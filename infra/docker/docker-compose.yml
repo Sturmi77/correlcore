@@ -1,0 +1,112 @@
+services:
+
+  traefik:
+    image: traefik:v3.0
+    container_name: moodsync-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/acme.json
+    networks:
+      - moodsync
+
+  api:
+    image: ghcr.io/sturmi77/moodsync-api:latest
+    container_name: moodsync-api
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+    networks:
+      - moodsync
+
+  web:
+    image: ghcr.io/sturmi77/moodsync-web:latest
+    container_name: moodsync-web
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+    networks:
+      - moodsync
+
+  worker:
+    image: ghcr.io/sturmi77/moodsync-api:latest
+    container_name: moodsync-worker
+    restart: unless-stopped
+    command: python -m backend.workers.analytics
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moodsync
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: moodsync-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-moodsync}
+      POSTGRES_USER: ${POSTGRES_USER:-moodsync}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-moodsync}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - moodsync
+
+  redis:
+    image: redis:7-alpine
+    container_name: moodsync-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - moodsync
+
+  minio:
+    image: minio/minio:latest
+    container_name: moodsync-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-moodsync}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - moodsync
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  moodsync:
+    driver: bridge
