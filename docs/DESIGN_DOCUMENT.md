@@ -1,6 +1,6 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.2 (Produkt-Konkretisierung)
+**Version:** 0.3 (Architektur-Härtung & DSGVO-Erweiterung)
 **Datum:** 2026-04-20
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
@@ -463,6 +463,24 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Leeres App-Shell (PWA) mit Theme-Toggle
 - **Exit:** Login funktioniert, leere Startseite erreichbar
 
+#### Akzeptanzkriterien M0
+
+- [ ] Docker Socket via Tecnativa-Proxy abgesichert (kein direkter Socket-Mount in Traefik-Container)
+- [ ] MinIO Console NICHT öffentlich über Traefik erreichbar (kein Router auf Port 9001)
+- [ ] Security Headers (HSTS, CSP, X-Frame-Options) in Traefik konfiguriert und per Test verifiziert
+- [ ] `.env.example` vollständig mit allen Variablen dokumentiert
+- [ ] Redis mit Passwort und `--appendonly yes` konfiguriert
+- [ ] Login-Flow end-to-end getestet (Authentik → FastAPI → SvelteKit)
+- [ ] CI/CD-Pipeline grün (Lint, Tests, Build)
+
+#### DSGVO-Checkpoint M0
+
+- [ ] 🔒 DSGVO: Datenschutzkonzept-Dokument (`docs/DSGVO.md`) vorhanden und versioniert
+- [ ] 🔒 DSGVO: Kein Third-Party Analytics oder Tracking-Code im Frontend (CSP prüfen)
+- [ ] 🔒 DSGVO: Keine externen Fonts oder CDN-Ressourcen ohne Datenschutz-Prüfung
+
+---
+
 ### M1 — Core Entry (Woche 3–5) → „Ich tracke meinen ersten Tag"
 - Tägliches Eintrags-Formular: Mood, Energy, Stress, Work-Context
 - Tag-System (vordefinierte Tags + Custom-Tags)
@@ -471,12 +489,45 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Offline-Fähigkeit via IndexedDB + Sync-Endpoint
 - **Exit:** Produktive Nutzung durch Entwickler selbst möglich
 
+#### Akzeptanzkriterien M1
+
+- [ ] Alle API-Endpunkte hinter Auth-Middleware (kein unauthenticated Zugriff auf Nutzdaten)
+- [ ] `user_id` auf allen Entitäten vorhanden, Row-Level-Security in Postgres aktiv und per Test verifiziert
+- [ ] Offline-Sync mit Conflict-Log-Tabelle implementiert (Konflikte werden aufgezeichnet)
+- [ ] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute)
+- [ ] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only
+- [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull`) funktioniert mit Offline-Queue
+
+#### DSGVO-Checkpoint M1
+
+- [ ] 🔒 DSGVO: `note_enc`-Feld verschlüsselt at-rest (pgcrypto oder App-Level-Encryption)
+- [ ] 🔒 DSGVO: Symptom-Daten (`symptoms`-Tabelle) ebenfalls verschlüsselt at-rest
+- [ ] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing prüfen)
+- [ ] 🔒 DSGVO: Auth-Strategie für Phase 1 dokumentiert und in ADR-0004 festgehalten
+
+---
+
 ### M2 — Visualisierung (Woche 6–7) → „Ich sehe meinen Verlauf"
 - Mood-Zeitreihe (Woche/Monat/Jahr)
 - Tag-Frequenz-Heatmap
 - Streak-Widgets
 - CSV/JSON-Export
 - **Exit:** Nutzer versteht Trends visuell
+
+#### Akzeptanzkriterien M2
+
+- [ ] CSV/JSON-Export vollständig (alle Felder, alle Einträge des Users)
+- [ ] Export enthält keine system-internen IDs, die Rückschlüsse auf andere User erlauben
+- [ ] Charts auf Mobilgerät (375 px Breite) korrekt gerendert und bedienbar
+- [ ] Zeitreihe korrekt für Wochen-/Monats-/Jahresansicht
+- [ ] Streak-Berechnung korrekt bei fehlenden Tagen
+
+#### DSGVO-Checkpoint M2
+
+- [ ] 🔒 DSGVO: Export-Funktion entspricht Right-to-Data-Portability (Art. 20 DSGVO) — maschinenlesbares Format
+- [ ] 🔒 DSGVO: Export enthält keine Daten anderer User (RLS-Test mit zwei Test-Accounts)
+
+---
 
 ### M3 — Insights v1 (Woche 8–10) → „Die App erklärt mir was"
 - Nightly Analytics-Worker
@@ -486,6 +537,22 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Confidence-Level + medizinischer Disclaimer
 - **Exit:** Mindestens 3 sinnvolle Insights bei 30 Einträgen
 
+#### Akzeptanzkriterien M3
+
+- [ ] Insights werden erst ab n≥30 Einträgen aktiviert (unter diesem Schwellwert keine Anzeige)
+- [ ] Jeder Insight hat sichtbaren Confidence-Level und Disclaimer
+- [ ] Kein Insight formuliert diagnostische Aussagen (Review-Checkliste liegt vor und ist abgezeichnet)
+- [ ] Analytics-Worker läuft als geplanter Job (Cron/Celery) und nicht inline in der API
+- [ ] Fehler im Analytics-Worker crashen nicht die API
+
+#### DSGVO-Checkpoint M3
+
+- [ ] 🔒 DSGVO: Analytics-Worker greift nur auf eigene User-Daten zu (RLS geprüft, Query-Audit)
+- [ ] 🔒 DSGVO: Ollama (falls genutzt) verarbeitet keine Daten außerhalb der eigenen Instanz (kein Cloud-Fallback)
+- [ ] 🔒 DSGVO: Kein Profiling-Output wird an Dritte übermittelt
+
+---
+
 ### M4 — Mobile Polish & PWA-Hardening (Woche 11–12)
 - Installierbare PWA, Service-Worker, App-Icon, Splash
 - Bottom-Sheet-UX, Gestensteuerung
@@ -493,22 +560,81 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - App-Lock (PIN) auf Mobile
 - **Exit:** App fühlt sich auf Handy nativ an
 
+#### Akzeptanzkriterien M4
+
+- [ ] PWA App-Lock (PIN) implementiert und aktivierbar
+- [ ] Service Worker cached keine sensitiven API-Responses (`Cache-Control: no-store` für `/api/*`)
+- [ ] Web Push Notifications enthalten keine Gesundheitsdaten im Payload
+- [ ] PWA installierbar auf Android Chrome und iOS Safari
+- [ ] Offline-Modus: Eintrag erstellen ohne Netzverbindung, Sync beim nächsten Online-Start
+
+#### DSGVO-Checkpoint M4
+
+- [ ] 🔒 DSGVO: Push-Notification-Payload enthält nur anonyme Reminder-Texte, keine Inhaltsdaten oder Mood-Werte
+- [ ] 🔒 DSGVO: Service-Worker-Cache-Strategie dokumentiert (welche Ressourcen werden gecacht)
+
+---
+
 ### M5 — Habits & Ziele (Woche 13–14)
 - Habit-Flag auf Tags (build / reduce) + Zielfrequenzen
 - Streak-Logik, Erfolgs-Badges
 - Habit-Dashboard
 - **Exit:** Gewohnheits-Tracking produktiv nutzbar
 
+#### Akzeptanzkriterien M5
+
+- [ ] Habit-Sprache neutral (build/reduce, nicht good/bad) — UI-Text-Review abgeschlossen
+- [ ] Keine Wertung oder Scoring von Habits, die psychologisch schaden könnte (kein „Versagt"-Framing)
+- [ ] Zielfrequenz konfigurierbar (täglich / x-mal pro Woche)
+- [ ] Streak-Reset-Logik korrekt bei fehlendem Tag vs. bewusstem Aussetzen
+
+#### DSGVO-Checkpoint M5
+
+- [ ] 🔒 DSGVO: Habit-Daten unterliegen derselben Verschlüsselung und RLS wie Entry-Daten
+
+---
+
 ### M6 — Fotos & Medien (Woche 15–16)
 - Lokaler Foto-Upload → MinIO, EXIF-Strip
 - Thumbnail-Galerie pro Tag
 - **Exit:** Fotos als zusätzlicher Gedächtnisanker
+
+#### Akzeptanzkriterien M6
+
+- [ ] EXIF-Strip serverseitig via Pillow implementiert (nicht nur clientseitig — clientseitiger Strip gilt nicht als ausreichend)
+- [ ] GPS-Koordinaten aus EXIF nachweislich entfernt (automatischer Test mit Foto mit bekannten GPS-Daten)
+- [ ] MinIO SSE-S3 für Photo-Bucket aktiviert
+- [ ] Foto-Upload nur für authentifizierte User, kein direkter MinIO-Zugriff ohne Pre-Signed URL
+- [ ] Maximale Dateigröße und erlaubte MIME-Types serverseitig validiert
+
+#### DSGVO-Checkpoint M6
+
+- [ ] 🔒 DSGVO: Fotos zählen als besondere Datenkategorie — Löschung bei Account-Delete verifiziert (inkl. MinIO-Bucket-Bereinigung)
+- [ ] 🔒 DSGVO: Foto-EXIF kann biometrische Merkmale enthalten → EXIF-Strip ist Pflicht und durch automatisierten Test abgedeckt
+- [ ] 🔒 DSGVO: Foto-Zugriff ist user-isoliert (kein Cross-User-Zugriff auf Pre-Signed URLs möglich)
+
+---
 
 ### M7 — Schlaf & Health Connect (Woche 17–18)
 - Manuelle Schlafdaten erweiterte Felder (Einschlafzeit, Tiefschlaf)
 - Android-seitig: Health Connect Import (Schlaf, HR, Schritte)
 - Korrelation Schlaf↔Mood in Insights
 - **Exit:** Wearable-Daten fließen automatisch
+
+#### Akzeptanzkriterien M7
+
+- [ ] Health Connect Permission-Request erklärt klar welche Daten gelesen werden (In-App-Erklärungsscreen)
+- [ ] Keine Weitergabe von Health-Connect-Daten an Third-Party-Services
+- [ ] Import importiert nur Schlaf + HR (keine Bewegungsprofile, keine Standortdaten)
+- [ ] Health Connect API Declaration korrekt in `AndroidManifest.xml` eingetragen
+
+#### DSGVO-Checkpoint M7
+
+- [ ] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Onboarding-Screen vor erstem Import
+- [ ] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR importiert, keine Bewegungsprofile (technisch durchgesetzt, nicht nur dokumentiert)
+- [ ] 🔒 DSGVO: Löschung von importierten Health-Connect-Daten bei Account-Delete vollständig implementiert und getestet
+
+---
 
 ### M8 — Insights v2 (Woche 19–21)
 - Multiple Regression (Lasso) über alle Variablen
@@ -517,6 +643,19 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Wöchentlicher „Insight Digest"
 - **Exit:** Qualitativ deutlich bessere Handlungsempfehlungen
 
+#### Akzeptanzkriterien M8
+
+- [ ] Lasso-Regression produziert reproduzierbare Ergebnisse bei gleichen Eingabedaten
+- [ ] Lag-Analyse konfigurierbar (1–7 Tage Verzögerung)
+- [ ] Insight Digest als optionale wöchentliche Push-Notification
+- [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust
+
+#### DSGVO-Checkpoint M8
+
+- [ ] 🔒 DSGVO: LLM verarbeitet keine Daten außerhalb der lokalen Instanz (kein Cloud-LLM ohne explizite User-Zustimmung)
+
+---
+
 ### M9 — Beta-Härtung (Woche 22–24)
 - Monitoring, GlitchTip-Error-Tracking
 - Backup/Restore-Dokumentation
@@ -524,11 +663,43 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Dokumentation (Install-Guide, User-Manual)
 - **Exit:** Stabil genug für Public-Selfhost-Release
 
+#### Akzeptanzkriterien M9
+
+- [ ] Vollständige Datenschutzerklärung vorhanden (`docs/PRIVACY.md` + in-app verlinkbar)
+- [ ] Account-Löschung (Right to Erasure, Art. 17 DSGVO) als Self-Service implementiert
+- [ ] Backup-Prozess dokumentiert und Restore-Test erfolgreich durchgeführt
+- [ ] GlitchTip Error-Tracking aktiv, kein PII in Error-Reports
+- [ ] Install-Guide für Selfhost vollständig (Docker Compose, Traefik, DNS)
+
+#### DSGVO-Checkpoint M9
+
+- [ ] 🔒 DSGVO: Datenschutz-Folgeabschätzung (DSFA) für Cloud-Deployment dokumentiert (falls SaaS geplant)
+- [ ] 🔒 DSGVO: AV-Vertrag-Template für Cloud-Hoster (Hetzner) vorhanden
+- [ ] 🔒 DSGVO: Vollständiger JSON+ZIP-Datenexport (Art. 20 DSGVO) als Self-Service implementiert und getestet
+- [ ] 🔒 DSGVO: GlitchTip-Instanz selfhosted oder DSGVO-konformer Anbieter
+
+---
+
 ### M10 — Public Selfhost Release v1.0 (Woche 25)
 - GitHub-Release, Docker Hub Image
 - Landing-Page + Docs-Site
 - Lizenzmodell finalisieren (AGPL)
 - **Exit:** v1.0 öffentlich nutzbar
+
+#### Akzeptanzkriterien M10
+
+- [ ] Docker Hub Image für amd64 + arm64 publiziert
+- [ ] `docker compose up` mit `.env.example` startet vollständigen Stack ohne weitere Konfiguration
+- [ ] Security-Disclosure-Policy vorhanden (`SECURITY.md` im Repository)
+- [ ] CHANGELOG.md gepflegt und vollständig für v1.0
+- [ ] Docs-Site (Docusaurus oder MkDocs) mit Install- und User-Guide live
+
+#### DSGVO-Checkpoint M10
+
+- [ ] 🔒 DSGVO: Datenschutzerklärung auf Landing-Page verlinkt
+- [ ] 🔒 DSGVO: Impressum (AT-Recht / DE-Recht) vorhanden und erreichbar
+
+---
 
 ### M11 — Android-App für Play Store (Woche 26–28)
 - PWA → TWA via Bubblewrap
@@ -537,11 +708,43 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Store-Assets (Screenshots, Beschreibung, Datenschutzerklärung)
 - **Exit:** Closed Testing im Play Store
 
+#### Akzeptanzkriterien M11
+
+- [ ] Capacitor-Build (statt TWA, falls D-008 so entschieden — Verweis auf ADR-0002) produktionsreif
+- [ ] Health Connect API Declaration im Play Store korrekt ausgefüllt (`health_permissions` deklariert)
+- [ ] App besteht Google Play Pre-Launch-Report ohne kritische Fehler
+- [ ] FCM-Integration getestet (Push-Notification kommt an)
+- [ ] Store-Assets vollständig (Screenshots alle Formfaktoren, Feature-Graphic, kurze/lange Beschreibung)
+
+#### DSGVO-Checkpoint M11
+
+- [ ] 🔒 DSGVO: Google Play Data Safety Section vollständig und wahrheitsgemäß ausgefüllt
+- [ ] 🔒 DSGVO: Datenschutzerklärung als App-Store-Link hinterlegt (Play Store verlangt öffentliche URL)
+- [ ] 🔒 DSGVO: Health Connect Nutzung in Data Safety Section korrekt deklariert
+
+---
+
 ### M12 — SaaS-Modus (Monat 7+)
 - Multi-Tenancy via Postgres RLS (Architektur bereits vorhanden)
 - Billing (Stripe), Onboarding, Support-Ticket-System
 - Managed-Hosting (Hetzner + k3s)
 - **Exit:** Erster zahlender Kunde
+
+#### Akzeptanzkriterien M12
+
+- [ ] Stripe Webhook mit Signatur-Verifikation implementiert (kein unauthenticated Webhook-Zugriff)
+- [ ] Tenant-Isolation via RLS für alle neuen Tabellen geprüft und durch Cross-Tenant-Test verifiziert
+- [ ] Onboarding-Flow für neue SaaS-User vollständig (Registrierung → Billing → erste Nutzung)
+- [ ] Support-Ticket-System oder Kontaktkanal vorhanden
+
+#### DSGVO-Checkpoint M12
+
+- [ ] 🔒 DSGVO: Data Processing Agreement (DPA) mit Cloud-Hoster abgeschlossen
+- [ ] 🔒 DSGVO: Auftragsverarbeitungsverzeichnis (Art. 30 DSGVO) gepflegt
+- [ ] 🔒 DSGVO: Datenlöschung bei Kündigung innerhalb 30 Tage implementiert und dokumentiert
+- [ ] 🔒 DSGVO: Datenschutzerklärung für SaaS-Betrieb aktualisiert (andere Rechtsgrundlage als Selfhost)
+
+---
 
 ### Backlog / Später
 - Immich-Integration (Foto-Referenzen statt Upload)
@@ -566,19 +769,28 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 | D-005 | Monetarisierung: Hybrid (Selfhost Free + Cloud Abo + Lifetime)? | 🔄 Offen | — |
 | D-006 | Push: UnifiedPush-first oder FCM-first? | ✅ Entschieden: UnifiedPush primary | — |
 | D-007 | LLM für Insights: Ollama local oder API? | 🔄 Offen | — |
+| D-008 | Mobile-Strategie: Capacitor vs. TWA (Bubblewrap)? TWA hat Google-Policy-Risiko (Health Connect Bridge, Policy-Änderungen); Capacitor bietet mehr nativen Zugriff, höherer Buildaufwand. | 🔄 Offen | [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md) |
+| D-009 | Sync-Protokoll Conflict-Handling: Aktuelles LWW-Modell (`updated_at`) birgt Datenverlust bei Multi-Device. Alternativen: CRDT, serverseitige Merge-Strategien, Conflict-Inbox für User. | 🔄 Offen | [ADR-0003](adr/0003-sync-conflict-handling.md) |
+| D-010 | Auth Phase 1: Native JWT (FastAPI-intern, kein Authentik-Overhead) vs. Authentik von Beginn an. Authentik ist ressourcenintensiv für Solo-Dev-Phase; natives JWT erfordert später Migration. | 🔄 Offen | [ADR-0004](adr/0004-auth-phase1-jwt-vs-authentik.md) |
+| D-011 | Verschlüsselung at-rest Strategie: pgcrypto (DB-Level), App-Level-Encryption (Python), oder Kombination? Auswirkungen auf Suche, Performance und Schlüsselverwaltung. | 🔄 Offen | [ADR-0005](adr/0005-verschluesselung-at-rest.md) |
 
 ---
 
 ## 8. Risiken
 
-| Risiko | Wahrscheinlichkeit | Impact | Maßnahme |
-|---|---|---|---|
-| Scheinkorrelationen führen User zu falschen Schlüssen | Mittel | Hoch | Confidence-Level, Disclaimer, Mindest-n=30 |
-| Play-Store-Rejection wegen Health-Claims | Niedrig | Hoch | Legal Review vor Submission, keine diagnostischen Aussagen |
-| Garmin-API ändert sich / TOS-Verstoß | Hoch | Mittel | Health Connect als primärer Weg, Garmin als opt-in mit Warnung |
-| Solo-Dev-Burnout | Mittel | Kritisch | Vertical Slices, klare Exit-Kriterien pro Milestone, Timeboxing |
-| Immich Breaking Changes in API | Mittel | Niedrig | Immich erst v2, abstrakte Integration via Adapter |
-| DSGVO-Verstoß bei Health-Daten | Niedrig | Kritisch | Privacy-by-Design, AV-Verträge, kein Third-Party-Analytics |
+| Risiko | ID | Wahrscheinlichkeit | Impact | Maßnahme |
+|---|---|---|---|---|
+| Scheinkorrelationen führen User zu falschen Schlüssen | — | Mittel | Hoch | Confidence-Level, Disclaimer, Mindest-n=30 |
+| Play-Store-Rejection wegen Health-Claims | — | Niedrig | Hoch | Legal Review vor Submission, keine diagnostischen Aussagen |
+| Garmin-API ändert sich / TOS-Verstoß | — | Hoch | Mittel | Health Connect als primärer Weg, Garmin als opt-in mit Warnung |
+| Solo-Dev-Burnout | ZS-05 | Mittel | Kritisch | Vertical Slices mit klaren Exit-Kriterien; Timebox pro Milestone fixiert; wöchentliches 1h-Review ob Scope noch realistisch; konsequentes Backlog-Kürzen bei Verzögerung; keine Feature-Creep-Toleranz in laufendem Milestone |
+| Immich Breaking Changes in API | — | Mittel | Niedrig | Immich erst v2, abstrakte Integration via Adapter |
+| DSGVO-Verstoß bei Health-Daten | — | Niedrig | Kritisch | Privacy-by-Design, AV-Verträge, kein Third-Party-Analytics |
+| LWW Sync Datenverlust bei Multi-Device | SW-01 | Mittel | Mittel | Conflict-Log-Tabelle persistiert alle Konflikte; User-sichtbarer Conflict-Inbox geplant (D-009 / ADR-0003); CRDT als langfristige Option evaluieren |
+| Auth-Modell undefiniert in Phase 1 | SEC-01 | Hoch | Hoch | Entscheidung vor M1-Start erzwingen (D-010 / ADR-0004); Interim-Lösung mit nativem JWT + klar definiertem Migrations-Pfad zu Authentik dokumentieren |
+| Docker Socket Exposure (Traefik) | SEC-03 | Mittel | Kritisch | Docker Socket ausschließlich via Tecnativa Socket-Proxy mounten; kein direkter `/var/run/docker.sock`-Mount in Traefik; Akzeptanzkriterium in M0 |
+| MinIO Console öffentlich erreichbar | SEC-04 | Hoch | Hoch | MinIO Console (Port 9001) nicht via Traefik exponieren; Zugriff nur über internes Netz oder SSH-Tunnel; Akzeptanzkriterium in M0 |
+| TWA Google-Policy-Risiko / Health Connect Bridge-Problem | ZS-01 | Mittel | Hoch | Capacitor als Alternative evaluieren (D-008 / ADR-0002); TWA ist abhängig von Chrome-internen Bridges für Health Connect-Zugriff — Capacitor-native Plugin stabiler; Entscheidung spätestens M7 |
 
 ---
 
@@ -592,3 +804,27 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Manuell auf Staging verifiziert
 - [ ] Changelog-Eintrag
 - [ ] Privacy-Impact geprüft (bei Gesundheitsdaten-relevanten Changes)
+- [ ] 🔒 DSGVO: Art.-9-Impact-Check durchgeführt bei allen health-daten-relevanten Changes
+- [ ] 🔒 DSGVO: EXIF-Strip verifiziert bei Foto-relevanten Changes (automatisierter Test mit GPS-EXIF-Testbild)
+- [ ] 🔒 DSGVO: Löschkonzept geprüft bei neuen Datenfeldern (werden Felder bei Account-Delete vollständig entfernt?)
+
+---
+
+## 10. Architektur-Entscheidungen & bekannte Schwachstellen
+
+Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen mit aktuellem Status und Verweis auf ADR oder Meilenstein.
+
+| ID | Beschreibung | Kategorie | Status | Verweis |
+|---|---|---|---|---|
+| SEC-01 | Auth-Modell undefiniert in Phase 1 — kein klares JWT vs. Authentik-Commitment | Sicherheit | ❌ offen | D-010, [ADR-0004](adr/0004-auth-phase1-jwt-vs-authentik.md) |
+| SEC-03 | Docker Socket direkter Mount in Traefik ermöglicht Container-Escape | Sicherheit | ❌ offen | M0-AC, Tecnativa-Proxy |
+| SEC-04 | MinIO Console (Port 9001) öffentlich über Traefik erreichbar | Sicherheit | ❌ offen | M0-AC |
+| SW-01 | LWW Sync-Strategie verursacht stillen Datenverlust bei gleichzeitigen Multi-Device-Edits | Software | ❌ offen | D-009, [ADR-0003](adr/0003-sync-conflict-handling.md) |
+| ZS-01 | TWA-Strategie gefährdet durch Google-Policy-Änderungen und Health Connect Bridge-Instabilität | Zielstrategie | 🔄 in Arbeit | D-008, [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md), M11 |
+| ZS-05 | Solo-Dev-Burnout-Risiko durch Scope-Creep und fehlende Timeboxing-Disziplin | Zielstrategie | 🔄 in Arbeit | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien |
+| DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt (pgcrypto vs. App-Level) | DSGVO | ❌ offen | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md), M1-DSGVO |
+| DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur | DSGVO | ❌ offen | M7-DSGVO |
+| DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden | DSGVO | ❌ offen | M9-DSGVO |
+| DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test | DSGVO | ❌ offen | M6-AC, DoD |
+| ARCH-01 | Mermaid-Diagramm zeigt TWA als Android-Client — inkonsistent mit offener D-008-Entscheidung | Architektur | 🔄 in Arbeit | D-008, ADR-0002 |
+| ARCH-02 | Keine ADRs für D-002 bis D-007 angelegt (Entscheidungen undokumentiert) | Architektur | ❌ offen | Backlog: ADR-Erstellung pro offener Entscheidung |
