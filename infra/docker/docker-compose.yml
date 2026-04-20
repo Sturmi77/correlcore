@@ -1,5 +1,40 @@
+# MoodSync — Docker Compose Stack
+# Sicherheitsgehärtete Konfiguration (April 2026)
+# Änderungen gegenüber v0.1:
+#   - Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount [SEC-03]
+#   - Redis mit Passwort-Auth [SEC-01]
+#   - Security-Header-Middleware (HSTS, CSP, X-Frame) [SEC-05]
+#   - MinIO Console nur intern erreichbar [SEC-04]
+#   - MinIO SSE-S3 Encryption aktiviert [SEC-02]
+#   - Healthchecks auf allen Diensten
+#   - Conflict-Log-Migration via Alembic [SW-01]
+
+name: moodsync
+
 services:
 
+  # ── Docker Socket Proxy ────────────────────────────────────────────────────
+  # Statt direktem Socket-Mount: Tecnativa-Proxy filtert erlaubte Docker API Calls
+  # Löst: SEC-03 (Container-Escape-Risiko durch direkten Socket-Zugriff)
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: moodsync-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1   # Traefik braucht Container-Labels lesen
+      NETWORKS: 1     # Traefik braucht Netzwerk-Info
+      SERVICES: 1     # optional, für Service Discovery
+      TASKS: 1        # optional
+      # Alles andere ist DEAKTIVIERT (kein POST, kein EXEC, kein BUILD)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket
+    # Socket-Proxy NICHT im edge-Netz — nur Traefik hat Zugriff
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Reverse Proxy ──────────────────────────────────────────────────────────
   traefik:
     image: traefik:v3.0
     container_name: moodsync-traefik
@@ -7,30 +42,76 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      # Traefik nutzt den Socket-Proxy, nicht den direkten Socket
+      DOCKER_HOST: tcp://socket-proxy:2375
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/acme.json:/acme.json
+      - traefik_certs:/etc/traefik/acme
+    depends_on:
+      - socket-proxy
     networks:
-      - moodsync
+      - edge
+      - socket
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      # Security-Header-Middleware für alle Routen
+      - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.security-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.security-headers.headers.frameDeny=true"
+      - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.security-headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=()"
+      # HTTP → HTTPS Redirect
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-https"
 
+  # ── Backend API ────────────────────────────────────────────────────────────
   api:
     image: ghcr.io/sturmi77/moodsync-api:latest
     container_name: moodsync-api
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Encryption Key für App-Level-Feld-Verschlüsselung (notes, symptoms)
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-moodsync}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: moodsync
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.api.middlewares=security-headers"
+      # Rate-Limiting für API (global)
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=50"
+      - "traefik.http.routers.api.middlewares=security-headers,api-ratelimit"
     networks:
-      - moodsync
+      - internal
+      - edge
+    security_opt:
+      - no-new-privileges:true
 
+  # ── Web Frontend ───────────────────────────────────────────────────────────
   web:
     image: ghcr.io/sturmi77/moodsync-web:latest
     container_name: moodsync-web
@@ -41,22 +122,37 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.web.middlewares=security-headers"
     networks:
-      - moodsync
+      - internal
+      - edge
+    security_opt:
+      - no-new-privileges:true
 
+  # ── Analytics Worker ───────────────────────────────────────────────────────
   worker:
     image: ghcr.io/sturmi77/moodsync-api:latest
     container_name: moodsync-worker
     restart: unless-stopped
     command: python -m backend.workers.analytics
     env_file: .env
+    environment:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - moodsync
+      - internal
+    security_opt:
+      - no-new-privileges:true
 
+  # ── Datenbank ──────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
     container_name: moodsync-postgres
@@ -68,45 +164,125 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-moodsync}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
     networks:
-      - moodsync
+      - internal
+    # Keine externe Port-Exposition!
+    security_opt:
+      - no-new-privileges:true
 
+  # ── Cache & Queue ──────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: moodsync-redis
     restart: unless-stopped
+    # Passwort-Auth + AOF-Persistenz [SEC-01 Fix]
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --appendfsync everysec
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
-      - moodsync
+      - internal
+    security_opt:
+      - no-new-privileges:true
 
+  # ── Objekt-Speicher ────────────────────────────────────────────────────────
   minio:
     image: minio/minio:latest
     container_name: moodsync-minio
     restart: unless-stopped
+    # SSE-S3 Encryption aktiviert [SEC-02 Fix]
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-moodsync}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      # Server-Side Encryption aktivieren
+      MINIO_KMS_AUTO_ENCRYPTION: "on"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
-      - moodsync
+      - internal  # NUR internes Netz — kein öffentlicher Zugriff auf Console [SEC-04 Fix]
+    # MinIO Console (9001) und API (9000) sind NICHT via Traefik öffentlich geroutet
+    # Zugriff auf Console: SSH-Tunnel oder VPN
+    security_opt:
+      - no-new-privileges:true
+
+  # ── MinIO Bucket Bootstrap ─────────────────────────────────────────────────
+  minio-init:
+    image: minio/mc:latest
+    container_name: moodsync-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-moodsync} ${MINIO_ROOT_PASSWORD} &&
+      mc mb -p local/moodsync || true &&
+      mc mb -p local/moodsync-photos || true &&
+      mc anonymous set none local/moodsync &&
+      mc anonymous set none local/moodsync-photos &&
+      echo 'MinIO Buckets initialisiert.'
+      "
+    networks:
+      - internal
+    restart: "no"
+
+  # ── Monitoring ─────────────────────────────────────────────────────────────
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    container_name: moodsync-glitchtip
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
+      EMAIL_URL: ${EMAIL_URL:-consolemail://}
+      GLITCHTIP_DOMAIN: https://errors.${DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.glitchtip.rule=Host(`errors.${DOMAIN}`)"
+      - "traefik.http.routers.glitchtip.entrypoints=websecure"
+      - "traefik.http.routers.glitchtip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.glitchtip.middlewares=security-headers"
+    networks:
+      - internal
+      - edge
+    profiles:
+      - monitoring
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+  traefik_certs:
 
 networks:
-  moodsync:
+  edge:
     driver: bridge
+  internal:
+    driver: bridge
+    internal: true   # Kein direkter Internet-Zugriff aus internen Diensten
+  socket:
+    driver: bridge   # Dediziertes Netz nur für Traefik ↔ Socket-Proxy Kommunikation

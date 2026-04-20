@@ -1,0 +1,183 @@
+# MoodSync — Datenschutz-Schutzkonzept (DSGVO)
+
+**Version:** 1.0 | **Datum:** 2026-04-20 | **Verantwortlicher:** [Name / Firmenname]
+**Rechtsgrundlage:** DSGVO (EU 2016/679), DSG (Österreich), Art. 9 besondere Datenkategorien
+
+---
+
+## 1. Zweck und Geltungsbereich
+
+MoodSync verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, biometrische Wearable-Daten), die gemäß Art. 9 DSGVO als besondere Kategorien personenbezogener Daten einzustufen sind. Dieses Dokument beschreibt alle technischen und organisatorischen Maßnahmen (TOMs) zur Sicherstellung der Datenschutz-Compliance.
+
+## 2. Verarbeitete Datenkategorien
+
+| Datenkategorie | Art-9-relevant | Speicherort | Verschlüsselung | Rechtsgrundlage |
+|---|---|---|---|---|
+| Stimmungsdaten (mood_score, energy, stress) | ✅ Ja | PostgreSQL | App-Level AES-256 | Einwilligung Art. 6(1)(a) + Art. 9(2)(a) |
+| Symptom-Daten (Kopfschmerzen, Verdauung, etc.) | ✅ Ja | PostgreSQL | App-Level AES-256 | Einwilligung |
+| Notizen (Freitext) | ⚠️ potenziell | PostgreSQL | App-Level AES-256 | Einwilligung |
+| Fotos | ⚠️ potenziell (biometrisch) | MinIO | SSE-S3 | Einwilligung |
+| Schlafdaten (Garmin/Health Connect) | ✅ Ja | PostgreSQL | App-Level AES-256 | Einwilligung + explizite separate Einwilligung für HC |
+| Aktivitäts-Tags | ❌ nein (abstrakt) | PostgreSQL | Standard | berechtigtes Interesse |
+| E-Mail-Adresse | ❌ nein | PostgreSQL | Standard | Vertragserfüllung |
+
+## 3. Technische und organisatorische Maßnahmen (TOMs, Art. 32 DSGVO)
+
+### 3.1 Verschlüsselung
+
+- **Transport:** TLS 1.3 (HSTS, HSTS-Preload)
+- **Daten at-rest:** App-Level Fernet/AES-256 für alle Art.-9-Felder
+- **Objekte:** MinIO SSE-S3 für alle Buckets
+- **Backups:** restic mit AES-256-GCM-Verschlüsselung
+
+### 3.2 Zugriffskontrolle
+
+- **Authentifizierung:** MFA-fähig (TOTP)
+- **Autorisierung:** PostgreSQL Row-Level-Security (user_id-basiert)
+- **API:** Rate-Limiting, JWT-Refresh-Token-Rotation
+- **Docker:** Socket-Proxy, no-new-privileges, interne Netzwerke
+
+### 3.3 Datenminimierung
+
+- Nur explizit eingegebene Daten werden erfasst (kein Background-Tracking)
+- EXIF-Strip bei Foto-Upload (GPS, Kamera-Metadaten, biometrische Marker entfernt)
+- Logs enthalten keine Gesundheitsdaten im Klartext
+- Push-Notification-Payloads sind inhaltsleer (nur Reminder-Signal)
+
+### 3.4 Verfügbarkeit und Integrität
+
+- Backups: täglich via restic, 30-Tage-Retention
+- Monitoring: GlitchTip (Fehlertracking), Uptime-Kuma (Verfügbarkeit)
+- Health-Checks auf allen Containern
+- Sync-Konflikt-Log verhindert stillen Datenverlust
+
+## 4. Betroffenenrechte (Art. 15–22 DSGVO)
+
+| Recht | Endpunkt / Umsetzung | Frist | Status |
+|---|---|---|---|
+| Auskunft (Art. 15) | `GET /api/v1/user/data` → JSON-Dump aller Daten | sofort (automatisiert) | ✅ M2 |
+| Berichtigung (Art. 16) | Standard-Edit-UI | sofort | ✅ M1 |
+| Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/account` → Cascade alle Daten + MinIO-Bereinigung | sofort | ✅ M9 |
+| Datenübertragbarkeit (Art. 20) | `GET /api/v1/user/export` → ZIP (JSON + Fotos) | automatisiert | ✅ M2 |
+| Widerspruch Analyse (Art. 21) | `POST /api/v1/user/settings {analytics_enabled: false}` | sofort | ✅ M3 |
+| Einschränkung (Art. 18) | via Support (manuell in v1) | 72h | 🔄 M9 |
+
+## 5. Einwilligungsmanagement
+
+- Opt-in bei Registrierung: explizite Checkbox für Art.-9-Datenverarbeitung
+- Separate Einwilligung für Health-Connect-Import (gesonderte UI, mit Erklärung was importiert wird)
+- Einwilligungen werden mit Timestamp gespeichert (`consent_log` Tabelle)
+- Widerruf jederzeit möglich (Settings → Datenschutz → Einwilligungen verwalten)
+
+## 6. Auftragsverarbeitung (Art. 28 DSGVO)
+
+### Selfhosted-Betrieb
+
+- Keine Auftragsverarbeitung — User ist selbst Verantwortlicher
+- Kein DPA erforderlich
+
+### Cloud-Betrieb (MoodSync Cloud, ab M12)
+
+| Auftragsverarbeiter | Zweck | AV-Vertrag |
+|---|---|---|
+| Hetzner Online GmbH (Frankfurt) | Hosting / Infrastruktur | https://www.hetzner.com/AV/ |
+| Resend Inc. | Transaktions-E-Mail | vorhanden |
+| Stripe Payments Europe Ltd. | Billing / Zahlungsabwicklung | vorhanden |
+
+Keine weiteren Auftragsverarbeiter.
+
+## 7. Datenschutz-Folgeabschätzung (DSFA, Art. 35 DSGVO)
+
+Eine DSFA ist durchzuführen wenn Gesundheitsdaten im Cloud-Betrieb verarbeitet werden.
+
+| # | Risikofeld | Mitigationsmaßnahme |
+|---|---|---|
+| 1 | Unbefugter Datenbankzugriff | Verschlüsselung at-rest, RLS, starke Auth |
+| 2 | Backup-Diebstahl | restic-Verschlüsselung, separate Key-Aufbewahrung |
+| 3 | Insider-Threat (SaaS-Betrieb) | Audit-Log, keine menschliche Zugriffsnotwendigkeit auf Nutzdaten |
+| 4 | Third-Party-Kompromittierung | kein Third-Party-Analytics, minimale externe Abhängigkeiten |
+| 5 | Gesetzliche Auskunftspflicht | AV-Verträge, Daten in EU (Hetzner Frankfurt) |
+
+**DSFA-Status:** 🔄 Vor M12 (Cloud-Launch) zu erstellen
+
+## 8. Datenpannen (Art. 33–34 DSGVO)
+
+**Meldepflicht:** 72h an zuständige Aufsichtsbehörde (AT: Datenschutzbehörde, dsb.gv.at)
+
+**Interner Prozess:**
+
+1. Entdeckung → sofortige Isolierung des betroffenen Systems
+2. Bewertung: Betroffene Datenkategorien? Art.-9-Daten betroffen?
+3. Wenn Art.-9-Daten betroffen: immer Meldepflicht (auch bei geringem Risiko)
+4. DSB-Meldung via https://www.dsb.gv.at/meldung-datenverletzung
+5. Betroffene informieren wenn hohes Risiko (Art. 34)
+
+**Incident-Response-Plan:** `docs/runbooks/incident-response.md` (zu erstellen in M9)
+
+## 9. Aufbewahrungsfristen
+
+| Datenkategorie | Aufbewahrungsdauer | Löschauslöser |
+|---|---|---|
+| Mood-Entries | bis Account-Löschung oder explizite Nutzer-Löschung | Account-Delete / Nutzeraktion |
+| Analytics/Insights | 90 Tage Rolling Window (ältere werden neu berechnet) | Automatisch |
+| Sync-Konflikt-Log | 90 Tage | Automatisch |
+| Auth-Logs (Login-Versuche) | 30 Tage | Automatisch |
+| Error-Logs (GlitchTip) | 90 Tage | Automatisch |
+| Billing-Daten | 7 Jahre | Gesetzliche Aufbewahrungspflicht AT |
+
+## 10. Meilenstein-Checkpoints
+
+Für jeden Meilenstein der DSGVO-relevante Features enthält:
+
+### M0 – Fundament
+
+- [ ] 🔒 DSGVO: Dieses Dokument (DSGVO.md) vorhanden und im Repo
+- [ ] 🔒 DSGVO: Kein Third-Party-Tracking im Frontend-Code verifiziert
+- [ ] 🔒 DSGVO: ENCRYPTION_KEY in .env.example dokumentiert
+- [ ] 🔒 DSGVO: MinIO SSE in docker-compose.yml aktiviert
+
+### M1 – Core Entry
+
+- [ ] 🔒 DSGVO: consent_log Tabelle implementiert
+- [ ] 🔒 DSGVO: note_enc und symptoms.details verschlüsselt at-rest (Fernet)
+- [ ] 🔒 DSGVO: Opt-in-Checkbox bei Registrierung mit korrektem Rechtstext
+- [ ] 🔒 DSGVO: Keine Klartextloggung sensibler Felder verifiziert (Log-Review)
+
+### M2 – Visualisierung
+
+- [ ] 🔒 DSGVO: Datenexport-Funktion (Art. 20) implementiert und getestet
+- [ ] 🔒 DSGVO: Export enthält alle gespeicherten Daten (Vollständigkeits-Test)
+
+### M3 – Insights
+
+- [ ] 🔒 DSGVO: Analytics-Opt-Out implementiert (analytics_enabled Flag)
+- [ ] 🔒 DSGVO: Ollama-Daten verlassen die eigene Instanz nicht (verifiziert)
+
+### M6 – Fotos
+
+- [ ] 🔒 DSGVO: EXIF-Strip automatisch getestet (Unit-Test mit GPS-haltigen Testfotos)
+- [ ] 🔒 DSGVO: Account-Delete löscht auch alle MinIO-Objekte (Cascade-Test)
+
+### M7 – Health Connect
+
+- [ ] 🔒 DSGVO: Separate Health-Connect-Einwilligung mit klarer Erklärung implementiert
+- [ ] 🔒 DSGVO: Nur minimale Health-Daten importiert (Schlaf + HR, keine Bewegungsprofile)
+
+### M9 – Beta
+
+- [ ] 🔒 DSGVO: Datenschutzerklärung (PRIVACY.md + in-app Link) vorhanden
+- [ ] 🔒 DSGVO: Account-Löschung (Right to Erasure) End-to-End getestet
+- [ ] 🔒 DSGVO: Incident-Response-Runbook vorhanden
+- [ ] 🔒 DSGVO: Backup-Verschlüsselung verifiziert
+
+### M11 – Play Store
+
+- [ ] 🔒 DSGVO: Google Play Data Safety Section wahrheitsgemäß ausgefüllt
+- [ ] 🔒 DSGVO: Datenschutzerklärung URL im Store hinterlegt
+
+### M12 – SaaS
+
+- [ ] 🔒 DSGVO: DSFA erstellt und dokumentiert
+- [ ] 🔒 DSGVO: AV-Vertrag mit Hetzner nachweislich abgeschlossen
+- [ ] 🔒 DSGVO: Auftragsverarbeitungsverzeichnis (Art. 30) gepflegt
+- [ ] 🔒 DSGVO: Datenlöschung bei Kündigung in ≤30 Tagen implementiert und getestet
