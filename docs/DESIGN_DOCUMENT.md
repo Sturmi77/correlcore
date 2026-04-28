@@ -1,7 +1,7 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.3 (Architektur-Härtung & DSGVO-Erweiterung)
-**Datum:** 2026-04-20
+**Version:** 0.4 (M0 Observability & Healthchecks)
+**Datum:** 2026-04-28
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
 **Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
@@ -428,6 +428,105 @@ erDiagram
 
 ---
 
+### 3.6 Observability-Strategie
+
+Für M0 wird bewusst ein schlanker Observability-Ansatz gewählt: Der Kernstack soll bereits diagnosefähig sein, ohne dass der Projektstart von zusätzlichen Betriebsdiensten abhängig wird.
+
+**Architekturentscheidung:** Healthchecks und strukturiertes Logging sind im Anwendungscode verpflichtend. Uptime Kuma, GlitchTip und Loki werden als optionale Compose-Profile oder separate Ops-Datei vorbereitet und erst nachgelagert (M9) aktiviert.
+
+#### Health-Endpunkte (verpflichtend ab M0)
+
+Die API stellt drei Health-Endpunkte bereit:
+
+| Endpunkt | Zweck | Fehlt bei |
+|---|---|---|
+| `GET /health/live` | Prozess lebt — keine externen Deps prüfen | API-Prozess selbst defekt |
+| `GET /health/ready` | Betriebsbereit — DB, Redis, MinIO erreichbar | Abhängige Komponenten nicht ready |
+| `GET /health` | Kompakte menschenlesbare Aggregation | — |
+
+`/health/live` darf bei kurzzeitigen PostgreSQL- oder Redis-Problemen **nicht** rot werden, um unnötige Restart-Schleifen zu vermeiden. `/health/ready` wird von Reverse Proxy, Uptime-Checks und späteren Monitoring-Systemen ausgewertet.
+
+#### Strukturiertes JSON-Logging (verpflichtend ab M0)
+
+Jeder Log-Eintrag enthält mindestens:
+
+```json
+{
+  "timestamp": "...",
+  "level": "INFO",
+  "service": "moodsync-api",
+  "environment": "production",
+  "request_id": "...",
+  "method": "GET",
+  "path": "/health/ready",
+  "status_code": 200,
+  "duration_ms": 12
+}
+```
+
+Fehlerlogs dürfen Stacktraces enthalten, aber **keine sensiblen Nutzdaten** (Mood-Werte, Symptome, Notizen). Unstrukturierte `print()`-Ausgaben gelten nicht als Standard für produktionsnahen Betrieb.
+
+#### Request-ID / Correlation-ID (verpflichtend ab M0)
+
+Jede eingehende HTTP-Anfrage erhält eine `request_id` via Middleware. Sie wird in Logs mitgeführt und als Response-Header `X-Request-ID` zurückgegeben. Dadurch ist die Korrelation einzelner Requests über API, Traefik und spätere Zusatzdienste möglich.
+
+#### Docker-Healthchecks im Core-Stack (verpflichtend ab M0)
+
+| Dienst | Check-Methode |
+|---|---|
+| API | HTTP `GET /health/live` |
+| Web (SvelteKit) | HTTP-Check auf App-Shell oder Statusseite |
+| PostgreSQL | Native Readiness-Prüfung (`pg_isready`) |
+| Redis | `PING` |
+| MinIO | HTTP- oder CLI-Check |
+
+#### Compose-Strategie: Core vs. Ops
+
+`docker-compose.yml` enthält ausschließlich den Core-Stack (Traefik, Web, API, PostgreSQL, Redis, MinIO, Bucket-Init). Zusätzliche Betriebsdienste (Uptime Kuma, GlitchTip, Loki, Tracing) werden in `docker-compose.ops.yml` oder über Compose-Profile geführt — damit bleibt der Basisstart schlank. Diese Trennung ist besonders sinnvoll für Selfhosting- und Synology-Szenarien.
+
+#### Empfohlene Repo- und Dateistruktur für M0
+
+```text
+moodsync/
+├── apps/
+│   └── web/
+│       ├── src/routes/+page.svelte
+│       ├── src/routes/status/+page.svelte
+│       ├── src/lib/api/health.ts
+│       └── Dockerfile
+├── backend/
+│   └── app/
+│       ├── main.py
+│       ├── api/v1/health.py
+│       ├── core/config.py
+│       ├── core/logging.py
+│       ├── core/request_id.py
+│       ├── services/health_service.py
+│       └── tests/test_health.py
+├── infra/
+│   └── docker/
+│       ├── docker-compose.yml
+│       ├── docker-compose.ops.yml
+│       ├── .env.example
+│       ├── traefik/
+│       │   └── dynamic/middlewares.yml
+│       └── postgres/init/001-create-extensions.sql
+├── .github/
+│   └── workflows/
+│       ├── ci-api.yml
+│       └── ci-web.yml
+├── scripts/
+│   ├── dev-up.sh
+│   └── migrate.sh
+└── docs/
+    └── adr/
+        ├── ADR-0001-monorepo-structure.md
+        ├── ADR-0002-core-compose-stack.md
+        └── ADR-0003-healthchecks-and-logging.md
+```
+
+---
+
 ## 4. Frontend-Prinzipien
 
 - **60-Sekunden-Regel:** Default-Eintrag in ≤ 60 Sek. (Mood-Slider, 3 Top-Tags, Symptome optional, Notiz optional)
@@ -457,11 +556,15 @@ erDiagram
 Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 ### M0 — Fundament (Woche 1–2)
-- Monorepo-Setup, CI/CD, Docker Compose-Stack
-- Postgres-Schema v1, Alembic
+- Monorepo-Grundstruktur für Web, API, Infra, Dokumentation und CI
+- Core-Compose-Stack: Traefik, Web, API, PostgreSQL, Redis, MinIO + Bucket-Init
+- FastAPI-Minimalservice mit versionierter API-Struktur und Health-Endpunkten
+- SvelteKit-App-Shell als leere, startbare PWA-Basis
+- CI/CD-Grundsetup für Linting, Typechecks, Tests und Builds
+- **Strukturiertes JSON-Logging im Backend** als Standard (kein `print()`)
+- **Docker- und Applikations-Healthchecks** als verpflichtender Teil des Core-Stacks
 - Authentik-Anbindung, User-Login
-- Leeres App-Shell (PWA) mit Theme-Toggle
-- **Exit:** Login funktioniert, leere Startseite erreichbar
+- **Exit:** Login funktioniert, leere Startseite erreichbar, Health-Endpunkte antworten, CI grün
 
 #### Akzeptanzkriterien M0
 
@@ -472,6 +575,11 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Redis mit Passwort und `--appendonly yes` konfiguriert
 - [ ] Login-Flow end-to-end getestet (Authentik → FastAPI → SvelteKit)
 - [ ] CI/CD-Pipeline grün (Lint, Tests, Build)
+- [ ] API liefert funktionierende `GET /health/live`, `GET /health/ready` und `GET /health` Endpunkte
+- [ ] Strukturierte JSON-Logs für Startup, Requests und Fehler werden geschrieben
+- [ ] Jede Anfrage erhält eine `request_id` (Middleware gesetzt, in Logs mitgeführt, als `X-Request-ID`-Header zurückgegeben)
+- [ ] Docker-Healthchecks für API, Web, PostgreSQL, Redis und MinIO im Core-Stack konfiguriert
+- [ ] `.env.example` und Startdokumentation reichen für reproduzierbares Setup auf frischer Umgebung
 
 #### DSGVO-Checkpoint M0
 
@@ -502,7 +610,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 - [ ] 🔒 DSGVO: `note_enc`-Feld verschlüsselt at-rest (pgcrypto oder App-Level-Encryption)
 - [ ] 🔒 DSGVO: Symptom-Daten (`symptoms`-Tabelle) ebenfalls verschlüsselt at-rest
-- [ ] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing prüfen)
+- [ ] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing prüfen) — Fehlerlogs dürfen Stacktraces, aber keine Tagebucheinträge, Symptome oder Gesundheitsdaten enthalten (siehe Abschnitt 3.6)
 - [ ] 🔒 DSGVO: Auth-Strategie für Phase 1 dokumentiert und in ADR-0004 festgehalten
 
 ---
@@ -773,6 +881,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 | D-009 | Sync-Protokoll Conflict-Handling: Aktuelles LWW-Modell (`updated_at`) birgt Datenverlust bei Multi-Device. Alternativen: CRDT, serverseitige Merge-Strategien, Conflict-Inbox für User. | 🔄 Offen | [ADR-0003](adr/0003-sync-conflict-handling.md) |
 | D-010 | Auth Phase 1: Native JWT (FastAPI-intern, kein Authentik-Overhead) vs. Authentik von Beginn an. Authentik ist ressourcenintensiv für Solo-Dev-Phase; natives JWT erfordert später Migration. | 🔄 Offen | [ADR-0004](adr/0004-auth-phase1-jwt-vs-authentik.md) |
 | D-011 | Verschlüsselung at-rest Strategie: pgcrypto (DB-Level), App-Level-Encryption (Python), oder Kombination? Auswirkungen auf Suche, Performance und Schlüsselverwaltung. | 🔄 Offen | [ADR-0005](adr/0005-verschluesselung-at-rest.md) |
+| D-012 | Observability-Tiefe in M0: Schlanker Ansatz (Healthchecks + Logging im Code, Ops-Tools optional) vs. vollständiger Stack von Beginn an. | ✅ Entschieden: Schlanker Ansatz, Ops-Tools als `docker-compose.ops.yml` | [ADR-0003-healthchecks-and-logging](adr/ADR-0003-healthchecks-and-logging.md) |
 
 ---
 
@@ -828,3 +937,4 @@ Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen 
 | DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test | DSGVO | ❌ offen | M6-AC, DoD |
 | ARCH-01 | Mermaid-Diagramm zeigt TWA als Android-Client — inkonsistent mit offener D-008-Entscheidung | Architektur | 🔄 in Arbeit | D-008, ADR-0002 |
 | ARCH-02 | Keine ADRs für D-002 bis D-007 angelegt (Entscheidungen undokumentiert) | Architektur | ❌ offen | Backlog: ADR-Erstellung pro offener Entscheidung |
+| OBS-01 | Observability-Anforderungen für M0 nicht explizit definiert (fehlende Health-Endpunkte, kein strukturiertes Logging, keine Correlation-IDs) | Architektur | ✅ behoben | D-012, ADR-0003-healthchecks-and-logging, Abschnitt 3.6 |
