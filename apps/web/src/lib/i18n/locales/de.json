@@ -1,0 +1,44 @@
+{
+  "app": {
+    "name": "MoodSync",
+    "tagline": "Verstehe warum manche Tage gut und andere schlecht waren."
+  },
+  "nav": {
+    "home": "Heute",
+    "history": "Verlauf",
+    "insights": "Erkenntnisse",
+    "settings": "Einstellungen"
+  },
+  "theme": {
+    "toggle_light": "Zum hellen Modus wechseln",
+    "toggle_dark": "Zum dunklen Modus wechseln"
+  },
+  "home": {
+    "greeting_morning": "Guten Morgen",
+    "greeting_day": "Hallo",
+    "greeting_evening": "Guten Abend",
+    "no_entry_today": "Noch kein Eintrag heute",
+    "add_entry": "Tag erfassen",
+    "streak_label": "Tage in Folge"
+  },
+  "entry": {
+    "mood_label": "Wie war dein Tag?",
+    "mood_terrible": "Sehr schlecht",
+    "mood_bad": "Schlecht",
+    "mood_okay": "Okay",
+    "mood_good": "Gut",
+    "mood_great": "Großartig",
+    "energy_label": "Energie",
+    "stress_label": "Stress",
+    "note_placeholder": "Notiz (optional)...",
+    "save": "Speichern",
+    "cancel": "Abbrechen"
+  },
+  "disclaimer": {
+    "medical": "MoodSync ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."
+  },
+  "error": {
+    "generic": "Etwas ist schiefgelaufen.",
+    "not_found": "Seite nicht gefunden."
+  }
+}
