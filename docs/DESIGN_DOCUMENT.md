@@ -1,6 +1,6 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.4 (M0 Observability & Healthchecks)
+**Version:** 0.5 (M0 Postgres-Schema, CI/CD, Observability abgeschlossen)
 **Datum:** 2026-04-28
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
@@ -560,11 +560,12 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Core-Compose-Stack: Traefik, Web, API, PostgreSQL, Redis, MinIO + Bucket-Init
 - FastAPI-Minimalservice mit versionierter API-Struktur und Health-Endpunkten
 - SvelteKit-App-Shell als leere, startbare PWA-Basis
-- CI/CD-Grundsetup für Linting, Typechecks, Tests und Builds
+- CI/CD-Grundsetup für Linting, Typechecks, Tests und Builds (`ci-api.yml`, `ci-web.yml`)
 - **Strukturiertes JSON-Logging im Backend** als Standard (kein `print()`)
 - **Docker- und Applikations-Healthchecks** als verpflichtender Teil des Core-Stacks
+- **Postgres-Schema v1** mit `users`-Tabelle + Alembic-Migrationen (`000_initial`, `001_create_users`)
 - Authentik-Anbindung, User-Login
-- **Exit:** Login funktioniert, leere Startseite erreichbar, Health-Endpunkte antworten, CI grün
+- **Exit:** Login funktioniert, leere Startseite erreichbar, Health-Endpunkte antworten, CI grün, User-Tabelle migriert
 
 #### Akzeptanzkriterien M0
 
@@ -575,11 +576,17 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Redis mit Passwort und `--appendonly yes` konfiguriert
 - [ ] Login-Flow end-to-end getestet (Authentik → FastAPI → SvelteKit)
 - [ ] CI/CD-Pipeline grün (Lint, Tests, Build)
-- [ ] API liefert funktionierende `GET /health/live`, `GET /health/ready` und `GET /health` Endpunkte
-- [ ] Strukturierte JSON-Logs für Startup, Requests und Fehler werden geschrieben
-- [ ] Jede Anfrage erhält eine `request_id` (Middleware gesetzt, in Logs mitgeführt, als `X-Request-ID`-Header zurückgegeben)
-- [ ] Docker-Healthchecks für API, Web, PostgreSQL, Redis und MinIO im Core-Stack konfiguriert
+- [x] API liefert funktionierende `GET /health/live`, `GET /health/ready` und `GET /health` Endpunkte _(PR #35)_
+- [x] Strukturierte JSON-Logs für Startup, Requests und Fehler werden geschrieben _(PR #35)_
+- [x] Jede Anfrage erhält eine `request_id` (Middleware gesetzt, in Logs mitgeführt, als `X-Request-ID`-Header zurückgegeben) _(PR #35)_
+- [x] Docker-Healthchecks für API, Web, PostgreSQL, Redis und MinIO im Core-Stack konfiguriert _(PR #35)_
 - [ ] `.env.example` und Startdokumentation reichen für reproduzierbares Setup auf frischer Umgebung
+- [ ] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed_password, is_active, is_verified, created_at, updated_at
+- [ ] Alembic-Migrationen `000_initial` und `001_create_users` laufen fehlerfrei (forward + rollback)
+- [ ] `updated_at`-Trigger in Postgres aktiv
+- [ ] GitHub Actions `ci-api.yml` grün (ruff, mypy, pytest mit Coverage ≥ 70 %)
+- [ ] GitHub Actions `ci-web.yml` grün (ESLint, Prettier, svelte-check, vite build)
+- [ ] Branch Protection auf `main`: PR + grüne CI als Pflicht vor Merge
 
 #### DSGVO-Checkpoint M0
 
@@ -938,3 +945,5 @@ Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen 
 | ARCH-01 | Mermaid-Diagramm zeigt TWA als Android-Client — inkonsistent mit offener D-008-Entscheidung | Architektur | 🔄 in Arbeit | D-008, ADR-0002 |
 | ARCH-02 | Keine ADRs für D-002 bis D-007 angelegt (Entscheidungen undokumentiert) | Architektur | ❌ offen | Backlog: ADR-Erstellung pro offener Entscheidung |
 | OBS-01 | Observability-Anforderungen für M0 nicht explizit definiert (fehlende Health-Endpunkte, kein strukturiertes Logging, keine Correlation-IDs) | Architektur | ✅ behoben | D-012, ADR-0003-healthchecks-and-logging, Abschnitt 3.6 |
+| ARCH-03 | Kein Postgres-Schema v1 und keine Alembic-Basismigrationen vorhanden | Architektur | ✅ behoben | Issue #5, PR feat/m0-postgres-schema |
+| ARCH-04 | Kein CI/CD-Setup — keine automatisierten Lint/Test/Build-Checks bei PRs | Architektur | ✅ behoben | Issue #6, PR feat/m0-ci |
