@@ -3,9 +3,12 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -13,16 +16,18 @@ from app.core.logging import setup_logging
 from app.core.request_id import RequestIDMiddleware
 from app.services.health_service import check_liveness
 
+limiter = Limiter(key_func=get_remote_address)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan — startup and shutdown hooks."""
     setup_logging()
-    # TODO M0: warm up DB connection pool
-    # TODO M0: warm up Redis connection pool
+    # TODO M1: warm up DB connection pool
+    # TODO M1: warm up Redis connection pool
     yield
-    # TODO M0: close DB pool
-    # TODO M0: close Redis pool
+    # TODO M1: close DB pool
+    # TODO M1: close Redis pool
 
 
 def create_app() -> FastAPI:
@@ -37,12 +42,12 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # ── Middleware (order matters — outermost runs first) ───────────────────
-    # 1. Request-ID must be first so all subsequent middleware + handlers
-    #    have access to the correlation ID in their logs.
-    app.add_middleware(RequestIDMiddleware)
+    # ── Rate limiter state ──────────────────────────────────────────────────
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # 2. CORS — only allow configured frontend origins
+    # ── Middleware (outermost first) ────────────────────────────────────────
+    app.add_middleware(RequestIDMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
@@ -55,16 +60,13 @@ def create_app() -> FastAPI:
     # ── Routers ────────────────────────────────────────────────────────────
     app.include_router(api_router, prefix="/api/v1")
 
-    # ── Root health endpoint (for Docker HEALTHCHECK on /health/live) ──────
-    # Mirrors /api/v1/health/* but accessible without the /api/v1 prefix so
-    # Docker and plain curl checks work without knowing the versioned path.
+    # ── Root health shortcuts (Docker HEALTHCHECK) ─────────────────────────
     @app.get("/health/live", include_in_schema=False)
     async def root_live() -> JSONResponse:
         return JSONResponse(check_liveness())
 
     @app.get("/health", include_in_schema=False)
     async def root_health() -> JSONResponse:
-        """Compact liveness-only check for Docker HEALTHCHECK."""
         return JSONResponse(check_liveness())
 
     return app
