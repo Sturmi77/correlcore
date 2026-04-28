@@ -1,0 +1,76 @@
+[project]
+name = "moodsync-backend"
+version = "0.0.1"
+description = "MoodSync FastAPI backend"
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "AGPL-3.0" }
+
+dependencies = [
+  # Web framework
+  "fastapi>=0.111.0",
+  "uvicorn[standard]>=0.30.0",
+  "python-multipart>=0.0.9",
+  # Database
+  "sqlalchemy>=2.0.0",
+  "asyncpg>=0.29.0",
+  "alembic>=1.13.0",
+  # Redis
+  "redis>=5.0.0",
+  # Validation / settings
+  "pydantic>=2.7.0",
+  "pydantic-settings>=2.3.0",
+  # Auth (Phase 1: native JWT — ADR-0004)
+  "python-jose[cryptography]>=3.3.0",
+  "passlib[bcrypt]>=1.7.4",
+  # Encryption at-rest (ADR-0005)
+  "cryptography>=42.0.0",
+  # Analytics worker
+  "pandas>=2.2.0",
+  "scikit-learn>=1.5.0",
+  "scipy>=1.13.0",
+  # Email
+  "emails>=0.6.0",
+  # Rate limiting
+  "slowapi>=0.1.9",
+  # Scheduling
+  "apscheduler>=3.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.23.0",
+  "pytest-cov>=5.0.0",
+  "httpx>=0.27.0",
+  "ruff>=0.5.0",
+  "mypy>=1.10.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=70"
