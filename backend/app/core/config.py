@@ -6,7 +6,7 @@ See infra/docker/.env.example for the full list.
 
 from typing import List
 
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # App
     APP_ENV: str = "development"  # development | staging | production
+    APP_VERSION: str = "0.0.1"
     DEBUG: bool = False
     SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION_MIN_32_BYTES_RANDOM"
 
