@@ -1,6 +1,9 @@
-"""ORM models — import all here so Alembic autogenerates migrations correctly."""
+"""Model registry — import all models here so Alembic auto-detects them.
 
-# Models will be imported as they are created (M0+)
-# from app.models.user import User
-# from app.models.entry import Entry
-# from app.models.tag import Tag
+Every new model module must be imported in this file.
+Alembic's env.py does ``import app.models`` which triggers this file.
+"""
+
+from app.models.user import User  # noqa: F401
+
+__all__ = ["User"]
