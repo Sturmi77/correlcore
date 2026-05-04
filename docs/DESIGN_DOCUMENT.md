@@ -1,6 +1,6 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.7 (M1 in Arbeit: #41 + #39 + #40 gemergt, ADR-0005 nachgeschärft — D-011 Verschlüsselungsstrategie re-evaluiert und bestätigt: App-Level Fernet pro-User)
+**Version:** 0.8 (M1 in Arbeit: #41 + #39 + #40 + #8 + #9 + #57 gemergt, CI-Doku-Trigger #49 gefixt, [ADR-0009](adr/0009-offline-sync-nach-m4.md): Offline-Sync nach M4 verschoben — M1-Scope reduziert auf Online-Nutzung)
 **Datum:** 2026-05-04
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
@@ -636,24 +636,24 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 - Tägliches Eintrags-Formular: Mood, Energy, Stress, Work-Context
 - Tag-System (vordefinierte Tags + Custom-Tags)
-- Symptom-Checkliste
+- Symptom-Checkliste + Custom-Symptome
 - Notiz-Feld (Markdown)
-- Offline-Fähigkeit via IndexedDB + Sync-Endpoint
+- App-Level-Verschlüsselung at-rest für `entries.note` und `symptoms.name` (Custom) gemäß ADR-0005
 - **Login-UI:** SvelteKit Login/Register-Seiten _(aus M0 verschoben, Issue #40)_
 - **E-Mail-Verifikation:** `POST /auth/verify-email`, SMTP-Versand _(aus M0 verschoben, Issue #39)_
 - **`.env.example`-Fix + Vollständigkeit:** SECRET*KEY-Mismatch beheben, alle Config-Variablen dokumentieren *(aus M0 verschoben, Issue #41)\_
-- **Exit:** Produktive Nutzung durch Entwickler selbst möglich (inkl. Login im Browser)
+- **Nicht in M1-Scope:** Offline-Sync und Sync-Conflict-Log — verschoben nach M4 gemäß [ADR-0009](adr/0009-offline-sync-nach-m4.md)
+- **Exit:** Produktive Online-Nutzung durch Entwickler selbst möglich (inkl. Login im Browser)
 
 #### Akzeptanzkriterien M1
 
 - [x] Alle API-Endpunkte hinter Auth-Middleware (kein unauthenticated Zugriff auf Nutzdaten) _(Entry-Endpoints via `get_current_verified_user`, Issue #7)_
 - [~] `user_id` auf allen Entitäten vorhanden, Row-Level-Security in Postgres aktiv und per Test verifiziert _(RLS-Policies für `entries` in Migration `003_create_entries.py` enthalten; vollständige Enforcement via `SET LOCAL app.current_user_id`-Middleware folgt als M1-Followup)_
-- [ ] Offline-Sync mit Conflict-Log-Tabelle implementiert (Konflikte werden aufgezeichnet)
 - [x] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38; Entry-Endpoints zusätzlich rate-limitiert: 60/min POST/PATCH, 120/min GET — Issue #7)_
 - [x] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only _(Issue #7: `BACKDATE_DAYS_LIMIT=7` im Service, UI-Datepicker auf 7-Tage-Fenster begrenzt)_
 - [x] Tag-System (vordefinierte Tags + Custom-Tags) verfügbar: `/tags`-CRUD + `PUT /entries/{id}/tags` (replace-set), 30 kuratierte Defaults im Migration-Seed, RLS für Custom-Tags _(Issue #8)_
 - [x] Symptom-Checkliste verfügbar: `/symptoms`-Endpunkte, visuelle Intensitäts-Skala 0–3, medizinischer Disclaimer in der UI _(Issue #9: 5 Standard-Keys (`headache`/`digestion`/`back_pain`/`fatigue`/`cold`), `GET /symptoms/standard` ohne Auth, `GET`/`PUT /entries/{id}/symptoms` (replace-set, owner-scoped, max. 32), Migration 005 mit RLS und CHECK-Constraints, Frontend-Komponente `SymptomChecker` mit 4-Punkt-Skala und persistentem Disclaimer)_
-- [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull`) funktioniert mit Offline-Queue
+- [x] Custom-Symptome verfügbar: User-eigene Symptome über CRUD-Endpoints analog Tags _(Issue #57, [ADR-0008](adr/0008-symptom-master-tabelle.md), Migration 006: `symptoms`-Master-Tabelle, `entry_symptoms.symptom_id`-FK, 50 Custom-Cap pro User, RLS analog Tags)_
 - [x] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40, PR #45)_
 - [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_
 - [x] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41, PR #43)_
@@ -725,7 +725,9 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Bottom-Sheet-UX, Gestensteuerung
 - Daily Reminder (Web-Push / UnifiedPush)
 - App-Lock (PIN) auf Mobile
-- **Exit:** App fühlt sich auf Handy nativ an
+- **Offline-Sync via IndexedDB (Dexie.js) + Sync-Endpoints** _(aus M1 verschoben, [ADR-0009](adr/0009-offline-sync-nach-m4.md), Issue #10)_
+- **Sync-Conflict-Log-Tabelle** _(aus M1 verschoben, ADR-0003 + [ADR-0009](adr/0009-offline-sync-nach-m4.md), Issue #24)_
+- **Exit:** App fühlt sich auf Handy nativ an, Multi-Device-Sync funktioniert verlustfrei
 
 #### Akzeptanzkriterien M4
 
@@ -733,7 +735,9 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Service Worker cached keine sensitiven API-Responses (`Cache-Control: no-store` für `/api/*`)
 - [ ] Web Push Notifications enthalten keine Gesundheitsdaten im Payload
 - [ ] PWA installierbar auf Android Chrome und iOS Safari
-- [ ] Offline-Modus: Eintrag erstellen ohne Netzverbindung, Sync beim nächsten Online-Start
+- [ ] Offline-Modus: Eintrag erstellen ohne Netzverbindung, Sync beim nächsten Online-Start _(Issue #10)_
+- [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull?since=`) funktioniert mit lokaler Dexie-Queue, Last-Write-Wins per Feld via `updated_at` _(Issue #10, §3.5)_
+- [ ] Sync-Conflict-Log: Tabelle `sync_conflicts` schreibt LWW-Konflikte transparent mit, kritische Felder (`mood_score`, `note`, `energy`, `stress`, `symptoms`); 90-Tage-Auto-Bereinigung; `GET /user/sync-conflicts` Read-only-Endpoint _(Issue #24, ADR-0003)_
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M4

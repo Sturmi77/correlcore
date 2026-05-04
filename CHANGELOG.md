@@ -10,6 +10,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Roadmap-Scope** (ADR-0009): Issues #10 (Offline-Sync) und #24 (Sync-Conflict-Log) verschoben von **M1 — Core Entry** nach **M4 — Mobile Polish & PWA-Hardening**. M1-Exit ist 'Produktive Online-Nutzung im Browser'; Offline-Sync (Dexie.js + `/sync/push` + `/sync/pull` + LWW-Merge + Conflict-Reports) ist substantieller Aufwand und thematisch in M4 besser aufgehoben, wo bereits Offline-Modus-Akzeptanz dokumentiert war (frueher Doppelung mit M1). Issue #26 (App-Level Fernet at-rest) bleibt M1, da DSGVO-blockierend für realen Eigen-User-Test mit echten Symptom-Namen. DESIGN_DOCUMENT §3 M1 + M4 entsprechend umgestellt; Sync-Protokoll-Spezifikation in §3.5 unverändert.
 - **CI** (Issue #49): `ci-web.yml` triggert jetzt zusätzlich auf `docs/**`, `**/*.md` und `.prettierignore`. Damit werden Prettier-Format-Drifts in der Dokumentation (z. B. `docs/API.md`, ADRs, Root-Markdown wie `CHANGELOG.md`) bei docs-only-PRs verlässlich erkannt — vorher liefen die Web-Jobs gar nicht, sodass Drift erst beim nächsten code-touchenden PR auffiel.
 
 ### Added

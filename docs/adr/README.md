@@ -19,6 +19,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted | 2026-05-04 |
 | [ADR-0007](0007-healthchecks-and-logging.md)            | Healthchecks und strukturiertes Logging                     | Accepted | 2026-05-04 |
 | [ADR-0008](0008-symptom-master-tabelle.md)              | Symptom-Master-Tabelle für Custom-Symptome                  | Accepted | 2026-05-04 |
+| [ADR-0009](0009-offline-sync-nach-m4.md)                | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)       | Accepted | 2026-05-04 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -53,6 +54,10 @@ Drei-Tier-Healthchecks (`/health/live` nie 5xx, `/health/ready` 503 bei Dep-Ausf
 ### ADR-0008 – Symptom-Master-Tabelle für Custom-Symptome
 
 Neue Tabelle `symptoms` analog `tags` mit Owner-Trennung (`user_id NULL = curated`, `is_default`), Slug-Uniqueness via Partial-Indexes und 4 RLS-Policies. `entry_symptoms` referenziert künftig `symptoms.id` per FK statt String-`symptom_key`. Migration 006 transformiert die fünf Standard-Keys aus PR #56 zu Default-Rows mit deterministischen UUIDs (UUID5). Erlaubt User-eigene Symptome mit gleichem CRUD-Modell wie Tags (Issue #57). DSGVO: `symptoms.name` ist Art.-9-relevant und wird mit Issue #26 (App-Level Fernet) verschlüsselt.
+
+### ADR-0009 – Offline-Sync nach M4 verschieben
+
+Issues #10 (Offline-Sync) und #24 (Sync-Conflict-Log) werden von M1 nach M4 (Mobile Polish & PWA-Hardening) verschoben. M1-Exit ist 'Produktive Online-Nutzung im Browser' und für den Eigen-User-Test ohne Offline-Sync erreichbar; #10 ist substantieller Aufwand (Dexie + Sync-Endpoints + LWW-Merge + Conflict-Reports), der M1 unnötig blockiert. M4 enthält bereits einen Offline-Modus-Akzeptanztest — Verschmelzung ist sauber. Issue #26 (Fernet at-rest) bleibt M1, da DSGVO-blockierend.
 
 ---
 
