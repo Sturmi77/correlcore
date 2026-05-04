@@ -19,11 +19,63 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab.
 
 ## 2. Auth-Endpunkte
 
+Phase 1 (Selfhost, M0–M10): Native JWT — siehe **ADR-0004**.
+Phase 2 (SaaS, M12+): Authentik OIDC — wird zusätzlich aktiviert.
+
+### Phase 1 — Native JWT
+
+```
+POST   /api/v1/auth/register              Registrierung (Issue #39: sendet Verify-Mail)
+POST   /api/v1/auth/login                 Login (5/min/IP, setzt HttpOnly-Cookies)
+POST   /api/v1/auth/refresh               Refresh-Token rotieren
+POST   /api/v1/auth/logout                Refresh-Token invalidieren, Cookies löschen
+POST   /api/v1/auth/verify-email          E-Mail bestätigen (Issue #39, Token im Body)
+POST   /api/v1/auth/resend-verification   Verify-Mail erneut senden (3/min/IP, immer 202)
+GET    /api/v1/auth/me                    Aktueller User
+```
+
+#### `POST /api/v1/auth/verify-email`
+
+Bestätigt eine User-E-Mail anhand des Tokens, der bei der Registrierung
+per Mail versendet wurde. Token-TTL: **24 Stunden** (ADR-0004). Token ist
+**single-use** — zweiter Aufruf mit demselben Token gibt 400.
+
+```http
+POST /api/v1/auth/verify-email
+Content-Type: application/json
+
+{
+  "token": "<64-zeichen-aus-mail>"
+}
+```
+
+**Antworten**
+- `200 OK` — `{"message": "Email verified. You can now sign in."}`
+- `400 Bad Request` — generisch `Invalid or expired verification token`
+  (kein Detail über Ursache, um Enumeration zu verhindern)
+- `422 Unprocessable Entity` — Token zu kurz / Schema-invalid
+
+#### `POST /api/v1/auth/resend-verification`
+
+Fordert eine neue Verify-Mail an. Liefert immer `202 Accepted` mit
+generischer Antwort, unabhängig davon, ob die E-Mail-Adresse existiert
+oder bereits verifiziert ist (Schutz vor User-Enumeration).
+
+```http
+POST /api/v1/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "alice@example.com"
+}
+```
+
+**Rate-Limit:** 3 Requests / Minute / IP.
+
+### Phase 2 — OIDC (geplant, M12+)
+
 ```
 POST   /api/v1/auth/callback     OIDC Callback (Code → Session)
-POST   /api/v1/auth/refresh      Refresh Token rotieren
-DELETE /api/v1/auth/logout       Session beenden
-GET    /api/v1/auth/me           Aktueller User-Info
 ```
 
 ---
