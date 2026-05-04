@@ -71,6 +71,7 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 "app/api/v1/deps/auth.py" = ["B008"]
 "app/api/v1/endpoints/auth.py" = ["B008"]
+"app/api/v1/endpoints/entries.py" = ["B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

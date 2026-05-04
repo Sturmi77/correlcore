@@ -4,6 +4,14 @@ Every new model module must be imported in this file.
 Alembic's env.py does ``import app.models`` which triggers this file.
 """
 
+from app.models.email_verification_token import EmailVerificationToken  # noqa: F401
+from app.models.entry import Entry, EntrySlot, WorkContext  # noqa: F401
 from app.models.user import User  # noqa: F401
 
-__all__ = ["User"]
+__all__ = [
+    "EmailVerificationToken",
+    "Entry",
+    "EntrySlot",
+    "User",
+    "WorkContext",
+]

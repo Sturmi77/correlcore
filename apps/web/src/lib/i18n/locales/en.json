@@ -32,7 +32,31 @@
     "stress_label": "Stress",
     "note_placeholder": "Note (optional)...",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "title": "Log your day",
+    "subtitle": "How was your day, honestly?",
+    "date_label": "Date",
+    "work_context_label": "Work context",
+    "work_context": {
+      "homeoffice": "Home office",
+      "office": "Office",
+      "vacation": "Vacation",
+      "sick": "Sick",
+      "weekend": "Weekend",
+      "travel": "Travel"
+    },
+    "save_busy": "Saving…",
+    "saved_redirect": "Entry saved.",
+    "error_generic": "Failed to save entry.",
+    "error_conflict": "An entry for this day already exists.",
+    "error_too_old": "You can only log entries for the last 7 days.",
+    "error_unauthenticated": "Please sign in again.",
+    "mood_decrement": "Decrease mood",
+    "mood_increment": "Increase mood",
+    "energy_decrement": "Decrease energy",
+    "energy_increment": "Increase energy",
+    "stress_decrement": "Decrease stress",
+    "stress_increment": "Increase stress"
   },
   "disclaimer": {
     "medical": "MoodSync is not a medical diagnostic tool. All insights are for personal reflection only."

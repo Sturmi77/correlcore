@@ -634,11 +634,11 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 #### Akzeptanzkriterien M1
 
-- [ ] Alle API-Endpunkte hinter Auth-Middleware (kein unauthenticated Zugriff auf Nutzdaten)
-- [ ] `user_id` auf allen Entitäten vorhanden, Row-Level-Security in Postgres aktiv und per Test verifiziert
+- [x] Alle API-Endpunkte hinter Auth-Middleware (kein unauthenticated Zugriff auf Nutzdaten) _(Entry-Endpoints via `get_current_verified_user`, Issue #7)_
+- [~] `user_id` auf allen Entitäten vorhanden, Row-Level-Security in Postgres aktiv und per Test verifiziert _(RLS-Policies für `entries` in Migration `003_create_entries.py` enthalten; vollständige Enforcement via `SET LOCAL app.current_user_id`-Middleware folgt als M1-Followup)_
 - [ ] Offline-Sync mit Conflict-Log-Tabelle implementiert (Konflikte werden aufgezeichnet)
-- [ ] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38)_
-- [ ] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only
+- [x] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38; Entry-Endpoints zusätzlich rate-limitiert: 60/min POST/PATCH, 120/min GET — Issue #7)_
+- [x] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only _(Issue #7: `BACKDATE_DAYS_LIMIT=7` im Service, UI-Datepicker auf 7-Tage-Fenster begrenzt)_
 - [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull`) funktioniert mit Offline-Queue
 - [x] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40, PR #45)_
 - [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_

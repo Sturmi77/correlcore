@@ -1,0 +1,170 @@
+"""Entry endpoints — daily mood/energy/stress log (M1, Issue #7).
+
+All endpoints require an active *and verified* user
+(``get_current_verified_user``). Unverified accounts cannot create
+sensitive content (DSGVO-relevant data) — this matches the auth
+middleware acceptance criterion in M1.
+
+Rate-limiting
+-------------
+``POST /entries`` is limited to 60/min per IP. The 60-second-rule
+(DESIGN_DOCUMENT.md §6) targets a single happy-path submit per minute;
+the limit is generous enough to allow retries on flaky networks but
+tight enough to make brute-force enumeration of valid IDs uneconomical.
+``GET`` endpoints are limited to 120/min per IP — generous, since list
+fetches are normal user behaviour.
+"""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from datetime import date as date_type
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.v1.deps.auth import get_current_verified_user
+from app.core.rate_limit import limiter
+from app.db.session import get_session
+from app.models.user import User
+from app.schemas.entry import EntryCreate, EntryResponse, EntryUpdate
+from app.services.entry_service import (
+    DEFAULT_LIST_LIMIT,
+    MAX_LIST_LIMIT,
+    EntryConflictError,
+    EntryDateOutOfRangeError,
+    EntryNotFoundError,
+    EntryReadOnlyError,
+    create_entry,
+    get_entry,
+    list_entries,
+    update_entry,
+)
+
+logger = logging.getLogger(__name__)
+router = APIRouter()
+
+
+# ---------------------------------------------------------------------------
+# Create
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "",
+    response_model=EntryResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a daily entry",
+)
+@limiter.limit("60/minute")
+async def create_entry_endpoint(
+    request: Request,
+    payload: EntryCreate,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> EntryResponse:
+    try:
+        entry = await create_entry(db, user_id=user.id, payload=payload)
+    except EntryDateOutOfRangeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except EntryConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+
+    return EntryResponse.model_validate(entry)
+
+
+# ---------------------------------------------------------------------------
+# Read — single
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/{entry_id}",
+    response_model=EntryResponse,
+    summary="Fetch a single entry",
+)
+@limiter.limit("120/minute")
+async def get_entry_endpoint(
+    request: Request,
+    entry_id: uuid.UUID,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> EntryResponse:
+    try:
+        entry = await get_entry(db, user_id=user.id, entry_id=entry_id)
+    except EntryNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="entry not found",
+        ) from exc
+    return EntryResponse.model_validate(entry)
+
+
+# ---------------------------------------------------------------------------
+# Read — list
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "",
+    response_model=list[EntryResponse],
+    summary="List entries (newest first)",
+)
+@limiter.limit("120/minute")
+async def list_entries_endpoint(
+    request: Request,
+    start_date: date_type | None = Query(default=None, alias="start_date"),
+    end_date: date_type | None = Query(default=None, alias="end_date"),
+    limit: int = Query(default=DEFAULT_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> list[EntryResponse]:
+    entries = await list_entries(
+        db,
+        user_id=user.id,
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit,
+    )
+    return [EntryResponse.model_validate(e) for e in entries]
+
+
+# ---------------------------------------------------------------------------
+# Update
+# ---------------------------------------------------------------------------
+
+
+@router.patch(
+    "/{entry_id}",
+    response_model=EntryResponse,
+    summary="Update an entry within the 7-day window",
+)
+@limiter.limit("60/minute")
+async def update_entry_endpoint(
+    request: Request,
+    entry_id: uuid.UUID,
+    payload: EntryUpdate,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> EntryResponse:
+    try:
+        entry = await update_entry(db, user_id=user.id, entry_id=entry_id, payload=payload)
+    except EntryNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="entry not found",
+        ) from exc
+    except EntryReadOnlyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+
+    return EntryResponse.model_validate(entry)

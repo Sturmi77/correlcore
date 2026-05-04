@@ -21,7 +21,7 @@ from __future__ import annotations
 import secrets
 import uuid
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -30,6 +30,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.entry import Entry, EntrySlot, WorkContext
 from app.models.user import User
 from app.services.auth_service import _hash_token
 
@@ -62,6 +63,37 @@ def make_user(
     u.created_at = datetime.now(UTC)
     u.updated_at = datetime.now(UTC)
     return u
+
+
+def make_entry(
+    user: User,
+    *,
+    entry_date: date | None = None,
+    slot: EntrySlot = EntrySlot.DAY,
+    mood_score: int = 3,
+    energy: int = 3,
+    stress: int = 3,
+    work_context: WorkContext = WorkContext.HOMEOFFICE,
+    note: str | None = None,
+) -> Entry:
+    """Build a detached :class:`Entry` for service-layer tests.
+
+    Defaults to today's date and a neutral 3/3/3 mood — call sites only
+    override what they actually exercise.
+    """
+    e = Entry()
+    e.id = uuid.uuid4()
+    e.user_id = user.id
+    e.entry_date = entry_date or date.today()
+    e.slot = slot
+    e.mood_score = mood_score
+    e.energy = energy
+    e.stress = stress
+    e.work_context = work_context
+    e.note_enc = note
+    e.created_at = datetime.now(UTC)
+    e.updated_at = datetime.now(UTC)
+    return e
 
 
 def make_verification_token(
