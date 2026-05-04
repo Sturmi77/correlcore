@@ -1,6 +1,6 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.6 (M0 vollständig abgeschlossen; E-Mail-Verifikation, Login-UI, .env-Fix nach M1 verschoben)
+**Version:** 0.7 (M1 in Arbeit: #41 + #39 mergebereit, #40 Login/Register-UI implementiert)
 **Datum:** 2026-04-28
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
@@ -604,7 +604,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Rate-Limiting auf `/auth/login` (SlowAPI) _(PR #38)_
 - [ ] Branch Protection auf `main`: PR + grüne CI als Pflicht vor Merge _(blockiert: GitHub Free Plan; nachholen wenn Repo public wird — M10)_
 - [ ] `.env.example` / `SECRET_KEY`-Mismatch behoben → **verschoben nach M1** _(Issue #41)_
-- [ ] Login-Flow end-to-end getestet (JWT → FastAPI → SvelteKit Login-UI) → **verschoben nach M1** _(Issue #40)_
+- [x] Login-Flow end-to-end implementiert (JWT → FastAPI → SvelteKit Login-UI) _(Issue #40, M1)_
 - [ ] E-Mail-Verifikation (`POST /auth/verify-email`, SMTP) → **verschoben nach M1** _(Issue #39)_
 
 #### DSGVO-Checkpoint M0

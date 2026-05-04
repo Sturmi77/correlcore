@@ -1,0 +1,156 @@
+<script lang="ts">
+  import { _ } from 'svelte-i18n';
+  import { ApiError } from '$lib/api/client';
+  import { resendVerification } from '$lib/api/auth';
+
+  let email = '';
+  let busy = false;
+  let success = false;
+  let errorKey: string | null = null;
+
+  async function onSubmit() {
+    if (busy) return;
+    errorKey = null;
+    success = false;
+    busy = true;
+    try {
+      await resendVerification(email.trim().toLowerCase());
+      // Backend always returns 202 (anti-enumeration) — show generic success.
+      success = true;
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        errorKey = 'auth.resend.error_rate_limit';
+      } else {
+        errorKey = 'error.generic';
+      }
+    } finally {
+      busy = false;
+    }
+  }
+</script>
+
+<svelte:head>
+  <title>{$_('auth.resend.title')} — {$_('app.name')}</title>
+</svelte:head>
+
+<header class="auth-page-header">
+  <h1 class="auth-page-title">{$_('auth.resend.title')}</h1>
+</header>
+
+<p class="auth-body">{$_('auth.resend.body')}</p>
+
+{#if success}
+  <p class="auth-success" role="status">{$_('auth.resend.success')}</p>
+  <nav class="auth-links">
+    <a href="/auth/login" class="btn variant-filled-primary auth-submit">
+      {$_('auth.common.back_to_login')}
+    </a>
+  </nav>
+{:else}
+  <form class="auth-form" on:submit|preventDefault={onSubmit} novalidate>
+    <label class="auth-field">
+      <span class="auth-label">{$_('auth.common.email_label')}</span>
+      <input
+        type="email"
+        class="input"
+        autocomplete="email"
+        inputmode="email"
+        required
+        bind:value={email}
+        placeholder={$_('auth.common.email_placeholder')}
+        disabled={busy}
+      />
+    </label>
+
+    {#if errorKey}
+      <p class="auth-error" role="alert">{$_(errorKey)}</p>
+    {/if}
+
+    <button type="submit" class="btn variant-filled-primary auth-submit" disabled={busy || !email}>
+      {busy ? $_('auth.common.submit_busy') : $_('auth.resend.submit')}
+    </button>
+  </form>
+
+  <nav class="auth-links">
+    <p>
+      <a href="/auth/login">{$_('auth.common.back_to_login')}</a>
+    </p>
+  </nav>
+{/if}
+
+<style>
+  .auth-page-header {
+    text-align: center;
+    margin-bottom: var(--space-4);
+  }
+
+  .auth-page-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  .auth-body {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: var(--space-6);
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .auth-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  .auth-error {
+    font-size: var(--text-sm);
+    color: rgb(var(--color-error-500));
+    background: rgb(var(--color-error-500) / 0.1);
+    border-left: 3px solid rgb(var(--color-error-500));
+    padding: var(--space-2) var(--space-3);
+    border-radius: 6px;
+  }
+
+  .auth-success {
+    font-size: var(--text-sm);
+    color: rgb(var(--color-success-700));
+    background: rgb(var(--color-success-500) / 0.12);
+    border-left: 3px solid rgb(var(--color-success-500));
+    padding: var(--space-3);
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: var(--space-6);
+  }
+
+  .auth-submit {
+    margin-top: var(--space-2);
+    width: 100%;
+  }
+
+  .auth-links {
+    margin-top: var(--space-6);
+    text-align: center;
+    font-size: var(--text-sm);
+  }
+
+  .auth-links a {
+    color: var(--color-ms-primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .auth-links a:hover {
+    text-decoration: underline;
+  }
+</style>

@@ -40,5 +40,74 @@
   "error": {
     "generic": "Etwas ist schiefgelaufen.",
     "not_found": "Seite nicht gefunden."
+  },
+  "auth": {
+    "common": {
+      "email_label": "E-Mail-Adresse",
+      "email_placeholder": "du@beispiel.de",
+      "password_label": "Passwort",
+      "password_placeholder": "Mindestens 8 Zeichen",
+      "display_name_label": "Anzeigename (optional)",
+      "display_name_placeholder": "Wie sollen wir dich nennen?",
+      "submit_busy": "Bitte warten…",
+      "back_to_login": "Zurück zum Login"
+    },
+    "login": {
+      "title": "Anmelden",
+      "subtitle": "Willkommen zurück.",
+      "submit": "Anmelden",
+      "no_account": "Noch kein Konto?",
+      "register_link": "Jetzt registrieren",
+      "forgot_password": "Passwort vergessen?",
+      "error_invalid": "E-Mail oder Passwort ist falsch.",
+      "error_unverified": "Bitte bestätige zuerst deine E-Mail-Adresse.",
+      "error_rate_limit": "Zu viele Versuche. Bitte in einer Minute erneut probieren."
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "subtitle": "Privacy-first Mood- und Habit-Tracker.",
+      "submit": "Registrieren",
+      "have_account": "Schon registriert?",
+      "login_link": "Hier anmelden",
+      "password_hint": "Mindestens 8 Zeichen, ein Buchstabe und eine Ziffer.",
+      "strength_empty": "",
+      "strength_very_weak": "Sehr schwach",
+      "strength_weak": "Schwach",
+      "strength_good": "Gut",
+      "strength_strong": "Stark",
+      "success_redirect": "Konto erstellt — wir leiten dich weiter…",
+      "error_duplicate": "Diese E-Mail-Adresse ist bereits registriert.",
+      "error_weak_password": "Das Passwort erfüllt nicht die Mindestanforderungen.",
+      "privacy_note": "Mit der Registrierung bestätigst du, die Verarbeitung deiner Gesundheitsdaten gemäß DSGVO Art. 9(2)(a) zu akzeptieren."
+    },
+    "check_email": {
+      "title": "Prüfe dein Postfach",
+      "body": "Wir haben dir eine Bestätigungs-E-Mail an {email} geschickt. Bitte klicke auf den Link in der Mail, um dein Konto zu aktivieren.",
+      "ttl_hint": "Der Link ist 24 Stunden gültig.",
+      "spam_hint": "Mail nicht im Posteingang? Schau auch im Spam-Ordner nach.",
+      "resend_link": "Bestätigungs-E-Mail erneut senden"
+    },
+    "verify": {
+      "title": "E-Mail-Adresse bestätigen",
+      "body": "Klicke auf den Button, um deine E-Mail-Adresse zu bestätigen und dein Konto zu aktivieren.",
+      "submit": "E-Mail bestätigen",
+      "success_title": "E-Mail bestätigt",
+      "success_body": "Dein Konto ist nun aktiv. Du kannst dich jetzt anmelden.",
+      "error_title": "Bestätigung fehlgeschlagen",
+      "error_body": "Der Link ist ungültig oder abgelaufen. Fordere bitte eine neue Bestätigungs-Mail an.",
+      "missing_token": "Es wurde kein Bestätigungs-Token in der URL gefunden.",
+      "go_to_login": "Zur Anmeldung",
+      "go_to_resend": "Neue Mail anfordern"
+    },
+    "resend": {
+      "title": "Bestätigungs-E-Mail erneut senden",
+      "body": "Gib deine E-Mail-Adresse ein. Falls ein passendes, noch nicht bestätigtes Konto existiert, senden wir eine neue Bestätigungs-Mail.",
+      "submit": "Mail erneut senden",
+      "success": "Falls die E-Mail-Adresse bei uns registriert und noch nicht bestätigt ist, wurde eine neue Mail gesendet.",
+      "error_rate_limit": "Zu viele Anfragen. Bitte in einer Minute erneut probieren."
+    },
+    "logout": {
+      "label": "Abmelden"
+    }
   }
 }

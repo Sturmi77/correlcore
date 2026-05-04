@@ -40,5 +40,74 @@
   "error": {
     "generic": "Something went wrong.",
     "not_found": "Page not found."
+  },
+  "auth": {
+    "common": {
+      "email_label": "Email address",
+      "email_placeholder": "you@example.com",
+      "password_label": "Password",
+      "password_placeholder": "At least 8 characters",
+      "display_name_label": "Display name (optional)",
+      "display_name_placeholder": "What should we call you?",
+      "submit_busy": "Please wait…",
+      "back_to_login": "Back to sign in"
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Welcome back.",
+      "submit": "Sign in",
+      "no_account": "No account yet?",
+      "register_link": "Create one now",
+      "forgot_password": "Forgot password?",
+      "error_invalid": "Email or password is incorrect.",
+      "error_unverified": "Please verify your email address first.",
+      "error_rate_limit": "Too many attempts. Please try again in a minute."
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Privacy-first mood and habit tracker.",
+      "submit": "Sign up",
+      "have_account": "Already have an account?",
+      "login_link": "Sign in here",
+      "password_hint": "At least 8 characters, one letter and one digit.",
+      "strength_empty": "",
+      "strength_very_weak": "Very weak",
+      "strength_weak": "Weak",
+      "strength_good": "Good",
+      "strength_strong": "Strong",
+      "success_redirect": "Account created — redirecting…",
+      "error_duplicate": "This email address is already registered.",
+      "error_weak_password": "The password does not meet the minimum requirements.",
+      "privacy_note": "By registering you agree to the processing of your health data under GDPR Art. 9(2)(a)."
+    },
+    "check_email": {
+      "title": "Check your inbox",
+      "body": "We have sent a verification email to {email}. Please click the link in that email to activate your account.",
+      "ttl_hint": "The link is valid for 24 hours.",
+      "spam_hint": "Mail not in your inbox? Please check the spam folder.",
+      "resend_link": "Resend verification email"
+    },
+    "verify": {
+      "title": "Verify email address",
+      "body": "Click the button below to confirm your email address and activate your account.",
+      "submit": "Verify email",
+      "success_title": "Email verified",
+      "success_body": "Your account is now active. You can sign in.",
+      "error_title": "Verification failed",
+      "error_body": "The link is invalid or has expired. Please request a new verification email.",
+      "missing_token": "No verification token found in the URL.",
+      "go_to_login": "Sign in",
+      "go_to_resend": "Request new email"
+    },
+    "resend": {
+      "title": "Resend verification email",
+      "body": "Enter your email address. If a matching unverified account exists, we will send a fresh verification email.",
+      "submit": "Resend email",
+      "success": "If the email is registered and unverified, a new verification mail has been sent.",
+      "error_rate_limit": "Too many requests. Please try again in a minute."
+    },
+    "logout": {
+      "label": "Sign out"
+    }
   }
 }
