@@ -73,6 +73,188 @@ Content-Type: application/json
 
 **Rate-Limit:** 3 Requests / Minute / IP.
 
+#### `POST /api/v1/auth/register`
+
+Legt einen neuen User an und versendet asynchron eine Verify-Mail. Der
+Account ist nach `register` `unverified` und kann sich erst nach
+erfolgreichem `verify-email` einloggen. Mail-Versand läuft im Hintergrund;
+SMTP-Fehler werden geloggt, blocken die Antwort aber nicht (Issue #39).
+
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "hunter2-correct-horse",
+  "display_name": "Alice"
+}
+```
+
+**Body**
+
+- `email` — gültige E-Mail-Adresse (RFC 5322), required
+- `password` — 8–128 Zeichen, mindestens **ein Buchstabe und eine Ziffer**, required
+- `display_name` — optional, max. 100 Zeichen
+
+**Antworten**
+
+- `201 Created` — `{"message": "Registration successful. Please verify your email address."}`
+- `409 Conflict` — `{"detail": "Email already registered"}`, wenn die
+  Adresse bereits existiert
+- `422 Unprocessable Entity` — Schema-Verstoß (z.B. Passwort ohne Ziffer,
+  ungültige Mail, `display_name` zu lang)
+
+> ⚠️ Der 409 leakt aktuell die Existenz einer Mail-Adresse. Für ein
+> hardened Produkt-Setup (M9+) ist eine E-Mail-Adress-Enumeration-
+> resistente Variante geplant (`202 Accepted` mit asynchronem
+> "Already-registered"-Mailflow analog zu `resend-verification`).
+> Verfolgt unter Issue #50 / Backlog.
+
+**Hinweis:** Setzt **noch keine** Auth-Cookies — diese werden erst nach
+erfolgreichem `verify-email` + `login` ausgegeben.
+
+#### `POST /api/v1/auth/login`
+
+Login mit E-Mail und Passwort. Setzt zwei HttpOnly-Cookies (Access +
+Refresh) und liefert den Access-Token zusätzlich im Body, damit Native-
+und Mobile-Clients ihn ohne Cookie-Jar verwenden können (ADR-0004).
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "hunter2-correct-horse"
+}
+```
+
+**Cookies (gesetzt bei 200)**
+
+- `access_token` — `HttpOnly; Secure; SameSite=Strict; Path=/api;
+Max-Age=900` (15 min, aus `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`)
+- `refresh_token` — `HttpOnly; Secure; SameSite=Strict;
+Path=/api/v1/auth/refresh; Max-Age=2592000` (30 Tage, aus
+  `JWT_REFRESH_TOKEN_EXPIRE_DAYS`). Der enge Pfad-Scope sorgt dafür, dass
+  das Refresh-Cookie ausschließlich am Refresh-Endpunkt mitgesendet wird.
+
+**Antworten**
+
+- `200 OK` — `TokenResponse`
+  ```json
+  {
+    "access_token": "<jwt>",
+    "token_type": "bearer",
+    "expires_in": 900,
+    "user": {
+      "id": "<uuid>",
+      "email": "alice@example.com",
+      "display_name": "Alice",
+      "is_verified": true
+    }
+  }
+  ```
+- `401 Unauthorized` — generisch `Invalid email or password`; deckt
+  unbekannte Mail, falsches Passwort und unverifizierten Account ab
+  (Schutz vor User-Enumeration)
+- `422 Unprocessable Entity` — Schema-Verstoß
+- `429 Too Many Requests` — Rate-Limit überschritten
+
+**Rate-Limit:** 5 Requests / Minute / IP (SlowAPI).
+
+#### `POST /api/v1/auth/refresh`
+
+Rotiert das Refresh-Token (Single-Use) und gibt ein frisches Access-Token
+aus. Primärer Eingabepfad ist das HttpOnly-`refresh_token`-Cookie; als
+Fallback für Native-Clients ohne Cookie-Jar wird das Token alternativ im
+JSON-Body akzeptiert.
+
+```http
+POST /api/v1/auth/refresh
+Cookie: refresh_token=<jwt>
+```
+
+_oder, ohne Cookie:_
+
+```http
+POST /api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "<jwt>"
+}
+```
+
+**Verhalten**
+
+- Bei Erfolg: Altes Refresh-Token wird in Redis als verwendet markiert
+  (Single-Use), neues Access- und Refresh-Cookie werden gesetzt.
+- Bei Fehler: Auth-Cookies werden defensiv gelöscht, damit ein
+  kompromittiertes Refresh-Token keinen weiteren Zugriff erlaubt.
+
+**Antworten**
+
+- `200 OK` — `TokenResponse` (identisch zu `/login`), neue Cookies werden gesetzt
+- `401 Unauthorized` — Token fehlt, abgelaufen, bereits verwendet oder
+  ungültig; konkrete Ursache wird im `detail` zurückgegeben (kein
+  Enumerations-Risiko, da das Cookie/Token nur für eingeloggte Clients
+  existiert)
+
+#### `POST /api/v1/auth/logout`
+
+Invalidiert das aktuelle Refresh-Token in Redis und löscht beide Auth-
+Cookies. Idempotent: Liefert auch ohne gültiges Token `200`, damit
+Client-seitiges Aufräumen immer funktioniert.
+
+```http
+POST /api/v1/auth/logout
+Cookie: refresh_token=<jwt>
+```
+
+_Body-Fallback (analog `/refresh`):_
+
+```http
+POST /api/v1/auth/logout
+Content-Type: application/json
+
+{
+  "refresh_token": "<jwt>"
+}
+```
+
+**Antworten**
+
+- `200 OK` — `{"message": "Logged out successfully"}`; `Set-Cookie`-Header
+  löscht `access_token` und `refresh_token`
+
+#### `GET /api/v1/auth/me`
+
+Liefert das Profil des aktuell eingeloggten Users. Auth erfolgt über das
+`access_token`-Cookie (oder `Authorization: Bearer <token>` für API-
+Clients). Endpunkt ist Teil der Auth-Boundary: Lädt zusätzlich den per-User
+DEK in den Request-Context (siehe ADR-0005).
+
+```http
+GET /api/v1/auth/me
+Cookie: access_token=<jwt>
+```
+
+**Antworten**
+
+- `200 OK` — `UserResponse`
+  ```json
+  {
+    "id": "<uuid>",
+    "email": "alice@example.com",
+    "display_name": "Alice",
+    "is_verified": true
+  }
+  ```
+- `401 Unauthorized` — kein Token, ungültiger/abgelaufener Token, oder
+  DEK des Users konnte nicht entschlüsselt werden (Master-Key-Mismatch,
+  siehe ADR-0005 / Issue #26)
+
 ### Phase 2 — OIDC (geplant, M12+)
 
 ```
