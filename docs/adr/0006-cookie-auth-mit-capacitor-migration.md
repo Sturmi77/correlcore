@@ -1,0 +1,63 @@
+# ADR-0006: Cookie-basierte Auth im Web mit geplanter Capacitor-Bearer-Migration
+
+**Status:** Akzeptiert
+**Datum:** 2026-05-04
+**Kontext:** Issue #40, ergänzt ADR-0004 (Auth-Strategie) und ADR-0002 (Capacitor)
+
+---
+
+## Kontext
+
+ADR-0004 legt fest, dass Phase 1 mit nativem JWT in FastAPI läuft. Offen blieb, **wie der Browser-Client die Token hält** — Cookie oder In-Memory-Bearer? Beide Varianten sind in der MoodSync-Threat-Modellierung relevant, weil:
+
+- DSGVO Art. 9 (Gesundheitsdaten) verlangt erhöhte Sicherheit gegen Token-Diebstahl.
+- Phase 2 nutzt Capacitor (ADR-0002) — `capacitor://`-Schema blockiert Third-Party-Cookies zur API-Domain.
+
+Eine Entscheidung "ein Mechanismus für alle Phasen" ist nicht möglich, ohne entweder XSS-Resistenz (im Web) oder Capacitor-Kompatibilität (mobil) zu opfern.
+
+## Entscheidung
+
+**Phase 1 (Web, M1–M10):** HttpOnly-Cookies (`SameSite=Strict`, `Secure` in Prod). Refresh-Token in `/auth/refresh` rotiert; Access-Cookie kurzlebig (15 min).
+
+**Phase 2 (Mobile, M11+):** Bearer-Token in einer In-Memory-Variable, ausgeliefert über das bereits existierende `TokenResponse.access_token`-Feld der Login-Endpoints. Kein `localStorage`, kein `sessionStorage`. Refresh läuft analog über `/auth/refresh`, aber mit explizitem `Authorization: Bearer …`.
+
+Der Wechsel ist isoliert in **`apiFetch` (`apps/web/src/lib/api/client.ts`)**: alle Auth-API-Module und alle Stores nutzen ausschließlich `apiFetch`. Der Capacitor-Build wird `apiFetch` durch eine zweite Implementierung mit identischer Signatur ersetzen (Build-Zeit-Switch via Vite-Env oder Sub-Path-Import). Keine UI-Komponente wird angefasst.
+
+## Begründung
+
+| Kriterium                    | Cookie (Phase 1)                                           | Bearer (Phase 2)                                           |
+| ---------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| **XSS-Resistenz**            | ✅ HttpOnly — JS kann den Token nicht lesen                | ⚠️ JS-Heap, aber In-Memory (kein persistenter Storage)     |
+| **CSRF-Risiko**              | Mitigiert via SameSite=Strict + State-Changing Requests POST/JSON | ✅ N/A (kein Cookie, kein automatisches Senden)            |
+| **Capacitor-Kompatibilität** | ❌ `capacitor://`-Cookies werden nicht an API gesendet     | ✅ Header funktioniert in beiden Schemes                   |
+| **JS-Bundle-Kosten**         | ✅ Null (Browser handhabt Cookie automatisch)              | Minimal (~0.5 KB für In-Memory-Container)                  |
+| **DSGVO Art.-9-Risiko**      | Niedrigste Angriffsfläche (XSS-immun)                      | Akzeptabel, da App-Container kein dritter JavaScript-Code  |
+
+**Cookie für Web** maximiert XSS-Resistenz für Gesundheitsdaten, was angesichts unserer DSGVO-Verpflichtungen den Ausschlag gibt. **Bearer für Capacitor** ist die einzige funktionierende Variante; das XSS-Risiko ist dort drastisch geringer, weil der App-Container keine eingebettete Drittanbieter-Werbung oder externe Scripts ausführt.
+
+Die Migration ist **antizipiert, aber lokal**: nur `apiFetch` ändert sich.
+
+## Konsequenzen
+
+**Positiv:**
+
+- Web nutzt das sicherste Pattern für Art.-9-Daten.
+- Der Capacitor-Pfad ist bereits im Backend vorbereitet (Login/Register liefern `access_token` im Response-Body).
+- Keine Code-Duplikation in API-Modulen oder Stores.
+
+**Negativ:**
+
+- Refresh-Logik muss in zwei Varianten getestet werden (Cookie- + Bearer-Pfad).
+- CSRF-Schutz fällt in Phase 1 in unsere Verantwortung (SameSite=Strict + JSON-Content-Type-Pflicht).
+
+**Neutral:**
+
+- Phase 2 erbt automatisch alle aktuellen Backend-Endpoints (kein neues Interface).
+- Single-Flight-Refresh-Pattern (`apps/web/src/lib/api/client.ts`) gilt in beiden Varianten unverändert.
+
+## Referenzen
+
+- ADR-0002: Capacitor statt TWA
+- ADR-0004: Auth-Strategie (JWT Phase 1, Authentik Phase 2)
+- Issue #40: Frontend Login/Register-UI
+- OWASP Cheat-Sheet "JWT for Java" — Storage-Empfehlungen für SPA + Mobile

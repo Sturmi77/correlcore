@@ -175,3 +175,67 @@ Storybook für alle Atoms und Molecules.
   }
 }
 ```
+
+---
+
+## 9. Authentifizierung (Issue #40)
+
+### Strategie
+
+- **Mechanismus:** HttpOnly-Cookies (`SameSite=Strict`, `Secure` in Prod), kein Token im JavaScript-Heap.
+- **Begründung:** Maximale Resistenz gegen XSS auf DSGVO Art.-9-Daten — siehe ADR-0004.
+- **Refresh:** `apiFetch` setzt auf 401 genau einen `/auth/refresh` ab und wiederholt den Original-Request. Single-Flight-Pattern: parallele 401s teilen sich die selbe Refresh-Promise; es wird nie mehr als eine `/auth/refresh`-Anfrage gleichzeitig gestellt.
+- **Phase 2 (Capacitor, M11+):** `capacitor://`-Schema blockiert Third-Party-Cookies. Der Migrationspfad ist im selben `apiFetch`-Interface umgesetzt: das Backend liefert `access_token` bereits im Body (siehe `TokenResponse`), und `apiFetch` wird in der Capacitor-Build-Variante auf einen In-Memory-Bearer-Header umgestellt. Eigener ADR-Entry folgt bei M11-Start.
+
+### Routen
+
+| Route                       | Zweck                                                      | Public |
+| --------------------------- | ---------------------------------------------------------- | ------ |
+| `/auth/login`               | Anmeldung. Redirect auf `?next=…` (whitelisted in-app).    | ✅     |
+| `/auth/register`            | Registrierung. Leitet auf `/auth/check-email?email=…`.     | ✅     |
+| `/auth/check-email`         | Hinweis nach Registrierung.                                | ✅     |
+| `/auth/verify-email`        | Bestätigt Token aus E-Mail-Link **per User-Klick**.        | ✅     |
+| `/auth/resend-verification` | Fordert neue Bestätigungs-Mail an (immer 202).             | ✅     |
+
+Alle anderen Routen sind durch den Auth-Guard im Root-`+layout.svelte` geschützt: bei `auth.status === 'anonymous'` Redirect auf `/auth/login?next=<aktueller-Pfad>`.
+
+### Verify-Flow: Confirm-Page statt Auto-Submit
+
+Die Verify-E-Mail enthält einen Link auf `/auth/verify-email?token=…`. Die Seite ruft den Endpoint **nicht automatisch** auf, sondern zeigt einen "E-Mail bestätigen"-Button.
+
+**Begründung:**
+
+- E-Mail-Scanner (Outlook Safe-Links, VirusTotal, Antiviren-Gateways) folgen Links beim Empfang und würden den Single-Use-Token aufbrauchen, bevor der User ihn anklicken kann.
+- Active-Consent-Pattern entspricht dem DSGVO-Geist (User aktiviert die Verarbeitung selbst).
+
+Der Button ist deaktiviert bei laufender Anfrage; bei Erfolg / Fehler / fehlendem Token rendert die Seite jeweils einen klar getrennten Zustand.
+
+### Module
+
+```
+apps/web/src/lib/
+├── api/
+│   ├── client.ts        # apiFetch + Single-Flight-Refresh + Errors
+│   └── auth.ts          # register, login, logout, fetchCurrentUser, verifyEmail, resendVerification
+├── stores/
+│   └── auth.ts          # AuthState-Store (loading | authenticated | anonymous), hydrate(), login(), logout()
+└── components/auth/
+    └── PasswordStrength.svelte   # Visueller Strength-Indicator + evaluatePassword()
+```
+
+### Fehlerklassen
+
+- `ApiError` — Backend hat geantwortet (Status, parsedes `detail`, Pfad).
+- `NetworkError` — Transport-Fehler (offline, CORS, DNS).
+
+Beide sind explizit instanzbar (`err instanceof ApiError`) und ermöglichen status-spezifisches UI-Routing in den Pages.
+
+### Tests
+
+Vitest-Suite (`*.test.ts`) deckt ab:
+
+- `apiFetch`: 2xx/4xx/Network/204, Header-Setting, JSON-Body, **Single-Flight-Refresh** mit 3 Szenarien (Erfolg, Refresh-Fail, parallele Requests).
+- Auth-Store: Initialzustand, Hydrate-Transitions, Idempotenz, Login/Logout/setUser.
+- Password-Strength: Minimum-Compliance, Score-Steigerung mit Länge/Symbolen.
+
+24 Tests grün (`npm test`).

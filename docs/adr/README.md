@@ -16,6 +16,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0003](0003-sync-conflict-log.md)        | Sync-Protokoll: Conflict-Log statt stilles LWW              | Accepted | 2026-04-20 |
 | [ADR-0004](0004-auth-strategie.md)           | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2 | Accepted | 2026-04-20 |
 | [ADR-0005](0005-verschluesselung-at-rest.md) | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted | 2026-04-20 |
+| [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted | 2026-05-04 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -38,6 +39,10 @@ Phase 1 (Selfhost, bis M10): Native JWT Auth in FastAPI mit Refresh-Token-Rotati
 ### ADR-0005 – Verschlüsselung at-rest
 
 Zweistufig: Stufe 1 = MinIO SSE + LUKS-Volumes + HSTS (Infrastruktur, M0). Stufe 2 = App-Level Fernet-Verschlüsselung mit pro-User-Keys für `entries.note`, `entry_symptoms.details`, `insights.statement` (M1).
+
+### ADR-0006 – Cookie-Auth im Web mit Capacitor-Migration
+
+Phase 1 (Web): HttpOnly-Cookies (SameSite=Strict, Secure) für maximale XSS-Resistenz auf Art.-9-Daten. Phase 2 (Capacitor, M11+): In-Memory-Bearer-Token, da `capacitor://`-Cookies geblockt werden. Migration ist auf `apiFetch` lokalisiert; UI und Stores bleiben unberührt.
 
 ---
 

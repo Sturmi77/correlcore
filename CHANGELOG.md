@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased] — M1 Core Auth & Entry
+
+### Added
+
+- **Frontend-Auth-Flow** (Issue #40):
+  - Zentraler `apiFetch`-Client mit `credentials: 'include'` + Single-Flight-Refresh auf 401.
+  - Auth-API-Modul (`register`, `login`, `logout`, `fetchCurrentUser`, `verifyEmail`, `resendVerification`).
+  - Auth-Store (`loading | authenticated | anonymous`) mit `hydrate()`, abgeleitete Stores (`currentUser`, `isAuthenticated`).
+  - Routen: `/auth/login`, `/auth/register`, `/auth/check-email`, `/auth/verify-email`, `/auth/resend-verification`.
+  - Auth-Layout für `/auth/*` (zentriert, ohne Hauptnavigation).
+  - Reaktiver Auth-Guard im Root-Layout: Redirect auf `/auth/login?next=…` für geschützte Routen.
+  - Verify-Page mit explizitem Confirm-Button (kein Auto-Submit — Schutz gegen Mail-Scanner).
+  - Password-Strength-Indicator (Score 0–4, Live-Validierung gegen Backend-Regeln).
+  - i18n-Strings für Auth-Flow (de/en).
+  - Vitest-Suite: 24 Tests für Client, Store und Password-Strength.
+
 ## [Unreleased] — M0 Fundament
 
 ### Added
