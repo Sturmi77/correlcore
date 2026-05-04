@@ -161,7 +161,7 @@ for row in user_encryption_keys:
   - Kritischer Hinweis in der Deployment-Dokumentation: **`ENCRYPTION_KEY` separat und sicher backuppen** (z. B. Vaultwarden / Bitwarden Secrets / Hardware-Token)
 - **Performance:** Fernet-Verschlüsselung ~0.1 ms pro Feld bei typischen Dateigrößen (Notizen < 10 KB) – vernachlässigbar gegenüber DB-Latenz. Pro Request +1 DB-Roundtrip für `user_encryption_keys`-Lookup, mit Caching auf Request-Ebene auf **einen** Roundtrip pro Request begrenzt
 - **DSGVO-Compliance:** Verschlüsselung at-rest ist eine der ausdrücklich empfohlenen technischen Maßnahmen gemäß **Art. 32 DSGVO** (Sicherheit der Verarbeitung); dokumentiert als Teil des TOM-Verzeichnisses
-- **Account-Löschung (Art. 17):** Beim `DELETE /user/account` wird die `user_encryption_keys`-Row gelöscht — die Ciphertext-Felder sind danach kryptografisch wertlos, selbst wenn sie aus alten Backups rekonstruiert würden („cryptographic erasure")
+- **Account-Löschung (Art. 17):** Beim `DELETE /api/v1/user/me` (Issue #66) wird die `user_encryption_keys`-Row über `ON DELETE CASCADE` gelöscht — die Ciphertext-Felder sind danach kryptografisch wertlos, selbst wenn sie aus alten Backups rekonstruiert würden („cryptographic erasure")
 
 ---
 

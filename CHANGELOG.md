@@ -8,6 +8,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — M1 Vorbereitung
 
+### Added
+
+- **`DELETE /api/v1/user/me` — DSGVO-Art.-17-Erasure-API** (Issue #66, M1-Quality-Gate-Finding **SA-4**, ADR-0005). Schließt den letzten blockierenden M1-Exit-Pfad: User können ihren Account jetzt vollständig per API löschen, statt auf manuelle DB-Eingriffe angewiesen zu sein.
+  - **Auth + Re-Auth:** Endpoint läuft hinter `get_current_user` (Verifizierung **nicht** erforderlich — das Recht auf Löschung darf nicht von einer ausstehenden E-Mail-Bestätigung abhängen). Body verlangt das aktuelle Passwort als Defense-in-Depth gegen XSRF-via-Cookie und gegen einen geleakten Access-Token.
+  - **Cascade-Reichweite:** Hard-Delete der `users`-Row triggert `ON DELETE CASCADE` auf `entries`, `entry_tags`, `entry_symptoms`, Custom-`tags`, Custom-`symptoms`, `email_verification_tokens` und — entscheidend — `user_encryption_keys`. Damit werden `entries.note_enc` und Custom-`symptoms.name_enc` ab dem Commit kryptografisch unentschlüsselbar („cryptographic erasure“, ADR-0005). Default-Tags/Symptome (`user_id IS NULL`) bleiben erhalten.
+  - **Refresh-Token-Revoke:** `TokenStore.revoke_all(user_id)` wird **vor** dem DB-DELETE aufgerufen — selbst bei späterem DB-Fehler ist der User damit force-logged-out auf allen Geräten. Auf der Response werden `access_token`- und `refresh_token`-Cookies invalidiert.
+  - **Status-Codes:** `204 No Content` bei Erfolg, `401` für fehlende Auth **und** falsches Passwort (generische `"Invalid credentials"`-Meldung verhindert Unterscheidbarkeit), `422` für Body-Validierung.
+  - **Logs:** ausschließlich `user_id`, niemals Email — abgesichert durch zwei dedizierte Tests (`test_user_service.py::test_delete_user_*_logs_user_id_not_email`).
+  - **Neuer Service** `app/services/user_service.py` (`delete_user_account`, `UserDeletionError`), neuer Endpoint-Router `app/api/v1/endpoints/user.py` unter `/api/v1/user`, neues Schema `DeleteAccountRequest`. Tests: 5 Service-Unit-Tests + 7 Endpoint-Tests, alle DB-/Redis-frei via Mocks.
+  - **Doku:** Neuer Abschnitt §6 „User“ in `docs/API.md`; ADR-0005, `docs/DSGVO.md`, `docs/ARCHITECTURE.md` und `docs/DESIGN_DOCUMENT.md` (DSGVO-Checkpoint M1) auf den finalen URL `/api/v1/user/me` konsolidiert (vorher inkonsistent zwischen `/user/me` und `/user/account`). M1-Quality-Gate-Report aktualisiert: SA-4 als behoben markiert.
+  - **M1-Quality-Gate-Checkpoint** (DESIGN_DOCUMENT §3 „M1 — Core Entry“) ist mit diesem PR auf `[x]` gesetzt: alle drei blockierenden Major-Findings (#64 Auth-Coverage, #65 `/auth/register` Enumeration, #66 Erasure-API) sind adressiert.
+
 ### Tests
 
 - **Auth-Coverage auf ≥85 % gehoben** (Issue #64, M1-Quality-Gate-Finding CQR-1/2/3): die drei sicherheitskritischsten Auth-Module sind jetzt umfassend unit-getestet, ohne DB- oder Redis-Abhängigkeit. **Coverage-Sprung:** `app/services/auth_service.py` 53 % → **95 %**, `app/api/v1/deps/auth.py` 38 % → **100 %**, `app/core/security.py` 58 % → **100 %**. **Gesamt-Backend-Coverage** 84.95 % → **92.29 %**, 160 → **213 grüne Tests**.

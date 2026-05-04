@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, entries, health, symptoms, tags
+from app.api.v1.endpoints import auth, entries, health, symptoms, tags, user
 
 api_router = APIRouter()
 
@@ -11,6 +11,11 @@ api_router.include_router(health.router, prefix="/health", tags=["internal"])
 
 # Auth
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+
+# User self-management (M1, Issue #66) — currently only DELETE /user/me
+# (DSGVO Art. 17 erasure). Future M2+: GET /user/me, PATCH /user/me,
+# data-export endpoints (Issue #25).
+api_router.include_router(user.router, prefix="/user", tags=["user"])
 
 # Daily entries (M1, Issue #7)
 api_router.include_router(entries.router, prefix="/entries", tags=["entries"])

@@ -300,10 +300,10 @@ Privacy-by-Design-Prinzipien verarbeitet. Details: [docs/DSGVO.md](DSGVO.md)
 
 ### Technische Umsetzung der Datenschutzrechte
 
-| Recht                          | Umsetzung                                                           |
-| ------------------------------ | ------------------------------------------------------------------- |
-| Auskunft (Art. 15)             | API: `GET /user/data-export` (JSON-Dump)                            |
-| Berichtigung (Art. 16)         | Standard-Edit-Endpunkte                                             |
-| Löschung (Art. 17)             | `DELETE /user/account` → Cascade auf alle Daten incl. MinIO         |
-| Datenübertragbarkeit (Art. 20) | `GET /user/export` → ZIP mit JSON + Fotos                           |
-| Widerspruch (Art. 21)          | Analytics-Opt-Out: `POST /user/settings {analytics_enabled: false}` |
+| Recht                          | Umsetzung                                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| Auskunft (Art. 15)             | API: `GET /user/data-export` (JSON-Dump)                                        |
+| Berichtigung (Art. 16)         | Standard-Edit-Endpunkte                                                         |
+| Löschung (Art. 17)             | `DELETE /api/v1/user/me` → Cascade auf alle Daten + Cryptographic Erasure (DEK) |
+| Datenübertragbarkeit (Art. 20) | `GET /user/export` → ZIP mit JSON + Fotos                                       |
+| Widerspruch (Art. 21)          | Analytics-Opt-Out: `POST /user/settings {analytics_enabled: false}`             |

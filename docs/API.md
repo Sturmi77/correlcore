@@ -288,7 +288,7 @@ PATCH  /api/v1/entries/{id}             Eintrag aktualisieren          (60/min)
 **Geplant (folgt in M1+):**
 
 ```
-DELETE /api/v1/entries/{id}             Eintrag löschen            (#23 oder M9 Account-Erasure)
+DELETE /api/v1/entries/{id}             Eintrag löschen            (#23 — oder via DELETE /user/me, siehe §6)
 GET    /api/v1/entries/date/{date}      Eintrag für ein Datum     (M1 Followup)
 ```
 
@@ -657,7 +657,76 @@ Fehler:
 
 ---
 
-## 6. Insights
+## 6. User
+
+Self-Service-Endpoints für den eigenen Account. Alle Pfade liegen unter
+`/api/v1/user/me` und sind ausschließlich auf den authentifizierten
+Aufrufer bezogen — die Adressierung anderer User ist konzeptionell
+nicht möglich.
+
+```
+DELETE /api/v1/user/me               Account und alle abhängigen Daten löschen (DSGVO Art. 17)
+```
+
+### `DELETE /api/v1/user/me`
+
+DSGVO-Art.-17-Erasure-API (Issue #66, ADR-0005). Hard-löscht den
+authentifizierten User samt aller abhängigen Daten. Die Cryptographic
+Erasure (`user_encryption_keys`-Cascade) sorgt dafür, dass
+`entries.note_enc` und Custom-`symptoms.name_enc` ab dem Moment des
+Commits mathematisch nicht mehr entschlüsselbar sind — selbst aus alten
+Backups (siehe ADR-0005 §"Account-Löschung").
+
+**Auth:** required (Access-Cookie oder `Authorization: Bearer ...`).
+Im Gegensatz zu den meisten anderen Endpoints **nicht** auf `is_verified`
+gegated — das Recht auf Löschung darf nicht von einer noch ausstehenden
+E-Mail-Verifizierung abhängen.
+
+**Body:**
+
+```json
+{ "password": "<aktuelles Passwort, 8–128 Zeichen>" }
+```
+
+Die Passwort-Bestätigung ist Re-Authentication als Defense-in-Depth gegen
+XSRF-via-Cookie und gegen einen geleakten Access-Token. (Der Access-
+Cookie nutzt zwar `SameSite=strict`, aber für eine destruktive Aktion
+ist die zusätzliche Bestätigung verpflichtend.)
+
+**Response:**
+
+- `204 No Content` — Account und alle abhängigen Daten gelöscht; Refresh-
+  Tokens des Users in Redis revoked; `access_token`- und `refresh_token`-
+  Cookies auf dem Response invalidiert.
+- `401 Unauthorized` — fehlender/ungültiger Access-Token **oder** falsches
+  Passwort. Fehlermeldung ist generisch (`{"detail": "Invalid credentials"}`),
+  damit Beobachter nicht zwischen „Token stale“ und „Passwort falsch“
+  unterscheiden können.
+- `422 Unprocessable Entity` — Body-Validierung (Passwort fehlt oder zu
+  kurz/lang).
+
+**Cascade-Reichweite** (durch DB-`ON DELETE CASCADE` auf jeder FK gegen
+`users.id` garantiert, im Service-Modul `user_service.py` dokumentiert):
+
+- `entries`, `entry_tags`, `entry_symptoms`
+- `tags` (Custom; Defaults haben `user_id IS NULL` und bleiben)
+- `symptoms` (Custom; Defaults haben `user_id IS NULL` und bleiben)
+- `email_verification_tokens`
+- `user_encryption_keys` — **Cryptographic Erasure**
+
+**Beispiel:**
+
+```bash
+curl -X DELETE https://api.moodsync.example/api/v1/user/me \
+  -H "Cookie: access_token=..." \
+  -H "Content-Type: application/json" \
+  -d '{"password":"mein-aktuelles-passwort"}'
+# → 204 No Content
+```
+
+---
+
+## 7. Insights
 
 ```
 GET    /api/v1/insights              Alle Insights des Users
@@ -667,7 +736,7 @@ POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 
 ---
 
-## 7. Sync (Offline-First)
+## 8. Sync (Offline-First)
 
 ```
 POST   /api/v1/sync/push    Client-Änderungen hochladen
@@ -702,7 +771,7 @@ GET    /api/v1/sync/pull    Delta seit Cursor herunterladen
 
 ---
 
-## 8. Export
+## 9. Export
 
 ```
 GET    /api/v1/export/json      Vollexport als JSON
@@ -713,7 +782,7 @@ GET    /api/v1/export/jobs/{id} Status des ZIP-Jobs
 
 ---
 
-## 9. Admin
+## 10. Admin
 
 ```
 GET    /api/v1/admin/users          User-Liste
@@ -724,7 +793,7 @@ GET    /api/v1/admin/audit-log      Audit-Log abrufen
 
 ---
 
-## 10. Fehlerformat (RFC 7807)
+## 11. Fehlerformat (RFC 7807)
 
 ```json
 {
