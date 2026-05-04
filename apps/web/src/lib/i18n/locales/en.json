@@ -75,6 +75,27 @@
       "other": "Other"
     }
   },
+  "symptom": {
+    "picker_label": "Symptoms",
+    "picker_counter": "{count}/{max} selected",
+    "loading": "Loading symptoms…",
+    "error_load": "Could not refresh the symptom list — falling back to the default set.",
+    "error_assign": "Entry was saved, but symptoms could not be attached.",
+    "scale_label": "Intensity for {name}",
+    "intensity": {
+      "0": "None",
+      "1": "Mild",
+      "2": "Moderate",
+      "3": "Strong"
+    },
+    "key": {
+      "headache": "Headache",
+      "digestion": "Digestion",
+      "back_pain": "Back pain",
+      "fatigue": "Fatigue",
+      "cold": "Cold"
+    }
+  },
   "disclaimer": {
     "medical": "MoodSync is not a medical diagnostic tool. All insights are for personal reflection only."
   },

@@ -19,9 +19,11 @@
   import { goto } from '$app/navigation';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
+  import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
   import type { WorkContext } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
   import { assignTagsToEntry } from '$lib/api/tags';
+  import { assignSymptomsToEntry, type SymptomEntry } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   // ---------------------------------------------------------------------
@@ -48,6 +50,7 @@
   let workContext: WorkContext = defaultWorkContext(today);
   let note = '';
   let selectedTagIds: string[] = [];
+  let selectedSymptoms: SymptomEntry[] = [];
   let busy = false;
   let errorKey: string | null = null;
 
@@ -104,6 +107,17 @@
           await assignTagsToEntry(created.id, selectedTagIds);
         } catch (tagErr) {
           errorKey = mapApiError(tagErr, ERROR_MAP) ?? 'tag.error_assign';
+          return;
+        }
+      }
+      // Symptom assignment is best-effort — the entry is already
+      // saved. Mirrors the tag-assignment flow above so the user can
+      // retry from /entries/{id} without losing the entry itself.
+      if (selectedSymptoms.length > 0) {
+        try {
+          await assignSymptomsToEntry(created.id, selectedSymptoms);
+        } catch (symptomErr) {
+          errorKey = mapApiError(symptomErr, ERROR_MAP) ?? 'symptom.error_assign';
           return;
         }
       }
@@ -179,6 +193,8 @@
   </label>
 
   <TagPicker bind:selected={selectedTagIds} disabled={busy} />
+
+  <SymptomChecker bind:selected={selectedSymptoms} disabled={busy} />
 
   <label class="entry-field">
     <span class="entry-label">{$_('entry.note_placeholder')}</span>

@@ -31,6 +31,7 @@ from httpx import ASGITransport, AsyncClient
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.entry import Entry, EntrySlot, WorkContext
+from app.models.symptom import EntrySymptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user import User
 from app.services.auth_service import _hash_token
@@ -138,6 +139,24 @@ def make_entry_tag(
     et.user_id = entry.user_id
     et.created_at = datetime.now(UTC)
     return et
+
+
+def make_entry_symptom(
+    *,
+    entry: Entry,
+    symptom_key: str = "headache",
+    intensity: int = 1,
+) -> EntrySymptom:
+    """Build a detached :class:`EntrySymptom` row for service-layer tests."""
+    es = EntrySymptom()
+    es.id = uuid.uuid4()
+    es.entry_id = entry.id
+    es.user_id = entry.user_id
+    es.symptom_key = symptom_key
+    es.intensity = intensity
+    es.created_at = datetime.now(UTC)
+    es.updated_at = datetime.now(UTC)
+    return es
 
 
 def make_verification_token(

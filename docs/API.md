@@ -328,17 +328,96 @@ Fehler:
 
 ---
 
-## 5. Insights
+## 5. Symptome
+
+Gesundheits-Symptome werden parallel zu Tags pro Entry erfasst (Issue #9). Standard-Keys sind eine geschlossene Menge (kein User-Custom-Surface in M1); die Intensität bewegt sich in einem 0–3-Bereich, der im UI als 4-Punkt-Skala gerendert wird. Symptome sind Gesundheitsdaten nach DSGVO Art. 9 — Server-Logs enthalten weder `symptom_key` noch `intensity` (statisch via `test_log_scrubbing` und `test_symptom_service_logs_no_sensitive_fields` geprüft).
 
 ```
-GET    /api/v1/insights              Alle Insights des Users
-GET    /api/v1/insights/latest       Neuester Insight je Metrik
-POST   /api/v1/insights/trigger      Worker manuell anstoßen (Admin only)
+GET    /api/v1/symptoms/standard                Standard-Symptom-Keys (kein Auth)
+GET    /api/v1/entries/{entry_id}/symptoms      Aktuelle Symptome eines Entries
+PUT    /api/v1/entries/{entry_id}/symptoms      Replace-Set: gesamte Symptom-Liste
+```
+
+### Datentypen
+
+- `symptom_key`: String, einer aus der geschlossenen Menge `headache | digestion | back_pain | fatigue | cold`. CHECK-Constraint in der DB sowie Pydantic-Validator setzen das durch.
+- `intensity`: Integer 0..3 (0 = nicht vorhanden, 1 = leicht, 2 = mittel, 3 = stark). DB-CHECK + Pydantic-Field-Constraint mirroren den Range. UI rendert 4 Dots, kein freier Zahlen-Input.
+
+### `GET /api/v1/symptoms/standard`
+
+Liefert die kuratierte Liste der M1-Standard-Symptom-Keys. Die Liste ist nicht personenbezogen (Build-Time-Konstante), daher kein Auth erforderlich — das Picker-UI kann vor Login-Abschluss rendern. Rate-Limit: 120/min/IP.
+
+Response `200 OK`:
+
+```json
+{
+  "keys": [
+    { "symptom_key": "back_pain" },
+    { "symptom_key": "cold" },
+    { "symptom_key": "digestion" },
+    { "symptom_key": "fatigue" },
+    { "symptom_key": "headache" }
+  ]
+}
+```
+
+### `GET /api/v1/entries/{entry_id}/symptoms`
+
+Liefert die aktuell auf einem Entry geloggten Symptome (Liste, leer wenn keine zugewiesen). Owner-scoped via Service-Layer; `404 Not Found`, falls der Entry einem anderen User gehört oder nicht existiert. Rate-Limit: 120/min.
+
+Response `200 OK`: Liste von `SymptomResponse`-Objekten (siehe unten).
+
+### `PUT /api/v1/entries/{entry_id}/symptoms`
+
+**Replace-Set-Semantik:** Die übergebene `symptoms`-Liste ersetzt das gesamte Symptom-Set des Entries. Eine leere Liste entfernt alle Symptome. Maximale Listenlänge: **32** (`MAX_SYMPTOMS_PER_ENTRY`). Rate-Limit: 60/min.
+
+Der Service-Layer berechnet einen Key-basierten Diff (add / update intensity / remove), sodass die Tabelle bei Updates nicht mit veralteten Zeilen wächst.
+
+Request:
+
+```json
+{
+  "symptoms": [
+    { "symptom_key": "headache", "intensity": 2 },
+    { "symptom_key": "cold", "intensity": 1 }
+  ]
+}
+```
+
+Response `200 OK`: Liste der `SymptomResponse`-Objekte nach dem Replace, sortiert nach `symptom_key`.
+
+Fehler:
+
+- `404 Not Found` — Entry gehört nicht dem User oder existiert nicht.
+- `422 Unprocessable Entity` — unbekannter `symptom_key`, `intensity` außerhalb 0..3, doppelte Keys im Request oder Liste länger als 32.
+
+### `SymptomResponse`
+
+```json
+{
+  "id": "uuid",
+  "entry_id": "uuid",
+  "user_id": "uuid",
+  "symptom_key": "headache",
+  "intensity": 2,
+  "created_at": "2026-05-04T17:00:00Z",
+  "updated_at": "2026-05-04T17:00:00Z"
+}
 ```
 
 ---
 
-## 6. Sync (Offline-First)
+## 6. Insights
+
+```
+GET    /api/v1/insights              Alle Insights des Users
+GET    /api/v1/insights/latest       Neuester Insight je Metrik
+POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
+```
+
+---
+
+## 7. Sync (Offline-First)
 
 ```
 POST   /api/v1/sync/push    Client-Änderungen hochladen
@@ -373,7 +452,7 @@ GET    /api/v1/sync/pull    Delta seit Cursor herunterladen
 
 ---
 
-## 7. Export
+## 8. Export
 
 ```
 GET    /api/v1/export/json      Vollexport als JSON
@@ -384,7 +463,7 @@ GET    /api/v1/export/jobs/{id} Status des ZIP-Jobs
 
 ---
 
-## 8. Admin
+## 9. Admin
 
 ```
 GET    /api/v1/admin/users          User-Liste
@@ -395,7 +474,7 @@ GET    /api/v1/admin/audit-log      Audit-Log abrufen
 
 ---
 
-## 9. Fehlerformat (RFC 7807)
+## 10. Fehlerformat (RFC 7807)
 
 ```json
 {
