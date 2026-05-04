@@ -160,10 +160,7 @@ def upgrade() -> None:
         dek = Fernet.generate_key()
         wrapped = master.encrypt(dek)
         bind.execute(
-            sa.text(
-                "INSERT INTO user_encryption_keys (user_id, wrapped_dek) "
-                "VALUES (:uid, :w)"
-            ),
+            sa.text("INSERT INTO user_encryption_keys (user_id, wrapped_dek) VALUES (:uid, :w)"),
             {"uid": user_id, "w": wrapped},
         )
         user_dek[user_id] = dek
@@ -178,10 +175,7 @@ def upgrade() -> None:
     )
 
     entry_rows = bind.execute(
-        sa.text(
-            "SELECT id, user_id, note_enc_old FROM entries "
-            "WHERE note_enc_old IS NOT NULL"
-        )
+        sa.text("SELECT id, user_id, note_enc_old FROM entries WHERE note_enc_old IS NOT NULL")
     ).fetchall()
     for entry_id, user_id, plaintext in entry_rows:
         if plaintext is None:
@@ -220,8 +214,7 @@ def upgrade() -> None:
     # Encrypt every custom symptom's name into name_enc, then null out name.
     custom_rows = bind.execute(
         sa.text(
-            "SELECT id, user_id, name FROM symptoms "
-            "WHERE is_default = FALSE AND name IS NOT NULL"
+            "SELECT id, user_id, name FROM symptoms WHERE is_default = FALSE AND name IS NOT NULL"
         )
     ).fetchall()
     for sym_id, user_id, plaintext in custom_rows:
@@ -240,9 +233,7 @@ def upgrade() -> None:
             user_dek[user_id] = dek
         ciphertext = Fernet(dek).encrypt(plaintext.encode("utf-8"))
         bind.execute(
-            sa.text(
-                "UPDATE symptoms SET name_enc = :ct, name = NULL WHERE id = :id"
-            ),
+            sa.text("UPDATE symptoms SET name_enc = :ct, name = NULL WHERE id = :id"),
             {"ct": ciphertext, "id": sym_id},
         )
 
@@ -273,10 +264,7 @@ def downgrade() -> None:
     # Custom rows had their plaintext name nulled. We cannot recover it.
     # Restore something non-NULL (the slug) so the not-null constraint holds.
     bind.execute(
-        sa.text(
-            "UPDATE symptoms SET name = slug "
-            "WHERE is_default = FALSE AND name IS NULL"
-        )
+        sa.text("UPDATE symptoms SET name = slug WHERE is_default = FALSE AND name IS NULL")
     )
     op.drop_column("symptoms", "name_enc")
     op.alter_column("symptoms", "name", nullable=False)
