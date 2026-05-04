@@ -8,6 +8,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — M1 Vorbereitung
 
+### Documentation
+
+- **Auth-Endpoints in `docs/API.md` vereinheitlicht** (Issue #50): `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` und `GET /auth/me` haben jetzt jeweils einen vollständigen, dokumentierten Abschnitt analog zu `verify-email`/`resend-verification` (Body-Schemas, Cookie-Verhalten mit Pfad-Scopes und Max-Age, Statuscodes inkl. 401/409/422/429, Rate-Limits, Beispiel-Requests/Responses). Hinweis auf den Enumeration-Leak im aktuellen `register`-409 als known limitation mit Backlog-Verweis.
+
 ### Added
 
 - **App-Level Fernet at-rest** (Issue #26, ADR-0005): `entries.note` und `symptoms.name` (Custom) werden ab sofort serverseitig pro User mit einem eigenen Data-Encryption-Key (DEK) verschlüsselt gespeichert. Das schließt den letzten DSGVO-Art.-9-Blocker für M1.
