@@ -64,6 +64,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   - Datenmodell-Erweiterung `user_encryption_keys` definiert (KEK/DEK-Pattern)
   - Cryptographic-Erasure-Hinweis für Account-Löschung (Art. 17 DSGVO)
 - DESIGN_DOCUMENT.md: D-011 von „Offen“ auf „Entschieden“ gesetzt; DSGVO-01 als entschieden markiert; Version 0.7
+- DESIGN_DOCUMENT.md: M0/M1-Definition-of-Done konsistent gemacht — Issues #39 (E-Mail-Verifikation, PR #44), #40 (Login/Register-UI, PR #45) und #41 (`.env.example`/`SECRET_KEY`, PR #43) als `[x]` mit PR-Verweis markiert.
+- Prettier-Konformität: `docs/API.md` und `docs/adr/0005-verschluesselung-at-rest.md` formatiert (kein semantischer Inhalt geändert, nur Whitespace/Tabellen-Alignment).
 
 ---
 

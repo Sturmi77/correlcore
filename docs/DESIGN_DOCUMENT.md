@@ -603,9 +603,9 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Redis Single-Use Token Rotation für Refresh-Tokens _(PR #38)_
 - [x] Rate-Limiting auf `/auth/login` (SlowAPI) _(PR #38)_
 - [ ] Branch Protection auf `main`: PR + grüne CI als Pflicht vor Merge _(blockiert: GitHub Free Plan; nachholen wenn Repo public wird — M10)_
-- [ ] `.env.example` / `SECRET_KEY`-Mismatch behoben → **verschoben nach M1** _(Issue #41)_
-- [x] Login-Flow end-to-end implementiert (JWT → FastAPI → SvelteKit Login-UI) _(Issue #40, M1)_
-- [ ] E-Mail-Verifikation (`POST /auth/verify-email`, SMTP) → **verschoben nach M1** _(Issue #39)_
+- [x] `.env.example` / `SECRET_KEY`-Mismatch behoben _(Issue #41, PR #43)_
+- [x] Login-Flow end-to-end implementiert (JWT → FastAPI → SvelteKit Login-UI) _(Issue #40, PR #45, M1)_
+- [x] E-Mail-Verifikation (`POST /auth/verify-email`, SMTP) _(Issue #39, PR #44, M1)_
 
 #### DSGVO-Checkpoint M0
 
@@ -635,10 +635,10 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38)_
 - [ ] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only
 - [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull`) funktioniert mit Offline-Queue
-- [ ] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40)_
+- [x] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40, PR #45)_
 - [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_
-- [ ] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41)_
-- [ ] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41)_
+- [x] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41, PR #43)_
+- [x] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41, PR #43)_
 
 #### DSGVO-Checkpoint M1
 

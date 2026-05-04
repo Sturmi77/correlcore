@@ -15,14 +15,14 @@
 
 ### Bedrohungsmodell (welche Angriffe wir abdecken)
 
-| Bedrohung | Mitigation durch Stufe 1 (LUKS+SSE) | Mitigation durch Stufe 2 (Fernet) |
-| --- | --- | --- |
-| Diebstahl Backup-Datei (`pg_dump.sql.gz`, restic-Snapshot ohne Verschlüsselung) | ❌ | ✅ |
-| Diebstahl Festplatte aus **abgeschaltetem** Server | ✅ | ✅ |
-| Diebstahl Festplatte aus laufendem Server | ❌ | ❌ |
-| Read-Only-Postgres-Zugriff (Angreifer bekommt SQL-Zugang, App-Server unkompromittiert) | ❌ | ✅ |
-| Kompromittierter App-Server (Klartext im RAM zugänglich) | ❌ | ❌ |
-| Insider-DBA bei SaaS-Betrieb (Cloud, M12+) | ❌ | ✅ |
+| Bedrohung                                                                              | Mitigation durch Stufe 1 (LUKS+SSE) | Mitigation durch Stufe 2 (Fernet) |
+| -------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------- |
+| Diebstahl Backup-Datei (`pg_dump.sql.gz`, restic-Snapshot ohne Verschlüsselung)        | ❌                                  | ✅                                |
+| Diebstahl Festplatte aus **abgeschaltetem** Server                                     | ✅                                  | ✅                                |
+| Diebstahl Festplatte aus laufendem Server                                              | ❌                                  | ❌                                |
+| Read-Only-Postgres-Zugriff (Angreifer bekommt SQL-Zugang, App-Server unkompromittiert) | ❌                                  | ✅                                |
+| Kompromittierter App-Server (Klartext im RAM zugänglich)                               | ❌                                  | ❌                                |
+| Insider-DBA bei SaaS-Betrieb (Cloud, M12+)                                             | ❌                                  | ✅                                |
 
 → **Stufe 1 allein deckt die für Art.-9-Daten relevanten Backup-Szenarien nicht ab.** Feld-Verschlüsselung ist daher Pflicht, nicht Kür.
 
@@ -32,12 +32,12 @@
 
 ### Stufe 1 – Infrastruktur-Ebene (sofort, bis M1)
 
-| Maßnahme               | Implementierung                                                                                                                                     |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **MinIO SSE-S3**       | Server-Side Encryption für alle Buckets aktivieren (`MINIO_KMS_AUTO_ENCRYPTION: 'on'` im Compose-File) – reine Konfiguration, kein Code-Aufwand |
-| **PostgreSQL-Volumes** | Hetzner-LUKS-verschlüsselte Volumes nutzen (in der Deployment-Anleitung dokumentiert); Encryption at-rest auf Block-Ebene                           |
-| **TLS erzwingen**      | Traefik HTTPS-Redirect für alle Services; HSTS mit `max-age=31536000` (1 Jahr), `includeSubDomains`                                                 |
-| **restic-Backup-Verschlüsselung** | Backup-Tool mit AES-256-GCM, Repo-Passwort separat von DB-Credentials |
+| Maßnahme                          | Implementierung                                                                                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MinIO SSE-S3**                  | Server-Side Encryption für alle Buckets aktivieren (`MINIO_KMS_AUTO_ENCRYPTION: 'on'` im Compose-File) – reine Konfiguration, kein Code-Aufwand |
+| **PostgreSQL-Volumes**            | Hetzner-LUKS-verschlüsselte Volumes nutzen (in der Deployment-Anleitung dokumentiert); Encryption at-rest auf Block-Ebene                       |
+| **TLS erzwingen**                 | Traefik HTTPS-Redirect für alle Services; HSTS mit `max-age=31536000` (1 Jahr), `includeSubDomains`                                             |
+| **restic-Backup-Verschlüsselung** | Backup-Tool mit AES-256-GCM, Repo-Passwort separat von DB-Credentials                                                                           |
 
 ### Stufe 2 – App-Ebene (M1)
 
@@ -134,13 +134,13 @@ for row in user_encryption_keys:
 
 ## Alternativen erwogen
 
-| Option                                 | Vorteile                                                                              | Nachteile                                                                                                |
-| -------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **Kein Encryption at-rest**            | Kein Aufwand, volle FTS-Funktionalität                                                | Art.-9-DSGVO-Risiko, Daten bei Backup-Diebstahl im Klartext, **inakzeptabel**                                |
-| **Nur Stufe 1 (LUKS + SSE)**           | Sehr einfach, transparent                                                             | Schützt nicht vor Backup-/`pg_dump`-Diebstahl der entpackten Daten, nicht vor Read-Only-DB-Zugriff      |
-| **pgcrypto Column-Level**              | In PostgreSQL eingebaut, kein zusätzlicher App-Code                                   | Connection-Pool-Risiko, pro-User-Key teuer, Key-Rotation aufwendig, schwächere Performance                |
-| **App-Level Fernet (pro-User-Key)** ✅ | Gute Performance (~0.1 ms/Feld), pro-User-Key trivial, authenticated encryption, saubere Rotation via MultiFernet, Python-nativ | FTS auf verschlüsselten Feldern nicht möglich (Workaround via Dexie.js)                                  |
-| **E2E Client-Side (libsodium)**        | Maximaler Schutz, Server sieht keine Klartextdaten                                    | Bricht serverseitige Insights, höchste Implementierungskomplexität, für Phase 1 überdimensioniert        |
+| Option                                 | Vorteile                                                                                                                        | Nachteile                                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Kein Encryption at-rest**            | Kein Aufwand, volle FTS-Funktionalität                                                                                          | Art.-9-DSGVO-Risiko, Daten bei Backup-Diebstahl im Klartext, **inakzeptabel**                      |
+| **Nur Stufe 1 (LUKS + SSE)**           | Sehr einfach, transparent                                                                                                       | Schützt nicht vor Backup-/`pg_dump`-Diebstahl der entpackten Daten, nicht vor Read-Only-DB-Zugriff |
+| **pgcrypto Column-Level**              | In PostgreSQL eingebaut, kein zusätzlicher App-Code                                                                             | Connection-Pool-Risiko, pro-User-Key teuer, Key-Rotation aufwendig, schwächere Performance         |
+| **App-Level Fernet (pro-User-Key)** ✅ | Gute Performance (~0.1 ms/Feld), pro-User-Key trivial, authenticated encryption, saubere Rotation via MultiFernet, Python-nativ | FTS auf verschlüsselten Feldern nicht möglich (Workaround via Dexie.js)                            |
+| **E2E Client-Side (libsodium)**        | Maximaler Schutz, Server sieht keine Klartextdaten                                                                              | Bricht serverseitige Insights, höchste Implementierungskomplexität, für Phase 1 überdimensioniert  |
 
 ---
 
@@ -161,12 +161,12 @@ for row in user_encryption_keys:
 
 ## Umsetzung
 
-| Meilenstein | Aufgabe                                                                                                                                          |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **M0** ✅   | Stufe 1: MinIO SSE aktiviert (`MINIO_KMS_AUTO_ENCRYPTION: 'on'`), Traefik HSTS-Konfiguration, `ENCRYPTION_KEY` in `.env.example` dokumentiert    |
+| Meilenstein | Aufgabe                                                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **M0** ✅   | Stufe 1: MinIO SSE aktiviert (`MINIO_KMS_AUTO_ENCRYPTION: 'on'`), Traefik HSTS-Konfiguration, `ENCRYPTION_KEY` in `.env.example` dokumentiert                                  |
 | **M1**      | Stufe 2: Migration `user_encryption_keys`, `app/core/crypto.py`, SQLAlchemy-`TypeDecorator` für verschlüsselte Felder, DEK-Generierung bei Registrierung, Key-Rotation-Runbook |
-| **M9**      | LUKS-Volume-Dokumentation für Selfhost-Deployment, restic-Backup-Konfiguration im Install-Guide                                                 |
-| **M12+**    | E2E-Verschlüsselung als Opt-in für Power-User (Backlog)                                                                                          |
+| **M9**      | LUKS-Volume-Dokumentation für Selfhost-Deployment, restic-Backup-Konfiguration im Install-Guide                                                                                |
+| **M12+**    | E2E-Verschlüsselung als Opt-in für Power-User (Backlog)                                                                                                                        |
 
 ---
 
