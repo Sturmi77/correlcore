@@ -1,7 +1,7 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.6 (M0 vollständig abgeschlossen; E-Mail-Verifikation, Login-UI, .env-Fix nach M1 verschoben)
-**Datum:** 2026-04-28
+**Version:** 0.7 (D-011 Verschlüsselungsstrategie re-evaluiert und bestätigt: App-Level Fernet pro-User; ADR-0005 nachgeschärft)
+**Datum:** 2026-05-04
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
 **Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
@@ -927,7 +927,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 | D-008 | Mobile-Strategie: Capacitor vs. TWA (Bubblewrap)? TWA hat Google-Policy-Risiko (Health Connect Bridge, Policy-Änderungen); Capacitor bietet mehr nativen Zugriff, höherer Buildaufwand. | 🔄 Offen                                                                 | [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md)                     |
 | D-009 | Sync-Protokoll Conflict-Handling: Aktuelles LWW-Modell (`updated_at`) birgt Datenverlust bei Multi-Device. Alternativen: CRDT, serverseitige Merge-Strategien, Conflict-Inbox für User. | 🔄 Offen                                                                 | [ADR-0003](adr/0003-sync-conflict-handling.md)                                |
 | D-010 | Auth Phase 1: Native JWT (FastAPI-intern) — implementiert. Authentik ab Phase 2 (M12+).                                                                                                 | ✅ Entschieden: Native JWT Phase 1, Authentik M12+                       | [ADR-0004](adr/0004-auth-strategie.md)                                        |
-| D-011 | Verschlüsselung at-rest Strategie: pgcrypto (DB-Level), App-Level-Encryption (Python), oder Kombination? Auswirkungen auf Suche, Performance und Schlüsselverwaltung.                   | 🔄 Offen                                                                 | [ADR-0005](adr/0005-verschluesselung-at-rest.md)                              |
+| D-011 | Verschlüsselung at-rest Strategie: pgcrypto (DB-Level), App-Level-Encryption (Python), oder Kombination? Auswirkungen auf Suche, Performance und Schlüsselverwaltung.                   | ✅ Entschieden: Zweistufig — LUKS+SSE (Stufe 1) + App-Level Fernet pro-User (Stufe 2); pgcrypto verworfen wegen Connection-Pool-Risiko und teurer Key-Rotation | [ADR-0005](adr/0005-verschluesselung-at-rest.md)                              |
 | D-012 | Observability-Tiefe in M0: Schlanker Ansatz (Healthchecks + Logging im Code, Ops-Tools optional) vs. vollständiger Stack von Beginn an.                                                 | ✅ Entschieden: Schlanker Ansatz, Ops-Tools als `docker-compose.ops.yml` | [ADR-0003-healthchecks-and-logging](adr/ADR-0003-healthchecks-and-logging.md) |
 
 ---
@@ -979,7 +979,7 @@ Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen 
 | SW-01    | LWW Sync-Strategie verursacht stillen Datenverlust bei gleichzeitigen Multi-Device-Edits                                                    | Software      | ❌ offen     | D-009, [ADR-0003](adr/0003-sync-conflict-handling.md)                                      |
 | ZS-01    | TWA-Strategie gefährdet durch Google-Policy-Änderungen und Health Connect Bridge-Instabilität                                               | Zielstrategie | 🔄 in Arbeit | D-008, [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md), M11                      |
 | ZS-05    | Solo-Dev-Burnout-Risiko durch Scope-Creep und fehlende Timeboxing-Disziplin                                                                 | Zielstrategie | 🔄 in Arbeit | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien                               |
-| DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt (pgcrypto vs. App-Level)                                                                 | DSGVO         | ❌ offen     | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md), M1-DSGVO                          |
+| DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt (pgcrypto vs. App-Level)                                                                 | DSGVO         | ✅ entschieden | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md) (re-evaluiert 2026-05-04: App-Level Fernet pro-User), Umsetzung in M1                          |
 | DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur                                                                 | DSGVO         | ❌ offen     | M7-DSGVO                                                                                   |
 | DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden                                                                                      | DSGVO         | ❌ offen     | M9-DSGVO                                                                                   |
 | DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test                                                               | DSGVO         | ❌ offen     | M6-AC, DoD                                                                                 |

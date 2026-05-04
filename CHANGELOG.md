@@ -6,7 +6,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — M0 Fundament
+## [Unreleased] — M1 Vorbereitung
+
+### Documentation
+
+- ADR-0005 (Verschlüsselung at-rest) re-evaluiert und nachgeschärft (2026-05-04):
+  - Bedrohungsmodell-Tabelle hinzugefügt
+  - Begründung gegen pgcrypto explizit dokumentiert (Connection-Pool-Risiko, teure Key-Rotation, pro-User-Key-Overhead)
+  - Konkretes Schlüssel-Rotationsverfahren via `MultiFernet.rotate()` mit Code-Skizze
+  - Datenmodell-Erweiterung `user_encryption_keys` definiert (KEK/DEK-Pattern)
+  - Cryptographic-Erasure-Hinweis für Account-Löschung (Art. 17 DSGVO)
+- DESIGN_DOCUMENT.md: D-011 von „Offen“ auf „Entschieden“ gesetzt; DSGVO-01 als entschieden markiert; Version 0.7
+
+## [0.6.0] — M0 Fundament — 2026-04-28
 
 ### Added
 
