@@ -31,6 +31,7 @@ from httpx import ASGITransport, AsyncClient
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.entry import Entry, EntrySlot, WorkContext
+from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user import User
 from app.services.auth_service import _hash_token
 
@@ -94,6 +95,49 @@ def make_entry(
     e.created_at = datetime.now(UTC)
     e.updated_at = datetime.now(UTC)
     return e
+
+
+def make_tag(
+    user: User | None = None,
+    *,
+    slug: str = "sport",
+    name: str = "Sport",
+    category: TagCategory = TagCategory.SPORT,
+    icon: str | None = "dumbbell",
+    color: str | None = "#10b981",
+    is_default: bool = False,
+) -> Tag:
+    """Build a detached :class:`Tag` for service-layer tests.
+
+    Pass ``user=None`` together with ``is_default=True`` to model a
+    curated default tag. Otherwise the tag is owned by ``user``.
+    """
+    t = Tag()
+    t.id = uuid.uuid4()
+    t.user_id = None if is_default else (user.id if user is not None else uuid.uuid4())
+    t.slug = slug
+    t.name = name
+    t.category = category
+    t.icon = icon
+    t.color = color
+    t.is_default = is_default
+    t.created_at = datetime.now(UTC)
+    t.updated_at = datetime.now(UTC)
+    return t
+
+
+def make_entry_tag(
+    *,
+    entry: Entry,
+    tag: Tag,
+) -> EntryTag:
+    """Build a detached :class:`EntryTag` link row."""
+    et = EntryTag()
+    et.entry_id = entry.id
+    et.tag_id = tag.id
+    et.user_id = entry.user_id
+    et.created_at = datetime.now(UTC)
+    return et
 
 
 def make_verification_token(
