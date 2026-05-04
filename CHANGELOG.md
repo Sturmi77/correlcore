@@ -10,6 +10,36 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Tägliches Eintrags-Formular** (Issue #7): Erste Kern-Funktion von M1.
+  - Backend: `Entry`-Modell mit `EntrySlot` (`morning`/`midday`/`evening`/`unscheduled`)
+    und `WorkContext` (`work_day`/`off_day`/`vacation`/`sick`); CHECK-Constraints für
+    `mood_score`/`energy`/`stress` (1–5) und Unique-Constraint auf
+    `(user_id, entry_date, slot)`. Migration `003_create_entries.py` legt Tabelle,
+    Indizes und vier Row-Level-Security-Policies (`SELECT/INSERT/UPDATE/DELETE`)
+    über `current_setting('app.current_user_id')` an.
+  - Endpoints unter `/api/v1/entries` (`POST`, `GET /`, `GET /{id}`, `PATCH /{id}`)
+    sämtlich hinter `get_current_verified_user`; Rate-Limit 60/min für Schreib- und
+    120/min für Lese-Operationen.
+  - Service-Layer (`entry_service.py`) mit typisierten Exceptions
+    (`EntryNotFoundError`, `EntryConflictError`, `EntryReadOnlyError`,
+    `EntryDateOutOfRangeError`); Backdate-Fenster `BACKDATE_DAYS_LIMIT=7`,
+    Notiz-Maxlänge `MAX_NOTE_LENGTH=4000`.
+  - Pydantic-Schemas (`EntryCreate`/`EntryUpdate`/`EntryResponse`); Wire-Feld
+    `note_enc` wird via `validation_alias` auf das API-Feld `note` gemappt
+    (Vorbereitung für App-Level-Encryption gemäß ADR-0005).
+  - Frontend: API-Client (`apps/web/src/lib/api/entries.ts`), Svelte-Store
+    (`entries.ts` mit `idle/loading/ready/error`), Formular-Page
+    `/entries/new/+page.svelte` mit Datepicker (auf 7-Tage-Fenster begrenzt),
+    drei `ScaleSlider`-Komponenten (1–5 mit +/--Buttons für Tastatur/A11y),
+    Work-Context-Select mit Wochentag-Default, Notiz-Textarea (4000 Zeichen)
+    und Fehler-Mapping für 401/409/422.
+  - i18n (`de.json`/`en.json`) um den `entry.*`-Block erweitert.
+  - Tests: 21 Backend-Tests (Service + Endpoints + statischer Log-Scrubbing-
+    Check für `mood_score`/`energy`/`stress`/`note_enc`) und 12 Frontend-Tests
+    (API-Client + Store).
+  - API.md §3 vollständig auf den M1-Stand gebracht (4 implementierte Endpoints +
+    2 geplante Operationen mit Request-/Response-Beispielen, Validierungsregeln,
+    Fehlercodes, Backdate-Fenster).
 - E-Mail-Verifikation komplett umgesetzt (Issue #39): `POST /api/v1/auth/verify-email`,
   `POST /api/v1/auth/resend-verification` (rate-limitiert 3/min/IP), Single-Use-Token
   in neuer Tabelle `email_verification_tokens` mit SHA-256-Hash + 24h TTL (ADR-0004).

@@ -32,7 +32,31 @@
     "stress_label": "Stress",
     "note_placeholder": "Notiz (optional)...",
     "save": "Speichern",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "title": "Tag erfassen",
+    "subtitle": "Wie war dein Tag wirklich?",
+    "date_label": "Datum",
+    "work_context_label": "Arbeitssituation",
+    "work_context": {
+      "homeoffice": "Homeoffice",
+      "office": "Büro",
+      "vacation": "Urlaub",
+      "sick": "Krank",
+      "weekend": "Wochenende",
+      "travel": "Unterwegs"
+    },
+    "save_busy": "Speichere…",
+    "saved_redirect": "Eintrag gespeichert.",
+    "error_generic": "Eintrag konnte nicht gespeichert werden.",
+    "error_conflict": "Für diesen Tag gibt es bereits einen Eintrag.",
+    "error_too_old": "Du kannst Einträge nur für die letzten 7 Tage erfassen.",
+    "error_unauthenticated": "Bitte melde dich erneut an.",
+    "mood_decrement": "Stimmung verringern",
+    "mood_increment": "Stimmung erhöhen",
+    "energy_decrement": "Energie verringern",
+    "energy_increment": "Energie erhöhen",
+    "stress_decrement": "Stress verringern",
+    "stress_increment": "Stress erhöhen"
   },
   "disclaimer": {
     "medical": "MoodSync ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."

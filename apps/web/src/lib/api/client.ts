@@ -152,6 +152,9 @@ export const api = {
   post: <T = unknown>(path: string, json?: unknown, options?: FetchOptions) =>
     apiFetch<T>(path, { ...options, method: 'POST', json }),
 
+  patch: <T = unknown>(path: string, json?: unknown, options?: FetchOptions) =>
+    apiFetch<T>(path, { ...options, method: 'PATCH', json }),
+
   delete: <T = unknown>(path: string, options?: FetchOptions) =>
     apiFetch<T>(path, { ...options, method: 'DELETE' }),
 };

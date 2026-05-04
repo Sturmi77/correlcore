@@ -83,35 +83,124 @@ POST   /api/v1/auth/callback     OIDC Callback (Code → Session)
 
 ## 3. Entries
 
+M1-Implementierungsstand (Issue #7). `tags`, `symptoms`, `sleep_*` und der
+`/entries/date/{date}`-Lookup folgen in Issues #8 (Tags), #9 (Symptome)
+und M7 (Schlaf). Alle Endpunkte hier laufen hinter
+`get_current_verified_user` und sind pro IP rate-limitiert.
+
 ```
-GET    /api/v1/entries                  Liste (gefiltert, paginiert)
-POST   /api/v1/entries                  Neuen Eintrag erstellen
-GET    /api/v1/entries/{id}             Einzelner Eintrag
-PATCH  /api/v1/entries/{id}             Eintrag aktualisieren
-DELETE /api/v1/entries/{id}             Eintrag löschen
-GET    /api/v1/entries/date/{date}      Eintrag für ein Datum (YYYY-MM-DD)
+POST   /api/v1/entries                  Neuen Eintrag erstellen        (60/min)
+GET    /api/v1/entries                  Liste (gefiltert, neueste zuerst) (120/min)
+GET    /api/v1/entries/{id}             Einzelner Eintrag              (120/min)
+PATCH  /api/v1/entries/{id}             Eintrag aktualisieren          (60/min)
 ```
 
-### Entry-Objekt
+**Geplant (folgt in M1+):**
+
+```
+DELETE /api/v1/entries/{id}             Eintrag löschen            (#23 oder M9 Account-Erasure)
+GET    /api/v1/entries/date/{date}      Eintrag für ein Datum     (M1 Followup)
+```
+
+### Datentypen
+
+- `slot`         — Enum: `day` (Default, M1), `morning`, `noon`, `evening` (reserviert für M3+).
+- `work_context` — Enum: `homeoffice`, `office`, `vacation`, `sick`, `weekend`, `travel`.
+- `mood_score`, `energy`, `stress` — Integer 1..5 (DB-CHECK + Pydantic-Validierung).
+- `note`         — Optional, max. 4000 Zeichen. Wird in der Spalte `note_enc` gespeichert; M1
+  liefert Klartext, ADR-0005 + Issue #26 ziehen Fernet-Verschlüsselung at-rest nach.
+
+### Backdate-Fenster
+
+Neue Einträge sind für **heute** und die letzten **7 Tage** erlaubt.
+Aktualisierungen sind nur innerhalb desselben 7-Tage-Fensters möglich;
+ältere Einträge sind read-only (`409 Conflict`).
+
+### `POST /api/v1/entries`
+
+Request:
+
+```json
+{
+  "entry_date": "2026-05-04",
+  "slot": "day",
+  "mood_score": 4,
+  "energy": 3,
+  "stress": 2,
+  "work_context": "homeoffice",
+  "note": "Lange Sitzung, aber produktiv."
+}
+```
+
+Response `201 Created`:
 
 ```json
 {
   "id": "uuid",
   "user_id": "uuid",
-  "entry_date": "2026-04-20",
+  "entry_date": "2026-05-04",
   "slot": "day",
-  "mood_score": 2,
+  "mood_score": 4,
   "energy": 3,
-  "stress": 1,
+  "stress": 2,
   "work_context": "homeoffice",
-  "note_enc": "...",
-  "sleep_minutes": 450,
-  "sleep_quality": 3,
-  "tags": ["uuid-sport", "uuid-musik"],
-  "symptoms": [{ "symptom_key": "headache", "intensity": 1 }],
-  "created_at": "2026-04-20T17:00:00Z",
-  "updated_at": "2026-04-20T17:00:00Z"
+  "note": "Lange Sitzung, aber produktiv.",
+  "created_at": "2026-05-04T17:00:00Z",
+  "updated_at": "2026-05-04T17:00:00Z"
 }
+```
+
+Fehler:
+
+- `401 Unauthorized` — fehlender / abgelaufener Token.
+- `403 Forbidden`   — nicht verifizierter Account.
+- `409 Conflict`    — für `(user, entry_date, slot)` existiert bereits ein Eintrag.
+- `422 Unprocessable Entity` — Range-Verletzung (mood/energy/stress ∉ 1..5),
+  `entry_date` in der Zukunft, oder älter als 7 Tage.
+
+### `GET /api/v1/entries`
+
+Query-Parameter (alle optional):
+
+- `start_date` (ISO `YYYY-MM-DD`) — inklusiv.
+- `end_date`   (ISO `YYYY-MM-DD`) — inklusiv.
+- `limit`      (1..365, Default 100).
+
+Response `200 OK`: Liste von Entry-Objekten, sortiert nach `entry_date` (desc),
+bei Gleichstand nach `slot` (asc).
+
+### `GET /api/v1/entries/{id}`
+
+Response `200 OK` mit Entry-Objekt; `404 Not Found` falls die ID einem anderen User gehört
+oder nicht existiert (RLS + Service-Layer-Check).
+
+### `PATCH /api/v1/entries/{id}`
+
+Request (alle Felder optional):
+
+```json
+{
+  "mood_score": 5,
+  "energy": 4,
+  "stress": 1,
+  "work_context": "office",
+  "note": "Korrektur"
+}
+```
+
+Fehler:
+
+- `404 Not Found` — wie oben.
+- `409 Conflict`  — Eintrag ist älter als 7 Tage (read-only).
+
+### Zukünftige Felder
+
+```jsonc
+// Sobald Issues #8/#9 / M7 landen, erweitert sich die Antwort um:
+// "tags":     ["uuid-sport", "uuid-musik"],
+// "symptoms": [{ "symptom_key": "headache", "intensity": 1 }],
+// "sleep_minutes": 450,
+// "sleep_quality": 3
 ```
 
 ---

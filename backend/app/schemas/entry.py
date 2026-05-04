@@ -1,0 +1,114 @@
+"""Pydantic schemas for entry endpoints (M1, Issue #7).
+
+Privacy note
+------------
+Entry payloads carry the most sensitive data in the system (mood,
+energy, stress, freeform note). These schemas are also imported by the
+log-scrubber to detect leaked field names — the canonical sensitive-
+field list lives in :mod:`app.core.logging`.
+
+Validation
+----------
+- ``mood_score`` / ``energy`` / ``stress`` are 1..5 ints — same range
+  the DB CHECK constraint enforces. Pydantic surfaces a friendly error
+  before it ever reaches the DB.
+- ``entry_date`` may not be in the future. Older than 7 days is
+  rejected at the service layer (read-only window) so the schema can
+  stay stateless.
+- ``note`` (request-side) maps onto ``note_enc`` (storage). The wire
+  field stays human-readable; the column name signals the at-rest
+  encryption upgrade path (Issue #26 / ADR-0005).
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import date as date_type
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.models.entry import EntrySlot, WorkContext
+
+# Maximum note length on the wire. Generous, but bounded so a malicious
+# client can't dump arbitrary blobs into the DB. Aligns with the
+# Markdown-note design guidance in DESIGN_DOCUMENT.md §2.6.
+MAX_NOTE_LENGTH = 4000
+
+# Read-only window for backdating an entry (DESIGN_DOCUMENT.md §2.1).
+# Enforced in the service layer; documented here for schema readers.
+BACKDATE_DAYS_LIMIT = 7
+
+
+# ---------------------------------------------------------------------------
+# Request schemas
+# ---------------------------------------------------------------------------
+
+
+class EntryCreate(BaseModel):
+    """Payload for ``POST /api/v1/entries``."""
+
+    entry_date: date_type
+    slot: EntrySlot = EntrySlot.DAY
+    mood_score: int = Field(ge=1, le=5)
+    energy: int = Field(ge=1, le=5)
+    stress: int = Field(ge=1, le=5)
+    work_context: WorkContext
+    note: str | None = Field(default=None, max_length=MAX_NOTE_LENGTH)
+
+    @field_validator("entry_date")
+    @classmethod
+    def date_not_in_future(cls, v: date_type) -> date_type:
+        if v > datetime.now().date():
+            raise ValueError("entry_date must not be in the future")
+        return v
+
+    @field_validator("note")
+    @classmethod
+    def note_not_only_whitespace(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            return None
+        return v
+
+
+class EntryUpdate(BaseModel):
+    """Payload for ``PATCH /api/v1/entries/{id}``.
+
+    All fields optional — only sent fields are updated.
+    """
+
+    mood_score: int | None = Field(default=None, ge=1, le=5)
+    energy: int | None = Field(default=None, ge=1, le=5)
+    stress: int | None = Field(default=None, ge=1, le=5)
+    work_context: WorkContext | None = None
+    note: str | None = Field(default=None, max_length=MAX_NOTE_LENGTH)
+
+    @field_validator("note")
+    @classmethod
+    def note_not_only_whitespace(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            return None
+        return v
+
+
+# ---------------------------------------------------------------------------
+# Response schemas
+# ---------------------------------------------------------------------------
+
+
+class EntryResponse(BaseModel):
+    """Single entry — returned by create / get / update / list."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    entry_date: date_type
+    slot: EntrySlot
+    mood_score: int
+    energy: int
+    stress: int
+    work_context: WorkContext
+    note: str | None = Field(default=None, validation_alias="note_enc")
+    created_at: datetime
+    updated_at: datetime
