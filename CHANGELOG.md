@@ -56,6 +56,34 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - Plaintext-Token wird nie persistiert, nur SHA-256-Hash; Token-Versand ausschließlich über Mail.
 - **DSGVO Log-Scrubbing-Test** (`backend/tests/test_log_scrubbing.py`) als M1-DSGVO-Checkpoint-Absicherung ergänzt. Prüft das fixe JSON-Log-Schema gegen Top-Level-Key-Whitelist, blockt `extra=`-Leaks von Health-Daten, deckt Exception-Logging ohne User-Daten ab und scannt Production-Code auf `print()`-Aufrufe sowie auf Logger-Templates mit sensiblen Feldnamen (`mood_score`, `note_enc`, `password_plain`, ...). Schliesst M1-DSGVO-DoD `Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs`.
 
+### Changed
+
+- **Code-Quality-Cleanup nach M1-Vorbereitung** (Issues #49 vorbereitend, kein neuer Issue):
+  - SlowAPI-`Limiter` in neues Modul `backend/app/core/rate_limit.py` extrahiert.
+    Vorher wurde der `Limiter(key_func=get_remote_address)` doppelt instanziert
+    (`app/main.py` und `app/api/v1/endpoints/auth.py`) — funktional unauffällig
+    mit dem aktuellen In-Memory-Backend, aber konzeptuell falsch und würde beim
+    Wechsel auf einen geteilten Redis-Storage zwei separate State-Buckets erzeugen.
+    Beide Stellen importieren jetzt dieselbe Instanz.
+  - Schwergewichts-Dependencies (`pandas`, `scikit-learn`, `scipy`, `apscheduler`)
+    aus `[project.dependencies]` in neue Optional-Group `analytics` verschoben.
+    Diese Libraries werden im aktuellen M0/M1-Code an keiner Stelle importiert
+    und sparen ~150–200 MB Image-Size sowie deutlich verkürzte `uv sync`-Zeiten
+    in CI. Aktivierung erfolgt automatisch sobald ADR-0006-Insights-Worker (M2+)
+    startet — dann via `uv sync --extra analytics`.
+  - Test-Factories in zentrales `backend/tests/conftest.py` extrahiert
+    (`make_user`, `make_verification_token`, `make_db_session_with_results`,
+    `async_client`-Fixture, Token-Konstanten). Vorher waren `_make_user` /
+    `_make_token` / `_make_db_with_token` 2× leicht abweichend in `test_auth.py`
+    und `test_email_verification.py` dupliziert; das `AsyncClient`-Setup wurde
+    in 17 Tests wörtlich kopiert. M1-Test-Suite (Entries/Tags/Symptome) baut
+    jetzt direkt auf den Fixtures auf.
+  - Frontend: `mapApiError(err, statusMap)`-Helper in `apps/web/src/lib/utils/error.ts`
+    konsolidiert vier nahezu identische `mapError`-Funktionen aus den Auth-Pages
+    (`login`, `register`, `verify-email`, `resend-verification`). Reduziert
+    Boilerplate, vereinheitlicht den Fallback-Pfad (`error.generic`) und ist mit
+    7 Vitest-Tests abgedeckt.
+
 ### Documentation
 
 - ADR-0005 (Verschlüsselung at-rest) re-evaluiert und nachgeschärft (2026-05-04):
