@@ -9,13 +9,13 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 
 ## Index
 
-| ADR                                          | Titel                                                       | Status   | Datum      |
-| -------------------------------------------- | ----------------------------------------------------------- | -------- | ---------- |
-| [ADR-0001](0001-sveltekit-vs-nextjs.md)      | SvelteKit als Web-Framework (statt Next.js)                 | Accepted | –          |
-| [ADR-0002](0002-capacitor-statt-twa.md)      | Capacitor statt TWA als Mobile-Strategie                    | Accepted | 2026-04-20 |
-| [ADR-0003](0003-sync-conflict-log.md)        | Sync-Protokoll: Conflict-Log statt stilles LWW              | Accepted | 2026-04-20 |
-| [ADR-0004](0004-auth-strategie.md)           | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2 | Accepted | 2026-04-20 |
-| [ADR-0005](0005-verschluesselung-at-rest.md) | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted | 2026-04-20 |
+| ADR                                                     | Titel                                                       | Status   | Datum      |
+| ------------------------------------------------------- | ----------------------------------------------------------- | -------- | ---------- |
+| [ADR-0001](0001-sveltekit-vs-nextjs.md)                 | SvelteKit als Web-Framework (statt Next.js)                 | Accepted | –          |
+| [ADR-0002](0002-capacitor-statt-twa.md)                 | Capacitor statt TWA als Mobile-Strategie                    | Accepted | 2026-04-20 |
+| [ADR-0003](0003-sync-conflict-log.md)                   | Sync-Protokoll: Conflict-Log statt stilles LWW              | Accepted | 2026-04-20 |
+| [ADR-0004](0004-auth-strategie.md)                      | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2 | Accepted | 2026-04-20 |
+| [ADR-0005](0005-verschluesselung-at-rest.md)            | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted | 2026-04-20 |
 | [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted | 2026-05-04 |
 
 ## Kurzübersicht der Entscheidungen

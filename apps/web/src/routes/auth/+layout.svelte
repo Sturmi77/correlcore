@@ -134,13 +134,17 @@
     padding: var(--space-8) var(--space-6);
     border-radius: 16px;
     background: rgb(var(--color-surface-100) / 0.6);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.06);
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.06),
+      0 8px 24px rgb(0 0 0 / 0.06);
     backdrop-filter: blur(8px);
   }
 
   :global(html.dark) .auth-card {
     background: rgb(var(--color-surface-800) / 0.55);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.3);
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.4),
+      0 12px 32px rgb(0 0 0 / 0.3);
   }
 
   .auth-footer {

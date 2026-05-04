@@ -43,7 +43,14 @@
 {#if phase === 'success'}
   <header class="auth-page-header">
     <div class="auth-icon auth-icon-success" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
+      <svg
+        viewBox="0 0 24 24"
+        width="48"
+        height="48"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
         <circle cx="12" cy="12" r="10" />
         <path d="M8 12.5l3 3 5-6" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
@@ -59,7 +66,14 @@
 {:else if phase === 'error'}
   <header class="auth-page-header">
     <div class="auth-icon auth-icon-error" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
+      <svg
+        viewBox="0 0 24 24"
+        width="48"
+        height="48"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
         <circle cx="12" cy="12" r="10" />
         <path d="M12 8v4M12 16h.01" stroke-linecap="round" />
       </svg>

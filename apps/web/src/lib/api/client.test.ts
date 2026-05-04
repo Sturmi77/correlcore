@@ -102,9 +102,7 @@ describe('apiFetch — single-flight refresh', () => {
   });
 
   it('does not retry when refresh itself fails', async () => {
-    fetchMock
-      .mockResolvedValueOnce(emptyResponse(401))
-      .mockResolvedValueOnce(emptyResponse(401)); // refresh also unauth
+    fetchMock.mockResolvedValueOnce(emptyResponse(401)).mockResolvedValueOnce(emptyResponse(401)); // refresh also unauth
 
     await expect(apiFetch('/protected')).rejects.toMatchObject({
       name: 'ApiError',
@@ -130,9 +128,7 @@ describe('apiFetch — single-flight refresh', () => {
     expect(a).toEqual({ url: expect.stringContaining('/a') });
     expect(b).toEqual({ url: expect.stringContaining('/b') });
 
-    const refreshCalls = fetchMock.mock.calls.filter((c) =>
-      String(c[0]).includes('/auth/refresh'),
-    );
+    const refreshCalls = fetchMock.mock.calls.filter((c) => String(c[0]).includes('/auth/refresh'));
     expect(refreshCalls).toHaveLength(1);
   });
 

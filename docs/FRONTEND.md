@@ -189,13 +189,13 @@ Storybook für alle Atoms und Molecules.
 
 ### Routen
 
-| Route                       | Zweck                                                      | Public |
-| --------------------------- | ---------------------------------------------------------- | ------ |
-| `/auth/login`               | Anmeldung. Redirect auf `?next=…` (whitelisted in-app).    | ✅     |
-| `/auth/register`            | Registrierung. Leitet auf `/auth/check-email?email=…`.     | ✅     |
-| `/auth/check-email`         | Hinweis nach Registrierung.                                | ✅     |
-| `/auth/verify-email`        | Bestätigt Token aus E-Mail-Link **per User-Klick**.        | ✅     |
-| `/auth/resend-verification` | Fordert neue Bestätigungs-Mail an (immer 202).             | ✅     |
+| Route                       | Zweck                                                   | Public |
+| --------------------------- | ------------------------------------------------------- | ------ |
+| `/auth/login`               | Anmeldung. Redirect auf `?next=…` (whitelisted in-app). | ✅     |
+| `/auth/register`            | Registrierung. Leitet auf `/auth/check-email?email=…`.  | ✅     |
+| `/auth/check-email`         | Hinweis nach Registrierung.                             | ✅     |
+| `/auth/verify-email`        | Bestätigt Token aus E-Mail-Link **per User-Klick**.     | ✅     |
+| `/auth/resend-verification` | Fordert neue Bestätigungs-Mail an (immer 202).          | ✅     |
 
 Alle anderen Routen sind durch den Auth-Guard im Root-`+layout.svelte` geschützt: bei `auth.status === 'anonymous'` Redirect auf `/auth/login?next=<aktueller-Pfad>`.
 

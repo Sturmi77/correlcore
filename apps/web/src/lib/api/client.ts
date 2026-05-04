@@ -26,7 +26,7 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     public readonly detail: string,
-    public readonly path: string,
+    public readonly path: string
   ) {
     super(`API ${status} on ${path}: ${detail}`);
     this.name = 'ApiError';
@@ -34,7 +34,10 @@ export class ApiError extends Error {
 }
 
 export class NetworkError extends Error {
-  constructor(public readonly path: string, cause?: unknown) {
+  constructor(
+    public readonly path: string,
+    cause?: unknown
+  ) {
     super(`Network error on ${path}`);
     this.name = 'NetworkError';
     if (cause) (this as { cause?: unknown }).cause = cause;
@@ -93,10 +96,7 @@ async function parseError(res: Response, path: string): Promise<ApiError> {
  * @throws ApiError      on non-2xx responses (after the 401 retry)
  * @throws NetworkError  on transport failures (offline, DNS, CORS)
  */
-export async function apiFetch<T = unknown>(
-  path: string,
-  options: FetchOptions = {},
-): Promise<T> {
+export async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const { json, skipAuthRefresh, headers, ...rest } = options;
   const url = `${API_BASE}${path}`;
 

@@ -11,7 +11,14 @@
 
 <header class="auth-page-header">
   <div class="auth-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+    <svg
+      viewBox="0 0 24 24"
+      width="48"
+      height="48"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    >
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="M3 7l9 6 9-6" />
     </svg>
@@ -23,7 +30,9 @@
   {#if email}
     {$_('auth.check_email.body', { values: { email } })}
   {:else}
-    {$_('auth.check_email.body', { values: { email: $_('auth.common.email_label').toLowerCase() } })}
+    {$_('auth.check_email.body', {
+      values: { email: $_('auth.common.email_label').toLowerCase() },
+    })}
   {/if}
 </p>
 

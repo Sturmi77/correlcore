@@ -25,13 +25,13 @@ Der Wechsel ist isoliert in **`apiFetch` (`apps/web/src/lib/api/client.ts`)**: a
 
 ## Begründung
 
-| Kriterium                    | Cookie (Phase 1)                                           | Bearer (Phase 2)                                           |
-| ---------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
-| **XSS-Resistenz**            | ✅ HttpOnly — JS kann den Token nicht lesen                | ⚠️ JS-Heap, aber In-Memory (kein persistenter Storage)     |
-| **CSRF-Risiko**              | Mitigiert via SameSite=Strict + State-Changing Requests POST/JSON | ✅ N/A (kein Cookie, kein automatisches Senden)            |
-| **Capacitor-Kompatibilität** | ❌ `capacitor://`-Cookies werden nicht an API gesendet     | ✅ Header funktioniert in beiden Schemes                   |
-| **JS-Bundle-Kosten**         | ✅ Null (Browser handhabt Cookie automatisch)              | Minimal (~0.5 KB für In-Memory-Container)                  |
-| **DSGVO Art.-9-Risiko**      | Niedrigste Angriffsfläche (XSS-immun)                      | Akzeptabel, da App-Container kein dritter JavaScript-Code  |
+| Kriterium                    | Cookie (Phase 1)                                                  | Bearer (Phase 2)                                          |
+| ---------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------- |
+| **XSS-Resistenz**            | ✅ HttpOnly — JS kann den Token nicht lesen                       | ⚠️ JS-Heap, aber In-Memory (kein persistenter Storage)    |
+| **CSRF-Risiko**              | Mitigiert via SameSite=Strict + State-Changing Requests POST/JSON | ✅ N/A (kein Cookie, kein automatisches Senden)           |
+| **Capacitor-Kompatibilität** | ❌ `capacitor://`-Cookies werden nicht an API gesendet            | ✅ Header funktioniert in beiden Schemes                  |
+| **JS-Bundle-Kosten**         | ✅ Null (Browser handhabt Cookie automatisch)                     | Minimal (~0.5 KB für In-Memory-Container)                 |
+| **DSGVO Art.-9-Risiko**      | Niedrigste Angriffsfläche (XSS-immun)                             | Akzeptabel, da App-Container kein dritter JavaScript-Code |
 
 **Cookie für Web** maximiert XSS-Resistenz für Gesundheitsdaten, was angesichts unserer DSGVO-Verpflichtungen den Ausschlag gibt. **Bearer für Capacitor** ist die einzige funktionierende Variante; das XSS-Risiko ist dort drastisch geringer, weil der App-Container keine eingebettete Drittanbieter-Werbung oder externe Scripts ausführt.
 

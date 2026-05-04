@@ -31,9 +31,7 @@ const _auth = writable<AuthState>({ status: 'loading' });
 export const auth = { subscribe: _auth.subscribe };
 
 /** Convenience derived stores. */
-export const currentUser = derived(_auth, ($a) =>
-  $a.status === 'authenticated' ? $a.user : null,
-);
+export const currentUser = derived(_auth, ($a) => ($a.status === 'authenticated' ? $a.user : null));
 export const isAuthenticated = derived(_auth, ($a) => $a.status === 'authenticated');
 export const isAuthLoading = derived(_auth, ($a) => $a.status === 'loading');
 
