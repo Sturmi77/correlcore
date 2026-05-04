@@ -17,6 +17,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0004](0004-auth-strategie.md)                      | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2 | Accepted | 2026-04-20 |
 | [ADR-0005](0005-verschluesselung-at-rest.md)            | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted | 2026-04-20 |
 | [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted | 2026-05-04 |
+| [ADR-0007](0007-healthchecks-and-logging.md)            | Healthchecks und strukturiertes Logging                     | Accepted | 2026-05-04 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -43,6 +44,10 @@ Zweistufig: Stufe 1 = MinIO SSE + LUKS-Volumes + HSTS (Infrastruktur, M0). Stufe
 ### ADR-0006 – Cookie-Auth im Web mit Capacitor-Migration
 
 Phase 1 (Web): HttpOnly-Cookies (SameSite=Strict, Secure) für maximale XSS-Resistenz auf Art.-9-Daten. Phase 2 (Capacitor, M11+): In-Memory-Bearer-Token, da `capacitor://`-Cookies geblockt werden. Migration ist auf `apiFetch` lokalisiert; UI und Stores bleiben unberührt.
+
+### ADR-0007 – Healthchecks und strukturiertes Logging
+
+Drei-Tier-Healthchecks (`/health/live` nie 5xx, `/health/ready` 503 bei Dep-Ausfall, `/health` aggregierte Summary) verhindern Restart-Loops. JSON-Logging mit fixem Schema nach STDOUT plus Request-ID-Middleware (UUID4 oder vom Client übernommen) erlaubt Korrelation ohne externes Tracing-System. Logs enthalten niemals Art.-9-Gesundheitsdaten — abgesichert durch automatischen Log-Scrubbing-Test (`tests/test_log_scrubbing.py`). Schlägt explizit ADR-0008-Möglichkeiten für einen vollständigen Metrics-Stack ab M9 vor.
 
 ---
 
