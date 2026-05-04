@@ -43,6 +43,22 @@ class RefreshRequest(BaseModel):
     refresh_token: str | None = None
 
 
+class VerifyEmailRequest(BaseModel):
+    """Issue #39: payload for POST /auth/verify-email.
+
+    Token is sent in the JSON body (not the URL) so it doesn't end up
+    in access logs / browser history when the frontend forwards it.
+    """
+
+    token: str = Field(min_length=16, max_length=128)
+
+
+class ResendVerificationRequest(BaseModel):
+    """Issue #39: payload for POST /auth/resend-verification."""
+
+    email: EmailStr
+
+
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------

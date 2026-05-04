@@ -241,6 +241,32 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # ── MailPit (Dev SMTP — Issue #39) ───────────────────────────────────────
+  # Fängt alle ausgehenden Mails ab (kein realer Versand). UI: http://localhost:8025
+  # In Produktion über .env das echte SMTP_HOST setzen — der mailpit-Container kann
+  # via `docker compose stop mailpit` deaktiviert werden ohne Compose-Edit.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: moodsync-mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      # Web-UI nur an localhost gebunden — kein externer Zugriff.
+      # SMTP (1025) ist nur über das interne Compose-Netz erreichbar.
+      - '127.0.0.1:8025:8025'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:8025/api/v1/info']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   # ── MinIO Bucket Bootstrap ─────────────────────────────────────────────────
   minio-init:
     image: minio/mc:latest

@@ -13,11 +13,14 @@ Privacy: no user content (mood/symptoms/notes) is ever touched here.
 
 from __future__ import annotations
 
+import hashlib
 import logging
+import secrets
 import uuid
+from datetime import UTC, datetime, timedelta
 
 from jose import JWTError, jwt
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -28,6 +31,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.redis_client import TokenStore
+from app.models.email_verification_token import EmailVerificationToken
 from app.models.user import User
 from app.schemas.auth import RegisterRequest
 
@@ -47,6 +51,14 @@ class RegistrationError(Exception):
     """Maps to HTTP 409 (conflict) or HTTP 422 (validation)."""
 
 
+class VerificationError(Exception):
+    """Email verification failed — maps to HTTP 400.
+
+    Error message is intentionally generic to avoid leaking whether a
+    token existed-but-expired vs. never-existed (timing/enumeration).
+    """
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -60,6 +72,118 @@ async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
 async def _get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
     result = await db.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none()
+
+
+# ---------------------------------------------------------------------------
+# Email verification (Issue #39)
+# ---------------------------------------------------------------------------
+
+_TOKEN_BYTES = 32  # 256 bits — 64 hex chars after .hex()
+
+
+def _hash_token(plaintext: str) -> str:
+    """SHA-256 hex digest. Plaintext token is never persisted."""
+    return hashlib.sha256(plaintext.encode("utf-8")).hexdigest()
+
+
+async def create_verification_token(
+    db: AsyncSession,
+    user: User,
+) -> str:
+    """Create a fresh single-use email-verification token for ``user``.
+
+    Any previously-issued unused tokens for the same user are deleted to
+    enforce "latest token wins" semantics on resend (matches the refresh
+    token rotation pattern from ADR-0004).
+
+    Returns the **plaintext** token — caller must put it into the email
+    URL and never log it. Only the hash is persisted.
+    """
+    # Invalidate prior tokens for this user (resend semantics)
+    await db.execute(
+        delete(EmailVerificationToken).where(EmailVerificationToken.user_id == user.id)
+    )
+
+    plaintext = secrets.token_urlsafe(_TOKEN_BYTES)
+    record = EmailVerificationToken(
+        user_id=user.id,
+        token_hash=_hash_token(plaintext),
+        expires_at=datetime.now(UTC) + timedelta(hours=settings.EMAIL_VERIFICATION_TTL_HOURS),
+    )
+    db.add(record)
+    await db.flush()
+    logger.info(
+        "verification token issued",
+        extra={"user_id": str(user.id), "token_id": str(record.id)},
+    )
+    return plaintext
+
+
+async def verify_email(db: AsyncSession, plaintext_token: str) -> User:
+    """Consume a verification token and mark the user as verified.
+
+    Raises ``VerificationError`` for any failure mode (unknown / expired /
+    used / inactive user). The error message is generic to prevent
+    enumeration via timing or message comparison.
+    """
+    token_hash = _hash_token(plaintext_token)
+
+    result = await db.execute(
+        select(EmailVerificationToken).where(
+            EmailVerificationToken.token_hash == token_hash
+        )
+    )
+    token = result.scalar_one_or_none()
+
+    if token is None:
+        logger.warning("verify-email: unknown token")
+        raise VerificationError("Invalid or expired verification token")
+
+    if token.used_at is not None:
+        logger.warning(
+            "verify-email: token replay",
+            extra={"user_id": str(token.user_id), "token_id": str(token.id)},
+        )
+        raise VerificationError("Invalid or expired verification token")
+
+    # expires_at is timezone-aware (DateTime(timezone=True))
+    if token.expires_at < datetime.now(UTC):
+        logger.info(
+            "verify-email: token expired",
+            extra={"user_id": str(token.user_id), "token_id": str(token.id)},
+        )
+        raise VerificationError("Invalid or expired verification token")
+
+    user = await _get_user_by_id(db, token.user_id)
+    if user is None or not user.is_active:
+        raise VerificationError("Invalid or expired verification token")
+
+    # Idempotent on the user side: already-verified is a no-op success
+    if not user.is_verified:
+        user.is_verified = True
+
+    token.used_at = datetime.now(UTC)
+    await db.flush()
+    logger.info("user email verified", extra={"user_id": str(user.id)})
+    return user
+
+
+async def request_verification_resend(
+    db: AsyncSession,
+    email: str,
+) -> tuple[User, str] | None:
+    """Resend a verification mail for the given email if applicable.
+
+    Returns ``(user, plaintext_token)`` if a token was minted, ``None``
+    otherwise (unknown email, already verified, or inactive). The endpoint
+    layer must always respond with the same generic 202 message regardless
+    of return value to avoid email enumeration.
+    """
+    user = await _get_user_by_email(db, email)
+    if user is None or not user.is_active or user.is_verified:
+        return None
+    plaintext = await create_verification_token(db, user)
+    return user, plaintext
 
 
 def _build_token_pair(user: User) -> tuple[str, str, str]:

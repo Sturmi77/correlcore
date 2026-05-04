@@ -636,7 +636,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only
 - [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull`) funktioniert mit Offline-Queue
 - [ ] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40)_
-- [ ] E-Mail-Verifikation: `/register` sendet Mail, `/auth/verify-email?token=` setzt `is_verified=True` _(Issue #39)_
+- [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_
 - [ ] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41)_
 - [ ] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41)_
 

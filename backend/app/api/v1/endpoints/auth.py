@@ -16,7 +16,15 @@ from __future__ import annotations
 import logging
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,17 +39,24 @@ from app.schemas.auth import (
     MessageResponse,
     RefreshRequest,
     RegisterRequest,
+    ResendVerificationRequest,
     TokenResponse,
     UserResponse,
+    VerifyEmailRequest,
 )
 from app.services.auth_service import (
     AuthError,
     RegistrationError,
+    VerificationError,
+    create_verification_token,
     login_user,
     logout_user,
     refresh_tokens,
     register_user,
+    request_verification_resend,
+    verify_email,
 )
+from app.services.email_service import send_verification_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -93,14 +108,83 @@ def _clear_auth_cookies(response: Response) -> None:
 )
 async def register(
     data: RegisterRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_session),
 ) -> MessageResponse:
     try:
-        await register_user(db, data)
+        user = await register_user(db, data)
+        plaintext_token = await create_verification_token(db, user)
     except RegistrationError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    # TODO M1: send verification email
+
+    # Mail-Versand asynchron im Hintergrund — Registration responst sofort.
+    # SMTP-Fehler werden im EmailService geloggt, blocken aber nicht die
+    # Registrierung (Issue #39).
+    background_tasks.add_task(
+        send_verification_email,
+        to_email=user.email,
+        display_name=user.display_name,
+        token=plaintext_token,
+    )
     return MessageResponse(message="Registration successful. Please verify your email address.")
+
+
+# ---------------------------------------------------------------------------
+# POST /verify-email  (Issue #39)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/verify-email",
+    response_model=MessageResponse,
+    summary="Verify a user's email via the token from the welcome mail",
+)
+async def verify_email_endpoint(
+    data: VerifyEmailRequest,
+    db: AsyncSession = Depends(get_session),
+) -> MessageResponse:
+    try:
+        await verify_email(db, data.token)
+    except VerificationError as exc:
+        # Always 400 with a generic message — see service docstring
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    return MessageResponse(message="Email verified. You can now sign in.")
+
+
+# ---------------------------------------------------------------------------
+# POST /resend-verification  (Issue #39, rate-limited)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/resend-verification",
+    response_model=MessageResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Resend a verification email (always returns 202 to avoid enumeration)",
+)
+@limiter.limit("3/minute")
+async def resend_verification(
+    request: Request,
+    data: ResendVerificationRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_session),
+) -> MessageResponse:
+    result = await request_verification_resend(db, data.email)
+    if result is not None:
+        user, plaintext_token = result
+        background_tasks.add_task(
+            send_verification_email,
+            to_email=user.email,
+            display_name=user.display_name,
+            token=plaintext_token,
+        )
+    # Same response whether or not an email exists — prevents enumeration
+    return MessageResponse(
+        message="If the email is registered and unverified, a verification mail has been sent."
+    )
 
 
 # ---------------------------------------------------------------------------

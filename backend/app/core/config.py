@@ -50,12 +50,22 @@ class Settings(BaseSettings):
     # CORS — list of allowed frontend origins
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
-    # SMTP (for email verification)
+    # SMTP (for email verification — Issue #39)
+    # In dev: MailPit catches all mail at smtp://mailpit:1025 (UI on :8025)
+    # In prod: configure a real SMTP relay
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "noreply@moodsync.local"
+    SMTP_USE_TLS: bool = True  # STARTTLS — disable for MailPit/MailHog dev relays
+    SMTP_TIMEOUT: int = 10  # seconds
+
+    # Email verification (ADR-0004: 24h TTL)
+    EMAIL_VERIFICATION_TTL_HOURS: int = 24
+    # Public base URL used to build the verify link in outgoing mails.
+    # Frontend route handles the GET and calls the API.
+    FRONTEND_BASE_URL: str = "http://localhost:5173"
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
