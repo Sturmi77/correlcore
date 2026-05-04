@@ -1,12 +1,16 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { ApiError } from '$lib/api/client';
   import { resendVerification } from '$lib/api/auth';
+  import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   let email = '';
   let busy = false;
   let success = false;
   let errorKey: string | null = null;
+
+  const ERROR_MAP: ApiErrorMap = {
+    429: 'auth.resend.error_rate_limit',
+  };
 
   async function onSubmit() {
     if (busy) return;
@@ -18,11 +22,7 @@
       // Backend always returns 202 (anti-enumeration) — show generic success.
       success = true;
     } catch (err) {
-      if (err instanceof ApiError && err.status === 429) {
-        errorKey = 'auth.resend.error_rate_limit';
-      } else {
-        errorKey = 'error.generic';
-      }
+      errorKey = mapApiError(err, ERROR_MAP);
     } finally {
       busy = false;
     }

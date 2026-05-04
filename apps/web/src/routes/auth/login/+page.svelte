@@ -2,13 +2,19 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { ApiError } from '$lib/api/client';
   import { login } from '$lib/stores/auth';
+  import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   let email = '';
   let password = '';
   let busy = false;
   let errorKey: string | null = null;
+
+  const ERROR_MAP: ApiErrorMap = {
+    401: 'auth.login.error_invalid',
+    403: 'auth.login.error_unverified',
+    429: 'auth.login.error_rate_limit',
+  };
 
   /** Whitelist next-target to in-app paths to prevent open-redirect. */
   function safeNext(raw: string | null): string {
@@ -27,19 +33,10 @@
       const target = safeNext($page.url.searchParams.get('next'));
       await goto(target, { replaceState: true });
     } catch (err) {
-      errorKey = mapError(err);
+      errorKey = mapApiError(err, ERROR_MAP);
     } finally {
       busy = false;
     }
-  }
-
-  function mapError(err: unknown): string {
-    if (err instanceof ApiError) {
-      if (err.status === 401) return 'auth.login.error_invalid';
-      if (err.status === 403) return 'auth.login.error_unverified';
-      if (err.status === 429) return 'auth.login.error_rate_limit';
-    }
-    return 'error.generic';
   }
 </script>
 
