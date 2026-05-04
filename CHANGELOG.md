@@ -10,6 +10,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- E-Mail-Verifikation komplett umgesetzt (Issue #39): `POST /api/v1/auth/verify-email`,
+  `POST /api/v1/auth/resend-verification` (rate-limitiert 3/min/IP), Single-Use-Token
+  in neuer Tabelle `email_verification_tokens` mit SHA-256-Hash + 24h TTL (ADR-0004).
+  `POST /api/v1/auth/register` versendet Verify-Mail asynchron via BackgroundTask.
+- MailPit-Service in `infra/docker/docker-compose.yml` als Dev/Test-SMTP-Catcher
+  (Web-UI an `127.0.0.1:8025`, kein externer Zugriff).
+- Verify-Mail-Templates (HTML + Plain-Text) in `backend/app/templates/email/`,
+  ohne Tracking-Pixel und ohne externe Assets (DSGVO).
+- `aiosmtplib`-basierter Async-`EmailService` ersetzt sync `emails`-Lib.
+- Migration `002_create_email_verification_tokens.sql` (Cascade-Delete bei User-Erasure).
+- API.md: vollständige Auth-Endpoint-Dokumentation; Phase-1-Native-JWT vs.
+  Phase-2-OIDC-Block sauber getrennt (war zuvor inkonsistent).
 - **Frontend-Auth-Flow** (Issue #40):
   - Zentraler `apiFetch`-Client mit `credentials: 'include'` + Single-Flight-Refresh auf 401.
   - Auth-API-Modul (`register`, `login`, `logout`, `fetchCurrentUser`, `verifyEmail`, `resendVerification`).
@@ -30,8 +42,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   - `CORS_ORIGINS`, `APP_VERSION`, `DEBUG`, `JWT_ALGORITHM` in `.env.example` ergänzt
   - Compose erzwingt jetzt explizit `ENCRYPTION_KEY` als Pflichtvariable (`:?error`)
   - Anmerkung: Der ursprüngliche `SECRET_KEY`/`JWT_SECRET`-Mismatch war bereits durch `AliasChoices` in `config.py` behoben — Restscope war Vollständigkeits-Check
+- CI-API-Workflow scheiterte mit `Failed to spawn pytest`, weil `uv sync --dev` Dev-Dependencies aus `[project.optional-dependencies]` nicht installiert (uv 0.5+ erwartet PEP 735 `[dependency-groups]` für `--dev`). Workflow nutzt jetzt `uv sync --extra dev --frozen`, damit Dev-Tools (pytest/mypy/ruff) deterministisch aus dem Lockfile installiert werden.
+- `backend/uv.lock` regeneriert: war noch auf altem Stand mit `emails`-Paket, obwohl der Email-Service in Issue #39 bereits auf `aiosmtplib` + `jinja2` migriert wurde. Lock entspricht jetzt wieder `pyproject.toml`.
+- Bestehende Backend-Dateien (`auth_service.py`, `tests/test_auth.py`, `tests/test_email_verification.py`) gemäß `ruff format`-Standard formatiert — wurden vom Format-Check im CI-Lint-Job sonst gerejected.
 - Auth-UI-Dateien (`apps/web/src/lib/api/client.ts` + Tests, `apps/web/src/lib/stores/auth.ts`, `apps/web/src/routes/auth/{+layout,check-email,verify-email}/...`) sowie zugehörige Doku (`docs/FRONTEND.md`, `docs/adr/0006-...`, `docs/adr/README.md`) gemäß Prettier-Standard formatiert — wurden vom CI-Web-Format-Check sonst gerejected.
 - `@eslint/js` zur Root-`devDependencies` ergänzt (Issue #46): `eslint.config.js` importierte das Paket bereits, es war aber nicht deklariert. Daher schlug `pnpm lint` (auch im CI-Web-Lint-Job) seit M0 mit `ERR_MODULE_NOT_FOUND` fehl. ESLint 9 liefert die `js`-Recommended-Configs nur noch über das separate `@eslint/js`-Paket.
+
+### Security
+
+- Verify-Endpoint gibt einheitlich `Invalid or expired verification token` (kein
+  Detail über Ursache) — verhindert Enumeration.
+- Resend-Endpoint antwortet immer mit generischem 202 — verhindert E-Mail-Enumeration.
+- Plaintext-Token wird nie persistiert, nur SHA-256-Hash; Token-Versand ausschließlich über Mail.
+
+---
 
 ## [0.6.0] — M0 Fundament — 2026-04-28
 
