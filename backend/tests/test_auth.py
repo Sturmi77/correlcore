@@ -60,15 +60,17 @@ NEW_REFRESH = "new.refresh.token"
 async def test_register_success() -> None:
     # Issue #39: register also schedules a verification email — mock the
     # token-mint and mail-send helpers so we don't touch DB or SMTP.
-    with patch(
-        "app.api.v1.endpoints.auth.register_user", new_callable=AsyncMock
-    ) as mock_reg, patch(
-        "app.api.v1.endpoints.auth.create_verification_token",
-        new_callable=AsyncMock,
-        return_value="plaintext-token",
-    ), patch(
-        "app.api.v1.endpoints.auth.send_verification_email",
-        new_callable=AsyncMock,
+    with (
+        patch("app.api.v1.endpoints.auth.register_user", new_callable=AsyncMock) as mock_reg,
+        patch(
+            "app.api.v1.endpoints.auth.create_verification_token",
+            new_callable=AsyncMock,
+            return_value="plaintext-token",
+        ),
+        patch(
+            "app.api.v1.endpoints.auth.send_verification_email",
+            new_callable=AsyncMock,
+        ),
     ):
         mock_reg.return_value = _make_user()
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:

@@ -280,14 +280,17 @@ async def test_endpoint_resend_known_email_schedules_mail() -> None:
     user = _make_user(verified=False)
     plaintext = "tok_" + "x" * 32
 
-    with patch(
-        "app.api.v1.endpoints.auth.request_verification_resend",
-        new_callable=AsyncMock,
-        return_value=(user, plaintext),
-    ), patch(
-        "app.api.v1.endpoints.auth.send_verification_email",
-        new_callable=AsyncMock,
-    ) as mock_send:
+    with (
+        patch(
+            "app.api.v1.endpoints.auth.request_verification_resend",
+            new_callable=AsyncMock,
+            return_value=(user, plaintext),
+        ),
+        patch(
+            "app.api.v1.endpoints.auth.send_verification_email",
+            new_callable=AsyncMock,
+        ) as mock_send,
+    ):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             r = await c.post(
                 "/api/v1/auth/resend-verification",
@@ -308,18 +311,22 @@ async def test_register_schedules_verification_email() -> None:
     user = _make_user(verified=False)
     plaintext = "tok_" + "y" * 32
 
-    with patch(
-        "app.api.v1.endpoints.auth.register_user",
-        new_callable=AsyncMock,
-        return_value=user,
-    ), patch(
-        "app.api.v1.endpoints.auth.create_verification_token",
-        new_callable=AsyncMock,
-        return_value=plaintext,
-    ), patch(
-        "app.api.v1.endpoints.auth.send_verification_email",
-        new_callable=AsyncMock,
-    ) as mock_send:
+    with (
+        patch(
+            "app.api.v1.endpoints.auth.register_user",
+            new_callable=AsyncMock,
+            return_value=user,
+        ),
+        patch(
+            "app.api.v1.endpoints.auth.create_verification_token",
+            new_callable=AsyncMock,
+            return_value=plaintext,
+        ),
+        patch(
+            "app.api.v1.endpoints.auth.send_verification_email",
+            new_callable=AsyncMock,
+        ) as mock_send,
+    ):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             r = await c.post(
                 "/api/v1/auth/register",
