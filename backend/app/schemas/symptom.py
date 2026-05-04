@@ -31,7 +31,7 @@ import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 from app.models.symptom import INTENSITY_MAX, INTENSITY_MIN
 
@@ -135,14 +135,22 @@ class EntrySymptomAssignment(BaseModel):
 
 
 class SymptomResponse(BaseModel):
-    """Single symptom master row — returned by symptom CRUD endpoints."""
+    """Single symptom master row — returned by symptom CRUD endpoints.
 
-    model_config = ConfigDict(from_attributes=True)
+    For custom symptoms, ``name`` is decrypted on the fly from
+    ``Symptom.display_name`` (which uses the request-scoped DEK). Default
+    symptoms expose their plaintext ``name`` directly.
+    """
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: uuid.UUID
     user_id: uuid.UUID | None
     slug: str
-    name: str
+    # ``display_name`` resolves to plaintext for both default & custom rows.
+    # Wire field stays ``name`` for backwards compatibility with the
+    # existing API contract.
+    name: str = Field(validation_alias=AliasChoices("display_name", "name"))
     icon: str | None
     is_default: bool
     created_at: datetime

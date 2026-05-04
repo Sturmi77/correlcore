@@ -164,13 +164,16 @@ async def create_custom_symptom(
     if default_clash.scalar_one_or_none() is not None:
         raise SymptomConflictError("slug clashes with a default symptom")
 
+    # Issue #26: custom symptom names are Art.-9-relevant. Store the
+    # ciphertext under the user's DEK in ``name_enc`` and leave ``name``
+    # NULL (the CHECK constraint enforces the polymorphism).
     symptom = Symptom(
         user_id=user_id,
         slug=payload.slug,
-        name=payload.name,
         icon=payload.icon,
         is_default=False,
     )
+    symptom.set_custom_name(payload.name)
     db.add(symptom)
     try:
         await db.flush()
@@ -201,6 +204,12 @@ async def update_custom_symptom(
     symptom = await _get_owned_custom_symptom(db, symptom_id=symptom_id, user_id=user_id)
 
     data = payload.model_dump(exclude_unset=True)
+    # ``name`` is encrypted; route it through the model helper so the
+    # ciphertext is written to ``name_enc`` and ``name`` stays NULL.
+    if "name" in data:
+        new_name = data.pop("name")
+        if new_name is not None:
+            symptom.set_custom_name(new_name)
     for field, value in data.items():
         setattr(symptom, field, value)
 

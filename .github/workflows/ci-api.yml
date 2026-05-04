@@ -92,7 +92,9 @@ jobs:
           DATABASE_URL: 'postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync'
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
-          ENCRYPTION_KEY: 'dGVzdC1lbmNyeXB0aW9uLWtleS0zMi1ieXRlcw=='
+          # Valid Fernet test key (32 random bytes, URL-safe base64). NOT a secret —
+          # only used by unit tests to exercise wrap/unwrap and EncryptedString round-trips.
+          ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

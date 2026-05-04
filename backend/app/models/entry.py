@@ -42,13 +42,13 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
-    Text,
     UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.crypto import EncryptedString
 from app.db.base import Base
 
 
@@ -109,8 +109,13 @@ class Entry(Base):
         Enum(WorkContext, name="work_context", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
     )
+    # note_enc holds the user's freeform note. It is stored as a Fernet token
+    # (BYTEA) under the user's per-user DEK; the EncryptedString TypeDecorator
+    # makes the conversion transparent (string in, string out) as long as the
+    # request DEK is bound via app.core.crypto.set_current_user_dek().
+    # Issue #26 / ADR-0005.
     note_enc: Mapped[str | None] = mapped_column(
-        Text,
+        EncryptedString,
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
