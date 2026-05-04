@@ -27,20 +27,23 @@ dependencies = [
   "bcrypt<5.0.0",
   # Encryption at-rest (ADR-0005)
   "cryptography>=42.0.0",
-  # Analytics worker
-  "pandas>=2.2.0",
-  "scikit-learn>=1.5.0",
-  "scipy>=1.13.0",
   # Email (async SMTP — Issue #39)
   "aiosmtplib>=3.0.0",
   "jinja2>=3.1.0",
   # Rate limiting
   "slowapi>=0.1.9",
-  # Scheduling
-  "apscheduler>=3.10.0",
 ]
 
 [project.optional-dependencies]
+# Analytics / Insights worker (ADR-0006, M2+).
+# Not installed in the default M0/M1 image to keep build-time and image
+# size lean (~150-200 MB saved). Activate when insights endpoints land.
+analytics = [
+  "pandas>=2.2.0",
+  "scikit-learn>=1.5.0",
+  "scipy>=1.13.0",
+  "apscheduler>=3.10.0",
+]
 dev = [
   "pytest>=8.0.0",
   "pytest-asyncio>=0.23.0",
