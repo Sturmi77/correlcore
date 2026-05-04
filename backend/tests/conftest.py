@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import secrets
 import uuid
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from datetime import UTC, date, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
@@ -28,6 +28,12 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+from app.core.crypto import (
+    encrypt_with_dek,
+    generate_dek,
+    reset_current_user_dek,
+    set_current_user_dek,
+)
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.entry import Entry, EntrySlot, WorkContext
@@ -35,6 +41,17 @@ from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user import User
 from app.services.auth_service import _hash_token
+
+# ---------------------------------------------------------------------------
+# Issue #26 — module-scope DEK for tests
+# ---------------------------------------------------------------------------
+# All tests run with one synthetic DEK bound globally. Endpoint tests that
+# override ``get_current_verified_user`` bypass the real auth dependency and
+# therefore also bypass the DEK-binding step — the autouse fixture below
+# closes that gap so encrypted-field access (``Symptom.display_name``,
+# ``EncryptedString`` round-trips) keeps working in tests.
+
+_TEST_DEK = generate_dek()
 
 # ---------------------------------------------------------------------------
 # Object factories
@@ -92,7 +109,11 @@ def make_entry(
     e.energy = energy
     e.stress = stress
     e.work_context = work_context
-    e.note_enc = note
+    # Issue #26: ``note`` on the model maps to ``note_enc`` storage. In
+    # tests we set the plaintext directly because the service tests use
+    # MagicMock sessions that never trigger the ``EncryptedString``
+    # TypeDecorator. The endpoint tests rely on the auto-bound DEK below.
+    e.note_enc = note  # type: ignore[assignment]
     e.created_at = datetime.now(UTC)
     e.updated_at = datetime.now(UTC)
     return e
@@ -159,9 +180,17 @@ def make_symptom(
     s.id = symptom_id or uuid.uuid4()
     s.user_id = None if is_default else (user.id if user is not None else uuid.uuid4())
     s.slug = slug
-    s.name = name
     s.icon = icon
     s.is_default = is_default
+    # Issue #26: defaults keep ``name`` plaintext; custom symptoms store
+    # the Fernet ciphertext in ``name_enc`` and leave ``name`` NULL. The
+    # encrypt path uses the module-scope test DEK so the ContextVar does
+    # not need to be bound at construction time.
+    if is_default:
+        s.name = name
+    else:
+        s.name = None
+        s.name_enc = encrypt_with_dek(name, _TEST_DEK)
     s.created_at = datetime.now(UTC)
     s.updated_at = datetime.now(UTC)
     return s
@@ -248,6 +277,24 @@ NEW_REFRESH_TOKEN = "new.refresh.token"
 # ---------------------------------------------------------------------------
 # Pytest fixtures
 # ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _bind_test_dek() -> Generator[None, None, None]:
+    """Bind the synthetic test DEK for every test (Issue #26).
+
+    The DEK is normally bound by ``get_current_user`` during request
+    handling. Tests override that dependency, so we bind a stable
+    module-scope DEK here. Tests that care about the unauthenticated
+    path (e.g. ``GET /symptoms/default``) still work because the default
+    code paths only read plaintext ``Symptom.name`` and never touch the
+    ContextVar.
+    """
+    token = set_current_user_dek(uuid.uuid4(), _TEST_DEK)
+    try:
+        yield
+    finally:
+        reset_current_user_dek(token)
 
 
 @pytest.fixture

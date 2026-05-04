@@ -662,8 +662,8 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 #### DSGVO-Checkpoint M1
 
-- [ ] 🔒 DSGVO: `note_enc`-Feld verschlüsselt at-rest (pgcrypto oder App-Level-Encryption)
-- [ ] 🔒 DSGVO: Symptom-Daten (`entry_symptoms`-Tabelle und Custom-`symptoms.name`) ebenfalls verschlüsselt at-rest _(M1-Stand: Plaintext mit RLS-Schutz, App-Logs scrubben `slug`/`name`/`symptom_id`/`intensity`; Fernet-At-Rest-Verschlüsselung folgt mit Issue #26 gemäß ADR-0005, muss laut [ADR-0008](adr/0008-symptom-master-tabelle.md) auch `symptoms.name` einschließen)_
+- [x] 🔒 DSGVO: `note_enc`-Feld verschlüsselt at-rest via App-Level Fernet pro User (Issue #26, ADR-0005)
+- [x] 🔒 DSGVO: Custom-`symptoms.name` ebenfalls verschlüsselt at-rest (`symptoms.name_enc`, BYTEA, Fernet pro User-DEK); Default-Symptome bleiben plaintext (nicht-personenbezogene Labels) _(Issue #26, ADR-0005, ADR-0008). `symptoms.slug` bleibt für Custom-Symptome plaintext zur Operability — Hardening via Slug-HMAC ist als Backlog-Issue für M9+ eingeplant._
 - [x] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing geprüft) — Fehlerlogs dürfen Stacktraces, aber keine Tagebucheinträge, Symptome oder Gesundheitsdaten enthalten (siehe Abschnitt 3.6 und [ADR-0007](adr/0007-healthchecks-and-logging.md)); abgesichert durch automatischen Test `backend/tests/test_log_scrubbing.py`
 - [x] 🔒 DSGVO: Auth-Strategie für Phase 1 dokumentiert und in [ADR-0004](adr/0004-auth-strategie.md) festgehalten
 

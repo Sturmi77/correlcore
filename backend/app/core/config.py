@@ -36,9 +36,17 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
-    # Encryption at-rest (ADR-0005)
-    # Must be a 32-byte URL-safe base64 string. Keep separate from DB backup!
+    # Encryption at-rest (ADR-0005, Issue #26)
+    # Master-Key wraps per-user DEKs in user_encryption_keys.wrapped_dek.
+    # During key rotation: ENCRYPTION_KEYS as comma-separated list, new key first.
+    # Generate: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     ENCRYPTION_KEY: str = "CHANGE_ME_32_BYTE_BASE64_KEY_HERE"
+    ENCRYPTION_KEYS: list[str] = Field(
+        default_factory=list,
+        description="Optional comma-separated list of master keys, used during rotation. "
+        "If empty, ENCRYPTION_KEY is used. First entry encrypts new data; "
+        "all entries can decrypt existing data.",
+    )
 
     # MinIO / S3
     MINIO_ENDPOINT: str = "minio:9000"
@@ -76,14 +84,44 @@ class Settings(BaseSettings):
             return [str(origin).strip() for origin in v]
         raise TypeError("CORS_ORIGINS must be a comma-separated string or list")
 
+    @field_validator("ENCRYPTION_KEYS", mode="before")
+    @classmethod
+    def parse_encryption_keys(cls, v: object) -> list[str]:
+        """Accept comma-separated string or list. Empty -> []. Whitespace stripped."""
+        if v is None or v == "":
+            return []
+        if isinstance(v, str):
+            return [k.strip() for k in v.split(",") if k.strip()]
+        if isinstance(v, list):
+            return [str(k).strip() for k in v if str(k).strip()]
+        raise TypeError("ENCRYPTION_KEYS must be a comma-separated string or list")
+
+    def effective_encryption_keys(self) -> list[str]:
+        """Return the master-key list to use for crypto operations.
+
+        Precedence: ENCRYPTION_KEYS list > ENCRYPTION_KEY scalar.
+        Always returns at least one key (never empty); raises if neither set.
+        The first key is used for new encryptions; all are used for decryption.
+        """
+        if self.ENCRYPTION_KEYS:
+            return self.ENCRYPTION_KEYS
+        return [self.ENCRYPTION_KEY]
+
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
-        if self.APP_ENV.lower() in {"production", "staging"} and (
-            self.SECRET_KEY.startswith("CHANGE_ME") or len(self.SECRET_KEY) < 32
-        ):
-            raise ValueError(
-                "SECRET_KEY must be set to at least 32 random characters in production"
-            )
+        if self.APP_ENV.lower() in {"production", "staging"}:
+            if self.SECRET_KEY.startswith("CHANGE_ME") or len(self.SECRET_KEY) < 32:
+                raise ValueError(
+                    "SECRET_KEY must be set to at least 32 random characters in production"
+                )
+            keys = self.effective_encryption_keys()
+            if any(k.startswith("CHANGE_ME") for k in keys):
+                raise ValueError(
+                    "ENCRYPTION_KEY (or ENCRYPTION_KEYS) must be set to a real "
+                    "Fernet key in production. Generate with: "
+                    "python -c 'from cryptography.fernet import Fernet; "
+                    "print(Fernet.generate_key().decode())'"
+                )
         return self
 
 

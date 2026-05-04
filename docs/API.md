@@ -107,8 +107,7 @@ GET    /api/v1/entries/date/{date}      Eintrag für ein Datum     (M1 Followup)
 - `slot` — Enum: `day` (Default, M1), `morning`, `noon`, `evening` (reserviert für M3+).
 - `work_context` — Enum: `homeoffice`, `office`, `vacation`, `sick`, `weekend`, `travel`.
 - `mood_score`, `energy`, `stress` — Integer 1..5 (DB-CHECK + Pydantic-Validierung).
-- `note` — Optional, max. 4000 Zeichen. Wird in der Spalte `note_enc` gespeichert; M1
-  liefert Klartext, ADR-0005 + Issue #26 ziehen Fernet-Verschlüsselung at-rest nach.
+- `note` — Optional, max. 4000 Zeichen. Wird in der Spalte `note_enc` (BYTEA) als Fernet-Ciphertext unter dem User-DEK gespeichert (Issue #26, ADR-0005). API-Surface bleibt Klartext: Requests senden `note: "..."`, Responses geben den entschlüsselten String zurück. Ohne gültigen Auth-Kontext (DEK fehlt) liefert das Backend 401.
 
 ### Backdate-Fenster
 
@@ -335,7 +334,7 @@ Gesundheits-Symptome werden parallel zu Tags pro Entry erfasst (Issue #9 + Issue
 - **Default-Symptome** — kuratierte Liste (5 Symptome aus Migration-Seed `006_add_symptom_master_table.py`). `user_id IS NULL`, `is_default = true`. Read-only für alle User; lesbar auch ohne Auth über `/symptoms/default`.
 - **Custom-Symptome** — pro User mit `user_id = <user>`. Vollständige CRUD-Hoheit, Slugs müssen sich nicht mit Defaults überschneiden. Hard Cap: **50 pro User** (`MAX_SYMPTOMS_PER_USER`).
 
-Die Intensität bewegt sich in einem 0–3-Bereich, der im UI als 4-Punkt-Skala gerendert wird. Symptome sind Gesundheitsdaten nach DSGVO Art. 9 — Server-Logs enthalten weder `slug`/`name`/`symptom_id` noch `intensity` (statisch via `test_log_scrubbing` und `test_symptom_service_logs_no_sensitive_fields` geprüft). Custom-Symptom-Namen sind ebenfalls Art.-9-relevant und müssen im Rahmen von Issue #26 (Fernet at-rest) verschlüsselt werden.
+Die Intensität bewegt sich in einem 0–3-Bereich, der im UI als 4-Punkt-Skala gerendert wird. Symptome sind Gesundheitsdaten nach DSGVO Art. 9 — Server-Logs enthalten weder `slug`/`name`/`symptom_id` noch `intensity` (statisch via `test_log_scrubbing` und `test_symptom_service_logs_no_sensitive_fields` geprüft). Custom-Symptom-Namen werden in `symptoms.name_enc` als Fernet-Ciphertext unter dem User-DEK gespeichert (Issue #26, ADR-0005); Default-Symptom-Namen bleiben plaintext, weil sie kuratierte, nicht-personenbezogene Labels sind und ohne aktiven User-Kontext gelesen werden müssen (`GET /symptoms/default`). Der `slug` bleibt auch für Custom-Symptome plaintext — ein Slug-HMAC-Hardening ist als Backlog für M9+ vorgesehen.
 
 ```
 GET    /api/v1/symptoms/default                 Kuratierte Standard-Symptome   (no auth)

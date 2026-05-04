@@ -41,11 +41,15 @@
 
 ### Stufe 2 – App-Ebene (M1)
 
-**Verschlüsselte Felder:**
+**Verschlüsselte Felder (M1 — Issue #26):**
 
-- `entries.note` (Stimmungsnotizen)
-- `entry_symptoms.details` (Symptom-Freitextbeschreibungen)
-- `insights.statement` (KI-generierte Insights, die Nutzertext enthalten können)
+- `entries.note_enc` (Stimmungsnotizen, BYTEA, transparent via `EncryptedString`-TypeDecorator)
+- `symptoms.name_enc` für **Custom-Symptome** (Default-Symptome bleiben plaintext, weil deren Namen kuratierte, nicht-personenbezogene Labels sind und ohne aktiven User-Kontext gelesen werden müssen — z. B. für `GET /symptoms/default`)
+- _Nicht in M1:_ `entry_symptoms.details`, `insights.statement` — werden mit den jeweiligen Features (M2/M3) eingeführt und nutzen dieselbe Mechanik
+
+**Bewusst nicht verschlüsselt (Trade-off):**
+
+- `symptoms.slug` (auch für Custom-Symptome) — dieser leitet sich aus dem Namen ab und kann den Symptom-Namen im Klartext leaken (z. B. `migraene_mit_aura`). Er bleibt plaintext, weil Slug-basierte Operability (Debugging, Recovery-Heuristik bei Master-Key-Verlust, eindeutige Backend-Logs) für M1 wichtiger ist als die zusätzliche Vertraulichkeit des semantischen Hinweises. **Hardening via deterministischen Slug-HMAC ist als Backlog-Issue für M9+ eingeplant** (vor Public-Selfhost-Release re-evaluieren).
 
 **Implementierung:**
 
@@ -89,7 +93,9 @@ def decrypt_field(ciphertext: bytes, dek: bytes) -> str:
     return Fernet(dek).decrypt(ciphertext).decode("utf-8")
 ```
 
-Im Request-Lifecycle: Auth-Dependency lädt den DEK des aktuellen Users einmal pro Request, hält ihn im Request-State, Service-Layer ent-/verschlüsselt damit.
+Im Request-Lifecycle: Auth-Dependency lädt den DEK des aktuellen Users einmal pro Request, hält ihn in einer **`ContextVar`** (`app.core.crypto._current_dek`), Service-Layer und der `EncryptedString`-TypeDecorator lesen daraus. Cleanup erfolgt im FastAPI `yield`-Pattern (`finally: reset_current_user_dek(token)`), so dass keine Schlüsselreste über Request-Grenzen hinweg geteilt werden.
+
+**Mischweg Symptom-Modell (Issue #26 / ADR-0008):** Für `symptoms` gibt es zwei Spalten — `name` (plaintext, nur für `is_default=TRUE`) und `name_enc` (BYTEA, nur für `is_default=FALSE`). Eine Tabellen-CHECK-Constraint (`ck_symptoms_name_storage_consistency`) erzwingt die Exklusivität. Auf Modell-Ebene macht `Symptom.display_name` den Polymorphismus transparent für Endpoints/Schemas. Der `EncryptedString`-TypeDecorator wird hier nicht genutzt, weil Default-Reads (z. B. `GET /symptoms/default`) ohne Auth-Kontext funktionieren müssen — die Encrypt/Decrypt-Calls liefen sonst in `DekUnavailableError`.
 
 ### Warum nicht pgcrypto?
 

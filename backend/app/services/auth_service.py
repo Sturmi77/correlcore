@@ -24,6 +24,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.crypto import generate_dek, wrap_dek
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -33,6 +34,7 @@ from app.core.security import (
 from app.db.redis_client import TokenStore
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.user import User
+from app.models.user_encryption_key import UserEncryptionKey
 from app.schemas.auth import RegisterRequest
 
 logger = logging.getLogger(__name__)
@@ -211,6 +213,22 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> User:
     )
     db.add(user)
     await db.flush()  # get the generated UUID without committing
+
+    # Issue #26: provision a per-user Data-Encryption-Key (DEK) wrapped
+    # by the master MultiFernet. The plaintext DEK never touches disk —
+    # it is unwrapped on demand inside the request via auth dependency.
+    dek = generate_dek()
+    db.add(
+        UserEncryptionKey(
+            user_id=user.id,
+            wrapped_dek=wrap_dek(dek),
+            key_version=1,
+        )
+    )
+    await db.flush()
+    # Wipe the local plaintext reference; GC will collect.
+    del dek
+
     logger.info("user registered", extra={"user_id": str(user.id)})
     return user
 

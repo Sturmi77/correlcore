@@ -271,7 +271,11 @@ async def test_update_custom_symptom_happy_path() -> None:
         symptom_id=sym.id,
         payload=SymptomUpdate(name="Tinnitus rechts"),
     )
-    assert result.name == "Tinnitus rechts"
+    # Issue #26: custom symptom names are stored encrypted in ``name_enc``;
+    # the plaintext is exposed via ``display_name``. The plain ``name``
+    # column stays NULL for custom symptoms.
+    assert result.name is None
+    assert result.display_name == "Tinnitus rechts"
 
 
 @pytest.mark.asyncio

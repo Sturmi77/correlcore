@@ -16,6 +16,7 @@ from app.models.symptom import (  # noqa: F401
 )
 from app.models.tag import EntryTag, Tag, TagCategory  # noqa: F401
 from app.models.user import User  # noqa: F401
+from app.models.user_encryption_key import UserEncryptionKey  # noqa: F401
 
 __all__ = [
     "INTENSITY_MAX",
@@ -30,6 +31,7 @@ __all__ = [
     "Tag",
     "TagCategory",
     "User",
+    "UserEncryptionKey",
     "WorkContext",
     "default_symptom_uuid",
 ]
