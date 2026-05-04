@@ -9,7 +9,7 @@
 
 In Issue #9 (PR #56) wurde die Symptom-Checkliste bewusst minimal als **Single-Table-Design** umgesetzt: Die Tabelle `entry_symptoms` enthielt einen String-Spalte `symptom_key`, validiert über eine `CHECK`-Constraint mit einem geschlossenen Set von fünf Standard-Keys (`headache`, `digestion`, `back_pain`, `fatigue`, `cold`). Es gab keine Master-Tabelle für Symptome.
 
-Diese Entscheidung war für den M1-Scope korrekt — sie minimierte Komplexität, RLS-Policies und Migrations-Aufwand. Das DESIGN_DOCUMENT.md (§2.2) und die ursprüngliche Akzeptanzbasis von Issue #9 sahen bewusst _kein_ Custom-Symptom-Feature vor.
+Diese Entscheidung war für den M1-Scope korrekt — sie minimierte Komplexität, RLS-Policies und Migrations-Aufwand. Das DESIGN*DOCUMENT.md (§2.2) und die ursprüngliche Akzeptanzbasis von Issue #9 sahen bewusst \_kein* Custom-Symptom-Feature vor.
 
 **Gegenüber dem Tag-System** (Issue #8 / PR #55) ist das eine Asymmetrie: Tags haben bereits eine Master-Tabelle `tags` mit Owner-Trennung (`user_id NULL = curated`, `is_default=TRUE`), Slug-Uniqueness via Partial-Indexes, RLS-Policies, und vollem CRUD-Endpoint-Set. Nutzer können beliebige Tags anlegen, bearbeiten, löschen.
 
@@ -23,15 +23,15 @@ Wir führen eine neue Tabelle **`symptoms`** ein, die strukturell `tags` spiegel
 
 ### 1. Neue Tabelle `symptoms`
 
-| Spalte | Typ | Bemerkung |
-|---|---|---|
-| `id` | UUID PK | |
-| `user_id` | UUID NULL FK → `users.id` ON DELETE CASCADE | NULL = curated/default |
-| `slug` | String(64) NOT NULL | Slug-Uniqueness via Partial-Indexes |
-| `name` | String(64) NOT NULL | Anzeigename, Art.-9-relevant |
-| `icon` | String(32) NULL | Emoji oder Lucide-Icon-Name |
-| `is_default` | Boolean NOT NULL | TRUE nur wenn `user_id IS NULL` |
-| `created_at` / `updated_at` | TIMESTAMPTZ | |
+| Spalte                      | Typ                                         | Bemerkung                           |
+| --------------------------- | ------------------------------------------- | ----------------------------------- |
+| `id`                        | UUID PK                                     |                                     |
+| `user_id`                   | UUID NULL FK → `users.id` ON DELETE CASCADE | NULL = curated/default              |
+| `slug`                      | String(64) NOT NULL                         | Slug-Uniqueness via Partial-Indexes |
+| `name`                      | String(64) NOT NULL                         | Anzeigename, Art.-9-relevant        |
+| `icon`                      | String(32) NULL                             | Emoji oder Lucide-Icon-Name         |
+| `is_default`                | Boolean NOT NULL                            | TRUE nur wenn `user_id IS NULL`     |
+| `created_at` / `updated_at` | TIMESTAMPTZ                                 |                                     |
 
 **Owner-Konsistenz:** `CHECK ((is_default = TRUE AND user_id IS NULL) OR (is_default = FALSE AND user_id IS NOT NULL))` — exakt wie bei `tags`.
 
