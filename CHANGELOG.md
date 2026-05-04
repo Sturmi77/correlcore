@@ -10,6 +10,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Symptom-Checkliste** (Issue #9): Gesundheits-Symptome können pro Entry mit einer Intensität von 0–3 erfasst werden — parallel zum Tag-System.
+  - Backend: `EntrySymptom`-Modell ohne separate Master-Symptom-Tabelle (geschlossene Standard-Key-Menge `headache`/`digestion`/`back_pain`/`fatigue`/`cold`); CHECK-Constraints für `intensity BETWEEN 0 AND 3` und für die zulässigen Keys; `(entry_id, symptom_key)`-Unique-Constraint verhindert doppelte Symptome am selben Entry.
+  - Migration `005_create_entry_symptoms.py`: `entry_symptoms`-Tabelle, denormalisiertes `user_id` für RLS, vier owner-scoped Row-Level-Security-Policies (`SELECT/INSERT/UPDATE/DELETE`), `updated_at`-Trigger.
+  - Service-Layer (`symptom_service.py`) mit Replace-Set-Semantik und Key-basiertem Diff (add / update intensity / remove); typisierte Exception `EntryNotFoundForSymptomError`. **Privacy:** weder `symptom_key` noch `intensity` werden geloggt — nur `user_id`, `entry_id` und Zähler.
+  - Endpoints: `GET /api/v1/symptoms/standard` (ohne Auth, Rate-Limit 120/min), `GET /api/v1/entries/{id}/symptoms` (Auth, 120/min) und `PUT /api/v1/entries/{id}/symptoms` (Auth, 60/min, max. `MAX_SYMPTOMS_PER_ENTRY=32`).
+  - Pydantic-Schemas (`SymptomEntry`/`EntrySymptomAssignment`/`SymptomResponse`/`StandardSymptomKey`) mit Schlüssel-Normalisierung (lowercase + trim), Range-Validierung 0..3 und Duplikat-Prüfung.
+  - Frontend: API-Client (`apps/web/src/lib/api/symptoms.ts`) mit lokalen Konstanten für `STANDARD_SYMPTOM_KEYS`/`MAX_SYMPTOMS_PER_ENTRY`/`INTENSITY_MIN`/`INTENSITY_MAX`, Svelte-Store (`symptoms.ts`, Fällt bei Fetch-Fehler auf die Build-Time-Konstante zurück), `SymptomChecker`-Komponente mit visueller 4-Punkt-Skala (`<button aria-pressed>` je Intensität, klick auf aktiven Dot löscht das Symptom) und permanentem medizinischem Disclaimer (`disclaimer.medical`).
+  - Integration in `/entries/new`: Symptom-Zuweisung erfolgt nach erfolgreichem Entry-Create (best-effort, eigenes Fehlertext-Mapping `symptom.error_assign`).
+  - i18n (`de.json`/`en.json`) um den `symptom.*`-Block (Picker-Labels, Schlüssel-Namen `Kopfschmerzen`/`Verdauung`/`Rückenschmerzen`/`Müdigkeit`/`Erkältung`, Intensitäts-Legenden, Fehlertexte) erweitert.
+  - Tests: 21 Backend-Tests (Schemas, Service, Endpoints inkl. 422-Pfade für unbekannte Keys und out-of-range-Intensitäten, statischer Log-Scrubbing-Check) sowie 11 Frontend-Tests (API-Client, Store inkl. Fallback-Verhalten).
+  - DESIGN_DOCUMENT.md M1-Akzeptanzkriterium für die Symptom-Checkliste auf `[x]` gesetzt; DSGVO-Checkpoint zur At-Rest-Verschlüsselung der `entry_symptoms`-Tabelle bleibt offen und verweist explizit auf Issue #26 (Fernet, ADR-0005). API.md §5 vollständig ergänzt; nachfolgende Abschnitte (Insights/Sync/Export/Admin/Fehlerformat) entsprechend renumeriert.
+  - Hinweis: M1 speichert Symptom-Daten als Plaintext; RLS und Log-Scrubbing schirmen die Daten serverseitig ab. App-Level-Verschlüsselung folgt in Issue #26.
 - **Tag-System** (Issue #8): Einträge können mit kuratierten Default-Tags und User-eigenen Custom-Tags annotiert werden.
   - Backend: `Tag`- und `EntryTag`-Modelle mit `TagCategory`-Enum (`sport`/`social`/`work`/`leisure`/`consumption`/`health`/`other`); Default-vs-Custom-Invariante über CHECK-Constraint (`is_default = true` ⇔ `user_id IS NULL`); Slug-Eindeutigkeit per partieller Unique-Indexe.
   - Migration `004_create_tags.py`: `tags`- und `entry_tags`-Tabellen, RLS-Policies (Public-Read für Defaults, Owner-Scoped CRUD für Custom-Tags) sowie Seed mit 30 kuratierten Default-Tags (Sport, Laufen, Familie, Alkohol, Meditation, …).

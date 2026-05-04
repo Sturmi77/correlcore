@@ -640,7 +640,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38; Entry-Endpoints zusätzlich rate-limitiert: 60/min POST/PATCH, 120/min GET — Issue #7)_
 - [x] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only _(Issue #7: `BACKDATE_DAYS_LIMIT=7` im Service, UI-Datepicker auf 7-Tage-Fenster begrenzt)_
 - [x] Tag-System (vordefinierte Tags + Custom-Tags) verfügbar: `/tags`-CRUD + `PUT /entries/{id}/tags` (replace-set), 30 kuratierte Defaults im Migration-Seed, RLS für Custom-Tags _(Issue #8)_
-- [ ] Symptom-Checkliste verfügbar: `/symptoms`-Endpunkte, visuelle Intensitäts-Skala 0–3, medizinischer Disclaimer in der UI _(Issue #9)_
+- [x] Symptom-Checkliste verfügbar: `/symptoms`-Endpunkte, visuelle Intensitäts-Skala 0–3, medizinischer Disclaimer in der UI _(Issue #9: 5 Standard-Keys (`headache`/`digestion`/`back_pain`/`fatigue`/`cold`), `GET /symptoms/standard` ohne Auth, `GET`/`PUT /entries/{id}/symptoms` (replace-set, owner-scoped, max. 32), Migration 005 mit RLS und CHECK-Constraints, Frontend-Komponente `SymptomChecker` mit 4-Punkt-Skala und persistentem Disclaimer)_
 - [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull`) funktioniert mit Offline-Queue
 - [x] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40, PR #45)_
 - [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_
@@ -651,7 +651,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 #### DSGVO-Checkpoint M1
 
 - [ ] 🔒 DSGVO: `note_enc`-Feld verschlüsselt at-rest (pgcrypto oder App-Level-Encryption)
-- [ ] 🔒 DSGVO: Symptom-Daten (`symptoms`-Tabelle) ebenfalls verschlüsselt at-rest
+- [ ] 🔒 DSGVO: Symptom-Daten (`entry_symptoms`-Tabelle) ebenfalls verschlüsselt at-rest _(M1-Stand: Plaintext mit RLS-Schutz, App-Logs scrubben `symptom_key`/`intensity`; Fernet-At-Rest-Verschlüsselung folgt mit Issue #26 gemäß ADR-0005)_
 - [x] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing geprüft) — Fehlerlogs dürfen Stacktraces, aber keine Tagebucheinträge, Symptome oder Gesundheitsdaten enthalten (siehe Abschnitt 3.6 und [ADR-0007](adr/0007-healthchecks-and-logging.md)); abgesichert durch automatischen Test `backend/tests/test_log_scrubbing.py`
 - [x] 🔒 DSGVO: Auth-Strategie für Phase 1 dokumentiert und in [ADR-0004](adr/0004-auth-strategie.md) festgehalten
 

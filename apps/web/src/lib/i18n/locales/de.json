@@ -75,6 +75,27 @@
       "other": "Sonstiges"
     }
   },
+  "symptom": {
+    "picker_label": "Symptome",
+    "picker_counter": "{count}/{max} ausgewählt",
+    "loading": "Symptome werden geladen…",
+    "error_load": "Symptomliste konnte nicht aktualisiert werden — Standardliste wird verwendet.",
+    "error_assign": "Eintrag wurde gespeichert, Symptome konnten aber nicht zugewiesen werden.",
+    "scale_label": "Intensität für {name}",
+    "intensity": {
+      "0": "Nicht vorhanden",
+      "1": "Leicht",
+      "2": "Mittel",
+      "3": "Stark"
+    },
+    "key": {
+      "headache": "Kopfschmerzen",
+      "digestion": "Verdauung",
+      "back_pain": "Rückenschmerzen",
+      "fatigue": "Müdigkeit",
+      "cold": "Erkältung"
+    }
+  },
   "disclaimer": {
     "medical": "MoodSync ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."
   },
