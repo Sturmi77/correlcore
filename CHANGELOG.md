@@ -10,6 +10,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 
+- **M1 Quality-Gate-Report** (`docs/quality/M1_QUALITY_GATE.md`): kombinierter Code-Quality-Review + Security-Audit gemäß Design-Doc §9. Verdikt **bestanden mit Auflagen** — vier Major-Findings als blockierende Folge-Issues angelegt (#64 Auth-Coverage, #65 Register-Enumeration + Rate-Limit, #66 `DELETE /user/me`-Erasure-API), fünf weitere Findings als nicht-blockierende Folge-Issues (#67 Log-Scrubbing-Tests, #68 Encryption-Healthcheck, #69 esbuild-Advisory, #70 email/health-Service-Coverage, #71 vite-plugin-svelte-Update). DESIGN_DOCUMENT-Checkpoint M1-Quality-Gate referenziert den Report; wird auf `[x]` gesetzt, sobald die drei Major-Issue-Pakete gemerged sind.
 - **Auth-Endpoints in `docs/API.md` vereinheitlicht** (Issue #50): `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` und `GET /auth/me` haben jetzt jeweils einen vollständigen, dokumentierten Abschnitt analog zu `verify-email`/`resend-verification` (Body-Schemas, Cookie-Verhalten mit Pfad-Scopes und Max-Age, Statuscodes inkl. 401/409/422/429, Rate-Limits, Beispiel-Requests/Responses). Hinweis auf den Enumeration-Leak im aktuellen `register`-409 als known limitation mit Backlog-Verweis.
 
 ### Added
