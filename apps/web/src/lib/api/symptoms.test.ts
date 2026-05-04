@@ -1,5 +1,5 @@
 /**
- * Tests for the symptoms API client (Issue #9).
+ * Tests for the symptoms API client (Issue #9 + Issue #57 Custom-Symptome).
  *
  * The underlying `api` helper is mocked so the assertions are about
  * the call shape (path + body) the client emits — same pattern as
@@ -25,27 +25,20 @@ import {
   INTENSITY_MAX,
   INTENSITY_MIN,
   MAX_SYMPTOMS_PER_ENTRY,
-  STANDARD_SYMPTOM_KEYS,
   assignSymptomsToEntry,
-  listStandardSymptomKeys,
+  createSymptom,
+  deleteSymptom,
+  listDefaultSymptoms,
   listSymptomsForEntry,
+  listVisibleSymptoms,
+  updateSymptom,
 } from './symptoms';
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('STANDARD_SYMPTOM_KEYS', () => {
-  it('exposes the canonical set of M1 standard keys', () => {
-    expect([...STANDARD_SYMPTOM_KEYS].sort()).toEqual([
-      'back_pain',
-      'cold',
-      'digestion',
-      'fatigue',
-      'headache',
-    ]);
-  });
-
+describe('constants', () => {
   it('uses the documented intensity bounds', () => {
     expect(INTENSITY_MIN).toBe(0);
     expect(INTENSITY_MAX).toBe(3);
@@ -56,11 +49,51 @@ describe('STANDARD_SYMPTOM_KEYS', () => {
   });
 });
 
-describe('listStandardSymptomKeys', () => {
-  it('GETs /symptoms/standard', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ keys: [] });
-    await listStandardSymptomKeys();
-    expect(api.get).toHaveBeenCalledWith('/symptoms/standard');
+describe('listDefaultSymptoms', () => {
+  it('GETs /symptoms/default', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+    await listDefaultSymptoms();
+    expect(api.get).toHaveBeenCalledWith('/symptoms/default');
+  });
+});
+
+describe('listVisibleSymptoms', () => {
+  it('GETs /symptoms', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+    await listVisibleSymptoms();
+    expect(api.get).toHaveBeenCalledWith('/symptoms');
+  });
+});
+
+describe('createSymptom', () => {
+  it('POSTs to /symptoms with the payload', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({ id: 's1' });
+    await createSymptom({
+      slug: 'migraene_aura',
+      name: 'Migräne mit Aura',
+      icon: '🧠',
+    });
+    expect(api.post).toHaveBeenCalledWith('/symptoms', {
+      slug: 'migraene_aura',
+      name: 'Migräne mit Aura',
+      icon: '🧠',
+    });
+  });
+});
+
+describe('updateSymptom', () => {
+  it('PATCHes /symptoms/{id}', async () => {
+    vi.mocked(api.patch).mockResolvedValueOnce({ id: 's1' });
+    await updateSymptom('s1', { name: 'Renamed' });
+    expect(api.patch).toHaveBeenCalledWith('/symptoms/s1', { name: 'Renamed' });
+  });
+});
+
+describe('deleteSymptom', () => {
+  it('DELETEs /symptoms/{id}', async () => {
+    vi.mocked(api.delete).mockResolvedValueOnce(undefined);
+    await deleteSymptom('s1');
+    expect(api.delete).toHaveBeenCalledWith('/symptoms/s1');
   });
 });
 
@@ -76,13 +109,13 @@ describe('assignSymptomsToEntry', () => {
   it('PUTs the full symptom list to /entries/{id}/symptoms', async () => {
     vi.mocked(api.put).mockResolvedValueOnce([]);
     await assignSymptomsToEntry('e1', [
-      { symptom_key: 'headache', intensity: 2 },
-      { symptom_key: 'cold', intensity: 1 },
+      { symptom_id: 's-headache', intensity: 2 },
+      { symptom_id: 's-cold', intensity: 1 },
     ]);
     expect(api.put).toHaveBeenCalledWith('/entries/e1/symptoms', {
       symptoms: [
-        { symptom_key: 'headache', intensity: 2 },
-        { symptom_key: 'cold', intensity: 1 },
+        { symptom_id: 's-headache', intensity: 2 },
+        { symptom_id: 's-cold', intensity: 1 },
       ],
     });
   });

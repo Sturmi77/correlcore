@@ -205,7 +205,7 @@ batch-fähig (`GET /entries`).
 
 ```jsonc
 // Sobald Issue #9 / M7 landen, erweitert sich die Antwort um:
-// "symptoms": [{ "symptom_key": "headache", "intensity": 1 }],
+// "symptoms": [{ "symptom_id": "uuid", "intensity": 1 }],
 // "sleep_minutes": 450,
 // "sleep_quality": 3
 ```
@@ -330,75 +330,136 @@ Fehler:
 
 ## 5. Symptome
 
-Gesundheits-Symptome werden parallel zu Tags pro Entry erfasst (Issue #9). Standard-Keys sind eine geschlossene Menge (kein User-Custom-Surface in M1); die Intensität bewegt sich in einem 0–3-Bereich, der im UI als 4-Punkt-Skala gerendert wird. Symptome sind Gesundheitsdaten nach DSGVO Art. 9 — Server-Logs enthalten weder `symptom_key` noch `intensity` (statisch via `test_log_scrubbing` und `test_symptom_service_logs_no_sensitive_fields` geprüft).
+Gesundheits-Symptome werden parallel zu Tags pro Entry erfasst (Issue #9 + Issue #57, ADR-0008). Seit Issue #57 sind Symptome — analog zum Tag-System — in zwei Klassen geteilt:
+
+- **Default-Symptome** — kuratierte Liste (5 Symptome aus Migration-Seed `006_add_symptom_master_table.py`). `user_id IS NULL`, `is_default = true`. Read-only für alle User; lesbar auch ohne Auth über `/symptoms/default`.
+- **Custom-Symptome** — pro User mit `user_id = <user>`. Vollständige CRUD-Hoheit, Slugs müssen sich nicht mit Defaults überschneiden. Hard Cap: **50 pro User** (`MAX_SYMPTOMS_PER_USER`).
+
+Die Intensität bewegt sich in einem 0–3-Bereich, der im UI als 4-Punkt-Skala gerendert wird. Symptome sind Gesundheitsdaten nach DSGVO Art. 9 — Server-Logs enthalten weder `slug`/`name`/`symptom_id` noch `intensity` (statisch via `test_log_scrubbing` und `test_symptom_service_logs_no_sensitive_fields` geprüft). Custom-Symptom-Namen sind ebenfalls Art.-9-relevant und müssen im Rahmen von Issue #26 (Fernet at-rest) verschlüsselt werden.
 
 ```
-GET    /api/v1/symptoms/standard                Standard-Symptom-Keys (kein Auth)
-GET    /api/v1/entries/{entry_id}/symptoms      Aktuelle Symptome eines Entries
-PUT    /api/v1/entries/{entry_id}/symptoms      Replace-Set: gesamte Symptom-Liste
+GET    /api/v1/symptoms/default                 Kuratierte Standard-Symptome   (no auth)
+GET    /api/v1/symptoms                         Defaults + eigene Custom        (60/min)
+POST   /api/v1/symptoms                         Neues Custom-Symptom anlegen   (60/min)
+PATCH  /api/v1/symptoms/{id}                    Custom-Symptom aktualisieren    (60/min)
+DELETE /api/v1/symptoms/{id}                    Custom-Symptom löschen          (60/min)
+GET    /api/v1/entries/{entry_id}/symptoms      Aktuelle Symptome eines Entries (120/min)
+PUT    /api/v1/entries/{entry_id}/symptoms      Replace-Set: gesamte Symptom-Liste (60/min)
 ```
 
 ### Datentypen
 
-- `symptom_key`: String, einer aus der geschlossenen Menge `headache | digestion | back_pain | fatigue | cold`. CHECK-Constraint in der DB sowie Pydantic-Validator setzen das durch.
-- `intensity`: Integer 0..3 (0 = nicht vorhanden, 1 = leicht, 2 = mittel, 3 = stark). DB-CHECK + Pydantic-Field-Constraint mirroren den Range. UI rendert 4 Dots, kein freier Zahlen-Input.
+- `id` — UUID des Symptoms (Default-Rows nutzen einen deterministischen `uuid5` aus `moodsync.symptom.<slug>`, siehe ADR-0008).
+- `slug` — kanonischer Schlüssel, 2..64 Zeichen, lowercased Buchstaben/Ziffern/Underscores; **nicht patchbar** (bräche Verweise in `entry_symptoms`).
+- `name` — Display-Name, 1..80 Zeichen.
+- `icon` — optional, max. 8 Zeichen (Emoji oder kurzer Slug für Icon-Lookup).
+- `is_default` — boolean, server-managed; Defaults sind nicht mutierbar.
+- `intensity` — Integer 0..3 (0 = nicht vorhanden, 1 = leicht, 2 = mittel, 3 = stark). DB-CHECK + Pydantic-Field-Constraint mirroren den Range. UI rendert 4 Dots, kein freier Zahlen-Input.
 
-### `GET /api/v1/symptoms/standard`
+### `GET /api/v1/symptoms/default`
 
-Liefert die kuratierte Liste der M1-Standard-Symptom-Keys. Die Liste ist nicht personenbezogen (Build-Time-Konstante), daher kein Auth erforderlich — das Picker-UI kann vor Login-Abschluss rendern. Rate-Limit: 120/min/IP.
+Liefert die kuratierte Liste der M1-Standard-Symptome (5 Einträge: `headache`, `digestion`, `back_pain`, `fatigue`, `cold`). Nicht personenbezogen, daher kein Auth erforderlich — das Picker-UI kann vor Login-Abschluss rendern. Rate-Limit: 120/min/IP.
 
-Response `200 OK`:
+Response `200 OK`: Liste von `SymptomResponse`-Objekten mit `is_default: true` und `user_id: null`, sortiert alphabetisch nach Slug.
+
+### `GET /api/v1/symptoms`
+
+Liefert Defaults + alle Custom-Symptome des aufrufenden Users in einer Antwort. Reihenfolge: Defaults zuerst (alphabetisch nach Slug), dann eigene Custom-Symptome (alphabetisch nach `name`). Rate-Limit: 60/min.
+
+### `POST /api/v1/symptoms`
+
+Erstellt ein Custom-Symptom. Slug-Kollisionen (mit Default oder eigenem) liefern `409 Conflict`. Beim Erreichen des User-Caps liefert der Service `409 Conflict` mit der Begründung `cap_reached`.
+
+Request:
 
 ```json
 {
-  "keys": [
-    { "symptom_key": "back_pain" },
-    { "symptom_key": "cold" },
-    { "symptom_key": "digestion" },
-    { "symptom_key": "fatigue" },
-    { "symptom_key": "headache" }
-  ]
+  "slug": "migraene_aura",
+  "name": "Migräne mit Aura",
+  "icon": "🧠"
 }
 ```
+
+Response `201 Created`: `SymptomResponse` (siehe unten).
+
+Fehler:
+
+- `401 Unauthorized` / `403 Forbidden` — fehlender Token / nicht verifiziert.
+- `409 Conflict` — Slug existiert bereits als Default oder als Custom des Users; oder User-Cap (50) erreicht.
+- `422 Unprocessable Entity` — Slug-Format invalid, Name leer/zu lang, Icon zu lang.
+
+### `PATCH /api/v1/symptoms/{id}`
+
+Nur Custom-Symptome des aufrufenden Users sind editierbar. Versuch, ein Default-Symptom zu ändern, liefert `403 Forbidden`. Slug ist bewusst **nicht** patchbar (würde Verweise in `entry_symptoms` brechen).
+
+Request (alle Felder optional):
+
+```json
+{
+  "name": "Migräne mit Aura (chronisch)",
+  "icon": "🧠"
+}
+```
+
+### `DELETE /api/v1/symptoms/{id}`
+
+Löscht ein Custom-Symptom und kaskadiert alle `entry_symptoms`-Verknüpfungen (FK `ON DELETE CASCADE`). Default-Symptome lassen sich nicht löschen (`403 Forbidden`).
+
+Response: `204 No Content`.
 
 ### `GET /api/v1/entries/{entry_id}/symptoms`
 
 Liefert die aktuell auf einem Entry geloggten Symptome (Liste, leer wenn keine zugewiesen). Owner-scoped via Service-Layer; `404 Not Found`, falls der Entry einem anderen User gehört oder nicht existiert. Rate-Limit: 120/min.
 
-Response `200 OK`: Liste von `SymptomResponse`-Objekten (siehe unten).
+Response `200 OK`: Liste von `EntrySymptomResponse`-Objekten (siehe unten).
 
 ### `PUT /api/v1/entries/{entry_id}/symptoms`
 
 **Replace-Set-Semantik:** Die übergebene `symptoms`-Liste ersetzt das gesamte Symptom-Set des Entries. Eine leere Liste entfernt alle Symptome. Maximale Listenlänge: **32** (`MAX_SYMPTOMS_PER_ENTRY`). Rate-Limit: 60/min.
 
-Der Service-Layer berechnet einen Key-basierten Diff (add / update intensity / remove), sodass die Tabelle bei Updates nicht mit veralteten Zeilen wächst.
+Der Service-Layer prüft, dass jede `symptom_id` für den User sichtbar ist (Default oder eigenes Custom) — unbekannte/fremde IDs liefern `422 Unprocessable Entity`. Anschließend wird ein Diff (add / update intensity / remove) berechnet, sodass die Tabelle bei Updates nicht mit veralteten Zeilen wächst.
 
 Request:
 
 ```json
 {
   "symptoms": [
-    { "symptom_key": "headache", "intensity": 2 },
-    { "symptom_key": "cold", "intensity": 1 }
+    { "symptom_id": "5e4f5b7e-...-headache", "intensity": 2 },
+    { "symptom_id": "a92b1c3d-...-custom", "intensity": 1 }
   ]
 }
 ```
 
-Response `200 OK`: Liste der `SymptomResponse`-Objekte nach dem Replace, sortiert nach `symptom_key`.
+Response `200 OK`: Liste der `EntrySymptomResponse`-Objekte nach dem Replace, sortiert nach `symptom_id`.
 
 Fehler:
 
 - `404 Not Found` — Entry gehört nicht dem User oder existiert nicht.
-- `422 Unprocessable Entity` — unbekannter `symptom_key`, `intensity` außerhalb 0..3, doppelte Keys im Request oder Liste länger als 32.
+- `422 Unprocessable Entity` — unbekannte/nicht sichtbare `symptom_id`, `intensity` außerhalb 0..3, doppelte IDs im Request oder Liste länger als 32.
 
 ### `SymptomResponse`
 
 ```json
 {
   "id": "uuid",
+  "user_id": null,
+  "slug": "headache",
+  "name": "Kopfschmerzen",
+  "icon": "🤕",
+  "is_default": true,
+  "created_at": "2026-05-04T17:00:00Z",
+  "updated_at": "2026-05-04T17:00:00Z"
+}
+```
+
+### `EntrySymptomResponse`
+
+```json
+{
+  "id": "uuid",
   "entry_id": "uuid",
   "user_id": "uuid",
-  "symptom_key": "headache",
+  "symptom_id": "uuid",
   "intensity": 2,
   "created_at": "2026-05-04T17:00:00Z",
   "updated_at": "2026-05-04T17:00:00Z"

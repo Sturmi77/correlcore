@@ -130,6 +130,8 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 **Entscheidung:** Eigene `symptoms`-Entität, parallel zu Tags. Zyklus-Tracking als optionales Modul.
 
+**M1 Custom-Symptome (Issue #57, [ADR-0008](adr/0008-symptom-master-tabelle.md)):** Seit Issue #57 spiegelt das Symptom-System das Tag-Modell vollständig: kuratierte Defaults (5 Einträge mit deterministischer `uuid5`) + User-eigene Custom-Symptome mit CRUD analog zu Tags. `entry_symptoms` referenziert `symptoms.id` per FK statt vormals `symptom_key:String`. Cap: 50 Custom-Symptome pro User; max. 32 zugewiesene Symptome pro Entry.
+
 **Priorität:** MUST (Kern-USP der Korrelationsanalyse)
 
 ---
@@ -419,9 +421,19 @@ erDiagram
   }
   ENTRY_SYMPTOM {
     uuid entry_id FK
-    string symptom_key
+    uuid symptom_id FK
     int intensity
   }
+  SYMPTOM {
+    uuid id PK
+    uuid user_id FK
+    string slug
+    string name
+    string icon
+    bool is_default
+  }
+  USER ||--o{ SYMPTOM : owns
+  SYMPTOM ||--o{ ENTRY_SYMPTOM : used_in
   INSIGHT {
     uuid id PK
     uuid user_id FK
@@ -651,7 +663,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 #### DSGVO-Checkpoint M1
 
 - [ ] 🔒 DSGVO: `note_enc`-Feld verschlüsselt at-rest (pgcrypto oder App-Level-Encryption)
-- [ ] 🔒 DSGVO: Symptom-Daten (`entry_symptoms`-Tabelle) ebenfalls verschlüsselt at-rest _(M1-Stand: Plaintext mit RLS-Schutz, App-Logs scrubben `symptom_key`/`intensity`; Fernet-At-Rest-Verschlüsselung folgt mit Issue #26 gemäß ADR-0005)_
+- [ ] 🔒 DSGVO: Symptom-Daten (`entry_symptoms`-Tabelle und Custom-`symptoms.name`) ebenfalls verschlüsselt at-rest _(M1-Stand: Plaintext mit RLS-Schutz, App-Logs scrubben `slug`/`name`/`symptom_id`/`intensity`; Fernet-At-Rest-Verschlüsselung folgt mit Issue #26 gemäß ADR-0005, muss laut [ADR-0008](adr/0008-symptom-master-tabelle.md) auch `symptoms.name` einschließen)_
 - [x] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing geprüft) — Fehlerlogs dürfen Stacktraces, aber keine Tagebucheinträge, Symptome oder Gesundheitsdaten enthalten (siehe Abschnitt 3.6 und [ADR-0007](adr/0007-healthchecks-and-logging.md)); abgesichert durch automatischen Test `backend/tests/test_log_scrubbing.py`
 - [x] 🔒 DSGVO: Auth-Strategie für Phase 1 dokumentiert und in [ADR-0004](adr/0004-auth-strategie.md) festgehalten
 

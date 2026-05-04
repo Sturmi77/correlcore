@@ -31,7 +31,7 @@ from httpx import ASGITransport, AsyncClient
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.entry import Entry, EntrySlot, WorkContext
-from app.models.symptom import EntrySymptom
+from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user import User
 from app.services.auth_service import _hash_token
@@ -141,10 +141,37 @@ def make_entry_tag(
     return et
 
 
+def make_symptom(
+    user: User | None = None,
+    *,
+    slug: str = "headache",
+    name: str = "Kopfschmerzen",
+    icon: str | None = "\U0001f915",
+    is_default: bool = False,
+    symptom_id: uuid.UUID | None = None,
+) -> Symptom:
+    """Build a detached :class:`Symptom` for service-layer tests.
+
+    Pass ``user=None`` together with ``is_default=True`` to model a
+    curated default symptom. Otherwise the symptom is owned by ``user``.
+    """
+    s = Symptom()
+    s.id = symptom_id or uuid.uuid4()
+    s.user_id = None if is_default else (user.id if user is not None else uuid.uuid4())
+    s.slug = slug
+    s.name = name
+    s.icon = icon
+    s.is_default = is_default
+    s.created_at = datetime.now(UTC)
+    s.updated_at = datetime.now(UTC)
+    return s
+
+
 def make_entry_symptom(
     *,
     entry: Entry,
-    symptom_key: str = "headache",
+    symptom: Symptom | None = None,
+    symptom_id: uuid.UUID | None = None,
     intensity: int = 1,
 ) -> EntrySymptom:
     """Build a detached :class:`EntrySymptom` row for service-layer tests."""
@@ -152,7 +179,11 @@ def make_entry_symptom(
     es.id = uuid.uuid4()
     es.entry_id = entry.id
     es.user_id = entry.user_id
-    es.symptom_key = symptom_key
+    es.symptom_id = (
+        symptom_id
+        if symptom_id is not None
+        else (symptom.id if symptom is not None else uuid.uuid4())
+    )
     es.intensity = intensity
     es.created_at = datetime.now(UTC)
     es.updated_at = datetime.now(UTC)

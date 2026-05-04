@@ -11,6 +11,8 @@ from app.models.symptom import (  # noqa: F401
     INTENSITY_MIN,
     STANDARD_SYMPTOM_KEYS,
     EntrySymptom,
+    Symptom,
+    default_symptom_uuid,
 )
 from app.models.tag import EntryTag, Tag, TagCategory  # noqa: F401
 from app.models.user import User  # noqa: F401
@@ -24,8 +26,10 @@ __all__ = [
     "EntrySlot",
     "EntrySymptom",
     "EntryTag",
+    "Symptom",
     "Tag",
     "TagCategory",
     "User",
     "WorkContext",
+    "default_symptom_uuid",
 ]

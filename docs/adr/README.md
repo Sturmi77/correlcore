@@ -18,6 +18,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0005](0005-verschluesselung-at-rest.md)            | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted | 2026-04-20 |
 | [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted | 2026-05-04 |
 | [ADR-0007](0007-healthchecks-and-logging.md)            | Healthchecks und strukturiertes Logging                     | Accepted | 2026-05-04 |
+| [ADR-0008](0008-symptom-master-tabelle.md)              | Symptom-Master-Tabelle für Custom-Symptome                  | Accepted | 2026-05-04 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -47,7 +48,11 @@ Phase 1 (Web): HttpOnly-Cookies (SameSite=Strict, Secure) für maximale XSS-Resi
 
 ### ADR-0007 – Healthchecks und strukturiertes Logging
 
-Drei-Tier-Healthchecks (`/health/live` nie 5xx, `/health/ready` 503 bei Dep-Ausfall, `/health` aggregierte Summary) verhindern Restart-Loops. JSON-Logging mit fixem Schema nach STDOUT plus Request-ID-Middleware (UUID4 oder vom Client übernommen) erlaubt Korrelation ohne externes Tracing-System. Logs enthalten niemals Art.-9-Gesundheitsdaten — abgesichert durch automatischen Log-Scrubbing-Test (`tests/test_log_scrubbing.py`). Schlägt explizit ADR-0008-Möglichkeiten für einen vollständigen Metrics-Stack ab M9 vor.
+Drei-Tier-Healthchecks (`/health/live` nie 5xx, `/health/ready` 503 bei Dep-Ausfall, `/health` aggregierte Summary) verhindern Restart-Loops. JSON-Logging mit fixem Schema nach STDOUT plus Request-ID-Middleware (UUID4 oder vom Client übernommen) erlaubt Korrelation ohne externes Tracing-System. Logs enthalten niemals Art.-9-Gesundheitsdaten — abgesichert durch automatischen Log-Scrubbing-Test (`tests/test_log_scrubbing.py`).
+
+### ADR-0008 – Symptom-Master-Tabelle für Custom-Symptome
+
+Neue Tabelle `symptoms` analog `tags` mit Owner-Trennung (`user_id NULL = curated`, `is_default`), Slug-Uniqueness via Partial-Indexes und 4 RLS-Policies. `entry_symptoms` referenziert künftig `symptoms.id` per FK statt String-`symptom_key`. Migration 006 transformiert die fünf Standard-Keys aus PR #56 zu Default-Rows mit deterministischen UUIDs (UUID5). Erlaubt User-eigene Symptome mit gleichem CRUD-Modell wie Tags (Issue #57). DSGVO: `symptoms.name` ist Art.-9-relevant und wird mit Issue #26 (App-Level Fernet) verschlüsselt.
 
 ---
 
