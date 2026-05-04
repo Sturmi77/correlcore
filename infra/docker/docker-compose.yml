@@ -79,15 +79,26 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      # Encryption Key für App-Level-Feld-Verschlüsselung (notes, symptoms)
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      # Encryption Key für App-Level-Feld-Verschlüsselung (ADR-0005)
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      S3_ENDPOINT: http://minio:9000
-      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-moodsync}
-      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      S3_BUCKET: moodsync
+      # MinIO — Variablennamen entsprechen backend/app/core/config.py (Issue #41)
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-moodsync}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET_PHOTOS: ${MINIO_BUCKET_PHOTOS:-moodsync-photos}
+      MINIO_SECURE: ${MINIO_SECURE:-false}
+      # CORS
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://${DOMAIN}}
+      # SMTP (E-Mail-Verifikation, Issue #39)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@${DOMAIN}}
     depends_on:
       postgres:
         condition: service_healthy
@@ -153,7 +164,8 @@ services:
     command: python -m backend.workers.analytics
     env_file: .env
     environment:
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
