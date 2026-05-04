@@ -193,11 +193,18 @@ Fehler:
 - `404 Not Found` — wie oben.
 - `409 Conflict` — Eintrag ist älter als 7 Tage (read-only).
 
+### Tag-Zuweisung
+
+Der Tag-Set eines Eintrags wird über einen separaten, idempotenten
+`PUT`-Endpunkt verwaltet — siehe §4. `entries`-Antworten enthalten
+**keine** Tag-Liste; Clients laden Tags pro Entry on-demand über
+`GET /entries/{id}/tags`. Damit bleibt das Entry-Schema stabil und
+batch-fähig (`GET /entries`).
+
 ### Zukünftige Felder
 
 ```jsonc
-// Sobald Issues #8/#9 / M7 landen, erweitert sich die Antwort um:
-// "tags":     ["uuid-sport", "uuid-musik"],
+// Sobald Issue #9 / M7 landen, erweitert sich die Antwort um:
 // "symptoms": [{ "symptom_key": "headache", "intensity": 1 }],
 // "sleep_minutes": 450,
 // "sleep_quality": 3
@@ -207,12 +214,116 @@ Fehler:
 
 ## 4. Tags
 
+M1-Implementierungsstand (Issue #8). Tags sind in zwei Klassen geteilt:
+
+- **Default-Tags** — kuratierte Liste (30 Tags, gepflegt im Migration-Seed `004_create_tags.py`). `user_id IS NULL`, `is_default = true`. Read-only für alle User; lesbar auch ohne Auth über `/tags/default`.
+- **Custom-Tags** — pro User mit `user_id = <user>`. Vollständige CRUD-Hoheit, Slugs müssen sich nicht mit Defaults überschneiden.
+
+Kategorien (`TagCategory`): `sport`, `social`, `work`, `leisure`, `consumption`, `health`, `other`.
+
 ```
-GET    /api/v1/tags              Alle Tags des Users
-POST   /api/v1/tags              Neuen Tag erstellen
-PATCH  /api/v1/tags/{id}         Tag aktualisieren
-DELETE /api/v1/tags/{id}         Tag löschen
-GET    /api/v1/tags/default      Kuratierte Standard-Tags (30 Stück)
+GET    /api/v1/tags/default                Kuratierte Standard-Tags        (no auth)
+GET    /api/v1/tags                        Defaults + eigene Custom-Tags   (60/min)
+POST   /api/v1/tags                        Neuen Custom-Tag erstellen      (60/min)
+PATCH  /api/v1/tags/{id}                   Custom-Tag aktualisieren        (60/min)
+DELETE /api/v1/tags/{id}                   Custom-Tag löschen              (60/min)
+GET    /api/v1/entries/{entry_id}/tags     Tags eines Eintrags             (120/min)
+PUT    /api/v1/entries/{entry_id}/tags     Tag-Set ersetzen (replace)      (60/min)
+```
+
+### Datentypen
+
+- `slug` — kanonischer Schlüssel, 2..64 Zeichen, lowercased Buchstaben/Ziffern/Dashes/Underscores; nicht patchbar (würde Historie brechen).
+- `name` — Display-Name, 1..64 Zeichen.
+- `category` — Enum (siehe oben).
+- `icon` — optional, max. 32 Zeichen (Emoji oder kurzer Slug für Icon-Lookup).
+- `color` — optional, 7-Zeichen-Hex (`#rrggbb`); fällt auf Kategorie-Default zurück.
+- `is_default` — boolean, server-managed; Defaults sind nicht mutierbar.
+
+### `POST /api/v1/tags`
+
+Erstellt einen Custom-Tag. Slug-Kollisionen (mit Default oder eigenem) liefern `409 Conflict`.
+
+Request:
+
+```json
+{
+  "slug": "yoga",
+  "name": "Yoga",
+  "category": "sport",
+  "icon": "🧘",
+  "color": "#a1b2c3"
+}
+```
+
+Response `201 Created`: `TagResponse` (siehe unten).
+
+Fehler:
+
+- `401 Unauthorized` / `403 Forbidden` — fehlender Token / nicht verifiziert.
+- `409 Conflict` — Slug existiert bereits als Default oder als Custom-Tag des Users.
+- `422 Unprocessable Entity` — Slug-Format invalid, Hex-Farbe falsch, Felder zu lang.
+
+### `PATCH /api/v1/tags/{id}`
+
+Nur Custom-Tags des aufrufenden Users sind editierbar. Versuch, einen Default-Tag zu ändern, liefert `403 Forbidden`. Slug ist bewusst **nicht** patchbar (würde Verweise in `entry_tags` brechen).
+
+Request (alle Felder optional):
+
+```json
+{
+  "name": "Yoga (zuhause)",
+  "category": "sport",
+  "icon": "🧘",
+  "color": "#a1b2c3"
+}
+```
+
+### `DELETE /api/v1/tags/{id}`
+
+Löscht einen Custom-Tag und kaskadiert alle `entry_tags`-Verknüpfungen (FK `ON DELETE CASCADE`). Default-Tags lassen sich nicht löschen (`403 Forbidden`).
+
+Response: `204 No Content`.
+
+### `GET /api/v1/entries/{entry_id}/tags`
+
+Liefert die aktuell verknüpften Tags eines Eintrags (Liste, leer wenn keine zugewiesen). `404 Not Found`, falls der Entry einem anderen User gehört oder nicht existiert.
+
+### `PUT /api/v1/entries/{entry_id}/tags`
+
+**Replace-Set-Semantik:** Der übergebene `tag_ids`-Array ersetzt das gesamte Tag-Set des Eintrags. Eine leere Liste entfernt alle Tags. Maximale Listenlänge: **50** (`MAX_TAGS_PER_ENTRY`).
+
+Request:
+
+```json
+{
+  "tag_ids": ["uuid-sport", "uuid-musik"]
+}
+```
+
+Response `200 OK`: Liste der `TagResponse`-Objekte nach dem Replace.
+
+Fehler:
+
+- `404 Not Found` — Entry gehört nicht dem User.
+- `409 Conflict` — Mindestens eine `tag_id` ist nicht sichtbar (weder Default noch Custom-Tag des Users).
+- `422 Unprocessable Entity` — Liste enthält Duplikate oder ist länger als 50.
+
+### `TagResponse`
+
+```json
+{
+  "id": "uuid",
+  "user_id": null,
+  "slug": "sport",
+  "name": "Sport",
+  "category": "sport",
+  "icon": "🏃",
+  "color": "#22c55e",
+  "is_default": true,
+  "created_at": "2026-05-04T17:00:00Z",
+  "updated_at": "2026-05-04T17:00:00Z"
+}
 ```
 
 ---

@@ -639,6 +639,8 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Offline-Sync mit Conflict-Log-Tabelle implementiert (Konflikte werden aufgezeichnet)
 - [x] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38; Entry-Endpoints zusätzlich rate-limitiert: 60/min POST/PATCH, 120/min GET — Issue #7)_
 - [x] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only _(Issue #7: `BACKDATE_DAYS_LIMIT=7` im Service, UI-Datepicker auf 7-Tage-Fenster begrenzt)_
+- [x] Tag-System (vordefinierte Tags + Custom-Tags) verfügbar: `/tags`-CRUD + `PUT /entries/{id}/tags` (replace-set), 30 kuratierte Defaults im Migration-Seed, RLS für Custom-Tags _(Issue #8)_
+- [ ] Symptom-Checkliste verfügbar: `/symptoms`-Endpunkte, visuelle Intensitäts-Skala 0–3, medizinischer Disclaimer in der UI _(Issue #9)_
 - [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull`) funktioniert mit Offline-Queue
 - [x] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40, PR #45)_
 - [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_

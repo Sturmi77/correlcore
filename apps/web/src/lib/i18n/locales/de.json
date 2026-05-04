@@ -58,6 +58,23 @@
     "stress_decrement": "Stress verringern",
     "stress_increment": "Stress erhöhen"
   },
+  "tag": {
+    "picker_label": "Tags",
+    "picker_counter": "{count}/{max} ausgewählt",
+    "loading": "Tags werden geladen…",
+    "empty": "Noch keine Tags vorhanden.",
+    "error_load": "Tags konnten nicht geladen werden.",
+    "error_assign": "Eintrag wurde gespeichert, Tags konnten aber nicht zugewiesen werden.",
+    "category": {
+      "sport": "Sport",
+      "social": "Sozial",
+      "work": "Arbeit",
+      "leisure": "Freizeit",
+      "consumption": "Konsum",
+      "health": "Gesundheit",
+      "other": "Sonstiges"
+    }
+  },
   "disclaimer": {
     "medical": "MoodSync ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."
   },

@@ -18,8 +18,10 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
+  import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import type { WorkContext } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
+  import { assignTagsToEntry } from '$lib/api/tags';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   // ---------------------------------------------------------------------
@@ -45,6 +47,7 @@
   let stress = 3;
   let workContext: WorkContext = defaultWorkContext(today);
   let note = '';
+  let selectedTagIds: string[] = [];
   let busy = false;
   let errorKey: string | null = null;
 
@@ -83,7 +86,7 @@
     busy = true;
     errorKey = null;
     try {
-      await submitEntry({
+      const created = await submitEntry({
         entry_date: entryDate,
         slot: 'day',
         mood_score: moodScore,
@@ -92,6 +95,18 @@
         work_context: workContext,
         note: note.trim() ? note.trim() : undefined,
       });
+      // Tag assignment is best-effort — the entry is already saved. If
+      // attaching tags fails (e.g. transient network blip) we surface a
+      // dedicated error key so the user can retry from /entries/{id}
+      // instead of losing the entry itself.
+      if (selectedTagIds.length > 0) {
+        try {
+          await assignTagsToEntry(created.id, selectedTagIds);
+        } catch (tagErr) {
+          errorKey = mapApiError(tagErr, ERROR_MAP) ?? 'tag.error_assign';
+          return;
+        }
+      }
       await goto('/', { replaceState: true });
     } catch (err) {
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_generic';
@@ -162,6 +177,8 @@
       {/each}
     </select>
   </label>
+
+  <TagPicker bind:selected={selectedTagIds} disabled={busy} />
 
   <label class="entry-field">
     <span class="entry-label">{$_('entry.note_placeholder')}</span>

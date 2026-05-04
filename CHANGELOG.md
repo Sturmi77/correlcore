@@ -10,6 +10,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Tag-System** (Issue #8): Einträge können mit kuratierten Default-Tags und User-eigenen Custom-Tags annotiert werden.
+  - Backend: `Tag`- und `EntryTag`-Modelle mit `TagCategory`-Enum (`sport`/`social`/`work`/`leisure`/`consumption`/`health`/`other`); Default-vs-Custom-Invariante über CHECK-Constraint (`is_default = true` ⇔ `user_id IS NULL`); Slug-Eindeutigkeit per partieller Unique-Indexe.
+  - Migration `004_create_tags.py`: `tags`- und `entry_tags`-Tabellen, RLS-Policies (Public-Read für Defaults, Owner-Scoped CRUD für Custom-Tags) sowie Seed mit 30 kuratierten Default-Tags (Sport, Laufen, Familie, Alkohol, Meditation, …).
+  - Service-Layer (`tag_service.py`) mit typisierten Exceptions (`TagNotFoundError`, `TagConflictError`, `TagOperationDeniedError`, `EntryNotFoundForTagError`, `TagsNotFoundError`); Replace-Set-Semantik für Tag-Zuweisungen, `MAX_TAGS_PER_ENTRY=50`.
+  - Endpoints unter `/api/v1/tags` (`GET /default` ohne Auth; `GET /`, `POST /`, `PATCH /{id}`, `DELETE /{id}`) sowie `/api/v1/entries/{id}/tags` (`GET`, `PUT` Replace); Rate-Limit 60/min für Schreib- und 120/min für Lese-Operationen.
+  - Pydantic-Schemas (`TagCreate`/`TagUpdate`/`TagResponse`/`EntryTagAssignment`) inkl. Slug-Normalisierung (lowercase, 2..64 Zeichen) und Hex-Color-Validierung.
+  - Frontend: API-Client (`apps/web/src/lib/api/tags.ts`), Svelte-Store (`tags.ts` mit `idle/loading/ready/error` und nach Kategorie gruppiertem Derived Store), `TagPicker`-Komponente (Multi-Select Chips, Kategorie-Gruppierung, A11y via `aria-pressed`), Integration in `/entries/new` (Tag-Zuweisung erfolgt nach erfolgreichem Entry-Create, Fehler werden separat angezeigt).
+  - i18n (`de.json`/`en.json`) um den `tag.*`-Block (Picker-Labels, Kategorie-Namen, Fehlertexte) erweitert.
+  - Tests: 32 Backend-Tests (Schemas, Service, Endpoints, statischer Log-Scrubbing-Check) sowie 17 neue Frontend-Tests (API-Client, Store, gruppierter Derived Store).
+  - API.md §4 vollständig auf den Issue-#8-Stand gebracht (alle Endpoints mit Request-/Response-Beispielen, Validierungsregeln, Fehlercodes, `TagResponse`-Schema).
 - **Tägliches Eintrags-Formular** (Issue #7): Erste Kern-Funktion von M1.
   - Backend: `Entry`-Modell mit `EntrySlot` (`morning`/`midday`/`evening`/`unscheduled`)
     und `WorkContext` (`work_day`/`off_day`/`vacation`/`sick`); CHECK-Constraints für
