@@ -20,9 +20,11 @@ dependencies = [
   # Validation / settings
   "pydantic>=2.7.0",
   "pydantic-settings>=2.3.0",
+  "email-validator>=2.2.0",
   # Auth (Phase 1: native JWT — ADR-0004)
   "python-jose[cryptography]>=3.3.0",
   "passlib[bcrypt]>=1.7.4",
+  "bcrypt<5.0.0",
   # Encryption at-rest (ADR-0005)
   "cryptography>=42.0.0",
   # Analytics worker
@@ -61,6 +63,10 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/api/v1/deps/auth.py" = ["B008"]
+"app/api/v1/endpoints/auth.py" = ["B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

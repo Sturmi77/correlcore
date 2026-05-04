@@ -5,8 +5,6 @@
    Density: balanced (mobile-first, 60s entry UX) */
 
 @import 'tailwindcss';
-@import '@skeletonlabs/skeleton/themes/theme-skeleton.css';
-@import '@skeletonlabs/skeleton';
 
 :root {
   /* Type scale — fluid */
@@ -116,4 +114,83 @@ button {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+.h1 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.h2 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.card {
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, Canvas 94%, var(--color-ms-primary) 6%);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  padding: 0.5rem 0.75rem;
+  transition:
+    background-color var(--transition-interactive),
+    border-color var(--transition-interactive);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.625rem;
+  font-size: var(--text-sm);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+}
+
+.variant-ghost-surface {
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.variant-ghost-error,
+.variant-soft-warning {
+  background: color-mix(in srgb, #f59e0b 14%, transparent);
+  color: #92400e;
+}
+
+.text-success-500 {
+  color: #15803d;
+}
+
+.text-warning-500 {
+  color: #b45309;
+}
+
+.text-error-500 {
+  color: #b91c1c;
+}
+
+.bg-success-500 {
+  background-color: #16a34a;
+}
+
+.bg-warning-500 {
+  background-color: #d97706;
+}
+
+.bg-error-500 {
+  background-color: #dc2626;
+}
+
+.text-surface-600-300-token {
+  color: color-mix(in srgb, currentColor 65%, transparent);
 }

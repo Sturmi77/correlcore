@@ -9,12 +9,6 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "moduleResolution": "bundler",
-    "paths": {
-      "$lib": ["./src/lib"],
-      "$lib/*": ["./src/lib/*"],
-      "$i18n": ["./src/lib/i18n"],
-      "$i18n/*": ["./src/lib/i18n/*"]
-    }
+    "moduleResolution": "bundler"
   }
 }

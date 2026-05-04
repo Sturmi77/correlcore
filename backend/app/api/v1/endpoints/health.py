@@ -20,7 +20,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.services.health_service import (
-    ComponentHealth,
     check_liveness,
     check_readiness,
 )
@@ -31,6 +30,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 # Response models
 # ---------------------------------------------------------------------------
+
 
 class LivenessResponse(BaseModel):
     status: str
@@ -57,6 +57,7 @@ class HealthSummary(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.get(
     "/live",

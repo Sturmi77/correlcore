@@ -18,7 +18,7 @@ only be used once before it is invalidated.
 from __future__ import annotations
 
 import logging
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import redis.asyncio as aioredis
 
@@ -51,6 +51,7 @@ async def get_redis() -> AsyncGenerator[aioredis.Redis, None]:
 # ---------------------------------------------------------------------------
 # Token store
 # ---------------------------------------------------------------------------
+
 
 class TokenStore:
     """Manages single-use refresh tokens in Redis."""

@@ -36,9 +36,7 @@ _HEADER = "X-Request-ID"
 class RequestIDMiddleware(BaseHTTPMiddleware):
     """Attach / propagate a request-scoped correlation ID."""
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Reuse client-supplied ID or generate a new one
         request_id = request.headers.get(_HEADER) or str(uuid.uuid4())
 

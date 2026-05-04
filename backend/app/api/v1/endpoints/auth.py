@@ -15,11 +15,13 @@ from __future__ import annotations
 
 import logging
 
+import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.deps.auth import get_current_user
 from app.core.config import settings
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
@@ -40,9 +42,6 @@ from app.services.auth_service import (
     refresh_tokens,
     register_user,
 )
-from app.api.v1.deps.auth import get_current_user
-
-import redis.asyncio as aioredis
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -85,6 +84,7 @@ def _clear_auth_cookies(response: Response) -> None:
 # POST /register
 # ---------------------------------------------------------------------------
 
+
 @router.post(
     "/register",
     response_model=MessageResponse,
@@ -98,16 +98,15 @@ async def register(
     try:
         await register_user(db, data)
     except RegistrationError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     # TODO M1: send verification email
-    return MessageResponse(
-        message="Registration successful. Please verify your email address."
-    )
+    return MessageResponse(message="Registration successful. Please verify your email address.")
 
 
 # ---------------------------------------------------------------------------
 # POST /login  (rate-limited: 5/min per IP)
 # ---------------------------------------------------------------------------
+
 
 @router.post(
     "/login",
@@ -125,12 +124,12 @@ async def login(
     token_store = TokenStore(redis)
     try:
         access, refresh, user = await login_user(db, token_store, data.email, data.password)
-    except AuthError:
+    except AuthError as exc:
         # Generic message — no user enumeration
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
-        )
+        ) from exc
     _set_auth_cookies(response, access, refresh)
     return TokenResponse(
         access_token=access,
@@ -142,6 +141,7 @@ async def login(
 # ---------------------------------------------------------------------------
 # POST /refresh
 # ---------------------------------------------------------------------------
+
 
 @router.post(
     "/refresh",
@@ -167,7 +167,7 @@ async def refresh(
         access, new_refresh, user = await refresh_tokens(db, token_store, token)
     except AuthError as exc:
         _clear_auth_cookies(response)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     _set_auth_cookies(response, access, new_refresh)
     return TokenResponse(
         access_token=access,
@@ -179,6 +179,7 @@ async def refresh(
 # ---------------------------------------------------------------------------
 # POST /logout
 # ---------------------------------------------------------------------------
+
 
 @router.post(
     "/logout",
@@ -202,6 +203,7 @@ async def logout(
 # ---------------------------------------------------------------------------
 # GET /me
 # ---------------------------------------------------------------------------
+
 
 @router.get(
     "/me",

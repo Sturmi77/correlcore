@@ -1,7 +1,6 @@
-<script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
-  import { fetchHealthSummary, type HealthSummary } from '$lib/api/health';
+  <script lang="ts">
+    import { onDestroy, onMount } from 'svelte';
+    import { fetchHealthSummary, type HealthSummary } from '$lib/api/health';
 
   let summary: HealthSummary | null = null;
   let error: string | null = null;

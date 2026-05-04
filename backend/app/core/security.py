@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
-from jose import JWTError, jwt
+from jose import jwt
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -19,11 +19,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return cast(bool, pwd_context.verify(plain_password, hashed_password))
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return cast(str, pwd_context.hash(password))
 
 
 def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> str:
@@ -38,7 +38,7 @@ def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> st
     }
     if extra:
         payload.update(extra)
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return cast(str, jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM))
 
 
 def create_refresh_token(subject: str, jti: str) -> str:
@@ -56,9 +56,12 @@ def create_refresh_token(subject: str, jti: str) -> str:
         "type": "refresh",
         "jti": jti,
     }
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return cast(str, jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM))
 
 
 def decode_token(token: str) -> dict[str, Any]:
     """Decode and verify a JWT. Raises JWTError on invalid/expired tokens."""
-    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    return cast(
+        dict[str, Any],
+        jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]),
+    )

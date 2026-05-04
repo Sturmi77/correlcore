@@ -21,10 +21,10 @@ from httpx import ASGITransport, AsyncClient
 from app.main import app
 from app.services.health_service import ComponentHealth, ComponentStatus, ReadinessReport
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _ok_report() -> ReadinessReport:
     return ReadinessReport(
@@ -54,6 +54,7 @@ def _down_report() -> ReadinessReport:
 # Root shortcuts (used by Docker HEALTHCHECK)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_root_health_live_200() -> None:
     """GET /health/live must return 200 regardless of external deps."""
@@ -75,6 +76,7 @@ async def test_root_health_200() -> None:
 # ---------------------------------------------------------------------------
 # /api/v1/health/live
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_api_v1_health_live_200() -> None:
@@ -103,6 +105,7 @@ async def test_liveness_does_not_fail_when_db_is_down() -> None:
 # ---------------------------------------------------------------------------
 # /api/v1/health/ready
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_api_v1_health_ready_200_when_deps_ok() -> None:
@@ -140,6 +143,7 @@ async def test_api_v1_health_ready_503_when_db_down() -> None:
 # /api/v1/health (summary)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_api_v1_health_summary_200_always() -> None:
     """Summary endpoint must always return 200."""
@@ -171,6 +175,7 @@ async def test_api_v1_health_summary_ok_when_all_up() -> None:
 # X-Request-ID propagation
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_request_id_header_returned() -> None:
     """Every response must carry X-Request-ID."""
@@ -184,9 +189,7 @@ async def test_client_request_id_is_echoed() -> None:
     """If client sends X-Request-ID it must be echoed back unchanged."""
     custom_id = "my-trace-abc-123"
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        response = await client.get(
-            "/health/live", headers={"X-Request-ID": custom_id}
-        )
+        response = await client.get("/health/live", headers={"X-Request-ID": custom_id})
     assert response.headers.get("x-request-id") == custom_id
 
 
@@ -194,12 +197,15 @@ async def test_client_request_id_is_echoed() -> None:
 # Docs hidden in production
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_docs_hidden_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
     """OpenAPI docs must be disabled when DEBUG=False."""
     from app.core import config
+
     monkeypatch.setattr(config.settings, "DEBUG", False)
     from app.main import create_app
+
     prod_app = create_app()
     async with AsyncClient(transport=ASGITransport(app=prod_app), base_url="http://test") as client:
         resp = await client.get("/api/openapi.json")

@@ -13,9 +13,12 @@ connectivity/ping-level checks are performed.
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
+from typing import Any, cast
 
+from redis.asyncio import Redis
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -24,7 +27,7 @@ from app.db.session import engine
 logger = logging.getLogger(__name__)
 
 
-class ComponentStatus(str, Enum):
+class ComponentStatus(StrEnum):
     OK = "ok"
     DEGRADED = "degraded"
     DOWN = "down"
@@ -51,6 +54,7 @@ class ReadinessReport:
 # Liveness — process-only, no I/O
 # ---------------------------------------------------------------------------
 
+
 def check_liveness() -> dict[str, str]:
     """Returns immediately — only confirms the process is alive."""
     return {"status": "ok", "version": settings.APP_VERSION}
@@ -59,6 +63,7 @@ def check_liveness() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # Readiness — probes DB and Redis
 # ---------------------------------------------------------------------------
+
 
 async def check_readiness() -> ReadinessReport:
     components: list[ComponentHealth] = []
@@ -91,10 +96,8 @@ async def _probe_postgres() -> ComponentHealth:
 
 async def _probe_redis() -> ComponentHealth:
     try:
-        import redis.asyncio as aioredis  # type: ignore[import-untyped]
-
-        client = aioredis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
-        await client.ping()
+        client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+        await cast(Awaitable[Any], client.ping())
         await client.aclose()
         return ComponentHealth(name="redis", status=ComponentStatus.OK)
     except Exception as exc:

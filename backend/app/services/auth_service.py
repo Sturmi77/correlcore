@@ -21,7 +21,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    verify_password,
+)
 from app.db.redis_client import TokenStore
 from app.models.user import User
 from app.schemas.auth import RegisterRequest
@@ -32,6 +37,7 @@ _DUMMY_PASSWORD_HASH = hash_password("__moodsync_dummy_password__")
 # ---------------------------------------------------------------------------
 # Exceptions
 # ---------------------------------------------------------------------------
+
 
 class AuthError(Exception):
     """Base auth error — maps to HTTP 401."""
@@ -44,6 +50,7 @@ class RegistrationError(Exception):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
     result = await db.execute(select(User).where(User.email == email.lower()))
@@ -67,6 +74,7 @@ def _build_token_pair(user: User) -> tuple[str, str, str]:
 # Register
 # ---------------------------------------------------------------------------
 
+
 async def register_user(db: AsyncSession, data: RegisterRequest) -> User:
     existing = await _get_user_by_email(db, data.email)
     if existing:
@@ -88,6 +96,7 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> User:
 # ---------------------------------------------------------------------------
 # Login
 # ---------------------------------------------------------------------------
+
 
 async def login_user(
     db: AsyncSession,
@@ -125,6 +134,7 @@ async def login_user(
 # Refresh
 # ---------------------------------------------------------------------------
 
+
 async def refresh_tokens(
     db: AsyncSession,
     token_store: TokenStore,
@@ -137,8 +147,8 @@ async def refresh_tokens(
             settings.SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-    except JWTError:
-        raise AuthError("Invalid or expired refresh token")
+    except JWTError as exc:
+        raise AuthError("Invalid or expired refresh token") from exc
 
     if payload.get("type") != "refresh":
         raise AuthError("Wrong token type")
@@ -158,8 +168,8 @@ async def refresh_tokens(
 
     try:
         user_id = uuid.UUID(user_id_str)
-    except ValueError:
-        raise AuthError("Malformed token")
+    except ValueError as exc:
+        raise AuthError("Malformed token") from exc
 
     user = await _get_user_by_id(db, user_id)
     if not user or not user.is_active:
@@ -175,6 +185,7 @@ async def refresh_tokens(
 # ---------------------------------------------------------------------------
 # Logout
 # ---------------------------------------------------------------------------
+
 
 async def logout_user(
     token_store: TokenStore,

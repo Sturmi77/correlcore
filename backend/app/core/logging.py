@@ -24,7 +24,7 @@ import logging
 import sys
 import traceback
 from contextvars import ContextVar
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.config import settings
@@ -62,12 +62,13 @@ def set_request_context(
 # JSON formatter
 # ---------------------------------------------------------------------------
 
+
 class _JsonFormatter(logging.Formatter):
     """Formats log records as single-line JSON objects."""
 
     def format(self, record: logging.LogRecord) -> str:
         entry: dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "service": "moodsync-api",
             "environment": settings.APP_ENV,
@@ -93,6 +94,7 @@ class _JsonFormatter(logging.Formatter):
 # ---------------------------------------------------------------------------
 # Setup
 # ---------------------------------------------------------------------------
+
 
 def setup_logging() -> None:
     """Configure root logger with JSON output. Call once at app startup."""

@@ -34,8 +34,8 @@ _CREDENTIALS_EXCEPTION = HTTPException(
 async def _resolve_user(token: str, db: AsyncSession) -> User:
     try:
         payload = decode_token(token)
-    except JWTError:
-        raise _CREDENTIALS_EXCEPTION
+    except JWTError as exc:
+        raise _CREDENTIALS_EXCEPTION from exc
 
     if payload.get("type") != "access":
         raise _CREDENTIALS_EXCEPTION
@@ -46,8 +46,8 @@ async def _resolve_user(token: str, db: AsyncSession) -> User:
 
     try:
         user_id = uuid.UUID(user_id_str)
-    except ValueError:
-        raise _CREDENTIALS_EXCEPTION
+    except ValueError as exc:
+        raise _CREDENTIALS_EXCEPTION from exc
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()

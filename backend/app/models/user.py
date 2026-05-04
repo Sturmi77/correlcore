@@ -12,7 +12,7 @@ Design notes:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -59,14 +59,14 @@ class User(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        onupdate=lambda: datetime.now(timezone.utc),
-        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(UTC),
+        default=lambda: datetime.now(UTC),
     )
 
     def __repr__(self) -> str:

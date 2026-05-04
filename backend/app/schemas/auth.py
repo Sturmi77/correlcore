@@ -10,10 +10,10 @@ import uuid
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-
 # ---------------------------------------------------------------------------
 # Request schemas
 # ---------------------------------------------------------------------------
+
 
 class RegisterRequest(BaseModel):
     email: EmailStr
@@ -39,12 +39,14 @@ class LoginRequest(BaseModel):
 class RefreshRequest(BaseModel):
     """Client sends the refresh token in the request body as fallback.
     Primary path is the HttpOnly cookie — body field is optional."""
+
     refresh_token: str | None = None
 
 
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class UserResponse(BaseModel):
     id: uuid.UUID
@@ -57,6 +59,7 @@ class UserResponse(BaseModel):
 
 class TokenResponse(BaseModel):
     """Access token returned in body; refresh token set as HttpOnly cookie."""
+
     access_token: str
     token_type: str = "bearer"
     expires_in: int  # seconds

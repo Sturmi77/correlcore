@@ -1,14 +1,17 @@
 """FastAPI application factory."""
 
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import cast
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from starlette.requests import Request
+from starlette.responses import Response
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -44,7 +47,10 @@ def create_app() -> FastAPI:
 
     # ── Rate limiter state ──────────────────────────────────────────────────
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(
+        RateLimitExceeded,
+        cast(Callable[[Request, Exception], Response], _rate_limit_exceeded_handler),
+    )
 
     # ── Middleware (outermost first) ────────────────────────────────────────
     app.add_middleware(RequestIDMiddleware)

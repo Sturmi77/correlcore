@@ -13,6 +13,7 @@ external services. No real passwords or tokens are logged.
 
 from __future__ import annotations
 
+from datetime import UTC
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -27,9 +28,11 @@ from app.services.auth_service import AuthError, RegistrationError
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_user(verified: bool = True) -> User:
     import uuid
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     u = User()
     u.id = uuid.uuid4()
     u.email = "test@example.com"
@@ -37,8 +40,8 @@ def _make_user(verified: bool = True) -> User:
     u.display_name = "Test User"
     u.is_active = True
     u.is_verified = verified
-    u.created_at = datetime.now(timezone.utc)
-    u.updated_at = datetime.now(timezone.utc)
+    u.created_at = datetime.now(UTC)
+    u.updated_at = datetime.now(UTC)
     return u
 
 
@@ -52,15 +55,19 @@ NEW_REFRESH = "new.refresh.token"
 # Register
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_register_success() -> None:
     with patch("app.api.v1.endpoints.auth.register_user", new_callable=AsyncMock) as mock_reg:
         mock_reg.return_value = _make_user()
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post("/api/v1/auth/register", json={
-                "email": "new@example.com",
-                "password": "Passw0rd",
-            })
+            r = await c.post(
+                "/api/v1/auth/register",
+                json={
+                    "email": "new@example.com",
+                    "password": "Passw0rd",
+                },
+            )
     assert r.status_code == 201
     assert "verify" in r.json()["message"].lower()
 
@@ -73,26 +80,33 @@ async def test_register_duplicate_email() -> None:
         side_effect=RegistrationError("Email already registered"),
     ):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post("/api/v1/auth/register", json={
-                "email": "dupe@example.com",
-                "password": "Passw0rd",
-            })
+            r = await c.post(
+                "/api/v1/auth/register",
+                json={
+                    "email": "dupe@example.com",
+                    "password": "Passw0rd",
+                },
+            )
     assert r.status_code == 409
 
 
 @pytest.mark.asyncio
 async def test_register_weak_password() -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        r = await c.post("/api/v1/auth/register", json={
-            "email": "test@example.com",
-            "password": "short",
-        })
+        r = await c.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "test@example.com",
+                "password": "short",
+            },
+        )
     assert r.status_code == 422
 
 
 # ---------------------------------------------------------------------------
 # Login
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_login_success() -> None:
@@ -103,10 +117,13 @@ async def test_login_success() -> None:
         return_value=(VALID_ACCESS, VALID_REFRESH, user),
     ):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post("/api/v1/auth/login", json={
-                "email": "test@example.com",
-                "password": "Passw0rd",
-            })
+            r = await c.post(
+                "/api/v1/auth/login",
+                json={
+                    "email": "test@example.com",
+                    "password": "Passw0rd",
+                },
+            )
     assert r.status_code == 200
     data = r.json()
     assert data["access_token"] == VALID_ACCESS
@@ -125,10 +142,13 @@ async def test_login_wrong_password() -> None:
         side_effect=AuthError("Invalid credentials"),
     ):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post("/api/v1/auth/login", json={
-                "email": "test@example.com",
-                "password": "wrongpass1",
-            })
+            r = await c.post(
+                "/api/v1/auth/login",
+                json={
+                    "email": "test@example.com",
+                    "password": "wrongpass1",
+                },
+            )
     assert r.status_code == 401
     # Generic message — no user enumeration hint
     assert "Invalid" in r.json()["detail"]
@@ -137,6 +157,7 @@ async def test_login_wrong_password() -> None:
 # ---------------------------------------------------------------------------
 # Refresh
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_refresh_success() -> None:
@@ -181,6 +202,7 @@ async def test_refresh_missing_token_returns_401() -> None:
 # Logout
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_logout_success() -> None:
     with patch("app.api.v1.endpoints.auth.logout_user", new_callable=AsyncMock):
@@ -204,6 +226,7 @@ async def test_logout_no_token_still_200() -> None:
 # ---------------------------------------------------------------------------
 # /me
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_me_authenticated() -> None:
