@@ -54,6 +54,12 @@ def build_verify_url(token: str) -> str:
     return f"{base}/auth/verify-email?token={token}"
 
 
+def build_login_url() -> str:
+    """Build the public login URL for transactional mails."""
+    base = settings.FRONTEND_BASE_URL.rstrip("/")
+    return f"{base}/auth/login"
+
+
 async def _send(message: EmailMessage) -> None:
     """Send an EmailMessage. Swallows errors (logs them) so business flows
     are never broken by transient SMTP issues. Always log the recipient
@@ -111,6 +117,37 @@ async def send_verification_email(
 
     msg = EmailMessage()
     msg["Subject"] = "MoodSync — Bitte bestätige deine E-Mail-Adresse"
+    msg["From"] = settings.SMTP_FROM
+    msg["To"] = to_email
+    msg.set_content(text_body)
+    msg.add_alternative(html_body, subtype="html")
+
+    await _send(msg)
+
+
+async def send_already_registered_email(
+    *,
+    to_email: str,
+    display_name: str | None,
+) -> None:
+    """Notify a user that someone tried to register with their address.
+
+    Sent from the enumeration-safe ``POST /auth/register`` branch when
+    the email already exists (Issue #65). Carries no token; the user is
+    pointed to the login URL. Subject and body are intentionally written
+    so they read sensibly whether the recipient initiated the attempt or
+    not.
+    """
+    ctx = {
+        "display_name": display_name,
+        "login_url": build_login_url(),
+    }
+
+    text_body = _render("already_registered.txt.j2", **ctx)
+    html_body = _render("already_registered.html.j2", **ctx)
+
+    msg = EmailMessage()
+    msg["Subject"] = "MoodSync — Diese Adresse ist bereits registriert"
     msg["From"] = settings.SMTP_FROM
     msg["To"] = to_email
     msg.set_content(text_body)
