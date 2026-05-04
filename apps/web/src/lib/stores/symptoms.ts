@@ -1,64 +1,103 @@
 /**
- * Symptoms store — Issue #9.
+ * Symptoms store — Issue #57 (Custom-Symptome, ADR-0008).
  *
- * In-memory cache of the standard symptom-key catalogue. The catalogue
- * is a build-time constant on the backend (closed set of 5 keys), so
- * after the first fetch it never changes within a session.
+ * In-memory cache of the symptom catalogue (defaults + custom symptoms).
+ * The catalogue is small (≤ 50 custom + 5 defaults), so we keep one flat
+ * array in memory and refresh on demand. Symptoms have no category, so the
+ * picker renders a single flat alphabetised list (defaults first, then
+ * custom — see `symptomsList`).
  *
  * State shape mirrors the tags store: `idle | loading | ready | error`.
- *
- * The actual per-entry symptom selections live in the SymptomChecker
- * component's bound state — they're submitted via
- * `assignSymptomsToEntry` and not cached here, since they're tied to a
- * specific entry's lifecycle.
  */
 
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import {
-  STANDARD_SYMPTOM_KEYS,
-  listStandardSymptomKeys as apiListStandardSymptomKeys,
+  createSymptom as apiCreateSymptom,
+  deleteSymptom as apiDeleteSymptom,
+  listVisibleSymptoms as apiListVisibleSymptoms,
+  updateSymptom as apiUpdateSymptom,
+  type SymptomCreatePayload,
+  type SymptomResponse,
+  type SymptomUpdatePayload,
 } from '$lib/api/symptoms';
 
-export type SymptomCatalogueState =
+export type SymptomsState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; keys: string[] }
+  | { status: 'ready'; symptoms: SymptomResponse[] }
   | { status: 'error'; message: string };
 
-const _catalogue = writable<SymptomCatalogueState>({ status: 'idle' });
+const _symptoms = writable<SymptomsState>({ status: 'idle' });
 
-export const symptomCatalogue = { subscribe: _catalogue.subscribe };
-
-/** Flat list of currently-known symptom keys, or [] when not ready. */
-export const symptomKeysList = derived(_catalogue, ($s) => ($s.status === 'ready' ? $s.keys : []));
+export const symptoms = { subscribe: _symptoms.subscribe };
 
 /**
- * Refresh the standard symptom catalogue from the server.
- *
- * On failure we fall back to the build-time constant `STANDARD_SYMPTOM_KEYS`
- * so the picker stays usable offline / when the backend is briefly
- * unavailable. The error is still recorded in the store so the caller
- * can show a non-blocking warning if it wants to.
+ * Flat list of currently-known symptoms (defaults + custom), or [] when
+ * not ready. Defaults come first, then custom; within each group sorted
+ * alphabetically by display name (locale-aware) so the picker order is
+ * stable across reloads.
  */
-export async function refreshSymptomCatalogue(): Promise<string[]> {
-  _catalogue.set({ status: 'loading' });
+export const symptomsList = derived(_symptoms, ($s) => {
+  if ($s.status !== 'ready') return [] as SymptomResponse[];
+  const defaults = $s.symptoms.filter((s) => s.is_default);
+  const custom = $s.symptoms.filter((s) => !s.is_default);
+  defaults.sort((a, b) => a.name.localeCompare(b.name));
+  custom.sort((a, b) => a.name.localeCompare(b.name));
+  return [...defaults, ...custom];
+});
+
+/** Refresh the symptom catalogue from the server. */
+export async function refreshSymptoms(): Promise<SymptomResponse[]> {
+  _symptoms.set({ status: 'loading' });
   try {
-    const list = await apiListStandardSymptomKeys();
-    const keys = list.keys.map((k) => k.symptom_key);
-    _catalogue.set({ status: 'ready', keys });
-    return keys;
+    const list = await apiListVisibleSymptoms();
+    _symptoms.set({ status: 'ready', symptoms: list });
+    return list;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load symptoms';
-    // Best-effort fallback — populate from the local constant so the
-    // checker still renders. The error is reported on the side-channel
-    // for callers that care.
-    _catalogue.set({ status: 'ready', keys: [...STANDARD_SYMPTOM_KEYS] });
-    // Re-throw so the caller can decide whether to surface the message.
-    throw new Error(message);
+    _symptoms.set({ status: 'error', message });
+    throw err;
+  }
+}
+
+/** Create a custom symptom and add it to the cache. */
+export async function submitSymptom(payload: SymptomCreatePayload): Promise<SymptomResponse> {
+  const created = await apiCreateSymptom(payload);
+  const current = get(_symptoms);
+  const existing = current.status === 'ready' ? current.symptoms : [];
+  _symptoms.set({ status: 'ready', symptoms: [...existing, created] });
+  return created;
+}
+
+/** Update a custom symptom in place in the cache. */
+export async function patchSymptom(
+  id: string,
+  payload: SymptomUpdatePayload
+): Promise<SymptomResponse> {
+  const updated = await apiUpdateSymptom(id, payload);
+  const current = get(_symptoms);
+  if (current.status === 'ready') {
+    _symptoms.set({
+      status: 'ready',
+      symptoms: current.symptoms.map((s) => (s.id === id ? updated : s)),
+    });
+  }
+  return updated;
+}
+
+/** Delete a custom symptom and remove it from the cache. */
+export async function removeSymptom(id: string): Promise<void> {
+  await apiDeleteSymptom(id);
+  const current = get(_symptoms);
+  if (current.status === 'ready') {
+    _symptoms.set({
+      status: 'ready',
+      symptoms: current.symptoms.filter((s) => s.id !== id),
+    });
   }
 }
 
 /** Reset the cache — useful on logout. */
 export function resetSymptomsStore(): void {
-  _catalogue.set({ status: 'idle' });
+  _symptoms.set({ status: 'idle' });
 }

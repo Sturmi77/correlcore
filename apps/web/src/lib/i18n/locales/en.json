@@ -94,6 +94,25 @@
       "back_pain": "Back pain",
       "fatigue": "Fatigue",
       "cold": "Cold"
+    },
+    "empty": "No symptoms yet.",
+    "custom": {
+      "add_button": "Add custom symptom",
+      "heading": "Create custom symptom",
+      "name_label": "Name",
+      "name_placeholder": "e.g. Migraine with aura",
+      "slug_label": "Slug (unique)",
+      "slug_placeholder": "migraine_aura",
+      "icon_label": "Icon (optional)",
+      "icon_placeholder": "🧠",
+      "save": "Create",
+      "save_busy": "Saving…",
+      "cancel": "Cancel",
+      "error_required": "Name and slug are required.",
+      "error_slug_invalid": "Slug may only contain lowercase letters, digits and _ (max. 64 chars).",
+      "error_conflict": "That slug already exists.",
+      "error_validation": "Input is invalid.",
+      "error_generic": "Could not create symptom."
     }
   },
   "disclaimer": {

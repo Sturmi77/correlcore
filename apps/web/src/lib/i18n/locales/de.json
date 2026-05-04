@@ -94,6 +94,25 @@
       "back_pain": "Rückenschmerzen",
       "fatigue": "Müdigkeit",
       "cold": "Erkältung"
+    },
+    "empty": "Noch keine Symptome vorhanden.",
+    "custom": {
+      "add_button": "Eigenes Symptom hinzufügen",
+      "heading": "Eigenes Symptom anlegen",
+      "name_label": "Name",
+      "name_placeholder": "z. B. Migräne mit Aura",
+      "slug_label": "Slug (eindeutig)",
+      "slug_placeholder": "migraene_aura",
+      "icon_label": "Icon (optional)",
+      "icon_placeholder": "🧠",
+      "save": "Anlegen",
+      "save_busy": "Speichert…",
+      "cancel": "Abbrechen",
+      "error_required": "Name und Slug sind Pflichtfelder.",
+      "error_slug_invalid": "Slug darf nur Kleinbuchstaben, Ziffern und _ enthalten (max. 64 Zeichen).",
+      "error_conflict": "Diesen Slug gibt es bereits.",
+      "error_validation": "Eingabe ist ungültig.",
+      "error_generic": "Symptom konnte nicht angelegt werden."
     }
   },
   "disclaimer": {
