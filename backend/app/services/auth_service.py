@@ -17,7 +17,9 @@ import hashlib
 import logging
 import secrets
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from jose import JWTError, jwt
 from sqlalchemy import delete, select
@@ -59,6 +61,32 @@ class VerificationError(Exception):
     Error message is intentionally generic to avoid leaking whether a
     token existed-but-expired vs. never-existed (timing/enumeration).
     """
+
+
+# ---------------------------------------------------------------------------
+# Registration request — enumeration-safe envelope (Issue #65, SA-1)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class RegistrationOutcome:
+    """Result of :func:`request_registration`.
+
+    The endpoint layer always responds with the same generic 202 message,
+    regardless of which branch fires. This envelope tells the endpoint
+    which background mail (if any) to dispatch — never propagated to the
+    HTTP response.
+
+    ``action``:
+        - ``"created"`` — fresh user; ``user`` and ``verification_token``
+          are set.
+        - ``"already_registered"`` — email exists; ``user`` is set,
+          ``verification_token`` is ``None``.
+    """
+
+    action: Literal["created", "already_registered"]
+    user: User
+    verification_token: str | None
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +227,53 @@ def _build_token_pair(user: User) -> tuple[str, str, str]:
 # ---------------------------------------------------------------------------
 
 
+async def request_registration(
+    db: AsyncSession,
+    data: RegisterRequest,
+) -> RegistrationOutcome:
+    """Enumeration-safe entry point for ``POST /auth/register`` (Issue #65).
+
+    Always returns a :class:`RegistrationOutcome`; never raises
+    :class:`RegistrationError` for duplicate emails. The endpoint layer
+    responds with the same generic 202 message in both branches so an
+    attacker cannot tell whether an email is registered.
+
+    Branches:
+        - email is new → create user + DEK, return ``action="created"``
+          plus the plaintext verification token to be mailed.
+        - email exists → return ``action="already_registered"`` with the
+          existing user; the endpoint dispatches an "already-registered"
+          notice mail instead of a verification mail. No DB writes.
+    """
+    existing = await _get_user_by_email(db, data.email)
+    if existing is not None:
+        logger.info(
+            "register hit existing email — enumeration-safe branch",
+            extra={"user_id": str(existing.id)},
+        )
+        return RegistrationOutcome(
+            action="already_registered",
+            user=existing,
+            verification_token=None,
+        )
+
+    user = await register_user(db, data)
+    plaintext_token = await create_verification_token(db, user)
+    return RegistrationOutcome(
+        action="created",
+        user=user,
+        verification_token=plaintext_token,
+    )
+
+
 async def register_user(db: AsyncSession, data: RegisterRequest) -> User:
+    """Create a new user + provision DEK. Internal helper.
+
+    Raises :class:`RegistrationError` on duplicate email — the endpoint
+    layer no longer surfaces this as 4xx (Issue #65) but the error is
+    kept for direct service-layer callers and tests. Production traffic
+    goes through :func:`request_registration` which never raises.
+    """
     existing = await _get_user_by_email(db, data.email)
     if existing:
         raise RegistrationError("Email already registered")

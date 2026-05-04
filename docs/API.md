@@ -25,7 +25,7 @@ Phase 2 (SaaS, M12+): Authentik OIDC — wird zusätzlich aktiviert.
 ### Phase 1 — Native JWT
 
 ```
-POST   /api/v1/auth/register              Registrierung (Issue #39: sendet Verify-Mail)
+POST   /api/v1/auth/register              Registrierung (5/min/IP, immer 202; Issue #65)
 POST   /api/v1/auth/login                 Login (5/min/IP, setzt HttpOnly-Cookies)
 POST   /api/v1/auth/refresh               Refresh-Token rotieren
 POST   /api/v1/auth/logout                Refresh-Token invalidieren, Cookies löschen
@@ -75,10 +75,13 @@ Content-Type: application/json
 
 #### `POST /api/v1/auth/register`
 
-Legt einen neuen User an und versendet asynchron eine Verify-Mail. Der
-Account ist nach `register` `unverified` und kann sich erst nach
-erfolgreichem `verify-email` einloggen. Mail-Versand läuft im Hintergrund;
-SMTP-Fehler werden geloggt, blocken die Antwort aber nicht (Issue #39).
+Legt einen neuen User an und versendet asynchron eine Verify-Mail. Liefert
+**immer `202 Accepted`** mit derselben generischen Antwort, unabhängig
+davon, ob die Adresse neu oder bereits registriert ist (Schutz vor
+User-Enumeration, Issue #65 / SA-1). Der Account ist nach `register`
+`unverified` und kann sich erst nach erfolgreichem `verify-email`
+einloggen. Mail-Versand läuft im Hintergrund; SMTP-Fehler werden geloggt,
+blocken die Antwort aber nicht (Issue #39).
 
 ```http
 POST /api/v1/auth/register
@@ -97,19 +100,24 @@ Content-Type: application/json
 - `password` — 8–128 Zeichen, mindestens **ein Buchstabe und eine Ziffer**, required
 - `display_name` — optional, max. 100 Zeichen
 
+**Verhalten je nach Mail-Status (intern, niemals an den Client geleakt)**
+
+- _Adresse neu_ — User wird angelegt, DEK provisioniert, Verify-Mail
+  asynchron versandt.
+- _Adresse bereits registriert_ — **kein** neuer User, **keine** Verify-Mail.
+  Stattdessen wird einmalig eine "Diese Adresse ist bereits registriert"-
+  Notiz an die Adresse versendet, mit Hinweis auf Login bzw.
+  "Passwort vergessen".
+
 **Antworten**
 
-- `201 Created` — `{"message": "Registration successful. Please verify your email address."}`
-- `409 Conflict` — `{"detail": "Email already registered"}`, wenn die
-  Adresse bereits existiert
+- `202 Accepted` — `{"message": "If the email is not yet registered, a verification mail has been sent."}`
+  (identisch in beiden Branches)
 - `422 Unprocessable Entity` — Schema-Verstoß (z.B. Passwort ohne Ziffer,
   ungültige Mail, `display_name` zu lang)
+- `429 Too Many Requests` — Rate-Limit überschritten
 
-> ⚠️ Der 409 leakt aktuell die Existenz einer Mail-Adresse. Für ein
-> hardened Produkt-Setup (M9+) ist eine E-Mail-Adress-Enumeration-
-> resistente Variante geplant (`202 Accepted` mit asynchronem
-> "Already-registered"-Mailflow analog zu `resend-verification`).
-> Verfolgt unter Issue #50 / Backlog.
+**Rate-Limit:** 5 Requests / Minute / IP (SA-2).
 
 **Hinweis:** Setzt **noch keine** Auth-Cookies — diese werden erst nach
 erfolgreichem `verify-email` + `login` ausgegeben.

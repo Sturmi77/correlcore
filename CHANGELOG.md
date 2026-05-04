@@ -8,6 +8,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — M1 Vorbereitung
 
+### Changed
+
+- **`POST /api/v1/auth/register` enumeration-safe** (Issue #65, SA-1/SA-2): Endpoint liefert jetzt **immer `202 Accepted`** mit derselben generischen Antwort, unabhängig davon, ob die Adresse neu oder bereits registriert ist — der bisherige `409 "Email already registered"` ist ersatzlos entfallen, weil er die Existenz einer Adresse leakte. Bei bereits registrierter Adresse wird kein User angelegt und keine Verify-Mail versandt; stattdessen geht einmalig eine "Diese Adresse ist bereits registriert"-Notiz an die Adresse (neue Templates `already_registered.txt.j2` / `.html.j2`, neue `EmailService.send_already_registered_email`). Service-Layer-Wrapper `request_registration` kapselt die Branch-Wahl in einem `RegistrationOutcome` ohne Exception. **Rate-Limit:** zusätzlich `5/min/IP` per SlowAPI auf den Endpoint, identisch zu `/login`. `docs/API.md` aktualisiert (known-limitation-Hinweis ersetzt durch finale Doku); 4 neue Endpoint-Tests (neuer User → 202 + Verify-Mail, bestehender User → 202 + Already-registered-Mail, Response-Äquivalenz, Rate-Limit-Trigger nach 6. Versuch) plus 2 Service-Tests.
+
 ### Documentation
 
 - **M1 Quality-Gate-Report** (`docs/quality/M1_QUALITY_GATE.md`): kombinierter Code-Quality-Review + Security-Audit gemäß Design-Doc §9. Verdikt **bestanden mit Auflagen** — vier Major-Findings als blockierende Folge-Issues angelegt (#64 Auth-Coverage, #65 Register-Enumeration + Rate-Limit, #66 `DELETE /user/me`-Erasure-API), fünf weitere Findings als nicht-blockierende Folge-Issues (#67 Log-Scrubbing-Tests, #68 Encryption-Healthcheck, #69 esbuild-Advisory, #70 email/health-Service-Coverage, #71 vite-plugin-svelte-Update). DESIGN_DOCUMENT-Checkpoint M1-Quality-Gate referenziert den Report; wird auf `[x]` gesetzt, sobald die drei Major-Issue-Pakete gemerged sind.

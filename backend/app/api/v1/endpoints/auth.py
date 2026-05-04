@@ -8,7 +8,9 @@ Scoping the refresh cookie to /api/v1/auth/refresh ensures it is only sent
 on the single endpoint that needs it, reducing the attack surface.
 
 Rate-limiting (SlowAPI):
-- POST /login: 5 requests / minute per IP → 429 on breach
+- POST /register: 5 requests / minute per IP → 429 on breach (Issue #65, SA-2)
+- POST /login:    5 requests / minute per IP → 429 on breach
+- POST /resend-verification: 3 requests / minute per IP
 """
 
 from __future__ import annotations
@@ -45,17 +47,18 @@ from app.schemas.auth import (
 )
 from app.services.auth_service import (
     AuthError,
-    RegistrationError,
     VerificationError,
-    create_verification_token,
     login_user,
     logout_user,
     refresh_tokens,
-    register_user,
+    request_registration,
     request_verification_resend,
     verify_email,
 )
-from app.services.email_service import send_verification_email
+from app.services.email_service import (
+    send_already_registered_email,
+    send_verification_email,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -97,33 +100,55 @@ def _clear_auth_cookies(response: Response) -> None:
 # ---------------------------------------------------------------------------
 
 
+_REGISTER_GENERIC_MESSAGE = "If the email is not yet registered, a verification mail has been sent."
+
+
 @router.post(
     "/register",
     response_model=MessageResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Register a new user (always returns 202 to prevent enumeration)",
 )
+@limiter.limit("5/minute")
 async def register(
+    request: Request,
     data: RegisterRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_session),
 ) -> MessageResponse:
-    try:
-        user = await register_user(db, data)
-        plaintext_token = await create_verification_token(db, user)
-    except RegistrationError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    """Enumeration-safe registration endpoint (Issue #65, SA-1/SA-2).
 
-    # Mail-Versand asynchron im Hintergrund — Registration responst sofort.
-    # SMTP-Fehler werden im EmailService geloggt, blocken aber nicht die
-    # Registrierung (Issue #39).
-    background_tasks.add_task(
-        send_verification_email,
-        to_email=user.email,
-        display_name=user.display_name,
-        token=plaintext_token,
-    )
-    return MessageResponse(message="Registration successful. Please verify your email address.")
+    Always responds with the same generic 202 message regardless of
+    whether the email is new or already registered, so an attacker
+    cannot distinguish the two cases from HTTP status, body, or timing
+    above the SMTP background task. The branch is decided in
+    :func:`request_registration`; mail dispatch happens asynchronously.
+
+    Rate-limit: 5 requests per minute per IP.
+    """
+    outcome = await request_registration(db, data)
+
+    if outcome.action == "created":
+        # Plaintext-Token nur im Background-Task an den Mail-Versand weiterreichen.
+        # SMTP-Fehler werden im EmailService geloggt, blocken aber nicht die
+        # Registrierung (Issue #39).
+        assert outcome.verification_token is not None  # narrows type for mypy
+        background_tasks.add_task(
+            send_verification_email,
+            to_email=outcome.user.email,
+            display_name=outcome.user.display_name,
+            token=outcome.verification_token,
+        )
+    else:
+        # action == "already_registered": kein neuer User, keine Verify-Mail.
+        # Stattdessen einmalige "Bereits registriert"-Notiz an die Adresse.
+        background_tasks.add_task(
+            send_already_registered_email,
+            to_email=outcome.user.email,
+            display_name=outcome.user.display_name,
+        )
+
+    return MessageResponse(message=_REGISTER_GENERIC_MESSAGE)
 
 
 # ---------------------------------------------------------------------------

@@ -253,19 +253,23 @@ async def test_endpoint_resend_known_email_schedules_mail(async_client: AsyncCli
 
 @pytest.mark.asyncio
 async def test_register_schedules_verification_email(async_client: AsyncClient) -> None:
+    """Issue #39 / Issue #65: a fresh registration schedules the verify mail.
+
+    The endpoint now goes through ``request_registration`` (Issue #65) and
+    always returns 202; the verify-mail must still be dispatched in the
+    background for the ``created`` branch.
+    """
+    from app.services.auth_service import RegistrationOutcome
+
     user = make_user(verified=False)
     plaintext = "tok_" + "y" * 32
+    outcome = RegistrationOutcome(action="created", user=user, verification_token=plaintext)
 
     with (
         patch(
-            "app.api.v1.endpoints.auth.register_user",
+            "app.api.v1.endpoints.auth.request_registration",
             new_callable=AsyncMock,
-            return_value=user,
-        ),
-        patch(
-            "app.api.v1.endpoints.auth.create_verification_token",
-            new_callable=AsyncMock,
-            return_value=plaintext,
+            return_value=outcome,
         ),
         patch(
             "app.api.v1.endpoints.auth.send_verification_email",
@@ -280,7 +284,7 @@ async def test_register_schedules_verification_email(async_client: AsyncClient) 
             },
         )
 
-    assert r.status_code == 201
+    assert r.status_code == 202
     mock_send.assert_awaited()
     # Verify the call carried the plaintext token (NOT a hash)
     awaited_kwargs = mock_send.call_args.kwargs

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>MoodSync — Konto existiert bereits</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f7f7f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7f7f7;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;padding:40px;max-width:560px;">
+            <tr>
+              <td>
+                <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;">
+                  Hallo{% if display_name %}, {{ display_name }}{% endif %}
+                </h1>
+                <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444;">
+                  Jemand — möglicherweise du selbst — hat versucht, sich mit dieser
+                  E-Mail-Adresse erneut bei MoodSync zu registrieren. Es wurde
+                  <strong>kein neues Konto</strong> angelegt, weil hier bereits ein
+                  Konto existiert.
+                </p>
+                <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444;">
+                  <strong>Wenn das du warst:</strong> melde dich wie gewohnt an. Wenn du
+                  dein Passwort vergessen hast, nutze die „Passwort vergessen"-Funktion
+                  auf der Login-Seite.
+                </p>
+                <p style="margin:0 0 32px;text-align:center;">
+                  <a
+                    href="{{ login_url }}"
+                    style="display:inline-block;padding:12px 28px;background-color:#2b6cb0;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;"
+                  >Zur Anmeldung</a>
+                </p>
+                <p style="margin:0 0 24px;font-size:13px;line-height:1.6;color:#666;">
+                  <strong>Wenn das nicht du warst:</strong> ignoriere diese Mail einfach.
+                  Wir haben weder Daten geändert noch ein neues Konto erstellt. Bei
+                  verdächtiger Aktivität melde dich bitte bei
+                  <a href="mailto:support@moodsync.app" style="color:#2b6cb0;">support@moodsync.app</a>.
+                </p>
+                <hr style="border:0;border-top:1px solid #eee;margin:24px 0;" />
+                <p style="margin:0;font-size:12px;line-height:1.6;color:#888;">
+                  Datenschutz: Diese Mail enthält keine Tracking-Pixel und keine externen Inhalte.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
