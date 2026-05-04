@@ -9,47 +9,29 @@ Coverage:
 
 All Redis and DB interactions are mocked so tests run without
 external services. No real passwords or tokens are logged.
+
+Shared factories (``make_user``) and the ``async_client`` fixture live
+in :mod:`tests.conftest`.
 """
 
 from __future__ import annotations
 
-from datetime import UTC
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 
 from app.api.v1.deps.auth import get_current_user
 from app.main import app
 from app.models.user import User
 from app.services.auth_service import AuthError, RegistrationError
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-
-def _make_user(verified: bool = True) -> User:
-    import uuid
-    from datetime import datetime
-
-    u = User()
-    u.id = uuid.uuid4()
-    u.email = "test@example.com"
-    u.hashed_password = "$2b$12$placeholder"
-    u.display_name = "Test User"
-    u.is_active = True
-    u.is_verified = verified
-    u.created_at = datetime.now(UTC)
-    u.updated_at = datetime.now(UTC)
-    return u
-
-
-VALID_ACCESS = "valid.access.token"
-VALID_REFRESH = "valid.refresh.token"
-NEW_ACCESS = "new.access.token"
-NEW_REFRESH = "new.refresh.token"
-
+from tests.conftest import (
+    NEW_ACCESS_TOKEN,
+    NEW_REFRESH_TOKEN,
+    VALID_ACCESS_TOKEN,
+    VALID_REFRESH_TOKEN,
+    make_user,
+)
 
 # ---------------------------------------------------------------------------
 # Register
@@ -57,7 +39,7 @@ NEW_REFRESH = "new.refresh.token"
 
 
 @pytest.mark.asyncio
-async def test_register_success() -> None:
+async def test_register_success(async_client: AsyncClient) -> None:
     # Issue #39: register also schedules a verification email — mock the
     # token-mint and mail-send helpers so we don't touch DB or SMTP.
     with (
@@ -72,47 +54,35 @@ async def test_register_success() -> None:
             new_callable=AsyncMock,
         ),
     ):
-        mock_reg.return_value = _make_user()
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/register",
-                json={
-                    "email": "new@example.com",
-                    "password": "Passw0rd",
-                },
-            )
+        mock_reg.return_value = make_user()
+        r = await async_client.post(
+            "/api/v1/auth/register",
+            json={"email": "new@example.com", "password": "Passw0rd"},
+        )
     assert r.status_code == 201
     assert "verify" in r.json()["message"].lower()
 
 
 @pytest.mark.asyncio
-async def test_register_duplicate_email() -> None:
+async def test_register_duplicate_email(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.endpoints.auth.register_user",
         new_callable=AsyncMock,
         side_effect=RegistrationError("Email already registered"),
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/register",
-                json={
-                    "email": "dupe@example.com",
-                    "password": "Passw0rd",
-                },
-            )
+        r = await async_client.post(
+            "/api/v1/auth/register",
+            json={"email": "dupe@example.com", "password": "Passw0rd"},
+        )
     assert r.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_register_weak_password() -> None:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        r = await c.post(
-            "/api/v1/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "short",
-            },
-        )
+async def test_register_weak_password(async_client: AsyncClient) -> None:
+    r = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": "test@example.com", "password": "short"},
+    )
     assert r.status_code == 422
 
 
@@ -122,24 +92,19 @@ async def test_register_weak_password() -> None:
 
 
 @pytest.mark.asyncio
-async def test_login_success() -> None:
-    user = _make_user()
+async def test_login_success(async_client: AsyncClient, user: User) -> None:
     with patch(
         "app.api.v1.endpoints.auth.login_user",
         new_callable=AsyncMock,
-        return_value=(VALID_ACCESS, VALID_REFRESH, user),
+        return_value=(VALID_ACCESS_TOKEN, VALID_REFRESH_TOKEN, user),
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/login",
-                json={
-                    "email": "test@example.com",
-                    "password": "Passw0rd",
-                },
-            )
+        r = await async_client.post(
+            "/api/v1/auth/login",
+            json={"email": "test@example.com", "password": "Passw0rd"},
+        )
     assert r.status_code == 200
     data = r.json()
-    assert data["access_token"] == VALID_ACCESS
+    assert data["access_token"] == VALID_ACCESS_TOKEN
     assert data["token_type"] == "bearer"
     assert data["user"]["email"] == user.email
     # HttpOnly cookies must be set
@@ -148,20 +113,16 @@ async def test_login_success() -> None:
 
 
 @pytest.mark.asyncio
-async def test_login_wrong_password() -> None:
+async def test_login_wrong_password(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.endpoints.auth.login_user",
         new_callable=AsyncMock,
         side_effect=AuthError("Invalid credentials"),
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/login",
-                json={
-                    "email": "test@example.com",
-                    "password": "wrongpass1",
-                },
-            )
+        r = await async_client.post(
+            "/api/v1/auth/login",
+            json={"email": "test@example.com", "password": "wrongpass1"},
+        )
     assert r.status_code == 401
     # Generic message — no user enumeration hint
     assert "Invalid" in r.json()["detail"]
@@ -173,41 +134,37 @@ async def test_login_wrong_password() -> None:
 
 
 @pytest.mark.asyncio
-async def test_refresh_success() -> None:
-    user = _make_user()
+async def test_refresh_success(async_client: AsyncClient, user: User) -> None:
     with patch(
         "app.api.v1.endpoints.auth.refresh_tokens",
         new_callable=AsyncMock,
-        return_value=(NEW_ACCESS, NEW_REFRESH, user),
+        return_value=(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN, user),
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/refresh",
-                json={"refresh_token": VALID_REFRESH},
-            )
+        r = await async_client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": VALID_REFRESH_TOKEN},
+        )
     assert r.status_code == 200
-    assert r.json()["access_token"] == NEW_ACCESS
+    assert r.json()["access_token"] == NEW_ACCESS_TOKEN
 
 
 @pytest.mark.asyncio
-async def test_refresh_replay_returns_401() -> None:
+async def test_refresh_replay_returns_401(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.endpoints.auth.refresh_tokens",
         new_callable=AsyncMock,
         side_effect=AuthError("Refresh token already used or revoked"),
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/refresh",
-                json={"refresh_token": "replayed.token"},
-            )
+        r = await async_client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": "replayed.token"},
+        )
     assert r.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_refresh_missing_token_returns_401() -> None:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        r = await c.post("/api/v1/auth/refresh", json={})
+async def test_refresh_missing_token_returns_401(async_client: AsyncClient) -> None:
+    r = await async_client.post("/api/v1/auth/refresh", json={})
     assert r.status_code == 401
 
 
@@ -217,22 +174,20 @@ async def test_refresh_missing_token_returns_401() -> None:
 
 
 @pytest.mark.asyncio
-async def test_logout_success() -> None:
+async def test_logout_success(async_client: AsyncClient) -> None:
     with patch("app.api.v1.endpoints.auth.logout_user", new_callable=AsyncMock):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/logout",
-                json={"refresh_token": VALID_REFRESH},
-            )
+        r = await async_client.post(
+            "/api/v1/auth/logout",
+            json={"refresh_token": VALID_REFRESH_TOKEN},
+        )
     assert r.status_code == 200
     assert r.json()["message"] == "Logged out successfully"
 
 
 @pytest.mark.asyncio
-async def test_logout_no_token_still_200() -> None:
+async def test_logout_no_token_still_200(async_client: AsyncClient) -> None:
     """Logout without token should still succeed — idempotent."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        r = await c.post("/api/v1/auth/logout", json={})
+    r = await async_client.post("/api/v1/auth/logout", json={})
     assert r.status_code == 200
 
 
@@ -242,19 +197,16 @@ async def test_logout_no_token_still_200() -> None:
 
 
 @pytest.mark.asyncio
-async def test_me_authenticated() -> None:
-    user = _make_user()
-
+async def test_me_authenticated(async_client: AsyncClient, user: User) -> None:
     async def override_current_user() -> User:
         return user
 
     app.dependency_overrides[get_current_user] = override_current_user
     try:
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.get(
-                "/api/v1/auth/me",
-                cookies={"access_token": VALID_ACCESS},
-            )
+        r = await async_client.get(
+            "/api/v1/auth/me",
+            cookies={"access_token": VALID_ACCESS_TOKEN},
+        )
     finally:
         app.dependency_overrides.clear()
 
@@ -263,7 +215,6 @@ async def test_me_authenticated() -> None:
 
 
 @pytest.mark.asyncio
-async def test_me_unauthenticated() -> None:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        r = await c.get("/api/v1/auth/me")
+async def test_me_unauthenticated(async_client: AsyncClient) -> None:
+    r = await async_client.get("/api/v1/auth/me")
     assert r.status_code == 401

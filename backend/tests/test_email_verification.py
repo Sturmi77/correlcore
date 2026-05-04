@@ -1,4 +1,4 @@
-"""Tests for Issue #39 \u2014 email verification flow.
+"""Tests for Issue #39 — email verification flow.
 
 Coverage:
 - Service: ``_hash_token`` is deterministic and SHA-256 sized.
@@ -14,85 +14,35 @@ Coverage:
 - Endpoint: POST /register schedules the verification email as a
   background task.
 
-DB is mocked at the service boundary \u2014 we don't want a Postgres dep in
+DB is mocked at the service boundary — we don't want a Postgres dep in
 unit tests. End-to-end DB integration is covered by the Compose-stack
 integration test (separate, not in this PR).
+
+Shared factories (``make_user``, ``make_verification_token``,
+``make_db_session_with_results``) and the ``async_client`` fixture live
+in :mod:`tests.conftest`.
 """
 
 from __future__ import annotations
 
 import hashlib
-import secrets
-import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 
-from app.main import app
-from app.models.email_verification_token import EmailVerificationToken
-from app.models.user import User
 from app.services.auth_service import (
     VerificationError,
     _hash_token,
     request_verification_resend,
     verify_email,
 )
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_user(*, verified: bool = False, active: bool = True) -> User:
-    u = User()
-    u.id = uuid.uuid4()
-    u.email = "test@example.com"
-    u.hashed_password = "$2b$12$placeholder"
-    u.display_name = "Test User"
-    u.is_active = active
-    u.is_verified = verified
-    u.created_at = datetime.now(UTC)
-    u.updated_at = datetime.now(UTC)
-    return u
-
-
-def _make_token(
-    user: User,
-    *,
-    plaintext: str | None = None,
-    expires_in: timedelta = timedelta(hours=1),
-    used: bool = False,
-) -> tuple[EmailVerificationToken, str]:
-    plaintext = plaintext or secrets.token_urlsafe(32)
-    record = EmailVerificationToken()
-    record.id = uuid.uuid4()
-    record.user_id = user.id
-    record.token_hash = _hash_token(plaintext)
-    record.expires_at = datetime.now(UTC) + expires_in
-    record.used_at = datetime.now(UTC) if used else None
-    record.created_at = datetime.now(UTC)
-    return record, plaintext
-
-
-def _make_db_with_token(
-    token_record: EmailVerificationToken | None,
-    user: User | None,
-) -> MagicMock:
-    """Build an AsyncSession mock that yields ``token_record`` then ``user``
-    on consecutive ``execute().scalar_one_or_none()`` calls."""
-    db = MagicMock()
-    db.flush = AsyncMock()
-
-    token_result = MagicMock()
-    token_result.scalar_one_or_none.return_value = token_record
-    user_result = MagicMock()
-    user_result.scalar_one_or_none.return_value = user
-
-    db.execute = AsyncMock(side_effect=[token_result, user_result])
-    return db
-
+from tests.conftest import (
+    make_db_session_with_results,
+    make_user,
+    make_verification_token,
+)
 
 # ---------------------------------------------------------------------------
 # Service: _hash_token
@@ -116,16 +66,16 @@ def test_hash_token_is_deterministic() -> None:
 
 @pytest.mark.asyncio
 async def test_verify_email_unknown_token() -> None:
-    db = _make_db_with_token(None, None)
+    db = make_db_session_with_results(None, None)
     with pytest.raises(VerificationError, match="Invalid or expired"):
         await verify_email(db, "does-not-exist")
 
 
 @pytest.mark.asyncio
 async def test_verify_email_expired_token() -> None:
-    user = _make_user()
-    token, plaintext = _make_token(user, expires_in=timedelta(hours=-1))
-    db = _make_db_with_token(token, user)
+    user = make_user(verified=False)
+    token, plaintext = make_verification_token(user, expires_in=timedelta(hours=-1))
+    db = make_db_session_with_results(token, user)
 
     with pytest.raises(VerificationError, match="Invalid or expired"):
         await verify_email(db, plaintext)
@@ -133,9 +83,9 @@ async def test_verify_email_expired_token() -> None:
 
 @pytest.mark.asyncio
 async def test_verify_email_already_used_token() -> None:
-    user = _make_user()
-    token, plaintext = _make_token(user, used=True)
-    db = _make_db_with_token(token, user)
+    user = make_user(verified=False)
+    token, plaintext = make_verification_token(user, used=True)
+    db = make_db_session_with_results(token, user)
 
     with pytest.raises(VerificationError, match="Invalid or expired"):
         await verify_email(db, plaintext)
@@ -143,9 +93,9 @@ async def test_verify_email_already_used_token() -> None:
 
 @pytest.mark.asyncio
 async def test_verify_email_inactive_user() -> None:
-    user = _make_user(active=False)
-    token, plaintext = _make_token(user)
-    db = _make_db_with_token(token, user)
+    user = make_user(verified=False, active=False)
+    token, plaintext = make_verification_token(user)
+    db = make_db_session_with_results(token, user)
 
     with pytest.raises(VerificationError, match="Invalid or expired"):
         await verify_email(db, plaintext)
@@ -153,9 +103,9 @@ async def test_verify_email_inactive_user() -> None:
 
 @pytest.mark.asyncio
 async def test_verify_email_success_marks_user_verified() -> None:
-    user = _make_user(verified=False)
-    token, plaintext = _make_token(user)
-    db = _make_db_with_token(token, user)
+    user = make_user(verified=False)
+    token, plaintext = make_verification_token(user)
+    db = make_db_session_with_results(token, user)
 
     result_user = await verify_email(db, plaintext)
 
@@ -167,9 +117,9 @@ async def test_verify_email_success_marks_user_verified() -> None:
 @pytest.mark.asyncio
 async def test_verify_email_idempotent_for_already_verified() -> None:
     """A user who is already verified stays verified; token is still consumed."""
-    user = _make_user(verified=True)
-    token, plaintext = _make_token(user)
-    db = _make_db_with_token(token, user)
+    user = make_user(verified=True)
+    token, plaintext = make_verification_token(user)
+    db = make_db_session_with_results(token, user)
 
     result_user = await verify_email(db, plaintext)
 
@@ -196,7 +146,7 @@ async def test_resend_returns_none_for_unknown_email() -> None:
 
 @pytest.mark.asyncio
 async def test_resend_returns_none_for_already_verified() -> None:
-    user = _make_user(verified=True)
+    user = make_user(verified=True)
     db = MagicMock()
     db.flush = AsyncMock()
     user_result = MagicMock()
@@ -213,44 +163,41 @@ async def test_resend_returns_none_for_already_verified() -> None:
 
 
 @pytest.mark.asyncio
-async def test_endpoint_verify_email_success() -> None:
+async def test_endpoint_verify_email_success(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.endpoints.auth.verify_email",
         new_callable=AsyncMock,
     ) as mock_verify:
-        mock_verify.return_value = _make_user(verified=True)
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/verify-email",
-                json={"token": "x" * 32},
-            )
+        mock_verify.return_value = make_user(verified=True)
+        r = await async_client.post(
+            "/api/v1/auth/verify-email",
+            json={"token": "x" * 32},
+        )
     assert r.status_code == 200
     assert "verified" in r.json()["message"].lower()
 
 
 @pytest.mark.asyncio
-async def test_endpoint_verify_email_invalid_returns_400() -> None:
+async def test_endpoint_verify_email_invalid_returns_400(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.endpoints.auth.verify_email",
         new_callable=AsyncMock,
         side_effect=VerificationError("Invalid or expired verification token"),
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/verify-email",
-                json={"token": "x" * 32},
-            )
+        r = await async_client.post(
+            "/api/v1/auth/verify-email",
+            json={"token": "x" * 32},
+        )
     assert r.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_endpoint_verify_email_short_token_validation() -> None:
+async def test_endpoint_verify_email_short_token_validation(async_client: AsyncClient) -> None:
     """Pydantic should reject obviously short tokens before the service is called."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        r = await c.post(
-            "/api/v1/auth/verify-email",
-            json={"token": "short"},
-        )
+    r = await async_client.post(
+        "/api/v1/auth/verify-email",
+        json={"token": "short"},
+    )
     assert r.status_code == 422
 
 
@@ -260,24 +207,23 @@ async def test_endpoint_verify_email_short_token_validation() -> None:
 
 
 @pytest.mark.asyncio
-async def test_endpoint_resend_unknown_email_still_202() -> None:
+async def test_endpoint_resend_unknown_email_still_202(async_client: AsyncClient) -> None:
     """Enumeration protection: response is the same whether email exists or not."""
     with patch(
         "app.api.v1.endpoints.auth.request_verification_resend",
         new_callable=AsyncMock,
         return_value=None,
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/resend-verification",
-                json={"email": "unknown@example.com"},
-            )
+        r = await async_client.post(
+            "/api/v1/auth/resend-verification",
+            json={"email": "unknown@example.com"},
+        )
     assert r.status_code == 202
 
 
 @pytest.mark.asyncio
-async def test_endpoint_resend_known_email_schedules_mail() -> None:
-    user = _make_user(verified=False)
+async def test_endpoint_resend_known_email_schedules_mail(async_client: AsyncClient) -> None:
+    user = make_user(verified=False)
     plaintext = "tok_" + "x" * 32
 
     with (
@@ -291,13 +237,12 @@ async def test_endpoint_resend_known_email_schedules_mail() -> None:
             new_callable=AsyncMock,
         ) as mock_send,
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/resend-verification",
-                json={"email": user.email},
-            )
+        r = await async_client.post(
+            "/api/v1/auth/resend-verification",
+            json={"email": user.email},
+        )
     assert r.status_code == 202
-    # BackgroundTask runs after response \u2014 give it a tick
+    # BackgroundTask runs after response — give it a tick
     mock_send.assert_awaited()
 
 
@@ -307,8 +252,8 @@ async def test_endpoint_resend_known_email_schedules_mail() -> None:
 
 
 @pytest.mark.asyncio
-async def test_register_schedules_verification_email() -> None:
-    user = _make_user(verified=False)
+async def test_register_schedules_verification_email(async_client: AsyncClient) -> None:
+    user = make_user(verified=False)
     plaintext = "tok_" + "y" * 32
 
     with (
@@ -327,14 +272,13 @@ async def test_register_schedules_verification_email() -> None:
             new_callable=AsyncMock,
         ) as mock_send,
     ):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-            r = await c.post(
-                "/api/v1/auth/register",
-                json={
-                    "email": "fresh@example.com",
-                    "password": "Passw0rd",
-                },
-            )
+        r = await async_client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "fresh@example.com",
+                "password": "Passw0rd",
+            },
+        )
 
     assert r.status_code == 201
     mock_send.assert_awaited()
