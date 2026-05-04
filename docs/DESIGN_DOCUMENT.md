@@ -610,6 +610,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] `.env.example` / `SECRET_KEY`-Mismatch behoben _(Issue #41, PR #43)_
 - [x] Login-Flow end-to-end implementiert (JWT → FastAPI → SvelteKit Login-UI) _(Issue #40, PR #45, M1)_
 - [x] E-Mail-Verifikation (`POST /auth/verify-email`, SMTP) _(Issue #39, PR #44, M1)_
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(M0 retroaktiv abgedeckt durch ADR-0007 + PR #51, PR #52)_
 
 #### DSGVO-Checkpoint M0
 
@@ -643,6 +644,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_
 - [x] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41, PR #43)_
 - [x] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41, PR #43)_
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M1
 
@@ -668,6 +670,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Charts auf Mobilgerät (375 px Breite) korrekt gerendert und bedienbar
 - [ ] Zeitreihe korrekt für Wochen-/Monats-/Jahresansicht
 - [ ] Streak-Berechnung korrekt bei fehlenden Tagen
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M2
 
@@ -692,6 +695,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Kein Insight formuliert diagnostische Aussagen (Review-Checkliste liegt vor und ist abgezeichnet)
 - [ ] Analytics-Worker läuft als geplanter Job (Cron/Celery) und nicht inline in der API
 - [ ] Fehler im Analytics-Worker crashen nicht die API
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M3
 
@@ -716,6 +720,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Web Push Notifications enthalten keine Gesundheitsdaten im Payload
 - [ ] PWA installierbar auf Android Chrome und iOS Safari
 - [ ] Offline-Modus: Eintrag erstellen ohne Netzverbindung, Sync beim nächsten Online-Start
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M4
 
@@ -737,6 +742,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Keine Wertung oder Scoring von Habits, die psychologisch schaden könnte (kein „Versagt"-Framing)
 - [ ] Zielfrequenz konfigurierbar (täglich / x-mal pro Woche)
 - [ ] Streak-Reset-Logik korrekt bei fehlendem Tag vs. bewusstem Aussetzen
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M5
 
@@ -757,6 +763,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] MinIO SSE-S3 für Photo-Bucket aktiviert
 - [ ] Foto-Upload nur für authentifizierte User, kein direkter MinIO-Zugriff ohne Pre-Signed URL
 - [ ] Maximale Dateigröße und erlaubte MIME-Types serverseitig validiert
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M6
 
@@ -779,6 +786,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Keine Weitergabe von Health-Connect-Daten an Third-Party-Services
 - [ ] Import importiert nur Schlaf + HR (keine Bewegungsprofile, keine Standortdaten)
 - [ ] Health Connect API Declaration korrekt in `AndroidManifest.xml` eingetragen
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M7
 
@@ -802,6 +810,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Lag-Analyse konfigurierbar (1–7 Tage Verzögerung)
 - [ ] Insight Digest als optionale wöchentliche Push-Notification
 - [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M8
 
@@ -824,6 +833,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Backup-Prozess dokumentiert und Restore-Test erfolgreich durchgeführt
 - [ ] GlitchTip Error-Tracking aktiv, kein PII in Error-Reports
 - [ ] Install-Guide für Selfhost vollständig (Docker Compose, Traefik, DNS)
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M9
 
@@ -848,6 +858,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Security-Disclosure-Policy vorhanden (`SECURITY.md` im Repository)
 - [ ] CHANGELOG.md gepflegt und vollständig für v1.0
 - [ ] Docs-Site (Docusaurus oder MkDocs) mit Install- und User-Guide live
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M10
 
@@ -871,6 +882,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] App besteht Google Play Pre-Launch-Report ohne kritische Fehler
 - [ ] FCM-Integration getestet (Push-Notification kommt an)
 - [ ] Store-Assets vollständig (Screenshots alle Formfaktoren, Feature-Graphic, kurze/lange Beschreibung)
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M11
 
@@ -894,6 +906,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Tenant-Isolation via RLS für alle neuen Tabellen geprüft und durch Cross-Tenant-Test verifiziert
 - [ ] Onboarding-Flow für neue SaaS-User vollständig (Registrierung → Billing → erste Nutzung)
 - [ ] Support-Ticket-System oder Kontaktkanal vorhanden
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M12
 
@@ -956,6 +969,10 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 ## 9. Definition of Done
 
+Die folgenden Punkte gelten für **jeden** Pull-Request, unabhängig vom Milestone. Zusätzlich definiert jeder Milestone ein **Quality-Gate** (Code-Quality-Review + Security-Audit), das vor dem Milestone-Exit bestanden sein muss.
+
+### Pro Pull-Request
+
 - [ ] Code reviewed (Self-Review-Checkliste)
 - [ ] Tests grün (Unit + Integration)
 - [ ] OpenAPI-Spec aktualisiert
@@ -967,6 +984,33 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] 🔒 DSGVO: Art.-9-Impact-Check durchgeführt bei allen health-daten-relevanten Changes
 - [ ] 🔒 DSGVO: EXIF-Strip verifiziert bei Foto-relevanten Changes (automatisierter Test mit GPS-EXIF-Testbild)
 - [ ] 🔒 DSGVO: Löschkonzept geprüft bei neuen Datenfeldern (werden Felder bei Account-Delete vollständig entfernt?)
+
+### Pro Milestone (Quality-Gate)
+
+Jeder Milestone darf erst auf `done` gesetzt werden, wenn beide Audits durchgeführt **und** bestanden wurden. Findings müssen entweder im selben Milestone gefixt oder als getracktes Issue mit Risiko-Akzeptanz dokumentiert werden.
+
+#### Code-Quality-Review (CQR)
+
+- [ ] **Reuse / DRY**: Doppelter Code identifiziert und in Helper / Service / Util konsolidiert
+- [ ] **Test-Factories**: Neue Modelle haben Fixtures in `backend/tests/conftest.py` (Backend) bzw. Test-Helpern (Frontend)
+- [ ] **Library-Hygiene**: Neue Dependencies dokumentiert; ungenutzte Dependencies in optional-Group oder entfernt
+- [ ] **Konsistenz**: Naming, Modulstruktur, Schema-Pattern folgen den im Milestone bisher etablierten Mustern
+- [ ] **Coverage**: Backend `pytest --cov` ≥ 70 % gehalten; kritische Pfade (Auth, Sync, Krypto) zusätzlich ≥ 85 %
+- [ ] **Statische Analyse grün**: `ruff check`, `ruff format --check`, `mypy --strict` (Backend); `eslint`, `prettier --check`, `svelte-check` (Frontend)
+- [ ] **CHANGELOG-Eintrag** im `Changed`-Block mit konkreten Refactorings (kein generisches "Code-Cleanup")
+
+#### Security-Audit (SA)
+
+- [ ] **Auth-Coverage**: Alle neuen Endpoints hinter `get_current_user` / `get_current_verified_user` (außer explizit öffentlich); RLS-Pfad geprüft
+- [ ] **Input-Validation**: Pydantic-Schemas mit `Field`-Constraints (min/max-Length, Bereiche, Regex) für alle User-Inputs
+- [ ] **Rate-Limiting**: Neue öffentliche Endpoints mit `@limiter.limit(...)` versehen, wo sinnvoll (Auth, E-Mail, Resend, Costly-Reads)
+- [ ] **Healthchecks**: Neue Services / DB-Tabellen / externe Dependencies in `/health/ready` integriert; Liveness vs. Readiness sauber getrennt (siehe [ADR-0007](adr/0007-healthchecks-and-logging.md))
+- [ ] **Logging-Hygiene**: Keine Klartext-Mood-/Symptom-/Notiz-/Token-Werte in Logs; `test_log_scrubbing.py` erweitert um neue sensitive Felder; nur `request_id` + `user_id` als Korrelation
+- [ ] **DSGVO-Pfad**: Neue Felder im Erasure-Pfad (`DELETE /user/me`); persönliche Daten entweder verschlüsselt at-rest oder als nicht-personenbeziehbar dokumentiert
+- [ ] **Anti-Enumeration**: Neue öffentliche Endpoints (Lookup, Resend, Reset) liefern generische Antworten; keine Timing-Side-Channels
+- [ ] **Headers / Cookies**: Bei neuen Cookies HttpOnly + Secure + `SameSite=strict`; Pfad möglichst eng gescopet (siehe `auth.py`)
+- [ ] **Dependency-Scan**: `pip-audit` (Backend) und `pnpm audit --prod` (Frontend) ohne `high`/`critical`-Findings; Ausnahmen mit Begründung in CHANGELOG
+- [ ] **Secrets-Scan**: Repo gegen `.env`-Leaks geprüft (kein Secret in Git-History); neue Env-Vars in `.env.example` mit Generierungsbefehl
 
 ---
 

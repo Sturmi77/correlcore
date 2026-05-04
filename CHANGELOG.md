@@ -86,6 +86,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 
+- **DESIGN_DOCUMENT.md §9 "Definition of Done" um Quality-Gate erweitert**: Pro Milestone
+  ist nun ein Code-Quality-Review (CQR) und ein Security-Audit (SA) verpflichtend.
+  CQR prüft u.a. Reuse/DRY, Test-Factories, Library-Hygiene, Konsistenz, Coverage-Schwellen
+  (≥70% gesamt / ≥85% Auth+Sync+Krypto), statische Analyse (ruff, mypy, ESLint, svelte-check)
+  und CHANGELOG-Pflege. SA prüft Auth-Coverage aller neuen Endpoints, Input-Validation,
+  Rate-Limiting, Healthchecks (3-Tier nach ADR-0007), Logging-Hygiene (kein PII/Secrets,
+  ADR-0007 Scrubbing), DSGVO-Pfade, Anti-Enumeration-Pattern, Security-Headers/Cookies,
+  Dependency-Scan (`pip-audit`, `pnpm audit`) und Secrets-Scan. Jeder Milestone-
+  Akzeptanzkriterienblock (M0–M12) erhält eine Quality-Gate-Checkbox; M0 ist retroaktiv
+  durch ADR-0007, PR #51 und PR #52 abgedeckt.
 - ADR-0005 (Verschlüsselung at-rest) re-evaluiert und nachgeschärft (2026-05-04):
   - Bedrohungsmodell-Tabelle hinzugefügt
   - Begründung gegen pgcrypto explizit dokumentiert (Connection-Pool-Risiko, teure Key-Rotation, pro-User-Key-Overhead)
