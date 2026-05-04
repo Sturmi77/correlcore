@@ -37,13 +37,13 @@
 
 ## Alternativen erwogen
 
-| Option | Vorteile | Nachteile |
-|---|---|---|
-| **Native JWT (FastAPI)** ✅ | Kein Ressourcen-Overhead, keine zweite Datenbank, vollständige Kontrolle, Selfhost-freundlich | MFA und SSO müssen selbst implementiert werden |
-| **Authentik** | Vollständiges IAM-System, SSO, SAML, LDAP, SCIM out-of-the-box | ~500 MB RAM + eigene Postgres-Instanz, zu schwergewichtig für Phase 1 Selfhost |
-| **Logto** | Modernes OIDC/OAuth2-System, gute DX, geringerer Overhead als Authentik | Noch weniger ausgereift als Authentik, proprietäre Hosted-Option, weniger Selfhost-Community |
-| **PocketBase** | All-in-One Backend + Auth, sehr leichtgewichtig | Go-basiert (kein Python-Ökosystem), kein nativer FastAPI-Fit, würde den Stack umstrukturieren |
-| **Keycloak** | Enterprise-grade, SAML/LDAP/SSO, große Community | Noch schwergewichtiger als Authentik (~1 GB RAM), JVM-basiert, Selfhost-Overhead inakzeptabel |
+| Option                      | Vorteile                                                                                      | Nachteile                                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Native JWT (FastAPI)** ✅ | Kein Ressourcen-Overhead, keine zweite Datenbank, vollständige Kontrolle, Selfhost-freundlich | MFA und SSO müssen selbst implementiert werden                                                |
+| **Authentik**               | Vollständiges IAM-System, SSO, SAML, LDAP, SCIM out-of-the-box                                | ~500 MB RAM + eigene Postgres-Instanz, zu schwergewichtig für Phase 1 Selfhost                |
+| **Logto**                   | Modernes OIDC/OAuth2-System, gute DX, geringerer Overhead als Authentik                       | Noch weniger ausgereift als Authentik, proprietäre Hosted-Option, weniger Selfhost-Community  |
+| **PocketBase**              | All-in-One Backend + Auth, sehr leichtgewichtig                                               | Go-basiert (kein Python-Ökosystem), kein nativer FastAPI-Fit, würde den Stack umstrukturieren |
+| **Keycloak**                | Enterprise-grade, SAML/LDAP/SSO, große Community                                              | Noch schwergewichtiger als Authentik (~1 GB RAM), JVM-basiert, Selfhost-Overhead inakzeptabel |
 
 ---
 
@@ -59,9 +59,9 @@
 
 ## Umsetzung
 
-| Meilenstein | Aufgabe |
-|---|---|
-| **M0** | Auth-Grundgerüst: JWT-Ausstellung, Refresh-Token-Rotation, Passwort-Hashing, E-Mail-Verifikation |
-| **M1** | Vollständige Auth-Integration: alle Endpunkte abgesichert, Rate-Limiting aktiv, Login/Logout/Register UI fertig |
-| **M3** | TOTP-MFA als optionales Opt-in |
-| **M12+** | Authentik OIDC-Integration für SaaS-Phase |
+| Meilenstein | Aufgabe                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------- |
+| **M0**      | Auth-Grundgerüst: JWT-Ausstellung, Refresh-Token-Rotation, Passwort-Hashing, E-Mail-Verifikation                |
+| **M1**      | Vollständige Auth-Integration: alle Endpunkte abgesichert, Rate-Limiting aktiv, Login/Logout/Register UI fertig |
+| **M3**      | TOTP-MFA als optionales Opt-in                                                                                  |
+| **M12+**    | Authentik OIDC-Integration für SaaS-Phase                                                                       |

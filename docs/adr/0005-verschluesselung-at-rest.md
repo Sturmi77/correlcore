@@ -18,20 +18,22 @@
 
 ### Stufe 1 – Infrastruktur-Ebene (sofort, bis M1)
 
-| Maßnahme | Implementierung |
-|---|---|
-| **MinIO SSE-S3** | Server-Side Encryption für alle Buckets aktivieren (`mc admin config set myminio api sse_default_key=...`) – reine Konfiguration, kein Code-Aufwand |
-| **PostgreSQL-Volumes** | Hetzner-LUKS-verschlüsselte Volumes nutzen (in der Deployment-Anleitung dokumentiert); Encryption at-rest auf Block-Ebene |
-| **TLS erzwingen** | Traefik HTTPS-Redirect für alle Services; HSTS mit `max-age=31536000` (1 Jahr), `includeSubDomains` |
+| Maßnahme               | Implementierung                                                                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MinIO SSE-S3**       | Server-Side Encryption für alle Buckets aktivieren (`mc admin config set myminio api sse_default_key=...`) – reine Konfiguration, kein Code-Aufwand |
+| **PostgreSQL-Volumes** | Hetzner-LUKS-verschlüsselte Volumes nutzen (in der Deployment-Anleitung dokumentiert); Encryption at-rest auf Block-Ebene                           |
+| **TLS erzwingen**      | Traefik HTTPS-Redirect für alle Services; HSTS mit `max-age=31536000` (1 Jahr), `includeSubDomains`                                                 |
 
 ### Stufe 2 – App-Ebene (M1)
 
 **Verschlüsselte Felder:**
+
 - `entries.note` (Stimmungsnotizen)
 - `entry_symptoms.details` (Symptom-Freitextbeschreibungen)
 - `insights.statement` (KI-generierte Insights, die Nutzertext enthalten können)
 
 **Implementierung:**
+
 - **Fernet** (symmetrische Verschlüsselung, `python-cryptography`): AES-128-CBC + HMAC-SHA256, authenticated encryption
 - **Pro-User-Key:** Jeder Nutzer erhält einen individuellen Encryption-Key (verhindert, dass ein kompromittierter Key alle Nutzer betrifft)
 - **Key-Storage:** User-Keys werden in PostgreSQL gespeichert, verschlüsselt mit einem Master-Key aus der Umgebungsvariable `ENCRYPTION_KEY`
@@ -47,12 +49,12 @@
 
 ## Alternativen erwogen
 
-| Option | Vorteile | Nachteile |
-|---|---|---|
-| **Kein Encryption at-rest** | Kein Aufwand, volle FTS-Funktionalität | Art.-9-DSGVO-Risiko, Daten bei Backup-Diebstahl im Klartext, inakzeptabel |
-| **pgcrypto Column-Level** | Direkt in PostgreSQL, kein App-Code | Schlechtere Performance als App-Level, Key-Management in DB schwieriger, kein pro-User-Key ohne Overhead |
-| **App-Level Fernet (pro-User-Key)** ✅ | Gute Performance (~0.1 ms/Feld), pro-User-Key, authenticated encryption, Python-nativ | FTS auf verschlüsselten Feldern nicht möglich (Workaround via Dexie.js) |
-| **E2E Client-Side (libsodium)** | Maximaler Schutz, Server sieht keine Klartextdaten | Bricht serverseitige Insights, höchste Implementierungskomplexität, für Phase 1 überdimensioniert |
+| Option                                 | Vorteile                                                                              | Nachteile                                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Kein Encryption at-rest**            | Kein Aufwand, volle FTS-Funktionalität                                                | Art.-9-DSGVO-Risiko, Daten bei Backup-Diebstahl im Klartext, inakzeptabel                                |
+| **pgcrypto Column-Level**              | Direkt in PostgreSQL, kein App-Code                                                   | Schlechtere Performance als App-Level, Key-Management in DB schwieriger, kein pro-User-Key ohne Overhead |
+| **App-Level Fernet (pro-User-Key)** ✅ | Gute Performance (~0.1 ms/Feld), pro-User-Key, authenticated encryption, Python-nativ | FTS auf verschlüsselten Feldern nicht möglich (Workaround via Dexie.js)                                  |
+| **E2E Client-Side (libsodium)**        | Maximaler Schutz, Server sieht keine Klartextdaten                                    | Bricht serverseitige Insights, höchste Implementierungskomplexität, für Phase 1 überdimensioniert        |
 
 ---
 
@@ -71,8 +73,8 @@
 
 ## Umsetzung
 
-| Meilenstein | Aufgabe |
-|---|---|
-| **M0** | Stufe 1: MinIO SSE aktivieren, LUKS-Volume-Dokumentation, Traefik HSTS-Konfiguration |
-| **M1** | Stufe 2: Fernet-Integration, pro-User-Key-Generierung bei Registrierung, Alembic-Migration für verschlüsselte Felder, Key-Rotation-Dokumentation |
-| **M12+** | E2E-Verschlüsselung als Opt-in für Power-User (Backlog) |
+| Meilenstein | Aufgabe                                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **M0**      | Stufe 1: MinIO SSE aktivieren, LUKS-Volume-Dokumentation, Traefik HSTS-Konfiguration                                                             |
+| **M1**      | Stufe 2: Fernet-Integration, pro-User-Key-Generierung bei Registrierung, Alembic-Migration für verschlüsselte Felder, Key-Rotation-Dokumentation |
+| **M12+**    | E2E-Verschlüsselung als Opt-in für Power-User (Backlog)                                                                                          |

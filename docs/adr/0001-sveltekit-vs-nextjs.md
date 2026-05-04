@@ -9,6 +9,7 @@
 ## Kontext
 
 Für die MoodSync-PWA wird ein Framework benötigt, das:
+
 - Kleine Bundle-Größen produziert (Performance-Budget: JS < 150 KB gz)
 - Gute Offline-/PWA-Unterstützung bietet
 - Von einem Solo-Dev effizient bedient werden kann
@@ -20,14 +21,14 @@ Für die MoodSync-PWA wird ein Framework benötigt, das:
 
 ## Begründung
 
-| Kriterium | SvelteKit | Next.js |
-|---|---|---|
-| Bundle-Größe | ~30–80 KB gz (kein Virtual DOM) | ~150–300 KB gz (React overhead) |
-| Performance | Compile-time Optimierung, kein Runtime-Overhead | Hydration-Overhead |
-| Lernkurve | Niedriger für Solo-Dev | Höher (React-Ökosystem-Komplexität) |
-| PWA-Support | Gut (via `@vite-pwa/sveltekit`) | Gut (via `next-pwa`) |
-| Community | Kleiner, aber wachsend | Sehr groß |
-| Employer Branding | Gut für Portfolio-Differenzierung | Standard |
+| Kriterium         | SvelteKit                                       | Next.js                             |
+| ----------------- | ----------------------------------------------- | ----------------------------------- |
+| Bundle-Größe      | ~30–80 KB gz (kein Virtual DOM)                 | ~150–300 KB gz (React overhead)     |
+| Performance       | Compile-time Optimierung, kein Runtime-Overhead | Hydration-Overhead                  |
+| Lernkurve         | Niedriger für Solo-Dev                          | Höher (React-Ökosystem-Komplexität) |
+| PWA-Support       | Gut (via `@vite-pwa/sveltekit`)                 | Gut (via `next-pwa`)                |
+| Community         | Kleiner, aber wachsend                          | Sehr groß                           |
+| Employer Branding | Gut für Portfolio-Differenzierung               | Standard                            |
 
 Next.js wäre die sichere Wahl bei Team-Erweiterung (mehr React-Devs am Markt). Für ein Solo-Projekt, das Performance-sensitiv und Bundle-bewusst ist, überwiegen die SvelteKit-Vorteile.
 

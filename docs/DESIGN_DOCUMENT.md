@@ -58,13 +58,13 @@ MoodSync ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwisch
 
 ### 1.6 Erfolgsmetriken
 
-| Metrik | Ziel |
-|---|---|
-| Day-7 Retention | ≥ 40 % |
-| Day-30 Retention | ≥ 20 % |
+| Metrik                         | Ziel                |
+| ------------------------------ | ------------------- |
+| Day-7 Retention                | ≥ 40 %              |
+| Day-30 Retention               | ≥ 20 %              |
 | Ø Tägliche Eintrags-Completion | ≥ 70 % aktiver User |
-| Time-to-First-Insight | < 14 Tage |
-| Crash-Free-Rate | > 99,5 % |
+| Time-to-First-Insight          | < 14 Tage           |
+| Crash-Free-Rate                | > 99,5 %            |
 
 ---
 
@@ -77,6 +77,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Ein Eintrag pro Tag mit Mood-Score (1–5 oder −2..+2 Slider), Energielevel, Stresslevel, optionaler Text-Notiz.
 
 **Kritisch:**
+
 - „Ein Datensatz pro Tag" ist einfach, verliert aber Intra-Day-Dynamik (morgens top, abends mies).
 - Empfehlung: 1 Hauptdatensatz pro Tag + optionale Mehrfacheinträge (Morning/Noon/Evening) als „Detail-Checkins". Standard-UX bleibt „1/Tag", Power-User können mehr erfassen.
 - Nachträgliches Erfassen für bis zu 7 Tage erlauben, danach read-only (sonst Bias durch Rückblick).
@@ -92,6 +93,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Multi-Select von Tags (Sport, Musik, Lesen, Familie, Alkohol, Meditation, …). User-definierbar, gruppierbar (Kategorien: Sport, Sozial, Arbeit, Freizeit, Konsum).
 
 **Kritisch:**
+
 - Vordefinierte Tags vs. freie Tags: beides. Start mit kuratiertem Set (~30 Tags), freies Hinzufügen möglich, Merge-UI gegen Tag-Wildwuchs.
 - Dauer/Intensität erfassen? Fürs MVP nein (Friction zu hoch); später optional Duration-Slider pro Tag.
 
@@ -106,6 +108,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Explizit als „gut" oder „schlecht" markierte Tags mit Streak-Tracking (z. B. „7 Tage ohne Alkohol", „12 Tage Meditation").
 
 **Kritisch:**
+
 - Habit ≠ Tag: Habits brauchen Ziele („5×/Woche Sport") und Streaks, Tags nur Ja/Nein.
 - Psychologisch heikel: „Bad Habit"-Framing kann schaden. Neutrale Sprache anbieten („Habits I'm building" / „Habits I'm reducing").
 
@@ -120,6 +123,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Checkliste für Symptome (Kopfschmerzen, Verdauung, Rückenschmerzen, Schlafqualität subjektiv, Erkältung) + Intensitätsskala 0–3.
 
 **Kritisch:**
+
 - Klar von Mood trennen — Symptome sind objektivere Marker und wichtig für Korrelationen.
 - Menstruationszyklus explizit berücksichtigen? Ja, optional (hoher Korrelationswert, Gender-Inclusion).
 - Medizinischer Disclaimer Pflicht.
@@ -135,6 +139,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Freitextfeld pro Eintrag, Markdown-Support.
 
 **Kritisch:**
+
 - Volltextsuche nötig? Ja, über Postgres FTS oder Meilisearch.
 - E2E-Verschlüsselung sinnvoll — siehe Security.
 
@@ -149,11 +154,13 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Fotos des Tages anhängen bzw. aus Immich (selfhosted Foto-Stack) referenzieren.
 
 **Kritisch:**
+
 - Fotos selbst hosten verdoppelt Storage-Bedarf. Immich-Referenz ist eleganter: `asset_id` + Thumbnail-Proxy.
 - Immich hat eine OAuth-fähige API (REST) → realistisch integrierbar, aber Breaking Changes möglich.
 - Datenschutz: Foto-Metadaten (EXIF, GPS) vorher strippen.
 
 **Entscheidung:**
+
 - v1: lokaler Upload nach MinIO, EXIF-Strip Pflicht.
 - v2: optionale Immich-Integration via API-Key, „Foto des Tages" per Search-API (by date).
 
@@ -166,6 +173,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Kategorischer Tages-Kontext (Büro, Homeoffice, Urlaub, Krank, Wochenende, Dienstreise).
 
 **Kritisch:**
+
 - Nicht als Tag, sondern als dedicated Field — hoher Korrelationswert, strukturiertes Reporting.
 - Auto-Detection via Kalender (ICS-Import) oder Geofence später möglich.
 
@@ -180,12 +188,14 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Schlafdauer, -qualität, HRV, Ruhepuls automatisch importieren.
 
 **Kritisch:**
+
 - Garmin hat **keine** offizielle Consumer-API ohne Approval-Prozess (Health-API nur B2B). Workarounds:
   - `python-garminconnect` — fragil, TOS-Grauzone
   - Garmin → Health Connect (Android 14+) — offizieller Weg
   - Manueller CSV-Import als Fallback
 
 **Entscheidung:**
+
 - v1: Manuelle Eingabe Schlafdauer + -qualität
 - v2 (Android-App): Health Connect Integration
 - v3: Direkte `python-garminconnect` für Power-User mit Warnhinweis
@@ -199,6 +209,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** App erkennt Korrelationen und formuliert kurze Statements.
 
 **Kritisch:**
+
 - Korrelation ≠ Kausalität. Disclaimer + Confidence-Level nötig.
 - Minimum Datenmenge: seriöse Aussagen erst ab ~30 Einträgen.
 - Statistische Methoden: Punkt-Biseriale Korrelation, Lag-Analyse, Lasso-Regression.
@@ -215,6 +226,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Mood-Verlauf (Tag/Woche/Monat/Jahr), Tag-Frequenz-Heatmap, Korrelations-Matrix, Streak-Visualisierung.
 
 **Kritisch:**
+
 - Charts mobile-freundlich! Keine riesigen Dashboards.
 - Export als PNG/CSV/PDF für Arzt-Gespräche.
 
@@ -229,6 +241,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Schneller Eintrag auch ohne Netz, Sync wenn verfügbar.
 
 **Kritisch:**
+
 - PWA mit IndexedDB reicht für Text/Tags; Fotos-Upload muss Queue-basiert sein.
 - Konfliktauflösung: Last-Write-Wins mit `updated_at` reicht, kein CRDT nötig.
 
@@ -243,6 +256,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Familie/WG nutzt selbe Instanz mit getrennten Daten.
 
 **Kritisch:**
+
 - Von Tag 1 einbauen — nachträglich Multi-Tenancy einziehen ist schmerzhaft.
 - Kein Cross-User-Zugriff, kein Sharing in v1.
 
@@ -267,6 +281,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Gesundheitsdaten = besonders schützenswert (DSGVO Art. 9).
 
 **Entscheidungen:**
+
 - Auth: Native JWT Phase 1 (ADR-0004), Authentik ab Phase 2 (M12+, SaaS)
 - Verschlüsselung at-rest: `notes`, `symptoms.details`, Fotos in MinIO mit SSE
 - E2E-Option (v2): Client-seitig verschlüsselte Notizen — als Opt-in
@@ -285,6 +300,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 **Beschreibung:** Tägliche Erinnerung „Wie war dein Tag?" + adaptive Zeiten.
 
 **Kritisch:**
+
 - Max. 1/Tag, konfigurierbare Zeit, Snooze.
 - Selfhost: NTFY / Gotify; Play-Store-App: FCM oder UnifiedPush.
 
@@ -346,23 +362,23 @@ flowchart LR
 
 ### 3.3 Tech-Stack (fixiert)
 
-| Schicht | Technologie | Alternative erwogen |
-|---|---|---|
-| Backend API | FastAPI 0.111 + Python 3.12 | Django REST (zu schwerfällig) |
-| Web Frontend | SvelteKit 2 + Skeleton UI | Next.js (React, größeres Bundle) |
-| Mobile | PWA → TWA via Bubblewrap | React Native (zu viel Overhead für Solo-Dev) |
-| Datenbank | PostgreSQL 16 + pgvector | SQLite (kein RLS für Multi-User) |
-| Cache/Queue | Redis 7 | Valkey (Drop-in, evaluieren) |
-| Object Storage | MinIO | S3 (nur SaaS-Phase) |
-| Reverse Proxy | Traefik v3 | Nginx Proxy Manager |
-| Auth Phase 1 | Native JWT (FastAPI) | Authentik (M12+, SaaS) |
-| Offline-Sync | Dexie.js (IndexedDB) | PouchDB |
-| Analytics Worker | pandas + scikit-learn | R (kein Python-Ökosystem) |
-| Error Tracking | GlitchTip | Sentry Cloud (Privacy) |
-| Push | UnifiedPush / FCM | NTFY direkt |
-| Build | pnpm + Vite | npm (langsamer) |
-| Python Deps | uv | pip/poetry |
-| Migrations | Alembic | — |
+| Schicht          | Technologie                 | Alternative erwogen                          |
+| ---------------- | --------------------------- | -------------------------------------------- |
+| Backend API      | FastAPI 0.111 + Python 3.12 | Django REST (zu schwerfällig)                |
+| Web Frontend     | SvelteKit 2 + Skeleton UI   | Next.js (React, größeres Bundle)             |
+| Mobile           | PWA → TWA via Bubblewrap    | React Native (zu viel Overhead für Solo-Dev) |
+| Datenbank        | PostgreSQL 16 + pgvector    | SQLite (kein RLS für Multi-User)             |
+| Cache/Queue      | Redis 7                     | Valkey (Drop-in, evaluieren)                 |
+| Object Storage   | MinIO                       | S3 (nur SaaS-Phase)                          |
+| Reverse Proxy    | Traefik v3                  | Nginx Proxy Manager                          |
+| Auth Phase 1     | Native JWT (FastAPI)        | Authentik (M12+, SaaS)                       |
+| Offline-Sync     | Dexie.js (IndexedDB)        | PouchDB                                      |
+| Analytics Worker | pandas + scikit-learn       | R (kein Python-Ökosystem)                    |
+| Error Tracking   | GlitchTip                   | Sentry Cloud (Privacy)                       |
+| Push             | UnifiedPush / FCM           | NTFY direkt                                  |
+| Build            | pnpm + Vite                 | npm (langsamer)                              |
+| Python Deps      | uv                          | pip/poetry                                   |
+| Migrations       | Alembic                     | —                                            |
 
 ### 3.4 Datenmodell (Kern)
 
@@ -437,11 +453,11 @@ Für M0 wird bewusst ein schlanker Observability-Ansatz gewählt: Der Kernstack 
 
 Die API stellt drei Health-Endpunkte bereit:
 
-| Endpunkt | Zweck | Fehlt bei |
-|---|---|---|
-| `GET /health/live` | Prozess lebt — keine externen Deps prüfen | API-Prozess selbst defekt |
+| Endpunkt            | Zweck                                        | Fehlt bei                         |
+| ------------------- | -------------------------------------------- | --------------------------------- |
+| `GET /health/live`  | Prozess lebt — keine externen Deps prüfen    | API-Prozess selbst defekt         |
 | `GET /health/ready` | Betriebsbereit — DB, Redis, MinIO erreichbar | Abhängige Komponenten nicht ready |
-| `GET /health` | Kompakte menschenlesbare Aggregation | — |
+| `GET /health`       | Kompakte menschenlesbare Aggregation         | —                                 |
 
 `/health/live` darf bei kurzzeitigen PostgreSQL- oder Redis-Problemen **nicht** rot werden, um unnötige Restart-Schleifen zu vermeiden. `/health/ready` wird von Reverse Proxy, Uptime-Checks und späteren Monitoring-Systemen ausgewertet.
 
@@ -471,13 +487,13 @@ Jede eingehende HTTP-Anfrage erhält eine `request_id` via Middleware. Sie wird 
 
 #### Docker-Healthchecks im Core-Stack (verpflichtend ab M0)
 
-| Dienst | Check-Methode |
-|---|---|
-| API | HTTP `GET /health/live` |
+| Dienst          | Check-Methode                             |
+| --------------- | ----------------------------------------- |
+| API             | HTTP `GET /health/live`                   |
 | Web (SvelteKit) | HTTP-Check auf App-Shell oder Statusseite |
-| PostgreSQL | Native Readiness-Prüfung (`pg_isready`) |
-| Redis | `PING` |
-| MinIO | HTTP- oder CLI-Check |
+| PostgreSQL      | Native Readiness-Prüfung (`pg_isready`)   |
+| Redis           | `PING`                                    |
+| MinIO           | HTTP- oder CLI-Check                      |
 
 #### Compose-Strategie: Core vs. Ops
 
@@ -555,6 +571,7 @@ moodsync/
 Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 ### M0 — Fundament ✅ ABGESCHLOSSEN (PRs #32, #33, #35, #36, #37, #38)
+
 - Monorepo-Grundstruktur für Web, API, Infra, Dokumentation und CI
 - Core-Compose-Stack: Traefik, Web, API, PostgreSQL, Redis, MinIO + Bucket-Init
 - FastAPI-Minimalservice mit versionierter API-Struktur und Health-Endpunkten
@@ -577,7 +594,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Strukturierte JSON-Logs für Startup, Requests und Fehler werden geschrieben _(PR #35)_
 - [x] Jede Anfrage erhält eine `request_id` (Middleware gesetzt, in Logs mitgeführt, als `X-Request-ID`-Header zurückgegeben) _(PR #35)_
 - [x] Docker-Healthchecks für API, Web, PostgreSQL, Redis und MinIO im Core-Stack konfiguriert _(PR #35)_
-- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed_password, is_active, is_verified, created_at, updated_at _(PR #36)_
+- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed*password, is_active, is_verified, created_at, updated_at *(PR #36)\_
 - [x] Alembic-Migrationen `000_initial` und `001_create_users` laufen fehlerfrei (forward + rollback) _(PR #36)_
 - [x] `updated_at`-Trigger in Postgres aktiv _(PR #36)_
 - [x] GitHub Actions `ci-api.yml` grün (ruff, mypy, pytest mit Coverage ≥ 70 %) _(PR #37)_
@@ -599,6 +616,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M1 — Core Entry (Woche 3–5) → „Ich tracke meinen ersten Tag"
+
 - Tägliches Eintrags-Formular: Mood, Energy, Stress, Work-Context
 - Tag-System (vordefinierte Tags + Custom-Tags)
 - Symptom-Checkliste
@@ -606,7 +624,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - Offline-Fähigkeit via IndexedDB + Sync-Endpoint
 - **Login-UI:** SvelteKit Login/Register-Seiten _(aus M0 verschoben, Issue #40)_
 - **E-Mail-Verifikation:** `POST /auth/verify-email`, SMTP-Versand _(aus M0 verschoben, Issue #39)_
-- **`.env.example`-Fix + Vollständigkeit:** SECRET_KEY-Mismatch beheben, alle Config-Variablen dokumentieren _(aus M0 verschoben, Issue #41)_
+- **`.env.example`-Fix + Vollständigkeit:** SECRET*KEY-Mismatch beheben, alle Config-Variablen dokumentieren *(aus M0 verschoben, Issue #41)\_
 - **Exit:** Produktive Nutzung durch Entwickler selbst möglich (inkl. Login im Browser)
 
 #### Akzeptanzkriterien M1
@@ -632,6 +650,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M2 — Visualisierung (Woche 6–7) → „Ich sehe meinen Verlauf"
+
 - Mood-Zeitreihe (Woche/Monat/Jahr)
 - Tag-Frequenz-Heatmap
 - Streak-Widgets
@@ -654,6 +673,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M3 — Insights v1 (Woche 8–10) → „Die App erklärt mir was"
+
 - Nightly Analytics-Worker
 - Punkt-Biseriale Korrelation Tags↔Mood
 - Template-basierte Statements
@@ -678,6 +698,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M4 — Mobile Polish & PWA-Hardening (Woche 11–12)
+
 - Installierbare PWA, Service-Worker, App-Icon, Splash
 - Bottom-Sheet-UX, Gestensteuerung
 - Daily Reminder (Web-Push / UnifiedPush)
@@ -700,6 +721,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M5 — Habits & Ziele (Woche 13–14)
+
 - Habit-Flag auf Tags (build / reduce) + Zielfrequenzen
 - Streak-Logik, Erfolgs-Badges
 - Habit-Dashboard
@@ -719,6 +741,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M6 — Fotos & Medien (Woche 15–16)
+
 - Lokaler Foto-Upload → MinIO, EXIF-Strip
 - Thumbnail-Galerie pro Tag
 - **Exit:** Fotos als zusätzlicher Gedächtnisanker
@@ -740,6 +763,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M7 — Schlaf & Health Connect (Woche 17–18)
+
 - Manuelle Schlafdaten erweiterte Felder (Einschlafzeit, Tiefschlaf)
 - Android-seitig: Health Connect Import (Schlaf, HR, Schritte)
 - Korrelation Schlaf↔Mood in Insights
@@ -761,6 +785,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M8 — Insights v2 (Woche 19–21)
+
 - Multiple Regression (Lasso) über alle Variablen
 - Lag-Analyse (Sport gestern → Mood heute)
 - Optional: Lokales LLM (Ollama) formuliert Statements natürlicher
@@ -781,6 +806,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M9 — Beta-Härtung (Woche 22–24)
+
 - Monitoring, GlitchTip-Error-Tracking
 - Backup/Restore-Dokumentation
 - 5–10 externe Beta-Tester, Feedback einarbeiten
@@ -805,6 +831,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M10 — Public Selfhost Release v1.0 (Woche 25)
+
 - GitHub-Release, Docker Hub Image
 - Landing-Page + Docs-Site
 - Lizenzmodell finalisieren (AGPL)
@@ -826,6 +853,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M11 — Android-App für Play Store (Woche 26–28)
+
 - PWA → TWA via Bubblewrap
 - Play Console Setup, Internal Testing Track
 - FCM für Non-Selfhost-User
@@ -849,6 +877,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### M12 — SaaS-Modus (Monat 7+)
+
 - Multi-Tenancy via Postgres RLS (Architektur bereits vorhanden)
 - Billing (Stripe), Onboarding, Support-Ticket-System
 - Managed-Hosting (Hetzner + k3s)
@@ -872,6 +901,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 ---
 
 ### Backlog / Später
+
 - Immich-Integration (Foto-Referenzen statt Upload)
 - iOS-App (HealthKit)
 - Direkte Garmin-Connect-Sync (TOS-Risiko evaluieren)
@@ -885,38 +915,38 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 ## 7. Offene Entscheidungen (Decision-Log)
 
-| ID | Frage | Status | ADR |
-|---|---|---|---|
-| D-001 | SvelteKit oder Next.js als Web-Framework? | ✅ Entschieden: SvelteKit | [ADR-0001](adr/0001-sveltekit-vs-nextjs.md) |
-| D-002 | Primäre Chart-Bibliothek: ECharts oder LayerChart? | 🔄 Offen | — |
-| D-003 | E2E-Verschlüsselung in v1 oder v2? | ✅ Entschieden: v2 opt-in | — |
-| D-004 | Lizenzmodell: AGPL oder Source-Available? | 🔄 Offen | — |
-| D-005 | Monetarisierung: Hybrid (Selfhost Free + Cloud Abo + Lifetime)? | 🔄 Offen | — |
-| D-006 | Push: UnifiedPush-first oder FCM-first? | ✅ Entschieden: UnifiedPush primary | — |
-| D-007 | LLM für Insights: Ollama local oder API? | 🔄 Offen | — |
-| D-008 | Mobile-Strategie: Capacitor vs. TWA (Bubblewrap)? TWA hat Google-Policy-Risiko (Health Connect Bridge, Policy-Änderungen); Capacitor bietet mehr nativen Zugriff, höherer Buildaufwand. | 🔄 Offen | [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md) |
-| D-009 | Sync-Protokoll Conflict-Handling: Aktuelles LWW-Modell (`updated_at`) birgt Datenverlust bei Multi-Device. Alternativen: CRDT, serverseitige Merge-Strategien, Conflict-Inbox für User. | 🔄 Offen | [ADR-0003](adr/0003-sync-conflict-handling.md) |
-| D-010 | Auth Phase 1: Native JWT (FastAPI-intern) — implementiert. Authentik ab Phase 2 (M12+). | ✅ Entschieden: Native JWT Phase 1, Authentik M12+ | [ADR-0004](adr/0004-auth-strategie.md) |
-| D-011 | Verschlüsselung at-rest Strategie: pgcrypto (DB-Level), App-Level-Encryption (Python), oder Kombination? Auswirkungen auf Suche, Performance und Schlüsselverwaltung. | 🔄 Offen | [ADR-0005](adr/0005-verschluesselung-at-rest.md) |
-| D-012 | Observability-Tiefe in M0: Schlanker Ansatz (Healthchecks + Logging im Code, Ops-Tools optional) vs. vollständiger Stack von Beginn an. | ✅ Entschieden: Schlanker Ansatz, Ops-Tools als `docker-compose.ops.yml` | [ADR-0003-healthchecks-and-logging](adr/ADR-0003-healthchecks-and-logging.md) |
+| ID    | Frage                                                                                                                                                                                   | Status                                                                   | ADR                                                                           |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| D-001 | SvelteKit oder Next.js als Web-Framework?                                                                                                                                               | ✅ Entschieden: SvelteKit                                                | [ADR-0001](adr/0001-sveltekit-vs-nextjs.md)                                   |
+| D-002 | Primäre Chart-Bibliothek: ECharts oder LayerChart?                                                                                                                                      | 🔄 Offen                                                                 | —                                                                             |
+| D-003 | E2E-Verschlüsselung in v1 oder v2?                                                                                                                                                      | ✅ Entschieden: v2 opt-in                                                | —                                                                             |
+| D-004 | Lizenzmodell: AGPL oder Source-Available?                                                                                                                                               | 🔄 Offen                                                                 | —                                                                             |
+| D-005 | Monetarisierung: Hybrid (Selfhost Free + Cloud Abo + Lifetime)?                                                                                                                         | 🔄 Offen                                                                 | —                                                                             |
+| D-006 | Push: UnifiedPush-first oder FCM-first?                                                                                                                                                 | ✅ Entschieden: UnifiedPush primary                                      | —                                                                             |
+| D-007 | LLM für Insights: Ollama local oder API?                                                                                                                                                | 🔄 Offen                                                                 | —                                                                             |
+| D-008 | Mobile-Strategie: Capacitor vs. TWA (Bubblewrap)? TWA hat Google-Policy-Risiko (Health Connect Bridge, Policy-Änderungen); Capacitor bietet mehr nativen Zugriff, höherer Buildaufwand. | 🔄 Offen                                                                 | [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md)                     |
+| D-009 | Sync-Protokoll Conflict-Handling: Aktuelles LWW-Modell (`updated_at`) birgt Datenverlust bei Multi-Device. Alternativen: CRDT, serverseitige Merge-Strategien, Conflict-Inbox für User. | 🔄 Offen                                                                 | [ADR-0003](adr/0003-sync-conflict-handling.md)                                |
+| D-010 | Auth Phase 1: Native JWT (FastAPI-intern) — implementiert. Authentik ab Phase 2 (M12+).                                                                                                 | ✅ Entschieden: Native JWT Phase 1, Authentik M12+                       | [ADR-0004](adr/0004-auth-strategie.md)                                        |
+| D-011 | Verschlüsselung at-rest Strategie: pgcrypto (DB-Level), App-Level-Encryption (Python), oder Kombination? Auswirkungen auf Suche, Performance und Schlüsselverwaltung.                   | 🔄 Offen                                                                 | [ADR-0005](adr/0005-verschluesselung-at-rest.md)                              |
+| D-012 | Observability-Tiefe in M0: Schlanker Ansatz (Healthchecks + Logging im Code, Ops-Tools optional) vs. vollständiger Stack von Beginn an.                                                 | ✅ Entschieden: Schlanker Ansatz, Ops-Tools als `docker-compose.ops.yml` | [ADR-0003-healthchecks-and-logging](adr/ADR-0003-healthchecks-and-logging.md) |
 
 ---
 
 ## 8. Risiken
 
-| Risiko | ID | Wahrscheinlichkeit | Impact | Maßnahme |
-|---|---|---|---|---|
-| Scheinkorrelationen führen User zu falschen Schlüssen | — | Mittel | Hoch | Confidence-Level, Disclaimer, Mindest-n=30 |
-| Play-Store-Rejection wegen Health-Claims | — | Niedrig | Hoch | Legal Review vor Submission, keine diagnostischen Aussagen |
-| Garmin-API ändert sich / TOS-Verstoß | — | Hoch | Mittel | Health Connect als primärer Weg, Garmin als opt-in mit Warnung |
-| Solo-Dev-Burnout | ZS-05 | Mittel | Kritisch | Vertical Slices mit klaren Exit-Kriterien; Timebox pro Milestone fixiert; wöchentliches 1h-Review ob Scope noch realistisch; konsequentes Backlog-Kürzen bei Verzögerung; keine Feature-Creep-Toleranz in laufendem Milestone |
-| Immich Breaking Changes in API | — | Mittel | Niedrig | Immich erst v2, abstrakte Integration via Adapter |
-| DSGVO-Verstoß bei Health-Daten | — | Niedrig | Kritisch | Privacy-by-Design, AV-Verträge, kein Third-Party-Analytics |
-| LWW Sync Datenverlust bei Multi-Device | SW-01 | Mittel | Mittel | Conflict-Log-Tabelle persistiert alle Konflikte; User-sichtbarer Conflict-Inbox geplant (D-009 / ADR-0003); CRDT als langfristige Option evaluieren |
-| Auth-Modell undefiniert in Phase 1 | SEC-01 | ✅ behoben | — | Native JWT implementiert (PR #38); Authentik auf M12 verschoben (ADR-0004) |
-| Docker Socket Exposure (Traefik) | SEC-03 | Mittel | Kritisch | Docker Socket ausschließlich via Tecnativa Socket-Proxy mounten — implementiert (PR #32) |
-| MinIO Console öffentlich erreichbar | SEC-04 | ✅ behoben | — | MinIO Console (Port 9001) nicht via Traefik exponiert (PR #32) |
-| TWA Google-Policy-Risiko / Health Connect Bridge-Problem | ZS-01 | Mittel | Hoch | Capacitor als Alternative evaluieren (D-008 / ADR-0002); Entscheidung spätestens M7 |
+| Risiko                                                   | ID     | Wahrscheinlichkeit | Impact   | Maßnahme                                                                                                                                                                                                                      |
+| -------------------------------------------------------- | ------ | ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scheinkorrelationen führen User zu falschen Schlüssen    | —      | Mittel             | Hoch     | Confidence-Level, Disclaimer, Mindest-n=30                                                                                                                                                                                    |
+| Play-Store-Rejection wegen Health-Claims                 | —      | Niedrig            | Hoch     | Legal Review vor Submission, keine diagnostischen Aussagen                                                                                                                                                                    |
+| Garmin-API ändert sich / TOS-Verstoß                     | —      | Hoch               | Mittel   | Health Connect als primärer Weg, Garmin als opt-in mit Warnung                                                                                                                                                                |
+| Solo-Dev-Burnout                                         | ZS-05  | Mittel             | Kritisch | Vertical Slices mit klaren Exit-Kriterien; Timebox pro Milestone fixiert; wöchentliches 1h-Review ob Scope noch realistisch; konsequentes Backlog-Kürzen bei Verzögerung; keine Feature-Creep-Toleranz in laufendem Milestone |
+| Immich Breaking Changes in API                           | —      | Mittel             | Niedrig  | Immich erst v2, abstrakte Integration via Adapter                                                                                                                                                                             |
+| DSGVO-Verstoß bei Health-Daten                           | —      | Niedrig            | Kritisch | Privacy-by-Design, AV-Verträge, kein Third-Party-Analytics                                                                                                                                                                    |
+| LWW Sync Datenverlust bei Multi-Device                   | SW-01  | Mittel             | Mittel   | Conflict-Log-Tabelle persistiert alle Konflikte; User-sichtbarer Conflict-Inbox geplant (D-009 / ADR-0003); CRDT als langfristige Option evaluieren                                                                           |
+| Auth-Modell undefiniert in Phase 1                       | SEC-01 | ✅ behoben         | —        | Native JWT implementiert (PR #38); Authentik auf M12 verschoben (ADR-0004)                                                                                                                                                    |
+| Docker Socket Exposure (Traefik)                         | SEC-03 | Mittel             | Kritisch | Docker Socket ausschließlich via Tecnativa Socket-Proxy mounten — implementiert (PR #32)                                                                                                                                      |
+| MinIO Console öffentlich erreichbar                      | SEC-04 | ✅ behoben         | —        | MinIO Console (Port 9001) nicht via Traefik exponiert (PR #32)                                                                                                                                                                |
+| TWA Google-Policy-Risiko / Health Connect Bridge-Problem | ZS-01  | Mittel             | Hoch     | Capacitor als Alternative evaluieren (D-008 / ADR-0002); Entscheidung spätestens M7                                                                                                                                           |
 
 ---
 
@@ -940,21 +970,21 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen mit aktuellem Status und Verweis auf ADR oder Meilenstein.
 
-| ID | Beschreibung | Kategorie | Status | Verweis |
-|---|---|---|---|---|
-| SEC-01 | Auth-Modell undefiniert in Phase 1 — kein klares JWT vs. Authentik-Commitment | Sicherheit | ✅ behoben | Native JWT implementiert (PR #38), Authentik → M12; [ADR-0004](adr/0004-auth-strategie.md) |
-| SEC-02 | `SECRET_KEY` in config.py vs. `JWT_SECRET` in .env.example — Env-Var-Mismatch, JWT-Secret wird nicht gelesen | Sicherheit | ❌ offen | [Issue #41](https://github.com/Sturmi77/moodsync/issues/41), M1 |
-| SEC-03 | Docker Socket direkter Mount in Traefik ermöglicht Container-Escape | Sicherheit | ✅ behoben | PR #32, Tecnativa-Proxy |
-| SEC-04 | MinIO Console (Port 9001) öffentlich über Traefik erreichbar | Sicherheit | ✅ behoben | PR #32 |
-| SW-01 | LWW Sync-Strategie verursacht stillen Datenverlust bei gleichzeitigen Multi-Device-Edits | Software | ❌ offen | D-009, [ADR-0003](adr/0003-sync-conflict-handling.md) |
-| ZS-01 | TWA-Strategie gefährdet durch Google-Policy-Änderungen und Health Connect Bridge-Instabilität | Zielstrategie | 🔄 in Arbeit | D-008, [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md), M11 |
-| ZS-05 | Solo-Dev-Burnout-Risiko durch Scope-Creep und fehlende Timeboxing-Disziplin | Zielstrategie | 🔄 in Arbeit | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien |
-| DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt (pgcrypto vs. App-Level) | DSGVO | ❌ offen | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md), M1-DSGVO |
-| DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur | DSGVO | ❌ offen | M7-DSGVO |
-| DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden | DSGVO | ❌ offen | M9-DSGVO |
-| DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test | DSGVO | ❌ offen | M6-AC, DoD |
-| ARCH-01 | Mermaid-Diagramm zeigt TWA als Android-Client — inkonsistent mit offener D-008-Entscheidung | Architektur | 🔄 in Arbeit | D-008, ADR-0002 |
-| ARCH-02 | Keine ADRs für D-002 bis D-007 angelegt (Entscheidungen undokumentiert) | Architektur | ❌ offen | Backlog: ADR-Erstellung pro offener Entscheidung |
-| OBS-01 | Observability-Anforderungen für M0 nicht explizit definiert (fehlende Health-Endpunkte, kein strukturiertes Logging, keine Correlation-IDs) | Architektur | ✅ behoben | D-012, ADR-0003-healthchecks-and-logging, Abschnitt 3.6 |
-| ARCH-03 | Kein Postgres-Schema v1 und keine Alembic-Basismigrationen vorhanden | Architektur | ✅ behoben | Issue #5, PR feat/m0-postgres-schema |
-| ARCH-04 | Kein CI/CD-Setup — keine automatisierten Lint/Test/Build-Checks bei PRs | Architektur | ✅ behoben | Issue #6, PR feat/m0-ci |
+| ID       | Beschreibung                                                                                                                                | Kategorie     | Status       | Verweis                                                                                    |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------ | ------------------------------------------------------------------------------------------ |
+| SEC-01   | Auth-Modell undefiniert in Phase 1 — kein klares JWT vs. Authentik-Commitment                                                               | Sicherheit    | ✅ behoben   | Native JWT implementiert (PR #38), Authentik → M12; [ADR-0004](adr/0004-auth-strategie.md) |
+| SEC-02   | `SECRET_KEY` in config.py vs. `JWT_SECRET` in .env.example — Env-Var-Mismatch, JWT-Secret wird nicht gelesen                                | Sicherheit    | ❌ offen     | [Issue #41](https://github.com/Sturmi77/moodsync/issues/41), M1                            |
+| SEC-03   | Docker Socket direkter Mount in Traefik ermöglicht Container-Escape                                                                         | Sicherheit    | ✅ behoben   | PR #32, Tecnativa-Proxy                                                                    |
+| SEC-04   | MinIO Console (Port 9001) öffentlich über Traefik erreichbar                                                                                | Sicherheit    | ✅ behoben   | PR #32                                                                                     |
+| SW-01    | LWW Sync-Strategie verursacht stillen Datenverlust bei gleichzeitigen Multi-Device-Edits                                                    | Software      | ❌ offen     | D-009, [ADR-0003](adr/0003-sync-conflict-handling.md)                                      |
+| ZS-01    | TWA-Strategie gefährdet durch Google-Policy-Änderungen und Health Connect Bridge-Instabilität                                               | Zielstrategie | 🔄 in Arbeit | D-008, [ADR-0002](adr/0002-mobile-strategie-capacitor-vs-twa.md), M11                      |
+| ZS-05    | Solo-Dev-Burnout-Risiko durch Scope-Creep und fehlende Timeboxing-Disziplin                                                                 | Zielstrategie | 🔄 in Arbeit | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien                               |
+| DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt (pgcrypto vs. App-Level)                                                                 | DSGVO         | ❌ offen     | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md), M1-DSGVO                          |
+| DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur                                                                 | DSGVO         | ❌ offen     | M7-DSGVO                                                                                   |
+| DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden                                                                                      | DSGVO         | ❌ offen     | M9-DSGVO                                                                                   |
+| DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test                                                               | DSGVO         | ❌ offen     | M6-AC, DoD                                                                                 |
+| ARCH-01  | Mermaid-Diagramm zeigt TWA als Android-Client — inkonsistent mit offener D-008-Entscheidung                                                 | Architektur   | 🔄 in Arbeit | D-008, ADR-0002                                                                            |
+| ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt (Entscheidungen undokumentiert)                                                                     | Architektur   | ❌ offen     | Backlog: ADR-Erstellung pro offener Entscheidung                                           |
+| OBS-01   | Observability-Anforderungen für M0 nicht explizit definiert (fehlende Health-Endpunkte, kein strukturiertes Logging, keine Correlation-IDs) | Architektur   | ✅ behoben   | D-012, ADR-0003-healthchecks-and-logging, Abschnitt 3.6                                    |
+| ARCH-03  | Kein Postgres-Schema v1 und keine Alembic-Basismigrationen vorhanden                                                                        | Architektur   | ✅ behoben   | Issue #5, PR feat/m0-postgres-schema                                                       |
+| ARCH-04  | Kein CI/CD-Setup — keine automatisierten Lint/Test/Build-Checks bei PRs                                                                     | Architektur   | ✅ behoben   | Issue #6, PR feat/m0-ci                                                                    |

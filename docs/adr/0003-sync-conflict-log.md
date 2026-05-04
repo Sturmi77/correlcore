@@ -43,12 +43,12 @@ CREATE INDEX ON sync_conflicts (entity_id);
 
 ## Alternativen erwogen
 
-| Option | Vorteile | Nachteile |
-|---|---|---|
-| **Stilles LWW (Status quo)** | Kein zusätzlicher Storage, maximale Einfachheit | Datenverlust ohne jede Transparenz, keine Recovery möglich, schlechtes UX bei Multi-Device |
-| **LWW + Conflict-Log** ✅ | Transparenz für User, Recovery möglich, kein Framework-Overhead, LWW-Performance bleibt erhalten | Minimaler Storage-Overhead, Bereinigungsjob nötig |
-| **CRDT (z. B. Automerge, Yjs)** | Automatisches, verlustfreies Merging auch für komplexe Datenstrukturen | Hoher Implementierungsaufwand, Framework-Lock-in, Overhead für seltene Konflikte in einer Mood-App nicht gerechtfertigt |
-| **Operational Transform (OT)** | Bewährt für kollaborative Editoren | Sehr hohe Komplexität, für strukturierte Mood-Daten (einzelne Felder) überdimensioniert |
+| Option                          | Vorteile                                                                                         | Nachteile                                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| **Stilles LWW (Status quo)**    | Kein zusätzlicher Storage, maximale Einfachheit                                                  | Datenverlust ohne jede Transparenz, keine Recovery möglich, schlechtes UX bei Multi-Device                              |
+| **LWW + Conflict-Log** ✅       | Transparenz für User, Recovery möglich, kein Framework-Overhead, LWW-Performance bleibt erhalten | Minimaler Storage-Overhead, Bereinigungsjob nötig                                                                       |
+| **CRDT (z. B. Automerge, Yjs)** | Automatisches, verlustfreies Merging auch für komplexe Datenstrukturen                           | Hoher Implementierungsaufwand, Framework-Lock-in, Overhead für seltene Konflikte in einer Mood-App nicht gerechtfertigt |
+| **Operational Transform (OT)**  | Bewährt für kollaborative Editoren                                                               | Sehr hohe Komplexität, für strukturierte Mood-Daten (einzelne Felder) überdimensioniert                                 |
 
 ---
 
@@ -64,9 +64,9 @@ CREATE INDEX ON sync_conflicts (entity_id);
 
 ## Umsetzung
 
-| Meilenstein | Aufgabe |
-|---|---|
-| **M0 / M1** | `sync_conflicts`-Tabelle anlegen (Alembic-Migration), Indices erstellen |
-| **M1** | Sync-Endpunkt (`POST /sync`) schreibt Konflikte bei LWW-Entscheidungen in die Tabelle |
-| **M2** | Admin-UI: Read-only-View der Konflikte im Admin-Panel (für Debugging und Support) |
-| **M4+** | User-facing „Sync-Verlauf"-Seite in den Einstellungen |
+| Meilenstein | Aufgabe                                                                               |
+| ----------- | ------------------------------------------------------------------------------------- |
+| **M0 / M1** | `sync_conflicts`-Tabelle anlegen (Alembic-Migration), Indices erstellen               |
+| **M1**      | Sync-Endpunkt (`POST /sync`) schreibt Konflikte bei LWW-Entscheidungen in die Tabelle |
+| **M2**      | Admin-UI: Read-only-View der Konflikte im Admin-Panel (für Debugging und Support)     |
+| **M4+**     | User-facing „Sync-Verlauf"-Seite in den Einstellungen                                 |

@@ -55,9 +55,7 @@ GET    /api/v1/entries/date/{date}      Eintrag für ein Datum (YYYY-MM-DD)
   "sleep_minutes": 450,
   "sleep_quality": 3,
   "tags": ["uuid-sport", "uuid-musik"],
-  "symptoms": [
-    {"symptom_key": "headache", "intensity": 1}
-  ],
+  "symptoms": [{ "symptom_key": "headache", "intensity": 1 }],
   "created_at": "2026-04-20T17:00:00Z",
   "updated_at": "2026-04-20T17:00:00Z"
 }

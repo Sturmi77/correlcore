@@ -11,15 +11,15 @@ MoodSync verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, bi
 
 ## 2. Verarbeitete Datenkategorien
 
-| Datenkategorie | Art-9-relevant | Speicherort | Verschlüsselung | Rechtsgrundlage |
-|---|---|---|---|---|
-| Stimmungsdaten (mood_score, energy, stress) | ✅ Ja | PostgreSQL | App-Level AES-256 | Einwilligung Art. 6(1)(a) + Art. 9(2)(a) |
-| Symptom-Daten (Kopfschmerzen, Verdauung, etc.) | ✅ Ja | PostgreSQL | App-Level AES-256 | Einwilligung |
-| Notizen (Freitext) | ⚠️ potenziell | PostgreSQL | App-Level AES-256 | Einwilligung |
-| Fotos | ⚠️ potenziell (biometrisch) | MinIO | SSE-S3 | Einwilligung |
-| Schlafdaten (Garmin/Health Connect) | ✅ Ja | PostgreSQL | App-Level AES-256 | Einwilligung + explizite separate Einwilligung für HC |
-| Aktivitäts-Tags | ❌ nein (abstrakt) | PostgreSQL | Standard | berechtigtes Interesse |
-| E-Mail-Adresse | ❌ nein | PostgreSQL | Standard | Vertragserfüllung |
+| Datenkategorie                                 | Art-9-relevant              | Speicherort | Verschlüsselung   | Rechtsgrundlage                                       |
+| ---------------------------------------------- | --------------------------- | ----------- | ----------------- | ----------------------------------------------------- |
+| Stimmungsdaten (mood_score, energy, stress)    | ✅ Ja                       | PostgreSQL  | App-Level AES-256 | Einwilligung Art. 6(1)(a) + Art. 9(2)(a)              |
+| Symptom-Daten (Kopfschmerzen, Verdauung, etc.) | ✅ Ja                       | PostgreSQL  | App-Level AES-256 | Einwilligung                                          |
+| Notizen (Freitext)                             | ⚠️ potenziell               | PostgreSQL  | App-Level AES-256 | Einwilligung                                          |
+| Fotos                                          | ⚠️ potenziell (biometrisch) | MinIO       | SSE-S3            | Einwilligung                                          |
+| Schlafdaten (Garmin/Health Connect)            | ✅ Ja                       | PostgreSQL  | App-Level AES-256 | Einwilligung + explizite separate Einwilligung für HC |
+| Aktivitäts-Tags                                | ❌ nein (abstrakt)          | PostgreSQL  | Standard          | berechtigtes Interesse                                |
+| E-Mail-Adresse                                 | ❌ nein                     | PostgreSQL  | Standard          | Vertragserfüllung                                     |
 
 ## 3. Technische und organisatorische Maßnahmen (TOMs, Art. 32 DSGVO)
 
@@ -53,14 +53,14 @@ MoodSync verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, bi
 
 ## 4. Betroffenenrechte (Art. 15–22 DSGVO)
 
-| Recht | Endpunkt / Umsetzung | Frist | Status |
-|---|---|---|---|
-| Auskunft (Art. 15) | `GET /api/v1/user/data` → JSON-Dump aller Daten | sofort (automatisiert) | ✅ M2 |
-| Berichtigung (Art. 16) | Standard-Edit-UI | sofort | ✅ M1 |
-| Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/account` → Cascade alle Daten + MinIO-Bereinigung | sofort | ✅ M9 |
-| Datenübertragbarkeit (Art. 20) | `GET /api/v1/user/export` → ZIP (JSON + Fotos) | automatisiert | ✅ M2 |
-| Widerspruch Analyse (Art. 21) | `POST /api/v1/user/settings {analytics_enabled: false}` | sofort | ✅ M3 |
-| Einschränkung (Art. 18) | via Support (manuell in v1) | 72h | 🔄 M9 |
+| Recht                                 | Endpunkt / Umsetzung                                                   | Frist                  | Status |
+| ------------------------------------- | ---------------------------------------------------------------------- | ---------------------- | ------ |
+| Auskunft (Art. 15)                    | `GET /api/v1/user/data` → JSON-Dump aller Daten                        | sofort (automatisiert) | ✅ M2  |
+| Berichtigung (Art. 16)                | Standard-Edit-UI                                                       | sofort                 | ✅ M1  |
+| Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/account` → Cascade alle Daten + MinIO-Bereinigung | sofort                 | ✅ M9  |
+| Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON + Fotos)                         | automatisiert          | ✅ M2  |
+| Widerspruch Analyse (Art. 21)         | `POST /api/v1/user/settings {analytics_enabled: false}`                | sofort                 | ✅ M3  |
+| Einschränkung (Art. 18)               | via Support (manuell in v1)                                            | 72h                    | 🔄 M9  |
 
 ## 5. Einwilligungsmanagement
 
@@ -78,11 +78,11 @@ MoodSync verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, bi
 
 ### Cloud-Betrieb (MoodSync Cloud, ab M12)
 
-| Auftragsverarbeiter | Zweck | AV-Vertrag |
-|---|---|---|
-| Hetzner Online GmbH (Frankfurt) | Hosting / Infrastruktur | https://www.hetzner.com/AV/ |
-| Resend Inc. | Transaktions-E-Mail | vorhanden |
-| Stripe Payments Europe Ltd. | Billing / Zahlungsabwicklung | vorhanden |
+| Auftragsverarbeiter             | Zweck                        | AV-Vertrag                  |
+| ------------------------------- | ---------------------------- | --------------------------- |
+| Hetzner Online GmbH (Frankfurt) | Hosting / Infrastruktur      | https://www.hetzner.com/AV/ |
+| Resend Inc.                     | Transaktions-E-Mail          | vorhanden                   |
+| Stripe Payments Europe Ltd.     | Billing / Zahlungsabwicklung | vorhanden                   |
 
 Keine weiteren Auftragsverarbeiter.
 
@@ -90,13 +90,13 @@ Keine weiteren Auftragsverarbeiter.
 
 Eine DSFA ist durchzuführen wenn Gesundheitsdaten im Cloud-Betrieb verarbeitet werden.
 
-| # | Risikofeld | Mitigationsmaßnahme |
-|---|---|---|
-| 1 | Unbefugter Datenbankzugriff | Verschlüsselung at-rest, RLS, starke Auth |
-| 2 | Backup-Diebstahl | restic-Verschlüsselung, separate Key-Aufbewahrung |
-| 3 | Insider-Threat (SaaS-Betrieb) | Audit-Log, keine menschliche Zugriffsnotwendigkeit auf Nutzdaten |
-| 4 | Third-Party-Kompromittierung | kein Third-Party-Analytics, minimale externe Abhängigkeiten |
-| 5 | Gesetzliche Auskunftspflicht | AV-Verträge, Daten in EU (Hetzner Frankfurt) |
+| #   | Risikofeld                    | Mitigationsmaßnahme                                              |
+| --- | ----------------------------- | ---------------------------------------------------------------- |
+| 1   | Unbefugter Datenbankzugriff   | Verschlüsselung at-rest, RLS, starke Auth                        |
+| 2   | Backup-Diebstahl              | restic-Verschlüsselung, separate Key-Aufbewahrung                |
+| 3   | Insider-Threat (SaaS-Betrieb) | Audit-Log, keine menschliche Zugriffsnotwendigkeit auf Nutzdaten |
+| 4   | Third-Party-Kompromittierung  | kein Third-Party-Analytics, minimale externe Abhängigkeiten      |
+| 5   | Gesetzliche Auskunftspflicht  | AV-Verträge, Daten in EU (Hetzner Frankfurt)                     |
 
 **DSFA-Status:** 🔄 Vor M12 (Cloud-Launch) zu erstellen
 
@@ -116,14 +116,14 @@ Eine DSFA ist durchzuführen wenn Gesundheitsdaten im Cloud-Betrieb verarbeitet 
 
 ## 9. Aufbewahrungsfristen
 
-| Datenkategorie | Aufbewahrungsdauer | Löschauslöser |
-|---|---|---|
-| Mood-Entries | bis Account-Löschung oder explizite Nutzer-Löschung | Account-Delete / Nutzeraktion |
-| Analytics/Insights | 90 Tage Rolling Window (ältere werden neu berechnet) | Automatisch |
-| Sync-Konflikt-Log | 90 Tage | Automatisch |
-| Auth-Logs (Login-Versuche) | 30 Tage | Automatisch |
-| Error-Logs (GlitchTip) | 90 Tage | Automatisch |
-| Billing-Daten | 7 Jahre | Gesetzliche Aufbewahrungspflicht AT |
+| Datenkategorie             | Aufbewahrungsdauer                                   | Löschauslöser                       |
+| -------------------------- | ---------------------------------------------------- | ----------------------------------- |
+| Mood-Entries               | bis Account-Löschung oder explizite Nutzer-Löschung  | Account-Delete / Nutzeraktion       |
+| Analytics/Insights         | 90 Tage Rolling Window (ältere werden neu berechnet) | Automatisch                         |
+| Sync-Konflikt-Log          | 90 Tage                                              | Automatisch                         |
+| Auth-Logs (Login-Versuche) | 30 Tage                                              | Automatisch                         |
+| Error-Logs (GlitchTip)     | 90 Tage                                              | Automatisch                         |
+| Billing-Daten              | 7 Jahre                                              | Gesetzliche Aufbewahrungspflicht AT |
 
 ## 10. Meilenstein-Checkpoints
 

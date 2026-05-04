@@ -15,11 +15,11 @@ Menschen spüren, dass Schlaf, Sport, Homeoffice-Tage oder Sozialkontakte ihr Wo
 
 **MoodSync** schließt diese Lücke:
 
-| Versprechen | Beschreibung |
-|---|---|
+| Versprechen                         | Beschreibung                                            |
+| ----------------------------------- | ------------------------------------------------------- |
 | 🔍 **Zusammenhänge statt Rohdaten** | Die App erklärt dir, warum Tage gut oder schlecht waren |
-| 🏠 **Selfhosted & Offline-First** | Deine Gesundheitsdaten verlassen nie dein Zuhause |
-| ⏱️ **60 Sekunden pro Tag** | Nicht mehr, sonst wird es nicht gemacht |
+| 🏠 **Selfhosted & Offline-First**   | Deine Gesundheitsdaten verlassen nie dein Zuhause       |
+| ⏱️ **60 Sekunden pro Tag**          | Nicht mehr, sonst wird es nicht gemacht                 |
 
 ---
 
@@ -45,21 +45,21 @@ Vollständige Roadmap: [`docs/DESIGN_DOCUMENT.md#roadmap`](docs/DESIGN_DOCUMENT.
 
 ## Tech Stack
 
-| Schicht | Technologie | Begründung |
-|---|---|---|
-| **Backend API** | FastAPI (Python 3.12) | Async, OpenAPI-nativ, schnell iterierbar |
-| **Web Frontend** | SvelteKit + Skeleton UI | Performance, Bundle < 150 KB gz |
-| **Mobile** | PWA → TWA (Bubblewrap) | Code-Sharing max., Play Store ohne RN |
-| **Datenbank** | PostgreSQL 16 + pgvector | RLS für Multi-User, Vektor für Insights |
-| **Cache / Queue** | Redis 7 | Session, Rate-Limit, Sync-Queue |
-| **Object Storage** | MinIO | Selfhost-kompatibles S3, EXIF-Strip |
-| **Reverse Proxy** | Traefik v3 | Automatisches TLS, Docker-Labels |
-| **Auth** | Authentik | OIDC, SSO, selfhost |
-| **Offline-Sync** | Dexie.js (IndexedDB) | Delta-Sync, Last-Write-Wins |
-| **Analytics** | pandas + scikit-learn | Korrelation, Lasso, Lag-Analyse |
-| **Migrations** | Alembic | Schema-Versionierung |
-| **Monitoring** | GlitchTip + Uptime Kuma | Selfhost-Error-Tracking |
-| **Notifications** | UnifiedPush / FCM | Privacy-first Push |
+| Schicht            | Technologie              | Begründung                               |
+| ------------------ | ------------------------ | ---------------------------------------- |
+| **Backend API**    | FastAPI (Python 3.12)    | Async, OpenAPI-nativ, schnell iterierbar |
+| **Web Frontend**   | SvelteKit + Skeleton UI  | Performance, Bundle < 150 KB gz          |
+| **Mobile**         | PWA → TWA (Bubblewrap)   | Code-Sharing max., Play Store ohne RN    |
+| **Datenbank**      | PostgreSQL 16 + pgvector | RLS für Multi-User, Vektor für Insights  |
+| **Cache / Queue**  | Redis 7                  | Session, Rate-Limit, Sync-Queue          |
+| **Object Storage** | MinIO                    | Selfhost-kompatibles S3, EXIF-Strip      |
+| **Reverse Proxy**  | Traefik v3               | Automatisches TLS, Docker-Labels         |
+| **Auth**           | Authentik                | OIDC, SSO, selfhost                      |
+| **Offline-Sync**   | Dexie.js (IndexedDB)     | Delta-Sync, Last-Write-Wins              |
+| **Analytics**      | pandas + scikit-learn    | Korrelation, Lasso, Lag-Analyse          |
+| **Migrations**     | Alembic                  | Schema-Versionierung                     |
+| **Monitoring**     | GlitchTip + Uptime Kuma  | Selfhost-Error-Tracking                  |
+| **Notifications**  | UnifiedPush / FCM        | Privacy-first Push                       |
 
 ---
 
@@ -129,14 +129,14 @@ Aufgabe: <hier konkrete Aufgabe>
 
 ## Dokumentation
 
-| Dokument | Inhalt |
-|---|---|
+| Dokument                                      | Inhalt                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------- |
 | [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md) | Vision, Features, Architektur, Roadmap — **Single Source of Truth** |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Komponentendiagramm, Deployment-Topologien, Sync-Protokoll |
-| [API.md](docs/API.md) | OpenAPI-Richtlinien, Endpunkte, Auth-Flow |
-| [FRONTEND.md](docs/FRONTEND.md) | Design-Prinzipien, Atomic Design, i18n, Performance-Budget |
-| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md) | Wettbewerbs- und Marktanalyse, Monetarisierung, Marketing |
-| [ADR Index](docs/adr/) | Architecture Decision Records |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)       | Komponentendiagramm, Deployment-Topologien, Sync-Protokoll          |
+| [API.md](docs/API.md)                         | OpenAPI-Richtlinien, Endpunkte, Auth-Flow                           |
+| [FRONTEND.md](docs/FRONTEND.md)               | Design-Prinzipien, Atomic Design, i18n, Performance-Budget          |
+| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md) | Wettbewerbs- und Marktanalyse, Monetarisierung, Marketing           |
+| [ADR Index](docs/adr/)                        | Architecture Decision Records                                       |
 
 ---
 

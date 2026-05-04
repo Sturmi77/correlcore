@@ -26,9 +26,9 @@ assignees: ''
 
 ## Umgebung
 
-- MoodSync Version: 
-- Browser / App: 
-- OS: 
+- MoodSync Version:
+- Browser / App:
+- OS:
 - Deployment: [ ] Selfhost (Docker) [ ] MoodSync Cloud [ ] Lokal (dev)
 
 ## Logs / Screenshots

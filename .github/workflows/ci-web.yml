@@ -4,21 +4,21 @@ on:
   push:
     branches: [main]
     paths:
-      - "apps/web/**"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - "eslint.config.js"
-      - ".prettierrc"
-      - ".github/workflows/ci-web.yml"
+      - 'apps/web/**'
+      - 'package.json'
+      - 'pnpm-workspace.yaml'
+      - 'eslint.config.js'
+      - '.prettierrc'
+      - '.github/workflows/ci-web.yml'
   pull_request:
     branches: [main]
     paths:
-      - "apps/web/**"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - "eslint.config.js"
-      - ".prettierrc"
-      - ".github/workflows/ci-web.yml"
+      - 'apps/web/**'
+      - 'package.json'
+      - 'pnpm-workspace.yaml'
+      - 'eslint.config.js'
+      - '.prettierrc'
+      - '.github/workflows/ci-web.yml'
 
 defaults:
   run:
@@ -34,12 +34,12 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".nvmrc"
+          node-version-file: '.nvmrc'
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -57,12 +57,12 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".nvmrc"
+          node-version-file: '.nvmrc'
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -81,12 +81,12 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".nvmrc"
+          node-version-file: '.nvmrc'
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -104,12 +104,12 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".nvmrc"
+          node-version-file: '.nvmrc'
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -119,4 +119,4 @@ jobs:
         run: pnpm build
         env:
           # Suppress missing API URL warning during CI build
-          VITE_API_BASE_URL: "/api/v1"
+          VITE_API_BASE_URL: '/api/v1'

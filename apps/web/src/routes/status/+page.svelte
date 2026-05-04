@@ -1,6 +1,6 @@
-  <script lang="ts">
-    import { onDestroy, onMount } from 'svelte';
-    import { fetchHealthSummary, type HealthSummary } from '$lib/api/health';
+<script lang="ts">
+  import { onDestroy, onMount } from 'svelte';
+  import { fetchHealthSummary, type HealthSummary } from '$lib/api/health';
 
   let summary: HealthSummary | null = null;
   let error: string | null = null;
@@ -55,13 +55,11 @@
 
   {#if loading && !summary}
     <p class="opacity-60 text-sm">Checking…</p>
-
   {:else if error}
     <div class="card p-4 variant-ghost-error w-full">
       <p class="text-sm">Could not reach the API: <code>{error}</code></p>
       <button class="btn btn-sm variant-ghost-surface mt-2" on:click={load}>Retry</button>
     </div>
-
   {:else if summary}
     <!-- Overall status -->
     <div class="card p-5 variant-ghost-surface w-full flex items-center gap-4">

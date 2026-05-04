@@ -7,7 +7,9 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab.
 ## 1. Kerngrundsätze
 
 ### 60-Sekunden-Regel
+
 Der Default-Eintrag muss in ≤ 60 Sekunden abgeschlossen sein:
+
 - Mood-Slider (Pflicht)
 - 3 Top-Tags (Optional, schnell auswählbar)
 - Symptome (Optional)
@@ -16,12 +18,14 @@ Der Default-Eintrag muss in ≤ 60 Sekunden abgeschlossen sein:
 Jede Komponente, die diesen Flow verlangsamt, ist zu überdenken.
 
 ### Mobile First
+
 - Breakpoints: 375px (Basis) → 768px → 1024px+
 - Touch-Targets: ≥ 44×44 px (WCAG 2.5.5)
 - Bottom-Sheet statt Full-Page-Form für Entry-Erstellung
 - Swipe-Gesten für Navigation (Heute ↔ Gestern ↔ Insights)
 
 ### Home-Screen-Philosophie
+
 ```
 ┌─────────────────────┐
 │  Heute, 20. April   │
@@ -33,32 +37,33 @@ Jede Komponente, die diesen Flow verlangsamt, ist zu überdenken.
 │  [Eintrag erstellen]│
 └─────────────────────┘
 ```
+
 Keine Dashboard-Überladung. Maximal 3 Informationsbereiche auf dem Home-Screen.
 
 ---
 
 ## 2. Tech-Stack
 
-| Technologie | Begründung |
-|---|---|
-| **SvelteKit 2** | Kleinstes Bundle, SSR/CSR flexibel, native Transitions |
-| **Skeleton UI** | SvelteKit-native, themeable, Dark-Mode-Support |
-| **Dexie.js** | IndexedDB-Abstraktion für Offline-Sync |
+| Technologie              | Begründung                                                    |
+| ------------------------ | ------------------------------------------------------------- |
+| **SvelteKit 2**          | Kleinstes Bundle, SSR/CSR flexibel, native Transitions        |
+| **Skeleton UI**          | SvelteKit-native, themeable, Dark-Mode-Support                |
+| **Dexie.js**             | IndexedDB-Abstraktion für Offline-Sync                        |
 | **ECharts / LayerChart** | Mobile-freundliche Charts (Entscheidung noch offen, ADR-0002) |
-| **pnpm** | Schnelleres Package Management im Monorepo |
-| **Vite** | Fast HMR, optimiertes Bundling |
+| **pnpm**                 | Schnelleres Package Management im Monorepo                    |
+| **Vite**                 | Fast HMR, optimiertes Bundling                                |
 
 ---
 
 ## 3. Performance-Budget
 
-| Metrik | Ziel |
-|---|---|
-| JS Bundle (gz) | < 150 KB |
-| LCP (Largest Contentful Paint) | < 2,0 s |
-| TTI (Time to Interactive) | < 3,0 s |
-| CLS | < 0,1 |
-| FID / INP | < 100 ms |
+| Metrik                         | Ziel     |
+| ------------------------------ | -------- |
+| JS Bundle (gz)                 | < 150 KB |
+| LCP (Largest Contentful Paint) | < 2,0 s  |
+| TTI (Time to Interactive)      | < 3,0 s  |
+| CLS                            | < 0,1    |
+| FID / INP                      | < 100 ms |
 
 Tools: Lighthouse CI in CI/CD-Pipeline, Web Vitals Monitoring via GlitchTip.
 
@@ -70,7 +75,7 @@ Tools: Lighthouse CI in CI/CD-Pipeline, Web Vitals Monitoring via GlitchTip.
 
 ```css
 /* CSS Custom Properties */
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --color-bg: #0f1117;
   --color-surface: #1a1d27;
   --color-primary: #7c6af5;
@@ -78,7 +83,7 @@ Tools: Lighthouse CI in CI/CD-Pipeline, Web Vitals Monitoring via GlitchTip.
   --color-text-muted: #8b8fa8;
 }
 
-:root[data-theme="light"] {
+:root[data-theme='light'] {
   --color-bg: #f8f9fc;
   --color-surface: #ffffff;
   --color-primary: #6356d9;

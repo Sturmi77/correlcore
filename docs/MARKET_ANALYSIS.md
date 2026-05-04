@@ -11,6 +11,7 @@
 Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playern dominiert und zeigt eine klare Konsolidierung auf Freemium-Abo-Modelle. Fast alle Marktführer sind Teams von 2–10 Personen — ein Solo-Dev-Einstieg ist realistisch.
 
 **Benchmarks:**
+
 - Bearable (~770k USD ARR bei 500k+ Downloads): ~1,50 USD Revenue/Download
 - Daylio (10M+ Downloads, 4.7 Rating): Dominiert durch First-Mover-Effekt (seit 2015)
 - Abo-Apps wachsen jährlich ~15,8% beim User-Spending
@@ -21,13 +22,13 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### Daylio — der Platzhirsch
 
-| Attribut | Details |
-|---|---|
-| Downloads | 10M+ (Play Store) |
-| Rating | 4.7/5 |
-| Team | Habitics (Samuel Bednar, Bratislava, gegr. 2015) |
-| Preis | Free (mit Ads) + Premium 4,99 $/Mon. oder 35,99 $/Jahr |
-| Plattform | Android + iOS |
+| Attribut  | Details                                                |
+| --------- | ------------------------------------------------------ |
+| Downloads | 10M+ (Play Store)                                      |
+| Rating    | 4.7/5                                                  |
+| Team      | Habitics (Samuel Bednar, Bratislava, gegr. 2015)       |
+| Preis     | Free (mit Ads) + Premium 4,99 $/Mon. oder 35,99 $/Jahr |
+| Plattform | Android + iOS                                          |
 
 **Stärken:** Bullet-Journal-Ansatz ohne Tippzwang, sehr schnelle Einträge, umfangreiche Statistiken, „Year in Pixels", Goals, starke Customization, breite kostenlose Basis.
 
@@ -39,14 +40,14 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### Bearable — der Health-Fokus-Spezialist
 
-| Attribut | Details |
-|---|---|
-| Downloads | 500k+ (Play Store) |
-| Rating | 4.5/5 |
-| Team | Bearable Ltd (James Saady, London, gegr. 2019), < 10 MA |
-| Finanzierung | ~204k USD Seed |
-| ARR | ~770k USD |
-| Preis | Free + Abo (ca. 4,99 $/Mon.) |
+| Attribut     | Details                                                 |
+| ------------ | ------------------------------------------------------- |
+| Downloads    | 500k+ (Play Store)                                      |
+| Rating       | 4.5/5                                                   |
+| Team         | Bearable Ltd (James Saady, London, gegr. 2019), < 10 MA |
+| Finanzierung | ~204k USD Seed                                          |
+| ARR          | ~770k USD                                               |
+| Preis        | Free + Abo (ca. 4,99 $/Mon.)                            |
 
 **Stärken:** Sehr starker Fokus auf Symptom-Tracking + Korrelationsanalyse (Chronic Illness, Bipolar, Migräne, PCOS), Medikamenten-Tracking, Schlafdaten, Energielevel; „built by patients", explizite Ärzte-Empfehlungen.
 
@@ -58,11 +59,11 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### Moodflow — der kostenlose Herausforderer
 
-| Attribut | Details |
-|---|---|
-| Downloads | 100k–500k |
-| Team | Kleines Indie-Studio (iOS seit 2019) |
-| Preis | Kostenlos (Opt-in-Ads) |
+| Attribut  | Details                              |
+| --------- | ------------------------------------ |
+| Downloads | 100k–500k                            |
+| Team      | Kleines Indie-Studio (iOS seit 2019) |
+| Preis     | Kostenlos (Opt-in-Ads)               |
 
 **Stärken:** Free ohne Ad-Zwang, Daten lokal auf dem Gerät, moderne UI, Mood-Kalender/Symptome/Habits/Gratitude/Routinen/Foto-Album, Insights über Zusammenhänge.
 
@@ -72,11 +73,11 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### How We Feel — der wissenschaftliche Non-Profit
 
-| Attribut | Details |
-|---|---|
-| Downloads | 1M+ |
-| Team | Ben Silbermann, Marc Brackett (Yale-Methodik) |
-| Preis | Komplett kostenlos, spendenfinanziert |
+| Attribut  | Details                                       |
+| --------- | --------------------------------------------- |
+| Downloads | 1M+                                           |
+| Team      | Ben Silbermann, Marc Brackett (Yale-Methodik) |
+| Preis     | Komplett kostenlos, spendenfinanziert         |
 
 **Stärken:** Wissenschaftlich basiert (RULER-Methodik, 144 Emotionswörter), Mini-Kurse zu Emotionsregulation, keine Ads.
 
@@ -86,11 +87,11 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### eMoods — der Bipolar-Nischenplayer
 
-| Attribut | Details |
-|---|---|
-| Downloads | 100k+ |
-| Team | Liviant LLC (schlankes Indie-Team) |
-| Preis | Free + Premium Abo |
+| Attribut  | Details                            |
+| --------- | ---------------------------------- |
+| Downloads | 100k+                              |
+| Team      | Liviant LLC (schlankes Indie-Team) |
+| Preis     | Free + Premium Abo                 |
 
 **Stärken:** Klarer Bipolar-Fokus, PDF-Report für Arzt, Zyklus-/Mondphasen-Integration, Dropbox-Export, Classic-Variante 100% offline.
 
@@ -100,13 +101,13 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ## 3. Marktlücken & Differenzierung für MoodSync
 
-| Lücke | Beschreibung | MoodSync-Ansatz |
-|---|---|---|
-| **Selfhost/Privacy-first** | Keine der Top-Apps bietet offizielles Selfhosting | Kern-USP: `docker compose up`, Daten bleiben lokal |
+| Lücke                               | Beschreibung                                                         | MoodSync-Ansatz                                                 |
+| ----------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **Selfhost/Privacy-first**          | Keine der Top-Apps bietet offizielles Selfhosting                    | Kern-USP: `docker compose up`, Daten bleiben lokal              |
 | **Korrelationstiefe für Lifestyle** | Bearable führend bei Health, aber Cloud-only + chronisch-krank-Fokus | Lifestyle-Zielgruppe (Remote-Worker 30–50) mit echter Statistik |
-| **Wearable via Health Connect** | Keine App hat saubere Garmin-/Wearables-Pipeline | Health Connect als First-Class-Feature ab M7 |
-| **Work-Context (Homeoffice)** | Nirgends als First-Class-Feature | `work_context`-Feld als dediziertes Pflichtfeld |
-| **DACH-Datenschutz-Positionierung** | Alle großen Anbieter US/UK-basiert | DSGVO-native, österreichischer Developer, DE/AT/CH-First |
+| **Wearable via Health Connect**     | Keine App hat saubere Garmin-/Wearables-Pipeline                     | Health Connect als First-Class-Feature ab M7                    |
+| **Work-Context (Homeoffice)**       | Nirgends als First-Class-Feature                                     | `work_context`-Feld als dediziertes Pflichtfeld                 |
+| **DACH-Datenschutz-Positionierung** | Alle großen Anbieter US/UK-basiert                                   | DSGVO-native, österreichischer Developer, DE/AT/CH-First        |
 
 ---
 
@@ -121,13 +122,14 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### Empfohlenes Hybrid-Modell für MoodSync
 
-| Tier | Beschreibung | Preis (Empfehlung) |
-|---|---|---|
-| **Selfhost Free** | Vollständige Features für Selfhoster (AGPL) | 0 € |
-| **Cloud Abo** | Managed Hosting, kein eigener Server nötig | 4,99 €/Monat oder 39 €/Jahr |
-| **Founders Lifetime** | Einmalzahlung, zeitlich/mengenmäßig begrenzt (erste 500 Käufer) | 89 € (einmalig) |
+| Tier                  | Beschreibung                                                    | Preis (Empfehlung)          |
+| --------------------- | --------------------------------------------------------------- | --------------------------- |
+| **Selfhost Free**     | Vollständige Features für Selfhoster (AGPL)                     | 0 €                         |
+| **Cloud Abo**         | Managed Hosting, kein eigener Server nötig                      | 4,99 €/Monat oder 39 €/Jahr |
+| **Founders Lifetime** | Einmalzahlung, zeitlich/mengenmäßig begrenzt (erste 500 Käufer) | 89 € (einmalig)             |
 
 **Begründung:**
+
 - „Du zahlst einmal, du besitzt es, deine Daten bleiben bei dir" ist ideologisch kohärent und glaubwürdig — reine Abo-Player (Daylio, Bearable) können das nicht senden
 - Lifetime zeitlich/mengenmäßig begrenzen: Dringlichkeit, schützt Unit Economics
 - Lifetime **außerhalb des Play Store** verkaufen (via Stripe auf Website) → spart 15% Google-Cut
@@ -140,12 +142,12 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### Einmalige Startkosten
 
-| Position | Kosten |
-|---|---|
-| Google Play Console | 25 USD (einmalig) |
-| Domain (.app oder .io, 1 Jahr) | ~15–20 € |
-| Sonstiges (Assets, Tools) | ~0–50 € |
-| **Gesamt** | **~40–100 €** |
+| Position                       | Kosten            |
+| ------------------------------ | ----------------- |
+| Google Play Console            | 25 USD (einmalig) |
+| Domain (.app oder .io, 1 Jahr) | ~15–20 €          |
+| Sonstiges (Assets, Tools)      | ~0–50 €           |
+| **Gesamt**                     | **~40–100 €**     |
 
 ### Laufende Kosten nach Skalierungsstufe
 
@@ -219,12 +221,14 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 ### Maßnahmen nach Meilenstein
 
 **M0–M2: Pre-Product (Budget 0–30 €)**
+
 - Build-in-Public starten: Mastodon, BlueSky, LinkedIn (2–3 Posts/Woche)
 - Landing-Page + Mailing-Liste (Listmonk self-hosted)
 - Problem-Interviews: 10–15 Gespräche mit Zielgruppe
 - Konkurrenz-Reviews systematisch lesen: 1-Sterne-Reviews von Daylio/Bearable → Feature-Priorisierung
 
 **M3–M5: Closed Alpha (Budget 20–50 €)**
+
 - Private Beta: 10–20 Tester aus Problem-Interviews; Lifetime-Key als Benefit
 - BetaList-Listung (kostenlos)
 - Reddit präsent: r/selfhosted, r/quantifiedself, r/PrivacyApps (hilfreich kommentieren, kein direktes Marketing)
@@ -232,24 +236,28 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 - GitHub-Repo öffnen (zumindest Issues + Roadmap)
 
 **M6–M9: Beta-Härtung (Budget 50–200 €)**
+
 - Awesome-Lists-PRs: `awesome-selfhosted`, `awesome-privacy`, `awesome-android`
 - Selfhosted-Community-Outreach: Selfh.st Newsletter, The Self-Hosted Podcast
 - Mini-Case-Studies: „Ich habe 90 Tage Stimmung + Homeoffice getrackt — 3 überraschende Muster"
 - Erste Domain-Authority: 3–5 Blogposts (2.000+ Wörter) zu Mood-Tracking-Science
 
 **M10: Public Selfhost Release (Budget 100–400 €)**
+
 - Show HN auf Hacker News (potenziell 5.000–50.000 Visits)
 - Product Hunt Launch (500–2.000 Downloads realistisch)
 - Lobste.rs, r/opensource, r/androidapps
 - Optional: Indie App Santa Android-Promotion (~150 USD)
 
 **M11: Play Store (Budget 200–800 €)**
+
 - ASO: Title, Short-Desc, 5 Screenshots, Featured Graphic
 - Keywords: „mood tracker", „habit tracker", „mood journal", „privacy tracker"
 - Reviews aus Beta-Testern (DSGVO-konform)
 - Optional: Google Ads UAC (~200–500 € Test) — erst nach verifizierter Organic-Conversion
 
 **M12: SaaS-Skalierung (Budget 500–2.000 €/Monat)**
+
 - Paid Ads nur wenn CAC < 1/3 LTV bewiesen
 - Content-SEO: 1 Artikel/Woche
 - Affiliate-Programm: 20–25% Revshare an Mental-Health-Blogger
@@ -257,18 +265,19 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### Gesamtbudget Jahr 1
 
-| Phase | Budget |
-|---|---|
-| Pre-Launch bis Beta | ~70–280 € |
-| Play-Store-Launch | ~225–825 € |
+| Phase                  | Budget                                  |
+| ---------------------- | --------------------------------------- |
+| Pre-Launch bis Beta    | ~70–280 €                               |
+| Play-Store-Launch      | ~225–825 €                              |
 | Post-Launch SaaS-Start | ~500–2.000 €/Monat (nur wenn LTV passt) |
-| **Gesamt Jahr 1** | **~300–1.100 € Cash** |
+| **Gesamt Jahr 1**      | **~300–1.100 € Cash**                   |
 
 ---
 
 ## 8. SWOT-Analyse
 
 ### Stärken
+
 - Privacy-first / Selfhosted als echter Marktalleinstellungsmerkmal
 - Tiefe Korrelationsanalyse (über Lifestyle-Apps hinaus)
 - Offline-First ermöglicht Nutzung ohne Vertrauen in Cloud
@@ -276,18 +285,21 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 - DACH-Markt: Datenschutz-Glaubwürdigkeit durch österreichischen Entwickler
 
 ### Schwächen
+
 - Solo-Dev: begrenzte Entwicklungskapazität
 - Keine Marke / kein Publikum zu Beginn
 - Health Connect erst ab Android 14+ verbreitet
 - E2E-Verschlüsselung bricht serverseitige Korrelationsanalyse (Trade-off)
 
 ### Chancen
+
 - Subscription Fatigue: Lifetime-Modell als Differenzierung
 - Wachsende Selfhost-Community (YunoHost, Umbrel, Casaos)
 - Health Connect-Ökosystem wächst (Garmin, Fitbit, Samsung schreiben alle hinein)
 - Nischenkeywords mit niedriger Konkurrenz für ASO/SEO
 
 ### Risiken
+
 - Daylio nicht frontal schlagbar (10M+ Downloads, Netzwerkeffekt)
 - Play-Store-Rejection wegen Health-Claims
 - Solo-Dev-Burnout bei zu ambitionierter Roadmap

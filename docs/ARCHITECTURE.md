@@ -6,14 +6,14 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab un
 
 ## 1. Leitprinzipien
 
-| Prinzip | Bedeutung |
-|---|---|
-| **API-First** | Backend ist vollständig über REST/OpenAPI konsumierbar; kein Coupling zwischen Frontend und DB |
-| **Offline-First** | Clients sind vollwertig offline bedienbar; Server ist autoritativ bei Merge |
-| **Selfhosted-First, Cloud-Ready** | `docker compose up` → lauffähig. Kein Code-Rewrite für SaaS-Phase |
-| **Privacy by Design** | Datenminimierung, Feld-Verschlüsselung für Sensibles, keine Third-Party-Analytics |
-| **Stateless Backend** | Keine Server-Side-Session; State in PostgreSQL + Redis; horizontal skalierbar |
-| **12-Factor App** | Config über Env-Variablen, Logs auf stdout, Prozesse stateless |
+| Prinzip                           | Bedeutung                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **API-First**                     | Backend ist vollständig über REST/OpenAPI konsumierbar; kein Coupling zwischen Frontend und DB |
+| **Offline-First**                 | Clients sind vollwertig offline bedienbar; Server ist autoritativ bei Merge                    |
+| **Selfhosted-First, Cloud-Ready** | `docker compose up` → lauffähig. Kein Code-Rewrite für SaaS-Phase                              |
+| **Privacy by Design**             | Datenminimierung, Feld-Verschlüsselung für Sensibles, keine Third-Party-Analytics              |
+| **Stateless Backend**             | Keine Server-Side-Session; State in PostgreSQL + Redis; horizontal skalierbar                  |
+| **12-Factor App**                 | Config über Env-Variablen, Logs auf stdout, Prozesse stateless                                 |
 
 ---
 
@@ -115,6 +115,7 @@ Client                          Server
 ```
 
 **Konfliktauflösung:**
+
 - Granularität: pro Feld, nicht pro Dokument
 - Entscheid: `updated_at` entscheidet (Server-Version gewinnt bei gleichem Timestamp)
 - Client erhält Merge-Report bei Konflikt
@@ -153,6 +154,7 @@ Nightly Cron (02:00 UTC)
 ```
 
 **Insight-Objekt:**
+
 ```json
 {
   "metric": "tag:sport",
@@ -168,24 +170,24 @@ Nightly Cron (02:00 UTC)
 
 ## 7. Datensicherheit
 
-| Layer | Maßnahme | Status |
-|---|---|---|
-| Transport | TLS 1.3 + HSTS + CSP strict via Traefik | ✅ |
-| Auth | OIDC via Authentik (Phase 2) / native JWT + Refresh-Rotation (Phase 1) | ✅ |
-| Docker Security | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount | ✅ |
-| Daten at-rest (DB) | `note_enc`, `symptoms.details` AES-256 (pgcrypto) | ✅ |
-| Daten at-rest (MinIO) | SSE-S3 für alle Buckets aktiviert | ✅ |
-| MinIO Isolation | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar | ✅ |
-| Multi-Tenancy | PostgreSQL Row-Level-Security (`user_id`-basiert) | ✅ |
-| Sync-Konflikte | Conflict-Log-Tabelle für alle LWW-Konflikte | ✅ |
-| App-Lock | PIN / Biometrie (Web Crypto API) | Phase 1.1 |
-| Export/Löschung | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung | ✅ |
-| Backups | Verschlüsselt via restic auf externen Storage | ✅ |
-| Audit-Log | Alle Admin-Aktionen geloggt | ✅ |
-| EXIF-Strip | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten) | ✅ |
-| Logs | Keine Klartextloggung von Mood-/Symptom-Werten | ✅ |
-| Rate-Limiting | Login-Endpunkte max. 5/min (SlowAPI) | ✅ |
-| Push Payload | Notification-Payload enthält keine Gesundheitsdaten | ✅ |
+| Layer                 | Maßnahme                                                                  | Status    |
+| --------------------- | ------------------------------------------------------------------------- | --------- |
+| Transport             | TLS 1.3 + HSTS + CSP strict via Traefik                                   | ✅        |
+| Auth                  | OIDC via Authentik (Phase 2) / native JWT + Refresh-Rotation (Phase 1)    | ✅        |
+| Docker Security       | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount | ✅        |
+| Daten at-rest (DB)    | `note_enc`, `symptoms.details` AES-256 (pgcrypto)                         | ✅        |
+| Daten at-rest (MinIO) | SSE-S3 für alle Buckets aktiviert                                         | ✅        |
+| MinIO Isolation       | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar          | ✅        |
+| Multi-Tenancy         | PostgreSQL Row-Level-Security (`user_id`-basiert)                         | ✅        |
+| Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                               | ✅        |
+| App-Lock              | PIN / Biometrie (Web Crypto API)                                          | Phase 1.1 |
+| Export/Löschung       | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung            | ✅        |
+| Backups               | Verschlüsselt via restic auf externen Storage                             | ✅        |
+| Audit-Log             | Alle Admin-Aktionen geloggt                                               | ✅        |
+| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)       | ✅        |
+| Logs                  | Keine Klartextloggung von Mood-/Symptom-Werten                            | ✅        |
+| Rate-Limiting         | Login-Endpunkte max. 5/min (SlowAPI)                                      | ✅        |
+| Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                       | ✅        |
 
 ---
 
@@ -197,11 +199,11 @@ Nightly Cron (02:00 UTC)
 
 Trusted Web Activities (TWA / Bubblewrap) wurden als initialer Ansatz evaluiert, aber aus mehreren Gründen verworfen:
 
-| Problem | Erläuterung |
-|---|---|
-| **Kein Health Connect Zugriff** | TWA ist eine Chrome-Rendering-Schicht und bietet keine Möglichkeit, native Android-APIs wie Health Connect direkt anzubinden. Eine Brücke wäre nur über einen separaten nativen Companion-Layer möglich — faktisch ein zweites Projekt. |
-| **Google Play Policy-Risiko** | Google hat TWA-Apps, die primär eine Website wrappen ohne substanziellen nativen Mehrwert, wiederholt aus dem Play Store entfernt oder abgelehnt. Für eine App mit Gesundheitsdaten (erweitertes Policy-Screening) ist dieses Risiko nicht akzeptabel. |
-| **Eingeschränkte Offline-Capabilities** | TWA-Cache-Verhalten ist an den Chrome-Browser gebunden; kein zuverlässiges Workbox-controlled ServiceWorker-Lifecycle außerhalb des Browser-Contexts. |
+| Problem                                 | Erläuterung                                                                                                                                                                                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Kein Health Connect Zugriff**         | TWA ist eine Chrome-Rendering-Schicht und bietet keine Möglichkeit, native Android-APIs wie Health Connect direkt anzubinden. Eine Brücke wäre nur über einen separaten nativen Companion-Layer möglich — faktisch ein zweites Projekt.                |
+| **Google Play Policy-Risiko**           | Google hat TWA-Apps, die primär eine Website wrappen ohne substanziellen nativen Mehrwert, wiederholt aus dem Play Store entfernt oder abgelehnt. Für eine App mit Gesundheitsdaten (erweitertes Policy-Screening) ist dieses Risiko nicht akzeptabel. |
+| **Eingeschränkte Offline-Capabilities** | TWA-Cache-Verhalten ist an den Chrome-Browser gebunden; kein zuverlässiges Workbox-controlled ServiceWorker-Lifecycle außerhalb des Browser-Contexts.                                                                                                  |
 
 ### Capacitor als Lösung
 
@@ -259,13 +261,13 @@ CREATE TABLE sync_conflicts (
 
 ### Verhalten
 
-| Aspekt | Beschreibung |
-|---|---|
-| **Auslöser** | Jedes Feld, bei dem `client_ts` und `server_ts` divergieren und beide Werte sich unterscheiden |
-| **Gewinner** | Server-Version (`server_value`) gewinnt und wird in der Haupttabelle gespeichert |
-| **Verlierer** | Client-Version (`client_value`) wird in `sync_conflicts` archiviert |
-| **Einsehbar** | Settings → Datenverlauf → Sync-Konflikte (gefiltert nach Zeitraum und Entity-Type) |
-| **Auflösung** | User kann `resolved_at` setzen (= manuell als erledigt markiert); zukünftig: manuelle Wert-Übernahme |
+| Aspekt          | Beschreibung                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Auslöser**    | Jedes Feld, bei dem `client_ts` und `server_ts` divergieren und beide Werte sich unterscheiden                                  |
+| **Gewinner**    | Server-Version (`server_value`) gewinnt und wird in der Haupttabelle gespeichert                                                |
+| **Verlierer**   | Client-Version (`client_value`) wird in `sync_conflicts` archiviert                                                             |
+| **Einsehbar**   | Settings → Datenverlauf → Sync-Konflikte (gefiltert nach Zeitraum und Entity-Type)                                              |
+| **Auflösung**   | User kann `resolved_at` setzen (= manuell als erledigt markiert); zukünftig: manuelle Wert-Übernahme                            |
 | **Bereinigung** | Automatisches Löschen nach **90 Tagen** via PostgreSQL-Job / pg_cron (`DELETE … WHERE created_at < NOW() - INTERVAL '90 days'`) |
 
 ### Sequenzdiagramm (Konfliktfall)
@@ -298,10 +300,10 @@ Privacy-by-Design-Prinzipien verarbeitet. Details: [docs/DSGVO.md](DSGVO.md)
 
 ### Technische Umsetzung der Datenschutzrechte
 
-| Recht | Umsetzung |
-|---|---|
-| Auskunft (Art. 15) | API: `GET /user/data-export` (JSON-Dump) |
-| Berichtigung (Art. 16) | Standard-Edit-Endpunkte |
-| Löschung (Art. 17) | `DELETE /user/account` → Cascade auf alle Daten incl. MinIO |
-| Datenübertragbarkeit (Art. 20) | `GET /user/export` → ZIP mit JSON + Fotos |
-| Widerspruch (Art. 21) | Analytics-Opt-Out: `POST /user/settings {analytics_enabled: false}` |
+| Recht                          | Umsetzung                                                           |
+| ------------------------------ | ------------------------------------------------------------------- |
+| Auskunft (Art. 15)             | API: `GET /user/data-export` (JSON-Dump)                            |
+| Berichtigung (Art. 16)         | Standard-Edit-Endpunkte                                             |
+| Löschung (Art. 17)             | `DELETE /user/account` → Cascade auf alle Daten incl. MinIO         |
+| Datenübertragbarkeit (Art. 20) | `GET /user/export` → ZIP mit JSON + Fotos                           |
+| Widerspruch (Art. 21)          | Analytics-Opt-Out: `POST /user/settings {analytics_enabled: false}` |

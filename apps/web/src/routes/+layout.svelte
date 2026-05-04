@@ -22,7 +22,10 @@
 </script>
 
 <svelte:head>
-  <meta name="description" content="Privacy-first mood &amp; habit tracker — understand why some days are good and others are bad." />
+  <meta
+    name="description"
+    content="Privacy-first mood &amp; habit tracker — understand why some days are good and others are bad."
+  />
 </svelte:head>
 
 <!-- Theme wrapper: data-theme drives Skeleton UI + custom CSS vars -->

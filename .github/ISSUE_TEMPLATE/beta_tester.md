@@ -27,4 +27,5 @@ Danke für dein Interesse! MoodSync sucht Beta-Tester für die geschlossene Alph
 <!-- Optional: Wie können wir dich erreichen? (Email, Mastodon, etc.) -->
 
 ---
-*Beta-Tester erhalten eine kostenlose Lifetime-Lizenz als Dankeschön.*
+
+_Beta-Tester erhalten eine kostenlose Lifetime-Lizenz als Dankeschön._

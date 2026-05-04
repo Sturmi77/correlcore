@@ -12,7 +12,6 @@
 name: moodsync
 
 services:
-
   # ── Docker Socket Proxy ────────────────────────────────────────────────────
   # Statt direktem Socket-Mount: Tecnativa-Proxy filtert erlaubte Docker API Calls
   # Löst: SEC-03 (Container-Escape-Risiko durch direkten Socket-Zugriff)
@@ -21,10 +20,10 @@ services:
     container_name: moodsync-socket-proxy
     restart: unless-stopped
     environment:
-      CONTAINERS: 1   # Traefik braucht Container-Labels lesen
-      NETWORKS: 1     # Traefik braucht Netzwerk-Info
-      SERVICES: 1     # optional, für Service Discovery
-      TASKS: 1        # optional
+      CONTAINERS: 1 # Traefik braucht Container-Labels lesen
+      NETWORKS: 1 # Traefik braucht Netzwerk-Info
+      SERVICES: 1 # optional, für Service Discovery
+      TASKS: 1 # optional
       # Alles andere ist DEAKTIVIERT (kein POST, kein EXEC, kein BUILD)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -40,8 +39,8 @@ services:
     container_name: moodsync-traefik
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     environment:
       # Traefik nutzt den Socket-Proxy, nicht den direkten Socket
       DOCKER_HOST: tcp://socket-proxy:2375
@@ -57,21 +56,21 @@ services:
       - no-new-privileges:true
     labels:
       # Security-Header-Middleware für alle Routen
-      - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
-      - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
-      - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
-      - "traefik.http.middlewares.security-headers.headers.forceSTSHeader=true"
-      - "traefik.http.middlewares.security-headers.headers.frameDeny=true"
-      - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
-      - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
-      - "traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
-      - "traefik.http.middlewares.security-headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=()"
+      - 'traefik.http.middlewares.security-headers.headers.stsSeconds=31536000'
+      - 'traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true'
+      - 'traefik.http.middlewares.security-headers.headers.stsPreload=true'
+      - 'traefik.http.middlewares.security-headers.headers.forceSTSHeader=true'
+      - 'traefik.http.middlewares.security-headers.headers.frameDeny=true'
+      - 'traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true'
+      - 'traefik.http.middlewares.security-headers.headers.browserXssFilter=true'
+      - 'traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin'
+      - 'traefik.http.middlewares.security-headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=()'
       # HTTP → HTTPS Redirect
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
-      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-https"
+      - 'traefik.http.middlewares.redirect-https.redirectscheme.scheme=https'
+      - 'traefik.http.middlewares.redirect-https.redirectscheme.permanent=true'
+      - 'traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)'
+      - 'traefik.http.routers.http-catchall.entrypoints=web'
+      - 'traefik.http.routers.http-catchall.middlewares=redirect-https'
 
   # ── Backend API ────────────────────────────────────────────────────────────
   api:
@@ -97,15 +96,15 @@ services:
       minio:
         condition: service_healthy
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.api.middlewares=security-headers"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)'
+      - 'traefik.http.routers.api.entrypoints=websecure'
+      - 'traefik.http.routers.api.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.api.middlewares=security-headers'
       # Rate-Limiting für API (global)
-      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=100"
-      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=50"
-      - "traefik.http.routers.api.middlewares=security-headers,api-ratelimit"
+      - 'traefik.http.middlewares.api-ratelimit.ratelimit.average=100'
+      - 'traefik.http.middlewares.api-ratelimit.ratelimit.burst=50'
+      - 'traefik.http.routers.api.middlewares=security-headers,api-ratelimit'
     networks:
       - internal
       - edge
@@ -113,7 +112,7 @@ services:
       - no-new-privileges:true
     healthcheck:
       # /health/live: liveness only — no external deps, safe for Docker restart logic
-      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health/live || exit 1"]
+      test: ['CMD-SHELL', 'curl -sf http://localhost:8000/health/live || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -128,11 +127,11 @@ services:
     depends_on:
       - api
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.web.middlewares=security-headers"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.web.rule=Host(`${DOMAIN}`)'
+      - 'traefik.http.routers.web.entrypoints=websecure'
+      - 'traefik.http.routers.web.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.web.middlewares=security-headers'
     networks:
       - internal
       - edge
@@ -140,7 +139,7 @@ services:
       - no-new-privileges:true
     healthcheck:
       # SvelteKit node server listens on port 3000
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1"]
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -180,7 +179,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -205,7 +204,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -226,17 +225,17 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-moodsync}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       # Server-Side Encryption aktivieren
-      MINIO_KMS_AUTO_ENCRYPTION: "on"
+      MINIO_KMS_AUTO_ENCRYPTION: 'on'
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ['CMD', 'mc', 'ready', 'local']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
     networks:
-      - internal  # NUR internes Netz — kein öffentlicher Zugriff auf Console [SEC-04 Fix]
+      - internal # NUR internes Netz — kein öffentlicher Zugriff auf Console [SEC-04 Fix]
     # MinIO Console (9001) und API (9000) sind NICHT via Traefik öffentlich geroutet
     # Zugriff auf Console: SSH-Tunnel oder VPN
     security_opt:
@@ -260,7 +259,7 @@ services:
       "
     networks:
       - internal
-    restart: "no"
+    restart: 'no'
 
   # ── Monitoring ─────────────────────────────────────────────────────────────
   glitchtip:
@@ -277,11 +276,11 @@ services:
       postgres:
         condition: service_healthy
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.glitchtip.rule=Host(`errors.${DOMAIN}`)"
-      - "traefik.http.routers.glitchtip.entrypoints=websecure"
-      - "traefik.http.routers.glitchtip.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.glitchtip.middlewares=security-headers"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.glitchtip.rule=Host(`errors.${DOMAIN}`)'
+      - 'traefik.http.routers.glitchtip.entrypoints=websecure'
+      - 'traefik.http.routers.glitchtip.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.glitchtip.middlewares=security-headers'
     networks:
       - internal
       - edge
@@ -299,6 +298,6 @@ networks:
     driver: bridge
   internal:
     driver: bridge
-    internal: true   # Kein direkter Internet-Zugriff aus internen Diensten
+    internal: true # Kein direkter Internet-Zugriff aus internen Diensten
   socket:
-    driver: bridge   # Dediziertes Netz nur für Traefik ↔ Socket-Proxy Kommunikation
+    driver: bridge # Dediziertes Netz nur für Traefik ↔ Socket-Proxy Kommunikation

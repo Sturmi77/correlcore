@@ -25,12 +25,12 @@ Die SvelteKit-Codebase bleibt unverändert. Capacitor wird als zusätzlicher Bui
 
 ## Alternativen erwogen
 
-| Option | Vorteile | Nachteile |
-|---|---|---|
-| **TWA (Bubblewrap)** | Kein nativer Code, minimaler Aufwand, bestehende PWA direkt nutzbar | Play-Store-Policy-Risiko, kein Health Connect, unzuverlässige Push Notifications, kein Zugang zu nativen APIs |
-| **Capacitor** ✅ | SvelteKit-Code unverändert, offizielle Plugin-Bridges (Health Connect, FCM), Play-Store-konform, CI/CD-fähig | Zusätzlicher Build-Step, Android Studio für Plugin-Updates nötig, etwas höhere Build-Komplexität |
-| **React Native** | Ausgereiftes natives Ökosystem, große Community, gute Performance | Komplette Neuimplementierung des UI-Layers (Svelte → React), massiver Mehraufwand, Code-Duplikation |
-| **Flutter** | Exzellente native Performance, eigenes Rendering, starke UI-Konsistenz | Komplette Neuimplementierung in Dart, kein Code-Sharing mit SvelteKit, noch höherer Aufwand als React Native |
+| Option               | Vorteile                                                                                                     | Nachteile                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| **TWA (Bubblewrap)** | Kein nativer Code, minimaler Aufwand, bestehende PWA direkt nutzbar                                          | Play-Store-Policy-Risiko, kein Health Connect, unzuverlässige Push Notifications, kein Zugang zu nativen APIs |
+| **Capacitor** ✅     | SvelteKit-Code unverändert, offizielle Plugin-Bridges (Health Connect, FCM), Play-Store-konform, CI/CD-fähig | Zusätzlicher Build-Step, Android Studio für Plugin-Updates nötig, etwas höhere Build-Komplexität              |
+| **React Native**     | Ausgereiftes natives Ökosystem, große Community, gute Performance                                            | Komplette Neuimplementierung des UI-Layers (Svelte → React), massiver Mehraufwand, Code-Duplikation           |
+| **Flutter**          | Exzellente native Performance, eigenes Rendering, starke UI-Konsistenz                                       | Komplette Neuimplementierung in Dart, kein Code-Sharing mit SvelteKit, noch höherer Aufwand als React Native  |
 
 ---
 
@@ -47,7 +47,7 @@ Die SvelteKit-Codebase bleibt unverändert. Capacitor wird als zusätzlicher Bui
 
 ## Umsetzung
 
-| Meilenstein | Aufgabe |
-|---|---|
-| **M4** (Mobile Polish) | Capacitor einrichten, Android-Build-Pipeline aufsetzen, Health Connect Plugin integrieren, FCM konfigurieren |
-| **M11** (Play Store Release) | Play Store Release via Capacitor-Build, App-Signing-Konfiguration in CI/CD |
+| Meilenstein                  | Aufgabe                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **M4** (Mobile Polish)       | Capacitor einrichten, Android-Build-Pipeline aufsetzen, Health Connect Plugin integrieren, FCM konfigurieren |
+| **M11** (Play Store Release) | Play Store Release via Capacitor-Build, App-Signing-Konfiguration in CI/CD                                   |

@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
     paths:
-      - "backend/**"
-      - ".github/workflows/ci-api.yml"
+      - 'backend/**'
+      - '.github/workflows/ci-api.yml'
   pull_request:
     branches: [main]
     paths:
-      - "backend/**"
-      - ".github/workflows/ci-api.yml"
+      - 'backend/**'
+      - '.github/workflows/ci-api.yml'
 
 defaults:
   run:
@@ -26,12 +26,12 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install dependencies
         run: uv sync --dev
@@ -51,12 +51,12 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install dependencies
         run: uv sync --dev
@@ -73,12 +73,12 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install dependencies
         run: uv sync --dev
@@ -89,10 +89,10 @@ jobs:
           # Test environment — no real DB/Redis needed for unit tests
           # (health probes are mocked in test_health.py)
           APP_ENV: test
-          DATABASE_URL: "postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync"
-          REDIS_URL: "redis://:changeme@localhost:6379/0"
-          SECRET_KEY: "test-secret-key-min-32-bytes-long-padding"
-          ENCRYPTION_KEY: "dGVzdC1lbmNyeXB0aW9uLWtleS0zMi1ieXRlcw=="
+          DATABASE_URL: 'postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync'
+          REDIS_URL: 'redis://:changeme@localhost:6379/0'
+          SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
+          ENCRYPTION_KEY: 'dGVzdC1lbmNyeXB0aW9uLWtleS0zMi1ieXRlcw=='
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
