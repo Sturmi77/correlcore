@@ -13,11 +13,12 @@ external services. No real passwords or tokens are logged.
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.api.v1.deps.auth import get_current_user
 from app.main import app
 from app.models.user import User
 from app.services.auth_service import AuthError, RegistrationError
@@ -207,14 +208,22 @@ async def test_logout_no_token_still_200() -> None:
 @pytest.mark.asyncio
 async def test_me_authenticated() -> None:
     user = _make_user()
-    with patch("app.api.v1.deps.auth.get_current_user", return_value=user):
+
+    async def override_current_user() -> User:
+        return user
+
+    app.dependency_overrides[get_current_user] = override_current_user
+    try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             r = await c.get(
                 "/api/v1/auth/me",
                 cookies={"access_token": VALID_ACCESS},
             )
-    # Either 200 (mocked) or 401 (if mock didn't override dep) — just check it's not 500
-    assert r.status_code in (200, 401)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert r.status_code == 200
+    assert r.json()["email"] == user.email
 
 
 @pytest.mark.asyncio

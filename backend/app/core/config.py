@@ -4,9 +4,7 @@ All values are read from environment variables (12-factor).
 See infra/docker/.env.example for the full list.
 """
 
-from typing import List
-
-from pydantic import field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,7 +20,10 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"  # development | staging | production
     APP_VERSION: str = "0.0.1"
     DEBUG: bool = False
-    SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION_MIN_32_BYTES_RANDOM"
+    SECRET_KEY: str = Field(
+        default="CHANGE_ME_IN_PRODUCTION_MIN_32_BYTES_RANDOM",
+        validation_alias=AliasChoices("SECRET_KEY", "JWT_SECRET"),
+    )
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync"
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     MINIO_SECURE: bool = False  # True in production behind Traefik TLS
 
     # CORS — list of allowed frontend origins
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
     # SMTP (for email verification)
     SMTP_HOST: str = ""
@@ -61,7 +62,19 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v: object) -> list[str]:
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
-        return v  # type: ignore[return-value]
+        if isinstance(v, list):
+            return [str(origin).strip() for origin in v]
+        raise TypeError("CORS_ORIGINS must be a comma-separated string or list")
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        if self.APP_ENV.lower() in {"production", "staging"} and (
+            self.SECRET_KEY.startswith("CHANGE_ME") or len(self.SECRET_KEY) < 32
+        ):
+            raise ValueError(
+                "SECRET_KEY must be set to at least 32 random characters in production"
+            )
+        return self
 
 
 settings = Settings()

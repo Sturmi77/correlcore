@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import UTC, datetime, timedelta
 
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -28,6 +27,7 @@ from app.models.user import User
 from app.schemas.auth import RegisterRequest
 
 logger = logging.getLogger(__name__)
+_DUMMY_PASSWORD_HASH = hash_password("__moodsync_dummy_password__")
 
 # ---------------------------------------------------------------------------
 # Exceptions
@@ -102,8 +102,10 @@ async def login_user(
 
     # Constant-time path: always verify even if user not found to prevent
     # timing-based user enumeration.
-    dummy_hash = "$2b$12$invalidhashfortimingprotectionXXXXXXXXXXXX"
-    valid = verify_password(password, user.hashed_password if user else dummy_hash)
+    valid = verify_password(
+        password,
+        user.hashed_password if user else _DUMMY_PASSWORD_HASH,
+    )
 
     if not valid or not user:
         logger.warning("failed login attempt", extra={"email_domain": email.split("@")[-1]})
