@@ -50,6 +50,7 @@ Content-Type: application/json
 ```
 
 **Antworten**
+
 - `200 OK` — `{"message": "Email verified. You can now sign in."}`
 - `400 Bad Request` — generisch `Invalid or expired verification token`
   (kein Detail über Ursache, um Enumeration zu verhindern)
