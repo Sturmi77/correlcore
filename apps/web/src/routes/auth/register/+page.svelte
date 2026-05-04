@@ -1,15 +1,22 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
-  import { ApiError } from '$lib/api/client';
   import { register } from '$lib/api/auth';
   import PasswordStrength, { evaluatePassword } from '$lib/components/auth/PasswordStrength.svelte';
+  import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   let email = '';
   let password = '';
   let displayName = '';
   let busy = false;
   let errorKey: string | null = null;
+
+  const ERROR_MAP: ApiErrorMap = {
+    400: 'auth.register.error_weak_password',
+    409: 'auth.register.error_duplicate',
+    422: 'auth.register.error_weak_password',
+    429: 'auth.login.error_rate_limit',
+  };
 
   $: strength = evaluatePassword(password);
   $: canSubmit = !busy && email.includes('@') && strength.meetsRequirements;
@@ -28,19 +35,10 @@
       const target = `/auth/check-email?email=${encodeURIComponent(email.trim().toLowerCase())}`;
       await goto(target);
     } catch (err) {
-      errorKey = mapError(err);
+      errorKey = mapApiError(err, ERROR_MAP);
     } finally {
       busy = false;
     }
-  }
-
-  function mapError(err: unknown): string {
-    if (err instanceof ApiError) {
-      if (err.status === 409) return 'auth.register.error_duplicate';
-      if (err.status === 422 || err.status === 400) return 'auth.register.error_weak_password';
-      if (err.status === 429) return 'auth.login.error_rate_limit';
-    }
-    return 'error.generic';
   }
 </script>
 

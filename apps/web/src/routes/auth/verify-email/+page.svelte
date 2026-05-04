@@ -1,7 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { page } from '$app/stores';
-  import { ApiError } from '$lib/api/client';
   import { verifyEmail } from '$lib/api/auth';
 
   type Phase = 'idle' | 'busy' | 'success' | 'error' | 'missing-token';
@@ -24,14 +23,11 @@
     try {
       await verifyEmail(token);
       phase = 'success';
-    } catch (err) {
+    } catch {
       // Backend returns a generic 400 for invalid/expired/used tokens
-      // (anti-enumeration). We map both ApiError and NetworkError to "error".
-      if (err instanceof ApiError) {
-        phase = 'error';
-      } else {
-        phase = 'error';
-      }
+      // (anti-enumeration). ApiError and NetworkError both surface as
+      // a single "error" phase — the UI never differentiates.
+      phase = 'error';
     }
   }
 </script>
