@@ -659,7 +659,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41, PR #43)_
 - [x] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41, PR #43)_
 - [x] Auth-Endpoints in `docs/API.md` vereinheitlicht dokumentiert _(Issue #50)_
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Audit durchgeführt 2026-05-04: Verdikt **bestanden mit Auflagen** — [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md). Vier Major-Findings als blockierende Folge-Issues: #64 (Auth-Coverage), #65 (`/auth/register` Enumeration + Rate-Limit), #66 (`DELETE /user/me`-Erasure-API). Checkpoint wird auf `[x]` gesetzt, sobald #64/#65/#66 gemerged sind.)_
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Audit durchgeführt 2026-05-04: Verdikt **bestanden mit Auflagen** — [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md). Major-Findings-Status: #64 ✅ gemerged (Auth-Coverage 92.29 %), #65 ✅ gemerged (`/auth/register` Enumeration + Rate-Limit), #66 ⏳ offen (`DELETE /user/me`-Erasure-API). Checkpoint wird auf `[x]` gesetzt, sobald #66 gemerged ist.)_
 
 #### DSGVO-Checkpoint M1
 
