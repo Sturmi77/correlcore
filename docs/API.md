@@ -104,10 +104,10 @@ GET    /api/v1/entries/date/{date}      Eintrag für ein Datum     (M1 Followup)
 
 ### Datentypen
 
-- `slot`         — Enum: `day` (Default, M1), `morning`, `noon`, `evening` (reserviert für M3+).
+- `slot` — Enum: `day` (Default, M1), `morning`, `noon`, `evening` (reserviert für M3+).
 - `work_context` — Enum: `homeoffice`, `office`, `vacation`, `sick`, `weekend`, `travel`.
 - `mood_score`, `energy`, `stress` — Integer 1..5 (DB-CHECK + Pydantic-Validierung).
-- `note`         — Optional, max. 4000 Zeichen. Wird in der Spalte `note_enc` gespeichert; M1
+- `note` — Optional, max. 4000 Zeichen. Wird in der Spalte `note_enc` gespeichert; M1
   liefert Klartext, ADR-0005 + Issue #26 ziehen Fernet-Verschlüsselung at-rest nach.
 
 ### Backdate-Fenster
@@ -153,8 +153,8 @@ Response `201 Created`:
 Fehler:
 
 - `401 Unauthorized` — fehlender / abgelaufener Token.
-- `403 Forbidden`   — nicht verifizierter Account.
-- `409 Conflict`    — für `(user, entry_date, slot)` existiert bereits ein Eintrag.
+- `403 Forbidden` — nicht verifizierter Account.
+- `409 Conflict` — für `(user, entry_date, slot)` existiert bereits ein Eintrag.
 - `422 Unprocessable Entity` — Range-Verletzung (mood/energy/stress ∉ 1..5),
   `entry_date` in der Zukunft, oder älter als 7 Tage.
 
@@ -163,8 +163,8 @@ Fehler:
 Query-Parameter (alle optional):
 
 - `start_date` (ISO `YYYY-MM-DD`) — inklusiv.
-- `end_date`   (ISO `YYYY-MM-DD`) — inklusiv.
-- `limit`      (1..365, Default 100).
+- `end_date` (ISO `YYYY-MM-DD`) — inklusiv.
+- `limit` (1..365, Default 100).
 
 Response `200 OK`: Liste von Entry-Objekten, sortiert nach `entry_date` (desc),
 bei Gleichstand nach `slot` (asc).
@@ -191,7 +191,7 @@ Request (alle Felder optional):
 Fehler:
 
 - `404 Not Found` — wie oben.
-- `409 Conflict`  — Eintrag ist älter als 7 Tage (read-only).
+- `409 Conflict` — Eintrag ist älter als 7 Tage (read-only).
 
 ### Zukünftige Felder
 
