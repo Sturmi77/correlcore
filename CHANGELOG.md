@@ -8,6 +8,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — M1 Vorbereitung
 
+### Changed
+
+- **CI** (Issue #49): `ci-web.yml` triggert jetzt zusätzlich auf `docs/**`, `**/*.md` und `.prettierignore`. Damit werden Prettier-Format-Drifts in der Dokumentation (z. B. `docs/API.md`, ADRs, Root-Markdown wie `CHANGELOG.md`) bei docs-only-PRs verlässlich erkannt — vorher liefen die Web-Jobs gar nicht, sodass Drift erst beim nächsten code-touchenden PR auffiel.
+
 ### Added
 
 - **Custom-Symptome** (Issue #57, ADR-0008): User können eigene Symptome (z. B. „Migräne mit Aura“, „Tinnitus“, „Knieschmerzen“) anlegen, bearbeiten und löschen — vollständig analog zum Tag-System (Issue #8).
