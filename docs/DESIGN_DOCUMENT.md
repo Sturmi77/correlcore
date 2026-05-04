@@ -659,7 +659,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41, PR #43)_
 - [x] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41, PR #43)_
 - [x] Auth-Endpoints in `docs/API.md` vereinheitlicht dokumentiert _(Issue #50)_
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Audit durchgeführt 2026-05-04: Verdikt **bestanden mit Auflagen** — [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md). Major-Findings-Status: #64 ✅ gemerged (Auth-Coverage 92.29 %), #65 ✅ gemerged (`/auth/register` Enumeration + Rate-Limit), #66 ⏳ offen (`DELETE /user/me`-Erasure-API). Checkpoint wird auf `[x]` gesetzt, sobald #66 gemerged ist.)_
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Audit durchgeführt 2026-05-04: Verdikt **bestanden mit Auflagen** — [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md). Alle drei blockierenden Major-Findings adressiert: #64 ✅ (Auth-Coverage 92.29 %), #65 ✅ (`/auth/register` Enumeration + Rate-Limit), #66 ✅ (`DELETE /api/v1/user/me`-Erasure-API mit Cryptographic Erasure)._
 
 #### DSGVO-Checkpoint M1
 
@@ -667,6 +667,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] 🔒 DSGVO: Custom-`symptoms.name` ebenfalls verschlüsselt at-rest (`symptoms.name_enc`, BYTEA, Fernet pro User-DEK); Default-Symptome bleiben plaintext (nicht-personenbezogene Labels) _(Issue #26, ADR-0005, ADR-0008). `symptoms.slug` bleibt für Custom-Symptome plaintext zur Operability — Hardening via Slug-HMAC ist als Backlog-Issue für M9+ eingeplant._
 - [x] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing geprüft) — Fehlerlogs dürfen Stacktraces, aber keine Tagebucheinträge, Symptome oder Gesundheitsdaten enthalten (siehe Abschnitt 3.6 und [ADR-0007](adr/0007-healthchecks-and-logging.md)); abgesichert durch automatischen Test `backend/tests/test_log_scrubbing.py`
 - [x] 🔒 DSGVO: Auth-Strategie für Phase 1 dokumentiert und in [ADR-0004](adr/0004-auth-strategie.md) festgehalten
+- [x] 🔒 DSGVO: Right-to-Erasure-API (`DELETE /api/v1/user/me`) implementiert — Re-Auth via Passwort, Refresh-Token-Revoke, Cascade-Delete über alle abhängigen Tabellen, Cryptographic Erasure via `user_encryption_keys` _(Issue #66, ADR-0005)_
 
 ---
 

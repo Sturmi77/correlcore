@@ -156,7 +156,7 @@ Nicht abgedeckt: `name_enc` (Custom-Symptom-Name, neu mit #26), `tag.name`, `tag
 ### 3.6 DSGVO-Pfad / Erasure
 
 - ✅ Cryptographic Erasure ist auf DB-Ebene implementiert: `user_encryption_keys.user_id ON DELETE CASCADE` macht alle `entries.note_enc` und `symptoms.name_enc` (Custom) eines Users in einer Bewegung unentschlüsselbar. ADR-0005 dokumentiert das. Migration 007 setzt RLS so, dass User die Row weder selbst inserten noch löschen können.
-- ❌ **Es existiert kein API-Endpoint für Account-Löschung.** Weder `DELETE /user/me` (laut Design-Doc §9) noch `DELETE /user/account` (laut ADR-0005 §"Account-Löschung") sind im Backend implementiert. Manuelle DB-DELETEs greifen zwar (Cascade ist da), aber für eine DSGVO-Art.-17-Antrag-Pipeline fehlt der API-Pfad. → Finding **SA-4** **(blocker für M1-Exit-Done)**.
+- ❌ **Es existiert kein API-Endpoint für Account-Löschung.** Weder `DELETE /user/me` (laut Design-Doc §9) noch `DELETE /user/account` (laut ADR-0005 §"Account-Löschung") sind im Backend implementiert. Manuelle DB-DELETEs greifen zwar (Cascade ist da), aber für eine DSGVO-Art.-17-Antrag-Pipeline fehlt der API-Pfad. → Finding **SA-4** **(blocker für M1-Exit-Done)** — **✅ behoben in [#66](https://github.com/Sturmi77/moodsync/issues/66)**: `DELETE /api/v1/user/me` mit Re-Auth via Passwort, Refresh-Token-Revoke und Cascade-Delete über alle abhängigen Tabellen inkl. `user_encryption_keys`.
 
 ### 3.7 Anti-Enumeration
 
@@ -194,7 +194,7 @@ Nicht abgedeckt: `name_enc` (Custom-Symptom-Name, neu mit #26), `tag.name`, `tag
 | SA-1 | **major** | `POST /auth/register` 409 leakt Email-Existenz (`Email already registered`).                                    | Folge-Issue [#65](https://github.com/Sturmi77/moodsync/issues/65). **Blocker für M1-Exit-Done** wegen DSGVO/Privacy-Wirkung. |
 | SA-2 | minor     | `POST /auth/register` ist ungerate-limitiert — verstärkt SA-1.                                                  | Folge-Issue [#65](https://github.com/Sturmi77/moodsync/issues/65) (gemeinsam mit SA-1).                                      |
 | SA-3 | minor     | Log-Scrubbing-Tests decken `name_enc`/`tag.name`/`tag.slug`/`symptom.slug` nicht ab.                            | Folge-Issue [#67](https://github.com/Sturmi77/moodsync/issues/67).                                                           |
-| SA-4 | **major** | Kein API-Endpoint `DELETE /user/me` für DSGVO-Art.-17-Erasure. Cryptographic Erasure ist nur DB-seitig wirksam. | Folge-Issue [#66](https://github.com/Sturmi77/moodsync/issues/66). **Blocker für M1-Exit-Done.**                             |
+| SA-4 | **major** | Kein API-Endpoint `DELETE /user/me` für DSGVO-Art.-17-Erasure. Cryptographic Erasure ist nur DB-seitig wirksam. | ✅ Behoben in [#66](https://github.com/Sturmi77/moodsync/issues/66): `DELETE /api/v1/user/me` mit Re-Auth + Cascade.         |
 | SA-5 | minor     | `/health/ready` prüft Encryption-Key-Verfügbarkeit nicht.                                                       | Folge-Issue [#68](https://github.com/Sturmi77/moodsync/issues/68).                                                           |
 | SA-6 | minor     | `esbuild` ≤ 0.24.2 (transitive via `svelte-i18n`) hat moderate Advisory.                                        | Folge-Issue [#69](https://github.com/Sturmi77/moodsync/issues/69). Nicht-Blocker.                                            |
 
