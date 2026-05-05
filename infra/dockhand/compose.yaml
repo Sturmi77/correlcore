@@ -1,0 +1,263 @@
+# MoodSync — Dockhand-Stack für ersten User-Test
+# ───────────────────────────────────────────────────────────────────────────
+# Drop-in für Dockhand (https://dockhand.pro). Zwei empfohlene Setups:
+#
+#   A) Git-Stack (empfohlen):
+#      Im Dockhand-UI: "Stacks → New → From Git" und
+#         Repo:     https://github.com/Sturmi77/moodsync
+#         Branch:   main
+#         Path:     infra/dockhand
+#         Env file: .env  (im Stack-Detail im UI pflegen)
+#      Dockhand sync't bei jedem Webhook-Push automatisch.
+#
+#   B) Manuelles Verzeichnis:
+#      Auf dem Host /opt/stacks/moodsync/ anlegen, compose.yaml + .env
+#      reinkopieren. Im Dockhand-UI über "Adopt stack" oder "New from
+#      file" verlinken.
+#
+# Zielumgebung: Tailscale-internes Netz (Homelab / Synology / Mini-PC).
+#   - Web/API binden auf ${TAILSCALE_IP} → kein WAN-Exposure.
+#   - Kein Letsencrypt, kein Traefik (User-Test, keine Public-Domain).
+#
+# Dockhand-Besonderheiten gegenüber dem Dockge-Stack:
+#   - 'name: moodsync' ist gesetzt (Dockhand respektiert es im UI-Header).
+#   - Kein 'pull_policy: always' — Dockhand verwaltet Pulls selbst und
+#     scannt vor dem Deploy mit Grype+Trivy. Pinned IMAGE_TAG empfohlen.
+#   - Profiles bleiben drin — Dockhand-UI hat ein Feld "Profiles to enable".
+#   - Logging-Limits explizit gesetzt (max-size 10m, max-file 3) damit
+#     Dockhands Log-Viewer nicht Gigabyte streamt.
+#
+# Migrations laufen einmalig im migrate-Service (alembic upgrade head),
+# blockieren api/worker bis Schema aktuell ist. Idempotent.
+
+name: moodsync
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+x-api-image: &api-image
+  image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
+
+x-api-env: &api-env
+  APP_ENV: ${APP_ENV:-staging}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  CORS_ORIGINS: ${CORS_ORIGINS}
+  SMTP_HOST: ${SMTP_HOST:-mailpit}
+  SMTP_PORT: ${SMTP_PORT:-1025}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-noreply@moodsync.local}
+
+services:
+  # ── Migrations-Init ───────────────────────────────────────────────────────
+  # Läuft einmal vor api+worker, blockiert bis Schema aktuell ist.
+  # Dockhand zeigt diesen Container nach erfolgreichem Run als "Exited (0)" —
+  # das ist gewollt, kein Fehler.
+  migrate:
+    <<: *api-image
+    container_name: moodsync-migrate
+    command: ['alembic', 'upgrade', 'head']
+    environment: *api-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moodsync
+    restart: 'no'
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  # ── Backend API ───────────────────────────────────────────────────────────
+  api:
+    <<: *api-image
+    container_name: moodsync-api
+    restart: unless-stopped
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:8000:8000'
+    networks:
+      - moodsync
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'python -c "import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health/live\")" || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ── Web Frontend ──────────────────────────────────────────────────────────
+  web:
+    image: ghcr.io/sturmi77/moodsync-web:${IMAGE_TAG:-latest}
+    container_name: moodsync-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:3000:3000'
+    networks:
+      - moodsync
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging: *default-logging
+
+  # ── Datenbank ─────────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: moodsync-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-moodsync}
+      POSTGRES_USER: ${POSTGRES_USER:-moodsync}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - moodsync
+    # Keine Port-Exposition — DB nur intern erreichbar
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  # ── Cache & Token-Store ───────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: moodsync-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - moodsync
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  # ── Mailpit (SMTP-Catcher für Mail-Verifikation) ──────────────────────────
+  # Web-UI: http://${TAILSCALE_IP}:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: moodsync-mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:8025:8025'
+    networks:
+      - moodsync
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:8025/api/v1/info']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+
+  # ── Error-Tracking (optional, --profile monitoring) ───────────────────────
+  # In Dockhand: Stack-Detail → "Profiles to enable" → 'monitoring' eintragen.
+  # Erst-Bootstrap nach erstem Up:
+  #   docker exec -it moodsync-glitchtip ./manage.py migrate
+  #   docker exec -it moodsync-glitchtip ./manage.py createsuperuser
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    container_name: moodsync-glitchtip
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-}
+      EMAIL_URL: smtp://mailpit:1025
+      DEFAULT_FROM_EMAIL: errors@moodsync.local
+      GLITCHTIP_DOMAIN: http://${TAILSCALE_IP:-127.0.0.1}:8080
+      ENABLE_USER_REGISTRATION: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:8080:8080'
+    networks:
+      - moodsync
+    profiles:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  # ── Analytics-Worker (optional, --profile worker, M2+) ────────────────────
+  # ACHTUNG: Worker-Code existiert noch NICHT (backend/workers/ ist leer).
+  # Erst aktivieren, wenn app/workers/analytics.py implementiert ist —
+  # vorher startet der Container in CrashLoop.
+  worker:
+    <<: *api-image
+    container_name: moodsync-worker
+    restart: unless-stopped
+    command: ['python', '-m', 'app.workers.analytics']
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - moodsync
+    profiles:
+      - worker
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+volumes:
+  postgres_data:
+    name: moodsync_postgres_data
+  redis_data:
+    name: moodsync_redis_data
+
+networks:
+  moodsync:
+    name: moodsync
+    driver: bridge
