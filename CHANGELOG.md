@@ -8,6 +8,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — M1 Vorbereitung
 
+### Fixed
+
+- **Container-Image-Builds zum ersten Mal lauffähig.** Beide Dockerfiles waren zwar im Repo, aber kein Image war je gebaut/gepublished worden — was beim ersten Run des neuen `release-images.yml`-Workflows (PR #76 / Commit 4378fcb) sichtbar wurde.
+  - **`backend/Dockerfile`**: `OSError: Readme file does not exist: README.md` beim `uv pip install -e .` — Hatchling liest `readme = "README.md"` aus `pyproject.toml`, die Datei war aber nicht im Build-Context. Fix: `COPY pyproject.toml uv.lock README.md ./` (statt nur `pyproject.toml`). Gleichzeitig `[dev]`-Extras aus dem Production-Image entfernt (`-e .` statt `-e .[dev]`) → ruff/mypy/pytest landen nicht mehr im Runtime-Image, kleinere Angriffsfläche. `uv.lock` wird mitkopiert für reproducible Builds.
+  - **`apps/web/Dockerfile`**: `pnpm prune --prod` hängte mit "confirmModulesPurge"-Prompt im non-TTY-CI-Container und brach mit Exit 1 ab. Fix: `pnpm prune --prod` durch ein dediziertes `pnpm install --prod --frozen-lockfile --filter @moodsync/web...` nach dem Build ersetzt — robusteres Pattern, weil es nicht auf interaktive pnpm-Modi setzt.
+  - Beide Fixes betreffen ausschließlich Build-Mechanik, keine Runtime-Semantik. Erste erfolgreiche GHCR-Pushes (`ghcr.io/sturmi77/moodsync-{api,web}:latest`) entstehen mit dem main-Push dieses PRs.
+
 ### Added
 
 - **Deployment-Bundle für ersten User-Test** (Tailscale-internes Homelab-Szenario). Nach abgeschlossenem M1-Quality-Gate steht der Stack jetzt out-of-the-box für ersten Real-User-Feedback bereit, ohne dass Production-Voraussetzungen wie öffentliche Domain oder Letsencrypt erfüllt sein müssen.
