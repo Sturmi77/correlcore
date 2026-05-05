@@ -1,7 +1,10 @@
 node_modules
 .svelte-kit
 build
-dist
 .env
 .env.*
-pnpm-lock.yaml
+!.env.example
+*.log
+coverage
+.vscode
+.idea
