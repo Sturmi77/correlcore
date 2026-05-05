@@ -9,6 +9,12 @@ FROM node:22-alpine AS builder
 
 WORKDIR /repo
 
+# CI=true übergeht pnpm-Interactive-Prompts (z. B. confirmModulesPurge), die
+# in non-TTY-Containern zu ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY führen.
+# GitHub-Actions setzt CI=true im Runner-Env, vererbt das aber nicht in den
+# Buildx-Container — deshalb hier explizit.
+ENV CI=true
+
 # pnpm via corepack
 RUN corepack enable
 
