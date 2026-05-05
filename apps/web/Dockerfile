@@ -4,55 +4,66 @@
 # Build context: Repo-Root (wegen pnpm workspace + lockfile)
 #   docker build -f apps/web/Dockerfile -t moodsync-web .
 
-# ---- Build stage ----
-FROM node:22-alpine AS builder
+# ─────────────────────────────────────────────────────────────────────────
+# Stage 1: deps (Prod-Deps für die Runtime)
+# ─────────────────────────────────────────────────────────────────────────
+# Separater Stage statt 'prune --prod' nach dem Build:
+# - prune/install --prod nach vollem Install kippt mit
+#   ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY (auch mit CI=true).
+# - 'prepare'-Hook (svelte-kit sync) braucht devDependencies, die im
+#   --prod-Modus nicht da sind → 'svelte-kit: not found'.
+# Lösung: Prod-Install in Isolation ohne prepare-Scripts.
+FROM node:22-alpine AS deps
 
 WORKDIR /repo
-
-# CI=true übergeht pnpm-Interactive-Prompts (z. B. confirmModulesPurge), die
-# in non-TTY-Containern zu ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY führen.
-# GitHub-Actions setzt CI=true im Runner-Env, vererbt das aber nicht in den
-# Buildx-Container — deshalb hier explizit.
 ENV CI=true
-
-# pnpm via corepack
 RUN corepack enable
 
-# Lockfile + Workspace-Manifeste zuerst (Layer-Cache)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 COPY apps/web/package.json apps/web/package.json
 
-# Deps installieren (frozen — reproducible)
+# --ignore-scripts überspringt 'prepare' (svelte-kit sync braucht devDeps).
+# --prod installiert nur dependencies, keine devDependencies.
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts \
+      --filter @moodsync/web...
+
+# ─────────────────────────────────────────────────────────────────────────
+# Stage 2: builder (Build mit allen Deps)
+# ─────────────────────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
+
+WORKDIR /repo
+ENV CI=true
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
+COPY apps/web/package.json apps/web/package.json
+
 RUN pnpm install --frozen-lockfile --filter @moodsync/web...
 
-# Quellen
 COPY apps/web/ apps/web/
 
-# Build (Vite + SvelteKit Node-Adapter)
 ARG VITE_API_BASE_URL=/api/v1
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 WORKDIR /repo/apps/web
 RUN pnpm build
 
-# Prod-Deps separat installieren (weniger fragil als `pnpm prune --prod`,
-# das in CI-Containern ohne TTY mit "confirmModulesPurge"-Prompt hängt).
-WORKDIR /repo
-RUN pnpm install --prod --frozen-lockfile --filter @moodsync/web...
-
-# ---- Runtime stage ----
+# ─────────────────────────────────────────────────────────────────────────
+# Stage 3: runtime
+# ─────────────────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runtime
 
 WORKDIR /app
 
-# Non-root User (Alpine: addgroup/adduser)
+# Non-root User
 RUN addgroup -S moodsync && adduser -S -G moodsync moodsync
 
-# Build-Output + Prod-Deps kopieren
-# SvelteKit adapter-node erzeugt /build mit eigenem package.json + Server
+# SvelteKit adapter-node erzeugt /build mit eigenem Server.
 COPY --from=builder --chown=moodsync:moodsync /repo/apps/web/build ./build
 COPY --from=builder --chown=moodsync:moodsync /repo/apps/web/package.json ./package.json
-COPY --from=builder --chown=moodsync:moodsync /repo/apps/web/node_modules ./node_modules
+# node_modules aus dem deps-Stage (nur Prod-Deps, keine devDeps).
+COPY --from=deps --chown=moodsync:moodsync /repo/apps/web/node_modules ./node_modules
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
@@ -63,5 +74,4 @@ USER moodsync
 
 EXPOSE 3000
 
-# adapter-node Server
 CMD ["node", "build/index.js"]
