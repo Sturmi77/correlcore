@@ -37,8 +37,14 @@ RUN pnpm build
 
 # Prod-Deps separat installieren (weniger fragil als `pnpm prune --prod`,
 # das in CI-Containern ohne TTY mit "confirmModulesPurge"-Prompt hängt).
+#
+# --ignore-scripts: der `prepare`-Hook in apps/web/package.json ruft
+# `svelte-kit sync` auf — das würde @sveltejs/kit erfordern, das aber als
+# devDependency bei --prod nicht installiert wird (sh: svelte-kit: not found).
+# Für das Production-Image wird `prepare` ohnehin nicht gebraucht: der Build
+# ist im vorigen Step bereits durchgelaufen.
 WORKDIR /repo
-RUN pnpm install --prod --frozen-lockfile --filter @moodsync/web...
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts --filter @moodsync/web...
 
 # ---- Runtime stage ----
 FROM node:22-alpine AS runtime
