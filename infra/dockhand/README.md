@@ -60,6 +60,117 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(48))'
 > **WICHTIG:** `ENCRYPTION_KEY` sicher backuppen. Geht der Key verloren,
 > sind alle verschlüsselten Felder unentschlüsselbar.
 
+## Environment-Variablen-Referenz
+
+Alle Variablen aus `.env.example` im Detail — was sie tun, ob sie pflicht
+sind, welche Form sie brauchen und wo sie im Backend-Code wirken
+([`backend/app/core/config.py`](../../backend/app/core/config.py)).
+
+### Stack-Steuerung (nur in der Compose, nicht im Backend)
+
+| Variable       | Pflicht | Default     | Beschreibung                                                                                                                                                                                                                                                                                                            |
+| -------------- | ------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IMAGE_TAG`    | nein    | `latest`    | Welcher GHCR-Tag für `moodsync-api` und `moodsync-web` gepullt wird. Empfohlen: pinned Tag (`sha-abc1234` oder `v0.3.0`) damit Dockhands Vulnerability-Scan (Grype/Trivy) reproducible vergleichen kann. Verfügbare Tags siehe [GHCR-Pakete im Repo](https://github.com/Sturmi77/moodsync/pkgs/container/moodsync-api). |
+| `TAILSCALE_IP` | nein    | `127.0.0.1` | IPv4-Adresse, auf die api/web/mailpit (und optional GlitchTip) ihre Ports binden. Default `127.0.0.1` = nur vom Host selbst erreichbar. Für Tailnet-Zugriff: `tailscale ip -4` auf dem Host → z. B. `100.101.102.103`.                                                                                                  |
+
+### Backend — App-Modus
+
+| Variable  | Pflicht | Default   | Beschreibung                                                                                                                                                                                                        |
+| --------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `APP_ENV` | nein    | `staging` | `development` \| `staging` \| `production`. Bei `staging`/`production` greift ein zusätzlicher Validator: `SECRET_KEY` muss ≥ 32 Zeichen und nicht-Default sein, `ENCRYPTION_KEY` darf nicht den Platzhalter haben. |
+
+### Backend — Auth & Krypto (sicherheitskritisch)
+
+| Variable         | Pflicht | Default  | Beschreibung                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SECRET_KEY`     | **ja**  | _keiner_ | Signiert JWT-Access- und Refresh-Tokens (HS256, ADR-0004). Mindestens 32 Bytes, URL-safe. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(48))'`. Wechsel führt dazu, dass alle ausgegebenen Tokens sofort ungültig werden → alle User müssen neu einloggen.                                                                                                                            |
+| `ENCRYPTION_KEY` | **ja**  | _keiner_ | Master-Key (Fernet, AES-128-CBC + HMAC-SHA256), der die per-User-DEKs in `user_encryption_keys.wrapped_dek` wrapped (ADR-0005, Issue #26). Damit werden `entries.note_enc` und Custom-`symptoms.name_enc` verschlüsselt at-rest. **Verlust = Daten unentschlüsselbar**. Generieren: `python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'`. Backup z. B. in Bitwarden. |
+
+> **Key-Rotation:** Optional kann statt `ENCRYPTION_KEY` eine Komma-Liste
+> `ENCRYPTION_KEYS=neu,alt1,alt2` gesetzt werden. Der erste Key
+> verschlüsselt neue Daten, alle Keys können entschlüsseln (siehe
+> `Settings.effective_encryption_keys()`). Für User-Test nicht nötig.
+
+### Backend — Datenbank
+
+| Variable            | Pflicht | Default    | Beschreibung                                                                                                                                                                                                                                                            |
+| ------------------- | ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_DB`       | nein    | `moodsync` | Name der App-Datenbank, die der Postgres-Container beim ersten Start anlegt.                                                                                                                                                                                            |
+| `POSTGRES_USER`     | nein    | `moodsync` | DB-User, der vom `migrate`-Container und der API genutzt wird.                                                                                                                                                                                                          |
+| `POSTGRES_PASSWORD` | **ja**  | _keiner_   | Passwort für `POSTGRES_USER`. **Mindestens 20 Zeichen, kein `@` und kein `/`** — beides bricht den Asyncpg-DSN auseinander. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(24))'`. Wird von der API automatisch in `DATABASE_URL` zusammengesetzt. |
+
+> `DATABASE_URL` wird in der Compose aus den drei Variablen gebaut:
+> `postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}`. Du musst `DATABASE_URL` selbst nicht setzen.
+
+### Backend — Redis
+
+| Variable         | Pflicht | Default  | Beschreibung                                                                                                                                                                                                                                                                                     |
+| ---------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `REDIS_PASSWORD` | **ja**  | _keiner_ | Passwort für Redis. Wird via `redis-server --requirepass` an den Container übergeben. Mindestens 20 Zeichen empfohlen. Redis dient als Token-Store (Refresh-Token-Family-Tracking, ADR-0004) und Rate-Limit-Backend. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(24))'`. |
+
+> `REDIS_URL` wird automatisch zu `redis://:${REDIS_PASSWORD}@redis:6379/0` zusammengesetzt.
+
+### Backend — CORS
+
+| Variable       | Pflicht | Default                 | Beschreibung                                                                                                                                                                                                                                                                                                                                                             |
+| -------------- | ------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CORS_ORIGINS` | ja\*    | `http://127.0.0.1:3000` | Komma-separierte Liste von Origins, von denen das Frontend die API aufrufen darf. Wird im Pydantic-Validator `parse_cors_origins` aus der Komma-String in eine Python-Liste übersetzt. Für Tailnet-Tests: `http://<tailscale-ip>:3000` und/oder `http://<magicdns-name>.ts.net:3000`. \*Pflicht in dem Sinn, dass der Default nur für lokalen Host-Zugriff funktioniert. |
+
+### Frontend — Web
+
+| Variable            | Pflicht | Default   | Beschreibung                                                                                                                                                                                                                                                                                                                                |
+| ------------------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL` | nein    | `/api/v1` | API-Pfad, den der SvelteKit-Server zur Runtime nutzt. **Achtung:** Im aktuellen Release-Workflow wird der Wert `/api/v1` zusätzlich beim Image-Build als Build-Arg fest ins Web-Image gebacken. Änderungen zur Runtime greifen nur für server-seitige Fetches, nicht für im Bundle hardgecodete URLs. Für User-Test einfach Default lassen. |
+
+### Backend — SMTP / E-Mail-Verifikation
+
+| Variable        | Pflicht | Default                  | Beschreibung                                                                                                                                                                                                                                                           |
+| --------------- | ------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SMTP_HOST`     | nein    | `mailpit`                | SMTP-Server-Hostname. Default zeigt auf den lokalen Mailpit-Container. Für echten Mailversand: z. B. `smtp.eu.mailgun.org`, `smtp.fastmail.com`.                                                                                                                       |
+| `SMTP_PORT`     | nein    | `1025`                   | SMTP-Port. Mailpit lauscht auf `1025` (kein TLS). Echter Provider meist `587` (STARTTLS) oder `465` (SMTPS). **Hinweis:** Backend-Default in `config.py` ist `587` — die Compose überschreibt das hier explizit auf `1025`, damit Mailpit out-of-the-box funktioniert. |
+| `SMTP_USER`     | nein    | _leer_                   | Auth-User beim SMTP-Provider. Für Mailpit nicht nötig.                                                                                                                                                                                                                 |
+| `SMTP_PASSWORD` | nein    | _leer_                   | Auth-Passwort. Für Mailpit nicht nötig.                                                                                                                                                                                                                                |
+| `SMTP_FROM`     | nein    | `noreply@moodsync.local` | Absender-Adresse für Verifikations- und Reset-Mails. Für echten Versand auf eine validierte Domain umstellen.                                                                                                                                                          |
+
+> Die Backend-Settings `SMTP_USE_TLS` (Default `true`), `SMTP_TIMEOUT`
+> (Default `10`), `EMAIL_VERIFICATION_TTL_HOURS` (Default `24`,
+> ADR-0004) und `FRONTEND_BASE_URL` (Default `http://localhost:5173`)
+> sind in der Compose nicht expliziert — die Backend-Defaults reichen
+> für den User-Test. Wer einen externen SMTP-Provider mit STARTTLS nutzt,
+> lässt `SMTP_USE_TLS=true` (Default). Für Mailpit empfiehlt sich
+> `SMTP_USE_TLS=false`, weil Mailpit standardmäßig auf `1025` ohne TLS
+> lauscht.
+>
+> Auch `FRONTEND_BASE_URL` solltest du spätestens dann auf den Tailnet-
+> Hostnamen ändern (`http://moodsync.<tailnet>.ts.net:3000` o.ä.), wenn
+> du echte Verifikations-Mails verschicken willst — sonst zeigt der Link
+> in der Mail auf `localhost:5173`.
+
+### Optional — GlitchTip (Profile `monitoring`)
+
+| Variable               | Pflicht\*\* | Default | Beschreibung                                                                                                                                                                                                                                    |
+| ---------------------- | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GLITCHTIP_SECRET_KEY` | ja\*\*      | _leer_  | Django-Secret für GlitchTip (separat von `SECRET_KEY` der MoodSync-API). Mindestens 50 Zeichen empfohlen. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(48))'`. \*\*Pflicht nur, wenn das Profile `monitoring` aktiv ist. |
+
+Weitere GlitchTip-Variablen (`DATABASE_URL`, `EMAIL_URL`,
+`GLITCHTIP_DOMAIN`, `ENABLE_USER_REGISTRATION`) werden direkt in der
+Compose gesetzt — nicht in `.env`.
+
+### Pflicht-Kurzliste vor erstem Deploy
+
+Füllen muss man **mindestens** diese vier Variablen, sonst startet der
+Stack nicht (Compose-Validator wirft `must be set`-Fehler):
+
+```env
+SECRET_KEY=...                # python -c 'import secrets; print(secrets.token_urlsafe(48))'
+ENCRYPTION_KEY=...            # python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
+POSTGRES_PASSWORD=...         # python -c 'import secrets; print(secrets.token_urlsafe(24))'
+REDIS_PASSWORD=...            # python -c 'import secrets; print(secrets.token_urlsafe(24))'
+```
+
+`TAILSCALE_IP` und `CORS_ORIGINS` zusätzlich anpassen, wenn der Stack im
+Tailnet erreichbar sein soll (sonst nur localhost).
+
 ## Tailscale-Bind
 
 Setze `TAILSCALE_IP=$(tailscale ip -4)` in der `.env`. Dann binden api/web/
