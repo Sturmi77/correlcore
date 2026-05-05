@@ -6,12 +6,16 @@ WORKDIR /app
 # Install uv for fast dependency resolution
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy dependency manifests first (layer caching)
-COPY pyproject.toml .
+# Copy dependency manifests + README (Hatchling liest readme = "README.md" beim
+# editable install — ohne diese Datei: OSError: Readme file does not exist).
+# uv.lock für reproducible Builds; pyproject.toml zuerst für Layer-Caching.
+COPY pyproject.toml uv.lock README.md ./
 
 # Install deps into /app/.venv
+# --no-dev: Production-Image enthält nur Runtime-Deps (ruff, mypy, pytest etc.
+# bleiben draußen → kleineres Image, kleinere Angriffsfläche).
 RUN uv venv .venv && \
-    uv pip install --python .venv/bin/python -e .[dev]
+    uv pip install --python .venv/bin/python -e .
 
 # ---- Runtime stage ----
 FROM python:3.12-slim AS runtime

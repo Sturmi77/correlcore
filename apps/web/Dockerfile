@@ -27,7 +27,12 @@ ARG VITE_API_BASE_URL=/api/v1
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 WORKDIR /repo/apps/web
-RUN pnpm build && pnpm prune --prod
+RUN pnpm build
+
+# Prod-Deps separat installieren (weniger fragil als `pnpm prune --prod`,
+# das in CI-Containern ohne TTY mit "confirmModulesPurge"-Prompt hängt).
+WORKDIR /repo
+RUN pnpm install --prod --frozen-lockfile --filter @moodsync/web...
 
 # ---- Runtime stage ----
 FROM node:22-alpine AS runtime
