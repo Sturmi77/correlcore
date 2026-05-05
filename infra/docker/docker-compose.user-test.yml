@@ -1,0 +1,244 @@
+# MoodSync — Compose-Stack für ersten User-Test
+# ───────────────────────────────────────────────────────────────────────────
+# Zielumgebung: Tailscale-internes Netz (Homelab / Synology / Mini-PC).
+# - Kein Letsencrypt, kein Traefik — Web/API direkt auf Tailnet-Ports gebunden.
+# - Bind an 0.0.0.0 + Tailscale-Funnel/MagicDNS regelt den Zugriff.
+# - Ports werden nur aufs Tailscale-Interface bzw. localhost gebunden, NICHT
+#   global, damit sie aus öffentlichem WAN nicht erreichbar sind.
+#
+# Optional aktivierte Profile:
+#   --profile monitoring   → GlitchTip (Error-Tracking)
+#   --profile worker       → Analytics-Worker (M2+, Code noch nicht implementiert)
+#
+# Nicht enthalten (M1-Scope):
+#   MinIO (Foto-Upload erst M3+) — wer Foto-Tests braucht, nimmt die
+#   Production-Compose docker-compose.yml.
+#
+# Start:
+#   cp .env.example .env  # und ausfüllen!
+#   docker compose -f docker-compose.user-test.yml up -d
+#   docker compose -f docker-compose.user-test.yml logs -f api
+#
+# Migrations:
+#   Werden vom Service `migrate` einmalig vor api/web ausgeführt
+#   (Alembic upgrade head). Idempotent — kann beliebig oft laufen.
+
+name: moodsync-test
+
+x-api-image: &api-image
+  image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
+  pull_policy: always
+
+x-api-env: &api-env
+  APP_ENV: ${APP_ENV:-staging}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  CORS_ORIGINS: ${CORS_ORIGINS}
+  # SMTP — defaults auf Mailpit (lokal abfangen)
+  SMTP_HOST: ${SMTP_HOST:-mailpit}
+  SMTP_PORT: ${SMTP_PORT:-1025}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-noreply@moodsync.local}
+
+services:
+  # ── Migrations-Init ─────────────────────────────────────────────────────
+  # Läuft einmal vor api+worker, blockiert bis Schema aktuell ist.
+  # Idempotent: alembic upgrade head ist no-op wenn nichts zu tun.
+  migrate:
+    <<: *api-image
+    container_name: moodsync-test-migrate
+    command: ['alembic', 'upgrade', 'head']
+    environment: *api-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: 'no'
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Backend API ─────────────────────────────────────────────────────────
+  api:
+    <<: *api-image
+    container_name: moodsync-test-api
+    restart: unless-stopped
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    ports:
+      # Bindet auf Tailscale-Interface (in .env: TAILSCALE_IP=100.x.y.z),
+      # NICHT auf 0.0.0.0 — kein WAN-Exposure.
+      - '${TAILSCALE_IP:-127.0.0.1}:8000:8000'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'python -c "import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health/live\")" || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Web Frontend ────────────────────────────────────────────────────────
+  web:
+    image: ghcr.io/sturmi77/moodsync-web:${IMAGE_TAG:-latest}
+    pull_policy: always
+    container_name: moodsync-test-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      # SvelteKit Server soll API über internes Netz erreichen (SSR)
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:3000:3000'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Datenbank ───────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: moodsync-test-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-moodsync}
+      POSTGRES_USER: ${POSTGRES_USER:-moodsync}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - internal
+    # Keine Port-Exposition — DB nur intern erreichbar
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Cache & Token-Store ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: moodsync-test-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+
+  # ── MailPit (Mail-Verifikation lokal abfangen) ──────────────────────────
+  # Web-UI: http://<TAILSCALE_IP>:8025  (nur im Tailnet erreichbar)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: moodsync-test-mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:8025:8025'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:8025/api/v1/info']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Error-Tracking (optional, --profile monitoring) ─────────────────────
+  # GlitchTip braucht eigene DB-Bootstrap-Schritte beim ersten Start.
+  # Manuell nach erstem Up:
+  #   docker compose ... exec glitchtip ./manage.py migrate
+  #   docker compose ... exec glitchtip ./manage.py createsuperuser
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    container_name: moodsync-test-glitchtip
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-}
+      EMAIL_URL: smtp://mailpit:1025
+      DEFAULT_FROM_EMAIL: errors@moodsync.local
+      GLITCHTIP_DOMAIN: http://${TAILSCALE_IP:-127.0.0.1}:8080
+      ENABLE_USER_REGISTRATION: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:8080:8080'
+    networks:
+      - internal
+    profiles:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Analytics-Worker (optional, --profile worker) ───────────────────────
+  # ACHTUNG: Worker-Code existiert noch NICHT (backend/workers/ ist leer).
+  # Profile bleibt für M2+ vorbereitet — aktivieren erst wenn analytics.py
+  # gemerged ist. Vorher startet der Container mit Fehler.
+  worker:
+    <<: *api-image
+    container_name: moodsync-test-worker
+    restart: unless-stopped
+    command: ['python', '-m', 'app.workers.analytics']
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+    profiles:
+      - worker
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  internal:
+    driver: bridge
