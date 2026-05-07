@@ -141,8 +141,13 @@ class Tag(Base):
     )
 
     def __repr__(self) -> str:  # pragma: no cover - debug helper
-        owner = "default" if self.is_default else f"user={self.user_id}"
-        return f"<Tag id={self.id} slug={self.slug} {owner}>"
+        # ``name`` is omitted unconditionally; ``slug`` is masked for
+        # user-owned tags because it derives from the user-supplied name
+        # and can leak it semantically (analog ADR-0005 trade-off for
+        # ``Symptom.slug``). Default tag slugs are curated and public.
+        if self.is_default:
+            return f"<Tag id={self.id} slug={self.slug} default>"
+        return f"<Tag id={self.id} slug=<custom> user={self.user_id}>"
 
 
 class EntryTag(Base):
