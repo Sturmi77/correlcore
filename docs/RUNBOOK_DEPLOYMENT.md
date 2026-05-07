@@ -251,17 +251,25 @@ Error response from daemon: driver failed programming external connectivity
 
 Auf der Synology / im Homelab läuft bereits ein anderer Dienst auf dem Host-Port, den der Compose-Stack mappen will. Typische Kollisionen:
 
-| Port | Belegt durch                     |
-| ---- | -------------------------------- |
-| 3000 | Grafana                          |
-| 5000 | DSM                              |
-| 7878 | Radarr                           |
-| 8000 | Paperless-ngx                    |
-| 8080 | diverse Web-UIs (GlitchTip, ...) |
-| 8096 | Jellyfin                         |
-| 8123 | Home Assistant                   |
-| 8989 | Sonarr                           |
-| 9000 | Portainer                        |
+| Port | Belegt durch                                                         |
+| ---- | -------------------------------------------------------------------- |
+| 3000 | Grafana, **Gotenberg (Paperless-ngx-Sidecar für PDF-Konvertierung)** |
+| 5000 | DSM                                                                  |
+| 7878 | Radarr                                                               |
+| 8000 | Paperless-ngx                                                        |
+| 8080 | diverse Web-UIs (GlitchTip, ...)                                     |
+| 8096 | Jellyfin                                                             |
+| 8123 | Home Assistant                                                       |
+| 8989 | Sonarr                                                               |
+| 9000 | Portainer                                                            |
+
+> **Synology-Hinweis:** Auf DSM gibt es kein `ss`/`lsof`. Der zuverlässige
+> Befehl ist `sudo netstat -tlnp | grep ':3000 '` (Leerzeichen am Ende des
+> Patterns wichtig, sonst matched es 3000-3999). Synology-Containerdienste
+> binden ihre Ports oft auf `:::PORT` (IPv6-Listen) statt `0.0.0.0:PORT` —
+> ein `docker ps`-Listing erkennt sie deshalb manchmal nicht als
+> Konflikt-Quelle, der Bind-Versuch eines neuen Containers schlägt aber
+> trotzdem fehl (z.B. Gotenberg, das in einem anderen Compose-Stack läuft).
 
 ### Fix
 
@@ -270,7 +278,7 @@ Alle drei Compose-Varianten (`infra/dockhand/`, `infra/dockge/`, `infra/docker/d
 ```bash
 # In der .env des Stacks:
 API_HOST_PORT=8210      # Default seit PR #90; vorher hardcoded 8000
-WEB_HOST_PORT=3000      # Default; bei Grafana-Konflikt z.B. auf 3010 setzen
+WEB_HOST_PORT=3010      # Default war 3000, bei Paperless+Gotenberg auf 3010 ausweichen
 ```
 
 Container-interne Ports bleiben fix bei `8000` (API) und `3000` (Web). 8210 ist absichtlich gewählt: kollidiert mit keinem der oben gelisteten Standard-Selfhosted-Tools.
