@@ -189,16 +189,63 @@ Damit überspringt pydantic-settings den JSON-Pre-Parse, der existierende `mode=
 
 ---
 
+## 5. Alembic + ENUM in `op.bulk_insert`
+
+### Symptom
+
+`moodsync-migrate` läuft die ersten Migrationen sauber, scheitert dann in der Seed-Phase einer Migration mit:
+
+```
+asyncpg.exceptions.DatatypeMismatchError: column "category" is of type tag_category
+  but expression is of type character varying
+```
+
+Die Tabelle und der ENUM-Typ wurden in derselben Migration korrekt erzeugt; erst der `op.bulk_insert(...)`-Aufruf danach kippt um. Da Alembic Transactional DDL nutzt, wird der gesamte Migrationsschritt zurückgerollt — die DB bleibt auf der vorigen Revision sauber stehen.
+
+### Ursache
+
+Für `op.bulk_insert` definiert man parallel zum `op.create_table(...)` einen leichtgewichtigen `sa.table(...)`-Stub mit `sa.column(...)`-Einträgen. SQLAlchemy nutzt **diesen Stub** (nicht das `Table`-Objekt aus `create_table`) zur Generierung des INSERT-Statements und bindet Parameter mit dem dort deklarierten Typ. Eine als `sa.String` deklarierte Spalte erzeugt `$N::VARCHAR`; PostgreSQL verweigert den impliziten Cast von `character varying` auf einen Custom-ENUM-Typ. Bei direktem `INSERT ... VALUES ('sport', ...)` mit String-Literal hätte Postgres den Cast erlaubt — mit gebundenem Parameter und explizit geforderter Typ-Annotation greift das nicht.
+
+### Fix
+
+Im Stub die ENUM-Typdefinition wiederholen, mit `create_type=False`, weil der Typ im selben Schritt schon erzeugt wurde:
+
+```python
+from sqlalchemy.dialects import postgresql
+
+_TAG_CATEGORY_VALUES = ("emotion", "context", "activity", ...)
+
+tags_table = sa.table(
+    "tags",
+    sa.column("slug", sa.String),
+    sa.column(
+        "category",
+        postgresql.ENUM(*_TAG_CATEGORY_VALUES, name="tag_category", create_type=False),
+    ),
+    # ...
+)
+op.bulk_insert(tags_table, [...])
+```
+
+SQLAlchemy generiert daraufhin `$N::tag_category`, Postgres akzeptiert. Gleicher Pattern für jeden weiteren `bulk_insert`-Stub mit ENUM-Spalten.
+
+### Lehre
+
+**Der `sa.table`-Stub ist eine separate Typ-Deklaration — keine Abkürzung für "siehe `create_table` oben".** SQL aus Alembic kompiliert oft erfolgreich, wird aber zur Ausführungszeit von Postgres mit `DatatypeMismatchError`, FK-Verletzungen oder fehlenden Extensions abgelehnt. Unit-Tests mit DB-Mocks fangen diese Bug-Klasse prinzipbedingt nicht. Die einzige verlässliche Absicherung ist `alembic upgrade head` gegen einen echten Postgres in CI — seit PR #89 als Job `migrations-smoke` im Backend-Workflow verdrahtet, mit Bonus-Round-Trip `downgrade base → upgrade head` zur Idempotenz-Prüfung.
+
+---
+
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
-| Symptom                                                                                         | Erste Hypothese                         | Sofort-Check                                                                                                                                               |
-| ----------------------------------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `moodsync-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                         | Veraltetes Backend-Image im GHCR        | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/moodsync-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen |
-| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP | Synology+Tailscale Userspace-Mode       | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                        |
-| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                 | Frischer Branch + Drift in pnpm-Version | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                 |
-| GHCR-Pull schlägt mit `unauthorized` fehl                                                       | Image ist privat                        | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                   |
-| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                 | Lokales pnpm liest `allowBuilds` nicht  | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                 |
-| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`        | CSV-Liste in ENV ohne `NoDecode`        | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)              |
+| Symptom                                                                                                                   | Erste Hypothese                                              | Sofort-Check                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `moodsync-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                                                   | Veraltetes Backend-Image im GHCR                             | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/moodsync-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen               |
+| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP                           | Synology+Tailscale Userspace-Mode                            | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                                      |
+| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                                           | Frischer Branch + Drift in pnpm-Version                      | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                               |
+| GHCR-Pull schlägt mit `unauthorized` fehl                                                                                 | Image ist privat                                             | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                                 |
+| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                                           | Lokales pnpm liest `allowBuilds` nicht                       | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                               |
+| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                             | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                            |
+| `moodsync-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5 |
 
 ---
 
