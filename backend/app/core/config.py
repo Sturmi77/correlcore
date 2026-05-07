@@ -4,8 +4,10 @@ All values are read from environment variables (12-factor).
 See infra/docker/.env.example for the full list.
 """
 
+from typing import Annotated
+
 from pydantic import AliasChoices, Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -41,7 +43,9 @@ class Settings(BaseSettings):
     # During key rotation: ENCRYPTION_KEYS as comma-separated list, new key first.
     # Generate: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     ENCRYPTION_KEY: str = "CHANGE_ME_32_BYTE_BASE64_KEY_HERE"
-    ENCRYPTION_KEYS: list[str] = Field(
+    # NoDecode keeps pydantic-settings from JSON-parsing the ENV value;
+    # the field_validator below splits comma-separated strings.
+    ENCRYPTION_KEYS: Annotated[list[str], NoDecode] = Field(
         default_factory=list,
         description="Optional comma-separated list of master keys, used during rotation. "
         "If empty, ENCRYPTION_KEY is used. First entry encrypts new data; "
@@ -55,8 +59,13 @@ class Settings(BaseSettings):
     MINIO_BUCKET_PHOTOS: str = "moodsync-photos"
     MINIO_SECURE: bool = False  # True in production behind Traefik TLS
 
-    # CORS — list of allowed frontend origins
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # CORS — list of allowed frontend origins.
+    # NoDecode prevents pydantic-settings from JSON-parsing the ENV value;
+    # the field_validator below handles comma-separated strings instead.
+    CORS_ORIGINS: Annotated[list[str], NoDecode] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
 
     # SMTP (for email verification — Issue #39)
     # In dev: MailPit catches all mail at smtp://mailpit:1025 (UI on :8025)

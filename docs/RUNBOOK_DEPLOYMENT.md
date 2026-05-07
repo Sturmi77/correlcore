@@ -152,6 +152,43 @@ Doppelt:
 
 ---
 
+## 4. Pydantic-Settings: CSV-ENV-Listen brauchen `NoDecode`
+
+### Symptom
+
+Beim ersten Redeploy mit gepinnten Image-Tags startet der `moodsync-migrate`-Container nicht und stirbt mit:
+
+```
+pydantic_settings.exceptions.SettingsError: error parsing value
+  for field "CORS_ORIGINS" from source "EnvSettingsSource"
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+```
+
+Die betroffene `.env`-Zeile sieht harmlos aus: `CORS_ORIGINS=http://a.example,http://b.example`.
+
+### Ursache
+
+pydantic-settings v2 versucht für komplexe Felder (`list[str]`, `dict[...]`) den ENV-Wert **zuerst** als JSON zu dekodieren, _bevor_ irgendein `field_validator(mode="before")` aufgerufen wird. Ein bestehender Validator zum CSV-Splitten kommt damit nie zum Zug — der JSON-Parse scheitert vorher und macht die ganze `Settings()`-Instantiierung zu einem harten Crash.
+
+### Fix
+
+`Annotated[list[str], NoDecode]` aus `pydantic_settings` auf das Feld:
+
+```python
+from typing import Annotated
+from pydantic_settings import NoDecode
+
+CORS_ORIGINS: Annotated[list[str], NoDecode] = [...]
+```
+
+Damit überspringt pydantic-settings den JSON-Pre-Parse, der existierende `mode="before"`-Validator splittet wie dokumentiert auf Komma. Gleicher Pattern für jedes weitere `list[...]`-Settings-Feld, das über ENV gesetzt werden kann.
+
+### Lehre
+
+**ENV-Format und Settings-Typen müssen konsistent sein.** Wenn die `.env.example` CSV dokumentiert, muss der Settings-Code auch CSV akzeptieren — nicht nur "validatorisch im Sinne von", sondern bevor der erste implizite JSON-Decode einspringt. Tests, die `Settings()` direkt instantiieren mit `monkeypatch.setenv`, fangen das im CI ab; die Bug-Klasse fällt sonst erst im echten Deployment auf, weil die Test-Suite ohne ENV-Override mit Defaults läuft.
+
+---
+
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
 | Symptom                                                                                         | Erste Hypothese                         | Sofort-Check                                                                                                                                               |
@@ -161,6 +198,7 @@ Doppelt:
 | Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                 | Frischer Branch + Drift in pnpm-Version | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                 |
 | GHCR-Pull schlägt mit `unauthorized` fehl                                                       | Image ist privat                        | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                   |
 | `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                 | Lokales pnpm liest `allowBuilds` nicht  | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                 |
+| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`        | CSV-Liste in ENV ohne `NoDecode`        | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)              |
 
 ---
 
