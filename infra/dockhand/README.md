@@ -176,13 +176,31 @@ Tailnet erreichbar sein soll (sonst nur localhost).
 Setze `TAILSCALE_IP=$(tailscale ip -4)` in der `.env`. Dann binden api/web/
 mailpit nur auf das Tailnet-Interface — kein WAN-Exposure.
 
-| Service | Port | Zugriff im Tailnet                       |
-| ------- | ---- | ---------------------------------------- |
-| Web     | 3000 | `http://<tailscale-ip>:3000`             |
-| API     | 8000 | `http://<tailscale-ip>:8000/health/live` |
-| Mailpit | 8025 | `http://<tailscale-ip>:8025`             |
+| Service | Host-Port (Default)      | Zugriff im Tailnet                                  |
+| ------- | ------------------------ | --------------------------------------------------- |
+| Web     | `${WEB_HOST_PORT:-3000}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`             |
+| API     | `${API_HOST_PORT:-8210}` | `http://<tailscale-ip>:<API_HOST_PORT>/health/live` |
+| Mailpit | 8025                     | `http://<tailscale-ip>:8025`                        |
 
 Postgres und Redis sind nur stack-intern erreichbar (kein Port-Mapping).
+
+### Host-Port-Konflikte (Synology-typisch)
+
+Die Host-Ports sind über `API_HOST_PORT` und `WEB_HOST_PORT` in der `.env`
+konfigurierbar, weil 8000 und 3000 auf typischen Selfhosted-Setups oft
+schon belegt sind:
+
+| Standard-Port | Häufig belegt durch | Default-Ausweich-Port (MoodSync)   |
+| ------------- | ------------------- | ---------------------------------- |
+| 8000          | Paperless-ngx       | `API_HOST_PORT=8210`               |
+| 3000          | Grafana             | bleibt 3000 (anpassen falls nötig) |
+
+**Wenn du `WEB_HOST_PORT` änderst, vergiss nicht, in `CORS_ORIGINS` den
+entsprechenden Port nachzuziehen** — sonst blockiert der Browser API-Calls
+vom Frontend mit CORS-Fehler.
+
+Der Container-interne Port bleibt in beiden Fällen fix (8000 bzw. 3000);
+das Mapping erfolgt nur auf Host-Seite.
 
 ## Migrations
 

@@ -17,6 +17,9 @@
 #
 # Zielumgebung: Tailscale-internes Netz (Homelab / Synology / Mini-PC).
 #   - Web/API binden auf ${TAILSCALE_IP} → kein WAN-Exposure.
+#   - Host-Ports via API_HOST_PORT/WEB_HOST_PORT konfigurierbar, falls auf
+#     dem Host bereits ein anderer Service auf 8000/3000 lauscht
+#     (z.B. Paperless, Grafana). Container-interne Ports bleiben fix.
 #   - Kein Letsencrypt, kein Traefik (User-Test, keine Public-Domain).
 #
 # Dockhand-Besonderheiten gegenüber dem Dockge-Stack:
@@ -87,7 +90,10 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - '${TAILSCALE_IP:-127.0.0.1}:8000:8000'
+      # Host-Port konfigurierbar (Default 8210), um Konflikten mit anderen
+      # Self-Hosted-Diensten auf der Synology auszuweichen — 8000 ist z.B.
+      # bei Paperless belegt. Container-Port bleibt 8000.
+      - '${TAILSCALE_IP:-127.0.0.1}:${API_HOST_PORT:-8210}:8000'
     networks:
       - moodsync
     security_opt:
@@ -117,7 +123,8 @@ services:
       api:
         condition: service_healthy
     ports:
-      - '${TAILSCALE_IP:-127.0.0.1}:3000:3000'
+      # Host-Port konfigurierbar (Default 3000), siehe API-Kommentar oben.
+      - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000'
     networks:
       - moodsync
     security_opt:

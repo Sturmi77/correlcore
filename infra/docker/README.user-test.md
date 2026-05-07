@@ -83,9 +83,14 @@ docker compose -f docker-compose.user-test.yml ps
 
 Alles `healthy`? Dann:
 
-- **App:** `http://<TAILSCALE_IP>:3000`
-- **API-Docs:** `http://<TAILSCALE_IP>:8000/api/docs` _(nur wenn `APP_ENV=staging` und Debug an)_
+- **App:** `http://<TAILSCALE_IP>:<WEB_HOST_PORT>` (Default-Port `3000`)
+- **API-Docs:** `http://<TAILSCALE_IP>:<API_HOST_PORT>/api/docs` (Default-Port `8210`) _(nur wenn `APP_ENV=staging` und Debug an)_
 - **Mailpit:** `http://<TAILSCALE_IP>:8025`
+
+> `API_HOST_PORT` und `WEB_HOST_PORT` sind in der `.env` konfigurierbar —
+> nützlich, wenn auf dem Host bereits ein anderer Selfhosted-Dienst auf 8000
+> oder 3000 lauscht (z.B. Paperless = 8000). Beim Ändern von `WEB_HOST_PORT`:
+> `CORS_ORIGINS` entsprechend nachziehen.
 
 ---
 

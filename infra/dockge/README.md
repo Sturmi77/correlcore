@@ -43,11 +43,16 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(24))'
 Setze `TAILSCALE_IP=$(tailscale ip -4)` in der `.env`. Dann binden api/web/
 mailpit nur auf das Tailnet-Interface — kein WAN-Exposure.
 
-| Service | Port | Zugriff im Tailnet                       |
-| ------- | ---- | ---------------------------------------- |
-| Web     | 3000 | `http://<tailscale-ip>:3000`             |
-| API     | 8000 | `http://<tailscale-ip>:8000/health/live` |
-| Mailpit | 8025 | `http://<tailscale-ip>:8025`             |
+| Service | Host-Port (Default)      | Zugriff im Tailnet                                  |
+| ------- | ------------------------ | --------------------------------------------------- |
+| Web     | `${WEB_HOST_PORT:-3000}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`             |
+| API     | `${API_HOST_PORT:-8210}` | `http://<tailscale-ip>:<API_HOST_PORT>/health/live` |
+| Mailpit | 8025                     | `http://<tailscale-ip>:8025`                        |
+
+> Host-Ports sind über `API_HOST_PORT` (Default `8210`) und `WEB_HOST_PORT`
+> (Default `3000`) in der `.env` konfigurierbar — falls auf dem Host bereits
+> ein anderer Selfhosted-Dienst diese Ports belegt (z.B. Paperless auf 8000).
+> Beim Ändern von `WEB_HOST_PORT`: `CORS_ORIGINS` entsprechend nachziehen.
 
 Postgres und Redis sind nur stack-intern erreichbar (kein Port-Mapping).
 

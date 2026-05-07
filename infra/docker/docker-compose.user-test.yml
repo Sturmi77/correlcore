@@ -75,7 +75,9 @@ services:
     ports:
       # Bindet auf Tailscale-Interface (in .env: TAILSCALE_IP=100.x.y.z),
       # NICHT auf 0.0.0.0 — kein WAN-Exposure.
-      - '${TAILSCALE_IP:-127.0.0.1}:8000:8000'
+      # Host-Port konfigurierbar (Default 8210), um Konflikten mit anderen
+      # Self-Hosted-Diensten auszuweichen (Paperless = 8000 etc.).
+      - '${TAILSCALE_IP:-127.0.0.1}:${API_HOST_PORT:-8210}:8000'
     networks:
       - internal
     security_opt:
@@ -105,7 +107,8 @@ services:
       api:
         condition: service_healthy
     ports:
-      - '${TAILSCALE_IP:-127.0.0.1}:3000:3000'
+      # Host-Port konfigurierbar (Default 3000), siehe API-Kommentar oben.
+      - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000'
     networks:
       - internal
     security_opt:
