@@ -235,17 +235,71 @@ SQLAlchemy generiert daraufhin `$N::tag_category`, Postgres akzeptiert. Gleicher
 
 ---
 
+## 6. Host-Port-Konflikte mit anderen Selfhosted-Diensten
+
+### Symptom
+
+`moodsync-api` (oder `moodsync-web`) startet nicht und produziert beim Container-Create:
+
+```
+Error response from daemon: driver failed programming external connectivity
+  on endpoint moodsync-api: Error starting userland proxy:
+  listen tcp4 0.0.0.0:8000: bind: address already in use
+```
+
+### Ursache
+
+Auf der Synology / im Homelab läuft bereits ein anderer Dienst auf dem Host-Port, den der Compose-Stack mappen will. Typische Kollisionen:
+
+| Port | Belegt durch                     |
+| ---- | -------------------------------- |
+| 3000 | Grafana                          |
+| 5000 | DSM                              |
+| 7878 | Radarr                           |
+| 8000 | Paperless-ngx                    |
+| 8080 | diverse Web-UIs (GlitchTip, ...) |
+| 8096 | Jellyfin                         |
+| 8123 | Home Assistant                   |
+| 8989 | Sonarr                           |
+| 9000 | Portainer                        |
+
+### Fix
+
+Alle drei Compose-Varianten (`infra/dockhand/`, `infra/dockge/`, `infra/docker/docker-compose.user-test.yml`) seit PR #90 mit konfigurierbaren Host-Ports:
+
+```bash
+# In der .env des Stacks:
+API_HOST_PORT=8210      # Default seit PR #90; vorher hardcoded 8000
+WEB_HOST_PORT=3000      # Default; bei Grafana-Konflikt z.B. auf 3010 setzen
+```
+
+Container-interne Ports bleiben fix bei `8000` (API) und `3000` (Web). 8210 ist absichtlich gewählt: kollidiert mit keinem der oben gelisteten Standard-Selfhosted-Tools.
+
+**WICHTIG:** Wenn `WEB_HOST_PORT` geändert wird, müssen die Einträge in `CORS_ORIGINS` ebenfalls angepasst werden — sonst blockiert der Browser API-Calls vom Frontend mit CORS-Fehler. Beispiel:
+
+```bash
+WEB_HOST_PORT=3010
+CORS_ORIGINS=http://moodsync.tail-scale.ts.net:3010,http://100.101.102.103:3010
+```
+
+### Lehre
+
+**Host-Ports in Compose-Stacks sind kein Implementierungsdetail — sie sind Teil der Deployment-Schnittstelle und müssen via ENV konfigurierbar sein.** Hardcoded `8000:8000` funktioniert auf einem dedizierten Server, kollidiert aber im typischen Homelab-Mehrfach-Stack. Der Container-interne Port bleibt fix (App-Konfiguration, Health-Checks, Inter-Container-Kommunikation), nur der Host-Port-Mapper-Teil bekommt ein Default mit ENV-Override. Eine kurze Default-Liste der "üblichen Belegungen" im Runbook spart später Debugging-Zeit.
+
+---
+
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
-| Symptom                                                                                                                   | Erste Hypothese                                              | Sofort-Check                                                                                                                                                             |
-| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `moodsync-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                                                   | Veraltetes Backend-Image im GHCR                             | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/moodsync-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen               |
-| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP                           | Synology+Tailscale Userspace-Mode                            | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                                      |
-| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                                           | Frischer Branch + Drift in pnpm-Version                      | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                               |
-| GHCR-Pull schlägt mit `unauthorized` fehl                                                                                 | Image ist privat                                             | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                                 |
-| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                                           | Lokales pnpm liest `allowBuilds` nicht                       | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                               |
-| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                             | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                            |
-| `moodsync-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5 |
+| Symptom                                                                                                                   | Erste Hypothese                                                        | Sofort-Check                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `moodsync-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                                                   | Veraltetes Backend-Image im GHCR                                       | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/moodsync-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen               |
+| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP                           | Synology+Tailscale Userspace-Mode                                      | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                                      |
+| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                                           | Frischer Branch + Drift in pnpm-Version                                | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                               |
+| GHCR-Pull schlägt mit `unauthorized` fehl                                                                                 | Image ist privat                                                       | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                                 |
+| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                                           | Lokales pnpm liest `allowBuilds` nicht                                 | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                               |
+| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                                       | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                            |
+| `moodsync-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert           | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5 |
+| Container-Create scheitert: `Error starting userland proxy: listen tcp4 0.0.0.0:8000: bind: address already in use`       | Host-Port 8000/3000 von anderem Dienst belegt (Paperless, Grafana ...) | `API_HOST_PORT=8210` und ggf. `WEB_HOST_PORT=<frei>` in `.env` setzen; `WEB_HOST_PORT`-Änderung erfordert `CORS_ORIGINS`-Anpassung. Siehe §6                             |
 
 ---
 
