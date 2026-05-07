@@ -333,9 +333,19 @@ docker pull ghcr.io/sturmi77/moodsync-web:latest
 docker compose up -d --force-recreate moodsync-web
 ```
 
+**Verifiziert in Produktion am 2026-05-07:** Auf der Synology mit
+`TAILSCALE_IP=100.120.157.82`, `WEB_HOST_PORT=3010`, `API_HOST_PORT=8210` und
+rebuiltem `:latest`-Image (workflow_dispatch mit
+`vite_api_base_url=http://100.120.157.82:8210/api/v1`) funktioniert die
+Registrierung end-to-end inkl. Mailpit-Versand der Verifikations-Mail.
+
 ### Caveat
 
-Das Bundle ist nach diesem Build an die im `vite_api_base_url`-Input angegebene URL gekoppelt. Wechselt die Tailscale-IP oder der Host-Port, muss neu gebaut werden. Für eine architektonisch saubere Lösung ist ein interner Reverse-Proxy im Web-Container vorgesehen (siehe ADR-0011, geplant).
+Das Bundle ist nach diesem Build an die im `vite_api_base_url`-Input angegebene
+URL gekoppelt. Wechselt die Tailscale-IP oder der Host-Port, muss neu gebaut
+werden. Für eine architektonisch saubere Lösung ist ein interner Reverse-Proxy
+im Web-Container vorgesehen (siehe [ADR-0011](adr/0011-web-internal-reverse-proxy.md),
+geplant für M2).
 
 ### Lehre
 
