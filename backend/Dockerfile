@@ -11,7 +11,13 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # uv.lock für reproducible Builds; pyproject.toml zuerst für Layer-Caching.
 COPY pyproject.toml uv.lock README.md ./
 
-# Install deps into /app/.venv
+# Source mit-kopieren VOR dem editable install. Hatchling braucht den
+# `app/`-Package zum Build-Zeitpunkt, sonst landet nur die Dependencies in
+# der venv und der Package selbst ist nicht importierbar (alembic-Run
+# scheitert dann mit ModuleNotFoundError: No module named 'app').
+COPY app/ app/
+
+# Install deps + Package into /app/.venv
 # --no-dev: Production-Image enthält nur Runtime-Deps (ruff, mypy, pytest etc.
 # bleiben draußen → kleineres Image, kleinere Angriffsfläche).
 RUN uv venv .venv && \
