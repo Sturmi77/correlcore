@@ -111,12 +111,35 @@ App nochmal neu starten. Ab jetzt akzeptiert der `MultiFernet` nur noch den neue
 ### 6. Verifikation
 
 - `pytest backend/tests/test_crypto.py -q` (lokal) — alle Roundtrips müssen grün sein.
+- `curl -fsS http://<host>:<api-port>/health/ready | jq '.components[] | select(.name=="encryption")'` — muss `"status": "ok"` liefern (siehe Abschnitt **Healthcheck-Verhalten**).
 - Login-Flow als Testuser durchspielen, Custom-Symptom anlegen, Note schreiben → in der DB sollten neue Ciphertext-Bytes erscheinen, die NICHT mit dem alten Key entschlüsselbar sind.
 - `SELECT key_version, COUNT(*) FROM user_encryption_keys GROUP BY key_version` → alle Rows sollten auf der neuen Version liegen.
 
 ### 7. Alten Key sicher vernichten
 
 Nach erfolgreicher Verifikation den alten Key aus dem Secrets-Backend löschen (Vault-Eintrag entfernen, Hardware-Token überschreiben). **Nicht in Backups behalten** — sonst neutralisiert die Rotation ihren eigenen Zweck.
+
+---
+
+## Healthcheck-Verhalten während Rotation
+
+`/health/ready` enthält seit Issue #68 (M1-Quality-Gate, SA-5) eine `encryption`-Probe, die einen kompletten Master-Fernet-Roundtrip ausführt: `generate_dek()` → `wrap_dek()` → `unwrap_dek()` → Byte-Vergleich. Damit fällt eine fehlerhafte Master-Key-Konfiguration sofort auf (vorher hätte `200 OK` Traffic auf einen Knoten geroutet, der bei jedem authentifizierten Request still 401 gibt).
+
+| Phase                                                                      | `components[encryption].status`      | Anmerkung                                                                                                                                                |
+| -------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stabil** (alter Key alleine)                                             | `ok`                                 | Wrap mit altem Key, Unwrap mit altem Key.                                                                                                                |
+| **Phase 2** — `ENCRYPTION_KEYS=NEW,OLD` nach App-Restart                   | `ok`                                 | `MultiFernet` wrapt mit `NEW` (erster in der Liste), `unwrap_dek` versucht beide. Probe ist grün, sobald **mindestens ein** Key valide ist.              |
+| **Phase 4** — Re-Wrap-Job läuft                                            | `ok`                                 | Probe ist von User-DEKs entkoppelt — sie testet nur den Master-Key, nicht einzelne `wrapped_dek`-Rows. Der Re-Wrap-Status wird gesondert geloggt.        |
+| **Phase 5** — alten Key aus Liste entfernt + Restart                       | `ok`                                 | Neuer Key alleine, Roundtrip funktioniert.                                                                                                               |
+| **Fehlkonfiguration** — `ENCRYPTION_KEY` leer / fehlt                      | `down` (`detail=RuntimeError`)       | `wrap_dek` wirft `"No encryption key configured"`. Probe loggt nur den Klassennamen (ADR-0007), niemals den fehlenden Variablennamen oder Settings-Dump. |
+| **Fehlkonfiguration** — ungültige Fernet-Bytes (32-Byte-Base64-URL falsch) | `down` (`detail=RuntimeError`)       | `_build_master` wirft generische Fehlermeldung ohne Key-Material.                                                                                        |
+| **Schwerer Crypto-Bug** — Roundtrip liefert andere Bytes                   | `down` (`detail=roundtrip_mismatch`) | Defensive Prüfung. Sollte in Praxis nie passieren — wenn doch, sofort eskalieren.                                                                        |
+
+**Operative Konsequenz während Rotation:**
+
+- Wenn nach Restart in Phase 2 oder 5 die Probe auf `down` springt, ist der Restart auf einen Knoten gegangen, der die ENV-Variable nicht gelesen hat (häufig: Compose-Override mit veraltetem File, Container-Cache). Sofort `docker compose config | grep -A2 ENCRYPTION` prüfen, **bevor** der Re-Wrap-Job in Phase 4 gestartet wird — dieser würde sonst alle DEKs in einen nicht-rekonstruierbaren Zustand bringen.
+- Uptime-Kuma / Traefik werten `/health/ready` als 503, sobald **eine** Komponente nicht-OK ist — Traffic wird während einer Fehlkonfiguration also automatisch vom Service abgezogen.
+- Die Probe ist **synchron** (Fernet ist CPU-bound, Mikrosekunden) — sie verzögert `/health/ready` nicht messbar.
 
 ---
 
