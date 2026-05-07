@@ -9,18 +9,19 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 
 ## Index
 
-| ADR                                                     | Titel                                                       | Status   | Datum      |
-| ------------------------------------------------------- | ----------------------------------------------------------- | -------- | ---------- |
-| [ADR-0001](0001-sveltekit-vs-nextjs.md)                 | SvelteKit als Web-Framework (statt Next.js)                 | Accepted | –          |
-| [ADR-0002](0002-capacitor-statt-twa.md)                 | Capacitor statt TWA als Mobile-Strategie                    | Accepted | 2026-04-20 |
-| [ADR-0003](0003-sync-conflict-log.md)                   | Sync-Protokoll: Conflict-Log statt stilles LWW              | Accepted | 2026-04-20 |
-| [ADR-0004](0004-auth-strategie.md)                      | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2 | Accepted | 2026-04-20 |
-| [ADR-0005](0005-verschluesselung-at-rest.md)            | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted | 2026-04-20 |
-| [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted | 2026-05-04 |
-| [ADR-0007](0007-healthchecks-and-logging.md)            | Healthchecks und strukturiertes Logging                     | Accepted | 2026-05-04 |
-| [ADR-0008](0008-symptom-master-tabelle.md)              | Symptom-Master-Tabelle für Custom-Symptome                  | Accepted | 2026-05-04 |
-| [ADR-0009](0009-offline-sync-nach-m4.md)                | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)       | Accepted | 2026-05-04 |
-| [ADR-0010](0010-build-toolchain-pinning.md)             | Build-Toolchain-Pinning (pnpm-Version)                      | Accepted | 2026-05-07 |
+| ADR                                                     | Titel                                                       | Status        | Datum      |
+| ------------------------------------------------------- | ----------------------------------------------------------- | ------------- | ---------- |
+| [ADR-0001](0001-sveltekit-vs-nextjs.md)                 | SvelteKit als Web-Framework (statt Next.js)                 | Accepted      | –          |
+| [ADR-0002](0002-capacitor-statt-twa.md)                 | Capacitor statt TWA als Mobile-Strategie                    | Accepted      | 2026-04-20 |
+| [ADR-0003](0003-sync-conflict-log.md)                   | Sync-Protokoll: Conflict-Log statt stilles LWW              | Accepted      | 2026-04-20 |
+| [ADR-0004](0004-auth-strategie.md)                      | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2 | Accepted      | 2026-04-20 |
+| [ADR-0005](0005-verschluesselung-at-rest.md)            | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted      | 2026-04-20 |
+| [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted      | 2026-05-04 |
+| [ADR-0007](0007-healthchecks-and-logging.md)            | Healthchecks und strukturiertes Logging                     | Accepted      | 2026-05-04 |
+| [ADR-0008](0008-symptom-master-tabelle.md)              | Symptom-Master-Tabelle für Custom-Symptome                  | Accepted      | 2026-05-04 |
+| [ADR-0009](0009-offline-sync-nach-m4.md)                | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)       | Accepted      | 2026-05-04 |
+| [ADR-0010](0010-build-toolchain-pinning.md)             | Build-Toolchain-Pinning (pnpm-Version)                      | Accepted      | 2026-05-07 |
+| [ADR-0011](0011-web-internal-reverse-proxy.md)          | Interner Reverse-Proxy im Web-Container (M2)                | Vorgeschlagen | 2026-05-07 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -63,6 +64,10 @@ Issues #10 (Offline-Sync) und #24 (Sync-Conflict-Log) werden von M1 nach M4 (Mob
 ### ADR-0010 – Build-Toolchain-Pinning (pnpm-Version)
 
 pnpm-Version wird in Root-`package.json` (`packageManager: "pnpm@11.0.8"`) und in allen `pnpm/action-setup`-Workflow-Steps (`version: '11.0.8'`) explizit gepinnt. Hintergrund: `pnpm/action-setup@v4 version: 'latest'` zog je nach Tag pnpm 10.x oder 11.x, was zu Drift in der `pnpm-workspace.yaml`-Konfiguration führte (`onlyBuiltDependencies` in v10 vs. `allowBuilds` in v11) und reproduzierbar `ERR_PNPM_IGNORED_BUILDS` auf Branches ohne Cache-Hit auslöste. Mit dem Pin ist Toolchain-Verhalten zwischen CI und Image-Build deterministisch; Updates werden zu bewussten Commits statt zu stillen Drift-Effekten. `pnpm-workspace.yaml` nutzt nur noch v11-Syntax (`allowBuilds`-Map). Update-Pfad in der ADR dokumentiert.
+
+### ADR-0011 – Interner Reverse-Proxy im Web-Container (M2)
+
+Der `moodsync-web`-Container bekommt in M2 einen integrierten Reverse-Proxy via SvelteKit `hooks.server.ts`, der `/api/*`-Requests intern an `http://api:8000/*` weiterleitet. Hintergrund: `VITE_API_BASE_URL` ist eine Build-Time-Variable und wird ins JS-Bundle einkompiliert — PR #92 hat das via `workflow_dispatch`-Input parametrisierbar gemacht (Sofort-Fix), aber das Bundle bleibt an die im Build angegebene URL gekoppelt (Rebuild bei IP-/Port-Wechsel) und der API-Port muss am Host gemappt sein. Der interne Proxy löst beides: Ein Image für alle Topologien (`/api/v1` bleibt immer korrekt), API-Port nur noch via `expose` intern (Sicherheitsplus), Same-Origin für Cookie-Auth (vereinfacht ADR-0006-Setup). Gewählt wurde Variante B (SvelteKit-Handle-Hook, ~40 Zeilen TS) statt Sidecar-nginx (Variante A) oder Caddy-im-Image (Variante C). Status `Vorgeschlagen`, geplant für M2 (Insights & Polishing).
 
 ---
 
