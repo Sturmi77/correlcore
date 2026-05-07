@@ -228,8 +228,19 @@ IMAGE_TAG=v0.3.0       # statt 'latest' — saubere Versionierung
 
 Im Dockhand-UI: Stack-Detail → **Re-pull images** → **Redeploy**.
 
-> Bei `IMAGE_TAG=latest` reicht ein Redeploy — es wird automatisch das
-> neueste main-Image gezogen.
+> **Bei `IMAGE_TAG=latest`** sorgt `pull_policy: always` (gesetzt auf
+> `api`, `migrate`, `worker` via Anchor und auf `web`) dafür, dass
+> jeder Redeploy automatisch das aktuellste GHCR-Image holt — ein
+> manueller **Re-pull** ist dafür nicht mehr nötig. Für `postgres`,
+> `redis` und `mailpit` ist `pull_policy` bewusst nicht gesetzt:
+> diese laufen auf gepinnten Versions-Tags und sollen sich nicht
+> ungewollt aktualisieren.
+>
+> **Achtung beim Mischen mit `:latest`:** Da Auto-Pull zwangsläufig
+> `:latest` hält, propagiert ein fehlerhaftes main-Image direkt zum
+> nächsten Redeploy. Für Production-ähnliche Stabilität lieber auf
+> `IMAGE_TAG=vX.Y.Z` oder `IMAGE_TAG=sha-<short>` pinnen — siehe
+> `docs/RUNBOOK_DEPLOYMENT.md` für die Verifikations-Snippets.
 
 ## Logging
 
@@ -257,7 +268,7 @@ docker run --rm -v moodsync_postgres_data:/data -v "$PWD":/backup \
 | ------------------ | ---------------------- | -------------------------- | ---------------------------------- |
 | Top-level `name:`  | `moodsync-test`        | _kein_ (nimmt Verzeichnis) | `moodsync` (Dockhand respektiert)  |
 | Container-Präfix   | `moodsync-test-*`      | `moodsync-*`               | `moodsync-*`                       |
-| `pull_policy`      | `always`               | `always`                   | _entfernt_ (Dockhand managt Pulls) |
+| `pull_policy`      | `always`               | `always`                   | `always` (api/migrate/worker/web)  |
 | Profiles           | `monitoring`, `worker` | _auskommentiert_           | `monitoring`, `worker` (UI-Feld)   |
 | Logging-Limits     | _default_              | _default_                  | `json-file` 10 MB × 3 (per Anchor) |
 | Volume-Namen       | compose-default        | explizit (`moodsync_*`)    | explizit (`moodsync_*`)            |
