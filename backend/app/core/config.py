@@ -75,8 +75,25 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "noreply@moodsync.local"
-    SMTP_USE_TLS: bool = True  # STARTTLS — disable for MailPit/MailHog dev relays
+    # STARTTLS-Default ist `None` (= Auto): TLS an, sobald `SMTP_USER` gesetzt
+    # ist (echter Relay), aus, wenn keine Auth konfiguriert ist (Mailpit/MailHog
+    # im Homelab sprechen Plain-SMTP auf 1025 ohne STARTTLS-Support). Override
+    # via `SMTP_USE_TLS=true` / `false` in der `.env` jederzeit möglich.
+    SMTP_USE_TLS: bool | None = None
     SMTP_TIMEOUT: int = 10  # seconds
+
+    @property
+    def smtp_should_use_tls(self) -> bool:
+        """Effective STARTTLS-Setting: explicit override wins, sonst auto.
+
+        - Wenn ``SMTP_USE_TLS`` explizit ``True``/``False`` gesetzt ist, gilt das.
+        - Wenn ``SMTP_USE_TLS`` ``None`` ist (Default), schalten wir TLS nur ein,
+          wenn ``SMTP_USER`` einen nicht-leeren Wert hat — die Heuristik
+          "Auth = echter Relay = STARTTLS, keine Auth = Dev-Catcher = plain".
+        """
+        if self.SMTP_USE_TLS is not None:
+            return self.SMTP_USE_TLS
+        return bool(self.SMTP_USER)
 
     # Email verification (ADR-0004: 24h TTL)
     EMAIL_VERIFICATION_TTL_HOURS: int = 24

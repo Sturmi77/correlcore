@@ -80,7 +80,7 @@ async def _send(message: EmailMessage) -> None:
             port=settings.SMTP_PORT,
             username=settings.SMTP_USER or None,
             password=settings.SMTP_PASSWORD or None,
-            start_tls=settings.SMTP_USE_TLS,
+            start_tls=settings.smtp_should_use_tls,
             timeout=settings.SMTP_TIMEOUT,
         )
         logger.info(
