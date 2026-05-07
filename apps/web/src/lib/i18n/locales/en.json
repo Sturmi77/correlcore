@@ -18,7 +18,11 @@
     "greeting_day": "Hello",
     "greeting_evening": "Good evening",
     "no_entry_today": "No entry today yet",
+    "entry_today_present": "Already tracked today",
     "add_entry": "Log your day",
+    "cta_new_entry": "New entry",
+    "cta_edit_entry": "Edit today's entry",
+    "loading_today": "Loading today's status…",
     "streak_label": "day streak"
   },
   "entry": {
