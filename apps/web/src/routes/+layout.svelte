@@ -3,10 +3,18 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { isLoading } from 'svelte-i18n';
   import { setupI18n } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
   import { auth, hydrate } from '$lib/stores/auth';
 
+  // svelte-i18n's `init()` registers the locale dictionary asynchronously
+  // (locale files are dynamic imports). We must NOT render any child that
+  // calls `$_(...)` before the dictionary is loaded — otherwise the very
+  // first format call throws "Cannot format a message without first setting
+  // the initial locale", the render pipeline aborts, and the user sees a
+  // blank page. The `isLoading` store from svelte-i18n flips to `false`
+  // once the active locale is ready; we gate the slot on that.
   setupI18n();
 
   // Routes that do NOT require authentication.
@@ -55,7 +63,15 @@
 
 <!-- data-theme on <html> drives CSS variables in app.css (light/dark) -->
 <div class="h-dvh flex flex-col">
-  {#if $auth.status === 'loading' && !isPublic($page.url.pathname)}
+  {#if $isLoading}
+    <!--
+      svelte-i18n locale dictionary is still loading. Render a silent
+      splash so children that use `$_(...)` do not mount before init.
+    -->
+    <div class="auth-splash" aria-busy="true" aria-live="polite">
+      <span class="sr-only">Loading…</span>
+    </div>
+  {:else if $auth.status === 'loading' && !isPublic($page.url.pathname)}
     <!--
       Auth is still hydrating and the route is protected.
       Render an unobtrusive splash so we don't briefly show protected
