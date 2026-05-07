@@ -476,4 +476,3 @@ def test_user_encryption_key_repr_does_not_leak_wrapped_dek(
     assert "wrapped_dek=" not in blob
     # Aber Metadaten sind erlaubt:
     assert "version=1" in blob
-
