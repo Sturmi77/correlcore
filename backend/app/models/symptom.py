@@ -205,8 +205,12 @@ class Symptom(Base):
     def __repr__(self) -> str:  # pragma: no cover - debug helper
         # Deliberately omits ``name`` — log-scrubbing rule bans Art.-9
         # symptom payloads (incl. custom names) from logs.
-        owner = "default" if self.is_default else f"user={self.user_id}"
-        return f"<Symptom id={self.id} slug={self.slug} {owner}>"
+        # For custom symptoms the slug derives from the user-supplied name
+        # (ADR-0005 plaintext trade-off) and can semantically leak the
+        # symptom name, so we mask it here. Default slugs are public.
+        if self.is_default:
+            return f"<Symptom id={self.id} slug={self.slug} default>"
+        return f"<Symptom id={self.id} slug=<custom> user={self.user_id}>"
 
 
 class EntrySymptom(Base):

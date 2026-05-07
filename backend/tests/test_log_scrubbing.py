@@ -44,6 +44,14 @@ FORBIDDEN_VALUES: tuple[str, ...] = (
     "stress=7",
     "Heute geht es mir schlecht wegen Migräne",  # Notiz-Klartext
     "headache",  # Symptom-Key in falschem Kontext
+    # Custom-Symptom-/Tag-Slugs & -Namen (Issues #8, #57; ADR-0005 Trade-off)
+    "Migräne mit Aura",  # Custom-Symptom-Name (Klartext, vor Verschlüsselung)
+    "migraene-mit-aura",  # Custom-Symptom-Slug (semantischer Leak)
+    "Stress bei Arbeit",  # Custom-Tag-Name
+    "stress-bei-arbeit",  # Custom-Tag-Slug
+    # Encryption-Material (ADR-0005)
+    "name_enc_ciphertext_bytes",  # Symptom.name_enc Sentinel
+    "wrapped_dek_ciphertext_bytes",  # UserEncryptionKey.wrapped_dek Sentinel
     # PII
     "alice@example.com",
     "max.mustermann@gmail.com",
@@ -249,10 +257,12 @@ def test_sensitive_field_names_not_in_message_template_strings() -> None:
 
     backend_app = Path(__file__).parent.parent / "app"
 
-    # Logger-Aufruf mit f-String, der eines der Health-Felder enthält
+    # Logger-Aufruf mit f-String, der eines der Health-Felder enthält.
+    # Erweitert um Issues #8 (Tags), #57 (Custom-Symptome), #26 (Encryption).
     risky = re.compile(
         r"logger\.\w+\([^)]*\b(mood_score|energy_level|stress_level|note_enc|"
-        r"symptom_intensity|hashed_password|password_plain)\b",
+        r"symptom_intensity|hashed_password|password_plain|"
+        r"name_enc|wrapped_dek)\b",
         re.IGNORECASE,
     )
 
@@ -271,3 +281,199 @@ def test_sensitive_field_names_not_in_message_template_strings() -> None:
             for p, line, snippet in offenders
         )
     )
+
+
+# ---------------------------------------------------------------------------
+# Tests — Repr-Stripping (SA-3, Issue #67)
+#
+# SQLAlchemy-Modelle können ungewollt via ``%r`` / ``str(obj)`` in Logs
+# landen — etwa in Exception-Messages, ``logger.debug("got %r", row)`` oder
+# ORM-internen Stacktraces. Die ``__repr__``-Methoden dürfen daher KEINE
+# Art.-9-relevanten Klartextwerte, Custom-Slugs oder Encryption-Material
+# enthalten. Default-Slugs (``headache``, ``fatigue``, ...) sind hingegen
+# kuratiert und dürfen erscheinen.
+# ---------------------------------------------------------------------------
+
+
+def test_entry_repr_does_not_leak_payload(captured_logs: io.StringIO) -> None:
+    """``Entry.__repr__`` darf weder Notiz-Klartext noch Mood/Energy/Stress
+    in den Output durchreichen — selbst wenn das Objekt via ``%r`` geloggt wird.
+    """
+    import uuid
+    from datetime import date
+
+    from app.models.entry import Entry, EntrySlot, WorkContext
+
+    entry = Entry(
+        id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        entry_date=date(2026, 5, 7),
+        slot=EntrySlot.MORNING,
+        mood_score=8,
+        energy=3,
+        stress=7,
+        work_context=WorkContext.HOMEOFFICE,
+        note_enc="ciphertext-bytes",
+    )
+
+    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger.info("loaded entry %r", entry)
+
+    records = _parse_lines(captured_logs)
+    _assert_no_forbidden(records)
+    blob = _serialize(records)
+    # Auch reine Feldnamen dürfen nicht im Repr stehen.
+    assert "mood_score" not in blob
+    assert "energy" not in blob
+    assert "stress" not in blob
+    assert "note_enc" not in blob
+    assert "ciphertext" not in blob
+
+
+def test_default_symptom_repr_keeps_curated_slug(
+    captured_logs: io.StringIO,
+) -> None:
+    """Default-Symptome haben kuratierte Slugs (``headache`` etc.) — die
+    sind öffentlich und dürfen im Repr stehen. Aber: ``name`` (Anzeigename)
+    bleibt draußen, weil bei Custom-Symptomen Art.-9-relevant.
+    """
+    import uuid
+
+    from app.models.symptom import Symptom
+
+    symptom = Symptom(
+        id=uuid.uuid4(),
+        user_id=None,
+        slug="headache",
+        name="Kopfschmerzen",
+        name_enc=None,
+        is_default=True,
+    )
+
+    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger.info("loaded symptom %r", symptom)
+
+    records = _parse_lines(captured_logs)
+    blob = _serialize(records)
+    # Default-Slug darf erscheinen — aber kein Anzeigename.
+    assert "headache" in blob, "Default-Slug sollte im Repr sichtbar sein"
+    assert "Kopfschmerzen" not in blob
+
+
+def test_custom_symptom_repr_masks_slug_and_name(
+    captured_logs: io.StringIO,
+) -> None:
+    """Custom-Symptome: Slug leitet sich vom user-supplied Namen ab
+    (ADR-0005 Trade-off, plaintext in DB). Im Repr/Log MUSS der Slug
+    maskiert werden, der ``name_enc`` ciphertext darf nicht erscheinen,
+    und natuerlich kein Klartextname.
+    """
+    import uuid
+
+    from app.models.symptom import Symptom
+
+    symptom = Symptom(
+        id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        slug="migraene-mit-aura",
+        name=None,
+        name_enc=b"name_enc_ciphertext_bytes",
+        is_default=False,
+    )
+
+    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger.info("loaded symptom %r", symptom)
+
+    records = _parse_lines(captured_logs)
+    _assert_no_forbidden(records)
+    blob = _serialize(records)
+    assert "migraene-mit-aura" not in blob
+    assert "Migr\u00e4ne mit Aura" not in blob
+    assert "name_enc_ciphertext_bytes" not in blob
+    # Repr sollte den Custom-Marker enthalten
+    assert "<custom>" in blob
+
+
+def test_default_tag_repr_keeps_curated_slug(
+    captured_logs: io.StringIO,
+) -> None:
+    """Default-Tags: kuratierte Slugs duerfen erscheinen, ``name`` nicht."""
+    import uuid
+
+    from app.models.tag import Tag, TagCategory
+
+    tag = Tag(
+        id=uuid.uuid4(),
+        user_id=None,
+        slug="sport",
+        name="Arbeit",
+        category=TagCategory.SPORT,
+        is_default=True,
+    )
+
+    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger.info("loaded tag %r", tag)
+
+    records = _parse_lines(captured_logs)
+    blob = _serialize(records)
+    assert "sport" in blob, "Default-Tag-Slug sollte im Repr sichtbar sein"
+    assert "Arbeit" not in blob
+
+
+def test_custom_tag_repr_masks_slug_and_name(captured_logs: io.StringIO) -> None:
+    """User-Tags: Slug+Name leiten sich aus User-Eingabe ab und koennen
+    Lifestyle-Hinweise (potentiell Art.-9-relevant) enthalten.
+    Repr maskiert Slug; Name war ohnehin nie Teil des Reprs.
+    """
+    import uuid
+
+    from app.models.tag import Tag, TagCategory
+
+    tag = Tag(
+        id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        slug="stress-bei-arbeit",
+        name="Stress bei Arbeit",
+        category=TagCategory.WORK,
+        is_default=False,
+    )
+
+    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger.info("loaded tag %r", tag)
+
+    records = _parse_lines(captured_logs)
+    _assert_no_forbidden(records)
+    blob = _serialize(records)
+    assert "stress-bei-arbeit" not in blob
+    assert "Stress bei Arbeit" not in blob
+    assert "<custom>" in blob
+
+
+def test_user_encryption_key_repr_does_not_leak_wrapped_dek(
+    captured_logs: io.StringIO,
+) -> None:
+    """``UserEncryptionKey.__repr__`` darf den ``wrapped_dek`` ciphertext
+    auch nicht als Laenge oder Praefix ausspielen — ADR-0005 erlaubt nur
+    ``user_id`` + ``key_version``.
+    """
+    import uuid
+
+    from app.models.user_encryption_key import UserEncryptionKey
+
+    uek = UserEncryptionKey(
+        user_id=uuid.uuid4(),
+        wrapped_dek=b"wrapped_dek_ciphertext_bytes",
+        key_version=1,
+    )
+
+    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger.info("loaded uek %r", uek)
+
+    records = _parse_lines(captured_logs)
+    _assert_no_forbidden(records)
+    blob = _serialize(records)
+    assert "wrapped_dek_ciphertext_bytes" not in blob
+    assert "wrapped_dek=" not in blob
+    # Aber Metadaten sind erlaubt:
+    assert "version=1" in blob
+
