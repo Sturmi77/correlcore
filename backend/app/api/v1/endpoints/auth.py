@@ -47,6 +47,7 @@ from app.schemas.auth import (
 )
 from app.services.auth_service import (
     AuthError,
+    EmailNotVerifiedError,
     VerificationError,
     login_user,
     logout_user,
@@ -230,6 +231,12 @@ async def login(
     token_store = TokenStore(redis)
     try:
         access, refresh, user = await login_user(db, token_store, data.email, data.password)
+    except EmailNotVerifiedError as exc:
+        # 403 → frontend shows 'resend verification' UI (see auth.login.error_unverified)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified",
+        ) from exc
     except AuthError as exc:
         # Generic message — no user enumeration
         raise HTTPException(

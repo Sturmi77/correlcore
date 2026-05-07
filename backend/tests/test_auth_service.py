@@ -23,6 +23,7 @@ from app.models.email_verification_token import EmailVerificationToken
 from app.schemas.auth import RegisterRequest
 from app.services.auth_service import (
     AuthError,
+    EmailNotVerifiedError,
     RegistrationError,
     VerificationError,
     create_verification_token,
@@ -310,6 +311,27 @@ async def test_login_user_inactive_account_raises_distinct_auth_error() -> None:
     with patch("app.services.auth_service.verify_password", return_value=True):
         with pytest.raises(AuthError, match="disabled"):
             await login_user(db, store, user.email, "Passw0rd")
+    store.store.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_login_user_unverified_email_raises_email_not_verified_error() -> None:
+    """Active but unverified accounts must be blocked from login (→ HTTP 403).
+
+    EmailNotVerifiedError is a subclass of AuthError; the endpoint catches
+    it specifically before the generic AuthError handler so it can return
+    403 instead of 401, enabling the frontend's 'resend verification' UI.
+    """
+    user = make_user(verified=False, active=True)
+    db = _make_db(scalar_one_or_none=user)
+    store = MagicMock()
+    store.store = AsyncMock()
+
+    with patch("app.services.auth_service.verify_password", return_value=True):
+        with pytest.raises(EmailNotVerifiedError, match="not verified"):
+            await login_user(db, store, user.email, "Passw0rd")
+    # Subclass relationship matters for endpoint mapping
+    assert issubclass(EmailNotVerifiedError, AuthError)
     store.store.assert_not_called()
 
 
