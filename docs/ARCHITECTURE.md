@@ -170,24 +170,24 @@ Nightly Cron (02:00 UTC)
 
 ## 7. Datensicherheit
 
-| Layer                 | Maßnahme                                                                  | Status    |
-| --------------------- | ------------------------------------------------------------------------- | --------- |
-| Transport             | TLS 1.3 + HSTS + CSP strict via Traefik                                   | ✅        |
-| Auth                  | OIDC via Authentik (Phase 2) / native JWT + Refresh-Rotation (Phase 1)    | ✅        |
-| Docker Security       | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount | ✅        |
-| Daten at-rest (DB)    | `note_enc`, `symptoms.details` AES-256 (pgcrypto)                         | ✅        |
-| Daten at-rest (MinIO) | SSE-S3 für alle Buckets aktiviert                                         | ✅        |
-| MinIO Isolation       | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar          | ✅        |
-| Multi-Tenancy         | PostgreSQL Row-Level-Security (`user_id`-basiert)                         | ✅        |
-| Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                               | ✅        |
-| App-Lock              | PIN / Biometrie (Web Crypto API)                                          | Phase 1.1 |
-| Export/Löschung       | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung            | ✅        |
-| Backups               | Verschlüsselt via restic auf externen Storage                             | ✅        |
-| Audit-Log             | Alle Admin-Aktionen geloggt                                               | ✅        |
-| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)       | ✅        |
-| Logs                  | Keine Klartextloggung von Mood-/Symptom-Werten                            | ✅        |
-| Rate-Limiting         | Login-Endpunkte max. 5/min (SlowAPI)                                      | ✅        |
-| Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                       | ✅        |
+| Layer                 | Maßnahme                                                                                       | Status    |
+| --------------------- | ---------------------------------------------------------------------------------------------- | --------- |
+| Transport             | TLS 1.3 + HSTS + CSP strict via Traefik                                                        | ✅        |
+| Auth                  | Native JWT + Refresh-Rotation (Phase 1, M1 ✅) / OIDC via Authentik (Phase 2, M12+)            | ✅        |
+| Docker Security       | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount                      | ✅        |
+| Daten at-rest (DB)    | App-Level Fernet pro User-DEK für `entries.note_enc` und Custom-`symptoms.name_enc` (ADR-0005) | ✅        |
+| Daten at-rest (MinIO) | SSE-S3 für alle Buckets aktiviert                                                              | ✅        |
+| MinIO Isolation       | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar                               | ✅        |
+| Multi-Tenancy         | PostgreSQL Row-Level-Security (`user_id`-basiert)                                              | ✅        |
+| Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                                                    | ✅        |
+| App-Lock              | PIN / Biometrie (Web Crypto API)                                                               | Phase 1.1 |
+| Export/Löschung       | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung                                 | ✅        |
+| Backups               | Verschlüsselt via restic auf externen Storage                                                  | ✅        |
+| Audit-Log             | Alle Admin-Aktionen geloggt                                                                    | ✅        |
+| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)                            | ✅        |
+| Logs                  | Keine Klartextloggung von Mood-/Symptom-Werten                                                 | ✅        |
+| Rate-Limiting         | Login-Endpunkte max. 5/min (SlowAPI)                                                           | ✅        |
+| Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                                            | ✅        |
 
 ---
 

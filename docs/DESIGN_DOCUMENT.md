@@ -1,6 +1,6 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.9 (M1 in Arbeit: #41 + #39 + #40 + #8 + #9 + #57 gemergt, CI-Doku-Trigger #49 gefixt, [ADR-0009](adr/0009-offline-sync-nach-m4.md): Offline-Sync nach M4 verschoben — M1-Scope reduziert auf Online-Nutzung; erstes User-Test-Deployment durchlaufen — Erkenntnisse in [`RUNBOOK_DEPLOYMENT.md`](RUNBOOK_DEPLOYMENT.md), Toolchain-Pinning [ADR-0010](adr/0010-build-toolchain-pinning.md))
+**Version:** 0.10 (M1 review-bereit: alle 12 Quality-Gate-Findings geschlossen — siehe [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md), 288 Tests grün bei 96.11 % Coverage; [ADR-0009](adr/0009-offline-sync-nach-m4.md) Offline-Sync nach M4 verschoben; [ADR-0010](adr/0010-build-toolchain-pinning.md) Build-Toolchain-Pinning; [ADR-0011](adr/0011-web-internal-reverse-proxy.md) Vorgeschlagen für M2; erstes User-Test-Deployment dokumentiert in [`RUNBOOK_DEPLOYMENT.md`](RUNBOOK_DEPLOYMENT.md))
 **Datum:** 2026-05-07
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
@@ -659,7 +659,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41, PR #43)_
 - [x] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41, PR #43)_
 - [x] Auth-Endpoints in `docs/API.md` vereinheitlicht dokumentiert _(Issue #50)_
-- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Audit durchgeführt 2026-05-04: Verdikt **bestanden mit Auflagen** — [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md). Alle drei blockierenden Major-Findings adressiert: #64 ✅ (Auth-Coverage 92.29 %), #65 ✅ (`/auth/register` Enumeration + Rate-Limit), #66 ✅ (`DELETE /api/v1/user/me`-Erasure-API mit Cryptographic Erasure)._
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden — Verdikt **vollständig bestanden** (Stand 2026-05-07, [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md)). Alle 12 Findings (4 major + 8 minor) geschlossen: #64 ✅ Auth-Coverage 95–100 %, #65 ✅ `/auth/register` enumeration-safe + rate-limited, #66 ✅ `DELETE /api/v1/user/me`-Erasure-API mit Cryptographic Erasure, #67 ✅ Log-Scrubbing für Tags/Custom-Symptome/Encryption (PR #105), #68 ✅ Encryption-Probe in `/health/ready` (PR #106), #69 ✅ esbuild ^0.25.0 (PR #102), #70 ✅ email/health-Service-Coverage 100 % (PR #104), #71 ✅ vite-plugin-svelte ^4 (PR #103). 288 Tests grün, projektweite Coverage 96.11 %.\_
 
 #### DSGVO-Checkpoint M1
 

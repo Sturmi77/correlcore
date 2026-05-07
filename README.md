@@ -25,8 +25,8 @@ Menschen spüren, dass Schlaf, Sport, Homeoffice-Tage oder Sozialkontakte ihr Wo
 
 ## Features (Roadmap)
 
-- [x] **M0** — Monorepo, CI/CD, Docker-Stack, Auth (Authentik), leeres App-Shell
-- [ ] **M1** — Täglicher Eintrag: Mood, Energy, Stress, Tags, Symptome, Notiz, Offline-Sync
+- [x] **M0** — Monorepo, CI/CD, Docker-Stack, Native JWT Auth, leeres App-Shell
+- [x] **M1** — Täglicher Eintrag: Mood, Energy, Stress, Tags (kuratiert + custom), Symptome (kuratiert + custom), Notiz, App-Level Fernet at-rest, Login/Register-UI, E-Mail-Verifikation, DSGVO-Erasure (Offline-Sync nach M4 verschoben — [ADR-0009](docs/adr/0009-offline-sync-nach-m4.md))
 - [ ] **M2** — Visualisierungen: Zeitreihe, Heatmap, Streaks, CSV-Export
 - [ ] **M3** — Insights v1: Korrelationsanalyse, Template-Statements, Confidence-Level
 - [ ] **M4** — Mobile Polish: PWA, Bottom-Sheet-UX, UnifiedPush, App-Lock
