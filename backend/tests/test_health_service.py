@@ -30,6 +30,7 @@ from sqlalchemy.exc import OperationalError
 
 from app.services.health_service import (
     ComponentStatus,
+    _probe_encryption,
     _probe_postgres,
     _probe_redis,
     check_liveness,
@@ -243,6 +244,9 @@ async def test_check_readiness_all_ok() -> None:
     redis_ok = MagicMock()
     redis_ok.status = ComponentStatus.OK
     redis_ok.name = "redis"
+    enc_ok = MagicMock()
+    enc_ok.status = ComponentStatus.OK
+    enc_ok.name = "encryption"
 
     with (
         patch(
@@ -255,12 +259,16 @@ async def test_check_readiness_all_ok() -> None:
             new_callable=AsyncMock,
             return_value=redis_ok,
         ),
+        patch(
+            "app.services.health_service._probe_encryption",
+            return_value=enc_ok,
+        ),
     ):
         report = await check_readiness()
 
     assert report.ready is True
     assert report.status == "ready"
-    assert [c.name for c in report.components] == ["postgres", "redis"]
+    assert [c.name for c in report.components] == ["postgres", "redis", "encryption"]
 
 
 @pytest.mark.asyncio
@@ -271,6 +279,9 @@ async def test_check_readiness_postgres_down_marks_not_ready() -> None:
     redis_ok = MagicMock()
     redis_ok.status = ComponentStatus.OK
     redis_ok.name = "redis"
+    enc_ok = MagicMock()
+    enc_ok.status = ComponentStatus.OK
+    enc_ok.name = "encryption"
 
     with (
         patch(
@@ -282,6 +293,10 @@ async def test_check_readiness_postgres_down_marks_not_ready() -> None:
             "app.services.health_service._probe_redis",
             new_callable=AsyncMock,
             return_value=redis_ok,
+        ),
+        patch(
+            "app.services.health_service._probe_encryption",
+            return_value=enc_ok,
         ),
     ):
         report = await check_readiness()
@@ -298,6 +313,9 @@ async def test_check_readiness_redis_down_marks_not_ready() -> None:
     redis_down = MagicMock()
     redis_down.status = ComponentStatus.DOWN
     redis_down.name = "redis"
+    enc_ok = MagicMock()
+    enc_ok.status = ComponentStatus.OK
+    enc_ok.name = "encryption"
 
     with (
         patch(
@@ -309,6 +327,10 @@ async def test_check_readiness_redis_down_marks_not_ready() -> None:
             "app.services.health_service._probe_redis",
             new_callable=AsyncMock,
             return_value=redis_down,
+        ),
+        patch(
+            "app.services.health_service._probe_encryption",
+            return_value=enc_ok,
         ),
     ):
         report = await check_readiness()
@@ -325,6 +347,9 @@ async def test_check_readiness_both_down_marks_not_ready() -> None:
     redis_down = MagicMock()
     redis_down.status = ComponentStatus.DOWN
     redis_down.name = "redis"
+    enc_ok = MagicMock()
+    enc_ok.status = ComponentStatus.OK
+    enc_ok.name = "encryption"
 
     with (
         patch(
@@ -337,8 +362,192 @@ async def test_check_readiness_both_down_marks_not_ready() -> None:
             new_callable=AsyncMock,
             return_value=redis_down,
         ),
+        patch(
+            "app.services.health_service._probe_encryption",
+            return_value=enc_ok,
+        ),
     ):
         report = await check_readiness()
 
     assert report.ready is False
     assert report.status == "not_ready"
+
+
+@pytest.mark.asyncio
+async def test_check_readiness_encryption_down_marks_not_ready() -> None:
+    """SA-5 (Issue #68): a missing/broken master key MUST flip readiness
+    to not_ready, even if Postgres and Redis are happy. Otherwise
+    Traefik/Uptime-Kuma keep routing traffic to a node where every
+    authenticated request silently 401s on DEK unwrap.
+    """
+    pg_ok = MagicMock()
+    pg_ok.status = ComponentStatus.OK
+    pg_ok.name = "postgres"
+    redis_ok = MagicMock()
+    redis_ok.status = ComponentStatus.OK
+    redis_ok.name = "redis"
+    enc_down = MagicMock()
+    enc_down.status = ComponentStatus.DOWN
+    enc_down.name = "encryption"
+
+    with (
+        patch(
+            "app.services.health_service._probe_postgres",
+            new_callable=AsyncMock,
+            return_value=pg_ok,
+        ),
+        patch(
+            "app.services.health_service._probe_redis",
+            new_callable=AsyncMock,
+            return_value=redis_ok,
+        ),
+        patch(
+            "app.services.health_service._probe_encryption",
+            return_value=enc_down,
+        ),
+    ):
+        report = await check_readiness()
+
+    assert report.ready is False
+    assert report.status == "not_ready"
+    assert any(
+        c.name == "encryption" and c.status == ComponentStatus.DOWN for c in report.components
+    )
+
+
+# ---------------------------------------------------------------------------
+# _probe_encryption — SA-5 / Issue #68
+#
+# Verifies the master Fernet roundtrip. We do NOT mock the inner
+# crypto primitives (Fernet itself); we mock the helper functions in
+# ``app.core.crypto`` so the test stays a pure unit test that does not
+# depend on a real ENCRYPTION_KEY being configured at import time.
+# ---------------------------------------------------------------------------
+
+
+def test_probe_encryption_ok() -> None:
+    """Happy path: generate → wrap → unwrap returns the original DEK."""
+    sample = b"sample-dek-bytes-32"
+    with (
+        patch(
+            "app.services.health_service.generate_dek",
+            return_value=sample,
+        ),
+        patch(
+            "app.services.health_service.wrap_dek",
+            return_value=b"wrapped-bytes",
+        ),
+        patch(
+            "app.services.health_service.unwrap_dek",
+            return_value=sample,
+        ),
+    ):
+        result = _probe_encryption()
+
+    assert result.status == ComponentStatus.OK
+    assert result.name == "encryption"
+    assert result.detail == ""
+
+
+def test_probe_encryption_master_key_missing_returns_down(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Settings without a master key: ``wrap_dek`` raises RuntimeError
+    ("No encryption key configured"). The probe must catch it and
+    surface DOWN with the exception class name only — never the
+    settings.* contents.
+    """
+    with (
+        patch(
+            "app.services.health_service.generate_dek",
+            return_value=b"any",
+        ),
+        patch(
+            "app.services.health_service.wrap_dek",
+            side_effect=RuntimeError("No encryption key configured (ENCRYPTION_KEY missing)"),
+        ),
+        caplog.at_level(logging.WARNING, logger="app.services.health_service"),
+    ):
+        result = _probe_encryption()
+
+    assert result.status == ComponentStatus.DOWN
+    assert result.detail == "RuntimeError"
+    # The log must NOT contain the message (which references settings)
+    # — only the class name (ADR-0007).
+    joined = " ".join(r.getMessage() for r in caplog.records)
+    assert "RuntimeError" in joined
+    assert "ENCRYPTION_KEY" not in joined
+
+
+def test_probe_encryption_invalid_key_returns_down() -> None:
+    """Master key present but malformed: ``_build_master`` raises
+    RuntimeError with a generic message. Probe surfaces DOWN.
+    """
+    with (
+        patch(
+            "app.services.health_service.generate_dek",
+            return_value=b"any",
+        ),
+        patch(
+            "app.services.health_service.wrap_dek",
+            side_effect=RuntimeError(
+                "ENCRYPTION_KEY/ENCRYPTION_KEYS contains an invalid Fernet key"
+            ),
+        ),
+    ):
+        result = _probe_encryption()
+
+    assert result.status == ComponentStatus.DOWN
+    assert result.detail == "RuntimeError"
+
+
+def test_probe_encryption_unwrap_failure_returns_down() -> None:
+    """Wrap succeeds but unwrap raises (e.g. master key was rotated mid
+    test, ciphertext came from a key no longer in MultiFernet). Probe
+    catches the DecryptionError and surfaces DOWN.
+    """
+    from app.core.crypto import DecryptionError
+
+    with (
+        patch(
+            "app.services.health_service.generate_dek",
+            return_value=b"any",
+        ),
+        patch(
+            "app.services.health_service.wrap_dek",
+            return_value=b"opaque",
+        ),
+        patch(
+            "app.services.health_service.unwrap_dek",
+            side_effect=DecryptionError("unwrap failed"),
+        ),
+    ):
+        result = _probe_encryption()
+
+    assert result.status == ComponentStatus.DOWN
+    assert result.detail == "DecryptionError"
+
+
+def test_probe_encryption_roundtrip_mismatch_returns_down() -> None:
+    """Defensive: if generate → wrap → unwrap returns *different* bytes
+    (would imply a serious crypto bug, not just a config issue), the
+    probe must still flag DOWN with a deterministic detail string.
+    """
+    with (
+        patch(
+            "app.services.health_service.generate_dek",
+            return_value=b"original",
+        ),
+        patch(
+            "app.services.health_service.wrap_dek",
+            return_value=b"wrapped",
+        ),
+        patch(
+            "app.services.health_service.unwrap_dek",
+            return_value=b"different",
+        ),
+    ):
+        result = _probe_encryption()
+
+    assert result.status == ComponentStatus.DOWN
+    assert result.detail == "roundtrip_mismatch"
