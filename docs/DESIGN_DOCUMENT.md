@@ -1,7 +1,7 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.8 (M1 in Arbeit: #41 + #39 + #40 + #8 + #9 + #57 gemergt, CI-Doku-Trigger #49 gefixt, [ADR-0009](adr/0009-offline-sync-nach-m4.md): Offline-Sync nach M4 verschoben — M1-Scope reduziert auf Online-Nutzung)
-**Datum:** 2026-05-04
+**Version:** 0.9 (M1 in Arbeit: #41 + #39 + #40 + #8 + #9 + #57 gemergt, CI-Doku-Trigger #49 gefixt, [ADR-0009](adr/0009-offline-sync-nach-m4.md): Offline-Sync nach M4 verschoben — M1-Scope reduziert auf Online-Nutzung; erstes User-Test-Deployment durchlaufen — Erkenntnisse in [`RUNBOOK_DEPLOYMENT.md`](RUNBOOK_DEPLOYMENT.md), Toolchain-Pinning [ADR-0010](adr/0010-build-toolchain-pinning.md))
+**Datum:** 2026-05-07
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
 **Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
