@@ -3,19 +3,15 @@ packages:
   - 'packages/*'
 
 # Build-Script-Allowlist gegen ERR_PNPM_IGNORED_BUILDS auf frischen Branches.
-# Seit pnpm 10 verlangt der Installer explizite Freigabe; ohne diese Liste
-# bricht der CI-Install ab, sobald esbuild oder es5-ext ihre postinstall-
-# Skripte ausfuehren wollen. Beide werden gebraucht:
+# pnpm verlangt seit 10.x explizite Freigabe fuer Package-Build-Scripts;
+# ohne diese Liste bricht der CI-Install ab, sobald esbuild oder es5-ext
+# ihre postinstall-Skripte ausfuehren wollen. Beide werden gebraucht:
 #   - esbuild laedt sein Native-Binary fuer die jeweilige Plattform
 #   - es5-ext registriert Polyfill-Hooks (transitiv ueber die ESLint-Toolchain)
 #
-# Doppelte Konfiguration fuer pnpm 10 (onlyBuiltDependencies) und pnpm 11+
-# (allowBuilds), damit der Fix unabhaengig von der konkreten pnpm-Version
-# greift, die `pnpm/action-setup@v4 version: latest` jeweils installiert.
-onlyBuiltDependencies:
-  - esbuild
-  - es5-ext
-
+# Format: pnpm 11+ verwendet `allowBuilds` (Map). Der pnpm-10-kompatible
+# `onlyBuiltDependencies`-Schluessel wurde mit dem Pin auf pnpm 11.0.8
+# entfernt (siehe ADR-0010, packageManager-Feld in package.json).
 allowBuilds:
   esbuild: true
   es5-ext: true

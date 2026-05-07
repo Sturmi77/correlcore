@@ -20,6 +20,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0007](0007-healthchecks-and-logging.md)            | Healthchecks und strukturiertes Logging                     | Accepted | 2026-05-04 |
 | [ADR-0008](0008-symptom-master-tabelle.md)              | Symptom-Master-Tabelle für Custom-Symptome                  | Accepted | 2026-05-04 |
 | [ADR-0009](0009-offline-sync-nach-m4.md)                | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)       | Accepted | 2026-05-04 |
+| [ADR-0010](0010-build-toolchain-pinning.md)             | Build-Toolchain-Pinning (pnpm-Version)                      | Accepted | 2026-05-07 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -58,6 +59,10 @@ Neue Tabelle `symptoms` analog `tags` mit Owner-Trennung (`user_id NULL = curate
 ### ADR-0009 – Offline-Sync nach M4 verschieben
 
 Issues #10 (Offline-Sync) und #24 (Sync-Conflict-Log) werden von M1 nach M4 (Mobile Polish & PWA-Hardening) verschoben. M1-Exit ist 'Produktive Online-Nutzung im Browser' und für den Eigen-User-Test ohne Offline-Sync erreichbar; #10 ist substantieller Aufwand (Dexie + Sync-Endpoints + LWW-Merge + Conflict-Reports), der M1 unnötig blockiert. M4 enthält bereits einen Offline-Modus-Akzeptanztest — Verschmelzung ist sauber. Issue #26 (Fernet at-rest) bleibt M1, da DSGVO-blockierend.
+
+### ADR-0010 – Build-Toolchain-Pinning (pnpm-Version)
+
+pnpm-Version wird in Root-`package.json` (`packageManager: "pnpm@11.0.8"`) und in allen `pnpm/action-setup`-Workflow-Steps (`version: '11.0.8'`) explizit gepinnt. Hintergrund: `pnpm/action-setup@v4 version: 'latest'` zog je nach Tag pnpm 10.x oder 11.x, was zu Drift in der `pnpm-workspace.yaml`-Konfiguration führte (`onlyBuiltDependencies` in v10 vs. `allowBuilds` in v11) und reproduzierbar `ERR_PNPM_IGNORED_BUILDS` auf Branches ohne Cache-Hit auslöste. Mit dem Pin ist Toolchain-Verhalten zwischen CI und Image-Build deterministisch; Updates werden zu bewussten Commits statt zu stillen Drift-Effekten. `pnpm-workspace.yaml` nutzt nur noch v11-Syntax (`allowBuilds`-Map). Update-Pfad in der ADR dokumentiert.
 
 ---
 
