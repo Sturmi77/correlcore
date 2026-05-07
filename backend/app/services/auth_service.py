@@ -51,6 +51,14 @@ class AuthError(Exception):
     """Base auth error — maps to HTTP 401."""
 
 
+class EmailNotVerifiedError(AuthError):
+    """Login attempt with unverified email — maps to HTTP 403.
+
+    Distinct from generic AuthError so the endpoint can return 403 and the
+    frontend can offer a 'resend verification' action.
+    """
+
+
 class RegistrationError(Exception):
     """Maps to HTTP 409 (conflict) or HTTP 422 (validation)."""
 
@@ -336,6 +344,13 @@ async def login_user(
 
     if not user.is_active:
         raise AuthError("Account is disabled")
+
+    if not user.is_verified:
+        logger.info(
+            "login blocked: email not verified",
+            extra={"user_id": str(user.id)},
+        )
+        raise EmailNotVerifiedError("Email not verified")
 
     access, refresh, jti = _build_token_pair(user)
     await token_store.store(str(user.id), jti)
