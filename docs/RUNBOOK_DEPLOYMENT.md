@@ -296,6 +296,53 @@ CORS_ORIGINS=http://moodsync.tail-scale.ts.net:3010,http://100.101.102.103:3010
 
 ---
 
+## 7. Frontend 404 bei `/api/v1/...`: `VITE_API_BASE_URL` ist Build-Time
+
+### Symptom
+
+Stack ist sauber hochgekommen, API-Healthchecks zeigen 200, aber jede Aktion im Frontend (z. B. Registrierung) scheitert. Browser-DevTools zeigt:
+
+```
+POST http://<host>:<WEB_HOST_PORT>/api/v1/auth/register 404 (Not Found)
+```
+
+Im API-Container-Log taucht der POST gar nicht auf — das Frontend sendet an sich selbst, nicht an die API.
+
+### Ursache
+
+`VITE_API_BASE_URL` ist eine **Build-Time-Variable**: Vite ersetzt `import.meta.env.VITE_API_BASE_URL` zur Build-Zeit als String-Konstante im JS-Bundle. Eine ENV-Änderung am laufenden `moodsync-web`-Container hat dadurch **keinen Effekt**.
+
+Der Default `VITE_API_BASE_URL=/api/v1` (relativer Pfad) funktioniert nur in Setups mit Reverse-Proxy, der `/api/*` an den API-Container weiterleitet. Im user-test/Dockhand-Setup mit direktem Host-Port-Mapping (Web=3010, API=8210) sendet der Browser an den Web-Port, der nur Static-Files serviert → 404.
+
+### Fix (Option A: konfigurierbarer GHA-Build, seit diesem PR)
+
+Der Workflow `release-images.yml` hat einen `workflow_dispatch`-Input `vite_api_base_url`. Manuelles Rebuild des Web-Images mit absoluter URL:
+
+```bash
+# auf einem Rechner mit gh-CLI
+gh workflow run release-images.yml \
+  -R Sturmi77/moodsync \
+  --ref main \
+  -f vite_api_base_url=http://100.120.157.82:8210/api/v1
+```
+
+Nach erfolgreichem Build auf der Synology das neue `:latest`-Web-Image pullen und Container recreaten:
+
+```bash
+docker pull ghcr.io/sturmi77/moodsync-web:latest
+docker compose up -d --force-recreate moodsync-web
+```
+
+### Caveat
+
+Das Bundle ist nach diesem Build an die im `vite_api_base_url`-Input angegebene URL gekoppelt. Wechselt die Tailscale-IP oder der Host-Port, muss neu gebaut werden. Für eine architektonisch saubere Lösung ist ein interner Reverse-Proxy im Web-Container vorgesehen (siehe ADR-0011, geplant).
+
+### Lehre
+
+**Vite-`VITE_*`-Variablen sind Build-Time-Konstanten, keine Runtime-Konfiguration.** Wer das Bundle in mehreren Topologien (mit/ohne Proxy, verschiedene Hosts) ausrollen will, braucht entweder eine Runtime-Config-Injection (`window.__APP_CONFIG__` aus `/config.js`) oder einen internen Reverse-Proxy, der den relativen Default `/api/v1` immer korrekt auflöst. Hardcoded Build-Args sind eine bekannte Sollbruchstelle bei SPA-Deployments.
+
+---
+
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
 | Symptom                                                                                                                   | Erste Hypothese                                                        | Sofort-Check                                                                                                                                                             |
@@ -308,6 +355,7 @@ CORS_ORIGINS=http://moodsync.tail-scale.ts.net:3010,http://100.101.102.103:3010
 | `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                                       | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                            |
 | `moodsync-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert           | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5 |
 | Container-Create scheitert: `Error starting userland proxy: listen tcp4 0.0.0.0:8000: bind: address already in use`       | Host-Port 8000/3000 von anderem Dienst belegt (Paperless, Grafana ...) | `API_HOST_PORT=8210` und ggf. `WEB_HOST_PORT=<frei>` in `.env` setzen; `WEB_HOST_PORT`-Änderung erfordert `CORS_ORIGINS`-Anpassung. Siehe §6                             |
+| Frontend 404 auf `/api/v1/...` am Web-Port, API-Log zeigt keinen POST                                                     | `VITE_API_BASE_URL` ist Build-Time-konstant `/api/v1` (Proxy-Default)  | `release-images.yml` via `workflow_dispatch` mit `vite_api_base_url=http://<host>:<api-port>/api/v1` neu triggern, Web-Image pullen, recreaten. Siehe §7                 |
 
 ---
 
