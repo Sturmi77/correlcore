@@ -15,3 +15,17 @@ packages:
 allowBuilds:
   esbuild: true
   es5-ext: true
+
+# Sicherheits-Overrides: erzwinge esbuild ^0.25.0 fuer alle transitiven
+# Abhaengigkeiten (svelte-i18n@4.0.1 ist auf esbuild ^0.19.2 gepinnt,
+# vite@5.4.21 zieht esbuild 0.21.5 - beide Versionen sind von der
+# moderaten Advisory GHSA-67mh-4wv8-2f99 betroffen). Siehe SA-6 im
+# M1-Quality-Gate-Report. Issue #69.
+#
+# Hinweis: Pin auf ^0.25 (nicht >=0.25) - esbuild 0.28+ hat Breaking
+# Changes beim Transpilieren von Object-Spread-Destructuring fuer
+# legacy Browser-Targets (chrome87/edge88/firefox78/safari14), die
+# unseren vite build aktuell brechen. 0.25.x patched die Advisory
+# (siehe Release-Notes 0.25.0) und ist API-stabil.
+overrides:
+  esbuild: '^0.25.0'
