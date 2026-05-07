@@ -132,14 +132,21 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 | `SMTP_PASSWORD` | nein    | _leer_                   | Auth-Passwort. Für Mailpit nicht nötig.                                                                                                                                                                                                                                |
 | `SMTP_FROM`     | nein    | `noreply@moodsync.local` | Absender-Adresse für Verifikations- und Reset-Mails. Für echten Versand auf eine validierte Domain umstellen.                                                                                                                                                          |
 
-> Die Backend-Settings `SMTP_USE_TLS` (Default `true`), `SMTP_TIMEOUT`
-> (Default `10`), `EMAIL_VERIFICATION_TTL_HOURS` (Default `24`,
-> ADR-0004) und `FRONTEND_BASE_URL` (Default `http://localhost:5173`)
-> sind in der Compose nicht expliziert — die Backend-Defaults reichen
-> für den User-Test. Wer einen externen SMTP-Provider mit STARTTLS nutzt,
-> lässt `SMTP_USE_TLS=true` (Default). Für Mailpit empfiehlt sich
-> `SMTP_USE_TLS=false`, weil Mailpit standardmäßig auf `1025` ohne TLS
-> lauscht.
+> Die Backend-Settings `SMTP_USE_TLS` (Default _auto_, siehe unten),
+> `SMTP_TIMEOUT` (Default `10`), `EMAIL_VERIFICATION_TTL_HOURS`
+> (Default `24`, ADR-0004) und `FRONTEND_BASE_URL` (Default
+> `http://localhost:5173`) sind in der Compose nicht expliziert — die
+> Backend-Defaults reichen für den User-Test.
+>
+> **`SMTP_USE_TLS` ist seit PR #94 ein Tri-State (`true` / `false` /
+> _unset_) mit smartem Default:** Bleibt die Variable leer, schaltet das
+> Backend STARTTLS automatisch nur dann ein, wenn `SMTP_USER` einen
+> nicht-leeren Wert hat. Heuristik dahinter: "Auth gesetzt = echter
+> Relay = STARTTLS", "keine Auth = Dev-Catcher wie Mailpit/MailHog =
+> plain". Damit funktioniert die Default-`.env` ohne weitere Eingriffe
+> sowohl mit Mailpit (`SMTP_USER=` leer) als auch mit einem echten
+> Provider (`SMTP_USER=<key>` gesetzt). Explizit `SMTP_USE_TLS=true`
+> oder `SMTP_USE_TLS=false` setzen überschreibt die Heuristik immer.
 >
 > Auch `FRONTEND_BASE_URL` solltest du spätestens dann auf den Tailnet-
 > Hostnamen ändern (`http://moodsync.<tailnet>.ts.net:3000` o.ä.), wenn
