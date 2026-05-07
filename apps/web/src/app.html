@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="%sveltekit.lang%" data-theme="skeleton">
+<html lang="%sveltekit.lang%" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,9 +7,27 @@
     <meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)" />
     <!-- No external fonts or third-party resources (DSGVO M0 requirement) -->
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!--
+      Inline theme bootstrap: read persisted choice and set data-theme BEFORE
+      first paint so we avoid a flash of wrong theme. The theme store reads
+      this attribute in getInitial() and stays in sync. Failures (sandboxed
+      iframe / disabled storage) silently fall back to the dark default.
+    -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('moodsync-theme');
+          if (saved === 'light' || saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', saved);
+          }
+        } catch (_) {
+          /* ignore */
+        }
+      })();
+    </script>
     %sveltekit.head%
   </head>
-  <body data-sveltekit-preload-data="hover" class="bg-surface-900">
+  <body data-sveltekit-preload-data="hover">
     <div style="display: contents">%sveltekit.body%</div>
   </body>
 </html>

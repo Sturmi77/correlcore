@@ -27,10 +27,48 @@
   /* Transitions */
   --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* MoodSync teal accent */
+  /* MoodSync teal accent (theme-invariant) */
   --color-ms-primary: #01696f;
   --color-ms-primary-hover: #0c4e54;
   --color-ms-primary-active: #0f3638;
+}
+
+/* ---------------------------------------------------------------------------
+ * Theme tokens — driven by data-theme on <html>
+ *
+ * The theme store (lib/stores/theme.ts) writes data-theme="light"|"dark" on
+ * documentElement; the inline bootstrap script in app.html applies the
+ * persisted value before first paint (avoids flash of wrong theme).
+ *
+ * Dark is the default (matches store getInitial() and app.html). Light
+ * overrides the same tokens via the [data-theme="light"] selector.
+ * ------------------------------------------------------------------------- */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #171614;
+  --color-fg: #f5f3ef;
+  --color-surface: #221f1c;
+  --color-surface-2: #2c2925;
+  --color-muted: #a8a39c;
+  --color-border: #3a352f;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --color-bg: #fafaf7;
+  --color-fg: #1c1a17;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1efe9;
+  --color-muted: #6b6660;
+  --color-border: #d8d3cb;
+  --color-success: #16a34a;
+  --color-warning: #b45309;
+  --color-error: #b91c1c;
 }
 
 *,
@@ -53,6 +91,11 @@ body {
   min-height: 100dvh;
   line-height: 1.6;
   font-size: var(--text-base);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  transition:
+    background-color var(--transition-interactive),
+    color var(--transition-interactive);
 }
 
 img,
@@ -132,9 +175,10 @@ button {
 }
 
 .card {
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background: color-mix(in srgb, Canvas 94%, var(--color-ms-primary) 6%);
+  background: var(--color-surface);
+  color: var(--color-fg);
 }
 
 .btn {

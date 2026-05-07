@@ -17,7 +17,10 @@
     return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   }
 
-  // Apply theme class + hydrate auth on mount (SPA mode — ssr=false).
+  // Re-sync theme store with persisted value + hydrate auth on mount.
+  // The inline bootstrap in app.html already sets data-theme before first
+  // paint to avoid a flash of wrong theme; here we mirror it into the store
+  // so reactive consumers (toggle button, etc.) start in the correct state.
   onMount(() => {
     const saved = (() => {
       try {
@@ -50,7 +53,7 @@
   />
 </svelte:head>
 
-<!-- Theme wrapper: data-theme drives Skeleton UI + custom CSS vars -->
+<!-- data-theme on <html> drives CSS variables in app.css (light/dark) -->
 <div class="h-dvh flex flex-col">
   {#if $auth.status === 'loading' && !isPublic($page.url.pathname)}
     <!--
