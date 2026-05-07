@@ -291,11 +291,21 @@ def upgrade() -> None:
     )
 
     # ---- Seed default tags -------------------------------------------------
+    # ``category`` MUST be typed as the existing ENUM, not as ``sa.String``.
+    # alembic's bulk_insert binds parameters with their declared SQLAlchemy
+    # type — a ``String`` column emits ``$N::VARCHAR``, and PostgreSQL refuses
+    # the implicit cast from ``character varying`` to a custom enum, raising
+    # ``DatatypeMismatchError: column "category" is of type tag_category but
+    # expression is of type character varying``. ``create_type=False`` avoids
+    # a duplicate ``CREATE TYPE`` (the ENUM was already created above).
     tags_table = sa.table(
         "tags",
         sa.column("slug", sa.String),
         sa.column("name", sa.String),
-        sa.column("category", sa.String),
+        sa.column(
+            "category",
+            postgresql.ENUM(*_TAG_CATEGORY_VALUES, name="tag_category", create_type=False),
+        ),
         sa.column("icon", sa.String),
         sa.column("color", sa.String),
         sa.column("is_default", sa.Boolean),
