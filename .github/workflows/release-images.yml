@@ -12,15 +12,11 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
-    inputs:
-      vite_api_base_url:
-        description: >-
-          Build-Time-API-Base-URL fuer das Web-Bundle. Default '/api/v1' setzt voraus,
-          dass ein Reverse-Proxy /api/* an die API weiterleitet. Fuer Setups ohne Proxy
-          (z. B. user-test/Dockhand mit direktem Host-Port-Mapping) eine absolute URL
-          angeben, z. B. 'http://100.120.157.82:8210/api/v1'.
-        required: false
-        default: '/api/v1'
+    # Seit ADR-0011 (interner Reverse-Proxy in apps/web/src/hooks.server.ts)
+    # ist VITE_API_BASE_URL=/api/v1 die einzige unterstuetzte Build-Time-Konfig.
+    # Der Web-Container leitet /api/* zur Laufzeit an INTERNAL_API_URL
+    # (Default http://api:8000) weiter; pro Topologie ist nur diese
+    # Runtime-ENV anzupassen, kein Rebuild noetig.
 
 permissions:
   contents: read
@@ -108,4 +104,4 @@ jobs:
           cache-to: type=gha,scope=web,mode=max
           provenance: false
           build-args: |
-            VITE_API_BASE_URL=${{ github.event.inputs.vite_api_base_url || '/api/v1' }}
+            VITE_API_BASE_URL=/api/v1

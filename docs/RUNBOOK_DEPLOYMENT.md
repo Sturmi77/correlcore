@@ -296,11 +296,11 @@ CORS_ORIGINS=http://moodsync.tail-scale.ts.net:3010,http://100.101.102.103:3010
 
 ---
 
-## 7. Frontend 404 bei `/api/v1/...`: `VITE_API_BASE_URL` ist Build-Time
+## 7. Frontend 404 bei `/api/v1/...`: dauerhaft gelöst durch ADR-0011
 
-### Symptom
+### Symptom (historisch)
 
-Stack ist sauber hochgekommen, API-Healthchecks zeigen 200, aber jede Aktion im Frontend (z. B. Registrierung) scheitert. Browser-DevTools zeigt:
+Stack ist sauber hochgekommen, API-Healthchecks zeigen 200, aber jede Aktion im Frontend (Login, Registrierung, Verify-Mail) scheitert. Browser-DevTools zeigt:
 
 ```
 POST http://<host>:<WEB_HOST_PORT>/api/v1/auth/register 404 (Not Found)
@@ -308,83 +308,76 @@ POST http://<host>:<WEB_HOST_PORT>/api/v1/auth/register 404 (Not Found)
 
 Im API-Container-Log taucht der POST gar nicht auf — das Frontend sendet an sich selbst, nicht an die API.
 
-### Ursache
+### Ursache (historisch)
 
-`VITE_API_BASE_URL` ist eine **Build-Time-Variable**: Vite ersetzt `import.meta.env.VITE_API_BASE_URL` zur Build-Zeit als String-Konstante im JS-Bundle. Eine ENV-Änderung am laufenden `moodsync-web`-Container hat dadurch **keinen Effekt**.
+`VITE_API_BASE_URL` ist eine **Build-Time-Variable**: Vite ersetzt `import.meta.env.VITE_API_BASE_URL` zur Build-Zeit als String-Konstante im JS-Bundle. Eine ENV-Änderung am laufenden `moodsync-web`-Container hatte dadurch keinen Effekt. Mit Default `/api/v1` (relativ) funktionierte das nur, wenn ein Reverse-Proxy `/api/*` an den API-Container weiterleitete.
 
-Der Default `VITE_API_BASE_URL=/api/v1` (relativer Pfad) funktioniert nur in Setups mit Reverse-Proxy, der `/api/*` an den API-Container weiterleitet. Im user-test/Dockhand-Setup mit direktem Host-Port-Mapping (Web=3010, API=8210) sendet der Browser an den Web-Port, der nur Static-Files serviert → 404.
+Im user-test/Dockhand-Setup mit direktem Host-Port-Mapping (Web=3010, API=8210) ohne Proxy sendete der Browser an den Web-Port, der nur Static-Files serviert → 404. Schlimmer: der `release-images.yml`-Workflow baute auf jedem Push auf `main` automatisch ein neues `:latest` mit Default `/api/v1`, sodass nach jedem Merge der manuelle `workflow_dispatch`-Override (siehe ältere Versionen dieses Runbooks) wieder überschrieben wurde — ein wiederkehrender Login-Bruch.
 
-### Fix (Option A: konfigurierbarer GHA-Build, seit diesem PR)
+### Lösung (dauerhaft, seit ADR-0011)
 
-Der Workflow `release-images.yml` hat einen `workflow_dispatch`-Input `vite_api_base_url`. Manuelles Rebuild des Web-Images mit absoluter URL:
+Der `moodsync-web`-Container enthält einen integrierten Reverse-Proxy in `apps/web/src/hooks.server.ts`. Jeder Request mit Pfad `/api/*` wird zur Laufzeit an `INTERNAL_API_URL` (Default `http://api:8000`) weitergeleitet, inklusive Method, Headers, Body, Query-String und vollständiger `Set-Cookie`-Behandlung (mehrere Cookies bleiben separate Header-Lines, Hop-by-Hop-Header werden entfernt).
+
+Konsequenzen:
+
+- `VITE_API_BASE_URL` ist fest auf `/api/v1` gepinnt; der `workflow_dispatch`-Input ist aus `release-images.yml` entfernt. Ein Image funktioniert in jeder Topologie.
+- Pro Topologie wird nur die **Runtime-ENV** `INTERNAL_API_URL` am Web-Container gesetzt — kein Rebuild bei IP-/Port-Wechsel.
+- Im docker-compose-Setup mit Service-Namen (`api`) ist nichts zu konfigurieren; der Default trifft.
+- API-Port muss am Host nicht mehr gemappt sein. `expose: ["8000"]` reicht; der API-Container ist nur intern aus dem `web`-Container erreichbar (Sicherheitsplus).
+
+### Verifikation nach Deployment
 
 ```bash
-# auf einem Rechner mit gh-CLI
-gh workflow run release-images.yml \
-  -R Sturmi77/moodsync \
-  --ref main \
-  -f vite_api_base_url=http://100.120.157.82:8210/api/v1
+# Web-Container muss die API-Route durchreichen
+curl -v http://<host>:<WEB_HOST_PORT>/api/v1/health/live
+# erwartete Antwort: HTTP 200, JSON {"status":"ok"} (oder 502 mit JSON-Body, falls API down)
 ```
 
-Nach erfolgreichem Build auf der Synology das neue `:latest`-Web-Image pullen und Container recreaten:
+Wenn `502 {"detail":"Upstream API unreachable"}` zurückkommt: API-Container prüfen, `INTERNAL_API_URL` im Web-Container kontrollieren (siehe `docker compose exec web env | grep INTERNAL`).
 
-```bash
-docker pull ghcr.io/sturmi77/moodsync-web:latest
-docker compose up -d --force-recreate moodsync-web
+### Compose-Beispiel (Dockhand / Selfhost ohne externen Proxy)
+
+```yaml
+services:
+  api:
+    image: ghcr.io/sturmi77/moodsync-api:latest
+    expose:
+      - '8000' # nur intern; KEIN ports: mehr nötig
+    # ...
+
+  web:
+    image: ghcr.io/sturmi77/moodsync-web:latest
+    environment:
+      INTERNAL_API_URL: http://api:8000 # default, kann auch entfallen
+    ports:
+      - '3010:3000' # nur Web nach außen exponiert
 ```
 
-**Verifiziert in Produktion am 2026-05-07:** Auf der Synology mit
-`TAILSCALE_IP=100.120.157.82`, `WEB_HOST_PORT=3010`, `API_HOST_PORT=8210` und
-rebuiltem `:latest`-Image (workflow_dispatch mit
-`vite_api_base_url=http://100.120.157.82:8210/api/v1`) funktioniert die
-Registrierung end-to-end inkl. Mailpit-Versand der Verifikations-Mail.
+### Verwandte ADRs / Issues
 
-### Caveat
-
-Das Bundle ist nach diesem Build an die im `vite_api_base_url`-Input angegebene
-URL gekoppelt. Wechselt die Tailscale-IP oder der Host-Port, muss neu gebaut
-werden. Für eine architektonisch saubere Lösung ist ein interner Reverse-Proxy
-im Web-Container vorgesehen (siehe [ADR-0011](adr/0011-web-internal-reverse-proxy.md),
-geplant für M2).
-
-### Wiederauftreten nach einem neuen PR
-
-Wenn das Fehlerbild nach einem späteren Merge wieder unverändert auftaucht, ist
-die wahrscheinlichste Ursache **kein Code-Regression im Login oder in der
-E-Mail-Verifikation**, sondern ein neues `:latest`-Web-Image aus dem normalen
-`push`-Release. Der Workflow baut bei jedem Push auf `main` automatisch und
-verwendet ohne manuellen `workflow_dispatch`-Input wieder den Default
-`VITE_API_BASE_URL=/api/v1`. In einem Dockhand/User-Test-Setup ohne
-Reverse-Proxy zeigt dieses Bundle erneut auf den Web-Port; wegen
-`pull_policy: always` wird das frisch gebaute `:latest` beim Recreate auch
-zuverlässig gezogen.
-
-Sofort-Check im Browser: Wenn Login/Verify/Register Requests an
-`http://<host>:<WEB_HOST_PORT>/api/v1/...` gehen oder als Antwort HTML/404 vom
-Web-Container zurückkommt und im API-Log kein Request erscheint, ist wieder das
-falsch gebaute Web-Bundle aktiv. Dann das Web-Image erneut per
-`workflow_dispatch` mit absoluter `vite_api_base_url` bauen oder, langfristig,
-ADR-0011 umsetzen.
+- [ADR-0011](../adr/0011-web-internal-reverse-proxy.md) — Architektur-Entscheidung und gewählte Variante (B: SvelteKit-Handle-Hook)
+- [ADR-0006](../adr/0006-cookie-auth-strategie.md) — Cookie-basierte Auth, durch Same-Origin-Proxy vereinfacht
 
 ### Lehre
 
-**Vite-`VITE_*`-Variablen sind Build-Time-Konstanten, keine Runtime-Konfiguration.** Wer das Bundle in mehreren Topologien (mit/ohne Proxy, verschiedene Hosts) ausrollen will, braucht entweder eine Runtime-Config-Injection (`window.__APP_CONFIG__` aus `/config.js`) oder einen internen Reverse-Proxy, der den relativen Default `/api/v1` immer korrekt auflöst. Hardcoded Build-Args sind eine bekannte Sollbruchstelle bei SPA-Deployments.
+**Vite-`VITE_*`-Variablen sind Build-Time-Konstanten, keine Runtime-Konfiguration.** Für Bundles, die in mehreren Topologien (verschiedene Hosts/Ports, mit/ohne Proxy) deployed werden, ist ein interner Reverse-Proxy oder Runtime-Config-Injection Pflicht. Build-time-gekoppelte API-Basis-URLs sind eine bekannte Sollbruchstelle bei SPA-Deployments und reproduzieren sich bei jedem automatischen Image-Build, wenn man sich auf manuelle `workflow_dispatch`-Overrides verlässt.
 
 ---
 
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
-| Symptom                                                                                                                   | Erste Hypothese                                                        | Sofort-Check                                                                                                                                                             |
-| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `moodsync-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                                                   | Veraltetes Backend-Image im GHCR                                       | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/moodsync-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen               |
-| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP                           | Synology+Tailscale Userspace-Mode                                      | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                                      |
-| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                                           | Frischer Branch + Drift in pnpm-Version                                | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                               |
-| GHCR-Pull schlägt mit `unauthorized` fehl                                                                                 | Image ist privat                                                       | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                                 |
-| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                                           | Lokales pnpm liest `allowBuilds` nicht                                 | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                               |
-| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                                       | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                            |
-| `moodsync-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert           | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5 |
-| Container-Create scheitert: `Error starting userland proxy: listen tcp4 0.0.0.0:8000: bind: address already in use`       | Host-Port 8000/3000 von anderem Dienst belegt (Paperless, Grafana ...) | `API_HOST_PORT=8210` und ggf. `WEB_HOST_PORT=<frei>` in `.env` setzen; `WEB_HOST_PORT`-Änderung erfordert `CORS_ORIGINS`-Anpassung. Siehe §6                             |
-| Frontend 404 auf `/api/v1/...` am Web-Port, API-Log zeigt keinen POST                                                     | `VITE_API_BASE_URL` ist Build-Time-konstant `/api/v1` (Proxy-Default)  | `release-images.yml` via `workflow_dispatch` mit `vite_api_base_url=http://<host>:<api-port>/api/v1` neu triggern, Web-Image pullen, recreaten. Siehe §7                 |
+| Symptom                                                                                                                   | Erste Hypothese                                                             | Sofort-Check                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `moodsync-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                                                   | Veraltetes Backend-Image im GHCR                                            | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/moodsync-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen                                                                                           |
+| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP                           | Synology+Tailscale Userspace-Mode                                           | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                                                                                                                  |
+| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                                           | Frischer Branch + Drift in pnpm-Version                                     | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                                                                                                           |
+| GHCR-Pull schlägt mit `unauthorized` fehl                                                                                 | Image ist privat                                                            | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                                                                                                             |
+| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                                           | Lokales pnpm liest `allowBuilds` nicht                                      | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                                                                                                           |
+| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                                            | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                                                                                                        |
+| `moodsync-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert                | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5                                                                             |
+| Container-Create scheitert: `Error starting userland proxy: listen tcp4 0.0.0.0:8000: bind: address already in use`       | Host-Port 8000/3000 von anderem Dienst belegt (Paperless, Grafana ...)      | `API_HOST_PORT=8210` und ggf. `WEB_HOST_PORT=<frei>` in `.env` setzen; `WEB_HOST_PORT`-Änderung erfordert `CORS_ORIGINS`-Anpassung. Siehe §6                                                                                                         |
+| Frontend 404 auf `/api/v1/...` am Web-Port, API-Log zeigt keinen POST                                                     | Web-Image pre-ADR-0011 oder Container ohne `INTERNAL_API_URL`-Konnektivität | Web-Image neuer als 2026-05-08 pullen (enthält internen Proxy aus `hooks.server.ts`); `docker compose exec web env \| grep INTERNAL_API_URL` prüfen; API-Container im selben Netzwerk und unter dem konfigurierten Host (`api`) erreichbar. Siehe §7 |
+| Frontend 502 auf `/api/v1/...` mit JSON `{"detail":"Upstream API unreachable"}`                                           | Web-Container kann API-Container nicht erreichen                            | API-Container-Status prüfen (`docker compose ps api`); Netzwerk-Reachability vom Web aus testen (`docker compose exec web wget -qO- http://api:8000/api/v1/health/live`); ggf. `INTERNAL_API_URL` korrigieren. Siehe §7                              |
 
 ---
 
