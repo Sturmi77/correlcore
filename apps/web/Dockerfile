@@ -29,6 +29,12 @@ RUN pnpm install --frozen-lockfile --filter @moodsync/web...
 COPY apps/web/ apps/web/
 
 # Build (Vite + SvelteKit Node-Adapter)
+#
+# VITE_API_BASE_URL is a build-time constant baked into the JS bundle. Since
+# ADR-0011 the only supported value is `/api/v1` (relative). The web
+# container forwards `/api/*` to the API at runtime via
+# `apps/web/src/hooks.server.ts` (INTERNAL_API_URL, default `http://api:8000`).
+# Override at runtime, never at build time.
 ARG VITE_API_BASE_URL=/api/v1
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 

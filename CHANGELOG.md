@@ -8,6 +8,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — M1 Vorbereitung
 
+### Added
+
+- **Interner Reverse-Proxy im Web-Container (ADR-0011, dauerhafte Lösung des Vite-Build-Time-Kopplungsproblems).** Neuer SvelteKit-`handle`-Hook in `apps/web/src/hooks.server.ts` leitet jeden Request mit Pfad `/api/*` zur Laufzeit an `INTERNAL_API_URL` (Default `http://api:8000`) weiter — inklusive Method, Headers, Body, Query-String und vollständiger `Set-Cookie`-Behandlung (mehrere Cookies bleiben separate Header-Lines via `getSetCookie()`-Lift, Hop-by-Hop-Header werden gemäß RFC 7230 §6.1 entfernt, `Host`-Header wird auf den Upstream-Host gesetzt). Bei Upstream-Verbindungsfehler wird ein JSON-`502 {"detail":"Upstream API unreachable"}` zurückgegeben, sodass `apiFetch` weiterhin strukturiert parsen kann. Vollständig getestet (9 neue Vitest-Tests in `hooks.server.test.ts` decken: Pass-Through für Nicht-API-Pfade, GET/POST mit Query und JSON-Body, `INTERNAL_API_URL`-Override mit Trailing-Slash-Strip, Hop-by-Hop-Stripping, Set-Cookie-Forwarding mit Multi-Cookie, 502 bei Upstream-Failure, Status-Code-Forwarding für 4xx/5xx).
+
+### Changed
+
+- **`VITE_API_BASE_URL` ist nun fest auf `/api/v1` gepinnt; pro Topologie wird stattdessen die Runtime-ENV `INTERNAL_API_URL` am Web-Container gesetzt.** Konsequenz aus ADR-0011: ein Image funktioniert in jeder Topologie, kein Rebuild bei IP-/Port-Wechsel mehr nötig. Der `workflow_dispatch`-Input `vite_api_base_url` ist aus `.github/workflows/release-images.yml` entfernt; der Build-Arg-Default im Workflow ist hartkodiert auf `/api/v1`. `apps/web/Dockerfile` enthält einen Kommentar, der die neue Topologie und `INTERNAL_API_URL` referenziert. ADR-0011 ist von `Vorgeschlagen` auf `Accepted` (2026-05-08) hochgesetzt.
+- **API-Container kann nun ohne Host-Port-Mapping deployed werden.** Mit dem internen Proxy ist der API-Container nur noch über das Docker-Netzwerk erreichbar; `expose: ["8000"]` reicht, kein `ports:` mehr nötig (Sicherheitsplus, schließt Direkt-Zugriff auf API von außerhalb).
+
+### Documentation
+
+- **`docs/RUNBOOK_DEPLOYMENT.md` §7 vollständig neu geschrieben** („Frontend 404 bei `/api/v1/...`: dauerhaft gelöst durch ADR-0011"). Dokumentiert die historische Ursache (Build-Time-Konstante + Auto-`:latest`-Build), die jetzige Architektur (`hooks.server.ts`-Proxy, `INTERNAL_API_URL`-ENV) und liefert Verifikations-`curl`, Compose-Beispiel mit `expose:` statt `ports:`, sowie Verweise auf ADR-0011 und ADR-0006. Die Quick-Reference-Tabelle hat einen neuen 502-Eintrag (Web-Container kann API nicht erreichen) und der bestehende 404-Eintrag wurde auf den neuen Sofort-Check (`docker compose exec web env | grep INTERNAL_API_URL`) umgeschrieben.
+- **ADR-Index (`docs/adr/README.md`) aktualisiert.** ADR-0011 in der Statustabelle auf `Accepted` (2026-05-08); Kurzübersicht erweitert um Implementierungs-Hinweis (~140 Zeilen TS inkl. Hop-by-Hop- und Set-Cookie-Behandlung) und um die Konsequenz, dass `vite_api_base_url`-Input entfernt und `VITE_API_BASE_URL` fix `/api/v1` ist.
+
 ### Documentation
 
 - **ADR-0012 (Vorgeschlagen) — M2/M5 Streak-Semantik + Habit-Schema-Vorgriff** (`docs/adr/0012-m2-m5-streak-semantik.md`). Löst die im Design-Doc unsaubere Abgrenzung zwischen M2 (Visualisierung) und M5 (Habits & Ziele) auf. M2 liefert ausschließlich **Eintrags-Streaks** (aufeinanderfolgende Tage mit Eintrag, ohne Habit-Semantik) und Tag-Frequenz-Heatmap; M5 liefert **Habit-Streaks** (zielbezogen via `habit_type` + `target_frequency`) und das Habit-Dashboard. Begriffe „Eintrags-Streak" und „Habit-Streak" werden kanonisch. Schema-Vorgriff in M2: `tags`-Tabelle erhält zwei nullable Spalten (`habit_type`, Default `'none'`; `target_frequency`, nullable) inkl. CHECK-Constraints — API/UI/Streak-Logik bleiben M5-Lieferung. Vermeidet Daten-Backfill in M5. `docs/DESIGN_DOCUMENT.md` §2.3 erhält einen Verweis auf ADR-0012; M2-Akzeptanzkriterium präzisiert auf „Eintrags-Streak-Berechnung", M5-Akzeptanzkriterium auf „Habit-Streak-Reset-Logik". `docs/adr/README.md` Index + Kurzübersicht erweitert.

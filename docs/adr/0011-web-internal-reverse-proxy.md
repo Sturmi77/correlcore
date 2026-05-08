@@ -1,8 +1,9 @@
 # ADR-0011: Interner Reverse-Proxy im Web-Container (Auflösung des Vite-Build-Time-Kopplungsproblems)
 
 **Datum:** 2026-05-07
-**Status:** Vorgeschlagen
-**Geplante Umsetzung:** M2 (Insights & Polishing)
+**Status:** Accepted
+**Akzeptiert:** 2026-05-08
+**Umsetzung:** PR mit `apps/web/src/hooks.server.ts` (Variante B, SvelteKit-`handle`-Hook). VITE_API_BASE_URL wird auf `/api/v1` festgenagelt; Topologie wird zur Laufzeit über `INTERNAL_API_URL` (Default `http://api:8000`) konfiguriert. Der `workflow_dispatch`-Input `vite_api_base_url` wurde aus `release-images.yml` entfernt, weil obsolet.
 
 ---
 
