@@ -16,11 +16,25 @@
 #      file" verlinken.
 #
 # Zielumgebung: Tailscale-internes Netz (Homelab / Synology / Mini-PC).
-#   - Web/API binden auf ${TAILSCALE_IP} → kein WAN-Exposure.
-#   - Host-Ports via API_HOST_PORT/WEB_HOST_PORT konfigurierbar, falls auf
-#     dem Host bereits ein anderer Service auf 8000/3000 lauscht
-#     (z.B. Paperless, Grafana). Container-interne Ports bleiben fix.
+#   - Web bindet auf ${TAILSCALE_IP} → kein WAN-Exposure.
+#   - API ist seit ADR-0011 NICHT mehr direkt von außen erreichbar:
+#     Web proxt /api/* via SvelteKit hooks.server.ts an http://api:8000
+#     im internen Compose-Netz. Damit gibt es genau eine Origin (Web),
+#     keine CORS-Sonderfälle, keine Build-Time-URL-Falle mehr.
+#   - Host-Port via WEB_HOST_PORT konfigurierbar, falls auf dem Host
+#     bereits ein anderer Service auf 3000 lauscht (z. B. Grafana).
+#     Container-interne Ports bleiben fix.
 #   - Kein Letsencrypt, kein Traefik (User-Test, keine Public-Domain).
+#
+# ADR-0011 (Accepted, 2026-05-08):
+#   Web-interner Reverse-Proxy in apps/web/src/hooks.server.ts.
+#   - VITE_API_BASE_URL wird ignoriert (Build-Time-Fall entfällt).
+#   - Frontend ruft immer relativ /api/v1/* auf, hooks.server.ts
+#     leitet serverseitig an INTERNAL_API_URL weiter.
+#   - Default für INTERNAL_API_URL ist http://api:8000 — Service-Name
+#     greift im Compose-Netz, daher unten nicht zwingend zu setzen.
+#   Siehe docs/adr/0011-web-internal-reverse-proxy.md und
+#   docs/RUNBOOK_DEPLOYMENT.md §7.
 #
 # Dockhand-Besonderheiten gegenüber dem Dockge-Stack:
 #   - 'name: moodsync' ist gesetzt (Dockhand respektiert es im UI-Header).
@@ -32,6 +46,11 @@
 #
 # Migrations laufen einmalig im migrate-Service (alembic upgrade head),
 # blockieren api/worker bis Schema aktuell ist. Idempotent.
+#
+# .env-Hinweis (siehe .env.example):
+#   - VITE_API_BASE_URL kann entfernt werden (wird seit ADR-0011 ignoriert).
+#   - API_HOST_PORT kann entfernt werden (API hat kein Host-Port-Mapping mehr).
+#   - WEB_HOST_PORT, TAILSCALE_IP, FRONTEND_BASE_URL bleiben relevant.
 
 name: moodsync
 
@@ -80,6 +99,11 @@ services:
     logging: *default-logging
 
   # ── Backend API ───────────────────────────────────────────────────────────
+  # Seit ADR-0011 KEIN Host-Port-Mapping mehr — API ist nur noch intern
+  # über das Compose-Netz unter http://api:8000 erreichbar. Web-Container
+  # proxyt /api/* serverseitig dorthin (apps/web/src/hooks.server.ts).
+  # Sicherheitsplus: API ist auch im Tailscale-Netz nicht mehr direkt
+  # ansprechbar — einzige Origin ist Web auf ${WEB_HOST_PORT}.
   api:
     <<: *api-image
     container_name: moodsync-api
@@ -90,11 +114,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    ports:
-      # Host-Port konfigurierbar (Default 8210), um Konflikten mit anderen
-      # Self-Hosted-Diensten auf der Synology auszuweichen — 8000 ist z.B.
-      # bei Paperless belegt. Container-Port bleibt 8000.
-      - '${TAILSCALE_IP:-127.0.0.1}:${API_HOST_PORT:-8210}:8000'
+    expose:
+      - '8000'
     networks:
       - moodsync
     security_opt:
@@ -112,6 +133,10 @@ services:
     logging: *default-logging
 
   # ── Web Frontend ──────────────────────────────────────────────────────────
+  # SvelteKit-Adapter-Node Container. hooks.server.ts proxt /api/* an
+  # INTERNAL_API_URL (Default http://api:8000) — siehe ADR-0011.
+  # VITE_API_BASE_URL wird ignoriert und ist hier bewusst nicht mehr gesetzt;
+  # bitte auch aus der .env entfernen.
   web:
     image: ghcr.io/sturmi77/moodsync-web:${IMAGE_TAG:-latest}
     pull_policy: always
@@ -119,12 +144,16 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+      # Optional override — der Default http://api:8000 greift im Compose-Netz
+      # automatisch über den Service-Namen 'api'. Nur setzen, wenn der API-
+      # Service umbenannt oder extern liegt.
+      # INTERNAL_API_URL: http://api:8000
     depends_on:
       api:
         condition: service_healthy
     ports:
-      # Host-Port konfigurierbar (Default 3000), siehe API-Kommentar oben.
+      # Host-Port konfigurierbar (Default 3000), um Konflikten mit anderen
+      # Self-Hosted-Diensten auf dem Host auszuweichen (z. B. Grafana).
       - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000'
     networks:
       - moodsync
