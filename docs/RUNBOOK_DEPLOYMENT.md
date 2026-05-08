@@ -347,6 +347,25 @@ werden. Für eine architektonisch saubere Lösung ist ein interner Reverse-Proxy
 im Web-Container vorgesehen (siehe [ADR-0011](adr/0011-web-internal-reverse-proxy.md),
 geplant für M2).
 
+### Wiederauftreten nach einem neuen PR
+
+Wenn das Fehlerbild nach einem späteren Merge wieder unverändert auftaucht, ist
+die wahrscheinlichste Ursache **kein Code-Regression im Login oder in der
+E-Mail-Verifikation**, sondern ein neues `:latest`-Web-Image aus dem normalen
+`push`-Release. Der Workflow baut bei jedem Push auf `main` automatisch und
+verwendet ohne manuellen `workflow_dispatch`-Input wieder den Default
+`VITE_API_BASE_URL=/api/v1`. In einem Dockhand/User-Test-Setup ohne
+Reverse-Proxy zeigt dieses Bundle erneut auf den Web-Port; wegen
+`pull_policy: always` wird das frisch gebaute `:latest` beim Recreate auch
+zuverlässig gezogen.
+
+Sofort-Check im Browser: Wenn Login/Verify/Register Requests an
+`http://<host>:<WEB_HOST_PORT>/api/v1/...` gehen oder als Antwort HTML/404 vom
+Web-Container zurückkommt und im API-Log kein Request erscheint, ist wieder das
+falsch gebaute Web-Bundle aktiv. Dann das Web-Image erneut per
+`workflow_dispatch` mit absoluter `vite_api_base_url` bauen oder, langfristig,
+ADR-0011 umsetzen.
+
 ### Lehre
 
 **Vite-`VITE_*`-Variablen sind Build-Time-Konstanten, keine Runtime-Konfiguration.** Wer das Bundle in mehreren Topologien (mit/ohne Proxy, verschiedene Hosts) ausrollen will, braucht entweder eine Runtime-Config-Injection (`window.__APP_CONFIG__` aus `/config.js`) oder einen internen Reverse-Proxy, der den relativen Default `/api/v1` immer korrekt auflöst. Hardcoded Build-Args sind eine bekannte Sollbruchstelle bei SPA-Deployments.
