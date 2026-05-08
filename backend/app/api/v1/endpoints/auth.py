@@ -30,7 +30,12 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps.auth import get_current_user
-from app.core.config import settings
+from app.core.auth_cookies import (
+    ACCESS_COOKIE_MAX_AGE_SECONDS,
+    REFRESH_COOKIE_NAME,
+    clear_auth_cookies,
+    set_auth_cookies,
+)
 from app.core.rate_limit import limiter
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
@@ -63,37 +68,6 @@ from app.services.email_service import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-_ACCESS_COOKIE = "access_token"
-_REFRESH_COOKIE = "refresh_token"
-_ACCESS_MAX_AGE = settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
-_REFRESH_MAX_AGE = settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS * 86_400
-
-
-def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    response.set_cookie(
-        key=_ACCESS_COOKIE,
-        value=access_token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        path="/api",
-        max_age=_ACCESS_MAX_AGE,
-    )
-    response.set_cookie(
-        key=_REFRESH_COOKIE,
-        value=refresh_token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        path="/api/v1/auth/refresh",
-        max_age=_REFRESH_MAX_AGE,
-    )
-
-
-def _clear_auth_cookies(response: Response) -> None:
-    response.delete_cookie(_ACCESS_COOKIE, path="/api")
-    response.delete_cookie(_REFRESH_COOKIE, path="/api/v1/auth/refresh")
 
 
 # ---------------------------------------------------------------------------
@@ -243,10 +217,10 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         ) from exc
-    _set_auth_cookies(response, access, refresh)
+    set_auth_cookies(response, access, refresh)
     return TokenResponse(
         access_token=access,
-        expires_in=_ACCESS_MAX_AGE,
+        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
         user=UserResponse.model_validate(user),
     )
 
@@ -269,7 +243,7 @@ async def refresh(
     redis: aioredis.Redis = Depends(get_redis),
 ) -> TokenResponse:
     # Prefer HttpOnly cookie, fall back to body (API clients)
-    token = request.cookies.get(_REFRESH_COOKIE) or body.refresh_token
+    token = request.cookies.get(REFRESH_COOKIE_NAME) or body.refresh_token
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -279,12 +253,12 @@ async def refresh(
     try:
         access, new_refresh, user = await refresh_tokens(db, token_store, token)
     except AuthError as exc:
-        _clear_auth_cookies(response)
+        clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
-    _set_auth_cookies(response, access, new_refresh)
+    set_auth_cookies(response, access, new_refresh)
     return TokenResponse(
         access_token=access,
-        expires_in=_ACCESS_MAX_AGE,
+        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
         user=UserResponse.model_validate(user),
     )
 
@@ -305,11 +279,11 @@ async def logout(
     body: RefreshRequest = RefreshRequest(),
     redis: aioredis.Redis = Depends(get_redis),
 ) -> MessageResponse:
-    token = request.cookies.get(_REFRESH_COOKIE) or body.refresh_token
+    token = request.cookies.get(REFRESH_COOKIE_NAME) or body.refresh_token
     if token:
         token_store = TokenStore(redis)
         await logout_user(token_store, token)
-    _clear_auth_cookies(response)
+    clear_auth_cookies(response)
     return MessageResponse(message="Logged out successfully")
 
 

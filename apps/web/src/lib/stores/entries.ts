@@ -2,8 +2,8 @@
  * Entries store — Issue #7.
  *
  * Light client-side cache of the user's recent entries. The store is
- * deliberately small: the offline-first sync layer (M1, Issue #10) will
- * own the long-term cache; this is just the in-memory mirror so the
+ * deliberately small: the M4 offline-sync layer (ADR-0009 / Issue #10)
+ * will own the long-term cache; this is just the in-memory mirror so the
  * timeline view doesn't need to refetch on every navigation.
  *
  * State shape mirrors the auth store: `loading | ready | error`.

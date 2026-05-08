@@ -16,7 +16,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "quality:m1": "./scripts/quality-gate-m1.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

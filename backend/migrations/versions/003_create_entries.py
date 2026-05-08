@@ -16,9 +16,10 @@ Notes
   the DB layer in addition to Pydantic validation. Defence-in-depth:
   any future bulk-import path or background worker cannot bypass the
   range invariant.
-- ``note_enc`` is nullable TEXT. M1 stores plaintext; Issue #26 swaps
-  to Fernet ciphertext (ADR-0005). The column name reflects the target
-  state so we don't need to rename it later.
+- ``note_enc`` starts in this historical migration as nullable TEXT so
+  the initial Entry feature could land independently. Migration 007 later
+  re-types and backfills it to BYTEA Fernet ciphertext (ADR-0005) without
+  renaming the column.
 - ``user_id`` carries an explicit btree index — most queries are
   ``WHERE user_id = ?`` (timeline, calendar, last-7-days).
 - Row-Level-Security:
@@ -132,8 +133,9 @@ def upgrade() -> None:
     )
 
     # Row-Level-Security: enable on table; policies key on a session GUC
-    # the application sets per-request. See M1 follow-up to wire the
-    # ``SET LOCAL app.current_user_id`` step into a request middleware.
+    # the application sets per authenticated transaction. If that binding
+    # is absent, policies evaluate to false and app-level owner filters are
+    # still the fallback line of defence.
     op.execute("ALTER TABLE entries ENABLE ROW LEVEL SECURITY")
     op.execute(
         """

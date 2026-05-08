@@ -38,6 +38,23 @@ Ausserhalb des M1-Scope (zur Vermeidung von Falsch-Erwartungen):
 
 ## 2. Code-Quality-Review (CQR)
 
+### 2.0 Reproduzierbare Gate-Ausführung
+
+Der M1-Review hat die Tooling-Reproduzierbarkeit als eigenes Maintainability-Risiko
+identifiziert. Seit dem Nachzieh-PR ist das Gate deshalb als ausführbares Artefakt
+versioniert:
+
+```bash
+pnpm quality:m1
+```
+
+Der Root-Befehl ruft `scripts/quality-gate-m1.sh` auf; der Backend-Teil liegt in
+`backend/scripts/check.sh`, pinnt Python 3.12 (`backend/.python-version`) und führt
+`uv sync --python 3.12 --extra dev --frozen`, `ruff check`, `ruff format --check`,
+`mypy app` und `pytest` aus. Lokale Netzwerk-/Index-Ausfälle beim Dependency-Download
+gelten nicht als fachliches Gate-Ergebnis; CI ist in diesem Fall die maßgebliche
+Quelle.
+
 ### 2.1 Statische Analyse
 
 | Tool                              | Ergebnis                         |
@@ -116,6 +133,12 @@ Aufschlüsselung der kritischen Pfade (Stichtag 2026-05-07):
 - Alle nicht-öffentlichen Endpoints sind hinter `get_current_user` oder `get_current_verified_user` (Entries, Tags, Symptome). ✅
 - Öffentlich (bewusst): `POST /auth/register`, `POST /auth/login`, `POST /auth/verify-email`, `POST /auth/resend-verification`, `POST /auth/refresh`, `POST /auth/logout`, `GET /symptoms/default`. ✅
 - RLS-Policies vorhanden für `users`, `entries`, `tags`, `entry_tags`, `symptoms`, `entry_symptoms`, `user_encryption_keys`, `email_verification_tokens` (Migrationen 002–007). ✅
+
+**Follow-up-Hinweis:** Das Design-Dokument markiert die vollständige RLS-Enforcement
+weiterhin als `[~]`, solange das per Transaktion gesetzte
+`SET LOCAL app.current_user_id` nicht automatisiert und durch Integrationstests
+belegt ist. Bis dahin sind App-Level-Owner-Filter die primäre Durchsetzung und
+RLS-Policies die vorbereitete Defense-in-Depth-Schicht.
 
 ### 3.2 Input-Validation
 

@@ -31,6 +31,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps.auth import get_current_user
+from app.core.auth_cookies import clear_auth_cookies
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
 from app.models.user import User
@@ -39,22 +40,6 @@ from app.services.user_service import UserDeletionError, delete_user_account
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-_ACCESS_COOKIE = "access_token"
-_REFRESH_COOKIE = "refresh_token"
-
-
-def _clear_auth_cookies(response: Response) -> None:
-    """Mirror of ``app.api.v1.endpoints.auth._clear_auth_cookies``.
-
-    Duplicated intentionally to keep the user-router free of imports
-    from the auth-router module (one-way dependency: user can call into
-    auth deps, but auth cannot call into user). The two helpers must
-    keep their cookie paths in sync — the auth cookies are scoped to
-    ``/api`` and ``/api/v1/auth/refresh`` respectively.
-    """
-    response.delete_cookie(_ACCESS_COOKIE, path="/api")
-    response.delete_cookie(_REFRESH_COOKIE, path="/api/v1/auth/refresh")
 
 
 @router.delete(
@@ -109,7 +94,7 @@ async def delete_my_account(
             detail="Invalid credentials",
         ) from exc
 
-    _clear_auth_cookies(response)
+    clear_auth_cookies(response)
     # 204 No Content — the response body must be empty per RFC 7231.
     response.status_code = status.HTTP_204_NO_CONTENT
     return response

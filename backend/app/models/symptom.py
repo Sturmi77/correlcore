@@ -35,11 +35,11 @@ Privacy
 **Symptoms are health data under DSGVO Art. 9.** The combination of a
 symptom name and ``intensity`` is sensitive on its own and must never
 appear in application logs (see ``test_log_scrubbing.py``). User-created
-custom names (``Symptom.name``) are likewise Art.-9-relevant: ADR-0005 /
-Issue #26 will add Fernet at-rest encryption for both ``Symptom.name``
-and (legacy) ``EntrySymptom``-side data; for M1 we store plaintext and
-rely on table-level RLS policies (migrations 005 + 006) to prevent
-cross-user reads at the DB level.
+custom names are likewise Art.-9-relevant and are stored in
+``Symptom.name_enc`` as Fernet ciphertext under the owner's per-user DEK
+(ADR-0005 / Issue #26). Curated defaults keep ``name`` plaintext because
+those labels are non-personal catalogue data and must be readable without
+an authenticated DEK context.
 
 The standard symptom set is intentionally short and physiological; we
 deliberately do not seed mental-health keys in M1 to avoid creating a
