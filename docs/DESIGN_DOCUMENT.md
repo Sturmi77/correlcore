@@ -112,7 +112,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 - Habit ≠ Tag: Habits brauchen Ziele („5×/Woche Sport") und Streaks, Tags nur Ja/Nein.
 - Psychologisch heikel: „Bad Habit"-Framing kann schaden. Neutrale Sprache anbieten („Habits I'm building" / „Habits I'm reducing").
 
-**Entscheidung:** Tag kann Flag `habit_type: none|build|reduce` + `target_frequency` haben. Streak-Logik separat.
+**Entscheidung:** Tag kann Flag `habit_type: none|build|reduce` + `target_frequency` haben. Streak-Logik separat. Die genaue Abgrenzung zwischen **Eintrags-Streak** (M2, aktivitätsbasiert) und **Habit-Streak** (M5, zielbezogen) sowie der Schema-Vorgriff für `tags.habit_type` / `tags.target_frequency` in M2 ist in [ADR-0012](adr/0012-m2-m5-streak-semantik.md) festgelegt.
 
 **Priorität:** SHOULD (v1.1)
 
@@ -685,7 +685,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Export enthält keine system-internen IDs, die Rückschlüsse auf andere User erlauben
 - [ ] Charts auf Mobilgerät (375 px Breite) korrekt gerendert und bedienbar
 - [ ] Zeitreihe korrekt für Wochen-/Monats-/Jahresansicht
-- [ ] Streak-Berechnung korrekt bei fehlenden Tagen
+- [ ] **Eintrags-Streak**-Berechnung korrekt bei fehlenden Tagen (aufeinanderfolgende Tage mit mindestens einem Eintrag; ohne Habit-Semantik gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M2
@@ -761,7 +761,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [ ] Habit-Sprache neutral (build/reduce, nicht good/bad) — UI-Text-Review abgeschlossen
 - [ ] Keine Wertung oder Scoring von Habits, die psychologisch schaden könnte (kein „Versagt"-Framing)
 - [ ] Zielfrequenz konfigurierbar (täglich / x-mal pro Woche)
-- [ ] Streak-Reset-Logik korrekt bei fehlendem Tag vs. bewusstem Aussetzen
+- [ ] **Habit-Streak**-Reset-Logik korrekt bei fehlendem Tag vs. bewusstem Aussetzen (zielbezogene Streaks gemäß `habit_type` + `target_frequency`, siehe [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M5
