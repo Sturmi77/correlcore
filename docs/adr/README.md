@@ -22,6 +22,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0009](0009-offline-sync-nach-m4.md)                | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)       | Accepted      | 2026-05-04 |
 | [ADR-0010](0010-build-toolchain-pinning.md)             | Build-Toolchain-Pinning (pnpm-Version)                      | Accepted      | 2026-05-07 |
 | [ADR-0011](0011-web-internal-reverse-proxy.md)          | Interner Reverse-Proxy im Web-Container (M2)                | Vorgeschlagen | 2026-05-07 |
+| [ADR-0012](0012-m2-m5-streak-semantik.md)               | M2/M5 Streak-Semantik + Habit-Schema-Vorgriff               | Vorgeschlagen | 2026-05-08 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -68,6 +69,10 @@ pnpm-Version wird in Root-`package.json` (`packageManager: "pnpm@11.0.8"`) und i
 ### ADR-0011 – Interner Reverse-Proxy im Web-Container (M2)
 
 Der `moodsync-web`-Container bekommt in M2 einen integrierten Reverse-Proxy via SvelteKit `hooks.server.ts`, der `/api/*`-Requests intern an `http://api:8000/*` weiterleitet. Hintergrund: `VITE_API_BASE_URL` ist eine Build-Time-Variable und wird ins JS-Bundle einkompiliert — PR #92 hat das via `workflow_dispatch`-Input parametrisierbar gemacht (Sofort-Fix), aber das Bundle bleibt an die im Build angegebene URL gekoppelt (Rebuild bei IP-/Port-Wechsel) und der API-Port muss am Host gemappt sein. Der interne Proxy löst beides: Ein Image für alle Topologien (`/api/v1` bleibt immer korrekt), API-Port nur noch via `expose` intern (Sicherheitsplus), Same-Origin für Cookie-Auth (vereinfacht ADR-0006-Setup). Gewählt wurde Variante B (SvelteKit-Handle-Hook, ~40 Zeilen TS) statt Sidecar-nginx (Variante A) oder Caddy-im-Image (Variante C). Status `Vorgeschlagen`, geplant für M2 (Insights & Polishing).
+
+### ADR-0012 – M2/M5 Streak-Semantik + Habit-Schema-Vorgriff
+
+Löst die im Design-Doc unsaubere Abgrenzung zwischen M2 (Visualisierung) und M5 (Habits & Ziele) auf: M2 liefert ausschließlich **Eintrags-Streaks** (aufeinanderfolgende Tage mit Eintrag) und Tag-Frequenz-Heatmap (Roh-Häufigkeiten ohne Habit-Semantik). M5 liefert **Habit-Streaks** (zielbezogen via `habit_type` + `target_frequency`) und das Habit-Dashboard. Begriffe „Eintrags-Streak" und „Habit-Streak" werden kanonisch. Schema-Vorgriff in M2: `tags`-Tabelle bekommt zwei nullable Spalten `habit_type` (Default `'none'`) und `target_frequency`, abgesichert durch CHECK-Constraints — API/UI/Streak-Logik bleiben M5-Lieferung. Vermeidet Daten-Backfill in M5 und macht M5 zu einer reinen Frontend-/Service-Erweiterung. Status `Vorgeschlagen`, Schema-Migration in M2, volle Habit-Funktionalität in M5.
 
 ---
 
