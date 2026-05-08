@@ -118,9 +118,9 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 ### Frontend — Web
 
-| Variable            | Pflicht | Default   | Beschreibung                                                                                                                                                                                                                                                                                                                                |
-| ------------------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_API_BASE_URL` | nein    | `/api/v1` | API-Pfad, den der SvelteKit-Server zur Runtime nutzt. **Achtung:** Im aktuellen Release-Workflow wird der Wert `/api/v1` zusätzlich beim Image-Build als Build-Arg fest ins Web-Image gebacken. Änderungen zur Runtime greifen nur für server-seitige Fetches, nicht für im Bundle hardgecodete URLs. Für User-Test einfach Default lassen. |
+| Variable           | Pflicht | Default           | Beschreibung                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------ | ------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `INTERNAL_API_URL` | nein    | `http://api:8000` | Upstream für den Web-internen Reverse-Proxy (ADR-0011). `apps/web/src/hooks.server.ts` leitet alle `/api/*`-Requests serverseitig hierhin weiter. Der Default greift im Compose-Netz über den Service-Namen `api` automatisch — nur setzen, wenn der API-Service umbenannt oder extern liegt. **`VITE_API_BASE_URL` gibt es seit ADR-0011 nicht mehr als Stack-Variable; der Wert ist fest `/api/v1`.** |
 
 ### Backend — SMTP / E-Mail-Verifikation
 
@@ -180,34 +180,38 @@ Tailnet erreichbar sein soll (sonst nur localhost).
 
 ## Tailscale-Bind
 
-Setze `TAILSCALE_IP=$(tailscale ip -4)` in der `.env`. Dann binden api/web/
+Setze `TAILSCALE_IP=$(tailscale ip -4)` in der `.env`. Dann binden web und
 mailpit nur auf das Tailnet-Interface — kein WAN-Exposure.
 
-| Service | Host-Port (Default)      | Zugriff im Tailnet                                  |
-| ------- | ------------------------ | --------------------------------------------------- |
-| Web     | `${WEB_HOST_PORT:-3000}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`             |
-| API     | `${API_HOST_PORT:-8210}` | `http://<tailscale-ip>:<API_HOST_PORT>/health/live` |
-| Mailpit | 8025                     | `http://<tailscale-ip>:8025`                        |
+| Service | Host-Port (Default)      | Zugriff im Tailnet                       |
+| ------- | ------------------------ | ---------------------------------------- |
+| Web     | `${WEB_HOST_PORT:-3000}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`  |
+| API     | _kein Host-Port_         | nur intern (`http://api:8000`, ADR-0011) |
+| Mailpit | 8025                     | `http://<tailscale-ip>:8025`             |
 
-Postgres und Redis sind nur stack-intern erreichbar (kein Port-Mapping).
+**Seit ADR-0011 hat die API kein Host-Port-Mapping mehr.** Der Web-Container
+proxyt `/api/*` serverseitig an `INTERNAL_API_URL` (Default `http://api:8000`)
+über das interne Compose-Netz. Damit ist die API auch im Tailnet nicht
+mehr direkt ansprechbar — ein Sicherheitsplus, weil es genau eine externe
+Origin (Web auf `WEB_HOST_PORT`) gibt. Für API-Healthchecks von außen den
+Umweg über Web nehmen: `http://<tailscale-ip>:<WEB_HOST_PORT>/api/v1/health`.
 
-### Host-Port-Konflikte (Synology-typisch)
+Postgres und Redis sind ohnehin nur stack-intern erreichbar.
 
-Die Host-Ports sind über `API_HOST_PORT` und `WEB_HOST_PORT` in der `.env`
-konfigurierbar, weil 8000 und 3000 auf typischen Selfhosted-Setups oft
-schon belegt sind:
+### Host-Port-Konflikt: Web auf 3000
 
-| Standard-Port | Häufig belegt durch | Default-Ausweich-Port (MoodSync)   |
-| ------------- | ------------------- | ---------------------------------- |
-| 8000          | Paperless-ngx       | `API_HOST_PORT=8210`               |
-| 3000          | Grafana             | bleibt 3000 (anpassen falls nötig) |
+Falls auf dem Host bereits ein anderer Self-Hosted-Dienst auf 3000
+lauscht (z. B. Grafana), `WEB_HOST_PORT` in der `.env` ausweichen —
+z. B. `WEB_HOST_PORT=3010`. Container-interner Port bleibt fix 3000.
 
-**Wenn du `WEB_HOST_PORT` änderst, vergiss nicht, in `CORS_ORIGINS` den
-entsprechenden Port nachzuziehen** — sonst blockiert der Browser API-Calls
-vom Frontend mit CORS-Fehler.
+Wenn du `WEB_HOST_PORT` änderst, denke an `FRONTEND_BASE_URL` (wird in
+Verifikations-Mails als Link-Präfix verwendet). `CORS_ORIGINS` ist seit
+ADR-0011 unkritisch geworden (Same-Origin durch den Web-Proxy), sollte
+der Vollständigkeit halber aber mitgezogen werden.
 
-Der Container-interne Port bleibt in beiden Fällen fix (8000 bzw. 3000);
-das Mapping erfolgt nur auf Host-Seite.
+> **Hinweis zu alten `.env`-Dateien:** `API_HOST_PORT` und
+> `VITE_API_BASE_URL` werden vom aktuellen `compose.yaml` nicht mehr
+> ausgewertet und können gelöscht werden — leere Reste stören aber nicht.
 
 ## Migrations
 
