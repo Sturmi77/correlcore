@@ -21,12 +21,22 @@ REFRESH_COOKIE_MAX_AGE_SECONDS = settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS * 86_400
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    """Attach access and refresh cookies with ADR-0004 security attributes."""
+    """Attach access and refresh cookies with ADR-0004/-0006 security attributes.
+
+    ``Secure`` wird über ``settings.cookie_secure_effective`` gesteuert
+    (Default: True ausser ``APP_ENV=development`` oder explizit
+    ``COOKIE_SECURE=false``). Hartkodiertes ``secure=True`` würde Browser
+    bei HTTP-Origins (lokales Tailscale-/Homelab-Setup ohne TLS) dazu
+    bringen, das Set-Cookie zu verwerfen — Login-Flow scheitert dann
+    stillschweigend. ADR-0006 stellt sicher, dass Production weiterhin
+    zwangsweise Secure verwendet.
+    """
+    secure = settings.cookie_secure_effective
     response.set_cookie(
         key=ACCESS_COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=secure,
         samesite="strict",
         path=ACCESS_COOKIE_PATH,
         max_age=ACCESS_COOKIE_MAX_AGE_SECONDS,
@@ -35,7 +45,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         key=REFRESH_COOKIE_NAME,
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=secure,
         samesite="strict",
         path=REFRESH_COOKIE_PATH,
         max_age=REFRESH_COOKIE_MAX_AGE_SECONDS,

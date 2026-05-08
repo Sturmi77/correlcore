@@ -38,6 +38,16 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
+    # Auth-Cookie Secure-Flag (ADR-0006).
+    # ADR-0006 schreibt `Secure` in Produktion vor; Cookies mit `Secure`
+    # werden vom Browser bei HTTP-Origins (z. B. lokales Tailscale-Setup
+    # ohne TLS) verworfen, was Login/Refresh stillschweigend bricht. Auto-
+    # Heuristik: ``None`` (Default) -> True ausser im APP_ENV=development.
+    # Für HTTP-Staging-/Homelab-Setups kann der Operator explizit
+    # ``COOKIE_SECURE=false`` setzen; in Production weigert sich der
+    # Validator, Secure auszuschalten (siehe model_validator unten).
+    COOKIE_SECURE: bool | None = None
+
     # Encryption at-rest (ADR-0005, Issue #26)
     # Master-Key wraps per-user DEKs in user_encryption_keys.wrapped_dek.
     # During key rotation: ENCRYPTION_KEYS as comma-separated list, new key first.
@@ -133,6 +143,23 @@ class Settings(BaseSettings):
             return self.ENCRYPTION_KEYS
         return [self.ENCRYPTION_KEY]
 
+    @property
+    def cookie_secure_effective(self) -> bool:
+        """Effective Secure-Flag for auth cookies (ADR-0006).
+
+        - Wenn ``COOKIE_SECURE`` explizit ``True``/``False`` gesetzt ist, gilt
+          das (mit Production-Sicherheits-Override im Validator).
+        - Wenn ``None`` (Default), schalten wir ``Secure`` nur in
+          ``APP_ENV=development`` aus; alle anderen Umgebungen (staging,
+          production) starten mit ``Secure=True``. Operatoren von HTTP-only
+          Staging-/Homelab-Setups (z. B. Tailscale-IP ohne TLS) müssen
+          dann explizit ``COOKIE_SECURE=false`` setzen — andernfalls
+          verwirft der Browser ``Set-Cookie`` und Login schlägt fehl.
+        """
+        if self.COOKIE_SECURE is not None:
+            return self.COOKIE_SECURE
+        return self.APP_ENV.lower() != "development"
+
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
         if self.APP_ENV.lower() in {"production", "staging"}:
@@ -148,6 +175,15 @@ class Settings(BaseSettings):
                     "python -c 'from cryptography.fernet import Fernet; "
                     "print(Fernet.generate_key().decode())'"
                 )
+        # ADR-0006: Secure ist in Produktion nicht abschaltbar. Staging darf
+        # COOKIE_SECURE=false setzen (Homelab-HTTP-Setups), Production nicht.
+        if self.APP_ENV.lower() == "production" and self.COOKIE_SECURE is False:
+            raise ValueError(
+                "COOKIE_SECURE=false ist in APP_ENV=production nicht erlaubt "
+                "(ADR-0006: Secure-Flag verbindlich). Bitte HTTPS terminieren "
+                "(z. B. Reverse-Proxy mit TLS) und COOKIE_SECURE entfernen "
+                "oder auf true setzen."
+            )
         return self
 
 

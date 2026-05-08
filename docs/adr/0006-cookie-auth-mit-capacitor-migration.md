@@ -55,9 +55,25 @@ Die Migration ist **antizipiert, aber lokal**: nur `apiFetch` ändert sich.
 - Phase 2 erbt automatisch alle aktuellen Backend-Endpoints (kein neues Interface).
 - Single-Flight-Refresh-Pattern (`apps/web/src/lib/api/client.ts`) gilt in beiden Varianten unverändert.
 
+## Implementation-Notiz — `Secure`-Flag (Update 2026-05-08)
+
+Die ursprüngliche Implementierung (`backend/app/core/auth_cookies.py`) hat `secure=True` für beide Cookies hartkodiert. Browser verwerfen `Set-Cookie`-Header mit `Secure` jedoch bei HTTP-Origins gemäß RFC 6265bis §4.1.2.5 — darunter fallen lokale Homelab-Setups, die das Web-Image über eine Tailscale-IP oder einen plain-HTTP-Reverse-Proxy ausliefern. Symptom: Login-Endpoint liefert 200 + Set-Cookie, der Browser legt aber **nichts** in der Cookie-Jar ab; alle Folge-Requests sind 401, das Frontend zeigt "Bitte melde dich erneut an".
+
+Fix:
+
+- Neue Settings-Variable `COOKIE_SECURE: bool | None = None` (`backend/app/core/config.py`).
+- Property `Settings.cookie_secure_effective`: explizite Werte gewinnen; `None` (Default) resolved zu `False` für `APP_ENV=development`, `True` für alles andere (staging, production).
+- `set_auth_cookies` setzt `secure=settings.cookie_secure_effective` statt hartkodiert `True`.
+- Model-Validator verbietet `COOKIE_SECURE=false` in `APP_ENV=production` — die Garantie aus dem Entscheidungs-Statement ("`Secure` in Prod") bleibt zwingend.
+- `infra/dockhand/.env.example` setzt `COOKIE_SECURE=false` mit Begründung, weil dieser Stack über Tailscale ohne TLS-Terminierung ausgeliefert wird; `infra/docker/.env.example` dokumentiert die Variable als optional.
+
+Keine Auswirkung auf den Capacitor-Pfad (Phase 2): Bearer-Tokens sind vom `Secure`-Flag nicht betroffen.
+
 ## Referenzen
 
 - ADR-0002: Capacitor statt TWA
 - ADR-0004: Auth-Strategie (JWT Phase 1, Authentik Phase 2)
+- ADR-0011: Web-internal Reverse-Proxy (relevant für `INTERNAL_API_URL`-Topologie, in der Cookies das Web-Image überhaupt erst sehen)
 - Issue #40: Frontend Login/Register-UI
+- RFC 6265bis §4.1.2.5 (Set-Cookie `Secure`-Attribut, Verwerfungssemantik bei HTTP)
 - OWASP Cheat-Sheet "JWT for Java" — Storage-Empfehlungen für SPA + Mobile
