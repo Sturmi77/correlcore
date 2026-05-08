@@ -12,10 +12,10 @@ Design notes
   CHECK constraint. The slider in the UI maps directly onto this range.
 - ``work_context`` is an enum: ``homeoffice | office | vacation | sick |
   weekend | travel`` (DESIGN_DOCUMENT.md §2.7).
-- ``note_enc`` holds the user's freeform note. The column is named
-  ``_enc`` because Issue #26 will swap the plaintext bytes for Fernet-
-  encrypted ciphertext (ADR-0005). For M1 we accept plaintext UTF-8 and
-  document the upgrade path in CHANGELOG; the schema is already correct.
+- ``note_enc`` holds the user's freeform note as Fernet ciphertext under
+  the request-bound per-user DEK (ADR-0005 / Issue #26). The
+  ``EncryptedString`` TypeDecorator keeps service and schema code working
+  with ``str | None`` while the database stores opaque ``BYTEA`` tokens.
 - All timestamps in UTC (``timezone=True``) with a Postgres trigger
   keeping ``updated_at`` fresh (created in migration 003 and reusing
   the ``update_updated_at_column`` function from migration 001).

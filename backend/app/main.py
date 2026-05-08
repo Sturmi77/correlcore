@@ -24,11 +24,10 @@ from app.services.health_service import check_liveness
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan — startup and shutdown hooks."""
     setup_logging()
-    # TODO M1: warm up DB connection pool
-    # TODO M1: warm up Redis connection pool
+    # Connection pools are opened lazily by their dependencies. Keep the
+    # lifespan hook focused on process-wide setup until a measured startup
+    # warmup or explicit shutdown hook is required.
     yield
-    # TODO M1: close DB pool
-    # TODO M1: close Redis pool
 
 
 def create_app() -> FastAPI:

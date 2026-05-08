@@ -34,13 +34,13 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: uv sync --extra dev --frozen
+        run: uv sync --python 3.12 --extra dev --frozen
 
       - name: Lint (ruff check)
-        run: uv run ruff check .
+        run: uv run --python 3.12 ruff check .
 
       - name: Format check (ruff format)
-        run: uv run ruff format --check .
+        run: uv run --python 3.12 ruff format --check .
 
   typecheck:
     name: Typecheck (mypy)
@@ -59,10 +59,10 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: uv sync --extra dev --frozen
+        run: uv sync --python 3.12 --extra dev --frozen
 
       - name: Typecheck (mypy)
-        run: uv run mypy app
+        run: uv run --python 3.12 mypy app
 
   test:
     name: Tests (pytest + coverage)
@@ -81,10 +81,10 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: uv sync --extra dev --frozen
+        run: uv sync --python 3.12 --extra dev --frozen
 
       - name: Run tests with coverage
-        run: uv run pytest
+        run: uv run --python 3.12 pytest
         env:
           # Test environment — no real DB/Redis needed for unit tests
           # (health probes are mocked in test_health.py)
@@ -135,7 +135,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: uv sync --extra dev --frozen
+        run: uv sync --python 3.12 --extra dev --frozen
 
       # Catches the class of bugs where a migration generates SQL that compiles
       # but is rejected by PostgreSQL at execution time — e.g. ENUM<>VARCHAR
@@ -145,7 +145,7 @@ jobs:
       # ``alembic upgrade head`` against a real Postgres 16.4-alpine, which
       # mirrors the version in ``infra/dockhand/compose.yaml``.
       - name: alembic upgrade head
-        run: uv run alembic -c migrations/alembic.ini upgrade head
+        run: uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
         env:
           APP_ENV: test
           DATABASE_URL: 'postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync'
@@ -159,8 +159,8 @@ jobs:
       # is idempotent against a wiped DB.
       - name: alembic downgrade base then upgrade head (round-trip)
         run: |
-          uv run alembic -c migrations/alembic.ini downgrade base
-          uv run alembic -c migrations/alembic.ini upgrade head
+          uv run --python 3.12 alembic -c migrations/alembic.ini downgrade base
+          uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
         env:
           APP_ENV: test
           DATABASE_URL: 'postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync'
