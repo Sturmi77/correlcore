@@ -20,6 +20,7 @@
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
+  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import type { WorkContext } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
   import { assignTagsToEntry } from '$lib/api/tags';
@@ -141,8 +142,13 @@
 </svelte:head>
 
 <header class="entry-header">
-  <h1 class="entry-title">{$_('entry.title')}</h1>
-  <p class="entry-subtitle">{$_('entry.subtitle')}</p>
+  <div class="entry-header-row">
+    <div class="entry-header-text">
+      <h1 class="entry-title">{$_('entry.title')}</h1>
+      <p class="entry-subtitle">{$_('entry.subtitle')}</p>
+    </div>
+    <ThemeToggle testId="entry-theme-toggle" />
+  </div>
 </header>
 
 <form class="entry-form" on:submit|preventDefault={onSubmit} novalidate>
@@ -227,10 +233,22 @@
     margin-bottom: var(--space-6);
   }
 
+  .entry-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .entry-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
   .entry-title {
     font-size: var(--text-lg);
     font-weight: 600;
-    margin-bottom: var(--space-2);
   }
 
   .entry-subtitle {

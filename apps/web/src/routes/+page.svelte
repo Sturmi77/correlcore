@@ -16,12 +16,10 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
-  import { theme } from '$lib/stores/theme';
   import { auth, currentUser, logout } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { findEntryForDate, greetingKey, localIsoDate } from '$lib/utils/home';
-
-  $: currentTheme = $theme;
+  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
 
   // ---------------------------------------------------------------------
   // Today-view state (only relevant for authenticated users).
@@ -86,42 +84,7 @@
   <main class="flex-1 flex flex-col items-center p-6 gap-8 w-full">
     <!-- Top bar: theme toggle + logout -->
     <header class="w-full max-w-xl flex items-center justify-between">
-      <button
-        class="btn btn-sm variant-ghost-surface"
-        on:click={() => theme.toggle()}
-        aria-label={currentTheme === 'dark' ? $_('theme.toggle_light') : $_('theme.toggle_dark')}
-      >
-        {#if currentTheme === 'dark'}
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="5" />
-            <path
-              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-            />
-          </svg>
-          <span>Hell</span>
-        {:else}
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-          <span>Dunkel</span>
-        {/if}
-      </button>
+      <ThemeToggle testId="home-theme-toggle" />
 
       <button
         class="btn btn-sm variant-ghost-surface"
@@ -233,42 +196,7 @@
     <!-- Theme toggle -->
     <div class="flex items-center gap-3">
       <span class="text-sm opacity-60">Theme:</span>
-      <button
-        class="btn btn-sm variant-ghost-surface"
-        on:click={() => theme.toggle()}
-        aria-label={currentTheme === 'dark' ? $_('theme.toggle_light') : $_('theme.toggle_dark')}
-      >
-        {#if currentTheme === 'dark'}
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="5" />
-            <path
-              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-            />
-          </svg>
-          <span>Hell</span>
-        {:else}
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-          <span>Dunkel</span>
-        {/if}
-      </button>
+      <ThemeToggle testId="landing-theme-toggle" />
     </div>
 
     <!-- Status badge -->
