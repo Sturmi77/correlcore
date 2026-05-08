@@ -8,6 +8,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — M1 Vorbereitung
 
+### Fixed
+
+- **Theme-Toggle (Hell/Dunkel) jetzt auch in der Tagesansicht (`/entries/new`) sichtbar.** Aus dem produktiven Test nach PR #112-Merge gemeldet: in der Tagesansicht fehlte der Toggle, sodass das Erfassen eines Eintrags zwingend im aktiven Theme erfolgen musste — bisher war der Toggle nur auf Home und im Auth-Layout vorhanden. Refactoring: gemeinsame `ThemeToggle.svelte`-Komponente unter `apps/web/src/lib/components/common/ThemeToggle.svelte` extrahiert (zwei Varianten via `withLabel`-Prop: Icon+Label für Home/Tagesansicht, Icon-only für Auth-Header). Drei Verwender umgestellt: `apps/web/src/routes/+page.svelte` (authenticated home + anonymous landing), `apps/web/src/routes/auth/+layout.svelte` und neu `apps/web/src/routes/entries/new/+page.svelte`. Code-Duplizierung (~110 Zeilen Inline-SVG ✕ 3 Stellen) eliminiert; i18n-Keys `theme.toggle_light` / `theme.toggle_dark` unverändert. Keine Architektur-Abweichung von DESIGN_DOCUMENT.md, kein ADR nötig. Lint 0/0, typecheck 0/0, 97/97 Vitest-Tests grün.
+
 ### Added
 
 - **Interner Reverse-Proxy im Web-Container (ADR-0011, dauerhafte Lösung des Vite-Build-Time-Kopplungsproblems).** Neuer SvelteKit-`handle`-Hook in `apps/web/src/hooks.server.ts` leitet jeden Request mit Pfad `/api/*` zur Laufzeit an `INTERNAL_API_URL` (Default `http://api:8000`) weiter — inklusive Method, Headers, Body, Query-String und vollständiger `Set-Cookie`-Behandlung (mehrere Cookies bleiben separate Header-Lines via `getSetCookie()`-Lift, Hop-by-Hop-Header werden gemäß RFC 7230 §6.1 entfernt, `Host`-Header wird auf den Upstream-Host gesetzt). Bei Upstream-Verbindungsfehler wird ein JSON-`502 {"detail":"Upstream API unreachable"}` zurückgegeben, sodass `apiFetch` weiterhin strukturiert parsen kann. Vollständig getestet (9 neue Vitest-Tests in `hooks.server.test.ts` decken: Pass-Through für Nicht-API-Pfade, GET/POST mit Query und JSON-Body, `INTERNAL_API_URL`-Override mit Trailing-Slash-Strip, Hop-by-Hop-Stripping, Set-Cookie-Forwarding mit Multi-Cookie, 502 bei Upstream-Failure, Status-Code-Forwarding für 4xx/5xx).

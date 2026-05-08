@@ -1,8 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { theme } from '$lib/stores/theme';
-
-  $: currentTheme = $theme;
+  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
 </script>
 
 <!--
@@ -43,41 +41,7 @@
       <span class="auth-brand-text">{$_('app.name')}</span>
     </a>
 
-    <button
-      type="button"
-      class="btn btn-sm variant-ghost-surface"
-      on:click={() => theme.toggle()}
-      aria-label={currentTheme === 'dark' ? $_('theme.toggle_light') : $_('theme.toggle_dark')}
-    >
-      {#if currentTheme === 'dark'}
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="5" />
-          <path
-            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-          />
-        </svg>
-      {:else}
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-      {/if}
-    </button>
+    <ThemeToggle withLabel={false} iconSize={16} testId="auth-theme-toggle" />
   </header>
 
   <main class="auth-main">
