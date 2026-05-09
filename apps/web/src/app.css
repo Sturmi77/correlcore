@@ -41,10 +41,10 @@
    * Alle Seiten-Abstände und das Chart-"klebt am Rand"-Problem
    * werden damit über einen einzigen Token gesteuert.
    * ------------------------------------------------------------------------- */
-  --page-padding-x:       max(var(--space-4), env(safe-area-inset-left));
+  --page-padding-x: max(var(--space-4), env(safe-area-inset-left));
   --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
-  --page-padding-bottom:  calc(var(--space-4) + env(safe-area-inset-bottom));
-  --content-max-width:    640px;
+  --page-padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  --content-max-width: 640px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -67,33 +67,33 @@
   color-scheme: dark;
 
   /* Basis-Surfaces */
-  --color-bg:              #171614;
-  --color-fg:              #f5f3ef;
-  --color-surface:         #221f1c;
-  --color-surface-2:       #2c2925;
-  --color-muted:           #a8a39c;
-  --color-border:          #3a352f;
+  --color-bg: #171614;
+  --color-fg: #f5f3ef;
+  --color-surface: #221f1c;
+  --color-surface-2: #2c2925;
+  --color-muted: #a8a39c;
+  --color-border: #3a352f;
 
   /* Erweiterte Surface-Ebenen (Fix 2) */
-  --color-surface-offset:  #1d1c1a;
+  --color-surface-offset: #1d1c1a;
   --color-surface-dynamic: #2d2c2a;
 
   /* Text-Hierarchie — 3 Ebenen (Fix 2: behebt "weiß auf grau"-Problem) */
-  --color-text:            #cdccca;
-  --color-text-muted:      #797876;
-  --color-text-faint:      #5a5957;
-  --color-text-inverse:    #2b2a28;
+  --color-text: #cdccca;
+  --color-text-muted: #797876;
+  --color-text-faint: #5a5957;
+  --color-text-inverse: #2b2a28;
 
   /* Primary-Varianten für Button-States im Dark Mode (Fix 2) */
-  --color-primary:         #4f98a3;
-  --color-primary-hover:   #227f8b;
-  --color-primary-active:  #1a626b;
+  --color-primary: #4f98a3;
+  --color-primary-hover: #227f8b;
+  --color-primary-active: #1a626b;
   --color-primary-highlight: #313b3b;
 
   /* Status-Farben */
   --color-success: #4ade80;
   --color-warning: #fbbf24;
-  --color-error:   #f87171;
+  --color-error: #f87171;
 
   /* Shadows — dunkler Modus braucht stärkere Opacity */
   --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
@@ -105,33 +105,33 @@
   color-scheme: light;
 
   /* Basis-Surfaces */
-  --color-bg:              #fafaf7;
-  --color-fg:              #1c1a17;
-  --color-surface:         #ffffff;
-  --color-surface-2:       #f1efe9;
-  --color-muted:           #6b6660;
-  --color-border:          #d8d3cb;
+  --color-bg: #fafaf7;
+  --color-fg: #1c1a17;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1efe9;
+  --color-muted: #6b6660;
+  --color-border: #d8d3cb;
 
   /* Erweiterte Surface-Ebenen (Fix 2) */
-  --color-surface-offset:  #f3f0ec;
+  --color-surface-offset: #f3f0ec;
   --color-surface-dynamic: #e6e4df;
 
   /* Text-Hierarchie — 3 Ebenen (Fix 2) */
-  --color-text:            #1c1a17;
-  --color-text-muted:      #6b6660;
-  --color-text-faint:      #a8a39c;
-  --color-text-inverse:    #f9f8f4;
+  --color-text: #1c1a17;
+  --color-text-muted: #6b6660;
+  --color-text-faint: #a8a39c;
+  --color-text-inverse: #f9f8f4;
 
   /* Primary-Varianten für Button-States im Light Mode (Fix 2) */
-  --color-primary:         #01696f;
-  --color-primary-hover:   #0c4e54;
-  --color-primary-active:  #0f3638;
+  --color-primary: #01696f;
+  --color-primary-hover: #0c4e54;
+  --color-primary-active: #0f3638;
   --color-primary-highlight: #cedcd8;
 
   /* Status-Farben */
   --color-success: #16a34a;
   --color-warning: #b45309;
-  --color-error:   #b91c1c;
+  --color-error: #b91c1c;
 
   /* Shadows — warm getönt passend zu Beige-Surfaces */
   --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
@@ -143,25 +143,25 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
-    --color-bg:              #171614;
-    --color-fg:              #f5f3ef;
-    --color-surface:         #221f1c;
-    --color-surface-2:       #2c2925;
-    --color-muted:           #a8a39c;
-    --color-border:          #3a352f;
-    --color-surface-offset:  #1d1c1a;
+    --color-bg: #171614;
+    --color-fg: #f5f3ef;
+    --color-surface: #221f1c;
+    --color-surface-2: #2c2925;
+    --color-muted: #a8a39c;
+    --color-border: #3a352f;
+    --color-surface-offset: #1d1c1a;
     --color-surface-dynamic: #2d2c2a;
-    --color-text:            #cdccca;
-    --color-text-muted:      #797876;
-    --color-text-faint:      #5a5957;
-    --color-text-inverse:    #2b2a28;
-    --color-primary:         #4f98a3;
-    --color-primary-hover:   #227f8b;
-    --color-primary-active:  #1a626b;
+    --color-text: #cdccca;
+    --color-text-muted: #797876;
+    --color-text-faint: #5a5957;
+    --color-text-inverse: #2b2a28;
+    --color-primary: #4f98a3;
+    --color-primary-hover: #227f8b;
+    --color-primary-active: #1a626b;
     --color-primary-highlight: #313b3b;
     --color-success: #4ade80;
     --color-warning: #fbbf24;
-    --color-error:   #f87171;
+    --color-error: #f87171;
     --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
     --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
     --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);

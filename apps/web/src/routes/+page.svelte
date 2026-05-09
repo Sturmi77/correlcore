@@ -56,7 +56,7 @@
    */
   $: summaryWindowStart = shiftIsoDate(todayIso, -6);
   $: summaryEntries = recentEntries.filter(
-    (e) => e.entry_date >= summaryWindowStart && e.entry_date <= todayIso
+    (e) => e.entry_date >= summaryWindowStart && e.entry_date <= todayIso,
   );
 
   async function loadDashboard(): Promise<void> {
@@ -133,12 +133,11 @@
 
 {#if $auth.status === 'authenticated'}
   <!-- ================================================================
-       Authenticated Home — „Heute-Ansicht“ + Dashboard (ADR-0014)
+       Authenticated Home — „Heute-Ansicht" + Dashboard (ADR-0014)
        Kein eigener <main> — page-shell in +layout.svelte übernimmt
        Padding (Safe-Area), max-width und Zentrierung.
        ================================================================ -->
   <div class="flex flex-col gap-6 pt-4 pb-8">
-
     <!-- Top bar: theme toggle + logout -->
     <header class="flex items-center justify-between">
       <ThemeToggle testId="home-theme-toggle" />
@@ -202,7 +201,9 @@
           data-testid="home-cta"
         >
           <span class="text-lg font-semibold">{$_('home.cta_new_entry')}</span>
-          <span class="text-sm" style="color: var(--color-text-muted)">{$_('entry.subtitle')}</span>
+          <span class="text-sm" style="color: var(--color-text-muted)"
+            >{$_('entry.subtitle')}</span
+          >
         </a>
       {/if}
     </section>
@@ -242,13 +243,11 @@
       <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
     </nav>
   </div>
-
 {:else}
   <!-- ================================================================
        Anonymous Landing
        ================================================================ -->
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">
-
     <!-- Logo -->
     <div class="flex flex-col items-center gap-4">
       <svg
