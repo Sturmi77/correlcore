@@ -1,0 +1,43 @@
+import { describe, expect, it } from 'vitest';
+import { buildLinePoints, heatmapLevel, linePath } from './charts';
+
+describe('chart utilities', () => {
+  it('builds SVG line points and skips nulls', () => {
+    const points = buildLinePoints(
+      [
+        {
+          period_start: '2026-05-01',
+          period_end: '2026-05-01',
+          entry_count: 1,
+          mood_avg: 1,
+          energy_avg: null,
+          stress_avg: null,
+        },
+        {
+          period_start: '2026-05-02',
+          period_end: '2026-05-02',
+          entry_count: 1,
+          mood_avg: 5,
+          energy_avg: null,
+          stress_avg: null,
+        },
+      ],
+      'mood_avg',
+      100,
+      40
+    );
+
+    expect(points).toEqual([
+      { x: 0, y: 40, value: 1, label: '2026-05-01' },
+      { x: 100, y: 0, value: 5, label: '2026-05-02' },
+    ]);
+    expect(linePath(points)).toBe('M 0.00 40.00 L 100.00 0.00');
+  });
+
+  it('maps heatmap counts into five visual levels', () => {
+    expect(heatmapLevel(0, 10)).toBe(0);
+    expect(heatmapLevel(1, 10)).toBe(1);
+    expect(heatmapLevel(5, 10)).toBe(2);
+    expect(heatmapLevel(8, 10)).toBe(4);
+  });
+});

@@ -6,6 +6,7 @@
   "nav": {
     "home": "Heute",
     "history": "Verlauf",
+    "trends": "Trends",
     "insights": "Erkenntnisse",
     "settings": "Einstellungen"
   },
@@ -163,6 +164,55 @@
       "error_validation": "Eingabe ist ungültig.",
       "error_generic": "Symptom konnte nicht angelegt werden.",
       "icon_hint": "Emoji (z. B. 🧠) oder Lucide-Icon-Name (z. B. dumbbell, brain, heart-pulse). Liste: lucide.dev/icons."
+    }
+  },
+  "trends": {
+    "title": "Trends",
+    "subtitle": "Zeitreihe, Streaks und Tag-Häufigkeiten für deinen Verlauf.",
+    "auth_required": "Bitte melde dich an, um deine Trends zu sehen.",
+    "controls": "Trend-Filter",
+    "category": "Kategorie",
+    "category_all": "Alle Tags",
+    "empty": "Noch keine Einträge im gewählten Zeitraum.",
+    "range": {
+      "week": "Woche",
+      "month": "Monat",
+      "year": "Jahr"
+    },
+    "metric": {
+      "mood": "Stimmung",
+      "energy": "Energie",
+      "stress": "Stress"
+    },
+    "timeseries": {
+      "heading": "Zeitreihe",
+      "legend": "Metriken",
+      "aria": "Zeitreihe für Stimmung, Energie und Stress"
+    },
+    "streak": {
+      "heading": "Eintrags-Streak",
+      "current": "Aktuell",
+      "longest": "Längste Serie",
+      "total": "Erfasste Tage"
+    },
+    "heatmap": {
+      "heading": "Tag-Frequenz",
+      "aria": "Heatmap der Tag-Häufigkeiten",
+      "empty": "Noch keine Tags im gewählten Zeitraum."
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Exportiere deine Daten und verwalte lokale App-Optionen.",
+    "auth_required": "Bitte melde dich an, um deine Daten zu exportieren.",
+    "export": {
+      "heading": "Datenexport",
+      "body": "Der Export kann sensible Gesundheitsdaten enthalten. Speichere ihn nur an einem sicheren Ort.",
+      "zip": "DSGVO-ZIP herunterladen",
+      "json": "JSON herunterladen",
+      "csv": "CSV herunterladen",
+      "busy": "Bereite Download vor…",
+      "error": "Export konnte nicht erstellt werden."
     }
   },
   "disclaimer": {

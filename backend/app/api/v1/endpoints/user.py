@@ -36,10 +36,27 @@ from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.user import DeleteAccountRequest
+from app.services.export_service import build_export_envelope, export_filename, render_export_zip
 from app.services.user_service import UserDeletionError, delete_user_account
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get(
+    "/export",
+    summary="Download the current user's portable data export (DSGVO Art. 20)",
+)
+async def export_my_data(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+) -> Response:
+    envelope = await build_export_envelope(db, user=current_user)
+    return Response(
+        content=render_export_zip(envelope),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{export_filename("zip")}"'},
+    )
 
 
 @router.delete(

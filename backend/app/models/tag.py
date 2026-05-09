@@ -54,6 +54,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    Integer,
     String,
     UniqueConstraint,
     func,
@@ -96,6 +97,14 @@ class Tag(Base):
         # Slug uniqueness lives in partial indexes (see migration 004) —
         # we cannot express "unique slug among defaults" cleanly with
         # just ``UniqueConstraint`` because user_id NULL would defeat it.
+        CheckConstraint(
+            "habit_type IN ('none', 'build', 'reduce')", name="ck_tags_habit_type_valid"
+        ),
+        CheckConstraint(
+            "(habit_type = 'none' AND target_frequency IS NULL) "
+            "OR (habit_type IN ('build', 'reduce') AND target_frequency BETWEEN 1 AND 7)",
+            name="ck_tags_target_frequency_consistent",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -126,6 +135,13 @@ class Tag(Base):
         server_default="false",
         default=False,
     )
+    habit_type: Mapped[str] = mapped_column(
+        String(8),
+        nullable=False,
+        server_default="none",
+        default="none",
+    )
+    target_frequency: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

@@ -29,6 +29,12 @@ from app.core.rate_limit import limiter
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.entry import EntryCreate, EntryResponse, EntryUpdate
+from app.schemas.stats import (
+    EntryStreakResponse,
+    TagHeatmapResponse,
+    TimeseriesRange,
+    TimeseriesResponse,
+)
 from app.services.entry_service import (
     DEFAULT_LIST_LIMIT,
     MAX_LIST_LIMIT,
@@ -41,6 +47,7 @@ from app.services.entry_service import (
     list_entries,
     update_entry,
 )
+from app.services.stats_service import get_entry_streak, get_tag_heatmap, get_timeseries
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -78,6 +85,75 @@ async def create_entry_endpoint(
         ) from exc
 
     return EntryResponse.model_validate(entry)
+
+
+# ---------------------------------------------------------------------------
+# M2 statistics
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/stats/timeseries",
+    response_model=TimeseriesResponse,
+    summary="Return mood, energy and stress time-series aggregates",
+)
+@limiter.limit("120/minute")
+async def get_timeseries_endpoint(
+    request: Request,
+    range: TimeseriesRange = Query(default="week"),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> TimeseriesResponse:
+    return await get_timeseries(db, user_id=user.id, range_=range)
+
+
+@router.get(
+    "/stats/tags",
+    response_model=TagHeatmapResponse,
+    summary="Return tag frequency heatmap data",
+)
+@limiter.limit("120/minute")
+async def get_tag_heatmap_endpoint(
+    request: Request,
+    start_date: date_type | None = Query(default=None, alias="start_date"),
+    end_date: date_type | None = Query(default=None, alias="end_date"),
+    category: str | None = Query(default=None),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> TagHeatmapResponse:
+    from app.models.tag import TagCategory
+
+    parsed_category = None
+    if category is not None:
+        try:
+            parsed_category = TagCategory(category)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="unknown tag category",
+            ) from exc
+    return await get_tag_heatmap(
+        db,
+        user_id=user.id,
+        start_date=start_date,
+        end_date=end_date,
+        category=parsed_category,
+    )
+
+
+@router.get(
+    "/stats/streak",
+    response_model=EntryStreakResponse,
+    summary="Return entry-streak metrics",
+)
+@limiter.limit("120/minute")
+async def get_entry_streak_endpoint(
+    request: Request,
+    as_of: date_type | None = Query(default=None, alias="as_of"),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> EntryStreakResponse:
+    return await get_entry_streak(db, user_id=user.id, as_of=as_of)
 
 
 # ---------------------------------------------------------------------------

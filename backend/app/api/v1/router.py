@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, entries, health, symptoms, tags, user
+from app.api.v1.endpoints import auth, entries, export, health, symptoms, tags, user
 
 api_router = APIRouter()
 
@@ -16,6 +16,9 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 # (DSGVO Art. 17 erasure). Future M2+: GET /user/me, PATCH /user/me,
 # data-export endpoints (Issue #25).
 api_router.include_router(user.router, prefix="/user", tags=["user"])
+
+# M2 convenience data exports (canonical DSGVO ZIP lives under /user/export)
+api_router.include_router(export.router, prefix="/export", tags=["export"])
 
 # Daily entries (M1, Issue #7)
 api_router.include_router(entries.router, prefix="/entries", tags=["entries"])
