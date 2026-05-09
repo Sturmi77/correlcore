@@ -1,6 +1,6 @@
 # ADR-0013 — Auto-Save für Day-Entries (M1.5)
 
-**Status:** Vorgeschlagen
+**Status:** Akzeptiert
 **Datum:** 2026-05-09
 **Bezug:** Issue #117 (Tagesansicht-Hydration), ADR-0009 (Offline-Sync nach M4), DESIGN_DOCUMENT.md §3 M1
 
@@ -140,4 +140,4 @@ Offline-Buffering wird mit M4 (ADR-0009) nachgereicht; die Auto-Save-State-Machi
 
 ## Status-Übergang
 
-`Vorgeschlagen` → `Accepted` nach Implementierung in PR „feat(web): auto-save day entry".
+`Vorgeschlagen` → `Akzeptiert` mit Implementierung in PR „feat(web): auto-save day entry“ (M1.5).
