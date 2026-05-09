@@ -63,7 +63,16 @@
     "stress_increment": "Increase stress",
     "edit_hint": "You are editing an existing entry for this day.",
     "update": "Update",
-    "error_load": "Could not load this day’s entry. You can still save."
+    "error_load": "Could not load this day’s entry. You can still save.",
+    "autosave": {
+      "dirty": "Will save shortly…",
+      "saving": "Saving…",
+      "saved_at": "Saved at {time}",
+      "error": "Failed to save.",
+      "retry": "Retry",
+      "offline": "Offline — changes are not being saved.",
+      "leave_warning": "There are unsaved changes. Are you sure you want to leave?"
+    }
   },
   "tag": {
     "picker_label": "Tags",

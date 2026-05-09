@@ -63,7 +63,16 @@
     "stress_increment": "Stress erhöhen",
     "edit_hint": "Du bearbeitest einen bereits gespeicherten Eintrag fuer diesen Tag.",
     "update": "Aktualisieren",
-    "error_load": "Eintrag konnte nicht geladen werden. Du kannst trotzdem speichern."
+    "error_load": "Eintrag konnte nicht geladen werden. Du kannst trotzdem speichern.",
+    "autosave": {
+      "dirty": "Wird in Kürze gespeichert…",
+      "saving": "Wird gespeichert…",
+      "saved_at": "Gespeichert um {time}",
+      "error": "Fehler beim Speichern.",
+      "retry": "Erneut versuchen",
+      "offline": "Keine Verbindung — Eingaben werden nicht gespeichert.",
+      "leave_warning": "Es laufen noch ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?"
+    }
   },
   "tag": {
     "picker_label": "Tags",

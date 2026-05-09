@@ -1,8 +1,8 @@
 <script lang="ts">
   /**
-   * /entries/new — daily-entry form (Issue #7).
+   * /entries/new — daily-entry form (Issue #7) + auto-save (ADR-0013).
    *
-   * Design constraints (DESIGN_DOCUMENT.md §6 + Issue #7):
+   * Design constraints (DESIGN_DOCUMENT.md §6 + Issue #7 + ADR-0013):
    *   - 60-second rule: a default entry should be submittable in ≤ 60 s.
    *     We pre-fill mood/energy/stress to a neutral 3 and pick the date
    *     based on weekday → a typical homeoffice/office/weekend default.
@@ -10,16 +10,20 @@
    *     (see ScaleSlider).
    *   - Backdating is allowed up to 7 days; the date input is bounded
    *     accordingly.
-   *   - On success the user is redirected back to "/" (the timeline /
-   *     home page that will land in a sibling issue).
+   *   - **Auto-save (ADR-0013):** there is no explicit submit button.
+   *     Every semantic change marks the form `dirty`; a debounced
+   *     800 ms timer triggers a POST (first save) or PATCH (subsequent
+   *     saves on the same `existingEntryId`). A status badge next to
+   *     the headline reports the current save state.
    */
 
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
+  import SaveStatusBadge from '$lib/components/entries/SaveStatusBadge.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { listEntries, updateEntry, type EntryResponse, type WorkContext } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
@@ -30,6 +34,7 @@
     type SymptomEntry,
   } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
+  import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
 
   // ---------------------------------------------------------------------
   // Form state
@@ -56,20 +61,24 @@
   let note = '';
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
-  let busy = false;
   let errorKey: string | null = null;
 
   // Edit-mode: when the user navigates to a date that already has a
   // ``slot=day`` entry, we hydrate the form with the existing values so
   // the picker doubles as both "new" and "edit" view. The presence of
-  // ``existingEntryId`` flips the submit handler from POST to PATCH and
-  // re-uses the same replace-set tag/symptom assignment endpoints.
+  // ``existingEntryId`` flips the auto-save handler from POST to PATCH
+  // and re-uses the same replace-set tag/symptom assignment endpoints.
   let existingEntryId: string | null = null;
   let loading = false;
-  // Debounce token: each load invocation increments this; stale
-  // responses (user changed date again before fetch returned) are
-  // discarded so the form doesn't snap back to outdated data.
+  // Debounce token for date-change loads: each load invocation
+  // increments this; stale responses (user changed date again before
+  // fetch returned) are discarded so the form doesn't snap back to
+  // outdated data.
   let loadToken = 0;
+  // While `true`, reactive watchers on form fields skip `markDirty()`
+  // — needed during hydration so loading an existing entry doesn't
+  // immediately schedule a save back to the server.
+  let hydrating = false;
 
   // Keep the work-context default in sync if the user picks a different
   // day, but only until they manually change it themselves.
@@ -109,7 +118,12 @@
   async function loadForDate(date: string) {
     const myToken = ++loadToken;
     loading = true;
+    hydrating = true;
     errorKey = null;
+    // Cancel any in-flight auto-save scheduling — switching dates is a
+    // hard form-reset, not an edit (ADR-0013 explicitly excludes date
+    // changes from auto-save triggers).
+    autoSave.reset();
     try {
       const matches = await listEntries({
         start_date: date,
@@ -155,7 +169,15 @@
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
       resetForm(date);
     } finally {
-      if (myToken === loadToken) loading = false;
+      if (myToken === loadToken) {
+        loading = false;
+        // Defer turning hydration off to the next microtask: Svelte
+        // reactivity flushes any pending field-change reactions
+        // synchronously after this assignment, and we don't want those
+        // to count as user edits.
+        await Promise.resolve();
+        hydrating = false;
+      }
     }
   }
 
@@ -186,67 +208,147 @@
     'travel',
   ];
 
-  async function onSubmit() {
-    if (busy) return;
-    busy = true;
-    errorKey = null;
-    try {
-      // Two flows from one form: when ``existingEntryId`` is set the
-      // user is editing an entry that the loader pulled in earlier, so
-      // we PATCH instead of POST. Replace-set tag/symptom assignment
-      // remains the same in both cases (PUT is idempotent).
-      let entryId: string;
-      if (existingEntryId) {
-        const updated = await updateEntry(existingEntryId, {
-          mood_score: moodScore,
-          energy,
-          stress,
-          work_context: workContext,
-          note: note.trim() ? note.trim() : '',
-        });
-        entryId = updated.id;
-      } else {
-        const created = await submitEntry({
-          entry_date: entryDate,
-          slot: 'day',
-          mood_score: moodScore,
-          energy,
-          stress,
-          work_context: workContext,
-          note: note.trim() ? note.trim() : undefined,
-        });
-        entryId = created.id;
-      }
+  // ---------------------------------------------------------------------
+  // Auto-save controller (ADR-0013)
+  // ---------------------------------------------------------------------
 
-      // Tag/Symptom-Assignment: replace-set semantics make this safe
-      // even when re-submitting an unchanged form. Sending the
-      // (possibly empty) lists guarantees "unchecked" rows actually
-      // disappear server-side.
-      try {
-        await assignTagsToEntry(entryId, selectedTagIds);
-      } catch (tagErr) {
-        errorKey = mapApiError(tagErr, ERROR_MAP) ?? 'tag.error_assign';
-        return;
-      }
-      try {
-        await assignSymptomsToEntry(entryId, selectedSymptoms);
-      } catch (symptomErr) {
-        errorKey = mapApiError(symptomErr, ERROR_MAP) ?? 'symptom.error_assign';
-        return;
-      }
-      await goto('/', { replaceState: true });
-    } catch (err) {
-      errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_generic';
-    } finally {
-      busy = false;
+  interface FormSnapshot {
+    entry_date: string;
+    mood_score: number;
+    energy: number;
+    stress: number;
+    work_context: WorkContext;
+    note: string;
+    selectedTagIds: string[];
+    selectedSymptoms: SymptomEntry[];
+  }
+
+  function snapshot(): FormSnapshot {
+    return {
+      entry_date: entryDate,
+      mood_score: moodScore,
+      energy,
+      stress,
+      work_context: workContext,
+      note: note.trim(),
+      selectedTagIds: [...selectedTagIds],
+      selectedSymptoms: selectedSymptoms.map((s) => ({ ...s })),
+    };
+  }
+
+  /**
+   * The actual persistence path. Mirrors the previous manual
+   * ``onSubmit``: POST on first save (no ``existingEntryId``), PATCH
+   * thereafter. Tag and symptom replace-sets always run after the
+   * entry write so unchecked rows actually disappear server-side.
+   */
+  async function persist(snap: FormSnapshot): Promise<void> {
+    let entryId: string;
+    if (existingEntryId) {
+      const updated = await updateEntry(existingEntryId, {
+        mood_score: snap.mood_score,
+        energy: snap.energy,
+        stress: snap.stress,
+        work_context: snap.work_context,
+        note: snap.note,
+      });
+      entryId = updated.id;
+    } else {
+      const created = await submitEntry({
+        entry_date: snap.entry_date,
+        slot: 'day',
+        mood_score: snap.mood_score,
+        energy: snap.energy,
+        stress: snap.stress,
+        work_context: snap.work_context,
+        note: snap.note ? snap.note : undefined,
+      });
+      entryId = created.id;
+      // POST → PATCH-Flip: store the id so subsequent saves go via
+      // updateEntry. This is the same flow that defused the 409 race
+      // we hit in PR #117.
+      existingEntryId = entryId;
+    }
+
+    await assignTagsToEntry(entryId, snap.selectedTagIds);
+    await assignSymptomsToEntry(entryId, snap.selectedSymptoms);
+  }
+
+  const autoSave = createAutoSave<FormSnapshot>({
+    getSnapshot: snapshot,
+    save: persist,
+  });
+  const autoSaveState = autoSave.state;
+
+  let autoSaveSnap: AutoSaveState = { status: 'idle', lastSavedAt: null, lastError: null };
+  $: autoSaveSnap = $autoSaveState;
+
+  function markDirty() {
+    if (hydrating || loading) return;
+    // Per-route guard: don't try to auto-save when the user has dialed
+    // into a load-error — they need to retry the load first.
+    autoSave.markDirty();
+  }
+
+  // Reactive watchers: any edit to a tracked field marks the form
+  // dirty. We deliberately keep `entryDate` out of this list — date
+  // changes trigger a full hydration via `loadForDate` instead.
+  $: {
+    moodScore;
+    energy;
+    stress;
+    workContext;
+    note;
+    selectedTagIds;
+    selectedSymptoms;
+    markDirty();
+  }
+
+  // ---------------------------------------------------------------------
+  // beforeunload: warn on dirty / saving
+  // ---------------------------------------------------------------------
+
+  function onBeforeUnload(ev: BeforeUnloadEvent) {
+    const s = autoSave.peek().status;
+    if (s === 'dirty' || s === 'saving') {
+      // Try to flush synchronously so the browser at least kicks off
+      // the request before tearing down the page (best-effort: most
+      // browsers will still close the tab without awaiting).
+      void autoSave.flushNow();
+      ev.preventDefault();
+      ev.returnValue = '';
     }
   }
 
+  function onCancel() {
+    // Cancel button leaves the page; auto-save has already persisted
+    // any committed dirty state, so we just navigate.
+    void goto('/');
+  }
+
   onMount(() => {
-    // Focus the mood slider so a typical "log my day" flow needs zero clicks.
+    // Focus the mood slider so a typical "log my day" flow needs zero
+    // clicks (still relevant under auto-save).
     const el = document.getElementById('entry-mood');
     el?.focus();
+    window.addEventListener('beforeunload', onBeforeUnload);
   });
+
+  onDestroy(() => {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    }
+    autoSave.destroy();
+  });
+
+  // Surface auto-save errors via the existing error-key channel for the
+  // error banner; mapping unknown errors to the generic key keeps the
+  // user from seeing raw stack traces.
+  $: if (autoSaveSnap.status === 'error' && autoSaveSnap.lastError) {
+    errorKey = 'entry.error_generic';
+  } else if (autoSaveSnap.status === 'saving' || autoSaveSnap.status === 'saved') {
+    errorKey = null;
+  }
 </script>
 
 <svelte:head>
@@ -264,16 +366,24 @@
         </p>
       {/if}
     </div>
-    <ThemeToggle testId="entry-theme-toggle" />
+    <div class="entry-header-tools">
+      <SaveStatusBadge
+        status={autoSaveSnap.status}
+        lastSavedAt={autoSaveSnap.lastSavedAt}
+        lastError={autoSaveSnap.lastError}
+        onRetry={() => void autoSave.retry()}
+      />
+      <ThemeToggle testId="entry-theme-toggle" />
+    </div>
   </div>
 </header>
 
 <form
   class="entry-form"
-  on:submit|preventDefault={onSubmit}
   novalidate
-  aria-busy={loading}
+  aria-busy={loading || autoSaveSnap.status === 'saving'}
   data-loading={loading ? 'true' : 'false'}
+  data-autosave-status={autoSaveSnap.status}
 >
   <label class="entry-field">
     <span class="entry-label">{$_('entry.date_label')}</span>
@@ -284,7 +394,6 @@
       min={isoDate(sevenDaysAgo)}
       max={isoDate(today)}
       required
-      disabled={busy}
     />
   </label>
 
@@ -314,16 +423,16 @@
 
   <label class="entry-field">
     <span class="entry-label">{$_('entry.work_context_label')}</span>
-    <select class="input" value={workContext} on:change={onWorkContextChange} disabled={busy}>
+    <select class="input" value={workContext} on:change={onWorkContextChange}>
       {#each WORK_CONTEXTS as wc}
         <option value={wc}>{$_(`entry.work_context.${wc}`)}</option>
       {/each}
     </select>
   </label>
 
-  <TagPicker bind:selected={selectedTagIds} disabled={busy} />
+  <TagPicker bind:selected={selectedTagIds} />
 
-  <SymptomChecker bind:selected={selectedSymptoms} disabled={busy} />
+  <SymptomChecker bind:selected={selectedSymptoms} />
 
   <label class="entry-field">
     <span class="entry-label">{$_('entry.note_placeholder')}</span>
@@ -333,7 +442,6 @@
       maxlength="4000"
       bind:value={note}
       placeholder={$_('entry.note_placeholder')}
-      disabled={busy}
     ></textarea>
   </label>
 
@@ -342,11 +450,8 @@
   {/if}
 
   <div class="entry-actions">
-    <button type="button" class="btn" on:click={() => goto('/')} disabled={busy}>
+    <button type="button" class="btn" on:click={onCancel} data-testid="entry-cancel">
       {$_('entry.cancel')}
-    </button>
-    <button type="submit" class="btn variant-filled-primary" disabled={busy || loading}>
-      {busy ? $_('entry.save_busy') : existingEntryId ? $_('entry.update') : $_('entry.save')}
     </button>
   </div>
 </form>
@@ -367,6 +472,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+
+  .entry-header-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
   }
 
   .entry-title {
