@@ -38,7 +38,7 @@
 
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import SymptomIcon from '$lib/components/common/SymptomIcon.svelte';
+  import IconRender from '$lib/components/common/IconRender.svelte';
   import { refreshSymptoms, submitSymptom, symptoms, symptomsList } from '$lib/stores/symptoms';
   import {
     INTENSITY_MAX,
@@ -229,7 +229,7 @@
             <legend class="symptom-name">
               {#if symptom.icon}
                 <span class="symptom-icon" aria-hidden="true">
-                  <SymptomIcon icon={symptom.icon} />
+                  <IconRender icon={symptom.icon} />
                 </span>
               {/if}
               <span>{name}</span>
@@ -317,7 +317,7 @@
           <small class="symptom-custom-hint">{$_('symptom.custom.icon_hint')}</small>
           {#if customIcon.trim()}
             <span class="symptom-custom-preview" aria-live="polite">
-              <SymptomIcon icon={customIcon} size={20} />
+              <IconRender icon={customIcon} size={20} />
             </span>
           {/if}
         </label>
