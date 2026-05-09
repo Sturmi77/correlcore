@@ -6,6 +6,7 @@
   "nav": {
     "home": "Today",
     "history": "History",
+    "trends": "Trends",
     "insights": "Insights",
     "settings": "Settings"
   },
@@ -163,6 +164,55 @@
       "error_validation": "Input is invalid.",
       "error_generic": "Could not create symptom.",
       "icon_hint": "Emoji (e.g. 🧠) or a Lucide icon name (e.g. dumbbell, brain, heart-pulse). List: lucide.dev/icons."
+    }
+  },
+  "trends": {
+    "title": "Trends",
+    "subtitle": "Time series, streaks and tag frequencies for your history.",
+    "auth_required": "Please sign in to view your trends.",
+    "controls": "Trend filters",
+    "category": "Category",
+    "category_all": "All tags",
+    "empty": "No entries in the selected range yet.",
+    "range": {
+      "week": "Week",
+      "month": "Month",
+      "year": "Year"
+    },
+    "metric": {
+      "mood": "Mood",
+      "energy": "Energy",
+      "stress": "Stress"
+    },
+    "timeseries": {
+      "heading": "Time series",
+      "legend": "Metrics",
+      "aria": "Time series for mood, energy and stress"
+    },
+    "streak": {
+      "heading": "Entry streak",
+      "current": "Current",
+      "longest": "Longest",
+      "total": "Logged days"
+    },
+    "heatmap": {
+      "heading": "Tag frequency",
+      "aria": "Heatmap of tag frequencies",
+      "empty": "No tags in the selected range yet."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Export your data and manage local app options.",
+    "auth_required": "Please sign in to export your data.",
+    "export": {
+      "heading": "Data export",
+      "body": "The export can contain sensitive health data. Store it only in a safe place.",
+      "zip": "Download GDPR ZIP",
+      "json": "Download JSON",
+      "csv": "Download CSV",
+      "busy": "Preparing download…",
+      "error": "Could not create export."
     }
   },
   "disclaimer": {

@@ -143,6 +143,8 @@ def make_tag(
     t.icon = icon
     t.color = color
     t.is_default = is_default
+    t.habit_type = "none"
+    t.target_frequency = None
     t.created_at = datetime.now(UTC)
     t.updated_at = datetime.now(UTC)
     return t

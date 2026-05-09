@@ -90,6 +90,28 @@ async function parseError(res: Response, path: string): Promise<ApiError> {
   return new ApiError(res.status, detail, path);
 }
 
+async function requestWithRefresh(path: string, init: RequestInit, skipAuthRefresh = false) {
+  const url = `${API_BASE}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch (err) {
+    throw new NetworkError(path, err);
+  }
+
+  if (res.status === 401 && !skipAuthRefresh) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      try {
+        res = await fetch(url, init);
+      } catch (err) {
+        throw new NetworkError(path, err);
+      }
+    }
+  }
+  return res;
+}
+
 /**
  * Make an authenticated request to the MoodSync API.
  *
@@ -98,7 +120,6 @@ async function parseError(res: Response, path: string): Promise<ApiError> {
  */
 export async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const { json, skipAuthRefresh, headers, ...rest } = options;
-  const url = `${API_BASE}${path}`;
 
   const finalHeaders = new Headers(headers);
   finalHeaders.set('Accept', 'application/json');
@@ -114,24 +135,7 @@ export async function apiFetch<T = unknown>(path: string, options: FetchOptions 
     init.body = JSON.stringify(json);
   }
 
-  let res: Response;
-  try {
-    res = await fetch(url, init);
-  } catch (err) {
-    throw new NetworkError(path, err);
-  }
-
-  // Auto-refresh on 401 once.
-  if (res.status === 401 && !skipAuthRefresh) {
-    const refreshed = await refreshAccessToken();
-    if (refreshed) {
-      try {
-        res = await fetch(url, init);
-      } catch (err) {
-        throw new NetworkError(path, err);
-      }
-    }
-  }
+  const res = await requestWithRefresh(path, init, skipAuthRefresh);
 
   if (!res.ok) {
     throw await parseError(res, path);
@@ -142,6 +146,20 @@ export async function apiFetch<T = unknown>(path: string, options: FetchOptions 
     return undefined as T;
   }
   return (await res.json()) as T;
+}
+
+export async function apiBlob(path: string): Promise<Blob> {
+  const headers = new Headers();
+  headers.set('Accept', '*/*');
+  const res = await requestWithRefresh(path, {
+    method: 'GET',
+    credentials: 'include',
+    headers,
+  });
+  if (!res.ok) {
+    throw await parseError(res, path);
+  }
+  return res.blob();
 }
 
 /** Convenience helpers. */

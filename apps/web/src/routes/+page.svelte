@@ -21,6 +21,7 @@
   import { goto } from '$app/navigation';
   import { auth, currentUser, logout } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
+  import { fetchEntryStreak, type EntryStreakResponse } from '$lib/api/stats';
   import { findEntryForDate, greetingKey, localIsoDate } from '$lib/utils/home';
   import { computeEntryStreak, shiftIsoDate } from '$lib/utils/streak';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
@@ -43,6 +44,7 @@
   let todayEntry: EntryResponse | null = null;
   let recentEntries: EntryResponse[] = [];
   let streakEntries: EntryResponse[] = [];
+  let backendStreak: EntryStreakResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
   /** True once the loader had to query the extended 30-day window. */
@@ -65,6 +67,7 @@
         start_date: start,
         end_date: todayIso,
       });
+      backendStreak = await fetchEntryStreak(todayIso);
       recentEntries = baseline;
       todayEntry = findEntryForDate(baseline, todayIso);
 
@@ -95,6 +98,7 @@
       recentEntries = [];
       streakEntries = [];
       todayEntry = null;
+      backendStreak = null;
       streakCapped = false;
     } finally {
       dashboardLoading = false;
@@ -114,6 +118,7 @@
     streakEntries = [];
     dashboardLoaded = false;
     streakCapped = false;
+    backendStreak = null;
     void goto('/', { replaceState: true });
   }
 
@@ -221,6 +226,7 @@
         {streakEntries}
         {todayIso}
         {streakCapped}
+        backendStreak={backendStreak?.current_streak ?? null}
         loading={dashboardLoading && !dashboardLoaded}
       />
     </section>
@@ -233,6 +239,11 @@
         loading={dashboardLoading && !dashboardLoaded}
       />
     </section>
+
+    <nav class="w-full max-w-xl flex gap-3 justify-center text-sm">
+      <a class="btn btn-sm variant-soft-primary" href="/trends">{$_('trends.title')}</a>
+      <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
+    </nav>
   </main>
 {:else}
   <!-- ============================================================

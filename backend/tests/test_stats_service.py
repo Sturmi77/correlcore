@@ -1,0 +1,118 @@
+"""Tests for M2 visualization statistics."""
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from app.models.tag import TagCategory
+from app.services.stats_service import get_entry_streak, get_tag_heatmap, get_timeseries
+from tests.conftest import make_entry, make_tag, make_user
+
+
+def _scalar_result(values: list[object]) -> MagicMock:
+    scalars = MagicMock()
+    scalars.all.return_value = values
+    result = MagicMock()
+    result.scalars.return_value = scalars
+    return result
+
+
+def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
+    result = MagicMock()
+    result.all.return_value = values
+    return result
+
+
+@pytest.mark.asyncio
+async def test_timeseries_week_fills_missing_days() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    entries = [
+        make_entry(user, entry_date=as_of - timedelta(days=1), mood_score=4, energy=3, stress=2),
+        make_entry(user, entry_date=as_of, mood_score=2, energy=5, stress=4),
+    ]
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(entries))
+
+    out = await get_timeseries(db, user_id=user.id, range_="week", as_of=as_of)
+
+    assert len(out.points) == 7
+    assert out.points[-1].period_start == as_of
+    assert out.points[-1].mood_avg == 2
+    assert out.points[0].entry_count == 0
+
+
+@pytest.mark.asyncio
+async def test_entry_streak_breaks_on_missing_as_of_day() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        return_value=_row_result(
+            [
+                (date(2026, 5, 5),),
+                (date(2026, 5, 6),),
+                (date(2026, 5, 8),),
+            ]
+        )
+    )
+
+    out = await get_entry_streak(db, user_id=user.id, as_of=as_of)
+
+    assert out.current_streak == 0
+    assert out.longest_streak == 2
+    assert out.total_entry_days == 3
+    assert out.last_entry_date == date(2026, 5, 8)
+
+
+@pytest.mark.asyncio
+async def test_entry_streak_counts_back_from_as_of() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        return_value=_row_result(
+            [
+                (date(2026, 5, 6),),
+                (date(2026, 5, 7),),
+                (date(2026, 5, 8),),
+                (date(2026, 5, 9),),
+            ]
+        )
+    )
+
+    out = await get_entry_streak(db, user_id=user.id, as_of=as_of)
+
+    assert out.current_streak == 4
+    assert out.longest_streak == 4
+
+
+@pytest.mark.asyncio
+async def test_tag_heatmap_groups_counts_by_tag_and_day() -> None:
+    user = make_user()
+    sport = make_tag(user=None, is_default=True, slug="sport", name="Sport")
+    focus = make_tag(user, slug="focus", name="Focus", category=TagCategory.WORK)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        return_value=_row_result(
+            [
+                (sport, date(2026, 5, 8)),
+                (sport, date(2026, 5, 8)),
+                (focus, date(2026, 5, 9)),
+            ]
+        )
+    )
+
+    out = await get_tag_heatmap(
+        db,
+        user_id=user.id,
+        start_date=date(2026, 5, 1),
+        end_date=date(2026, 5, 9),
+    )
+
+    sport_payload = next(tag for tag in out.tags if tag.slug == "sport")
+    assert sport_payload.days[0].date == date(2026, 5, 8)
+    assert sport_payload.days[0].count == 2

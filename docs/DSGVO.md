@@ -145,8 +145,8 @@ Für jeden Meilenstein der DSGVO-relevante Features enthält:
 
 ### M2 – Visualisierung
 
-- [ ] 🔒 DSGVO: Datenexport-Funktion (Art. 20) implementiert und getestet
-- [ ] 🔒 DSGVO: Export enthält alle gespeicherten Daten (Vollständigkeits-Test)
+- [x] 🔒 DSGVO: Datenexport-Funktion (Art. 20) implementiert und getestet
+- [x] 🔒 DSGVO: Export enthält alle aktuell gespeicherten M1/M2-Daten (Entries, Tags, Symptome; zukuenftige Fotos/Habits/Insights/Sleep als leere, versionierte Sektionen)
 
 ### M3 – Insights
 

@@ -26,12 +26,15 @@
   export let loading = false;
   /** True when the loader hit the 30-day cap. */
   export let streakCapped = false;
+  /** Backend-authoritative M2 entry-streak, if available. */
+  export let backendStreak: number | null = null;
 
   $: moodAvg = averageOver(entries, 'mood_score');
   $: energyAvg = averageOver(entries, 'energy');
   $: stressAvg = averageOver(entries, 'stress');
   $: count = countDayEntries(entries);
-  $: streak = computeEntryStreak(streakEntries.length ? streakEntries : entries, todayIso);
+  $: streak =
+    backendStreak ?? computeEntryStreak(streakEntries.length ? streakEntries : entries, todayIso);
 
   function formatAvg(v: number | null): string {
     if (v === null) return '–';

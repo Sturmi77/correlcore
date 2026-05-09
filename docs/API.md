@@ -736,7 +736,48 @@ POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 
 ---
 
-## 8. Sync (Offline-First)
+## 8. Visualisierungs-Stats (M2)
+
+Alle Endpunkte erfordern einen verifizierten User und liefern ausschliesslich
+Daten dieses Users.
+
+```
+GET /api/v1/entries/stats/timeseries?range=week|month|year
+GET /api/v1/entries/stats/tags?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&category=work
+GET /api/v1/entries/stats/streak?as_of=YYYY-MM-DD
+```
+
+`timeseries` liefert fuer `week` sieben Tagespunkte, fuer `month` 30 Tagespunkte
+und fuer `year` 12 Monatspunkte mit `entry_count`, `mood_avg`, `energy_avg` und
+`stress_avg`. Fehlende Perioden bleiben als Punkte mit `entry_count=0` und
+`*_avg=null` erhalten.
+
+`tags` liefert die Tag-Frequenz-Heatmap pro sichtbarem Tag:
+
+```json
+{
+  "start_date": "2026-01-01",
+  "end_date": "2026-05-09",
+  "tags": [
+    {
+      "tag_id": "uuid",
+      "slug": "sport",
+      "name": "Sport",
+      "category": "sport",
+      "color": "#10b981",
+      "days": [{ "date": "2026-05-09", "count": 1 }]
+    }
+  ]
+}
+```
+
+`streak` zaehlt nach ADR-0012 nur Eintrags-Streaks: aufeinanderfolgende Tage mit
+mindestens einem Entry. Es gibt keine Habit-Semantik und keine Toleranz fuer
+fehlende Tage.
+
+---
+
+## 9. Sync (Offline-First)
 
 ```
 POST   /api/v1/sync/push    Client-Änderungen hochladen
@@ -771,18 +812,21 @@ GET    /api/v1/sync/pull    Delta seit Cursor herunterladen
 
 ---
 
-## 9. Export
+## 10. Export
 
 ```
-GET    /api/v1/export/json      Vollexport als JSON
-GET    /api/v1/export/csv       Entries als CSV
-POST   /api/v1/export/zip       JSON + Fotos als ZIP (async, gibt Job-ID zurück)
-GET    /api/v1/export/jobs/{id} Status des ZIP-Jobs
+GET    /api/v1/user/export  DSGVO Art. 20 ZIP mit export.json + README.txt
+GET    /api/v1/export/json  Direkter JSON-Export
+GET    /api/v1/export/csv   Direkter CSV-Export der Entries
 ```
+
+Der ZIP-Export ist der kanonische Datenportabilitaets-Endpunkt. JSON/CSV sind
+Convenience-Downloads fuer Weiterverarbeitung und Arztgespraeche. Das Format ist
+in [`DATA_EXPORT_FORMAT.md`](DATA_EXPORT_FORMAT.md) dokumentiert.
 
 ---
 
-## 10. Admin
+## 11. Admin
 
 ```
 GET    /api/v1/admin/users          User-Liste
@@ -793,7 +837,7 @@ GET    /api/v1/admin/audit-log      Audit-Log abrufen
 
 ---
 
-## 11. Fehlerformat (RFC 7807)
+## 12. Fehlerformat (RFC 7807)
 
 ```json
 {
