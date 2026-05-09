@@ -1,18 +1,3 @@
-:root {
-  /* Safe-Area Layout-Tokens */
-  --page-padding-x: max(var(--space-4), env(safe-area-inset-left));
-  --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
-  --page-padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
-  --content-max-width: 640px;
-
-  /* Fehlende Text-Hierarchie-Tokens */
-  --color-text:        var(--color-fg);
-  --color-text-muted:  var(--color-muted);
-  --color-text-faint:  color-mix(in srgb, var(--color-muted) 60%, transparent);
-
-  /* Surface-Hover für Cards/Buttons */
-  --color-surface-dynamic: color-mix(in srgb, var(--color-surface-2) 60%, var(--color-surface));
-}
 /* MoodSync global styles */
 /* Art direction: Privacy-first mood tracker → calm, trustworthy, focused
    Palette: warm dark surfaces, teal accent (trust + calm)
@@ -42,10 +27,24 @@
   /* Transitions */
   --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* MoodSync teal accent (theme-invariant) */
+  /* MoodSync teal accent (theme-invariant base — überschrieben durch Theme-Tokens unten) */
   --color-ms-primary: #01696f;
   --color-ms-primary-hover: #0c4e54;
   --color-ms-primary-active: #0f3638;
+
+  /* -------------------------------------------------------------------------
+   * Layout-Tokens (Fix 1: Safe-Area + page-shell)
+   *
+   * Verwendet env(safe-area-inset-*) für iPhone-Notch / Android-Edge-to-Edge.
+   * max() stellt sicher, dass mindestens --space-4 (16px) Abstand bleibt,
+   * auch auf Geräten ohne Safe-Area-Insets.
+   * Alle Seiten-Abstände und das Chart-"klebt am Rand"-Problem
+   * werden damit über einen einzigen Token gesteuert.
+   * ------------------------------------------------------------------------- */
+  --page-padding-x:       max(var(--space-4), env(safe-area-inset-left));
+  --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
+  --page-padding-bottom:  calc(var(--space-4) + env(safe-area-inset-bottom));
+  --content-max-width:    640px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -57,33 +56,116 @@
  *
  * Dark is the default (matches store getInitial() and app.html). Light
  * overrides the same tokens via the [data-theme="light"] selector.
+ *
+ * Fix 2: Erweiterte Token-Hierarchie für Dark Mode Kontrast-Problem.
+ * Jede Ebene hat jetzt vollständige Text-, Surface- und Primary-Varianten,
+ * damit Komponenten niemals hardcodierte Farben benötigen.
  * ------------------------------------------------------------------------- */
 
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #171614;
-  --color-fg: #f5f3ef;
-  --color-surface: #221f1c;
-  --color-surface-2: #2c2925;
-  --color-muted: #a8a39c;
-  --color-border: #3a352f;
+
+  /* Basis-Surfaces */
+  --color-bg:              #171614;
+  --color-fg:              #f5f3ef;
+  --color-surface:         #221f1c;
+  --color-surface-2:       #2c2925;
+  --color-muted:           #a8a39c;
+  --color-border:          #3a352f;
+
+  /* Erweiterte Surface-Ebenen (Fix 2) */
+  --color-surface-offset:  #1d1c1a;
+  --color-surface-dynamic: #2d2c2a;
+
+  /* Text-Hierarchie — 3 Ebenen (Fix 2: behebt "weiß auf grau"-Problem) */
+  --color-text:            #cdccca;
+  --color-text-muted:      #797876;
+  --color-text-faint:      #5a5957;
+  --color-text-inverse:    #2b2a28;
+
+  /* Primary-Varianten für Button-States im Dark Mode (Fix 2) */
+  --color-primary:         #4f98a3;
+  --color-primary-hover:   #227f8b;
+  --color-primary-active:  #1a626b;
+  --color-primary-highlight: #313b3b;
+
+  /* Status-Farben */
   --color-success: #4ade80;
   --color-warning: #fbbf24;
-  --color-error: #f87171;
+  --color-error:   #f87171;
+
+  /* Shadows — dunkler Modus braucht stärkere Opacity */
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --color-bg: #fafaf7;
-  --color-fg: #1c1a17;
-  --color-surface: #ffffff;
-  --color-surface-2: #f1efe9;
-  --color-muted: #6b6660;
-  --color-border: #d8d3cb;
+
+  /* Basis-Surfaces */
+  --color-bg:              #fafaf7;
+  --color-fg:              #1c1a17;
+  --color-surface:         #ffffff;
+  --color-surface-2:       #f1efe9;
+  --color-muted:           #6b6660;
+  --color-border:          #d8d3cb;
+
+  /* Erweiterte Surface-Ebenen (Fix 2) */
+  --color-surface-offset:  #f3f0ec;
+  --color-surface-dynamic: #e6e4df;
+
+  /* Text-Hierarchie — 3 Ebenen (Fix 2) */
+  --color-text:            #1c1a17;
+  --color-text-muted:      #6b6660;
+  --color-text-faint:      #a8a39c;
+  --color-text-inverse:    #f9f8f4;
+
+  /* Primary-Varianten für Button-States im Light Mode (Fix 2) */
+  --color-primary:         #01696f;
+  --color-primary-hover:   #0c4e54;
+  --color-primary-active:  #0f3638;
+  --color-primary-highlight: #cedcd8;
+
+  /* Status-Farben */
   --color-success: #16a34a;
   --color-warning: #b45309;
-  --color-error: #b91c1c;
+  --color-error:   #b91c1c;
+
+  /* Shadows — warm getönt passend zu Beige-Surfaces */
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+  --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+}
+
+/* System-Preference-Fallback für User ohne manuellen Toggle */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-bg:              #171614;
+    --color-fg:              #f5f3ef;
+    --color-surface:         #221f1c;
+    --color-surface-2:       #2c2925;
+    --color-muted:           #a8a39c;
+    --color-border:          #3a352f;
+    --color-surface-offset:  #1d1c1a;
+    --color-surface-dynamic: #2d2c2a;
+    --color-text:            #cdccca;
+    --color-text-muted:      #797876;
+    --color-text-faint:      #5a5957;
+    --color-text-inverse:    #2b2a28;
+    --color-primary:         #4f98a3;
+    --color-primary-hover:   #227f8b;
+    --color-primary-active:  #1a626b;
+    --color-primary-highlight: #313b3b;
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-error:   #f87171;
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+    --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+    --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
+  }
 }
 
 *,
@@ -107,7 +189,7 @@ body {
   line-height: 1.6;
   font-size: var(--text-base);
   background: var(--color-bg);
-  color: var(--color-fg);
+  color: var(--color-text);
   transition:
     background-color var(--transition-interactive),
     color var(--transition-interactive);
@@ -147,7 +229,7 @@ p {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-ms-primary);
+  outline: 2px solid var(--color-primary);
   outline-offset: 3px;
   border-radius: 0.25rem;
 }
@@ -179,6 +261,33 @@ button {
   border-width: 0;
 }
 
+/* ---------------------------------------------------------------------------
+ * Layout-Utilities (Fix 1)
+ *
+ * .page-shell  — zentraler Seiten-Wrapper; einmalig in +layout.svelte nutzen.
+ *               Steuert Safe-Area-Padding, max-width und Zentrierung.
+ *               Löst "Button/Chart klebt am Rand"-Problem global.
+ *
+ * .bleed-full  — negiert das page-shell-Padding für full-width Elemente
+ *               (z.B. Heatmap, Mood-Chart). Innerhalb von .page-shell nutzen.
+ * ------------------------------------------------------------------------- */
+.page-shell {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--page-padding-x);
+  padding-inline-end: var(--page-padding-x-right);
+  padding-bottom: var(--page-padding-bottom);
+}
+
+.bleed-full {
+  margin-inline: calc(var(--page-padding-x) * -1);
+}
+
+/* ---------------------------------------------------------------------------
+ * Komponenten-Klassen
+ * ------------------------------------------------------------------------- */
+
 .h1 {
   font-size: var(--text-xl);
   font-weight: 700;
@@ -193,7 +302,7 @@ button {
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   background: var(--color-surface);
-  color: var(--color-fg);
+  color: var(--color-text);
 }
 
 .btn {
@@ -204,6 +313,9 @@ button {
   border-radius: 0.375rem;
   border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
   padding: 0.5rem 0.75rem;
+  /* WCAG 2.2: Touch-Target min. 44×44px */
+  min-height: 44px;
+  min-width: 44px;
   transition:
     background-color var(--transition-interactive),
     border-color var(--transition-interactive);
@@ -212,6 +324,8 @@ button {
 .btn-sm {
   padding: 0.375rem 0.625rem;
   font-size: var(--text-sm);
+  /* Auch kleine Buttons erfüllen Touch-Target */
+  min-height: 44px;
 }
 
 .badge {
