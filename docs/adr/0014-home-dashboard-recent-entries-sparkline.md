@@ -1,6 +1,6 @@
 # ADR-0014 — Home-Dashboard mit Recent-Entries-Liste und 14-Tage-Sparkline (M1.5-Vorzug aus M2)
 
-**Status:** Vorgeschlagen
+**Status:** Akzeptiert
 **Datum:** 2026-05-09
 **Bezug:** Issue #97 (Home-Today-View), DESIGN_DOCUMENT.md §3 M1/M2, ADR-0012 (M2/M5 Streak-Semantik)
 
@@ -149,4 +149,4 @@ ADR-0012 reserviert „Habit-Streak" für M5. Diese ADR liefert nur **Eintrags-S
 
 ## Status-Übergang
 
-`Vorgeschlagen` → `Accepted` nach Implementierung in PR „feat(web): home dashboard with recent entries and 14-day sparkline".
+`Vorgeschlagen` → `Akzeptiert` (2026-05-09) nach Implementierung in PR #122 „feat(web): home dashboard with recent entries and 14-day sparkline". Die drei Komponenten `HomeRecentEntries`, `HomeSummary` und `HomeSparkline` wurden inklusive 36 Util-Tests (`streak`, `sparkline`, `dateLabels`) und i18n-Strings DE/EN ausgeliefert. `/entries/new` respektiert nun den `?date=YYYY-MM-DD`-Query-Parameter.

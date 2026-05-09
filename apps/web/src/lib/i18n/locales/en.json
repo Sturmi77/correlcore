@@ -23,7 +23,40 @@
     "cta_new_entry": "New entry",
     "cta_edit_entry": "Edit today's entry",
     "loading_today": "Loading today's status…",
-    "streak_label": "day streak"
+    "streak_label": "day streak",
+    "recent": {
+      "heading": "Last 7 days",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "empty_card": "No entry",
+      "tags_count": "{n} tag(s)",
+      "symptoms_count": "{n} symptom(s)",
+      "aria_filled": "Entry for {date}, mood {mood} of 5",
+      "aria_empty": "No entry on {date}, log here"
+    },
+    "summary": {
+      "heading": "Last 7 days",
+      "mood_avg": "Mood avg",
+      "energy_avg": "Energy avg",
+      "stress_avg": "Stress avg",
+      "streak": "Streak",
+      "streak_unit": "days",
+      "count": "Logged"
+    },
+    "sparkline": {
+      "heading": "Mood trend",
+      "caption": "Last {n} days",
+      "aria_label": "Line chart of mood over {n} days"
+    },
+    "weekday": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   },
   "entry": {
     "mood_label": "How was your day?",

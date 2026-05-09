@@ -1,16 +1,19 @@
 <script lang="ts">
   /**
-   * Home route — Issue #97.
+   * Home route — Issue #97 + ADR-0014 (M1.5 Home-Dashboard).
    *
    * Two faces, gated by auth state:
    *   - Anonymous → existing landing (logo + tagline + theme toggle).
-   *   - Authenticated → today-view: time-aware greeting, today-status badge,
-   *     hero CTA to /entries/new (or "edit today's entry" if one exists),
-   *     logout button. Theme toggle stays.
+   *   - Authenticated → today-view + recent-entries list, 7-day summary
+   *     and 14-day mood sparkline.
    *
-   * Deliberately minimal for M1. No streak counter, no recent-entries list,
-   * no charts — those land with M2 (visualisation milestone). See
-   * DESIGN_DOCUMENT.md "Home-Screen-Heuristik".
+   * Loader strategy (ADR-0014):
+   *   - Fetch the last 14 days for sparkline + recent-entries list.
+   *   - Compute the entry-streak from those 14 days; if it equals 14
+   *     (rare) we run a second query covering 30 days so the streak can
+   *     keep growing. Numbers ≥ 30 render as "30+".
+   *   - Tag/symptom decorations on individual cards are loaded lazily
+   *     inside `HomeRecentEntries` (Promise.allSettled per entry).
    */
 
   import { onMount } from 'svelte';
@@ -19,47 +22,98 @@
   import { auth, currentUser, logout } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { findEntryForDate, greetingKey, localIsoDate } from '$lib/utils/home';
+  import { computeEntryStreak, shiftIsoDate } from '$lib/utils/streak';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import HomeRecentEntries from '$lib/components/home/HomeRecentEntries.svelte';
+  import HomeSummary from '$lib/components/home/HomeSummary.svelte';
+  import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
 
   // ---------------------------------------------------------------------
-  // Today-view state (only relevant for authenticated users).
+  // Constants & derived state.
   // ---------------------------------------------------------------------
+
+  /** ADR-0014: 14-day baseline window covers sparkline + recent-list. */
+  const BASELINE_DAYS = 14;
+  /** Extension cap when the streak fills the baseline window. */
+  const EXTENDED_DAYS = 30;
 
   const todayIso = localIsoDate(new Date());
   const greetingI18nKey = greetingKey(new Date().getHours());
 
   let todayEntry: EntryResponse | null = null;
-  let todayLoading = false;
-  let todayLoaded = false;
+  let recentEntries: EntryResponse[] = [];
+  let streakEntries: EntryResponse[] = [];
+  let dashboardLoading = false;
+  let dashboardLoaded = false;
+  /** True once the loader had to query the extended 30-day window. */
+  let streakCapped = false;
 
-  async function loadTodayEntry(): Promise<void> {
-    todayLoading = true;
+  /**
+   * Slice the 14-day window for the 7-day summary so HomeSummary's
+   * averages and counts only consider the last 7 days (ADR-0014).
+   */
+  $: summaryWindowStart = shiftIsoDate(todayIso, -6);
+  $: summaryEntries = recentEntries.filter(
+    (e) => e.entry_date >= summaryWindowStart && e.entry_date <= todayIso
+  );
+
+  async function loadDashboard(): Promise<void> {
+    dashboardLoading = true;
     try {
-      const entries = await listEntries({
-        start_date: todayIso,
+      const start = shiftIsoDate(todayIso, -(BASELINE_DAYS - 1));
+      const baseline = await listEntries({
+        start_date: start,
         end_date: todayIso,
-        limit: 1,
       });
-      todayEntry = findEntryForDate(entries, todayIso);
+      recentEntries = baseline;
+      todayEntry = findEntryForDate(baseline, todayIso);
+
+      // Streak math: if the entry-streak fills the baseline window we
+      // expand the lookup so 7+ day streaks can render correctly. We
+      // cap at 30 ("30+") to keep the request cheap.
+      const baselineStreak = computeEntryStreak(baseline, todayIso);
+      if (baselineStreak >= BASELINE_DAYS) {
+        const extendedStart = shiftIsoDate(todayIso, -(EXTENDED_DAYS - 1));
+        try {
+          streakEntries = await listEntries({
+            start_date: extendedStart,
+            end_date: todayIso,
+          });
+          streakCapped = true;
+        } catch {
+          // Fall back to baseline if the extension query fails.
+          streakEntries = baseline;
+          streakCapped = false;
+        }
+      } else {
+        streakEntries = baseline;
+        streakCapped = false;
+      }
     } catch {
-      // Best-effort. The "no entry today yet" copy is a safe default and
-      // the user can still hit the CTA.
+      // Best-effort; show empty placeholders rather than blocking the
+      // whole page. The CTA at the bottom is still reachable.
+      recentEntries = [];
+      streakEntries = [];
       todayEntry = null;
+      streakCapped = false;
     } finally {
-      todayLoading = false;
-      todayLoaded = true;
+      dashboardLoading = false;
+      dashboardLoaded = true;
     }
   }
 
-  // Trigger today-load whenever auth flips to authenticated.
-  $: if ($auth.status === 'authenticated' && !todayLoaded && !todayLoading) {
-    void loadTodayEntry();
+  // Trigger loader whenever auth flips to authenticated.
+  $: if ($auth.status === 'authenticated' && !dashboardLoaded && !dashboardLoading) {
+    void loadDashboard();
   }
 
   async function handleLogout(): Promise<void> {
     await logout();
     todayEntry = null;
-    todayLoaded = false;
+    recentEntries = [];
+    streakEntries = [];
+    dashboardLoaded = false;
+    streakCapped = false;
     void goto('/', { replaceState: true });
   }
 
@@ -67,8 +121,8 @@
   $: displayName = $currentUser?.display_name?.trim() || $currentUser?.email || '';
 
   onMount(() => {
-    if ($auth.status === 'authenticated' && !todayLoaded) {
-      void loadTodayEntry();
+    if ($auth.status === 'authenticated' && !dashboardLoaded) {
+      void loadDashboard();
     }
   });
 </script>
@@ -79,9 +133,9 @@
 
 {#if $auth.status === 'authenticated'}
   <!-- ============================================================
-       Authenticated Home — "Heute-Ansicht"
+       Authenticated Home — "Heute-Ansicht" + Dashboard (ADR-0014)
        ============================================================ -->
-  <main class="flex-1 flex flex-col items-center p-6 gap-8 w-full">
+  <main class="flex-1 flex flex-col items-center p-6 gap-6 w-full">
     <!-- Top bar: theme toggle + logout -->
     <header class="w-full max-w-xl flex items-center justify-between">
       <ThemeToggle testId="home-theme-toggle" />
@@ -105,7 +159,7 @@
 
     <!-- Today status -->
     <section class="w-full max-w-xl flex flex-col items-center gap-3">
-      {#if todayLoading}
+      {#if dashboardLoading && !dashboardLoaded}
         <span class="badge variant-soft text-xs" aria-live="polite">
           {$_('home.loading_today')}
         </span>
@@ -149,6 +203,35 @@
           <span class="text-sm opacity-70">{$_('entry.subtitle')}</span>
         </a>
       {/if}
+    </section>
+
+    <!-- Recent-entries list -->
+    <section class="w-full max-w-xl">
+      <HomeRecentEntries
+        {todayIso}
+        entries={recentEntries}
+        loading={dashboardLoading && !dashboardLoaded}
+      />
+    </section>
+
+    <!-- 7-day summary -->
+    <section class="w-full max-w-xl">
+      <HomeSummary
+        entries={summaryEntries}
+        {streakEntries}
+        {todayIso}
+        {streakCapped}
+        loading={dashboardLoading && !dashboardLoaded}
+      />
+    </section>
+
+    <!-- 14-day mood sparkline -->
+    <section class="w-full max-w-xl">
+      <HomeSparkline
+        entries={recentEntries}
+        {todayIso}
+        loading={dashboardLoading && !dashboardLoaded}
+      />
     </section>
   </main>
 {:else}

@@ -24,7 +24,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0011](0011-web-internal-reverse-proxy.md)              | Interner Reverse-Proxy im Web-Container                      | Accepted      | 2026-05-08 |
 | [ADR-0012](0012-m2-m5-streak-semantik.md)                   | M2/M5 Streak-Semantik + Habit-Schema-Vorgriff                | Vorgeschlagen | 2026-05-08 |
 | [ADR-0013](0013-autosave-day-entries.md)                    | Auto-Save für Day-Entries (M1.5)                             | Akzeptiert    | 2026-05-09 |
-| [ADR-0014](0014-home-dashboard-recent-entries-sparkline.md) | Home-Dashboard mit Recent-Entries + 14-Tage-Sparkline (M1.5) | Vorgeschlagen | 2026-05-09 |
+| [ADR-0014](0014-home-dashboard-recent-entries-sparkline.md) | Home-Dashboard mit Recent-Entries + 14-Tage-Sparkline (M1.5) | Akzeptiert    | 2026-05-09 |
 
 ## Kurzübersicht der Entscheidungen
 
