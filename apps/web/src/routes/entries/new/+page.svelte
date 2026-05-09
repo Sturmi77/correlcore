@@ -20,6 +20,8 @@
   import { onMount, onDestroy } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { get } from 'svelte/store';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
@@ -44,6 +46,23 @@
     return d.toISOString().slice(0, 10);
   }
 
+  /**
+   * Validate a `?date=YYYY-MM-DD` query param and clamp to the
+   * 7-day-back window. Invalid or out-of-range values fall back to
+   * today silently — backdating > 7 days is blocked by the date input
+   * anyway, so we don't need a user-facing error.
+   */
+  function resolveInitialDate(today: Date, queryDate: string | null): string {
+    if (!queryDate) return isoDate(today);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(queryDate)) return isoDate(today);
+    const parsed = new Date(queryDate + 'T00:00:00');
+    if (Number.isNaN(parsed.getTime())) return isoDate(today);
+    const min = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    if (parsed > today) return isoDate(today);
+    if (parsed < min) return isoDate(today);
+    return queryDate;
+  }
+
   function defaultWorkContext(d: Date): WorkContext {
     const dow = d.getDay(); // 0 = Sun
     if (dow === 0 || dow === 6) return 'weekend';
@@ -53,11 +72,16 @@
   const today = new Date();
   const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  let entryDate: string = isoDate(today);
+  // Initial date may come from `?date=YYYY-MM-DD` (ADR-0014: clicking
+  // a recent-entries card pre-fills the picker). Reading the page
+  // store via `get()` keeps the initial value synchronous; later
+  // navigations land on this route with a fresh component instance.
+  const initialDate = resolveInitialDate(today, get(page).url.searchParams.get('date'));
+  let entryDate: string = initialDate;
   let moodScore = 3;
   let energy = 3;
   let stress = 3;
-  let workContext: WorkContext = defaultWorkContext(today);
+  let workContext: WorkContext = defaultWorkContext(new Date(initialDate + 'T00:00:00'));
   let note = '';
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];

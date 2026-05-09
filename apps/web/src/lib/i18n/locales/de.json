@@ -23,7 +23,40 @@
     "cta_new_entry": "Neuer Eintrag",
     "cta_edit_entry": "Heutigen Eintrag bearbeiten",
     "loading_today": "Lade Heute-Status…",
-    "streak_label": "Tage in Folge"
+    "streak_label": "Tage in Folge",
+    "recent": {
+      "heading": "Letzte 7 Tage",
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "empty_card": "Kein Eintrag",
+      "tags_count": "{n} Tag(s)",
+      "symptoms_count": "{n} Symptom(e)",
+      "aria_filled": "Eintrag vom {date}, Stimmung {mood} von 5",
+      "aria_empty": "Kein Eintrag am {date}, hier eintragen"
+    },
+    "summary": {
+      "heading": "Letzte 7 Tage",
+      "mood_avg": "Stimmung Ø",
+      "energy_avg": "Energie Ø",
+      "stress_avg": "Stress Ø",
+      "streak": "Streak",
+      "streak_unit": "Tage",
+      "count": "Erfasst"
+    },
+    "sparkline": {
+      "heading": "Stimmungs-Verlauf",
+      "caption": "Letzte {n} Tage",
+      "aria_label": "Liniendiagramm der Stimmung über {n} Tage"
+    },
+    "weekday": {
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "So"
+    }
   },
   "entry": {
     "mood_label": "Wie war dein Tag?",
