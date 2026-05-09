@@ -1,5 +1,5 @@
 /**
- * SymptomIcon — classification regression tests.
+ * IconRender — classification regression tests.
  *
  * The component itself is mostly a thin renderer; the part worth
  * regression-testing is the heuristic that decides whether a string is
@@ -34,7 +34,7 @@ function classify(value: string | null | undefined): 'empty' | 'emoji' | 'lucide
   return 'unknown';
 }
 
-describe('SymptomIcon classification', () => {
+describe('IconRender classification', () => {
   it('treats empty / whitespace / null as empty', () => {
     expect(classify(null)).toBe('empty');
     expect(classify(undefined)).toBe('empty');

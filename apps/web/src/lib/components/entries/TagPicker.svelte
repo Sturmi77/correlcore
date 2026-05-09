@@ -24,7 +24,7 @@
   import { _ } from 'svelte-i18n';
   import { tags, tagsByCategory, refreshTags } from '$lib/stores/tags';
   import { TAG_CATEGORIES, MAX_TAGS_PER_ENTRY, type TagCategory } from '$lib/api/tags';
-  import SymptomIcon from '$lib/components/common/SymptomIcon.svelte';
+  import IconRender from '$lib/components/common/IconRender.svelte';
 
   /** Two-way bound: list of selected tag IDs. */
   export let selected: string[] = [];
@@ -98,7 +98,7 @@
             >
               {#if tag.icon}
                 <span class="tag-icon" aria-hidden="true">
-                  <SymptomIcon icon={tag.icon} size={16} />
+                  <IconRender icon={tag.icon} size={16} />
                 </span>
               {/if}
               <span class="tag-name">{tag.name}</span>

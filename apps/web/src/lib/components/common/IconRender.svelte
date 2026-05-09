@@ -1,26 +1,28 @@
 <script lang="ts">
   /**
-   * SymptomIcon — renders an icon string in one of two ways:
+   * IconRender — renders an icon string in one of two ways:
    *
    *   1. **Emoji / single grapheme** (default seed: 🤕 🌀 🦴 😴 🤧, or
    *      whatever the user typed as a Unicode emoji). Rendered as a plain
    *      `<span>` so the browser draws the system emoji font.
    *
    *   2. **Lucide icon slug** (e.g. ``dumbbell``, ``brain``, ``heart-pulse``).
-   *      Backend ``Symptom.icon`` is documented in ``backend/app/models/tag.py``
-   *      as accepting either form. Slugs are kebab-case, ASCII letters/digits/
-   *      hyphens only. Dynamically loaded from ``lucide-svelte/icons/<slug>``
-   *      to keep the bundle small — only icons actually referenced by saved
-   *      symptoms are pulled in at runtime.
+   *      Backend ``Symptom.icon`` and ``Tag.icon`` are documented in
+   *      ``backend/app/models/tag.py`` as accepting either form. Slugs are
+   *      kebab-case, ASCII letters/digits/hyphens only. Dynamically loaded
+   *      from ``lucide-svelte/icons/<slug>`` to keep the bundle small —
+   *      only icons actually referenced by saved symptoms or tags are
+   *      pulled in at runtime.
    *
    * Failure mode: if neither shape matches (e.g. user typed "asdf qwer") or
    * the dynamic import fails (typo'd slug → 404), the component renders
    * nothing visible. The surrounding name label always remains, so the
-   * symptom is still identifiable. We never render the raw slug string —
-   * that was the original bug ("dumbbell krafttraining").
+   * entity (symptom, tag, ...) is still identifiable. We never render
+   * the raw slug string — that was the original bug
+   * ("dumbbell krafttraining").
    *
    * Sizing: ``size`` prop maps to both width/height (px). Default 18 to fit
-   * the existing ``.symptom-icon`` line-height.
+   * the existing ``.symptom-icon`` line-height; tag chips pass 16.
    */
 
   import { onMount } from 'svelte';
@@ -104,7 +106,7 @@
 
 {#if mode === 'emoji'}
   <span
-    class="symptom-icon-emoji"
+    class="icon-render-emoji"
     role={label ? 'img' : undefined}
     aria-label={label}
     aria-hidden={label ? undefined : 'true'}
@@ -122,7 +124,7 @@
 {/if}
 
 <style>
-  .symptom-icon-emoji {
+  .icon-render-emoji {
     display: inline-block;
     line-height: 1;
     font-size: 1.05em;
