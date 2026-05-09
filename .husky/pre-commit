@@ -1,1 +1,15 @@
-pnpm lint-staged
+#!/bin/sh
+# Pre-commit hook: auto-format staged files with prettier.
+# No extra dependencies — uses prettier already in the root devDependencies.
+
+FILES=$(git diff --cached --name-only --diff-filter=ACMR \
+  | grep -E '\.(ts|svelte|css|json|md)$' \
+  | tr '\n' ' ')
+
+if [ -n "$FILES" ]; then
+  # shellcheck disable=SC2086
+  pnpm exec prettier --write $FILES
+  # Re-stage the formatted files
+  # shellcheck disable=SC2086
+  git add $FILES
+fi

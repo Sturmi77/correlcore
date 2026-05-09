@@ -18,10 +18,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "quality:m1": "./scripts/quality-gate-m1.sh",
-    "prepare": "husky"
-  },
-  "lint-staged": {
-    "*.{ts,svelte,css,json,md}": "prettier --write"
+    "prepare": "git config core.hooksPath .husky || true"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -30,8 +27,6 @@
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-svelte": "^2.38.0",
-    "husky": "^9.0.0",
-    "lint-staged": "^15.0.0",
     "prettier": "^3.3.0",
     "prettier-plugin-svelte": "^3.2.0",
     "typescript": "^5.5.0"
