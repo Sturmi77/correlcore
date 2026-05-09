@@ -84,7 +84,6 @@
           });
           streakCapped = true;
         } catch {
-          // Fall back to baseline if the extension query fails.
           streakEntries = baseline;
           streakCapped = false;
         }
@@ -93,8 +92,6 @@
         streakCapped = false;
       }
     } catch {
-      // Best-effort; show empty placeholders rather than blocking the
-      // whole page. The CTA at the bottom is still reachable.
       recentEntries = [];
       streakEntries = [];
       todayEntry = null;
@@ -106,7 +103,6 @@
     }
   }
 
-  // Trigger loader whenever auth flips to authenticated.
   $: if ($auth.status === 'authenticated' && !dashboardLoaded && !dashboardLoading) {
     void loadDashboard();
   }
@@ -122,7 +118,6 @@
     void goto('/', { replaceState: true });
   }
 
-  // Greeting line: "<greeting>, <display_name|email>"
   $: displayName = $currentUser?.display_name?.trim() || $currentUser?.email || '';
 
   onMount(() => {
@@ -137,14 +132,16 @@
 </svelte:head>
 
 {#if $auth.status === 'authenticated'}
-  <!-- ============================================================
-       Authenticated Home — "Heute-Ansicht" + Dashboard (ADR-0014)
-       ============================================================ -->
-  <main class="flex-1 flex flex-col items-center p-6 gap-6 w-full">
-    <!-- Top bar: theme toggle + logout -->
-    <header class="w-full max-w-xl flex items-center justify-between">
-      <ThemeToggle testId="home-theme-toggle" />
+  <!-- ================================================================
+       Authenticated Home — „Heute-Ansicht“ + Dashboard (ADR-0014)
+       Kein eigener <main> — page-shell in +layout.svelte übernimmt
+       Padding (Safe-Area), max-width und Zentrierung.
+       ================================================================ -->
+  <div class="flex flex-col gap-6 pt-4 pb-8">
 
+    <!-- Top bar: theme toggle + logout -->
+    <header class="flex items-center justify-between">
+      <ThemeToggle testId="home-theme-toggle" />
       <button
         class="btn btn-sm variant-ghost-surface"
         type="button"
@@ -163,7 +160,7 @@
     </section>
 
     <!-- Today status -->
-    <section class="w-full max-w-xl flex flex-col items-center gap-3">
+    <section class="flex flex-col items-center gap-3">
       {#if dashboardLoading && !dashboardLoaded}
         <span class="badge variant-soft text-xs" aria-live="polite">
           {$_('home.loading_today')}
@@ -188,7 +185,7 @@
     </section>
 
     <!-- Hero CTA -->
-    <section class="w-full max-w-xl">
+    <section>
       {#if todayEntry}
         <a
           class="card p-6 flex flex-col items-center gap-2 text-center hover:variant-soft-primary"
@@ -196,7 +193,7 @@
           data-testid="home-cta"
         >
           <span class="text-lg font-semibold">{$_('home.cta_edit_entry')}</span>
-          <span class="text-sm opacity-70">{todayIso}</span>
+          <span class="text-sm" style="color: var(--color-text-muted)">{todayIso}</span>
         </a>
       {:else}
         <a
@@ -205,13 +202,13 @@
           data-testid="home-cta"
         >
           <span class="text-lg font-semibold">{$_('home.cta_new_entry')}</span>
-          <span class="text-sm opacity-70">{$_('entry.subtitle')}</span>
+          <span class="text-sm" style="color: var(--color-text-muted)">{$_('entry.subtitle')}</span>
         </a>
       {/if}
     </section>
 
     <!-- Recent-entries list -->
-    <section class="w-full max-w-xl">
+    <section>
       <HomeRecentEntries
         {todayIso}
         entries={recentEntries}
@@ -220,7 +217,7 @@
     </section>
 
     <!-- 7-day summary -->
-    <section class="w-full max-w-xl">
+    <section>
       <HomeSummary
         entries={summaryEntries}
         {streakEntries}
@@ -232,7 +229,7 @@
     </section>
 
     <!-- 14-day mood sparkline -->
-    <section class="w-full max-w-xl">
+    <section>
       <HomeSparkline
         entries={recentEntries}
         {todayIso}
@@ -240,16 +237,18 @@
       />
     </section>
 
-    <nav class="w-full max-w-xl flex gap-3 justify-center text-sm">
+    <nav class="flex gap-3 justify-center text-sm">
       <a class="btn btn-sm variant-soft-primary" href="/trends">{$_('trends.title')}</a>
       <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
     </nav>
-  </main>
+  </div>
+
 {:else}
-  <!-- ============================================================
-       Anonymous Landing (unchanged)
-       ============================================================ -->
-  <main class="flex-1 flex flex-col items-center justify-center p-6 gap-8">
+  <!-- ================================================================
+       Anonymous Landing
+       ================================================================ -->
+  <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">
+
     <!-- Logo -->
     <div class="flex flex-col items-center gap-4">
       <svg
@@ -259,41 +258,49 @@
         height="64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        class="text-current"
       >
-        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3" opacity="0.25" />
+        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3" opacity="0.2" />
         <path
           d="M24 4 A20 20 0 0 1 44 24"
-          stroke="#01696f"
+          stroke="var(--color-primary)"
           stroke-width="3"
           stroke-linecap="round"
         />
         <path
           d="M16 26 Q24 34 32 26"
-          stroke="#01696f"
+          stroke="var(--color-primary)"
           stroke-width="2.5"
           stroke-linecap="round"
           fill="none"
         />
-        <circle cx="19" cy="20" r="1.5" fill="#01696f" />
-        <circle cx="29" cy="20" r="1.5" fill="#01696f" />
+        <circle cx="19" cy="20" r="1.5" fill="var(--color-primary)" />
+        <circle cx="29" cy="20" r="1.5" fill="var(--color-primary)" />
       </svg>
 
       <h1 class="h1 text-center" style="font-size: var(--text-xl)">
         {$_('app.name')}
       </h1>
-      <p class="text-surface-600-300-token text-center" style="font-size: var(--text-base)">
+      <p class="text-center" style="font-size: var(--text-base); color: var(--color-text-muted)">
         {$_('app.tagline')}
       </p>
     </div>
 
     <!-- Theme toggle -->
     <div class="flex items-center gap-3">
-      <span class="text-sm opacity-60">Theme:</span>
+      <span style="font-size: var(--text-sm); color: var(--color-text-faint)">Theme:</span>
       <ThemeToggle testId="landing-theme-toggle" />
     </div>
 
     <!-- Status badge -->
-    <div class="badge variant-soft-warning text-xs">Pre-Alpha — M0 Setup</div>
-  </main>
+    <div
+      class="badge"
+      style="
+        background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+        color: var(--color-warning);
+        font-size: var(--text-xs);
+      "
+    >
+      Pre-Alpha — M0 Setup
+    </div>
+  </div>
 {/if}
