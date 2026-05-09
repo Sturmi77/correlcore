@@ -61,7 +61,14 @@
   />
 </svelte:head>
 
-<!-- data-theme on <html> drives CSS variables in app.css (light/dark) -->
+<!--
+  Outer shell: h-dvh + flex-col so auth-splash can fill the viewport.
+  Inner <main> uses .page-shell (defined in app.css) which handles:
+    - Safe-Area padding via env(safe-area-inset-*)
+    - max-width centering (--content-max-width: 640px)
+    - scroll container for page content
+  Auth/loading states bypass page-shell intentionally (full-viewport splash).
+-->
 <div class="h-dvh flex flex-col">
   {#if $isLoading}
     <!--
@@ -81,7 +88,14 @@
       <span class="sr-only">Loading…</span>
     </div>
   {:else}
-    <slot />
+    <!--
+      page-shell: Safe-Area-Padding + max-width + centering (see app.css).
+      overflow-y-auto here so only the content scrolls, not the whole viewport.
+      Use .bleed-full on child elements (charts, heatmaps) that need full width.
+    -->
+    <main class="page-shell flex-1 overflow-y-auto">
+      <slot />
+    </main>
   {/if}
 </div>
 
@@ -91,16 +105,5 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
   }
 </style>
