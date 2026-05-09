@@ -1,3 +1,18 @@
+:root {
+  /* Safe-Area Layout-Tokens */
+  --page-padding-x: max(var(--space-4), env(safe-area-inset-left));
+  --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
+  --page-padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  --content-max-width: 640px;
+
+  /* Fehlende Text-Hierarchie-Tokens */
+  --color-text:        var(--color-fg);
+  --color-text-muted:  var(--color-muted);
+  --color-text-faint:  color-mix(in srgb, var(--color-muted) 60%, transparent);
+
+  /* Surface-Hover für Cards/Buttons */
+  --color-surface-dynamic: color-mix(in srgb, var(--color-surface-2) 60%, var(--color-surface));
+}
 /* MoodSync global styles */
 /* Art direction: Privacy-first mood tracker → calm, trustworthy, focused
    Palette: warm dark surfaces, teal accent (trust + calm)
