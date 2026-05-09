@@ -133,7 +133,7 @@
 
 {#if $auth.status === 'authenticated'}
   <!-- ================================================================
-       Authenticated Home — „Heute-Ansicht" + Dashboard (ADR-0014)
+       Authenticated Home - "Heute-Ansicht" + Dashboard (ADR-0014)
        Kein eigener <main> — page-shell in +layout.svelte übernimmt
        Padding (Safe-Area), max-width und Zentrierung.
        ================================================================ -->
