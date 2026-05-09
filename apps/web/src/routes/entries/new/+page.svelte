@@ -21,10 +21,14 @@
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
-  import type { WorkContext } from '$lib/api/entries';
+  import { listEntries, updateEntry, type EntryResponse, type WorkContext } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
-  import { assignTagsToEntry } from '$lib/api/tags';
-  import { assignSymptomsToEntry, type SymptomEntry } from '$lib/api/symptoms';
+  import { assignTagsToEntry, listTagsForEntry } from '$lib/api/tags';
+  import {
+    assignSymptomsToEntry,
+    listSymptomsForEntry,
+    type SymptomEntry,
+  } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   // ---------------------------------------------------------------------
@@ -55,14 +59,111 @@
   let busy = false;
   let errorKey: string | null = null;
 
+  // Edit-mode: when the user navigates to a date that already has a
+  // ``slot=day`` entry, we hydrate the form with the existing values so
+  // the picker doubles as both "new" and "edit" view. The presence of
+  // ``existingEntryId`` flips the submit handler from POST to PATCH and
+  // re-uses the same replace-set tag/symptom assignment endpoints.
+  let existingEntryId: string | null = null;
+  let loading = false;
+  // Debounce token: each load invocation increments this; stale
+  // responses (user changed date again before fetch returned) are
+  // discarded so the form doesn't snap back to outdated data.
+  let loadToken = 0;
+
   // Keep the work-context default in sync if the user picks a different
   // day, but only until they manually change it themselves.
   let workContextTouched = false;
-  $: if (!workContextTouched && entryDate) {
+  $: if (!workContextTouched && entryDate && !existingEntryId) {
     const d = new Date(entryDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
       workContext = defaultWorkContext(d);
     }
+  }
+
+  /**
+   * Reset the form to the neutral default for a date with no entry yet.
+   * Called when the user picks a date and the API returns no match.
+   */
+  function resetForm(forDate: string) {
+    existingEntryId = null;
+    moodScore = 3;
+    energy = 3;
+    stress = 3;
+    note = '';
+    selectedTagIds = [];
+    selectedSymptoms = [];
+    workContextTouched = false;
+    const d = new Date(forDate + 'T00:00:00');
+    if (!Number.isNaN(d.getTime())) {
+      workContext = defaultWorkContext(d);
+    }
+  }
+
+  /**
+   * Hydrate the form from an existing entry. Tags and symptoms are
+   * fetched in parallel; failures there are non-fatal (form still
+   * usable, just without the related rows pre-selected). Errors on the
+   * entry fetch itself are surfaced via ``errorKey``.
+   */
+  async function loadForDate(date: string) {
+    const myToken = ++loadToken;
+    loading = true;
+    errorKey = null;
+    try {
+      const matches = await listEntries({
+        start_date: date,
+        end_date: date,
+        limit: 5,
+      });
+      if (myToken !== loadToken) return;
+      const dayEntry = matches.find(
+        (e: EntryResponse) => e.entry_date === date && e.slot === 'day'
+      );
+      if (!dayEntry) {
+        resetForm(date);
+        return;
+      }
+      existingEntryId = dayEntry.id;
+      moodScore = dayEntry.mood_score;
+      energy = dayEntry.energy;
+      stress = dayEntry.stress;
+      workContext = dayEntry.work_context;
+      // Mark touched so the date-change reactive block doesn't reset it
+      // back to the weekday default.
+      workContextTouched = true;
+      note = dayEntry.note ?? '';
+
+      // Tags + symptoms load in parallel; both wrapped so one slow
+      // network blip doesn't keep the other from rendering.
+      const [tagsRes, symRes] = await Promise.allSettled([
+        listTagsForEntry(dayEntry.id),
+        listSymptomsForEntry(dayEntry.id),
+      ]);
+      if (myToken !== loadToken) return;
+      if (tagsRes.status === 'fulfilled') {
+        selectedTagIds = tagsRes.value.map((t) => t.id);
+      }
+      if (symRes.status === 'fulfilled') {
+        selectedSymptoms = symRes.value.map((s) => ({
+          symptom_id: s.symptom_id,
+          intensity: s.intensity,
+        }));
+      }
+    } catch (err) {
+      if (myToken !== loadToken) return;
+      errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
+      resetForm(date);
+    } finally {
+      if (myToken === loadToken) loading = false;
+    }
+  }
+
+  // Reactively reload whenever the user picks a different date. The
+  // initial call is also covered: once ``entryDate`` is initialised
+  // above, this reactive block fires on mount.
+  $: if (entryDate) {
+    void loadForDate(entryDate);
   }
 
   function onWorkContextChange(e: Event) {
@@ -90,37 +191,48 @@
     busy = true;
     errorKey = null;
     try {
-      const created = await submitEntry({
-        entry_date: entryDate,
-        slot: 'day',
-        mood_score: moodScore,
-        energy,
-        stress,
-        work_context: workContext,
-        note: note.trim() ? note.trim() : undefined,
-      });
-      // Tag assignment is best-effort — the entry is already saved. If
-      // attaching tags fails (e.g. transient network blip) we surface a
-      // dedicated error key so the user can retry from /entries/{id}
-      // instead of losing the entry itself.
-      if (selectedTagIds.length > 0) {
-        try {
-          await assignTagsToEntry(created.id, selectedTagIds);
-        } catch (tagErr) {
-          errorKey = mapApiError(tagErr, ERROR_MAP) ?? 'tag.error_assign';
-          return;
-        }
+      // Two flows from one form: when ``existingEntryId`` is set the
+      // user is editing an entry that the loader pulled in earlier, so
+      // we PATCH instead of POST. Replace-set tag/symptom assignment
+      // remains the same in both cases (PUT is idempotent).
+      let entryId: string;
+      if (existingEntryId) {
+        const updated = await updateEntry(existingEntryId, {
+          mood_score: moodScore,
+          energy,
+          stress,
+          work_context: workContext,
+          note: note.trim() ? note.trim() : '',
+        });
+        entryId = updated.id;
+      } else {
+        const created = await submitEntry({
+          entry_date: entryDate,
+          slot: 'day',
+          mood_score: moodScore,
+          energy,
+          stress,
+          work_context: workContext,
+          note: note.trim() ? note.trim() : undefined,
+        });
+        entryId = created.id;
       }
-      // Symptom assignment is best-effort — the entry is already
-      // saved. Mirrors the tag-assignment flow above so the user can
-      // retry from /entries/{id} without losing the entry itself.
-      if (selectedSymptoms.length > 0) {
-        try {
-          await assignSymptomsToEntry(created.id, selectedSymptoms);
-        } catch (symptomErr) {
-          errorKey = mapApiError(symptomErr, ERROR_MAP) ?? 'symptom.error_assign';
-          return;
-        }
+
+      // Tag/Symptom-Assignment: replace-set semantics make this safe
+      // even when re-submitting an unchanged form. Sending the
+      // (possibly empty) lists guarantees "unchecked" rows actually
+      // disappear server-side.
+      try {
+        await assignTagsToEntry(entryId, selectedTagIds);
+      } catch (tagErr) {
+        errorKey = mapApiError(tagErr, ERROR_MAP) ?? 'tag.error_assign';
+        return;
+      }
+      try {
+        await assignSymptomsToEntry(entryId, selectedSymptoms);
+      } catch (symptomErr) {
+        errorKey = mapApiError(symptomErr, ERROR_MAP) ?? 'symptom.error_assign';
+        return;
       }
       await goto('/', { replaceState: true });
     } catch (err) {
@@ -146,12 +258,23 @@
     <div class="entry-header-text">
       <h1 class="entry-title">{$_('entry.title')}</h1>
       <p class="entry-subtitle">{$_('entry.subtitle')}</p>
+      {#if existingEntryId}
+        <p class="entry-edit-hint" role="status" data-testid="entry-edit-hint">
+          {$_('entry.edit_hint')}
+        </p>
+      {/if}
     </div>
     <ThemeToggle testId="entry-theme-toggle" />
   </div>
 </header>
 
-<form class="entry-form" on:submit|preventDefault={onSubmit} novalidate>
+<form
+  class="entry-form"
+  on:submit|preventDefault={onSubmit}
+  novalidate
+  aria-busy={loading}
+  data-loading={loading ? 'true' : 'false'}
+>
   <label class="entry-field">
     <span class="entry-label">{$_('entry.date_label')}</span>
     <input
@@ -222,8 +345,8 @@
     <button type="button" class="btn" on:click={() => goto('/')} disabled={busy}>
       {$_('entry.cancel')}
     </button>
-    <button type="submit" class="btn variant-filled-primary" disabled={busy}>
-      {busy ? $_('entry.save_busy') : $_('entry.save')}
+    <button type="submit" class="btn variant-filled-primary" disabled={busy || loading}>
+      {busy ? $_('entry.save_busy') : existingEntryId ? $_('entry.update') : $_('entry.save')}
     </button>
   </div>
 </form>
@@ -254,6 +377,18 @@
   .entry-subtitle {
     font-size: var(--text-sm);
     opacity: 0.75;
+  }
+
+  .entry-edit-hint {
+    margin-top: 0.25rem;
+    font-size: var(--text-xs, 0.78rem);
+    color: rgb(var(--color-primary-600, 37 99 235));
+    font-weight: 600;
+  }
+
+  .entry-form[data-loading='true'] {
+    opacity: 0.65;
+    pointer-events: none;
   }
 
   .entry-form {

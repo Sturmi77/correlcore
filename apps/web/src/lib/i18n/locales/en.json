@@ -60,7 +60,10 @@
     "energy_decrement": "Decrease energy",
     "energy_increment": "Increase energy",
     "stress_decrement": "Decrease stress",
-    "stress_increment": "Increase stress"
+    "stress_increment": "Increase stress",
+    "edit_hint": "You are editing an existing entry for this day.",
+    "update": "Update",
+    "error_load": "Could not load this day’s entry. You can still save."
   },
   "tag": {
     "picker_label": "Tags",
@@ -116,7 +119,8 @@
       "error_slug_invalid": "Slug may only contain lowercase letters, digits and _ (max. 64 chars).",
       "error_conflict": "That slug already exists.",
       "error_validation": "Input is invalid.",
-      "error_generic": "Could not create symptom."
+      "error_generic": "Could not create symptom.",
+      "icon_hint": "Emoji (e.g. 🧠) or a Lucide icon name (e.g. dumbbell, brain, heart-pulse). List: lucide.dev/icons."
     }
   },
   "disclaimer": {
