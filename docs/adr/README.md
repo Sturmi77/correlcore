@@ -9,20 +9,22 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 
 ## Index
 
-| ADR                                                     | Titel                                                       | Status        | Datum      |
-| ------------------------------------------------------- | ----------------------------------------------------------- | ------------- | ---------- |
-| [ADR-0001](0001-sveltekit-vs-nextjs.md)                 | SvelteKit als Web-Framework (statt Next.js)                 | Accepted      | –          |
-| [ADR-0002](0002-capacitor-statt-twa.md)                 | Capacitor statt TWA als Mobile-Strategie                    | Accepted      | 2026-04-20 |
-| [ADR-0003](0003-sync-conflict-log.md)                   | Sync-Protokoll: Conflict-Log statt stilles LWW              | Accepted      | 2026-04-20 |
-| [ADR-0004](0004-auth-strategie.md)                      | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2 | Accepted      | 2026-04-20 |
-| [ADR-0005](0005-verschluesselung-at-rest.md)            | Datenverschlüsselung at-rest: Zweistufige Strategie         | Accepted      | 2026-04-20 |
-| [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md) | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration | Accepted      | 2026-05-04 |
-| [ADR-0007](0007-healthchecks-and-logging.md)            | Healthchecks und strukturiertes Logging                     | Accepted      | 2026-05-04 |
-| [ADR-0008](0008-symptom-master-tabelle.md)              | Symptom-Master-Tabelle für Custom-Symptome                  | Accepted      | 2026-05-04 |
-| [ADR-0009](0009-offline-sync-nach-m4.md)                | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)       | Accepted      | 2026-05-04 |
-| [ADR-0010](0010-build-toolchain-pinning.md)             | Build-Toolchain-Pinning (pnpm-Version)                      | Accepted      | 2026-05-07 |
-| [ADR-0011](0011-web-internal-reverse-proxy.md)          | Interner Reverse-Proxy im Web-Container                     | Accepted      | 2026-05-08 |
-| [ADR-0012](0012-m2-m5-streak-semantik.md)               | M2/M5 Streak-Semantik + Habit-Schema-Vorgriff               | Vorgeschlagen | 2026-05-08 |
+| ADR                                                         | Titel                                                        | Status        | Datum      |
+| ----------------------------------------------------------- | ------------------------------------------------------------ | ------------- | ---------- |
+| [ADR-0001](0001-sveltekit-vs-nextjs.md)                     | SvelteKit als Web-Framework (statt Next.js)                  | Accepted      | –          |
+| [ADR-0002](0002-capacitor-statt-twa.md)                     | Capacitor statt TWA als Mobile-Strategie                     | Accepted      | 2026-04-20 |
+| [ADR-0003](0003-sync-conflict-log.md)                       | Sync-Protokoll: Conflict-Log statt stilles LWW               | Accepted      | 2026-04-20 |
+| [ADR-0004](0004-auth-strategie.md)                          | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2  | Accepted      | 2026-04-20 |
+| [ADR-0005](0005-verschluesselung-at-rest.md)                | Datenverschlüsselung at-rest: Zweistufige Strategie          | Accepted      | 2026-04-20 |
+| [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md)     | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration  | Accepted      | 2026-05-04 |
+| [ADR-0007](0007-healthchecks-and-logging.md)                | Healthchecks und strukturiertes Logging                      | Accepted      | 2026-05-04 |
+| [ADR-0008](0008-symptom-master-tabelle.md)                  | Symptom-Master-Tabelle für Custom-Symptome                   | Accepted      | 2026-05-04 |
+| [ADR-0009](0009-offline-sync-nach-m4.md)                    | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)        | Accepted      | 2026-05-04 |
+| [ADR-0010](0010-build-toolchain-pinning.md)                 | Build-Toolchain-Pinning (pnpm-Version)                       | Accepted      | 2026-05-07 |
+| [ADR-0011](0011-web-internal-reverse-proxy.md)              | Interner Reverse-Proxy im Web-Container                      | Accepted      | 2026-05-08 |
+| [ADR-0012](0012-m2-m5-streak-semantik.md)                   | M2/M5 Streak-Semantik + Habit-Schema-Vorgriff                | Vorgeschlagen | 2026-05-08 |
+| [ADR-0013](0013-autosave-day-entries.md)                    | Auto-Save für Day-Entries (M1.5)                             | Vorgeschlagen | 2026-05-09 |
+| [ADR-0014](0014-home-dashboard-recent-entries-sparkline.md) | Home-Dashboard mit Recent-Entries + 14-Tage-Sparkline (M1.5) | Vorgeschlagen | 2026-05-09 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -73,6 +75,14 @@ Der `moodsync-web`-Container bekommt in M2 einen integrierten Reverse-Proxy via 
 ### ADR-0012 – M2/M5 Streak-Semantik + Habit-Schema-Vorgriff
 
 Löst die im Design-Doc unsaubere Abgrenzung zwischen M2 (Visualisierung) und M5 (Habits & Ziele) auf: M2 liefert ausschließlich **Eintrags-Streaks** (aufeinanderfolgende Tage mit Eintrag) und Tag-Frequenz-Heatmap (Roh-Häufigkeiten ohne Habit-Semantik). M5 liefert **Habit-Streaks** (zielbezogen via `habit_type` + `target_frequency`) und das Habit-Dashboard. Begriffe „Eintrags-Streak" und „Habit-Streak" werden kanonisch. Schema-Vorgriff in M2: `tags`-Tabelle bekommt zwei nullable Spalten `habit_type` (Default `'none'`) und `target_frequency`, abgesichert durch CHECK-Constraints — API/UI/Streak-Logik bleiben M5-Lieferung. Vermeidet Daten-Backfill in M5 und macht M5 zu einer reinen Frontend-/Service-Erweiterung. Status `Vorgeschlagen`, Schema-Migration in M2, volle Habit-Funktionalität in M5.
+
+### ADR-0013 – Auto-Save für Day-Entries
+
+Die Tagesansicht wechselt von manuellem Submit auf Hybrid Auto-Save mit sichtbarer Status-Anzeige (`idle | dirty | saving | saved | error`) und 800 ms-Debounce. Erste Save-Operation eines Tages bleibt POST, anschließend PATCH (POST→PATCH-Flip aus PR #117). Konflikte: LWW (Single-Device-M1-Scope, ADR-0003 wird erst Multi-Device aktiv). Offline-Verhalten: explizit online-only, kein localStorage-Buffer (siehe ADR-0009). Submit-Button entfällt; Cancel-Button bleibt; `beforeunload`-Listener fängt Tab-Close während `saving` ab. State-Machine ist offline-erweiterungsfähig (M4).
+
+### ADR-0014 – Home-Dashboard mit Recent-Entries und 14-Tage-Sparkline
+
+Recent-Entries-Liste (7 Tage, klickbar mit `?date=`-Param), 7-Tage-Summary (Mood/Energy/Stress-Avg + Eintrags-Streak per ADR-0012) und 14-Tage-Mood-Sparkline werden von M2 nach M1.5 vorgezogen. Keine neue Dependency: Sparkline ist eigenes SVG (~80 LOC, theme-aware, wiederverwendbar für M2-Charts). Kein neuer Backend-Endpoint; alles aus dem bestehenden `listEntries`-Pfad. Streak-Berechnung clientseitig in `lib/utils/streak.ts`, in M2 wechselt nur die Datenquelle wenn der Backend-Streak-Endpoint kommt. Anonymous-Landing bleibt unverändert.
 
 ---
 

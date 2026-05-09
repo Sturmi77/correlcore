@@ -671,12 +671,35 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 
 ---
 
+### M1.5 — UX-Pflege Tagesansicht & Home-Dashboard (Zwischen-Iteration aus M1-Eigentest)
+
+Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. Schema- und API-seitig keine Änderung; reine Frontend-Lieferung. Erlaubt M2 (Visualisierung) sich auf erweiterte Charts und Habit-Vorbereitung zu konzentrieren statt Basis-UX nachzuziehen.
+
+- **Auto-Save für Day-Entries** ([ADR-0013](adr/0013-autosave-day-entries.md)): Submit-Button entfällt, Hybrid-Auto-Save mit Status-Maschine (`idle | dirty | saving | saved | error`), 800 ms-Debounce, POST→PATCH-Flip aus PR #117 wiederverwendet, online-only (Offline-Buffer bleibt M4 / [ADR-0009](adr/0009-offline-sync-nach-m4.md)).
+- **Home-Dashboard** ([ADR-0014](adr/0014-home-dashboard-recent-entries-sparkline.md)): Recent-Entries-Liste (7 Tage, klickbar mit `?date=`-Param auf `/entries/new`), 7-Tage-Summary (Mood-/Energy-/Stress-Avg + **Eintrags-Streak** gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md)), 14-Tage-Mood-Sparkline (eigenes SVG, keine Chart-Lib-Dependency).
+- **`/entries/new?date=YYYY-MM-DD`-Routing**: Bestehender Loader respektiert Query-Param.
+- **Exit:** Tagesansicht ohne Speichern-Button bedienbar; Startseite zeigt Trend und navigiert direkt zu vergangenen Tagen.
+
+#### Akzeptanzkriterien M1.5
+
+- [ ] Auto-Save speichert Slider-/Tag-/Symptom-/Notes-Änderungen ohne Button-Klick; Status-Badge sichtbar in allen fünf Zuständen
+- [ ] Erster Save eines Tages bleibt POST, Folge-Saves PATCH (kein 409 mehr beim zweiten Submit)
+- [ ] Datumswechsel löst **kein** Auto-Save aus (nur Hydration)
+- [ ] `beforeunload`-Listener warnt bei Tab-Close während `dirty` oder `saving`
+- [ ] Recent-Entries-Liste zeigt 7 Tage; leerer Tag als gestrichelte Card; Klick navigiert zu `/entries/new?date=...`
+- [ ] 7-Tage-Summary korrekt bei lueckenhaften Tagen; Streak bricht erst am Folgetag eines fehlenden Eintrags
+- [ ] Sparkline rendert mit fehlenden Datenpunkten (Dashed-Line); Tooltip pro Punkt; theme-aware
+- [ ] **Quality-Gate:** Lint 0/0, Typecheck 0/0, Vitest 100% pre-existing + neue Tests grün
+
+---
+
 ### M2 — Visualisierung (Woche 6–7) → „Ich sehe meinen Verlauf"
 
-- Mood-Zeitreihe (Woche/Monat/Jahr)
-- Tag-Frequenz-Heatmap
-- Streak-Widgets
+- Mood-Zeitreihe (Woche/Monat/Jahr) — erweitert auf Multi-Metric (Energy, Stress) und Bar/Heatmap
+- Tag-Frequenz-Heatmap (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
+- Streak-Widgets (Backend-API als Datenquelle für den in M1.5 eingeführten clientseitigen Streak; Anzeige bleibt unverändert)
 - CSV/JSON-Export
+- Schema-Vorgriff Habits gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md): `tags.habit_type` + `tags.target_frequency`-Spalten, ohne API/UI
 - **Exit:** Nutzer versteht Trends visuell
 
 #### Akzeptanzkriterien M2
