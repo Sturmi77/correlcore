@@ -38,6 +38,7 @@
 
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import SymptomIcon from '$lib/components/common/SymptomIcon.svelte';
   import { refreshSymptoms, submitSymptom, symptoms, symptomsList } from '$lib/stores/symptoms';
   import {
     INTENSITY_MAX,
@@ -227,7 +228,9 @@
           <fieldset class="symptom-fieldset" {disabled}>
             <legend class="symptom-name">
               {#if symptom.icon}
-                <span class="symptom-icon" aria-hidden="true">{symptom.icon}</span>
+                <span class="symptom-icon" aria-hidden="true">
+                  <SymptomIcon icon={symptom.icon} />
+                </span>
               {/if}
               <span>{name}</span>
             </legend>
@@ -307,10 +310,16 @@
             class="input"
             type="text"
             bind:value={customIcon}
-            maxlength="8"
+            maxlength="32"
             disabled={customBusy || disabled}
             placeholder={$_('symptom.custom.icon_placeholder')}
           />
+          <small class="symptom-custom-hint">{$_('symptom.custom.icon_hint')}</small>
+          {#if customIcon.trim()}
+            <span class="symptom-custom-preview" aria-live="polite">
+              <SymptomIcon icon={customIcon} size={20} />
+            </span>
+          {/if}
         </label>
         {#if customError}
           <p class="symptom-custom-error" role="alert">{$_(customError)}</p>
@@ -406,6 +415,25 @@
   .symptom-icon {
     font-size: 1rem;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .symptom-custom-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: var(--text-xs, 0.78rem);
+    color: var(--color-muted, #6b7280);
+    line-height: 1.4;
+  }
+
+  .symptom-custom-preview {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 0.35rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 6px;
+    background: var(--color-surface-2, rgba(0, 0, 0, 0.04));
   }
 
   .symptom-scale {
