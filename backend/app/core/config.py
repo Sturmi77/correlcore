@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"  # development | staging | production
     APP_VERSION: str = "0.0.1"
     DEBUG: bool = False
+    DEV_VIEW_ENABLED: bool = False
+    IMAGE_TAG: str = "latest"
+    IMAGE_DIGEST: str = ""
+    GIT_COMMIT: str = "unknown"
+    GIT_BRANCH: str = "unknown"
+    BUILD_TIME: str = ""
     SECRET_KEY: str = Field(
         default="CHANGE_ME_IN_PRODUCTION_MIN_32_BYTES_RANDOM",
         validation_alias=AliasChoices("SECRET_KEY", "JWT_SECRET"),

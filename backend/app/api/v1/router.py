@@ -2,12 +2,15 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, entries, export, health, symptoms, tags, user
+from app.api.v1.endpoints import auth, dev, entries, export, health, symptoms, tags, user
 
 api_router = APIRouter()
 
 # Internal health probes
 api_router.include_router(health.router, prefix="/health", tags=["internal"])
+
+# Feature-flagged developer diagnostics (Issue #125)
+api_router.include_router(dev.router, prefix="/dev", tags=["internal"])
 
 # Auth
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])

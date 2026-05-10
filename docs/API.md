@@ -835,7 +835,46 @@ in [`DATA_EXPORT_FORMAT.md`](DATA_EXPORT_FORMAT.md) dokumentiert.
 
 ---
 
-## 11. Admin
+## 11. Developer Diagnostics
+
+```
+GET    /api/v1/dev/info
+```
+
+Default-off Diagnose-Endpunkt fuer verifizierte User. Wenn
+`DEV_VIEW_ENABLED=false` ist, antwortet der Endpunkt absichtlich mit `404`.
+Ohne Session kommt `401`, mit unverified User `403`.
+
+Die Response trennt GitHub-Version und Container-Artefakt:
+
+```json
+{
+  "git_commit": "26c4274e0b2688931f7ceab108d72b775233fdf7",
+  "git_branch": "main",
+  "build_time": "2026-05-10T16:00:00Z",
+  "image_tag": "sha-26c4274",
+  "image_digest": "ghcr.io/sturmi77/moodsync-api@sha256:...",
+  "image_hash": "ghcr.io/sturmi77/moodsync-api@sha256:...",
+  "python_version": "3.12.13",
+  "fastapi_version": "0.115.0",
+  "db_migration_head": "009",
+  "db_pool_size": 10,
+  "db_checked_out": 1,
+  "redis_connected": true,
+  "minio_connected": false,
+  "health_ready": true,
+  "uptime_seconds": 42
+}
+```
+
+`git_commit` wird beim Image-Build eingebettet und ist die primaere
+GitHub-Versionskennung. `image_digest` ist nur gesetzt, wenn das Deployment den
+echten OCI/RepoDigest als ENV `IMAGE_DIGEST` uebergibt; sonst ist der Wert
+`null`.
+
+---
+
+## 12. Admin
 
 ```
 GET    /api/v1/admin/users          User-Liste
@@ -846,7 +885,7 @@ GET    /api/v1/admin/audit-log      Audit-Log abrufen
 
 ---
 
-## 12. Fehlerformat (RFC 7807)
+## 13. Fehlerformat (RFC 7807)
 
 ```json
 {

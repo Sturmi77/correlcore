@@ -248,6 +248,11 @@
       "error_load": "Could not load tags.",
       "error_save": "Could not save this tag.",
       "error_reset": "Could not reset this tag."
+    },
+    "dev": {
+      "heading": "Developer View",
+      "body": "Inspect the GitHub commit, image tag and optional OCI digest currently served by the backend.",
+      "open": "Open developer view"
     }
   },
   "disclaimer": {

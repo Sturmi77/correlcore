@@ -700,6 +700,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - Streak-Widgets (Backend-API als Datenquelle für den in M1.5 eingeführten clientseitigen Streak; Anzeige bleibt unverändert)
 - CSV/JSON-Export
 - Schema-Vorgriff Habits gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md): `tags.habit_type` + `tags.target_frequency`-Spalten, ohne API/UI
+- M2-Stretch Developer-View gemäß [ADR-0015](adr/0015-developer-view-version-identifikation.md): `/dev` zeigt GitHub-Commit, Image-Tag und optionalen OCI/RepoDigest; default-off via `DEV_VIEW_ENABLED`
 - **Exit:** Nutzer versteht Trends visuell
 
 #### Akzeptanzkriterien M2

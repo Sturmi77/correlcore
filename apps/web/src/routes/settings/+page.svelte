@@ -1,11 +1,15 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import { ApiError } from '$lib/api/client';
+  import { fetchDevInfo } from '$lib/api/dev';
   import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
 
   let busy: ExportKind | null = null;
   let error = '';
+  let devAvailable = false;
 
   async function handleDownload(kind: ExportKind): Promise<void> {
     busy = kind;
@@ -19,6 +23,24 @@
       busy = null;
     }
   }
+
+  async function checkDevView(): Promise<void> {
+    if ($auth.status !== 'authenticated') return;
+    try {
+      await fetchDevInfo();
+      devAvailable = true;
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        devAvailable = false;
+        return;
+      }
+      devAvailable = false;
+    }
+  }
+
+  onMount(() => {
+    void checkDevView();
+  });
 </script>
 
 <svelte:head>
@@ -51,6 +73,18 @@
         <a class="btn variant-soft-primary" href="/settings/tags">{$_('settings.tags.open')}</a>
       </div>
     </section>
+
+    {#if devAvailable}
+      <section class="settings__panel">
+        <div class="settings__panel-head">
+          <h2>{$_('settings.dev.heading')}</h2>
+          <p>{$_('settings.dev.body')}</p>
+        </div>
+        <div class="settings__downloads">
+          <a class="btn variant-soft-primary" href="/dev">{$_('settings.dev.open')}</a>
+        </div>
+      </section>
+    {/if}
 
     <section class="settings__panel">
       <div class="settings__panel-head">

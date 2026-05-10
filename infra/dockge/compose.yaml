@@ -36,6 +36,9 @@ x-api-env: &api-env
   SMTP_FROM: ${SMTP_FROM:-noreply@moodsync.local}
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
+  DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+  IMAGE_TAG: ${IMAGE_TAG:-latest}
+  IMAGE_DIGEST: ${IMAGE_DIGEST:-}
 
 services:
   # ── Migrations-Init ───────────────────────────────────────────────────────
