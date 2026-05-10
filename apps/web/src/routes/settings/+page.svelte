@@ -44,6 +44,16 @@
   {:else}
     <section class="settings__panel">
       <div class="settings__panel-head">
+        <h2>{$_('settings.tags.heading')}</h2>
+        <p>{$_('settings.tags.body')}</p>
+      </div>
+      <div class="settings__downloads">
+        <a class="btn variant-soft-primary" href="/settings/tags">{$_('settings.tags.open')}</a>
+      </div>
+    </section>
+
+    <section class="settings__panel">
+      <div class="settings__panel-head">
         <h2>{$_('settings.export.heading')}</h2>
         <p>{$_('settings.export.body')}</p>
       </div>

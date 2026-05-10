@@ -10,7 +10,7 @@ Schemas:
 Service layer:
 - list_default_tags / list_visible_tags happy paths.
 - create_custom_tag — clash with default → 409, IntegrityError → 409.
-- update_custom_tag — owner-only, 404 for foreign or default.
+- update_custom_tag — owner-only for customs, copy-on-write for defaults.
 - delete_custom_tag — owner-only.
 - assign_tags_to_entry — replace semantics, missing tag → error,
   missing entry → error.
@@ -270,6 +270,66 @@ async def test_update_custom_tag_not_found_for_default_or_foreign() -> None:
 
 
 @pytest.mark.asyncio
+async def test_update_default_tag_creates_user_override() -> None:
+    user = make_user()
+    default = make_tag(slug="sport", name="Sport", is_default=True)
+    db = MagicMock()
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(default),
+            _scalar_result(None),
+        ]
+    )
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=default.id,
+        payload=TagUpdate(name="Training", color="#112233"),
+    )
+
+    assert out is not default
+    assert out.user_id == user.id
+    assert out.slug == default.slug
+    assert out.name == "Training"
+    assert out.color == "#112233"
+    assert out.is_default is False
+    assert default.name == "Sport"
+    db.add.assert_called_once_with(out)
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_default_tag_reuses_existing_user_override() -> None:
+    user = make_user()
+    default = make_tag(slug="sport", name="Sport", is_default=True)
+    override = make_tag(user, slug="sport", name="My Sport")
+    db = MagicMock()
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(default),
+            _scalar_result(override),
+        ]
+    )
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=default.id,
+        payload=TagUpdate(is_hidden=True),
+    )
+
+    assert out is override
+    assert out.is_hidden is True
+    db.add.assert_not_called()
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_delete_custom_tag_calls_db_delete() -> None:
     user = make_user()
     tag = make_tag(user, slug="x", name="X")
@@ -476,7 +536,7 @@ async def test_get_tags_200(async_client: AsyncClient, user: User) -> None:
             return_value=rows,
         ):
             r = await async_client.get(
-                "/api/v1/tags",
+                "/api/v1/tags?include_hidden=true",
                 cookies={"access_token": "valid.access.token"},
             )
     finally:
@@ -485,6 +545,7 @@ async def test_get_tags_200(async_client: AsyncClient, user: User) -> None:
     assert r.status_code == 200
     body = r.json()
     assert len(body) == 2
+    assert body[0]["is_hidden"] is False
 
 
 @pytest.mark.asyncio

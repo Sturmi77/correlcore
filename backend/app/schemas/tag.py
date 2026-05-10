@@ -85,17 +85,19 @@ class TagCreate(BaseModel):
 
 
 class TagUpdate(BaseModel):
-    """Payload for ``PATCH /api/v1/tags/{id}`` — custom tags only.
+    """Payload for ``PATCH /api/v1/tags/{id}``.
 
     The slug is intentionally not patchable: changing a slug breaks
     every historical entry that references the tag. Users who want a
-    new slug should create a new tag and re-tag their entries.
+    new slug should create a new tag and re-tag their entries. Default
+    tag updates create or update a user-owned copy-on-write override.
     """
 
     name: str | None = Field(default=None, min_length=1, max_length=64)
     category: TagCategory | None = None
     icon: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=7)
+    is_hidden: bool | None = None
 
     @field_validator("name")
     @classmethod
@@ -158,5 +160,6 @@ class TagResponse(BaseModel):
     icon: str | None
     color: str | None
     is_default: bool
+    is_hidden: bool
     created_at: datetime
     updated_at: datetime

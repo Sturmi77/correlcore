@@ -410,11 +410,19 @@ M1-Implementierungsstand (Issue #8). Tags sind in zwei Klassen geteilt:
 
 Kategorien (`TagCategory`): `sport`, `social`, `work`, `leisure`, `consumption`, `health`, `other`.
 
+M2-Stretch (#124) erweitert den Vertrag um persoenliche Default-Overrides:
+`PATCH /api/v1/tags/{id}` mutiert globale Default-Tags nicht direkt, sondern
+legt fuer den User eine Copy-on-Write-Zeile mit gleichem `slug` an. Diese
+Override-Zeile ueberschattet den Default. `is_hidden=true` blendet Tags aus
+normalen Listen und aus dem Entry-Picker aus; Settings koennen sie mit
+`include_hidden=true` trotzdem laden und zuruecksetzen.
+
 ```
 GET    /api/v1/tags/default                Kuratierte Standard-Tags        (no auth)
-GET    /api/v1/tags                        Defaults + eigene Custom-Tags   (60/min)
+GET    /api/v1/tags                        Defaults + eigene Custom-Tags   (120/min)
+GET    /api/v1/tags?include_hidden=true    Inkl. Hidden-Tags/Overrides     (120/min)
 POST   /api/v1/tags                        Neuen Custom-Tag erstellen      (60/min)
-PATCH  /api/v1/tags/{id}                   Custom-Tag aktualisieren        (60/min)
+PATCH  /api/v1/tags/{id}                   Tag aktualisieren/Override      (60/min)
 DELETE /api/v1/tags/{id}                   Custom-Tag löschen              (60/min)
 GET    /api/v1/entries/{entry_id}/tags     Tags eines Eintrags             (120/min)
 PUT    /api/v1/entries/{entry_id}/tags     Tag-Set ersetzen (replace)      (60/min)
@@ -427,7 +435,8 @@ PUT    /api/v1/entries/{entry_id}/tags     Tag-Set ersetzen (replace)      (60/m
 - `category` — Enum (siehe oben).
 - `icon` — optional, max. 32 Zeichen (Emoji oder kurzer Slug für Icon-Lookup).
 - `color` — optional, 7-Zeichen-Hex (`#rrggbb`); fällt auf Kategorie-Default zurück.
-- `is_default` — boolean, server-managed; Defaults sind nicht mutierbar.
+- `is_default` — boolean, server-managed; Defaults werden per Copy-on-Write ueberschattet.
+- `is_hidden` — boolean; normale Listen und Entry-Picker filtern versteckte Tags aus.
 
 ### `POST /api/v1/tags`
 
@@ -455,7 +464,7 @@ Fehler:
 
 ### `PATCH /api/v1/tags/{id}`
 
-Nur Custom-Tags des aufrufenden Users sind editierbar. Versuch, einen Default-Tag zu ändern, liefert `403 Forbidden`. Slug ist bewusst **nicht** patchbar (würde Verweise in `entry_tags` brechen).
+Custom-Tags des aufrufenden Users werden direkt editiert. Wird ein Default-Tag gepatcht, erzeugt oder aktualisiert das Backend stattdessen einen persoenlichen Override (`user_id = current_user`, gleicher `slug`, `is_default=false`) und gibt diesen Override zurueck. Slug ist bewusst **nicht** patchbar (wuerde Verweise in `entry_tags` brechen).
 
 Request (alle Felder optional):
 
@@ -470,7 +479,7 @@ Request (alle Felder optional):
 
 ### `DELETE /api/v1/tags/{id}`
 
-Löscht einen Custom-Tag und kaskadiert alle `entry_tags`-Verknüpfungen (FK `ON DELETE CASCADE`). Default-Tags lassen sich nicht löschen (`403 Forbidden`).
+Loescht einen Custom-Tag oder einen persoenlichen Default-Override. Bei Overrides bedeutet das "zuruecksetzen auf Standard": der globale Default wird wieder sichtbar. Default-Tags selbst lassen sich nicht loeschen.
 
 Response: `204 No Content`.
 
@@ -495,8 +504,7 @@ Response `200 OK`: Liste der `TagResponse`-Objekte nach dem Replace.
 Fehler:
 
 - `404 Not Found` — Entry gehört nicht dem User.
-- `409 Conflict` — Mindestens eine `tag_id` ist nicht sichtbar (weder Default noch Custom-Tag des Users).
-- `422 Unprocessable Entity` — Liste enthält Duplikate oder ist länger als 50.
+- `422 Unprocessable Entity` — Liste enthält Duplikate, ist länger als 50, oder mindestens eine `tag_id` ist nicht sichtbar.
 
 ### `TagResponse`
 
@@ -510,6 +518,7 @@ Fehler:
   "icon": "🏃",
   "color": "#22c55e",
   "is_default": true,
+  "is_hidden": false,
   "created_at": "2026-05-04T17:00:00Z",
   "updated_at": "2026-05-04T17:00:00Z"
 }

@@ -108,6 +108,18 @@
       "leave_warning": "Es laufen noch ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?"
     }
   },
+  "day_entries": {
+    "title": "Tageseinträge",
+    "loading": "Lade diesen Tag…",
+    "invalid_date": "Dieses Datum ist ungültig.",
+    "empty": "Für diesen Tag gibt es noch keine Einträge.",
+    "empty_for_tag": "Für diesen Tag gibt es keine Einträge mit diesem Tag.",
+    "create": "Diesen Tag erfassen",
+    "add_or_edit": "Erfassen oder bearbeiten",
+    "edit": "Bearbeiten",
+    "list_aria": "Einträge für den ausgewählten Tag",
+    "score_line": "Stimmung {mood}/5 · Energie {energy}/5 · Stress {stress}/5"
+  },
   "tag": {
     "picker_label": "Tags",
     "picker_counter": "{count}/{max} ausgewählt",
@@ -213,6 +225,29 @@
       "csv": "CSV herunterladen",
       "busy": "Bereite Download vor…",
       "error": "Export konnte nicht erstellt werden."
+    },
+    "tags": {
+      "heading": "Tags",
+      "body": "Benenne Tags um, ändere Farbe und Icon, blende Tags aus oder setze sie zurück.",
+      "open": "Tags verwalten",
+      "title": "Tags verwalten",
+      "subtitle": "Passe Standard- und eigene Tags an, ohne das kuratierte Set für andere zu ändern.",
+      "default": "Standard",
+      "override": "Persönlicher Override",
+      "custom": "Eigen",
+      "hidden": "Ausgeblendet",
+      "name": "Name",
+      "category": "Kategorie",
+      "icon": "Icon",
+      "color": "Farbe",
+      "save": "Speichern",
+      "saving": "Speichert…",
+      "hide": "Ausblenden",
+      "show": "Einblenden",
+      "reset": "Zurücksetzen",
+      "error_load": "Tags konnten nicht geladen werden.",
+      "error_save": "Dieser Tag konnte nicht gespeichert werden.",
+      "error_reset": "Dieser Tag konnte nicht zurückgesetzt werden."
     }
   },
   "disclaimer": {

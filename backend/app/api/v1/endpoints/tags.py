@@ -87,10 +87,16 @@ async def list_default_tags_endpoint(
 async def list_tags_endpoint(
     request: Request,
     limit: int = Query(default=DEFAULT_TAG_LIST_LIMIT, ge=1, le=MAX_TAG_LIST_LIMIT),
+    include_hidden: bool = Query(default=False, alias="include_hidden"),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> list[TagResponse]:
-    tags = await list_visible_tags(db, user_id=user.id, limit=limit)
+    tags = await list_visible_tags(
+        db,
+        user_id=user.id,
+        limit=limit,
+        include_hidden=include_hidden,
+    )
     return [TagResponse.model_validate(t) for t in tags]
 
 
@@ -120,7 +126,7 @@ async def create_tag_endpoint(
 @tags_router.patch(
     "/{tag_id}",
     response_model=TagResponse,
-    summary="Update a custom tag (defaults are read-only)",
+    summary="Update a tag or create a user override for a default",
 )
 @limiter.limit("60/minute")
 async def update_tag_endpoint(

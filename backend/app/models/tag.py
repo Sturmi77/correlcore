@@ -10,8 +10,8 @@ Design notes
   ``is_default = FALSE``). The DB enforces this with a CHECK constraint
   so neither half of the invariant can drift.
 - Default tags are seeded by the migration. They are immutable from the
-  application perspective: the API never lets a regular user edit or
-  delete a default tag. (DESIGN_DOCUMENT.md §2.2.)
+  application perspective: user edits create personal copy-on-write
+  overrides instead of mutating defaults globally. (DESIGN_DOCUMENT.md §2.2.)
 - Categories live as an enum (``sport | social | work | leisure |
   consumption | health | other``) so reports can group without
   clustering on free-text strings. The DESIGN_DOCUMENT lists the first
@@ -130,6 +130,12 @@ class Tag(Base):
     # Color: 7-char ``#rrggbb`` hex. Validated at the schema layer.
     color: Mapped[str | None] = mapped_column(String(7), nullable=True)
     is_default: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default="false",
+        default=False,
+    )
+    is_hidden: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
         server_default="false",

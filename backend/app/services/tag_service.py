@@ -4,8 +4,9 @@ Layering
 --------
 - Endpoints validate HTTP and shape responses.
 - This module owns the business rules:
-    * The user can only mutate *their own* custom tags. Default tags
-      are read-only (``EntryTagOperationDeniedError``).
+    * The user mutates own custom tags directly. Default-tag edits
+      create user-owned copy-on-write overrides so curated defaults
+      never change globally.
     * Slug uniqueness conflicts are surfaced as
       :class:`TagConflictError` so the endpoint can map them to 409.
     * Assigning tags to an entry replaces the current tag set — the
@@ -27,9 +28,11 @@ import logging
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, exists, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.entry import Entry
 from app.models.tag import EntryTag, Tag
@@ -96,6 +99,45 @@ async def _get_owned_custom_tag(db: AsyncSession, *, tag_id: uuid.UUID, user_id:
     return tag
 
 
+async def _get_editable_tag(db: AsyncSession, *, tag_id: uuid.UUID, user_id: uuid.UUID) -> Tag:
+    """Fetch an own custom tag or a curated default tag for copy-on-write."""
+    result = await db.execute(
+        select(Tag).where(
+            Tag.id == tag_id,
+            (Tag.user_id == user_id) | (Tag.is_default.is_(True)),
+        )
+    )
+    tag = result.scalar_one_or_none()
+    if tag is None:
+        raise TagNotFoundError("tag not found")
+    return tag
+
+
+async def _find_user_override(db: AsyncSession, *, user_id: uuid.UUID, slug: str) -> Tag | None:
+    """Return the user's copy-on-write row for a default slug, if present."""
+    result = await db.execute(
+        select(Tag).where(
+            Tag.user_id == user_id,
+            Tag.slug == slug,
+            Tag.is_default.is_(False),
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+def _visible_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
+    """Return the visibility predicate for defaults plus user overrides."""
+    override = aliased(Tag)
+    shadowed_default = exists(
+        select(override.id).where(
+            override.user_id == user_id,
+            override.slug == Tag.slug,
+            override.is_default.is_(False),
+        )
+    )
+    return (Tag.user_id == user_id) | (Tag.is_default.is_(True) & ~shadowed_default)
+
+
 async def _get_owned_entry(db: AsyncSession, *, entry_id: uuid.UUID, user_id: uuid.UUID) -> Entry:
     """Fetch an entry the user owns or raise :class:`EntryNotFoundForTagError`."""
     result = await db.execute(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id))
@@ -123,15 +165,18 @@ async def list_visible_tags(
     *,
     user_id: uuid.UUID,
     limit: int = DEFAULT_TAG_LIST_LIMIT,
+    include_hidden: bool = False,
 ) -> list[Tag]:
-    """Return defaults *plus* the user's own custom tags, ordered by slug."""
+    """Return defaults plus user tags, with overrides shadowing defaults."""
     limit = max(1, min(limit, MAX_TAG_LIST_LIMIT))
     stmt = (
         select(Tag)
-        .where((Tag.is_default.is_(True)) | (Tag.user_id == user_id))
+        .where(_visible_tag_predicate(user_id))
         .order_by(Tag.category.asc(), Tag.slug.asc())
         .limit(limit)
     )
+    if not include_hidden:
+        stmt = stmt.where(Tag.is_hidden.is_(False))
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
@@ -186,14 +231,30 @@ async def update_custom_tag(
     tag_id: uuid.UUID,
     payload: TagUpdate,
 ) -> Tag:
-    """Update a custom tag the user owns.
+    """Update an own tag, or create/update an override for a default tag.
 
     Raises:
-        TagNotFoundError: tag does not exist or belongs to someone else
-            (or is a curated default — defaults are read-only and the
-            ownership filter excludes them).
+        TagNotFoundError: tag does not exist or belongs to someone else.
     """
-    tag = await _get_owned_custom_tag(db, tag_id=tag_id, user_id=user_id)
+    source = await _get_editable_tag(db, tag_id=tag_id, user_id=user_id)
+    if source.is_default:
+        tag = await _find_user_override(db, user_id=user_id, slug=source.slug)
+        if tag is None:
+            tag = Tag(
+                user_id=user_id,
+                slug=source.slug,
+                name=source.name,
+                category=source.category,
+                icon=source.icon,
+                color=source.color,
+                is_default=False,
+                is_hidden=False,
+                habit_type=source.habit_type,
+                target_frequency=source.target_frequency,
+            )
+            db.add(tag)
+    else:
+        tag = source
 
     data = payload.model_dump(exclude_unset=True)
     for field, value in data.items():
@@ -280,7 +341,8 @@ async def assign_tags_to_entry(
         visible = await db.execute(
             select(Tag.id).where(
                 Tag.id.in_(target_ids),
-                (Tag.is_default.is_(True)) | (Tag.user_id == user_id),
+                _visible_tag_predicate(user_id),
+                Tag.is_hidden.is_(False),
             )
         )
         visible_ids = {row[0] for row in visible.all()}
