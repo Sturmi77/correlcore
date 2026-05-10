@@ -74,7 +74,7 @@ services:
 
   # ── Backend API ────────────────────────────────────────────────────────────
   api:
-    image: ghcr.io/sturmi77/moodsync-api:latest
+    image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
     container_name: moodsync-api
     restart: unless-stopped
     env_file: .env
@@ -100,6 +100,9 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@${DOMAIN}}
       UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
+      DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+      IMAGE_TAG: ${IMAGE_TAG:-latest}
+      IMAGE_DIGEST: ${IMAGE_DIGEST:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -132,7 +135,7 @@ services:
 
   # ── Web Frontend ───────────────────────────────────────────────────────────
   web:
-    image: ghcr.io/sturmi77/moodsync-web:latest
+    image: ghcr.io/sturmi77/moodsync-web:${IMAGE_TAG:-latest}
     container_name: moodsync-web
     restart: unless-stopped
     env_file: .env
@@ -159,7 +162,7 @@ services:
 
   # ── Analytics Worker ───────────────────────────────────────────────────────
   worker:
-    image: ghcr.io/sturmi77/moodsync-api:latest
+    image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
     container_name: moodsync-worker
     restart: unless-stopped
     command: python -m app.workers.analytics
@@ -171,6 +174,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
+      DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+      IMAGE_TAG: ${IMAGE_TAG:-latest}
+      IMAGE_DIGEST: ${IMAGE_DIGEST:-}
     depends_on:
       postgres:
         condition: service_healthy

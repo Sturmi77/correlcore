@@ -25,6 +25,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0012](0012-m2-m5-streak-semantik.md)                   | M2/M5 Streak-Semantik + Habit-Schema-Vorgriff                | Vorgeschlagen | 2026-05-08 |
 | [ADR-0013](0013-autosave-day-entries.md)                    | Auto-Save für Day-Entries (M1.5)                             | Akzeptiert    | 2026-05-09 |
 | [ADR-0014](0014-home-dashboard-recent-entries-sparkline.md) | Home-Dashboard mit Recent-Entries + 14-Tage-Sparkline (M1.5) | Akzeptiert    | 2026-05-09 |
+| [ADR-0015](0015-developer-view-version-identifikation.md)   | Developer-View fuer Versionsidentifikation                   | Akzeptiert    | 2026-05-10 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -83,6 +84,15 @@ Die Tagesansicht wechselt von manuellem Submit auf Hybrid Auto-Save mit sichtbar
 ### ADR-0014 – Home-Dashboard mit Recent-Entries und 14-Tage-Sparkline
 
 Recent-Entries-Liste (7 Tage, klickbar mit `?date=`-Param), 7-Tage-Summary (Mood/Energy/Stress-Avg + Eintrags-Streak per ADR-0012) und 14-Tage-Mood-Sparkline werden von M2 nach M1.5 vorgezogen. Keine neue Dependency: Sparkline ist eigenes SVG (~80 LOC, theme-aware, wiederverwendbar für M2-Charts). Kein neuer Backend-Endpoint; alles aus dem bestehenden `listEntries`-Pfad. Streak-Berechnung clientseitig in `lib/utils/streak.ts`, in M2 wechselt nur die Datenquelle wenn der Backend-Streak-Endpoint kommt. Anonymous-Landing bleibt unverändert.
+
+### ADR-0015 - Developer-View fuer Versionsidentifikation
+
+`/dev` wird als default-off Diagnose-View fuer verifizierte User eingefuehrt.
+`git_commit`/`git_branch`/`build_time` werden beim API-Image-Build eingebettet
+und beantworten, welche GitHub-Version laeuft. `image_tag` und optional
+`image_digest` kommen aus dem Deployment; der echte RepoDigest wird nicht im
+Container ermittelt und der Docker-Socket bleibt bewusst ungemountet. Fehlt
+`IMAGE_DIGEST`, zeigt API/UI `null` bzw. "Digest not provided".
 
 ---
 

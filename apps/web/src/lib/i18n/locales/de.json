@@ -248,6 +248,11 @@
       "error_load": "Tags konnten nicht geladen werden.",
       "error_save": "Dieser Tag konnte nicht gespeichert werden.",
       "error_reset": "Dieser Tag konnte nicht zurückgesetzt werden."
+    },
+    "dev": {
+      "heading": "Developer View",
+      "body": "Prüfe den GitHub-Commit, Image-Tag und optionalen OCI-Digest, den das Backend aktuell meldet.",
+      "open": "Developer View öffnen"
     }
   },
   "disclaimer": {

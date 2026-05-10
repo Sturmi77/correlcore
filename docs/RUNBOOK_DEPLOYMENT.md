@@ -397,6 +397,39 @@ reversibel, weil auch die verschluesselten DEKs des Users entfernt werden.
 
 ---
 
+## 9. Echte Image-Version im Deployment verifizieren
+
+Seit M2-Stretch gibt es die default-off Developer-View `/dev`. Sie beantwortet
+zwei unterschiedliche Fragen:
+
+- `git_commit`: welche GitHub-Version wurde ins API-Image gebaut?
+- `image_digest`: welches exakte OCI/RepoDigest-Artefakt meldet das Deployment?
+
+`git_commit`, `git_branch` und `build_time` werden im Release-Workflow per
+Build-Args gesetzt. `image_tag` und `image_digest` sind Runtime-ENV-Werte aus
+Compose/Dockhand/Dockge. Der API-Container liest keinen Docker-Socket.
+
+Empfohlene `.env`-Werte fuer verifizierbare Deployments:
+
+```env
+DEV_VIEW_ENABLED=true
+IMAGE_TAG=sha-26c4274
+IMAGE_DIGEST=ghcr.io/sturmi77/moodsync-api@sha256:<digest>
+```
+
+Den Digest nach Pull/Deploy vom Host ermitteln:
+
+```bash
+docker inspect ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG} \
+  --format='{{index .RepoDigests 0}}'
+```
+
+Wenn `IMAGE_DIGEST` leer bleibt, zeigt `/dev` bewusst `Digest not provided`.
+Das ist kein Fehler, sondern bedeutet: GitHub-Version ist sichtbar, das exakte
+Container-Artefakt wurde vom Deployment nicht an den Container uebergeben.
+
+---
+
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
 | Symptom                                                                                                                   | Erste Hypothese                                                             | Sofort-Check                                                                                                                                                                                                                                         |

@@ -28,6 +28,10 @@ FROM python:3.12-slim AS runtime
 
 WORKDIR /app
 
+ARG GIT_COMMIT=unknown
+ARG GIT_BRANCH=unknown
+ARG BUILD_TIME=
+
 # Non-root user for security
 RUN groupadd -r moodsync && useradd -r -g moodsync moodsync
 
@@ -36,6 +40,9 @@ COPY --from=builder /app/.venv .venv
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV GIT_COMMIT=${GIT_COMMIT}
+ENV GIT_BRANCH=${GIT_BRANCH}
+ENV BUILD_TIME=${BUILD_TIME}
 
 # Copy source
 COPY app/ app/
