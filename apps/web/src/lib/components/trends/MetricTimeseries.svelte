@@ -15,10 +15,11 @@
   const height = 220;
   const padding = 28;
 
+  // GAP-11: Metrik-Farben aus CSS-Token-System statt Hex-Literalen
   const metrics: { key: MetricKey; label: string; color: string }[] = [
-    { key: 'mood_avg', label: 'trends.metric.mood', color: '#01696f' },
-    { key: 'energy_avg', label: 'trends.metric.energy', color: '#10b981' },
-    { key: 'stress_avg', label: 'trends.metric.stress', color: '#ef4444' },
+    { key: 'mood_avg',   label: 'trends.metric.mood',   color: 'var(--color-metric-mood)'   },
+    { key: 'energy_avg', label: 'trends.metric.energy', color: 'var(--color-metric-energy)' },
+    { key: 'stress_avg', label: 'trends.metric.stress', color: 'var(--color-metric-stress)' },
   ];
 
   $: series = metrics.map((metric) => {
@@ -96,14 +97,14 @@
   .timeseries {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: var(--space-3);
   }
 
   .timeseries__head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .timeseries__head h2 {
@@ -116,42 +117,46 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 0.55rem;
-    font-size: 0.78rem;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
     opacity: 0.78;
   }
 
   .timeseries__legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-1);
   }
 
   .timeseries__dot {
     width: 0.55rem;
     height: 0.55rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--metric-color);
   }
 
   .timeseries__chart {
     width: 100%;
     min-height: 15rem;
-    border-radius: 0.5rem;
-    background: rgb(var(--color-surface-50, 249 250 251) / 0.72);
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.45);
+    /* GAP-10: Radius-Token statt Literal */
+    border-radius: var(--radius-md);
+    /* GAP-03: ersetzt rgb(var(--color-surface-50, 249 250 251) / 0.72) */
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
   }
 
   .timeseries__grid {
     stroke: currentColor;
-    opacity: 0.1;
+    /* GAP-04 Vorbereitung: Opacity 0.1 → 0.18 für bessere Dark-Mode-Sichtbarkeit */
+    opacity: 0.18;
     stroke-width: 1;
   }
 
   .timeseries__tick {
     font-size: 11px;
     fill: currentColor;
-    opacity: 0.45;
+    /* GAP-04 Vorbereitung: Opacity 0.45 → 0.65 */
+    opacity: 0.65;
   }
 
   .timeseries__line {
@@ -164,7 +169,8 @@
 
   .timeseries__point {
     fill: var(--metric-color);
-    stroke: rgb(var(--color-surface-50, 249 250 251));
+    /* GAP-03: ersetzt rgb(var(--color-surface-50, 249 250 251)) */
+    stroke: var(--color-bg);
     stroke-width: 2;
   }
 
@@ -177,7 +183,7 @@
 
   .timeseries__empty {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     opacity: 0.72;
   }
 
