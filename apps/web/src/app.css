@@ -24,6 +24,13 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
+  /* GAP-10: Radius-Token-System */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
   /* Transitions */
   --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -34,12 +41,6 @@
 
   /* -------------------------------------------------------------------------
    * Layout-Tokens (Fix 1: Safe-Area + page-shell)
-   *
-   * Verwendet env(safe-area-inset-*) für iPhone-Notch / Android-Edge-to-Edge.
-   * max() stellt sicher, dass mindestens --space-4 (16px) Abstand bleibt,
-   * auch auf Geräten ohne Safe-Area-Insets.
-   * Alle Seiten-Abstände und das Chart-"klebt am Rand"-Problem
-   * werden damit über einen einzigen Token gesteuert.
    * ------------------------------------------------------------------------- */
   --page-padding-x: max(var(--space-4), env(safe-area-inset-left));
   --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
@@ -50,16 +51,7 @@
 /* ---------------------------------------------------------------------------
  * Theme tokens — driven by data-theme on <html>
  *
- * The theme store (lib/stores/theme.ts) writes data-theme="light"|"dark" on
- * documentElement; the inline bootstrap script in app.html applies the
- * persisted value before first paint (avoids flash of wrong theme).
- *
- * Dark is the default (matches store getInitial() and app.html). Light
- * overrides the same tokens via the [data-theme="light"] selector.
- *
- * Fix 2: Erweiterte Token-Hierarchie für Dark Mode Kontrast-Problem.
- * Jede Ebene hat jetzt vollständige Text-, Surface- und Primary-Varianten,
- * damit Komponenten niemals hardcodierte Farben benötigen.
+ * Dark is the default. Light overrides via [data-theme="light"].
  * ------------------------------------------------------------------------- */
 
 :root,
@@ -74,17 +66,17 @@
   --color-muted: #a8a39c;
   --color-border: #3a352f;
 
-  /* Erweiterte Surface-Ebenen (Fix 2) */
+  /* Erweiterte Surface-Ebenen */
   --color-surface-offset: #1d1c1a;
   --color-surface-dynamic: #2d2c2a;
 
-  /* Text-Hierarchie — 3 Ebenen (Fix 2: behebt "weiß auf grau"-Problem) */
+  /* Text-Hierarchie — 3 Ebenen */
   --color-text: #cdccca;
   --color-text-muted: #797876;
   --color-text-faint: #5a5957;
   --color-text-inverse: #2b2a28;
 
-  /* Primary-Varianten für Button-States im Dark Mode (Fix 2) */
+  /* Primary-Varianten */
   --color-primary: #4f98a3;
   --color-primary-hover: #227f8b;
   --color-primary-active: #1a626b;
@@ -95,7 +87,23 @@
   --color-warning: #fbbf24;
   --color-error: #f87171;
 
-  /* Shadows — dunkler Modus braucht stärkere Opacity */
+  /* GAP-11: Metrik-Farben Dark Mode */
+  --color-metric-mood: #4f98a3;
+  --color-metric-energy: #34d399;
+  --color-metric-stress: #f87171;
+
+  /* GAP-03: Surface-Tokens für Komponenten (ersetzt ungültige rgb(--color-surface-50/200/300)) */
+  --color-surface-tag-bg: #221f1c;
+  --color-surface-chart-bg: color-mix(in oklch, var(--color-surface) 72%, transparent);
+  --color-border-chart: color-mix(in oklch, var(--color-border) 45%, transparent);
+
+  /* GAP-03: Heatmap-Zellfarben Dark Mode */
+  --color-heatmap-1: #1e4a48;
+  --color-heatmap-2: #236e6b;
+  --color-heatmap-3: #2a9490;
+  --color-heatmap-4: #4f98a3;
+
+  /* Shadows */
   --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
   --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
   --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
@@ -112,17 +120,17 @@
   --color-muted: #6b6660;
   --color-border: #d8d3cb;
 
-  /* Erweiterte Surface-Ebenen (Fix 2) */
+  /* Erweiterte Surface-Ebenen */
   --color-surface-offset: #f3f0ec;
   --color-surface-dynamic: #e6e4df;
 
-  /* Text-Hierarchie — 3 Ebenen (Fix 2) */
+  /* Text-Hierarchie — 3 Ebenen */
   --color-text: #1c1a17;
   --color-text-muted: #6b6660;
   --color-text-faint: #a8a39c;
   --color-text-inverse: #f9f8f4;
 
-  /* Primary-Varianten für Button-States im Light Mode (Fix 2) */
+  /* Primary-Varianten */
   --color-primary: #01696f;
   --color-primary-hover: #0c4e54;
   --color-primary-active: #0f3638;
@@ -133,7 +141,23 @@
   --color-warning: #b45309;
   --color-error: #b91c1c;
 
-  /* Shadows — warm getönt passend zu Beige-Surfaces */
+  /* GAP-11: Metrik-Farben Light Mode */
+  --color-metric-mood: #01696f;
+  --color-metric-energy: #10b981;
+  --color-metric-stress: #ef4444;
+
+  /* GAP-03: Surface-Tokens für Komponenten */
+  --color-surface-tag-bg: #ffffff;
+  --color-surface-chart-bg: color-mix(in oklch, var(--color-surface) 72%, transparent);
+  --color-border-chart: color-mix(in oklch, var(--color-border) 45%, transparent);
+
+  /* GAP-03: Heatmap-Zellfarben Light Mode */
+  --color-heatmap-1: #b8e2df;
+  --color-heatmap-2: #73c7c1;
+  --color-heatmap-3: #2f9b98;
+  --color-heatmap-4: #01696f;
+
+  /* Shadows */
   --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
   --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
   --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
@@ -162,6 +186,16 @@
     --color-success: #4ade80;
     --color-warning: #fbbf24;
     --color-error: #f87171;
+    --color-metric-mood: #4f98a3;
+    --color-metric-energy: #34d399;
+    --color-metric-stress: #f87171;
+    --color-surface-tag-bg: #221f1c;
+    --color-surface-chart-bg: color-mix(in oklch, #221f1c 72%, transparent);
+    --color-border-chart: color-mix(in oklch, #3a352f 45%, transparent);
+    --color-heatmap-1: #1e4a48;
+    --color-heatmap-2: #236e6b;
+    --color-heatmap-3: #2a9490;
+    --color-heatmap-4: #4f98a3;
     --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
     --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
     --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
@@ -231,7 +265,7 @@ p {
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -263,13 +297,6 @@ button {
 
 /* ---------------------------------------------------------------------------
  * Layout-Utilities (Fix 1)
- *
- * .page-shell  — zentraler Seiten-Wrapper; einmalig in +layout.svelte nutzen.
- *               Steuert Safe-Area-Padding, max-width und Zentrierung.
- *               Löst "Button/Chart klebt am Rand"-Problem global.
- *
- * .bleed-full  — negiert das page-shell-Padding für full-width Elemente
- *               (z.B. Heatmap, Mood-Chart). Innerhalb von .page-shell nutzen.
  * ------------------------------------------------------------------------- */
 .page-shell {
   width: 100%;
@@ -300,7 +327,7 @@ button {
 
 .card {
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text);
 }
@@ -309,11 +336,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  border-radius: 0.375rem;
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
   border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-  padding: 0.5rem 0.75rem;
-  /* WCAG 2.2: Touch-Target min. 44×44px */
+  padding: var(--space-2) var(--space-3);
   min-height: 44px;
   min-width: 44px;
   transition:
@@ -324,15 +350,14 @@ button {
 .btn-sm {
   padding: 0.375rem 0.625rem;
   font-size: var(--text-sm);
-  /* Auch kleine Buttons erfüllen Touch-Target */
   min-height: 44px;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
-  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) 0.625rem;
 }
 
 .variant-ghost-surface {

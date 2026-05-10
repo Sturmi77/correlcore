@@ -8,6 +8,15 @@
   export let loading = false;
 
   $: dates = heatmap ? buildDates(heatmap.start_date, heatmap.end_date) : [];
+
+  /**
+   * GAP-02: Datumsrichtung — neuestes Datum rechts.
+   * buildDates() liefert aufsteigend (ältestes zuerst).
+   * Wir kehren das Array um damit die Spalten von rechts nach links
+   * älter werden — Standard für Activity-Heatmaps (GitHub, Wakatime).
+   */
+  $: reversedDates = [...dates].reverse();
+
   $: maxCount = heatmap
     ? Math.max(0, ...heatmap.tags.flatMap((tag) => tag.days.map((day) => day.count)))
     : 0;
@@ -33,16 +42,17 @@
   <div class="heatmap__head">
     <h2>{$_('trends.heatmap.heading')}</h2>
     {#if heatmap}
-      <span>{heatmap.start_date} - {heatmap.end_date}</span>
+      <span>{heatmap.start_date} – {heatmap.end_date}</span>
     {/if}
   </div>
 
   {#if heatmap && heatmap.tags.length > 0}
     <div class="heatmap__scroller" aria-label={$_('trends.heatmap.aria')}>
-      <div class="heatmap__grid" style={`--day-count: ${dates.length}`}>
+      <div class="heatmap__grid" style={`--day-count: ${reversedDates.length}`}>
         {#each heatmap.tags as tag, tagIndex}
           <div class="heatmap__tag" title={tag.name}>{tag.name}</div>
-          {#each dates as date}
+          <!-- GAP-02: reversedDates statt dates → neuestes Datum rechts -->
+          {#each reversedDates as date}
             {@const count = countFor(tagIndex, date)}
             <a
               class={`heatmap__cell heatmap__cell--${heatmapLevel(count, maxCount)}`}
@@ -63,14 +73,14 @@
   .heatmap {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: var(--space-3);
   }
 
   .heatmap__head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .heatmap__head h2 {
@@ -80,13 +90,13 @@
   }
 
   .heatmap__head span {
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     opacity: 0.68;
   }
 
   .heatmap__scroller {
     overflow-x: auto;
-    padding-bottom: 0.25rem;
+    padding-bottom: var(--space-1);
   }
 
   .heatmap__grid {
@@ -101,9 +111,9 @@
     position: sticky;
     left: 0;
     z-index: 1;
-    padding: 0.2rem 0.45rem 0.2rem 0;
-    font-size: 0.78rem;
-    background: rgb(var(--color-surface-50, 249 250 251));
+    padding: var(--space-1) var(--space-2) var(--space-1) 0;
+    font-size: var(--text-xs);
+    background: var(--color-surface-tag-bg);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -112,35 +122,35 @@
   .heatmap__cell {
     width: 0.8rem;
     height: 0.8rem;
-    border-radius: 0.18rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.4);
-    background: rgb(var(--color-surface-200, 229 231 235) / 0.45);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface-dynamic);
   }
 
   .heatmap__cell:focus {
-    outline: 2px solid #01696f;
+    outline: 2px solid var(--color-primary);
     outline-offset: 1px;
   }
 
   .heatmap__cell--1 {
-    background: #b8e2df;
+    background: var(--color-heatmap-1);
   }
 
   .heatmap__cell--2 {
-    background: #73c7c1;
+    background: var(--color-heatmap-2);
   }
 
   .heatmap__cell--3 {
-    background: #2f9b98;
+    background: var(--color-heatmap-3);
   }
 
   .heatmap__cell--4 {
-    background: #01696f;
+    background: var(--color-heatmap-4);
   }
 
   .heatmap__empty {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     opacity: 0.72;
   }
 
