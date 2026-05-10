@@ -99,6 +99,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@${DOMAIN}}
+      UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
     depends_on:
       postgres:
         condition: service_healthy
@@ -161,7 +162,7 @@ services:
     image: ghcr.io/sturmi77/moodsync-api:latest
     container_name: moodsync-worker
     restart: unless-stopped
-    command: python -m backend.workers.analytics
+    command: python -m app.workers.analytics
     env_file: .env
     environment:
       APP_ENV: ${APP_ENV:-production}
@@ -169,6 +170,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
     depends_on:
       postgres:
         condition: service_healthy

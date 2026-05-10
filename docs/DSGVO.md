@@ -116,14 +116,15 @@ Eine DSFA ist durchzuführen wenn Gesundheitsdaten im Cloud-Betrieb verarbeitet 
 
 ## 9. Aufbewahrungsfristen
 
-| Datenkategorie             | Aufbewahrungsdauer                                   | Löschauslöser                       |
-| -------------------------- | ---------------------------------------------------- | ----------------------------------- |
-| Mood-Entries               | bis Account-Löschung oder explizite Nutzer-Löschung  | Account-Delete / Nutzeraktion       |
-| Analytics/Insights         | 90 Tage Rolling Window (ältere werden neu berechnet) | Automatisch                         |
-| Sync-Konflikt-Log          | 90 Tage                                              | Automatisch                         |
-| Auth-Logs (Login-Versuche) | 30 Tage                                              | Automatisch                         |
-| Error-Logs (GlitchTip)     | 90 Tage                                              | Automatisch                         |
-| Billing-Daten              | 7 Jahre                                              | Gesetzliche Aufbewahrungspflicht AT |
+| Datenkategorie              | Aufbewahrungsdauer                                    | Löschauslöser                            |
+| --------------------------- | ----------------------------------------------------- | ---------------------------------------- |
+| Mood-Entries                | bis Account-Löschung oder explizite Nutzer-Löschung   | Account-Delete / Nutzeraktion            |
+| Analytics/Insights          | 90 Tage Rolling Window (ältere werden neu berechnet)  | Automatisch                              |
+| Nicht verifizierte Accounts | 7 Tage (konfigurierbar via `UNVERIFIED_CLEANUP_DAYS`) | Worker-Job `cleanup_unverified_accounts` |
+| Sync-Konflikt-Log           | 90 Tage                                               | Automatisch                              |
+| Auth-Logs (Login-Versuche)  | 30 Tage                                               | Automatisch                              |
+| Error-Logs (GlitchTip)      | 90 Tage                                               | Automatisch                              |
+| Billing-Daten               | 7 Jahre                                               | Gesetzliche Aufbewahrungspflicht AT      |
 
 ## 10. Meilenstein-Checkpoints
 

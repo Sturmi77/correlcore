@@ -107,6 +107,10 @@ class Settings(BaseSettings):
 
     # Email verification (ADR-0004: 24h TTL)
     EMAIL_VERIFICATION_TTL_HOURS: int = 24
+    # Storage limitation (DSGVO Art. 5(1)(e)): unverified accounts that
+    # never click the mail link are hard-deleted by the worker after this
+    # many days so email addresses do not remain blocked forever.
+    UNVERIFIED_CLEANUP_DAYS: int = Field(default=7, ge=1)
     # Public base URL used to build the verify link in outgoing mails.
     # Frontend route handles the GET and calls the API.
     FRONTEND_BASE_URL: str = "http://localhost:5173"

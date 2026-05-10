@@ -364,6 +364,39 @@ services:
 
 ---
 
+## 8. Unverified-Account-Recovery: Auto-Cleanup statt manuellem SQL
+
+### Symptom
+
+Ein User registriert sich, klickt den Verify-Link aber nie, etwa weil SMTP
+falsch konfiguriert war oder die Mail im Spam landet. Die E-Mail-Adresse ist
+danach durch den unverified Account blockiert.
+
+### Kanonischer Pfad seit M2
+
+Der Worker `python -m app.workers.analytics` fuehrt taeglich um 03:00 UTC
+`cleanup_unverified_accounts` aus. Alle Accounts mit `is_verified=false` und
+`created_at < now - UNVERIFIED_CLEANUP_DAYS` werden per `DELETE FROM users`
+entfernt. Default ist `UNVERIFIED_CLEANUP_DAYS=7`.
+
+Die bestehende Cascade-Kette entfernt dabei auch Entries, Tags/Symptome des
+Users, Verification-Tokens und `user_encryption_keys`. Logs enthalten nur den
+aggregierten Count und `user_ids`, nie E-Mail-Adressen.
+
+### Notfall-Override
+
+Manuelles SQL bleibt nur ein Admin-Notfallpfad, wenn der Worker noch nicht
+laeuft oder eine Adresse sofort freigegeben werden muss:
+
+```sql
+DELETE FROM users WHERE LOWER(email) = LOWER('foo@example.com');
+```
+
+Vorher die Cascade-Reichweite bewusst pruefen: der Delete ist hart und nicht
+reversibel, weil auch die verschluesselten DEKs des Users entfernt werden.
+
+---
+
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
 | Symptom                                                                                                                   | Erste Hypothese                                                             | Sofort-Check                                                                                                                                                                                                                                         |

@@ -7,9 +7,9 @@
 #   - Kein Letsencrypt, kein Traefik — Web/API direkt auf Tailnet-IP gebunden.
 #   - Ports binden auf ${TAILSCALE_IP} (Default 127.0.0.1) → kein WAN-Exposure.
 #
-# Optional aktivierbar (Block am Ende der Datei einkommentieren):
+# Optional aktivierbar:
 #   • GlitchTip (Error-Tracking, Web-UI Port 8080)
-#   • Analytics-Worker (M2+, Code noch nicht implementiert)
+#   • Worker für M2-Cleanup-Jobs via --profile worker
 #
 # Nicht enthalten (M1-Scope):
 #   MinIO (Foto-Upload erst M3+) — wer Foto-Tests braucht, nimmt die
@@ -35,6 +35,7 @@ x-api-env: &api-env
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   SMTP_FROM: ${SMTP_FROM:-noreply@moodsync.local}
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+  UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
 
 services:
   # ── Migrations-Init ───────────────────────────────────────────────────────
@@ -205,25 +206,26 @@ services:
   #     - no-new-privileges:true
 
   # ── Analytics-Worker (optional, M2+) ──────────────────────────────────────
-  # ACHTUNG: Worker-Code existiert noch NICHT (backend/workers/ ist leer).
-  # Erst aktivieren, wenn app/workers/analytics.py implementiert ist —
-  # vorher startet der Container in CrashLoop.
+  # Führt tägliche Wartungsjobs aus, aktuell den M2-Cleanup für unverified
+  # Accounts. Bei Bedarf einkommentieren.
   #
-  # worker:
-  #   <<: *api-image
-  #   container_name: moodsync-worker
-  #   restart: unless-stopped
-  #   command: ['python', '-m', 'app.workers.analytics']
-  #   environment: *api-env
-  #   depends_on:
-  #     migrate:
-  #       condition: service_completed_successfully
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - moodsync
-  #   security_opt:
-  #     - no-new-privileges:true
+  worker:
+    <<: *api-image
+    container_name: moodsync-worker
+    restart: unless-stopped
+    command: ['python', '-m', 'app.workers.analytics']
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - moodsync
+    profiles:
+      - worker
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   postgres_data:
