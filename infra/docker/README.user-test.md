@@ -10,16 +10,16 @@ Zielumgebung: Tailscale-internes Netz (Homelab, Synology, Mini-PC).
 
 ## Was läuft mit?
 
-| Service     | Zweck                                                 | Profile      |
-| ----------- | ----------------------------------------------------- | ------------ |
-| `migrate`   | Alembic-Migrations (Init-Container, einmalig)         | _always_     |
-| `api`       | FastAPI-Backend (`ghcr.io/sturmi77/moodsync-api`)     | _always_     |
-| `web`       | SvelteKit-Frontend (`ghcr.io/sturmi77/moodsync-web`)  | _always_     |
-| `postgres`  | PostgreSQL 16 + pgvector                              | _always_     |
-| `redis`     | Token-Store + Rate-Limit-State                        | _always_     |
-| `mailpit`   | Lokaler SMTP-Catcher für Verifizierungs-Mails         | _always_     |
-| `glitchtip` | Error-Tracking (Web-UI auf Port 8080)                 | `monitoring` |
-| `worker`    | Analytics-Worker (M2+, Code noch nicht implementiert) | `worker`     |
+| Service     | Zweck                                                | Profile      |
+| ----------- | ---------------------------------------------------- | ------------ |
+| `migrate`   | Alembic-Migrations (Init-Container, einmalig)        | _always_     |
+| `api`       | FastAPI-Backend (`ghcr.io/sturmi77/moodsync-api`)    | _always_     |
+| `web`       | SvelteKit-Frontend (`ghcr.io/sturmi77/moodsync-web`) | _always_     |
+| `postgres`  | PostgreSQL 16 + pgvector                             | _always_     |
+| `redis`     | Token-Store + Rate-Limit-State                       | _always_     |
+| `mailpit`   | Lokaler SMTP-Catcher für Verifizierungs-Mails        | _always_     |
+| `glitchtip` | Error-Tracking (Web-UI auf Port 8080)                | `monitoring` |
+| `worker`    | M2-Cleanup-Worker fuer unverified Accounts           | `worker`     |
 
 **Bewusst NICHT enthalten:** MinIO (Foto-Upload kommt erst in M3+) und
 Traefik (kein Letsencrypt im internen Tailnet).

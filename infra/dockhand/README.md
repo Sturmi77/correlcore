@@ -21,7 +21,7 @@ Dockhand pullt das Repo selbst und re-deployt bei jedem Webhook-Push.
    Secrets ausfüllen (siehe unten).
 4. Optional **Profiles to enable** setzen:
    - `monitoring` für GlitchTip
-   - `worker` für Analytics-Worker (M2+, Code noch nicht da)
+   - `worker` fuer den M2-Cleanup-Worker
 5. **Deploy** klicken.
 
 ### Variante B — Manuelles Verzeichnis
@@ -152,6 +152,11 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 > Hostnamen ändern (`http://moodsync.<tailnet>.ts.net:3000` o.ä.), wenn
 > du echte Verifikations-Mails verschicken willst — sonst zeigt der Link
 > in der Mail auf `localhost:5173`.
+>
+> Wenn Mailversand ausfaellt und User ihre Adresse nie verifizieren,
+> blockieren diese Accounts die Adresse nicht dauerhaft: der optionale
+> `worker`-Service loescht unverified Accounts nach
+> `UNVERIFIED_CLEANUP_DAYS` Tagen (Default `7`) automatisch.
 
 ### Optional — GlitchTip (Profile `monitoring`)
 
@@ -229,7 +234,7 @@ erfolgreichem Run als **Exited (0)** — das ist gewollt, kein Fehler.
 | Profile      | Service     | Zweck                                      |
 | ------------ | ----------- | ------------------------------------------ |
 | `monitoring` | `glitchtip` | Error-Tracking-Web-UI auf Port 8080        |
-| `worker`     | `worker`    | Analytics-Worker (M2+, Code fehlt aktuell) |
+| `worker`     | `worker`    | M2-Cleanup-Worker fuer unverified Accounts |
 
 Aktivierung:
 

@@ -81,6 +81,7 @@ x-api-env: &api-env
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   SMTP_FROM: ${SMTP_FROM:-noreply@moodsync.local}
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+  UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
 
 services:
   # ── Migrations-Init ───────────────────────────────────────────────────────
@@ -272,9 +273,8 @@ services:
     logging: *default-logging
 
   # ── Analytics-Worker (optional, --profile worker, M2+) ────────────────────
-  # ACHTUNG: Worker-Code existiert noch NICHT (backend/workers/ ist leer).
-  # Erst aktivieren, wenn app/workers/analytics.py implementiert ist —
-  # vorher startet der Container in CrashLoop.
+  # Führt tägliche Wartungsjobs aus, aktuell den M2-Cleanup für unverified
+  # Accounts. Aktivieren in Dockhand über Profile: worker.
   worker:
     <<: *api-image
     container_name: moodsync-worker
