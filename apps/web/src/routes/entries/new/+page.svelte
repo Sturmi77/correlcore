@@ -426,6 +426,7 @@
     label={$_('entry.mood_label')}
     decrementLabel={$_('entry.mood_decrement')}
     incrementLabel={$_('entry.mood_increment')}
+    scaleType="mood"
     bind:value={moodScore}
   />
 
@@ -434,6 +435,7 @@
     label={$_('entry.energy_label')}
     decrementLabel={$_('entry.energy_decrement')}
     incrementLabel={$_('entry.energy_increment')}
+    scaleType="energy"
     bind:value={energy}
   />
 
@@ -442,6 +444,7 @@
     label={$_('entry.stress_label')}
     decrementLabel={$_('entry.stress_decrement')}
     incrementLabel={$_('entry.stress_increment')}
+    scaleType="stress"
     bind:value={stress}
   />
 

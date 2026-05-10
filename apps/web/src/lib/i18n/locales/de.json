@@ -106,6 +106,16 @@
       "retry": "Erneut versuchen",
       "offline": "Keine Verbindung — Eingaben werden nicht gespeichert.",
       "leave_warning": "Es laufen noch ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?"
+    },
+    "scale": {
+      "mood_low": "sehr schlecht",
+      "mood_high": "sehr gut",
+      "energy_low": "erschöpft",
+      "energy_high": "voller Energie",
+      "stress_low": "entspannt",
+      "stress_high": "sehr gestresst",
+      "default_low": "niedrig",
+      "default_high": "hoch"
     }
   },
   "day_entries": {
