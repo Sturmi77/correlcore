@@ -114,7 +114,7 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 | Variable       | Pflicht | Default                 | Beschreibung                                                                                                                                                                                                                                                                                                                                                             |
 | -------------- | ------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `CORS_ORIGINS` | ja\*    | `http://127.0.0.1:3000` | Komma-separierte Liste von Origins, von denen das Frontend die API aufrufen darf. Wird im Pydantic-Validator `parse_cors_origins` aus der Komma-String in eine Python-Liste übersetzt. Für Tailnet-Tests: `http://<tailscale-ip>:3000` und/oder `http://<magicdns-name>.ts.net:3000`. \*Pflicht in dem Sinn, dass der Default nur für lokalen Host-Zugriff funktioniert. |
+| `CORS_ORIGINS` | ja\*    | `http://127.0.0.1:3010` | Komma-separierte Liste von Origins, von denen das Frontend die API aufrufen darf. Wird im Pydantic-Validator `parse_cors_origins` aus der Komma-String in eine Python-Liste übersetzt. Für Tailnet-Tests: `http://<tailscale-ip>:3010` und/oder `http://<magicdns-name>.ts.net:3010`. \*Pflicht in dem Sinn, dass der Default nur für lokalen Host-Zugriff funktioniert. |
 
 ### Frontend — Web
 
@@ -149,7 +149,7 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 > oder `SMTP_USE_TLS=false` setzen überschreibt die Heuristik immer.
 >
 > Auch `FRONTEND_BASE_URL` solltest du spätestens dann auf den Tailnet-
-> Hostnamen ändern (`http://moodsync.<tailnet>.ts.net:3000` o.ä.), wenn
+> Hostnamen ändern (`http://moodsync.<tailnet>.ts.net:3010` o.ä.), wenn
 > du echte Verifikations-Mails verschicken willst — sonst zeigt der Link
 > in der Mail auf `localhost:5173`.
 >
@@ -190,7 +190,7 @@ mailpit nur auf das Tailnet-Interface — kein WAN-Exposure.
 
 | Service | Host-Port (Default)      | Zugriff im Tailnet                       |
 | ------- | ------------------------ | ---------------------------------------- |
-| Web     | `${WEB_HOST_PORT:-3000}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`  |
+| Web     | `${WEB_HOST_PORT:-3010}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`  |
 | API     | _kein Host-Port_         | nur intern (`http://api:8000`, ADR-0011) |
 | Mailpit | 8025                     | `http://<tailscale-ip>:8025`             |
 
@@ -205,9 +205,11 @@ Postgres und Redis sind ohnehin nur stack-intern erreichbar.
 
 ### Host-Port-Konflikt: Web auf 3000
 
-Falls auf dem Host bereits ein anderer Self-Hosted-Dienst auf 3000
-lauscht (z. B. Grafana), `WEB_HOST_PORT` in der `.env` ausweichen —
-z. B. `WEB_HOST_PORT=3010`. Container-interner Port bleibt fix 3000.
+Der Dockhand-Default nutzt `WEB_HOST_PORT=3010`, damit typische Host-
+Konflikte auf 3000 (z. B. Grafana oder ein anderes Web-UI) vermieden
+werden. Falls 3010 auf dem Host ebenfalls belegt ist, `WEB_HOST_PORT` in
+der `.env` weiter ausweichen — z. B. `WEB_HOST_PORT=3011`.
+Container-interner Port bleibt fix 3000.
 
 Wenn du `WEB_HOST_PORT` änderst, denke an `FRONTEND_BASE_URL` (wird in
 Verifikations-Mails als Link-Präfix verwendet). `CORS_ORIGINS` ist seit

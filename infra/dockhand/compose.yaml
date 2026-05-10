@@ -157,9 +157,9 @@ services:
       api:
         condition: service_healthy
     ports:
-      # Host-Port konfigurierbar (Default 3000), um Konflikten mit anderen
+      # Host-Port konfigurierbar (Default 3010), um Konflikten mit anderen
       # Self-Hosted-Diensten auf dem Host auszuweichen (z. B. Grafana).
-      - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000'
+      - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3010}:3000'
     networks:
       - moodsync
     security_opt:
