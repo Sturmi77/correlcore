@@ -55,10 +55,14 @@ jobs:
         run: pnpm lint
 
   format:
-    name: Format check (Prettier)
+    name: Format auto-fix (Prettier)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -74,7 +78,23 @@ jobs:
         run: pnpm install --no-frozen-lockfile
         working-directory: .
 
-      - name: Prettier check
+      - name: Prettier write
+        run: pnpm format
+        working-directory: .
+
+      - name: Commit auto-fix (push only)
+        if: github.event_name == 'push'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet && echo "Already formatted, nothing to commit." && exit 0
+          git add -A
+          git commit -m "style: prettier auto-fix [skip ci]"
+          git push
+        working-directory: .
+
+      - name: Prettier check (PR only)
+        if: github.event_name == 'pull_request'
         run: pnpm format:check
         working-directory: .
 
@@ -124,5 +144,4 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          # Suppress missing API URL warning during CI build
           VITE_API_BASE_URL: '/api/v1'
