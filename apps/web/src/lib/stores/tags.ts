@@ -80,14 +80,17 @@ export async function submitTag(payload: TagCreatePayload): Promise<TagResponse>
   return created;
 }
 
-/** Update a custom tag in place in the cache. */
+/** Update a tag in place in the cache. Default edits may return a user override. */
 export async function patchTag(id: string, payload: TagUpdatePayload): Promise<TagResponse> {
   const updated = await apiUpdateTag(id, payload);
   const current = get(_tags);
   if (current.status === 'ready') {
     _tags.set({
       status: 'ready',
-      tags: current.tags.map((t) => (t.id === id ? updated : t)),
+      tags: current.tags
+        .filter((t) => t.id !== id)
+        .concat(updated)
+        .filter((t) => !t.is_hidden),
     });
   }
   return updated;

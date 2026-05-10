@@ -46,7 +46,7 @@
             {@const count = countFor(tagIndex, date)}
             <a
               class={`heatmap__cell heatmap__cell--${heatmapLevel(count, maxCount)}`}
-              href={`/entries/new?date=${date}`}
+              href={`/entries/day/${date}?tag_id=${tag.tag_id}`}
               aria-label={`${tag.name}, ${date}: ${count}`}
               title={`${tag.name}, ${date}: ${count}`}
             ></a>

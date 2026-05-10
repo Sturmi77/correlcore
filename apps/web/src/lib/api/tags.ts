@@ -6,7 +6,7 @@
  * on 401 (see ./client.ts).
  *
  * The tag system has two surfaces:
- *   1. Tag CRUD — defaults (read-only) plus the user's custom tags.
+ *   1. Tag CRUD — defaults plus user-owned custom/override tags.
  *   2. Entry-tag assignment — replace-set semantics on
  *      PUT /entries/{id}/tags.
  */
@@ -52,6 +52,7 @@ export interface TagResponse {
   icon: string | null;
   color: string | null;
   is_default: boolean;
+  is_hidden: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +70,11 @@ export interface TagUpdatePayload {
   category?: TagCategory;
   icon?: string | null;
   color?: string | null;
+  is_hidden?: boolean;
+}
+
+export interface TagListQuery {
+  include_hidden?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -81,8 +87,11 @@ export async function listDefaultTags(): Promise<TagResponse[]> {
 }
 
 /** GET /tags — defaults + the current user's custom tags. */
-export async function listVisibleTags(): Promise<TagResponse[]> {
-  return api.get<TagResponse[]>('/tags');
+export async function listVisibleTags(query: TagListQuery = {}): Promise<TagResponse[]> {
+  const params = new URLSearchParams();
+  if (query.include_hidden) params.set('include_hidden', 'true');
+  const qs = params.toString();
+  return api.get<TagResponse[]>(qs ? `/tags?${qs}` : '/tags');
 }
 
 /** POST /tags — create a custom tag for the current user. */
@@ -90,7 +99,7 @@ export async function createTag(payload: TagCreatePayload): Promise<TagResponse>
   return api.post<TagResponse>('/tags', payload);
 }
 
-/** PATCH /tags/{id} — update a custom tag (defaults are read-only). */
+/** PATCH /tags/{id} — update a custom tag or create/update a default override. */
 export async function updateTag(id: string, payload: TagUpdatePayload): Promise<TagResponse> {
   return api.patch<TagResponse>(`/tags/${id}`, payload);
 }

@@ -108,6 +108,18 @@
       "leave_warning": "There are unsaved changes. Are you sure you want to leave?"
     }
   },
+  "day_entries": {
+    "title": "Day entries",
+    "loading": "Loading this day…",
+    "invalid_date": "This date is invalid.",
+    "empty": "No entries for this day yet.",
+    "empty_for_tag": "No entries for this tag on this day.",
+    "create": "Log this day",
+    "add_or_edit": "Add or edit",
+    "edit": "Edit",
+    "list_aria": "Entries for the selected day",
+    "score_line": "Mood {mood}/5 · Energy {energy}/5 · Stress {stress}/5"
+  },
   "tag": {
     "picker_label": "Tags",
     "picker_counter": "{count}/{max} selected",
@@ -213,6 +225,29 @@
       "csv": "Download CSV",
       "busy": "Preparing download…",
       "error": "Could not create export."
+    },
+    "tags": {
+      "heading": "Tags",
+      "body": "Rename, recolor, hide or reset the tags shown in the entry form.",
+      "open": "Manage tags",
+      "title": "Manage tags",
+      "subtitle": "Personalize default and custom tags without changing the curated set for anyone else.",
+      "default": "Default",
+      "override": "Personal override",
+      "custom": "Custom",
+      "hidden": "Hidden",
+      "name": "Name",
+      "category": "Category",
+      "icon": "Icon",
+      "color": "Color",
+      "save": "Save",
+      "saving": "Saving…",
+      "hide": "Hide",
+      "show": "Show",
+      "reset": "Reset",
+      "error_load": "Could not load tags.",
+      "error_save": "Could not save this tag.",
+      "error_reset": "Could not reset this tag."
     }
   },
   "disclaimer": {

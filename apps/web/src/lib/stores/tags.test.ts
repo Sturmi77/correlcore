@@ -41,6 +41,7 @@ function makeTag(overrides: Partial<tagsApi.TagResponse> = {}): tagsApi.TagRespo
     icon: null,
     color: null,
     is_default: true,
+    is_hidden: false,
     created_at: '2026-05-04T10:00:00Z',
     updated_at: '2026-05-04T10:00:00Z',
     ...overrides,
@@ -137,6 +138,18 @@ describe('patchTag', () => {
     const list = get(tagsList);
     expect(list).toHaveLength(1);
     expect(list[0].name).toBe('New');
+  });
+
+  it('drops a tag from the cache when an update hides it', async () => {
+    const existing = makeTag({ id: 't1', name: 'Old', is_default: false });
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValueOnce([existing]);
+    await refreshTags();
+
+    vi.mocked(tagsApi.updateTag).mockResolvedValueOnce({ ...existing, is_hidden: true });
+
+    await patchTag('t1', { is_hidden: true });
+
+    expect(get(tagsList)).toHaveLength(0);
   });
 });
 

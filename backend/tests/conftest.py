@@ -128,6 +128,7 @@ def make_tag(
     icon: str | None = "dumbbell",
     color: str | None = "#10b981",
     is_default: bool = False,
+    is_hidden: bool = False,
 ) -> Tag:
     """Build a detached :class:`Tag` for service-layer tests.
 
@@ -143,6 +144,7 @@ def make_tag(
     t.icon = icon
     t.color = color
     t.is_default = is_default
+    t.is_hidden = is_hidden
     t.habit_type = "none"
     t.target_frequency = None
     t.created_at = datetime.now(UTC)

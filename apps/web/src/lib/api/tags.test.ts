@@ -49,6 +49,12 @@ describe('listVisibleTags', () => {
     await listVisibleTags();
     expect(api.get).toHaveBeenCalledWith('/tags');
   });
+
+  it('GETs /tags with include_hidden when requested', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+    await listVisibleTags({ include_hidden: true });
+    expect(api.get).toHaveBeenCalledWith('/tags?include_hidden=true');
+  });
 });
 
 describe('createTag', () => {
@@ -74,8 +80,8 @@ describe('createTag', () => {
 describe('updateTag', () => {
   it('PATCHes /tags/{id}', async () => {
     vi.mocked(api.patch).mockResolvedValueOnce({ id: 't1' });
-    await updateTag('t1', { name: 'Renamed' });
-    expect(api.patch).toHaveBeenCalledWith('/tags/t1', { name: 'Renamed' });
+    await updateTag('t1', { name: 'Renamed', is_hidden: true });
+    expect(api.patch).toHaveBeenCalledWith('/tags/t1', { name: 'Renamed', is_hidden: true });
   });
 });
 
