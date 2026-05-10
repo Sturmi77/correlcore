@@ -29,10 +29,10 @@
   export let scaleType: 'mood' | 'energy' | 'stress' | 'default' = 'default';
 
   const scaleLegends: Record<typeof scaleType, { low: string; high: string }> = {
-    mood:    { low: 'sehr schlecht', high: 'sehr gut'        },
-    energy:  { low: 'erschöpft',    high: 'voller Energie'  },
-    stress:  { low: 'entspannt',    high: 'sehr gestresst'  },
-    default: { low: 'niedrig',      high: 'hoch'            },
+    mood: { low: 'sehr schlecht', high: 'sehr gut' },
+    energy: { low: 'erschöpft', high: 'voller Energie' },
+    stress: { low: 'entspannt', high: 'sehr gestresst' },
+    default: { low: 'niedrig', high: 'hoch' },
   };
 
   $: legend = scaleLegends[scaleType];

@@ -17,7 +17,7 @@
 
   // GAP-11: Metrik-Farben aus CSS-Token-System statt Hex-Literalen
   const metrics: { key: MetricKey; label: string; color: string }[] = [
-    { key: 'mood_avg',   label: 'trends.metric.mood',   color: 'var(--color-metric-mood)'   },
+    { key: 'mood_avg', label: 'trends.metric.mood', color: 'var(--color-metric-mood)' },
     { key: 'energy_avg', label: 'trends.metric.energy', color: 'var(--color-metric-energy)' },
     { key: 'stress_avg', label: 'trends.metric.stress', color: 'var(--color-metric-stress)' },
   ];
