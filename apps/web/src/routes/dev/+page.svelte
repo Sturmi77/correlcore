@@ -115,9 +115,9 @@
     <section class="dev__panel dev__panel--notice" role="status">
       <p>
         <strong>Backend developer endpoint not available.</strong><br />
-        <code>DEV_VIEW_ENABLED</code> is set to <code>false</code> on the server.
-        Runtime diagnostics are unavailable in this environment.
-        The Developer View was opened because you enabled the manual toggle in Settings.
+        <code>DEV_VIEW_ENABLED</code> is set to <code>false</code> on the server. Runtime diagnostics
+        are unavailable in this environment. The Developer View was opened because you enabled the manual
+        toggle in Settings.
       </p>
       <a class="btn btn-sm variant-ghost-surface" href="/settings">Back to Settings</a>
     </section>
