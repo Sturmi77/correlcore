@@ -14,7 +14,7 @@ M8 introduces machine learning models to the analytics pipeline: Lasso regressio
 
 The standard cross-validation technique in scikit-learn is `KFold`, which randomly shuffles observations into training and test folds. For **time series data**, this is statistically invalid:
 
-- A fold may contain entries from week 10 in the *training* set and entries from week 8 in the *test* set.
+- A fold may contain entries from week 10 in the _training_ set and entries from week 8 in the _test_ set.
 - The model therefore "learns from the future" — a form of data leakage known as **look-ahead bias**.
 - Look-ahead bias produces artificially high cross-validation scores and overfitted models that fail in production.
 
@@ -32,7 +32,7 @@ from sklearn.model_selection import TimeSeriesSplit
 tscv = TimeSeriesSplit(n_splits=5)
 ```
 
-`TimeSeriesSplit` creates folds that always use *earlier* observations for training and *later* observations for testing, respecting the causal direction of time:
+`TimeSeriesSplit` creates folds that always use _earlier_ observations for training and _later_ observations for testing, respecting the causal direction of time:
 
 ```
 Fold 1:  Train [t1 … t18]      Test [t19 … t36]
@@ -91,7 +91,7 @@ entries = (
 
 ### Option C: Walk-Forward Validation (considered, deferred)
 
-Also called *expanding window* or *anchored walk-forward*. Train on all data up to point T, test on point T+1, advance by one observation. Produces n-1 folds for n observations, maximising statistical power.
+Also called _expanding window_ or _anchored walk-forward_. Train on all data up to point T, test on point T+1, advance by one observation. Produces n-1 folds for n observations, maximising statistical power.
 
 **Pros:** Most rigorous temporal validation.  
 **Cons:** Very slow for large datasets; high computational cost in a nightly batch worker; overkill for datasets of ~90–500 entries. Can be reconsidered post-M8 if model quality becomes a concern.  
