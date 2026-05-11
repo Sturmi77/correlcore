@@ -1,10 +1,12 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onDestroy, onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import IconRender from '$lib/components/common/IconRender.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo, type DevInfoResponse } from '$lib/api/dev';
+  import { developerMode } from '$lib/stores/developerMode';
 
   const COMMIT_BASE_URL = 'https://github.com/sturmi77/moodsync/commit/';
   const REFRESH_MS = 30_000;
@@ -12,6 +14,7 @@
   let info: DevInfoResponse | null = null;
   let loading = true;
   let error = '';
+  let backendUnavailable = false;
   let copied: 'commit' | 'digest' | null = null;
   let controller: AbortController | null = null;
   let interval: ReturnType<typeof setInterval> | null = null;
@@ -44,12 +47,20 @@
     controller = new AbortController();
     loading = !info;
     error = '';
+    backendUnavailable = false;
     try {
       info = await fetchDevInfo(controller.signal);
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
       if (err instanceof ApiError && err.status === 404) {
-        await goto('/');
+        // Only redirect when the developer mode store is NOT manually active.
+        // When the user enabled the toggle in Settings, stay on the page and
+        // show an informational notice instead of bouncing them back.
+        if (!get(developerMode)) {
+          await goto('/');
+          return;
+        }
+        backendUnavailable = true;
         return;
       }
       if (err instanceof ApiError && err.status === 401) {
@@ -100,7 +111,17 @@
     <p>Verify the deployed GitHub commit, image tag and optional OCI digest.</p>
   </section>
 
-  {#if loading && !info}
+  {#if backendUnavailable}
+    <section class="dev__panel dev__panel--notice" role="status">
+      <p>
+        <strong>Backend developer endpoint not available.</strong><br />
+        <code>DEV_VIEW_ENABLED</code> is set to <code>false</code> on the server.
+        Runtime diagnostics are unavailable in this environment.
+        The Developer View was opened because you enabled the manual toggle in Settings.
+      </p>
+      <a class="btn btn-sm variant-ghost-surface" href="/settings">Back to Settings</a>
+    </section>
+  {:else if loading && !info}
     <section class="dev__panel">
       <p class="dev__muted">Loading runtime details...</p>
     </section>
@@ -350,6 +371,12 @@
   .dev__panel--error {
     border-color: rgb(185 28 28 / 0.35);
     color: #991b1b;
+  }
+
+  .dev__panel--notice {
+    border-color: rgb(var(--color-warning-500, 202 138 4) / 0.4);
+    background: rgb(var(--color-warning-50, 254 252 232) / 0.6);
+    color: rgb(var(--color-warning-800, 133 77 14));
   }
 
   .dev__facts {
