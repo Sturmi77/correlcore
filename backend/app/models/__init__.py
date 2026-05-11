@@ -6,6 +6,7 @@ Alembic's env.py does ``import app.models`` which triggers this file.
 
 from app.models.email_verification_token import EmailVerificationToken  # noqa: F401
 from app.models.entry import Entry, EntrySlot, WorkContext  # noqa: F401
+from app.models.insight import Insight, InsightTier, InsightType  # noqa: F401
 from app.models.symptom import (  # noqa: F401
     INTENSITY_MAX,
     INTENSITY_MIN,
@@ -17,6 +18,7 @@ from app.models.symptom import (  # noqa: F401
 from app.models.tag import EntryTag, Tag, TagCategory  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.user_encryption_key import UserEncryptionKey  # noqa: F401
+from app.models.user_preference import UserPreference  # noqa: F401
 
 __all__ = [
     "INTENSITY_MAX",
@@ -27,11 +29,15 @@ __all__ = [
     "EntrySlot",
     "EntrySymptom",
     "EntryTag",
+    "Insight",
+    "InsightTier",
+    "InsightType",
     "Symptom",
     "Tag",
     "TagCategory",
     "User",
     "UserEncryptionKey",
+    "UserPreference",
     "WorkContext",
     "default_symptom_uuid",
 ]

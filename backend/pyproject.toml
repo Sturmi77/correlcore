@@ -35,13 +35,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Analytics / Insights worker (ADR-0006, M2+).
-# Not installed in the default M0/M1 image to keep build-time and image
-# size lean (~150-200 MB saved). Activate when insights endpoints land.
+# Analytics / Insights worker (M3).
+# Installed in API runtime and CI from the M3 foundation sprint onward so
+# schema and worker follow-ups exercise the same dependency surface as deploys.
 analytics = [
   "pandas>=2.2.0",
   "scikit-learn>=1.5.0",
   "scipy>=1.13.0",
+  "statsmodels>=0.14.0",
   "apscheduler>=3.10.0",
 ]
 dev = [

@@ -21,7 +21,7 @@ COPY app/ app/
 # --no-dev: Production-Image enthält nur Runtime-Deps (ruff, mypy, pytest etc.
 # bleiben draußen → kleineres Image, kleinere Angriffsfläche).
 RUN uv venv .venv && \
-    uv pip install --python .venv/bin/python -e .
+    uv pip install --python .venv/bin/python -e ".[analytics]"
 
 # ---- Runtime stage ----
 FROM python:3.12-slim AS runtime

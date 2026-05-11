@@ -5,7 +5,7 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-uv sync --python 3.12 --extra dev --frozen
+uv sync --python 3.12 --extra dev --extra analytics --frozen
 uv run --python 3.12 ruff check .
 uv run --python 3.12 ruff format --check .
 uv run --python 3.12 mypy app

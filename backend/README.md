@@ -16,7 +16,7 @@ CI and `pyproject.toml`:
 
 It runs the same checks that must stay green for an M1/Milestone review:
 
-1. `uv sync --python 3.12 --extra dev --frozen`
+1. `uv sync --python 3.12 --extra dev --extra analytics --frozen`
 2. `uv run --python 3.12 ruff check .`
 3. `uv run --python 3.12 ruff format --check .`
 4. `uv run --python 3.12 mypy app`
