@@ -27,16 +27,16 @@ Menschen spüren, dass Schlaf, Sport, Homeoffice-Tage oder Sozialkontakte ihr Wo
 
 - [x] **M0** — Monorepo, CI/CD, Docker-Stack, Native JWT Auth, leeres App-Shell
 - [x] **M1** — Täglicher Eintrag: Mood, Energy, Stress, Tags (kuratiert + custom), Symptome (kuratiert + custom), Notiz, App-Level Fernet at-rest, Login/Register-UI, E-Mail-Verifikation, DSGVO-Erasure (Offline-Sync nach M4 verschoben — [ADR-0009](docs/adr/0009-offline-sync-nach-m4.md))
-- [ ] **M2** — Visualisierungen: Zeitreihe, Heatmap, Streaks, CSV-Export
+- [x] **M2** — Visualisierungen: Mood-Zeitreihe (Multi-Metric), Tag-Frequenz-Heatmap mit Drilldown, Eintrags-Streak-Widgets, CSV/JSON-Export (DSGVO Art. 20), Custom-SVG-Charts, Schema-Vorgriff Habits ([ADR-0012](docs/adr/0012-m2-m5-streak-semantik.md)), Developer-View ([ADR-0015](docs/adr/0015-developer-view-version-identifikation.md))
 - [ ] **M3** — Insights v1: Korrelationsanalyse, Template-Statements, Confidence-Level
-- [ ] **M4** — Mobile Polish: PWA, Bottom-Sheet-UX, UnifiedPush, App-Lock
+- [ ] **M4** — Mobile Polish: PWA, Bottom-Sheet-UX, UnifiedPush, App-Lock, Offline-Sync (Dexie.js)
 - [ ] **M5** — Habits & Ziele: Streak-Logik, Badges, Habit-Dashboard
 - [ ] **M6** — Fotos: lokaler Upload → MinIO, EXIF-Strip, Immich-Integration (v2)
 - [ ] **M7** — Health Connect: Android-Wearables-Import, Schlaf-Korrelation
 - [ ] **M8** — Insights v2: Lasso-Regression, Lag-Analyse, optionales lokales LLM (Ollama)
 - [ ] **M9** — Beta-Härtung: Monitoring, GlitchTip, externe Tester, Dokumentation
 - [ ] **M10** — Public Selfhost Release v1.0
-- [ ] **M11** — Android Play Store (TWA)
+- [ ] **M11** — Android Play Store (Capacitor)
 - [ ] **M12** — SaaS-Modus (Managed Hosting)
 
 Vollständige Roadmap: [`docs/DESIGN_DOCUMENT.md#roadmap`](docs/DESIGN_DOCUMENT.md)
@@ -45,21 +45,22 @@ Vollständige Roadmap: [`docs/DESIGN_DOCUMENT.md#roadmap`](docs/DESIGN_DOCUMENT.
 
 ## Tech Stack
 
-| Schicht            | Technologie              | Begründung                               |
-| ------------------ | ------------------------ | ---------------------------------------- |
-| **Backend API**    | FastAPI (Python 3.12)    | Async, OpenAPI-nativ, schnell iterierbar |
-| **Web Frontend**   | SvelteKit + Skeleton UI  | Performance, Bundle < 150 KB gz          |
-| **Mobile**         | PWA → TWA (Bubblewrap)   | Code-Sharing max., Play Store ohne RN    |
-| **Datenbank**      | PostgreSQL 16 + pgvector | RLS für Multi-User, Vektor für Insights  |
-| **Cache / Queue**  | Redis 7                  | Session, Rate-Limit, Sync-Queue          |
-| **Object Storage** | MinIO                    | Selfhost-kompatibles S3, EXIF-Strip      |
-| **Reverse Proxy**  | Traefik v3               | Automatisches TLS, Docker-Labels         |
-| **Auth**           | Authentik                | OIDC, SSO, selfhost                      |
-| **Offline-Sync**   | Dexie.js (IndexedDB)     | Delta-Sync, Last-Write-Wins              |
-| **Analytics**      | pandas + scikit-learn    | Korrelation, Lasso, Lag-Analyse          |
-| **Migrations**     | Alembic                  | Schema-Versionierung                     |
-| **Monitoring**     | GlitchTip + Uptime Kuma  | Selfhost-Error-Tracking                  |
-| **Notifications**  | UnifiedPush / FCM        | Privacy-first Push                       |
+| Schicht            | Technologie                  | Begründung                               |
+| ------------------ | ---------------------------- | ---------------------------------------- |
+| **Backend API**    | FastAPI (Python 3.12)        | Async, OpenAPI-nativ, schnell iterierbar |
+| **Web Frontend**   | SvelteKit + Skeleton UI      | Performance, Bundle < 150 KB gz          |
+| **Mobile**         | PWA → Capacitor (Android)    | Code-Sharing max., nativer Health Connect-Zugriff ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
+| **Charts**         | Custom SVG-Komponenten       | Kein externes Framework, JS-Budget eingehalten, Token-konform |
+| **Datenbank**      | PostgreSQL 16 + pgvector     | RLS für Multi-User, Vektor für Insights  |
+| **Cache / Queue**  | Redis 7                      | Session, Rate-Limit, Sync-Queue          |
+| **Object Storage** | MinIO                        | Selfhost-kompatibles S3, EXIF-Strip      |
+| **Reverse Proxy**  | Traefik v3                   | Automatisches TLS, Docker-Labels         |
+| **Auth**           | Native JWT Phase 1, Authentik ab M12 | OIDC, SSO, selfhost ([ADR-0004](docs/adr/0004-auth-strategie.md)) |
+| **Offline-Sync**   | Dexie.js (IndexedDB)         | Delta-Sync, Last-Write-Wins (M4)         |
+| **Analytics**      | pandas + scikit-learn        | Korrelation, Lasso, Lag-Analyse          |
+| **Migrations**     | Alembic                      | Schema-Versionierung                     |
+| **Monitoring**     | GlitchTip + Uptime Kuma      | Selfhost-Error-Tracking                  |
+| **Notifications**  | UnifiedPush / FCM            | Privacy-first Push                       |
 
 ---
 
@@ -69,7 +70,6 @@ Vollständige Roadmap: [`docs/DESIGN_DOCUMENT.md#roadmap`](docs/DESIGN_DOCUMENT.
 
 - Docker ≥ 24 + Docker Compose v2
 - Eine Domain mit DNS auf deinen Server
-- Optional: Authentik-Instanz (oder mitgelieferter Stack)
 
 ### Setup
 
@@ -93,7 +93,7 @@ Danach erreichbar unter `https://deine-domain.tld`
 moodsync/
 ├── apps/
 │   ├── web/          # SvelteKit PWA
-│   └── android/      # Bubblewrap TWA (ab M11)
+│   └── android/      # Capacitor Android App (ab M11)
 ├── backend/
 │   ├── app/          # FastAPI Anwendung
 │   ├── migrations/   # Alembic Migrationen
@@ -107,6 +107,7 @@ moodsync/
 │   ├── API.md
 │   ├── FRONTEND.md
 │   ├── MARKET_ANALYSIS.md
+│   ├── quality/                # Quality-Gate-Reports (M1, M2, …)
 │   └── adr/                    # Architecture Decision Records
 └── .github/
     └── ISSUE_TEMPLATE/
@@ -137,6 +138,7 @@ Aufgabe: <hier konkrete Aufgabe>
 | [FRONTEND.md](docs/FRONTEND.md)               | Design-Prinzipien, Atomic Design, i18n, Performance-Budget          |
 | [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md) | Wettbewerbs- und Marktanalyse, Monetarisierung, Marketing           |
 | [ADR Index](docs/adr/)                        | Architecture Decision Records                                       |
+| [Quality Gates](docs/quality/)                | M1/M2 Quality-Gate-Reports                                          |
 
 ---
 
