@@ -1,12 +1,45 @@
 import type { TimeseriesPoint } from '$lib/api/stats';
 
 export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
+export type TimeseriesRange = 'week' | 'month' | 'year';
+export type PointShape = 'circle' | 'diamond' | 'triangle';
 
 export interface ChartPoint {
   x: number;
   y: number;
   value: number;
   label: string;
+}
+
+export interface MetricStyle {
+  color: string;
+  dasharray: string;
+  shape: PointShape;
+}
+
+export const metricStyles: Record<MetricKey, MetricStyle> = {
+  mood_avg: {
+    color: 'var(--color-metric-mood)',
+    dasharray: '',
+    shape: 'circle',
+  },
+  energy_avg: {
+    color: 'var(--color-metric-energy)',
+    dasharray: '8 5',
+    shape: 'diamond',
+  },
+  stress_avg: {
+    color: 'var(--color-metric-stress)',
+    dasharray: '2 5',
+    shape: 'triangle',
+  },
+};
+
+export function formatTimeseriesTick(range: TimeseriesRange, isoDate: string): string {
+  const [year, month, day] = isoDate.split('-');
+  if (!year || !month || !day) return isoDate;
+  if (range === 'year') return `${year}-${month}`;
+  return `${month}-${day}`;
 }
 
 export function buildLinePoints(

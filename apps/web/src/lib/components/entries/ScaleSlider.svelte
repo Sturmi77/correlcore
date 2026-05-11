@@ -101,8 +101,8 @@
   }
 
   .scale-step {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: var(--radius-full);
     border: 1px solid var(--color-border, #d4d4d4);
     background: transparent;
@@ -141,8 +141,8 @@
     font-size: var(--text-xs);
     color: var(--color-text-muted);
     padding-inline: 0.125rem;
-    padding-inline-start: calc(2.25rem + var(--space-3));
-    padding-inline-end: calc(2.25rem + var(--space-3) + 1.5rem + var(--space-3));
+    padding-inline-start: calc(2.75rem + var(--space-3));
+    padding-inline-end: calc(2.75rem + var(--space-3) + 1.5rem + var(--space-3));
   }
 
   .scale-legend__low,

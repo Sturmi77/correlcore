@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildLinePoints, heatmapLevel, linePath } from './charts';
+import {
+  buildLinePoints,
+  formatTimeseriesTick,
+  heatmapLevel,
+  linePath,
+  metricStyles,
+} from './charts';
 
 describe('chart utilities', () => {
   it('builds SVG line points and skips nulls', () => {
@@ -39,5 +45,19 @@ describe('chart utilities', () => {
     expect(heatmapLevel(1, 10)).toBe(1);
     expect(heatmapLevel(5, 10)).toBe(2);
     expect(heatmapLevel(8, 10)).toBe(4);
+  });
+
+  it('formats x-axis ticks for the selected timeseries range', () => {
+    expect(formatTimeseriesTick('week', '2026-05-09')).toBe('05-09');
+    expect(formatTimeseriesTick('month', '2026-05-09')).toBe('05-09');
+    expect(formatTimeseriesTick('year', '2026-05-09')).toBe('2026-05');
+    expect(formatTimeseriesTick('week', 'bad-date')).toBe('bad-date');
+  });
+
+  it('uses non-color metric styles for a11y', () => {
+    expect(metricStyles.mood_avg.shape).toBe('circle');
+    expect(metricStyles.energy_avg.shape).toBe('diamond');
+    expect(metricStyles.stress_avg.shape).toBe('triangle');
+    expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(3);
   });
 });

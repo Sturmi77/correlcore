@@ -196,6 +196,7 @@
     "category": "Category",
     "category_all": "All tags",
     "empty": "No entries in the selected range yet.",
+    "empty_cta": "Log an entry",
     "range": {
       "week": "Week",
       "month": "Month",
@@ -209,7 +210,10 @@
     "timeseries": {
       "heading": "Time series",
       "legend": "Metrics",
-      "aria": "Time series for mood, energy and stress"
+      "aria": "Time series for mood, energy and stress",
+      "score_axis": "Score 1-5",
+      "loading": "Loading time series",
+      "empty": "No mood scores in this range yet."
     },
     "streak": {
       "heading": "Entry streak",
@@ -220,7 +224,11 @@
     "heatmap": {
       "heading": "Tag frequency",
       "aria": "Heatmap of tag frequencies",
-      "empty": "No tags in the selected range yet."
+      "legend": "Tag frequency intensity",
+      "less": "Less",
+      "more": "More",
+      "loading": "Loading tag heatmap",
+      "empty": "No tag activity in this range yet."
     }
   },
   "settings": {
