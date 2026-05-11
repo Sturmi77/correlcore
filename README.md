@@ -15,12 +15,12 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 
 **CorrelCore** fills this gap:
 
-| Promise | Description |
-| --- | --- |
-| **Correlations, not raw data** | The app explains why days were good or bad |
-| **Selfhosted & Offline-First** | Your health data never leaves your home |
-| **60 seconds per day** | No more, or it simply won't get done |
-| **No gamification, ever** | You track your habits — not how often you open the app |
+| Promise                        | Description                                            |
+| ------------------------------ | ------------------------------------------------------ |
+| **Correlations, not raw data** | The app explains why days were good or bad             |
+| **Selfhosted & Offline-First** | Your health data never leaves your home                |
+| **60 seconds per day**         | No more, or it simply won't get done                   |
+| **No gamification, ever**      | You track your habits — not how often you open the app |
 
 ---
 
@@ -46,22 +46,22 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ## Tech Stack
 
-| Layer | Technology | Rationale |
-| --- | --- | --- |
-| **Backend API** | FastAPI (Python 3.12) | Async, OpenAPI-native, fast iteration |
-| **Web Frontend** | SvelteKit + Skeleton UI | Performance, bundle < 150 KB gz |
-| **Mobile** | PWA + Capacitor (Android) | Maximum code sharing, native Health Connect access ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
-| **Charts** | Custom SVG components | No external framework, JS budget maintained, token-compliant |
-| **Database** | PostgreSQL 16 + pgvector | Row-level security for multi-user, vector for insights |
-| **Cache / Queue** | Redis 7 | Sessions, rate limiting, sync queue |
-| **Object Storage** | MinIO | Selfhost-compatible S3, EXIF strip |
-| **Reverse Proxy** | Traefik v3 | Automatic TLS, Docker label routing |
-| **Auth** | Native JWT phase 1, Authentik from M11 | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md)) |
-| **Offline Sync** | Dexie.js (IndexedDB) | Delta sync, last-write-wins (M4) |
-| **Analytics** | pandas + scikit-learn | Correlation, Lasso, lag analysis |
-| **Migrations** | Alembic | Schema versioning |
-| **Monitoring** | GlitchTip + Uptime Kuma | Selfhosted error tracking |
-| **Notifications** | UnifiedPush / FCM | Privacy-first push |
+| Layer              | Technology                             | Rationale                                                                                             |
+| ------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Backend API**    | FastAPI (Python 3.12)                  | Async, OpenAPI-native, fast iteration                                                                 |
+| **Web Frontend**   | SvelteKit + Skeleton UI                | Performance, bundle < 150 KB gz                                                                       |
+| **Mobile**         | PWA + Capacitor (Android)              | Maximum code sharing, native Health Connect access ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
+| **Charts**         | Custom SVG components                  | No external framework, JS budget maintained, token-compliant                                          |
+| **Database**       | PostgreSQL 16 + pgvector               | Row-level security for multi-user, vector for insights                                                |
+| **Cache / Queue**  | Redis 7                                | Sessions, rate limiting, sync queue                                                                   |
+| **Object Storage** | MinIO                                  | Selfhost-compatible S3, EXIF strip                                                                    |
+| **Reverse Proxy**  | Traefik v3                             | Automatic TLS, Docker label routing                                                                   |
+| **Auth**           | Native JWT phase 1, Authentik from M11 | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                 |
+| **Offline Sync**   | Dexie.js (IndexedDB)                   | Delta sync, last-write-wins (M4)                                                                      |
+| **Analytics**      | pandas + scikit-learn                  | Correlation, Lasso, lag analysis                                                                      |
+| **Migrations**     | Alembic                                | Schema versioning                                                                                     |
+| **Monitoring**     | GlitchTip + Uptime Kuma                | Selfhosted error tracking                                                                             |
+| **Notifications**  | UnifiedPush / FCM                      | Privacy-first push                                                                                    |
 
 ---
 
@@ -131,17 +131,17 @@ Task: <your specific task here>
 
 ## Documentation
 
-| Document | Content |
-| --- | --- |
-| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md) | Vision, features, architecture, roadmap — single source of truth |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Component diagram, deployment topologies, sync protocol |
-| [API.md](docs/API.md) | OpenAPI guidelines, endpoints, auth flow |
-| [FRONTEND.md](docs/FRONTEND.md) | Design principles, atomic design, i18n, performance budget |
-| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md) | Competitive and market analysis, monetisation, marketing |
-| [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan |
-| [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md) | Rename and deployment migration notes from MoodSync to CorrelCore |
-| [ADR Index](docs/adr/) | Architecture decision records |
-| [Quality Gates](docs/quality/) | M1/M2 quality gate reports |
+| Document                                                              | Content                                                           |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                         | Vision, features, architecture, roadmap — single source of truth  |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                               | Component diagram, deployment topologies, sync protocol           |
+| [API.md](docs/API.md)                                                 | OpenAPI guidelines, endpoints, auth flow                          |
+| [FRONTEND.md](docs/FRONTEND.md)                                       | Design principles, atomic design, i18n, performance budget        |
+| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                         | Competitive and market analysis, monetisation, marketing          |
+| [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan      |
+| [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)           | Rename and deployment migration notes from MoodSync to CorrelCore |
+| [ADR Index](docs/adr/)                                                | Architecture decision records                                     |
+| [Quality Gates](docs/quality/)                                        | M1/M2 quality gate reports                                        |
 
 ---
 
