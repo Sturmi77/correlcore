@@ -8,15 +8,6 @@
   export let loading = false;
 
   $: dates = heatmap ? buildDates(heatmap.start_date, heatmap.end_date) : [];
-
-  /**
-   * GAP-02: Datumsrichtung — neuestes Datum rechts.
-   * buildDates() liefert aufsteigend (ältestes zuerst).
-   * Wir kehren das Array um damit die Spalten von rechts nach links
-   * älter werden — Standard für Activity-Heatmaps (GitHub, Wakatime).
-   */
-  $: reversedDates = [...dates].reverse();
-
   $: maxCount = heatmap
     ? Math.max(0, ...heatmap.tags.flatMap((tag) => tag.days.map((day) => day.count)))
     : 0;
@@ -42,17 +33,16 @@
   <div class="heatmap__head">
     <h2>{$_('trends.heatmap.heading')}</h2>
     {#if heatmap}
-      <span>{heatmap.start_date} – {heatmap.end_date}</span>
+      <span>{heatmap.start_date} - {heatmap.end_date}</span>
     {/if}
   </div>
 
   {#if heatmap && heatmap.tags.length > 0}
     <div class="heatmap__scroller" aria-label={$_('trends.heatmap.aria')}>
-      <div class="heatmap__grid" style={`--day-count: ${reversedDates.length}`}>
+      <div class="heatmap__grid" style={`--day-count: ${dates.length}`}>
         {#each heatmap.tags as tag, tagIndex}
           <div class="heatmap__tag" title={tag.name}>{tag.name}</div>
-          <!-- GAP-02: reversedDates statt dates → neuestes Datum rechts -->
-          {#each reversedDates as date}
+          {#each dates as date}
             {@const count = countFor(tagIndex, date)}
             <a
               class={`heatmap__cell heatmap__cell--${heatmapLevel(count, maxCount)}`}

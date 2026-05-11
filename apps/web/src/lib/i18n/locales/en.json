@@ -106,6 +106,16 @@
       "retry": "Retry",
       "offline": "Offline — changes are not being saved.",
       "leave_warning": "There are unsaved changes. Are you sure you want to leave?"
+    },
+    "scale": {
+      "mood_low": "very bad",
+      "mood_high": "very good",
+      "energy_low": "drained",
+      "energy_high": "full of energy",
+      "stress_low": "relaxed",
+      "stress_high": "very stressed",
+      "default_low": "low",
+      "default_high": "high"
     }
   },
   "day_entries": {

@@ -12,10 +12,14 @@
   export let loading = false;
 
   const width = 720;
-  const height = 220;
-  const padding = 28;
+  const height = 240;
+  const paddingLeft = 40;
+  const paddingRight = 16;
+  const paddingTop = 16;
+  const paddingBottom = 32;
+  const innerW = width - paddingLeft - paddingRight;
+  const innerH = height - paddingTop - paddingBottom;
 
-  // GAP-11: Metrik-Farben aus CSS-Token-System statt Hex-Literalen
   const metrics: { key: MetricKey; label: string; color: string }[] = [
     { key: 'mood_avg', label: 'trends.metric.mood', color: 'var(--color-metric-mood)' },
     { key: 'energy_avg', label: 'trends.metric.energy', color: 'var(--color-metric-energy)' },
@@ -23,10 +27,23 @@
   ];
 
   $: series = metrics.map((metric) => {
-    const raw = buildLinePoints(points, metric.key, width - padding * 2, height - padding * 2);
-    const shifted = raw.map((point) => ({ ...point, x: point.x + padding, y: point.y + padding }));
+    const raw = buildLinePoints(points, metric.key, innerW, innerH);
+    const shifted = raw.map((point) => ({
+      ...point,
+      x: point.x + paddingLeft,
+      y: point.y + paddingTop,
+    }));
     return { ...metric, points: shifted, path: linePath(shifted) };
   });
+
+  $: xLabels = (() => {
+    if (points.length === 0) return [];
+    const indexes = [0, Math.floor((points.length - 1) / 2), points.length - 1];
+    return [...new Set(indexes)].map((index) => ({
+      x: paddingLeft + (index / Math.max(1, points.length - 1)) * innerW,
+      label: points[index].period_start,
+    }));
+  })();
 </script>
 
 <section class="timeseries" data-loading={loading ? 'true' : 'false'}>
@@ -48,20 +65,32 @@
     role="img"
     aria-label={$_('trends.timeseries.aria')}
   >
+    <line
+      x1={paddingLeft}
+      x2={paddingLeft}
+      y1={paddingTop}
+      y2={height - paddingBottom}
+      class="timeseries__axis"
+    />
+    <line
+      x1={paddingLeft}
+      x2={width - paddingRight}
+      y1={height - paddingBottom}
+      y2={height - paddingBottom}
+      class="timeseries__axis"
+    />
+
     {#each [1, 2, 3, 4, 5] as tick}
-      <line
-        x1={padding}
-        x2={width - padding}
-        y1={height - padding - ((tick - 1) / 4) * (height - padding * 2)}
-        y2={height - padding - ((tick - 1) / 4) * (height - padding * 2)}
-        class="timeseries__grid"
-      />
-      <text
-        x="8"
-        y={height - padding - ((tick - 1) / 4) * (height - padding * 2) + 4}
-        class="timeseries__tick"
-      >
+      {@const y = height - paddingBottom - ((tick - 1) / 4) * innerH}
+      <line x1={paddingLeft} x2={width - paddingRight} y1={y} y2={y} class="timeseries__grid" />
+      <text x="10" y={y + 4} class="timeseries__tick">
         {tick}
+      </text>
+    {/each}
+
+    {#each xLabels as tick}
+      <text x={tick.x} y={height - 9} class="timeseries__tick timeseries__tick--x">
+        {tick.label}
       </text>
     {/each}
 
@@ -138,25 +167,35 @@
   .timeseries__chart {
     width: 100%;
     min-height: 15rem;
-    /* GAP-10: Radius-Token statt Literal */
     border-radius: var(--radius-md);
-    /* GAP-03: ersetzt rgb(var(--color-surface-50, 249 250 251) / 0.72) */
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
   }
 
+  .timeseries__axis {
+    stroke: currentColor;
+    opacity: 0.3;
+    stroke-width: 1;
+  }
+
   .timeseries__grid {
     stroke: currentColor;
-    /* GAP-04 Vorbereitung: Opacity 0.1 → 0.18 für bessere Dark-Mode-Sichtbarkeit */
-    opacity: 0.18;
+    opacity: 0.22;
     stroke-width: 1;
+    stroke-dasharray: 4 4;
   }
 
   .timeseries__tick {
     font-size: 11px;
     fill: currentColor;
-    /* GAP-04 Vorbereitung: Opacity 0.45 → 0.65 */
+    opacity: 0.72;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timeseries__tick--x {
+    font-size: 10px;
     opacity: 0.65;
+    text-anchor: middle;
   }
 
   .timeseries__line {
@@ -169,7 +208,6 @@
 
   .timeseries__point {
     fill: var(--metric-color);
-    /* GAP-03: ersetzt rgb(var(--color-surface-50, 249 250 251)) */
     stroke: var(--color-bg);
     stroke-width: 2;
   }

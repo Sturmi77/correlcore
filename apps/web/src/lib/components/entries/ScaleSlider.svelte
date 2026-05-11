@@ -1,15 +1,7 @@
 <script lang="ts">
-  /**
-   * 1..5 scale slider with explicit +/- buttons (a11y guidance from
-   * Issue #7: "Mood-Slider Svelte-Komponente — a11y: +/- Buttons zusätzlich").
-   *
-   * Renders a native range input plus two icon-buttons so users on
-   * touch and keyboard get the same affordance. Labels and aria text
-   * are passed in by the caller — this component does not own copy.
-   *
-   * GAP-01: scaleType prop adds contextual min/max legend so users
-   * understand the direction of each metric (esp. stress: 1=relaxed, 5=very stressed).
-   */
+  import { _ } from 'svelte-i18n';
+
+  type ScaleType = 'mood' | 'energy' | 'stress' | 'default';
 
   export let value: number;
   export let label: string;
@@ -18,24 +10,20 @@
   export let id: string;
   export let min = 1;
   export let max = 5;
+  export let scaleType: ScaleType = 'default';
 
-  /**
-   * GAP-01: Metrik-Typ — bestimmt die Bedeutungslegende unter dem Slider.
-   * mood    → 1 = sehr schlecht … 5 = sehr gut
-   * energy  → 1 = erschöpft     … 5 = voller Energie
-   * stress  → 1 = entspannt     … 5 = sehr gestresst  (invertierte Valenz!)
-   * default → 1 = niedrig       … 5 = hoch
-   */
-  export let scaleType: 'mood' | 'energy' | 'stress' | 'default' = 'default';
-
-  const scaleLegends: Record<typeof scaleType, { low: string; high: string }> = {
-    mood: { low: 'sehr schlecht', high: 'sehr gut' },
-    energy: { low: 'erschöpft', high: 'voller Energie' },
-    stress: { low: 'entspannt', high: 'sehr gestresst' },
-    default: { low: 'niedrig', high: 'hoch' },
+  const scaleLegendKeys: Record<ScaleType, { low: string; high: string }> = {
+    mood: { low: 'entry.scale.mood_low', high: 'entry.scale.mood_high' },
+    energy: { low: 'entry.scale.energy_low', high: 'entry.scale.energy_high' },
+    stress: { low: 'entry.scale.stress_low', high: 'entry.scale.stress_high' },
+    default: { low: 'entry.scale.default_low', high: 'entry.scale.default_high' },
   };
 
-  $: legend = scaleLegends[scaleType];
+  $: legendKeys = scaleLegendKeys[scaleType];
+  $: legendLow = $_(legendKeys.low);
+  $: legendHigh = $_(legendKeys.high);
+  $: legendText = `${min} = ${legendLow}; ${max} = ${legendHigh}`;
+  $: legendId = `${id}-legend`;
 
   function clamp(n: number): number {
     return Math.max(min, Math.min(max, n));
@@ -60,7 +48,7 @@
       on:click={decrement}
       disabled={value <= min}
     >
-      −
+      -
     </button>
     <input
       {id}
@@ -72,6 +60,8 @@
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={value}
+      aria-valuetext={`${value}; ${legendText}`}
+      aria-describedby={legendId}
     />
     <button
       type="button"
@@ -85,10 +75,9 @@
     <output class="scale-value" for={id}>{value}</output>
   </div>
 
-  <!-- GAP-01: Skala-Legende — zeigt Bedeutung von 1 und 5 je Metrik-Typ -->
-  <div class="scale-legend" aria-hidden="true">
-    <span class="scale-legend__low">{min} = {legend.low}</span>
-    <span class="scale-legend__high">{max} = {legend.high}</span>
+  <div class="scale-legend" id={legendId}>
+    <span class="scale-legend__low">{min} = {legendLow}</span>
+    <span class="scale-legend__high">{max} = {legendHigh}</span>
   </div>
 </div>
 
@@ -146,21 +135,18 @@
     width: 100%;
   }
 
-  /* GAP-01: Legende */
   .scale-legend {
     display: flex;
     justify-content: space-between;
     font-size: var(--text-xs);
     color: var(--color-text-muted);
     padding-inline: 0.125rem;
-    /* Einrücken damit Labels mit den Slider-Endpunkten fluchten */
     padding-inline-start: calc(2.25rem + var(--space-3));
     padding-inline-end: calc(2.25rem + var(--space-3) + 1.5rem + var(--space-3));
   }
 
   .scale-legend__low,
   .scale-legend__high {
-    /* Stress-Wert (high) soll visuell klar als Warnung lesbar sein */
     white-space: nowrap;
   }
 </style>

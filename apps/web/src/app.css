@@ -72,8 +72,8 @@
 
   /* Text-Hierarchie — 3 Ebenen */
   --color-text: #cdccca;
-  --color-text-muted: #797876;
-  --color-text-faint: #5a5957;
+  --color-text-muted: #878684;
+  --color-text-faint: #6b6a68;
   --color-text-inverse: #2b2a28;
 
   /* Primary-Varianten */
@@ -176,8 +176,8 @@
     --color-surface-offset: #1d1c1a;
     --color-surface-dynamic: #2d2c2a;
     --color-text: #cdccca;
-    --color-text-muted: #797876;
-    --color-text-faint: #5a5957;
+    --color-text-muted: #878684;
+    --color-text-faint: #6b6a68;
     --color-text-inverse: #2b2a28;
     --color-primary: #4f98a3;
     --color-primary-hover: #227f8b;
