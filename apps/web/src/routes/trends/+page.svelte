@@ -144,7 +144,7 @@
     {/if}
 
     <section class="trends__panel">
-      <MetricTimeseries points={timeseries?.points ?? []} enabled={metrics} {loading} />
+      <MetricTimeseries points={timeseries?.points ?? []} {range} enabled={metrics} {loading} />
     </section>
 
     <section class="trends__streak" aria-label={$_('trends.streak.heading')}>
@@ -203,9 +203,9 @@
   .trends__panel,
   .trends__streak {
     padding: 1rem;
-    border-radius: 0.5rem;
-    background: rgb(var(--color-surface-50, 249 250 251) / 0.78);
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.5);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
   }
 
   .trends__controls {
@@ -216,13 +216,15 @@
     display: inline-flex;
     gap: 0.25rem;
     padding: 0.25rem;
-    border-radius: 0.5rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.55);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface);
   }
 
   .trends__segments button {
+    min-height: 44px;
     border: 0;
-    border-radius: 0.35rem;
+    border-radius: var(--radius-sm);
     padding: 0.45rem 0.7rem;
     background: transparent;
     color: inherit;
@@ -232,8 +234,8 @@
   }
 
   .trends__segments button.active {
-    background: #01696f;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
   }
 
   .trends__metric-toggles {
@@ -245,6 +247,7 @@
 
   .trends__metric-toggles label,
   .trends__select {
+    min-height: 44px;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -256,10 +259,10 @@
   }
 
   .trends__select select {
-    min-height: 2.25rem;
-    border-radius: 0.45rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219));
-    background: rgb(var(--color-surface-50, 249 250 251));
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
     color: inherit;
     padding: 0 0.55rem;
   }
@@ -286,7 +289,7 @@
 
   .trends__error {
     margin: 0;
-    color: #b91c1c;
+    color: var(--color-error);
   }
 
   @media (max-width: 640px) {

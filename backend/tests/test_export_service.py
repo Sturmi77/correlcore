@@ -56,12 +56,31 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
     payload = envelope.model_dump(mode="json")
 
     assert payload["user"]["email"] == "me@example.test"
+    assert payload["format_version"] == "1.1"
+    assert payload["score_legend"]["stress"] == {
+        "min": 1,
+        "max": 5,
+        "min_label": "relaxed",
+        "max_label": "very stressed",
+    }
     assert payload["entries"][0]["note"] == "private note"
     assert payload["entries"][0]["tags"][0]["name"] == "Focus"
     assert payload["entries"][0]["symptoms"][0]["intensity"] == 2
     serialized = json.dumps(payload)
-    assert str(user.id) not in serialized
-    assert str(entry.id) not in serialized
+    forbidden_values = [
+        str(user.id),
+        str(entry.id),
+        str(tag.id),
+        str(symptom.id),
+        str(entry_tag.entry_id),
+        str(entry_tag.tag_id),
+        str(entry_symptom.entry_id),
+        str(entry_symptom.symptom_id),
+    ]
+    for value in forbidden_values:
+        assert value not in serialized
+    for forbidden_key in ["user_id", "entry_id", "tag_id", "symptom_id"]:
+        assert forbidden_key not in serialized
 
 
 @pytest.mark.asyncio
@@ -75,8 +94,15 @@ async def test_export_csv_and_zip_render() -> None:
     csv_bytes = render_export_csv(envelope)
     zip_bytes = render_export_zip(envelope)
 
-    assert b"mood_score" in csv_bytes
+    csv_text = csv_bytes.decode("utf-8-sig")
+    assert "mood_score" in csv_text
+    assert "mood_scale" in csv_text
+    assert "1=very bad; 5=very good" in csv_text
     with zipfile.ZipFile(BytesIO(zip_bytes)) as archive:
         assert sorted(archive.namelist()) == ["README.txt", "export.json"]
+        readme = archive.read("README.txt").decode("utf-8")
+        assert "stress: 1=relaxed; 5=very stressed" in readme
         data = json.loads(archive.read("export.json"))
+        assert data["format_version"] == "1.1"
+        assert data["score_legend"]["energy"]["max_label"] == "full of energy"
         assert data["entries"][0]["date"] == entry.entry_date.isoformat()

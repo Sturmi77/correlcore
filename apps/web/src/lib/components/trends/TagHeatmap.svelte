@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import { heatmapLevel } from '$lib/utils/charts';
@@ -7,10 +8,20 @@
   export let heatmap: TagHeatmapResponse | null = null;
   export let loading = false;
 
+  const skeletonRows = [0, 1, 2, 3];
+
+  let scroller: HTMLDivElement;
+  let lastScrolledHeatmap: TagHeatmapResponse | null = null;
+
   $: dates = heatmap ? buildDates(heatmap.start_date, heatmap.end_date) : [];
   $: maxCount = heatmap
     ? Math.max(0, ...heatmap.tags.flatMap((tag) => tag.days.map((day) => day.count)))
     : 0;
+  $: showSkeleton = loading && !heatmap;
+  $: if (heatmap && heatmap !== lastScrolledHeatmap) {
+    lastScrolledHeatmap = heatmap;
+    void scrollToLatest();
+  }
 
   function buildDates(start: string, end: string): string[] {
     const out: string[] = [];
@@ -20,6 +31,13 @@
       cursor = shiftIsoDate(cursor, 1);
     }
     return out;
+  }
+
+  async function scrollToLatest(): Promise<void> {
+    await tick();
+    if (scroller) {
+      scroller.scrollLeft = scroller.scrollWidth;
+    }
   }
 
   function countFor(tagIndex: number, date: string): number {
@@ -37,8 +55,14 @@
     {/if}
   </div>
 
-  {#if heatmap && heatmap.tags.length > 0}
-    <div class="heatmap__scroller" aria-label={$_('trends.heatmap.aria')}>
+  {#if showSkeleton}
+    <div class="heatmap__skeleton" role="status" aria-label={$_('trends.heatmap.loading')}>
+      {#each skeletonRows as skeletonIndex}
+        <span style={`--skeleton-index: ${skeletonIndex}`}></span>
+      {/each}
+    </div>
+  {:else if heatmap && heatmap.tags.length > 0}
+    <div class="heatmap__scroller" aria-label={$_('trends.heatmap.aria')} bind:this={scroller}>
       <div class="heatmap__grid" style={`--day-count: ${dates.length}`}>
         {#each heatmap.tags as tag, tagIndex}
           <div class="heatmap__tag" title={tag.name}>{tag.name}</div>
@@ -54,8 +78,18 @@
         {/each}
       </div>
     </div>
+    <div class="heatmap__legend" aria-label={$_('trends.heatmap.legend')}>
+      <span>{$_('trends.heatmap.less')}</span>
+      {#each [0, 1, 2, 3, 4] as level}
+        <span class={`heatmap__legend-cell heatmap__cell--${level}`}></span>
+      {/each}
+      <span>{$_('trends.heatmap.more')}</span>
+    </div>
   {:else if !loading}
-    <p class="heatmap__empty">{$_('trends.heatmap.empty')}</p>
+    <div class="heatmap__empty">
+      <p>{$_('trends.heatmap.empty')}</p>
+      <a class="btn btn-sm variant-soft-primary" href="/entries/new">{$_('trends.empty_cta')}</a>
+    </div>
   {/if}
 </section>
 
@@ -81,12 +115,13 @@
 
   .heatmap__head span {
     font-size: var(--text-xs);
-    opacity: 0.68;
+    color: var(--color-text-muted);
   }
 
   .heatmap__scroller {
     overflow-x: auto;
     padding-bottom: var(--space-1);
+    scroll-behavior: smooth;
   }
 
   .heatmap__grid {
@@ -109,7 +144,8 @@
     white-space: nowrap;
   }
 
-  .heatmap__cell {
+  .heatmap__cell,
+  .heatmap__legend-cell {
     width: 0.8rem;
     height: 0.8rem;
     border-radius: var(--radius-sm);
@@ -138,13 +174,86 @@
     background: var(--color-heatmap-4);
   }
 
+  .heatmap__legend,
   .heatmap__empty {
-    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .heatmap__empty {
+    justify-content: space-between;
     font-size: var(--text-sm);
-    opacity: 0.72;
+  }
+
+  .heatmap__empty p {
+    margin: 0;
+  }
+
+  .heatmap__skeleton {
+    min-height: 10rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface-chart-bg);
+    padding: var(--space-4);
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .heatmap__skeleton span {
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-dynamic),
+      var(--color-primary-highlight),
+      var(--color-surface-dynamic)
+    );
+    background-size: 220% 100%;
+    animation: heatmap-shimmer 1.1s ease-in-out infinite;
   }
 
   .heatmap[data-loading='true'] {
-    opacity: 0.55;
+    opacity: 0.92;
+  }
+
+  @keyframes heatmap-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .heatmap__scroller {
+      scroll-behavior: auto;
+    }
+
+    .heatmap__skeleton span {
+      animation: none;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .heatmap__grid {
+      grid-template-columns: minmax(7rem, 9rem) repeat(var(--day-count), 2.75rem);
+      gap: 0.25rem;
+    }
+
+    .heatmap__cell {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .heatmap__head,
+    .heatmap__empty {
+      align-items: stretch;
+      flex-direction: column;
+    }
   }
 </style>

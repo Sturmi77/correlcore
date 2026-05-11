@@ -14,10 +14,18 @@ class ExportUser(BaseModel):
     created_at: datetime
 
 
+class ExportScoreLegendItem(BaseModel):
+    min: int
+    max: int
+    min_label: str
+    max_label: str
+
+
 class ExportEnvelope(BaseModel):
     export_date: datetime
     moodsync_version: str
-    format_version: str = "1.0"
+    format_version: str = "1.1"
+    score_legend: dict[str, ExportScoreLegendItem]
     user: ExportUser
     entries: list[dict[str, Any]] = Field(default_factory=list)
     tags: list[dict[str, Any]] = Field(default_factory=list)

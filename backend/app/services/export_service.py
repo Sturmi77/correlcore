@@ -23,10 +23,34 @@ from app.models.entry import Entry
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
 from app.models.user import User
-from app.schemas.export import ExportEnvelope, ExportUser
+from app.schemas.export import ExportEnvelope, ExportScoreLegendItem, ExportUser
 
-EXPORT_FORMAT_VERSION = "1.0"
+EXPORT_FORMAT_VERSION = "1.1"
 MOODSYNC_EXPORT_VERSION = "0.0.1"
+SCORE_LEGEND: dict[str, ExportScoreLegendItem] = {
+    "mood_score": ExportScoreLegendItem(
+        min=1,
+        max=5,
+        min_label="very bad",
+        max_label="very good",
+    ),
+    "energy": ExportScoreLegendItem(
+        min=1,
+        max=5,
+        min_label="drained",
+        max_label="full of energy",
+    ),
+    "stress": ExportScoreLegendItem(
+        min=1,
+        max=5,
+        min_label="relaxed",
+        max_label="very stressed",
+    ),
+}
+CSV_SCORE_LEGENDS = {
+    key: f"{value.min}={value.min_label}; {value.max}={value.max_label}"
+    for key, value in SCORE_LEGEND.items()
+}
 
 
 def export_filename(extension: str, *, now: datetime | None = None) -> str:
@@ -106,6 +130,7 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
         export_date=datetime.now(UTC),
         moodsync_version=MOODSYNC_EXPORT_VERSION,
         format_version=EXPORT_FORMAT_VERSION,
+        score_legend=SCORE_LEGEND,
         user=ExportUser(
             email=user.email,
             display_name=user.display_name,
@@ -136,6 +161,9 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
             "mood_score",
             "energy",
             "stress",
+            "mood_scale",
+            "energy_scale",
+            "stress_scale",
             "work_context",
             "note",
             "tags",
@@ -153,6 +181,9 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
                 "mood_score": entry["mood_score"],
                 "energy": entry["energy"],
                 "stress": entry["stress"],
+                "mood_scale": CSV_SCORE_LEGENDS["mood_score"],
+                "energy_scale": CSV_SCORE_LEGENDS["energy"],
+                "stress_scale": CSV_SCORE_LEGENDS["stress"],
                 "work_context": entry["work_context"],
                 "note": entry["note"] or "",
                 "tags": ", ".join(tag["name"] for tag in entry["tags"]),
@@ -175,6 +206,10 @@ def render_export_zip(envelope: ExportEnvelope) -> bytes:
         "Files:\n"
         "- export.json: entries, assigned tags, assigned symptoms and account metadata.\n"
         "- README.txt: this format note.\n\n"
+        "Score scales:\n"
+        "- mood_score: 1=very bad; 5=very good.\n"
+        "- energy: 1=drained; 5=full of energy.\n"
+        "- stress: 1=relaxed; 5=very stressed.\n\n"
         "Sections for photos, habits, insights and sleep are present as empty arrays until those "
         "features exist in the product.\n"
     )

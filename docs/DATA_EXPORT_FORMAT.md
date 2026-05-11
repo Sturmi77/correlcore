@@ -17,7 +17,27 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
 {
   "export_date": "2026-05-09T14:00:00Z",
   "moodsync_version": "0.0.1",
-  "format_version": "1.0",
+  "format_version": "1.1",
+  "score_legend": {
+    "mood_score": {
+      "min": 1,
+      "max": 5,
+      "min_label": "very bad",
+      "max_label": "very good"
+    },
+    "energy": {
+      "min": 1,
+      "max": 5,
+      "min_label": "drained",
+      "max_label": "full of energy"
+    },
+    "stress": {
+      "min": 1,
+      "max": 5,
+      "min_label": "relaxed",
+      "max_label": "very stressed"
+    }
+  },
   "user": {
     "email": "user@example.test",
     "display_name": "User",
@@ -72,7 +92,9 @@ depend on a stable top-level shape.
 CSV is a flat entry table for spreadsheet and doctor-visit workflows. It
 contains:
 
-`date, slot, mood_score, energy, stress, work_context, note, tags, symptoms, created_at, updated_at`
+`date, slot, mood_score, energy, stress, mood_scale, energy_scale, stress_scale, work_context, note, tags, symptoms, created_at, updated_at`
 
 Tags are comma-separated names. Symptoms are comma-separated `name:intensity`
-pairs. The CSV is encoded as UTF-8 with BOM for spreadsheet compatibility.
+pairs. The `*_scale` columns repeat the 1..5 endpoint meaning per row so the
+spreadsheet remains self-describing when separated from the JSON export. The CSV
+is encoded as UTF-8 with BOM for spreadsheet compatibility.
