@@ -45,22 +45,22 @@ Vollständige Roadmap: [`docs/DESIGN_DOCUMENT.md#roadmap`](docs/DESIGN_DOCUMENT.
 
 ## Tech Stack
 
-| Schicht            | Technologie                  | Begründung                               |
-| ------------------ | ---------------------------- | ---------------------------------------- |
-| **Backend API**    | FastAPI (Python 3.12)        | Async, OpenAPI-nativ, schnell iterierbar |
-| **Web Frontend**   | SvelteKit + Skeleton UI      | Performance, Bundle < 150 KB gz          |
-| **Mobile**         | PWA → Capacitor (Android)    | Code-Sharing max., nativer Health Connect-Zugriff ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
-| **Charts**         | Custom SVG-Komponenten       | Kein externes Framework, JS-Budget eingehalten, Token-konform |
-| **Datenbank**      | PostgreSQL 16 + pgvector     | RLS für Multi-User, Vektor für Insights  |
-| **Cache / Queue**  | Redis 7                      | Session, Rate-Limit, Sync-Queue          |
-| **Object Storage** | MinIO                        | Selfhost-kompatibles S3, EXIF-Strip      |
-| **Reverse Proxy**  | Traefik v3                   | Automatisches TLS, Docker-Labels         |
-| **Auth**           | Native JWT Phase 1, Authentik ab M12 | OIDC, SSO, selfhost ([ADR-0004](docs/adr/0004-auth-strategie.md)) |
-| **Offline-Sync**   | Dexie.js (IndexedDB)         | Delta-Sync, Last-Write-Wins (M4)         |
-| **Analytics**      | pandas + scikit-learn        | Korrelation, Lasso, Lag-Analyse          |
-| **Migrations**     | Alembic                      | Schema-Versionierung                     |
-| **Monitoring**     | GlitchTip + Uptime Kuma      | Selfhost-Error-Tracking                  |
-| **Notifications**  | UnifiedPush / FCM            | Privacy-first Push                       |
+| Schicht            | Technologie                          | Begründung                                                                                           |
+| ------------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| **Backend API**    | FastAPI (Python 3.12)                | Async, OpenAPI-nativ, schnell iterierbar                                                             |
+| **Web Frontend**   | SvelteKit + Skeleton UI              | Performance, Bundle < 150 KB gz                                                                      |
+| **Mobile**         | PWA → Capacitor (Android)            | Code-Sharing max., nativer Health Connect-Zugriff ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
+| **Charts**         | Custom SVG-Komponenten               | Kein externes Framework, JS-Budget eingehalten, Token-konform                                        |
+| **Datenbank**      | PostgreSQL 16 + pgvector             | RLS für Multi-User, Vektor für Insights                                                              |
+| **Cache / Queue**  | Redis 7                              | Session, Rate-Limit, Sync-Queue                                                                      |
+| **Object Storage** | MinIO                                | Selfhost-kompatibles S3, EXIF-Strip                                                                  |
+| **Reverse Proxy**  | Traefik v3                           | Automatisches TLS, Docker-Labels                                                                     |
+| **Auth**           | Native JWT Phase 1, Authentik ab M12 | OIDC, SSO, selfhost ([ADR-0004](docs/adr/0004-auth-strategie.md))                                    |
+| **Offline-Sync**   | Dexie.js (IndexedDB)                 | Delta-Sync, Last-Write-Wins (M4)                                                                     |
+| **Analytics**      | pandas + scikit-learn                | Korrelation, Lasso, Lag-Analyse                                                                      |
+| **Migrations**     | Alembic                              | Schema-Versionierung                                                                                 |
+| **Monitoring**     | GlitchTip + Uptime Kuma              | Selfhost-Error-Tracking                                                                              |
+| **Notifications**  | UnifiedPush / FCM                    | Privacy-first Push                                                                                   |
 
 ---
 
