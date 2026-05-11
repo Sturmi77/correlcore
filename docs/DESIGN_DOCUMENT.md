@@ -1,6 +1,6 @@
 # Design-Dokument: CorrelCore — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.11 (M2 abgeschlossen — alle Quality-Gate-Findings geschlossen, siehe [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md); D-002 entschieden: Custom-SVG-Komponenten statt externer Chart-Lib; ADR-0015 Developer-View implementiert; M2-Akzeptanzkriterien und DSGVO-Checkpoints bestanden)
+**Version:** 0.12 (No-gamification promise added; M5 habits redesigned: streak logic replaced by Adherence Rate + Calendar Heatmap + Correlation Contribution; M2 entry-streak relabeled to Tracking Consistency — Issues #157, #158, #159)
 **Datum:** 2026-05-11
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** CorrelCore
@@ -48,6 +48,7 @@ CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwis
 - **Zusammenhänge statt Rohdaten** — die App erklärt, warum Tage gut/schlecht waren
 - **Selfhosted & Offline-First** — deine Gesundheitsdaten verlassen dein Zuhause nicht
 - **60 Sekunden pro Tag** — nicht mehr, sonst wird es nicht gemacht
+- **No gamification, ever** — du trackst deine Gewohnheiten, nicht wie oft du die App öffnest. Kein Streak-Druck, keine Badges, keine Belohnungsschleifen.
 
 ### 1.5 Nicht-Ziele (wichtig!)
 
@@ -55,6 +56,7 @@ CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwis
 - Kein Social Network, keine öffentlichen Feeds
 - Kein Chat-Bot/Therapeut-Ersatz
 - Keine Ads, kein Daten-Verkauf — Monetarisierung ausschließlich via Selfhost-Lizenz oder SaaS-Abo
+- **Keine Gamification** — keine Streaks, Punkte, Badges oder Engagement-Loops (s. §1.4)
 
 ### 1.6 Erfolgsmetriken
 
@@ -105,14 +107,18 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 ### 2.3 Good / Bad Habits
 
-**Beschreibung:** Explizit als „gut" oder „schlecht" markierte Tags mit Streak-Tracking (z. B. „7 Tage ohne Alkohol", „12 Tage Meditation").
+**Beschreibung:** Als „build" oder „reduce" markierte Tags mit Zielfrequenz-Tracking.
 
 **Kritisch:**
 
-- Habit ≠ Tag: Habits brauchen Ziele („5×/Woche Sport") und Streaks, Tags nur Ja/Nein.
-- Psychologisch heikel: „Bad Habit"-Framing kann schaden. Neutrale Sprache anbieten („Habits I'm building" / „Habits I'm reducing").
+- Habit ≠ Tag: Habits brauchen Ziele („5×/Woche Sport") und Frequenz-Tracking, Tags nur Ja/Nein.
+- Psychologisch heikel: „Bad Habit"-Framing kann schaden. Neutrale Sprache: „Habits I'm building" / „Habits I'm reducing".
+- **Keine Streaks** — Streak-Logik widerspricht dem No-Gamification-Promise (§1.4). Ersatz durch drei nicht-gamifizierende Metriken (s. M5 und Issue #157):
+  1. **Adherence Rate**: `count(days_with_tag) / total_days_in_window` — ehrlich, bricht nicht bei einer Unterbrechung
+  2. **Calendar Heatmap**: visuelle Frequenzdarstellung (M2-Komponente wiederverwendet), kein Streak-Zähler
+  3. **Correlation Contribution Score**: wie stark ein Habit die Insight-Qualität beeinflusst (aus M3/M8 Insight Engine)
 
-**Entscheidung:** Tag kann Flag `habit_type: none|build|reduce` + `target_frequency` haben. Streak-Logik separat. Die genaue Abgrenzung zwischen **Eintrags-Streak** (M2, aktivitätsbasiert) und **Habit-Streak** (M5, zielbezogen) sowie der Schema-Vorgriff für `tags.habit_type` / `tags.target_frequency` in M2 ist in [ADR-0012](adr/0012-m2-m5-streak-semantik.md) festgelegt.
+**Entscheidung:** Tag kann Flag `habit_type: none|build|reduce` + `target_frequency` haben. Adherence Rate als primäre KPI. Keine Streak-Logik. Die genaue Abgrenzung zwischen **Eintrags-Tracking-Consistency** (M2, aktivitätsbasiert) und **Habit-Adherence-Rate** (M5, zielbezogen) sowie der Schema-Vorgriff für `tags.habit_type` / `tags.target_frequency` in M2 ist in [ADR-0012](adr/0012-m2-m5-streak-semantik.md) festgelegt (Update zu ADR-0012 erforderlich).
 
 **Priorität:** SHOULD (v1.1)
 
@@ -225,7 +231,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 ### 2.10 Auswertungen / Visualisierungen
 
-**Beschreibung:** Mood-Verlauf (Tag/Woche/Monat/Jahr), Tag-Frequenz-Heatmap, Korrelations-Matrix, Streak-Visualisierung.
+**Beschreibung:** Mood-Verlauf (Tag/Woche/Monat/Jahr), Tag-Frequenz-Heatmap, Korrelations-Matrix, Tracking-Consistency-Visualisierung.
 
 **Kritisch:**
 
@@ -305,8 +311,9 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 - Max. 1/Tag, konfigurierbare Zeit, Snooze.
 - Selfhost: NTFY / Gotify; Play-Store-App: FCM oder UnifiedPush.
+- **Keine Streak-Reminder** („don't break your streak") — widerspricht No-Gamification-Promise.
 
-**Entscheidung:** UnifiedPush als Primary (selfhostbar), FCM-Fallback.
+**Entscheidung:** UnifiedPush als Primary (selfhostbar), FCM-Fallback. Notification-Copy ist neutral: „Time for your daily check-in." — kein Streak-Druck.
 
 **Priorität:** SHOULD
 
@@ -320,6 +327,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 2. **Selfhosted-First, Cloud-Ready** — `docker compose up` → lauffähig. Kein Code-Rewrite für SaaS
 3. **Privacy by Design** — Datenminimierung, Feld-Verschlüsselung für Sensibles, keine Third-Party-Analytics
 4. **Stateless Backend, 12-Factor**
+5. **No Gamification** — keine Streak-Logik, Punkte, Badges oder Engagement-Loops im gesamten System
 
 ### 3.2 Komponenten
 
@@ -565,7 +573,7 @@ correlcore/
 
 - **60-Sekunden-Regel:** Default-Eintrag in ≤ 60 Sek. (Mood-Slider, 3 Top-Tags, Symptome optional, Notiz optional)
 - **Bottom-Sheet-Entry** statt Full-Page-Form auf Mobile
-- **Home-Screen** = Heute + Streak + letzter Insight. Keine Dashboard-Überladung
+- **Home-Screen** = Heute + Tracking-Consistency + letzter Insight. Keine Dashboard-Überladung
 - **Dark-Mode First**, Light-Variante paritätisch
 - **a11y WCAG 2.2 AA** — Slider zusätzlich mit Buttons, Farben nie einzige Information
 - **Performance-Budget:** JS < 150 KB gz, LCP < 2 s
@@ -573,6 +581,7 @@ correlcore/
 - **Komponenten:** Atomic Design + Storybook
 - **Motion:** subtil, 150–250 ms; Reduced-Motion respektieren
 - **Chart-Implementierung:** Custom-SVG-Komponenten in SvelteKit (kein externes Chart-Framework); Token-konform für Dark-Mode; Metrik-Linien mit unterschiedlichen Dash-Patterns + Point-Shapes (Color-Blind-Safe)
+- **No Gamification in UI:** Keine Streak-Zähler, Badges, Punkte, Fortschrittsbalken die Engagement messen. Einzige Ausnahme: Tracking-Consistency-Widget (neutral formuliert, Datensatz-Qualität kommunizierend, kein Druck-Framing)
 
 ---
 
@@ -614,7 +623,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Strukturierte JSON-Logs für Startup, Requests und Fehler werden geschrieben _(PR #35)_
 - [x] Jede Anfrage erhält eine `request_id` (Middleware gesetzt, in Logs mitgeführt, als `X-Request-ID`-Header zurückgegeben) _(PR #35)_
 - [x] Docker-Healthchecks für API, Web, PostgreSQL, Redis und MinIO im Core-Stack konfiguriert _(PR #35)_
-- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed*password, is_active, is_verified, created_at, updated_at *(PR #36)\_
+- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed_password, is_active, is_verified, created_at, updated_at _(PR #36)_
 - [x] Alembic-Migrationen `000_initial` und `001_create_users` laufen fehlerfrei (forward + rollback) _(PR #36)_
 - [x] `updated_at`-Trigger in Postgres aktiv _(PR #36)_
 - [x] GitHub Actions `ci-api.yml` grün (ruff, mypy, pytest mit Coverage ≥ 70 %) _(PR #37)_
@@ -645,7 +654,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - App-Level-Verschlüsselung at-rest für `entries.note` und `symptoms.name` (Custom) gemäß ADR-0005
 - **Login-UI:** SvelteKit Login/Register-Seiten _(aus M0 verschoben, Issue #40)_
 - **E-Mail-Verifikation:** `POST /auth/verify-email`, SMTP-Versand _(aus M0 verschoben, Issue #39)_
-- **`.env.example`-Fix + Vollständigkeit:** SECRET*KEY-Mismatch beheben, alle Config-Variablen dokumentieren *(aus M0 verschoben, Issue #41)\_
+- **`.env.example`-Fix + Vollständigkeit:** SECRET_KEY-Mismatch beheben, alle Config-Variablen dokumentieren _(aus M0 verschoben, Issue #41)_
 - **Nicht in M1-Scope:** Offline-Sync und Sync-Conflict-Log — verschoben nach M4 gemäß [ADR-0009](adr/0009-offline-sync-nach-m4.md)
 - **Exit:** Produktive Online-Nutzung durch Entwickler selbst möglich (inkl. Login im Browser)
 
@@ -691,7 +700,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - [ ] Datumswechsel löst **kein** Auto-Save aus (nur Hydration)
 - [ ] `beforeunload`-Listener warnt bei Tab-Close während `dirty` oder `saving`
 - [ ] Recent-Entries-Liste zeigt 7 Tage; leerer Tag als gestrichelte Card
-- [ ] 7-Tage-Summary korrekt bei lückenhaften Tagen; Streak bricht erst am Folgetag eines fehlenden Eintrags
+- [ ] 7-Tage-Summary korrekt bei lückenhaften Tagen; Tracking-Consistency bricht erst am Folgetag eines fehlenden Eintrags
 - [ ] Sparkline rendert mit fehlenden Datenpunkten (Dashed-Line); Tooltip pro Punkt; theme-aware
 - [ ] **Quality-Gate:** Lint 0/0, Typecheck 0/0, Vitest 100% pre-existing + neue Tests grün
 
@@ -701,7 +710,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 - Mood-Zeitreihe (Woche/Monat/Jahr) — erweitert auf Multi-Metric (Energy, Stress)
 - Tag-Frequenz-Heatmap mit Drilldown auf Tageseinträge (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
-- Streak-Widgets (Eintrags-Streak, Backend-API als Datenquelle)
+- **Tracking-Consistency-Widget** (ehemals Streak-Widget — Issue #158): zeigt „X of last Y days" statt Streak-Zähler; neutral formuliert, kommuniziert Datensatz-Qualität für Insight Engine
 - CSV/JSON-Export (DSGVO Art. 20, `format_version 1.1`, kein `user_id` im Export)
 - Schema-Vorgriff Habits gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md): `tags.habit_type` + `tags.target_frequency` + `tags.is_hidden` Spalten (Migration 007+008), ohne API/UI
 - Tag-Kategorien bearbeitbar: Copy-on-Write für Default-Tags, `is_hidden`-Flag _(Issue #124)_
@@ -709,6 +718,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - Auto-Cleanup für unverified Accounts via Worker-Job (`UNVERIFIED_CLEANUP_DAYS=7`) _(Issue #101)_
 - **Chart-Implementierung:** Custom-SVG-Komponenten (D-002 entschieden) — kein externes Chart-Framework, JS-Budget < 150 KB gz eingehalten
 - **Quality-Gate:** Alle 14 GUI-Findings aus Issue #133/#135 geschlossen, CI grün ([`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md))
+- **M2 Followup (Issue #158):** Entry-Streak-Widget auf „Tracking consistency: X of last Y days" relabeln — kein Streak-Framing, kein Druck, Bezug zu Insight-Qualität
 - **Exit:** Nutzer versteht Trends visuell ✅
 
 #### Akzeptanzkriterien M2
@@ -717,8 +727,9 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - [x] Export enthält keine system-internen IDs, die Rückschlüsse auf andere User erlauben _(kein `user_id` im Export-Payload — verifiziert in Closure-PR)_
 - [x] Charts auf Mobilgerät (375 px Breite) korrekt gerendert und bedienbar _(QA-Checkliste in [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md) bestanden; alle Touch-Targets ≥ 44 px)_
 - [x] Zeitreihe korrekt für Wochen-/Monats-/Jahresansicht _(Issue #11; Score-Achse 1–5, X-Axis-Labels, Gridlines implementiert)_
-- [x] **Eintrags-Streak**-Berechnung korrekt bei fehlenden Tagen (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md)) _(Issue #13)_
-- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Issues #133, #135, #142 geschlossen; `ruff`, `mypy`, `pytest`, `eslint`, `svelte-check`, `build` grün — [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md))_
+- [x] **Tracking-Consistency**-Berechnung korrekt bei fehlenden Tagen (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md)) _(Issue #13)_
+- [ ] **M2 Followup:** Widget-Label auf „Tracking consistency: X of last Y days" aktualisiert _(Issue #158)_
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Issues #133, #135, #142 geschlossen; [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md))_
 
 #### DSGVO-Checkpoint M2
 
@@ -734,15 +745,30 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - Template-basierte Statements
 - Home-Screen-Insight-Karte
 - Confidence-Level + medizinischer Disclaimer
+- **Tiered Confidence System** (Cold-Start UX):
+  - 3–7 Einträge: einfachste Trends, Label „Early signal — still little data"
+  - 8–14 Einträge: Single-variable streaks, Label „Preliminary — pattern emerging"
+  - 15–29 Einträge: Bivariate correlation, Label „Data-based — more entries sharpen the picture"
+  - 30+ Einträge: Volle Korrelationsanalyse, Label „Statistically robust"
+- **Cold-Start UX-Features:**
+  - Retrospective onboarding (bis 7 Tage rückwirkend erfassen)
+  - Insight-Reifegrad-Fortschrittsbalken (ehrlich, kein Streak-Druck)
+  - Day-over-day delta ab 2 Einträgen
+  - Weekday pattern insight ab 7 Einträgen
+  - Onboarding profile questionnaire (Schlafzeit, Arbeitssituation, Sport-Frequenz)
 - **Exit:** Mindestens 3 sinnvolle Insights bei 30 Einträgen
 
 #### Akzeptanzkriterien M3
 
-- [ ] Insights werden erst ab n≥30 Einträgen aktiviert (unter diesem Schwellwert keine Anzeige)
+- [ ] Insights werden tiered angezeigt (3/8/15/30 Einträge — s. Tiered Confidence System)
 - [ ] Jeder Insight hat sichtbaren Confidence-Level und Disclaimer
 - [ ] Kein Insight formuliert diagnostische Aussagen (Review-Checkliste liegt vor und ist abgezeichnet)
 - [ ] Analytics-Worker läuft als geplanter Job (Cron/Celery) und nicht inline in der API
 - [ ] Fehler im Analytics-Worker crashen nicht die API
+- [ ] Retrospective onboarding: bis 7 Tage rückwirkend erfassbar im Onboarding-Flow
+- [ ] Day-over-day delta ab 2 Einträgen sichtbar
+- [ ] Weekday pattern insight ab 7 Einträgen sichtbar (labeled „early pattern — unconfirmed")
+- [ ] Insight-Reifegrad-Fortschrittsbalken zeigt X/30 Datenpunkte (neutral, kein Druck-Framing)
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M3
@@ -757,7 +783,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 - Installierbare PWA, Service-Worker, App-Icon, Splash
 - Bottom-Sheet-UX, Gestensteuerung
-- Daily Reminder (Web-Push / UnifiedPush)
+- Daily Reminder (Web-Push / UnifiedPush) — neutral formuliert, kein Streak-Druck
 - App-Lock (PIN) auf Mobile
 - **Offline-Sync via IndexedDB (Dexie.js) + Sync-Endpoints** _(aus M1 verschoben, [ADR-0009](adr/0009-offline-sync-nach-m4.md), Issue #10)_
 - **Sync-Conflict-Log-Tabelle** _(aus M1 verschoben, ADR-0003 + [ADR-0009](adr/0009-offline-sync-nach-m4.md), Issue #24)_
@@ -768,6 +794,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - [ ] PWA App-Lock (PIN) implementiert und aktivierbar
 - [ ] Service Worker cached keine sensitiven API-Responses (`Cache-Control: no-store` für `/api/*`)
 - [ ] Web Push Notifications enthalten keine Gesundheitsdaten im Payload
+- [ ] Push-Notification-Copy ist neutral (kein „don't break your streak", kein Guilt-Framing)
 - [ ] PWA installierbar auf Android Chrome und iOS Safari
 - [ ] Offline-Modus: Eintrag erstellen ohne Netzverbindung, Sync beim nächsten Online-Start _(Issue #10)_
 - [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull?since=`) funktioniert mit lokaler Dexie-Queue _(Issue #10, §3.5)_
@@ -783,17 +810,28 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 ### M5 — Habits & Ziele (Woche 13–14)
 
+**Designprinzip:** Keine Gamification. Streaks sind durch drei nicht-gamifizierende Metriken ersetzt (Issues #157, #159).
+
 - Habit-Flag auf Tags (build / reduce) + Zielfrequenzen (API/UI — Schema-Vorgriff bereits in M2 via Migration 007)
-- Streak-Logik, Erfolgs-Badges
-- Habit-Dashboard
-- **Exit:** Gewohnheits-Tracking produktiv nutzbar
+- **Adherence Rate** als primäre Habit-KPI: `count(days_with_tag) / total_days_in_window` — konfigurierbares Fenster 7/14/28/90 Tage
+- **Calendar Heatmap** pro Habit: M2-Komponente wiederverwendet, kein Streak-Zähler
+- **Correlation Contribution Score** pro Habit: aus M3 Insight Engine — zeigt wie stark ein Habit Mood-Predictions beeinflusst
+- **Habit-Dashboard** mit Habit-Liste + Habit-Detail-View
+- **Keine Streak-Logik, keine Badges, keine Punkte** — konsequente Umsetzung des No-Gamification-Promise
+- **Exit:** Gewohnheits-Tracking produktiv nutzbar ohne Engagement-Loops
 
 #### Akzeptanzkriterien M5
 
+- [ ] Kein Streak-Zähler irgendwo in der Habits-UI (Issues #157, #159)
+- [ ] Adherence Rate als primäre Habit-KPI angezeigt (konfigurierbares Fenster 7/14/28/90 Tage)
+- [ ] Calendar Heatmap (M2-Komponente) pro Habit verfügbar
+- [ ] Correlation Contribution Score pro Habit angezeigt (aus M3 Insight Engine; nullable wenn M3-Daten fehlen)
 - [ ] Habit-Sprache neutral (build/reduce, nicht good/bad) — UI-Text-Review abgeschlossen
-- [ ] Keine Wertung oder Scoring von Habits, die psychologisch schaden könnte (kein „Versagt"-Framing)
+- [ ] Kein „Versagt"-, „Streak broken"- oder Guilt-Framing in irgendeinem UI-Zustand
 - [ ] Zielfrequenz konfigurierbar (täglich / x-mal pro Woche)
-- [ ] **Habit-Streak**-Reset-Logik korrekt bei fehlendem Tag vs. bewusstem Aussetzen (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
+- [ ] Empty State bei < 7 Habit-Einträgen: neutral, kein Urgency-Framing
+- [ ] Kein Badge-, Punkte- oder Belohnungssystem irgendwo implementiert
+- [ ] `GET /habits/{tag_id}/stats?window=28` liefert `{ adherence_rate, days_tracked, days_total, correlation_score }`
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M5
@@ -999,6 +1037,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 | D-010 | Auth Phase 1: Native JWT (FastAPI-intern) — implementiert. Authentik ab Phase 2 (M12+). | ✅ Entschieden: Native JWT Phase 1, Authentik M12+                                                                                                                                                                                | [ADR-0004](adr/0004-auth-strategie.md)           |
 | D-011 | Verschlüsselung at-rest Strategie: pgcrypto vs. App-Level?                              | ✅ Entschieden: Zweistufig — LUKS+SSE (Stufe 1) + App-Level Fernet pro-User (Stufe 2)                                                                                                                                             | [ADR-0005](adr/0005-verschluesselung-at-rest.md) |
 | D-012 | Observability-Tiefe in M0: Schlanker Ansatz vs. vollständiger Stack von Beginn an.      | ✅ Entschieden: Schlanker Ansatz, Ops-Tools als `docker-compose.ops.yml`                                                                                                                                                          | [ADR-0007](adr/0007-healthchecks-and-logging.md) |
+| D-013 | Habit-Tracking: Streak-Logik vs. Adherence Rate?                                        | ✅ Entschieden: Adherence Rate + Calendar Heatmap + Correlation Contribution Score. Keine Streaks (No-Gamification-Promise §1.4). M2 Entry-Streak-Widget zu „Tracking Consistency" relabeln (Issue #158).                         | Issues #157, #158, #159                          |
 
 ---
 
@@ -1006,7 +1045,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 | Risiko                                                   | ID     | Wahrscheinlichkeit | Impact   | Maßnahme                                                                                                                                                                                                                      |
 | -------------------------------------------------------- | ------ | ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scheinkorrelationen führen User zu falschen Schlüssen    | —      | Mittel             | Hoch     | Confidence-Level, Disclaimer, Mindest-n=30                                                                                                                                                                                    |
+| Scheinkorrelationen führen User zu falschen Schlüssen    | —      | Mittel             | Hoch     | Confidence-Level, Disclaimer, Tiered Insight System (3/8/15/30 Einträge)                                                                                                                                                     |
 | Play-Store-Rejection wegen Health-Claims                 | —      | Niedrig            | Hoch     | Legal Review vor Submission, keine diagnostischen Aussagen                                                                                                                                                                    |
 | Garmin-API ändert sich / TOS-Verstoß                     | —      | Hoch               | Mittel   | Health Connect als primärer Weg, Garmin als opt-in mit Warnung                                                                                                                                                                |
 | Solo-Dev-Burnout                                         | ZS-05  | Mittel             | Kritisch | Vertical Slices mit klaren Exit-Kriterien; Timebox pro Milestone fixiert; wöchentliches 1h-Review ob Scope noch realistisch; konsequentes Backlog-Kürzen bei Verzögerung; keine Feature-Creep-Toleranz in laufendem Milestone |
@@ -1034,6 +1073,7 @@ Die folgenden Punkte gelten für **jeden** Pull-Request, unabhängig vom Milesto
 - [ ] Manuell auf Staging verifiziert
 - [ ] Changelog-Eintrag
 - [ ] Privacy-Impact geprüft (bei Gesundheitsdaten-relevanten Changes)
+- [ ] No-Gamification-Check: kein Streak-Zähler, kein Badge, kein Punkte-System eingebaut
 - [ ] 🔒 DSGVO: Art.-9-Impact-Check durchgeführt bei allen health-daten-relevanten Changes
 - [ ] 🔒 DSGVO: EXIF-Strip verifiziert bei Foto-relevanten Changes (automatisierter Test mit GPS-EXIF-Testbild)
 - [ ] 🔒 DSGVO: Löschkonzept geprüft bei neuen Datenfeldern (werden Felder bei Account-Delete vollständig entfernt?)
@@ -1085,7 +1125,8 @@ Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen 
 | DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden                                   | DSGVO         | ❌ offen       | M9-DSGVO                                                                                                   |
 | DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test            | DSGVO         | ❌ offen       | M6-AC, DoD                                                                                                 |
 | ARCH-01  | Mermaid-Diagramm zeigte TWA als Android-Client — inkonsistent mit D-008                  | Architektur   | ✅ behoben     | Diagramm auf Capacitor aktualisiert                                                                        |
-| ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt                                                  | Architektur   | 🔄 in Arbeit   | D-002 entschieden (Custom-SVG, §7); D-003, D-006, D-008–D-012 dokumentiert; D-004, D-005, D-007 noch offen |
+| ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt                                                  | Architektur   | 🔄 in Arbeit   | D-002 entschieden (Custom-SVG, §7); D-003, D-006, D-008–D-013 dokumentiert; D-004, D-005, D-007 noch offen |
 | OBS-01   | Observability-Anforderungen für M0 nicht explizit definiert                              | Architektur   | ✅ behoben     | D-012, [ADR-0007](adr/0007-healthchecks-and-logging.md), Abschnitt 3.6                                     |
 | ARCH-03  | Kein Postgres-Schema v1 und keine Alembic-Basismigrationen vorhanden                     | Architektur   | ✅ behoben     | Issue #5, PR feat/m0-postgres-schema                                                                       |
 | ARCH-04  | Kein CI/CD-Setup — keine automatisierten Lint/Test/Build-Checks bei PRs                  | Architektur   | ✅ behoben     | Issue #6, PR feat/m0-ci                                                                                    |
+| ARCH-05  | M5 Streak-Logik widerspricht No-Gamification-Promise                                     | Architektur   | ✅ entschieden | D-013, Issues #157, #158, #159 — Streaks ersetzt durch Adherence Rate + Heatmap + Correlation Contribution |
