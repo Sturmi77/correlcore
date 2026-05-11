@@ -23,7 +23,7 @@
     "add_entry": "Log your day",
     "cta_new_entry": "New entry",
     "cta_edit_entry": "Edit today's entry",
-    "loading_today": "Loading today's status…",
+    "loading_today": "Loading today's status\u2026",
     "streak_label": "day streak",
     "recent": {
       "heading": "Last 7 days",
@@ -83,7 +83,7 @@
       "weekend": "Weekend",
       "travel": "Travel"
     },
-    "save_busy": "Saving…",
+    "save_busy": "Saving\u2026",
     "saved_redirect": "Entry saved.",
     "error_generic": "Failed to save entry.",
     "error_conflict": "An entry for this day already exists.",
@@ -97,14 +97,14 @@
     "stress_increment": "Increase stress",
     "edit_hint": "You are editing an existing entry for this day.",
     "update": "Update",
-    "error_load": "Could not load this day’s entry. You can still save.",
+    "error_load": "Could not load this day's entry. You can still save.",
     "autosave": {
-      "dirty": "Will save shortly…",
-      "saving": "Saving…",
+      "dirty": "Will save shortly\u2026",
+      "saving": "Saving\u2026",
       "saved_at": "Saved at {time}",
       "error": "Failed to save.",
       "retry": "Retry",
-      "offline": "Offline — changes are not being saved.",
+      "offline": "Offline \u2014 changes are not being saved.",
       "leave_warning": "There are unsaved changes. Are you sure you want to leave?"
     },
     "scale": {
@@ -120,7 +120,7 @@
   },
   "day_entries": {
     "title": "Day entries",
-    "loading": "Loading this day…",
+    "loading": "Loading this day\u2026",
     "invalid_date": "This date is invalid.",
     "empty": "No entries for this day yet.",
     "empty_for_tag": "No entries for this tag on this day.",
@@ -128,12 +128,12 @@
     "add_or_edit": "Add or edit",
     "edit": "Edit",
     "list_aria": "Entries for the selected day",
-    "score_line": "Mood {mood}/5 · Energy {energy}/5 · Stress {stress}/5"
+    "score_line": "Mood {mood}/5 \u00b7 Energy {energy}/5 \u00b7 Stress {stress}/5"
   },
   "tag": {
     "picker_label": "Tags",
     "picker_counter": "{count}/{max} selected",
-    "loading": "Loading tags…",
+    "loading": "Loading tags\u2026",
     "empty": "No tags yet.",
     "error_load": "Tags could not be loaded.",
     "error_assign": "Entry was saved, but tags could not be attached.",
@@ -150,8 +150,8 @@
   "symptom": {
     "picker_label": "Symptoms",
     "picker_counter": "{count}/{max} selected",
-    "loading": "Loading symptoms…",
-    "error_load": "Could not refresh the symptom list — falling back to the default set.",
+    "loading": "Loading symptoms\u2026",
+    "error_load": "Could not refresh the symptom list \u2014 falling back to the default set.",
     "error_assign": "Entry was saved, but symptoms could not be attached.",
     "scale_label": "Intensity for {name}",
     "intensity": {
@@ -176,16 +176,16 @@
       "slug_label": "Slug (unique)",
       "slug_placeholder": "migraine_aura",
       "icon_label": "Icon (optional)",
-      "icon_placeholder": "🧠",
+      "icon_placeholder": "\ud83e\udde0",
       "save": "Create",
-      "save_busy": "Saving…",
+      "save_busy": "Saving\u2026",
       "cancel": "Cancel",
       "error_required": "Name and slug are required.",
       "error_slug_invalid": "Slug may only contain lowercase letters, digits and _ (max. 64 chars).",
       "error_conflict": "That slug already exists.",
       "error_validation": "Input is invalid.",
       "error_generic": "Could not create symptom.",
-      "icon_hint": "Emoji (e.g. 🧠) or a Lucide icon name (e.g. dumbbell, brain, heart-pulse). List: lucide.dev/icons."
+      "icon_hint": "Emoji (e.g. \ud83e\udde0) or a Lucide icon name (e.g. dumbbell, brain, heart-pulse). List: lucide.dev/icons."
     }
   },
   "trends": {
@@ -212,6 +212,8 @@
       "legend": "Metrics",
       "aria": "Time series for mood, energy and stress",
       "score_axis": "Score 1-5",
+      "y_axis_label": "Score (1\u20135)",
+      "x_axis_label": "Date",
       "loading": "Loading time series",
       "empty": "No mood scores in this range yet."
     },
@@ -241,7 +243,7 @@
       "zip": "Download GDPR ZIP",
       "json": "Download JSON",
       "csv": "Download CSV",
-      "busy": "Preparing download…",
+      "busy": "Preparing download\u2026",
       "error": "Could not create export."
     },
     "tags": {
@@ -259,7 +261,7 @@
       "icon": "Icon",
       "color": "Color",
       "save": "Save",
-      "saving": "Saving…",
+      "saving": "Saving\u2026",
       "hide": "Hide",
       "show": "Show",
       "reset": "Reset",
@@ -271,6 +273,13 @@
       "heading": "Developer View",
       "body": "Inspect the GitHub commit, image tag and optional OCI digest currently served by the backend.",
       "open": "Open developer view"
+    },
+    "developer": {
+      "heading": "Developer",
+      "body": "Enable developer mode to show diagnostic views regardless of the backend flag.",
+      "toggle_label": "Enable developer mode",
+      "toggle_aria": "Toggle developer mode",
+      "active_hint": "Developer mode is active. The dev view link is visible."
     }
   },
   "disclaimer": {
@@ -288,7 +297,7 @@
       "password_placeholder": "At least 8 characters",
       "display_name_label": "Display name (optional)",
       "display_name_placeholder": "What should we call you?",
-      "submit_busy": "Please wait…",
+      "submit_busy": "Please wait\u2026",
       "back_to_login": "Back to sign in"
     },
     "login": {
@@ -314,7 +323,7 @@
       "strength_weak": "Weak",
       "strength_good": "Good",
       "strength_strong": "Strong",
-      "success_redirect": "Account created — redirecting…",
+      "success_redirect": "Account created \u2014 redirecting\u2026",
       "error_duplicate": "This email address is already registered.",
       "error_weak_password": "The password does not meet the minimum requirements.",
       "privacy_note": "By registering you agree to the processing of your health data under GDPR Art. 9(2)(a)."

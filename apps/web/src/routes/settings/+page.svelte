@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
+  import { developerMode } from '$lib/stores/developerMode';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
@@ -74,7 +75,8 @@
       </div>
     </section>
 
-    {#if devAvailable}
+    <!-- Developer section: visible when backend devAvailable OR user toggled developerMode -->
+    {#if devAvailable || $developerMode}
       <section class="settings__panel">
         <div class="settings__panel-head">
           <h2>{$_('settings.dev.heading')}</h2>
@@ -85,6 +87,27 @@
         </div>
       </section>
     {/if}
+
+    <!-- Developer Mode toggle (always visible for authenticated users) -->
+    <section class="settings__panel">
+      <div class="settings__panel-head">
+        <h2>{$_('settings.developer.heading')}</h2>
+        <p>{$_('settings.developer.body')}</p>
+      </div>
+      <label class="settings__toggle-label">
+        <input
+          type="checkbox"
+          class="settings__toggle"
+          checked={$developerMode}
+          aria-label={$_('settings.developer.toggle_aria')}
+          on:change={(e) => developerMode.set(e.currentTarget.checked)}
+        />
+        <span>{$_('settings.developer.toggle_label')}</span>
+      </label>
+      {#if $developerMode}
+        <p class="settings__hint">{$_('settings.developer.active_hint')}</p>
+      {/if}
+    </section>
 
     <section class="settings__panel">
       <div class="settings__panel-head">
@@ -151,14 +174,15 @@
     opacity: 0.72;
   }
 
+  /* Phase 1 fix: replace old rgb(var(--color-surface-*)) syntax with correct design tokens */
   .settings__panel {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
     border-radius: 0.5rem;
-    background: rgb(var(--color-surface-50, 249 250 251) / 0.78);
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.5);
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
   }
 
   .settings__panel-head h2 {
@@ -172,8 +196,34 @@
     gap: 0.65rem;
   }
 
+  /* Phase 1 fix: replace hardcoded #b91c1c with design token */
   .settings__error {
     margin: 0;
-    color: #b91c1c;
+    color: var(--color-error);
+  }
+
+  .settings__hint {
+    margin: 0;
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--color-text-muted);
+  }
+
+  /* Phase 3: Developer Mode toggle — min 44px touch target */
+  .settings__toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    min-height: 2.75rem;
+    padding-block: 0.25rem;
+    user-select: none;
+  }
+
+  .settings__toggle {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: 1.25rem;
+    cursor: pointer;
+    accent-color: var(--color-primary);
   }
 </style>

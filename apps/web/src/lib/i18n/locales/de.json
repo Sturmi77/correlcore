@@ -23,7 +23,7 @@
     "add_entry": "Tag erfassen",
     "cta_new_entry": "Neuer Eintrag",
     "cta_edit_entry": "Heutigen Eintrag bearbeiten",
-    "loading_today": "Lade Heute-Status…",
+    "loading_today": "Lade Heute-Status\u2026",
     "streak_label": "Tage in Folge",
     "recent": {
       "heading": "Letzte 7 Tage",
@@ -37,9 +37,9 @@
     },
     "summary": {
       "heading": "Letzte 7 Tage",
-      "mood_avg": "Stimmung Ø",
-      "energy_avg": "Energie Ø",
-      "stress_avg": "Stress Ø",
+      "mood_avg": "Stimmung \u00d8",
+      "energy_avg": "Energie \u00d8",
+      "stress_avg": "Stress \u00d8",
       "streak": "Streak",
       "streak_unit": "Tage",
       "count": "Erfasst"
@@ -47,7 +47,7 @@
     "sparkline": {
       "heading": "Stimmungs-Verlauf",
       "caption": "Letzte {n} Tage",
-      "aria_label": "Liniendiagramm der Stimmung über {n} Tage"
+      "aria_label": "Liniendiagramm der Stimmung \u00fcber {n} Tage"
     },
     "weekday": {
       "mon": "Mo",
@@ -65,7 +65,7 @@
     "mood_bad": "Schlecht",
     "mood_okay": "Okay",
     "mood_good": "Gut",
-    "mood_great": "Großartig",
+    "mood_great": "Gro\u00dfartig",
     "energy_label": "Energie",
     "stress_label": "Stress",
     "note_placeholder": "Notiz (optional)...",
@@ -77,40 +77,40 @@
     "work_context_label": "Arbeitssituation",
     "work_context": {
       "homeoffice": "Homeoffice",
-      "office": "Büro",
+      "office": "B\u00fcro",
       "vacation": "Urlaub",
       "sick": "Krank",
       "weekend": "Wochenende",
       "travel": "Unterwegs"
     },
-    "save_busy": "Speichere…",
+    "save_busy": "Speichere\u2026",
     "saved_redirect": "Eintrag gespeichert.",
     "error_generic": "Eintrag konnte nicht gespeichert werden.",
-    "error_conflict": "Für diesen Tag gibt es bereits einen Eintrag.",
-    "error_too_old": "Du kannst Einträge nur für die letzten 7 Tage erfassen.",
+    "error_conflict": "F\u00fcr diesen Tag gibt es bereits einen Eintrag.",
+    "error_too_old": "Du kannst Eintr\u00e4ge nur f\u00fcr die letzten 7 Tage erfassen.",
     "error_unauthenticated": "Bitte melde dich erneut an.",
     "mood_decrement": "Stimmung verringern",
-    "mood_increment": "Stimmung erhöhen",
+    "mood_increment": "Stimmung erh\u00f6hen",
     "energy_decrement": "Energie verringern",
-    "energy_increment": "Energie erhöhen",
+    "energy_increment": "Energie erh\u00f6hen",
     "stress_decrement": "Stress verringern",
-    "stress_increment": "Stress erhöhen",
+    "stress_increment": "Stress erh\u00f6hen",
     "edit_hint": "Du bearbeitest einen bereits gespeicherten Eintrag fuer diesen Tag.",
     "update": "Aktualisieren",
     "error_load": "Eintrag konnte nicht geladen werden. Du kannst trotzdem speichern.",
     "autosave": {
-      "dirty": "Wird in Kürze gespeichert…",
-      "saving": "Wird gespeichert…",
+      "dirty": "Wird in K\u00fcrze gespeichert\u2026",
+      "saving": "Wird gespeichert\u2026",
       "saved_at": "Gespeichert um {time}",
       "error": "Fehler beim Speichern.",
       "retry": "Erneut versuchen",
-      "offline": "Keine Verbindung — Eingaben werden nicht gespeichert.",
-      "leave_warning": "Es laufen noch ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?"
+      "offline": "Keine Verbindung \u2014 Eingaben werden nicht gespeichert.",
+      "leave_warning": "Es laufen noch ungespeicherte \u00c4nderungen. M\u00f6chtest du die Seite wirklich verlassen?"
     },
     "scale": {
       "mood_low": "sehr schlecht",
       "mood_high": "sehr gut",
-      "energy_low": "erschöpft",
+      "energy_low": "ersch\u00f6pft",
       "energy_high": "voller Energie",
       "stress_low": "entspannt",
       "stress_high": "sehr gestresst",
@@ -119,21 +119,21 @@
     }
   },
   "day_entries": {
-    "title": "Tageseinträge",
-    "loading": "Lade diesen Tag…",
-    "invalid_date": "Dieses Datum ist ungültig.",
-    "empty": "Für diesen Tag gibt es noch keine Einträge.",
-    "empty_for_tag": "Für diesen Tag gibt es keine Einträge mit diesem Tag.",
+    "title": "Tageseintr\u00e4ge",
+    "loading": "Lade diesen Tag\u2026",
+    "invalid_date": "Dieses Datum ist ung\u00fcltig.",
+    "empty": "F\u00fcr diesen Tag gibt es noch keine Eintr\u00e4ge.",
+    "empty_for_tag": "F\u00fcr diesen Tag gibt es keine Eintr\u00e4ge mit diesem Tag.",
     "create": "Diesen Tag erfassen",
     "add_or_edit": "Erfassen oder bearbeiten",
     "edit": "Bearbeiten",
-    "list_aria": "Einträge für den ausgewählten Tag",
-    "score_line": "Stimmung {mood}/5 · Energie {energy}/5 · Stress {stress}/5"
+    "list_aria": "Eintr\u00e4ge f\u00fcr den ausgew\u00e4hlten Tag",
+    "score_line": "Stimmung {mood}/5 \u00b7 Energie {energy}/5 \u00b7 Stress {stress}/5"
   },
   "tag": {
     "picker_label": "Tags",
-    "picker_counter": "{count}/{max} ausgewählt",
-    "loading": "Tags werden geladen…",
+    "picker_counter": "{count}/{max} ausgew\u00e4hlt",
+    "loading": "Tags werden geladen\u2026",
     "empty": "Noch keine Tags vorhanden.",
     "error_load": "Tags konnten nicht geladen werden.",
     "error_assign": "Eintrag wurde gespeichert, Tags konnten aber nicht zugewiesen werden.",
@@ -149,11 +149,11 @@
   },
   "symptom": {
     "picker_label": "Symptome",
-    "picker_counter": "{count}/{max} ausgewählt",
-    "loading": "Symptome werden geladen…",
-    "error_load": "Symptomliste konnte nicht aktualisiert werden — Standardliste wird verwendet.",
+    "picker_counter": "{count}/{max} ausgew\u00e4hlt",
+    "loading": "Symptome werden geladen\u2026",
+    "error_load": "Symptomliste konnte nicht aktualisiert werden \u2014 Standardliste wird verwendet.",
     "error_assign": "Eintrag wurde gespeichert, Symptome konnten aber nicht zugewiesen werden.",
-    "scale_label": "Intensität für {name}",
+    "scale_label": "Intensit\u00e4t f\u00fcr {name}",
     "intensity": {
       "0": "Nicht vorhanden",
       "1": "Leicht",
@@ -163,39 +163,39 @@
     "key": {
       "headache": "Kopfschmerzen",
       "digestion": "Verdauung",
-      "back_pain": "Rückenschmerzen",
-      "fatigue": "Müdigkeit",
-      "cold": "Erkältung"
+      "back_pain": "R\u00fcckenschmerzen",
+      "fatigue": "M\u00fcdigkeit",
+      "cold": "Erk\u00e4ltung"
     },
     "empty": "Noch keine Symptome vorhanden.",
     "custom": {
-      "add_button": "Eigenes Symptom hinzufügen",
+      "add_button": "Eigenes Symptom hinzuf\u00fcgen",
       "heading": "Eigenes Symptom anlegen",
       "name_label": "Name",
-      "name_placeholder": "z. B. Migräne mit Aura",
+      "name_placeholder": "z. B. Migr\u00e4ne mit Aura",
       "slug_label": "Slug (eindeutig)",
       "slug_placeholder": "migraene_aura",
       "icon_label": "Icon (optional)",
-      "icon_placeholder": "🧠",
+      "icon_placeholder": "\ud83e\udde0",
       "save": "Anlegen",
-      "save_busy": "Speichert…",
+      "save_busy": "Speichert\u2026",
       "cancel": "Abbrechen",
       "error_required": "Name und Slug sind Pflichtfelder.",
       "error_slug_invalid": "Slug darf nur Kleinbuchstaben, Ziffern und _ enthalten (max. 64 Zeichen).",
       "error_conflict": "Diesen Slug gibt es bereits.",
-      "error_validation": "Eingabe ist ungültig.",
+      "error_validation": "Eingabe ist ung\u00fcltig.",
       "error_generic": "Symptom konnte nicht angelegt werden.",
-      "icon_hint": "Emoji (z. B. 🧠) oder Lucide-Icon-Name (z. B. dumbbell, brain, heart-pulse). Liste: lucide.dev/icons."
+      "icon_hint": "Emoji (z. B. \ud83e\udde0) oder Lucide-Icon-Name (z. B. dumbbell, brain, heart-pulse). Liste: lucide.dev/icons."
     }
   },
   "trends": {
     "title": "Trends",
-    "subtitle": "Zeitreihe, Streaks und Tag-Häufigkeiten für deinen Verlauf.",
+    "subtitle": "Zeitreihe, Streaks und Tag-H\u00e4ufigkeiten f\u00fcr deinen Verlauf.",
     "auth_required": "Bitte melde dich an, um deine Trends zu sehen.",
     "controls": "Trend-Filter",
     "category": "Kategorie",
     "category_all": "Alle Tags",
-    "empty": "Noch keine Einträge im gewählten Zeitraum.",
+    "empty": "Noch keine Eintr\u00e4ge im gew\u00e4hlten Zeitraum.",
     "empty_cta": "Eintrag erfassen",
     "range": {
       "week": "Woche",
@@ -210,25 +210,27 @@
     "timeseries": {
       "heading": "Zeitreihe",
       "legend": "Metriken",
-      "aria": "Zeitreihe für Stimmung, Energie und Stress",
+      "aria": "Zeitreihe f\u00fcr Stimmung, Energie und Stress",
       "score_axis": "Score 1-5",
+      "y_axis_label": "Score (1\u20135)",
+      "x_axis_label": "Datum",
       "loading": "Lade Zeitreihe",
       "empty": "Noch keine Scores in diesem Zeitraum."
     },
     "streak": {
       "heading": "Eintrags-Streak",
       "current": "Aktuell",
-      "longest": "Längste Serie",
+      "longest": "L\u00e4ngste Serie",
       "total": "Erfasste Tage"
     },
     "heatmap": {
       "heading": "Tag-Frequenz",
-      "aria": "Heatmap der Tag-Häufigkeiten",
-      "legend": "Intensität der Tag-Häufigkeit",
+      "aria": "Heatmap der Tag-H\u00e4ufigkeiten",
+      "legend": "Intensit\u00e4t der Tag-H\u00e4ufigkeit",
       "less": "Weniger",
       "more": "Mehr",
       "loading": "Lade Tag-Heatmap",
-      "empty": "Noch keine Tag-Aktivität in diesem Zeitraum."
+      "empty": "Noch keine Tag-Aktivit\u00e4t in diesem Zeitraum."
     }
   },
   "settings": {
@@ -241,17 +243,17 @@
       "zip": "DSGVO-ZIP herunterladen",
       "json": "JSON herunterladen",
       "csv": "CSV herunterladen",
-      "busy": "Bereite Download vor…",
+      "busy": "Bereite Download vor\u2026",
       "error": "Export konnte nicht erstellt werden."
     },
     "tags": {
       "heading": "Tags",
-      "body": "Benenne Tags um, ändere Farbe und Icon, blende Tags aus oder setze sie zurück.",
+      "body": "Benenne Tags um, \u00e4ndere Farbe und Icon, blende Tags aus oder setze sie zur\u00fcck.",
       "open": "Tags verwalten",
       "title": "Tags verwalten",
-      "subtitle": "Passe Standard- und eigene Tags an, ohne das kuratierte Set für andere zu ändern.",
+      "subtitle": "Passe Standard- und eigene Tags an, ohne das kuratierte Set f\u00fcr andere zu \u00e4ndern.",
       "default": "Standard",
-      "override": "Persönlicher Override",
+      "override": "Pers\u00f6nlicher Override",
       "custom": "Eigen",
       "hidden": "Ausgeblendet",
       "name": "Name",
@@ -259,22 +261,29 @@
       "icon": "Icon",
       "color": "Farbe",
       "save": "Speichern",
-      "saving": "Speichert…",
+      "saving": "Speichert\u2026",
       "hide": "Ausblenden",
       "show": "Einblenden",
-      "reset": "Zurücksetzen",
+      "reset": "Zur\u00fccksetzen",
       "error_load": "Tags konnten nicht geladen werden.",
       "error_save": "Dieser Tag konnte nicht gespeichert werden.",
-      "error_reset": "Dieser Tag konnte nicht zurückgesetzt werden."
+      "error_reset": "Dieser Tag konnte nicht zur\u00fcckgesetzt werden."
     },
     "dev": {
       "heading": "Developer View",
-      "body": "Prüfe den GitHub-Commit, Image-Tag und optionalen OCI-Digest, den das Backend aktuell meldet.",
-      "open": "Developer View öffnen"
+      "body": "Pr\u00fcfe den GitHub-Commit, Image-Tag und optionalen OCI-Digest, den das Backend aktuell meldet.",
+      "open": "Developer View \u00f6ffnen"
+    },
+    "developer": {
+      "heading": "Entwickler",
+      "body": "Aktiviere den Entwicklermodus, um Diagnose-Ansichten unabh\u00e4ngig vom Backend-Flag einzublenden.",
+      "toggle_label": "Entwicklermodus aktivieren",
+      "toggle_aria": "Entwicklermodus umschalten",
+      "active_hint": "Entwicklermodus ist aktiv. Der Dev-View-Link ist eingeblendet."
     }
   },
   "disclaimer": {
-    "medical": "MoodSync ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."
+    "medical": "MoodSync ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschlie\u00dflich zur pers\u00f6nlichen Reflexion."
   },
   "error": {
     "generic": "Etwas ist schiefgelaufen.",
@@ -288,18 +297,18 @@
       "password_placeholder": "Mindestens 8 Zeichen",
       "display_name_label": "Anzeigename (optional)",
       "display_name_placeholder": "Wie sollen wir dich nennen?",
-      "submit_busy": "Bitte warten…",
-      "back_to_login": "Zurück zum Login"
+      "submit_busy": "Bitte warten\u2026",
+      "back_to_login": "Zur\u00fcck zum Login"
     },
     "login": {
       "title": "Anmelden",
-      "subtitle": "Willkommen zurück.",
+      "subtitle": "Willkommen zur\u00fcck.",
       "submit": "Anmelden",
       "no_account": "Noch kein Konto?",
       "register_link": "Jetzt registrieren",
       "forgot_password": "Passwort vergessen?",
       "error_invalid": "E-Mail oder Passwort ist falsch.",
-      "error_unverified": "Bitte bestätige zuerst deine E-Mail-Adresse.",
+      "error_unverified": "Bitte best\u00e4tige zuerst deine E-Mail-Adresse.",
       "error_rate_limit": "Zu viele Versuche. Bitte in einer Minute erneut probieren."
     },
     "register": {
@@ -314,35 +323,35 @@
       "strength_weak": "Schwach",
       "strength_good": "Gut",
       "strength_strong": "Stark",
-      "success_redirect": "Konto erstellt — wir leiten dich weiter…",
+      "success_redirect": "Konto erstellt \u2014 wir leiten dich weiter\u2026",
       "error_duplicate": "Diese E-Mail-Adresse ist bereits registriert.",
-      "error_weak_password": "Das Passwort erfüllt nicht die Mindestanforderungen.",
-      "privacy_note": "Mit der Registrierung bestätigst du, die Verarbeitung deiner Gesundheitsdaten gemäß DSGVO Art. 9(2)(a) zu akzeptieren."
+      "error_weak_password": "Das Passwort erf\u00fcllt nicht die Mindestanforderungen.",
+      "privacy_note": "Mit der Registrierung best\u00e4tigst du, die Verarbeitung deiner Gesundheitsdaten gem\u00e4\u00df DSGVO Art. 9(2)(a) zu akzeptieren."
     },
     "check_email": {
-      "title": "Prüfe dein Postfach",
-      "body": "Wir haben dir eine Bestätigungs-E-Mail an {email} geschickt. Bitte klicke auf den Link in der Mail, um dein Konto zu aktivieren.",
-      "ttl_hint": "Der Link ist 24 Stunden gültig.",
+      "title": "Pr\u00fcfe dein Postfach",
+      "body": "Wir haben dir eine Best\u00e4tigungs-E-Mail an {email} geschickt. Bitte klicke auf den Link in der Mail, um dein Konto zu aktivieren.",
+      "ttl_hint": "Der Link ist 24 Stunden g\u00fcltig.",
       "spam_hint": "Mail nicht im Posteingang? Schau auch im Spam-Ordner nach.",
-      "resend_link": "Bestätigungs-E-Mail erneut senden"
+      "resend_link": "Best\u00e4tigungs-E-Mail erneut senden"
     },
     "verify": {
-      "title": "E-Mail-Adresse bestätigen",
-      "body": "Klicke auf den Button, um deine E-Mail-Adresse zu bestätigen und dein Konto zu aktivieren.",
-      "submit": "E-Mail bestätigen",
-      "success_title": "E-Mail bestätigt",
+      "title": "E-Mail-Adresse best\u00e4tigen",
+      "body": "Klicke auf den Button, um deine E-Mail-Adresse zu best\u00e4tigen und dein Konto zu aktivieren.",
+      "submit": "E-Mail best\u00e4tigen",
+      "success_title": "E-Mail best\u00e4tigt",
       "success_body": "Dein Konto ist nun aktiv. Du kannst dich jetzt anmelden.",
-      "error_title": "Bestätigung fehlgeschlagen",
-      "error_body": "Der Link ist ungültig oder abgelaufen. Fordere bitte eine neue Bestätigungs-Mail an.",
-      "missing_token": "Es wurde kein Bestätigungs-Token in der URL gefunden.",
+      "error_title": "Best\u00e4tigung fehlgeschlagen",
+      "error_body": "Der Link ist ung\u00fcltig oder abgelaufen. Fordere bitte eine neue Best\u00e4tigungs-Mail an.",
+      "missing_token": "Es wurde kein Best\u00e4tigungs-Token in der URL gefunden.",
       "go_to_login": "Zur Anmeldung",
       "go_to_resend": "Neue Mail anfordern"
     },
     "resend": {
-      "title": "Bestätigungs-E-Mail erneut senden",
-      "body": "Gib deine E-Mail-Adresse ein. Falls ein passendes, noch nicht bestätigtes Konto existiert, senden wir eine neue Bestätigungs-Mail.",
+      "title": "Best\u00e4tigungs-E-Mail erneut senden",
+      "body": "Gib deine E-Mail-Adresse ein. Falls ein passendes, noch nicht best\u00e4tigtes Konto existiert, senden wir eine neue Best\u00e4tigungs-Mail.",
       "submit": "Mail erneut senden",
-      "success": "Falls die E-Mail-Adresse bei uns registriert und noch nicht bestätigt ist, wurde eine neue Mail gesendet.",
+      "success": "Falls die E-Mail-Adresse bei uns registriert und noch nicht best\u00e4tigt ist, wurde eine neue Mail gesendet.",
       "error_rate_limit": "Zu viele Anfragen. Bitte in einer Minute erneut probieren."
     },
     "logout": {
