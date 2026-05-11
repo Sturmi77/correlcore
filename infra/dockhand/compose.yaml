@@ -54,12 +54,6 @@
 
 name: moodsync
 
-x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: 10m
-    max-file: '3'
-
 x-api-image: &api-image
   image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
   pull_policy: always
@@ -104,7 +98,11 @@ services:
     restart: 'no'
     security_opt:
       - no-new-privileges:true
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # ── Backend API ───────────────────────────────────────────────────────────
   # Seit ADR-0011 KEIN Host-Port-Mapping mehr — API ist nur noch intern
@@ -138,7 +136,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # ── Web Frontend ──────────────────────────────────────────────────────────
   # SvelteKit-Adapter-Node Container. hooks.server.ts proxt /api/* an
@@ -173,7 +175,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # ── Datenbank ─────────────────────────────────────────────────────────────
   postgres:
@@ -197,7 +203,11 @@ services:
     # Keine Port-Exposition — DB nur intern erreichbar
     security_opt:
       - no-new-privileges:true
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # ── Cache & Token-Store ───────────────────────────────────────────────────
   redis:
@@ -221,7 +231,11 @@ services:
       - moodsync
     security_opt:
       - no-new-privileges:true
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # ── Mailpit (SMTP-Catcher für Mail-Verifikation) ──────────────────────────
   # Web-UI: http://${TAILSCALE_IP}:8025
@@ -244,7 +258,11 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # ── Error-Tracking (optional, --profile monitoring) ───────────────────────
   # In Dockhand: Stack-Detail → "Profiles to enable" → 'monitoring' eintragen.
@@ -273,7 +291,11 @@ services:
       - monitoring
     security_opt:
       - no-new-privileges:true
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # ── Analytics-Worker (optional, --profile worker, M2+) ────────────────────
   # Führt tägliche Wartungsjobs aus, aktuell den M2-Cleanup für unverified
@@ -295,7 +317,11 @@ services:
       - worker
     security_opt:
       - no-new-privileges:true
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
 volumes:
   postgres_data:
