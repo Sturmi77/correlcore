@@ -73,7 +73,7 @@ def captured_logs() -> Iterator[io.StringIO]:
     handler = logging.StreamHandler(buf)
     handler.setFormatter(_JsonFormatter())
 
-    test_logger = logging.getLogger("moodsync.test_scrubbing")
+    test_logger = logging.getLogger("correlcore.test_scrubbing")
     test_logger.handlers.clear()
     test_logger.addHandler(handler)
     test_logger.setLevel(logging.DEBUG)
@@ -122,7 +122,7 @@ def test_formatter_emits_only_whitelisted_top_level_keys(
         duration_ms=12.5,
     )
 
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info("entry created")
 
     records = _parse_lines(captured_logs)
@@ -152,7 +152,7 @@ def test_logger_extra_kwargs_do_not_leak_into_output(
 ) -> None:
     """Selbst wenn ein Entwickler versehentlich Health-Daten via extra= übergibt,
     landen sie nicht im Output, weil der Formatter ein fixes Schema hat."""
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info(
         "entry created",
         extra={
@@ -179,7 +179,7 @@ def test_message_with_health_data_is_developer_responsibility(
     Codebase ein f-String mit mood_score in eine Log-Message eingebaut wird,
     schlägt CI an.
     """
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
 
     # ✅ Korrekt: keine Health-Daten in der Message
     logger.info("entry persisted user_id=00000000-0000-0000-0000-000000000001")
@@ -191,7 +191,7 @@ def test_message_with_health_data_is_developer_responsibility(
 def test_exception_logging_strips_user_data(captured_logs: io.StringIO) -> None:
     """Bei Exceptions wird der Stacktrace geloggt, aber niemals
     die User-Daten, die den Fehler ausgelöst haben."""
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
 
     note_content = "Heute geht es mir schlecht wegen Migräne"
     try:
@@ -316,7 +316,7 @@ def test_entry_repr_does_not_leak_payload(captured_logs: io.StringIO) -> None:
         note_enc="ciphertext-bytes",
     )
 
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info("loaded entry %r", entry)
 
     records = _parse_lines(captured_logs)
@@ -350,7 +350,7 @@ def test_default_symptom_repr_keeps_curated_slug(
         is_default=True,
     )
 
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info("loaded symptom %r", symptom)
 
     records = _parse_lines(captured_logs)
@@ -381,7 +381,7 @@ def test_custom_symptom_repr_masks_slug_and_name(
         is_default=False,
     )
 
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info("loaded symptom %r", symptom)
 
     records = _parse_lines(captured_logs)
@@ -411,7 +411,7 @@ def test_default_tag_repr_keeps_curated_slug(
         is_default=True,
     )
 
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info("loaded tag %r", tag)
 
     records = _parse_lines(captured_logs)
@@ -438,7 +438,7 @@ def test_custom_tag_repr_masks_slug_and_name(captured_logs: io.StringIO) -> None
         is_default=False,
     )
 
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info("loaded tag %r", tag)
 
     records = _parse_lines(captured_logs)
@@ -466,7 +466,7 @@ def test_user_encryption_key_repr_does_not_leak_wrapped_dek(
         key_version=1,
     )
 
-    logger = logging.getLogger("moodsync.test_scrubbing")
+    logger = logging.getLogger("correlcore.test_scrubbing")
     logger.info("loaded uek %r", uek)
 
     records = _parse_lines(captured_logs)

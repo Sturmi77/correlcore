@@ -26,10 +26,10 @@ assignees: ''
 
 ## Umgebung
 
-- MoodSync Version:
+- CorrelCore Version:
 - Browser / App:
 - OS:
-- Deployment: [ ] Selfhost (Docker) [ ] MoodSync Cloud [ ] Lokal (dev)
+- Deployment: [ ] Selfhost (Docker) [ ] CorrelCore Cloud [ ] Lokal (dev)
 
 ## Logs / Screenshots
 

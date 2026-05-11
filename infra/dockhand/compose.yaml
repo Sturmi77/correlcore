@@ -1,17 +1,17 @@
-# MoodSync — Dockhand-Stack für ersten User-Test
+# CorrelCore — Dockhand-Stack für ersten User-Test
 # ───────────────────────────────────────────────────────────────────────────
 # Drop-in für Dockhand (https://dockhand.pro). Zwei empfohlene Setups:
 #
 #   A) Git-Stack (empfohlen):
 #      Im Dockhand-UI: "Stacks → New → From Git" und
-#         Repo:     https://github.com/Sturmi77/moodsync
+#         Repo:     https://github.com/Sturmi77/correlcore
 #         Branch:   main
 #         Path:     infra/dockhand
 #         Env file: .env  (im Stack-Detail im UI pflegen)
 #      Dockhand sync't bei jedem Webhook-Push automatisch.
 #
 #   B) Manuelles Verzeichnis:
-#      Auf dem Host /opt/stacks/moodsync/ anlegen, compose.yaml + .env
+#      Auf dem Host /opt/stacks/correlcore/ anlegen, compose.yaml + .env
 #      reinkopieren. Im Dockhand-UI über "Adopt stack" oder "New from
 #      file" verlinken.
 #
@@ -37,7 +37,7 @@
 #   docs/RUNBOOK_DEPLOYMENT.md §7.
 #
 # Dockhand-Besonderheiten gegenüber dem Dockge-Stack:
-#   - 'name: moodsync' ist gesetzt (Dockhand respektiert es im UI-Header).
+#   - 'name: correlcore' ist gesetzt (Dockhand respektiert es im UI-Header).
 #   - Kein 'pull_policy: always' — Dockhand verwaltet Pulls selbst und
 #     scannt vor dem Deploy mit Grype+Trivy. Pinned IMAGE_TAG empfohlen.
 #   - Profiles bleiben drin — Dockhand-UI hat ein Feld "Profiles to enable".
@@ -52,10 +52,10 @@
 #   - API_HOST_PORT kann entfernt werden (API hat kein Host-Port-Mapping mehr).
 #   - WEB_HOST_PORT, TAILSCALE_IP, FRONTEND_BASE_URL bleiben relevant.
 
-name: moodsync
+name: correlcore
 
 x-api-image: &api-image
-  image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
+  image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
   pull_policy: always
 
 x-api-env: &api-env
@@ -66,14 +66,14 @@ x-api-env: &api-env
   COOKIE_SECURE: ${COOKIE_SECURE:-false}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
   REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
   CORS_ORIGINS: ${CORS_ORIGINS}
   SMTP_HOST: ${SMTP_HOST:-mailpit}
   SMTP_PORT: ${SMTP_PORT:-1025}
   SMTP_USER: ${SMTP_USER:-}
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-  SMTP_FROM: ${SMTP_FROM:-noreply@moodsync.local}
+  SMTP_FROM: ${SMTP_FROM:-noreply@correlcore.local}
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
@@ -87,14 +87,14 @@ services:
   # das ist gewollt, kein Fehler.
   migrate:
     <<: *api-image
-    container_name: moodsync-migrate
+    container_name: correlcore-migrate
     command: ['alembic', 'upgrade', 'head']
     environment: *api-env
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - moodsync
+      - correlcore
     restart: 'no'
     security_opt:
       - no-new-privileges:true
@@ -112,7 +112,7 @@ services:
   # ansprechbar — einzige Origin ist Web auf ${WEB_HOST_PORT}.
   api:
     <<: *api-image
-    container_name: moodsync-api
+    container_name: correlcore-api
     restart: unless-stopped
     environment: *api-env
     depends_on:
@@ -123,7 +123,7 @@ services:
     expose:
       - '8000'
     networks:
-      - moodsync
+      - correlcore
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -148,9 +148,9 @@ services:
   # VITE_API_BASE_URL wird ignoriert und ist hier bewusst nicht mehr gesetzt;
   # bitte auch aus der .env entfernen.
   web:
-    image: ghcr.io/sturmi77/moodsync-web:${IMAGE_TAG:-latest}
+    image: ghcr.io/sturmi77/correlcore-web:${IMAGE_TAG:-latest}
     pull_policy: always
-    container_name: moodsync-web
+    container_name: correlcore-web
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -166,7 +166,7 @@ services:
       # Self-Hosted-Diensten auf dem Host auszuweichen (z. B. Grafana).
       - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3010}:3000'
     networks:
-      - moodsync
+      - correlcore
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -184,22 +184,23 @@ services:
   # ── Datenbank ─────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: moodsync-postgres
+    container_name: correlcore-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-moodsync}
-      POSTGRES_USER: ${POSTGRES_USER:-moodsync}
+      POSTGRES_DB: ${POSTGRES_DB:-correlcore}
+      POSTGRES_USER: ${POSTGRES_USER:-correlcore}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}']
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
     networks:
-      - moodsync
+      - correlcore
     # Keine Port-Exposition — DB nur intern erreichbar
     security_opt:
       - no-new-privileges:true
@@ -212,7 +213,7 @@ services:
   # ── Cache & Token-Store ───────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: moodsync-redis
+    container_name: correlcore-redis
     restart: unless-stopped
     command: >
       redis-server
@@ -228,7 +229,7 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - moodsync
+      - correlcore
     security_opt:
       - no-new-privileges:true
     logging:
@@ -241,7 +242,7 @@ services:
   # Web-UI: http://${TAILSCALE_IP}:8025
   mailpit:
     image: axllent/mailpit:latest
-    container_name: moodsync-mailpit
+    container_name: correlcore-mailpit
     restart: unless-stopped
     environment:
       MP_MAX_MESSAGES: 5000
@@ -250,7 +251,7 @@ services:
     ports:
       - '${TAILSCALE_IP:-127.0.0.1}:8025:8025'
     networks:
-      - moodsync
+      - correlcore
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -267,17 +268,17 @@ services:
   # ── Error-Tracking (optional, --profile monitoring) ───────────────────────
   # In Dockhand: Stack-Detail → "Profiles to enable" → 'monitoring' eintragen.
   # Erst-Bootstrap nach erstem Up:
-  #   docker exec -it moodsync-glitchtip ./manage.py migrate
-  #   docker exec -it moodsync-glitchtip ./manage.py createsuperuser
+  #   docker exec -it correlcore-glitchtip ./manage.py migrate
+  #   docker exec -it correlcore-glitchtip ./manage.py createsuperuser
   glitchtip:
     image: glitchtip/glitchtip:latest
-    container_name: moodsync-glitchtip
+    container_name: correlcore-glitchtip
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+      DATABASE_URL: postgresql://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-}
       EMAIL_URL: smtp://mailpit:1025
-      DEFAULT_FROM_EMAIL: errors@moodsync.local
+      DEFAULT_FROM_EMAIL: errors@correlcore.local
       GLITCHTIP_DOMAIN: http://${TAILSCALE_IP:-127.0.0.1}:8080
       ENABLE_USER_REGISTRATION: 'false'
     depends_on:
@@ -286,7 +287,7 @@ services:
     ports:
       - '${TAILSCALE_IP:-127.0.0.1}:8080:8080'
     networks:
-      - moodsync
+      - correlcore
     profiles:
       - monitoring
     security_opt:
@@ -302,7 +303,7 @@ services:
   # Accounts. Aktivieren in Dockhand über Profile: worker.
   worker:
     <<: *api-image
-    container_name: moodsync-worker
+    container_name: correlcore-worker
     restart: unless-stopped
     command: ['python', '-m', 'app.workers.analytics']
     environment: *api-env
@@ -312,7 +313,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - moodsync
+      - correlcore
     profiles:
       - worker
     security_opt:
@@ -325,11 +326,11 @@ services:
 
 volumes:
   postgres_data:
-    name: moodsync_postgres_data
+    name: correlcore_postgres_data
   redis_data:
-    name: moodsync_redis_data
+    name: correlcore_redis_data
 
 networks:
-  moodsync:
-    name: moodsync
+  correlcore:
+    name: correlcore
     driver: bridge

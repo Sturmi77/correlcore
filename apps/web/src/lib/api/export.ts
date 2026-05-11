@@ -6,7 +6,7 @@ export function exportFilename(kind: ExportKind, date = new Date()): string {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
-  return `moodsync-export-${yyyy}-${mm}-${dd}.${kind}`;
+  return `correlcore-export-${yyyy}-${mm}-${dd}.${kind}`;
 }
 
 export async function downloadExport(kind: ExportKind): Promise<Blob> {

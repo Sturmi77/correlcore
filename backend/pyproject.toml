@@ -1,7 +1,7 @@
 [project]
-name = "moodsync-backend"
+name = "correlcore-backend"
 version = "0.0.1"
-description = "MoodSync FastAPI backend"
+description = "CorrelCore FastAPI backend"
 requires-python = ">=3.12"
 readme = "README.md"
 license = { text = "AGPL-3.0" }

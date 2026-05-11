@@ -40,7 +40,7 @@ from app.models.user_encryption_key import UserEncryptionKey
 from app.schemas.auth import RegisterRequest
 
 logger = logging.getLogger(__name__)
-_DUMMY_PASSWORD_HASH = hash_password("__moodsync_dummy_password__")
+_DUMMY_PASSWORD_HASH = hash_password("__correlcore_dummy_password__")
 
 # ---------------------------------------------------------------------------
 # Exceptions

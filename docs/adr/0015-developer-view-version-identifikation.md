@@ -15,7 +15,7 @@ API-Container oeffnen.
 
 ## Entscheidung
 
-MoodSync erhaelt eine default-off Developer-View:
+CorrelCore erhaelt eine default-off Developer-View:
 
 - Backend: `GET /api/v1/dev/info`, nur aktiv bei `DEV_VIEW_ENABLED=true`, nur
   fuer authentifizierte und verifizierte User.

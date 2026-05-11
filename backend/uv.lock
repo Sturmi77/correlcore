@@ -749,7 +749,7 @@ wheels = [
 ]
 
 [[package]]
-name = "moodsync-backend"
+name = "correlcore-backend"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [

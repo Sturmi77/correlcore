@@ -1,4 +1,4 @@
-# MoodSync — Compose-Stack für ersten User-Test
+# CorrelCore — Compose-Stack für ersten User-Test
 # ───────────────────────────────────────────────────────────────────────────
 # Zielumgebung: Tailscale-internes Netz (Homelab / Synology / Mini-PC).
 # - Kein Letsencrypt, kein Traefik — Web/API direkt auf Tailnet-Ports gebunden.
@@ -23,17 +23,17 @@
 #   Werden vom Service `migrate` einmalig vor api/web ausgeführt
 #   (Alembic upgrade head). Idempotent — kann beliebig oft laufen.
 
-name: moodsync-test
+name: correlcore-test
 
 x-api-image: &api-image
-  image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
+  image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
   pull_policy: always
 
 x-api-env: &api-env
   APP_ENV: ${APP_ENV:-staging}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
   REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
   CORS_ORIGINS: ${CORS_ORIGINS}
   # SMTP — defaults auf Mailpit (lokal abfangen)
@@ -41,7 +41,7 @@ x-api-env: &api-env
   SMTP_PORT: ${SMTP_PORT:-1025}
   SMTP_USER: ${SMTP_USER:-}
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-  SMTP_FROM: ${SMTP_FROM:-noreply@moodsync.local}
+  SMTP_FROM: ${SMTP_FROM:-noreply@correlcore.local}
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
@@ -54,7 +54,7 @@ services:
   # Idempotent: alembic upgrade head ist no-op wenn nichts zu tun.
   migrate:
     <<: *api-image
-    container_name: moodsync-test-migrate
+    container_name: correlcore-test-migrate
     command: ['alembic', 'upgrade', 'head']
     environment: *api-env
     depends_on:
@@ -69,7 +69,7 @@ services:
   # ── Backend API ─────────────────────────────────────────────────────────
   api:
     <<: *api-image
-    container_name: moodsync-test-api
+    container_name: correlcore-test-api
     restart: unless-stopped
     environment: *api-env
     depends_on:
@@ -100,9 +100,9 @@ services:
 
   # ── Web Frontend ────────────────────────────────────────────────────────
   web:
-    image: ghcr.io/sturmi77/moodsync-web:${IMAGE_TAG:-latest}
+    image: ghcr.io/sturmi77/correlcore-web:${IMAGE_TAG:-latest}
     pull_policy: always
-    container_name: moodsync-test-web
+    container_name: correlcore-test-web
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -128,16 +128,17 @@ services:
   # ── Datenbank ───────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: moodsync-test-postgres
+    container_name: correlcore-test-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-moodsync}
-      POSTGRES_USER: ${POSTGRES_USER:-moodsync}
+      POSTGRES_DB: ${POSTGRES_DB:-correlcore}
+      POSTGRES_USER: ${POSTGRES_USER:-correlcore}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -151,7 +152,7 @@ services:
   # ── Cache & Token-Store ─────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: moodsync-test-redis
+    container_name: correlcore-test-redis
     restart: unless-stopped
     command: >
       redis-server
@@ -175,7 +176,7 @@ services:
   # Web-UI: http://<TAILSCALE_IP>:8025  (nur im Tailnet erreichbar)
   mailpit:
     image: axllent/mailpit:latest
-    container_name: moodsync-test-mailpit
+    container_name: correlcore-test-mailpit
     restart: unless-stopped
     environment:
       MP_MAX_MESSAGES: 5000
@@ -200,13 +201,13 @@ services:
   #   docker compose ... exec glitchtip ./manage.py createsuperuser
   glitchtip:
     image: glitchtip/glitchtip:latest
-    container_name: moodsync-test-glitchtip
+    container_name: correlcore-test-glitchtip
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+      DATABASE_URL: postgresql://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-}
       EMAIL_URL: smtp://mailpit:1025
-      DEFAULT_FROM_EMAIL: errors@moodsync.local
+      DEFAULT_FROM_EMAIL: errors@correlcore.local
       GLITCHTIP_DOMAIN: http://${TAILSCALE_IP:-127.0.0.1}:8080
       ENABLE_USER_REGISTRATION: 'false'
     depends_on:
@@ -226,7 +227,7 @@ services:
   # Accounts. Aktivieren mit --profile worker.
   worker:
     <<: *api-image
-    container_name: moodsync-test-worker
+    container_name: correlcore-test-worker
     restart: unless-stopped
     command: ['python', '-m', 'app.workers.analytics']
     environment: *api-env

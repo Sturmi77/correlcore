@@ -44,7 +44,7 @@ an authenticated DEK context.
 The standard symptom set is intentionally short and physiological; we
 deliberately do not seed mental-health keys in M1 to avoid creating a
 quasi-diagnostic surface (DESIGN_DOCUMENT.md §6 medical disclaimer —
-MoodSync is not a diagnostic tool).
+CorrelCore is not a diagnostic tool).
 """
 
 from __future__ import annotations
@@ -101,6 +101,7 @@ def default_symptom_uuid(slug: str) -> uuid.UUID:
     rows are de-duplicable across environments without extra lookup
     columns.
     """
+    # Keep the original namespace stable so renamed builds preserve default IDs.
     return uuid.uuid5(uuid.NAMESPACE_DNS, f"moodsync.symptom.{slug}")
 
 

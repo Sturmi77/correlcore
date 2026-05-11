@@ -12,7 +12,7 @@ Dieses Runbook fasst die Erkenntnisse aus dem ersten echten User-Test-Deployment
 
 ### Symptom
 
-Beim ersten Stack-Start (Dockhand, Dockge oder docker-compose user-test) bricht der Init-Container `moodsync-migrate` mit folgendem Fehler ab:
+Beim ersten Stack-Start (Dockhand, Dockge oder docker-compose user-test) bricht der Init-Container `correlcore-migrate` mit folgendem Fehler ab:
 
 ```text
 Traceback (most recent call last):
@@ -21,7 +21,7 @@ Traceback (most recent call last):
 ModuleNotFoundError: No module named 'app'
 ```
 
-Der API-Container (`moodsync-api`) bleibt deshalb auf dem `service_completed_successfully`-Gate hängen und startet nie.
+Der API-Container (`correlcore-api`) bleibt deshalb auf dem `service_completed_successfully`-Gate hängen und startet nie.
 
 ### Ursache
 
@@ -156,7 +156,7 @@ Doppelt:
 
 ### Symptom
 
-Beim ersten Redeploy mit gepinnten Image-Tags startet der `moodsync-migrate`-Container nicht und stirbt mit:
+Beim ersten Redeploy mit gepinnten Image-Tags startet der `correlcore-migrate`-Container nicht und stirbt mit:
 
 ```
 pydantic_settings.exceptions.SettingsError: error parsing value
@@ -193,7 +193,7 @@ Damit überspringt pydantic-settings den JSON-Pre-Parse, der existierende `mode=
 
 ### Symptom
 
-`moodsync-migrate` läuft die ersten Migrationen sauber, scheitert dann in der Seed-Phase einer Migration mit:
+`correlcore-migrate` läuft die ersten Migrationen sauber, scheitert dann in der Seed-Phase einer Migration mit:
 
 ```
 asyncpg.exceptions.DatatypeMismatchError: column "category" is of type tag_category
@@ -239,11 +239,11 @@ SQLAlchemy generiert daraufhin `$N::tag_category`, Postgres akzeptiert. Gleicher
 
 ### Symptom
 
-`moodsync-api` (oder `moodsync-web`) startet nicht und produziert beim Container-Create:
+`correlcore-api` (oder `correlcore-web`) startet nicht und produziert beim Container-Create:
 
 ```
 Error response from daemon: driver failed programming external connectivity
-  on endpoint moodsync-api: Error starting userland proxy:
+  on endpoint correlcore-api: Error starting userland proxy:
   listen tcp4 0.0.0.0:8000: bind: address already in use
 ```
 
@@ -287,7 +287,7 @@ Container-interne Ports bleiben fix bei `8000` (API) und `3000` (Web). 8210 ist 
 
 ```bash
 WEB_HOST_PORT=3010
-CORS_ORIGINS=http://moodsync.tail-scale.ts.net:3010,http://100.101.102.103:3010
+CORS_ORIGINS=http://correlcore.tail-scale.ts.net:3010,http://100.101.102.103:3010
 ```
 
 ### Lehre
@@ -310,13 +310,13 @@ Im API-Container-Log taucht der POST gar nicht auf — das Frontend sendet an si
 
 ### Ursache (historisch)
 
-`VITE_API_BASE_URL` ist eine **Build-Time-Variable**: Vite ersetzt `import.meta.env.VITE_API_BASE_URL` zur Build-Zeit als String-Konstante im JS-Bundle. Eine ENV-Änderung am laufenden `moodsync-web`-Container hatte dadurch keinen Effekt. Mit Default `/api/v1` (relativ) funktionierte das nur, wenn ein Reverse-Proxy `/api/*` an den API-Container weiterleitete.
+`VITE_API_BASE_URL` ist eine **Build-Time-Variable**: Vite ersetzt `import.meta.env.VITE_API_BASE_URL` zur Build-Zeit als String-Konstante im JS-Bundle. Eine ENV-Änderung am laufenden `correlcore-web`-Container hatte dadurch keinen Effekt. Mit Default `/api/v1` (relativ) funktionierte das nur, wenn ein Reverse-Proxy `/api/*` an den API-Container weiterleitete.
 
 Im user-test/Dockhand-Setup mit direktem Host-Port-Mapping (Web=3010, API=8210) ohne Proxy sendete der Browser an den Web-Port, der nur Static-Files serviert → 404. Schlimmer: der `release-images.yml`-Workflow baute auf jedem Push auf `main` automatisch ein neues `:latest` mit Default `/api/v1`, sodass nach jedem Merge der manuelle `workflow_dispatch`-Override (siehe ältere Versionen dieses Runbooks) wieder überschrieben wurde — ein wiederkehrender Login-Bruch.
 
 ### Lösung (dauerhaft, seit ADR-0011)
 
-Der `moodsync-web`-Container enthält einen integrierten Reverse-Proxy in `apps/web/src/hooks.server.ts`. Jeder Request mit Pfad `/api/*` wird zur Laufzeit an `INTERNAL_API_URL` (Default `http://api:8000`) weitergeleitet, inklusive Method, Headers, Body, Query-String und vollständiger `Set-Cookie`-Behandlung (mehrere Cookies bleiben separate Header-Lines, Hop-by-Hop-Header werden entfernt).
+Der `correlcore-web`-Container enthält einen integrierten Reverse-Proxy in `apps/web/src/hooks.server.ts`. Jeder Request mit Pfad `/api/*` wird zur Laufzeit an `INTERNAL_API_URL` (Default `http://api:8000`) weitergeleitet, inklusive Method, Headers, Body, Query-String und vollständiger `Set-Cookie`-Behandlung (mehrere Cookies bleiben separate Header-Lines, Hop-by-Hop-Header werden entfernt).
 
 Konsequenzen:
 
@@ -340,13 +340,13 @@ Wenn `502 {"detail":"Upstream API unreachable"}` zurückkommt: API-Container pr�
 ```yaml
 services:
   api:
-    image: ghcr.io/sturmi77/moodsync-api:latest
+    image: ghcr.io/sturmi77/correlcore-api:latest
     expose:
       - '8000' # nur intern; KEIN ports: mehr nötig
     # ...
 
   web:
-    image: ghcr.io/sturmi77/moodsync-web:latest
+    image: ghcr.io/sturmi77/correlcore-web:latest
     environment:
       INTERNAL_API_URL: http://api:8000 # default, kann auch entfallen
     ports:
@@ -414,13 +414,13 @@ Empfohlene `.env`-Werte fuer verifizierbare Deployments:
 ```env
 DEV_VIEW_ENABLED=true
 IMAGE_TAG=sha-26c4274
-IMAGE_DIGEST=ghcr.io/sturmi77/moodsync-api@sha256:<digest>
+IMAGE_DIGEST=ghcr.io/sturmi77/correlcore-api@sha256:<digest>
 ```
 
 Den Digest nach Pull/Deploy vom Host ermitteln:
 
 ```bash
-docker inspect ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG} \
+docker inspect ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG} \
   --format='{{index .RepoDigests 0}}'
 ```
 
@@ -432,18 +432,18 @@ Container-Artefakt wurde vom Deployment nicht an den Container uebergeben.
 
 ## Quick-Reference: Erste-Hilfe-Tabelle
 
-| Symptom                                                                                                                   | Erste Hypothese                                                             | Sofort-Check                                                                                                                                                                                                                                         |
-| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `moodsync-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                                                   | Veraltetes Backend-Image im GHCR                                            | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/moodsync-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen                                                                                           |
-| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP                           | Synology+Tailscale Userspace-Mode                                           | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                                                                                                                  |
-| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                                           | Frischer Branch + Drift in pnpm-Version                                     | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                                                                                                           |
-| GHCR-Pull schlägt mit `unauthorized` fehl                                                                                 | Image ist privat                                                            | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                                                                                                             |
-| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                                           | Lokales pnpm liest `allowBuilds` nicht                                      | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                                                                                                           |
-| `moodsync-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                                            | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                                                                                                        |
-| `moodsync-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert                | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5                                                                             |
-| Container-Create scheitert: `Error starting userland proxy: listen tcp4 0.0.0.0:8000: bind: address already in use`       | Host-Port 8000/3000 von anderem Dienst belegt (Paperless, Grafana ...)      | `API_HOST_PORT=8210` und ggf. `WEB_HOST_PORT=<frei>` in `.env` setzen; `WEB_HOST_PORT`-Änderung erfordert `CORS_ORIGINS`-Anpassung. Siehe §6                                                                                                         |
-| Frontend 404 auf `/api/v1/...` am Web-Port, API-Log zeigt keinen POST                                                     | Web-Image pre-ADR-0011 oder Container ohne `INTERNAL_API_URL`-Konnektivität | Web-Image neuer als 2026-05-08 pullen (enthält internen Proxy aus `hooks.server.ts`); `docker compose exec web env \| grep INTERNAL_API_URL` prüfen; API-Container im selben Netzwerk und unter dem konfigurierten Host (`api`) erreichbar. Siehe §7 |
-| Frontend 502 auf `/api/v1/...` mit JSON `{"detail":"Upstream API unreachable"}`                                           | Web-Container kann API-Container nicht erreichen                            | API-Container-Status prüfen (`docker compose ps api`); Netzwerk-Reachability vom Web aus testen (`docker compose exec web wget -qO- http://api:8000/api/v1/health/live`); ggf. `INTERNAL_API_URL` korrigieren. Siehe §7                              |
+| Symptom                                                                                                                     | Erste Hypothese                                                             | Sofort-Check                                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `correlcore-migrate` Exit 1, `ModuleNotFoundError: No module named 'app'`                                                   | Veraltetes Backend-Image im GHCR                                            | Backend-Image neu pullen (`docker pull ghcr.io/sturmi77/correlcore-api:latest`); `docker inspect` muss `Created ≥ 2026-05-07` zeigen, sonst Pull wiederholen                                                                                         |
+| Container bleibt in `Restarting`, Log: `bind: cannot assign requested address` für Tailscale-IP                             | Synology+Tailscale Userspace-Mode                                           | `TAILSCALE_IP=0.0.0.0` in `.env`, Stack neu starten                                                                                                                                                                                                  |
+| Web-CI-Job bricht im Install-Step mit `ERR_PNPM_IGNORED_BUILDS`                                                             | Frischer Branch + Drift in pnpm-Version                                     | Branch auf aktuelles `main` rebasen (Pin aus ADR-0010 muss vorhanden sein)                                                                                                                                                                           |
+| GHCR-Pull schlägt mit `unauthorized` fehl                                                                                   | Image ist privat                                                            | GitHub → Repo-Settings → Packages → Visibility: `Public`                                                                                                                                                                                             |
+| `pnpm install` lokal: `ERR_PNPM_IGNORED_BUILDS`                                                                             | Lokales pnpm liest `allowBuilds` nicht                                      | `corepack use pnpm@11.0.8` (forciert die gepinnte Version)                                                                                                                                                                                           |
+| `correlcore-migrate` Exit 1, `SettingsError: error parsing value for field "CORS_ORIGINS"`                                  | CSV-Liste in ENV ohne `NoDecode`                                            | Backend-Image neuer als 2026-05-07 12:54 UTC pullen (Fix in PR #87+); alternativ ENV als JSON setzen (`CORS_ORIGINS=["http://a","http://b"]`)                                                                                                        |
+| `correlcore-migrate` Exit 1, `DatatypeMismatchError: column ... is of type ... but expression is of type character varying` | ENUM-Spalte im `bulk_insert`-Stub als `sa.String` deklariert                | Backend-Image neuer als 2026-05-07 14:00 UTC pullen (Fix in PR #89+); für Eigenentwicklungen: ENUM-Typ im `sa.table`-Stub mit `create_type=False` wiederholen — siehe §5                                                                             |
+| Container-Create scheitert: `Error starting userland proxy: listen tcp4 0.0.0.0:8000: bind: address already in use`         | Host-Port 8000/3000 von anderem Dienst belegt (Paperless, Grafana ...)      | `API_HOST_PORT=8210` und ggf. `WEB_HOST_PORT=<frei>` in `.env` setzen; `WEB_HOST_PORT`-Änderung erfordert `CORS_ORIGINS`-Anpassung. Siehe §6                                                                                                         |
+| Frontend 404 auf `/api/v1/...` am Web-Port, API-Log zeigt keinen POST                                                       | Web-Image pre-ADR-0011 oder Container ohne `INTERNAL_API_URL`-Konnektivität | Web-Image neuer als 2026-05-08 pullen (enthält internen Proxy aus `hooks.server.ts`); `docker compose exec web env \| grep INTERNAL_API_URL` prüfen; API-Container im selben Netzwerk und unter dem konfigurierten Host (`api`) erreichbar. Siehe §7 |
+| Frontend 502 auf `/api/v1/...` mit JSON `{"detail":"Upstream API unreachable"}`                                             | Web-Container kann API-Container nicht erreichen                            | API-Container-Status prüfen (`docker compose ps api`); Netzwerk-Reachability vom Web aus testen (`docker compose exec web wget -qO- http://api:8000/api/v1/health/live`); ggf. `INTERNAL_API_URL` korrigieren. Siehe §7                              |
 
 ---
 
@@ -452,9 +452,9 @@ Container-Artefakt wurde vom Deployment nicht an den Container uebergeben.
 Anonymer Pull von `:latest` (sollte HTTP 200 zurückgeben):
 
 ```bash
-TOKEN=$(curl -s "https://ghcr.io/token?service=ghcr.io&scope=repository:sturmi77/moodsync-api:pull" | jq -r .token)
+TOKEN=$(curl -s "https://ghcr.io/token?service=ghcr.io&scope=repository:sturmi77/correlcore-api:pull" | jq -r .token)
 curl -sI -H "Authorization: Bearer $TOKEN" \
-  "https://ghcr.io/v2/sturmi77/moodsync-api/manifests/latest"
+  "https://ghcr.io/v2/sturmi77/correlcore-api/manifests/latest"
 ```
 
 Die Header-Antwort sollte `HTTP/2 200` zeigen. Bei `401` ist das Image privat oder der Tag existiert nicht.

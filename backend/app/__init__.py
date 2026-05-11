@@ -1,1 +1,1 @@
-"""MoodSync FastAPI backend."""
+"""CorrelCore FastAPI backend."""

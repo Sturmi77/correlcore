@@ -20,8 +20,8 @@ from tests.conftest import make_user
 
 def _dev_payload() -> DevInfoResponse:
     return DevInfoResponse(
-        image_hash="ghcr.io/sturmi77/moodsync-api@sha256:abc",
-        image_digest="ghcr.io/sturmi77/moodsync-api@sha256:abc",
+        image_hash="ghcr.io/sturmi77/correlcore-api@sha256:abc",
+        image_digest="ghcr.io/sturmi77/correlcore-api@sha256:abc",
         image_tag="sha-26c4274",
         build_time="2026-05-10T16:00:00Z",
         git_commit="26c4274e0b2688931f7ceab108d72b775233fdf7",
@@ -93,7 +93,7 @@ async def test_dev_info_403_for_unverified_user(async_client: AsyncClient) -> No
 @pytest.mark.asyncio
 async def test_dev_info_200_for_verified_user(async_client: AsyncClient) -> None:
     settings.DEV_VIEW_ENABLED = True
-    settings.IMAGE_DIGEST = "ghcr.io/sturmi77/moodsync-api@sha256:abc"
+    settings.IMAGE_DIGEST = "ghcr.io/sturmi77/correlcore-api@sha256:abc"
     settings.IMAGE_TAG = "sha-26c4274"
     settings.GIT_COMMIT = "26c4274e0b2688931f7ceab108d72b775233fdf7"
     settings.GIT_BRANCH = "main"
@@ -114,7 +114,7 @@ async def test_dev_info_200_for_verified_user(async_client: AsyncClient) -> None
 
     assert response.status_code == 200
     data = response.json()
-    assert data["image_digest"] == "ghcr.io/sturmi77/moodsync-api@sha256:abc"
+    assert data["image_digest"] == "ghcr.io/sturmi77/correlcore-api@sha256:abc"
     assert data["image_tag"] == "sha-26c4274"
     assert data["git_commit"] == "26c4274e0b2688931f7ceab108d72b775233fdf7"
     assert data["git_branch"] == "main"

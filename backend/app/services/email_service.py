@@ -116,7 +116,7 @@ async def send_verification_email(
     html_body = _render("verify_email.html.j2", **ctx)
 
     msg = EmailMessage()
-    msg["Subject"] = "MoodSync — Bitte bestätige deine E-Mail-Adresse"
+    msg["Subject"] = "CorrelCore - Bitte bestätige deine E-Mail-Adresse"
     msg["From"] = settings.SMTP_FROM
     msg["To"] = to_email
     msg.set_content(text_body)
@@ -147,7 +147,7 @@ async def send_already_registered_email(
     html_body = _render("already_registered.html.j2", **ctx)
 
     msg = EmailMessage()
-    msg["Subject"] = "MoodSync — Diese Adresse ist bereits registriert"
+    msg["Subject"] = "CorrelCore - Diese Adresse ist bereits registriert"
     msg["From"] = settings.SMTP_FROM
     msg["To"] = to_email
     msg.set_content(text_body)

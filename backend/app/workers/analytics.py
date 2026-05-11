@@ -44,7 +44,7 @@ async def run_cleanup_once() -> int:
 
 async def run_worker(*, sleep: CleanupSleep = asyncio.sleep) -> None:
     """Run scheduled worker jobs forever."""
-    logger.info("moodsync worker started")
+    logger.info("correlcore worker started")
     while True:
         delay = seconds_until_next_cleanup()
         logger.info("next unverified account cleanup scheduled", extra={"delay_seconds": delay})

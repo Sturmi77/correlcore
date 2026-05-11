@@ -32,7 +32,7 @@
   onMount(() => {
     const saved = (() => {
       try {
-        return localStorage.getItem('moodsync-theme') as 'light' | 'dark' | null;
+        return localStorage.getItem('correlcore-theme') as 'light' | 'dark' | null;
       } catch {
         return null;
       }

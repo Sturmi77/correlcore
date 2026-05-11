@@ -16,9 +16,12 @@
     <script>
       (function () {
         try {
-          var saved = localStorage.getItem('moodsync-theme');
+          var saved =
+            localStorage.getItem('correlcore-theme') || localStorage.getItem('moodsync-theme');
           if (saved === 'light' || saved === 'dark') {
             document.documentElement.setAttribute('data-theme', saved);
+            localStorage.setItem('correlcore-theme', saved);
+            localStorage.removeItem('moodsync-theme');
           }
         } catch (_) {
           /* ignore */

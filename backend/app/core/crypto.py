@@ -167,7 +167,7 @@ def decrypt_with_dek(ciphertext: bytes | memoryview, dek: bytes) -> str:
 # Tuple (user_id, dek) so we can detect a leaked DEK from another request:
 # if the contextvar still holds a DEK with a different user_id, that's a bug.
 _current_dek: contextvars.ContextVar[tuple[uuid.UUID, bytes] | None] = contextvars.ContextVar(
-    "moodsync_current_dek",
+    "correlcore_current_dek",
     default=None,
 )
 

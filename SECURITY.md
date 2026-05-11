@@ -11,7 +11,7 @@
 
 **Bitte keine Security-Issues öffentlich im Issue-Tracker anlegen.**
 
-Sicherheitslücken an: **security@moodsync.app** (oder direkt an den Maintainer)
+Sicherheitslücken an: **security@correlcore.app** (oder direkt an den Maintainer)
 
 Bitte folgende Informationen angeben:
 

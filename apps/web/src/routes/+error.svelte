@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-  <title>Fehler — MoodSync</title>
+  <title>Fehler — CorrelCore</title>
 </svelte:head>
 
 <main class="flex-1 flex flex-col items-center justify-center p-6 gap-4">

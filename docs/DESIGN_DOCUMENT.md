@@ -1,9 +1,9 @@
-# Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
+# Design-Dokument: CorrelCore — Mood & Habit Tracker mit Korrelationsanalyse
 
 **Version:** 0.11 (M2 abgeschlossen — alle Quality-Gate-Findings geschlossen, siehe [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md); D-002 entschieden: Custom-SVG-Komponenten statt externer Chart-Lib; ADR-0015 Developer-View implementiert; M2-Akzeptanzkriterien und DSGVO-Checkpoints bestanden)
 **Datum:** 2026-05-11
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
-**Arbeitstitel:** MoodSync
+**Arbeitstitel:** CorrelCore
 **Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
 
 ---
@@ -35,7 +35,7 @@ Menschen spüren, dass Schlaf, Sport, Homeoffice-Tage, Sozialkontakte oder besti
 
 ### 1.2 Vision
 
-MoodSync ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwischen Aktivitäten, Gesundheit und Wohlbefinden sichtbar macht und in alltagstauglichen Handlungsempfehlungen verdichtet.
+CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwischen Aktivitäten, Gesundheit und Wohlbefinden sichtbar macht und in alltagstauglichen Handlungsempfehlungen verdichtet.
 
 ### 1.3 Zielgruppe
 
@@ -484,7 +484,7 @@ Jeder Log-Eintrag enthält mindestens:
 {
   "timestamp": "...",
   "level": "INFO",
-  "service": "moodsync-api",
+  "service": "correlcore-api",
   "environment": "production",
   "request_id": "...",
   "method": "GET",
@@ -517,7 +517,7 @@ Jede eingehende HTTP-Anfrage erhält eine `request_id` via Middleware. Sie wird 
 #### Empfohlene Repo- und Dateistruktur für M0
 
 ```text
-moodsync/
+correlcore/
 ├── apps/
 │   └── web/
 │       ├── src/routes/+page.svelte
@@ -1069,10 +1069,12 @@ Jeder Milestone darf erst auf `done` gesetzt werden, wenn beide Audits durchgef�
 
 ## 10. Architektur-Entscheidungen & bekannte Schwachstellen
 
+Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen mit aktuellem Status und Verweis auf ADR oder Meilenstein.
+
 | ID       | Beschreibung                                                                             | Kategorie     | Status         | Verweis                                                                                                    |
 | -------- | ---------------------------------------------------------------------------------------- | ------------- | -------------- | ---------------------------------------------------------------------------------------------------------- |
 | SEC-01   | Auth-Modell undefiniert in Phase 1                                                       | Sicherheit    | ✅ behoben     | Native JWT implementiert (PR #38), Authentik → M12; [ADR-0004](adr/0004-auth-strategie.md)                 |
-| SEC-02   | `SECRET_KEY` vs. `JWT_SECRET` Env-Var-Mismatch                                           | Sicherheit    | ✅ behoben     | [Issue #41](https://github.com/Sturmi77/moodsync/issues/41), PR #43                                        |
+| SEC-02   | `SECRET_KEY` vs. `JWT_SECRET` Env-Var-Mismatch                                           | Sicherheit    | ✅ behoben     | [Issue #41](https://github.com/Sturmi77/correlcore/issues/41), PR #43                                      |
 | SEC-03   | Docker Socket direkter Mount in Traefik                                                  | Sicherheit    | ✅ behoben     | PR #32, Tecnativa-Proxy                                                                                    |
 | SEC-04   | MinIO Console (Port 9001) öffentlich über Traefik erreichbar                             | Sicherheit    | ✅ behoben     | PR #32                                                                                                     |
 | SW-01    | LWW Sync-Strategie verursacht stillen Datenverlust bei gleichzeitigen Multi-Device-Edits | Software      | ✅ behoben     | D-009, [ADR-0003](adr/0003-sync-conflict-log.md), Issue #24                                                |

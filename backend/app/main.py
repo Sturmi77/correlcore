@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
-        title="MoodSync API",
+        title="CorrelCore API",
         description="Privacy-first Mood & Habit Tracker API",
         version="0.0.1",
         docs_url="/api/docs" if settings.DEBUG else None,

@@ -33,7 +33,7 @@ ARG GIT_BRANCH=unknown
 ARG BUILD_TIME=
 
 # Non-root user for security
-RUN groupadd -r moodsync && useradd -r -g moodsync moodsync
+RUN groupadd -r correlcore && useradd -r -g correlcore correlcore
 
 # Copy venv from builder
 COPY --from=builder /app/.venv .venv
@@ -49,7 +49,7 @@ COPY app/ app/
 COPY migrations/ migrations/
 COPY migrations/alembic.ini alembic.ini
 
-USER moodsync
+USER correlcore
 
 EXPOSE 8000
 

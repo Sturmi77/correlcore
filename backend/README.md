@@ -1,6 +1,6 @@
-# MoodSync Backend
+# CorrelCore Backend
 
-FastAPI backend for MoodSync.
+FastAPI backend for CorrelCore.
 
 The package metadata in `pyproject.toml` uses this file as its project README so
 editable installs and CI dependency syncs can build the package consistently.

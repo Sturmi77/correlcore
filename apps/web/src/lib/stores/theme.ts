@@ -4,6 +4,9 @@ import { writable } from 'svelte/store';
 export type Theme = 'light' | 'dark';
 
 function createThemeStore() {
+  const storageKey = 'correlcore-theme';
+  const legacyStorageKey = 'moodsync-theme';
+
   // NOTE: localStorage unavailable in sandboxed iframes — use in-memory fallback
   const getInitial = (): Theme => {
     if (!browser) return 'dark';
@@ -25,7 +28,8 @@ function createThemeStore() {
           document.documentElement.setAttribute('data-theme', next);
           // Persist in localStorage only when available (not sandboxed)
           try {
-            localStorage.setItem('moodsync-theme', next);
+            localStorage.setItem(storageKey, next);
+            localStorage.removeItem(legacyStorageKey);
           } catch {
             // Silently ignore — sandboxed environment
           }
@@ -37,7 +41,8 @@ function createThemeStore() {
       if (browser) {
         document.documentElement.setAttribute('data-theme', theme);
         try {
-          localStorage.setItem('moodsync-theme', theme);
+          localStorage.setItem(storageKey, theme);
+          localStorage.removeItem(legacyStorageKey);
         } catch {
           // Silently ignore
         }

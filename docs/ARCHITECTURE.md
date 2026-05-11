@@ -1,4 +1,4 @@
-# MoodSync — Architektur
+# CorrelCore — Architektur
 
 Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab und vertieft die technische Architektur.
 

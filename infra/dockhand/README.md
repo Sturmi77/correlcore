@@ -1,4 +1,4 @@
-# MoodSync — Dockhand-Stack (User-Test)
+# CorrelCore — Dockhand-Stack (User-Test)
 
 Drop-in für [Dockhand](https://dockhand.pro). Für die Stack-Manager-UI im
 Homelab — funktional identisch zu `infra/docker/docker-compose.user-test.yml`
@@ -13,7 +13,7 @@ Dockhand pullt das Repo selbst und re-deployt bei jedem Webhook-Push.
 
 1. Im Dockhand-UI: **Stacks → New → From Git**
 2. Felder:
-   - **Repository:** `https://github.com/Sturmi77/moodsync`
+   - **Repository:** `https://github.com/Sturmi77/correlcore`
    - **Branch:** `main`
    - **Compose path:** `infra/dockhand`
    - **Auto-sync:** an (für Webhook-getriggerte Re-Deploys)
@@ -26,16 +26,16 @@ Dockhand pullt das Repo selbst und re-deployt bei jedem Webhook-Push.
 
 ### Variante B — Manuelles Verzeichnis
 
-1. Verzeichnis am Host anlegen, z. B. `/opt/stacks/moodsync/`.
+1. Verzeichnis am Host anlegen, z. B. `/opt/stacks/correlcore/`.
 2. `compose.yaml` und `.env.example` reinkopieren.
 3. `cp .env.example .env` und alle leeren Variablen ausfüllen.
 4. Im Dockhand-UI: **Stacks → Adopt** (oder **New → From file**) und das
    Verzeichnis verlinken.
 
 ```bash
-sudo mkdir -p /opt/stacks/moodsync
-sudo cp infra/dockhand/compose.yaml infra/dockhand/.env.example /opt/stacks/moodsync/
-cd /opt/stacks/moodsync
+sudo mkdir -p /opt/stacks/correlcore
+sudo cp infra/dockhand/compose.yaml infra/dockhand/.env.example /opt/stacks/correlcore/
+cd /opt/stacks/correlcore
 sudo cp .env.example .env
 sudo $EDITOR .env
 # → Dockhand-UI: Adopt stack
@@ -68,10 +68,10 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 ### Stack-Steuerung (nur in der Compose, nicht im Backend)
 
-| Variable       | Pflicht | Default     | Beschreibung                                                                                                                                                                                                                                                                                                            |
-| -------------- | ------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IMAGE_TAG`    | nein    | `latest`    | Welcher GHCR-Tag für `moodsync-api` und `moodsync-web` gepullt wird. Empfohlen: pinned Tag (`sha-abc1234` oder `v0.3.0`) damit Dockhands Vulnerability-Scan (Grype/Trivy) reproducible vergleichen kann. Verfügbare Tags siehe [GHCR-Pakete im Repo](https://github.com/Sturmi77/moodsync/pkgs/container/moodsync-api). |
-| `TAILSCALE_IP` | nein    | `127.0.0.1` | IPv4-Adresse, auf die api/web/mailpit (und optional GlitchTip) ihre Ports binden. Default `127.0.0.1` = nur vom Host selbst erreichbar. Für Tailnet-Zugriff: `tailscale ip -4` auf dem Host → z. B. `100.101.102.103`.                                                                                                  |
+| Variable       | Pflicht | Default     | Beschreibung                                                                                                                                                                                                                                                                                                                    |
+| -------------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IMAGE_TAG`    | nein    | `latest`    | Welcher GHCR-Tag für `correlcore-api` und `correlcore-web` gepullt wird. Empfohlen: pinned Tag (`sha-abc1234` oder `v0.3.0`) damit Dockhands Vulnerability-Scan (Grype/Trivy) reproducible vergleichen kann. Verfügbare Tags siehe [GHCR-Pakete im Repo](https://github.com/Sturmi77/correlcore/pkgs/container/correlcore-api). |
+| `TAILSCALE_IP` | nein    | `127.0.0.1` | IPv4-Adresse, auf die api/web/mailpit (und optional GlitchTip) ihre Ports binden. Default `127.0.0.1` = nur vom Host selbst erreichbar. Für Tailnet-Zugriff: `tailscale ip -4` auf dem Host → z. B. `100.101.102.103`.                                                                                                          |
 
 ### Backend — App-Modus
 
@@ -93,11 +93,11 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 ### Backend — Datenbank
 
-| Variable            | Pflicht | Default    | Beschreibung                                                                                                                                                                                                                                                            |
-| ------------------- | ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POSTGRES_DB`       | nein    | `moodsync` | Name der App-Datenbank, die der Postgres-Container beim ersten Start anlegt.                                                                                                                                                                                            |
-| `POSTGRES_USER`     | nein    | `moodsync` | DB-User, der vom `migrate`-Container und der API genutzt wird.                                                                                                                                                                                                          |
-| `POSTGRES_PASSWORD` | **ja**  | _keiner_   | Passwort für `POSTGRES_USER`. **Mindestens 20 Zeichen, kein `@` und kein `/`** — beides bricht den Asyncpg-DSN auseinander. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(24))'`. Wird von der API automatisch in `DATABASE_URL` zusammengesetzt. |
+| Variable            | Pflicht | Default      | Beschreibung                                                                                                                                                                                                                                                            |
+| ------------------- | ------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_DB`       | nein    | `correlcore` | Name der App-Datenbank, die der Postgres-Container beim ersten Start anlegt.                                                                                                                                                                                            |
+| `POSTGRES_USER`     | nein    | `correlcore` | DB-User, der vom `migrate`-Container und der API genutzt wird.                                                                                                                                                                                                          |
+| `POSTGRES_PASSWORD` | **ja**  | _keiner_     | Passwort für `POSTGRES_USER`. **Mindestens 20 Zeichen, kein `@` und kein `/`** — beides bricht den Asyncpg-DSN auseinander. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(24))'`. Wird von der API automatisch in `DATABASE_URL` zusammengesetzt. |
 
 > `DATABASE_URL` wird in der Compose aus den drei Variablen gebaut:
 > `postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}`. Du musst `DATABASE_URL` selbst nicht setzen.
@@ -124,13 +124,13 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 ### Backend — SMTP / E-Mail-Verifikation
 
-| Variable        | Pflicht | Default                  | Beschreibung                                                                                                                                                                                                                                                           |
-| --------------- | ------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SMTP_HOST`     | nein    | `mailpit`                | SMTP-Server-Hostname. Default zeigt auf den lokalen Mailpit-Container. Für echten Mailversand: z. B. `smtp.eu.mailgun.org`, `smtp.fastmail.com`.                                                                                                                       |
-| `SMTP_PORT`     | nein    | `1025`                   | SMTP-Port. Mailpit lauscht auf `1025` (kein TLS). Echter Provider meist `587` (STARTTLS) oder `465` (SMTPS). **Hinweis:** Backend-Default in `config.py` ist `587` — die Compose überschreibt das hier explizit auf `1025`, damit Mailpit out-of-the-box funktioniert. |
-| `SMTP_USER`     | nein    | _leer_                   | Auth-User beim SMTP-Provider. Für Mailpit nicht nötig.                                                                                                                                                                                                                 |
-| `SMTP_PASSWORD` | nein    | _leer_                   | Auth-Passwort. Für Mailpit nicht nötig.                                                                                                                                                                                                                                |
-| `SMTP_FROM`     | nein    | `noreply@moodsync.local` | Absender-Adresse für Verifikations- und Reset-Mails. Für echten Versand auf eine validierte Domain umstellen.                                                                                                                                                          |
+| Variable        | Pflicht | Default                    | Beschreibung                                                                                                                                                                                                                                                           |
+| --------------- | ------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SMTP_HOST`     | nein    | `mailpit`                  | SMTP-Server-Hostname. Default zeigt auf den lokalen Mailpit-Container. Für echten Mailversand: z. B. `smtp.eu.mailgun.org`, `smtp.fastmail.com`.                                                                                                                       |
+| `SMTP_PORT`     | nein    | `1025`                     | SMTP-Port. Mailpit lauscht auf `1025` (kein TLS). Echter Provider meist `587` (STARTTLS) oder `465` (SMTPS). **Hinweis:** Backend-Default in `config.py` ist `587` — die Compose überschreibt das hier explizit auf `1025`, damit Mailpit out-of-the-box funktioniert. |
+| `SMTP_USER`     | nein    | _leer_                     | Auth-User beim SMTP-Provider. Für Mailpit nicht nötig.                                                                                                                                                                                                                 |
+| `SMTP_PASSWORD` | nein    | _leer_                     | Auth-Passwort. Für Mailpit nicht nötig.                                                                                                                                                                                                                                |
+| `SMTP_FROM`     | nein    | `noreply@correlcore.local` | Absender-Adresse für Verifikations- und Reset-Mails. Für echten Versand auf eine validierte Domain umstellen.                                                                                                                                                          |
 
 > Die Backend-Settings `SMTP_USE_TLS` (Default _auto_, siehe unten),
 > `SMTP_TIMEOUT` (Default `10`), `EMAIL_VERIFICATION_TTL_HOURS`
@@ -149,7 +149,7 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 > oder `SMTP_USE_TLS=false` setzen überschreibt die Heuristik immer.
 >
 > Auch `FRONTEND_BASE_URL` solltest du spätestens dann auf den Tailnet-
-> Hostnamen ändern (`http://moodsync.<tailnet>.ts.net:3010` o.ä.), wenn
+> Hostnamen ändern (`http://correlcore.<tailnet>.ts.net:3010` o.ä.), wenn
 > du echte Verifikations-Mails verschicken willst — sonst zeigt der Link
 > in der Mail auf `localhost:5173`.
 >
@@ -160,9 +160,9 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 ### Optional — GlitchTip (Profile `monitoring`)
 
-| Variable               | Pflicht\*\* | Default | Beschreibung                                                                                                                                                                                                                                    |
-| ---------------------- | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GLITCHTIP_SECRET_KEY` | ja\*\*      | _leer_  | Django-Secret für GlitchTip (separat von `SECRET_KEY` der MoodSync-API). Mindestens 50 Zeichen empfohlen. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(48))'`. \*\*Pflicht nur, wenn das Profile `monitoring` aktiv ist. |
+| Variable               | Pflicht\*\* | Default | Beschreibung                                                                                                                                                                                                                                      |
+| ---------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GLITCHTIP_SECRET_KEY` | ja\*\*      | _leer_  | Django-Secret für GlitchTip (separat von `SECRET_KEY` der CorrelCore-API). Mindestens 50 Zeichen empfohlen. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(48))'`. \*\*Pflicht nur, wenn das Profile `monitoring` aktiv ist. |
 
 Weitere GlitchTip-Variablen (`DATABASE_URL`, `EMAIL_URL`,
 `GLITCHTIP_DOMAIN`, `ENABLE_USER_REGISTRATION`) werden direkt in der
@@ -226,7 +226,7 @@ Der `migrate`-Container läuft einmalig vor `api`/`worker` und führt
 `alembic upgrade head` aus. Idempotent — Re-Deploys triggern automatisch
 neue Migrations.
 
-In der Dockhand-Container-Liste erscheint `moodsync-migrate` nach
+In der Dockhand-Container-Liste erscheint `correlcore-migrate` nach
 erfolgreichem Run als **Exited (0)** — das ist gewollt, kein Fehler.
 
 ## Profiles in Dockhand
@@ -247,8 +247,8 @@ Aktivierung:
 GlitchTip-Erst-Bootstrap nach erstem Up:
 
 ```bash
-docker exec -it moodsync-glitchtip ./manage.py migrate
-docker exec -it moodsync-glitchtip ./manage.py createsuperuser
+docker exec -it correlcore-glitchtip ./manage.py migrate
+docker exec -it correlcore-glitchtip ./manage.py createsuperuser
 ```
 
 ## Update auf neuen Image-Tag
@@ -288,11 +288,11 @@ und der Plattenverbrauch bleibt vorhersehbar.
 
 ```bash
 # Postgres-Dump
-docker exec moodsync-postgres pg_dump -U moodsync moodsync \
-  | gzip > moodsync-$(date +%F).sql.gz
+docker exec correlcore-postgres pg_dump -U correlcore correlcore \
+  | gzip > correlcore-$(date +%F).sql.gz
 
 # Volumes (alternativ, vollständig)
-docker run --rm -v moodsync_postgres_data:/data -v "$PWD":/backup \
+docker run --rm -v correlcore_postgres_data:/data -v "$PWD":/backup \
   alpine tar czf /backup/postgres-data-$(date +%F).tar.gz -C /data .
 ```
 
@@ -300,16 +300,16 @@ docker run --rm -v moodsync_postgres_data:/data -v "$PWD":/backup \
 
 ## Unterschiede zu den anderen Compose-Varianten
 
-| Punkt              | user-test (CLI)        | Dockge                     | Dockhand                           |
-| ------------------ | ---------------------- | -------------------------- | ---------------------------------- |
-| Top-level `name:`  | `moodsync-test`        | _kein_ (nimmt Verzeichnis) | `moodsync` (Dockhand respektiert)  |
-| Container-Präfix   | `moodsync-test-*`      | `moodsync-*`               | `moodsync-*`                       |
-| `pull_policy`      | `always`               | `always`                   | `always` (api/migrate/worker/web)  |
-| Profiles           | `monitoring`, `worker` | _auskommentiert_           | `monitoring`, `worker` (UI-Feld)   |
-| Logging-Limits     | _default_              | _default_                  | `json-file` 10 MB × 3 (per Anchor) |
-| Volume-Namen       | compose-default        | explizit (`moodsync_*`)    | explizit (`moodsync_*`)            |
-| Network-Name       | `internal`             | `moodsync`                 | `moodsync`                         |
-| Git-Sync supported | nein                   | nein                       | ja (Webhook-Auto-Deploy)           |
+| Punkt              | user-test (CLI)        | Dockge                     | Dockhand                            |
+| ------------------ | ---------------------- | -------------------------- | ----------------------------------- |
+| Top-level `name:`  | `correlcore-test`      | _kein_ (nimmt Verzeichnis) | `correlcore` (Dockhand respektiert) |
+| Container-Präfix   | `correlcore-test-*`    | `correlcore-*`             | `correlcore-*`                      |
+| `pull_policy`      | `always`               | `always`                   | `always` (api/migrate/worker/web)   |
+| Profiles           | `monitoring`, `worker` | _auskommentiert_           | `monitoring`, `worker` (UI-Feld)    |
+| Logging-Limits     | _default_              | _default_                  | `json-file` 10 MB × 3 (per Anchor)  |
+| Volume-Namen       | compose-default        | explizit (`correlcore_*`)  | explizit (`correlcore_*`)           |
+| Network-Name       | `internal`             | `correlcore`               | `correlcore`                        |
+| Git-Sync supported | nein                   | nein                       | ja (Webhook-Auto-Deploy)            |
 
 Funktional identisch — gleiche GHCR-Images, gleiche Services, gleiche
 Healthchecks, gleicher Tailscale-IP-Bind.

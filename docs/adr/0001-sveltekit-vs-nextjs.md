@@ -8,7 +8,7 @@
 
 ## Kontext
 
-Für die MoodSync-PWA wird ein Framework benötigt, das:
+Für die CorrelCore-PWA wird ein Framework benötigt, das:
 
 - Kleine Bundle-Größen produziert (Performance-Budget: JS < 150 KB gz)
 - Gute Offline-/PWA-Unterstützung bietet

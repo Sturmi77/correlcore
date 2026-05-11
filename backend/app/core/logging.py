@@ -1,4 +1,4 @@
-"""Structured JSON logging for MoodSync API.
+"""Structured JSON logging for CorrelCore API.
 
 Every log record emits valid JSON with a fixed set of fields.
 Sensitive user data (mood values, symptoms, notes) must never appear in logs —
@@ -70,7 +70,7 @@ class _JsonFormatter(logging.Formatter):
         entry: dict[str, Any] = {
             "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
-            "service": "moodsync-api",
+            "service": "correlcore-api",
             "environment": settings.APP_ENV,
             "logger": record.name,
             "request_id": _ctx_request_id.get(),

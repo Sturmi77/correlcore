@@ -8,7 +8,7 @@
 
 ## Kontext
 
-ADR-0004 legt fest, dass Phase 1 mit nativem JWT in FastAPI läuft. Offen blieb, **wie der Browser-Client die Token hält** — Cookie oder In-Memory-Bearer? Beide Varianten sind in der MoodSync-Threat-Modellierung relevant, weil:
+ADR-0004 legt fest, dass Phase 1 mit nativem JWT in FastAPI läuft. Offen blieb, **wie der Browser-Client die Token hält** — Cookie oder In-Memory-Bearer? Beide Varianten sind in der CorrelCore-Threat-Modellierung relevant, weil:
 
 - DSGVO Art. 9 (Gesundheitsdaten) verlangt erhöhte Sicherheit gegen Token-Diebstahl.
 - Phase 2 nutzt Capacitor (ADR-0002) — `capacitor://`-Schema blockiert Third-Party-Cookies zur API-Domain.

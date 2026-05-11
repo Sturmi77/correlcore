@@ -1,22 +1,22 @@
-# MoodSync — Dockge-Stack (User-Test)
+# CorrelCore — Dockge-Stack (User-Test)
 
 Drop-in für [Dockge](https://github.com/louislam/dockge). Identisch zum
 `docker-compose.user-test.yml` in [`infra/docker/`](../docker/), aber für
 die Dockge-Konvention (`compose.yaml` + `.env` pro Stack-Verzeichnis)
 optimiert. Kein top-level `name:` — Dockge nimmt den Verzeichnisnamen
-(`moodsync`) als Stack-Identifier.
+(`correlcore`) als Stack-Identifier.
 
 ## Setup
 
-1. Verzeichnis im Dockge-Stacks-Pfad anlegen (z. B. `/opt/stacks/moodsync/`).
+1. Verzeichnis im Dockge-Stacks-Pfad anlegen (z. B. `/opt/stacks/correlcore/`).
 2. `compose.yaml` und `.env.example` reinkopieren.
 3. `cp .env.example .env` und alle leeren Variablen ausfüllen.
-4. Dockge UI öffnen → Stack `moodsync` erscheint als _inactive_ → **Deploy**.
+4. Dockge UI öffnen → Stack `correlcore` erscheint als _inactive_ → **Deploy**.
 
 ```bash
-sudo mkdir -p /opt/stacks/moodsync
-sudo cp compose.yaml .env.example /opt/stacks/moodsync/
-cd /opt/stacks/moodsync
+sudo mkdir -p /opt/stacks/correlcore
+sudo cp compose.yaml .env.example /opt/stacks/correlcore/
+cd /opt/stacks/correlcore
 sudo cp .env.example .env
 sudo $EDITOR .env   # Secrets generieren (siehe Snippets in der Datei)
 # → Dockge-UI: Deploy
@@ -70,8 +70,8 @@ In `compose.yaml` sind zwei Service-Blöcke auskommentiert:
   Block einkommentieren + `GLITCHTIP_SECRET_KEY` setzen, dann nach erstem
   Up:
   ```bash
-  docker exec -it moodsync-glitchtip ./manage.py migrate
-  docker exec -it moodsync-glitchtip ./manage.py createsuperuser
+  docker exec -it correlcore-glitchtip ./manage.py migrate
+  docker exec -it correlcore-glitchtip ./manage.py createsuperuser
   ```
 - **Analytics-Worker** (M2+)
   Erst aktivieren wenn `app/workers/analytics.py` implementiert ist —
@@ -90,11 +90,11 @@ IMAGE_TAG=v0.3.0
 
 ```bash
 # Postgres-Dump
-docker exec moodsync-postgres pg_dump -U moodsync moodsync \
-  | gzip > moodsync-$(date +%F).sql.gz
+docker exec correlcore-postgres pg_dump -U correlcore correlcore \
+  | gzip > correlcore-$(date +%F).sql.gz
 
 # Volumes (alternative, vollständig)
-docker run --rm -v moodsync_postgres_data:/data -v "$PWD":/backup \
+docker run --rm -v correlcore_postgres_data:/data -v "$PWD":/backup \
   alpine tar czf /backup/postgres-data-$(date +%F).tar.gz -C /data .
 ```
 
@@ -104,10 +104,10 @@ docker run --rm -v moodsync_postgres_data:/data -v "$PWD":/backup \
 
 | Punkt             | user-test compose      | Dockge compose                                             |
 | ----------------- | ---------------------- | ---------------------------------------------------------- |
-| Top-level `name:` | `moodsync-test`        | _kein_ (Dockge nutzt Ordner)                               |
-| Container-Präfix  | `moodsync-test-*`      | `moodsync-*`                                               |
-| Volume-Namen      | compose-default        | explizit (`moodsync_*`)                                    |
+| Top-level `name:` | `correlcore-test`      | _kein_ (Dockge nutzt Ordner)                               |
+| Container-Präfix  | `correlcore-test-*`    | `correlcore-*`                                             |
+| Volume-Namen      | compose-default        | explizit (`correlcore_*`)                                  |
 | Profiles          | `monitoring`, `worker` | _entfernt_ — Blöcke kommentiert (Dockge ignoriert Profile) |
-| Network-Name      | `internal`             | `moodsync`                                                 |
+| Network-Name      | `internal`             | `correlcore`                                               |
 
 Funktional identisch — gleiche Images, gleiche Services, gleiche Healthchecks.

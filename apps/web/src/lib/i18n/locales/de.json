@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "MoodSync",
+    "name": "CorrelCore",
     "tagline": "Verstehe warum manche Tage gut und andere schlecht waren."
   },
   "nav": {
@@ -283,7 +283,7 @@
     }
   },
   "disclaimer": {
-    "medical": "MoodSync ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschlie\u00dflich zur pers\u00f6nlichen Reflexion."
+    "medical": "CorrelCore ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."
   },
   "error": {
     "generic": "Etwas ist schiefgelaufen.",

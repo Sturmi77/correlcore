@@ -27,7 +27,7 @@ gar nicht erst auf.
 
 Vite ersetzt `import.meta.env.VITE_API_BASE_URL` zur **Build-Zeit** als
 String-Literal im JS-Bundle. Eine ENV-Änderung am laufenden
-`moodsync-web`-Container hat dadurch _keinen_ Effekt — der Wert ist im
+`correlcore-web`-Container hat dadurch _keinen_ Effekt — der Wert ist im
 Bundle einkompiliert.
 
 Der Default `VITE_API_BASE_URL=/api/v1` (relativer Pfad) funktioniert nur,
@@ -42,7 +42,7 @@ Der GitHub-Actions-Workflow `release-images.yml` hat einen
 Web-Image manuell mit absoluter URL neu gebaut werden kann:
 
 ```bash
-gh workflow run release-images.yml -R Sturmi77/moodsync --ref main \
+gh workflow run release-images.yml -R Sturmi77/correlcore --ref main \
   -f vite_api_base_url=http://100.120.157.82:8210/api/v1
 ```
 
@@ -62,7 +62,7 @@ Das ist akzeptabel als Hotfix, aber keine architektonische Endlösung.
 
 ## Entscheidung
 
-**Der `moodsync-web`-Container bekommt einen integrierten Reverse-Proxy,
+**Der `correlcore-web`-Container bekommt einen integrierten Reverse-Proxy,
 der `/api/*`-Requests intern an `http://api:8000/*` weiterleitet
 (Inter-Container-Kommunikation über das Compose-Netzwerk).** Der
 Build-Arg-Default `VITE_API_BASE_URL=/api/v1` bleibt in allen Topologien
@@ -149,7 +149,7 @@ Für eine reine `/api/*`-Weiterleitung overkill.
    Default setzen — bleibt überschreibbar pro Compose-Variante
 3. **Compose-Files** (`infra/dockhand/compose.yaml`,
    `infra/dockge/compose.yaml`, `infra/docker/docker-compose.user-test.yml`):
-   - `moodsync-web` `depends_on: api: { condition: service_healthy }`
+   - `correlcore-web` `depends_on: api: { condition: service_healthy }`
      hinzufügen
    - `API_HOST_PORT`-Mapping auf `expose:`-Block umstellen (Port nur
      intern, nicht mehr aufs Host gebunden) — als _opt-out_ via
@@ -190,7 +190,7 @@ Für eine reine `/api/*`-Weiterleitung overkill.
 
 ## Verweise
 
-- [PR #92 — `VITE_API_BASE_URL` workflow_dispatch-Input](https://github.com/Sturmi77/moodsync/pull/92)
+- [PR #92 — `VITE_API_BASE_URL` workflow_dispatch-Input](https://github.com/Sturmi77/correlcore/pull/92)
 - [RUNBOOK §7 — `VITE_API_BASE_URL` Build-Time](../RUNBOOK_DEPLOYMENT.md)
 - [ADR-0001 — SvelteKit als Web-Framework](0001-sveltekit-vs-nextjs.md)
 - [ADR-0006 — Cookie-Auth mit Capacitor-Migration](0006-cookie-auth-mit-capacitor-migration.md) (profitiert direkt durch Same-Origin)

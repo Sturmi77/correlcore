@@ -8,7 +8,7 @@
   import { fetchDevInfo, type DevInfoResponse } from '$lib/api/dev';
   import { developerMode } from '$lib/stores/developerMode';
 
-  const COMMIT_BASE_URL = 'https://github.com/sturmi77/moodsync/commit/';
+  const COMMIT_BASE_URL = 'https://github.com/sturmi77/correlcore/commit/';
   const REFRESH_MS = 30_000;
 
   let info: DevInfoResponse | null = null;
@@ -96,7 +96,7 @@
 </script>
 
 <svelte:head>
-  <title>Developer View - MoodSync</title>
+  <title>Developer View - CorrelCore</title>
 </svelte:head>
 
 <main class="dev">

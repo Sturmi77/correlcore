@@ -1,5 +1,5 @@
 {
-  "name": "moodsync",
+  "name": "correlcore",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,8 +9,8 @@
   },
   "packageManager": "pnpm@11.0.8",
   "scripts": {
-    "dev": "pnpm --filter @moodsync/web dev",
-    "build": "pnpm --filter @moodsync/web build",
+    "dev": "pnpm --filter @correlcore/web dev",
+    "build": "pnpm --filter @correlcore/web build",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix",
     "format": "prettier --write .",
