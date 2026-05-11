@@ -1,7 +1,7 @@
 # Design-Dokument: MoodSync — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.10 (M1 review-bereit: alle 12 Quality-Gate-Findings geschlossen — siehe [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md), 288 Tests grün bei 96.11 % Coverage; [ADR-0009](adr/0009-offline-sync-nach-m4.md) Offline-Sync nach M4 verschoben; [ADR-0010](adr/0010-build-toolchain-pinning.md) Build-Toolchain-Pinning; [ADR-0011](adr/0011-web-internal-reverse-proxy.md) Vorgeschlagen für M2; erstes User-Test-Deployment dokumentiert in [`RUNBOOK_DEPLOYMENT.md`](RUNBOOK_DEPLOYMENT.md))
-**Datum:** 2026-05-07
+**Version:** 0.11 (M2 abgeschlossen — alle Quality-Gate-Findings geschlossen, siehe [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md); D-002 entschieden: Custom-SVG-Komponenten statt externer Chart-Lib; ADR-0015 Developer-View implementiert; M2-Akzeptanzkriterien und DSGVO-Checkpoints bestanden)
+**Datum:** 2026-05-11
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** MoodSync
 **Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
@@ -232,7 +232,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 - Charts mobile-freundlich! Keine riesigen Dashboards.
 - Export als PNG/CSV/PDF für Arzt-Gespräche.
 
-**Entscheidung:** Chart-Lib: ECharts oder LayerChart (Svelte). CSV/JSON-Export per Default, PDF ab v1.1.
+**Entscheidung:** Chart-Implementierung via **Custom-SVG-Komponenten** in SvelteKit (D-002 entschieden — siehe §7). CSV/JSON-Export implementiert. PDF ab v1.1. PNG-Export im Backlog.
 
 **Priorität:** MUST
 
@@ -327,7 +327,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 flowchart LR
   subgraph Clients
     PWA[PWA / Web]
-    AND[Android App - TWA]
+    AND[Android App - Capacitor]
   end
   subgraph Edge
     TRAEFIK[Traefik]
@@ -368,7 +368,7 @@ flowchart LR
 | ---------------- | --------------------------- | -------------------------------------------- |
 | Backend API      | FastAPI 0.111 + Python 3.12 | Django REST (zu schwerfällig)                |
 | Web Frontend     | SvelteKit 2 + Skeleton UI   | Next.js (React, größeres Bundle)             |
-| Mobile           | PWA → TWA via Bubblewrap    | React Native (zu viel Overhead für Solo-Dev) |
+| Mobile           | PWA → Capacitor (Android)   | TWA/Bubblewrap (Google-Policy-Risiko, Health Connect — ADR-0002) |
 | Datenbank        | PostgreSQL 16 + pgvector    | SQLite (kein RLS für Multi-User)             |
 | Cache/Queue      | Redis 7                     | Valkey (Drop-in, evaluieren)                 |
 | Object Storage   | MinIO                       | S3 (nur SaaS-Phase)                          |
@@ -376,6 +376,7 @@ flowchart LR
 | Auth Phase 1     | Native JWT (FastAPI)        | Authentik (M12+, SaaS)                       |
 | Offline-Sync     | Dexie.js (IndexedDB)        | PouchDB                                      |
 | Analytics Worker | pandas + scikit-learn       | R (kein Python-Ökosystem)                    |
+| **Chart-Lib**    | **Custom SVG-Komponenten**  | ECharts, LayerChart (D-002 entschieden)      |
 | Error Tracking   | GlitchTip                   | Sentry Cloud (Privacy)                       |
 | Push             | UnifiedPush / FCM           | NTFY direkt                                  |
 | Build            | pnpm + Vite                 | npm (langsamer)                              |
@@ -418,6 +419,8 @@ erDiagram
     string icon
     string color
     enum habit_type
+    int target_frequency
+    bool is_hidden
   }
   ENTRY_SYMPTOM {
     uuid entry_id FK
@@ -569,6 +572,7 @@ moodsync/
 - **i18n DE/EN** ab Tag 1, keine Hardcodes
 - **Komponenten:** Atomic Design + Storybook
 - **Motion:** subtil, 150–250 ms; Reduced-Motion respektieren
+- **Chart-Implementierung:** Custom-SVG-Komponenten in SvelteKit (kein externes Chart-Framework); Token-konform für Dark-Mode; Metrik-Linien mit unterschiedlichen Dash-Patterns + Point-Shapes (Color-Blind-Safe)
 
 ---
 
@@ -576,7 +580,7 @@ moodsync/
 
 **Laufzeit:** PostgreSQL, Redis, MinIO, Traefik, optional Authentik (Phase 2), optional Ollama, optional Immich, SMTP-Relay
 
-**Build:** Node LTS, pnpm, Python 3.12 + uv, Android Studio + Bubblewrap
+**Build:** Node LTS, pnpm, Python 3.12 + uv, Android Studio + Capacitor
 
 **Extern (SaaS-Phase):** Google Play Console (25 USD), FCM, Resend/Postmark, Stripe
 
@@ -610,7 +614,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Strukturierte JSON-Logs für Startup, Requests und Fehler werden geschrieben _(PR #35)_
 - [x] Jede Anfrage erhält eine `request_id` (Middleware gesetzt, in Logs mitgeführt, als `X-Request-ID`-Header zurückgegeben) _(PR #35)_
 - [x] Docker-Healthchecks für API, Web, PostgreSQL, Redis und MinIO im Core-Stack konfiguriert _(PR #35)_
-- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed*password, is_active, is_verified, created_at, updated_at *(PR #36)\_
+- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed_password, is_active, is_verified, created_at, updated_at _(PR #36)_
 - [x] Alembic-Migrationen `000_initial` und `001_create_users` laufen fehlerfrei (forward + rollback) _(PR #36)_
 - [x] `updated_at`-Trigger in Postgres aktiv _(PR #36)_
 - [x] GitHub Actions `ci-api.yml` grün (ruff, mypy, pytest mit Coverage ≥ 70 %) _(PR #37)_
@@ -641,7 +645,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - App-Level-Verschlüsselung at-rest für `entries.note` und `symptoms.name` (Custom) gemäß ADR-0005
 - **Login-UI:** SvelteKit Login/Register-Seiten _(aus M0 verschoben, Issue #40)_
 - **E-Mail-Verifikation:** `POST /auth/verify-email`, SMTP-Versand _(aus M0 verschoben, Issue #39)_
-- **`.env.example`-Fix + Vollständigkeit:** SECRET*KEY-Mismatch beheben, alle Config-Variablen dokumentieren *(aus M0 verschoben, Issue #41)\_
+- **`.env.example`-Fix + Vollständigkeit:** SECRET_KEY-Mismatch beheben, alle Config-Variablen dokumentieren _(aus M0 verschoben, Issue #41)_
 - **Nicht in M1-Scope:** Offline-Sync und Sync-Conflict-Log — verschoben nach M4 gemäß [ADR-0009](adr/0009-offline-sync-nach-m4.md)
 - **Exit:** Produktive Online-Nutzung durch Entwickler selbst möglich (inkl. Login im Browser)
 
@@ -652,33 +656,33 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38; Entry-Endpoints zusätzlich rate-limitiert: 60/min POST/PATCH, 120/min GET — Issue #7)_
 - [x] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only _(Issue #7: `BACKDATE_DAYS_LIMIT=7` im Service, UI-Datepicker auf 7-Tage-Fenster begrenzt)_
 - [x] Tag-System (vordefinierte Tags + Custom-Tags) verfügbar: `/tags`-CRUD + `PUT /entries/{id}/tags` (replace-set), 30 kuratierte Defaults im Migration-Seed, RLS für Custom-Tags _(Issue #8)_
-- [x] Symptom-Checkliste verfügbar: `/symptoms`-Endpunkte, visuelle Intensitäts-Skala 0–3, medizinischer Disclaimer in der UI _(Issue #9: 5 Standard-Keys (`headache`/`digestion`/`back_pain`/`fatigue`/`cold`), `GET /symptoms/standard` ohne Auth, `GET`/`PUT /entries/{id}/symptoms` (replace-set, owner-scoped, max. 32), Migration 005 mit RLS und CHECK-Constraints, Frontend-Komponente `SymptomChecker` mit 4-Punkt-Skala und persistentem Disclaimer)_
-- [x] Custom-Symptome verfügbar: User-eigene Symptome über CRUD-Endpoints analog Tags _(Issue #57, [ADR-0008](adr/0008-symptom-master-tabelle.md), Migration 006: `symptoms`-Master-Tabelle, `entry_symptoms.symptom_id`-FK, 50 Custom-Cap pro User, RLS analog Tags)_
+- [x] Symptom-Checkliste verfügbar: `/symptoms`-Endpunkte, visuelle Intensitäts-Skala 0–3, medizinischer Disclaimer in der UI _(Issue #9)_
+- [x] Custom-Symptome verfügbar: User-eigene Symptome über CRUD-Endpoints analog Tags _(Issue #57, [ADR-0008](adr/0008-symptom-master-tabelle.md))_
 - [x] Login/Register im Browser funktioniert End-to-End (SvelteKit → JWT → FastAPI) _(Issue #40, PR #45)_
-- [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True`; Single-Use-Token in `email_verification_tokens` (24h TTL); `POST /auth/resend-verification` rate-limitiert _(Issue #39, PR #44)_
+- [x] E-Mail-Verifikation: `/register` sendet Mail über MailPit/SMTP, `POST /auth/verify-email` setzt `is_verified=True` _(Issue #39, PR #44)_
 - [x] `SECRET_KEY` in `config.py` und `.env.example` konsistent _(Issue #41, PR #43)_
 - [x] `.env.example` vollständig: alle Config-Variablen mit Kommentaren und Generierungsbefehlen _(Issue #41, PR #43)_
 - [x] Auth-Endpoints in `docs/API.md` vereinheitlicht dokumentiert _(Issue #50)_
-- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden — Verdikt **vollständig bestanden** (Stand 2026-05-07, [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md)). Alle 12 Findings (4 major + 8 minor) geschlossen: #64 ✅ Auth-Coverage 95–100 %, #65 ✅ `/auth/register` enumeration-safe + rate-limited, #66 ✅ `DELETE /api/v1/user/me`-Erasure-API mit Cryptographic Erasure, #67 ✅ Log-Scrubbing für Tags/Custom-Symptome/Encryption (PR #105), #68 ✅ Encryption-Probe in `/health/ready` (PR #106), #69 ✅ esbuild ^0.25.0 (PR #102), #70 ✅ email/health-Service-Coverage 100 % (PR #104), #71 ✅ vite-plugin-svelte ^4 (PR #103). 288 Tests grün, projektweite Coverage 96.11 %.\_
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden — Verdikt **vollständig bestanden** (Stand 2026-05-07, [`docs/quality/M1_QUALITY_GATE.md`](quality/M1_QUALITY_GATE.md)). 288 Tests grün, projektweite Coverage 96.11 %.
 
 #### DSGVO-Checkpoint M1
 
 - [x] 🔒 DSGVO: `note_enc`-Feld verschlüsselt at-rest via App-Level Fernet pro User (Issue #26, ADR-0005)
-- [x] 🔒 DSGVO: Custom-`symptoms.name` ebenfalls verschlüsselt at-rest (`symptoms.name_enc`, BYTEA, Fernet pro User-DEK); Default-Symptome bleiben plaintext (nicht-personenbezogene Labels) _(Issue #26, ADR-0005, ADR-0008). `symptoms.slug` bleibt für Custom-Symptome plaintext zur Operability — Hardening via Slug-HMAC ist als Backlog-Issue für M9+ eingeplant._
-- [x] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing geprüft) — Fehlerlogs dürfen Stacktraces, aber keine Tagebucheinträge, Symptome oder Gesundheitsdaten enthalten (siehe Abschnitt 3.6 und [ADR-0007](adr/0007-healthchecks-and-logging.md)); abgesichert durch automatischen Test `backend/tests/test_log_scrubbing.py`
+- [x] 🔒 DSGVO: Custom-`symptoms.name` ebenfalls verschlüsselt at-rest _(Issue #26, ADR-0005, ADR-0008)_
+- [x] 🔒 DSGVO: Keine Klartextloggung von Mood-/Symptom-Werten in App-Logs (Log-Scrubbing geprüft)
 - [x] 🔒 DSGVO: Auth-Strategie für Phase 1 dokumentiert und in [ADR-0004](adr/0004-auth-strategie.md) festgehalten
-- [x] 🔒 DSGVO: Right-to-Erasure-API (`DELETE /api/v1/user/me`) implementiert — Re-Auth via Passwort, Refresh-Token-Revoke, Cascade-Delete über alle abhängigen Tabellen, Cryptographic Erasure via `user_encryption_keys` _(Issue #66, ADR-0005)_
+- [x] 🔒 DSGVO: Right-to-Erasure-API (`DELETE /api/v1/user/me`) implementiert _(Issue #66, ADR-0005)_
 
 ---
 
 ### M1.5 — UX-Pflege Tagesansicht & Home-Dashboard (Zwischen-Iteration aus M1-Eigentest)
 
-Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. Schema- und API-seitig keine Änderung; reine Frontend-Lieferung. Erlaubt M2 (Visualisierung) sich auf erweiterte Charts und Habit-Vorbereitung zu konzentrieren statt Basis-UX nachzuziehen.
+Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. Schema- und API-seitig keine Änderung; reine Frontend-Lieferung.
 
-- **Auto-Save für Day-Entries** ([ADR-0013](adr/0013-autosave-day-entries.md)): Submit-Button entfällt, Hybrid-Auto-Save mit Status-Maschine (`idle | dirty | saving | saved | error`), 800 ms-Debounce, POST→PATCH-Flip aus PR #117 wiederverwendet, online-only (Offline-Buffer bleibt M4 / [ADR-0009](adr/0009-offline-sync-nach-m4.md)).
-- **Home-Dashboard** ([ADR-0014](adr/0014-home-dashboard-recent-entries-sparkline.md)): Recent-Entries-Liste (7 Tage, klickbar mit `?date=`-Param auf `/entries/new`), 7-Tage-Summary (Mood-/Energy-/Stress-Avg + **Eintrags-Streak** gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md)), 14-Tage-Mood-Sparkline (eigenes SVG, keine Chart-Lib-Dependency).
+- **Auto-Save für Day-Entries** ([ADR-0013](adr/0013-autosave-day-entries.md)): Submit-Button entfällt, Hybrid-Auto-Save mit Status-Maschine (`idle | dirty | saving | saved | error`), 800 ms-Debounce.
+- **Home-Dashboard** ([ADR-0014](adr/0014-home-dashboard-recent-entries-sparkline.md)): Recent-Entries-Liste (7 Tage), 7-Tage-Summary, 14-Tage-Mood-Sparkline (eigenes SVG).
 - **`/entries/new?date=YYYY-MM-DD`-Routing**: Bestehender Loader respektiert Query-Param.
-- **Exit:** Tagesansicht ohne Speichern-Button bedienbar; Startseite zeigt Trend und navigiert direkt zu vergangenen Tagen.
+- **Exit:** Tagesansicht ohne Speichern-Button bedienbar; Startseite zeigt Trend.
 
 #### Akzeptanzkriterien M1.5
 
@@ -686,36 +690,40 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - [ ] Erster Save eines Tages bleibt POST, Folge-Saves PATCH (kein 409 mehr beim zweiten Submit)
 - [ ] Datumswechsel löst **kein** Auto-Save aus (nur Hydration)
 - [ ] `beforeunload`-Listener warnt bei Tab-Close während `dirty` oder `saving`
-- [ ] Recent-Entries-Liste zeigt 7 Tage; leerer Tag als gestrichelte Card; Klick navigiert zu `/entries/new?date=...`
-- [ ] 7-Tage-Summary korrekt bei lueckenhaften Tagen; Streak bricht erst am Folgetag eines fehlenden Eintrags
+- [ ] Recent-Entries-Liste zeigt 7 Tage; leerer Tag als gestrichelte Card
+- [ ] 7-Tage-Summary korrekt bei lückenhaften Tagen; Streak bricht erst am Folgetag eines fehlenden Eintrags
 - [ ] Sparkline rendert mit fehlenden Datenpunkten (Dashed-Line); Tooltip pro Punkt; theme-aware
 - [ ] **Quality-Gate:** Lint 0/0, Typecheck 0/0, Vitest 100% pre-existing + neue Tests grün
 
 ---
 
-### M2 — Visualisierung (Woche 6–7) → „Ich sehe meinen Verlauf"
+### M2 — Visualisierung (Woche 6–7) ✅ ABGESCHLOSSEN → „Ich sehe meinen Verlauf"
 
-- Mood-Zeitreihe (Woche/Monat/Jahr) — erweitert auf Multi-Metric (Energy, Stress) und Bar/Heatmap
-- Tag-Frequenz-Heatmap (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
-- Streak-Widgets (Backend-API als Datenquelle für den in M1.5 eingeführten clientseitigen Streak; Anzeige bleibt unverändert)
-- CSV/JSON-Export
-- Schema-Vorgriff Habits gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md): `tags.habit_type` + `tags.target_frequency`-Spalten, ohne API/UI
-- M2-Stretch Developer-View gemäß [ADR-0015](adr/0015-developer-view-version-identifikation.md): `/dev` zeigt GitHub-Commit, Image-Tag und optionalen OCI/RepoDigest; default-off via `DEV_VIEW_ENABLED`
-- **Exit:** Nutzer versteht Trends visuell
+- Mood-Zeitreihe (Woche/Monat/Jahr) — erweitert auf Multi-Metric (Energy, Stress)
+- Tag-Frequenz-Heatmap mit Drilldown auf Tageseinträge (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
+- Streak-Widgets (Eintrags-Streak, Backend-API als Datenquelle)
+- CSV/JSON-Export (DSGVO Art. 20, `format_version 1.1`, kein `user_id` im Export)
+- Schema-Vorgriff Habits gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md): `tags.habit_type` + `tags.target_frequency` + `tags.is_hidden` Spalten (Migration 007+008), ohne API/UI
+- Tag-Kategorien bearbeitbar: Copy-on-Write für Default-Tags, `is_hidden`-Flag _(Issue #124)_
+- Developer-View gemäß [ADR-0015](adr/0015-developer-view-version-identifikation.md): `/dev` zeigt GitHub-Commit, Image-Tag und Infra-Status; default-off via `DEV_VIEW_ENABLED` _(Issue #125)_
+- Auto-Cleanup für unverified Accounts via Worker-Job (`UNVERIFIED_CLEANUP_DAYS=7`) _(Issue #101)_
+- **Chart-Implementierung:** Custom-SVG-Komponenten (D-002 entschieden) — kein externes Chart-Framework, JS-Budget < 150 KB gz eingehalten
+- **Quality-Gate:** Alle 14 GUI-Findings aus Issue #133/#135 geschlossen, CI grün ([`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md))
+- **Exit:** Nutzer versteht Trends visuell ✅
 
 #### Akzeptanzkriterien M2
 
-- [ ] CSV/JSON-Export vollständig (alle Felder, alle Einträge des Users)
-- [ ] Export enthält keine system-internen IDs, die Rückschlüsse auf andere User erlauben
-- [ ] Charts auf Mobilgerät (375 px Breite) korrekt gerendert und bedienbar
-- [ ] Zeitreihe korrekt für Wochen-/Monats-/Jahresansicht
-- [ ] **Eintrags-Streak**-Berechnung korrekt bei fehlenden Tagen (aufeinanderfolgende Tage mit mindestens einem Eintrag; ohne Habit-Semantik gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+- [x] CSV/JSON-Export vollständig (alle Felder, alle Einträge des Users) _(Issue #14, Issue #30; `format_version 1.1`, `score_legend` enthalten)_
+- [x] Export enthält keine system-internen IDs, die Rückschlüsse auf andere User erlauben _(kein `user_id` im Export-Payload — verifiziert in Closure-PR)_
+- [x] Charts auf Mobilgerät (375 px Breite) korrekt gerendert und bedienbar _(QA-Checkliste in [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md) bestanden; alle Touch-Targets ≥ 44 px)_
+- [x] Zeitreihe korrekt für Wochen-/Monats-/Jahresansicht _(Issue #11; Score-Achse 1–5, X-Axis-Labels, Gridlines implementiert)_
+- [x] **Eintrags-Streak**-Berechnung korrekt bei fehlenden Tagen (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md)) _(Issue #13)_
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden _(Issues #133, #135, #142 geschlossen; `ruff`, `mypy`, `pytest`, `eslint`, `svelte-check`, `build` grün — [`docs/quality/M2_ISSUE_133_CLOSURE.md`](quality/M2_ISSUE_133_CLOSURE.md))_
 
 #### DSGVO-Checkpoint M2
 
-- [ ] 🔒 DSGVO: Export-Funktion entspricht Right-to-Data-Portability (Art. 20 DSGVO) — maschinenlesbares Format
-- [ ] 🔒 DSGVO: Export enthält keine Daten anderer User (RLS-Test mit zwei Test-Accounts)
+- [x] 🔒 DSGVO: Export-Funktion entspricht Right-to-Data-Portability (Art. 20 DSGVO) — maschinenlesbares Format _(Issue #30; JSON + CSV, `README.txt` im Export, `docs/DATA_EXPORT_FORMAT.md`)_
+- [x] 🔒 DSGVO: Export enthält keine Daten anderer User (RLS-Test mit zwei Test-Accounts) _(verifiziert in Closure-PR; kein `user_id` im Export-Payload)_
 
 ---
 
@@ -762,8 +770,8 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - [ ] Web Push Notifications enthalten keine Gesundheitsdaten im Payload
 - [ ] PWA installierbar auf Android Chrome und iOS Safari
 - [ ] Offline-Modus: Eintrag erstellen ohne Netzverbindung, Sync beim nächsten Online-Start _(Issue #10)_
-- [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull?since=`) funktioniert mit lokaler Dexie-Queue, Last-Write-Wins per Feld via `updated_at` _(Issue #10, §3.5)_
-- [ ] Sync-Conflict-Log: Tabelle `sync_conflicts` schreibt LWW-Konflikte transparent mit, kritische Felder (`mood_score`, `note`, `energy`, `stress`, `symptoms`); 90-Tage-Auto-Bereinigung; `GET /user/sync-conflicts` Read-only-Endpoint _(Issue #24, ADR-0003)_
+- [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull?since=`) funktioniert mit lokaler Dexie-Queue _(Issue #10, §3.5)_
+- [ ] Sync-Conflict-Log: Tabelle `sync_conflicts` schreibt LWW-Konflikte transparent mit _(Issue #24, ADR-0003)_
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M4
@@ -775,7 +783,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 ### M5 — Habits & Ziele (Woche 13–14)
 
-- Habit-Flag auf Tags (build / reduce) + Zielfrequenzen
+- Habit-Flag auf Tags (build / reduce) + Zielfrequenzen (API/UI — Schema-Vorgriff bereits in M2 via Migration 007)
 - Streak-Logik, Erfolgs-Badges
 - Habit-Dashboard
 - **Exit:** Gewohnheits-Tracking produktiv nutzbar
@@ -785,7 +793,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - [ ] Habit-Sprache neutral (build/reduce, nicht good/bad) — UI-Text-Review abgeschlossen
 - [ ] Keine Wertung oder Scoring von Habits, die psychologisch schaden könnte (kein „Versagt"-Framing)
 - [ ] Zielfrequenz konfigurierbar (täglich / x-mal pro Woche)
-- [ ] **Habit-Streak**-Reset-Logik korrekt bei fehlendem Tag vs. bewusstem Aussetzen (zielbezogene Streaks gemäß `habit_type` + `target_frequency`, siehe [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
+- [ ] **Habit-Streak**-Reset-Logik korrekt bei fehlendem Tag vs. bewusstem Aussetzen (gemäß [ADR-0012](adr/0012-m2-m5-streak-semantik.md))
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M5
@@ -802,7 +810,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 #### Akzeptanzkriterien M6
 
-- [ ] EXIF-Strip serverseitig via Pillow implementiert (nicht nur clientseitig — clientseitiger Strip gilt nicht als ausreichend)
+- [ ] EXIF-Strip serverseitig via Pillow implementiert (nicht nur clientseitig)
 - [ ] GPS-Koordinaten aus EXIF nachweislich entfernt (automatischer Test mit Foto mit bekannten GPS-Daten)
 - [ ] MinIO SSE-S3 für Photo-Bucket aktiviert
 - [ ] Foto-Upload nur für authentifizierte User, kein direkter MinIO-Zugriff ohne Pre-Signed URL
@@ -835,7 +843,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 #### DSGVO-Checkpoint M7
 
 - [ ] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Onboarding-Screen vor erstem Import
-- [ ] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR importiert, keine Bewegungsprofile (technisch durchgesetzt, nicht nur dokumentiert)
+- [ ] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR importiert, keine Bewegungsprofile (technisch durchgesetzt)
 - [ ] 🔒 DSGVO: Löschung von importierten Health-Connect-Daten bei Account-Delete vollständig implementiert und getestet
 
 ---
@@ -913,7 +921,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 ### M11 — Android-App für Play Store (Woche 26–28)
 
-- PWA → TWA via Bubblewrap
+- PWA → Capacitor (Android)
 - Play Console Setup, Internal Testing Track
 - FCM für Non-Selfhost-User
 - Store-Assets (Screenshots, Beschreibung, Datenschutzerklärung)
@@ -921,7 +929,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 #### Akzeptanzkriterien M11
 
-- [ ] Capacitor-Build (statt TWA, falls D-008 so entschieden — Verweis auf ADR-0002) produktionsreif
+- [ ] Capacitor-Build produktionsreif (`pnpm cap sync && cap build` erfolgreich)
 - [ ] Health Connect API Declaration im Play Store korrekt ausgefüllt (`health_permissions` deklariert)
 - [ ] App besteht Google Play Pre-Launch-Report ohne kritische Fehler
 - [ ] FCM-Integration getestet (Push-Notification kommt an)
@@ -971,6 +979,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - Zyklus-Tracking-Modul
 - Sharing-Features (Arzt-Report als PDF)
 - Apple Watch / Wear OS Complication
+- PNG-Export aus Charts (für Arzt-Gespräch) — derzeit CSV/JSON verfügbar
 
 ---
 
@@ -979,17 +988,17 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 | ID    | Frage                                                                                                                                                                                   | Status                                                                                                                                                         | ADR                                              |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | D-001 | SvelteKit oder Next.js als Web-Framework?                                                                                                                                               | ✅ Entschieden: SvelteKit                                                                                                                                      | [ADR-0001](adr/0001-sveltekit-vs-nextjs.md)      |
-| D-002 | Primäre Chart-Bibliothek: ECharts oder LayerChart?                                                                                                                                      | 🔄 Offen                                                                                                                                                       | —                                                |
+| D-002 | Primäre Chart-Bibliothek: ECharts oder LayerChart?                                                                                                                                      | ✅ Entschieden: Custom-SVG-Komponenten (kein externes Framework) — JS-Budget < 150 KB gz eingehalten; Dark-Mode via Token-System; Color-Blind-Safe via Dash-Patterns + Point-Shapes. ECharts/LayerChart evaluiert aber verworfen. | —                                                |
 | D-003 | E2E-Verschlüsselung in v1 oder v2?                                                                                                                                                      | ✅ Entschieden: v2 opt-in                                                                                                                                      | —                                                |
 | D-004 | Lizenzmodell: AGPL oder Source-Available?                                                                                                                                               | 🔄 Offen                                                                                                                                                       | —                                                |
 | D-005 | Monetarisierung: Hybrid (Selfhost Free + Cloud Abo + Lifetime)?                                                                                                                         | 🔄 Offen                                                                                                                                                       | —                                                |
 | D-006 | Push: UnifiedPush-first oder FCM-first?                                                                                                                                                 | ✅ Entschieden: UnifiedPush primary                                                                                                                            | —                                                |
 | D-007 | LLM für Insights: Ollama local oder API?                                                                                                                                                | 🔄 Offen                                                                                                                                                       | —                                                |
-| D-008 | Mobile-Strategie: Capacitor vs. TWA (Bubblewrap)? TWA hat Google-Policy-Risiko (Health Connect Bridge, Policy-Änderungen); Capacitor bietet mehr nativen Zugriff, höherer Buildaufwand. | ✅ Entschieden: Capacitor                                                                                                                                      | [ADR-0002](adr/0002-capacitor-statt-twa.md)      |
-| D-009 | Sync-Protokoll Conflict-Handling: Aktuelles LWW-Modell (`updated_at`) birgt Datenverlust bei Multi-Device. Alternativen: CRDT, serverseitige Merge-Strategien, Conflict-Inbox für User. | ✅ Entschieden: LWW + Conflict-Log-Tabelle                                                                                                                     | [ADR-0003](adr/0003-sync-conflict-log.md)        |
+| D-008 | Mobile-Strategie: Capacitor vs. TWA (Bubblewrap)?                                                                                                                                      | ✅ Entschieden: Capacitor                                                                                                                                      | [ADR-0002](adr/0002-capacitor-statt-twa.md)      |
+| D-009 | Sync-Protokoll Conflict-Handling: LWW vs. CRDT?                                                                                                                                        | ✅ Entschieden: LWW + Conflict-Log-Tabelle                                                                                                                     | [ADR-0003](adr/0003-sync-conflict-log.md)        |
 | D-010 | Auth Phase 1: Native JWT (FastAPI-intern) — implementiert. Authentik ab Phase 2 (M12+).                                                                                                 | ✅ Entschieden: Native JWT Phase 1, Authentik M12+                                                                                                             | [ADR-0004](adr/0004-auth-strategie.md)           |
-| D-011 | Verschlüsselung at-rest Strategie: pgcrypto (DB-Level), App-Level-Encryption (Python), oder Kombination? Auswirkungen auf Suche, Performance und Schlüsselverwaltung.                   | ✅ Entschieden: Zweistufig — LUKS+SSE (Stufe 1) + App-Level Fernet pro-User (Stufe 2); pgcrypto verworfen wegen Connection-Pool-Risiko und teurer Key-Rotation | [ADR-0005](adr/0005-verschluesselung-at-rest.md) |
-| D-012 | Observability-Tiefe in M0: Schlanker Ansatz (Healthchecks + Logging im Code, Ops-Tools optional) vs. vollständiger Stack von Beginn an.                                                 | ✅ Entschieden: Schlanker Ansatz, Ops-Tools als `docker-compose.ops.yml`                                                                                       | [ADR-0007](adr/0007-healthchecks-and-logging.md) |
+| D-011 | Verschlüsselung at-rest Strategie: pgcrypto vs. App-Level?                                                                                                                              | ✅ Entschieden: Zweistufig — LUKS+SSE (Stufe 1) + App-Level Fernet pro-User (Stufe 2)                                                                          | [ADR-0005](adr/0005-verschluesselung-at-rest.md) |
+| D-012 | Observability-Tiefe in M0: Schlanker Ansatz vs. vollständiger Stack von Beginn an.                                                                                                      | ✅ Entschieden: Schlanker Ansatz, Ops-Tools als `docker-compose.ops.yml`                                                                                       | [ADR-0007](adr/0007-healthchecks-and-logging.md) |
 
 ---
 
@@ -1003,11 +1012,11 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 | Solo-Dev-Burnout                                         | ZS-05  | Mittel             | Kritisch | Vertical Slices mit klaren Exit-Kriterien; Timebox pro Milestone fixiert; wöchentliches 1h-Review ob Scope noch realistisch; konsequentes Backlog-Kürzen bei Verzögerung; keine Feature-Creep-Toleranz in laufendem Milestone |
 | Immich Breaking Changes in API                           | —      | Mittel             | Niedrig  | Immich erst v2, abstrakte Integration via Adapter                                                                                                                                                                             |
 | DSGVO-Verstoß bei Health-Daten                           | —      | Niedrig            | Kritisch | Privacy-by-Design, AV-Verträge, kein Third-Party-Analytics                                                                                                                                                                    |
-| LWW Sync Datenverlust bei Multi-Device                   | SW-01  | Mittel             | Mittel   | Conflict-Log-Tabelle persistiert alle Konflikte; User-sichtbarer Conflict-Inbox geplant (D-009 / ADR-0003); CRDT als langfristige Option evaluieren                                                                           |
+| LWW Sync Datenverlust bei Multi-Device                   | SW-01  | Mittel             | Mittel   | Conflict-Log-Tabelle persistiert alle Konflikte; CRDT als langfristige Option evaluieren                                                                                                                                      |
 | Auth-Modell undefiniert in Phase 1                       | SEC-01 | ✅ behoben         | —        | Native JWT implementiert (PR #38); Authentik auf M12 verschoben (ADR-0004)                                                                                                                                                    |
-| Docker Socket Exposure (Traefik)                         | SEC-03 | Mittel             | Kritisch | Docker Socket ausschließlich via Tecnativa Socket-Proxy mounten — implementiert (PR #32)                                                                                                                                      |
+| Docker Socket Exposure (Traefik)                         | SEC-03 | ✅ behoben         | —        | Docker Socket ausschließlich via Tecnativa Socket-Proxy mounten — implementiert (PR #32)                                                                                                                                      |
 | MinIO Console öffentlich erreichbar                      | SEC-04 | ✅ behoben         | —        | MinIO Console (Port 9001) nicht via Traefik exponiert (PR #32)                                                                                                                                                                |
-| TWA Google-Policy-Risiko / Health Connect Bridge-Problem | ZS-01  | Mittel             | Hoch     | Capacitor als Alternative evaluieren (D-008 / ADR-0002); Entscheidung spätestens M7                                                                                                                                           |
+| TWA Google-Policy-Risiko / Health Connect Bridge-Problem | ZS-01  | ✅ behoben         | —        | Capacitor als Mobile-Strategie entschieden (D-008 / ADR-0002)                                                                                                                                                                 |
 
 ---
 
@@ -1031,52 +1040,50 @@ Die folgenden Punkte gelten für **jeden** Pull-Request, unabhängig vom Milesto
 
 ### Pro Milestone (Quality-Gate)
 
-Jeder Milestone darf erst auf `done` gesetzt werden, wenn beide Audits durchgeführt **und** bestanden wurden. Findings müssen entweder im selben Milestone gefixt oder als getracktes Issue mit Risiko-Akzeptanz dokumentiert werden.
+Jeder Milestone darf erst auf `done` gesetzt werden, wenn beide Audits durchgeführt **und** bestanden wurden.
 
 #### Code-Quality-Review (CQR)
 
 - [ ] **Reuse / DRY**: Doppelter Code identifiziert und in Helper / Service / Util konsolidiert
-- [ ] **Test-Factories**: Neue Modelle haben Fixtures in `backend/tests/conftest.py` (Backend) bzw. Test-Helpern (Frontend)
-- [ ] **Library-Hygiene**: Neue Dependencies dokumentiert; ungenutzte Dependencies in optional-Group oder entfernt
-- [ ] **Konsistenz**: Naming, Modulstruktur, Schema-Pattern folgen den im Milestone bisher etablierten Mustern
-- [ ] **Coverage**: Backend `pytest --cov` ≥ 70 % gehalten; kritische Pfade (Auth, Sync, Krypto) zusätzlich ≥ 85 %
+- [ ] **Test-Factories**: Neue Modelle haben Fixtures in `backend/tests/conftest.py` bzw. Test-Helpern (Frontend)
+- [ ] **Library-Hygiene**: Neue Dependencies dokumentiert; ungenutzte Dependencies entfernt
+- [ ] **Konsistenz**: Naming, Modulstruktur, Schema-Pattern folgen etablierten Mustern
+- [ ] **Coverage**: Backend `pytest --cov` ≥ 70 % gehalten; kritische Pfade ≥ 85 %
 - [ ] **Statische Analyse grün**: `ruff check`, `ruff format --check`, `mypy --strict` (Backend); `eslint`, `prettier --check`, `svelte-check` (Frontend)
-- [ ] **CHANGELOG-Eintrag** im `Changed`-Block mit konkreten Refactorings (kein generisches "Code-Cleanup")
+- [ ] **CHANGELOG-Eintrag** im `Changed`-Block mit konkreten Refactorings
 
 #### Security-Audit (SA)
 
-- [ ] **Auth-Coverage**: Alle neuen Endpoints hinter `get_current_user` / `get_current_verified_user` (außer explizit öffentlich); RLS-Pfad geprüft
-- [ ] **Input-Validation**: Pydantic-Schemas mit `Field`-Constraints (min/max-Length, Bereiche, Regex) für alle User-Inputs
-- [ ] **Rate-Limiting**: Neue öffentliche Endpoints mit `@limiter.limit(...)` versehen, wo sinnvoll (Auth, E-Mail, Resend, Costly-Reads)
-- [ ] **Healthchecks**: Neue Services / DB-Tabellen / externe Dependencies in `/health/ready` integriert; Liveness vs. Readiness sauber getrennt (siehe [ADR-0007](adr/0007-healthchecks-and-logging.md))
-- [ ] **Logging-Hygiene**: Keine Klartext-Mood-/Symptom-/Notiz-/Token-Werte in Logs; `test_log_scrubbing.py` erweitert um neue sensitive Felder; nur `request_id` + `user_id` als Korrelation
-- [ ] **DSGVO-Pfad**: Neue Felder im Erasure-Pfad (`DELETE /user/me`); persönliche Daten entweder verschlüsselt at-rest oder als nicht-personenbeziehbar dokumentiert
-- [ ] **Anti-Enumeration**: Neue öffentliche Endpoints (Lookup, Resend, Reset) liefern generische Antworten; keine Timing-Side-Channels
-- [ ] **Headers / Cookies**: Bei neuen Cookies HttpOnly + Secure + `SameSite=strict`; Pfad möglichst eng gescopet (siehe `auth.py`)
-- [ ] **Dependency-Scan**: `pip-audit` (Backend) und `pnpm audit --prod` (Frontend) ohne `high`/`critical`-Findings; Ausnahmen mit Begründung in CHANGELOG
-- [ ] **Secrets-Scan**: Repo gegen `.env`-Leaks geprüft (kein Secret in Git-History); neue Env-Vars in `.env.example` mit Generierungsbefehl
+- [ ] **Auth-Coverage**: Alle neuen Endpoints hinter `get_current_user` / `get_current_verified_user`; RLS-Pfad geprüft
+- [ ] **Input-Validation**: Pydantic-Schemas mit `Field`-Constraints für alle User-Inputs
+- [ ] **Rate-Limiting**: Neue öffentliche Endpoints mit `@limiter.limit(...)` versehen
+- [ ] **Healthchecks**: Neue Services in `/health/ready` integriert (siehe [ADR-0007](adr/0007-healthchecks-and-logging.md))
+- [ ] **Logging-Hygiene**: Keine Klartext-Mood-/Symptom-/Notiz-/Token-Werte in Logs
+- [ ] **DSGVO-Pfad**: Neue Felder im Erasure-Pfad (`DELETE /user/me`)
+- [ ] **Anti-Enumeration**: Neue öffentliche Endpoints liefern generische Antworten
+- [ ] **Headers / Cookies**: Bei neuen Cookies HttpOnly + Secure + `SameSite=strict`
+- [ ] **Dependency-Scan**: `pip-audit` und `pnpm audit --prod` ohne `high`/`critical`-Findings
+- [ ] **Secrets-Scan**: Repo gegen `.env`-Leaks geprüft; neue Env-Vars in `.env.example`
 
 ---
 
 ## 10. Architektur-Entscheidungen & bekannte Schwachstellen
 
-Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen mit aktuellem Status und Verweis auf ADR oder Meilenstein.
-
 | ID       | Beschreibung                                                                                                                                | Kategorie     | Status         | Verweis                                                                                                                       |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| SEC-01   | Auth-Modell undefiniert in Phase 1 — kein klares JWT vs. Authentik-Commitment                                                               | Sicherheit    | ✅ behoben     | Native JWT implementiert (PR #38), Authentik → M12; [ADR-0004](adr/0004-auth-strategie.md)                                    |
-| SEC-02   | `SECRET_KEY` in config.py vs. `JWT_SECRET` in .env.example — Env-Var-Mismatch, JWT-Secret wird nicht gelesen                                | Sicherheit    | ✅ behoben     | [Issue #41](https://github.com/Sturmi77/moodsync/issues/41), PR #43                                                           |
-| SEC-03   | Docker Socket direkter Mount in Traefik ermöglicht Container-Escape                                                                         | Sicherheit    | ✅ behoben     | PR #32, Tecnativa-Proxy                                                                                                       |
+| SEC-01   | Auth-Modell undefiniert in Phase 1                                                                                                          | Sicherheit    | ✅ behoben     | Native JWT implementiert (PR #38), Authentik → M12; [ADR-0004](adr/0004-auth-strategie.md)                                    |
+| SEC-02   | `SECRET_KEY` vs. `JWT_SECRET` Env-Var-Mismatch                                                                                             | Sicherheit    | ✅ behoben     | [Issue #41](https://github.com/Sturmi77/moodsync/issues/41), PR #43                                                           |
+| SEC-03   | Docker Socket direkter Mount in Traefik                                                                                                     | Sicherheit    | ✅ behoben     | PR #32, Tecnativa-Proxy                                                                                                       |
 | SEC-04   | MinIO Console (Port 9001) öffentlich über Traefik erreichbar                                                                                | Sicherheit    | ✅ behoben     | PR #32                                                                                                                        |
 | SW-01    | LWW Sync-Strategie verursacht stillen Datenverlust bei gleichzeitigen Multi-Device-Edits                                                    | Software      | ✅ behoben     | D-009, [ADR-0003](adr/0003-sync-conflict-log.md), Issue #24                                                                   |
-| ZS-01    | TWA-Strategie gefährdet durch Google-Policy-Änderungen und Health Connect Bridge-Instabilität                                               | Zielstrategie | ✅ behoben     | D-008, [ADR-0002](adr/0002-capacitor-statt-twa.md), M11                                                                       |
-| ZS-05    | Solo-Dev-Burnout-Risiko durch Scope-Creep und fehlende Timeboxing-Disziplin                                                                 | Zielstrategie | 🔄 in Arbeit   | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien                                                                  |
-| DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt (pgcrypto vs. App-Level)                                                                 | DSGVO         | ✅ entschieden | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md) (re-evaluiert 2026-05-04: App-Level Fernet pro-User), Umsetzung in M1 |
+| ZS-01    | TWA-Strategie gefährdet durch Google-Policy-Änderungen                                                                                      | Zielstrategie | ✅ behoben     | D-008, [ADR-0002](adr/0002-capacitor-statt-twa.md)                                                                            |
+| ZS-05    | Solo-Dev-Burnout-Risiko durch Scope-Creep                                                                                                   | Zielstrategie | 🔄 in Arbeit   | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien                                                                  |
+| DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt                                                                                          | DSGVO         | ✅ entschieden | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md)                                                                       |
 | DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur                                                                 | DSGVO         | ❌ offen       | M7-DSGVO                                                                                                                      |
 | DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden                                                                                      | DSGVO         | ❌ offen       | M9-DSGVO                                                                                                                      |
 | DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test                                                               | DSGVO         | ❌ offen       | M6-AC, DoD                                                                                                                    |
-| ARCH-01  | Mermaid-Diagramm zeigt TWA als Android-Client — inkonsistent mit offener D-008-Entscheidung                                                 | Architektur   | 🔄 in Arbeit   | D-008, ADR-0002                                                                                                               |
-| ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt (Entscheidungen undokumentiert)                                                                     | Architektur   | ❌ offen       | Backlog: ADR-Erstellung pro offener Entscheidung                                                                              |
-| OBS-01   | Observability-Anforderungen für M0 nicht explizit definiert (fehlende Health-Endpunkte, kein strukturiertes Logging, keine Correlation-IDs) | Architektur   | ✅ behoben     | D-012, [ADR-0007](adr/0007-healthchecks-and-logging.md), Abschnitt 3.6                                                        |
+| ARCH-01  | Mermaid-Diagramm zeigte TWA als Android-Client — inkonsistent mit D-008                                                                     | Architektur   | ✅ behoben     | Diagramm auf Capacitor aktualisiert                                                                                            |
+| ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt                                                                                                     | Architektur   | 🔄 in Arbeit   | D-002 entschieden (Custom-SVG, §7); D-003, D-006, D-008–D-012 dokumentiert; D-004, D-005, D-007 noch offen                    |
+| OBS-01   | Observability-Anforderungen für M0 nicht explizit definiert                                                                                 | Architektur   | ✅ behoben     | D-012, [ADR-0007](adr/0007-healthchecks-and-logging.md), Abschnitt 3.6                                                        |
 | ARCH-03  | Kein Postgres-Schema v1 und keine Alembic-Basismigrationen vorhanden                                                                        | Architektur   | ✅ behoben     | Issue #5, PR feat/m0-postgres-schema                                                                                          |
 | ARCH-04  | Kein CI/CD-Setup — keine automatisierten Lint/Test/Build-Checks bei PRs                                                                     | Architektur   | ✅ behoben     | Issue #6, PR feat/m0-ci                                                                                                       |
