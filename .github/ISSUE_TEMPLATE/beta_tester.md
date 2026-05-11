@@ -8,7 +8,7 @@ assignees: ''
 
 ## Beta-Tester Anmeldung
 
-Danke für dein Interesse! MoodSync sucht Beta-Tester für die geschlossene Alpha.
+Danke für dein Interesse! CorrelCore sucht Beta-Tester für die geschlossene Alpha.
 
 ### Über dich
 
@@ -20,7 +20,7 @@ Danke für dein Interesse! MoodSync sucht Beta-Tester für die geschlossene Alph
 
 ### Erwartungen
 
-<!-- Was erhoffst du dir von MoodSync? Was fehlt dir bei bestehenden Apps? -->
+<!-- Was erhoffst du dir von CorrelCore? Was fehlt dir bei bestehenden Apps? -->
 
 ### Kontakt
 

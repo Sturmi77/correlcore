@@ -1,19 +1,19 @@
-# MoodSync
+# CorrelCore
 
 > **Privacy-first Mood & Habit Tracker mit Korrelationsanalyse**
 > Verstehe, warum manche Tage gut und andere schlecht waren — selfhosted, offline-first, 60 Sekunden pro Tag.
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Status](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/Sturmi77/moodsync/milestones)
+[![Status](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/Sturmi77/correlcore/milestones)
 [![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20SvelteKit%20%2B%20PostgreSQL-green)](#tech-stack)
 
 ---
 
-## Was ist MoodSync?
+## Was ist CorrelCore?
 
 Menschen spüren, dass Schlaf, Sport, Homeoffice-Tage oder Sozialkontakte ihr Wohlbefinden beeinflussen — aber niemand weiß **welche** Faktoren wirklich wirken, **wie stark** und mit welcher **Verzögerung**. Bestehende Apps sind entweder zu simpel (nur Emoji), zu Cloud-abhängig (Datenschutzproblem bei Gesundheitsdaten) oder zu komplex (Quantified-Self-Nerd-Zielgruppe).
 
-**MoodSync** schließt diese Lücke:
+**CorrelCore** schließt diese Lücke:
 
 | Versprechen                         | Beschreibung                                            |
 | ----------------------------------- | ------------------------------------------------------- |
@@ -74,8 +74,8 @@ Vollständige Roadmap: [`docs/DESIGN_DOCUMENT.md#roadmap`](docs/DESIGN_DOCUMENT.
 ### Setup
 
 ```bash
-git clone https://github.com/Sturmi77/moodsync.git
-cd moodsync
+git clone https://github.com/Sturmi77/correlcore.git
+cd correlcore
 cp infra/docker/.env.example infra/docker/.env
 # .env anpassen (DOMAIN, SECRET_KEY, POSTGRES_PASSWORD, …)
 docker compose -f infra/docker/docker-compose.yml up -d
@@ -83,14 +83,14 @@ docker compose -f infra/docker/docker-compose.yml up -d
 
 Danach erreichbar unter `https://deine-domain.tld`
 
-> **Hinweis:** MoodSync befindet sich in aktiver Entwicklung (Pre-Alpha). Produktiveinsatz erst ab v1.0 empfohlen.
+> **Hinweis:** CorrelCore befindet sich in aktiver Entwicklung (Pre-Alpha). Produktiveinsatz erst ab v1.0 empfohlen.
 
 ---
 
 ## Monorepo-Struktur
 
 ```
-moodsync/
+correlcore/
 ├── apps/
 │   ├── web/          # SvelteKit PWA
 │   └── android/      # Capacitor Android App (ab M11)
@@ -130,32 +130,34 @@ Aufgabe: <hier konkrete Aufgabe>
 
 ## Dokumentation
 
-| Dokument                                      | Inhalt                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------- |
-| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md) | Vision, Features, Architektur, Roadmap — **Single Source of Truth** |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)       | Komponentendiagramm, Deployment-Topologien, Sync-Protokoll          |
-| [API.md](docs/API.md)                         | OpenAPI-Richtlinien, Endpunkte, Auth-Flow                           |
-| [FRONTEND.md](docs/FRONTEND.md)               | Design-Prinzipien, Atomic Design, i18n, Performance-Budget          |
-| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md) | Wettbewerbs- und Marktanalyse, Monetarisierung, Marketing           |
-| [ADR Index](docs/adr/)                        | Architecture Decision Records                                       |
-| [Quality Gates](docs/quality/)                | M1/M2 Quality-Gate-Reports                                          |
+| Dokument                                                              | Inhalt                                                              |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                         | Vision, Features, Architektur, Roadmap — **Single Source of Truth** |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                               | Komponentendiagramm, Deployment-Topologien, Sync-Protokoll          |
+| [API.md](docs/API.md)                                                 | OpenAPI-Richtlinien, Endpunkte, Auth-Flow                           |
+| [FRONTEND.md](docs/FRONTEND.md)                                       | Design-Prinzipien, Atomic Design, i18n, Performance-Budget          |
+| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                         | Wettbewerbs- und Marktanalyse, Monetarisierung, Marketing           |
+| [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan        |
+| [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)           | Rename and deployment migration notes from MoodSync to CorrelCore   |
+| [ADR Index](docs/adr/)                                                | Architecture Decision Records                                       |
+| [Quality Gates](docs/quality/)                                        | M1/M2 Quality-Gate-Reports                                          |
 
 ---
 
 ## Mitwirken
 
-MoodSync ist aktuell ein Solo-Projekt. Sobald v1.0 erscheint, werden Contribution-Guidelines veröffentlicht. Issues und Diskussionen sind willkommen.
+CorrelCore ist aktuell ein Solo-Projekt. Sobald v1.0 erscheint, werden Contribution-Guidelines veröffentlicht. Issues und Diskussionen sind willkommen.
 
-**Interesse an Beta-Testing?** → [Issue öffnen](https://github.com/Sturmi77/moodsync/issues/new?template=beta_tester.md) oder auf der [Landing Page](https://moodsync.app) eintragen (coming soon).
+**Interesse an Beta-Testing?** → [Issue öffnen](https://github.com/Sturmi77/correlcore/issues/new?template=beta_tester.md) oder auf der [Landing Page](https://correlcore.app) eintragen (coming soon).
 
 ---
 
 ## Lizenz
 
-MoodSync wird unter der [GNU Affero General Public License v3.0](LICENSE) veröffentlicht. Für kommerzielle Selfhost-Lizenzen ohne AGPL-Copyleft: Kontakt via Issue.
+CorrelCore wird unter der [GNU Affero General Public License v3.0](LICENSE) veröffentlicht. Für kommerzielle Selfhost-Lizenzen ohne AGPL-Copyleft: Kontakt via Issue.
 
 ---
 
 ## Disclaimer
 
-MoodSync ist **kein medizinisches Diagnose-Tool**. Alle angezeigten Korrelationen und Insights dienen ausschließlich zur persönlichen Reflexion und ersetzen keine ärztliche oder therapeutische Beratung.
+CorrelCore ist **kein medizinisches Diagnose-Tool**. Alle angezeigten Korrelationen und Insights dienen ausschließlich zur persönlichen Reflexion und ersetzen keine ärztliche oder therapeutische Beratung.

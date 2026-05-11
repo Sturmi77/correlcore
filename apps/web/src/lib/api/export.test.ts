@@ -14,7 +14,7 @@ beforeEach(() => {
 describe('export API client', () => {
   it('builds stable local filenames', () => {
     expect(exportFilename('zip', new Date('2026-05-09T12:00:00'))).toBe(
-      'moodsync-export-2026-05-09.zip'
+      'correlcore-export-2026-05-09.zip'
     );
   });
 

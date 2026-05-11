@@ -1,4 +1,4 @@
-# MoodSync — Datenschutz-Schutzkonzept (DSGVO)
+# CorrelCore — Datenschutz-Schutzkonzept (DSGVO)
 
 **Version:** 1.0 | **Datum:** 2026-04-20 | **Verantwortlicher:** [Name / Firmenname]
 **Rechtsgrundlage:** DSGVO (EU 2016/679), DSG (Österreich), Art. 9 besondere Datenkategorien
@@ -7,7 +7,7 @@
 
 ## 1. Zweck und Geltungsbereich
 
-MoodSync verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, biometrische Wearable-Daten), die gemäß Art. 9 DSGVO als besondere Kategorien personenbezogener Daten einzustufen sind. Dieses Dokument beschreibt alle technischen und organisatorischen Maßnahmen (TOMs) zur Sicherstellung der Datenschutz-Compliance.
+CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, biometrische Wearable-Daten), die gemäß Art. 9 DSGVO als besondere Kategorien personenbezogener Daten einzustufen sind. Dieses Dokument beschreibt alle technischen und organisatorischen Maßnahmen (TOMs) zur Sicherstellung der Datenschutz-Compliance.
 
 ## 2. Verarbeitete Datenkategorien
 
@@ -76,7 +76,7 @@ MoodSync verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, bi
 - Keine Auftragsverarbeitung — User ist selbst Verantwortlicher
 - Kein DPA erforderlich
 
-### Cloud-Betrieb (MoodSync Cloud, ab M12)
+### Cloud-Betrieb (CorrelCore Cloud, ab M12)
 
 | Auftragsverarbeiter             | Zweck                        | AV-Vertrag                  |
 | ------------------------------- | ---------------------------- | --------------------------- |

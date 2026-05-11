@@ -1,4 +1,4 @@
-# MoodSync — Docker Compose Stack
+# CorrelCore — Docker Compose Stack
 # Sicherheitsgehärtete Konfiguration (April 2026)
 # Änderungen gegenüber v0.1:
 #   - Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount [SEC-03]
@@ -9,7 +9,7 @@
 #   - Healthchecks auf allen Diensten
 #   - Conflict-Log-Migration via Alembic [SW-01]
 
-name: moodsync
+name: correlcore
 
 services:
   # ── Docker Socket Proxy ────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ services:
   # Löst: SEC-03 (Container-Escape-Risiko durch direkten Socket-Zugriff)
   socket-proxy:
     image: tecnativa/docker-socket-proxy:latest
-    container_name: moodsync-socket-proxy
+    container_name: correlcore-socket-proxy
     restart: unless-stopped
     environment:
       CONTAINERS: 1 # Traefik braucht Container-Labels lesen
@@ -36,7 +36,7 @@ services:
   # ── Reverse Proxy ──────────────────────────────────────────────────────────
   traefik:
     image: traefik:v3.0
-    container_name: moodsync-traefik
+    container_name: correlcore-traefik
     restart: unless-stopped
     ports:
       - '80:80'
@@ -74,8 +74,8 @@ services:
 
   # ── Backend API ────────────────────────────────────────────────────────────
   api:
-    image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
-    container_name: moodsync-api
+    image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+    container_name: correlcore-api
     restart: unless-stopped
     env_file: .env
     environment:
@@ -83,13 +83,13 @@ services:
       # Encryption Key für App-Level-Feld-Verschlüsselung (ADR-0005)
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       # MinIO — Variablennamen entsprechen backend/app/core/config.py (Issue #41)
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-moodsync}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-correlcore}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_PHOTOS: ${MINIO_BUCKET_PHOTOS:-moodsync-photos}
+      MINIO_BUCKET_PHOTOS: ${MINIO_BUCKET_PHOTOS:-correlcore-photos}
       MINIO_SECURE: ${MINIO_SECURE:-false}
       # CORS
       CORS_ORIGINS: ${CORS_ORIGINS:-https://${DOMAIN}}
@@ -135,8 +135,8 @@ services:
 
   # ── Web Frontend ───────────────────────────────────────────────────────────
   web:
-    image: ghcr.io/sturmi77/moodsync-web:${IMAGE_TAG:-latest}
-    container_name: moodsync-web
+    image: ghcr.io/sturmi77/correlcore-web:${IMAGE_TAG:-latest}
+    container_name: correlcore-web
     restart: unless-stopped
     env_file: .env
     depends_on:
@@ -162,8 +162,8 @@ services:
 
   # ── Analytics Worker ───────────────────────────────────────────────────────
   worker:
-    image: ghcr.io/sturmi77/moodsync-api:${IMAGE_TAG:-latest}
-    container_name: moodsync-worker
+    image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+    container_name: correlcore-worker
     restart: unless-stopped
     command: python -m app.workers.analytics
     env_file: .env
@@ -171,7 +171,7 @@ services:
       APP_ENV: ${APP_ENV:-production}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-moodsync}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
       DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
@@ -190,16 +190,17 @@ services:
   # ── Datenbank ──────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: moodsync-postgres
+    container_name: correlcore-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-moodsync}
-      POSTGRES_USER: ${POSTGRES_USER:-moodsync}
+      POSTGRES_DB: ${POSTGRES_DB:-correlcore}
+      POSTGRES_USER: ${POSTGRES_USER:-correlcore}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-moodsync} -d ${POSTGRES_DB:-moodsync}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -213,7 +214,7 @@ services:
   # ── Cache & Queue ──────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: moodsync-redis
+    container_name: correlcore-redis
     restart: unless-stopped
     # Passwort-Auth + AOF-Persistenz [SEC-01 Fix]
     command: >
@@ -237,12 +238,12 @@ services:
   # ── Objekt-Speicher ────────────────────────────────────────────────────────
   minio:
     image: minio/minio:latest
-    container_name: moodsync-minio
+    container_name: correlcore-minio
     restart: unless-stopped
     # SSE-S3 Encryption aktiviert [SEC-02 Fix]
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-moodsync}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-correlcore}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       # Server-Side Encryption aktivieren
       MINIO_KMS_AUTO_ENCRYPTION: 'on'
@@ -267,7 +268,7 @@ services:
   # via `docker compose stop mailpit` deaktiviert werden ohne Compose-Edit.
   mailpit:
     image: axllent/mailpit:latest
-    container_name: moodsync-mailpit
+    container_name: correlcore-mailpit
     restart: unless-stopped
     environment:
       MP_MAX_MESSAGES: 5000
@@ -290,17 +291,17 @@ services:
   # ── MinIO Bucket Bootstrap ─────────────────────────────────────────────────
   minio-init:
     image: minio/mc:latest
-    container_name: moodsync-minio-init
+    container_name: correlcore-minio-init
     depends_on:
       minio:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-moodsync} ${MINIO_ROOT_PASSWORD} &&
-      mc mb -p local/moodsync || true &&
-      mc mb -p local/moodsync-photos || true &&
-      mc anonymous set none local/moodsync &&
-      mc anonymous set none local/moodsync-photos &&
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-correlcore} ${MINIO_ROOT_PASSWORD} &&
+      mc mb -p local/correlcore || true &&
+      mc mb -p local/correlcore-photos || true &&
+      mc anonymous set none local/correlcore &&
+      mc anonymous set none local/correlcore-photos &&
       echo 'MinIO Buckets initialisiert.'
       "
     networks:
@@ -310,11 +311,11 @@ services:
   # ── Monitoring ─────────────────────────────────────────────────────────────
   glitchtip:
     image: glitchtip/glitchtip:latest
-    container_name: moodsync-glitchtip
+    container_name: correlcore-glitchtip
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-moodsync}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+      DATABASE_URL: postgresql://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
       EMAIL_URL: ${EMAIL_URL:-consolemail://}
       GLITCHTIP_DOMAIN: https://errors.${DOMAIN}

@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-  <title>System Status — MoodSync</title>
+  <title>System Status — CorrelCore</title>
 </svelte:head>
 
 <main class="flex-1 flex flex-col items-center p-6 gap-6 max-w-lg mx-auto w-full">

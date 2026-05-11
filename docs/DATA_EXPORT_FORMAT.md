@@ -1,10 +1,10 @@
-# MoodSync Data Export Format
+# CorrelCore Data Export Format
 
-MoodSync M2 exposes three self-service export downloads:
+CorrelCore M2 exposes three self-service export downloads:
 
-- `GET /api/v1/user/export` returns `moodsync-export-YYYY-MM-DD.zip`
-- `GET /api/v1/export/json` returns `moodsync-export-YYYY-MM-DD.json`
-- `GET /api/v1/export/csv` returns `moodsync-export-YYYY-MM-DD.csv`
+- `GET /api/v1/user/export` returns `correlcore-export-YYYY-MM-DD.zip`
+- `GET /api/v1/export/json` returns `correlcore-export-YYYY-MM-DD.json`
+- `GET /api/v1/export/csv` returns `correlcore-export-YYYY-MM-DD.csv`
 
 The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
 
@@ -16,8 +16,8 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
 ```json
 {
   "export_date": "2026-05-09T14:00:00Z",
-  "moodsync_version": "0.0.1",
-  "format_version": "1.1",
+  "app_version": "0.0.1",
+  "format_version": "1.2",
   "score_legend": {
     "mood_score": {
       "min": 1,
@@ -67,7 +67,7 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
         {
           "slug": "headache",
           "name": "Kopfschmerzen",
-          "icon": "🤕",
+          "icon": "ðŸ¤•",
           "is_default": true,
           "intensity": 2
         }

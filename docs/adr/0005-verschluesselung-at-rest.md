@@ -8,9 +8,9 @@
 
 ## Kontext
 
-- **MoodSync verarbeitet Daten nach Art. 9 DSGVO:** Gesundheitsdaten, Stimmungsdaten und Symptomdaten gelten als besondere Kategorien personenbezogener Daten, für die erhöhte Schutzpflichten gelten.
+- **CorrelCore verarbeitet Daten nach Art. 9 DSGVO:** Gesundheitsdaten, Stimmungsdaten und Symptomdaten gelten als besondere Kategorien personenbezogener Daten, für die erhöhte Schutzpflichten gelten.
 - **Ohne Verschlüsselung at-rest** sind Daten bei physischem Serverzugriff, Datenbank-Dump (`pg_dump`) oder Backup-Diebstahl im Klartext lesbar – ein inakzeptables Risiko für Art.-9-Daten.
-- **Vollständige E2E-Verschlüsselung** (clientseitig, kein Server-Zugriff auf Klartextdaten) würde serverseitige Korrelationsanalysen und ML-Insights unmöglich machen – ein zentrales Feature von MoodSync.
+- **Vollständige E2E-Verschlüsselung** (clientseitig, kein Server-Zugriff auf Klartextdaten) würde serverseitige Korrelationsanalysen und ML-Insights unmöglich machen – ein zentrales Feature von CorrelCore.
 - **Kompromiss:** Selektive Feld-Verschlüsselung für die sensibelsten Felder auf App-Ebene kombiniert mit Storage-Level-Verschlüsselung für alle Daten.
 
 ### Bedrohungsmodell (welche Angriffe wir abdecken)

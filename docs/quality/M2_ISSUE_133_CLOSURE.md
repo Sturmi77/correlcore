@@ -19,13 +19,13 @@ Issue #133 tracked the remaining M2 visualization UX and best-practice findings.
 - Heatmap latest date: render logic scrolls the horizontal container to `scrollWidth` after each new heatmap payload.
 - Colors are not the only information: metric lines use different dash patterns and point shapes.
 - Reduced motion: skeleton shimmer and heatmap auto-scroll fall back when `prefers-reduced-motion: reduce` is active.
-- Export privacy: `format_version` is `1.1`; JSON/CSV explain score scales; internal IDs and `user_id` remain omitted.
+- Export privacy: `format_version` was introduced as `1.1` for self-describing score scales and is `1.2` after the CorrelCore rename; JSON/CSV explain score scales; internal IDs and `user_id` remain omitted.
 
 ## Verification
 
 Quality gate completed for the closure PR:
 
 - Backend: `ruff check`, `ruff format --check`, `mypy app`, and `pytest` passed.
-- Web: `corepack pnpm --filter @moodsync/web lint`, `typecheck`, `test`, and `build` passed.
+- Web: `corepack pnpm --filter @correlcore/web lint`, `typecheck`, `test`, and `build` passed.
 - Backend test note: the full `pytest` run uses a temporary valid test `ENCRYPTION_KEY` because the local environment may contain the documented placeholder key.
 - Build-budget review: no new charting library was added; the closure reuses custom SVG components and utility functions. The largest reported client gzip chunks remain below the existing 150 KB JS budget.

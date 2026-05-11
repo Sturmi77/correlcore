@@ -1,4 +1,4 @@
-# MoodSync — Frontend-Prinzipien
+# CorrelCore — Frontend-Prinzipien
 
 Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab.
 

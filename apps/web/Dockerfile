@@ -1,8 +1,8 @@
-# MoodSync Web — SvelteKit (Node-Adapter)
+# CorrelCore Web — SvelteKit (Node-Adapter)
 # Multi-Stage Build, non-root, Production-ready.
 #
 # Build context: Repo-Root (wegen pnpm workspace + lockfile)
-#   docker build -f apps/web/Dockerfile -t moodsync-web .
+#   docker build -f apps/web/Dockerfile -t correlcore-web .
 
 # ---- Build stage ----
 FROM node:22-alpine AS builder
@@ -23,7 +23,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 COPY apps/web/package.json apps/web/package.json
 
 # Deps installieren (frozen — reproducible)
-RUN pnpm install --frozen-lockfile --filter @moodsync/web...
+RUN pnpm install --frozen-lockfile --filter @correlcore/web...
 
 # Quellen
 COPY apps/web/ apps/web/
@@ -50,7 +50,7 @@ RUN pnpm build
 # Für das Production-Image wird `prepare` ohnehin nicht gebraucht: der Build
 # ist im vorigen Step bereits durchgelaufen.
 WORKDIR /repo
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts --filter @moodsync/web...
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts --filter @correlcore/web...
 
 # ---- Runtime stage ----
 FROM node:22-alpine AS runtime
@@ -58,20 +58,20 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 
 # Non-root User (Alpine: addgroup/adduser)
-RUN addgroup -S moodsync && adduser -S -G moodsync moodsync
+RUN addgroup -S correlcore && adduser -S -G correlcore correlcore
 
 # Build-Output + Prod-Deps kopieren
 # SvelteKit adapter-node erzeugt /build mit eigenem package.json + Server
-COPY --from=builder --chown=moodsync:moodsync /repo/apps/web/build ./build
-COPY --from=builder --chown=moodsync:moodsync /repo/apps/web/package.json ./package.json
-COPY --from=builder --chown=moodsync:moodsync /repo/apps/web/node_modules ./node_modules
+COPY --from=builder --chown=correlcore:correlcore /repo/apps/web/build ./build
+COPY --from=builder --chown=correlcore:correlcore /repo/apps/web/package.json ./package.json
+COPY --from=builder --chown=correlcore:correlcore /repo/apps/web/node_modules ./node_modules
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 ENV BODY_SIZE_LIMIT=5M
 
-USER moodsync
+USER correlcore
 
 EXPOSE 3000
 

@@ -89,7 +89,7 @@ jobs:
           # Test environment — no real DB/Redis needed for unit tests
           # (health probes are mocked in test_health.py)
           APP_ENV: test
-          DATABASE_URL: 'postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync'
+          DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           # Valid Fernet test key (32 random bytes, URL-safe base64). NOT a secret —
@@ -111,13 +111,13 @@ jobs:
       postgres:
         image: postgres:16.4-alpine
         env:
-          POSTGRES_USER: moodsync
-          POSTGRES_PASSWORD: moodsync
-          POSTGRES_DB: moodsync
+          POSTGRES_USER: correlcore
+          POSTGRES_PASSWORD: correlcore
+          POSTGRES_DB: correlcore
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U moodsync"
+          --health-cmd "pg_isready -U correlcore"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -148,7 +148,7 @@ jobs:
         run: uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
         env:
           APP_ENV: test
-          DATABASE_URL: 'postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync'
+          DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
@@ -163,7 +163,7 @@ jobs:
           uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
         env:
           APP_ENV: test
-          DATABASE_URL: 'postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync'
+          DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='

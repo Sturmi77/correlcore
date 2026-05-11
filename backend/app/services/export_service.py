@@ -25,8 +25,8 @@ from app.models.tag import EntryTag, Tag
 from app.models.user import User
 from app.schemas.export import ExportEnvelope, ExportScoreLegendItem, ExportUser
 
-EXPORT_FORMAT_VERSION = "1.1"
-MOODSYNC_EXPORT_VERSION = "0.0.1"
+EXPORT_FORMAT_VERSION = "1.2"
+APP_EXPORT_VERSION = "0.0.1"
 SCORE_LEGEND: dict[str, ExportScoreLegendItem] = {
     "mood_score": ExportScoreLegendItem(
         min=1,
@@ -55,7 +55,7 @@ CSV_SCORE_LEGENDS = {
 
 def export_filename(extension: str, *, now: datetime | None = None) -> str:
     stamp = (now or datetime.now(UTC)).date().isoformat()
-    return f"moodsync-export-{stamp}.{extension}"
+    return f"correlcore-export-{stamp}.{extension}"
 
 
 async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelope:
@@ -128,7 +128,7 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
 
     return ExportEnvelope(
         export_date=datetime.now(UTC),
-        moodsync_version=MOODSYNC_EXPORT_VERSION,
+        app_version=APP_EXPORT_VERSION,
         format_version=EXPORT_FORMAT_VERSION,
         score_legend=SCORE_LEGEND,
         user=ExportUser(
@@ -199,9 +199,9 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
 
 def render_export_zip(envelope: ExportEnvelope) -> bytes:
     readme = (
-        "MoodSync data export\n"
+        "CorrelCore data export\n"
         "====================\n\n"
-        "This archive contains your MoodSync data in machine-readable JSON.\n"
+        "This archive contains your CorrelCore data in machine-readable JSON.\n"
         "It may include sensitive health-related information. Store it carefully.\n\n"
         "Files:\n"
         "- export.json: entries, assigned tags, assigned symptoms and account metadata.\n"

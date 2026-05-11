@@ -7,7 +7,7 @@
 
 ## Kontext
 
-MoodSync ist eine Selfhost-Anwendung mit verteilten Komponenten (FastAPI-API, SvelteKit-Web, Worker, PostgreSQL, Redis, MinIO, Mailpit, optional Glitchtip). Ein Selfhoster ohne Vollzeit-DevOps-Team braucht zwei Dinge zuverlässig:
+CorrelCore ist eine Selfhost-Anwendung mit verteilten Komponenten (FastAPI-API, SvelteKit-Web, Worker, PostgreSQL, Redis, MinIO, Mailpit, optional Glitchtip). Ein Selfhoster ohne Vollzeit-DevOps-Team braucht zwei Dinge zuverlässig:
 
 1. **Healthchecks**, die _zuverlässig_ unterscheiden zwischen „Container-Prozess hängt" (→ Restart sinnvoll) und „abhängiger Dienst kurzzeitig nicht erreichbar" (→ Restart wäre kontraproduktiv und verstärkt die Störung).
 2. **Logs**, die ohne externes Logging-System (ELK, Loki, Datadog) auf der Kommandozeile auswertbar sind und gleichzeitig für eine spätere Aggregation strukturiert genug bleiben.
@@ -48,7 +48,7 @@ Alle API-Logs werden als einzeiliges JSON nach STDOUT geschrieben, mit einem fes
 {
   "timestamp": "2026-05-04T13:42:11.123Z",
   "level": "INFO",
-  "service": "moodsync-api",
+  "service": "correlcore-api",
   "environment": "production",
   "logger": "app.api.v1.endpoints.auth",
   "request_id": "f3c4e1a2-...",

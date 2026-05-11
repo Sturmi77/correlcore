@@ -56,7 +56,8 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
     payload = envelope.model_dump(mode="json")
 
     assert payload["user"]["email"] == "me@example.test"
-    assert payload["format_version"] == "1.1"
+    assert payload["app_version"] == "0.0.1"
+    assert payload["format_version"] == "1.2"
     assert payload["score_legend"]["stress"] == {
         "min": 1,
         "max": 5,
@@ -103,6 +104,6 @@ async def test_export_csv_and_zip_render() -> None:
         readme = archive.read("README.txt").decode("utf-8")
         assert "stress: 1=relaxed; 5=very stressed" in readme
         data = json.loads(archive.read("export.json"))
-        assert data["format_version"] == "1.1"
+        assert data["format_version"] == "1.2"
         assert data["score_legend"]["energy"]["max_label"] == "full of energy"
         assert data["entries"][0]["date"] == entry.entry_date.isoformat()

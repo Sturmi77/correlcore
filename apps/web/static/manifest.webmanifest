@@ -1,6 +1,6 @@
 {
-  "name": "MoodSync",
-  "short_name": "MoodSync",
+  "name": "CorrelCore",
+  "short_name": "CorrelCore",
   "description": "Privacy-first mood & habit tracker",
   "start_url": "/",
   "display": "standalone",

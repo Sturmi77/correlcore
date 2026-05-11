@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     )
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://moodsync:moodsync@localhost:5432/moodsync"
+    DATABASE_URL: str = "postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore"
 
     # Redis
     REDIS_URL: str = "redis://:changeme@localhost:6379/0"
@@ -70,9 +70,9 @@ class Settings(BaseSettings):
 
     # MinIO / S3
     MINIO_ENDPOINT: str = "minio:9000"
-    MINIO_ACCESS_KEY: str = "moodsync"
+    MINIO_ACCESS_KEY: str = "correlcore"
     MINIO_SECRET_KEY: str = "CHANGE_ME_MINIO_SECRET"
-    MINIO_BUCKET_PHOTOS: str = "moodsync-photos"
+    MINIO_BUCKET_PHOTOS: str = "correlcore-photos"
     MINIO_SECURE: bool = False  # True in production behind Traefik TLS
 
     # CORS — list of allowed frontend origins.
@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM: str = "noreply@moodsync.local"
+    SMTP_FROM: str = "noreply@correlcore.local"
     # STARTTLS-Default ist `None` (= Auto): TLS an, sobald `SMTP_USER` gesetzt
     # ist (echter Relay), aus, wenn keine Auth konfiguriert ist (Mailpit/MailHog
     # im Homelab sprechen Plain-SMTP auf 1025 ohne STARTTLS-Support). Override

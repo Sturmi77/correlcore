@@ -1,4 +1,4 @@
-# MoodSync — API-Richtlinien & Endpunkte
+# CorrelCore — API-Richtlinien & Endpunkte
 
 Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab.
 
@@ -547,7 +547,7 @@ PUT    /api/v1/entries/{entry_id}/symptoms      Replace-Set: gesamte Symptom-Lis
 
 ### Datentypen
 
-- `id` — UUID des Symptoms (Default-Rows nutzen einen deterministischen `uuid5` aus `moodsync.symptom.<slug>`, siehe ADR-0008).
+- `id` — UUID des Symptoms (Default-Rows nutzen weiterhin den deterministischen Legacy-Namespace `uuid5(..., "moodsync.symptom.<slug>")`, damit der CorrelCore-Rename bestehende IDs nicht verändert; siehe ADR-0008).
 - `slug` — kanonischer Schlüssel, 2..64 Zeichen, lowercased Buchstaben/Ziffern/Underscores; **nicht patchbar** (bräche Verweise in `entry_symptoms`).
 - `name` — Display-Name, 1..80 Zeichen.
 - `icon` — optional, max. 8 Zeichen (Emoji oder kurzer Slug für Icon-Lookup).
@@ -726,7 +726,7 @@ ist die zusätzliche Bestätigung verpflichtend.)
 **Beispiel:**
 
 ```bash
-curl -X DELETE https://api.moodsync.example/api/v1/user/me \
+curl -X DELETE https://api.correlcore.example/api/v1/user/me \
   -H "Cookie: access_token=..." \
   -H "Content-Type: application/json" \
   -d '{"password":"mein-aktuelles-passwort"}'
@@ -853,8 +853,8 @@ Die Response trennt GitHub-Version und Container-Artefakt:
   "git_branch": "main",
   "build_time": "2026-05-10T16:00:00Z",
   "image_tag": "sha-26c4274",
-  "image_digest": "ghcr.io/sturmi77/moodsync-api@sha256:...",
-  "image_hash": "ghcr.io/sturmi77/moodsync-api@sha256:...",
+  "image_digest": "ghcr.io/sturmi77/correlcore-api@sha256:...",
+  "image_hash": "ghcr.io/sturmi77/correlcore-api@sha256:...",
   "python_version": "3.12.13",
   "fastapi_version": "0.115.0",
   "db_migration_head": "009",
@@ -889,7 +889,7 @@ GET    /api/v1/admin/audit-log      Audit-Log abrufen
 
 ```json
 {
-  "type": "https://moodsync.app/errors/validation-error",
+  "type": "https://correlcore.app/errors/validation-error",
   "title": "Validation Error",
   "status": 422,
   "detail": "mood_score must be between -2 and 2",

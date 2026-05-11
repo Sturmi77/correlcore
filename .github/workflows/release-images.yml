@@ -1,6 +1,6 @@
 name: Release — Container Images
 
-# Baut und published moodsync-api und moodsync-web nach GHCR.
+# Baut und published correlcore-api und correlcore-web nach GHCR.
 # - Push auf main → :latest + :main + :sha-<short>
 # - Tag v* (z. B. v0.2.0) → :v0.2.0 + :v0.2 + :latest
 # - manual dispatch → :manual-<sha>
@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   api:
-    name: Build & Push moodsync-api
+    name: Build & Push correlcore-api
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/moodsync-api
+          images: ghcr.io/${{ github.repository_owner }}/correlcore-api
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -73,7 +73,7 @@ jobs:
             BUILD_TIME=${{ steps.build_meta.outputs.build_time }}
 
   web:
-    name: Build & Push moodsync-web
+    name: Build & Push correlcore-web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/moodsync-web
+          images: ghcr.io/${{ github.repository_owner }}/correlcore-web
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}

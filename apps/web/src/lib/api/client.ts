@@ -113,7 +113,7 @@ async function requestWithRefresh(path: string, init: RequestInit, skipAuthRefre
 }
 
 /**
- * Make an authenticated request to the MoodSync API.
+ * Make an authenticated request to the CorrelCore API.
  *
  * @throws ApiError      on non-2xx responses (after the 401 retry)
  * @throws NetworkError  on transport failures (offline, DNS, CORS)

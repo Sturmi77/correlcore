@@ -73,6 +73,7 @@ def _default_symptom_uuid(slug: str) -> uuid.UUID:
     package (Alembic best practice — migrations should be runnable even
     if the app code has drifted).
     """
+    # Keep the original namespace stable so existing seed IDs remain unchanged.
     return uuid.uuid5(uuid.NAMESPACE_DNS, f"moodsync.symptom.{slug}")
 
 

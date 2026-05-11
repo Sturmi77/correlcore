@@ -1,4 +1,4 @@
-# MoodSync — Markt- und Wettbewerbsanalyse
+# CorrelCore — Markt- und Wettbewerbsanalyse
 
 **Version:** 0.1
 **Datum:** 2026-04-20
@@ -34,7 +34,7 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 **Schwächen:** UI nicht besonders modern, viele Stats nur in Premium, kein automatisches Cloud-Backup in Free-Version, Korrelationsanalyse oberflächlich (nur Activity-Counts, keine echte Regression), enthält Ads.
 
-**Für MoodSync relevant:** Daylio ist mit 10M+ Downloads nicht frontal schlagbar. Positionierung als „Daylio für Privacy-Nerds mit Wearables" ist realistisch.
+**Für CorrelCore relevant:** Daylio ist mit 10M+ Downloads nicht frontal schlagbar. Positionierung als „Daylio für Privacy-Nerds mit Wearables" ist realistisch.
 
 ---
 
@@ -53,7 +53,7 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 **Schwächen:** Hoher Tracking-Aufwand (Konfigurations-Overhead), Zielgruppe chronisch Kranke → weniger Lifestyle-Feeling, Datenhoheit: Cloud-basiert, nur 500k Downloads trotz 6 Jahren.
 
-**Für MoodSync relevant:** Bearable zeigt, dass Korrelationsanalyse als USP funktioniert. Die Lifestyle-Zielgruppe (nicht chronisch krank) ist eine offene Lücke.
+**Für CorrelCore relevant:** Bearable zeigt, dass Korrelationsanalyse als USP funktioniert. Die Lifestyle-Zielgruppe (nicht chronisch krank) ist eine offene Lücke.
 
 ---
 
@@ -99,9 +99,9 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ---
 
-## 3. Marktlücken & Differenzierung für MoodSync
+## 3. Marktlücken & Differenzierung für CorrelCore
 
-| Lücke                               | Beschreibung                                                         | MoodSync-Ansatz                                                 |
+| Lücke                               | Beschreibung                                                         | CorrelCore-Ansatz                                               |
 | ----------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
 | **Selfhost/Privacy-first**          | Keine der Top-Apps bietet offizielles Selfhosting                    | Kern-USP: `docker compose up`, Daten bleiben lokal              |
 | **Korrelationstiefe für Lifestyle** | Bearable führend bei Health, aber Cloud-only + chronisch-krank-Fokus | Lifestyle-Zielgruppe (Remote-Worker 30–50) mit echter Statistik |
@@ -120,7 +120,7 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 - Abo-Apps wachsen jährlich ~15,8% beim User-Spending
 - Einmalkäufe haben dennoch ihren Revenue-Anteil von 6,4% (2023) auf 10,3% (2025) gesteigert (+6%) — Subscription Fatigue ist real
 
-### Empfohlenes Hybrid-Modell für MoodSync
+### Empfohlenes Hybrid-Modell für CorrelCore
 
 | Tier                  | Beschreibung                                                    | Preis (Empfehlung)          |
 | --------------------- | --------------------------------------------------------------- | --------------------------- |
@@ -194,7 +194,7 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ## 6. Werbung & Affiliate (Bewertung)
 
-### Warum Ads für MoodSync nicht empfohlen werden
+### Warum Ads für CorrelCore nicht empfohlen werden
 
 - Ad-ARPU ≈ 0,07 USD/Monat vs. Subscriber-ARPPU ≈ 2,82 USD/Monat → Faktor 40
 - 5.000 DAU × 3 Interstitials × 3 USD eCPM = ~1.350 USD/Monat brutto; dieselben 5.000 DAU mit 3% Abo-Conversion = 748 USD netto — ohne Friction

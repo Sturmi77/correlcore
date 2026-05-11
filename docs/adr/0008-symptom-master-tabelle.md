@@ -133,7 +133,7 @@ Symptome wären dann „Tags der Kategorie health". Pro: Eine Tabelle weniger. C
 
 ## Implementierung
 
-- Issue: [#57](https://github.com/Sturmi77/moodsync/issues/57)
+- Issue: [#57](https://github.com/Sturmi77/correlcore/issues/57)
 - Branch: `feature/57-custom-symptoms`
 - Migration: `backend/migrations/versions/006_add_symptom_master_table.py`
 - Models: `backend/app/models/symptom.py` (erweitert), neue `Symptom`-Klasse + refactorter `EntrySymptom`

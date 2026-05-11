@@ -1,4 +1,4 @@
-# MoodSync — User-Test-Deployment
+# CorrelCore — User-Test-Deployment
 
 Compose-Stack für den **ersten User-Test** nach abgeschlossenem M1.
 Zielumgebung: Tailscale-internes Netz (Homelab, Synology, Mini-PC).
@@ -10,16 +10,16 @@ Zielumgebung: Tailscale-internes Netz (Homelab, Synology, Mini-PC).
 
 ## Was läuft mit?
 
-| Service     | Zweck                                                | Profile      |
-| ----------- | ---------------------------------------------------- | ------------ |
-| `migrate`   | Alembic-Migrations (Init-Container, einmalig)        | _always_     |
-| `api`       | FastAPI-Backend (`ghcr.io/sturmi77/moodsync-api`)    | _always_     |
-| `web`       | SvelteKit-Frontend (`ghcr.io/sturmi77/moodsync-web`) | _always_     |
-| `postgres`  | PostgreSQL 16 + pgvector                             | _always_     |
-| `redis`     | Token-Store + Rate-Limit-State                       | _always_     |
-| `mailpit`   | Lokaler SMTP-Catcher für Verifizierungs-Mails        | _always_     |
-| `glitchtip` | Error-Tracking (Web-UI auf Port 8080)                | `monitoring` |
-| `worker`    | M2-Cleanup-Worker fuer unverified Accounts           | `worker`     |
+| Service     | Zweck                                                  | Profile      |
+| ----------- | ------------------------------------------------------ | ------------ |
+| `migrate`   | Alembic-Migrations (Init-Container, einmalig)          | _always_     |
+| `api`       | FastAPI-Backend (`ghcr.io/sturmi77/correlcore-api`)    | _always_     |
+| `web`       | SvelteKit-Frontend (`ghcr.io/sturmi77/correlcore-web`) | _always_     |
+| `postgres`  | PostgreSQL 16 + pgvector                               | _always_     |
+| `redis`     | Token-Store + Rate-Limit-State                         | _always_     |
+| `mailpit`   | Lokaler SMTP-Catcher für Verifizierungs-Mails          | _always_     |
+| `glitchtip` | Error-Tracking (Web-UI auf Port 8080)                  | `monitoring` |
+| `worker`    | M2-Cleanup-Worker fuer unverified Accounts             | `worker`     |
 
 **Bewusst NICHT enthalten:** MinIO (Foto-Upload kommt erst in M3+) und
 Traefik (kein Letsencrypt im internen Tailnet).
@@ -31,7 +31,7 @@ Traefik (kein Letsencrypt im internen Tailnet).
 - Docker ≥ 24 + Compose-Plugin
 - Tailscale läuft auf dem Host (`tailscale status` zeigt Verbindung)
 - Tailnet-IP des Hosts kennen: `tailscale ip -4`
-- Optional: MagicDNS-Hostname (z. B. `moodsync-test.tail-scale.ts.net`)
+- Optional: MagicDNS-Hostname (z. B. `correlcore-test.tail-scale.ts.net`)
 
 ---
 
@@ -63,7 +63,7 @@ tailscale ip -4
 erreichbar sein wird, z. B.:
 
 ```env
-CORS_ORIGINS=http://moodsync-test.tail-scale.ts.net:3000,http://100.101.102.103:3000
+CORS_ORIGINS=http://correlcore-test.tail-scale.ts.net:3000,http://100.101.102.103:3000
 ```
 
 ---
@@ -144,15 +144,15 @@ persistenz-relevant. Beispiel-Dump:
 
 ```bash
 docker compose -f docker-compose.user-test.yml exec postgres \
-  pg_dump -U moodsync moodsync | gzip > moodsync-$(date +%F).sql.gz
+  pg_dump -U correlcore correlcore | gzip > correlcore-$(date +%F).sql.gz
 ```
 
 Restore:
 
 ```bash
-gunzip -c moodsync-2026-05-05.sql.gz | \
+gunzip -c correlcore-2026-05-05.sql.gz | \
   docker compose -f docker-compose.user-test.yml exec -T postgres \
-  psql -U moodsync moodsync
+  psql -U correlcore correlcore
 ```
 
 ---

@@ -33,7 +33,7 @@
    * Symptoms are health data under DSGVO Art. 9. The component never logs
    * the user's selections, even on error. We render a permanent medical
    * disclaimer (`disclaimer.medical`) at the top of the section so users
-   * know MoodSync is not a diagnostic tool.
+   * know CorrelCore is not a diagnostic tool.
    */
 
   import { onMount } from 'svelte';

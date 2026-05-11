@@ -249,7 +249,7 @@
     <!-- Logo -->
     <div class="flex flex-col items-center gap-4">
       <svg
-        aria-label="MoodSync"
+        aria-label="CorrelCore"
         viewBox="0 0 48 48"
         width="64"
         height="64"

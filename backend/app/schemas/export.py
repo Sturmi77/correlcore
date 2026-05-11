@@ -23,8 +23,8 @@ class ExportScoreLegendItem(BaseModel):
 
 class ExportEnvelope(BaseModel):
     export_date: datetime
-    moodsync_version: str
-    format_version: str = "1.1"
+    app_version: str
+    format_version: str = "1.2"
     score_legend: dict[str, ExportScoreLegendItem]
     user: ExportUser
     entries: list[dict[str, Any]] = Field(default_factory=list)

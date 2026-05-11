@@ -58,9 +58,9 @@ def _build_message(to: str = "alice@example.com") -> EmailMessage:
 
 def test_build_verify_url_strips_trailing_slash() -> None:
     with patch("app.services.email_service.settings") as s:
-        s.FRONTEND_BASE_URL = "https://moodsync.example.com/"
+        s.FRONTEND_BASE_URL = "https://correlcore.example.com/"
         url = build_verify_url("tok-123")
-    assert url == "https://moodsync.example.com/auth/verify-email?token=tok-123"
+    assert url == "https://correlcore.example.com/auth/verify-email?token=tok-123"
 
 
 def test_build_verify_url_no_trailing_slash() -> None:
@@ -72,8 +72,8 @@ def test_build_verify_url_no_trailing_slash() -> None:
 
 def test_build_login_url() -> None:
     with patch("app.services.email_service.settings") as s:
-        s.FRONTEND_BASE_URL = "https://moodsync.example.com"
-        assert build_login_url() == "https://moodsync.example.com/auth/login"
+        s.FRONTEND_BASE_URL = "https://correlcore.example.com"
+        assert build_login_url() == "https://correlcore.example.com/auth/login"
 
 
 # ---------------------------------------------------------------------------
@@ -318,7 +318,7 @@ async def test_send_verification_email_renders_and_dispatches() -> None:
         patch("app.services.email_service.settings") as s,
         patch("app.services.email_service._send", side_effect=fake_send),
     ):
-        s.FRONTEND_BASE_URL = "https://moodsync.example.com"
+        s.FRONTEND_BASE_URL = "https://correlcore.example.com"
         s.SMTP_FROM = "noreply@example.com"
         s.EMAIL_VERIFICATION_TTL_HOURS = 24
 
@@ -336,7 +336,7 @@ async def test_send_verification_email_renders_and_dispatches() -> None:
     parts = list(msg.walk())
     payloads = [p.get_payload() for p in parts if not p.is_multipart()]
     body_text = "\n".join(str(p) for p in payloads)
-    assert "https://moodsync.example.com/auth/verify-email?token=abc-123" in body_text
+    assert "https://correlcore.example.com/auth/verify-email?token=abc-123" in body_text
 
 
 @pytest.mark.asyncio
@@ -351,7 +351,7 @@ async def test_send_verification_email_handles_none_display_name() -> None:
         patch("app.services.email_service.settings") as s,
         patch("app.services.email_service._send", side_effect=fake_send),
     ):
-        s.FRONTEND_BASE_URL = "https://moodsync.example.com"
+        s.FRONTEND_BASE_URL = "https://correlcore.example.com"
         s.SMTP_FROM = "noreply@example.com"
         s.EMAIL_VERIFICATION_TTL_HOURS = 24
 
@@ -380,7 +380,7 @@ async def test_send_already_registered_email_renders_and_dispatches() -> None:
         patch("app.services.email_service.settings") as s,
         patch("app.services.email_service._send", side_effect=fake_send),
     ):
-        s.FRONTEND_BASE_URL = "https://moodsync.example.com"
+        s.FRONTEND_BASE_URL = "https://correlcore.example.com"
         s.SMTP_FROM = "noreply@example.com"
 
         await send_already_registered_email(
@@ -395,5 +395,5 @@ async def test_send_already_registered_email_renders_and_dispatches() -> None:
     payloads = [p.get_payload() for p in msg.walk() if not p.is_multipart()]
     body_text = "\n".join(str(p) for p in payloads)
     # Carries no token — only the login URL.
-    assert "https://moodsync.example.com/auth/login" in body_text
+    assert "https://correlcore.example.com/auth/login" in body_text
     assert "token=" not in body_text
