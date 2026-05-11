@@ -623,7 +623,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - [x] Strukturierte JSON-Logs für Startup, Requests und Fehler werden geschrieben _(PR #35)_
 - [x] Jede Anfrage erhält eine `request_id` (Middleware gesetzt, in Logs mitgeführt, als `X-Request-ID`-Header zurückgegeben) _(PR #35)_
 - [x] Docker-Healthchecks für API, Web, PostgreSQL, Redis und MinIO im Core-Stack konfiguriert _(PR #35)_
-- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed_password, is_active, is_verified, created_at, updated_at _(PR #36)_
+- [x] Postgres-Schema v1 migriert: `users`-Tabelle mit UUID-PK, email, hashed*password, is_active, is_verified, created_at, updated_at *(PR #36)\_
 - [x] Alembic-Migrationen `000_initial` und `001_create_users` laufen fehlerfrei (forward + rollback) _(PR #36)_
 - [x] `updated_at`-Trigger in Postgres aktiv _(PR #36)_
 - [x] GitHub Actions `ci-api.yml` grün (ruff, mypy, pytest mit Coverage ≥ 70 %) _(PR #37)_
@@ -654,7 +654,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 - App-Level-Verschlüsselung at-rest für `entries.note` und `symptoms.name` (Custom) gemäß ADR-0005
 - **Login-UI:** SvelteKit Login/Register-Seiten _(aus M0 verschoben, Issue #40)_
 - **E-Mail-Verifikation:** `POST /auth/verify-email`, SMTP-Versand _(aus M0 verschoben, Issue #39)_
-- **`.env.example`-Fix + Vollständigkeit:** SECRET_KEY-Mismatch beheben, alle Config-Variablen dokumentieren _(aus M0 verschoben, Issue #41)_
+- **`.env.example`-Fix + Vollständigkeit:** SECRET*KEY-Mismatch beheben, alle Config-Variablen dokumentieren *(aus M0 verschoben, Issue #41)\_
 - **Nicht in M1-Scope:** Offline-Sync und Sync-Conflict-Log — verschoben nach M4 gemäß [ADR-0009](adr/0009-offline-sync-nach-m4.md)
 - **Exit:** Produktive Online-Nutzung durch Entwickler selbst möglich (inkl. Login im Browser)
 
@@ -1045,7 +1045,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 | Risiko                                                   | ID     | Wahrscheinlichkeit | Impact   | Maßnahme                                                                                                                                                                                                                      |
 | -------------------------------------------------------- | ------ | ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scheinkorrelationen führen User zu falschen Schlüssen    | —      | Mittel             | Hoch     | Confidence-Level, Disclaimer, Tiered Insight System (3/8/15/30 Einträge)                                                                                                                                                     |
+| Scheinkorrelationen führen User zu falschen Schlüssen    | —      | Mittel             | Hoch     | Confidence-Level, Disclaimer, Tiered Insight System (3/8/15/30 Einträge)                                                                                                                                                      |
 | Play-Store-Rejection wegen Health-Claims                 | —      | Niedrig            | Hoch     | Legal Review vor Submission, keine diagnostischen Aussagen                                                                                                                                                                    |
 | Garmin-API ändert sich / TOS-Verstoß                     | —      | Hoch               | Mittel   | Health Connect als primärer Weg, Garmin als opt-in mit Warnung                                                                                                                                                                |
 | Solo-Dev-Burnout                                         | ZS-05  | Mittel             | Kritisch | Vertical Slices mit klaren Exit-Kriterien; Timebox pro Milestone fixiert; wöchentliches 1h-Review ob Scope noch realistisch; konsequentes Backlog-Kürzen bei Verzögerung; keine Feature-Creep-Toleranz in laufendem Milestone |
