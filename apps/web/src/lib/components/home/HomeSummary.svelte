@@ -2,12 +2,13 @@
   /**
    * HomeSummary — ADR-0014.
    *
-   * 7-day aggregation of mood / energy / stress plus the entry-streak
-   * (per ADR-0012 — *not* habit-streak). All numbers are computed
+   * 7-day aggregation of mood / energy / stress plus tracking consistency.
+   * The consistency number keeps the existing entry-run calculation
+   * (per ADR-0012 — *not* habit logic). All numbers are computed
    * client-side from the entries the parent already loaded; no extra
    * API call.
    *
-   * Streak ≥ 30 is rendered as `30+` because the loader caps the
+   * Consistency ≥ 30 is rendered as `30+` because the loader caps the
    * extended window at 30 days (ADR-0014).
    */
 
@@ -18,7 +19,7 @@
   /** Entries within the 7-day display window. */
   export let entries: EntryResponse[] = [];
   /**
-   * Wider entry list (up to 30 days) used solely for streak math. The
+   * Wider entry list (up to 30 days) used solely for consistency math. The
    * parent passes this when the 7-day window is exhausted.
    */
   export let streakEntries: EntryResponse[] = [];
@@ -26,7 +27,7 @@
   export let loading = false;
   /** True when the loader hit the 30-day cap. */
   export let streakCapped = false;
-  /** Backend-authoritative M2 entry-streak, if available. */
+  /** Backend-authoritative M2 entry-run value, if available. */
   export let backendStreak: number | null = null;
 
   $: moodAvg = averageOver(entries, 'mood_score');
@@ -80,6 +81,7 @@
       <dd class="home-summary__value">{count}<span class="home-summary__unit">/7</span></dd>
     </div>
   </dl>
+  <p class="home-summary__hint">{$_('home.summary.consistency_hint')}</p>
 </section>
 
 <style>
@@ -135,6 +137,13 @@
     font-size: 0.7rem;
     opacity: 0.55;
     font-weight: 400;
+  }
+
+  .home-summary__hint {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    line-height: 1.35;
   }
 
   .home-summary[data-loading='true'] .home-summary__value {

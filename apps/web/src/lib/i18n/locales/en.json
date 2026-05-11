@@ -24,7 +24,7 @@
     "cta_new_entry": "New entry",
     "cta_edit_entry": "Edit today's entry",
     "loading_today": "Loading today's status\u2026",
-    "streak_label": "day streak",
+    "streak_label": "tracking consistency",
     "recent": {
       "heading": "Last 7 days",
       "today": "Today",
@@ -40,9 +40,10 @@
       "mood_avg": "Mood avg",
       "energy_avg": "Energy avg",
       "stress_avg": "Stress avg",
-      "streak": "Streak",
-      "streak_unit": "days",
-      "count": "Logged"
+      "streak": "Tracking consistency",
+      "streak_unit": "tracked days",
+      "count": "Logged",
+      "consistency_hint": "More consistent data improves insight quality."
     },
     "sparkline": {
       "heading": "Mood trend",
@@ -190,7 +191,7 @@
   },
   "trends": {
     "title": "Trends",
-    "subtitle": "Time series, streaks and tag frequencies for your history.",
+    "subtitle": "Time series, tracking consistency and tag frequencies for your history.",
     "auth_required": "Please sign in to view your trends.",
     "controls": "Trend filters",
     "category": "Category",
@@ -218,9 +219,9 @@
       "empty": "No mood scores in this range yet."
     },
     "streak": {
-      "heading": "Entry streak",
-      "current": "Current",
-      "longest": "Longest",
+      "heading": "Tracking consistency",
+      "current": "Current continuity",
+      "longest": "Best continuity",
       "total": "Logged days"
     },
     "heatmap": {

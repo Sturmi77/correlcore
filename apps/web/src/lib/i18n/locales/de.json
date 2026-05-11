@@ -24,7 +24,7 @@
     "cta_new_entry": "Neuer Eintrag",
     "cta_edit_entry": "Heutigen Eintrag bearbeiten",
     "loading_today": "Lade Heute-Status\u2026",
-    "streak_label": "Tage in Folge",
+    "streak_label": "Tracking-Konsistenz",
     "recent": {
       "heading": "Letzte 7 Tage",
       "today": "Heute",
@@ -40,9 +40,10 @@
       "mood_avg": "Stimmung \u00d8",
       "energy_avg": "Energie \u00d8",
       "stress_avg": "Stress \u00d8",
-      "streak": "Streak",
-      "streak_unit": "Tage",
-      "count": "Erfasst"
+      "streak": "Tracking-Konsistenz",
+      "streak_unit": "erfasste Tage",
+      "count": "Erfasst",
+      "consistency_hint": "Konsistentere Daten verbessern die Qualität deiner Erkenntnisse."
     },
     "sparkline": {
       "heading": "Stimmungs-Verlauf",
@@ -190,7 +191,7 @@
   },
   "trends": {
     "title": "Trends",
-    "subtitle": "Zeitreihe, Streaks und Tag-H\u00e4ufigkeiten f\u00fcr deinen Verlauf.",
+    "subtitle": "Zeitreihe, Tracking-Konsistenz und Tag-H\u00e4ufigkeiten f\u00fcr deinen Verlauf.",
     "auth_required": "Bitte melde dich an, um deine Trends zu sehen.",
     "controls": "Trend-Filter",
     "category": "Kategorie",
@@ -218,9 +219,9 @@
       "empty": "Noch keine Scores in diesem Zeitraum."
     },
     "streak": {
-      "heading": "Eintrags-Streak",
-      "current": "Aktuell",
-      "longest": "L\u00e4ngste Serie",
+      "heading": "Tracking-Konsistenz",
+      "current": "Aktuelle Kontinuit\u00e4t",
+      "longest": "Beste Kontinuit\u00e4t",
       "total": "Erfasste Tage"
     },
     "heatmap": {

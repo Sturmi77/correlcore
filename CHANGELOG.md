@@ -35,6 +35,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **No-Gamification-Prep für M3 gestartet (Issue #158).** Die sichtbare Web-Copy für Eintrags-Serien wurde neutral auf `Tracking consistency` / `Tracking-Konsistenz` umgestellt: Home-Summary und Trends-Seite sprechen nicht mehr von Streaks, sondern von Datenkontinuität und ergänzen den Hinweis, dass konsistentere Daten die Insight-Qualität verbessern. Berechnung, Backend-Endpoint und API-Typen bleiben in diesem Sprint unverändert. Neuer Vitest-Regressionscheck stellt sicher, dass Locale-Strings keine Streak-/Reward-/Badge-/Fire-Framings exponieren.
+
 - **`SymptomIcon` in `IconRender` umbenannt (kosmetischer Refactor zu PR #117/#118).** Die in PR #117 eingeführte Komponente klassifiziert beliebige Icon-Strings (Emoji oder Lucide-Slug) und ist nicht symptom-spezifisch — mit der Wiederverwendung im `TagPicker` (PR #118) wurde der Name irreführend. Datei umbenannt: `apps/web/src/lib/components/common/SymptomIcon.svelte` → `IconRender.svelte`, zusammen mit `SymptomIcon.test.ts` → `IconRender.test.ts`. Verwender (`SymptomChecker.svelte`, `TagPicker.svelte`) auf den neuen Namen umgestellt; CSS-Klasse `.symptom-icon-emoji` → `.icon-render-emoji`. Doc-Kommentar aktualisiert (referenziert jetzt `Symptom.icon` und `Tag.icon`). Keine Verhaltensänderung, keine Änderung an der Klassifikations-Logik, keine Backend-Auswirkung. Lint 0/0, typecheck 0/0, 102/102 Vitest-Tests grün.
 
 ### Fixed
