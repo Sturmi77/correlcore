@@ -1,0 +1,58 @@
+"""Insight read endpoints (M3)."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.v1.deps.auth import get_current_verified_user
+from app.core.rate_limit import limiter
+from app.db.session import get_session
+from app.models.user import User
+from app.schemas.insight import InsightListResponse, InsightResponse
+from app.services.insight_service import (
+    DEFAULT_INSIGHT_LIST_LIMIT,
+    DEFAULT_LATEST_INSIGHT_LIMIT,
+    MAX_INSIGHT_LIST_LIMIT,
+    MAX_LATEST_INSIGHT_LIMIT,
+    list_insights,
+    list_latest_insights,
+)
+
+router = APIRouter()
+
+
+@router.get(
+    "",
+    response_model=InsightListResponse,
+    summary="List generated insights",
+)
+@limiter.limit("120/minute")
+async def list_insights_endpoint(
+    request: Request,
+    limit: int = Query(default=DEFAULT_INSIGHT_LIST_LIMIT, ge=1, le=MAX_INSIGHT_LIST_LIMIT),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightListResponse:
+    insights = await list_insights(db, user_id=user.id, limit=limit)
+    return InsightListResponse(
+        insights=[InsightResponse.model_validate(insight) for insight in insights]
+    )
+
+
+@router.get(
+    "/latest",
+    response_model=InsightListResponse,
+    summary="List latest generated insights by analytical subject",
+)
+@limiter.limit("120/minute")
+async def list_latest_insights_endpoint(
+    request: Request,
+    limit: int = Query(default=DEFAULT_LATEST_INSIGHT_LIMIT, ge=1, le=MAX_LATEST_INSIGHT_LIMIT),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightListResponse:
+    insights = await list_latest_insights(db, user_id=user.id, limit=limit)
+    return InsightListResponse(
+        insights=[InsightResponse.model_validate(insight) for insight in insights]
+    )

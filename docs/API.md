@@ -737,11 +737,53 @@ curl -X DELETE https://api.correlcore.example/api/v1/user/me \
 
 ## 7. Insights
 
+Alle Endpunkte erfordern einen verifizierten User. Insight-Statements werden
+serverseitig aus `insights.statement_enc` entschluesselt und nur fuer den
+jeweiligen Owner ausgegeben.
+
 ```
 GET    /api/v1/insights              Alle Insights des Users
 GET    /api/v1/insights/latest       Neuester Insight je Metrik
 POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 ```
+
+`GET /api/v1/insights?limit=50` liefert die neuesten gespeicherten Insights:
+
+```json
+{
+  "insights": [
+    {
+      "id": "uuid",
+      "user_id": "uuid",
+      "insight_type": "pointbiserial",
+      "tier": "developing",
+      "metric": "mood_score",
+      "subject_type": "tag",
+      "subject_id": "uuid",
+      "subject_label": "Sport",
+      "effect_size": 0.42,
+      "confidence": 0.61,
+      "sample_n": 18,
+      "statement": "Days tagged Sport currently line up with higher mood scores in your data. Treat this as a pattern to reflect on, not a cause.",
+      "flags": {
+        "method": "pointbiserial",
+        "medical_disclaimer_required": true,
+        "causal_claim": false
+      },
+      "payload": {},
+      "generated_for_date": "2026-05-12",
+      "generated_at": "2026-05-12T03:00:00Z",
+      "created_at": "2026-05-12T03:00:00Z",
+      "updated_at": "2026-05-12T03:00:00Z"
+    }
+  ]
+}
+```
+
+`GET /api/v1/insights/latest?limit=10` liefert die neuesten Insights pro
+analytischem Subject (`insight_type`, `metric`, optionaler Tag/Metric/Weekday).
+Der manuelle Trigger bleibt geplant und ist in M3 noch nicht oeffentlich
+implementiert.
 
 ---
 

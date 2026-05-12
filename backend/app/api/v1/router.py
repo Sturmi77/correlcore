@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, dev, entries, export, health, symptoms, tags, user
+from app.api.v1.endpoints import auth, dev, entries, export, health, insights, symptoms, tags, user
 
 api_router = APIRouter()
 
@@ -26,6 +26,9 @@ api_router.include_router(export.router, prefix="/export", tags=["export"])
 # Daily entries (M1, Issue #7)
 api_router.include_router(entries.router, prefix="/entries", tags=["entries"])
 
+# M3 generated insights (read-only API surface; worker generation is scheduled)
+api_router.include_router(insights.router, prefix="/insights", tags=["insights"])
+
 # Tag system (M1, Issue #8) — tag CRUD under /tags, entry-tag assignment
 # under /entries/{entry_id}/tags. Two routers, mounted with the right
 # prefixes so the URL hierarchy stays REST-idiomatic.
@@ -40,4 +43,3 @@ api_router.include_router(symptoms.entry_symptoms_router, prefix="/entries", tag
 
 # Future routers (M1+):
 # api_router.include_router(sync.router, prefix="/sync", tags=["sync"])
-# api_router.include_router(insights.router, prefix="/insights", tags=["insights"])

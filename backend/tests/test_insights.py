@@ -1,0 +1,185 @@
+from __future__ import annotations
+
+import uuid
+from datetime import UTC, date, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from httpx import AsyncClient
+
+from app.api.v1.deps.auth import get_current_verified_user
+from app.main import app
+from app.models.insight import Insight, InsightTier, InsightType
+from app.models.user import User
+from app.services.insight_service import list_insights, list_latest_insights
+from tests.conftest import make_user
+
+
+def _scalars_result(values: list[object]) -> MagicMock:
+    scalars = MagicMock()
+    scalars.all.return_value = values
+    result = MagicMock()
+    result.scalars.return_value = scalars
+    return result
+
+
+def _make_insight(
+    user: User,
+    *,
+    generated_at: datetime | None = None,
+    insight_type: InsightType = InsightType.SPEARMAN,
+    tier: InsightTier = InsightTier.DEVELOPING,
+    metric: str = "mood_score",
+    subject_type: str | None = "metric",
+    subject_id: uuid.UUID | None = None,
+    subject_label: str | None = "energy",
+    statement: str = "Mood currently lines up with energy in your entries.",
+) -> Insight:
+    now = generated_at or datetime.now(UTC)
+    insight = Insight()
+    insight.id = uuid.uuid4()
+    insight.user_id = user.id
+    insight.insight_type = insight_type
+    insight.tier = tier
+    insight.metric = metric
+    insight.subject_type = subject_type
+    insight.subject_id = subject_id
+    insight.subject_label = subject_label
+    insight.effect_size = 0.42
+    insight.confidence = 0.61
+    insight.sample_n = 18
+    insight.statement_enc = statement
+    insight.flags = {"medical_disclaimer_required": True, "causal_claim": False}
+    insight.payload = {"window_days": 30}
+    insight.generated_for_date = date(2026, 5, 12)
+    insight.generated_at = now
+    insight.created_at = now
+    insight.updated_at = now
+    return insight
+
+
+@pytest.mark.asyncio
+async def test_list_insights_filters_by_user_and_orders_newest() -> None:
+    user = make_user()
+    rows = [_make_insight(user)]
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result(rows))
+
+    out = await list_insights(db, user_id=user.id, limit=500)
+
+    assert out == rows
+    stmt = db.execute.await_args.args[0]
+    assert "insights.user_id = :user_id_1" in str(stmt.whereclause)
+    assert "ORDER BY insights.generated_at DESC" in str(stmt)
+    assert stmt._limit_clause.value == 200
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_deduplicates_by_subject() -> None:
+    user = make_user()
+    tag_id = uuid.uuid4()
+    newest_tag = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=tag_id,
+        subject_label="Sport",
+    )
+    older_same_tag = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=tag_id,
+        subject_label="Sport",
+    )
+    metric = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 10, tzinfo=UTC),
+        insight_type=InsightType.SPEARMAN,
+        subject_type="metric",
+        subject_label="stress",
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result([newest_tag, older_same_tag, metric]))
+
+    out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [newest_tag, metric]
+
+
+@pytest.mark.asyncio
+async def test_insights_endpoint_returns_statement_field(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    insight = _make_insight(user, statement="Energy and mood currently move together.")
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.insights.list_insights",
+            new_callable=AsyncMock,
+            return_value=[insight],
+        ):
+            response = await async_client.get(
+                "/api/v1/insights?limit=5",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["insights"]) == 1
+    item = body["insights"][0]
+    assert item["statement"] == "Energy and mood currently move together."
+    assert "statement_enc" not in item
+    assert item["tier"] == "developing"
+    assert item["flags"]["causal_claim"] is False
+
+
+@pytest.mark.asyncio
+async def test_latest_insights_endpoint_uses_latest_service(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    row = _make_insight(
+        user,
+        generated_at=datetime.now(UTC) - timedelta(days=1),
+        insight_type=InsightType.WEEKDAY_PATTERN,
+        subject_type="weekday",
+        subject_label="Monday",
+    )
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.insights.list_latest_insights",
+            new_callable=AsyncMock,
+            return_value=[row],
+        ) as latest:
+            response = await async_client.get(
+                "/api/v1/insights/latest?limit=3",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    latest.assert_awaited_once()
+    assert response.json()["insights"][0]["insight_type"] == "weekday_pattern"
+
+
+@pytest.mark.asyncio
+async def test_insights_endpoint_requires_auth(async_client: AsyncClient) -> None:
+    response = await async_client.get("/api/v1/insights")
+
+    assert response.status_code == 401
