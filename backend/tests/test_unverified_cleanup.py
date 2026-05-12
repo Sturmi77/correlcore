@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.services.cleanup_service import cleanup_unverified_accounts
-from app.workers.analytics import seconds_until_next_cleanup
+from app.workers.analytics import run_cleanup_once, seconds_until_next_cleanup
 
 
 def _session_with_deleted_ids(*deleted_ids: uuid.UUID) -> MagicMock:
@@ -131,3 +131,27 @@ def test_worker_schedules_next_cleanup_for_tomorrow_after_three_utc() -> None:
     now = datetime(2026, 5, 10, 3, 0, tzinfo=UTC)
 
     assert seconds_until_next_cleanup(now) == timedelta(days=1).total_seconds()
+
+
+@pytest.mark.asyncio
+async def test_run_cleanup_once_accepts_session_factory() -> None:
+    class FakeSession:
+        def __init__(self) -> None:
+            self.commit = AsyncMock()
+            self.rollback = AsyncMock()
+            self.execute = AsyncMock(return_value=MagicMock())
+            self.execute.return_value.scalars.return_value.all.return_value = []
+
+        async def __aenter__(self) -> FakeSession:
+            return self
+
+        async def __aexit__(self, *_exc: object) -> None:
+            return None
+
+    session = FakeSession()
+
+    deleted = await run_cleanup_once(session_factory=lambda: session)
+
+    assert deleted == 0
+    assert session.commit.await_count == 1
+    assert session.rollback.await_count == 0
