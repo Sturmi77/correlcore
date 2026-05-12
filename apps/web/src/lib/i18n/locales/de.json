@@ -45,6 +45,24 @@
       "count": "Erfasst",
       "consistency_hint": "Konsistentere Daten verbessern die Qualität deiner Erkenntnisse."
     },
+    "insight": {
+      "heading": "Neueste Erkenntnis",
+      "empty": "Noch keine Erkenntnis",
+      "empty_hint": "Weitere erfasste Tage schaffen genug Daten fuer ein verlaessliches Muster.",
+      "empty_statement": "Diese Erkenntnis hat noch keinen Text.",
+      "meta_label": "Details zur Erkenntnis",
+      "confidence": "Konfidenz",
+      "confidence_unknown": "Noch nicht genug Daten",
+      "sample_size": "Eintraege",
+      "updated": "Datum",
+      "tier": {
+        "none": "Noch nicht bereit",
+        "early": "Fruehes Muster",
+        "preliminary": "Vorlaeufig",
+        "developing": "Entwickelnd",
+        "robust": "Robust"
+      }
+    },
     "sparkline": {
       "heading": "Stimmungs-Verlauf",
       "caption": "Letzte {n} Tage",

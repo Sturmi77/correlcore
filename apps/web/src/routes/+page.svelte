@@ -21,10 +21,12 @@
   import { goto } from '$app/navigation';
   import { auth, currentUser, logout } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
+  import { fetchLatestInsight, type InsightResponse } from '$lib/api/insights';
   import { fetchEntryStreak, type EntryStreakResponse } from '$lib/api/stats';
   import { findEntryForDate, greetingKey, localIsoDate } from '$lib/utils/home';
   import { computeEntryStreak, shiftIsoDate } from '$lib/utils/streak';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import HomeInsight from '$lib/components/home/HomeInsight.svelte';
   import HomeRecentEntries from '$lib/components/home/HomeRecentEntries.svelte';
   import HomeSummary from '$lib/components/home/HomeSummary.svelte';
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
@@ -45,6 +47,7 @@
   let recentEntries: EntryResponse[] = [];
   let streakEntries: EntryResponse[] = [];
   let backendStreak: EntryStreakResponse | null = null;
+  let latestInsight: InsightResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
   /** True once the loader had to query the extended 30-day window. */
@@ -63,11 +66,20 @@
     dashboardLoading = true;
     try {
       const start = shiftIsoDate(todayIso, -(BASELINE_DAYS - 1));
-      const baseline = await listEntries({
-        start_date: start,
-        end_date: todayIso,
-      });
-      backendStreak = await fetchEntryStreak(todayIso);
+      const [baselineResult, streakResult, insightResult] = await Promise.allSettled([
+        listEntries({
+          start_date: start,
+          end_date: todayIso,
+        }),
+        fetchEntryStreak(todayIso),
+        fetchLatestInsight(),
+      ]);
+
+      if (baselineResult.status === 'rejected') throw baselineResult.reason;
+
+      const baseline = baselineResult.value;
+      backendStreak = streakResult.status === 'fulfilled' ? streakResult.value : null;
+      latestInsight = insightResult.status === 'fulfilled' ? insightResult.value : null;
       recentEntries = baseline;
       todayEntry = findEntryForDate(baseline, todayIso);
 
@@ -96,6 +108,7 @@
       streakEntries = [];
       todayEntry = null;
       backendStreak = null;
+      latestInsight = null;
       streakCapped = false;
     } finally {
       dashboardLoading = false;
@@ -115,6 +128,7 @@
     dashboardLoaded = false;
     streakCapped = false;
     backendStreak = null;
+    latestInsight = null;
     void goto('/', { replaceState: true });
   }
 
@@ -225,6 +239,11 @@
         backendStreak={backendStreak?.current_streak ?? null}
         loading={dashboardLoading && !dashboardLoaded}
       />
+    </section>
+
+    <!-- Latest generated insight -->
+    <section>
+      <HomeInsight insight={latestInsight} loading={dashboardLoading && !dashboardLoaded} />
     </section>
 
     <!-- 14-day mood sparkline -->

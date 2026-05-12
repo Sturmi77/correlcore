@@ -45,6 +45,24 @@
       "count": "Logged",
       "consistency_hint": "More consistent data improves insight quality."
     },
+    "insight": {
+      "heading": "Latest insight",
+      "empty": "No insight yet",
+      "empty_hint": "Keep logging days to build enough data for a reliable pattern.",
+      "empty_statement": "This insight has no statement yet.",
+      "meta_label": "Insight details",
+      "confidence": "Confidence",
+      "confidence_unknown": "Not enough data",
+      "sample_size": "Entries",
+      "updated": "Date",
+      "tier": {
+        "none": "Not ready",
+        "early": "Early pattern",
+        "preliminary": "Preliminary",
+        "developing": "Developing",
+        "robust": "Robust"
+      }
+    },
     "sparkline": {
       "heading": "Mood trend",
       "caption": "Last {n} days",
