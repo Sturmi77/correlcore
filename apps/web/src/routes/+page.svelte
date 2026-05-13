@@ -1,6 +1,7 @@
 <script lang="ts">
   /**
    * Home route — Issue #97 + ADR-0014 (M1.5 Home-Dashboard).
+   * M3.1 #161: renamed streak props to consistency (ADR-0017 no-gamification).
    *
    * Two faces, gated by auth state:
    *   - Anonymous → existing landing (logo + tagline + theme toggle).
@@ -9,8 +10,8 @@
    *
    * Loader strategy (ADR-0014):
    *   - Fetch the last 14 days for sparkline + recent-entries list.
-   *   - Compute the entry-streak from those 14 days; if it equals 14
-   *     (rare) we run a second query covering 30 days so the streak can
+   *   - Compute the entry-consistency from those 14 days; if it equals 14
+   *     (rare) we run a second query covering 30 days so the number can
    *     keep growing. Numbers ≥ 30 render as "30+".
    *   - Tag/symptom decorations on individual cards are loaded lazily
    *     inside `HomeRecentEntries` (Promise.allSettled per entry).
@@ -46,7 +47,7 @@
 
   /** ADR-0014: 14-day baseline window covers sparkline + recent-list. */
   const BASELINE_DAYS = 14;
-  /** Extension cap when the streak fills the baseline window. */
+  /** Extension cap when the consistency fills the baseline window. */
   const EXTENDED_DAYS = 30;
   const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
 
@@ -55,8 +56,8 @@
 
   let todayEntry: EntryResponse | null = null;
   let recentEntries: EntryResponse[] = [];
-  let streakEntries: EntryResponse[] = [];
-  let backendStreak: EntryStreakResponse | null = null;
+  let consistencyEntries: EntryResponse[] = [];
+  let backendStreakData: EntryStreakResponse | null = null;
   let dashboardSummary: DashboardSummaryResponse | null = null;
   let latestInsight: InsightResponse | null = null;
   let weekdayInsight: InsightResponse | null = null;
@@ -64,7 +65,7 @@
   let dashboardLoading = false;
   let dashboardLoaded = false;
   /** True once the loader had to query the extended 30-day window. */
-  let streakCapped = false;
+  let consistencyCapped = false;
 
   /**
    * Slice the 14-day window for the 7-day summary so HomeSummary's
@@ -94,7 +95,7 @@
       if (baselineResult.status === 'rejected') throw baselineResult.reason;
 
       const baseline = baselineResult.value;
-      backendStreak = streakResult.status === 'fulfilled' ? streakResult.value : null;
+      backendStreakData = streakResult.status === 'fulfilled' ? streakResult.value : null;
       dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
       const insights = insightResult.status === 'fulfilled' ? insightResult.value.insights : [];
       latestInsight = insights[0] ?? null;
@@ -104,36 +105,36 @@
       recentEntries = baseline;
       todayEntry = findEntryForDate(baseline, todayIso);
 
-      // Streak math: if the entry-streak fills the baseline window we
-      // expand the lookup so 7+ day streaks can render correctly. We
+      // Consistency math: if the entry-run fills the baseline window we
+      // expand the lookup so 7+ day runs can render correctly. We
       // cap at 30 ("30+") to keep the request cheap.
-      const baselineStreak = computeEntryStreak(baseline, todayIso);
-      if (baselineStreak >= BASELINE_DAYS) {
+      const baselineConsistency = computeEntryStreak(baseline, todayIso);
+      if (baselineConsistency >= BASELINE_DAYS) {
         const extendedStart = shiftIsoDate(todayIso, -(EXTENDED_DAYS - 1));
         try {
-          streakEntries = await listEntries({
+          consistencyEntries = await listEntries({
             start_date: extendedStart,
             end_date: todayIso,
           });
-          streakCapped = true;
+          consistencyCapped = true;
         } catch {
-          streakEntries = baseline;
-          streakCapped = false;
+          consistencyEntries = baseline;
+          consistencyCapped = false;
         }
       } else {
-        streakEntries = baseline;
-        streakCapped = false;
+        consistencyEntries = baseline;
+        consistencyCapped = false;
       }
     } catch {
       recentEntries = [];
-      streakEntries = [];
+      consistencyEntries = [];
       todayEntry = null;
-      backendStreak = null;
+      backendStreakData = null;
       dashboardSummary = null;
       latestInsight = null;
       weekdayInsight = null;
       userPreferences = null;
-      streakCapped = false;
+      consistencyCapped = false;
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
@@ -148,10 +149,10 @@
     await logout();
     todayEntry = null;
     recentEntries = [];
-    streakEntries = [];
+    consistencyEntries = [];
     dashboardLoaded = false;
-    streakCapped = false;
-    backendStreak = null;
+    consistencyCapped = false;
+    backendStreakData = null;
     dashboardSummary = null;
     latestInsight = null;
     weekdayInsight = null;
@@ -195,8 +196,7 @@
         dismissed_insight_keys: optimistic.dismissed_insight_keys,
       });
     } catch {
-      // Keep the optimistic dismissal for this session; a later reload will
-      // reflect the server state if persistence failed.
+      // Keep the optimistic dismissal for this session.
     }
   }
 
@@ -212,11 +212,6 @@
 </svelte:head>
 
 {#if $auth.status === 'authenticated'}
-  <!-- ================================================================
-       Authenticated Home - "Heute-Ansicht" + Dashboard (ADR-0014)
-       Kein eigener <main> — page-shell in +layout.svelte übernimmt
-       Padding (Safe-Area), max-width und Zentrierung.
-       ================================================================ -->
   <div class="flex flex-col gap-6 pt-4 pb-8">
     <!-- Top bar: theme toggle + logout -->
     <header class="flex items-center justify-between">
@@ -299,10 +294,10 @@
     <section>
       <HomeSummary
         entries={summaryEntries}
-        {streakEntries}
+        {consistencyEntries}
         {todayIso}
-        {streakCapped}
-        backendStreak={backendStreak?.current_streak ?? null}
+        {consistencyCapped}
+        backendConsistency={backendStreakData?.current_streak ?? null}
         loading={dashboardLoading && !dashboardLoaded}
       />
     </section>
@@ -349,9 +344,6 @@
     </nav>
   </div>
 {:else}
-  <!-- ================================================================
-       Anonymous Landing
-       ================================================================ -->
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">
     <!-- Logo -->
     <div class="flex flex-col items-center gap-4">
@@ -389,13 +381,11 @@
       </p>
     </div>
 
-    <!-- Theme toggle -->
     <div class="flex items-center gap-3">
       <span style="font-size: var(--text-sm); color: var(--color-text-faint)">Theme:</span>
       <ThemeToggle testId="landing-theme-toggle" />
     </div>
 
-    <!-- Status badge -->
     <div
       class="badge"
       style="

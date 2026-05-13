@@ -1,12 +1,18 @@
 <script lang="ts">
   /**
-   * HomeSummary — ADR-0014.
+   * HomeSummary — ADR-0014 + ADR-0017 (M3.1 No-Gamification).
    *
    * 7-day aggregation of mood / energy / stress plus tracking consistency.
    * The consistency number keeps the existing entry-run calculation
    * (per ADR-0012 — *not* habit logic). All numbers are computed
    * client-side from the entries the parent already loaded; no extra
    * API call.
+   *
+   * Renamed in M3.1 (#161):
+   *   streakEntries      → consistencyEntries
+   *   backendStreak      → backendConsistency
+   *   streak (local var) → trackingConsistency
+   *   formatStreak       → formatConsistency
    *
    * Consistency ≥ 30 is rendered as `30+` because the loader caps the
    * extended window at 30 days (ADR-0014).
@@ -22,28 +28,32 @@
    * Wider entry list (up to 30 days) used solely for consistency math. The
    * parent passes this when the 7-day window is exhausted.
    */
-  export let streakEntries: EntryResponse[] = [];
+  export let consistencyEntries: EntryResponse[] = [];
   export let todayIso: string;
   export let loading = false;
   /** True when the loader hit the 30-day cap. */
-  export let streakCapped = false;
+  export let consistencyCapped = false;
   /** Backend-authoritative M2 entry-run value, if available. */
-  export let backendStreak: number | null = null;
+  export let backendConsistency: number | null = null;
 
   $: moodAvg = averageOver(entries, 'mood_score');
   $: energyAvg = averageOver(entries, 'energy');
   $: stressAvg = averageOver(entries, 'stress');
   $: count = countDayEntries(entries);
-  $: streak =
-    backendStreak ?? computeEntryStreak(streakEntries.length ? streakEntries : entries, todayIso);
+  $: trackingConsistency =
+    backendConsistency ??
+    computeEntryStreak(
+      consistencyEntries.length ? consistencyEntries : entries,
+      todayIso
+    );
 
   function formatAvg(v: number | null): string {
     if (v === null) return '–';
     return v.toFixed(1);
   }
 
-  function formatStreak(n: number): string {
-    if (streakCapped && n >= 30) return '30+';
+  function formatConsistency(n: number): string {
+    if (consistencyCapped && n >= 30) return '30+';
     return String(n);
   }
 </script>
@@ -69,10 +79,10 @@
       <dt class="home-summary__label">{$_('home.summary.stress_avg')}</dt>
       <dd class="home-summary__value">{formatAvg(stressAvg)}</dd>
     </div>
-    <div class="home-summary__cell" data-testid="home-summary-streak">
-      <dt class="home-summary__label">{$_('home.summary.streak')}</dt>
+    <div class="home-summary__cell" data-testid="home-summary-consistency">
+      <dt class="home-summary__label">{$_('home.summary.tracking_consistency')}</dt>
       <dd class="home-summary__value">
-        {formatStreak(streak)}
+        {formatConsistency(trackingConsistency)}
         <span class="home-summary__unit">{$_('home.summary.streak_unit')}</span>
       </dd>
     </div>
