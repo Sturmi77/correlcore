@@ -29,7 +29,16 @@
   <header class="home-insight__header">
     <h2 class="home-insight__heading">{$_('home.insight.heading')}</h2>
     {#if insight}
-      <span class="home-insight__tier">{$_(`home.insight.tier.${insight.tier}`)}</span>
+      <span
+        class="home-insight__tier"
+        data-tier={insight.tier}
+        title={$_(`home.insight.tier_help.${insight.tier}`)}
+        aria-label={`${$_(`home.insight.tier.${insight.tier}`)}: ${$_(
+          `home.insight.tier_help.${insight.tier}`
+        )}`}
+      >
+        {$_(`home.insight.tier.${insight.tier}`)}
+      </span>
     {/if}
   </header>
 
@@ -58,6 +67,7 @@
         </div>
       </dl>
       <p class="home-insight__disclaimer">{$_('disclaimer.medical')}</p>
+      <a class="home-insight__link" href="/insights">{$_('home.insight.more')}</a>
     </div>
   {:else}
     <div class="home-insight__body home-insight__body--muted">
@@ -100,8 +110,28 @@
     padding: 0.18rem 0.55rem;
     font-size: 0.68rem;
     font-weight: 600;
+    background: rgb(var(--color-surface-300, 209 213 219) / 0.28);
+    color: var(--color-text-muted);
+  }
+
+  .home-insight__tier[data-tier='early'] {
+    background: rgb(var(--color-warning-500, 245 158 11) / 0.14);
+    color: rgb(var(--color-warning-700, 180 83 9));
+  }
+
+  .home-insight__tier[data-tier='preliminary'] {
     background: rgb(var(--color-primary-500, 59 130 246) / 0.1);
     color: rgb(var(--color-primary-700, 29 78 216));
+  }
+
+  .home-insight__tier[data-tier='developing'] {
+    background: rgb(var(--color-warning-500, 245 158 11) / 0.2);
+    color: rgb(var(--color-warning-800, 146 64 14));
+  }
+
+  .home-insight__tier[data-tier='robust'] {
+    background: rgb(var(--color-success-500, 34 197 94) / 0.14);
+    color: rgb(var(--color-success-700, 21 128 61));
   }
 
   .home-insight__body {
@@ -123,6 +153,13 @@
   .home-insight__hint,
   .home-insight__disclaimer {
     margin: 0;
+  }
+
+  .home-insight__link {
+    width: fit-content;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgb(var(--color-primary-700, 29 78 216));
   }
 
   .home-insight__statement {

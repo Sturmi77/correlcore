@@ -1,0 +1,22 @@
+[
+  {
+    "match": { "insight_curiosity": "energy_sleep" },
+    "preview_text": "People often discover that shorter sleep and next-day energy move together. CorrelCore will check whether that pattern appears in your own entries.",
+    "source_label": "General research finding: sleep and affect studies"
+  },
+  {
+    "match": { "sport_frequency": "3_4_week" },
+    "preview_text": "Movement routines can coincide with steadier mood ratings for some people. CorrelCore will compare your logged activity days with your mood data.",
+    "source_label": "General research finding: exercise and mood studies"
+  },
+  {
+    "match": { "work_context_typical": "remote" },
+    "preview_text": "Work context can line up with stress or energy patterns. CorrelCore will look for differences between your own office, remote and weekend days.",
+    "source_label": "General research finding: work context and wellbeing studies"
+  },
+  {
+    "match": {},
+    "preview_text": "After a few entries, CorrelCore can surface calendar and tag patterns as descriptive signals, not conclusions.",
+    "source_label": "General research finding"
+  }
+]

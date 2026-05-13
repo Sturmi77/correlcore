@@ -24,6 +24,7 @@ function entry(date: string, overrides: Partial<EntryResponse> = {}): EntryRespo
     energy: 3,
     stress: 3,
     work_context: 'homeoffice',
+    source: 'direct',
     note: null,
     created_at: date + 'T08:00:00Z',
     updated_at: date + 'T08:00:00Z',

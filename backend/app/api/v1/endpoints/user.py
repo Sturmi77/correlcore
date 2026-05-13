@@ -30,17 +30,65 @@ import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.deps.auth import get_current_user
+from app.api.v1.deps.auth import get_current_user, get_current_verified_user
 from app.core.auth_cookies import clear_auth_cookies
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.user import DeleteAccountRequest
+from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
+from app.schemas.user_profile import UserProfileResponse, UserProfileUpsert
 from app.services.export_service import build_export_envelope, export_filename, render_export_zip
+from app.services.user_preferences_service import (
+    get_or_create_user_preferences,
+    update_user_preferences,
+)
+from app.services.user_profile_service import upsert_user_profile
 from app.services.user_service import UserDeletionError, delete_user_account
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get(
+    "/preferences",
+    response_model=UserPreferencesResponse,
+    summary="Return the current user's preference state",
+)
+async def get_my_preferences(
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> UserPreferencesResponse:
+    preferences = await get_or_create_user_preferences(db, user_id=current_user.id)
+    return UserPreferencesResponse.model_validate(preferences)
+
+
+@router.patch(
+    "/preferences",
+    response_model=UserPreferencesResponse,
+    summary="Update the current user's preference state",
+)
+async def update_my_preferences(
+    payload: UserPreferencesUpdate,
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> UserPreferencesResponse:
+    preferences = await update_user_preferences(db, user_id=current_user.id, payload=payload)
+    return UserPreferencesResponse.model_validate(preferences)
+
+
+@router.put(
+    "/profile",
+    response_model=UserProfileResponse,
+    summary="Upsert the current user's optional onboarding profile",
+)
+async def put_my_profile(
+    payload: UserProfileUpsert,
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> UserProfileResponse:
+    profile = await upsert_user_profile(db, user_id=current_user.id, payload=payload)
+    return UserProfileResponse.model_validate(profile)
 
 
 @router.get(

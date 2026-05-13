@@ -2,7 +2,18 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, dev, entries, export, health, insights, symptoms, tags, user
+from app.api.v1.endpoints import (
+    auth,
+    dashboard,
+    dev,
+    entries,
+    export,
+    health,
+    insights,
+    symptoms,
+    tags,
+    user,
+)
 
 api_router = APIRouter()
 
@@ -25,6 +36,9 @@ api_router.include_router(export.router, prefix="/export", tags=["export"])
 
 # Daily entries (M1, Issue #7)
 api_router.include_router(entries.router, prefix="/entries", tags=["entries"])
+
+# Dashboard summary (M3 insight confidence scale)
+api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 
 # M3 generated insights (read-only API surface; worker generation is scheduled)
 api_router.include_router(insights.router, prefix="/insights", tags=["insights"])

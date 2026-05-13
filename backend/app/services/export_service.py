@@ -23,6 +23,7 @@ from app.models.entry import Entry
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
 from app.models.user import User
+from app.models.user_profile import UserProfile
 from app.schemas.export import ExportEnvelope, ExportScoreLegendItem, ExportUser
 
 EXPORT_FORMAT_VERSION = "1.2"
@@ -66,6 +67,8 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
     )
     entries = list(entries_result.scalars().all())
     entry_ids = [entry.id for entry in entries]
+    profile_result = await db.execute(select(UserProfile).where(UserProfile.user_id == user.id))
+    profile = profile_result.scalar_one_or_none()
 
     tags_by_entry: dict[uuid.UUID, list[dict[str, Any]]] = defaultdict(list)
     symptoms_by_entry: dict[uuid.UUID, list[dict[str, Any]]] = defaultdict(list)
@@ -118,6 +121,7 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
                 "energy": entry.energy,
                 "stress": entry.stress,
                 "work_context": entry.work_context.value,
+                "source": entry.source.value,
                 "note": entry.note_enc,
                 "created_at": entry.created_at.isoformat(),
                 "updated_at": entry.updated_at.isoformat(),
@@ -140,6 +144,32 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
         tags=sorted(visible_tags.values(), key=lambda item: (item["category"], item["slug"])),
         symptoms=sorted(visible_symptoms.values(), key=lambda item: item["slug"]),
         habits=[],
+        profile=(
+            {
+                "sleep_hours_typical": (
+                    profile.sleep_hours_typical.value
+                    if profile.sleep_hours_typical is not None
+                    else None
+                ),
+                "work_context_typical": (
+                    profile.work_context_typical.value
+                    if profile.work_context_typical is not None
+                    else None
+                ),
+                "sport_frequency": (
+                    profile.sport_frequency.value if profile.sport_frequency is not None else None
+                ),
+                "insight_curiosity": (
+                    profile.insight_curiosity.value
+                    if profile.insight_curiosity is not None
+                    else None
+                ),
+                "created_at": profile.created_at.isoformat(),
+                "updated_at": profile.updated_at.isoformat(),
+            }
+            if profile is not None
+            else None
+        ),
         insights=[],
         photos=[],
         sleep=[],

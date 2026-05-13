@@ -55,13 +55,47 @@
       "confidence_unknown": "Noch nicht genug Daten",
       "sample_size": "Eintraege",
       "updated": "Datum",
+      "more": "Mehr Erkenntnisse",
       "tier": {
         "none": "Noch nicht bereit",
         "early": "Fruehes Muster",
         "preliminary": "Vorlaeufig",
         "developing": "Entwickelnd",
         "robust": "Robust"
+      },
+      "tier_help": {
+        "none": "Noch nicht genug Eintraege fuer ein Muster.",
+        "early": "Beschreibendes Signal aus wenigen Daten; keine Korrelationsaussage.",
+        "preliminary": "Ein Muster entsteht, kann sich mit weiteren Eintraegen aber aendern.",
+        "developing": "Datenbasierter Zusammenhang mit sichtbarer Konfidenz.",
+        "robust": "Genug Eintraege fuer die vollstaendige Analyse-Pipeline."
       }
+    },
+    "confidence_scale": {
+      "heading": "Insight-Qualitaet",
+      "low": "Begrenzte Daten",
+      "high": "Praeziser",
+      "entry_count": "Basierend auf {n} Eintraegen",
+      "tier": {
+        "none": "Erste Datenpunkte werden gesammelt",
+        "early": "Fruehe Signale aktiv",
+        "preliminary": "Vorlaeufige Muster aktiv",
+        "developing": "Korrelationen aktiv",
+        "robust": "Volle Analyse aktiv"
+      }
+    },
+    "first_week_banner": {
+      "title": "Dein erstes Wochenmuster ist bereit.",
+      "body": "Eine neutrale Zusammenfassung zeigt, wie deine Stimmung nach Wochentagen verteilt war.",
+      "view": "Muster ansehen",
+      "dismiss": "Hinweis ausblenden"
+    },
+    "weekday_pattern": {
+      "heading": "Deine erste Woche in Zahlen",
+      "early_signal": "Fruehes Signal",
+      "aria": "Balkendiagramm der durchschnittlichen Stimmung nach Wochentag",
+      "empty_statement": "Dieses Wochenmuster hat noch keinen Text.",
+      "hint": "Basierend auf einer Woche Daten. Muster brauchen mehr Daten, um stabiler zu werden."
     },
     "sparkline": {
       "heading": "Stimmungs-Verlauf",
@@ -135,6 +169,15 @@
       "stress_high": "sehr gestresst",
       "default_low": "niedrig",
       "default_high": "hoch"
+    },
+    "delta": {
+      "heading": "Vergleich mit gestern",
+      "subheading": "Ein direkter Vergleich desselben Tages-Slots.",
+      "loading": "Aktualisiere...",
+      "mood": "Stimmung",
+      "energy": "Energie",
+      "stress": "Stress",
+      "shared_tags": "Tags an beiden Tagen"
     }
   },
   "day_entries": {
@@ -303,6 +346,61 @@
   },
   "disclaimer": {
     "medical": "CorrelCore ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."
+  },
+  "insights": {
+    "page": {
+      "title": "Erkenntnisse",
+      "subtitle": "Aktuelle Muster aus deinen eigenen Eintraegen, sachlich und ohne Diagnose.",
+      "auth_required": "Melde dich an, um deine Erkenntnisse zu sehen.",
+      "loading": "Lade Erkenntnisse...",
+      "empty": "Noch nicht genug Daten fuer aktuelle Erkenntnisse.",
+      "list_heading": "Aktuelle Erkenntnisse"
+    },
+    "matrix": {
+      "heading": "Korrelations-Matrix",
+      "subtitle": "Tag- und Mood-Muster nach Effektstaerke sortiert.",
+      "tag": "Tag",
+      "metric": "Metrik",
+      "effect": "Effekt",
+      "confidence": "Konfidenz",
+      "export": "PNG exportieren",
+      "empty": "Noch keine ausreichend stabilen Tag-Mood-Muster vorhanden."
+    },
+    "energy_mood_positive": "Dein Energielevel und deine Stimmung zeigen einen klaren Zusammenhang (r={r}, basierend auf {n} Tagen). An Tagen mit hoeherer Energie ist deine Stimmung in deinen Daten tendenziell hoeher.",
+    "energy_mood_negative": "Dein Energielevel und deine Stimmung zeigen einen unerwarteten Zusammenhang (r={r}, basierend auf {n} Tagen). Hoehere Energie geht in deinen Daten tendenziell mit niedrigerer Stimmung einher.",
+    "stress_mood": "Stress und Stimmung zeigen einen klaren Zusammenhang (r={r}, basierend auf {n} Tagen). Das ist ein Datenmuster, keine medizinische Aussage.",
+    "weekday_confounded_note": "Hinweis: Dieses Muster tritt vorwiegend an bestimmten Wochentagen auf."
+  },
+  "onboarding": {
+    "skip": "Ueberspringen",
+    "continue": "Weiter",
+    "finish": "Fertig",
+    "skip_question": "Frage ueberspringen",
+    "retro": {
+      "title": "Wie waren die letzten Tage?",
+      "body": "Optional: grobe Erinnerung reicht. Sie hilft CorrelCore, schneller erste Muster zu kalibrieren."
+    },
+    "profile": {
+      "title": "Worauf soll CorrelCore achten?",
+      "body": "Alle Fragen sind optional. Die Beispiele danach sind allgemeine Forschungshinweise, keine persoenlichen Erkenntnisse.",
+      "sleep": "Wie viele Stunden schlaefst du typischerweise?",
+      "work": "Wie arbeitest du meistens?",
+      "work_office": "Buero",
+      "work_hybrid": "Hybrid",
+      "work_remote": "Remote",
+      "other": "Anderes",
+      "sport": "Wie oft machst du Sport?",
+      "sport_rarely": "Selten",
+      "sport_daily": "Taeglich",
+      "curiosity": "Was interessiert dich am meisten?",
+      "curiosity_work": "Work-Life-Balance",
+      "curiosity_sleep": "Energie und Schlaf",
+      "curiosity_sport": "Gewohnheiten und Sport",
+      "curiosity_wellbeing": "Allgemeines Wohlbefinden",
+      "show_previews": "Beispiele anzeigen",
+      "preview_heading": "Was CorrelCore spaeter in deinen Daten pruefen kann",
+      "preview_label": "Allgemeiner Forschungshinweis"
+    }
   },
   "error": {
     "generic": "Etwas ist schiefgelaufen.",

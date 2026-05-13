@@ -55,13 +55,47 @@
       "confidence_unknown": "Not enough data",
       "sample_size": "Entries",
       "updated": "Date",
+      "more": "More insights",
       "tier": {
         "none": "Not ready",
         "early": "Early pattern",
         "preliminary": "Preliminary",
         "developing": "Developing",
         "robust": "Robust"
+      },
+      "tier_help": {
+        "none": "Not enough entries for a pattern yet.",
+        "early": "Descriptive signal from limited data; no correlation claim.",
+        "preliminary": "A pattern is emerging, but more entries can change it.",
+        "developing": "Data-based relationship with a visible confidence level.",
+        "robust": "Enough entries for the full analysis pipeline."
       }
+    },
+    "confidence_scale": {
+      "heading": "Insight Quality",
+      "low": "Limited data",
+      "high": "More precise",
+      "entry_count": "Based on {n} entries",
+      "tier": {
+        "none": "Collecting first data points",
+        "early": "Early signals active",
+        "preliminary": "Preliminary patterns active",
+        "developing": "Correlations active",
+        "robust": "Full analysis active"
+      }
+    },
+    "first_week_banner": {
+      "title": "Your first week pattern is ready.",
+      "body": "A neutral summary shows how your mood was distributed across weekdays.",
+      "view": "View pattern",
+      "dismiss": "Dismiss notice"
+    },
+    "weekday_pattern": {
+      "heading": "Your First Week In Numbers",
+      "early_signal": "Early signal",
+      "aria": "Bar chart of average mood by weekday",
+      "empty_statement": "This weekday pattern has no statement yet.",
+      "hint": "Based on one week of data. Patterns need more data to become more stable."
     },
     "sparkline": {
       "heading": "Mood trend",
@@ -135,6 +169,15 @@
       "stress_high": "very stressed",
       "default_low": "low",
       "default_high": "high"
+    },
+    "delta": {
+      "heading": "Compared with yesterday",
+      "subheading": "A direct comparison of the same daily entry slot.",
+      "loading": "Updating...",
+      "mood": "Mood",
+      "energy": "Energy",
+      "stress": "Stress",
+      "shared_tags": "Tags on both days"
     }
   },
   "day_entries": {
@@ -303,6 +346,61 @@
   },
   "disclaimer": {
     "medical": "CorrelCore is not a medical diagnostic tool. All insights are for personal reflection only."
+  },
+  "insights": {
+    "page": {
+      "title": "Insights",
+      "subtitle": "Current patterns from your own entries, kept descriptive and non-diagnostic.",
+      "auth_required": "Sign in to view your insights.",
+      "loading": "Loading insights...",
+      "empty": "Not enough data for current insights yet.",
+      "list_heading": "Current insights"
+    },
+    "matrix": {
+      "heading": "Correlation Matrix",
+      "subtitle": "Tag and mood patterns sorted by effect size.",
+      "tag": "Tag",
+      "metric": "Metric",
+      "effect": "Effect",
+      "confidence": "Confidence",
+      "export": "Export PNG",
+      "empty": "No sufficiently stable tag-mood patterns yet."
+    },
+    "energy_mood_positive": "Your energy level and mood show a clear association (r={r}, based on {n} days). On higher-energy days, your mood tends to be higher in your data.",
+    "energy_mood_negative": "Your energy level and mood show an unexpected association (r={r}, based on {n} days). Higher energy tends to line up with lower mood in your data.",
+    "stress_mood": "Stress and mood show a clear association (r={r}, based on {n} days). This is a data pattern, not a medical statement.",
+    "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays."
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "continue": "Continue",
+    "finish": "Done",
+    "skip_question": "Skip this question",
+    "retro": {
+      "title": "How were the last few days?",
+      "body": "Optional: rough memory is fine. It helps CorrelCore calibrate early patterns faster."
+    },
+    "profile": {
+      "title": "What should CorrelCore look for?",
+      "body": "Every question is optional. The examples after this are general research notes, not personal insights.",
+      "sleep": "How many hours do you typically sleep?",
+      "work": "How do you typically work?",
+      "work_office": "Office",
+      "work_hybrid": "Hybrid",
+      "work_remote": "Remote",
+      "other": "Other",
+      "sport": "How often do you exercise?",
+      "sport_rarely": "Rarely",
+      "sport_daily": "Daily",
+      "curiosity": "What are you most curious about?",
+      "curiosity_work": "Work-life balance",
+      "curiosity_sleep": "Energy and sleep",
+      "curiosity_sport": "Habits and sport",
+      "curiosity_wellbeing": "General wellbeing",
+      "show_previews": "Show examples",
+      "preview_heading": "What CorrelCore can later check in your data",
+      "preview_label": "General research finding"
+    }
   },
   "error": {
     "generic": "Something went wrong.",

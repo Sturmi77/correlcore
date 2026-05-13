@@ -28,7 +28,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.models.entry import EntrySlot, WorkContext
+from app.models.entry import EntrySlot, EntrySource, WorkContext
+from app.schemas.tag import TagResponse
 
 # Maximum note length on the wire. Generous, but bounded so a malicious
 # client can't dump arbitrary blobs into the DB. Aligns with the
@@ -53,6 +54,7 @@ class EntryCreate(BaseModel):
     mood_score: int = Field(ge=1, le=5)
     energy: int = Field(ge=1, le=5)
     stress: int = Field(ge=1, le=5)
+    source: EntrySource = EntrySource.DIRECT
     work_context: WorkContext
     note: str | None = Field(default=None, max_length=MAX_NOTE_LENGTH)
 
@@ -108,7 +110,43 @@ class EntryResponse(BaseModel):
     mood_score: int
     energy: int
     stress: int
+    source: EntrySource
     work_context: WorkContext
     note: str | None = Field(default=None, validation_alias="note_enc")
     created_at: datetime
     updated_at: datetime
+
+
+class EntryBatchCreate(BaseModel):
+    """Payload for onboarding retrospective entry import."""
+
+    entries: list[EntryCreate] = Field(min_length=0, max_length=7)
+
+
+class EntryMetrics(BaseModel):
+    """Small metric-only entry shape for day-over-day comparisons."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    entry_date: date_type
+    slot: EntrySlot
+    mood_score: int
+    energy: int
+    stress: int
+
+
+class EntryMetricDelta(BaseModel):
+    """Difference between two entry metric sets."""
+
+    mood: int | None = None
+    energy: int | None = None
+    stress: int | None = None
+
+
+class EntryDeltaResponse(BaseModel):
+    """Day-over-day comparison for one entry date and slot."""
+
+    today: EntryMetrics | None = None
+    previous: EntryMetrics | None = None
+    delta: EntryMetricDelta = Field(default_factory=EntryMetricDelta)
+    shared_tags: list[TagResponse] = Field(default_factory=list)

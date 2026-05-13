@@ -36,11 +36,15 @@ describe('HomeInsight', () => {
     render(HomeInsight, { props: { insight, loading: false } });
 
     expect(screen.getByText('home.insight.heading')).toBeTruthy();
-    expect(screen.getByText('home.insight.tier.early')).toBeTruthy();
+    const badge = screen.getByText('home.insight.tier.early');
+    expect(badge).toBeTruthy();
+    expect(badge.getAttribute('title')).toBe('home.insight.tier_help.early');
+    expect(badge.getAttribute('data-tier')).toBe('early');
     expect(screen.getByText(insight.statement)).toBeTruthy();
     expect(screen.getByText('57%')).toBeTruthy();
     expect(screen.getByText('9')).toBeTruthy();
     expect(screen.getByText('disclaimer.medical')).toBeTruthy();
+    expect(screen.getByText('home.insight.more').getAttribute('href')).toBe('/insights');
   });
 
   it('renders empty and loading states', () => {

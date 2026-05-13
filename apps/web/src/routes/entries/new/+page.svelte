@@ -26,8 +26,16 @@
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
   import SaveStatusBadge from '$lib/components/entries/SaveStatusBadge.svelte';
+  import DayDeltaCard from '$lib/components/entries/DayDeltaCard.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
-  import { listEntries, updateEntry, type EntryResponse, type WorkContext } from '$lib/api/entries';
+  import {
+    fetchEntryDelta,
+    listEntries,
+    updateEntry,
+    type EntryDeltaResponse,
+    type EntryResponse,
+    type WorkContext,
+  } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
   import { assignTagsToEntry, listTagsForEntry } from '$lib/api/tags';
   import {
@@ -103,6 +111,9 @@
   // — needed during hydration so loading an existing entry doesn't
   // immediately schedule a save back to the server.
   let hydrating = false;
+  let dayDelta: EntryDeltaResponse | null = null;
+  let dayDeltaLoading = false;
+  let dayDeltaToken = 0;
 
   // Keep the work-context default in sync if the user picks a different
   // day, but only until they manually change it themselves.
@@ -120,6 +131,7 @@
    */
   function resetForm(forDate: string) {
     existingEntryId = null;
+    dayDelta = null;
     moodScore = 3;
     energy = 3;
     stress = 3;
@@ -133,6 +145,23 @@
     }
   }
 
+  async function refreshDayDelta(date: string) {
+    const token = ++dayDeltaToken;
+    dayDeltaLoading = true;
+    try {
+      const result = await fetchEntryDelta({ entry_date: date, slot: 'day' });
+      if (token !== dayDeltaToken) return;
+      dayDelta = result.today && result.previous ? result : null;
+    } catch {
+      if (token !== dayDeltaToken) return;
+      dayDelta = null;
+    } finally {
+      if (token === dayDeltaToken) {
+        dayDeltaLoading = false;
+      }
+    }
+  }
+
   /**
    * Hydrate the form from an existing entry. Tags and symptoms are
    * fetched in parallel; failures there are non-fatal (form still
@@ -141,6 +170,9 @@
    */
   async function loadForDate(date: string) {
     const myToken = ++loadToken;
+    dayDeltaToken += 1;
+    dayDelta = null;
+    dayDeltaLoading = false;
     loading = true;
     hydrating = true;
     errorKey = null;
@@ -188,6 +220,7 @@
           intensity: s.intensity,
         }));
       }
+      void refreshDayDelta(date);
     } catch (err) {
       if (myToken !== loadToken) return;
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
@@ -296,6 +329,7 @@
 
     await assignTagsToEntry(entryId, snap.selectedTagIds);
     await assignSymptomsToEntry(entryId, snap.selectedSymptoms);
+    await refreshDayDelta(snap.entry_date);
   }
 
   const autoSave = createAutoSave<FormSnapshot>({
@@ -420,6 +454,8 @@
       required
     />
   </label>
+
+  <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
 
   <ScaleSlider
     id="entry-mood"
