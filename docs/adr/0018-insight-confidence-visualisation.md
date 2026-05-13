@@ -9,16 +9,19 @@ Accepted (2026-05-13)
 The analytics engine produces an `insight.confidence` float (0.0–1.0) and `insight.sample_n` integer for every generated insight. These values must be communicated to the user. Three options were evaluated:
 
 **Option A — Dot indicators (●●●●○):**
+
 - 5 discrete levels, immediately readable
 - Low cognitive load
 - Risk: aesthetic association with star ratings / gamification
 
 **Option B — Percentage bar with numeric label (73%):**
+
 - Continuous, technically precise
 - Problem: "73%" reads as "almost certain" in everyday language, but on 30–60 data points a 0.73 confidence is only a moderate finding — pseudo-precision that the model does not support
 - Problem: a filled bar visually resembles a progress bar / achievement unlock (implicit gamification)
 
 **Option C — Single-colour labelled progress bar (chosen):**
+
 - Bar width encodes relative strength visually (technical feel)
 - A semantic label replaces the numeric percentage on the card surface (`Early signal` / `Emerging pattern` / `Moderate finding` / `Strong finding` / `Very strong finding`)
 - Raw `confidence` float and `sample_n` are shown in the expanded state only (Level 2 / Level 3 disclosure)
@@ -31,13 +34,13 @@ Option C is adopted. The `InsightConfidenceScale` component (already present in 
 
 ### Mapping table
 
-| confidence range | bar fill | label |
-|---|---|---|
-| 0.0–0.2 | 20% | Early signal |
-| 0.2–0.4 | 40% | Emerging pattern |
-| 0.4–0.6 | 60% | Moderate finding |
-| 0.6–0.8 | 80% | Strong finding |
-| 0.8–1.0 | 100% | Very strong finding |
+| confidence range | bar fill | label               |
+| ---------------- | -------- | ------------------- |
+| 0.0–0.2          | 20%      | Early signal        |
+| 0.2–0.4          | 40%      | Emerging pattern    |
+| 0.4–0.6          | 60%      | Moderate finding    |
+| 0.6–0.8          | 80%      | Strong finding      |
+| 0.8–1.0          | 100%     | Very strong finding |
 
 ### Accessibility requirement
 

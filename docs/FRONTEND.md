@@ -27,17 +27,18 @@ Every component that slows this flow must be reconsidered.
 
 All insight content follows a strict 3-level disclosure model:
 
-| Level | Content | Trigger |
-|---|---|---|
-| **1 — Statement** | One-sentence finding + direction indicator | Always visible |
-| **2 — Context** | Confidence bar + sample_n + time window + disclaimer link | Visible on card |
-| **3 — Exploration** | Full dual-axis chart, raw data overlay, export button | Tap "Show details" |
+| Level               | Content                                                   | Trigger            |
+| ------------------- | --------------------------------------------------------- | ------------------ |
+| **1 — Statement**   | One-sentence finding + direction indicator                | Always visible     |
+| **2 — Context**     | Confidence bar + sample_n + time window + disclaimer link | Visible on card    |
+| **3 — Exploration** | Full dual-axis chart, raw data overlay, export button     | Tap "Show details" |
 
 No user should need Level 3 to understand the value of an insight.
 
 ### 1.4 Data Integrity as UX Statement
 
 Every insight card **must** carry:
+
 - `confidence` visualised as a labelled progress bar (see §6)
 - `sample_n` as subtext (`Based on 42 entries · 90 days`)
 - A "What does this mean?" link to the correlation disclaimer
@@ -74,26 +75,26 @@ Offline → Cached data with "offline" badge or graceful hide
 
 ## 2. Tech Stack
 
-| Technology | Rationale |
-|---|---|
-| **SvelteKit 2** | Smallest bundle, SSR/CSR flexible, native transitions |
-| **Skeleton UI** | SvelteKit-native, themeable, dark-mode support |
-| **Dexie.js** | IndexedDB abstraction for offline sync (active from M4) |
-| **Custom SVG components** | Chart library (D-002 decided — see DESIGN_DOCUMENT §2.10) |
-| **pnpm + Vite** | Fast HMR, optimised bundling, pinned via ADR-0010 |
-| **svelte-i18n / paraglide-js** | i18n from day 1 (DE + EN) |
+| Technology                     | Rationale                                                 |
+| ------------------------------ | --------------------------------------------------------- |
+| **SvelteKit 2**                | Smallest bundle, SSR/CSR flexible, native transitions     |
+| **Skeleton UI**                | SvelteKit-native, themeable, dark-mode support            |
+| **Dexie.js**                   | IndexedDB abstraction for offline sync (active from M4)   |
+| **Custom SVG components**      | Chart library (D-002 decided — see DESIGN_DOCUMENT §2.10) |
+| **pnpm + Vite**                | Fast HMR, optimised bundling, pinned via ADR-0010         |
+| **svelte-i18n / paraglide-js** | i18n from day 1 (DE + EN)                                 |
 
 ---
 
 ## 3. Performance Budget
 
-| Metric | Target |
-|---|---|
-| JS Bundle (gzipped) | < 150 KB |
-| LCP (Largest Contentful Paint) | < 2.0 s |
-| TTI (Time to Interactive) | < 3.0 s |
-| CLS | < 0.1 |
-| FID / INP | < 100 ms |
+| Metric                         | Target   |
+| ------------------------------ | -------- |
+| JS Bundle (gzipped)            | < 150 KB |
+| LCP (Largest Contentful Paint) | < 2.0 s  |
+| TTI (Time to Interactive)      | < 3.0 s  |
+| CLS                            | < 0.1    |
+| FID / INP                      | < 100 ms |
 
 Enforced via Lighthouse CI in the CI/CD pipeline. Web Vitals monitoring via GlitchTip.
 
@@ -165,6 +166,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 **Purpose:** Daily touch point. Create entry + passively receive latest insight.
 
 **Layout (max. 3 information zones):**
+
 ```
 ┌──────────────────────────────┐
 │  Wednesday, 13 May           │  ← Date + Work Context badge
@@ -186,6 +188,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 ```
 
 **Rules:**
+
 - No streak counter — tracking consistency widget (neutral %) only when relevant
 - Insight card is dismissable → writes to `user_preferences.dismissed_insight_ids`
 - If no insight exists (< 7 days of data): show `FirstWeekInsightBanner` (Issue #155)
@@ -198,6 +201,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 **Purpose:** Log daily entry in ≤ 60 seconds.
 
 **Layout:**
+
 ```
 ┌──────────────────────────────┐
 │  ▬  How was your day?        │
@@ -217,6 +221,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 ```
 
 **Rules:**
+
 - Mood slider is the only required field
 - Tag suggestions sorted by historical usage frequency
 - "+ More" opens full tag sheet (symptoms, notes, photo)
@@ -229,6 +234,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 **Purpose:** Explore all generated insights with progressive disclosure.
 
 **Layout:**
+
 ```
 ┌──────────────────────────────┐
 │  Insights                    │
@@ -249,6 +255,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 ```
 
 **Rules:**
+
 - Sorted by `confidence × effect_size` descending (strongest, most certain first)
 - Direction indicator (↗/↘) is more prominent than numeric value
 - "What is a correlation?" disclaimer always accessible via header info icon
@@ -262,6 +269,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 **Purpose:** Long-term visualisations — mood timeline, tag frequency, work context patterns.
 
 **Layout (tab-based):**
+
 ```
 [Mood] [Activities] [Health]
 
@@ -283,6 +291,7 @@ Time range: [7D] [30D] [90D] [1Y]
 ```
 
 **Rules:**
+
 - Calendar heatmap uses blue-tone neutral scale — never red/green
 - No "best day" comparisons or ranking language
 - Export button (CSV/JSON) in header — for doctor visits and power users
@@ -295,6 +304,7 @@ Time range: [7D] [30D] [90D] [1Y]
 **Purpose:** Profile, tag/symptom management, privacy, export, analytics toggle, developer mode.
 
 **Layout:**
+
 ```
 TRACKING
 → Manage tags
@@ -318,6 +328,7 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 ```
 
 **Developer Mode rules** (extends [ADR-0015](adr/0015-developer-view-version-identifikation.md), see [ADR-0019](adr/0019-dev-mode-settings-toggle.md)):
+
 - Hidden behind 7× tap on version string in Settings footer
 - Toggle writes `dev_mode_enabled` to LocalStorage
 - When enabled: `DEV_VIEW_ENABLED` flag activates `/dev` route link in Settings
@@ -327,13 +338,13 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 
 ### Secondary Sheets & Overlays
 
-| Sheet | Trigger | Content |
-|---|---|---|
-| **Tag Picker (full)** | "+ More" in entry | Full tag category view with search |
-| **Symptom Checker** | Optional in entry | Symptom intensity sliders (0–3) |
-| **Insight Detail** | "Show details" on insight card | Dual-axis chart + lag selector |
-| **Onboarding Flow** | First launch / Issue #156 | Profile setup + static insight previews |
-| **Entry History** | Date tap in calendar | Single past entry, read-only |
+| Sheet                 | Trigger                        | Content                                 |
+| --------------------- | ------------------------------ | --------------------------------------- |
+| **Tag Picker (full)** | "+ More" in entry              | Full tag category view with search      |
+| **Symptom Checker**   | Optional in entry              | Symptom intensity sliders (0–3)         |
+| **Insight Detail**    | "Show details" on insight card | Dual-axis chart + lag selector          |
+| **Onboarding Flow**   | First launch / Issue #156      | Profile setup + static insight previews |
+| **Entry History**     | Date tap in calendar           | Single past entry, read-only            |
 
 ---
 
@@ -444,11 +455,11 @@ apps/web/src/
 ```typescript
 // stores/insights.ts
 interface InsightStore {
-  insights: Insight[];        // All insights from worker
-  latest: Insight | null;     // For home screen (Sprint 6 implemented)
+  insights: Insight[]; // All insights from worker
+  latest: Insight | null; // For home screen (Sprint 6 implemented)
   loading: boolean;
   error: string | null;
-  dismissedIds: string[];     // From user_preferences
+  dismissedIds: string[]; // From user_preferences
 }
 ```
 
@@ -468,7 +479,9 @@ The insights store is best-effort: a load failure must not propagate an error st
   animation: fadeIn 200ms ease-out;
 }
 @media (prefers-reduced-motion: reduce) {
-  .fade-in { animation: none; }
+  .fade-in {
+    animation: none;
+  }
 }
 ```
 
@@ -505,16 +518,16 @@ See [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md) for full details
 - **Auth guard:** Root `+layout.svelte` redirects unauthenticated users to `/auth/login?next=<path>`
 - **Route groups:** All authenticated screens live under the implicit `(app)` layout group
 
-| Route | Purpose | Public |
-|---|---|---|
-| `/auth/login` | Sign in | ✅ |
-| `/auth/register` | Registration | ✅ |
-| `/auth/verify-email` | Email confirmation | ✅ |
-| `/` | Home | 🔒 |
-| `/insights` | Insights feed | 🔒 |
-| `/trends` | Trend charts | 🔒 |
-| `/settings` | Settings | 🔒 |
-| `/dev` | Developer view | 🔒 + dev flag |
+| Route                | Purpose            | Public        |
+| -------------------- | ------------------ | ------------- |
+| `/auth/login`        | Sign in            | ✅            |
+| `/auth/register`     | Registration       | ✅            |
+| `/auth/verify-email` | Email confirmation | ✅            |
+| `/`                  | Home               | 🔒            |
+| `/insights`          | Insights feed      | 🔒            |
+| `/trends`            | Trend charts       | 🔒            |
+| `/settings`          | Settings           | 🔒            |
+| `/dev`               | Developer view     | 🔒 + dev flag |
 
 ---
 
@@ -523,12 +536,14 @@ See [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md) for full details
 Every new component or screen decision must be checked against:
 
 **Product level**
+
 - [ ] Is this completable in 60 seconds (entry flow) or < 3 scrolls (insights)?
 - [ ] Does this component add truth or just mood?
 - [ ] Does the user understand correlation ≠ causation here?
 - [ ] Does this screen work with zero data (empty state defined)?
 
 **Technical level**
+
 - [ ] Stateless atom or store-consuming organism?
 - [ ] Custom SVG chart or library? (library needs ADR)
 - [ ] Renders without horizontal scroll at 375 px?
@@ -536,6 +551,7 @@ Every new component or screen decision must be checked against:
 - [ ] All strings in locale file?
 
 **No-gamification gate**
+
 - [ ] No streak counter?
 - [ ] No badge or reward animation?
 - [ ] Heatmap uses neutral blue-tone scale?
