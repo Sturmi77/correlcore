@@ -36,7 +36,7 @@ from app.core.crypto import (
 )
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
-from app.models.entry import Entry, EntrySlot, WorkContext
+from app.models.entry import Entry, EntrySlot, EntrySource, WorkContext
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user import User
@@ -92,6 +92,7 @@ def make_entry(
     mood_score: int = 3,
     energy: int = 3,
     stress: int = 3,
+    source: EntrySource = EntrySource.DIRECT,
     work_context: WorkContext = WorkContext.HOMEOFFICE,
     note: str | None = None,
 ) -> Entry:
@@ -108,6 +109,7 @@ def make_entry(
     e.mood_score = mood_score
     e.energy = energy
     e.stress = stress
+    e.source = source
     e.work_context = work_context
     # Issue #26: ``note`` on the model maps to ``note_enc`` storage. In
     # tests we set the plaintext directly because the service tests use

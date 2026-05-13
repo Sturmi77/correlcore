@@ -23,15 +23,25 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.entry import Entry, EntrySlot
-from app.schemas.entry import BACKDATE_DAYS_LIMIT, EntryCreate, EntryUpdate
+from app.models.entry import Entry, EntrySlot, EntrySource
+from app.models.tag import EntryTag, Tag
+from app.schemas.entry import (
+    BACKDATE_DAYS_LIMIT,
+    EntryBatchCreate,
+    EntryCreate,
+    EntryDeltaResponse,
+    EntryMetricDelta,
+    EntryMetrics,
+    EntryUpdate,
+)
+from app.schemas.tag import TagResponse
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +83,7 @@ class EntryDateOutOfRangeError(EntryError):
 
 def _today() -> date_type:
     """Indirection so tests can monkeypatch the clock."""
-    return datetime.now(UTC).date()
+    return datetime.now().date()
 
 
 def _within_backdate_window(entry_date: date_type) -> bool:
@@ -94,6 +104,47 @@ async def _get_owned_entry(db: AsyncSession, *, entry_id: uuid.UUID, user_id: uu
     if entry is None:
         raise EntryNotFoundError("entry not found")
     return entry
+
+
+async def _get_entry_for_day(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entry_date: date_type,
+    slot: EntrySlot,
+) -> Entry | None:
+    result = await db.execute(
+        select(Entry).where(
+            Entry.user_id == user_id,
+            Entry.entry_date == entry_date,
+            Entry.slot == slot,
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def _shared_tags_for_entries(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    today_entry_id: uuid.UUID,
+    previous_entry_id: uuid.UUID,
+) -> list[Tag]:
+    previous_tag_ids = select(EntryTag.tag_id).where(
+        EntryTag.user_id == user_id,
+        EntryTag.entry_id == previous_entry_id,
+    )
+    result = await db.execute(
+        select(Tag)
+        .join(EntryTag, EntryTag.tag_id == Tag.id)
+        .where(
+            EntryTag.user_id == user_id,
+            EntryTag.entry_id == today_entry_id,
+            Tag.id.in_(previous_tag_ids),
+        )
+        .order_by(Tag.category.asc(), Tag.slug.asc())
+    )
+    return list(result.scalars().all())
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +178,7 @@ async def create_entry(
         mood_score=payload.mood_score,
         energy=payload.energy,
         stress=payload.stress,
+        source=payload.source,
         work_context=payload.work_context,
         note_enc=payload.note,
     )
@@ -143,6 +195,22 @@ async def create_entry(
         extra={"user_id": str(user_id), "entry_id": str(entry.id)},
     )
     return entry
+
+
+async def create_entry_batch(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    payload: EntryBatchCreate,
+) -> list[Entry]:
+    """Create up to seven onboarding retrospective entries atomically."""
+
+    created: list[Entry] = []
+    for item in payload.entries:
+        if item.source is not EntrySource.RETROSPECTIVE:
+            item = item.model_copy(update={"source": EntrySource.RETROSPECTIVE})
+        created.append(await create_entry(db, user_id=user_id, payload=item))
+    return created
 
 
 async def get_entry(
@@ -178,6 +246,48 @@ async def list_entries(
 
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_entry_delta(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entry_date: date_type,
+    slot: EntrySlot = EntrySlot.DAY,
+) -> EntryDeltaResponse:
+    """Return a neutral day-over-day comparison for one entry date and slot."""
+
+    today = await _get_entry_for_day(db, user_id=user_id, entry_date=entry_date, slot=slot)
+    previous_date = entry_date - timedelta(days=1)
+    previous = await _get_entry_for_day(
+        db,
+        user_id=user_id,
+        entry_date=previous_date,
+        slot=slot,
+    )
+
+    if today is None or previous is None:
+        return EntryDeltaResponse(
+            today=EntryMetrics.model_validate(today) if today is not None else None,
+            previous=EntryMetrics.model_validate(previous) if previous is not None else None,
+        )
+
+    shared_tags = await _shared_tags_for_entries(
+        db,
+        user_id=user_id,
+        today_entry_id=today.id,
+        previous_entry_id=previous.id,
+    )
+    return EntryDeltaResponse(
+        today=EntryMetrics.model_validate(today),
+        previous=EntryMetrics.model_validate(previous),
+        delta=EntryMetricDelta(
+            mood=today.mood_score - previous.mood_score,
+            energy=today.energy - previous.energy,
+            stress=today.stress - previous.stress,
+        ),
+        shared_tags=[TagResponse.model_validate(tag) for tag in shared_tags],
+    )
 
 
 async def update_entry(
@@ -225,6 +335,8 @@ __all__ = [
     "EntrySlot",
     "MAX_LIST_LIMIT",
     "create_entry",
+    "create_entry_batch",
+    "get_entry_delta",
     "get_entry",
     "list_entries",
     "update_entry",

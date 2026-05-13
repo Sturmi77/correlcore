@@ -19,6 +19,7 @@ from app.models.tag import EntryTag, Tag, TagCategory  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.user_encryption_key import UserEncryptionKey  # noqa: F401
 from app.models.user_preference import UserPreference  # noqa: F401
+from app.models.user_profile import UserProfile  # noqa: F401
 
 __all__ = [
     "INTENSITY_MAX",

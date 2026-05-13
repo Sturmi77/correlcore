@@ -20,10 +20,38 @@ vi.mock('./client', () => ({
 }));
 
 import { api } from './client';
-import { createEntry, fetchEntry, listEntries, updateEntry } from './entries';
+import {
+  createEntry,
+  createEntryBatch,
+  fetchEntry,
+  fetchEntryDelta,
+  listEntries,
+  updateEntry,
+} from './entries';
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+describe('createEntryBatch', () => {
+  it('POSTs to /entries/batch with retrospective entries', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce([]);
+    await createEntryBatch({
+      entries: [
+        {
+          entry_date: '2026-05-04',
+          mood_score: 4,
+          energy: 3,
+          stress: 2,
+          source: 'retrospective',
+          work_context: 'homeoffice',
+        },
+      ],
+    });
+    expect(api.post).toHaveBeenCalledWith('/entries/batch', {
+      entries: [expect.objectContaining({ source: 'retrospective' })],
+    });
+  });
 });
 
 describe('createEntry', () => {
@@ -71,6 +99,21 @@ describe('listEntries', () => {
     expect(path).toContain('start_date=2026-05-01');
     expect(path).toContain('end_date=2026-05-04');
     expect(path).toContain('limit=30');
+  });
+});
+
+describe('fetchEntryDelta', () => {
+  it('GETs /entries/delta with entry date and slot', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+
+    await fetchEntryDelta({ entry_date: '2026-05-13', slot: 'day' });
+
+    expect(api.get).toHaveBeenCalledWith('/entries/delta?entry_date=2026-05-13&slot=day');
   });
 });
 

@@ -7,12 +7,14 @@
  */
 
 import { api } from './client';
+import type { TagResponse } from './tags';
 
 // ---------------------------------------------------------------------------
 // Enums — keep in sync with app/models/entry.py
 // ---------------------------------------------------------------------------
 
 export type EntrySlot = 'day' | 'morning' | 'noon' | 'evening';
+export type EntrySource = 'direct' | 'retrospective' | 'import' | 'wearable';
 
 export type WorkContext = 'homeoffice' | 'office' | 'vacation' | 'sick' | 'weekend' | 'travel';
 
@@ -28,6 +30,7 @@ export interface EntryResponse {
   mood_score: number;
   energy: number;
   stress: number;
+  source: EntrySource;
   work_context: WorkContext;
   note: string | null;
   created_at: string;
@@ -40,8 +43,13 @@ export interface EntryCreatePayload {
   mood_score: number;
   energy: number;
   stress: number;
+  source?: EntrySource;
   work_context: WorkContext;
   note?: string;
+}
+
+export interface EntryBatchCreatePayload {
+  entries: EntryCreatePayload[];
 }
 
 export interface EntryUpdatePayload {
@@ -58,6 +66,32 @@ export interface EntryListQuery {
   limit?: number;
 }
 
+export interface EntryDeltaQuery {
+  entry_date: string;
+  slot?: EntrySlot;
+}
+
+export interface EntryMetrics {
+  entry_date: string;
+  slot: EntrySlot;
+  mood_score: number;
+  energy: number;
+  stress: number;
+}
+
+export interface EntryMetricDelta {
+  mood: number | null;
+  energy: number | null;
+  stress: number | null;
+}
+
+export interface EntryDeltaResponse {
+  today: EntryMetrics | null;
+  previous: EntryMetrics | null;
+  delta: EntryMetricDelta;
+  shared_tags: TagResponse[];
+}
+
 // ---------------------------------------------------------------------------
 // Calls
 // ---------------------------------------------------------------------------
@@ -65,6 +99,11 @@ export interface EntryListQuery {
 /** POST /entries — create today's (or backdated up to 7 days) entry. */
 export async function createEntry(payload: EntryCreatePayload): Promise<EntryResponse> {
   return api.post<EntryResponse>('/entries', payload);
+}
+
+/** POST /entries/batch — create up to seven retrospective onboarding entries. */
+export async function createEntryBatch(payload: EntryBatchCreatePayload): Promise<EntryResponse[]> {
+  return api.post<EntryResponse[]>('/entries/batch', payload);
 }
 
 /** GET /entries/{id} — fetch a single entry. */
@@ -84,6 +123,14 @@ export async function listEntries(query: EntryListQuery = {}): Promise<EntryResp
 }
 
 /** PATCH /entries/{id} — update within the 7-day window. */
+/** GET /entries/delta - day-over-day comparison for one entry date and slot. */
+export async function fetchEntryDelta(query: EntryDeltaQuery): Promise<EntryDeltaResponse> {
+  const params = new URLSearchParams();
+  params.set('entry_date', query.entry_date);
+  if (query.slot) params.set('slot', query.slot);
+  return api.get<EntryDeltaResponse>(`/entries/delta?${params.toString()}`);
+}
+
 export async function updateEntry(id: string, payload: EntryUpdatePayload): Promise<EntryResponse> {
   return api.patch<EntryResponse>(`/entries/${id}`, payload);
 }

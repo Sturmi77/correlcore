@@ -61,6 +61,15 @@ class EntrySlot(StrEnum):
     EVENING = "evening"
 
 
+class EntrySource(StrEnum):
+    """How an entry was captured."""
+
+    DIRECT = "direct"
+    RETROSPECTIVE = "retrospective"
+    IMPORT = "import"
+    WEARABLE = "wearable"
+
+
 class WorkContext(StrEnum):
     """User's working/life context for the day (DESIGN_DOCUMENT.md §2.7)."""
 
@@ -105,6 +114,12 @@ class Entry(Base):
     mood_score: Mapped[int] = mapped_column(Integer, nullable=False)
     energy: Mapped[int] = mapped_column(Integer, nullable=False)
     stress: Mapped[int] = mapped_column(Integer, nullable=False)
+    source: Mapped[EntrySource] = mapped_column(
+        Enum(EntrySource, name="entry_source", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=EntrySource.DIRECT,
+        server_default=EntrySource.DIRECT.value,
+    )
     work_context: Mapped[WorkContext] = mapped_column(
         Enum(WorkContext, name="work_context", values_callable=lambda x: [e.value for e in x]),
         nullable=False,

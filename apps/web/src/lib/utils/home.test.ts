@@ -50,6 +50,7 @@ describe('findEntryForDate', () => {
     energy: 3,
     stress: 3,
     work_context: 'homeoffice',
+    source: 'direct',
     note: null,
     created_at: '2026-05-07T10:00:00Z',
     updated_at: '2026-05-07T10:00:00Z',

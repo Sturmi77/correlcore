@@ -34,6 +34,12 @@ def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
     return result
 
 
+def _scalar_optional_result(value: object | None) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
+    return result
+
+
 @pytest.mark.asyncio
 async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
     user = make_user(email="me@example.test")
@@ -47,6 +53,7 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
     db.execute = AsyncMock(
         side_effect=[
             _scalar_result([entry]),
+            _scalar_optional_result(None),
             _row_result([(entry_tag.entry_id, tag)]),
             _row_result([(entry_symptom.entry_id, entry_symptom.intensity, symptom)]),
         ]
@@ -89,7 +96,14 @@ async def test_export_csv_and_zip_render() -> None:
     user = make_user()
     entry = make_entry(user, note=None)
     db = MagicMock()
-    db.execute = AsyncMock(side_effect=[_scalar_result([entry]), _row_result([]), _row_result([])])
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result([entry]),
+            _scalar_optional_result(None),
+            _row_result([]),
+            _row_result([]),
+        ]
+    )
 
     envelope = await build_export_envelope(db, user=user)
     csv_bytes = render_export_csv(envelope)

@@ -29,9 +29,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
-from app.models.entry import EntrySlot, WorkContext
+from app.models.entry import EntrySlot, EntrySource, WorkContext
 from app.models.user import User
-from app.schemas.entry import EntryCreate, EntryUpdate
+from app.schemas.entry import EntryBatchCreate, EntryCreate, EntryDeltaResponse, EntryUpdate
 from app.services import entry_service
 from app.services.entry_service import (
     EntryConflictError,
@@ -39,11 +39,13 @@ from app.services.entry_service import (
     EntryNotFoundError,
     EntryReadOnlyError,
     create_entry,
+    create_entry_batch,
     get_entry,
+    get_entry_delta,
     list_entries,
     update_entry,
 )
-from tests.conftest import make_entry, make_user
+from tests.conftest import make_entry, make_tag, make_user
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -60,6 +62,20 @@ def _make_db(*, flush_raises: Exception | None = None) -> MagicMock:
         db.flush = AsyncMock()
     db.rollback = AsyncMock()
     return db
+
+
+def _scalar_one_result(value: object | None) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
+    return result
+
+
+def _scalars_all_result(values: list[object]) -> MagicMock:
+    scalars = MagicMock()
+    scalars.all.return_value = values
+    result = MagicMock()
+    result.scalars.return_value = scalars
+    return result
 
 
 def _payload(**overrides: object) -> EntryCreate:
@@ -92,6 +108,7 @@ async def test_create_entry_happy_path() -> None:
     assert entry.mood_score == 4
     assert entry.energy == 3
     assert entry.stress == 2
+    assert entry.source is EntrySource.DIRECT
     assert entry.work_context is WorkContext.HOMEOFFICE
     assert entry.note_enc == "feeling good"
     db.add.assert_called_once()
@@ -109,6 +126,21 @@ async def test_create_entry_at_backdate_boundary_succeeds() -> None:
     entry = await create_entry(db, user_id=user.id, payload=_payload(entry_date=seven_days_ago))
 
     assert entry.entry_date == seven_days_ago
+
+
+@pytest.mark.asyncio
+async def test_create_entry_batch_marks_entries_retrospective() -> None:
+    user = make_user()
+    db = _make_db()
+
+    entries = await create_entry_batch(
+        db,
+        user_id=user.id,
+        payload=EntryBatchCreate(entries=[_payload(source=EntrySource.DIRECT)]),
+    )
+
+    assert len(entries) == 1
+    assert entries[0].source is EntrySource.RETROSPECTIVE
 
 
 @pytest.mark.asyncio
@@ -223,6 +255,96 @@ async def test_list_entries_clamps_limit() -> None:
     assert out == []
     # The query was built — we just confirm no crash + correct call shape.
     db.execute.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# Service: get_entry_delta
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_entry_delta_returns_metric_differences_and_shared_tags() -> None:
+    user = make_user()
+    today = make_entry(
+        user,
+        entry_date=date(2026, 5, 13),
+        mood_score=4,
+        energy=2,
+        stress=3,
+    )
+    previous = make_entry(
+        user,
+        entry_date=date(2026, 5, 12),
+        mood_score=2,
+        energy=4,
+        stress=3,
+    )
+    shared = make_tag(user, slug="sport", name="Sport")
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_result(today),
+            _scalar_one_result(previous),
+            _scalars_all_result([shared]),
+        ]
+    )
+
+    out = await get_entry_delta(
+        db,
+        user_id=user.id,
+        entry_date=date(2026, 5, 13),
+        slot=EntrySlot.DAY,
+    )
+
+    assert out.today is not None
+    assert out.previous is not None
+    assert out.delta.mood == 2
+    assert out.delta.energy == -2
+    assert out.delta.stress == 0
+    assert [tag.slug for tag in out.shared_tags] == ["sport"]
+
+
+@pytest.mark.asyncio
+async def test_get_entry_delta_without_previous_entry_returns_no_delta() -> None:
+    user = make_user()
+    today = make_entry(user, entry_date=date(2026, 5, 13))
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_result(today),
+            _scalar_one_result(None),
+        ]
+    )
+
+    out = await get_entry_delta(db, user_id=user.id, entry_date=date(2026, 5, 13))
+
+    assert out.today is not None
+    assert out.previous is None
+    assert out.delta.mood is None
+    assert out.delta.energy is None
+    assert out.delta.stress is None
+    assert out.shared_tags == []
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_get_entry_delta_without_today_entry_returns_previous_context_only() -> None:
+    user = make_user()
+    previous = make_entry(user, entry_date=date(2026, 5, 12))
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_result(None),
+            _scalar_one_result(previous),
+        ]
+    )
+
+    out = await get_entry_delta(db, user_id=user.id, entry_date=date(2026, 5, 13))
+
+    assert out.today is None
+    assert out.previous is not None
+    assert out.delta.mood is None
+    assert out.shared_tags == []
 
 
 # ---------------------------------------------------------------------------
@@ -447,6 +569,49 @@ async def test_list_entries_200(async_client: AsyncClient, user: User) -> None:
     assert isinstance(body, list)
     assert len(body) == 3
     assert all(set(item.keys()) >= {"id", "mood_score", "work_context"} for item in body)
+
+
+@pytest.mark.asyncio
+async def test_get_entry_delta_200(async_client: AsyncClient, user: User) -> None:
+    today = make_entry(user, entry_date=date(2026, 5, 13), mood_score=4)
+    previous = make_entry(user, entry_date=date(2026, 5, 12), mood_score=3)
+    payload = EntryDeltaResponse.model_validate(
+        {
+            "today": today,
+            "previous": previous,
+            "delta": {"mood": 1, "energy": 0, "stress": 0},
+            "shared_tags": [],
+        }
+    )
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.entries.get_entry_delta",
+            new_callable=AsyncMock,
+            return_value=payload,
+        ) as mocked:
+            r = await async_client.get(
+                "/api/v1/entries/delta?entry_date=2026-05-13&slot=day",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["delta"]["mood"] == 1
+    assert body["today"]["entry_date"] == "2026-05-13"
+    mocked.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_entry_delta_unauthenticated(async_client: AsyncClient) -> None:
+    r = await async_client.get("/api/v1/entries/delta?entry_date=2026-05-13")
+    assert r.status_code == 401
 
 
 @pytest.mark.asyncio

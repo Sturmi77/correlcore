@@ -17,10 +17,12 @@ from datetime import UTC, datetime
 from datetime import date as date_type
 from typing import Any, Literal
 
-from scipy.stats import pointbiserialr, spearmanr
+from scipy.stats import chisquare, pointbiserialr, spearmanr
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from statsmodels.stats.multitest import multipletests
 
+from app.core.config import settings
 from app.models.entry import Entry
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.tag import EntryTag, Tag
@@ -36,6 +38,7 @@ MIN_BIVARIATE_ENTRIES = DEVELOPING_ENTRY_COUNT
 MIN_TAG_GROUP_SIZE = 2
 MIN_ABS_EFFECT_SIZE = 0.25
 MIN_WEEKDAY_DELTA = 0.5
+FDR_ALPHA = 0.05
 
 MetricName = Literal["mood_score", "energy", "stress"]
 
@@ -144,13 +147,61 @@ def _direction(effect_size: float | None, positive: str, negative: str) -> str:
     return positive if effect_size is not None and effect_size >= 0 else negative
 
 
-def _base_flags(*, p_value: float | None, method: str) -> dict[str, object]:
-    return {
+def _base_flags(
+    *,
+    p_value: float | None,
+    method: str,
+    p_corrected: float | None = None,
+) -> dict[str, object]:
+    flags: dict[str, object] = {
         "method": method,
         "p_value": _round_or_none(p_value),
         "medical_disclaimer_required": True,
         "causal_claim": False,
     }
+    if p_corrected is not None:
+        flags["p_corrected"] = _round_or_none(p_corrected)
+        flags["multiple_testing_correction"] = "fdr_bh"
+    return flags
+
+
+def _fdr_results(p_values: Sequence[float]) -> list[tuple[bool, float]]:
+    """Apply Benjamini-Hochberg FDR correction to one correlation family."""
+
+    if not p_values:
+        return []
+    reject, p_corrected, _, _ = multipletests(p_values, alpha=FDR_ALPHA, method="fdr_bh")
+    return [
+        (bool(sig), float(corrected)) for sig, corrected in zip(reject, p_corrected, strict=True)
+    ]
+
+
+def is_weekday_biased(
+    entries: Sequence[AnalyticsEntry],
+    tag_id: uuid.UUID,
+    *,
+    threshold_p: float = FDR_ALPHA,
+) -> bool:
+    """Return True when a tag is concentrated on specific weekdays."""
+
+    observed = [
+        sum(1 for entry in entries if tag_id in entry.tag_ids and entry.entry_date.weekday() == day)
+        for day in range(7)
+    ]
+    total = sum(observed)
+    if total < settings.ANALYTICS_MIN_TAG_USAGES:
+        return False
+
+    expected = [total / 7] * 7
+    result = chisquare(observed, f_exp=expected)
+    p_value = _finite_float(result.pvalue)
+    return p_value is not None and p_value < threshold_p
+
+
+def _weekday_confounded_statement(statement: str, *, weekday_confounded: bool) -> str:
+    if not weekday_confounded:
+        return statement
+    return f"{statement} Note: this pattern occurs primarily on specific weekdays."
 
 
 def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEntry]:
@@ -189,13 +240,12 @@ def _spearman_candidates(
     if len(entries) < MIN_BIVARIATE_ENTRIES:
         return []
 
-    candidates: list[InsightCandidate] = []
-    pairs: tuple[tuple[MetricName, MetricName], ...] = (
-        ("mood_score", "energy"),
-        ("mood_score", "stress"),
-        ("energy", "stress"),
+    raw: list[tuple[MetricName, MetricName, str, float, float]] = []
+    pairs: tuple[tuple[MetricName, MetricName, str], ...] = (
+        ("energy", "mood_score", "energy_mood"),
+        ("stress", "mood_score", "stress_mood"),
     )
-    for left, right in pairs:
+    for left, right, metric in pairs:
         left_values = [_metric_value(entry, left) for entry in entries]
         right_values = [_metric_value(entry, right) for entry in entries]
         if len(set(left_values)) < 2 or len(set(right_values)) < 2:
@@ -203,9 +253,18 @@ def _spearman_candidates(
         result = spearmanr(left_values, right_values)
         rho = _finite_float(result.statistic)
         p_value = _finite_float(result.pvalue)
-        if rho is None or abs(rho) < MIN_ABS_EFFECT_SIZE:
+        if rho is None or p_value is None or abs(rho) < MIN_ABS_EFFECT_SIZE:
             continue
+        raw.append((left, right, metric, rho, p_value))
 
+    candidates: list[InsightCandidate] = []
+    for (left, right, metric, rho, p_value), (significant, p_corrected) in zip(
+        raw,
+        _fdr_results([item[4] for item in raw]),
+        strict=True,
+    ):
+        if not significant:
+            continue
         direction = _direction(rho, "higher", "lower")
         statement = (
             f"In your entries so far, {_METRIC_LABELS[left]} tends to be {direction} "
@@ -215,19 +274,20 @@ def _spearman_candidates(
             InsightCandidate(
                 insight_type=InsightType.SPEARMAN,
                 tier=tier,
-                metric=left,
+                metric=metric,
                 subject_type="metric",
                 subject_id=None,
                 subject_label=right,
                 effect_size=round(rho, 4),
-                confidence=_confidence(rho, p_value, tier),
+                confidence=_confidence(rho, p_corrected, tier),
                 sample_n=len(entries),
                 statement=statement,
-                flags=_base_flags(p_value=p_value, method="spearman"),
+                flags=_base_flags(p_value=p_value, p_corrected=p_corrected, method="spearman"),
                 payload={
                     "left_metric": left,
                     "right_metric": right,
                     "rho": round(rho, 4),
+                    "p_corrected": round(p_corrected, 4),
                 },
                 generated_for_date=generated_for_date,
             )
@@ -245,19 +305,31 @@ def _pointbiserial_candidates(
     if len(entries) < MIN_BIVARIATE_ENTRIES:
         return []
 
-    candidates: list[InsightCandidate] = []
+    raw: list[
+        tuple[
+            uuid.UUID,
+            TagSnapshot,
+            float,
+            float,
+            int,
+            int,
+            float,
+            float,
+            bool,
+        ]
+    ] = []
     for tag_id, tag in sorted(tags.items(), key=lambda item: item[1].slug):
         binary = [1 if tag_id in entry.tag_ids else 0 for entry in entries]
         tagged_count = sum(binary)
         untagged_count = len(binary) - tagged_count
-        if tagged_count < MIN_TAG_GROUP_SIZE or untagged_count < MIN_TAG_GROUP_SIZE:
+        if tagged_count < settings.ANALYTICS_MIN_TAG_USAGES or untagged_count < MIN_TAG_GROUP_SIZE:
             continue
 
         mood_values = [entry.mood_score for entry in entries]
         result = pointbiserialr(binary, mood_values)
         coefficient = _finite_float(result.statistic)
         p_value = _finite_float(result.pvalue)
-        if coefficient is None or abs(coefficient) < MIN_ABS_EFFECT_SIZE:
+        if coefficient is None or p_value is None or abs(coefficient) < MIN_ABS_EFFECT_SIZE:
             continue
 
         tagged_mood = (
@@ -272,10 +344,46 @@ def _pointbiserial_candidates(
             )
             / untagged_count
         )
+        raw.append(
+            (
+                tag_id,
+                tag,
+                coefficient,
+                p_value,
+                tagged_count,
+                untagged_count,
+                tagged_mood,
+                untagged_mood,
+                is_weekday_biased(entries, tag_id),
+            )
+        )
+
+    candidates: list[InsightCandidate] = []
+    for (
+        tag_id,
+        tag,
+        coefficient,
+        p_value,
+        tagged_count,
+        untagged_count,
+        tagged_mood,
+        untagged_mood,
+        weekday_confounded,
+    ), (significant, p_corrected) in zip(
+        raw,
+        _fdr_results([item[3] for item in raw]),
+        strict=True,
+    ):
+        if not significant:
+            continue
         direction = _direction(coefficient, "higher", "lower")
         statement = (
             f"Days tagged {tag.label} currently line up with {direction} mood scores "
             "in your data. Treat this as a pattern to reflect on, not a cause."
+        )
+        statement = _weekday_confounded_statement(
+            statement,
+            weekday_confounded=weekday_confounded,
         )
         candidates.append(
             InsightCandidate(
@@ -286,15 +394,24 @@ def _pointbiserial_candidates(
                 subject_id=tag_id,
                 subject_label=tag.label,
                 effect_size=round(coefficient, 4),
-                confidence=_confidence(coefficient, p_value, tier),
+                confidence=_confidence(coefficient, p_corrected, tier),
                 sample_n=len(entries),
                 statement=statement,
-                flags=_base_flags(p_value=p_value, method="pointbiserial"),
+                flags={
+                    **_base_flags(
+                        p_value=p_value,
+                        p_corrected=p_corrected,
+                        method="pointbiserial",
+                    ),
+                    "weekday_confounded": weekday_confounded,
+                    "min_tag_usages": settings.ANALYTICS_MIN_TAG_USAGES,
+                },
                 payload={
                     "tagged_count": tagged_count,
                     "untagged_count": untagged_count,
                     "tagged_mood_avg": round(tagged_mood, 2),
                     "untagged_mood_avg": round(untagged_mood, 2),
+                    "p_corrected": round(p_corrected, 4),
                 },
                 generated_for_date=generated_for_date,
             )
@@ -355,6 +472,13 @@ def _weekday_candidates(
             payload={
                 "weekday": weekday,
                 "weekday_mood_avg": round(avg, 2),
+                "weekday_mood_avgs": {
+                    str(day): round(sum(values) / len(values), 2)
+                    for day, values in sorted(by_weekday.items())
+                },
+                "weekday_entry_counts": {
+                    str(day): len(values) for day, values in sorted(by_weekday.items())
+                },
                 "overall_mood_avg": round(overall_avg, 2),
                 "weekday_entry_count": len(by_weekday[weekday]),
             },
@@ -411,7 +535,9 @@ async def _load_analytics_inputs(
 ) -> tuple[list[AnalyticsEntry], list[TagSnapshot]]:
     result = await db.execute(
         select(Entry)
-        .where(Entry.user_id == user_id, Entry.entry_date <= as_of)
+        # Temporal integrity guard: analytics must follow entry_date only.
+        # created_at/updated_at would leak look-ahead bias for backdated entries.
+        .where(Entry.user_id == user_id, Entry.entry_date < as_of)
         .order_by(Entry.entry_date.asc(), Entry.slot.asc())
     )
     entries = list(result.scalars().all())
@@ -422,7 +548,7 @@ async def _load_analytics_inputs(
         select(EntryTag.entry_id, Tag)
         .join(Tag, Tag.id == EntryTag.tag_id)
         .join(Entry, Entry.id == EntryTag.entry_id)
-        .where(EntryTag.user_id == user_id, Entry.user_id == user_id, Entry.entry_date <= as_of)
+        .where(EntryTag.user_id == user_id, Entry.user_id == user_id, Entry.entry_date < as_of)
     )
     tag_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
     tags_by_id: dict[uuid.UUID, TagSnapshot] = {}

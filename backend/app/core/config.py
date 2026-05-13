@@ -117,6 +117,10 @@ class Settings(BaseSettings):
     # never click the mail link are hard-deleted by the worker after this
     # many days so email addresses do not remain blocked forever.
     UNVERIFIED_CLEANUP_DAYS: int = Field(default=7, ge=1)
+    # Minimum pairwise usage count before a tag can produce a tag->mood insight.
+    # This is intentionally stricter than the global entry-count tier because
+    # rare tags have too little statistical power even inside a large history.
+    ANALYTICS_MIN_TAG_USAGES: int = Field(default=10, ge=2)
     # Public base URL used to build the verify link in outgoing mails.
     # Frontend route handles the GET and calls the API.
     FRONTEND_BASE_URL: str = "http://localhost:5173"

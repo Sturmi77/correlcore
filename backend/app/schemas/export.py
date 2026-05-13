@@ -31,6 +31,7 @@ class ExportEnvelope(BaseModel):
     tags: list[dict[str, Any]] = Field(default_factory=list)
     symptoms: list[dict[str, Any]] = Field(default_factory=list)
     habits: list[dict[str, Any]] = Field(default_factory=list)
+    profile: dict[str, Any] | None = None
     insights: list[dict[str, Any]] = Field(default_factory=list)
     photos: list[dict[str, Any]] = Field(default_factory=list)
     sleep: list[dict[str, Any]] = Field(default_factory=list)

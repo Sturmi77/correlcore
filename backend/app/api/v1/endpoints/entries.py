@@ -27,8 +27,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.deps.auth import get_current_verified_user
 from app.core.rate_limit import limiter
 from app.db.session import get_session
+from app.models.entry import EntrySlot
 from app.models.user import User
-from app.schemas.entry import EntryCreate, EntryResponse, EntryUpdate
+from app.schemas.entry import (
+    EntryBatchCreate,
+    EntryCreate,
+    EntryDeltaResponse,
+    EntryResponse,
+    EntryUpdate,
+)
 from app.schemas.stats import (
     EntryStreakResponse,
     TagHeatmapResponse,
@@ -43,7 +50,9 @@ from app.services.entry_service import (
     EntryNotFoundError,
     EntryReadOnlyError,
     create_entry,
+    create_entry_batch,
     get_entry,
+    get_entry_delta,
     list_entries,
     update_entry,
 )
@@ -85,6 +94,34 @@ async def create_entry_endpoint(
         ) from exc
 
     return EntryResponse.model_validate(entry)
+
+
+@router.post(
+    "/batch",
+    response_model=list[EntryResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a small retrospective entry batch",
+)
+@limiter.limit("20/minute")
+async def create_entry_batch_endpoint(
+    request: Request,
+    payload: EntryBatchCreate,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> list[EntryResponse]:
+    try:
+        entries = await create_entry_batch(db, user_id=user.id, payload=payload)
+    except EntryDateOutOfRangeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except EntryConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    return [EntryResponse.model_validate(entry) for entry in entries]
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +191,22 @@ async def get_entry_streak_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> EntryStreakResponse:
     return await get_entry_streak(db, user_id=user.id, as_of=as_of)
+
+
+@router.get(
+    "/delta",
+    response_model=EntryDeltaResponse,
+    summary="Return a neutral day-over-day entry comparison",
+)
+@limiter.limit("120/minute")
+async def get_entry_delta_endpoint(
+    request: Request,
+    entry_date: date_type = Query(..., alias="entry_date"),
+    slot: EntrySlot = Query(default=EntrySlot.DAY),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> EntryDeltaResponse:
+    return await get_entry_delta(db, user_id=user.id, entry_date=entry_date, slot=slot)
 
 
 # ---------------------------------------------------------------------------

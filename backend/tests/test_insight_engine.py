@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, timedelta
+from random import Random
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -13,6 +14,7 @@ from app.services.insight_engine import (
     confidence_tier_for_sample,
     generate_and_store_insights,
     generate_insight_candidates,
+    is_weekday_biased,
 )
 from tests.conftest import make_entry, make_tag, make_user
 
@@ -72,6 +74,15 @@ def test_weekday_pattern_is_available_before_bivariate_correlation() -> None:
     assert candidate.tier == InsightTier.EARLY
     assert candidate.subject_label == "Monday"
     assert candidate.flags["early_pattern"] is True
+    assert candidate.payload["weekday_mood_avgs"] == {
+        "0": 5.0,
+        "1": 3.0,
+        "2": 3.0,
+        "3": 3.0,
+        "4": 3.0,
+        "5": 3.0,
+        "6": 3.0,
+    }
 
 
 def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
@@ -94,6 +105,11 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     by_type = {candidate.insight_type for candidate in candidates}
     assert InsightType.SPEARMAN in by_type
     assert InsightType.POINTBISERIAL in by_type
+    assert {"energy_mood", "stress_mood"} <= {
+        candidate.metric
+        for candidate in candidates
+        if candidate.insight_type == InsightType.SPEARMAN
+    }
     assert all(candidate.tier == InsightTier.ROBUST for candidate in candidates)
     assert all(candidate.sample_n == 30 for candidate in candidates)
     assert all(candidate.confidence is not None for candidate in candidates)
@@ -124,6 +140,71 @@ def test_bivariate_candidates_wait_for_developing_sample_size() -> None:
     assert all(candidate.insight_type != InsightType.SPEARMAN for candidate in candidates)
 
 
+def test_pointbiserial_uses_fdr_correction_for_many_random_tags() -> None:
+    rng = Random(42)
+    start = date(2026, 4, 1)
+    tag_ids = [uuid.uuid4() for _ in range(40)]
+    tags = [
+        TagSnapshot(id=tag_id, label=f"Tag {idx}", slug=f"tag_{idx}")
+        for idx, tag_id in enumerate(tag_ids)
+    ]
+    entries: list[AnalyticsEntry] = []
+    for offset in range(60):
+        assigned = {tag_id for tag_id in tag_ids if rng.random() < 0.35}
+        entries.append(
+            _entry(
+                start + timedelta(days=offset),
+                mood=rng.randint(1, 5),
+                energy=rng.randint(1, 5),
+                stress=rng.randint(1, 5),
+                tag_ids=frozenset(assigned),
+            )
+        )
+
+    candidates = generate_insight_candidates(entries, tags, as_of=date(2026, 5, 31))
+    tag_candidates = [c for c in candidates if c.insight_type == InsightType.POINTBISERIAL]
+
+    assert len(tag_candidates) < 5
+    assert all(c.flags["multiple_testing_correction"] == "fdr_bh" for c in tag_candidates)
+
+
+def test_pairwise_min_tag_usages_skip_rare_tags() -> None:
+    tag_id = uuid.uuid4()
+    tag = TagSnapshot(id=tag_id, label="Rare tag", slug="rare")
+    start = date(2026, 4, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset < 3 else 2,
+            energy=3,
+            stress=3,
+            tag_ids=frozenset({tag_id}) if offset < 3 else frozenset(),
+        )
+        for offset in range(30)
+    ]
+
+    candidates = generate_insight_candidates(entries, [tag], as_of=date(2026, 4, 30))
+
+    assert all(candidate.subject_id != tag_id for candidate in candidates)
+
+
+def test_weekday_biased_detects_tag_concentrated_on_one_weekday() -> None:
+    tag_id = uuid.uuid4()
+    start = date(2026, 4, 4)  # Saturday
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=3,
+            energy=3,
+            stress=3,
+            tag_ids=frozenset({tag_id}) if offset % 7 == 0 else frozenset(),
+        )
+        for offset in range(70)
+    ]
+
+    assert is_weekday_biased(entries, tag_id) is True
+
+
 @pytest.mark.asyncio
 async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     user = make_user()
@@ -146,17 +227,20 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     )
     db.flush = AsyncMock()
 
-    stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 4, 30))
+    stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
     assert stored
     assert db.execute.await_count == 3
+    load_stmt = db.execute.await_args_list[0].args[0]
+    assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
+    assert "ORDER BY entries.entry_date ASC" in str(load_stmt)
     delete_stmt = db.execute.await_args_list[2].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert db.add.call_count == len(stored)
     assert db.flush.await_count == 1
     assert any(insight.insight_type == InsightType.POINTBISERIAL for insight in stored)
     assert all(insight.user_id == user.id for insight in stored)
-    assert all(insight.generated_for_date == date(2026, 4, 30) for insight in stored)
+    assert all(insight.generated_for_date == date(2026, 5, 1) for insight in stored)
 
 
 def test_hidden_or_sparse_tag_groups_do_not_create_tag_insights() -> None:

@@ -21,15 +21,24 @@
   import { goto } from '$app/navigation';
   import { auth, currentUser, logout } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
-  import { fetchLatestInsight, type InsightResponse } from '$lib/api/insights';
+  import { fetchDashboardSummary, type DashboardSummaryResponse } from '$lib/api/dashboard';
+  import { listLatestInsights, type InsightResponse } from '$lib/api/insights';
+  import {
+    fetchUserPreferences,
+    updateUserPreferences,
+    type UserPreferencesResponse,
+  } from '$lib/api/preferences';
   import { fetchEntryStreak, type EntryStreakResponse } from '$lib/api/stats';
   import { findEntryForDate, greetingKey, localIsoDate } from '$lib/utils/home';
   import { computeEntryStreak, shiftIsoDate } from '$lib/utils/streak';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeInsight from '$lib/components/home/HomeInsight.svelte';
   import HomeRecentEntries from '$lib/components/home/HomeRecentEntries.svelte';
   import HomeSummary from '$lib/components/home/HomeSummary.svelte';
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
+  import InsightConfidenceScale from '$lib/components/home/InsightConfidenceScale.svelte';
+  import WeekdayPatternChart from '$lib/components/home/WeekdayPatternChart.svelte';
 
   // ---------------------------------------------------------------------
   // Constants & derived state.
@@ -39,6 +48,7 @@
   const BASELINE_DAYS = 14;
   /** Extension cap when the streak fills the baseline window. */
   const EXTENDED_DAYS = 30;
+  const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
 
   const todayIso = localIsoDate(new Date());
   const greetingI18nKey = greetingKey(new Date().getHours());
@@ -47,7 +57,10 @@
   let recentEntries: EntryResponse[] = [];
   let streakEntries: EntryResponse[] = [];
   let backendStreak: EntryStreakResponse | null = null;
+  let dashboardSummary: DashboardSummaryResponse | null = null;
   let latestInsight: InsightResponse | null = null;
+  let weekdayInsight: InsightResponse | null = null;
+  let userPreferences: UserPreferencesResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
   /** True once the loader had to query the extended 30-day window. */
@@ -66,20 +79,28 @@
     dashboardLoading = true;
     try {
       const start = shiftIsoDate(todayIso, -(BASELINE_DAYS - 1));
-      const [baselineResult, streakResult, insightResult] = await Promise.allSettled([
-        listEntries({
-          start_date: start,
-          end_date: todayIso,
-        }),
-        fetchEntryStreak(todayIso),
-        fetchLatestInsight(),
-      ]);
+      const [baselineResult, streakResult, summaryResult, insightResult, preferencesResult] =
+        await Promise.allSettled([
+          listEntries({
+            start_date: start,
+            end_date: todayIso,
+          }),
+          fetchEntryStreak(todayIso),
+          fetchDashboardSummary(todayIso),
+          listLatestInsights({ limit: 10 }),
+          fetchUserPreferences(),
+        ]);
 
       if (baselineResult.status === 'rejected') throw baselineResult.reason;
 
       const baseline = baselineResult.value;
       backendStreak = streakResult.status === 'fulfilled' ? streakResult.value : null;
-      latestInsight = insightResult.status === 'fulfilled' ? insightResult.value : null;
+      dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
+      const insights = insightResult.status === 'fulfilled' ? insightResult.value.insights : [];
+      latestInsight = insights[0] ?? null;
+      weekdayInsight =
+        insights.find((insight) => insight.insight_type === 'weekday_pattern') ?? null;
+      userPreferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : null;
       recentEntries = baseline;
       todayEntry = findEntryForDate(baseline, todayIso);
 
@@ -108,7 +129,10 @@
       streakEntries = [];
       todayEntry = null;
       backendStreak = null;
+      dashboardSummary = null;
       latestInsight = null;
+      weekdayInsight = null;
+      userPreferences = null;
       streakCapped = false;
     } finally {
       dashboardLoading = false;
@@ -128,11 +152,53 @@
     dashboardLoaded = false;
     streakCapped = false;
     backendStreak = null;
+    dashboardSummary = null;
     latestInsight = null;
+    weekdayInsight = null;
+    userPreferences = null;
     void goto('/', { replaceState: true });
   }
 
   $: displayName = $currentUser?.display_name?.trim() || $currentUser?.email || '';
+  $: firstWeekDismissed =
+    userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
+  $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
+  $: if (
+    dashboardLoaded &&
+    $auth.status === 'authenticated' &&
+    dashboardSummary?.entry_count === 0 &&
+    userPreferences &&
+    !userPreferences.onboarding_retro_completed
+  ) {
+    void goto('/onboarding/retro', { replaceState: true });
+  }
+
+  async function dismissFirstWeekBanner(): Promise<void> {
+    const dismissed = new Set(userPreferences?.dismissed_insight_keys ?? []);
+    dismissed.add(FIRST_WEEK_PATTERN_KEY);
+    const optimistic = {
+      ...(userPreferences ?? {
+        user_id: $currentUser?.id ?? '',
+        analytics_enabled: true,
+        onboarding_retro_completed: false,
+        onboarding_profile_completed: false,
+        reached_milestone_keys: [],
+        last_seen_insight_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+      dismissed_insight_keys: [...dismissed],
+    };
+    userPreferences = optimistic;
+    try {
+      userPreferences = await updateUserPreferences({
+        dismissed_insight_keys: optimistic.dismissed_insight_keys,
+      });
+    } catch {
+      // Keep the optimistic dismissal for this session; a later reload will
+      // reflect the server state if persistence failed.
+    }
+  }
 
   onMount(() => {
     if ($auth.status === 'authenticated' && !dashboardLoaded) {
@@ -240,6 +306,28 @@
         loading={dashboardLoading && !dashboardLoaded}
       />
     </section>
+
+    {#if showFirstWeekBanner}
+      <section>
+        <FirstWeekInsightBanner on:dismiss={dismissFirstWeekBanner} />
+      </section>
+    {/if}
+
+    <!-- Permanent insight confidence scale -->
+    <section>
+      <InsightConfidenceScale
+        confidenceScore={dashboardSummary?.confidence_score ?? 0.05}
+        currentTier={dashboardSummary?.insight_tier ?? 'none'}
+        entryCount={dashboardSummary?.entry_count ?? 0}
+        loading={dashboardLoading && !dashboardLoaded}
+      />
+    </section>
+
+    {#if weekdayInsight}
+      <section>
+        <WeekdayPatternChart insight={weekdayInsight} />
+      </section>
+    {/if}
 
     <!-- Latest generated insight -->
     <section>
