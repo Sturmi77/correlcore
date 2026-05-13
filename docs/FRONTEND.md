@@ -1,80 +1,109 @@
-# CorrelCore — Frontend-Prinzipien
+# CorrelCore — Frontend Principles
 
-Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab.
+Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-13 (M3.1 frontend restructure).
+
+> **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
 ---
 
-## 1. Kerngrundsätze
+## 1. Core Principles
 
-### 60-Sekunden-Regel
+### 1.1 Analytical Clarity over Aesthetic Delight
 
-Der Default-Eintrag muss in ≤ 60 Sekunden abgeschlossen sein:
+CorrelCore is not a wellness journal. The visual language must signal **precision and trustworthiness**, not playfulness. The color palette (`--color-primary: #7c6af5 / #6356d9`) is technical and modern. Charts use semantic colors (negative correlation → desaturated cool tones, positive → warm primary tones), never arbitrary brightness.
 
-- Mood-Slider (Pflicht)
-- 3 Top-Tags (Optional, schnell auswählbar)
-- Symptome (Optional)
-- Notiz (Optional)
+### 1.2 The 60-Second Rule
 
-Jede Komponente, die diesen Flow verlangsamt, ist zu überdenken.
+The default daily entry must be completable in ≤ 60 seconds:
 
-### Mobile First
+- Mood slider (required)
+- Work context quick-pick (one tap)
+- Top 3 tags (optional, pre-sorted by usage frequency)
+- Symptoms / Note (optional, behind "More" expand)
 
-- Breakpoints: 375px (Basis) → 768px → 1024px+
-- Touch-Targets: ≥ 44×44 px (WCAG 2.5.5)
-- Bottom-Sheet statt Full-Page-Form für Entry-Erstellung
-- Swipe-Gesten für Navigation (Heute ↔ Gestern ↔ Insights)
+Every component that slows this flow must be reconsidered.
 
-### Home-Screen-Philosophie
+### 1.3 Progressive Disclosure — Three Levels
+
+All insight content follows a strict 3-level disclosure model:
+
+| Level | Content | Trigger |
+|---|---|---|
+| **1 — Statement** | One-sentence finding + direction indicator | Always visible |
+| **2 — Context** | Confidence bar + sample_n + time window + disclaimer link | Visible on card |
+| **3 — Exploration** | Full dual-axis chart, raw data overlay, export button | Tap "Show details" |
+
+No user should need Level 3 to understand the value of an insight.
+
+### 1.4 Data Integrity as UX Statement
+
+Every insight card **must** carry:
+- `confidence` visualised as a labelled progress bar (see §6)
+- `sample_n` as subtext (`Based on 42 entries · 90 days`)
+- A "What does this mean?" link to the correlation disclaimer
+
+This is active user trust-building, not legal boilerplate.
+
+### 1.5 No-Gamification Consequences in Visualisations
+
+- **No** streak counters anywhere in the UI
+- **No** badges, points, fire emojis, or reward animations
+- Calendar / frequency heatmaps use **blue-tone neutral scales** — never red/green traffic-light colouring that implies a streak verdict
+- Habit adherence is shown as a **percentage rate**, not a chain counter
+- Notifications copy is always neutral: "Time for your daily check-in." — never "Don't break your streak!"
+
+### 1.6 Mobile First
+
+- Breakpoints: 375 px (base) → 768 px → 1024 px+
+- Touch targets: ≥ 44 × 44 px (WCAG 2.5.5)
+- Bottom sheet instead of full-page navigation for entry creation
+- Every screen must render without horizontal scroll at 375 px
+
+### 1.7 Offline-First Component Contract
+
+Every data-fetching component must define all four states:
 
 ```
-┌─────────────────────┐
-│  Heute, 20. April   │
-│  [Streak: 🔥 7]     │
-│                     │
-│  [Insight-Karte]    │
-│  "An Sport-Tagen..."│
-│                     │
-│  [Eintrag erstellen]│
-└─────────────────────┘
+Loading → Skeleton placeholder
+Error   → Inline error + retry button
+Empty   → Contextual empty state (not a blank div)
+Offline → Cached data with "offline" badge or graceful hide
 ```
 
-Keine Dashboard-Überladung. Maximal 3 Informationsbereiche auf dem Home-Screen.
+---
+
+## 2. Tech Stack
+
+| Technology | Rationale |
+|---|---|
+| **SvelteKit 2** | Smallest bundle, SSR/CSR flexible, native transitions |
+| **Skeleton UI** | SvelteKit-native, themeable, dark-mode support |
+| **Dexie.js** | IndexedDB abstraction for offline sync (active from M4) |
+| **Custom SVG components** | Chart library (D-002 decided — see DESIGN_DOCUMENT §2.10) |
+| **pnpm + Vite** | Fast HMR, optimised bundling, pinned via ADR-0010 |
+| **svelte-i18n / paraglide-js** | i18n from day 1 (DE + EN) |
 
 ---
 
-## 2. Tech-Stack
+## 3. Performance Budget
 
-| Technologie              | Begründung                                                    |
-| ------------------------ | ------------------------------------------------------------- |
-| **SvelteKit 2**          | Kleinstes Bundle, SSR/CSR flexibel, native Transitions        |
-| **Skeleton UI**          | SvelteKit-native, themeable, Dark-Mode-Support                |
-| **Dexie.js**             | IndexedDB-Abstraktion für Offline-Sync                        |
-| **ECharts / LayerChart** | Mobile-freundliche Charts (Entscheidung noch offen, ADR-0002) |
-| **pnpm**                 | Schnelleres Package Management im Monorepo                    |
-| **Vite**                 | Fast HMR, optimiertes Bundling                                |
+| Metric | Target |
+|---|---|
+| JS Bundle (gzipped) | < 150 KB |
+| LCP (Largest Contentful Paint) | < 2.0 s |
+| TTI (Time to Interactive) | < 3.0 s |
+| CLS | < 0.1 |
+| FID / INP | < 100 ms |
 
----
-
-## 3. Performance-Budget
-
-| Metrik                         | Ziel     |
-| ------------------------------ | -------- |
-| JS Bundle (gz)                 | < 150 KB |
-| LCP (Largest Contentful Paint) | < 2,0 s  |
-| TTI (Time to Interactive)      | < 3,0 s  |
-| CLS                            | < 0,1    |
-| FID / INP                      | < 100 ms |
-
-Tools: Lighthouse CI in CI/CD-Pipeline, Web Vitals Monitoring via GlitchTip.
+Enforced via Lighthouse CI in the CI/CD pipeline. Web Vitals monitoring via GlitchTip.
 
 ---
 
-## 4. Design-System
+## 4. Design System
 
-### Theming
+### 4.1 Theming
 
 ```css
-/* CSS Custom Properties */
 :root[data-theme='dark'] {
   --color-bg: #0f1117;
   --color-surface: #1a1d27;
@@ -92,150 +121,422 @@ Tools: Lighthouse CI in CI/CD-Pipeline, Web Vitals Monitoring via GlitchTip.
 }
 ```
 
-- System-Preference via `prefers-color-scheme` als Default
-- Manueller Override via `data-theme`-Attribut auf `<html>`
-- Persistenz in LocalStorage
+- System preference via `prefers-color-scheme` as default
+- Manual override via `data-theme` attribute on `<html>`
+- Persisted in LocalStorage
 
-### Mood-Score-Farben
+### 4.2 Mood Score Colours
 
 ```
--2 (sehr schlecht) → #ef4444 (rot)
--1 (schlecht)      → #f97316 (orange)
- 0 (neutral)       → #94a3b8 (grau)
-+1 (gut)           → #84cc16 (hellgrün)
-+2 (sehr gut)      → #22c55e (grün)
+-2 (very bad)  → #ef4444 (red)
+-1 (bad)       → #f97316 (orange)
+ 0 (neutral)   → #94a3b8 (slate)
++1 (good)      → #84cc16 (lime)
++2 (very good) → #22c55e (green)
 ```
 
-Farbe darf **nie** die einzige Information sein — immer Label oder Icon ergänzen (WCAG 1.4.1).
+Colour must **never** be the only information carrier — always pair with label or icon (WCAG 1.4.1).
+
+### 4.3 Confidence Bar (Insight-Specific)
+
+Insight confidence is visualised as a single-colour progress bar with a semantic label. No stars (gamification association), no raw percentages on cards (pseudo-precision). See [ADR-0018](adr/0018-insight-confidence-visualisation.md).
+
+```
+confidence  bar fill    label
+0.0–0.2     ██░░░░░░░░  Early signal
+0.2–0.4     ████░░░░░░  Emerging pattern
+0.4–0.6     ██████░░░░  Moderate finding
+0.6–0.8     ████████░░  Strong finding
+0.8–1.0     ██████████  Very strong finding
+```
+
+- Bar uses `--color-primary` at varying opacity
+- Label text is intentionally epistemological, not evaluative
+- Raw `confidence` value and `sample_n` shown in Level 2 / expanded state only
 
 ---
 
-## 5. Accessibility (WCAG 2.2 AA)
+## 5. Screen Architecture
 
-- Alle interaktiven Elemente per Keyboard navigierbar
-- Mood-Slider: zusätzlich mit +/- Buttons bedienbar (für Screenreader + Motor-Einschränkungen)
-- Farbkontrast: ≥ 4,5:1 (Normal Text), ≥ 3:1 (Large Text)
-- Focus-Outline sichtbar und nicht entfernt
-- ARIA-Labels für alle Icon-only-Buttons
-- `prefers-reduced-motion`: Animationen deaktiviert / minimiert
+CorrelCore has exactly **5 primary screens**. No screen may be added without an explicit justification and ADR entry. See [ADR-0017](adr/0017-frontend-screen-architecture.md).
+
+### Screen 1: Home (`/`)
+
+**Purpose:** Daily touch point. Create entry + passively receive latest insight.
+
+**Layout (max. 3 information zones):**
+```
+┌──────────────────────────────┐
+│  Wednesday, 13 May           │  ← Date + Work Context badge
+│  [🏠 Home office]            │
+│                              │
+│  ┌────────────────────────┐  │
+│  │ INSIGHT CARD           │  │  ← Latest worker insight
+│  │ "On exercise days your │  │    (best-effort, non-blocking)
+│  │  mood was ↑ +0.8 pts" │  │
+│  │  [████████░░ Strong]   │  │  ← Confidence bar
+│  └────────────────────────┘  │
+│                              │
+│  Last 7 days ████▓░░░        │  ← Mood sparkline
+│                              │
+│  ┌─────────────────────────┐ │
+│  │  + Log today            │ │  ← Primary CTA, always visible
+│  └─────────────────────────┘ │
+└──────────────────────────────┘
+```
+
+**Rules:**
+- No streak counter — tracking consistency widget (neutral %) only when relevant
+- Insight card is dismissable → writes to `user_preferences.dismissed_insight_ids`
+- If no insight exists (< 7 days of data): show `FirstWeekInsightBanner` (Issue #155)
+- Insight fetch is best-effort and must not block `HomeRecentEntries` or the CTA button
 
 ---
 
-## 6. Internationalisierung (i18n)
+### Screen 2: Entry Form (Bottom Sheet, triggered from Home)
 
-- **Ab Tag 1:** DE und EN
-- Keine Hardcoded Strings im Template-Code
-- Bibliothek: `svelte-i18n` oder `paraglide-js`
-- Locale-Dateien unter `apps/web/src/locales/de.json` und `en.json`
-- Datumsformate: `Intl.DateTimeFormat` (locale-aware)
-- RTL-Unterstützung: kein Ziel für v1, aber keine Breaking-Choices treffen
+**Purpose:** Log daily entry in ≤ 60 seconds.
+
+**Layout:**
+```
+┌──────────────────────────────┐
+│  ▬  How was your day?        │
+│                              │
+│  ●─────────────────── ○      │  ← Mood slider (−2..+2)
+│  Bad              Very good  │
+│                              │
+│  Energy  ●────────── ○       │
+│  Stress  ○──────────●        │
+│                              │
+│  [🏠 Home] [🏢 Office] [✈️] │  ← Work context quick-pick
+│                              │
+│  [Sport ] [Music ] [+ More ] │  ← Top tags + expand
+│                              │
+│  [Save]                      │  ← Auto-save (ADR-0013)
+└──────────────────────────────┘
+```
+
+**Rules:**
+- Mood slider is the only required field
+- Tag suggestions sorted by historical usage frequency
+- "+ More" opens full tag sheet (symptoms, notes, photo)
+- Day-over-day delta shown as neutral info card after save (Issue #154)
 
 ---
 
-## 7. Komponenten-Struktur (Atomic Design)
+### Screen 3: Insights (`/insights`)
+
+**Purpose:** Explore all generated insights with progressive disclosure.
+
+**Layout:**
+```
+┌──────────────────────────────┐
+│  Insights                    │
+│  Last 90 days · n=67 entries │
+│                              │
+│  [All][Mood][Symptoms][Sleep] │  ← Filter tabs (= insight tiers)
+│                              │
+│  ┌────────────────────────┐  │
+│  │ ↗ POSITIVE             │  │
+│  │ Exercise → Mood        │  │
+│  │ [████████░░ Strong]    │  │
+│  │ "On exercise days..."  │  │
+│  │ Based on 42 entries    │  │
+│  │ [Show details ▼]       │  │
+│  └────────────────────────┘  │
+│  ...                         │
+└──────────────────────────────┘
+```
+
+**Rules:**
+- Sorted by `confidence × effect_size` descending (strongest, most certain first)
+- Direction indicator (↗/↘) is more prominent than numeric value
+- "What is a correlation?" disclaimer always accessible via header info icon
+- Filter tabs correspond to insight tiers from the analytics engine
+- Each card has 3 states: Collapsed / Expanded (with chart) / Full detail
+
+---
+
+### Screen 4: Trends (`/trends`)
+
+**Purpose:** Long-term visualisations — mood timeline, tag frequency, work context patterns.
+
+**Layout (tab-based):**
+```
+[Mood] [Activities] [Health]
+
+Time range: [7D] [30D] [90D] [1Y]
+
+┌──────────────────────────────┐
+│  Mood over time              │
+│  ╭─╮  ╭╮                    │
+│ ╭╯ ╰──╯╰╮ ╭─────            │  ← Custom SVG line chart
+│─╯        ╰╯                  │
+│  Apr          May            │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│  Work Context                │
+│  Home office  ████████ 12d   │
+│  Office       █████     7d   │
+└──────────────────────────────┘
+```
+
+**Rules:**
+- Calendar heatmap uses blue-tone neutral scale — never red/green
+- No "best day" comparisons or ranking language
+- Export button (CSV/JSON) in header — for doctor visits and power users
+- Charts are tappable: tap on data point shows tooltip with day details
+
+---
+
+### Screen 5: Settings (`/settings`)
+
+**Purpose:** Profile, tag/symptom management, privacy, export, analytics toggle, developer mode.
+
+**Layout:**
+```
+TRACKING
+→ Manage tags
+→ Manage symptoms
+→ Reminders
+
+ANALYSIS
+→ Analytics enabled  [✓]
+→ Explore insights
+
+PRIVACY & DATA
+→ Export all data  (ZIP: JSON + photos)
+→ Delete account
+
+APPEARANCE
+→ Dark / Light / System
+→ Language: EN / DE
+
+DEVELOPER  ← only visible after unlock (7× tap on version string)
+→ Developer mode  [OFF]
+```
+
+**Developer Mode rules** (extends [ADR-0015](adr/0015-developer-view-version-identifikation.md), see [ADR-0019](adr/0019-dev-mode-settings-toggle.md)):
+- Hidden behind 7× tap on version string in Settings footer
+- Toggle writes `dev_mode_enabled` to LocalStorage
+- When enabled: `DEV_VIEW_ENABLED` flag activates `/dev` route link in Settings
+- Does not count as a user-facing screen — it is a diagnostic tool
+
+---
+
+### Secondary Sheets & Overlays
+
+| Sheet | Trigger | Content |
+|---|---|---|
+| **Tag Picker (full)** | "+ More" in entry | Full tag category view with search |
+| **Symptom Checker** | Optional in entry | Symptom intensity sliders (0–3) |
+| **Insight Detail** | "Show details" on insight card | Dual-axis chart + lag selector |
+| **Onboarding Flow** | First launch / Issue #156 | Profile setup + static insight previews |
+| **Entry History** | Date tap in calendar | Single past entry, read-only |
+
+---
+
+## 6. Insight Card Specification
+
+### 6.1 Anatomy
+
+```
+┌──────────────────────────────────────────┐
+│ [↗] Exercise & Mood     [████████░░]    │  ← Direction + Title + Confidence bar
+│ ──────────────────────────────────────── │
+│ "On days with exercise your mood was    │  ← Natural language statement
+│  on average 0.8 points higher."         │  (from statement_template engine)
+│                                          │
+│  Based on 42 entries · 90 days          │  ← sample_n + time window
+│  [What does this mean? ⓘ]               │  ← Disclaimer link
+│ ──────────────────────────────────────── │
+│  [Show details ▼]                        │  ← Progressive disclosure trigger
+└──────────────────────────────────────────┘
+```
+
+### 6.2 Expanded State — Dual-Axis Chart
+
+```
+┌──────────────────────────────────────────┐
+│ Exercise & Mood — last 90 days           │
+│                                          │
+│  +2 ╭╮   ╭──╮       Mood ─────          │
+│  +1─╯╰───╯  ╰───╮                       │
+│   0              ╰───────               │
+│  ● Exercise day  ○ No exercise           │
+│                                          │
+│  Apr   May                               │
+│                                          │
+│  Pearson r = +0.52 · p < 0.05           │  ← Shown only in expanded view
+│  [Export data]                           │
+└──────────────────────────────────────────┘
+```
+
+### 6.3 Empty State (< 7 entries)
+
+```
+┌──────────────────────────────────────────┐
+│  📊 Building your first patterns         │
+│                                          │
+│  You have logged 4 of the last 7 days.  │
+│  CorrelCore needs ~30 entries for       │
+│  reliable correlations.                  │
+│                                          │
+│  Tracking consistency: 4/7 days         │
+└──────────────────────────────────────────┘
+```
+
+No motivational language. No fire emojis. Neutral, data-based information.
+
+---
+
+## 7. Component Structure (Atomic Design)
 
 ```
 apps/web/src/
 ├── lib/
-│   ├── atoms/          # Button, Input, Badge, Icon, Slider
-│   ├── molecules/      # MoodSlider, TagPicker, SymptomChecker
-│   ├── organisms/      # EntryForm, InsightCard, StreakWidget
-│   ├── templates/      # PageLayout, BottomSheetLayout
-│   └── stores/         # Svelte Stores (entries, sync, insights)
-├── routes/
-│   ├── +page.svelte    # Home-Screen
-│   ├── entry/          # Entry Create/Edit
-│   ├── insights/       # Insights & Visualisierungen
-│   └── settings/       # User-Einstellungen
-└── locales/
-    ├── de.json
-    └── en.json
+│   ├── components/
+│   │   ├── common/          # Shared atoms: Button, Input, Badge, Icon, Slider
+│   │   ├── auth/            # Auth-specific components
+│   │   ├── home/            # HomeInsight, HomeSparkline, HomeSummary,
+│   │   │                    # HomeRecentEntries, FirstWeekInsightBanner,
+│   │   │                    # InsightConfidenceScale, WeekdayPatternChart
+│   │   ├── insights/        # InsightCard, InsightCardExpanded,
+│   │   │                    # InsightFeed, InsightMatrix, CorrelationBadge,
+│   │   │                    # DualAxisChart
+│   │   ├── trends/          # MetricTimeseries, TagHeatmap,
+│   │   │                    # WorkContextBar, CalendarHeatmap
+│   │   └── entries/         # EntryForm, TagPicker, SymptomChecker
+│   ├── api/
+│   │   ├── client.ts        # apiFetch + single-flight refresh
+│   │   ├── auth.ts          # Auth API calls
+│   │   └── insights.ts      # Insights API calls
+│   ├── stores/
+│   │   ├── auth.ts          # AuthState store
+│   │   └── insights.ts      # InsightStore (latest, all, dismissed IDs)
+│   ├── utils/
+│   │   └── streak.ts        # Tracking consistency calculation (not streak)
+│   ├── data/                # Static data, tag defaults
+│   └── i18n/
+│       ├── de.json
+│       └── en.json
+└── routes/
+    ├── +layout.svelte       # App shell (nav, auth guard)
+    ├── +page.svelte         # Home
+    ├── auth/                # Public: login, register, verify-email
+    ├── insights/
+    │   └── +page.svelte     # Insights feed
+    ├── trends/
+    │   └── +page.svelte     # Trend visualisations
+    ├── settings/
+    │   ├── +page.svelte     # Settings
+    │   └── tags/            # Tag management sub-page
+    ├── onboarding/          # Onboarding flow (Issue #156)
+    ├── dev/                 # Developer view (ADR-0015, ADR-0019)
+    └── status/              # Health status page
 ```
-
-Storybook für alle Atoms und Molecules.
 
 ---
 
-## 8. Motion & Animationen
+## 8. Insights Store
 
-- **Dauer:** 150–250 ms für Standard-Transitions
-- **Easing:** `ease-out` für Einblendungen, `ease-in` für Ausblendungen
-- **Reduced Motion:** `@media (prefers-reduced-motion: reduce)` → `transition: none`
-- **Keine Layout-Shifts** durch Animationen (CLS-Budget)
+```typescript
+// stores/insights.ts
+interface InsightStore {
+  insights: Insight[];        // All insights from worker
+  latest: Insight | null;     // For home screen (Sprint 6 implemented)
+  loading: boolean;
+  error: string | null;
+  dismissedIds: string[];     // From user_preferences
+}
+```
+
+The insights store is best-effort: a load failure must not propagate an error state to unrelated home screen components.
+
+---
+
+## 9. Motion & Animations
+
+- **Duration:** 150–250 ms for standard transitions
+- **Easing:** `ease-out` for entrances, `ease-in` for exits
+- **Reduced motion:** `@media (prefers-reduced-motion: reduce)` → `transition: none`
+- **No layout shifts** caused by animations (CLS budget)
 
 ```css
-/* Standard Transition */
 .fade-in {
   animation: fadeIn 200ms ease-out;
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .fade-in {
-    animation: none;
-  }
+  .fade-in { animation: none; }
 }
 ```
 
 ---
 
-## 9. Authentifizierung (Issue #40)
+## 10. Accessibility (WCAG 2.2 AA)
 
-### Strategie
+- All interactive elements keyboard-navigable
+- Mood slider: also operable with +/− buttons (screen reader + motor impairment)
+- Colour contrast: ≥ 4.5:1 (normal text), ≥ 3:1 (large text)
+- Visible focus outline, never removed
+- ARIA labels on all icon-only buttons
+- `prefers-reduced-motion`: animations disabled or minimised
+- Confidence bar must have `aria-label` with text label (not just visual fill)
 
-- **Mechanismus:** HttpOnly-Cookies (`SameSite=Strict`, `Secure` in Prod), kein Token im JavaScript-Heap.
-- **Begründung:** Maximale Resistenz gegen XSS auf DSGVO Art.-9-Daten — siehe ADR-0004.
-- **Refresh:** `apiFetch` setzt auf 401 genau einen `/auth/refresh` ab und wiederholt den Original-Request. Single-Flight-Pattern: parallele 401s teilen sich die selbe Refresh-Promise; es wird nie mehr als eine `/auth/refresh`-Anfrage gleichzeitig gestellt.
-- **Phase 2 (Capacitor, M11+):** `capacitor://`-Schema blockiert Third-Party-Cookies. Der Migrationspfad ist im selben `apiFetch`-Interface umgesetzt: das Backend liefert `access_token` bereits im Body (siehe `TokenResponse`), und `apiFetch` wird in der Capacitor-Build-Variante auf einen In-Memory-Bearer-Header umgestellt. Eigener ADR-Entry folgt bei M11-Start.
+---
 
-### Routen
+## 11. Internationalisation (i18n)
 
-| Route                       | Zweck                                                   | Public |
-| --------------------------- | ------------------------------------------------------- | ------ |
-| `/auth/login`               | Anmeldung. Redirect auf `?next=…` (whitelisted in-app). | ✅     |
-| `/auth/register`            | Registrierung. Leitet auf `/auth/check-email?email=…`.  | ✅     |
-| `/auth/check-email`         | Hinweis nach Registrierung.                             | ✅     |
-| `/auth/verify-email`        | Bestätigt Token aus E-Mail-Link **per User-Klick**.     | ✅     |
-| `/auth/resend-verification` | Fordert neue Bestätigungs-Mail an (immer 202).          | ✅     |
+- **From day 1:** DE and EN
+- No hardcoded strings in template code
+- Library: `svelte-i18n` or `paraglide-js`
+- Locale files: `apps/web/src/lib/i18n/de.json` and `en.json`
+- Date formats: `Intl.DateTimeFormat` (locale-aware)
+- Insight statement templates are locale-keyed — the backend returns a `statement_key`, the frontend resolves the localised string
 
-Alle anderen Routen sind durch den Auth-Guard im Root-`+layout.svelte` geschützt: bei `auth.status === 'anonymous'` Redirect auf `/auth/login?next=<aktueller-Pfad>`.
+---
 
-### Verify-Flow: Confirm-Page statt Auto-Submit
+## 12. Authentication
 
-Die Verify-E-Mail enthält einen Link auf `/auth/verify-email?token=…`. Die Seite ruft den Endpoint **nicht automatisch** auf, sondern zeigt einen "E-Mail bestätigen"-Button.
+See [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md) for full details.
 
-**Begründung:**
+- **Mechanism:** HttpOnly cookies (`SameSite=Strict`, `Secure` in prod)
+- **Auth guard:** Root `+layout.svelte` redirects unauthenticated users to `/auth/login?next=<path>`
+- **Route groups:** All authenticated screens live under the implicit `(app)` layout group
 
-- E-Mail-Scanner (Outlook Safe-Links, VirusTotal, Antiviren-Gateways) folgen Links beim Empfang und würden den Single-Use-Token aufbrauchen, bevor der User ihn anklicken kann.
-- Active-Consent-Pattern entspricht dem DSGVO-Geist (User aktiviert die Verarbeitung selbst).
+| Route | Purpose | Public |
+|---|---|---|
+| `/auth/login` | Sign in | ✅ |
+| `/auth/register` | Registration | ✅ |
+| `/auth/verify-email` | Email confirmation | ✅ |
+| `/` | Home | 🔒 |
+| `/insights` | Insights feed | 🔒 |
+| `/trends` | Trend charts | 🔒 |
+| `/settings` | Settings | 🔒 |
+| `/dev` | Developer view | 🔒 + dev flag |
 
-Der Button ist deaktiviert bei laufender Anfrage; bei Erfolg / Fehler / fehlendem Token rendert die Seite jeweils einen klar getrennten Zustand.
+---
 
-### Module
+## 13. Key Design Questions Checklist
 
-```
-apps/web/src/lib/
-├── api/
-│   ├── client.ts        # apiFetch + Single-Flight-Refresh + Errors
-│   └── auth.ts          # register, login, logout, fetchCurrentUser, verifyEmail, resendVerification
-├── stores/
-│   └── auth.ts          # AuthState-Store (loading | authenticated | anonymous), hydrate(), login(), logout()
-└── components/auth/
-    └── PasswordStrength.svelte   # Visueller Strength-Indicator + evaluatePassword()
-```
+Every new component or screen decision must be checked against:
 
-### Fehlerklassen
+**Product level**
+- [ ] Is this completable in 60 seconds (entry flow) or < 3 scrolls (insights)?
+- [ ] Does this component add truth or just mood?
+- [ ] Does the user understand correlation ≠ causation here?
+- [ ] Does this screen work with zero data (empty state defined)?
 
-- `ApiError` — Backend hat geantwortet (Status, parsedes `detail`, Pfad).
-- `NetworkError` — Transport-Fehler (offline, CORS, DNS).
+**Technical level**
+- [ ] Stateless atom or store-consuming organism?
+- [ ] Custom SVG chart or library? (library needs ADR)
+- [ ] Renders without horizontal scroll at 375 px?
+- [ ] All four component states defined (loading/error/empty/offline)?
+- [ ] All strings in locale file?
 
-Beide sind explizit instanzbar (`err instanceof ApiError`) und ermöglichen status-spezifisches UI-Routing in den Pages.
-
-### Tests
-
-Vitest-Suite (`*.test.ts`) deckt ab:
-
-- `apiFetch`: 2xx/4xx/Network/204, Header-Setting, JSON-Body, **Single-Flight-Refresh** mit 3 Szenarien (Erfolg, Refresh-Fail, parallele Requests).
-- Auth-Store: Initialzustand, Hydrate-Transitions, Idempotenz, Login/Logout/setUser.
-- Password-Strength: Minimum-Compliance, Score-Steigerung mit Länge/Symbolen.
-
-24 Tests grün (`npm test`).
+**No-gamification gate**
+- [ ] No streak counter?
+- [ ] No badge or reward animation?
+- [ ] Heatmap uses neutral blue-tone scale?
+- [ ] Notification copy is neutral?
