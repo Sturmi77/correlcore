@@ -26,6 +26,10 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0013](0013-autosave-day-entries.md)                    | Auto-Save für Day-Entries (M1.5)                             | Akzeptiert    | 2026-05-09 |
 | [ADR-0014](0014-home-dashboard-recent-entries-sparkline.md) | Home-Dashboard mit Recent-Entries + 14-Tage-Sparkline (M1.5) | Akzeptiert    | 2026-05-09 |
 | [ADR-0015](0015-developer-view-version-identifikation.md)   | Developer-View fuer Versionsidentifikation                   | Akzeptiert    | 2026-05-10 |
+| [ADR-0016](0016-timeseries-split-ml-models.md)              | Timeseries Split für ML-Modelle                              | Akzeptiert    | 2026-05-10 |
+| [ADR-0017](0017-frontend-screen-architecture.md)            | Frontend Screen Architecture (M3.1)                          | Accepted      | 2026-05-13 |
+| [ADR-0018](0018-insight-confidence-visualisation.md)        | Insight Confidence Visualisation                             | Accepted      | 2026-05-13 |
+| [ADR-0019](0019-dev-mode-settings-toggle.md)                | Developer Mode Toggle in Settings                            | Accepted      | 2026-05-13 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -87,12 +91,23 @@ Recent-Entries-Liste (7 Tage, klickbar mit `?date=`-Param), 7-Tage-Summary (Mood
 
 ### ADR-0015 - Developer-View fuer Versionsidentifikation
 
-`/dev` wird als default-off Diagnose-View fuer verifizierte User eingefuehrt.
-`git_commit`/`git_branch`/`build_time` werden beim API-Image-Build eingebettet
-und beantworten, welche GitHub-Version laeuft. `image_tag` und optional
-`image_digest` kommen aus dem Deployment; der echte RepoDigest wird nicht im
-Container ermittelt und der Docker-Socket bleibt bewusst ungemountet. Fehlt
-`IMAGE_DIGEST`, zeigt API/UI `null` bzw. "Digest not provided".
+`/dev` wird als default-off Diagnose-View fuer verifizierte User eingefuehrt. `git_commit`/`git_branch`/`build_time` werden beim API-Image-Build eingebettet und beantworten, welche GitHub-Version laeuft. `image_tag` und optional `image_digest` kommen aus dem Deployment; der echte RepoDigest wird nicht im Container ermittelt und der Docker-Socket bleibt bewusst ungemountet. Fehlt `IMAGE_DIGEST`, zeigt API/UI `null` bzw. "Digest not provided".
+
+### ADR-0016 – Timeseries Split für ML-Modelle
+
+Zeit-basierter Train/Test-Split (kein random-shuffle) für alle ML/Statistik-Modelle in CorrelCore. Sichert zeitliche Kausalität in Korrelationsberechnungen ab.
+
+### ADR-0017 – Frontend Screen Architecture (M3.1)
+
+CorrelCore hat genau 5 primäre Screens (Home, Entry Sheet, Insights, Trends, Settings). Kein neuer Screen ohne ADR-Begründung. Der `/dev`-Screen zählt nicht als User-facing Screen. Der `[Streak: 🔥 7]`-Sketch aus dem alten FRONTEND.md wird formal entfernt. Insights werden nach `confidence × effect_size` sortiert, jede Card hat 3 Disclosure-Level.
+
+### ADR-0018 – Insight Confidence Visualisation
+
+Confidence wird als einfarbiger Fortschrittsbalken mit semantischem Label dargestellt (`Early signal` / `Emerging pattern` / `Moderate finding` / `Strong finding` / `Very strong finding`). Kein Prozentwert auf der Collapsed-Card (Pseudo-Präzision), keine Punkte/Sterne (Gamification-Assoziation). Raw-Wert und `sample_n` nur in Expanded State sichtbar.
+
+### ADR-0019 – Developer Mode Toggle in Settings
+
+Developer Mode wird über 7× Tap auf den Version-String im Settings-Footer aktiviert. Persistenz in localStorage (client-only). Wenn aktiv: `DEVELOPER`-Sektion in Settings sichtbar mit Toggle + Link zu `/dev`. Die Route `/dev` wird nicht in der Bottom Navigation gezeigt.
 
 ---
 
