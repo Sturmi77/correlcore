@@ -41,9 +41,10 @@
       "energy_avg": "Energie \u00d8",
       "stress_avg": "Stress \u00d8",
       "streak": "Tracking-Konsistenz",
+      "tracking_consistency": "Tracking-Konsistenz",
       "streak_unit": "erfasste Tage",
       "count": "Erfasst",
-      "consistency_hint": "Konsistentere Daten verbessern die Qualität deiner Erkenntnisse."
+      "consistency_hint": "Konsistentere Daten verbessern die Qualit\u00e4t deiner Erkenntnisse."
     },
     "insight": {
       "heading": "Neueste Erkenntnis",
@@ -345,7 +346,7 @@
     }
   },
   "disclaimer": {
-    "medical": "CorrelCore ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschließlich zur persönlichen Reflexion."
+    "medical": "CorrelCore ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschlie\u00dflich zur pers\u00f6nlichen Reflexion."
   },
   "insights": {
     "page": {
@@ -365,6 +366,13 @@
       "confidence": "Konfidenz",
       "export": "PNG exportieren",
       "empty": "Noch keine ausreichend stabilen Tag-Mood-Muster vorhanden."
+    },
+    "confidence_label": {
+      "early_signal": "Erstes Signal",
+      "emerging_pattern": "Entstehendes Muster",
+      "moderate_finding": "Moderater Befund",
+      "strong_finding": "Starker Befund",
+      "very_strong_finding": "Sehr starker Befund"
     },
     "energy_mood_positive": "Dein Energielevel und deine Stimmung zeigen einen klaren Zusammenhang (r={r}, basierend auf {n} Tagen). An Tagen mit hoeherer Energie ist deine Stimmung in deinen Daten tendenziell hoeher.",
     "energy_mood_negative": "Dein Energielevel und deine Stimmung zeigen einen unerwarteten Zusammenhang (r={r}, basierend auf {n} Tagen). Hoehere Energie geht in deinen Daten tendenziell mit niedrigerer Stimmung einher.",

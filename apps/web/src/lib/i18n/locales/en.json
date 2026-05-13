@@ -41,6 +41,7 @@
       "energy_avg": "Energy avg",
       "stress_avg": "Stress avg",
       "streak": "Tracking consistency",
+      "tracking_consistency": "Tracking consistency",
       "streak_unit": "tracked days",
       "count": "Logged",
       "consistency_hint": "More consistent data improves insight quality."
@@ -365,6 +366,13 @@
       "confidence": "Confidence",
       "export": "Export PNG",
       "empty": "No sufficiently stable tag-mood patterns yet."
+    },
+    "confidence_label": {
+      "early_signal": "Early signal",
+      "emerging_pattern": "Emerging pattern",
+      "moderate_finding": "Moderate finding",
+      "strong_finding": "Strong finding",
+      "very_strong_finding": "Very strong finding"
     },
     "energy_mood_positive": "Your energy level and mood show a clear association (r={r}, based on {n} days). On higher-energy days, your mood tends to be higher in your data.",
     "energy_mood_negative": "Your energy level and mood show an unexpected association (r={r}, based on {n} days). Higher energy tends to line up with lower mood in your data.",
