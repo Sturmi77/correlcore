@@ -85,10 +85,7 @@
   </div>
 
   <div class="insight-confidence__copy">
-    <p
-      class="insight-confidence__label"
-      data-testid="insight-confidence-label"
-    >
+    <p class="insight-confidence__label" data-testid="insight-confidence-label">
       {$_(`insights.confidence_label.${labelKey}`)}
     </p>
     <p class="insight-confidence__meta">
