@@ -8,20 +8,20 @@ post-M3 polish iteration see [M3.1_SPRINT_STATUS.md](./M3.1_SPRINT_STATUS.md).
 
 ## Sprint Overview
 
-| Sprint | Status | Summary |
-|--------|--------|---------|
-| 1 | ✅ Closed | No-gamification prep: entry run copy updated to Tracking Consistency. |
-| 2 | ✅ Closed | Insight & Preference foundation: migration, models, schemas, analytics dependencies. |
-| 3 | ✅ Closed | Analytics Engine v1: tiered candidates, Spearman, Point-biserial, Weekday Pattern. |
-| 4 | ✅ Closed | Analytics Worker: nightly insight generation for active / verified users. |
-| 5 | ✅ Closed | Read API: `GET /api/v1/insights` and `/insights/latest`. |
-| 6 | ✅ Closed | Web Home Preview: latest insight rendered read-only on the Home screen. |
-| 7 | ✅ Closed | Statistics hardening: FDR correction, minimum sample size, weekday bias, entry-date guard. |
-| 8 | ✅ Closed | Insight Confidence Scale: dashboard summary endpoint and persistent Home scale. |
-| 9 | ✅ Closed | First-Week UX: WeekdayPatternChart, neutral banner, preference dismiss state. |
-| 10 | ✅ Closed | Insights page and correlation matrix for tag–mood patterns. |
-| 11 | ✅ Closed | Cold-start onboarding: retro batch, profile questionnaire, static preview library. |
-| 12 | ✅ Closed | Day-over-Day Delta: direct comparison to yesterday after entry save. |
+| Sprint | Status    | Summary                                                                                    |
+| ------ | --------- | ------------------------------------------------------------------------------------------ |
+| 1      | ✅ Closed | No-gamification prep: entry run copy updated to Tracking Consistency.                      |
+| 2      | ✅ Closed | Insight & Preference foundation: migration, models, schemas, analytics dependencies.       |
+| 3      | ✅ Closed | Analytics Engine v1: tiered candidates, Spearman, Point-biserial, Weekday Pattern.         |
+| 4      | ✅ Closed | Analytics Worker: nightly insight generation for active / verified users.                  |
+| 5      | ✅ Closed | Read API: `GET /api/v1/insights` and `/insights/latest`.                                   |
+| 6      | ✅ Closed | Web Home Preview: latest insight rendered read-only on the Home screen.                    |
+| 7      | ✅ Closed | Statistics hardening: FDR correction, minimum sample size, weekday bias, entry-date guard. |
+| 8      | ✅ Closed | Insight Confidence Scale: dashboard summary endpoint and persistent Home scale.            |
+| 9      | ✅ Closed | First-Week UX: WeekdayPatternChart, neutral banner, preference dismiss state.              |
+| 10     | ✅ Closed | Insights page and correlation matrix for tag–mood patterns.                                |
+| 11     | ✅ Closed | Cold-start onboarding: retro batch, profile questionnaire, static preview library.         |
+| 12     | ✅ Closed | Day-over-Day Delta: direct comparison to yesterday after entry save.                       |
 
 ## Implementation Summary
 

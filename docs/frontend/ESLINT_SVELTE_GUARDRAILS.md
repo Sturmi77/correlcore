@@ -20,6 +20,7 @@ Error: Type 'HTMLDivElement' is missing the following properties from type
 ```
 
 **Fix:**
+
 ```svelte
 <!-- ❌ wrong -->
 <div bind:this={dialogEl} class="cd-modal">
@@ -68,6 +69,7 @@ type **must** be explicitly exported from the module's `index.ts` or the module
 file itself.
 
 **Failure pattern encountered:**
+
 ```
 Error: Module '"$lib/api/insights"' has no exported member 'InsightDto'.
 ```
@@ -76,6 +78,7 @@ Error: Module '"$lib/api/insights"' has no exported member 'InsightDto'.
 the M3 analytics refactor but tests were not updated.
 
 **Fix & prevention:**
+
 1. After any type rename, run `grep -r 'InsightDto' apps/web/src` to catch all
    stale references before committing.
 2. Keep a single canonical re-export in `$lib/api/insights/index.ts`:
