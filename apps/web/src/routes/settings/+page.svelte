@@ -2,15 +2,17 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
-  import { developerMode } from '$lib/stores/developerMode';
+  import { devMode } from '$lib/stores/devMode';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
   import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
 
+  // ---------------------------------------------------------------------------
+  // Export
+  // ---------------------------------------------------------------------------
   let busy: ExportKind | null = null;
   let error = '';
-  let devAvailable = false;
 
   async function handleDownload(kind: ExportKind): Promise<void> {
     busy = kind;
@@ -25,6 +27,11 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Dev view availability (backend flag)
+  // ---------------------------------------------------------------------------
+  let devAvailable = false;
+
   async function checkDevView(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     try {
@@ -37,6 +44,47 @@
       }
       devAvailable = false;
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 7× tap on version string (ADR-0019)
+  // ---------------------------------------------------------------------------
+  const REQUIRED_TAPS = 7;
+  const TAP_TIMEOUT_MS = 3000;
+
+  let tapCount = 0;
+  let tapTimer: ReturnType<typeof setTimeout> | null = null;
+  let toastMessage = '';
+  let toastVisible = false;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function showToast(msg: string) {
+    toastMessage = msg;
+    toastVisible = true;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastVisible = false;
+    }, 2500);
+  }
+
+  function handleVersionTap() {
+    tapCount++;
+    if (tapTimer) clearTimeout(tapTimer);
+
+    if (tapCount >= REQUIRED_TAPS) {
+      tapCount = 0;
+      devMode.toggle();
+      showToast(
+        $devMode
+          ? $_('settings.developer.toast_enabled')
+          : $_('settings.developer.toast_disabled')
+      );
+      return;
+    }
+
+    tapTimer = setTimeout(() => {
+      tapCount = 0;
+    }, TAP_TIMEOUT_MS);
   }
 
   onMount(() => {
@@ -75,39 +123,31 @@
       </div>
     </section>
 
-    <!-- Developer section: visible when backend devAvailable OR user toggled developerMode -->
-    {#if devAvailable || $developerMode}
-      <section class="settings__panel">
+    <!-- DEVELOPER section: only visible when devMode is active -->
+    {#if $devMode || devAvailable}
+      <section class="settings__panel settings__panel--developer" data-testid="developer-section">
         <div class="settings__panel-head">
-          <h2>{$_('settings.dev.heading')}</h2>
-          <p>{$_('settings.dev.body')}</p>
+          <h2>{$_('settings.developer.heading')}</h2>
+          <p>{$_('settings.developer.body')}</p>
         </div>
         <div class="settings__downloads">
-          <a class="btn variant-soft-primary" href="/dev">{$_('settings.dev.open')}</a>
+          <a class="btn variant-soft-primary" href="/dev" data-testid="dev-link">
+            {$_('settings.dev.open')}
+          </a>
         </div>
+        <label class="settings__toggle-label">
+          <input
+            type="checkbox"
+            class="settings__toggle"
+            checked={$devMode}
+            aria-label={$_('settings.developer.toggle_aria')}
+            data-testid="developer-toggle"
+            on:change={(e) => devMode.set(e.currentTarget.checked)}
+          />
+          <span>{$_('settings.developer.toggle_label')}</span>
+        </label>
       </section>
     {/if}
-
-    <!-- Developer Mode toggle (always visible for authenticated users) -->
-    <section class="settings__panel">
-      <div class="settings__panel-head">
-        <h2>{$_('settings.developer.heading')}</h2>
-        <p>{$_('settings.developer.body')}</p>
-      </div>
-      <label class="settings__toggle-label">
-        <input
-          type="checkbox"
-          class="settings__toggle"
-          checked={$developerMode}
-          aria-label={$_('settings.developer.toggle_aria')}
-          on:change={(e) => developerMode.set(e.currentTarget.checked)}
-        />
-        <span>{$_('settings.developer.toggle_label')}</span>
-      </label>
-      {#if $developerMode}
-        <p class="settings__hint">{$_('settings.developer.active_hint')}</p>
-      {/if}
-    </section>
 
     <section class="settings__panel">
       <div class="settings__panel-head">
@@ -145,7 +185,28 @@
       {/if}
     </section>
   {/if}
+
+  <!-- Version string: hidden tap target for 7× dev mode activation (ADR-0019) -->
+  <footer class="settings__footer">
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <p
+      class="settings__version"
+      role="contentinfo"
+      data-testid="version-string"
+      on:click={handleVersionTap}
+    >
+      {$_('app.name')} v{$_('app.version')}
+    </p>
+  </footer>
 </main>
+
+<!-- Toast notification -->
+{#if toastVisible}
+  <div class="settings__toast" role="status" aria-live="polite" data-testid="dev-toast">
+    {toastMessage}
+  </div>
+{/if}
 
 <style>
   .settings {
@@ -174,7 +235,6 @@
     opacity: 0.72;
   }
 
-  /* Phase 1 fix: replace old rgb(var(--color-surface-*)) syntax with correct design tokens */
   .settings__panel {
     display: flex;
     flex-direction: column;
@@ -183,6 +243,10 @@
     border-radius: 0.5rem;
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
+  }
+
+  .settings__panel--developer {
+    border-color: var(--color-primary);
   }
 
   .settings__panel-head h2 {
@@ -196,19 +260,12 @@
     gap: 0.65rem;
   }
 
-  /* Phase 1 fix: replace hardcoded #b91c1c with design token */
   .settings__error {
     margin: 0;
     color: var(--color-error);
   }
 
-  .settings__hint {
-    margin: 0;
-    font-size: var(--text-sm, 0.875rem);
-    color: var(--color-text-muted);
-  }
-
-  /* Phase 3: Developer Mode toggle — min 44px touch target */
+  /* Developer Mode toggle — min 44px touch target */
   .settings__toggle-label {
     display: flex;
     align-items: center;
@@ -225,5 +282,46 @@
     min-width: 1.25rem;
     cursor: pointer;
     accent-color: var(--color-primary);
+  }
+
+  /* Footer version string — no visible affordance */
+  .settings__footer {
+    margin-top: var(--space-4, 1rem);
+    text-align: center;
+  }
+
+  .settings__version {
+    font-size: var(--text-xs, 0.75rem);
+    color: var(--color-text-faint);
+    cursor: default;
+    user-select: none;
+    margin: 0;
+  }
+
+  /* Toast */
+  .settings__toast {
+    position: fixed;
+    bottom: var(--space-6, 1.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 0.5rem);
+    padding: var(--space-3, 0.75rem) var(--space-5, 1.25rem);
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--color-text);
+    box-shadow: var(--shadow-lg);
+    z-index: 300;
+    white-space: nowrap;
+    animation: toastIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .settings__toast { animation: none; }
   }
 </style>
