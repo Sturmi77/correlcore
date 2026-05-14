@@ -67,9 +67,7 @@ describe('InsightCard', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     // The InsightConfidenceScale is rendered with showRawPercent=false
     // so the data-testid for the percent span should not be in the DOM
-    expect(
-      screen.queryByTestId('insight-confidence-score-percent')
-    ).toBeNull();
+    expect(screen.queryByTestId('insight-confidence-score-percent')).toBeNull();
   });
 
   it('renders disclaimer link', () => {
