@@ -287,9 +287,15 @@
     text-align: center;
     flex-shrink: 0;
   }
-  .insight-card__direction--positive { color: var(--color-success); }
-  .insight-card__direction--negative { color: var(--color-notification); }
-  .insight-card__direction--neutral  { color: var(--color-text-muted); }
+  .insight-card__direction--positive {
+    color: var(--color-success);
+  }
+  .insight-card__direction--negative {
+    color: var(--color-notification);
+  }
+  .insight-card__direction--neutral {
+    color: var(--color-text-muted);
+  }
   .insight-card__title {
     flex: 1;
     font-size: var(--text-sm, 0.875rem);
@@ -332,7 +338,9 @@
     text-underline-offset: 2px;
     align-self: flex-start;
   }
-  .insight-card__disclaimer:hover { color: var(--color-primary); }
+  .insight-card__disclaimer:hover {
+    color: var(--color-primary);
+  }
   .insight-card__toggle {
     display: flex;
     align-items: center;
@@ -345,8 +353,12 @@
     border-radius: var(--radius-sm, 0.375rem);
     transition: color var(--transition-interactive, 180ms ease);
   }
-  .insight-card__toggle:hover { color: var(--color-primary-hover); }
-  .insight-card__toggle-icon { font-size: 0.6rem; }
+  .insight-card__toggle:hover {
+    color: var(--color-primary-hover);
+  }
+  .insight-card__toggle-icon {
+    font-size: 0.6rem;
+  }
   .insight-card__level2 {
     display: flex;
     flex-direction: column;
@@ -356,8 +368,14 @@
     animation: fadeSlideIn 180ms ease both;
   }
   @keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .insight-card__chart {
     display: flex;
@@ -367,7 +385,11 @@
     border-radius: var(--radius-md, 0.5rem);
     padding: var(--space-3, 0.75rem);
   }
-  .insight-card__sparkline { width: 100%; height: auto; display: block; }
+  .insight-card__sparkline {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
   .insight-card__chart-legend {
     display: flex;
     align-items: center;
@@ -380,8 +402,12 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .insight-card__legend-dot--primary   { background: var(--color-primary); }
-  .insight-card__legend-dot--secondary { background: var(--color-orange); }
+  .insight-card__legend-dot--primary {
+    background: var(--color-primary);
+  }
+  .insight-card__legend-dot--secondary {
+    background: var(--color-orange);
+  }
   .insight-card__legend-label {
     font-size: var(--text-xs, 0.72rem);
     color: var(--color-text-muted);
@@ -391,7 +417,9 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--space-1, 0.25rem) var(--space-4, 1rem);
   }
-  .insight-card__meta-row { display: contents; }
+  .insight-card__meta-row {
+    display: contents;
+  }
   .insight-card__meta-grid dt {
     font-size: var(--text-xs, 0.72rem);
     color: var(--color-text-muted);
@@ -420,10 +448,16 @@
     color: var(--color-text);
     border-color: oklch(from var(--color-text) l c h / 0.3);
   }
-  .insight-card--skeleton { pointer-events: none; }
+  .insight-card--skeleton {
+    pointer-events: none;
+  }
   @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
   .skeleton {
     background: linear-gradient(
@@ -436,9 +470,19 @@
     animation: shimmer 1.5s ease-in-out infinite;
     border-radius: var(--radius-sm, 0.375rem);
   }
-  .skeleton-heading { height: 1.1rem; width: 55%; }
-  .skeleton-text    { height: 0.85rem; width: 100%; }
-  .skeleton-track   { height: 0.55rem; width: 100%; border-radius: 999px; }
+  .skeleton-heading {
+    height: 1.1rem;
+    width: 55%;
+  }
+  .skeleton-text {
+    height: 0.85rem;
+    width: 100%;
+  }
+  .skeleton-track {
+    height: 0.55rem;
+    width: 100%;
+    border-radius: 999px;
+  }
   .insight-card--error {
     border-color: oklch(from var(--color-error) l c h / 0.25);
     background: oklch(from var(--color-error) l c h / 0.04);
@@ -462,7 +506,12 @@
     background: oklch(from var(--color-primary) l c h / 0.08);
   }
   @media (prefers-reduced-motion: reduce) {
-    .skeleton { animation: none; opacity: 0.6; }
-    .insight-card__level2 { animation: none; }
+    .skeleton {
+      animation: none;
+      opacity: 0.6;
+    }
+    .insight-card__level2 {
+      animation: none;
+    }
   }
 </style>
