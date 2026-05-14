@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
-const mockI18n = { subscribe: (run: (fn: (v: string) => string) => void) => { run((v) => v); return () => {}; } };
+const mockI18n = { subscribe: (run: (arg: (key: string) => string) => void) => { run((key) => key); return () => {}; } };
 
 vi.mock('svelte-i18n', () => ({ _: mockI18n }));
 
