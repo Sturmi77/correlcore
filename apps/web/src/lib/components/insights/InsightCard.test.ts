@@ -4,7 +4,7 @@
  * Covers all acceptance criteria from issue #163.
  * Uses @testing-library/svelte + vitest.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import InsightCard from './InsightCard.svelte';
 import type { InsightDto } from '$lib/api/insights';
