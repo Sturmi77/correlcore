@@ -16,11 +16,10 @@ vi.stubGlobal('localStorage', localStorageMock);
 // ---------------------------------------------------------------------------
 // Helpers to simulate tap sequence
 // ---------------------------------------------------------------------------
-const TAP_TARGET = 'version-string';
 const REQUIRED_TAPS = 7;
 const TIMEOUT_MS = 3000;
 
-function makeTapHandler(onActivate: (enabled: boolean) => void) {
+function makeTapHandler(onActivate: () => void) {
   let count = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -32,7 +31,7 @@ function makeTapHandler(onActivate: (enabled: boolean) => void) {
       count = 0;
       const next = localStorage.getItem('dev_mode_enabled') !== 'true';
       localStorage.setItem('dev_mode_enabled', String(next));
-      onActivate(next);
+      onActivate();
       return;
     }
 
@@ -57,7 +56,6 @@ describe('devMode tap sequence', () => {
     const tap = makeTapHandler(handler);
     for (let i = 0; i < REQUIRED_TAPS; i++) tap();
     expect(handler).toHaveBeenCalledOnce();
-    expect(handler).toHaveBeenCalledWith(true);
     expect(localStorage.getItem('dev_mode_enabled')).toBe('true');
   });
 
