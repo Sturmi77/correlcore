@@ -79,8 +79,7 @@
   $: latestInsight = $insightStore.latest;
   $: insightLoading = $insightStore.loading;
   $: insightError = $insightStore.error ?? '';
-  $: weekdayInsight =
-    $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
+  $: weekdayInsight = $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
   // Correlation matrix: all pointbiserial insights with enough confidence.
   $: matrixInsights = $rankedInsights.filter(
     (i) => i.insight_type === 'pointbiserial' && (i.confidence ?? 0) >= 0.2
