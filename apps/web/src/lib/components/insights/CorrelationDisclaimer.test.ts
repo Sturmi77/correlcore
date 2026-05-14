@@ -33,33 +33,33 @@ describe('CorrelationDisclaimer', () => {
   });
 
   it('dispatches close on close-button click', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.click(screen.getByTestId('cd-close'));
     expect(handler).toHaveBeenCalledOnce();
   });
 
   it('dispatches close on got-it button click', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.click(screen.getByTestId('cd-got-it'));
     expect(handler).toHaveBeenCalledOnce();
   });
 
   it('dispatches close on backdrop click', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.click(screen.getByTestId('cd-backdrop'));
     expect(handler).toHaveBeenCalledOnce();
   });
 
   it('dispatches close on Escape key', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.keyDown(document, { key: 'Escape' });
     expect(handler).toHaveBeenCalledOnce();
   });

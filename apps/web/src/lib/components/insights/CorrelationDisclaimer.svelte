@@ -20,7 +20,7 @@
 
   const dispatch = createEventDispatcher<{ close: void }>();
 
-  let dialogEl: HTMLDialogElement | null = null;
+  let dialogEl: HTMLDivElement | null = null;
   let firstFocusable: HTMLElement | null = null;
   let lastFocusable: HTMLElement | null = null;
 

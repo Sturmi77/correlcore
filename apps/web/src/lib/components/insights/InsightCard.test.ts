@@ -7,34 +7,38 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import InsightCard from './InsightCard.svelte';
-import type { InsightDto } from '$lib/api/insights';
+import type { InsightResponse } from '$lib/api/insights';
 
-// Minimal fixture that satisfies InsightDto
-const INSIGHT: InsightDto = {
+// Minimal fixture that satisfies InsightResponse
+const INSIGHT: InsightResponse = {
   id: 'test-001',
+  user_id: 'u1',
+  insight_type: 'spearman',
   tier: 'developing',
+  metric: 'mood',
+  subject_type: 'tag',
+  subject_id: 'sport',
+  subject_label: 'sport',
   confidence: 0.72,
   effect_size: 0.38,
-  r_value: 0.612,
-  rho_value: 0.598,
-  p_value: 0.031,
   sample_n: 42,
-  time_window_days: 60,
-  tag_a: 'sport',
-  tag_b: 'mood',
   statement: 'On days you exercised, your mood tended to be higher.',
+  flags: {},
+  payload: { r_value: 0.612, rho_value: 0.598, p_value: 0.031, time_window_days: 60, tag_a: 'sport', tag_b: 'mood' },
+  generated_for_date: '2026-05-10',
+  generated_at: '2026-05-10T10:00:00Z',
   created_at: '2026-05-10T10:00:00Z',
   updated_at: '2026-05-12T08:00:00Z',
 };
 
-const NEGATIVE_INSIGHT: InsightDto = {
+const NEGATIVE_INSIGHT: InsightResponse = {
   ...INSIGHT,
   id: 'test-002',
   effect_size: -0.42,
-  r_value: -0.551,
   statement: 'Higher stress correlates with lower mood in your data.',
-  tag_a: 'stress',
-  tag_b: 'mood',
+  subject_id: 'stress',
+  subject_label: 'stress',
+  payload: { ...INSIGHT.payload, r_value: -0.551, tag_a: 'stress' },
 };
 
 describe('InsightCard', () => {
@@ -65,8 +69,6 @@ describe('InsightCard', () => {
 
   it('does NOT show raw percentage in collapsed state', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
-    // The InsightConfidenceScale is rendered with showRawPercent=false
-    // so the data-testid for the percent span should not be in the DOM
     expect(screen.queryByTestId('insight-confidence-score-percent')).toBeNull();
   });
 
@@ -124,9 +126,9 @@ describe('InsightCard', () => {
   });
 
   it('dispatches retry event when retry button is clicked', async () => {
-    const { component } = render(InsightCard, { props: { error: 'err' } });
+    const { container } = render(InsightCard, { props: { error: 'err' } });
     const handler = vi.fn();
-    component.$on('retry', handler);
+    container.addEventListener('retry', handler);
     await fireEvent.click(screen.getByTestId('insight-card-retry'));
     expect(handler).toHaveBeenCalledOnce();
   });
