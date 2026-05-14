@@ -4,8 +4,8 @@ import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
 vi.mock('svelte-i18n', () => ({
   _: {
-    subscribe: (_fn: (_t: (_key: string) => string) => void) => {
-      _fn((_key: string) => _key);
+    subscribe: (fn: (translator: (k: string) => string) => void) => {
+      fn((k) => k);
       return () => {};
     }
   }
