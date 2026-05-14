@@ -77,18 +77,14 @@
   const SVG_H = 72;
   const PAD = 10;
 
-  function sparkPoints(
-    baseline: number,
-    r: number,
-    n: number
-  ): string {
+  function sparkPoints(baseline: number, r: number, n: number): string {
     const pts: [number, number][] = [];
     const steps = Math.min(n, 12);
     for (let i = 0; i < steps; i++) {
       const t = i / Math.max(steps - 1, 1);
       const x = PAD + t * (SVG_W - PAD * 2);
       // Simulate a vaguely correlated series around the baseline
-      const noise = (Math.sin(i * 2.1 + baseline * 10) * 0.18);
+      const noise = Math.sin(i * 2.1 + baseline * 10) * 0.18;
       const y_norm = Math.min(1, Math.max(0, baseline + noise + r * t * 0.25));
       const y = PAD + (1 - y_norm) * (SVG_H - PAD * 2);
       pts.push([x, y]);
@@ -99,15 +95,11 @@
   $: title = insight ? buildTitle(insight) : '';
   $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '→';
   $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
-  $: seriesA = insight
-    ? sparkPoints(0.6, insight.effect_size ?? 0, insight.sample_n ?? 10)
-    : '';
+  $: seriesA = insight ? sparkPoints(0.6, insight.effect_size ?? 0, insight.sample_n ?? 10) : '';
   $: seriesB = insight
     ? sparkPoints(0.45, -(insight.effect_size ?? 0) * 0.6, insight.sample_n ?? 10)
     : '';
-  $: expandLabel = expanded
-    ? $_('insights.card.collapse_aria')
-    : $_('insights.card.expand_aria');
+  $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
 </script>
 
 <!-- Loading skeleton -->
@@ -124,13 +116,9 @@
     <div class="skeleton skeleton-track" style="margin-top:0.5rem"></div>
   </article>
 
-<!-- Error state -->
+  <!-- Error state -->
 {:else if error}
-  <article
-    class="insight-card insight-card--error"
-    data-testid="insight-card-error"
-    role="alert"
-  >
+  <article class="insight-card insight-card--error" data-testid="insight-card-error" role="alert">
     <p class="insight-card__error-msg">{$_('insights.card.error_body')}</p>
     <button
       class="insight-card__retry-btn"
@@ -141,7 +129,7 @@
     </button>
   </article>
 
-<!-- Happy path -->
+  <!-- Happy path -->
 {:else if insight}
   <article
     class="insight-card"
@@ -154,8 +142,8 @@
       <span
         class="insight-card__direction insight-card__direction--{dirClass}"
         aria-hidden="true"
-        data-testid="insight-card-direction"
-      >{glyph}</span>
+        data-testid="insight-card-direction">{glyph}</span
+      >
 
       <h3 class="insight-card__title" data-testid="insight-card-title">
         {title}
@@ -183,10 +171,7 @@
     </div>
 
     <!-- One-sentence statement -->
-    <p
-      class="insight-card__statement"
-      data-testid="insight-card-statement"
-    >
+    <p class="insight-card__statement" data-testid="insight-card-statement">
       {insight.statement ?? $_('home.insight.empty_statement')}
     </p>
 
@@ -195,8 +180,8 @@
       {$_('insights.card.sample_meta', {
         values: {
           n: insight.sample_n ?? 0,
-          days: insight.time_window_days ?? 0
-        }
+          days: insight.time_window_days ?? 0,
+        },
       })}
     </p>
 
@@ -277,8 +262,10 @@
           </svg>
           <div class="insight-card__chart-legend">
             <span class="insight-card__legend-dot insight-card__legend-dot--primary"></span>
-            <span class="insight-card__legend-label">{insight.tag_a ?? insight.factor_a ?? 'A'}</span>
-            {#if (insight.tag_b ?? insight.factor_b)}
+            <span class="insight-card__legend-label"
+              >{insight.tag_a ?? insight.factor_a ?? 'A'}</span
+            >
+            {#if insight.tag_b ?? insight.factor_b}
               <span class="insight-card__legend-dot insight-card__legend-dot--secondary"></span>
               <span class="insight-card__legend-label">{insight.tag_b ?? insight.factor_b}</span>
             {/if}
@@ -286,10 +273,7 @@
         </div>
 
         <!-- Technical metadata -->
-        <dl
-          class="insight-card__meta-grid"
-          data-testid="insight-card-tech-meta"
-        >
+        <dl class="insight-card__meta-grid" data-testid="insight-card-tech-meta">
           {#if insight.r_value != null}
             <div class="insight-card__meta-row">
               <dt>{$_('insights.card.meta_r')}</dt>
@@ -305,12 +289,16 @@
           {#if insight.p_value != null}
             <div class="insight-card__meta-row">
               <dt>{$_('insights.card.meta_p')}</dt>
-              <dd data-testid="insight-card-p-value">{insight.p_value < 0.001 ? '<0.001' : insight.p_value.toFixed(3)}</dd>
+              <dd data-testid="insight-card-p-value">
+                {insight.p_value < 0.001 ? '<0.001' : insight.p_value.toFixed(3)}
+              </dd>
             </div>
           {/if}
           <div class="insight-card__meta-row">
             <dt>{$_('insights.card.meta_confidence')}</dt>
-            <dd data-testid="insight-card-confidence-raw">{(insight.confidence * 100).toFixed(0)}%</dd>
+            <dd data-testid="insight-card-confidence-raw">
+              {(insight.confidence * 100).toFixed(0)}%
+            </dd>
           </div>
           <div class="insight-card__meta-row">
             <dt>{$_('insights.card.meta_effect')}</dt>
@@ -359,9 +347,15 @@
     text-align: center;
     flex-shrink: 0;
   }
-  .insight-card__direction--positive { color: var(--color-success); }
-  .insight-card__direction--negative { color: var(--color-notification); }
-  .insight-card__direction--neutral  { color: var(--color-text-muted); }
+  .insight-card__direction--positive {
+    color: var(--color-success);
+  }
+  .insight-card__direction--negative {
+    color: var(--color-notification);
+  }
+  .insight-card__direction--neutral {
+    color: var(--color-text-muted);
+  }
 
   .insight-card__title {
     flex: 1;
@@ -378,8 +372,9 @@
     border-radius: var(--radius-sm, 0.375rem);
     font-size: 0.75rem;
     line-height: 1;
-    transition: color var(--transition-interactive, 180ms ease),
-                background var(--transition-interactive, 180ms ease);
+    transition:
+      color var(--transition-interactive, 180ms ease),
+      background var(--transition-interactive, 180ms ease);
   }
   .insight-card__dismiss:hover,
   .insight-card__dismiss:focus-visible {
@@ -446,8 +441,14 @@
   }
 
   @keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Sparkline chart */
@@ -479,8 +480,12 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .insight-card__legend-dot--primary   { background: var(--color-primary); }
-  .insight-card__legend-dot--secondary { background: var(--color-orange); }
+  .insight-card__legend-dot--primary {
+    background: var(--color-primary);
+  }
+  .insight-card__legend-dot--secondary {
+    background: var(--color-orange);
+  }
 
   .insight-card__legend-label {
     font-size: var(--text-xs, 0.72rem);
@@ -521,8 +526,9 @@
     border: 1px solid oklch(from var(--color-text) l c h / 0.15);
     border-radius: var(--radius-sm, 0.375rem);
     padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
-    transition: color var(--transition-interactive, 180ms ease),
-                border-color var(--transition-interactive, 180ms ease);
+    transition:
+      color var(--transition-interactive, 180ms ease),
+      border-color var(--transition-interactive, 180ms ease);
   }
   .insight-card__export-btn:hover {
     color: var(--color-text);
@@ -535,8 +541,12 @@
   }
 
   @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position:  200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
 
   .skeleton {
@@ -551,9 +561,19 @@
     border-radius: var(--radius-sm, 0.375rem);
   }
 
-  .skeleton-heading { height: 1.1rem; width: 55%; }
-  .skeleton-text    { height: 0.85rem; width: 100%; }
-  .skeleton-track   { height: 0.55rem; width: 100%; border-radius: 999px; }
+  .skeleton-heading {
+    height: 1.1rem;
+    width: 55%;
+  }
+  .skeleton-text {
+    height: 0.85rem;
+    width: 100%;
+  }
+  .skeleton-track {
+    height: 0.55rem;
+    width: 100%;
+    border-radius: 999px;
+  }
 
   /* ─── Error state ────────────────────────────────────────────── */
   .insight-card--error {
