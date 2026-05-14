@@ -7,8 +7,8 @@ vi.mock('svelte-i18n', () => ({
     subscribe: (_fn: (_v: (_k: string) => string) => void) => {
       _fn((_key: string) => _key);
       return () => {};
-    }
-  }
+    },
+  },
 }));
 
 describe('CorrelationDisclaimer', () => {

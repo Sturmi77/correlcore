@@ -24,8 +24,7 @@
   let firstFocusable: HTMLElement | null = null;
   let lastFocusable: HTMLElement | null = null;
 
-  const FOCUSABLE =
-    'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   function updateFocusBounds() {
     if (!dialogEl) return;
@@ -87,12 +86,7 @@
 </script>
 
 {#if open}
-  <div
-    class="cd-backdrop"
-    role="presentation"
-    on:click={onBackdrop}
-    data-testid="cd-backdrop"
-  >
+  <div class="cd-backdrop" role="presentation" on:click={onBackdrop} data-testid="cd-backdrop">
     <div
       bind:this={dialogEl}
       class="cd-modal"
@@ -171,11 +165,7 @@
       </div>
 
       <div class="cd-footer">
-        <button
-          class="cd-got-it"
-          data-testid="cd-got-it"
-          on:click={close}
-        >
+        <button class="cd-got-it" data-testid="cd-got-it" on:click={close}>
           {$_('insights.disclaimer.got_it')}
         </button>
       </div>
@@ -197,8 +187,12 @@
   }
 
   @keyframes cdFadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   .cd-modal {
@@ -216,8 +210,14 @@
   }
 
   @keyframes cdSlideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   /* Desktop: centred dialog instead of bottom-sheet */
