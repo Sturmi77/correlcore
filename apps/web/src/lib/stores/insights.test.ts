@@ -36,13 +36,11 @@ import {
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
-const makeInsight = (
-  overrides: Partial<{
-    id: string;
-    confidence: number | null;
-    effect_size: number | null;
-  }> = {}
-) => ({
+const makeInsight = (overrides: Partial<{
+  id: string;
+  confidence: number | null;
+  effect_size: number | null;
+}> = {}) => ({
   id: 'insight-1',
   user_id: 'user-1',
   insight_type: 'pointbiserial' as const,
