@@ -3,12 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/svelte';
 import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
 vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: (_fn: (_v: (_k: string) => string) => void) => {
-      _fn((_key: string) => _key);
-      return () => {};
-    },
-  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _: { subscribe: (run: any) => { run((v: any) => v); return () => {}; } }
 }));
 
 describe('CorrelationDisclaimer', () => {
@@ -37,33 +33,33 @@ describe('CorrelationDisclaimer', () => {
   });
 
   it('dispatches close on close-button click', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.click(screen.getByTestId('cd-close'));
     expect(handler).toHaveBeenCalledOnce();
   });
 
   it('dispatches close on got-it button click', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.click(screen.getByTestId('cd-got-it'));
     expect(handler).toHaveBeenCalledOnce();
   });
 
   it('dispatches close on backdrop click', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.click(screen.getByTestId('cd-backdrop'));
     expect(handler).toHaveBeenCalledOnce();
   });
 
   it('dispatches close on Escape key', async () => {
-    const { component } = render(CorrelationDisclaimer, { props: { open: true } });
+    const { container } = render(CorrelationDisclaimer, { props: { open: true } });
     const handler = vi.fn();
-    component.$on('close', handler);
+    container.addEventListener('close', handler);
     await fireEvent.keyDown(document, { key: 'Escape' });
     expect(handler).toHaveBeenCalledOnce();
   });
