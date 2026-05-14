@@ -3,12 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/svelte';
 import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
 vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: (fn: (translator: (k: string) => string) => void) => {
-      fn((k) => k);
-      return () => {};
-    }
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _: { subscribe: (run: any) => { run((v: any) => v); return () => {}; } }
 }));
 
 describe('CorrelationDisclaimer', () => {
