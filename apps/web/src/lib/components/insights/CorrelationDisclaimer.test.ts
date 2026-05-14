@@ -4,7 +4,12 @@ import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
 vi.mock('svelte-i18n', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _: { subscribe: (run: any) => { run((v: any) => v); return () => {}; } }
+  _: {
+    subscribe: (run: any) => {
+      run((v: any) => v);
+      return () => {};
+    },
+  },
 }));
 
 describe('CorrelationDisclaimer', () => {

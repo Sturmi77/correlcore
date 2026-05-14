@@ -18,9 +18,7 @@ const STORAGE_KEY = 'dev_mode_enabled';
 function createDevModeStore() {
   // SSR-safe initial value
   const initial =
-    typeof window !== 'undefined'
-      ? localStorage.getItem(STORAGE_KEY) === 'true'
-      : false;
+    typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) === 'true' : false;
 
   const { subscribe, set, update } = writable<boolean>(initial);
 
@@ -40,7 +38,7 @@ function createDevModeStore() {
         }
         return next;
       });
-    }
+    },
   };
 }
 

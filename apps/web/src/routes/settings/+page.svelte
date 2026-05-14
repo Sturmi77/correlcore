@@ -75,9 +75,7 @@
       tapCount = 0;
       devMode.toggle();
       showToast(
-        $devMode
-          ? $_('settings.developer.toast_enabled')
-          : $_('settings.developer.toast_disabled')
+        $devMode ? $_('settings.developer.toast_enabled') : $_('settings.developer.toast_disabled')
       );
       return;
     }
@@ -317,11 +315,19 @@
   }
 
   @keyframes toastIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .settings__toast { animation: none; }
+    .settings__toast {
+      animation: none;
+    }
   }
 </style>

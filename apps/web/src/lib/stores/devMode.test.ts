@@ -6,9 +6,15 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 const store: Record<string, string> = {};
 const localStorageMock = {
   getItem: (k: string) => store[k] ?? null,
-  setItem: (k: string, v: string) => { store[k] = v; },
-  removeItem: (k: string) => { delete store[k]; },
-  clear: () => { Object.keys(store).forEach((k) => delete store[k]); }
+  setItem: (k: string, v: string) => {
+    store[k] = v;
+  },
+  removeItem: (k: string) => {
+    delete store[k];
+  },
+  clear: () => {
+    Object.keys(store).forEach((k) => delete store[k]);
+  },
 };
 
 vi.stubGlobal('localStorage', localStorageMock);
