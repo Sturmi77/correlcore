@@ -42,10 +42,7 @@
   $: count = countDayEntries(entries);
   $: trackingConsistency =
     backendConsistency ??
-    computeEntryStreak(
-      consistencyEntries.length ? consistencyEntries : entries,
-      todayIso
-    );
+    computeEntryStreak(consistencyEntries.length ? consistencyEntries : entries, todayIso);
 
   function formatAvg(v: number | null): string {
     if (v === null) return '–';
