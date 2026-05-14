@@ -2,6 +2,7 @@
   /**
    * Home route — Issue #97 + ADR-0014 (M1.5 Home-Dashboard).
    * M3.1 #161: renamed streak props to consistency (ADR-0017 no-gamification).
+   * M3.1 #167: HomeInsight replaced by InsightCard + insightStore (TODO-1,3,4).
    *
    * Two faces, gated by auth state:
    *   - Anonymous → existing landing (logo + tagline + theme toggle).
@@ -15,6 +16,8 @@
    *     keep growing. Numbers ≥ 30 render as "30+".
    *   - Tag/symptom decorations on individual cards are loaded lazily
    *     inside `HomeRecentEntries` (Promise.allSettled per entry).
+   *   - Insights are owned by insightStore (ADR-0017) — isolated from
+   *     dashboard loading state so a fetch failure never blocks the CTA.
    */
 
   import { onMount } from 'svelte';
@@ -23,7 +26,13 @@
   import { auth, currentUser, logout } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchDashboardSummary, type DashboardSummaryResponse } from '$lib/api/dashboard';
-  import { listLatestInsights, type InsightResponse } from '$lib/api/insights';
+  import {
+    insightStore,
+    rankedInsights,
+    loadInsights,
+    dismissInsight,
+    resetInsightStore,
+  } from '$lib/stores/insights';
   import {
     fetchUserPreferences,
     updateUserPreferences,
@@ -34,12 +43,13 @@
   import { computeEntryStreak, shiftIsoDate } from '$lib/utils/streak';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
-  import HomeInsight from '$lib/components/home/HomeInsight.svelte';
   import HomeRecentEntries from '$lib/components/home/HomeRecentEntries.svelte';
   import HomeSummary from '$lib/components/home/HomeSummary.svelte';
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
   import InsightConfidenceScale from '$lib/components/home/InsightConfidenceScale.svelte';
   import WeekdayPatternChart from '$lib/components/home/WeekdayPatternChart.svelte';
+  import InsightCard from '$lib/components/insights/InsightCard.svelte';
+  import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
 
   // ---------------------------------------------------------------------
   // Constants & derived state.
@@ -59,13 +69,22 @@
   let consistencyEntries: EntryResponse[] = [];
   let backendStreakData: EntryStreakResponse | null = null;
   let dashboardSummary: DashboardSummaryResponse | null = null;
-  let latestInsight: InsightResponse | null = null;
-  let weekdayInsight: InsightResponse | null = null;
   let userPreferences: UserPreferencesResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
   /** True once the loader had to query the extended 30-day window. */
   let consistencyCapped = false;
+
+  // Insight state comes exclusively from insightStore (ADR-0017).
+  $: latestInsight = $insightStore.latest;
+  $: insightLoading = $insightStore.loading;
+  $: insightError = $insightStore.error ?? '';
+  $: weekdayInsight =
+    $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
+  // Correlation matrix: all pointbiserial insights with enough confidence.
+  $: matrixInsights = $rankedInsights.filter(
+    (i) => i.insight_type === 'pointbiserial' && (i.confidence ?? 0) >= 0.2
+  );
 
   /**
    * Slice the 14-day window for the 7-day summary so HomeSummary's
@@ -80,7 +99,7 @@
     dashboardLoading = true;
     try {
       const start = shiftIsoDate(todayIso, -(BASELINE_DAYS - 1));
-      const [baselineResult, streakResult, summaryResult, insightResult, preferencesResult] =
+      const [baselineResult, streakResult, summaryResult, preferencesResult] =
         await Promise.allSettled([
           listEntries({
             start_date: start,
@@ -88,7 +107,6 @@
           }),
           fetchEntryStreak(todayIso),
           fetchDashboardSummary(todayIso),
-          listLatestInsights({ limit: 10 }),
           fetchUserPreferences(),
         ]);
 
@@ -97,10 +115,6 @@
       const baseline = baselineResult.value;
       backendStreakData = streakResult.status === 'fulfilled' ? streakResult.value : null;
       dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
-      const insights = insightResult.status === 'fulfilled' ? insightResult.value.insights : [];
-      latestInsight = insights[0] ?? null;
-      weekdayInsight =
-        insights.find((insight) => insight.insight_type === 'weekday_pattern') ?? null;
       userPreferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : null;
       recentEntries = baseline;
       todayEntry = findEntryForDate(baseline, todayIso);
@@ -131,8 +145,6 @@
       todayEntry = null;
       backendStreakData = null;
       dashboardSummary = null;
-      latestInsight = null;
-      weekdayInsight = null;
       userPreferences = null;
       consistencyCapped = false;
     } finally {
@@ -143,6 +155,7 @@
 
   $: if ($auth.status === 'authenticated' && !dashboardLoaded && !dashboardLoading) {
     void loadDashboard();
+    void loadInsights();
   }
 
   async function handleLogout(): Promise<void> {
@@ -154,9 +167,8 @@
     consistencyCapped = false;
     backendStreakData = null;
     dashboardSummary = null;
-    latestInsight = null;
-    weekdayInsight = null;
     userPreferences = null;
+    resetInsightStore();
     void goto('/', { replaceState: true });
   }
 
@@ -203,6 +215,7 @@
   onMount(() => {
     if ($auth.status === 'authenticated' && !dashboardLoaded) {
       void loadDashboard();
+      void loadInsights();
     }
   });
 </script>
@@ -324,10 +337,23 @@
       </section>
     {/if}
 
-    <!-- Latest generated insight -->
+    <!-- Latest insight card (ADR-0017: InsightCard replaces HomeInsight) -->
     <section>
-      <HomeInsight insight={latestInsight} loading={dashboardLoading && !dashboardLoaded} />
+      <InsightCard
+        insight={latestInsight}
+        loading={insightLoading && !latestInsight}
+        error={insightError}
+        on:dismiss={(e) => void dismissInsight(e.detail.id)}
+        on:retry={() => void loadInsights()}
+      />
     </section>
+
+    <!-- Correlation matrix (pointbiserial insights, confidence >= 0.2) -->
+    {#if !insightLoading && matrixInsights.length >= 2}
+      <section>
+        <InsightMatrix insights={matrixInsights} />
+      </section>
+    {/if}
 
     <!-- 14-day mood sparkline -->
     <section>
