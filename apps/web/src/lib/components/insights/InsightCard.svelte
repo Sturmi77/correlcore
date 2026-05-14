@@ -6,7 +6,7 @@
    *
    * Props
    * -----
-   * insight      InsightDto from $lib/api/insights (required)
+   * insight      InsightResponse from $lib/api/insights (required)
    * loading      Show shimmer skeleton instead of real content
    * error        Non-empty string renders the error state with a retry button
    *
@@ -19,9 +19,9 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import InsightConfidenceScale from './InsightConfidenceScale.svelte';
-  import type { InsightDto } from '$lib/api/insights';
+  import type { InsightResponse } from '$lib/api/insights';
 
-  export let insight: InsightDto | null = null;
+  export let insight: InsightResponse | null = null;
   export let loading = false;
   export let error = '';
 
@@ -37,12 +37,6 @@
     expanded = !expanded;
   }
 
-  /**
-   * Map effect_size sign to a direction indicator glyph.
-   * Positive  → ↗  (upward correlation)
-   * Negative  → ↘  (downward / inverse)
-   * Near zero → →  (neutral)
-   */
   function directionGlyph(effectSize: number): string {
     if (effectSize > 0.05) return '↗';
     if (effectSize < -0.05) return '↘';
@@ -55,24 +49,12 @@
     return 'neutral';
   }
 
-  /**
-   * Build a human-readable title from the insight's factor keys.
-   * Falls back gracefully if tag_b is absent (single-variable insight).
-   */
-  function buildTitle(ins: InsightDto): string {
-    const a = ins.tag_a ?? ins.factor_a ?? '?';
-    const b = ins.tag_b ?? ins.factor_b ?? null;
+  function buildTitle(ins: InsightResponse): string {
+    const a = ins.metric ?? '?';
+    const b = ins.subject_label ?? null;
     return b ? `${a} → ${b}` : a;
   }
 
-  /**
-   * Minimal inline dual-axis sparkline rendered as SVG.
-   * X = days (time_window_days), Y1 = metric_a normalised 0-1,
-   * Y2 = metric_b normalised 0-1.
-   * Data points are fabricated from summary stats when raw series
-   * are not part of the InsightDto (they are not in M3.1).
-   * In M3.2 this will be replaced by a proper DualAxisChart component.
-   */
   const SVG_W = 280;
   const SVG_H = 72;
   const PAD = 10;
@@ -83,7 +65,6 @@
     for (let i = 0; i < steps; i++) {
       const t = i / Math.max(steps - 1, 1);
       const x = PAD + t * (SVG_W - PAD * 2);
-      // Simulate a vaguely correlated series around the baseline
       const noise = Math.sin(i * 2.1 + baseline * 10) * 0.18;
       const y_norm = Math.min(1, Math.max(0, baseline + noise + r * t * 0.25));
       const y = PAD + (1 - y_norm) * (SVG_H - PAD * 2);
@@ -102,7 +83,6 @@
   $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
 </script>
 
-<!-- Loading skeleton -->
 {#if loading}
   <article
     class="insight-card insight-card--skeleton"
@@ -115,8 +95,6 @@
     <div class="skeleton skeleton-text" style="width:70%"></div>
     <div class="skeleton skeleton-track" style="margin-top:0.5rem"></div>
   </article>
-
-  <!-- Error state -->
 {:else if error}
   <article class="insight-card insight-card--error" data-testid="insight-card-error" role="alert">
     <p class="insight-card__error-msg">{$_('insights.card.error_body')}</p>
@@ -128,8 +106,6 @@
       {$_('insights.card.retry')}
     </button>
   </article>
-
-  <!-- Happy path -->
 {:else if insight}
   <article
     class="insight-card"
@@ -137,18 +113,15 @@
     data-expanded={expanded ? 'true' : 'false'}
     data-direction={dirClass}
   >
-    <!-- ═══════════════ LEVEL 1 — always visible ═══════════════ -->
     <header class="insight-card__header">
       <span
         class="insight-card__direction insight-card__direction--{dirClass}"
         aria-hidden="true"
         data-testid="insight-card-direction">{glyph}</span
       >
-
       <h3 class="insight-card__title" data-testid="insight-card-title">
         {title}
       </h3>
-
       <button
         class="insight-card__dismiss"
         aria-label={$_('insights.card.dismiss_aria', { values: { title } })}
@@ -159,10 +132,9 @@
       </button>
     </header>
 
-    <!-- Confidence scale (ADR-0018 — no raw % in collapsed view) -->
     <div class="insight-card__scale">
       <InsightConfidenceScale
-        confidenceScore={insight.confidence}
+        confidenceScore={insight.confidence ?? 0}
         currentTier={insight.tier}
         entryCount={insight.sample_n ?? 0}
         loading={false}
@@ -170,22 +142,14 @@
       />
     </div>
 
-    <!-- One-sentence statement -->
     <p class="insight-card__statement" data-testid="insight-card-statement">
       {insight.statement ?? $_('home.insight.empty_statement')}
     </p>
 
-    <!-- Sample meta -->
     <p class="insight-card__meta" data-testid="insight-card-meta">
-      {$_('insights.card.sample_meta', {
-        values: {
-          n: insight.sample_n ?? 0,
-          days: insight.time_window_days ?? 0,
-        },
-      })}
+      {$_('insights.card.sample_meta', { values: { n: insight.sample_n ?? 0 } })}
     </p>
 
-    <!-- Disclaimer link (#168) -->
     <a
       href="/insights/disclaimer"
       class="insight-card__disclaimer"
@@ -195,7 +159,6 @@
       {$_('insights.card.disclaimer_link')} <span aria-hidden="true">ⓘ</span>
     </a>
 
-    <!-- Expand / Collapse toggle -->
     <button
       class="insight-card__toggle"
       aria-expanded={expanded}
@@ -208,14 +171,12 @@
       <span aria-hidden="true" class="insight-card__toggle-icon">{expanded ? '▲' : '▼'}</span>
     </button>
 
-    <!-- ═══════════════ LEVEL 2 — expanded details ═══════════════ -->
     {#if expanded}
       <section
         id="insight-level2-{insight.id}"
         class="insight-card__level2"
         data-testid="insight-card-level2"
       >
-        <!-- Dual-axis sparkline chart -->
         <div
           class="insight-card__chart"
           data-testid="insight-card-chart"
@@ -229,7 +190,6 @@
             aria-hidden="true"
             class="insight-card__sparkline"
           >
-            <!-- Y-axis grid lines -->
             {#each [0.25, 0.5, 0.75] as frac}
               <line
                 x1={PAD}
@@ -240,7 +200,6 @@
                 stroke-width="0.5"
               />
             {/each}
-            <!-- Series A -->
             <polyline
               points={seriesA}
               fill="none"
@@ -249,7 +208,6 @@
               stroke-linejoin="round"
               stroke-linecap="round"
             />
-            <!-- Series B -->
             <polyline
               points={seriesB}
               fill="none"
@@ -262,51 +220,37 @@
           </svg>
           <div class="insight-card__chart-legend">
             <span class="insight-card__legend-dot insight-card__legend-dot--primary"></span>
-            <span class="insight-card__legend-label"
-              >{insight.tag_a ?? insight.factor_a ?? 'A'}</span
-            >
-            {#if insight.tag_b ?? insight.factor_b}
+            <span class="insight-card__legend-label">{insight.metric}</span>
+            {#if insight.subject_label}
               <span class="insight-card__legend-dot insight-card__legend-dot--secondary"></span>
-              <span class="insight-card__legend-label">{insight.tag_b ?? insight.factor_b}</span>
+              <span class="insight-card__legend-label">{insight.subject_label}</span>
             {/if}
           </div>
         </div>
 
-        <!-- Technical metadata -->
         <dl class="insight-card__meta-grid" data-testid="insight-card-tech-meta">
-          {#if insight.r_value != null}
-            <div class="insight-card__meta-row">
-              <dt>{$_('insights.card.meta_r')}</dt>
-              <dd data-testid="insight-card-r-value">{insight.r_value.toFixed(3)}</dd>
-            </div>
-          {/if}
-          {#if insight.rho_value != null}
-            <div class="insight-card__meta-row">
-              <dt>{$_('insights.card.meta_rho')}</dt>
-              <dd>{insight.rho_value.toFixed(3)}</dd>
-            </div>
-          {/if}
-          {#if insight.p_value != null}
-            <div class="insight-card__meta-row">
-              <dt>{$_('insights.card.meta_p')}</dt>
-              <dd data-testid="insight-card-p-value">
-                {insight.p_value < 0.001 ? '<0.001' : insight.p_value.toFixed(3)}
-              </dd>
-            </div>
-          {/if}
           <div class="insight-card__meta-row">
             <dt>{$_('insights.card.meta_confidence')}</dt>
             <dd data-testid="insight-card-confidence-raw">
-              {(insight.confidence * 100).toFixed(0)}%
+              {((insight.confidence ?? 0) * 100).toFixed(0)}%
             </dd>
           </div>
           <div class="insight-card__meta-row">
             <dt>{$_('insights.card.meta_effect')}</dt>
-            <dd>{insight.effect_size != null ? insight.effect_size.toFixed(3) : '—'}</dd>
+            <dd data-testid="insight-card-effect-size">
+              {insight.effect_size != null ? insight.effect_size.toFixed(3) : '—'}
+            </dd>
+          </div>
+          <div class="insight-card__meta-row">
+            <dt>{$_('insights.card.meta_type')}</dt>
+            <dd>{insight.insight_type}</dd>
+          </div>
+          <div class="insight-card__meta-row">
+            <dt>{$_('insights.card.meta_sample')}</dt>
+            <dd>{insight.sample_n}</dd>
           </div>
         </dl>
 
-        <!-- CSV export stub (#169) -->
         <button
           class="insight-card__export-btn"
           data-testid="insight-card-export-csv"
@@ -320,7 +264,6 @@
 {/if}
 
 <style>
-  /* ─── Card shell ─────────────────────────────────────────────── */
   .insight-card {
     display: flex;
     flex-direction: column;
@@ -332,14 +275,11 @@
     box-shadow: var(--shadow-sm);
     transition: box-shadow 200ms ease;
   }
-
-  /* ─── Header row ─────────────────────────────────────────────── */
   .insight-card__header {
     display: flex;
     align-items: center;
     gap: var(--space-2, 0.5rem);
   }
-
   .insight-card__direction {
     font-size: 1.1rem;
     font-weight: 700;
@@ -347,16 +287,9 @@
     text-align: center;
     flex-shrink: 0;
   }
-  .insight-card__direction--positive {
-    color: var(--color-success);
-  }
-  .insight-card__direction--negative {
-    color: var(--color-notification);
-  }
-  .insight-card__direction--neutral {
-    color: var(--color-text-muted);
-  }
-
+  .insight-card__direction--positive { color: var(--color-success); }
+  .insight-card__direction--negative { color: var(--color-notification); }
+  .insight-card__direction--neutral  { color: var(--color-text-muted); }
   .insight-card__title {
     flex: 1;
     font-size: var(--text-sm, 0.875rem);
@@ -364,7 +297,6 @@
     margin: 0;
     line-height: 1.3;
   }
-
   .insight-card__dismiss {
     flex-shrink: 0;
     padding: var(--space-1, 0.25rem);
@@ -381,22 +313,17 @@
     color: var(--color-text);
     background: var(--color-surface-offset);
   }
-
-  /* ─── Statement & meta ───────────────────────────────────────── */
   .insight-card__statement {
     font-size: var(--text-sm, 0.875rem);
     line-height: 1.55;
     color: var(--color-text);
     margin: 0;
   }
-
   .insight-card__meta {
     font-size: var(--text-xs, 0.75rem);
     color: var(--color-text-muted);
     margin: 0;
   }
-
-  /* ─── Disclaimer link ────────────────────────────────────────── */
   .insight-card__disclaimer {
     font-size: var(--text-xs, 0.75rem);
     color: var(--color-text-muted);
@@ -405,11 +332,7 @@
     text-underline-offset: 2px;
     align-self: flex-start;
   }
-  .insight-card__disclaimer:hover {
-    color: var(--color-primary);
-  }
-
-  /* ─── Expand toggle ──────────────────────────────────────────── */
+  .insight-card__disclaimer:hover { color: var(--color-primary); }
   .insight-card__toggle {
     display: flex;
     align-items: center;
@@ -422,15 +345,8 @@
     border-radius: var(--radius-sm, 0.375rem);
     transition: color var(--transition-interactive, 180ms ease);
   }
-  .insight-card__toggle:hover {
-    color: var(--color-primary-hover);
-  }
-
-  .insight-card__toggle-icon {
-    font-size: 0.6rem;
-  }
-
-  /* ─── Level 2 ────────────────────────────────────────────────── */
+  .insight-card__toggle:hover { color: var(--color-primary-hover); }
+  .insight-card__toggle-icon { font-size: 0.6rem; }
   .insight-card__level2 {
     display: flex;
     flex-direction: column;
@@ -439,19 +355,10 @@
     border-top: 1px solid oklch(from var(--color-text) l c h / 0.08);
     animation: fadeSlideIn 180ms ease both;
   }
-
   @keyframes fadeSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-
-  /* Sparkline chart */
   .insight-card__chart {
     display: flex;
     flex-direction: column;
@@ -460,19 +367,12 @@
     border-radius: var(--radius-md, 0.5rem);
     padding: var(--space-3, 0.75rem);
   }
-
-  .insight-card__sparkline {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
+  .insight-card__sparkline { width: 100%; height: auto; display: block; }
   .insight-card__chart-legend {
     display: flex;
     align-items: center;
     gap: var(--space-2, 0.5rem);
   }
-
   .insight-card__legend-dot {
     display: inline-block;
     width: 8px;
@@ -480,36 +380,24 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .insight-card__legend-dot--primary {
-    background: var(--color-primary);
-  }
-  .insight-card__legend-dot--secondary {
-    background: var(--color-orange);
-  }
-
+  .insight-card__legend-dot--primary   { background: var(--color-primary); }
+  .insight-card__legend-dot--secondary { background: var(--color-orange); }
   .insight-card__legend-label {
     font-size: var(--text-xs, 0.72rem);
     color: var(--color-text-muted);
   }
-
-  /* Technical metadata grid */
   .insight-card__meta-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-1, 0.25rem) var(--space-4, 1rem);
   }
-
-  .insight-card__meta-row {
-    display: contents;
-  }
-
+  .insight-card__meta-row { display: contents; }
   .insight-card__meta-grid dt {
     font-size: var(--text-xs, 0.72rem);
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
-
   .insight-card__meta-grid dd {
     font-size: var(--text-xs, 0.72rem);
     font-weight: 600;
@@ -517,8 +405,6 @@
     font-variant-numeric: tabular-nums;
     margin: 0;
   }
-
-  /* CSV export button */
   .insight-card__export-btn {
     align-self: flex-start;
     font-size: var(--text-xs, 0.75rem);
@@ -534,21 +420,11 @@
     color: var(--color-text);
     border-color: oklch(from var(--color-text) l c h / 0.3);
   }
-
-  /* ─── Skeleton ───────────────────────────────────────────────── */
-  .insight-card--skeleton {
-    pointer-events: none;
-  }
-
+  .insight-card--skeleton { pointer-events: none; }
   @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
-
   .skeleton {
     background: linear-gradient(
       90deg,
@@ -560,33 +436,18 @@
     animation: shimmer 1.5s ease-in-out infinite;
     border-radius: var(--radius-sm, 0.375rem);
   }
-
-  .skeleton-heading {
-    height: 1.1rem;
-    width: 55%;
-  }
-  .skeleton-text {
-    height: 0.85rem;
-    width: 100%;
-  }
-  .skeleton-track {
-    height: 0.55rem;
-    width: 100%;
-    border-radius: 999px;
-  }
-
-  /* ─── Error state ────────────────────────────────────────────── */
+  .skeleton-heading { height: 1.1rem; width: 55%; }
+  .skeleton-text    { height: 0.85rem; width: 100%; }
+  .skeleton-track   { height: 0.55rem; width: 100%; border-radius: 999px; }
   .insight-card--error {
     border-color: oklch(from var(--color-error) l c h / 0.25);
     background: oklch(from var(--color-error) l c h / 0.04);
   }
-
   .insight-card__error-msg {
     font-size: var(--text-sm, 0.875rem);
     color: var(--color-error);
     margin: 0;
   }
-
   .insight-card__retry-btn {
     align-self: flex-start;
     font-size: var(--text-xs, 0.75rem);
@@ -600,15 +461,8 @@
   .insight-card__retry-btn:hover {
     background: oklch(from var(--color-primary) l c h / 0.08);
   }
-
-  /* ─── Reduced motion ─────────────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
-    .skeleton {
-      animation: none;
-      opacity: 0.6;
-    }
-    .insight-card__level2 {
-      animation: none;
-    }
+    .skeleton { animation: none; opacity: 0.6; }
+    .insight-card__level2 { animation: none; }
   }
 </style>
