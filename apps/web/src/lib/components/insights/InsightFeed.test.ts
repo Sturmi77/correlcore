@@ -16,15 +16,20 @@ import type { InsightResponse } from '$lib/api/insights';
 
 vi.mock('svelte-i18n', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _: { subscribe: (run: any) => { run((v: any) => v); return () => {}; } }
+  _: {
+    subscribe: (run: any) => {
+      run((v: any) => v);
+      return () => {};
+    },
+  },
 }));
 
 vi.mock('./InsightCard.svelte', () => ({
-  default: { render: () => ({ html: '<div data-testid="insight-card-mock"></div>' }) }
+  default: { render: () => ({ html: '<div data-testid="insight-card-mock"></div>' }) },
 }));
 
 vi.mock('./CorrelationDisclaimer.svelte', () => ({
-  default: { render: () => ({ html: '' }) }
+  default: { render: () => ({ html: '' }) },
 }));
 
 function makeInsight(overrides: Partial<InsightResponse> = {}): InsightResponse {
@@ -96,9 +101,9 @@ describe('InsightFeed', () => {
 
   // ── Sort order ────────────────────────────────────────────────────
   it('sorts insights by confidence × |effect_size| descending', () => {
-    const low  = makeInsight({ id: 'low',  confidence: 0.3, effect_size: 0.2 }); // score 0.06
+    const low = makeInsight({ id: 'low', confidence: 0.3, effect_size: 0.2 }); // score 0.06
     const high = makeInsight({ id: 'high', confidence: 0.9, effect_size: 0.8 }); // score 0.72
-    const mid  = makeInsight({ id: 'mid',  confidence: 0.5, effect_size: 0.5 }); // score 0.25
+    const mid = makeInsight({ id: 'mid', confidence: 0.5, effect_size: 0.5 }); // score 0.25
     render(InsightFeed, { props: { insights: [low, high, mid] } });
     const list = screen.getByTestId('insight-feed-list');
     const items = list.querySelectorAll('li');
@@ -128,7 +133,7 @@ describe('InsightFeed', () => {
   });
 
   it('mood tab filters out non-mood insights', async () => {
-    const moodInsight  = makeInsight({ id: 'm', metric: 'mood' });
+    const moodInsight = makeInsight({ id: 'm', metric: 'mood' });
     const sleepInsight = makeInsight({ id: 's', metric: 'sleep' });
     render(InsightFeed, { props: { insights: [moodInsight, sleepInsight] } });
     await fireEvent.click(screen.getByTestId('insight-feed-tab-mood'));

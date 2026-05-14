@@ -35,17 +35,17 @@
   let disclaimerOpen = false;
 
   const TABS: { id: FilterTab; label: string }[] = [
-    { id: 'all',      label: 'insights.feed.tab_all' },
-    { id: 'mood',     label: 'insights.feed.tab_mood' },
+    { id: 'all', label: 'insights.feed.tab_all' },
+    { id: 'mood', label: 'insights.feed.tab_mood' },
     { id: 'symptoms', label: 'insights.feed.tab_symptoms' },
-    { id: 'sleep',    label: 'insights.feed.tab_sleep' },
+    { id: 'sleep', label: 'insights.feed.tab_sleep' },
   ];
 
   const METRIC_MAP: Record<FilterTab, string[]> = {
-    all:      [],
-    mood:     ['mood'],
+    all: [],
+    mood: ['mood'],
     symptoms: ['symptom', 'symptoms'],
-    sleep:    ['sleep'],
+    sleep: ['sleep'],
   };
 
   function score(i: InsightResponse): number {
@@ -81,18 +81,31 @@
       data-testid="insight-feed-disclaimer-btn"
       on:click={() => (disclaimerOpen = true)}
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-        aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
     </button>
   </header>
 
   <!-- Filter tabs -->
-  <div class="if-tabs" role="tablist" aria-label={$_('insights.feed.filter_label')} data-testid="insight-feed-tabs">
+  <div
+    class="if-tabs"
+    role="tablist"
+    aria-label={$_('insights.feed.filter_label')}
+    data-testid="insight-feed-tabs"
+  >
     {#each TABS as tab}
       <button
         role="tab"
@@ -131,20 +144,27 @@
       {/each}
     </ul>
 
-  <!-- Empty state -->
+    <!-- Empty state -->
   {:else if !error && filtered.length === 0}
     <div class="if-empty" data-testid="insight-feed-empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-        <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z"/>
-        <path d="M15 11v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v0"/>
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        aria-hidden="true"
+      >
+        <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z" />
+        <path d="M15 11v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v0" />
       </svg>
       <p>{$_('insights.feed.empty_title')}</p>
       <span>{$_('insights.feed.empty_body')}</span>
       <a href="/" class="if-empty__cta">{$_('insights.feed.empty_cta')}</a>
     </div>
 
-  <!-- Feed -->
+    <!-- Feed -->
   {:else if !error}
     <ul class="if-list" data-testid="insight-feed-list">
       {#each filtered as insight (insight.id)}
@@ -155,10 +175,7 @@
     </ul>
   {/if}
 
-  <CorrelationDisclaimer
-    open={disclaimerOpen}
-    on:close={() => (disclaimerOpen = false)}
-  />
+  <CorrelationDisclaimer open={disclaimerOpen} on:close={() => (disclaimerOpen = false)} />
 </section>
 
 <style>

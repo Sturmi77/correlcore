@@ -59,13 +59,7 @@
       </a>
     </section>
   {:else}
-    <InsightFeed
-      {insights}
-      {loading}
-      {error}
-      {entryCount}
-      on:retry={loadInsights}
-    />
+    <InsightFeed {insights} {loading} {error} {entryCount} on:retry={loadInsights} />
   {/if}
 </main>
 
