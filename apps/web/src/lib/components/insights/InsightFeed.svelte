@@ -61,7 +61,7 @@
     .sort((a, b) => score(b) - score(a));
 
   const SKELETON_COUNT = 3;
-  const skeletonItems = Array.from({ length: SKELETON_COUNT });
+  const skeletonItems: number[] = Array.from({ length: SKELETON_COUNT }, (_, idx) => idx);
 </script>
 
 <section class="if-feed" aria-label={$_('insights.feed.aria_label')} data-testid="insight-feed">
@@ -124,7 +124,7 @@
   <!-- Loading skeleton -->
   {#if loading}
     <ul class="if-list" aria-busy="true" data-testid="insight-feed-skeleton">
-      {#each skeletonItems as _item}
+      {#each skeletonItems as idx (idx)}
         <li>
           <InsightCard loading />
         </li>
@@ -168,7 +168,6 @@
     gap: var(--space-4);
   }
 
-  /* Header */
   .if-header {
     display: flex;
     align-items: flex-start;
@@ -215,7 +214,6 @@
     background: var(--color-primary-highlight);
   }
 
-  /* Filter tabs */
   .if-tabs {
     display: flex;
     gap: var(--space-1);
@@ -246,7 +244,6 @@
     border-color: oklch(from var(--color-primary) l c h / 0.25);
   }
 
-  /* Error banner */
   .if-error {
     display: flex;
     align-items: center;
@@ -269,7 +266,6 @@
     text-underline-offset: 2px;
   }
 
-  /* List */
   .if-list {
     list-style: none;
     padding: 0;
@@ -279,7 +275,6 @@
     gap: var(--space-3);
   }
 
-  /* Empty state */
   .if-empty {
     display: flex;
     flex-direction: column;

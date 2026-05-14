@@ -2,11 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
-type I18nSubscriber = (run: (fn: (v: string) => string) => void) => () => void;
+type I18nSubscriber = (_run: (_fn: (_v: string) => string) => void) => () => void;
 
 vi.mock('svelte-i18n', () => ({
   _: {
-    subscribe: ((run) => { run((v: string) => v); return () => {}; }) as I18nSubscriber,
+    subscribe: ((_run) => { _run((_v: string) => _v); return () => {}; }) as I18nSubscriber,
   },
 }));
 
