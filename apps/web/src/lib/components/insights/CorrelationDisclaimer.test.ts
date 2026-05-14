@@ -2,13 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
-type I18nSubscriber = ((fn: (v: string) => string) => void) => () => void;
+const mockI18n = { subscribe: (run: (fn: (v: string) => string) => void) => { run((v) => v); return () => {}; } };
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: ((run: I18nSubscriber) => run((v: string) => v)) as unknown as I18nSubscriber,
-  },
-}));
+vi.mock('svelte-i18n', () => ({ _: mockI18n }));
 
 describe('CorrelationDisclaimer', () => {
   it('renders nothing when open=false', () => {
