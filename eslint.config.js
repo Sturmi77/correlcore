@@ -3,7 +3,17 @@ import ts from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import prettier from 'eslint-config-prettier';
 import svelte from 'eslint-plugin-svelte';
-import svelteParser from 'svelte-eslint-parser';
+
+const noUnusedVarsConfig = [
+  'error',
+  {
+    varsIgnorePattern: '^_',
+    argsIgnorePattern: '^_',
+    caughtErrorsIgnorePattern: '^_',
+    destructuredArrayIgnorePattern: '^_',
+    ignoreRestSiblings: true,
+  },
+];
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
@@ -33,25 +43,15 @@ export default [
     rules: {
       'no-undef': 'off',
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          varsIgnorePattern: '^_',
-          argsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-          destructuredArrayIgnorePattern: '^_',
-          ignoreRestSiblings: true,
-        },
-      ],
+      '@typescript-eslint/no-unused-vars': noUnusedVarsConfig,
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
 
-  // ── Svelte files — svelte-eslint-parser as main, tsParser as sub-parser ──
+  // ── Svelte files — parser provided by eslint-plugin-svelte ─────────────
   {
     files: ['**/*.svelte'],
     languageOptions: {
-      parser: svelteParser,
       parserOptions: {
         parser: tsParser,
       },
@@ -62,16 +62,7 @@ export default [
     rules: {
       'no-undef': 'off',
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          varsIgnorePattern: '^_',
-          argsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-          destructuredArrayIgnorePattern: '^_',
-          ignoreRestSiblings: true,
-        },
-      ],
+      '@typescript-eslint/no-unused-vars': noUnusedVarsConfig,
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
