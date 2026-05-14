@@ -7,6 +7,9 @@
    * - Filter tabs: All | Mood | Symptoms | Sleep
    * - Inline error banner — no full-page crash on API failure
    * - Empty state / skeleton delegated to InsightFeed
+   *
+   * InsightMatrix (M3.1 Step 4 / TODO-5) is rendered above the feed
+   * to show the correlation matrix for pointbiserial insights.
    */
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -14,6 +17,7 @@
   import { listLatestInsights, type InsightResponse } from '$lib/api/insights';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
+  import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
 
   let insights: InsightResponse[] = [];
   let loading = false;
@@ -59,6 +63,10 @@
       </a>
     </section>
   {:else}
+    {#if !loading && insights.length > 0}
+      <InsightMatrix {insights} />
+    {/if}
+
     <InsightFeed {insights} {loading} {error} {entryCount} on:retry={loadInsights} />
   {/if}
 </main>
