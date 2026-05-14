@@ -61,6 +61,7 @@
     .sort((a, b) => score(b) - score(a));
 
   const SKELETON_COUNT = 3;
+  const skeletonItems = Array.from({ length: SKELETON_COUNT });
 </script>
 
 <section class="if-feed" aria-label={$_('insights.feed.aria_label')} data-testid="insight-feed">
@@ -123,7 +124,7 @@
   <!-- Loading skeleton -->
   {#if loading}
     <ul class="if-list" aria-busy="true" data-testid="insight-feed-skeleton">
-      {#each { length: SKELETON_COUNT } as _}
+      {#each skeletonItems as _item}
         <li>
           <InsightCard loading />
         </li>

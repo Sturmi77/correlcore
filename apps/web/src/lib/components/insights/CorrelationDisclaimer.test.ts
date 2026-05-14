@@ -2,13 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
 
+type I18nSubscriber = (run: (fn: (v: string) => string) => void) => () => void;
+
 vi.mock('svelte-i18n', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _: {
-    subscribe: (run: any) => {
-      run((v: any) => v);
-      return () => {};
-    },
+    subscribe: ((run) => { run((v: string) => v); return () => {}; }) as I18nSubscriber,
   },
 }));
 
