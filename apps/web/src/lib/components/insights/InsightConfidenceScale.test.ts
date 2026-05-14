@@ -33,17 +33,17 @@ vi.mock('svelte-i18n', async () => {
 
 describe('InsightConfidenceScale — semantic labels (ADR-0018)', () => {
   const labelCases = [
-    { score: 0.0, label: 'Early signal', fill: '0%' },
-    { score: 0.1, label: 'Early signal', fill: '10%' },
-    { score: 0.19, label: 'Early signal', fill: '19%' },
-    { score: 0.2, label: 'Emerging pattern', fill: '20%' },
-    { score: 0.39, label: 'Emerging pattern', fill: '39%' },
-    { score: 0.4, label: 'Moderate finding', fill: '40%' },
-    { score: 0.59, label: 'Moderate finding', fill: '59%' },
-    { score: 0.6, label: 'Strong finding', fill: '60%' },
-    { score: 0.79, label: 'Strong finding', fill: '79%' },
-    { score: 0.8, label: 'Very strong finding', fill: '80%' },
-    { score: 1.0, label: 'Very strong finding', fill: '100%' },
+    { score: 0.0,  label: 'Early signal',        fill: '0%'  },
+    { score: 0.1,  label: 'Early signal',        fill: '10%' },
+    { score: 0.19, label: 'Early signal',        fill: '19%' },
+    { score: 0.2,  label: 'Emerging pattern',    fill: '20%' },
+    { score: 0.39, label: 'Emerging pattern',    fill: '39%' },
+    { score: 0.4,  label: 'Moderate finding',    fill: '40%' },
+    { score: 0.59, label: 'Moderate finding',    fill: '59%' },
+    { score: 0.6,  label: 'Strong finding',      fill: '60%' },
+    { score: 0.79, label: 'Strong finding',      fill: '79%' },
+    { score: 0.8,  label: 'Very strong finding', fill: '80%' },
+    { score: 1.0,  label: 'Very strong finding', fill: '100%' },
   ] as const;
 
   it.each(labelCases)('score $score → label "$label"', ({ score, label, fill }) => {
@@ -84,12 +84,7 @@ describe('InsightConfidenceScale — no raw percentage in collapsed state', () =
 
   it('shows percentage when showRawPercent=true', () => {
     render(InsightConfidenceScale, {
-      props: {
-        confidenceScore: 0.73,
-        currentTier: 'developing',
-        entryCount: 28,
-        showRawPercent: true,
-      },
+      props: { confidenceScore: 0.73, currentTier: 'developing', entryCount: 28, showRawPercent: true },
     });
     expect(screen.getByTestId('insight-confidence-score-percent')).toBeTruthy();
   });
@@ -100,21 +95,15 @@ describe('InsightConfidenceScale — input clamping', () => {
     render(InsightConfidenceScale, {
       props: { confidenceScore: 2.5, currentTier: 'robust', entryCount: 50 },
     });
-    expect(screen.getByTestId('insight-confidence-fill').getAttribute('style')).toContain(
-      'width: 100%'
-    );
-    expect(screen.getByTestId('insight-confidence-label').textContent?.trim()).toBe(
-      'Very strong finding'
-    );
+    expect(screen.getByTestId('insight-confidence-fill').getAttribute('style')).toContain('width: 100%');
+    expect(screen.getByTestId('insight-confidence-label').textContent?.trim()).toBe('Very strong finding');
   });
 
   it('clamps score < 0 to 0%', () => {
     render(InsightConfidenceScale, {
       props: { confidenceScore: -0.5, currentTier: 'none', entryCount: 0 },
     });
-    expect(screen.getByTestId('insight-confidence-fill').getAttribute('style')).toContain(
-      'width: 0%'
-    );
+    expect(screen.getByTestId('insight-confidence-fill').getAttribute('style')).toContain('width: 0%');
     expect(screen.getByTestId('insight-confidence-label').textContent?.trim()).toBe('Early signal');
   });
 });
