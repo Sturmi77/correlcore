@@ -54,7 +54,10 @@ export const rankedInsights = derived(_state, ($s) =>
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Resolve the highest-ranked non-dismissed insight from a list. */
-function pickLatest(insights: InsightResponse[], dismissedIds: string[]): InsightResponse | null {
+function pickLatest(
+  insights: InsightResponse[],
+  dismissedIds: string[]
+): InsightResponse | null {
   const visible = insights.filter((i) => !dismissedIds.includes(i.id));
   if (visible.length === 0) return null;
   return visible.reduce((best, curr) =>
