@@ -23,7 +23,11 @@
 </script>
 
 <svelte:head>
-  <title>{$_('insights.disclaimer.page_title', { default: 'Correlation Disclaimer' })} - {$_('app.name')}</title>
+  <title
+    >{$_('insights.disclaimer.page_title', { default: 'Correlation Disclaimer' })} - {$_(
+      'app.name'
+    )}</title
+  >
 </svelte:head>
 
 <!--
