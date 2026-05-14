@@ -1,60 +1,59 @@
-# M3 Sprint- und Issue-Status
+# M3 Sprint Status — Insights v1
 
-Stand: 2026-05-13
+Last updated: 2026-05-14  
+Status: **✅ Complete**
 
-Dieses Dokument beschreibt den Abschlussstand von M3 im Abschluss-Branch
-`m3-completion-plan`. Die ersten sechs Sprints lagen bereits auf `main`; die
-Sprints 7 bis 12 werden in einem Abschluss-PR zusammengefuehrt und danach ueber
-den `release-images.yml`-Workflow als neue GHCR-Images verifiziert.
+This document records the closed state of M3 (Insights v1). For the
+post-M3 polish iteration see [M3.1_SPRINT_STATUS.md](./M3.1_SPRINT_STATUS.md).
 
-## Sprint-Uebersicht
+## Sprint Overview
 
-| Sprint | Status      | Kurzinhalt                                                                               |
-| ------ | ----------- | ---------------------------------------------------------------------------------------- |
-| 1      | geschlossen | No-Gamification-Prep: sichtbare Entry-Run-Copy auf Tracking Consistency umgestellt.      |
-| 2      | geschlossen | Insight- und Preference-Foundation: Migration, Modelle, Schemas, Analytics-Dependencies. |
-| 3      | geschlossen | Analytics Engine v1: tiered Kandidaten, Spearman, Point-biserial, Weekday Pattern.       |
-| 4      | geschlossen | Analytics Worker: nightly Insight-Generation fuer aktive/verifizierte User.              |
-| 5      | geschlossen | Read-API: `GET /api/v1/insights` und `/insights/latest`.                                 |
-| 6      | geschlossen | Web Home Preview: neuester Insight read-only auf der Home-Seite.                         |
-| 7      | geschlossen | Statistik-Haertung: FDR-Korrektur, Mindeststichprobe, Wochentags-Bias, entry-date Guard. |
-| 8      | geschlossen | Insight Confidence Scale: Dashboard Summary Endpoint und permanente Home-Skala.          |
-| 9      | geschlossen | First-Week UX: WeekdayPatternChart, neutraler Banner, Preference-Dismiss-State.          |
-| 10     | geschlossen | Insights-Seite und Korrelations-Matrix fuer Tag-Mood-Muster.                             |
-| 11     | geschlossen | Cold-start Onboarding: Retro-Batch, Profilfragen, statische Preview-Library.             |
-| 12     | geschlossen | Day-over-Day Delta: direkter Vergleich zu gestern nach Entry-Save.                       |
+| Sprint | Status | Summary |
+|--------|--------|---------|
+| 1 | ✅ Closed | No-gamification prep: entry run copy updated to Tracking Consistency. |
+| 2 | ✅ Closed | Insight & Preference foundation: migration, models, schemas, analytics dependencies. |
+| 3 | ✅ Closed | Analytics Engine v1: tiered candidates, Spearman, Point-biserial, Weekday Pattern. |
+| 4 | ✅ Closed | Analytics Worker: nightly insight generation for active / verified users. |
+| 5 | ✅ Closed | Read API: `GET /api/v1/insights` and `/insights/latest`. |
+| 6 | ✅ Closed | Web Home Preview: latest insight rendered read-only on the Home screen. |
+| 7 | ✅ Closed | Statistics hardening: FDR correction, minimum sample size, weekday bias, entry-date guard. |
+| 8 | ✅ Closed | Insight Confidence Scale: dashboard summary endpoint and persistent Home scale. |
+| 9 | ✅ Closed | First-Week UX: WeekdayPatternChart, neutral banner, preference dismiss state. |
+| 10 | ✅ Closed | Insights page and correlation matrix for tag–mood patterns. |
+| 11 | ✅ Closed | Cold-start onboarding: retro batch, profile questionnaire, static preview library. |
+| 12 | ✅ Closed | Day-over-Day Delta: direct comparison to yesterday after entry save. |
 
-## Implementierungsstand
+## Implementation Summary
 
-- **#151 Tiered Confidence System:** `Insight`-Model/API/Worker liefern `tier`, `confidence` und `sample_n`; Home rendert Tier-Badge, erklaerenden Tooltip/ARIA-Text, sichtbaren Medical Disclaimer und neutrale Copy ohne kausale oder diagnostische Aussagen.
-- **#152 Retrospective Entry Import:** `EntrySource`, Migration, `POST /api/v1/entries/batch`, `/onboarding/retro` und persistierter `onboarding_retro_completed`-State sind umgesetzt.
-- **#153 Insight Confidence Scale:** `GET /api/v1/dashboard/summary`, logarithmischer `confidence_score` und `InsightConfidenceScale` auf Home sind umgesetzt.
-- **#154 Day-over-Day Delta:** neuer `GET /api/v1/entries/delta?entry_date=YYYY-MM-DD&slot=day`, metric-only Response, shared Tags und `DayDeltaCard` auf `/entries/new` nach Auto-Save bzw. beim Laden bestehender Eintraege sind umgesetzt.
-- **#155 First-Week Tracking Consistency Insight:** Weekday-Payload, 7-Bar-Chart, neutraler Banner und persistenter `dismissed_insight_keys`-State sind umgesetzt.
-- **#156 Onboarding Questionnaire:** `user_profiles`, `PUT /api/v1/user/profile`, Export-Erweiterung, `/onboarding/profile` und `insight_previews.json` mit klar gelabelten allgemeinen Forschungshinweisen sind umgesetzt.
-- **#157 und #159:** bleiben bewusst ausserhalb von M3 als M5-Folgearbeit offen.
-- **#158:** M2-Follow-up ist umgesetzt und in GitHub bereits geschlossen.
+- **#151 Tiered Confidence System:** `Insight` model/API/worker deliver `tier`, `confidence`, and `sample_n`. Home renders tier badge, explanatory tooltip/ARIA text, visible medical disclaimer, and neutral copy without causal or diagnostic claims.
+- **#152 Retrospective Entry Import:** `EntrySource`, migration, `POST /api/v1/entries/batch`, `/onboarding/retro`, and persisted `onboarding_retro_completed` state are implemented.
+- **#153 Insight Confidence Scale:** `GET /api/v1/dashboard/summary`, logarithmic `confidence_score`, and `InsightConfidenceScale` on Home are implemented.
+- **#154 Day-over-Day Delta:** `GET /api/v1/entries/delta?entry_date=YYYY-MM-DD&slot=day`, metric-only response, shared tags, and `DayDeltaCard` on `/entries/new` after auto-save or when loading existing entries are implemented.
+- **#155 First-Week Tracking Consistency Insight:** weekday payload, 7-bar chart, neutral banner, and persistent `dismissed_insight_keys` state are implemented.
+- **#156 Onboarding Questionnaire:** `user_profiles`, `PUT /api/v1/user/profile`, export extension, `/onboarding/profile`, and `insight_previews.json` with clearly labelled general research notes are implemented.
+- **#157 and #159:** intentionally deferred outside M3 as M5 follow-up work.
+- **#158:** M2 follow-up is implemented and closed in GitHub.
 
-## Verifikation
+## Final Verification Gate
 
-Zuletzt ausgefuehrte Abschluss-Gates:
+All checks passed on branch `m3-completion-plan` before merge to `main`:
 
-- `uv run --python 3.12 ruff check .` gruen.
-- `uv run --python 3.12 ruff format --check .` gruen.
-- `uv run --python 3.12 mypy app` gruen.
-- `$env:ENCRYPTION_KEY='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='; uv run --python 3.12 pytest --no-cov` mit 372 Tests gruen.
-- `NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @correlcore/web typecheck` gruen.
-- `pnpm --filter @correlcore/web lint` gruen.
-- `pnpm --filter @correlcore/web test -- --run` mit 195 Tests gruen.
-- `pnpm --filter @correlcore/web build` gruen.
+```
+uv run --python 3.12 ruff check .                   ✅
+uv run --python 3.12 ruff format --check .          ✅
+uv run --python 3.12 mypy app                       ✅
+pytest --no-cov                     372 tests ✅
+pnpm --filter @correlcore/web typecheck             ✅
+pnpm --filter @correlcore/web lint                  ✅
+pnpm --filter @correlcore/web test -- --run  195 tests ✅
+pnpm --filter @correlcore/web build                 ✅
+```
 
-Hinweis: Der gueltige Test-Fernet-Key wird nur fuer lokale Tests gesetzt, weil
-die lokale `.env` weiterhin den dokumentierten Platzhalter-Key enthaelt.
+> The valid test Fernet key is set only for local test runs.
+> The local `.env` retains the documented placeholder key.
 
-## Abschlussfolge
+## Post-M3 Work
 
-1. Abschluss-Commit auf `m3-completion-plan` erstellen und PR gegen `main` oeffnen.
-2. GitHub-Checks im PR abwarten.
-3. PR nach `main` mergen, wenn die Checks gruen sind.
-4. Issues #151, #152, #154 und #156 mit Abschlusskommentar schliessen.
-5. `release-images.yml` auf `main` verifizieren: API- und Web-Job muessen gruen sein und `latest`, `main`, `sha-<merge-short-sha>` nach GHCR pushen.
+See [M3.1_SPRINT_STATUS.md](./M3.1_SPRINT_STATUS.md) for the follow-up polish
+iteration covering InsightCard, InsightStore non-blocking load, CorrelationDisclaimer,
+and heatmap neutralisation.
