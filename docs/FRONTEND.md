@@ -1,6 +1,6 @@
 # CorrelCore — Frontend Principles
 
-Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-13 (M3.1 frontend restructure).
+Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-15 (M3.5 design review — metric invert table, color-primary ADR note, screen naming, i18n guidance).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
@@ -11,6 +11,8 @@ Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-1
 ### 1.1 Analytical Clarity over Aesthetic Delight
 
 CorrelCore is not a wellness journal. The visual language must signal **precision and trustworthiness**, not playfulness. The color palette (`--color-primary: #7c6af5 / #6356d9`) is technical and modern. Charts use semantic colors (negative correlation → desaturated cool tones, positive → warm primary tones), never arbitrary brightness.
+
+> **Color note:** `--color-primary` uses a violet palette, intentionally diverging from the Nexus design system defaults (teal). This decision reflects the analytical/technical brand direction (§1.1). A formal ADR entry documenting this divergence is pending — until then this comment serves as the canonical reference.
 
 ### 1.2 The 60-Second Rule
 
@@ -52,6 +54,7 @@ This is active user trust-building, not legal boilerplate.
 - Calendar / frequency heatmaps use **blue-tone neutral scales** — never red/green traffic-light colouring that implies a streak verdict
 - Habit adherence is shown as a **percentage rate**, not a chain counter
 - Notifications copy is always neutral: "Time for your daily check-in." — never "Don't break your streak!"
+- **InsightQualityMeter copy is always descriptive, never imperative.** No call-to-action, no urgency framing. Example of correct copy: *"At your current tracking pace: ca. 2–3 weeks until first insight."* — no emoji, no imperative verb. See Issue #184.
 
 ### 1.6 Mobile First
 
@@ -82,7 +85,9 @@ Offline → Cached data with "offline" badge or graceful hide
 | **Dexie.js**                   | IndexedDB abstraction for offline sync (active from M4)   |
 | **Custom SVG components**      | Chart library (D-002 decided — see DESIGN_DOCUMENT §2.10) |
 | **pnpm + Vite**                | Fast HMR, optimised bundling, pinned via ADR-0010         |
-| **svelte-i18n / paraglide-js** | i18n from day 1 (DE + EN)                                 |
+| **paraglide-js**               | i18n from day 1 (DE + EN) — canonical choice              |
+
+> **i18n implementation note (Issue #185):** Use `paraglide-js`'s built-in `setLocale()` for language switching. Do **not** introduce a custom `writable` locale store — paraglide-js handles persistence and reactivity. Locale preference is additionally synced to the server via `PATCH /api/v1/user/settings { locale: 'de' }` for cross-device consistency.
 
 ---
 
@@ -138,7 +143,20 @@ Enforced via Lighthouse CI in the CI/CD pipeline. Web Vitals monitoring via Glit
 
 Colour must **never** be the only information carrier — always pair with label or icon (WCAG 1.4.1).
 
-### 4.3 Confidence Bar (Insight-Specific)
+### 4.3 Metric Semantics & Invert Flag
+
+Not all metrics share the same direction — a higher raw value does not always mean "better". The following table is the canonical definition for chart rendering, analytics worker correlation sign, and axis labelling:
+
+| Metric          | DB field        | Scale | Direction       | `invert` | Notes                                      |
+| --------------- | --------------- | ----- | --------------- | -------- | ------------------------------------------ |
+| Mood            | `mood_score`    | 1–5   | Higher = better | `false`  |                                            |
+| Energy          | `energy`        | 1–5   | Higher = better | `false`  |                                            |
+| Stress          | `stress`        | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw`           |
+| Sleep Quality   | `sleep_quality` | 1–5   | Higher = better | `false`  | Issue #172 — M7 Health Connect will re-use |
+
+> **Implementation:** The `invert` flag is defined centrally in `src/lib/config/metrics.ts` and consumed by `MetricTimeseries.svelte`, `HomeSparkline.svelte`, `DualAxisChart.svelte`, and `analytics_worker.py`. Raw DB values are **never** modified — inversion is view-layer only.
+
+### 4.4 Confidence Bar (Insight-Specific)
 
 Insight confidence is visualised as a single-colour progress bar with a semantic label. No stars (gamification association), no raw percentages on cards (pseudo-precision). See [ADR-0018](adr/0018-insight-confidence-visualisation.md).
 
@@ -160,6 +178,8 @@ confidence  bar fill    label
 ## 5. Screen Architecture
 
 CorrelCore has exactly **5 primary screens**. No screen may be added without an explicit justification and ADR entry. See [ADR-0017](adr/0017-frontend-screen-architecture.md).
+
+> **Naming note:** All sub-views, history lists, and calendar overlays within a screen are **secondary sheets or tabs** — they do not constitute separate primary screens. The Entry History view (tap on a past entry) is a secondary sheet overlay within Trends, not a standalone screen.
 
 ### Screen 1: Home (`/`)
 
@@ -210,7 +230,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 │  Bad              Very good  │
 │                              │
 │  Energy  ●────────── ○       │
-│  Stress  ○──────────●        │
+│  Stress  ○──────────●        │  ← Stress: higher raw = worse (invert: true)
 │                              │
 │  [🏠 Home] [🏢 Office] [✈️] │  ← Work context quick-pick
 │                              │
@@ -226,6 +246,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 - Tag suggestions sorted by historical usage frequency
 - "+ More" opens full tag sheet (symptoms, notes, photo)
 - Day-over-day delta shown as neutral info card after save (Issue #154)
+- Stress slider axis label reflects inverted semantics: left = "High stress", right = "Low stress"
 
 ---
 
@@ -268,6 +289,8 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 
 **Purpose:** Long-term visualisations — mood timeline, tag frequency, work context patterns.
 
+> **ADR-0017 note:** "History", "Calendar", and "Entry list" views are **not separate screens** — they are tabs or secondary sheet overlays within `/trends`. The Entry Detail view (tap on a past entry) opens as a secondary sheet (read-only overlay), not a new route.
+
 **Layout (tab-based):**
 
 ```
@@ -296,6 +319,7 @@ Time range: [7D] [30D] [90D] [1Y]
 - No "best day" comparisons or ranking language
 - Export button (CSV/JSON) in header — for doctor visits and power users
 - Charts are tappable: tap on data point shows tooltip with day details
+- Entry History: tap on any data point or calendar cell → secondary sheet overlay with single past entry (read-only)
 
 ---
 
@@ -325,6 +349,7 @@ APPEARANCE
 
 DEVELOPER  ← only visible after unlock (7× tap on version string)
 → Developer mode  [OFF]
+→ Force visualizations  [OFF]  ← only visible when Developer mode is ON
 ```
 
 **Developer Mode rules** (extends [ADR-0015](adr/0015-developer-view-version-identifikation.md), see [ADR-0019](adr/0019-dev-mode-settings-toggle.md)):
@@ -332,6 +357,9 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 - Hidden behind 7× tap on version string in Settings footer
 - Toggle writes `dev_mode_enabled` to LocalStorage
 - When enabled: `DEV_VIEW_ENABLED` flag activates `/dev` route link in Settings
+- **"Force visualizations" sub-toggle** is only visible when `dev_mode_enabled === true`
+- `devForceVisualizations` is a `derived` store from `devModeEnabled` — **not** gated by `import.meta.env.DEV` (available to selfhosters in production, see Issue #183)
+- Deactivating Developer mode resets `dev_force_viz` to `false`
 - Does not count as a user-facing screen — it is a diagnostic tool
 
 ---
@@ -344,7 +372,7 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 | **Symptom Checker**   | Optional in entry              | Symptom intensity sliders (0–3)         |
 | **Insight Detail**    | "Show details" on insight card | Dual-axis chart + lag selector          |
 | **Onboarding Flow**   | First launch / Issue #156      | Profile setup + static insight previews |
-| **Entry History**     | Date tap in calendar           | Single past entry, read-only            |
+| **Entry History**     | Date tap / data point in Trends | Single past entry, read-only            |
 
 ---
 
@@ -400,6 +428,20 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 
 No motivational language. No fire emojis. Neutral, data-based information.
 
+### 6.4 InsightQualityMeter Copy Rules
+
+All copy in `InsightQualityMeter.svelte` must be **descriptive, never imperative**. The following table defines the canonical copy for each stage:
+
+| Entries | Stage           | Correct copy                                                              |
+| ------- | --------------- | ------------------------------------------------------------------------- |
+| 0–3     | Getting started | "Your data is being collected. First patterns become visible around 30 entries." |
+| 4–29    | Building data   | "At your current tracking pace: ca. X weeks until first insight."        |
+| 4–29    | No recent data  | "No recent entries found. Estimated time to first insight cannot be calculated." |
+| 30–89   | Low confidence  | First insight visible — confidence label shown                            |
+| 90+     | Medium / High   | Full insights                                                             |
+
+**Prohibited patterns:** emoji in progress display, imperative verbs (`Track`, `Log`, `Don't`), urgency language (`speed up`, `falling behind`, `almost there`).
+
 ---
 
 ## 7. Component Structure (Atomic Design)
@@ -415,7 +457,7 @@ apps/web/src/
 │   │   │                    # InsightConfidenceScale, WeekdayPatternChart
 │   │   ├── insights/        # InsightCard, InsightCardExpanded,
 │   │   │                    # InsightFeed, InsightMatrix, CorrelationBadge,
-│   │   │                    # DualAxisChart
+│   │   │                    # DualAxisChart, InsightQualityMeter
 │   │   ├── trends/          # MetricTimeseries, TagHeatmap,
 │   │   │                    # WorkContextBar, CalendarHeatmap
 │   │   └── entries/         # EntryForm, TagPicker, SymptomChecker
@@ -423,8 +465,11 @@ apps/web/src/
 │   │   ├── client.ts        # apiFetch + single-flight refresh
 │   │   ├── auth.ts          # Auth API calls
 │   │   └── insights.ts      # Insights API calls
+│   ├── config/
+│   │   └── metrics.ts       # Canonical metric definitions incl. invert flag (§4.3)
 │   ├── stores/
 │   │   ├── auth.ts          # AuthState store
+│   │   ├── devMode.ts       # devModeEnabled + devForceVisualizations (ADR-0019)
 │   │   └── insights.ts      # InsightStore (latest, all, dismissed IDs)
 │   ├── utils/
 │   │   └── streak.ts        # Tracking consistency calculation (not streak)
@@ -439,7 +484,7 @@ apps/web/src/
     ├── insights/
     │   └── +page.svelte     # Insights feed
     ├── trends/
-    │   └── +page.svelte     # Trend visualisations
+    │   └── +page.svelte     # Trend visualisations (incl. Activities tab + Entry History sheet)
     ├── settings/
     │   ├── +page.svelte     # Settings
     │   └── tags/            # Tag management sub-page
@@ -503,7 +548,9 @@ The insights store is best-effort: a load failure must not propagate an error st
 
 - **From day 1:** DE and EN
 - No hardcoded strings in template code
-- Library: `svelte-i18n` or `paraglide-js`
+- Library: **`paraglide-js`** (canonical choice — do not introduce a parallel `svelte-i18n` store)
+- Language switching: call `paraglide-js`'s `setLocale()` directly — no custom writable store needed
+- Locale preference persisted via `PATCH /api/v1/user/settings { locale: 'de' }` for cross-device sync; LocalStorage as client-side fallback
 - Locale files: `apps/web/src/lib/i18n/de.json` and `en.json`
 - Date formats: `Intl.DateTimeFormat` (locale-aware)
 - Insight statement templates are locale-keyed — the backend returns a `statement_key`, the frontend resolves the localised string
@@ -549,6 +596,7 @@ Every new component or screen decision must be checked against:
 - [ ] Renders without horizontal scroll at 375 px?
 - [ ] All four component states defined (loading/error/empty/offline)?
 - [ ] All strings in locale file?
+- [ ] Metric uses correct `invert` flag from `src/lib/config/metrics.ts` (§4.3)?
 
 **No-gamification gate**
 
@@ -556,3 +604,4 @@ Every new component or screen decision must be checked against:
 - [ ] No badge or reward animation?
 - [ ] Heatmap uses neutral blue-tone scale?
 - [ ] Notification copy is neutral?
+- [ ] InsightQualityMeter copy is descriptive, not imperative (§6.4)?
