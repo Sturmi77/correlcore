@@ -264,7 +264,7 @@
 
   .home-recent__card:hover,
   .home-recent__card:focus-visible {
-    background: rgb(var(--color-primary-500, 59 130 246) / 0.08);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
     transform: translateY(-1px);
   }
 

@@ -46,7 +46,6 @@ export interface AutoSaveOptions<T> {
   /** Snapshot the current form. Called right before each save. */
   getSnapshot: () => T;
   /** Persist a snapshot. Resolves on success, rejects on failure. */
-  // eslint-disable-next-line no-unused-vars
   save: (snapshot: T) => Promise<void>;
   /** Debounce window in ms. ADR-0013 mandates 800. */
   debounceMs?: number;

@@ -89,7 +89,7 @@
     padding: 0.18rem 0.55rem;
     font-size: 0.68rem;
     font-weight: 600;
-    background: rgb(var(--color-primary-500, 59 130 246) / 0.1);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
     color: rgb(var(--color-primary-700, 29 78 216));
   }
 
@@ -126,7 +126,7 @@
     max-width: 1.4rem;
     min-height: 0.25rem;
     border-radius: 999px 999px 0.25rem 0.25rem;
-    background: rgb(var(--color-primary-500, 59 130 246) / 0.45);
+    background: color-mix(in srgb, var(--color-primary) 45%, transparent);
   }
 
   .weekday-pattern__bar-cell[data-highlight='high'] .weekday-pattern__bar {

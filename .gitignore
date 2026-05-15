@@ -38,6 +38,8 @@ build/
 *.swo
 .DS_Store
 Thumbs.db
+@eaDir/
+SYNOINDEX_MEDIA_INFO
 
 # Docker
 *.log

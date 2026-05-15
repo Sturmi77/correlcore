@@ -9,6 +9,19 @@ import { render, screen, fireEvent } from '@testing-library/svelte';
 import InsightCard from './InsightCard.svelte';
 import type { InsightResponse } from '$lib/api/insights';
 
+vi.mock('svelte-i18n', async () => {
+  const { readable } = await import('svelte/store');
+
+  return {
+    _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
+      if (key === 'home.confidence_scale.entry_count')
+        return `Based on ${options?.values?.n} entries`;
+      if (key === 'insights.card.sample_meta') return `Based on ${options?.values?.n} entries`;
+      return key;
+    }),
+  };
+});
+
 // Minimal fixture that satisfies InsightResponse
 const INSIGHT: InsightResponse = {
   id: 'test-001',
@@ -69,9 +82,9 @@ describe('InsightCard', () => {
     expect(dir.textContent?.trim()).toBe('↘');
   });
 
-  it('renders title as "tag_a → tag_b" format', () => {
+  it('renders title as "metric -> subject" format', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
-    expect(screen.getByTestId('insight-card-title').textContent).toContain('sport → mood');
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('mood → sport');
   });
 
   it('does NOT show raw percentage in collapsed state', () => {
@@ -107,11 +120,10 @@ describe('InsightCard', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('level 2 shows r-value and p-value when present', async () => {
+  it('level 2 shows effect size when present', async () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     await fireEvent.click(screen.getByTestId('insight-card-toggle'));
-    expect(screen.getByTestId('insight-card-r-value').textContent).toContain('0.612');
-    expect(screen.getByTestId('insight-card-p-value').textContent).toContain('0.031');
+    expect(screen.getByTestId('insight-card-effect-size').textContent).toContain('0.380');
   });
 
   it('level 2 shows raw confidence float', async () => {
@@ -133,9 +145,8 @@ describe('InsightCard', () => {
   });
 
   it('dispatches retry event when retry button is clicked', async () => {
-    const { container } = render(InsightCard, { props: { error: 'err' } });
     const handler = vi.fn();
-    container.addEventListener('retry', handler);
+    render(InsightCard, { props: { error: 'err' }, events: { retry: handler } });
     await fireEvent.click(screen.getByTestId('insight-card-retry'));
     expect(handler).toHaveBeenCalledOnce();
   });

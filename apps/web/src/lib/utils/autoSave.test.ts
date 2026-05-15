@@ -23,11 +23,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function makeController(
-  // eslint-disable-next-line no-unused-vars
-  saveImpl: (s: Snap) => Promise<void>,
-  initialV = 0
-) {
+function makeController(saveImpl: (s: Snap) => Promise<void>, initialV = 0) {
   let v = initialV;
   const controller = createAutoSave<Snap>({
     getSnapshot: () => ({ v }),

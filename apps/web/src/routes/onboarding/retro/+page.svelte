@@ -134,7 +134,7 @@
   }
 
   .onboarding__moods button.active {
-    background: rgb(var(--color-primary-500, 59 130 246));
+    background: var(--color-primary);
     color: white;
   }
 

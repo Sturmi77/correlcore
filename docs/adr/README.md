@@ -30,6 +30,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0017](0017-frontend-screen-architecture.md)            | Frontend Screen Architecture (M3.1)                          | Accepted      | 2026-05-13 |
 | [ADR-0018](0018-insight-confidence-visualisation.md)        | Insight Confidence Visualisation                             | Accepted      | 2026-05-13 |
 | [ADR-0019](0019-dev-mode-settings-toggle.md)                | Developer Mode Toggle in Settings                            | Accepted      | 2026-05-13 |
+| [ADR-0020](0020-primary-color-system.md)                    | Primary Color System for M3.5 Frontend                       | Accepted      | 2026-05-15 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -108,6 +109,10 @@ Confidence wird als einfarbiger Fortschrittsbalken mit semantischem Label darges
 ### ADR-0019 – Developer Mode Toggle in Settings
 
 Developer Mode wird über 7× Tap auf den Version-String im Settings-Footer aktiviert. Persistenz in localStorage (client-only). Wenn aktiv: `DEVELOPER`-Sektion in Settings sichtbar mit Toggle + Link zu `/dev`. Die Route `/dev` wird nicht in der Bottom Navigation gezeigt.
+
+### ADR-0020 - Primary Color System for M3.5 Frontend
+
+CorrelCore verwendet Violet als kanonische Primary-Farbfamilie fuer interaktive Elemente, Fokuszustaende und Mood-Metriken. Die frueheren Teal-Defaults bleiben nur als bewusst migrierte Legacy-Referenzen erlaubt. Heatmaps verwenden neutrale Blauabstufungen ohne Rot/Gruen-Wertung.
 
 ---
 

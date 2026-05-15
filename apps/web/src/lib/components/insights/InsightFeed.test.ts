@@ -5,8 +5,8 @@
  * Uses @testing-library/svelte + vitest.
  *
  * Learnings applied:
- * - No component.$on() — use container.addEventListener instead
- * - No inline type params in vi.mock callbacks — use `any` with eslint-disable
+ * - No component.$on() - use Svelte 5 `events` render option instead
+ * - No inline type params in vi.mock callbacks
  * - Use InsightResponse, not InsightDto
  */
 import { describe, it, expect, vi } from 'vitest';
@@ -15,21 +15,12 @@ import InsightFeed from './InsightFeed.svelte';
 import type { InsightResponse } from '$lib/api/insights';
 
 vi.mock('svelte-i18n', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _: {
-    subscribe: (run: any) => {
-      run((v: any) => v);
-      return () => {};
+    subscribe: (run: (formatter: (key: string) => string) => void) => {
+      run((key: string) => key);
+      return () => undefined;
     },
   },
-}));
-
-vi.mock('./InsightCard.svelte', () => ({
-  default: { render: () => ({ html: '<div data-testid="insight-card-mock"></div>' }) },
-}));
-
-vi.mock('./CorrelationDisclaimer.svelte', () => ({
-  default: { render: () => ({ html: '' }) },
 }));
 
 function makeInsight(overrides: Partial<InsightResponse> = {}): InsightResponse {
@@ -92,9 +83,8 @@ describe('InsightFeed', () => {
   });
 
   it('dispatches retry when retry button is clicked', async () => {
-    const { container } = render(InsightFeed, { props: { error: 'err' } });
     const handler = vi.fn();
-    container.addEventListener('retry', handler);
+    render(InsightFeed, { props: { error: 'err' }, events: { retry: handler } });
     await fireEvent.click(screen.getByTestId('insight-feed-retry'));
     expect(handler).toHaveBeenCalledOnce();
   });

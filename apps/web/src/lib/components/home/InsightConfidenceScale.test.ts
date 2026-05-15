@@ -15,12 +15,48 @@ vi.mock('svelte-i18n', async () => {
 });
 
 const cases = [
-  { entryCount: 0, confidenceScore: 0.05, currentTier: 'none', expected: '5%' },
-  { entryCount: 3, confidenceScore: 0.2, currentTier: 'early', expected: '20%' },
-  { entryCount: 8, confidenceScore: 0.4, currentTier: 'preliminary', expected: '40%' },
-  { entryCount: 15, confidenceScore: 0.65, currentTier: 'developing', expected: '65%' },
-  { entryCount: 30, confidenceScore: 0.9, currentTier: 'robust', expected: '90%' },
-  { entryCount: 100, confidenceScore: 1, currentTier: 'robust', expected: '100%' },
+  {
+    entryCount: 0,
+    confidenceScore: 0.05,
+    currentTier: 'none',
+    expected: '5%',
+    label: 'insights.confidence_label.early_signal',
+  },
+  {
+    entryCount: 3,
+    confidenceScore: 0.2,
+    currentTier: 'early',
+    expected: '20%',
+    label: 'insights.confidence_label.emerging_pattern',
+  },
+  {
+    entryCount: 8,
+    confidenceScore: 0.4,
+    currentTier: 'preliminary',
+    expected: '40%',
+    label: 'insights.confidence_label.moderate_finding',
+  },
+  {
+    entryCount: 15,
+    confidenceScore: 0.65,
+    currentTier: 'developing',
+    expected: '65%',
+    label: 'insights.confidence_label.strong_finding',
+  },
+  {
+    entryCount: 30,
+    confidenceScore: 0.9,
+    currentTier: 'robust',
+    expected: '90%',
+    label: 'insights.confidence_label.very_strong_finding',
+  },
+  {
+    entryCount: 100,
+    confidenceScore: 1,
+    currentTier: 'robust',
+    expected: '100%',
+    label: 'insights.confidence_label.very_strong_finding',
+  },
 ] as const;
 
 describe('InsightConfidenceScale', () => {
@@ -29,7 +65,8 @@ describe('InsightConfidenceScale', () => {
 
     const fill = screen.getByTestId('insight-confidence-fill');
     expect(fill.getAttribute('style')).toContain(`width: ${props.expected}`);
-    expect(screen.getByText(`home.confidence_scale.tier.${props.currentTier}`)).toBeTruthy();
+    expect(screen.getByTestId('insight-confidence-scale').dataset.tier).toBe(props.currentTier);
+    expect(screen.getByText(props.label)).toBeTruthy();
     expect(screen.getByText(`based on ${props.entryCount} entries`)).toBeTruthy();
   });
 

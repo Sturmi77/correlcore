@@ -189,8 +189,8 @@
   }
 
   .tag-chip-active {
-    background: var(--tag-color, rgb(var(--color-primary-500)));
-    border-color: var(--tag-color, rgb(var(--color-primary-500)));
+    background: var(--tag-color, var(--color-primary));
+    border-color: var(--tag-color, var(--color-primary));
     color: #ffffff;
   }
 

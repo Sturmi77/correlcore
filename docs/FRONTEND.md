@@ -12,7 +12,7 @@ Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-1
 
 CorrelCore is not a wellness journal. The visual language must signal **precision and trustworthiness**, not playfulness. The color palette (`--color-primary: #7c6af5 / #6356d9`) is technical and modern. Charts use semantic colors (negative correlation → desaturated cool tones, positive → warm primary tones), never arbitrary brightness.
 
-> **Color note:** `--color-primary` uses a violet palette, intentionally diverging from the Nexus design system defaults (teal). This decision reflects the analytical/technical brand direction (§1.1). A formal ADR entry documenting this divergence is pending — until then this comment serves as the canonical reference.
+> **Color note:** `--color-primary` uses a violet palette, intentionally diverging from the Nexus design system defaults (teal). This decision reflects the analytical/technical brand direction (§1.1) and is formalized in [ADR-0020](adr/0020-primary-color-system.md).
 
 ### 1.2 The 60-Second Rule
 
@@ -85,9 +85,9 @@ Offline → Cached data with "offline" badge or graceful hide
 | **Dexie.js**              | IndexedDB abstraction for offline sync (active from M4)   |
 | **Custom SVG components** | Chart library (D-002 decided — see DESIGN_DOCUMENT §2.10) |
 | **pnpm + Vite**           | Fast HMR, optimised bundling, pinned via ADR-0010         |
-| **paraglide-js**          | i18n from day 1 (DE + EN) — canonical choice              |
+| **svelte-i18n**           | Current i18n implementation for DE + EN                   |
 
-> **i18n implementation note (Issue #185):** Use `paraglide-js`'s built-in `setLocale()` for language switching. Do **not** introduce a custom `writable` locale store — paraglide-js handles persistence and reactivity. Locale preference is additionally synced to the server via `PATCH /api/v1/user/settings { locale: 'de' }` for cross-device consistency.
+> **i18n implementation note (Issue #185):** M3.5 uses the existing `svelte-i18n` setup. Do **not** introduce a second custom writable locale store. Language switching should update the active `svelte-i18n` locale, persist a local fallback, and sync to the server only once a `locale` user-preference field exists. A future migration to `paraglide-js` requires a dedicated ADR and must not be mixed into the language-toggle sprint.
 
 ---
 
@@ -548,9 +548,9 @@ The insights store is best-effort: a load failure must not propagate an error st
 
 - **From day 1:** DE and EN
 - No hardcoded strings in template code
-- Library: **`paraglide-js`** (canonical choice — do not introduce a parallel `svelte-i18n` store)
-- Language switching: call `paraglide-js`'s `setLocale()` directly — no custom writable store needed
-- Locale preference persisted via `PATCH /api/v1/user/settings { locale: 'de' }` for cross-device sync; LocalStorage as client-side fallback
+- Library: **`svelte-i18n`** (current implementation; a future `paraglide-js` migration needs its own ADR)
+- Language switching: update the active `svelte-i18n` locale directly; do not add a parallel custom locale store
+- Locale preference persisted via LocalStorage as client-side fallback; sync via `PATCH /api/v1/user/settings { locale: 'de' }` only after the backend preference field exists
 - Locale files: `apps/web/src/lib/i18n/de.json` and `en.json`
 - Date formats: `Intl.DateTimeFormat` (locale-aware)
 - Insight statement templates are locale-keyed — the backend returns a `statement_key`, the frontend resolves the localised string
