@@ -59,7 +59,7 @@
   }
 
   function onBackdrop(e: MouseEvent) {
-    if (e.target === dialogEl) close();
+    if (e.currentTarget === e.target) close();
   }
 
   let previouslyFocused: HTMLElement | null = null;

@@ -96,8 +96,8 @@
 
   .save-status--saving {
     color: rgb(var(--color-primary-600, 37 99 235));
-    background: rgb(var(--color-primary-500, 59 130 246) / 0.1);
-    border-color: rgb(var(--color-primary-500, 59 130 246) / 0.25);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
   }
 
   .save-status--saved {

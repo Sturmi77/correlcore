@@ -32,9 +32,9 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.85rem;
-    border: 1px solid rgb(var(--color-primary-500, 59 130 246) / 0.2);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
     border-radius: 0.45rem;
-    background: rgb(var(--color-primary-500, 59 130 246) / 0.08);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   }
 
   .first-week-banner__copy {

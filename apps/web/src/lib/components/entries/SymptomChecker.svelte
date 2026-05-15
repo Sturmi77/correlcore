@@ -80,11 +80,7 @@
    * Display name for a symptom: defaults are localised via i18n key,
    * custom symptoms render their user-provided name verbatim.
    */
-  function displayName(
-    s: SymptomResponse,
-    // eslint-disable-next-line no-unused-vars
-    translator: (k: string) => string
-  ): string {
+  function displayName(s: SymptomResponse, translator: (k: string) => string): string {
     if (s.is_default) {
       const i18nKey = `symptom.key.${s.slug}`;
       const translated = translator(i18nKey);
@@ -365,7 +361,7 @@
     font-size: var(--text-xs);
     line-height: 1.4;
     opacity: 0.75;
-    border-left: 3px solid rgb(var(--color-primary-500) / 0.4);
+    border-left: 3px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
     padding: var(--space-1) var(--space-3);
     margin: 0;
   }
@@ -463,7 +459,7 @@
   }
 
   .symptom-dot:hover:not(:disabled) {
-    border-color: rgb(var(--color-primary-500));
+    border-color: var(--color-primary);
   }
 
   .symptom-dot:active:not(:disabled) {
@@ -476,14 +472,14 @@
   }
 
   .symptom-dot-active {
-    background: rgb(var(--color-primary-500));
-    border-color: rgb(var(--color-primary-500));
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     color: #ffffff;
   }
 
   /* Visual cue: 0 means "no symptom" — keep it neutral even when active. */
   .symptom-dot-zero.symptom-dot-active {
-    background: var(--color-surface-2, rgb(var(--color-primary-500) / 0.15));
+    background: var(--color-surface-2, color-mix(in srgb, var(--color-primary) 15%, transparent));
     color: inherit;
   }
 
@@ -509,7 +505,7 @@
   }
 
   .symptom-custom-toggle:hover:not(:disabled) {
-    border-color: rgb(var(--color-primary-500));
+    border-color: var(--color-primary);
   }
 
   .symptom-custom-toggle:disabled {
