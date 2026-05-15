@@ -38,10 +38,10 @@ describe('HomeTodayContext', () => {
       props: { todayIso: '2026-05-15', todayEntry: entry, loading: false },
     });
     expect(screen.getByTestId('home-work-context').textContent).toContain(
-      'entry.work_context.homeoffice',
+      'entry.work_context.homeoffice'
     );
     expect(screen.getByTestId('home-today-status').textContent).toContain(
-      'home.entry_today_present',
+      'home.entry_today_present'
     );
   });
 });

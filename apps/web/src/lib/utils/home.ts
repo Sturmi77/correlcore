@@ -16,7 +16,7 @@ export function localIsoDate(d: Date): string {
  * Pick the time-of-day greeting i18n key.
  */
 export function greetingKey(
-  hour: number,
+  hour: number
 ): 'home.greeting_morning' | 'home.greeting_day' | 'home.greeting_evening' {
   if (hour >= 5 && hour < 12) return 'home.greeting_morning';
   if (hour >= 18 || hour < 5) return 'home.greeting_evening';
@@ -26,7 +26,7 @@ export function greetingKey(
 /** Find an entry whose entry_date matches the given ISO date, if any. */
 export function findEntryForDate(
   entries: readonly EntryResponse[] | null | undefined,
-  isoDay: string,
+  isoDay: string
 ): EntryResponse | null {
   if (!entries || entries.length === 0) return null;
   for (const e of entries) {

@@ -177,11 +177,7 @@
 
     <!-- Zone 1: date + work context + entry status -->
     <section class="home-zone" data-testid="home-zone-context">
-      <HomeTodayContext
-        {todayIso}
-        {todayEntry}
-        loading={dashboardLoading && !dashboardLoaded}
-      />
+      <HomeTodayContext {todayIso} {todayEntry} loading={dashboardLoading && !dashboardLoaded} />
     </section>
 
     <!-- Zone 2: insight preview (best-effort) -->
