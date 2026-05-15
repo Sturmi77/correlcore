@@ -11,7 +11,7 @@
     <p class="first-week-banner__body">{$_('home.first_week_banner.body')}</p>
   </div>
   <div class="first-week-banner__actions">
-    <a class="first-week-banner__link" href="#weekday-pattern">
+    <a class="first-week-banner__link" href="/insights">
       {$_('home.first_week_banner.view')}
     </a>
     <button

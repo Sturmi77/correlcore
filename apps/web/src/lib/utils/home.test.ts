@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { EntryResponse } from '$lib/api/entries';
-import { findEntryForDate, greetingKey, localIsoDate } from './home';
+import { findEntryForDate, formatHomeDate, greetingKey, localIsoDate } from './home';
 
 describe('localIsoDate', () => {
   it('formats year/month/day with zero-padding in local time', () => {
@@ -72,5 +72,17 @@ describe('findEntryForDate', () => {
   it('returns null when no entry matches', () => {
     const entries = [make('2026-05-06'), make('2026-05-05')];
     expect(findEntryForDate(entries, '2026-05-07')).toBeNull();
+  });
+
+  it('ignores non-day slots for the same date', () => {
+    const entries = [{ ...make('2026-05-07'), slot: 'evening' as const }];
+    expect(findEntryForDate(entries, '2026-05-07')).toBeNull();
+  });
+});
+
+describe('formatHomeDate', () => {
+  it('formats a long weekday date', () => {
+    const label = formatHomeDate('2026-05-15', 'en');
+    expect(label).toMatch(/2026|15|May/i);
   });
 });

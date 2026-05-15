@@ -1,9 +1,5 @@
 /**
- * Home-Screen helpers — Issue #97.
- *
- * Pure, side-effect-free utilities used by the authenticated Home view.
- * Extracted from the route component so they can be unit-tested without a
- * Svelte component-testing harness (we currently only ship store/util tests).
+ * Home-Screen helpers — Issue #97, M3.5 Sprint 4 (ADR-0017).
  */
 
 import type { EntryResponse } from '$lib/api/entries';
@@ -18,12 +14,9 @@ export function localIsoDate(d: Date): string {
 
 /**
  * Pick the time-of-day greeting i18n key.
- *   05:00–11:59 → morning
- *   18:00–04:59 → evening
- *   otherwise   → day (generic "Hallo")
  */
 export function greetingKey(
-  hour: number
+  hour: number,
 ): 'home.greeting_morning' | 'home.greeting_day' | 'home.greeting_evening' {
   if (hour >= 5 && hour < 12) return 'home.greeting_morning';
   if (hour >= 18 || hour < 5) return 'home.greeting_evening';
@@ -33,11 +26,22 @@ export function greetingKey(
 /** Find an entry whose entry_date matches the given ISO date, if any. */
 export function findEntryForDate(
   entries: readonly EntryResponse[] | null | undefined,
-  isoDay: string
+  isoDay: string,
 ): EntryResponse | null {
   if (!entries || entries.length === 0) return null;
   for (const e of entries) {
-    if (e.entry_date === isoDay) return e;
+    if (e.entry_date === isoDay && e.slot === 'day') return e;
   }
   return null;
+}
+
+/** Locale-aware long date for the home header (e.g. "Wednesday, 15 May"). */
+export function formatHomeDate(iso: string, locale: string): string {
+  const parsed = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(parsed);
 }

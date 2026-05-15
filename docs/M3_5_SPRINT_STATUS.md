@@ -6,18 +6,18 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 
 ## Overview
 
-| Sprint | Title                                     | Status  | PR / commit (main)   | Issues           |
-| ------ | ----------------------------------------- | ------- | -------------------- | ---------------- |
-| 0      | Repo Hygiene & Design-System Alignment    | ✅ Done | #187 / `1152d13`     | #186 (partial)   |
-| 1      | App Shell & Mobile Navigation             | ✅ Done | `64735bc`, `fc25c80` | #186             |
-| 2      | Entry Flow Foundation                     | ✅ Done | `830d31a`            | #170, #171, #182 |
-| 3      | Entry Bottom Sheet & Sleep Quality        | ✅ Done | (pending push)       | #172, #186       |
-| 4      | Home Screen Recomposition                 | ⬜ Open | —                    | #186             |
-| 5      | Insights Quality & Progressive Disclosure | ⬜ Open | —                    | #184, #186       |
-| 6      | Trends Tabbed Analysis Surface            | ⬜ Open | —                    | #182, #186       |
-| 7      | Settings, Language & Developer UX         | ⬜ Open | —                    | #183, #185, #186 |
-| 8      | Tag Lifecycle & Inactive Correlations     | ⬜ Open | —                    | #173             |
-| 9      | Visual QA, Docs & GitHub Closure          | ⬜ Open | —                    | all              |
+| Sprint | Title                                    | Status     | PR / commit (main)        | Issues        |
+| ------ | ---------------------------------------- | ---------- | ------------------------- | ------------- |
+| 0      | Repo Hygiene & Design-System Alignment   | ✅ Done    | #187 / `1152d13`          | #186 (partial)|
+| 1      | App Shell & Mobile Navigation            | ✅ Done    | `64735bc`, `fc25c80`      | #186          |
+| 2      | Entry Flow Foundation                    | ✅ Done    | `830d31a`                 | #170, #171, #182 |
+| 3      | Entry Bottom Sheet & Sleep Quality       | ✅ Done    | `bea8b40`                 | #172, #186    |
+| 4      | Home Screen Recomposition                | ✅ Done    | (pending push)            | #186          |
+| 5      | Insights Quality & Progressive Disclosure| ⬜ Open    | —                         | #184, #186    |
+| 6      | Trends Tabbed Analysis Surface           | ⬜ Open    | —                         | #182, #186    |
+| 7      | Settings, Language & Developer UX        | ⬜ Open    | —                         | #183, #185, #186 |
+| 8      | Tag Lifecycle & Inactive Correlations    | ⬜ Open    | —                         | #173          |
+| 9      | Visual QA, Docs & GitHub Closure         | ⬜ Open    | —                         | all           |
 
 ## Sprint 0 — Done
 
@@ -56,6 +56,14 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Escape, backdrop, close button, focus restore, dirty-close confirm
 - `EntrySheet.test.ts` — open/close/backdrop
 
-## Next up — Sprint 4
+## Sprint 4 — Done
 
-Home screen recomposition (max. 3 information zones per ADR-0017).
+- Home reduced to **3 zones**: today context, insight preview, 7-day sparkline + CTA
+- Removed from Home: `InsightMatrix`, `HomeRecentEntries`, `HomeSummary`, `InsightConfidenceScale`, `WeekdayPatternChart`
+- New `HomeTodayContext.svelte` (date, work context badge, entry status)
+- Secondary links to Insights and Trends
+- `homeView.test.ts` + `HomeTodayContext.test.ts`
+
+## Next up — Sprint 5
+
+Insights quality meter and progressive disclosure (#184).

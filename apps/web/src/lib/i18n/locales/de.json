@@ -26,7 +26,11 @@
     "entry_today_present": "Heute schon getrackt",
     "add_entry": "Tag erfassen",
     "cta_new_entry": "Neuer Eintrag",
+    "cta_log_today": "Heute erfassen",
     "cta_edit_entry": "Heutigen Eintrag bearbeiten",
+    "explore_insights": "Erkenntnisse entdecken",
+    "view_trends": "Trends ansehen",
+    "secondary_nav": "Weitere Bereiche",
     "loading_today": "Lade Heute-Status\u2026",
     "streak_label": "Tracking-Konsistenz",
     "recent": {

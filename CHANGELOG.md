@@ -16,6 +16,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 - **M3.5 Sprint 3 — Entry bottom sheet.** `EntryForm` + `EntrySheet` from Home CTA; optional fields behind “+ More”; `/entries/new` deep link preserved. Sleep quality (#172) deferred to M7 (Variant B). Refs #186.
 
+- **M3.5 Sprint 4 — Home recomposition.** Three-zone Home per ADR-0017; matrix, summary, recent entries, and confidence scale removed from the first screen. Refs #186.
+
 - **M3 Abschluss umgesetzt.** Die offenen M3-Themen #151, #152, #154 und #156 sind lokal implementiert und per Abschluss-Gates verifiziert. Backend-Gates: `ruff check`, `ruff format --check`, `mypy app` und 372 Pytest-Tests gruen mit gueltigem Test-Fernet-Key. Web-Gates: Typecheck, Lint, 195 Vitest-Tests und Production-Build gruen. Die finale Veroeffentlichung erfolgt ueber PR nach `main` und anschliessende Verifikation des `release-images.yml`-Workflows fuer neue `correlcore-api`- und `correlcore-web`-Images.
 
 - **M3 Day-over-Day Delta umgesetzt.** Neuer Backend-Endpoint `GET /api/v1/entries/delta?entry_date=YYYY-MM-DD&slot=day` liefert einen neutralen Vergleich zwischen Eintrag und Vortag: metric-only `today`/`previous`, Delta-Werte fuer Mood/Energy/Stress und gemeinsame Tags. Das Web ergaenzt `fetchEntryDelta` und `DayDeltaCard.svelte`; `/entries/new` aktualisiert die Karte nach Auto-Save sowie beim Laden bestehender Eintraege und blendet sie ohne Vortagsvergleich aus. Copy bleibt rein deskriptiv und vermeidet Bewertungs-, Diagnose- oder Kausalframing.

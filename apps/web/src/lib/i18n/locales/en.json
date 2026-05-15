@@ -26,7 +26,11 @@
     "entry_today_present": "Already tracked today",
     "add_entry": "Log your day",
     "cta_new_entry": "New entry",
+    "cta_log_today": "Log today",
     "cta_edit_entry": "Edit today's entry",
+    "explore_insights": "Explore insights",
+    "view_trends": "View trends",
+    "secondary_nav": "More areas",
     "loading_today": "Loading today's status\u2026",
     "streak_label": "tracking consistency",
     "recent": {
