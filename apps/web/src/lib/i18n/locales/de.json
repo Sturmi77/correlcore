@@ -133,6 +133,16 @@
     "subtitle": "Wie war dein Tag wirklich?",
     "date_label": "Datum",
     "work_context_label": "Arbeitssituation",
+    "work_context_required_hint": "Bitte w\u00e4hle deine Arbeitssituation \u2014 am Wochenende ist \u00abWochenende\u00bb vorausgew\u00e4hlt. Auto-Save l\u00e4uft auch ohne manuelle Best\u00e4tigung.",
+    "section": {
+      "date": "Datum",
+      "metrics": "Stimmung & K\u00f6rper",
+      "work_context": "Arbeitssituation",
+      "tags": "Tags",
+      "symptoms": "Symptome",
+      "note": "Notiz",
+      "delta": "Vergleich mit gestern"
+    },
     "work_context": {
       "homeoffice": "Homeoffice",
       "office": "B\u00fcro",

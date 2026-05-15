@@ -1,4 +1,5 @@
 import type { TimeseriesPoint } from '$lib/api/stats';
+import { displayTimeseriesValue } from '$lib/utils/metrics';
 
 export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
 export type TimeseriesRange = 'week' | 'month' | 'year';
@@ -51,8 +52,9 @@ export function buildLinePoints(
   const usable = points.map((point) => point[metric]);
   const step = points.length > 1 ? width / (points.length - 1) : width;
   return points.flatMap((point, index) => {
-    const value = usable[index];
-    if (value === null) return [];
+    const raw = usable[index];
+    if (raw === null) return [];
+    const value = displayTimeseriesValue(metric, raw);
     const x = points.length > 1 ? index * step : width / 2;
     const y = height - ((value - 1) / 4) * height;
     return [{ x, y, value, label: point.period_start }];

@@ -40,6 +40,40 @@ describe('chart utilities', () => {
     expect(linePath(points)).toBe('M 0.00 40.00 L 100.00 0.00');
   });
 
+  it('inverts stress_avg on the chart Y axis (higher raw stress plots lower)', () => {
+    const stressed = buildLinePoints(
+      [
+        {
+          period_start: '2026-05-01',
+          period_end: '2026-05-01',
+          entry_count: 1,
+          mood_avg: null,
+          energy_avg: null,
+          stress_avg: 5,
+        },
+      ],
+      'stress_avg',
+      100,
+      40,
+    );
+    const relaxed = buildLinePoints(
+      [
+        {
+          period_start: '2026-05-01',
+          period_end: '2026-05-01',
+          entry_count: 1,
+          mood_avg: null,
+          energy_avg: null,
+          stress_avg: 1,
+        },
+      ],
+      'stress_avg',
+      100,
+      40,
+    );
+    expect(stressed[0]?.y).toBeGreaterThan(relaxed[0]?.y ?? 0);
+  });
+
   it('maps heatmap counts into five visual levels', () => {
     expect(heatmapLevel(0, 10)).toBe(0);
     expect(heatmapLevel(1, 10)).toBe(1);

@@ -12,6 +12,7 @@ from app.services.insight_engine import (
     AnalyticsEntry,
     TagSnapshot,
     confidence_tier_for_sample,
+    display_metric_value,
     generate_and_store_insights,
     generate_insight_candidates,
     is_weekday_biased,
@@ -49,6 +50,13 @@ def _entry(
         stress=stress,
         tag_ids=tag_ids,
     )
+
+
+def test_display_metric_value_inverts_stress_only() -> None:
+    assert display_metric_value("mood_score", 3) == 3
+    assert display_metric_value("energy", 5) == 5
+    assert display_metric_value("stress", 1) == 5
+    assert display_metric_value("stress", 5) == 1
 
 
 def test_confidence_tier_boundaries_follow_m3_ladder() -> None:

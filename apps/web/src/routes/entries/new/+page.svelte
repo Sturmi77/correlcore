@@ -45,6 +45,7 @@
   } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
   import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
+  import { defaultWorkContextForDate } from '$lib/utils/workContext';
 
   // ---------------------------------------------------------------------
   // Form state
@@ -71,12 +72,6 @@
     return queryDate;
   }
 
-  function defaultWorkContext(d: Date): WorkContext {
-    const dow = d.getDay(); // 0 = Sun
-    if (dow === 0 || dow === 6) return 'weekend';
-    return 'homeoffice';
-  }
-
   const today = new Date();
   const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -89,7 +84,7 @@
   let moodScore = 3;
   let energy = 3;
   let stress = 3;
-  let workContext: WorkContext = defaultWorkContext(new Date(initialDate + 'T00:00:00'));
+  let workContext: WorkContext = defaultWorkContextForDate(new Date(initialDate + 'T00:00:00'));
   let note = '';
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
@@ -121,7 +116,7 @@
   $: if (!workContextTouched && entryDate && !existingEntryId) {
     const d = new Date(entryDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
-      workContext = defaultWorkContext(d);
+      workContext = defaultWorkContextForDate(d);
     }
   }
 
@@ -141,7 +136,7 @@
     workContextTouched = false;
     const d = new Date(forDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
-      workContext = defaultWorkContext(d);
+      workContext = defaultWorkContextForDate(d);
     }
   }
 
@@ -443,70 +438,105 @@
   data-loading={loading ? 'true' : 'false'}
   data-autosave-status={autoSaveSnap.status}
 >
-  <label class="entry-field">
-    <span class="entry-label">{$_('entry.date_label')}</span>
-    <input
-      type="date"
-      class="input"
-      bind:value={entryDate}
-      min={isoDate(sevenDaysAgo)}
-      max={isoDate(today)}
-      required
-    />
-  </label>
+  <section class="entry-section" aria-labelledby="entry-section-date">
+    <h2 id="entry-section-date" class="entry-section__title">{$_('entry.section.date')}</h2>
+    <label class="entry-field">
+      <span class="entry-label">{$_('entry.date_label')}</span>
+      <input
+        type="date"
+        class="input"
+        bind:value={entryDate}
+        min={isoDate(sevenDaysAgo)}
+        max={isoDate(today)}
+        required
+      />
+    </label>
+  </section>
 
-  <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
+  <section class="entry-section" aria-labelledby="entry-section-metrics">
+    <h2 id="entry-section-metrics" class="entry-section__title">{$_('entry.section.metrics')}</h2>
+    <div class="entry-section__stack">
+      <ScaleSlider
+        id="entry-mood"
+        label={$_('entry.mood_label')}
+        decrementLabel={$_('entry.mood_decrement')}
+        incrementLabel={$_('entry.mood_increment')}
+        scaleType="mood"
+        bind:value={moodScore}
+      />
 
-  <ScaleSlider
-    id="entry-mood"
-    label={$_('entry.mood_label')}
-    decrementLabel={$_('entry.mood_decrement')}
-    incrementLabel={$_('entry.mood_increment')}
-    scaleType="mood"
-    bind:value={moodScore}
-  />
+      <ScaleSlider
+        id="entry-energy"
+        label={$_('entry.energy_label')}
+        decrementLabel={$_('entry.energy_decrement')}
+        incrementLabel={$_('entry.energy_increment')}
+        scaleType="energy"
+        bind:value={energy}
+      />
 
-  <ScaleSlider
-    id="entry-energy"
-    label={$_('entry.energy_label')}
-    decrementLabel={$_('entry.energy_decrement')}
-    incrementLabel={$_('entry.energy_increment')}
-    scaleType="energy"
-    bind:value={energy}
-  />
+      <ScaleSlider
+        id="entry-stress"
+        label={$_('entry.stress_label')}
+        decrementLabel={$_('entry.stress_decrement')}
+        incrementLabel={$_('entry.stress_increment')}
+        scaleType="stress"
+        bind:value={stress}
+      />
+    </div>
+  </section>
 
-  <ScaleSlider
-    id="entry-stress"
-    label={$_('entry.stress_label')}
-    decrementLabel={$_('entry.stress_decrement')}
-    incrementLabel={$_('entry.stress_increment')}
-    scaleType="stress"
-    bind:value={stress}
-  />
+  <section class="entry-section" aria-labelledby="entry-section-work">
+    <h2 id="entry-section-work" class="entry-section__title">{$_('entry.section.work_context')}</h2>
+    {#if !workContextTouched}
+      <p class="entry-hint" id="entry-work-context-hint">
+        {$_('entry.work_context_required_hint')}
+      </p>
+    {/if}
+    <label class="entry-field">
+      <span class="entry-label">{$_('entry.work_context_label')}</span>
+      <select
+        class="input"
+        value={workContext}
+        on:change={onWorkContextChange}
+        aria-describedby={workContextTouched ? undefined : 'entry-work-context-hint'}
+      >
+        {#each WORK_CONTEXTS as wc}
+          <option value={wc}>{$_(`entry.work_context.${wc}`)}</option>
+        {/each}
+      </select>
+    </label>
+  </section>
 
-  <label class="entry-field">
-    <span class="entry-label">{$_('entry.work_context_label')}</span>
-    <select class="input" value={workContext} on:change={onWorkContextChange}>
-      {#each WORK_CONTEXTS as wc}
-        <option value={wc}>{$_(`entry.work_context.${wc}`)}</option>
-      {/each}
-    </select>
-  </label>
+  <section class="entry-section" aria-labelledby="entry-section-tags">
+    <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
+    <TagPicker bind:selected={selectedTagIds} />
+  </section>
 
-  <TagPicker bind:selected={selectedTagIds} />
+  <section class="entry-section" aria-labelledby="entry-section-symptoms">
+    <h2 id="entry-section-symptoms" class="entry-section__title">
+      {$_('entry.section.symptoms')}
+    </h2>
+    <SymptomChecker bind:selected={selectedSymptoms} />
+  </section>
 
-  <SymptomChecker bind:selected={selectedSymptoms} />
+  <section class="entry-section" aria-labelledby="entry-section-note">
+    <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
+    <label class="entry-field">
+      <span class="sr-only">{$_('entry.note_placeholder')}</span>
+      <textarea
+        class="input"
+        rows="4"
+        maxlength="4000"
+        bind:value={note}
+        placeholder={$_('entry.note_placeholder')}
+      ></textarea>
+    </label>
+  </section>
 
-  <label class="entry-field">
-    <span class="entry-label">{$_('entry.note_placeholder')}</span>
-    <textarea
-      class="input"
-      rows="4"
-      maxlength="4000"
-      bind:value={note}
-      placeholder={$_('entry.note_placeholder')}
-    ></textarea>
-  </label>
+  <section class="entry-section" aria-labelledby="entry-section-delta">
+    <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
+    <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
+  </section>
 
   {#if errorKey}
     <p class="entry-error" role="alert">{$_(errorKey)}</p>
@@ -556,7 +586,7 @@
   .entry-edit-hint {
     margin-top: 0.25rem;
     font-size: var(--text-xs, 0.78rem);
-    color: rgb(var(--color-primary-600, 37 99 235));
+    color: var(--color-primary);
     font-weight: 600;
   }
 
@@ -568,9 +598,45 @@
   .entry-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-5);
+    gap: var(--space-6);
     max-width: 32rem;
     margin: 0 auto;
+  }
+
+  .entry-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .entry-section__title {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-fg);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .entry-section__stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .entry-hint {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--color-text);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    border-left: 3px solid var(--color-primary);
   }
 
   .entry-field {
@@ -586,9 +652,9 @@
 
   .entry-error {
     font-size: var(--text-sm);
-    color: rgb(var(--color-error-500));
-    background: rgb(var(--color-error-500) / 0.1);
-    border-left: 3px solid rgb(var(--color-error-500));
+    color: var(--color-error);
+    background: var(--color-error-highlight);
+    border-left: 3px solid var(--color-error);
     padding: var(--space-2) var(--space-3);
     border-radius: 6px;
   }

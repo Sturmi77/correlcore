@@ -112,6 +112,14 @@ def _metric_value(entry: AnalyticsEntry, metric: MetricName) -> int:
     return entry.stress
 
 
+def display_metric_value(metric: MetricName, raw: int, *, scale_min: int = 1, scale_max: int = 5) -> int:
+    """View-layer inversion for stress (FRONTEND.md §4.3). Raw DB values stay unchanged."""
+
+    if metric == "stress":
+        return scale_min + scale_max - raw
+    return raw
+
+
 def _finite_float(value: Any) -> float | None:
     try:
         numeric = float(value)

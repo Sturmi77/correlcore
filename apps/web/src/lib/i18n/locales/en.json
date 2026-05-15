@@ -133,6 +133,16 @@
     "subtitle": "How was your day, honestly?",
     "date_label": "Date",
     "work_context_label": "Work context",
+    "work_context_required_hint": "Please choose your work situation \u2014 weekends default to \u201cWeekend\u201d. Auto-save still runs without a separate confirmation.",
+    "section": {
+      "date": "Date",
+      "metrics": "Mood & body",
+      "work_context": "Work situation",
+      "tags": "Tags",
+      "symptoms": "Symptoms",
+      "note": "Note",
+      "delta": "Compared to yesterday"
+    },
     "work_context": {
       "homeoffice": "Home office",
       "office": "Office",
