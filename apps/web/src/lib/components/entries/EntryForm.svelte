@@ -353,7 +353,8 @@
   export async function requestClose(): Promise<boolean> {
     const status = autoSave.peek().status;
     if (status === 'dirty' || status === 'saving') {
-      const leave = typeof window !== 'undefined' && window.confirm($_('entry.autosave.leave_warning'));
+      const leave =
+        typeof window !== 'undefined' && window.confirm($_('entry.autosave.leave_warning'));
       if (!leave) return false;
       await autoSave.flushNow();
     }
