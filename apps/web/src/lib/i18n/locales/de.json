@@ -185,6 +185,12 @@
       "default_low": "niedrig",
       "default_high": "hoch"
     },
+    "more_toggle": "+ Mehr (Tags, Symptome, Notiz)",
+    "sheet": {
+      "title": "Wie war dein Tag?",
+      "close": "Eintrag schlie\u00dfen",
+      "done": "Fertig"
+    },
     "delta": {
       "heading": "Vergleich mit gestern",
       "subheading": "Ein direkter Vergleich desselben Tages-Slots.",

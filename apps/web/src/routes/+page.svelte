@@ -50,6 +50,7 @@
   import WeekdayPatternChart from '$lib/components/home/WeekdayPatternChart.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
+  import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
 
   // ---------------------------------------------------------------------
   // Constants & derived state.
@@ -74,6 +75,8 @@
   let dashboardLoaded = false;
   /** True once the loader had to query the extended 30-day window. */
   let consistencyCapped = false;
+  let entrySheetOpen = false;
+  let entrySheetDate = todayIso;
 
   // Insight state comes exclusively from insightStore (ADR-0017).
   $: latestInsight = $insightStore.latest;
@@ -93,6 +96,16 @@
   $: summaryEntries = recentEntries.filter(
     (e) => e.entry_date >= summaryWindowStart && e.entry_date <= todayIso
   );
+
+  function openEntrySheet(date: string = todayIso) {
+    entrySheetDate = date;
+    entrySheetOpen = true;
+  }
+
+  function onEntrySheetSaved() {
+    void loadDashboard();
+    void loadInsights();
+  }
 
   async function loadDashboard(): Promise<void> {
     dashboardLoading = true;
@@ -270,27 +283,22 @@
       {/if}
     </section>
 
-    <!-- Hero CTA -->
+    <!-- Hero CTA — opens entry bottom sheet (ADR-0017 Screen 2) -->
     <section>
-      {#if todayEntry}
-        <a
-          class="card p-6 flex flex-col items-center gap-2 text-center hover:variant-soft-primary"
-          href="/entries/new"
-          data-testid="home-cta"
-        >
+      <button
+        type="button"
+        class="card p-6 flex flex-col items-center gap-2 text-center hover:variant-soft-primary w-full"
+        data-testid="home-cta"
+        on:click={() => openEntrySheet(todayIso)}
+      >
+        {#if todayEntry}
           <span class="text-lg font-semibold">{$_('home.cta_edit_entry')}</span>
           <span class="text-sm" style="color: var(--color-text-muted)">{todayIso}</span>
-        </a>
-      {:else}
-        <a
-          class="card p-6 flex flex-col items-center gap-2 text-center hover:variant-soft-primary"
-          href="/entries/new"
-          data-testid="home-cta"
-        >
+        {:else}
           <span class="text-lg font-semibold">{$_('home.cta_new_entry')}</span>
           <span class="text-sm" style="color: var(--color-text-muted)">{$_('entry.subtitle')}</span>
-        </a>
-      {/if}
+        {/if}
+      </button>
     </section>
 
     <!-- Recent-entries list -->
@@ -367,6 +375,12 @@
       <a class="btn btn-sm variant-soft-primary" href="/trends">{$_('trends.title')}</a>
       <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
     </nav>
+
+    <EntrySheet
+      bind:open={entrySheetOpen}
+      initialDate={entrySheetDate}
+      on:saved={onEntrySheetSaved}
+    />
   </div>
 {:else}
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">
