@@ -54,7 +54,7 @@ This is active user trust-building, not legal boilerplate.
 - Calendar / frequency heatmaps use **blue-tone neutral scales** — never red/green traffic-light colouring that implies a streak verdict
 - Habit adherence is shown as a **percentage rate**, not a chain counter
 - Notifications copy is always neutral: "Time for your daily check-in." — never "Don't break your streak!"
-- **InsightQualityMeter copy is always descriptive, never imperative.** No call-to-action, no urgency framing. Example of correct copy: *"At your current tracking pace: ca. 2–3 weeks until first insight."* — no emoji, no imperative verb. See Issue #184.
+- **InsightQualityMeter copy is always descriptive, never imperative.** No call-to-action, no urgency framing. Example of correct copy: _"At your current tracking pace: ca. 2–3 weeks until first insight."_ — no emoji, no imperative verb. See Issue #184.
 
 ### 1.6 Mobile First
 
@@ -78,14 +78,14 @@ Offline → Cached data with "offline" badge or graceful hide
 
 ## 2. Tech Stack
 
-| Technology                     | Rationale                                                 |
-| ------------------------------ | --------------------------------------------------------- |
-| **SvelteKit 2**                | Smallest bundle, SSR/CSR flexible, native transitions     |
-| **Skeleton UI**                | SvelteKit-native, themeable, dark-mode support            |
-| **Dexie.js**                   | IndexedDB abstraction for offline sync (active from M4)   |
-| **Custom SVG components**      | Chart library (D-002 decided — see DESIGN_DOCUMENT §2.10) |
-| **pnpm + Vite**                | Fast HMR, optimised bundling, pinned via ADR-0010         |
-| **paraglide-js**               | i18n from day 1 (DE + EN) — canonical choice              |
+| Technology                | Rationale                                                 |
+| ------------------------- | --------------------------------------------------------- |
+| **SvelteKit 2**           | Smallest bundle, SSR/CSR flexible, native transitions     |
+| **Skeleton UI**           | SvelteKit-native, themeable, dark-mode support            |
+| **Dexie.js**              | IndexedDB abstraction for offline sync (active from M4)   |
+| **Custom SVG components** | Chart library (D-002 decided — see DESIGN_DOCUMENT §2.10) |
+| **pnpm + Vite**           | Fast HMR, optimised bundling, pinned via ADR-0010         |
+| **paraglide-js**          | i18n from day 1 (DE + EN) — canonical choice              |
 
 > **i18n implementation note (Issue #185):** Use `paraglide-js`'s built-in `setLocale()` for language switching. Do **not** introduce a custom `writable` locale store — paraglide-js handles persistence and reactivity. Locale preference is additionally synced to the server via `PATCH /api/v1/user/settings { locale: 'de' }` for cross-device consistency.
 
@@ -147,12 +147,12 @@ Colour must **never** be the only information carrier — always pair with label
 
 Not all metrics share the same direction — a higher raw value does not always mean "better". The following table is the canonical definition for chart rendering, analytics worker correlation sign, and axis labelling:
 
-| Metric          | DB field        | Scale | Direction       | `invert` | Notes                                      |
-| --------------- | --------------- | ----- | --------------- | -------- | ------------------------------------------ |
-| Mood            | `mood_score`    | 1–5   | Higher = better | `false`  |                                            |
-| Energy          | `energy`        | 1–5   | Higher = better | `false`  |                                            |
-| Stress          | `stress`        | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw`           |
-| Sleep Quality   | `sleep_quality` | 1–5   | Higher = better | `false`  | Issue #172 — M7 Health Connect will re-use |
+| Metric        | DB field        | Scale | Direction       | `invert` | Notes                                      |
+| ------------- | --------------- | ----- | --------------- | -------- | ------------------------------------------ |
+| Mood          | `mood_score`    | 1–5   | Higher = better | `false`  |                                            |
+| Energy        | `energy`        | 1–5   | Higher = better | `false`  |                                            |
+| Stress        | `stress`        | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw`           |
+| Sleep Quality | `sleep_quality` | 1–5   | Higher = better | `false`  | Issue #172 — M7 Health Connect will re-use |
 
 > **Implementation:** The `invert` flag is defined centrally in `src/lib/config/metrics.ts` and consumed by `MetricTimeseries.svelte`, `HomeSparkline.svelte`, `DualAxisChart.svelte`, and `analytics_worker.py`. Raw DB values are **never** modified — inversion is view-layer only.
 
@@ -366,12 +366,12 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 
 ### Secondary Sheets & Overlays
 
-| Sheet                 | Trigger                        | Content                                 |
-| --------------------- | ------------------------------ | --------------------------------------- |
-| **Tag Picker (full)** | "+ More" in entry              | Full tag category view with search      |
-| **Symptom Checker**   | Optional in entry              | Symptom intensity sliders (0–3)         |
-| **Insight Detail**    | "Show details" on insight card | Dual-axis chart + lag selector          |
-| **Onboarding Flow**   | First launch / Issue #156      | Profile setup + static insight previews |
+| Sheet                 | Trigger                         | Content                                 |
+| --------------------- | ------------------------------- | --------------------------------------- |
+| **Tag Picker (full)** | "+ More" in entry               | Full tag category view with search      |
+| **Symptom Checker**   | Optional in entry               | Symptom intensity sliders (0–3)         |
+| **Insight Detail**    | "Show details" on insight card  | Dual-axis chart + lag selector          |
+| **Onboarding Flow**   | First launch / Issue #156       | Profile setup + static insight previews |
 | **Entry History**     | Date tap / data point in Trends | Single past entry, read-only            |
 
 ---
@@ -432,13 +432,13 @@ No motivational language. No fire emojis. Neutral, data-based information.
 
 All copy in `InsightQualityMeter.svelte` must be **descriptive, never imperative**. The following table defines the canonical copy for each stage:
 
-| Entries | Stage           | Correct copy                                                              |
-| ------- | --------------- | ------------------------------------------------------------------------- |
+| Entries | Stage           | Correct copy                                                                     |
+| ------- | --------------- | -------------------------------------------------------------------------------- |
 | 0–3     | Getting started | "Your data is being collected. First patterns become visible around 30 entries." |
-| 4–29    | Building data   | "At your current tracking pace: ca. X weeks until first insight."        |
+| 4–29    | Building data   | "At your current tracking pace: ca. X weeks until first insight."                |
 | 4–29    | No recent data  | "No recent entries found. Estimated time to first insight cannot be calculated." |
-| 30–89   | Low confidence  | First insight visible — confidence label shown                            |
-| 90+     | Medium / High   | Full insights                                                             |
+| 30–89   | Low confidence  | First insight visible — confidence label shown                                   |
+| 90+     | Medium / High   | Full insights                                                                    |
 
 **Prohibited patterns:** emoji in progress display, imperative verbs (`Track`, `Log`, `Don't`), urgency language (`speed up`, `falling behind`, `almost there`).
 
