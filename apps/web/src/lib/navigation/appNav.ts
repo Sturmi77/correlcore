@@ -44,7 +44,7 @@ export function isNavItemActive(pathname: string, href: string, match: NavMatch)
 
 export function shouldShowAppNav(
   authStatus: 'loading' | 'authenticated' | 'anonymous',
-  pathname: string,
+  pathname: string
 ): boolean {
   return authStatus === 'authenticated' && !isRouteWithoutAppNav(pathname);
 }

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isNavItemActive,
-  isPublicRoute,
-  isRouteWithoutAppNav,
-  shouldShowAppNav,
-} from './appNav';
+import { isNavItemActive, isPublicRoute, isRouteWithoutAppNav, shouldShowAppNav } from './appNav';
 
 describe('appNav routing helpers', () => {
   describe('isPublicRoute', () => {

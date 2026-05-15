@@ -17,16 +17,20 @@ describe('AppNav', () => {
 
     expect(screen.getByRole('navigation', { name: 'nav.aria_label' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'nav.home' }).getAttribute('href')).toBe('/');
-    expect(screen.getByRole('link', { name: 'nav.insights' }).getAttribute('href')).toBe('/insights');
+    expect(screen.getByRole('link', { name: 'nav.insights' }).getAttribute('href')).toBe(
+      '/insights'
+    );
     expect(screen.getByRole('link', { name: 'nav.trends' }).getAttribute('href')).toBe('/trends');
-    expect(screen.getByRole('link', { name: 'nav.settings' }).getAttribute('href')).toBe('/settings');
+    expect(screen.getByRole('link', { name: 'nav.settings' }).getAttribute('href')).toBe(
+      '/settings'
+    );
   });
 
   it('marks the active route with aria-current', () => {
     render(AppNav);
 
     expect(screen.getByRole('link', { name: 'nav.insights' }).getAttribute('aria-current')).toBe(
-      'page',
+      'page'
     );
     expect(screen.getByRole('link', { name: 'nav.home' }).getAttribute('aria-current')).toBeNull();
   });
