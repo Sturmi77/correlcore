@@ -15,7 +15,7 @@ export function displayMetricValue(
   field: EntryMetricField,
   raw: number,
   scaleMin = METRIC_SCALE_MIN,
-  scaleMax = METRIC_SCALE_MAX,
+  scaleMax = METRIC_SCALE_MAX
 ): number {
   const def = ENTRY_METRICS[field];
   if (!def.invert) return raw;

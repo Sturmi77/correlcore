@@ -54,7 +54,7 @@ describe('chart utilities', () => {
       ],
       'stress_avg',
       100,
-      40,
+      40
     );
     const relaxed = buildLinePoints(
       [
@@ -69,7 +69,7 @@ describe('chart utilities', () => {
       ],
       'stress_avg',
       100,
-      40,
+      40
     );
     expect(stressed[0]?.y).toBeGreaterThan(relaxed[0]?.y ?? 0);
   });
