@@ -3,10 +3,12 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { isLoading } from 'svelte-i18n';
+  import { _, isLoading } from 'svelte-i18n';
   import { setupI18n } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
   import { auth, hydrate } from '$lib/stores/auth';
+  import AppNav from '$lib/components/common/AppNav.svelte';
+  import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
 
   // svelte-i18n's `init()` registers the locale dictionary asynchronously
   // (locale files are dynamic imports). We must NOT render any child that
@@ -17,13 +19,8 @@
   // once the active locale is ready; we gate the slot on that.
   setupI18n();
 
-  // Routes that do NOT require authentication.
-  // Anything else triggers a redirect to /auth/login when no session exists.
-  const PUBLIC_PREFIXES = ['/auth', '/status'];
-
-  function isPublic(pathname: string): boolean {
-    return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-  }
+  $: pathname = $page.url.pathname;
+  $: showAppNav = shouldShowAppNav($auth.status, pathname);
 
   // Re-sync theme store with persisted value + hydrate auth on mount.
   // The inline bootstrap in app.html already sets data-theme before first
@@ -47,9 +44,9 @@
   $: if (
     typeof window !== 'undefined' &&
     $auth.status === 'anonymous' &&
-    !isPublic($page.url.pathname)
+    !isPublicRoute(pathname)
   ) {
-    const next = encodeURIComponent($page.url.pathname + $page.url.search);
+    const next = encodeURIComponent(pathname + $page.url.search);
     void goto(`/auth/login?next=${next}`, { replaceState: true });
   }
 </script>
@@ -78,7 +75,7 @@
     <div class="auth-splash" aria-busy="true" aria-live="polite">
       <span class="sr-only">Loading…</span>
     </div>
-  {:else if $auth.status === 'loading' && !isPublic($page.url.pathname)}
+  {:else if $auth.status === 'loading' && !isPublicRoute(pathname)}
     <!--
       Auth is still hydrating and the route is protected.
       Render an unobtrusive splash so we don't briefly show protected
@@ -87,13 +84,24 @@
     <div class="auth-splash" aria-busy="true" aria-live="polite">
       <span class="sr-only">Loading…</span>
     </div>
+  {:else if showAppNav}
+    <div class="app-frame app-frame--with-nav">
+      <a class="skip-link" href="#main-content">{$_('a11y.skip_to_content')}</a>
+      <main
+        id="main-content"
+        class="page-shell page-shell--with-nav flex-1 overflow-y-auto min-h-0"
+      >
+        <slot />
+      </main>
+      <AppNav />
+    </div>
   {:else}
     <!--
       page-shell: Safe-Area-Padding + max-width + centering (see app.css).
       overflow-y-auto here so only the content scrolls, not the whole viewport.
       Use .bleed-full on child elements (charts, heatmaps) that need full width.
     -->
-    <main class="page-shell flex-1 overflow-y-auto">
+    <main class="page-shell flex-1 overflow-y-auto min-h-0">
       <slot />
     </main>
   {/if}

@@ -4,11 +4,15 @@
     "tagline": "Verstehe warum manche Tage gut und andere schlecht waren."
   },
   "nav": {
+    "aria_label": "Hauptnavigation",
     "home": "Heute",
     "history": "Verlauf",
     "trends": "Trends",
     "insights": "Erkenntnisse",
     "settings": "Einstellungen"
+  },
+  "a11y": {
+    "skip_to_content": "Zum Inhalt springen"
   },
   "theme": {
     "toggle_light": "Zum hellen Modus wechseln",
