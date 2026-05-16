@@ -7,7 +7,12 @@ vi.mock('./client', () => ({
 }));
 
 import { api } from './client';
-import { fetchLatestInsight, listInsights, listLatestInsights, type InsightMaturity } from './insights';
+import {
+  fetchLatestInsight,
+  listInsights,
+  listLatestInsights,
+  type InsightMaturity,
+} from './insights';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -62,7 +67,10 @@ describe('insights API client', () => {
   });
 
   it('returns the first latest insight for the home preview', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [insight] });
+    vi.mocked(api.get).mockResolvedValueOnce({
+      insight_maturity: insightMaturity,
+      insights: [insight],
+    });
 
     await expect(fetchLatestInsight()).resolves.toEqual(insight);
     expect(api.get).toHaveBeenCalledWith('/insights/latest?limit=1');

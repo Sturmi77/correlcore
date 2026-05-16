@@ -6,13 +6,13 @@ Tracking document for [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md). M3.6 impleme
 
 ## Overview
 
-| Sprint | Title                                   | Status | PR / commit (main) | Issues     |
-| ------ | --------------------------------------- | ------ | ------------------ | ---------- |
+| Sprint | Title                                   | Status                  | PR / commit (main) | Issues     |
+| ------ | --------------------------------------- | ----------------------- | ------------------ | ---------- |
 | 0      | API Contract and Shared Types           | Implemented, CI pending | pending CI         | #191       |
-| 1      | Journey Banner and Explainer            | Open   | -                  | #188       |
-| 2      | Insight Cards and Empty States          | Open   | -                  | #189, #190 |
-| 3      | Milestone Notifications and Preferences | Open   | -                  | #192       |
-| 4      | Visual QA, Docs and GitHub Closure      | Open   | -                  | #188-#192  |
+| 1      | Journey Banner and Explainer            | Open                    | -                  | #188       |
+| 2      | Insight Cards and Empty States          | Open                    | -                  | #189, #190 |
+| 3      | Milestone Notifications and Preferences | Open                    | -                  | #192       |
+| 4      | Visual QA, Docs and GitHub Closure      | Open                    | -                  | #188-#192  |
 
 ## GitHub Milestone Assignment
 
