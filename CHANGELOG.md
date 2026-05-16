@@ -28,6 +28,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 - **M3.5 Sprint 9 — Visual QA, docs and closeout.** Added the M3.5 visual QA handoff, reconciled `FRONTEND.md` with the implemented screen model, documented the remaining rendered-QA/tooling blockers for the NAS UNC environment, and captured the GitHub issue closure status for #170, #171, #172, #173, #182, #183, #184, #185, and #186.
 
+- **M3.5 Vollständigkeitsprüfung.** The milestone is implementation-complete but not release-complete: rendered browser QA, GitHub issue closure/rescope, CI gate confirmation, and API/Web image verification remain required before M3.5 should be tagged as complete.
+
 - **M3 Abschluss umgesetzt.** Die offenen M3-Themen #151, #152, #154 und #156 sind lokal implementiert und per Abschluss-Gates verifiziert. Backend-Gates: `ruff check`, `ruff format --check`, `mypy app` und 372 Pytest-Tests gruen mit gueltigem Test-Fernet-Key. Web-Gates: Typecheck, Lint, 195 Vitest-Tests und Production-Build gruen. Die finale Veroeffentlichung erfolgt ueber PR nach `main` und anschliessende Verifikation des `release-images.yml`-Workflows fuer neue `correlcore-api`- und `correlcore-web`-Images.
 
 - **M3 Day-over-Day Delta umgesetzt.** Neuer Backend-Endpoint `GET /api/v1/entries/delta?entry_date=YYYY-MM-DD&slot=day` liefert einen neutralen Vergleich zwischen Eintrag und Vortag: metric-only `today`/`previous`, Delta-Werte fuer Mood/Energy/Stress und gemeinsame Tags. Das Web ergaenzt `fetchEntryDelta` und `DayDeltaCard.svelte`; `/entries/new` aktualisiert die Karte nach Auto-Save sowie beim Laden bestehender Eintraege und blendet sie ohne Vortagsvergleich aus. Copy bleibt rein deskriptiv und vermeidet Bewertungs-, Diagnose- oder Kausalframing.

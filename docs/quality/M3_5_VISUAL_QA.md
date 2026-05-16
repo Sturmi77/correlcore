@@ -6,7 +6,19 @@ Scope: M3.5 frontend and mobile optimisation across Home, Entry Sheet, Insights,
 
 ## Result
 
-M3.5 is code-complete on `main` through Sprint 8 (`0d255f0`). Sprint 9 records the final QA and documentation closeout. In this Cursor environment, rendered browser QA could not be executed because the web toolchain still fails on the NAS UNC path with pnpm symlink errors; the remote CI/image build remains the source of truth for executable web gates.
+M3.5 is implementation-complete on `main` through Sprint 8 (`0d255f0`) and the Sprint 9 closeout documentation is present in `fb65168`. The milestone is **not complete for release tagging yet** because rendered browser QA, GitHub issue closure/rescope, CI confirmation, and release image verification remain open.
+
+In this Cursor environment, rendered browser QA could not be executed because the web toolchain still fails on the NAS UNC path with pnpm symlink errors; the remote CI/image build remains the source of truth for executable web gates.
+
+## Completeness Snapshot
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| Sprint implementation | Complete | Sprints 0-8 are on `main`; Sprint 9 closeout docs are on `main`. |
+| Static documentation | Complete | `FRONTEND.md`, `M3_5_SPRINT_STATUS.md`, `CHANGELOG.md`, and this QA handoff are updated. |
+| Rendered viewport/theme QA | Pending | Must be run outside the NAS/UNC agent environment. |
+| GitHub issue closure | Pending | #170, #171, #172, #173, #182, #183, #184, #185, and #186 still need closure or explicit rescope. |
+| CI / release image verification | Pending | Confirm GitHub checks and the API/Web image build after the latest `main` commit. |
 
 ## Static QA Evidence
 
@@ -62,3 +74,4 @@ M3.5 is code-complete on `main` through Sprint 8 (`0d255f0`). Sprint 9 records t
 - Run the rendered QA matrix from a local clone or CI environment where `pnpm install` succeeds.
 - Close or rescope M3.5 GitHub issues after posting the closeout summary from this document.
 - Verify the GitHub Actions image build for `correlcore-api` and `correlcore-web` after the pushed Sprint 9 commit.
+- Only mark M3.5 as complete once the pending rows in the completeness snapshot are resolved.
