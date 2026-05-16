@@ -49,12 +49,12 @@ This feature follows three principles already documented in `DESIGN_DOCUMENT.md`
 
 ## Product Principles
 
-| # | Principle | Rationale |
-|---|-----------|----------|
-| 1 | Notes remain optional | Preserve the 60-second daily logging promise |
-| 2 | Visibility before automation | First value = seeing notes in analysis context, not NLP |
-| 3 | Structured signals over raw text | Insights use normalized markers/signals, never raw free text |
-| 4 | Explainability first | Every note-derived insight must be traceable to evidence |
+| #   | Principle                        | Rationale                                                    |
+| --- | -------------------------------- | ------------------------------------------------------------ |
+| 1   | Notes remain optional            | Preserve the 60-second daily logging promise                 |
+| 2   | Visibility before automation     | First value = seeing notes in analysis context, not NLP      |
+| 3   | Structured signals over raw text | Insights use normalized markers/signals, never raw free text |
+| 4   | Explainability first             | Every note-derived insight must be traceable to evidence     |
 
 ---
 
@@ -170,19 +170,19 @@ GET    /analysis/notes/signal-correlation
 
 ### Marker Taxonomy (v1)
 
-| Key           | Display Label (DE / EN)         |
-|--------------|----------------------------------|
-| `work`        | Arbeit / Work                   |
-| `homeoffice`  | Homeoffice / Remote             |
-| `social`      | Sozial / Social                 |
-| `movement`    | Bewegung / Exercise             |
-| `sleep_bad`   | Schlechter Schlaf / Poor Sleep  |
-| `sleep_good`  | Guter Schlaf / Good Sleep       |
-| `stress`      | Stress                          |
-| `conflict`    | Konflikt / Conflict             |
-| `symptom`     | Symptom                         |
-| `travel`      | Reise / Travel                  |
-| `achievement` | Erfolg / Achievement            |
+| Key           | Display Label (DE / EN)        |
+| ------------- | ------------------------------ |
+| `work`        | Arbeit / Work                  |
+| `homeoffice`  | Homeoffice / Remote            |
+| `social`      | Sozial / Social                |
+| `movement`    | Bewegung / Exercise            |
+| `sleep_bad`   | Schlechter Schlaf / Poor Sleep |
+| `sleep_good`  | Guter Schlaf / Good Sleep      |
+| `stress`      | Stress                         |
+| `conflict`    | Konflikt / Conflict            |
+| `symptom`     | Symptom                        |
+| `travel`      | Reise / Travel                 |
+| `achievement` | Erfolg / Achievement           |
 
 Custom markers are free-text, max 32 chars, stored alongside predefined ones.
 
@@ -253,11 +253,11 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Privacy & Consent
 
-| `note_visibility` value | Effect |
-|------------------------|--------|
-| `full` (default) | Full display and analysis |
-| `analysis_only` | Used in signal extraction and insights; `note_raw` hidden in shared views and exports |
-| `hidden` | Stored but excluded from all analysis, display, and exports |
+| `note_visibility` value | Effect                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| `full` (default)        | Full display and analysis                                                             |
+| `analysis_only`         | Used in signal extraction and insights; `note_raw` hidden in shared views and exports |
+| `hidden`                | Stored but excluded from all analysis, display, and exports                           |
 
 - Setting is per-entry; a global user preference sets the default.
 - All signal extraction runs server-side within the selfhosted instance — no external API calls.
@@ -267,16 +267,16 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Milestone Mapping
 
-| Milestone | Status | Work Package |
-|-----------|--------|--------------|
-| **M1** Core Entry | ✅ Done → **RETROACTIVE** | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea |
-| **M2** Visualisation | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips |
-| **M3** Insights v1 | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary API |
-| **M4** Mobile Polish | 🔲 Planned | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview |
-| **M8** Insights v2 | 🔲 Planned | Signal extraction service, `entry_note_signals` table, evidence block on insight cards |
-| **M9** Beta | 🔲 Planned | Threshold validation, false-positive review, opt-out privacy setting per entry |
-| **M10** Public Selfhost | 🔲 Planned | Export includes notes/signals, backward compat, operator reprocess endpoint |
-| **M11** Play Store | 🔲 Planned | Mobile UX hardening, no health-claim copy in signal descriptions |
+| Milestone               | Status                    | Work Package                                                                              |
+| ----------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
+| **M1** Core Entry       | ✅ Done → **RETROACTIVE** | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea                        |
+| **M2** Visualisation    | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips               |
+| **M3** Insights v1      | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                 |
+| **M4** Mobile Polish    | 🔲 Planned                | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview |
+| **M8** Insights v2      | 🔲 Planned                | Signal extraction service, `entry_note_signals` table, evidence block on insight cards    |
+| **M9** Beta             | 🔲 Planned                | Threshold validation, false-positive review, opt-out privacy setting per entry            |
+| **M10** Public Selfhost | 🔲 Planned                | Export includes notes/signals, backward compat, operator reprocess endpoint               |
+| **M11** Play Store      | 🔲 Planned                | Mobile UX hardening, no health-claim copy in signal descriptions                          |
 
 ---
 
@@ -322,11 +322,11 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Open Questions / ADR Triggers
 
-| ID | Question | Decision Needed By |
-|----|----------|--------------------|
+| ID       | Question                                                                                                        | Decision Needed By |
+| -------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
 | ADR-N-01 | Should `note_summary_short` be computed client-side (first sentence) or server-side (extractive summarisation)? | M4 sprint planning |
-| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7? | M8 sprint planning |
-| ADR-N-03 | Should custom markers be normalised (lowercased, deduplicated) server-side, or stored verbatim? | M3 retroactive |
+| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7?                                     | M8 sprint planning |
+| ADR-N-03 | Should custom markers be normalised (lowercased, deduplicated) server-side, or stored verbatim?                 | M3 retroactive     |
 
 ---
 
@@ -339,12 +339,12 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Related Issues
 
-| Issue | Scope | Phase |
-|-------|-------|-------|
-| Epic: Notes in Analysis — Retrofit after M3 | Coordination | All |
-| Backend: entry model + API extension | Backend | M1 retroactive |
-| Frontend: note visibility in timeline and drilldown | Frontend | M2 retroactive |
-| Backend/Frontend: manual markers | Full-stack | M3 retroactive |
-| Insights: marker-aware evidence statements | Backend | M3 retroactive |
-| Architecture: ADR-N-01, ADR-N-02, ADR-N-03 | Architecture | Before respective milestones |
-| Future: signal extraction and Insights v2 | Backend | M8 |
+| Issue                                               | Scope        | Phase                        |
+| --------------------------------------------------- | ------------ | ---------------------------- |
+| Epic: Notes in Analysis — Retrofit after M3         | Coordination | All                          |
+| Backend: entry model + API extension                | Backend      | M1 retroactive               |
+| Frontend: note visibility in timeline and drilldown | Frontend     | M2 retroactive               |
+| Backend/Frontend: manual markers                    | Full-stack   | M3 retroactive               |
+| Insights: marker-aware evidence statements          | Backend      | M3 retroactive               |
+| Architecture: ADR-N-01, ADR-N-02, ADR-N-03          | Architecture | Before respective milestones |
+| Future: signal extraction and Insights v2           | Backend      | M8                           |
