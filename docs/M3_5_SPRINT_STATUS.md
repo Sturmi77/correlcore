@@ -14,7 +14,7 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 | 3      | Entry Bottom Sheet & Sleep Quality       | ✅ Done    | `bea8b40`                 | #172, #186    |
 | 4      | Home Screen Recomposition                | ✅ Done    | `9a02655`                 | #186          |
 | 5      | Insights Quality & Progressive Disclosure| ✅ Done    | `da5e74f`                 | #184, #186    |
-| 6      | Trends Tabbed Analysis Surface           | ✅ Done    | (pending commit)          | #182, #186    |
+| 6      | Trends Tabbed Analysis Surface           | ✅ Done    | `6173c80`                 | #182, #186    |
 | 7      | Settings, Language & Developer UX        | ⬜ Open    | —                         | #183, #185, #186 |
 | 8      | Tag Lifecycle & Inactive Correlations    | ⬜ Open    | —                         | #173          |
 | 9      | Visual QA, Docs & GitHub Closure         | ⬜ Open    | —                         | all           |
