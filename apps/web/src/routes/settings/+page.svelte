@@ -1,18 +1,31 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
-  import { devMode } from '$lib/stores/devMode';
+  import {
+    devForceVisualizations,
+    devForceVisualizationsControl,
+    devMode,
+  } from '$lib/stores/devMode';
+  import { setAppLocale, type AppLocale } from '$lib/i18n';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
   import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
+  import {
+    fetchUserPreferences,
+    updateUserPreferences,
+    type UserPreferencesResponse,
+  } from '$lib/api/preferences';
 
   // ---------------------------------------------------------------------------
   // Export
   // ---------------------------------------------------------------------------
   let busy: ExportKind | null = null;
   let error = '';
+  let preferences: UserPreferencesResponse | null = null;
+  let preferencesBusy = false;
+  let preferencesError = '';
 
   async function handleDownload(kind: ExportKind): Promise<void> {
     busy = kind;
@@ -25,6 +38,31 @@
     } finally {
       busy = null;
     }
+  }
+
+  async function loadPreferences(): Promise<void> {
+    if ($auth.status !== 'authenticated') return;
+    try {
+      preferences = await fetchUserPreferences();
+    } catch (err) {
+      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    }
+  }
+
+  async function toggleAnalytics(enabled: boolean): Promise<void> {
+    preferencesBusy = true;
+    preferencesError = '';
+    try {
+      preferences = await updateUserPreferences({ analytics_enabled: enabled });
+    } catch (err) {
+      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    } finally {
+      preferencesBusy = false;
+    }
+  }
+
+  function selectLocale(nextLocale: AppLocale): void {
+    setAppLocale(nextLocale);
   }
 
   // ---------------------------------------------------------------------------
@@ -87,6 +125,7 @@
 
   onMount(() => {
     void checkDevView();
+    void loadPreferences();
   });
 </script>
 
@@ -111,44 +150,51 @@
       <a class="btn btn-sm variant-filled-primary" href="/auth/login">{$_('auth.login.submit')}</a>
     </section>
   {:else}
-    <section class="settings__panel">
+    <section class="settings__panel" data-testid="settings-section-tracking">
       <div class="settings__panel-head">
-        <h2>{$_('settings.tags.heading')}</h2>
-        <p>{$_('settings.tags.body')}</p>
+        <span class="settings__section-kicker">{$_('settings.section.tracking')}</span>
+        <h2>{$_('settings.tracking.heading')}</h2>
+        <p>{$_('settings.tracking.body')}</p>
       </div>
       <div class="settings__downloads">
         <a class="btn variant-soft-primary" href="/settings/tags">{$_('settings.tags.open')}</a>
+        <button class="btn variant-ghost-surface" type="button" disabled>
+          {$_('settings.tracking.symptoms_placeholder')}
+        </button>
+        <button class="btn variant-ghost-surface" type="button" disabled>
+          {$_('settings.tracking.reminders_placeholder')}
+        </button>
       </div>
     </section>
 
-    <!-- DEVELOPER section: only visible when devMode is active -->
-    {#if $devMode || devAvailable}
-      <section class="settings__panel settings__panel--developer" data-testid="developer-section">
-        <div class="settings__panel-head">
-          <h2>{$_('settings.developer.heading')}</h2>
-          <p>{$_('settings.developer.body')}</p>
-        </div>
-        <div class="settings__downloads">
-          <a class="btn variant-soft-primary" href="/dev" data-testid="dev-link">
-            {$_('settings.dev.open')}
-          </a>
-        </div>
-        <label class="settings__toggle-label">
-          <input
-            type="checkbox"
-            class="settings__toggle"
-            checked={$devMode}
-            aria-label={$_('settings.developer.toggle_aria')}
-            data-testid="developer-toggle"
-            on:change={(e) => devMode.set(e.currentTarget.checked)}
-          />
-          <span>{$_('settings.developer.toggle_label')}</span>
-        </label>
-      </section>
-    {/if}
-
-    <section class="settings__panel">
+    <section class="settings__panel" data-testid="settings-section-analysis">
       <div class="settings__panel-head">
+        <span class="settings__section-kicker">{$_('settings.section.analysis')}</span>
+        <h2>{$_('settings.analysis.heading')}</h2>
+        <p>{$_('settings.analysis.body')}</p>
+      </div>
+      <label class="settings__toggle-label">
+        <input
+          type="checkbox"
+          class="settings__toggle"
+          checked={preferences?.analytics_enabled ?? true}
+          disabled={preferencesBusy}
+          data-testid="analytics-toggle"
+          on:change={(e) => void toggleAnalytics(e.currentTarget.checked)}
+        />
+        <span>{$_('settings.analysis.analytics_enabled')}</span>
+      </label>
+      <div class="settings__downloads">
+        <a class="btn variant-soft-primary" href="/insights">{$_('settings.analysis.insights')}</a>
+      </div>
+      {#if preferencesError}
+        <p class="settings__error" role="alert">{preferencesError}</p>
+      {/if}
+    </section>
+
+    <section class="settings__panel" data-testid="settings-section-privacy">
+      <div class="settings__panel-head">
+        <span class="settings__section-kicker">{$_('settings.section.privacy')}</span>
         <h2>{$_('settings.export.heading')}</h2>
         <p>{$_('settings.export.body')}</p>
       </div>
@@ -177,11 +223,84 @@
         >
           {busy === 'csv' ? $_('settings.export.busy') : $_('settings.export.csv')}
         </button>
+        <button class="btn variant-ghost-surface" type="button" disabled>
+          {$_('settings.privacy.delete_placeholder')}
+        </button>
       </div>
       {#if error}
         <p class="settings__error" role="alert">{error}</p>
       {/if}
     </section>
+
+    <section class="settings__panel" data-testid="settings-section-appearance">
+      <div class="settings__panel-head">
+        <span class="settings__section-kicker">{$_('settings.section.appearance')}</span>
+        <h2>{$_('settings.appearance.heading')}</h2>
+        <p>{$_('settings.appearance.body')}</p>
+      </div>
+      <div class="settings__appearance-row">
+        <span>{$_('settings.appearance.theme')}</span>
+        <ThemeToggle testId="settings-theme-toggle-panel" />
+      </div>
+      <div class="settings__language" role="group" aria-label={$_('settings.appearance.language')}>
+        <button
+          type="button"
+          class:active={$locale === 'de'}
+          data-testid="language-de"
+          on:click={() => selectLocale('de')}
+        >
+          DE
+        </button>
+        <button
+          type="button"
+          class:active={$locale === 'en'}
+          data-testid="language-en"
+          on:click={() => selectLocale('en')}
+        >
+          EN
+        </button>
+      </div>
+    </section>
+
+    <!-- DEVELOPER section: only visible when devMode is active -->
+    {#if $devMode || devAvailable}
+      <section class="settings__panel settings__panel--developer" data-testid="developer-section">
+        <div class="settings__panel-head">
+          <span class="settings__section-kicker">{$_('settings.section.developer')}</span>
+          <h2>{$_('settings.developer.heading')}</h2>
+          <p>{$_('settings.developer.body')}</p>
+        </div>
+        <div class="settings__downloads">
+          <a class="btn variant-soft-primary" href="/dev" data-testid="dev-link">
+            {$_('settings.dev.open')}
+          </a>
+        </div>
+        <label class="settings__toggle-label">
+          <input
+            type="checkbox"
+            class="settings__toggle"
+            checked={$devMode}
+            aria-label={$_('settings.developer.toggle_aria')}
+            data-testid="developer-toggle"
+            on:change={(e) => devMode.set(e.currentTarget.checked)}
+          />
+          <span>{$_('settings.developer.toggle_label')}</span>
+        </label>
+        {#if $devMode}
+          <label class="settings__toggle-label">
+            <input
+              type="checkbox"
+              class="settings__toggle"
+              checked={$devForceVisualizations}
+              aria-label={$_('settings.developer.force_viz_aria')}
+              data-testid="force-viz-toggle"
+              on:change={(e) => devForceVisualizationsControl.set(e.currentTarget.checked)}
+            />
+            <span>{$_('settings.developer.force_viz_label')}</span>
+          </label>
+        {/if}
+      </section>
+    {/if}
   {/if}
 
   <!-- Version string: hidden tap target for 7× dev mode activation (ADR-0019) -->
@@ -252,6 +371,16 @@
     font-size: var(--text-lg, 1.125rem);
   }
 
+  .settings__section-kicker {
+    display: inline-block;
+    margin-bottom: var(--space-1);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
   .settings__downloads {
     display: flex;
     flex-wrap: wrap;
@@ -280,6 +409,35 @@
     min-width: 1.25rem;
     cursor: pointer;
     accent-color: var(--color-primary);
+  }
+
+  .settings__appearance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .settings__language {
+    display: inline-flex;
+    width: fit-content;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .settings__language button {
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-4);
+    color: var(--color-text-muted);
+  }
+
+  .settings__language button.active {
+    color: var(--color-text-inverse);
+    background: var(--color-primary);
   }
 
   /* Footer version string — no visible affordance */

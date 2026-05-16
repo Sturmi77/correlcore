@@ -15,7 +15,7 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 | 4      | Home Screen Recomposition                | ✅ Done    | `9a02655`                 | #186          |
 | 5      | Insights Quality & Progressive Disclosure| ✅ Done    | `da5e74f`                 | #184, #186    |
 | 6      | Trends Tabbed Analysis Surface           | ✅ Done    | `6173c80`                 | #182, #186    |
-| 7      | Settings, Language & Developer UX        | ⬜ Open    | —                         | #183, #185, #186 |
+| 7      | Settings, Language & Developer UX        | 🚧 In Progress | —                      | #183, #185, #186 |
 | 8      | Tag Lifecycle & Inactive Correlations    | ⬜ Open    | —                         | #173          |
 | 9      | Visual QA, Docs & GitHub Closure         | ⬜ Open    | —                         | all           |
 
@@ -85,6 +85,14 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Health tab avoids unfinished charts and shows neutral readiness / tracking-consistency copy
 - Tests: tab switching, Entry History sheet, and 90-day backend range coverage
 
-## Next up — Sprint 7
+## Sprint 7 — In Progress
 
-Settings, language, and developer UX (#183, #185, #186).
+- Settings split into TRACKING / ANALYSIS / PRIVACY & DATA / APPEARANCE / DEVELOPER
+- Language segmented control (`DE | EN`) persists via localStorage and updates `svelte-i18n` without reload
+- Dev Mode store now includes `devForceVisualizations` with `dev_force_viz` persistence
+- Disabling Dev Mode resets Force Visualizations
+- Force Visualizations uses centralized mock entries, insights, and trends without API writes
+
+## Next up — Sprint 8
+
+Tag lifecycle and inactive correlations (#173).

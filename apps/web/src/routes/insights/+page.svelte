@@ -19,6 +19,9 @@
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
+  import { mockEntries } from '$lib/dev/mockEntries';
+  import { mockInsights } from '$lib/dev/mockInsights';
+  import { devForceVisualizations } from '$lib/stores/devMode';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
 
@@ -33,6 +36,13 @@
     loading = true;
     error = null;
     try {
+      if ($devForceVisualizations) {
+        insights = mockInsights;
+        dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
+        entryCount = dayEntryDates.length;
+        return;
+      }
+
       const todayIso = localIsoDate(new Date());
       const startIso = shiftIsoDate(todayIso, -89);
       const [response, entryResponse] = await Promise.all([

@@ -350,6 +350,35 @@
     "title": "Settings",
     "subtitle": "Export your data and manage local app options.",
     "auth_required": "Please sign in to export your data.",
+    "section": {
+      "tracking": "Tracking",
+      "analysis": "Analysis",
+      "privacy": "Privacy & Data",
+      "appearance": "Appearance",
+      "developer": "Developer"
+    },
+    "tracking": {
+      "heading": "Manage tracking",
+      "body": "Adjust the inputs available in the daily entry flow.",
+      "symptoms_placeholder": "Manage symptoms (M9)",
+      "reminders_placeholder": "Reminders (later)"
+    },
+    "analysis": {
+      "heading": "Analysis",
+      "body": "Control whether your entries are used for local patterns and insights.",
+      "analytics_enabled": "Analysis enabled",
+      "insights": "Explore insights",
+      "error": "Could not save analysis settings."
+    },
+    "privacy": {
+      "delete_placeholder": "Delete account (M9)"
+    },
+    "appearance": {
+      "heading": "Appearance",
+      "body": "Adjust theme and language for this installation.",
+      "theme": "Theme",
+      "language": "Language"
+    },
     "export": {
       "heading": "Data export",
       "body": "The export can contain sensitive health data. Store it only in a safe place.",
@@ -392,7 +421,11 @@
       "body": "Enable developer mode to show diagnostic views regardless of the backend flag.",
       "toggle_label": "Enable developer mode",
       "toggle_aria": "Toggle developer mode",
-      "active_hint": "Developer mode is active. The dev view link is visible."
+      "active_hint": "Developer mode is active. The dev view link is visible.",
+      "force_viz_label": "Force visualizations with mock data",
+      "force_viz_aria": "Toggle mock data for visualizations",
+      "toast_enabled": "Developer mode enabled",
+      "toast_disabled": "Developer mode disabled"
     }
   },
   "disclaimer": {

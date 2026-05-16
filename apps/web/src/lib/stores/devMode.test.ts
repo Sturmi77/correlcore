@@ -1,3 +1,4 @@
+import { get } from 'svelte/store';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
@@ -83,5 +84,38 @@ describe('devMode tap sequence', () => {
 
   it('DEVELOPER section hidden by default (dev_mode_enabled not set)', () => {
     expect(localStorage.getItem('dev_mode_enabled')).toBeNull();
+  });
+});
+
+describe('devMode force visualizations', () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    vi.resetModules();
+  });
+
+  it('derives force visualizations from dev mode and the force flag', async () => {
+    const { devMode, devForceVisualizations, devForceVisualizationsControl } = await import(
+      './devMode'
+    );
+
+    devForceVisualizationsControl.set(true);
+    expect(get(devForceVisualizations)).toBe(false);
+
+    devMode.set(true);
+    expect(get(devForceVisualizations)).toBe(true);
+    expect(localStorage.getItem('dev_force_viz')).toBe('true');
+  });
+
+  it('turns force visualizations off when dev mode is disabled', async () => {
+    const { devMode, devForceVisualizations, devForceVisualizationsControl } = await import(
+      './devMode'
+    );
+
+    devMode.set(true);
+    devForceVisualizationsControl.set(true);
+    devMode.set(false);
+
+    expect(get(devForceVisualizations)).toBe(false);
+    expect(localStorage.getItem('dev_force_viz')).toBe('false');
   });
 });

@@ -29,6 +29,8 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
+  import { mockDashboardSummary, mockEntries, mockUserPreferences } from '$lib/dev/mockEntries';
+  import { devForceVisualizations } from '$lib/stores/devMode';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
   import { shiftIsoDate } from '$lib/utils/streak';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
@@ -73,6 +75,14 @@
   async function loadDashboard(): Promise<void> {
     dashboardLoading = true;
     try {
+      if ($devForceVisualizations) {
+        recentEntries = mockEntries.slice(0, HOME_SPARKLINE_DAYS);
+        todayEntry = findEntryForDate(recentEntries, todayIso);
+        dashboardSummary = mockDashboardSummary;
+        userPreferences = mockUserPreferences;
+        return;
+      }
+
       const start = shiftIsoDate(todayIso, -(HOME_SPARKLINE_DAYS - 1));
       const [entriesResult, summaryResult, preferencesResult] = await Promise.allSettled([
         listEntries({ start_date: start, end_date: todayIso }),

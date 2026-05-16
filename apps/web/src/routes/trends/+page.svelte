@@ -17,6 +17,9 @@
   import type { MetricKey } from '$lib/utils/charts';
   import type { TagCategory } from '$lib/api/tags';
   import { TAG_CATEGORIES } from '$lib/api/tags';
+  import { mockEntries } from '$lib/dev/mockEntries';
+  import { mockEntryStreak, mockTagHeatmap, mockTimeseries } from '$lib/dev/mockTrends';
+  import { devForceVisualizations } from '$lib/stores/devMode';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
@@ -76,6 +79,13 @@
     loading = true;
     error = '';
     try {
+      if ($devForceVisualizations) {
+        timeseries = { ...mockTimeseries, range };
+        heatmap = mockTagHeatmap;
+        streak = mockEntryStreak;
+        return;
+      }
+
       const { start_date, end_date } = dateWindow();
       const [nextTimeseries, nextHeatmap, nextStreak] = await Promise.all([
         fetchTimeseries(range),
@@ -107,6 +117,17 @@
     historyError = '';
     historyDetails = [];
     try {
+      if ($devForceVisualizations) {
+        historyDetails = mockEntries
+          .filter((entry) => entry.entry_date === date)
+          .map((entry) => ({
+            entry,
+            tags: ['Focus work'],
+            symptoms: [],
+          }));
+        return;
+      }
+
       const entries = await listEntries({ start_date: date, end_date: date, limit: 365 });
       const visibleSymptoms = await listVisibleSymptoms();
       const symptomNames = new Map(visibleSymptoms.map((symptom) => [symptom.id, symptom.name]));

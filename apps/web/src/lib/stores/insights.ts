@@ -17,6 +17,8 @@
 import { writable, derived, get } from 'svelte/store';
 import { listInsights, type InsightResponse } from '$lib/api/insights';
 import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
+import { devForceVisualizations } from '$lib/stores/devMode';
+import { mockInsights } from '$lib/dev/mockInsights';
 
 export interface InsightStoreState {
   insights: InsightResponse[];
@@ -96,6 +98,12 @@ export async function loadInsights(): Promise<void> {
   const dismissedIds = await loadDismissedIds();
 
   try {
+    if (get(devForceVisualizations)) {
+      const latest = pickLatest(mockInsights, dismissedIds);
+      _state.set({ insights: mockInsights, latest, loading: false, error: null, dismissedIds });
+      return;
+    }
+
     const response = await listInsights();
     const insights = response.insights;
     const latest = pickLatest(insights, dismissedIds);

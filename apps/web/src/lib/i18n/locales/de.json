@@ -350,6 +350,35 @@
     "title": "Einstellungen",
     "subtitle": "Exportiere deine Daten und verwalte lokale App-Optionen.",
     "auth_required": "Bitte melde dich an, um deine Daten zu exportieren.",
+    "section": {
+      "tracking": "Tracking",
+      "analysis": "Analyse",
+      "privacy": "Datenschutz & Daten",
+      "appearance": "Darstellung",
+      "developer": "Developer"
+    },
+    "tracking": {
+      "heading": "Tracking verwalten",
+      "body": "Passe die Eingaben an, die im taeglichen Entry Flow verfuegbar sind.",
+      "symptoms_placeholder": "Symptome verwalten (M9)",
+      "reminders_placeholder": "Reminder (spaeter)"
+    },
+    "analysis": {
+      "heading": "Analyse",
+      "body": "Steuere, ob deine Eintraege fuer lokale Muster und Erkenntnisse ausgewertet werden.",
+      "analytics_enabled": "Analyse aktiviert",
+      "insights": "Erkenntnisse ansehen",
+      "error": "Analyse-Einstellungen konnten nicht gespeichert werden."
+    },
+    "privacy": {
+      "delete_placeholder": "Account loeschen (M9)"
+    },
+    "appearance": {
+      "heading": "Darstellung",
+      "body": "Passe Theme und Sprache fuer diese Installation an.",
+      "theme": "Theme",
+      "language": "Sprache"
+    },
     "export": {
       "heading": "Datenexport",
       "body": "Der Export kann sensible Gesundheitsdaten enthalten. Speichere ihn nur an einem sicheren Ort.",
@@ -392,7 +421,11 @@
       "body": "Aktiviere den Entwicklermodus, um Diagnose-Ansichten unabh\u00e4ngig vom Backend-Flag einzublenden.",
       "toggle_label": "Entwicklermodus aktivieren",
       "toggle_aria": "Entwicklermodus umschalten",
-      "active_hint": "Entwicklermodus ist aktiv. Der Dev-View-Link ist eingeblendet."
+      "active_hint": "Entwicklermodus ist aktiv. Der Dev-View-Link ist eingeblendet.",
+      "force_viz_label": "Visualisierungen mit Mock-Daten erzwingen",
+      "force_viz_aria": "Mock-Daten fuer Visualisierungen umschalten",
+      "toast_enabled": "Entwicklermodus aktiviert",
+      "toast_disabled": "Entwicklermodus deaktiviert"
     }
   },
   "disclaimer": {
