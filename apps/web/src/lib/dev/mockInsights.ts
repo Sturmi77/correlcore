@@ -37,8 +37,7 @@ export const mockInsights: InsightResponse[] = [
     effect_size: 0.36,
     confidence: 0.54,
     sample_n: 28,
-    statement:
-      'Mock data shows a descriptive association between focus-work tags and mood scores.',
+    statement: 'Mock data shows a descriptive association between focus-work tags and mood scores.',
     flags: { causal_claim: false, mock: true },
     payload: {},
     generated_for_date: today,

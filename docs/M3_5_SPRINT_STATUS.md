@@ -6,18 +6,18 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 
 ## Overview
 
-| Sprint | Title                                    | Status     | PR / commit (main)        | Issues        |
-| ------ | ---------------------------------------- | ---------- | ------------------------- | ------------- |
-| 0      | Repo Hygiene & Design-System Alignment   | ✅ Done    | #187 / `1152d13`          | #186 (partial)|
-| 1      | App Shell & Mobile Navigation            | ✅ Done    | `64735bc`, `fc25c80`      | #186          |
-| 2      | Entry Flow Foundation                    | ✅ Done    | `830d31a`                 | #170, #171, #182 |
-| 3      | Entry Bottom Sheet & Sleep Quality       | ✅ Done    | `bea8b40`                 | #172, #186    |
-| 4      | Home Screen Recomposition                | ✅ Done    | `9a02655`                 | #186          |
-| 5      | Insights Quality & Progressive Disclosure| ✅ Done    | `da5e74f`                 | #184, #186    |
-| 6      | Trends Tabbed Analysis Surface           | ✅ Done    | `6173c80`                 | #182, #186    |
-| 7      | Settings, Language & Developer UX        | 🚧 In Progress | —                      | #183, #185, #186 |
-| 8      | Tag Lifecycle & Inactive Correlations    | ⬜ Open    | —                         | #173          |
-| 9      | Visual QA, Docs & GitHub Closure         | ⬜ Open    | —                         | all           |
+| Sprint | Title                                     | Status         | PR / commit (main)   | Issues           |
+| ------ | ----------------------------------------- | -------------- | -------------------- | ---------------- |
+| 0      | Repo Hygiene & Design-System Alignment    | ✅ Done        | #187 / `1152d13`     | #186 (partial)   |
+| 1      | App Shell & Mobile Navigation             | ✅ Done        | `64735bc`, `fc25c80` | #186             |
+| 2      | Entry Flow Foundation                     | ✅ Done        | `830d31a`            | #170, #171, #182 |
+| 3      | Entry Bottom Sheet & Sleep Quality        | ✅ Done        | `bea8b40`            | #172, #186       |
+| 4      | Home Screen Recomposition                 | ✅ Done        | `9a02655`            | #186             |
+| 5      | Insights Quality & Progressive Disclosure | ✅ Done        | `da5e74f`            | #184, #186       |
+| 6      | Trends Tabbed Analysis Surface            | ✅ Done        | `6173c80`            | #182, #186       |
+| 7      | Settings, Language & Developer UX         | 🚧 In Progress | —                    | #183, #185, #186 |
+| 8      | Tag Lifecycle & Inactive Correlations     | ⬜ Open        | —                    | #173             |
+| 9      | Visual QA, Docs & GitHub Closure          | ⬜ Open        | —                    | all              |
 
 ## Sprint 0 — Done
 

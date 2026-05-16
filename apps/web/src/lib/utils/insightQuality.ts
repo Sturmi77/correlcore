@@ -54,11 +54,7 @@ export function dayEntryDatesFromIsoEntries(
   return [...dates].sort();
 }
 
-function countDatesInWindow(
-  dates: readonly string[],
-  asOfIso: string,
-  windowDays: number
-): number {
+function countDatesInWindow(dates: readonly string[], asOfIso: string, windowDays: number): number {
   const start = shiftIsoDate(asOfIso, -(windowDays - 1));
   const inWindow = new Set<string>();
   for (const d of dates) {

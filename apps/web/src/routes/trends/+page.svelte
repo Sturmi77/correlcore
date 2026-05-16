@@ -272,7 +272,11 @@
         />
       </section>
     {:else}
-      <section class="trends__panel trends__health" role="tabpanel" aria-label={$_('trends.tabs.health')}>
+      <section
+        class="trends__panel trends__health"
+        role="tabpanel"
+        aria-label={$_('trends.tabs.health')}
+      >
         <div>
           <h2>{$_('trends.health.heading')}</h2>
           <p>{$_('trends.health.body')}</p>

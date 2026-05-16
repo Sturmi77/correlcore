@@ -94,9 +94,8 @@ describe('devMode force visualizations', () => {
   });
 
   it('derives force visualizations from dev mode and the force flag', async () => {
-    const { devMode, devForceVisualizations, devForceVisualizationsControl } = await import(
-      './devMode'
-    );
+    const { devMode, devForceVisualizations, devForceVisualizationsControl } =
+      await import('./devMode');
 
     devForceVisualizationsControl.set(true);
     expect(get(devForceVisualizations)).toBe(false);
@@ -107,9 +106,8 @@ describe('devMode force visualizations', () => {
   });
 
   it('turns force visualizations off when dev mode is disabled', async () => {
-    const { devMode, devForceVisualizations, devForceVisualizationsControl } = await import(
-      './devMode'
-    );
+    const { devMode, devForceVisualizations, devForceVisualizationsControl } =
+      await import('./devMode');
 
     devMode.set(true);
     devForceVisualizationsControl.set(true);

@@ -89,7 +89,14 @@
       <InsightMatrix {insights} />
     {/if}
 
-    <InsightFeed {insights} {loading} {error} {entryCount} {dayEntryDates} on:retry={loadInsights} />
+    <InsightFeed
+      {insights}
+      {loading}
+      {error}
+      {entryCount}
+      {dayEntryDates}
+      on:retry={loadInsights}
+    />
   {/if}
 </main>
 

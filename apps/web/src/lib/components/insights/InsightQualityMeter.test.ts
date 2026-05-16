@@ -12,8 +12,7 @@ vi.mock('svelte-i18n', async () => {
         'insights.quality_meter.getting_started':
           'Your data is being collected. First patterns become visible around 30 entries.',
         'insights.quality_meter.building_pace': `${values.current}/${values.target}. At your current tracking pace: ca. ${values.weeks} weeks until first insight.`,
-        'insights.quality_meter.building_no_recent':
-          `${values.current}/${values.target}. No recent entries found. Estimated time to first insight cannot be calculated.`,
+        'insights.quality_meter.building_no_recent': `${values.current}/${values.target}. No recent entries found. Estimated time to first insight cannot be calculated.`,
         'insights.quality_meter.ready_low':
           'First insight visible. The confidence label is shown per insight.',
         'insights.quality_meter.ready_full': 'Full insights are available.',
