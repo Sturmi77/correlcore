@@ -1,12 +1,12 @@
 # ADR-0021: Insight Maturity Phases as a First-Class Frontend Concept
 
-| Field       | Value                          |
-|-------------|--------------------------------|
-| **ID**      | 0021                           |
-| **Date**    | 2026-05-16                     |
-| **Status**  | Accepted                       |
-| **Deciders**| @Sturmi77                     |
-| **Area**    | Frontend / Insights / API      |
+| Field        | Value                     |
+| ------------ | ------------------------- |
+| **ID**       | 0021                      |
+| **Date**     | 2026-05-16                |
+| **Status**   | Accepted                  |
+| **Deciders** | @Sturmi77                 |
+| **Area**     | Frontend / Insights / API |
 
 ---
 
@@ -18,6 +18,7 @@ for insight activation with a disclaimer, but this threshold was purely a backen
 no concept of _insight maturity_ at all.
 
 This led to two UX problems:
+
 1. Users see an empty or locked insights section without understanding why.
 2. The wait feels like a bug, not a guided journey.
 
@@ -25,6 +26,7 @@ Discussions also revealed that the **Insight Quality Indicator** (ADR-0018) is d
 it must reflect maturity phase, not just statistical confidence of an individual insight.
 
 Furthermore, a systematic analysis identified **all frontend elements affected** by maturity logic:
+
 - Insight cards (headline, tone, CTA)
 - Quality indicator / confidence badge
 - Chart annotations and uncertainty hints
@@ -42,12 +44,12 @@ Insight maturity is promoted to a **first-class domain concept** shared by backe
 
 ### Phase Model
 
-| Phase | Key | Entry Range | Label (UI) | What is available |
-|-------|-----|-------------|------------|-------------------|
-| 1 | `collecting` | 1–6 | Collecting Data | Streaks, raw counts, entry history |
-| 2 | `early_patterns` | 7–13 | First Patterns | Trends, frequency charts, simple comparisons |
-| 3 | `provisional` | 14–29 | Provisional Insights | Correlations with explicit uncertainty disclaimer |
-| 4 | `robust` | 30+ | Robust Insights | Full insight engine, template statements, recommendations |
+| Phase | Key              | Entry Range | Label (UI)           | What is available                                         |
+| ----- | ---------------- | ----------- | -------------------- | --------------------------------------------------------- |
+| 1     | `collecting`     | 1–6         | Collecting Data      | Streaks, raw counts, entry history                        |
+| 2     | `early_patterns` | 7–13        | First Patterns       | Trends, frequency charts, simple comparisons              |
+| 3     | `provisional`    | 14–29       | Provisional Insights | Correlations with explicit uncertainty disclaimer         |
+| 4     | `robust`         | 30+         | Robust Insights      | Full insight engine, template statements, recommendations |
 
 ### API Contract Extension
 
@@ -83,12 +85,14 @@ The `user_message_key` references a translation/copy key — the backend never g
 ## Consequences
 
 ### Positive
+
 - Users understand the journey; waiting feels purposeful.
 - Consistent maturity signal across all UI elements prevents contradictory messages.
 - Backend and frontend share a single source of truth via API fields.
 - Enables future gamification (streaks toward next phase milestone).
 
 ### Negative / Trade-offs
+
 - Additional fields in every insight API response (minor payload increase).
 - All existing insight UI components need a maturity-awareness refactor (tracked in GitHub Issues).
 - Copy/translation layer requires `maturity.*` keys for all 4 phases.
@@ -97,11 +101,11 @@ The `user_message_key` references a translation/copy key — the backend never g
 
 ## Alternatives Considered
 
-| Alternative | Reason Rejected |
-|-------------|----------------|
-| Keep threshold as pure backend gate | Leaves users without UX context; contradicts "guided journey" philosophy |
-| Compute maturity only on the frontend | Duplicates logic; risks divergence from backend insight engine |
-| Use raw entry count in UI | Too technical; doesn't communicate meaning or progress |
+| Alternative                           | Reason Rejected                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| Keep threshold as pure backend gate   | Leaves users without UX context; contradicts "guided journey" philosophy |
+| Compute maturity only on the frontend | Duplicates logic; risks divergence from backend insight engine           |
+| Use raw entry count in UI             | Too technical; doesn't communicate meaning or progress                   |
 
 ---
 

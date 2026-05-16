@@ -9,12 +9,12 @@ and enforced across all frontend surfaces in CorrelCore.
 
 ## 1. Phase Definitions
 
-| Phase Key       | Entries | Badge Label        | Color Token             | Icon            |
-|-----------------|---------|--------------------|-------------------------|-----------------|
-| `collecting`    | 1–6     | Collecting Data    | `--color-text-muted`    | `loader-circle` |
-| `early_patterns`| 7–13    | First Patterns     | `--color-gold`          | `sparkles`      |
-| `provisional`   | 14–29   | Provisional        | `--color-warning`       | `flask-conical` |
-| `robust`        | 30+     | Robust Insights    | `--color-success`       | `shield-check`  |
+| Phase Key        | Entries | Badge Label     | Color Token          | Icon            |
+| ---------------- | ------- | --------------- | -------------------- | --------------- |
+| `collecting`     | 1–6     | Collecting Data | `--color-text-muted` | `loader-circle` |
+| `early_patterns` | 7–13    | First Patterns  | `--color-gold`       | `sparkles`      |
+| `provisional`    | 14–29   | Provisional     | `--color-warning`    | `flask-conical` |
+| `robust`         | 30+     | Robust Insights | `--color-success`    | `shield-check`  |
 
 ---
 
@@ -25,6 +25,7 @@ and enforced across all frontend surfaces in CorrelCore.
 Displayed at the top of the **Insights page** and as a collapsible card on the **Dashboard**.
 
 **Structure:**
+
 ```
 ┌────────────────────────────────────────────────────┐
 │  [Phase Icon]  Phase 2 of 4: First Patterns         │
@@ -35,17 +36,19 @@ Displayed at the top of the **Insights page** and as a collapsible card on the *
 ```
 
 **Props:**
+
 ```typescript
 interface InsightJourneyBannerProps {
   phase: 'collecting' | 'early_patterns' | 'provisional' | 'robust';
-  phaseIndex: number;          // 1–4
+  phaseIndex: number; // 1–4
   currentEntries: number;
-  nextPhaseAt: number | null;  // null when robust
+  nextPhaseAt: number | null; // null when robust
   nextPhaseLabel: string | null;
 }
 ```
 
 **Behaviour:**
+
 - Progress bar fills proportionally within the current phase range.
 - In `robust` phase: shows a completed state with a celebration micro-animation (confetti, once only).
 - The `[?]` button opens an inline explainer Bottom Sheet: `InsightJourneyExplainer`.
@@ -59,14 +62,15 @@ Replaces the raw confidence score in all insight cards. Combines phase + statist
 
 **Variants by phase:**
 
-| Phase           | Badge text example                    | Tooltip |
-|-----------------|---------------------------------------|---------|
-| `collecting`    | — (no insight cards shown yet)        | —       |
-| `early_patterns`| "First hint · 7 entries"              | "Based on limited data — patterns may change." |
-| `provisional`   | "Provisional · 21 entries"            | "Early correlation detected. Needs more data to confirm." |
-| `robust`        | "Confirmed · 45 entries"              | "Stable correlation based on sufficient tracking history." |
+| Phase            | Badge text example             | Tooltip                                                    |
+| ---------------- | ------------------------------ | ---------------------------------------------------------- |
+| `collecting`     | — (no insight cards shown yet) | —                                                          |
+| `early_patterns` | "First hint · 7 entries"       | "Based on limited data — patterns may change."             |
+| `provisional`    | "Provisional · 21 entries"     | "Early correlation detected. Needs more data to confirm."  |
+| `robust`         | "Confirmed · 45 entries"       | "Stable correlation based on sufficient tracking history." |
 
 **Rules:**
+
 - Never show a raw p-value or numeric confidence score to the user.
 - Badge is always accompanied by a plain-language tooltip.
 - In `early_patterns` and `provisional`: show a subtle warning icon next to the badge.
@@ -78,6 +82,7 @@ Replaces the raw confidence score in all insight cards. Combines phase + statist
 A Bottom Sheet / Modal explaining the maturity model in plain language.
 
 **Content structure:**
+
 ```
 How insights are built
 
@@ -107,6 +112,7 @@ Triggered when the user enters a new phase. This is NOT a toast — it is a **de
 at the top of the Dashboard and Insights page on the user's next visit after the phase transition.
 
 **Example (entering `early_patterns`):**
+
 ```
 🔍 New: First Patterns unlocked!
 You've tracked 7 days. Trend charts and early signals are now available.
@@ -114,6 +120,7 @@ You've tracked 7 days. Trend charts and early signals are now available.
 ```
 
 **Rules:**
+
 - Shown maximum once per phase transition.
 - Dismissed on explicit user action (tap/click), not auto-dismissed.
 - Stored in user preferences via API (`milestone_notifications_seen[]`).
@@ -124,20 +131,20 @@ You've tracked 7 days. Trend charts and early signals are now available.
 
 Every element listed here MUST be aware of the current maturity phase and adapt its content or visibility.
 
-| Element | Location | Adaptation |
-|---------|----------|------------|
-| `InsightJourneyBanner` | Insights page, Dashboard | Always visible; shows phase progress |
-| `InsightMaturityBadge` | All insight cards | Phase-appropriate label + tooltip |
-| Insight card headline | Insights page | Tone: cautious in early phases, confident in robust |
-| Insight card CTA | Insights page | Hidden in `collecting`; contextual in later phases |
-| Chart annotations | All charts with correlation | Uncertainty ribbon shown in `early_patterns` + `provisional` |
-| Dashboard summary module | Dashboard | Only renders correlations in `provisional`+ |
-| Weekly Reflection | Dashboard / Insights | Distinguishes observation vs. pattern vs. correlation |
-| Empty state (Insights) | Insights page | Phase-aware: explains what's missing and why |
-| Locked state | Insights sub-sections | Shows phase gate reason, not a generic lock icon |
-| Phase Milestone Card | Dashboard, Insights | One-time card on phase transition |
-| Notification (push/in-app) | System | Milestone alert on phase transition |
-| API response | All `/insights/*` endpoints | `insight_maturity` object required (see ADR-0021) |
+| Element                    | Location                    | Adaptation                                                   |
+| -------------------------- | --------------------------- | ------------------------------------------------------------ |
+| `InsightJourneyBanner`     | Insights page, Dashboard    | Always visible; shows phase progress                         |
+| `InsightMaturityBadge`     | All insight cards           | Phase-appropriate label + tooltip                            |
+| Insight card headline      | Insights page               | Tone: cautious in early phases, confident in robust          |
+| Insight card CTA           | Insights page               | Hidden in `collecting`; contextual in later phases           |
+| Chart annotations          | All charts with correlation | Uncertainty ribbon shown in `early_patterns` + `provisional` |
+| Dashboard summary module   | Dashboard                   | Only renders correlations in `provisional`+                  |
+| Weekly Reflection          | Dashboard / Insights        | Distinguishes observation vs. pattern vs. correlation        |
+| Empty state (Insights)     | Insights page               | Phase-aware: explains what's missing and why                 |
+| Locked state               | Insights sub-sections       | Shows phase gate reason, not a generic lock icon             |
+| Phase Milestone Card       | Dashboard, Insights         | One-time card on phase transition                            |
+| Notification (push/in-app) | System                      | Milestone alert on phase transition                          |
+| API response               | All `/insights/*` endpoints | `insight_maturity` object required (see ADR-0021)            |
 
 ---
 
@@ -145,12 +152,12 @@ Every element listed here MUST be aware of the current maturity phase and adapt 
 
 ### Tone per phase
 
-| Phase           | Tone               | Avoid                          | Use instead |
-|-----------------|--------------------|--------------------------------|-------------|
-| `collecting`    | Encouraging        | "No data yet"                  | "We're building your foundation." |
-| `early_patterns`| Curious, cautious  | "Strong pattern found"         | "First hints are emerging." |
-| `provisional`   | Informative        | "This is a confirmed insight"  | "Early correlation — more data will clarify this." |
-| `robust`        | Confident          | "You must..." (prescriptive)   | "Your data shows a consistent pattern." |
+| Phase            | Tone              | Avoid                         | Use instead                                        |
+| ---------------- | ----------------- | ----------------------------- | -------------------------------------------------- |
+| `collecting`     | Encouraging       | "No data yet"                 | "We're building your foundation."                  |
+| `early_patterns` | Curious, cautious | "Strong pattern found"        | "First hints are emerging."                        |
+| `provisional`    | Informative       | "This is a confirmed insight" | "Early correlation — more data will clarify this." |
+| `robust`         | Confident         | "You must..." (prescriptive)  | "Your data shows a consistent pattern."            |
 
 ### Translation keys (`i18n`)
 
@@ -183,10 +190,10 @@ interface InsightMaturity {
   phase: 'collecting' | 'early_patterns' | 'provisional' | 'robust';
   phase_index: 1 | 2 | 3 | 4;
   current_entries: number;
-  next_phase_at: number | null;    // null in robust
+  next_phase_at: number | null; // null in robust
   next_phase_label: string | null; // null in robust
   entries_until_next: number | null;
-  user_message_key: string;        // i18n key
+  user_message_key: string; // i18n key
 }
 ```
 
