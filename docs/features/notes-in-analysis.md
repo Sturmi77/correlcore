@@ -18,9 +18,10 @@ Milestones M1–M3 are already completed. All work marked **[RETROACTIVE]** must
 
 ## Motivation
 
-Raw numeric data (mood scores, sleep hours, activity counts) alone cannot explain *why* patterns emerge. Notes already exist as a freeform field on entries, but they are currently invisible in charts, analysis views, and insights. Surfacing notes as first-class contextual evidence closes this gap without introducing opaque AI inference.
+Raw numeric data (mood scores, sleep hours, activity counts) alone cannot explain _why_ patterns emerge. Notes already exist as a freeform field on entries, but they are currently invisible in charts, analysis views, and insights. Surfacing notes as first-class contextual evidence closes this gap without introducing opaque AI inference.
 
 This feature follows three principles already documented in `DESIGN_DOCUMENT.md`:
+
 - **Explainability first:** every insight references the specific days and signals it is based on.
 - **60-second rule:** note entry must never add friction to the daily logging flow.
 - **Privacy by design:** free-text is never sent to external services; analysis runs on structured signals only.
@@ -139,19 +140,19 @@ GET    /analysis/notes/signal-correlation
 
 ### Marker Taxonomy (v1)
 
-| Key | Display Label (DE/EN) |
-|-----|-----------------------|
-| `work` | Arbeit / Work |
-| `homeoffice` | Homeoffice / Remote |
-| `social` | Sozial / Social |
-| `movement` | Bewegung / Exercise |
-| `sleep_bad` | Schlechter Schlaf / Poor Sleep |
-| `sleep_good` | Guter Schlaf / Good Sleep |
-| `stress` | Stress |
-| `conflict` | Konflikt / Conflict |
-| `symptom` | Symptom |
-| `travel` | Reise / Travel |
-| `achievement` | Erfolg / Achievement |
+| Key           | Display Label (DE/EN)          |
+| ------------- | ------------------------------ |
+| `work`        | Arbeit / Work                  |
+| `homeoffice`  | Homeoffice / Remote            |
+| `social`      | Sozial / Social                |
+| `movement`    | Bewegung / Exercise            |
+| `sleep_bad`   | Schlechter Schlaf / Poor Sleep |
+| `sleep_good`  | Guter Schlaf / Good Sleep      |
+| `stress`      | Stress                         |
+| `conflict`    | Konflikt / Conflict            |
+| `symptom`     | Symptom                        |
+| `travel`      | Reise / Travel                 |
+| `achievement` | Erfolg / Achievement           |
 
 Custom markers are free-text, max 32 chars, stored alongside predefined ones.
 
@@ -180,7 +181,7 @@ Added to all insight cards from M8 onward:
 └──────────────────────────────────────────────────┘
 ```
 
-Insights only activate when `sample_size >= 20` entries have notes. Below that threshold the UI shows a soft prompt: *"Füge Notizen hinzu, um Zusammenhänge besser zu verstehen."*
+Insights only activate when `sample_size >= 20` entries have notes. Below that threshold the UI shows a soft prompt: _"Füge Notizen hinzu, um Zusammenhänge besser zu verstehen."_
 
 ---
 
@@ -229,16 +230,16 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Milestone Mapping
 
-| Milestone | Status | Work Package |
-|-----------|--------|--------------|
-| **M1** Core Entry | ✅ Done → **RETROACTIVE** | Add `note_raw` field to entry model, CRUD, Offline/Dexie sync, basic UI textarea |
-| **M2** Visualisation | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips |
-| **M3** Insights v1 | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary endpoint |
-| **M4** Mobile Polish | 🔲 Planned | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview |
-| **M8** Insights v2 | 🔲 Planned | Signal extraction service, `entry_note_signals` table, evidence block on insight cards |
-| **M9** Beta | 🔲 Planned | Threshold validation, false-positive review, opt-out privacy setting per entry |
-| **M10** Public Selfhost | 🔲 Planned | Export includes notes/signals, backward compatibility, operator reprocess endpoint |
-| **M11** Play Store | 🔲 Planned | Mobile UX hardening, no health-claim copy in signal descriptions |
+| Milestone               | Status                    | Work Package                                                                              |
+| ----------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
+| **M1** Core Entry       | ✅ Done → **RETROACTIVE** | Add `note_raw` field to entry model, CRUD, Offline/Dexie sync, basic UI textarea          |
+| **M2** Visualisation    | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips               |
+| **M3** Insights v1      | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary endpoint            |
+| **M4** Mobile Polish    | 🔲 Planned                | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview |
+| **M8** Insights v2      | 🔲 Planned                | Signal extraction service, `entry_note_signals` table, evidence block on insight cards    |
+| **M9** Beta             | 🔲 Planned                | Threshold validation, false-positive review, opt-out privacy setting per entry            |
+| **M10** Public Selfhost | 🔲 Planned                | Export includes notes/signals, backward compatibility, operator reprocess endpoint        |
+| **M11** Play Store      | 🔲 Planned                | Mobile UX hardening, no health-claim copy in signal descriptions                          |
 
 ---
 
@@ -283,11 +284,11 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Open Questions / ADR Triggers
 
-| # | Question | Decision Needed By |
-|---|----------|--------------------|
+| #        | Question                                                                                                        | Decision Needed By |
+| -------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
 | ADR-N-01 | Should `note_summary_short` be computed client-side (first sentence) or server-side (extractive summarisation)? | M4 sprint planning |
-| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7? | M8 sprint planning |
-| ADR-N-03 | Should custom markers be normalized (lowercased, deduplicated) server-side, or stored verbatim? | M3 retroactive |
+| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7?                                     | M8 sprint planning |
+| ADR-N-03 | Should custom markers be normalized (lowercased, deduplicated) server-side, or stored verbatim?                 | M3 retroactive     |
 
 ---
 
