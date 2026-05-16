@@ -635,12 +635,14 @@ Instead, they should feel guided through a comprehensible journey from data coll
 All insight copy must use careful, non-medical, non-causal wording.
 
 Preferred wording:
+
 - “first indications”
 - “emerging pattern”
 - “possible relationship”
 - “more data needed for stronger confidence”
 
 Avoid wording such as:
+
 - “this causes”
 - “this proves”
 - “this is certain”
@@ -656,10 +658,12 @@ This philosophy requires a shared maturity model across product layers:
 - content system: phase-specific copy and disclaimers.
 
 Suggested states:
+
 - `collecting`
 - `early_patterns`
 - `provisional`
 - `robust`
+
 ---
 
 ## 5. Abhängigkeiten
