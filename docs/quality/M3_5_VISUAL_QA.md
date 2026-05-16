@@ -18,38 +18,38 @@ M3.5 is code-complete on `main` through Sprint 8 (`0d255f0`). Sprint 9 records t
 
 ## Viewport Matrix
 
-| Viewport | Intended Coverage | Status |
-| --- | --- | --- |
-| 375 x 812 | Mobile bottom nav, Entry Sheet, stacked settings/tag rows, no horizontal scroll | Requires rendered browser pass |
-| 768 x 1024 | Tablet side nav breakpoint and sheet/modal transitions | Requires rendered browser pass |
-| 1280 x 800 | Desktop layout, trends charts, settings sections, insight feed density | Requires rendered browser pass |
+| Viewport   | Intended Coverage                                                               | Status                         |
+| ---------- | ------------------------------------------------------------------------------- | ------------------------------ |
+| 375 x 812  | Mobile bottom nav, Entry Sheet, stacked settings/tag rows, no horizontal scroll | Requires rendered browser pass |
+| 768 x 1024 | Tablet side nav breakpoint and sheet/modal transitions                          | Requires rendered browser pass |
+| 1280 x 800 | Desktop layout, trends charts, settings sections, insight feed density          | Requires rendered browser pass |
 
 ## Theme Matrix
 
-| Theme | Intended Coverage | Status |
-| --- | --- | --- |
+| Theme | Intended Coverage                                        | Status                         |
+| ----- | -------------------------------------------------------- | ------------------------------ |
 | Light | Surface/card contrast, focus rings, chart/heatmap colors | Requires rendered browser pass |
-| Dark | Surface/card contrast, focus rings, chart/heatmap colors | Requires rendered browser pass |
+| Dark  | Surface/card contrast, focus rings, chart/heatmap colors | Requires rendered browser pass |
 
 ## State Matrix
 
-| State | Coverage |
-| --- | --- |
-| Loading | Insight cards, quality meter, trends charts/heatmap, tag settings |
-| Error | Insight feed retry, tag settings alert, component-level chart/tag errors |
-| Empty | Insight feed empty state, Entry History empty date, Tag Settings active/inactive empty groups |
-| Populated | Home mock entries, insight feed, trends charts/heatmap, settings sections |
-| Forced visualizations | Dev Mode -> Force visualizations feeds centralized mock entries, insights, and trends |
+| State                 | Coverage                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| Loading               | Insight cards, quality meter, trends charts/heatmap, tag settings                             |
+| Error                 | Insight feed retry, tag settings alert, component-level chart/tag errors                      |
+| Empty                 | Insight feed empty state, Entry History empty date, Tag Settings active/inactive empty groups |
+| Populated             | Home mock entries, insight feed, trends charts/heatmap, settings sections                     |
+| Forced visualizations | Dev Mode -> Force visualizations feeds centralized mock entries, insights, and trends         |
 
 ## Core Interactions
 
-| Interaction | Implementation Evidence | Rendered QA |
-| --- | --- | --- |
-| Home -> Entry Sheet -> Auto-Save -> Day Delta | `EntrySheet`, `EntryForm`, `SaveStatusBadge`, `DayDeltaCard` tests/util coverage | Pending browser pass |
-| Insights -> Filter -> Disclaimer -> Details | `InsightFeed`, `CorrelationDisclaimer`, `InsightCard` tests | Pending browser pass |
-| Trends -> Tab -> Data point -> Entry History Sheet | `routes/trends/page.test.ts`, `EntryHistorySheet.test.ts` | Pending browser pass |
-| Settings -> Language -> Theme -> Dev Unlock -> Force Viz | `routes/settings/page.test.ts`, `devMode.test.ts` | Pending browser pass |
-| Tag Settings -> deactivate/reactivate -> picker hidden tags | `routes/settings/tags/page.test.ts`, `tags.test.ts`, backend tag tests | Pending browser pass |
+| Interaction                                                 | Implementation Evidence                                                          | Rendered QA          |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------- |
+| Home -> Entry Sheet -> Auto-Save -> Day Delta               | `EntrySheet`, `EntryForm`, `SaveStatusBadge`, `DayDeltaCard` tests/util coverage | Pending browser pass |
+| Insights -> Filter -> Disclaimer -> Details                 | `InsightFeed`, `CorrelationDisclaimer`, `InsightCard` tests                      | Pending browser pass |
+| Trends -> Tab -> Data point -> Entry History Sheet          | `routes/trends/page.test.ts`, `EntryHistorySheet.test.ts`                        | Pending browser pass |
+| Settings -> Language -> Theme -> Dev Unlock -> Force Viz    | `routes/settings/page.test.ts`, `devMode.test.ts`                                | Pending browser pass |
+| Tag Settings -> deactivate/reactivate -> picker hidden tags | `routes/settings/tags/page.test.ts`, `tags.test.ts`, backend tag tests           | Pending browser pass |
 
 ## Tooling Blockers
 
