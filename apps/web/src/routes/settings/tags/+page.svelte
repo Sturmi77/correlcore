@@ -196,114 +196,121 @@
         {:else}
           <div class="tag-settings__rows">
             {#each group.tags as tag (tag.id)}
-            {@const draft = drafts[tag.id]}
-            <article class="tag-settings__row" class:muted={tag.is_hidden}>
-              <div class="tag-settings__identity">
-                <span
-                  class="tag-settings__icon"
-                  style={tag.color ? `--tag-color: ${tag.color}` : ''}
-                >
-                  {#if draft?.icon}
-                    <IconRender icon={draft.icon} size={18} />
-                  {:else}
-                    <span aria-hidden="true">#</span>
-                  {/if}
-                </span>
-                <div>
-                  <strong>{tag.name}</strong>
-                  <span>
-                    {$_(`tag.category.${tag.category}`)} ·
-                    {tag.is_default
-                      ? $_('settings.tags.default')
-                      : isOverride(tag)
-                        ? $_('settings.tags.override')
-                        : $_('settings.tags.custom')}
-                    {tag.is_hidden ? ` · ${$_('settings.tags.hidden')}` : ''}
+              {@const draft = drafts[tag.id]}
+              <article class="tag-settings__row" class:muted={tag.is_hidden}>
+                <div class="tag-settings__identity">
+                  <span
+                    class="tag-settings__icon"
+                    style={tag.color ? `--tag-color: ${tag.color}` : ''}
+                  >
+                    {#if draft?.icon}
+                      <IconRender icon={draft.icon} size={18} />
+                    {:else}
+                      <span aria-hidden="true">#</span>
+                    {/if}
                   </span>
+                  <div>
+                    <strong>{tag.name}</strong>
+                    <span>
+                      {$_(`tag.category.${tag.category}`)} ·
+                      {tag.is_default
+                        ? $_('settings.tags.default')
+                        : isOverride(tag)
+                          ? $_('settings.tags.override')
+                          : $_('settings.tags.custom')}
+                      {tag.is_hidden ? ` · ${$_('settings.tags.hidden')}` : ''}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {#if draft}
-                <div class="tag-settings__fields">
-                  <label>
-                    <span>{$_('settings.tags.name')}</span>
-                    <input
-                      class="input"
-                      value={draft.name}
-                      maxlength="64"
-                      on:input={(event) =>
-                        setDraft(tag.id, { name: (event.currentTarget as HTMLInputElement).value })}
-                    />
-                  </label>
-                  <label>
-                    <span>{$_('settings.tags.category')}</span>
-                    <select
-                      class="input"
-                      value={draft.category}
-                      on:change={(event) =>
-                        setDraft(tag.id, {
-                          category: (event.currentTarget as HTMLSelectElement).value as TagCategory,
-                        })}
-                    >
-                      {#each TAG_CATEGORIES as category}
-                        <option value={category}>{$_(`tag.category.${category}`)}</option>
-                      {/each}
-                    </select>
-                  </label>
-                  <label>
-                    <span>{$_('settings.tags.icon')}</span>
-                    <input
-                      class="input"
-                      value={draft.icon}
-                      maxlength="32"
-                      on:input={(event) =>
-                        setDraft(tag.id, { icon: (event.currentTarget as HTMLInputElement).value })}
-                    />
-                  </label>
-                  <label>
-                    <span>{$_('settings.tags.color')}</span>
-                    <input
-                      class="tag-settings__color"
-                      type="color"
-                      value={draft.color}
-                      on:input={(event) =>
-                        setDraft(tag.id, {
-                          color: (event.currentTarget as HTMLInputElement).value,
-                        })}
-                    />
-                  </label>
-                </div>
-              {/if}
+                {#if draft}
+                  <div class="tag-settings__fields">
+                    <label>
+                      <span>{$_('settings.tags.name')}</span>
+                      <input
+                        class="input"
+                        value={draft.name}
+                        maxlength="64"
+                        on:input={(event) =>
+                          setDraft(tag.id, {
+                            name: (event.currentTarget as HTMLInputElement).value,
+                          })}
+                      />
+                    </label>
+                    <label>
+                      <span>{$_('settings.tags.category')}</span>
+                      <select
+                        class="input"
+                        value={draft.category}
+                        on:change={(event) =>
+                          setDraft(tag.id, {
+                            category: (event.currentTarget as HTMLSelectElement)
+                              .value as TagCategory,
+                          })}
+                      >
+                        {#each TAG_CATEGORIES as category}
+                          <option value={category}>{$_(`tag.category.${category}`)}</option>
+                        {/each}
+                      </select>
+                    </label>
+                    <label>
+                      <span>{$_('settings.tags.icon')}</span>
+                      <input
+                        class="input"
+                        value={draft.icon}
+                        maxlength="32"
+                        on:input={(event) =>
+                          setDraft(tag.id, {
+                            icon: (event.currentTarget as HTMLInputElement).value,
+                          })}
+                      />
+                    </label>
+                    <label>
+                      <span>{$_('settings.tags.color')}</span>
+                      <input
+                        class="tag-settings__color"
+                        type="color"
+                        value={draft.color}
+                        on:input={(event) =>
+                          setDraft(tag.id, {
+                            color: (event.currentTarget as HTMLInputElement).value,
+                          })}
+                      />
+                    </label>
+                  </div>
+                {/if}
 
-              <div class="tag-settings__actions">
-                <button
-                  class="btn btn-sm variant-filled-primary"
-                  type="button"
-                  disabled={savingId !== null}
-                  on:click={() => save(tag)}
-                >
-                  {savingId === tag.id ? $_('settings.tags.saving') : $_('settings.tags.save')}
-                </button>
-                <button
-                  class="btn btn-sm variant-soft-primary"
-                  type="button"
-                  disabled={savingId !== null}
-                  on:click={() => toggleHidden(tag)}
-                >
-                  {tag.is_hidden ? $_('settings.tags.reactivate') : $_('settings.tags.deactivate')}
-                </button>
-                {#if isOverride(tag)}
+                <div class="tag-settings__actions">
                   <button
-                    class="btn btn-sm variant-ghost-surface"
+                    class="btn btn-sm variant-filled-primary"
                     type="button"
                     disabled={savingId !== null}
-                    on:click={() => resetOverride(tag)}
+                    on:click={() => save(tag)}
                   >
-                    {$_('settings.tags.reset')}
+                    {savingId === tag.id ? $_('settings.tags.saving') : $_('settings.tags.save')}
                   </button>
-                {/if}
-              </div>
-            </article>
+                  <button
+                    class="btn btn-sm variant-soft-primary"
+                    type="button"
+                    disabled={savingId !== null}
+                    on:click={() => toggleHidden(tag)}
+                  >
+                    {tag.is_hidden
+                      ? $_('settings.tags.reactivate')
+                      : $_('settings.tags.deactivate')}
+                  </button>
+                  {#if isOverride(tag)}
+                    <button
+                      class="btn btn-sm variant-ghost-surface"
+                      type="button"
+                      disabled={savingId !== null}
+                      on:click={() => resetOverride(tag)}
+                    >
+                      {$_('settings.tags.reset')}
+                    </button>
+                  {/if}
+                </div>
+              </article>
             {/each}
           </div>
         {/if}

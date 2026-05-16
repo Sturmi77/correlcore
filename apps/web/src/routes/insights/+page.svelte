@@ -57,7 +57,9 @@
       insights = response.insights;
       dayEntryDates = dayEntryDatesFromIsoEntries(entryResponse);
       entryCount = dayEntryDates.length;
-      const inactiveSlugs = new Set(tagResponse.filter((tag) => tag.is_hidden).map((tag) => tag.slug));
+      const inactiveSlugs = new Set(
+        tagResponse.filter((tag) => tag.is_hidden).map((tag) => tag.slug)
+      );
       inactiveTagIds = [
         ...tagResponse.filter((tag) => tag.is_hidden).map((tag) => tag.id),
         ...defaultTags.filter((tag) => inactiveSlugs.has(tag.slug)).map((tag) => tag.id),
