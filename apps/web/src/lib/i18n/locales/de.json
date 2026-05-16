@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "CorrelCore",
+    "version": "0.0.1",
     "tagline": "Verstehe warum manche Tage gut und andere schlecht waren."
   },
   "nav": {
@@ -12,9 +13,13 @@
     "settings": "Einstellungen"
   },
   "a11y": {
-    "skip_to_content": "Zum Inhalt springen"
+    "skip_to_content": "Zum Inhalt springen",
+    "loading": "Laedt..."
   },
   "theme": {
+    "label": "Darstellung:",
+    "light": "Hell",
+    "dark": "Dunkel",
     "toggle_light": "Zum hellen Modus wechseln",
     "toggle_dark": "Zum dunklen Modus wechseln"
   },
@@ -81,7 +86,7 @@
       }
     },
     "confidence_scale": {
-      "heading": "Insight-Qualitaet",
+      "heading": "Erkenntnisqualitaet",
       "low": "Begrenzte Daten",
       "high": "Praeziser",
       "entry_count": "Basierend auf {n} Eintraegen",
@@ -324,7 +329,7 @@
       "total": "Erfasste Tage"
     },
     "health": {
-      "heading": "Health Readiness",
+      "heading": "Gesundheitsbereitschaft",
       "body": "Symptom- und Schlafanalysen erscheinen hier, sobald die benoetigten Datenfelder stabil verfuegbar sind. Bis dahin zeigt dieser Bereich nur Tracking-Konsistenz."
     },
     "heatmap": {
@@ -355,13 +360,13 @@
       "analysis": "Analyse",
       "privacy": "Datenschutz & Daten",
       "appearance": "Darstellung",
-      "developer": "Developer"
+      "developer": "Entwickler"
     },
     "tracking": {
       "heading": "Tracking verwalten",
-      "body": "Passe die Eingaben an, die im taeglichen Entry Flow verfuegbar sind.",
+      "body": "Passe die Eingaben an, die im taeglichen Erfassungsablauf verfuegbar sind.",
       "symptoms_placeholder": "Symptome verwalten (M9)",
-      "reminders_placeholder": "Reminder (spaeter)"
+      "reminders_placeholder": "Erinnerungen (spaeter)"
     },
     "analysis": {
       "heading": "Analyse",
@@ -376,7 +381,7 @@
     "appearance": {
       "heading": "Darstellung",
       "body": "Passe Theme und Sprache fuer diese Installation an.",
-      "theme": "Theme",
+      "theme": "Design",
       "language": "Sprache"
     },
     "export": {
@@ -420,9 +425,9 @@
       "error_reset": "Dieser Tag konnte nicht zur\u00fcckgesetzt werden."
     },
     "dev": {
-      "heading": "Developer View",
+      "heading": "Entwickleransicht",
       "body": "Pr\u00fcfe den GitHub-Commit, Image-Tag und optionalen OCI-Digest, den das Backend aktuell meldet.",
-      "open": "Developer View \u00f6ffnen"
+      "open": "Entwickleransicht \u00f6ffnen"
     },
     "developer": {
       "heading": "Entwickler",
@@ -463,7 +468,7 @@
       "empty_cta": "Zur Startseite"
     },
     "quality_meter": {
-      "heading": "Insight-Qualitaet",
+      "heading": "Erkenntnisqualitaet",
       "getting_started": "Deine Daten werden gesammelt. Erste Muster werden ab etwa 30 Eintraegen sichtbar.",
       "building_pace": "{current}/{target}. Bei deiner aktuellen Tracking-Frequenz: ca. {weeks} Wochen bis zur ersten Erkenntnis.",
       "building_no_recent": "{current}/{target}. Keine aktuellen Eintraege gefunden. Eine Zeitschaetzung bis zur ersten Erkenntnis kann nicht berechnet werden.",
@@ -561,8 +566,58 @@
     }
   },
   "error": {
+    "title": "Fehler",
     "generic": "Etwas ist schiefgelaufen.",
-    "not_found": "Seite nicht gefunden."
+    "not_found": "Seite nicht gefunden.",
+    "back_home": "Zurueck zur Startseite"
+  },
+  "status": {
+    "title": "Systemstatus",
+    "checking": "Pruefe...",
+    "api_error": "API konnte nicht erreicht werden:",
+    "retry": "Erneut versuchen",
+    "components": "Komponenten",
+    "auto_refresh": "Aktualisiert automatisch alle 30 s",
+    "unknown_error": "Unbekannter Fehler"
+  },
+  "dev": {
+    "title": "Entwickleransicht",
+    "eyebrow": "Laufzeitdiagnose",
+    "subtitle": "Pruefe den deployten GitHub-Commit, Image-Tag und optionalen OCI-Digest.",
+    "backend_unavailable_title": "Backend-Developer-Endpoint nicht verfuegbar.",
+    "backend_unavailable_body": "DEV_VIEW_ENABLED ist auf dem Server false. Laufzeitdiagnosen sind in dieser Umgebung nicht verfuegbar. Der Developer View wurde geoeffnet, weil du den manuellen Toggle in den Einstellungen aktiviert hast.",
+    "back_settings": "Zurueck zu Einstellungen",
+    "loading": "Lade Laufzeitdetails...",
+    "retry": "Erneut versuchen",
+    "error_load": "Developer-Informationen konnten nicht geladen werden.",
+    "version_identity": "Versionsidentitaet",
+    "github_commit": "GitHub-Commit",
+    "copy_commit": "GitHub-Commit kopieren",
+    "container_image": "Container-Image",
+    "refresh": "Developer-Informationen aktualisieren",
+    "image_tag": "Image-Tag",
+    "image_digest": "Image-Digest",
+    "digest_missing": "Digest nicht angegeben",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "image_hash": "Image-Hash",
+    "build_time": "Build-Zeit",
+    "not_provided": "Nicht angegeben",
+    "runtime": "Laufzeit",
+    "db_migration": "DB-Migration",
+    "unavailable": "Nicht verfuegbar",
+    "uptime": "Uptime",
+    "infrastructure": "Infrastruktur",
+    "health": "Health",
+    "ready": "bereit",
+    "not_ready": "nicht bereit",
+    "connected": "verbunden",
+    "down": "down",
+    "db_pool_size": "DB-Pool-Groesse",
+    "db_checked_out": "DB ausgecheckt",
+    "na": "n/a",
+    "auto_refresh": "Aktualisiert automatisch alle 30 Sekunden. Zuletzt geladen von",
+    "commit_copied": "Commit kopiert."
   },
   "auth": {
     "common": {
@@ -588,7 +643,7 @@
     },
     "register": {
       "title": "Konto erstellen",
-      "subtitle": "Privacy-first Mood- und Habit-Tracker.",
+      "subtitle": "Datenschutzorientierter Stimmungs- und Gewohnheitstracker.",
       "submit": "Registrieren",
       "have_account": "Schon registriert?",
       "login_link": "Hier anmelden",

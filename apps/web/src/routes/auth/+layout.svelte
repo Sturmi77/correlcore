@@ -24,19 +24,19 @@
         <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3" opacity="0.25" />
         <path
           d="M24 4 A20 20 0 0 1 44 24"
-          stroke="#01696f"
+          stroke="var(--color-primary)"
           stroke-width="3"
           stroke-linecap="round"
         />
         <path
           d="M16 26 Q24 34 32 26"
-          stroke="#01696f"
+          stroke="var(--color-primary)"
           stroke-width="2.5"
           stroke-linecap="round"
           fill="none"
         />
-        <circle cx="19" cy="20" r="1.5" fill="#01696f" />
-        <circle cx="29" cy="20" r="1.5" fill="#01696f" />
+        <circle cx="19" cy="20" r="1.5" fill="var(--color-primary)" />
+        <circle cx="29" cy="20" r="1.5" fill="var(--color-primary)" />
       </svg>
       <span class="auth-brand-text">{$_('app.name')}</span>
     </a>
@@ -97,18 +97,11 @@
     max-width: 420px;
     padding: var(--space-8) var(--space-6);
     border-radius: 16px;
-    background: rgb(var(--color-surface-100) / 0.6);
+    background: color-mix(in oklch, var(--color-surface) 82%, transparent);
     box-shadow:
       0 1px 3px rgb(0 0 0 / 0.06),
       0 8px 24px rgb(0 0 0 / 0.06);
     backdrop-filter: blur(8px);
-  }
-
-  :global(html.dark) .auth-card {
-    background: rgb(var(--color-surface-800) / 0.55);
-    box-shadow:
-      0 1px 3px rgb(0 0 0 / 0.4),
-      0 12px 32px rgb(0 0 0 / 0.3);
   }
 
   .auth-footer {

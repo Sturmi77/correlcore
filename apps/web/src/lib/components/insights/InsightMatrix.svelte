@@ -25,6 +25,10 @@
     return `${Math.round(value * 100)}%`;
   }
 
+  function themeColor(name: string): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
   function exportPng(): void {
     const canvas = document.createElement('canvas');
     canvas.width = 900;
@@ -32,9 +36,17 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.fillStyle = '#ffffff';
+    const colors = {
+      background: themeColor('--color-surface'),
+      text: themeColor('--color-text'),
+      muted: themeColor('--color-text-muted'),
+      success: themeColor('--color-success'),
+      error: themeColor('--color-error'),
+    };
+
+    ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#111827';
+    ctx.fillStyle = colors.text;
     ctx.font = '700 24px sans-serif';
     ctx.fillText('CorrelCore Insight Matrix', 32, 44);
     ctx.font = '14px sans-serif';
@@ -43,12 +55,12 @@
       const effect = row.effect_size ?? 0;
       ctx.fillStyle =
         tone(effect) === 'positive'
-          ? '#15803d'
+          ? colors.success
           : tone(effect) === 'negative'
-            ? '#b91c1c'
-            : '#6b7280';
+            ? colors.error
+            : colors.muted;
       ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 280), 24);
-      ctx.fillStyle = '#111827';
+      ctx.fillStyle = colors.text;
       ctx.fillText(row.subject_label ?? row.metric, 332, y);
       ctx.fillText(effect.toFixed(2), 560, y);
       ctx.fillText(percent(row.confidence), 650, y);
@@ -140,7 +152,7 @@
 
   .insight-matrix__table {
     overflow-x: auto;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.55);
+    border: 1px solid var(--color-border-chart);
     border-radius: 0.45rem;
   }
 
@@ -151,7 +163,7 @@
     gap: 0.75rem;
     align-items: center;
     padding: 0.6rem 0.75rem;
-    border-top: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.35);
+    border-top: 1px solid var(--color-border-chart);
     font-size: 0.85rem;
   }
 
@@ -173,15 +185,15 @@
     display: inline-block;
     height: 0.55rem;
     border-radius: 999px;
-    background: rgb(var(--color-surface-400, 156 163 175));
+    background: var(--color-text-muted);
   }
 
   .insight-matrix__row[data-tone='positive'] .insight-matrix__effect span {
-    background: rgb(var(--color-success-500, 34 197 94));
+    background: var(--color-success);
   }
 
   .insight-matrix__row[data-tone='negative'] .insight-matrix__effect span {
-    background: rgb(var(--color-error-500, 239 68 68));
+    background: var(--color-error);
   }
 
   @media (max-width: 520px) {

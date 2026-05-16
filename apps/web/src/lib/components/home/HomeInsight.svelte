@@ -110,28 +110,28 @@
     padding: 0.18rem 0.55rem;
     font-size: 0.68rem;
     font-weight: 600;
-    background: rgb(var(--color-surface-300, 209 213 219) / 0.28);
+    background: var(--color-surface-offset);
     color: var(--color-text-muted);
   }
 
   .home-insight__tier[data-tier='early'] {
-    background: rgb(var(--color-warning-500, 245 158 11) / 0.14);
-    color: rgb(var(--color-warning-700, 180 83 9));
+    background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+    color: var(--color-warning);
   }
 
   .home-insight__tier[data-tier='preliminary'] {
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-    color: rgb(var(--color-primary-700, 29 78 216));
+    color: var(--color-primary);
   }
 
   .home-insight__tier[data-tier='developing'] {
-    background: rgb(var(--color-warning-500, 245 158 11) / 0.2);
-    color: rgb(var(--color-warning-800, 146 64 14));
+    background: color-mix(in srgb, var(--color-warning) 20%, transparent);
+    color: var(--color-warning);
   }
 
   .home-insight__tier[data-tier='robust'] {
-    background: rgb(var(--color-success-500, 34 197 94) / 0.14);
-    color: rgb(var(--color-success-700, 21 128 61));
+    background: color-mix(in srgb, var(--color-success) 14%, transparent);
+    color: var(--color-success);
   }
 
   .home-insight__body {
@@ -140,8 +140,8 @@
     gap: 0.6rem;
     padding: 0.75rem 0.85rem;
     border-radius: 0.6rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.45);
-    background: rgb(var(--color-surface-100, 243 244 246) / 0.4);
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface-chart-bg);
   }
 
   .home-insight__body--muted {
@@ -159,7 +159,7 @@
     width: fit-content;
     font-size: 0.78rem;
     font-weight: 700;
-    color: rgb(var(--color-primary-700, 29 78 216));
+    color: var(--color-primary);
   }
 
   .home-insight__statement {
@@ -203,7 +203,7 @@
     width: 62%;
     height: 0.7rem;
     border-radius: 999px;
-    background: rgb(var(--color-surface-300, 209 213 219) / 0.55);
+    background: var(--color-surface-offset);
   }
 
   .home-insight__line--wide {

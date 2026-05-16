@@ -121,8 +121,8 @@
     gap: 0.1rem;
     padding: 0.6rem 0.7rem;
     border-radius: 0.55rem;
-    background: rgb(var(--color-surface-100, 243 244 246) / 0.5);
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.4);
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
   }
 
   .home-summary__label {

@@ -34,7 +34,7 @@
       name: tag.name,
       category: tag.category,
       icon: tag.icon ?? '',
-      color: tag.color ?? '#01696f',
+      color: tag.color ?? '#6356d9',
     };
   }
 
@@ -349,8 +349,8 @@
   .tag-settings__section {
     padding: 1rem;
     border-radius: 0.5rem;
-    background: rgb(var(--color-surface-50, 249 250 251) / 0.78);
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.5);
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
   }
 
   .tag-settings__section-head {
@@ -381,7 +381,7 @@
     gap: 0.9rem;
     align-items: center;
     padding: 0.75rem 0;
-    border-top: 1px solid rgb(var(--color-surface-200, 229 231 235) / 0.8);
+    border-top: 1px solid var(--color-border);
   }
 
   .tag-settings__row:first-child {
@@ -419,8 +419,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    background: var(--tag-color, #01696f);
+    color: var(--color-text-inverse);
+    background: var(--tag-color, var(--color-primary));
     flex: 0 0 auto;
   }
 
@@ -445,9 +445,10 @@
   .tag-settings__color {
     width: 2.6rem;
     min-height: 2.35rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219));
+    border: 1px solid var(--color-border);
     border-radius: 0.45rem;
-    background: transparent;
+    background: var(--color-surface);
+    color: var(--color-text);
     padding: 0.15rem;
   }
 
@@ -460,7 +461,7 @@
 
   .tag-settings__error {
     margin: 0;
-    color: #b91c1c;
+    color: var(--color-error);
   }
 
   @media (max-width: 860px) {

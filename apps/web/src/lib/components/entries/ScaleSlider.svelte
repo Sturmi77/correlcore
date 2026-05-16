@@ -104,7 +104,7 @@
     width: 2.75rem;
     height: 2.75rem;
     border-radius: var(--radius-full);
-    border: 1px solid var(--color-border, #d4d4d4);
+    border: 1px solid var(--color-border);
     background: transparent;
     font-size: 1.25rem;
     line-height: 1;

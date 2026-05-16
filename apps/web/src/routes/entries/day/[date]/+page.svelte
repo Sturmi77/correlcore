@@ -230,8 +230,8 @@
   .day-entries__card {
     padding: 1rem;
     border-radius: 0.5rem;
-    background: rgb(var(--color-surface-50, 249 250 251) / 0.78);
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.5);
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
   }
 
   .day-entries__list {
@@ -263,13 +263,13 @@
     gap: 0.25rem;
     padding: 0.22rem 0.5rem;
     border-radius: 999px;
-    background: rgb(var(--color-surface-200, 229 231 235) / 0.75);
+    background: var(--color-surface-offset);
     font-size: 0.78rem;
   }
 
   .day-entries__chips span.active {
-    background: #01696f;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
   }
 
   .day-entries__chips strong {
@@ -278,7 +278,7 @@
 
   .day-entries__error {
     margin: 0;
-    color: #b91c1c;
+    color: var(--color-error);
   }
 
   .day-entries__empty {

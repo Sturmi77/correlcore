@@ -111,7 +111,7 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.55);
+    border: 1px solid var(--color-border-chart);
     border-radius: 0.45rem;
   }
 
@@ -129,13 +129,13 @@
     width: 2rem;
     height: 2rem;
     border-radius: 999px;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219));
+    border: 1px solid var(--color-border);
     background: transparent;
   }
 
   .onboarding__moods button.active {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-text-inverse);
   }
 
   .onboarding__actions {
@@ -143,6 +143,6 @@
   }
 
   .onboarding__error {
-    color: rgb(var(--color-error-600, 220 38 38));
+    color: var(--color-error);
   }
 </style>

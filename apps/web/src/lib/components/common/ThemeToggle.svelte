@@ -5,7 +5,7 @@
    * Extracted so every screen with chrome (home, auth shell, /entries/new …)
    * exposes the same control. Two visual variants:
    *
-   *   - `withLabel = true`  (default): icon + text label ("Hell" / "Dunkel"),
+   *   - `withLabel = true`  (default): icon + localized target theme label,
    *     used on screens with enough horizontal room (home top bar, entry view).
    *   - `withLabel = false`: icon only, used in compact headers (auth shell).
    *
@@ -50,7 +50,7 @@
         d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
       />
     </svg>
-    {#if withLabel}<span>Hell</span>{/if}
+    {#if withLabel}<span>{$_('theme.light')}</span>{/if}
   {:else}
     <svg
       width={iconSize}
@@ -63,6 +63,6 @@
     >
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </svg>
-    {#if withLabel}<span>Dunkel</span>{/if}
+    {#if withLabel}<span>{$_('theme.dark')}</span>{/if}
   {/if}
 </button>

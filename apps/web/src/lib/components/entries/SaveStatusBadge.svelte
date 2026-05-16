@@ -83,33 +83,33 @@
     padding: 0.2rem 0.55rem;
     border-radius: 999px;
     border: 1px solid transparent;
-    background: rgb(var(--color-surface-200, 230 230 235) / 0.6);
-    color: rgb(var(--color-surface-900, 17 24 39));
+    background: var(--color-surface-offset);
+    color: var(--color-text);
     white-space: nowrap;
   }
 
   .save-status--dirty {
-    color: rgb(var(--color-warning-600, 217 119 6));
-    background: rgb(var(--color-warning-500, 245 158 11) / 0.1);
-    border-color: rgb(var(--color-warning-500, 245 158 11) / 0.25);
+    color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-warning) 25%, transparent);
   }
 
   .save-status--saving {
-    color: rgb(var(--color-primary-600, 37 99 235));
+    color: var(--color-primary);
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
     border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
   }
 
   .save-status--saved {
-    color: rgb(var(--color-success-600, 22 163 74));
-    background: rgb(var(--color-success-500, 34 197 94) / 0.1);
-    border-color: rgb(var(--color-success-500, 34 197 94) / 0.25);
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
   }
 
   .save-status--error {
-    color: rgb(var(--color-error-600, 220 38 38));
-    background: rgb(var(--color-error-500, 239 68 68) / 0.1);
-    border-color: rgb(var(--color-error-500, 239 68 68) / 0.3);
+    color: var(--color-error);
+    background: color-mix(in srgb, var(--color-error) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
     flex-wrap: wrap;
   }
 
@@ -161,7 +161,7 @@
 
   .save-status__retry:hover {
     background: currentColor;
-    color: white;
+    color: var(--color-text-inverse);
   }
 
   @media (prefers-reduced-motion: reduce) {

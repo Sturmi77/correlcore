@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "CorrelCore",
+    "version": "0.0.1",
     "tagline": "Understand why some days are good and others are bad."
   },
   "nav": {
@@ -12,9 +13,13 @@
     "settings": "Settings"
   },
   "a11y": {
-    "skip_to_content": "Skip to content"
+    "skip_to_content": "Skip to content",
+    "loading": "Loading..."
   },
   "theme": {
+    "label": "Theme:",
+    "light": "Light",
+    "dark": "Dark",
     "toggle_light": "Switch to light mode",
     "toggle_dark": "Switch to dark mode"
   },
@@ -465,7 +470,7 @@
     "quality_meter": {
       "heading": "Insight quality",
       "getting_started": "Your data is being collected. First patterns become visible around 30 entries.",
-      "building_pace": "{current}/{target}. At your current tracking pace: ca. {weeks} weeks until first insight.",
+      "building_pace": "{current}/{target}. At your current tracking pace: about {weeks} weeks until first insight.",
       "building_no_recent": "{current}/{target}. No recent entries found. Estimated time to first insight cannot be calculated.",
       "ready_low": "First insight visible. The confidence label is shown per insight.",
       "ready_full": "Full insights are available.",
@@ -561,8 +566,58 @@
     }
   },
   "error": {
+    "title": "Error",
     "generic": "Something went wrong.",
-    "not_found": "Page not found."
+    "not_found": "Page not found.",
+    "back_home": "Back to home"
+  },
+  "status": {
+    "title": "System status",
+    "checking": "Checking...",
+    "api_error": "Could not reach the API:",
+    "retry": "Retry",
+    "components": "Components",
+    "auto_refresh": "Auto-refreshes every 30 s",
+    "unknown_error": "Unknown error"
+  },
+  "dev": {
+    "title": "Developer View",
+    "eyebrow": "Runtime diagnostics",
+    "subtitle": "Verify the deployed GitHub commit, image tag and optional OCI digest.",
+    "backend_unavailable_title": "Backend developer endpoint not available.",
+    "backend_unavailable_body": "DEV_VIEW_ENABLED is false on the server. Runtime diagnostics are unavailable in this environment. The Developer View was opened because you enabled the manual toggle in Settings.",
+    "back_settings": "Back to Settings",
+    "loading": "Loading runtime details...",
+    "retry": "Retry",
+    "error_load": "Developer information could not be loaded.",
+    "version_identity": "Version identity",
+    "github_commit": "GitHub Commit",
+    "copy_commit": "Copy GitHub commit",
+    "container_image": "Container Image",
+    "refresh": "Refresh developer information",
+    "image_tag": "Image Tag",
+    "image_digest": "Image Digest",
+    "digest_missing": "Digest not provided",
+    "copy": "Copy",
+    "copied": "Copied",
+    "image_hash": "Image Hash",
+    "build_time": "Build Time",
+    "not_provided": "Not provided",
+    "runtime": "Runtime",
+    "db_migration": "DB Migration",
+    "unavailable": "Unavailable",
+    "uptime": "Uptime",
+    "infrastructure": "Infrastructure",
+    "health": "Health",
+    "ready": "ready",
+    "not_ready": "not ready",
+    "connected": "connected",
+    "down": "down",
+    "db_pool_size": "DB Pool Size",
+    "db_checked_out": "DB Checked Out",
+    "na": "n/a",
+    "auto_refresh": "Auto-refreshes every 30 seconds. Last loaded from",
+    "commit_copied": "Commit copied."
   },
   "auth": {
     "common": {

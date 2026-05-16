@@ -70,7 +70,7 @@
 
   .first-week-banner__link {
     font-weight: 700;
-    color: rgb(var(--color-primary-700, 29 78 216));
+    color: var(--color-primary);
   }
 
   .first-week-banner__dismiss {
@@ -78,7 +78,7 @@
     height: 2rem;
     border: 0;
     border-radius: 999px;
-    background: rgb(var(--color-surface-200, 229 231 235) / 0.7);
+    background: var(--color-surface-offset);
     color: inherit;
     cursor: pointer;
     font-size: 1.1rem;

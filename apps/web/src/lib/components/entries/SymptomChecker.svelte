@@ -372,7 +372,7 @@
   }
 
   .symptom-status-warn {
-    color: rgb(var(--color-warning-500, 245 158 11));
+    color: var(--color-warning);
     opacity: 1;
   }
 
@@ -419,7 +419,7 @@
     display: block;
     margin-top: 0.25rem;
     font-size: var(--text-xs, 0.78rem);
-    color: var(--color-muted, #6b7280);
+    color: var(--color-text-muted);
     line-height: 1.4;
   }
 
@@ -429,7 +429,7 @@
     margin-top: 0.35rem;
     padding: 0.2rem 0.45rem;
     border-radius: 6px;
-    background: var(--color-surface-2, rgba(0, 0, 0, 0.04));
+    background: var(--color-surface-2);
   }
 
   .symptom-scale {
@@ -441,7 +441,7 @@
     width: 2rem;
     height: 2rem;
     border-radius: 999px;
-    border: 1px solid var(--color-border, #d4d4d4);
+    border: 1px solid var(--color-border);
     background: transparent;
     color: inherit;
     font-size: var(--text-xs);
@@ -474,12 +474,12 @@
   .symptom-dot-active {
     background: var(--color-primary);
     border-color: var(--color-primary);
-    color: #ffffff;
+    color: var(--color-text-inverse);
   }
 
   /* Visual cue: 0 means "no symptom" — keep it neutral even when active. */
   .symptom-dot-zero.symptom-dot-active {
-    background: var(--color-surface-2, color-mix(in srgb, var(--color-primary) 15%, transparent));
+    background: var(--color-surface-2);
     color: inherit;
   }
 
@@ -493,7 +493,7 @@
 
   .symptom-custom-toggle {
     background: transparent;
-    border: 1px dashed var(--color-border, #d4d4d4);
+    border: 1px dashed var(--color-border);
     border-radius: 8px;
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-sm);
@@ -517,7 +517,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    border: 1px solid var(--color-border, #d4d4d4);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: var(--space-3);
   }
@@ -542,7 +542,7 @@
 
   .symptom-custom-error {
     font-size: var(--text-sm);
-    color: rgb(var(--color-error-500));
+    color: var(--color-error);
     margin: 0;
   }
 

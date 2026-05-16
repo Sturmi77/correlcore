@@ -508,10 +508,39 @@ button {
     border-color var(--transition-interactive);
 }
 
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
 .btn-sm {
   padding: 0.375rem 0.625rem;
   font-size: var(--text-sm);
   min-height: 44px;
+}
+
+.input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
+  transition:
+    background-color var(--transition-interactive),
+    border-color var(--transition-interactive),
+    color var(--transition-interactive);
+}
+
+.input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  background: var(--color-surface-offset);
 }
 
 .badge {
@@ -527,32 +556,32 @@ button {
 
 .variant-ghost-error,
 .variant-soft-warning {
-  background: color-mix(in srgb, #f59e0b 14%, transparent);
-  color: #92400e;
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  color: var(--color-error);
 }
 
 .text-success-500 {
-  color: #15803d;
+  color: var(--color-success);
 }
 
 .text-warning-500 {
-  color: #b45309;
+  color: var(--color-warning);
 }
 
 .text-error-500 {
-  color: #b91c1c;
+  color: var(--color-error);
 }
 
 .bg-success-500 {
-  background-color: #16a34a;
+  background-color: var(--color-success);
 }
 
 .bg-warning-500 {
-  background-color: #d97706;
+  background-color: var(--color-warning);
 }
 
 .bg-error-500 {
-  background-color: #dc2626;
+  background-color: var(--color-error);
 }
 
 .text-surface-600-300-token {

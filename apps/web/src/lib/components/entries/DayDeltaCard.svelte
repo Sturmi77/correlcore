@@ -72,9 +72,9 @@
     flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-3);
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.75);
+    border: 1px solid var(--color-border-chart);
     border-radius: 8px;
-    background: rgb(var(--color-surface-100, 243 244 246) / 0.45);
+    background: var(--color-surface-chart-bg);
   }
 
   .day-delta__header {
@@ -111,7 +111,7 @@
     min-width: 0;
     padding: var(--space-2);
     border-radius: 6px;
-    background: rgb(var(--color-surface-0, 255 255 255) / 0.7);
+    background: var(--color-surface);
   }
 
   .day-delta__metrics dt {
@@ -127,11 +127,11 @@
   }
 
   .day-delta__metrics dd[data-direction='up'] {
-    color: rgb(var(--color-primary-700, 29 78 216));
+    color: var(--color-primary);
   }
 
   .day-delta__metrics dd[data-direction='down'] {
-    color: rgb(var(--color-warning-700, 180 83 9));
+    color: var(--color-warning);
   }
 
   .day-delta__metrics dd[data-direction='same'] {
@@ -158,7 +158,7 @@
     padding: 0.15rem 0.5rem;
     font-size: var(--text-xs, 0.78rem);
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-    color: rgb(var(--color-primary-700, 29 78 216));
+    color: var(--color-primary);
   }
 
   @media (max-width: 420px) {

@@ -73,7 +73,7 @@
       splash so children that use `$_(...)` do not mount before init.
     -->
     <div class="auth-splash" aria-busy="true" aria-live="polite">
-      <span class="sr-only">Loading…</span>
+      <span class="sr-only">...</span>
     </div>
   {:else if $auth.status === 'loading' && !isPublicRoute(pathname)}
     <!--
@@ -82,7 +82,7 @@
       content before the redirect kicks in.
     -->
     <div class="auth-splash" aria-busy="true" aria-live="polite">
-      <span class="sr-only">Loading…</span>
+      <span class="sr-only">{$_('a11y.loading')}</span>
     </div>
   {:else if showAppNav}
     <div class="app-frame app-frame--with-nav">

@@ -255,8 +255,8 @@
     border-radius: 0.6rem;
     text-decoration: none;
     color: inherit;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.5);
-    background: rgb(var(--color-surface-100, 243 244 246) / 0.4);
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface-chart-bg);
     transition:
       background 120ms ease,
       transform 120ms ease;
@@ -311,7 +311,7 @@
     font-size: 0.72rem;
     padding: 0.1rem 0.4rem;
     border-radius: 999px;
-    background: rgb(var(--color-surface-200, 229 231 235) / 0.7);
+    background: var(--color-surface-offset);
   }
 
   .home-recent__chip-num {

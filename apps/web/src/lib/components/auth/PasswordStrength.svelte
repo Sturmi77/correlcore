@@ -82,22 +82,18 @@
     flex: 1;
     height: 4px;
     border-radius: 2px;
-    background: rgb(var(--color-surface-300) / 0.5);
+    background: var(--color-surface-offset);
     transition: background var(--transition-interactive);
   }
 
-  :global(html.dark) .bar {
-    background: rgb(var(--color-surface-700) / 0.6);
-  }
-
   .bar.filled[data-score='1'] {
-    background: rgb(var(--color-error-500));
+    background: var(--color-error);
   }
   .bar.filled[data-score='2'] {
-    background: rgb(var(--color-warning-500));
+    background: var(--color-warning);
   }
   .bar.filled[data-score='3'] {
-    background: rgb(var(--color-success-500));
+    background: var(--color-success);
   }
   .bar.filled[data-score='4'] {
     background: var(--color-ms-primary);

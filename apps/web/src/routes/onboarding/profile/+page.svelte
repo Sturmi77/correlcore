@@ -152,7 +152,7 @@
     display: grid;
     gap: 0.35rem;
     padding: 0.75rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.55);
+    border: 1px solid var(--color-border-chart);
     border-radius: 0.45rem;
   }
 

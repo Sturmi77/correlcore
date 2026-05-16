@@ -130,11 +130,11 @@
   }
 
   .auth-icon-success {
-    color: rgb(var(--color-success-500));
+    color: var(--color-success);
   }
 
   .auth-icon-error {
-    color: rgb(var(--color-error-500));
+    color: var(--color-error);
   }
 
   .auth-page-title {

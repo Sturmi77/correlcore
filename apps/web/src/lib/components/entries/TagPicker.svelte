@@ -136,7 +136,7 @@
   }
 
   .tag-status-error {
-    color: rgb(var(--color-error-500));
+    color: var(--color-error);
     opacity: 1;
   }
 
@@ -167,7 +167,7 @@
     gap: 0.4rem;
     padding: 0.35rem 0.75rem;
     border-radius: 999px;
-    border: 1px solid var(--color-border, #d4d4d4);
+    border: 1px solid var(--color-border);
     background: transparent;
     color: inherit;
     font-size: var(--text-sm);
@@ -191,7 +191,7 @@
   .tag-chip-active {
     background: var(--tag-color, var(--color-primary));
     border-color: var(--tag-color, var(--color-primary));
-    color: #ffffff;
+    color: var(--color-text-inverse);
   }
 
   .tag-icon {

@@ -131,7 +131,7 @@
               cy={c.y}
               r="2.25"
               fill="currentColor"
-              stroke="rgb(var(--color-surface-50, 250 250 252))"
+              stroke="var(--color-surface)"
               stroke-width="1"
             />
             <title>{c.date} · {c.value ?? ''}</title>
@@ -148,7 +148,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
-    color: rgb(var(--color-primary-600, 37 99 235));
+    color: var(--color-primary);
   }
 
   .home-sparkline__header {
@@ -156,7 +156,7 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 0.5rem;
-    color: rgb(var(--color-surface-900, 17 24 39));
+    color: var(--color-text);
   }
 
   .home-sparkline__heading {

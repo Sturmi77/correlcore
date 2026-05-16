@@ -115,18 +115,18 @@
 
   .auth-error {
     font-size: var(--text-sm);
-    color: rgb(var(--color-error-500));
-    background: rgb(var(--color-error-500) / 0.1);
-    border-left: 3px solid rgb(var(--color-error-500));
+    color: var(--color-error);
+    background: var(--color-error-highlight);
+    border-left: 3px solid var(--color-error);
     padding: var(--space-2) var(--space-3);
     border-radius: 6px;
   }
 
   .auth-success {
     font-size: var(--text-sm);
-    color: rgb(var(--color-success-700));
-    background: rgb(var(--color-success-500) / 0.12);
-    border-left: 3px solid rgb(var(--color-success-500));
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    border-left: 3px solid var(--color-success);
     padding: var(--space-3);
     border-radius: 6px;
     text-align: center;

@@ -90,7 +90,7 @@
     font-size: 0.68rem;
     font-weight: 600;
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-    color: rgb(var(--color-primary-700, 29 78 216));
+    color: var(--color-primary);
   }
 
   .weekday-pattern__chart {
@@ -100,8 +100,8 @@
     align-items: end;
     gap: 0.35rem;
     padding: 0.75rem 0.5rem 0.55rem;
-    border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.45);
-    background: rgb(var(--color-surface-100, 243 244 246) / 0.35);
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface-chart-bg);
     border-radius: 0.45rem;
   }
 
@@ -130,11 +130,11 @@
   }
 
   .weekday-pattern__bar-cell[data-highlight='high'] .weekday-pattern__bar {
-    background: rgb(var(--color-success-500, 34 197 94));
+    background: var(--color-success);
   }
 
   .weekday-pattern__bar-cell[data-highlight='low'] .weekday-pattern__bar {
-    background: rgb(var(--color-warning-500, 245 158 11));
+    background: var(--color-warning);
   }
 
   .weekday-pattern__statement,
