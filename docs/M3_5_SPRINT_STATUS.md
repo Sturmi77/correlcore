@@ -13,8 +13,8 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 | 2      | Entry Flow Foundation                    | ✅ Done    | `830d31a`                 | #170, #171, #182 |
 | 3      | Entry Bottom Sheet & Sleep Quality       | ✅ Done    | `bea8b40`                 | #172, #186    |
 | 4      | Home Screen Recomposition                | ✅ Done    | `9a02655`                 | #186          |
-| 5      | Insights Quality & Progressive Disclosure| ✅ Done    | (pending commit)          | #184, #186    |
-| 6      | Trends Tabbed Analysis Surface           | ⬜ Open    | —                         | #182, #186    |
+| 5      | Insights Quality & Progressive Disclosure| ✅ Done    | `da5e74f`                 | #184, #186    |
+| 6      | Trends Tabbed Analysis Surface           | ✅ Done    | (pending commit)          | #182, #186    |
 | 7      | Settings, Language & Developer UX        | ⬜ Open    | —                         | #183, #185, #186 |
 | 8      | Tag Lifecycle & Inactive Correlations    | ⬜ Open    | —                         | #173          |
 | 9      | Visual QA, Docs & GitHub Closure         | ⬜ Open    | —                         | all           |
@@ -76,6 +76,15 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - DE/EN copy stays descriptive: no imperative wording, emoji, or urgency framing
 - Tests: `insightQuality`, `InsightQualityMeter`, and `InsightFeed` coverage
 
-## Next up — Sprint 6
+## Sprint 6 — Done
 
-Trends screen as tabbed analysis surface (#182, #186).
+- `/trends` converted to Mood / Activities / Health tabs
+- Unified range controls now expose 7D / 30D / 90D / 1Y
+- Backend and web stats ranges now include `quarter` for 90-day daily points
+- Mood data points and activity heatmap cells open a read-only Entry History sheet
+- Health tab avoids unfinished charts and shows neutral readiness / tracking-consistency copy
+- Tests: tab switching, Entry History sheet, and 90-day backend range coverage
+
+## Next up — Sprint 7
+
+Settings, language, and developer UX (#183, #185, #186).

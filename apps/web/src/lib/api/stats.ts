@@ -1,7 +1,7 @@
 import { api } from './client';
 import type { TagCategory } from './tags';
 
-export type TimeseriesRange = 'week' | 'month' | 'year';
+export type TimeseriesRange = 'week' | 'month' | 'quarter' | 'year';
 
 export interface TimeseriesPoint {
   period_start: string;

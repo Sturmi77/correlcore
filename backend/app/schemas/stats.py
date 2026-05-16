@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from app.models.tag import TagCategory
 
-TimeseriesRange = Literal["week", "month", "year"]
+TimeseriesRange = Literal["week", "month", "quarter", "year"]
 
 
 class TimeseriesPoint(BaseModel):

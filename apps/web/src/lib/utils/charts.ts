@@ -2,7 +2,7 @@ import type { TimeseriesPoint } from '$lib/api/stats';
 import { displayTimeseriesValue } from '$lib/utils/metrics';
 
 export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
-export type TimeseriesRange = 'week' | 'month' | 'year';
+export type TimeseriesRange = 'week' | 'month' | 'quarter' | 'year';
 export type PointShape = 'circle' | 'diamond' | 'triangle';
 
 export interface ChartPoint {

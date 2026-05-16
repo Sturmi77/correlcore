@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import {
@@ -17,6 +18,8 @@
     stress_avg: true,
   };
   export let loading = false;
+
+  const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
 
   const width = 720;
   const height = 248;
@@ -135,8 +138,10 @@
           />
           {#each metric.points as point}
             <a
-              href={`/entries/new?date=${point.label}`}
+              href={`/entries/day/${point.label}`}
+              class="timeseries__point-button"
               aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
+              on:click|preventDefault={() => dispatch('selectDate', { date: point.label })}
             >
               <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
                 <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
@@ -283,7 +288,7 @@
     stroke-width: 2;
   }
 
-  a:focus .timeseries__hit {
+  .timeseries__point-button:focus .timeseries__hit {
     stroke: currentColor;
     stroke-width: 2;
   }

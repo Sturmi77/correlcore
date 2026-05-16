@@ -285,9 +285,16 @@
     "empty": "No entries in the selected range yet.",
     "empty_cta": "Log an entry",
     "range": {
-      "week": "Week",
-      "month": "Month",
-      "year": "Year"
+      "week": "7D",
+      "month": "30D",
+      "quarter": "90D",
+      "year": "1Y"
+    },
+    "tabs": {
+      "label": "Trend sections",
+      "mood": "Mood",
+      "activities": "Activities",
+      "health": "Health"
     },
     "metric": {
       "mood": "Mood",
@@ -310,6 +317,16 @@
       "longest": "Best continuity",
       "total": "Logged days"
     },
+    "consistency": {
+      "heading": "Tracking consistency",
+      "current": "Current continuity",
+      "longest": "Best continuity",
+      "total": "Logged days"
+    },
+    "health": {
+      "heading": "Health readiness",
+      "body": "Symptom and sleep analyses appear here once the required data fields are stable. Until then, this section only shows tracking consistency."
+    },
     "heatmap": {
       "heading": "Tag frequency",
       "aria": "Heatmap of tag frequencies",
@@ -318,6 +335,15 @@
       "more": "More",
       "loading": "Loading tag heatmap",
       "empty": "No tag activity in this range yet."
+    },
+    "history": {
+      "eyebrow": "Entry details",
+      "close_aria": "Close entry details",
+      "loading": "Loading entry details",
+      "empty": "No entry exists for this date.",
+      "tags": "Tags",
+      "symptoms": "Symptoms",
+      "none": "None"
     }
   },
   "settings": {

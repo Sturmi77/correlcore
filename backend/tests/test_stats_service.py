@@ -46,6 +46,20 @@ async def test_timeseries_week_fills_missing_days() -> None:
 
 
 @pytest.mark.asyncio
+async def test_timeseries_quarter_returns_90_daily_points() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result([]))
+
+    out = await get_timeseries(db, user_id=user.id, range_="quarter", as_of=as_of)
+
+    assert len(out.points) == 90
+    assert out.points[0].period_start == as_of - timedelta(days=89)
+    assert out.points[-1].period_start == as_of
+
+
+@pytest.mark.asyncio
 async def test_entry_streak_breaks_on_missing_as_of_day() -> None:
     user = make_user()
     as_of = date(2026, 5, 9)

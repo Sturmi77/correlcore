@@ -285,9 +285,16 @@
     "empty": "Noch keine Eintr\u00e4ge im gew\u00e4hlten Zeitraum.",
     "empty_cta": "Eintrag erfassen",
     "range": {
-      "week": "Woche",
-      "month": "Monat",
-      "year": "Jahr"
+      "week": "7T",
+      "month": "30T",
+      "quarter": "90T",
+      "year": "1J"
+    },
+    "tabs": {
+      "label": "Trend-Bereiche",
+      "mood": "Stimmung",
+      "activities": "Aktivitaeten",
+      "health": "Gesundheit"
     },
     "metric": {
       "mood": "Stimmung",
@@ -310,6 +317,16 @@
       "longest": "Beste Kontinuit\u00e4t",
       "total": "Erfasste Tage"
     },
+    "consistency": {
+      "heading": "Tracking-Konsistenz",
+      "current": "Aktuelle Kontinuit\u00e4t",
+      "longest": "Beste Kontinuit\u00e4t",
+      "total": "Erfasste Tage"
+    },
+    "health": {
+      "heading": "Health Readiness",
+      "body": "Symptom- und Schlafanalysen erscheinen hier, sobald die benoetigten Datenfelder stabil verfuegbar sind. Bis dahin zeigt dieser Bereich nur Tracking-Konsistenz."
+    },
     "heatmap": {
       "heading": "Tag-Frequenz",
       "aria": "Heatmap der Tag-H\u00e4ufigkeiten",
@@ -318,6 +335,15 @@
       "more": "Mehr",
       "loading": "Lade Tag-Heatmap",
       "empty": "Noch keine Tag-Aktivit\u00e4t in diesem Zeitraum."
+    },
+    "history": {
+      "eyebrow": "Eintragsdetails",
+      "close_aria": "Eintragsdetails schliessen",
+      "loading": "Lade Eintragsdetails",
+      "empty": "Kein Eintrag fuer dieses Datum vorhanden.",
+      "tags": "Tags",
+      "symptoms": "Symptome",
+      "none": "Keine"
     }
   },
   "settings": {

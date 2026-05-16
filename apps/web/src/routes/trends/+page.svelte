@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
+  import { listEntries, type EntryResponse } from '$lib/api/entries';
   import {
     fetchEntryStreak,
     fetchTagHeatmap,
@@ -11,12 +12,20 @@
     type TimeseriesRange,
     type TimeseriesResponse,
   } from '$lib/api/stats';
+  import { listSymptomsForEntry, listVisibleSymptoms } from '$lib/api/symptoms';
+  import { listTagsForEntry } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
   import type { TagCategory } from '$lib/api/tags';
   import { TAG_CATEGORIES } from '$lib/api/tags';
+  import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
+  import EntryHistorySheet, {
+    type EntryHistoryDetail,
+  } from '$lib/components/trends/EntryHistorySheet.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+
+  type TrendTab = 'mood' | 'activities' | 'health';
 
   const metricLabels: Record<MetricKey, string> = {
     mood_avg: 'trends.metric.mood',
@@ -24,6 +33,20 @@
     stress_avg: 'trends.metric.stress',
   };
 
+  const rangeOptions: { id: TimeseriesRange; label: string; days: number }[] = [
+    { id: 'week', label: 'trends.range.week', days: 7 },
+    { id: 'month', label: 'trends.range.month', days: 30 },
+    { id: 'quarter', label: 'trends.range.quarter', days: 90 },
+    { id: 'year', label: 'trends.range.year', days: 365 },
+  ];
+
+  const tabs: { id: TrendTab; label: string }[] = [
+    { id: 'mood', label: 'trends.tabs.mood' },
+    { id: 'activities', label: 'trends.tabs.activities' },
+    { id: 'health', label: 'trends.tabs.health' },
+  ];
+
+  let activeTab: TrendTab = 'mood';
   let range: TimeseriesRange = 'week';
   let selectedCategory: TagCategory | 'all' = 'all';
   let timeseries: TimeseriesResponse | null = null;
@@ -36,15 +59,31 @@
   };
   let loading = false;
   let error = '';
+  let historyOpen = false;
+  let historyDate = '';
+  let historyLoading = false;
+  let historyError = '';
+  let historyDetails: EntryHistoryDetail[] = [];
+
+  function dateWindow(): { start_date: string; end_date: string } {
+    const option = rangeOptions.find((item) => item.id === range) ?? rangeOptions[0];
+    const end_date = localIsoDate(new Date());
+    return { start_date: shiftIsoDate(end_date, -(option.days - 1)), end_date };
+  }
 
   async function loadTrends(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     loading = true;
     error = '';
     try {
+      const { start_date, end_date } = dateWindow();
       const [nextTimeseries, nextHeatmap, nextStreak] = await Promise.all([
         fetchTimeseries(range),
-        fetchTagHeatmap(selectedCategory === 'all' ? {} : { category: selectedCategory }),
+        fetchTagHeatmap({
+          start_date,
+          end_date,
+          ...(selectedCategory === 'all' ? {} : { category: selectedCategory }),
+        }),
         fetchEntryStreak(),
       ]);
       timeseries = nextTimeseries;
@@ -59,6 +98,39 @@
 
   function toggleMetric(metric: MetricKey): void {
     metrics = { ...metrics, [metric]: !metrics[metric] };
+  }
+
+  async function openHistory(date: string): Promise<void> {
+    historyOpen = true;
+    historyDate = date;
+    historyLoading = true;
+    historyError = '';
+    historyDetails = [];
+    try {
+      const entries = await listEntries({ start_date: date, end_date: date, limit: 365 });
+      const visibleSymptoms = await listVisibleSymptoms();
+      const symptomNames = new Map(visibleSymptoms.map((symptom) => [symptom.id, symptom.name]));
+      historyDetails = await Promise.all(
+        entries.map(async (entry: EntryResponse) => {
+          const [tags, symptoms] = await Promise.all([
+            listTagsForEntry(entry.id),
+            listSymptomsForEntry(entry.id),
+          ]);
+          return {
+            entry,
+            tags: tags.map((tag) => tag.name),
+            symptoms: symptoms.map((symptom) => ({
+              name: symptomNames.get(symptom.symptom_id) ?? symptom.symptom_id,
+              intensity: symptom.intensity,
+            })),
+          };
+        })
+      );
+    } catch (err) {
+      historyError = err instanceof Error ? err.message : $_('error.generic');
+    } finally {
+      historyLoading = false;
+    }
   }
 
   $: if ($auth.status === 'authenticated' && timeseries && timeseries.range !== range && !loading) {
@@ -96,75 +168,119 @@
   {:else}
     <section class="trends__controls" aria-label={$_('trends.controls')}>
       <div class="trends__segments">
-        {#each ['week', 'month', 'year'] as option}
+        {#each rangeOptions as option}
           <button
             type="button"
-            class:active={range === option}
+            class:active={range === option.id}
             on:click={() => {
-              range = option as TimeseriesRange;
+              range = option.id;
               void loadTrends();
             }}
           >
-            {$_(`trends.range.${option}`)}
+            {$_(option.label)}
           </button>
         {/each}
       </div>
 
-      <div class="trends__metric-toggles">
-        {#each Object.entries(metricLabels) as [key, label]}
-          <label>
-            <input
-              type="checkbox"
-              checked={metrics[key as MetricKey]}
-              on:change={() => toggleMetric(key as MetricKey)}
-            />
-            {$_(label)}
-          </label>
-        {/each}
-      </div>
-
-      <label class="trends__select">
-        <span>{$_('trends.category')}</span>
-        <select
-          bind:value={selectedCategory}
-          on:change={() => {
-            void loadTrends();
-          }}
-        >
-          <option value="all">{$_('trends.category_all')}</option>
-          {#each TAG_CATEGORIES as category}
-            <option value={category}>{$_(`tag.category.${category}`)}</option>
+      {#if activeTab === 'mood'}
+        <div class="trends__metric-toggles">
+          {#each Object.entries(metricLabels) as [key, label]}
+            <label>
+              <input
+                type="checkbox"
+                checked={metrics[key as MetricKey]}
+                on:change={() => toggleMetric(key as MetricKey)}
+              />
+              {$_(label)}
+            </label>
           {/each}
-        </select>
-      </label>
+        </div>
+      {:else if activeTab === 'activities'}
+        <label class="trends__select">
+          <span>{$_('trends.category')}</span>
+          <select
+            bind:value={selectedCategory}
+            on:change={() => {
+              void loadTrends();
+            }}
+          >
+            <option value="all">{$_('trends.category_all')}</option>
+            {#each TAG_CATEGORIES as category}
+              <option value={category}>{$_(`tag.category.${category}`)}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
     </section>
+
+    <nav class="trends__tabs" role="tablist" aria-label={$_('trends.tabs.label')}>
+      {#each tabs as tab}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          class:active={activeTab === tab.id}
+          data-testid={`trends-tab-${tab.id}`}
+          on:click={() => (activeTab = tab.id)}
+        >
+          {$_(tab.label)}
+        </button>
+      {/each}
+    </nav>
 
     {#if error}
       <p class="trends__error" role="alert">{error}</p>
     {/if}
 
-    <section class="trends__panel">
-      <MetricTimeseries points={timeseries?.points ?? []} {range} enabled={metrics} {loading} />
-    </section>
+    {#if activeTab === 'mood'}
+      <section class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.mood')}>
+        <MetricTimeseries
+          points={timeseries?.points ?? []}
+          {range}
+          enabled={metrics}
+          {loading}
+          on:selectDate={(event) => void openHistory(event.detail.date)}
+        />
+      </section>
+    {:else if activeTab === 'activities'}
+      <section class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.activities')}>
+        <TagHeatmap
+          {heatmap}
+          {loading}
+          on:selectDate={(event) => void openHistory(event.detail.date)}
+        />
+      </section>
+    {:else}
+      <section class="trends__panel trends__health" role="tabpanel" aria-label={$_('trends.tabs.health')}>
+        <div>
+          <h2>{$_('trends.health.heading')}</h2>
+          <p>{$_('trends.health.body')}</p>
+        </div>
+        <section class="trends__consistency" aria-label={$_('trends.consistency.heading')}>
+          <div>
+            <span>{$_('trends.consistency.current')}</span>
+            <strong>{streak?.current_streak ?? '-'}</strong>
+          </div>
+          <div>
+            <span>{$_('trends.consistency.longest')}</span>
+            <strong>{streak?.longest_streak ?? '-'}</strong>
+          </div>
+          <div>
+            <span>{$_('trends.consistency.total')}</span>
+            <strong>{streak?.total_entry_days ?? '-'}</strong>
+          </div>
+        </section>
+      </section>
+    {/if}
 
-    <section class="trends__streak" aria-label={$_('trends.streak.heading')}>
-      <div>
-        <span>{$_('trends.streak.current')}</span>
-        <strong>{streak?.current_streak ?? '-'}</strong>
-      </div>
-      <div>
-        <span>{$_('trends.streak.longest')}</span>
-        <strong>{streak?.longest_streak ?? '-'}</strong>
-      </div>
-      <div>
-        <span>{$_('trends.streak.total')}</span>
-        <strong>{streak?.total_entry_days ?? '-'}</strong>
-      </div>
-    </section>
-
-    <section class="trends__panel">
-      <TagHeatmap {heatmap} {loading} />
-    </section>
+    <EntryHistorySheet
+      open={historyOpen}
+      date={historyDate}
+      loading={historyLoading}
+      error={historyError}
+      details={historyDetails}
+      on:close={() => (historyOpen = false)}
+    />
   {/if}
 </main>
 
@@ -181,7 +297,7 @@
   .trends__top,
   .trends__intro,
   .trends__controls,
-  .trends__streak {
+  .trends__consistency {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -201,7 +317,7 @@
   }
 
   .trends__panel,
-  .trends__streak {
+  .trends__consistency {
     padding: 1rem;
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
@@ -238,6 +354,28 @@
     color: var(--color-text-inverse);
   }
 
+  .trends__tabs {
+    display: flex;
+    gap: var(--space-1);
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  .trends__tabs button {
+    min-height: 44px;
+    white-space: nowrap;
+    border-radius: var(--radius-full);
+    padding: var(--space-2) var(--space-4);
+    color: var(--color-text-muted);
+    border: 1px solid transparent;
+  }
+
+  .trends__tabs button.active {
+    color: var(--color-primary);
+    background: var(--color-primary-highlight);
+    border-color: oklch(from var(--color-primary) l c h / 0.25);
+  }
+
   .trends__metric-toggles {
     display: flex;
     flex-wrap: wrap;
@@ -267,24 +405,40 @@
     padding: 0 0.55rem;
   }
 
-  .trends__streak {
+  .trends__consistency {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .trends__streak div {
+  .trends__consistency div {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
   }
 
-  .trends__streak span {
+  .trends__consistency span {
     font-size: 0.78rem;
     opacity: 0.7;
   }
 
-  .trends__streak strong {
+  .trends__consistency strong {
     font-size: 1.55rem;
+  }
+
+  .trends__health {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .trends__health h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+
+  .trends__health p {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-muted);
   }
 
   .trends__error {
@@ -303,7 +457,7 @@
       flex-direction: column;
     }
 
-    .trends__streak {
+    .trends__consistency {
       grid-template-columns: 1fr;
     }
   }

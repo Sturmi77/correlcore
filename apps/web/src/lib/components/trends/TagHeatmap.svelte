@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TagHeatmapResponse } from '$lib/api/stats';
@@ -7,6 +8,8 @@
 
   export let heatmap: TagHeatmapResponse | null = null;
   export let loading = false;
+
+  const dispatch = createEventDispatcher<{ selectDate: { date: string; tagId: string } }>();
 
   const skeletonRows = [0, 1, 2, 3];
 
@@ -73,6 +76,7 @@
               href={`/entries/day/${date}?tag_id=${tag.tag_id}`}
               aria-label={`${tag.name}, ${date}: ${count}`}
               title={`${tag.name}, ${date}: ${count}`}
+              on:click|preventDefault={() => dispatch('selectDate', { date, tagId: tag.tag_id })}
             ></a>
           {/each}
         {/each}

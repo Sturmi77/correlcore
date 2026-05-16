@@ -54,6 +54,9 @@ def _periods_for_range(range_: TimeseriesRange, as_of: date_type) -> list[_Perio
     if range_ == "month":
         start = as_of - timedelta(days=29)
         return [_Period(start + timedelta(days=i), start + timedelta(days=i)) for i in range(30)]
+    if range_ == "quarter":
+        start = as_of - timedelta(days=89)
+        return [_Period(start + timedelta(days=i), start + timedelta(days=i)) for i in range(90)]
 
     first_this_month = date(as_of.year, as_of.month, 1)
     first = _add_months(first_this_month, -11)
