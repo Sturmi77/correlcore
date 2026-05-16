@@ -15,7 +15,11 @@
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
   import { listEntries } from '$lib/api/entries';
-  import { listLatestInsights, type InsightMaturity, type InsightResponse } from '$lib/api/insights';
+  import {
+    listLatestInsights,
+    type InsightMaturity,
+    type InsightResponse,
+  } from '$lib/api/insights';
   import { listDefaultTags, listVisibleTags } from '$lib/api/tags';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
