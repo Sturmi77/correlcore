@@ -8,18 +8,18 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 
 ## Overview
 
-| Sprint | Title                                     | Status         | PR / commit (main)   | Issues           |
-| ------ | ----------------------------------------- | -------------- | -------------------- | ---------------- |
-| 0      | Repo Hygiene & Design-System Alignment    | ✅ Done        | #187 / `1152d13`     | #186 (partial)   |
-| 1      | App Shell & Mobile Navigation             | ✅ Done        | `64735bc`, `fc25c80` | #186             |
-| 2      | Entry Flow Foundation                     | ✅ Done        | `830d31a`            | #170, #171, #182 |
-| 3      | Entry Bottom Sheet & Sleep Quality        | ✅ Done        | `bea8b40`            | #172, #186       |
-| 4      | Home Screen Recomposition                 | ✅ Done        | `9a02655`            | #186             |
-| 5      | Insights Quality & Progressive Disclosure | ✅ Done        | `da5e74f`            | #184, #186       |
-| 6      | Trends Tabbed Analysis Surface            | ✅ Done        | `6173c80`            | #182, #186       |
-| 7      | Settings, Language & Developer UX         | ✅ Done        | `a30cf6e`            | #183, #185, #186 |
-| 8      | Tag Lifecycle & Inactive Correlations     | ✅ Done        | `0d255f0`            | #173             |
-| 9      | Visual QA, Docs & GitHub Closure          | ⚠️ Closure Pending | `fb65168`         | all              |
+| Sprint | Title                                     | Status             | PR / commit (main)   | Issues           |
+| ------ | ----------------------------------------- | ------------------ | -------------------- | ---------------- |
+| 0      | Repo Hygiene & Design-System Alignment    | ✅ Done            | #187 / `1152d13`     | #186 (partial)   |
+| 1      | App Shell & Mobile Navigation             | ✅ Done            | `64735bc`, `fc25c80` | #186             |
+| 2      | Entry Flow Foundation                     | ✅ Done            | `830d31a`            | #170, #171, #182 |
+| 3      | Entry Bottom Sheet & Sleep Quality        | ✅ Done            | `bea8b40`            | #172, #186       |
+| 4      | Home Screen Recomposition                 | ✅ Done            | `9a02655`            | #186             |
+| 5      | Insights Quality & Progressive Disclosure | ✅ Done            | `da5e74f`            | #184, #186       |
+| 6      | Trends Tabbed Analysis Surface            | ✅ Done            | `6173c80`            | #182, #186       |
+| 7      | Settings, Language & Developer UX         | ✅ Done            | `a30cf6e`            | #183, #185, #186 |
+| 8      | Tag Lifecycle & Inactive Correlations     | ✅ Done            | `0d255f0`            | #173             |
+| 9      | Visual QA, Docs & GitHub Closure          | ⚠️ Closure Pending | `fb65168`            | all              |
 
 ## Sprint 0 — Done
 
@@ -115,18 +115,18 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 
 ## M3.5 Definition of Done Audit
 
-| Criterion | Status | Evidence / next action |
-| --- | --- | --- |
-| All sprint PRs / commits merged to `main` | ✅ Met | Sprints 0-8 are done; Sprint 9 closeout commit is `fb65168` on `main`. |
-| All M3.5 issues closed or deliberately rescoped | ❌ Open | #170, #171, #172, #173, #182, #183, #184, #185, #186 were still open when checked via GitHub API. Close implemented items; rescope #172 to M7 if still intentional. |
-| `docs/FRONTEND.md` matches the implemented UI | ✅ Met for documented scope | Updated in Sprint 9 for screen model, trends tabs, settings sections, forced visualizations, and tag lifecycle. |
-| `docs/M3_5_SPRINT_STATUS.md` documents final state | ✅ Met | This audit records implementation status and remaining release blockers. |
-| `CHANGELOG.md` contains M3.5 | ✅ Met | Sprints 1-9 are listed under Unreleased. |
-| Local and GitHub CI gates green | ⚠️ Partially verified | Local `git diff --check` for Sprint 9 passed after rebase. Backend pytest and web pnpm/vitest remain blocked in this NAS/UNC agent environment; confirm via CI. |
-| Web and Mobile QA documented | ⚠️ Documented, not executed | `docs/quality/M3_5_VISUAL_QA.md` records matrix and blocker; run rendered QA from local clone or CI runner. |
-| No known 375px horizontal scroll / overlap / touch target issues | ⚠️ Needs rendered QA | Static review did not identify a known issue, but viewport proof is still pending. |
-| No No-Gamification violations in visible UI copy | ✅ Met by static evidence | Locale regression test exists: `apps/web/src/lib/i18n/noGamificationCopy.test.ts`; visible copy uses "Tracking consistency". |
-| GitHub built new API and Web images after merge | ⚠️ Needs verification | Verify release/image workflow after the latest `main` push. |
+| Criterion                                                        | Status                      | Evidence / next action                                                                                                                                              |
+| ---------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| All sprint PRs / commits merged to `main`                        | ✅ Met                      | Sprints 0-8 are done; Sprint 9 closeout commit is `fb65168` on `main`.                                                                                              |
+| All M3.5 issues closed or deliberately rescoped                  | ❌ Open                     | #170, #171, #172, #173, #182, #183, #184, #185, #186 were still open when checked via GitHub API. Close implemented items; rescope #172 to M7 if still intentional. |
+| `docs/FRONTEND.md` matches the implemented UI                    | ✅ Met for documented scope | Updated in Sprint 9 for screen model, trends tabs, settings sections, forced visualizations, and tag lifecycle.                                                     |
+| `docs/M3_5_SPRINT_STATUS.md` documents final state               | ✅ Met                      | This audit records implementation status and remaining release blockers.                                                                                            |
+| `CHANGELOG.md` contains M3.5                                     | ✅ Met                      | Sprints 1-9 are listed under Unreleased.                                                                                                                            |
+| Local and GitHub CI gates green                                  | ⚠️ Partially verified       | Local `git diff --check` for Sprint 9 passed after rebase. Backend pytest and web pnpm/vitest remain blocked in this NAS/UNC agent environment; confirm via CI.     |
+| Web and Mobile QA documented                                     | ⚠️ Documented, not executed | `docs/quality/M3_5_VISUAL_QA.md` records matrix and blocker; run rendered QA from local clone or CI runner.                                                         |
+| No known 375px horizontal scroll / overlap / touch target issues | ⚠️ Needs rendered QA        | Static review did not identify a known issue, but viewport proof is still pending.                                                                                  |
+| No No-Gamification violations in visible UI copy                 | ✅ Met by static evidence   | Locale regression test exists: `apps/web/src/lib/i18n/noGamificationCopy.test.ts`; visible copy uses "Tracking consistency".                                        |
+| GitHub built new API and Web images after merge                  | ⚠️ Needs verification       | Verify release/image workflow after the latest `main` push.                                                                                                         |
 
 ## Next up
 

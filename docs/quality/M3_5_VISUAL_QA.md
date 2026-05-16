@@ -12,13 +12,13 @@ In this Cursor environment, rendered browser QA could not be executed because th
 
 ## Completeness Snapshot
 
-| Area | Status | Notes |
-| --- | --- | --- |
-| Sprint implementation | Complete | Sprints 0-8 are on `main`; Sprint 9 closeout docs are on `main`. |
-| Static documentation | Complete | `FRONTEND.md`, `M3_5_SPRINT_STATUS.md`, `CHANGELOG.md`, and this QA handoff are updated. |
-| Rendered viewport/theme QA | Pending | Must be run outside the NAS/UNC agent environment. |
-| GitHub issue closure | Pending | #170, #171, #172, #173, #182, #183, #184, #185, and #186 still need closure or explicit rescope. |
-| CI / release image verification | Pending | Confirm GitHub checks and the API/Web image build after the latest `main` commit. |
+| Area                            | Status   | Notes                                                                                            |
+| ------------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| Sprint implementation           | Complete | Sprints 0-8 are on `main`; Sprint 9 closeout docs are on `main`.                                 |
+| Static documentation            | Complete | `FRONTEND.md`, `M3_5_SPRINT_STATUS.md`, `CHANGELOG.md`, and this QA handoff are updated.         |
+| Rendered viewport/theme QA      | Pending  | Must be run outside the NAS/UNC agent environment.                                               |
+| GitHub issue closure            | Pending  | #170, #171, #172, #173, #182, #183, #184, #185, and #186 still need closure or explicit rescope. |
+| CI / release image verification | Pending  | Confirm GitHub checks and the API/Web image build after the latest `main` commit.                |
 
 ## Static QA Evidence
 
