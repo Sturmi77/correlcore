@@ -6,7 +6,7 @@ Scope: M3.5 frontend and mobile optimisation across Home, Entry Sheet, Insights,
 
 ## Result
 
-M3.5 is implementation-complete on `main` through Sprint 8 (`0d255f0`) and the Sprint 9 closeout documentation is present in `fb65168`. The milestone is **not complete for release tagging yet** because rendered browser QA, GitHub issue closure/rescope, CI confirmation, and release image verification remain open.
+M3.5 is implementation-complete on `main` through Sprint 8 (`0d255f0`) and the Sprint 9 closeout documentation is present in `fb65168`. The milestone is **not complete for release tagging yet** because rendered browser QA, GitHub issue closure/rescope, and a green Web CI rerun remain open. Release image verification is complete for `8274144` (`Release — Container Images`, run `25965407416`).
 
 In this Cursor environment, rendered browser QA could not be executed because the web toolchain still fails on the NAS UNC path with pnpm symlink errors; the remote CI/image build remains the source of truth for executable web gates.
 
@@ -17,8 +17,9 @@ In this Cursor environment, rendered browser QA could not be executed because th
 | Sprint implementation           | Complete | Sprints 0-8 are on `main`; Sprint 9 closeout docs are on `main`.                                 |
 | Static documentation            | Complete | `FRONTEND.md`, `M3_5_SPRINT_STATUS.md`, `CHANGELOG.md`, and this QA handoff are updated.         |
 | Rendered viewport/theme QA      | Pending  | Must be run outside the NAS/UNC agent environment.                                               |
-| GitHub issue closure            | Pending  | #170, #171, #172, #173, #182, #183, #184, #185, and #186 still need closure or explicit rescope. |
-| CI / release image verification | Pending  | Confirm GitHub checks and the API/Web image build after the latest `main` commit.                |
+| GitHub issue closure            | Prepared | #170, #171, #173, #182, #184 can close as implemented; #172 should move to M7; #183/#185 need scope notes; #186 stays open until final rendered QA/Web CI. |
+| CI verification                 | Pending  | `CI — Web` failed on `8274144` due two lint/typecheck findings; this closeout pass fixes them locally and needs a non-`[skip ci]` rerun.                  |
+| Release image verification      | Complete | `Release — Container Images` succeeded for `8274144` in run `25965407416`.                                                                     |
 
 ## Static QA Evidence
 
@@ -65,7 +66,7 @@ In this Cursor environment, rendered browser QA could not be executed because th
 
 ## Tooling Blockers
 
-- `gh` is not installed in this shell, so GitHub issues could not be commented or closed from the agent.
+- `gh` is not installed in this shell, no `GH_TOKEN` / `GITHUB_TOKEN` is present, and the browser session is signed out of GitHub, so issues could not be commented or closed from the agent.
 - `pytest` is not installed in the active Python environment.
 - `pnpm`/Vitest cannot install/run from the NAS UNC workspace because pnpm fails while creating project symlinks in the store.
 
@@ -73,5 +74,5 @@ In this Cursor environment, rendered browser QA could not be executed because th
 
 - Run the rendered QA matrix from a local clone or CI environment where `pnpm install` succeeds.
 - Close or rescope M3.5 GitHub issues after posting the closeout summary from this document.
-- Verify the GitHub Actions image build for `correlcore-api` and `correlcore-web` after the pushed Sprint 9 commit.
+- Commit/push the local Web CI lint fixes without `[skip ci]` and verify `CI — Web` turns green.
 - Only mark M3.5 as complete once the pending rows in the completeness snapshot are resolved.

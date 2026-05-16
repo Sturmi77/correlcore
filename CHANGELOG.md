@@ -30,6 +30,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 - **M3.5 Vollständigkeitsprüfung.** The milestone is implementation-complete but not release-complete: rendered browser QA, GitHub issue closure/rescope, CI gate confirmation, and API/Web image verification remain required before M3.5 should be tagged as complete.
 
+- **M3.5 Restpunkt-Recherche.** Public GitHub checks now identify the remaining closeout state precisely: release image build succeeded for `8274144`, Web CI failed on two lint/typecheck findings that are fixed locally, and the M3.5 issue closure/rescope matrix is documented for authenticated GitHub execution.
+
 - **M3.6 Meilenstein eingeführt.** ADR-0021 Insight Maturity Phases now has a dedicated implementation milestone between M3.5 and M4, with sprint plan/status docs for issues #188-#192 covering the API `insight_maturity` contract, Journey Banner, Maturity Badge, phase-aware empty states, and milestone notification card. GitHub milestone assignment is documented but blocked locally by missing `gh`/token tooling.
 
 - **M3 Abschluss umgesetzt.** Die offenen M3-Themen #151, #152, #154 und #156 sind lokal implementiert und per Abschluss-Gates verifiziert. Backend-Gates: `ruff check`, `ruff format --check`, `mypy app` und 372 Pytest-Tests gruen mit gueltigem Test-Fernet-Key. Web-Gates: Typecheck, Lint, 195 Vitest-Tests und Production-Build gruen. Die finale Veroeffentlichung erfolgt ueber PR nach `main` und anschliessende Verifikation des `release-images.yml`-Workflows fuer neue `correlcore-api`- und `correlcore-web`-Images.

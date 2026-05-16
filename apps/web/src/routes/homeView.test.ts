@@ -6,7 +6,6 @@
  */
 
 import { render, screen } from '@testing-library/svelte';
-import { readable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
 import InsightCard from '$lib/components/insights/InsightCard.svelte';
