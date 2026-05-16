@@ -16,8 +16,8 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 | 5      | Insights Quality & Progressive Disclosure | ✅ Done        | `da5e74f`            | #184, #186       |
 | 6      | Trends Tabbed Analysis Surface            | ✅ Done        | `6173c80`            | #182, #186       |
 | 7      | Settings, Language & Developer UX         | ✅ Done        | `a30cf6e`            | #183, #185, #186 |
-| 8      | Tag Lifecycle & Inactive Correlations     | 🚧 In Progress | —                    | #173             |
-| 9      | Visual QA, Docs & GitHub Closure          | ⬜ Open        | —                    | all              |
+| 8      | Tag Lifecycle & Inactive Correlations     | ✅ Done        | `0d255f0`            | #173             |
+| 9      | Visual QA, Docs & GitHub Closure          | 🚧 In Progress | —                    | all              |
 
 ## Sprint 0 — Done
 
@@ -93,7 +93,7 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Disabling Dev Mode resets Force Visualizations
 - Force Visualizations uses centralized mock entries, insights, and trends without API writes
 
-## Sprint 8 — In Progress
+## Sprint 8 — Done (`0d255f0`)
 
 - Tag settings split active and inactive tags while loading `include_hidden=true`
 - Inactive tags can be reactivated without removing historical entry relations
@@ -102,6 +102,15 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Existing tag insights remain visible and are marked when their tag is inactive
 - API docs clarify `include_hidden` and hidden-tag calculation behavior
 
-## Next up — Sprint 9
+## Sprint 9 — In Progress
 
-Visual QA, docs and GitHub closure.
+- Visual QA closeout recorded in `docs/quality/M3_5_VISUAL_QA.md`
+- `docs/FRONTEND.md` reconciled with implemented M3.5 screens and tag lifecycle
+- Changelog includes Sprint 9 closeout and QA handoff
+- GitHub issue states checked via public API: #170, #171, #172, #173, #182, #183, #184, #185, #186 remain open
+- GitHub issue commenting/closure blocked in this agent environment because `gh` is not installed
+- Rendered browser QA remains pending outside the NAS/UNC agent environment because pnpm cannot create symlinks on the network share
+
+## Next up
+
+Run rendered QA from a local clone or CI runner, then close/rescope the remaining M3.5 GitHub issues.

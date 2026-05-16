@@ -1,6 +1,6 @@
 # CorrelCore — Frontend Principles
 
-Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-15 (M3.5 design review — metric invert table, color-primary ADR note, screen naming, i18n guidance).
+Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-16 (M3.5 closeout — screen implementation notes, visual QA handoff, tag lifecycle, developer visualisations).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
@@ -261,7 +261,10 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 │  Insights                    │
 │  Last 90 days · n=67 entries │
 │                              │
-│  [All][Mood][Symptoms][Sleep] │  ← Filter tabs (= insight tiers)
+│  Insight Quality              │  ← Readiness meter from recent entries
+│  [██████░░░░] 18/30           │
+│                              │
+│  [All][Mood][Symptoms][Sleep] │  ← Metric filter tabs
 │                              │
 │  ┌────────────────────────┐  │
 │  │ ↗ POSITIVE             │  │
@@ -280,8 +283,9 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 - Sorted by `confidence × effect_size` descending (strongest, most certain first)
 - Direction indicator (↗/↘) is more prominent than numeric value
 - "What is a correlation?" disclaimer always accessible via header info icon
-- Filter tabs correspond to insight tiers from the analytics engine
-- Each card has 3 states: Collapsed / Expanded (with chart) / Full detail
+- Filter tabs group insights by metric/topic; they do not change analytics tiers
+- Existing insights for inactive tags remain visible and receive a neutral "Tag inactive" marker
+- Each card has progressive disclosure: statement/context first, expanded details on demand
 
 ---
 
@@ -361,6 +365,14 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 - `devForceVisualizations` is a `derived` store from `devModeEnabled` — **not** gated by `import.meta.env.DEV` (available to selfhosters in production, see Issue #183)
 - Deactivating Developer mode resets `dev_force_viz` to `false`
 - Does not count as a user-facing screen — it is a diagnostic tool
+
+**Tag lifecycle rules** (Issue #173):
+
+- Tag Settings must load `GET /api/v1/tags?include_hidden=true` so inactive tags remain reactivatable.
+- Active and inactive tags are grouped separately with neutral copy.
+- Hidden tags do not appear in new Entry Tag Picker flows.
+- Historical entry-tag relations are retained; analytics and heatmap calculations skip hidden tags for new calculations.
+- Existing insights that point to inactive tags are not deleted; they are marked as inactive in the UI.
 
 ---
 
@@ -605,3 +617,15 @@ Every new component or screen decision must be checked against:
 - [ ] Heatmap uses neutral blue-tone scale?
 - [ ] Notification copy is neutral?
 - [ ] InsightQualityMeter copy is descriptive, not imperative (§6.4)?
+
+## 12. M3.5 Closeout Notes
+
+Sprint 9 records the QA handoff in [`quality/M3_5_VISUAL_QA.md`](quality/M3_5_VISUAL_QA.md). The implemented M3.5 screen model is:
+
+- Home: three primary zones with best-effort insight preview and 7-day sparkline.
+- Entry: bottom sheet/page mode with sectioned form, neutral work-context hint, auto-save status, and Day Delta.
+- Insights: quality meter, filterable insight feed, disclaimer access, progressive detail expansion, and inactive-tag markers.
+- Trends: Mood / Activities / Health tabs, unified ranges, custom SVG charts, heatmap, and Entry History sheet overlay.
+- Settings: Tracking / Analysis / Privacy & Data / Appearance / Developer sections, language control, theme toggle, Dev Mode, Force Visualizations, and Tag Settings active/inactive lifecycle.
+
+Rendered browser QA is documented as pending outside this NAS/UNC agent environment because the local pnpm install/test path cannot create symlinks on the network share. Do not treat that tooling limitation as a frontend design exception; run the rendered viewport/theme matrix from a local clone or CI environment before release tagging.
