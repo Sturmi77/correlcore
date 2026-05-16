@@ -130,4 +130,4 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 
 ## Next up
 
-Run rendered QA from a local clone or CI runner, then close/rescope the remaining M3.5 GitHub issues.
+Run rendered QA from a local clone or CI runner, close/rescope the remaining M3.5 GitHub issues, then continue with [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md) for the ADR-0021 insight maturity implementation.

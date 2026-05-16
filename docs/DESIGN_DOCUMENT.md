@@ -664,6 +664,8 @@ Suggested states:
 - `provisional`
 - `robust`
 
+Implementation milestone: **M3.6 — Insight Maturity Phases**. M3.6 is the dedicated vertical slice for ADR-0021 and owns the backend API contract, frontend journey UI, phase-aware empty states, and milestone notification card before M4 starts.
+
 ---
 
 ## 5. Abhängigkeiten
@@ -857,6 +859,36 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 - [ ] 🔒 DSGVO: Analytics-Worker greift nur auf eigene User-Daten zu (RLS geprüft, Query-Audit)
 - [ ] 🔒 DSGVO: Ollama (falls genutzt) verarbeitet keine Daten außerhalb der eigenen Instanz (kein Cloud-Fallback)
 - [ ] 🔒 DSGVO: Kein Profiling-Output wird an Dritte übermittelt
+
+---
+
+### M3.6 — Insight Maturity Phases (Zwischen-Iteration vor M4)
+
+ADR-0021 macht Insight-Reifephasen zu einem First-Class-Konzept in Backend, API und Frontend. M3.6 setzt diese Phasenlogik als eigene vertikale Iteration um, damit M4 nicht auf einer widersprüchlichen "30 Einträge oder nichts"-UX aufbaut.
+
+- **API-Vertrag:** Alle `/api/v1/insights/*`-Antworten enthalten ein `insight_maturity`-Objekt mit Phase, Entry-Count, nächstem Schwellenwert und i18n-Key.
+- **Frontend Journey:** `InsightJourneyBanner` zeigt auf Insights und Home die aktuelle Phase, Fortschritt innerhalb der Phase und den nächsten sinnvollen Schritt.
+- **Insight Cards:** `InsightMaturityBadge` ersetzt die rohe Confidence-/Prozent-Logik in Standardkarten durch phase-aware Labels.
+- **Empty/Locked States:** Insights- und Dashboard-Leerzustände erklären die aktuelle Phase statt generische Lock-/No-Data-Texte zu zeigen.
+- **Milestone Card:** Phasenübergänge erscheinen als dedizierte, einmalige Karte; kein Toast, kein Druck-Framing.
+- **Exit:** Nutzer versteht in jeder Phase, was CorrelCore bereits zeigen kann und warum stärkere Insights mehr Daten brauchen.
+
+#### Akzeptanzkriterien M3.6
+
+- [ ] `insight_maturity` ist in allen Insight-Endpoint-Responses vorhanden und dokumentiert.
+- [ ] Frontend berechnet Phasen nicht eigenständig, sondern liest sie aus der API.
+- [ ] `InsightJourneyBanner` rendert alle vier Phasen (`collecting`, `early_patterns`, `provisional`, `robust`).
+- [ ] `InsightMaturityBadge` ist auf allen geeigneten Insight Cards sichtbar.
+- [ ] Empty/Locked States sind phase-aware und verwenden `maturity.*` i18n-Keys.
+- [ ] Phase Milestone Card erscheint einmal pro Übergang und persistiert Dismiss-State.
+- [ ] Copy bleibt nicht-medizinisch, nicht-kausal und nicht-gamifiziert.
+- [ ] Issues #188-#192 sind dem GitHub-Meilenstein **M3.6 — Insight Maturity Phases** zugeordnet und geschlossen oder bewusst rescope't.
+
+#### DSGVO-Checkpoint M3.6
+
+- [ ] 🔒 DSGVO: `insight_maturity` enthält nur aggregierte Entry-Counts und keine sensiblen Freitext-/Gesundheitsdaten.
+- [ ] 🔒 DSGVO: Milestone-Dismiss-State wird als Preference gespeichert und ist im Export/Erasure-Pfad berücksichtigt.
+- [ ] 🔒 DSGVO: Keine Phase-Milestone-Notification enthält Gesundheitsdaten im Push-/Notification-Payload.
 
 ---
 
