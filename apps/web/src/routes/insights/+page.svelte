@@ -15,13 +15,14 @@
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
   import { listEntries } from '$lib/api/entries';
-  import { listLatestInsights, type InsightResponse } from '$lib/api/insights';
+  import { listLatestInsights, type InsightMaturity, type InsightResponse } from '$lib/api/insights';
   import { listDefaultTags, listVisibleTags } from '$lib/api/tags';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
+  import InsightJourneyBanner from '$lib/components/insights/InsightJourneyBanner.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import { mockEntries } from '$lib/dev/mockEntries';
-  import { mockInsights } from '$lib/dev/mockInsights';
+  import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
@@ -29,6 +30,7 @@
   let insights: InsightResponse[] = [];
   let loading = false;
   let error: string | null = null;
+  let insightMaturity: InsightMaturity | null = null;
   let entryCount = 0;
   let dayEntryDates: string[] = [];
   let inactiveTagIds: string[] = [];
@@ -40,6 +42,7 @@
     try {
       if ($devForceVisualizations) {
         insights = mockInsights;
+        insightMaturity = mockInsightMaturity;
         dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
         entryCount = dayEntryDates.length;
         inactiveTagIds = [];
@@ -55,6 +58,7 @@
         listDefaultTags().catch(() => []),
       ]);
       insights = response.insights;
+      insightMaturity = response.insight_maturity;
       dayEntryDates = dayEntryDatesFromIsoEntries(entryResponse);
       entryCount = dayEntryDates.length;
       const inactiveSlugs = new Set(
@@ -67,6 +71,7 @@
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
       insights = [];
+      insightMaturity = null;
       dayEntryDates = [];
       entryCount = 0;
       inactiveTagIds = [];
@@ -98,6 +103,10 @@
       </a>
     </section>
   {:else}
+    {#if insightMaturity}
+      <InsightJourneyBanner maturity={insightMaturity} />
+    {/if}
+
     {#if !loading && insights.length > 0}
       <InsightMatrix {insights} />
     {/if}

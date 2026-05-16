@@ -444,6 +444,52 @@
   "disclaimer": {
     "medical": "CorrelCore is not a medical diagnostic tool. All insights are for personal reflection only."
   },
+  "maturity": {
+    "collecting": {
+      "label": "Collecting Data",
+      "range": "1-6 entries",
+      "description": "We are building your data foundation. No patterns yet.",
+      "hint": "Streaks, raw counts and entry history are the focus."
+    },
+    "early_patterns": {
+      "label": "First Patterns",
+      "range": "7-13 entries",
+      "description": "First hints are becoming visible. Treat them as observations, not conclusions.",
+      "hint": "Trends, frequencies and simple comparisons become more meaningful."
+    },
+    "provisional": {
+      "label": "Provisional Insights",
+      "range": "14-29 entries",
+      "description": "Relationships are emerging. More data can confirm or change them.",
+      "hint": "Correlations are shown with explicit uncertainty."
+    },
+    "robust": {
+      "label": "Robust Insights",
+      "range": "30+ entries",
+      "description": "More stable patterns are available. Statements remain descriptive and non-medical.",
+      "hint": "The full insight engine is active."
+    },
+    "journey": {
+      "aria_label": "Insight maturity progress",
+      "phase_heading": "Phase {phaseIndex} of 4: {label}",
+      "entries_until_next": "{current} entries tracked · {remaining} more until {nextPhase}",
+      "robust_meta": "{current} entries tracked · full insight engine active",
+      "help_cta": "How do insights work?",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "progress_aria": "Progress toward the next insight phase"
+    },
+    "explainer": {
+      "title": "How insights are built",
+      "intro": "CorrelCore finds patterns in your data over time. The more you track, the more reliable the hints become.",
+      "close": "Close"
+    },
+    "milestone": {
+      "collecting_to_early_patterns": "First patterns are visible.",
+      "early_patterns_to_provisional": "Provisional insights are available.",
+      "provisional_to_robust": "Robust insights are available."
+    }
+  },
   "insights": {
     "page": {
       "title": "Insights",

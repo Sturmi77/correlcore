@@ -38,6 +38,7 @@
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
+  import InsightJourneyBanner from '$lib/components/insights/InsightJourneyBanner.svelte';
   import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
 
   const HOME_SPARKLINE_DAYS = 7;
@@ -55,6 +56,7 @@
   let entrySheetDate = todayIso;
 
   $: latestInsight = $insightStore.latest;
+  $: insightMaturity = $insightStore.insightMaturity;
   $: insightLoading = $insightStore.loading;
   $: insightError = $insightStore.error ?? '';
   $: weekdayInsight = $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
@@ -192,6 +194,10 @@
 
     <!-- Zone 2: insight preview (best-effort) -->
     <section class="home-zone" data-testid="home-zone-insight">
+      {#if insightMaturity}
+        <InsightJourneyBanner maturity={insightMaturity} collapsible initialCollapsed />
+      {/if}
+
       {#if showFirstWeekBanner}
         <FirstWeekInsightBanner on:dismiss={dismissFirstWeekBanner} />
       {:else}

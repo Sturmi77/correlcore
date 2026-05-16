@@ -444,6 +444,52 @@
   "disclaimer": {
     "medical": "CorrelCore ist kein medizinisches Diagnose-Tool. Alle Erkenntnisse dienen ausschlie\u00dflich zur pers\u00f6nlichen Reflexion."
   },
+  "maturity": {
+    "collecting": {
+      "label": "Daten sammeln",
+      "range": "1-6 Eintraege",
+      "description": "Wir bauen deine Datengrundlage auf. Noch keine Muster.",
+      "hint": "Streaks, Rohzahlen und der Eintragsverlauf stehen im Vordergrund."
+    },
+    "early_patterns": {
+      "label": "Erste Muster",
+      "range": "7-13 Eintraege",
+      "description": "Erste Hinweise werden sichtbar. Behandle sie als Beobachtungen, nicht als Schlussfolgerungen.",
+      "hint": "Trends, Haeufigkeiten und einfache Vergleiche werden aussagekraeftiger."
+    },
+    "provisional": {
+      "label": "Vorlaeufige Erkenntnisse",
+      "range": "14-29 Eintraege",
+      "description": "Zusammenhaenge entstehen. Mehr Daten koennen sie bestaetigen oder veraendern.",
+      "hint": "Korrelationen werden mit ausdruecklicher Unsicherheit gezeigt."
+    },
+    "robust": {
+      "label": "Robuste Erkenntnisse",
+      "range": "30+ Eintraege",
+      "description": "Stabilere Muster sind verfuegbar. Aussagen bleiben beschreibend und nicht medizinisch.",
+      "hint": "Die vollstaendige Insight-Engine ist aktiv."
+    },
+    "journey": {
+      "aria_label": "Fortschritt der Erkenntnisreife",
+      "phase_heading": "Phase {phaseIndex} von 4: {label}",
+      "entries_until_next": "{current} Eintraege erfasst · noch {remaining} bis {nextPhase}",
+      "robust_meta": "{current} Eintraege erfasst · volle Insight-Engine aktiv",
+      "help_cta": "Wie entstehen Erkenntnisse?",
+      "collapse": "Einklappen",
+      "expand": "Aufklappen",
+      "progress_aria": "Fortschritt zur naechsten Erkenntnisphase"
+    },
+    "explainer": {
+      "title": "Wie Erkenntnisse entstehen",
+      "intro": "CorrelCore findet Muster in deinen Daten ueber Zeit. Je mehr du erfasst, desto verlaesslicher werden die Hinweise.",
+      "close": "Schliessen"
+    },
+    "milestone": {
+      "collecting_to_early_patterns": "Erste Muster sind sichtbar.",
+      "early_patterns_to_provisional": "Vorlaeufige Erkenntnisse sind verfuegbar.",
+      "provisional_to_robust": "Robuste Erkenntnisse sind verfuegbar."
+    }
+  },
   "insights": {
     "page": {
       "title": "Erkenntnisse",

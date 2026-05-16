@@ -9,7 +9,7 @@ Tracking document for [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md). M3.6 impleme
 | Sprint | Title                                   | Status                  | PR / commit (main) | Issues     |
 | ------ | --------------------------------------- | ----------------------- | ------------------ | ---------- |
 | 0      | API Contract and Shared Types           | Implemented, CI pending | pending CI         | #191       |
-| 1      | Journey Banner and Explainer            | Open                    | -                  | #188       |
+| 1      | Journey Banner and Explainer            | Implemented, CI pending | local changes      | #188       |
 | 2      | Insight Cards and Empty States          | Open                    | -                  | #189, #190 |
 | 3      | Milestone Notifications and Preferences | Open                    | -                  | #192       |
 | 4      | Visual QA, Docs and GitHub Closure      | Open                    | -                  | #188-#192  |
@@ -39,11 +39,13 @@ Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN`
 
 ## Sprint 1 - Journey Banner and Explainer
 
-- `InsightJourneyBanner`
-- `InsightJourneyExplainer`
-- Insights page placement
-- Home collapsible variant
-- DE/EN copy
+- [x] `InsightJourneyBanner`
+- [x] `InsightJourneyExplainer`
+- [x] Insights page placement
+- [x] Home collapsible variant
+- [x] DE/EN `maturity.*` copy
+- [x] Component tests for render, explainer open and collapsed variant
+- [ ] CI-confirmed web gates after commit
 
 ## Sprint 2 - Insight Cards and Empty States
 
@@ -70,4 +72,4 @@ Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN`
 
 ## Next Up
 
-Run/confirm the Sprint 0 backend and web gates for the API contract extension. GitHub milestone assignment for #188-#192 remains blocked in this agent environment by missing `gh`/token tooling.
+Run/confirm the Sprint 1 web gates, then continue with Sprint 2 (`InsightMaturityBadge` and phase-aware empty/locked states). GitHub milestone assignment for #188-#192 remains blocked in this agent environment by missing `gh`/token tooling.
