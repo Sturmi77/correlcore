@@ -381,6 +381,29 @@
       "empty": "Noch nicht genug Daten fuer aktuelle Erkenntnisse.",
       "list_heading": "Aktuelle Erkenntnisse"
     },
+    "feed": {
+      "aria_label": "Erkenntnisse Feed",
+      "title": "Erkenntnisse",
+      "subtitle": "{n} Eintraege in den letzten {days} Tagen",
+      "disclaimer_aria": "Erklaerung zu Korrelationen anzeigen",
+      "filter_label": "Erkenntnisse filtern",
+      "tab_all": "Alle",
+      "tab_mood": "Stimmung",
+      "tab_symptoms": "Symptome",
+      "tab_sleep": "Schlaf",
+      "empty_title": "Keine Erkenntnisse in dieser Ansicht",
+      "empty_body": "Sobald genuegend passende Daten vorhanden sind, erscheinen hier beschreibende Muster.",
+      "empty_cta": "Zur Startseite"
+    },
+    "quality_meter": {
+      "heading": "Insight-Qualitaet",
+      "getting_started": "Deine Daten werden gesammelt. Erste Muster werden ab etwa 30 Eintraegen sichtbar.",
+      "building_pace": "{current}/{target}. Bei deiner aktuellen Tracking-Frequenz: ca. {weeks} Wochen bis zur ersten Erkenntnis.",
+      "building_no_recent": "{current}/{target}. Keine aktuellen Eintraege gefunden. Eine Zeitschaetzung bis zur ersten Erkenntnis kann nicht berechnet werden.",
+      "ready_low": "Erste Erkenntnis sichtbar. Die Konfidenz wird pro Erkenntnis angezeigt.",
+      "ready_full": "Vollstaendige Erkenntnisse sind verfuegbar.",
+      "entry_total": "Basierend auf {n} Eintraegen"
+    },
     "matrix": {
       "heading": "Korrelations-Matrix",
       "subtitle": "Tag- und Mood-Muster nach Effektstaerke sortiert.",

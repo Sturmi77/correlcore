@@ -14,27 +14,39 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
+  import { listEntries } from '$lib/api/entries';
   import { listLatestInsights, type InsightResponse } from '$lib/api/insights';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
+  import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
+  import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
 
   let insights: InsightResponse[] = [];
   let loading = false;
   let error: string | null = null;
   let entryCount = 0;
+  let dayEntryDates: string[] = [];
 
   async function loadInsights(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     loading = true;
     error = null;
     try {
-      const response = await listLatestInsights({ limit: 50 });
+      const todayIso = localIsoDate(new Date());
+      const startIso = shiftIsoDate(todayIso, -89);
+      const [response, entryResponse] = await Promise.all([
+        listLatestInsights({ limit: 50 }),
+        listEntries({ start_date: startIso, end_date: todayIso }),
+      ]);
       insights = response.insights;
-      entryCount = insights.reduce((max, i) => Math.max(max, i.sample_n), 0);
+      dayEntryDates = dayEntryDatesFromIsoEntries(entryResponse);
+      entryCount = dayEntryDates.length;
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
       insights = [];
+      dayEntryDates = [];
+      entryCount = 0;
     } finally {
       loading = false;
     }
@@ -67,7 +79,7 @@
       <InsightMatrix {insights} />
     {/if}
 
-    <InsightFeed {insights} {loading} {error} {entryCount} on:retry={loadInsights} />
+    <InsightFeed {insights} {loading} {error} {entryCount} {dayEntryDates} on:retry={loadInsights} />
   {/if}
 </main>
 

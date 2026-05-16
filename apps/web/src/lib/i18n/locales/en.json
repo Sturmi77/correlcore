@@ -381,6 +381,29 @@
       "empty": "Not enough data for current insights yet.",
       "list_heading": "Current insights"
     },
+    "feed": {
+      "aria_label": "Insights feed",
+      "title": "Insights",
+      "subtitle": "{n} entries in the last {days} days",
+      "disclaimer_aria": "Show explanation for correlations",
+      "filter_label": "Filter insights",
+      "tab_all": "All",
+      "tab_mood": "Mood",
+      "tab_symptoms": "Symptoms",
+      "tab_sleep": "Sleep",
+      "empty_title": "No insights in this view",
+      "empty_body": "When enough matching data is available, descriptive patterns appear here.",
+      "empty_cta": "Go to home"
+    },
+    "quality_meter": {
+      "heading": "Insight quality",
+      "getting_started": "Your data is being collected. First patterns become visible around 30 entries.",
+      "building_pace": "{current}/{target}. At your current tracking pace: ca. {weeks} weeks until first insight.",
+      "building_no_recent": "{current}/{target}. No recent entries found. Estimated time to first insight cannot be calculated.",
+      "ready_low": "First insight visible. The confidence label is shown per insight.",
+      "ready_full": "Full insights are available.",
+      "entry_total": "Based on {n} entries"
+    },
     "matrix": {
       "heading": "Correlation Matrix",
       "subtitle": "Tag and mood patterns sorted by effect size.",

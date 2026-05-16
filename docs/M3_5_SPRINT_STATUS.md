@@ -1,23 +1,23 @@
 # M3.5 Sprint Status — Frontend Web and Mobile Optimisation
 
-Last updated: 2026-05-15
+Last updated: 2026-05-16
 
 Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint maps to a focused PR on `main`.
 
 ## Overview
 
-| Sprint | Title                                     | Status  | PR / commit (main)   | Issues           |
-| ------ | ----------------------------------------- | ------- | -------------------- | ---------------- |
-| 0      | Repo Hygiene & Design-System Alignment    | ✅ Done | #187 / `1152d13`     | #186 (partial)   |
-| 1      | App Shell & Mobile Navigation             | ✅ Done | `64735bc`, `fc25c80` | #186             |
-| 2      | Entry Flow Foundation                     | ✅ Done | `830d31a`            | #170, #171, #182 |
-| 3      | Entry Bottom Sheet & Sleep Quality        | ✅ Done | `bea8b40`            | #172, #186       |
-| 4      | Home Screen Recomposition                 | ✅ Done | (pending push)       | #186             |
-| 5      | Insights Quality & Progressive Disclosure | ⬜ Open | —                    | #184, #186       |
-| 6      | Trends Tabbed Analysis Surface            | ⬜ Open | —                    | #182, #186       |
-| 7      | Settings, Language & Developer UX         | ⬜ Open | —                    | #183, #185, #186 |
-| 8      | Tag Lifecycle & Inactive Correlations     | ⬜ Open | —                    | #173             |
-| 9      | Visual QA, Docs & GitHub Closure          | ⬜ Open | —                    | all              |
+| Sprint | Title                                    | Status     | PR / commit (main)        | Issues        |
+| ------ | ---------------------------------------- | ---------- | ------------------------- | ------------- |
+| 0      | Repo Hygiene & Design-System Alignment   | ✅ Done    | #187 / `1152d13`          | #186 (partial)|
+| 1      | App Shell & Mobile Navigation            | ✅ Done    | `64735bc`, `fc25c80`      | #186          |
+| 2      | Entry Flow Foundation                    | ✅ Done    | `830d31a`                 | #170, #171, #182 |
+| 3      | Entry Bottom Sheet & Sleep Quality       | ✅ Done    | `bea8b40`                 | #172, #186    |
+| 4      | Home Screen Recomposition                | ✅ Done    | `9a02655`                 | #186          |
+| 5      | Insights Quality & Progressive Disclosure| ✅ Done    | (pending commit)          | #184, #186    |
+| 6      | Trends Tabbed Analysis Surface           | ⬜ Open    | —                         | #182, #186    |
+| 7      | Settings, Language & Developer UX        | ⬜ Open    | —                         | #183, #185, #186 |
+| 8      | Tag Lifecycle & Inactive Correlations    | ⬜ Open    | —                         | #173          |
+| 9      | Visual QA, Docs & GitHub Closure         | ⬜ Open    | —                         | all           |
 
 ## Sprint 0 — Done
 
@@ -64,6 +64,18 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Secondary links to Insights and Trends
 - `homeView.test.ts` + `HomeTodayContext.test.ts`
 
-## Next up — Sprint 5
+## Sprint 5 — Done
 
-Insights quality meter and progressive disclosure (#184).
+- `InsightQualityMeter.svelte` added to the Insights feed
+- `estimateInsightReadiness` estimates first-insight readiness from day-entry dates
+- 0-3 entries: neutral collection copy, no estimate
+- 4-29 entries: `X/30` plus a 14-day tracking-pace estimate when recent data exists
+- 4-29 without recent entries: no time estimate
+- 30+ entries: first-insight/full-insights stages with confidence label context
+- `/insights` now loads entries for the existing 90-day feed context and derives readiness without a separate meter-only endpoint
+- DE/EN copy stays descriptive: no imperative wording, emoji, or urgency framing
+- Tests: `insightQuality`, `InsightQualityMeter`, and `InsightFeed` coverage
+
+## Next up — Sprint 6
+
+Trends screen as tabbed analysis surface (#182, #186).
