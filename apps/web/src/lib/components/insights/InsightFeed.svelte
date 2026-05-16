@@ -20,12 +20,13 @@
    */
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import type { InsightResponse } from '$lib/api/insights';
+  import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import InsightCard from './InsightCard.svelte';
   import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
   import InsightQualityMeter from './InsightQualityMeter.svelte';
 
   export let insights: InsightResponse[] = [];
+  export let maturity: InsightMaturity | null = null;
   export let loading = false;
   export let error: string | null = null;
   export let entryCount = 0;
@@ -65,6 +66,13 @@
     .sort((a, b) => score(b) - score(a));
   $: strongestInsight =
     insights.length > 0 ? [...insights].sort((a, b) => score(b) - score(a))[0] : null;
+  $: isPhaseEmpty = Boolean(maturity && insights.length === 0);
+  $: emptyTitleKey = isPhaseEmpty
+    ? `insights.feed.empty_phase.${maturity?.phase}.title`
+    : 'insights.feed.empty_title';
+  $: emptyBodyKey = isPhaseEmpty
+    ? `insights.feed.empty_phase.${maturity?.phase}.body`
+    : 'insights.feed.empty_body';
 
   const SKELETON_COUNT = 3;
   const skeletonItems: number[] = Array.from({ length: SKELETON_COUNT }, (_, idx) => idx);
@@ -172,8 +180,8 @@
         <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z" />
         <path d="M15 11v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v0" />
       </svg>
-      <p>{$_('insights.feed.empty_title')}</p>
-      <span>{$_('insights.feed.empty_body')}</span>
+      <p>{$_(emptyTitleKey)}</p>
+      <span>{$_(emptyBodyKey)}</span>
       <a href="/" class="if-empty__cta">{$_('insights.feed.empty_cta')}</a>
     </div>
 
@@ -182,7 +190,7 @@
     <ul class="if-list" data-testid="insight-feed-list">
       {#each filtered as insight (insight.id)}
         <li>
-          <InsightCard {insight} {inactiveTagIds} />
+          <InsightCard {insight} {maturity} {inactiveTagIds} />
         </li>
       {/each}
     </ul>

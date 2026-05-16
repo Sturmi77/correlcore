@@ -449,7 +449,7 @@
       "label": "Collecting Data",
       "range": "1-6 entries",
       "description": "We are building your data foundation. No patterns yet.",
-      "hint": "Streaks, raw counts and entry history are the focus."
+      "hint": "Raw counts, entry history and simple overviews are the focus."
     },
     "early_patterns": {
       "label": "First Patterns",
@@ -488,6 +488,33 @@
       "collecting_to_early_patterns": "First patterns are visible.",
       "early_patterns_to_provisional": "Provisional insights are available.",
       "provisional_to_robust": "Robust insights are available."
+    },
+    "milestone_card": {
+      "eyebrow": "New phase: {label}",
+      "cta": "View insights",
+      "dismiss": "Dismiss notice",
+      "early_patterns": {
+        "title": "First patterns are visible.",
+        "body": "You have tracked {n} entries. Trends and frequencies are now framed as cautious hints."
+      },
+      "provisional": {
+        "title": "Provisional insights are available.",
+        "body": "With {n} entries, early relationships can appear. They remain explicitly provisional."
+      },
+      "robust": {
+        "title": "More robust insights are available.",
+        "body": "With {n} entries, the full insight engine is active. Statements remain descriptive and non-medical."
+      }
+    },
+    "badge": {
+      "collecting": "Collecting · {n} entries",
+      "collecting_tooltip": "No insight cards yet. We are building your foundation first.",
+      "early_patterns": "First hint · {n} entries",
+      "early_patterns_tooltip": "Based on limited data. Patterns may change as more entries are added.",
+      "provisional": "Provisional · {n} entries",
+      "provisional_tooltip": "An early relationship is visible. More data helps put it into context.",
+      "robust": "Stable · {n} entries",
+      "robust_tooltip": "More stable pattern based on sufficient tracking history."
     }
   },
   "insights": {
@@ -511,7 +538,25 @@
       "tab_sleep": "Sleep",
       "empty_title": "No insights in this view",
       "empty_body": "When enough matching data is available, descriptive patterns appear here.",
-      "empty_cta": "Go to home"
+      "empty_cta": "Go to home",
+      "empty_phase": {
+        "collecting": {
+          "title": "We are still building your foundation.",
+          "body": "In this phase CorrelCore does not show insight cards yet. Entries and simple overviews are the focus."
+        },
+        "early_patterns": {
+          "title": "First patterns are taking shape.",
+          "body": "Trend and frequency data are becoming more meaningful. Insight cards stay cautious until more data is available."
+        },
+        "provisional": {
+          "title": "Provisional insights need matching data.",
+          "body": "When enough shared data points exist for a topic, cautiously worded relationships appear here."
+        },
+        "robust": {
+          "title": "No matching insights in this view.",
+          "body": "The insight engine is active. Change the filter or keep tracking so new patterns can appear."
+        }
+      }
     },
     "quality_meter": {
       "heading": "Insight quality",

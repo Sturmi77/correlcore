@@ -20,21 +20,30 @@
     type InsightMaturity,
     type InsightResponse,
   } from '$lib/api/insights';
+  import {
+    fetchUserPreferences,
+    updateUserPreferences,
+    type UserPreferencesResponse,
+  } from '$lib/api/preferences';
   import { listDefaultTags, listVisibleTags } from '$lib/api/tags';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightJourneyBanner from '$lib/components/insights/InsightJourneyBanner.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
+  import InsightPhaseMilestoneCard from '$lib/components/insights/InsightPhaseMilestoneCard.svelte';
   import { mockEntries } from '$lib/dev/mockEntries';
+  import { mockUserPreferences } from '$lib/dev/mockEntries';
   import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
+  import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
 
   let insights: InsightResponse[] = [];
   let loading = false;
   let error: string | null = null;
   let insightMaturity: InsightMaturity | null = null;
+  let userPreferences: UserPreferencesResponse | null = null;
   let entryCount = 0;
   let dayEntryDates: string[] = [];
   let inactiveTagIds: string[] = [];
@@ -47,6 +56,7 @@
       if ($devForceVisualizations) {
         insights = mockInsights;
         insightMaturity = mockInsightMaturity;
+        userPreferences = mockUserPreferences;
         dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
         entryCount = dayEntryDates.length;
         inactiveTagIds = [];
@@ -55,14 +65,16 @@
 
       const todayIso = localIsoDate(new Date());
       const startIso = shiftIsoDate(todayIso, -89);
-      const [response, entryResponse, tagResponse, defaultTags] = await Promise.all([
+      const [response, entryResponse, tagResponse, defaultTags, preferences] = await Promise.all([
         listLatestInsights({ limit: 50 }),
         listEntries({ start_date: startIso, end_date: todayIso }),
         listVisibleTags({ include_hidden: true }).catch(() => []),
         listDefaultTags().catch(() => []),
+        fetchUserPreferences().catch(() => null),
       ]);
       insights = response.insights;
       insightMaturity = response.insight_maturity;
+      userPreferences = preferences;
       dayEntryDates = dayEntryDatesFromIsoEntries(entryResponse);
       entryCount = dayEntryDates.length;
       const inactiveSlugs = new Set(
@@ -76,6 +88,7 @@
       error = err instanceof Error ? err.message : $_('error.generic');
       insights = [];
       insightMaturity = null;
+      userPreferences = null;
       dayEntryDates = [];
       entryCount = 0;
       inactiveTagIds = [];
@@ -87,6 +100,37 @@
   onMount(() => {
     void loadInsights();
   });
+
+  $: showMaturityMilestone = shouldShowMaturityMilestone(
+    insightMaturity,
+    userPreferences?.reached_milestone_keys
+  );
+
+  async function dismissMaturityMilestone(key: string): Promise<void> {
+    const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
+    reached.add(key);
+    const optimistic = {
+      ...(userPreferences ?? {
+        user_id: '',
+        analytics_enabled: true,
+        onboarding_retro_completed: false,
+        onboarding_profile_completed: false,
+        dismissed_insight_keys: [],
+        last_seen_insight_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+      reached_milestone_keys: [...reached],
+    };
+    userPreferences = optimistic;
+    try {
+      userPreferences = await updateUserPreferences({
+        reached_milestone_keys: optimistic.reached_milestone_keys,
+      });
+    } catch {
+      // Optimistic dismissal for this session.
+    }
+  }
 </script>
 
 <svelte:head>
@@ -107,6 +151,13 @@
       </a>
     </section>
   {:else}
+    {#if insightMaturity && showMaturityMilestone}
+      <InsightPhaseMilestoneCard
+        maturity={insightMaturity}
+        on:dismiss={(e) => void dismissMaturityMilestone(e.detail.key)}
+      />
+    {/if}
+
     {#if insightMaturity}
       <InsightJourneyBanner maturity={insightMaturity} />
     {/if}
@@ -117,6 +168,7 @@
 
     <InsightFeed
       {insights}
+      maturity={insightMaturity}
       {loading}
       {error}
       {entryCount}

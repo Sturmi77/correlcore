@@ -39,7 +39,9 @@
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
   import InsightJourneyBanner from '$lib/components/insights/InsightJourneyBanner.svelte';
+  import InsightPhaseMilestoneCard from '$lib/components/insights/InsightPhaseMilestoneCard.svelte';
   import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
+  import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
 
   const HOME_SPARKLINE_DAYS = 7;
   const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
@@ -63,6 +65,10 @@
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
+  $: showMaturityMilestone = shouldShowMaturityMilestone(
+    insightMaturity,
+    userPreferences?.reached_milestone_keys
+  );
 
   function openEntrySheet(date: string = todayIso) {
     entrySheetDate = date;
@@ -161,6 +167,32 @@
     }
   }
 
+  async function dismissMaturityMilestone(key: string): Promise<void> {
+    const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
+    reached.add(key);
+    const optimistic = {
+      ...(userPreferences ?? {
+        user_id: $currentUser?.id ?? '',
+        analytics_enabled: true,
+        onboarding_retro_completed: false,
+        onboarding_profile_completed: false,
+        dismissed_insight_keys: [],
+        last_seen_insight_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+      reached_milestone_keys: [...reached],
+    };
+    userPreferences = optimistic;
+    try {
+      userPreferences = await updateUserPreferences({
+        reached_milestone_keys: optimistic.reached_milestone_keys,
+      });
+    } catch {
+      // Optimistic dismissal for this session.
+    }
+  }
+
   onMount(() => {
     if ($auth.status === 'authenticated' && !dashboardLoaded) {
       void loadDashboard();
@@ -187,6 +219,13 @@
       </button>
     </header>
 
+    {#if insightMaturity && showMaturityMilestone}
+      <InsightPhaseMilestoneCard
+        maturity={insightMaturity}
+        on:dismiss={(e) => void dismissMaturityMilestone(e.detail.key)}
+      />
+    {/if}
+
     <!-- Zone 1: date + work context + entry status -->
     <section class="home-zone" data-testid="home-zone-context">
       <HomeTodayContext {todayIso} {todayEntry} loading={dashboardLoading && !dashboardLoaded} />
@@ -203,6 +242,7 @@
       {:else}
         <InsightCard
           insight={latestInsight}
+          maturity={insightMaturity}
           loading={insightLoading && !latestInsight}
           error={insightError}
           on:dismiss={(e) => void dismissInsight(e.detail.id)}

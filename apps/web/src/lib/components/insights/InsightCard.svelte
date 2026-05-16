@@ -19,9 +19,11 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import InsightConfidenceScale from './InsightConfidenceScale.svelte';
-  import type { InsightResponse } from '$lib/api/insights';
+  import InsightMaturityBadge from './InsightMaturityBadge.svelte';
+  import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
   export let insight: InsightResponse | null = null;
+  export let maturity: InsightMaturity | null = null;
   export let loading = false;
   export let error = '';
   export let inactiveTagIds: readonly string[] = [];
@@ -140,15 +142,9 @@
       </button>
     </header>
 
-    <div class="insight-card__scale">
-      <InsightConfidenceScale
-        confidenceScore={insight.confidence ?? 0}
-        currentTier={insight.tier}
-        entryCount={insight.sample_n ?? 0}
-        loading={false}
-        showRawPercent={expanded}
-      />
-    </div>
+    {#if maturity}
+      <InsightMaturityBadge {maturity} entryCount={insight.sample_n ?? 0} />
+    {/if}
 
     <p class="insight-card__statement" data-testid="insight-card-statement">
       {insight.statement ?? $_('home.insight.empty_statement')}
@@ -188,6 +184,14 @@
         class="insight-card__level2"
         data-testid="insight-card-level2"
       >
+        <InsightConfidenceScale
+          confidenceScore={insight.confidence ?? 0}
+          currentTier={insight.tier}
+          entryCount={insight.sample_n ?? 0}
+          loading={false}
+          showRawPercent
+        />
+
         <div
           class="insight-card__chart"
           data-testid="insight-card-chart"

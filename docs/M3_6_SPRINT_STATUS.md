@@ -10,8 +10,8 @@ Tracking document for [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md). M3.6 impleme
 | ------ | --------------------------------------- | ----------------------- | ------------------ | ---------- |
 | 0      | API Contract and Shared Types           | Implemented, CI pending | pending CI         | #191       |
 | 1      | Journey Banner and Explainer            | Implemented, CI pending | local changes      | #188       |
-| 2      | Insight Cards and Empty States          | Open                    | -                  | #189, #190 |
-| 3      | Milestone Notifications and Preferences | Open                    | -                  | #192       |
+| 2      | Insight Cards and Empty States          | Implemented, CI pending | local changes      | #189, #190 |
+| 3      | Milestone Notifications and Preferences | Implemented, CI pending | local changes      | #192       |
 | 4      | Visual QA, Docs and GitHub Closure      | Open                    | -                  | #188-#192  |
 
 ## GitHub Milestone Assignment
@@ -49,18 +49,22 @@ Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN`
 
 ## Sprint 2 - Insight Cards and Empty States
 
-- `InsightMaturityBadge`
-- Insight card confidence display replacement
-- Phase-aware empty states
-- Phase-aware locked states
-- Uncertainty hints for early/provisional content
+- [x] `InsightMaturityBadge`
+- [x] Insight card confidence display replacement in default card state
+- [x] Statistical confidence details kept in expanded/detail state
+- [x] Phase-aware empty/locked-state messaging for Insights feed
+- [x] Uncertainty hints for `early_patterns` and `provisional`
+- [x] Component tests for badge rendering and phase-aware empty states
+- [ ] CI-confirmed web gates after commit
 
 ## Sprint 3 - Milestone Notifications and Preferences
 
-- One-time phase milestone card
-- Preference persistence for dismissed phase milestones
-- Explicit-dismiss behavior
-- Reduced-motion handling
+- [x] One-time phase milestone card
+- [x] Preference persistence for dismissed phase milestones via `reached_milestone_keys`
+- [x] Explicit-dismiss behavior, not toast/auto-dismiss
+- [x] Reduced-motion handling
+- [x] Component and helper tests for milestone visibility/dismiss
+- [ ] CI-confirmed web gates after commit
 
 ## Sprint 4 - Closeout
 
@@ -72,4 +76,4 @@ Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN`
 
 ## Next Up
 
-Run/confirm the Sprint 1 web gates, then continue with Sprint 2 (`InsightMaturityBadge` and phase-aware empty/locked states). GitHub milestone assignment for #188-#192 remains blocked in this agent environment by missing `gh`/token tooling.
+Run/confirm the Sprint 3 web gates, then continue with Sprint 4 closeout QA. GitHub milestone assignment for #188-#192 remains blocked in this agent environment by missing `gh`/token tooling.

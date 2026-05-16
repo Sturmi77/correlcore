@@ -269,7 +269,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 │  ┌────────────────────────┐  │
 │  │ ↗ POSITIVE             │  │
 │  │ Exercise → Mood        │  │
-│  │ [████████░░ Strong]    │  │
+│  │ Provisional · 42 entries │ │
 │  │ "On exercise days..."  │  │
 │  │ Based on 42 entries    │  │
 │  │ [Show details ▼]       │  │
@@ -287,6 +287,9 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 - Existing insights for inactive tags remain visible and receive a neutral "Tag inactive" marker
 - Each card has progressive disclosure: statement/context first, expanded details on demand
 - M3.6 insight maturity comes from the API-level `insight_maturity` object; frontend components must not recompute the phase from entry count.
+- Default insight cards show `InsightMaturityBadge` instead of raw confidence or p-values; statistical details stay in expanded/detail contexts.
+- Empty and locked states explain the current maturity phase instead of using a generic unavailable state.
+- Phase milestone cards are explicit-dismiss only and persist in `reached_milestone_keys`; they are not toasts and never auto-dismiss.
 
 ---
 

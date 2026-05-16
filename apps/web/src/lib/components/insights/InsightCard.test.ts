@@ -7,7 +7,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import InsightCard from './InsightCard.svelte';
-import type { InsightResponse } from '$lib/api/insights';
+import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
@@ -61,6 +61,16 @@ const NEGATIVE_INSIGHT: InsightResponse = {
   payload: { ...INSIGHT.payload, r_value: -0.551, tag_a: 'stress' },
 };
 
+const MATURITY: InsightMaturity = {
+  phase: 'provisional',
+  phase_index: 3,
+  current_entries: 21,
+  next_phase_at: 30,
+  next_phase_label: 'Robust Insights',
+  entries_until_next: 9,
+  user_message_key: 'maturity.provisional.description',
+};
+
 describe('InsightCard', () => {
   // ── Collapsed (Level 1) ──────────────────────────────────────────
   it('renders statement in collapsed state', () => {
@@ -101,6 +111,14 @@ describe('InsightCard', () => {
   it('does NOT show raw percentage in collapsed state', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     expect(screen.queryByTestId('insight-confidence-score-percent')).toBeNull();
+  });
+
+  it('renders a maturity badge when maturity is provided', () => {
+    render(InsightCard, { props: { insight: INSIGHT, maturity: MATURITY } });
+    const badge = screen.getByTestId('insight-maturity-badge');
+
+    expect(badge.getAttribute('data-phase')).toBe('provisional');
+    expect(badge.textContent).toContain('maturity.badge.provisional');
   });
 
   it('renders disclaimer link', () => {

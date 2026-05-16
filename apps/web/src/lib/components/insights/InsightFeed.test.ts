@@ -12,7 +12,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import InsightFeed from './InsightFeed.svelte';
-import type { InsightResponse } from '$lib/api/insights';
+import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
 vi.mock('svelte-i18n', () => ({
   _: {
@@ -47,6 +47,16 @@ function makeInsight(overrides: Partial<InsightResponse> = {}): InsightResponse 
   };
 }
 
+const maturity: InsightMaturity = {
+  phase: 'early_patterns',
+  phase_index: 2,
+  current_entries: 9,
+  next_phase_at: 14,
+  next_phase_label: 'Provisional Insights',
+  entries_until_next: 5,
+  user_message_key: 'maturity.early_patterns.description',
+};
+
 describe('InsightFeed', () => {
   // ── Skeleton ─────────────────────────────────────────────────────
   it('renders skeleton when loading=true', () => {
@@ -69,6 +79,13 @@ describe('InsightFeed', () => {
     render(InsightFeed, { props: { insights: [] } });
     const cta = screen.getByRole('link');
     expect(cta.getAttribute('href')).toBe('/');
+  });
+
+  it('uses phase-aware empty copy when no insights exist yet', () => {
+    render(InsightFeed, { props: { insights: [], maturity } });
+
+    expect(screen.getByText('insights.feed.empty_phase.early_patterns.title')).toBeTruthy();
+    expect(screen.getByText('insights.feed.empty_phase.early_patterns.body')).toBeTruthy();
   });
 
   // ── Error banner ──────────────────────────────────────────────────
@@ -94,7 +111,7 @@ describe('InsightFeed', () => {
     const low = makeInsight({ id: 'low', confidence: 0.3, effect_size: 0.2 }); // score 0.06
     const high = makeInsight({ id: 'high', confidence: 0.9, effect_size: 0.8 }); // score 0.72
     const mid = makeInsight({ id: 'mid', confidence: 0.5, effect_size: 0.5 }); // score 0.25
-    render(InsightFeed, { props: { insights: [low, high, mid] } });
+    render(InsightFeed, { props: { insights: [low, high, mid], maturity } });
     const list = screen.getByTestId('insight-feed-list');
     const items = list.querySelectorAll('li');
     // order: high (0.72), mid (0.25), low (0.06)

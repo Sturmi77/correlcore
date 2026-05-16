@@ -123,7 +123,7 @@ You've tracked 7 days. Trend charts and early signals are now available.
 
 - Shown maximum once per phase transition.
 - Dismissed on explicit user action (tap/click), not auto-dismissed.
-- Stored in user preferences via API (`milestone_notifications_seen[]`).
+- Stored in user preferences via API (`reached_milestone_keys[]`).
 
 ---
 

@@ -449,7 +449,7 @@
       "label": "Daten sammeln",
       "range": "1-6 Eintraege",
       "description": "Wir bauen deine Datengrundlage auf. Noch keine Muster.",
-      "hint": "Streaks, Rohzahlen und der Eintragsverlauf stehen im Vordergrund."
+      "hint": "Rohzahlen, Eintragsverlauf und einfache Uebersichten stehen im Vordergrund."
     },
     "early_patterns": {
       "label": "Erste Muster",
@@ -488,6 +488,33 @@
       "collecting_to_early_patterns": "Erste Muster sind sichtbar.",
       "early_patterns_to_provisional": "Vorlaeufige Erkenntnisse sind verfuegbar.",
       "provisional_to_robust": "Robuste Erkenntnisse sind verfuegbar."
+    },
+    "milestone_card": {
+      "eyebrow": "Neue Phase: {label}",
+      "cta": "Erkenntnisse ansehen",
+      "dismiss": "Hinweis ausblenden",
+      "early_patterns": {
+        "title": "Erste Muster sind sichtbar.",
+        "body": "Du hast {n} Eintraege erfasst. Trends und Haeufigkeiten werden nun als vorsichtige Hinweise eingeordnet."
+      },
+      "provisional": {
+        "title": "Vorlaeufige Erkenntnisse sind verfuegbar.",
+        "body": "Mit {n} Eintraegen koennen erste Zusammenhaenge erscheinen. Sie bleiben ausdruecklich vorlaeufig."
+      },
+      "robust": {
+        "title": "Robustere Erkenntnisse sind verfuegbar.",
+        "body": "Mit {n} Eintraegen ist die vollstaendige Insight-Engine aktiv. Aussagen bleiben beschreibend und nicht medizinisch."
+      }
+    },
+    "badge": {
+      "collecting": "Daten sammeln · {n} Eintraege",
+      "collecting_tooltip": "Noch keine Erkenntniskarten. Wir bauen zuerst deine Grundlage auf.",
+      "early_patterns": "Erster Hinweis · {n} Eintraege",
+      "early_patterns_tooltip": "Basierend auf begrenzten Daten. Muster koennen sich mit weiteren Eintraegen aendern.",
+      "provisional": "Vorlaeufig · {n} Eintraege",
+      "provisional_tooltip": "Ein frueher Zusammenhang ist sichtbar. Mehr Daten helfen bei der Einordnung.",
+      "robust": "Stabil · {n} Eintraege",
+      "robust_tooltip": "Stabileres Muster auf Basis ausreichender Tracking-Historie."
     }
   },
   "insights": {
@@ -511,7 +538,25 @@
       "tab_sleep": "Schlaf",
       "empty_title": "Keine Erkenntnisse in dieser Ansicht",
       "empty_body": "Sobald genuegend passende Daten vorhanden sind, erscheinen hier beschreibende Muster.",
-      "empty_cta": "Zur Startseite"
+      "empty_cta": "Zur Startseite",
+      "empty_phase": {
+        "collecting": {
+          "title": "Wir sammeln noch deine Grundlage.",
+          "body": "In dieser Phase zeigt CorrelCore noch keine Erkenntniskarten. Eintraege und einfache Uebersichten stehen im Vordergrund."
+        },
+        "early_patterns": {
+          "title": "Erste Muster entstehen.",
+          "body": "Trend- und Haeufigkeitsdaten werden aussagekraeftiger. Erkenntniskarten bleiben vorsichtig, bis mehr Daten vorliegen."
+        },
+        "provisional": {
+          "title": "Vorlaeufige Erkenntnisse brauchen passende Daten.",
+          "body": "Wenn genuegend gemeinsame Datenpunkte fuer ein Thema vorliegen, erscheinen hier vorsichtig formulierte Zusammenhaenge."
+        },
+        "robust": {
+          "title": "Keine passenden Erkenntnisse in dieser Ansicht.",
+          "body": "Die Insight-Engine ist aktiv. Aendere den Filter oder erfasse weiter, damit neue Muster sichtbar werden."
+        }
+      }
     },
     "quality_meter": {
       "heading": "Erkenntnisqualitaet",
