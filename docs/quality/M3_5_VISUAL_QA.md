@@ -12,14 +12,14 @@ In this Cursor environment, rendered browser QA could not be executed because th
 
 ## Completeness Snapshot
 
-| Area                            | Status   | Notes                                                                                            |
-| ------------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
-| Sprint implementation           | Complete | Sprints 0-8 are on `main`; Sprint 9 closeout docs are on `main`.                                 |
-| Static documentation            | Complete | `FRONTEND.md`, `M3_5_SPRINT_STATUS.md`, `CHANGELOG.md`, and this QA handoff are updated.         |
-| Rendered viewport/theme QA      | Pending  | Must be run outside the NAS/UNC agent environment.                                               |
-| GitHub issue closure            | Prepared | #170, #171, #173, #182, #184 can close as implemented; #172 should move to M7; #183/#185 need scope notes; #186 stays open until final rendered QA/Web CI. |
-| CI verification                 | Pending  | `CI — Web` failed on `8274144` due two lint/typecheck findings; this closeout pass fixes them locally and needs a non-`[skip ci]` rerun.                  |
-| Release image verification      | Complete | `Release — Container Images` succeeded for `8274144` in run `25965407416`.                                                                     |
+| Area                       | Status   | Notes                                                                                                                                                      |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint implementation      | Complete | Sprints 0-8 are on `main`; Sprint 9 closeout docs are on `main`.                                                                                           |
+| Static documentation       | Complete | `FRONTEND.md`, `M3_5_SPRINT_STATUS.md`, `CHANGELOG.md`, and this QA handoff are updated.                                                                   |
+| Rendered viewport/theme QA | Pending  | Must be run outside the NAS/UNC agent environment.                                                                                                         |
+| GitHub issue closure       | Prepared | #170, #171, #173, #182, #184 can close as implemented; #172 should move to M7; #183/#185 need scope notes; #186 stays open until final rendered QA/Web CI. |
+| CI verification            | Pending  | `CI — Web` failed on `8274144` due two lint/typecheck findings; this closeout pass fixes them locally and needs a non-`[skip ci]` rerun.                   |
+| Release image verification | Complete | `Release — Container Images` succeeded for `8274144` in run `25965407416`.                                                                                 |
 
 ## Static QA Evidence
 

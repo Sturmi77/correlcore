@@ -117,32 +117,32 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 
 ## M3.5 GitHub Closure Matrix
 
-| Issue | Closure decision | Evidence / action |
-| --- | --- | --- |
-| #170 | Close as implemented | Entry form sections and Home composition were delivered in Sprints 2-4; rendered QA still belongs to #186. |
-| #171 | Close as implemented | Work-context hint and weekend auto-fill were delivered in Sprint 2. |
-| #172 | Rescope to M7 | Sprint 3 chose Variant B: no manual sleep slider in M3.5; Health Connect remains the proper milestone. |
-| #173 | Close as implemented | Sprint 8 delivered inactive tag lifecycle, hidden-tag filtering, reactivation, and inactive insight marking. |
-| #182 | Close as implemented | Stress display inversion and metric semantics are covered by Sprint 2 and Trends work. |
-| #183 | Close as implemented with scope note | Force visualizations exist in Settings developer controls with centralized mock data; placement differs from the original DEV-only wording. |
-| #184 | Close as implemented | Sprint 5 delivered the readiness/progress meter; M3.6 now supersedes the broader maturity journey. |
-| #185 | Close as implemented with scope note | DE/EN switching is implemented in Settings and persisted locally; not duplicated in header navigation. |
-| #186 | Keep open until final release gate | Umbrella tracker should close only after Web CI rerun and rendered 375px / 768px / 1280px light/dark QA are complete. |
+| Issue | Closure decision                     | Evidence / action                                                                                                                           |
+| ----- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| #170  | Close as implemented                 | Entry form sections and Home composition were delivered in Sprints 2-4; rendered QA still belongs to #186.                                  |
+| #171  | Close as implemented                 | Work-context hint and weekend auto-fill were delivered in Sprint 2.                                                                         |
+| #172  | Rescope to M7                        | Sprint 3 chose Variant B: no manual sleep slider in M3.5; Health Connect remains the proper milestone.                                      |
+| #173  | Close as implemented                 | Sprint 8 delivered inactive tag lifecycle, hidden-tag filtering, reactivation, and inactive insight marking.                                |
+| #182  | Close as implemented                 | Stress display inversion and metric semantics are covered by Sprint 2 and Trends work.                                                      |
+| #183  | Close as implemented with scope note | Force visualizations exist in Settings developer controls with centralized mock data; placement differs from the original DEV-only wording. |
+| #184  | Close as implemented                 | Sprint 5 delivered the readiness/progress meter; M3.6 now supersedes the broader maturity journey.                                          |
+| #185  | Close as implemented with scope note | DE/EN switching is implemented in Settings and persisted locally; not duplicated in header navigation.                                      |
+| #186  | Keep open until final release gate   | Umbrella tracker should close only after Web CI rerun and rendered 375px / 768px / 1280px light/dark QA are complete.                       |
 
 ## M3.5 Definition of Done Audit
 
-| Criterion                                                        | Status                      | Evidence / next action                                                                                                                                              |
-| ---------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| All sprint PRs / commits merged to `main`                        | ✅ Met                      | Sprints 0-8 are done; Sprint 9 closeout commit is `fb65168` on `main`.                                                                                              |
-| All M3.5 issues closed or deliberately rescoped                  | ⚠️ Closure prepared        | Public API confirms #170, #171, #172, #173, #182, #183, #184, #185, #186 remain open. Closure/rescope decisions are documented above; direct GitHub updates require an authenticated session. |
-| `docs/FRONTEND.md` matches the implemented UI                    | ✅ Met for documented scope | Updated in Sprint 9 for screen model, trends tabs, settings sections, forced visualizations, and tag lifecycle.                                                     |
-| `docs/M3_5_SPRINT_STATUS.md` documents final state               | ✅ Met                      | This audit records implementation status and remaining release blockers.                                                                                            |
-| `CHANGELOG.md` contains M3.5                                     | ✅ Met                      | Sprints 1-9 are listed under Unreleased.                                                                                                                            |
+| Criterion                                                        | Status                      | Evidence / next action                                                                                                                                                                              |
+| ---------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| All sprint PRs / commits merged to `main`                        | ✅ Met                      | Sprints 0-8 are done; Sprint 9 closeout commit is `fb65168` on `main`.                                                                                                                              |
+| All M3.5 issues closed or deliberately rescoped                  | ⚠️ Closure prepared         | Public API confirms #170, #171, #172, #173, #182, #183, #184, #185, #186 remain open. Closure/rescope decisions are documented above; direct GitHub updates require an authenticated session.       |
+| `docs/FRONTEND.md` matches the implemented UI                    | ✅ Met for documented scope | Updated in Sprint 9 for screen model, trends tabs, settings sections, forced visualizations, and tag lifecycle.                                                                                     |
+| `docs/M3_5_SPRINT_STATUS.md` documents final state               | ✅ Met                      | This audit records implementation status and remaining release blockers.                                                                                                                            |
+| `CHANGELOG.md` contains M3.5                                     | ✅ Met                      | Sprints 1-9 are listed under Unreleased.                                                                                                                                                            |
 | Local and GitHub CI gates green                                  | ⚠️ Fix prepared             | Public API shows `CI — Web` failed on `8274144` due two lint/typecheck findings; both are fixed locally. Backend pytest and local web pnpm/vitest remain blocked in this NAS/UNC agent environment. |
-| Web and Mobile QA documented                                     | ⚠️ Documented, not executed | `docs/quality/M3_5_VISUAL_QA.md` records matrix and blocker; run rendered QA from local clone or CI runner.                                                         |
-| No known 375px horizontal scroll / overlap / touch target issues | ⚠️ Needs rendered QA        | Static review did not identify a known issue, but viewport proof is still pending.                                                                                  |
-| No No-Gamification violations in visible UI copy                 | ✅ Met by static evidence   | Locale regression test exists: `apps/web/src/lib/i18n/noGamificationCopy.test.ts`; visible copy uses "Tracking consistency".                                        |
-| GitHub built new API and Web images after merge                  | ✅ Met                      | Public API verifies `Release — Container Images` succeeded for `8274144` in run `25965407416`.                                                                      |
+| Web and Mobile QA documented                                     | ⚠️ Documented, not executed | `docs/quality/M3_5_VISUAL_QA.md` records matrix and blocker; run rendered QA from local clone or CI runner.                                                                                         |
+| No known 375px horizontal scroll / overlap / touch target issues | ⚠️ Needs rendered QA        | Static review did not identify a known issue, but viewport proof is still pending.                                                                                                                  |
+| No No-Gamification violations in visible UI copy                 | ✅ Met by static evidence   | Locale regression test exists: `apps/web/src/lib/i18n/noGamificationCopy.test.ts`; visible copy uses "Tracking consistency".                                                                        |
+| GitHub built new API and Web images after merge                  | ✅ Met                      | Public API verifies `Release — Container Images` succeeded for `8274144` in run `25965407416`.                                                                                                      |
 
 ## Next up
 
