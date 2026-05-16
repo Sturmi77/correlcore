@@ -7,7 +7,7 @@ vi.mock('./client', () => ({
 }));
 
 import { api } from './client';
-import { fetchLatestInsight, listInsights, listLatestInsights } from './insights';
+import { fetchLatestInsight, listInsights, listLatestInsights, type InsightMaturity } from './insights';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -34,9 +34,19 @@ const insight = {
   updated_at: '2026-05-12T03:00:00Z',
 };
 
+const insightMaturity: InsightMaturity = {
+  phase: 'provisional',
+  phase_index: 3,
+  current_entries: 18,
+  next_phase_at: 30,
+  next_phase_label: 'Robust Insights',
+  entries_until_next: 12,
+  user_message_key: 'maturity.provisional.description',
+};
+
 describe('insights API client', () => {
   it('lists insights with optional limit', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ insights: [] });
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
 
     await listInsights({ limit: 20 });
 
@@ -44,7 +54,7 @@ describe('insights API client', () => {
   });
 
   it('lists latest insights', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ insights: [] });
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
 
     await listLatestInsights({ limit: 3 });
 
@@ -52,14 +62,14 @@ describe('insights API client', () => {
   });
 
   it('returns the first latest insight for the home preview', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ insights: [insight] });
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [insight] });
 
     await expect(fetchLatestInsight()).resolves.toEqual(insight);
     expect(api.get).toHaveBeenCalledWith('/insights/latest?limit=1');
   });
 
   it('returns null when no latest insight exists yet', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ insights: [] });
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
 
     await expect(fetchLatestInsight()).resolves.toBeNull();
   });

@@ -15,6 +15,7 @@ from app.services.insight_service import (
     DEFAULT_LATEST_INSIGHT_LIMIT,
     MAX_INSIGHT_LIST_LIMIT,
     MAX_LATEST_INSIGHT_LIMIT,
+    get_insight_maturity,
     list_insights,
     list_latest_insights,
 )
@@ -35,7 +36,9 @@ async def list_insights_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> InsightListResponse:
     insights = await list_insights(db, user_id=user.id, limit=limit)
+    insight_maturity = await get_insight_maturity(db, user_id=user.id)
     return InsightListResponse(
+        insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights]
     )
 
@@ -53,6 +56,8 @@ async def list_latest_insights_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> InsightListResponse:
     insights = await list_latest_insights(db, user_id=user.id, limit=limit)
+    insight_maturity = await get_insight_maturity(db, user_id=user.id)
     return InsightListResponse(
+        insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights]
     )

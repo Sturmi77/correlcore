@@ -5,11 +5,31 @@ from __future__ import annotations
 import uuid
 from datetime import date as date_type
 from datetime import datetime
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.insight import InsightTier, InsightType
+
+
+class InsightMaturityPhase(StrEnum):
+    COLLECTING = "collecting"
+    EARLY_PATTERNS = "early_patterns"
+    PROVISIONAL = "provisional"
+    ROBUST = "robust"
+
+
+class InsightMaturity(BaseModel):
+    """Shared API contract for the user's current insight journey phase."""
+
+    phase: InsightMaturityPhase
+    phase_index: int = Field(ge=1, le=4)
+    current_entries: int = Field(ge=0)
+    next_phase_at: int | None = Field(default=None, ge=1)
+    next_phase_label: str | None = None
+    entries_until_next: int | None = Field(default=None, ge=0)
+    user_message_key: str
 
 
 class InsightResponse(BaseModel):
@@ -44,4 +64,5 @@ class InsightResponse(BaseModel):
 class InsightListResponse(BaseModel):
     """Envelope for future insight list endpoints."""
 
+    insight_maturity: InsightMaturity
     insights: list[InsightResponse] = Field(default_factory=list)

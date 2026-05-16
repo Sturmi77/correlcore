@@ -751,6 +751,15 @@ POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 
 ```json
 {
+  "insight_maturity": {
+    "phase": "provisional",
+    "phase_index": 3,
+    "current_entries": 18,
+    "next_phase_at": 30,
+    "next_phase_label": "Robust Insights",
+    "entries_until_next": 12,
+    "user_message_key": "maturity.provisional.description"
+  },
   "insights": [
     {
       "id": "uuid",
@@ -782,6 +791,12 @@ POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 
 `GET /api/v1/insights/latest?limit=10` liefert die neuesten Insights pro
 analytischem Subject (`insight_type`, `metric`, optionaler Tag/Metric/Weekday).
+Beide Insight-Listen enthalten dasselbe serverseitig berechnete
+`insight_maturity`-Objekt. Die Phase wird aus den unterschiedlichen
+Tracking-Tagen des Users abgeleitet: `collecting` fuer 0-6 Eintraege,
+`early_patterns` fuer 7-13, `provisional` fuer 14-29 und `robust` ab 30.
+Frontend-Clients duerfen diese Phase nicht selbst aus der Entry-Anzahl
+rekonstruieren.
 Der manuelle Trigger bleibt geplant und ist in M3 noch nicht oeffentlich
 implementiert.
 

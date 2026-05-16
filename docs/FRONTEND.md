@@ -1,6 +1,6 @@
 # CorrelCore — Frontend Principles
 
-Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-16 (M3.5 closeout — screen implementation notes, visual QA handoff, tag lifecycle, developer visualisations).
+Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-16 (M3.6 Sprint 0 — insight maturity API contract and shared web types).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
@@ -286,6 +286,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 - Filter tabs group insights by metric/topic; they do not change analytics tiers
 - Existing insights for inactive tags remain visible and receive a neutral "Tag inactive" marker
 - Each card has progressive disclosure: statement/context first, expanded details on demand
+- M3.6 insight maturity comes from the API-level `insight_maturity` object; frontend components must not recompute the phase from entry count.
 
 ---
 
@@ -513,6 +514,7 @@ apps/web/src/
 // stores/insights.ts
 interface InsightStore {
   insights: Insight[]; // All insights from worker
+  insightMaturity: InsightMaturity | null; // Backend-owned phase contract
   latest: Insight | null; // For home screen (Sprint 6 implemented)
   loading: boolean;
   error: string | null;

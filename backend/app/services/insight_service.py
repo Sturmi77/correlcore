@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.entry import Entry
 from app.models.insight import Insight
+from app.schemas.insight import InsightMaturity, InsightMaturityPhase
 
 DEFAULT_INSIGHT_LIST_LIMIT = 50
 MAX_INSIGHT_LIST_LIMIT = 200
@@ -19,6 +21,61 @@ def _clamp_limit(limit: int, *, default: int, maximum: int) -> int:
     if limit <= 0:
         return default
     return min(limit, maximum)
+
+
+def calculate_insight_maturity(entry_count: int) -> InsightMaturity:
+    """Map tracked entry count to the ADR-0021 insight maturity phase."""
+
+    count = max(entry_count, 0)
+    if count >= 30:
+        return InsightMaturity(
+            phase=InsightMaturityPhase.ROBUST,
+            phase_index=4,
+            current_entries=count,
+            next_phase_at=None,
+            next_phase_label=None,
+            entries_until_next=None,
+            user_message_key="maturity.robust.description",
+        )
+    if count >= 14:
+        return InsightMaturity(
+            phase=InsightMaturityPhase.PROVISIONAL,
+            phase_index=3,
+            current_entries=count,
+            next_phase_at=30,
+            next_phase_label="Robust Insights",
+            entries_until_next=30 - count,
+            user_message_key="maturity.provisional.description",
+        )
+    if count >= 7:
+        return InsightMaturity(
+            phase=InsightMaturityPhase.EARLY_PATTERNS,
+            phase_index=2,
+            current_entries=count,
+            next_phase_at=14,
+            next_phase_label="Provisional Insights",
+            entries_until_next=14 - count,
+            user_message_key="maturity.early_patterns.description",
+        )
+    return InsightMaturity(
+        phase=InsightMaturityPhase.COLLECTING,
+        phase_index=1,
+        current_entries=count,
+        next_phase_at=7,
+        next_phase_label="First Patterns",
+        entries_until_next=7 - count,
+        user_message_key="maturity.collecting.description",
+    )
+
+
+async def get_insight_maturity(db: AsyncSession, *, user_id: uuid.UUID) -> InsightMaturity:
+    """Return the current insight maturity based on tracked entry days."""
+
+    result = await db.execute(
+        select(func.count(func.distinct(Entry.entry_date))).where(Entry.user_id == user_id)
+    )
+    entry_count = int(result.scalar_one() or 0)
+    return calculate_insight_maturity(entry_count)
 
 
 async def list_insights(

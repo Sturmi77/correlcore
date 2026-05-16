@@ -8,7 +8,7 @@ Tracking document for [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md). M3.6 impleme
 
 | Sprint | Title                                   | Status | PR / commit (main) | Issues     |
 | ------ | --------------------------------------- | ------ | ------------------ | ---------- |
-| 0      | API Contract and Shared Types           | Open   | -                  | #191       |
+| 0      | API Contract and Shared Types           | Implemented, CI pending | pending CI         | #191       |
 | 1      | Journey Banner and Explainer            | Open   | -                  | #188       |
 | 2      | Insight Cards and Empty States          | Open   | -                  | #189, #190 |
 | 3      | Milestone Notifications and Preferences | Open   | -                  | #192       |
@@ -30,11 +30,12 @@ Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN`
 
 ## Sprint 0 - API Contract and Shared Types
 
-- Backend maturity phase calculation
-- `insight_maturity` object on all insight endpoints
-- OpenAPI / API docs
-- Frontend API type
-- Phase boundary tests
+- [x] Backend maturity phase calculation from distinct tracked entry days
+- [x] `insight_maturity` object on `/api/v1/insights` and `/api/v1/insights/latest`
+- [x] API docs updated in `docs/API.md`
+- [x] Frontend API type and insight store contract updated
+- [x] Phase boundary tests for 1, 6, 7, 13, 14, 29, 30+
+- [ ] CI-confirmed backend/web gates after commit
 
 ## Sprint 1 - Journey Banner and Explainer
 
@@ -69,4 +70,4 @@ Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN`
 
 ## Next Up
 
-Create or select the GitHub milestone **M3.6 — Insight Maturity Phases**, assign #188-#192, then start Sprint 0 with the API contract extension (#191).
+Run/confirm the Sprint 0 backend and web gates for the API contract extension. GitHub milestone assignment for #188-#192 remains blocked in this agent environment by missing `gh`/token tooling.

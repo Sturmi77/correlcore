@@ -1,7 +1,17 @@
-import type { InsightResponse } from '$lib/api/insights';
+import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 import { localIsoDate } from '$lib/utils/streak';
 
 const today = localIsoDate(new Date());
+
+export const mockInsightMaturity: InsightMaturity = {
+  phase: 'robust',
+  phase_index: 4,
+  current_entries: 42,
+  next_phase_at: null,
+  next_phase_label: null,
+  entries_until_next: null,
+  user_message_key: 'maturity.robust.description',
+};
 
 export const mockInsights: InsightResponse[] = [
   {

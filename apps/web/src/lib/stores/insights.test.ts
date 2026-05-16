@@ -25,6 +25,7 @@ vi.mock('$lib/api/preferences', () => ({
 }));
 
 import { listInsights } from '$lib/api/insights';
+import type { InsightResponse } from '$lib/api/insights';
 import { updateUserPreferences } from '$lib/api/preferences';
 import {
   insightStore,
@@ -64,6 +65,21 @@ const makeInsight = (
   ...overrides,
 });
 
+const insightMaturity = {
+  phase: 'provisional' as const,
+  phase_index: 3 as const,
+  current_entries: 18,
+  next_phase_at: 30,
+  next_phase_label: 'Robust Insights',
+  entries_until_next: 12,
+  user_message_key: 'maturity.provisional.description',
+};
+
+const insightList = (insights: InsightResponse[]) => ({
+  insight_maturity: insightMaturity,
+  insights,
+});
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -76,6 +92,7 @@ describe('insightStore — initial state', () => {
     const state = get(insightStore);
     expect(state.loading).toBe(false);
     expect(state.insights).toEqual([]);
+    expect(state.insightMaturity).toBeNull();
     expect(state.latest).toBeNull();
     expect(state.error).toBeNull();
     expect(state.dismissedIds).toEqual([]);
@@ -85,7 +102,7 @@ describe('insightStore — initial state', () => {
 describe('loadInsights()', () => {
   it('populates insights and derives latest on success', async () => {
     const insight = makeInsight();
-    vi.mocked(listInsights).mockResolvedValue({ insights: [insight] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([insight]));
 
     await loadInsights();
 
@@ -93,6 +110,7 @@ describe('loadInsights()', () => {
     expect(state.loading).toBe(false);
     expect(state.error).toBeNull();
     expect(state.insights).toHaveLength(1);
+    expect(state.insightMaturity?.phase).toBe('provisional');
     expect(state.latest?.id).toBe('insight-1');
   });
 
@@ -113,7 +131,7 @@ describe('loadInsights()', () => {
     const weak = makeInsight({ id: 'weak', confidence: 0.3, effect_size: 0.1 });
     const strong = makeInsight({ id: 'strong', confidence: 0.9, effect_size: 0.7 });
     const medium = makeInsight({ id: 'medium', confidence: 0.5, effect_size: 0.5 });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [weak, medium, strong] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([weak, medium, strong]));
 
     await loadInsights();
 
@@ -124,7 +142,7 @@ describe('loadInsights()', () => {
 
   it('latest is null when all insights are dismissed', async () => {
     const insight = makeInsight({ id: 'solo' });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [insight] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([insight]));
     await loadInsights();
 
     await dismissInsight('solo');
@@ -138,7 +156,7 @@ describe('dismissInsight()', () => {
   it('adds id to dismissedIds and recomputes latest', async () => {
     const a = makeInsight({ id: 'a', confidence: 0.9, effect_size: 0.7 });
     const b = makeInsight({ id: 'b', confidence: 0.6, effect_size: 0.5 });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [a, b] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([a, b]));
     await loadInsights();
 
     await dismissInsight('a');
@@ -151,7 +169,7 @@ describe('dismissInsight()', () => {
 
   it('is idempotent — double dismiss does not duplicate id', async () => {
     const insight = makeInsight({ id: 'dup' });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [insight] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([insight]));
     await loadInsights();
 
     await dismissInsight('dup');
@@ -163,7 +181,7 @@ describe('dismissInsight()', () => {
 
   it('fires PATCH /user/preferences best-effort on dismiss', async () => {
     const insight = makeInsight({ id: 'pref-test' });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [insight] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([insight]));
     await loadInsights();
 
     await dismissInsight('pref-test');
@@ -175,7 +193,7 @@ describe('dismissInsight()', () => {
 
   it('does NOT throw when preferences PATCH fails', async () => {
     const insight = makeInsight({ id: 'prefs-fail' });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [insight] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([insight]));
     vi.mocked(updateUserPreferences).mockRejectedValue(new Error('Prefs error'));
     await loadInsights();
 
@@ -189,7 +207,7 @@ describe('rankedInsights derived store', () => {
     const low = makeInsight({ id: 'low', confidence: 0.2, effect_size: 0.1 });
     const high = makeInsight({ id: 'high', confidence: 0.9, effect_size: 0.8 });
     const mid = makeInsight({ id: 'mid', confidence: 0.5, effect_size: 0.4 });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [low, mid, high] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([low, mid, high]));
     await loadInsights();
 
     const ranked = get(rankedInsights);
@@ -199,7 +217,7 @@ describe('rankedInsights derived store', () => {
   it('excludes dismissed ids from ranked list', async () => {
     const a = makeInsight({ id: 'a', confidence: 0.9, effect_size: 0.8 });
     const b = makeInsight({ id: 'b', confidence: 0.5, effect_size: 0.4 });
-    vi.mocked(listInsights).mockResolvedValue({ insights: [a, b] });
+    vi.mocked(listInsights).mockResolvedValue(insightList([a, b]));
     await loadInsights();
 
     await dismissInsight('a');

@@ -11,17 +11,19 @@
  *   - `insights`     — all insights from GET /api/v1/insights
  *   - `latest`       — highest confidence × effect_size non-dismissed insight
  *   - `error`        — human-readable error string; null on success; never re-thrown
+ *   - `insightMaturity` — backend-owned maturity phase for insight UI
  *   - `dismissedIds` — insight IDs the user has dismissed (persisted to prefs)
  */
 
 import { writable, derived, get } from 'svelte/store';
-import { listInsights, type InsightResponse } from '$lib/api/insights';
+import { listInsights, type InsightMaturity, type InsightResponse } from '$lib/api/insights';
 import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
 import { devForceVisualizations } from '$lib/stores/devMode';
-import { mockInsights } from '$lib/dev/mockInsights';
+import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
 
 export interface InsightStoreState {
   insights: InsightResponse[];
+  insightMaturity: InsightMaturity | null;
   latest: InsightResponse | null;
   loading: boolean;
   error: string | null;
@@ -32,6 +34,7 @@ export interface InsightStoreState {
 
 const _state = writable<InsightStoreState>({
   insights: [],
+  insightMaturity: null,
   latest: null,
   loading: false,
   error: null,
@@ -100,14 +103,28 @@ export async function loadInsights(): Promise<void> {
   try {
     if (get(devForceVisualizations)) {
       const latest = pickLatest(mockInsights, dismissedIds);
-      _state.set({ insights: mockInsights, latest, loading: false, error: null, dismissedIds });
+      _state.set({
+        insights: mockInsights,
+        insightMaturity: mockInsightMaturity,
+        latest,
+        loading: false,
+        error: null,
+        dismissedIds,
+      });
       return;
     }
 
     const response = await listInsights();
     const insights = response.insights;
     const latest = pickLatest(insights, dismissedIds);
-    _state.set({ insights, latest, loading: false, error: null, dismissedIds });
+    _state.set({
+      insights,
+      insightMaturity: response.insight_maturity,
+      latest,
+      loading: false,
+      error: null,
+      dismissedIds,
+    });
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Failed to load insights';
     // Update only the error + loading fields — keep any previously loaded insights
@@ -142,6 +159,7 @@ export async function dismissInsight(id: string): Promise<void> {
 export function resetInsightStore(): void {
   _state.set({
     insights: [],
+    insightMaturity: null,
     latest: null,
     loading: false,
     error: null,

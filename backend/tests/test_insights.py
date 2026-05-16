@@ -11,7 +11,12 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.user import User
-from app.services.insight_service import list_insights, list_latest_insights
+from app.services.insight_service import (
+    calculate_insight_maturity,
+    get_insight_maturity,
+    list_insights,
+    list_latest_insights,
+)
 from tests.conftest import make_user
 
 
@@ -20,6 +25,12 @@ def _scalars_result(values: list[object]) -> MagicMock:
     scalars.all.return_value = values
     result = MagicMock()
     result.scalars.return_value = scalars
+    return result
+
+
+def _scalar_result(value: object) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one.return_value = value
     return result
 
 
@@ -56,6 +67,50 @@ def _make_insight(
     insight.created_at = now
     insight.updated_at = now
     return insight
+
+
+@pytest.mark.parametrize(
+    ("entry_count", "phase", "phase_index", "next_phase_at", "entries_until_next"),
+    [
+        (1, "collecting", 1, 7, 6),
+        (6, "collecting", 1, 7, 1),
+        (7, "early_patterns", 2, 14, 7),
+        (13, "early_patterns", 2, 14, 1),
+        (14, "provisional", 3, 30, 16),
+        (29, "provisional", 3, 30, 1),
+        (30, "robust", 4, None, None),
+        (45, "robust", 4, None, None),
+    ],
+)
+def test_calculate_insight_maturity_boundaries(
+    entry_count: int,
+    phase: str,
+    phase_index: int,
+    next_phase_at: int | None,
+    entries_until_next: int | None,
+) -> None:
+    maturity = calculate_insight_maturity(entry_count)
+
+    assert maturity.phase == phase
+    assert maturity.phase_index == phase_index
+    assert maturity.current_entries == entry_count
+    assert maturity.next_phase_at == next_phase_at
+    assert maturity.entries_until_next == entries_until_next
+    assert maturity.user_message_key == f"maturity.{phase}.description"
+
+
+@pytest.mark.asyncio
+async def test_get_insight_maturity_counts_distinct_entry_days() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(14))
+
+    maturity = await get_insight_maturity(db, user_id=user.id)
+
+    assert maturity.phase == "provisional"
+    stmt = db.execute.await_args.args[0]
+    assert "count(distinct(entries.entry_date))" in str(stmt).lower()
+    assert "entries.user_id = :user_id_1" in str(stmt.whereclause)
 
 
 @pytest.mark.asyncio
@@ -125,6 +180,10 @@ async def test_insights_endpoint_returns_statement_field(
             "app.api.v1.endpoints.insights.list_insights",
             new_callable=AsyncMock,
             return_value=[insight],
+        ), patch(
+            "app.api.v1.endpoints.insights.get_insight_maturity",
+            new_callable=AsyncMock,
+            return_value=calculate_insight_maturity(18),
         ):
             response = await async_client.get(
                 "/api/v1/insights?limit=5",
@@ -141,6 +200,10 @@ async def test_insights_endpoint_returns_statement_field(
     assert "statement_enc" not in item
     assert item["tier"] == "developing"
     assert item["flags"]["causal_claim"] is False
+    maturity = body["insight_maturity"]
+    assert maturity["phase"] == "provisional"
+    assert maturity["current_entries"] == 18
+    assert maturity["next_phase_at"] == 30
 
 
 @pytest.mark.asyncio
@@ -165,7 +228,11 @@ async def test_latest_insights_endpoint_uses_latest_service(
             "app.api.v1.endpoints.insights.list_latest_insights",
             new_callable=AsyncMock,
             return_value=[row],
-        ) as latest:
+        ) as latest, patch(
+            "app.api.v1.endpoints.insights.get_insight_maturity",
+            new_callable=AsyncMock,
+            return_value=calculate_insight_maturity(30),
+        ):
             response = await async_client.get(
                 "/api/v1/insights/latest?limit=3",
                 cookies={"access_token": "valid.access.token"},
@@ -175,7 +242,9 @@ async def test_latest_insights_endpoint_uses_latest_service(
 
     assert response.status_code == 200
     latest.assert_awaited_once()
-    assert response.json()["insights"][0]["insight_type"] == "weekday_pattern"
+    body = response.json()
+    assert body["insights"][0]["insight_type"] == "weekday_pattern"
+    assert body["insight_maturity"]["phase"] == "robust"
 
 
 @pytest.mark.asyncio

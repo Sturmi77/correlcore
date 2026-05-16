@@ -10,6 +10,17 @@ import { api } from './client';
 
 export type InsightType = 'pointbiserial' | 'spearman' | 'weekday_pattern';
 export type InsightTier = 'none' | 'early' | 'preliminary' | 'developing' | 'robust';
+export type InsightMaturityPhase = 'collecting' | 'early_patterns' | 'provisional' | 'robust';
+
+export interface InsightMaturity {
+  phase: InsightMaturityPhase;
+  phase_index: 1 | 2 | 3 | 4;
+  current_entries: number;
+  next_phase_at: number | null;
+  next_phase_label: string | null;
+  entries_until_next: number | null;
+  user_message_key: string;
+}
 
 export interface InsightResponse {
   id: string;
@@ -33,6 +44,7 @@ export interface InsightResponse {
 }
 
 export interface InsightListResponse {
+  insight_maturity: InsightMaturity;
   insights: InsightResponse[];
 }
 
