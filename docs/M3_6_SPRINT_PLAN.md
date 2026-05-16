@@ -8,12 +8,12 @@ M3.6 introduces the ADR-0021 insight maturity phase model as an implementation m
 
 Implement insight maturity as a first-class product and API concept. The frontend must no longer treat insights as a binary "locked/unlocked at 30 entries" feature. Instead, Home, Insights, and related empty/locked states use the shared four-phase model from ADR-0021:
 
-| Phase | Key | Entry Range | UI Label | Scope |
-| --- | --- | --- | --- | --- |
-| 1 | `collecting` | 1-6 | Collecting Data | Foundation, entry history, simple data completeness |
-| 2 | `early_patterns` | 7-13 | First Patterns | Trends, frequency charts, first descriptive patterns |
-| 3 | `provisional` | 14-29 | Provisional Insights | Emerging relationships with explicit uncertainty |
-| 4 | `robust` | 30+ | Robust Insights | Full insight engine, stronger statements, recommendations |
+| Phase | Key              | Entry Range | UI Label             | Scope                                                     |
+| ----- | ---------------- | ----------- | -------------------- | --------------------------------------------------------- |
+| 1     | `collecting`     | 1-6         | Collecting Data      | Foundation, entry history, simple data completeness       |
+| 2     | `early_patterns` | 7-13        | First Patterns       | Trends, frequency charts, first descriptive patterns      |
+| 3     | `provisional`    | 14-29       | Provisional Insights | Emerging relationships with explicit uncertainty          |
+| 4     | `robust`         | 30+         | Robust Insights      | Full insight engine, stronger statements, recommendations |
 
 ## Sources of Truth
 
@@ -26,13 +26,13 @@ Implement insight maturity as a first-class product and API concept. The fronten
 
 These issues should be assigned to the GitHub milestone **M3.6 — Insight Maturity Phases**.
 
-| Issue | Title | Area | Status |
-| --- | --- | --- | --- |
-| #188 | Insight Maturity: InsightJourneyBanner component | Frontend | Open |
-| #189 | Insight Maturity: InsightMaturityBadge replaces raw confidence score | Frontend | Open |
-| #190 | Insight Maturity: phase-aware empty & locked states on Insights page | Frontend / UX | Open |
-| #191 | Insight Maturity: API contract extension (`insight_maturity` object) | Backend / API | Open |
-| #192 | Insight Maturity: phase milestone notification card | Frontend / UX / Preferences | Open |
+| Issue | Title                                                                | Area                        | Status |
+| ----- | -------------------------------------------------------------------- | --------------------------- | ------ |
+| #188  | Insight Maturity: InsightJourneyBanner component                     | Frontend                    | Open   |
+| #189  | Insight Maturity: InsightMaturityBadge replaces raw confidence score | Frontend                    | Open   |
+| #190  | Insight Maturity: phase-aware empty & locked states on Insights page | Frontend / UX               | Open   |
+| #191  | Insight Maturity: API contract extension (`insight_maturity` object) | Backend / API               | Open   |
+| #192  | Insight Maturity: phase milestone notification card                  | Frontend / UX / Preferences | Open   |
 
 Tooling note: this agent environment currently has no `gh` executable and no `GH_TOKEN` / `GITHUB_TOKEN`, so GitHub milestone creation and issue assignment must be completed manually or from an authenticated environment.
 
