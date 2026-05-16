@@ -583,6 +583,83 @@ correlcore/
 - **Chart-Implementierung:** Custom-SVG-Komponenten in SvelteKit (kein externes Chart-Framework); Token-konform für Dark-Mode; Metrik-Linien mit unterschiedlichen Dash-Patterns + Point-Shapes (Color-Blind-Safe)
 - **No Gamification in UI:** Keine Streak-Zähler, Badges, Punkte, Fortschrittsbalken die Engagement messen. Einzige Ausnahme: Tracking-Consistency-Widget (neutral formuliert, Datensatz-Qualität kommunizierend, kein Druck-Framing)
 
+## Insight Maturity as Core Product Philosophy
+
+CorrelCore does not treat insights as binary output that suddenly appears after a fixed amount of data.  
+Instead, the product communicates an explicit journey from raw input to increasingly trustworthy findings.
+
+This philosophy is fundamental to the product experience:
+
+- Users should always understand what stage of the insight journey they are currently in.
+- The frontend must actively communicate what is already possible, what is still missing, and why.
+- Early signals may be shown before robust correlations are available, but they must be clearly labeled as low-confidence or provisional.
+- Robust insight statements require sufficient longitudinal data and statistical safeguards.
+- The system must never imply causality where only correlation or weak pattern evidence exists.
+
+### Insight Journey Phases
+
+The product should model insight maturity in explicit phases:
+
+1. **Baseline Collection (Day 1-6)**  
+   The system primarily gathers enough entries to establish personal baselines and data completeness.
+
+2. **Early Patterns (Day 7-13)**  
+   The system may show first descriptive patterns such as recurring moods, repeated activities, simple frequency trends, and basic comparisons.
+
+3. **Provisional Relationships (Day 14-29)**  
+   The system may surface weak or emerging relationships between behaviors, contexts, and wellbeing signals, always marked as provisional.
+
+4. **Robust Insights (Day 30+)**  
+   The system may generate stronger insight statements when sample size, consistency, and confidence thresholds are met.
+
+### Frontend Responsibilities
+
+Insight maturity must be a first-class frontend concept, not just backend logic.
+
+The UI should therefore include:
+
+- a visible phase indicator,
+- a short explanation of the current maturity level,
+- a clear description of what users can already learn now,
+- a transparent explanation of why stronger insights need more data,
+- confidence badges and disclaimers attached to every generated insight.
+
+### UX Principle
+
+CorrelCore should reduce uncertainty by making progress visible.  
+Users should never feel that the app is “not doing anything yet”.  
+Instead, they should feel guided through a comprehensible journey from data collection to trustworthy personal insight.
+
+### Language Principle
+
+All insight copy must use careful, non-medical, non-causal wording.
+
+Preferred wording:
+- “first indications”
+- “emerging pattern”
+- “possible relationship”
+- “more data needed for stronger confidence”
+
+Avoid wording such as:
+- “this causes”
+- “this proves”
+- “this is certain”
+- “medical conclusion”
+
+### Architectural Consequence
+
+This philosophy requires a shared maturity model across product layers:
+
+- backend: insight maturity evaluation and confidence scoring,
+- API: explicit `insight_maturity` field,
+- frontend: journey visualization and contextual explanations,
+- content system: phase-specific copy and disclaimers.
+
+Suggested states:
+- `collecting`
+- `early_patterns`
+- `provisional`
+- `robust`
 ---
 
 ## 5. Abhängigkeiten
