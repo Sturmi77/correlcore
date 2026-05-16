@@ -228,7 +228,8 @@
         <h2>{$_('dev.infrastructure')}</h2>
         <div class="dev__status-list">
           <span class:dev__ok={info.health_ready} class:dev__down={!info.health_ready}>
-            {$_('dev.health')} {info.health_ready ? $_('dev.ready') : $_('dev.not_ready')}
+            {$_('dev.health')}
+            {info.health_ready ? $_('dev.ready') : $_('dev.not_ready')}
           </span>
           <span class:dev__ok={info.redis_connected} class:dev__down={!info.redis_connected}>
             Redis {info.redis_connected ? $_('dev.connected') : $_('dev.down')}
