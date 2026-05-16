@@ -30,7 +30,7 @@
       </p>
       <h2>{title}</h2>
       <p>{body}</p>
-      <a class="milestone-card__link" href={href}>
+      <a class="milestone-card__link" {href}>
         {$_('maturity.milestone_card.cta')}
       </a>
     </div>
