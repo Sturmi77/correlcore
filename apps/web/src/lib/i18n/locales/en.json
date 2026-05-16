@@ -394,6 +394,12 @@
       "open": "Manage tags",
       "title": "Manage tags",
       "subtitle": "Personalize default and custom tags without changing the curated set for anyone else.",
+      "active_heading": "Active tags",
+      "active_body": "Available in new entries and future calculations.",
+      "active_empty": "No active tags available.",
+      "inactive_heading": "Inactive tags",
+      "inactive_body": "Kept for historical entries, but hidden from new entries and future calculations.",
+      "inactive_empty": "No inactive tags.",
       "default": "Default",
       "override": "Personal override",
       "custom": "Custom",
@@ -406,6 +412,8 @@
       "saving": "Saving\u2026",
       "hide": "Hide",
       "show": "Show",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
       "reset": "Reset",
       "error_load": "Could not load tags.",
       "error_save": "Could not save this tag.",
@@ -499,7 +507,9 @@
       "chart_aria": "Dual-axis sparkline for {title}",
       "loading_aria": "Loading insight",
       "error_body": "This insight could not be loaded.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "inactive_tag_badge": "Tag inactive",
+      "inactive_tag_hint": "This tag is no longer used for new calculations."
     },
     "disclaimer": {
       "modal_title": "What does this insight mean?",

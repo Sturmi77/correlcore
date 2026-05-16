@@ -16,6 +16,7 @@ from app.services.insight_engine import (
     generate_and_store_insights,
     generate_insight_candidates,
     is_weekday_biased,
+    load_analytics_data,
 )
 from tests.conftest import make_entry, make_tag, make_user
 
@@ -249,6 +250,20 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     assert any(insight.insight_type == InsightType.POINTBISERIAL for insight in stored)
     assert all(insight.user_id == user.id for insight in stored)
     assert all(insight.generated_for_date == date(2026, 5, 1) for insight in stored)
+
+
+@pytest.mark.asyncio
+async def test_load_analytics_data_filters_hidden_tags() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 1)
+    entries = [make_entry(user, entry_date=as_of - timedelta(days=1))]
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[_scalar_result(entries), _row_result([])])
+
+    await load_analytics_data(db, user_id=user.id, as_of=as_of)
+
+    tag_stmt = db.execute.await_args_list[1].args[0]
+    assert "tags.is_hidden IS false" in str(tag_stmt.whereclause)
 
 
 def test_hidden_or_sparse_tag_groups_do_not_create_tag_insights() -> None:

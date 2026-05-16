@@ -22,6 +22,7 @@ from app.schemas.stats import (
     TimeseriesRange,
     TimeseriesResponse,
 )
+from app.services.tag_service import active_tag_predicate
 
 
 def _today() -> date_type:
@@ -125,6 +126,7 @@ async def get_tag_heatmap(
             Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
+            active_tag_predicate(user_id),
         )
         .order_by(Tag.category.asc(), Tag.slug.asc(), Entry.entry_date.asc())
     )

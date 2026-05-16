@@ -22,7 +22,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 - **M3.5 Sprint 6 — Trends tabbed analysis surface.** `/trends` now uses Mood / Activities / Health tabs with unified 7D / 30D / 90D / 1Y controls, a 90-day `quarter` stats range, and read-only Entry History as an overlay instead of a primary route. The Health tab avoids unfinished charts and keeps visible copy neutral around tracking consistency. Refs #182, #186.
 
-- **M3.5 Sprint 7 gestartet — Settings, language and developer UX.** Settings is being reorganized into the canonical TRACKING / ANALYSIS / PRIVACY & DATA / APPEARANCE / DEVELOPER sections, with local `DE | EN` language switching and Dev Mode Force Visualizations backed by centralized mock data. Refs #183, #185, #186.
+- **M3.5 Sprint 7 — Settings, language and developer UX.** Settings is organized into the canonical TRACKING / ANALYSIS / PRIVACY & DATA / APPEARANCE / DEVELOPER sections, with local `DE | EN` language switching and Dev Mode Force Visualizations backed by centralized mock data. Refs #183, #185, #186.
+
+- **M3.5 Sprint 8 — Tag lifecycle and inactive correlations.** Tag settings now split active and inactive tags, hidden tags remain reactivatable via `include_hidden=true`, entry pickers and tag stores keep hidden tags out of new entries, and new stats/insight calculations skip hidden tags without deleting existing insights. Existing tag insights are marked neutrally when their tag is inactive. Refs #173.
 
 - **M3 Abschluss umgesetzt.** Die offenen M3-Themen #151, #152, #154 und #156 sind lokal implementiert und per Abschluss-Gates verifiziert. Backend-Gates: `ruff check`, `ruff format --check`, `mypy app` und 372 Pytest-Tests gruen mit gueltigem Test-Fernet-Key. Web-Gates: Typecheck, Lint, 195 Vitest-Tests und Production-Build gruen. Die finale Veroeffentlichung erfolgt ueber PR nach `main` und anschliessende Verifikation des `release-images.yml`-Workflows fuer neue `correlcore-api`- und `correlcore-web`-Images.
 

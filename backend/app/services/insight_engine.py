@@ -26,6 +26,7 @@ from app.core.config import settings
 from app.models.entry import Entry
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.tag import EntryTag, Tag
+from app.services.tag_service import active_tag_predicate
 
 logger = logging.getLogger(__name__)
 
@@ -556,7 +557,12 @@ async def _load_analytics_inputs(
         select(EntryTag.entry_id, Tag)
         .join(Tag, Tag.id == EntryTag.tag_id)
         .join(Entry, Entry.id == EntryTag.entry_id)
-        .where(EntryTag.user_id == user_id, Entry.user_id == user_id, Entry.entry_date < as_of)
+        .where(
+            EntryTag.user_id == user_id,
+            Entry.user_id == user_id,
+            Entry.entry_date < as_of,
+            active_tag_predicate(user_id),
+        )
     )
     tag_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
     tags_by_id: dict[uuid.UUID, TagSnapshot] = {}

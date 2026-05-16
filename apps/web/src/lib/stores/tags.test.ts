@@ -189,4 +189,16 @@ describe('tagsByCategory', () => {
     expect(grouped.sport).toEqual([]);
     expect(grouped.other).toEqual([]);
   });
+
+  it('does not expose hidden tags in picker groups', async () => {
+    const list = [
+      makeTag({ id: 'visible', name: 'Visible', category: 'sport' }),
+      makeTag({ id: 'hidden', name: 'Hidden', category: 'sport', is_hidden: true }),
+    ];
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValueOnce(list);
+    await refreshTags();
+
+    const grouped = get(tagsByCategory);
+    expect(grouped.sport.map((t) => t.id)).toEqual(['visible']);
+  });
 });

@@ -24,6 +24,7 @@
   export let insight: InsightResponse | null = null;
   export let loading = false;
   export let error = '';
+  export let inactiveTagIds: readonly string[] = [];
 
   const dispatch = createEventDispatcher<{
     retry: void;
@@ -81,6 +82,10 @@
     ? sparkPoints(0.45, -(insight.effect_size ?? 0) * 0.6, insight.sample_n ?? 10)
     : '';
   $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
+  $: isInactiveTag =
+    insight?.subject_type === 'tag' &&
+    typeof insight.subject_id === 'string' &&
+    inactiveTagIds.includes(insight.subject_id);
 </script>
 
 {#if loading}
@@ -121,6 +126,9 @@
       >
       <h3 class="insight-card__title" data-testid="insight-card-title">
         {title}
+        {#if isInactiveTag}
+          <span class="insight-card__inactive-badge">{$_('insights.card.inactive_tag_badge')}</span>
+        {/if}
       </h3>
       <button
         class="insight-card__dismiss"
@@ -148,6 +156,9 @@
 
     <p class="insight-card__meta" data-testid="insight-card-meta">
       {$_('insights.card.sample_meta', { values: { n: insight.sample_n ?? 0 } })}
+      {#if isInactiveTag}
+        <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
+      {/if}
     </p>
 
     <a
@@ -303,6 +314,17 @@
     margin: 0;
     line-height: 1.3;
   }
+  .insight-card__inactive-badge {
+    display: inline-flex;
+    margin-left: var(--space-2, 0.5rem);
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 500;
+    white-space: nowrap;
+  }
   .insight-card__dismiss {
     flex-shrink: 0;
     padding: var(--space-1, 0.25rem);
@@ -329,6 +351,9 @@
     font-size: var(--text-xs, 0.75rem);
     color: var(--color-text-muted);
     margin: 0;
+  }
+  .insight-card__inactive-hint::before {
+    content: ' · ';
   }
   .insight-card__disclaimer {
     font-size: var(--text-xs, 0.75rem);

@@ -47,6 +47,7 @@ export const tagsByCategory = derived(_tags, ($s) => {
   };
   if ($s.status !== 'ready') return grouped;
   for (const tag of $s.tags) {
+    if (tag.is_hidden) continue;
     grouped[tag.category].push(tag);
   }
   // Sort each category alphabetically by display name (locale-aware) so the

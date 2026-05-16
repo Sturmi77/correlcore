@@ -123,12 +123,28 @@
     }
   }
 
-  $: grouped = TAG_CATEGORIES.map((category) => ({
-    category,
-    tags: tags
-      .filter((tag) => tag.category === category)
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  })).filter((group) => group.tags.length > 0);
+  function sortTags(input: TagResponse[]): TagResponse[] {
+    return [...input].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  $: activeTags = sortTags(tags.filter((tag) => !tag.is_hidden));
+  $: inactiveTags = sortTags(tags.filter((tag) => tag.is_hidden));
+  $: tagGroups = [
+    {
+      id: 'active',
+      heading: 'settings.tags.active_heading',
+      body: 'settings.tags.active_body',
+      empty: 'settings.tags.active_empty',
+      tags: activeTags,
+    },
+    {
+      id: 'inactive',
+      heading: 'settings.tags.inactive_heading',
+      body: 'settings.tags.inactive_body',
+      empty: 'settings.tags.inactive_empty',
+      tags: inactiveTags,
+    },
+  ];
 
   onMount(() => {
     void load();
@@ -164,12 +180,22 @@
       <p class="tag-settings__error" role="alert">{error}</p>
     {/if}
 
-    {#each grouped as group (group.category)}
-      <section class="tag-settings__section" aria-labelledby={`tag-settings-${group.category}`}>
-        <h2 id={`tag-settings-${group.category}`}>{$_(`tag.category.${group.category}`)}</h2>
+    {#each tagGroups as group (group.id)}
+      <section
+        class="tag-settings__section"
+        data-testid={`tag-settings-${group.id}`}
+        aria-labelledby={`tag-settings-${group.id}`}
+      >
+        <div class="tag-settings__section-head">
+          <h2 id={`tag-settings-${group.id}`}>{$_(group.heading)}</h2>
+          <p>{$_(group.body)}</p>
+        </div>
 
-        <div class="tag-settings__rows">
-          {#each group.tags as tag (tag.id)}
+        {#if group.tags.length === 0}
+          <p class="tag-settings__empty">{$_(group.empty)}</p>
+        {:else}
+          <div class="tag-settings__rows">
+            {#each group.tags as tag (tag.id)}
             {@const draft = drafts[tag.id]}
             <article class="tag-settings__row" class:muted={tag.is_hidden}>
               <div class="tag-settings__identity">
@@ -186,12 +212,13 @@
                 <div>
                   <strong>{tag.name}</strong>
                   <span>
+                    {$_(`tag.category.${tag.category}`)} ·
                     {tag.is_default
                       ? $_('settings.tags.default')
                       : isOverride(tag)
                         ? $_('settings.tags.override')
                         : $_('settings.tags.custom')}
-                    {tag.is_hidden ? ` - ${$_('settings.tags.hidden')}` : ''}
+                    {tag.is_hidden ? ` · ${$_('settings.tags.hidden')}` : ''}
                   </span>
                 </div>
               </div>
@@ -263,7 +290,7 @@
                   disabled={savingId !== null}
                   on:click={() => toggleHidden(tag)}
                 >
-                  {tag.is_hidden ? $_('settings.tags.show') : $_('settings.tags.hide')}
+                  {tag.is_hidden ? $_('settings.tags.reactivate') : $_('settings.tags.deactivate')}
                 </button>
                 {#if isOverride(tag)}
                   <button
@@ -277,8 +304,9 @@
                 {/if}
               </div>
             </article>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {/if}
       </section>
     {/each}
   {/if}
@@ -318,9 +346,20 @@
     border: 1px solid rgb(var(--color-surface-300, 209 213 219) / 0.5);
   }
 
-  .tag-settings__section h2 {
-    margin: 0 0 0.85rem;
+  .tag-settings__section-head {
+    margin-bottom: 0.85rem;
+  }
+
+  .tag-settings__section-head h2 {
+    margin: 0;
     font-size: var(--text-lg, 1.125rem);
+  }
+
+  .tag-settings__section-head p,
+  .tag-settings__empty {
+    margin: 0.2rem 0 0;
+    opacity: 0.72;
+    font-size: var(--text-sm, 0.875rem);
   }
 
   .tag-settings__rows {

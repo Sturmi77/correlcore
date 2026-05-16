@@ -54,6 +54,7 @@ from app.services.tag_service import (
     TagConflictError,
     TagNotFoundError,
     TagsNotFoundError,
+    active_tag_predicate,
     assign_tags_to_entry,
     create_custom_tag,
     delete_custom_tag,
@@ -162,6 +163,41 @@ async def test_list_visible_tags_clamps_limit() -> None:
     out = await list_visible_tags(db, user_id=user.id, limit=10_000)
     assert out == []
     db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_visible_tags_filters_hidden_by_default() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result([]))
+
+    await list_visible_tags(db, user_id=user.id)
+
+    stmt = db.execute.await_args.args[0]
+    assert "tags.is_hidden IS false" in str(stmt.whereclause)
+
+
+@pytest.mark.asyncio
+async def test_list_visible_tags_can_include_hidden() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result([]))
+
+    await list_visible_tags(db, user_id=user.id, include_hidden=True)
+
+    stmt = db.execute.await_args.args[0]
+    assert "tags.is_hidden IS false" not in str(stmt.whereclause)
+
+
+def test_active_tag_predicate_respects_hidden_default_overrides() -> None:
+    user = make_user()
+
+    predicate = active_tag_predicate(user.id)
+
+    text = str(predicate)
+    assert "tags.is_hidden IS false" in text
+    assert "EXISTS" in text
+    assert "is_hidden IS true" in text
 
 
 # ---------------------------------------------------------------------------

@@ -394,6 +394,12 @@
       "open": "Tags verwalten",
       "title": "Tags verwalten",
       "subtitle": "Passe Standard- und eigene Tags an, ohne das kuratierte Set f\u00fcr andere zu \u00e4ndern.",
+      "active_heading": "Aktive Tags",
+      "active_body": "Verfuegbar in neuen Eintraegen und zukuenftigen Berechnungen.",
+      "active_empty": "Keine aktiven Tags vorhanden.",
+      "inactive_heading": "Inaktive Tags",
+      "inactive_body": "Bleiben fuer historische Eintraege erhalten, erscheinen aber nicht in neuen Eintraegen oder zukuenftigen Berechnungen.",
+      "inactive_empty": "Keine inaktiven Tags.",
       "default": "Standard",
       "override": "Pers\u00f6nlicher Override",
       "custom": "Eigen",
@@ -406,6 +412,8 @@
       "saving": "Speichert\u2026",
       "hide": "Ausblenden",
       "show": "Einblenden",
+      "deactivate": "Deaktivieren",
+      "reactivate": "Reaktivieren",
       "reset": "Zur\u00fccksetzen",
       "error_load": "Tags konnten nicht geladen werden.",
       "error_save": "Dieser Tag konnte nicht gespeichert werden.",
@@ -499,7 +507,9 @@
       "chart_aria": "Dual-Achsen-Sparkline fuer {title}",
       "loading_aria": "Erkenntnis wird geladen",
       "error_body": "Erkenntnis konnte nicht geladen werden.",
-      "retry": "Erneut versuchen"
+      "retry": "Erneut versuchen",
+      "inactive_tag_badge": "Tag inaktiv",
+      "inactive_tag_hint": "Dieser Tag wird fuer neue Berechnungen nicht mehr verwendet."
     },
     "disclaimer": {
       "modal_title": "Was bedeutet diese Erkenntnis?",

@@ -87,6 +87,17 @@ describe('InsightCard', () => {
     expect(screen.getByTestId('insight-card-title').textContent).toContain('mood → sport');
   });
 
+  it('marks insights for inactive tags without hiding them', () => {
+    render(InsightCard, { props: { insight: INSIGHT, inactiveTagIds: ['sport'] } });
+
+    expect(screen.getByTestId('insight-card-title').textContent).toContain(
+      'insights.card.inactive_tag_badge'
+    );
+    expect(screen.getByTestId('insight-card-meta').textContent).toContain(
+      'insights.card.inactive_tag_hint'
+    );
+  });
+
   it('does NOT show raw percentage in collapsed state', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     expect(screen.queryByTestId('insight-confidence-score-percent')).toBeNull();

@@ -30,6 +30,7 @@
   export let error: string | null = null;
   export let entryCount = 0;
   export let dayEntryDates: readonly string[] = [];
+  export let inactiveTagIds: readonly string[] = [];
 
   const dispatch = createEventDispatcher<{ retry: void }>();
 
@@ -181,7 +182,7 @@
     <ul class="if-list" data-testid="insight-feed-list">
       {#each filtered as insight (insight.id)}
         <li>
-          <InsightCard {insight} />
+          <InsightCard {insight} {inactiveTagIds} />
         </li>
       {/each}
     </ul>

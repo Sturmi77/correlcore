@@ -138,6 +138,25 @@ def _visible_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
     return (Tag.user_id == user_id) | (Tag.is_default.is_(True) & ~shadowed_default)
 
 
+def active_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
+    """Return true for tags that should participate in new user calculations.
+
+    Default tags can be hidden through a user-owned override with the same slug.
+    Historical entry links may still point at the original default row, so
+    calculation queries need to treat that hidden override as shadowing too.
+    """
+    override = aliased(Tag)
+    hidden_override = exists(
+        select(override.id).where(
+            override.user_id == user_id,
+            override.slug == Tag.slug,
+            override.is_default.is_(False),
+            override.is_hidden.is_(True),
+        )
+    )
+    return Tag.is_hidden.is_(False) & ~hidden_override
+
+
 async def _get_owned_entry(db: AsyncSession, *, entry_id: uuid.UUID, user_id: uuid.UUID) -> Entry:
     """Fetch an entry the user owns or raise :class:`EntryNotFoundForTagError`."""
     result = await db.execute(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id))

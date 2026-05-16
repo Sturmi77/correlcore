@@ -130,3 +130,20 @@ async def test_tag_heatmap_groups_counts_by_tag_and_day() -> None:
     sport_payload = next(tag for tag in out.tags if tag.slug == "sport")
     assert sport_payload.days[0].date == date(2026, 5, 8)
     assert sport_payload.days[0].count == 2
+
+
+@pytest.mark.asyncio
+async def test_tag_heatmap_filters_hidden_tags() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_row_result([]))
+
+    await get_tag_heatmap(
+        db,
+        user_id=user.id,
+        start_date=date(2026, 5, 1),
+        end_date=date(2026, 5, 9),
+    )
+
+    stmt = db.execute.await_args.args[0]
+    assert "tags.is_hidden IS false" in str(stmt.whereclause)

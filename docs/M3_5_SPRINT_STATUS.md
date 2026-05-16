@@ -15,8 +15,8 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 | 4      | Home Screen Recomposition                 | ✅ Done        | `9a02655`            | #186             |
 | 5      | Insights Quality & Progressive Disclosure | ✅ Done        | `da5e74f`            | #184, #186       |
 | 6      | Trends Tabbed Analysis Surface            | ✅ Done        | `6173c80`            | #182, #186       |
-| 7      | Settings, Language & Developer UX         | 🚧 In Progress | —                    | #183, #185, #186 |
-| 8      | Tag Lifecycle & Inactive Correlations     | ⬜ Open        | —                    | #173             |
+| 7      | Settings, Language & Developer UX         | ✅ Done        | `a30cf6e`            | #183, #185, #186 |
+| 8      | Tag Lifecycle & Inactive Correlations     | 🚧 In Progress | —                    | #173             |
 | 9      | Visual QA, Docs & GitHub Closure          | ⬜ Open        | —                    | all              |
 
 ## Sprint 0 — Done
@@ -85,7 +85,7 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Health tab avoids unfinished charts and shows neutral readiness / tracking-consistency copy
 - Tests: tab switching, Entry History sheet, and 90-day backend range coverage
 
-## Sprint 7 — In Progress
+## Sprint 7 — Done (`a30cf6e`)
 
 - Settings split into TRACKING / ANALYSIS / PRIVACY & DATA / APPEARANCE / DEVELOPER
 - Language segmented control (`DE | EN`) persists via localStorage and updates `svelte-i18n` without reload
@@ -93,6 +93,15 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Disabling Dev Mode resets Force Visualizations
 - Force Visualizations uses centralized mock entries, insights, and trends without API writes
 
-## Next up — Sprint 8
+## Sprint 8 — In Progress
 
-Tag lifecycle and inactive correlations (#173).
+- Tag settings split active and inactive tags while loading `include_hidden=true`
+- Inactive tags can be reactivated without removing historical entry relations
+- Entry picker/store paths keep hidden tags out of new assignments
+- Tag heatmap and insight generation skip hidden tags for new calculations
+- Existing tag insights remain visible and are marked when their tag is inactive
+- API docs clarify `include_hidden` and hidden-tag calculation behavior
+
+## Next up — Sprint 9
+
+Visual QA, docs and GitHub closure.
