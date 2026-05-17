@@ -29,10 +29,12 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M0** — Monorepo, CI/CD, Docker stack, native JWT auth, empty app shell
 - [x] **M1** — Daily entry: mood, energy, stress, tags (curated + custom), symptoms (curated + custom), notes, app-level Fernet encryption at rest, login/register UI, email verification, GDPR erasure (offline sync moved to M4 — [ADR-0009](docs/adr/0009-offline-sync-nach-m4.md))
 - [x] **M2** — Visualisations: mood time series (multi-metric), tag frequency heatmap with drilldown, entry streak widgets, CSV/JSON export (GDPR Art. 20), custom SVG charts, habit schema prep ([ADR-0012](docs/adr/0012-m2-m5-streak-semantik.md)), developer view ([ADR-0015](docs/adr/0015-developer-view-version-identifikation.md))
-- [ ] **M3** — Insights v1: correlation analysis, template-based statements, tiered confidence system, cold-start UX (retrospective onboarding, insight confidence scale, day-over-day delta, weekday pattern insight, onboarding profile questionnaire)
-- [ ] **M3.6** — Insight maturity phases: ADR-0021 API contract (`insight_maturity`), Journey Banner, Maturity Badge, phase-aware empty states, and phase milestone cards
+- [x] **M3** — Insights v1: correlation analysis, template-based statements, tiered confidence system, cold-start UX (retrospective onboarding, insight confidence scale, day-over-day delta, weekday pattern insight, onboarding profile questionnaire)
+- [x] **M3.1** — Insights polish: non-blocking InsightStore, canonical InsightCard, full Insights feed, correlation disclaimer, and neutral heatmap styling
+- [ ] **M3.5** — Frontend web and mobile optimisation: app shell, entry bottom sheet, Home recomposition, Trends tabs, Settings/i18n, tag lifecycle. Implementation is on `main`; release closeout still needs rendered QA, Web CI confirmation, and GitHub issue closure.
+- [ ] **M3.6** — Insight maturity phases: ADR-0021 API contract (`insight_maturity`), Journey Banner, Maturity Badge, phase-aware empty states, and phase milestone cards. Implementation is documented through Sprint 4; release closeout remains blocked by Web CI diagnostics and GitHub write access.
 - [ ] **M4** — Mobile polish: PWA, bottom-sheet UX, UnifiedPush, app lock, offline sync (Dexie.js)
-- [ ] **M5** — Habits & goals: streak logic, badges, habit dashboard
+- [ ] **M5** — Habits & goals: adherence rate, tracking consistency, habit dashboard
 - [ ] **M6** — Health Connect: Android wearables import, sleep correlation
 - [ ] **M7** — Insights v2: Lasso regression, lag analysis, optional local LLM (Ollama)
 - [ ] **M8** — Beta hardening: monitoring, GlitchTip, external testers, documentation
@@ -42,6 +44,15 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [ ] **M12** — Photo & media: local upload to MinIO, EXIF strip, Immich integration (v2)
 
 Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
+
+### Current Milestone Status
+
+| Milestone | Status | Notes |
+| --------- | ------ | ----- |
+| **M3** | Complete | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md). |
+| **M3.1** | Complete | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md). |
+| **M3.5** | Implementation complete, release gates pending | Frontend/mobile optimisation is implemented and documented, but final release tagging still needs rendered browser QA, Web CI rerun, and authenticated GitHub issue closure/rescope. See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md). |
+| **M3.6** | Implementation documented, release gates pending | Insight maturity phases are implemented through Sprint 3 and Sprint 4 documents the remaining blockers: Web typecheck/lint diagnostics, rendered QA, and GitHub milestone/issue updates. See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md). |
 
 ---
 
