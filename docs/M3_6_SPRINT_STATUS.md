@@ -1,6 +1,6 @@
 # M3.6 Sprint Status - Insight Maturity Phases
 
-Last updated: 2026-05-16
+Last updated: 2026-05-17
 
 Tracking document for [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md). M3.6 implements ADR-0021 and `docs/frontend/INSIGHT_MATURITY.md`.
 
@@ -8,11 +8,11 @@ Tracking document for [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md). M3.6 impleme
 
 | Sprint | Title                                   | Status                  | PR / commit (main) | Issues     |
 | ------ | --------------------------------------- | ----------------------- | ------------------ | ---------- |
-| 0      | API Contract and Shared Types           | Implemented, CI pending | pending CI         | #191       |
-| 1      | Journey Banner and Explainer            | Implemented, CI pending | local changes      | #188       |
-| 2      | Insight Cards and Empty States          | Implemented, CI pending | local changes      | #189, #190 |
-| 3      | Milestone Notifications and Preferences | Implemented, CI pending | local changes      | #192       |
-| 4      | Visual QA, Docs and GitHub Closure      | Open                    | -                  | #188-#192  |
+| 0      | API Contract and Shared Types           | Implemented, CI blocked | 782e6ba            | #191       |
+| 1      | Journey Banner and Explainer            | Implemented, CI blocked | 4017c36            | #188       |
+| 2      | Insight Cards and Empty States          | Implemented, CI blocked | 12bdad4            | #189, #190 |
+| 3      | Milestone Notifications and Preferences | Implemented, CI blocked | 12bdad4            | #192       |
+| 4      | Visual QA, Docs and GitHub Closure      | Closeout documented     | docs only          | #188-#192  |
 
 ## GitHub Milestone Assignment
 
@@ -26,7 +26,9 @@ Target GitHub milestone: **M3.6 — Insight Maturity Phases**.
 | #191  | Open, no milestone                        | M3.6 — Insight Maturity Phases |
 | #192  | Open, no milestone                        | M3.6 — Insight Maturity Phases |
 
-Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN` / `GITHUB_TOKEN`. Milestone creation and issue assignment must therefore be completed manually or from an authenticated shell.
+Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN` / `GITHUB_TOKEN`. Milestone creation, issue assignment, and issue closure must therefore be completed manually or from an authenticated shell.
+
+Sprint 4 public API check on 2026-05-17 confirmed #188-#192 are still open and have no milestone.
 
 ## Sprint 0 - API Contract and Shared Types
 
@@ -68,12 +70,26 @@ Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN`
 
 ## Sprint 4 - Closeout
 
-- Rendered QA for all phases
-- Mobile/desktop and light/dark verification
-- i18n completeness
-- No-gamification copy review
-- GitHub issue closure / rescope
+- [x] Repo state checked against `origin/main`; local `main` is aligned with remote head `72f5a9c`
+- [x] Public GitHub Actions state checked for M3.6 Sprint 2/3 commit `12bdad4`
+- [x] GitHub Prettier auto-fix confirmed as follow-up commit `72f5a9c` with `[skip ci]`
+- [x] Public GitHub issue state checked for #188-#192
+- [x] Closeout blockers documented
+- [ ] Rendered QA for all phases
+- [ ] Mobile/desktop and light/dark verification
+- [ ] CI-confirmed web typecheck/lint gates
+- [ ] GitHub issue milestone assignment and closure / rescope
+
+### Sprint 4 Findings
+
+- `CI — Web` for `12bdad4` failed in `Typecheck (svelte-check)` and `Lint (ESLint + svelte-check)`.
+- The same run succeeded in `Format auto-fix (Prettier)` and `Build (vite)`.
+- GitHub generated `72f5a9c style: prettier auto-fix [skip ci]` after `12bdad4`, so no fresh CI gates ran on the formatted remote head.
+- Public check-run annotations only expose generic `Process completed with exit code 1` messages for the failing typecheck/lint jobs.
+- Local `ReadLints` found no IDE diagnostics in the touched web insight/page files.
+- Local `pnpm typecheck` could not provide diagnostics in this Windows/NAS environment because Corepack/pnpm failed during dependency status/install with exit code `3221226505`.
+- Browser-rendered QA was not completed in this agent environment and remains a release gate.
 
 ## Next Up
 
-Run/confirm the Sprint 3 web gates, then continue with Sprint 4 closeout QA. GitHub milestone assignment for #188-#192 remains blocked in this agent environment by missing `gh`/token tooling.
+M3.6 implementation is documented as complete through Sprint 3, and Sprint 4 closeout has captured the remaining release blockers. Before M3.6 can be tagged release-complete, run web typecheck/lint in a non-UNC environment or inspect authenticated GitHub logs, complete rendered QA, and assign/close or rescope #188-#192 from an authenticated GitHub session.
