@@ -47,12 +47,12 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ### Current Milestone Status
 
-| Milestone | Status | Notes |
-| --------- | ------ | ----- |
-| **M3** | Complete | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md). |
-| **M3.1** | Complete | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md). |
-| **M3.5** | Implementation complete, release gates pending | Frontend/mobile optimisation is implemented and documented, but final release tagging still needs rendered browser QA, Web CI rerun, and authenticated GitHub issue closure/rescope. See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md). |
-| **M3.6** | Implementation documented, release gates pending | Insight maturity phases are implemented through Sprint 3 and Sprint 4 documents the remaining blockers: Web typecheck/lint diagnostics, rendered QA, and GitHub milestone/issue updates. See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md). |
+| Milestone | Status                                           | Notes                                                                                                                                                                                                                                                                                                                       |
+| --------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M3**    | Complete                                         | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                                                                                                                        |
+| **M3.1**  | Complete                                         | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md).                                                                                                    |
+| **M3.5**  | Implementation complete, release gates pending   | Frontend/mobile optimisation is implemented and documented, but final release tagging still needs rendered browser QA, Web CI rerun, and authenticated GitHub issue closure/rescope. See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md). |
+| **M3.6**  | Implementation documented, release gates pending | Insight maturity phases are implemented through Sprint 3 and Sprint 4 documents the remaining blockers: Web typecheck/lint diagnostics, rendered QA, and GitHub milestone/issue updates. See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md).                                                                    |
 
 ---
 
