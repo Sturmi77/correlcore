@@ -5,6 +5,7 @@
 **Quelle:** Desk Research + Analyse Google Play, App Store, LinkedIn, Crunchbase, GitHub
 
 **Changelog:**
+
 - v0.2 (2026-05-16): HabitHeat und Habit Tracker — Completer ergänzt (Indie- und Minimalist-Wettbewerber)
 
 ---
@@ -90,16 +91,16 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### HabitHeat — der Indie-Heatmap-Webtracker
 
-| Attribut       | Details                                                                       |
-| -------------- | ----------------------------------------------------------------------------- |
-| URL            | [habitheat.com](https://habitheat.com/) (Vercel-gehostet)                     |
-| Repository     | [BaraniVA/Habitheat](https://github.com/BaraniVA/Habitheat) (MIT-Lizenz)      |
-| Downloads      | „hundreds of users" (Eigenangabe Reddit, kein App-Store)                      |
-| Team           | Solo-Indie-Entwickler (BaraniVA), seit ~2025                                  |
-| Preis          | 100% kostenlos, keine Ads                                                     |
-| Plattform      | Web only (PWA-fähig, responsive) — kein iOS/Android-Native                    |
-| Tech-Stack     | React 18 + TypeScript + Tailwind + Vite (Frontend), Node/Express (Backend)    |
-| Datenhaltung   | Hybrid: LocalStorage **plus** Backend mit User-Auth (Passport.js, Google OAuth, Cloudinary) |
+| Attribut     | Details                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| URL          | [habitheat.com](https://habitheat.com/) (Vercel-gehostet)                                   |
+| Repository   | [BaraniVA/Habitheat](https://github.com/BaraniVA/Habitheat) (MIT-Lizenz)                    |
+| Downloads    | „hundreds of users" (Eigenangabe Reddit, kein App-Store)                                    |
+| Team         | Solo-Indie-Entwickler (BaraniVA), seit ~2025                                                |
+| Preis        | 100% kostenlos, keine Ads                                                                   |
+| Plattform    | Web only (PWA-fähig, responsive) — kein iOS/Android-Native                                  |
+| Tech-Stack   | React 18 + TypeScript + Tailwind + Vite (Frontend), Node/Express (Backend)                  |
+| Datenhaltung | Hybrid: LocalStorage **plus** Backend mit User-Auth (Passport.js, Google OAuth, Cloudinary) |
 
 **Stärken:**
 
@@ -133,15 +134,15 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ### Habit Tracker — Completer (Plainzer) — der Apple-Ecosystem-Minimalist
 
-| Attribut       | Details                                                                                |
-| -------------- | -------------------------------------------------------------------------------------- |
-| URL            | [App Store](https://apps.apple.com/us/app/habit-tracker-completer/id6757959722)        |
-| Downloads      | Unbekannt (keine sichtbaren Ratings/Reviews — frische App, Version 1.2)                |
-| Team           | Plainzer Sp. z o.o. (Polen)                                                            |
-| Preis          | Free + Pro: 1,99 USD/Monat oder 11,99 USD/Jahr                                         |
-| Plattform      | iPhone (iOS 18+), iPad (iPadOS 18+), Mac (macOS 15 + M1), Apple Vision (visionOS 2)    |
-| Sprachen       | DE, EN, FR, IT, PL, PT, RU, ES (8 Sprachen — überdurchschnittlich für Indie)           |
-| Datenhaltung   | Lokal + iCloud-Sync (nur Pro); Telemetrie: Usage + Diagnostics, nicht identitätsverknüpft |
+| Attribut     | Details                                                                                   |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| URL          | [App Store](https://apps.apple.com/us/app/habit-tracker-completer/id6757959722)           |
+| Downloads    | Unbekannt (keine sichtbaren Ratings/Reviews — frische App, Version 1.2)                   |
+| Team         | Plainzer Sp. z o.o. (Polen)                                                               |
+| Preis        | Free + Pro: 1,99 USD/Monat oder 11,99 USD/Jahr                                            |
+| Plattform    | iPhone (iOS 18+), iPad (iPadOS 18+), Mac (macOS 15 + M1), Apple Vision (visionOS 2)       |
+| Sprachen     | DE, EN, FR, IT, PL, PT, RU, ES (8 Sprachen — überdurchschnittlich für Indie)              |
+| Datenhaltung | Lokal + iCloud-Sync (nur Pro); Telemetrie: Usage + Diagnostics, nicht identitätsverknüpft |
 
 **Stärken:**
 
@@ -191,15 +192,15 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 
 ## 3. Marktlücken & Differenzierung für CorrelCore
 
-| Lücke                               | Beschreibung                                                         | CorrelCore-Ansatz                                               |
-| ----------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
-| **Selfhost/Privacy-first**          | Keine der Top-Apps bietet offizielles Selfhosting                    | Kern-USP: `docker compose up`, Daten bleiben lokal              |
-| **Korrelationstiefe für Lifestyle** | Bearable führend bei Health, aber Cloud-only + chronisch-krank-Fokus | Lifestyle-Zielgruppe (Remote-Worker 30–50) mit echter Statistik |
-| **Wearable via Health Connect**     | Keine App hat saubere Garmin-/Wearables-Pipeline                     | Health Connect als First-Class-Feature ab M7                    |
-| **Work-Context (Homeoffice)**       | Nirgends als First-Class-Feature                                     | `work_context`-Feld als dediziertes Pflichtfeld                 |
-| **DACH-Datenschutz-Positionierung** | Alle großen Anbieter US/UK-basiert                                   | DSGVO-native, österreichischer Developer, DE/AT/CH-First        |
-| **Ehrlicher Selfhost statt Theater** | HabitHeat verspricht „local-first", liefert aber stiller Backend-Stack ohne Doku | Transparente Compose-Files, klare Datenflüsse, AGPL             |
-| **Cross-Plattform statt Apple-Bubble** | Completer/Habit Heatmap ignorieren Android/Linux/Windows komplett   | PWA-first, später Android-Native via Play Store, alles Selfhost-bar |
+| Lücke                                  | Beschreibung                                                                     | CorrelCore-Ansatz                                                   |
+| -------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Selfhost/Privacy-first**             | Keine der Top-Apps bietet offizielles Selfhosting                                | Kern-USP: `docker compose up`, Daten bleiben lokal                  |
+| **Korrelationstiefe für Lifestyle**    | Bearable führend bei Health, aber Cloud-only + chronisch-krank-Fokus             | Lifestyle-Zielgruppe (Remote-Worker 30–50) mit echter Statistik     |
+| **Wearable via Health Connect**        | Keine App hat saubere Garmin-/Wearables-Pipeline                                 | Health Connect als First-Class-Feature ab M7                        |
+| **Work-Context (Homeoffice)**          | Nirgends als First-Class-Feature                                                 | `work_context`-Feld als dediziertes Pflichtfeld                     |
+| **DACH-Datenschutz-Positionierung**    | Alle großen Anbieter US/UK-basiert                                               | DSGVO-native, österreichischer Developer, DE/AT/CH-First            |
+| **Ehrlicher Selfhost statt Theater**   | HabitHeat verspricht „local-first", liefert aber stiller Backend-Stack ohne Doku | Transparente Compose-Files, klare Datenflüsse, AGPL                 |
+| **Cross-Plattform statt Apple-Bubble** | Completer/Habit Heatmap ignorieren Android/Linux/Windows komplett                | PWA-first, später Android-Native via Play Store, alles Selfhost-bar |
 
 ---
 
