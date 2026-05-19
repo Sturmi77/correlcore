@@ -31,6 +31,8 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0018](0018-insight-confidence-visualisation.md)        | Insight Confidence Visualisation                             | Accepted      | 2026-05-13 |
 | [ADR-0019](0019-dev-mode-settings-toggle.md)                | Developer Mode Toggle in Settings                            | Accepted      | 2026-05-13 |
 | [ADR-0020](0020-primary-color-system.md)                    | Primary Color System for M3.5 Frontend                       | Accepted      | 2026-05-15 |
+| [ADR-0021](0021-insight-maturity-phases.md)                 | Insight Maturity Phases as a First-Class Frontend Concept    | Accepted      | 2026-05-16 |
+| [ADR-0025](0025-symptom-analytics.md)                       | Symptom Analytics — Univariate, Co-Occurrence, Multivariate | Vorgeschlagen | 2026-05-19 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -113,6 +115,14 @@ Developer Mode wird über 7× Tap auf den Version-String im Settings-Footer akti
 ### ADR-0020 - Primary Color System for M3.5 Frontend
 
 CorrelCore verwendet Violet als kanonische Primary-Farbfamilie fuer interaktive Elemente, Fokuszustaende und Mood-Metriken. Die frueheren Teal-Defaults bleiben nur als bewusst migrierte Legacy-Referenzen erlaubt. Heatmaps verwenden neutrale Blauabstufungen ohne Rot/Gruen-Wertung.
+
+### ADR-0021 – Insight Maturity Phases as a First-Class Frontend Concept
+
+Insight maturity wird zum gemeinsamen Domain-Konzept von Backend und Frontend erhoben. Vier Phasen (`collecting` 1–6, `early_patterns` 7–13, `provisional` 14–29, `robust` 30+) bestimmen welche Inhalte in der UI erscheinen. Jede `/api/v1/insights/*`-Antwort enthält ein `insight_maturity`-Objekt mit `phase`, `phase_index`, `current_entries`, `next_phase_at`, `next_phase_label`, `entries_until_next` und `user_message_key`. Frontend-Komponenten (`InsightJourneyBanner`, `InsightMaturityBadge`, Phase-Milestone-Karten) und phasen-spezifische Sprache sind verpflichtend; das Frontend berechnet Phasen niemals selbst. Confidence-Visualisierung aus ADR-0018 wird durch das kombinierte Phase+Confidence-Modell teilweise abgelöst.
+
+### ADR-0025 – Symptom Analytics: Univariate, Co-Occurrence, Multivariate
+
+Symptome werden in drei analytischen Ebenen behandelt: **univariat** (Pointbiserial, Mann-Whitney-U, Cliff's Delta gegen Mood/Energy/Stress), **Ko-Okkurrenz** (Phi, Jaccard, Lift/PMI, Fisher Exact gegen Tags) und **multivariat** (Symptome als binäre Features in Lasso #144, Lag-Analyse #145, hierarchischem Clustering #150). Phase-Gating folgt ADR-0021: Level 1 und 2 ab `provisional` (≥15 Einträge), Level 3 ab `robust` (≥30). Methodische Guardrails sind zwingend: FDR-Korrektur (Benjamini-Hochberg) über alle Symptom-Tests, Min-Frequenz 5× pro Symptom, Wiederverwendung des bestehenden Weekday-Confounder-Checks, durchgehend Assoziations-statt-Kausalitäts-Sprache. Engine-seitig neuer Modul `symptom_analytics.py` integriert in den bestehenden Nightly-Worker; keine Schema-Änderung. API: neue Insight-Typen `symptom_mood_association`, `symptom_tag_cooccurrence`, `symptom_cluster` ohne Breaking Changes. Frontend integriert in den bestehenden `/insights`-Feed (keine separate Route) plus drei neue Visualisierungen (Co-Occurrence-Heatmap, Symptom-Kalender-Heatmap, Symptom-Trend-Overlay). Symptom-Intensität (0–3) bleibt explizit Future Work. Vollständige Spezifikation in `docs/features/symptom-analytics.md` und `docs/frontend/SYMPTOM_VISUALIZATION.md`.
 
 ---
 
