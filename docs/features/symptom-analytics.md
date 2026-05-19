@@ -63,14 +63,14 @@ This spec defines the engineering and product work required to close all three g
 
 ## Product Principles
 
-| #   | Principle                                                | Rationale                                                                                   |
-| --- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 1   | Association, never causation                             | All user-facing language is neutral; causal framing is forbidden                            |
-| 2   | Methodology guardrails are non-negotiable                | FDR correction, min-frequency, and confounder checks are not optional                       |
-| 3   | Phase gating is shared with tag analytics                | Symptom insights follow ADR-0021 exactly — no separate gating logic                         |
-| 4   | Multivariate inclusion is structural                     | Symptoms are inputs to Lasso/lag/clustering by architectural decision, not sprint choice    |
-| 5   | Visibility before sophistication                         | Descriptive heatmaps in `early_patterns` precede inferential insights in `provisional`      |
-| 6   | Symptom insights live in the existing /insights feed     | No separate route; the feed is the canonical insight surface                                |
+| #   | Principle                                            | Rationale                                                                                |
+| --- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | Association, never causation                         | All user-facing language is neutral; causal framing is forbidden                         |
+| 2   | Methodology guardrails are non-negotiable            | FDR correction, min-frequency, and confounder checks are not optional                    |
+| 3   | Phase gating is shared with tag analytics            | Symptom insights follow ADR-0021 exactly — no separate gating logic                      |
+| 4   | Multivariate inclusion is structural                 | Symptoms are inputs to Lasso/lag/clustering by architectural decision, not sprint choice |
+| 5   | Visibility before sophistication                     | Descriptive heatmaps in `early_patterns` precede inferential insights in `provisional`   |
+| 6   | Symptom insights live in the existing /insights feed | No separate route; the feed is the canonical insight surface                             |
 
 ---
 
@@ -82,11 +82,11 @@ This spec defines the engineering and product work required to close all three g
 
 #### Methods
 
-| Method                | When applied                                                       | Output                                |
-| --------------------- | ------------------------------------------------------------------ | ------------------------------------- |
-| Pointbiserial         | Default; mirror of existing Tag↔Mood code path                     | Correlation coefficient `r_pb`        |
-| Mann-Whitney-U        | When mood distribution is non-normal (Shapiro-Wilk p < 0.05)       | U statistic, effect size `r = Z/√N`   |
-| Cliff's Delta         | Always computed alongside U for interpretability                   | `δ ∈ [-1, +1]`                        |
+| Method         | When applied                                                 | Output                              |
+| -------------- | ------------------------------------------------------------ | ----------------------------------- |
+| Pointbiserial  | Default; mirror of existing Tag↔Mood code path               | Correlation coefficient `r_pb`      |
+| Mann-Whitney-U | When mood distribution is non-normal (Shapiro-Wilk p < 0.05) | U statistic, effect size `r = Z/√N` |
+| Cliff's Delta  | Always computed alongside U for interpretability             | `δ ∈ [-1, +1]`                      |
 
 The Mann-Whitney/Cliff's Delta pair is the **robust track**; pointbiserial is reported for parity with
 the tag pipeline but downweighted if the normality test fails. The engine reports both, the frontend
@@ -116,12 +116,12 @@ Benjamini-Hochberg correction is applied **per metric** across all symptoms test
 
 #### Methods
 
-| Method                    | Role                                                               | Range          |
-| ------------------------- | ------------------------------------------------------------------ | -------------- |
-| Phi coefficient (φ)       | Primary effect size; equivalent to Pearson on two binaries         | `[-1, +1]`     |
-| Jaccard index (J)         | Asymmetric interpretability: "given symptom X, how often tag Y?"   | `[0, 1]`       |
-| Lift / PMI                | Compares observed vs. expected co-occurrence under independence    | `(0, +∞)`      |
-| Fisher Exact Test         | Significance test; preferred over chi-square at small cell counts  | p-value        |
+| Method              | Role                                                              | Range      |
+| ------------------- | ----------------------------------------------------------------- | ---------- |
+| Phi coefficient (φ) | Primary effect size; equivalent to Pearson on two binaries        | `[-1, +1]` |
+| Jaccard index (J)   | Asymmetric interpretability: "given symptom X, how often tag Y?"  | `[0, 1]`   |
+| Lift / PMI          | Compares observed vs. expected co-occurrence under independence   | `(0, +∞)`  |
+| Fisher Exact Test   | Significance test; preferred over chi-square at small cell counts | p-value    |
 
 **Display rule:** the heatmap colours by Lift (divergent scale, neutral at Lift = 1). Phi is shown in
 the card detail view. Jaccard is shown as natural-language phrasing in copy. Fisher Exact drives the
@@ -167,11 +167,11 @@ mood variation, and on what timescale?"
 
 This level **extends three existing M8 issues** rather than introducing new pipelines:
 
-| Existing Issue        | Title                                          | Extension                                                                                  |
-| --------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| [#144](https://github.com/Sturmi77/correlcore/issues/144) | Lasso Multi-Variable Regression                | Include `entry_symptoms` as binary features in the design matrix alongside tags and metrics |
-| [#145](https://github.com/Sturmi77/correlcore/issues/145) | Lag Analysis 1–7 days                          | Treat symptoms as both input and target variables: `symptom_t → mood_{t+1..7}` and reverse  |
-| [#150](https://github.com/Sturmi77/correlcore/issues/150) | Hierarchical Tag Clustering                    | Use combined symptom+tag Jaccard distance matrix; clusters may mix symptoms and tags        |
+| Existing Issue                                            | Title                           | Extension                                                                                   |
+| --------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------- |
+| [#144](https://github.com/Sturmi77/correlcore/issues/144) | Lasso Multi-Variable Regression | Include `entry_symptoms` as binary features in the design matrix alongside tags and metrics |
+| [#145](https://github.com/Sturmi77/correlcore/issues/145) | Lag Analysis 1–7 days           | Treat symptoms as both input and target variables: `symptom_t → mood_{t+1..7}` and reverse  |
+| [#150](https://github.com/Sturmi77/correlcore/issues/150) | Hierarchical Tag Clustering     | Use combined symptom+tag Jaccard distance matrix; clusters may mix symptoms and tags        |
 
 #### Eligibility
 
@@ -242,11 +242,11 @@ These rules apply across all three levels and are not negotiable per-sprint.
 Following [ADR-0021](../adr/0021-insight-maturity-phases.md), symptom analytics visibility by maturity
 phase:
 
-| Phase            | Entries | Symptom Analytics Visible                                                                |
-| ---------------- | ------- | ---------------------------------------------------------------------------------------- |
-| `collecting`     | 1–6     | **None.** No symptom insights computed, no symptom views in `/insights`.                 |
-| `early_patterns` | 7–13    | Descriptive only: SymptomCalendarHeatmap (counts), Co-occurrence heatmap shows raw counts (no Lift). No correlation claims. |
-| `provisional`    | 14–29   | Level 1 (univariate) and Level 2 (co-occurrence) insights with FDR + uncertainty disclaimer. Heatmap switches to Lift colouring. |
+| Phase            | Entries | Symptom Analytics Visible                                                                                                             |
+| ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `collecting`     | 1–6     | **None.** No symptom insights computed, no symptom views in `/insights`.                                                              |
+| `early_patterns` | 7–13    | Descriptive only: SymptomCalendarHeatmap (counts), Co-occurrence heatmap shows raw counts (no Lift). No correlation claims.           |
+| `provisional`    | 14–29   | Level 1 (univariate) and Level 2 (co-occurrence) insights with FDR + uncertainty disclaimer. Heatmap switches to Lift colouring.      |
 | `robust`         | 30+     | All three levels including multivariate symptom inclusion. Full copy without explicit uncertainty disclaimer in collapsed card state. |
 
 **The frontend never computes the phase.** It always reads `insight_maturity.phase` from the API
@@ -303,11 +303,11 @@ new insight types alongside existing types.
 
 ### New Insight Type Strings
 
-| Type string                   | Level | Introduced in   |
-| ----------------------------- | ----- | --------------- |
-| `symptom_mood_association`    | 1     | Sprint-free bugfix |
-| `symptom_tag_cooccurrence`    | 2     | M8              |
-| `symptom_cluster`             | 3     | M8              |
+| Type string                | Level | Introduced in      |
+| -------------------------- | ----- | ------------------ |
+| `symptom_mood_association` | 1     | Sprint-free bugfix |
+| `symptom_tag_cooccurrence` | 2     | M8                 |
+| `symptom_cluster`          | 3     | M8                 |
 
 ### Payload Schemas
 
@@ -406,15 +406,15 @@ Summary:
 
 ## Milestone Mapping
 
-| Milestone     | Symptom Analytics Scope                                                                                   |
-| ------------- | --------------------------------------------------------------------------------------------------------- |
-| Sprint-free   | **Pointbiserial Symptom↔Mood bugfix** (Level 1 foundation). Standalone issue, no milestone label.         |
-| M4            | None. Mobile/Offline-focused; including symptom work would break sprint scope.                            |
-| M5            | **Symptom data quality audit** — descriptive statistics over beta data to identify which symptoms meet eligibility thresholds. Preparation only. |
-| M6            | None.                                                                                                     |
-| M7            | **Sleep × Symptom association** (Level 1 extension) as a side effect of sleep-metric integration.         |
-| M8            | **Main implementation.** Epic with sub-issues covering Level 2 engine, all frontend components, API extensions, multivariate extensions via existing #144 / #145 / #150 comments. |
-| M9            | **Beta usability review.** Potential reconsideration of intensity scope based on user feedback.           |
+| Milestone   | Symptom Analytics Scope                                                                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint-free | **Pointbiserial Symptom↔Mood bugfix** (Level 1 foundation). Standalone issue, no milestone label.                                                                                 |
+| M4          | None. Mobile/Offline-focused; including symptom work would break sprint scope.                                                                                                    |
+| M5          | **Symptom data quality audit** — descriptive statistics over beta data to identify which symptoms meet eligibility thresholds. Preparation only.                                  |
+| M6          | None.                                                                                                                                                                             |
+| M7          | **Sleep × Symptom association** (Level 1 extension) as a side effect of sleep-metric integration.                                                                                 |
+| M8          | **Main implementation.** Epic with sub-issues covering Level 2 engine, all frontend components, API extensions, multivariate extensions via existing #144 / #145 / #150 comments. |
+| M9          | **Beta usability review.** Potential reconsideration of intensity scope based on user feedback.                                                                                   |
 
 ---
 
