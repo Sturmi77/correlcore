@@ -1,12 +1,12 @@
 # ADR-0025: Symptom Analytics — Univariate, Co-Occurrence, Multivariate
 
-| Field        | Value                                |
-| ------------ | ------------------------------------ |
-| **ID**       | 0025                                 |
-| **Date**     | 2026-05-19                           |
-| **Status**   | Proposed                             |
-| **Deciders** | @Sturmi77                            |
-| **Area**     | Insights / Engine / Frontend / API   |
+| Field        | Value                              |
+| ------------ | ---------------------------------- |
+| **ID**       | 0025                               |
+| **Date**     | 2026-05-19                         |
+| **Status**   | Proposed                           |
+| **Deciders** | @Sturmi77                          |
+| **Area**     | Insights / Engine / Frontend / API |
 
 ---
 
@@ -25,7 +25,7 @@ multivariate models (Issues #144 Lasso, #145 Lag analysis, #150 Hierarchical clu
 
 This is a structural gap, not just a missing feature:
 
-1. The Insight Engine has no notion of *association* between two categorical/binary variables. Tag↔Mood
+1. The Insight Engine has no notion of _association_ between two categorical/binary variables. Tag↔Mood
    uses pointbiserial because mood is continuous; Tag↔Symptom (both binary) requires a different statistical
    family (co-occurrence measures).
 2. The planned multivariate models in M8 implicitly assume tags as the only categorical input, which would
@@ -54,11 +54,11 @@ behaviour specified in [`docs/frontend/SYMPTOM_VISUALIZATION.md`](../frontend/SY
 
 ### Three Analytical Levels
 
-| Level | Name           | Methods                                                              | Phase Gate          | Insight Type(s)              |
-| ----- | -------------- | -------------------------------------------------------------------- | ------------------- | ---------------------------- |
-| 1     | Univariate     | Pointbiserial, Mann-Whitney-U, Cliff's Delta                         | ≥15 (`provisional`) | `symptom_mood_association`   |
-| 2     | Co-Occurrence  | Phi coefficient, Jaccard index, Lift/PMI, Fisher Exact               | ≥15 (`provisional`) | `symptom_tag_cooccurrence`   |
-| 3     | Multivariate   | Lasso (Issue #144 extended), Lag analysis (#145 extended), Clustering (#150 extended) | ≥30 (`robust`)      | `symptom_cluster`            |
+| Level | Name          | Methods                                                                               | Phase Gate          | Insight Type(s)            |
+| ----- | ------------- | ------------------------------------------------------------------------------------- | ------------------- | -------------------------- |
+| 1     | Univariate    | Pointbiserial, Mann-Whitney-U, Cliff's Delta                                          | ≥15 (`provisional`) | `symptom_mood_association` |
+| 2     | Co-Occurrence | Phi coefficient, Jaccard index, Lift/PMI, Fisher Exact                                | ≥15 (`provisional`) | `symptom_tag_cooccurrence` |
+| 3     | Multivariate  | Lasso (Issue #144 extended), Lag analysis (#145 extended), Clustering (#150 extended) | ≥30 (`robust`)      | `symptom_cluster`          |
 
 The three levels are **complementary, not alternative**. An insight at level 1 (symptom↔mood) does not
 replace a finding at level 2 (symptom↔tag) — they answer different questions.
@@ -170,14 +170,14 @@ post-M9 based on beta feedback, or earlier if binary findings reveal strong inte
 
 ## Alternatives Considered
 
-| Alternative                                                       | Reason Rejected                                                                                                                                                  |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Three separate ADRs (one per analytical level)                    | The three levels share statistical guardrails, phase gating, and frontend infrastructure. Splitting fragments the decision trail without clarifying anything.    |
-| Symptom analytics as a separate worker / pipeline                 | Would duplicate the FDR, weekday-confounder, and storage infrastructure already in `insight_engine.py`. Integration is cheaper and prevents methodological drift. |
-| Build a dedicated `/insights/symptoms` route                      | The heatmap is the only oversized component. Integrating it as a section above the feed avoids navigation fragmentation and keeps symptom findings in context.   |
-| Include symptom intensity in M8 scope                             | Adds material complexity (ordinal methods, smaller per-level sample sizes) before binary findings have demonstrated user value. Deferred as Future Work.         |
-| Use chi-square for symptom×tag co-occurrence                      | Small cell counts in typical homelab datasets (50–200 entries) violate chi-square assumptions. Fisher Exact is more reliable; Lift adds interpretability.        |
-| Use pointwise correlation only (no co-occurrence measures)        | Cannot quantify the association between two binary variables. Would force symptom-tag analysis into a less informative metric-mood frame.                         |
+| Alternative                                                | Reason Rejected                                                                                                                                                   |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Three separate ADRs (one per analytical level)             | The three levels share statistical guardrails, phase gating, and frontend infrastructure. Splitting fragments the decision trail without clarifying anything.     |
+| Symptom analytics as a separate worker / pipeline          | Would duplicate the FDR, weekday-confounder, and storage infrastructure already in `insight_engine.py`. Integration is cheaper and prevents methodological drift. |
+| Build a dedicated `/insights/symptoms` route               | The heatmap is the only oversized component. Integrating it as a section above the feed avoids navigation fragmentation and keeps symptom findings in context.    |
+| Include symptom intensity in M8 scope                      | Adds material complexity (ordinal methods, smaller per-level sample sizes) before binary findings have demonstrated user value. Deferred as Future Work.          |
+| Use chi-square for symptom×tag co-occurrence               | Small cell counts in typical homelab datasets (50–200 entries) violate chi-square assumptions. Fisher Exact is more reliable; Lift adds interpretability.         |
+| Use pointwise correlation only (no co-occurrence measures) | Cannot quantify the association between two binary variables. Would force symptom-tag analysis into a less informative metric-mood frame.                         |
 
 ---
 
