@@ -138,6 +138,14 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 **M1 Custom-Symptome (Issue #57, [ADR-0008](adr/0008-symptom-master-tabelle.md)):** Seit Issue #57 spiegelt das Symptom-System das Tag-Modell vollständig: kuratierte Defaults (5 Einträge mit deterministischer `uuid5`) + User-eigene Custom-Symptome mit CRUD analog zu Tags. `entry_symptoms` referenziert `symptoms.id` per FK statt vormals `symptom_key:String`. Cap: 50 Custom-Symptome pro User; max. 32 zugewiesene Symptome pro Entry.
 
+**Analytische Behandlung ([ADR-0025](adr/0025-symptom-analytics.md)):** Symptome werden in drei Ebenen analysiert (vollständige Spezifikation: [`features/symptom-analytics.md`](features/symptom-analytics.md)):
+
+- **Univariat:** Zusammenhang zwischen einzelnen Symptomen und Mood/Energy/Stress (Pointbiserial, Mann-Whitney-U, Cliff's Delta)
+- **Ko-Okkurrenz:** Assoziationen zwischen Symptomen und Tags (Phi, Jaccard, Lift/PMI, Fisher Exact)
+- **Multivariat:** Symptome als Features in Lasso- und Lag-Analysen sowie hierarchischem Clustering (M8)
+
+Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-maturity-phases.md). Symptom-Intensität (0–3) bleibt zunächst außerhalb des Scopes (Future Work, dokumentiert in der Feature-Spec).
+
 **Priorität:** MUST (Kern-USP der Korrelationsanalyse)
 
 ---
@@ -220,10 +228,12 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 - Korrelation ≠ Kausalität. Disclaimer + Confidence-Level nötig.
 - Minimum Datenmenge: seriöse Aussagen erst ab ~30 Einträgen.
-- Statistische Methoden: Punkt-Biseriale Korrelation, Lag-Analyse, Lasso-Regression.
+- Statistische Methoden: Punkt-Biseriale Korrelation, Mann-Whitney-U, Lag-Analyse, Lasso-Regression. Für Symptom×Tag-Assoziationen zusätzlich Ko-Okkurrenz-Maße (Phi, Jaccard, Lift, Fisher Exact) — Details in [ADR-0025](adr/0025-symptom-analytics.md).
 - LLM nur als Formulierungs-Schicht über statistisch verifizierten Findings. Lokales LLM (Ollama) für Privacy.
 
 **Entscheidung:** Analyse-Worker berechnet nightly Insights. Insight-Objekt: `{metric, effect_size, confidence, sample_n, statement_template}`. Statement-Rendering template-basiert, LLM optional.
+
+**Insight-Typen (Auswahl):** `tag_mood_correlation`, `metric_mood_correlation` (Energy/Stress), `weekday_pattern`, `symptom_mood_association`, `symptom_tag_cooccurrence`, `symptom_cluster` (M8). Vollständiges Schema in [`features/symptom-analytics.md`](features/symptom-analytics.md) und [API.md](API.md).
 
 **Priorität:** MUST (Kern-USP), iterativ ausbaubar
 
@@ -231,7 +241,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 ### 2.10 Auswertungen / Visualisierungen
 
-**Beschreibung:** Mood-Verlauf (Tag/Woche/Monat/Jahr), Tag-Frequenz-Heatmap, Korrelations-Matrix, Tracking-Consistency-Visualisierung.
+**Beschreibung:** Mood-Verlauf (Tag/Woche/Monat/Jahr), Tag-Frequenz-Heatmap, Korrelations-Matrix, Tracking-Consistency-Visualisierung, Symptom-Tag-Ko-Okkurrenz-Heatmap (M8), Symptom-Kalender-Heatmap (M8), Symptom-Trend mit Mood-Overlay (M8). Symptom-Visualisierungen sind in den bestehenden `/insights`-Feed integriert — keine separate Route. Details in [`frontend/SYMPTOM_VISUALIZATION.md`](frontend/SYMPTOM_VISUALIZATION.md).
 
 **Kritisch:**
 
@@ -1003,6 +1013,8 @@ ADR-0021 macht Insight-Reifephasen zu einem First-Class-Konzept in Backend, API 
 
 - Multiple Regression (Lasso) über alle Variablen
 - Lag-Analyse (Sport gestern → Mood heute)
+- Symptom-Analytics (univariat, Ko-Okkurrenz, multivariat) gemäß [ADR-0025](adr/0025-symptom-analytics.md) und [`features/symptom-analytics.md`](features/symptom-analytics.md)
+- Hierarchisches Clustering über kombinierte Symptom+Tag-Distanzmatrix
 - Optional: Lokales LLM (Ollama) formuliert Statements natürlicher
 - Wöchentlicher „Insight Digest"
 - **Exit:** Qualitativ deutlich bessere Handlungsempfehlungen
@@ -1010,7 +1022,11 @@ ADR-0021 macht Insight-Reifephasen zu einem First-Class-Konzept in Backend, API 
 #### Akzeptanzkriterien M8
 
 - [ ] Lasso-Regression produziert reproduzierbare Ergebnisse bei gleichen Eingabedaten
+- [ ] Lasso-Designmatrix enthält Symptome als binäre Features (nicht als separate Pipeline)
 - [ ] Lag-Analyse konfigurierbar (1–7 Tage Verzögerung)
+- [ ] Lag-Analyse berücksichtigt Symptome als Eingangs- und Zielvariablen
+- [ ] Symptom×Tag-Ko-Okkurrenz-Insights erscheinen ab Phase `provisional` mit FDR-Korrektur (BH)
+- [ ] Symptom-Ko-Okkurrenz-Heatmap und Symptom-Kalender-Heatmap im `/insights`-Feed integriert
 - [ ] Insight Digest als optionale wöchentliche Push-Notification
 - [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
