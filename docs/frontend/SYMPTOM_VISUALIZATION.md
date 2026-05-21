@@ -11,13 +11,13 @@ phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md
 
 ## 1. Component Inventory
 
-| Component                          | Type            | Reuses                              | Purpose                                                       |
-| ---------------------------------- | --------------- | ----------------------------------- | ------------------------------------------------------------- |
-| `SymptomCooccurrenceHeatmap`       | Visualisation   | Existing custom SVG primitives      | Symptoms × Tags Lift-coloured grid                            |
-| `SymptomCalendarHeatmap`           | Visualisation   | M2 `CalendarHeatmap` (data variant) | Year-grid frequency view per symptom                          |
-| `SymptomTrendOverlay`              | Visualisation   | `DualAxisChart` (FRONTEND.md §6.2)  | Rolling-7d symptom frequency + mood overlay                   |
-| `SymptomInsightCard`               | Insight card    | `InsightCard` (progressive disclosure) | Card variant for symptom-derived insights                  |
-| `SymptomMethodologyDisclaimer`     | Modal/Bottom Sheet | `CorrelationDisclaimer` (extends) | Symptom-specific methodology copy (esp. Lift interpretation)  |
+| Component                      | Type               | Reuses                                 | Purpose                                                      |
+| ------------------------------ | ------------------ | -------------------------------------- | ------------------------------------------------------------ |
+| `SymptomCooccurrenceHeatmap`   | Visualisation      | Existing custom SVG primitives         | Symptoms × Tags Lift-coloured grid                           |
+| `SymptomCalendarHeatmap`       | Visualisation      | M2 `CalendarHeatmap` (data variant)    | Year-grid frequency view per symptom                         |
+| `SymptomTrendOverlay`          | Visualisation      | `DualAxisChart` (FRONTEND.md §6.2)     | Rolling-7d symptom frequency + mood overlay                  |
+| `SymptomInsightCard`           | Insight card       | `InsightCard` (progressive disclosure) | Card variant for symptom-derived insights                    |
+| `SymptomMethodologyDisclaimer` | Modal/Bottom Sheet | `CorrelationDisclaimer` (extends)      | Symptom-specific methodology copy (esp. Lift interpretation) |
 
 All components live under `apps/web/src/lib/components/insights/symptoms/` following the existing
 folder convention for insight-related components.
@@ -108,24 +108,24 @@ interface CooccurrenceCell {
 
 ### Visual Rules
 
-| Aspect                  | Rule                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------ |
-| Color scale             | Divergent: blue (`--color-info`) for Lift < 1, white at Lift = 1, red (`--color-warning`) for Lift > 1 |
-| Color clamp             | Lift ≤ 0.33 = max blue; Lift ≥ 3.0 = max red; values outside clamp use clamp color         |
-| Cell annotation         | `co_count` as small subscript number in bottom-right of cell                               |
-| Significance marker     | `*` after Lift value when `p_value_corrected < 0.10`                                       |
-| Confounder marker       | Cell uses muted/desaturated variant when `confounder === 'weekday'`                        |
-| Empty cells             | Pairs not meeting eligibility threshold: rendered as crosshatch pattern with tooltip "Insufficient data" |
-| Cell size               | 48×48 px desktop, 40×40 px mobile, with 1px gap                                            |
-| Axis labels             | Truncated with ellipsis at 12 chars; full name in tooltip                                  |
+| Aspect              | Rule                                                                                                     |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| Color scale         | Divergent: blue (`--color-info`) for Lift < 1, white at Lift = 1, red (`--color-warning`) for Lift > 1   |
+| Color clamp         | Lift ≤ 0.33 = max blue; Lift ≥ 3.0 = max red; values outside clamp use clamp color                       |
+| Cell annotation     | `co_count` as small subscript number in bottom-right of cell                                             |
+| Significance marker | `*` after Lift value when `p_value_corrected < 0.10`                                                     |
+| Confounder marker   | Cell uses muted/desaturated variant when `confounder === 'weekday'`                                      |
+| Empty cells         | Pairs not meeting eligibility threshold: rendered as crosshatch pattern with tooltip "Insufficient data" |
+| Cell size           | 48×48 px desktop, 40×40 px mobile, with 1px gap                                                          |
+| Axis labels         | Truncated with ellipsis at 12 chars; full name in tooltip                                                |
 
 ### Phase-Gated Rendering
 
-| Phase            | Rendering                                                                                |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `collecting`     | Component not rendered (hidden by parent section gate)                                   |
-| `early_patterns` | Renders **raw counts only** — no Lift colouring, no significance markers, neutral grey scale |
-| `provisional`    | Full Lift colouring, FDR significance markers, confounder muting                         |
+| Phase            | Rendering                                                                                             |
+| ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `collecting`     | Component not rendered (hidden by parent section gate)                                                |
+| `early_patterns` | Renders **raw counts only** — no Lift colouring, no significance markers, neutral grey scale          |
+| `provisional`    | Full Lift colouring, FDR significance markers, confounder muting                                      |
 | `robust`         | Full Lift colouring, plus optional hierarchical clustering reordering when `sortMode === 'clustered'` |
 
 ### Display Filtering (from Feature Spec)
@@ -200,12 +200,12 @@ interface DailyOccurrence {
 
 ### Phase-Gated Rendering
 
-| Phase            | Rendering                                                                                |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `collecting`     | Component not rendered                                                                   |
-| `early_patterns` | **Renders fully** — pure descriptive visualisation, no statistical claim                  |
-| `provisional`    | Same as `early_patterns`, plus inline note: "Now showing in correlations below"          |
-| `robust`         | Same as `provisional`                                                                    |
+| Phase            | Rendering                                                                       |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `collecting`     | Component not rendered                                                          |
+| `early_patterns` | **Renders fully** — pure descriptive visualisation, no statistical claim        |
+| `provisional`    | Same as `early_patterns`, plus inline note: "Now showing in correlations below" |
+| `robust`         | Same as `provisional`                                                           |
 
 This is the only symptom component that is fully visible from `early_patterns` — frequency
 visualisation does not make any correlation claim and is therefore statistically uncontroversial.
@@ -243,7 +243,7 @@ Frequency           Mood
    1.0                 10
         ╭─╮                            ─── Headache freq (left)
    0.5         ╭───╮      6        ─── Mood avg (right)
-        ╯           ╰╮          
+        ╯           ╰╮
    0.0  ───────────────╰──────  2
         Mar 1   Mar 15   Apr 1
 ```
@@ -281,12 +281,12 @@ interface TrendPoint {
 
 ### Phase-Gated Rendering
 
-| Phase            | Rendering                                                                                |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `collecting`     | Component not rendered                                                                   |
-| `early_patterns` | Renders with uncertainty ribbon on mood line; no statistical annotation                  |
+| Phase            | Rendering                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `collecting`     | Component not rendered                                                                                              |
+| `early_patterns` | Renders with uncertainty ribbon on mood line; no statistical annotation                                             |
 | `provisional`    | Renders with uncertainty ribbon; optional inline annotation when associated insight exists ("Linked to insight: X") |
-| `robust`         | Renders without uncertainty ribbon (mood data is sufficiently stable); insight annotation visible |
+| `robust`         | Renders without uncertainty ribbon (mood data is sufficiently stable); insight annotation visible                   |
 
 ### Which Symptoms Are Shown
 
@@ -307,13 +307,13 @@ insights. Appears interleaved with other insight cards in `InsightFeed`.
 
 ### Variants by Insight Type
 
-| Insight Type                  | Card Title Pattern                                          | Primary Statement Pattern (provisional)                              |
-| ----------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
-| `symptom_mood_association`    | "{Symptom} days and your {metric}"                          | "On days with {symptom}, your {metric} tends to be lower."           |
-| `symptom_tag_cooccurrence`    | "{Symptom} often coincides with {tag}"                      | "When you log {symptom}, {tag} is present {jaccard*100}% of the time." |
-| `symptom_cluster` (lasso)     | "{Symptom} stands out in your overall pattern"              | "Among many factors, {symptom} is one of the strongest links to your {target}." |
-| `symptom_cluster` (lag)       | "{Symptom} relates to next-day {target}"                    | "{Symptom} days are followed by lower {target} the next day."        |
-| `symptom_cluster` (cluster)   | "{Symptom} appears with related signals"                    | "{Symptom}, {co-cluster member 1}, and {co-cluster member 2} tend to occur together." |
+| Insight Type                | Card Title Pattern                             | Primary Statement Pattern (provisional)                                               |
+| --------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `symptom_mood_association`  | "{Symptom} days and your {metric}"             | "On days with {symptom}, your {metric} tends to be lower."                            |
+| `symptom_tag_cooccurrence`  | "{Symptom} often coincides with {tag}"         | "When you log {symptom}, {tag} is present {jaccard\*100}% of the time."               |
+| `symptom_cluster` (lasso)   | "{Symptom} stands out in your overall pattern" | "Among many factors, {symptom} is one of the strongest links to your {target}."       |
+| `symptom_cluster` (lag)     | "{Symptom} relates to next-day {target}"       | "{Symptom} days are followed by lower {target} the next day."                         |
+| `symptom_cluster` (cluster) | "{Symptom} appears with related signals"       | "{Symptom}, {co-cluster member 1}, and {co-cluster member 2} tend to occur together." |
 
 All copy templates live in `i18n/insights/symptoms/*.json` with the namespace `insight.symptom.*`.
 
@@ -333,23 +333,23 @@ Three levels, identical mechanism to existing `InsightCard`:
 
 For `symptom_mood_association` (using Cliff's Delta as the robust effect size):
 
-| `|δ|`        | Label                  |
-| ------------ | ---------------------- |
-| < 0.147      | Negligible (suppressed in card surfacing) |
-| 0.147–0.330  | Small association      |
-| 0.330–0.474  | Moderate association   |
-| ≥ 0.474      | Strong association     |
+| `           | δ                                         | `   | Label |
+| ----------- | ----------------------------------------- | --- | ----- |
+| < 0.147     | Negligible (suppressed in card surfacing) |
+| 0.147–0.330 | Small association                         |
+| 0.330–0.474 | Moderate association                      |
+| ≥ 0.474     | Strong association                        |
 
 For `symptom_tag_cooccurrence` (using Lift):
 
-| Lift Range   | Label                                              |
-| ------------ | -------------------------------------------------- |
-| 0.67–1.5     | Suppressed in card surfacing                       |
-| 1.5–2.0      | "Often occurs together"                            |
-| 2.0–3.0      | "Frequently occurs together"                       |
-| ≥ 3.0        | "Almost always occurs together"                    |
-| 0.33–0.67    | "Rarely occurs together"                           |
-| < 0.33       | "Almost never occurs together"                     |
+| Lift Range | Label                           |
+| ---------- | ------------------------------- |
+| 0.67–1.5   | Suppressed in card surfacing    |
+| 1.5–2.0    | "Often occurs together"         |
+| 2.0–3.0    | "Frequently occurs together"    |
+| ≥ 3.0      | "Almost always occurs together" |
+| 0.33–0.67  | "Rarely occurs together"        |
+| < 0.33     | "Almost never occurs together"  |
 
 ### Phase Behaviour
 
@@ -419,17 +419,17 @@ Lift is non-intuitive. The disclaimer must explain:
 
 ## 8. Affected UI Elements — Full Map
 
-| Element                                | Location                              | Adaptation                                                          |
-| -------------------------------------- | ------------------------------------- | ------------------------------------------------------------------- |
-| Symptom Analytics Section (container)  | `/insights` route                     | Hidden in `collecting`; visible from `early_patterns` onward        |
-| `SymptomCooccurrenceHeatmap`           | Symptom Analytics Section             | Hidden in `early_patterns` for Lift; renders raw counts only        |
-| `SymptomCalendarHeatmap`               | Symptom Analytics Section             | Renders from `early_patterns`; max 8 visible without expansion      |
-| `SymptomTrendOverlay`                  | Symptom Analytics Section             | Renders from `early_patterns` with uncertainty ribbon               |
-| `SymptomInsightCard`                   | `InsightFeed` (inline)                | Produced by engine from `provisional` onward                        |
-| `SymptomMethodologyDisclaimer`         | Modal triggered from multiple places  | Always available; extends existing `CorrelationDisclaimer`          |
-| Insight feed sorting                   | `InsightFeed`                         | Confounded symptom insights sorted lower than non-confounded peers  |
-| `CorrelationDisclaimer`                | Existing modal                        | Extended with two new sections                                      |
-| Empty state (Symptom Analytics)        | Symptom Analytics Section             | Phase-aware: "Track 7+ days to see symptom patterns"                |
+| Element                               | Location                             | Adaptation                                                         |
+| ------------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| Symptom Analytics Section (container) | `/insights` route                    | Hidden in `collecting`; visible from `early_patterns` onward       |
+| `SymptomCooccurrenceHeatmap`          | Symptom Analytics Section            | Hidden in `early_patterns` for Lift; renders raw counts only       |
+| `SymptomCalendarHeatmap`              | Symptom Analytics Section            | Renders from `early_patterns`; max 8 visible without expansion     |
+| `SymptomTrendOverlay`                 | Symptom Analytics Section            | Renders from `early_patterns` with uncertainty ribbon              |
+| `SymptomInsightCard`                  | `InsightFeed` (inline)               | Produced by engine from `provisional` onward                       |
+| `SymptomMethodologyDisclaimer`        | Modal triggered from multiple places | Always available; extends existing `CorrelationDisclaimer`         |
+| Insight feed sorting                  | `InsightFeed`                        | Confounded symptom insights sorted lower than non-confounded peers |
+| `CorrelationDisclaimer`               | Existing modal                       | Extended with two new sections                                     |
+| Empty state (Symptom Analytics)       | Symptom Analytics Section            | Phase-aware: "Track 7+ days to see symptom patterns"               |
 
 ---
 
