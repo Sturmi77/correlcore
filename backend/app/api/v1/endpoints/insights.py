@@ -39,7 +39,7 @@ async def list_insights_endpoint(
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
-        insights=[InsightResponse.model_validate(insight) for insight in insights]
+        insights=[InsightResponse.model_validate(insight) for insight in insights],
     )
 
 
@@ -59,5 +59,5 @@ async def list_latest_insights_endpoint(
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
-        insights=[InsightResponse.model_validate(insight) for insight in insights]
+        insights=[InsightResponse.model_validate(insight) for insight in insights],
     )

@@ -6,10 +6,11 @@ import uuid
 from dataclasses import dataclass
 from datetime import date as date_type
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import reset_current_user_dek, set_current_user_dek, unwrap_dek
+from app.db.session import bind_rls_current_user
 from app.models.user import User
 from app.models.user_encryption_key import UserEncryptionKey
 from app.models.user_preference import UserPreference
@@ -34,20 +35,32 @@ async def list_insight_generation_jobs(db: AsyncSession) -> list[InsightGenerati
     """
 
     result = await db.execute(
-        select(User.id, UserEncryptionKey.wrapped_dek)
-        .join(UserEncryptionKey, UserEncryptionKey.user_id == User.id)
-        .outerjoin(UserPreference, UserPreference.user_id == User.id)
+        select(User.id)
         .where(
             User.is_active.is_(True),
             User.is_verified.is_(True),
-            or_(UserPreference.user_id.is_(None), UserPreference.analytics_enabled.is_(True)),
         )
         .order_by(User.id.asc())
     )
-    return [
-        InsightGenerationJob(user_id=user_id, wrapped_dek=wrapped_dek)
-        for user_id, wrapped_dek in result.all()
-    ]
+    user_ids = result.scalars().all()
+
+    jobs: list[InsightGenerationJob] = []
+    for user_id in user_ids:
+        await bind_rls_current_user(db, user_id)
+        job_result = await db.execute(
+            select(UserEncryptionKey.wrapped_dek, UserPreference.analytics_enabled)
+            .outerjoin(UserPreference, UserPreference.user_id == UserEncryptionKey.user_id)
+            .where(UserEncryptionKey.user_id == user_id)
+        )
+        row = job_result.first()
+        if row is None:
+            continue
+        wrapped_dek, analytics_enabled = row
+        if analytics_enabled is False:
+            continue
+        jobs.append(InsightGenerationJob(user_id=user_id, wrapped_dek=wrapped_dek))
+
+    return jobs
 
 
 async def generate_insights_for_job(
@@ -61,6 +74,7 @@ async def generate_insights_for_job(
     dek = unwrap_dek(job.wrapped_dek)
     token = set_current_user_dek(job.user_id, dek)
     try:
+        await bind_rls_current_user(db, job.user_id)
         insights = await generate_and_store_insights(db, user_id=job.user_id, as_of=as_of)
     finally:
         reset_current_user_dek(token)

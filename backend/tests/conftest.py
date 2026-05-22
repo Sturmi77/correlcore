@@ -18,6 +18,8 @@ Conventions
 
 from __future__ import annotations
 
+import base64
+import os
 import secrets
 import uuid
 from collections.abc import AsyncGenerator, Generator
@@ -27,6 +29,20 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+
+# Unit tests must not require external Redis just because endpoint-level rate
+# limits are enabled in production. Set this before importing app.main, where
+# the process-wide SlowAPI limiter is created.
+os.environ.setdefault("APP_ENV", "test")
+os.environ.setdefault("RATE_LIMIT_STORAGE_URL", "memory://")
+os.environ.setdefault(
+    "SECRET_KEY",
+    "test-" + "-".join(["secret", "key", "for", "correlcore", "checks"]),
+)
+os.environ.setdefault(
+    "ENCRYPTION_KEY",
+    base64.urlsafe_b64encode(b"0" * 32).decode(),
+)
 
 from app.core.crypto import (
     encrypt_with_dek,

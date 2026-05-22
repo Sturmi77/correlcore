@@ -113,7 +113,9 @@ def _metric_value(entry: AnalyticsEntry, metric: MetricName) -> int:
     return entry.stress
 
 
-def display_metric_value(metric: MetricName, raw: int, *, scale_min: int = 1, scale_max: int = 5) -> int:
+def display_metric_value(
+    metric: MetricName, raw: int, *, scale_min: int = 1, scale_max: int = 5
+) -> int:
     """View-layer inversion for stress (FRONTEND.md §4.3). Raw DB values stay unchanged."""
 
     if metric == "stress":
@@ -581,6 +583,21 @@ async def _load_analytics_inputs(
         )
         for entry in entries
     ], list(tags_by_id.values())
+
+
+async def load_analytics_data(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    as_of: date_type,
+) -> tuple[list[AnalyticsEntry], list[TagSnapshot]]:
+    """Load sanitized analytics rows for tests and diagnostics.
+
+    The public wrapper preserves the M3 service contract while keeping the
+    query implementation private to this module.
+    """
+
+    return await _load_analytics_inputs(db, user_id=user_id, as_of=as_of)
 
 
 async def generate_and_store_insights(

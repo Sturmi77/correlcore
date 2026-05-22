@@ -7,16 +7,10 @@
  */
 
 import { api } from './client';
+import type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
 import type { TagResponse } from './tags';
 
-// ---------------------------------------------------------------------------
-// Enums — keep in sync with app/models/entry.py
-// ---------------------------------------------------------------------------
-
-export type EntrySlot = 'day' | 'morning' | 'noon' | 'evening';
-export type EntrySource = 'direct' | 'retrospective' | 'import' | 'wearable';
-
-export type WorkContext = 'homeoffice' | 'office' | 'vacation' | 'sick' | 'weekend' | 'travel';
+export type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
 
 // ---------------------------------------------------------------------------
 // DTOs

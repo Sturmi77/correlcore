@@ -11,15 +11,15 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 
 ## 2. Verarbeitete Datenkategorien
 
-| Datenkategorie                                 | Art-9-relevant              | Speicherort | Verschlüsselung   | Rechtsgrundlage                                       |
-| ---------------------------------------------- | --------------------------- | ----------- | ----------------- | ----------------------------------------------------- |
-| Stimmungsdaten (mood_score, energy, stress)    | ✅ Ja                       | PostgreSQL  | App-Level AES-256 | Einwilligung Art. 6(1)(a) + Art. 9(2)(a)              |
-| Symptom-Daten (Kopfschmerzen, Verdauung, etc.) | ✅ Ja                       | PostgreSQL  | App-Level AES-256 | Einwilligung                                          |
-| Notizen (Freitext)                             | ⚠️ potenziell               | PostgreSQL  | App-Level AES-256 | Einwilligung                                          |
-| Fotos                                          | ⚠️ potenziell (biometrisch) | MinIO       | SSE-S3            | Einwilligung                                          |
-| Schlafdaten (Garmin/Health Connect)            | ✅ Ja                       | PostgreSQL  | App-Level AES-256 | Einwilligung + explizite separate Einwilligung für HC |
-| Aktivitäts-Tags                                | ❌ nein (abstrakt)          | PostgreSQL  | Standard          | berechtigtes Interesse                                |
-| E-Mail-Adresse                                 | ❌ nein                     | PostgreSQL  | Standard          | Vertragserfüllung                                     |
+| Datenkategorie                                 | Art-9-relevant              | Speicherort     | Verschlüsselung      | Rechtsgrundlage                                       |
+| ---------------------------------------------- | --------------------------- | --------------- | -------------------- | ----------------------------------------------------- |
+| Stimmungsdaten (mood_score, energy, stress)    | ✅ Ja                       | PostgreSQL      | App-Level AES-256    | Einwilligung Art. 6(1)(a) + Art. 9(2)(a)              |
+| Symptom-Daten (Kopfschmerzen, Verdauung, etc.) | ✅ Ja                       | PostgreSQL      | App-Level AES-256    | Einwilligung                                          |
+| Notizen (Freitext)                             | ⚠️ potenziell               | PostgreSQL      | App-Level AES-256    | Einwilligung                                          |
+| Fotos                                          | ⚠️ potenziell (biometrisch) | MinIO (geplant) | SSE-S3 (vorbereitet) | Einwilligung                                          |
+| Schlafdaten (Garmin/Health Connect)            | ✅ Ja                       | PostgreSQL      | App-Level AES-256    | Einwilligung + explizite separate Einwilligung für HC |
+| Aktivitäts-Tags                                | ❌ nein (abstrakt)          | PostgreSQL      | Standard             | berechtigtes Interesse                                |
+| E-Mail-Adresse                                 | ❌ nein                     | PostgreSQL      | Standard             | Vertragserfüllung                                     |
 
 ## 3. Technische und organisatorische Maßnahmen (TOMs, Art. 32 DSGVO)
 
@@ -32,7 +32,7 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 
 ### 3.2 Zugriffskontrolle
 
-- **Authentifizierung:** MFA-fähig (TOTP)
+- **Authentifizierung:** Native JWT mit HttpOnly-Cookies und Refresh-Rotation; MFA/TOTP ist erst mit Authentik/OIDC geplant
 - **Autorisierung:** PostgreSQL Row-Level-Security (user_id-basiert)
 - **API:** Rate-Limiting, JWT-Refresh-Token-Rotation
 - **Docker:** Socket-Proxy, no-new-privileges, interne Netzwerke
@@ -40,7 +40,7 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 ### 3.3 Datenminimierung
 
 - Nur explizit eingegebene Daten werden erfasst (kein Background-Tracking)
-- EXIF-Strip bei Foto-Upload (GPS, Kamera-Metadaten, biometrische Marker entfernt)
+- EXIF-Strip bei Foto-Upload ist verpflichtender M6-Scope; aktuell gibt es noch keine Foto-/Attachment-API
 - Logs enthalten keine Gesundheitsdaten im Klartext
 - Push-Notification-Payloads sind inhaltsleer (nur Reminder-Signal)
 
@@ -58,8 +58,8 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 | Auskunft (Art. 15)                    | `GET /api/v1/user/data` → JSON-Dump aller Daten                             | sofort (automatisiert) | ✅ M2  |
 | Berichtigung (Art. 16)                | Standard-Edit-UI                                                            | sofort                 | ✅ M1  |
 | Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/me` → Cascade alle Daten + Cryptographic Erasure (DEK) | sofort                 | ✅ M1  |
-| Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON + Fotos)                              | automatisiert          | ✅ M2  |
-| Widerspruch Analyse (Art. 21)         | `POST /api/v1/user/settings {analytics_enabled: false}`                     | sofort                 | ✅ M3  |
+| Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON/CSV; Foto-Sektion bis M6 leer)        | automatisiert          | ✅ M2  |
+| Widerspruch Analyse (Art. 21)         | `PATCH /api/v1/user/preferences {analytics_enabled: false}`                 | sofort                 | ✅ M3  |
 | Einschränkung (Art. 18)               | via Support (manuell in v1)                                                 | 72h                    | 🔄 M9  |
 
 ## 5. Einwilligungsmanagement
@@ -90,13 +90,13 @@ Keine weiteren Auftragsverarbeiter.
 
 Eine DSFA ist durchzuführen wenn Gesundheitsdaten im Cloud-Betrieb verarbeitet werden.
 
-| #   | Risikofeld                    | Mitigationsmaßnahme                                              |
-| --- | ----------------------------- | ---------------------------------------------------------------- |
-| 1   | Unbefugter Datenbankzugriff   | Verschlüsselung at-rest, RLS, starke Auth                        |
-| 2   | Backup-Diebstahl              | restic-Verschlüsselung, separate Key-Aufbewahrung                |
-| 3   | Insider-Threat (SaaS-Betrieb) | Audit-Log, keine menschliche Zugriffsnotwendigkeit auf Nutzdaten |
-| 4   | Third-Party-Kompromittierung  | kein Third-Party-Analytics, minimale externe Abhängigkeiten      |
-| 5   | Gesetzliche Auskunftspflicht  | AV-Verträge, Daten in EU (Hetzner Frankfurt)                     |
+| #   | Risikofeld                    | Mitigationsmaßnahme                                                                                                     |
+| --- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | Unbefugter Datenbankzugriff   | Verschlüsselung at-rest, RLS, starke Auth                                                                               |
+| 2   | Backup-Diebstahl              | restic-Verschlüsselung, separate Key-Aufbewahrung                                                                       |
+| 3   | Insider-Threat (SaaS-Betrieb) | RLS, App-Level-Verschlüsselung, keine menschliche Zugriffsnotwendigkeit auf Nutzdaten; Admin-Audit-Log ist noch geplant |
+| 4   | Third-Party-Kompromittierung  | kein Third-Party-Analytics, minimale externe Abhängigkeiten                                                             |
+| 5   | Gesetzliche Auskunftspflicht  | AV-Verträge, Daten in EU (Hetzner Frankfurt)                                                                            |
 
 **DSFA-Status:** 🔄 Vor M12 (Cloud-Launch) zu erstellen
 
@@ -121,7 +121,7 @@ Eine DSFA ist durchzuführen wenn Gesundheitsdaten im Cloud-Betrieb verarbeitet 
 | Mood-Entries                | bis Account-Löschung oder explizite Nutzer-Löschung   | Account-Delete / Nutzeraktion            |
 | Analytics/Insights          | 90 Tage Rolling Window (ältere werden neu berechnet)  | Automatisch                              |
 | Nicht verifizierte Accounts | 7 Tage (konfigurierbar via `UNVERIFIED_CLEANUP_DAYS`) | Worker-Job `cleanup_unverified_accounts` |
-| Sync-Konflikt-Log           | 90 Tage                                               | Automatisch                              |
+| Sync-Konflikt-Log           | 90 Tage                                               | Geplant mit M4                           |
 | Auth-Logs (Login-Versuche)  | 30 Tage                                               | Automatisch                              |
 | Error-Logs (GlitchTip)      | 90 Tage                                               | Automatisch                              |
 | Billing-Daten               | 7 Jahre                                               | Gesetzliche Aufbewahrungspflicht AT      |
@@ -156,6 +156,7 @@ Für jeden Meilenstein der DSGVO-relevante Features enthält:
 
 ### M6 – Fotos
 
+- [ ] 🔒 DSGVO: Foto-/Attachment-API implementiert
 - [ ] 🔒 DSGVO: EXIF-Strip automatisch getestet (Unit-Test mit GPS-haltigen Testfotos)
 - [ ] 🔒 DSGVO: Account-Delete löscht auch alle MinIO-Objekte (Cascade-Test)
 

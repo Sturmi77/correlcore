@@ -120,6 +120,13 @@ export const handle: Handle = async ({ event, resolve }) => {
   // with the upstream host so virtual-host routing on the API side (if
   // any) works as expected. URL parsing handles default ports correctly.
   forwardedHeaders.set('host', new URL(upstreamBase).host);
+  // Do not pass through browser-supplied forwarding headers. The backend may
+  // trust these for rate limiting in reverse-proxy deployments, so the web
+  // proxy must make them authoritative.
+  forwardedHeaders.set('x-forwarded-for', event.getClientAddress());
+  forwardedHeaders.set('x-real-ip', event.getClientAddress());
+  forwardedHeaders.set('x-forwarded-host', event.url.host);
+  forwardedHeaders.set('x-forwarded-proto', event.url.protocol.replace(':', ''));
 
   // GET/HEAD must not carry a body. For all other methods we pass the
   // raw stream through; `duplex: 'half'` is required by the Node fetch

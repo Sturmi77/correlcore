@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { evaluatePassword } from './PasswordStrength.svelte';
+import { evaluatePassword } from '$lib/utils/passwordStrength';
 
 describe('evaluatePassword', () => {
   it('reports score 0 + not-meeting for empty input', () => {

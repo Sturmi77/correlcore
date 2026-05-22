@@ -66,8 +66,10 @@ x-api-env: &api-env
   COOKIE_SECURE: ${COOKIE_SECURE:-false}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
+  DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
   REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+  RATE_LIMIT_TRUST_PROXY_HEADERS: 'true'
   CORS_ORIGINS: ${CORS_ORIGINS}
   SMTP_HOST: ${SMTP_HOST:-mailpit}
   SMTP_PORT: ${SMTP_PORT:-1025}
@@ -89,7 +91,9 @@ services:
     <<: *api-image
     container_name: correlcore-migrate
     command: ['alembic', 'upgrade', 'head']
-    environment: *api-env
+    environment:
+      <<: *api-env
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
     depends_on:
       postgres:
         condition: service_healthy
@@ -190,8 +194,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-correlcore}
       POSTGRES_USER: ${POSTGRES_USER:-correlcore}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      APP_DB_USER: ${APP_DB_USER:-correlcore_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test:
         ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}']

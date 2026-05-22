@@ -15,9 +15,17 @@ from app.services.insight_worker_service import (
 from app.workers.analytics import run_daily_jobs_once, run_insights_once
 
 
-def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
+def _scalars_result(values: list[object]) -> MagicMock:
     result = MagicMock()
-    result.all.return_value = values
+    scalars = MagicMock()
+    scalars.all.return_value = values
+    result.scalars.return_value = scalars
+    return result
+
+
+def _first_result(value: tuple[object, ...] | None) -> MagicMock:
+    result = MagicMock()
+    result.first.return_value = value
     return result
 
 
@@ -47,17 +55,27 @@ class _FakeSessionFactory:
 async def test_list_insight_generation_jobs_filters_eligible_users() -> None:
     user_id = uuid.uuid4()
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_row_result([(user_id, b"wrapped-dek")]))
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([user_id]),
+            _first_result((b"wrapped-dek", None)),
+        ]
+    )
 
-    jobs = await list_insight_generation_jobs(db)
+    with patch(
+        "app.services.insight_worker_service.bind_rls_current_user", new=AsyncMock()
+    ) as bind_rls:
+        jobs = await list_insight_generation_jobs(db)
 
     assert jobs == [InsightGenerationJob(user_id=user_id, wrapped_dek=b"wrapped-dek")]
-    stmt = db.execute.await_args.args[0]
+    bind_rls.assert_awaited_once_with(db, user_id)
+    stmt = db.execute.await_args_list[0].args[0]
     where_sql = str(stmt.whereclause)
     assert "users.is_active IS true" in where_sql
     assert "users.is_verified IS true" in where_sql
-    assert "user_preferences.analytics_enabled IS true" in where_sql
-    assert "user_encryption_keys" in str(stmt)
+    user_scoped_stmt = db.execute.await_args_list[1].args[0]
+    assert "user_encryption_keys" in str(user_scoped_stmt)
+    assert "user_preferences" in str(user_scoped_stmt)
 
 
 @pytest.mark.asyncio
@@ -72,6 +90,9 @@ async def test_generate_insights_for_job_binds_and_resets_user_dek() -> None:
         ) as bind,
         patch("app.services.insight_worker_service.reset_current_user_dek") as reset,
         patch(
+            "app.services.insight_worker_service.bind_rls_current_user", new=AsyncMock()
+        ) as bind_rls,
+        patch(
             "app.services.insight_worker_service.generate_and_store_insights",
             new=AsyncMock(return_value=[object(), object()]),
         ) as generate,
@@ -85,6 +106,7 @@ async def test_generate_insights_for_job_binds_and_resets_user_dek() -> None:
     assert count == 2
     unwrap.assert_called_once_with(b"wrapped-dek")
     bind.assert_called_once_with(job.user_id, b"dek")
+    bind_rls.assert_awaited_once_with(db, job.user_id)
     generate.assert_awaited_once()
     reset.assert_called_once_with("token")
 
@@ -98,6 +120,7 @@ async def test_generate_insights_for_job_resets_dek_on_engine_failure() -> None:
         patch("app.services.insight_worker_service.unwrap_dek", return_value=b"dek"),
         patch("app.services.insight_worker_service.set_current_user_dek", return_value="token"),
         patch("app.services.insight_worker_service.reset_current_user_dek") as reset,
+        patch("app.services.insight_worker_service.bind_rls_current_user", new=AsyncMock()),
         patch(
             "app.services.insight_worker_service.generate_and_store_insights",
             new=AsyncMock(side_effect=RuntimeError("boom")),

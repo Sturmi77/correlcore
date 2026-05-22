@@ -94,3 +94,6 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=70"
+markers = [
+  "integration: tests that require external services such as PostgreSQL or Redis",
+]

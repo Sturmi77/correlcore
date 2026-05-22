@@ -1,5 +1,10 @@
-"""Async SQLAlchemy session factory."""
+"""Async SQLAlchemy session factory and request-scoped DB context."""
 
+from __future__ import annotations
+
+import uuid
+
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
@@ -19,6 +24,20 @@ AsyncSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+async def bind_rls_current_user(session: AsyncSession, user_id: uuid.UUID) -> None:
+    """Bind the authenticated user id to the current transaction for RLS.
+
+    PostgreSQL policies read ``app.current_user_id`` via ``current_setting``.
+    ``set_config(..., true)`` is transaction-local, so the value is cleared by
+    the commit/rollback in ``get_session`` before the pooled connection can be
+    reused by another request.
+    """
+    await session.execute(
+        text("SELECT set_config('app.current_user_id', :user_id, true)"),
+        {"user_id": str(user_id)},
+    )
 
 
 async def get_session() -> AsyncSession:  # type: ignore[misc]

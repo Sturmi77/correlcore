@@ -1,7 +1,7 @@
 # CorrelCore
 
 > **Privacy-first Mood & Habit Tracker with Correlation Analysis**
-> Understand why some days are good and others are not — selfhosted, offline-first, 60 seconds per day.
+> Understand why some days are good and others are not — selfhosted today, offline-capable by design, 60 seconds per day.
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/Sturmi77/correlcore/milestones)
@@ -15,12 +15,12 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 
 **CorrelCore** fills this gap:
 
-| Promise                        | Description                                            |
-| ------------------------------ | ------------------------------------------------------ |
-| **Correlations, not raw data** | The app explains why days were good or bad             |
-| **Selfhosted & Offline-First** | Your health data never leaves your home                |
-| **60 seconds per day**         | No more, or it simply won't get done                   |
-| **No gamification, ever**      | You track your habits — not how often you open the app |
+| Promise                                | Description                                                                  |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| **Correlations, not raw data**         | The app explains why days were good or bad                                   |
+| **Selfhosted now, offline-ready next** | Your health data stays on your instance; full offline sync is planned for M4 |
+| **60 seconds per day**                 | No more, or it simply won't get done                                         |
+| **No gamification, ever**              | You track your habits — not how often you open the app                       |
 
 ---
 
@@ -33,15 +33,15 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M3.1** — Insights polish: non-blocking InsightStore, canonical InsightCard, full Insights feed, correlation disclaimer, and neutral heatmap styling
 - [ ] **M3.5** — Frontend web and mobile optimisation: app shell, entry bottom sheet, Home recomposition, Trends tabs, Settings/i18n, tag lifecycle. Implementation is on `main`; release closeout still needs rendered QA, Web CI confirmation, and GitHub issue closure.
 - [ ] **M3.6** — Insight maturity phases: ADR-0021 API contract (`insight_maturity`), Journey Banner, Maturity Badge, phase-aware empty states, and phase milestone cards. Implementation is documented through Sprint 4; release closeout remains blocked by Web CI diagnostics and GitHub write access.
-- [ ] **M4** — Mobile polish: PWA, bottom-sheet UX, UnifiedPush, app lock, offline sync (Dexie.js)
+- [ ] **M4** — Mobile/PWA hardening: installable PWA, service-worker cache policy, UnifiedPush/Web Push, app lock, offline sync (Dexie.js), sync-conflict log
 - [ ] **M5** — Habits & goals: adherence rate, tracking consistency, habit dashboard
-- [ ] **M6** — Health Connect: Android wearables import, sleep correlation
-- [ ] **M7** — Insights v2: Lasso regression, lag analysis, optional local LLM (Ollama)
-- [ ] **M8** — Beta hardening: monitoring, GlitchTip, external testers, documentation
-- [ ] **M9** — Public selfhost release v1.0
-- [ ] **M10** — Android Play Store (Capacitor)
-- [ ] **M11** — SaaS mode (managed hosting)
-- [ ] **M12** — Photo & media: local upload to MinIO, EXIF strip, Immich integration (v2)
+- [ ] **M6** — Photo & media: local upload to MinIO, EXIF strip, Immich integration (v2)
+- [ ] **M7** — Health Connect: Android wearables import, sleep correlation
+- [ ] **M8** — Insights v2: Lasso regression, lag analysis, optional local LLM (Ollama)
+- [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation
+- [ ] **M10** — Public selfhost release v1.0
+- [ ] **M11** — Android Play Store (Capacitor)
+- [ ] **M12** — SaaS mode (managed hosting)
 
 Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
@@ -58,22 +58,22 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ## Tech Stack
 
-| Layer              | Technology                             | Rationale                                                                                             |
-| ------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **Backend API**    | FastAPI (Python 3.12)                  | Async, OpenAPI-native, fast iteration                                                                 |
-| **Web Frontend**   | SvelteKit + Skeleton UI                | Performance, bundle < 150 KB gz                                                                       |
-| **Mobile**         | PWA + Capacitor (Android)              | Maximum code sharing, native Health Connect access ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
-| **Charts**         | Custom SVG components                  | No external framework, JS budget maintained, token-compliant                                          |
-| **Database**       | PostgreSQL 16 + pgvector               | Row-level security for multi-user, vector for insights                                                |
-| **Cache / Queue**  | Redis 7                                | Sessions, rate limiting, sync queue                                                                   |
-| **Object Storage** | MinIO                                  | Selfhost-compatible S3, EXIF strip                                                                    |
-| **Reverse Proxy**  | Traefik v3                             | Automatic TLS, Docker label routing                                                                   |
-| **Auth**           | Native JWT phase 1, Authentik from M11 | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                 |
-| **Offline Sync**   | Dexie.js (IndexedDB)                   | Delta sync, last-write-wins (M4)                                                                      |
-| **Analytics**      | pandas + scikit-learn                  | Correlation, Lasso, lag analysis                                                                      |
-| **Migrations**     | Alembic                                | Schema versioning                                                                                     |
-| **Monitoring**     | GlitchTip + Uptime Kuma                | Selfhosted error tracking                                                                             |
-| **Notifications**  | UnifiedPush / FCM                      | Privacy-first push                                                                                    |
+| Layer              | Technology                                                        | Rationale                                                                                                   |
+| ------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Backend API**    | FastAPI (Python 3.12)                                             | Async, OpenAPI-native, fast iteration                                                                       |
+| **Web Frontend**   | SvelteKit + Skeleton UI                                           | Performance, bundle < 150 KB gz                                                                             |
+| **Mobile**         | Responsive web now; PWA hardening in M4; Capacitor Android in M11 | Maximum code sharing, native Health Connect access later ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
+| **Charts**         | Custom SVG components                                             | No external framework, JS budget maintained, token-compliant                                                |
+| **Database**       | PostgreSQL 16 + pgvector                                          | Row-level security for multi-user, vector for insights                                                      |
+| **Cache / Queue**  | Redis 7                                                           | Sessions, rate limiting, sync queue                                                                         |
+| **Object Storage** | MinIO                                                             | Selfhost-compatible S3 foundation; photo upload and EXIF strip are M6 scope                                 |
+| **Reverse Proxy**  | Traefik v3                                                        | Automatic TLS, Docker label routing                                                                         |
+| **Auth**           | Native JWT phase 1, Authentik from M12                            | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                       |
+| **Offline Sync**   | Planned: Dexie.js (IndexedDB)                                     | Delta sync, last-write-wins and conflict log in M4                                                          |
+| **Analytics**      | pandas + scikit-learn                                             | Correlation, Lasso, lag analysis                                                                            |
+| **Migrations**     | Alembic                                                           | Schema versioning                                                                                           |
+| **Monitoring**     | GlitchTip + Uptime Kuma                                           | Selfhosted error tracking                                                                                   |
+| **Notifications**  | UnifiedPush / FCM                                                 | Privacy-first push                                                                                          |
 
 ---
 
@@ -105,7 +105,7 @@ After startup, CorrelCore is available at `https://your-domain.tld`
 ```
 correlcore/
 ├── apps/
-│   ├── web/          # SvelteKit PWA
+│   ├── web/          # SvelteKit web app; PWA hardening from M4
 │   └── android/      # Capacitor Android app (from M10)
 ├── backend/
 │   ├── app/          # FastAPI application
@@ -148,7 +148,9 @@ Task: <your specific task here>
 | [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                         | Vision, features, architecture, roadmap — single source of truth  |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md)                               | Component diagram, deployment topologies, sync protocol           |
 | [API.md](docs/API.md)                                                 | OpenAPI guidelines, endpoints, auth flow                          |
+| [API_CONTRACTS.md](docs/API_CONTRACTS.md)                             | API contract strategy, frontend constants, OpenAPI client plan    |
 | [FRONTEND.md](docs/FRONTEND.md)                                       | Design principles, atomic design, i18n, performance budget        |
+| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                 | Local setup, quality gates, test database and secret scanning     |
 | [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                         | Competitive and market analysis, monetisation, marketing          |
 | [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan      |
 | [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)           | Rename and deployment migration notes from MoodSync to CorrelCore |

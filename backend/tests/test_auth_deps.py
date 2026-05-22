@@ -250,6 +250,7 @@ async def test_get_current_user_accepts_bearer_header(async_client: AsyncClient)
 
     with (
         patch("app.api.v1.deps.auth._resolve_user", side_effect=fake_resolve),
+        patch("app.api.v1.deps.auth.bind_rls_current_user", new_callable=AsyncMock),
         patch("app.api.v1.deps.auth._load_and_bind_dek", side_effect=fake_load_and_bind),
     ):
         r = await async_client.get(
@@ -277,6 +278,7 @@ async def test_get_current_user_resets_dek_after_response(
 
     with (
         patch("app.api.v1.deps.auth._resolve_user", side_effect=fake_resolve),
+        patch("app.api.v1.deps.auth.bind_rls_current_user", new_callable=AsyncMock),
         patch("app.api.v1.deps.auth._load_and_bind_dek", side_effect=fake_load_and_bind),
         patch("app.api.v1.deps.auth.reset_current_user_dek") as mock_reset,
     ):

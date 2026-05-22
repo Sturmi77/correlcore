@@ -234,7 +234,7 @@
       {/if}
     </section>
 
-    <nav class="trends__tabs" role="tablist" aria-label={$_('trends.tabs.label')}>
+    <div class="trends__tabs" role="tablist" aria-label={$_('trends.tabs.label')}>
       {#each tabs as tab}
         <button
           type="button"
@@ -247,14 +247,14 @@
           {$_(tab.label)}
         </button>
       {/each}
-    </nav>
+    </div>
 
     {#if error}
       <p class="trends__error" role="alert">{error}</p>
     {/if}
 
     {#if activeTab === 'mood'}
-      <section class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.mood')}>
+      <div class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.mood')}>
         <MetricTimeseries
           points={timeseries?.points ?? []}
           {range}
@@ -262,17 +262,17 @@
           {loading}
           on:selectDate={(event) => void openHistory(event.detail.date)}
         />
-      </section>
+      </div>
     {:else if activeTab === 'activities'}
-      <section class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.activities')}>
+      <div class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.activities')}>
         <TagHeatmap
           {heatmap}
           {loading}
           on:selectDate={(event) => void openHistory(event.detail.date)}
         />
-      </section>
+      </div>
     {:else}
-      <section
+      <div
         class="trends__panel trends__health"
         role="tabpanel"
         aria-label={$_('trends.tabs.health')}
@@ -295,7 +295,7 @@
             <strong>{streak?.total_entry_days ?? '-'}</strong>
           </div>
         </section>
-      </section>
+      </div>
     {/if}
 
     <EntryHistorySheet

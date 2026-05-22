@@ -31,6 +31,7 @@ function makeEvent(url: string, init: RequestInit = {}): RequestEvent {
   return {
     url: new URL(url),
     request,
+    getClientAddress: () => '203.0.113.42',
   } as unknown as RequestEvent;
 }
 
@@ -143,6 +144,25 @@ describe('handle — proxy /api/*', () => {
     expect(headers.get('keep-alive')).toBeNull();
     expect(headers.get('transfer-encoding')).toBeNull();
     expect(headers.get('x-trace-id')).toBe('abc123');
+  });
+
+  it('overwrites client supplied forwarding headers', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    const event = makeEvent('http://web.local/api/v1/ping', {
+      headers: {
+        'x-forwarded-for': '198.51.100.99',
+        'x-real-ip': '198.51.100.100',
+      },
+    });
+
+    await handle({ event, resolve: resolveMock });
+
+    const [, init] = fetchMock.mock.calls[0];
+    const headers = (init as RequestInit).headers as Headers;
+    expect(headers.get('x-forwarded-for')).toBe('203.0.113.42');
+    expect(headers.get('x-forwarded-host')).toBe('web.local');
+    expect(headers.get('x-forwarded-proto')).toBe('http');
+    expect(headers.get('x-real-ip')).toBe('203.0.113.42');
   });
 
   it('forwards upstream Set-Cookie (HttpOnly auth cookie) verbatim', async () => {

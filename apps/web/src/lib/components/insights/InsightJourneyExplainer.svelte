@@ -21,7 +21,7 @@
       aria-label={$_('maturity.explainer.close')}
       on:click={close}
     ></button>
-    <section
+    <div
       class="journey-explainer__sheet"
       role="dialog"
       aria-modal="true"
@@ -57,7 +57,7 @@
       <button class="btn btn-sm variant-filled-primary" type="button" on:click={close}>
         {$_('maturity.explainer.close')}
       </button>
-    </section>
+    </div>
   </div>
 {/if}
 

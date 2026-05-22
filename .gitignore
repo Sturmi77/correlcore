@@ -23,6 +23,8 @@ htmlcov/
 node_modules/
 .svelte-kit/
 .next/
+playwright-report/
+test-results/
 out/
 dist/
 build/

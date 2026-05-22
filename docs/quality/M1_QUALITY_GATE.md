@@ -134,11 +134,10 @@ Aufschlüsselung der kritischen Pfade (Stichtag 2026-05-07):
 - Öffentlich (bewusst): `POST /auth/register`, `POST /auth/login`, `POST /auth/verify-email`, `POST /auth/resend-verification`, `POST /auth/refresh`, `POST /auth/logout`, `GET /symptoms/default`. ✅
 - RLS-Policies vorhanden für `users`, `entries`, `tags`, `entry_tags`, `symptoms`, `entry_symptoms`, `user_encryption_keys`, `email_verification_tokens` (Migrationen 002–007). ✅
 
-**Follow-up-Hinweis:** Das Design-Dokument markiert die vollständige RLS-Enforcement
-weiterhin als `[~]`, solange das per Transaktion gesetzte
-`SET LOCAL app.current_user_id` nicht automatisiert und durch Integrationstests
-belegt ist. Bis dahin sind App-Level-Owner-Filter die primäre Durchsetzung und
-RLS-Policies die vorbereitete Defense-in-Depth-Schicht.
+**Follow-up-Status nach Sprint 2:** Die RLS-Enforcement ist jetzt automatisiert:
+Authentifizierte Requests binden `app.current_user_id` transaktionslokal vor dem
+DEK-Lookup, der Analytics-Worker bindet den Kontext pro User-Job und Migration
+012 erzwingt RLS für die eingeschränkte App-Rolle.
 
 ### 3.2 Input-Validation
 
@@ -281,7 +280,7 @@ cd backend
 APP_ENV=test \
   DATABASE_URL='postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore' \
   REDIS_URL='redis://:changeme@localhost:6379/0' \
-  SECRET_KEY='test-secret-key-min-32-bytes-long-padding' \
+  SECRET_KEY='<generate-local-test-secret>' \
   ENCRYPTION_KEY='<gültiger Fernet-Key>' \
   uv run pytest --cov=app --cov-report=term -q
 
