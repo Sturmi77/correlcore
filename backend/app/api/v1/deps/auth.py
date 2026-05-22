@@ -34,7 +34,7 @@ from app.core.crypto import (
     unwrap_dek,
 )
 from app.core.security import decode_token
-from app.db.session import get_session
+from app.db.session import bind_rls_current_user, get_session
 from app.models.user import User
 from app.models.user_encryption_key import UserEncryptionKey
 
@@ -128,6 +128,7 @@ async def get_current_user(
         raise _CREDENTIALS_EXCEPTION
 
     user = await _resolve_user(token, db)
+    await bind_rls_current_user(db, user.id)
     dek_token = await _load_and_bind_dek(db, user)
     try:
         yield user

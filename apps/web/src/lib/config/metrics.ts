@@ -4,7 +4,10 @@
  * Raw DB/API values are never mutated; use `displayMetricValue` for charts.
  */
 
-export type EntryMetricField = 'mood_score' | 'energy' | 'stress' | 'sleep_quality';
+import { ENTRY_CONTRACT } from '$lib/contracts/apiContract';
+import type { EntryMetricField } from '$lib/contracts/apiContract';
+
+export type { EntryMetricField } from '$lib/contracts/apiContract';
 
 export type TimeseriesMetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
 
@@ -16,14 +19,34 @@ export interface MetricDefinition {
   invert: boolean;
 }
 
-export const METRIC_SCALE_MIN = 1;
-export const METRIC_SCALE_MAX = 5;
+export const METRIC_SCALE_MIN = ENTRY_CONTRACT.metrics.mood_score.min;
+export const METRIC_SCALE_MAX = ENTRY_CONTRACT.metrics.mood_score.max;
 
 export const ENTRY_METRICS: Record<EntryMetricField, MetricDefinition> = {
-  mood_score: { field: 'mood_score', scaleMin: 1, scaleMax: 5, invert: false },
-  energy: { field: 'energy', scaleMin: 1, scaleMax: 5, invert: false },
-  stress: { field: 'stress', scaleMin: 1, scaleMax: 5, invert: true },
-  sleep_quality: { field: 'sleep_quality', scaleMin: 1, scaleMax: 5, invert: false },
+  mood_score: {
+    field: 'mood_score',
+    scaleMin: ENTRY_CONTRACT.metrics.mood_score.min,
+    scaleMax: ENTRY_CONTRACT.metrics.mood_score.max,
+    invert: ENTRY_CONTRACT.metrics.mood_score.invert,
+  },
+  energy: {
+    field: 'energy',
+    scaleMin: ENTRY_CONTRACT.metrics.energy.min,
+    scaleMax: ENTRY_CONTRACT.metrics.energy.max,
+    invert: ENTRY_CONTRACT.metrics.energy.invert,
+  },
+  stress: {
+    field: 'stress',
+    scaleMin: ENTRY_CONTRACT.metrics.stress.min,
+    scaleMax: ENTRY_CONTRACT.metrics.stress.max,
+    invert: ENTRY_CONTRACT.metrics.stress.invert,
+  },
+  sleep_quality: {
+    field: 'sleep_quality',
+    scaleMin: ENTRY_CONTRACT.metrics.sleep_quality.min,
+    scaleMax: ENTRY_CONTRACT.metrics.sleep_quality.max,
+    invert: ENTRY_CONTRACT.metrics.sleep_quality.invert,
+  },
 };
 
 /** Maps timeseries API keys to entry metric fields. */

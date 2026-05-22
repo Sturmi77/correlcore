@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { readable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 import EntrySheet from './EntrySheet.svelte';
@@ -8,19 +8,21 @@ vi.mock('svelte-i18n', () => ({
 }));
 
 vi.mock('./EntryForm.svelte', () => ({
-  default: class EntryFormMock {
-    requestClose = vi.fn(async () => true);
-    constructor(options: { target?: HTMLElement }) {
-      if (options.target) {
-        const el = document.createElement('div');
-        el.setAttribute('data-testid', 'entry-form-mock');
-        options.target.appendChild(el);
-      }
-    }
-    $on() {
-      return () => {};
-    }
-    $set() {}
+  default: function EntryFormMock(anchor: Element | Comment) {
+    const el = document.createElement('div');
+    el.setAttribute('data-testid', 'entry-form-mock');
+    anchor.parentNode?.insertBefore(el, anchor);
+
+    return {
+      requestClose: vi.fn(async () => true),
+      $on() {
+        return () => {};
+      },
+      $set() {},
+      $destroy() {
+        el.remove();
+      },
+    };
   },
 }));
 
@@ -41,10 +43,12 @@ describe('EntrySheet', () => {
   });
 
   it('closes on backdrop click', async () => {
-    const { component } = render(EntrySheet, {
+    render(EntrySheet, {
       props: { open: true, initialDate: '2026-05-15' },
     });
     await fireEvent.click(screen.getByTestId('entry-sheet-backdrop'));
-    expect(component.open).toBe(false);
+    await waitFor(() => {
+      expect(screen.queryByTestId('entry-sheet')).toBeNull();
+    });
   });
 });

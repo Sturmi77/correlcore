@@ -46,7 +46,7 @@ CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwis
 ### 1.4 Value Proposition
 
 - **Zusammenhänge statt Rohdaten** — die App erklärt, warum Tage gut/schlecht waren
-- **Selfhosted & Offline-First** — deine Gesundheitsdaten verlassen dein Zuhause nicht
+- **Selfhosted heute, Offline-fähig ab M4** — deine Gesundheitsdaten bleiben auf deiner Instanz; echte Offline-Sync-Fähigkeit ist expliziter M4-Scope
 - **60 Sekunden pro Tag** — nicht mehr, sonst wird es nicht gemacht
 - **No gamification, ever** — du trackst deine Gewohnheiten, nicht wie oft du die App öffnest. Kein Streak-Druck, keine Badges, keine Belohnungsschleifen.
 
@@ -76,7 +76,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 ### 2.1 Täglicher Eintrag (Mood-Entry)
 
-**Beschreibung:** Ein Eintrag pro Tag mit Mood-Score (1–5 oder −2..+2 Slider), Energielevel, Stresslevel, optionaler Text-Notiz.
+**Beschreibung:** Ein Eintrag pro Tag mit Mood-Score (1–5 Slider), Energielevel, Stresslevel, optionaler Text-Notiz.
 
 **Kritisch:**
 
@@ -177,7 +177,7 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 
 **Entscheidung:**
 
-- v1: lokaler Upload nach MinIO, EXIF-Strip Pflicht.
+- M6: lokaler Upload nach MinIO, EXIF-Strip Pflicht.
 - v2: optionale Immich-Integration via API-Key, „Foto des Tages" per Search-API (by date).
 
 **Priorität:** COULD (Immich), SHOULD (lokaler Upload)
@@ -263,7 +263,7 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 - PWA mit IndexedDB reicht für Text/Tags; Fotos-Upload muss Queue-basiert sein.
 - Konfliktauflösung: Last-Write-Wins mit `updated_at` reicht, kein CRDT nötig.
 
-**Entscheidung:** Lokale SQLite/IndexedDB (Dexie.js), Sync-Queue mit Retry, Delta-Sync per `updated_at`.
+**Entscheidung:** M4 liefert lokale IndexedDB (Dexie.js), Sync-Queue mit Retry und Delta-Sync per `updated_at`. Der aktuelle Web-Client ist online-first und bereitet nur UI-Zustände für Offline-Fälle vor.
 
 **Priorität:** MUST
 
@@ -301,12 +301,12 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 **Entscheidungen:**
 
 - Auth: Native JWT Phase 1 (ADR-0004), Authentik ab Phase 2 (M12+, SaaS)
-- Verschlüsselung at-rest: `notes`, `symptoms.details`, Fotos in MinIO mit SSE
+- Verschlüsselung at-rest: `notes` und Custom-`symptoms.name` per App-Level-Fernet; Fotos in MinIO mit SSE folgen im Foto-/Medien-Milestone
 - E2E-Option (v2): Client-seitig verschlüsselte Notizen — als Opt-in
 - Transport: TLS 1.3, HSTS, CSP strikt
-- App-Lock: PIN / Biometrie auf Mobile
-- Export/Delete: vollständiger Datenexport (JSON+Fotos-ZIP) und „Account löschen" Self-Service
-- Audit-Log aller Admin-Aktionen
+- App-Lock: PIN / Biometrie auf Mobile (M4)
+- Export/Delete: vollständiger Datenexport für aktuelle M1-M3-Daten und „Account löschen" Self-Service; Foto-Sektion bleibt bis M6 leer
+- Audit-Log aller Admin-Aktionen (geplant, noch nicht implementiert)
 - Backup: verschlüsselt via restic auf externen Storage
 
 **Priorität:** MUST (Basics), SHOULD (E2E opt-in v2)
@@ -333,7 +333,7 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 
 ### 3.1 Leitprinzipien
 
-1. **API-First & Offline-First** — Clients sind vollwertig offline bedienbar, Server ist autoritativ bei Merge
+1. **API-First & offline-ready** — Backend ist REST/OpenAPI-first; echte Offline-Sync-Fähigkeit kommt mit M4
 2. **Selfhosted-First, Cloud-Ready** — `docker compose up` → lauffähig. Kein Code-Rewrite für SaaS
 3. **Privacy by Design** — Datenminimierung, Feld-Verschlüsselung für Sensibles, keine Third-Party-Analytics
 4. **Stateless Backend, 12-Factor**
@@ -382,24 +382,24 @@ flowchart LR
 
 ### 3.3 Tech-Stack (fixiert)
 
-| Schicht          | Technologie                 | Alternative erwogen                                              |
-| ---------------- | --------------------------- | ---------------------------------------------------------------- |
-| Backend API      | FastAPI 0.111 + Python 3.12 | Django REST (zu schwerfällig)                                    |
-| Web Frontend     | SvelteKit 2 + Skeleton UI   | Next.js (React, größeres Bundle)                                 |
-| Mobile           | PWA → Capacitor (Android)   | TWA/Bubblewrap (Google-Policy-Risiko, Health Connect — ADR-0002) |
-| Datenbank        | PostgreSQL 16 + pgvector    | SQLite (kein RLS für Multi-User)                                 |
-| Cache/Queue      | Redis 7                     | Valkey (Drop-in, evaluieren)                                     |
-| Object Storage   | MinIO                       | S3 (nur SaaS-Phase)                                              |
-| Reverse Proxy    | Traefik v3                  | Nginx Proxy Manager                                              |
-| Auth Phase 1     | Native JWT (FastAPI)        | Authentik (M12+, SaaS)                                           |
-| Offline-Sync     | Dexie.js (IndexedDB)        | PouchDB                                                          |
-| Analytics Worker | pandas + scikit-learn       | R (kein Python-Ökosystem)                                        |
-| **Chart-Lib**    | **Custom SVG-Komponenten**  | ECharts, LayerChart (D-002 entschieden)                          |
-| Error Tracking   | GlitchTip                   | Sentry Cloud (Privacy)                                           |
-| Push             | UnifiedPush / FCM           | NTFY direkt                                                      |
-| Build            | pnpm + Vite                 | npm (langsamer)                                                  |
-| Python Deps      | uv                          | pip/poetry                                                       |
-| Migrations       | Alembic                     | —                                                                |
+| Schicht          | Technologie                                             | Alternative erwogen                                              |
+| ---------------- | ------------------------------------------------------- | ---------------------------------------------------------------- |
+| Backend API      | FastAPI 0.111 + Python 3.12                             | Django REST (zu schwerfällig)                                    |
+| Web Frontend     | SvelteKit 2 + Skeleton UI                               | Next.js (React, größeres Bundle)                                 |
+| Mobile           | Responsive Web → PWA-Hardening M4 → Capacitor (Android) | TWA/Bubblewrap (Google-Policy-Risiko, Health Connect — ADR-0002) |
+| Datenbank        | PostgreSQL 16 + pgvector                                | SQLite (kein RLS für Multi-User)                                 |
+| Cache/Queue      | Redis 7                                                 | Valkey (Drop-in, evaluieren)                                     |
+| Object Storage   | MinIO                                                   | S3 (nur SaaS-Phase); Foto-Upload/EXIF-Strip folgen später        |
+| Reverse Proxy    | Traefik v3                                              | Nginx Proxy Manager                                              |
+| Auth Phase 1     | Native JWT (FastAPI)                                    | Authentik (M12+, SaaS)                                           |
+| Offline-Sync     | Dexie.js (IndexedDB), geplant M4                        | PouchDB                                                          |
+| Analytics Worker | pandas + scikit-learn                                   | R (kein Python-Ökosystem)                                        |
+| **Chart-Lib**    | **Custom SVG-Komponenten**                              | ECharts, LayerChart (D-002 entschieden)                          |
+| Error Tracking   | GlitchTip                                               | Sentry Cloud (Privacy)                                           |
+| Push             | UnifiedPush / FCM                                       | NTFY direkt                                                      |
+| Build            | pnpm + Vite                                             | npm (langsamer)                                                  |
+| Python Deps      | uv                                                      | pip/poetry                                                       |
+| Migrations       | Alembic                                                 | —                                                                |
 
 ### 3.4 Datenmodell (Kern)
 
@@ -467,7 +467,9 @@ erDiagram
   }
 ```
 
-### 3.5 Sync-Protokoll (Offline-First)
+### 3.5 Sync-Protokoll (M4-Ziel)
+
+Noch nicht implementiert. Der aktuelle Client ist online-first; M4 liefert die lokale Dexie-Queue, Sync-Endpunkte und Konflikttransparenz.
 
 1. Client hält lokale `change_log` mit monotoner Sequenz + `client_id`
 2. `POST /sync/push` sendet Batch, Server merged (Last-Write-Wins pro Feld, `updated_at` entscheidet)
@@ -754,7 +756,7 @@ Entwicklung in Vertical Slices — jedes Release ist end-to-end nutzbar.
 #### Akzeptanzkriterien M1
 
 - [x] Alle API-Endpunkte hinter Auth-Middleware (kein unauthenticated Zugriff auf Nutzdaten) _(Entry-Endpoints via `get_current_verified_user`, Issue #7)_
-- [~] `user_id` auf allen Entitäten vorhanden, Row-Level-Security in Postgres aktiv und per Test verifiziert _(RLS-Policies für `entries` in Migration `003_create_entries.py` enthalten; vollständige Enforcement via `SET LOCAL app.current_user_id`-Middleware folgt als M1-Followup)_
+- [x] `user_id` auf allen Entitäten vorhanden, Row-Level-Security in Postgres aktiv und per Test verifiziert _(RLS-Policies für User-Daten vorhanden; Enforcement via transaktionslokalem `app.current_user_id`-Binding in Auth-Dependency und Analytics-Worker; Migration `012_enforce_rls_and_app_role_grants.py` erzwingt RLS auch für die eingeschränkte App-Rolle)_
 - [x] Rate-Limiting auf Login-Endpunkten (max. 5 Versuche/Minute) _(bereits implementiert in PR #38; Entry-Endpoints zusätzlich rate-limitiert: 60/min POST/PATCH, 120/min GET — Issue #7)_
 - [x] Nachträgliches Erfassen bis 7 Tage möglich, ältere Einträge read-only _(Issue #7: `BACKDATE_DAYS_LIMIT=7` im Service, UI-Datepicker auf 7-Tage-Fenster begrenzt)_
 - [x] Tag-System (vordefinierte Tags + Custom-Tags) verfügbar: `/tags`-CRUD + `PUT /entries/{id}/tags` (replace-set), 30 kuratierte Defaults im Migration-Seed, RLS für Custom-Tags _(Issue #8)_
@@ -866,7 +868,7 @@ Nicht-blockierende UX-Verbesserungen aus dem Eigen-User-Test nach M1-Abschluss. 
 
 #### DSGVO-Checkpoint M3
 
-- [ ] 🔒 DSGVO: Analytics-Worker greift nur auf eigene User-Daten zu (RLS geprüft, Query-Audit)
+- [x] 🔒 DSGVO: Analytics-Worker greift nur auf eigene User-Daten zu (RLS-Binding pro User-Job, Query-Audit, Regressionstest)
 - [ ] 🔒 DSGVO: Ollama (falls genutzt) verarbeitet keine Daten außerhalb der eigenen Instanz (kein Cloud-Fallback)
 - [ ] 🔒 DSGVO: Kein Profiling-Output wird an Dritte übermittelt
 

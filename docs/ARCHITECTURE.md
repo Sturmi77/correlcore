@@ -9,7 +9,7 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab un
 | Prinzip                           | Bedeutung                                                                                      |
 | --------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **API-First**                     | Backend ist vollständig über REST/OpenAPI konsumierbar; kein Coupling zwischen Frontend und DB |
-| **Offline-First**                 | Clients sind vollwertig offline bedienbar; Server ist autoritativ bei Merge                    |
+| **Offline-ready Architektur**     | Aktuelle Clients sind online-first; M4 ergänzt Dexie-Queue, Sync-Endpunkte und Konfliktlog     |
 | **Selfhosted-First, Cloud-Ready** | `docker compose up` → lauffähig. Kein Code-Rewrite für SaaS-Phase                              |
 | **Privacy by Design**             | Datenminimierung, Feld-Verschlüsselung für Sensibles, keine Third-Party-Analytics              |
 | **Stateless Backend**             | Keine Server-Side-Session; State in PostgreSQL + Redis; horizontal skalierbar                  |
@@ -22,8 +22,8 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab un
 ```mermaid
 flowchart LR
   subgraph Clients
-    PWA[PWA / Web\nSvelteKit]
-    AND[Android App\nCapacitor]
+    PWA[Web App\nSvelteKit]
+    AND[Android App\nCapacitor M10]
   end
 
   subgraph Edge
@@ -40,7 +40,7 @@ flowchart LR
   subgraph Data
     PG[(PostgreSQL 16\n+ pgvector + RLS)]
     RED[(Redis 7\nSession + Queue)]
-    MIN[(MinIO\nS3-kompatibel)]
+    MIN[(MinIO\nS3-kompatibel\nPhoto scope M6)]
   end
 
   subgraph External["External / Optional"]
@@ -100,7 +100,12 @@ Hetzner CCX23 × 2 + Managed Postgres + Managed Object Storage. ~150–250 €/M
 
 ---
 
-## 4. Sync-Protokoll (Offline-First Detail)
+## 4. Sync-Protokoll (M4-Ziel, noch nicht implementiert)
+
+Der aktuelle Web-Client ist online-first. Einzelne Komponenten haben
+Loading/Error/Offline-Zustände, aber es gibt noch keine lokale Dexie-Queue,
+keine `/sync/*`-API und keine `sync_conflicts`-Tabelle. Das folgende Protokoll
+ist der M4-Sollvertrag.
 
 ```
 Client                          Server
@@ -124,7 +129,20 @@ Client                          Server
 
 ---
 
-## 5. Auth-Flow (OIDC via Authentik)
+## 5. Auth-Flow
+
+### Phase 1: Native JWT + HttpOnly-Cookies (implementiert)
+
+```
+1. User sendet E-Mail/Passwort an POST /api/v1/auth/login
+2. FastAPI prüft Credentials und Verifikationsstatus
+3. Backend rotiert/registriert Refresh-JTI in Redis
+4. Response setzt access_token (Path=/api) und refresh_token (Path=/api/v1/auth/refresh)
+5. Browser sendet access_token automatisch; API-/Mobile-Clients können Authorization: Bearer nutzen
+6. POST /api/v1/auth/refresh rotiert das Refresh-Token single-use
+```
+
+### Phase 2: OIDC via Authentik (geplant, M12+)
 
 ```
 1. User öffnet App → redirect zu Authentik /authorize
@@ -170,24 +188,24 @@ Nightly Cron (02:00 UTC)
 
 ## 7. Datensicherheit
 
-| Layer                 | Maßnahme                                                                                       | Status    |
-| --------------------- | ---------------------------------------------------------------------------------------------- | --------- |
-| Transport             | TLS 1.3 + HSTS + CSP strict via Traefik                                                        | ✅        |
-| Auth                  | Native JWT + Refresh-Rotation (Phase 1, M1 ✅) / OIDC via Authentik (Phase 2, M12+)            | ✅        |
-| Docker Security       | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount                      | ✅        |
-| Daten at-rest (DB)    | App-Level Fernet pro User-DEK für `entries.note_enc` und Custom-`symptoms.name_enc` (ADR-0005) | ✅        |
-| Daten at-rest (MinIO) | SSE-S3 für alle Buckets aktiviert                                                              | ✅        |
-| MinIO Isolation       | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar                               | ✅        |
-| Multi-Tenancy         | PostgreSQL Row-Level-Security (`user_id`-basiert)                                              | ✅        |
-| Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                                                    | ✅        |
-| App-Lock              | PIN / Biometrie (Web Crypto API)                                                               | Phase 1.1 |
-| Export/Löschung       | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung                                 | ✅        |
-| Backups               | Verschlüsselt via restic auf externen Storage                                                  | ✅        |
-| Audit-Log             | Alle Admin-Aktionen geloggt                                                                    | ✅        |
-| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)                            | ✅        |
-| Logs                  | Keine Klartextloggung von Mood-/Symptom-Werten                                                 | ✅        |
-| Rate-Limiting         | Login-Endpunkte max. 5/min (SlowAPI)                                                           | ✅        |
-| Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                                            | ✅        |
+| Layer                 | Maßnahme                                                                                       | Status                   |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------ |
+| Transport             | TLS 1.3 + HSTS + CSP strict via Traefik                                                        | ✅                       |
+| Auth                  | Native JWT + Refresh-Rotation (Phase 1) / OIDC via Authentik (Phase 2)                         | Phase 1 ✅ / Phase 2 M12 |
+| Docker Security       | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount                      | ✅                       |
+| Daten at-rest (DB)    | App-Level Fernet pro User-DEK für `entries.note_enc` und Custom-`symptoms.name_enc` (ADR-0005) | ✅                       |
+| Daten at-rest (MinIO) | SSE-S3 ist im Compose vorbereitet; Foto-/Attachment-API folgt später                           | Vorbereitet              |
+| MinIO Isolation       | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar                               | ✅                       |
+| Multi-Tenancy         | PostgreSQL Row-Level-Security (`user_id`-basiert)                                              | ✅                       |
+| Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                                                    | M4                       |
+| App-Lock              | PIN / Biometrie (Web Crypto API)                                                               | M4                       |
+| Export/Löschung       | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung                                 | ✅                       |
+| Backups               | Verschlüsselt via restic auf externen Storage                                                  | ✅                       |
+| Audit-Log             | Admin-Audit-Log                                                                                | Geplant                  |
+| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)                            | M12                      |
+| Logs                  | Keine Klartextloggung von Mood-/Symptom-Werten                                                 | ✅                       |
+| Rate-Limiting         | Login-Endpunkte max. 5/min (SlowAPI)                                                           | ✅                       |
+| Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                                            | M4                       |
 
 ---
 
@@ -233,9 +251,9 @@ Android APK / AAB (für Play Store)
 
 ---
 
-## 9. Sync-Protokoll: Conflict-Log
+## 9. Sync-Protokoll: Conflict-Log (M4-Ziel)
 
-Ergänzend zu der in Sektion 4 beschriebenen LWW-Strategie (Last-Write-Wins) werden alle Konflikte persistent geloggt — sie werden nicht still überschrieben.
+Ergänzend zu der in Sektion 4 beschriebenen LWW-Strategie (Last-Write-Wins) sollen alle Konflikte persistent geloggt werden — sie werden nicht still überschrieben. Die Tabelle und API sind noch nicht implementiert.
 
 ### Motivation
 
@@ -305,5 +323,5 @@ Privacy-by-Design-Prinzipien verarbeitet. Details: [docs/DSGVO.md](DSGVO.md)
 | Auskunft (Art. 15)             | API: `GET /user/data-export` (JSON-Dump)                                        |
 | Berichtigung (Art. 16)         | Standard-Edit-Endpunkte                                                         |
 | Löschung (Art. 17)             | `DELETE /api/v1/user/me` → Cascade auf alle Daten + Cryptographic Erasure (DEK) |
-| Datenübertragbarkeit (Art. 20) | `GET /user/export` → ZIP mit JSON + Fotos                                       |
-| Widerspruch (Art. 21)          | Analytics-Opt-Out: `POST /user/settings {analytics_enabled: false}`             |
+| Datenübertragbarkeit (Art. 20) | `GET /api/v1/user/export` → ZIP mit JSON/CSV; Foto-Sektion derzeit leer         |
+| Widerspruch (Art. 21)          | Analytics-Opt-Out: `PATCH /api/v1/user/preferences {analytics_enabled:false}`   |

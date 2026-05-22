@@ -34,6 +34,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.redis_client import TokenStore
+from app.db.session import bind_rls_current_user
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.user import User
 from app.models.user_encryption_key import UserEncryptionKey
@@ -295,6 +296,7 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> User:
     )
     db.add(user)
     await db.flush()  # get the generated UUID without committing
+    await bind_rls_current_user(db, user.id)
 
     # Issue #26: provision a per-user Data-Encryption-Key (DEK) wrapped
     # by the master MultiFernet. The plaintext DEK never touches disk —

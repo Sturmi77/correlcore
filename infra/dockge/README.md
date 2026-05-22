@@ -9,13 +9,14 @@ optimiert. Kein top-level `name:` — Dockge nimmt den Verzeichnisnamen
 ## Setup
 
 1. Verzeichnis im Dockge-Stacks-Pfad anlegen (z. B. `/opt/stacks/correlcore/`).
-2. `compose.yaml` und `.env.example` reinkopieren.
+2. `compose.yaml`, `initdb/` und `.env.example` reinkopieren.
 3. `cp .env.example .env` und alle leeren Variablen ausfüllen.
 4. Dockge UI öffnen → Stack `correlcore` erscheint als _inactive_ → **Deploy**.
 
 ```bash
 sudo mkdir -p /opt/stacks/correlcore
 sudo cp compose.yaml .env.example /opt/stacks/correlcore/
+sudo cp -r initdb /opt/stacks/correlcore/
 cd /opt/stacks/correlcore
 sudo cp .env.example .env
 sudo $EDITOR .env   # Secrets generieren (siehe Snippets in der Datei)
@@ -31,7 +32,7 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(48))'
 # ENCRYPTION_KEY (Fernet)
 python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 
-# POSTGRES_PASSWORD / REDIS_PASSWORD
+# POSTGRES_PASSWORD / APP_DB_PASSWORD / REDIS_PASSWORD
 python3 -c 'import secrets; print(secrets.token_urlsafe(24))'
 ```
 
@@ -61,6 +62,11 @@ Postgres und Redis sind nur stack-intern erreichbar (kein Port-Mapping).
 Der `migrate`-Container läuft einmalig vor `api`/`worker` und führt
 `alembic upgrade head` aus. Idempotent — Re-Deploys triggern automatisch
 neue Migrations.
+
+`migrate` nutzt `POSTGRES_USER` als Schema-Owner. API und Worker verwenden
+`APP_DB_USER=correlcore_app`, eine eingeschränkte Runtime-Rolle. Das
+`initdb/`-Script legt diese Rolle beim ersten Postgres-Volume-Start an;
+Migration 012 erteilt Rechte und erzwingt Row-Level-Security auf User-Daten.
 
 ## Optional aktivieren
 

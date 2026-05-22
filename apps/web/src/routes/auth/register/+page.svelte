@@ -2,7 +2,8 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { register } from '$lib/api/auth';
-  import PasswordStrength, { evaluatePassword } from '$lib/components/auth/PasswordStrength.svelte';
+  import PasswordStrength from '$lib/components/auth/PasswordStrength.svelte';
+  import { evaluatePassword } from '$lib/utils/passwordStrength';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   let email = '';

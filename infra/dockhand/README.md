@@ -27,7 +27,7 @@ Dockhand pullt das Repo selbst und re-deployt bei jedem Webhook-Push.
 ### Variante B — Manuelles Verzeichnis
 
 1. Verzeichnis am Host anlegen, z. B. `/opt/stacks/correlcore/`.
-2. `compose.yaml` und `.env.example` reinkopieren.
+2. `compose.yaml`, `initdb/` und `.env.example` reinkopieren.
 3. `cp .env.example .env` und alle leeren Variablen ausfüllen.
 4. Im Dockhand-UI: **Stacks → Adopt** (oder **New → From file**) und das
    Verzeichnis verlinken.
@@ -35,6 +35,7 @@ Dockhand pullt das Repo selbst und re-deployt bei jedem Webhook-Push.
 ```bash
 sudo mkdir -p /opt/stacks/correlcore
 sudo cp infra/dockhand/compose.yaml infra/dockhand/.env.example /opt/stacks/correlcore/
+sudo cp -r infra/dockhand/initdb /opt/stacks/correlcore/
 cd /opt/stacks/correlcore
 sudo cp .env.example .env
 sudo $EDITOR .env
@@ -50,7 +51,7 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(48))'
 # ENCRYPTION_KEY (Fernet)
 python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 
-# POSTGRES_PASSWORD / REDIS_PASSWORD
+# POSTGRES_PASSWORD / APP_DB_PASSWORD / REDIS_PASSWORD
 python3 -c 'import secrets; print(secrets.token_urlsafe(24))'
 
 # GLITCHTIP_SECRET_KEY (nur wenn Profile 'monitoring' aktiv)
@@ -93,14 +94,16 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 ### Backend — Datenbank
 
-| Variable            | Pflicht | Default      | Beschreibung                                                                                                                                                                                                                                                            |
-| ------------------- | ------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POSTGRES_DB`       | nein    | `correlcore` | Name der App-Datenbank, die der Postgres-Container beim ersten Start anlegt.                                                                                                                                                                                            |
-| `POSTGRES_USER`     | nein    | `correlcore` | DB-User, der vom `migrate`-Container und der API genutzt wird.                                                                                                                                                                                                          |
-| `POSTGRES_PASSWORD` | **ja**  | _keiner_     | Passwort für `POSTGRES_USER`. **Mindestens 20 Zeichen, kein `@` und kein `/`** — beides bricht den Asyncpg-DSN auseinander. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(24))'`. Wird von der API automatisch in `DATABASE_URL` zusammengesetzt. |
+| Variable            | Pflicht | Default          | Beschreibung                                                                                                                                                                                                                                  |
+| ------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_DB`       | nein    | `correlcore`     | Name der App-Datenbank, die der Postgres-Container beim ersten Start anlegt.                                                                                                                                                                  |
+| `POSTGRES_USER`     | nein    | `correlcore`     | Migrations-/Owner-User, der das Schema anlegt. API und Worker nutzen diesen User nicht mehr.                                                                                                                                                  |
+| `POSTGRES_PASSWORD` | **ja**  | _keiner_         | Passwort für `POSTGRES_USER`. **Mindestens 20 Zeichen, kein `@` und kein `/`** — beides bricht den Asyncpg-DSN auseinander. Generieren: `python -c 'import secrets; print(secrets.token_urlsafe(24))'`. Wird vom `migrate`-Container genutzt. |
+| `APP_DB_USER`       | nein    | `correlcore_app` | Eingeschränkter Runtime-DB-User für API und Worker. Der Postgres-Init legt ihn beim ersten Volume-Start an; Migration 012 erteilt Tabellenrechte und erzwingt RLS.                                                                            |
+| `APP_DB_PASSWORD`   | **ja**  | _keiner_         | Passwort für `APP_DB_USER`. Separat von `POSTGRES_PASSWORD` generieren.                                                                                                                                                                       |
 
-> `DATABASE_URL` wird in der Compose aus den drei Variablen gebaut:
-> `postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}`. Du musst `DATABASE_URL` selbst nicht setzen.
+> `DATABASE_URL` wird in der Compose getrennt gebaut: `migrate` nutzt
+> `POSTGRES_USER`, API/Worker nutzen `APP_DB_USER`.
 
 ### Backend — Redis
 
@@ -177,6 +180,7 @@ Stack nicht (Compose-Validator wirft `must be set`-Fehler):
 SECRET_KEY=...                # python -c 'import secrets; print(secrets.token_urlsafe(48))'
 ENCRYPTION_KEY=...            # python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 POSTGRES_PASSWORD=...         # python -c 'import secrets; print(secrets.token_urlsafe(24))'
+APP_DB_PASSWORD=...           # python -c 'import secrets; print(secrets.token_urlsafe(24))'
 REDIS_PASSWORD=...            # python -c 'import secrets; print(secrets.token_urlsafe(24))'
 ```
 

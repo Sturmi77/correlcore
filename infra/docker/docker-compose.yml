@@ -83,8 +83,10 @@ services:
       # Encryption Key für App-Level-Feld-Verschlüsselung (ADR-0005)
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      RATE_LIMIT_TRUST_PROXY_HEADERS: 'true'
       # MinIO — Variablennamen entsprechen backend/app/core/config.py (Issue #41)
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-correlcore}
@@ -171,8 +173,10 @@ services:
       APP_ENV: ${APP_ENV:-production}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      RATE_LIMIT_TRUST_PROXY_HEADERS: 'true'
       UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
       DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
       IMAGE_TAG: ${IMAGE_TAG:-latest}
@@ -196,8 +200,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-correlcore}
       POSTGRES_USER: ${POSTGRES_USER:-correlcore}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_DB_USER: ${APP_DB_USER:-correlcore_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test:
         ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}']

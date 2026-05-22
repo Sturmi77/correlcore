@@ -6,14 +6,14 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab.
 
 ## 1. Allgemeine Richtlinien
 
-- **OpenAPI 3.1** — Spec wird bei jedem Build auto-generiert aus FastAPI-Annotationen
+- **OpenAPI 3.1** — Spec wird von FastAPI aus Annotationen erzeugt. Ein TypeScript-Client-Generator ist noch nicht eingeführt; zentrale Frontend-Konstanten werden über Contract-Tests gegen Backend-Schemas abgesichert.
 - **Versionierung:** `/api/v1/...` — Version im URL-Pfad
-- **Auth:** Bearer Token (JWT via Authentik) im `Authorization`-Header **oder** HttpOnly-Cookie (`session_token`)
-- **Fehlerformat:** RFC 7807 Problem Details
+- **Auth:** Phase 1 nutzt native JWTs. Browser authentifizieren primär über HttpOnly-Cookies `access_token` und `refresh_token`; API-/Mobile-Clients können den Access-Token als `Authorization: Bearer <token>` senden. Authentik/OIDC folgt erst in Phase 2 (M12+).
+- **Fehlerformat:** FastAPI-Standardfehler (`{"detail": ...}`) mit `422`-Validation-Details. RFC 7807 ist ein zukünftiges Hardening-Ziel, nicht aktueller Ist-Stand.
 - **Datumsformat:** ISO 8601 (`2026-04-20T17:00:00Z`)
 - **IDs:** UUID v4
-- **Paginierung:** Cursor-basiert (`?cursor=<opaque>&limit=50`)
-- **Rate Limiting:** 60 Req/Minute per User (via Redis)
+- **Paginierung:** Endpoint-spezifisch; aktuelle Listen nutzen `limit` und Datumsfilter, noch keine generische Cursor-Paginierung.
+- **Rate Limiting:** Endpoint-spezifisch per SlowAPI. Login/Register sind `5/min/IP`, Resend Verification `3/min/IP`, Entries je nach Methode `60/min` oder `120/min`. Deployments nutzen Redis-Storage, lokale Setups fallen auf Memory zurück.
 
 ---
 
@@ -164,8 +164,9 @@ Path=/api/v1/auth/refresh; Max-Age=2592000` (30 Tage, aus
   }
   ```
 - `401 Unauthorized` — generisch `Invalid email or password`; deckt
-  unbekannte Mail, falsches Passwort und unverifizierten Account ab
-  (Schutz vor User-Enumeration)
+  unbekannte Mail und falsches Passwort ab (Schutz vor User-Enumeration)
+- `403 Forbidden` — `Email not verified`; der Client darf daraus die
+  Resend-Verifikation-UI anbieten
 - `422 Unprocessable Entity` — Schema-Verstoß
 - `429 Too Many Requests` — Rate-Limit überschritten
 
@@ -674,8 +675,32 @@ Aufrufer bezogen — die Adressierung anderer User ist konzeptionell
 nicht möglich.
 
 ```
+GET    /api/v1/user/preferences      Eigene Insight-/Onboarding-Präferenzen laden
+PATCH  /api/v1/user/preferences      Eigene Präferenzen aktualisieren
+PUT    /api/v1/user/profile          Optionales Onboarding-Profil upserten
+GET    /api/v1/user/export           DSGVO Art. 20 ZIP mit export.json + README.txt
 DELETE /api/v1/user/me               Account und alle abhängigen Daten löschen (DSGVO Art. 17)
 ```
+
+### `GET/PATCH /api/v1/user/preferences`
+
+Speichert nicht-sensitive UI-/Insight-Präferenzen des aktuellen Users:
+`analytics_enabled`, Onboarding-Completion-Flags,
+`dismissed_insight_keys`, `reached_milestone_keys` und
+`last_seen_insight_at`. Der Analytics-Worker berücksichtigt
+`analytics_enabled=false` beim Job-Listing.
+
+### `PUT /api/v1/user/profile`
+
+Upsert für optionale Onboarding-Antworten:
+`sleep_hours_typical`, `work_context_typical`, `sport_frequency` und
+`insight_curiosity`.
+
+### `GET /api/v1/user/export`
+
+Kanonischer DSGVO-Art.-20-ZIP-Export mit `export.json` und `README.txt`.
+Fotos/Attachments sind bis zum Foto-/Medien-Milestone nicht enthalten; die
+Export-Struktur hält dafür leere, versionierte Sektionen vor.
 
 ### `DELETE /api/v1/user/me`
 
@@ -845,7 +870,11 @@ fehlende Tage.
 
 ---
 
-## 9. Sync (Offline-First)
+## 9. Sync (M4 Offline-Sync, geplant)
+
+Die Sync-API ist noch nicht implementiert. Der Router enthält den Sync-Mount
+bewusst nur als Future-Kommentar; M4 liefert Dexie-Queue,
+`/sync/push`, `/sync/pull` und das `sync_conflicts`-Log.
 
 ```
 POST   /api/v1/sync/push    Client-Änderungen hochladen
@@ -915,8 +944,8 @@ Die Response trennt GitHub-Version und Container-Artefakt:
   "image_digest": "ghcr.io/sturmi77/correlcore-api@sha256:...",
   "image_hash": "ghcr.io/sturmi77/correlcore-api@sha256:...",
   "python_version": "3.12.13",
-  "fastapi_version": "0.115.0",
-  "db_migration_head": "009",
+  "fastapi_version": "0.136.1",
+  "db_migration_head": "012",
   "db_pool_size": 10,
   "db_checked_out": 1,
   "redis_connected": true,
@@ -933,7 +962,10 @@ echten OCI/RepoDigest als ENV `IMAGE_DIGEST` uebergibt; sonst ist der Wert
 
 ---
 
-## 12. Admin
+## 12. Admin (geplant)
+
+Admin-Endpunkte und Audit-Log sind noch nicht implementiert. Aktuell gibt es
+keine öffentliche `/api/v1/admin/*`-Route.
 
 ```
 GET    /api/v1/admin/users          User-Liste
@@ -944,14 +976,21 @@ GET    /api/v1/admin/audit-log      Audit-Log abrufen
 
 ---
 
-## 13. Fehlerformat (RFC 7807)
+## 13. Fehlerformat
+
+Aktueller Ist-Stand ist das FastAPI-Fehlerformat. Beispiel:
 
 ```json
 {
-  "type": "https://correlcore.app/errors/validation-error",
-  "title": "Validation Error",
-  "status": 422,
-  "detail": "mood_score must be between -2 and 2",
-  "instance": "/api/v1/entries"
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["body", "mood_score"],
+      "msg": "Input should be greater than or equal to 1"
+    }
+  ]
 }
 ```
+
+RFC 7807 Problem Details bleiben ein mögliches API-Hardening für spätere
+Milestones.

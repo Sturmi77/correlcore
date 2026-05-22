@@ -49,6 +49,7 @@ cp .env.user-test.example .env
 python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'   # ENCRYPTION_KEY
 python -c 'import secrets; print(secrets.token_urlsafe(48))'                                # SECRET_KEY
 python -c 'import secrets; print(secrets.token_urlsafe(24))'                                # POSTGRES_PASSWORD
+python -c 'import secrets; print(secrets.token_urlsafe(24))'                                # APP_DB_PASSWORD
 python -c 'import secrets; print(secrets.token_urlsafe(24))'                                # REDIS_PASSWORD
 
 # Tailnet-IP eintragen

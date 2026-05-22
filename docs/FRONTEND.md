@@ -63,7 +63,7 @@ This is active user trust-building, not legal boilerplate.
 - Bottom sheet instead of full-page navigation for entry creation
 - Every screen must render without horizontal scroll at 375 px
 
-### 1.7 Offline-First Component Contract
+### 1.7 Offline-Ready Component Contract
 
 Every data-fetching component must define all four states:
 
@@ -226,7 +226,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 ┌──────────────────────────────┐
 │  ▬  How was your day?        │
 │                              │
-│  ●─────────────────── ○      │  ← Mood slider (−2..+2)
+│  ●─────────────────── ○      │  ← Mood slider (1..5)
 │  Bad              Very good  │
 │                              │
 │  Energy  ●────────── ○       │
@@ -244,7 +244,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 
 - Mood slider is the only required field
 - Tag suggestions sorted by historical usage frequency
-- "+ More" opens full tag sheet (symptoms, notes, photo)
+- "+ More" opens full tag sheet (symptoms and notes now; photo follows in the media milestone)
 - Day-over-day delta shown as neutral info card after save (Issue #154)
 - Stress slider axis label reflects inverted semantics: left = "High stress", right = "Low stress"
 
@@ -348,7 +348,7 @@ ANALYSIS
 → Explore insights
 
 PRIVACY & DATA
-→ Export all data  (ZIP: JSON + photos)
+→ Export all current data  (ZIP: JSON/CSV; photo section remains empty until media support lands)
 → Delete account
 
 APPEARANCE

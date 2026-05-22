@@ -9,7 +9,7 @@ import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
 import InsightCard from '$lib/components/insights/InsightCard.svelte';
-import type { Insight } from '$lib/api/insights';
+import type { InsightResponse } from '$lib/api/insights';
 
 vi.mock('svelte-i18n', async () => {
   const { readable: r } = await import('svelte/store');
@@ -19,7 +19,7 @@ vi.mock('svelte-i18n', async () => {
   };
 });
 
-const insight: Insight = {
+const insight: InsightResponse = {
   id: 'insight-1',
   user_id: 'user-1',
   insight_type: 'spearman',
@@ -59,6 +59,6 @@ describe('Home zone building blocks', () => {
     render(InsightCard, {
       props: { insight, loading: false, error: '' },
     });
-    expect(screen.getByText(insight.statement)).toBeTruthy();
+    expect(screen.getByText('Energy tends to be higher when mood is higher.')).toBeTruthy();
   });
 });

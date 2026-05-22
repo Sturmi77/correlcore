@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://:changeme@localhost:6379/0"
 
+    # Rate limiting
+    RATE_LIMIT_STORAGE_URL: str = ""
+    RATE_LIMIT_TRUST_PROXY_HEADERS: bool = False
+
     # JWT (ADR-0004: Phase 1 native JWT)
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15

@@ -176,14 +176,17 @@ async def test_insights_endpoint_returns_statement_field(
 
     app.dependency_overrides[get_current_verified_user] = override
     try:
-        with patch(
-            "app.api.v1.endpoints.insights.list_insights",
-            new_callable=AsyncMock,
-            return_value=[insight],
-        ), patch(
-            "app.api.v1.endpoints.insights.get_insight_maturity",
-            new_callable=AsyncMock,
-            return_value=calculate_insight_maturity(18),
+        with (
+            patch(
+                "app.api.v1.endpoints.insights.list_insights",
+                new_callable=AsyncMock,
+                return_value=[insight],
+            ),
+            patch(
+                "app.api.v1.endpoints.insights.get_insight_maturity",
+                new_callable=AsyncMock,
+                return_value=calculate_insight_maturity(18),
+            ),
         ):
             response = await async_client.get(
                 "/api/v1/insights?limit=5",
@@ -224,14 +227,17 @@ async def test_latest_insights_endpoint_uses_latest_service(
 
     app.dependency_overrides[get_current_verified_user] = override
     try:
-        with patch(
-            "app.api.v1.endpoints.insights.list_latest_insights",
-            new_callable=AsyncMock,
-            return_value=[row],
-        ) as latest, patch(
-            "app.api.v1.endpoints.insights.get_insight_maturity",
-            new_callable=AsyncMock,
-            return_value=calculate_insight_maturity(30),
+        with (
+            patch(
+                "app.api.v1.endpoints.insights.list_latest_insights",
+                new_callable=AsyncMock,
+                return_value=[row],
+            ) as latest,
+            patch(
+                "app.api.v1.endpoints.insights.get_insight_maturity",
+                new_callable=AsyncMock,
+                return_value=calculate_insight_maturity(30),
+            ),
         ):
             response = await async_client.get(
                 "/api/v1/insights/latest?limit=3",
