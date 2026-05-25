@@ -26,7 +26,9 @@
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
   import { listDefaultTags, listVisibleTags } from '$lib/api/tags';
-  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import Button from '$lib/components/common/Button.svelte';
+  import Panel from '$lib/components/common/Panel.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightJourneyBanner from '$lib/components/insights/InsightJourneyBanner.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
@@ -138,18 +140,15 @@
 </svelte:head>
 
 <main class="insights-page">
-  <header class="insights-page__top">
-    <a class="btn btn-sm variant-ghost-surface" href="/">{$_('nav.home')}</a>
-    <ThemeToggle testId="insights-theme-toggle" />
-  </header>
+  <ScreenHeader title={$_('insights.page.title')} subtitle={$_('insights.page.subtitle')} />
 
   {#if $auth.status !== 'authenticated'}
-    <section class="insights-page__panel">
+    <Panel variant="bordered">
       <p>{$_('insights.page.auth_required')}</p>
-      <a class="btn btn-sm variant-filled-primary" href="/auth/login">
+      <Button href="/auth/login" variant="primary" size="sm">
         {$_('auth.login.submit')}
-      </a>
-    </section>
+      </Button>
+    </Panel>
   {:else}
     {#if insightMaturity && showMaturityMilestone}
       <InsightPhaseMilestoneCard
@@ -185,21 +184,5 @@
     flex-direction: column;
     gap: var(--space-5);
     padding: var(--space-4) 0 var(--space-8);
-  }
-
-  .insights-page__top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-  }
-
-  .insights-page__panel {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    border: 1px solid oklch(from var(--color-text) l c h / 0.1);
-    border-radius: var(--radius-lg);
   }
 </style>

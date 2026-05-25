@@ -1,6 +1,6 @@
 # M4 Release Notes
 
-Stand: 2026-05-22
+Stand: 2026-05-25
 
 ## Highlights
 
@@ -26,6 +26,13 @@ Stand: 2026-05-22
 - Attachment-/EXIF-Verarbeitung ist nicht produktiv aktiviert und muss vor Aktivierung erneut sicherheitsgeprüft werden.
 - OpenAPI TypeScript Client ist noch nicht eingeführt. API-/Frontend-Verträge werden für M4 über zentrale Konstanten und Contract-Tests abgesichert.
 - Lokale Entwicklerumgebungen können weiterhin weniger Gates ausführen als CI, wenn Docker, Gitleaks, Playwright-Browser oder externe Services fehlen.
+
+### Meilenstein-Zuordnung
+
+- Offline/PWA bleibt Teil von [M4 Mobile/PWA](../DESIGN_DOCUMENT.md#m4--mobile-polish--pwa-hardening-woche-1112), ist aber in diesem Release bewusst kein vollständiger Offline-first-Sync.
+- Attachment-/EXIF-Verarbeitung gehört vor produktiver Aktivierung zu [M6 Fotos & Medien](../DESIGN_DOCUMENT.md#m6--fotos--medien-woche-1516).
+- OpenAPI TypeScript Client bleibt im [API Contract Strategy](../API_CONTRACTS.md) dokumentiert.
+- Mobile Screenshot-QA bei 375 px und vollständige Ablösung route-lokaler Button-Klassen bleiben Follow-ups des [Frontend Component System](../frontend/UI_COMPONENT_SYSTEM.md#migration-backlog).
 
 ## Upgrade-/Deploy-Hinweise
 

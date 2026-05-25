@@ -2,8 +2,12 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
-  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import Button from '$lib/components/common/Button.svelte';
+  import DataState from '$lib/components/common/DataState.svelte';
   import IconRender from '$lib/components/common/IconRender.svelte';
+  import InlineAlert from '$lib/components/common/InlineAlert.svelte';
+  import Panel from '$lib/components/common/Panel.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import {
     TAG_CATEGORIES,
     deleteTag,
@@ -156,28 +160,22 @@
 </svelte:head>
 
 <main class="tag-settings">
-  <header class="tag-settings__top">
-    <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
-    <ThemeToggle testId="tag-settings-theme-toggle" />
-  </header>
-
-  <section class="tag-settings__intro">
-    <h1>{$_('settings.tags.title')}</h1>
-    <p>{$_('settings.tags.subtitle')}</p>
-  </section>
+  <ScreenHeader title={$_('settings.tags.title')} subtitle={$_('settings.tags.subtitle')} compact>
+    <Button slot="actions" href="/settings" variant="ghost" size="sm">
+      {$_('settings.tags.back_settings')}
+    </Button>
+  </ScreenHeader>
 
   {#if $auth.status !== 'authenticated'}
-    <section class="tag-settings__panel">
+    <Panel variant="bordered">
       <p>{$_('settings.auth_required')}</p>
-      <a class="btn btn-sm variant-filled-primary" href="/auth/login">{$_('auth.login.submit')}</a>
-    </section>
+      <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
+    </Panel>
   {:else if loading}
-    <section class="tag-settings__panel" aria-busy="true">
-      <p>{$_('tag.loading')}</p>
-    </section>
+    <DataState state="loading" loadingText={$_('tag.loading')} testId="tag-settings-loading" />
   {:else}
     {#if error}
-      <p class="tag-settings__error" role="alert">{error}</p>
+      <InlineAlert variant="error" message={error} testId="tag-settings-error" />
     {/if}
 
     {#each tagGroups as group (group.id)}
@@ -329,23 +327,6 @@
     gap: 1rem;
   }
 
-  .tag-settings__top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .tag-settings__intro h1 {
-    margin: 0;
-    font-size: var(--text-2xl, 1.5rem);
-  }
-
-  .tag-settings__intro p {
-    margin: 0.25rem 0 0;
-    opacity: 0.72;
-  }
-
-  .tag-settings__panel,
   .tag-settings__section {
     padding: 1rem;
     border-radius: 0.5rem;
@@ -457,11 +438,6 @@
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.45rem;
-  }
-
-  .tag-settings__error {
-    margin: 0;
-    color: var(--color-error);
   }
 
   @media (max-width: 860px) {

@@ -360,6 +360,7 @@
       "analysis": "Analyse",
       "privacy": "Datenschutz & Daten",
       "appearance": "Darstellung",
+      "account": "Konto",
       "developer": "Entwickler"
     },
     "tracking": {
@@ -384,6 +385,10 @@
       "theme": "Design",
       "language": "Sprache"
     },
+    "account": {
+      "heading": "Konto",
+      "body": "Sitzungsaktionen liegen hier, damit Home auf den heutigen Eintrag fokussiert bleibt."
+    },
     "export": {
       "heading": "Datenexport",
       "body": "Der Export kann sensible Gesundheitsdaten enthalten. Speichere ihn nur an einem sicheren Ort.",
@@ -397,6 +402,7 @@
       "heading": "Tags",
       "body": "Benenne Tags um, \u00e4ndere Farbe und Icon, blende Tags aus oder setze sie zur\u00fcck.",
       "open": "Tags verwalten",
+      "back_settings": "Zurueck zu Einstellungen",
       "title": "Tags verwalten",
       "subtitle": "Passe Standard- und eigene Tags an, ohne das kuratierte Set f\u00fcr andere zu \u00e4ndern.",
       "active_heading": "Aktive Tags",

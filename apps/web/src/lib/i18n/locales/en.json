@@ -360,6 +360,7 @@
       "analysis": "Analysis",
       "privacy": "Privacy & Data",
       "appearance": "Appearance",
+      "account": "Account",
       "developer": "Developer"
     },
     "tracking": {
@@ -384,6 +385,10 @@
       "theme": "Theme",
       "language": "Language"
     },
+    "account": {
+      "heading": "Account",
+      "body": "Session actions live here so Home can stay focused on today's entry."
+    },
     "export": {
       "heading": "Data export",
       "body": "The export can contain sensitive health data. Store it only in a safe place.",
@@ -397,6 +402,7 @@
       "heading": "Tags",
       "body": "Rename, recolor, hide or reset the tags shown in the entry form.",
       "open": "Manage tags",
+      "back_settings": "Back to Settings",
       "title": "Manage tags",
       "subtitle": "Personalize default and custom tags without changing the curated set for anyone else.",
       "active_heading": "Active tags",

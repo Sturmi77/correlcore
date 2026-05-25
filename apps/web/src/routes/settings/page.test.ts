@@ -24,8 +24,13 @@ vi.mock('$lib/stores/auth', async () => {
       status: 'authenticated',
       user: { id: 'user-1', email: 'user@example.com' },
     }),
+    logout: vi.fn(async () => undefined),
   };
 });
+
+vi.mock('$app/navigation', () => ({
+  goto: vi.fn(),
+}));
 
 vi.mock('$lib/api/dev', () => ({
   fetchDevInfo: vi.fn(async () => {
@@ -76,6 +81,7 @@ describe('/settings Sprint 7', () => {
     expect(screen.getByTestId('settings-section-analysis')).toBeTruthy();
     expect(screen.getByTestId('settings-section-privacy')).toBeTruthy();
     expect(screen.getByTestId('settings-section-appearance')).toBeTruthy();
+    expect(screen.getByTestId('settings-section-account')).toBeTruthy();
   });
 
   it('keeps developer controls hidden until the 7x tap unlock', async () => {

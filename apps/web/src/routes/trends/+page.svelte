@@ -26,7 +26,14 @@
   import EntryHistorySheet, {
     type EntryHistoryDetail,
   } from '$lib/components/trends/EntryHistorySheet.svelte';
-  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import Button from '$lib/components/common/Button.svelte';
+  import InlineAlert from '$lib/components/common/InlineAlert.svelte';
+  import Panel from '$lib/components/common/Panel.svelte';
+  import SegmentedControl, {
+    type SegmentedControlOption,
+  } from '$lib/components/common/SegmentedControl.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
 
   type TrendTab = 'mood' | 'activities' | 'health';
 
@@ -157,6 +164,20 @@
   $: if ($auth.status === 'authenticated' && timeseries && timeseries.range !== range && !loading) {
     void loadTrends();
   }
+  $: rangeControlOptions = rangeOptions.map(
+    (option): SegmentedControlOption => ({
+      id: option.id,
+      label: $_(option.label),
+      testId: `trends-range-${option.id}`,
+    })
+  );
+  $: trendTabOptions = tabs.map(
+    (tab): TabBarOption => ({
+      id: tab.id,
+      label: $_(tab.label),
+      testId: `trends-tab-${tab.id}`,
+    })
+  );
 
   onMount(() => {
     void loadTrends();
@@ -168,40 +189,25 @@
 </svelte:head>
 
 <main class="trends">
-  <header class="trends__top">
-    <a class="btn btn-sm variant-ghost-surface" href="/">{$_('nav.home')}</a>
-    <ThemeToggle testId="trends-theme-toggle" />
-  </header>
-
-  <section class="trends__intro">
-    <div>
-      <h1>{$_('trends.title')}</h1>
-      <p>{$_('trends.subtitle')}</p>
-    </div>
-    <a class="btn btn-sm variant-soft-primary" href="/settings">{$_('nav.settings')}</a>
-  </section>
+  <ScreenHeader title={$_('trends.title')} subtitle={$_('trends.subtitle')} />
 
   {#if $auth.status !== 'authenticated'}
-    <section class="trends__panel">
+    <Panel variant="bordered">
       <p>{$_('trends.auth_required')}</p>
-      <a class="btn btn-sm variant-filled-primary" href="/auth/login">{$_('auth.login.submit')}</a>
-    </section>
+      <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
+    </Panel>
   {:else}
     <section class="trends__controls" aria-label={$_('trends.controls')}>
-      <div class="trends__segments">
-        {#each rangeOptions as option}
-          <button
-            type="button"
-            class:active={range === option.id}
-            on:click={() => {
-              range = option.id;
-              void loadTrends();
-            }}
-          >
-            {$_(option.label)}
-          </button>
-        {/each}
-      </div>
+      <SegmentedControl
+        value={range}
+        options={rangeControlOptions}
+        ariaLabel={$_('trends.controls')}
+        testId="trends-range-control"
+        on:change={(event) => {
+          range = event.detail.value as TimeseriesRange;
+          void loadTrends();
+        }}
+      />
 
       {#if activeTab === 'mood'}
         <div class="trends__metric-toggles">
@@ -234,23 +240,16 @@
       {/if}
     </section>
 
-    <div class="trends__tabs" role="tablist" aria-label={$_('trends.tabs.label')}>
-      {#each tabs as tab}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === tab.id}
-          class:active={activeTab === tab.id}
-          data-testid={`trends-tab-${tab.id}`}
-          on:click={() => (activeTab = tab.id)}
-        >
-          {$_(tab.label)}
-        </button>
-      {/each}
-    </div>
+    <TabBar
+      value={activeTab}
+      options={trendTabOptions}
+      ariaLabel={$_('trends.tabs.label')}
+      testId="trends-tabs"
+      on:change={(event) => (activeTab = event.detail.value as TrendTab)}
+    />
 
     {#if error}
-      <p class="trends__error" role="alert">{error}</p>
+      <InlineAlert variant="error" message={error} />
     {/if}
 
     {#if activeTab === 'mood'}
@@ -319,26 +318,12 @@
     gap: 1rem;
   }
 
-  .trends__top,
-  .trends__intro,
   .trends__controls,
   .trends__consistency {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-  }
-
-  .trends__intro h1 {
-    margin: 0;
-    font-size: var(--text-2xl, 1.5rem);
-    font-weight: 700;
-  }
-
-  .trends__intro p {
-    margin: 0.25rem 0 0;
-    max-width: 42rem;
-    opacity: 0.72;
   }
 
   .trends__panel,
@@ -351,54 +336,6 @@
 
   .trends__controls {
     flex-wrap: wrap;
-  }
-
-  .trends__segments {
-    display: inline-flex;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border-chart);
-    background: var(--color-surface);
-  }
-
-  .trends__segments button {
-    min-height: 44px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    padding: 0.45rem 0.7rem;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    font-size: 0.86rem;
-    cursor: pointer;
-  }
-
-  .trends__segments button.active {
-    background: var(--color-primary);
-    color: var(--color-text-inverse);
-  }
-
-  .trends__tabs {
-    display: flex;
-    gap: var(--space-1);
-    overflow-x: auto;
-    padding-bottom: 0.1rem;
-  }
-
-  .trends__tabs button {
-    min-height: 44px;
-    white-space: nowrap;
-    border-radius: var(--radius-full);
-    padding: var(--space-2) var(--space-4);
-    color: var(--color-text-muted);
-    border: 1px solid transparent;
-  }
-
-  .trends__tabs button.active {
-    color: var(--color-primary);
-    background: var(--color-primary-highlight);
-    border-color: oklch(from var(--color-primary) l c h / 0.25);
   }
 
   .trends__metric-toggles {
@@ -466,17 +403,11 @@
     color: var(--color-text-muted);
   }
 
-  .trends__error {
-    margin: 0;
-    color: var(--color-error);
-  }
-
   @media (max-width: 640px) {
     .trends {
       padding: 1rem;
     }
 
-    .trends__intro,
     .trends__controls {
       align-items: stretch;
       flex-direction: column;
