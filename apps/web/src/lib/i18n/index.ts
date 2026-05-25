@@ -10,10 +10,10 @@ export type AppLocale = (typeof supportedLocales)[number];
 register('de', () => import('./locales/de.json'));
 register('en', () => import('./locales/en.json'));
 
-export function setupI18n(locale?: string) {
+export function setupI18n(preferredLocale?: string) {
   const storedLocale = browser ? localStorage.getItem(STORAGE_KEY) : null;
   const resolvedLocale =
-    locale ?? storedLocale ?? (browser ? navigator.language.split('-')[0] : defaultLocale);
+    preferredLocale ?? storedLocale ?? (browser ? navigator.language.split('-')[0] : defaultLocale);
   const finalLocale = supportedLocales.includes(resolvedLocale as AppLocale)
     ? (resolvedLocale as AppLocale)
     : defaultLocale;
@@ -22,6 +22,10 @@ export function setupI18n(locale?: string) {
     fallbackLocale: defaultLocale,
     initialLocale: finalLocale,
   });
+
+  if (browser) {
+    locale.set(finalLocale);
+  }
 }
 
 export function setAppLocale(nextLocale: AppLocale): void {

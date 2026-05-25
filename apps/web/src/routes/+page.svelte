@@ -14,16 +14,10 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
-  import { auth, currentUser, logout } from '$lib/stores/auth';
+  import { auth, currentUser } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchDashboardSummary, type DashboardSummaryResponse } from '$lib/api/dashboard';
-  import {
-    insightStore,
-    rankedInsights,
-    loadInsights,
-    dismissInsight,
-    resetInsightStore,
-  } from '$lib/stores/insights';
+  import { insightStore, rankedInsights, loadInsights, dismissInsight } from '$lib/stores/insights';
   import {
     fetchUserPreferences,
     updateUserPreferences,
@@ -33,15 +27,13 @@
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
   import { shiftIsoDate } from '$lib/utils/streak';
+  import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
-  import InsightJourneyBanner from '$lib/components/insights/InsightJourneyBanner.svelte';
-  import InsightPhaseMilestoneCard from '$lib/components/insights/InsightPhaseMilestoneCard.svelte';
   import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
-  import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
 
   const HOME_SPARKLINE_DAYS = 7;
   const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
@@ -65,10 +57,6 @@
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
-  $: showMaturityMilestone = shouldShowMaturityMilestone(
-    insightMaturity,
-    userPreferences?.reached_milestone_keys
-  );
 
   function openEntrySheet(date: string = todayIso) {
     entrySheetDate = date;
@@ -120,17 +108,6 @@
     void loadInsights();
   }
 
-  async function handleLogout(): Promise<void> {
-    await logout();
-    todayEntry = null;
-    recentEntries = [];
-    dashboardLoaded = false;
-    dashboardSummary = null;
-    userPreferences = null;
-    resetInsightStore();
-    void goto('/', { replaceState: true });
-  }
-
   $: if (
     dashboardLoaded &&
     $auth.status === 'authenticated' &&
@@ -167,32 +144,6 @@
     }
   }
 
-  async function dismissMaturityMilestone(key: string): Promise<void> {
-    const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
-    reached.add(key);
-    const optimistic = {
-      ...(userPreferences ?? {
-        user_id: $currentUser?.id ?? '',
-        analytics_enabled: true,
-        onboarding_retro_completed: false,
-        onboarding_profile_completed: false,
-        dismissed_insight_keys: [],
-        last_seen_insight_at: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }),
-      reached_milestone_keys: [...reached],
-    };
-    userPreferences = optimistic;
-    try {
-      userPreferences = await updateUserPreferences({
-        reached_milestone_keys: optimistic.reached_milestone_keys,
-      });
-    } catch {
-      // Optimistic dismissal for this session.
-    }
-  }
-
   onMount(() => {
     if ($auth.status === 'authenticated' && !dashboardLoaded) {
       void loadDashboard();
@@ -207,25 +158,6 @@
 
 {#if $auth.status === 'authenticated'}
   <div class="home-screen">
-    <header class="home-screen__toolbar">
-      <ThemeToggle testId="home-theme-toggle" />
-      <button
-        class="btn btn-sm variant-ghost-surface"
-        type="button"
-        on:click={handleLogout}
-        data-testid="home-logout"
-      >
-        {$_('auth.logout.label')}
-      </button>
-    </header>
-
-    {#if insightMaturity && showMaturityMilestone}
-      <InsightPhaseMilestoneCard
-        maturity={insightMaturity}
-        on:dismiss={(e) => void dismissMaturityMilestone(e.detail.key)}
-      />
-    {/if}
-
     <!-- Zone 1: date + work context + entry status -->
     <section class="home-zone" data-testid="home-zone-context">
       <HomeTodayContext {todayIso} {todayEntry} loading={dashboardLoading && !dashboardLoaded} />
@@ -233,10 +165,6 @@
 
     <!-- Zone 2: insight preview (best-effort) -->
     <section class="home-zone" data-testid="home-zone-insight">
-      {#if insightMaturity}
-        <InsightJourneyBanner maturity={insightMaturity} collapsible initialCollapsed />
-      {/if}
-
       {#if showFirstWeekBanner}
         <FirstWeekInsightBanner on:dismiss={dismissFirstWeekBanner} />
       {:else}
@@ -260,9 +188,13 @@
         loading={dashboardLoading && !dashboardLoaded}
       />
 
-      <button
+      <Button
         type="button"
-        class="home-cta card p-6 flex flex-col items-center gap-2 text-center w-full hover:variant-soft-primary"
+        variant="primary"
+        size="lg"
+        fullWidth
+        stacked
+        className="home-cta"
         data-testid="home-cta"
         on:click={() => openEntrySheet(todayIso)}
       >
@@ -272,14 +204,8 @@
           <span class="text-lg font-semibold">{$_('home.cta_log_today')}</span>
         {/if}
         <span class="text-sm home-cta__hint">{$_('entry.subtitle')}</span>
-      </button>
+      </Button>
     </section>
-
-    <nav class="home-links" aria-label={$_('home.secondary_nav')}>
-      <a class="home-links__item" href="/insights">{$_('home.explore_insights')}</a>
-      <span class="home-links__sep" aria-hidden="true">·</span>
-      <a class="home-links__item" href="/trends">{$_('home.view_trends')}</a>
-    </nav>
 
     <EntrySheet
       bind:open={entrySheetOpen}
@@ -353,12 +279,6 @@
     padding-bottom: var(--space-8);
   }
 
-  .home-screen__toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
   .home-zone {
     display: flex;
     flex-direction: column;
@@ -369,31 +289,11 @@
     gap: var(--space-5);
   }
 
-  .home-cta {
+  :global(.home-cta) {
     border: 1px solid color-mix(in oklch, var(--color-primary) 25%, transparent);
-    background: color-mix(in oklch, var(--color-primary) 6%, var(--color-surface));
   }
 
-  .home-cta__hint {
-    color: var(--color-text-muted);
-  }
-
-  .home-links {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    font-size: var(--text-sm);
-  }
-
-  .home-links__item {
-    color: var(--color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .home-links__sep {
-    color: var(--color-text-muted);
+  :global(.home-cta .home-cta__hint) {
+    color: color-mix(in srgb, var(--color-text-inverse) 78%, transparent);
   }
 </style>

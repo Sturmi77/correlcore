@@ -1,6 +1,6 @@
 # M4 Release Readiness
 
-Stand: 2026-05-22
+Stand: 2026-05-25
 
 ## Zielbild
 
@@ -105,6 +105,23 @@ Ersatz für einen externen Penetrationstest gegen eine produktive Umgebung.
 | P2        | OpenAPI TypeScript Client                                         | Contract-Test und zentrale Contract-Konstanten decken M4 ab; echte Client-Generation bleibt evaluiertes Folgeprojekt. |
 | P2        | Offline/PWA                                                       | M4 dokumentiert ehrlich: Manifest vorhanden, kein vollständiges Offline-first/Sync.                                   |
 | P3        | Attachment/EXIF/Audit-Log                                         | Kein produktiver M4-Pfad; vor Aktivierung eigener Upload-Flows erneut auditieren.                                     |
+
+### Meilenstein-Zuordnung der Restthemen
+
+Die folgenden Punkte bleiben bewusst offen, sind aber einem Zielmeilenstein
+oder einem verbindlichen Gate zugeordnet:
+
+| Priorität | Thema                                                                                | Ziel / Link                                                                        | M4-Entscheidung                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| P1        | Externer Penetrationstest gegen Staging/Production                                   | [M9 Beta-Härtung](../DESIGN_DOCUMENT.md#m9--beta-h%C3%A4rtung-woche-2224)          | Nicht Blocker für internen M4, Blocker vor öffentlicher Beta.                                                         |
+| P1        | Lokaler Gitleaks-Scan nicht überall verfügbar                                        | [CI - Security](../../.github/workflows/ci-security.yml)                           | CI-Gate ist maßgeblich; lokale Entwickler können Gitleaks optional installieren.                                      |
+| P2        | Dependency-Audit mit `pip-audit`/`pnpm audit` als eigenes CI-Gate                    | [M9 Beta-Härtung](../DESIGN_DOCUMENT.md#m9--beta-h%C3%A4rtung-woche-2224)          | Für M4 dokumentiert, nach M4 als Security-Backlog ergänzen.                                                           |
+| P2        | OpenAPI TypeScript Client                                                            | [API Contract Strategy](../API_CONTRACTS.md)                                       | Contract-Test und zentrale Contract-Konstanten decken M4 ab; echte Client-Generation bleibt evaluiertes Folgeprojekt. |
+| P2        | Vollständiger Offline-first/PWA-Sync                                                 | [M4 Mobile/PWA](../DESIGN_DOCUMENT.md#m4--mobile-polish--pwa-hardening-woche-1112) | M4 dokumentiert ehrlich: Manifest vorhanden, kein vollständiges Offline-first/Sync.                                   |
+| P2        | Mobile Screenshot-QA für Home, Entry Sheet, Insights, Trends und Settings bei 375 px | [M4 Mobile/PWA](../DESIGN_DOCUMENT.md#m4--mobile-polish--pwa-hardening-woche-1112) | Nicht Blocker für diesen UI-Hardening-Push, solange Playwright-Smoke, Browser-QA und CI grün bleiben.                 |
+| P2        | Vollständige Ablösung route-lokaler Button-Klassen durch Common-Primitives           | [Frontend Component System](../frontend/UI_COMPONENT_SYSTEM.md#migration-backlog)  | Begonnen in Sprints B-E; weitere Ersetzung bleibt Follow-up für Mobile-Hardening.                                     |
+| P2        | Style-Contract/Lint für unbekannte Design-Tokens und Varianten                       | [M9 Beta-Härtung](../DESIGN_DOCUMENT.md#m9--beta-h%C3%A4rtung-woche-2224)          | Nach M4 als Qualitäts-Guardrail ergänzen.                                                                             |
+| P3        | Attachment/EXIF/Audit-Log                                                            | [M6 Fotos & Medien](../DESIGN_DOCUMENT.md#m6--fotos--medien-woche-1516)            | Kein produktiver M4-Pfad; vor Aktivierung eigener Upload-Flows erneut auditieren.                                     |
 
 ## Release-Entscheidung
 

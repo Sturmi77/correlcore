@@ -1,13 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { _, locale } from 'svelte-i18n';
-  import { auth } from '$lib/stores/auth';
+  import { goto } from '$app/navigation';
+  import { auth, logout } from '$lib/stores/auth';
   import {
     devForceVisualizations,
     devForceVisualizationsControl,
     devMode,
   } from '$lib/stores/devMode';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
+  import Button from '$lib/components/common/Button.svelte';
+  import InlineAlert from '$lib/components/common/InlineAlert.svelte';
+  import Panel from '$lib/components/common/Panel.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
@@ -63,6 +68,11 @@
 
   function selectLocale(nextLocale: AppLocale): void {
     setAppLocale(nextLocale);
+  }
+
+  async function handleLogout(): Promise<void> {
+    await logout();
+    await goto('/', { replaceState: true });
   }
 
   // ---------------------------------------------------------------------------
@@ -134,21 +144,13 @@
 </svelte:head>
 
 <main class="settings">
-  <header class="settings__top">
-    <a class="btn btn-sm variant-ghost-surface" href="/">{$_('nav.home')}</a>
-    <ThemeToggle testId="settings-theme-toggle" />
-  </header>
-
-  <section class="settings__intro">
-    <h1>{$_('settings.title')}</h1>
-    <p>{$_('settings.subtitle')}</p>
-  </section>
+  <ScreenHeader title={$_('settings.title')} subtitle={$_('settings.subtitle')} />
 
   {#if $auth.status !== 'authenticated'}
-    <section class="settings__panel">
+    <Panel variant="bordered">
       <p>{$_('settings.auth_required')}</p>
-      <a class="btn btn-sm variant-filled-primary" href="/auth/login">{$_('auth.login.submit')}</a>
-    </section>
+      <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
+    </Panel>
   {:else}
     <section class="settings__panel" data-testid="settings-section-tracking">
       <div class="settings__panel-head">
@@ -188,7 +190,7 @@
         <a class="btn variant-soft-primary" href="/insights">{$_('settings.analysis.insights')}</a>
       </div>
       {#if preferencesError}
-        <p class="settings__error" role="alert">{preferencesError}</p>
+        <InlineAlert variant="error" message={preferencesError} />
       {/if}
     </section>
 
@@ -228,7 +230,7 @@
         </button>
       </div>
       {#if error}
-        <p class="settings__error" role="alert">{error}</p>
+        <InlineAlert variant="error" message={error} />
       {/if}
     </section>
 
@@ -259,6 +261,19 @@
         >
           EN
         </button>
+      </div>
+    </section>
+
+    <section class="settings__panel" data-testid="settings-section-account">
+      <div class="settings__panel-head">
+        <span class="settings__section-kicker">{$_('settings.section.account')}</span>
+        <h2>{$_('settings.account.heading')}</h2>
+        <p>{$_('settings.account.body')}</p>
+      </div>
+      <div class="settings__downloads">
+        <Button variant="ghost" data-testid="settings-logout" on:click={() => void handleLogout()}>
+          {$_('auth.logout.label')}
+        </Button>
       </div>
     </section>
 
@@ -335,18 +350,6 @@
     gap: 1rem;
   }
 
-  .settings__top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .settings__intro h1 {
-    margin: 0;
-    font-size: var(--text-2xl, 1.5rem);
-  }
-
-  .settings__intro p,
   .settings__panel-head p {
     margin: 0.25rem 0 0;
     opacity: 0.72;
@@ -385,11 +388,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem;
-  }
-
-  .settings__error {
-    margin: 0;
-    color: var(--color-error);
   }
 
   /* Developer Mode toggle — min 44px touch target */

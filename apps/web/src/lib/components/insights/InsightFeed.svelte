@@ -21,6 +21,9 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
+  import EmptyState from '$lib/components/common/EmptyState.svelte';
+  import InlineAlert from '$lib/components/common/InlineAlert.svelte';
+  import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
   import InsightCard from './InsightCard.svelte';
   import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
   import InsightQualityMeter from './InsightQualityMeter.svelte';
@@ -73,6 +76,13 @@
   $: emptyBodyKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.body`
     : 'insights.feed.empty_body';
+  $: filterTabOptions = TABS.map(
+    (tab): TabBarOption => ({
+      id: tab.id,
+      label: $_(tab.label),
+      testId: `insight-feed-tab-${tab.id}`,
+    })
+  );
 
   const SKELETON_COUNT = 3;
   const skeletonItems: number[] = Array.from({ length: SKELETON_COUNT }, (_, idx) => idx);
@@ -121,38 +131,24 @@
   />
 
   <!-- Filter tabs -->
-  <div
-    class="if-tabs"
-    role="tablist"
-    aria-label={$_('insights.feed.filter_label')}
-    data-testid="insight-feed-tabs"
-  >
-    {#each TABS as tab}
-      <button
-        role="tab"
-        aria-selected={activeTab === tab.id}
-        class="if-tab"
-        class:if-tab--active={activeTab === tab.id}
-        data-testid="insight-feed-tab-{tab.id}"
-        on:click={() => (activeTab = tab.id)}
-      >
-        {$_(tab.label)}
-      </button>
-    {/each}
-  </div>
+  <TabBar
+    value={activeTab}
+    options={filterTabOptions}
+    ariaLabel={$_('insights.feed.filter_label')}
+    testId="insight-feed-tabs"
+    on:change={(event) => (activeTab = event.detail.value as FilterTab)}
+  />
 
   <!-- Inline error banner -->
   {#if error}
-    <div class="if-error" role="alert" data-testid="insight-feed-error">
-      <span>{error}</span>
-      <button
-        class="if-error__retry"
-        data-testid="insight-feed-retry"
-        on:click={() => dispatch('retry')}
-      >
-        {$_('entry.autosave.retry')}
-      </button>
-    </div>
+    <InlineAlert
+      variant="error"
+      message={error}
+      actionLabel={$_('entry.autosave.retry')}
+      actionTestId="insight-feed-retry"
+      testId="insight-feed-error"
+      on:action={() => dispatch('retry')}
+    />
   {/if}
 
   <!-- Loading skeleton -->
@@ -167,8 +163,15 @@
 
     <!-- Empty state -->
   {:else if !error && filtered.length === 0}
-    <div class="if-empty" data-testid="insight-feed-empty">
+    <EmptyState
+      title={$_(emptyTitleKey)}
+      body={$_(emptyBodyKey)}
+      actionLabel={$_('insights.feed.empty_cta')}
+      actionHref="/"
+      testId="insight-feed-empty"
+    >
       <svg
+        slot="icon"
         width="40"
         height="40"
         viewBox="0 0 24 24"
@@ -180,10 +183,7 @@
         <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z" />
         <path d="M15 11v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v0" />
       </svg>
-      <p>{$_(emptyTitleKey)}</p>
-      <span>{$_(emptyBodyKey)}</span>
-      <a href="/" class="if-empty__cta">{$_('insights.feed.empty_cta')}</a>
-    </div>
+    </EmptyState>
 
     <!-- Feed -->
   {:else if !error}
@@ -252,58 +252,6 @@
     background: var(--color-primary-highlight);
   }
 
-  .if-tabs {
-    display: flex;
-    gap: var(--space-1);
-    flex-wrap: wrap;
-  }
-
-  .if-tab {
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--color-text-muted);
-    border: 1px solid transparent;
-    transition:
-      color var(--transition-interactive),
-      background var(--transition-interactive),
-      border-color var(--transition-interactive);
-  }
-
-  .if-tab:hover {
-    color: var(--color-text);
-    background: var(--color-surface-offset);
-  }
-
-  .if-tab--active {
-    color: var(--color-primary);
-    background: var(--color-primary-highlight);
-    border-color: oklch(from var(--color-primary) l c h / 0.25);
-  }
-
-  .if-error {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-error-highlight);
-    border: 1px solid oklch(from var(--color-error) l c h / 0.25);
-    border-radius: var(--radius-md);
-    font-size: var(--text-sm);
-    color: var(--color-error);
-  }
-
-  .if-error__retry {
-    flex-shrink: 0;
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-error);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
   .if-list {
     list-style: none;
     padding: 0;
@@ -311,45 +259,5 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-  }
-
-  .if-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--space-3);
-    padding: var(--space-16) var(--space-8);
-    color: var(--color-text-muted);
-  }
-
-  .if-empty p {
-    font-size: var(--text-base);
-    font-weight: 600;
-    color: var(--color-text);
-    margin: 0;
-  }
-
-  .if-empty span {
-    font-size: var(--text-sm);
-    max-width: 36ch;
-    margin: 0;
-  }
-
-  .if-empty__cta {
-    margin-top: var(--space-2);
-    padding: var(--space-2) var(--space-5);
-    background: var(--color-primary);
-    color: var(--color-text-inverse);
-    border-radius: var(--radius-md);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    text-decoration: none;
-    transition: background var(--transition-interactive);
-  }
-
-  .if-empty__cta:hover,
-  .if-empty__cta:focus-visible {
-    background: var(--color-primary-hover);
   }
 </style>

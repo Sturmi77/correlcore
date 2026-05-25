@@ -11,6 +11,7 @@ const user = {
 
 const now = '2026-05-22T10:00:00Z';
 const entryId = '10000000-0000-4000-8000-000000000001';
+const APP_READY_TIMEOUT_MS = 60_000;
 
 type ApiWrite = {
   method: string;
@@ -216,20 +217,26 @@ test('login redirects to a protected workflow', async ({ page }) => {
   await installSmokeApi(page, { authenticated: false });
 
   await page.goto('/auth/login?next=/entries/new');
-  await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /sign in|anmelden/i })).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
   await page.locator('input[type="email"]').fill(user.email);
   await page.locator('input[type="password"]').fill('CorrectHorse123!');
   await page.locator('button[type="submit"]').click();
 
   await expect(page).toHaveURL(/\/entries\/new$/);
-  await expect(page.getByRole('heading', { name: /log your day/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /log your day|tag erfassen/i })).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
 });
 
 test('entry creation autosaves the core daily metrics', async ({ page }) => {
   const api = await installSmokeApi(page, { authenticated: true });
 
   await page.goto('/entries/new');
-  await expect(page.getByRole('heading', { name: /log your day/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /log your day|tag erfassen/i })).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
 
   await page.locator('#entry-mood').evaluate((element) => {
     const input = element as HTMLInputElement;
@@ -248,13 +255,18 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
   await installSmokeApi(page, { authenticated: true });
 
   await page.goto('/trends');
-  await expect(page.getByRole('heading', { name: /trends/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /trends/i })).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
   await page.getByTestId('trends-tab-activities').click();
-  await expect(page.getByRole('tabpanel', { name: /activities/i })).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: /activities|aktivitaeten/i })).toBeVisible();
   await page.getByTestId('trends-tab-health').click();
   await expect(page.locator('.trends__consistency strong').first()).toHaveText('3');
 
   await page.goto('/insights');
   await expect(page.getByText(/fridays currently line up/i)).toBeVisible();
-  await expect(page.getByText('maturity.badge.developing')).toBeVisible();
+  await expect(page.getByTestId('insight-maturity-badge')).toHaveAttribute(
+    'data-phase',
+    'developing'
+  );
 });

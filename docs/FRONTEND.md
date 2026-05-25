@@ -1,6 +1,6 @@
 # CorrelCore — Frontend Principles
 
-Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-16 (M3.6 Sprint 0 — insight maturity API contract and shared web types).
+Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-22 (Sprint A — UI component system and mobile hardening contract).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
@@ -173,6 +173,21 @@ confidence  bar fill    label
 - Label text is intentionally epistemological, not evaluative
 - Raw `confidence` value and `sample_n` shown in Level 2 / expanded state only
 
+### 4.5 UI Component Contract
+
+All new controls and screen-level refactors must follow the shared component contract in [`frontend/UI_COMPONENT_SYSTEM.md`](frontend/UI_COMPONENT_SYSTEM.md). Route-local button, tab, panel, and header styling is legacy unless a component has an explicit exception.
+
+Mandatory shared primitives for the next frontend hardening work:
+
+- `Button` / `IconButton` for all actions, including text links that behave like controls
+- `ScreenHeader` for primary screen headers
+- `Panel` for bounded information and tool surfaces
+- `SegmentedControl` and `TabBar` for filters and within-screen views
+- `BottomSheet` for entry creation and secondary mobile flows
+- `DataState`, `EmptyState`, and `InlineAlert` for loading, error, empty, and offline states
+
+Every interactive primitive must provide a 44 x 44 px touch target, visible focus state, accessible label, and a documented variant/state model.
+
 ---
 
 ## 5. Screen Architecture
@@ -213,6 +228,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 - Insight card is dismissable → writes to `user_preferences.dismissed_insight_ids`
 - If no insight exists (< 7 days of data): show `FirstWeekInsightBanner` (Issue #155)
 - Insight fetch is best-effort and must not block `HomeRecentEntries` or the CTA button
+- Home must not render insight maturity journey banners, phase milestone cards, insight matrices, deep filters, or secondary navigation that duplicates `AppNav`.
 
 ---
 
@@ -466,7 +482,10 @@ All copy in `InsightQualityMeter.svelte` must be **descriptive, never imperative
 apps/web/src/
 ├── lib/
 │   ├── components/
-│   │   ├── common/          # Shared atoms: Button, Input, Badge, Icon, Slider
+│   │   ├── common/          # Shared primitives: Button, IconButton,
+│   │   │                    # ScreenHeader, Panel, SegmentedControl,
+│   │   │                    # TabBar, BottomSheet, DataState,
+│   │   │                    # EmptyState, InlineAlert, Input, Badge
 │   │   ├── auth/            # Auth-specific components
 │   │   ├── home/            # HomeInsight, HomeSparkline, HomeSummary,
 │   │   │                    # HomeRecentEntries, FirstWeekInsightBanner,
@@ -609,6 +628,7 @@ Every new component or screen decision must be checked against:
 **Technical level**
 
 - [ ] Stateless atom or store-consuming organism?
+- [ ] Uses an approved shared primitive from `frontend/UI_COMPONENT_SYSTEM.md`?
 - [ ] Custom SVG chart or library? (library needs ADR)
 - [ ] Renders without horizontal scroll at 375 px?
 - [ ] All four component states defined (loading/error/empty/offline)?
