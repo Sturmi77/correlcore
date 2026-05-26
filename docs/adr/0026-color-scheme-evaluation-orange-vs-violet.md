@@ -18,6 +18,7 @@ The full theoretical framework, contrast tables, and design rationale are
 in `docs/frontend/COLOR_SCHEME_CONCEPT.md`.
 
 The evaluation covered:
+
 - Color theory (hue semantics, simultaneous contrast, Bezold effect)
 - WCAG 2.2 contrast ratios in dark AND light mode
 - Cognitive associations for the privacy-first selfhoster audience
@@ -31,11 +32,11 @@ confirmed per ADR-0020.**
 
 ### Why orange was considered
 
-| Argument | Assessment |
-|----------|------------|
-| Selfhoster ecosystem recognition (Grafana, Home Assistant) | Valid — target audience familiarity is high |
-| High-energy, activating hue | Counterproductive for a passive, reflective tracking app |
-| Distinct market positioning | Undermined by visual sameness with Grafana |
+| Argument                                                   | Assessment                                               |
+| ---------------------------------------------------------- | -------------------------------------------------------- |
+| Selfhoster ecosystem recognition (Grafana, Home Assistant) | Valid — target audience familiarity is high              |
+| High-energy, activating hue                                | Counterproductive for a passive, reflective tracking app |
+| Distinct market positioning                                | Undermined by visual sameness with Grafana               |
 
 ### Rejection reasons
 

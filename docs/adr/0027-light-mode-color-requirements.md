@@ -27,28 +27,28 @@ present and future light mode implementations in CorrelCore.
 
 ### Current Light Mode Token Baseline
 
-| Token | Value | Role |
-|-------|-------|------|
-| `--color-bg` | `#fafaf7` | Page background (warm off-white, not pure white) |
-| `--color-surface` | `#f0ede8` | Card / elevated surface |
-| `--color-border` | `#d6d0c8` | Dividers, input borders |
-| `--color-text` | `#1c1a17` | Primary text |
-| `--color-text-muted` | `#6b6660` | Secondary / descriptive text |
-| `--color-text-faint` | `#a8a39c` | Placeholder, disabled states only |
-| `--color-primary` | `#6356d9` | Interactive elements, focus rings |
-| `--color-primary-hover` | `#5548c5` | Hover state |
-| `--color-primary-active` | `#4338a8` | Active / pressed state |
-| `--color-primary-highlight` | `#ebe9ff` | Subtle tint backgrounds |
+| Token                       | Value     | Role                                             |
+| --------------------------- | --------- | ------------------------------------------------ |
+| `--color-bg`                | `#fafaf7` | Page background (warm off-white, not pure white) |
+| `--color-surface`           | `#f0ede8` | Card / elevated surface                          |
+| `--color-border`            | `#d6d0c8` | Dividers, input borders                          |
+| `--color-text`              | `#1c1a17` | Primary text                                     |
+| `--color-text-muted`        | `#6b6660` | Secondary / descriptive text                     |
+| `--color-text-faint`        | `#a8a39c` | Placeholder, disabled states only                |
+| `--color-primary`           | `#6356d9` | Interactive elements, focus rings                |
+| `--color-primary-hover`     | `#5548c5` | Hover state                                      |
+| `--color-primary-active`    | `#4338a8` | Active / pressed state                           |
+| `--color-primary-highlight` | `#ebe9ff` | Subtle tint backgrounds                          |
 
 ### Contrast Requirements (WCAG 2.2)
 
-| Token pair | Minimum ratio required | Actual ratio | Status |
-|------------|----------------------|--------------|--------|
-| `--color-text` on `--color-bg` (`#1c1a17` / `#fafaf7`) | 4.5:1 (AA) | 16.8:1 | ✅ AAA |
-| `--color-primary` on `--color-bg` (`#6356d9` / `#fafaf7`) | 4.5:1 (AA) | 5.2:1 | ✅ AA |
-| `--color-text-muted` on `--color-bg` (`#6b6660` / `#fafaf7`) | 4.5:1 (AA) | 5.1:1 | ✅ AA |
-| `--color-text-faint` on `--color-bg` (`#a8a39c` / `#fafaf7`) | Decorative only | 2.7:1 | ⚠️ Decorative use only |
-| `--color-primary` focus ring on `--color-surface` | 3:1 (SC 1.4.11) | 4.8:1 | ✅ Pass |
+| Token pair                                                   | Minimum ratio required | Actual ratio | Status                 |
+| ------------------------------------------------------------ | ---------------------- | ------------ | ---------------------- |
+| `--color-text` on `--color-bg` (`#1c1a17` / `#fafaf7`)       | 4.5:1 (AA)             | 16.8:1       | ✅ AAA                 |
+| `--color-primary` on `--color-bg` (`#6356d9` / `#fafaf7`)    | 4.5:1 (AA)             | 5.2:1        | ✅ AA                  |
+| `--color-text-muted` on `--color-bg` (`#6b6660` / `#fafaf7`) | 4.5:1 (AA)             | 5.1:1        | ✅ AA                  |
+| `--color-text-faint` on `--color-bg` (`#a8a39c` / `#fafaf7`) | Decorative only        | 2.7:1        | ⚠️ Decorative use only |
+| `--color-primary` focus ring on `--color-surface`            | 3:1 (SC 1.4.11)        | 4.8:1        | ✅ Pass                |
 
 ### Hard Rules for Light Mode
 

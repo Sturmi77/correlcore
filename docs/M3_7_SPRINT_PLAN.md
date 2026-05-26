@@ -64,11 +64,11 @@ No rebrand. The deliverables are:
 
 ### Issues to create and close
 
-| Issue title | Labels | Notes |
-|-------------|--------|-------|
-| `[M3.7] Token: add --color-gold and insight maturity semantic tokens` | `frontend`, `tokens` | Blocks #189 |
-| `[M3.7] Cleanup: remove legacy --color-ms-primary* aliases` | `frontend`, `cleanup` | — |
-| `[M3.7] Fix: system-preference fallback block missing --color-metric-*` | `frontend`, `bug` | — |
+| Issue title                                                             | Labels                | Notes       |
+| ----------------------------------------------------------------------- | --------------------- | ----------- |
+| `[M3.7] Token: add --color-gold and insight maturity semantic tokens`   | `frontend`, `tokens`  | Blocks #189 |
+| `[M3.7] Cleanup: remove legacy --color-ms-primary* aliases`             | `frontend`, `cleanup` | —           |
+| `[M3.7] Fix: system-preference fallback block missing --color-metric-*` | `frontend`, `bug`     | —           |
 
 ### Tasks
 
@@ -78,23 +78,27 @@ No rebrand. The deliverables are:
    - Document contrast ratio in PR description
 
 2. **Add insight maturity semantic tokens** to `app.css`
+
    ```css
    /* dark */
-   --color-insight-early:       #fbbf24;
+   --color-insight-early: #fbbf24;
    --color-insight-provisional: #60a5fa;
-   --color-insight-robust:      #4ade80;
+   --color-insight-robust: #4ade80;
 
    /* light */
-   --color-insight-early:       #b45309;
+   --color-insight-early: #b45309;
    --color-insight-provisional: #2563eb;
-   --color-insight-robust:      #16a34a;
+   --color-insight-robust: #16a34a;
    ```
 
 3. **Remove legacy aliases** — verify no component references them first:
+
    ```bash
    grep -r 'color-ms-primary' apps/web/src/
    ```
+
    Then remove from `app.css`:
+
    ```css
    /* DELETE these three aliases */
    --color-ms-primary: ...;
@@ -124,11 +128,11 @@ No rebrand. The deliverables are:
 
 ### Issues to create and close
 
-| Issue title | Labels | Notes |
-|-------------|--------|-------|
-| `[M3.7] CI: add pnpm check:contrast WCAG AA gate` | `frontend`, `ci`, `a11y` | — |
-| `[M3.7] QA: Light mode contrast audit against ADR-0027` | `frontend`, `a11y`, `qa` | — |
-| `[M3.7] docs: update FRONTEND.md to reference ADR-0027` | `documentation` | — |
+| Issue title                                             | Labels                   | Notes |
+| ------------------------------------------------------- | ------------------------ | ----- |
+| `[M3.7] CI: add pnpm check:contrast WCAG AA gate`       | `frontend`, `ci`, `a11y` | —     |
+| `[M3.7] QA: Light mode contrast audit against ADR-0027` | `frontend`, `a11y`, `qa` | —     |
+| `[M3.7] docs: update FRONTEND.md to reference ADR-0027` | `documentation`          | —     |
 
 ### Tasks
 
@@ -145,11 +149,13 @@ No rebrand. The deliverables are:
    - Exit code 1 on any failure
 
    Add to `package.json`:
+
    ```json
    "check:contrast": "tsx scripts/check-contrast.ts"
    ```
 
    Add step to `ci-web.yml`:
+
    ```yaml
    - name: Contrast check
      run: pnpm check:contrast
@@ -175,6 +181,7 @@ No rebrand. The deliverables are:
    Document QA results in `docs/M3_7_SPRINT_STATUS.md`.
 
 3. **Update `docs/FRONTEND.md`** — add theming section:
+
    ```markdown
    ## Theming
 
@@ -200,14 +207,14 @@ No rebrand. The deliverables are:
 
 Create the following issues before Sprint 1 begins:
 
-| # | Title | Sprint | Labels | Dependency |
-|---|-------|--------|--------|------------|
-| — | [M3.7] Token: add `--color-gold` and insight maturity semantic tokens | S1 | `frontend`, `tokens` | Blocks #189 |
-| — | [M3.7] Cleanup: remove legacy `--color-ms-primary*` aliases | S1 | `frontend`, `cleanup` | — |
-| — | [M3.7] Fix: system-preference fallback block missing `--color-metric-*` | S1 | `frontend`, `bug` | — |
-| — | [M3.7] CI: add `pnpm check:contrast` WCAG AA gate | S2 | `frontend`, `ci`, `a11y` | — |
-| — | [M3.7] QA: Light mode contrast audit against ADR-0027 | S2 | `frontend`, `a11y`, `qa` | — |
-| — | [M3.7] docs: update FRONTEND.md to reference ADR-0027 | S2 | `documentation` | — |
+| #   | Title                                                                   | Sprint | Labels                   | Dependency  |
+| --- | ----------------------------------------------------------------------- | ------ | ------------------------ | ----------- |
+| —   | [M3.7] Token: add `--color-gold` and insight maturity semantic tokens   | S1     | `frontend`, `tokens`     | Blocks #189 |
+| —   | [M3.7] Cleanup: remove legacy `--color-ms-primary*` aliases             | S1     | `frontend`, `cleanup`    | —           |
+| —   | [M3.7] Fix: system-preference fallback block missing `--color-metric-*` | S1     | `frontend`, `bug`        | —           |
+| —   | [M3.7] CI: add `pnpm check:contrast` WCAG AA gate                       | S2     | `frontend`, `ci`, `a11y` | —           |
+| —   | [M3.7] QA: Light mode contrast audit against ADR-0027                   | S2     | `frontend`, `a11y`, `qa` | —           |
+| —   | [M3.7] docs: update FRONTEND.md to reference ADR-0027                   | S2     | `documentation`          | —           |
 
 ---
 
