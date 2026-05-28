@@ -25,8 +25,9 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.tag import TagCategory
 
@@ -39,6 +40,8 @@ _HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
 # Maximum number of tags a client may assign to one entry in a single
 # request. Keeps payloads small and prevents accidental tag-spam.
 MAX_TAGS_PER_ENTRY = 50
+
+HabitType = Literal["none", "build", "reduce"]
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +57,8 @@ class TagCreate(BaseModel):
     category: TagCategory
     icon: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=7)
+    habit_type: HabitType = "none"
+    target_frequency: int | None = Field(default=None, ge=1, le=7)
 
     @field_validator("slug")
     @classmethod
@@ -83,6 +88,14 @@ class TagCreate(BaseModel):
             raise ValueError("color must be a 7-char hex string like #aabbcc")
         return v.lower()
 
+    @model_validator(mode="after")
+    def habit_fields_consistent(self) -> TagCreate:
+        if self.habit_type == "none":
+            self.target_frequency = None
+        elif self.target_frequency is None:
+            raise ValueError("target_frequency is required for habit tags")
+        return self
+
 
 class TagUpdate(BaseModel):
     """Payload for ``PATCH /api/v1/tags/{id}``.
@@ -98,6 +111,8 @@ class TagUpdate(BaseModel):
     icon: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=7)
     is_hidden: bool | None = None
+    habit_type: HabitType | None = None
+    target_frequency: int | None = Field(default=None, ge=1, le=7)
 
     @field_validator("name")
     @classmethod
@@ -117,6 +132,14 @@ class TagUpdate(BaseModel):
         if not _HEX_COLOR_PATTERN.match(v):
             raise ValueError("color must be a 7-char hex string like #aabbcc")
         return v.lower()
+
+    @model_validator(mode="after")
+    def habit_fields_consistent(self) -> TagUpdate:
+        if self.habit_type == "none":
+            self.target_frequency = None
+        elif self.habit_type in {"build", "reduce"} and self.target_frequency is None:
+            raise ValueError("target_frequency is required for habit tags")
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -161,5 +184,7 @@ class TagResponse(BaseModel):
     color: str | None
     is_default: bool
     is_hidden: bool
+    habit_type: HabitType
+    target_frequency: int | None
     created_at: datetime
     updated_at: datetime

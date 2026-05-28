@@ -15,6 +15,7 @@
     listVisibleTags,
     updateTag,
     type TagCategory,
+    type HabitType,
     type TagResponse,
   } from '$lib/api/tags';
   import { refreshTags } from '$lib/stores/tags';
@@ -24,6 +25,8 @@
     category: TagCategory;
     icon: string;
     color: string;
+    habit_type: HabitType;
+    target_frequency: number;
   };
 
   let loading = true;
@@ -39,6 +42,8 @@
       category: tag.category,
       icon: tag.icon ?? '',
       color: tag.color ?? '#6356d9',
+      habit_type: tag.habit_type,
+      target_frequency: tag.target_frequency ?? 3,
     };
   }
 
@@ -89,6 +94,8 @@
         category: draft.category,
         icon: draft.icon.trim() ? draft.icon.trim() : null,
         color: draft.color,
+        habit_type: draft.habit_type,
+        target_frequency: draft.habit_type === 'none' ? null : draft.target_frequency,
       });
       await load();
       await refreshTags();
@@ -275,6 +282,39 @@
                           })}
                       />
                     </label>
+                    <label>
+                      <span>{$_('settings.tags.habit_type')}</span>
+                      <select
+                        class="input"
+                        value={draft.habit_type}
+                        on:change={(event) =>
+                          setDraft(tag.id, {
+                            habit_type: (event.currentTarget as HTMLSelectElement)
+                              .value as HabitType,
+                          })}
+                      >
+                        <option value="none">{$_('settings.tags.habit_none')}</option>
+                        <option value="build">{$_('settings.tags.habit_build')}</option>
+                        <option value="reduce">{$_('settings.tags.habit_reduce')}</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>{$_('settings.tags.target_frequency')}</span>
+                      <input
+                        class="input"
+                        type="number"
+                        min="1"
+                        max="7"
+                        value={draft.target_frequency}
+                        disabled={draft.habit_type === 'none'}
+                        on:input={(event) =>
+                          setDraft(tag.id, {
+                            target_frequency: Number(
+                              (event.currentTarget as HTMLInputElement).value || 1
+                            ),
+                          })}
+                      />
+                    </label>
                   </div>
                 {/if}
 
@@ -282,7 +322,9 @@
                   <button
                     class="btn btn-sm variant-filled-primary"
                     type="button"
-                    disabled={savingId !== null}
+                    disabled={savingId !== null ||
+                      (draft?.habit_type !== 'none' &&
+                        (draft?.target_frequency < 1 || draft?.target_frequency > 7))}
                     on:click={() => save(tag)}
                   >
                     {savingId === tag.id ? $_('settings.tags.saving') : $_('settings.tags.save')}
@@ -407,7 +449,9 @@
 
   .tag-settings__fields {
     display: grid;
-    grid-template-columns: minmax(8rem, 1.4fr) minmax(7rem, 1fr) minmax(6rem, 0.9fr) auto;
+    grid-template-columns:
+      minmax(8rem, 1.4fr) minmax(7rem, 1fr) minmax(6rem, 0.9fr) auto
+      minmax(8rem, 1fr) minmax(5rem, 0.6fr);
     gap: 0.55rem;
     align-items: end;
   }

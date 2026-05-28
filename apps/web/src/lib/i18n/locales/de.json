@@ -314,7 +314,8 @@
       "label": "Trend-Bereiche",
       "mood": "Stimmung",
       "activities": "Aktivitaeten",
-      "health": "Gesundheit"
+      "health": "Gesundheit",
+      "habits": "Gewohnheiten"
     },
     "metric": {
       "mood": "Stimmung",
@@ -373,6 +374,29 @@
       "tags": "Tags",
       "symptoms": "Symptome",
       "none": "Keine"
+    }
+  },
+  "habits": {
+    "heading": "Gewohnheiten",
+    "subtitle": "Zielbereiche ohne Belohnungen oder Druck verfolgen.",
+    "window_label": "Gewohnheiten-Zeitraum",
+    "window_days": "{n}T",
+    "loading": "Lade Gewohnheiten",
+    "empty": "Markiere Tags in den Einstellungen als Aufbau- oder Reduktionsgewohnheit, um hier Adherence zu sehen.",
+    "empty_cta": "Tags verwalten",
+    "list_label": "Gewohnheitenliste",
+    "days_tracked": "Erfasste Tage",
+    "target_days": "Zieltage",
+    "target_frequency": "Wochenziel",
+    "correlation": "Korrelationsbeitrag",
+    "type": {
+      "build": "Aufbauen",
+      "reduce": "Reduzieren"
+    },
+    "status": {
+      "progress": "Richtung Wochenziel",
+      "within_target": "Im Zielbereich",
+      "above_target": "Ueber dem Zielbereich"
     }
   },
   "settings": {
@@ -443,6 +467,11 @@
       "category": "Kategorie",
       "icon": "Icon",
       "color": "Farbe",
+      "habit_type": "Gewohnheit",
+      "habit_none": "Keine",
+      "habit_build": "Aufbauen",
+      "habit_reduce": "Reduzieren",
+      "target_frequency": "Pro Woche",
       "save": "Speichern",
       "saving": "Speichert\u2026",
       "hide": "Ausblenden",

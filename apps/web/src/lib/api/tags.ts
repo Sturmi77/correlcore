@@ -27,6 +27,8 @@ export type TagCategory =
   | 'cycle'
   | 'other';
 
+export type HabitType = 'none' | 'build' | 'reduce';
+
 export const TAG_CATEGORIES: readonly TagCategory[] = [
   'sport',
   'social',
@@ -55,6 +57,8 @@ export interface TagResponse {
   color: string | null;
   is_default: boolean;
   is_hidden: boolean;
+  habit_type: HabitType;
+  target_frequency: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +69,8 @@ export interface TagCreatePayload {
   category: TagCategory;
   icon?: string | null;
   color?: string | null;
+  habit_type?: HabitType;
+  target_frequency?: number | null;
 }
 
 export interface TagUpdatePayload {
@@ -73,6 +79,8 @@ export interface TagUpdatePayload {
   icon?: string | null;
   color?: string | null;
   is_hidden?: boolean;
+  habit_type?: HabitType;
+  target_frequency?: number | null;
 }
 
 export interface TagListQuery {

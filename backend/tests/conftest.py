@@ -149,6 +149,8 @@ def make_tag(
     color: str | None = "#10b981",
     is_default: bool = False,
     is_hidden: bool = False,
+    habit_type: str = "none",
+    target_frequency: int | None = None,
 ) -> Tag:
     """Build a detached :class:`Tag` for service-layer tests.
 
@@ -165,8 +167,8 @@ def make_tag(
     t.color = color
     t.is_default = is_default
     t.is_hidden = is_hidden
-    t.habit_type = "none"
-    t.target_frequency = None
+    t.habit_type = habit_type
+    t.target_frequency = target_frequency
     t.created_at = datetime.now(UTC)
     t.updated_at = datetime.now(UTC)
     return t

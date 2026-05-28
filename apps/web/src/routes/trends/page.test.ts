@@ -35,6 +35,10 @@ vi.mock('$lib/api/stats', () => ({
   })),
 }));
 
+vi.mock('$lib/api/habits', () => ({
+  listHabits: vi.fn(async () => ({ habits: [] })),
+}));
+
 vi.mock('$lib/api/entries', () => ({
   listEntries: vi.fn(async () => []),
 }));
@@ -44,6 +48,7 @@ vi.mock('$lib/api/tags', async () => {
   return {
     ...actual,
     listTagsForEntry: vi.fn(async () => []),
+    listVisibleTags: vi.fn(async () => []),
   };
 });
 
@@ -59,11 +64,24 @@ describe('/trends page', () => {
     expect(await screen.findByTestId('trends-tab-mood')).toBeTruthy();
     expect(screen.getByTestId('trends-tab-activities')).toBeTruthy();
     const health = screen.getByTestId('trends-tab-health');
+    expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();
 
     await fireEvent.click(health);
     await waitFor(() => {
       expect(health.getAttribute('aria-selected')).toBe('true');
     });
     expect(screen.getByText('trends.health.heading')).toBeTruthy();
+  });
+
+  it('switches to Habits tab', async () => {
+    render(Page);
+
+    const habits = await screen.findByTestId('trends-tab-habits');
+    await fireEvent.click(habits);
+
+    await waitFor(() => {
+      expect(habits.getAttribute('aria-selected')).toBe('true');
+    });
+    expect(screen.getByTestId('habits-panel')).toBeTruthy();
   });
 });

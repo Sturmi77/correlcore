@@ -10,6 +10,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M5 Habits Core ohne Gamification.** Tags expose `habit_type` and
+  `target_frequency` through API/UI, new `/api/v1/habits` endpoints return
+  goal-based adherence plus optional correlation contribution, Settings > Tags
+  configures build/reduce habits, and `/trends` adds a Habits tab with neutral
+  adherence list/detail and heatmap reuse. Co-occurrence is documented as
+  M5.1/backlog and is not an M5 exit criterion.
+
 - **M4 Quick Wins + Mobile/PWA Hardening.** Entry create/update/read now carries
   `cycle_day` and the existing `slot` field is editable with clean `409`
   conflict handling. The web entry flow adds slot chips and cycle day behind

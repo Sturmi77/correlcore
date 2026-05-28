@@ -314,7 +314,8 @@
       "label": "Trend sections",
       "mood": "Mood",
       "activities": "Activities",
-      "health": "Health"
+      "health": "Health",
+      "habits": "Habits"
     },
     "metric": {
       "mood": "Mood",
@@ -373,6 +374,29 @@
       "tags": "Tags",
       "symptoms": "Symptoms",
       "none": "None"
+    }
+  },
+  "habits": {
+    "heading": "Habits",
+    "subtitle": "Track target ranges without pressure loops.",
+    "window_label": "Habit window",
+    "window_days": "{n}D",
+    "loading": "Loading habit stats",
+    "empty": "Mark tags as build or reduce habits in Settings to see adherence here.",
+    "empty_cta": "Manage tags",
+    "list_label": "Habit list",
+    "days_tracked": "Tracked days",
+    "target_days": "Target days",
+    "target_frequency": "Weekly target",
+    "correlation": "Correlation contribution",
+    "type": {
+      "build": "Build",
+      "reduce": "Reduce"
+    },
+    "status": {
+      "progress": "Toward weekly target",
+      "within_target": "Within target range",
+      "above_target": "Above target range"
     }
   },
   "settings": {
@@ -443,6 +467,11 @@
       "category": "Category",
       "icon": "Icon",
       "color": "Color",
+      "habit_type": "Habit",
+      "habit_none": "None",
+      "habit_build": "Build",
+      "habit_reduce": "Reduce",
+      "target_frequency": "Per week",
       "save": "Save",
       "saving": "Saving\u2026",
       "hide": "Hide",

@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     dev,
     entries,
     export,
+    habits,
     health,
     insights,
     onboarding,
@@ -43,6 +44,9 @@ api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboar
 
 # M3 generated insights (read-only API surface; worker generation is scheduled)
 api_router.include_router(insights.router, prefix="/insights", tags=["insights"])
+
+# M5 habit statistics.
+api_router.include_router(habits.router, prefix="/habits", tags=["habits"])
 
 # M4 guided onboarding.
 api_router.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])

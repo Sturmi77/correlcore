@@ -900,7 +900,46 @@ fehlende Tage.
 
 ---
 
-## 9. Sync (M4 Offline-Sync, geplant)
+## 9. Habits (M5)
+
+Alle Endpunkte erfordern einen verifizierten User. Habits sind sichtbare Tags
+mit `habit_type=build|reduce` und `target_frequency` zwischen 1 und 7.
+
+```
+GET /api/v1/habits?window=7|14|28|90
+GET /api/v1/habits/{tag_id}/stats?window=7|14|28|90
+```
+
+Antwortform:
+
+```json
+{
+  "habits": [
+    {
+      "tag_id": "uuid",
+      "habit_type": "build",
+      "target_frequency": 4,
+      "window": 28,
+      "start_date": "2026-05-01",
+      "end_date": "2026-05-28",
+      "days_tracked": 10,
+      "days_total": 28,
+      "target_days": 16,
+      "adherence_rate": 62.5,
+      "correlation_score": 0.42
+    }
+  ]
+}
+```
+
+`adherence_rate` ist zielbasiert. `build` misst Fortschritt zum Wochenziel,
+`reduce` misst neutral, ob die Tag-Haeufigkeit im Zielbereich bleibt.
+`correlation_score` ist der neueste passende M3-Insight-Effekt fuer diesen Tag
+oder `null`, wenn noch kein Insight existiert.
+
+---
+
+## 10. Sync (M4 Offline-Sync, geplant)
 
 Die Sync-API ist noch nicht implementiert. Der Router enthält den Sync-Mount
 bewusst nur als Future-Kommentar; M4 liefert Dexie-Queue,

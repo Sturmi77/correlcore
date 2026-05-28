@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import Page from './+page.svelte';
 import type { TagResponse } from '$lib/api/tags';
@@ -48,6 +48,8 @@ function makeTag(overrides: Partial<TagResponse> = {}): TagResponse {
     color: '#01696f',
     is_default: false,
     is_hidden: false,
+    habit_type: 'none',
+    target_frequency: null,
     created_at: '2026-05-16T10:00:00Z',
     updated_at: '2026-05-16T10:00:00Z',
     ...overrides,
@@ -81,6 +83,37 @@ describe('/settings/tags Sprint 8', () => {
 
     await waitFor(() => {
       expect(tagsApi.listVisibleTags).toHaveBeenCalledWith({ include_hidden: true });
+    });
+  });
+
+  it('saves habit configuration with the tag update', async () => {
+    const tag = makeTag({ id: 'habit-tag', name: 'Walk' });
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValue([tag]);
+    vi.mocked(tagsApi.updateTag).mockResolvedValue({
+      ...tag,
+      habit_type: 'build',
+      target_frequency: 4,
+    });
+
+    render(Page);
+
+    const row = (await screen.findByText('Walk')).closest('article');
+    const selects = row?.querySelectorAll('select');
+    const habitSelect = selects?.[1] as HTMLSelectElement;
+    habitSelect.value = 'build';
+    await fireEvent.change(habitSelect);
+
+    const targetInput = row?.querySelector('input[type="number"]') as HTMLInputElement;
+    targetInput.value = '4';
+    await fireEvent.input(targetInput);
+
+    await fireEvent.click(screen.getByText('settings.tags.save'));
+
+    await waitFor(() => {
+      expect(tagsApi.updateTag).toHaveBeenCalledWith(
+        'habit-tag',
+        expect.objectContaining({ habit_type: 'build', target_frequency: 4 })
+      );
     });
   });
 });
