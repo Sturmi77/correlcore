@@ -43,7 +43,7 @@ def _scalar_optional_result(value: object | None) -> MagicMock:
 @pytest.mark.asyncio
 async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
     user = make_user(email="me@example.test")
-    entry = make_entry(user, mood_score=5, note="private note")
+    entry = make_entry(user, mood_score=5, cycle_day=12, note="private note")
     tag = make_tag(user, slug="focus", name="Focus")
     symptom = make_symptom(user, slug="migraine", name="Migraine")
     entry_tag = make_entry_tag(entry=entry, tag=tag)
@@ -72,6 +72,7 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
         "max_label": "very stressed",
     }
     assert payload["entries"][0]["note"] == "private note"
+    assert payload["entries"][0]["cycle_day"] == 12
     assert payload["entries"][0]["tags"][0]["name"] == "Focus"
     assert payload["entries"][0]["symptoms"][0]["intensity"] == 2
     serialized = json.dumps(payload)
@@ -94,7 +95,7 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
 @pytest.mark.asyncio
 async def test_export_csv_and_zip_render() -> None:
     user = make_user()
-    entry = make_entry(user, note=None)
+    entry = make_entry(user, cycle_day=8, note=None)
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
@@ -111,6 +112,8 @@ async def test_export_csv_and_zip_render() -> None:
 
     csv_text = csv_bytes.decode("utf-8-sig")
     assert "mood_score" in csv_text
+    assert "cycle_day" in csv_text
+    assert ",8," in csv_text
     assert "mood_scale" in csv_text
     assert "1=very bad; 5=very good" in csv_text
     with zipfile.ZipFile(BytesIO(zip_bytes)) as archive:

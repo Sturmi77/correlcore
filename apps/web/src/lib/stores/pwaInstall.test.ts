@@ -46,4 +46,22 @@ describe('pwaInstallStore', () => {
     expect(localStorage.getItem(PWA_DISMISSED_STORAGE_KEY)).toBe('true');
     expect(get(pwaInstallStore).dismissed).toBe(true);
   });
+
+  it('clears a single-use prompt after the browser prompt is dismissed', async () => {
+    const { pwaInstallStore, PWA_DISMISSED_STORAGE_KEY } = await import('./pwaInstall');
+    const event = new Event('beforeinstallprompt') as Event & {
+      prompt: () => Promise<void>;
+      userChoice: Promise<{ outcome: 'dismissed'; platform: string }>;
+    };
+    event.prompt = vi.fn(async () => undefined);
+    event.userChoice = Promise.resolve({ outcome: 'dismissed', platform: 'web' });
+
+    window.dispatchEvent(event);
+    await pwaInstallStore.promptInstall();
+
+    expect(event.prompt).toHaveBeenCalledOnce();
+    expect(localStorage.getItem(PWA_DISMISSED_STORAGE_KEY)).toBe('true');
+    expect(get(pwaInstallStore).promptEvent).toBeNull();
+    expect(get(pwaInstallStore).dismissed).toBe(true);
+  });
 });

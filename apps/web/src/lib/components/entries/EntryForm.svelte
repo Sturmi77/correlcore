@@ -70,8 +70,8 @@
   let selectedSymptoms: SymptomEntry[] = [];
   let errorKey: string | null = null;
 
-  // Edit-mode: when the user navigates to a date that already has a
-  // ``slot=day`` entry, we hydrate the form with the existing values so
+  // Edit-mode: when the user navigates to a date/slot that already has an
+  // entry, we hydrate the form with the existing values so
   // the picker doubles as both "new" and "edit" view. The presence of
   // ``existingEntryId`` flips the auto-save handler from POST to PATCH
   // and re-uses the same replace-set tag/symptom assignment endpoints.
@@ -104,13 +104,13 @@
    * Reset the form to the neutral default for a date with no entry yet.
    * Called when the user picks a date and the API returns no match.
    */
-  function resetForm(forDate: string) {
+  function resetForm(forDate: string, slot: EntrySlot = 'day') {
     existingEntryId = null;
     dayDelta = null;
     moodScore = 3;
     energy = 3;
     stress = 3;
-    selectedSlot = 'day';
+    selectedSlot = slot;
     cycleDay = null;
     note = '';
     selectedTagIds = [];
@@ -145,7 +145,7 @@
    * usable, just without the related rows pre-selected). Errors on the
    * entry fetch itself are surfaced via ``errorKey``.
    */
-  async function loadForDate(date: string) {
+  async function loadForDate(date: string, slot: EntrySlot = 'day') {
     const myToken = ++loadToken;
     dayDeltaToken += 1;
     dayDelta = null;
@@ -153,6 +153,7 @@
     loading = true;
     hydrating = true;
     errorKey = null;
+    selectedSlot = slot;
     // Cancel any in-flight auto-save scheduling — switching dates is a
     // hard form-reset, not an edit (ADR-0013 explicitly excludes date
     // changes from auto-save triggers).
@@ -164,30 +165,30 @@
         limit: 5,
       });
       if (myToken !== loadToken) return;
-      const dayEntry = matches.find(
-        (e: EntryResponse) => e.entry_date === date && e.slot === 'day'
+      const matchingEntry = matches.find(
+        (e: EntryResponse) => e.entry_date === date && e.slot === slot
       );
-      if (!dayEntry) {
-        resetForm(date);
+      if (!matchingEntry) {
+        resetForm(date, slot);
         return;
       }
-      existingEntryId = dayEntry.id;
-      selectedSlot = dayEntry.slot;
-      moodScore = dayEntry.mood_score;
-      energy = dayEntry.energy;
-      stress = dayEntry.stress;
-      cycleDay = dayEntry.cycle_day;
-      workContext = dayEntry.work_context;
+      existingEntryId = matchingEntry.id;
+      selectedSlot = matchingEntry.slot;
+      moodScore = matchingEntry.mood_score;
+      energy = matchingEntry.energy;
+      stress = matchingEntry.stress;
+      cycleDay = matchingEntry.cycle_day;
+      workContext = matchingEntry.work_context;
       // Mark touched so the date-change reactive block doesn't reset it
       // back to the weekday default.
       workContextTouched = true;
-      note = dayEntry.note ?? '';
+      note = matchingEntry.note ?? '';
 
       // Tags + symptoms load in parallel; both wrapped so one slow
       // network blip doesn't keep the other from rendering.
       const [tagsRes, symRes] = await Promise.allSettled([
-        listTagsForEntry(dayEntry.id),
-        listSymptomsForEntry(dayEntry.id),
+        listTagsForEntry(matchingEntry.id),
+        listSymptomsForEntry(matchingEntry.id),
       ]);
       if (myToken !== loadToken) return;
       if (tagsRes.status === 'fulfilled') {
@@ -203,7 +204,7 @@
     } catch (err) {
       if (myToken !== loadToken) return;
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
-      resetForm(date);
+      resetForm(date, slot);
     } finally {
       if (myToken === loadToken) {
         loading = false;
@@ -229,6 +230,12 @@
     workContext = (e.target as HTMLSelectElement).value as WorkContext;
   }
 
+  function onCycleDayInput(e: Event) {
+    const value = (e.currentTarget as HTMLInputElement).value;
+    const parsed = Number(value);
+    cycleDay = value === '' || !Number.isFinite(parsed) ? null : parsed;
+  }
+
   const ERROR_MAP: ApiErrorMap = {
     401: 'entry.error_unauthenticated',
     409: 'entry.error_conflict',
@@ -246,8 +253,8 @@
   const ENTRY_SLOTS: Exclude<EntrySlot, 'day'>[] = ['morning', 'noon', 'evening'];
 
   function setSlot(slot: EntrySlot) {
-    selectedSlot = selectedSlot === slot ? 'day' : slot;
-    void refreshDayDelta(entryDate, selectedSlot);
+    const nextSlot = selectedSlot === slot ? 'day' : slot;
+    void loadForDate(entryDate, nextSlot);
   }
 
   // ---------------------------------------------------------------------
@@ -274,7 +281,7 @@
       energy,
       stress,
       slot: selectedSlot,
-      cycle_day: cycleDay,
+      cycle_day: cycleDay ?? null,
       work_context: workContext,
       note: note.trim(),
       selectedTagIds: [...selectedTagIds],
@@ -593,7 +600,8 @@
           class="input"
           min="1"
           max="35"
-          bind:value={cycleDay}
+          value={cycleDay ?? ''}
+          on:input={onCycleDayInput}
           placeholder={$_('entry.cycle_day.placeholder')}
         />
       </label>

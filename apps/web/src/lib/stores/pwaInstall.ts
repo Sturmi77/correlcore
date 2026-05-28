@@ -61,10 +61,15 @@ function createPwaInstallStore(): Readable<PwaInstallState> & {
       if (!promptEvent) return;
       await promptEvent.prompt();
       const choice = await promptEvent.userChoice;
-      if (choice.outcome === 'accepted') {
+      if (typeof window !== 'undefined') {
         localStorage.setItem(PWA_DISMISSED_STORAGE_KEY, 'true');
-        update((state) => ({ ...state, dismissed: true, promptEvent: null }));
       }
+      update((state) => ({
+        ...state,
+        dismissed: true,
+        promptEvent: null,
+        installed: choice.outcome === 'accepted' ? true : state.installed,
+      }));
     },
     dismiss() {
       if (typeof window !== 'undefined') {

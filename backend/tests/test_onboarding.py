@@ -61,6 +61,26 @@ async def test_complete_onboarding_marks_existing_preferences(
 
     assert response.status_code == 200
     body = response.json()
-    assert body["preferences"]["onboarding_retro_completed"] is True
-    assert body["preferences"]["onboarding_profile_completed"] is True
+    assert body["onboarding_retro_completed"] is True
+    assert body["onboarding_profile_completed"] is True
     mocked.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_complete_onboarding_rejects_invalid_tag_input(
+    async_client: AsyncClient, user: User
+) -> None:
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        response = await async_client.post(
+            "/api/v1/onboarding/complete",
+            json={"tags": [{"slug": "bad slug", "name": "Bad", "color": "purple"}]},
+            cookies={"access_token": "valid.access.token"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422

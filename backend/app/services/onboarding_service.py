@@ -21,7 +21,6 @@ from app.schemas.user_preferences import UserPreferencesUpdate
 from app.services.tag_service import TagConflictError, create_custom_tag
 from app.services.user_preferences_service import update_user_preferences
 
-
 _SUGGESTIONS: tuple[TagSuggestionGroup, ...] = (
     TagSuggestionGroup(
         category=TagCategory.WORK,
