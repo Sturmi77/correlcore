@@ -27,9 +27,8 @@ frontend:
 | `--color-primary-active`    | `#6a5be0` | `#4338a8` |
 | `--color-primary-highlight` | `#2b2742` | `#ebe9ff` |
 
-The legacy `--color-ms-primary*` aliases remain temporarily mapped to the
-light-mode violet values so older components do not regress while M3.5 removes
-remaining legacy token usage.
+The legacy `--color-ms-primary*` aliases were removed during M3.7. Components
+must use the canonical `--color-primary*` tokens directly.
 
 Heatmap tokens are kept separate from the primary color and use a neutral blue
 scale. Calendar and frequency charts must not use red/green traffic-light
@@ -46,5 +45,4 @@ no-gamification promise.
 - Future components must use semantic tokens (`--color-primary`,
   `--color-primary-highlight`, `--color-heatmap-*`) instead of hardcoded teal
   or `rgb(var(--color-primary-500...))` fallbacks.
-- Remaining legacy color references should be cleaned up incrementally during
-  the M3.5 screen sprints.
+- Legacy `--color-ms-primary*` references are no longer allowed.

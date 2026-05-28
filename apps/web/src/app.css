@@ -34,11 +34,6 @@
   /* Transitions */
   --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* CorrelCore primary aliases (theme-invariant base - overwritten by theme tokens below) */
-  --color-ms-primary: #6356d9;
-  --color-ms-primary-hover: #5548c5;
-  --color-ms-primary-active: #4338a8;
-
   /* -------------------------------------------------------------------------
    * Layout-Tokens (Fix 1: Safe-Area + page-shell)
    * ------------------------------------------------------------------------- */
@@ -89,6 +84,10 @@
   --color-warning: #fbbf24;
   --color-error: #f87171;
   --color-error-highlight: #3a2424;
+  --color-gold: #fbbf24;
+  --color-insight-early: #fbbf24;
+  --color-insight-provisional: #60a5fa;
+  --color-insight-robust: #4ade80;
 
   /* GAP-11: Metrik-Farben Dark Mode */
   --color-metric-mood: #7c6af5;
@@ -144,6 +143,10 @@
   --color-warning: #b45309;
   --color-error: #b91c1c;
   --color-error-highlight: #fef2f2;
+  --color-gold: #b45309;
+  --color-insight-early: #b45309;
+  --color-insight-provisional: #2563eb;
+  --color-insight-robust: #16a34a;
 
   /* GAP-11: Metrik-Farben Light Mode */
   --color-metric-mood: #6356d9;
@@ -191,12 +194,16 @@
     --color-warning: #fbbf24;
     --color-error: #f87171;
     --color-error-highlight: #3a2424;
+    --color-gold: #fbbf24;
+    --color-insight-early: #fbbf24;
+    --color-insight-provisional: #60a5fa;
+    --color-insight-robust: #4ade80;
     --color-metric-mood: #7c6af5;
     --color-metric-energy: #34d399;
     --color-metric-stress: #f87171;
     --color-surface-tag-bg: #221f1c;
-    --color-surface-chart-bg: color-mix(in oklch, #221f1c 72%, transparent);
-    --color-border-chart: color-mix(in oklch, #3a352f 45%, transparent);
+    --color-surface-chart-bg: color-mix(in oklch, var(--color-surface) 72%, transparent);
+    --color-border-chart: color-mix(in oklch, var(--color-border) 45%, transparent);
     --color-heatmap-1: #1f2a44;
     --color-heatmap-2: #2e3f6f;
     --color-heatmap-3: #415aa3;

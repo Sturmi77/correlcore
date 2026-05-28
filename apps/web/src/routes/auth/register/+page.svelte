@@ -178,7 +178,7 @@
   }
 
   .auth-links a {
-    color: var(--color-ms-primary);
+    color: var(--color-primary);
     text-decoration: none;
     font-weight: 500;
   }

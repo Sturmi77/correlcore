@@ -446,7 +446,7 @@
 
   .settings__version {
     font-size: var(--text-xs, 0.75rem);
-    color: var(--color-text-faint);
+    color: var(--color-text-muted);
     cursor: default;
     user-select: none;
     margin: 0;

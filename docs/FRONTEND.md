@@ -109,27 +109,35 @@ Enforced via Lighthouse CI in the CI/CD pipeline. Web Vitals monitoring via Glit
 
 ### 4.1 Theming
 
+Color tokens are defined in `apps/web/src/app.css`.
+Light mode requirements are formally specified in
+[ADR-0027](adr/0027-light-mode-color-requirements.md). The theoretical
+framework and contrast tables are documented in
+[COLOR_SCHEME_CONCEPT.md](frontend/COLOR_SCHEME_CONCEPT.md).
+
 ```css
 :root[data-theme='dark'] {
-  --color-bg: #0f1117;
-  --color-surface: #1a1d27;
+  --color-bg: #171614;
+  --color-surface: #221f1c;
   --color-primary: #7c6af5;
-  --color-text: #e8eaf0;
-  --color-text-muted: #8b8fa8;
+  --color-text: #cdccca;
+  --color-text-muted: #878684;
 }
 
 :root[data-theme='light'] {
-  --color-bg: #f8f9fc;
+  --color-bg: #fafaf7;
   --color-surface: #ffffff;
   --color-primary: #6356d9;
-  --color-text: #1a1d27;
-  --color-text-muted: #6b7280;
+  --color-text: #1c1a17;
+  --color-text-muted: #6b6660;
 }
 ```
 
 - System preference via `prefers-color-scheme` as default
 - Manual override via `data-theme` attribute on `<html>`
 - Persisted in LocalStorage
+- `pnpm check:contrast` verifies the ADR-0027 text/UI token pairs in CI.
+- `--color-text-faint` is reserved for decorative or placeholder states only.
 
 ### 4.2 Mood Score Colours
 
