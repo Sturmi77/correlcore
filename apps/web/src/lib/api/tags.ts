@@ -24,6 +24,7 @@ export type TagCategory =
   | 'leisure'
   | 'consumption'
   | 'health'
+  | 'cycle'
   | 'other';
 
 export const TAG_CATEGORIES: readonly TagCategory[] = [
@@ -33,6 +34,7 @@ export const TAG_CATEGORIES: readonly TagCategory[] = [
   'leisure',
   'consumption',
   'health',
+  'cycle',
   'other',
 ] as const;
 

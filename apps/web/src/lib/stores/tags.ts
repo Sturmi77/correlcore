@@ -43,6 +43,7 @@ export const tagsByCategory = derived(_tags, ($s) => {
     leisure: [],
     consumption: [],
     health: [],
+    cycle: [],
     other: [],
   };
   if ($s.status !== 'ready') return grouped;

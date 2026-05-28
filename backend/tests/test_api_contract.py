@@ -45,8 +45,13 @@ def test_frontend_entry_enums_match_backend_models() -> None:
 
 
 def test_frontend_entry_metric_ranges_match_backend_schema() -> None:
-    for field_name in ("mood_score", "energy", "stress"):
-        assert _contract_metric_range(field_name) == (1, 5)
+    for field_name, expected in (
+        ("mood_score", (1, 5)),
+        ("energy", (1, 5)),
+        ("stress", (1, 5)),
+        ("cycle_day", (1, 35)),
+    ):
+        assert _contract_metric_range(field_name) == expected
         assert _schema_range(EntryCreate, field_name) == _contract_metric_range(field_name)
         assert _schema_range(EntryUpdate, field_name) == _contract_metric_range(field_name)
 

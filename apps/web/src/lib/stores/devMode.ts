@@ -17,6 +17,22 @@ import { derived, writable } from 'svelte/store';
 export const DEV_MODE_STORAGE_KEY = 'dev_mode_enabled';
 export const DEV_FORCE_VIZ_STORAGE_KEY = 'dev_force_viz';
 
+export type DevInsightMaturity = 'collecting' | 'early_patterns' | 'provisional' | 'robust';
+
+export interface DevPhaseState {
+  insightMaturity: DevInsightMaturity;
+  onboardingCompleted: boolean;
+  entryCount: number;
+  onboardingPreviewOpen: boolean;
+}
+
+const DEFAULT_DEV_PHASE: DevPhaseState = {
+  insightMaturity: 'collecting',
+  onboardingCompleted: true,
+  entryCount: 0,
+  onboardingPreviewOpen: false,
+};
+
 function readStoredBoolean(key: string): boolean {
   return typeof window !== 'undefined' ? localStorage.getItem(key) === 'true' : false;
 }
@@ -38,6 +54,7 @@ function createDevModeStore() {
       writeStoredBoolean(DEV_MODE_STORAGE_KEY, value);
       if (!value) {
         forceVisualizations.set(false);
+        devPhase.reset();
       }
       set(value);
     },
@@ -47,6 +64,7 @@ function createDevModeStore() {
         writeStoredBoolean(DEV_MODE_STORAGE_KEY, next);
         if (!next) {
           forceVisualizations.set(false);
+          devPhase.reset();
         }
         return next;
       });
@@ -68,6 +86,30 @@ function createForceVisualizationsStore() {
 }
 
 const forceVisualizations = createForceVisualizationsStore();
+
+function createDevPhaseStore() {
+  const { subscribe, set, update } = writable<DevPhaseState>({ ...DEFAULT_DEV_PHASE });
+  return {
+    subscribe,
+    setInsightMaturity(insightMaturity: DevInsightMaturity) {
+      update((state) => ({ ...state, insightMaturity }));
+    },
+    setOnboardingCompleted(onboardingCompleted: boolean) {
+      update((state) => ({ ...state, onboardingCompleted }));
+    },
+    setEntryCount(entryCount: number) {
+      update((state) => ({ ...state, entryCount: Math.max(0, Math.min(200, entryCount)) }));
+    },
+    setOnboardingPreviewOpen(onboardingPreviewOpen: boolean) {
+      update((state) => ({ ...state, onboardingPreviewOpen }));
+    },
+    reset() {
+      set({ ...DEFAULT_DEV_PHASE });
+    },
+  };
+}
+
+export const devPhase = createDevPhaseStore();
 
 export const devMode = createDevModeStore();
 export const devModeEnabled = devMode;

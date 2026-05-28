@@ -88,6 +88,10 @@ class Entry(Base):
         CheckConstraint("mood_score BETWEEN 1 AND 5", name="ck_entries_mood_score_range"),
         CheckConstraint("energy BETWEEN 1 AND 5", name="ck_entries_energy_range"),
         CheckConstraint("stress BETWEEN 1 AND 5", name="ck_entries_stress_range"),
+        CheckConstraint(
+            "cycle_day IS NULL OR cycle_day BETWEEN 1 AND 35",
+            name="ck_entries_cycle_day_range",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -114,6 +118,7 @@ class Entry(Base):
     mood_score: Mapped[int] = mapped_column(Integer, nullable=False)
     energy: Mapped[int] = mapped_column(Integer, nullable=False)
     stress: Mapped[int] = mapped_column(Integer, nullable=False)
+    cycle_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source: Mapped[EntrySource] = mapped_column(
         Enum(EntrySource, name="entry_source", values_callable=lambda x: [e.value for e in x]),
         nullable=False,

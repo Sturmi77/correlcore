@@ -178,6 +178,7 @@ async def create_entry(
         mood_score=payload.mood_score,
         energy=payload.energy,
         stress=payload.stress,
+        cycle_day=payload.cycle_day,
         source=payload.source,
         work_context=payload.work_context,
         note_enc=payload.note,
@@ -315,7 +316,11 @@ async def update_entry(
     for field, value in data.items():
         setattr(entry, field, value)
 
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise EntryConflictError("entry already exists for this date and slot") from exc
 
     logger.info(
         "entry.updated",

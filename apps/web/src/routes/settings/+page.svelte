@@ -4,9 +4,11 @@
   import { goto } from '$app/navigation';
   import { auth, logout } from '$lib/stores/auth';
   import {
+    devPhase,
     devForceVisualizations,
     devForceVisualizationsControl,
     devMode,
+    type DevInsightMaturity,
   } from '$lib/stores/devMode';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
   import Button from '$lib/components/common/Button.svelte';
@@ -79,6 +81,12 @@
   // Dev view availability (backend flag)
   // ---------------------------------------------------------------------------
   let devAvailable = false;
+  const devInsightPhases: DevInsightMaturity[] = [
+    'collecting',
+    'early_patterns',
+    'provisional',
+    'robust',
+  ];
 
   async function checkDevView(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
@@ -131,6 +139,11 @@
     tapTimer = setTimeout(() => {
       tapCount = 0;
     }, TAP_TIMEOUT_MS);
+  }
+
+  function updateDevEntryCount(value: string): void {
+    const parsed = Number.parseInt(value, 10);
+    devPhase.setEntryCount(Number.isFinite(parsed) ? parsed : 0);
   }
 
   onMount(() => {
@@ -313,6 +326,51 @@
             />
             <span>{$_('settings.developer.force_viz_label')}</span>
           </label>
+          <div class="settings__dev-grid" data-testid="developer-phase-controls">
+            <label class="settings__field">
+              <span>{$_('settings.developer.phase_label')}</span>
+              <select
+                value={$devPhase.insightMaturity}
+                data-testid="developer-phase-select"
+                on:change={(e) =>
+                  devPhase.setInsightMaturity(e.currentTarget.value as DevInsightMaturity)}
+              >
+                {#each devInsightPhases as phase}
+                  <option value={phase}>{$_(`settings.developer.phase.${phase}`)}</option>
+                {/each}
+              </select>
+            </label>
+            <label class="settings__field">
+              <span>{$_('settings.developer.entry_count_label')}</span>
+              <input
+                type="number"
+                min="0"
+                max="200"
+                value={$devPhase.entryCount}
+                data-testid="developer-entry-count"
+                on:input={(e) => updateDevEntryCount(e.currentTarget.value)}
+              />
+            </label>
+          </div>
+          <label class="settings__toggle-label">
+            <input
+              type="checkbox"
+              class="settings__toggle"
+              checked={$devPhase.onboardingCompleted}
+              data-testid="developer-onboarding-toggle"
+              on:change={(e) => devPhase.setOnboardingCompleted(e.currentTarget.checked)}
+            />
+            <span>{$_('settings.developer.onboarding_completed')}</span>
+          </label>
+          <div class="settings__downloads">
+            <Button
+              variant="secondary"
+              data-testid="developer-onboarding-preview"
+              on:click={() => devPhase.setOnboardingPreviewOpen(true)}
+            >
+              {$_('settings.developer.preview_onboarding')}
+            </Button>
+          </div>
         {/if}
       </section>
     {/if}
@@ -337,6 +395,39 @@
 {#if toastVisible}
   <div class="settings__toast" role="status" aria-live="polite" data-testid="dev-toast">
     {toastMessage}
+  </div>
+{/if}
+
+{#if $devMode && $devPhase.onboardingPreviewOpen}
+  <div
+    class="settings__modal-backdrop"
+    role="presentation"
+    on:click={() => devPhase.setOnboardingPreviewOpen(false)}
+  >
+    <dialog
+      open
+      class="settings__modal"
+      aria-modal="true"
+      aria-labelledby="onboarding-preview-title"
+      on:click|stopPropagation
+    >
+      <div class="settings__modal-head">
+        <h2 id="onboarding-preview-title">{$_('settings.developer.preview_title')}</h2>
+        <button
+          type="button"
+          class="settings__modal-close"
+          aria-label={$_('settings.developer.preview_close')}
+          on:click={() => devPhase.setOnboardingPreviewOpen(false)}
+        >
+          x
+        </button>
+      </div>
+      <iframe
+        class="settings__preview-frame"
+        title={$_('settings.developer.preview_title')}
+        src="/onboarding?preview=1"
+      ></iframe>
+    </dialog>
   </div>
 {/if}
 
@@ -407,6 +498,81 @@
     min-width: 1.25rem;
     cursor: pointer;
     accent-color: var(--color-primary);
+  }
+
+  .settings__dev-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--space-3);
+  }
+
+  .settings__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .settings__field select,
+  .settings__field input {
+    min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-3);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .settings__modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: grid;
+    place-items: center;
+    padding: var(--space-4);
+    background: color-mix(in srgb, var(--color-surface) 62%, transparent);
+  }
+
+  .settings__modal {
+    width: min(100%, 42rem);
+    height: min(88dvh, 52rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .settings__modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .settings__modal-head h2 {
+    margin: 0;
+    font-size: var(--text-base);
+  }
+
+  .settings__modal-close {
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    background: color-mix(in srgb, currentColor 6%, transparent);
+  }
+
+  .settings__preview-frame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: var(--color-surface);
   }
 
   .settings__appearance-row {

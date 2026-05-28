@@ -46,7 +46,7 @@ CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwis
 ### 1.4 Value Proposition
 
 - **Zusammenhänge statt Rohdaten** — die App erklärt, warum Tage gut/schlecht waren
-- **Selfhosted heute, Offline-fähig ab M4** — deine Gesundheitsdaten bleiben auf deiner Instanz; echte Offline-Sync-Fähigkeit ist expliziter M4-Scope
+- **Selfhosted heute, PWA-Hardening in M4** — deine Gesundheitsdaten bleiben auf deiner Instanz; vollständige Offline-Sync-Fähigkeit ist nach M4 bewusst ein Follow-up-Scope
 - **60 Sekunden pro Tag** — nicht mehr, sonst wird es nicht gemacht
 - **No gamification, ever** — du trackst deine Gewohnheiten, nicht wie oft du die App öffnest. Kein Streak-Druck, keine Badges, keine Belohnungsschleifen.
 
@@ -904,26 +904,31 @@ ADR-0021 macht Insight-Reifephasen zu einem First-Class-Konzept in Backend, API 
 
 ---
 
-### M4 — Mobile Polish & PWA-Hardening (Woche 11–12)
+### M4 — Quick Wins + Mobile/PWA-Hardening (Woche 11–12)
 
-- Installierbare PWA, Service-Worker, App-Icon, Splash
-- Bottom-Sheet-UX, Gestensteuerung
-- Daily Reminder (Web-Push / UnifiedPush) — neutral formuliert, kein Streak-Druck
-- App-Lock (PIN) auf Mobile
-- **Offline-Sync via IndexedDB (Dexie.js) + Sync-Endpoints** _(aus M1 verschoben, [ADR-0009](adr/0009-offline-sync-nach-m4.md), Issue #10)_
-- **Sync-Conflict-Log-Tabelle** _(aus M1 verschoben, ADR-0003 + [ADR-0009](adr/0009-offline-sync-nach-m4.md), Issue #24)_
-- **Exit:** App fühlt sich auf Handy nativ an, Multi-Device-Sync funktioniert verlustfrei
+M4 ist auf Quick Wins und PWA-Hardening rescoped. Verbindlich sind
+`entries.slot` (kein neues `time_slot`), `cycle_day`, Guided Onboarding,
+clientseitige Trend-Glaettung, Dev-Mode-Overrides und Service-Worker-Haertung.
+Vollstaendiger Dexie Offline-Sync, Sync-Conflict-Log, Capacitor, Notes-Composer
+und Web Push sind Follow-ups nach M4.
+
+- Bestehendes `entries.slot`-Feld in API und UI vollständig nutzbar machen
+- `cycle_day` als neutrales optionales Entry-Feld vorbereiten
+- Guided Onboarding mit Tag-Vorschlägen und idempotenter Custom-Tag-Erstellung
+- Trends Mood: clientseitige 7-Tage-SMA mit `Raw | Smoothed`
+- Developer Mode: Insight-Maturity, Onboarding-State und Entry-Count mockbar
+- Installierbare PWA, Service Worker nur für App-Shell/static assets, `/offline`
+- **Exit:** Quick Wins sind nutzbar, PWA-Grundlagen sind gehärtet, API-Responses werden nicht durch den Service Worker gecacht
 
 #### Akzeptanzkriterien M4
 
-- [ ] PWA App-Lock (PIN) implementiert und aktivierbar
-- [ ] Service Worker cached keine sensitiven API-Responses (`Cache-Control: no-store` für `/api/*`)
-- [ ] Web Push Notifications enthalten keine Gesundheitsdaten im Payload
-- [ ] Push-Notification-Copy ist neutral (kein „don't break your streak", kein Guilt-Framing)
-- [ ] PWA installierbar auf Android Chrome und iOS Safari
-- [ ] Offline-Modus: Eintrag erstellen ohne Netzverbindung, Sync beim nächsten Online-Start _(Issue #10)_
-- [ ] Sync-Endpunkt (`/sync/push` + `/sync/pull?since=`) funktioniert mit lokaler Dexie-Queue _(Issue #10, §3.5)_
-- [ ] Sync-Conflict-Log: Tabelle `sync_conflicts` schreibt LWW-Konflikte transparent mit _(Issue #24, ADR-0003)_
+- [ ] `slot` ist in Entry Create/Update/Read und UI-Chips verfügbar; Slot-Konflikte liefern `409`
+- [ ] `cycle_day` ist als nullable `1..35` in Schema, Migration und Entry-UI verfügbar
+- [ ] `/onboarding` führt durch Auswahl, Custom Tags und Summary; alte Deep Links bleiben erhalten
+- [ ] Trends Mood bietet `Raw | Smoothed` ab 30 Tagen und persistiert die Auswahl lokal
+- [ ] Dev Mode setzt alle Phase-Overrides zurück, sobald Dev Mode deaktiviert wird
+- [ ] Service Worker cached keine `/api/*`-Responses
+- [ ] PWA installierbar auf Android Chrome und iOS Safari; `/offline` funktioniert als Fallback
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M4

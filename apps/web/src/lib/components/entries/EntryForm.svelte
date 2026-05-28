@@ -33,6 +33,7 @@
     updateEntry,
     type EntryDeltaResponse,
     type EntryResponse,
+    type EntrySlot,
     type WorkContext,
   } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
@@ -58,9 +59,11 @@
 
   let entryDate: string = initialDate;
   let showMore = mode === 'page';
+  let selectedSlot: EntrySlot = 'day';
   let moodScore = 3;
   let energy = 3;
   let stress = 3;
+  let cycleDay: number | null = null;
   let workContext: WorkContext = defaultWorkContextForDate(new Date(initialDate + 'T00:00:00'));
   let note = '';
   let selectedTagIds: string[] = [];
@@ -107,6 +110,8 @@
     moodScore = 3;
     energy = 3;
     stress = 3;
+    selectedSlot = 'day';
+    cycleDay = null;
     note = '';
     selectedTagIds = [];
     selectedSymptoms = [];
@@ -117,11 +122,11 @@
     }
   }
 
-  async function refreshDayDelta(date: string) {
+  async function refreshDayDelta(date: string, slot: EntrySlot = selectedSlot) {
     const token = ++dayDeltaToken;
     dayDeltaLoading = true;
     try {
-      const result = await fetchEntryDelta({ entry_date: date, slot: 'day' });
+      const result = await fetchEntryDelta({ entry_date: date, slot });
       if (token !== dayDeltaToken) return;
       dayDelta = result.today && result.previous ? result : null;
     } catch {
@@ -167,9 +172,11 @@
         return;
       }
       existingEntryId = dayEntry.id;
+      selectedSlot = dayEntry.slot;
       moodScore = dayEntry.mood_score;
       energy = dayEntry.energy;
       stress = dayEntry.stress;
+      cycleDay = dayEntry.cycle_day;
       workContext = dayEntry.work_context;
       // Mark touched so the date-change reactive block doesn't reset it
       // back to the weekday default.
@@ -192,7 +199,7 @@
           intensity: s.intensity,
         }));
       }
-      void refreshDayDelta(date);
+      void refreshDayDelta(date, selectedSlot);
     } catch (err) {
       if (myToken !== loadToken) return;
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
@@ -236,6 +243,12 @@
     'weekend',
     'travel',
   ];
+  const ENTRY_SLOTS: Exclude<EntrySlot, 'day'>[] = ['morning', 'noon', 'evening'];
+
+  function setSlot(slot: EntrySlot) {
+    selectedSlot = selectedSlot === slot ? 'day' : slot;
+    void refreshDayDelta(entryDate, selectedSlot);
+  }
 
   // ---------------------------------------------------------------------
   // Auto-save controller (ADR-0013)
@@ -246,6 +259,8 @@
     mood_score: number;
     energy: number;
     stress: number;
+    slot: EntrySlot;
+    cycle_day: number | null;
     work_context: WorkContext;
     note: string;
     selectedTagIds: string[];
@@ -258,6 +273,8 @@
       mood_score: moodScore,
       energy,
       stress,
+      slot: selectedSlot,
+      cycle_day: cycleDay,
       work_context: workContext,
       note: note.trim(),
       selectedTagIds: [...selectedTagIds],
@@ -278,6 +295,8 @@
         mood_score: snap.mood_score,
         energy: snap.energy,
         stress: snap.stress,
+        slot: snap.slot,
+        cycle_day: snap.cycle_day,
         work_context: snap.work_context,
         note: snap.note,
       });
@@ -285,10 +304,11 @@
     } else {
       const created = await submitEntry({
         entry_date: snap.entry_date,
-        slot: 'day',
+        slot: snap.slot,
         mood_score: snap.mood_score,
         energy: snap.energy,
         stress: snap.stress,
+        cycle_day: snap.cycle_day,
         work_context: snap.work_context,
         note: snap.note ? snap.note : undefined,
       });
@@ -301,7 +321,7 @@
 
     await assignTagsToEntry(entryId, snap.selectedTagIds);
     await assignSymptomsToEntry(entryId, snap.selectedSymptoms);
-    await refreshDayDelta(snap.entry_date);
+    await refreshDayDelta(snap.entry_date, snap.slot);
   }
 
   const autoSave = createAutoSave<FormSnapshot>({
@@ -327,6 +347,8 @@
     moodScore;
     energy;
     stress;
+    selectedSlot;
+    cycleDay;
     workContext;
     note;
     selectedTagIds;
@@ -519,6 +541,23 @@
   {/if}
 
   {#if mode === 'page' || showMore}
+    <section class="entry-section" aria-labelledby="entry-section-time">
+      <h2 id="entry-section-time" class="entry-section__title">{$_('entry.section.time')}</h2>
+      <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
+        {#each ENTRY_SLOTS as slot}
+          <button
+            type="button"
+            class:active={selectedSlot === slot}
+            aria-pressed={selectedSlot === slot}
+            on:click={() => setSlot(slot)}
+          >
+            {$_(`entry.time_slot.${slot}`)}
+          </button>
+        {/each}
+      </div>
+      <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
+    </section>
+
     <section class="entry-section" aria-labelledby="entry-section-tags">
       <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
       <TagPicker bind:selected={selectedTagIds} />
@@ -543,6 +582,22 @@
           placeholder={$_('entry.note_placeholder')}
         ></textarea>
       </label>
+    </section>
+
+    <section class="entry-section" aria-labelledby="entry-section-cycle">
+      <h2 id="entry-section-cycle" class="entry-section__title">{$_('entry.section.cycle')}</h2>
+      <label class="entry-field">
+        <span class="entry-label">{$_('entry.cycle_day.label')}</span>
+        <input
+          type="number"
+          class="input"
+          min="1"
+          max="35"
+          bind:value={cycleDay}
+          placeholder={$_('entry.cycle_day.placeholder')}
+        />
+      </label>
+      <p class="entry-hint">{$_('entry.cycle_day.hint')}</p>
     </section>
   {/if}
 
@@ -671,6 +726,31 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+
+  .entry-chip-row {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .entry-chip-row button {
+    min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    padding: var(--space-2) var(--space-3);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .entry-chip-row button.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    font-weight: 650;
   }
 
   .entry-label {

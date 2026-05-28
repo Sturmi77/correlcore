@@ -18,7 +18,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { listInsights, type InsightMaturity, type InsightResponse } from '$lib/api/insights';
 import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
-import { devForceVisualizations } from '$lib/stores/devMode';
+import { devForceVisualizations, devPhase, type DevInsightMaturity } from '$lib/stores/devMode';
 import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
 
 export interface InsightStoreState {
@@ -70,6 +70,49 @@ function pickLatest(insights: InsightResponse[], dismissedIds: string[]): Insigh
   );
 }
 
+function devMaturityFromPhase(phase: DevInsightMaturity, entryCount: number): InsightMaturity {
+  const phases: Record<
+    DevInsightMaturity,
+    Pick<InsightMaturity, 'phase_index' | 'next_phase_at' | 'next_phase_label' | 'user_message_key'>
+  > = {
+    collecting: {
+      phase_index: 1,
+      next_phase_at: 7,
+      next_phase_label: 'early_patterns',
+      user_message_key: 'maturity.collecting.description',
+    },
+    early_patterns: {
+      phase_index: 2,
+      next_phase_at: 14,
+      next_phase_label: 'provisional',
+      user_message_key: 'maturity.early_patterns.description',
+    },
+    provisional: {
+      phase_index: 3,
+      next_phase_at: 30,
+      next_phase_label: 'robust',
+      user_message_key: 'maturity.provisional.description',
+    },
+    robust: {
+      phase_index: 4,
+      next_phase_at: null,
+      next_phase_label: null,
+      user_message_key: 'maturity.robust.description',
+    },
+  };
+  const selected = phases[phase];
+  return {
+    phase,
+    phase_index: selected.phase_index,
+    current_entries: entryCount,
+    next_phase_at: selected.next_phase_at,
+    next_phase_label: selected.next_phase_label,
+    entries_until_next:
+      selected.next_phase_at === null ? null : Math.max(0, selected.next_phase_at - entryCount),
+    user_message_key: selected.user_message_key,
+  };
+}
+
 /**
  * Load dismissed IDs from user preferences.
  * Falls back to an empty array on any error (SSR-safe — no localStorage).
@@ -102,10 +145,14 @@ export async function loadInsights(): Promise<void> {
 
   try {
     if (get(devForceVisualizations)) {
+      const phase = get(devPhase);
       const latest = pickLatest(mockInsights, dismissedIds);
       _state.set({
         insights: mockInsights,
-        insightMaturity: mockInsightMaturity,
+        insightMaturity: {
+          ...mockInsightMaturity,
+          ...devMaturityFromPhase(phase.insightMaturity, phase.entryCount),
+        },
         latest,
         loading: false,
         error: null,

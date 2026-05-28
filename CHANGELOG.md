@@ -10,6 +10,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M4 Quick Wins + Mobile/PWA Hardening.** Entry create/update/read now carries
+  `cycle_day` and the existing `slot` field is editable with clean `409`
+  conflict handling. The web entry flow adds slot chips and cycle day behind
+  `+ More`; Trends Mood adds persisted `Raw | Smoothed` client-side SMA; guided
+  `/onboarding` creates/reuses custom tags by slug; Dev Mode gains in-memory
+  phase/onboarding/entry-count overrides; PWA hardening adds an install banner,
+  `/offline`, manifest/iOS metadata, and a service worker that skips `/api/*`.
+
 - **M3.7 Color System Hardening.** `apps/web/src/app.css` now contains the
   complete gold and insight-maturity semantic token set for dark, light, and
   system-preference fallback themes. Legacy `--color-ms-primary*` aliases were

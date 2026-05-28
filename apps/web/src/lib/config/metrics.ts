@@ -47,6 +47,12 @@ export const ENTRY_METRICS: Record<EntryMetricField, MetricDefinition> = {
     scaleMax: ENTRY_CONTRACT.metrics.sleep_quality.max,
     invert: ENTRY_CONTRACT.metrics.sleep_quality.invert,
   },
+  cycle_day: {
+    field: 'cycle_day',
+    scaleMin: ENTRY_CONTRACT.metrics.cycle_day.min,
+    scaleMax: ENTRY_CONTRACT.metrics.cycle_day.max,
+    invert: ENTRY_CONTRACT.metrics.cycle_day.invert,
+  },
 };
 
 /** Maps timeseries API keys to entry metric fields. */

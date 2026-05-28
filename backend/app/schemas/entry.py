@@ -54,6 +54,7 @@ class EntryCreate(BaseModel):
     mood_score: int = Field(ge=1, le=5)
     energy: int = Field(ge=1, le=5)
     stress: int = Field(ge=1, le=5)
+    cycle_day: int | None = Field(default=None, ge=1, le=35)
     source: EntrySource = EntrySource.DIRECT
     work_context: WorkContext
     note: str | None = Field(default=None, max_length=MAX_NOTE_LENGTH)
@@ -82,6 +83,8 @@ class EntryUpdate(BaseModel):
     mood_score: int | None = Field(default=None, ge=1, le=5)
     energy: int | None = Field(default=None, ge=1, le=5)
     stress: int | None = Field(default=None, ge=1, le=5)
+    slot: EntrySlot | None = None
+    cycle_day: int | None = Field(default=None, ge=1, le=35)
     work_context: WorkContext | None = None
     note: str | None = Field(default=None, max_length=MAX_NOTE_LENGTH)
 
@@ -110,6 +113,7 @@ class EntryResponse(BaseModel):
     mood_score: int
     energy: int
     stress: int
+    cycle_day: int | None = None
     source: EntrySource
     work_context: WorkContext
     note: str | None = Field(default=None, validation_alias="note_enc")
