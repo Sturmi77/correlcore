@@ -268,8 +268,10 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 
 - Mood slider is the only required field
 - Tag suggestions sorted by historical usage frequency
-- "+ More" opens full tag sheet (symptoms and notes now; photo follows in the media milestone)
+- "+ More" opens time-slot chips, cycle day, full tag sheet, symptoms and notes; photo follows in the media milestone
 - Day-over-day delta shown as neutral info card after save (Issue #154)
+- Time slots use the existing API field `slot`: `day` means whole-day; `morning`, `noon`, and `evening` are optional chips.
+- `cycle_day` is optional, accepts `1..35`, and is framed as neutral personal context only.
 - Stress slider axis label reflects inverted semantics: left = "High stress", right = "Low stress"
 
 ---
@@ -352,6 +354,8 @@ Time range: [7D] [30D] [90D] [1Y]
 - Export button (CSV/JSON) in header — for doctor visits and power users
 - Charts are tappable: tap on data point shows tooltip with day details
 - Entry History: tap on any data point or calendar cell → secondary sheet overlay with single past entry (read-only)
+- Mood charts expose `Raw | Smoothed` for 30D and longer ranges; smoothing is a client-side 7-day SMA persisted in `cc_trend_smooth`.
+- Health tab may show a cycle-day strip when entries contain `cycle_day`; it must not infer phases or provide medical interpretation.
 
 ---
 
@@ -382,6 +386,7 @@ APPEARANCE
 DEVELOPER  ← only visible after unlock (7× tap on version string)
 → Developer mode  [OFF]
 → Force visualizations  [OFF]  ← only visible when Developer mode is ON
+→ Insight phase / onboarding / entry-count mocks
 ```
 
 **Developer Mode rules** (extends [ADR-0015](adr/0015-developer-view-version-identifikation.md), see [ADR-0019](adr/0019-dev-mode-settings-toggle.md)):
@@ -391,7 +396,9 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 - When enabled: `DEV_VIEW_ENABLED` flag activates `/dev` route link in Settings
 - **"Force visualizations" sub-toggle** is only visible when `dev_mode_enabled === true`
 - `devForceVisualizations` is a `derived` store from `devModeEnabled` — **not** gated by `import.meta.env.DEV` (available to selfhosters in production, see Issue #183)
-- Deactivating Developer mode resets `dev_force_viz` to `false`
+- Deactivating Developer mode resets `dev_force_viz` and all in-memory `devPhase` overrides
+- `devPhase` overrides Insight maturity, onboarding completion, and mock entry count only in the local session
+- Onboarding preview opens `/onboarding?preview=1` in a modal and must not write onboarding completion
 - Does not count as a user-facing screen — it is a diagnostic tool
 
 **Tag lifecycle rules** (Issue #173):
@@ -406,13 +413,13 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 
 ### Secondary Sheets & Overlays
 
-| Sheet                 | Trigger                         | Content                                 |
-| --------------------- | ------------------------------- | --------------------------------------- |
-| **Tag Picker (full)** | "+ More" in entry               | Full tag category view with search      |
-| **Symptom Checker**   | Optional in entry               | Symptom intensity sliders (0–3)         |
-| **Insight Detail**    | "Show details" on insight card  | Dual-axis chart + lag selector          |
-| **Onboarding Flow**   | First launch / Issue #156       | Profile setup + static insight previews |
-| **Entry History**     | Date tap / data point in Trends | Single past entry, read-only            |
+| Sheet                 | Trigger                         | Content                                |
+| --------------------- | ------------------------------- | -------------------------------------- |
+| **Tag Picker (full)** | "+ More" in entry               | Full tag category view with search     |
+| **Symptom Checker**   | Optional in entry               | Symptom intensity sliders (0–3)        |
+| **Insight Detail**    | "Show details" on insight card  | Dual-axis chart + lag selector         |
+| **Onboarding Flow**   | First launch / M4               | Guided tag setup, custom tags, summary |
+| **Entry History**     | Date tap / data point in Trends | Single past entry, read-only           |
 
 ---
 
@@ -659,6 +666,7 @@ Sprint 9 records the QA handoff in [`quality/M3_5_VISUAL_QA.md`](quality/M3_5_VI
 - Entry: bottom sheet/page mode with sectioned form, neutral work-context hint, auto-save status, and Day Delta.
 - Insights: quality meter, filterable insight feed, disclaimer access, progressive detail expansion, and inactive-tag markers.
 - Trends: Mood / Activities / Health tabs, unified ranges, custom SVG charts, heatmap, and Entry History sheet overlay.
-- Settings: Tracking / Analysis / Privacy & Data / Appearance / Developer sections, language control, theme toggle, Dev Mode, Force Visualizations, and Tag Settings active/inactive lifecycle.
+- Settings: Tracking / Analysis / Privacy & Data / Appearance / Developer sections, language control, theme toggle, Dev Mode, Force Visualizations, phase mocks, and Tag Settings active/inactive lifecycle.
+- PWA: Home install banner is dismissible via `cc_pwa_dismissed`; `/offline` is the navigation fallback; service worker skips `/api/*`.
 
 Rendered browser QA is documented as pending outside this NAS/UNC agent environment because the local pnpm install/test path cannot create symlinks on the network share. Do not treat that tooling limitation as a frontend design exception; run the rendered viewport/theme matrix from a local clone or CI environment before release tagging.

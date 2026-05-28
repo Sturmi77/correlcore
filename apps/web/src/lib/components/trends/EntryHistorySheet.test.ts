@@ -17,6 +17,7 @@ const entry = {
   mood_score: 4,
   energy: 3,
   stress: 2,
+  cycle_day: null,
   source: 'direct' as const,
   work_context: 'office' as const,
   note: 'Focused day',

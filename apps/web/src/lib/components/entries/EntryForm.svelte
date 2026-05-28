@@ -33,6 +33,7 @@
     updateEntry,
     type EntryDeltaResponse,
     type EntryResponse,
+    type EntrySlot,
     type WorkContext,
   } from '$lib/api/entries';
   import { submitEntry } from '$lib/stores/entries';
@@ -58,17 +59,19 @@
 
   let entryDate: string = initialDate;
   let showMore = mode === 'page';
+  let selectedSlot: EntrySlot = 'day';
   let moodScore = 3;
   let energy = 3;
   let stress = 3;
+  let cycleDay: number | null = null;
   let workContext: WorkContext = defaultWorkContextForDate(new Date(initialDate + 'T00:00:00'));
   let note = '';
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
   let errorKey: string | null = null;
 
-  // Edit-mode: when the user navigates to a date that already has a
-  // ``slot=day`` entry, we hydrate the form with the existing values so
+  // Edit-mode: when the user navigates to a date/slot that already has an
+  // entry, we hydrate the form with the existing values so
   // the picker doubles as both "new" and "edit" view. The presence of
   // ``existingEntryId`` flips the auto-save handler from POST to PATCH
   // and re-uses the same replace-set tag/symptom assignment endpoints.
@@ -101,12 +104,14 @@
    * Reset the form to the neutral default for a date with no entry yet.
    * Called when the user picks a date and the API returns no match.
    */
-  function resetForm(forDate: string) {
+  function resetForm(forDate: string, slot: EntrySlot = 'day') {
     existingEntryId = null;
     dayDelta = null;
     moodScore = 3;
     energy = 3;
     stress = 3;
+    selectedSlot = slot;
+    cycleDay = null;
     note = '';
     selectedTagIds = [];
     selectedSymptoms = [];
@@ -117,11 +122,11 @@
     }
   }
 
-  async function refreshDayDelta(date: string) {
+  async function refreshDayDelta(date: string, slot: EntrySlot = selectedSlot) {
     const token = ++dayDeltaToken;
     dayDeltaLoading = true;
     try {
-      const result = await fetchEntryDelta({ entry_date: date, slot: 'day' });
+      const result = await fetchEntryDelta({ entry_date: date, slot });
       if (token !== dayDeltaToken) return;
       dayDelta = result.today && result.previous ? result : null;
     } catch {
@@ -140,7 +145,7 @@
    * usable, just without the related rows pre-selected). Errors on the
    * entry fetch itself are surfaced via ``errorKey``.
    */
-  async function loadForDate(date: string) {
+  async function loadForDate(date: string, slot: EntrySlot = 'day') {
     const myToken = ++loadToken;
     dayDeltaToken += 1;
     dayDelta = null;
@@ -148,6 +153,7 @@
     loading = true;
     hydrating = true;
     errorKey = null;
+    selectedSlot = slot;
     // Cancel any in-flight auto-save scheduling — switching dates is a
     // hard form-reset, not an edit (ADR-0013 explicitly excludes date
     // changes from auto-save triggers).
@@ -159,28 +165,30 @@
         limit: 5,
       });
       if (myToken !== loadToken) return;
-      const dayEntry = matches.find(
-        (e: EntryResponse) => e.entry_date === date && e.slot === 'day'
+      const matchingEntry = matches.find(
+        (e: EntryResponse) => e.entry_date === date && e.slot === slot
       );
-      if (!dayEntry) {
-        resetForm(date);
+      if (!matchingEntry) {
+        resetForm(date, slot);
         return;
       }
-      existingEntryId = dayEntry.id;
-      moodScore = dayEntry.mood_score;
-      energy = dayEntry.energy;
-      stress = dayEntry.stress;
-      workContext = dayEntry.work_context;
+      existingEntryId = matchingEntry.id;
+      selectedSlot = matchingEntry.slot;
+      moodScore = matchingEntry.mood_score;
+      energy = matchingEntry.energy;
+      stress = matchingEntry.stress;
+      cycleDay = matchingEntry.cycle_day;
+      workContext = matchingEntry.work_context;
       // Mark touched so the date-change reactive block doesn't reset it
       // back to the weekday default.
       workContextTouched = true;
-      note = dayEntry.note ?? '';
+      note = matchingEntry.note ?? '';
 
       // Tags + symptoms load in parallel; both wrapped so one slow
       // network blip doesn't keep the other from rendering.
       const [tagsRes, symRes] = await Promise.allSettled([
-        listTagsForEntry(dayEntry.id),
-        listSymptomsForEntry(dayEntry.id),
+        listTagsForEntry(matchingEntry.id),
+        listSymptomsForEntry(matchingEntry.id),
       ]);
       if (myToken !== loadToken) return;
       if (tagsRes.status === 'fulfilled') {
@@ -192,11 +200,11 @@
           intensity: s.intensity,
         }));
       }
-      void refreshDayDelta(date);
+      void refreshDayDelta(date, selectedSlot);
     } catch (err) {
       if (myToken !== loadToken) return;
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
-      resetForm(date);
+      resetForm(date, slot);
     } finally {
       if (myToken === loadToken) {
         loading = false;
@@ -222,6 +230,12 @@
     workContext = (e.target as HTMLSelectElement).value as WorkContext;
   }
 
+  function onCycleDayInput(e: Event) {
+    const value = (e.currentTarget as HTMLInputElement).value;
+    const parsed = Number(value);
+    cycleDay = value === '' || !Number.isFinite(parsed) ? null : parsed;
+  }
+
   const ERROR_MAP: ApiErrorMap = {
     401: 'entry.error_unauthenticated',
     409: 'entry.error_conflict',
@@ -236,6 +250,12 @@
     'weekend',
     'travel',
   ];
+  const ENTRY_SLOTS: Exclude<EntrySlot, 'day'>[] = ['morning', 'noon', 'evening'];
+
+  function setSlot(slot: EntrySlot) {
+    const nextSlot = selectedSlot === slot ? 'day' : slot;
+    void loadForDate(entryDate, nextSlot);
+  }
 
   // ---------------------------------------------------------------------
   // Auto-save controller (ADR-0013)
@@ -246,6 +266,8 @@
     mood_score: number;
     energy: number;
     stress: number;
+    slot: EntrySlot;
+    cycle_day: number | null;
     work_context: WorkContext;
     note: string;
     selectedTagIds: string[];
@@ -258,6 +280,8 @@
       mood_score: moodScore,
       energy,
       stress,
+      slot: selectedSlot,
+      cycle_day: cycleDay ?? null,
       work_context: workContext,
       note: note.trim(),
       selectedTagIds: [...selectedTagIds],
@@ -278,6 +302,8 @@
         mood_score: snap.mood_score,
         energy: snap.energy,
         stress: snap.stress,
+        slot: snap.slot,
+        cycle_day: snap.cycle_day,
         work_context: snap.work_context,
         note: snap.note,
       });
@@ -285,10 +311,11 @@
     } else {
       const created = await submitEntry({
         entry_date: snap.entry_date,
-        slot: 'day',
+        slot: snap.slot,
         mood_score: snap.mood_score,
         energy: snap.energy,
         stress: snap.stress,
+        cycle_day: snap.cycle_day,
         work_context: snap.work_context,
         note: snap.note ? snap.note : undefined,
       });
@@ -301,7 +328,7 @@
 
     await assignTagsToEntry(entryId, snap.selectedTagIds);
     await assignSymptomsToEntry(entryId, snap.selectedSymptoms);
-    await refreshDayDelta(snap.entry_date);
+    await refreshDayDelta(snap.entry_date, snap.slot);
   }
 
   const autoSave = createAutoSave<FormSnapshot>({
@@ -327,6 +354,8 @@
     moodScore;
     energy;
     stress;
+    selectedSlot;
+    cycleDay;
     workContext;
     note;
     selectedTagIds;
@@ -519,6 +548,23 @@
   {/if}
 
   {#if mode === 'page' || showMore}
+    <section class="entry-section" aria-labelledby="entry-section-time">
+      <h2 id="entry-section-time" class="entry-section__title">{$_('entry.section.time')}</h2>
+      <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
+        {#each ENTRY_SLOTS as slot}
+          <button
+            type="button"
+            class:active={selectedSlot === slot}
+            aria-pressed={selectedSlot === slot}
+            on:click={() => setSlot(slot)}
+          >
+            {$_(`entry.time_slot.${slot}`)}
+          </button>
+        {/each}
+      </div>
+      <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
+    </section>
+
     <section class="entry-section" aria-labelledby="entry-section-tags">
       <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
       <TagPicker bind:selected={selectedTagIds} />
@@ -543,6 +589,23 @@
           placeholder={$_('entry.note_placeholder')}
         ></textarea>
       </label>
+    </section>
+
+    <section class="entry-section" aria-labelledby="entry-section-cycle">
+      <h2 id="entry-section-cycle" class="entry-section__title">{$_('entry.section.cycle')}</h2>
+      <label class="entry-field">
+        <span class="entry-label">{$_('entry.cycle_day.label')}</span>
+        <input
+          type="number"
+          class="input"
+          min="1"
+          max="35"
+          value={cycleDay ?? ''}
+          on:input={onCycleDayInput}
+          placeholder={$_('entry.cycle_day.placeholder')}
+        />
+      </label>
+      <p class="entry-hint">{$_('entry.cycle_day.hint')}</p>
     </section>
   {/if}
 
@@ -671,6 +734,31 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+
+  .entry-chip-row {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .entry-chip-row button {
+    min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    padding: var(--space-2) var(--space-3);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .entry-chip-row button.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    font-weight: 650;
   }
 
   .entry-label {

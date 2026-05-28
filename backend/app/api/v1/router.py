@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     export,
     health,
     insights,
+    onboarding,
     symptoms,
     tags,
     user,
@@ -42,6 +43,9 @@ api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboar
 
 # M3 generated insights (read-only API surface; worker generation is scheduled)
 api_router.include_router(insights.router, prefix="/insights", tags=["insights"])
+
+# M4 guided onboarding.
+api_router.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
 
 # Tag system (M1, Issue #8) — tag CRUD under /tags, entry-tag assignment
 # under /entries/{entry_id}/tags. Two routers, mounted with the right

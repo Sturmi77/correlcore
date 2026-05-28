@@ -5,6 +5,7 @@ import {
   heatmapLevel,
   linePath,
   metricStyles,
+  smoothTimeseriesPoints,
 } from './charts';
 
 describe('chart utilities', () => {
@@ -93,5 +94,40 @@ describe('chart utilities', () => {
     expect(metricStyles.energy_avg.shape).toBe('diamond');
     expect(metricStyles.stress_avg.shape).toBe('triangle');
     expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(3);
+  });
+
+  it('smooths timeseries with a trailing average and preserves null gaps', () => {
+    const points = [
+      {
+        period_start: '2026-05-01',
+        period_end: '2026-05-01',
+        entry_count: 1,
+        mood_avg: 1,
+        energy_avg: null,
+        stress_avg: 5,
+      },
+      {
+        period_start: '2026-05-02',
+        period_end: '2026-05-02',
+        entry_count: 1,
+        mood_avg: 3,
+        energy_avg: 4,
+        stress_avg: null,
+      },
+      {
+        period_start: '2026-05-03',
+        period_end: '2026-05-03',
+        entry_count: 1,
+        mood_avg: 5,
+        energy_avg: 2,
+        stress_avg: 1,
+      },
+    ];
+
+    const smoothed = smoothTimeseriesPoints(points, 2);
+
+    expect(smoothed.map((point) => point.mood_avg)).toEqual([1, 2, 4]);
+    expect(smoothed.map((point) => point.energy_avg)).toEqual([null, 4, 3]);
+    expect(smoothed.map((point) => point.stress_avg)).toEqual([5, 5, 1]);
   });
 });

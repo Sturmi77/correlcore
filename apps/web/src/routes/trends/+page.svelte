@@ -21,6 +21,7 @@
   import { mockEntryStreak, mockTagHeatmap, mockTimeseries } from '$lib/dev/mockTrends';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
+  import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
   import EntryHistorySheet, {
@@ -62,6 +63,7 @@
   let timeseries: TimeseriesResponse | null = null;
   let heatmap: TagHeatmapResponse | null = null;
   let streak: EntryStreakResponse | null = null;
+  let cycleEntries: EntryResponse[] = [];
   let metrics: Record<MetricKey, boolean> = {
     mood_avg: true,
     energy_avg: true,
@@ -74,6 +76,9 @@
   let historyLoading = false;
   let historyError = '';
   let historyDetails: EntryHistoryDetail[] = [];
+  let smoothing = false;
+
+  const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
 
   function dateWindow(): { start_date: string; end_date: string } {
     const option = rangeOptions.find((item) => item.id === range) ?? rangeOptions[0];
@@ -90,11 +95,12 @@
         timeseries = { ...mockTimeseries, range };
         heatmap = mockTagHeatmap;
         streak = mockEntryStreak;
+        cycleEntries = mockEntries.filter((entry) => entry.cycle_day !== null);
         return;
       }
 
       const { start_date, end_date } = dateWindow();
-      const [nextTimeseries, nextHeatmap, nextStreak] = await Promise.all([
+      const [nextTimeseries, nextHeatmap, nextStreak, nextEntries] = await Promise.all([
         fetchTimeseries(range),
         fetchTagHeatmap({
           start_date,
@@ -102,10 +108,12 @@
           ...(selectedCategory === 'all' ? {} : { category: selectedCategory }),
         }),
         fetchEntryStreak(),
+        listEntries({ start_date, end_date, limit: 365 }),
       ]);
       timeseries = nextTimeseries;
       heatmap = nextHeatmap;
       streak = nextStreak;
+      cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
     } finally {
@@ -115,6 +123,13 @@
 
   function toggleMetric(metric: MetricKey): void {
     metrics = { ...metrics, [metric]: !metrics[metric] };
+  }
+
+  function setSmoothing(value: boolean): void {
+    smoothing = value;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(SMOOTHING_STORAGE_KEY, value ? 'true' : 'false');
+    }
   }
 
   async function openHistory(date: string): Promise<void> {
@@ -178,8 +193,18 @@
       testId: `trends-tab-${tab.id}`,
     })
   );
+  $: smoothingOptions = [
+    { id: 'raw', label: $_('trends.smoothing.raw'), testId: 'trends-smoothing-raw' },
+    { id: 'smoothed', label: $_('trends.smoothing.smoothed'), testId: 'trends-smoothing-smoothed' },
+  ];
+  $: smoothingAvailable = range !== 'week';
+  $: displayTimeseries =
+    timeseries && smoothing && smoothingAvailable
+      ? { ...timeseries, points: smoothTimeseriesPoints(timeseries.points) }
+      : timeseries;
 
   onMount(() => {
+    smoothing = localStorage.getItem(SMOOTHING_STORAGE_KEY) === 'true';
     void loadTrends();
   });
 </script>
@@ -211,6 +236,15 @@
 
       {#if activeTab === 'mood'}
         <div class="trends__metric-toggles">
+          {#if smoothingAvailable}
+            <SegmentedControl
+              value={smoothing ? 'smoothed' : 'raw'}
+              options={smoothingOptions}
+              ariaLabel={$_('trends.smoothing.label')}
+              testId="trends-smoothing-control"
+              on:change={(event) => setSmoothing(event.detail.value === 'smoothed')}
+            />
+          {/if}
           {#each Object.entries(metricLabels) as [key, label]}
             <label>
               <input
@@ -255,7 +289,7 @@
     {#if activeTab === 'mood'}
       <div class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.mood')}>
         <MetricTimeseries
-          points={timeseries?.points ?? []}
+          points={displayTimeseries?.points ?? []}
           {range}
           enabled={metrics}
           {loading}
@@ -294,6 +328,22 @@
             <strong>{streak?.total_entry_days ?? '-'}</strong>
           </div>
         </section>
+        {#if cycleEntries.length > 0}
+          <section class="trends__cycle" aria-label={$_('trends.cycle.heading')}>
+            <div>
+              <h3>{$_('trends.cycle.heading')}</h3>
+              <p>{$_('trends.cycle.body')}</p>
+            </div>
+            <div class="trends__cycle-strip">
+              {#each cycleEntries.slice(0, 14) as entry}
+                <span title={`${entry.entry_date}: ${entry.cycle_day}`}>
+                  <small>{entry.entry_date.slice(5)}</small>
+                  <strong>{entry.cycle_day}</strong>
+                </span>
+              {/each}
+            </div>
+          </section>
+        {/if}
       </div>
     {/if}
 
@@ -401,6 +451,50 @@
   .trends__health p {
     margin: var(--space-1) 0 0;
     color: var(--color-text-muted);
+  }
+
+  .trends__cycle {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-surface-2) 72%, transparent);
+  }
+
+  .trends__cycle h3,
+  .trends__cycle p {
+    margin: 0;
+  }
+
+  .trends__cycle h3 {
+    font-size: var(--text-base);
+  }
+
+  .trends__cycle-strip {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .trends__cycle-strip span {
+    min-width: 3.75rem;
+    min-height: 3.75rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+  }
+
+  .trends__cycle-strip small {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .trends__cycle-strip strong {
+    font-size: var(--text-lg);
   }
 
   @media (max-width: 640px) {

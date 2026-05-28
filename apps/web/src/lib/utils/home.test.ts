@@ -49,6 +49,7 @@ describe('findEntryForDate', () => {
     mood_score: 3,
     energy: 3,
     stress: 3,
+    cycle_day: null,
     work_context: 'homeoffice',
     source: 'direct',
     note: null,

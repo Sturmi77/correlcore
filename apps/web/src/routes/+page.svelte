@@ -24,7 +24,8 @@
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
   import { mockDashboardSummary, mockEntries, mockUserPreferences } from '$lib/dev/mockEntries';
-  import { devForceVisualizations } from '$lib/stores/devMode';
+  import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
+  import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
   import { shiftIsoDate } from '$lib/utils/streak';
   import Button from '$lib/components/common/Button.svelte';
@@ -74,8 +75,12 @@
       if ($devForceVisualizations) {
         recentEntries = mockEntries.slice(0, HOME_SPARKLINE_DAYS);
         todayEntry = findEntryForDate(recentEntries, todayIso);
-        dashboardSummary = mockDashboardSummary;
-        userPreferences = mockUserPreferences;
+        dashboardSummary = { ...mockDashboardSummary, entry_count: $devPhase.entryCount };
+        userPreferences = {
+          ...mockUserPreferences,
+          onboarding_retro_completed: $devPhase.onboardingCompleted,
+          onboarding_profile_completed: $devPhase.onboardingCompleted,
+        };
         return;
       }
 
@@ -115,7 +120,7 @@
     userPreferences &&
     !userPreferences.onboarding_retro_completed
   ) {
-    void goto('/onboarding/retro', { replaceState: true });
+    void goto('/onboarding', { replaceState: true });
   }
 
   async function dismissFirstWeekBanner(): Promise<void> {
@@ -158,6 +163,27 @@
 
 {#if $auth.status === 'authenticated'}
   <div class="home-screen">
+    {#if $pwaInstallStore.promptEvent && !$pwaInstallStore.dismissed && !$pwaInstallStore.installed}
+      <section class="home-install" data-testid="pwa-install-banner">
+        <div>
+          <h2>{$_('pwa.install.title')}</h2>
+          <p>{$_('pwa.install.body')}</p>
+        </div>
+        <div class="home-install__actions">
+          <Button variant="ghost" size="sm" on:click={() => pwaInstallStore.dismiss()}>
+            {$_('pwa.install.dismiss')}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            on:click={() => void pwaInstallStore.promptInstall()}
+          >
+            {$_('pwa.install.cta')}
+          </Button>
+        </div>
+      </section>
+    {/if}
+
     <!-- Zone 1: date + work context + entry status -->
     <section class="home-zone" data-testid="home-zone-context">
       <HomeTodayContext {todayIso} {todayEntry} loading={dashboardLoading && !dashboardLoaded} />
@@ -283,6 +309,39 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  .home-install {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  }
+
+  .home-install h2,
+  .home-install p {
+    margin: 0;
+  }
+
+  .home-install h2 {
+    font-size: var(--text-base);
+  }
+
+  .home-install p {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .home-install__actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .home-zone--foot {

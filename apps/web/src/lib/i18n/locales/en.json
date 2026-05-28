@@ -147,10 +147,24 @@
       "date": "Date",
       "metrics": "Mood & body",
       "work_context": "Work situation",
+      "time": "Time of day",
       "tags": "Tags",
       "symptoms": "Symptoms",
       "note": "Note",
+      "cycle": "Cycle",
       "delta": "Compared to yesterday"
+    },
+    "time_slot": {
+      "label": "Time of day",
+      "morning": "Morning",
+      "noon": "Noon",
+      "evening": "Evening",
+      "hint": "Optional. Leave all chips off for a whole-day entry."
+    },
+    "cycle_day": {
+      "label": "Cycle day (optional)",
+      "placeholder": "1-35",
+      "hint": "Neutral tracking only. CorrelCore does not predict or diagnose cycle phases."
     },
     "work_context": {
       "homeoffice": "Home office",
@@ -184,7 +198,7 @@
       "offline": "Offline \u2014 changes are not being saved.",
       "leave_warning": "There are unsaved changes. Are you sure you want to leave?"
     },
-    "more_toggle": "+ More (tags, symptoms, note)",
+    "more_toggle": "+ More (time, tags, symptoms, note)",
     "sheet": {
       "title": "How was your day?",
       "close": "Close entry",
@@ -236,6 +250,7 @@
       "leisure": "Leisure",
       "consumption": "Consumption",
       "health": "Health",
+      "cycle": "Cycle",
       "other": "Other"
     }
   },
@@ -306,6 +321,11 @@
       "energy": "Energy",
       "stress": "Stress"
     },
+    "smoothing": {
+      "label": "Trend smoothing",
+      "raw": "Raw",
+      "smoothed": "Smoothed"
+    },
     "timeseries": {
       "heading": "Time series",
       "legend": "Metrics",
@@ -331,6 +351,10 @@
     "health": {
       "heading": "Health readiness",
       "body": "Symptom and sleep analyses appear here once the required data fields are stable. Until then, this section only shows tracking consistency."
+    },
+    "cycle": {
+      "heading": "Cycle day overlay",
+      "body": "Optional cycle-day entries are shown as neutral context only, without interpretation."
     },
     "heatmap": {
       "heading": "Tag frequency",
@@ -443,8 +467,33 @@
       "active_hint": "Developer mode is active. The dev view link is visible.",
       "force_viz_label": "Force visualizations with mock data",
       "force_viz_aria": "Toggle mock data for visualizations",
+      "phase_label": "Insight maturity",
+      "entry_count_label": "Mock entry count",
+      "onboarding_completed": "Onboarding completed",
+      "preview_onboarding": "Preview onboarding",
+      "preview_title": "Onboarding preview",
+      "preview_close": "Close preview",
+      "phase": {
+        "collecting": "Collecting",
+        "early_patterns": "First patterns",
+        "provisional": "Provisional",
+        "robust": "Robust"
+      },
       "toast_enabled": "Developer mode enabled",
       "toast_disabled": "Developer mode disabled"
+    }
+  },
+  "pwa": {
+    "install": {
+      "title": "Install CorrelCore",
+      "body": "Add the app to your home screen for a focused standalone experience.",
+      "cta": "Install",
+      "dismiss": "Not now"
+    },
+    "offline": {
+      "title": "You are offline",
+      "body": "CorrelCore can open its app shell offline. Sync and API data load again when the connection returns.",
+      "cta": "Back to Today"
     }
   },
   "disclaimer": {
@@ -636,6 +685,19 @@
     "continue": "Continue",
     "finish": "Done",
     "skip_question": "Skip this question",
+    "guided": {
+      "title": "Set up your tracking",
+      "intro": "Choose a few tags that describe your usual context. You can change everything later.",
+      "progress": "Onboarding progress",
+      "tags_title": "Pick useful tags",
+      "tags_body": "Start with a small set. Free-text tags are always available.",
+      "custom": "Custom tag",
+      "add_tag": "Add tag",
+      "summary_title": "Ready to start",
+      "summary_body": "{count} tags selected.",
+      "start": "Start tracking",
+      "back": "Back"
+    },
     "retro": {
       "title": "How were the last few days?",
       "body": "Optional: rough memory is fine. It helps CorrelCore calibrate early patterns faster."

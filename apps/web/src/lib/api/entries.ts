@@ -24,6 +24,7 @@ export interface EntryResponse {
   mood_score: number;
   energy: number;
   stress: number;
+  cycle_day: number | null;
   source: EntrySource;
   work_context: WorkContext;
   note: string | null;
@@ -37,6 +38,7 @@ export interface EntryCreatePayload {
   mood_score: number;
   energy: number;
   stress: number;
+  cycle_day?: number | null;
   source?: EntrySource;
   work_context: WorkContext;
   note?: string;
@@ -50,6 +52,8 @@ export interface EntryUpdatePayload {
   mood_score?: number;
   energy?: number;
   stress?: number;
+  slot?: EntrySlot;
+  cycle_day?: number | null;
   work_context?: WorkContext;
   note?: string;
 }

@@ -116,4 +116,21 @@ describe('devMode force visualizations', () => {
     expect(get(devForceVisualizations)).toBe(false);
     expect(localStorage.getItem('dev_force_viz')).toBe('false');
   });
+
+  it('resets in-memory phase overrides when dev mode is disabled', async () => {
+    const { devMode, devPhase } = await import('./devMode');
+
+    devMode.set(true);
+    devPhase.setInsightMaturity('robust');
+    devPhase.setEntryCount(88);
+    devPhase.setOnboardingCompleted(false);
+    devMode.set(false);
+
+    expect(get(devPhase)).toEqual({
+      insightMaturity: 'collecting',
+      onboardingCompleted: true,
+      entryCount: 0,
+      onboardingPreviewOpen: false,
+    });
+  });
 });

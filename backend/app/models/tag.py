@@ -80,6 +80,7 @@ class TagCategory(StrEnum):
     LEISURE = "leisure"
     CONSUMPTION = "consumption"
     HEALTH = "health"
+    CYCLE = "cycle"
     OTHER = "other"
 
 

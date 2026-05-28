@@ -147,10 +147,24 @@
       "date": "Datum",
       "metrics": "Stimmung & K\u00f6rper",
       "work_context": "Arbeitssituation",
+      "time": "Tageszeit",
       "tags": "Tags",
       "symptoms": "Symptome",
       "note": "Notiz",
+      "cycle": "Zyklus",
       "delta": "Vergleich mit gestern"
+    },
+    "time_slot": {
+      "label": "Tageszeit",
+      "morning": "Morgens",
+      "noon": "Mittags",
+      "evening": "Abends",
+      "hint": "Optional. Ohne Auswahl bleibt es ein ganzer Tag."
+    },
+    "cycle_day": {
+      "label": "Zyklustag (optional)",
+      "placeholder": "1-35",
+      "hint": "Nur neutrale Erfassung. CorrelCore macht keine Vorhersage und keine Diagnose."
     },
     "work_context": {
       "homeoffice": "Homeoffice",
@@ -194,7 +208,7 @@
       "default_low": "niedrig",
       "default_high": "hoch"
     },
-    "more_toggle": "+ Mehr (Tags, Symptome, Notiz)",
+    "more_toggle": "+ Mehr (Tageszeit, Tags, Symptome, Notiz)",
     "sheet": {
       "title": "Wie war dein Tag?",
       "close": "Eintrag schlie\u00dfen",
@@ -236,6 +250,7 @@
       "leisure": "Freizeit",
       "consumption": "Konsum",
       "health": "Gesundheit",
+      "cycle": "Zyklus",
       "other": "Sonstiges"
     }
   },
@@ -306,6 +321,11 @@
       "energy": "Energie",
       "stress": "Stress"
     },
+    "smoothing": {
+      "label": "Trend-Glaettung",
+      "raw": "Roh",
+      "smoothed": "Geglaettet"
+    },
     "timeseries": {
       "heading": "Zeitreihe",
       "legend": "Metriken",
@@ -331,6 +351,10 @@
     "health": {
       "heading": "Gesundheitsbereitschaft",
       "body": "Symptom- und Schlafanalysen erscheinen hier, sobald die benoetigten Datenfelder stabil verfuegbar sind. Bis dahin zeigt dieser Bereich nur Tracking-Konsistenz."
+    },
+    "cycle": {
+      "heading": "Cycle-Day-Overlay",
+      "body": "Optionale Cycle-Day-Eintraege werden nur als neutraler Kontext gezeigt, ohne Interpretation."
     },
     "heatmap": {
       "heading": "Tag-Frequenz",
@@ -443,8 +467,33 @@
       "active_hint": "Entwicklermodus ist aktiv. Der Dev-View-Link ist eingeblendet.",
       "force_viz_label": "Visualisierungen mit Mock-Daten erzwingen",
       "force_viz_aria": "Mock-Daten fuer Visualisierungen umschalten",
+      "phase_label": "Erkenntnisreife",
+      "entry_count_label": "Mock-Eintragszahl",
+      "onboarding_completed": "Onboarding abgeschlossen",
+      "preview_onboarding": "Onboarding ansehen",
+      "preview_title": "Onboarding-Vorschau",
+      "preview_close": "Vorschau schliessen",
+      "phase": {
+        "collecting": "Daten sammeln",
+        "early_patterns": "Erste Muster",
+        "provisional": "Vorlaeufig",
+        "robust": "Robust"
+      },
       "toast_enabled": "Entwicklermodus aktiviert",
       "toast_disabled": "Entwicklermodus deaktiviert"
+    }
+  },
+  "pwa": {
+    "install": {
+      "title": "CorrelCore installieren",
+      "body": "Fuege die App zum Homescreen hinzu, um sie als fokussierte Standalone-App zu nutzen.",
+      "cta": "Installieren",
+      "dismiss": "Jetzt nicht"
+    },
+    "offline": {
+      "title": "Du bist offline",
+      "body": "CorrelCore kann die App-Shell offline oeffnen. Sync und API-Daten laden wieder, sobald die Verbindung zurueck ist.",
+      "cta": "Zurueck zu Heute"
     }
   },
   "disclaimer": {
@@ -636,6 +685,19 @@
     "continue": "Weiter",
     "finish": "Fertig",
     "skip_question": "Frage ueberspringen",
+    "guided": {
+      "title": "Tracking einrichten",
+      "intro": "Waehle ein paar Tags, die deinen Alltag gut beschreiben. Du kannst spaeter alles anpassen.",
+      "progress": "Onboarding-Fortschritt",
+      "tags_title": "Nuetzliche Tags auswaehlen",
+      "tags_body": "Starte mit einer kleinen Auswahl. Freitext-Tags bleiben immer moeglich.",
+      "custom": "Eigener Tag",
+      "add_tag": "Tag hinzufuegen",
+      "summary_title": "Bereit zum Start",
+      "summary_body": "{count} Tags ausgewaehlt.",
+      "start": "Tracking starten",
+      "back": "Zurueck"
+    },
     "retro": {
       "title": "Wie waren die letzten Tage?",
       "body": "Optional: grobe Erinnerung reicht. Sie hilft CorrelCore, schneller erste Muster zu kalibrieren."

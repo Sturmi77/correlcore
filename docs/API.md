@@ -295,9 +295,10 @@ GET    /api/v1/entries/date/{date}      Eintrag für ein Datum     (M1 Followup)
 
 ### Datentypen
 
-- `slot` — Enum: `day` (Default, M1), `morning`, `noon`, `evening` (reserviert für M3+).
+- `slot` — Enum: `day` (Default), `morning`, `noon`, `evening`.
 - `work_context` — Enum: `homeoffice`, `office`, `vacation`, `sick`, `weekend`, `travel`.
 - `mood_score`, `energy`, `stress` — Integer 1..5 (DB-CHECK + Pydantic-Validierung).
+- `cycle_day` — Optionaler Integer 1..35; neutraler Kontext, keine medizinische Interpretation.
 - `note` — Optional, max. 4000 Zeichen. Wird in der Spalte `note_enc` (BYTEA) als Fernet-Ciphertext unter dem User-DEK gespeichert (Issue #26, ADR-0005). API-Surface bleibt Klartext: Requests senden `note: "..."`, Responses geben den entschlüsselten String zurück. Ohne gültigen Auth-Kontext (DEK fehlt) liefert das Backend 401.
 
 ### Backdate-Fenster
@@ -317,6 +318,7 @@ Request:
   "mood_score": 4,
   "energy": 3,
   "stress": 2,
+  "cycle_day": 12,
   "work_context": "homeoffice",
   "note": "Lange Sitzung, aber produktiv."
 }
@@ -333,6 +335,7 @@ Response `201 Created`:
   "mood_score": 4,
   "energy": 3,
   "stress": 2,
+  "cycle_day": 12,
   "work_context": "homeoffice",
   "note": "Lange Sitzung, aber produktiv.",
   "created_at": "2026-05-04T17:00:00Z",
@@ -371,8 +374,10 @@ Request (alle Felder optional):
 ```json
 {
   "mood_score": 5,
+  "slot": "evening",
   "energy": 4,
   "stress": 1,
+  "cycle_day": 12,
   "work_context": "office",
   "note": "Korrektur"
 }
@@ -381,7 +386,8 @@ Request (alle Felder optional):
 Fehler:
 
 - `404 Not Found` — wie oben.
-- `409 Conflict` — Eintrag ist älter als 7 Tage (read-only).
+- `409 Conflict` — Eintrag ist älter als 7 Tage (read-only) oder der Ziel-Slot
+  kollidiert mit einem vorhandenen `(user, entry_date, slot)`-Eintrag.
 
 ### Tag-Zuweisung
 
@@ -695,6 +701,30 @@ Speichert nicht-sensitive UI-/Insight-Präferenzen des aktuellen Users:
 Upsert für optionale Onboarding-Antworten:
 `sleep_hours_typical`, `work_context_typical`, `sport_frequency` und
 `insight_curiosity`.
+
+## 6a. Onboarding
+
+```
+GET  /api/v1/onboarding/tag-suggestions   Gruppierte Tag-Vorschläge
+POST /api/v1/onboarding/complete          Onboarding abschließen
+```
+
+`GET /api/v1/onboarding/tag-suggestions` liefert statische Vorschlagsgruppen
+für `work`, `health`, `social` und `cycle`.
+
+`POST /api/v1/onboarding/complete` akzeptiert ausgewählte Vorschläge und freie
+Tags:
+
+```json
+{
+  "tags": [{ "slug": "deep-work", "name": "Deep work", "category": "work" }]
+}
+```
+
+Der Service erstellt fehlende User-Custom-Tags idempotent nach Slug oder
+verwendet sichtbare bestehende Tags wieder. Danach werden die bestehenden
+Preferences `onboarding_retro_completed` und `onboarding_profile_completed`
+auf `true` gesetzt.
 
 ### `GET /api/v1/user/export`
 

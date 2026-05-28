@@ -102,12 +102,13 @@ async def test_create_entry_happy_path() -> None:
     user = make_user()
     db = _make_db()
 
-    entry = await create_entry(db, user_id=user.id, payload=_payload())
+    entry = await create_entry(db, user_id=user.id, payload=_payload(cycle_day=12))
 
     assert entry.user_id == user.id
     assert entry.mood_score == 4
     assert entry.energy == 3
     assert entry.stress == 2
+    assert entry.cycle_day == 12
     assert entry.source is EntrySource.DIRECT
     assert entry.work_context is WorkContext.HOMEOFFICE
     assert entry.note_enc == "feeling good"
@@ -188,12 +189,42 @@ async def test_update_entry_within_window_changes_fields() -> None:
         db,
         user_id=user.id,
         entry_id=existing.id,
-        payload=EntryUpdate(mood_score=5, note="great day"),
+        payload=EntryUpdate(
+            mood_score=5,
+            note="great day",
+            slot=EntrySlot.EVENING,
+            cycle_day=21,
+        ),
     )
 
     assert updated.mood_score == 5
     assert updated.note_enc == "great day"
+    assert updated.slot is EntrySlot.EVENING
+    assert updated.cycle_day == 21
     db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_entry_duplicate_slot_raises_conflict() -> None:
+    user = make_user()
+    existing = make_entry(user)
+    integrity = IntegrityError("UPDATE", params=None, orig=Exception("uq"))
+    db = MagicMock()
+    result_mock = MagicMock()
+    result_mock.scalar_one_or_none.return_value = existing
+    db.execute = AsyncMock(return_value=result_mock)
+    db.flush = AsyncMock(side_effect=integrity)
+    db.rollback = AsyncMock()
+
+    with pytest.raises(EntryConflictError):
+        await update_entry(
+            db,
+            user_id=user.id,
+            entry_id=existing.id,
+            payload=EntryUpdate(slot=EntrySlot.MORNING),
+        )
+
+    db.rollback.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -656,6 +687,29 @@ async def test_patch_entry_read_only_409(async_client: AsyncClient, user: User) 
             r = await async_client.patch(
                 f"/api/v1/entries/{uuid.uuid4()}",
                 json={"mood_score": 5},
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert r.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_patch_entry_slot_conflict_409(async_client: AsyncClient, user: User) -> None:
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.entries.update_entry",
+            new_callable=AsyncMock,
+            side_effect=EntryConflictError("slot exists"),
+        ):
+            r = await async_client.patch(
+                f"/api/v1/entries/{uuid.uuid4()}",
+                json={"slot": "morning"},
                 cookies={"access_token": "valid.access.token"},
             )
     finally:

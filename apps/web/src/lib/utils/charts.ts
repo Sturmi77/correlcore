@@ -61,6 +61,28 @@ export function buildLinePoints(
   });
 }
 
+export function smoothTimeseriesPoints(
+  points: readonly TimeseriesPoint[],
+  windowSize = 7
+): TimeseriesPoint[] {
+  return points.map((point, index) => {
+    const window = points.slice(Math.max(0, index - windowSize + 1), index + 1);
+    const average = (metric: MetricKey): number | null => {
+      const values = window
+        .map((item) => item[metric])
+        .filter((value): value is number => value !== null);
+      if (values.length === 0) return null;
+      return values.reduce((sum, value) => sum + value, 0) / values.length;
+    };
+    return {
+      ...point,
+      mood_avg: average('mood_avg'),
+      energy_avg: average('energy_avg'),
+      stress_avg: average('stress_avg'),
+    };
+  });
+}
+
 export function linePath(points: readonly ChartPoint[]): string {
   if (points.length === 0) return '';
   return points

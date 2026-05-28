@@ -7,6 +7,10 @@ kick-off and maps them to focused sprints. Each sprint targets a single
 merge-ready PR on `main`. Sprints must be executed in order to avoid
 parallel dependency conflicts.
 
+> Scope correction (2026-05-28): the backend already has `entries.slot =
+day|morning|noon|evening`. M4 uses `slot`, not a new `time_slot`, and full
+> offline-first Dexie sync is deferred out of M4.
+
 ## Background
 
 M3.5 through M3.7 deliver a complete mobile-optimised frontend, insight
@@ -49,10 +53,10 @@ implementation begins. No code changes.
 
 ### Deliverables
 
-- [ ] `docs/adr/0028-entry-time-slot-model.md`
-  - Decision: optional `time_slot` enum (`morning | noon | evening | null`) on
-    the `DayEntry` model; `null` means whole-day entry (backward compatible)
-  - Migration strategy: additive Alembic migration, no existing data touched
+- [ ] `docs/adr/0028-entry-slot-model.md`
+  - Decision: use existing `entries.slot` enum (`day | morning | noon |
+evening`); `day` means whole-day entry
+  - Migration strategy: no slot migration required
 - [ ] `docs/adr/0029-trend-smoothing-frontend.md`
   - Decision: 7-day simple moving average computed client-side in Recharts;
     no new backend endpoint required
@@ -81,11 +85,11 @@ morning, noon, or evening so that I can track intra-day patterns.
 
 #### Backend
 
-- [ ] Alembic migration: add `time_slot VARCHAR(10) NULL` to `day_entries`
-- [ ] `TimeSlot` Python enum: `morning | noon | evening`
-- [ ] `DayEntryCreate` / `DayEntryRead` Pydantic schemas updated
-- [ ] `GET /api/v1/entries` and `GET /api/v1/entries/{id}` include `time_slot`
-- [ ] `PATCH /api/v1/entries/{id}` accepts `time_slot`
+- [ ] No slot migration; reuse existing `entries.slot`
+- [ ] Existing `EntrySlot` Python enum: `day | morning | noon | evening`
+- [ ] `EntryCreate` / `EntryRead` Pydantic schemas retain `slot`
+- [ ] `GET /api/v1/entries` and `GET /api/v1/entries/{id}` include `slot`
+- [ ] `PATCH /api/v1/entries/{id}` accepts `slot`
 - [ ] `docs/API.md` updated
 - [ ] Unit tests: schema validation, migration round-trip
 
