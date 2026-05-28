@@ -8,6 +8,7 @@ cycle tracking deep integration deferred from M4.
 ## Context
 
 M4 Sprint 2 introduces:
+
 - Optional `cycle_day` integer field on `DayEntry`
 - `cycle` tag category in the suggestion library
 - Neutral cycle day overlay on the Trends > Health tab
@@ -68,7 +69,7 @@ cycle-aware visualisations, once the Android app path is established.
 
 ## Framing Guardrails
 
-- No algorithmic prediction ("you will ovulate on…")  
-- No health claim language  
-- Phase bands always labelled "approximate"  
-- Disclaimer visible wherever phase bands are shown  
+- No algorithmic prediction ("you will ovulate on…")
+- No health claim language
+- Phase bands always labelled "approximate"
+- Disclaimer visible wherever phase bands are shown

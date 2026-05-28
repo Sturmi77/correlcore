@@ -22,23 +22,23 @@ foundation with four categories of work:
 
 ## Milestone Overview
 
-| Sprint | Title | Status |
-| ------ | ----------------------------------------------------- | ------- |
-| 0 | ADR & Scope Documentation | Pending |
-| 1 | Entry Time Slots + Trend Smoothing | Pending |
-| 2 | Guided Onboarding + Cycle Tracking Groundwork | Pending |
-| 3 | Developer Mode: Phase Switcher + Onboarding Mock | Pending |
-| 4 | PWA Hardening + Homescreen Install Prompt | Pending |
-| 5 | Visual QA, Docs & GitHub Closure | Pending |
+| Sprint | Title                                            | Status  |
+| ------ | ------------------------------------------------ | ------- |
+| 0      | ADR & Scope Documentation                        | Pending |
+| 1      | Entry Time Slots + Trend Smoothing               | Pending |
+| 2      | Guided Onboarding + Cycle Tracking Groundwork    | Pending |
+| 3      | Developer Mode: Phase Switcher + Onboarding Mock | Pending |
+| 4      | PWA Hardening + Homescreen Install Prompt        | Pending |
+| 5      | Visual QA, Docs & GitHub Closure                 | Pending |
 
 ## Deferred to Later Milestones
 
-| Feature | Target | Rationale |
-| ------------------------------------------ | ------ | ------------------------------------------------------------ |
-| Co-occurrence heatmap (Tag × Tag) | M5 | Requires a sufficient data foundation and a new backend endpoint |
-| Cycle tracking deep integration | M7 | Health Connect (Android) context; avoid premature health claims |
-| Pattern recognition / clustering | M8 | Needs pgvector and statistically robust data volume |
-| Native Android homescreen widget | M11 | Depends on Play Store / TWA path; Glance API |
+| Feature                           | Target | Rationale                                                        |
+| --------------------------------- | ------ | ---------------------------------------------------------------- |
+| Co-occurrence heatmap (Tag × Tag) | M5     | Requires a sufficient data foundation and a new backend endpoint |
+| Cycle tracking deep integration   | M7     | Health Connect (Android) context; avoid premature health claims  |
+| Pattern recognition / clustering  | M8     | Needs pgvector and statistically robust data volume              |
+| Native Android homescreen widget  | M11    | Depends on Play Store / TWA path; Glance API                     |
 
 ---
 
@@ -92,7 +92,7 @@ morning, noon, or evening so that I can track intra-day patterns.
 #### Frontend
 
 - [ ] `EntryForm.svelte`: optional chip group (Morgens · Mittags · Abends),
-  collapsed by default behind "+ More"; no chip selected = whole-day
+      collapsed by default behind "+ More"; no chip selected = whole-day
 - [ ] `EntrySheet.svelte`: same chip group in sheet mode
 - [ ] i18n keys `entry.time_slot.*` in `de.json` / `en.json`
 - [ ] Entry detail view shows time slot badge when set
@@ -109,7 +109,7 @@ morning, noon, or evening so that I can track intra-day patterns.
 - [ ] Compute 7-day SMA in a `derivedSmoothed` Svelte store or inline util
 - [ ] Toggle rendered as segmented control: `Raw | Smoothed`
 - [ ] Toggle persisted via `devMode` pattern (localStorage key
-  `cc_trend_smooth`)
+      `cc_trend_smooth`)
 - [ ] Smoothing only active for ranges ≥ 30 D; toggle hidden for 7 D
 - [ ] i18n keys `trends.smoothing.*`
 - [ ] Unit tests: SMA calculation edge cases (fewer points than window)
@@ -131,27 +131,27 @@ that my first entries are already well-structured.
 #### Backend
 
 - [ ] `GET /api/v1/onboarding/tag-suggestions` — returns suggestion library
-  grouped by category from a static JSON asset (no DB write)
+      grouped by category from a static JSON asset (no DB write)
 - [ ] `POST /api/v1/onboarding/complete` — marks user as onboarded
-  (`onboarding_completed_at` timestamp on `User`)
+      (`onboarding_completed_at` timestamp on `User`)
 - [ ] Alembic migration: `onboarding_completed_at TIMESTAMP NULL` on `users`
 - [ ] Auth middleware: redirect unauthenticated `/onboarding` requests
 
 #### Frontend
 
 - [ ] `/onboarding` route (already hidden from nav per M3.5 Sprint 1)
-  activated and linked from post-registration redirect
+      activated and linked from post-registration redirect
 - [ ] Step 1: Welcome screen with CorrelCore value proposition (2–3 lines,
-  no gamification copy)
+      no gamification copy)
 - [ ] Step 2: Tag suggestion picker — category chips expand to tag chips;
-  user can deselect any suggestion and type custom tags
+      user can deselect any suggestion and type custom tags
 - [ ] Step 3: Summary + "Start tracking" CTA that calls
-  `POST /api/v1/onboarding/complete` and creates selected tags
+      `POST /api/v1/onboarding/complete` and creates selected tags
 - [ ] Progress indicator (3 dots, no percentage)
 - [ ] Skip option on each step (skips remaining steps, marks onboarded)
 - [ ] i18n keys `onboarding.*` in `de.json` / `en.json`
 - [ ] `src/lib/data/tagSuggestions.ts` — typed suggestion library
-  (categories: Work, Health, Social, Mood, Cycle, Custom)
+      (categories: Work, Health, Social, Mood, Cycle, Custom)
 - [ ] Component tests: step navigation, tag selection, skip, submission
 
 ### 2b — Cycle Tracking Groundwork
@@ -163,7 +163,7 @@ visible in Trends.
 #### Backend
 
 - [ ] Alembic migration: `cycle_day SMALLINT NULL` on `day_entries`
-  (1–35 range; NULL = not tracked)
+      (1–35 range; NULL = not tracked)
 - [ ] `DayEntryCreate` / `DayEntryRead` updated
 - [ ] `docs/API.md` updated
 - [ ] Unit tests: range validation
@@ -171,10 +171,10 @@ visible in Trends.
 #### Frontend
 
 - [ ] `EntryForm.svelte`: optional numeric input for cycle day, behind
-  "+ More", with range hint (1–35)
+      "+ More", with range hint (1–35)
 - [ ] Tag suggestion library includes `cycle` category
 - [ ] Trends > Health tab: if `cycle_day` data exists, show cycle phase
-  overlay on the mood chart (simple line, no algorithmic interpretation)
+      overlay on the mood chart (simple line, no algorithmic interpretation)
 - [ ] i18n keys `entry.cycle_day.*`, `trends.cycle.*`
 - [ ] No medical copy; framing: "Cycle day (optional)" with neutral hint text
 - [ ] Component tests
@@ -194,20 +194,20 @@ trends.
 ### Deliverables
 
 - [ ] Dev Mode panel (Settings > Developer) gains a **Phase Switcher**
-  section with the following controls:
+      section with the following controls:
   - Insight maturity: `collecting (0–6d) | early (7–13d) | provisional
-    (14–29d) | robust (30+d)` — overrides `insight_maturity` in the
+(14–29d) | robust (30+d)` — overrides `insight_maturity` in the
     insights store
   - Onboarding state: `completed | not completed` — toggles the
     onboarding redirect without touching the real user record
   - Entry count mock: numeric input (0–200) — controls the readiness
     meter display
 - [ ] **Onboarding Preview** button opens the full `/onboarding` flow in
-  a modal overlay so layouts can be reviewed without resetting the account
+      a modal overlay so layouts can be reviewed without resetting the account
 - [ ] Dev phase state stored in a dedicated `devPhase` Svelte store
-  (in-memory only, not persisted across reloads)
+      (in-memory only, not persisted across reloads)
 - [ ] Disabling Dev Mode resets all phase overrides (consistent with
-  existing `devForceVisualizations` reset behaviour)
+      existing `devForceVisualizations` reset behaviour)
 - [ ] i18n keys `dev.phase.*`
 - [ ] Component tests: phase switching, override propagation, reset
 
@@ -221,18 +221,18 @@ resilience. Native Android widget is out of scope for M4.
 ### Deliverables
 
 - [ ] `beforeinstallprompt` event captured in a Svelte store
-  (`pwaInstallStore`)
+      (`pwaInstallStore`)
 - [ ] Install prompt banner on the Home screen: appears once, dismissible,
-  stored as dismissed in `localStorage` (`cc_pwa_dismissed`)
+      stored as dismissed in `localStorage` (`cc_pwa_dismissed`)
 - [ ] Service Worker (`service-worker.ts`): cache strategy reviewed;
-  offline fallback page (`/offline`) added
+      offline fallback page (`/offline`) added
 - [ ] `manifest.webmanifest`: verify `display: standalone`, `start_url`,
-  `theme_color` matches `--color-primary` in both themes
+      `theme_color` matches `--color-primary` in both themes
 - [ ] `<meta name="apple-mobile-web-app-capable">` and related iOS PWA
-  meta tags present
+      meta tags present
 - [ ] PWA install tested on Android Chrome and iOS Safari
 - [ ] `docs/features/PWA.md`: documents install flow, offline behaviour,
-  and widget roadmap note (M11 via Android Glance API / TWA)
+      and widget roadmap note (M11 via Android Glance API / TWA)
 - [ ] i18n keys `pwa.*`
 - [ ] Component tests: banner show/dismiss logic
 
@@ -246,14 +246,14 @@ documentation, and close GitHub issues.
 ### Deliverables
 
 - [ ] Rendered QA at 375 px, 768 px, and 1280 px (light + dark) — document
-  in `docs/quality/M4_VISUAL_QA.md`
+      in `docs/quality/M4_VISUAL_QA.md`
 - [ ] Onboarding flow QA (all three steps, skip path, tag selection)
 - [ ] Time slot chips QA (entry form + sheet + detail view)
 - [ ] Trend smoothing toggle QA (30D and 90D ranges)
 - [ ] Dev Mode phase switcher QA (all four maturity stages)
 - [ ] PWA install prompt QA (Android Chrome + iOS Safari)
 - [ ] `docs/FRONTEND.md` updated with onboarding route, time slots, cycle
-  field, smoothing toggle, and phase switcher
+      field, smoothing toggle, and phase switcher
 - [ ] `docs/M4_SPRINT_STATUS.md` updated to Done for all sprints
 - [ ] `CHANGELOG.md` updated under Unreleased
 - [ ] GitHub issues for M4 closed or rescoped
@@ -261,14 +261,14 @@ documentation, and close GitHub issues.
 
 ## Definition of Done
 
-| Criterion | Expected evidence |
-| --------------------------------------------------- | ----------------------------------------- |
-| All sprint PRs / commits merged to `main` | Sprints 0–5 on `main` |
-| All M4 issues closed or deliberately rescoped | GitHub issue tracker |
-| `docs/FRONTEND.md` matches implemented UI | Updated in Sprint 5 |
-| `docs/M4_SPRINT_STATUS.md` documents final state | All rows ✅ Done |
-| `CHANGELOG.md` contains M4 | Sprints 1–5 under Unreleased |
-| Local and GitHub CI gates green | `CI — Web` and `CI — API` |
-| Visual QA documented | `docs/quality/M4_VISUAL_QA.md` |
-| No gamification violations in visible UI copy | `noGamificationCopy.test.ts` passes |
-| ADRs 0028–0031 merged | `docs/adr/` |
+| Criterion                                        | Expected evidence                   |
+| ------------------------------------------------ | ----------------------------------- |
+| All sprint PRs / commits merged to `main`        | Sprints 0–5 on `main`               |
+| All M4 issues closed or deliberately rescoped    | GitHub issue tracker                |
+| `docs/FRONTEND.md` matches implemented UI        | Updated in Sprint 5                 |
+| `docs/M4_SPRINT_STATUS.md` documents final state | All rows ✅ Done                    |
+| `CHANGELOG.md` contains M4                       | Sprints 1–5 under Unreleased        |
+| Local and GitHub CI gates green                  | `CI — Web` and `CI — API`           |
+| Visual QA documented                             | `docs/quality/M4_VISUAL_QA.md`      |
+| No gamification violations in visible UI copy    | `noGamificationCopy.test.ts` passes |
+| ADRs 0028–0031 merged                            | `docs/adr/`                         |
