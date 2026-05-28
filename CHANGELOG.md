@@ -10,6 +10,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M3.5 / M3.6 Release-Closeout.** Rendered browser QA passed from local clone (`correlcore-ci`, `70bb5ed`) on 2026-05-27. M3.5 and M3.6 marked release-complete in README, sprint status docs, and design-doc checklists. GitHub issues #186 and #188–#192 closed. Refs #186, #188, #189, #190, #191, #192.
+
 - **M3.5 Sprint 1 — App Shell.** Mobile bottom navigation (four ADR-0017 primary screens), side nav from 768px, skip link, and `AppNav` routing helpers. Refs #186.
 
 - **M3.5 Sprint 2 — Entry Flow Foundation.** Entry form sections, informative work-context hint with weekend auto-fill, central `metrics.ts` / stress display inversion for trends charts, and `defaultWorkContextForDate`. Refs #170, #171, #182.

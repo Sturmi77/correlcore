@@ -887,20 +887,20 @@ ADR-0021 macht Insight-Reifephasen zu einem First-Class-Konzept in Backend, API 
 
 #### Akzeptanzkriterien M3.6
 
-- [ ] `insight_maturity` ist in allen Insight-Endpoint-Responses vorhanden und dokumentiert.
-- [ ] Frontend berechnet Phasen nicht eigenständig, sondern liest sie aus der API.
-- [ ] `InsightJourneyBanner` rendert alle vier Phasen (`collecting`, `early_patterns`, `provisional`, `robust`).
-- [ ] `InsightMaturityBadge` ist auf allen geeigneten Insight Cards sichtbar.
-- [ ] Empty/Locked States sind phase-aware und verwenden `maturity.*` i18n-Keys.
-- [ ] Phase Milestone Card erscheint einmal pro Übergang und persistiert Dismiss-State.
-- [ ] Copy bleibt nicht-medizinisch, nicht-kausal und nicht-gamifiziert.
-- [ ] Issues #188-#192 sind dem GitHub-Meilenstein **M3.6 — Insight Maturity Phases** zugeordnet und geschlossen oder bewusst rescope't.
+- [x] `insight_maturity` ist in allen Insight-Endpoint-Responses vorhanden und dokumentiert.
+- [x] Frontend berechnet Phasen nicht eigenständig, sondern liest sie aus der API.
+- [x] `InsightJourneyBanner` rendert alle vier Phasen (`collecting`, `early_patterns`, `provisional`, `robust`).
+- [x] `InsightMaturityBadge` ist auf allen geeigneten Insight Cards sichtbar.
+- [x] Empty/Locked States sind phase-aware und verwenden `maturity.*` i18n-Keys.
+- [x] Phase Milestone Card erscheint einmal pro Übergang und persistiert Dismiss-State.
+- [x] Copy bleibt nicht-medizinisch, nicht-kausal und nicht-gamifiziert.
+- [x] Issues #188-#192 sind dem GitHub-Meilenstein **M3.6 — Insight Maturity Phases** zugeordnet und geschlossen oder bewusst rescope't.
 
 #### DSGVO-Checkpoint M3.6
 
-- [ ] 🔒 DSGVO: `insight_maturity` enthält nur aggregierte Entry-Counts und keine sensiblen Freitext-/Gesundheitsdaten.
-- [ ] 🔒 DSGVO: Milestone-Dismiss-State wird als Preference gespeichert und ist im Export/Erasure-Pfad berücksichtigt.
-- [ ] 🔒 DSGVO: Keine Phase-Milestone-Notification enthält Gesundheitsdaten im Push-/Notification-Payload.
+- [x] 🔒 DSGVO: `insight_maturity` enthält nur aggregierte Entry-Counts und keine sensiblen Freitext-/Gesundheitsdaten.
+- [x] 🔒 DSGVO: Milestone-Dismiss-State wird als Preference gespeichert und ist im Export/Erasure-Pfad berücksichtigt.
+- [x] 🔒 DSGVO: Keine Phase-Milestone-Notification enthält Gesundheitsdaten im Push-/Notification-Payload.
 
 ---
 

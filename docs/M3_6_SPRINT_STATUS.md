@@ -1,34 +1,30 @@
 # M3.6 Sprint Status - Insight Maturity Phases
 
-Last updated: 2026-05-17
+Last updated: 2026-05-27
 
 Tracking document for [`M3_6_SPRINT_PLAN.md`](M3_6_SPRINT_PLAN.md). M3.6 implements ADR-0021 and `docs/frontend/INSIGHT_MATURITY.md`.
 
+**Milestone completeness:** ✅ Release-complete. Rendered QA passed on 2026-05-27; GitHub issues #188–#192 closed; CI green on `70bb5ed`.
+
 ## Overview
 
-| Sprint | Title                                   | Status                  | PR / commit (main) | Issues     |
-| ------ | --------------------------------------- | ----------------------- | ------------------ | ---------- |
-| 0      | API Contract and Shared Types           | Implemented, CI blocked | 782e6ba            | #191       |
-| 1      | Journey Banner and Explainer            | Implemented, CI blocked | 4017c36            | #188       |
-| 2      | Insight Cards and Empty States          | Implemented, CI blocked | 12bdad4            | #189, #190 |
-| 3      | Milestone Notifications and Preferences | Implemented, CI blocked | 12bdad4            | #192       |
-| 4      | Visual QA, Docs and GitHub Closure      | Closeout documented     | docs only          | #188-#192  |
+| Sprint | Title                                   | Status  | PR / commit (main) | Issues     |
+| ------ | --------------------------------------- | ------- | ------------------ | ---------- |
+| 0      | API Contract and Shared Types           | ✅ Done | 782e6ba            | #191       |
+| 1      | Journey Banner and Explainer            | ✅ Done | 4017c36            | #188       |
+| 2      | Insight Cards and Empty States          | ✅ Done | 12bdad4            | #189, #190 |
+| 3      | Milestone Notifications and Preferences | ✅ Done | 12bdad4            | #192       |
+| 4      | Visual QA, Docs and GitHub Closure      | ✅ Done | closeout docs      | #188-#192  |
 
-## GitHub Milestone Assignment
+## GitHub Issue Closure
 
-Target GitHub milestone: **M3.6 — Insight Maturity Phases**.
-
-| Issue | Current repo state checked via public API | Target milestone               |
-| ----- | ----------------------------------------- | ------------------------------ |
-| #188  | Open, no milestone                        | M3.6 — Insight Maturity Phases |
-| #189  | Open, no milestone                        | M3.6 — Insight Maturity Phases |
-| #190  | Open, no milestone                        | M3.6 — Insight Maturity Phases |
-| #191  | Open, no milestone                        | M3.6 — Insight Maturity Phases |
-| #192  | Open, no milestone                        | M3.6 — Insight Maturity Phases |
-
-Tooling blocker: this agent environment has no `gh` executable and no `GH_TOKEN` / `GITHUB_TOKEN`. Milestone creation, issue assignment, and issue closure must therefore be completed manually or from an authenticated shell.
-
-Sprint 4 public API check on 2026-05-17 confirmed #188-#192 are still open and have no milestone.
+| Issue | Status | Closed     |
+| ----- | ------ | ---------- |
+| #188  | Closed | 2026-05-26 |
+| #189  | Closed | 2026-05-26 |
+| #190  | Closed | 2026-05-26 |
+| #191  | Closed | 2026-05-26 |
+| #192  | Closed | 2026-05-26 |
 
 ## Sprint 0 - API Contract and Shared Types
 
@@ -37,7 +33,7 @@ Sprint 4 public API check on 2026-05-17 confirmed #188-#192 are still open and h
 - [x] API docs updated in `docs/API.md`
 - [x] Frontend API type and insight store contract updated
 - [x] Phase boundary tests for 1, 6, 7, 13, 14, 29, 30+
-- [ ] CI-confirmed backend/web gates after commit
+- [x] CI-confirmed backend/web gates on `70bb5ed`
 
 ## Sprint 1 - Journey Banner and Explainer
 
@@ -47,7 +43,7 @@ Sprint 4 public API check on 2026-05-17 confirmed #188-#192 are still open and h
 - [x] Home collapsible variant
 - [x] DE/EN `maturity.*` copy
 - [x] Component tests for render, explainer open and collapsed variant
-- [ ] CI-confirmed web gates after commit
+- [x] CI-confirmed web gates on `70bb5ed`
 
 ## Sprint 2 - Insight Cards and Empty States
 
@@ -57,7 +53,7 @@ Sprint 4 public API check on 2026-05-17 confirmed #188-#192 are still open and h
 - [x] Phase-aware empty/locked-state messaging for Insights feed
 - [x] Uncertainty hints for `early_patterns` and `provisional`
 - [x] Component tests for badge rendering and phase-aware empty states
-- [ ] CI-confirmed web gates after commit
+- [x] CI-confirmed web gates on `70bb5ed`
 
 ## Sprint 3 - Milestone Notifications and Preferences
 
@@ -66,30 +62,17 @@ Sprint 4 public API check on 2026-05-17 confirmed #188-#192 are still open and h
 - [x] Explicit-dismiss behavior, not toast/auto-dismiss
 - [x] Reduced-motion handling
 - [x] Component and helper tests for milestone visibility/dismiss
-- [ ] CI-confirmed web gates after commit
+- [x] CI-confirmed web gates on `70bb5ed`
 
 ## Sprint 4 - Closeout
 
-- [x] Repo state checked against `origin/main`; local `main` is aligned with remote head `72f5a9c`
-- [x] Public GitHub Actions state checked for M3.6 Sprint 2/3 commit `12bdad4`
-- [x] GitHub Prettier auto-fix confirmed as follow-up commit `72f5a9c` with `[skip ci]`
-- [x] Public GitHub issue state checked for #188-#192
-- [x] Closeout blockers documented
-- [ ] Rendered QA for all phases
-- [ ] Mobile/desktop and light/dark verification
-- [ ] CI-confirmed web typecheck/lint gates
-- [ ] GitHub issue milestone assignment and closure / rescope
-
-### Sprint 4 Findings
-
-- `CI — Web` for `12bdad4` failed in `Typecheck (svelte-check)` and `Lint (ESLint + svelte-check)`.
-- The same run succeeded in `Format auto-fix (Prettier)` and `Build (vite)`.
-- GitHub generated `72f5a9c style: prettier auto-fix [skip ci]` after `12bdad4`, so no fresh CI gates ran on the formatted remote head.
-- Public check-run annotations only expose generic `Process completed with exit code 1` messages for the failing typecheck/lint jobs.
-- Local `ReadLints` found no IDE diagnostics in the touched web insight/page files.
-- Local `pnpm typecheck` could not provide diagnostics in this Windows/NAS environment because Corepack/pnpm failed during dependency status/install with exit code `3221226505`.
-- Browser-rendered QA was not completed in this agent environment and remains a release gate.
+- [x] Repo aligned with `origin/main` at `70bb5ed`
+- [x] GitHub `CI — Web` green on current `main`
+- [x] GitHub issues #188–#192 closed
+- [x] Rendered QA for all phases — see [`docs/quality/M3_6_VISUAL_QA.md`](quality/M3_6_VISUAL_QA.md)
+- [x] Mobile/desktop and light/dark verification passed
+- [x] Sprint status and design-doc checklists updated
 
 ## Next Up
 
-M3.6 implementation is documented as complete through Sprint 3, and Sprint 4 closeout has captured the remaining release blockers. Before M3.6 can be tagged release-complete, run web typecheck/lint in a non-UNC environment or inspect authenticated GitHub logs, complete rendered QA, and assign/close or rescope #188-#192 from an authenticated GitHub session.
+M3.7 — Color System Hardening (see [`docs/M3_7_SPRINT_PLAN.md`](M3_7_SPRINT_PLAN.md)). M4 — Mobile/PWA hardening follows after M3.7.
