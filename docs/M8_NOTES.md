@@ -13,6 +13,7 @@ algorithmic pattern detection: automatic grouping of tags that tend to
 co-occur, and surface-level anomaly detection.
 
 Deferred to M8 because:
+
 1. Requires a statistically robust data volume (≥ 90 days, ≥ 5 active tags)
 2. `pgvector` extension must be available on the target deployment
 3. Results must be explainable — no black-box outputs

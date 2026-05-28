@@ -14,6 +14,7 @@ requires the native Android app path (TWA or dedicated APK) and the
 Android Glance API.
 
 Deferred to M11 because:
+
 1. Native Android app shell must exist (Play Store path)
 2. Glance API is Kotlin/Compose-only — not available in a PWA
 3. Widget data must be fetched from the CorrelCore API with a
