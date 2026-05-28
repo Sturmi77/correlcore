@@ -54,7 +54,7 @@
     background: var(--color-success);
   }
   .bar.filled[data-score='4'] {
-    background: var(--color-ms-primary);
+    background: var(--color-primary);
   }
 
   .label {

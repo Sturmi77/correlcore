@@ -251,7 +251,7 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <span style="font-size: var(--text-sm); color: var(--color-text-faint)"
+      <span style="font-size: var(--text-sm); color: var(--color-text-muted)"
         >{$_('theme.label')}</span
       >
       <ThemeToggle testId="landing-theme-toggle" />

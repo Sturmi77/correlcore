@@ -98,9 +98,7 @@
     padding: var(--space-8) var(--space-6);
     border-radius: 16px;
     background: color-mix(in oklch, var(--color-surface) 82%, transparent);
-    box-shadow:
-      0 1px 3px rgb(0 0 0 / 0.06),
-      0 8px 24px rgb(0 0 0 / 0.06);
+    box-shadow: var(--shadow-md);
     backdrop-filter: blur(8px);
   }
 
