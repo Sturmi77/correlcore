@@ -13,6 +13,8 @@ const now = '2026-05-22T10:00:00Z';
 const entryId = '10000000-0000-4000-8000-000000000001';
 const APP_READY_TIMEOUT_MS = 60_000;
 
+test.setTimeout(APP_READY_TIMEOUT_MS);
+
 type ApiWrite = {
   method: string;
   path: string;
@@ -147,6 +149,14 @@ async function installSmokeApi(page: Page, options: { authenticated: boolean }) 
       });
     }
 
+    if (path === '/entries/stats/symptoms' && method === 'GET') {
+      return json(200, {
+        start_date: url.searchParams.get('start_date') ?? '2026-05-16',
+        end_date: url.searchParams.get('end_date') ?? '2026-05-22',
+        symptoms: [],
+      });
+    }
+
     if (path === '/entries/stats/streak' && method === 'GET') {
       return json(200, {
         current_streak: 3,
@@ -258,8 +268,7 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
   await expect(page.getByRole('heading', { name: /trends/i })).toBeVisible({
     timeout: APP_READY_TIMEOUT_MS,
   });
-  await page.getByTestId('trends-tab-activities').click();
-  await expect(page.getByRole('tabpanel', { name: /activities|aktivitaeten/i })).toBeVisible();
+  await expect(page.getByTestId('trends-compare-panel')).toBeVisible();
   await page.getByTestId('trends-tab-health').click();
   await expect(page.locator('.trends__consistency strong').first()).toHaveText('3');
 

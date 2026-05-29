@@ -38,6 +38,22 @@
     "secondary_nav": "Weitere Bereiche",
     "loading_today": "Lade Heute-Status\u2026",
     "streak_label": "Tracking-Konsistenz",
+    "brief": {
+      "label": "Daily Brief",
+      "heading": "Heute auf einen Blick",
+      "insight_fallback": "Oeffne Erkenntnisse fuer Kontext und Rohdaten.",
+      "phase_fallback": "Deine aktuelle Erkenntnisphase ist aktiv. Details bleiben in Erkenntnisse verfuegbar.",
+      "collecting_title": "Heutigen Kontext sammeln",
+      "collecting_body": "Erfasse ein paar Tage, damit der Brief konkreter wird.",
+      "mood_delta": "7-Tage-Stimmungsrichtung",
+      "delta_empty": "Noch nicht genug Eintraege",
+      "delta_up": "Plus {value} Punkt(e)",
+      "delta_down": "Minus {value} Punkt(e)",
+      "delta_flat": "Stabil",
+      "top_tag": "Auffaelliger Tag",
+      "top_symptom": "Auffaelliges Symptom",
+      "none": "Keine"
+    },
     "recent": {
       "heading": "Letzte 7 Tage",
       "today": "Heute",
@@ -312,6 +328,7 @@
     },
     "tabs": {
       "label": "Trend-Bereiche",
+      "compare": "Vergleichen",
       "mood": "Stimmung",
       "activities": "Aktivitaeten",
       "health": "Gesundheit",
@@ -365,6 +382,16 @@
       "more": "Mehr",
       "loading": "Lade Tag-Heatmap",
       "empty": "Noch keine Tag-Aktivit\u00e4t in diesem Zeitraum."
+    },
+    "compare": {
+      "heading": "Vergleichen",
+      "body": "Stimmung, Energie und Stress liegen auf derselben Zeitachse wie Tag- und Symptomzeilen.",
+      "layers": "Ebenen",
+      "tags": "Tags",
+      "symptoms": "Symptome",
+      "heatmap_heading": "Kontextzeilen",
+      "loading": "Lade Vergleichsebenen",
+      "empty_layers": "Aktiviere Tags oder Symptome, um Kontext auf derselben Zeitachse zu vergleichen."
     },
     "history": {
       "eyebrow": "Eintragsdetails",
@@ -608,7 +635,13 @@
       "auth_required": "Melde dich an, um deine Erkenntnisse zu sehen.",
       "loading": "Lade Erkenntnisse...",
       "empty": "Noch nicht genug Daten fuer aktuelle Erkenntnisse.",
-      "list_heading": "Aktuelle Erkenntnisse"
+      "list_heading": "Aktuelle Erkenntnisse",
+      "detail_views": "Detailansichten fuer Erkenntnisse",
+      "findings_view": "Erkenntnisse",
+      "matrix_view": "Matrix"
+    },
+    "stage": {
+      "aria_label": "Erkenntnisbereitschaft"
     },
     "feed": {
       "aria_label": "Erkenntnisse Feed",

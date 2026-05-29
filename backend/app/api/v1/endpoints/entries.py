@@ -38,6 +38,7 @@ from app.schemas.entry import (
 )
 from app.schemas.stats import (
     EntryStreakResponse,
+    SymptomHeatmapResponse,
     TagHeatmapResponse,
     TimeseriesRange,
     TimeseriesResponse,
@@ -56,7 +57,12 @@ from app.services.entry_service import (
     list_entries,
     update_entry,
 )
-from app.services.stats_service import get_entry_streak, get_tag_heatmap, get_timeseries
+from app.services.stats_service import (
+    get_entry_streak,
+    get_symptom_heatmap,
+    get_tag_heatmap,
+    get_timeseries,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -175,6 +181,27 @@ async def get_tag_heatmap_endpoint(
         start_date=start_date,
         end_date=end_date,
         category=parsed_category,
+    )
+
+
+@router.get(
+    "/stats/symptoms",
+    response_model=SymptomHeatmapResponse,
+    summary="Return neutral symptom occurrence heatmap data",
+)
+@limiter.limit("120/minute")
+async def get_symptom_heatmap_endpoint(
+    request: Request,
+    start_date: date_type | None = Query(default=None, alias="start_date"),
+    end_date: date_type | None = Query(default=None, alias="end_date"),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> SymptomHeatmapResponse:
+    return await get_symptom_heatmap(
+        db,
+        user_id=user.id,
+        start_date=start_date,
+        end_date=end_date,
     )
 
 

@@ -26,6 +26,11 @@ vi.mock('$lib/api/stats', () => ({
     end_date: '2026-05-16',
     tags: [],
   })),
+  fetchSymptomHeatmap: vi.fn(async () => ({
+    start_date: '2026-05-01',
+    end_date: '2026-05-16',
+    symptoms: [],
+  })),
   fetchEntryStreak: vi.fn(async () => ({
     current_streak: 2,
     longest_streak: 5,
@@ -61,8 +66,7 @@ describe('/trends page', () => {
   it('renders canonical tabs and switches to Health', async () => {
     render(Page);
 
-    expect(await screen.findByTestId('trends-tab-mood')).toBeTruthy();
-    expect(screen.getByTestId('trends-tab-activities')).toBeTruthy();
+    expect(await screen.findByTestId('trends-tab-compare')).toBeTruthy();
     const health = screen.getByTestId('trends-tab-health');
     expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();
 

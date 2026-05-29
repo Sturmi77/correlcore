@@ -37,6 +37,26 @@ export interface TagHeatmapResponse {
   tags: TagHeatmapTag[];
 }
 
+export interface SymptomHeatmapDay {
+  date: string;
+  count: number;
+  max_intensity: number;
+}
+
+export interface SymptomHeatmapSymptom {
+  symptom_id: string;
+  slug: string;
+  name: string;
+  icon: string | null;
+  days: SymptomHeatmapDay[];
+}
+
+export interface SymptomHeatmapResponse {
+  start_date: string;
+  end_date: string;
+  symptoms: SymptomHeatmapSymptom[];
+}
+
 export interface EntryStreakResponse {
   current_streak: number;
   longest_streak: number;
@@ -62,6 +82,21 @@ export async function fetchTagHeatmap(
   if (query.category) params.set('category', query.category);
   const qs = params.toString();
   return api.get<TagHeatmapResponse>(qs ? `/entries/stats/tags?${qs}` : '/entries/stats/tags');
+}
+
+export async function fetchSymptomHeatmap(
+  query: {
+    start_date?: string;
+    end_date?: string;
+  } = {}
+): Promise<SymptomHeatmapResponse> {
+  const params = new URLSearchParams();
+  if (query.start_date) params.set('start_date', query.start_date);
+  if (query.end_date) params.set('end_date', query.end_date);
+  const qs = params.toString();
+  return api.get<SymptomHeatmapResponse>(
+    qs ? `/entries/stats/symptoms?${qs}` : '/entries/stats/symptoms'
+  );
 }
 
 export async function fetchEntryStreak(asOf?: string): Promise<EntryStreakResponse> {

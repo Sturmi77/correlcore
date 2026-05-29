@@ -12,7 +12,6 @@
    * loading     boolean            Show skeleton cards
    * error       string | null      Inline error banner
    * entryCount  number             Total entries in last 90 days (for header)
-   * dayEntryDates string[]          Distinct day-entry dates for readiness
    *
    * Events
    * ------
@@ -26,14 +25,12 @@
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
   import InsightCard from './InsightCard.svelte';
   import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
-  import InsightQualityMeter from './InsightQualityMeter.svelte';
 
   export let insights: InsightResponse[] = [];
   export let maturity: InsightMaturity | null = null;
   export let loading = false;
   export let error: string | null = null;
   export let entryCount = 0;
-  export let dayEntryDates: readonly string[] = [];
   export let inactiveTagIds: readonly string[] = [];
 
   const dispatch = createEventDispatcher<{ retry: void }>();
@@ -67,8 +64,6 @@
       return keywords.some((k) => i.metric?.toLowerCase().includes(k));
     })
     .sort((a, b) => score(b) - score(a));
-  $: strongestInsight =
-    insights.length > 0 ? [...insights].sort((a, b) => score(b) - score(a))[0] : null;
   $: isPhaseEmpty = Boolean(maturity && insights.length === 0);
   $: emptyTitleKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.title`
@@ -122,13 +117,6 @@
       </svg>
     </button>
   </header>
-
-  <InsightQualityMeter
-    {dayEntryDates}
-    insightTier={strongestInsight?.tier ?? 'none'}
-    confidenceScore={strongestInsight?.confidence ?? 0}
-    {loading}
-  />
 
   <!-- Filter tabs -->
   <TabBar

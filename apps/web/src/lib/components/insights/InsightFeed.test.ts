@@ -166,20 +166,14 @@ describe('InsightFeed', () => {
     expect(screen.getByTestId('insight-feed-subtitle')).toBeTruthy();
   });
 
-  it('renders the insight quality meter with entry readiness data', () => {
+  it('keeps readiness out of the feed card stack', () => {
     render(InsightFeed, {
       props: {
         insights: [makeInsight({ confidence: 0.7, effect_size: 0.5, tier: 'developing' })],
-        dayEntryDates: Array.from(
-          { length: 30 },
-          (_, idx) => `2026-05-${String(idx + 1).padStart(2, '0')}`
-        ),
       },
     });
 
-    expect(screen.getByTestId('insight-quality-meter').getAttribute('data-stage')).toBe(
-      'ready_low'
-    );
+    expect(screen.queryByTestId('insight-quality-meter')).toBeNull();
   });
 
   it('renders disclaimer button', () => {

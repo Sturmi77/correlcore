@@ -8,8 +8,13 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.models.tag import TagCategory
-from app.services.stats_service import get_entry_streak, get_tag_heatmap, get_timeseries
-from tests.conftest import make_entry, make_tag, make_user
+from app.services.stats_service import (
+    get_entry_streak,
+    get_symptom_heatmap,
+    get_tag_heatmap,
+    get_timeseries,
+)
+from tests.conftest import make_entry, make_symptom, make_tag, make_user
 
 
 def _scalar_result(values: list[object]) -> MagicMock:
@@ -147,3 +152,53 @@ async def test_tag_heatmap_filters_hidden_tags() -> None:
 
     stmt = db.execute.await_args.args[0]
     assert "tags.is_hidden IS false" in str(stmt.whereclause)
+
+
+@pytest.mark.asyncio
+async def test_symptom_heatmap_groups_counts_and_max_intensity() -> None:
+    user = make_user()
+    headache = make_symptom(is_default=True, slug="headache", name="Headache")
+    fatigue = make_symptom(user, slug="fatigue-custom", name="Fatigue")
+    db = MagicMock()
+    db.execute = AsyncMock(
+        return_value=_row_result(
+            [
+                (headache, date(2026, 5, 8), 1),
+                (headache, date(2026, 5, 8), 3),
+                (fatigue, date(2026, 5, 9), 2),
+            ]
+        )
+    )
+
+    out = await get_symptom_heatmap(
+        db,
+        user_id=user.id,
+        start_date=date(2026, 5, 1),
+        end_date=date(2026, 5, 9),
+    )
+
+    headache_payload = next(symptom for symptom in out.symptoms if symptom.slug == "headache")
+    assert headache_payload.name == "Headache"
+    assert headache_payload.days[0].date == date(2026, 5, 8)
+    assert headache_payload.days[0].count == 2
+    assert headache_payload.days[0].max_intensity == 3
+
+
+@pytest.mark.asyncio
+async def test_symptom_heatmap_scopes_visible_symptoms_to_user() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_row_result([]))
+
+    await get_symptom_heatmap(
+        db,
+        user_id=user.id,
+        start_date=date(2026, 5, 1),
+        end_date=date(2026, 5, 9),
+    )
+
+    stmt = db.execute.await_args.args[0]
+    whereclause = str(stmt.whereclause)
+    assert "entry_symptoms.user_id" in whereclause
+    assert "entries.user_id" in whereclause
+    assert "symptoms.is_default IS true" in whereclause

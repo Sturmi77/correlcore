@@ -47,6 +47,26 @@ class TagHeatmapResponse(BaseModel):
     tags: list[TagHeatmapTag] = Field(default_factory=list)
 
 
+class SymptomHeatmapDay(BaseModel):
+    date: date_type
+    count: int
+    max_intensity: int
+
+
+class SymptomHeatmapSymptom(BaseModel):
+    symptom_id: uuid.UUID
+    slug: str
+    name: str
+    icon: str | None = None
+    days: list[SymptomHeatmapDay] = Field(default_factory=list)
+
+
+class SymptomHeatmapResponse(BaseModel):
+    start_date: date_type
+    end_date: date_type
+    symptoms: list[SymptomHeatmapSymptom] = Field(default_factory=list)
+
+
 class EntryStreakResponse(BaseModel):
     current_streak: int
     longest_streak: int
