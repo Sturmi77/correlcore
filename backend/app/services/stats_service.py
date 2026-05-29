@@ -198,7 +198,9 @@ async def get_symptom_heatmap(
     for symptom, entry_date, intensity in result.all():
         symptom_meta[symptom.id] = symptom
         counts[symptom.id][entry_date] += 1
-        max_intensity[symptom.id][entry_date] = max(max_intensity[symptom.id][entry_date], intensity)
+        max_intensity[symptom.id][entry_date] = max(
+            max_intensity[symptom.id][entry_date], intensity
+        )
 
     symptoms: list[SymptomHeatmapSymptom] = []
     for symptom_id, symptom in sorted(symptom_meta.items(), key=lambda item: item[1].slug):
