@@ -118,8 +118,8 @@ existing entry feature code.
 | Onboarding toggle (see ADR-0034)                      | M4                  |
 | Calendar overlay with cycle markers                   | M5                  |
 | Rule-based cycle pattern insights                     | M5                  |
-| Cycle × lifestyle correlations                        | M8 (Insights v2)    |
-| External health imports (cycle data)                  | M7 (Health Connect) |
+| Cycle × lifestyle correlations                        | M7 (Insights v2)    |
+| External health imports (cycle data)                  | M8 (Health Connect) |
 
 ## Consequences
 

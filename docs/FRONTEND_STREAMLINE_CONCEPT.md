@@ -400,7 +400,7 @@ Line chart plus heatmap in one panel is the right analytical model but can be
 too wide. Guardrail: one shared horizontal scroller, sticky row labels, and a
 compact mobile row selector. Do not stack separate scroll areas.
 
-### Risk: Symptom Heatmap Pulls M8 Too Early
+### Risk: Symptom Heatmap Pulls M7 Too Early
 
 Symptom visualization was previously future-scoped. Guardrail: implement only
 daily occurrence/intensity rows. No symptom analytics, no co-occurrence claims,

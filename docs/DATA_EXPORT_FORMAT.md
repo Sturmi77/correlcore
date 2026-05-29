@@ -47,6 +47,8 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
     {
       "date": "2026-05-09",
       "slot": "day",
+      "source": "direct",
+      "cycle_day": 12,
       "mood_score": 4,
       "energy": 3,
       "stress": 2,
@@ -83,16 +85,20 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
 }
 ```
 
-Internal database IDs and `user_id` values are intentionally omitted. Future
-domains that do not exist yet are represented as empty arrays so importers can
-depend on a stable top-level shape.
+Internal database IDs and `user_id` values are intentionally omitted. Tags in
+the export may include `habit_type` (`none`, `build`, `reduce`) and
+`target_frequency` (1..7) when configured. The top-level `habits` array is
+reserved for a future dedicated habit export section and is currently empty.
+The `photos` array stays empty until M13 photo/media support ships. Other
+future domains that do not exist yet are represented as empty arrays so
+importers can depend on a stable top-level shape.
 
 ## CSV Shape
 
 CSV is a flat entry table for spreadsheet and doctor-visit workflows. It
 contains:
 
-`date, slot, mood_score, energy, stress, mood_scale, energy_scale, stress_scale, work_context, note, tags, symptoms, created_at, updated_at`
+`date, slot, source, cycle_day, mood_score, energy, stress, mood_scale, energy_scale, stress_scale, work_context, note, tags, symptoms, created_at, updated_at`
 
 Tags are comma-separated names. Symptoms are comma-separated `name:intensity`
 pairs. The `*_scale` columns repeat the 1..5 endpoint meaning per row so the

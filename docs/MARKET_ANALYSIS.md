@@ -196,7 +196,7 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 | -------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **Selfhost/Privacy-first**             | Keine der Top-Apps bietet offizielles Selfhosting                                | Kern-USP: `docker compose up`, Daten bleiben lokal                  |
 | **Korrelationstiefe für Lifestyle**    | Bearable führend bei Health, aber Cloud-only + chronisch-krank-Fokus             | Lifestyle-Zielgruppe (Remote-Worker 30–50) mit echter Statistik     |
-| **Wearable via Health Connect**        | Keine App hat saubere Garmin-/Wearables-Pipeline                                 | Health Connect als First-Class-Feature ab M7                        |
+| **Wearable via Health Connect**        | Keine App hat saubere Garmin-/Wearables-Pipeline                                 | Health Connect als First-Class-Feature ab M8                        |
 | **Work-Context (Homeoffice)**          | Nirgends als First-Class-Feature                                                 | `work_context`-Feld als dediziertes Pflichtfeld                     |
 | **DACH-Datenschutz-Positionierung**    | Alle großen Anbieter US/UK-basiert                                               | DSGVO-native, österreichischer Developer, DE/AT/CH-First            |
 | **Ehrlicher Selfhost statt Theater**   | HabitHeat verspricht „local-first", liefert aber stiller Backend-Stack ohne Doku | Transparente Compose-Files, klare Datenflüsse, AGPL                 |

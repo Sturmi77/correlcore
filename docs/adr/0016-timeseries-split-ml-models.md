@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-05-11  
-**Milestone:** M8 (Insights v2)  
+**Milestone:** M7 (Insights v2)  
 **Decider:** Solo developer  
 **Related Issues:** #144, #145, #146, #149, #150
 
@@ -10,7 +10,7 @@
 
 ## Context
 
-M8 introduces machine learning models to the analytics pipeline: Lasso regression, lag analysis, weekday confounder control, and changepoint detection. These models require validation to ensure they generalise to unseen data and produce reliable insight statements.
+M7 introduces machine learning models to the analytics pipeline: Lasso regression, lag analysis, weekday confounder control, and changepoint detection. These models require validation to ensure they generalise to unseen data and produce reliable insight statements.
 
 The standard cross-validation technique in scikit-learn is `KFold`, which randomly shuffles observations into training and test folds. For **time series data**, this is statistically invalid:
 
@@ -94,8 +94,8 @@ entries = (
 Also called _expanding window_ or _anchored walk-forward_. Train on all data up to point T, test on point T+1, advance by one observation. Produces n-1 folds for n observations, maximising statistical power.
 
 **Pros:** Most rigorous temporal validation.  
-**Cons:** Very slow for large datasets; high computational cost in a nightly batch worker; overkill for datasets of ~90–500 entries. Can be reconsidered post-M8 if model quality becomes a concern.  
-**Deferred to post-M8 review.**
+**Cons:** Very slow for large datasets; high computational cost in a nightly batch worker; overkill for datasets of ~90–500 entries. Can be reconsidered post-M7 if model quality becomes a concern.  
+**Deferred to post-M7 review.**
 
 ### Option D: Single train/test split with holdout (considered, deferred)
 
@@ -116,7 +116,7 @@ Reserve the last 20% of entries as a holdout test set, train on the first 80%.
 
 ### Negative
 
-- `TimeSeriesSplit` requires a minimum number of entries to produce `n_splits=5` folds with meaningful size. **Minimum n=90 entries** enforced in the M8 worker before any cross-validated model is run.
+- `TimeSeriesSplit` requires a minimum number of entries to produce `n_splits=5` folds with meaningful size. **Minimum n=90 entries** enforced in the M7 worker before any cross-validated model is run.
 - Slightly more verbose setup than `LassoCV()` with default `cv=5`.
 
 ### Neutral
@@ -131,7 +131,7 @@ Reserve the last 20% of entries as a holdout test set, train on the first 80%.
 - [ ] `TimeSeriesSplit` used in `LassoCV` (Issue #144)
 - [ ] `df.dropna()` called after lag construction, never `df.fillna(0)` (Issue #145)
 - [ ] Analytics worker data loading uses `ORDER BY entry_date ASC` and `WHERE entry_date < CURRENT_DATE` (Issue #15 comment)
-- [ ] Minimum entry guards: n≥30 for M3, n≥90 for M8 Lasso
+- [ ] Minimum entry guards: n≥30 for M3, n≥90 for M7 Lasso
 - [ ] Unit tests assert that no test fold index precedes the maximum training fold index in the same split
 
 ---
@@ -142,5 +142,5 @@ Reserve the last 20% of entries as a holdout test set, train on the first 80%.
 - [Hyndman & Athanasopoulos, Forecasting: Principles and Practice §5.10 — Cross-validation](https://otexts.com/fpp3/tscv.html)
 - DESIGN_DOCUMENT.md §2.1 (7-day entry backdating)
 - DESIGN_DOCUMENT.md §2.9 (Trend & Pattern Recognition, statistical methods)
-- DESIGN_DOCUMENT.md §6 M8 (Insights v2 acceptance criteria)
+- DESIGN_DOCUMENT.md §6 M7 (Insights v2 acceptance criteria)
 - ADR-0012 (M2/M5 streak semantics — prior example of temporal boundary documentation)

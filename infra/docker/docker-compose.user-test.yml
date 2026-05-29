@@ -11,7 +11,7 @@
 #   --profile worker       → Worker für M2-Cleanup-Jobs
 #
 # Nicht enthalten (M1-Scope):
-#   MinIO (Foto-Upload erst M3+) — wer Foto-Tests braucht, nimmt die
+#   MinIO (Foto-Upload erst M13) — wer Foto-Tests braucht, nimmt die
 #   Production-Compose docker-compose.yml.
 #
 # Start:

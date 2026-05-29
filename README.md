@@ -15,12 +15,12 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 
 **CorrelCore** fills this gap:
 
-| Promise                                | Description                                                                  |
-| -------------------------------------- | ---------------------------------------------------------------------------- |
-| **Correlations, not raw data**         | The app explains why days were good or bad                                   |
-| **Selfhosted now, offline-ready next** | Your health data stays on your instance; full offline sync is planned for M4 |
-| **60 seconds per day**                 | No more, or it simply won't get done                                         |
-| **No gamification, ever**              | You track your habits — not how often you open the app                       |
+| Promise                                | Description                                                                                                |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Correlations, not raw data**         | The app explains why days were good or bad                                                                 |
+| **Selfhosted now, offline-ready next** | Your health data stays on your instance; PWA shell caching is live; full Dexie offline sync is a follow-up |
+| **60 seconds per day**                 | No more, or it simply won't get done                                                                       |
+| **No gamification, ever**              | You track your habits — not how often you open the app                                                     |
 
 ---
 
@@ -34,48 +34,50 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M3.5** — Frontend web and mobile optimisation: app shell, entry bottom sheet, Home recomposition, Trends tabs, Settings/i18n, tag lifecycle. Release-complete after rendered QA on 2026-05-27. See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).
 - [x] **M3.6** — Insight maturity phases: ADR-0021 API contract (`insight_maturity`), Journey Banner, Maturity Badge, phase-aware empty states, and phase milestone cards. Release-complete after rendered QA on 2026-05-27. See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).
 - [x] **M3.7** — Color system hardening: complete semantic tokens, legacy primary alias cleanup, ADR-0027 contrast gate, light-mode QA documentation, and Web CI integration. Release-complete locally after rendered QA on 2026-05-28. See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).
-- [ ] **M4** — Mobile/PWA hardening: installable PWA, service-worker cache policy, UnifiedPush/Web Push, app lock, offline sync (Dexie.js), sync-conflict log
-- [ ] **M5** — Habits & goals: adherence rate, tracking consistency, habit dashboard
-- [ ] **M6** — Photo & media: local upload to MinIO, EXIF strip, Immich integration (v2)
-- [ ] **M7** — Health Connect: Android wearables import, sleep correlation
-- [ ] **M8** — Insights v2: Lasso regression, lag analysis, optional local LLM (Ollama)
+- [x] **M4 (partial)** — Quick wins + PWA hardening: entry slots, cycle day, guided onboarding, Dev Mode mocks, install banner, service worker (app shell), `/offline` fallback. Follow-ups: Dexie offline sync, sync-conflict log, Web Push, app lock. See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/features/PWA.md`](docs/features/PWA.md).
+- [x] **M5 (Habits Core)** — Goal-based habit adherence (`build`/`reduce`), `/api/v1/habits`, Settings tag configuration, Trends Habits tab. Co-occurrence deferred to M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md).
+- [ ] **M7** — Insights v2: Lasso regression, lag analysis, symptom analytics, tag clustering, optional local LLM (Ollama). See [`docs/M7_NOTES.md`](docs/M7_NOTES.md) and [`docs/M7_M8_MILESTONE_SWAP.md`](docs/M7_M8_MILESTONE_SWAP.md).
+- [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
 - [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation
 - [ ] **M10** — Public selfhost release v1.0
 - [ ] **M11** — Android Play Store (Capacitor)
 - [ ] **M12** — SaaS mode (managed hosting)
+- [ ] **M13** — Photo & media: local upload to MinIO, EXIF strip, thumbnail gallery; optional Immich reference integration as follow-up
 
 Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ### Current Milestone Status
 
-| Milestone | Status   | Notes                                                                                                                                                                                                                    |
-| --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **M3**    | Complete | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                     |
-| **M3.1**  | Complete | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md). |
-| **M3.5**  | Complete | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).     |
-| **M3.6**  | Complete | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).          |
-| **M3.7**  | Complete | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                               |
+| Milestone | Status   | Notes                                                                                                                                                                                                                                       |
+| --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M3**    | Complete | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                                        |
+| **M3.1**  | Complete | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md).                    |
+| **M3.5**  | Complete | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).                        |
+| **M3.6**  | Complete | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).                             |
+| **M3.7**  | Complete | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                                                  |
+| **M4**    | Partial  | Quick wins + PWA hardening merged on `main`; Dexie sync, conflict log, push, and app lock remain follow-ups. See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md). |
+| **M5**    | Partial  | Habits Core merged on `main`; rendered QA and issue closeout still pending. Co-occurrence is M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md).                                                                      |
 
 ---
 
 ## Tech Stack
 
-| Layer              | Technology                                                        | Rationale                                                                                                   |
-| ------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Backend API**    | FastAPI (Python 3.12)                                             | Async, OpenAPI-native, fast iteration                                                                       |
-| **Web Frontend**   | SvelteKit + Skeleton UI                                           | Performance, bundle < 150 KB gz                                                                             |
-| **Mobile**         | Responsive web now; PWA hardening in M4; Capacitor Android in M11 | Maximum code sharing, native Health Connect access later ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
-| **Charts**         | Custom SVG components                                             | No external framework, JS budget maintained, token-compliant                                                |
-| **Database**       | PostgreSQL 16 + pgvector                                          | Row-level security for multi-user, vector for insights                                                      |
-| **Cache / Queue**  | Redis 7                                                           | Sessions, rate limiting, sync queue                                                                         |
-| **Object Storage** | MinIO                                                             | Selfhost-compatible S3 foundation; photo upload and EXIF strip are M6 scope                                 |
-| **Reverse Proxy**  | Traefik v3                                                        | Automatic TLS, Docker label routing                                                                         |
-| **Auth**           | Native JWT phase 1, Authentik from M12                            | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                       |
-| **Offline Sync**   | Planned: Dexie.js (IndexedDB)                                     | Delta sync, last-write-wins and conflict log in M4                                                          |
-| **Analytics**      | pandas + scikit-learn                                             | Correlation, Lasso, lag analysis                                                                            |
-| **Migrations**     | Alembic                                                           | Schema versioning                                                                                           |
-| **Monitoring**     | GlitchTip + Uptime Kuma                                           | Selfhosted error tracking                                                                                   |
-| **Notifications**  | UnifiedPush / FCM                                                 | Privacy-first push                                                                                          |
+| Layer              | Technology                                                                              | Rationale                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Backend API**    | FastAPI (Python 3.12)                                                                   | Async, OpenAPI-native, fast iteration                                                                       |
+| **Web Frontend**   | SvelteKit + Skeleton UI                                                                 | Performance, bundle < 150 KB gz                                                                             |
+| **Mobile**         | Responsive web + partial PWA (install banner, SW shell cache); Capacitor Android in M11 | Maximum code sharing, native Health Connect access later ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md)) |
+| **Charts**         | Custom SVG components                                                                   | No external framework, JS budget maintained, token-compliant                                                |
+| **Database**       | PostgreSQL 16 + pgvector                                                                | Row-level security for multi-user, vector for insights                                                      |
+| **Cache / Queue**  | Redis 7                                                                                 | Sessions, rate limiting, sync queue                                                                         |
+| **Object Storage** | MinIO                                                                                   | Selfhost-compatible S3 foundation; photo upload and EXIF strip are M13 scope                                |
+| **Reverse Proxy**  | Traefik v3                                                                              | Automatic TLS, Docker label routing                                                                         |
+| **Auth**           | Native JWT phase 1, Authentik from M12                                                  | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                       |
+| **Offline Sync**   | Planned: Dexie.js (IndexedDB)                                                           | PWA shell cache live; delta sync and conflict log are follow-ups after M4 quick wins                        |
+| **Analytics**      | pandas + scikit-learn                                                                   | M7: Lasso, lag, symptom analytics; correlation engine live since M3                                         |
+| **Migrations**     | Alembic                                                                                 | Schema versioning                                                                                           |
+| **Monitoring**     | GlitchTip + Uptime Kuma                                                                 | Selfhosted error tracking                                                                                   |
+| **Notifications**  | UnifiedPush / FCM                                                                       | Privacy-first push                                                                                          |
 
 ---
 
@@ -107,8 +109,8 @@ After startup, CorrelCore is available at `https://your-domain.tld`
 ```
 correlcore/
 ├── apps/
-│   ├── web/          # SvelteKit web app; PWA hardening from M4
-│   └── android/      # Capacitor Android app (from M10)
+│   ├── web/          # SvelteKit web app; partial PWA (service worker, install banner)
+│   └── android/      # Capacitor Android app (from M11)
 ├── backend/
 │   ├── app/          # FastAPI application
 │   ├── migrations/   # Alembic migrations
@@ -152,12 +154,21 @@ Task: <your specific task here>
 | [API.md](docs/API.md)                                                 | OpenAPI guidelines, endpoints, auth flow                          |
 | [API_CONTRACTS.md](docs/API_CONTRACTS.md)                             | API contract strategy, frontend constants, OpenAPI client plan    |
 | [FRONTEND.md](docs/FRONTEND.md)                                       | Design principles, atomic design, i18n, performance budget        |
-| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                 | Local setup, quality gates, test database and secret scanning     |
+| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                 | Local setup, quality gates, NAS/pnpm notes, test database         |
 | [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                         | Competitive and market analysis, monetisation, marketing          |
 | [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan      |
 | [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)           | Rename and deployment migration notes from MoodSync to CorrelCore |
-| [ADR Index](docs/adr/)                                                | Architecture decision records                                     |
-| [Quality Gates](docs/quality/)                                        | M1/M2 quality gate reports                                        |
+| [M4 Sprint Status](docs/M4_SPRINT_STATUS.md)                          | M4 quick wins + PWA hardening tracking                            |
+| [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                          | M5 Habits Core tracking                                           |
+| [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering            |
+| [M8 Notes](docs/M8_NOTES.md)                                          | Sleep, Health Connect, cycle deep integration                     |
+| [M7/M8 swap](docs/M7_M8_MILESTONE_SWAP.md)                            | Milestone reorder rationale and consequence index (2026-05-29)    |
+| [M13 Notes](docs/M13_NOTES.md)                                        | Photo & media milestone scope (deferred post-M12)                 |
+| [PWA](docs/features/PWA.md)                                           | Install banner, service worker, offline fallback                  |
+| [Cycle tracking](docs/features/cycle-tracking.md)                     | Neutral `cycle_day` domain scope                                  |
+| [COLOR_SCHEME_CONCEPT](docs/frontend/COLOR_SCHEME_CONCEPT.md)         | Token framework and contrast rationale (M3.7)                     |
+| [ADR Index](docs/adr/)                                                | Architecture decision records (0001–0034)                         |
+| [Quality Gates](docs/quality/)                                        | M1–M4 visual QA and quality gate reports                          |
 
 ---
 

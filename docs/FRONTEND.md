@@ -155,12 +155,12 @@ Colour must **never** be the only information carrier — always pair with label
 
 Not all metrics share the same direction — a higher raw value does not always mean "better". The following table is the canonical definition for chart rendering, analytics worker correlation sign, and axis labelling:
 
-| Metric        | DB field        | Scale | Direction       | `invert` | Notes                                      |
-| ------------- | --------------- | ----- | --------------- | -------- | ------------------------------------------ |
-| Mood          | `mood_score`    | 1–5   | Higher = better | `false`  |                                            |
-| Energy        | `energy`        | 1–5   | Higher = better | `false`  |                                            |
-| Stress        | `stress`        | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw`           |
-| Sleep Quality | `sleep_quality` | 1–5   | Higher = better | `false`  | Issue #172 — M7 Health Connect will re-use |
+| Metric        | DB field        | Scale | Direction       | `invert` | Notes                                |
+| ------------- | --------------- | ----- | --------------- | -------- | ------------------------------------ |
+| Mood          | `mood_score`    | 1–5   | Higher = better | `false`  |                                      |
+| Energy        | `energy`        | 1–5   | Higher = better | `false`  |                                      |
+| Stress        | `stress`        | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw`     |
+| Sleep Quality | `sleep_quality` | 1–5   | Higher = better | `false`  | Issue #172 — M8 Sleep/Health Connect |
 
 > **Implementation:** The `invert` flag is defined centrally in `src/lib/config/metrics.ts` and consumed by `MetricTimeseries.svelte`, `HomeSparkline.svelte`, `DualAxisChart.svelte`, and `analytics_worker.py`. Raw DB values are **never** modified — inversion is view-layer only.
 
@@ -274,7 +274,7 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 
 - Mood slider is the only required field
 - Tag suggestions sorted by historical usage frequency
-- "+ More" opens time-slot chips, cycle day, full tag sheet, symptoms and notes; photo follows in the media milestone
+- "+ More" opens time-slot chips, cycle day, full tag sheet, symptoms and notes; photo upload follows in M13
 - Day-over-day delta shown as neutral info card after save (Issue #154)
 - Time slots use the existing API field `slot`: `day` means whole-day; `morning`, `noon`, and `evening` are optional chips.
 - `cycle_day` is optional, accepts `1..35`, and is framed as neutral personal context only.
@@ -391,7 +391,7 @@ ANALYSIS
 → Explore insights
 
 PRIVACY & DATA
-→ Export all current data  (ZIP: JSON/CSV; photo section remains empty until media support lands)
+→ Export all current data  (ZIP: JSON/CSV; photo section remains empty until M13)
 → Delete account
 
 APPEARANCE
@@ -554,7 +554,11 @@ apps/web/src/
     ├── settings/
     │   ├── +page.svelte     # Settings
     │   └── tags/            # Tag management sub-page
-    ├── onboarding/          # Onboarding flow (Issue #156)
+    ├── onboarding/          # Guided flow (+page), profile questionnaire, retro batch
+    │   ├── +page.svelte     # M4 3-step guided onboarding
+    │   ├── profile/         # Optional onboarding profile (M3)
+    │   └── retro/           # Retrospective entry batch (M3 cold-start)
+    ├── offline/             # PWA navigation fallback (M4)
     ├── dev/                 # Developer view (ADR-0015, ADR-0019)
     └── status/              # Health status page
 ```

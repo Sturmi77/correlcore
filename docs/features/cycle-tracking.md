@@ -67,8 +67,8 @@ Article 9. Key rules (full spec in ADR-0033):
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **M4** _(in progress)_    | `cycle_day` + `cycle_bleeding_level` fields; migration; onboarding toggle (ADR-0034); `user_preferences.cycle_tracking_enabled`; Settings toggle; Health tab nudge; `sanitise_entry_for_log()`; `DELETE /api/v1/entries/cycle-data` |
 | **M5** _(Habits)_         | Cycle symptom taxonomy extension (ADR-0008); calendar overlay with cycle markers; basic cycle phase visualisation; first pattern-based insight rules (≥3 cycles)                                                                    |
-| **M7** _(Health Connect)_ | External cycle data import (Android Health Connect); cross-source cycle day reconciliation                                                                                                                                          |
-| **M8** _(Insights v2)_    | Cycle × lifestyle correlation engine; forecast window (±2 days); advanced cycle-phase insight cards; retrospective cycle analysis                                                                                                   |
+| **M7** _(Insights v2)_    | Cycle × lifestyle correlation engine; forecast window (±2 days); advanced cycle-phase insight cards; retrospective cycle analysis                                                                                                   |
+| **M8** _(Health Connect)_ | External cycle data import (Android Health Connect); cross-source cycle day reconciliation                                                                                                                                          |
 
 ## Insight Examples
 

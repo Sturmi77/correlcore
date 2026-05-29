@@ -364,13 +364,13 @@ Vor Implementation muss eine der beiden Varianten gewaehlt werden:
 - Export JSON/CSV um Sleep Quality erweitern.
 - Entry UI bekommt optionalen 1-5 Slider.
 
-#### Variante B - `#172` wird korrigiert und auf M7 verschoben
+#### Variante B - `#172` wird korrigiert und auf M8 verschoben
 
 - `#172` wird kommentiert: Annahme "DB-Feld existiert" ist falsch.
 - M3.5 baut nur die UI-Erweiterbarkeit in `ScaleSlider`/Metric Config.
-- Sleep Quality wird in M7 mit Health Connect Datenmodell eingefuehrt.
+- Sleep Quality wird in M8 mit Health Connect Datenmodell eingefuehrt.
 
-Empfehlung: Variante A nur umsetzen, wenn Sleep Quality vor M7 wirklich fuer
+Empfehlung: Variante A nur umsetzen, wenn Sleep Quality vor M8 wirklich fuer
 M3.5 notwendig ist. Sonst Variante B, um Scope und Datenmodell klein zu halten.
 
 ### Bottom Sheet Aufgaben
@@ -838,7 +838,7 @@ Rendered QA:
 
 | Thema                                | Blockiert      | Klaerung                                          |
 | ------------------------------------ | -------------- | ------------------------------------------------- |
-| `sleep_quality` fehlt im Entry Model | Sprint 3       | Migration in M3.5 oder Issue auf M7 korrigieren   |
+| `sleep_quality` fehlt im Entry Model | Sprint 3       | Migration in M3.5 oder Issue auf M8 korrigieren   |
 | `svelte-i18n` vs `paraglide-js`      | Sprint 7       | Kein paralleler Store; Entscheidung dokumentieren |
 | Primary Farbe teal vs violett        | Sprint 0       | ADR oder FRONTEND.md Korrektur                    |
 | Stress-Inversion                     | Sprint 2, 6, 8 | zentrale Metric Config plus Backend-Semantik      |

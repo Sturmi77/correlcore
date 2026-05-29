@@ -59,5 +59,5 @@ a new backend aggregation endpoint. It should not block M5 Habits Core.
 
 ## Deferred
 
-Clustering / pattern recognition is deferred to M8. M5.1 delivers only the raw
+Clustering / pattern recognition is deferred to M7. M5.1 delivers only the raw
 co-occurrence view without algorithmic interpretation.

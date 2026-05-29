@@ -5,7 +5,7 @@
 **Created:** 2026-05-19
 **Updated:** 2026-05-19
 **Owner:** @Sturmi77
-**Milestone Coverage:** Sprint-free (foundational bugfix) → M7 (sleep×symptom) → M8 (main implementation) → M9 (beta hardening)
+**Milestone Coverage:** Sprint-free (foundational bugfix) → M7 (main implementation) → M8 (sleep×symptom) → M9 (beta hardening)
 
 ---
 
@@ -38,7 +38,7 @@ Three concrete problems result from this gap:
    receives no insight, even though the data is sufficient for analysis.
 2. **Symptom-tag co-occurrence is invisible.** Whether headaches cluster with stress-tags or sleep-tags
    is currently unknowable through the UI.
-3. **Planned M8 multivariate models would permanently exclude symptoms** unless this is addressed at
+3. **Planned M7 multivariate models would permanently exclude symptoms** unless this is addressed at
    architecture level — Lasso (#144), lag analysis (#145), and hierarchical clustering (#150) all
    currently scope to tags only.
 
@@ -160,12 +160,12 @@ is fully explained by a shared weekday pattern (e.g. both peaking on Sundays) is
 
 ---
 
-### Level 3 — Multivariate (Symptoms in M8 Models)
+### Level 3 — Multivariate (Symptoms in M7 Models)
 
 **Question answered:** "Considering all signals together, which symptoms contribute meaningfully to
 mood variation, and on what timescale?"
 
-This level **extends three existing M8 issues** rather than introducing new pipelines:
+This level **extends three existing M7 issues** rather than introducing new pipelines:
 
 | Existing Issue                                            | Title                           | Extension                                                                                   |
 | --------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -276,7 +276,7 @@ if maturity_phase in ("provisional", "robust"):
     symptom_insights = symptom_analytics.compute_univariate(user_entries)
     symptom_insights += symptom_analytics.compute_cooccurrence(user_entries)
 if maturity_phase == "robust":
-    symptom_insights += symptom_analytics.compute_multivariate(user_entries)  # M8 only
+    symptom_insights += symptom_analytics.compute_multivariate(user_entries)  # M7 only
 store_insights(symptom_insights)  # reuses existing storage with date-based dedup
 ```
 
@@ -306,8 +306,8 @@ new insight types alongside existing types.
 | Type string                | Level | Introduced in      |
 | -------------------------- | ----- | ------------------ |
 | `symptom_mood_association` | 1     | Sprint-free bugfix |
-| `symptom_tag_cooccurrence` | 2     | M8                 |
-| `symptom_cluster`          | 3     | M8                 |
+| `symptom_tag_cooccurrence` | 2     | M7                 |
+| `symptom_cluster`          | 3     | M7                 |
 
 ### Payload Schemas
 
@@ -411,9 +411,8 @@ Summary:
 | Sprint-free | **Pointbiserial Symptom↔Mood bugfix** (Level 1 foundation). Standalone issue, no milestone label.                                                                                 |
 | M4          | None. Mobile/Offline-focused; including symptom work would break sprint scope.                                                                                                    |
 | M5          | **Symptom data quality audit** — descriptive statistics over beta data to identify which symptoms meet eligibility thresholds. Preparation only.                                  |
-| M6          | None.                                                                                                                                                                             |
-| M7          | **Sleep × Symptom association** (Level 1 extension) as a side effect of sleep-metric integration.                                                                                 |
-| M8          | **Main implementation.** Epic with sub-issues covering Level 2 engine, all frontend components, API extensions, multivariate extensions via existing #144 / #145 / #150 comments. |
+| M7          | **Main implementation.** Epic with sub-issues covering Level 2 engine, all frontend components, API extensions, multivariate extensions via existing #144 / #145 / #150 comments. |
+| M8          | **Sleep × Symptom association** (Level 1 extension) as a side effect of sleep-metric integration.                                                                                 |
 | M9          | **Beta usability review.** Potential reconsideration of intensity scope based on user feedback.                                                                                   |
 
 ---
@@ -432,12 +431,6 @@ Summary:
 
 ### M7
 
-- [ ] Sleep×Symptom Spearman correlation computed when sleep data is available
-- [ ] Sleep-related symptom insights surfaced as `symptom_mood_association` with `metric: "sleep_minutes"`
-- [ ] Acceptance criteria for sleep metrics from M7 spec remain satisfied
-
-### M8
-
 - [ ] Level 2 engine produces Phi, Jaccard, Lift, Fisher Exact for all eligible symptom×tag pairs
 - [ ] FDR correction (BH) applied across the full symptom×tag family
 - [ ] Lasso (#144) includes symptoms as binary features in the design matrix
@@ -451,6 +444,12 @@ Summary:
 - [ ] Translation keys (de/en) cover all symptom insight types
 - [ ] Weekday confounder check applies to all symptom insights with `confounder` field surfaced
 - [ ] Base-rate exclusion logged when applicable
+
+### M8
+
+- [ ] Sleep×Symptom Spearman correlation computed when sleep data is available
+- [ ] Sleep-related symptom insights surfaced as `symptom_mood_association` with `metric: "sleep_minutes"`
+- [ ] Acceptance criteria for sleep metrics from M8 spec remain satisfied
 
 ### M9
 
@@ -492,11 +491,11 @@ volumes support it.
 ## Open Questions / ADR Triggers
 
 - **Intensity scope reconsideration**: if beta feedback strongly demands intensity-aware insights, a
-  follow-up ADR (ADR-0026 or later) will define the ordinal methodology. Not blocking M8.
+  follow-up ADR (ADR-0026 or later) will define the ordinal methodology. Not blocking M7.
 - **Custom symptom moderation**: users can create custom symptoms (ADR-0008). Should the engine treat
   custom symptoms identically to curated defaults? Current spec assumption: yes. If false-positive
   noise from low-quality custom symptoms becomes a problem in beta, a `min_data_quality` flag could be
-  added. Not blocking M8.
+  added. Not blocking M7.
 - **Cross-user pooling for very rare symptoms**: ruled out for privacy (Art. 9 data). Documented here
   to close the discussion.
 
@@ -518,8 +517,8 @@ volumes support it.
 ## Related Issues
 
 - **Sprint-free bugfix:** Pointbiserial Symptom↔Mood (to be created; no milestone label)
-- **M7:** Sleep×Symptom association (to be created)
-- **M8 Epic:** Symptom Analytics — Full Implementation (to be created with sub-issues)
+- **M7 Epic:** Symptom Analytics — Full Implementation (to be created with sub-issues)
+- **M8:** Sleep×Symptom association (to be created)
 - **Existing issues to extend via comment:**
   - [#144](https://github.com/Sturmi77/correlcore/issues/144) — Lasso multi-variable regression
   - [#145](https://github.com/Sturmi77/correlcore/issues/145) — Lag analysis

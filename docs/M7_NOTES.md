@@ -1,75 +1,67 @@
-# M7 Notes — Cycle Tracking Deep Integration
+# M7 Notes — Insights v2
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
-This document captures the scope and acceptance criteria for the
-cycle tracking deep integration deferred from M4.
+Implementation notes for **M7 — Insights v2** (Lasso, lag analysis, symptom
+analytics, tag clustering, optional Ollama). Milestone resequencing rationale:
+[`M7_M8_MILESTONE_SWAP.md`](M7_M8_MILESTONE_SWAP.md).
 
 ## Context
 
-M4 Sprint 2 introduces:
-
-- Optional `cycle_day` integer field on `DayEntry`
-- `cycle` tag category in the suggestion library
-- Neutral cycle day overlay on the Trends > Health tab
-
-M7 extends this with Health Connect (Android) integration and richer
-cycle-aware visualisations, once the Android app path is established.
+M3.x delivers correlation-based insights (tag ↔ metric, weekday patterns).
+M5 adds a raw tag co-occurrence heatmap. **M7** extends the pipeline with
+multivariate models, lag analysis, full symptom analytics (ADR-0025), and
+optional tag clustering — all on existing entry/tag/symptom data, without
+Android or Health Connect.
 
 ## Scope
 
-### Sprint 1 — Health Connect Read Permission
+### Sprint 1 — Lasso & Lag (#144, #145)
 
-- Android app requests `READ_MENSTRUATION` Health Connect permission
-- Permission request follows the Android Health Connect guidelines
-  (rationale screen before the system dialog)
-- If permission denied, app falls back to manual `cycle_day` entry
-  (M4 behaviour); no error state
-- `docs/features/HEALTH_CONNECT.md` documents all requested permissions
-  and their purpose
+- Lasso regression over tags, metrics, and symptoms (binary features)
+- Lag analysis 1–7 days; symptoms as input and target variables
+- `TimeSeriesSplit` validation per [ADR-0016](adr/0016-timeseries-split-ml-models.md)
+- Minimum n=90 entries before cross-validated models run
 
-### Sprint 2 — Cycle Data Sync
+### Sprint 2 — Symptom Analytics (Level 2 & 3)
 
-- Background sync reads menstruation records from Health Connect
-- Maps Health Connect `MenstruationRecord` to CorrelCore `cycle_day`
-  (day within cycle computed from period start date)
-- Sync writes to `cycle_day` on `DayEntry` only if field is currently
-  null (manual entry takes precedence)
-- `PATCH /api/v1/entries/{id}` source field: `health_connect | manual`
-- User can disable Health Connect sync per-field in Settings > Tracking
+- Symptom×tag co-occurrence (Phi, Jaccard, Lift, Fisher) with FDR (BH)
+- Symptom calendar heatmap, co-occurrence heatmap, trend overlay in `/insights`
+- Hierarchical clustering (#150) on combined symptom+tag Jaccard matrix
+- Full acceptance criteria in [`features/symptom-analytics.md`](features/symptom-analytics.md)
 
-### Sprint 3 — Cycle-Aware Visualisation
+### Sprint 3 — Tag Clustering (pgvector)
 
-- Trends > Health tab: follicular / ovulatory / luteal / menstrual
-  phase bands derived from `cycle_day` (simple 28-day model, clearly
-  labelled as approximate)
-- Mood overlay on phase bands — colour: `--color-primary` with alpha
-- Explicit disclaimer: "Phase bands are approximate and based on a
-  28-day model. CorrelCore does not provide medical advice."
-- i18n keys `trends.cycle.phases.*`
-- Component tests
+- Enable `pgvector` extension in Alembic migration
+- Per-tag co-occurrence vectors from M5 aggregation table → `tag_vectors`
+- k-means clustering (k=3..6); `GET /api/v1/insights/tag-clusters`
+- Insufficient-data guard: < 90 entries or < 5 active tags → `{ "status": "insufficient_data" }`
+- Frontend: "Tag Groups" section in Insights
+
+### Sprint 4 — Optional LLM & Digest
+
+- Ollama integration for natural-language insight summaries (opt-in, local only)
+- Weekly "Insight Digest" push notification (optional)
 
 ## Acceptance Criteria
 
-- [ ] Health Connect permission requested with rationale screen
-- [ ] Sync writes `cycle_day` only when null (manual wins)
-- [ ] User can disable Health Connect sync in Settings
-- [ ] Phase bands render with disclaimer text
-- [ ] No medical claim language in any visible copy
-- [ ] `noGamificationCopy.test.ts` / copy lint passes
-- [ ] Visual QA at 375 px, 768 px (light + dark)
+- [ ] Lasso and lag produce reproducible results on fixed input data
+- [ ] Symptom insights integrated in `/insights` feed per ADR-0025
+- [ ] `pgvector` migration applied; tag vectors recomputed nightly
+- [ ] Cluster cards use copy: "Tags that often appear together" (no "AI"/"ML" language)
+- [ ] LLM optional and disableable without feature loss
+- [ ] Visual QA at 375 px, 768 px, 1280 px (light + dark)
 - [ ] CI green
 
 ## Prerequisites
 
-- Android app shell exists (Play Store path started)
-- M4 `cycle_day` field and `cycle` tag category shipped
-- Health Connect dependency (`androidx.health.connect:connect-client`)
-  added to Android build
+- M3 insight engine shipped
+- M5 co-occurrence heatmap / aggregation table
+- Sprint-free pointbiserial Symptom↔Mood bugfix (ADR-0025 prerequisite)
+- `pgvector` available on Synology NAS Docker image (verify before sprint)
 
-## Framing Guardrails
+## Deferred to M8
 
-- No algorithmic prediction ("you will ovulate on…")
-- No health claim language
-- Phase bands always labelled "approximate"
-- Disclaimer visible wherever phase bands are shown
+- Sleep×Symptom association (requires sleep metrics from M8)
+- Cycle × lifestyle correlations that depend on Health Connect import use
+  `cycle_day` from M4/M5 where available; HC sync remains M8

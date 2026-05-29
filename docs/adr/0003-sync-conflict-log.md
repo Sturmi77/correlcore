@@ -58,7 +58,7 @@ CREATE INDEX ON sync_conflicts (entity_id);
 - **Automatische Bereinigung:** Einträge in `sync_conflicts` werden nach **90 Tagen** via Worker-Job (APScheduler) gelöscht.
 - **Storage-Overhead:** Minimal – ca. 1–2 KB pro Konflikt-Eintrag (JSONB-Werte für Mood-Felder sind klein). Bei 100 Konflikten/User/Monat ≈ 200 KB/User/Monat, deutlich unter 1 MB.
 - **Kein CRDT-Overhead:** Das System bleibt framework-unabhängig und skaliert linear.
-- **Zukunftspfad:** Ab M8 können Felder mit häufigen Konflikten (z. B. `notes`) selektiv auf CRDT (Automerge) migriert werden, ohne die übrige Sync-Architektur zu berühren.
+- **Zukunftspfad:** Ab M9 können Felder mit häufigen Konflikten (z. B. `notes`) selektiv auf CRDT (Automerge) migriert werden, ohne die übrige Sync-Architektur zu berühren. (Chronologischer Slot — unabhängig vom Feature-Meilenstein M8 Sleep/HC; siehe [`M7_M8_MILESTONE_SWAP.md`](../M7_M8_MILESTONE_SWAP.md).)
 
 ---
 

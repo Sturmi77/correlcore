@@ -40,8 +40,8 @@ foundation with four categories of work:
 | Feature                           | Target | Rationale                                                        |
 | --------------------------------- | ------ | ---------------------------------------------------------------- |
 | Co-occurrence heatmap (Tag × Tag) | M5     | Requires a sufficient data foundation and a new backend endpoint |
-| Cycle tracking deep integration   | M7     | Health Connect (Android) context; avoid premature health claims  |
-| Pattern recognition / clustering  | M8     | Needs pgvector and statistically robust data volume              |
+| Cycle tracking deep integration   | M8     | Health Connect (Android) context; avoid premature health claims  |
+| Pattern recognition / clustering  | M7     | Needs pgvector and statistically robust data volume              |
 | Native Android homescreen widget  | M11    | Depends on Play Store / TWA path; Glance API                     |
 
 ---
@@ -68,7 +68,7 @@ evening`); `day` means whole-day entry
 - [ ] `docs/adr/0031-cycle-tracking-scope.md`
   - Decision: M4 introduces only a `cycle_day` optional integer field on
     `DayEntry` and a `cycle` tag category; no health claims, no algorithmic
-    prediction; deeper integration deferred to M7 (Health Connect)
+    prediction; deeper integration deferred to M8 (Health Connect)
 - [ ] Scope note in `docs/DESIGN_DOCUMENT.md` under the M4 section
 
 ---

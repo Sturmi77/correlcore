@@ -28,8 +28,8 @@ M1-Inhalte (gemäß Design-Doc §3):
 
 Ausserhalb des M1-Scope (zur Vermeidung von Falsch-Erwartungen):
 
-- Foto-Upload mit EXIF-Strip → **M6**
-- Health-Connect / Wearables → **M7**
+- Foto-Upload mit EXIF-Strip → **M13**
+- Health-Connect / Wearables → **M8**
 - Offline-Sync (Dexie + Conflict-Log) → **M4** (ADR-0009)
 - DSFA-Dokument → **M9**
 - OIDC / Authentik → **M12**

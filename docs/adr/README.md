@@ -9,30 +9,39 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 
 ## Index
 
-| ADR                                                         | Titel                                                        | Status        | Datum      |
-| ----------------------------------------------------------- | ------------------------------------------------------------ | ------------- | ---------- |
-| [ADR-0001](0001-sveltekit-vs-nextjs.md)                     | SvelteKit als Web-Framework (statt Next.js)                  | Accepted      | –          |
-| [ADR-0002](0002-capacitor-statt-twa.md)                     | Capacitor statt TWA als Mobile-Strategie                     | Accepted      | 2026-04-20 |
-| [ADR-0003](0003-sync-conflict-log.md)                       | Sync-Protokoll: Conflict-Log statt stilles LWW               | Accepted      | 2026-04-20 |
-| [ADR-0004](0004-auth-strategie.md)                          | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2  | Accepted      | 2026-04-20 |
-| [ADR-0005](0005-verschluesselung-at-rest.md)                | Datenverschlüsselung at-rest: Zweistufige Strategie          | Accepted      | 2026-04-20 |
-| [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md)     | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration  | Accepted      | 2026-05-04 |
-| [ADR-0007](0007-healthchecks-and-logging.md)                | Healthchecks und strukturiertes Logging                      | Accepted      | 2026-05-04 |
-| [ADR-0008](0008-symptom-master-tabelle.md)                  | Symptom-Master-Tabelle für Custom-Symptome                   | Accepted      | 2026-05-04 |
-| [ADR-0009](0009-offline-sync-nach-m4.md)                    | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)        | Accepted      | 2026-05-04 |
-| [ADR-0010](0010-build-toolchain-pinning.md)                 | Build-Toolchain-Pinning (pnpm-Version)                       | Accepted      | 2026-05-07 |
-| [ADR-0011](0011-web-internal-reverse-proxy.md)              | Interner Reverse-Proxy im Web-Container                      | Accepted      | 2026-05-08 |
-| [ADR-0012](0012-m2-m5-streak-semantik.md)                   | M2/M5 Tracking-Semantik + Habit-Adherence                    | Accepted      | 2026-05-28 |
-| [ADR-0013](0013-autosave-day-entries.md)                    | Auto-Save für Day-Entries (M1.5)                             | Akzeptiert    | 2026-05-09 |
-| [ADR-0014](0014-home-dashboard-recent-entries-sparkline.md) | Home-Dashboard mit Recent-Entries + 14-Tage-Sparkline (M1.5) | Akzeptiert    | 2026-05-09 |
-| [ADR-0015](0015-developer-view-version-identifikation.md)   | Developer-View fuer Versionsidentifikation                   | Akzeptiert    | 2026-05-10 |
-| [ADR-0016](0016-timeseries-split-ml-models.md)              | Timeseries Split für ML-Modelle                              | Akzeptiert    | 2026-05-10 |
-| [ADR-0017](0017-frontend-screen-architecture.md)            | Frontend Screen Architecture (M3.1)                          | Accepted      | 2026-05-13 |
-| [ADR-0018](0018-insight-confidence-visualisation.md)        | Insight Confidence Visualisation                             | Accepted      | 2026-05-13 |
-| [ADR-0019](0019-dev-mode-settings-toggle.md)                | Developer Mode Toggle in Settings                            | Accepted      | 2026-05-13 |
-| [ADR-0020](0020-primary-color-system.md)                    | Primary Color System for M3.5 Frontend                       | Accepted      | 2026-05-15 |
-| [ADR-0021](0021-insight-maturity-phases.md)                 | Insight Maturity Phases as a First-Class Frontend Concept    | Accepted      | 2026-05-16 |
-| [ADR-0025](0025-symptom-analytics.md)                       | Symptom Analytics — Univariate, Co-Occurrence, Multivariate  | Vorgeschlagen | 2026-05-19 |
+| ADR                                                              | Titel                                                        | Status        | Datum      |
+| ---------------------------------------------------------------- | ------------------------------------------------------------ | ------------- | ---------- |
+| [ADR-0001](0001-sveltekit-vs-nextjs.md)                          | SvelteKit als Web-Framework (statt Next.js)                  | Accepted      | –          |
+| [ADR-0002](0002-capacitor-statt-twa.md)                          | Capacitor statt TWA als Mobile-Strategie                     | Accepted      | 2026-04-20 |
+| [ADR-0003](0003-sync-conflict-log.md)                            | Sync-Protokoll: Conflict-Log statt stilles LWW               | Accepted      | 2026-04-20 |
+| [ADR-0004](0004-auth-strategie.md)                               | Auth-Strategie: Native JWT in Phase 1, Authentik ab Phase 2  | Accepted      | 2026-04-20 |
+| [ADR-0005](0005-verschluesselung-at-rest.md)                     | Datenverschlüsselung at-rest: Zweistufige Strategie          | Accepted      | 2026-04-20 |
+| [ADR-0006](0006-cookie-auth-mit-capacitor-migration.md)          | Cookie-Auth im Web mit geplanter Capacitor-Bearer-Migration  | Accepted      | 2026-05-04 |
+| [ADR-0007](0007-healthchecks-and-logging.md)                     | Healthchecks und strukturiertes Logging                      | Accepted      | 2026-05-04 |
+| [ADR-0008](0008-symptom-master-tabelle.md)                       | Symptom-Master-Tabelle für Custom-Symptome                   | Accepted      | 2026-05-04 |
+| [ADR-0009](0009-offline-sync-nach-m4.md)                         | Offline-Sync nach M4 verschieben (Scope-Reduktion M1)        | Accepted      | 2026-05-04 |
+| [ADR-0010](0010-build-toolchain-pinning.md)                      | Build-Toolchain-Pinning (pnpm-Version)                       | Accepted      | 2026-05-07 |
+| [ADR-0011](0011-web-internal-reverse-proxy.md)                   | Interner Reverse-Proxy im Web-Container                      | Accepted      | 2026-05-08 |
+| [ADR-0012](0012-m2-m5-streak-semantik.md)                        | M2/M5 Tracking-Semantik + Habit-Adherence                    | Accepted      | 2026-05-28 |
+| [ADR-0013](0013-autosave-day-entries.md)                         | Auto-Save für Day-Entries (M1.5)                             | Akzeptiert    | 2026-05-09 |
+| [ADR-0014](0014-home-dashboard-recent-entries-sparkline.md)      | Home-Dashboard mit Recent-Entries + 14-Tage-Sparkline (M1.5) | Akzeptiert    | 2026-05-09 |
+| [ADR-0015](0015-developer-view-version-identifikation.md)        | Developer-View fuer Versionsidentifikation                   | Akzeptiert    | 2026-05-10 |
+| [ADR-0016](0016-timeseries-split-ml-models.md)                   | Timeseries Split für ML-Modelle                              | Akzeptiert    | 2026-05-10 |
+| [ADR-0017](0017-frontend-screen-architecture.md)                 | Frontend Screen Architecture (M3.1)                          | Accepted      | 2026-05-13 |
+| [ADR-0018](0018-insight-confidence-visualisation.md)             | Insight Confidence Visualisation                             | Accepted      | 2026-05-13 |
+| [ADR-0019](0019-dev-mode-settings-toggle.md)                     | Developer Mode Toggle in Settings                            | Accepted      | 2026-05-13 |
+| [ADR-0020](0020-primary-color-system.md)                         | Primary Color System for M3.5 Frontend                       | Accepted      | 2026-05-15 |
+| [ADR-0021](0021-insight-maturity-phases.md)                      | Insight Maturity Phases as a First-Class Frontend Concept    | Accepted      | 2026-05-16 |
+| [ADR-0025](0025-symptom-analytics.md)                            | Symptom Analytics — Univariate, Co-Occurrence, Multivariate  | Vorgeschlagen | 2026-05-19 |
+| [ADR-0026](0026-color-scheme-evaluation-orange-vs-violet.md)     | Color Scheme Evaluation: Orange/Dark vs. Violet/Dark         | Accepted      | 2026-05-26 |
+| [ADR-0027](0027-light-mode-color-requirements.md)                | Light Mode Color Requirements (WCAG contrast)                | Accepted      | 2026-05-26 |
+| [ADR-0028](0028-entry-slot-model.md)                             | Entry Slot Model (`day` / `morning` / `noon` / `evening`)    | Accepted      | 2026-05-28 |
+| [ADR-0029](0029-trend-smoothing-frontend.md)                     | Client-Side 7-Day SMA Trend Smoothing                        | Accepted      | 2026-05-28 |
+| [ADR-0030](0030-onboarding-tag-suggestions.md)                   | Guided Onboarding Tag Suggestions by Slug                    | Accepted      | 2026-05-28 |
+| [ADR-0031](0031-cycle-tracking-scope.md)                         | Neutral `cycle_day` Scope (no medical inference)             | Accepted      | 2026-05-28 |
+| [ADR-0032](0032-cycle-tracking-as-domain-extension.md)           | Cycle Tracking as Domain Extension                           | Accepted      | 2026-05-28 |
+| [ADR-0033](0033-sensitive-health-data-handling-cycle-signals.md) | Sensitive Health Data Handling for Cycle Signals             | Accepted      | 2026-05-28 |
+| [ADR-0034](0034-onboarding-cycle-tracking-toggle.md)             | Onboarding Cycle Tracking Toggle                             | Accepted      | 2026-05-28 |
 
 ## Kurzübersicht der Entscheidungen
 

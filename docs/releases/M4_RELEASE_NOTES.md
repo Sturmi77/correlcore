@@ -30,7 +30,7 @@ Stand: 2026-05-25
 ### Meilenstein-Zuordnung
 
 - Offline/PWA bleibt Teil von [M4 Mobile/PWA](../DESIGN_DOCUMENT.md#m4--mobile-polish--pwa-hardening-woche-1112), ist aber in diesem Release bewusst kein vollständiger Offline-first-Sync.
-- Attachment-/EXIF-Verarbeitung gehört vor produktiver Aktivierung zu [M6 Fotos & Medien](../DESIGN_DOCUMENT.md#m6--fotos--medien-woche-1516).
+- Attachment-/EXIF-Verarbeitung gehört vor produktiver Aktivierung zu [M13 Fotos & Medien](../DESIGN_DOCUMENT.md#m13--fotos--medien-post-saas).
 - OpenAPI TypeScript Client bleibt im [API Contract Strategy](../API_CONTRACTS.md) dokumentiert.
 - Mobile Screenshot-QA bei 375 px und vollständige Ablösung route-lokaler Button-Klassen bleiben Follow-ups des [Frontend Component System](../frontend/UI_COMPONENT_SYSTEM.md#migration-backlog).
 
