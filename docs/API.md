@@ -870,6 +870,7 @@ jeweiligen Owner ausgegeben.
 ```
 GET    /api/v1/insights              Alle Insights des Users
 GET    /api/v1/insights/latest       Neuester Insight je Metrik
+GET    /api/v1/insights/tag-cooccurrence   Tag-Paar-Co-Occurrence (M5.1)
 POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 ```
 
@@ -925,6 +926,52 @@ Frontend-Clients duerfen diese Phase nicht selbst aus der Entry-Anzahl
 rekonstruieren.
 Der manuelle Trigger bleibt geplant und ist in M3 noch nicht oeffentlich
 implementiert.
+
+`GET /api/v1/insights/tag-cooccurrence?range=30d|90d|1y&min_count=2` (M5.1)
+liefert Tag-Paare, die auf demselben Entry gemeinsam vorkommen. Hidden Tags
+bleiben ausgeschlossen. Paare sind nach `count` absteigend sortiert.
+
+Query-Parameter:
+
+| Parameter   | Default | Beschreibung                                     |
+| ----------- | ------- | ------------------------------------------------ |
+| `range`     | `90d`   | Fenster: `30d`, `90d` oder `1y` (inklusive Tage) |
+| `min_count` | `2`     | Mindest-Co-Occurrence pro Paar (1–100)           |
+
+Response `200 OK`:
+
+```json
+{
+  "range": "90d",
+  "start_date": "2026-02-09",
+  "end_date": "2026-05-09",
+  "min_count": 2,
+  "pairs": [
+    {
+      "tag_a": {
+        "tag_id": "uuid",
+        "slug": "sport",
+        "name": "Sport",
+        "category": "sport",
+        "color": "#10b981"
+      },
+      "tag_b": {
+        "tag_id": "uuid",
+        "slug": "focus",
+        "name": "Focus",
+        "category": "work",
+        "color": "#6366f1"
+      },
+      "count": 8,
+      "pct_of_a": 66.7,
+      "pct_of_b": 80.0
+    }
+  ]
+}
+```
+
+`pct_of_a` / `pct_of_b` sind Anteile der Entries mit Tag A bzw. B, auf denen
+beide Tags gemeinsam vorkommen (0–100, eine Nachkommastelle).
 
 ---
 

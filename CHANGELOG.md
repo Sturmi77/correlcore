@@ -17,6 +17,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M5.1 Tag co-occurrence heatmap.** `GET /api/v1/insights/tag-cooccurrence`
+  plus Insights **Patterns** section with `TagCooccurrenceHeatmap` and filtered
+  entry sheet. Closeout: [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).
+
 - **M5 Habits Core ohne Gamification.** Tags expose `habit_type` and
   `target_frequency` through API/UI, new `/api/v1/habits` endpoints return
   goal-based adherence plus optional correlation contribution, Settings > Tags

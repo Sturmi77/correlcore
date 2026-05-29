@@ -15,10 +15,15 @@ from app.models.entry import Entry
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.schemas.stats import (
+    COOCCURRENCE_RANGE_DAYS,
     EntryStreakResponse,
     SymptomHeatmapDay,
     SymptomHeatmapResponse,
     SymptomHeatmapSymptom,
+    TagCooccurrencePair,
+    TagCooccurrenceRange,
+    TagCooccurrenceResponse,
+    TagCooccurrenceTagRef,
     TagHeatmapDay,
     TagHeatmapResponse,
     TagHeatmapTag,
@@ -264,4 +269,93 @@ async def get_entry_streak(
         total_entry_days=len(dates),
         last_entry_date=dates[-1] if dates else None,
         as_of=as_of,
+    )
+
+
+def _cooccurrence_window(
+    range_: TagCooccurrenceRange,
+    as_of: date_type,
+) -> tuple[date_type, date_type]:
+    days = COOCCURRENCE_RANGE_DAYS[range_]
+    start = as_of - timedelta(days=days - 1)
+    return start, as_of
+
+
+def _tag_ref(tag: Tag) -> TagCooccurrenceTagRef:
+    return TagCooccurrenceTagRef(
+        tag_id=tag.id,
+        slug=tag.slug,
+        name=tag.name,
+        category=tag.category,
+        color=tag.color,
+    )
+
+
+async def get_tag_cooccurrence(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    range_: TagCooccurrenceRange,
+    min_count: int = 2,
+    as_of: date_type | None = None,
+) -> TagCooccurrenceResponse:
+    """Count tag pairs that appear together on the same entry within a range."""
+
+    as_of = as_of or _today()
+    start_date, end_date = _cooccurrence_window(range_, as_of)
+
+    result = await db.execute(
+        select(Entry.id, Tag)
+        .join(EntryTag, EntryTag.entry_id == Entry.id)
+        .join(Tag, Tag.id == EntryTag.tag_id)
+        .where(
+            Entry.user_id == user_id,
+            EntryTag.user_id == user_id,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= end_date,
+            active_tag_predicate(user_id),
+        )
+        .order_by(Entry.id.asc(), Tag.id.asc())
+    )
+
+    entry_tags: dict[uuid.UUID, dict[uuid.UUID, Tag]] = defaultdict(dict)
+    for entry_id, tag in result.all():
+        entry_tags[entry_id][tag.id] = tag
+
+    tag_entry_counts: dict[uuid.UUID, int] = defaultdict(int)
+    pair_counts: dict[tuple[uuid.UUID, uuid.UUID], int] = defaultdict(int)
+    tag_meta: dict[uuid.UUID, Tag] = {}
+
+    for tags_by_id in entry_tags.values():
+        tags = sorted(tags_by_id.values(), key=lambda item: item.id)
+        for tag in tags:
+            tag_entry_counts[tag.id] += 1
+            tag_meta[tag.id] = tag
+        for index, tag_a in enumerate(tags):
+            for tag_b in tags[index + 1 :]:
+                pair_counts[(tag_a.id, tag_b.id)] += 1
+
+    pairs: list[TagCooccurrencePair] = []
+    for (tag_a_id, tag_b_id), count in pair_counts.items():
+        if count < min_count:
+            continue
+        entries_with_a = tag_entry_counts[tag_a_id]
+        entries_with_b = tag_entry_counts[tag_b_id]
+        pairs.append(
+            TagCooccurrencePair(
+                tag_a=_tag_ref(tag_meta[tag_a_id]),
+                tag_b=_tag_ref(tag_meta[tag_b_id]),
+                count=count,
+                pct_of_a=round((count / entries_with_a) * 100, 1),
+                pct_of_b=round((count / entries_with_b) * 100, 1),
+            )
+        )
+
+    pairs.sort(key=lambda pair: (-pair.count, pair.tag_a.slug, pair.tag_b.slug))
+    return TagCooccurrenceResponse(
+        range=range_,
+        start_date=start_date,
+        end_date=end_date,
+        min_count=min_count,
+        pairs=pairs,
     )

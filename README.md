@@ -163,6 +163,7 @@ Task: <your specific task here>
 | [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering            |
 | [M8 Notes](docs/M8_NOTES.md)                                          | Sleep, Health Connect, cycle deep integration                     |
 | [M7/M8 swap](docs/M7_M8_MILESTONE_SWAP.md)                            | Milestone reorder rationale and consequence index (2026-05-29)    |
+| [M5.1 Visual QA](docs/quality/M5_1_VISUAL_QA.md)                      | Tag co-occurrence heatmap closeout (2026-05-29)                   |
 | [M13 Notes](docs/M13_NOTES.md)                                        | Photo & media milestone scope (deferred post-M12)                 |
 | [PWA](docs/features/PWA.md)                                           | Install banner, service worker, offline fallback                  |
 | [Cycle tracking](docs/features/cycle-tracking.md)                     | Neutral `cycle_day` domain scope                                  |

@@ -153,3 +153,107 @@ export const mockHabits: HabitStatsResponse[] = [
     correlation_score: null,
   },
 ];
+
+export const mockTagCooccurrence = {
+  range: '90d' as const,
+  start_date: shiftIsoDate(today, -89),
+  end_date: today,
+  min_count: 2,
+  pairs: [
+    {
+      tag_a: {
+        tag_id: 'mock-tag-focus',
+        slug: 'focus',
+        name: 'Focus work',
+        category: 'work',
+        color: null,
+      },
+      tag_b: {
+        tag_id: 'mock-tag-walk',
+        slug: 'walk',
+        name: 'Walk',
+        category: 'sport',
+        color: null,
+      },
+      count: 5,
+      pct_of_a: 71.4,
+      pct_of_b: 83.3,
+    },
+    {
+      tag_a: {
+        tag_id: 'mock-tag-focus',
+        slug: 'focus',
+        name: 'Focus work',
+        category: 'work',
+        color: null,
+      },
+      tag_b: {
+        tag_id: 'mock-tag-coffee',
+        slug: 'coffee',
+        name: 'Coffee',
+        category: 'consumption',
+        color: null,
+      },
+      count: 4,
+      pct_of_a: 57.1,
+      pct_of_b: 80.0,
+    },
+    {
+      tag_a: {
+        tag_id: 'mock-tag-walk',
+        slug: 'walk',
+        name: 'Walk',
+        category: 'sport',
+        color: null,
+      },
+      tag_b: {
+        tag_id: 'mock-tag-coffee',
+        slug: 'coffee',
+        name: 'Coffee',
+        category: 'consumption',
+        color: null,
+      },
+      count: 3,
+      pct_of_a: 50.0,
+      pct_of_b: 60.0,
+    },
+    {
+      tag_a: {
+        tag_id: 'mock-tag-read',
+        slug: 'read',
+        name: 'Read',
+        category: 'leisure',
+        color: null,
+      },
+      tag_b: {
+        tag_id: 'mock-tag-walk',
+        slug: 'walk',
+        name: 'Walk',
+        category: 'sport',
+        color: null,
+      },
+      count: 2,
+      pct_of_a: 66.7,
+      pct_of_b: 33.3,
+    },
+    {
+      tag_a: {
+        tag_id: 'mock-tag-read',
+        slug: 'read',
+        name: 'Read',
+        category: 'leisure',
+        color: null,
+      },
+      tag_b: {
+        tag_id: 'mock-tag-coffee',
+        slug: 'coffee',
+        name: 'Coffee',
+        category: 'consumption',
+        color: null,
+      },
+      count: 2,
+      pct_of_a: 66.7,
+      pct_of_b: 40.0,
+    },
+  ],
+};
