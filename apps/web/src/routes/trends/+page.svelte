@@ -5,9 +5,11 @@
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import {
     fetchEntryStreak,
+    fetchSymptomHeatmap,
     fetchTagHeatmap,
     fetchTimeseries,
     type EntryStreakResponse,
+    type SymptomHeatmapResponse,
     type TagHeatmapResponse,
     type TimeseriesRange,
     type TimeseriesResponse,
@@ -23,14 +25,14 @@
     mockEntryStreak,
     mockHabitTags,
     mockHabits,
+    mockSymptomHeatmap,
     mockTagHeatmap,
     mockTimeseries,
   } from '$lib/dev/mockTrends';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
-  import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
-  import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
+  import TrendsComparePanel from '$lib/components/trends/TrendsComparePanel.svelte';
   import HabitsPanel from '$lib/components/trends/HabitsPanel.svelte';
   import EntryHistorySheet, {
     type EntryHistoryDetail,
@@ -44,7 +46,7 @@
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
 
-  type TrendTab = 'mood' | 'activities' | 'health' | 'habits';
+  type TrendTab = 'compare' | 'health' | 'habits';
 
   const metricLabels: Record<MetricKey, string> = {
     mood_avg: 'trends.metric.mood',
@@ -60,17 +62,17 @@
   ];
 
   const tabs: { id: TrendTab; label: string }[] = [
-    { id: 'mood', label: 'trends.tabs.mood' },
-    { id: 'activities', label: 'trends.tabs.activities' },
+    { id: 'compare', label: 'trends.tabs.compare' },
     { id: 'health', label: 'trends.tabs.health' },
     { id: 'habits', label: 'trends.tabs.habits' },
   ];
 
-  let activeTab: TrendTab = 'mood';
+  let activeTab: TrendTab = 'compare';
   let range: TimeseriesRange = 'week';
   let selectedCategory: TagCategory | 'all' = 'all';
   let timeseries: TimeseriesResponse | null = null;
   let heatmap: TagHeatmapResponse | null = null;
+  let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let streak: EntryStreakResponse | null = null;
   let habitStats: HabitStatsResponse[] = [];
   let habitTags: TagResponse[] = [];
@@ -89,6 +91,8 @@
   let historyError = '';
   let historyDetails: EntryHistoryDetail[] = [];
   let smoothing = false;
+  let showTagRows = true;
+  let showSymptomRows = false;
 
   const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
 
@@ -107,6 +111,7 @@
       if ($devForceVisualizations) {
         timeseries = { ...mockTimeseries, range };
         heatmap = mockTagHeatmap;
+        symptomHeatmap = mockSymptomHeatmap;
         streak = mockEntryStreak;
         habitStats = mockHabits.map((habit) => ({ ...habit, window: habitWindow }));
         habitTags = mockHabitTags;
@@ -115,25 +120,34 @@
       }
 
       const { start_date, end_date } = dateWindow(activeTab === 'habits' ? habitWindow : undefined);
-      const [nextTimeseries, nextHeatmap, nextStreak, nextEntries, nextHabitStats, nextTags] =
-        await Promise.all([
-          fetchTimeseries(range),
-          fetchTagHeatmap({
-            start_date,
-            end_date,
-            ...(activeTab === 'activities' && selectedCategory !== 'all'
-              ? { category: selectedCategory }
-              : {}),
-          }),
-          fetchEntryStreak(),
-          listEntries({ start_date, end_date, limit: 365 }),
-          activeTab === 'habits'
-            ? listHabits(habitWindow)
-            : Promise.resolve({ habits: habitStats }),
-          activeTab === 'habits' ? listVisibleTags() : Promise.resolve(habitTags),
-        ]);
+      const [
+        nextTimeseries,
+        nextHeatmap,
+        nextSymptomHeatmap,
+        nextStreak,
+        nextEntries,
+        nextHabitStats,
+        nextTags,
+      ] = await Promise.all([
+        fetchTimeseries(range),
+        fetchTagHeatmap({
+          start_date,
+          end_date,
+          ...(activeTab === 'compare' && selectedCategory !== 'all'
+            ? { category: selectedCategory }
+            : {}),
+        }),
+        activeTab === 'compare'
+          ? fetchSymptomHeatmap({ start_date, end_date })
+          : Promise.resolve(symptomHeatmap),
+        fetchEntryStreak(),
+        listEntries({ start_date, end_date, limit: 365 }),
+        activeTab === 'habits' ? listHabits(habitWindow) : Promise.resolve({ habits: habitStats }),
+        activeTab === 'habits' ? listVisibleTags() : Promise.resolve(habitTags),
+      ]);
       timeseries = nextTimeseries;
       heatmap = nextHeatmap;
+      symptomHeatmap = nextSymptomHeatmap;
       streak = nextStreak;
       habitStats = nextHabitStats.habits;
       habitTags = nextTags.filter((tag) => tag.habit_type !== 'none');
@@ -258,7 +272,7 @@
         }}
       />
 
-      {#if activeTab === 'mood'}
+      {#if activeTab === 'compare'}
         <div class="trends__metric-toggles">
           {#if smoothingAvailable}
             <SegmentedControl
@@ -280,7 +294,6 @@
             </label>
           {/each}
         </div>
-      {:else if activeTab === 'activities'}
         <label class="trends__select">
           <span>{$_('trends.category')}</span>
           <select
@@ -313,22 +326,26 @@
       <InlineAlert variant="error" message={error} />
     {/if}
 
-    {#if activeTab === 'mood'}
-      <div class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.mood')}>
-        <MetricTimeseries
+    {#if activeTab === 'compare'}
+      <div
+        class="trends__panel trends__panel--compare"
+        role="tabpanel"
+        aria-label={$_('trends.tabs.compare')}
+      >
+        <TrendsComparePanel
           points={displayTimeseries?.points ?? []}
           {range}
           enabled={metrics}
+          tagHeatmap={heatmap}
+          {symptomHeatmap}
+          showTags={showTagRows}
+          showSymptoms={showSymptomRows}
           {loading}
           on:selectDate={(event) => void openHistory(event.detail.date)}
-        />
-      </div>
-    {:else if activeTab === 'activities'}
-      <div class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.activities')}>
-        <TagHeatmap
-          {heatmap}
-          {loading}
-          on:selectDate={(event) => void openHistory(event.detail.date)}
+          on:layerChange={(event) => {
+            showTagRows = event.detail.showTags;
+            showSymptomRows = event.detail.showSymptoms;
+          }}
         />
       </div>
     {:else if activeTab === 'health'}
@@ -402,7 +419,7 @@
 
 <style>
   .trends {
-    width: min(100%, 68rem);
+    width: min(100%, 76rem);
     margin: 0 auto;
     padding: 1.25rem;
     display: flex;
@@ -426,8 +443,21 @@
     border: 1px solid var(--color-border-chart);
   }
 
+  .trends__panel--compare {
+    padding: 0;
+    overflow: hidden;
+  }
+
   .trends__controls {
     flex-wrap: wrap;
+    position: sticky;
+    top: calc(var(--app-header-height, 0px) + 0.5rem);
+    z-index: 2;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(14px);
   }
 
   .trends__metric-toggles {
@@ -547,6 +577,7 @@
     .trends__controls {
       align-items: stretch;
       flex-direction: column;
+      position: static;
     }
 
     .trends__consistency {

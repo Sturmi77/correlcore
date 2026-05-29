@@ -1,5 +1,10 @@
 import type { HabitStatsResponse } from '$lib/api/habits';
-import type { EntryStreakResponse, TagHeatmapResponse, TimeseriesResponse } from '$lib/api/stats';
+import type {
+  EntryStreakResponse,
+  SymptomHeatmapResponse,
+  TagHeatmapResponse,
+  TimeseriesResponse,
+} from '$lib/api/stats';
 import type { TagResponse } from '$lib/api/tags';
 import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
 
@@ -46,6 +51,34 @@ export const mockTagHeatmap: TagHeatmapResponse = {
       days: [
         { date: shiftIsoDate(today, -4), count: 1 },
         { date: shiftIsoDate(today, -1), count: 1 },
+      ],
+    },
+  ],
+};
+
+export const mockSymptomHeatmap: SymptomHeatmapResponse = {
+  start_date: start,
+  end_date: today,
+  symptoms: [
+    {
+      symptom_id: 'mock-symptom-fatigue',
+      slug: 'fatigue',
+      name: 'Fatigue',
+      icon: 'battery-low',
+      days: [
+        { date: shiftIsoDate(today, -6), count: 1, max_intensity: 1 },
+        { date: shiftIsoDate(today, -3), count: 1, max_intensity: 2 },
+        { date: today, count: 1, max_intensity: 1 },
+      ],
+    },
+    {
+      symptom_id: 'mock-symptom-headache',
+      slug: 'headache',
+      name: 'Headache',
+      icon: 'activity',
+      days: [
+        { date: shiftIsoDate(today, -4), count: 1, max_intensity: 3 },
+        { date: shiftIsoDate(today, -2), count: 1, max_intensity: 1 },
       ],
     },
   ],

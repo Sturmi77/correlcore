@@ -58,3 +58,13 @@ The root `+layout.svelte` acts as the app shell and auth guard. All authenticate
 - All M3.1 issues (#160–#166) implement components within this architecture.
 - Any new route proposal must reference this ADR and explain the addition.
 - The `InsightMatrix.svelte` component (currently in `components/insights/`) should be evaluated against the new `InsightFeed` + `InsightCard` pattern in Sprint 7/8 and removed or repurposed if redundant.
+
+## 2026-05-29 M5 Streamline Amendment
+
+The five-screen architecture remains canonical. M5 frontend streamlining may move data out of the default viewport, but must not remove data depth:
+
+- Home becomes a Daily Brief, not a mini-dashboard. Deep filters, matrices, and raw values live in Insights or Trends drilldowns.
+- Insights shows exactly one phase/readiness surface via `InsightStageHeader`; the matrix remains a secondary drilldown inside `/insights`.
+- Trends becomes Compare-first: metric lines and tag/symptom heatmap rows share one time axis. `Activities` is represented as tag rows in Compare instead of a default tab.
+- Symptom heatmap in M5 is neutral occurrence/intensity visualization only. It does not introduce symptom co-occurrence, medical interpretation, correlation recommendations, or a new analytics engine.
+- Desktop layouts may use split views, side panels, and sticky controls. These are secondary surfaces inside existing routes, not new primary screens.

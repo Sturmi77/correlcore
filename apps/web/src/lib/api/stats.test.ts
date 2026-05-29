@@ -7,7 +7,7 @@ vi.mock('./client', () => ({
 }));
 
 import { api } from './client';
-import { fetchEntryStreak, fetchTagHeatmap, fetchTimeseries } from './stats';
+import { fetchEntryStreak, fetchSymptomHeatmap, fetchTagHeatmap, fetchTimeseries } from './stats';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -32,6 +32,19 @@ describe('stats API client', () => {
     expect(path).toContain('start_date=2026-01-01');
     expect(path).toContain('end_date=2026-01-31');
     expect(path).toContain('category=work');
+  });
+
+  it('serializes symptom heatmap filters', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      start_date: '2026-01-01',
+      end_date: '2026-01-31',
+      symptoms: [],
+    });
+    await fetchSymptomHeatmap({ start_date: '2026-01-01', end_date: '2026-01-31' });
+    const path = vi.mocked(api.get).mock.calls[0][0] as string;
+    expect(path).toContain('/entries/stats/symptoms?');
+    expect(path).toContain('start_date=2026-01-01');
+    expect(path).toContain('end_date=2026-01-31');
   });
 
   it('fetches streak with optional as_of', async () => {

@@ -30,9 +30,8 @@
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
-  import InsightJourneyBanner from '$lib/components/insights/InsightJourneyBanner.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
-  import InsightPhaseMilestoneCard from '$lib/components/insights/InsightPhaseMilestoneCard.svelte';
+  import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
   import { mockEntries } from '$lib/dev/mockEntries';
   import { mockUserPreferences } from '$lib/dev/mockEntries';
   import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
@@ -49,6 +48,7 @@
   let entryCount = 0;
   let dayEntryDates: string[] = [];
   let inactiveTagIds: string[] = [];
+  let detailView: 'findings' | 'matrix' = 'findings';
 
   async function loadInsights(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
@@ -150,31 +150,44 @@
       </Button>
     </Panel>
   {:else}
-    {#if insightMaturity && showMaturityMilestone}
-      <InsightPhaseMilestoneCard
+    {#if insightMaturity}
+      <InsightStageHeader
         maturity={insightMaturity}
-        on:dismiss={(e) => void dismissMaturityMilestone(e.detail.key)}
+        showMilestone={showMaturityMilestone}
+        on:dismissMilestone={(e) => void dismissMaturityMilestone(e.detail.key)}
       />
     {/if}
 
-    {#if insightMaturity}
-      <InsightJourneyBanner maturity={insightMaturity} />
-    {/if}
+    <div class="insights-page__view-toggle" aria-label={$_('insights.page.detail_views')}>
+      <button
+        type="button"
+        class:insights-page__view-toggle--active={detailView === 'findings'}
+        on:click={() => (detailView = 'findings')}
+      >
+        {$_('insights.page.findings_view')}
+      </button>
+      <button
+        type="button"
+        class:insights-page__view-toggle--active={detailView === 'matrix'}
+        on:click={() => (detailView = 'matrix')}
+      >
+        {$_('insights.page.matrix_view')}
+      </button>
+    </div>
 
-    {#if !loading && insights.length > 0}
+    {#if detailView === 'matrix'}
       <InsightMatrix {insights} />
+    {:else}
+      <InsightFeed
+        {insights}
+        maturity={insightMaturity}
+        {loading}
+        {error}
+        {entryCount}
+        {inactiveTagIds}
+        on:retry={loadInsights}
+      />
     {/if}
-
-    <InsightFeed
-      {insights}
-      maturity={insightMaturity}
-      {loading}
-      {error}
-      {entryCount}
-      {dayEntryDates}
-      {inactiveTagIds}
-      on:retry={loadInsights}
-    />
   {/if}
 </main>
 
@@ -184,5 +197,29 @@
     flex-direction: column;
     gap: var(--space-5);
     padding: var(--space-4) 0 var(--space-8);
+  }
+
+  .insights-page__view-toggle {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    width: fit-content;
+  }
+
+  .insights-page__view-toggle button {
+    min-height: 44px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .insights-page__view-toggle--active {
+    background: var(--color-primary-highlight);
+    color: var(--color-primary) !important;
   }
 </style>

@@ -202,11 +202,15 @@ Every interactive primitive must provide a 44 x 44 px touch target, visible focu
 
 CorrelCore has exactly **5 primary screens**. No screen may be added without an explicit justification and ADR entry. See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
+M5 Streamline keeps that contract intact: matrix views, entry details, comparison layers, and analysis drilldowns are secondary sheets, panels, tabs, or query-state views inside the existing routes. Mobile-first defines prioritization and touch flow; desktop may use split views, sticky controls, and side panels to preserve data depth without adding primary screens.
+
 > **Naming note:** All sub-views, history lists, and calendar overlays within a screen are **secondary sheets or tabs** — they do not constitute separate primary screens. The Entry History view (tap on a past entry) is a secondary sheet overlay within Trends, not a standalone screen.
 
 ### Screen 1: Home (`/`)
 
-**Purpose:** Daily touch point. Create entry + passively receive latest insight.
+**Purpose:** Daily touch point. Create or edit today's entry and receive a compact Daily Brief.
+
+**M5 Streamline:** Home is not a mini-dashboard. It has three zones: Today Strip, Daily Brief, and 7-day Preview. Full filters, matrices, and raw analytics live in Insights or Trends drilldowns.
 
 **Layout (max. 3 information zones):**
 
@@ -233,10 +237,12 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 **Rules:**
 
 - No streak counter — tracking consistency widget (neutral %) only when relevant
-- Insight card is dismissable → writes to `user_preferences.dismissed_insight_ids`
+- Home does not dismiss insights directly; insight-level actions live in `/insights`.
 - If no insight exists (< 7 days of data): show `FirstWeekInsightBanner` (Issue #155)
 - Insight fetch is best-effort and must not block `HomeRecentEntries` or the CTA button
 - Home must not render insight maturity journey banners, phase milestone cards, insight matrices, deep filters, or secondary navigation that duplicates `AppNav`.
+- Home shows a short insight summary or phase fallback, not the full `InsightCard` anatomy. Insight drilldown links to `/insights`; the 7-day preview links to `/trends`.
+- Desktop may place Today Strip and Brief side by side. Mobile remains one column with the CTA visible; after today's entry exists, "Edit today" is visually lighter than the initial log action.
 
 ---
 
@@ -278,7 +284,9 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 
 ### Screen 3: Insights (`/insights`)
 
-**Purpose:** Explore all generated insights with progressive disclosure.
+**Purpose:** Explore all generated insights with progressive disclosure and a single readiness surface.
+
+**M5 Streamline:** `InsightStageHeader` is the only default phase/readiness surface. It replaces separate journey banner, quality meter, and standalone milestone card presentation. `InsightMatrix` remains available as a secondary drilldown, not as default viewport content.
 
 **Layout:**
 
@@ -316,10 +324,13 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 - Default insight cards show `InsightMaturityBadge` instead of raw confidence or p-values; statistical details stay in expanded/detail contexts.
 - Empty and locked states explain the current maturity phase instead of using a generic unavailable state.
 - Phase milestone cards are explicit-dismiss only and persist in `reached_milestone_keys`; they are not toasts and never auto-dismiss.
+- Matrix, raw values, sample sizes, confidence, filters, and card detail charts remain reachable through drilldowns. Decluttering must never remove data depth.
 
 ---
 
 ### Screen 4: Trends (`/trends`)
+
+**M5 Streamline:** `Compare` is the default tab. It shows Mood/Energy/Stress lines above tag and symptom heatmap rows on one shared time axis. `Activities` is no longer a default tab; its tag-frequency function is represented by tag rows in Compare.
 
 **Purpose:** Long-term visualisations — mood timeline, tag frequency, work context patterns.
 
@@ -328,7 +339,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 **Layout (tab-based):**
 
 ```
-[Mood] [Activities] [Health] [Habits]
+[Compare] [Health] [Habits]
 
 Time range: [7D] [30D] [90D] [1Y]
 
@@ -355,6 +366,8 @@ Time range: [7D] [30D] [90D] [1Y]
 - Charts are tappable: tap on data point shows tooltip with day details
 - Entry History: tap on any data point or calendar cell → secondary sheet overlay with single past entry (read-only)
 - Mood charts expose `Raw | Smoothed` for 30D and longer ranges; smoothing is a client-side 7-day SMA persisted in `cc_trend_smooth`.
+- Symptom heatmap is neutral occurrence/intensity visualization only. It does not introduce co-occurrence, medical interpretation, correlation recommendations, or a new analytics engine.
+- Mobile uses one controlled horizontal timeline scroller with sticky row labels and compact layer controls. Desktop uses a wider analysis canvas, sticky controls, and may keep an entry-detail panel open beside the chart.
 - Health tab may show a cycle-day strip when entries contain `cycle_day`; it must not infer phases or provide medical interpretation.
 - Habits tab shows goal-based adherence for `build` / `reduce` habit tags, with a 7/14/28/90 day window selector.
 - Habit detail reuses the neutral tag heatmap and may show a correlation contribution from existing insights; no streak counters, badges, points, rewards or urgency framing.
@@ -537,7 +550,7 @@ apps/web/src/
     ├── insights/
     │   └── +page.svelte     # Insights feed
     ├── trends/
-    │   └── +page.svelte     # Trend visualisations (incl. Activities tab + Entry History sheet)
+    │   └── +page.svelte     # Trend visualisations (Compare + Entry History sheet)
     ├── settings/
     │   ├── +page.svelte     # Settings
     │   └── tags/            # Tag management sub-page
@@ -665,10 +678,10 @@ Every new component or screen decision must be checked against:
 
 Sprint 9 records the QA handoff in [`quality/M3_5_VISUAL_QA.md`](quality/M3_5_VISUAL_QA.md). The implemented M3.5 screen model is:
 
-- Home: three primary zones with best-effort insight preview and 7-day sparkline.
+- Home: Daily Brief with Today Strip, compact insight/phase summary, and 7-day preview.
 - Entry: bottom sheet/page mode with sectioned form, neutral work-context hint, auto-save status, and Day Delta.
-- Insights: quality meter, filterable insight feed, disclaimer access, progressive detail expansion, and inactive-tag markers.
-- Trends: Mood / Activities / Health tabs, unified ranges, custom SVG charts, heatmap, and Entry History sheet overlay.
+- Insights: single Stage Header, filterable insight feed, disclaimer access, progressive detail expansion, matrix drilldown, and inactive-tag markers.
+- Trends: Compare / Health / Habits tabs, unified ranges, custom SVG charts, tag/symptom context rows, and Entry History sheet overlay.
 - Settings: Tracking / Analysis / Privacy & Data / Appearance / Developer sections, language control, theme toggle, Dev Mode, Force Visualizations, phase mocks, and Tag Settings active/inactive lifecycle.
 - PWA: Home install banner is dismissible via `cc_pwa_dismissed`; `/offline` is the navigation fallback; service worker skips `/api/*`.
 

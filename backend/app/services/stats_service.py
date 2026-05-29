@@ -12,9 +12,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
+from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.schemas.stats import (
     EntryStreakResponse,
+    SymptomHeatmapDay,
+    SymptomHeatmapResponse,
+    SymptomHeatmapSymptom,
     TagHeatmapDay,
     TagHeatmapResponse,
     TagHeatmapTag,
@@ -159,6 +163,64 @@ async def get_tag_heatmap(
             )
         )
     return TagHeatmapResponse(start_date=start_date, end_date=end_date, tags=tags)
+
+
+async def get_symptom_heatmap(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    start_date: date_type | None = None,
+    end_date: date_type | None = None,
+) -> SymptomHeatmapResponse:
+    """Return neutral daily symptom occurrence/intensity rows for Trends."""
+
+    end_date = end_date or _today()
+    start_date = start_date or (end_date - timedelta(days=364))
+
+    stmt = (
+        select(Symptom, Entry.entry_date, EntrySymptom.intensity)
+        .join(EntrySymptom, EntrySymptom.symptom_id == Symptom.id)
+        .join(Entry, Entry.id == EntrySymptom.entry_id)
+        .where(
+            EntrySymptom.user_id == user_id,
+            Entry.user_id == user_id,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= end_date,
+            (Symptom.is_default.is_(True)) | (Symptom.user_id == user_id),
+        )
+        .order_by(Symptom.slug.asc(), Entry.entry_date.asc())
+    )
+
+    result = await db.execute(stmt)
+    counts: dict[uuid.UUID, dict[date_type, int]] = defaultdict(lambda: defaultdict(int))
+    max_intensity: dict[uuid.UUID, dict[date_type, int]] = defaultdict(lambda: defaultdict(int))
+    symptom_meta: dict[uuid.UUID, Symptom] = {}
+    for symptom, entry_date, intensity in result.all():
+        symptom_meta[symptom.id] = symptom
+        counts[symptom.id][entry_date] += 1
+        max_intensity[symptom.id][entry_date] = max(max_intensity[symptom.id][entry_date], intensity)
+
+    symptoms: list[SymptomHeatmapSymptom] = []
+    for symptom_id, symptom in sorted(symptom_meta.items(), key=lambda item: item[1].slug):
+        days = [
+            SymptomHeatmapDay(
+                date=day,
+                count=count,
+                max_intensity=max_intensity[symptom_id][day],
+            )
+            for day, count in sorted(counts[symptom_id].items(), key=lambda item: item[0])
+        ]
+        symptoms.append(
+            SymptomHeatmapSymptom(
+                symptom_id=symptom.id,
+                slug=symptom.slug,
+                name=symptom.display_name,
+                icon=symptom.icon,
+                days=days,
+            )
+        )
+
+    return SymptomHeatmapResponse(start_date=start_date, end_date=end_date, symptoms=symptoms)
 
 
 async def get_entry_streak(

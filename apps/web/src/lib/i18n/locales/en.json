@@ -38,6 +38,22 @@
     "secondary_nav": "More areas",
     "loading_today": "Loading today's status\u2026",
     "streak_label": "tracking consistency",
+    "brief": {
+      "label": "Daily brief",
+      "heading": "Today at a glance",
+      "insight_fallback": "Open Insights for the full context and underlying data.",
+      "phase_fallback": "Your current insight phase is active. Details stay available in Insights.",
+      "collecting_title": "Collecting today's context",
+      "collecting_body": "Log a few days to make the brief more specific.",
+      "mood_delta": "7-day mood direction",
+      "delta_empty": "Not enough entries yet",
+      "delta_up": "Up {value} point(s)",
+      "delta_down": "Down {value} point(s)",
+      "delta_flat": "Stable",
+      "top_tag": "Notable tag",
+      "top_symptom": "Notable symptom",
+      "none": "None"
+    },
     "recent": {
       "heading": "Last 7 days",
       "today": "Today",
@@ -312,6 +328,7 @@
     },
     "tabs": {
       "label": "Trend sections",
+      "compare": "Compare",
       "mood": "Mood",
       "activities": "Activities",
       "health": "Health",
@@ -365,6 +382,16 @@
       "more": "More",
       "loading": "Loading tag heatmap",
       "empty": "No tag activity in this range yet."
+    },
+    "compare": {
+      "heading": "Compare",
+      "body": "Mood, energy and stress share one timeline with tag and symptom rows below.",
+      "layers": "Layers",
+      "tags": "Tags",
+      "symptoms": "Symptoms",
+      "heatmap_heading": "Context rows",
+      "loading": "Loading comparison layers",
+      "empty_layers": "Enable tags or symptoms to compare context on the shared timeline."
     },
     "history": {
       "eyebrow": "Entry details",
@@ -608,7 +635,13 @@
       "auth_required": "Sign in to view your insights.",
       "loading": "Loading insights...",
       "empty": "Not enough data for current insights yet.",
-      "list_heading": "Current insights"
+      "list_heading": "Current insights",
+      "detail_views": "Insight detail views",
+      "findings_view": "Findings",
+      "matrix_view": "Matrix"
+    },
+    "stage": {
+      "aria_label": "Insight readiness"
     },
     "feed": {
       "aria_label": "Insights feed",

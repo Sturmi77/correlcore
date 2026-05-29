@@ -4,7 +4,7 @@
    *
    * Authenticated home uses exactly three information zones:
    *   1. Today context (date, work context, entry status)
-   *   2. Latest insight OR first-week banner (best-effort)
+   *   2. Daily Brief: latest insight summary OR phase fallback (best-effort)
    *   3. 7-day mood sparkline + primary entry CTA
    *
    * Insight load never blocks the CTA. No matrix, summary grid, or
@@ -17,7 +17,13 @@
   import { auth, currentUser } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchDashboardSummary, type DashboardSummaryResponse } from '$lib/api/dashboard';
-  import { insightStore, rankedInsights, loadInsights, dismissInsight } from '$lib/stores/insights';
+  import {
+    fetchSymptomHeatmap,
+    fetchTagHeatmap,
+    type SymptomHeatmapResponse,
+    type TagHeatmapResponse,
+  } from '$lib/api/stats';
+  import { insightStore, rankedInsights, loadInsights } from '$lib/stores/insights';
   import {
     fetchUserPreferences,
     updateUserPreferences,
@@ -33,7 +39,7 @@
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
-  import InsightCard from '$lib/components/insights/InsightCard.svelte';
+  import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
 
   const HOME_SPARKLINE_DAYS = 7;
@@ -45,6 +51,8 @@
   let recentEntries: EntryResponse[] = [];
   let dashboardSummary: DashboardSummaryResponse | null = null;
   let userPreferences: UserPreferencesResponse | null = null;
+  let tagHeatmap: TagHeatmapResponse | null = null;
+  let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
   let entrySheetOpen = false;
@@ -53,7 +61,6 @@
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
   $: insightLoading = $insightStore.loading;
-  $: insightError = $insightStore.error ?? '';
   $: weekdayInsight = $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
@@ -76,6 +83,8 @@
         recentEntries = mockEntries.slice(0, HOME_SPARKLINE_DAYS);
         todayEntry = findEntryForDate(recentEntries, todayIso);
         dashboardSummary = { ...mockDashboardSummary, entry_count: $devPhase.entryCount };
+        tagHeatmap = null;
+        symptomHeatmap = null;
         userPreferences = {
           ...mockUserPreferences,
           onboarding_retro_completed: $devPhase.onboardingCompleted,
@@ -85,11 +94,14 @@
       }
 
       const start = shiftIsoDate(todayIso, -(HOME_SPARKLINE_DAYS - 1));
-      const [entriesResult, summaryResult, preferencesResult] = await Promise.allSettled([
-        listEntries({ start_date: start, end_date: todayIso }),
-        fetchDashboardSummary(todayIso),
-        fetchUserPreferences(),
-      ]);
+      const [entriesResult, summaryResult, preferencesResult, tagsResult, symptomsResult] =
+        await Promise.allSettled([
+          listEntries({ start_date: start, end_date: todayIso }),
+          fetchDashboardSummary(todayIso),
+          fetchUserPreferences(),
+          fetchTagHeatmap({ start_date: start, end_date: todayIso }),
+          fetchSymptomHeatmap({ start_date: start, end_date: todayIso }),
+        ]);
 
       if (entriesResult.status === 'rejected') throw entriesResult.reason;
 
@@ -97,11 +109,15 @@
       todayEntry = findEntryForDate(recentEntries, todayIso);
       dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
       userPreferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : null;
+      tagHeatmap = tagsResult.status === 'fulfilled' ? tagsResult.value : null;
+      symptomHeatmap = symptomsResult.status === 'fulfilled' ? symptomsResult.value : null;
     } catch {
       recentEntries = [];
       todayEntry = null;
       dashboardSummary = null;
       userPreferences = null;
+      tagHeatmap = null;
+      symptomHeatmap = null;
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
@@ -189,18 +205,18 @@
       <HomeTodayContext {todayIso} {todayEntry} loading={dashboardLoading && !dashboardLoaded} />
     </section>
 
-    <!-- Zone 2: insight preview (best-effort) -->
+    <!-- Zone 2: daily brief (best-effort) -->
     <section class="home-zone" data-testid="home-zone-insight">
       {#if showFirstWeekBanner}
         <FirstWeekInsightBanner on:dismiss={dismissFirstWeekBanner} />
       {:else}
-        <InsightCard
-          insight={latestInsight}
+        <HomeDailyBrief
+          entries={recentEntries}
+          {latestInsight}
           maturity={insightMaturity}
           loading={insightLoading && !latestInsight}
-          error={insightError}
-          on:dismiss={(e) => void dismissInsight(e.detail.id)}
-          on:retry={() => void loadInsights()}
+          {tagHeatmap}
+          {symptomHeatmap}
         />
       {/if}
     </section>
@@ -216,7 +232,7 @@
 
       <Button
         type="button"
-        variant="primary"
+        variant={todayEntry ? 'secondary' : 'primary'}
         size="lg"
         fullWidth
         stacked
