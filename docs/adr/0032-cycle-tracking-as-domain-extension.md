@@ -103,23 +103,23 @@ existing entry feature code.
 
 ## Considered Alternatives
 
-| Alternative | Reason rejected |
-|---|---|
+| Alternative                            | Reason rejected                                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Standalone `cycle` module at top-level | Breaks the existing domain structure; creates parallel routing, duplicates data access patterns |
-| Separate "Cycle" screen in navigation | Violates the single-source-of-truth entry model; creates two competing data entry flows |
-| Third-party cycle tracking SDK | Incompatible with Privacy-by-Design and self-hosting principles |
+| Separate "Cycle" screen in navigation  | Violates the single-source-of-truth entry model; creates two competing data entry flows         |
+| Third-party cycle tracking SDK         | Incompatible with Privacy-by-Design and self-hosting principles                                 |
 
 ## Milestone Mapping
 
-| Deliverable | Milestone |
-|---|---|
-| `cycle_day`, `cycle_bleeding_level` fields, migration | M4 (in progress) |
-| Cycle symptom taxonomy extension | M4 |
-| Onboarding toggle (see ADR-0034) | M4 |
-| Calendar overlay with cycle markers | M5 |
-| Rule-based cycle pattern insights | M5 |
-| Cycle × lifestyle correlations | M8 (Insights v2) |
-| External health imports (cycle data) | M7 (Health Connect) |
+| Deliverable                                           | Milestone           |
+| ----------------------------------------------------- | ------------------- |
+| `cycle_day`, `cycle_bleeding_level` fields, migration | M4 (in progress)    |
+| Cycle symptom taxonomy extension                      | M4                  |
+| Onboarding toggle (see ADR-0034)                      | M4                  |
+| Calendar overlay with cycle markers                   | M5                  |
+| Rule-based cycle pattern insights                     | M5                  |
+| Cycle × lifestyle correlations                        | M8 (Insights v2)    |
+| External health imports (cycle data)                  | M7 (Health Connect) |
 
 ## Consequences
 

@@ -66,15 +66,15 @@ Deletion of cycle data is a separate action available at
 
 ### 3. What the toggle controls (UI scope)
 
-| UI element | Toggle OFF | Toggle ON |
-|---|---|---|
-| `cycle_day` field in entry form | Hidden (under `+ More`) | Visible in entry form |
-| `cycle_bleeding_level` field | Hidden | Visible |
-| Cycle symptom codes in symptom picker | Hidden | Visible |
-| Cycle event buttons (period start, etc.) | Hidden | Visible |
-| Calendar cycle overlay (M5) | Hidden | Visible |
-| Cycle-phase insight cards | Hidden | Visible |
-| Health tab cycle section | Hidden | Visible |
+| UI element                               | Toggle OFF              | Toggle ON             |
+| ---------------------------------------- | ----------------------- | --------------------- |
+| `cycle_day` field in entry form          | Hidden (under `+ More`) | Visible in entry form |
+| `cycle_bleeding_level` field             | Hidden                  | Visible               |
+| Cycle symptom codes in symptom picker    | Hidden                  | Visible               |
+| Cycle event buttons (period start, etc.) | Hidden                  | Visible               |
+| Calendar cycle overlay (M5)              | Hidden                  | Visible               |
+| Cycle-phase insight cards                | Hidden                  | Visible               |
+| Health tab cycle section                 | Hidden                  | Visible               |
 
 The `cycle_day` field remains accessible under `+ More` even when the
 toggle is off (consistent with ADR-0031), so power users who bypass the
@@ -104,23 +104,23 @@ This nudge is shown at most once per week and is permanently dismissible.
 
 ## Considered Alternatives
 
-| Alternative | Reason rejected |
-|---|---|
-| Always show cycle fields, no toggle | Adds friction for non-relevant users; violates health data consent principle |
-| Feature flag server-side | Overkill for a user preference; adds API round-trip on every page load |
-| Separate "Cycle" screen in navigation | Creates a competing entry flow and breaks the single-entry-per-day model |
-| Opt-out (on by default) | Contradicts Privacy-by-Design consent requirement for health data |
+| Alternative                           | Reason rejected                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------- |
+| Always show cycle fields, no toggle   | Adds friction for non-relevant users; violates health data consent principle |
+| Feature flag server-side              | Overkill for a user preference; adds API round-trip on every page load       |
+| Separate "Cycle" screen in navigation | Creates a competing entry flow and breaks the single-entry-per-day model     |
+| Opt-out (on by default)               | Contradicts Privacy-by-Design consent requirement for health data            |
 
 ## Milestone Mapping
 
-| Deliverable | Milestone |
-|---|---|
+| Deliverable                                     | Milestone        |
+| ----------------------------------------------- | ---------------- |
 | `user_preferences.cycle_tracking_enabled` field | M4 (in progress) |
-| Onboarding step 3 (cycle opt-in) | M4 |
-| Settings toggle + hide/show logic | M4 |
-| Health tab nudge card | M4 |
-| Calendar overlay controlled by toggle | M5 |
-| Cycle insight cards controlled by toggle | M5 |
+| Onboarding step 3 (cycle opt-in)                | M4               |
+| Settings toggle + hide/show logic               | M4               |
+| Health tab nudge card                           | M4               |
+| Calendar overlay controlled by toggle           | M5               |
+| Cycle insight cards controlled by toggle        | M5               |
 
 ## Consequences
 

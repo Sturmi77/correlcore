@@ -111,11 +111,11 @@ This disclaimer applies to all insight cards referencing cycle data.
 
 ## Considered Alternatives
 
-| Alternative | Reason rejected |
-|---|---|
-| Separate encrypted table for SHD | Sync complexity, JOIN overhead, migration risk — benefits do not outweigh costs at current scale |
-| Field-level encryption for SHD columns only | High implementation cost; ADR-0005 already encrypts the full table at rest |
-| Opt-out instead of opt-in for cycle tracking | Contradicts Privacy-by-Design; health data must be explicitly consented |
+| Alternative                                  | Reason rejected                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Separate encrypted table for SHD             | Sync complexity, JOIN overhead, migration risk — benefits do not outweigh costs at current scale |
+| Field-level encryption for SHD columns only  | High implementation cost; ADR-0005 already encrypts the full table at rest                       |
+| Opt-out instead of opt-in for cycle tracking | Contradicts Privacy-by-Design; health data must be explicitly consented                          |
 
 ## Consequences
 
