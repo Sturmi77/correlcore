@@ -82,19 +82,24 @@ export async function submitTag(payload: TagCreatePayload): Promise<TagResponse>
   return created;
 }
 
+/** Apply an already-persisted tag update to the cache. */
+export function applyTagUpdate(previousId: string, updated: TagResponse): void {
+  const current = get(_tags);
+  if (current.status !== 'ready') return;
+  _tags.set({
+    status: 'ready',
+    tags: current.tags
+      .filter((tag) => tag.id !== previousId && tag.id !== updated.id)
+      .filter((tag) => !(tag.is_default && tag.slug === updated.slug))
+      .concat(updated)
+      .filter((tag) => !tag.is_hidden),
+  });
+}
+
 /** Update a tag in place in the cache. Default edits may return a user override. */
 export async function patchTag(id: string, payload: TagUpdatePayload): Promise<TagResponse> {
   const updated = await apiUpdateTag(id, payload);
-  const current = get(_tags);
-  if (current.status === 'ready') {
-    _tags.set({
-      status: 'ready',
-      tags: current.tags
-        .filter((t) => t.id !== id)
-        .concat(updated)
-        .filter((t) => !t.is_hidden),
-    });
-  }
+  applyTagUpdate(id, updated);
   return updated;
 }
 

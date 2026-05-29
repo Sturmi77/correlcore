@@ -54,6 +54,7 @@ from app.services.tag_service import (
     TagConflictError,
     TagNotFoundError,
     TagsNotFoundError,
+    TagValidationError,
     active_tag_predicate,
     assign_tags_to_entry,
     create_custom_tag,
@@ -155,6 +156,12 @@ def test_tag_create_validates_habit_fields() -> None:
 
 def test_tag_update_clears_target_frequency_for_non_habit() -> None:
     payload = TagUpdate(habit_type="none", target_frequency=4)
+    assert payload.target_frequency is None
+
+
+def test_tag_update_allows_partial_habit_type_patch() -> None:
+    payload = TagUpdate(habit_type="build")
+    assert payload.habit_type == "build"
     assert payload.target_frequency is None
 
 
@@ -369,6 +376,58 @@ async def test_update_default_tag_creates_user_override() -> None:
     assert default.name == "Sport"
     db.add.assert_called_once_with(out)
     db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_default_tag_partial_habit_patch_uses_existing_target() -> None:
+    user = make_user()
+    default = make_tag(
+        slug="sport",
+        name="Sport",
+        is_default=True,
+        habit_type="build",
+        target_frequency=3,
+    )
+    db = MagicMock()
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(default),
+            _scalar_result(None),
+        ]
+    )
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=default.id,
+        payload=TagUpdate(habit_type="reduce"),
+    )
+
+    assert out.habit_type == "reduce"
+    assert out.target_frequency == 3
+    db.add.assert_called_once_with(out)
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_tag_rejects_habit_without_effective_target() -> None:
+    user = make_user()
+    tag = make_tag(user, slug="custom", habit_type="none", target_frequency=None)
+    db = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(return_value=_scalar_result(tag))
+
+    with pytest.raises(TagValidationError):
+        await update_custom_tag(
+            db,
+            user_id=user.id,
+            tag_id=tag.id,
+            payload=TagUpdate(habit_type="build"),
+        )
+
+    db.flush.assert_not_called()
 
 
 @pytest.mark.asyncio

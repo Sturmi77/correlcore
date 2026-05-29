@@ -18,7 +18,7 @@
     type HabitType,
     type TagResponse,
   } from '$lib/api/tags';
-  import { refreshTags } from '$lib/stores/tags';
+  import { applyTagUpdate, refreshTags } from '$lib/stores/tags';
 
   type Draft = {
     name: string;
@@ -83,13 +83,26 @@
     };
   }
 
+  function applySavedTag(previousId: string, updated: TagResponse): void {
+    tags = tags
+      .filter((item) => item.id !== previousId && item.id !== updated.id)
+      .filter((item) => !(item.is_default && item.slug === updated.slug))
+      .concat(updated);
+    const { [previousId]: _discarded, ...remainingDrafts } = drafts;
+    drafts = {
+      ...remainingDrafts,
+      [updated.id]: draftFrom(updated),
+    };
+    applyTagUpdate(previousId, updated);
+  }
+
   async function save(tag: TagResponse): Promise<void> {
     const draft = drafts[tag.id];
     if (!draft) return;
     savingId = tag.id;
     error = '';
     try {
-      await updateTag(tag.id, {
+      const updated = await updateTag(tag.id, {
         name: draft.name,
         category: draft.category,
         icon: draft.icon.trim() ? draft.icon.trim() : null,
@@ -97,8 +110,7 @@
         habit_type: draft.habit_type,
         target_frequency: draft.habit_type === 'none' ? null : draft.target_frequency,
       });
-      await load();
-      await refreshTags();
+      applySavedTag(tag.id, updated);
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.tags.error_save');
     } finally {
@@ -110,9 +122,8 @@
     savingId = tag.id;
     error = '';
     try {
-      await updateTag(tag.id, { is_hidden: !tag.is_hidden });
-      await load();
-      await refreshTags();
+      const updated = await updateTag(tag.id, { is_hidden: !tag.is_hidden });
+      applySavedTag(tag.id, updated);
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.tags.error_save');
     } finally {

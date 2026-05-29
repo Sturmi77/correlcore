@@ -35,6 +35,7 @@ from app.services.tag_service import (
     TagConflictError,
     TagNotFoundError,
     TagsNotFoundError,
+    TagValidationError,
     assign_tags_to_entry,
     create_custom_tag,
     delete_custom_tag,
@@ -142,6 +143,11 @@ async def update_tag_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="tag not found",
+        ) from exc
+    except TagValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
         ) from exc
     return TagResponse.model_validate(tag)
 

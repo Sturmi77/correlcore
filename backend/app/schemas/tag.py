@@ -135,9 +135,14 @@ class TagUpdate(BaseModel):
 
     @model_validator(mode="after")
     def habit_fields_consistent(self) -> TagUpdate:
+        fields_set = self.model_fields_set
         if self.habit_type == "none":
             self.target_frequency = None
-        elif self.habit_type in {"build", "reduce"} and self.target_frequency is None:
+        elif (
+            self.habit_type in {"build", "reduce"}
+            and "target_frequency" in fields_set
+            and self.target_frequency is None
+        ):
             raise ValueError("target_frequency is required for habit tags")
         return self
 
