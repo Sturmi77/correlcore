@@ -227,6 +227,8 @@ async def create_custom_tag(
         category=payload.category,
         icon=payload.icon,
         color=payload.color,
+        habit_type=payload.habit_type,
+        target_frequency=payload.target_frequency,
         is_default=False,
     )
     db.add(tag)

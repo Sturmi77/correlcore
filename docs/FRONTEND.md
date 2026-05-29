@@ -328,7 +328,7 @@ CorrelCore has exactly **5 primary screens**. No screen may be added without an 
 **Layout (tab-based):**
 
 ```
-[Mood] [Activities] [Health]
+[Mood] [Activities] [Health] [Habits]
 
 Time range: [7D] [30D] [90D] [1Y]
 
@@ -356,6 +356,8 @@ Time range: [7D] [30D] [90D] [1Y]
 - Entry History: tap on any data point or calendar cell → secondary sheet overlay with single past entry (read-only)
 - Mood charts expose `Raw | Smoothed` for 30D and longer ranges; smoothing is a client-side 7-day SMA persisted in `cc_trend_smooth`.
 - Health tab may show a cycle-day strip when entries contain `cycle_day`; it must not infer phases or provide medical interpretation.
+- Habits tab shows goal-based adherence for `build` / `reduce` habit tags, with a 7/14/28/90 day window selector.
+- Habit detail reuses the neutral tag heatmap and may show a correlation contribution from existing insights; no streak counters, badges, points, rewards or urgency framing.
 
 ---
 
@@ -408,6 +410,7 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 - Hidden tags do not appear in new Entry Tag Picker flows.
 - Historical entry-tag relations are retained; analytics and heatmap calculations skip hidden tags for new calculations.
 - Existing insights that point to inactive tags are not deleted; they are marked as inactive in the UI.
+- Habit configuration lives in Tag Settings: `none | build | reduce` plus a weekly target from 1 to 7. `none` clears the target.
 
 ---
 

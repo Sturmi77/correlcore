@@ -14,7 +14,8 @@ function collectStrings(value: unknown): string[] {
 
 describe('no-gamification UI copy', () => {
   it('does not expose streak or reward framing in locale strings', () => {
-    const forbidden = /\b(streak|reward|badge|fire)\b|don't break/i;
+    const forbidden =
+      /\b(streak|reward|badge|fire)\b|don't break|streak broken|you failed|failed your/i;
     const strings = [...collectStrings(en), ...collectStrings(de)];
 
     expect(strings.filter((copy) => forbidden.test(copy))).toEqual([]);

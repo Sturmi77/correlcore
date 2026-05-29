@@ -1,4 +1,6 @@
+import type { HabitStatsResponse } from '$lib/api/habits';
 import type { EntryStreakResponse, TagHeatmapResponse, TimeseriesResponse } from '$lib/api/stats';
+import type { TagResponse } from '$lib/api/tags';
 import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
 
 const today = localIsoDate(new Date());
@@ -56,3 +58,65 @@ export const mockEntryStreak: EntryStreakResponse = {
   last_entry_date: today,
   as_of: today,
 };
+
+export const mockHabitTags: TagResponse[] = [
+  {
+    id: 'mock-tag-walk',
+    user_id: 'mock-user',
+    slug: 'walk',
+    name: 'Walk',
+    category: 'sport',
+    icon: 'footprints',
+    color: null,
+    is_default: false,
+    is_hidden: false,
+    habit_type: 'build',
+    target_frequency: 4,
+    created_at: `${today}T00:00:00Z`,
+    updated_at: `${today}T00:00:00Z`,
+  },
+  {
+    id: 'mock-tag-focus',
+    user_id: 'mock-user',
+    slug: 'focus',
+    name: 'Focus work',
+    category: 'work',
+    icon: 'briefcase',
+    color: null,
+    is_default: false,
+    is_hidden: false,
+    habit_type: 'reduce',
+    target_frequency: 5,
+    created_at: `${today}T00:00:00Z`,
+    updated_at: `${today}T00:00:00Z`,
+  },
+];
+
+export const mockHabits: HabitStatsResponse[] = [
+  {
+    tag_id: 'mock-tag-walk',
+    habit_type: 'build',
+    target_frequency: 4,
+    window: 28,
+    start_date: shiftIsoDate(today, -27),
+    end_date: today,
+    days_tracked: 12,
+    days_total: 28,
+    target_days: 16,
+    adherence_rate: 75,
+    correlation_score: 0.48,
+  },
+  {
+    tag_id: 'mock-tag-focus',
+    habit_type: 'reduce',
+    target_frequency: 5,
+    window: 28,
+    start_date: shiftIsoDate(today, -27),
+    end_date: today,
+    days_tracked: 14,
+    days_total: 28,
+    target_days: 20,
+    adherence_rate: 100,
+    correlation_score: null,
+  },
+];

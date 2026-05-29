@@ -66,6 +66,8 @@ describe('createTag', () => {
       category: 'sport',
       icon: '🧘',
       color: '#a1b2c3',
+      habit_type: 'build',
+      target_frequency: 4,
     });
     expect(api.post).toHaveBeenCalledWith('/tags', {
       slug: 'yoga',
@@ -73,6 +75,8 @@ describe('createTag', () => {
       category: 'sport',
       icon: '🧘',
       color: '#a1b2c3',
+      habit_type: 'build',
+      target_frequency: 4,
     });
   });
 });
@@ -80,8 +84,12 @@ describe('createTag', () => {
 describe('updateTag', () => {
   it('PATCHes /tags/{id}', async () => {
     vi.mocked(api.patch).mockResolvedValueOnce({ id: 't1' });
-    await updateTag('t1', { name: 'Renamed', is_hidden: true });
-    expect(api.patch).toHaveBeenCalledWith('/tags/t1', { name: 'Renamed', is_hidden: true });
+    await updateTag('t1', { name: 'Renamed', is_hidden: true, habit_type: 'none' });
+    expect(api.patch).toHaveBeenCalledWith('/tags/t1', {
+      name: 'Renamed',
+      is_hidden: true,
+      habit_type: 'none',
+    });
   });
 });
 

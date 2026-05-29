@@ -12,18 +12,26 @@
     type TimeseriesRange,
     type TimeseriesResponse,
   } from '$lib/api/stats';
+  import { listHabits, type HabitStatsResponse, type HabitWindow } from '$lib/api/habits';
   import { listSymptomsForEntry, listVisibleSymptoms } from '$lib/api/symptoms';
-  import { listTagsForEntry } from '$lib/api/tags';
+  import { listTagsForEntry, listVisibleTags, type TagResponse } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
   import type { TagCategory } from '$lib/api/tags';
   import { TAG_CATEGORIES } from '$lib/api/tags';
   import { mockEntries } from '$lib/dev/mockEntries';
-  import { mockEntryStreak, mockTagHeatmap, mockTimeseries } from '$lib/dev/mockTrends';
+  import {
+    mockEntryStreak,
+    mockHabitTags,
+    mockHabits,
+    mockTagHeatmap,
+    mockTimeseries,
+  } from '$lib/dev/mockTrends';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
+  import HabitsPanel from '$lib/components/trends/HabitsPanel.svelte';
   import EntryHistorySheet, {
     type EntryHistoryDetail,
   } from '$lib/components/trends/EntryHistorySheet.svelte';
@@ -36,7 +44,7 @@
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
 
-  type TrendTab = 'mood' | 'activities' | 'health';
+  type TrendTab = 'mood' | 'activities' | 'health' | 'habits';
 
   const metricLabels: Record<MetricKey, string> = {
     mood_avg: 'trends.metric.mood',
@@ -55,6 +63,7 @@
     { id: 'mood', label: 'trends.tabs.mood' },
     { id: 'activities', label: 'trends.tabs.activities' },
     { id: 'health', label: 'trends.tabs.health' },
+    { id: 'habits', label: 'trends.tabs.habits' },
   ];
 
   let activeTab: TrendTab = 'mood';
@@ -63,6 +72,9 @@
   let timeseries: TimeseriesResponse | null = null;
   let heatmap: TagHeatmapResponse | null = null;
   let streak: EntryStreakResponse | null = null;
+  let habitStats: HabitStatsResponse[] = [];
+  let habitTags: TagResponse[] = [];
+  let habitWindow: HabitWindow = 28;
   let cycleEntries: EntryResponse[] = [];
   let metrics: Record<MetricKey, boolean> = {
     mood_avg: true,
@@ -80,10 +92,11 @@
 
   const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
 
-  function dateWindow(): { start_date: string; end_date: string } {
+  function dateWindow(days?: number): { start_date: string; end_date: string } {
     const option = rangeOptions.find((item) => item.id === range) ?? rangeOptions[0];
+    const windowDays = days ?? option.days;
     const end_date = localIsoDate(new Date());
-    return { start_date: shiftIsoDate(end_date, -(option.days - 1)), end_date };
+    return { start_date: shiftIsoDate(end_date, -(windowDays - 1)), end_date };
   }
 
   async function loadTrends(): Promise<void> {
@@ -95,24 +108,35 @@
         timeseries = { ...mockTimeseries, range };
         heatmap = mockTagHeatmap;
         streak = mockEntryStreak;
+        habitStats = mockHabits.map((habit) => ({ ...habit, window: habitWindow }));
+        habitTags = mockHabitTags;
         cycleEntries = mockEntries.filter((entry) => entry.cycle_day !== null);
         return;
       }
 
-      const { start_date, end_date } = dateWindow();
-      const [nextTimeseries, nextHeatmap, nextStreak, nextEntries] = await Promise.all([
-        fetchTimeseries(range),
-        fetchTagHeatmap({
-          start_date,
-          end_date,
-          ...(selectedCategory === 'all' ? {} : { category: selectedCategory }),
-        }),
-        fetchEntryStreak(),
-        listEntries({ start_date, end_date, limit: 365 }),
-      ]);
+      const { start_date, end_date } = dateWindow(activeTab === 'habits' ? habitWindow : undefined);
+      const [nextTimeseries, nextHeatmap, nextStreak, nextEntries, nextHabitStats, nextTags] =
+        await Promise.all([
+          fetchTimeseries(range),
+          fetchTagHeatmap({
+            start_date,
+            end_date,
+            ...(activeTab === 'activities' && selectedCategory !== 'all'
+              ? { category: selectedCategory }
+              : {}),
+          }),
+          fetchEntryStreak(),
+          listEntries({ start_date, end_date, limit: 365 }),
+          activeTab === 'habits'
+            ? listHabits(habitWindow)
+            : Promise.resolve({ habits: habitStats }),
+          activeTab === 'habits' ? listVisibleTags() : Promise.resolve(habitTags),
+        ]);
       timeseries = nextTimeseries;
       heatmap = nextHeatmap;
       streak = nextStreak;
+      habitStats = nextHabitStats.habits;
+      habitTags = nextTags.filter((tag) => tag.habit_type !== 'none');
       cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
@@ -279,7 +303,10 @@
       options={trendTabOptions}
       ariaLabel={$_('trends.tabs.label')}
       testId="trends-tabs"
-      on:change={(event) => (activeTab = event.detail.value as TrendTab)}
+      on:change={(event) => {
+        activeTab = event.detail.value as TrendTab;
+        void loadTrends();
+      }}
     />
 
     {#if error}
@@ -304,7 +331,7 @@
           on:selectDate={(event) => void openHistory(event.detail.date)}
         />
       </div>
-    {:else}
+    {:else if activeTab === 'health'}
       <div
         class="trends__panel trends__health"
         role="tabpanel"
@@ -344,6 +371,21 @@
             </div>
           </section>
         {/if}
+      </div>
+    {:else}
+      <div class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.habits')}>
+        <HabitsPanel
+          habits={habitStats}
+          tags={habitTags}
+          {heatmap}
+          window={habitWindow}
+          {loading}
+          on:windowChange={(event) => {
+            habitWindow = event.detail.window;
+            void loadTrends();
+          }}
+          on:selectDate={(event) => void openHistory(event.detail.date)}
+        />
       </div>
     {/if}
 

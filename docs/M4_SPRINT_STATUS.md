@@ -75,14 +75,14 @@ confirmation is still required after push/PR.
 - [ ] GitHub issues #10, #24, #27, and #200 commented/rescoped; connector
       startup was unavailable during local closeout.
 - [ ] GitHub CI green after push/PR.
-      | Sprint | Title | Status |
-      | ------ | ------------------------------------------------ | ------- |
-      | 0 | ADR & Scope Documentation | Pending |
-      | 1 | Entry Time Slots + Trend Smoothing | Pending |
-      | 2 | Guided Onboarding + Cycle Tracking Groundwork | Pending |
-      | 3 | Developer Mode: Phase Switcher + Onboarding Mock | Pending |
-      | 4 | PWA Hardening + Homescreen Install Prompt | Pending |
-      | 5 | Visual QA, Docs & GitHub Closure | Pending |
+| Sprint | Title                                            | Status  |
+| ------ | ------------------------------------------------ | ------- |
+| 0      | ADR & Scope Documentation                        | Pending |
+| 1      | Entry Time Slots + Trend Smoothing               | Pending |
+| 2      | Guided Onboarding + Cycle Tracking Groundwork    | Pending |
+| 3      | Developer Mode: Phase Switcher + Onboarding Mock | Pending |
+| 4      | PWA Hardening + Homescreen Install Prompt        | Pending |
+| 5      | Visual QA, Docs & GitHub Closure                 | Pending |
 
 ## Prerequisites
 

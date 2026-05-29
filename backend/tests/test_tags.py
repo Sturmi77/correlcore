@@ -133,6 +133,31 @@ def test_tag_create_validates_color() -> None:
     assert payload.color == "#aabbcc"
 
 
+def test_tag_create_validates_habit_fields() -> None:
+    payload = TagCreate(
+        slug="walk",
+        name="Walk",
+        category=TagCategory.SPORT,
+        habit_type="build",
+        target_frequency=4,
+    )
+    assert payload.habit_type == "build"
+    assert payload.target_frequency == 4
+
+    with pytest.raises(ValueError):
+        TagCreate(
+            slug="sleep",
+            name="Sleep",
+            category=TagCategory.HEALTH,
+            habit_type="reduce",
+        )
+
+
+def test_tag_update_clears_target_frequency_for_non_habit() -> None:
+    payload = TagUpdate(habit_type="none", target_frequency=4)
+    assert payload.target_frequency is None
+
+
 def test_entry_tag_assignment_rejects_duplicates() -> None:
     tid = uuid.uuid4()
     with pytest.raises(ValueError):
@@ -224,6 +249,7 @@ async def test_create_custom_tag_happy_path() -> None:
     assert tag.user_id == user.id
     assert tag.slug == "custom"
     assert tag.is_default is False
+    assert tag.habit_type == "none"
     db.add.assert_called_once()
     db.flush.assert_awaited_once()
     db.rollback.assert_not_awaited()
@@ -308,7 +334,13 @@ async def test_update_custom_tag_not_found_for_default_or_foreign() -> None:
 @pytest.mark.asyncio
 async def test_update_default_tag_creates_user_override() -> None:
     user = make_user()
-    default = make_tag(slug="sport", name="Sport", is_default=True)
+    default = make_tag(
+        slug="sport",
+        name="Sport",
+        is_default=True,
+        habit_type="build",
+        target_frequency=3,
+    )
     db = MagicMock()
     db.add = MagicMock()
     db.flush = AsyncMock()
@@ -332,6 +364,8 @@ async def test_update_default_tag_creates_user_override() -> None:
     assert out.name == "Training"
     assert out.color == "#112233"
     assert out.is_default is False
+    assert out.habit_type == "build"
+    assert out.target_frequency == 3
     assert default.name == "Sport"
     db.add.assert_called_once_with(out)
     db.flush.assert_awaited_once()
@@ -637,7 +671,13 @@ async def test_post_tag_conflict_409(async_client: AsyncClient, user: User) -> N
 
 @pytest.mark.asyncio
 async def test_patch_tag_200(async_client: AsyncClient, user: User) -> None:
-    updated = make_tag(user, slug="custom", name="Renamed")
+    updated = make_tag(
+        user,
+        slug="custom",
+        name="Renamed",
+        habit_type="build",
+        target_frequency=4,
+    )
 
     async def override() -> User:
         return user
@@ -651,7 +691,7 @@ async def test_patch_tag_200(async_client: AsyncClient, user: User) -> None:
         ):
             r = await async_client.patch(
                 f"/api/v1/tags/{updated.id}",
-                json={"name": "Renamed"},
+                json={"name": "Renamed", "habit_type": "build", "target_frequency": 4},
                 cookies={"access_token": "valid.access.token"},
             )
     finally:
@@ -659,6 +699,8 @@ async def test_patch_tag_200(async_client: AsyncClient, user: User) -> None:
 
     assert r.status_code == 200
     assert r.json()["name"] == "Renamed"
+    assert r.json()["habit_type"] == "build"
+    assert r.json()["target_frequency"] == 4
 
 
 @pytest.mark.asyncio

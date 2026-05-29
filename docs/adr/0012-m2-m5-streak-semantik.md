@@ -1,8 +1,19 @@
 # ADR-0012: Abgrenzung der Streak-Semantik zwischen M2 und M5 + Schema-Vorgriff für Habit-Felder
 
 **Datum:** 2026-05-08
-**Status:** Vorgeschlagen
+**Status:** Accepted
 **Geplante Umsetzung:** Schema-Vorgriff in M2 (Migration), volle Habit-Funktionalität in M5
+
+---
+
+## M5 Update 2026-05-28
+
+Der urspruengliche Habit-Streak-Teil dieser ADR ist durch den
+No-Gamification-Promise ersetzt. M5 implementiert keine Habit-Streaks, keine
+Badges und keine Punkte. Die kanonische Habit-Metrik ist **Adherence Rate**:
+`build` misst Fortschritt zum Wochenziel, `reduce` misst neutral, ob die
+Haeufigkeit im Zielbereich bleibt. Die bestehenden Spalten `tags.habit_type` und
+`tags.target_frequency` bleiben die Grundlage; API/UI werden in M5 aktiviert.
 
 ---
 
