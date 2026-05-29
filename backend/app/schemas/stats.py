@@ -11,6 +11,13 @@ from pydantic import BaseModel, Field
 from app.models.tag import TagCategory
 
 TimeseriesRange = Literal["week", "month", "quarter", "year"]
+TagCooccurrenceRange = Literal["30d", "90d", "1y"]
+
+COOCCURRENCE_RANGE_DAYS: dict[TagCooccurrenceRange, int] = {
+    "30d": 30,
+    "90d": 90,
+    "1y": 365,
+}
 
 
 class TimeseriesPoint(BaseModel):
@@ -73,3 +80,27 @@ class EntryStreakResponse(BaseModel):
     total_entry_days: int
     last_entry_date: date_type | None = None
     as_of: date_type
+
+
+class TagCooccurrenceTagRef(BaseModel):
+    tag_id: uuid.UUID
+    slug: str
+    name: str
+    category: TagCategory
+    color: str | None = None
+
+
+class TagCooccurrencePair(BaseModel):
+    tag_a: TagCooccurrenceTagRef
+    tag_b: TagCooccurrenceTagRef
+    count: int = Field(ge=1)
+    pct_of_a: float = Field(ge=0, le=100)
+    pct_of_b: float = Field(ge=0, le=100)
+
+
+class TagCooccurrenceResponse(BaseModel):
+    range: TagCooccurrenceRange
+    start_date: date_type
+    end_date: date_type
+    min_count: int = Field(ge=1)
+    pairs: list[TagCooccurrencePair] = Field(default_factory=list)

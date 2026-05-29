@@ -116,7 +116,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 - **Keine Streaks** — Streak-Logik widerspricht dem No-Gamification-Promise (§1.4). Ersatz durch drei nicht-gamifizierende Metriken (s. M5 und Issue #157):
   1. **Adherence Rate**: `count(days_with_tag) / total_days_in_window` — ehrlich, bricht nicht bei einer Unterbrechung
   2. **Calendar Heatmap**: visuelle Frequenzdarstellung (M2-Komponente wiederverwendet), kein Streak-Zähler
-  3. **Correlation Contribution Score**: wie stark ein Habit die Insight-Qualität beeinflusst (aus M3/M8 Insight Engine)
+  3. **Correlation Contribution Score**: wie stark ein Habit die Insight-Qualität beeinflusst (aus M3/M7 Insight Engine)
 
 **Entscheidung:** Tag kann Flag `habit_type: none|build|reduce` + `target_frequency` haben. Adherence Rate als primäre KPI. Keine Streak-Logik. Die genaue Abgrenzung zwischen **Eintrags-Tracking-Consistency** (M2, aktivitätsbasiert) und **Habit-Adherence-Rate** (M5, zielbezogen) sowie der Schema-Vorgriff für `tags.habit_type` / `tags.target_frequency` in M2 ist in [ADR-0012](adr/0012-m2-m5-streak-semantik.md) festgelegt (Update zu ADR-0012 erforderlich).
 
@@ -142,7 +142,7 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 - **Univariat:** Zusammenhang zwischen einzelnen Symptomen und Mood/Energy/Stress (Pointbiserial, Mann-Whitney-U, Cliff's Delta)
 - **Ko-Okkurrenz:** Assoziationen zwischen Symptomen und Tags (Phi, Jaccard, Lift/PMI, Fisher Exact)
-- **Multivariat:** Symptome als Features in Lasso- und Lag-Analysen sowie hierarchischem Clustering (M8)
+- **Multivariat:** Symptome als Features in Lasso- und Lag-Analysen sowie hierarchischem Clustering (M7)
 
 Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-maturity-phases.md). Symptom-Intensität (0–3) bleibt zunächst außerhalb des Scopes (Future Work, dokumentiert in der Feature-Spec).
 
@@ -177,8 +177,8 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 
 **Entscheidung:**
 
-- M6: lokaler Upload nach MinIO, EXIF-Strip Pflicht.
-- v2: optionale Immich-Integration via API-Key, „Foto des Tages" per Search-API (by date).
+- M13: lokaler Upload nach MinIO, EXIF-Strip Pflicht.
+- Optional (M13+ / Backlog): Immich-Integration via API-Key, „Foto des Tages" per Search-API (by date).
 
 **Priorität:** COULD (Immich), SHOULD (lokaler Upload)
 
@@ -233,7 +233,7 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 
 **Entscheidung:** Analyse-Worker berechnet nightly Insights. Insight-Objekt: `{metric, effect_size, confidence, sample_n, statement_template}`. Statement-Rendering template-basiert, LLM optional.
 
-**Insight-Typen (Auswahl):** `tag_mood_correlation`, `metric_mood_correlation` (Energy/Stress), `weekday_pattern`, `symptom_mood_association`, `symptom_tag_cooccurrence`, `symptom_cluster` (M8). Vollständiges Schema in [`features/symptom-analytics.md`](features/symptom-analytics.md) und [API.md](API.md).
+**Insight-Typen (Auswahl):** `tag_mood_correlation`, `metric_mood_correlation` (Energy/Stress), `weekday_pattern`, `symptom_mood_association`, `symptom_tag_cooccurrence`, `symptom_cluster` (M7). Vollständiges Schema in [`features/symptom-analytics.md`](features/symptom-analytics.md) und [API.md](API.md).
 
 **Priorität:** MUST (Kern-USP), iterativ ausbaubar
 
@@ -241,7 +241,7 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 
 ### 2.10 Auswertungen / Visualisierungen
 
-**Beschreibung:** Mood-Verlauf (Tag/Woche/Monat/Jahr), Tag-Frequenz-Heatmap, Korrelations-Matrix, Tracking-Consistency-Visualisierung, Symptom-Tag-Ko-Okkurrenz-Heatmap (M8), Symptom-Kalender-Heatmap (M8), Symptom-Trend mit Mood-Overlay (M8). Symptom-Visualisierungen sind in den bestehenden `/insights`-Feed integriert — keine separate Route. Details in [`frontend/SYMPTOM_VISUALIZATION.md`](frontend/SYMPTOM_VISUALIZATION.md).
+**Beschreibung:** Mood-Verlauf (Tag/Woche/Monat/Jahr), Tag-Frequenz-Heatmap, Korrelations-Matrix, Tracking-Consistency-Visualisierung, Symptom-Tag-Ko-Okkurrenz-Heatmap (M7), Symptom-Kalender-Heatmap (M7), Symptom-Trend mit Mood-Overlay (M7). Symptom-Visualisierungen sind in den bestehenden `/insights`-Feed integriert — keine separate Route. Details in [`frontend/SYMPTOM_VISUALIZATION.md`](frontend/SYMPTOM_VISUALIZATION.md).
 
 **Kritisch:**
 
@@ -301,11 +301,11 @@ Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-mat
 **Entscheidungen:**
 
 - Auth: Native JWT Phase 1 (ADR-0004), Authentik ab Phase 2 (M12+, SaaS)
-- Verschlüsselung at-rest: `notes` und Custom-`symptoms.name` per App-Level-Fernet; Fotos in MinIO mit SSE folgen im Foto-/Medien-Milestone
+- Verschlüsselung at-rest: `notes` und Custom-`symptoms.name` per App-Level-Fernet; Fotos in MinIO mit SSE folgen in M13
 - E2E-Option (v2): Client-seitig verschlüsselte Notizen — als Opt-in
 - Transport: TLS 1.3, HSTS, CSP strikt
 - App-Lock: PIN / Biometrie auf Mobile (M4)
-- Export/Delete: vollständiger Datenexport für aktuelle M1-M3-Daten und „Account löschen" Self-Service; Foto-Sektion bleibt bis M6 leer
+- Export/Delete: vollständiger Datenexport für aktuelle M1-M3-Daten und „Account löschen" Self-Service; Foto-Sektion bleibt bis M13 leer
 - Audit-Log aller Admin-Aktionen (geplant, noch nicht implementiert)
 - Backup: verschlüsselt via restic auf externen Storage
 
@@ -970,53 +970,11 @@ und Web Push sind Follow-ups nach M4.
 
 ---
 
-### M6 — Fotos & Medien (Woche 15–16)
+### M7 — Insights v2 (Woche 17–19)
 
-- Lokaler Foto-Upload → MinIO, EXIF-Strip
-- Thumbnail-Galerie pro Tag
-- **Exit:** Fotos als zusätzlicher Gedächtnisanker
-
-#### Akzeptanzkriterien M6
-
-- [ ] EXIF-Strip serverseitig via Pillow implementiert (nicht nur clientseitig)
-- [ ] GPS-Koordinaten aus EXIF nachweislich entfernt (automatischer Test mit Foto mit bekannten GPS-Daten)
-- [ ] MinIO SSE-S3 für Photo-Bucket aktiviert
-- [ ] Foto-Upload nur für authentifizierte User, kein direkter MinIO-Zugriff ohne Pre-Signed URL
-- [ ] Maximale Dateigröße und erlaubte MIME-Types serverseitig validiert
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
-
-#### DSGVO-Checkpoint M6
-
-- [ ] 🔒 DSGVO: Fotos zählen als besondere Datenkategorie — Löschung bei Account-Delete verifiziert (inkl. MinIO-Bucket-Bereinigung)
-- [ ] 🔒 DSGVO: Foto-EXIF kann biometrische Merkmale enthalten → EXIF-Strip ist Pflicht und durch automatisierten Test abgedeckt
-- [ ] 🔒 DSGVO: Foto-Zugriff ist user-isoliert (kein Cross-User-Zugriff auf Pre-Signed URLs möglich)
-
----
-
-### M7 — Schlaf & Health Connect (Woche 17–18)
-
-- Manuelle Schlafdaten erweiterte Felder (Einschlafzeit, Tiefschlaf)
-- Android-seitig: Health Connect Import (Schlaf, HR, Schritte)
-- Korrelation Schlaf↔Mood in Insights
-- **Exit:** Wearable-Daten fließen automatisch
-
-#### Akzeptanzkriterien M7
-
-- [ ] Health Connect Permission-Request erklärt klar welche Daten gelesen werden (In-App-Erklärungsscreen)
-- [ ] Keine Weitergabe von Health-Connect-Daten an Third-Party-Services
-- [ ] Import importiert nur Schlaf + HR (keine Bewegungsprofile, keine Standortdaten)
-- [ ] Health Connect API Declaration korrekt in `AndroidManifest.xml` eingetragen
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
-
-#### DSGVO-Checkpoint M7
-
-- [ ] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Onboarding-Screen vor erstem Import
-- [ ] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR importiert, keine Bewegungsprofile (technisch durchgesetzt)
-- [ ] 🔒 DSGVO: Löschung von importierten Health-Connect-Daten bei Account-Delete vollständig implementiert und getestet
-
----
-
-### M8 — Insights v2 (Woche 19–21)
+> **Meilenstein-Umordnung (2026-05-29):** M7 und M8 wurden getauscht. Begründung und
+> Konsequenzindex: [`M7_M8_MILESTONE_SWAP.md`](M7_M8_MILESTONE_SWAP.md). Implementierungsnotizen:
+> [`M7_NOTES.md`](M7_NOTES.md).
 
 - Multiple Regression (Lasso) über alle Variablen
 - Lag-Analyse (Sport gestern → Mood heute)
@@ -1026,7 +984,7 @@ und Web Push sind Follow-ups nach M4.
 - Wöchentlicher „Insight Digest"
 - **Exit:** Qualitativ deutlich bessere Handlungsempfehlungen
 
-#### Akzeptanzkriterien M8
+#### Akzeptanzkriterien M7
 
 - [ ] Lasso-Regression produziert reproduzierbare Ergebnisse bei gleichen Eingabedaten
 - [ ] Lasso-Designmatrix enthält Symptome als binäre Features (nicht als separate Pipeline)
@@ -1038,9 +996,36 @@ und Web Push sind Follow-ups nach M4.
 - [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
-#### DSGVO-Checkpoint M8
+#### DSGVO-Checkpoint M7
 
 - [ ] 🔒 DSGVO: LLM verarbeitet keine Daten außerhalb der lokalen Instanz (kein Cloud-LLM ohne explizite User-Zustimmung)
+
+---
+
+### M8 — Schlaf & Health Connect (Woche 20–21)
+
+> Implementierungsnotizen: [`M8_NOTES.md`](M8_NOTES.md) (Schlaf, Wearables, Cycle-Health-Connect).
+
+- Manuelle Schlafdaten erweiterte Felder (Einschlafzeit, Tiefschlaf)
+- Android-seitig: Health Connect Import (Schlaf, HR, Schritte)
+- Korrelation Schlaf↔Mood in Insights; Sleep×Symptom als Level-1-Erweiterung (ADR-0025)
+- Cycle-Deep-Integration: Health Connect `READ_MENSTRUATION`, Phase-Bands (mit M11 Android-Shell)
+- **Exit:** Wearable-Daten fließen automatisch
+
+#### Akzeptanzkriterien M8
+
+- [ ] Health Connect Permission-Request erklärt klar welche Daten gelesen werden (In-App-Erklärungsscreen)
+- [ ] Keine Weitergabe von Health-Connect-Daten an Third-Party-Services
+- [ ] Import importiert nur Schlaf + HR (keine Bewegungsprofile, keine Standortdaten)
+- [ ] Health Connect API Declaration korrekt in `AndroidManifest.xml` eingetragen
+- [ ] Sleep×Symptom-Korrelationen erscheinen wenn Schlafmetriken vorhanden
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+
+#### DSGVO-Checkpoint M8
+
+- [ ] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Onboarding-Screen vor erstem Import
+- [ ] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR importiert, keine Bewegungsprofile (technisch durchgesetzt)
+- [ ] 🔒 DSGVO: Löschung von importierten Health-Connect-Daten bei Account-Delete vollständig implementiert und getestet
 
 ---
 
@@ -1143,9 +1128,35 @@ und Web Push sind Follow-ups nach M4.
 
 ---
 
+### M13 — Fotos & Medien (post-SaaS)
+
+Deferred past M10 (public selfhost v1.0) and M12 (SaaS launch) so core tracking,
+insights, and deployment paths ship without photo storage complexity.
+
+- Lokaler Foto-Upload → MinIO, EXIF-Strip
+- Thumbnail-Galerie pro Tag
+- **Exit:** Fotos als zusätzlicher Gedächtnisanker
+
+#### Akzeptanzkriterien M13
+
+- [ ] EXIF-Strip serverseitig via Pillow implementiert (nicht nur clientseitig)
+- [ ] GPS-Koordinaten aus EXIF nachweislich entfernt (automatischer Test mit Foto mit bekannten GPS-Daten)
+- [ ] MinIO SSE-S3 für Photo-Bucket aktiviert
+- [ ] Foto-Upload nur für authentifizierte User, kein direkter MinIO-Zugriff ohne Pre-Signed URL
+- [ ] Maximale Dateigröße und erlaubte MIME-Types serverseitig validiert
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+
+#### DSGVO-Checkpoint M13
+
+- [ ] 🔒 DSGVO: Fotos zählen als besondere Datenkategorie — Löschung bei Account-Delete verifiziert (inkl. MinIO-Bucket-Bereinigung)
+- [ ] 🔒 DSGVO: Foto-EXIF kann biometrische Merkmale enthalten → EXIF-Strip ist Pflicht und durch automatisierten Test abgedeckt
+- [ ] 🔒 DSGVO: Foto-Zugriff ist user-isoliert (kein Cross-User-Zugriff auf Pre-Signed URLs möglich)
+
+---
+
 ### Backlog / Später
 
-- Immich-Integration (Foto-Referenzen statt Upload)
+- Immich-Integration (Foto-Referenzen statt Upload; optional M13+ follow-up)
 - iOS-App (HealthKit)
 - Direkte Garmin-Connect-Sync (TOS-Risiko evaluieren)
 - E2E-Verschlüsselung opt-in
@@ -1257,9 +1268,9 @@ Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen 
 | ZS-01    | TWA-Strategie gefährdet durch Google-Policy-Änderungen                                   | Zielstrategie | ✅ behoben     | D-008, [ADR-0002](adr/0002-capacitor-statt-twa.md)                                                         |
 | ZS-05    | Solo-Dev-Burnout-Risiko durch Scope-Creep                                                | Zielstrategie | 🔄 in Arbeit   | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien                                               |
 | DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt                                       | DSGVO         | ✅ entschieden | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md)                                                    |
-| DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur              | DSGVO         | ❌ offen       | M7-DSGVO                                                                                                   |
+| DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur              | DSGVO         | ❌ offen       | M8-DSGVO                                                                                                   |
 | DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden                                   | DSGVO         | ❌ offen       | M9-DSGVO                                                                                                   |
-| DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test            | DSGVO         | ❌ offen       | M6-AC, DoD                                                                                                 |
+| DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test            | DSGVO         | ❌ offen       | M13-AC, DoD                                                                                                |
 | ARCH-01  | Mermaid-Diagramm zeigte TWA als Android-Client — inkonsistent mit D-008                  | Architektur   | ✅ behoben     | Diagramm auf Capacitor aktualisiert                                                                        |
 | ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt                                                  | Architektur   | 🔄 in Arbeit   | D-002 entschieden (Custom-SVG, §7); D-003, D-006, D-008–D-013 dokumentiert; D-004, D-005, D-007 noch offen |
 | OBS-01   | Observability-Anforderungen für M0 nicht explizit definiert                              | Architektur   | ✅ behoben     | D-012, [ADR-0007](adr/0007-healthchecks-and-logging.md), Abschnitt 3.6                                     |

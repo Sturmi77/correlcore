@@ -9,6 +9,7 @@ vi.mock('./client', () => ({
 import { api } from './client';
 import {
   fetchLatestInsight,
+  fetchTagCooccurrence,
   listInsights,
   listLatestInsights,
   type InsightMaturity,
@@ -80,5 +81,19 @@ describe('insights API client', () => {
     vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
 
     await expect(fetchLatestInsight()).resolves.toBeNull();
+  });
+
+  it('fetches tag co-occurrence pairs', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      range: '90d',
+      start_date: '2026-02-09',
+      end_date: '2026-05-09',
+      min_count: 2,
+      pairs: [],
+    });
+
+    await fetchTagCooccurrence({ range: '90d', min_count: 2 });
+
+    expect(api.get).toHaveBeenCalledWith('/insights/tag-cooccurrence?range=90d&min_count=2');
   });
 });

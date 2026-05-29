@@ -1,10 +1,11 @@
 # M5 Sprint Status - Habits Core ohne Gamification
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 Tracking document for [`docs/M5_SPRINT_PLAN.md`](M5_SPRINT_PLAN.md).
 
-**Milestone completeness:** Implementation in progress on `codex/m5-habits-core`.
+**Milestone completeness:** Habits Core merged on `main` (PR #212). Closeout
+(rendered QA, full gate rerun, issue closure) is still in verification.
 
 ## Overview
 
@@ -30,6 +31,6 @@ Tracking document for [`docs/M5_SPRINT_PLAN.md`](M5_SPRINT_PLAN.md).
 ## Remaining Closeout
 
 - [ ] Full backend gates: `ruff`, `mypy`, `pytest --cov`.
-- [ ] Full web gates: `svelte-check`, ESLint, Vitest.
+- [ ] Full web gates: `svelte-check`, ESLint, Vitest, `pnpm check:contrast`.
 - [ ] Rendered QA at 375/768/1280 in light and dark.
-- [ ] GitHub issues #157/#159 closed or commented after PR merge.
+- [ ] GitHub issues #157/#159 closed or commented after closeout.

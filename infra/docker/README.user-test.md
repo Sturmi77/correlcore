@@ -21,7 +21,7 @@ Zielumgebung: Tailscale-internes Netz (Homelab, Synology, Mini-PC).
 | `glitchtip` | Error-Tracking (Web-UI auf Port 8080)                  | `monitoring` |
 | `worker`    | M2-Cleanup-Worker fuer unverified Accounts             | `worker`     |
 
-**Bewusst NICHT enthalten:** MinIO (Foto-Upload kommt erst in M3+) und
+**Bewusst NICHT enthalten:** MinIO (Foto-Upload kommt erst in M13) und
 Traefik (kein Letsencrypt im internen Tailnet).
 
 ---

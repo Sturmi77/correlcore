@@ -49,7 +49,7 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 
 ## Sprint 3 — Done
 
-**Sleep quality (#172):** **Variant B** — deferred to M7 (Health Connect). `sleep_quality` stays in `metrics.ts` only; no Alembic migration in M3.5.
+**Sleep quality (#172):** **Variant B** — deferred to M8 (Sleep & Health Connect). `sleep_quality` stays in `metrics.ts` only; no Alembic migration in M3.5.
 
 - `EntryForm.svelte` — shared form (page + sheet modes)
 - `EntrySheet.svelte` — bottom sheet (&lt;768px) / centered modal (≥768px)
@@ -117,7 +117,7 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 | ----- | ------------------------------------ | ------ |
 | #170  | Close as implemented                 | Closed |
 | #171  | Close as implemented                 | Closed |
-| #172  | Rescope to M7                        | Closed |
+| #172  | Rescope to M8                        | Closed |
 | #173  | Close as implemented                 | Closed |
 | #182  | Close as implemented                 | Closed |
 | #183  | Close as implemented with scope note | Closed |

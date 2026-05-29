@@ -9,7 +9,7 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab un
 | Prinzip                           | Bedeutung                                                                                      |
 | --------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **API-First**                     | Backend ist vollständig über REST/OpenAPI konsumierbar; kein Coupling zwischen Frontend und DB |
-| **Offline-ready Architektur**     | Aktuelle Clients sind online-first; M4 ergänzt Dexie-Queue, Sync-Endpunkte und Konfliktlog     |
+| **Offline-ready Architektur**     | Online-first mit PWA-Shell-Cache (M4); Dexie-Queue, Sync-Endpunkte und Konfliktlog folgen      |
 | **Selfhosted-First, Cloud-Ready** | `docker compose up` → lauffähig. Kein Code-Rewrite für SaaS-Phase                              |
 | **Privacy by Design**             | Datenminimierung, Feld-Verschlüsselung für Sensibles, keine Third-Party-Analytics              |
 | **Stateless Backend**             | Keine Server-Side-Session; State in PostgreSQL + Redis; horizontal skalierbar                  |
@@ -23,7 +23,7 @@ Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab un
 flowchart LR
   subgraph Clients
     PWA[Web App\nSvelteKit]
-    AND[Android App\nCapacitor M10]
+    AND[Android App\nCapacitor M11]
   end
 
   subgraph Edge
@@ -40,7 +40,7 @@ flowchart LR
   subgraph Data
     PG[(PostgreSQL 16\n+ pgvector + RLS)]
     RED[(Redis 7\nSession + Queue)]
-    MIN[(MinIO\nS3-kompatibel\nPhoto scope M6)]
+    MIN[(MinIO\nS3-kompatibel\nPhoto scope M13)]
   end
 
   subgraph External["External / Optional"]
@@ -100,12 +100,13 @@ Hetzner CCX23 × 2 + Managed Postgres + Managed Object Storage. ~150–250 €/M
 
 ---
 
-## 4. Sync-Protokoll (M4-Ziel, noch nicht implementiert)
+## 4. Sync-Protokoll (Follow-up nach M4 Quick Wins)
 
-Der aktuelle Web-Client ist online-first. Einzelne Komponenten haben
-Loading/Error/Offline-Zustände, aber es gibt noch keine lokale Dexie-Queue,
-keine `/sync/*`-API und keine `sync_conflicts`-Tabelle. Das folgende Protokoll
-ist der M4-Sollvertrag.
+Der Web-Client ist online-first. M4 Quick Wins lieferten PWA shell caching
+(Service Worker, `/offline`, Install-Banner — siehe [`features/PWA.md`](features/PWA.md)),
+aber noch keine lokale Dexie-Queue, keine `/sync/*`-API und keine
+`sync_conflicts`-Tabelle. Das folgende Protokoll bleibt der Sollvertrag fuer
+den Offline-Sync-Follow-up.
 
 ```
 Client                          Server
@@ -160,16 +161,17 @@ Client                          Server
 
 ```
 Nightly Cron (02:00 UTC)
-  └── Für jeden aktiven User (≥ 30 Einträge):
-        ├── Lade Entry-History aus PostgreSQL
-        ├── Berechne Punkt-Biseriale Korrelationen (Tags ↔ Mood)
-        ├── Berechne Lag-Analyse (Tag t-1, t-2 ↔ Mood t)
-        ├── Lasso-Regression (multiple Variablen, Regularisierung)
-        ├── Filtere: effect_size > 0.15, confidence > 0.7, sample_n ≥ 10
-        ├── Generiere Statement via Template
-        │     └── Optional: Ollama (lokales LLM) für natürlichere Sprache
-        └── Speichere Insight in PostgreSQL
+  └── Für jeden aktiven User mit analytics_enabled=true:
+        ├── Lade Entry-History aus PostgreSQL (RLS-kontextgebunden)
+        ├── Berechne Punkt-Biseriale Korrelationen (Tags ↔ Mood/Energy/Stress)
+        ├── Filtere nach Tier-Schwellen (effect_size, confidence, sample_n)
+        ├── Generiere Statement via Template (kein LLM in M3)
+        └── Speichere verschlüsseltes Insight in PostgreSQL
 ```
+
+**Geplant (M7 Insights v2):** Lag-Analyse, Lasso-Regression, optional Ollama
+für natürlichere Sprache. Symptom-Analytics gemäß ADR-0025 ist vorgeschlagen,
+noch nicht implementiert.
 
 **Insight-Objekt:**
 
@@ -194,24 +196,37 @@ Nightly Cron (02:00 UTC)
 | Auth                  | Native JWT + Refresh-Rotation (Phase 1) / OIDC via Authentik (Phase 2)                         | Phase 1 ✅ / Phase 2 M12 |
 | Docker Security       | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount                      | ✅                       |
 | Daten at-rest (DB)    | App-Level Fernet pro User-DEK für `entries.note_enc` und Custom-`symptoms.name_enc` (ADR-0005) | ✅                       |
-| Daten at-rest (MinIO) | SSE-S3 ist im Compose vorbereitet; Foto-/Attachment-API folgt später                           | Vorbereitet              |
+| Daten at-rest (MinIO) | SSE-S3 ist im Compose vorbereitet; Foto-/Attachment-API folgt in M13                           | Vorbereitet              |
 | MinIO Isolation       | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar                               | ✅                       |
 | Multi-Tenancy         | PostgreSQL Row-Level-Security (`user_id`-basiert)                                              | ✅                       |
-| Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                                                    | M4                       |
-| App-Lock              | PIN / Biometrie (Web Crypto API)                                                               | M4                       |
+| Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                                                    | Follow-up                |
+| App-Lock              | PIN / Biometrie (Web Crypto API)                                                               | Follow-up                |
+| PWA Shell Cache       | Service Worker cached App-Shell/Statics; `/api/*` uncached                                     | ✅ (M4 Quick Wins)       |
 | Export/Löschung       | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung                                 | ✅                       |
 | Backups               | Verschlüsselt via restic auf externen Storage                                                  | ✅                       |
 | Audit-Log             | Admin-Audit-Log                                                                                | Geplant                  |
-| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)                            | M12                      |
+| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)                            | M13                      |
 | Logs                  | Keine Klartextloggung von Mood-/Symptom-Werten                                                 | ✅                       |
 | Rate-Limiting         | Login-Endpunkte max. 5/min (SlowAPI)                                                           | ✅                       |
-| Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                                            | M4                       |
+| Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                                            | Follow-up                |
+
+---
+
+## 7a. M4/M5 Erweiterungen (Ist-Stand)
+
+| Bereich               | Umsetzung                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Entry Slots**       | `entries.slot` editierbar; Morning/Noon/Evening optional (ADR-0028)                                      |
+| **Cycle Day**         | Nullable `entries.cycle_day` (1..35); neutraler Kontext, keine Phasen-Inferenz (ADR-0031)                |
+| **Guided Onboarding** | `/onboarding` + `/api/v1/onboarding/*`; Custom-Tags idempotent per Slug (ADR-0030)                       |
+| **Habits Core**       | Tags mit `habit_type`/`target_frequency`; `/api/v1/habits` liefert zielbasierte Adherence (M5, ADR-0012) |
+| **PWA**               | Install-Banner, manifest, Service Worker, `/offline` — siehe [`features/PWA.md`](features/PWA.md)        |
 
 ---
 
 ## 8. Mobile-Strategie: Capacitor statt TWA
 
-> Rationale vollständig dokumentiert in [ADR-0002](../decisions/ADR-0002.md).
+> Rationale vollständig dokumentiert in [ADR-0002](adr/0002-capacitor-statt-twa.md).
 
 ### Ausgangslage: Warum nicht TWA?
 
@@ -251,7 +266,7 @@ Android APK / AAB (für Play Store)
 
 ---
 
-## 9. Sync-Protokoll: Conflict-Log (M4-Ziel)
+## 9. Sync-Protokoll: Conflict-Log (Follow-up)
 
 Ergänzend zu der in Sektion 4 beschriebenen LWW-Strategie (Last-Write-Wins) sollen alle Konflikte persistent geloggt werden — sie werden nicht still überschrieben. Die Tabelle und API sind noch nicht implementiert.
 

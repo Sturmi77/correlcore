@@ -40,7 +40,7 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 ### 3.3 Datenminimierung
 
 - Nur explizit eingegebene Daten werden erfasst (kein Background-Tracking)
-- EXIF-Strip bei Foto-Upload ist verpflichtender M6-Scope; aktuell gibt es noch keine Foto-/Attachment-API
+- EXIF-Strip bei Foto-Upload ist verpflichtender M13-Scope; aktuell gibt es noch keine Foto-/Attachment-API
 - Logs enthalten keine Gesundheitsdaten im Klartext
 - Push-Notification-Payloads sind inhaltsleer (nur Reminder-Signal)
 
@@ -58,7 +58,7 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 | Auskunft (Art. 15)                    | `GET /api/v1/user/data` → JSON-Dump aller Daten                             | sofort (automatisiert) | ✅ M2  |
 | Berichtigung (Art. 16)                | Standard-Edit-UI                                                            | sofort                 | ✅ M1  |
 | Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/me` → Cascade alle Daten + Cryptographic Erasure (DEK) | sofort                 | ✅ M1  |
-| Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON/CSV; Foto-Sektion bis M6 leer)        | automatisiert          | ✅ M2  |
+| Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON/CSV; Foto-Sektion bis M13 leer)       | automatisiert          | ✅ M2  |
 | Widerspruch Analyse (Art. 21)         | `PATCH /api/v1/user/preferences {analytics_enabled: false}`                 | sofort                 | ✅ M3  |
 | Einschränkung (Art. 18)               | via Support (manuell in v1)                                                 | 72h                    | 🔄 M9  |
 
@@ -152,15 +152,12 @@ Für jeden Meilenstein der DSGVO-relevante Features enthält:
 ### M3 – Insights
 
 - [ ] 🔒 DSGVO: Analytics-Opt-Out implementiert (analytics_enabled Flag)
-- [ ] 🔒 DSGVO: Ollama-Daten verlassen die eigene Instanz nicht (verifiziert)
 
-### M6 – Fotos
+### M7 – Insights v2 (LLM)
 
-- [ ] 🔒 DSGVO: Foto-/Attachment-API implementiert
-- [ ] 🔒 DSGVO: EXIF-Strip automatisch getestet (Unit-Test mit GPS-haltigen Testfotos)
-- [ ] 🔒 DSGVO: Account-Delete löscht auch alle MinIO-Objekte (Cascade-Test)
+- [ ] 🔒 DSGVO: Ollama/LLM verarbeitet keine Daten außerhalb der lokalen Instanz (verifiziert)
 
-### M7 – Health Connect
+### M8 – Health Connect
 
 - [ ] 🔒 DSGVO: Separate Health-Connect-Einwilligung mit klarer Erklärung implementiert
 - [ ] 🔒 DSGVO: Nur minimale Health-Daten importiert (Schlaf + HR, keine Bewegungsprofile)
@@ -183,3 +180,9 @@ Für jeden Meilenstein der DSGVO-relevante Features enthält:
 - [ ] 🔒 DSGVO: AV-Vertrag mit Hetzner nachweislich abgeschlossen
 - [ ] 🔒 DSGVO: Auftragsverarbeitungsverzeichnis (Art. 30) gepflegt
 - [ ] 🔒 DSGVO: Datenlöschung bei Kündigung in ≤30 Tagen implementiert und getestet
+
+### M13 – Fotos
+
+- [ ] 🔒 DSGVO: Foto-/Attachment-API implementiert
+- [ ] 🔒 DSGVO: EXIF-Strip automatisch getestet (Unit-Test mit GPS-haltigen Testfotos)
+- [ ] 🔒 DSGVO: Account-Delete löscht auch alle MinIO-Objekte (Cascade-Test)

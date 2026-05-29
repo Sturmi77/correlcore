@@ -1,80 +1,63 @@
-# M8 Notes — Pattern Recognition & Clustering
+# M8 Notes — Sleep & Health Connect
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
-This document captures the scope and acceptance criteria for the
-pattern recognition and clustering feature deferred from M4.
+Implementation notes for **M8 — Schlaf & Health Connect** (manual sleep
+fields, wearable import, sleep↔mood insights, cycle HC deep integration).
+Milestone resequencing: [`M7_M8_MILESTONE_SWAP.md`](M7_M8_MILESTONE_SWAP.md).
 
 ## Context
 
-M3.x insight engine delivers correlation-based insights (tag ↔ metric
-correlations). M5 delivers a raw co-occurrence heatmap. M8 adds
-algorithmic pattern detection: automatic grouping of tags that tend to
-co-occur, and surface-level anomaly detection.
-
-Deferred to M8 because:
-
-1. Requires a statistically robust data volume (≥ 90 days, ≥ 5 active tags)
-2. `pgvector` extension must be available on the target deployment
-3. Results must be explainable — no black-box outputs
+M7 delivers analytics on existing self-reported data. **M8** adds sleep metrics
+(manual first, then Health Connect on Android) and extends the M7 insight
+engine with sleep columns. Cycle deep integration (HC menstruation sync,
+phase bands) ships here together with the Android path (M11).
 
 ## Scope
 
-### Sprint 1 — pgvector Setup & Tag Embeddings
+### Sprint 1 — Manual Sleep Fields
 
-- Enable `pgvector` extension in Alembic migration
-- Compute per-tag co-occurrence vectors from the aggregation table
-  introduced in M5
-- Store vectors in `tag_vectors` table
-  (`tag_id`, `vector VECTOR(n)`, `computed_at`)
-- Nightly background job recomputes vectors when new entries exist
-- `docs/ARCHITECTURE.md` updated with pgvector dependency note
+- Entry fields: `sleep_minutes`, `sleep_quality` (Issue #172 rescoped from M3.5)
+- Alembic migration; API + export `sleep: []` populated
+- Sleep↔mood correlation in insights feed
 
-### Sprint 2 — Cluster Detection
+### Sprint 2 — Health Connect (Android)
 
-- k-means clustering (k=3..6, elbow method) on tag vectors
-- Clusters stored in `tag_clusters` table
-  (`cluster_id`, `tag_id`, `label TEXT NULL`)
-- `GET /api/v1/insights/tag-clusters` returns clusters with member tags
-  and a human-readable label (generated from most-common tag names in
-  cluster; no LLM required)
-- Minimum data guard: endpoint returns `{ "status": "insufficient_data" }`
-  when fewer than 90 day-entries or fewer than 5 active tags exist
-- Unit tests: cluster count bounds, insufficient-data guard
+- Permission request with rationale screen (Schlaf + HR only; no movement profiles)
+- Background sync from Health Connect sleep records
+- `docs/features/HEALTH_CONNECT.md` documents all permissions
+- DSGVO: Art. 9 explicit consent before first import
 
-### Sprint 3 — Frontend: Cluster Visualisation
+### Sprint 3 — Sleep×Symptom & Cycle HC
 
-- New section in Insights: "Tag Groups"
-- Each cluster shown as a card with member tag chips and a generated
-  label (e.g. "Work & Focus" if `work`, `focus`, `deadline` cluster)
-- Tapping a cluster opens the co-occurrence heatmap (M5) filtered to
-  that cluster's tags
-- Insufficient-data empty state with tracking-consistency copy
-- i18n keys `insights.clusters.*`
-- Component tests
+- Sleep×Symptom Spearman when sleep data available (ADR-0025 Level 1 extension)
+- `READ_MENSTRUATION` permission; sync `MenstruationRecord` → `cycle_day` when null
+- Manual `cycle_day` wins over HC sync
+- Settings toggle to disable HC sync per field
+- Trends > Health: follicular / ovulatory / luteal / menstrual phase bands (28-day model, disclaimer)
 
 ## Acceptance Criteria
 
-- [ ] `pgvector` extension present and migration applied
-- [ ] Tag vectors recomputed nightly
-- [ ] `GET /api/v1/insights/tag-clusters` returns correct clusters
-- [ ] Insufficient-data guard returns correct status
-- [ ] Cluster cards render with member tags and label
-- [ ] No "AI" or "machine learning" language in visible copy
-- [ ] Copy uses: "Tags that often appear together"
-- [ ] Visual QA at 375 px, 768 px, 1280 px (light + dark)
+- [ ] Health Connect permission requested with rationale screen
+- [ ] Import limited to sleep + HR (technically enforced)
+- [ ] Sync writes `cycle_day` only when null (manual wins)
+- [ ] User can disable Health Connect sync in Settings
+- [ ] Sleep×Symptom insights when sleep metrics present
+- [ ] Phase bands render with disclaimer; no medical claim language
+- [ ] Account delete removes imported HC data
+- [ ] `noGamificationCopy.test.ts` / copy lint passes
+- [ ] Visual QA at 375 px, 768 px (light + dark)
 - [ ] CI green
 
 ## Prerequisites
 
-- M5 co-occurrence heatmap shipped (provides aggregation table)
-- `pgvector` available on Synology NAS Docker deployment
-  (verify `pgvector` image tag before sprint start)
-- ≥ 90 days of entry data in staging for manual QA
+- M7 insight engine (sleep columns extend design matrix, no rewrite)
+- Android app shell / Capacitor path (M11 for Play Store HC declaration)
+- M4 `cycle_day` field and `cycle` tag category shipped
+- `androidx.health.connect:connect-client` in Android build
 
-## Copy Guardrails
+## Framing Guardrails
 
-- Never use: "AI", "machine learning", "predicts", "detects"
-- Use instead: "Tags that often appear together", "Recurring pattern",
-  "Frequently co-occurring"
-- All cluster labels derived from tag names — no synthetic copy
+- No algorithmic ovulation prediction
+- Phase bands always labelled "approximate"
+- Disclaimer visible wherever phase bands are shown

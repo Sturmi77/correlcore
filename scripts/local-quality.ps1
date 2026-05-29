@@ -31,8 +31,9 @@ if (-not $SkipFrontend) {
   Require-Command "pnpm.CMD" "Install Node 22 and enable Corepack, or install pnpm 11.0.8."
 
   Write-Host ""
-  Write-Host "Frontend: install, lint, typecheck, test"
+  Write-Host "Frontend: install, contrast check, lint, typecheck, test"
   & pnpm.CMD install --frozen-lockfile
+  & pnpm.CMD check:contrast
   & pnpm.CMD --filter "@correlcore/web" lint
   & pnpm.CMD --filter "@correlcore/web" typecheck
   & pnpm.CMD --filter "@correlcore/web" test

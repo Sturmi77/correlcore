@@ -5,7 +5,7 @@
 **Created:** 2026-05-16  
 **Updated:** 2026-05-16  
 **Owner:** @Sturmi77  
-**Milestone Coverage:** M1 (retroactive) → M2 (retroactive) → M3 (retroactive) → M4 → M8 → M9–M11
+**Milestone Coverage:** M1 (retroactive) → M2 (retroactive) → M3 (retroactive) → M4 → M7 → M9–M11
 
 ---
 
@@ -200,7 +200,7 @@ Custom markers are free-text, max 32 chars, stored alongside predefined ones.
 
 ### Insights — Evidence Block
 
-Added to all insight cards from M8 onward:
+Added to all insight cards from M7 onward:
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -217,7 +217,7 @@ shows a soft prompt: _"Füge Notizen hinzu, um Zusammenhänge besser zu verstehe
 
 ---
 
-## Signal Extraction (M8)
+## Signal Extraction (M7)
 
 Signal extraction runs as a FastAPI background task (`BackgroundTasks`) triggered on
 `PATCH /entries/{id}` when `note_raw` is updated.
@@ -273,7 +273,7 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 | **M2** Visualisation    | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips               |
 | **M3** Insights v1      | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                 |
 | **M4** Mobile Polish    | 🔲 Planned                | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview |
-| **M8** Insights v2      | 🔲 Planned                | Signal extraction service, `entry_note_signals` table, evidence block on insight cards    |
+| **M7** Insights v2      | 🔲 Planned                | Signal extraction service, `entry_note_signals` table, evidence block on insight cards    |
 | **M9** Beta             | 🔲 Planned                | Threshold validation, false-positive review, opt-out privacy setting per entry            |
 | **M10** Public Selfhost | 🔲 Planned                | Export includes notes/signals, backward compat, operator reprocess endpoint               |
 | **M11** Play Store      | 🔲 Planned                | Mobile UX hardening, no health-claim copy in signal descriptions                          |
@@ -311,7 +311,7 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 - [ ] On mobile (375px), chip row scrolls horizontally without wrapping.
 - [ ] `note_summary_short` auto-generated on save, max 120 chars.
 
-### M8
+### M7
 
 - [ ] Signal extraction completes within 500ms for notes up to 500 chars.
 - [ ] Signals stored with `confidence`, `source_span`, `extractor_v`.
@@ -325,7 +325,7 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 | ID       | Question                                                                                                        | Decision Needed By |
 | -------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
 | ADR-N-01 | Should `note_summary_short` be computed client-side (first sentence) or server-side (extractive summarisation)? | M4 sprint planning |
-| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7?                                     | M8 sprint planning |
+| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7?                                     | M7 sprint planning |
 | ADR-N-03 | Should custom markers be normalised (lowercased, deduplicated) server-side, or stored verbatim?                 | M3 retroactive     |
 
 ---
@@ -347,4 +347,4 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 | Backend/Frontend: manual markers                    | Full-stack   | M3 retroactive               |
 | Insights: marker-aware evidence statements          | Backend      | M3 retroactive               |
 | Architecture: ADR-N-01, ADR-N-02, ADR-N-03          | Architecture | Before respective milestones |
-| Future: signal extraction and Insights v2           | Backend      | M8                           |
+| Future: signal extraction and Insights v2           | Backend      | M7                           |

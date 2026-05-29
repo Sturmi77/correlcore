@@ -31,6 +31,48 @@ the clone as an explicit safe directory:
 git config --global --add safe.directory C:/path/to/correlcore
 ```
 
+## Development on network shares (NAS/SMB)
+
+pnpm's default isolated `node_modules` layout uses symlinks. Windows clients,
+Synology SMB mounts, UNC paths such as `\\SynologyDS923\...`, and mapped
+drives like `Y:` often reject those symlinks, which produces errors like
+`UNKNOWN: unknown error, symlink ...`.
+
+This repository ships a root [`.npmrc`](../.npmrc) with NAS-friendly defaults:
+
+- `node-linker=hoisted` — flat `node_modules`, fewer links
+- `package-import-method=copy` — copy packages from the store instead of linking
+
+Additionally, keep the **pnpm store on local disk**, not on the NAS. Either:
+
+```powershell
+pnpm config set store-dir C:\Users\<you>\.pnpm-store --global
+```
+
+or add this to your user-level `%USERPROFILE%\.npmrc` (not committed — paths
+are machine-specific):
+
+```ini
+store-dir=C:\Users\<you>\.pnpm-store
+```
+
+Then from the repo root on the network share:
+
+```powershell
+pnpm.cmd install --frozen-lockfile
+cd apps\web
+pnpm.cmd dev
+```
+
+If symlinks still fail after the settings above, use a local clone for daily
+development (for example `C:\dev\correlcore`) and keep the NAS copy for Git
+sync or deployment files only.
+
+Optional Windows/Synology tuning if problems remain:
+
+- Enable **Developer mode** in Windows settings (symlink creation).
+- On Synology DSM, review SMB advanced settings for symbolic link support.
+
 ## Local quality gate
 
 The PowerShell gate is intended for Windows contributors and CI debugging from
@@ -43,16 +85,17 @@ the Codex desktop workspace:
 It runs:
 
 1. `pnpm.CMD install --frozen-lockfile`
-2. `pnpm.CMD --filter @correlcore/web lint`
-3. `pnpm.CMD --filter @correlcore/web typecheck`
-4. `pnpm.CMD --filter @correlcore/web test`
-5. `uv sync --python 3.12 --extra dev --extra analytics --frozen`
-6. `uv run --python 3.12 ruff check .`
-7. `uv run --python 3.12 ruff format --check .`
-8. `uv run --python 3.12 mypy app`
-9. `uv run --python 3.12 pytest`
-10. `gitleaks detect --source . --no-git --redact`
-11. `gitleaks detect --source . --redact`
+2. `pnpm.CMD check:contrast` (ADR-0027 WCAG token pairs)
+3. `pnpm.CMD --filter @correlcore/web lint`
+4. `pnpm.CMD --filter @correlcore/web typecheck`
+5. `pnpm.CMD --filter @correlcore/web test`
+6. `uv sync --python 3.12 --extra dev --extra analytics --frozen`
+7. `uv run --python 3.12 ruff check .`
+8. `uv run --python 3.12 ruff format --check .`
+9. `uv run --python 3.12 mypy app`
+10. `uv run --python 3.12 pytest`
+11. `gitleaks detect --source . --no-git --redact`
+12. `gitleaks detect --source . --redact`
 
 Use the skip switches only while debugging a specific layer:
 
@@ -63,7 +106,8 @@ Use the skip switches only while debugging a specific layer:
 ```
 
 On Unix-like systems, `backend/scripts/check.sh` remains the canonical backend
-gate and `pnpm` can be used directly instead of `pnpm.CMD`.
+gate. Run `pnpm check:contrast` from the repo root before opening a web PR,
+then use `pnpm` directly for lint/typecheck/test.
 
 ## Backend test database
 
@@ -83,6 +127,9 @@ uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 
 The values above are generated for local test runs. Do not reuse local test
 values in deployed environments.
+
+Current migration head is **013** (`013_add_cycle_day_to_entries.py`), which
+adds nullable `entries.cycle_day`.
 
 ## Database roles and RLS
 

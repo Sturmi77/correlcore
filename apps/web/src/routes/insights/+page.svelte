@@ -16,24 +16,32 @@
   import { auth } from '$lib/stores/auth';
   import { listEntries } from '$lib/api/entries';
   import {
+    fetchTagCooccurrence,
     listLatestInsights,
     type InsightMaturity,
     type InsightResponse,
+    type TagCooccurrenceRange,
+    type TagCooccurrenceResponse,
   } from '$lib/api/insights';
+  import { listDefaultTags, listTagsForEntry, listVisibleTags } from '$lib/api/tags';
+  import { listVisibleSymptoms, listSymptomsForEntry } from '$lib/api/symptoms';
   import {
     fetchUserPreferences,
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import { listDefaultTags, listVisibleTags } from '$lib/api/tags';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
+  import CooccurrenceEntrySheet from '$lib/components/insights/CooccurrenceEntrySheet.svelte';
+  import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
+  import type { EntryHistoryDetail } from '$lib/components/trends/EntryHistorySheet.svelte';
   import { mockEntries } from '$lib/dev/mockEntries';
   import { mockUserPreferences } from '$lib/dev/mockEntries';
+  import { mockTagCooccurrence } from '$lib/dev/mockTrends';
   import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
@@ -49,6 +57,92 @@
   let dayEntryDates: string[] = [];
   let inactiveTagIds: string[] = [];
   let detailView: 'findings' | 'matrix' = 'findings';
+  let cooccurrenceRange: TagCooccurrenceRange = '90d';
+  let cooccurrence: TagCooccurrenceResponse | null = null;
+  let cooccurrenceLoading = false;
+  let cooccurrenceHistoryOpen = false;
+  let cooccurrenceHistoryTitle = '';
+  let cooccurrenceHistoryLoading = false;
+  let cooccurrenceHistoryError = '';
+  let cooccurrenceHistoryDetails: EntryHistoryDetail[] = [];
+
+  async function loadCooccurrence(): Promise<void> {
+    if ($auth.status !== 'authenticated') return;
+    cooccurrenceLoading = true;
+    try {
+      if ($devForceVisualizations) {
+        cooccurrence = mockTagCooccurrence;
+        return;
+      }
+      cooccurrence = await fetchTagCooccurrence({ range: cooccurrenceRange, min_count: 2 });
+    } catch {
+      cooccurrence = null;
+    } finally {
+      cooccurrenceLoading = false;
+    }
+  }
+
+  async function openCooccurrenceHistory(
+    event: CustomEvent<{
+      tagAId: string;
+      tagBId: string;
+      tagAName: string;
+      tagBName: string;
+      startDate: string;
+      endDate: string;
+    }>
+  ): Promise<void> {
+    const { tagAId, tagBId, tagAName, tagBName, startDate, endDate } = event.detail;
+    cooccurrenceHistoryOpen = true;
+    cooccurrenceHistoryTitle = `${tagAName} + ${tagBName}`;
+    cooccurrenceHistoryLoading = true;
+    cooccurrenceHistoryError = '';
+    cooccurrenceHistoryDetails = [];
+    try {
+      if ($devForceVisualizations) {
+        cooccurrenceHistoryDetails = mockEntries
+          .filter((entry) => entry.entry_date >= startDate && entry.entry_date <= endDate)
+          .slice(0, 3)
+          .map((entry) => ({
+            entry,
+            tags: [tagAName, tagBName],
+            symptoms: [],
+          }));
+        return;
+      }
+
+      const [entries, visibleSymptoms] = await Promise.all([
+        listEntries({ start_date: startDate, end_date: endDate, limit: 365 }),
+        listVisibleSymptoms(),
+      ]);
+      const symptomNames = new Map(visibleSymptoms.map((symptom) => [symptom.id, symptom.name]));
+      const details = await Promise.all(
+        entries.map(async (entry) => {
+          const [tags, symptoms] = await Promise.all([
+            listTagsForEntry(entry.id),
+            listSymptomsForEntry(entry.id),
+          ]);
+          const tagIds = new Set(tags.map((tag) => tag.id));
+          if (!tagIds.has(tagAId) || !tagIds.has(tagBId)) return null;
+          return {
+            entry,
+            tags: tags.map((tag) => tag.name),
+            symptoms: symptoms.map((symptom) => ({
+              name: symptomNames.get(symptom.symptom_id) ?? $_('symptom.picker_label'),
+              intensity: symptom.intensity,
+            })),
+          } satisfies EntryHistoryDetail;
+        })
+      );
+      cooccurrenceHistoryDetails = details.filter(
+        (detail): detail is EntryHistoryDetail => detail !== null
+      );
+    } catch (err) {
+      cooccurrenceHistoryError = err instanceof Error ? err.message : $_('error.generic');
+    } finally {
+      cooccurrenceHistoryLoading = false;
+    }
+  }
 
   async function loadInsights(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
@@ -101,6 +195,7 @@
 
   onMount(() => {
     void loadInsights();
+    void loadCooccurrence();
   });
 
   $: showMaturityMilestone = shouldShowMaturityMilestone(
@@ -188,6 +283,26 @@
         on:retry={loadInsights}
       />
     {/if}
+
+    <TagCooccurrenceHeatmap
+      data={cooccurrence}
+      loading={cooccurrenceLoading}
+      range={cooccurrenceRange}
+      on:rangeChange={(event) => {
+        cooccurrenceRange = event.detail.range;
+        void loadCooccurrence();
+      }}
+      on:selectPair={(event) => void openCooccurrenceHistory(event)}
+    />
+
+    <CooccurrenceEntrySheet
+      open={cooccurrenceHistoryOpen}
+      title={cooccurrenceHistoryTitle}
+      loading={cooccurrenceHistoryLoading}
+      error={cooccurrenceHistoryError}
+      details={cooccurrenceHistoryDetails}
+      on:close={() => (cooccurrenceHistoryOpen = false)}
+    />
   {/if}
 </main>
 

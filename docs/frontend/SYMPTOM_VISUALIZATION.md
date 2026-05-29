@@ -626,7 +626,7 @@ response (consistent with ADR-0021).
   resemble red/green. ADR-0020 explicitly states heatmaps should use neutral blue scales. This
   spec proposes a documented exception because bidirectional association (Lift < 1 and Lift > 1
   carry equally important meaning) cannot be expressed in a sequential scale. **Decision needed
-  before M8 implementation starts.**
+  before M7 implementation starts.**
 - **Insight feed mixing vs. grouping**: The current spec interleaves symptom insight cards with
   other insights. Alternative (rejected for now): group symptom cards into a "Symptom insights"
   collapsible subsection within the feed. Revisit if user testing shows symptom cards drown in

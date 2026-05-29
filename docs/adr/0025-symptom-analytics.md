@@ -28,7 +28,7 @@ This is a structural gap, not just a missing feature:
 1. The Insight Engine has no notion of _association_ between two categorical/binary variables. Tag↔Mood
    uses pointbiserial because mood is continuous; Tag↔Symptom (both binary) requires a different statistical
    family (co-occurrence measures).
-2. The planned multivariate models in M8 implicitly assume tags as the only categorical input, which would
+2. The planned multivariate models in M7 implicitly assume tags as the only categorical input, which would
    permanently exclude symptoms from Lasso and lag analysis unless this is addressed at the architecture level.
 3. There is no shared convention for how symptom-derived insights are phase-gated under [ADR-0021](0021-insight-maturity-phases.md),
    how their effect sizes are visualised under [ADR-0018](0018-insight-confidence-visualisation.md), or how
@@ -91,7 +91,7 @@ Following [ADR-0021](0021-insight-maturity-phases.md):
 | `collecting`     | 1–6         | None. No symptom insights computed or shown.                                          |
 | `early_patterns` | 7–13        | Descriptive only: symptom frequency, calendar heatmap. No correlation claims.         |
 | `provisional`    | 14–29       | Level 1 and Level 2 insights with FDR correction and explicit uncertainty disclaimer. |
-| `robust`         | 30+         | All three levels, including multivariate symptom inclusion in M8 models.              |
+| `robust`         | 30+         | All three levels, including multivariate symptom inclusion in M7 models.              |
 
 The symptom-tag co-occurrence heatmap is rendered in `early_patterns` only as raw counts (no Lift values),
 and switches to Lift-based colouring from `provisional` onward.
@@ -148,7 +148,7 @@ post-M9 based on beta feedback, or earlier if binary findings reveal strong inte
   §2.4) that was structurally unrealised since M3.
 - The Insight Engine gains a new statistical family (co-occurrence) that is reusable beyond symptoms —
   e.g. tag×tag co-occurrence becomes trivially possible later.
-- Multivariate symptom inclusion in M8 models (Lasso, lag, clustering) is guaranteed by architectural
+- Multivariate symptom inclusion in M7 models (Lasso, lag, clustering) is guaranteed by architectural
   decision, not by individual sprint discretion.
 - Phase gating, FDR correction, and confounder checks are shared with existing tag analytics → no
   divergent methodology between symptom and tag insights.
@@ -175,7 +175,7 @@ post-M9 based on beta feedback, or earlier if binary findings reveal strong inte
 | Three separate ADRs (one per analytical level)             | The three levels share statistical guardrails, phase gating, and frontend infrastructure. Splitting fragments the decision trail without clarifying anything.     |
 | Symptom analytics as a separate worker / pipeline          | Would duplicate the FDR, weekday-confounder, and storage infrastructure already in `insight_engine.py`. Integration is cheaper and prevents methodological drift. |
 | Build a dedicated `/insights/symptoms` route               | The heatmap is the only oversized component. Integrating it as a section above the feed avoids navigation fragmentation and keeps symptom findings in context.    |
-| Include symptom intensity in M8 scope                      | Adds material complexity (ordinal methods, smaller per-level sample sizes) before binary findings have demonstrated user value. Deferred as Future Work.          |
+| Include symptom intensity in M7 scope                      | Adds material complexity (ordinal methods, smaller per-level sample sizes) before binary findings have demonstrated user value. Deferred as Future Work.          |
 | Use chi-square for symptom×tag co-occurrence               | Small cell counts in typical homelab datasets (50–200 entries) violate chi-square assumptions. Fisher Exact is more reliable; Lift adds interpretability.         |
 | Use pointwise correlation only (no co-occurrence measures) | Cannot quantify the association between two binary variables. Would force symptom-tag analysis into a less informative metric-mood frame.                         |
 
@@ -187,12 +187,12 @@ This ADR does not commit a specific milestone for the foundational univariate st
 sequenced as follows:
 
 1. **Sprint-free**: Engine parity bugfix — pointbiserial Symptom↔Mood (analogous to existing Tag↔Mood).
-   This closes the most basic gap and is a prerequisite for all M8 symptom work. Tracked as a standalone
+   This closes the most basic gap and is a prerequisite for all M7 symptom work. Tracked as a standalone
    issue with no milestone label, picked up opportunistically.
-2. **M7** (Sleep & Health Connect): Sleep×Symptom association as a side effect of sleep-metric integration.
-3. **M8** (Insights v2): Main implementation — co-occurrence (Level 2), multivariate inclusion (Level 3),
+2. **M7** (Insights v2): Main implementation — co-occurrence (Level 2), multivariate inclusion (Level 3),
    all frontend components, methodology copy. Tracked as an Epic with sub-issues. Issues #144, #145, #150
    are extended via comment (not modified) to include symptoms as inputs.
+3. **M8** (Sleep & Health Connect): Sleep×Symptom association as a side effect of sleep-metric integration.
 4. **M9** (Beta hardening): Review usability of symptom analytics based on beta feedback. Potential
    reconsideration of intensity scope.
 

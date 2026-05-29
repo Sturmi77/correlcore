@@ -6,9 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — M1 Vorbereitung
+## [Unreleased] — M4/M5 auf main
+
+### Changed
+
+- **M7/M8 milestone swap (docs only).** Roadmap reordered: M7 = Insights v2
+  (Lasso, lag, symptom analytics, clustering); M8 = Sleep & Health Connect.
+  Rationale and consequence index: [`docs/M7_M8_MILESTONE_SWAP.md`](docs/M7_M8_MILESTONE_SWAP.md).
+  No code or schema changes.
 
 ### Added
+
+- **M5.1 Tag co-occurrence heatmap.** `GET /api/v1/insights/tag-cooccurrence`
+  plus Insights **Patterns** section with `TagCooccurrenceHeatmap` and filtered
+  entry sheet. Closeout: [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).
 
 - **M5 Habits Core ohne Gamification.** Tags expose `habit_type` and
   `target_frequency` through API/UI, new `/api/v1/habits` endpoints return
@@ -39,7 +50,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 - **M3.5 Sprint 2 — Entry Flow Foundation.** Entry form sections, informative work-context hint with weekend auto-fill, central `metrics.ts` / stress display inversion for trends charts, and `defaultWorkContextForDate`. Refs #170, #171, #182.
 
-- **M3.5 Sprint 3 — Entry bottom sheet.** `EntryForm` + `EntrySheet` from Home CTA; optional fields behind “+ More”; `/entries/new` deep link preserved. Sleep quality (#172) deferred to M7 (Variant B). Refs #186.
+- **M3.5 Sprint 3 — Entry bottom sheet.** `EntryForm` + `EntrySheet` from Home CTA; optional fields behind “+ More”; `/entries/new` deep link preserved. Sleep quality (#172) deferred to M8 (Variant B). Refs #186.
 
 - **M3.5 Sprint 4 — Home recomposition.** Three-zone Home per ADR-0017; matrix, summary, recent entries, and confidence scale removed from the first screen. Refs #186.
 

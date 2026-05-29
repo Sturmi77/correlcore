@@ -1,7 +1,7 @@
 # API Contracts
 
-This document records the current API contract strategy after the Sprint 3
-documentation audit.
+This document records the current API contract strategy after the M4/M5
+documentation sync.
 
 ## Current State
 
@@ -11,8 +11,12 @@ documentation audit.
   `apps/web/src/lib/contracts/apiContract.ts`.
 - Backend test `backend/tests/test_api_contract.py` compares that frontend
   contract against the backend Entry enums and Pydantic ranges.
+- Dedicated backend tests cover newer surfaces separately:
+  - `backend/tests/test_habits.py` — habit stats and tag habit fields
+  - `backend/tests/test_onboarding.py` — guided onboarding endpoints
+  - `backend/tests/test_entries.py` — batch create, delta, `cycle_day`, slots
 
-This means the central Entry enum/range values are contract-tested even before
+Entry enum/range values remain contract-tested via `apiContract.ts` even before
 an OpenAPI TypeScript client generator is introduced.
 
 ## Generator Evaluation

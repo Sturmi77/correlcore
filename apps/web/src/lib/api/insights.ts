@@ -52,6 +52,37 @@ export interface InsightListQuery {
   limit?: number;
 }
 
+export type TagCooccurrenceRange = '30d' | '90d' | '1y';
+
+export interface TagCooccurrenceTagRef {
+  tag_id: string;
+  slug: string;
+  name: string;
+  category: string;
+  color: string | null;
+}
+
+export interface TagCooccurrencePair {
+  tag_a: TagCooccurrenceTagRef;
+  tag_b: TagCooccurrenceTagRef;
+  count: number;
+  pct_of_a: number;
+  pct_of_b: number;
+}
+
+export interface TagCooccurrenceResponse {
+  range: TagCooccurrenceRange;
+  start_date: string;
+  end_date: string;
+  min_count: number;
+  pairs: TagCooccurrencePair[];
+}
+
+export interface TagCooccurrenceQuery {
+  range?: TagCooccurrenceRange;
+  min_count?: number;
+}
+
 function buildQuery(query: InsightListQuery): string {
   const params = new URLSearchParams();
   if (query.limit !== undefined) params.set('limit', String(query.limit));
@@ -69,6 +100,19 @@ export async function listLatestInsights(
   query: InsightListQuery = {}
 ): Promise<InsightListResponse> {
   return api.get<InsightListResponse>(`/insights/latest${buildQuery(query)}`);
+}
+
+/** GET /insights/tag-cooccurrence - tag pair counts for the co-occurrence heatmap (M5.1). */
+export async function fetchTagCooccurrence(
+  query: TagCooccurrenceQuery = {}
+): Promise<TagCooccurrenceResponse> {
+  const params = new URLSearchParams();
+  if (query.range) params.set('range', query.range);
+  if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
+  const qs = params.toString();
+  return api.get<TagCooccurrenceResponse>(
+    qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence'
+  );
 }
 
 /** Convenience helper for the Home preview card. */

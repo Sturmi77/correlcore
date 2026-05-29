@@ -274,28 +274,31 @@ POST   /api/v1/auth/callback     OIDC Callback (Code → Session)
 
 ## 3. Entries
 
-M1-Implementierungsstand (Issue #7). `tags`, `symptoms`, `sleep_*` und der
-`/entries/date/{date}`-Lookup folgen in Issues #8 (Tags), #9 (Symptome)
-und M7 (Schlaf). Alle Endpunkte hier laufen hinter
-`get_current_verified_user` und sind pro IP rate-limitiert.
+Daily mood/energy/stress log (M1+). Tags and symptoms are assigned via
+separate entry sub-routes (§4, §5). Sleep fields follow in M8. All
+endpoints require `get_current_verified_user` and are rate-limited per IP.
 
 ```
-POST   /api/v1/entries                  Neuen Eintrag erstellen        (60/min)
-GET    /api/v1/entries                  Liste (gefiltert, neueste zuerst) (120/min)
-GET    /api/v1/entries/{id}             Einzelner Eintrag              (120/min)
-PATCH  /api/v1/entries/{id}             Eintrag aktualisieren          (60/min)
+POST   /api/v1/entries                  Create entry                         (60/min)
+POST   /api/v1/entries/batch            Retrospective onboarding batch       (20/min)
+GET    /api/v1/entries                  List (filtered, newest first)        (120/min)
+GET    /api/v1/entries/delta            Day-over-day comparison              (120/min)
+GET    /api/v1/entries/{id}             Single entry                         (120/min)
+PATCH  /api/v1/entries/{id}             Update entry                         (60/min)
 ```
 
-**Geplant (folgt in M1+):**
+**Geplant:**
 
 ```
-DELETE /api/v1/entries/{id}             Eintrag löschen            (#23 — oder via DELETE /user/me, siehe §6)
-GET    /api/v1/entries/date/{date}      Eintrag für ein Datum     (M1 Followup)
+DELETE /api/v1/entries/{id}             Delete entry (#23 — or via DELETE /user/me, siehe §6)
+GET    /api/v1/entries/date/{date}      Lookup by date (backlog)
 ```
 
 ### Datentypen
 
-- `slot` — Enum: `day` (Default), `morning`, `noon`, `evening`.
+- `slot` — Enum: `day` (Default), `morning`, `noon`, `evening` (ADR-0028).
+- `source` — Enum: `direct`, `retrospective`, `import`, `wearable`. Batch
+  onboarding sets `retrospective`; normal creates default to `direct`.
 - `work_context` — Enum: `homeoffice`, `office`, `vacation`, `sick`, `weekend`, `travel`.
 - `mood_score`, `energy`, `stress` — Integer 1..5 (DB-CHECK + Pydantic-Validierung).
 - `cycle_day` — Optionaler Integer 1..35; neutraler Kontext, keine medizinische Interpretation.
@@ -389,6 +392,69 @@ Fehler:
 - `409 Conflict` — Eintrag ist älter als 7 Tage (read-only) oder der Ziel-Slot
   kollidiert mit einem vorhandenen `(user, entry_date, slot)`-Eintrag.
 
+### `POST /api/v1/entries/batch`
+
+Creates up to **7** retrospective entries for cold-start onboarding. Each
+entry is validated like a normal create and marked `source: retrospective`.
+The same 7-day backdate window applies.
+
+Request:
+
+```json
+{
+  "entries": [
+    {
+      "entry_date": "2026-05-20",
+      "slot": "day",
+      "mood_score": 3,
+      "energy": 3,
+      "stress": 2,
+      "work_context": "office",
+      "note": null
+    }
+  ]
+}
+```
+
+Response `201 Created`: list of `EntryResponse` objects.
+
+### `GET /api/v1/entries/delta`
+
+Returns a neutral day-over-day comparison for one `(entry_date, slot)` pair:
+metric-only `today`/`previous`, mood/energy/stress deltas, and shared tags.
+No causal or diagnostic framing.
+
+Query parameters:
+
+- `entry_date` (required, ISO `YYYY-MM-DD`)
+- `slot` (optional, default `day`)
+
+Response `200 OK`:
+
+```json
+{
+  "today": {
+    "entry_date": "2026-05-04",
+    "slot": "day",
+    "mood_score": 4,
+    "energy": 3,
+    "stress": 2
+  },
+  "previous": {
+    "entry_date": "2026-05-03",
+    "slot": "day",
+    "mood_score": 3,
+    "energy": 2,
+    "stress": 3
+  },
+  "delta": { "mood": 1, "energy": 1, "stress": -1 },
+  "shared_tags": []
+}
+```
+
+When no prior-day entry exists, `previous` is `null` and delta fields are
+`null`.
+
 ### Tag-Zuweisung
 
 Der Tag-Set eines Eintrags wird über einen separaten, idempotenten
@@ -400,7 +466,7 @@ batch-fähig (`GET /entries`).
 ### Zukünftige Felder
 
 ```jsonc
-// Sobald Issue #9 / M7 landen, erweitert sich die Antwort um:
+// Sobald Issue #9 / M8 landen, erweitert sich die Antwort um:
 // "symptoms": [{ "symptom_id": "uuid", "intensity": 1 }],
 // "sleep_minutes": 450,
 // "sleep_quality": 3
@@ -444,6 +510,9 @@ PUT    /api/v1/entries/{entry_id}/tags     Tag-Set ersetzen (replace)      (60/m
 - `color` — optional, 7-Zeichen-Hex (`#rrggbb`); fällt auf Kategorie-Default zurück.
 - `is_default` — boolean, server-managed; Defaults werden per Copy-on-Write ueberschattet.
 - `is_hidden` — boolean; normale Listen und Entry-Picker filtern versteckte Tags aus.
+- `habit_type` — Enum: `none` (default), `build`, `reduce` (M5, ADR-0012).
+- `target_frequency` — Integer 1..7; required when `habit_type` is `build` or
+  `reduce`, must be `null` when `habit_type` is `none`.
 
 ### `POST /api/v1/tags`
 
@@ -526,6 +595,8 @@ Fehler:
   "color": "#22c55e",
   "is_default": true,
   "is_hidden": false,
+  "habit_type": "build",
+  "target_frequency": 4,
   "created_at": "2026-05-04T17:00:00Z",
   "updated_at": "2026-05-04T17:00:00Z"
 }
@@ -729,7 +800,7 @@ auf `true` gesetzt.
 ### `GET /api/v1/user/export`
 
 Kanonischer DSGVO-Art.-20-ZIP-Export mit `export.json` und `README.txt`.
-Fotos/Attachments sind bis zum Foto-/Medien-Milestone nicht enthalten; die
+Fotos/Attachments sind bis M13 nicht enthalten; die
 Export-Struktur hält dafür leere, versionierte Sektionen vor.
 
 ### `DELETE /api/v1/user/me`
@@ -799,6 +870,7 @@ jeweiligen Owner ausgegeben.
 ```
 GET    /api/v1/insights              Alle Insights des Users
 GET    /api/v1/insights/latest       Neuester Insight je Metrik
+GET    /api/v1/insights/tag-cooccurrence   Tag-Paar-Co-Occurrence (M5.1)
 POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 ```
 
@@ -854,6 +926,75 @@ Frontend-Clients duerfen diese Phase nicht selbst aus der Entry-Anzahl
 rekonstruieren.
 Der manuelle Trigger bleibt geplant und ist in M3 noch nicht oeffentlich
 implementiert.
+
+`GET /api/v1/insights/tag-cooccurrence?range=30d|90d|1y&min_count=2` (M5.1)
+liefert Tag-Paare, die auf demselben Entry gemeinsam vorkommen. Hidden Tags
+bleiben ausgeschlossen. Paare sind nach `count` absteigend sortiert.
+
+Query-Parameter:
+
+| Parameter   | Default | Beschreibung                                     |
+| ----------- | ------- | ------------------------------------------------ |
+| `range`     | `90d`   | Fenster: `30d`, `90d` oder `1y` (inklusive Tage) |
+| `min_count` | `2`     | Mindest-Co-Occurrence pro Paar (1–100)           |
+
+Response `200 OK`:
+
+```json
+{
+  "range": "90d",
+  "start_date": "2026-02-09",
+  "end_date": "2026-05-09",
+  "min_count": 2,
+  "pairs": [
+    {
+      "tag_a": {
+        "tag_id": "uuid",
+        "slug": "sport",
+        "name": "Sport",
+        "category": "sport",
+        "color": "#10b981"
+      },
+      "tag_b": {
+        "tag_id": "uuid",
+        "slug": "focus",
+        "name": "Focus",
+        "category": "work",
+        "color": "#6366f1"
+      },
+      "count": 8,
+      "pct_of_a": 66.7,
+      "pct_of_b": 80.0
+    }
+  ]
+}
+```
+
+`pct_of_a` / `pct_of_b` sind Anteile der Entries mit Tag A bzw. B, auf denen
+beide Tags gemeinsam vorkommen (0–100, eine Nachkommastelle).
+
+---
+
+## 7a. Dashboard
+
+```
+GET /api/v1/dashboard/summary?as_of=YYYY-MM-DD
+```
+
+Liefert eine kompakte Insight-Confidence-Zusammenfassung fuer Home und
+Cold-Start-UX: `entry_count`, `insight_tier` und `confidence_score` (0..1).
+Der optionale Query-Parameter `as_of` begrenzt die Berechnung auf Eintraege
+bis einschliesslich dieses Datums.
+
+Response `200 OK`:
+
+```json
+{
+  "entry_count": 18,
+  "insight_tier": "developing",
+  "confidence_score": 0.61
+}
+```
 
 ---
 
@@ -939,11 +1080,12 @@ oder `null`, wenn noch kein Insight existiert.
 
 ---
 
-## 10. Sync (M4 Offline-Sync, geplant)
+## 10. Sync (Offline-Sync, geplant)
 
-Die Sync-API ist noch nicht implementiert. Der Router enthält den Sync-Mount
-bewusst nur als Future-Kommentar; M4 liefert Dexie-Queue,
-`/sync/push`, `/sync/pull` und das `sync_conflicts`-Log.
+Die Sync-API ist noch nicht implementiert. M4 quick wins lieferten PWA shell
+caching, aber keine Dexie-Queue. Der Router enthaelt den Sync-Mount bewusst
+nur als Future-Kommentar; Follow-ups sind Dexie-Queue, `/sync/push`,
+`/sync/pull` und das `sync_conflicts`-Log.
 
 ```
 POST   /api/v1/sync/push    Client-Änderungen hochladen
@@ -978,7 +1120,7 @@ GET    /api/v1/sync/pull    Delta seit Cursor herunterladen
 
 ---
 
-## 10. Export
+## 11. Export
 
 ```
 GET    /api/v1/user/export  DSGVO Art. 20 ZIP mit export.json + README.txt
@@ -992,7 +1134,7 @@ in [`DATA_EXPORT_FORMAT.md`](DATA_EXPORT_FORMAT.md) dokumentiert.
 
 ---
 
-## 11. Developer Diagnostics
+## 12. Developer Diagnostics
 
 ```
 GET    /api/v1/dev/info
@@ -1014,7 +1156,7 @@ Die Response trennt GitHub-Version und Container-Artefakt:
   "image_hash": "ghcr.io/sturmi77/correlcore-api@sha256:...",
   "python_version": "3.12.13",
   "fastapi_version": "0.136.1",
-  "db_migration_head": "012",
+  "db_migration_head": "013",
   "db_pool_size": 10,
   "db_checked_out": 1,
   "redis_connected": true,
@@ -1031,7 +1173,7 @@ echten OCI/RepoDigest als ENV `IMAGE_DIGEST` uebergibt; sonst ist der Wert
 
 ---
 
-## 12. Admin (geplant)
+## 13. Admin (geplant)
 
 Admin-Endpunkte und Audit-Log sind noch nicht implementiert. Aktuell gibt es
 keine öffentliche `/api/v1/admin/*`-Route.
@@ -1045,7 +1187,7 @@ GET    /api/v1/admin/audit-log      Audit-Log abrufen
 
 ---
 
-## 13. Fehlerformat
+## 14. Fehlerformat
 
 Aktueller Ist-Stand ist das FastAPI-Fehlerformat. Beispiel:
 
