@@ -32,6 +32,7 @@ vi.mock('$lib/api/tags', async () => {
 });
 
 vi.mock('$lib/stores/tags', () => ({
+  applyTagUpdate: vi.fn(),
   refreshTags: vi.fn(),
 }));
 
@@ -113,6 +114,55 @@ describe('/settings/tags Sprint 8', () => {
       expect(tagsApi.updateTag).toHaveBeenCalledWith(
         'habit-tag',
         expect.objectContaining({ habit_type: 'build', target_frequency: 4 })
+      );
+    });
+  });
+
+  it('uses the returned override id after saving a default tag', async () => {
+    const defaultTag = makeTag({
+      id: 'default-sport',
+      user_id: null,
+      slug: 'sport',
+      name: 'Sport',
+      category: 'sport',
+      is_default: true,
+    });
+    const overrideTag = {
+      ...defaultTag,
+      id: 'override-sport',
+      user_id: 'user-1',
+      name: 'Training',
+      is_default: false,
+    };
+    vi.mocked(tagsApi.listDefaultTags).mockResolvedValue([defaultTag]);
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValue([defaultTag]);
+    vi.mocked(tagsApi.updateTag)
+      .mockResolvedValueOnce(overrideTag)
+      .mockResolvedValueOnce({ ...overrideTag, color: '#112233' });
+
+    render(Page);
+
+    const row = (await screen.findByText('Sport')).closest('article');
+    const nameInput = row?.querySelector('input.input') as HTMLInputElement;
+    nameInput.value = 'Training';
+    await fireEvent.input(nameInput);
+
+    await fireEvent.click(screen.getByText('settings.tags.save'));
+
+    await waitFor(() => {
+      expect(tagsApi.updateTag).toHaveBeenCalledWith(
+        'default-sport',
+        expect.objectContaining({ name: 'Training' })
+      );
+    });
+    expect(await screen.findByText('Training')).toBeTruthy();
+
+    await fireEvent.click(screen.getByText('settings.tags.save'));
+
+    await waitFor(() => {
+      expect(tagsApi.updateTag).toHaveBeenLastCalledWith(
+        'override-sport',
+        expect.objectContaining({ name: 'Training' })
       );
     });
   });

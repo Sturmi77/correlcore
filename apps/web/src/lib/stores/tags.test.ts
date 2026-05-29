@@ -21,6 +21,7 @@ vi.mock('$lib/api/tags', async () => {
 
 import * as tagsApi from '$lib/api/tags';
 import {
+  applyTagUpdate,
   patchTag,
   refreshTags,
   removeTag,
@@ -152,6 +153,30 @@ describe('patchTag', () => {
     await patchTag('t1', { is_hidden: true });
 
     expect(get(tagsList)).toHaveLength(0);
+  });
+
+  it('replaces a default tag with the returned copy-on-write override', async () => {
+    const defaultTag = makeTag({
+      id: 'default-sport',
+      slug: 'sport',
+      name: 'Sport',
+      is_default: true,
+    });
+    const overrideTag = makeTag({
+      id: 'override-sport',
+      user_id: 'user-1',
+      slug: 'sport',
+      name: 'Training',
+      is_default: false,
+    });
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValueOnce([defaultTag]);
+    await refreshTags();
+
+    applyTagUpdate(defaultTag.id, overrideTag);
+
+    const list = get(tagsList);
+    expect(list.map((tag) => tag.id)).toEqual(['override-sport']);
+    expect(list[0].name).toBe('Training');
   });
 });
 

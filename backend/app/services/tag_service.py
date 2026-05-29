@@ -63,6 +63,10 @@ class TagConflictError(TagError):
     """Slug already exists for this user."""
 
 
+class TagValidationError(TagError):
+    """Tag update would violate tag field consistency."""
+
+
 class TagOperationDeniedError(TagError):
     """Operation is not allowed (e.g. mutating a default tag)."""
 
@@ -278,6 +282,13 @@ async def update_custom_tag(
         tag = source
 
     data = payload.model_dump(exclude_unset=True)
+    next_habit_type = data.get("habit_type", tag.habit_type)
+    next_target_frequency = data.get("target_frequency", tag.target_frequency)
+    if next_habit_type == "none":
+        data["target_frequency"] = None
+    elif next_target_frequency is None:
+        raise TagValidationError("target_frequency is required for habit tags")
+
     for field, value in data.items():
         setattr(tag, field, value)
 
@@ -424,6 +435,7 @@ __all__ = [
     "TagError",
     "TagNotFoundError",
     "TagOperationDeniedError",
+    "TagValidationError",
     "TagsNotFoundError",
     "assign_tags_to_entry",
     "create_custom_tag",

@@ -1,4 +1,4 @@
-# M4 Sprint Status — Quick Wins + Mobile/PWA Hardening
+# M4 Sprint Status - Quick Wins + Mobile/PWA Hardening
 
 Last updated: 2026-05-29
 
@@ -21,7 +21,7 @@ after M4.
 | 4      | PWA Hardening                        | Done            |
 | 5      | Closeout                             | In verification |
 
-## Sprint 0 — Done
+## Sprint 0 - Done
 
 - [x] ADR-0028 documents existing `entries.slot` as the canonical time-slot field.
 - [x] ADR-0029 documents client-side 7-day SMA smoothing.
@@ -29,7 +29,7 @@ after M4.
 - [x] ADR-0031 documents neutral `cycle_day` scope.
 - [x] `docs/DESIGN_DOCUMENT.md` reflects the M4 quick-win rescope.
 
-## Sprint 1 — Done
+## Sprint 1 - Done
 
 - [x] `EntryUpdate.slot` accepted by backend schemas and service updates.
 - [x] Slot-update uniqueness conflicts map to HTTP `409`.
@@ -38,7 +38,7 @@ after M4.
 - [x] Trends Mood has `Raw | Smoothed` for 30D+ ranges using `cc_trend_smooth`.
 - [x] SMA edge cases are covered by unit tests.
 
-## Sprint 2 — Done
+## Sprint 2 - Done
 
 - [x] Migration `013_add_cycle_day_to_entries.py` adds nullable `entries.cycle_day`.
 - [x] Entry create/update/read schemas include `cycle_day` with `1..35` validation.
@@ -48,7 +48,7 @@ after M4.
 - [x] Cycle day field is available behind `+ More`.
 - [x] Trends Health shows neutral cycle-day context when data exists.
 
-## Sprint 3 — Done
+## Sprint 3 - Done
 
 - [x] `devPhase` store is in-memory only.
 - [x] Settings > Developer includes phase switcher, onboarding-state toggle, and entry-count mock.
@@ -56,7 +56,7 @@ after M4.
 - [x] Onboarding preview opens from Settings in a modal iframe.
 - [x] Disabling Dev Mode resets all overrides.
 
-## Sprint 4 — Done
+## Sprint 4 - Done
 
 - [x] `pwaInstallStore` captures `beforeinstallprompt`.
 - [x] Home shows a dismissible install banner persisted via `cc_pwa_dismissed`.
@@ -65,7 +65,7 @@ after M4.
 - [x] Manifest, app icon, and iOS PWA meta tags reviewed.
 - [x] `docs/features/PWA.md` documents install/offline behavior.
 
-## Sprint 5 — In Verification
+## Sprint 5 - In Verification
 
 - [x] `docs/FRONTEND.md` updated for M4 user-visible surfaces.
 - [x] `CHANGELOG.md` updated under Unreleased.
