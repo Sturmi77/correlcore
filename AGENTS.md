@@ -6,11 +6,11 @@ CorrelCore is a pnpm + uv monorepo (SvelteKit web + FastAPI). See `docs/DEVELOPM
 
 ### Services (local dev)
 
-| Service | Purpose | How to start |
-|---------|---------|--------------|
-| PostgreSQL 16 (pgvector) | DB + migrations | `docker run -d --name correlcore-postgres -e POSTGRES_USER=correlcore -e POSTGRES_PASSWORD=correlcore -e POSTGRES_DB=correlcore -p 5432:5432 pgvector/pgvector:pg16` |
-| Redis 7 | Rate limits / sessions | `docker run -d --name correlcore-redis -p 6379:6379 redis:7-alpine redis-server --requirepass changeme` |
-| Mailpit (optional) | Email verification in dev | `docker run -d --name correlcore-mailpit -p 8025:8025 -p 1025:1025 axllent/mailpit:latest` |
+| Service                  | Purpose                   | How to start                                                                                                                                                         |
+| ------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PostgreSQL 16 (pgvector) | DB + migrations           | `docker run -d --name correlcore-postgres -e POSTGRES_USER=correlcore -e POSTGRES_PASSWORD=correlcore -e POSTGRES_DB=correlcore -p 5432:5432 pgvector/pgvector:pg16` |
+| Redis 7                  | Rate limits / sessions    | `docker run -d --name correlcore-redis -p 6379:6379 redis:7-alpine redis-server --requirepass changeme`                                                              |
+| Mailpit (optional)       | Email verification in dev | `docker run -d --name correlcore-mailpit -p 8025:8025 -p 1025:1025 axllent/mailpit:latest`                                                                           |
 
 After Postgres is healthy, from `backend/`:
 
@@ -34,11 +34,11 @@ uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 
 ### Lint / test / build
 
-| Layer | Commands |
-|-------|----------|
-| Web + root | `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` |
-| Backend | `cd backend && uv run --python 3.12 ruff check .`, `uv run --python 3.12 pytest` |
-| E2E smoke (mocked API) | `pnpm --filter @correlcore/web test:e2e:smoke` |
+| Layer                  | Commands                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| Web + root             | `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`                         |
+| Backend                | `cd backend && uv run --python 3.12 ruff check .`, `uv run --python 3.12 pytest` |
+| E2E smoke (mocked API) | `pnpm --filter @correlcore/web test:e2e:smoke`                                   |
 
 Pre-commit (`.husky/pre-commit`) runs Prettier on staged `*.ts`, `*.svelte`, etc. via `pnpm exec prettier`.
 
