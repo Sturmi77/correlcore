@@ -4,15 +4,44 @@
 
   export let insights: InsightResponse[] = [];
 
-  $: rows = insights
-    .filter(
+  function rowKey(insight: InsightResponse): string {
+    const tagSlug = typeof insight.payload?.tag_slug === 'string' ? insight.payload.tag_slug : '';
+    const subject =
+      insight.subject_type === 'tag'
+        ? tagSlug || insight.subject_label?.toLocaleLowerCase() || insight.subject_id || ''
+        : insight.subject_id || insight.subject_label || '';
+    return [insight.insight_type, insight.metric, insight.subject_type ?? '', subject].join(':');
+  }
+
+  function strongerRow(left: InsightResponse, right: InsightResponse): InsightResponse {
+    const leftEffect = Math.abs(left.effect_size ?? 0);
+    const rightEffect = Math.abs(right.effect_size ?? 0);
+    if (leftEffect !== rightEffect) return leftEffect > rightEffect ? left : right;
+    const leftConfidence = left.confidence ?? 0;
+    const rightConfidence = right.confidence ?? 0;
+    if (leftConfidence !== rightConfidence) return leftConfidence > rightConfidence ? left : right;
+    return left.generated_at >= right.generated_at ? left : right;
+  }
+
+  function dedupeRows(items: InsightResponse[]): InsightResponse[] {
+    const byKey = new Map<string, InsightResponse>();
+    for (const insight of items) {
+      const key = rowKey(insight);
+      const existing = byKey.get(key);
+      byKey.set(key, existing ? strongerRow(existing, insight) : insight);
+    }
+    return [...byKey.values()];
+  }
+
+  $: rows = dedupeRows(
+    insights.filter(
       (insight) =>
         insight.insight_type === 'pointbiserial' &&
         insight.effect_size !== null &&
         insight.confidence !== null &&
         insight.confidence >= 0.2
     )
-    .sort((a, b) => Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0));
+  ).sort((a, b) => Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0));
 
   function tone(effect: number): 'positive' | 'negative' | 'neutral' {
     if (effect >= 0.15) return 'positive';

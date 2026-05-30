@@ -51,4 +51,34 @@ describe('InsightMatrix', () => {
     expect(text[1]).toContain('Strong');
     expect(text[2]).toContain('Small');
   });
+
+  it('deduplicates default and override tag rows by slug', () => {
+    render(InsightMatrix, {
+      props: {
+        insights: [
+          {
+            ...base,
+            id: 'default-alcohol',
+            subject_id: 'default-id',
+            subject_label: 'Alcohol',
+            effect_size: 0.3,
+            payload: { tag_slug: 'alcohol' },
+          },
+          {
+            ...base,
+            id: 'override-alcohol',
+            subject_id: 'override-id',
+            subject_label: 'Alkohol',
+            effect_size: 0.6,
+            payload: { tag_slug: 'alcohol' },
+          },
+        ],
+      },
+    });
+
+    const rows = within(screen.getByTestId('insight-matrix')).getAllByRole('row');
+    expect(rows).toHaveLength(2);
+    expect(rows[1].textContent).toContain('Alkohol');
+    expect(rows[1].textContent).not.toContain('Alcohol');
+  });
 });

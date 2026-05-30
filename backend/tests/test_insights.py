@@ -44,6 +44,7 @@ def _make_insight(
     subject_type: str | None = "metric",
     subject_id: uuid.UUID | None = None,
     subject_label: str | None = "energy",
+    payload: dict[str, object] | None = None,
     statement: str = "Mood currently lines up with energy in your entries.",
 ) -> Insight:
     now = generated_at or datetime.now(UTC)
@@ -61,7 +62,7 @@ def _make_insight(
     insight.sample_n = 18
     insight.statement_enc = statement
     insight.flags = {"medical_disclaimer_required": True, "causal_claim": False}
-    insight.payload = {"window_days": 30}
+    insight.payload = payload or {"window_days": 30}
     insight.generated_for_date = date(2026, 5, 12)
     insight.generated_at = now
     insight.created_at = now
@@ -162,6 +163,35 @@ async def test_list_latest_insights_deduplicates_by_subject() -> None:
     out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [newest_tag, metric]
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_deduplicates_tag_overrides_by_slug() -> None:
+    user = make_user()
+    newest_override = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=uuid.uuid4(),
+        subject_label="Alkohol",
+        payload={"tag_slug": "alcohol"},
+    )
+    older_default = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=uuid.uuid4(),
+        subject_label="Alcohol",
+        payload={"tag_slug": "alcohol"},
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result([newest_override, older_default]))
+
+    out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [newest_override]
 
 
 @pytest.mark.asyncio

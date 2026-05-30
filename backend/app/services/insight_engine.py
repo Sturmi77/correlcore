@@ -70,6 +70,7 @@ class TagSnapshot:
     id: uuid.UUID
     label: str
     slug: str
+    is_default: bool = False
 
 
 @dataclass(frozen=True)
@@ -240,6 +241,48 @@ def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEn
             )
         )
     return daily
+
+
+def _canonicalize_tag_aliases(
+    entries: Sequence[AnalyticsEntry],
+    tags: Iterable[TagSnapshot],
+) -> tuple[list[AnalyticsEntry], list[TagSnapshot]]:
+    """Collapse default/override tag rows that share the same slug.
+
+    Copy-on-write tag overrides keep the default slug but receive their own
+    database ID. Historical entries can therefore reference the curated default
+    while newer entries reference the override. Analytics treats both IDs as
+    one semantic tag so matrices and insight feeds do not show duplicates such
+    as two separate "Alcohol" rows.
+    """
+
+    by_slug: dict[str, list[TagSnapshot]] = defaultdict(list)
+    for tag in tags:
+        by_slug[tag.slug].append(tag)
+
+    canonical_by_slug: dict[str, TagSnapshot] = {}
+    aliases: dict[uuid.UUID, uuid.UUID] = {}
+    for slug, snapshots in by_slug.items():
+        canonical = sorted(
+            snapshots,
+            key=lambda item: (item.is_default, item.label.casefold(), str(item.id)),
+        )[0]
+        canonical_by_slug[slug] = canonical
+        for snapshot in snapshots:
+            aliases[snapshot.id] = canonical.id
+
+    canonical_entries = [
+        AnalyticsEntry(
+            id=entry.id,
+            entry_date=entry.entry_date,
+            mood_score=entry.mood_score,
+            energy=entry.energy,
+            stress=entry.stress,
+            tag_ids=frozenset(aliases.get(tag_id, tag_id) for tag_id in entry.tag_ids),
+        )
+        for entry in entries
+    ]
+    return canonical_entries, sorted(canonical_by_slug.values(), key=lambda tag: tag.slug)
 
 
 def _spearman_candidates(
@@ -418,6 +461,7 @@ def _pointbiserial_candidates(
                     "min_tag_usages": settings.ANALYTICS_MIN_TAG_USAGES,
                 },
                 payload={
+                    "tag_slug": tag.slug,
                     "tagged_count": tagged_count,
                     "untagged_count": untagged_count,
                     "tagged_mood_avg": round(tagged_mood, 2),
@@ -515,7 +559,8 @@ def generate_insight_candidates(
     if tier is InsightTier.NONE:
         return []
 
-    tags_by_id = {tag.id: tag for tag in tags}
+    daily_entries, canonical_tags = _canonicalize_tag_aliases(daily_entries, tags)
+    tags_by_id = {tag.id: tag for tag in canonical_tags}
     candidates = [
         *_weekday_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
         *_spearman_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
@@ -570,9 +615,14 @@ async def _load_analytics_inputs(
     tags_by_id: dict[uuid.UUID, TagSnapshot] = {}
     for entry_id, tag in tag_rows.all():
         tag_ids_by_entry[entry_id].add(tag.id)
-        tags_by_id[tag.id] = TagSnapshot(id=tag.id, label=tag.name, slug=tag.slug)
+        tags_by_id[tag.id] = TagSnapshot(
+            id=tag.id,
+            label=tag.name,
+            slug=tag.slug,
+            is_default=tag.is_default,
+        )
 
-    return [
+    analytics_entries = [
         AnalyticsEntry(
             id=entry.id,
             entry_date=entry.entry_date,
@@ -582,7 +632,8 @@ async def _load_analytics_inputs(
             tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
         )
         for entry in entries
-    ], list(tags_by_id.values())
+    ]
+    return _canonicalize_tag_aliases(analytics_entries, tags_by_id.values())
 
 
 async def load_analytics_data(

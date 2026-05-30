@@ -125,7 +125,42 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     assert all("diagnoses" not in candidate.statement.lower() for candidate in candidates)
     tag_candidate = next(c for c in candidates if c.insight_type == InsightType.POINTBISERIAL)
     assert tag_candidate.subject_id == sport_id
+    assert tag_candidate.payload["tag_slug"] == "sport"
     assert tag_candidate.payload["tagged_count"] == 15
+
+
+def test_pointbiserial_collapses_default_and_override_with_same_slug() -> None:
+    default_id = uuid.uuid4()
+    override_id = uuid.uuid4()
+    default = TagSnapshot(id=default_id, label="Alcohol", slug="alcohol", is_default=True)
+    override = TagSnapshot(id=override_id, label="Alkohol", slug="alcohol", is_default=False)
+    start = date(2026, 4, 1)
+    entries: list[AnalyticsEntry] = []
+    for offset in range(30):
+        tag_ids = frozenset()
+        if offset < 8:
+            tag_ids = frozenset({default_id})
+        elif offset < 15:
+            tag_ids = frozenset({override_id})
+        entries.append(
+            _entry(
+                start + timedelta(days=offset),
+                mood=5 if tag_ids else 2,
+                energy=3,
+                stress=3,
+                tag_ids=tag_ids,
+            )
+        )
+
+    candidates = generate_insight_candidates(entries, [default, override], as_of=date(2026, 4, 30))
+    tag_candidates = [c for c in candidates if c.insight_type == InsightType.POINTBISERIAL]
+
+    assert len(tag_candidates) == 1
+    candidate = tag_candidates[0]
+    assert candidate.subject_id == override_id
+    assert candidate.subject_label == "Alkohol"
+    assert candidate.payload["tag_slug"] == "alcohol"
+    assert candidate.payload["tagged_count"] == 15
 
 
 def test_bivariate_candidates_wait_for_developing_sample_size() -> None:
