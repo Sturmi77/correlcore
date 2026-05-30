@@ -431,6 +431,16 @@
       "caption": "Divergent strip view of mood, energy and stress on the shared timeline",
       "aria": "Mood, energy and stress as divergent strips"
     },
+    "esm": {
+      "eyebrow": "Event-aligned view",
+      "title": "Aligned around each onset",
+      "body": "Each row shows the days around one event so co-occurring patterns become visible.",
+      "aria": "Event-aligned small multiples",
+      "close_aria": "Close event-aligned view",
+      "empty": "No events available for this insight yet.",
+      "locked": "Available once the insight reaches the provisional phase.",
+      "open_action": "Explore aligned events"
+    },
     "markers": {
       "aria": "Event markers on the shared timeline"
     },

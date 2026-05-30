@@ -431,6 +431,16 @@
       "caption": "Divergente Streifen-Darstellung von Stimmung, Energie und Stress auf der gemeinsamen Zeitachse",
       "aria": "Stimmung, Energie und Stress als divergente Streifen"
     },
+    "esm": {
+      "eyebrow": "Ereignis-Ausrichtung",
+      "title": "Tage rund um jeden Onset",
+      "body": "Jede Zeile zeigt die Tage rund um ein Ereignis — so werden gemeinsame Muster sichtbar.",
+      "aria": "Ereignis-ausgerichtete Klein-Multiples",
+      "close_aria": "Ereignis-Ansicht schliessen",
+      "empty": "Noch keine Ereignisse fuer diesen Insight verfuegbar.",
+      "locked": "Verfuegbar sobald der Insight die provisorische Phase erreicht.",
+      "open_action": "Ausgerichtete Ereignisse erkunden"
+    },
     "markers": {
       "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"
     },
