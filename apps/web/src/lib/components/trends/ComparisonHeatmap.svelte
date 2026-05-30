@@ -34,8 +34,27 @@
    * lines/bands across the heatmap grid.
    */
   export let markers: readonly EventMarker[] = [];
+  /**
+   * Sprint 2 (ADR-0035): row sorting mode. Pure presentation — the parent
+   * component owns the persisted preference. 'correlation' falls back to
+   * 'frequency' when no correlationScores map is supplied.
+   */
+  export let sortMode: 'frequency' | 'recent' | 'correlation' | 'pinned' = 'frequency';
+  /**
+   * Sprint 2 (ADR-0035): row ids that should float to the top regardless
+   * of the sort mode. Persisted by the parent.
+   */
+  export let pinned: readonly string[] = [];
+  /**
+   * Sprint 2 (ADR-0035): optional correlation strength per row id, used
+   * when sortMode === 'correlation'. Values are |r| in [0, 1].
+   */
+  export let correlationScores: Record<string, number> = {};
 
-  const dispatch = createEventDispatcher<{ selectDate: { date: string; rowId: string } }>();
+  const dispatch = createEventDispatcher<{
+    selectDate: { date: string; rowId: string };
+    pinToggle: { rowId: string; pinned: boolean };
+  }>();
 
   type Row = {
     id: string;
@@ -62,7 +81,7 @@
   $: endDate = tagHeatmap?.end_date ?? symptomHeatmap?.end_date ?? '';
   $: axisDates =
     dates.length > 0 ? dates : startDate && endDate ? buildIsoDateRange(startDate, endDate) : [];
-  $: rows = [
+  $: rawRows = [
     ...(showTags
       ? (tagHeatmap?.tags ?? []).map(
           (tag): Row => ({
@@ -84,6 +103,53 @@
         )
       : []),
   ];
+
+  /**
+   * Sprint 2 (ADR-0035): apply pin + sort.
+   *
+   * 1. Compute a primary score per row based on `sortMode`.
+   * 2. Pinned rows always sort to the top, in their pin-order.
+   * 3. Stable secondary sort by label to keep ties deterministic.
+   */
+  function rowScore(row: Row): number {
+    if (sortMode === 'recent') {
+      let maxIdx = -1;
+      for (let i = 0; i < row.days.length; i += 1) {
+        const d = row.days[i];
+        if ((d.count ?? 0) > 0 && d.date > (row.days[maxIdx]?.date ?? '')) {
+          maxIdx = i;
+        }
+      }
+      return maxIdx === -1 ? 0 : Date.parse(row.days[maxIdx].date);
+    }
+    if (sortMode === 'correlation') {
+      const score = correlationScores[row.id];
+      if (typeof score === 'number') return score;
+      // Fallback to frequency when no correlation is available.
+    }
+    // 'frequency' and fallback path.
+    return row.days.reduce((sum, d) => sum + (d.count ?? 0), 0);
+  }
+
+  $: pinnedOrder = new Map(pinned.map((id, idx) => [id, idx]));
+  $: rows = [...rawRows].sort((a, b) => {
+    const aPin = pinnedOrder.get(a.id);
+    const bPin = pinnedOrder.get(b.id);
+    if (aPin !== undefined && bPin !== undefined) return aPin - bPin;
+    if (aPin !== undefined) return -1;
+    if (bPin !== undefined) return 1;
+    if (sortMode === 'pinned') {
+      // After pinned rows, fall back to frequency.
+      return (
+        b.days.reduce((s, d) => s + (d.count ?? 0), 0) -
+        a.days.reduce((s, d) => s + (d.count ?? 0), 0) ||
+        a.label.localeCompare(b.label)
+      );
+    }
+    const delta = rowScore(b) - rowScore(a);
+    if (delta !== 0) return delta;
+    return a.label.localeCompare(b.label);
+  });
   $: maxValue = Math.max(0, ...rows.flatMap((row) => axisDates.map((date) => valueFor(row, date))));
   $: scrollKey = `${startDate}:${endDate}:${rows.length}`;
   $: gridStyle = [
@@ -134,8 +200,23 @@
       bind:this={scroller}
     >
       <div class="compare-heatmap__grid" style={gridStyle}>
-        {#each rows as row}
-          <div class="compare-heatmap__label" data-kind={row.kind}>{row.label}</div>
+        {#each rows as row (row.id)}
+          <div class="compare-heatmap__label" data-kind={row.kind}>
+            <button
+              type="button"
+              class="compare-heatmap__pin"
+              class:compare-heatmap__pin--active={pinnedOrder.has(row.id)}
+              aria-pressed={pinnedOrder.has(row.id)}
+              aria-label={pinnedOrder.has(row.id)
+                ? $_('trends.compare.unpin_aria')
+                : $_('trends.compare.pin_aria')}
+              on:click={() =>
+                dispatch('pinToggle', { rowId: row.id, pinned: !pinnedOrder.has(row.id) })}
+            >
+              {pinnedOrder.has(row.id) ? '★' : '☆'}
+            </button>
+            <span class="compare-heatmap__label-text">{row.label}</span>
+          </div>
           {#each axisDates as date}
             {@const value = valueFor(row, date)}
             <button
@@ -226,13 +307,45 @@
     background: var(--color-surface-chart-bg);
     color: var(--color-text);
     font-size: var(--text-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .compare-heatmap__label-text {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
-  .compare-heatmap__label[data-kind='symptom'] {
+  .compare-heatmap__label[data-kind='symptom'] .compare-heatmap__label-text {
     color: var(--color-primary);
+  }
+
+  .compare-heatmap__pin {
+    /* Theme-token only — no hue hardcoded. ADR-0035 §10. */
+    background: transparent;
+    border: 0;
+    padding: 2px 4px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    line-height: 1;
+    border-radius: var(--radius-sm);
+  }
+
+  .compare-heatmap__pin:hover,
+  .compare-heatmap__pin:focus-visible {
+    color: var(--color-fg);
+    outline: 2px solid var(--color-cursor-halo);
+    outline-offset: 1px;
+  }
+
+  .compare-heatmap__pin--active {
+    color: var(--color-event-marker);
   }
 
   .compare-heatmap__cell,

@@ -415,7 +415,21 @@
       "symptoms": "Symptoms",
       "heatmap_heading": "Context rows",
       "loading": "Loading comparison layers",
-      "empty_layers": "Enable tags or symptoms to compare context on the shared timeline."
+      "empty_layers": "Enable tags or symptoms to compare context on the shared timeline.",
+      "mode_label": "Display",
+      "mode_lines": "Lines",
+      "mode_strips": "Strips",
+      "sort_label": "Sort",
+      "sort_frequency": "By frequency",
+      "sort_recent": "Most recent",
+      "sort_correlation": "By correlation",
+      "sort_pinned": "Pinned first",
+      "pin_aria": "Pin row to top",
+      "unpin_aria": "Unpin row"
+    },
+    "strip": {
+      "caption": "Divergent strip view of mood, energy and stress on the shared timeline",
+      "aria": "Mood, energy and stress as divergent strips"
     },
     "markers": {
       "aria": "Event markers on the shared timeline"
