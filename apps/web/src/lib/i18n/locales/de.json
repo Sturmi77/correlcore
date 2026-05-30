@@ -417,6 +417,12 @@
       "loading": "Lade Vergleichsebenen",
       "empty_layers": "Aktiviere Tags oder Symptome, um Kontext auf derselben Zeitachse zu vergleichen."
     },
+    "markers": {
+      "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"
+    },
+    "cursor": {
+      "aria": "Gemeinsamer Zeitachsen-Cursor"
+    },
     "history": {
       "eyebrow": "Eintragsdetails",
       "close_aria": "Eintragsdetails schliessen",

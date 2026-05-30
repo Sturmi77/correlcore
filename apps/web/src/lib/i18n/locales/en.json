@@ -417,6 +417,12 @@
       "loading": "Loading comparison layers",
       "empty_layers": "Enable tags or symptoms to compare context on the shared timeline."
     },
+    "markers": {
+      "aria": "Event markers on the shared timeline"
+    },
+    "cursor": {
+      "aria": "Shared timeline cursor"
+    },
     "history": {
       "eyebrow": "Entry details",
       "close_aria": "Close entry details",

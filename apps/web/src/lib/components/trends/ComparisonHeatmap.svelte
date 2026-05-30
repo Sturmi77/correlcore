@@ -9,6 +9,8 @@
     heatmapLevel,
     type DailyAxisLayout,
   } from '$lib/utils/charts';
+  import { timelineCursor } from '$lib/stores/timelineCursor';
+  import type { EventMarker } from './EventMarkerLayer.svelte';
 
   export let tagHeatmap: TagHeatmapResponse | null = null;
   export let symptomHeatmap: SymptomHeatmapResponse | null = null;
@@ -21,6 +23,17 @@
   export let autoScroll = true;
   export let headingKey = 'trends.compare.heatmap_heading';
   export let emptyKey = 'trends.compare.empty_layers';
+  /**
+   * Sprint 1 (ADR-0035): enables hover synchronisation with the shared
+   * timeline cursor. When true, cell hover publishes to the cursor
+   * store and the matching column is highlighted via cursor state.
+   */
+  export let enableCursor = false;
+  /**
+   * Sprint 1 (ADR-0035): event markers rendered as full-height vertical
+   * lines/bands across the heatmap grid.
+   */
+  export let markers: readonly EventMarker[] = [];
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string; rowId: string } }>();
 
@@ -83,6 +96,25 @@
     lastKey = scrollKey;
     void scrollToLatest();
   }
+
+  // Sprint 1 (ADR-0035): mirror the cursor store to a local class for CSS
+  // column highlighting via [data-date] selectors.
+  $: cursorDate = $timelineCursor.date;
+  $: markerDateSet = new Set(markers.map((m) => m.date));
+  $: markerBandDates = markers
+    .filter((m) => m.endDate)
+    .flatMap((m) => buildIsoDateRange(m.date, m.endDate ?? m.date));
+  $: markerBandSet = new Set(markerBandDates);
+
+  function handleCellEnter(date: string) {
+    if (!enableCursor) return;
+    timelineCursor.hover(date);
+  }
+
+  function handleCellLeave() {
+    if (!enableCursor) return;
+    timelineCursor.hover(null);
+  }
 </script>
 
 <section class="compare-heatmap" data-loading={loading ? 'true' : 'false'}>
@@ -109,10 +141,18 @@
             <button
               type="button"
               class={`compare-heatmap__cell compare-heatmap__cell--${heatmapLevel(value, maxValue)}`}
+              class:compare-heatmap__cell--cursor={enableCursor && cursorDate === date}
+              class:compare-heatmap__cell--marker={markerDateSet.has(date)}
+              class:compare-heatmap__cell--marker-band={markerBandSet.has(date)}
               data-kind={row.kind}
+              data-date={date}
               aria-label={`${row.label}, ${date}: ${value}`}
               title={`${row.label}, ${date}: ${value}`}
               on:click={() => dispatch('selectDate', { date, rowId: row.id })}
+              on:pointerenter={() => handleCellEnter(date)}
+              on:pointerleave={handleCellLeave}
+              on:focus={() => enableCursor && timelineCursor.focus(date)}
+              on:blur={() => enableCursor && timelineCursor.hover(null)}
             ></button>
           {/each}
         {/each}
@@ -223,6 +263,25 @@
 
   .compare-heatmap__cell--4 {
     background: var(--color-heatmap-4);
+  }
+
+  /* Sprint 1 (ADR-0035): cursor + marker highlights — theme-agnostic */
+  .compare-heatmap__cell--cursor {
+    box-shadow:
+      0 0 0 2px var(--color-cursor),
+      0 0 0 5px var(--color-cursor-halo);
+    position: relative;
+    z-index: 1;
+  }
+
+  .compare-heatmap__cell--marker-band {
+    outline: 1px solid var(--color-event-marker-soft);
+    outline-offset: -1px;
+  }
+
+  .compare-heatmap__cell--marker {
+    border-left: 2px dashed var(--color-event-marker);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
 
   .compare-heatmap__cell[data-kind='symptom'].compare-heatmap__cell--1 {

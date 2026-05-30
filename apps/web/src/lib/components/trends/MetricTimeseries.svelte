@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import {
@@ -14,6 +14,9 @@
     type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
+  import { timelineCursor } from '$lib/stores/timelineCursor';
+  import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
+  import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
 
   export let points: TimeseriesPoint[] = [];
   export let range: TimeseriesRange = 'week';
@@ -25,6 +28,16 @@
   export let loading = false;
   export let axisDates: string[] = [];
   export let axisLayout: DailyAxisLayout = compareDailyAxisLayout;
+  /**
+   * Event markers to render on the shared axis (ADR-0035, M3.8 Sprint 1).
+   * Only honoured when the chart is aligned to a daily axis.
+   */
+  export let markers: readonly EventMarker[] = [];
+  /**
+   * Enables the shared timeline cursor + hover -> store wiring.
+   * Sparkline use cases (Home) keep this off.
+   */
+  export let enableCursor = false;
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
 
@@ -82,6 +95,66 @@
   function trianglePoints(x: number, y: number, size: number): string {
     return `${x},${y - size} ${x + size},${y + size} ${x - size},${y + size}`;
   }
+
+  // Sprint 1 (ADR-0035): publish the canonical axis so other components and
+  // keyboard handlers can navigate by date.
+  $: if (enableCursor && aligned) {
+    timelineCursor.setAxis(axisDates);
+  }
+
+  function nearestDateForX(clientX: number, svgEl: SVGSVGElement): string | null {
+    if (!aligned || axisDates.length === 0) return null;
+    const rect = svgEl.getBoundingClientRect();
+    const local = ((clientX - rect.left) / rect.width) * width;
+    let bestIndex = 0;
+    let bestDelta = Infinity;
+    for (let i = 0; i < axisDates.length; i += 1) {
+      const x = dailyAxisXForIndex(i, axisLayout);
+      const delta = Math.abs(x - local);
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        bestIndex = i;
+      }
+    }
+    return axisDates[bestIndex] ?? null;
+  }
+
+  function handlePointerMove(event: PointerEvent) {
+    if (!enableCursor) return;
+    const target = event.currentTarget as SVGSVGElement;
+    const date = nearestDateForX(event.clientX, target);
+    timelineCursor.hover(date);
+  }
+
+  function handlePointerLeave() {
+    if (!enableCursor) return;
+    timelineCursor.hover(null);
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (!enableCursor) return;
+    const step = event.shiftKey ? 7 : 1;
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      timelineCursor.move(-step);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      timelineCursor.move(step);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      timelineCursor.setDate(axisDates[0] ?? null, 'keyboard');
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      timelineCursor.setDate(axisDates[axisDates.length - 1] ?? null, 'keyboard');
+    } else if (event.key === 'Escape') {
+      timelineCursor.clear();
+    }
+  }
+
+  onDestroy(() => {
+    // Do not reset the cursor here — other components on the page may still
+    // be subscribed. The TrendsComparePanel owns the lifecycle.
+  });
 </script>
 
 <section class="timeseries" data-loading={loading ? 'true' : 'false'}>
@@ -111,13 +184,29 @@
     <svg
       class="timeseries__chart"
       class:timeseries__chart--aligned={aligned}
+      class:timeseries__chart--interactive={enableCursor && aligned}
       style={aligned ? `--timeseries-chart-width: ${width}px` : ''}
       {width}
       {height}
       viewBox={`0 0 ${width} ${height}`}
-      role="img"
+      role={enableCursor ? 'application' : 'img'}
+      tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.timeseries.aria')}
+      on:pointermove={handlePointerMove}
+      on:pointerleave={handlePointerLeave}
+      on:focus={() => enableCursor && timelineCursor.focus(axisDates[axisDates.length - 1] ?? null)}
+      on:blur={() => enableCursor && timelineCursor.hover(null)}
+      on:keydown={handleKeyDown}
     >
+      {#if enableCursor && aligned && markers.length > 0}
+        <EventMarkerLayer
+          {markers}
+          {axisDates}
+          {axisLayout}
+          top={paddingTop}
+          height={innerH}
+        />
+      {/if}
       <line
         x1={plotStart}
         x2={plotStart}
@@ -149,6 +238,15 @@
           {tick.label}
         </text>
       {/each}
+
+      {#if enableCursor && aligned}
+        <TimelineCursorOverlay
+          {axisDates}
+          {axisLayout}
+          top={paddingTop}
+          height={innerH}
+        />
+      {/if}
 
       {#each series as metric}
         {#if enabled[metric.key] && metric.path}
@@ -260,6 +358,15 @@
   .timeseries__chart--aligned {
     width: var(--timeseries-chart-width);
     max-width: none;
+  }
+
+  .timeseries__chart--interactive {
+    cursor: crosshair;
+    outline: none;
+  }
+
+  .timeseries__chart--interactive:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-cursor-halo);
   }
 
   .timeseries__axis {

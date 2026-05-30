@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type {
@@ -9,8 +9,10 @@
     TimeseriesRange,
   } from '$lib/api/stats';
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
+  import { timelineCursor } from '$lib/stores/timelineCursor';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
+  import type { EventMarker } from './EventMarkerLayer.svelte';
 
   export let points: TimeseriesPoint[] = [];
   export let range: TimeseriesRange = 'week';
@@ -20,11 +22,25 @@
   export let showTags = true;
   export let showSymptoms = false;
   export let loading = false;
+  /**
+   * Sprint 1 (ADR-0035): event markers shared across metric chart and
+   * heatmap rows. Computed by the parent page from insight maturity,
+   * symptom onsets, and habit goal changes; passed unfiltered.
+   */
+  export let markers: readonly EventMarker[] = [];
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string };
     layerChange: { showTags: boolean; showSymptoms: boolean };
   }>();
+
+  // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
+  onMount(() => {
+    timelineCursor.reset();
+  });
+  onDestroy(() => {
+    timelineCursor.reset();
+  });
 
   let axisScroller: HTMLDivElement;
   let lastAxisKey = '';
@@ -96,6 +112,8 @@
       {loading}
       {axisDates}
       axisLayout={compareDailyAxisLayout}
+      {markers}
+      enableCursor
       on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
     />
 
@@ -107,6 +125,8 @@
       {loading}
       dates={axisDates}
       axisLayout={compareDailyAxisLayout}
+      {markers}
+      enableCursor
       scrollable={false}
       autoScroll={false}
       on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
