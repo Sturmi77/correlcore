@@ -57,11 +57,25 @@
     return (i.confidence ?? 0) * Math.abs(i.effect_size ?? 0);
   }
 
+  function insightMatches(i: InsightResponse, keywords: string[]): boolean {
+    const tokens = [
+      i.metric,
+      i.insight_type,
+      i.subject_type,
+      i.subject_label,
+      typeof i.payload?.kind === 'string' ? i.payload.kind : '',
+      typeof i.flags?.kind === 'string' ? i.flags.kind : '',
+    ]
+      .filter(Boolean)
+      .map((token) => String(token).toLowerCase());
+    return keywords.some((keyword) => tokens.some((token) => token.includes(keyword)));
+  }
+
   $: filtered = insights
     .filter((i) => {
       if (activeTab === 'all') return true;
       const keywords = METRIC_MAP[activeTab];
-      return keywords.some((k) => i.metric?.toLowerCase().includes(k));
+      return insightMatches(i, keywords);
     })
     .sort((a, b) => score(b) - score(a));
   $: isPhaseEmpty = Boolean(maturity && insights.length === 0);

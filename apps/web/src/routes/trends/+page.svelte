@@ -95,6 +95,7 @@
   let showSymptomRows = false;
 
   const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
+  const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
 
   function dateWindow(days?: number): { start_date: string; end_date: string } {
     const option = rangeOptions.find((item) => item.id === range) ?? rangeOptions[0];
@@ -167,6 +168,27 @@
     smoothing = value;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(SMOOTHING_STORAGE_KEY, value ? 'true' : 'false');
+    }
+  }
+
+  function setCompareLayers(next: { showTags: boolean; showSymptoms: boolean }): void {
+    showTagRows = next.showTags;
+    showSymptomRows = next.showSymptoms;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(COMPARE_LAYERS_STORAGE_KEY, JSON.stringify(next));
+    }
+  }
+
+  function restoreCompareLayers(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(COMPARE_LAYERS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<{ showTags: boolean; showSymptoms: boolean }>;
+      if (typeof parsed.showTags === 'boolean') showTagRows = parsed.showTags;
+      if (typeof parsed.showSymptoms === 'boolean') showSymptomRows = parsed.showSymptoms;
+    } catch {
+      localStorage.removeItem(COMPARE_LAYERS_STORAGE_KEY);
     }
   }
 
@@ -243,6 +265,7 @@
 
   onMount(() => {
     smoothing = localStorage.getItem(SMOOTHING_STORAGE_KEY) === 'true';
+    restoreCompareLayers();
     void loadTrends();
   });
 </script>
@@ -342,10 +365,7 @@
           showSymptoms={showSymptomRows}
           {loading}
           on:selectDate={(event) => void openHistory(event.detail.date)}
-          on:layerChange={(event) => {
-            showTagRows = event.detail.showTags;
-            showSymptomRows = event.detail.showSymptoms;
-          }}
+          on:layerChange={(event) => setCompareLayers(event.detail)}
         />
       </div>
     {:else if activeTab === 'health'}

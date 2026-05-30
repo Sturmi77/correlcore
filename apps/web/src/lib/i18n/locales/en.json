@@ -268,6 +268,29 @@
       "health": "Health",
       "cycle": "Cycle",
       "other": "Other"
+    },
+    "custom": {
+      "add_button": "Add new tag",
+      "heading": "Create new tag",
+      "name_label": "Name",
+      "name_placeholder": "e.g. Deep work",
+      "category_label": "Category",
+      "slug_label": "Slug (unique)",
+      "slug_placeholder": "deep-work",
+      "icon_label": "Icon (optional)",
+      "icon_placeholder": "briefcase",
+      "color_label": "Color (optional)",
+      "color_placeholder": "#7c3aed",
+      "preview": "New tag",
+      "save": "Create",
+      "save_busy": "Saving...",
+      "cancel": "Cancel",
+      "error_required": "Name, category and slug are required.",
+      "error_slug_invalid": "Slug needs 2-64 chars and may contain lowercase letters, digits, - and _.",
+      "error_color_invalid": "Color must use #rrggbb format.",
+      "error_conflict": "That slug already exists.",
+      "error_validation": "Input is invalid.",
+      "error_generic": "Could not create tag."
     }
   },
   "symptom": {
@@ -387,6 +410,7 @@
       "heading": "Compare",
       "body": "Mood, energy and stress share one timeline with tag and symptom rows below.",
       "layers": "Layers",
+      "shared_axis": "Shared timeline for trendline and context rows",
       "tags": "Tags",
       "symptoms": "Symptoms",
       "heatmap_heading": "Context rows",
@@ -638,7 +662,8 @@
       "list_heading": "Current insights",
       "detail_views": "Insight detail views",
       "findings_view": "Findings",
-      "matrix_view": "Matrix"
+      "matrix_view": "Matrix",
+      "symptoms_toggle": "Blend in symptoms"
     },
     "stage": {
       "aria_label": "Insight readiness"
@@ -711,6 +736,12 @@
       "cell_title": "{tagA} + {tagB}: {count} shared entries",
       "history_eyebrow": "Shared entries",
       "history_empty": "No entries contain both tags in this range."
+    },
+    "symptoms": {
+      "heading": "Symptoms in insights",
+      "body": "Symptom days are blended in as descriptive context without medical interpretation.",
+      "heatmap_heading": "Symptom history",
+      "empty": "No symptom data in the selected range yet."
     },
     "confidence_label": {
       "early_signal": "Early signal",

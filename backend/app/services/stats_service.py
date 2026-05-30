@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
 
 from sqlalchemy import select
@@ -44,13 +44,6 @@ def _round_avg(values: list[int]) -> float | None:
     return round(sum(values) / len(values), 2)
 
 
-def _add_months(d: date_type, months: int) -> date_type:
-    total = d.year * 12 + (d.month - 1) + months
-    year = total // 12
-    month = (total % 12) + 1
-    return date(year, month, 1)
-
-
 @dataclass(frozen=True)
 class _Period:
     start: date_type
@@ -67,16 +60,8 @@ def _periods_for_range(range_: TimeseriesRange, as_of: date_type) -> list[_Perio
     if range_ == "quarter":
         start = as_of - timedelta(days=89)
         return [_Period(start + timedelta(days=i), start + timedelta(days=i)) for i in range(90)]
-
-    first_this_month = date(as_of.year, as_of.month, 1)
-    first = _add_months(first_this_month, -11)
-    periods: list[_Period] = []
-    for i in range(12):
-        start = _add_months(first, i)
-        next_month = _add_months(start, 1)
-        end = min(next_month - timedelta(days=1), as_of)
-        periods.append(_Period(start, end))
-    return periods
+    start = as_of - timedelta(days=364)
+    return [_Period(start + timedelta(days=i), start + timedelta(days=i)) for i in range(365)]
 
 
 async def get_timeseries(

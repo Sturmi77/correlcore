@@ -1009,9 +1009,9 @@ GET /api/v1/entries/stats/tags?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&categor
 GET /api/v1/entries/stats/streak?as_of=YYYY-MM-DD
 ```
 
-`timeseries` liefert fuer `week` sieben Tagespunkte, fuer `month` 30 Tagespunkte
-und fuer `year` 12 Monatspunkte mit `entry_count`, `mood_avg`, `energy_avg` und
-`stress_avg`. Fehlende Perioden bleiben als Punkte mit `entry_count=0` und
+`timeseries` liefert fuer `week` sieben Tagespunkte, fuer `month` 30 Tagespunkte,
+fuer `quarter` 90 Tagespunkte und fuer `year` 365 Tagespunkte mit `entry_count`,
+`mood_avg`, `energy_avg` und `stress_avg`. Fehlende Perioden bleiben als Punkte mit `entry_count=0` und
 `*_avg=null` erhalten.
 
 `tags` liefert die Tag-Frequenz-Heatmap pro sichtbarem Tag. Hidden Tags

@@ -8,7 +8,7 @@
 
 import { api } from './client';
 
-export type InsightType = 'pointbiserial' | 'spearman' | 'weekday_pattern';
+export type InsightType = 'pointbiserial' | 'spearman' | 'weekday_pattern' | (string & {});
 export type InsightTier = 'none' | 'early' | 'preliminary' | 'developing' | 'robust';
 export type InsightMaturityPhase = 'collecting' | 'early_patterns' | 'provisional' | 'robust';
 

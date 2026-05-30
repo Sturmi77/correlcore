@@ -3,14 +3,24 @@
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats';
-  import { heatmapLevel } from '$lib/utils/charts';
-  import { shiftIsoDate } from '$lib/utils/streak';
+  import {
+    buildIsoDateRange,
+    compareDailyAxisLayout,
+    heatmapLevel,
+    type DailyAxisLayout,
+  } from '$lib/utils/charts';
 
   export let tagHeatmap: TagHeatmapResponse | null = null;
   export let symptomHeatmap: SymptomHeatmapResponse | null = null;
   export let showTags = true;
   export let showSymptoms = false;
   export let loading = false;
+  export let dates: string[] = [];
+  export let axisLayout: DailyAxisLayout = compareDailyAxisLayout;
+  export let scrollable = true;
+  export let autoScroll = true;
+  export let headingKey = 'trends.compare.heatmap_heading';
+  export let emptyKey = 'trends.compare.empty_layers';
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string; rowId: string } }>();
 
@@ -23,16 +33,6 @@
 
   let scroller: HTMLDivElement;
   let lastKey = '';
-
-  function buildDates(start: string, end: string): string[] {
-    const out: string[] = [];
-    let cursor = start;
-    while (cursor <= end && out.length < 370) {
-      out.push(cursor);
-      cursor = shiftIsoDate(cursor, 1);
-    }
-    return out;
-  }
 
   function valueFor(row: Row, date: string): number {
     const day = row.days.find((item) => item.date === date);
@@ -47,7 +47,8 @@
 
   $: startDate = tagHeatmap?.start_date ?? symptomHeatmap?.start_date ?? '';
   $: endDate = tagHeatmap?.end_date ?? symptomHeatmap?.end_date ?? '';
-  $: dates = startDate && endDate ? buildDates(startDate, endDate) : [];
+  $: axisDates =
+    dates.length > 0 ? dates : startDate && endDate ? buildIsoDateRange(startDate, endDate) : [];
   $: rows = [
     ...(showTags
       ? (tagHeatmap?.tags ?? []).map(
@@ -70,9 +71,15 @@
         )
       : []),
   ];
-  $: maxValue = Math.max(0, ...rows.flatMap((row) => dates.map((date) => valueFor(row, date))));
+  $: maxValue = Math.max(0, ...rows.flatMap((row) => axisDates.map((date) => valueFor(row, date))));
   $: scrollKey = `${startDate}:${endDate}:${rows.length}`;
-  $: if (scrollKey && scrollKey !== lastKey) {
+  $: gridStyle = [
+    `--day-count: ${axisDates.length}`,
+    `--axis-label-width: ${axisLayout.labelWidth}px`,
+    `--axis-day-width: ${axisLayout.dayWidth}px`,
+    `--axis-gap: ${axisLayout.dayGap}px`,
+  ].join('; ');
+  $: if (autoScroll && scrollKey && scrollKey !== lastKey) {
     lastKey = scrollKey;
     void scrollToLatest();
   }
@@ -80,20 +87,24 @@
 
 <section class="compare-heatmap" data-loading={loading ? 'true' : 'false'}>
   <header class="compare-heatmap__head">
-    <h3>{$_('trends.compare.heatmap_heading')}</h3>
-    {#if startDate && endDate}
-      <span>{startDate} - {endDate}</span>
+    <h3>{$_(headingKey)}</h3>
+    {#if axisDates.length > 0}
+      <span>{axisDates[0]} - {axisDates[axisDates.length - 1]}</span>
     {/if}
   </header>
 
   {#if loading && rows.length === 0}
     <div class="compare-heatmap__empty" role="status">{$_('trends.compare.loading')}</div>
   {:else if rows.length > 0}
-    <div class="compare-heatmap__scroller" bind:this={scroller}>
-      <div class="compare-heatmap__grid" style={`--day-count: ${dates.length}`}>
+    <div
+      class="compare-heatmap__scroller"
+      data-scrollable={scrollable ? 'true' : 'false'}
+      bind:this={scroller}
+    >
+      <div class="compare-heatmap__grid" style={gridStyle}>
         {#each rows as row}
           <div class="compare-heatmap__label" data-kind={row.kind}>{row.label}</div>
-          {#each dates as date}
+          {#each axisDates as date}
             {@const value = valueFor(row, date)}
             <button
               type="button"
@@ -115,7 +126,7 @@
       <span>{$_('trends.heatmap.more')}</span>
     </div>
   {:else}
-    <div class="compare-heatmap__empty">{$_('trends.compare.empty_layers')}</div>
+    <div class="compare-heatmap__empty">{$_(emptyKey)}</div>
   {/if}
 </section>
 
@@ -153,10 +164,16 @@
     padding-bottom: var(--space-1);
   }
 
+  .compare-heatmap__scroller[data-scrollable='false'] {
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
   .compare-heatmap__grid {
     display: grid;
-    grid-template-columns: minmax(7rem, 10rem) repeat(var(--day-count), 0.82rem);
-    gap: 0.18rem;
+    grid-template-columns: var(--axis-label-width) repeat(var(--day-count), var(--axis-day-width));
+    column-gap: var(--axis-gap);
+    row-gap: 0.18rem;
     min-width: max-content;
     align-items: center;
   }
@@ -180,8 +197,8 @@
 
   .compare-heatmap__cell,
   .compare-heatmap__legend-cell {
-    width: 0.82rem;
-    height: 0.82rem;
+    width: var(--axis-day-width);
+    height: var(--axis-day-width);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-chart);
     background: var(--color-surface-dynamic);
@@ -234,17 +251,5 @@
     padding: var(--space-4);
     border: 1px dashed var(--color-border);
     border-radius: var(--radius-md);
-  }
-
-  @media (pointer: coarse) {
-    .compare-heatmap__grid {
-      grid-template-columns: minmax(7rem, 10rem) repeat(var(--day-count), 2.75rem);
-      gap: 0.25rem;
-    }
-
-    .compare-heatmap__cell {
-      width: 2.75rem;
-      height: 2.75rem;
-    }
   }
 </style>

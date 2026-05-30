@@ -15,6 +15,7 @@
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
   import { listEntries } from '$lib/api/entries';
+  import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
   import {
     fetchTagCooccurrence,
     listLatestInsights,
@@ -38,10 +39,11 @@
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
   import CooccurrenceEntrySheet from '$lib/components/insights/CooccurrenceEntrySheet.svelte';
   import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
+  import SymptomAnalyticsSection from '$lib/components/insights/symptoms/SymptomAnalyticsSection.svelte';
   import type { EntryHistoryDetail } from '$lib/components/trends/EntryHistorySheet.svelte';
   import { mockEntries } from '$lib/dev/mockEntries';
   import { mockUserPreferences } from '$lib/dev/mockEntries';
-  import { mockTagCooccurrence } from '$lib/dev/mockTrends';
+  import { mockSymptomHeatmap, mockTagCooccurrence } from '$lib/dev/mockTrends';
   import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
@@ -65,6 +67,17 @@
   let cooccurrenceHistoryLoading = false;
   let cooccurrenceHistoryError = '';
   let cooccurrenceHistoryDetails: EntryHistoryDetail[] = [];
+  let symptomHeatmap: SymptomHeatmapResponse | null = null;
+  let showInsightSymptoms = true;
+
+  const INSIGHT_SYMPTOMS_STORAGE_KEY = 'cc_insights_symptoms';
+
+  function setShowInsightSymptoms(value: boolean): void {
+    showInsightSymptoms = value;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(INSIGHT_SYMPTOMS_STORAGE_KEY, value ? 'true' : 'false');
+    }
+  }
 
   async function loadCooccurrence(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
@@ -153,6 +166,7 @@
         insights = mockInsights;
         insightMaturity = mockInsightMaturity;
         userPreferences = mockUserPreferences;
+        symptomHeatmap = mockSymptomHeatmap;
         dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
         entryCount = dayEntryDates.length;
         inactiveTagIds = [];
@@ -161,16 +175,19 @@
 
       const todayIso = localIsoDate(new Date());
       const startIso = shiftIsoDate(todayIso, -89);
-      const [response, entryResponse, tagResponse, defaultTags, preferences] = await Promise.all([
-        listLatestInsights({ limit: 50 }),
-        listEntries({ start_date: startIso, end_date: todayIso }),
-        listVisibleTags({ include_hidden: true }).catch(() => []),
-        listDefaultTags().catch(() => []),
-        fetchUserPreferences().catch(() => null),
-      ]);
+      const [response, entryResponse, tagResponse, defaultTags, preferences, nextSymptomHeatmap] =
+        await Promise.all([
+          listLatestInsights({ limit: 50 }),
+          listEntries({ start_date: startIso, end_date: todayIso }),
+          listVisibleTags({ include_hidden: true }).catch(() => []),
+          listDefaultTags().catch(() => []),
+          fetchUserPreferences().catch(() => null),
+          fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }).catch(() => null),
+        ]);
       insights = response.insights;
       insightMaturity = response.insight_maturity;
       userPreferences = preferences;
+      symptomHeatmap = nextSymptomHeatmap;
       dayEntryDates = dayEntryDatesFromIsoEntries(entryResponse);
       entryCount = dayEntryDates.length;
       const inactiveSlugs = new Set(
@@ -185,6 +202,7 @@
       insights = [];
       insightMaturity = null;
       userPreferences = null;
+      symptomHeatmap = null;
       dayEntryDates = [];
       entryCount = 0;
       inactiveTagIds = [];
@@ -194,6 +212,7 @@
   }
 
   onMount(() => {
+    showInsightSymptoms = localStorage.getItem(INSIGHT_SYMPTOMS_STORAGE_KEY) !== 'false';
     void loadInsights();
     void loadCooccurrence();
   });
@@ -202,6 +221,8 @@
     insightMaturity,
     userPreferences?.reached_milestone_keys
   );
+  $: showSymptomAnalytics =
+    showInsightSymptoms && (!insightMaturity || insightMaturity.phase !== 'collecting');
 
   async function dismissMaturityMilestone(key: string): Promise<void> {
     const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
@@ -268,6 +289,14 @@
       >
         {$_('insights.page.matrix_view')}
       </button>
+      <label class="insights-page__symptom-toggle">
+        <input
+          type="checkbox"
+          checked={showInsightSymptoms}
+          on:change={(event) => setShowInsightSymptoms(event.currentTarget.checked)}
+        />
+        {$_('insights.page.symptoms_toggle')}
+      </label>
     </div>
 
     {#if detailView === 'matrix'}
@@ -282,6 +311,9 @@
         {inactiveTagIds}
         on:retry={loadInsights}
       />
+      {#if showSymptomAnalytics}
+        <SymptomAnalyticsSection heatmap={symptomHeatmap} {loading} />
+      {/if}
     {/if}
 
     <TagCooccurrenceHeatmap
@@ -328,6 +360,17 @@
     min-height: 44px;
     padding: 0 var(--space-3);
     border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .insights-page__symptom-toggle {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0 var(--space-3);
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     font-weight: 700;

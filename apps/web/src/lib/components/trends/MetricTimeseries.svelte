@@ -3,10 +3,15 @@
   import { _ } from 'svelte-i18n';
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import {
+    buildDailyAxisLinePoints,
     buildLinePoints,
+    compareDailyAxisLayout,
+    dailyAxisChartWidth,
+    dailyAxisXForIndex,
     formatTimeseriesTick,
     linePath,
     metricStyles,
+    type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
 
@@ -18,16 +23,16 @@
     stress_avg: true,
   };
   export let loading = false;
+  export let axisDates: string[] = [];
+  export let axisLayout: DailyAxisLayout = compareDailyAxisLayout;
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
 
-  const width = 720;
   const height = 248;
   const paddingLeft = 48;
   const paddingRight = 18;
   const paddingTop = 18;
   const paddingBottom = 36;
-  const innerW = width - paddingLeft - paddingRight;
   const innerH = height - paddingTop - paddingBottom;
   const pointRadius = 5;
 
@@ -39,22 +44,34 @@
 
   $: hasData = points.some((point) => point.entry_count > 0);
   $: showSkeleton = loading && points.length === 0;
+  $: aligned = axisDates.length > 0;
+  $: width = aligned ? dailyAxisChartWidth(axisDates, axisLayout) : 720;
+  $: plotStart = aligned ? dailyAxisXForIndex(0, axisLayout) : paddingLeft;
+  $: plotEnd = aligned
+    ? dailyAxisXForIndex(Math.max(0, axisDates.length - 1), axisLayout)
+    : width - paddingRight;
+  $: innerW = plotEnd - plotStart;
   $: series = metrics.map((metric) => {
-    const raw = buildLinePoints(points, metric.key, innerW, innerH);
+    const raw = aligned
+      ? buildDailyAxisLinePoints(points, metric.key, axisDates, innerH, axisLayout)
+      : buildLinePoints(points, metric.key, innerW, innerH);
     const shifted = raw.map((point) => ({
       ...point,
-      x: point.x + paddingLeft,
+      x: aligned ? point.x : point.x + paddingLeft,
       y: point.y + paddingTop,
     }));
     return { ...metric, style: metricStyles[metric.key], points: shifted, path: linePath(shifted) };
   });
 
   $: xLabels = (() => {
-    if (points.length === 0) return [];
-    const indexes = [0, Math.floor((points.length - 1) / 2), points.length - 1];
+    const labels = aligned ? axisDates : points.map((point) => point.period_start);
+    if (labels.length === 0) return [];
+    const indexes = [0, Math.floor((labels.length - 1) / 2), labels.length - 1];
     return [...new Set(indexes)].map((index) => ({
-      x: paddingLeft + (index / Math.max(1, points.length - 1)) * innerW,
-      label: formatTimeseriesTick(range, points[index].period_start),
+      x: aligned
+        ? dailyAxisXForIndex(index, axisLayout)
+        : paddingLeft + (index / Math.max(1, labels.length - 1)) * innerW,
+      label: formatTimeseriesTick(range, labels[index]),
     }));
   })();
 
@@ -93,32 +110,36 @@
   {:else}
     <svg
       class="timeseries__chart"
+      class:timeseries__chart--aligned={aligned}
+      style={aligned ? `--timeseries-chart-width: ${width}px` : ''}
+      {width}
+      {height}
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={$_('trends.timeseries.aria')}
     >
       <line
-        x1={paddingLeft}
-        x2={paddingLeft}
+        x1={plotStart}
+        x2={plotStart}
         y1={paddingTop}
         y2={height - paddingBottom}
         class="timeseries__axis"
       />
       <line
-        x1={paddingLeft}
-        x2={width - paddingRight}
+        x1={plotStart}
+        x2={plotEnd}
         y1={height - paddingBottom}
         y2={height - paddingBottom}
         class="timeseries__axis"
       />
-      <text x={paddingLeft - 8} y={paddingTop + 8} class="timeseries__axis-label" text-anchor="end">
+      <text x={plotStart - 8} y={paddingTop + 8} class="timeseries__axis-label" text-anchor="end">
         {$_('trends.timeseries.score_axis')}
       </text>
 
       {#each [1, 2, 3, 4, 5] as tick}
         {@const y = height - paddingBottom - ((tick - 1) / 4) * innerH}
-        <line x1={paddingLeft} x2={width - paddingRight} y1={y} y2={y} class="timeseries__grid" />
-        <text x={paddingLeft - 12} y={y + 4} class="timeseries__tick" text-anchor="end">
+        <line x1={plotStart} x2={plotEnd} y1={y} y2={y} class="timeseries__grid" />
+        <text x={plotStart - 12} y={y + 4} class="timeseries__tick" text-anchor="end">
           {tick}
         </text>
       {/each}
@@ -234,6 +255,11 @@
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
+  }
+
+  .timeseries__chart--aligned {
+    width: var(--timeseries-chart-width);
+    max-width: none;
   }
 
   .timeseries__axis {

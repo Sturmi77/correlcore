@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildDailyAxisLinePoints,
+  buildIsoDateRange,
   buildLinePoints,
+  dailyAxisChartWidth,
+  dailyAxisXForDate,
   formatTimeseriesTick,
   heatmapLevel,
   linePath,
@@ -39,6 +43,49 @@ describe('chart utilities', () => {
       { x: 100, y: 0, value: 5, label: '2026-05-02' },
     ]);
     expect(linePath(points)).toBe('M 0.00 40.00 L 100.00 0.00');
+  });
+
+  it('builds a shared daily axis for aligned chart and heatmap rows', () => {
+    const dates = buildIsoDateRange('2026-05-01', '2026-05-03');
+    const layout = { labelWidth: 120, dayWidth: 10, dayGap: 2, rightPadding: 8 };
+
+    expect(dates).toEqual(['2026-05-01', '2026-05-02', '2026-05-03']);
+    expect(dailyAxisXForDate('2026-05-02', dates, layout)).toBe(137);
+    expect(dailyAxisChartWidth(dates, layout)).toBe(162);
+  });
+
+  it('maps timeseries points onto the shared daily axis by date', () => {
+    const dates = buildIsoDateRange('2026-05-01', '2026-05-03');
+    const layout = { labelWidth: 120, dayWidth: 10, dayGap: 2, rightPadding: 8 };
+    const points = buildDailyAxisLinePoints(
+      [
+        {
+          period_start: '2026-05-01',
+          period_end: '2026-05-01',
+          entry_count: 1,
+          mood_avg: 1,
+          energy_avg: null,
+          stress_avg: null,
+        },
+        {
+          period_start: '2026-05-03',
+          period_end: '2026-05-03',
+          entry_count: 1,
+          mood_avg: 5,
+          energy_avg: null,
+          stress_avg: null,
+        },
+      ],
+      'mood_avg',
+      dates,
+      40,
+      layout
+    );
+
+    expect(points).toEqual([
+      { x: 127, y: 40, value: 1, label: '2026-05-01' },
+      { x: 151, y: 0, value: 5, label: '2026-05-03' },
+    ]);
   });
 
   it('inverts stress_avg on the chart Y axis (higher raw stress plots lower)', () => {
