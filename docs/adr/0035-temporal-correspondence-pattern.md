@@ -4,7 +4,7 @@
 | ------------ | -------------------------------------------------------------------- |
 | **ID**       | 0035                                                                 |
 | **Date**     | 2026-05-30                                                           |
-| **Status**   | Proposed                                                             |
+| **Status**   | Accepted (2026-05-30)                                                |
 | **Deciders** | @Sturmi77                                                            |
 | **Area**     | Frontend / Visualisation / Architecture                              |
 | **Supersedes** | Partially supersedes [ADR D-002](../DESIGN_DOCUMENT.md#7) (chart-library policy) |
