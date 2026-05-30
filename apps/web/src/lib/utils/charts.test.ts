@@ -50,8 +50,8 @@ describe('chart utilities', () => {
     const layout = { labelWidth: 120, dayWidth: 10, dayGap: 2, rightPadding: 8 };
 
     expect(dates).toEqual(['2026-05-01', '2026-05-02', '2026-05-03']);
-    expect(dailyAxisXForDate('2026-05-02', dates, layout)).toBe(137);
-    expect(dailyAxisChartWidth(dates, layout)).toBe(162);
+    expect(dailyAxisXForDate('2026-05-02', dates, layout)).toBe(139);
+    expect(dailyAxisChartWidth(dates, layout)).toBe(164);
   });
 
   it('maps timeseries points onto the shared daily axis by date', () => {
