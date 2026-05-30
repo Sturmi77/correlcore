@@ -96,6 +96,24 @@ async def list_insights(
     return list(result.scalars().all())
 
 
+def _latest_subject_key(insight: Insight) -> tuple[object, ...]:
+    """Return the semantic subject key used by /insights/latest.
+
+    Tag insights may be generated from historical default-tag IDs and newer
+    copy-on-write override IDs. When the analytics payload includes a slug, use
+    it as the canonical key; otherwise fall back to a case-insensitive label so
+    older generated rows still collapse in the UI.
+    """
+
+    if insight.subject_type == "tag":
+        tag_slug = insight.payload.get("tag_slug") if isinstance(insight.payload, dict) else None
+        if isinstance(tag_slug, str) and tag_slug:
+            return ("tag_slug", tag_slug)
+        if insight.subject_label:
+            return ("tag_label", insight.subject_label.casefold())
+    return ("subject", insight.subject_id, insight.subject_label)
+
+
 async def list_latest_insights(
     db: AsyncSession,
     *,
@@ -129,8 +147,7 @@ async def list_latest_insights(
             insight.insight_type,
             insight.metric,
             insight.subject_type,
-            insight.subject_id,
-            insight.subject_label,
+            _latest_subject_key(insight),
         )
         if key in seen:
             continue
