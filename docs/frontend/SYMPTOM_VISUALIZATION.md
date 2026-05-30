@@ -1,6 +1,6 @@
 # Symptom Visualization — Frontend Specification
 
-> **Status:** Proposed · **ADR:** [0025](../adr/0025-symptom-analytics.md) · **Feature Spec:** [`symptom-analytics.md`](../features/symptom-analytics.md) · **Last updated:** 2026-05-19
+> **Status:** Partially implemented (descriptive frontend context) · **ADR:** [0025](../adr/0025-symptom-analytics.md) · **Feature Spec:** [`symptom-analytics.md`](../features/symptom-analytics.md) · **Last updated:** 2026-05-30
 
 This document is the single source of truth for how symptom analytics is rendered, integrated, and
 phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md`](INSIGHT_MATURITY.md)
@@ -13,6 +13,7 @@ phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md
 
 | Component                      | Type               | Reuses                                 | Purpose                                                      |
 | ------------------------------ | ------------------ | -------------------------------------- | ------------------------------------------------------------ |
+| `SymptomAnalyticsSection`      | Container          | `ComparisonHeatmap`                    | Toggleable descriptive symptom history inside `/insights`    |
 | `SymptomCooccurrenceHeatmap`   | Visualisation      | Existing custom SVG primitives         | Symptoms × Tags Lift-coloured grid                           |
 | `SymptomCalendarHeatmap`       | Visualisation      | M2 `CalendarHeatmap` (data variant)    | Year-grid frequency view per symptom                         |
 | `SymptomTrendOverlay`          | Visualisation      | `DualAxisChart` (FRONTEND.md §6.2)     | Rolling-7d symptom frequency + mood overlay                  |
@@ -21,6 +22,11 @@ phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md
 
 All components live under `apps/web/src/lib/components/insights/symptoms/` following the existing
 folder convention for insight-related components.
+
+**Implemented subset (2026-05-30):** `SymptomAnalyticsSection` exists and renders the existing
+`ComparisonHeatmap` with `showSymptoms=true`, `showTags=false`. It is descriptive only: it displays
+daily symptom occurrence/intensity context from `fetchSymptomHeatmap()` and intentionally does not
+render Lift, FDR markers, co-occurrence statistics, medical interpretation, or recommendations.
 
 ---
 
@@ -39,11 +45,10 @@ Symptom analytics is integrated into the **existing `/insights` route**. **No se
 │    ↳ InsightCard items, including SymptomInsightCard        │
 │      variants mixed inline with tag/metric insights         │
 ├─────────────────────────────────────────────────────────────┤
-│  Symptom Analytics Section          (NEW, phase-gated)      │
+│  Symptom Analytics Section          (toggleable, gated)     │
 │    ┌─────────────────────────────────────────────────────┐  │
-│    │  SymptomCooccurrenceHeatmap                          │  │
-│    │  SymptomCalendarHeatmap (one per active symptom)     │  │
-│    │  SymptomTrendOverlay (one per active symptom)        │  │
+│    │  Current: descriptive symptom-history heatmap        │  │
+│    │  Planned: Cooccurrence / Calendar / Trend overlays   │  │
 │    └─────────────────────────────────────────────────────┘  │
 ├─────────────────────────────────────────────────────────────┤
 │  InsightMatrix                              (existing)      │
@@ -57,10 +62,34 @@ who want to drill down. The matrix stays at the bottom as the existing reference
 **Section visibility:** the entire "Symptom Analytics Section" container is hidden in `collecting`.
 Below that, individual components have their own phase gates (see §6).
 
+**User toggle:** `/insights` exposes a "Blend in symptoms" toggle persisted in
+`cc_insights_symptoms`. Turning it off hides the descriptive section without affecting generated
+insight cards or analytics settings.
+
 **Mixed insight stream:** `SymptomInsightCard` variants appear **interleaved** with existing
 `InsightCard` items in `InsightFeed`. Sorting follows the existing `confidence × effect_size` rule
 from [ADR-0017](../adr/0017-frontend-screen-architecture.md). Symptom cards are not visually
 separated or grouped.
+
+**Current feed compatibility:** until the backend emits symptom-specific cards, the `Symptoms` tab
+matches both legacy metric strings and future payload shapes (`insight_type`, `subject_type`,
+`subject_label`, payload/flag `kind`) so the feed can accept `symptom_*` insight types without a
+route change.
+
+---
+
+## 2.1 Implemented descriptive symptom context
+
+`SymptomAnalyticsSection` is the first shipped frontend slice of symptom visualisation:
+
+- Route: existing `/insights`, below `InsightFeed` in the findings view.
+- Data: `fetchSymptomHeatmap({ start_date, end_date })` for the same 90-day context used by the
+  insights page.
+- Rendering: `ComparisonHeatmap` with symptom rows only.
+- Phase: hidden in `collecting`; visible from `early_patterns` onward when the user toggle is on.
+- Semantics: descriptive frequency/intensity context only; no statistical claims.
+- Tests: `InsightFeed` includes future symptom insight payload filtering; shared heatmap rendering is
+  covered through the trends comparison component and chart utilities.
 
 ---
 
@@ -543,9 +572,10 @@ response (consistent with ADR-0021).
 
 ### Routing & Integration
 
-- [ ] No `/insights/symptoms` route exists
-- [ ] Symptom Analytics Section renders below `InsightFeed`, above `InsightMatrix`, within the
-      existing `/insights` route
+- [x] No `/insights/symptoms` route exists
+- [x] Symptom Analytics Section renders below `InsightFeed` within the existing `/insights` route
+      when the findings view is active
+- [x] Descriptive symptom section can be toggled by the user and is persisted locally
 - [ ] `SymptomInsightCard` items appear interleaved in `InsightFeed`, sorted by
       `confidence × effect_size` alongside other insight cards
 
@@ -603,7 +633,7 @@ response (consistent with ADR-0021).
 
 ### Phase Gating
 
-- [ ] In `collecting`: entire Symptom Analytics Section is hidden
+- [x] In `collecting`: entire Symptom Analytics Section is hidden
 - [ ] In `early_patterns`: only descriptive views render (calendar heatmap, raw-count co-occurrence,
       trend overlay); no Lift colouring, no insight cards
 - [ ] In `provisional`: full statistical rendering with FDR markers and uncertainty ribbons
@@ -617,6 +647,13 @@ response (consistent with ADR-0021).
       heatmap explicitly violates this with documented justification — divergent scale is
       necessary for bidirectional association and uses warning/info tokens, not red/green)
 - [ ] All new components have `data-testid` attributes for E2E test coverage
+
+### Implemented 2026-05-30 subset
+
+- [x] `/trends` Compare uses a shared daily axis for trendline and tag/symptom heatmap rows
+- [x] `/trends` tag and symptom context layers are independently toggleable and persisted
+- [x] `/insights` includes toggleable descriptive symptom history via `SymptomAnalyticsSection`
+- [x] `InsightFeed` symptom filtering recognises future symptom insight payloads
 
 ---
 

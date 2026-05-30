@@ -12,11 +12,25 @@ export interface ChartPoint {
   label: string;
 }
 
+export interface DailyAxisLayout {
+  labelWidth: number;
+  dayWidth: number;
+  dayGap: number;
+  rightPadding: number;
+}
+
 export interface MetricStyle {
   color: string;
   dasharray: string;
   shape: PointShape;
 }
+
+export const compareDailyAxisLayout: DailyAxisLayout = {
+  labelWidth: 160,
+  dayWidth: 18,
+  dayGap: 4,
+  rightPadding: 18,
+};
 
 export const metricStyles: Record<MetricKey, MetricStyle> = {
   mood_avg: {
@@ -56,6 +70,87 @@ export function buildLinePoints(
     if (raw === null) return [];
     const value = displayTimeseriesValue(metric, raw);
     const x = points.length > 1 ? index * step : width / 2;
+    const y = height - ((value - 1) / 4) * height;
+    return [{ x, y, value, label: point.period_start }];
+  });
+}
+
+export function buildIsoDateRange(start: string, end: string, maxDays = 370): string[] {
+  if (!start || !end || start > end) return [];
+  const out: string[] = [];
+  let cursor = start;
+  while (cursor <= end && out.length < maxDays) {
+    out.push(cursor);
+    const next = shiftIsoDateForAxis(cursor, 1);
+    if (next === cursor) break;
+    cursor = next;
+  }
+  return out;
+}
+
+function shiftIsoDateForAxis(iso: string, deltaDays: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  d.setDate(d.getDate() + deltaDays);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function dailyAxisContentWidth(
+  dates: readonly string[],
+  layout: Pick<DailyAxisLayout, 'dayWidth' | 'dayGap'> = compareDailyAxisLayout
+): number {
+  if (dates.length === 0) return 0;
+  return dates.length * layout.dayWidth + Math.max(0, dates.length - 1) * layout.dayGap;
+}
+
+export function dailyAxisChartWidth(
+  dates: readonly string[],
+  layout: DailyAxisLayout = compareDailyAxisLayout
+): number {
+  return (
+    layout.labelWidth + layout.dayGap + dailyAxisContentWidth(dates, layout) + layout.rightPadding
+  );
+}
+
+export function dailyAxisXForIndex(
+  index: number,
+  layout: Pick<DailyAxisLayout, 'labelWidth' | 'dayWidth' | 'dayGap'> = compareDailyAxisLayout
+): number {
+  return (
+    layout.labelWidth +
+    layout.dayGap +
+    index * (layout.dayWidth + layout.dayGap) +
+    layout.dayWidth / 2
+  );
+}
+
+export function dailyAxisXForDate(
+  date: string,
+  dates: readonly string[],
+  layout: Pick<DailyAxisLayout, 'labelWidth' | 'dayWidth' | 'dayGap'> = compareDailyAxisLayout
+): number | null {
+  const index = dates.indexOf(date);
+  return index === -1 ? null : dailyAxisXForIndex(index, layout);
+}
+
+export function buildDailyAxisLinePoints(
+  points: readonly TimeseriesPoint[],
+  metric: MetricKey,
+  dates: readonly string[],
+  height: number,
+  layout: Pick<DailyAxisLayout, 'labelWidth' | 'dayWidth' | 'dayGap'> = compareDailyAxisLayout
+): ChartPoint[] {
+  const byDate = new Map(points.map((point) => [point.period_start, point]));
+  return dates.flatMap((date, index) => {
+    const point = byDate.get(date);
+    if (!point) return [];
+    const raw = point[metric];
+    if (raw === null) return [];
+    const value = displayTimeseriesValue(metric, raw);
+    const x = dailyAxisXForIndex(index, layout);
     const y = height - ((value - 1) / 4) * height;
     return [{ x, y, value, label: point.period_start }];
   });

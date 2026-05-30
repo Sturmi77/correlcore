@@ -155,6 +155,21 @@ describe('InsightFeed', () => {
     expect(screen.getByTestId('insight-feed-empty')).toBeTruthy();
   });
 
+  it('symptoms tab includes future symptom insight payloads', async () => {
+    const symptomInsight = makeInsight({
+      id: 'symptom',
+      metric: 'mood',
+      insight_type: 'symptom_mood_association',
+      subject_type: 'symptom',
+      subject_label: 'Headache',
+    });
+    const tagInsight = makeInsight({ id: 'tag', metric: 'mood', subject_type: 'tag' });
+    render(InsightFeed, { props: { insights: [symptomInsight, tagInsight] } });
+    await fireEvent.click(screen.getByTestId('insight-feed-tab-symptoms'));
+    const list = screen.getByTestId('insight-feed-list');
+    expect(list.querySelectorAll('li').length).toBe(1);
+  });
+
   // ── Header ────────────────────────────────────────────────────────
   it('renders feed title', () => {
     render(InsightFeed, { props: { insights: [] } });

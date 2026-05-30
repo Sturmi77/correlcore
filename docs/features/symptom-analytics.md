@@ -1,9 +1,9 @@
 # Feature Spec: Symptom Analytics
 
-**Status:** Proposed
-**Version:** 1.0.0
+**Status:** Partially implemented (frontend descriptive context; inferential engine pending)
+**Version:** 1.1.0
 **Created:** 2026-05-19
-**Updated:** 2026-05-19
+**Updated:** 2026-05-30
 **Owner:** @Sturmi77
 **Milestone Coverage:** Sprint-free (foundational bugfix) → M7 (main implementation) → M8 (sleep×symptom) → M9 (beta hardening)
 
@@ -43,6 +43,20 @@ Three concrete problems result from this gap:
    currently scope to tags only.
 
 This spec defines the engineering and product work required to close all three gaps coherently.
+
+### Implementation note — 2026-05-30
+
+The first frontend-only slice is implemented:
+
+- `/trends` Compare can blend tag and symptom rows below Mood/Energy/Stress on a shared daily axis.
+  Layer choices are persisted locally.
+- `/insights` can blend in a descriptive symptom-history section using the existing
+  symptom heatmap endpoint. This section is hidden in `collecting` and is user-toggleable.
+- `InsightFeed` is ready to filter future `symptom_*` insight types, but the backend insight engine
+  does not yet emit symptom-specific cards.
+
+The statistical levels below remain the normative target for the analytics worker and API. The
+shipped frontend context must not be treated as evidence of correlation or causation.
 
 ---
 

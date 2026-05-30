@@ -268,6 +268,29 @@
       "health": "Gesundheit",
       "cycle": "Zyklus",
       "other": "Sonstiges"
+    },
+    "custom": {
+      "add_button": "Neuen Tag hinzufuegen",
+      "heading": "Neuen Tag anlegen",
+      "name_label": "Name",
+      "name_placeholder": "z. B. Deep Work",
+      "category_label": "Kategorie",
+      "slug_label": "Slug (eindeutig)",
+      "slug_placeholder": "deep-work",
+      "icon_label": "Icon (optional)",
+      "icon_placeholder": "briefcase",
+      "color_label": "Farbe (optional)",
+      "color_placeholder": "#7c3aed",
+      "preview": "Neuer Tag",
+      "save": "Anlegen",
+      "save_busy": "Speichert...",
+      "cancel": "Abbrechen",
+      "error_required": "Name, Kategorie und Slug sind Pflichtfelder.",
+      "error_slug_invalid": "Slug braucht 2-64 Zeichen und darf Kleinbuchstaben, Ziffern, - und _ enthalten.",
+      "error_color_invalid": "Farbe muss im Format #rrggbb angegeben werden.",
+      "error_conflict": "Diesen Slug gibt es bereits.",
+      "error_validation": "Eingabe ist ungueltig.",
+      "error_generic": "Tag konnte nicht angelegt werden."
     }
   },
   "symptom": {
@@ -387,6 +410,7 @@
       "heading": "Vergleichen",
       "body": "Stimmung, Energie und Stress liegen auf derselben Zeitachse wie Tag- und Symptomzeilen.",
       "layers": "Ebenen",
+      "shared_axis": "Gemeinsame Zeitachse fuer Trendlinie und Kontextzeilen",
       "tags": "Tags",
       "symptoms": "Symptome",
       "heatmap_heading": "Kontextzeilen",
@@ -638,7 +662,8 @@
       "list_heading": "Aktuelle Erkenntnisse",
       "detail_views": "Detailansichten fuer Erkenntnisse",
       "findings_view": "Erkenntnisse",
-      "matrix_view": "Matrix"
+      "matrix_view": "Matrix",
+      "symptoms_toggle": "Symptome einblenden"
     },
     "stage": {
       "aria_label": "Erkenntnisbereitschaft"
@@ -711,6 +736,12 @@
       "cell_title": "{tagA} + {tagB}: {count} gemeinsame Entries",
       "history_eyebrow": "Gemeinsame Entries",
       "history_empty": "Keine Entries enthalten beide Tags in diesem Zeitraum."
+    },
+    "symptoms": {
+      "heading": "Symptome in Erkenntnissen",
+      "body": "Symptomtage werden als beschreibender Kontext eingeblendet, ohne medizinische Interpretation.",
+      "heatmap_heading": "Symptomverlauf",
+      "empty": "Noch keine Symptomdaten im gewaehlten Zeitraum."
     },
     "confidence_label": {
       "early_signal": "Erstes Signal",

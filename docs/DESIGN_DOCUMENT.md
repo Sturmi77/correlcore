@@ -101,6 +101,11 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 
 **Entscheidung:** Tags mit Kategorie, Icon, Farbe; Tag-Verwendung boolean pro Entry; V2: `tag_usage(entry_id, tag_id, duration_min, intensity)`.
 
+**UI-Stand 2026-05-30:** Neue Custom-Tags können direkt im Entry-/Bearbeitungsflow
+über den `TagPicker` angelegt werden (Name, Kategorie, eindeutiger Slug, optional
+Icon/Farbe). Der neue Tag wird sofort in die Auswahl übernommen, solange das
+Entry-Tag-Limit nicht erreicht ist.
+
 **Priorität:** MUST
 
 ---
@@ -145,6 +150,13 @@ Jedes Feature: Beschreibung → Kritische Fragen → Entscheidung/Umsetzung → 
 - **Multivariat:** Symptome als Features in Lasso- und Lag-Analysen sowie hierarchischem Clustering (M7)
 
 Phase-Gating, Schwellen und FDR-Korrektur folgen [ADR-0021](adr/0021-insight-maturity-phases.md). Symptom-Intensität (0–3) bleibt zunächst außerhalb des Scopes (Future Work, dokumentiert in der Feature-Spec).
+
+**UI-Stand 2026-05-30:** Symptome sind in `/trends` als eigener Kontext-Layer
+unter der Mood/Energy/Stress-Zeitreihe einblendbar; Trendlinie und Heatmap teilen
+sich eine tägliche Achse, damit identische Tage exakt übereinander liegen. In
+`/insights` kann ein deskriptiver Symptomverlauf eingeblendet werden. Diese
+Views zeigen Häufigkeit/Intensität, aber keine medizinische Interpretation und
+keine inferenziellen Korrelationen.
 
 **Priorität:** MUST (Kern-USP der Korrelationsanalyse)
 

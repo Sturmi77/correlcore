@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type {
     SymptomHeatmapResponse,
@@ -7,7 +8,7 @@
     TimeseriesPoint,
     TimeseriesRange,
   } from '$lib/api/stats';
-  import type { MetricKey } from '$lib/utils/charts';
+  import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
 
@@ -24,6 +25,29 @@
     selectDate: { date: string };
     layerChange: { showTags: boolean; showSymptoms: boolean };
   }>();
+
+  let axisScroller: HTMLDivElement;
+  let lastAxisKey = '';
+
+  async function scrollToLatest(): Promise<void> {
+    await tick();
+    if (axisScroller) axisScroller.scrollLeft = axisScroller.scrollWidth;
+  }
+
+  $: axisStart =
+    tagHeatmap?.start_date ?? symptomHeatmap?.start_date ?? points[0]?.period_start ?? '';
+  $: axisEnd =
+    tagHeatmap?.end_date ??
+    symptomHeatmap?.end_date ??
+    points[points.length - 1]?.period_end ??
+    points[points.length - 1]?.period_start ??
+    '';
+  $: axisDates = axisStart && axisEnd ? buildIsoDateRange(axisStart, axisEnd) : [];
+  $: axisKey = `${axisStart}:${axisEnd}:${axisDates.length}`;
+  $: if (axisKey && axisKey !== lastAxisKey) {
+    lastAxisKey = axisKey;
+    void scrollToLatest();
+  }
 </script>
 
 <section class="compare" data-testid="trends-compare-panel">
@@ -60,22 +84,34 @@
     </div>
   </header>
 
-  <MetricTimeseries
-    {points}
-    {range}
-    {enabled}
-    {loading}
-    on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
-  />
+  <div
+    class="compare__axis-scroller"
+    bind:this={axisScroller}
+    aria-label={$_('trends.compare.shared_axis')}
+  >
+    <MetricTimeseries
+      {points}
+      {range}
+      {enabled}
+      {loading}
+      {axisDates}
+      axisLayout={compareDailyAxisLayout}
+      on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+    />
 
-  <ComparisonHeatmap
-    {tagHeatmap}
-    {symptomHeatmap}
-    {showTags}
-    {showSymptoms}
-    {loading}
-    on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
-  />
+    <ComparisonHeatmap
+      {tagHeatmap}
+      {symptomHeatmap}
+      {showTags}
+      {showSymptoms}
+      {loading}
+      dates={axisDates}
+      axisLayout={compareDailyAxisLayout}
+      scrollable={false}
+      autoScroll={false}
+      on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+    />
+  </div>
 </section>
 
 <style>
@@ -120,6 +156,13 @@
     gap: var(--space-1);
     font-size: var(--text-sm);
     font-weight: 700;
+  }
+
+  .compare__axis-scroller {
+    display: grid;
+    gap: var(--space-4);
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
   }
 
   @media (max-width: 640px) {
