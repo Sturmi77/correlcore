@@ -1,5 +1,6 @@
 # Environment
 .env
+.dev.env
 .env.local
 .env.*.local
 infra/docker/traefik/acme.json
