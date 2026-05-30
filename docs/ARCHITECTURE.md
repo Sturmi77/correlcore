@@ -169,9 +169,11 @@ Nightly Cron (02:00 UTC)
         └── Speichere verschlüsseltes Insight in PostgreSQL
 ```
 
-**Geplant (M7 Insights v2):** Lag-Analyse, Lasso-Regression, optional Ollama
-für natürlichere Sprache. Symptom-Analytics gemäß ADR-0025 ist vorgeschlagen,
-noch nicht implementiert.
+**Teilweise umgesetzt / geplant:** Der Web-Client zeigt Symptome bereits als
+deskriptiven Kontext in `/trends` Compare und `/insights` an. Die inferenzielle
+Symptom-Analytics gemäß ADR-0025 (symptombasierte Insight Cards, Lag-Analyse,
+Lasso-Regression, symptom×tag Co-Occurrence mit Lift/FDR) bleibt M7 Insights v2
+und wird durch den Analytics Worker/API geliefert, nicht im Frontend berechnet.
 
 **Insight-Objekt:**
 

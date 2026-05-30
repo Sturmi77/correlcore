@@ -1,6 +1,6 @@
 # CorrelCore — Frontend Principles
 
-Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-22 (Sprint A — UI component system and mobile hardening contract).
+Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-30 (Findings implementation — aligned trend/heatmap axis, symptom context, inline tag creation).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
@@ -275,6 +275,9 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 - Mood slider is the only required field
 - Tag suggestions sorted by historical usage frequency
 - "+ More" opens time-slot chips, cycle day, full tag sheet, symptoms and notes; photo upload follows in M13
+- The full `TagPicker` supports inline custom tag creation in the entry/edit flow: name, category,
+  unique slug, optional icon and colour. A newly-created tag is added to the in-memory catalogue and
+  selected immediately when the entry has not reached `MAX_TAGS_PER_ENTRY`.
 - Day-over-day delta shown as neutral info card after save (Issue #154)
 - Time slots use the existing API field `slot`: `day` means whole-day; `morning`, `noon`, and `evening` are optional chips.
 - `cycle_day` is optional, accepts `1..35`, and is framed as neutral personal context only.
@@ -299,6 +302,7 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 │  [██████░░░░] 18/30           │
 │                              │
 │  [All][Mood][Symptoms][Sleep] │  ← Metric filter tabs
+│  [x] Blend in symptoms        │  ← Toggleable descriptive symptom context
 │                              │
 │  ┌────────────────────────┐  │
 │  │ ↗ POSITIVE             │  │
@@ -324,13 +328,19 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 - Default insight cards show `InsightMaturityBadge` instead of raw confidence or p-values; statistical details stay in expanded/detail contexts.
 - Empty and locked states explain the current maturity phase instead of using a generic unavailable state.
 - Phase milestone cards are explicit-dismiss only and persist in `reached_milestone_keys`; they are not toasts and never auto-dismiss.
+- The "Symptoms" filter recognises both current `metric` naming and future symptom insight payloads
+  (`insight_type`, `subject_type`, payload/flag kind) so symptom cards can be blended into the feed
+  without another route.
+- The descriptive `SymptomAnalyticsSection` may be toggled via `cc_insights_symptoms`. It renders a
+  neutral symptom-history heatmap below the feed and is hidden in `collecting`; it does not compute
+  correlations, lift, p-values, diagnoses or recommendations in the frontend.
 - Matrix, raw values, sample sizes, confidence, filters, and card detail charts remain reachable through drilldowns. Decluttering must never remove data depth.
 
 ---
 
 ### Screen 4: Trends (`/trends`)
 
-**M5 Streamline:** `Compare` is the default tab. It shows Mood/Energy/Stress lines above tag and symptom heatmap rows on one shared time axis. `Activities` is no longer a default tab; its tag-frequency function is represented by tag rows in Compare.
+**M5 Streamline:** `Compare` is the default tab. It shows Mood/Energy/Stress lines above tag and symptom heatmap rows on one shared daily time axis. `Activities` is no longer a default tab; its tag-frequency function is represented by tag rows in Compare.
 
 **Purpose:** Long-term visualisations — mood timeline, tag frequency, work context patterns.
 
@@ -366,6 +376,13 @@ Time range: [7D] [30D] [90D] [1Y]
 - Charts are tappable: tap on data point shows tooltip with day details
 - Entry History: tap on any data point or calendar cell → secondary sheet overlay with single past entry (read-only)
 - Mood charts expose `Raw | Smoothed` for 30D and longer ranges; smoothing is a client-side 7-day SMA persisted in `cc_trend_smooth`.
+- Compare uses one canonical `dates[]` axis and shared layout tokens (`labelWidth`, `dayWidth`,
+  `dayGap`) for `MetricTimeseries` and `ComparisonHeatmap`. The same ISO date must resolve to the
+  same X-position in both the SVG trendline and heatmap rows.
+- The 1Y range uses 365 daily timeseries points. Monthly buckets are not allowed in Compare because
+  they cannot align exactly with daily heatmap cells.
+- Tag and symptom context layers are independently toggleable and persisted in
+  `cc_trend_compare_layers`.
 - Symptom heatmap is neutral occurrence/intensity visualization only. It does not introduce co-occurrence, medical interpretation, correlation recommendations, or a new analytics engine.
 - Mobile uses one controlled horizontal timeline scroller with sticky row labels and compact layer controls. Desktop uses a wider analysis canvas, sticky controls, and may keep an entry-detail panel open beside the chart.
 - Health tab may show a cycle-day strip when entries contain `cycle_day`; it must not infer phases or provide medical interpretation.
@@ -429,13 +446,13 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 
 ### Secondary Sheets & Overlays
 
-| Sheet                 | Trigger                         | Content                                |
-| --------------------- | ------------------------------- | -------------------------------------- |
-| **Tag Picker (full)** | "+ More" in entry               | Full tag category view with search     |
-| **Symptom Checker**   | Optional in entry               | Symptom intensity sliders (0–3)        |
-| **Insight Detail**    | "Show details" on insight card  | Dual-axis chart + lag selector         |
-| **Onboarding Flow**   | First launch / M4               | Guided tag setup, custom tags, summary |
-| **Entry History**     | Date tap / data point in Trends | Single past entry, read-only           |
+| Sheet                 | Trigger                         | Content                                   |
+| --------------------- | ------------------------------- | ----------------------------------------- |
+| **Tag Picker (full)** | "+ More" in entry               | Full tag category view with inline create |
+| **Symptom Checker**   | Optional in entry               | Symptom intensity sliders (0–3)           |
+| **Insight Detail**    | "Show details" on insight card  | Dual-axis chart + lag selector            |
+| **Onboarding Flow**   | First launch / M4               | Guided tag setup, custom tags, summary    |
+| **Entry History**     | Date tap / data point in Trends | Single past entry, read-only              |
 
 ---
 
@@ -524,8 +541,9 @@ apps/web/src/
 │   │   ├── insights/        # InsightCard, InsightCardExpanded,
 │   │   │                    # InsightFeed, InsightMatrix, CorrelationBadge,
 │   │   │                    # DualAxisChart, InsightQualityMeter
+│   │   │   └── symptoms/    # SymptomAnalyticsSection
 │   │   ├── trends/          # MetricTimeseries, TagHeatmap,
-│   │   │                    # WorkContextBar, CalendarHeatmap
+│   │   │                    # ComparisonHeatmap, TrendsComparePanel
 │   │   └── entries/         # EntryForm, TagPicker, SymptomChecker
 │   ├── api/
 │   │   ├── client.ts        # apiFetch + single-flight refresh
