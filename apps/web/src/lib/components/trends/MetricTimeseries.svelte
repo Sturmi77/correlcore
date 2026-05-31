@@ -386,7 +386,7 @@
 
   /*
    * Sprint 1 (ADR-0035) a11y wrapper. The SVG above is purely
-   * presentational; this <div role="application"> carries keyboard
+   * presentational; this <div role="slider"> carries keyboard
    * focus and pointer interactions, and provides the bounding box that
    * pointer math reads via getBoundingClientRect().
    */

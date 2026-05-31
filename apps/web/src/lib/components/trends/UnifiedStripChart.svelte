@@ -226,6 +226,7 @@
       class="strip__interactive"
       class:strip__interactive--active={enableCursor}
       bind:this={hostEl}
+      style={`--strip-chart-width: ${width}px`}
       role="slider"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.strip.aria')}
@@ -238,7 +239,15 @@
       on:pointerleave={handlePointerLeave}
       on:keydown={handleKeydown}
     >
-      <svg class="strip__svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-hidden="true">
+      <svg
+        class="strip__svg"
+        {width}
+        {height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMinYMin meet"
+        role="img"
+        aria-hidden="true"
+      >
         {#each rows as row (row.key)}
           <g class="strip__row" data-metric={row.key}>
             <text
@@ -310,18 +319,21 @@
   }
 
   .strip__svg {
-    width: 100%;
-    height: auto;
     display: block;
+    width: var(--strip-chart-width);
+    max-width: none;
+    height: auto;
   }
 
   /*
-   * Sprint 2 (ADR-0035) a11y wrapper. role='application' lives here,
-   * not on the <svg>. Block-level so getBoundingClientRect spans the
-   * same box as the chart for pointer math.
+   * Sprint 2 (ADR-0035) a11y wrapper. role='slider' lives here, not on
+   * the <svg>. Block-level with min-width: max-content so it shares
+   * the same horizontal scroll geometry as the heatmap grid.
    */
   .strip__interactive {
     display: block;
+    width: var(--strip-chart-width);
+    min-width: max-content;
     outline: none;
     border-radius: var(--radius-md, 8px);
   }
