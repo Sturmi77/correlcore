@@ -54,18 +54,14 @@
   /**
    * Per-metric divergent mapping configuration.
    *
-   * Mood / Energy: 1..5 with midpoint 3 (range 4). Higher = positive.
-   * Stress:        1..5 with midpoint 3 (range 4). Higher = NEGATIVE
-   *                — we flip the sign so high stress reads as a strong
-   *                negative pole, matching ADR-0035 §10 (semantic
-   *                divergence rather than literal-value divergence).
+   * Values enter this component after displayTimeseriesValue(), so stress
+   * is already inverted to the same "higher = better" display contract as
+   * mood / energy before divergent encoding.
    */
   type StripMetric = {
     key: MetricKey;
     label: string;
     mapper: StripCellMapper;
-    midpoint: number;
-    signFlip: boolean;
   };
 
   const metrics: StripMetric[] = [
@@ -73,22 +69,16 @@
       key: 'mood_avg',
       label: 'trends.metric.mood',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-      midpoint: 3,
-      signFlip: false,
     },
     {
       key: 'energy_avg',
       label: 'trends.metric.energy',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-      midpoint: 3,
-      signFlip: false,
     },
     {
       key: 'stress_avg',
       label: 'trends.metric.stress',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-      midpoint: 3,
-      signFlip: true,
     },
   ];
 
@@ -122,14 +112,7 @@
       const raw = point ? point[metric.key] : null;
       const display =
         raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
-      const valueForEncoding =
-        display === null
-          ? null
-          : metric.signFlip
-            ? // Flip around midpoint: 5 -> 1, 4 -> 2, 3 -> 3 …
-              metric.midpoint * 2 - display
-            : display;
-      const encoded = metric.mapper.encode(valueForEncoding ?? NaN);
+      const encoded = metric.mapper.encode(display ?? NaN);
       const cx = dailyAxisXForIndex(index, axisLayout);
       const cellW = axisLayout.dayWidth;
       return {
