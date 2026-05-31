@@ -236,9 +236,9 @@
       bind:this={svgEl}
       class="strip__svg"
       viewBox={`0 0 ${width} ${height}`}
-      role="img"
+      role="application"
       aria-label={$_('trends.strip.aria')}
-      tabindex="0"
+      tabindex={enableCursor ? 0 : -1}
       on:pointermove={handlePointerMove}
       on:pointerleave={handlePointerLeave}
       on:keydown={handleKeydown}

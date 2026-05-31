@@ -189,7 +189,7 @@
       {width}
       {height}
       viewBox={`0 0 ${width} ${height}`}
-      role={enableCursor ? 'application' : 'img'}
+      role="application"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.timeseries.aria')}
       on:pointermove={handlePointerMove}
