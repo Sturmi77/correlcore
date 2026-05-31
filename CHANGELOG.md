@@ -17,6 +17,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M7 Sprint 1 opened: Lasso & Lag backend slice.** Added M7 sprint
+  plan/status docs, the additive `symptom_cluster` insight type, a multivariate
+  design matrix with metric/tag/symptom features, deterministic
+  `TimeSeriesSplit` Lasso models, and 1-7 day lag analysis with causal
+  `shift()`/`dropna()` handling.
+
 - **M5.1 Tag co-occurrence heatmap.** `GET /api/v1/insights/tag-cooccurrence`
   plus Insights **Patterns** section with `TagCooccurrenceHeatmap` and filtered
   entry sheet. Closeout: [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).

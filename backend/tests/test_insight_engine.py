@@ -10,6 +10,7 @@ import pytest
 from app.models.insight import InsightTier, InsightType
 from app.services.insight_engine import (
     AnalyticsEntry,
+    SymptomSnapshot,
     TagSnapshot,
     confidence_tier_for_sample,
     display_metric_value,
@@ -18,7 +19,7 @@ from app.services.insight_engine import (
     is_weekday_biased,
     load_analytics_data,
 )
-from tests.conftest import make_entry, make_tag, make_user
+from tests.conftest import make_entry, make_symptom, make_tag, make_user
 
 
 def _scalar_result(values: list[object]) -> MagicMock:
@@ -42,6 +43,7 @@ def _entry(
     energy: int,
     stress: int,
     tag_ids: frozenset[uuid.UUID] = frozenset(),
+    symptom_ids: frozenset[uuid.UUID] = frozenset(),
 ) -> AnalyticsEntry:
     return AnalyticsEntry(
         id=uuid.uuid4(),
@@ -50,6 +52,7 @@ def _entry(
         energy=energy,
         stress=stress,
         tag_ids=tag_ids,
+        symptom_ids=symptom_ids,
     )
 
 
@@ -267,18 +270,18 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     tag_rows = [(entry.id, sport) for offset, entry in enumerate(entries) if offset % 2 == 0]
     db = MagicMock()
     db.execute = AsyncMock(
-        side_effect=[_scalar_result(entries), _row_result(tag_rows), MagicMock()]
+        side_effect=[_scalar_result(entries), _row_result(tag_rows), _row_result([]), MagicMock()]
     )
     db.flush = AsyncMock()
 
     stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
     assert stored
-    assert db.execute.await_count == 3
+    assert db.execute.await_count == 4
     load_stmt = db.execute.await_args_list[0].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)
-    delete_stmt = db.execute.await_args_list[2].args[0]
+    delete_stmt = db.execute.await_args_list[3].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert db.add.call_count == len(stored)
     assert db.flush.await_count == 1
@@ -293,12 +296,42 @@ async def test_load_analytics_data_filters_hidden_tags() -> None:
     as_of = date(2026, 5, 1)
     entries = [make_entry(user, entry_date=as_of - timedelta(days=1))]
     db = MagicMock()
-    db.execute = AsyncMock(side_effect=[_scalar_result(entries), _row_result([])])
+    db.execute = AsyncMock(side_effect=[_scalar_result(entries), _row_result([]), _row_result([])])
 
     await load_analytics_data(db, user_id=user.id, as_of=as_of)
 
     tag_stmt = db.execute.await_args_list[1].args[0]
     assert "tags.is_hidden IS false" in str(tag_stmt.whereclause)
+
+
+@pytest.mark.asyncio
+async def test_load_analytics_data_includes_visible_symptoms() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 1)
+    entry = make_entry(user, entry_date=as_of - timedelta(days=1))
+    symptom = make_symptom(user=None, is_default=True, slug="headache", name="Headache")
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result([entry]),
+            _row_result([]),
+            _row_result([(entry.id, symptom)]),
+        ]
+    )
+
+    entries, _, symptoms = await load_analytics_data(db, user_id=user.id, as_of=as_of)
+
+    assert entries[0].symptom_ids == frozenset({symptom.id})
+    assert symptoms == [
+        SymptomSnapshot(
+            id=symptom.id,
+            label="Headache",
+            slug="headache",
+            is_default=True,
+        )
+    ]
+    symptom_stmt = db.execute.await_args_list[2].args[0]
+    assert "entry_symptoms.user_id = :user_id_1" in str(symptom_stmt.whereclause)
 
 
 def test_hidden_or_sparse_tag_groups_do_not_create_tag_insights() -> None:
@@ -319,3 +352,38 @@ def test_hidden_or_sparse_tag_groups_do_not_create_tag_insights() -> None:
     candidates = generate_insight_candidates(entries, [tag], as_of=date(2026, 4, 30))
 
     assert all(candidate.subject_id != tag_id for candidate in candidates)
+
+
+def test_m7_lasso_candidates_include_symptom_features_after_90_entries() -> None:
+    symptom_id = uuid.uuid4()
+    symptom = SymptomSnapshot(id=symptom_id, label="Headache", slug="headache")
+    start = date(2026, 1, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=2 if offset % 3 == 0 else 5,
+            energy=3,
+            stress=3,
+            symptom_ids=frozenset({symptom_id}) if offset % 3 == 0 else frozenset(),
+        )
+        for offset in range(95)
+    ]
+
+    candidates = generate_insight_candidates(
+        entries,
+        symptoms=[symptom],
+        as_of=date(2026, 4, 6),
+    )
+
+    lasso_candidates = [
+        candidate
+        for candidate in candidates
+        if candidate.insight_type == InsightType.SYMPTOM_CLUSTER
+        and candidate.payload["method"] == "lasso"
+    ]
+    assert lasso_candidates
+    assert any(
+        feature["kind"] == "symptom" and feature["slug"] == "headache"
+        for candidate in lasso_candidates
+        for feature in candidate.payload["features"]
+    )

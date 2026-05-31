@@ -33,7 +33,7 @@ from app.db.base import Base
 
 
 class InsightType(StrEnum):
-    """Supported M3 insight families.
+    """Supported insight families.
 
     The values are storage/API values; display wording is a frontend/i18n
     concern and must stay neutral under the No-Gamification principle.
@@ -42,6 +42,7 @@ class InsightType(StrEnum):
     POINTBISERIAL = "pointbiserial"
     SPEARMAN = "spearman"
     WEEKDAY_PATTERN = "weekday_pattern"
+    SYMPTOM_CLUSTER = "symptom_cluster"
 
 
 class InsightTier(StrEnum):

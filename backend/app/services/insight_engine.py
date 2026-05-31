@@ -18,14 +18,24 @@ from datetime import date as date_type
 from typing import Any, Literal
 
 from scipy.stats import chisquare, pointbiserialr, spearmanr
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
 from app.models.entry import Entry
 from app.models.insight import Insight, InsightTier, InsightType
+from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
+from app.services.multivariate_analytics import (
+    FeatureMetadata,
+    LagFinding,
+    LassoFinding,
+    MultivariateEntry,
+    build_design_matrix,
+    run_lag_analysis,
+    run_lasso_models,
+)
 from app.services.tag_service import active_tag_predicate
 
 logger = logging.getLogger(__name__)
@@ -61,11 +71,22 @@ class AnalyticsEntry:
     energy: int
     stress: int
     tag_ids: frozenset[uuid.UUID] = field(default_factory=frozenset)
+    symptom_ids: frozenset[uuid.UUID] = field(default_factory=frozenset)
 
 
 @dataclass(frozen=True)
 class TagSnapshot:
     """Tag metadata needed for statement rendering."""
+
+    id: uuid.UUID
+    label: str
+    slug: str
+    is_default: bool = False
+
+
+@dataclass(frozen=True)
+class SymptomSnapshot:
+    """Symptom metadata needed for M7 multivariate analytics."""
 
     id: uuid.UUID
     label: str
@@ -238,6 +259,7 @@ def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEn
                 energy=round(sum(row.energy for row in rows) / len(rows)),
                 stress=round(sum(row.stress for row in rows) / len(rows)),
                 tag_ids=frozenset(tag_id for row in rows for tag_id in row.tag_ids),
+                symptom_ids=frozenset(symptom_id for row in rows for symptom_id in row.symptom_ids),
             )
         )
     return daily
@@ -279,6 +301,7 @@ def _canonicalize_tag_aliases(
             energy=entry.energy,
             stress=entry.stress,
             tag_ids=frozenset(aliases.get(tag_id, tag_id) for tag_id in entry.tag_ids),
+            symptom_ids=entry.symptom_ids,
         )
         for entry in entries
     ]
@@ -542,9 +565,187 @@ def _weekday_candidates(
     ]
 
 
+def _multivariate_entries(entries: Sequence[AnalyticsEntry]) -> list[MultivariateEntry]:
+    return [
+        MultivariateEntry(
+            entry_date=entry.entry_date,
+            mood_score=entry.mood_score,
+            energy=entry.energy,
+            stress=entry.stress,
+            tag_ids=entry.tag_ids,
+            symptom_ids=entry.symptom_ids,
+        )
+        for entry in entries
+    ]
+
+
+def _feature_meta_for_tags(tags: Iterable[TagSnapshot]) -> dict[uuid.UUID, FeatureMetadata]:
+    return {
+        tag.id: FeatureMetadata(
+            kind="tag",
+            key=f"tag:{tag.slug}",
+            label=tag.label,
+            slug=tag.slug,
+            id=tag.id,
+        )
+        for tag in tags
+    }
+
+
+def _feature_meta_for_symptoms(
+    symptoms: Iterable[SymptomSnapshot],
+) -> dict[uuid.UUID, FeatureMetadata]:
+    return {
+        symptom.id: FeatureMetadata(
+            kind="symptom",
+            key=f"symptom:{symptom.slug}",
+            label=symptom.label,
+            slug=symptom.slug,
+            id=symptom.id,
+        )
+        for symptom in symptoms
+    }
+
+
+def _payload_feature(
+    feature: FeatureMetadata, *, coefficient: float | None = None
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "kind": feature.kind,
+        "key": feature.key,
+        "name": feature.label,
+    }
+    if feature.slug is not None:
+        payload["slug"] = feature.slug
+    if feature.id is not None:
+        payload["id"] = str(feature.id)
+    if coefficient is not None:
+        payload["coefficient"] = coefficient
+    return payload
+
+
+def _lasso_statement(finding: LassoFinding) -> str:
+    labels = ", ".join(feature.feature.label for feature in finding.features[:3])
+    return (
+        f"Across your tracked signals, {finding.target} currently varies most with {labels}. "
+        "This is a multivariate pattern, not a cause."
+    )
+
+
+def _lag_statement(finding: LagFinding) -> str:
+    direction = _direction(finding.correlation, "higher", "lower")
+    return (
+        f"{finding.feature.label} logged {finding.lag_days} day(s) earlier currently lines up "
+        f"with {direction} {finding.target.label}. Treat this as a time-shifted pattern, not a cause."
+    )
+
+
+def _lasso_candidates(
+    entries: Sequence[AnalyticsEntry],
+    tags: Iterable[TagSnapshot],
+    symptoms: Iterable[SymptomSnapshot],
+    *,
+    tier: InsightTier,
+    generated_for_date: date_type,
+) -> list[InsightCandidate]:
+    frame, feature_meta = build_design_matrix(
+        _multivariate_entries(entries),
+        tags=_feature_meta_for_tags(tags),
+        symptoms=_feature_meta_for_symptoms(symptoms),
+    )
+    findings = run_lasso_models(frame, feature_meta)
+    candidates: list[InsightCandidate] = []
+    for finding in findings:
+        max_coefficient = max(abs(feature.coefficient) for feature in finding.features)
+        candidates.append(
+            InsightCandidate(
+                insight_type=InsightType.SYMPTOM_CLUSTER,
+                tier=tier,
+                metric=finding.target,
+                subject_type="metric",
+                subject_id=None,
+                subject_label=finding.target,
+                effect_size=round(max_coefficient, 4),
+                confidence=_confidence(max_coefficient, None, tier),
+                sample_n=finding.sample_n,
+                statement=_lasso_statement(finding),
+                flags=_base_flags(p_value=None, method="lasso"),
+                payload={
+                    "method": "lasso",
+                    "target": finding.target,
+                    "features": [
+                        _payload_feature(feature.feature, coefficient=feature.coefficient)
+                        for feature in finding.features
+                    ],
+                    "cv": "TimeSeriesSplit",
+                    "cv_splits": 5,
+                    "cv_score": finding.cv_score,
+                    "alpha": finding.alpha,
+                    "sample_n": finding.sample_n,
+                },
+                generated_for_date=generated_for_date,
+            )
+        )
+    return candidates
+
+
+def _lag_candidates(
+    entries: Sequence[AnalyticsEntry],
+    tags: Iterable[TagSnapshot],
+    symptoms: Iterable[SymptomSnapshot],
+    *,
+    tier: InsightTier,
+    generated_for_date: date_type,
+) -> list[InsightCandidate]:
+    frame, feature_meta = build_design_matrix(
+        _multivariate_entries(entries),
+        tags=_feature_meta_for_tags(tags),
+        symptoms=_feature_meta_for_symptoms(symptoms),
+    )
+    findings = run_lag_analysis(frame, feature_meta)
+    candidates: list[InsightCandidate] = []
+    for finding in findings:
+        target_id = finding.target.id if finding.target.kind == "symptom" else None
+        metric = finding.target.key if finding.target.kind == "metric" else "symptom_presence"
+        candidates.append(
+            InsightCandidate(
+                insight_type=InsightType.SYMPTOM_CLUSTER,
+                tier=tier,
+                metric=metric,
+                subject_type=finding.target.kind,
+                subject_id=target_id,
+                subject_label=finding.target.label,
+                effect_size=finding.correlation,
+                confidence=_confidence(finding.correlation, finding.p_corrected, tier),
+                sample_n=finding.sample_n,
+                statement=_lag_statement(finding),
+                flags={
+                    **_base_flags(
+                        p_value=finding.p_value,
+                        p_corrected=finding.p_corrected,
+                        method="lag",
+                    ),
+                    "lag_days": finding.lag_days,
+                },
+                payload={
+                    "method": "lag",
+                    "target": _payload_feature(finding.target),
+                    "feature": _payload_feature(finding.feature),
+                    "lag_days": finding.lag_days,
+                    "correlation": finding.correlation,
+                    "p_value_corrected": finding.p_corrected,
+                    "sample_n": finding.sample_n,
+                },
+                generated_for_date=generated_for_date,
+            )
+        )
+    return candidates
+
+
 def generate_insight_candidates(
     entries: Sequence[AnalyticsEntry],
     tags: Iterable[TagSnapshot] = (),
+    symptoms: Iterable[SymptomSnapshot] = (),
     *,
     as_of: date_type | None = None,
 ) -> list[InsightCandidate]:
@@ -561,12 +762,27 @@ def generate_insight_candidates(
 
     daily_entries, canonical_tags = _canonicalize_tag_aliases(daily_entries, tags)
     tags_by_id = {tag.id: tag for tag in canonical_tags}
+    symptom_list = sorted(symptoms, key=lambda symptom: symptom.slug)
     candidates = [
         *_weekday_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
         *_spearman_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
         *_pointbiserial_candidates(
             daily_entries,
             tags_by_id,
+            tier=tier,
+            generated_for_date=generated_for_date,
+        ),
+        *_lasso_candidates(
+            daily_entries,
+            canonical_tags,
+            symptom_list,
+            tier=tier,
+            generated_for_date=generated_for_date,
+        ),
+        *_lag_candidates(
+            daily_entries,
+            canonical_tags,
+            symptom_list,
             tier=tier,
             generated_for_date=generated_for_date,
         ),
@@ -588,7 +804,7 @@ async def _load_analytics_inputs(
     *,
     user_id: uuid.UUID,
     as_of: date_type,
-) -> tuple[list[AnalyticsEntry], list[TagSnapshot]]:
+) -> tuple[list[AnalyticsEntry], list[TagSnapshot], list[SymptomSnapshot]]:
     result = await db.execute(
         select(Entry)
         # Temporal integrity guard: analytics must follow entry_date only.
@@ -598,7 +814,7 @@ async def _load_analytics_inputs(
     )
     entries = list(result.scalars().all())
     if not entries:
-        return [], []
+        return [], [], []
 
     tag_rows = await db.execute(
         select(EntryTag.entry_id, Tag)
@@ -622,6 +838,28 @@ async def _load_analytics_inputs(
             is_default=tag.is_default,
         )
 
+    symptom_rows = await db.execute(
+        select(EntrySymptom.entry_id, Symptom)
+        .join(Symptom, Symptom.id == EntrySymptom.symptom_id)
+        .join(Entry, Entry.id == EntrySymptom.entry_id)
+        .where(
+            EntrySymptom.user_id == user_id,
+            Entry.user_id == user_id,
+            Entry.entry_date < as_of,
+            or_(Symptom.is_default.is_(True), Symptom.user_id == user_id),
+        )
+    )
+    symptom_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    symptoms_by_id: dict[uuid.UUID, SymptomSnapshot] = {}
+    for entry_id, symptom in symptom_rows.all():
+        symptom_ids_by_entry[entry_id].add(symptom.id)
+        symptoms_by_id[symptom.id] = SymptomSnapshot(
+            id=symptom.id,
+            label=symptom.display_name,
+            slug=symptom.slug,
+            is_default=symptom.is_default,
+        )
+
     analytics_entries = [
         AnalyticsEntry(
             id=entry.id,
@@ -630,10 +868,19 @@ async def _load_analytics_inputs(
             energy=entry.energy,
             stress=entry.stress,
             tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
+            symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
         )
         for entry in entries
     ]
-    return _canonicalize_tag_aliases(analytics_entries, tags_by_id.values())
+    canonical_entries, canonical_tags = _canonicalize_tag_aliases(
+        analytics_entries,
+        tags_by_id.values(),
+    )
+    return (
+        canonical_entries,
+        canonical_tags,
+        sorted(symptoms_by_id.values(), key=lambda item: item.slug),
+    )
 
 
 async def load_analytics_data(
@@ -641,7 +888,7 @@ async def load_analytics_data(
     *,
     user_id: uuid.UUID,
     as_of: date_type,
-) -> tuple[list[AnalyticsEntry], list[TagSnapshot]]:
+) -> tuple[list[AnalyticsEntry], list[TagSnapshot], list[SymptomSnapshot]]:
     """Load sanitized analytics rows for tests and diagnostics.
 
     The public wrapper preserves the M3 service contract while keeping the
@@ -666,8 +913,12 @@ async def generate_and_store_insights(
     """
 
     generated_for_date = as_of or datetime.now(UTC).date()
-    entries, tags = await _load_analytics_inputs(db, user_id=user_id, as_of=generated_for_date)
-    candidates = generate_insight_candidates(entries, tags, as_of=generated_for_date)
+    entries, tags, symptoms = await _load_analytics_inputs(
+        db,
+        user_id=user_id,
+        as_of=generated_for_date,
+    )
+    candidates = generate_insight_candidates(entries, tags, symptoms, as_of=generated_for_date)
 
     await db.execute(
         delete(Insight).where(

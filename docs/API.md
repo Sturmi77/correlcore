@@ -924,6 +924,10 @@ Tracking-Tagen des Users abgeleitet: `collecting` fuer 0-6 Eintraege,
 `early_patterns` fuer 7-13, `provisional` fuer 14-29 und `robust` ab 30.
 Frontend-Clients duerfen diese Phase nicht selbst aus der Entry-Anzahl
 rekonstruieren.
+M7 Sprint 1 ergaenzt den bestehenden Envelope um `symptom_cluster` Insights.
+Lasso- und Lag-Befunde werden ueber `payload.method = "lasso" | "lag"`
+unterschieden; Clients, die den neuen Typ nicht kennen, sollen ihn wie andere
+unbekannte Insight-Typen ignorieren.
 Der manuelle Trigger bleibt geplant und ist in M3 noch nicht oeffentlich
 implementiert.
 
