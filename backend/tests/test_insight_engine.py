@@ -331,7 +331,9 @@ async def test_load_analytics_data_includes_visible_symptoms() -> None:
         )
     ]
     symptom_stmt = db.execute.await_args_list[2].args[0]
-    assert "entry_symptoms.user_id = :user_id_1" in str(symptom_stmt.whereclause)
+    where_sql = str(symptom_stmt.whereclause)
+    assert "entry_symptoms.user_id = :user_id_1" in where_sql
+    assert "entry_symptoms.intensity > :intensity_1" in where_sql
 
 
 def test_hidden_or_sparse_tag_groups_do_not_create_tag_insights() -> None:

@@ -201,6 +201,85 @@ async def test_symptom_tag_cooccurrence_service_returns_cells() -> None:
     assert cell.tag.slug == "stress"
     assert cell.co_count == 10
     assert cell.lift > 1.67
+    symptom_stmt = db.execute.await_args_list[2].args[0]
+    assert "entry_symptoms.intensity > :intensity_1" in str(symptom_stmt.whereclause)
+
+
+@pytest.mark.asyncio
+async def test_symptom_tag_cooccurrence_service_applies_min_count_to_cells() -> None:
+    user = make_user()
+    symptom = make_symptom(user=None, is_default=True, slug="headache", name="Headache")
+    tag = make_tag(user, slug="stress", name="Stress", category=TagCategory.WORK)
+    start = date(2026, 1, 1)
+    entries = [make_entry(user, entry_date=start + timedelta(days=offset)) for offset in range(40)]
+    symptom_rows = [
+        (entry.id, symptom)
+        for offset, entry in enumerate(entries)
+        if offset < 10 or 10 <= offset < 15
+    ]
+    tag_rows = [
+        (entry.id, tag) for offset, entry in enumerate(entries) if offset < 10 or 15 <= offset < 20
+    ]
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(entries),
+            _row_result(tag_rows),
+            _row_result(symptom_rows),
+        ]
+    )
+
+    response = await get_symptom_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="90d",
+        min_count=11,
+        as_of=date(2026, 2, 9),
+    )
+
+    assert response.cells == []
+
+
+@pytest.mark.asyncio
+async def test_symptom_tag_cooccurrence_service_canonicalizes_tag_overrides() -> None:
+    user = make_user()
+    symptom = make_symptom(user=None, is_default=True, slug="headache", name="Headache")
+    default_tag = make_tag(user=None, is_default=True, slug="stress", name="Stress")
+    override_tag = make_tag(user, slug="stress", name="Stress custom", category=TagCategory.WORK)
+    start = date(2026, 1, 1)
+    entries = [make_entry(user, entry_date=start + timedelta(days=offset)) for offset in range(40)]
+    symptom_rows = [
+        (entry.id, symptom)
+        for offset, entry in enumerate(entries)
+        if offset < 10 or 10 <= offset < 15
+    ]
+    tag_rows = []
+    for offset, entry in enumerate(entries):
+        if offset < 5:
+            tag_rows.append((entry.id, default_tag))
+        elif offset < 10 or 15 <= offset < 20:
+            tag_rows.append((entry.id, override_tag))
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(entries),
+            _row_result(tag_rows),
+            _row_result(symptom_rows),
+        ]
+    )
+
+    response = await get_symptom_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="90d",
+        min_count=5,
+        as_of=date(2026, 2, 9),
+    )
+
+    assert len(response.cells) == 1
+    assert response.cells[0].tag.tag_id == override_tag.id
+    assert response.cells[0].tag.slug == "stress"
+    assert response.cells[0].co_count == 10
 
 
 @pytest.mark.asyncio

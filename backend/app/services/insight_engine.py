@@ -1038,6 +1038,7 @@ async def _load_analytics_inputs(
         .join(Entry, Entry.id == EntrySymptom.entry_id)
         .where(
             EntrySymptom.user_id == user_id,
+            EntrySymptom.intensity > 0,
             Entry.user_id == user_id,
             Entry.entry_date < as_of,
             or_(Symptom.is_default.is_(True), Symptom.user_id == user_id),

@@ -128,7 +128,23 @@ def test_lag_frame_drops_shift_warmup_rows_without_false_zero_fill() -> None:
 
     assert len(lagged) == 5
     assert not lagged.isna().any().any()
-    assert lagged.index.min() == start + timedelta(days=7)
+    assert lagged.index.min().date() == start + timedelta(days=7)
+
+
+def test_lag_frame_uses_calendar_days_not_previous_logged_row() -> None:
+    start = date(2026, 1, 1)
+    frame, _ = build_design_matrix(
+        [
+            _entry(start, mood=1, energy=1),
+            _entry(start + timedelta(days=1), mood=2, energy=2),
+            _entry(start + timedelta(days=10), mood=5, energy=5),
+        ]
+    )
+
+    lagged = build_lagged_frame(frame, ["mood_score", "energy"], max_lag_days=1)
+
+    assert list(lagged.index.date) == [start + timedelta(days=1)]
+    assert int(lagged.iloc[0]["mood_score_lag1"]) == 1
 
 
 def test_lag_analysis_treats_symptoms_as_targets() -> None:

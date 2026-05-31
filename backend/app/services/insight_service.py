@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
-from app.models.insight import Insight
+from app.models.insight import Insight, InsightType
 from app.models.tag import Tag
 from app.schemas.insight import InsightMaturity, InsightMaturityPhase
 
@@ -108,6 +108,18 @@ def _normalise_label(value: str) -> str:
     return " ".join(value.casefold().split())
 
 
+def _payload_key(value: object) -> object:
+    if isinstance(value, dict):
+        parts = []
+        for key in ("kind", "key", "id", "slug", "name"):
+            if key in value:
+                parts.append((key, value[key]))
+        return tuple(parts) if parts else tuple(sorted(value.items()))
+    if isinstance(value, list):
+        return tuple(_payload_key(item) for item in value)
+    return value
+
+
 def _latest_subject_key(
     insight: Insight,
     *,
@@ -120,6 +132,22 @@ def _latest_subject_key(
     it as the canonical key; otherwise fall back to a case-insensitive label so
     older generated rows still collapse in the UI.
     """
+
+    if insight.insight_type == InsightType.SYMPTOM_CLUSTER and isinstance(insight.payload, dict):
+        method = insight.payload.get("method")
+        if method == "lag":
+            feature = insight.payload.get("feature")
+            feature_key = feature.get("key") if isinstance(feature, dict) else None
+            feature_id = feature.get("id") if isinstance(feature, dict) else None
+            return (
+                "symptom_cluster",
+                "lag",
+                _payload_key(insight.payload.get("target")),
+                _payload_key(feature_key or feature_id),
+                insight.payload.get("lag_days"),
+            )
+        if method == "lasso":
+            return ("symptom_cluster", "lasso", _payload_key(insight.payload.get("target")))
 
     if insight.subject_type == "tag":
         tag_slug = insight.payload.get("tag_slug") if isinstance(insight.payload, dict) else None

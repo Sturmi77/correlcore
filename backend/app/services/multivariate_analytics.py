@@ -11,7 +11,7 @@ from typing import Any, Literal
 
 import pandas as pd
 from scipy.stats import pearsonr
-from sklearn.linear_model import LassoCV
+from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -177,6 +177,32 @@ def _usable_feature_columns(frame: pd.DataFrame, target: str) -> list[str]:
     ]
 
 
+def _time_series_cv_score(
+    frame: pd.DataFrame,
+    feature_columns: Sequence[str],
+    target: str,
+    *,
+    alpha: float,
+) -> float | None:
+    """Return mean held-out R² across canonical TimeSeriesSplit folds."""
+
+    scores: list[float] = []
+    x = frame[list(feature_columns)]
+    y = frame[target]
+    for train_index, test_index in m7_time_series_split().split(x):
+        fold_model = make_pipeline(
+            StandardScaler(),
+            Lasso(alpha=alpha, max_iter=20_000),
+        )
+        fold_model.fit(x.iloc[train_index], y.iloc[train_index])
+        score = _finite_float(fold_model.score(x.iloc[test_index], y.iloc[test_index]))
+        if score is not None:
+            scores.append(score)
+    if not scores:
+        return None
+    return sum(scores) / len(scores)
+
+
 def run_lasso_models(
     frame: pd.DataFrame,
     feature_meta: Mapping[str, FeatureMetadata],
@@ -222,8 +248,12 @@ def run_lasso_models(
         if not coefficients:
             continue
 
-        score = _finite_float(model.score(x, y))
         alpha = _finite_float(lasso.alpha_)
+        score = (
+            _time_series_cv_score(frame, feature_columns, target, alpha=alpha)
+            if alpha is not None
+            else None
+        )
         findings.append(
             LassoFinding(
                 target=target,
@@ -245,7 +275,13 @@ def build_lagged_frame(
 ) -> pd.DataFrame:
     """Construct lag features and drop causal warm-up rows after shifting."""
 
-    lagged = frame.copy()
+    if frame.empty:
+        return frame.copy()
+
+    lagged = frame.copy().sort_index()
+    lagged.index = pd.to_datetime(lagged.index)
+    full_index = pd.date_range(lagged.index.min(), lagged.index.max(), freq="D")
+    lagged = lagged.reindex(full_index)
     for column in columns:
         for lag_days in range(1, max_lag_days + 1):
             lagged[f"{column}_lag{lag_days}"] = lagged[column].shift(lag_days)

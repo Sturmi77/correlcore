@@ -182,6 +182,7 @@ async def get_symptom_heatmap(
         .join(Entry, Entry.id == EntrySymptom.entry_id)
         .where(
             EntrySymptom.user_id == user_id,
+            EntrySymptom.intensity > 0,
             Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
@@ -413,6 +414,7 @@ async def get_symptom_tag_cooccurrence(
         .join(Entry, Entry.id == EntrySymptom.entry_id)
         .where(
             EntrySymptom.user_id == user_id,
+            EntrySymptom.intensity > 0,
             Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
@@ -421,11 +423,28 @@ async def get_symptom_tag_cooccurrence(
         .order_by(Entry.entry_date.asc(), Symptom.slug.asc())
     )
 
-    tag_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
-    tags_by_id: dict[uuid.UUID, Tag] = {}
+    raw_tag_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    tags_by_slug: dict[str, list[Tag]] = defaultdict(list)
     for entry_id, tag in tag_result.all():
-        tag_ids_by_entry[entry_id].add(tag.id)
-        tags_by_id[tag.id] = tag
+        raw_tag_ids_by_entry[entry_id].add(tag.id)
+        tags_by_slug[tag.slug].append(tag)
+
+    canonical_tags_by_slug = {
+        slug: sorted(tags, key=lambda item: (item.is_default, item.name.casefold(), str(item.id)))[
+            0
+        ]
+        for slug, tags in tags_by_slug.items()
+    }
+    tag_aliases = {
+        tag.id: canonical_tags_by_slug[tag.slug].id
+        for tags in tags_by_slug.values()
+        for tag in tags
+    }
+    tags_by_id = {tag.id: tag for tag in canonical_tags_by_slug.values()}
+    tag_ids_by_entry = {
+        entry_id: {tag_aliases.get(tag_id, tag_id) for tag_id in tag_ids}
+        for entry_id, tag_ids in raw_tag_ids_by_entry.items()
+    }
 
     symptom_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
     symptoms_by_id: dict[uuid.UUID, Symptom] = {}
@@ -476,6 +495,7 @@ async def get_symptom_tag_cooccurrence(
             confounder="weekday" if association.weekday_confounded else None,
         )
         for association in associations
+        if association.co_count >= min_count
     ]
     cells.sort(key=lambda cell: (-abs(cell.lift - 1.0), cell.symptom.slug, cell.tag.slug))
     return SymptomTagCooccurrenceResponse(
