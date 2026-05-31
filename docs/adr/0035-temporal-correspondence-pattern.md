@@ -1,12 +1,12 @@
 # ADR-0035: Temporal Correspondence Pattern for Trends ↔ Tags/Symptoms
 
-| Field        | Value                                                                |
-| ------------ | -------------------------------------------------------------------- |
-| **ID**       | 0035                                                                 |
-| **Date**     | 2026-05-30                                                           |
-| **Status**   | Accepted (2026-05-30)                                                |
-| **Deciders** | @Sturmi77                                                            |
-| **Area**     | Frontend / Visualisation / Architecture                              |
+| Field          | Value                                                                            |
+| -------------- | -------------------------------------------------------------------------------- |
+| **ID**         | 0035                                                                             |
+| **Date**       | 2026-05-30                                                                       |
+| **Status**     | Accepted (2026-05-30)                                                            |
+| **Deciders**   | @Sturmi77                                                                        |
+| **Area**       | Frontend / Visualisation / Architecture                                          |
 | **Supersedes** | Partially supersedes [ADR D-002](../DESIGN_DOCUMENT.md#7) (chart-library policy) |
 
 ---
@@ -67,11 +67,11 @@ Four research streams inform this decision:
 
 This ADR explicitly puts three previously-accepted decisions on the table:
 
-| Decision | Status before this ADR | Re-evaluation outcome |
-| -------- | --------------------- | --------------------- |
-| **D-002 — Custom-SVG only, no chart library** | Accepted (rationale: bundle-size budget < 150 KB gz, dark-mode token control, colour-blind safety via dash patterns) | **Partially superseded.** Tree-shakable chart libraries now exist (LayerChart ≈ 60 KB gz, uPlot ≈ 45 KB gz) that fit the budget. Hidden maintenance cost of custom SVG (current `MetricTimeseries.svelte` already 398 LOC) outweighs the bundle savings as analytical complexity grows. |
-| **No-Gamification — no red/green traffic-light colouring (DESIGN_DOCUMENT §1.4)** | Accepted | **Reaffirmed and clarified.** The rule is preserved but restated in **theme-agnostic, hue-family terms** so future GUI re-themes (different primary hue families) remain conformant. |
-| **Compare view: lines above heatmap rows (FRONTEND.md §Screen 4)** | Accepted as default | **Reaffirmed as default, but supplemented** by a Unified-Strip alternative mode for parity-of-encoding. |
+| Decision                                                                          | Status before this ADR                                                                                               | Re-evaluation outcome                                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **D-002 — Custom-SVG only, no chart library**                                     | Accepted (rationale: bundle-size budget < 150 KB gz, dark-mode token control, colour-blind safety via dash patterns) | **Partially superseded.** Tree-shakable chart libraries now exist (LayerChart ≈ 60 KB gz, uPlot ≈ 45 KB gz) that fit the budget. Hidden maintenance cost of custom SVG (current `MetricTimeseries.svelte` already 398 LOC) outweighs the bundle savings as analytical complexity grows. |
+| **No-Gamification — no red/green traffic-light colouring (DESIGN_DOCUMENT §1.4)** | Accepted                                                                                                             | **Reaffirmed and clarified.** The rule is preserved but restated in **theme-agnostic, hue-family terms** so future GUI re-themes (different primary hue families) remain conformant.                                                                                                    |
+| **Compare view: lines above heatmap rows (FRONTEND.md §Screen 4)**                | Accepted as default                                                                                                  | **Reaffirmed as default, but supplemented** by a Unified-Strip alternative mode for parity-of-encoding.                                                                                                                                                                                 |
 
 ---
 
@@ -183,13 +183,13 @@ budget of 80 KB gz** above the current baseline.
 
 Alternatives evaluated:
 
-| Library                 | Bundle (gz, tree-shaken for our use) | SvelteKit-SSR fit                          | Heatmap support       | Sync cursor across charts | Licence    | Verdict                    |
-| ----------------------- | ------------------------------------ | ------------------------------------------ | --------------------- | ------------------------- | ---------- | -------------------------- |
-| **LayerChart**          | ≈ 55–65 KB                           | ✅ Native Svelte 5, SSR-friendly           | ✅ Built-in           | ✅ Built-in `<Tooltip>` connector | MIT        | **Chosen**                 |
-| uPlot                   | ≈ 45 KB                              | ⚠️ Canvas-only, needs SSR shim             | ⚠️ Requires custom plugin | ⚠️ Manual               | MIT        | Rejected (no heatmap)      |
-| ECharts (tree-shaken)   | ≈ 110–130 KB                         | ⚠️ Canvas, needs lifecycle wiring          | ✅ Native             | ✅ `connect()` API        | Apache 2.0 | Rejected (budget pressure) |
-| Plotly.js (basic-dist)  | ≈ 280 KB                             | ⚠️ Heavy                                   | ✅                    | ✅                        | MIT        | Rejected (budget violation) |
-| Vega-Lite               | ≈ 200 KB                             | ⚠️ Heavy, declarative paradigm clash       | ✅                    | ⚠️ Cross-spec wiring      | BSD        | Rejected (budget violation) |
+| Library                | Bundle (gz, tree-shaken for our use) | SvelteKit-SSR fit                    | Heatmap support           | Sync cursor across charts         | Licence    | Verdict                     |
+| ---------------------- | ------------------------------------ | ------------------------------------ | ------------------------- | --------------------------------- | ---------- | --------------------------- |
+| **LayerChart**         | ≈ 55–65 KB                           | ✅ Native Svelte 5, SSR-friendly     | ✅ Built-in               | ✅ Built-in `<Tooltip>` connector | MIT        | **Chosen**                  |
+| uPlot                  | ≈ 45 KB                              | ⚠️ Canvas-only, needs SSR shim       | ⚠️ Requires custom plugin | ⚠️ Manual                         | MIT        | Rejected (no heatmap)       |
+| ECharts (tree-shaken)  | ≈ 110–130 KB                         | ⚠️ Canvas, needs lifecycle wiring    | ✅ Native                 | ✅ `connect()` API                | Apache 2.0 | Rejected (budget pressure)  |
+| Plotly.js (basic-dist) | ≈ 280 KB                             | ⚠️ Heavy                             | ✅                        | ✅                                | MIT        | Rejected (budget violation) |
+| Vega-Lite              | ≈ 200 KB                             | ⚠️ Heavy, declarative paradigm clash | ✅                        | ⚠️ Cross-spec wiring              | BSD        | Rejected (budget violation) |
 
 **Chosen: LayerChart.** Reasons:
 

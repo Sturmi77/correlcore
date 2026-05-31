@@ -170,11 +170,7 @@
   </header>
 
   <div class="compare__controls" data-testid="trends-compare-controls">
-    <div
-      class="compare__mode"
-      role="group"
-      aria-label={$_('trends.compare.mode_label')}
-    >
+    <div class="compare__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
       <span class="compare__control-label">{$_('trends.compare.mode_label')}</span>
       <button
         type="button"

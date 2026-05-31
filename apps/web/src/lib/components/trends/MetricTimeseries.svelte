@@ -217,110 +217,99 @@
       on:blur={() => enableCursor && timelineCursor.hover(null)}
       on:keydown={handleKeyDown}
     >
-    <svg
-      class="timeseries__chart"
-      class:timeseries__chart--aligned={aligned}
-      class:timeseries__chart--interactive={enableCursor && aligned}
-      style={aligned ? `--timeseries-chart-width: ${width}px` : ''}
-      {width}
-      {height}
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-label={$_('trends.timeseries.aria')}
-    >
-      {#if enableCursor && aligned && markers.length > 0}
-        <EventMarkerLayer
-          {markers}
-          {axisDates}
-          {axisLayout}
-          top={paddingTop}
-          height={innerH}
-        />
-      {/if}
-      <line
-        x1={plotStart}
-        x2={plotStart}
-        y1={paddingTop}
-        y2={height - paddingBottom}
-        class="timeseries__axis"
-      />
-      <line
-        x1={plotStart}
-        x2={plotEnd}
-        y1={height - paddingBottom}
-        y2={height - paddingBottom}
-        class="timeseries__axis"
-      />
-      <text x={plotStart - 8} y={paddingTop + 8} class="timeseries__axis-label" text-anchor="end">
-        {$_('trends.timeseries.score_axis')}
-      </text>
-
-      {#each [1, 2, 3, 4, 5] as tick}
-        {@const y = height - paddingBottom - ((tick - 1) / 4) * innerH}
-        <line x1={plotStart} x2={plotEnd} y1={y} y2={y} class="timeseries__grid" />
-        <text x={plotStart - 12} y={y + 4} class="timeseries__tick" text-anchor="end">
-          {tick}
-        </text>
-      {/each}
-
-      {#each xLabels as tick}
-        <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
-          {tick.label}
-        </text>
-      {/each}
-
-      {#if enableCursor && aligned}
-        <TimelineCursorOverlay
-          {axisDates}
-          {axisLayout}
-          top={paddingTop}
-          height={innerH}
-        />
-      {/if}
-
-      {#each series as metric}
-        {#if enabled[metric.key] && metric.path}
-          <path
-            d={metric.path}
-            class="timeseries__line"
-            style={`--metric-color: ${metric.style.color}; --metric-dasharray: ${metric.style.dasharray || 'none'}`}
-          />
-          {#each metric.points as point}
-            <a
-              href={`/entries/day/${point.label}`}
-              class="timeseries__point-button"
-              aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
-              on:click|preventDefault={() => dispatch('selectDate', { date: point.label })}
-            >
-              <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
-                <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
-              </circle>
-              {#if metric.style.shape === 'circle'}
-                <circle
-                  class="timeseries__point"
-                  style={`--metric-color: ${metric.style.color}`}
-                  cx={point.x}
-                  cy={point.y}
-                  r={pointRadius}
-                />
-              {:else if metric.style.shape === 'diamond'}
-                <polygon
-                  class="timeseries__point"
-                  style={`--metric-color: ${metric.style.color}`}
-                  points={diamondPoints(point.x, point.y, pointRadius + 1)}
-                />
-              {:else}
-                <polygon
-                  class="timeseries__point"
-                  style={`--metric-color: ${metric.style.color}`}
-                  points={trianglePoints(point.x, point.y, pointRadius + 1)}
-                />
-              {/if}
-            </a>
-          {/each}
+      <svg
+        class="timeseries__chart"
+        class:timeseries__chart--aligned={aligned}
+        class:timeseries__chart--interactive={enableCursor && aligned}
+        style={aligned ? `--timeseries-chart-width: ${width}px` : ''}
+        {width}
+        {height}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={$_('trends.timeseries.aria')}
+      >
+        {#if enableCursor && aligned && markers.length > 0}
+          <EventMarkerLayer {markers} {axisDates} {axisLayout} top={paddingTop} height={innerH} />
         {/if}
-      {/each}
-    </svg>
+        <line
+          x1={plotStart}
+          x2={plotStart}
+          y1={paddingTop}
+          y2={height - paddingBottom}
+          class="timeseries__axis"
+        />
+        <line
+          x1={plotStart}
+          x2={plotEnd}
+          y1={height - paddingBottom}
+          y2={height - paddingBottom}
+          class="timeseries__axis"
+        />
+        <text x={plotStart - 8} y={paddingTop + 8} class="timeseries__axis-label" text-anchor="end">
+          {$_('trends.timeseries.score_axis')}
+        </text>
+
+        {#each [1, 2, 3, 4, 5] as tick}
+          {@const y = height - paddingBottom - ((tick - 1) / 4) * innerH}
+          <line x1={plotStart} x2={plotEnd} y1={y} y2={y} class="timeseries__grid" />
+          <text x={plotStart - 12} y={y + 4} class="timeseries__tick" text-anchor="end">
+            {tick}
+          </text>
+        {/each}
+
+        {#each xLabels as tick}
+          <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
+            {tick.label}
+          </text>
+        {/each}
+
+        {#if enableCursor && aligned}
+          <TimelineCursorOverlay {axisDates} {axisLayout} top={paddingTop} height={innerH} />
+        {/if}
+
+        {#each series as metric}
+          {#if enabled[metric.key] && metric.path}
+            <path
+              d={metric.path}
+              class="timeseries__line"
+              style={`--metric-color: ${metric.style.color}; --metric-dasharray: ${metric.style.dasharray || 'none'}`}
+            />
+            {#each metric.points as point}
+              <a
+                href={`/entries/day/${point.label}`}
+                class="timeseries__point-button"
+                aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
+                on:click|preventDefault={() => dispatch('selectDate', { date: point.label })}
+              >
+                <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
+                  <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
+                </circle>
+                {#if metric.style.shape === 'circle'}
+                  <circle
+                    class="timeseries__point"
+                    style={`--metric-color: ${metric.style.color}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r={pointRadius}
+                  />
+                {:else if metric.style.shape === 'diamond'}
+                  <polygon
+                    class="timeseries__point"
+                    style={`--metric-color: ${metric.style.color}`}
+                    points={diamondPoints(point.x, point.y, pointRadius + 1)}
+                  />
+                {:else}
+                  <polygon
+                    class="timeseries__point"
+                    style={`--metric-color: ${metric.style.color}`}
+                    points={trianglePoints(point.x, point.y, pointRadius + 1)}
+                  />
+                {/if}
+              </a>
+            {/each}
+          {/if}
+        {/each}
+      </svg>
     </div>
   {/if}
 
@@ -397,7 +386,7 @@
 
   /*
    * Sprint 1 (ADR-0035) a11y wrapper. The SVG above is purely
-   * presentational; this <div role="application"> carries keyboard
+   * presentational; this <div role="slider"> carries keyboard
    * focus and pointer interactions, and provides the bounding box that
    * pointer math reads via getBoundingClientRect().
    */

@@ -54,18 +54,14 @@
   /**
    * Per-metric divergent mapping configuration.
    *
-   * Mood / Energy: 1..5 with midpoint 3 (range 4). Higher = positive.
-   * Stress:        1..5 with midpoint 3 (range 4). Higher = NEGATIVE
-   *                — we flip the sign so high stress reads as a strong
-   *                negative pole, matching ADR-0035 §10 (semantic
-   *                divergence rather than literal-value divergence).
+   * Values enter this component after displayTimeseriesValue(), so stress
+   * is already inverted to the same "higher = better" display contract as
+   * mood / energy before divergent encoding.
    */
   type StripMetric = {
     key: MetricKey;
     label: string;
     mapper: StripCellMapper;
-    midpoint: number;
-    signFlip: boolean;
   };
 
   const metrics: StripMetric[] = [
@@ -73,22 +69,16 @@
       key: 'mood_avg',
       label: 'trends.metric.mood',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-      midpoint: 3,
-      signFlip: false,
     },
     {
       key: 'energy_avg',
       label: 'trends.metric.energy',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-      midpoint: 3,
-      signFlip: false,
     },
     {
       key: 'stress_avg',
       label: 'trends.metric.stress',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-      midpoint: 3,
-      signFlip: true,
     },
   ];
 
@@ -120,15 +110,9 @@
     return axisDates.map((date, index) => {
       const point = byDate.get(date) ?? null;
       const raw = point ? point[metric.key] : null;
-      const display = raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
-      const valueForEncoding =
-        display === null
-          ? null
-          : metric.signFlip
-            ? // Flip around midpoint: 5 -> 1, 4 -> 2, 3 -> 3 …
-              metric.midpoint * 2 - display
-            : display;
-      const encoded = metric.mapper.encode(valueForEncoding ?? NaN);
+      const display =
+        raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
+      const encoded = metric.mapper.encode(display ?? NaN);
       const cx = dailyAxisXForIndex(index, axisLayout);
       const cellW = axisLayout.dayWidth;
       return {
@@ -211,8 +195,7 @@
         break;
       case 'End':
         event.preventDefault();
-        if (axisDates[axisDates.length - 1])
-          timelineCursor.focus(axisDates[axisDates.length - 1]);
+        if (axisDates[axisDates.length - 1]) timelineCursor.focus(axisDates[axisDates.length - 1]);
         break;
       case 'Escape':
         event.preventDefault();
@@ -239,17 +222,6 @@
       aria-query's allow-list), never on the underlying <svg> which
       Svelte v5's compiler treats as non-interactive.
     -->
-    <!--
-      Sprint 2 (ADR-0035) — pixel-precise alignment with the
-      ComparisonHeatmap grid. The heatmap is a CSS grid with
-      min-width: max-content and fixed-pixel columns
-      (labelWidth + n * dayWidth + gaps). For the strip rows to line
-      up with the heatmap columns inside the shared horizontal scroller,
-      the SVG cannot use width: 100% (that would stretch it to the
-      container width, not the data width). We pin its width to the
-      exact same pixel value `width` that dailyAxisChartWidth() computes
-      for the heatmap, via a CSS variable on the wrapper.
-    -->
     <div
       class="strip__interactive"
       class:strip__interactive--active={enableCursor}
@@ -267,79 +239,74 @@
       on:pointerleave={handlePointerLeave}
       on:keydown={handleKeydown}
     >
-    <svg
-      class="strip__svg"
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="xMinYMin meet"
-      role="img"
-      aria-hidden="true"
-    >
-      {#each rows as row (row.key)}
-        <g class="strip__row" data-metric={row.key}>
-          <text
-            class="strip__label"
-            x={axisLayout.labelWidth - 8}
-            y={row.top + stripHeight / 2}
-            text-anchor="end"
-            dominant-baseline="middle"
-          >
-            {$_(row.label)}
-          </text>
-          <rect
-            class="strip__track"
-            x={axisLayout.labelWidth + axisLayout.dayGap}
-            y={row.top}
-            width={width - axisLayout.labelWidth - axisLayout.dayGap - axisLayout.rightPadding}
-            height={stripHeight}
-            rx="4"
-          />
-          {#each row.cells as cell (cell.date)}
+      <svg
+        class="strip__svg"
+        {width}
+        {height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMinYMin meet"
+        role="img"
+        aria-hidden="true"
+      >
+        {#each rows as row (row.key)}
+          <g class="strip__row" data-metric={row.key}>
+            <text
+              class="strip__label"
+              x={axisLayout.labelWidth - 8}
+              y={row.top + stripHeight / 2}
+              text-anchor="end"
+              dominant-baseline="middle"
+            >
+              {$_(row.label)}
+            </text>
             <rect
-              class="strip__cell"
-              data-date={cell.date}
-              data-sign={cell.sign}
-              x={cell.x}
+              class="strip__track"
+              x={axisLayout.labelWidth + axisLayout.dayGap}
               y={row.top}
-              width={cell.width}
+              width={width - axisLayout.labelWidth - axisLayout.dayGap - axisLayout.rightPadding}
               height={stripHeight}
-              fill={cell.fill}
-              opacity={cell.opacity}
-              on:click={() => handleCellClick(cell.date)}
-              on:keydown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  handleCellClick(cell.date);
-                }
-              }}
-              role="button"
-              tabindex="-1"
-              aria-label={cell.displayValue === null
-                ? `${$_(row.label)} — ${cell.date}`
-                : `${$_(row.label)} — ${cell.date}: ${cell.displayValue.toFixed(1)}`}
+              rx="4"
             />
-          {/each}
-        </g>
-      {/each}
+            {#each row.cells as cell (cell.date)}
+              <rect
+                class="strip__cell"
+                data-date={cell.date}
+                data-sign={cell.sign}
+                x={cell.x}
+                y={row.top}
+                width={cell.width}
+                height={stripHeight}
+                fill={cell.fill}
+                opacity={cell.opacity}
+                on:click={() => handleCellClick(cell.date)}
+                on:keydown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleCellClick(cell.date);
+                  }
+                }}
+                role="button"
+                tabindex="-1"
+                aria-label={cell.displayValue === null
+                  ? `${$_(row.label)} — ${cell.date}`
+                  : `${$_(row.label)} — ${cell.date}: ${cell.displayValue.toFixed(1)}`}
+              />
+            {/each}
+          </g>
+        {/each}
 
-      <EventMarkerLayer
-        {markers}
-        {axisDates}
-        {axisLayout}
-        height={height - paddingBottom}
-        top={0}
-      />
-
-      {#if enableCursor}
-        <TimelineCursorOverlay
+        <EventMarkerLayer
+          {markers}
           {axisDates}
           {axisLayout}
           height={height - paddingBottom}
           top={0}
         />
-      {/if}
-    </svg>
+
+        {#if enableCursor}
+          <TimelineCursorOverlay {axisDates} {axisLayout} height={height - paddingBottom} top={0} />
+        {/if}
+      </svg>
     </div>
   {/if}
 </figure>
@@ -352,12 +319,6 @@
   }
 
   .strip__svg {
-    /*
-     * Pixel-precise: the SVG is exactly as wide as the data grid that
-     * ComparisonHeatmap renders next to it inside the same horizontal
-     * scroller. Never width: 100% — that would decouple it from the
-     * heatmap's column geometry.
-     */
     display: block;
     width: var(--strip-chart-width);
     max-width: none;

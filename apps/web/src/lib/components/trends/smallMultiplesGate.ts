@@ -18,8 +18,6 @@ export const SMALL_MULTIPLES_RADIUS = 7;
  * Sprint 3 / ADR-0021 + ADR-0035: small-multiples sheet is only safe
  * once we have at least provisional confidence (>=15 entries).
  */
-export function isSmallMultiplesUnlocked(
-  phase: InsightMaturityPhase | null | undefined
-): boolean {
+export function isSmallMultiplesUnlocked(phase: InsightMaturityPhase | null | undefined): boolean {
   return phase === 'provisional' || phase === 'robust';
 }

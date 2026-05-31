@@ -74,10 +74,7 @@ function createTimelineCursor() {
         if (state.axisDates.length === 0) return state;
         const currentIndex = state.date ? state.axisDates.indexOf(state.date) : -1;
         const startIndex = currentIndex >= 0 ? currentIndex : state.axisDates.length - 1;
-        const nextIndex = Math.min(
-          state.axisDates.length - 1,
-          Math.max(0, startIndex + delta),
-        );
+        const nextIndex = Math.min(state.axisDates.length - 1, Math.max(0, startIndex + delta));
         const nextDate = state.axisDates[nextIndex] ?? null;
         result = nextDate;
         return { ...state, date: nextDate, source: 'keyboard' };
@@ -100,7 +97,4 @@ export const timelineCursor = createTimelineCursor();
 /**
  * Convenience selector: just the active ISO date (null when no cursor).
  */
-export const timelineCursorDate: Readable<string | null> = derived(
-  timelineCursor,
-  ($s) => $s.date,
-);
+export const timelineCursorDate: Readable<string | null> = derived(timelineCursor, ($s) => $s.date);

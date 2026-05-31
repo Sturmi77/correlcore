@@ -253,13 +253,13 @@ These apply to all three sprints, not just the final one:
 
 ## Risks and Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-| ---- | ---------- | ------ | ---------- |
-| LayerChart marginal cost > 80 KB gz | Low | High (would require revisiting ADR-0035) | Run bundle measurement spike in Sprint 2 Day 1; if over budget, reduce to uPlot + custom heatmap |
-| Strip mode visually overwhelming for new users | Medium | Medium | Keep `lines` as default; show one-time hint for `strips` only when >12 tags |
-| Event-aligned median misleading on sparse data | Medium | High (insight quality risk) | Require ≥ 3 occurrences for median; explicit disclaimer; phase gating ≥ `provisional` |
-| Synchronised cursor performance on low-end mobile | Low | Medium | Throttle cursor updates to rAF; benchmark on Moto G4 baseline device |
-| Theme migration later breaks divergent scale | Low | Medium | Tokens are structural; any future theme must define conformant `--color-divergent-{neg,pos}` to pass CI |
+| Risk                                              | Likelihood | Impact                                   | Mitigation                                                                                              |
+| ------------------------------------------------- | ---------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| LayerChart marginal cost > 80 KB gz               | Low        | High (would require revisiting ADR-0035) | Run bundle measurement spike in Sprint 2 Day 1; if over budget, reduce to uPlot + custom heatmap        |
+| Strip mode visually overwhelming for new users    | Medium     | Medium                                   | Keep `lines` as default; show one-time hint for `strips` only when >12 tags                             |
+| Event-aligned median misleading on sparse data    | Medium     | High (insight quality risk)              | Require ≥ 3 occurrences for median; explicit disclaimer; phase gating ≥ `provisional`                   |
+| Synchronised cursor performance on low-end mobile | Low        | Medium                                   | Throttle cursor updates to rAF; benchmark on Moto G4 baseline device                                    |
+| Theme migration later breaks divergent scale      | Low        | Medium                                   | Tokens are structural; any future theme must define conformant `--color-divergent-{neg,pos}` to pass CI |
 
 ---
 
