@@ -27,6 +27,13 @@ Responsive screenshots:
 - `/opt/cursor/artifacts/m7_insights_dark_768.png`
 - `/opt/cursor/artifacts/m7_insights_dark_1280.png`
 
+Mobile follow-up artifacts:
+
+- `/opt/cursor/artifacts/m7_mobile_insights_demo_v2.webm`
+- `/opt/cursor/artifacts/m7_mobile_insights_light_390.png`
+- `/opt/cursor/artifacts/m7_mobile_insights_dark_390_v2.png`
+- `/opt/cursor/artifacts/m7_mobile_card_meta_bug.png`
+
 ## Test Environment
 
 | Area     | Detail                                                            |
@@ -67,9 +74,28 @@ Responsive screenshots:
 
 | Viewport   | Light | Dark | Notes                                                     |
 | ---------- | ----- | ---- | --------------------------------------------------------- |
+| 390 x 844  | Pass  | Pass | iPhone-sized touch flow works; visual issues below.       |
 | 375 x 812  | Pass  | Pass | Content stacks; horizontal heatmap scrolling is required. |
 | 768 x 1024 | Pass  | Pass | Side-nav/tablet density remains usable.                   |
 | 1280 x 800 | Pass  | Pass | Desktop layout is readable and complete.                  |
+
+## Mobile Follow-up
+
+The mobile pass used an iPhone-sized Playwright device profile with touch input.
+Bottom navigation, M7 feed filters, matrix/findings switching, the symptom
+blend toggle, symptom analytics, tag groups, range controls, and the shared-entry
+bottom sheet all responded.
+
+| Mobile interaction            | Result | Notes                                              |
+| ----------------------------- | ------ | -------------------------------------------------- |
+| Bottom nav: Insights ↔ Trends | Pass   | Touch targets navigate and preserve auth state.    |
+| Symptoms feed tab             | Pass   | Symptom card filter responds on mobile.            |
+| Matrix / Findings toggle      | Pass   | Both views can be reached via touch.               |
+| Blend in symptoms checkbox    | Pass   | Off/on states update correctly.                    |
+| Symptom analytics section     | Pass   | Section renders, but dense table labels are tight. |
+| Tag groups                    | Pass   | Groups render in stacked mobile flow.              |
+| Patterns range controls       | Pass   | `1Y` active state updates after tap.               |
+| Co-occurrence entry sheet     | Pass   | Opens and closes from a heatmap cell.              |
 
 ## Static and Automated Gates
 
@@ -106,6 +132,15 @@ Responsive screenshots:
   during demos.
 - Matrix empty state can look sparse when symptom blending is disabled because
   the matrix heading/export button remain while the matrix content is absent.
+- Mobile insight-card metadata renders the untranslated placeholders
+  `Based on {n} entries · {days} days`; the card currently passes only `n` into a
+  string that also expects `days`.
+- Mobile filter pills can wrap awkwardly into two rows when horizontal space is
+  tight.
+- Mobile M7 heatmaps are functional but cramped: rotated column headers overlap
+  or float away from their columns, and symptom/tag labels truncate aggressively.
+- The mobile shared-entry bottom sheet works, but its backdrop/safe-area spacing
+  can appear as an oversized grey block at the bottom of the viewport.
 
 ## Improvement Suggestions
 
@@ -123,3 +158,8 @@ Responsive screenshots:
    note when forced visualizations are enabled.
 6. Replace the sparse matrix empty gap with an explicit empty state when filters
    or symptom blending leave no matrix rows.
+7. Fix insight-card metadata interpolation by passing the expected `days` value
+   or changing the locale string to match available data.
+8. Add a mobile-specific layout treatment for insight feed tabs and dense
+   co-occurrence matrices, such as horizontal tab scrolling and clearer
+   small-screen header alignment.
