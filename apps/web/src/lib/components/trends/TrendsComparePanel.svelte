@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { browser } from '$app/environment';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type {
@@ -9,8 +10,11 @@
     TimeseriesRange,
   } from '$lib/api/stats';
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
+  import { timelineCursor } from '$lib/stores/timelineCursor';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
+  import UnifiedStripChart from './UnifiedStripChart.svelte';
+  import type { EventMarker } from './EventMarkerLayer.svelte';
 
   export let points: TimeseriesPoint[] = [];
   export let range: TimeseriesRange = 'week';
@@ -20,11 +24,92 @@
   export let showTags = true;
   export let showSymptoms = false;
   export let loading = false;
+  /**
+   * Sprint 1 (ADR-0035): event markers shared across metric chart and
+   * heatmap rows. Computed by the parent page from insight maturity,
+   * symptom onsets, and habit goal changes; passed unfiltered.
+   */
+  export let markers: readonly EventMarker[] = [];
+  /**
+   * Sprint 2 (ADR-0035): optional correlation map handed down to the
+   * heatmap when sortMode === 'correlation'. Values are |r| in [0, 1].
+   */
+  export let correlationScores: Record<string, number> = {};
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string };
     layerChange: { showTags: boolean; showSymptoms: boolean };
   }>();
+
+  // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
+  onMount(() => {
+    timelineCursor.reset();
+  });
+  onDestroy(() => {
+    timelineCursor.reset();
+  });
+
+  // -------- Sprint 2 (ADR-0035): mode + sorting + pins ----------------
+  type CompareMode = 'lines' | 'strips';
+  type SortMode = 'frequency' | 'recent' | 'correlation' | 'pinned';
+
+  const MODE_KEY = 'cc_trend_compare_mode';
+  const SORT_KEY = 'cc_trend_compare_sort';
+  const PINS_KEY = 'cc_trend_compare_pins';
+
+  function readLocal<T>(key: string, fallback: T, isValid: (value: unknown) => boolean): T {
+    if (!browser) return fallback;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw === null) return fallback;
+      const parsed = JSON.parse(raw);
+      return isValid(parsed) ? (parsed as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeLocal(key: string, value: unknown): void {
+    if (!browser) return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // Quota or private-mode — silently ignore. Preference falls back to default next session.
+    }
+  }
+
+  let mode: CompareMode = readLocal<CompareMode>(
+    MODE_KEY,
+    'lines',
+    (value) => value === 'lines' || value === 'strips'
+  );
+  let sortMode: SortMode = readLocal<SortMode>(
+    SORT_KEY,
+    'frequency',
+    (value) =>
+      value === 'frequency' || value === 'recent' || value === 'correlation' || value === 'pinned'
+  );
+  let pinned: string[] = readLocal<string[]>(
+    PINS_KEY,
+    [],
+    (value) => Array.isArray(value) && value.every((item) => typeof item === 'string')
+  );
+
+  function setMode(next: CompareMode): void {
+    mode = next;
+    writeLocal(MODE_KEY, next);
+  }
+
+  function setSortMode(next: SortMode): void {
+    sortMode = next;
+    writeLocal(SORT_KEY, next);
+  }
+
+  function handlePinToggle(event: CustomEvent<{ rowId: string; pinned: boolean }>): void {
+    const { rowId, pinned: shouldPin } = event.detail;
+    pinned = shouldPin ? [...pinned, rowId] : pinned.filter((id) => id !== rowId);
+    writeLocal(PINS_KEY, pinned);
+  }
 
   let axisScroller: HTMLDivElement;
   let lastAxisKey = '';
@@ -84,20 +169,76 @@
     </div>
   </header>
 
+  <div class="compare__controls" data-testid="trends-compare-controls">
+    <div
+      class="compare__mode"
+      role="group"
+      aria-label={$_('trends.compare.mode_label')}
+    >
+      <span class="compare__control-label">{$_('trends.compare.mode_label')}</span>
+      <button
+        type="button"
+        class="compare__chip"
+        class:compare__chip--active={mode === 'lines'}
+        aria-pressed={mode === 'lines'}
+        on:click={() => setMode('lines')}
+      >
+        {$_('trends.compare.mode_lines')}
+      </button>
+      <button
+        type="button"
+        class="compare__chip"
+        class:compare__chip--active={mode === 'strips'}
+        aria-pressed={mode === 'strips'}
+        on:click={() => setMode('strips')}
+      >
+        {$_('trends.compare.mode_strips')}
+      </button>
+    </div>
+
+    <label class="compare__sort">
+      <span class="compare__control-label">{$_('trends.compare.sort_label')}</span>
+      <select
+        value={sortMode}
+        on:change={(event) => setSortMode(event.currentTarget.value as SortMode)}
+      >
+        <option value="frequency">{$_('trends.compare.sort_frequency')}</option>
+        <option value="recent">{$_('trends.compare.sort_recent')}</option>
+        <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
+        <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
+      </select>
+    </label>
+  </div>
+
   <div
     class="compare__axis-scroller"
     bind:this={axisScroller}
     aria-label={$_('trends.compare.shared_axis')}
   >
-    <MetricTimeseries
-      {points}
-      {range}
-      {enabled}
-      {loading}
-      {axisDates}
-      axisLayout={compareDailyAxisLayout}
-      on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
-    />
+    {#if mode === 'strips'}
+      <UnifiedStripChart
+        {points}
+        {enabled}
+        {loading}
+        {axisDates}
+        axisLayout={compareDailyAxisLayout}
+        {markers}
+        enableCursor
+        on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+      />
+    {:else}
+      <MetricTimeseries
+        {points}
+        {range}
+        {enabled}
+        {loading}
+        {axisDates}
+        axisLayout={compareDailyAxisLayout}
+        {markers}
+        enableCursor
+        on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+      />
+    {/if}
 
     <ComparisonHeatmap
       {tagHeatmap}
@@ -107,9 +248,15 @@
       {loading}
       dates={axisDates}
       axisLayout={compareDailyAxisLayout}
+      {markers}
+      enableCursor
+      {sortMode}
+      {pinned}
+      {correlationScores}
       scrollable={false}
       autoScroll={false}
       on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+      on:pinToggle={handlePinToggle}
     />
   </div>
 </section>
@@ -163,6 +310,69 @@
     gap: var(--space-4);
     overflow-x: auto;
     padding-bottom: var(--space-2);
+  }
+
+  /* Sprint 2 (ADR-0035) — token-only, hue-agnostic controls. */
+  .compare__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .compare__mode {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    background: var(--color-surface-muted, var(--color-strip-track-bg));
+    border-radius: var(--radius-md, 8px);
+    padding: 2px;
+  }
+
+  .compare__control-label {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    padding: 0 var(--space-1);
+  }
+
+  .compare__chip {
+    background: transparent;
+    border: 0;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md, 8px);
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    min-height: 32px;
+  }
+
+  .compare__chip--active {
+    background: var(--color-surface);
+    color: var(--color-fg);
+    box-shadow: 0 0 0 1px var(--color-border-chart, var(--color-cursor-halo));
+  }
+
+  .compare__chip:focus-visible {
+    outline: 2px solid var(--color-cursor-halo);
+    outline-offset: 1px;
+  }
+
+  .compare__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+  }
+
+  .compare__sort select {
+    min-height: 36px;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-border, var(--color-border-chart));
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
   }
 
   @media (max-width: 640px) {

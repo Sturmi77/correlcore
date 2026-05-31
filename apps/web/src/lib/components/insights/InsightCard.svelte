@@ -20,6 +20,7 @@
   import { _ } from 'svelte-i18n';
   import InsightConfidenceScale from './InsightConfidenceScale.svelte';
   import InsightMaturityBadge from './InsightMaturityBadge.svelte';
+  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
   export let insight: InsightResponse | null = null;
@@ -32,7 +33,12 @@
     retry: void;
     dismiss: { id: string };
     exportCsv: { id: string };
+    exploreEvents: { id: string };
   }>();
+
+  // Sprint 3 (ADR-0035 §6): only surface the "Explore aligned events"
+  // affordance when the insight has reached the provisional phase.
+  $: canExploreEvents = isSmallMultiplesUnlocked(maturity?.phase ?? null);
 
   let expanded = false;
 
@@ -165,6 +171,17 @@
     >
       {$_('insights.card.disclaimer_link')} <span aria-hidden="true">ⓘ</span>
     </a>
+
+    {#if canExploreEvents}
+      <button
+        type="button"
+        class="insight-card__explore"
+        data-testid="insight-card-explore-events"
+        on:click={() => insight && dispatch('exploreEvents', { id: insight.id })}
+      >
+        {$_('trends.esm.open_action')}
+      </button>
+    {/if}
 
     <button
       class="insight-card__toggle"
@@ -476,6 +493,27 @@
   .insight-card__export-btn:hover {
     color: var(--color-text);
     border-color: oklch(from var(--color-text) l c h / 0.3);
+  }
+  /* Sprint 3 (ADR-0035 §6) — phase-gated explore-events affordance. */
+  .insight-card__explore {
+    align-self: flex-start;
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+    color: var(--color-fg);
+    background: transparent;
+    border: 1px solid var(--color-border, var(--color-border-chart));
+    border-radius: var(--radius-sm, 0.375rem);
+    padding: var(--space-1) var(--space-3);
+    cursor: pointer;
+    transition: background var(--transition-interactive, 180ms ease);
+  }
+  .insight-card__explore:hover,
+  .insight-card__explore:focus-visible {
+    background: var(--color-surface-muted, var(--color-strip-track-bg));
+    outline: none;
+  }
+  .insight-card__explore:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-cursor-halo);
   }
   .insight-card--skeleton {
     pointer-events: none;

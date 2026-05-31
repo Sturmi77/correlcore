@@ -51,7 +51,7 @@ This is active user trust-building, not legal boilerplate.
 
 - **No** streak counters anywhere in the UI
 - **No** badges, points, fire emojis, or reward animations
-- Calendar / frequency heatmaps use **blue-tone neutral scales** — never red/green traffic-light colouring that implies a streak verdict
+- Calendar / frequency heatmaps use a **theme-agnostic single-hue neutral scale** sourced from `--color-heatmap-*` tokens — never a red/green traffic-light pair that implies a streak verdict. The active hue is owned by the GUI theme (see [`COLOR_SCHEME_CONCEPT.md`](frontend/COLOR_SCHEME_CONCEPT.md)); components must not hardcode a hue. See [ADR-0035](adr/0035-temporal-correspondence-pattern.md) for the divergent-scale rule.
 - Habit adherence is shown as a **percentage rate**, not a chain counter
 - Notifications copy is always neutral: "Time for your daily check-in." — never "Don't break your streak!"
 - **InsightQualityMeter copy is always descriptive, never imperative.** No call-to-action, no urgency framing. Example of correct copy: _"At your current tracking pace: ca. 2–3 weeks until first insight."_ — no emoji, no imperative verb. See Issue #184.
@@ -370,7 +370,7 @@ Time range: [7D] [30D] [90D] [1Y]
 
 **Rules:**
 
-- Calendar heatmap uses blue-tone neutral scale — never red/green
+- Calendar and tag heatmaps use the **theme-owned single-hue neutral scale** (`--color-heatmap-*`); divergent symptom/mood scales follow the **theme-agnostic rule** in [ADR-0035](adr/0035-temporal-correspondence-pattern.md) — never a red/green pair, never hardcoded hues
 - No "best day" comparisons or ranking language
 - Export button (CSV/JSON) in header — for doctor visits and power users
 - Charts are tappable: tap on data point shows tooltip with day details
@@ -383,6 +383,10 @@ Time range: [7D] [30D] [90D] [1Y]
   they cannot align exactly with daily heatmap cells.
 - Tag and symptom context layers are independently toggleable and persisted in
   `cc_trend_compare_layers`.
+- **Compare render mode (M3.8, see [ADR-0035](adr/0035-temporal-correspondence-pattern.md)):** A `Lines | Strips` toggle switches the metric block between line chart and a **Unified-Strip view** (Mood/Energy/Stress rendered as horizontal divergent strips above the tag/symptom heatmap rows). Strip mode shares the canonical `dates[]` axis with all heatmap rows for exact column correspondence and is the recommended mode for ≥30D ranges on mobile. Mode is persisted in `cc_trend_compare_mode`.
+- **Dynamic sorting (M3.8):** In Strip mode, tag/symptom rows may be sorted by `frequency`, `recent activity`, `correlation strength` (phase-gated `provisional`+), or `pinned`. Sort key is persisted in `cc_trend_compare_sort`; user-pinned rows in `cc_trend_compare_pins`.
+- **Timeline cursor (M3.8):** A single shared cursor synchronises hover/focus across the metric block and all heatmap rows. Keyboard navigation (`←/→`) moves the cursor by one day; `Shift+←/→` jumps by one week.
+- **Event markers (M3.8):** Phase transitions, symptom onsets, and habit-goal changes appear as neutral vertical markers across all rows. Marker colour comes from `--color-event-marker-*` tokens and must respect the theme-agnostic colour rule.
 - Symptom heatmap is neutral occurrence/intensity visualization only. It does not introduce co-occurrence, medical interpretation, correlation recommendations, or a new analytics engine.
 - Mobile uses one controlled horizontal timeline scroller with sticky row labels and compact layer controls. Desktop uses a wider analysis canvas, sticky controls, and may keep an entry-detail panel open beside the chart.
 - Health tab may show a cycle-day strip when entries contain `cycle_day`; it must not infer phases or provide medical interpretation.

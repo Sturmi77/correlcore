@@ -415,7 +415,37 @@
       "symptoms": "Symptome",
       "heatmap_heading": "Kontextzeilen",
       "loading": "Lade Vergleichsebenen",
-      "empty_layers": "Aktiviere Tags oder Symptome, um Kontext auf derselben Zeitachse zu vergleichen."
+      "empty_layers": "Aktiviere Tags oder Symptome, um Kontext auf derselben Zeitachse zu vergleichen.",
+      "mode_label": "Darstellung",
+      "mode_lines": "Linien",
+      "mode_strips": "Streifen",
+      "sort_label": "Sortierung",
+      "sort_frequency": "Nach Haeufigkeit",
+      "sort_recent": "Zuletzt aktiv",
+      "sort_correlation": "Nach Korrelation",
+      "sort_pinned": "Angepinnt zuerst",
+      "pin_aria": "Zeile oben anpinnen",
+      "unpin_aria": "Pin entfernen"
+    },
+    "strip": {
+      "caption": "Divergente Streifen-Darstellung von Stimmung, Energie und Stress auf der gemeinsamen Zeitachse",
+      "aria": "Stimmung, Energie und Stress als divergente Streifen"
+    },
+    "esm": {
+      "eyebrow": "Ereignis-Ausrichtung",
+      "title": "Tage rund um jeden Onset",
+      "body": "Jede Zeile zeigt die Tage rund um ein Ereignis — so werden gemeinsame Muster sichtbar.",
+      "aria": "Ereignis-ausgerichtete Klein-Multiples",
+      "close_aria": "Ereignis-Ansicht schliessen",
+      "empty": "Noch keine Ereignisse fuer diesen Insight verfuegbar.",
+      "locked": "Verfuegbar sobald der Insight die provisorische Phase erreicht.",
+      "open_action": "Ausgerichtete Ereignisse erkunden"
+    },
+    "markers": {
+      "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"
+    },
+    "cursor": {
+      "aria": "Gemeinsamer Zeitachsen-Cursor"
     },
     "history": {
       "eyebrow": "Eintragsdetails",

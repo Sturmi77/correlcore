@@ -50,6 +50,15 @@ CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwis
 - **60 Sekunden pro Tag** — nicht mehr, sonst wird es nicht gemacht
 - **No gamification, ever** — du trackst deine Gewohnheiten, nicht wie oft du die App öffnest. Kein Streak-Druck, keine Badges, keine Belohnungsschleifen.
 
+**Visualisierungs-Konsequenz (Theme-agnostische Fassung, präzisiert durch [ADR-0035](adr/0035-temporal-correspondence-pattern.md)):**
+
+Eine divergente Skala (für signierte Größen wie Z-Score-Abweichung von der persönlichen Baseline oder positive/negative Korrelation) muss strukturell eine der folgenden Formen haben:
+
+- **(a)** Eine Hue-Familie mit zwei Wahrnehmungsextremen (hell↔dunkel oder gesättigt↔entsättigt), **oder**
+- **(b)** Zwei Hues aus dem aktiven Theme-Accent-System, die **nicht** als Ampel (rot↔grün) lesbar sind. Konkret untersagt: das Paar (rot ≈ H 0°/360°, grün ≈ H 120°) sowie jedes Paar innerhalb von 20° um diese Hues.
+
+Die beiden Endpunkte einer divergenten Skala kommen aus den Theme-Tokens `--color-divergent-neg` und `--color-divergent-pos`. Theme-Autoren können beliebige konforme Paare wählen — die Regel ist hue-agnostisch und überlebt jedes spätere GUI-Re-Skinning, solange die strukturelle Vorgabe eingehalten wird.
+
 ### 1.5 Nicht-Ziele (wichtig!)
 
 - Kein medizinisches Diagnose-Tool (Disclaimer nötig)
@@ -406,7 +415,7 @@ flowchart LR
 | Auth Phase 1     | Native JWT (FastAPI)                                    | Authentik (M12+, SaaS)                                           |
 | Offline-Sync     | Dexie.js (IndexedDB), geplant M4                        | PouchDB                                                          |
 | Analytics Worker | pandas + scikit-learn                                   | R (kein Python-Ökosystem)                                        |
-| **Chart-Lib**    | **Custom SVG-Komponenten**                              | ECharts, LayerChart (D-002 entschieden)                          |
+| **Chart-Lib**    | **Custom SVG-Komponenten (Default) + LayerChart in `/trends` & `/insights` Deep-Views (ab M3.8)** | ECharts, Plotly, Vega-Lite (Budget-Verletzung); reines Custom-SVG für analytische Tief-Views (Wartungskostenrisiko) — siehe D-002 + [ADR-0035](adr/0035-temporal-correspondence-pattern.md) |
 | Error Tracking   | GlitchTip                                               | Sentry Cloud (Privacy)                                           |
 | Push             | UnifiedPush / FCM                                       | NTFY direkt                                                      |
 | Build            | pnpm + Vite                                             | npm (langsamer)                                                  |
@@ -1185,7 +1194,7 @@ insights, and deployment paths ship without photo storage complexity.
 | ID    | Frage                                                                                   | Status                                                                                                                                                                                                                            | ADR                                              |
 | ----- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | D-001 | SvelteKit oder Next.js als Web-Framework?                                               | ✅ Entschieden: SvelteKit                                                                                                                                                                                                         | [ADR-0001](adr/0001-sveltekit-vs-nextjs.md)      |
-| D-002 | Primäre Chart-Bibliothek: ECharts oder LayerChart?                                      | ✅ Entschieden: Custom-SVG-Komponenten (kein externes Framework) — JS-Budget < 150 KB gz eingehalten; Dark-Mode via Token-System; Color-Blind-Safe via Dash-Patterns + Point-Shapes. ECharts/LayerChart evaluiert aber verworfen. | —                                                |
+| D-002 | Primäre Chart-Bibliothek: ECharts oder LayerChart?                                      | ✅ Entschieden (initial): Custom-SVG-Komponenten · ⚠️ **Teilweise abgelöst durch [ADR-0035](adr/0035-temporal-correspondence-pattern.md) (2026-05-30):** Custom-SVG bleibt Default für Sparklines, M2-Kalender-Heatmap und einfache Primitive. Für analytische Tief-Views in `/trends` und `/insights` ist LayerChart zugelassen unter einem harten Marginal-Bundle-Budget von 80 KB gz. Begründung im ADR. | [ADR-0035](adr/0035-temporal-correspondence-pattern.md) |
 | D-003 | E2E-Verschlüsselung in v1 oder v2?                                                      | ✅ Entschieden: v2 opt-in                                                                                                                                                                                                         | —                                                |
 | D-004 | Lizenzmodell: AGPL oder Source-Available?                                               | 🔄 Offen                                                                                                                                                                                                                          | —                                                |
 | D-005 | Monetarisierung: Hybrid (Selfhost Free + Cloud Abo + Lifetime)?                         | 🔄 Offen                                                                                                                                                                                                                          | —                                                |

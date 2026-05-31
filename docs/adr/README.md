@@ -42,6 +42,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0032](0032-cycle-tracking-as-domain-extension.md)           | Cycle Tracking as Domain Extension                           | Accepted      | 2026-05-28 |
 | [ADR-0033](0033-sensitive-health-data-handling-cycle-signals.md) | Sensitive Health Data Handling for Cycle Signals             | Accepted      | 2026-05-28 |
 | [ADR-0034](0034-onboarding-cycle-tracking-toggle.md)             | Onboarding Cycle Tracking Toggle                             | Accepted      | 2026-05-28 |
+| [ADR-0035](0035-temporal-correspondence-pattern.md)              | Temporal Correspondence Pattern for Trend+Heatmap Alignment  | Accepted      | 2026-05-30 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -132,6 +133,10 @@ CorrelCore verwendet Violet als kanonische Primary-Farbfamilie fuer interaktive 
 ### ADR-0021 – Insight Maturity Phases as a First-Class Frontend Concept
 
 Insight maturity wird zum gemeinsamen Domain-Konzept von Backend und Frontend erhoben. Vier Phasen (`collecting` 1–6, `early_patterns` 7–13, `provisional` 14–29, `robust` 30+) bestimmen welche Inhalte in der UI erscheinen. Jede `/api/v1/insights/*`-Antwort enthält ein `insight_maturity`-Objekt mit `phase`, `phase_index`, `current_entries`, `next_phase_at`, `next_phase_label`, `entries_until_next` und `user_message_key`. Frontend-Komponenten (`InsightJourneyBanner`, `InsightMaturityBadge`, Phase-Milestone-Karten) und phasen-spezifische Sprache sind verpflichtend; das Frontend berechnet Phasen niemals selbst. Confidence-Visualisierung aus ADR-0018 wird durch das kombinierte Phase+Confidence-Modell teilweise abgelöst.
+
+### ADR-0035 – Temporal Correspondence Pattern for Trend+Heatmap Alignment
+
+Die Trend-Visualisierung in `/trends` (und später `/insights`) wird auf ein dreistufiges **Temporal Correspondence**-Muster ausgerichtet: gemeinsame `dates[]`-Achse, geteilter Timeline-Cursor, neutrale Event-Marker sowie ein optionaler **Unified-Strip**-Render-Modus, in dem Mood/Energy/Stress als divergente Strips über den Tag- und Symptom-Heatmap-Zeilen liegen. Für `/trends`- und `/insights`-Deep-Views wird **LayerChart** (MIT, Svelte 5 nativ, ~55–65 KB gz) als optionale Chart-Library eingeführt; das Default-Rendering (Sparklines, M2-Heatmap, Home) bleibt Custom-SVG. Damit wird D-002 **teilweise abgelöst** (harte Marginal-Bundle-Grenze 80 KB gz für die Lib in den genannten Routen; Adapter-Pattern unter `apps/web/src/lib/charts/adapter/`). Alle divergenten Skalen folgen einer **theme-agnostischen Farbregel**: entweder Single-Hue mit zwei Extremen oder zwei nicht-rot↔grün Hue-Paare aus dem Theme-Accent-System; verboten ist jedes Paar innerhalb 20° von Rot (H 0°/360°) und Grün (H 120°). Theme-Tokens (`--color-divergent-neg/pos/mid`, `--color-event-marker-*`) werden vom aktiven GUI-Theme befüllt — keine Hue-Härtekodierung in Komponenten. Implementierung sequenziell in M3.8 (Sprint 0–3, siehe `docs/M3_8_SPRINT_PLAN.md`).
 
 ### ADR-0025 – Symptom Analytics: Univariate, Co-Occurrence, Multivariate
 
