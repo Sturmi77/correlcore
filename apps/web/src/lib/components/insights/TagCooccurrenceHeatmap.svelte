@@ -224,11 +224,15 @@
   }
 
   .cooccurrence__col-label {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 6.5rem;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     text-align: left;
-    padding: var(--space-1) 0;
-    max-height: 6rem;
+    padding: var(--space-2) 0 var(--space-1);
+    max-height: 7rem;
   }
 
   .cooccurrence__row-label {
@@ -348,6 +352,40 @@
     .cooccurrence__empty {
       flex-direction: column;
       align-items: stretch;
+    }
+
+    .cooccurrence__grid {
+      grid-template-columns: minmax(7rem, 8rem) repeat(var(--tag-count), minmax(3.25rem, 3.75rem));
+      gap: 0.3rem;
+    }
+
+    .cooccurrence__corner,
+    .cooccurrence__row-label {
+      position: static;
+    }
+
+    .cooccurrence__col-label {
+      min-height: 3.25rem;
+      max-height: none;
+      writing-mode: horizontal-tb;
+      transform: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 0 var(--space-1);
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.05;
+    }
+
+    .cooccurrence__row-label {
+      padding-right: var(--space-1);
+      white-space: normal;
+      line-height: 1.05;
+    }
+
+    .cooccurrence__cell {
+      min-width: 3.25rem;
     }
   }
 </style>

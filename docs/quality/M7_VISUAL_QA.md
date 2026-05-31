@@ -33,6 +33,9 @@ Mobile follow-up artifacts:
 - `/opt/cursor/artifacts/m7_mobile_insights_light_390.png`
 - `/opt/cursor/artifacts/m7_mobile_insights_dark_390_v2.png`
 - `/opt/cursor/artifacts/m7_mobile_card_meta_bug.png`
+- `/opt/cursor/artifacts/m7_mobile_after_fixes_demo.webm`
+- `/opt/cursor/artifacts/m7_mobile_after_fixes_light.png`
+- `/opt/cursor/artifacts/m7_mobile_after_fixes_dark.png`
 
 ## Test Environment
 
@@ -123,43 +126,45 @@ bottom sheet all responded.
 
 ### Visual / UX
 
-- Rotated heatmap column labels in symptom/tag patterns and tag patterns appear
-  visually detached from their columns, especially in dense desktop layouts.
+- Remediated in follow-up: rotated heatmap column labels in symptom/tag patterns
+  and tag patterns were replaced with compact horizontal mobile labels and more
+  stable desktop spacing.
 - The symptom-history legend is too faint; color swatches are difficult to see in
   the recorded light-theme pass.
-- Changing tag co-occurrence range updates the active control, but mock data
-  stays unchanged. This is acceptable for static mock data but can look broken
-  during demos.
+- Remediated in follow-up: forced-visualization mock co-occurrence data now
+  differs across 30D/90D/1Y ranges.
 - Matrix empty state can look sparse when symptom blending is disabled because
   the matrix heading/export button remain while the matrix content is absent.
-- Mobile insight-card metadata renders the untranslated placeholders
-  `Based on {n} entries · {days} days`; the card currently passes only `n` into a
-  string that also expects `days`.
-- Mobile filter pills can wrap awkwardly into two rows when horizontal space is
-  tight.
-- Mobile M7 heatmaps are functional but cramped: rotated column headers overlap
-  or float away from their columns, and symptom/tag labels truncate aggressively.
-- The mobile shared-entry bottom sheet works, but its backdrop/safe-area spacing
-  can appear as an oversized grey block at the bottom of the viewport.
+- Remediated in follow-up: mobile insight-card metadata now passes both `n` and
+  `days`, defaulting to the 90-day insight context when no payload window exists.
+- Remediated in follow-up: mobile filter tabs now scroll horizontally instead of
+  wrapping into two disjoint rows.
+- Remediated in follow-up: mobile M7 heatmaps use compact labels and wider local
+  grid cells to reduce overlap and aggressive truncation.
+- Remediated in follow-up: the mobile shared-entry sheet now accounts for
+  safe-area bottom padding and constrains panel height with `dvh`.
 
-## Improvement Suggestions
+## Follow-up Fixes (2026-05-31)
 
-1. Add a dedicated M7 Playwright spec that mocks:
-   `/insights/tag-clusters`, `/insights/symptom-tag-cooccurrence`,
-   `/insights/tag-cooccurrence`, `/entries/stats/symptoms`, and M7 insight cards
-   in `/insights/latest`.
-2. Add component tests for `TagGroupsSection`, `SymptomAnalyticsSection`, and
+| Finding                    | Fix                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| Card metadata placeholders | `InsightCard` passes `days` into `insights.card.sample_meta`, falling back to 90 days.      |
+| Mobile filter wrapping     | `TabBar` uses no-wrap horizontal scrolling under 420 px.                                    |
+| Heatmap label overlap      | Tag and symptom co-occurrence grids use compact mobile labels and clearer cell sizing.      |
+| Bottom sheet safe area     | Co-occurrence entry sheet adds safe-area-aware panel padding and mobile height constraints. |
+| Static demo range data     | Forced M7 mock co-occurrence data differs across 30D, 90D, and 1Y.                          |
+| Regression coverage        | Added unit coverage for metadata/range mocks and an M7 mobile Playwright touch-flow smoke.  |
+
+Post-fix manual spot check passed for card metadata, filter-tab layout, narrow
+matrix alignment, and shared-entry sheet open/close behavior.
+
+## Remaining Improvement Suggestions
+
+1. Add component tests for `TagGroupsSection`, `SymptomAnalyticsSection`, and
    `SymptomCooccurrenceHeatmap`.
-3. Add deterministic M7 demo seed tooling for 90+ entries so full-stack GUI QA
+2. Add deterministic M7 demo seed tooling for 90+ entries so full-stack GUI QA
    can run without developer mock visualizations.
-4. Improve heatmap header spacing and legend contrast for symptom/tag and tag
-   co-occurrence matrices.
-5. Make mock range data visibly differ by range or show a small "demo data"
-   note when forced visualizations are enabled.
-6. Replace the sparse matrix empty gap with an explicit empty state when filters
+3. Improve the symptom-history legend contrast; the follow-up fixed
+   co-occurrence matrices but did not change the shared history heatmap legend.
+4. Replace the sparse matrix empty gap with an explicit empty state when filters
    or symptom blending leave no matrix rows.
-7. Fix insight-card metadata interpolation by passing the expected `days` value
-   or changing the locale string to match available data.
-8. Add a mobile-specific layout treatment for insight feed tabs and dense
-   co-occurrence matrices, such as horizontal tab scrolling and clearer
-   small-screen header alignment.

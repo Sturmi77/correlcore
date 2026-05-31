@@ -50,9 +50,9 @@
   import { mockUserPreferences } from '$lib/dev/mockEntries';
   import {
     mockSymptomHeatmap,
-    mockSymptomTagCooccurrence,
+    mockSymptomTagCooccurrenceByRange,
     mockTagClusters,
-    mockTagCooccurrence,
+    mockTagCooccurrenceByRange,
   } from '$lib/dev/mockTrends';
   import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
   import { devForceVisualizations } from '$lib/stores/devMode';
@@ -98,7 +98,7 @@
     cooccurrenceLoading = true;
     try {
       if ($devForceVisualizations) {
-        cooccurrence = mockTagCooccurrence;
+        cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
         return;
       }
       cooccurrence = await fetchTagCooccurrence({ range: cooccurrenceRange, min_count: 2 });
@@ -130,7 +130,7 @@
     symptomCooccurrenceLoading = true;
     try {
       if ($devForceVisualizations) {
-        symptomCooccurrence = mockSymptomTagCooccurrence;
+        symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
         return;
       }
       symptomCooccurrence = await fetchSymptomTagCooccurrence({
@@ -216,8 +216,9 @@
         insightMaturity = mockInsightMaturity;
         userPreferences = mockUserPreferences;
         symptomHeatmap = mockSymptomHeatmap;
-        symptomCooccurrence = mockSymptomTagCooccurrence;
+        symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
         tagClusters = mockTagClusters;
+        cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
         dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
         entryCount = dayEntryDates.length;
         inactiveTagIds = [];

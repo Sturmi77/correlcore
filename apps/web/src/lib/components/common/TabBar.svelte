@@ -83,8 +83,23 @@
   }
 
   @media (max-width: 420px) {
+    .tab-bar {
+      flex-wrap: nowrap;
+      margin-inline: calc(var(--space-2) * -1);
+      padding-inline: var(--space-2);
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      scroll-padding-inline: var(--space-2);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-bar::-webkit-scrollbar {
+      display: none;
+    }
+
     .tab-bar__item {
-      flex: 1 1 calc(50% - var(--space-1));
+      flex: 0 0 auto;
       padding-inline: var(--space-2);
     }
   }

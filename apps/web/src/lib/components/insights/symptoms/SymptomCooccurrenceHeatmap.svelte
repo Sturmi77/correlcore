@@ -162,10 +162,14 @@
   }
 
   .symptom-cooccurrence__col-label {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 6.5rem;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    padding: var(--space-1) 0;
-    max-height: 6rem;
+    padding: var(--space-2) 0 var(--space-1);
+    max-height: 7rem;
   }
 
   .symptom-cooccurrence__row-label {
@@ -210,6 +214,42 @@
 
   .symptom-cooccurrence__cell--high-negative {
     background: color-mix(in srgb, var(--color-primary) 52%, var(--color-surface-dynamic));
+  }
+
+  @media (max-width: 520px) {
+    .symptom-cooccurrence__grid {
+      grid-template-columns: minmax(7rem, 8rem) repeat(var(--tag-count), minmax(3.25rem, 3.75rem));
+      gap: 0.3rem;
+    }
+
+    .symptom-cooccurrence__corner,
+    .symptom-cooccurrence__row-label {
+      position: static;
+    }
+
+    .symptom-cooccurrence__col-label {
+      min-height: 3.25rem;
+      max-height: none;
+      writing-mode: horizontal-tb;
+      transform: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 0 var(--space-1);
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.05;
+    }
+
+    .symptom-cooccurrence__row-label {
+      padding-right: var(--space-1);
+      white-space: normal;
+      line-height: 1.05;
+    }
+
+    .symptom-cooccurrence__cell {
+      min-width: 3.25rem;
+    }
   }
 
   .symptom-cooccurrence__skeleton {
