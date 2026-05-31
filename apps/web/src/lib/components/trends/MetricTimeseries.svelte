@@ -14,7 +14,7 @@
     type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
-  import { timelineCursor } from '$lib/stores/timelineCursor';
+  import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
 
@@ -182,21 +182,35 @@
     </div>
   {:else}
     <!--
-      Sprint 1 (ADR-0035) a11y contract: SVG widgets that manage their
-      own keyboard focus need an interactive ARIA role, but
-      eslint-plugin-svelte does not accept role='application' on a bare
-      <svg> (svg is treated as a non-interactive element). The
-      interactive contract therefore lives on a wrapper <div> with a
-      stable role='application'; the <svg> itself stays presentational
-      (role='img'). getBoundingClientRect resolves against the wrapper,
-      which spans the same box, so the cursor math is unchanged.
+      Sprint 1 (ADR-0035) a11y wrapper.
+
+      The SVG underneath is purely presentational (role='img'). The
+      interactive contract lives on this <div> instead, because Svelte
+      v5's a11y compiler classifies <svg> as non-interactive.
+
+      We use role='slider' rather than role='application' because:
+        - 'slider' is in aria-query's interactive-roles list (accepted
+          by both eslint-plugin-svelte and the Svelte v5 compiler),
+          while 'application' is not on that list and triggers
+          a11y_no_noninteractive_tabindex.
+        - 'slider' matches the actual interaction model: the cursor
+          travels along a date axis under keyboard control with
+          aria-valuemin/max/now/text exposed for screen readers.
+
+      getBoundingClientRect() resolves against this wrapper, which
+      spans the same box as the SVG, so the pointer math is unchanged.
     -->
     <div
       class="timeseries__interactive"
       class:timeseries__interactive--active={enableCursor && aligned}
-      role="application"
+      role="slider"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.timeseries.aria')}
+      aria-orientation="horizontal"
+      aria-valuemin={0}
+      aria-valuemax={Math.max(0, axisDates.length - 1)}
+      aria-valuenow={Math.max(0, axisDates.indexOf($timelineCursorDate ?? ''))}
+      aria-valuetext={$timelineCursorDate ?? undefined}
       on:pointermove={handlePointerMove}
       on:pointerleave={handlePointerLeave}
       on:focus={() => enableCursor && timelineCursor.focus(axisDates[axisDates.length - 1] ?? null)}

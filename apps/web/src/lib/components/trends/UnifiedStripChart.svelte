@@ -26,7 +26,7 @@
     type MetricKey,
   } from '$lib/utils/charts';
   import { displayTimeseriesValue } from '$lib/utils/metrics';
-  import { timelineCursor } from '$lib/stores/timelineCursor';
+  import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import { StripCellMapper } from '$lib/charts/adapter';
   import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
@@ -233,19 +233,24 @@
     <p class="strip__empty">{$_('trends.empty')}</p>
   {:else}
     <!--
-      Sprint 2 (ADR-0035) a11y contract: keyboard + pointer interaction
-      lives on a wrapper <div role='application'>, never directly on the
-      <svg>, because eslint-plugin-svelte treats <svg> as a
-      non-interactive element and rejects role='application' + tabindex
-      directly on it.
+      Sprint 2 (ADR-0035) a11y wrapper. See MetricTimeseries.svelte for
+      the full rationale; in short: keyboard + pointer interaction lives
+      on this wrapper <div> with role='slider' (an interactive role in
+      aria-query's allow-list), never on the underlying <svg> which
+      Svelte v5's compiler treats as non-interactive.
     -->
     <div
       class="strip__interactive"
       class:strip__interactive--active={enableCursor}
       bind:this={hostEl}
-      role="application"
+      role="slider"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.strip.aria')}
+      aria-orientation="horizontal"
+      aria-valuemin={0}
+      aria-valuemax={Math.max(0, axisDates.length - 1)}
+      aria-valuenow={Math.max(0, axisDates.indexOf($timelineCursorDate ?? ''))}
+      aria-valuetext={$timelineCursorDate ?? undefined}
       on:pointermove={handlePointerMove}
       on:pointerleave={handlePointerLeave}
       on:keydown={handleKeydown}
