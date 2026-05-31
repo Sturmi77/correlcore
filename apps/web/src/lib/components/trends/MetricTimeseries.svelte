@@ -102,9 +102,9 @@
     timelineCursor.setAxis(axisDates);
   }
 
-  function nearestDateForX(clientX: number, svgEl: SVGSVGElement): string | null {
+  function nearestDateForX(clientX: number, hostEl: Element): string | null {
     if (!aligned || axisDates.length === 0) return null;
-    const rect = svgEl.getBoundingClientRect();
+    const rect = hostEl.getBoundingClientRect();
     const local = ((clientX - rect.left) / rect.width) * width;
     let bestIndex = 0;
     let bestDelta = Infinity;
@@ -121,7 +121,7 @@
 
   function handlePointerMove(event: PointerEvent) {
     if (!enableCursor) return;
-    const target = event.currentTarget as SVGSVGElement;
+    const target = event.currentTarget as Element;
     const date = nearestDateForX(event.clientX, target);
     timelineCursor.hover(date);
   }
@@ -181,14 +181,19 @@
       <span></span>
     </div>
   {:else}
-    <svg
-      class="timeseries__chart"
-      class:timeseries__chart--aligned={aligned}
-      class:timeseries__chart--interactive={enableCursor && aligned}
-      style={aligned ? `--timeseries-chart-width: ${width}px` : ''}
-      {width}
-      {height}
-      viewBox={`0 0 ${width} ${height}`}
+    <!--
+      Sprint 1 (ADR-0035) a11y contract: SVG widgets that manage their
+      own keyboard focus need an interactive ARIA role, but
+      eslint-plugin-svelte does not accept role='application' on a bare
+      <svg> (svg is treated as a non-interactive element). The
+      interactive contract therefore lives on a wrapper <div> with a
+      stable role='application'; the <svg> itself stays presentational
+      (role='img'). getBoundingClientRect resolves against the wrapper,
+      which spans the same box, so the cursor math is unchanged.
+    -->
+    <div
+      class="timeseries__interactive"
+      class:timeseries__interactive--active={enableCursor && aligned}
       role="application"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.timeseries.aria')}
@@ -197,6 +202,17 @@
       on:focus={() => enableCursor && timelineCursor.focus(axisDates[axisDates.length - 1] ?? null)}
       on:blur={() => enableCursor && timelineCursor.hover(null)}
       on:keydown={handleKeyDown}
+    >
+    <svg
+      class="timeseries__chart"
+      class:timeseries__chart--aligned={aligned}
+      class:timeseries__chart--interactive={enableCursor && aligned}
+      style={aligned ? `--timeseries-chart-width: ${width}px` : ''}
+      {width}
+      {height}
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label={$_('trends.timeseries.aria')}
     >
       {#if enableCursor && aligned && markers.length > 0}
         <EventMarkerLayer
@@ -291,6 +307,7 @@
         {/if}
       {/each}
     </svg>
+    </div>
   {/if}
 
   {#if !loading && !hasData}
@@ -362,10 +379,21 @@
 
   .timeseries__chart--interactive {
     cursor: crosshair;
-    outline: none;
   }
 
-  .timeseries__chart--interactive:focus-visible {
+  /*
+   * Sprint 1 (ADR-0035) a11y wrapper. The SVG above is purely
+   * presentational; this <div role="application"> carries keyboard
+   * focus and pointer interactions, and provides the bounding box that
+   * pointer math reads via getBoundingClientRect().
+   */
+  .timeseries__interactive {
+    display: block;
+    outline: none;
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .timeseries__interactive--active:focus-visible {
     box-shadow: 0 0 0 2px var(--color-cursor-halo);
   }
 

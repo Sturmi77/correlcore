@@ -158,11 +158,11 @@
     timelineCursor.setAxis(axisDates);
   }
 
-  let svgEl: SVGSVGElement | null = null;
+  let hostEl: HTMLDivElement | null = null;
 
   function nearestDateForX(clientX: number): string | null {
-    if (!svgEl || axisDates.length === 0) return null;
-    const rect = svgEl.getBoundingClientRect();
+    if (!hostEl || axisDates.length === 0) return null;
+    const rect = hostEl.getBoundingClientRect();
     const local = ((clientX - rect.left) / rect.width) * width;
     let bestIndex = 0;
     let bestDelta = Infinity;
@@ -232,16 +232,29 @@
   {:else if !hasData}
     <p class="strip__empty">{$_('trends.empty')}</p>
   {:else}
-    <svg
-      bind:this={svgEl}
-      class="strip__svg"
-      viewBox={`0 0 ${width} ${height}`}
+    <!--
+      Sprint 2 (ADR-0035) a11y contract: keyboard + pointer interaction
+      lives on a wrapper <div role='application'>, never directly on the
+      <svg>, because eslint-plugin-svelte treats <svg> as a
+      non-interactive element and rejects role='application' + tabindex
+      directly on it.
+    -->
+    <div
+      class="strip__interactive"
+      class:strip__interactive--active={enableCursor}
+      bind:this={hostEl}
       role="application"
-      aria-label={$_('trends.strip.aria')}
       tabindex={enableCursor ? 0 : -1}
+      aria-label={$_('trends.strip.aria')}
       on:pointermove={handlePointerMove}
       on:pointerleave={handlePointerLeave}
       on:keydown={handleKeydown}
+    >
+    <svg
+      class="strip__svg"
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-hidden="true"
     >
       {#each rows as row (row.key)}
         <g class="strip__row" data-metric={row.key}>
@@ -307,6 +320,7 @@
         />
       {/if}
     </svg>
+    </div>
   {/if}
 </figure>
 
@@ -321,12 +335,21 @@
     width: 100%;
     height: auto;
     display: block;
-    outline: none;
   }
 
-  .strip__svg:focus-visible {
-    box-shadow: 0 0 0 2px var(--color-cursor-halo);
+  /*
+   * Sprint 2 (ADR-0035) a11y wrapper. role='application' lives here,
+   * not on the <svg>. Block-level so getBoundingClientRect spans the
+   * same box as the chart for pointer math.
+   */
+  .strip__interactive {
+    display: block;
+    outline: none;
     border-radius: var(--radius-md, 8px);
+  }
+
+  .strip__interactive--active:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-cursor-halo);
   }
 
   .strip__track {
