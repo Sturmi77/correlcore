@@ -418,6 +418,12 @@
     gap: var(--space-2);
   }
 
+  .compare-heatmap__legend-cell {
+    min-width: 0.9rem;
+    min-height: 0.9rem;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text-muted) 32%, transparent);
+  }
+
   .compare-heatmap__empty {
     padding: var(--space-4);
     border: 1px dashed var(--color-border);

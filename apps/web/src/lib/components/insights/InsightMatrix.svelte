@@ -131,14 +131,11 @@
       <h2>{$_('insights.matrix.heading')}</h2>
       <p>{$_('insights.matrix.subtitle')}</p>
     </div>
-    <button
-      class="btn btn-sm variant-soft-primary"
-      type="button"
-      on:click={exportPng}
-      disabled={!rows.length}
-    >
-      {$_('insights.matrix.export')}
-    </button>
+    {#if rows.length}
+      <button class="btn btn-sm variant-soft-primary" type="button" on:click={exportPng}>
+        {$_('insights.matrix.export')}
+      </button>
+    {/if}
   </header>
 
   {#if rows.length}

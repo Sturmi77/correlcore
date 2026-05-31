@@ -129,12 +129,12 @@ bottom sheet all responded.
 - Remediated in follow-up: rotated heatmap column labels in symptom/tag patterns
   and tag patterns were replaced with compact horizontal mobile labels and more
   stable desktop spacing.
-- The symptom-history legend is too faint; color swatches are difficult to see in
-  the recorded light-theme pass.
+- Remediated in follow-up: symptom-history legend swatches received stronger
+  minimum sizing and an inset contrast outline.
 - Remediated in follow-up: forced-visualization mock co-occurrence data now
   differs across 30D/90D/1Y ranges.
-- Matrix empty state can look sparse when symptom blending is disabled because
-  the matrix heading/export button remain while the matrix content is absent.
+- Remediated in follow-up: matrix export controls are hidden when no matrix rows
+  are available, leaving the explicit empty state.
 - Remediated in follow-up: mobile insight-card metadata now passes both `n` and
   `days`, defaulting to the 90-day insight context when no payload window exists.
 - Remediated in follow-up: mobile filter tabs now scroll horizontally instead of
@@ -153,6 +153,8 @@ bottom sheet all responded.
 | Heatmap label overlap      | Tag and symptom co-occurrence grids use compact mobile labels and clearer cell sizing.      |
 | Bottom sheet safe area     | Co-occurrence entry sheet adds safe-area-aware panel padding and mobile height constraints. |
 | Static demo range data     | Forced M7 mock co-occurrence data differs across 30D, 90D, and 1Y.                          |
+| Symptom legend contrast    | Shared comparison heatmap legend cells have stronger sizing and inset contrast.             |
+| Matrix empty state         | `InsightMatrix` hides export controls when no rows are present.                             |
 | Regression coverage        | Added unit coverage for metadata/range mocks and an M7 mobile Playwright touch-flow smoke.  |
 
 Post-fix manual spot check passed for card metadata, filter-tab layout, narrow
@@ -164,7 +166,3 @@ matrix alignment, and shared-entry sheet open/close behavior.
    `SymptomCooccurrenceHeatmap`.
 2. Add deterministic M7 demo seed tooling for 90+ entries so full-stack GUI QA
    can run without developer mock visualizations.
-3. Improve the symptom-history legend contrast; the follow-up fixed
-   co-occurrence matrices but did not change the shared history heatmap legend.
-4. Replace the sparse matrix empty gap with an explicit empty state when filters
-   or symptom blending leave no matrix rows.
