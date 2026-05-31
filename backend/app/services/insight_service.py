@@ -150,7 +150,7 @@ async def _tag_slugs_for_legacy_insights(
     if not tag_ids:
         return {}
     result = await db.execute(select(Tag.id, Tag.slug).where(Tag.id.in_(tag_ids)))
-    return dict(result.all())
+    return {row[0]: row[1] for row in result.all()}
 
 
 async def list_latest_insights(
