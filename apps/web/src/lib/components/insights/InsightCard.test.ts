@@ -121,6 +121,29 @@ describe('InsightCard', () => {
     expect(badge.textContent).toContain('maturity.badge.provisional');
   });
 
+  it('does not show explore-events action unless the parent opts in', () => {
+    render(InsightCard, { props: { insight: INSIGHT, maturity: MATURITY } });
+
+    expect(screen.queryByTestId('insight-card-explore-events')).toBeNull();
+  });
+
+  it('dispatches exploreEvents when the wired affordance is enabled', async () => {
+    const handler = vi.fn();
+    render(InsightCard, {
+      props: {
+        insight: INSIGHT,
+        maturity: MATURITY,
+        enableExploreEvents: true,
+      },
+      events: { exploreEvents: handler },
+    });
+
+    await fireEvent.click(screen.getByTestId('insight-card-explore-events'));
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(handler.mock.calls[0]?.[0].detail).toEqual({ id: INSIGHT.id });
+  });
+
   it('renders disclaimer link', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     const link = screen.getByTestId('insight-card-disclaimer');

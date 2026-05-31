@@ -15,6 +15,7 @@
    * retry        Dispatched when the user clicks the error-state retry button
    * dismiss      Dispatched when the user clicks the dismiss button
    * exportCsv    Dispatched when the user clicks "Export CSV" (stub, #169)
+   * exploreEvents Dispatched from an explicitly enabled, parent-wired affordance
    */
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -28,6 +29,7 @@
   export let loading = false;
   export let error = '';
   export let inactiveTagIds: readonly string[] = [];
+  export let enableExploreEvents = false;
 
   const dispatch = createEventDispatcher<{
     retry: void;
@@ -36,9 +38,9 @@
     exploreEvents: { id: string };
   }>();
 
-  // Sprint 3 (ADR-0035 §6): only surface the "Explore aligned events"
-  // affordance when the insight has reached the provisional phase.
-  $: canExploreEvents = isSmallMultiplesUnlocked(maturity?.phase ?? null);
+  // Sprint 3 (ADR-0035 §6): only surface the action when a parent has wired
+  // the sheet and the insight has reached the provisional phase.
+  $: canExploreEvents = enableExploreEvents && isSmallMultiplesUnlocked(maturity?.phase ?? null);
 
   let expanded = false;
 
