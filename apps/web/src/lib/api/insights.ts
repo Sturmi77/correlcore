@@ -83,6 +83,23 @@ export interface TagCooccurrenceQuery {
   min_count?: number;
 }
 
+export interface TagClusterGroup {
+  cluster_id: number;
+  label: string;
+  tags: TagCooccurrenceTagRef[];
+  strength: number;
+}
+
+export interface TagClustersResponse {
+  status: 'ok' | 'insufficient_data';
+  entry_count: number;
+  active_tag_count: number;
+  window_days: number;
+  k: number | null;
+  reason: string | null;
+  clusters: TagClusterGroup[];
+}
+
 export interface SymptomTagCooccurrenceSymptomRef {
   symptom_id: string;
   slug: string;
@@ -142,6 +159,11 @@ export async function fetchTagCooccurrence(
   return api.get<TagCooccurrenceResponse>(
     qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence'
   );
+}
+
+/** GET /insights/tag-clusters - M7 tag groups that often appear together. */
+export async function fetchTagClusters(): Promise<TagClustersResponse> {
+  return api.get<TagClustersResponse>('/insights/tag-clusters');
 }
 
 /** GET /insights/symptom-tag-cooccurrence - symptom x tag lift cells for M7. */

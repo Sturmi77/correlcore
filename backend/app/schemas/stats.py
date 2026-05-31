@@ -133,3 +133,20 @@ class SymptomTagCooccurrenceResponse(BaseModel):
     end_date: date_type
     min_count: int = Field(ge=1)
     cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
+
+
+class TagClusterGroup(BaseModel):
+    cluster_id: int = Field(ge=1)
+    label: str
+    tags: list[TagCooccurrenceTagRef] = Field(default_factory=list)
+    strength: float = Field(ge=0, le=1)
+
+
+class TagClustersResponse(BaseModel):
+    status: Literal["ok", "insufficient_data"]
+    entry_count: int = Field(ge=0)
+    active_tag_count: int = Field(ge=0)
+    window_days: int = Field(ge=1)
+    k: int | None = Field(default=None, ge=1)
+    reason: str | None = None
+    clusters: list[TagClusterGroup] = Field(default_factory=list)

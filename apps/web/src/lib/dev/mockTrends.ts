@@ -1,5 +1,5 @@
 import type { HabitStatsResponse } from '$lib/api/habits';
-import type { SymptomTagCooccurrenceResponse } from '$lib/api/insights';
+import type { SymptomTagCooccurrenceResponse, TagClustersResponse } from '$lib/api/insights';
 import type {
   EntryStreakResponse,
   SymptomHeatmapResponse,
@@ -312,6 +312,54 @@ export const mockSymptomTagCooccurrence: SymptomTagCooccurrenceResponse = {
       total_count: 42,
       p_value_corrected: 0.08,
       confounder: null,
+    },
+  ],
+};
+
+export const mockTagClusters: TagClustersResponse = {
+  status: 'ok',
+  entry_count: 96,
+  active_tag_count: 6,
+  window_days: 90,
+  k: 3,
+  reason: null,
+  clusters: [
+    {
+      cluster_id: 1,
+      label: 'Tag group 1',
+      strength: 0.72,
+      tags: [
+        {
+          tag_id: 'mock-tag-focus',
+          slug: 'focus',
+          name: 'Focus work',
+          category: 'work',
+          color: null,
+        },
+        { tag_id: 'mock-tag-read', slug: 'read', name: 'Read', category: 'leisure', color: null },
+      ],
+    },
+    {
+      cluster_id: 2,
+      label: 'Tag group 2',
+      strength: 0.64,
+      tags: [
+        { tag_id: 'mock-tag-walk', slug: 'walk', name: 'Walk', category: 'sport', color: null },
+      ],
+    },
+    {
+      cluster_id: 3,
+      label: 'Tag group 3',
+      strength: 0.58,
+      tags: [
+        {
+          tag_id: 'mock-tag-coffee',
+          slug: 'coffee',
+          name: 'Coffee',
+          category: 'consumption',
+          color: null,
+        },
+      ],
     },
   ],
 };

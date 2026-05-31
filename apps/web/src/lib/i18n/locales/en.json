@@ -780,6 +780,14 @@
       "cooccurrence_count_legend": "Shared entry counts until enough data is available for lift.",
       "cooccurrence_empty": "No stable symptom-tag patterns in this range yet."
     },
+    "tag_groups": {
+      "heading": "Tag groups",
+      "subtitle": "Tags that often appear together",
+      "loading": "Loading tag groups",
+      "empty": "No tag groups available yet. Keep logging entries with tags.",
+      "insufficient": "{entries}/90 entries and {tags}/5 active tags are available for tag groups.",
+      "strength": "{value}% shared pattern"
+    },
     "confidence_label": {
       "early_signal": "Early signal",
       "emerging_pattern": "Emerging pattern",

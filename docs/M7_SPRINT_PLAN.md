@@ -64,10 +64,10 @@ Goal: implement Symptom x Tag co-occurrence insights and visualization payloads.
 
 Goal: group signals that often appear together.
 
-- [ ] Enable pgvector in Alembic.
-- [ ] Add `tag_vectors` storage and nightly recomputation.
-- [ ] Add `GET /api/v1/insights/tag-clusters`.
-- [ ] Use combined symptom+tag Jaccard distance for symptom-aware clusters.
+- [x] Enable pgvector in Alembic.
+- [x] Add `tag_vectors` storage and nightly recomputation.
+- [x] Add `GET /api/v1/insights/tag-clusters`.
+- [ ] Use combined symptom+tag Jaccard distance for symptom-aware clusters (deferred after tag-only Sprint 3 slice).
 
 ## Sprint 4 - Optional LLM & Digest
 

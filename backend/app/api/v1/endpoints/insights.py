@@ -12,6 +12,7 @@ from app.models.user import User
 from app.schemas.insight import InsightListResponse, InsightResponse
 from app.schemas.stats import (
     SymptomTagCooccurrenceResponse,
+    TagClustersResponse,
     TagCooccurrenceRange,
     TagCooccurrenceResponse,
 )
@@ -25,6 +26,7 @@ from app.services.insight_service import (
     list_latest_insights,
 )
 from app.services.stats_service import get_symptom_tag_cooccurrence, get_tag_cooccurrence
+from app.services.tag_cluster_service import get_tag_clusters
 
 router = APIRouter()
 
@@ -120,3 +122,17 @@ async def get_symptom_tag_cooccurrence_endpoint(
         range_=range,
         min_count=min_count,
     )
+
+
+@router.get(
+    "/tag-clusters",
+    response_model=TagClustersResponse,
+    summary="Tag groups that often appear together",
+)
+@limiter.limit("120/minute")
+async def get_tag_clusters_endpoint(
+    request: Request,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> TagClustersResponse:
+    return await get_tag_clusters(db, user_id=user.id)

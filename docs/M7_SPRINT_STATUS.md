@@ -4,9 +4,9 @@ Last updated: 2026-05-31
 
 Tracking document for [`docs/M7_SPRINT_PLAN.md`](M7_SPRINT_PLAN.md).
 
-**Milestone completeness:** M7 is opened. Sprint 1 has a backend-only
-implementation slices for Lasso/lag analysis and Symptom Analytics Level 1/2;
-clustering, Ollama, and digest remain pending.
+**Milestone completeness:** M7 is opened. Sprints 1-3 have implementation slices
+for Lasso/lag analysis, Symptom Analytics Level 1/2, and tag clustering;
+Ollama and digest remain pending.
 
 ## Overview
 
@@ -15,7 +15,7 @@ clustering, Ollama, and digest remain pending.
 | 0      | Milestone Opening    | Done        |
 | 1      | Lasso & Lag          | In review   |
 | 2      | Symptom Analytics L2 | In review   |
-| 3      | Clustering           | Pending     |
+| 3      | Clustering           | In review   |
 | 4      | Optional LLM/Digest  | Pending     |
 | 5      | Closeout             | Pending     |
 
@@ -48,16 +48,21 @@ clustering, Ollama, and digest remain pending.
 - [x] Added symptom-specific feed titles and symptom-tag heatmap UI.
 - [x] Added backend tests for frequency guards, FDR metadata, lift surfacing,
   service output, and endpoint wiring.
-- [ ] Rendered browser QA completed.
+- [x] Rendered browser QA completed.
+- [ ] PR review completed.
+
+## Sprint 3 - In Review
+
+- [x] Added pgvector-backed `tag_vectors` migration with RLS policies.
+- [x] Added 90-day tag co-occurrence vectors and k-means clustering.
+- [x] Added nightly tag-vector recompute hook in the analytics worker.
+- [x] Added `GET /api/v1/insights/tag-clusters` with insufficient-data guards.
+- [x] Added frontend Tag Groups section, API client, mocks, and i18n.
+- [x] Rendered browser QA completed for the Tag Groups section in mock/dev mode.
+- [ ] Verify pgvector availability in the selfhost Docker target.
 - [ ] PR review completed.
 
 ## Remaining Work
-
-### Sprint 3
-
-- [ ] Verify pgvector availability in the selfhost Docker target.
-- [ ] Add `tag_vectors` storage and nightly recomputation.
-- [ ] Add tag cluster endpoint and frontend "Tag Groups" section.
 
 ### Sprint 4
 
@@ -69,5 +74,5 @@ clustering, Ollama, and digest remain pending.
 
 - GitHub milestone and issue hygiene require write access outside this read-only
   agent `gh` environment.
-- ADR-0025 is still Proposed and should be accepted before Sprint 2 changes.
+- ADR-0025 is still Proposed and should be accepted before M7 closeout.
 - M4/M5 closeout remains separate from the M7 implementation branch.

@@ -28,6 +28,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   FDR and weekday confounder metadata, `GET /api/v1/insights/symptom-tag-cooccurrence`,
   and a symptom-tag co-occurrence heatmap in `/insights`.
 
+- **M7 Sprint 3 Tag Clustering.** Added pgvector-backed `tag_vectors`, nightly
+  tag-vector recomputation, `GET /api/v1/insights/tag-clusters`, k-means tag
+  groups with insufficient-data guards, and a `/insights` Tag Groups section.
+
 - **M5.1 Tag co-occurrence heatmap.** `GET /api/v1/insights/tag-cooccurrence`
   plus Insights **Patterns** section with `TagCooccurrenceHeatmap` and filtered
   entry sheet. Closeout: [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).

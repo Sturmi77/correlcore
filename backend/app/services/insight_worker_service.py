@@ -15,6 +15,7 @@ from app.models.user import User
 from app.models.user_encryption_key import UserEncryptionKey
 from app.models.user_preference import UserPreference
 from app.services.insight_engine import generate_and_store_insights
+from app.services.tag_cluster_service import recompute_tag_vectors_and_clusters
 
 
 @dataclass(frozen=True)
@@ -76,6 +77,7 @@ async def generate_insights_for_job(
     try:
         await bind_rls_current_user(db, job.user_id)
         insights = await generate_and_store_insights(db, user_id=job.user_id, as_of=as_of)
+        await recompute_tag_vectors_and_clusters(db, user_id=job.user_id, as_of=as_of)
     finally:
         reset_current_user_dek(token)
     return len(insights)

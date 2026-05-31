@@ -872,6 +872,7 @@ GET    /api/v1/insights              Alle Insights des Users
 GET    /api/v1/insights/latest       Neuester Insight je Metrik
 GET    /api/v1/insights/tag-cooccurrence   Tag-Paar-Co-Occurrence (M5.1)
 GET    /api/v1/insights/symptom-tag-cooccurrence   Symptom×Tag-Lift-Matrix (M7)
+GET    /api/v1/insights/tag-clusters   Tag-Gruppen aus M7-Clustering
 POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 ```
 
@@ -1212,3 +1213,8 @@ Aktueller Ist-Stand ist das FastAPI-Fehlerformat. Beispiel:
 
 RFC 7807 Problem Details bleiben ein mögliches API-Hardening für spätere
 Milestones.
+
+`GET /api/v1/insights/tag-clusters` (M7) liefert entweder `status: "insufficient_data"`
+mit Entry-/Tag-Zaehlern oder `status: "ok"` mit Clustern unter der neutralen
+Semantik "Tags that often appear together". Der Guard ist <90 Tracking-Tage
+oder <5 aktive Tags im 90-Tage-Fenster.

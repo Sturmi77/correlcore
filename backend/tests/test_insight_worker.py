@@ -96,6 +96,10 @@ async def test_generate_insights_for_job_binds_and_resets_user_dek() -> None:
             "app.services.insight_worker_service.generate_and_store_insights",
             new=AsyncMock(return_value=[object(), object()]),
         ) as generate,
+        patch(
+            "app.services.insight_worker_service.recompute_tag_vectors_and_clusters",
+            new=AsyncMock(),
+        ) as recompute,
     ):
         count = await generate_insights_for_job(
             db,
@@ -108,6 +112,7 @@ async def test_generate_insights_for_job_binds_and_resets_user_dek() -> None:
     bind.assert_called_once_with(job.user_id, b"dek")
     bind_rls.assert_awaited_once_with(db, job.user_id)
     generate.assert_awaited_once()
+    recompute.assert_awaited_once()
     reset.assert_called_once_with("token")
 
 
@@ -124,6 +129,10 @@ async def test_generate_insights_for_job_resets_dek_on_engine_failure() -> None:
         patch(
             "app.services.insight_worker_service.generate_and_store_insights",
             new=AsyncMock(side_effect=RuntimeError("boom")),
+        ),
+        patch(
+            "app.services.insight_worker_service.recompute_tag_vectors_and_clusters",
+            new=AsyncMock(),
         ),
         pytest.raises(RuntimeError),
     ):
