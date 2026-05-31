@@ -239,10 +239,22 @@
       aria-query's allow-list), never on the underlying <svg> which
       Svelte v5's compiler treats as non-interactive.
     -->
+    <!--
+      Sprint 2 (ADR-0035) — pixel-precise alignment with the
+      ComparisonHeatmap grid. The heatmap is a CSS grid with
+      min-width: max-content and fixed-pixel columns
+      (labelWidth + n * dayWidth + gaps). For the strip rows to line
+      up with the heatmap columns inside the shared horizontal scroller,
+      the SVG cannot use width: 100% (that would stretch it to the
+      container width, not the data width). We pin its width to the
+      exact same pixel value `width` that dailyAxisChartWidth() computes
+      for the heatmap, via a CSS variable on the wrapper.
+    -->
     <div
       class="strip__interactive"
       class:strip__interactive--active={enableCursor}
       bind:this={hostEl}
+      style={`--strip-chart-width: ${width}px`}
       role="slider"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.strip.aria')}
@@ -257,7 +269,10 @@
     >
     <svg
       class="strip__svg"
+      width={width}
+      height={height}
       viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="xMinYMin meet"
       role="img"
       aria-hidden="true"
     >
@@ -337,18 +352,27 @@
   }
 
   .strip__svg {
-    width: 100%;
-    height: auto;
+    /*
+     * Pixel-precise: the SVG is exactly as wide as the data grid that
+     * ComparisonHeatmap renders next to it inside the same horizontal
+     * scroller. Never width: 100% — that would decouple it from the
+     * heatmap's column geometry.
+     */
     display: block;
+    width: var(--strip-chart-width);
+    max-width: none;
+    height: auto;
   }
 
   /*
-   * Sprint 2 (ADR-0035) a11y wrapper. role='application' lives here,
-   * not on the <svg>. Block-level so getBoundingClientRect spans the
-   * same box as the chart for pointer math.
+   * Sprint 2 (ADR-0035) a11y wrapper. role='slider' lives here, not on
+   * the <svg>. Block-level with min-width: max-content so it shares
+   * the same horizontal scroll geometry as the heatmap grid.
    */
   .strip__interactive {
     display: block;
+    width: var(--strip-chart-width);
+    min-width: max-content;
     outline: none;
     border-radius: var(--radius-md, 8px);
   }
