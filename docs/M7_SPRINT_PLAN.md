@@ -21,9 +21,9 @@ Goal: make M7 trackable before code lands.
 - [x] Create M7 sprint plan and status documents.
 - [x] Confirm M7 scope after the M7/M8 milestone swap.
 - [x] Record GitHub hygiene gap: public milestones still stop at M10 and issues
-  #144-#150 still carry historical M8 titles.
+      #144-#150 still carry historical M8 titles.
 - [ ] Create/update GitHub milestone labels and issue titles when write access is
-  available outside the read-only `gh` CLI.
+      available outside the read-only `gh` CLI.
 - [ ] Move ADR-0025 from Proposed to Accepted before symptom Level 2 work starts.
 
 ## Sprint 1 - Lasso & Lag (#144, #145)

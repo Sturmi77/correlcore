@@ -10,14 +10,14 @@ Ollama and digest remain pending.
 
 ## Overview
 
-| Sprint | Title                | Status      |
-| ------ | -------------------- | ----------- |
-| 0      | Milestone Opening    | Done        |
-| 1      | Lasso & Lag          | In review   |
-| 2      | Symptom Analytics L2 | In review   |
-| 3      | Clustering           | In review   |
-| 4      | Optional LLM/Digest  | Pending     |
-| 5      | Closeout             | Pending     |
+| Sprint | Title                | Status    |
+| ------ | -------------------- | --------- |
+| 0      | Milestone Opening    | Done      |
+| 1      | Lasso & Lag          | In review |
+| 2      | Symptom Analytics L2 | In review |
+| 3      | Clustering           | In review |
+| 4      | Optional LLM/Digest  | Pending   |
+| 5      | Closeout             | Pending   |
 
 ## Sprint 0 - Done
 
@@ -25,7 +25,7 @@ Ollama and digest remain pending.
 - [x] `docs/M7_SPRINT_STATUS.md` created.
 - [x] M7 scope confirmed as Insights v2 after the milestone swap.
 - [x] GitHub hygiene gap recorded: no public M7 milestone is present yet and
-  issues #144-#150 still use historical M8 titles.
+      issues #144-#150 still use historical M8 titles.
 
 ## Sprint 1 - In Review
 
@@ -35,7 +35,7 @@ Ollama and digest remain pending.
 - [x] Added deterministic `LassoCV` execution with `TimeSeriesSplit`.
 - [x] Added 1-7 day lag analysis using `shift()` and `dropna()`.
 - [x] Added backend tests for the n>=90 gate, reproducibility, symptom features,
-  causal lag warm-up handling, and symptom target lag analysis.
+      causal lag warm-up handling, and symptom target lag analysis.
 - [x] Full backend gates completed.
 - [ ] PR review completed.
 
@@ -43,11 +43,11 @@ Ollama and digest remain pending.
 
 - [x] Implemented `symptom_mood_association` Level 1 insights.
 - [x] Implemented `symptom_tag_cooccurrence` Level 2 insights with Phi, Jaccard,
-  Lift, Fisher Exact, and BH-FDR.
+      Lift, Fisher Exact, and BH-FDR.
 - [x] Added symptom-tag co-occurrence API endpoint for `/insights`.
 - [x] Added symptom-specific feed titles and symptom-tag heatmap UI.
 - [x] Added backend tests for frequency guards, FDR metadata, lift surfacing,
-  service output, and endpoint wiring.
+      service output, and endpoint wiring.
 - [x] Rendered browser QA completed.
 - [ ] PR review completed.
 
