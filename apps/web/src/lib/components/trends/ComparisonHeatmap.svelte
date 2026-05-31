@@ -142,8 +142,7 @@
       // After pinned rows, fall back to frequency.
       return (
         b.days.reduce((s, d) => s + (d.count ?? 0), 0) -
-        a.days.reduce((s, d) => s + (d.count ?? 0), 0) ||
-        a.label.localeCompare(b.label)
+          a.days.reduce((s, d) => s + (d.count ?? 0), 0) || a.label.localeCompare(b.label)
       );
     }
     const delta = rowScore(b) - rowScore(a);

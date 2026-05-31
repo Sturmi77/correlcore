@@ -131,12 +131,12 @@ on `[data-theme]`.
 
 **Divergent metric strips (Mood/Energy/Stress in Strip mode):**
 
-| Token                     | Dark value (Violet theme)                                | Light value (Violet theme)                              | Purpose                                                              |
-| ------------------------- | -------------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
-| `--color-divergent-neg`   | `#3a5a8a`                                                | `#4f68c7`                                               | Negative pole of a divergent metric (e.g. low mood)                  |
-| `--color-divergent-mid`   | `color-mix(in oklch, var(--color-surface) 78%, transparent)` | `color-mix(in oklch, var(--color-surface) 78%, transparent)` | Mid value (= no signal); resolves to current surface tone         |
-| `--color-divergent-pos`   | `#9587ff`                                                | `#6356d9`                                               | Positive pole (e.g. high mood) — same hue family as `--color-primary` |
-| `--color-strip-track-bg`  | `color-mix(in oklch, var(--color-surface) 86%, transparent)` | `color-mix(in oklch, var(--color-surface) 86%, transparent)` | Background of an empty strip cell                                |
+| Token                    | Dark value (Violet theme)                                    | Light value (Violet theme)                                   | Purpose                                                               |
+| ------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `--color-divergent-neg`  | `#3a5a8a`                                                    | `#4f68c7`                                                    | Negative pole of a divergent metric (e.g. low mood)                   |
+| `--color-divergent-mid`  | `color-mix(in oklch, var(--color-surface) 78%, transparent)` | `color-mix(in oklch, var(--color-surface) 78%, transparent)` | Mid value (= no signal); resolves to current surface tone             |
+| `--color-divergent-pos`  | `#9587ff`                                                    | `#6356d9`                                                    | Positive pole (e.g. high mood) — same hue family as `--color-primary` |
+| `--color-strip-track-bg` | `color-mix(in oklch, var(--color-surface) 86%, transparent)` | `color-mix(in oklch, var(--color-surface) 86%, transparent)` | Background of an empty strip cell                                     |
 
 The Violet-theme default uses a **single-hue divergent scale** (Rule (a) in
 ADR-0035): both poles sit in the violet/blue-violet family with two visually
@@ -145,21 +145,21 @@ distinct lightness/chroma steps. The mid point is the surface tone itself, so
 
 **Heatmap (sequential, single-hue — unchanged from current implementation):**
 
-| Token              | Dark value | Light value | Purpose                                  |
-| ------------------ | ---------- | ----------- | ---------------------------------------- |
-| `--color-heatmap-1` | `#1f2a44`  | `#dbe6ff`   | Lowest non-zero intensity                |
-| `--color-heatmap-2` | `#2e3f6f`  | `#adc2ff`   |                                          |
-| `--color-heatmap-3` | `#415aa3`  | `#7f9df2`   |                                          |
-| `--color-heatmap-4` | `#6279d6`  | `#4f68c7`   | Highest intensity                        |
+| Token               | Dark value | Light value | Purpose                   |
+| ------------------- | ---------- | ----------- | ------------------------- |
+| `--color-heatmap-1` | `#1f2a44`  | `#dbe6ff`   | Lowest non-zero intensity |
+| `--color-heatmap-2` | `#2e3f6f`  | `#adc2ff`   |                           |
+| `--color-heatmap-3` | `#415aa3`  | `#7f9df2`   |                           |
+| `--color-heatmap-4` | `#6279d6`  | `#4f68c7`   | Highest intensity         |
 
 **Timeline cursor & event markers:**
 
-| Token                       | Dark value                                              | Light value                                             | Purpose                                                              |
-| --------------------------- | ------------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
-| `--color-cursor`            | `color-mix(in oklch, var(--color-fg) 70%, transparent)` | `color-mix(in oklch, var(--color-fg) 65%, transparent)` | Single shared cursor line across metric + heatmap rows               |
-| `--color-cursor-halo`       | `color-mix(in oklch, var(--color-primary) 22%, transparent)` | `color-mix(in oklch, var(--color-primary) 18%, transparent)` | Soft halo around cursor on hover/focus                          |
-| `--color-event-marker`      | `color-mix(in oklch, var(--color-fg) 55%, transparent)` | `color-mix(in oklch, var(--color-fg) 50%, transparent)` | Default neutral vertical marker (phase boundary etc.)                |
-| `--color-event-marker-soft` | `color-mix(in oklch, var(--color-fg) 28%, transparent)` | `color-mix(in oklch, var(--color-fg) 22%, transparent)` | Background-band variant of marker (multi-day events)                 |
+| Token                       | Dark value                                                   | Light value                                                  | Purpose                                                |
+| --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------ |
+| `--color-cursor`            | `color-mix(in oklch, var(--color-fg) 70%, transparent)`      | `color-mix(in oklch, var(--color-fg) 65%, transparent)`      | Single shared cursor line across metric + heatmap rows |
+| `--color-cursor-halo`       | `color-mix(in oklch, var(--color-primary) 22%, transparent)` | `color-mix(in oklch, var(--color-primary) 18%, transparent)` | Soft halo around cursor on hover/focus                 |
+| `--color-event-marker`      | `color-mix(in oklch, var(--color-fg) 55%, transparent)`      | `color-mix(in oklch, var(--color-fg) 50%, transparent)`      | Default neutral vertical marker (phase boundary etc.)  |
+| `--color-event-marker-soft` | `color-mix(in oklch, var(--color-fg) 28%, transparent)`      | `color-mix(in oklch, var(--color-fg) 22%, transparent)`      | Background-band variant of marker (multi-day events)   |
 
 **Theme-agnostic colour rule (mandatory for every divergent token set):**
 

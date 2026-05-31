@@ -56,8 +56,7 @@ export function resolveDivergentToken(normalised: number): DivergentEncoding {
     return { color: 'var(--color-divergent-mid)', opacity: 0, sign: 'mid' };
   }
   const sign: DivergentSign = clamped < 0 ? 'neg' : 'pos';
-  const color =
-    sign === 'neg' ? 'var(--color-divergent-neg)' : 'var(--color-divergent-pos)';
+  const color = sign === 'neg' ? 'var(--color-divergent-neg)' : 'var(--color-divergent-pos)';
   // Map |value| ∈ [0.0625, 1] → opacity ∈ [0.25, 1] (perceptually friendlier).
   const opacity = 0.25 + 0.75 * Math.min(1, (absVal - 0.0625) / 0.9375);
   return { color, opacity, sign };

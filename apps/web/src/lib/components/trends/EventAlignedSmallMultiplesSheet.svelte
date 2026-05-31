@@ -84,7 +84,8 @@
       const date = isoOffset(evt.onset, offset);
       const point = byDate.get(date) ?? null;
       const raw = point ? point[metric] : null;
-      const display = raw === null || raw === undefined ? null : displayTimeseriesValue(metric, raw);
+      const display =
+        raw === null || raw === undefined ? null : displayTimeseriesValue(metric, raw);
       const encoded = mapper.encode(display ?? Number.NaN);
       cells.push({
         date,
@@ -159,7 +160,7 @@
                   text-anchor="middle"
                   class="esm__axis-tick"
                 >
-                  {offset === 0 ? 'T0' : (offset > 0 ? `+${offset}` : `${offset}`)}
+                  {offset === 0 ? 'T0' : offset > 0 ? `+${offset}` : `${offset}`}
                 </text>
               {/each}
             </g>

@@ -47,13 +47,13 @@
   $: resolved = markers
     .map((marker) => {
       const xStart = dailyAxisXForDate(marker.date, axisDates, axisLayout);
-      const xEnd = marker.endDate
-        ? dailyAxisXForDate(marker.endDate, axisDates, axisLayout)
-        : null;
+      const xEnd = marker.endDate ? dailyAxisXForDate(marker.endDate, axisDates, axisLayout) : null;
       if (xStart === null) return null;
       return { marker, xStart, xEnd };
     })
-    .filter((item): item is { marker: EventMarker; xStart: number; xEnd: number | null } => item !== null);
+    .filter(
+      (item): item is { marker: EventMarker; xStart: number; xEnd: number | null } => item !== null
+    );
 </script>
 
 {#if resolved.length > 0}

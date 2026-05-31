@@ -120,7 +120,8 @@
     return axisDates.map((date, index) => {
       const point = byDate.get(date) ?? null;
       const raw = point ? point[metric.key] : null;
-      const display = raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
+      const display =
+        raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
       const valueForEncoding =
         display === null
           ? null
@@ -211,8 +212,7 @@
         break;
       case 'End':
         event.preventDefault();
-        if (axisDates[axisDates.length - 1])
-          timelineCursor.focus(axisDates[axisDates.length - 1]);
+        if (axisDates[axisDates.length - 1]) timelineCursor.focus(axisDates[axisDates.length - 1]);
         break;
       case 'Escape':
         event.preventDefault();
@@ -255,76 +255,66 @@
       on:pointerleave={handlePointerLeave}
       on:keydown={handleKeydown}
     >
-    <svg
-      class="strip__svg"
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-hidden="true"
-    >
-      {#each rows as row (row.key)}
-        <g class="strip__row" data-metric={row.key}>
-          <text
-            class="strip__label"
-            x={axisLayout.labelWidth - 8}
-            y={row.top + stripHeight / 2}
-            text-anchor="end"
-            dominant-baseline="middle"
-          >
-            {$_(row.label)}
-          </text>
-          <rect
-            class="strip__track"
-            x={axisLayout.labelWidth + axisLayout.dayGap}
-            y={row.top}
-            width={width - axisLayout.labelWidth - axisLayout.dayGap - axisLayout.rightPadding}
-            height={stripHeight}
-            rx="4"
-          />
-          {#each row.cells as cell (cell.date)}
+      <svg class="strip__svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-hidden="true">
+        {#each rows as row (row.key)}
+          <g class="strip__row" data-metric={row.key}>
+            <text
+              class="strip__label"
+              x={axisLayout.labelWidth - 8}
+              y={row.top + stripHeight / 2}
+              text-anchor="end"
+              dominant-baseline="middle"
+            >
+              {$_(row.label)}
+            </text>
             <rect
-              class="strip__cell"
-              data-date={cell.date}
-              data-sign={cell.sign}
-              x={cell.x}
+              class="strip__track"
+              x={axisLayout.labelWidth + axisLayout.dayGap}
               y={row.top}
-              width={cell.width}
+              width={width - axisLayout.labelWidth - axisLayout.dayGap - axisLayout.rightPadding}
               height={stripHeight}
-              fill={cell.fill}
-              opacity={cell.opacity}
-              on:click={() => handleCellClick(cell.date)}
-              on:keydown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  handleCellClick(cell.date);
-                }
-              }}
-              role="button"
-              tabindex="-1"
-              aria-label={cell.displayValue === null
-                ? `${$_(row.label)} — ${cell.date}`
-                : `${$_(row.label)} — ${cell.date}: ${cell.displayValue.toFixed(1)}`}
+              rx="4"
             />
-          {/each}
-        </g>
-      {/each}
+            {#each row.cells as cell (cell.date)}
+              <rect
+                class="strip__cell"
+                data-date={cell.date}
+                data-sign={cell.sign}
+                x={cell.x}
+                y={row.top}
+                width={cell.width}
+                height={stripHeight}
+                fill={cell.fill}
+                opacity={cell.opacity}
+                on:click={() => handleCellClick(cell.date)}
+                on:keydown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleCellClick(cell.date);
+                  }
+                }}
+                role="button"
+                tabindex="-1"
+                aria-label={cell.displayValue === null
+                  ? `${$_(row.label)} — ${cell.date}`
+                  : `${$_(row.label)} — ${cell.date}: ${cell.displayValue.toFixed(1)}`}
+              />
+            {/each}
+          </g>
+        {/each}
 
-      <EventMarkerLayer
-        {markers}
-        {axisDates}
-        {axisLayout}
-        height={height - paddingBottom}
-        top={0}
-      />
-
-      {#if enableCursor}
-        <TimelineCursorOverlay
+        <EventMarkerLayer
+          {markers}
           {axisDates}
           {axisLayout}
           height={height - paddingBottom}
           top={0}
         />
-      {/if}
-    </svg>
+
+        {#if enableCursor}
+          <TimelineCursorOverlay {axisDates} {axisLayout} height={height - paddingBottom} top={0} />
+        {/if}
+      </svg>
     </div>
   {/if}
 </figure>

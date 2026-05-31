@@ -3,7 +3,15 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { timelineCursor, timelineCursorDate } from './timelineCursor';
 
-const AXIS_7D = ['2026-05-24', '2026-05-25', '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29', '2026-05-30'];
+const AXIS_7D = [
+  '2026-05-24',
+  '2026-05-25',
+  '2026-05-26',
+  '2026-05-27',
+  '2026-05-28',
+  '2026-05-29',
+  '2026-05-30',
+];
 
 describe('timelineCursor store (M3.8 Sprint 1 — ADR-0035)', () => {
   beforeEach(() => {

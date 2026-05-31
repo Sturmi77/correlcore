@@ -25,13 +25,7 @@
 {#if x !== null}
   <g class="cursor" aria-hidden="true" data-source={source ?? 'none'}>
     {#if showHalo}
-      <line
-        class="cursor__halo"
-        x1={x}
-        x2={x}
-        y1={top}
-        y2={top + height}
-      />
+      <line class="cursor__halo" x1={x} x2={x} y1={top} y2={top + height} />
     {/if}
     <line class="cursor__line" x1={x} x2={x} y1={top} y2={top + height} />
   </g>
