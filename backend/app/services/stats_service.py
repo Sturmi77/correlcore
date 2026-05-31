@@ -20,6 +20,9 @@ from app.schemas.stats import (
     SymptomHeatmapDay,
     SymptomHeatmapResponse,
     SymptomHeatmapSymptom,
+    SymptomTagCooccurrenceCell,
+    SymptomTagCooccurrenceResponse,
+    SymptomTagCooccurrenceSymptomRef,
     TagCooccurrencePair,
     TagCooccurrenceRange,
     TagCooccurrenceResponse,
@@ -30,6 +33,12 @@ from app.schemas.stats import (
     TimeseriesPoint,
     TimeseriesRange,
     TimeseriesResponse,
+)
+from app.services.symptom_analytics import (
+    DailySymptomEntry,
+    SymptomRef,
+    TagRef,
+    heatmap_symptom_tag_associations,
 )
 from app.services.tag_service import active_tag_predicate
 
@@ -173,6 +182,7 @@ async def get_symptom_heatmap(
         .join(Entry, Entry.id == EntrySymptom.entry_id)
         .where(
             EntrySymptom.user_id == user_id,
+            EntrySymptom.intensity > 0,
             Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
@@ -343,4 +353,155 @@ async def get_tag_cooccurrence(
         end_date=end_date,
         min_count=min_count,
         pairs=pairs,
+    )
+
+
+def _symptom_ref(symptom: Symptom) -> SymptomTagCooccurrenceSymptomRef:
+    return SymptomTagCooccurrenceSymptomRef(
+        symptom_id=symptom.id,
+        slug=symptom.slug,
+        name=symptom.display_name,
+        icon=symptom.icon,
+    )
+
+
+async def get_symptom_tag_cooccurrence(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    range_: TagCooccurrenceRange,
+    min_count: int = 3,
+    as_of: date_type | None = None,
+) -> SymptomTagCooccurrenceResponse:
+    """Return symptom x tag co-occurrence cells for the M7 Insights heatmap."""
+
+    as_of = as_of or _today()
+    start_date, end_date = _cooccurrence_window(range_, as_of)
+
+    entry_result = await db.execute(
+        select(Entry).where(
+            Entry.user_id == user_id,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= end_date,
+        )
+    )
+    entries = list(entry_result.scalars().all())
+    if not entries:
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+        )
+
+    tag_result = await db.execute(
+        select(EntryTag.entry_id, Tag)
+        .join(Tag, Tag.id == EntryTag.tag_id)
+        .join(Entry, Entry.id == EntryTag.entry_id)
+        .where(
+            EntryTag.user_id == user_id,
+            Entry.user_id == user_id,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= end_date,
+            active_tag_predicate(user_id),
+        )
+        .order_by(Entry.entry_date.asc(), Tag.slug.asc())
+    )
+    symptom_result = await db.execute(
+        select(EntrySymptom.entry_id, Symptom)
+        .join(Symptom, Symptom.id == EntrySymptom.symptom_id)
+        .join(Entry, Entry.id == EntrySymptom.entry_id)
+        .where(
+            EntrySymptom.user_id == user_id,
+            EntrySymptom.intensity > 0,
+            Entry.user_id == user_id,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= end_date,
+            (Symptom.is_default.is_(True)) | (Symptom.user_id == user_id),
+        )
+        .order_by(Entry.entry_date.asc(), Symptom.slug.asc())
+    )
+
+    raw_tag_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    tags_by_slug: dict[str, list[Tag]] = defaultdict(list)
+    for entry_id, tag in tag_result.all():
+        raw_tag_ids_by_entry[entry_id].add(tag.id)
+        tags_by_slug[tag.slug].append(tag)
+
+    canonical_tags_by_slug = {
+        slug: sorted(tags, key=lambda item: (item.is_default, item.name.casefold(), str(item.id)))[
+            0
+        ]
+        for slug, tags in tags_by_slug.items()
+    }
+    tag_aliases = {
+        tag.id: canonical_tags_by_slug[tag.slug].id
+        for tags in tags_by_slug.values()
+        for tag in tags
+    }
+    tags_by_id = {tag.id: tag for tag in canonical_tags_by_slug.values()}
+    tag_ids_by_entry = {
+        entry_id: {tag_aliases.get(tag_id, tag_id) for tag_id in tag_ids}
+        for entry_id, tag_ids in raw_tag_ids_by_entry.items()
+    }
+
+    symptom_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    symptoms_by_id: dict[uuid.UUID, Symptom] = {}
+    for entry_id, symptom in symptom_result.all():
+        symptom_ids_by_entry[entry_id].add(symptom.id)
+        symptoms_by_id[symptom.id] = symptom
+
+    daily_entries = [
+        DailySymptomEntry(
+            entry_date=entry.entry_date,
+            mood_score=entry.mood_score,
+            energy=entry.energy,
+            stress=entry.stress,
+            tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
+            symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
+        )
+        for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
+    ]
+    associations = heatmap_symptom_tag_associations(
+        daily_entries,
+        {
+            symptom_id: SymptomRef(
+                id=symptom.id,
+                label=symptom.display_name,
+                slug=symptom.slug,
+            )
+            for symptom_id, symptom in symptoms_by_id.items()
+        },
+        {
+            tag_id: TagRef(id=tag.id, label=tag.name, slug=tag.slug)
+            for tag_id, tag in tags_by_id.items()
+        },
+        min_tag_usages=min_count,
+    )
+
+    cells = [
+        SymptomTagCooccurrenceCell(
+            symptom=_symptom_ref(symptoms_by_id[association.symptom.id]),
+            tag=_tag_ref(tags_by_id[association.tag.id]),
+            phi=association.phi,
+            jaccard=association.jaccard,
+            lift=association.lift,
+            co_count=association.co_count,
+            symptom_count=association.symptom_count,
+            tag_count=association.tag_count,
+            total_count=association.total_count,
+            p_value_corrected=association.p_corrected,
+            confounder="weekday" if association.weekday_confounded else None,
+        )
+        for association in associations
+        if association.co_count >= min_count
+    ]
+    cells.sort(key=lambda cell: (-abs(cell.lift - 1.0), cell.symptom.slug, cell.tag.slug))
+    return SymptomTagCooccurrenceResponse(
+        range=range_,
+        start_date=start_date,
+        end_date=end_date,
+        min_count=min_count,
+        cells=cells,
     )

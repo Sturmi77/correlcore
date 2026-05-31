@@ -771,7 +771,22 @@
       "heading": "Symptome in Erkenntnissen",
       "body": "Symptomtage werden als beschreibender Kontext eingeblendet, ohne medizinische Interpretation.",
       "heatmap_heading": "Symptomverlauf",
-      "empty": "Noch keine Symptomdaten im gewaehlten Zeitraum."
+      "empty": "Noch keine Symptomdaten im gewaehlten Zeitraum.",
+      "cooccurrence_heading": "Symptom- und Tag-Muster",
+      "cooccurrence_body": "Lift markiert Symptome und Tags, die haeufiger oder seltener gemeinsam auftreten als erwartet.",
+      "cooccurrence_aria": "Symptom-Tag-Co-Occurrence-Matrix",
+      "cooccurrence_cell_title": "{symptom} + {tag}: Lift {lift}, {count} gemeinsame Entries",
+      "cooccurrence_lift_legend": "Lift-Werte; * bedeutet FDR-korrigiertes p < 0.10.",
+      "cooccurrence_count_legend": "Gemeinsame Entry-Anzahl, bis genug Daten fuer Lift vorhanden sind.",
+      "cooccurrence_empty": "Noch keine stabilen Symptom-Tag-Muster in diesem Zeitraum."
+    },
+    "tag_groups": {
+      "heading": "Tag-Gruppen",
+      "subtitle": "Tags, die haeufig gemeinsam auftreten",
+      "loading": "Tag-Gruppen werden geladen",
+      "empty": "Noch keine Tag-Gruppen verfuegbar. Tracke weiter Entries mit Tags.",
+      "insufficient": "{entries}/90 Entries und {tags}/5 aktive Tags sind fuer Tag-Gruppen verfuegbar.",
+      "strength": "{value}% gemeinsames Muster"
     },
     "confidence_label": {
       "early_signal": "Erstes Signal",

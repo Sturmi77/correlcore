@@ -287,6 +287,40 @@ async def test_insights_endpoint_returns_statement_field(
 
 
 @pytest.mark.asyncio
+async def test_list_latest_insights_keeps_lasso_and_lag_symptom_cluster_findings() -> None:
+    user = make_user()
+    lasso = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, 3, tzinfo=UTC),
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        metric="mood_score",
+        subject_type="metric",
+        subject_label="mood_score",
+        payload={"method": "lasso", "target": "mood_score"},
+    )
+    lag = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, 2, tzinfo=UTC),
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        metric="mood_score",
+        subject_type="metric",
+        subject_label="mood_score",
+        payload={
+            "method": "lag",
+            "target": {"kind": "metric", "key": "mood_score"},
+            "feature": {"kind": "tag", "key": "tag:sport", "id": str(uuid.uuid4())},
+            "lag_days": 1,
+        },
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result([lasso, lag]))
+
+    out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [lasso, lag]
+
+
+@pytest.mark.asyncio
 async def test_latest_insights_endpoint_uses_latest_service(
     async_client: AsyncClient,
     user: User,
