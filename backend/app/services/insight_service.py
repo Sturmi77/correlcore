@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
 from app.models.insight import Insight
+from app.models.tag import Tag
 from app.schemas.insight import InsightMaturity, InsightMaturityPhase
 
 DEFAULT_INSIGHT_LIST_LIMIT = 50
@@ -96,7 +97,22 @@ async def list_insights(
     return list(result.scalars().all())
 
 
-def _latest_subject_key(insight: Insight) -> tuple[object, ...]:
+def _latest_metric_key(insight: Insight) -> str:
+    if insight.insight_type == "pointbiserial" and insight.subject_type == "tag":
+        if insight.metric in {"mood", "mood_score", "mood_avg"}:
+            return "mood_score"
+    return insight.metric
+
+
+def _normalise_label(value: str) -> str:
+    return " ".join(value.casefold().split())
+
+
+def _latest_subject_key(
+    insight: Insight,
+    *,
+    tag_slugs_by_id: dict[uuid.UUID, str],
+) -> tuple[object, ...]:
     """Return the semantic subject key used by /insights/latest.
 
     Tag insights may be generated from historical default-tag IDs and newer
@@ -108,10 +124,33 @@ def _latest_subject_key(insight: Insight) -> tuple[object, ...]:
     if insight.subject_type == "tag":
         tag_slug = insight.payload.get("tag_slug") if isinstance(insight.payload, dict) else None
         if isinstance(tag_slug, str) and tag_slug:
-            return ("tag_slug", tag_slug)
+            return ("tag_slug", tag_slug.casefold())
+        if insight.subject_id and insight.subject_id in tag_slugs_by_id:
+            return ("tag_slug", tag_slugs_by_id[insight.subject_id].casefold())
         if insight.subject_label:
-            return ("tag_label", insight.subject_label.casefold())
+            return ("tag_label", _normalise_label(insight.subject_label))
     return ("subject", insight.subject_id, insight.subject_label)
+
+
+async def _tag_slugs_for_legacy_insights(
+    db: AsyncSession,
+    insights: list[Insight],
+) -> dict[uuid.UUID, str]:
+    tag_ids = {
+        insight.subject_id
+        for insight in insights
+        if insight.subject_type == "tag"
+        and insight.subject_id is not None
+        and not (
+            isinstance(insight.payload, dict)
+            and isinstance(insight.payload.get("tag_slug"), str)
+            and insight.payload.get("tag_slug")
+        )
+    }
+    if not tag_ids:
+        return {}
+    result = await db.execute(select(Tag.id, Tag.slug).where(Tag.id.in_(tag_ids)))
+    return {row[0]: row[1] for row in result.all()}
 
 
 async def list_latest_insights(
@@ -140,14 +179,17 @@ async def list_latest_insights(
         .limit(MAX_INSIGHT_LIST_LIMIT)
     )
 
+    insights = list(result.scalars().all())
+    tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
+
     latest: list[Insight] = []
     seen: set[tuple[object, ...]] = set()
-    for insight in result.scalars().all():
+    for insight in insights:
         key = (
             insight.insight_type,
-            insight.metric,
+            _latest_metric_key(insight),
             insight.subject_type,
-            _latest_subject_key(insight),
+            _latest_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id),
         )
         if key in seen:
             continue
