@@ -105,6 +105,44 @@ async def test_recompute_tag_vectors_upserts_vectors() -> None:
 
 
 @pytest.mark.asyncio
+async def test_recompute_tag_vectors_canonicalizes_tag_overrides() -> None:
+    user = make_user()
+    daily, fixture_tags = _cluster_fixture()
+    original_focus_id = fixture_tags[0].id
+    default_focus = make_tag(user=None, is_default=True, slug="focus", name="Focus")
+    override_focus = make_tag(user, slug="focus", name="Focus custom", category=TagCategory.WORK)
+    tags = [override_focus, *fixture_tags[1:]]
+    entries = [make_entry(user, entry_date=row.entry_date) for row in daily]
+    tags_by_id = {tag.id: tag for tag in fixture_tags[1:]}
+    tag_rows: list[tuple[date, object]] = []
+    for index, row in enumerate(daily):
+        for tag_id in row.tag_ids:
+            if tag_id == original_focus_id:
+                tag_rows.append((row.entry_date, default_focus if index < 5 else override_focus))
+                continue
+            tag = tags_by_id.get(tag_id)
+            if tag is None:
+                continue
+            tag_rows.append((row.entry_date, tag))
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[_scalar_result(entries), _row_result(tag_rows), *[MagicMock() for _ in tags]]
+    )
+
+    response = await recompute_tag_vectors_and_clusters(
+        db,
+        user_id=user.id,
+        as_of=date(2026, 4, 10),
+    )
+
+    assert response.active_tag_count == len(tags)
+    upsert_params = [call.args[1] for call in db.execute.await_args_list[2:]]
+    assert {params["tag_id"] for params in upsert_params} == {tag.id for tag in tags}
+    assert default_focus.id not in {params["tag_id"] for params in upsert_params}
+
+
+@pytest.mark.asyncio
 async def test_tag_clusters_endpoint_returns_response(
     async_client: AsyncClient,
     user: User,

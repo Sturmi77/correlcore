@@ -51,6 +51,14 @@ class _FakeSessionFactory:
         return session
 
 
+class _AsyncContext:
+    async def __aenter__(self) -> None:
+        return None
+
+    async def __aexit__(self, *_exc: object) -> None:
+        return None
+
+
 @pytest.mark.asyncio
 async def test_list_insight_generation_jobs_filters_eligible_users() -> None:
     user_id = uuid.uuid4()
@@ -81,6 +89,7 @@ async def test_list_insight_generation_jobs_filters_eligible_users() -> None:
 @pytest.mark.asyncio
 async def test_generate_insights_for_job_binds_and_resets_user_dek() -> None:
     db = MagicMock()
+    db.begin_nested.return_value = _AsyncContext()
     job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"wrapped-dek")
 
     with (
@@ -112,6 +121,37 @@ async def test_generate_insights_for_job_binds_and_resets_user_dek() -> None:
     bind.assert_called_once_with(job.user_id, b"dek")
     bind_rls.assert_awaited_once_with(db, job.user_id)
     generate.assert_awaited_once()
+    recompute.assert_awaited_once()
+    reset.assert_called_once_with("token")
+
+
+@pytest.mark.asyncio
+async def test_generate_insights_for_job_keeps_insights_when_tag_vectors_fail() -> None:
+    db = MagicMock()
+    db.begin_nested.return_value = _AsyncContext()
+    job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"wrapped-dek")
+
+    with (
+        patch("app.services.insight_worker_service.unwrap_dek", return_value=b"dek"),
+        patch("app.services.insight_worker_service.set_current_user_dek", return_value="token"),
+        patch("app.services.insight_worker_service.reset_current_user_dek") as reset,
+        patch("app.services.insight_worker_service.bind_rls_current_user", new=AsyncMock()),
+        patch(
+            "app.services.insight_worker_service.generate_and_store_insights",
+            new=AsyncMock(return_value=[object(), object()]),
+        ),
+        patch(
+            "app.services.insight_worker_service.recompute_tag_vectors_and_clusters",
+            new=AsyncMock(side_effect=RuntimeError("vector failure")),
+        ) as recompute,
+    ):
+        count = await generate_insights_for_job(
+            db,
+            job=job,
+            as_of=datetime(2026, 5, 12, tzinfo=UTC).date(),
+        )
+
+    assert count == 2
     recompute.assert_awaited_once()
     reset.assert_called_once_with("token")
 

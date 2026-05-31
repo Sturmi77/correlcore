@@ -53,6 +53,26 @@ def _round_avg(values: list[int]) -> float | None:
     return round(sum(values) / len(values), 2)
 
 
+def _dedupe_daily_symptom_entries(entries: list[DailySymptomEntry]) -> list[DailySymptomEntry]:
+    grouped: dict[date_type, list[DailySymptomEntry]] = defaultdict(list)
+    for entry in entries:
+        grouped[entry.entry_date].append(entry)
+
+    daily_entries: list[DailySymptomEntry] = []
+    for entry_date, rows in sorted(grouped.items()):
+        daily_entries.append(
+            DailySymptomEntry(
+                entry_date=entry_date,
+                mood_score=round(sum(row.mood_score for row in rows) / len(rows)),
+                energy=round(sum(row.energy for row in rows) / len(rows)),
+                stress=round(sum(row.stress for row in rows) / len(rows)),
+                tag_ids=frozenset(tag_id for row in rows for tag_id in row.tag_ids),
+                symptom_ids=frozenset(symptom_id for row in rows for symptom_id in row.symptom_ids),
+            )
+        )
+    return daily_entries
+
+
 @dataclass(frozen=True)
 class _Period:
     start: date_type
@@ -452,17 +472,19 @@ async def get_symptom_tag_cooccurrence(
         symptom_ids_by_entry[entry_id].add(symptom.id)
         symptoms_by_id[symptom.id] = symptom
 
-    daily_entries = [
-        DailySymptomEntry(
-            entry_date=entry.entry_date,
-            mood_score=entry.mood_score,
-            energy=entry.energy,
-            stress=entry.stress,
-            tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
-            symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
-        )
-        for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
-    ]
+    daily_entries = _dedupe_daily_symptom_entries(
+        [
+            DailySymptomEntry(
+                entry_date=entry.entry_date,
+                mood_score=entry.mood_score,
+                energy=entry.energy,
+                stress=entry.stress,
+                tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
+                symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
+            )
+            for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
+        ]
+    )
     associations = heatmap_symptom_tag_associations(
         daily_entries,
         {
