@@ -55,10 +55,10 @@ Acceptance criteria:
 
 Goal: implement Symptom x Tag co-occurrence insights and visualization payloads.
 
-- [ ] Add `symptom_mood_association` foundation if not already shipped.
-- [ ] Compute Phi, Jaccard, Lift, Fisher Exact, and BH-FDR for eligible pairs.
-- [ ] Extend `/insights` feed rendering with symptom-specific cards and copy.
-- [ ] Add symptom co-occurrence heatmap payloads and frontend component.
+- [x] Add `symptom_mood_association` foundation if not already shipped.
+- [x] Compute Phi, Jaccard, Lift, Fisher Exact, and BH-FDR for eligible pairs.
+- [x] Extend `/insights` feed rendering with symptom-specific cards and copy.
+- [x] Add symptom co-occurrence heatmap payloads and frontend component.
 
 ## Sprint 3 - Clustering
 

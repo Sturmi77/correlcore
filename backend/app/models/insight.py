@@ -43,6 +43,8 @@ class InsightType(StrEnum):
     SPEARMAN = "spearman"
     WEEKDAY_PATTERN = "weekday_pattern"
     SYMPTOM_CLUSTER = "symptom_cluster"
+    SYMPTOM_MOOD_ASSOCIATION = "symptom_mood_association"
+    SYMPTOM_TAG_COOCCURRENCE = "symptom_tag_cooccurrence"
 
 
 class InsightTier(StrEnum):

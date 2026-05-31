@@ -5,8 +5,8 @@ Last updated: 2026-05-31
 Tracking document for [`docs/M7_SPRINT_PLAN.md`](M7_SPRINT_PLAN.md).
 
 **Milestone completeness:** M7 is opened. Sprint 1 has a backend-only
-implementation slice for Lasso and lag analysis; frontend symptom cards,
-co-occurrence, clustering, Ollama, and digest remain pending.
+implementation slices for Lasso/lag analysis and Symptom Analytics Level 1/2;
+clustering, Ollama, and digest remain pending.
 
 ## Overview
 
@@ -14,7 +14,7 @@ co-occurrence, clustering, Ollama, and digest remain pending.
 | ------ | -------------------- | ----------- |
 | 0      | Milestone Opening    | Done        |
 | 1      | Lasso & Lag          | In review   |
-| 2      | Symptom Analytics L2 | Pending     |
+| 2      | Symptom Analytics L2 | In review   |
 | 3      | Clustering           | Pending     |
 | 4      | Optional LLM/Digest  | Pending     |
 | 5      | Closeout             | Pending     |
@@ -39,15 +39,19 @@ co-occurrence, clustering, Ollama, and digest remain pending.
 - [x] Full backend gates completed.
 - [ ] PR review completed.
 
+## Sprint 2 - In Review
+
+- [x] Implemented `symptom_mood_association` Level 1 insights.
+- [x] Implemented `symptom_tag_cooccurrence` Level 2 insights with Phi, Jaccard,
+  Lift, Fisher Exact, and BH-FDR.
+- [x] Added symptom-tag co-occurrence API endpoint for `/insights`.
+- [x] Added symptom-specific feed titles and symptom-tag heatmap UI.
+- [x] Added backend tests for frequency guards, FDR metadata, lift surfacing,
+  service output, and endpoint wiring.
+- [ ] Rendered browser QA completed.
+- [ ] PR review completed.
+
 ## Remaining Work
-
-### Sprint 2
-
-- [ ] Implement `symptom_mood_association` if it is still not shipped.
-- [ ] Implement `symptom_tag_cooccurrence` with Phi, Jaccard, Lift, Fisher Exact,
-  and BH-FDR.
-- [ ] Add symptom-specific insight card copy and methodology disclaimer.
-- [ ] Add `/insights` symptom co-occurrence visualization.
 
 ### Sprint 3
 

@@ -23,6 +23,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   `TimeSeriesSplit` Lasso models, and 1-7 day lag analysis with causal
   `shift()`/`dropna()` handling.
 
+- **M7 Sprint 2 Symptom Analytics.** Added `symptom_mood_association` and
+  `symptom_tag_cooccurrence` insight types, symptom Level 1/2 analytics with
+  FDR and weekday confounder metadata, `GET /api/v1/insights/symptom-tag-cooccurrence`,
+  and a symptom-tag co-occurrence heatmap in `/insights`.
+
 - **M5.1 Tag co-occurrence heatmap.** `GET /api/v1/insights/tag-cooccurrence`
   plus Insights **Patterns** section with `TagCooccurrenceHeatmap` and filtered
   entry sheet. Closeout: [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).

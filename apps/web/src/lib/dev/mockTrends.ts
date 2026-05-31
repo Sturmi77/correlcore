@@ -1,4 +1,5 @@
 import type { HabitStatsResponse } from '$lib/api/habits';
+import type { SymptomTagCooccurrenceResponse } from '$lib/api/insights';
 import type {
   EntryStreakResponse,
   SymptomHeatmapResponse,
@@ -254,6 +255,63 @@ export const mockTagCooccurrence = {
       count: 2,
       pct_of_a: 66.7,
       pct_of_b: 40.0,
+    },
+  ],
+};
+
+export const mockSymptomTagCooccurrence: SymptomTagCooccurrenceResponse = {
+  range: '90d',
+  start_date: shiftIsoDate(today, -89),
+  end_date: today,
+  min_count: 3,
+  cells: [
+    {
+      symptom: {
+        symptom_id: 'mock-symptom-headache',
+        slug: 'headache',
+        name: 'Headache',
+        icon: 'activity',
+      },
+      tag: {
+        tag_id: 'mock-tag-focus',
+        slug: 'focus',
+        name: 'Focus work',
+        category: 'work',
+        color: null,
+      },
+      phi: 0.38,
+      jaccard: 0.41,
+      lift: 2.1,
+      co_count: 7,
+      symptom_count: 10,
+      tag_count: 12,
+      total_count: 42,
+      p_value_corrected: 0.03,
+      confounder: null,
+    },
+    {
+      symptom: {
+        symptom_id: 'mock-symptom-fatigue',
+        slug: 'fatigue',
+        name: 'Fatigue',
+        icon: 'battery-low',
+      },
+      tag: {
+        tag_id: 'mock-tag-walk',
+        slug: 'walk',
+        name: 'Walk',
+        category: 'sport',
+        color: null,
+      },
+      phi: -0.29,
+      jaccard: 0.12,
+      lift: 0.5,
+      co_count: 3,
+      symptom_count: 9,
+      tag_count: 14,
+      total_count: 42,
+      p_value_corrected: 0.08,
+      confounder: null,
     },
   ],
 };

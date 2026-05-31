@@ -871,6 +871,7 @@ jeweiligen Owner ausgegeben.
 GET    /api/v1/insights              Alle Insights des Users
 GET    /api/v1/insights/latest       Neuester Insight je Metrik
 GET    /api/v1/insights/tag-cooccurrence   Tag-Paar-Co-Occurrence (M5.1)
+GET    /api/v1/insights/symptom-tag-cooccurrence   Symptom×Tag-Lift-Matrix (M7)
 POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 ```
 
@@ -924,10 +925,12 @@ Tracking-Tagen des Users abgeleitet: `collecting` fuer 0-6 Eintraege,
 `early_patterns` fuer 7-13, `provisional` fuer 14-29 und `robust` ab 30.
 Frontend-Clients duerfen diese Phase nicht selbst aus der Entry-Anzahl
 rekonstruieren.
-M7 Sprint 1 ergaenzt den bestehenden Envelope um `symptom_cluster` Insights.
+M7 ergaenzt den bestehenden Envelope um `symptom_cluster`,
+`symptom_mood_association` und `symptom_tag_cooccurrence` Insights.
 Lasso- und Lag-Befunde werden ueber `payload.method = "lasso" | "lag"`
-unterschieden; Clients, die den neuen Typ nicht kennen, sollen ihn wie andere
-unbekannte Insight-Typen ignorieren.
+unterschieden; Symptom-Insights liefern `payload.kind` sowie Symptom-/Tag-Slugs.
+Clients, die neue Typen nicht kennen, sollen sie wie andere unbekannte
+Insight-Typen ignorieren.
 Der manuelle Trigger bleibt geplant und ist in M3 noch nicht oeffentlich
 implementiert.
 

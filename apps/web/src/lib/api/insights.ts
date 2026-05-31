@@ -83,6 +83,35 @@ export interface TagCooccurrenceQuery {
   min_count?: number;
 }
 
+export interface SymptomTagCooccurrenceSymptomRef {
+  symptom_id: string;
+  slug: string;
+  name: string;
+  icon: string | null;
+}
+
+export interface SymptomTagCooccurrenceCell {
+  symptom: SymptomTagCooccurrenceSymptomRef;
+  tag: TagCooccurrenceTagRef;
+  phi: number;
+  jaccard: number;
+  lift: number;
+  co_count: number;
+  symptom_count: number;
+  tag_count: number;
+  total_count: number;
+  p_value_corrected: number;
+  confounder: string | null;
+}
+
+export interface SymptomTagCooccurrenceResponse {
+  range: TagCooccurrenceRange;
+  start_date: string;
+  end_date: string;
+  min_count: number;
+  cells: SymptomTagCooccurrenceCell[];
+}
+
 function buildQuery(query: InsightListQuery): string {
   const params = new URLSearchParams();
   if (query.limit !== undefined) params.set('limit', String(query.limit));
@@ -112,6 +141,19 @@ export async function fetchTagCooccurrence(
   const qs = params.toString();
   return api.get<TagCooccurrenceResponse>(
     qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence'
+  );
+}
+
+/** GET /insights/symptom-tag-cooccurrence - symptom x tag lift cells for M7. */
+export async function fetchSymptomTagCooccurrence(
+  query: TagCooccurrenceQuery = {}
+): Promise<SymptomTagCooccurrenceResponse> {
+  const params = new URLSearchParams();
+  if (query.range) params.set('range', query.range);
+  if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
+  const qs = params.toString();
+  return api.get<SymptomTagCooccurrenceResponse>(
+    qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence'
   );
 }
 
