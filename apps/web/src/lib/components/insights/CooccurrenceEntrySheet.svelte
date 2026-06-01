@@ -88,6 +88,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    padding: var(--space-3) var(--space-3) 0;
   }
 
   .cooccurrence-history__backdrop {
@@ -100,13 +101,16 @@
     position: relative;
     z-index: 1;
     width: min(100%, 42rem);
-    max-height: min(82vh, 42rem);
+    max-height: min(82dvh, 42rem);
     overflow: auto;
     padding: var(--space-4);
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
+    border-bottom: 0;
     box-shadow: var(--shadow-lg);
+    overscroll-behavior: contain;
   }
 
   .cooccurrence-history__header {
@@ -204,6 +208,8 @@
 
     .cooccurrence-history__panel {
       border-radius: var(--radius-xl);
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: var(--space-4);
     }
   }
 </style>

@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
 from app.models.tag import EntryTag, Tag
+from app.models.user_preference import UserPreference
 from app.schemas.stats import TagClusterGroup, TagClustersResponse, TagCooccurrenceTagRef
 from app.services.tag_service import active_tag_predicate
 
@@ -393,5 +394,16 @@ async def get_tag_clusters(
     as_of: date_type | None = None,
 ) -> TagClustersResponse:
     """Return current tag groups, recomputing vectors on demand for freshness."""
+
+    preference_result = await db.execute(
+        select(UserPreference.analytics_enabled).where(UserPreference.user_id == user_id)
+    )
+    if preference_result.scalar_one_or_none() is False:
+        return _insufficient(
+            entry_count=0,
+            active_tag_count=0,
+            reason="analytics_disabled",
+            window_days=TAG_CLUSTER_WINDOW_DAYS,
+        )
 
     return await recompute_tag_vectors_and_clusters(db, user_id=user_id, as_of=as_of)

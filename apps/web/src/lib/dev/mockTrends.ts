@@ -1,5 +1,10 @@
 import type { HabitStatsResponse } from '$lib/api/habits';
-import type { SymptomTagCooccurrenceResponse, TagClustersResponse } from '$lib/api/insights';
+import type {
+  SymptomTagCooccurrenceResponse,
+  TagClustersResponse,
+  TagCooccurrenceRange,
+  TagCooccurrenceResponse,
+} from '$lib/api/insights';
 import type {
   EntryStreakResponse,
   SymptomHeatmapResponse,
@@ -257,7 +262,33 @@ export const mockTagCooccurrence = {
       pct_of_b: 40.0,
     },
   ],
-};
+} satisfies TagCooccurrenceResponse;
+
+export const mockTagCooccurrenceByRange = {
+  '30d': {
+    ...mockTagCooccurrence,
+    range: '30d',
+    start_date: shiftIsoDate(today, -29),
+    pairs: mockTagCooccurrence.pairs.map((pair, idx) => ({
+      ...pair,
+      count: Math.max(2, pair.count - (idx < 2 ? 2 : 1)),
+      pct_of_a: Math.max(33.3, pair.pct_of_a - 18),
+      pct_of_b: Math.max(33.3, pair.pct_of_b - 15),
+    })),
+  },
+  '90d': mockTagCooccurrence,
+  '1y': {
+    ...mockTagCooccurrence,
+    range: '1y',
+    start_date: shiftIsoDate(today, -364),
+    pairs: mockTagCooccurrence.pairs.map((pair, idx) => ({
+      ...pair,
+      count: pair.count + (idx < 2 ? 4 : 3),
+      pct_of_a: Math.min(100, pair.pct_of_a + 10),
+      pct_of_b: Math.min(100, pair.pct_of_b + 8),
+    })),
+  },
+} satisfies Record<TagCooccurrenceRange, TagCooccurrenceResponse>;
 
 export const mockSymptomTagCooccurrence: SymptomTagCooccurrenceResponse = {
   range: '90d',
@@ -315,6 +346,32 @@ export const mockSymptomTagCooccurrence: SymptomTagCooccurrenceResponse = {
     },
   ],
 };
+
+export const mockSymptomTagCooccurrenceByRange = {
+  '30d': {
+    ...mockSymptomTagCooccurrence,
+    range: '30d',
+    start_date: shiftIsoDate(today, -29),
+    cells: mockSymptomTagCooccurrence.cells.map((cell) => ({
+      ...cell,
+      lift: Number(Math.max(0.4, cell.lift - 0.3).toFixed(1)),
+      co_count: Math.max(3, cell.co_count - 2),
+      total_count: 18,
+    })),
+  },
+  '90d': mockSymptomTagCooccurrence,
+  '1y': {
+    ...mockSymptomTagCooccurrence,
+    range: '1y',
+    start_date: shiftIsoDate(today, -364),
+    cells: mockSymptomTagCooccurrence.cells.map((cell) => ({
+      ...cell,
+      lift: Number((cell.lift + 0.4).toFixed(1)),
+      co_count: cell.co_count + 4,
+      total_count: 96,
+    })),
+  },
+} satisfies Record<TagCooccurrenceRange, SymptomTagCooccurrenceResponse>;
 
 export const mockTagClusters: TagClustersResponse = {
   status: 'ok',

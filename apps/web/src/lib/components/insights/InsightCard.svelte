@@ -173,7 +173,15 @@
     </p>
 
     <p class="insight-card__meta" data-testid="insight-card-meta">
-      {$_('insights.card.sample_meta', { values: { n: insight.sample_n ?? 0 } })}
+      {$_('insights.card.sample_meta', {
+        values: {
+          n: insight.sample_n ?? 0,
+          days:
+            typeof insight.payload?.time_window_days === 'number'
+              ? insight.payload.time_window_days
+              : 90,
+        },
+      })}
       {#if isInactiveTag}
         <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
       {/if}

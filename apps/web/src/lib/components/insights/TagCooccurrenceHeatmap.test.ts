@@ -157,4 +157,17 @@ describe('TagCooccurrenceHeatmap', () => {
 
     expect(screen.getByLabelText('insights.cooccurrence.loading')).toBeTruthy();
   });
+
+  it('dispatches range changes from the range control', async () => {
+    const handler = vi.fn();
+    render(TagCooccurrenceHeatmap, {
+      props: { data, loading: false, range: '90d' },
+      events: { rangeChange: handler },
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'insights.cooccurrence.range_1y' }));
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(handler.mock.calls[0][0].detail).toEqual({ range: '1y' });
+  });
 });

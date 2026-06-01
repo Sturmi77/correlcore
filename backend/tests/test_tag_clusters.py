@@ -15,6 +15,7 @@ from app.services.tag_cluster_service import (
     DailyTagSet,
     build_tag_cluster_response,
     build_tag_vectors,
+    get_tag_clusters,
     recompute_tag_vectors_and_clusters,
 )
 from tests.conftest import make_entry, make_tag, make_user
@@ -31,6 +32,12 @@ def _scalar_result(values: list[object]) -> MagicMock:
 def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
     result = MagicMock()
     result.all.return_value = values
+    return result
+
+
+def _scalar_one_or_none_result(value: object) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
     return result
 
 
@@ -140,6 +147,22 @@ async def test_recompute_tag_vectors_canonicalizes_tag_overrides() -> None:
     upsert_params = [call.args[1] for call in db.execute.await_args_list[2:]]
     assert {params["tag_id"] for params in upsert_params} == {tag.id for tag in tags}
     assert default_focus.id not in {params["tag_id"] for params in upsert_params}
+
+
+@pytest.mark.asyncio
+async def test_get_tag_clusters_skips_recompute_when_analytics_disabled() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_one_or_none_result(False))
+
+    response = await get_tag_clusters(db, user_id=user.id, as_of=date(2026, 4, 10))
+
+    assert response.status == "insufficient_data"
+    assert response.reason == "analytics_disabled"
+    assert response.entry_count == 0
+    assert response.active_tag_count == 0
+    assert response.clusters == []
+    assert db.execute.await_count == 1
 
 
 @pytest.mark.asyncio

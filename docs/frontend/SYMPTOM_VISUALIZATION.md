@@ -1,6 +1,6 @@
 # Symptom Visualization — Frontend Specification
 
-> **Status:** Partially implemented (descriptive frontend context) · **ADR:** [0025](../adr/0025-symptom-analytics.md) · **Feature Spec:** [`symptom-analytics.md`](../features/symptom-analytics.md) · **Last updated:** 2026-05-30
+> **Status:** Partially implemented (descriptive context + M7 co-occurrence view) · **ADR:** [0025](../adr/0025-symptom-analytics.md) · **Feature Spec:** [`symptom-analytics.md`](../features/symptom-analytics.md) · **Last updated:** 2026-05-31
 
 This document is the single source of truth for how symptom analytics is rendered, integrated, and
 phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md`](INSIGHT_MATURITY.md)
@@ -23,10 +23,10 @@ phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md
 All components live under `apps/web/src/lib/components/insights/symptoms/` following the existing
 folder convention for insight-related components.
 
-**Implemented subset (2026-05-30):** `SymptomAnalyticsSection` exists and renders the existing
-`ComparisonHeatmap` with `showSymptoms=true`, `showTags=false`. It is descriptive only: it displays
-daily symptom occurrence/intensity context from `fetchSymptomHeatmap()` and intentionally does not
-render Lift, FDR markers, co-occurrence statistics, medical interpretation, or recommendations.
+**Implemented subset (2026-05-31):** `SymptomAnalyticsSection` exists and renders the existing
+`ComparisonHeatmap` with `showSymptoms=true`, `showTags=false`, plus the M7
+`SymptomCooccurrenceHeatmap`. Symptom history remains descriptive only. The M7 co-occurrence grid
+renders backend-provided Lift/count context without medical interpretation or recommendations.
 
 ---
 
@@ -147,6 +147,7 @@ interface CooccurrenceCell {
 | Empty cells         | Pairs not meeting eligibility threshold: rendered as crosshatch pattern with tooltip "Insufficient data" |
 | Cell size           | 48×48 px desktop, 40×40 px mobile, with 1px gap                                                          |
 | Axis labels         | Truncated with ellipsis at 12 chars; full name in tooltip                                                |
+| Mobile labels       | 375 px uses compact horizontal labels in a local scroller; rotated headers must not overlap grid cells   |
 
 ### Phase-Gated Rendering
 
