@@ -64,6 +64,24 @@ def _tag_ref(tag: Tag) -> TagCooccurrenceTagRef:
     )
 
 
+def _canonicalize_tags_by_slug(
+    tags_by_slug: dict[str, list[Tag]],
+) -> tuple[dict[uuid.UUID, uuid.UUID], dict[uuid.UUID, Tag]]:
+    canonical_tags_by_slug = {
+        slug: sorted(tags, key=lambda item: (item.is_default, item.name.casefold(), str(item.id)))[
+            0
+        ]
+        for slug, tags in tags_by_slug.items()
+    }
+    tag_aliases = {
+        tag.id: canonical_tags_by_slug[tag.slug].id
+        for tags in tags_by_slug.values()
+        for tag in tags
+    }
+    tags_by_id = {tag.id: tag for tag in canonical_tags_by_slug.values()}
+    return tag_aliases, tags_by_id
+
+
 def _insufficient(
     *,
     entry_count: int,
@@ -259,11 +277,17 @@ async def _load_tag_vector_inputs(
         .order_by(Entry.entry_date.asc(), Tag.slug.asc())
     )
 
-    tag_ids_by_date: dict[date_type, set[uuid.UUID]] = defaultdict(set)
-    tags_by_id: dict[uuid.UUID, Tag] = {}
+    raw_tag_ids_by_date: dict[date_type, set[uuid.UUID]] = defaultdict(set)
+    tags_by_slug: dict[str, list[Tag]] = defaultdict(list)
     for entry_date, tag in tag_result.all():
-        tag_ids_by_date[entry_date].add(tag.id)
-        tags_by_id[tag.id] = tag
+        raw_tag_ids_by_date[entry_date].add(tag.id)
+        tags_by_slug[tag.slug].append(tag)
+
+    tag_aliases, tags_by_id = _canonicalize_tags_by_slug(tags_by_slug)
+    tag_ids_by_date = {
+        entry_date: {tag_aliases.get(tag_id, tag_id) for tag_id in tag_ids}
+        for entry_date, tag_ids in raw_tag_ids_by_date.items()
+    }
 
     daily_entries = [
         DailyTagSet(

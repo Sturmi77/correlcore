@@ -9,6 +9,7 @@ from httpx import AsyncClient
 
 from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
+from app.models.entry import EntrySlot
 from app.models.insight import InsightType
 from app.models.tag import TagCategory
 from app.models.user import User
@@ -280,6 +281,47 @@ async def test_symptom_tag_cooccurrence_service_canonicalizes_tag_overrides() ->
     assert response.cells[0].tag.tag_id == override_tag.id
     assert response.cells[0].tag.slug == "stress"
     assert response.cells[0].co_count == 10
+
+
+@pytest.mark.asyncio
+async def test_symptom_tag_cooccurrence_service_collapses_multiple_slots_per_day() -> None:
+    user = make_user()
+    symptom = make_symptom(user=None, is_default=True, slug="headache", name="Headache")
+    tag = make_tag(user, slug="stress", name="Stress", category=TagCategory.WORK)
+    start = date(2026, 1, 1)
+    entries = []
+    symptom_rows = []
+    tag_rows = []
+    for offset in range(40):
+        entry_date = start + timedelta(days=offset)
+        if offset < 10:
+            morning = make_entry(user, entry_date=entry_date, slot=EntrySlot.MORNING)
+            evening = make_entry(user, entry_date=entry_date, slot=EntrySlot.EVENING)
+            entries.extend([morning, evening])
+            symptom_rows.append((morning.id, symptom))
+            tag_rows.append((evening.id, tag))
+        else:
+            entries.append(make_entry(user, entry_date=entry_date))
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(entries),
+            _row_result(tag_rows),
+            _row_result(symptom_rows),
+        ]
+    )
+
+    response = await get_symptom_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="90d",
+        min_count=5,
+        as_of=date(2026, 2, 9),
+    )
+
+    assert len(response.cells) == 1
+    assert response.cells[0].co_count == 10
+    assert response.cells[0].total_count == 40
 
 
 @pytest.mark.asyncio
