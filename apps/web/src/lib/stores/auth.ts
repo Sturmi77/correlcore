@@ -19,6 +19,7 @@ import {
   type LoginPayload,
   type UserResponse,
 } from '$lib/api/auth';
+import { resetInsightStore } from '$lib/stores/insights';
 
 export type AuthState =
   | { status: 'loading' }
@@ -57,6 +58,7 @@ export async function hydrate(): Promise<AuthState> {
 
 export async function login(payload: LoginPayload): Promise<UserResponse> {
   const res = await apiLogin(payload);
+  resetInsightStore();
   _auth.set({ status: 'authenticated', user: res.user });
   return res.user;
 }
@@ -67,6 +69,7 @@ export async function logout(): Promise<void> {
   } catch {
     // Best-effort — even if the call fails, clear local state.
   }
+  resetInsightStore();
   _auth.set({ status: 'anonymous' });
 }
 
@@ -75,6 +78,7 @@ export async function logout(): Promise<void> {
  * (e.g. after verify-email + login in the same request chain).
  */
 export function setUser(user: UserResponse): void {
+  resetInsightStore();
   _auth.set({ status: 'authenticated', user });
 }
 
