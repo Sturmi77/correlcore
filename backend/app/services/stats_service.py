@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.entry import Entry
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
+from app.models.user_preference import UserPreference
 from app.schemas.stats import (
     COOCCURRENCE_RANGE_DAYS,
     EntryStreakResponse,
@@ -296,6 +297,13 @@ def _cooccurrence_window(
     return start, as_of
 
 
+async def _analytics_enabled(db: AsyncSession, *, user_id: uuid.UUID) -> bool:
+    result = await db.execute(
+        select(UserPreference.analytics_enabled).where(UserPreference.user_id == user_id)
+    )
+    return result.scalar_one_or_none() is not False
+
+
 def _tag_ref(tag: Tag) -> TagCooccurrenceTagRef:
     return TagCooccurrenceTagRef(
         tag_id=tag.id,
@@ -318,6 +326,15 @@ async def get_tag_cooccurrence(
 
     as_of = as_of or _today()
     start_date, end_date = _cooccurrence_window(range_, as_of)
+
+    if not await _analytics_enabled(db, user_id=user_id):
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+        )
 
     result = await db.execute(
         select(Entry.id, Tag)
@@ -397,6 +414,15 @@ async def get_symptom_tag_cooccurrence(
 
     as_of = as_of or _today()
     start_date, end_date = _cooccurrence_window(range_, as_of)
+
+    if not await _analytics_enabled(db, user_id=user_id):
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+        )
 
     entry_result = await db.execute(
         select(Entry).where(

@@ -38,6 +38,12 @@ def _scalar_result(values: list[object]) -> MagicMock:
     return result
 
 
+def _scalar_one_or_none_result(value: object) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
+    return result
+
+
 def _entry(
     day: date,
     *,
@@ -181,6 +187,7 @@ async def test_symptom_tag_cooccurrence_service_returns_cells() -> None:
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
+            _scalar_one_or_none_result(True),
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result(symptom_rows),
@@ -202,7 +209,7 @@ async def test_symptom_tag_cooccurrence_service_returns_cells() -> None:
     assert cell.tag.slug == "stress"
     assert cell.co_count == 10
     assert cell.lift > 1.67
-    symptom_stmt = db.execute.await_args_list[2].args[0]
+    symptom_stmt = db.execute.await_args_list[3].args[0]
     assert "entry_symptoms.intensity > :intensity_1" in str(symptom_stmt.whereclause)
 
 
@@ -224,6 +231,7 @@ async def test_symptom_tag_cooccurrence_service_applies_min_count_to_cells() -> 
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
+            _scalar_one_or_none_result(True),
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result(symptom_rows),
@@ -239,6 +247,27 @@ async def test_symptom_tag_cooccurrence_service_applies_min_count_to_cells() -> 
     )
 
     assert response.cells == []
+
+
+@pytest.mark.asyncio
+async def test_symptom_tag_cooccurrence_service_skips_when_analytics_disabled() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_one_or_none_result(False))
+
+    response = await get_symptom_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="90d",
+        min_count=3,
+        as_of=date(2026, 2, 9),
+    )
+
+    assert response.range == "90d"
+    assert response.start_date == date(2025, 11, 12)
+    assert response.end_date == date(2026, 2, 9)
+    assert response.cells == []
+    assert db.execute.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -263,6 +292,7 @@ async def test_symptom_tag_cooccurrence_service_canonicalizes_tag_overrides() ->
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
+            _scalar_one_or_none_result(True),
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result(symptom_rows),
@@ -305,6 +335,7 @@ async def test_symptom_tag_cooccurrence_service_collapses_multiple_slots_per_day
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
+            _scalar_one_or_none_result(True),
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result(symptom_rows),
