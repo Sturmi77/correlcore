@@ -1,4 +1,8 @@
 <script lang="ts">
+  /**
+   * Legacy/inactive: milestones are now inline inside the compact stage header.
+   * Keep this component only for reference tests until the old phase UI is removed.
+   */
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightMaturity } from '$lib/api/insights';

@@ -199,9 +199,6 @@
         />
         <span>{$_('settings.analysis.analytics_enabled')}</span>
       </label>
-      <div class="settings__downloads">
-        <a class="btn variant-soft-primary" href="/insights">{$_('settings.analysis.insights')}</a>
-      </div>
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
       {/if}

@@ -11,9 +11,6 @@
     <p class="first-week-banner__body">{$_('home.first_week_banner.body')}</p>
   </div>
   <div class="first-week-banner__actions">
-    <a class="first-week-banner__link" href="/insights">
-      {$_('home.first_week_banner.view')}
-    </a>
     <button
       class="first-week-banner__dismiss"
       type="button"
@@ -51,8 +48,7 @@
     font-weight: 700;
   }
 
-  .first-week-banner__body,
-  .first-week-banner__link {
+  .first-week-banner__body {
     font-size: 0.78rem;
   }
 
@@ -66,11 +62,6 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-  }
-
-  .first-week-banner__link {
-    font-weight: 700;
-    color: var(--color-primary);
   }
 
   .first-week-banner__dismiss {

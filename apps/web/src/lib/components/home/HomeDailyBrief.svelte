@@ -62,7 +62,6 @@
       <p>{$_('home.brief.label')}</p>
       <h2>{$_('home.brief.heading')}</h2>
     </div>
-    <a href="/insights">{$_('home.explore_insights')}</a>
   </header>
 
   <div class="daily-brief__insight">
@@ -128,13 +127,6 @@
   .daily-brief__header h2 {
     margin-top: var(--space-1);
     font-size: var(--text-lg);
-  }
-
-  .daily-brief__header a {
-    color: var(--color-primary);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    white-space: nowrap;
   }
 
   .daily-brief__insight {

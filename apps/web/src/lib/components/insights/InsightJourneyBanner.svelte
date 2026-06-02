@@ -1,4 +1,8 @@
 <script lang="ts">
+  /**
+   * Legacy/inactive: route screens now use the compact InsightStageHeader.
+   * Keep this component only for reference tests until the old phase UI is removed.
+   */
   import { _ } from 'svelte-i18n';
   import type { InsightMaturity, InsightMaturityPhase } from '$lib/api/insights';
   import InsightJourneyExplainer from './InsightJourneyExplainer.svelte';

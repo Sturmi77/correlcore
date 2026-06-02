@@ -26,6 +26,11 @@ describe('screen chrome contract', () => {
     expect(routeSources.settings).not.toContain('href="/">{$_(\'nav.home\')}');
   });
 
+  it('does not duplicate Insights navigation from Settings', () => {
+    expect(routeSources.settings).not.toContain('href="/insights"');
+    expect(routeSources.settings).not.toContain('settings.analysis.insights');
+  });
+
   it('keeps route-level theme controls out of non-settings screens', () => {
     expect(routeSources.insights).not.toContain('ThemeToggle');
     expect(routeSources.trends).not.toContain('ThemeToggle');
