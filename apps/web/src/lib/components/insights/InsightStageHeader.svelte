@@ -46,17 +46,19 @@
     <div class="stage__status">
       <span class="stage__marker" aria-hidden="true">{maturity.phase_index}/4</span>
       <div class="stage__copy">
-        <p class="stage__label">{$_('insights.stage.aria_label')}</p>
-        <h2>{phaseLabel}</h2>
-        <p data-testid="insight-stage-meta">
+        <p class="stage__label">{$_('insights.stage.readiness_label')}</p>
+        <p class="stage__line" data-testid="insight-stage-meta">
+          <strong>{phaseLabel}</strong>
+          <span aria-hidden="true"> · </span>
           {#if maturity.phase === 'robust'}
             {$_('maturity.journey.robust_meta', {
               values: { current: maturity.current_entries },
             })}
           {:else}
-            {$_('maturity.journey.entries_until_next', {
+            {$_('maturity.journey.compact_entries_until_next', {
               values: {
                 current: maturity.current_entries,
+                next: maturity.next_phase_at ?? maturity.current_entries,
                 remaining: maturity.entries_until_next ?? 0,
                 nextPhase: maturity.next_phase_label ?? '',
               },
@@ -160,8 +162,7 @@
   }
 
   .stage__label,
-  .stage__copy h2,
-  .stage__copy p,
+  .stage__line,
   .stage__milestone {
     margin: 0;
   }
@@ -173,16 +174,16 @@
     text-transform: uppercase;
   }
 
-  .stage__copy h2 {
-    margin-top: 0;
-    font-size: var(--text-base);
-  }
-
-  .stage__copy p,
+  .stage__line,
   .stage__milestone {
     color: var(--color-text-muted);
     font-size: var(--text-xs);
     line-height: 1.35;
+  }
+
+  .stage__line strong {
+    color: var(--color-text);
+    font-weight: 700;
   }
 
   .stage__controls {

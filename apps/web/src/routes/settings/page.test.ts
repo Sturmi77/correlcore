@@ -106,7 +106,7 @@ describe('/settings Sprint 7', () => {
     await fireEvent.click(screen.getByTestId('language-en'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('language-en').classList.contains('active')).toBe(true);
+      expect(screen.getByTestId('language-en').getAttribute('aria-pressed')).toBe('true');
     });
   });
 });

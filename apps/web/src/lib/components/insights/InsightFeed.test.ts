@@ -171,14 +171,14 @@ describe('InsightFeed', () => {
   });
 
   // ── Header ────────────────────────────────────────────────────────
-  it('renders feed title', () => {
+  it('does not render a duplicate screen title', () => {
     render(InsightFeed, { props: { insights: [] } });
-    expect(screen.getByTestId('insight-feed-title')).toBeTruthy();
+    expect(screen.queryByTestId('insight-feed-title')).toBeNull();
   });
 
-  it('renders subtitle with entry count', () => {
+  it('renders compact context with entry count', () => {
     render(InsightFeed, { props: { insights: [], entryCount: 42 } });
-    expect(screen.getByTestId('insight-feed-subtitle')).toBeTruthy();
+    expect(screen.getByTestId('insight-feed-context')).toBeTruthy();
   });
 
   it('keeps readiness out of the feed card stack', () => {

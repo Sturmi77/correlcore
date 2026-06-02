@@ -38,6 +38,7 @@
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
@@ -60,6 +61,8 @@
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
 
+  type DetailView = 'findings' | 'matrix';
+
   let insights: InsightResponse[] = [];
   let loading = false;
   let error: string | null = null;
@@ -68,7 +71,7 @@
   let entryCount = 0;
   let dayEntryDates: string[] = [];
   let inactiveTagIds: string[] = [];
-  let detailView: 'findings' | 'matrix' = 'findings';
+  let detailView: DetailView = 'findings';
   let cooccurrenceRange: TagCooccurrenceRange = '90d';
   let cooccurrence: TagCooccurrenceResponse | null = null;
   let cooccurrenceLoading = false;
@@ -85,6 +88,10 @@
   let showInsightSymptoms = true;
 
   const INSIGHT_SYMPTOMS_STORAGE_KEY = 'cc_insights_symptoms';
+  const detailViewTabs: { id: DetailView; label: string }[] = [
+    { id: 'findings', label: 'insights.page.findings_view' },
+    { id: 'matrix', label: 'insights.page.matrix_view' },
+  ];
 
   function setShowInsightSymptoms(value: boolean): void {
     showInsightSymptoms = value;
@@ -268,9 +275,6 @@
   onMount(() => {
     showInsightSymptoms = localStorage.getItem(INSIGHT_SYMPTOMS_STORAGE_KEY) !== 'false';
     void loadInsights();
-    void loadCooccurrence();
-    void loadTagClusters();
-    void loadSymptomCooccurrence();
   });
 
   $: showMaturityMilestone = shouldShowMaturityMilestone(
@@ -305,6 +309,28 @@
       // Optimistic dismissal for this session.
     }
   }
+
+  function handleAnalyticsToggle(event: Event): void {
+    const open = event.currentTarget instanceof HTMLDetailsElement && event.currentTarget.open;
+    if (!open) return;
+    if (!cooccurrence && !cooccurrenceLoading) {
+      void loadCooccurrence();
+    }
+    if (!tagClusters && !tagClustersLoading) {
+      void loadTagClusters();
+    }
+    if (!symptomCooccurrence && !symptomCooccurrenceLoading) {
+      void loadSymptomCooccurrence();
+    }
+  }
+
+  $: detailViewOptions = detailViewTabs.map(
+    (tab): TabBarOption => ({
+      id: tab.id,
+      label: $_(tab.label),
+      testId: `insights-view-${tab.id}`,
+    })
+  );
 </script>
 
 <svelte:head>
@@ -330,30 +356,13 @@
       />
     {/if}
 
-    <div class="insights-page__view-toggle" aria-label={$_('insights.page.detail_views')}>
-      <button
-        type="button"
-        class:insights-page__view-toggle--active={detailView === 'findings'}
-        on:click={() => (detailView = 'findings')}
-      >
-        {$_('insights.page.findings_view')}
-      </button>
-      <button
-        type="button"
-        class:insights-page__view-toggle--active={detailView === 'matrix'}
-        on:click={() => (detailView = 'matrix')}
-      >
-        {$_('insights.page.matrix_view')}
-      </button>
-      <label class="insights-page__symptom-toggle">
-        <input
-          type="checkbox"
-          checked={showInsightSymptoms}
-          on:change={(event) => setShowInsightSymptoms(event.currentTarget.checked)}
-        />
-        {$_('insights.page.symptoms_toggle')}
-      </label>
-    </div>
+    <TabBar
+      value={detailView}
+      options={detailViewOptions}
+      ariaLabel={$_('insights.page.detail_views')}
+      testId="insights-view-tabs"
+      on:change={(event) => (detailView = event.detail.value as DetailView)}
+    />
 
     {#if detailView === 'matrix'}
       <InsightMatrix {insights} />
@@ -367,30 +376,49 @@
         {inactiveTagIds}
         on:retry={loadInsights}
       />
-      {#if showSymptomAnalytics}
-        <SymptomAnalyticsSection
-          heatmap={symptomHeatmap}
-          cooccurrence={symptomCooccurrence}
-          cooccurrenceLoading={symptomCooccurrenceLoading}
-          phase={insightMaturity?.phase ?? null}
-          {loading}
-        />
-      {/if}
     {/if}
 
-    <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
+    <details class="insights-page__analytics" on:toggle={handleAnalyticsToggle}>
+      <summary>
+        <span>{$_('insights.page.analytics_summary')}</span>
+        <small>{$_('insights.page.analytics_hint')}</small>
+      </summary>
 
-    <TagCooccurrenceHeatmap
-      data={cooccurrence}
-      loading={cooccurrenceLoading}
-      range={cooccurrenceRange}
-      on:rangeChange={(event) => {
-        cooccurrenceRange = event.detail.range;
-        void loadCooccurrence();
-        void loadSymptomCooccurrence();
-      }}
-      on:selectPair={(event) => void openCooccurrenceHistory(event)}
-    />
+      <div class="insights-page__analytics-body">
+        <label class="insights-page__layer-toggle">
+          <input
+            type="checkbox"
+            checked={showInsightSymptoms}
+            on:change={(event) => setShowInsightSymptoms(event.currentTarget.checked)}
+          />
+          <span>{$_('insights.page.symptoms_toggle')}</span>
+        </label>
+
+        {#if showSymptomAnalytics}
+          <SymptomAnalyticsSection
+            heatmap={symptomHeatmap}
+            cooccurrence={symptomCooccurrence}
+            cooccurrenceLoading={symptomCooccurrenceLoading}
+            phase={insightMaturity?.phase ?? null}
+            {loading}
+          />
+        {/if}
+
+        <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
+
+        <TagCooccurrenceHeatmap
+          data={cooccurrence}
+          loading={cooccurrenceLoading}
+          range={cooccurrenceRange}
+          on:rangeChange={(event) => {
+            cooccurrenceRange = event.detail.range;
+            void loadCooccurrence();
+            void loadSymptomCooccurrence();
+          }}
+          on:selectPair={(event) => void openCooccurrenceHistory(event)}
+        />
+      </div>
+    </details>
 
     <CooccurrenceEntrySheet
       open={cooccurrenceHistoryOpen}
@@ -411,38 +439,54 @@
     padding: var(--space-4) 0 var(--space-8);
   }
 
-  .insights-page__view-toggle {
-    display: flex;
-    gap: var(--space-2);
-    padding: var(--space-1);
-    border: 1px solid var(--color-border);
+  .insights-page__analytics {
+    border: 1px solid var(--color-border-chart);
     border-radius: var(--radius-md);
-    background: var(--color-surface);
-    width: fit-content;
+    background: var(--color-surface-chart-bg);
   }
 
-  .insights-page__view-toggle button {
+  .insights-page__analytics summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
     min-height: 44px;
-    padding: 0 var(--space-3);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
     font-weight: 700;
   }
 
-  .insights-page__symptom-toggle {
+  .insights-page__analytics summary small {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    text-align: right;
+  }
+
+  .insights-page__analytics-body {
+    display: grid;
+    gap: var(--space-4);
+    padding: 0 var(--space-4) var(--space-4);
+  }
+
+  .insights-page__layer-toggle {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
-    padding: 0 var(--space-3);
+    gap: var(--space-2);
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     font-weight: 700;
   }
 
-  .insights-page__view-toggle--active {
-    background: var(--color-primary-highlight);
-    color: var(--color-primary) !important;
+  @media (max-width: 420px) {
+    .insights-page__analytics summary {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .insights-page__analytics summary small {
+      text-align: left;
+    }
   }
 </style>

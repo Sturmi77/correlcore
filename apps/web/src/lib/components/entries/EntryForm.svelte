@@ -26,6 +26,7 @@
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
   import SaveStatusBadge from '$lib/components/entries/SaveStatusBadge.svelte';
   import DayDeltaCard from '$lib/components/entries/DayDeltaCard.svelte';
+  import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import {
     fetchEntryDelta,
@@ -537,14 +538,16 @@
   </section>
 
   {#if mode === 'sheet' && !showMore}
-    <button
+    <Button
       type="button"
-      class="entry-more-toggle btn variant-soft-surface"
+      variant="ghost"
+      fullWidth
+      className="entry-more-toggle"
       data-testid="entry-more-toggle"
       on:click={() => (showMore = true)}
     >
       {$_('entry.more_toggle')}
-    </button>
+    </Button>
   {/if}
 
   {#if mode === 'page' || showMore}
@@ -619,9 +622,9 @@
   {/if}
 
   <div class="entry-actions">
-    <button type="button" class="btn" on:click={onCancel} data-testid="entry-cancel">
+    <Button type="button" variant="secondary" on:click={onCancel} data-testid="entry-cancel">
       {mode === 'sheet' ? $_('entry.sheet.done') : $_('entry.cancel')}
-    </button>
+    </Button>
   </div>
 </form>
 
@@ -640,7 +643,7 @@
     margin: 0;
   }
 
-  .entry-more-toggle {
+  :global(.entry-more-toggle) {
     width: 100%;
     justify-content: center;
   }

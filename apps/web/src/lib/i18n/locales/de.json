@@ -341,6 +341,7 @@
     "controls": "Trend-Filter",
     "category": "Kategorie",
     "category_all": "Alle Tags",
+    "metrics_label": "Metriken",
     "empty": "Noch keine Eintr\u00e4ge im gew\u00e4hlten Zeitraum.",
     "empty_cta": "Eintrag erfassen",
     "range": {
@@ -623,10 +624,10 @@
       "hint": "Trends, Haeufigkeiten und einfache Vergleiche werden aussagekraeftiger."
     },
     "provisional": {
-      "label": "Vorlaeufige Erkenntnisse",
-      "range": "14-29 Eintraege",
-      "description": "Zusammenhaenge entstehen. Mehr Daten koennen sie bestaetigen oder veraendern.",
-      "hint": "Korrelationen werden mit ausdruecklicher Unsicherheit gezeigt."
+      "label": "Vorläufige Erkenntnisse",
+      "range": "14-29 Einträge",
+      "description": "Zusammenhänge entstehen. Mehr Daten können sie bestätigen oder verändern.",
+      "hint": "Korrelationen werden mit ausdrücklicher Unsicherheit gezeigt."
     },
     "robust": {
       "label": "Robuste Erkenntnisse",
@@ -637,8 +638,9 @@
     "journey": {
       "aria_label": "Fortschritt der Erkenntnisreife",
       "phase_heading": "Phase {phaseIndex} von 4: {label}",
-      "entries_until_next": "{current} Eintraege erfasst · noch {remaining} bis {nextPhase}",
-      "robust_meta": "{current} Eintraege erfasst · volle Insight-Engine aktiv",
+      "entries_until_next": "{current} Einträge erfasst · noch {remaining} bis {nextPhase}",
+      "compact_entries_until_next": "{current}/{next} Einträge · noch {remaining} bis {nextPhase}",
+      "robust_meta": "{current} Einträge erfasst · volle Insight-Engine aktiv",
       "help_cta": "Wie entstehen Erkenntnisse?",
       "collapse": "Einklappen",
       "expand": "Aufklappen",
@@ -651,7 +653,7 @@
     },
     "milestone": {
       "collecting_to_early_patterns": "Erste Muster sind sichtbar.",
-      "early_patterns_to_provisional": "Vorlaeufige Erkenntnisse sind verfuegbar.",
+      "early_patterns_to_provisional": "Vorläufige Erkenntnisse sind verfügbar.",
       "provisional_to_robust": "Robuste Erkenntnisse sind verfuegbar."
     },
     "milestone_card": {
@@ -663,8 +665,8 @@
         "body": "Du hast {n} Eintraege erfasst. Trends und Haeufigkeiten werden nun als vorsichtige Hinweise eingeordnet."
       },
       "provisional": {
-        "title": "Vorlaeufige Erkenntnisse sind verfuegbar.",
-        "body": "Mit {n} Eintraegen koennen erste Zusammenhaenge erscheinen. Sie bleiben ausdruecklich vorlaeufig."
+        "title": "Vorläufige Erkenntnisse sind verfügbar.",
+        "body": "Mit {n} Einträgen können erste Zusammenhänge erscheinen. Sie bleiben ausdrücklich vorläufig."
       },
       "robust": {
         "title": "Robustere Erkenntnisse sind verfuegbar.",
@@ -676,8 +678,8 @@
       "collecting_tooltip": "Noch keine Erkenntniskarten. Wir bauen zuerst deine Grundlage auf.",
       "early_patterns": "Erster Hinweis · {n} Eintraege",
       "early_patterns_tooltip": "Basierend auf begrenzten Daten. Muster koennen sich mit weiteren Eintraegen aendern.",
-      "provisional": "Vorlaeufig · {n} Eintraege",
-      "provisional_tooltip": "Ein frueher Zusammenhang ist sichtbar. Mehr Daten helfen bei der Einordnung.",
+      "provisional": "Vorläufig · {n} Einträge",
+      "provisional_tooltip": "Ein früher Zusammenhang ist sichtbar. Mehr Daten helfen bei der Einordnung.",
       "robust": "Stabil · {n} Eintraege",
       "robust_tooltip": "Stabileres Muster auf Basis ausreichender Tracking-Historie."
     }
@@ -691,12 +693,15 @@
       "empty": "Noch nicht genug Daten fuer aktuelle Erkenntnisse.",
       "list_heading": "Aktuelle Erkenntnisse",
       "detail_views": "Detailansichten fuer Erkenntnisse",
-      "findings_view": "Erkenntnisse",
+      "findings_view": "Findings",
       "matrix_view": "Matrix",
-      "symptoms_toggle": "Symptome einblenden"
+      "symptoms_toggle": "Symptome einblenden",
+      "analytics_summary": "Analyse vertiefen",
+      "analytics_hint": "Symptome und gemeinsame Tags"
     },
     "stage": {
-      "aria_label": "Erkenntnisbereitschaft"
+      "aria_label": "Erkenntnisbereitschaft",
+      "readiness_label": "Datenbasis"
     },
     "feed": {
       "aria_label": "Erkenntnisse Feed",
@@ -721,8 +726,8 @@
           "body": "Trend- und Haeufigkeitsdaten werden aussagekraeftiger. Erkenntniskarten bleiben vorsichtig, bis mehr Daten vorliegen."
         },
         "provisional": {
-          "title": "Vorlaeufige Erkenntnisse brauchen passende Daten.",
-          "body": "Wenn genuegend gemeinsame Datenpunkte fuer ein Thema vorliegen, erscheinen hier vorsichtig formulierte Zusammenhaenge."
+          "title": "Noch keine belastbaren Zusammenhänge für diese Auswahl.",
+          "body": "Wenn genügend gemeinsame Datenpunkte für ein Thema vorliegen, erscheinen hier vorsichtig formulierte Zusammenhänge."
         },
         "robust": {
           "title": "Keine passenden Erkenntnisse in dieser Ansicht.",

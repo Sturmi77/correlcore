@@ -341,6 +341,7 @@
     "controls": "Trend filters",
     "category": "Category",
     "category_all": "All tags",
+    "metrics_label": "Metrics",
     "empty": "No entries in the selected range yet.",
     "empty_cta": "Log an entry",
     "range": {
@@ -638,6 +639,7 @@
       "aria_label": "Insight maturity progress",
       "phase_heading": "Phase {phaseIndex} of 4: {label}",
       "entries_until_next": "{current} entries tracked · {remaining} more until {nextPhase}",
+      "compact_entries_until_next": "{current}/{next} entries · {remaining} more until {nextPhase}",
       "robust_meta": "{current} entries tracked · full insight engine active",
       "help_cta": "How do insights work?",
       "collapse": "Collapse",
@@ -693,10 +695,13 @@
       "detail_views": "Insight detail views",
       "findings_view": "Findings",
       "matrix_view": "Matrix",
-      "symptoms_toggle": "Blend in symptoms"
+      "symptoms_toggle": "Blend in symptoms",
+      "analytics_summary": "Deepen analysis",
+      "analytics_hint": "Symptoms and shared tags"
     },
     "stage": {
-      "aria_label": "Insight readiness"
+      "aria_label": "Insight readiness",
+      "readiness_label": "Data basis"
     },
     "feed": {
       "aria_label": "Insights feed",
@@ -721,7 +726,7 @@
           "body": "Trend and frequency data are becoming more meaningful. Insight cards stay cautious until more data is available."
         },
         "provisional": {
-          "title": "Provisional insights need matching data.",
+          "title": "No reliable relationships for this selection yet.",
           "body": "When enough shared data points exist for a topic, cautiously worded relationships appear here."
         },
         "robust": {
