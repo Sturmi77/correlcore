@@ -4,6 +4,9 @@
    *
    * Descriptive progress toward first insight (30 day entries).
    * No imperatives, urgency, or emoji.
+   *
+   * Legacy/inactive: readiness now appears only in the compact stage header.
+   * Keep this component only for reference tests until the old phase UI is removed.
    */
   import { _ } from 'svelte-i18n';
   import type { InsightTier } from '$lib/api/insights';

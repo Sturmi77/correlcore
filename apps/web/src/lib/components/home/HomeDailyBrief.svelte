@@ -62,7 +62,6 @@
       <p>{$_('home.brief.label')}</p>
       <h2>{$_('home.brief.heading')}</h2>
     </div>
-    <a href="/insights">{$_('home.explore_insights')}</a>
   </header>
 
   <div class="daily-brief__insight">

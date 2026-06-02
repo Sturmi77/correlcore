@@ -67,7 +67,6 @@
         </div>
       </dl>
       <p class="home-insight__disclaimer">{$_('disclaimer.medical')}</p>
-      <a class="home-insight__link" href="/insights">{$_('home.insight.more')}</a>
     </div>
   {:else}
     <div class="home-insight__body home-insight__body--muted">
