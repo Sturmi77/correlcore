@@ -154,13 +154,6 @@
     margin: 0;
   }
 
-  .home-insight__link {
-    width: fit-content;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--color-primary);
-  }
-
   .home-insight__statement {
     font-size: var(--text-sm, 0.88rem);
     line-height: 1.45;

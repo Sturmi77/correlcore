@@ -48,8 +48,7 @@
     font-weight: 700;
   }
 
-  .first-week-banner__body,
-  .first-week-banner__link {
+  .first-week-banner__body {
     font-size: 0.78rem;
   }
 
@@ -63,11 +62,6 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-  }
-
-  .first-week-banner__link {
-    font-weight: 700;
-    color: var(--color-primary);
   }
 
   .first-week-banner__dismiss {

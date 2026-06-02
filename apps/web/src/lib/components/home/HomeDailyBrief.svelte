@@ -129,13 +129,6 @@
     font-size: var(--text-lg);
   }
 
-  .daily-brief__header a {
-    color: var(--color-primary);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    white-space: nowrap;
-  }
-
   .daily-brief__insight {
     display: grid;
     gap: var(--space-1);
