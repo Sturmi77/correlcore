@@ -296,7 +296,7 @@
       />
 
       {#if activeTab === 'compare'}
-        <div class="trends__metric-toggles">
+        <div class="trends__compare-controls">
           {#if smoothingAvailable}
             <SegmentedControl
               value={smoothing ? 'smoothed' : 'raw'}
@@ -306,16 +306,19 @@
               on:change={(event) => setSmoothing(event.detail.value === 'smoothed')}
             />
           {/if}
-          {#each Object.entries(metricLabels) as [key, label]}
-            <label>
-              <input
-                type="checkbox"
-                checked={metrics[key as MetricKey]}
-                on:change={() => toggleMetric(key as MetricKey)}
-              />
-              {$_(label)}
-            </label>
-          {/each}
+          <fieldset class="trends__metric-group">
+            <legend>{$_('trends.metrics_label')}</legend>
+            {#each Object.entries(metricLabels) as [key, label]}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={metrics[key as MetricKey]}
+                  on:change={() => toggleMetric(key as MetricKey)}
+                />
+                {$_(label)}
+              </label>
+            {/each}
+          </fieldset>
         </div>
         <label class="trends__select">
           <span>{$_('trends.category')}</span>
@@ -480,14 +483,31 @@
     backdrop-filter: blur(14px);
   }
 
-  .trends__metric-toggles {
+  .trends__compare-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+    align-items: center;
     font-size: 0.86rem;
   }
 
-  .trends__metric-toggles label,
+  .trends__metric-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .trends__metric-group legend {
+    width: 100%;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+
+  .trends__metric-group label,
   .trends__select {
     min-height: 44px;
     display: inline-flex;

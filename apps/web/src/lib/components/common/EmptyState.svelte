@@ -5,10 +5,11 @@
   export let body = '';
   export let actionLabel = '';
   export let actionHref = '';
+  export let compact = false;
   export let testId: string | undefined = undefined;
 </script>
 
-<div class="empty-state" data-testid={testId}>
+<div class="empty-state" class:empty-state--compact={compact} data-testid={testId}>
   {#if $$slots.icon}
     <div class="empty-state__icon" aria-hidden="true">
       <slot name="icon" />
@@ -60,5 +61,18 @@
     max-width: 36ch;
     font-size: var(--text-sm);
     line-height: 1.45;
+  }
+
+  .empty-state--compact {
+    align-items: flex-start;
+    padding: var(--space-5) var(--space-4);
+    border: 1px solid var(--color-border-chart);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-chart-bg);
+    text-align: left;
+  }
+
+  .empty-state--compact .empty-state__body {
+    max-width: 48ch;
   }
 </style>

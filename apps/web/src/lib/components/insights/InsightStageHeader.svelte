@@ -28,7 +28,6 @@
   }
 
   $: phaseLabel = $_(`maturity.${maturity.phase}.label`);
-  $: phaseDescription = $_(maturity.user_message_key);
   $: fillPercent = progressPercent(maturity);
   $: milestoneKey = maturityMilestoneKey(maturity.phase);
   $: milestoneTitle = milestoneKey ? $_(`maturity.milestone_card.${maturity.phase}.title`) : '';
@@ -46,44 +45,48 @@
   aria-label={$_('insights.stage.aria_label')}
 >
   <div class="stage__main">
-    <div class="stage__marker" aria-hidden="true">{maturity.phase_index}</div>
+    <div class="stage__marker" aria-hidden="true">{maturity.phase_index}/4</div>
     <div class="stage__copy">
-      <p class="stage__label">
-        {$_('maturity.journey.phase_heading', {
-          values: { phaseIndex: maturity.phase_index, label: phaseLabel },
-        })}
+      <p class="stage__label">{$_('insights.stage.readiness_label')}</p>
+      <p class="stage__line" data-testid="insight-stage-meta">
+        <strong>{phaseLabel}</strong>
+        <span aria-hidden="true"> · </span>
+        {#if maturity.phase === 'robust'}
+          {$_('maturity.journey.robust_meta', {
+            values: { current: maturity.current_entries },
+          })}
+        {:else}
+          {$_('maturity.journey.compact_entries_until_next', {
+            values: {
+              current: maturity.current_entries,
+              next: maturity.next_phase_at ?? maturity.current_entries,
+              remaining: maturity.entries_until_next ?? 0,
+              nextPhase: maturity.next_phase_label ?? '',
+            },
+          })}
+        {/if}
       </p>
-      <h2>{phaseLabel}</h2>
-      <p>{phaseDescription}</p>
     </div>
+    <button
+      class="stage__help"
+      type="button"
+      aria-label={$_('maturity.journey.help_cta')}
+      title={$_('maturity.journey.help_cta')}
+      on:click={() => (explainerOpen = true)}
+    >
+      ?
+    </button>
   </div>
 
-  <div class="stage__meta">
-    <div
-      class="stage__track"
-      role="meter"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={fillPercent}
-      aria-label={$_('maturity.journey.progress_aria')}
-    >
-      <span style={`width: ${fillPercent}%`}></span>
-    </div>
-    <p data-testid="insight-stage-meta">
-      {#if maturity.phase === 'robust'}
-        {$_('maturity.journey.robust_meta', {
-          values: { current: maturity.current_entries },
-        })}
-      {:else}
-        {$_('maturity.journey.entries_until_next', {
-          values: {
-            current: maturity.current_entries,
-            remaining: maturity.entries_until_next ?? 0,
-            nextPhase: maturity.next_phase_label ?? '',
-          },
-        })}
-      {/if}
-    </p>
+  <div
+    class="stage__track"
+    role="meter"
+    aria-valuemin={0}
+    aria-valuemax={100}
+    aria-valuenow={fillPercent}
+    aria-label={$_('maturity.journey.progress_aria')}
+  >
+    <span style={`width: ${fillPercent}%`}></span>
   </div>
 
   {#if showMilestone && milestoneKey}
@@ -102,18 +105,15 @@
     </div>
   {/if}
 
-  <button class="stage__text-button" type="button" on:click={() => (explainerOpen = true)}>
-    {$_('maturity.journey.help_cta')}
-  </button>
-
   <InsightJourneyExplainer open={explainerOpen} on:close={() => (explainerOpen = false)} />
 </section>
 
 <style>
   .stage {
-    display: grid;
-    gap: var(--space-3);
-    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
     border: 1px solid var(--color-border-chart);
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
@@ -121,31 +121,31 @@
 
   .stage__main {
     display: flex;
-    gap: var(--space-3);
-    align-items: flex-start;
+    gap: var(--space-2);
+    align-items: center;
   }
 
   .stage__marker {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
+    min-width: 3rem;
     height: 2rem;
     flex: 0 0 auto;
     border-radius: var(--radius-full);
     background: var(--color-primary);
     color: var(--color-text-inverse);
+    font-size: var(--text-sm);
     font-weight: 700;
   }
 
   .stage__copy {
+    flex: 1;
     min-width: 0;
   }
 
   .stage__label,
-  .stage__copy h2,
-  .stage__copy p,
-  .stage__meta p,
+  .stage__line,
   .stage__milestone p {
     margin: 0;
   }
@@ -157,26 +157,40 @@
     text-transform: uppercase;
   }
 
-  .stage__copy h2 {
-    margin-top: var(--space-1);
-    font-size: var(--text-lg);
-  }
-
-  .stage__copy p,
-  .stage__meta p,
+  .stage__line,
   .stage__milestone p {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
-    line-height: 1.45;
+    line-height: 1.35;
   }
 
-  .stage__meta {
-    display: grid;
-    gap: var(--space-2);
+  .stage__line strong {
+    color: var(--color-text);
+    font-weight: 700;
+  }
+
+  .stage__help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    font-size: var(--text-lg);
+    font-weight: 700;
+  }
+
+  .stage__help:hover,
+  .stage__help:focus-visible {
+    color: var(--color-primary);
+    background: var(--color-primary-highlight);
   }
 
   .stage__track {
-    height: 0.5rem;
+    height: 0.35rem;
     overflow: hidden;
     border-radius: var(--radius-full);
     background: color-mix(in srgb, var(--color-border) 55%, transparent);
@@ -210,13 +224,11 @@
 
   @media (min-width: 48rem) {
     .stage {
-      grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
-      align-items: center;
+      padding-inline: var(--space-4);
     }
 
-    .stage__milestone,
-    .stage__text-button {
-      grid-column: 1 / -1;
+    .stage__main {
+      gap: var(--space-3);
     }
   }
 </style>

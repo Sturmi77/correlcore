@@ -130,6 +130,31 @@ Required contract:
 
 ## Screen Ownership Rules
 
+## Control Semantics
+
+This contract is mandatory for all new and refactored route controls. A control's
+visual style must match its meaning, not merely its local layout.
+
+| Control            | Use for                                                                                    | Do not use for                                          |
+| ------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `TabBar`           | Switching in-screen views such as Findings/Matrix or Compare/Health/Habits                 | Filters, layer toggles, primary app navigation          |
+| `SegmentedControl` | One exclusive value such as range, smoothing mode, language, or a short mode selector      | Multi-select metrics or independent visibility toggles  |
+| Checkbox / switch  | Independent layers, persistent settings, or multi-select metric visibility                 | Navigation or mutually exclusive views                  |
+| Chips              | Fast content selection inside entry/input flows, especially tags, symptoms, and time slots | Screen navigation or analysis view switching            |
+| `Button`           | Actions, links that behave as actions, and primary/secondary CTAs                          | Passive status, placeholders, or selected state display |
+| `IconButton`       | Close, dismiss, help, info, export, and other compact tool actions                         | Unknown actions without labels/tooltips                 |
+| `Panel`            | One bounded information or tool surface                                                    | Nested cards or full-page section decoration            |
+
+Mobile-first hierarchy rule: after the screen header and at most one compact
+status/control row, the first viewport must show the screen's main value:
+content, a chart, the entry form, or a compact actionable empty state. A mobile
+viewport should never be consumed only by headings, readiness cards, and control
+rows.
+
+Route-local button groups, tab groups, view toggles, and disabled placeholder
+buttons are legacy. Replace them with the shared primitives above when touching
+the route.
+
 ### Home
 
 Home is the daily touch point. It owns:

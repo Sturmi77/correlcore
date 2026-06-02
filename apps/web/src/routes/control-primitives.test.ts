@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const trendsSource = readFileSync(resolve('src/routes/trends/+page.svelte'), 'utf8');
+const insightsRouteSource = readFileSync(resolve('src/routes/insights/+page.svelte'), 'utf8');
+const settingsSource = readFileSync(resolve('src/routes/settings/+page.svelte'), 'utf8');
 const insightFeedSource = readFileSync(
   resolve('src/lib/components/insights/InsightFeed.svelte'),
   'utf8'
@@ -24,5 +26,16 @@ describe('control primitive contract', () => {
     expect(insightFeedSource).toContain('<TabBar');
     expect(insightFeedSource).not.toContain('if-tabs');
     expect(insightFeedSource).not.toContain('if-tab');
+
+    expect(insightsRouteSource).toContain('$lib/components/common/TabBar.svelte');
+    expect(insightsRouteSource).toContain('<TabBar');
+    expect(insightsRouteSource).not.toContain('insights-page__view-toggle');
+  });
+
+  it('uses shared controls for settings selections and actions', () => {
+    expect(settingsSource).toContain('$lib/components/common/SegmentedControl.svelte');
+    expect(settingsSource).toContain('<SegmentedControl');
+    expect(settingsSource).not.toContain('settings__language button');
+    expect(settingsSource).not.toContain('class="btn');
   });
 });

@@ -196,6 +196,29 @@ Mandatory shared primitives for the next frontend hardening work:
 
 Every interactive primitive must provide a 44 x 44 px touch target, visible focus state, accessible label, and a documented variant/state model.
 
+### 4.6 GUI Consolidation Contract
+
+Accepted 2026-06-02 after mobile review of the Erkenntnisse screen.
+
+Every primary screen follows the same hierarchy:
+
+1. One screen title via `ScreenHeader`
+2. At most one compact status/control row before content
+3. The screen's main value in the first mobile viewport
+4. Secondary depth behind tabs, disclosure, or sheets
+
+Control vocabulary is fixed:
+
+- `TabBar` switches in-screen views.
+- `SegmentedControl` chooses one exclusive filter or mode.
+- Checkbox/switch controls independent layers or persistent settings.
+- Chips are fast content selection, mainly inside entry flows.
+- Buttons are actions or action-like links; disabled placeholders must not look like actions.
+
+Insights is the reference implementation: the maturity phase is context, not the
+main content. Findings or a compact empty state must appear before matrix,
+symptom, or co-occurrence analysis surfaces.
+
 ---
 
 ## 5. Screen Architecture
@@ -290,6 +313,13 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 **Purpose:** Explore all generated insights with progressive disclosure and a single readiness surface.
 
 **M5 Streamline:** `InsightStageHeader` is the only default phase/readiness surface. It replaces separate journey banner, quality meter, and standalone milestone card presentation. `InsightMatrix` remains available as a secondary drilldown, not as default viewport content.
+
+**GUI consolidation update (2026-06-02):** The maturity surface is compact on
+mobile: phase, entry count, next threshold, progress, and help affordance in one
+status row. The feed no longer renders a second screen-level "Insights" heading.
+`Findings` and `Matrix` are view tabs; metric/category filters remain inside the
+feed. Symptom context and tag co-occurrence are secondary analysis surfaces below
+the default findings flow or behind disclosure.
 
 **Layout:**
 

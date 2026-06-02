@@ -2,6 +2,8 @@
 
 Date: 2026-05-29
 
+Updated: 2026-06-02 after mobile Erkenntnisse screenshot review.
+
 ## Objective
 
 Raise the web frontend to a cleaner, more useful product level without changing
@@ -15,6 +17,21 @@ CorrelCore's core architecture:
 - The UI moves toward a calm, modern, analytical product surface.
 
 ## Current-State Findings
+
+### Erkenntnisse Mobile Screenshot (2026-06-02)
+
+The `/insights` mobile viewport was dominated by duplicated hierarchy:
+
+- route title and subtitle
+- a large readiness card headed "Vorlaeufige Erkenntnisse"
+- a mixed control row combining view tabs and an independent symptom checkbox
+- a second "Erkenntnisse" feed heading
+- a large centered empty state
+
+This made the first viewport feel like status and controls rather than a useful
+findings surface. The accepted correction is findings-first: compact maturity
+status, true view tabs, category filters inside the feed, and secondary analysis
+behind disclosure.
 
 ### Home
 
@@ -318,21 +335,37 @@ Exit criteria:
 - Scope is explicit.
 - Any deviation from current documented Trends tabs is approved/documented.
 
-### Sprint B - Insights Declutter
+### Sprint B - Insights First Viewport
 
-- Create `InsightStageHeader`.
-- Move milestone, journey progress, and quality/readiness into that single
-  component.
-- Remove `InsightQualityMeter` from `InsightFeed`.
-- Move `InsightMatrix` behind disclosure or a secondary "Matrix" view.
-- Update tests around phase visibility and no duplicate quality meter.
+- Compact `InsightStageHeader` so maturity is context, not the page's dominant
+  card.
+- Remove the duplicate feed-level "Insights" heading.
+- Use `TabBar` for Findings/Matrix and keep category filters separate inside
+  the feed.
+- Move symptom context and tag co-occurrence behind a secondary analysis
+  disclosure.
+- Update tests around duplicate headings, route-local toggles, and compact
+  empty states.
 
 Exit criteria:
 
 - One phase/readiness surface on `/insights`.
 - Insight cards become the primary content again.
+- At 375 px, the first viewport reaches findings or the empty-state explanation.
 
-### Sprint C - Useful Home
+### Sprint C - Control System Enforcement
+
+- Update `frontend/UI_COMPONENT_SYSTEM.md` with fixed control semantics.
+- Treat route-local button groups, view toggles, and disabled placeholder
+  buttons as legacy.
+- Extend source contract tests for Insights, Trends, Settings, and Entry.
+
+Exit criteria:
+
+- New/refactored controls use shared primitives.
+- Tabs, segments, switches, chips, buttons, and panels have distinct meanings.
+
+### Sprint D - Useful Home
 
 - Create `HomeDailyBrief`.
 - Use existing entries, dashboard summary, and latest insight data to show:
@@ -348,7 +381,7 @@ Exit criteria:
 - Home answers "what is useful today?"
 - CTA remains obvious but no longer monopolizes the screen.
 
-### Sprint D - Trends Compare Foundation
+### Sprint E - Trends Compare Foundation
 
 - Extract shared date/geometry utilities from `MetricTimeseries` and
   `TagHeatmap`.
@@ -361,7 +394,7 @@ Exit criteria:
 - Mood/energy/stress and tags share one range and visual timeline.
 - No horizontal overflow at 375 px.
 
-### Sprint E - Symptom Heatmap
+### Sprint F - Symptom Heatmap
 
 - Add backend symptom heatmap schema/service/endpoint.
 - Add frontend API client and tests.
@@ -373,10 +406,14 @@ Exit criteria:
 - Symptoms can be switched on/off in Trends heatmap.
 - No medical interpretation is introduced.
 
-### Sprint F - Polish & Visual QA
+### Sprint G - Entry, Settings & Visual QA
 
+- Replace action-like route-local `.btn` usage in Entry and Settings with
+  shared `Button`.
+- Keep Entry chips limited to fast input selection.
+- Replace disabled Settings placeholder buttons with passive planned-state text.
 - Render QA at 375, 768, 1280 px in light and dark mode.
-- Check Home, Insights, Trends.
+- Check Home, Insights, Trends, Entry Sheet, and Settings.
 - Run no-gamification copy tests.
 - Update `docs/FRONTEND.md`, changelog, and visual QA doc.
 

@@ -12,8 +12,12 @@
   } from '$lib/stores/devMode';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
   import Button from '$lib/components/common/Button.svelte';
+  import IconButton from '$lib/components/common/IconButton.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
+  import SegmentedControl, {
+    type SegmentedControlOption,
+  } from '$lib/components/common/SegmentedControl.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
@@ -81,6 +85,10 @@
   // Dev view availability (backend flag)
   // ---------------------------------------------------------------------------
   let devAvailable = false;
+  const localeOptions: SegmentedControlOption[] = [
+    { id: 'de', label: 'DE', testId: 'language-de' },
+    { id: 'en', label: 'EN', testId: 'language-en' },
+  ];
   const devInsightPhases: DevInsightMaturity[] = [
     'collecting',
     'early_patterns',
@@ -171,14 +179,10 @@
         <h2>{$_('settings.tracking.heading')}</h2>
         <p>{$_('settings.tracking.body')}</p>
       </div>
-      <div class="settings__downloads">
-        <a class="btn variant-soft-primary" href="/settings/tags">{$_('settings.tags.open')}</a>
-        <button class="btn variant-ghost-surface" type="button" disabled>
-          {$_('settings.tracking.symptoms_placeholder')}
-        </button>
-        <button class="btn variant-ghost-surface" type="button" disabled>
-          {$_('settings.tracking.reminders_placeholder')}
-        </button>
+      <div class="settings__actions">
+        <Button href="/settings/tags" variant="secondary">{$_('settings.tags.open')}</Button>
+        <span class="settings__placeholder">{$_('settings.tracking.symptoms_placeholder')}</span>
+        <span class="settings__placeholder">{$_('settings.tracking.reminders_placeholder')}</span>
       </div>
     </section>
 
@@ -199,8 +203,8 @@
         />
         <span>{$_('settings.analysis.analytics_enabled')}</span>
       </label>
-      <div class="settings__downloads">
-        <a class="btn variant-soft-primary" href="/insights">{$_('settings.analysis.insights')}</a>
+      <div class="settings__actions">
+        <Button href="/insights" variant="secondary">{$_('settings.analysis.insights')}</Button>
       </div>
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
@@ -213,34 +217,37 @@
         <h2>{$_('settings.export.heading')}</h2>
         <p>{$_('settings.export.body')}</p>
       </div>
-      <div class="settings__downloads">
-        <button
-          class="btn variant-filled-primary"
+      <div class="settings__actions">
+        <Button
+          variant="primary"
           type="button"
+          loading={busy === 'zip'}
           disabled={busy !== null}
           on:click={() => handleDownload('zip')}
         >
           {busy === 'zip' ? $_('settings.export.busy') : $_('settings.export.zip')}
-        </button>
-        <button
-          class="btn variant-soft-primary"
+        </Button>
+        <Button
+          variant="secondary"
           type="button"
+          loading={busy === 'json'}
           disabled={busy !== null}
           on:click={() => handleDownload('json')}
         >
           {busy === 'json' ? $_('settings.export.busy') : $_('settings.export.json')}
-        </button>
-        <button
-          class="btn variant-soft-primary"
+        </Button>
+        <Button
+          variant="secondary"
           type="button"
+          loading={busy === 'csv'}
           disabled={busy !== null}
           on:click={() => handleDownload('csv')}
         >
           {busy === 'csv' ? $_('settings.export.busy') : $_('settings.export.csv')}
-        </button>
-        <button class="btn variant-ghost-surface" type="button" disabled>
+        </Button>
+        <span class="settings__placeholder settings__placeholder--danger">
           {$_('settings.privacy.delete_placeholder')}
-        </button>
+        </span>
       </div>
       {#if error}
         <InlineAlert variant="error" message={error} />
@@ -257,24 +264,14 @@
         <span>{$_('settings.appearance.theme')}</span>
         <ThemeToggle testId="settings-theme-toggle-panel" />
       </div>
-      <div class="settings__language" role="group" aria-label={$_('settings.appearance.language')}>
-        <button
-          type="button"
-          class:active={$locale === 'de'}
-          data-testid="language-de"
-          on:click={() => selectLocale('de')}
-        >
-          DE
-        </button>
-        <button
-          type="button"
-          class:active={$locale === 'en'}
-          data-testid="language-en"
-          on:click={() => selectLocale('en')}
-        >
-          EN
-        </button>
-      </div>
+      <SegmentedControl
+        value={$locale ?? 'de'}
+        options={localeOptions}
+        ariaLabel={$_('settings.appearance.language')}
+        testId="settings-language-control"
+        equalWidth={false}
+        on:change={(event) => selectLocale(event.detail.value as AppLocale)}
+      />
     </section>
 
     <section class="settings__panel" data-testid="settings-section-account">
@@ -283,7 +280,7 @@
         <h2>{$_('settings.account.heading')}</h2>
         <p>{$_('settings.account.body')}</p>
       </div>
-      <div class="settings__downloads">
+      <div class="settings__actions">
         <Button variant="ghost" data-testid="settings-logout" on:click={() => void handleLogout()}>
           {$_('auth.logout.label')}
         </Button>
@@ -298,10 +295,10 @@
           <h2>{$_('settings.developer.heading')}</h2>
           <p>{$_('settings.developer.body')}</p>
         </div>
-        <div class="settings__downloads">
-          <a class="btn variant-soft-primary" href="/dev" data-testid="dev-link">
+        <div class="settings__actions">
+          <Button href="/dev" variant="secondary" data-testid="dev-link">
             {$_('settings.dev.open')}
-          </a>
+          </Button>
         </div>
         <label class="settings__toggle-label">
           <input
@@ -362,7 +359,7 @@
             />
             <span>{$_('settings.developer.onboarding_completed')}</span>
           </label>
-          <div class="settings__downloads">
+          <div class="settings__actions">
             <Button
               variant="secondary"
               data-testid="developer-onboarding-preview"
@@ -413,14 +410,14 @@
     >
       <div class="settings__modal-head">
         <h2 id="onboarding-preview-title">{$_('settings.developer.preview_title')}</h2>
-        <button
+        <IconButton
           type="button"
-          class="settings__modal-close"
-          aria-label={$_('settings.developer.preview_close')}
+          ariaLabel={$_('settings.developer.preview_close')}
+          title={$_('settings.developer.preview_close')}
           on:click={() => devPhase.setOnboardingPreviewOpen(false)}
         >
           x
-        </button>
+        </IconButton>
       </div>
       <iframe
         class="settings__preview-frame"
@@ -475,10 +472,26 @@
     text-transform: uppercase;
   }
 
-  .settings__downloads {
+  .settings__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem;
+  }
+
+  .settings__placeholder {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .settings__placeholder--danger {
+    border-color: color-mix(in srgb, var(--color-error) 32%, var(--color-border));
+    color: var(--color-error);
   }
 
   /* Developer Mode toggle — min 44px touch target */
@@ -560,14 +573,6 @@
     font-size: var(--text-base);
   }
 
-  .settings__modal-close {
-    min-width: 44px;
-    min-height: 44px;
-    border-radius: var(--radius-sm);
-    color: var(--color-text);
-    background: color-mix(in srgb, currentColor 6%, transparent);
-  }
-
   .settings__preview-frame {
     flex: 1;
     width: 100%;
@@ -580,28 +585,6 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
-  }
-
-  .settings__language {
-    display: inline-flex;
-    width: fit-content;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-  }
-
-  .settings__language button {
-    min-height: 44px;
-    border-radius: var(--radius-sm);
-    padding: 0 var(--space-4);
-    color: var(--color-text-muted);
-  }
-
-  .settings__language button.active {
-    color: var(--color-text-inverse);
-    background: var(--color-primary);
   }
 
   /* Footer version string — no visible affordance */

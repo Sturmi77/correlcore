@@ -98,16 +98,10 @@
 </script>
 
 <section class="if-feed" aria-label={$_('insights.feed.aria_label')} data-testid="insight-feed">
-  <!-- Header -->
-  <header class="if-header">
-    <div class="if-header__left">
-      <h1 class="if-title" data-testid="insight-feed-title">
-        {$_('insights.feed.title')}
-      </h1>
-      <p class="if-subtitle" data-testid="insight-feed-subtitle">
-        {$_('insights.feed.subtitle', { values: { days: 90, n: entryCount } })}
-      </p>
-    </div>
+  <div class="if-context-row">
+    <p class="if-context" data-testid="insight-feed-context">
+      {$_('insights.feed.subtitle', { values: { days: 90, n: entryCount } })}
+    </p>
     <button
       class="if-disclaimer-btn"
       aria-label={$_('insights.feed.disclaimer_aria')}
@@ -130,9 +124,8 @@
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
     </button>
-  </header>
+  </div>
 
-  <!-- Filter tabs -->
   <TabBar
     value={activeTab}
     options={filterTabOptions}
@@ -170,6 +163,7 @@
       body={$_(emptyBodyKey)}
       actionLabel={$_('insights.feed.empty_cta')}
       actionHref="/"
+      compact
       testId="insight-feed-empty"
     >
       <svg
@@ -208,27 +202,15 @@
     gap: var(--space-4);
   }
 
-  .if-header {
+  .if-context-row {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
   }
 
-  .if-header__left {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .if-title {
-    font-size: var(--text-xl);
-    font-weight: 700;
-    margin: 0;
-    color: var(--color-text);
-  }
-
-  .if-subtitle {
+  .if-context {
+    flex: 1;
     font-size: var(--text-sm);
     color: var(--color-text-muted);
     margin: 0;
