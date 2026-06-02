@@ -1,6 +1,6 @@
 # CorrelCore — Frontend Principles
 
-Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-30 (Findings implementation — aligned trend/heatmap axis, symptom context, inline tag creation).
+Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-31 (M7 mobile insight hardening — metadata, tabs, co-occurrence matrices, bottom sheets).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
 
@@ -62,6 +62,13 @@ This is active user trust-building, not legal boilerplate.
 - Touch targets: ≥ 44 × 44 px (WCAG 2.5.5)
 - Bottom sheet instead of full-page navigation for entry creation
 - Every screen must render without horizontal scroll at 375 px
+- Within-screen filter tabs use horizontal scrolling on narrow screens instead of wrapping into
+  disjoint rows. Page-level horizontal scroll remains forbidden; overflow must stay inside the
+  control or chart/table scroller.
+- Dense analytical matrices may use internal horizontal scrolling at 375 px, but row labels, column
+  labels, and legends must remain visually attached to the data they describe.
+- Mobile bottom sheets must account for `env(safe-area-inset-bottom)` in their panel padding and
+  must not leave a dead grey block below the actionable sheet content.
 
 ### 1.7 Offline-Ready Component Contract
 
@@ -354,6 +361,9 @@ the default findings flow or behind disclosure.
 - Filter tabs group insights by metric/topic; they do not change analytics tiers
 - Existing insights for inactive tags remain visible and receive a neutral "Tag inactive" marker
 - Each card has progressive disclosure: statement/context first, expanded details on demand
+- Insight metadata must interpolate both `sample_n` and its time window. If the API payload does not
+  provide `time_window_days`, cards fall back to the 90-day insight context rather than rendering a
+  placeholder token.
 - M3.6 insight maturity comes from the API-level `insight_maturity` object; frontend components must not recompute the phase from entry count.
 - Default insight cards show `InsightMaturityBadge` instead of raw confidence or p-values; statistical details stay in expanded/detail contexts.
 - Empty and locked states explain the current maturity phase instead of using a generic unavailable state.
@@ -364,6 +374,9 @@ the default findings flow or behind disclosure.
 - The descriptive `SymptomAnalyticsSection` may be toggled via `cc_insights_symptoms`. It renders a
   neutral symptom-history heatmap below the feed and is hidden in `collecting`; it does not compute
   correlations, lift, p-values, diagnoses or recommendations in the frontend.
+- M7 symptom/tag and tag/tag co-occurrence matrices are advanced data tables. Desktop may use
+  vertical column labels; mobile must use compact, readable labels and controlled horizontal
+  scrolling so headers do not overlap cells.
 - Matrix, raw values, sample sizes, confidence, filters, and card detail charts remain reachable through drilldowns. Decluttering must never remove data depth.
 
 ---

@@ -16,7 +16,7 @@ describe('FirstWeekInsightBanner', () => {
     render(FirstWeekInsightBanner, { events: { dismiss: onDismiss } });
 
     expect(screen.getByText('home.first_week_banner.title')).toBeTruthy();
-    expect(screen.getByText('home.first_week_banner.view').getAttribute('href')).toBe('/insights');
+    expect(screen.queryByText('home.first_week_banner.view')).toBeNull();
 
     await fireEvent.click(screen.getByLabelText('home.first_week_banner.dismiss'));
     expect(onDismiss).toHaveBeenCalledTimes(1);

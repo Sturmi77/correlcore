@@ -44,7 +44,7 @@ describe('HomeInsight', () => {
     expect(screen.getByText('57%')).toBeTruthy();
     expect(screen.getByText('9')).toBeTruthy();
     expect(screen.getByText('disclaimer.medical')).toBeTruthy();
-    expect(screen.getByText('home.insight.more').getAttribute('href')).toBe('/insights');
+    expect(screen.queryByText('home.insight.more')).toBeNull();
   });
 
   it('renders empty and loading states', () => {

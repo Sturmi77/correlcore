@@ -104,3 +104,49 @@ class TagCooccurrenceResponse(BaseModel):
     end_date: date_type
     min_count: int = Field(ge=1)
     pairs: list[TagCooccurrencePair] = Field(default_factory=list)
+
+
+class SymptomTagCooccurrenceSymptomRef(BaseModel):
+    symptom_id: uuid.UUID
+    slug: str
+    name: str
+    icon: str | None = None
+
+
+class SymptomTagCooccurrenceCell(BaseModel):
+    symptom: SymptomTagCooccurrenceSymptomRef
+    tag: TagCooccurrenceTagRef
+    phi: float
+    jaccard: float = Field(ge=0, le=1)
+    lift: float = Field(ge=0)
+    co_count: int = Field(ge=1)
+    symptom_count: int = Field(ge=1)
+    tag_count: int = Field(ge=1)
+    total_count: int = Field(ge=1)
+    p_value_corrected: float = Field(ge=0, le=1)
+    confounder: str | None = None
+
+
+class SymptomTagCooccurrenceResponse(BaseModel):
+    range: TagCooccurrenceRange
+    start_date: date_type
+    end_date: date_type
+    min_count: int = Field(ge=1)
+    cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
+
+
+class TagClusterGroup(BaseModel):
+    cluster_id: int = Field(ge=1)
+    label: str
+    tags: list[TagCooccurrenceTagRef] = Field(default_factory=list)
+    strength: float = Field(ge=0, le=1)
+
+
+class TagClustersResponse(BaseModel):
+    status: Literal["ok", "insufficient_data"]
+    entry_count: int = Field(ge=0)
+    active_tag_count: int = Field(ge=0)
+    window_days: int = Field(ge=1)
+    k: int | None = Field(default=None, ge=1)
+    reason: str | None = None
+    clusters: list[TagClusterGroup] = Field(default_factory=list)

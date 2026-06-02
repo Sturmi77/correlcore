@@ -16,7 +16,8 @@ vi.mock('svelte-i18n', async () => {
     _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
       if (key === 'home.confidence_scale.entry_count')
         return `Based on ${options?.values?.n} entries`;
-      if (key === 'insights.card.sample_meta') return `Based on ${options?.values?.n} entries`;
+      if (key === 'insights.card.sample_meta')
+        return `Based on ${options?.values?.n} entries · ${options?.values?.days} days`;
       return key;
     }),
   };
@@ -95,6 +96,13 @@ describe('InsightCard', () => {
   it('renders title as "metric -> subject" format', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     expect(screen.getByTestId('insight-card-title').textContent).toContain('mood → sport');
+  });
+
+  it('interpolates both entry count and time window in metadata', () => {
+    render(InsightCard, { props: { insight: INSIGHT } });
+    expect(screen.getByTestId('insight-card-meta').textContent).toContain(
+      'Based on 42 entries · 60 days'
+    );
   });
 
   it('marks insights for inactive tags without hiding them', () => {

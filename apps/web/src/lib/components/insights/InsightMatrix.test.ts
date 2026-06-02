@@ -81,4 +81,33 @@ describe('InsightMatrix', () => {
     expect(rows[1].textContent).toContain('Alkohol');
     expect(rows[1].textContent).not.toContain('Alcohol');
   });
+
+  it('deduplicates legacy mood metric aliases and normalised tag labels', () => {
+    render(InsightMatrix, {
+      props: {
+        insights: [
+          {
+            ...base,
+            id: 'default-alcohol',
+            metric: 'mood_score',
+            subject_id: 'default-id',
+            subject_label: ' Alkohol ',
+            effect_size: 0.3,
+          },
+          {
+            ...base,
+            id: 'override-alcohol',
+            metric: 'mood',
+            subject_id: 'override-id',
+            subject_label: 'alkohol',
+            effect_size: 0.6,
+          },
+        ],
+      },
+    });
+
+    const rows = within(screen.getByTestId('insight-matrix')).getAllByRole('row');
+    expect(rows).toHaveLength(2);
+    expect(rows[1].textContent).toContain('alkohol');
+  });
 });

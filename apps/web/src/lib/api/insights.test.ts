@@ -9,6 +9,7 @@ vi.mock('./client', () => ({
 import { api } from './client';
 import {
   fetchLatestInsight,
+  fetchTagClusters,
   fetchTagCooccurrence,
   listInsights,
   listLatestInsights,
@@ -81,6 +82,22 @@ describe('insights API client', () => {
     vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
 
     await expect(fetchLatestInsight()).resolves.toBeNull();
+  });
+
+  it('fetches tag clusters', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      status: 'insufficient_data',
+      entry_count: 12,
+      active_tag_count: 3,
+      window_days: 90,
+      k: null,
+      reason: 'entry_count_below_90',
+      clusters: [],
+    });
+
+    await fetchTagClusters();
+
+    expect(api.get).toHaveBeenCalledWith('/insights/tag-clusters');
   });
 
   it('fetches tag co-occurrence pairs', async () => {

@@ -4,13 +4,36 @@
 
   export let insights: InsightResponse[] = [];
 
+  function canonicalMetric(insight: InsightResponse): string {
+    if (
+      insight.subject_type === 'tag' &&
+      ['mood', 'mood_score', 'mood_avg'].includes(insight.metric)
+    ) {
+      return 'mood_score';
+    }
+    return insight.metric;
+  }
+
+  function normaliseLabel(value: string): string {
+    return value.toLocaleLowerCase().trim().replace(/\s+/g, ' ');
+  }
+
   function rowKey(insight: InsightResponse): string {
-    const tagSlug = typeof insight.payload?.tag_slug === 'string' ? insight.payload.tag_slug : '';
+    const tagSlug =
+      typeof insight.payload?.tag_slug === 'string' ? normaliseLabel(insight.payload.tag_slug) : '';
     const subject =
       insight.subject_type === 'tag'
-        ? tagSlug || insight.subject_label?.toLocaleLowerCase() || insight.subject_id || ''
+        ? tagSlug ||
+          (insight.subject_label ? normaliseLabel(insight.subject_label) : '') ||
+          insight.subject_id ||
+          ''
         : insight.subject_id || insight.subject_label || '';
-    return [insight.insight_type, insight.metric, insight.subject_type ?? '', subject].join(':');
+    return [
+      insight.insight_type,
+      canonicalMetric(insight),
+      insight.subject_type ?? '',
+      subject,
+    ].join(':');
   }
 
   function strongerRow(left: InsightResponse, right: InsightResponse): InsightResponse {
@@ -108,14 +131,11 @@
       <h2>{$_('insights.matrix.heading')}</h2>
       <p>{$_('insights.matrix.subtitle')}</p>
     </div>
-    <button
-      class="btn btn-sm variant-soft-primary"
-      type="button"
-      on:click={exportPng}
-      disabled={!rows.length}
-    >
-      {$_('insights.matrix.export')}
-    </button>
+    {#if rows.length}
+      <button class="btn btn-sm variant-soft-primary" type="button" on:click={exportPng}>
+        {$_('insights.matrix.export')}
+      </button>
+    {/if}
   </header>
 
   {#if rows.length}

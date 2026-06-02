@@ -776,7 +776,22 @@
       "heading": "Symptoms in insights",
       "body": "Symptom days are blended in as descriptive context without medical interpretation.",
       "heatmap_heading": "Symptom history",
-      "empty": "No symptom data in the selected range yet."
+      "empty": "No symptom data in the selected range yet.",
+      "cooccurrence_heading": "Symptom + tag patterns",
+      "cooccurrence_body": "Lift highlights symptoms and tags that appear together more or less often than expected.",
+      "cooccurrence_aria": "Symptom and tag co-occurrence matrix",
+      "cooccurrence_cell_title": "{symptom} + {tag}: lift {lift}, {count} shared entries",
+      "cooccurrence_lift_legend": "Lift values; * means FDR-adjusted p < 0.10.",
+      "cooccurrence_count_legend": "Shared entry counts until enough data is available for lift.",
+      "cooccurrence_empty": "No stable symptom-tag patterns in this range yet."
+    },
+    "tag_groups": {
+      "heading": "Tag groups",
+      "subtitle": "Tags that often appear together",
+      "loading": "Loading tag groups",
+      "empty": "No tag groups available yet. Keep logging entries with tags.",
+      "insufficient": "{entries}/90 entries and {tags}/5 active tags are available for tag groups.",
+      "strength": "{value}% shared pattern"
     },
     "confidence_label": {
       "early_signal": "Early signal",

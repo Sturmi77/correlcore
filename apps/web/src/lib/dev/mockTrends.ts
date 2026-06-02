@@ -1,5 +1,11 @@
 import type { HabitStatsResponse } from '$lib/api/habits';
 import type {
+  SymptomTagCooccurrenceResponse,
+  TagClustersResponse,
+  TagCooccurrenceRange,
+  TagCooccurrenceResponse,
+} from '$lib/api/insights';
+import type {
   EntryStreakResponse,
   SymptomHeatmapResponse,
   TagHeatmapResponse,
@@ -254,6 +260,163 @@ export const mockTagCooccurrence = {
       count: 2,
       pct_of_a: 66.7,
       pct_of_b: 40.0,
+    },
+  ],
+} satisfies TagCooccurrenceResponse;
+
+export const mockTagCooccurrenceByRange = {
+  '30d': {
+    ...mockTagCooccurrence,
+    range: '30d',
+    start_date: shiftIsoDate(today, -29),
+    pairs: mockTagCooccurrence.pairs.map((pair, idx) => ({
+      ...pair,
+      count: Math.max(2, pair.count - (idx < 2 ? 2 : 1)),
+      pct_of_a: Math.max(33.3, pair.pct_of_a - 18),
+      pct_of_b: Math.max(33.3, pair.pct_of_b - 15),
+    })),
+  },
+  '90d': mockTagCooccurrence,
+  '1y': {
+    ...mockTagCooccurrence,
+    range: '1y',
+    start_date: shiftIsoDate(today, -364),
+    pairs: mockTagCooccurrence.pairs.map((pair, idx) => ({
+      ...pair,
+      count: pair.count + (idx < 2 ? 4 : 3),
+      pct_of_a: Math.min(100, pair.pct_of_a + 10),
+      pct_of_b: Math.min(100, pair.pct_of_b + 8),
+    })),
+  },
+} satisfies Record<TagCooccurrenceRange, TagCooccurrenceResponse>;
+
+export const mockSymptomTagCooccurrence: SymptomTagCooccurrenceResponse = {
+  range: '90d',
+  start_date: shiftIsoDate(today, -89),
+  end_date: today,
+  min_count: 3,
+  cells: [
+    {
+      symptom: {
+        symptom_id: 'mock-symptom-headache',
+        slug: 'headache',
+        name: 'Headache',
+        icon: 'activity',
+      },
+      tag: {
+        tag_id: 'mock-tag-focus',
+        slug: 'focus',
+        name: 'Focus work',
+        category: 'work',
+        color: null,
+      },
+      phi: 0.38,
+      jaccard: 0.41,
+      lift: 2.1,
+      co_count: 7,
+      symptom_count: 10,
+      tag_count: 12,
+      total_count: 42,
+      p_value_corrected: 0.03,
+      confounder: null,
+    },
+    {
+      symptom: {
+        symptom_id: 'mock-symptom-fatigue',
+        slug: 'fatigue',
+        name: 'Fatigue',
+        icon: 'battery-low',
+      },
+      tag: {
+        tag_id: 'mock-tag-walk',
+        slug: 'walk',
+        name: 'Walk',
+        category: 'sport',
+        color: null,
+      },
+      phi: -0.29,
+      jaccard: 0.12,
+      lift: 0.5,
+      co_count: 3,
+      symptom_count: 9,
+      tag_count: 14,
+      total_count: 42,
+      p_value_corrected: 0.08,
+      confounder: null,
+    },
+  ],
+};
+
+export const mockSymptomTagCooccurrenceByRange = {
+  '30d': {
+    ...mockSymptomTagCooccurrence,
+    range: '30d',
+    start_date: shiftIsoDate(today, -29),
+    cells: mockSymptomTagCooccurrence.cells.map((cell) => ({
+      ...cell,
+      lift: Number(Math.max(0.4, cell.lift - 0.3).toFixed(1)),
+      co_count: Math.max(3, cell.co_count - 2),
+      total_count: 18,
+    })),
+  },
+  '90d': mockSymptomTagCooccurrence,
+  '1y': {
+    ...mockSymptomTagCooccurrence,
+    range: '1y',
+    start_date: shiftIsoDate(today, -364),
+    cells: mockSymptomTagCooccurrence.cells.map((cell) => ({
+      ...cell,
+      lift: Number((cell.lift + 0.4).toFixed(1)),
+      co_count: cell.co_count + 4,
+      total_count: 96,
+    })),
+  },
+} satisfies Record<TagCooccurrenceRange, SymptomTagCooccurrenceResponse>;
+
+export const mockTagClusters: TagClustersResponse = {
+  status: 'ok',
+  entry_count: 96,
+  active_tag_count: 6,
+  window_days: 90,
+  k: 3,
+  reason: null,
+  clusters: [
+    {
+      cluster_id: 1,
+      label: 'Tag group 1',
+      strength: 0.72,
+      tags: [
+        {
+          tag_id: 'mock-tag-focus',
+          slug: 'focus',
+          name: 'Focus work',
+          category: 'work',
+          color: null,
+        },
+        { tag_id: 'mock-tag-read', slug: 'read', name: 'Read', category: 'leisure', color: null },
+      ],
+    },
+    {
+      cluster_id: 2,
+      label: 'Tag group 2',
+      strength: 0.64,
+      tags: [
+        { tag_id: 'mock-tag-walk', slug: 'walk', name: 'Walk', category: 'sport', color: null },
+      ],
+    },
+    {
+      cluster_id: 3,
+      label: 'Tag group 3',
+      strength: 0.58,
+      tags: [
+        {
+          tag_id: 'mock-tag-coffee',
+          slug: 'coffee',
+          name: 'Coffee',
+          category: 'consumption',
+          color: null,
+        },
+      ],
     },
   ],
 };

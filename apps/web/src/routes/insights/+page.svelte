@@ -17,11 +17,15 @@
   import { listEntries } from '$lib/api/entries';
   import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
   import {
+    fetchSymptomTagCooccurrence,
+    fetchTagClusters,
     fetchTagCooccurrence,
     listLatestInsights,
     type InsightMaturity,
     type InsightResponse,
     type TagCooccurrenceRange,
+    type SymptomTagCooccurrenceResponse,
+    type TagClustersResponse,
     type TagCooccurrenceResponse,
   } from '$lib/api/insights';
   import { listDefaultTags, listTagsForEntry, listVisibleTags } from '$lib/api/tags';
@@ -40,11 +44,17 @@
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
   import CooccurrenceEntrySheet from '$lib/components/insights/CooccurrenceEntrySheet.svelte';
   import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
+  import TagGroupsSection from '$lib/components/insights/TagGroupsSection.svelte';
   import SymptomAnalyticsSection from '$lib/components/insights/symptoms/SymptomAnalyticsSection.svelte';
   import type { EntryHistoryDetail } from '$lib/components/trends/EntryHistorySheet.svelte';
   import { mockEntries } from '$lib/dev/mockEntries';
   import { mockUserPreferences } from '$lib/dev/mockEntries';
-  import { mockSymptomHeatmap, mockTagCooccurrence } from '$lib/dev/mockTrends';
+  import {
+    mockSymptomHeatmap,
+    mockSymptomTagCooccurrenceByRange,
+    mockTagClusters,
+    mockTagCooccurrenceByRange,
+  } from '$lib/dev/mockTrends';
   import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
@@ -65,12 +75,16 @@
   let cooccurrenceRange: TagCooccurrenceRange = '90d';
   let cooccurrence: TagCooccurrenceResponse | null = null;
   let cooccurrenceLoading = false;
+  let tagClusters: TagClustersResponse | null = null;
+  let tagClustersLoading = false;
   let cooccurrenceHistoryOpen = false;
   let cooccurrenceHistoryTitle = '';
   let cooccurrenceHistoryLoading = false;
   let cooccurrenceHistoryError = '';
   let cooccurrenceHistoryDetails: EntryHistoryDetail[] = [];
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
+  let symptomCooccurrence: SymptomTagCooccurrenceResponse | null = null;
+  let symptomCooccurrenceLoading = false;
   let showInsightSymptoms = true;
 
   const INSIGHT_SYMPTOMS_STORAGE_KEY = 'cc_insights_symptoms';
@@ -91,7 +105,7 @@
     cooccurrenceLoading = true;
     try {
       if ($devForceVisualizations) {
-        cooccurrence = mockTagCooccurrence;
+        cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
         return;
       }
       cooccurrence = await fetchTagCooccurrence({ range: cooccurrenceRange, min_count: 2 });
@@ -99,6 +113,41 @@
       cooccurrence = null;
     } finally {
       cooccurrenceLoading = false;
+    }
+  }
+
+  async function loadTagClusters(): Promise<void> {
+    if ($auth.status !== 'authenticated') return;
+    tagClustersLoading = true;
+    try {
+      if ($devForceVisualizations) {
+        tagClusters = mockTagClusters;
+        return;
+      }
+      tagClusters = await fetchTagClusters();
+    } catch {
+      tagClusters = null;
+    } finally {
+      tagClustersLoading = false;
+    }
+  }
+
+  async function loadSymptomCooccurrence(): Promise<void> {
+    if ($auth.status !== 'authenticated') return;
+    symptomCooccurrenceLoading = true;
+    try {
+      if ($devForceVisualizations) {
+        symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
+        return;
+      }
+      symptomCooccurrence = await fetchSymptomTagCooccurrence({
+        range: cooccurrenceRange,
+        min_count: 3,
+      });
+    } catch {
+      symptomCooccurrence = null;
+    } finally {
+      symptomCooccurrenceLoading = false;
     }
   }
 
@@ -174,6 +223,9 @@
         insightMaturity = mockInsightMaturity;
         userPreferences = mockUserPreferences;
         symptomHeatmap = mockSymptomHeatmap;
+        symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
+        tagClusters = mockTagClusters;
+        cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
         dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
         entryCount = dayEntryDates.length;
         inactiveTagIds = [];
@@ -210,6 +262,8 @@
       insightMaturity = null;
       userPreferences = null;
       symptomHeatmap = null;
+      symptomCooccurrence = null;
+      tagClusters = null;
       dayEntryDates = [];
       entryCount = 0;
       inactiveTagIds = [];
@@ -258,8 +312,15 @@
 
   function handleAnalyticsToggle(event: Event): void {
     const open = event.currentTarget instanceof HTMLDetailsElement && event.currentTarget.open;
-    if (open && !cooccurrence && !cooccurrenceLoading) {
+    if (!open) return;
+    if (!cooccurrence && !cooccurrenceLoading) {
       void loadCooccurrence();
+    }
+    if (!tagClusters && !tagClustersLoading) {
+      void loadTagClusters();
+    }
+    if (!symptomCooccurrence && !symptomCooccurrenceLoading) {
+      void loadSymptomCooccurrence();
     }
   }
 
@@ -334,8 +395,16 @@
         </label>
 
         {#if showSymptomAnalytics}
-          <SymptomAnalyticsSection heatmap={symptomHeatmap} {loading} />
+          <SymptomAnalyticsSection
+            heatmap={symptomHeatmap}
+            cooccurrence={symptomCooccurrence}
+            cooccurrenceLoading={symptomCooccurrenceLoading}
+            phase={insightMaturity?.phase ?? null}
+            {loading}
+          />
         {/if}
+
+        <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
 
         <TagCooccurrenceHeatmap
           data={cooccurrence}
@@ -344,6 +413,7 @@
           on:rangeChange={(event) => {
             cooccurrenceRange = event.detail.range;
             void loadCooccurrence();
+            void loadSymptomCooccurrence();
           }}
           on:selectPair={(event) => void openCooccurrenceHistory(event)}
         />

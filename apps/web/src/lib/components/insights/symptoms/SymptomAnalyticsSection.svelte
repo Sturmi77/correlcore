@@ -1,11 +1,16 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import type { InsightMaturityPhase, SymptomTagCooccurrenceResponse } from '$lib/api/insights';
   import type { SymptomHeatmapResponse } from '$lib/api/stats';
   import ComparisonHeatmap from '$lib/components/trends/ComparisonHeatmap.svelte';
   import { buildIsoDateRange, compareDailyAxisLayout } from '$lib/utils/charts';
+  import SymptomCooccurrenceHeatmap from './SymptomCooccurrenceHeatmap.svelte';
 
   export let heatmap: SymptomHeatmapResponse | null = null;
+  export let cooccurrence: SymptomTagCooccurrenceResponse | null = null;
+  export let cooccurrenceLoading = false;
+  export let phase: InsightMaturityPhase | null = null;
   export let loading = false;
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
@@ -33,6 +38,8 @@
     emptyKey="insights.symptoms.empty"
     on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
   />
+
+  <SymptomCooccurrenceHeatmap data={cooccurrence} loading={cooccurrenceLoading} {phase} />
 </section>
 
 <style>

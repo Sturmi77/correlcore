@@ -34,6 +34,12 @@ def _scalar_result(value: object) -> MagicMock:
     return result
 
 
+def _rows_result(values: list[tuple[object, ...]]) -> MagicMock:
+    result = MagicMock()
+    result.all.return_value = values
+    return result
+
+
 def _make_insight(
     user: User,
     *,
@@ -158,11 +164,52 @@ async def test_list_latest_insights_deduplicates_by_subject() -> None:
         subject_label="stress",
     )
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_scalars_result([newest_tag, older_same_tag, metric]))
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([newest_tag, older_same_tag, metric]),
+            _rows_result([(tag_id, "sport")]),
+        ]
+    )
 
     out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [newest_tag, metric]
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_deduplicates_legacy_tag_overrides_by_loaded_slug() -> None:
+    user = make_user()
+    default_id = uuid.uuid4()
+    override_id = uuid.uuid4()
+    newest_override = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        metric="mood",
+        subject_type="tag",
+        subject_id=override_id,
+        subject_label="Alkohol",
+    )
+    older_default = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        metric="mood_score",
+        subject_type="tag",
+        subject_id=default_id,
+        subject_label="Alcohol",
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([newest_override, older_default]),
+            _rows_result([(default_id, "alcohol"), (override_id, "alcohol")]),
+        ]
+    )
+
+    out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [newest_override]
 
 
 @pytest.mark.asyncio
@@ -237,6 +284,40 @@ async def test_insights_endpoint_returns_statement_field(
     assert maturity["phase"] == "provisional"
     assert maturity["current_entries"] == 18
     assert maturity["next_phase_at"] == 30
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_keeps_lasso_and_lag_symptom_cluster_findings() -> None:
+    user = make_user()
+    lasso = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, 3, tzinfo=UTC),
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        metric="mood_score",
+        subject_type="metric",
+        subject_label="mood_score",
+        payload={"method": "lasso", "target": "mood_score"},
+    )
+    lag = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, 2, tzinfo=UTC),
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        metric="mood_score",
+        subject_type="metric",
+        subject_label="mood_score",
+        payload={
+            "method": "lag",
+            "target": {"kind": "metric", "key": "mood_score"},
+            "feature": {"kind": "tag", "key": "tag:sport", "id": str(uuid.uuid4())},
+            "lag_days": 1,
+        },
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result([lasso, lag]))
+
+    out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [lasso, lag]
 
 
 @pytest.mark.asyncio

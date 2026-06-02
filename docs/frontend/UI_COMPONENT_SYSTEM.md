@@ -1,7 +1,7 @@
 # UI Component System - Sprint A
 
 Status: Accepted planning contract for mobile hardening  
-Last updated: 2026-05-25
+Last updated: 2026-05-31
 
 ## Purpose
 
@@ -104,7 +104,8 @@ Use for within-screen views, not for primary app navigation.
 Required contract:
 
 - Uses ARIA tab semantics when panels are switched in place
-- Labels must fit at 375 px or collapse to concise labels
+- Labels must fit at 375 px or use controlled horizontal scrolling; TabBar must not wrap filter
+  pills into disjoint rows on small screens
 - Primary app navigation remains owned by `AppNav`
 
 ### `BottomSheet`
@@ -117,6 +118,8 @@ Required contract:
 - Focus is trapped while open
 - Escape/backdrop close behavior is explicit per use case
 - Sheet content must be operable at 375 px without horizontal scroll
+- Sheet panels must include safe-area-aware bottom padding and avoid leaving inert backdrop space
+  below actionable content on mobile devices
 
 ### `EmptyState`, `InlineAlert`, `DataState`
 
@@ -208,7 +211,10 @@ Settings owns:
 - No horizontal page scroll at 375 px.
 - Horizontal overflow is allowed only for charts or data tables with an explicit affordance and a non-table fallback when practical.
 - Labels in buttons, tabs, sliders, and chips must wrap or shorten before they overflow.
+- Within-screen tab sets may use horizontal scrolling when labels would otherwise wrap poorly.
 - Header actions collapse before content does.
+- Dense data matrices must keep axis labels visually attached to their cells. At 375 px, prefer a
+  local chart/table scroller with compact horizontal labels over rotated labels that overlap cells.
 - Repeated controls must use the shared component API before route-specific styling is added.
 
 ## Migration Backlog

@@ -60,7 +60,21 @@
     return 'neutral';
   }
 
+  function payloadString(ins: InsightResponse, key: string): string | null {
+    const value = ins.payload?.[key];
+    return typeof value === 'string' && value.length > 0 ? value : null;
+  }
+
   function buildTitle(ins: InsightResponse): string {
+    if (ins.insight_type === 'symptom_mood_association') {
+      const symptom = payloadString(ins, 'symptom_name') ?? ins.subject_label ?? 'Symptoms';
+      return `${symptom} → ${ins.metric}`;
+    }
+    if (ins.insight_type === 'symptom_tag_cooccurrence') {
+      const symptom = payloadString(ins, 'symptom_name') ?? 'Symptoms';
+      const tag = payloadString(ins, 'tag_name') ?? ins.subject_label ?? 'Insight';
+      return `${symptom} + ${tag}`;
+    }
     const a = ins.metric ?? '?';
     const b = ins.subject_label ?? null;
     return b ? `${a} → ${b}` : a;
@@ -159,7 +173,15 @@
     </p>
 
     <p class="insight-card__meta" data-testid="insight-card-meta">
-      {$_('insights.card.sample_meta', { values: { n: insight.sample_n ?? 0 } })}
+      {$_('insights.card.sample_meta', {
+        values: {
+          n: insight.sample_n ?? 0,
+          days:
+            typeof insight.payload?.time_window_days === 'number'
+              ? insight.payload.time_window_days
+              : 90,
+        },
+      })}
       {#if isInactiveTag}
         <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
       {/if}
