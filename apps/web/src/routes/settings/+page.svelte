@@ -203,9 +203,6 @@
         />
         <span>{$_('settings.analysis.analytics_enabled')}</span>
       </label>
-      <div class="settings__actions">
-        <Button href="/insights" variant="secondary">{$_('settings.analysis.insights')}</Button>
-      </div>
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
       {/if}
