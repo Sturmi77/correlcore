@@ -23,6 +23,12 @@ def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
     return result
 
 
+def _scalar_one_or_none_result(value: object) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
+    return result
+
+
 @pytest.mark.asyncio
 async def test_tag_cooccurrence_counts_pairs_and_percentages() -> None:
     user = make_user()
@@ -34,15 +40,18 @@ async def test_tag_cooccurrence_counts_pairs_and_percentages() -> None:
 
     db = MagicMock()
     db.execute = AsyncMock(
-        return_value=_row_result(
-            [
-                (entry_a.id, sport),
-                (entry_a.id, focus),
-                (entry_b.id, sport),
-                (entry_b.id, focus),
-                (entry_b.id, coffee),
-            ]
-        )
+        side_effect=[
+            _scalar_one_or_none_result(True),
+            _row_result(
+                [
+                    (entry_a.id, sport),
+                    (entry_a.id, focus),
+                    (entry_b.id, sport),
+                    (entry_b.id, focus),
+                    (entry_b.id, coffee),
+                ]
+            ),
+        ]
     )
 
     out = await get_tag_cooccurrence(
@@ -72,12 +81,15 @@ async def test_tag_cooccurrence_applies_min_count_filter() -> None:
     focus = make_tag(user, slug="focus", name="Focus", category=TagCategory.WORK)
     db = MagicMock()
     db.execute = AsyncMock(
-        return_value=_row_result(
-            [
-                (entry.id, sport),
-                (entry.id, focus),
-            ]
-        )
+        side_effect=[
+            _scalar_one_or_none_result(True),
+            _row_result(
+                [
+                    (entry.id, sport),
+                    (entry.id, focus),
+                ]
+            ),
+        ]
     )
 
     out = await get_tag_cooccurrence(
@@ -92,10 +104,31 @@ async def test_tag_cooccurrence_applies_min_count_filter() -> None:
 
 
 @pytest.mark.asyncio
+async def test_tag_cooccurrence_skips_when_analytics_disabled() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_one_or_none_result(False))
+
+    out = await get_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="90d",
+        min_count=2,
+        as_of=date(2026, 5, 9),
+    )
+
+    assert out.range == "90d"
+    assert out.start_date == date(2026, 2, 9)
+    assert out.end_date == date(2026, 5, 9)
+    assert out.pairs == []
+    assert db.execute.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_tag_cooccurrence_excludes_hidden_tags_in_query() -> None:
     user = make_user()
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_row_result([]))
+    db.execute = AsyncMock(side_effect=[_scalar_one_or_none_result(True), _row_result([])])
 
     await get_tag_cooccurrence(
         db,
@@ -112,7 +145,7 @@ async def test_tag_cooccurrence_excludes_hidden_tags_in_query() -> None:
 async def test_tag_cooccurrence_uses_range_window() -> None:
     user = make_user()
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_row_result([]))
+    db.execute = AsyncMock(side_effect=[_scalar_one_or_none_result(True), _row_result([])])
 
     out = await get_tag_cooccurrence(
         db,

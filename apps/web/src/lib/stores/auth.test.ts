@@ -15,7 +15,12 @@ vi.mock('$lib/api/auth', () => ({
   logout: vi.fn(),
 }));
 
+vi.mock('$lib/stores/insights', () => ({
+  resetInsightStore: vi.fn(),
+}));
+
 import * as authApi from '$lib/api/auth';
+import { resetInsightStore } from '$lib/stores/insights';
 import {
   _resetForTests,
   auth,
@@ -94,18 +99,22 @@ describe('login / logout / setUser', () => {
     const user = await login({ email: 'a@b.de', password: 'pw12345678' });
     expect(user).toEqual(fakeUser);
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
+    expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 
   it('logout clears state even when API call fails', async () => {
     setUser(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
+    vi.mocked(resetInsightStore).mockClear();
     vi.mocked(authApi.logout).mockRejectedValueOnce(new Error('boom'));
     await logout();
     expect(get(auth)).toEqual({ status: 'anonymous' });
+    expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 
   it('setUser sets authenticated state without an API call', () => {
     setUser(fakeUser);
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
+    expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 });
