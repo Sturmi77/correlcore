@@ -616,6 +616,18 @@ correlcore/
 - **Chart-Implementierung:** Custom-SVG-Komponenten in SvelteKit (kein externes Chart-Framework); Token-konform für Dark-Mode; Metrik-Linien mit unterschiedlichen Dash-Patterns + Point-Shapes (Color-Blind-Safe)
 - **No Gamification in UI:** Keine Streak-Zähler, Badges, Punkte, Fortschrittsbalken die Engagement messen. Einzige Ausnahme: Tracking-Consistency-Widget (neutral formuliert, Datensatz-Qualität kommunizierend, kein Druck-Framing)
 
+### Mobile/Web Operating Model (2026-06-22)
+
+- **Mobile ist der Alltagsmodus:** tägliche Eingabe, Check-in, schnelle Rückmeldung und kompakte Review.
+- **Web ist der Analysemodus:** Vergleich, Verwaltung, tiefere Auswertung und datenreiche Visualisierung.
+- **Eine SvelteKit-Codebasis:** Routen, API-Verträge, Stores, Validierung und Domain-Logik bleiben geteilt. Unterschiede liegen in Shell, Komposition und Informationsdichte.
+- **Keine komprimierten Desktop-Dashboards auf Mobile:** Trends und Insights nutzen Zusammenfassungen und fokussierte Drill-downs.
+- **Keine künstliche Mobile-Verarmung auf Web:** Desktop darf Split Views, Side Panels, Sticky Controls und breite Chart-Flächen verwenden.
+
+Die abgeleitete Frontend-Spezifikation ist [`FRONTEND.md`](FRONTEND.md). Audit und Lieferplan:
+[`frontend/MOBILE_WEB_AUDIT.md`](frontend/MOBILE_WEB_AUDIT.md) und
+[`frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md`](frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md).
+
 ## Insight Maturity as Core Product Philosophy
 
 CorrelCore does not treat insights as binary output that suddenly appears after a fixed amount of data.  

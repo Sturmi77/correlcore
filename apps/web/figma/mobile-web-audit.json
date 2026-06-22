@@ -1,0 +1,348 @@
+{
+  "version": 1,
+  "runId": "correlcore-mobile-web-audit-2026-06-22-v1",
+  "figmaFileKey": "XjijHnzMJubA1iuPQxHOwS",
+  "orientation": {
+    "primary": "mobile-daily-use",
+    "mobileRole": "Capture, check-in, fast feedback",
+    "webRole": "Analysis, comparison, management, review",
+    "sharedSystemRole": "One visual language with different density"
+  },
+  "statusLegend": {
+    "green": "Fits with the current component system on this surface.",
+    "yellow": "Needs layout, variant, state, or density refinement.",
+    "red": "Needs conceptual split, new variants, or missing Figma/code parity work."
+  },
+  "screenMatrix": [
+    {
+      "screen": "Home / Today",
+      "routes": [
+        "/"
+      ],
+      "figmaNodes": [
+        "21:3",
+        "28:331",
+        "28:698"
+      ],
+      "primaryComponents": [
+        "HomeSummary",
+        "HomeDailyBrief",
+        "HomeTodayContext",
+        "HomeInsight",
+        "HomeRecentEntries",
+        "WeekdayPatternChart",
+        "AppNav",
+        "ScreenHeader"
+      ],
+      "mobileStatus": "yellow",
+      "webStatus": "green",
+      "problemType": "Partial Figma coverage and density split",
+      "recommendation": "Keep mobile as quick daily summary; make web a broader dashboard with recent movement and follow-up panels."
+    },
+    {
+      "screen": "Entry",
+      "routes": [
+        "/entries/new",
+        "/entries/day/[date]"
+      ],
+      "figmaNodes": [
+        "21:69",
+        "28:397",
+        "28:823"
+      ],
+      "primaryComponents": [
+        "EntryForm",
+        "ScaleSlider",
+        "TagPicker",
+        "SymptomChecker",
+        "SaveStatusBadge",
+        "DayDeltaCard"
+      ],
+      "mobileStatus": "yellow",
+      "webStatus": "yellow",
+      "problemType": "High-frequency form density and state coverage",
+      "recommendation": "Mobile gets a compressed capture flow; web gets a workspace layout with context, notes, and review states."
+    },
+    {
+      "screen": "Trends",
+      "routes": [
+        "/trends"
+      ],
+      "figmaNodes": [
+        "21:151",
+        "28:484",
+        "28:908"
+      ],
+      "primaryComponents": [
+        "TrendsComparePanel",
+        "MetricTimeseries",
+        "ComparisonHeatmap",
+        "UnifiedStripChart",
+        "TagHeatmap",
+        "HabitsPanel",
+        "EntryHistorySheet"
+      ],
+      "mobileStatus": "red",
+      "webStatus": "green",
+      "problemType": "Dense chart interactions and comparison surface",
+      "recommendation": "Web remains the primary analysis surface; mobile needs summary cards plus drill-down sheets instead of full chart parity."
+    },
+    {
+      "screen": "Insights",
+      "routes": [
+        "/insights",
+        "/insights/disclaimer"
+      ],
+      "figmaNodes": [
+        "21:282",
+        "28:615",
+        "28:1080"
+      ],
+      "primaryComponents": [
+        "InsightFeed",
+        "InsightCard",
+        "InsightMatrix",
+        "InsightQualityMeter",
+        "InsightConfidenceScale",
+        "TagGroupsSection",
+        "TagCooccurrenceHeatmap",
+        "SymptomAnalyticsSection"
+      ],
+      "mobileStatus": "red",
+      "webStatus": "yellow",
+      "problemType": "Missing Figma coverage for real insight components",
+      "recommendation": "Define insight card, feed, quality, and matrix variants before treating the Figma screen as implementation-ready."
+    },
+    {
+      "screen": "Settings",
+      "routes": [
+        "/settings",
+        "/settings/tags"
+      ],
+      "figmaNodes": [],
+      "primaryComponents": [
+        "ScreenHeader",
+        "Panel",
+        "Button",
+        "InlineAlert",
+        "ThemeToggle"
+      ],
+      "mobileStatus": "yellow",
+      "webStatus": "green",
+      "problemType": "Missing Figma flow",
+      "recommendation": "Add settings and tag-management backlog frames; keep mobile simple and web management-oriented."
+    },
+    {
+      "screen": "Onboarding/Auth",
+      "routes": [
+        "/onboarding",
+        "/onboarding/profile",
+        "/onboarding/retro",
+        "/auth/login",
+        "/auth/register",
+        "/auth/check-email",
+        "/auth/verify-email",
+        "/auth/resend-verification"
+      ],
+      "figmaNodes": [],
+      "primaryComponents": [
+        "Button",
+        "Panel",
+        "InlineAlert",
+        "PasswordStrength"
+      ],
+      "mobileStatus": "yellow",
+      "webStatus": "yellow",
+      "problemType": "Missing Figma flow and conversion-state coverage",
+      "recommendation": "Add a lightweight onboarding/auth backlog flow with form, verification, error, and success states."
+    },
+    {
+      "screen": "Offline/PWA",
+      "routes": [
+        "/offline"
+      ],
+      "figmaNodes": [],
+      "primaryComponents": [
+        "Panel",
+        "Button"
+      ],
+      "mobileStatus": "yellow",
+      "webStatus": "yellow",
+      "problemType": "Missing Figma state",
+      "recommendation": "Add offline/install/update states because they matter most in mobile daily-use contexts."
+    }
+  ],
+  "componentMatrix": [
+    {
+      "component": "AppNav",
+      "source": "apps/web/src/lib/components/common/AppNav.svelte",
+      "classification": "Needs split",
+      "mobileRisk": "medium",
+      "webRisk": "medium",
+      "recommendation": "Keep bottom nav and desktop rail variants as first-class shell decisions."
+    },
+    {
+      "component": "ScreenHeader",
+      "source": "apps/web/src/lib/components/common/ScreenHeader.svelte",
+      "classification": "Shared",
+      "mobileRisk": "low",
+      "webRisk": "low",
+      "recommendation": "Keep compact and action variants; audit long translated text."
+    },
+    {
+      "component": "Button",
+      "source": "apps/web/src/lib/components/common/Button.svelte",
+      "classification": "Shared",
+      "mobileRisk": "low",
+      "webRisk": "low",
+      "recommendation": "Keep current variants; verify icon-only and loading states in Figma."
+    },
+    {
+      "component": "Panel",
+      "source": "apps/web/src/lib/components/common/Panel.svelte",
+      "classification": "Shared",
+      "mobileRisk": "medium",
+      "webRisk": "low",
+      "recommendation": "Use as layout primitive, but avoid nested-card density on mobile."
+    },
+    {
+      "component": "InlineAlert",
+      "source": "apps/web/src/lib/components/common/InlineAlert.svelte",
+      "classification": "Shared",
+      "mobileRisk": "low",
+      "webRisk": "low",
+      "recommendation": "Keep action and no-action variants; include error/success states in screen specs."
+    },
+    {
+      "component": "ScaleSlider",
+      "source": "apps/web/src/lib/components/entries/ScaleSlider.svelte",
+      "classification": "Mobile-specialized",
+      "mobileRisk": "medium",
+      "webRisk": "low",
+      "recommendation": "Mobile touch target and thumb/value feedback are critical; web can group sliders horizontally."
+    },
+    {
+      "component": "TagPicker",
+      "source": "apps/web/src/lib/components/entries/TagPicker.svelte",
+      "classification": "Mobile-specialized",
+      "mobileRisk": "high",
+      "webRisk": "medium",
+      "recommendation": "Promote TagChip/FormField variants into fuller Figma coverage and limit overflow states."
+    },
+    {
+      "component": "SymptomChecker",
+      "source": "apps/web/src/lib/components/entries/SymptomChecker.svelte",
+      "classification": "Mobile-specialized",
+      "mobileRisk": "high",
+      "webRisk": "medium",
+      "recommendation": "Create Figma coverage; likely needs grouped disclosure on mobile."
+    },
+    {
+      "component": "EntryForm",
+      "source": "apps/web/src/lib/components/entries/EntryForm.svelte",
+      "classification": "Needs split",
+      "mobileRisk": "high",
+      "webRisk": "medium",
+      "recommendation": "Split screen composition, not data model: mobile capture flow vs web workspace."
+    },
+    {
+      "component": "HomeSummary",
+      "source": "apps/web/src/lib/components/home/HomeSummary.svelte",
+      "classification": "Shared",
+      "mobileRisk": "low",
+      "webRisk": "low",
+      "recommendation": "Use shared summary but vary surrounding context density."
+    },
+    {
+      "component": "MetricTimeseries",
+      "source": "apps/web/src/lib/components/trends/MetricTimeseries.svelte",
+      "classification": "Web-primary",
+      "mobileRisk": "high",
+      "webRisk": "low",
+      "recommendation": "Create mobile summary/drill-down treatment instead of squeezing full chart parity."
+    },
+    {
+      "component": "ComparisonHeatmap",
+      "source": "apps/web/src/lib/components/trends/ComparisonHeatmap.svelte",
+      "classification": "Web-primary",
+      "mobileRisk": "high",
+      "webRisk": "low",
+      "recommendation": "Use web as primary; mobile should expose top signals and drill-down."
+    },
+    {
+      "component": "TrendsComparePanel",
+      "source": "apps/web/src/lib/components/trends/TrendsComparePanel.svelte",
+      "classification": "Web-primary",
+      "mobileRisk": "high",
+      "webRisk": "low",
+      "recommendation": "Needs mobile simplification and Figma representation."
+    },
+    {
+      "component": "UnifiedStripChart",
+      "source": "apps/web/src/lib/components/trends/UnifiedStripChart.svelte",
+      "classification": "Web-primary",
+      "mobileRisk": "high",
+      "webRisk": "medium",
+      "recommendation": "Audit cursor/timeline interaction on mobile before implementation."
+    },
+    {
+      "component": "TagHeatmap",
+      "source": "apps/web/src/lib/components/trends/TagHeatmap.svelte",
+      "classification": "Web-primary",
+      "mobileRisk": "high",
+      "webRisk": "medium",
+      "recommendation": "Prefer compact ranked signal cards on mobile."
+    },
+    {
+      "component": "HabitsPanel",
+      "source": "apps/web/src/lib/components/trends/HabitsPanel.svelte",
+      "classification": "Web-primary",
+      "mobileRisk": "medium",
+      "webRisk": "low",
+      "recommendation": "Keep full panel web-first; mobile can use an insight teaser."
+    },
+    {
+      "component": "InsightFeed",
+      "source": "apps/web/src/lib/components/insights/InsightFeed.svelte",
+      "classification": "Needs variant",
+      "mobileRisk": "medium",
+      "webRisk": "medium",
+      "recommendation": "Add Figma variants for feed density and tab behavior."
+    },
+    {
+      "component": "InsightCard",
+      "source": "apps/web/src/lib/components/insights/InsightCard.svelte",
+      "classification": "Shared",
+      "mobileRisk": "medium",
+      "webRisk": "medium",
+      "recommendation": "Create Figma coverage; card content hierarchy drives both surfaces."
+    },
+    {
+      "component": "InsightMatrix",
+      "source": "apps/web/src/lib/components/insights/InsightMatrix.svelte",
+      "classification": "Web-primary",
+      "mobileRisk": "high",
+      "webRisk": "medium",
+      "recommendation": "Mobile needs a simplified pattern list; web can keep matrix visualization."
+    },
+    {
+      "component": "Settings screens",
+      "source": "apps/web/src/routes/settings",
+      "classification": "Web-primary",
+      "mobileRisk": "medium",
+      "webRisk": "low",
+      "recommendation": "Add Figma backlog screens for settings and tag management."
+    }
+  ],
+  "acceptance": {
+    "mainFlowsAssigned": true,
+    "existingFigmaScreensRated": true,
+    "coreComponentsClassified": true,
+    "primarySurfaceDecisionsResolved": true,
+    "nextImplementationPath": [
+      "Build missing Figma variants",
+      "Plan responsive code shell",
+      "Run browser responsive QA"
+    ]
+  }
+}

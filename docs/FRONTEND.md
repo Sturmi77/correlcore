@@ -1,8 +1,24 @@
+warning: encountered old-style '//SynologyDS923/docker/dockhand/git-repos/Synolgy DS923+/correlcore' that should be '%(prefix)///SynologyDS923/docker/dockhand/git-repos/Synolgy DS923+/correlcore'
 # CorrelCore — Frontend Principles
 
 Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-31 (M7 mobile insight hardening — metadata, tabs, co-occurrence matrices, bottom sheets).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
+
+
+## Mobile/Web Operating Model (2026-06-22)
+
+- **Mobile is the daily-use surface:** capture, check-in, quick feedback, and lightweight review.
+- **Web is the analysis surface:** comparison, management, deeper review, and data-dense visualisation.
+- **One SvelteKit codebase:** routes, API contracts, stores, validation, and domain calculations stay shared.
+- **Composition differs by surface:** mobile uses single-column flows and focused drill-downs; desktop may use split views, side panels, sticky controls, and wider chart regions.
+- **Existing shell breakpoint:** bottom navigation changes to the desktop rail at the global `768px` breakpoint.
+- **No compressed desktop dashboards on mobile:** Trends and Insights expose summaries plus focused details instead of full desktop parity.
+
+The complete audit and delivery sequence are maintained in
+[`frontend/MOBILE_WEB_AUDIT.md`](frontend/MOBILE_WEB_AUDIT.md) and
+[`frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md`](frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md).
+Editable Figma references are linked from those documents.
 
 ---
 

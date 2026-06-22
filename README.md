@@ -153,7 +153,7 @@ Task: <your specific task here>
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md)                               | Component diagram, deployment topologies, sync protocol           |
 | [API.md](docs/API.md)                                                 | OpenAPI guidelines, endpoints, auth flow                          |
 | [API_CONTRACTS.md](docs/API_CONTRACTS.md)                             | API contract strategy, frontend constants, OpenAPI client plan    |
-| [FRONTEND.md](docs/FRONTEND.md)                                       | Design principles, atomic design, i18n, performance budget        |
+| [FRONTEND.md](docs/FRONTEND.md)                                       | Mobile/Web roles, responsive shell, component ownership           |
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                 | Local setup, quality gates, NAS/pnpm notes, test database         |
 | [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                         | Competitive and market analysis, monetisation, marketing          |
 | [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan      |
@@ -168,6 +168,8 @@ Task: <your specific task here>
 | [PWA](docs/features/PWA.md)                                           | Install banner, service worker, offline fallback                  |
 | [Cycle tracking](docs/features/cycle-tracking.md)                     | Neutral `cycle_day` domain scope                                  |
 | [COLOR_SCHEME_CONCEPT](docs/frontend/COLOR_SCHEME_CONCEPT.md)         | Token framework and contrast rationale (M3.7)                     |
+| [Mobile/Web Audit](docs/frontend/MOBILE_WEB_AUDIT.md)                 | Critical frontend findings, status matrix, conflicts              |
+| [Mobile/Web Plan](docs/frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md)    | Mobile-first delivery sequence and verification gates             |
 | [ADR Index](docs/adr/)                                                | Architecture decision records (0001–0034)                         |
 | [Quality Gates](docs/quality/)                                        | M1–M4 visual QA and quality gate reports                          |
 
