@@ -48,6 +48,7 @@ library and a Dev or Full seat on an Organization or Enterprise plan.
 ## Mobile / Web audit
 
 - Figma audit overview: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=31-1089
+- Sprint 0 foundation contracts: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=36-1089
 - Audit narrative: ./mobile-web-audit.md
 - Audit data: ./mobile-web-audit.json
 

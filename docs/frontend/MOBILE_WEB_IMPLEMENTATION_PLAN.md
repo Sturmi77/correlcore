@@ -1,6 +1,6 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Proposed execution order
+**Status:** Sprint 0 complete; Phase 1 is the next implementation slice.
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
 
 ## Success criteria
@@ -26,6 +26,20 @@ Mobile work proceeds first unless it would:
 
 If a gate fails, extract or stabilise the shared contract first, then resume the
 mobile slice. Visual or composition differences alone are not conflicts.
+
+## Sprint 0: Shared surface foundation (complete)
+
+1. Added one source of truth for the 768 px shell breakpoint, five baseline
+   viewports, primary surface roles, and the six UI data states.
+2. Extended `DataState` with a `partial` state while preserving rendered content.
+3. Added route contracts for root shell ownership and navigation parity.
+4. Added browser coverage for shell placement, horizontal overflow, and 44 px
+   navigation targets at 390, 430, 768, 1280, and 1440 px.
+5. Added the editable Figma contract board:
+   https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=36-1089
+
+**Verification:** 11 unit/contract tests, five Playwright viewport tests, and
+`svelte-check` with zero errors and zero warnings.
 
 ## Phase 1: Mobile entry foundation
 
