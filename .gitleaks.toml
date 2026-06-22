@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public CorrelCore Figma file identifier"
+regexes = ['''XjijHnzMJubA1iuPQxHOwS''']
