@@ -22,5 +22,5 @@ export default {
   id: 'inline-alert',
   imports: ['import InlineAlert from "$lib/components/common/InlineAlert.svelte";'],
   example: figma.code`<InlineAlert variant="${variant}" message="${message}" ${actionVisible ? figma.code`actionLabel="${actionLabel}"` : ''} />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

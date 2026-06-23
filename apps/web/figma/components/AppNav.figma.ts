@@ -8,5 +8,5 @@ export default {
   id: 'app-nav',
   imports: ['import AppNav from "$lib/components/common/AppNav.svelte";'],
   example: figma.code`<AppNav />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

@@ -7,12 +7,12 @@ import figma from 'figma';
 const instance = figma.selectedInstance;
 const loading = instance.getEnum('State', {
   Ready: false,
-  Loading: true
+  Loading: true,
 });
 
 export default {
   id: 'home-summary',
   imports: ['import HomeSummary from "$lib/components/home/HomeSummary.svelte";'],
   example: figma.code`<HomeSummary entries={entries} consistencyEntries={consistencyEntries} todayIso={todayIso} ${loading ? 'loading' : ''} />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

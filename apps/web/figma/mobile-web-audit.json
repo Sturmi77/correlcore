@@ -16,14 +16,8 @@
   "screenMatrix": [
     {
       "screen": "Home / Today",
-      "routes": [
-        "/"
-      ],
-      "figmaNodes": [
-        "21:3",
-        "28:331",
-        "28:698"
-      ],
+      "routes": ["/"],
+      "figmaNodes": ["21:3", "28:331", "28:698"],
       "primaryComponents": [
         "HomeSummary",
         "HomeDailyBrief",
@@ -41,15 +35,8 @@
     },
     {
       "screen": "Entry",
-      "routes": [
-        "/entries/new",
-        "/entries/day/[date]"
-      ],
-      "figmaNodes": [
-        "21:69",
-        "28:397",
-        "28:823"
-      ],
+      "routes": ["/entries/new", "/entries/day/[date]"],
+      "figmaNodes": ["21:69", "28:397", "28:823"],
       "primaryComponents": [
         "EntryForm",
         "ScaleSlider",
@@ -65,14 +52,8 @@
     },
     {
       "screen": "Trends",
-      "routes": [
-        "/trends"
-      ],
-      "figmaNodes": [
-        "21:151",
-        "28:484",
-        "28:908"
-      ],
+      "routes": ["/trends"],
+      "figmaNodes": ["21:151", "28:484", "28:908"],
       "primaryComponents": [
         "TrendsComparePanel",
         "MetricTimeseries",
@@ -89,15 +70,8 @@
     },
     {
       "screen": "Insights",
-      "routes": [
-        "/insights",
-        "/insights/disclaimer"
-      ],
-      "figmaNodes": [
-        "21:282",
-        "28:615",
-        "28:1080"
-      ],
+      "routes": ["/insights", "/insights/disclaimer"],
+      "figmaNodes": ["21:282", "28:615", "28:1080"],
       "primaryComponents": [
         "InsightFeed",
         "InsightCard",
@@ -115,18 +89,9 @@
     },
     {
       "screen": "Settings",
-      "routes": [
-        "/settings",
-        "/settings/tags"
-      ],
+      "routes": ["/settings", "/settings/tags"],
       "figmaNodes": [],
-      "primaryComponents": [
-        "ScreenHeader",
-        "Panel",
-        "Button",
-        "InlineAlert",
-        "ThemeToggle"
-      ],
+      "primaryComponents": ["ScreenHeader", "Panel", "Button", "InlineAlert", "ThemeToggle"],
       "mobileStatus": "yellow",
       "webStatus": "green",
       "problemType": "Missing Figma flow",
@@ -145,12 +110,7 @@
         "/auth/resend-verification"
       ],
       "figmaNodes": [],
-      "primaryComponents": [
-        "Button",
-        "Panel",
-        "InlineAlert",
-        "PasswordStrength"
-      ],
+      "primaryComponents": ["Button", "Panel", "InlineAlert", "PasswordStrength"],
       "mobileStatus": "yellow",
       "webStatus": "yellow",
       "problemType": "Missing Figma flow and conversion-state coverage",
@@ -158,14 +118,9 @@
     },
     {
       "screen": "Offline/PWA",
-      "routes": [
-        "/offline"
-      ],
+      "routes": ["/offline"],
       "figmaNodes": [],
-      "primaryComponents": [
-        "Panel",
-        "Button"
-      ],
+      "primaryComponents": ["Panel", "Button"],
       "mobileStatus": "yellow",
       "webStatus": "yellow",
       "problemType": "Missing Figma state",

@@ -17,5 +17,5 @@ export default {
   id: 'screen-header',
   imports: ['import ScreenHeader from "$lib/components/common/ScreenHeader.svelte";'],
   example: figma.code`<ScreenHeader title="${title}" subtitle="${subtitle}" eyebrow="${eyebrow}" ${compact ? 'compact' : ''} />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

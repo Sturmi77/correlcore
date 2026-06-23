@@ -1,10 +1,10 @@
 warning: encountered old-style '//SynologyDS923/docker/dockhand/git-repos/Synolgy DS923+/correlcore' that should be '%(prefix)///SynologyDS923/docker/dockhand/git-repos/Synolgy DS923+/correlcore'
+
 # CorrelCore — Frontend Principles
 
 Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-31 (M7 mobile insight hardening — metadata, tabs, co-occurrence matrices, bottom sheets).
 
 > **Note:** This document supersedes the previous version. The old home-screen sketch showing `[Streak: 🔥 7]` has been removed — it contradicted the No-Gamification Promise (§1.4 DESIGN_DOCUMENT). See [ADR-0017](adr/0017-frontend-screen-architecture.md).
-
 
 ## Mobile/Web Operating Model (2026-06-22)
 

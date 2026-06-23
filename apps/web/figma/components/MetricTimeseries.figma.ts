@@ -8,12 +8,12 @@ const instance = figma.selectedInstance;
 const state = instance.getEnum('State', {
   Ready: 'ready',
   Loading: 'loading',
-  Empty: 'empty'
+  Empty: 'empty',
 });
 
 export default {
   id: 'metric-timeseries',
   imports: ['import MetricTimeseries from "$lib/components/trends/MetricTimeseries.svelte";'],
   example: figma.code`<MetricTimeseries points={points} range="week" enabled={enabled} loading={${state === 'loading'}} />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

@@ -10,11 +10,11 @@ const metric = instance.getEnum('Metric', {
   Energy: 'energy',
   Stress: 'stress',
   Consistency: 'tracking_consistency',
-  Count: 'count'
+  Count: 'count',
 });
 const loading = instance.getEnum('State', {
   Ready: false,
-  Loading: true
+  Loading: true,
 });
 const label = instance.getString('Label');
 const value = instance.getString('Value');
@@ -24,5 +24,5 @@ export default {
   id: 'metric-card',
   imports: ['// MetricCard is a Figma subcomponent extracted from HomeSummary.svelte'],
   example: figma.code`<MetricCard metric="${metric}" label="${label}" value="${value}" unit="${unit}" ${loading ? 'loading' : ''} />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

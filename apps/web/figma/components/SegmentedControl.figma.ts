@@ -30,5 +30,5 @@ export default {
     { id: 'third', label: '${option3}', disabled: ${disabled} }
   ]}
 />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

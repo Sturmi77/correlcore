@@ -30,5 +30,5 @@ export default {
     { id: 'settings', label: '${tab3}', disabled: ${disabled} }
   ]}
 />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

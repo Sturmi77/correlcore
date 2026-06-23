@@ -27,15 +27,15 @@
 
 ## Screen matrix
 
-| Screen | Mobile | Web | Primary problem | Decision |
-| --- | --- | --- | --- | --- |
-| Home / Today | Yellow | Green | Figma covers only part of the real home composition | Keep mobile as Daily Brief; expand desktop context without turning Home into a control centre |
-| Entry | Yellow | Yellow | Form density and incomplete state coverage | Mobile capture flow first; desktop workspace second, shared model and validation |
-| Trends | Red | Green | Dense chart interaction | Desktop is primary; mobile gets summaries and drill-down sheets |
-| Insights | Red | Yellow | Real insight components missing from Figma | Define feed/card/quality variants before implementation alignment |
-| Settings | Yellow | Green | Missing Figma flow | Mobile essentials; full web management surface |
-| Auth / Onboarding | Yellow | Yellow | Missing conversion and verification states | Add responsive form, error, success, and verification specs |
-| Offline / PWA | Yellow | Yellow | Missing recovery states | Specify offline, install, update, pending-sync, and retry states |
+| Screen            | Mobile | Web    | Primary problem                                     | Decision                                                                                      |
+| ----------------- | ------ | ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Home / Today      | Yellow | Green  | Figma covers only part of the real home composition | Keep mobile as Daily Brief; expand desktop context without turning Home into a control centre |
+| Entry             | Yellow | Yellow | Form density and incomplete state coverage          | Mobile capture flow first; desktop workspace second, shared model and validation              |
+| Trends            | Red    | Green  | Dense chart interaction                             | Desktop is primary; mobile gets summaries and drill-down sheets                               |
+| Insights          | Red    | Yellow | Real insight components missing from Figma          | Define feed/card/quality variants before implementation alignment                             |
+| Settings          | Yellow | Green  | Missing Figma flow                                  | Mobile essentials; full web management surface                                                |
+| Auth / Onboarding | Yellow | Yellow | Missing conversion and verification states          | Add responsive form, error, success, and verification specs                                   |
+| Offline / PWA     | Yellow | Yellow | Missing recovery states                             | Specify offline, install, update, pending-sync, and retry states                              |
 
 ## Component findings
 

@@ -7,12 +7,12 @@ import figma from 'figma';
 const instance = figma.selectedInstance;
 const kind = instance.getEnum('Kind', {
   Tags: 'tags',
-  Symptoms: 'symptoms'
+  Symptoms: 'symptoms',
 });
 const state = instance.getEnum('State', {
   Ready: 'ready',
   Loading: 'loading',
-  Empty: 'empty'
+  Empty: 'empty',
 });
 
 export default {
@@ -25,5 +25,5 @@ export default {
   showSymptoms={${kind === 'symptoms'}}
   loading={${state === 'loading'}}
 />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

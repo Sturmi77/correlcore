@@ -30,5 +30,5 @@ export default {
   scaleType="${scaleType}"
   ${disabled ? 'disabled' : ''}
 />`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

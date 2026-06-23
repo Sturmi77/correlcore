@@ -18,5 +18,5 @@ export default {
   id: 'panel',
   imports: ['import Panel from "$lib/components/common/Panel.svelte";'],
   example: figma.code`<Panel variant="${variant}">${body}</Panel>`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };

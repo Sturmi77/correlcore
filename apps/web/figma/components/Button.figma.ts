@@ -27,5 +27,5 @@ export default {
   id: 'button',
   imports: ['import Button from "$lib/components/common/Button.svelte";'],
   example: figma.code`<Button variant="${variant}" size="${size}" ${disabled ? 'disabled' : ''}>${label}</Button>`,
-  metadata: { nestable: true }
+  metadata: { nestable: true },
 };
