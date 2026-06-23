@@ -7,7 +7,8 @@
     "correlcore-steps-1-5-2026-06-22-v2",
     "correlcore-mobile-web-split-2026-06-22-v1",
     "correlcore-mobile-web-audit-2026-06-22-v1",
-    "correlcore-mobile-entry-sprint1-2026-06-23-v1"
+    "correlcore-mobile-entry-sprint1-2026-06-23-v1",
+    "correlcore-mobile-trends-sprint2-2026-06-23-v1"
   ],
   "componentSets": [
     {
@@ -231,6 +232,27 @@
         {
           "name": "Mobile Entry / Read-only History",
           "nodeId": "55:1153"
+        }
+      ]
+    },
+    {
+      "name": "Mobile Trends / Sprint 2 Flow",
+      "nodeId": "59:1285",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285",
+      "status": "implemented-and-verified",
+      "runId": "correlcore-mobile-trends-sprint2-2026-06-23-v1",
+      "children": [
+        {
+          "name": "Mobile Trends / Summary",
+          "nodeId": "59:1293"
+        },
+        {
+          "name": "Mobile Trends / Detail Open",
+          "nodeId": "59:1296"
+        },
+        {
+          "name": "Mobile Trends / Empty",
+          "nodeId": "59:1299"
         }
       ]
     }

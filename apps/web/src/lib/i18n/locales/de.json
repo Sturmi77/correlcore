@@ -357,6 +357,25 @@
       "quarter": "90T",
       "year": "1J"
     },
+    "mobile": {
+      "heading": "Auf einen Blick",
+      "updating": "Wird aktualisiert",
+      "entries": "{count} Eintr\u00e4ge in diesem Zeitraum",
+      "movement": "St\u00e4rkste Bewegung",
+      "movement_value": "{from} auf {to} ({delta})",
+      "not_enough": "Noch nicht genug Daten",
+      "tag": "H\u00e4ufigster Tag",
+      "tag_value": "{count} Vorkommen an {days} Tagen",
+      "no_tag": "Noch kein Tag-Signal",
+      "symptom": "H\u00e4ufigstes Symptom",
+      "symptom_value": "{count} Meldungen, Spitze {peak}/3",
+      "no_symptom": "Noch kein Symptom-Signal",
+      "empty_heading": "Noch keine Trend-Zusammenfassung",
+      "empty_body": "Erfasse weiter t\u00e4gliche Eintr\u00e4ge, damit Bewegungen und Kontext hier sichtbar werden.",
+      "show_details": "Detaillierte Diagramme anzeigen",
+      "hide_details": "Detaillierte Diagramme ausblenden",
+      "detail_filters": "Detaillierte Trend-Filter"
+    },
     "tabs": {
       "label": "Trend-Bereiche",
       "compare": "Vergleichen",

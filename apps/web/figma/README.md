@@ -55,6 +55,10 @@ library and a Dev or Full seat on an Organization or Enterprise plan.
 - Mobile Entry / Saving and Saved: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=52-1153
 - Mobile Entry / Offline Retry: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=54-1153
 - Mobile Entry / Read-only History: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=55-1153
+- Sprint 2 Mobile Trends flow: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285
+- Mobile Trends / Summary: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1293
+- Mobile Trends / Detail Open: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1296
+- Mobile Trends / Empty: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1299
 - Audit narrative: ./mobile-web-audit.md
 - Audit data: ./mobile-web-audit.json
 
@@ -62,6 +66,11 @@ The Sprint 1 flow documents the implemented mobile composition, autosave and
 validation feedback, explicit offline retry, tag and symptom limits, custom tag
 entry, and the seven-day read-only boundary. Offline changes are not silently
 queued; this remains consistent with ADR-0009 and ADR-0013.
+
+The Sprint 2 flow uses the existing timeseries, tag heatmap, and symptom heatmap
+responses. Mobile changes presentation hierarchy only: a readable summary is
+shown first, while the complete desktop comparison canvas remains available
+through an explicit detail action.
 
 ## Pending Figma work
 
