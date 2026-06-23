@@ -42,13 +42,18 @@
   let customBusy = false;
   let slugTouched = false;
 
-  onMount(async () => {
-    if ($tags.status === 'ready' || $tags.status === 'loading') return;
+  async function loadTags() {
+    loadError = null;
     try {
       await refreshTags();
     } catch (err) {
       loadError = err instanceof Error ? err.message : 'load_failed';
     }
+  }
+
+  onMount(async () => {
+    if ($tags.status === 'ready' || $tags.status === 'loading') return;
+    await loadTags();
   });
 
   function toggle(tagId: string) {
@@ -166,7 +171,10 @@
   {#if $tags.status === 'loading'}
     <p class="tag-status">{$_('tag.loading')}</p>
   {:else if $tags.status === 'error' || loadError}
-    <p class="tag-status tag-status-error" role="alert">{$_('tag.error_load')}</p>
+    <div class="tag-status-row">
+      <p class="tag-status tag-status-error" role="alert">{$_('tag.error_load')}</p>
+      <button type="button" class="tag-retry" on:click={loadTags}>{$_('tag.retry')}</button>
+    </div>
   {:else if $tags.status === 'ready' && visibleCategories.length === 0}
     <p class="tag-status">{$_('tag.empty')}</p>
   {:else if $tags.status === 'ready'}
@@ -198,9 +206,20 @@
     {/each}
   {/if}
 
+  {#if atLimit}
+    <p class="tag-limit" role="status" data-testid="tag-limit-message">
+      {$_('tag.limit_reached')}
+    </p>
+  {/if}
+
   <div class="tag-custom">
     {#if !showCustomForm}
-      <button type="button" class="tag-custom-toggle" on:click={openCustomForm} {disabled}>
+      <button
+        type="button"
+        class="tag-custom-toggle"
+        on:click={openCustomForm}
+        disabled={disabled || atLimit}
+      >
         + {$_('tag.custom.add_button')}
       </button>
     {:else}
@@ -332,6 +351,33 @@
     opacity: 1;
   }
 
+  .tag-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .tag-retry {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid currentColor;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-error);
+    cursor: pointer;
+  }
+
+  .tag-limit {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border-left: 3px solid var(--color-warning);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+  }
+
   .tag-category {
     display: flex;
     flex-direction: column;
@@ -365,6 +411,7 @@
     font-size: var(--text-sm);
     line-height: 1.2;
     cursor: pointer;
+    min-height: 44px;
     transition:
       background 120ms ease,
       border-color 120ms ease,
@@ -406,6 +453,7 @@
     width: 100%;
     text-align: left;
     transition: border-color 120ms ease;
+    min-height: 44px;
   }
 
   .tag-custom-toggle:hover:not(:disabled) {

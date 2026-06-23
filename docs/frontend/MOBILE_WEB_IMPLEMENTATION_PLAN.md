@@ -1,6 +1,6 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Sprint 0 complete; Phase 1 is the next implementation slice.
+**Status:** Sprint 0 and Phase 1 complete; Phase 2 is the next implementation slice.
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
 
 ## Success criteria
@@ -41,20 +41,28 @@ mobile slice. Visual or composition differences alone are not conflicts.
 **Verification:** 11 unit/contract tests, five Playwright viewport tests, and
 `svelte-check` with zero errors and zero warnings.
 
-## Phase 1: Mobile entry foundation
+## Phase 1: Mobile entry foundation (complete)
 
-1. Specify the complete mobile Entry flow in Figma: default, validation error,
-   saving, saved, offline pending, retry, read-only backdate, tag limit, custom
-   tag creation, and symptom disclosure.
-2. Add missing design-system coverage for `SymptomChecker`, full
-   `TagPicker`, save status, and mobile Entry composition.
-3. Refactor only where needed so `EntryForm` owns shared data/validation while
-   mobile and desktop wrappers own composition.
-4. Verify at 390 x 844 and 430 x 932, with DE/EN text, keyboard, screen reader,
-   reduced motion, and 44 px touch targets.
+1. Added the complete mobile Entry flow in Figma: quick capture, optional
+   details, validation, saving/saved, explicit offline retry, tag limits,
+   custom tags, symptom disclosure, and read-only history.
+2. Added implementation coverage for `SymptomChecker`, `TagPicker`, save
+   status, optional-detail disclosure, and mobile Entry composition.
+3. Kept shared entry data and validation in `EntryForm` while making mobile
+   composition responsive below the shared 768 px breakpoint.
+4. Added automated coverage at 390 x 844 and 430 x 932, including 44 px touch
+   targets, overflow, offline retry, desktop parity, and the seven-day boundary.
+
+Offline edits deliberately remain visible and retryable instead of being
+silently queued. A durable pending-sync queue is a separate product and data
+architecture decision under ADR-0009 and ADR-0013.
 
 **Exit:** A user can complete, recover, and understand a daily entry in at most
 60 seconds without desktop regressions.
+
+**Verification:** 9 focused unit tests, five Playwright Entry scenarios,
+`svelte-check` with zero errors and warnings, and the editable Figma flow:
+https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=48-1089
 
 ## Phase 2: Mobile Trends
 

@@ -180,7 +180,8 @@
     "cycle_day": {
       "label": "Zyklustag (optional)",
       "placeholder": "1-35",
-      "hint": "Nur neutrale Erfassung. CorrelCore macht keine Vorhersage und keine Diagnose."
+      "hint": "Nur neutrale Erfassung. CorrelCore macht keine Vorhersage und keine Diagnose.",
+      "error_range": "Der Zyklustag muss zwischen 1 und 35 liegen."
     },
     "work_context": {
       "homeoffice": "Homeoffice",
@@ -224,7 +225,8 @@
       "default_low": "niedrig",
       "default_high": "hoch"
     },
-    "more_toggle": "+ Mehr (Tageszeit, Tags, Symptome, Notiz)",
+    "more_toggle": "Optionale Details hinzuf\u00fcgen",
+    "more_hide": "Optionale Details ausblenden",
     "sheet": {
       "title": "Wie war dein Tag?",
       "close": "Eintrag schlie\u00dfen",
@@ -250,7 +252,8 @@
     "add_or_edit": "Erfassen oder bearbeiten",
     "edit": "Bearbeiten",
     "list_aria": "Eintr\u00e4ge f\u00fcr den ausgew\u00e4hlten Tag",
-    "score_line": "Stimmung {mood}/5 \u00b7 Energie {energy}/5 \u00b7 Stress {stress}/5"
+    "score_line": "Stimmung {mood}/5 \u00b7 Energie {energy}/5 \u00b7 Stress {stress}/5",
+    "read_only": "Dieser Eintrag liegt au\u00dferhalb des 7-Tage-Fensters und ist schreibgesch\u00fctzt."
   },
   "tag": {
     "picker_label": "Tags",
@@ -259,6 +262,8 @@
     "empty": "Noch keine Tags vorhanden.",
     "error_load": "Tags konnten nicht geladen werden.",
     "error_assign": "Eintrag wurde gespeichert, Tags konnten aber nicht zugewiesen werden.",
+    "limit_reached": "Maximum erreicht. Entferne einen Tag, bevor du einen weiteren ausw\u00e4hlst.",
+    "retry": "Erneut versuchen",
     "category": {
       "sport": "Sport",
       "social": "Sozial",
@@ -299,6 +304,8 @@
     "loading": "Symptome werden geladen\u2026",
     "error_load": "Symptomliste konnte nicht aktualisiert werden \u2014 Standardliste wird verwendet.",
     "error_assign": "Eintrag wurde gespeichert, Symptome konnten aber nicht zugewiesen werden.",
+    "limit_reached": "Maximum erreicht. Entferne ein Symptom, bevor du ein weiteres ausw\u00e4hlst.",
+    "retry": "Erneut versuchen",
     "scale_label": "Intensit\u00e4t f\u00fcr {name}",
     "intensity": {
       "0": "Nicht vorhanden",

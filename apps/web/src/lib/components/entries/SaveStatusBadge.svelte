@@ -20,6 +20,7 @@
   export let status: AutoSaveStatus = 'idle';
   export let lastSavedAt: number | null = null;
   export let lastError: string | null = null;
+  export let offline = false;
   export let onRetry: (() => void) | null = null;
   export let testId = 'save-status';
 
@@ -31,7 +32,7 @@
     return `${hh}:${mm}`;
   }
 
-  $: tone = status; // map status to CSS class
+  $: tone = offline ? 'offline' : status;
 </script>
 
 {#if status !== 'idle'}
@@ -42,7 +43,20 @@
     data-testid={testId}
     data-status={status}
   >
-    {#if status === 'dirty'}
+    {#if offline}
+      <span class="save-status__warn" aria-hidden="true">!</span>
+      <span class="save-status__text">{$_('entry.autosave.offline')}</span>
+      {#if status === 'error' && onRetry}
+        <button
+          type="button"
+          class="save-status__retry"
+          on:click={onRetry}
+          data-testid="{testId}-retry"
+        >
+          {$_('entry.autosave.retry')}
+        </button>
+      {/if}
+    {:else if status === 'dirty'}
       <span class="save-status__dot" aria-hidden="true"></span>
       <span class="save-status__text">{$_('entry.autosave.dirty')}</span>
     {:else if status === 'saving'}
@@ -113,6 +127,14 @@
     flex-wrap: wrap;
   }
 
+  .save-status--offline {
+    color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
   .save-status__dot {
     width: 0.5rem;
     height: 0.5rem;
@@ -157,6 +179,7 @@
     border-radius: 999px;
     padding: 0.05rem 0.5rem;
     cursor: pointer;
+    min-height: 2.75rem;
   }
 
   .save-status__retry:hover {

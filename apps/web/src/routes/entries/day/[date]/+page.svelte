@@ -13,6 +13,7 @@
     type EntrySymptomResponse,
     type SymptomResponse,
   } from '$lib/api/symptoms';
+  import { isEntryDateEditable } from '$lib/utils/entryForm';
 
   type EntryDecorations = {
     tags: TagResponse[];
@@ -28,6 +29,7 @@
   $: date = $page.params.date ?? '';
   $: selectedTagId = $page.url.searchParams.get('tag_id');
   $: validDate = /^\d{4}-\d{2}-\d{2}$/.test(date);
+  $: editableDate = validDate && isEntryDateEditable(new Date(), date);
   $: visibleEntries = selectedTagId
     ? entries.filter((entry) => decorations[entry.id]?.tags.some((tag) => tag.id === selectedTagId))
     : entries;
@@ -110,10 +112,18 @@
       <h1>{$_('day_entries.title')}</h1>
       <p>{date}</p>
     </div>
-    <a class="btn btn-sm variant-soft-primary" href={`/entries/new?date=${date}`}>
-      {$_('day_entries.add_or_edit')}
-    </a>
+    {#if editableDate}
+      <a class="btn btn-sm variant-soft-primary" href={`/entries/new?date=${date}`}>
+        {$_('day_entries.add_or_edit')}
+      </a>
+    {/if}
   </section>
+
+  {#if validDate && !editableDate}
+    <p class="day-entries__read-only" role="status" data-testid="day-entry-read-only">
+      {$_('day_entries.read_only')}
+    </p>
+  {/if}
 
   {#if $auth.status !== 'authenticated'}
     <section class="day-entries__panel">
@@ -131,9 +141,11 @@
       <p>
         {selectedTagId ? $_('day_entries.empty_for_tag') : $_('day_entries.empty')}
       </p>
-      <a class="btn btn-sm variant-filled-primary" href={`/entries/new?date=${date}`}>
-        {$_('day_entries.create')}
-      </a>
+      {#if editableDate}
+        <a class="btn btn-sm variant-filled-primary" href={`/entries/new?date=${date}`}>
+          {$_('day_entries.create')}
+        </a>
+      {/if}
     </section>
   {:else}
     <section class="day-entries__list" aria-label={$_('day_entries.list_aria')}>
@@ -153,12 +165,14 @@
                 })}
               </p>
             </div>
-            <a
-              class="btn btn-sm variant-ghost-surface"
-              href={`/entries/new?date=${entry.entry_date}`}
-            >
-              {$_('day_entries.edit')}
-            </a>
+            {#if editableDate}
+              <a
+                class="btn btn-sm variant-ghost-surface"
+                href={`/entries/new?date=${entry.entry_date}`}
+              >
+                {$_('day_entries.edit')}
+              </a>
+            {/if}
           </div>
 
           {#if entry.note}
@@ -279,6 +293,15 @@
   .day-entries__error {
     margin: 0;
     color: var(--color-error);
+  }
+
+  .day-entries__read-only {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid var(--color-warning);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    color: var(--color-text);
   }
 
   .day-entries__empty {

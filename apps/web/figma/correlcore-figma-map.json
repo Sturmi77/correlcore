@@ -6,7 +6,8 @@
     "correlcore-steps-1-5-2026-06-22-v1",
     "correlcore-steps-1-5-2026-06-22-v2",
     "correlcore-mobile-web-split-2026-06-22-v1",
-    "correlcore-mobile-web-audit-2026-06-22-v1"
+    "correlcore-mobile-web-audit-2026-06-22-v1",
+    "correlcore-mobile-entry-sprint1-2026-06-23-v1"
   ],
   "componentSets": [
     {
@@ -201,6 +202,37 @@
       "screenRows": 7,
       "componentCards": 20,
       "backlogCards": 3
+    }
+  ],
+  "implementationFlows": [
+    {
+      "name": "Mobile Entry / Sprint 1 Flow",
+      "nodeId": "48:1089",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=48-1089",
+      "status": "implemented-and-verified",
+      "runId": "correlcore-mobile-entry-sprint1-2026-06-23-v1",
+      "children": [
+        {
+          "name": "Mobile Entry / Quick Capture",
+          "nodeId": "49:1091"
+        },
+        {
+          "name": "Mobile Entry / Details Expanded",
+          "nodeId": "50:1153"
+        },
+        {
+          "name": "Mobile Entry / Saving and Saved",
+          "nodeId": "52:1153"
+        },
+        {
+          "name": "Mobile Entry / Offline Retry",
+          "nodeId": "54:1153"
+        },
+        {
+          "name": "Mobile Entry / Read-only History",
+          "nodeId": "55:1153"
+        }
+      ]
     }
   ]
 }
