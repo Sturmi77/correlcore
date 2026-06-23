@@ -249,6 +249,18 @@ Trusted Web Activities (TWA / Bubblewrap) wurden als initialer Ansatz evaluiert,
 - **Volle Play-Store-Konformität:** Capacitor-Apps gelten als native Apps, da sie echte APKs mit nativem Code erzeugen.
 - **Einheitlicher Build-Prozess:** Kein separates Android-Projekt zu pflegen; das Capacitor-Projekt wird aus dem SvelteKit-Build generiert.
 
+### Mobile/Web Frontend-Komposition
+
+Die gemeinsame Codebasis bedeutet nicht identische Screen-Komposition:
+
+- Unterhalb des bestehenden globalen `768px`-Breakpoints nutzt die App Bottom Navigation, einspaltige Daily-Use-Flows und fokussierte Drill-downs.
+- Ab `768px` nutzt die App die Desktop Rail; datenreiche Routen dürfen Split Views, Side Panels und breite Analyseflächen verwenden.
+- API-Verträge, Stores, Validierung, Routen und Analytics-Berechnungen bleiben viewport-unabhängig.
+- Mobile-spezifische Wrapper dürfen Darstellung und Reihenfolge ändern, aber keine zweite Domain- oder Analytics-Implementierung einführen.
+
+Details und Konfliktregeln: [`FRONTEND.md`](FRONTEND.md) und
+[`frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md`](frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md).
+
 ### Build-Prozess
 
 ```

@@ -1,5 +1,7 @@
 <script context="module" lang="ts">
-  export type DataStateKind = 'loading' | 'error' | 'empty' | 'offline' | 'ready';
+  import type { UiDataStateKind } from '$lib/ui/surfaceContract';
+
+  export type DataStateKind = UiDataStateKind;
 </script>
 
 <script lang="ts">
@@ -15,6 +17,7 @@
   export let emptyBody = '';
   export let offlineTitle = '';
   export let offlineBody = '';
+  export let partialMessage = '';
   export let retryLabel = '';
   export let actionTestId = '';
   export let testId: string | undefined = undefined;
@@ -39,6 +42,11 @@
   <EmptyState title={emptyTitle} body={emptyBody} {testId} />
 {:else if state === 'offline'}
   <EmptyState title={offlineTitle} body={offlineBody} {testId} />
+{:else if state === 'partial'}
+  <div class="data-state__partial" data-testid={testId}>
+    <InlineAlert variant="warning" message={partialMessage} />
+    <slot />
+  </div>
 {:else}
   <slot />
 {/if}
@@ -48,5 +56,10 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .data-state__partial {
+    display: grid;
+    gap: var(--space-3);
   }
 </style>

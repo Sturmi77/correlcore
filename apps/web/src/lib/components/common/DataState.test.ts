@@ -46,4 +46,19 @@ describe('DataState', () => {
     expect(screen.getByTestId('empty-data').textContent).toContain('Nothing here');
     expect(screen.getByText('Add data to continue.')).toBeTruthy();
   });
+
+  it('renders a partial-data warning without error semantics', () => {
+    render(DataState, {
+      props: {
+        state: 'partial',
+        partialMessage: 'Some comparison data is unavailable.',
+        testId: 'partial-data',
+      },
+    });
+
+    expect(screen.getByTestId('partial-data').textContent).toContain(
+      'Some comparison data is unavailable.'
+    );
+    expect(screen.getByTestId('partial-data').querySelector('[role="alert"]')).toBeNull();
+  });
 });

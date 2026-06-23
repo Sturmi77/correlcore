@@ -1,0 +1,7 @@
+{
+  "codeConnect": {
+    "include": ["apps/web/figma/**/*.figma.ts"],
+    "label": "Svelte",
+    "parser": "html"
+  }
+}

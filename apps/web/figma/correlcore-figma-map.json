@@ -1,0 +1,206 @@
+{
+  "fileKey": "XjijHnzMJubA1iuPQxHOwS",
+  "fileUrl": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS",
+  "runIds": [
+    "correlcore-components-2026-06-22-v1",
+    "correlcore-steps-1-5-2026-06-22-v1",
+    "correlcore-steps-1-5-2026-06-22-v2",
+    "correlcore-mobile-web-split-2026-06-22-v1",
+    "correlcore-mobile-web-audit-2026-06-22-v1"
+  ],
+  "componentSets": [
+    {
+      "name": "Button",
+      "nodeId": "6:64",
+      "source": "apps/web/src/lib/components/common/Button.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=6-64",
+      "status": "created"
+    },
+    {
+      "name": "Panel",
+      "nodeId": "9:27",
+      "source": "apps/web/src/lib/components/common/Panel.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=9-27",
+      "status": "created"
+    },
+    {
+      "name": "InlineAlert",
+      "nodeId": "10:43",
+      "source": "apps/web/src/lib/components/common/InlineAlert.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=10-43",
+      "status": "created"
+    },
+    {
+      "name": "ScreenHeader",
+      "nodeId": "11:33",
+      "source": "apps/web/src/lib/components/common/ScreenHeader.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=11-33",
+      "status": "created"
+    },
+    {
+      "name": "SegmentedControl",
+      "nodeId": "12:45",
+      "source": "apps/web/src/lib/components/common/SegmentedControl.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=12-45",
+      "status": "created"
+    },
+    {
+      "name": "TabBar",
+      "nodeId": "13:45",
+      "source": "apps/web/src/lib/components/common/TabBar.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=13-45",
+      "status": "created"
+    },
+    {
+      "name": "AppNav",
+      "nodeId": "14:179",
+      "source": "apps/web/src/lib/components/common/AppNav.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=14-179",
+      "status": "created"
+    },
+    {
+      "name": "ScaleSlider",
+      "nodeId": "16:107",
+      "source": "apps/web/src/lib/components/entries/ScaleSlider.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=16-107",
+      "status": "created"
+    },
+    {
+      "name": "TagChip",
+      "nodeId": "17:18",
+      "source": "apps/web/src/lib/components/entries/TagPicker.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=17-18",
+      "status": "created-design-subcomponent"
+    },
+    {
+      "name": "FormField",
+      "nodeId": "17:58",
+      "source": "apps/web/src/lib/components/entries/TagPicker.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=17-58",
+      "status": "created-design-subcomponent"
+    },
+    {
+      "name": "MetricCard",
+      "nodeId": "19:53",
+      "source": "apps/web/src/lib/components/home/HomeSummary.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-53",
+      "status": "created-design-subcomponent"
+    },
+    {
+      "name": "HomeSummary",
+      "nodeId": "19:113",
+      "source": "apps/web/src/lib/components/home/HomeSummary.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-113",
+      "status": "created"
+    },
+    {
+      "name": "MetricTimeseries",
+      "nodeId": "20:102",
+      "source": "apps/web/src/lib/components/trends/MetricTimeseries.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=20-102",
+      "status": "created"
+    },
+    {
+      "name": "ComparisonHeatmap",
+      "nodeId": "20:268",
+      "source": "apps/web/src/lib/components/trends/ComparisonHeatmap.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=20-268",
+      "status": "created"
+    }
+  ],
+  "screens": [
+    {
+      "name": "Home / Componentized",
+      "nodeId": "21:3",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-3",
+      "status": "created"
+    },
+    {
+      "name": "Entry Form / Componentized",
+      "nodeId": "21:69",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-69",
+      "status": "created"
+    },
+    {
+      "name": "Trends / Componentized",
+      "nodeId": "21:151",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-151",
+      "status": "created"
+    },
+    {
+      "name": "Insights / Componentized",
+      "nodeId": "21:282",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-282",
+      "status": "created"
+    },
+    {
+      "name": "Mobile / App Flow",
+      "nodeId": "28:328",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-328",
+      "status": "created-mobile-web-split",
+      "children": [
+        {
+          "name": "Mobile / Today",
+          "nodeId": "28:331",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-331"
+        },
+        {
+          "name": "Mobile / Entry",
+          "nodeId": "28:397",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-397"
+        },
+        {
+          "name": "Mobile / Trends",
+          "nodeId": "28:484",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-484"
+        },
+        {
+          "name": "Mobile / Insights",
+          "nodeId": "28:615",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-615"
+        }
+      ]
+    },
+    {
+      "name": "Web / Desktop Flow",
+      "nodeId": "28:694",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-694",
+      "status": "created-mobile-web-split",
+      "children": [
+        {
+          "name": "Web / Today Dashboard",
+          "nodeId": "28:698",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-698"
+        },
+        {
+          "name": "Web / Entry Workspace",
+          "nodeId": "28:823",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-823"
+        },
+        {
+          "name": "Web / Trends Dashboard",
+          "nodeId": "28:908",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-908"
+        },
+        {
+          "name": "Web / Insights Dashboard",
+          "nodeId": "28:1080",
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-1080"
+        }
+      ]
+    }
+  ],
+  "audits": [
+    {
+      "name": "Mobile/Web Audit / Overview",
+      "nodeId": "31:1089",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=31-1089",
+      "status": "created",
+      "runId": "correlcore-mobile-web-audit-2026-06-22-v1",
+      "badgeCount": 12,
+      "screenRows": 7,
+      "componentCards": 20,
+      "backlogCards": 3
+    }
+  ]
+}

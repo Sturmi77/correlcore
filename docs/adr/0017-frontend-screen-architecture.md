@@ -68,3 +68,24 @@ The five-screen architecture remains canonical. M5 frontend streamlining may mov
 - Trends becomes Compare-first: metric lines and tag/symptom heatmap rows share one time axis. `Activities` is represented as tag rows in Compare instead of a default tab.
 - Symptom heatmap in M5 is neutral occurrence/intensity visualization only. It does not introduce symptom co-occurrence, medical interpretation, correlation recommendations, or a new analytics engine.
 - Desktop layouts may use split views, side panels, and sticky controls. These are secondary surfaces inside existing routes, not new primary screens.
+
+## 2026-06-22 Mobile/Web Composition Amendment
+
+The five-screen architecture remains unchanged. Mobile and desktop are
+presentation roles within the same SvelteKit route and domain architecture:
+
+- Mobile is the daily-use surface for capture, check-in, concise feedback, and
+  focused drill-downs.
+- Desktop is the analysis and management surface for comparison, dense
+  visualisation, and administration.
+- Trends may not compress the full desktop dashboard into a mobile viewport;
+  it exposes shared analytics through summaries and focused detail states.
+- Entry may use different mobile and desktop composition, but validation,
+  persistence, and route semantics remain shared.
+- A separate mobile frontend codebase requires a new ADR. Capacitor continues
+  to wrap the shared SvelteKit application.
+
+The current derived specification is [`../FRONTEND.md`](../FRONTEND.md).
+Findings and delivery order are documented in
+[`../frontend/MOBILE_WEB_AUDIT.md`](../frontend/MOBILE_WEB_AUDIT.md) and
+[`../frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md`](../frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md).
