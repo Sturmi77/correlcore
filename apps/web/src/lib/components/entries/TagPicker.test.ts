@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TagResponse } from '$lib/api/tags';
+import { MAX_TAGS_PER_ENTRY, type TagResponse } from '$lib/api/tags';
 import TagPicker from './TagPicker.svelte';
 
 vi.mock('svelte-i18n', () => ({
@@ -119,5 +119,16 @@ describe('TagPicker', () => {
 
     const createdChip = screen.getByRole('button', { name: 'Deep Work' });
     expect(createdChip.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('explains the selection limit and blocks new choices', () => {
+    const selected = Array.from({ length: MAX_TAGS_PER_ENTRY }, (_, index) => `selected-${index}`);
+    render(TagPicker, { props: { selected } });
+
+    expect(screen.getByTestId('tag-limit-message').textContent).toContain('tag.limit_reached');
+    expect(screen.getByRole('button', { name: 'Focus' }).hasAttribute('disabled')).toBe(true);
+    expect(
+      screen.getByText('+ tag.custom.add_button').closest('button')?.hasAttribute('disabled')
+    ).toBe(true);
   });
 });

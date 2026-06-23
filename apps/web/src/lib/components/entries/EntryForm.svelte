@@ -59,7 +59,11 @@
   const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   let entryDate: string = initialDate;
-  let showMore = mode === 'page';
+  let compactEntry =
+    mode === 'sheet' ||
+    (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches);
+  let showMore = !compactEntry;
+  let optionalTouched = false;
   let selectedSlot: EntrySlot = 'day';
   let moodScore = 3;
   let energy = 3;
@@ -70,6 +74,9 @@
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
   let errorKey: string | null = null;
+  let cycleDayInvalid = false;
+  let offline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
+  let mobileMedia: MediaQueryList | null = null;
 
   // Edit-mode: when the user navigates to a date/slot that already has an
   // entry, we hydrate the form with the existing values so
@@ -113,6 +120,7 @@
     stress = 3;
     selectedSlot = slot;
     cycleDay = null;
+    cycleDayInvalid = false;
     note = '';
     selectedTagIds = [];
     selectedSymptoms = [];
@@ -179,6 +187,7 @@
       energy = matchingEntry.energy;
       stress = matchingEntry.stress;
       cycleDay = matchingEntry.cycle_day;
+      cycleDayInvalid = false;
       workContext = matchingEntry.work_context;
       // Mark touched so the date-change reactive block doesn't reset it
       // back to the weekday default.
@@ -235,6 +244,26 @@
     const value = (e.currentTarget as HTMLInputElement).value;
     const parsed = Number(value);
     cycleDay = value === '' || !Number.isFinite(parsed) ? null : parsed;
+    cycleDayInvalid = cycleDay !== null && (cycleDay < 1 || cycleDay > 35);
+  }
+
+  function toggleOptionalDetails() {
+    optionalTouched = true;
+    showMore = !showMore;
+  }
+
+  function syncCompactEntry() {
+    compactEntry = mode === 'sheet' || Boolean(mobileMedia?.matches);
+    if (!compactEntry) showMore = true;
+    else if (!optionalTouched) showMore = false;
+  }
+
+  function handleOnline() {
+    offline = false;
+  }
+
+  function handleOffline() {
+    offline = true;
   }
 
   const ERROR_MAP: ApiErrorMap = {
@@ -297,6 +326,9 @@
    * entry write so unchecked rows actually disappear server-side.
    */
   async function persist(snap: FormSnapshot): Promise<void> {
+    if (snap.cycle_day !== null && (snap.cycle_day < 1 || snap.cycle_day > 35)) {
+      throw new Error('invalid_cycle_day');
+    }
     let entryId: string;
     if (existingEntryId) {
       const updated = await updateEntry(existingEntryId, {
@@ -405,13 +437,21 @@
     // clicks (still relevant under auto-save).
     const el = document.getElementById('entry-mood');
     el?.focus();
+    mobileMedia = window.matchMedia('(max-width: 767px)');
+    syncCompactEntry();
+    mobileMedia.addEventListener('change', syncCompactEntry);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
     window.addEventListener('beforeunload', onBeforeUnload);
   });
 
   onDestroy(() => {
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', onBeforeUnload);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     }
+    mobileMedia?.removeEventListener('change', syncCompactEntry);
     autoSave.destroy();
   });
 
@@ -419,8 +459,10 @@
   // error banner; mapping unknown errors to the generic key keeps the
   // user from seeing raw stack traces.
   $: if (autoSaveSnap.status === 'error' && autoSaveSnap.lastError) {
+    if (autoSaveSnap.lastError.startsWith('Network error on ')) offline = true;
     errorKey = 'entry.error_generic';
   } else if (autoSaveSnap.status === 'saving' || autoSaveSnap.status === 'saved') {
+    if (typeof navigator === 'undefined' || navigator.onLine) offline = false;
     errorKey = null;
   }
 
@@ -451,6 +493,7 @@
         status={autoSaveSnap.status}
         lastSavedAt={autoSaveSnap.lastSavedAt}
         lastError={autoSaveSnap.lastError}
+        {offline}
         onRetry={() => void autoSave.retry()}
       />
       {#if mode === 'page'}
@@ -537,79 +580,90 @@
     </label>
   </section>
 
-  {#if mode === 'sheet' && !showMore}
+  {#if compactEntry}
     <Button
       type="button"
       variant="ghost"
       fullWidth
       className="entry-more-toggle"
       data-testid="entry-more-toggle"
-      on:click={() => (showMore = true)}
+      aria-expanded={showMore}
+      aria-controls="entry-optional-fields"
+      on:click={toggleOptionalDetails}
     >
-      {$_('entry.more_toggle')}
+      {showMore ? $_('entry.more_hide') : $_('entry.more_toggle')}
     </Button>
   {/if}
 
-  {#if mode === 'page' || showMore}
-    <section class="entry-section" aria-labelledby="entry-section-time">
-      <h2 id="entry-section-time" class="entry-section__title">{$_('entry.section.time')}</h2>
-      <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
-        {#each ENTRY_SLOTS as slot}
-          <button
-            type="button"
-            class:active={selectedSlot === slot}
-            aria-pressed={selectedSlot === slot}
-            on:click={() => setSlot(slot)}
-          >
-            {$_(`entry.time_slot.${slot}`)}
-          </button>
-        {/each}
-      </div>
-      <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
-    </section>
+  {#if showMore}
+    <div id="entry-optional-fields" class="entry-optional-fields">
+      <section class="entry-section" aria-labelledby="entry-section-time">
+        <h2 id="entry-section-time" class="entry-section__title">{$_('entry.section.time')}</h2>
+        <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
+          {#each ENTRY_SLOTS as slot}
+            <button
+              type="button"
+              class:active={selectedSlot === slot}
+              aria-pressed={selectedSlot === slot}
+              on:click={() => setSlot(slot)}
+            >
+              {$_(`entry.time_slot.${slot}`)}
+            </button>
+          {/each}
+        </div>
+        <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
+      </section>
 
-    <section class="entry-section" aria-labelledby="entry-section-tags">
-      <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
-      <TagPicker bind:selected={selectedTagIds} />
-    </section>
+      <section class="entry-section" aria-labelledby="entry-section-tags">
+        <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
+        <TagPicker bind:selected={selectedTagIds} />
+      </section>
 
-    <section class="entry-section" aria-labelledby="entry-section-symptoms">
-      <h2 id="entry-section-symptoms" class="entry-section__title">
-        {$_('entry.section.symptoms')}
-      </h2>
-      <SymptomChecker bind:selected={selectedSymptoms} />
-    </section>
+      <section class="entry-section" aria-labelledby="entry-section-symptoms">
+        <h2 id="entry-section-symptoms" class="entry-section__title">
+          {$_('entry.section.symptoms')}
+        </h2>
+        <SymptomChecker bind:selected={selectedSymptoms} />
+      </section>
 
-    <section class="entry-section" aria-labelledby="entry-section-note">
-      <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
-      <label class="entry-field">
-        <span class="sr-only">{$_('entry.note_placeholder')}</span>
-        <textarea
-          class="input"
-          rows="4"
-          maxlength="4000"
-          bind:value={note}
-          placeholder={$_('entry.note_placeholder')}
-        ></textarea>
-      </label>
-    </section>
+      <section class="entry-section" aria-labelledby="entry-section-note">
+        <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
+        <label class="entry-field">
+          <span class="sr-only">{$_('entry.note_placeholder')}</span>
+          <textarea
+            class="input"
+            rows="4"
+            maxlength="4000"
+            bind:value={note}
+            placeholder={$_('entry.note_placeholder')}
+          ></textarea>
+        </label>
+      </section>
 
-    <section class="entry-section" aria-labelledby="entry-section-cycle">
-      <h2 id="entry-section-cycle" class="entry-section__title">{$_('entry.section.cycle')}</h2>
-      <label class="entry-field">
-        <span class="entry-label">{$_('entry.cycle_day.label')}</span>
-        <input
-          type="number"
-          class="input"
-          min="1"
-          max="35"
-          value={cycleDay ?? ''}
-          on:input={onCycleDayInput}
-          placeholder={$_('entry.cycle_day.placeholder')}
-        />
-      </label>
-      <p class="entry-hint">{$_('entry.cycle_day.hint')}</p>
-    </section>
+      <section class="entry-section" aria-labelledby="entry-section-cycle">
+        <h2 id="entry-section-cycle" class="entry-section__title">{$_('entry.section.cycle')}</h2>
+        <label class="entry-field">
+          <span class="entry-label">{$_('entry.cycle_day.label')}</span>
+          <input
+            type="number"
+            class="input"
+            min="1"
+            max="35"
+            value={cycleDay ?? ''}
+            on:input={onCycleDayInput}
+            aria-invalid={cycleDayInvalid}
+            aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
+            placeholder={$_('entry.cycle_day.placeholder')}
+          />
+        </label>
+        <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
+        {#if cycleDayInvalid}
+          <p id="entry-cycle-error" class="entry-error" role="alert">
+            {$_('entry.cycle_day.error_range')}
+          </p>
+        {/if}
+      </section>
+    </div>
   {/if}
 
   <section class="entry-section" aria-labelledby="entry-section-delta">
@@ -641,6 +695,12 @@
     gap: var(--space-4);
     max-width: none;
     margin: 0;
+  }
+
+  .entry-optional-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
   }
 
   :global(.entry-more-toggle) {
@@ -783,5 +843,34 @@
     gap: var(--space-3);
     justify-content: flex-end;
     margin-top: var(--space-2);
+  }
+
+  @media (max-width: 767px) {
+    .entry-header-row {
+      flex-direction: column;
+    }
+
+    .entry-header-tools {
+      width: 100%;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .entry-form,
+    .entry-optional-fields {
+      gap: var(--space-5);
+    }
+
+    .entry-section {
+      padding: 0 0 var(--space-5);
+      border: 0;
+      border-bottom: 1px solid var(--color-border);
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .entry-actions :global(.ui-button) {
+      width: 100%;
+    }
   }
 </style>

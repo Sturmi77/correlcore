@@ -180,7 +180,8 @@
     "cycle_day": {
       "label": "Cycle day (optional)",
       "placeholder": "1-35",
-      "hint": "Neutral tracking only. CorrelCore does not predict or diagnose cycle phases."
+      "hint": "Neutral tracking only. CorrelCore does not predict or diagnose cycle phases.",
+      "error_range": "Cycle day must be between 1 and 35."
     },
     "work_context": {
       "homeoffice": "Home office",
@@ -214,7 +215,8 @@
       "offline": "Offline \u2014 changes are not being saved.",
       "leave_warning": "There are unsaved changes. Are you sure you want to leave?"
     },
-    "more_toggle": "+ More (time, tags, symptoms, note)",
+    "more_toggle": "Add optional details",
+    "more_hide": "Hide optional details",
     "sheet": {
       "title": "How was your day?",
       "close": "Close entry",
@@ -250,7 +252,8 @@
     "add_or_edit": "Add or edit",
     "edit": "Edit",
     "list_aria": "Entries for the selected day",
-    "score_line": "Mood {mood}/5 \u00b7 Energy {energy}/5 \u00b7 Stress {stress}/5"
+    "score_line": "Mood {mood}/5 \u00b7 Energy {energy}/5 \u00b7 Stress {stress}/5",
+    "read_only": "This entry is outside the 7-day editing window and is read-only."
   },
   "tag": {
     "picker_label": "Tags",
@@ -259,6 +262,8 @@
     "empty": "No tags yet.",
     "error_load": "Tags could not be loaded.",
     "error_assign": "Entry was saved, but tags could not be attached.",
+    "limit_reached": "Maximum reached. Remove a tag before selecting another.",
+    "retry": "Retry",
     "category": {
       "sport": "Sport",
       "social": "Social",
@@ -299,6 +304,8 @@
     "loading": "Loading symptoms\u2026",
     "error_load": "Could not refresh the symptom list \u2014 falling back to the default set.",
     "error_assign": "Entry was saved, but symptoms could not be attached.",
+    "limit_reached": "Maximum reached. Clear a symptom before selecting another.",
+    "retry": "Retry",
     "scale_label": "Intensity for {name}",
     "intensity": {
       "0": "None",

@@ -61,13 +61,18 @@
   let customError: string | null = null;
   let customBusy = false;
 
-  onMount(async () => {
-    if ($symptoms.status === 'ready' || $symptoms.status === 'loading') return;
+  async function loadSymptoms() {
+    loadError = null;
     try {
       await refreshSymptoms();
     } catch (err) {
       loadError = err instanceof Error ? err.message : 'load_failed';
     }
+  }
+
+  onMount(async () => {
+    if ($symptoms.status === 'ready' || $symptoms.status === 'loading') return;
+    await loadSymptoms();
   });
 
   const INTENSITY_VALUES = (() => {
@@ -210,9 +215,14 @@
   {#if $symptoms.status === 'loading'}
     <p class="symptom-status">{$_('symptom.loading')}</p>
   {:else if $symptoms.status === 'error' || loadError}
-    <p class="symptom-status symptom-status-warn" role="status">
-      {$_('symptom.error_load')}
-    </p>
+    <div class="symptom-status-row">
+      <p class="symptom-status symptom-status-warn" role="status">
+        {$_('symptom.error_load')}
+      </p>
+      <button type="button" class="symptom-retry" on:click={loadSymptoms}>
+        {$_('symptom.retry')}
+      </button>
+    </div>
   {/if}
 
   {#if list.length > 0}
@@ -245,7 +255,7 @@
                   aria-pressed={active}
                   aria-label={$_(`symptom.intensity.${value}`)}
                   title={$_(`symptom.intensity.${value}`)}
-                  disabled={disabled || (current === null && atLimit && value !== 0)}
+                  disabled={disabled || (current === null && atLimit)}
                   on:click={() => setIntensity(symptom.id, value)}
                 >
                   <span class="symptom-dot-marker" aria-hidden="true">{value}</span>
@@ -260,9 +270,20 @@
     <p class="symptom-status">{$_('symptom.empty')}</p>
   {/if}
 
+  {#if atLimit}
+    <p class="symptom-limit" role="status" data-testid="symptom-limit-message">
+      {$_('symptom.limit_reached')}
+    </p>
+  {/if}
+
   <div class="symptom-custom">
     {#if !showCustomForm}
-      <button type="button" class="symptom-custom-toggle" on:click={openCustomForm} {disabled}>
+      <button
+        type="button"
+        class="symptom-custom-toggle"
+        on:click={openCustomForm}
+        disabled={disabled || atLimit}
+      >
         + {$_('symptom.custom.add_button')}
       </button>
     {:else}
@@ -376,6 +397,33 @@
     opacity: 1;
   }
 
+  .symptom-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .symptom-retry {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid currentColor;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-warning);
+    cursor: pointer;
+  }
+
+  .symptom-limit {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border-left: 3px solid var(--color-warning);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+  }
+
   .symptom-list {
     list-style: none;
     margin: 0;
@@ -438,8 +486,8 @@
   }
 
   .symptom-dot {
-    width: 2rem;
-    height: 2rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: 999px;
     border: 1px solid var(--color-border);
     background: transparent;
@@ -502,6 +550,7 @@
     width: 100%;
     text-align: left;
     transition: border-color 120ms ease;
+    min-height: 44px;
   }
 
   .symptom-custom-toggle:hover:not(:disabled) {
@@ -550,5 +599,21 @@
     display: flex;
     gap: var(--space-2);
     justify-content: flex-end;
+  }
+
+  @media (max-width: 520px) {
+    .symptom-fieldset {
+      grid-template-columns: 1fr;
+    }
+
+    .symptom-scale {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(2.75rem, 1fr));
+      width: 100%;
+    }
+
+    .symptom-dot {
+      width: 100%;
+    }
   }
 </style>

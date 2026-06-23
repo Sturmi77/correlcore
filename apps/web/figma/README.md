@@ -49,8 +49,19 @@ library and a Dev or Full seat on an Organization or Enterprise plan.
 
 - Figma audit overview: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=31-1089
 - Sprint 0 foundation contracts: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=36-1089
+- Sprint 1 Mobile Entry flow: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=48-1089
+- Mobile Entry / Quick Capture: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=49-1091
+- Mobile Entry / Details Expanded: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=50-1153
+- Mobile Entry / Saving and Saved: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=52-1153
+- Mobile Entry / Offline Retry: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=54-1153
+- Mobile Entry / Read-only History: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=55-1153
 - Audit narrative: ./mobile-web-audit.md
 - Audit data: ./mobile-web-audit.json
+
+The Sprint 1 flow documents the implemented mobile composition, autosave and
+validation feedback, explicit offline retry, tag and symptom limits, custom tag
+entry, and the seven-day read-only boundary. Offline changes are not silently
+queued; this remains consistent with ADR-0009 and ADR-0013.
 
 ## Pending Figma work
 
