@@ -19,7 +19,6 @@
   import { listTagsForEntry, listVisibleTags, type TagResponse } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
   import type { TagCategory } from '$lib/api/tags';
-  import { TAG_CATEGORIES } from '$lib/api/tags';
   import { mockEntries } from '$lib/dev/mockEntries';
   import {
     mockEntryStreak,
@@ -33,6 +32,8 @@
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import TrendsComparePanel from '$lib/components/trends/TrendsComparePanel.svelte';
+  import TrendsCompareFilters from '$lib/components/trends/TrendsCompareFilters.svelte';
+  import MobileTrendsSummary from '$lib/components/trends/MobileTrendsSummary.svelte';
   import HabitsPanel from '$lib/components/trends/HabitsPanel.svelte';
   import EntryHistorySheet, {
     type EntryHistoryDetail,
@@ -45,14 +46,9 @@
   } from '$lib/components/common/SegmentedControl.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
+  import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
   type TrendTab = 'compare' | 'health' | 'habits';
-
-  const metricLabels: Record<MetricKey, string> = {
-    mood_avg: 'trends.metric.mood',
-    energy_avg: 'trends.metric.energy',
-    stress_avg: 'trends.metric.stress',
-  };
 
   const rangeOptions: { id: TimeseriesRange; label: string; days: number }[] = [
     { id: 'week', label: 'trends.range.week', days: 7 },
@@ -93,6 +89,9 @@
   let smoothing = false;
   let showTagRows = true;
   let showSymptomRows = false;
+  let compactTrends = false;
+  let mobileDetailsOpen = false;
+  let mobileMedia: MediaQueryList | null = null;
 
   const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
@@ -253,10 +252,6 @@
       testId: `trends-tab-${tab.id}`,
     })
   );
-  $: smoothingOptions = [
-    { id: 'raw', label: $_('trends.smoothing.raw'), testId: 'trends-smoothing-raw' },
-    { id: 'smoothed', label: $_('trends.smoothing.smoothed'), testId: 'trends-smoothing-smoothed' },
-  ];
   $: smoothingAvailable = range !== 'week';
   $: displayTimeseries =
     timeseries && smoothing && smoothingAvailable
@@ -266,7 +261,15 @@
   onMount(() => {
     smoothing = localStorage.getItem(SMOOTHING_STORAGE_KEY) === 'true';
     restoreCompareLayers();
+    mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
+    const updateCompactTrends = () => {
+      compactTrends = mobileMedia?.matches ?? false;
+      if (!compactTrends) mobileDetailsOpen = false;
+    };
+    updateCompactTrends();
+    mobileMedia?.addEventListener('change', updateCompactTrends);
     void loadTrends();
+    return () => mobileMedia?.removeEventListener('change', updateCompactTrends);
   });
 </script>
 
@@ -295,45 +298,19 @@
         }}
       />
 
-      {#if activeTab === 'compare'}
-        <div class="trends__compare-controls">
-          {#if smoothingAvailable}
-            <SegmentedControl
-              value={smoothing ? 'smoothed' : 'raw'}
-              options={smoothingOptions}
-              ariaLabel={$_('trends.smoothing.label')}
-              testId="trends-smoothing-control"
-              on:change={(event) => setSmoothing(event.detail.value === 'smoothed')}
-            />
-          {/if}
-          <fieldset class="trends__metric-group">
-            <legend>{$_('trends.metrics_label')}</legend>
-            {#each Object.entries(metricLabels) as [key, label]}
-              <label>
-                <input
-                  type="checkbox"
-                  checked={metrics[key as MetricKey]}
-                  on:change={() => toggleMetric(key as MetricKey)}
-                />
-                {$_(label)}
-              </label>
-            {/each}
-          </fieldset>
-        </div>
-        <label class="trends__select">
-          <span>{$_('trends.category')}</span>
-          <select
-            bind:value={selectedCategory}
-            on:change={() => {
-              void loadTrends();
-            }}
-          >
-            <option value="all">{$_('trends.category_all')}</option>
-            {#each TAG_CATEGORIES as category}
-              <option value={category}>{$_(`tag.category.${category}`)}</option>
-            {/each}
-          </select>
-        </label>
+      {#if activeTab === 'compare' && !compactTrends}
+        <TrendsCompareFilters
+          {smoothing}
+          {smoothingAvailable}
+          {metrics}
+          {selectedCategory}
+          on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+          on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+          on:categoryChange={(event) => {
+            selectedCategory = event.detail.category;
+            void loadTrends();
+          }}
+        />
       {/if}
     </section>
 
@@ -344,6 +321,7 @@
       testId="trends-tabs"
       on:change={(event) => {
         activeTab = event.detail.value as TrendTab;
+        mobileDetailsOpen = false;
         void loadTrends();
       }}
     />
@@ -353,24 +331,67 @@
     {/if}
 
     {#if activeTab === 'compare'}
-      <div
-        class="trends__panel trends__panel--compare"
-        role="tabpanel"
-        aria-label={$_('trends.tabs.compare')}
-      >
-        <TrendsComparePanel
+      {#if compactTrends}
+        <MobileTrendsSummary
           points={displayTimeseries?.points ?? []}
-          {range}
-          enabled={metrics}
           tagHeatmap={heatmap}
           {symptomHeatmap}
-          showTags={showTagRows}
-          showSymptoms={showSymptomRows}
+          {range}
           {loading}
-          on:selectDate={(event) => void openHistory(event.detail.date)}
-          on:layerChange={(event) => setCompareLayers(event.detail)}
         />
-      </div>
+        <Button
+          variant="secondary"
+          fullWidth
+          data-testid="mobile-trends-detail-toggle"
+          aria-expanded={mobileDetailsOpen}
+          aria-controls="mobile-trends-detail"
+          on:click={() => (mobileDetailsOpen = !mobileDetailsOpen)}
+        >
+          {mobileDetailsOpen ? $_('trends.mobile.hide_details') : $_('trends.mobile.show_details')}
+        </Button>
+      {/if}
+
+      {#if !compactTrends || mobileDetailsOpen}
+        <div id="mobile-trends-detail" class="trends__detail" data-testid="mobile-trends-detail">
+          {#if compactTrends}
+            <section
+              class="trends__detail-controls"
+              aria-label={$_('trends.mobile.detail_filters')}
+            >
+              <TrendsCompareFilters
+                {smoothing}
+                {smoothingAvailable}
+                {metrics}
+                {selectedCategory}
+                on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+                on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+                on:categoryChange={(event) => {
+                  selectedCategory = event.detail.category;
+                  void loadTrends();
+                }}
+              />
+            </section>
+          {/if}
+          <div
+            class="trends__panel trends__panel--compare"
+            role="tabpanel"
+            aria-label={$_('trends.tabs.compare')}
+          >
+            <TrendsComparePanel
+              points={displayTimeseries?.points ?? []}
+              {range}
+              enabled={metrics}
+              tagHeatmap={heatmap}
+              {symptomHeatmap}
+              showTags={showTagRows}
+              showSymptoms={showSymptomRows}
+              {loading}
+              on:selectDate={(event) => void openHistory(event.detail.date)}
+              on:layerChange={(event) => setCompareLayers(event.detail)}
+            />
+          </div>
+        </div>
+      {/if}
     {:else if activeTab === 'health'}
       <div
         class="trends__panel trends__health"
@@ -483,50 +504,14 @@
     backdrop-filter: blur(14px);
   }
 
-  .trends__compare-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: center;
-    font-size: 0.86rem;
+  .trends__detail {
+    display: grid;
+    gap: var(--space-3);
   }
 
-  .trends__metric-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  .trends__metric-group legend {
-    width: 100%;
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-    font-weight: 700;
-  }
-
-  .trends__metric-group label,
-  .trends__select {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  .trends__select span {
-    font-size: 0.8rem;
-    opacity: 0.72;
-  }
-
-  .trends__select select {
-    min-height: 44px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    color: inherit;
-    padding: 0 0.55rem;
+  .trends__detail-controls {
+    padding-block: var(--space-3);
+    border-block: 1px solid var(--color-border);
   }
 
   .trends__consistency {

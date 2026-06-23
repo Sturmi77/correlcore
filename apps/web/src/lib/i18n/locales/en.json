@@ -357,6 +357,25 @@
       "quarter": "90D",
       "year": "1Y"
     },
+    "mobile": {
+      "heading": "At a glance",
+      "updating": "Updating",
+      "entries": "{count} entries in this range",
+      "movement": "Strongest movement",
+      "movement_value": "{from} to {to} ({delta})",
+      "not_enough": "Not enough data yet",
+      "tag": "Most frequent tag",
+      "tag_value": "{count} occurrences on {days} days",
+      "no_tag": "No tag signal yet",
+      "symptom": "Most reported symptom",
+      "symptom_value": "{count} reports, peak {peak}/3",
+      "no_symptom": "No symptom signal yet",
+      "empty_heading": "No trend summary yet",
+      "empty_body": "Keep logging daily entries to make movement and context visible here.",
+      "show_details": "Show detailed charts",
+      "hide_details": "Hide detailed charts",
+      "detail_filters": "Detailed trend filters"
+    },
     "tabs": {
       "label": "Trend sections",
       "compare": "Compare",

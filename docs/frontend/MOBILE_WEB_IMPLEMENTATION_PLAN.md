@@ -1,6 +1,6 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Sprint 0 and Phase 1 complete; Phase 2 is the next implementation slice.
+**Status:** Sprint 0, Phase 1, and Phase 2 complete; Phase 3 is the next implementation slice.
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
 
 ## Success criteria
@@ -64,18 +64,24 @@ architecture decision under ADR-0009 and ADR-0013.
 `svelte-check` with zero errors and warnings, and the editable Figma flow:
 https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=48-1089
 
-## Phase 2: Mobile Trends
+## Phase 2: Mobile Trends (complete)
 
-1. Define a mobile Trends summary contract: selected range, top metric movement,
-   strongest tag/symptom signals, and an explicit detail action.
-2. Reuse existing analytics outputs; do not calculate alternate mobile results.
-3. Present full timeseries, heatmap, and comparison interactions in focused
-   sheets or detail states where they remain usable.
-4. Keep desktop `TrendsComparePanel`, charts, cursor linking, and heatmaps as
-   the primary analytical composition.
+1. Added a mobile Trends summary contract for the selected range, strongest
+   metric movement, most frequent tag, and most reported symptom.
+2. Reused the existing timeseries, tag heatmap, and symptom heatmap responses;
+   mobile performs no alternate analytics calculation.
+3. Put the full timeseries, heatmap, filters, sorting, cursor, and comparison
+   interactions behind an explicit mobile detail action.
+4. Kept desktop `TrendsComparePanel`, filters, charts, cursor linking, and
+   heatmaps permanently visible as the primary analytical composition.
 
 **Exit:** Mobile provides an understandable summary and reachable detail without
 rendering the desktop dashboard at reduced scale.
+
+**Verification:** Eight new focused unit and route tests, four Playwright
+summary/detail/empty/desktop scenarios, `svelte-check`, and the editable Figma
+flow:
+https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285
 
 ## Phase 3: Mobile Insights
 

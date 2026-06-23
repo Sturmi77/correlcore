@@ -20,16 +20,53 @@ vi.mock('$lib/stores/auth', async () => {
 });
 
 vi.mock('$lib/api/stats', () => ({
-  fetchTimeseries: vi.fn(async (range: string) => ({ range, points: [] })),
+  fetchTimeseries: vi.fn(async (range: string) => ({
+    range,
+    points: [
+      {
+        period_start: '2026-05-15',
+        period_end: '2026-05-15',
+        entry_count: 1,
+        mood_avg: 3,
+        energy_avg: 4,
+        stress_avg: 4,
+      },
+      {
+        period_start: '2026-05-16',
+        period_end: '2026-05-16',
+        entry_count: 1,
+        mood_avg: 4,
+        energy_avg: 3,
+        stress_avg: 2,
+      },
+    ],
+  })),
   fetchTagHeatmap: vi.fn(async () => ({
     start_date: '2026-05-01',
     end_date: '2026-05-16',
-    tags: [],
+    tags: [
+      {
+        tag_id: 'focus',
+        slug: 'focus',
+        name: 'Focus',
+        category: 'work',
+        color: null,
+        days: [{ date: '2026-05-16', count: 2 }],
+      },
+    ],
   })),
   fetchSymptomHeatmap: vi.fn(async () => ({
     start_date: '2026-05-01',
     end_date: '2026-05-16',
-    symptoms: [],
+    symptoms: [
+      {
+        symptom_id: 'fatigue',
+        slug: 'fatigue',
+        name: 'Fatigue',
+        icon: null,
+        days: [{ date: '2026-05-16', count: 1, max_intensity: 2 }],
+      },
+    ],
   })),
   fetchEntryStreak: vi.fn(async () => ({
     current_streak: 2,
@@ -87,5 +124,38 @@ describe('/trends page', () => {
       expect(habits.getAttribute('aria-selected')).toBe('true');
     });
     expect(screen.getByTestId('habits-panel')).toBeTruthy();
+  });
+
+  it('keeps the desktop comparison canvas visible', async () => {
+    render(Page);
+    expect(await screen.findByTestId('mobile-trends-detail')).toBeTruthy();
+    expect(screen.queryByTestId('mobile-trends-summary')).toBeNull();
+  });
+
+  it('uses summary-first composition on mobile and reveals the existing detail canvas', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn(() => ({
+        matches: true,
+        media: '(max-width: 767px)',
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+
+    render(Page);
+    expect(await screen.findByTestId('mobile-trends-summary')).toBeTruthy();
+    expect(screen.queryByTestId('mobile-trends-detail')).toBeNull();
+
+    const toggle = screen.getByTestId('mobile-trends-detail-toggle');
+    await fireEvent.click(toggle);
+
+    await waitFor(() => expect(screen.getByTestId('mobile-trends-detail')).toBeTruthy());
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('trends-compare-filters')).toBeTruthy();
   });
 });
