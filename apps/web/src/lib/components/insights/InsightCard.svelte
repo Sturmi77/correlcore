@@ -30,6 +30,8 @@
   export let error = '';
   export let inactiveTagIds: readonly string[] = [];
   export let enableExploreEvents = false;
+  export let featured = false;
+  export let showConfidenceSummary = false;
 
   const dispatch = createEventDispatcher<{
     retry: void;
@@ -138,9 +140,11 @@
 {:else if insight}
   <article
     class="insight-card"
+    class:insight-card--featured={featured}
     data-testid="insight-card"
     data-expanded={expanded ? 'true' : 'false'}
     data-direction={dirClass}
+    data-featured={featured ? 'true' : 'false'}
   >
     <header class="insight-card__header">
       <span
@@ -186,6 +190,16 @@
         <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
       {/if}
     </p>
+
+    {#if showConfidenceSummary && !expanded}
+      <div class="insight-card__confidence-summary" data-testid="insight-card-confidence-summary">
+        <InsightConfidenceScale
+          confidenceScore={insight.confidence ?? 0}
+          currentTier={insight.tier}
+          entryCount={insight.sample_n ?? 0}
+        />
+      </div>
+    {/if}
 
     <a
       href="/insights/disclaimer"
@@ -331,6 +345,10 @@
     box-shadow: var(--shadow-sm);
     transition: box-shadow 200ms ease;
   }
+  .insight-card--featured {
+    border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+  }
   .insight-card__header {
     display: flex;
     align-items: center;
@@ -372,7 +390,12 @@
   }
   .insight-card__dismiss {
     flex-shrink: 0;
-    padding: var(--space-1, 0.25rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
     color: var(--color-text-muted);
     border-radius: var(--radius-sm, 0.375rem);
     font-size: 0.75rem;
@@ -420,6 +443,7 @@
     font-weight: 600;
     color: var(--color-primary);
     padding: var(--space-1, 0.25rem) 0;
+    min-height: 2.75rem;
     border-radius: var(--radius-sm, 0.375rem);
     transition: color var(--transition-interactive, 180ms ease);
   }
@@ -428,6 +452,12 @@
   }
   .insight-card__toggle-icon {
     font-size: 0.6rem;
+  }
+  .insight-card__confidence-summary {
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-offset);
   }
   .insight-card__level2 {
     display: flex;

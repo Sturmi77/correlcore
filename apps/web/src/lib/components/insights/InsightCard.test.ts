@@ -121,6 +121,28 @@ describe('InsightCard', () => {
     expect(screen.queryByTestId('insight-confidence-score-percent')).toBeNull();
   });
 
+  it('shows semantic confidence without a raw percentage for a featured mobile card', () => {
+    render(InsightCard, {
+      props: { insight: INSIGHT, featured: true, showConfidenceSummary: true },
+    });
+
+    expect(screen.getByTestId('insight-card').getAttribute('data-featured')).toBe('true');
+    expect(screen.getByTestId('insight-card-confidence-summary')).toBeTruthy();
+    expect(screen.getByTestId('insight-confidence-label')).toBeTruthy();
+    expect(screen.queryByTestId('insight-confidence-score-percent')).toBeNull();
+  });
+
+  it('replaces the confidence summary with detailed confidence after expansion', async () => {
+    render(InsightCard, {
+      props: { insight: INSIGHT, featured: true, showConfidenceSummary: true },
+    });
+
+    await fireEvent.click(screen.getByTestId('insight-card-toggle'));
+
+    expect(screen.queryByTestId('insight-card-confidence-summary')).toBeNull();
+    expect(screen.getByTestId('insight-confidence-score-percent')).toBeTruthy();
+  });
+
   it('renders a maturity badge when maturity is provided', () => {
     render(InsightCard, { props: { insight: INSIGHT, maturity: MATURITY } });
     const badge = screen.getByTestId('insight-maturity-badge');

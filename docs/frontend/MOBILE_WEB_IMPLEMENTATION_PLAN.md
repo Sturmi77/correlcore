@@ -1,6 +1,8 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Sprint 0, Phase 1, and Phase 2 complete; Phase 3 is the next implementation slice.
+**Status:** Sprint 0, Phase 1, and Phase 2 complete. Phase 3 code is implemented;
+Figma parity and rendered QA remain pending because connector writes and the
+required local process escalation are temporarily unavailable.
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
 
 ## Success criteria
@@ -92,6 +94,17 @@ https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285
 3. Keep correlation language non-causal and confidence visible.
 
 **Exit:** Figma and code expose the same insight states and hierarchy on mobile.
+
+**Implemented in code:** The mobile findings view now ranks insights through a
+shared deterministic utility and presents the strongest signal first with a
+visible semantic confidence scale. Maturity context follows the lead signal,
+remaining patterns keep the existing filters, and matrix/co-occurrence surfaces
+remain behind explicit detail controls. Desktop keeps the existing analysis
+composition and API contract.
+
+**Pending closeout:** Create the production-aligned `InsightCard`, confidence,
+maturity, disclaimer, loading, empty, and error components in Figma; compose the
+summary/detail/empty flow; then run rendered Browser QA at 390, 430, and 1280 px.
 
 ## Phase 4: Supporting mobile flows
 

@@ -72,6 +72,20 @@ responses. Mobile changes presentation hierarchy only: a readable summary is
 shown first, while the complete desktop comparison canvas remains available
 through an explicit detail action.
 
+## Mobile Insights Sprint 3
+
+The code contract is implemented on `codex/mobile-insights-foundation`:
+
+- strongest deterministic signal first
+- semantic confidence visible without a raw percentage
+- maturity context second
+- remaining patterns retain feed filters
+- matrix and co-occurrence remain explicit detail surfaces
+
+Figma component and screen nodes are pending connector write availability. Do
+not treat the older generic `Mobile / Insights` panel composition as the Sprint
+3 implementation reference.
+
 ## Pending Figma work
 
 - Published-library Code Connect activation
