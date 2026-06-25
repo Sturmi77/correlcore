@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-113
 // source=apps/web/src/lib/components/home/HomeSummary.svelte
 // component=HomeSummary
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;

@@ -522,7 +522,6 @@
     "tracking": {
       "heading": "Manage tracking",
       "body": "Adjust the inputs available in the daily entry flow.",
-      "symptoms_placeholder": "Manage symptoms (M9)",
       "reminders_placeholder": "Reminders (later)"
     },
     "analysis": {
@@ -591,6 +590,46 @@
       "error_save": "Could not save this tag.",
       "error_reset": "Could not reset this tag."
     },
+    "symptoms": {
+      "open": "Manage symptoms",
+      "back_settings": "Back to Settings",
+      "title": "Manage symptoms",
+      "subtitle": "Review the symptom catalogue used in daily entries.",
+      "custom_heading": "Custom symptoms",
+      "custom_body": "Rename or remove symptoms you created. Removing one also removes its historical assignments.",
+      "custom_empty": "No custom symptoms yet. Create one from the daily entry flow.",
+      "default_heading": "Default symptoms",
+      "default_body": "The curated set is read-only and stays available to every user.",
+      "name": "Name",
+      "icon": "Icon",
+      "save": "Save",
+      "delete": "Delete",
+      "confirm_delete": "Confirm delete",
+      "cancel": "Cancel",
+      "error_load": "Could not load symptoms.",
+      "error_save": "Could not save this symptom.",
+      "error_delete": "Could not delete this symptom."
+    },
+    "app": {
+      "open": "App & offline",
+      "back_settings": "Back to Settings",
+      "title": "App & offline",
+      "subtitle": "Check installation, connection and update status.",
+      "connection_heading": "Connection",
+      "connection_online": "CorrelCore can reach online services.",
+      "connection_offline": "API data and saves need a connection.",
+      "status_online": "Online",
+      "status_offline": "Offline",
+      "install_heading": "Installation",
+      "install_body": "Install CorrelCore for a focused home-screen experience.",
+      "install_installed": "CorrelCore is running as an installed app.",
+      "install_unavailable": "Installation is offered by supported browsers. On iOS, use Add to Home Screen from the Share menu.",
+      "update_heading": "App version",
+      "update_available": "A new version is ready to activate.",
+      "update_current": "No waiting update was found.",
+      "check_update": "Check for update",
+      "sync_note": "Unsaved daily entries stay visible on their entry screen. Reconnect there and use Retry; CorrelCore does not silently upload health data in the background."
+    },
     "dev": {
       "heading": "Developer View",
       "body": "Inspect the GitHub commit, image tag and optional OCI digest currently served by the backend.",
@@ -630,7 +669,20 @@
     "offline": {
       "title": "You are offline",
       "body": "CorrelCore can open its app shell offline. Sync and API data load again when the connection returns.",
-      "cta": "Back to Today"
+      "cta": "Back to Today",
+      "retry": "Try again",
+      "restored": "Connection restored.",
+      "still_offline": "Still offline. Your local screen remains available."
+    },
+    "connection": {
+      "offline_title": "No connection",
+      "offline_body": "Saving and fresh data pause until you reconnect.",
+      "retry": "Retry"
+    },
+    "update": {
+      "title": "Update ready",
+      "body": "Restart CorrelCore to use the latest version.",
+      "cta": "Restart"
     }
   },
   "disclaimer": {

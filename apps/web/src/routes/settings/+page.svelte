@@ -181,7 +181,9 @@
       </div>
       <div class="settings__actions">
         <Button href="/settings/tags" variant="secondary">{$_('settings.tags.open')}</Button>
-        <span class="settings__placeholder">{$_('settings.tracking.symptoms_placeholder')}</span>
+        <Button href="/settings/symptoms" variant="secondary">
+          {$_('settings.symptoms.open')}
+        </Button>
         <span class="settings__placeholder">{$_('settings.tracking.reminders_placeholder')}</span>
       </div>
     </section>
@@ -269,6 +271,9 @@
         equalWidth={false}
         on:change={(event) => selectLocale(event.detail.value as AppLocale)}
       />
+      <div class="settings__actions">
+        <Button href="/settings/app" variant="secondary">{$_('settings.app.open')}</Button>
+      </div>
     </section>
 
     <section class="settings__panel" data-testid="settings-section-account">

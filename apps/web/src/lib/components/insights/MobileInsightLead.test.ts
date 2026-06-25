@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, within } from '@testing-library/svelte';
 import MobileInsightLead from './MobileInsightLead.svelte';
 import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
@@ -51,6 +51,7 @@ describe('MobileInsightLead', () => {
 
     expect(lead.contains(confidence)).toBe(true);
     expect(lead.contains(maturityContext)).toBe(true);
+    expect(screen.queryByTestId('insight-maturity-badge')).toBeNull();
     expect(
       confidence.compareDocumentPosition(maturityContext) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
@@ -59,7 +60,8 @@ describe('MobileInsightLead', () => {
   it('keeps non-causal guidance visible beside the lead insight', () => {
     render(MobileInsightLead, { props: { insight } });
 
-    expect(screen.getByTestId('mobile-insight-correlation-note')).toBeTruthy();
-    expect(screen.getByRole('link').getAttribute('href')).toBe('/insights/disclaimer');
+    const note = screen.getByTestId('mobile-insight-correlation-note');
+    expect(note).toBeTruthy();
+    expect(within(note).getByRole('link').getAttribute('href')).toBe('/insights/disclaimer');
   });
 });

@@ -1,7 +1,21 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
+  import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
+
+  onMount(() => pwaLifecycle.initialize());
+
+  function retry(): void {
+    if (typeof window === 'undefined') return;
+    if (window.navigator.onLine) {
+      void goto('/');
+      return;
+    }
+    window.location.reload();
+  }
 </script>
 
 <svelte:head>
@@ -12,7 +26,12 @@
   <Panel variant="bordered">
     <h1>{$_('pwa.offline.title')}</h1>
     <p>{$_('pwa.offline.body')}</p>
-    <Button href="/" variant="primary">{$_('pwa.offline.cta')}</Button>
+    <p class="offline-page__status" class:online={$pwaLifecycle.online} role="status">
+      {$pwaLifecycle.online ? $_('pwa.offline.restored') : $_('pwa.offline.still_offline')}
+    </p>
+    <Button variant="primary" on:click={retry}>
+      {$pwaLifecycle.online ? $_('pwa.offline.cta') : $_('pwa.offline.retry')}
+    </Button>
   </Panel>
 </main>
 
@@ -29,5 +48,15 @@
   .offline-page h1,
   .offline-page p {
     margin: 0 0 var(--space-3);
+  }
+
+  .offline-page__status {
+    color: var(--color-warning);
+    font-size: var(--text-sm);
+    font-weight: 650;
+  }
+
+  .offline-page__status.online {
+    color: var(--color-success);
   }
 </style>

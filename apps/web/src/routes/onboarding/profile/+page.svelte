@@ -157,7 +157,7 @@
   }
 
   .profile-onboarding select {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
   }
 
   .profile-onboarding__actions {
@@ -169,5 +169,17 @@
   .profile-onboarding__previews small,
   .profile-onboarding__error {
     color: var(--color-text-muted);
+  }
+
+  @media (max-width: 430px) {
+    .profile-onboarding__actions {
+      align-items: stretch;
+      flex-direction: column-reverse;
+    }
+
+    .profile-onboarding__actions button,
+    .profile-onboarding__previews a {
+      min-height: 44px;
+    }
   }
 </style>

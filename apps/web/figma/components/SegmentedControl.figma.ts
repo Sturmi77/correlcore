@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=12-45
 // source=apps/web/src/lib/components/common/SegmentedControl.svelte
 // component=SegmentedControl
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;

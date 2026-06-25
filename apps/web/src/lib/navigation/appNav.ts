@@ -22,10 +22,10 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
   { href: '/settings', labelKey: 'nav.settings', match: 'prefix', icon: 'settings' },
 ] as const;
 
-const PUBLIC_ROUTE_PREFIXES = ['/auth', '/status'] as const;
+const PUBLIC_ROUTE_PREFIXES = ['/auth', '/status', '/offline'] as const;
 
 /** Routes that hide the app chrome (no bottom / side nav). */
-const NO_APP_NAV_PREFIXES = ['/auth', '/status', '/onboarding'] as const;
+const NO_APP_NAV_PREFIXES = ['/auth', '/status', '/onboarding', '/offline'] as const;
 
 export function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

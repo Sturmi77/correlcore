@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-53
-// source=apps/web/src/lib/components/home/HomeSummary.svelte
+// source=apps/web/src/lib/components/home/MetricCard.svelte
 // component=MetricCard
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;
@@ -22,7 +22,7 @@ const unit = instance.getString('Unit');
 
 export default {
   id: 'metric-card',
-  imports: ['// MetricCard is a Figma subcomponent extracted from HomeSummary.svelte'],
+  imports: ['import MetricCard from "$lib/components/home/MetricCard.svelte";'],
   example: figma.code`<MetricCard metric="${metric}" label="${label}" value="${value}" unit="${unit}" ${loading ? 'loading' : ''} />`,
   metadata: { nestable: true },
 };

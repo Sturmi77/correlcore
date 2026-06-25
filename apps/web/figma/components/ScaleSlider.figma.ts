@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=16-107
 // source=apps/web/src/lib/components/entries/ScaleSlider.svelte
 // component=ScaleSlider
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;
@@ -23,7 +23,7 @@ export default {
   imports: ['import ScaleSlider from "$lib/components/entries/ScaleSlider.svelte";'],
   example: figma.code`<ScaleSlider
   id="${scaleType}-score"
-  bind:value={${Number(value) || 3}}
+  value={${Number(value) || 3}}
   label="${label}"
   decrementLabel="Decrease ${label}"
   incrementLabel="Increase ${label}"

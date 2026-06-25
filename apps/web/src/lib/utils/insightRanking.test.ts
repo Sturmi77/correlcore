@@ -28,7 +28,9 @@ function makeInsight(overrides: Partial<InsightResponse>): InsightResponse {
 
 describe('insight ranking', () => {
   it('scores confidence and absolute effect size', () => {
-    expect(insightPriorityScore(makeInsight({ confidence: 0.75, effect_size: -0.4 }))).toBe(0.3);
+    expect(insightPriorityScore(makeInsight({ confidence: 0.75, effect_size: -0.4 }))).toBeCloseTo(
+      0.3
+    );
   });
 
   it('ranks the strongest signal without mutating the API response', () => {

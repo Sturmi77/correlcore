@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=10-43
 // source=apps/web/src/lib/components/common/InlineAlert.svelte
 // component=InlineAlert
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;

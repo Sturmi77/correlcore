@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=6-64
 // source=apps/web/src/lib/components/common/Button.svelte
 // component=Button
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;

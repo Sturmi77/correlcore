@@ -8,7 +8,9 @@
   import { theme } from '$lib/stores/theme';
   import { auth, hydrate } from '$lib/stores/auth';
   import AppNav from '$lib/components/common/AppNav.svelte';
+  import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
+  import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
 
   // svelte-i18n's `init()` registers the locale dictionary asynchronously
   // (locale files are dynamic imports). We must NOT render any child that
@@ -27,6 +29,7 @@
   // paint to avoid a flash of wrong theme; here we mirror it into the store
   // so reactive consumers (toggle button, etc.) start in the correct state.
   onMount(() => {
+    pwaLifecycle.initialize();
     const saved = (() => {
       try {
         return localStorage.getItem('correlcore-theme') as 'light' | 'dark' | null;
@@ -94,6 +97,7 @@
         <slot />
       </main>
       <AppNav />
+      <PwaStatusBanner />
     </div>
   {:else}
     <!--

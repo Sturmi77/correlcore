@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=20-102
 // source=apps/web/src/lib/components/trends/MetricTimeseries.svelte
 // component=MetricTimeseries
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;

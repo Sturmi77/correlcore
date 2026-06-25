@@ -59,9 +59,8 @@
   const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   let entryDate: string = initialDate;
-  let compactEntry =
-    mode === 'sheet' ||
-    (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches);
+  // Keep SSR and the first client render identical; viewport adaptation happens on mount.
+  let compactEntry = mode === 'sheet';
   let showMore = !compactEntry;
   let optionalTouched = false;
   let selectedSlot: EntrySlot = 'day';
