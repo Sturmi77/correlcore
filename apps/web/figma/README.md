@@ -72,7 +72,51 @@ responses. Mobile changes presentation hierarchy only: a readable summary is
 shown first, while the complete desktop comparison canvas remains available
 through an explicit detail action.
 
+## Mobile Insights Sprint 3
+
+The code contract is implemented on `codex/mobile-insights-foundation`:
+
+- strongest deterministic signal first
+- semantic confidence visible without a raw percentage
+- maturity context second
+- remaining patterns retain feed filters
+- matrix and co-occurrence remain explicit detail surfaces
+
+Figma component and screen nodes are pending connector write availability. Do
+not treat the older generic `Mobile / Insights` panel composition as the Sprint
+3 implementation reference.
+
 ## Pending Figma work
+
+### Mobile supporting flows Sprint 4
+
+The implementation reference is `codex/mobile-supporting-flows`. Code is
+complete for this sprint; Figma frame creation is the remaining parity task.
+Add these production-aligned frames to the existing Screens page, using
+`ScreenHeader`, `Panel`, `Button`, `InlineAlert`, `FormField`, and `AppNav`
+instances:
+
+- Mobile / Settings essentials: Tags, Symptoms, App & Offline, Analysis,
+  Privacy, Appearance, and Account destinations
+- Mobile / Symptom management: custom edit, delete confirmation, empty, load,
+  and error states plus read-only defaults
+- Mobile / App & Offline: online/offline, install available/unavailable,
+  installed, update current/available, and restart states
+- Mobile / Auth recovery: verification idle/busy/success/error/missing token
+  and resend success/error
+- Mobile / Onboarding: guided tags, retrospective touch input, optional profile,
+  and submission error states
+- Global recovery overlays: offline retry and update-ready banners
+
+Do not depict an automatic background sync queue. Unsaved Entry data stays in
+the Entry screen and is retried explicitly after reconnecting.
+
+### Next sprint
+
+After the supporting-flow PR lands, the next code sprint should be Phase 5:
+desktop consolidation for Home, Trends, Insights, and Settings. Keep the
+mobile-first route and state contracts unchanged while improving desktop
+density and analysis surfaces.
 
 - Published-library Code Connect activation
 - Native mobile app split decision after product and platform scope is clear

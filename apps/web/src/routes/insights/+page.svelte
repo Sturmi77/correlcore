@@ -42,6 +42,7 @@
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
+  import MobileInsightLead from '$lib/components/insights/MobileInsightLead.svelte';
   import CooccurrenceEntrySheet from '$lib/components/insights/CooccurrenceEntrySheet.svelte';
   import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
   import TagGroupsSection from '$lib/components/insights/TagGroupsSection.svelte';
@@ -59,7 +60,9 @@
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
+  import { rankInsights } from '$lib/utils/insightRanking';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
+  import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
   type DetailView = 'findings' | 'matrix';
 
@@ -86,6 +89,8 @@
   let symptomCooccurrence: SymptomTagCooccurrenceResponse | null = null;
   let symptomCooccurrenceLoading = false;
   let showInsightSymptoms = true;
+  let compactInsights = false;
+  let mobileMedia: MediaQueryList | null = null;
 
   const INSIGHT_SYMPTOMS_STORAGE_KEY = 'cc_insights_symptoms';
   const detailViewTabs: { id: DetailView; label: string }[] = [
@@ -272,9 +277,18 @@
     }
   }
 
+  function syncCompactInsights(): void {
+    compactInsights = mobileMedia?.matches ?? false;
+  }
+
   onMount(() => {
     showInsightSymptoms = localStorage.getItem(INSIGHT_SYMPTOMS_STORAGE_KEY) !== 'false';
+    mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
+    syncCompactInsights();
+    mobileMedia?.addEventListener('change', syncCompactInsights);
     void loadInsights();
+
+    return () => mobileMedia?.removeEventListener('change', syncCompactInsights);
   });
 
   $: showMaturityMilestone = shouldShowMaturityMilestone(
@@ -283,6 +297,9 @@
   );
   $: showSymptomAnalytics =
     showInsightSymptoms && (!insightMaturity || insightMaturity.phase !== 'collecting');
+  $: rankedInsights = rankInsights(insights);
+  $: primaryMobileInsight = rankedInsights[0] ?? null;
+  $: remainingMobileInsights = rankedInsights.slice(1);
 
   async function dismissMaturityMilestone(key: string): Promise<void> {
     const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
@@ -348,11 +365,28 @@
       </Button>
     </Panel>
   {:else}
-    {#if insightMaturity}
+    {#if !compactInsights && insightMaturity}
       <InsightStageHeader
         maturity={insightMaturity}
         showMilestone={showMaturityMilestone}
         on:dismissMilestone={(e) => void dismissMaturityMilestone(e.detail.key)}
+      />
+    {/if}
+
+    {#if compactInsights && detailView === 'findings' && !loading && !error && primaryMobileInsight}
+      <MobileInsightLead
+        insight={primaryMobileInsight}
+        maturity={insightMaturity}
+        {entryCount}
+        {inactiveTagIds}
+        showMilestone={showMaturityMilestone}
+        on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
+      />
+    {:else if compactInsights && detailView === 'findings' && !loading && !error && insightMaturity}
+      <InsightStageHeader
+        maturity={insightMaturity}
+        showMilestone={showMaturityMilestone}
+        on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
       />
     {/if}
 
@@ -366,6 +400,20 @@
 
     {#if detailView === 'matrix'}
       <InsightMatrix {insights} />
+    {:else if compactInsights && primaryMobileInsight && !loading && !error}
+      {#if remainingMobileInsights.length > 0}
+        <section class="insights-page__more" data-testid="mobile-insights-more">
+          <h2>{$_('insights.mobile.more_heading')}</h2>
+          <InsightFeed
+            insights={remainingMobileInsights}
+            maturity={insightMaturity}
+            {entryCount}
+            {inactiveTagIds}
+            showContext={false}
+            on:retry={loadInsights}
+          />
+        </section>
+      {/if}
     {:else}
       <InsightFeed
         {insights}
@@ -477,6 +525,17 @@
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     font-weight: 700;
+  }
+
+  .insights-page__more {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .insights-page__more h2 {
+    margin: 0;
+    font-size: var(--text-lg);
   }
 
   @media (max-width: 420px) {

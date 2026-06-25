@@ -25,6 +25,36 @@
 6. **A separate mobile codebase is not justified.** ADR-0002 and the current
    SvelteKit/Capacitor strategy favour shared domain logic and route semantics.
 
+## Phase 4 resolution
+
+- Settings essentials now expose tag management, symptom management, and one
+  App & Offline status surface on mobile and desktop.
+- Symptom management shares the existing API/store contract. Mobile stacks the
+  editable fields and actions; desktop retains a dense row layout.
+- Connection loss and waiting app updates are global shell states. The offline
+  route reports whether connectivity has returned and offers an explicit retry.
+- Installation, current connection state, update check, and update activation
+  are grouped under `/settings/app` instead of competing with the daily Home
+  flow.
+- Retrospective and profile onboarding controls meet the 44 px mobile target.
+- Verification and resend flows already cover missing, expired, used, busy,
+  success, and generic error states. Password reset is still blocked by a
+  missing backend contract.
+- No background health-data queue was introduced. Entry remains the owner of
+  unsaved data and its explicit retry action.
+
+## Current implementation status
+
+The mobile-first remediation work is now implemented through Phase 4 in code.
+Entry, Trends, Insights hierarchy, Settings essentials, offline/PWA state, and
+onboarding touch targets all have explicit mobile roles while preserving shared
+routes, stores, validation, and analytics contracts.
+
+The remaining gap is no longer a mobile/code architecture gap. It is a parity
+and planning gap: Figma needs the production-aligned Insight and supporting-flow
+frames, and desktop needs a deliberate Phase 5 consolidation pass for wide
+layouts after the mobile PR lands.
+
 ## Screen matrix
 
 | Screen            | Mobile | Web    | Primary problem                                     | Decision                                                                                      |
@@ -33,9 +63,9 @@
 | Entry             | Yellow | Yellow | Form density and incomplete state coverage          | Mobile capture flow first; desktop workspace second, shared model and validation              |
 | Trends            | Red    | Green  | Dense chart interaction                             | Desktop is primary; mobile gets summaries and drill-down sheets                               |
 | Insights          | Red    | Yellow | Real insight components missing from Figma          | Define feed/card/quality variants before implementation alignment                             |
-| Settings          | Yellow | Green  | Missing Figma flow                                  | Mobile essentials; full web management surface                                                |
+| Settings          | Yellow | Green  | Figma parity pending                                | Shared controls; stacked mobile management and dense desktop rows                             |
 | Auth / Onboarding | Yellow | Yellow | Missing conversion and verification states          | Add responsive form, error, success, and verification specs                                   |
-| Offline / PWA     | Yellow | Yellow | Missing recovery states                             | Specify offline, install, update, pending-sync, and retry states                              |
+| Offline / PWA     | Yellow | Yellow | Figma parity pending                                | Shared lifecycle state; explicit install, update, reconnect, and Entry-owned retry            |
 
 ## Component findings
 

@@ -522,7 +522,6 @@
     "tracking": {
       "heading": "Tracking verwalten",
       "body": "Passe die Eingaben an, die im taeglichen Erfassungsablauf verfuegbar sind.",
-      "symptoms_placeholder": "Symptome verwalten (M9)",
       "reminders_placeholder": "Erinnerungen (spaeter)"
     },
     "analysis": {
@@ -591,6 +590,46 @@
       "error_save": "Dieser Tag konnte nicht gespeichert werden.",
       "error_reset": "Dieser Tag konnte nicht zur\u00fcckgesetzt werden."
     },
+    "symptoms": {
+      "open": "Symptome verwalten",
+      "back_settings": "Zurueck zu Einstellungen",
+      "title": "Symptome verwalten",
+      "subtitle": "Verwalte den Symptomkatalog fuer taegliche Eintraege.",
+      "custom_heading": "Eigene Symptome",
+      "custom_body": "Benenne eigene Symptome um oder entferne sie. Beim Entfernen werden auch historische Zuordnungen geloescht.",
+      "custom_empty": "Noch keine eigenen Symptome. Erstelle eines im taeglichen Eintrag.",
+      "default_heading": "Standard-Symptome",
+      "default_body": "Die kuratierte Auswahl ist schreibgeschuetzt und fuer alle verfuegbar.",
+      "name": "Name",
+      "icon": "Icon",
+      "save": "Speichern",
+      "delete": "Loeschen",
+      "confirm_delete": "Loeschen bestaetigen",
+      "cancel": "Abbrechen",
+      "error_load": "Symptome konnten nicht geladen werden.",
+      "error_save": "Dieses Symptom konnte nicht gespeichert werden.",
+      "error_delete": "Dieses Symptom konnte nicht geloescht werden."
+    },
+    "app": {
+      "open": "App & Offline",
+      "back_settings": "Zurueck zu Einstellungen",
+      "title": "App & Offline",
+      "subtitle": "Pruefe Installation, Verbindung und Updates.",
+      "connection_heading": "Verbindung",
+      "connection_online": "CorrelCore kann Online-Dienste erreichen.",
+      "connection_offline": "API-Daten und Speichern benoetigen eine Verbindung.",
+      "status_online": "Online",
+      "status_offline": "Offline",
+      "install_heading": "Installation",
+      "install_body": "Installiere CorrelCore fuer eine fokussierte App-Erfahrung.",
+      "install_installed": "CorrelCore laeuft als installierte App.",
+      "install_unavailable": "Unterstuetzte Browser bieten die Installation an. Unter iOS nutze Zum Home-Bildschirm im Teilen-Menue.",
+      "update_heading": "App-Version",
+      "update_available": "Eine neue Version kann aktiviert werden.",
+      "update_current": "Kein wartendes Update gefunden.",
+      "check_update": "Auf Update pruefen",
+      "sync_note": "Nicht gespeicherte Eintraege bleiben im Eingabe-Screen sichtbar. Stelle dort die Verbindung wieder her und nutze Erneut versuchen; CorrelCore laedt Gesundheitsdaten nicht unbemerkt im Hintergrund hoch."
+    },
     "dev": {
       "heading": "Entwickleransicht",
       "body": "Pr\u00fcfe den GitHub-Commit, Image-Tag und optionalen OCI-Digest, den das Backend aktuell meldet.",
@@ -630,7 +669,20 @@
     "offline": {
       "title": "Du bist offline",
       "body": "CorrelCore kann die App-Shell offline oeffnen. Sync und API-Daten laden wieder, sobald die Verbindung zurueck ist.",
-      "cta": "Zurueck zu Heute"
+      "cta": "Zurueck zu Heute",
+      "retry": "Erneut versuchen",
+      "restored": "Verbindung wiederhergestellt.",
+      "still_offline": "Weiterhin offline. Der lokale Screen bleibt verfuegbar."
+    },
+    "connection": {
+      "offline_title": "Keine Verbindung",
+      "offline_body": "Speichern und neue Daten pausieren bis zur Wiederverbindung.",
+      "retry": "Erneut versuchen"
+    },
+    "update": {
+      "title": "Update bereit",
+      "body": "Starte CorrelCore neu, um die aktuelle Version zu verwenden.",
+      "cta": "Neu starten"
     }
   },
   "disclaimer": {
@@ -724,6 +776,15 @@
       "symptoms_toggle": "Symptome einblenden",
       "analytics_summary": "Analyse vertiefen",
       "analytics_hint": "Symptome und gemeinsame Tags"
+    },
+    "mobile": {
+      "eyebrow": "Mobile Zusammenfassung",
+      "strongest_heading": "Stärkstes aktuelles Signal",
+      "context": "Priorisiert aus {n} Einträgen der letzten {days} Tage",
+      "correlation_note": "Das beschreibt einen Zusammenhang in deinen Einträgen, keine Ursache.",
+      "correlation_link": "So liest du das",
+      "maturity_heading": "Datenreife",
+      "more_heading": "Weitere Muster"
     },
     "stage": {
       "aria_label": "Erkenntnisbereitschaft",

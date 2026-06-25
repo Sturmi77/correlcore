@@ -21,6 +21,7 @@
   import { _ } from 'svelte-i18n';
   import type { EntryResponse } from '$lib/api/entries';
   import { averageOver, computeEntryStreak, countDayEntries } from '$lib/utils/streak';
+  import MetricCard from './MetricCard.svelte';
 
   /** Entries within the 7-day display window. */
   export let entries: EntryResponse[] = [];
@@ -64,29 +65,38 @@
   <h2 class="home-summary__heading">{$_('home.summary.heading')}</h2>
 
   <dl class="home-summary__grid">
-    <div class="home-summary__cell" data-testid="home-summary-mood">
-      <dt class="home-summary__label">{$_('home.summary.mood_avg')}</dt>
-      <dd class="home-summary__value">{formatAvg(moodAvg)}</dd>
-    </div>
-    <div class="home-summary__cell" data-testid="home-summary-energy">
-      <dt class="home-summary__label">{$_('home.summary.energy_avg')}</dt>
-      <dd class="home-summary__value">{formatAvg(energyAvg)}</dd>
-    </div>
-    <div class="home-summary__cell" data-testid="home-summary-stress">
-      <dt class="home-summary__label">{$_('home.summary.stress_avg')}</dt>
-      <dd class="home-summary__value">{formatAvg(stressAvg)}</dd>
-    </div>
-    <div class="home-summary__cell" data-testid="home-summary-consistency">
-      <dt class="home-summary__label">{$_('home.summary.tracking_consistency')}</dt>
-      <dd class="home-summary__value">
-        {formatConsistency(trackingConsistency)}
-        <span class="home-summary__unit">{$_('home.summary.streak_unit')}</span>
-      </dd>
-    </div>
-    <div class="home-summary__cell" data-testid="home-summary-count">
-      <dt class="home-summary__label">{$_('home.summary.count')}</dt>
-      <dd class="home-summary__value">{count}<span class="home-summary__unit">/7</span></dd>
-    </div>
+    <MetricCard
+      metric="mood_score"
+      label={$_('home.summary.mood_avg')}
+      value={formatAvg(moodAvg)}
+      {loading}
+    />
+    <MetricCard
+      metric="energy"
+      label={$_('home.summary.energy_avg')}
+      value={formatAvg(energyAvg)}
+      {loading}
+    />
+    <MetricCard
+      metric="stress"
+      label={$_('home.summary.stress_avg')}
+      value={formatAvg(stressAvg)}
+      {loading}
+    />
+    <MetricCard
+      metric="tracking_consistency"
+      label={$_('home.summary.tracking_consistency')}
+      value={formatConsistency(trackingConsistency)}
+      unit={$_('home.summary.streak_unit')}
+      {loading}
+    />
+    <MetricCard
+      metric="count"
+      label={$_('home.summary.count')}
+      value={String(count)}
+      unit="/7"
+      {loading}
+    />
   </dl>
   <p class="home-summary__hint">{$_('home.summary.consistency_hint')}</p>
 </section>
@@ -115,45 +125,10 @@
     gap: 0.5rem;
   }
 
-  .home-summary__cell {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    padding: 0.6rem 0.7rem;
-    border-radius: 0.55rem;
-    background: var(--color-surface-chart-bg);
-    border: 1px solid var(--color-border-chart);
-  }
-
-  .home-summary__label {
-    font-size: 0.7rem;
-    opacity: 0.7;
-    margin: 0;
-  }
-
-  .home-summary__value {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 0.25rem;
-  }
-
-  .home-summary__unit {
-    font-size: 0.7rem;
-    opacity: 0.55;
-    font-weight: 400;
-  }
-
   .home-summary__hint {
     margin: 0;
     font-size: 0.72rem;
     color: var(--color-text-muted);
     line-height: 1.35;
-  }
-
-  .home-summary[data-loading='true'] .home-summary__value {
-    opacity: 0.4;
   }
 </style>

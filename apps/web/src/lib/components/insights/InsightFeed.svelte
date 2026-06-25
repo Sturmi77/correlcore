@@ -25,6 +25,7 @@
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
   import InsightCard from './InsightCard.svelte';
   import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
+  import { rankInsights } from '$lib/utils/insightRanking';
 
   export let insights: InsightResponse[] = [];
   export let maturity: InsightMaturity | null = null;
@@ -32,6 +33,8 @@
   export let error: string | null = null;
   export let entryCount = 0;
   export let inactiveTagIds: readonly string[] = [];
+  export let showContext = true;
+  export let showFilters = true;
 
   const dispatch = createEventDispatcher<{ retry: void }>();
 
@@ -53,10 +56,6 @@
     sleep: ['sleep'],
   };
 
-  function score(i: InsightResponse): number {
-    return (i.confidence ?? 0) * Math.abs(i.effect_size ?? 0);
-  }
-
   function insightMatches(i: InsightResponse, keywords: string[]): boolean {
     const tokens = [
       i.metric,
@@ -71,13 +70,13 @@
     return keywords.some((keyword) => tokens.some((token) => token.includes(keyword)));
   }
 
-  $: filtered = insights
-    .filter((i) => {
+  $: filtered = rankInsights(
+    insights.filter((i) => {
       if (activeTab === 'all') return true;
       const keywords = METRIC_MAP[activeTab];
       return insightMatches(i, keywords);
     })
-    .sort((a, b) => score(b) - score(a));
+  );
   $: isPhaseEmpty = Boolean(maturity && insights.length === 0);
   $: emptyTitleKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.title`
@@ -98,41 +97,45 @@
 </script>
 
 <section class="if-feed" aria-label={$_('insights.feed.aria_label')} data-testid="insight-feed">
-  <div class="if-context-row">
-    <p class="if-context" data-testid="insight-feed-context">
-      {$_('insights.feed.subtitle', { values: { days: 90, n: entryCount } })}
-    </p>
-    <button
-      class="if-disclaimer-btn"
-      aria-label={$_('insights.feed.disclaimer_aria')}
-      data-testid="insight-feed-disclaimer-btn"
-      on:click={() => (disclaimerOpen = true)}
-    >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
+  {#if showContext}
+    <div class="if-context-row">
+      <p class="if-context" data-testid="insight-feed-context">
+        {$_('insights.feed.subtitle', { values: { days: 90, n: entryCount } })}
+      </p>
+      <button
+        class="if-disclaimer-btn"
+        aria-label={$_('insights.feed.disclaimer_aria')}
+        data-testid="insight-feed-disclaimer-btn"
+        on:click={() => (disclaimerOpen = true)}
       >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-    </button>
-  </div>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </button>
+    </div>
+  {/if}
 
-  <TabBar
-    value={activeTab}
-    options={filterTabOptions}
-    ariaLabel={$_('insights.feed.filter_label')}
-    testId="insight-feed-tabs"
-    on:change={(event) => (activeTab = event.detail.value as FilterTab)}
-  />
+  {#if showFilters}
+    <TabBar
+      value={activeTab}
+      options={filterTabOptions}
+      ariaLabel={$_('insights.feed.filter_label')}
+      testId="insight-feed-tabs"
+      on:change={(event) => (activeTab = event.detail.value as FilterTab)}
+    />
+  {/if}
 
   <!-- Inline error banner -->
   {#if error}

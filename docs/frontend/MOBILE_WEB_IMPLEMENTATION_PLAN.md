@@ -1,7 +1,49 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Sprint 0, Phase 1, and Phase 2 complete; Phase 3 is the next implementation slice.
+**Status:** Sprint 0, Phase 1, Phase 2, Phase 3 code, and Phase 4 code are
+complete. The current branch `codex/mobile-supporting-flows` closes the
+supporting-flow mobile implementation and the actionable review findings from
+the previous mobile sprints. Figma parity and final rendered Browser QA remain
+pending follow-up work.
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
+
+## Current GitHub sprint ledger
+
+**Completed by the current commit**
+
+- Phase 4 mobile supporting flows are implemented in code: Settings essentials,
+  symptom management, App & Offline status, global PWA/update state, offline
+  recovery messaging, and mobile touch refinements for onboarding/profile
+  inputs.
+- Review findings from the recent mobile PRs are addressed: UTC-based Entry
+  editability, hydration-safe Entry compact mode, touch-enabled mobile Insights
+  Playwright contexts, scoped Insight lead assertions, tolerant ranking float
+  checks, no duplicate maturity badge in the lead card, valid Code Connect
+  metadata order, a valid `ScaleSlider` snippet, and a real `MetricCard`
+  implementation behind the Figma mapping.
+- Shared contracts remain intact: no second mobile frontend, no alternate
+  analytics path, no background health-data queue, and no route/API split for
+  mobile.
+
+**Still open after this commit**
+
+- Build the production-aligned Phase 3 and Phase 4 Figma frames once connector
+  writes are available: Insight card/feed/maturity states, Settings essentials,
+  Symptom management, App & Offline, verification recovery, install/update, and
+  onboarding touch-state screens.
+- Run final rendered Browser QA across 390, 430, and 1280 px after the Figma
+  and browser connector path is available again.
+- Define backend/product contracts for password recovery, reminders, account
+  deletion, and future health-data import consent/revocation.
+- Start Phase 5 desktop consolidation after the mobile parity backlog above is
+  visible in Figma and the supporting-flow PR is merged.
+
+**Next recommended sprint**
+
+Phase 5 should be a desktop consolidation sprint focused on route-level desktop
+composition for Home, Trends, Insights, and Settings. It should keep all shared
+mobile contracts unchanged and only improve wide-screen density, comparison
+surfaces, and management ergonomics.
 
 ## Success criteria
 
@@ -93,6 +135,17 @@ https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285
 
 **Exit:** Figma and code expose the same insight states and hierarchy on mobile.
 
+**Implemented in code:** The mobile findings view now ranks insights through a
+shared deterministic utility and presents the strongest signal first with a
+visible semantic confidence scale. Maturity context follows the lead signal,
+remaining patterns keep the existing filters, and matrix/co-occurrence surfaces
+remain behind explicit detail controls. Desktop keeps the existing analysis
+composition and API contract.
+
+**Pending closeout:** Create the production-aligned `InsightCard`, confidence,
+maturity, disclaimer, loading, empty, and error components in Figma; compose the
+summary/detail/empty flow; then run rendered Browser QA at 390, 430, and 1280 px.
+
 ## Phase 4: Supporting mobile flows
 
 1. Add Settings essentials, tag/symptom management, auth/onboarding,
@@ -102,6 +155,26 @@ https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285
    work.
 
 **Exit:** No mobile-critical recovery or account flow remains undocumented.
+
+**Implemented in code:** Settings now links to shared tag and symptom
+management plus an App & Offline status screen. Custom symptoms can be renamed
+or deleted with explicit confirmation while curated defaults remain read-only.
+A shared PWA lifecycle store exposes connection loss, waiting service-worker
+updates, install state, update checks, and restart activation to the app shell,
+offline recovery screen, and settings. Retrospective and profile onboarding
+now keep 44 px touch targets and stack actions at mobile widths. Unsaved health
+data remains visible on the originating Entry screen and requires explicit
+retry; there is no silent background sync queue.
+
+**Documented dependencies:** Password recovery still needs a backend contract
+before a route can be implemented. Reminders and account deletion remain
+explicit product/backend backlog. Health-data import and Capacitor work remain
+gated on a dedicated consent and revocation flow.
+
+**Pending closeout:** Add the Settings essentials, Symptom management, App &
+Offline, verification recovery, install/update, and onboarding touch-state
+screens to Figma. Then run rendered Browser QA at 390, 430, and 1280 px and the
+new `mobile-supporting-flows.spec.ts` suite.
 
 ## Phase 5: Desktop consolidation
 

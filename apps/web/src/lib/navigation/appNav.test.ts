@@ -3,17 +3,19 @@ import { isNavItemActive, isPublicRoute, isRouteWithoutAppNav, shouldShowAppNav 
 
 describe('appNav routing helpers', () => {
   describe('isPublicRoute', () => {
-    it('treats auth and status as public', () => {
+    it('treats auth, status, and offline recovery as public', () => {
       expect(isPublicRoute('/auth/login')).toBe(true);
       expect(isPublicRoute('/status')).toBe(true);
+      expect(isPublicRoute('/offline')).toBe(true);
       expect(isPublicRoute('/')).toBe(false);
     });
   });
 
   describe('isRouteWithoutAppNav', () => {
-    it('hides nav on auth, status, and onboarding', () => {
+    it('hides nav on auth, status, onboarding, and offline recovery', () => {
       expect(isRouteWithoutAppNav('/auth/register')).toBe(true);
       expect(isRouteWithoutAppNav('/onboarding/profile')).toBe(true);
+      expect(isRouteWithoutAppNav('/offline')).toBe(true);
       expect(isRouteWithoutAppNav('/insights')).toBe(false);
       expect(isRouteWithoutAppNav('/dev')).toBe(false);
     });
@@ -24,6 +26,7 @@ describe('appNav routing helpers', () => {
       expect(shouldShowAppNav('authenticated', '/')).toBe(true);
       expect(shouldShowAppNav('authenticated', '/settings/tags')).toBe(true);
       expect(shouldShowAppNav('authenticated', '/auth/login')).toBe(false);
+      expect(shouldShowAppNav('authenticated', '/offline')).toBe(false);
       expect(shouldShowAppNav('anonymous', '/')).toBe(false);
       expect(shouldShowAppNav('loading', '/insights')).toBe(false);
     });

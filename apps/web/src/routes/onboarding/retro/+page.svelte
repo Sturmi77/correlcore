@@ -126,8 +126,8 @@
   }
 
   .onboarding__moods button {
-    width: 2rem;
-    height: 2rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: 999px;
     border: 1px solid var(--color-border);
     background: transparent;
@@ -144,5 +144,21 @@
 
   .onboarding__error {
     color: var(--color-error);
+  }
+
+  @media (max-width: 430px) {
+    .onboarding__day {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .onboarding__moods {
+      justify-content: space-between;
+    }
+
+    .onboarding__actions > :global(*) {
+      flex: 1;
+      min-height: 44px;
+    }
   }
 </style>

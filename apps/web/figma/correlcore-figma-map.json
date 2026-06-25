@@ -84,7 +84,7 @@
     {
       "name": "MetricCard",
       "nodeId": "19:53",
-      "source": "apps/web/src/lib/components/home/HomeSummary.svelte",
+      "source": "apps/web/src/lib/components/home/MetricCard.svelte",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-53",
       "status": "created-design-subcomponent"
     },

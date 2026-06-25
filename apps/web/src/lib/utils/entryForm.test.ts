@@ -14,6 +14,13 @@ describe('isEntryDateEditable', () => {
     expect(isEntryDateEditable(today, '2026-06-24')).toBe(false);
     expect(isEntryDateEditable(today, '2026-02-31')).toBe(false);
   });
+
+  it('uses the same UTC date basis as isoDate', () => {
+    const utcEvening = new Date('2026-06-23T23:30:00.000Z');
+
+    expect(isEntryDateEditable(utcEvening, '2026-06-23')).toBe(true);
+    expect(isEntryDateEditable(utcEvening, '2026-06-24')).toBe(false);
+  });
 });
 
 describe('resolveInitialDate', () => {
