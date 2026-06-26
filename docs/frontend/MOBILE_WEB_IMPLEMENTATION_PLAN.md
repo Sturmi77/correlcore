@@ -1,49 +1,47 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Sprint 0, Phase 1, Phase 2, Phase 3 code, and Phase 4 code are
-complete. The current branch `codex/mobile-supporting-flows` closes the
-supporting-flow mobile implementation and the actionable review findings from
-the previous mobile sprints. Figma parity and final rendered Browser QA remain
-pending follow-up work.
+**Status:** Phases 0–4 are complete (code and Figma). Cross-phase QA (Sprint C)
+and GitHub closeout (Sprint D) remain pending. **Phase 5 (desktop) is out of
+scope** for the current mobile closeout — see
+[`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md).
+
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
 
 ## Current GitHub sprint ledger
 
-**Completed by the current commit**
+**Completed on `main` @ `7b7ca8a` and closeout docs**
 
-- Phase 4 mobile supporting flows are implemented in code: Settings essentials,
-  symptom management, App & Offline status, global PWA/update state, offline
-  recovery messaging, and mobile touch refinements for onboarding/profile
-  inputs.
-- Review findings from the recent mobile PRs are addressed: UTC-based Entry
-  editability, hydration-safe Entry compact mode, touch-enabled mobile Insights
-  Playwright contexts, scoped Insight lead assertions, tolerant ranking float
-  checks, no duplicate maturity badge in the lead card, valid Code Connect
-  metadata order, a valid `ScaleSlider` snippet, and a real `MetricCard`
-  implementation behind the Figma mapping.
+- Phases 0–4 mobile code paths (Entry, Trends, Insights hierarchy, supporting
+  flows, PWA lifecycle).
+- Phase 4 mobile supporting flows in code: Settings essentials, symptom
+  management, App & Offline status, global PWA/update state, offline recovery
+  messaging, and mobile touch refinements for onboarding/profile inputs.
+- Review findings from recent mobile PRs addressed: UTC-based Entry editability,
+  hydration-safe Entry compact mode, touch-enabled mobile Insights Playwright
+  contexts, scoped Insight lead assertions, tolerant ranking float checks, no
+  duplicate maturity badge in the lead card, valid Code Connect metadata order,
+  a valid `ScaleSlider` snippet, and a real `MetricCard` implementation behind
+  the Figma mapping.
 - Shared contracts remain intact: no second mobile frontend, no alternate
   analytics path, no background health-data queue, and no route/API split for
   mobile.
+- Phase 3 Figma: `MobileInsightLead` component and Sprint 3 screen states
+  (Default, Empty, Loading, Matrix) — node `98:1573`.
+- Phase 3 QA closeout: [`docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md`](../quality/MOBILE_INSIGHTS_PHASE3_QA.md).
+- Phase 4 Figma: Supporting flows Sprint 4 board — node `105:1626` (22 screens,
+  1680 px layout board).
 
-**Still open after this commit**
+**Still open**
 
-- Build the production-aligned Phase 3 and Phase 4 Figma frames once connector
-  writes are available: Insight card/feed/maturity states, Settings essentials,
-  Symptom management, App & Offline, verification recovery, install/update, and
-  onboarding touch-state screens.
-- Run final rendered Browser QA across 390, 430, and 1280 px after the Figma
-  and browser connector path is available again.
+- Cross-phase mobile QA sign-off (Sprint C) and GitHub issue closure (Sprint D).
 - Define backend/product contracts for password recovery, reminders, account
   deletion, and future health-data import consent/revocation.
-- Start Phase 5 desktop consolidation after the mobile parity backlog above is
-  visible in Figma and the supporting-flow PR is merged.
 
 **Next recommended sprint**
 
-Phase 5 should be a desktop consolidation sprint focused on route-level desktop
-composition for Home, Trends, Insights, and Settings. It should keep all shared
-mobile contracts unchanged and only improve wide-screen density, comparison
-surfaces, and management ergonomics.
+Follow [`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md):
+Sprint C (cross-phase QA) → Sprint D (docs/GitHub). Phase 5 desktop consolidation
+starts after mobile parity is signed off in QA.
 
 ## Success criteria
 
@@ -142,9 +140,14 @@ remaining patterns keep the existing filters, and matrix/co-occurrence surfaces
 remain behind explicit detail controls. Desktop keeps the existing analysis
 composition and API contract.
 
-**Pending closeout:** Create the production-aligned `InsightCard`, confidence,
-maturity, disclaimer, loading, empty, and error components in Figma; compose the
-summary/detail/empty flow; then run rendered Browser QA at 390, 430, and 1280 px.
+**Figma (complete 2026-06-26):**
+
+- Component: `MobileInsightLead` — https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1541
+- Flow: `Mobile Insights / Sprint 3 Flow` — https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1573
+
+**QA (complete 2026-06-26):** Rendered sign-off at 390, 430, and 1280 px documented in
+[`docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md`](../quality/MOBILE_INSIGHTS_PHASE3_QA.md).
+Playwright: `mobile-insights-foundation.spec.ts`, `m7-insights-mobile.spec.ts`.
 
 ## Phase 4: Supporting mobile flows
 
@@ -171,10 +174,12 @@ before a route can be implemented. Reminders and account deletion remain
 explicit product/backend backlog. Health-data import and Capacitor work remain
 gated on a dedicated consent and revocation flow.
 
-**Pending closeout:** Add the Settings essentials, Symptom management, App &
-Offline, verification recovery, install/update, and onboarding touch-state
-screens to Figma. Then run rendered Browser QA at 390, 430, and 1280 px and the
-new `mobile-supporting-flows.spec.ts` suite.
+**Figma (complete 2026-06-26):**
+
+- Flow: [`Mobile Supporting Flows / Sprint 4 Flow`](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=105-1626) — Settings, symptom management, App & Offline, auth recovery, onboarding, PWA overlays.
+
+**Pending closeout:** Cross-phase rendered QA at 390 / 430 / 1280 px and
+`mobile-supporting-flows.spec.ts` sign-off (Sprint C).
 
 ## Phase 5: Desktop consolidation
 
@@ -186,6 +191,9 @@ new `mobile-supporting-flows.spec.ts` suite.
 
 **Exit:** Desktop uses available space efficiently without changing route or
 domain semantics.
+
+**Out of scope** for the mobile closeout plan. Resume after Phases 0–4 mobile
+parity is signed off in QA.
 
 ## Verification and rollout
 

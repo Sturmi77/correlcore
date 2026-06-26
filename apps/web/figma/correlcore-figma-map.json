@@ -8,7 +8,9 @@
     "correlcore-mobile-web-split-2026-06-22-v1",
     "correlcore-mobile-web-audit-2026-06-22-v1",
     "correlcore-mobile-entry-sprint1-2026-06-23-v1",
-    "correlcore-mobile-trends-sprint2-2026-06-23-v1"
+    "correlcore-mobile-trends-sprint2-2026-06-23-v1",
+    "correlcore-mobile-insights-sprint3-2026-06-26-v1",
+    "correlcore-mobile-supporting-sprint4-2026-06-26-v1"
   ],
   "componentSets": [
     {
@@ -107,6 +109,13 @@
       "nodeId": "20:268",
       "source": "apps/web/src/lib/components/trends/ComparisonHeatmap.svelte",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=20-268",
+      "status": "created"
+    },
+    {
+      "name": "MobileInsightLead",
+      "nodeId": "98:1541",
+      "source": "apps/web/src/lib/components/insights/MobileInsightLead.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1541",
       "status": "created"
     }
   ],
@@ -254,6 +263,63 @@
           "name": "Mobile Trends / Empty",
           "nodeId": "59:1299"
         }
+      ]
+    },
+    {
+      "name": "Mobile Insights / Sprint 3 Flow",
+      "nodeId": "98:1573",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1573",
+      "status": "implemented-and-verified",
+      "runId": "correlcore-mobile-insights-sprint3-2026-06-26-v1",
+      "children": [
+        { "name": "Mobile / Insights / Sprint 3 / Default", "nodeId": "98:1579" },
+        { "name": "Mobile / Insights / Sprint 3 / Empty", "nodeId": "99:1505" },
+        { "name": "Mobile / Insights / Sprint 3 / Loading", "nodeId": "99:1554" },
+        { "name": "Mobile / Insights / Sprint 3 / Matrix", "nodeId": "99:1607" }
+      ]
+    },
+    {
+      "name": "Mobile Supporting Flows / Sprint 4 Flow",
+      "nodeId": "105:1626",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=105-1626",
+      "status": "figma-parity-complete",
+      "runId": "correlcore-mobile-supporting-sprint4-2026-06-26-v1",
+      "layoutBoardWidthPx": 1680,
+      "screenSizePx": "390x844",
+      "rowGroups": [
+        { "name": "B1 Settings", "nodeId": "105:1631" },
+        { "name": "B2 Symptoms", "nodeId": "105:1676" },
+        { "name": "B2 Symptoms (cont.)", "nodeId": "111:2120" },
+        { "name": "B3 App & Offline", "nodeId": "105:1852" },
+        { "name": "B4 Auth recovery", "nodeId": "105:1975" },
+        { "name": "B4 Auth recovery (cont.)", "nodeId": "111:2123" },
+        { "name": "B4 Resend verification", "nodeId": "105:2116" },
+        { "name": "B5 Onboarding", "nodeId": "105:2137" },
+        { "name": "B6 Overlays", "nodeId": "105:2187" }
+      ],
+      "children": [
+        { "name": "Mobile / Settings / Sprint 4 / Default", "nodeId": "105:1634" },
+        { "name": "Mobile / Symptoms / Sprint 4 / Default", "nodeId": "105:1679" },
+        { "name": "Mobile / Symptoms / Sprint 4 / Delete confirm", "nodeId": "105:1718" },
+        { "name": "Mobile / Symptoms / Sprint 4 / Empty", "nodeId": "105:1755" },
+        { "name": "Mobile / Symptoms / Sprint 4 / Loading", "nodeId": "105:1787" },
+        { "name": "Mobile / Symptoms / Sprint 4 / Error", "nodeId": "105:1819" },
+        { "name": "Mobile / App & Offline / Sprint 4 / Online", "nodeId": "105:1855" },
+        { "name": "Mobile / App & Offline / Sprint 4 / Offline", "nodeId": "105:1899" },
+        { "name": "Mobile / App & Offline / Sprint 4 / Install unavailable", "nodeId": "105:1939" },
+        { "name": "Mobile / Auth / Sprint 4 / Verify idle", "nodeId": "105:1978" },
+        { "name": "Mobile / Auth / Sprint 4 / Verify busy", "nodeId": "105:2006" },
+        { "name": "Mobile / Auth / Sprint 4 / Verify success", "nodeId": "105:2032" },
+        { "name": "Mobile / Auth / Sprint 4 / Verify error", "nodeId": "105:2060" },
+        { "name": "Mobile / Auth / Sprint 4 / Missing token", "nodeId": "105:2088" },
+        { "name": "Mobile / Auth / Sprint 4 / Resend success", "nodeId": "105:2119" },
+        { "name": "Mobile / Auth / Sprint 4 / Resend error", "nodeId": "105:2127" },
+        { "name": "Mobile / Onboarding / Sprint 4 / Guided tags", "nodeId": "105:2176" },
+        { "name": "Mobile / Onboarding / Sprint 4 / Retrospective", "nodeId": "105:2140" },
+        { "name": "Mobile / Onboarding / Sprint 4 / Profile", "nodeId": "105:2152" },
+        { "name": "Mobile / Onboarding / Sprint 4 / Submission error", "nodeId": "105:2164" },
+        { "name": "Mobile / Overlays / Sprint 4 / Offline banner", "nodeId": "105:2190" },
+        { "name": "Mobile / Overlays / Sprint 4 / Update banner", "nodeId": "105:2228" }
       ]
     }
   ]

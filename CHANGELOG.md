@@ -17,6 +17,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Mobile Insights Phase 3 closeout.** Mobile `/insights` ranks insights via
+  `insightRanking`, surfaces the strongest signal in `MobileInsightLead` with
+  semantic confidence and maturity context, and keeps matrices/co-occurrence
+  behind explicit detail controls. Figma Sprint 3 flow (`98:1573`), Playwright
+  coverage (`mobile-insights-foundation`, `m7-insights-mobile`), and QA sign-off:
+  [`docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md`](docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md).
+
+- **Mobile supporting flows Figma Sprint 4.** Production-aligned frames for
+  Settings, symptom management, App & Offline, auth recovery, onboarding touch
+  states, and PWA recovery overlays — flow board `105:1626` (22 screens at
+  390×844, 1680 px layout board). See [`apps/web/figma/README.md`](apps/web/figma/README.md).
+
 - **M7 Sprint 1 opened: Lasso & Lag backend slice.** Added M7 sprint
   plan/status docs, the additive `symptom_cluster` insight type, a multivariate
   design matrix with metric/tag/symptom features, deterministic
