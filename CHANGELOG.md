@@ -29,6 +29,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   states, and PWA recovery overlays — flow board `105:1626` (22 screens at
   390×844, 1680 px layout board). See [`apps/web/figma/README.md`](apps/web/figma/README.md).
 
+- **Mobile web Sprint C closeout.** Cross-phase QA at 390/430/1280 px across
+  Entry, Trends, Insights, Settings/PWA; 17/17 Playwright mobile specs green.
+  Sign-off: [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](docs/quality/MOBILE_WEB_CLOSEOUT_QA.md).
+  Added `npm run test:e2e:mobile` and serial Playwright workers for stable runs.
+
 - **M7 Sprint 1 opened: Lasso & Lag backend slice.** Added M7 sprint
   plan/status docs, the additive `symptom_cluster` insight type, a multivariate
   design matrix with metric/tag/symptom features, deterministic

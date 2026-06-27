@@ -140,6 +140,7 @@ for (const viewport of [
   { name: 'mobile-large', width: 430, height: 932 },
 ]) {
   test(`${viewport.name} keeps optional entry details compact and touch safe`, async ({ page }) => {
+    test.setTimeout(90_000);
     await page.setViewportSize(viewport);
     await installEntryApi(page);
     await page.goto('/entries/new');

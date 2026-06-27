@@ -1,8 +1,8 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Phases 0–4 are complete (code and Figma). Cross-phase QA (Sprint C)
-and GitHub closeout (Sprint D) remain pending. **Phase 5 (desktop) is out of
-scope** for the current mobile closeout — see
+**Status:** Phases 0–4 are complete (code, Figma, and cross-phase QA). GitHub
+closeout (Sprint D) remains pending. **Phase 5 (desktop) is out of scope** for
+the current mobile closeout — see
 [`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md).
 
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
@@ -30,18 +30,19 @@ scope** for the current mobile closeout — see
 - Phase 3 QA closeout: [`docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md`](../quality/MOBILE_INSIGHTS_PHASE3_QA.md).
 - Phase 4 Figma: Supporting flows Sprint 4 board — node `105:1626` (22 screens,
   1680 px layout board).
+- Cross-phase mobile QA: [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md).
 
 **Still open**
 
-- Cross-phase mobile QA sign-off (Sprint C) and GitHub issue closure (Sprint D).
+- GitHub issue closure (Sprint D) and audit doc refresh.
 - Define backend/product contracts for password recovery, reminders, account
   deletion, and future health-data import consent/revocation.
 
 **Next recommended sprint**
 
 Follow [`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md):
-Sprint C (cross-phase QA) → Sprint D (docs/GitHub). Phase 5 desktop consolidation
-starts after mobile parity is signed off in QA.
+Sprint D (docs/GitHub). Phase 5 desktop consolidation starts after mobile parity
+is signed off in QA.
 
 ## Success criteria
 
@@ -178,8 +179,9 @@ gated on a dedicated consent and revocation flow.
 
 - Flow: [`Mobile Supporting Flows / Sprint 4 Flow`](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=105-1626) — Settings, symptom management, App & Offline, auth recovery, onboarding, PWA overlays.
 
-**Pending closeout:** Cross-phase rendered QA at 390 / 430 / 1280 px and
-`mobile-supporting-flows.spec.ts` sign-off (Sprint C).
+**QA (complete 2026-06-27):** Cross-phase sign-off in
+[`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md).
+Playwright: `mobile-supporting-flows.spec.ts` (17/17 mobile E2E suite @ `d77b556`).
 
 ## Phase 5: Desktop consolidation
 

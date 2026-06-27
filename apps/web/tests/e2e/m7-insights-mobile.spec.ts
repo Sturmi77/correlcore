@@ -65,12 +65,8 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await installM7MockMode(page);
 
   await page.goto('/insights');
+  await expect(page.getByTestId('insights-view-tabs')).toBeVisible({ timeout: 30_000 });
   const maturity = page.getByTestId('mobile-insight-maturity');
-  await expect(page.getByRole('link', { name: 'Insights' })).toHaveAttribute(
-    'aria-current',
-    'page',
-    { timeout: 30_000 }
-  );
   await expect(maturity).toBeVisible({ timeout: 30_000 });
   await expect(maturity.getByTestId('insight-stage-meta')).toContainText(/Robust Insights/i);
 

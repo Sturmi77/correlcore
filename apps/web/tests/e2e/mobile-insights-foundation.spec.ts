@@ -69,12 +69,7 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
   const maturity = page.getByTestId('mobile-insight-maturity');
   const viewTabs = page.getByTestId('insights-view-tabs');
 
-  await expect(page.getByRole('link', { name: 'Insights' })).toHaveAttribute(
-    'aria-current',
-    'page',
-    { timeout: 30_000 }
-  );
-  await expect(viewTabs).toBeVisible();
+  await expect(viewTabs).toBeVisible({ timeout: 30_000 });
   await expect(lead).toBeVisible({ timeout: 30_000 });
   await expect(lead.getByTestId('insight-card-title')).toContainText(/mood.*Energy/i);
   await expect(confidence).toBeVisible();

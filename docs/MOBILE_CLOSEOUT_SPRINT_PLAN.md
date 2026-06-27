@@ -21,10 +21,9 @@ Canonical references:
 | ----------- | ---------- | ---------------- | ------------------ | ------- |
 | **Code**    | ✅         | ✅               | ✅                 | ✅      |
 | **Figma**   | ✅         | ✅ (2026-06-26)  | ✅ (2026-06-26)    | ✅      |
-| **Docs/QA** | ✅         | ✅               | 🟡                 | 🟡      |
+| **Docs/QA** | ✅         | ✅               | ✅                 | ✅      |
 
-**Next critical path:** Cross-phase mobile QA (Sprint C) → GitHub issue closure
-(Sprint D).
+**Next critical path:** Documentation & GitHub closure (Sprint D).
 
 ---
 
@@ -36,7 +35,7 @@ Canonical references:
 | 1     | Mobile Entry          | ✅   | ✅    | ✅        | Sprint 1 flow `48:1089`                                                          |
 | 2     | Mobile Trends         | ✅   | ✅    | ✅        | Sprint 2 flow `59:1285`                                                          |
 | 3     | Mobile Insights       | ✅   | ✅    | ✅        | [`MOBILE_INSIGHTS_PHASE3_SPRINT_PLAN.md`](MOBILE_INSIGHTS_PHASE3_SPRINT_PLAN.md) |
-| 4     | Supporting flows      | ✅   | ✅    | ⏳        | This document, Sprint 4 below                                                    |
+| 4     | Supporting flows      | ✅   | ✅    | ✅        | This document, Sprint 4 below                                                    |
 | 5     | Desktop consolidation | —    | —     | —         | **Out of scope**                                                                 |
 
 ---
@@ -92,7 +91,9 @@ Node index: [`apps/web/figma/README.md`](../apps/web/figma/README.md)
 
 ---
 
-## Sprint C — Cross-phase mobile QA sign-off (current)
+## Sprint C — Cross-phase mobile QA sign-off ✅
+
+**Completed 2026-06-27.** QA doc: [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](quality/MOBILE_WEB_CLOSEOUT_QA.md).
 
 **Depends on:** Sprint A + Sprint B
 
@@ -121,11 +122,11 @@ not full desktop consolidation.
 check, touch target spot-check (44 px nav), and known deferrals.
 
 **Definition of done:** All primary mobile flows signed; open defects tracked as
-GitHub issues with `mobile` label.
+GitHub issues with `mobile` label. ✅
 
 ---
 
-## Sprint D — Documentation & GitHub closure
+## Sprint D — Documentation & GitHub closure (current)
 
 **Depends on:** Sprint C
 
