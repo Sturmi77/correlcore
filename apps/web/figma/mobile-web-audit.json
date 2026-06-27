@@ -1,6 +1,26 @@
 {
   "version": 1,
-  "runId": "correlcore-mobile-web-audit-2026-06-27-closeout-v1",
+  "runId": "correlcore-production-grade-sprint-i-2026-06-27-v1",
+  "productionGrade": {
+    "status": "signed-off-partial-h",
+    "qaDoc": "docs/quality/FIGMA_PRODUCTION_GRADE_QA.md",
+    "sprintsComplete": ["E", "F", "G", "I"],
+    "sprintDeferred": {
+      "id": "H",
+      "reason": "Code Connect publish requires Figma Org/Enterprise Dev or Full seat",
+      "owner": "Design / Figma org admin"
+    },
+    "codeConnect": {
+      "localTemplates": 20,
+      "componentSets": 21,
+      "livePublish": "deferred"
+    },
+    "themeParity": {
+      "figmaDarkReferenceBoard": "120:2096",
+      "sprintDarkPreviewRows": true,
+      "browserDarkE2e": "tests/e2e/mobile-theme-parity.spec.ts"
+    }
+  },
   "figmaFileKey": "XjijHnzMJubA1iuPQxHOwS",
   "orientation": {
     "primary": "mobile-daily-use",
@@ -17,21 +37,19 @@
     {
       "screen": "Home / Today",
       "routes": ["/"],
-      "figmaNodes": ["21:3", "28:331", "28:698"],
+      "figmaNodes": ["121:2292", "121:2296", "21:3", "28:331", "28:698"],
       "primaryComponents": [
         "HomeSummary",
         "HomeDailyBrief",
         "HomeTodayContext",
-        "HomeInsight",
-        "HomeRecentEntries",
-        "WeekdayPatternChart",
+        "HomeSparkline",
         "AppNav",
         "ScreenHeader"
       ],
-      "mobileStatus": "yellow",
+      "mobileStatus": "green",
       "webStatus": "green",
-      "problemType": "Partial Figma coverage and density split",
-      "recommendation": "Keep mobile as quick daily summary; make web a broader dashboard with recent movement and follow-up panels."
+      "problemType": "Sprint 5 mobile Home flow aligned with ADR-0017 three-zone contract",
+      "recommendation": "Use Sprint 5 flow `121:2292`; legacy `21:3` is reference-only."
     },
     {
       "screen": "Entry",
@@ -85,12 +103,19 @@
     {
       "screen": "Settings",
       "routes": ["/settings", "/settings/tags", "/settings/symptoms", "/settings/app"],
-      "figmaNodes": ["105:1626", "105:1634"],
-      "primaryComponents": ["ScreenHeader", "Panel", "Button", "InlineAlert", "ThemeToggle"],
+      "figmaNodes": ["105:1626", "105:1634", "121:2662", "121:2703", "121:2741"],
+      "primaryComponents": [
+        "ScreenHeader",
+        "Panel",
+        "Button",
+        "InlineAlert",
+        "ThemeToggle",
+        "FormField"
+      ],
       "mobileStatus": "green",
       "webStatus": "green",
-      "problemType": "Sprint 4 supporting-flow Figma + code parity",
-      "recommendation": "Signed off in Sprint 4; desktop keeps dense management rows."
+      "problemType": "Sprint 4 + F tag management frames",
+      "recommendation": "Use B1b tag frames; desktop keeps dense management rows."
     },
     {
       "screen": "Onboarding/Auth",
@@ -104,12 +129,20 @@
         "/auth/verify-email",
         "/auth/resend-verification"
       ],
-      "figmaNodes": ["105:1626", "105:1978", "105:2140"],
-      "primaryComponents": ["Button", "Panel", "InlineAlert", "PasswordStrength"],
+      "figmaNodes": [
+        "105:1626",
+        "105:1978",
+        "105:2140",
+        "121:2585",
+        "121:2600",
+        "121:2619",
+        "121:2638"
+      ],
+      "primaryComponents": ["Button", "Panel", "InlineAlert", "PasswordStrength", "FormField"],
       "mobileStatus": "green",
       "webStatus": "yellow",
-      "problemType": "Sprint 4 Figma touch states; conversion polish is Phase 5",
-      "recommendation": "Verification and onboarding frames exist; password reset blocked on backend contract."
+      "problemType": "Sprint 4 + F auth entry frames; web conversion polish is Phase 5",
+      "recommendation": "Login/register in B4b; verification in B4; password reset blocked on backend."
     },
     {
       "screen": "Offline/PWA",
@@ -175,17 +208,17 @@
       "component": "TagPicker",
       "source": "apps/web/src/lib/components/entries/TagPicker.svelte",
       "classification": "Mobile-specialized",
-      "mobileRisk": "high",
+      "mobileRisk": "medium",
       "webRisk": "medium",
-      "recommendation": "Promote TagChip/FormField variants into fuller Figma coverage and limit overflow states."
+      "recommendation": "TagChip/FormField component sets + Sprint G variant board `131:3864`; limit and create-custom states documented."
     },
     {
       "component": "SymptomChecker",
       "source": "apps/web/src/lib/components/entries/SymptomChecker.svelte",
       "classification": "Mobile-specialized",
-      "mobileRisk": "high",
+      "mobileRisk": "medium",
       "webRisk": "medium",
-      "recommendation": "Create Figma coverage; likely needs grouped disclosure on mobile."
+      "recommendation": "SymptomChecker component set `131:3914` + intensity grid on variant board `131:3864`."
     },
     {
       "component": "EntryForm",
@@ -263,9 +296,9 @@
       "component": "InsightCard",
       "source": "apps/web/src/lib/components/insights/InsightCard.svelte",
       "classification": "Shared",
-      "mobileRisk": "medium",
+      "mobileRisk": "low",
       "webRisk": "medium",
-      "recommendation": "Create Figma coverage; card content hierarchy drives both surfaces."
+      "recommendation": "Component set `79:55` + Code Connect template; Ready/Loading/Empty/Error variants."
     },
     {
       "component": "InsightMatrix",
@@ -278,10 +311,10 @@
     {
       "component": "Settings screens",
       "source": "apps/web/src/routes/settings",
-      "classification": "Web-primary",
-      "mobileRisk": "medium",
+      "classification": "Shared",
+      "mobileRisk": "low",
       "webRisk": "low",
-      "recommendation": "Add Figma backlog screens for settings and tag management."
+      "recommendation": "Tag management frames in Sprint F B1b; settings hub in Sprint 4 B1."
     }
   ],
   "acceptance": {
@@ -289,10 +322,13 @@
     "existingFigmaScreensRated": true,
     "coreComponentsClassified": true,
     "primarySurfaceDecisionsResolved": true,
+    "productionDeployReady": true,
+    "statusDoc": "docs/frontend/FRONTEND_STATUS.md",
     "nextImplementationPath": [
-      "Build missing Figma variants",
-      "Plan responsive code shell",
-      "Run browser responsive QA"
+      "Sprint H: Code Connect publish when Figma Dev/Full seat + FIGMA_ACCESS_TOKEN available",
+      "Phase 5: Entry and Auth web desktop density polish",
+      "Optional: full auth/onboarding Playwright state matrix",
+      "Optional: add mobile E2E to scheduled CI"
     ]
   }
 }

@@ -4,6 +4,8 @@
 (desktop consolidation) is the next track. See
 [`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md).
 
+**Full frontend audit (2026-06-27):** [`FRONTEND_STATUS.md`](FRONTEND_STATUS.md).
+
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
 
 ## Current GitHub sprint ledger
@@ -34,15 +36,18 @@
 
 **Still open**
 
+- **Code Connect publish (Sprint H)** — Figma Dev/Full seat + library publish. Local
+  templates complete (Sprint G). Track: [`FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md`](../FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md).
 - Phase 5 desktop consolidation (wide-screen density, split views).
 - Define backend/product contracts for password recovery, reminders, account
   deletion, and future health-data import consent/revocation.
-- Published-library Code Connect activation (Figma seat/plan gate).
+
+**Production-grade design system (Sprints E–G, I):** signed off — see
+[`docs/quality/FIGMA_PRODUCTION_GRADE_QA.md`](../quality/FIGMA_PRODUCTION_GRADE_QA.md).
 
 **Next recommended sprint**
 
-Phase 5 desktop consolidation — keep shared mobile contracts unchanged; improve
-wide-screen composition for Home, Trends, Insights, and Settings.
+Sprint **H** when Figma seat is available; otherwise Phase 5 desktop consolidation.
 
 ## Success criteria
 

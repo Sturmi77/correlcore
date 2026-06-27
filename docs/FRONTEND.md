@@ -15,6 +15,10 @@ Derived from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md). Last updated: 2026-05-3
 - **Existing shell breakpoint:** bottom navigation changes to the desktop rail at the global `768px` breakpoint.
 - **No compressed desktop dashboards on mobile:** Trends and Insights expose summaries plus focused details instead of full desktop parity.
 
+**Current status snapshot (2026-06-27):**
+[`frontend/FRONTEND_STATUS.md`](frontend/FRONTEND_STATUS.md) — deploy readiness,
+route matrix, quality gates, and deferrals.
+
 The complete audit and delivery sequence are maintained in
 [`frontend/MOBILE_WEB_AUDIT.md`](frontend/MOBILE_WEB_AUDIT.md) and
 [`frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md`](frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md).
