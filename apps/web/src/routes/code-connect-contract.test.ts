@@ -30,4 +30,17 @@ describe('Code Connect template contract', () => {
     expect(source).toContain('import MetricCard from "$lib/components/home/MetricCard.svelte";');
     expect(readFileSync(component, 'utf8')).toContain('export let metric');
   });
+
+  it('maps MobileInsightLead to an importable implementation', () => {
+    const source = readFileSync(resolve(templateDir, 'MobileInsightLead.figma.ts'), 'utf8');
+    const component = resolve('src/lib/components/insights/MobileInsightLead.svelte');
+
+    expect(source).toContain(
+      '// source=apps/web/src/lib/components/insights/MobileInsightLead.svelte'
+    );
+    expect(source).toContain(
+      'import MobileInsightLead from "$lib/components/insights/MobileInsightLead.svelte";'
+    );
+    expect(readFileSync(component, 'utf8')).toContain('export let insight');
+  });
 });

@@ -28,6 +28,7 @@ library and a Dev or Full seat on an Organization or Enterprise plan.
 - InsightQualityMeter: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-83
 - InsightStageHeader: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-111
 - MobileInsightLead: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1541
+  (Code Connect: [`components/MobileInsightLead.figma.ts`](./components/MobileInsightLead.figma.ts))
 
 ## Componentized screens
 

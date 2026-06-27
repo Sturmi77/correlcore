@@ -23,7 +23,7 @@ Canonical references:
 | **Figma**   | ✅         | ✅ (2026-06-26)  | ✅ (2026-06-26)    | ✅      |
 | **Docs/QA** | ✅         | ✅               | ✅                 | ✅      |
 
-**Next critical path:** Documentation & GitHub closure (Sprint D).
+**Mobile closeout (Phases 0–4) is complete.** Next track: Phase 5 desktop consolidation.
 
 ---
 
@@ -126,16 +126,18 @@ GitHub issues with `mobile` label. ✅
 
 ---
 
-## Sprint D — Documentation & GitHub closure (current)
+## Sprint D — Documentation & GitHub closure ✅
+
+**Completed 2026-06-27.**
 
 **Depends on:** Sprint C
 
-| #   | Task                                                                                                          | Exit                                     |
-| --- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| D1  | Set `MOBILE_WEB_IMPLEMENTATION_PLAN.md` header status to **mobile closeout complete** (Phases 0–4)            | Doc on `main`                            |
-| D2  | Refresh `MOBILE_WEB_AUDIT.md` status matrix (Insights yellow→green, Settings/Auth/Offline where Figma exists) | Audit current                            |
-| D3  | Close or rescope open mobile GitHub issues (#200, partial #214 mobile items)                                  | Issues updated                           |
-| D4  | Optional: `MobileInsightLead.figma.ts` Code Connect template                                                  | Template in `apps/web/figma/components/` |
+| #   | Task                                                                                                          | Exit                               |
+| --- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| D1  | Set `MOBILE_WEB_IMPLEMENTATION_PLAN.md` header status to **mobile closeout complete** (Phases 0–4)            | ✅ Doc on `main`                   |
+| D2  | Refresh `MOBILE_WEB_AUDIT.md` status matrix (Insights yellow→green, Settings/Auth/Offline where Figma exists) | ✅ Audit + `mobile-web-audit.json` |
+| D3  | Close or rescope open mobile GitHub issues (#200, partial #214 mobile items)                                  | ✅ #200 closed; #214 closed        |
+| D4  | `MobileInsightLead.figma.ts` Code Connect template                                                            | ✅ `apps/web/figma/components/`    |
 
 ---
 

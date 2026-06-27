@@ -1,8 +1,7 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Phases 0–4 are complete (code, Figma, and cross-phase QA). GitHub
-closeout (Sprint D) remains pending. **Phase 5 (desktop) is out of scope** for
-the current mobile closeout — see
+**Status:** **Mobile closeout complete** — Phases 0–4 (code, Figma, QA). Phase 5
+(desktop consolidation) is the next track. See
 [`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md).
 
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
@@ -31,18 +30,19 @@ the current mobile closeout — see
 - Phase 4 Figma: Supporting flows Sprint 4 board — node `105:1626` (22 screens,
   1680 px layout board).
 - Cross-phase mobile QA: [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md).
+- Sprint D: audit refresh, `MobileInsightLead.figma.ts`, GitHub #200 / #214 closure.
 
 **Still open**
 
-- GitHub issue closure (Sprint D) and audit doc refresh.
+- Phase 5 desktop consolidation (wide-screen density, split views).
 - Define backend/product contracts for password recovery, reminders, account
   deletion, and future health-data import consent/revocation.
+- Published-library Code Connect activation (Figma seat/plan gate).
 
 **Next recommended sprint**
 
-Follow [`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md):
-Sprint D (docs/GitHub). Phase 5 desktop consolidation starts after mobile parity
-is signed off in QA.
+Phase 5 desktop consolidation — keep shared mobile contracts unchanged; improve
+wide-screen composition for Home, Trends, Insights, and Settings.
 
 ## Success criteria
 

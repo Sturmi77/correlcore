@@ -1,106 +1,80 @@
 # Mobile/Web Frontend Audit
 
-**Date:** 2026-06-22
-**Direction:** Mobile daily use first; web analysis first
+**Date:** 2026-06-27 (closeout refresh; original 2026-06-22)  
+**Direction:** Mobile daily use first; web analysis first  
 **Figma:** [Audit overview](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=31-1089)
 
-## Executive findings
+**Mobile closeout status:** Phases 0–4 are **complete** (code, Figma Sprint 1–4, cross-phase QA).
+Sign-off: [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md).
+Phase 5 desktop consolidation remains a separate track.
 
-1. **Mobile Trends is red.** The current chart, heatmap, cursor, and comparison
-   interactions cannot be reduced to 390 px without losing comprehension.
-   Mobile needs ranked summaries and focused drill-down sheets rather than full
-   desktop chart parity.
-2. **Insights has the largest design/code gap.** `InsightFeed`, `InsightCard`,
-   `InsightMatrix`, quality/confidence surfaces, and co-occurrence views are
-   implemented in code but incompletely represented in Figma.
-3. **Entry is the highest-frequency mobile risk.** `EntryForm`, `TagPicker`,
-   `SymptomChecker`, save state, validation, and offline behaviour must work
-   together without making daily capture dense or fragile.
-4. **The shell split is valid and already partially implemented.** The global
-   CSS switches bottom navigation to a desktop rail at 768 px, but route-level
-   desktop composition remains inconsistent.
-5. **Settings, auth/onboarding, and offline/PWA lack current Figma coverage.**
-   These omissions hide important error, verification, install, and recovery
-   states.
-6. **A separate mobile codebase is not justified.** ADR-0002 and the current
-   SvelteKit/Capacitor strategy favour shared domain logic and route semantics.
+## Executive findings (post-closeout)
 
-## Phase 4 resolution
+1. **Mobile Trends is resolved for daily use.** Sprint 2 delivers ranked summaries and
+   explicit detail drill-down; desktop keeps the full comparison canvas (ADR-0035 adds
+   shared daily axis, cursor, and strip mode on wide screens).
+2. **Mobile Insights hierarchy is aligned.** Sprint 3 Figma (`98:1573`) and
+   `MobileInsightLead` match the code contract; matrices and co-occurrence stay behind
+   explicit detail actions.
+3. **Entry mobile capture is production-ready.** Sprint 1 Figma and Playwright cover
+   compact optional details, offline retry, touch targets, and read-only history.
+4. **The 768 px shell split is stable.** Bottom nav below 768 px, side rail at and
+   above; route-level desktop composition is the Phase 5 follow-up, not a mobile blocker.
+5. **Supporting flows have Figma parity.** Sprint 4 (`105:1626`) covers Settings,
+   symptoms, App & Offline, auth recovery, onboarding touch states, and PWA overlays.
+6. **A separate mobile codebase is not justified.** Shared routes, stores, and analytics
+   contracts hold through Phase 4.
 
-- Settings essentials now expose tag management, symptom management, and one
-  App & Offline status surface on mobile and desktop.
-- Symptom management shares the existing API/store contract. Mobile stacks the
-  editable fields and actions; desktop retains a dense row layout.
-- Connection loss and waiting app updates are global shell states. The offline
-  route reports whether connectivity has returned and offers an explicit retry.
-- Installation, current connection state, update check, and update activation
-  are grouped under `/settings/app` instead of competing with the daily Home
-  flow.
-- Retrospective and profile onboarding controls meet the 44 px mobile target.
-- Verification and resend flows already cover missing, expired, used, busy,
-  success, and generic error states. Password reset is still blocked by a
-  missing backend contract.
-- No background health-data queue was introduced. Entry remains the owner of
-  unsaved data and its explicit retry action.
+## Remaining gaps (out of mobile closeout scope)
 
-## Current implementation status
-
-The mobile-first remediation work is now implemented through Phase 4 in code.
-Entry, Trends, Insights hierarchy, Settings essentials, offline/PWA state, and
-onboarding touch targets all have explicit mobile roles while preserving shared
-routes, stores, validation, and analytics contracts.
-
-The remaining gap is no longer a mobile/code architecture gap. It is a parity
-and planning gap: Figma needs the production-aligned Insight and supporting-flow
-frames, and desktop needs a deliberate Phase 5 consolidation pass for wide
-layouts after the mobile PR lands.
+- **Home / Today:** partial Figma vs rendered home composition (Phase 5 / M5).
+- **Entry desktop workspace:** wider layout polish, not mobile capture.
+- **Code Connect library publish:** templates exist locally; activation needs Figma plan gate.
+- **Backend product gaps:** password recovery, reminders, account deletion.
 
 ## Screen matrix
 
-| Screen            | Mobile | Web    | Primary problem                                     | Decision                                                                                      |
-| ----------------- | ------ | ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Home / Today      | Yellow | Green  | Figma covers only part of the real home composition | Keep mobile as Daily Brief; expand desktop context without turning Home into a control centre |
-| Entry             | Yellow | Yellow | Form density and incomplete state coverage          | Mobile capture flow first; desktop workspace second, shared model and validation              |
-| Trends            | Red    | Green  | Dense chart interaction                             | Desktop is primary; mobile gets summaries and drill-down sheets                               |
-| Insights          | Red    | Yellow | Real insight components missing from Figma          | Define feed/card/quality variants before implementation alignment                             |
-| Settings          | Yellow | Green  | Figma parity pending                                | Shared controls; stacked mobile management and dense desktop rows                             |
-| Auth / Onboarding | Yellow | Yellow | Missing conversion and verification states          | Add responsive form, error, success, and verification specs                                   |
-| Offline / PWA     | Yellow | Yellow | Figma parity pending                                | Shared lifecycle state; explicit install, update, reconnect, and Entry-owned retry            |
+| Screen            | Mobile | Web    | Figma Sprint | Primary note                                    |
+| ----------------- | ------ | ------ | ------------ | ----------------------------------------------- |
+| Home / Today      | Yellow | Green  | partial      | Daily Brief OK; desktop context expansion later |
+| Entry             | Green  | Yellow | 1 `48:1089`  | Mobile capture complete; desktop workspace TBD  |
+| Trends            | Green  | Green  | 2 `59:1285`  | Mobile summary + detail; desktop full canvas    |
+| Insights          | Green  | Green  | 3 `98:1573`  | Mobile lead + tabs; desktop analysis-first      |
+| Settings          | Green  | Green  | 4 `105:1626` | Stacked mobile management; dense desktop rows   |
+| Auth / Onboarding | Green  | Yellow | 4 B4–B5      | Touch states + verification frames in Figma     |
+| Offline / PWA     | Green  | Green  | 4 B3/B6      | Lifecycle in code + Figma; Entry-owned retry    |
+
+Legend: **Green** = mobile closeout signed off. **Yellow** = functional but not the
+focus of Phases 0–4 or needs Phase 5 density work.
 
 ## Component findings
 
-### Mobile-critical
+### Mobile-critical (closeout complete)
 
-- `EntryForm`: split composition while preserving one data contract.
-- `TagPicker`: define overflow, category, create-tag, limit, and error states.
-- `SymptomChecker`: add Figma coverage and mobile progressive disclosure.
-- `ScaleSlider`: verify 44 px controls, value feedback, keyboard support, and
-  long translated labels.
+- `EntryForm`, `TagPicker`, `SymptomChecker`, `ScaleSlider`: Sprint 1 coverage + E2E.
+- `MobileInsightLead`, `InsightFeed`, `InsightCard`, `InsightMatrix`: Sprint 3 code +
+  Figma; matrix layer toggles added in M5.1 (#214 Finding 3).
+- Settings, auth, onboarding, offline/PWA: Sprint 4 Figma + supporting-flows E2E.
 
-### Web-primary
+### Web-primary (unchanged)
 
-- `MetricTimeseries`, `ComparisonHeatmap`, `TrendsComparePanel`,
-  `UnifiedStripChart`, `TagHeatmap`, and `HabitsPanel` retain their full
-  analytical form on desktop.
-- Mobile equivalents communicate top signals and open focused details; they do
-  not render the complete desktop visualisation at reduced scale.
+- `MetricTimeseries`, `ComparisonHeatmap`, `TrendsComparePanel`, `UnifiedStripChart`,
+  `TagHeatmap`, `HabitsPanel` retain full analytical form on desktop.
+- Mobile communicates top signals and opens focused details.
 
-### Missing design-system coverage
+### Code Connect templates
 
-- `InsightFeed`, `InsightCard`, `InsightMatrix`,
-  `InsightQualityMeter`, `SymptomChecker`, settings management, auth,
-  onboarding, and offline/PWA states.
+Repository templates in [`apps/web/figma/components/`](../../apps/web/figma/components/),
+including `MobileInsightLead.figma.ts` (node `98:1541`). Published-library activation
+still requires an eligible Figma Organization/Enterprise Dev or Full seat.
 
 ## Conflicts and constraints
 
-- The five-screen architecture from ADR-0017 must remain intact.
-- Home must remain a Daily Brief, consistent with the M5 streamline amendment.
-- Trends must remain mobile-friendly as required by `DESIGN_DOCUMENT.md`;
-  this means simplification, not dashboard compression.
-- Capacitor must reuse the SvelteKit codebase; platform-specific code is limited
-  to native capabilities and shell integration.
-- Code Connect is unavailable until Figma has an eligible Organization or
-  Enterprise Dev/Full seat. The repository mappings remain the handoff source.
+- ADR-0017 five-screen architecture remains intact.
+- Home stays a Daily Brief (M5 streamline amendment).
+- Trends mobile = simplification, not dashboard compression.
+- Capacitor reuses SvelteKit; no second frontend.
+- Legacy `Mobile / Insights` frame `28:615` is not the Sprint 3 reference (`98:1573`).
 
 ## Evidence
 
@@ -108,5 +82,6 @@ layouts after the mobile PR lands.
   [`apps/web/figma/mobile-web-audit.json`](../../apps/web/figma/mobile-web-audit.json)
 - Figma node ledger:
   [`apps/web/figma/correlcore-figma-map.json`](../../apps/web/figma/correlcore-figma-map.json)
-- Existing responsive breakpoint:
-  `apps/web/src/app.css` at `@media (min-width: 768px)`.
+- Cross-phase QA:
+  [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md)
+- Responsive breakpoint: `apps/web/src/app.css` at `@media (min-width: 768px)`.
