@@ -13,7 +13,7 @@
     type TagSuggestion,
     type TagSuggestionGroup,
   } from '$lib/api/onboarding';
-  import type { TagCategory } from '$lib/api/tags';
+  import { TAG_CATEGORIES, type TagCategory } from '$lib/api/tags';
 
   let step = 0;
   let groups: TagSuggestionGroup[] = [];
@@ -23,7 +23,7 @@
   let loading = true;
   let busy = false;
   let error = '';
-  const customCategories: TagCategory[] = ['work', 'health', 'social', 'cycle', 'other'];
+  const customCategories = TAG_CATEGORIES;
 
   $: selectedTags = [...selected.values()];
   $: progressLabel = `${step + 1}/3`;

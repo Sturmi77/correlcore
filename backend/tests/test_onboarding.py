@@ -34,7 +34,18 @@ async def test_get_onboarding_tag_suggestions(async_client: AsyncClient) -> None
     assert response.status_code == 200
     body = response.json()
     categories = {group["category"] for group in body["groups"]}
-    assert {"work", "health", "social", "cycle"}.issubset(categories)
+    assert categories == {
+        "sport",
+        "work",
+        "health",
+        "social",
+        "cycle",
+        "leisure",
+        "consumption",
+        "other",
+    }
+    sport_group = next(group for group in body["groups"] if group["category"] == "sport")
+    assert len(sport_group["suggestions"]) >= 2
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/svelte';
+import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import InsightMatrix from './InsightMatrix.svelte';
 
@@ -10,6 +10,34 @@ vi.mock('svelte-i18n', async () => {
   };
 });
 
+vi.mock('$lib/stores/tags', async () => {
+  const { readable } = await import('svelte/store');
+
+  return {
+    tags: readable({
+      status: 'ready',
+      tags: [
+        {
+          id: 'habit-tag',
+          user_id: 'user-1',
+          slug: 'walk',
+          name: 'Walk',
+          category: 'health',
+          icon: null,
+          color: null,
+          is_default: false,
+          is_hidden: false,
+          habit_type: 'build',
+          target_frequency: 4,
+          created_at: '2026-05-12T03:00:00Z',
+          updated_at: '2026-05-12T03:00:00Z',
+        },
+      ],
+    }),
+    refreshTags: vi.fn(),
+  };
+});
+
 const base = {
   id: 'insight-1',
   user_id: 'user-1',
@@ -17,7 +45,7 @@ const base = {
   tier: 'developing' as const,
   metric: 'mood_score',
   subject_type: 'tag',
-  subject_id: null,
+  subject_id: 'plain-tag',
   subject_label: 'Sport',
   effect_size: 0.4,
   confidence: 0.7,
@@ -109,5 +137,40 @@ describe('InsightMatrix', () => {
     const rows = within(screen.getByTestId('insight-matrix')).getAllByRole('row');
     expect(rows).toHaveLength(2);
     expect(rows[1].textContent).toContain('alkohol');
+  });
+
+  it('switches between tag, habit and symptom layers exclusively', async () => {
+    render(InsightMatrix, {
+      props: {
+        insights: [
+          { ...base, id: 'tag', subject_id: 'plain-tag', subject_label: 'Focus' },
+          {
+            ...base,
+            id: 'habit',
+            subject_id: 'habit-tag',
+            subject_label: 'Walk',
+          },
+          {
+            ...base,
+            id: 'symptom',
+            subject_type: 'symptom',
+            subject_id: 'symptom-1',
+            subject_label: 'Headache',
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByText('Focus')).toBeTruthy();
+    expect(screen.queryByText('Walk')).toBeNull();
+    expect(screen.queryByText('Headache')).toBeNull();
+
+    await fireEvent.click(screen.getByTestId('insight-matrix-layer-habits'));
+    expect(screen.queryByText('Focus')).toBeNull();
+    expect(screen.getByText('Walk')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('insight-matrix-layer-symptoms'));
+    expect(screen.getByText('Headache')).toBeTruthy();
+    expect(screen.queryByText('Walk')).toBeNull();
   });
 });

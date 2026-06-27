@@ -588,7 +588,12 @@
       "reset": "Reset",
       "error_load": "Could not load tags.",
       "error_save": "Could not save this tag.",
-      "error_reset": "Could not reset this tag."
+      "error_reset": "Could not reset this tag.",
+      "create_heading": "Add tag",
+      "create_body": "Create a new custom tag for your entries.",
+      "create_submit": "Create tag",
+      "creating": "Creating\u2026",
+      "error_create": "Could not create this tag."
     },
     "symptoms": {
       "open": "Manage symptoms",
@@ -839,7 +844,15 @@
       "effect": "Effect",
       "confidence": "Confidence",
       "export": "Export PNG",
-      "empty": "No sufficiently stable tag-mood patterns yet."
+      "empty": "No sufficiently stable tag-mood patterns yet.",
+      "empty_layer": "No stable patterns for this view yet.",
+      "layers": "Matrix view",
+      "layer_tags": "Tags",
+      "layer_symptoms": "Symptoms",
+      "layer_habits": "Habits",
+      "subject_tag": "Tag",
+      "subject_symptom": "Symptom",
+      "subject_habit": "Habit"
     },
     "cooccurrence": {
       "heading": "Patterns",

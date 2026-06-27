@@ -588,7 +588,12 @@
       "reset": "Zur\u00fccksetzen",
       "error_load": "Tags konnten nicht geladen werden.",
       "error_save": "Dieser Tag konnte nicht gespeichert werden.",
-      "error_reset": "Dieser Tag konnte nicht zur\u00fcckgesetzt werden."
+      "error_reset": "Dieser Tag konnte nicht zur\u00fcckgesetzt werden.",
+      "create_heading": "Tag hinzuf\u00fcgen",
+      "create_body": "Neues Custom-Tag f\u00fcr Eintr\u00e4ge anlegen.",
+      "create_submit": "Tag anlegen",
+      "creating": "Wird angelegt\u2026",
+      "error_create": "Tag konnte nicht angelegt werden."
     },
     "symptoms": {
       "open": "Symptome verwalten",
@@ -839,7 +844,15 @@
       "effect": "Effekt",
       "confidence": "Konfidenz",
       "export": "PNG exportieren",
-      "empty": "Noch keine ausreichend stabilen Tag-Mood-Muster vorhanden."
+      "empty": "Noch keine ausreichend stabilen Tag-Mood-Muster vorhanden.",
+      "empty_layer": "F\u00fcr diese Ansicht noch keine stabilen Muster.",
+      "layers": "Matrix-Ansicht",
+      "layer_tags": "Tags",
+      "layer_symptoms": "Symptome",
+      "layer_habits": "Habits",
+      "subject_tag": "Tag",
+      "subject_symptom": "Symptom",
+      "subject_habit": "Habit"
     },
     "cooccurrence": {
       "heading": "Muster",
