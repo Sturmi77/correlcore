@@ -58,7 +58,9 @@ def is_metric_association_weekday_confounded(
         return False
 
     weekdays = [entry_date.weekday() for entry_date in entry_dates]
-    signal_weekdays = {weekday for weekday, present in zip(weekdays, binary_signal, strict=True) if present}
+    signal_weekdays = {
+        weekday for weekday, present in zip(weekdays, binary_signal, strict=True) if present
+    }
     if len(signal_weekdays) <= 1:
         return True
 

@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
+from typing import Literal
 
 import numpy as np
 from sklearn.cluster import KMeans
@@ -188,9 +189,7 @@ def build_tag_vectors(
     ordered_ids = [node.node_id for node in nodes]
     signal_counts = {
         node_id: sum(
-            1
-            for entry in daily_entries
-            if node_id in entry.tag_ids or node_id in entry.symptom_ids
+            1 for entry in daily_entries if node_id in entry.tag_ids or node_id in entry.symptom_ids
         )
         for node_id in ordered_ids
     }
@@ -323,7 +322,7 @@ def build_tag_cluster_response(
         grouped[int(label)].append(node_id)
 
     has_symptoms = any(node.kind == "symptom" for node in nodes)
-    cluster_kind = "mixed" if has_symptoms else "tags_only"
+    cluster_kind: Literal["tags_only", "mixed"] = "mixed" if has_symptoms else "tags_only"
     clusters: list[TagClusterGroup] = []
     for ordinal, (_, cluster_node_ids) in enumerate(
         sorted(
