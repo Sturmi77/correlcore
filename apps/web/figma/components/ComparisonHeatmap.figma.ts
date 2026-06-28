@@ -1,7 +1,7 @@
-// @ts-nocheck
 // url=https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=20-268
 // source=apps/web/src/lib/components/trends/ComparisonHeatmap.svelte
 // component=ComparisonHeatmap
+// @ts-nocheck
 import figma from 'figma';
 
 const instance = figma.selectedInstance;

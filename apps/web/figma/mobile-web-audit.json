@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "runId": "correlcore-mobile-web-audit-2026-06-22-v1",
+  "runId": "correlcore-mobile-web-audit-2026-06-27-closeout-v1",
   "figmaFileKey": "XjijHnzMJubA1iuPQxHOwS",
   "orientation": {
     "primary": "mobile-daily-use",
@@ -36,7 +36,7 @@
     {
       "screen": "Entry",
       "routes": ["/entries/new", "/entries/day/[date]"],
-      "figmaNodes": ["21:69", "28:397", "28:823"],
+      "figmaNodes": ["21:69", "48:1089", "28:397"],
       "primaryComponents": [
         "EntryForm",
         "ScaleSlider",
@@ -45,57 +45,52 @@
         "SaveStatusBadge",
         "DayDeltaCard"
       ],
-      "mobileStatus": "yellow",
+      "mobileStatus": "green",
       "webStatus": "yellow",
-      "problemType": "High-frequency form density and state coverage",
-      "recommendation": "Mobile gets a compressed capture flow; web gets a workspace layout with context, notes, and review states."
+      "problemType": "Mobile capture complete; desktop workspace polish remains",
+      "recommendation": "Mobile compressed capture flow is signed off (Sprint 1). Desktop workspace layout is Phase 5."
     },
     {
       "screen": "Trends",
       "routes": ["/trends"],
-      "figmaNodes": ["21:151", "28:484", "28:908"],
+      "figmaNodes": ["21:151", "59:1285", "28:908"],
       "primaryComponents": [
+        "MobileTrendsSummary",
         "TrendsComparePanel",
         "MetricTimeseries",
         "ComparisonHeatmap",
-        "UnifiedStripChart",
-        "TagHeatmap",
-        "HabitsPanel",
-        "EntryHistorySheet"
+        "UnifiedStripChart"
       ],
-      "mobileStatus": "red",
+      "mobileStatus": "green",
       "webStatus": "green",
-      "problemType": "Dense chart interactions and comparison surface",
-      "recommendation": "Web remains the primary analysis surface; mobile needs summary cards plus drill-down sheets instead of full chart parity."
+      "problemType": "Mobile summary + detail implemented; desktop full canvas",
+      "recommendation": "Signed off in Sprint 2 + ADR-0035 shared daily axis on desktop."
     },
     {
       "screen": "Insights",
       "routes": ["/insights", "/insights/disclaimer"],
-      "figmaNodes": ["21:282", "28:615", "28:1080"],
+      "figmaNodes": ["21:282", "98:1573", "98:1541", "28:1080"],
       "primaryComponents": [
+        "MobileInsightLead",
         "InsightFeed",
         "InsightCard",
         "InsightMatrix",
-        "InsightQualityMeter",
-        "InsightConfidenceScale",
-        "TagGroupsSection",
-        "TagCooccurrenceHeatmap",
-        "SymptomAnalyticsSection"
+        "InsightStageHeader"
       ],
-      "mobileStatus": "red",
-      "webStatus": "yellow",
-      "problemType": "Missing Figma coverage for real insight components",
-      "recommendation": "Define insight card, feed, quality, and matrix variants before treating the Figma screen as implementation-ready."
+      "mobileStatus": "green",
+      "webStatus": "green",
+      "problemType": "Sprint 3 Figma + code hierarchy aligned",
+      "recommendation": "Use Sprint 3 flow `98:1573`; legacy `28:615` is not canonical."
     },
     {
       "screen": "Settings",
-      "routes": ["/settings", "/settings/tags"],
-      "figmaNodes": [],
+      "routes": ["/settings", "/settings/tags", "/settings/symptoms", "/settings/app"],
+      "figmaNodes": ["105:1626", "105:1634"],
       "primaryComponents": ["ScreenHeader", "Panel", "Button", "InlineAlert", "ThemeToggle"],
-      "mobileStatus": "yellow",
+      "mobileStatus": "green",
       "webStatus": "green",
-      "problemType": "Missing Figma flow",
-      "recommendation": "Add settings and tag-management backlog frames; keep mobile simple and web management-oriented."
+      "problemType": "Sprint 4 supporting-flow Figma + code parity",
+      "recommendation": "Signed off in Sprint 4; desktop keeps dense management rows."
     },
     {
       "screen": "Onboarding/Auth",
@@ -109,22 +104,22 @@
         "/auth/verify-email",
         "/auth/resend-verification"
       ],
-      "figmaNodes": [],
+      "figmaNodes": ["105:1626", "105:1978", "105:2140"],
       "primaryComponents": ["Button", "Panel", "InlineAlert", "PasswordStrength"],
-      "mobileStatus": "yellow",
+      "mobileStatus": "green",
       "webStatus": "yellow",
-      "problemType": "Missing Figma flow and conversion-state coverage",
-      "recommendation": "Add a lightweight onboarding/auth backlog flow with form, verification, error, and success states."
+      "problemType": "Sprint 4 Figma touch states; conversion polish is Phase 5",
+      "recommendation": "Verification and onboarding frames exist; password reset blocked on backend contract."
     },
     {
       "screen": "Offline/PWA",
-      "routes": ["/offline"],
-      "figmaNodes": [],
-      "primaryComponents": ["Panel", "Button"],
-      "mobileStatus": "yellow",
-      "webStatus": "yellow",
-      "problemType": "Missing Figma state",
-      "recommendation": "Add offline/install/update states because they matter most in mobile daily-use contexts."
+      "routes": ["/offline", "/settings/app"],
+      "figmaNodes": ["105:1855", "105:2190", "105:2228"],
+      "primaryComponents": ["Panel", "Button", "PwaOfflineBanner"],
+      "mobileStatus": "green",
+      "webStatus": "green",
+      "problemType": "Sprint 4 PWA lifecycle + overlays in Figma and code",
+      "recommendation": "Entry-owned retry; no silent background sync queue (ADR-0009)."
     }
   ],
   "componentMatrix": [

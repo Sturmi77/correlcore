@@ -1,9 +1,48 @@
 # Mobile/Web Frontend Implementation Plan
 
-**Status:** Sprint 0, Phase 1, and Phase 2 complete. Phase 3 code is implemented;
-Figma parity and rendered QA remain pending because connector writes and the
-required local process escalation are temporarily unavailable.
+**Status:** **Mobile closeout complete** — Phases 0–4 (code, Figma, QA). Phase 5
+(desktop consolidation) is the next track. See
+[`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../MOBILE_CLOSEOUT_SPRINT_PLAN.md).
+
 **Default:** Resolve mobile topics first unless a conflict gate below fails.
+
+## Current GitHub sprint ledger
+
+**Completed on `main` @ `7b7ca8a` and closeout docs**
+
+- Phases 0–4 mobile code paths (Entry, Trends, Insights hierarchy, supporting
+  flows, PWA lifecycle).
+- Phase 4 mobile supporting flows in code: Settings essentials, symptom
+  management, App & Offline status, global PWA/update state, offline recovery
+  messaging, and mobile touch refinements for onboarding/profile inputs.
+- Review findings from recent mobile PRs addressed: UTC-based Entry editability,
+  hydration-safe Entry compact mode, touch-enabled mobile Insights Playwright
+  contexts, scoped Insight lead assertions, tolerant ranking float checks, no
+  duplicate maturity badge in the lead card, valid Code Connect metadata order,
+  a valid `ScaleSlider` snippet, and a real `MetricCard` implementation behind
+  the Figma mapping.
+- Shared contracts remain intact: no second mobile frontend, no alternate
+  analytics path, no background health-data queue, and no route/API split for
+  mobile.
+- Phase 3 Figma: `MobileInsightLead` component and Sprint 3 screen states
+  (Default, Empty, Loading, Matrix) — node `98:1573`.
+- Phase 3 QA closeout: [`docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md`](../quality/MOBILE_INSIGHTS_PHASE3_QA.md).
+- Phase 4 Figma: Supporting flows Sprint 4 board — node `105:1626` (22 screens,
+  1680 px layout board).
+- Cross-phase mobile QA: [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md).
+- Sprint D: audit refresh, `MobileInsightLead.figma.ts`, GitHub #200 / #214 closure.
+
+**Still open**
+
+- Phase 5 desktop consolidation (wide-screen density, split views).
+- Define backend/product contracts for password recovery, reminders, account
+  deletion, and future health-data import consent/revocation.
+- Published-library Code Connect activation (Figma seat/plan gate).
+
+**Next recommended sprint**
+
+Phase 5 desktop consolidation — keep shared mobile contracts unchanged; improve
+wide-screen composition for Home, Trends, Insights, and Settings.
 
 ## Success criteria
 
@@ -102,9 +141,14 @@ remaining patterns keep the existing filters, and matrix/co-occurrence surfaces
 remain behind explicit detail controls. Desktop keeps the existing analysis
 composition and API contract.
 
-**Pending closeout:** Create the production-aligned `InsightCard`, confidence,
-maturity, disclaimer, loading, empty, and error components in Figma; compose the
-summary/detail/empty flow; then run rendered Browser QA at 390, 430, and 1280 px.
+**Figma (complete 2026-06-26):**
+
+- Component: `MobileInsightLead` — https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1541
+- Flow: `Mobile Insights / Sprint 3 Flow` — https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1573
+
+**QA (complete 2026-06-26):** Rendered sign-off at 390, 430, and 1280 px documented in
+[`docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md`](../quality/MOBILE_INSIGHTS_PHASE3_QA.md).
+Playwright: `mobile-insights-foundation.spec.ts`, `m7-insights-mobile.spec.ts`.
 
 ## Phase 4: Supporting mobile flows
 
@@ -116,6 +160,29 @@ summary/detail/empty flow; then run rendered Browser QA at 390, 430, and 1280 px
 
 **Exit:** No mobile-critical recovery or account flow remains undocumented.
 
+**Implemented in code:** Settings now links to shared tag and symptom
+management plus an App & Offline status screen. Custom symptoms can be renamed
+or deleted with explicit confirmation while curated defaults remain read-only.
+A shared PWA lifecycle store exposes connection loss, waiting service-worker
+updates, install state, update checks, and restart activation to the app shell,
+offline recovery screen, and settings. Retrospective and profile onboarding
+now keep 44 px touch targets and stack actions at mobile widths. Unsaved health
+data remains visible on the originating Entry screen and requires explicit
+retry; there is no silent background sync queue.
+
+**Documented dependencies:** Password recovery still needs a backend contract
+before a route can be implemented. Reminders and account deletion remain
+explicit product/backend backlog. Health-data import and Capacitor work remain
+gated on a dedicated consent and revocation flow.
+
+**Figma (complete 2026-06-26):**
+
+- Flow: [`Mobile Supporting Flows / Sprint 4 Flow`](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=105-1626) — Settings, symptom management, App & Offline, auth recovery, onboarding, PWA overlays.
+
+**QA (complete 2026-06-27):** Cross-phase sign-off in
+[`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md).
+Playwright: `mobile-supporting-flows.spec.ts` (17/17 mobile E2E suite @ `d77b556`).
+
 ## Phase 5: Desktop consolidation
 
 1. Review each primary route above 768 px and replace accidental stretched
@@ -126,6 +193,9 @@ summary/detail/empty flow; then run rendered Browser QA at 390, 430, and 1280 px
 
 **Exit:** Desktop uses available space efficiently without changing route or
 domain semantics.
+
+**Out of scope** for the mobile closeout plan. Resume after Phases 0–4 mobile
+parity is signed off in QA.
 
 ## Verification and rollout
 

@@ -10,6 +10,7 @@
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import {
     TAG_CATEGORIES,
+    createTag,
     deleteTag,
     listDefaultTags,
     listVisibleTags,
@@ -18,7 +19,7 @@
     type HabitType,
     type TagResponse,
   } from '$lib/api/tags';
-  import { applyTagUpdate, refreshTags } from '$lib/stores/tags';
+  import { refreshTags } from '$lib/stores/tags';
 
   type Draft = {
     name: string;
@@ -35,6 +36,34 @@
   let tags: TagResponse[] = [];
   let defaultBySlug: Record<string, TagResponse> = {};
   let drafts: Record<string, Draft> = {};
+  let creating = false;
+  let newDraft: Draft = {
+    name: '',
+    category: 'other',
+    icon: '',
+    color: '#6356d9',
+    habit_type: 'none',
+    target_frequency: 3,
+  };
+
+  function slugifyName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 64);
+  }
+
+  function resetNewDraft(): void {
+    newDraft = {
+      name: '',
+      category: 'other',
+      icon: '',
+      color: '#6356d9',
+      habit_type: 'none',
+      target_frequency: 3,
+    };
+  }
 
   function draftFrom(tag: TagResponse): Draft {
     return {
@@ -83,17 +112,33 @@
     };
   }
 
-  function applySavedTag(previousId: string, updated: TagResponse): void {
-    tags = tags
-      .filter((item) => item.id !== previousId && item.id !== updated.id)
-      .filter((item) => !(item.is_default && item.slug === updated.slug))
-      .concat(updated);
-    const { [previousId]: _discarded, ...remainingDrafts } = drafts;
-    drafts = {
-      ...remainingDrafts,
-      [updated.id]: draftFrom(updated),
-    };
-    applyTagUpdate(previousId, updated);
+  async function createNewTag(): Promise<void> {
+    const name = newDraft.name.trim();
+    if (!name) return;
+    creating = true;
+    error = '';
+    try {
+      await createTag({
+        slug: slugifyName(name) || 'tag',
+        name,
+        category: newDraft.category,
+        icon: newDraft.icon.trim() ? newDraft.icon.trim() : null,
+        color: newDraft.color,
+        habit_type: newDraft.habit_type,
+        target_frequency: newDraft.habit_type === 'none' ? null : newDraft.target_frequency,
+      });
+      resetNewDraft();
+      await load();
+      await refreshTags();
+    } catch (err) {
+      error = err instanceof Error ? err.message : $_('settings.tags.error_create');
+    } finally {
+      creating = false;
+    }
+  }
+
+  function setNewDraft(patch: Partial<Draft>): void {
+    newDraft = { ...newDraft, ...patch };
   }
 
   async function save(tag: TagResponse): Promise<void> {
@@ -102,7 +147,7 @@
     savingId = tag.id;
     error = '';
     try {
-      const updated = await updateTag(tag.id, {
+      await updateTag(tag.id, {
         name: draft.name,
         category: draft.category,
         icon: draft.icon.trim() ? draft.icon.trim() : null,
@@ -110,7 +155,8 @@
         habit_type: draft.habit_type,
         target_frequency: draft.habit_type === 'none' ? null : draft.target_frequency,
       });
-      applySavedTag(tag.id, updated);
+      await load();
+      await refreshTags();
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.tags.error_save');
     } finally {
@@ -122,8 +168,9 @@
     savingId = tag.id;
     error = '';
     try {
-      const updated = await updateTag(tag.id, { is_hidden: !tag.is_hidden });
-      applySavedTag(tag.id, updated);
+      await updateTag(tag.id, { is_hidden: !tag.is_hidden });
+      await load();
+      await refreshTags();
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.tags.error_save');
     } finally {
@@ -195,6 +242,105 @@
     {#if error}
       <InlineAlert variant="error" message={error} testId="tag-settings-error" />
     {/if}
+
+    <section
+      class="tag-settings__section tag-settings__create"
+      data-testid="tag-settings-create"
+      aria-labelledby="tag-settings-create-heading"
+    >
+      <div class="tag-settings__section-head">
+        <h2 id="tag-settings-create-heading">{$_('settings.tags.create_heading')}</h2>
+        <p>{$_('settings.tags.create_body')}</p>
+      </div>
+      <div class="tag-settings__create-form">
+        <label>
+          <span>{$_('settings.tags.name')}</span>
+          <input
+            class="input"
+            value={newDraft.name}
+            maxlength="64"
+            on:input={(event) =>
+              setNewDraft({ name: (event.currentTarget as HTMLInputElement).value })}
+          />
+        </label>
+        <label>
+          <span>{$_('settings.tags.category')}</span>
+          <select
+            class="input"
+            value={newDraft.category}
+            on:change={(event) =>
+              setNewDraft({
+                category: (event.currentTarget as HTMLSelectElement).value as TagCategory,
+              })}
+          >
+            {#each TAG_CATEGORIES as category}
+              <option value={category}>{$_(`tag.category.${category}`)}</option>
+            {/each}
+          </select>
+        </label>
+        <label>
+          <span>{$_('settings.tags.icon')}</span>
+          <input
+            class="input"
+            value={newDraft.icon}
+            maxlength="32"
+            on:input={(event) =>
+              setNewDraft({ icon: (event.currentTarget as HTMLInputElement).value })}
+          />
+        </label>
+        <label>
+          <span>{$_('settings.tags.color')}</span>
+          <input
+            class="tag-settings__color"
+            type="color"
+            value={newDraft.color}
+            on:input={(event) =>
+              setNewDraft({ color: (event.currentTarget as HTMLInputElement).value })}
+          />
+        </label>
+        <label>
+          <span>{$_('settings.tags.habit_type')}</span>
+          <select
+            class="input"
+            value={newDraft.habit_type}
+            on:change={(event) =>
+              setNewDraft({
+                habit_type: (event.currentTarget as HTMLSelectElement).value as HabitType,
+              })}
+          >
+            <option value="none">{$_('settings.tags.habit_none')}</option>
+            <option value="build">{$_('settings.tags.habit_build')}</option>
+            <option value="reduce">{$_('settings.tags.habit_reduce')}</option>
+          </select>
+        </label>
+        <label>
+          <span>{$_('settings.tags.target_frequency')}</span>
+          <input
+            class="input"
+            type="number"
+            min="1"
+            max="7"
+            value={newDraft.target_frequency}
+            disabled={newDraft.habit_type === 'none'}
+            on:input={(event) =>
+              setNewDraft({
+                target_frequency: Number((event.currentTarget as HTMLInputElement).value || 1),
+              })}
+          />
+        </label>
+        <button
+          class="btn btn-sm variant-filled-primary"
+          type="button"
+          disabled={creating ||
+            !newDraft.name.trim() ||
+            (newDraft.habit_type !== 'none' &&
+              (newDraft.target_frequency < 1 || newDraft.target_frequency > 7))}
+          on:click={createNewTag}
+        >
+          {creating ? $_('settings.tags.creating') : $_('settings.tags.create_submit')}
+        </button>
+      </div>
+    </section>
 
     {#each tagGroups as group (group.id)}
       <section
@@ -495,6 +641,26 @@
     gap: 0.45rem;
   }
 
+  .tag-settings__create-form {
+    display: grid;
+    grid-template-columns:
+      minmax(8rem, 1.4fr) minmax(7rem, 1fr) minmax(6rem, 0.9fr) auto
+      minmax(8rem, 1fr) minmax(5rem, 0.6fr) auto;
+    gap: 0.55rem;
+    align-items: end;
+  }
+
+  .tag-settings__create-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .tag-settings__create-form label span {
+    font-size: 0.72rem;
+    opacity: 0.72;
+  }
+
   @media (max-width: 860px) {
     .tag-settings__row {
       grid-template-columns: 1fr;
@@ -502,6 +668,10 @@
     }
 
     .tag-settings__fields {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .tag-settings__create-form {
       grid-template-columns: 1fr 1fr;
     }
 
@@ -516,6 +686,10 @@
     }
 
     .tag-settings__fields {
+      grid-template-columns: 1fr;
+    }
+
+    .tag-settings__create-form {
       grid-template-columns: 1fr;
     }
   }

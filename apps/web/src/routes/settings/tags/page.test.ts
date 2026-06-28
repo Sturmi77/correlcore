@@ -26,13 +26,13 @@ vi.mock('$lib/api/tags', async () => {
     ...actual,
     listDefaultTags: vi.fn(),
     listVisibleTags: vi.fn(),
+    createTag: vi.fn(),
     updateTag: vi.fn(),
     deleteTag: vi.fn(),
   };
 });
 
 vi.mock('$lib/stores/tags', () => ({
-  applyTagUpdate: vi.fn(),
   refreshTags: vi.fn(),
 }));
 
@@ -118,51 +118,28 @@ describe('/settings/tags Sprint 8', () => {
     });
   });
 
-  it('uses the returned override id after saving a default tag', async () => {
-    const defaultTag = makeTag({
-      id: 'default-sport',
-      user_id: null,
-      slug: 'sport',
-      name: 'Sport',
-      category: 'sport',
-      is_default: true,
-    });
-    const overrideTag = {
-      ...defaultTag,
-      id: 'override-sport',
-      user_id: 'user-1',
-      name: 'Training',
-      is_default: false,
-    };
-    vi.mocked(tagsApi.listDefaultTags).mockResolvedValue([defaultTag]);
-    vi.mocked(tagsApi.listVisibleTags).mockResolvedValue([defaultTag]);
-    vi.mocked(tagsApi.updateTag)
-      .mockResolvedValueOnce(overrideTag)
-      .mockResolvedValueOnce({ ...overrideTag, color: '#112233' });
+  it('creates a new custom tag from the create form', async () => {
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValue([]);
+    const created = makeTag({ id: 'new-tag', name: 'Meditation', slug: 'meditation' });
+    vi.mocked(tagsApi.createTag).mockResolvedValue(created);
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValueOnce([]).mockResolvedValueOnce([created]);
 
     render(Page);
 
-    const row = (await screen.findByText('Sport')).closest('article');
-    const nameInput = row?.querySelector('input.input') as HTMLInputElement;
-    nameInput.value = 'Training';
+    const createSection = await screen.findByTestId('tag-settings-create');
+    const nameInput = createSection.querySelectorAll('input.input')[0] as HTMLInputElement;
+    expect(nameInput).toBeTruthy();
+    nameInput.value = 'Meditation';
     await fireEvent.input(nameInput);
-
-    await fireEvent.click(screen.getByText('settings.tags.save'));
-
-    await waitFor(() => {
-      expect(tagsApi.updateTag).toHaveBeenCalledWith(
-        'default-sport',
-        expect.objectContaining({ name: 'Training' })
-      );
-    });
-    expect(await screen.findByText('Training')).toBeTruthy();
-
-    await fireEvent.click(screen.getByText('settings.tags.save'));
+    await fireEvent.click(screen.getByText('settings.tags.create_submit'));
 
     await waitFor(() => {
-      expect(tagsApi.updateTag).toHaveBeenLastCalledWith(
-        'override-sport',
-        expect.objectContaining({ name: 'Training' })
+      expect(tagsApi.createTag).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Meditation',
+          slug: 'meditation',
+          category: 'other',
+        })
       );
     });
   });

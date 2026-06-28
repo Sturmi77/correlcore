@@ -17,6 +17,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Mobile Insights Phase 3 closeout.** Mobile `/insights` ranks insights via
+  `insightRanking`, surfaces the strongest signal in `MobileInsightLead` with
+  semantic confidence and maturity context, and keeps matrices/co-occurrence
+  behind explicit detail controls. Figma Sprint 3 flow (`98:1573`), Playwright
+  coverage (`mobile-insights-foundation`, `m7-insights-mobile`), and QA sign-off:
+  [`docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md`](docs/quality/MOBILE_INSIGHTS_PHASE3_QA.md).
+
+- **Mobile supporting flows Figma Sprint 4.** Production-aligned frames for
+  Settings, symptom management, App & Offline, auth recovery, onboarding touch
+  states, and PWA recovery overlays — flow board `105:1626` (22 screens at
+  390×844, 1680 px layout board). See [`apps/web/figma/README.md`](apps/web/figma/README.md).
+
+- **Mobile web Sprint C closeout.** Cross-phase QA at 390/430/1280 px across
+  Entry, Trends, Insights, Settings/PWA; 17/17 Playwright mobile specs green.
+  Sign-off: [`docs/quality/MOBILE_WEB_CLOSEOUT_QA.md`](docs/quality/MOBILE_WEB_CLOSEOUT_QA.md).
+  Added `npm run test:e2e:mobile` and serial Playwright workers for stable runs.
+
+- **Mobile web Sprint D closeout.** Audit matrix refreshed to green for Phases 0–4
+  mobile surfaces; `MobileInsightLead.figma.ts` Code Connect template; GitHub #200
+  rescoped/closed (M8); #214 M5.1 follow-ups closed on `main`.
+
 - **M7 Sprint 1 opened: Lasso & Lag backend slice.** Added M7 sprint
   plan/status docs, the additive `symptom_cluster` insight type, a multivariate
   design matrix with metric/tag/symptom features, deterministic

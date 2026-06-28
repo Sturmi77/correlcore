@@ -21,7 +21,7 @@
     <p>{$_('insights.mobile.context', { values: { days: 90, n: entryCount } })}</p>
   </header>
 
-  <InsightCard {insight} {maturity} {inactiveTagIds} featured showConfidenceSummary />
+  <InsightCard {insight} {inactiveTagIds} featured showConfidenceSummary />
 
   <p class="mobile-lead__note" data-testid="mobile-insight-correlation-note">
     {$_('insights.mobile.correlation_note')}

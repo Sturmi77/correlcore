@@ -1,8 +1,24 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
+  import { refreshTags, tags } from '$lib/stores/tags';
 
   export let insights: InsightResponse[] = [];
+
+  type MatrixLayer = 'tags' | 'symptoms' | 'habits';
+
+  let layer: MatrixLayer = 'tags';
+
+  onMount(async () => {
+    if ($tags.status === 'idle') {
+      try {
+        await refreshTags();
+      } catch {
+        /* matrix still works for tag insights without habit metadata */
+      }
+    }
+  });
 
   function canonicalMetric(insight: InsightResponse): string {
     if (
@@ -56,15 +72,40 @@
     return [...byKey.values()];
   }
 
-  $: rows = dedupeRows(
-    insights.filter(
-      (insight) =>
-        insight.insight_type === 'pointbiserial' &&
-        insight.effect_size !== null &&
-        insight.confidence !== null &&
-        insight.confidence >= 0.2
-    )
-  ).sort((a, b) => Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0));
+  function isMatrixInsight(insight: InsightResponse): boolean {
+    return (
+      (insight.insight_type === 'pointbiserial' ||
+        insight.insight_type === 'symptom_mood_association') &&
+      insight.effect_size !== null &&
+      insight.confidence !== null &&
+      insight.confidence >= 0.2
+    );
+  }
+
+  $: habitTagIds = new Set(
+    $tags.status === 'ready'
+      ? $tags.tags.filter((tag) => tag.habit_type !== 'none').map((tag) => tag.id)
+      : []
+  );
+
+  $: baseRows = dedupeRows(insights.filter(isMatrixInsight)).sort(
+    (a, b) => Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0)
+  );
+
+  $: rows = baseRows.filter((row) => {
+    if (layer === 'symptoms') return row.subject_type === 'symptom';
+    const isHabit =
+      row.subject_type === 'tag' && row.subject_id !== null && habitTagIds.has(row.subject_id);
+    if (layer === 'habits') return isHabit;
+    return row.subject_type === 'tag' && !isHabit;
+  });
+
+  $: subjectHeading =
+    layer === 'symptoms'
+      ? $_('insights.matrix.subject_symptom')
+      : layer === 'habits'
+        ? $_('insights.matrix.subject_habit')
+        : $_('insights.matrix.subject_tag');
 
   function tone(effect: number): 'positive' | 'negative' | 'neutral' {
     if (effect >= 0.15) return 'positive';
@@ -131,17 +172,37 @@
       <h2>{$_('insights.matrix.heading')}</h2>
       <p>{$_('insights.matrix.subtitle')}</p>
     </div>
-    {#if rows.length}
-      <button class="btn btn-sm variant-soft-primary" type="button" on:click={exportPng}>
+    <div class="insight-matrix__actions">
+      <div class="insight-matrix__layers" role="tablist" aria-label={$_('insights.matrix.layers')}>
+        {#each ['tags', 'symptoms', 'habits'] as option}
+          <button
+            type="button"
+            role="tab"
+            class="insight-matrix__layer"
+            class:insight-matrix__layer--active={layer === option}
+            aria-selected={layer === option}
+            data-testid={`insight-matrix-layer-${option}`}
+            on:click={() => (layer = option as MatrixLayer)}
+          >
+            {$_(`insights.matrix.layer_${option}`)}
+          </button>
+        {/each}
+      </div>
+      <button
+        class="btn btn-sm variant-soft-primary"
+        type="button"
+        on:click={exportPng}
+        disabled={!rows.length}
+      >
         {$_('insights.matrix.export')}
       </button>
-    {/if}
+    </div>
   </header>
 
   {#if rows.length}
     <div class="insight-matrix__table" role="table" aria-label={$_('insights.matrix.heading')}>
       <div class="insight-matrix__row insight-matrix__row--head" role="row">
-        <span role="columnheader">{$_('insights.matrix.tag')}</span>
+        <span role="columnheader">{subjectHeading}</span>
         <span role="columnheader">{$_('insights.matrix.metric')}</span>
         <span role="columnheader">{$_('insights.matrix.effect')}</span>
         <span role="columnheader">{$_('insights.matrix.confidence')}</span>
@@ -165,7 +226,7 @@
       {/each}
     </div>
   {:else}
-    <p class="insight-matrix__empty">{$_('insights.matrix.empty')}</p>
+    <p class="insight-matrix__empty">{$_('insights.matrix.empty_layer')}</p>
   {/if}
 </section>
 
@@ -181,6 +242,41 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
+  }
+
+  .insight-matrix__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .insight-matrix__layers {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    padding: 0.2rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+  }
+
+  .insight-matrix__layer {
+    min-height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+  }
+
+  .insight-matrix__layer--active {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
   }
 
   .insight-matrix__header h2,
@@ -246,8 +342,14 @@
   }
 
   @media (max-width: 520px) {
-    .insight-matrix__header {
+    .insight-matrix__header,
+    .insight-matrix__actions {
       flex-direction: column;
+      align-items: stretch;
+    }
+
+    .insight-matrix__layers {
+      justify-content: flex-start;
     }
   }
 </style>

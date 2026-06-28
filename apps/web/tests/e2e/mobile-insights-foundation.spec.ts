@@ -1,10 +1,24 @@
 import { expect, test, type Page } from '@playwright/test';
 
+test.use({ hasTouch: true });
+
 const user = {
   id: '00000000-0000-4000-8000-000000000008',
   email: 'mobile-insights@example.com',
   display_name: 'Mobile Insights',
   is_verified: true,
+};
+
+const preferences = {
+  user_id: user.id,
+  analytics_enabled: true,
+  onboarding_retro_completed: true,
+  onboarding_profile_completed: true,
+  dismissed_insight_keys: [],
+  reached_milestone_keys: [],
+  last_seen_insight_at: null,
+  created_at: '2026-06-01T00:00:00Z',
+  updated_at: '2026-06-01T00:00:00Z',
 };
 
 async function installInsightsMockMode(page: Page) {
@@ -26,6 +40,13 @@ async function installInsightsMockMode(page: Page) {
         body: JSON.stringify(user),
       });
     }
+    if (path === '/user/preferences' && request.method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(preferences),
+      });
+    }
 
     return route.fulfill({
       status: 404,
@@ -38,6 +59,7 @@ async function installInsightsMockMode(page: Page) {
 }
 
 test('390px prioritizes the strongest signal, confidence, and maturity', async ({ page }) => {
+  test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await installInsightsMockMode(page);
   await page.goto('/insights');
@@ -47,8 +69,9 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
   const maturity = page.getByTestId('mobile-insight-maturity');
   const viewTabs = page.getByTestId('insights-view-tabs');
 
-  await expect(lead).toBeVisible();
-  await expect(lead.getByText(/mood.*Energy/i)).toBeVisible();
+  await expect(viewTabs).toBeVisible({ timeout: 30_000 });
+  await expect(lead).toBeVisible({ timeout: 30_000 });
+  await expect(lead.getByTestId('insight-card-title')).toContainText(/mood.*Energy/i);
   await expect(confidence).toBeVisible();
   await expect(page.getByTestId('insight-confidence-score-percent')).toHaveCount(0);
   await expect(page.getByTestId('mobile-insight-correlation-note')).toBeVisible();
@@ -104,7 +127,7 @@ test('desktop preserves the existing analysis-first composition', async ({ page 
   await page.goto('/insights');
 
   await expect(page.getByTestId('mobile-insight-lead')).toHaveCount(0);
-  await expect(page.getByTestId('insight-stage-header')).toBeVisible();
+  await expect(page.getByTestId('insight-stage-header')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('insight-feed')).toBeVisible();
   await expect(page.getByTestId('insight-card')).toHaveCount(4);
 

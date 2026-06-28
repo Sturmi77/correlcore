@@ -23,6 +23,29 @@ from app.services.user_preferences_service import update_user_preferences
 
 _SUGGESTIONS: tuple[TagSuggestionGroup, ...] = (
     TagSuggestionGroup(
+        category=TagCategory.SPORT,
+        suggestions=[
+            TagSuggestion(
+                slug="running",
+                name="Running",
+                category=TagCategory.SPORT,
+                icon="footprints",
+            ),
+            TagSuggestion(
+                slug="strength-training",
+                name="Strength training",
+                category=TagCategory.SPORT,
+                icon="dumbbell",
+            ),
+            TagSuggestion(
+                slug="yoga",
+                name="Yoga",
+                category=TagCategory.SPORT,
+                icon="activity",
+            ),
+        ],
+    ),
+    TagSuggestionGroup(
         category=TagCategory.WORK,
         suggestions=[
             TagSuggestion(
@@ -111,6 +134,75 @@ _SUGGESTIONS: tuple[TagSuggestionGroup, ...] = (
                 name="PMS",
                 category=TagCategory.CYCLE,
                 icon="activity",
+            ),
+        ],
+    ),
+    TagSuggestionGroup(
+        category=TagCategory.LEISURE,
+        suggestions=[
+            TagSuggestion(
+                slug="reading",
+                name="Reading",
+                category=TagCategory.LEISURE,
+                icon="book-open",
+            ),
+            TagSuggestion(
+                slug="gaming",
+                name="Gaming",
+                category=TagCategory.LEISURE,
+                icon="gamepad-2",
+            ),
+            TagSuggestion(
+                slug="tv",
+                name="TV",
+                category=TagCategory.LEISURE,
+                icon="tv",
+            ),
+        ],
+    ),
+    TagSuggestionGroup(
+        category=TagCategory.CONSUMPTION,
+        suggestions=[
+            TagSuggestion(
+                slug="alcohol",
+                name="Alcohol",
+                category=TagCategory.CONSUMPTION,
+                icon="wine",
+            ),
+            TagSuggestion(
+                slug="caffeine",
+                name="Caffeine",
+                category=TagCategory.CONSUMPTION,
+                icon="coffee",
+            ),
+            TagSuggestion(
+                slug="sugar",
+                name="Sugar",
+                category=TagCategory.CONSUMPTION,
+                icon="cookie",
+            ),
+        ],
+    ),
+    TagSuggestionGroup(
+        category=TagCategory.OTHER,
+        suggestions=[
+            TagSuggestion(
+                slug="travel",
+                name="Travel",
+                category=TagCategory.OTHER,
+                icon="map",
+            ),
+            TagSuggestion(
+                slug="weather",
+                name="Weather",
+                category=TagCategory.OTHER,
+                icon="cloud",
+            ),
+            TagSuggestion(
+                slug="news",
+                name="News",
+                category=TagCategory.OTHER,
+                icon="newspaper",
             ),
         ],
     ),

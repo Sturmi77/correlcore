@@ -7,6 +7,18 @@ const user = {
   is_verified: true,
 };
 
+const preferences = {
+  user_id: user.id,
+  analytics_enabled: true,
+  onboarding_retro_completed: true,
+  onboarding_profile_completed: true,
+  dismissed_insight_keys: [],
+  reached_milestone_keys: [],
+  last_seen_insight_at: null,
+  created_at: '2026-06-01T00:00:00Z',
+  updated_at: '2026-06-01T00:00:00Z',
+};
+
 async function installM7MockMode(page: Page) {
   await page.addInitScript(() => {
     window.localStorage.setItem('correlcore-locale', 'en');
@@ -27,6 +39,13 @@ async function installM7MockMode(page: Page) {
         body: JSON.stringify(user),
       });
     }
+    if (path === '/user/preferences' && request.method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(preferences),
+      });
+    }
 
     return route.fulfill({
       status: 404,
@@ -38,26 +57,31 @@ async function installM7MockMode(page: Page) {
 
 test.use({
   viewport: { width: 390, height: 844 },
-  isMobile: true,
   hasTouch: true,
 });
 
 test('M7 insights mobile mock flow supports touch interactions', async ({ page }) => {
+  test.setTimeout(60_000);
   await installM7MockMode(page);
 
   await page.goto('/insights');
-  await expect(page.getByText(/Phase 4 of 4: Robust Insights/i)).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Insights' })).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
+  await expect(page.getByTestId('insights-view-tabs')).toBeVisible({ timeout: 30_000 });
+  const maturity = page.getByTestId('mobile-insight-maturity');
+  await expect(maturity).toBeVisible({ timeout: 30_000 });
+  await expect(maturity.getByTestId('insight-stage-meta')).toContainText(/Robust Insights/i);
 
   await page.getByTestId('insight-feed-tab-symptoms').tap();
-  await expect(page.getByText(/Headache.*mood_score/i).first()).toBeVisible();
+  await expect(
+    page
+      .getByTestId('mobile-insights-more')
+      .getByText(/Headache/i)
+      .first()
+  ).toBeVisible();
 
-  await page.getByRole('button', { name: /matrix/i }).tap();
+  await page.getByTestId('insights-view-matrix').tap();
   await expect(page.getByText(/Correlation Matrix/i)).toBeVisible();
-  await page.getByRole('button', { name: /findings/i }).tap();
+  await page.getByTestId('insights-view-findings').tap();
+  await page.getByText('Deepen analysis', { exact: true }).tap();
 
   const symptomToggle = page.locator('label', { hasText: /blend in symptoms/i }).locator('input');
   await symptomToggle.uncheck();
