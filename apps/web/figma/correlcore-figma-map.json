@@ -322,6 +322,8 @@
       "variants": ["State=Ready", "State=Loading"],
       "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
     },
+    {
+      "name": "SymptomChecker",
       "nodeId": "131:3914",
       "source": "apps/web/src/lib/components/entries/SymptomChecker.svelte",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-3914",
