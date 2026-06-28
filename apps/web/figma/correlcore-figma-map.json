@@ -15,7 +15,10 @@
     "correlcore-production-grade-sprint-f-2026-06-27-v1",
     "correlcore-dark-previews-all-sprints-2026-06-27-v1",
     "correlcore-production-grade-sprint-g-2026-06-27-v1",
-    "correlcore-production-grade-sprint-i-2026-06-27-v1"
+    "correlcore-production-grade-sprint-i-2026-06-27-v1",
+    "correlcore-sprint9-analytics-2026-06-28-v1",
+    "correlcore-sprint9-component-sets-2026-06-28-v1",
+    "correlcore-sprint9-dark-previews-2026-06-28-v1"
   ],
   "themeReference": {
     "name": "Theme Reference / Dark",
@@ -171,7 +174,7 @@
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-55",
       "status": "created",
       "codeConnectTemplate": "components/InsightCard.figma.ts",
-      "variants": ["State=Ready", "State=Loading", "State=Empty", "State=Error"]
+      "variants": ["State=Ready", "State=Loading", "State=Empty", "State=Error", "State=Confounded"]
     },
     {
       "name": "InsightStageHeader",
@@ -211,6 +214,113 @@
       "codeConnectTemplate": "components/InsightMatrix.figma.ts",
       "variants": ["Variant=List", "Variant=Chart"],
       "runId": "correlcore-production-grade-sprint-g-2026-06-27-v1"
+    },
+    {
+      "name": "TagGroupsSection",
+      "nodeId": "144:59",
+      "source": "apps/web/src/lib/components/insights/TagGroupsSection.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-59",
+      "status": "created",
+      "codeConnectTemplate": "components/TagGroupsSection.figma.ts",
+      "variants": [
+        "Kind=TagsOnly, State=Ready",
+        "Kind=Mixed, State=Ready",
+        "Kind=Mixed, State=Insufficient",
+        "Kind=Mixed, State=Loading"
+      ],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "SymptomCooccurrenceDetailSheet",
+      "nodeId": "144:97",
+      "source": "apps/web/src/lib/components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-97",
+      "status": "created",
+      "codeConnectTemplate": "components/SymptomCooccurrenceDetailSheet.figma.ts",
+      "variants": ["Confounder=None", "Confounder=Weekday"],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "SymptomCooccurrenceHeatmap",
+      "nodeId": "144:3995",
+      "source": "apps/web/src/lib/components/insights/symptoms/SymptomCooccurrenceHeatmap.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-3995",
+      "status": "created",
+      "codeConnectTemplate": "components/SymptomCooccurrenceHeatmap.figma.ts",
+      "variants": [
+        "Phase=Early, Sort=Alphabetical",
+        "Phase=Provisional, Sort=Alphabetical",
+        "Phase=Robust, Sort=Alphabetical",
+        "Phase=Robust, Sort=Clustered"
+      ],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "TagCooccurrenceHeatmap",
+      "nodeId": "144:4086",
+      "source": "apps/web/src/lib/components/insights/TagCooccurrenceHeatmap.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-4086",
+      "status": "created",
+      "codeConnectTemplate": "components/TagCooccurrenceHeatmap.figma.ts",
+      "variants": [
+        "Range=30D, Sort=Alphabetical",
+        "Range=30D, Sort=Clustered",
+        "Range=90D, Sort=Alphabetical",
+        "Range=90D, Sort=Clustered",
+        "Range=1Y, Sort=Alphabetical",
+        "Range=1Y, Sort=Clustered"
+      ],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "SymptomCalendarHeatmap",
+      "nodeId": "144:4120",
+      "source": "apps/web/src/lib/components/insights/symptoms/SymptomCalendarHeatmap.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-4120",
+      "status": "created",
+      "codeConnectTemplate": "components/SymptomCalendarHeatmap.figma.ts",
+      "variants": ["Phase=Early", "Phase=Provisional", "Phase=Robust"],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "EntryHistorySheet",
+      "nodeId": "144:4145",
+      "source": "apps/web/src/lib/components/trends/EntryHistorySheet.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-4145",
+      "status": "created",
+      "codeConnectTemplate": "components/EntryHistorySheet.figma.ts",
+      "variants": ["State=Ready", "State=Loading", "State=Empty", "State=Error"],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "CooccurrenceEntrySheet",
+      "nodeId": "144:4169",
+      "source": "apps/web/src/lib/components/insights/CooccurrenceEntrySheet.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-4169",
+      "status": "created",
+      "codeConnectTemplate": "components/CooccurrenceEntrySheet.figma.ts",
+      "variants": ["State=Ready", "State=Loading", "State=Empty"],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "SymptomTrendOverlay",
+      "nodeId": "144:4189",
+      "source": "apps/web/src/lib/components/insights/symptoms/SymptomTrendOverlay.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=144-4189",
+      "status": "created",
+      "codeConnectTemplate": "components/SymptomTrendOverlay.figma.ts",
+      "variants": ["Phase=Early", "Phase=Provisional"],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
+    },
+    {
+      "name": "SymptomAnalyticsSection",
+      "nodeId": "146:4151",
+      "source": "apps/web/src/lib/components/insights/symptoms/SymptomAnalyticsSection.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=146-4151",
+      "status": "created",
+      "codeConnectTemplate": "components/SymptomAnalyticsSection.figma.ts",
+      "variants": ["State=Ready", "State=Loading"],
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1"
     },
     {
       "name": "SymptomChecker",
@@ -423,6 +533,42 @@
           "nodeId": "121:2781",
           "screenSizePx": "430x932",
           "runId": "correlcore-production-grade-sprint-f-2026-06-27-v1"
+        }
+      ]
+    },
+    {
+      "name": "Web Insights / Sprint 9 Analytics Flow",
+      "nodeId": "141:3841",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=141-3841",
+      "status": "implemented-sprint9-component-sets",
+      "runId": "correlcore-sprint9-component-sets-2026-06-28-v1",
+      "darkModePreviews": {
+        "nodeId": "146:3983",
+        "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=146-3983",
+        "screenCount": 4,
+        "runId": "correlcore-sprint9-dark-previews-2026-06-28-v1"
+      },
+      "layoutBoardWidthPx": 3600,
+      "children": [
+        {
+          "name": "Web / Insights / Sprint 9 / Analytics Expanded",
+          "nodeId": "141:3915",
+          "screenSizePx": "1280x960"
+        },
+        {
+          "name": "Mobile / Insights / Sprint 9 / Detail Sheet",
+          "nodeId": "141:3968",
+          "screenSizePx": "390x844"
+        },
+        {
+          "name": "Mobile / Insights / Sprint 9 / Entry History",
+          "nodeId": "141:3990",
+          "screenSizePx": "390x844"
+        },
+        {
+          "name": "Web / Insights / Sprint 9 / Symptom Analytics",
+          "nodeId": "146:4289",
+          "screenSizePx": "1280x1100"
         }
       ]
     },

@@ -135,10 +135,22 @@ class SymptomTagCooccurrenceResponse(BaseModel):
     cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
 
 
+class TagClusterMember(BaseModel):
+    kind: Literal["tag", "symptom"]
+    signal_id: uuid.UUID
+    slug: str
+    name: str
+    icon: str | None = None
+    category: str | None = None
+    color: str | None = None
+
+
 class TagClusterGroup(BaseModel):
     cluster_id: int = Field(ge=1)
     label: str
     tags: list[TagCooccurrenceTagRef] = Field(default_factory=list)
+    members: list[TagClusterMember] = Field(default_factory=list)
+    cluster_kind: Literal["tags_only", "mixed"] = "tags_only"
     strength: float = Field(ge=0, le=1)
 
 
@@ -146,7 +158,9 @@ class TagClustersResponse(BaseModel):
     status: Literal["ok", "insufficient_data"]
     entry_count: int = Field(ge=0)
     active_tag_count: int = Field(ge=0)
+    active_signal_count: int = Field(ge=0)
     window_days: int = Field(ge=1)
     k: int | None = Field(default=None, ge=1)
     reason: str | None = None
+    cluster_kind: Literal["tags_only", "mixed"] = "tags_only"
     clusters: list[TagClusterGroup] = Field(default_factory=list)

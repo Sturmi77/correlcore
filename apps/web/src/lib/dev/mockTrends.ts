@@ -72,6 +72,10 @@ export const mockSymptomHeatmap: SymptomHeatmapResponse = {
       name: 'Fatigue',
       icon: 'battery-low',
       days: [
+        { date: shiftIsoDate(today, -20), count: 1, max_intensity: 1 },
+        { date: shiftIsoDate(today, -16), count: 1, max_intensity: 2 },
+        { date: shiftIsoDate(today, -12), count: 1, max_intensity: 1 },
+        { date: shiftIsoDate(today, -9), count: 1, max_intensity: 2 },
         { date: shiftIsoDate(today, -6), count: 1, max_intensity: 1 },
         { date: shiftIsoDate(today, -3), count: 1, max_intensity: 2 },
         { date: today, count: 1, max_intensity: 1 },
@@ -83,6 +87,10 @@ export const mockSymptomHeatmap: SymptomHeatmapResponse = {
       name: 'Headache',
       icon: 'activity',
       days: [
+        { date: shiftIsoDate(today, -18), count: 1, max_intensity: 2 },
+        { date: shiftIsoDate(today, -14), count: 1, max_intensity: 1 },
+        { date: shiftIsoDate(today, -11), count: 1, max_intensity: 3 },
+        { date: shiftIsoDate(today, -8), count: 1, max_intensity: 1 },
         { date: shiftIsoDate(today, -4), count: 1, max_intensity: 3 },
         { date: shiftIsoDate(today, -2), count: 1, max_intensity: 1 },
       ],
@@ -377,13 +385,16 @@ export const mockTagClusters: TagClustersResponse = {
   status: 'ok',
   entry_count: 96,
   active_tag_count: 6,
+  active_signal_count: 7,
   window_days: 90,
   k: 3,
   reason: null,
+  cluster_kind: 'mixed',
   clusters: [
     {
       cluster_id: 1,
-      label: 'Tag group 1',
+      label: 'Signal group 1',
+      cluster_kind: 'mixed',
       strength: 0.72,
       tags: [
         {
@@ -395,22 +406,69 @@ export const mockTagClusters: TagClustersResponse = {
         },
         { tag_id: 'mock-tag-read', slug: 'read', name: 'Read', category: 'leisure', color: null },
       ],
+      members: [
+        {
+          kind: 'tag',
+          signal_id: 'mock-tag-focus',
+          slug: 'focus',
+          name: 'Focus work',
+          category: 'work',
+          color: null,
+        },
+        {
+          kind: 'tag',
+          signal_id: 'mock-tag-read',
+          slug: 'read',
+          name: 'Read',
+          category: 'leisure',
+          color: null,
+        },
+        {
+          kind: 'symptom',
+          signal_id: 'mock-symptom-headache',
+          slug: 'headache',
+          name: 'Headache',
+          icon: '🤕',
+        },
+      ],
     },
     {
       cluster_id: 2,
-      label: 'Tag group 2',
+      label: 'Signal group 2',
+      cluster_kind: 'mixed',
       strength: 0.64,
       tags: [
         { tag_id: 'mock-tag-walk', slug: 'walk', name: 'Walk', category: 'sport', color: null },
       ],
+      members: [
+        {
+          kind: 'tag',
+          signal_id: 'mock-tag-walk',
+          slug: 'walk',
+          name: 'Walk',
+          category: 'sport',
+          color: null,
+        },
+      ],
     },
     {
       cluster_id: 3,
-      label: 'Tag group 3',
+      label: 'Signal group 3',
+      cluster_kind: 'mixed',
       strength: 0.58,
       tags: [
         {
           tag_id: 'mock-tag-coffee',
+          slug: 'coffee',
+          name: 'Coffee',
+          category: 'consumption',
+          color: null,
+        },
+      ],
+      members: [
+        {
+          kind: 'tag',
+          signal_id: 'mock-tag-coffee',
           slug: 'coffee',
           name: 'Coffee',
           category: 'consumption',

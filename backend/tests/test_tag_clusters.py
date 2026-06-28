@@ -82,6 +82,7 @@ def test_tag_clusters_group_tags_from_jaccard_vectors() -> None:
     assert response.status == "ok"
     assert response.k is not None
     assert response.active_tag_count == 6
+    assert response.active_signal_count == 6
     assert response.entry_count == 100
     assert sum(len(cluster.tags) for cluster in response.clusters) == 6
     assert all(
@@ -98,7 +99,12 @@ async def test_recompute_tag_vectors_upserts_vectors() -> None:
     tag_rows = [(row.entry_date, tags_by_id[tag_id]) for row in daily for tag_id in row.tag_ids]
     db = MagicMock()
     db.execute = AsyncMock(
-        side_effect=[_scalar_result(entries), _row_result(tag_rows), *[MagicMock() for _ in tags]]
+        side_effect=[
+            _scalar_result(entries),
+            _row_result(tag_rows),
+            _row_result([]),
+            *[MagicMock() for _ in tags],
+        ]
     )
 
     response = await recompute_tag_vectors_and_clusters(
@@ -108,7 +114,7 @@ async def test_recompute_tag_vectors_upserts_vectors() -> None:
     )
 
     assert response.status == "ok"
-    assert db.execute.await_count == 2 + len(tags)
+    assert db.execute.await_count == 3 + len(tags)
 
 
 @pytest.mark.asyncio
@@ -134,7 +140,12 @@ async def test_recompute_tag_vectors_canonicalizes_tag_overrides() -> None:
 
     db = MagicMock()
     db.execute = AsyncMock(
-        side_effect=[_scalar_result(entries), _row_result(tag_rows), *[MagicMock() for _ in tags]]
+        side_effect=[
+            _scalar_result(entries),
+            _row_result(tag_rows),
+            _row_result([]),
+            *[MagicMock() for _ in tags],
+        ]
     )
 
     response = await recompute_tag_vectors_and_clusters(
@@ -144,7 +155,7 @@ async def test_recompute_tag_vectors_canonicalizes_tag_overrides() -> None:
     )
 
     assert response.active_tag_count == len(tags)
-    upsert_params = [call.args[1] for call in db.execute.await_args_list[2:]]
+    upsert_params = [call.args[1] for call in db.execute.await_args_list[3:]]
     assert {params["tag_id"] for params in upsert_params} == {tag.id for tag in tags}
     assert default_focus.id not in {params["tag_id"] for params in upsert_params}
 
@@ -161,6 +172,7 @@ async def test_get_tag_clusters_skips_recompute_when_analytics_disabled() -> Non
     assert response.reason == "analytics_disabled"
     assert response.entry_count == 0
     assert response.active_tag_count == 0
+    assert response.active_signal_count == 0
     assert response.clusters == []
     assert db.execute.await_count == 1
 
@@ -174,6 +186,7 @@ async def test_tag_clusters_endpoint_returns_response(
         status="insufficient_data",
         entry_count=12,
         active_tag_count=3,
+        active_signal_count=3,
         window_days=90,
         reason="entry_count_below_90",
         clusters=[],

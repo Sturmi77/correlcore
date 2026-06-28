@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
+from typing import Literal
 
 import numpy as np
 from sklearn.cluster import KMeans
@@ -17,14 +18,21 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
+from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
 from app.models.user_preference import UserPreference
-from app.schemas.stats import TagClusterGroup, TagClustersResponse, TagCooccurrenceTagRef
+from app.schemas.stats import (
+    TagClusterGroup,
+    TagClusterMember,
+    TagClustersResponse,
+    TagCooccurrenceTagRef,
+)
 from app.services.tag_service import active_tag_predicate
 
 TAG_CLUSTER_WINDOW_DAYS = 90
 MIN_TAG_CLUSTER_ENTRIES = 90
 MIN_TAG_CLUSTER_ACTIVE_TAGS = 5
+MIN_SIGNAL_CLUSTER_NODES = 5
 MIN_TAG_CLUSTER_K = 3
 MAX_TAG_CLUSTER_K = 6
 
@@ -33,6 +41,18 @@ MAX_TAG_CLUSTER_K = 6
 class DailyTagSet:
     entry_date: date_type
     tag_ids: frozenset[uuid.UUID]
+    symptom_ids: frozenset[uuid.UUID] = frozenset()
+
+
+@dataclass(frozen=True)
+class SignalNode:
+    kind: str
+    node_id: uuid.UUID
+    slug: str
+    name: str
+    icon: str | None = None
+    category: str | None = None
+    color: str | None = None
 
 
 @dataclass(frozen=True)
@@ -40,6 +60,7 @@ class TagVectorSet:
     daily_entries: tuple[DailyTagSet, ...]
     tags: tuple[Tag, ...]
     vectors: dict[uuid.UUID, tuple[float, ...]]
+    nodes: tuple[SignalNode, ...] = ()
 
     @property
     def entry_count(self) -> int:
@@ -48,6 +69,10 @@ class TagVectorSet:
     @property
     def active_tag_count(self) -> int:
         return len(self.tags)
+
+    @property
+    def active_signal_count(self) -> int:
+        return len(self.nodes) if self.nodes else len(self.tags)
 
 
 def _today() -> date_type:
@@ -82,10 +107,30 @@ def _canonicalize_tags_by_slug(
     return tag_aliases, tags_by_id
 
 
+def _canonicalize_symptoms_by_slug(
+    symptoms_by_slug: dict[str, list[Symptom]],
+) -> tuple[dict[uuid.UUID, uuid.UUID], dict[uuid.UUID, Symptom]]:
+    canonical_symptoms_by_slug = {
+        slug: sorted(
+            symptoms,
+            key=lambda item: (item.is_default, item.display_name.casefold(), str(item.id)),
+        )[0]
+        for slug, symptoms in symptoms_by_slug.items()
+    }
+    symptom_aliases = {
+        symptom.id: canonical_symptoms_by_slug[symptom.slug].id
+        for symptoms in symptoms_by_slug.values()
+        for symptom in symptoms
+    }
+    symptoms_by_id = {symptom.id: symptom for symptom in canonical_symptoms_by_slug.values()}
+    return symptom_aliases, symptoms_by_id
+
+
 def _insufficient(
     *,
     entry_count: int,
     active_tag_count: int,
+    active_signal_count: int,
     reason: str,
     window_days: int,
 ) -> TagClustersResponse:
@@ -93,27 +138,71 @@ def _insufficient(
         status="insufficient_data",
         entry_count=entry_count,
         active_tag_count=active_tag_count,
+        active_signal_count=active_signal_count,
         window_days=window_days,
         reason=reason,
         clusters=[],
     )
 
 
+def _member_from_node(node: SignalNode) -> TagClusterMember:
+    return TagClusterMember(
+        kind="tag" if node.kind == "tag" else "symptom",
+        signal_id=node.node_id,
+        slug=node.slug,
+        name=node.name,
+        icon=node.icon,
+        category=node.category,
+        color=node.color,
+    )
+
+
 def build_tag_vectors(
     daily_entries: Sequence[DailyTagSet],
     tags: Sequence[Tag],
+    symptoms: Sequence[Symptom] = (),
 ) -> TagVectorSet:
-    """Build one Jaccard co-occurrence vector per active tag."""
+    """Build one Jaccard co-occurrence vector per active tag and symptom."""
 
-    ordered_tags = tuple(sorted(tags, key=lambda tag: (tag.slug, str(tag.id))))
-    ordered_ids = [tag.id for tag in ordered_tags]
-    tag_counts = {
-        tag_id: sum(1 for entry in daily_entries if tag_id in entry.tag_ids)
-        for tag_id in ordered_ids
+    tag_nodes = tuple(
+        SignalNode(
+            kind="tag",
+            node_id=tag.id,
+            slug=tag.slug,
+            name=tag.name,
+            category=tag.category.value if hasattr(tag.category, "value") else str(tag.category),
+            color=tag.color,
+        )
+        for tag in sorted(tags, key=lambda item: (item.slug, str(item.id)))
+    )
+    symptom_nodes = tuple(
+        SignalNode(
+            kind="symptom",
+            node_id=symptom.id,
+            slug=symptom.slug,
+            name=symptom.display_name,
+            icon=symptom.icon,
+        )
+        for symptom in sorted(symptoms, key=lambda item: (item.slug, str(item.id)))
+    )
+    nodes = tag_nodes + symptom_nodes
+    ordered_ids = [node.node_id for node in nodes]
+    signal_counts = {
+        node_id: sum(
+            1 for entry in daily_entries if node_id in entry.tag_ids or node_id in entry.symptom_ids
+        )
+        for node_id in ordered_ids
     }
     pair_counts: dict[tuple[uuid.UUID, uuid.UUID], int] = defaultdict(int)
     for entry in daily_entries:
-        present = sorted(entry.tag_ids & set(ordered_ids), key=str)
+        present = sorted(
+            {
+                node_id
+                for node_id in ordered_ids
+                if node_id in entry.tag_ids or node_id in entry.symptom_ids
+            },
+            key=str,
+        )
         for index, left in enumerate(present):
             for right in present[index + 1 :]:
                 pair_counts[(left, right)] += 1
@@ -127,14 +216,15 @@ def build_tag_vectors(
                 row.append(1.0)
                 continue
             co_count = pair_counts.get((left_id, right_id), 0)
-            union_count = tag_counts[left_id] + tag_counts[right_id] - co_count
+            union_count = signal_counts[left_id] + signal_counts[right_id] - co_count
             row.append(round(co_count / union_count, 6) if union_count else 0.0)
         vectors[left_id] = tuple(row)
 
     return TagVectorSet(
         daily_entries=tuple(daily_entries),
-        tags=ordered_tags,
+        tags=tuple(sorted(tags, key=lambda tag: (tag.slug, str(tag.id)))),
         vectors=vectors,
+        nodes=nodes,
     )
 
 
@@ -180,57 +270,88 @@ def build_tag_cluster_response(
     *,
     window_days: int = TAG_CLUSTER_WINDOW_DAYS,
 ) -> TagClustersResponse:
-    """Cluster tag vectors with k-means or return an insufficient-data response."""
+    """Cluster signal vectors with k-means or return an insufficient-data response."""
 
+    active_signal_count = vector_set.active_signal_count
     if vector_set.entry_count < MIN_TAG_CLUSTER_ENTRIES:
         return _insufficient(
             entry_count=vector_set.entry_count,
             active_tag_count=vector_set.active_tag_count,
+            active_signal_count=active_signal_count,
             reason="entry_count_below_90",
             window_days=window_days,
         )
-    if vector_set.active_tag_count < MIN_TAG_CLUSTER_ACTIVE_TAGS:
+    if active_signal_count < MIN_SIGNAL_CLUSTER_NODES:
         return _insufficient(
             entry_count=vector_set.entry_count,
             active_tag_count=vector_set.active_tag_count,
-            reason="active_tag_count_below_5",
+            active_signal_count=active_signal_count,
+            reason="active_signal_count_below_5",
             window_days=window_days,
         )
 
-    tag_ids = [tag.id for tag in vector_set.tags]
-    matrix = np.array([vector_set.vectors[tag_id] for tag_id in tag_ids], dtype=float)
-    k = _choose_cluster_count(matrix, tag_count=len(tag_ids))
+    nodes = vector_set.nodes or tuple(
+        SignalNode(
+            kind="tag",
+            node_id=tag.id,
+            slug=tag.slug,
+            name=tag.name,
+            category=tag.category.value if hasattr(tag.category, "value") else str(tag.category),
+            color=tag.color,
+        )
+        for tag in vector_set.tags
+    )
+    node_ids = [node.node_id for node in nodes]
+    matrix = np.array([vector_set.vectors[node_id] for node_id in node_ids], dtype=float)
+    k = _choose_cluster_count(matrix, tag_count=len(node_ids))
     if k is None:
         return _insufficient(
             entry_count=vector_set.entry_count,
             active_tag_count=vector_set.active_tag_count,
+            active_signal_count=active_signal_count,
             reason="not_enough_vector_variance",
             window_days=window_days,
         )
 
     labels = KMeans(n_clusters=k, random_state=0, n_init=10).fit_predict(matrix)
+    nodes_by_id = {node.node_id: node for node in nodes}
     tags_by_id = {tag.id: tag for tag in vector_set.tags}
-    tag_index = {tag_id: index for index, tag_id in enumerate(tag_ids)}
+    node_index = {node_id: index for index, node_id in enumerate(node_ids)}
     grouped: dict[int, list[uuid.UUID]] = defaultdict(list)
-    for tag_id, label in zip(tag_ids, labels, strict=True):
-        grouped[int(label)].append(tag_id)
+    for node_id, label in zip(node_ids, labels, strict=True):
+        grouped[int(label)].append(node_id)
 
+    has_symptoms = any(node.kind == "symptom" for node in nodes)
+    cluster_kind: Literal["tags_only", "mixed"] = "mixed" if has_symptoms else "tags_only"
     clusters: list[TagClusterGroup] = []
-    for ordinal, (_, cluster_tag_ids) in enumerate(
+    for ordinal, (_, cluster_node_ids) in enumerate(
         sorted(
             grouped.items(),
-            key=lambda item: (-len(item[1]), min(tags_by_id[tag_id].slug for tag_id in item[1])),
+            key=lambda item: (
+                -len(item[1]),
+                min(nodes_by_id[node_id].slug for node_id in item[1]),
+            ),
         ),
         start=1,
     ):
-        ordered_cluster_ids = sorted(cluster_tag_ids, key=lambda tag_id: tags_by_id[tag_id].slug)
-        cluster_tags = [_tag_ref(tags_by_id[tag_id]) for tag_id in ordered_cluster_ids]
+        ordered_cluster_ids = sorted(
+            cluster_node_ids, key=lambda node_id: nodes_by_id[node_id].slug
+        )
+        members = [_member_from_node(nodes_by_id[node_id]) for node_id in ordered_cluster_ids]
+        cluster_tags = [
+            _tag_ref(tags_by_id[node_id])
+            for node_id in ordered_cluster_ids
+            if node_id in tags_by_id
+        ]
+        label_prefix = "Signal group" if cluster_kind == "mixed" else "Tag group"
         clusters.append(
             TagClusterGroup(
                 cluster_id=ordinal,
-                label=f"Tag group {ordinal}",
+                label=f"{label_prefix} {ordinal}",
                 tags=cluster_tags,
-                strength=_cluster_strength(ordered_cluster_ids, vector_set.vectors, tag_index),
+                members=members,
+                cluster_kind=cluster_kind,
+                strength=_cluster_strength(ordered_cluster_ids, vector_set.vectors, node_index),
             )
         )
 
@@ -238,8 +359,10 @@ def build_tag_cluster_response(
         status="ok",
         entry_count=vector_set.entry_count,
         active_tag_count=vector_set.active_tag_count,
+        active_signal_count=active_signal_count,
         window_days=window_days,
         k=k,
+        cluster_kind=cluster_kind,
         clusters=clusters,
     )
 
@@ -277,26 +400,55 @@ async def _load_tag_vector_inputs(
         .order_by(Entry.entry_date.asc(), Tag.slug.asc())
     )
 
+    symptom_result = await db.execute(
+        select(Entry.entry_date, Symptom)
+        .join(EntrySymptom, EntrySymptom.entry_id == Entry.id)
+        .join(Symptom, Symptom.id == EntrySymptom.symptom_id)
+        .where(
+            Entry.user_id == user_id,
+            EntrySymptom.user_id == user_id,
+            EntrySymptom.intensity > 0,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= as_of,
+        )
+        .order_by(Entry.entry_date.asc(), Symptom.slug.asc())
+    )
+
     raw_tag_ids_by_date: dict[date_type, set[uuid.UUID]] = defaultdict(set)
+    raw_symptom_ids_by_date: dict[date_type, set[uuid.UUID]] = defaultdict(set)
     tags_by_slug: dict[str, list[Tag]] = defaultdict(list)
+    symptoms_by_slug: dict[str, list[Symptom]] = defaultdict(list)
     for entry_date, tag in tag_result.all():
         raw_tag_ids_by_date[entry_date].add(tag.id)
         tags_by_slug[tag.slug].append(tag)
+    for entry_date, symptom in symptom_result.all():
+        raw_symptom_ids_by_date[entry_date].add(symptom.id)
+        symptoms_by_slug[symptom.slug].append(symptom)
 
     tag_aliases, tags_by_id = _canonicalize_tags_by_slug(tags_by_slug)
+    symptom_aliases, symptoms_by_id = _canonicalize_symptoms_by_slug(symptoms_by_slug)
     tag_ids_by_date = {
         entry_date: {tag_aliases.get(tag_id, tag_id) for tag_id in tag_ids}
         for entry_date, tag_ids in raw_tag_ids_by_date.items()
+    }
+    symptom_ids_by_date = {
+        entry_date: {symptom_aliases.get(symptom_id, symptom_id) for symptom_id in symptom_ids}
+        for entry_date, symptom_ids in raw_symptom_ids_by_date.items()
     }
 
     daily_entries = [
         DailyTagSet(
             entry_date=entry_date,
             tag_ids=frozenset(tag_ids_by_date.get(entry_date, set())),
+            symptom_ids=frozenset(symptom_ids_by_date.get(entry_date, set())),
         )
         for entry_date in sorted({entry.entry_date for entry in entries})
     ]
-    return build_tag_vectors(daily_entries, list(tags_by_id.values()))
+    return build_tag_vectors(
+        daily_entries,
+        list(tags_by_id.values()),
+        list(symptoms_by_id.values()),
+    )
 
 
 async def _upsert_tag_vectors(
@@ -347,6 +499,8 @@ async def _upsert_tag_vectors(
         """
     )
     for tag_id, vector in vector_set.vectors.items():
+        if tag_id not in {tag.id for tag in vector_set.tags}:
+            continue
         await db.execute(
             stmt,
             {
@@ -402,6 +556,7 @@ async def get_tag_clusters(
         return _insufficient(
             entry_count=0,
             active_tag_count=0,
+            active_signal_count=0,
             reason="analytics_disabled",
             window_days=TAG_CLUSTER_WINDOW_DAYS,
         )

@@ -211,8 +211,10 @@ jobs:
         run: |
           uv run --python 3.12 alembic -c migrations/alembic.ini downgrade base
           uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
+          uv run --python 3.12 pytest tests/test_m7_qa_seed_integration.py -q --no-cov
         env:
           APP_ENV: test
+          CORRELCORE_RUN_INTEGRATION: '1'
           DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'

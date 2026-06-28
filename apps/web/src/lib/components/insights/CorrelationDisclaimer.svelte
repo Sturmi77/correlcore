@@ -162,6 +162,16 @@
             {$_('insights.disclaimer.section4_body')}
           </p>
         </section>
+
+        <!-- Section 5: Symptom co-occurrence / Lift -->
+        <section class="cd-section" data-testid="cd-section-5">
+          <h3 class="cd-section-title">
+            {$_('insights.disclaimer.section5_title')}
+          </h3>
+          <p class="cd-section-body">
+            {$_('insights.disclaimer.section5_body')}
+          </p>
+        </section>
       </div>
 
       <div class="cd-footer">

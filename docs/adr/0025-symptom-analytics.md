@@ -1,12 +1,12 @@
 # ADR-0025: Symptom Analytics — Univariate, Co-Occurrence, Multivariate
 
-| Field        | Value                              |
-| ------------ | ---------------------------------- |
-| **ID**       | 0025                               |
-| **Date**     | 2026-05-19                         |
-| **Status**   | Proposed                           |
-| **Deciders** | @Sturmi77                          |
-| **Area**     | Insights / Engine / Frontend / API |
+| Field        | Value                                                   |
+| ------------ | ------------------------------------------------------- |
+| **ID**       | 0025                                                    |
+| **Date**     | 2026-05-19                                              |
+| **Status**   | Accepted (2026-06-28; M7 Sprints 1–2 shipped on `main`) |
+| **Deciders** | @Sturmi77                                               |
+| **Area**     | Insights / Engine / Frontend / API                      |
 
 ---
 

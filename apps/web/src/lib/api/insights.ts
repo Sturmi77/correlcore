@@ -83,10 +83,22 @@ export interface TagCooccurrenceQuery {
   min_count?: number;
 }
 
+export interface TagClusterMember {
+  kind: 'tag' | 'symptom';
+  signal_id: string;
+  slug: string;
+  name: string;
+  icon?: string | null;
+  category?: string | null;
+  color?: string | null;
+}
+
 export interface TagClusterGroup {
   cluster_id: number;
   label: string;
   tags: TagCooccurrenceTagRef[];
+  members: TagClusterMember[];
+  cluster_kind: 'tags_only' | 'mixed';
   strength: number;
 }
 
@@ -94,9 +106,11 @@ export interface TagClustersResponse {
   status: 'ok' | 'insufficient_data';
   entry_count: number;
   active_tag_count: number;
+  active_signal_count: number;
   window_days: number;
   k: number | null;
   reason: string | null;
+  cluster_kind: 'tags_only' | 'mixed';
   clusters: TagClusterGroup[];
 }
 

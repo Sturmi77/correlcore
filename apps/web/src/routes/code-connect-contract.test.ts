@@ -122,4 +122,91 @@ describe('Code Connect template contract', () => {
     );
     expect(readFileSync(component, 'utf8')).toContain('export let insights');
   });
+
+  it('maps TagGroupsSection to an importable implementation', () => {
+    const source = readFileSync(resolve(templateDir, 'TagGroupsSection.figma.ts'), 'utf8');
+    const component = resolve('src/lib/components/insights/TagGroupsSection.svelte');
+
+    expect(source).toContain(
+      '// source=apps/web/src/lib/components/insights/TagGroupsSection.svelte'
+    );
+    expect(source).toContain(
+      'import TagGroupsSection from "$lib/components/insights/TagGroupsSection.svelte";'
+    );
+    expect(readFileSync(component, 'utf8')).toContain('export let data');
+  });
+
+  it('maps SymptomCooccurrenceDetailSheet to an importable implementation', () => {
+    const source = readFileSync(
+      resolve(templateDir, 'SymptomCooccurrenceDetailSheet.figma.ts'),
+      'utf8'
+    );
+    const component = resolve(
+      'src/lib/components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte'
+    );
+
+    expect(source).toContain(
+      'import SymptomCooccurrenceDetailSheet from "$lib/components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte";'
+    );
+    expect(readFileSync(component, 'utf8')).toContain('export let open');
+  });
+
+  it('maps SymptomCooccurrenceHeatmap to an importable implementation', () => {
+    const source = readFileSync(
+      resolve(templateDir, 'SymptomCooccurrenceHeatmap.figma.ts'),
+      'utf8'
+    );
+    const component = resolve(
+      'src/lib/components/insights/symptoms/SymptomCooccurrenceHeatmap.svelte'
+    );
+
+    expect(source).toContain(
+      '// source=apps/web/src/lib/components/insights/symptoms/SymptomCooccurrenceHeatmap.svelte'
+    );
+    expect(source).toContain(
+      'import SymptomCooccurrenceHeatmap from "$lib/components/insights/symptoms/SymptomCooccurrenceHeatmap.svelte";'
+    );
+    expect(readFileSync(component, 'utf8')).toContain('export let data');
+  });
+
+  it('maps TagCooccurrenceHeatmap to an importable implementation', () => {
+    const source = readFileSync(resolve(templateDir, 'TagCooccurrenceHeatmap.figma.ts'), 'utf8');
+    const component = resolve('src/lib/components/insights/TagCooccurrenceHeatmap.svelte');
+
+    expect(source).toContain(
+      '// source=apps/web/src/lib/components/insights/TagCooccurrenceHeatmap.svelte'
+    );
+    expect(source).toContain(
+      'import TagCooccurrenceHeatmap from "$lib/components/insights/TagCooccurrenceHeatmap.svelte";'
+    );
+    expect(readFileSync(component, 'utf8')).toContain('export let data');
+  });
+
+  it('maps EntryHistorySheet to an importable implementation', () => {
+    const source = readFileSync(resolve(templateDir, 'EntryHistorySheet.figma.ts'), 'utf8');
+    const component = resolve('src/lib/components/trends/EntryHistorySheet.svelte');
+
+    expect(source).toContain(
+      '// source=apps/web/src/lib/components/trends/EntryHistorySheet.svelte'
+    );
+    expect(source).toContain(
+      'import EntryHistorySheet from "$lib/components/trends/EntryHistorySheet.svelte";'
+    );
+    expect(readFileSync(component, 'utf8')).toContain('export let open');
+  });
+
+  it('maps SymptomAnalyticsSection to an importable implementation', () => {
+    const source = readFileSync(resolve(templateDir, 'SymptomAnalyticsSection.figma.ts'), 'utf8');
+    const component = resolve(
+      'src/lib/components/insights/symptoms/SymptomAnalyticsSection.svelte'
+    );
+
+    expect(source).toContain(
+      '// source=apps/web/src/lib/components/insights/symptoms/SymptomAnalyticsSection.svelte'
+    );
+    expect(source).toContain(
+      'import SymptomAnalyticsSection from "$lib/components/insights/symptoms/SymptomAnalyticsSection.svelte";'
+    );
+    expect(readFileSync(component, 'utf8')).toContain('export let heatmap');
+  });
 });

@@ -232,4 +232,18 @@ describe('InsightCard', () => {
     await fireEvent.click(screen.getByTestId('insight-card-retry'));
     expect(handler).toHaveBeenCalledOnce();
   });
+
+  it('renders confounded variant with explanatory subtitle', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...INSIGHT,
+          payload: { ...INSIGHT.payload, confounder: 'weekday' },
+        },
+      },
+    });
+
+    expect(screen.getByTestId('insight-card-confounder')).toBeTruthy();
+    expect(screen.getByTestId('insight-card').className).toContain('insight-card--confounded');
+  });
 });

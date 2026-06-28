@@ -36,7 +36,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M3.7** — Color system hardening: complete semantic tokens, legacy primary alias cleanup, ADR-0027 contrast gate, light-mode QA documentation, and Web CI integration. Release-complete locally after rendered QA on 2026-05-28. See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).
 - [x] **M4 (partial)** — Quick wins + PWA hardening: entry slots, cycle day, guided onboarding, Dev Mode mocks, install banner, service worker (app shell), `/offline` fallback. Follow-ups: Dexie offline sync, sync-conflict log, Web Push, app lock. See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/features/PWA.md`](docs/features/PWA.md).
 - [x] **M5 (Habits Core)** — Goal-based habit adherence (`build`/`reduce`), `/api/v1/habits`, Settings tag configuration, Trends Habits tab. Co-occurrence deferred to M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md).
-- [ ] **M7** — Insights v2: Lasso regression, lag analysis, symptom analytics, tag clustering, optional local LLM (Ollama). Opened with Sprint 1 backend work. See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/M7_NOTES.md`](docs/M7_NOTES.md), and [`docs/M7_M8_MILESTONE_SWAP.md`](docs/M7_M8_MILESTONE_SWAP.md).
+- [x] **M7** — Insights v2: Lasso, lag, symptom analytics, tag clustering (core Sprints 1–7 on `main`; **Sprint 9** spec-complete). See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/M7_SPRINT9_PLAN.md`](docs/M7_SPRINT9_PLAN.md).
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
 - [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation
 - [ ] **M10** — Public selfhost release v1.0
@@ -48,15 +48,16 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ### Current Milestone Status
 
-| Milestone | Status   | Notes                                                                                                                                                                                                                                       |
-| --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **M3**    | Complete | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                                        |
-| **M3.1**  | Complete | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md).                    |
-| **M3.5**  | Complete | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).                        |
-| **M3.6**  | Complete | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).                             |
-| **M3.7**  | Complete | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                                                  |
-| **M4**    | Partial  | Quick wins + PWA hardening merged on `main`; Dexie sync, conflict log, push, and app lock remain follow-ups. See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md). |
-| **M5**    | Partial  | Habits Core merged on `main`; rendered QA and issue closeout still pending. Co-occurrence is M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md).                                                                      |
+| Milestone | Status                                    | Notes                                                                                                                                                                                                                                       |
+| --------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M3**    | Complete                                  | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                                        |
+| **M3.1**  | Complete                                  | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md).                    |
+| **M3.5**  | Complete                                  | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).                        |
+| **M3.6**  | Complete                                  | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).                             |
+| **M3.7**  | Complete                                  | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                                                  |
+| **M4**    | Partial                                   | Quick wins + PWA hardening merged on `main`; Dexie sync, conflict log, push, and app lock remain follow-ups. See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md). |
+| **M5**    | Partial                                   | Habits Core merged on `main`; rendered QA and issue closeout still pending. Co-occurrence is M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md).                                                                      |
+| **M7**    | **Spec complete** (Sprints 1–9 on `main`) | Core + Sprint 9 interaction, feed UX, mixed clusters. See [`docs/M7_SPRINT9_PLAN.md`](docs/M7_SPRINT9_PLAN.md).                                                                                                                             |
 
 ---
 
@@ -161,6 +162,7 @@ Task: <your specific task here>
 | [M4 Sprint Status](docs/M4_SPRINT_STATUS.md)                          | M4 quick wins + PWA hardening tracking                            |
 | [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                          | M5 Habits Core tracking                                           |
 | [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering            |
+| [M7 Sprint 9](docs/M7_SPRINT9_PLAN.md)                                | Spec-complete closeout: interaction, feed UX, cluster API, a11y   |
 | [M8 Notes](docs/M8_NOTES.md)                                          | Sleep, Health Connect, cycle deep integration                     |
 | [M7/M8 swap](docs/M7_M8_MILESTONE_SWAP.md)                            | Milestone reorder rationale and consequence index (2026-05-29)    |
 | [M5.1 Visual QA](docs/quality/M5_1_VISUAL_QA.md)                      | Tag co-occurrence heatmap closeout (2026-05-29)                   |

@@ -1,6 +1,6 @@
 # Symptom Visualization — Frontend Specification
 
-> **Status:** Partially implemented (descriptive context + M7 co-occurrence view) · **ADR:** [0025](../adr/0025-symptom-analytics.md) · **Feature Spec:** [`symptom-analytics.md`](../features/symptom-analytics.md) · **Last updated:** 2026-05-31
+> **Status:** Implemented (calendar + trend overlays, co-occurrence, descriptive heatmap) · **ADR:** [0025](../adr/0025-symptom-analytics.md) · **Feature Spec:** [`symptom-analytics.md`](../features/symptom-analytics.md) · **Last updated:** 2026-06-28
 
 This document is the single source of truth for how symptom analytics is rendered, integrated, and
 phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md`](INSIGHT_MATURITY.md)
@@ -23,10 +23,11 @@ phase-gated across the CorrelCore frontend. It complements [`INSIGHT_MATURITY.md
 All components live under `apps/web/src/lib/components/insights/symptoms/` following the existing
 folder convention for insight-related components.
 
-**Implemented subset (2026-05-31):** `SymptomAnalyticsSection` exists and renders the existing
-`ComparisonHeatmap` with `showSymptoms=true`, `showTags=false`, plus the M7
-`SymptomCooccurrenceHeatmap`. Symptom history remains descriptive only. The M7 co-occurrence grid
-renders backend-provided Lift/count context without medical interpretation or recommendations.
+**Implemented subset (2026-06-28):** `SymptomAnalyticsSection` renders the descriptive
+`ComparisonHeatmap`, M7 `SymptomCooccurrenceHeatmap`, `SymptomCalendarHeatmap` (Monday-aligned
+grid for symptoms with ≥5 occurrences), and `SymptomTrendOverlay` (rolling-7d frequency + mood).
+Symptom history remains descriptive only. The co-occurrence grid renders backend-provided
+Lift/count context without medical interpretation or recommendations.
 
 ---
 
@@ -47,8 +48,7 @@ Symptom analytics is integrated into the **existing `/insights` route**. **No se
 ├─────────────────────────────────────────────────────────────┤
 │  Symptom Analytics Section          (toggleable, gated)     │
 │    ┌─────────────────────────────────────────────────────┐  │
-│    │  Current: descriptive symptom-history heatmap        │  │
-│    │  Planned: Cooccurrence / Calendar / Trend overlays   │  │
+│    │  Heatmap, co-occurrence, calendar, and trend views   │  │
 │    └─────────────────────────────────────────────────────┘  │
 ├─────────────────────────────────────────────────────────────┤
 │  InsightMatrix                              (existing)      │
@@ -585,9 +585,9 @@ response (consistent with ADR-0021).
 - [ ] Divergent Lift colour scale renders correctly with neutral at Lift = 1
 - [ ] Cell annotation shows `co_count` as subscript
 - [ ] FDR significance marker (`*`) appears when `p_value_corrected < 0.10`
-- [ ] Confounder muting applies when `confounder === 'weekday'`
+- [x] Confounder muting applies when `confounder === 'weekday'`
 - [ ] In `early_patterns`: only raw counts rendered, no Lift colouring
-- [ ] In `robust`: clustered sort mode available via toggle
+- [x] In `robust`: clustered sort mode available via toggle
 - [ ] Cell click opens detail modal with all metrics
 - [ ] Cell tooltips include base-rate context phrase
 - [ ] Keyboard navigation works (arrow keys + Enter)
@@ -638,7 +638,7 @@ response (consistent with ADR-0021).
 - [ ] In `early_patterns`: only descriptive views render (calendar heatmap, raw-count co-occurrence,
       trend overlay); no Lift colouring, no insight cards
 - [ ] In `provisional`: full statistical rendering with FDR markers and uncertainty ribbons
-- [ ] In `robust`: confident copy, optional clustered sort, no uncertainty ribbon on trend overlay
+- [x] In `robust`: confident copy, optional clustered sort, no uncertainty ribbon on trend overlay
 - [ ] Phase is always read from API `insight_maturity.phase` — never recomputed in frontend
 
 ### Cross-cutting

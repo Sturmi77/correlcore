@@ -12,6 +12,11 @@ from typing import Any, Literal
 from scipy.stats import chisquare, fisher_exact, pointbiserialr
 from statsmodels.stats.multitest import multipletests
 
+from app.services.weekday_confounder import (
+    is_metric_association_weekday_confounded,
+    is_pair_cooccurrence_weekday_confounded,
+)
+
 MetricName = Literal["mood_score", "energy", "stress"]
 
 MIN_SYMPTOM_ANALYTICS_ENTRIES = 15
@@ -193,7 +198,16 @@ def compute_symptom_metric_associations(
                     comparison_count,
                     symptom_avg,
                     comparison_avg,
-                    is_weekday_biased_signal(entries, symptom_id, kind="symptom"),
+                    is_weekday_biased_signal(entries, symptom_id, kind="symptom")
+                    or is_metric_association_weekday_confounded(
+                        [entry.entry_date for entry in entries],
+                        metric_values,
+                        binary,
+                        raw_coefficient=coefficient,
+                        raw_p_value=p_value,
+                        min_effect=min_abs_effect_size,
+                        alpha=SYMPTOM_FDR_ALPHA,
+                    ),
                 )
             )
 
@@ -301,11 +315,15 @@ def compute_symptom_tag_associations(
             co_count, symptom_count, tag_count, total, phi, jaccard, lift, p_value = stats
             if co_count < 5 and not (co_count >= 3 and p_value < 0.05):
                 continue
-            weekday_confounded = is_weekday_biased_signal(
-                entries,
-                symptom_id,
-                kind="symptom",
-            ) and is_weekday_biased_signal(entries, tag_id, kind="tag")
+            weekday_confounded = (
+                is_weekday_biased_signal(entries, symptom_id, kind="symptom")
+                and is_weekday_biased_signal(entries, tag_id, kind="tag")
+            ) or is_pair_cooccurrence_weekday_confounded(
+                [entry.entry_date for entry in entries],
+                [1 if symptom_id in entry.symptom_ids else 0 for entry in entries],
+                [1 if tag_id in entry.tag_ids else 0 for entry in entries],
+                alpha=SYMPTOM_FDR_ALPHA,
+            )
             raw.append(
                 (
                     symptom,

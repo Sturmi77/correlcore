@@ -10,12 +10,45 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **M7 Sprint 9 complete — spec complete.** Entry-history drawer and symptom×tag detail sheet on
+  `/insights`; confounded insight cards with ranking tie-break; heatmap keyboard navigation, tag
+  cluster sort at `robust`, and mixed signal clusters API (`members[]` with tags + symptoms). Quality
+  gates: backend 459 tests, web 489 tests. See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md).
+
+- **M7 Sprint 9 plan (spec complete).** Work packages A–E in
+  [`docs/M7_SPRINT9_PLAN.md`](docs/M7_SPRINT9_PLAN.md): interaction, feed confounder UX,
+  heatmap polish, combined cluster API, docs sign-off (excludes sleep/cycle/LLM).
+
+- **M7 Sprint 7 complete — core milestone exit.** OLS weekday confounder (#146) with
+  Newey-West HAC in `weekday_confounder.py`; hierarchical co-occurrence heatmap reorder (#150) at
+  `robust` phase; changepoint (#149) remains deferred. See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md).
+
+- **M7 Sprint 6 symptom visualisation complete.** Calendar heatmap and trend overlay in
+  `SymptomAnalyticsSection`; Lift methodology in `CorrelationDisclaimer`; component tests for M7
+  insight sections. See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md).
+
+- **M7 Sprint 5 closeout complete.** ADR-0025 accepted; QA seed + integration tests
+  (`test_m7_qa_seed_integration.py` in CI migrations-smoke); API verifier
+  (`scripts/verify_m7_qa_api.py`); sign-off [`docs/quality/M7_SPRINT5_FULLSTACK_QA.md`](docs/quality/M7_SPRINT5_FULLSTACK_QA.md).
+
 - **M7/M8 milestone swap (docs only).** Roadmap reordered: M7 = Insights v2
   (Lasso, lag, symptom analytics, clustering); M8 = Sleep & Health Connect.
   Rationale and consequence index: [`docs/M7_M8_MILESTONE_SWAP.md`](docs/M7_M8_MILESTONE_SWAP.md).
   No code or schema changes.
 
 ### Added
+
+- **M7 weekday OLS confounder.** `backend/app/services/weekday_confounder.py` adjusts tag/symptom
+  associations for weekday effects; co-occurrence pairs flagged when overlap is weekday-driven.
+
+- **M7 clustered heatmap sort.** `cooccurrenceClusterOrder.ts` reorders symptom×tag axes by Jaccard
+  profile similarity when `sortMode === 'clustered'` (`robust` phase).
+
+- **M7 symptom views.** `SymptomCalendarHeatmap`, `SymptomTrendOverlay`, and
+  `symptomAnalyticsViews` helpers (eligibility, calendar grid, rolling trend series).
+
+- **M7 QA seed script.** `backend/scripts/seed_m7_qa.py` seeds a verified user with
+  100 days of tag/symptom patterns for full-stack `/insights` QA without mock mode.
 
 - **Mobile Insights Phase 3 closeout.** Mobile `/insights` ranks insights via
   `insightRanking`, surfaces the strongest signal in `MobileInsightLead` with
