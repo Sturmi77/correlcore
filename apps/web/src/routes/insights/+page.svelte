@@ -14,7 +14,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
-  import { listEntries } from '$lib/api/entries';
+  import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
   import {
     fetchSymptomTagCooccurrence,
@@ -23,6 +23,7 @@
     listLatestInsights,
     type InsightMaturity,
     type InsightResponse,
+    type SymptomTagCooccurrenceCell,
     type TagCooccurrenceRange,
     type SymptomTagCooccurrenceResponse,
     type TagClustersResponse,
@@ -44,10 +45,15 @@
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
   import MobileInsightLead from '$lib/components/insights/MobileInsightLead.svelte';
   import CooccurrenceEntrySheet from '$lib/components/insights/CooccurrenceEntrySheet.svelte';
+  import CorrelationDisclaimer from '$lib/components/insights/CorrelationDisclaimer.svelte';
   import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
   import TagGroupsSection from '$lib/components/insights/TagGroupsSection.svelte';
   import SymptomAnalyticsSection from '$lib/components/insights/symptoms/SymptomAnalyticsSection.svelte';
-  import type { EntryHistoryDetail } from '$lib/components/trends/EntryHistorySheet.svelte';
+  import SymptomCooccurrenceDetailSheet from '$lib/components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte';
+  import EntryHistorySheet, {
+    type EntryHistoryDetail,
+  } from '$lib/components/trends/EntryHistorySheet.svelte';
+  import type { CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
   import { mockEntries } from '$lib/dev/mockEntries';
   import { mockUserPreferences } from '$lib/dev/mockEntries';
   import {
@@ -73,6 +79,7 @@
   let userPreferences: UserPreferencesResponse | null = null;
   let entryCount = 0;
   let dayEntryDates: string[] = [];
+  let moodEntries: EntryResponse[] = [];
   let inactiveTagIds: string[] = [];
   let detailView: DetailView = 'findings';
   let cooccurrenceRange: TagCooccurrenceRange = '90d';
@@ -85,6 +92,15 @@
   let cooccurrenceHistoryLoading = false;
   let cooccurrenceHistoryError = '';
   let cooccurrenceHistoryDetails: EntryHistoryDetail[] = [];
+  let symptomHistoryOpen = false;
+  let symptomHistoryDate = '';
+  let symptomHistoryLoading = false;
+  let symptomHistoryError = '';
+  let symptomHistoryDetails: EntryHistoryDetail[] = [];
+  let symptomDetailOpen = false;
+  let symptomDetailCell: SymptomTagCooccurrenceCell | null = null;
+  let disclaimerOpen = false;
+  let tagCooccurrenceSortMode: CooccurrenceSortMode = 'alphabetical';
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let symptomCooccurrence: SymptomTagCooccurrenceResponse | null = null;
   let symptomCooccurrenceLoading = false;
@@ -154,6 +170,55 @@
     } finally {
       symptomCooccurrenceLoading = false;
     }
+  }
+
+  async function openSymptomHistory(date: string): Promise<void> {
+    symptomHistoryOpen = true;
+    symptomHistoryDate = date;
+    symptomHistoryLoading = true;
+    symptomHistoryError = '';
+    symptomHistoryDetails = [];
+    try {
+      if ($devForceVisualizations) {
+        symptomHistoryDetails = mockEntries
+          .filter((entry) => entry.entry_date === date)
+          .map((entry) => ({
+            entry,
+            tags: ['Focus work'],
+            symptoms: [{ name: 'Headache', intensity: 2 }],
+          }));
+        return;
+      }
+
+      const entries = await listEntries({ start_date: date, end_date: date, limit: 365 });
+      const visibleSymptoms = await listVisibleSymptoms();
+      const symptomNames = new Map(visibleSymptoms.map((symptom) => [symptom.id, symptom.name]));
+      symptomHistoryDetails = await Promise.all(
+        entries.map(async (entry: EntryResponse) => {
+          const [tags, symptoms] = await Promise.all([
+            listTagsForEntry(entry.id),
+            listSymptomsForEntry(entry.id),
+          ]);
+          return {
+            entry,
+            tags: tags.map((tag) => tag.name),
+            symptoms: symptoms.map((symptom) => ({
+              name: symptomNames.get(symptom.symptom_id) ?? symptom.symptom_id,
+              intensity: symptom.intensity,
+            })),
+          };
+        })
+      );
+    } catch (err) {
+      symptomHistoryError = err instanceof Error ? err.message : $_('error.generic');
+    } finally {
+      symptomHistoryLoading = false;
+    }
+  }
+
+  function openSymptomDetail(cell: SymptomTagCooccurrenceCell): void {
+    symptomDetailCell = cell;
+    symptomDetailOpen = true;
   }
 
   async function openCooccurrenceHistory(
@@ -232,6 +297,7 @@
         tagClusters = mockTagClusters;
         cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
         dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
+        moodEntries = mockEntries;
         entryCount = dayEntryDates.length;
         inactiveTagIds = [];
         return;
@@ -253,6 +319,7 @@
       userPreferences = preferences;
       symptomHeatmap = nextSymptomHeatmap;
       dayEntryDates = dayEntryDatesFromIsoEntries(entryResponse);
+      moodEntries = entryResponse;
       entryCount = dayEntryDates.length;
       const inactiveSlugs = new Set(
         tagResponse.filter((tag) => tag.is_hidden).map((tag) => tag.slug)
@@ -270,6 +337,7 @@
       symptomCooccurrence = null;
       tagClusters = null;
       dayEntryDates = [];
+      moodEntries = [];
       entryCount = 0;
       inactiveTagIds = [];
     } finally {
@@ -445,10 +513,13 @@
         {#if showSymptomAnalytics}
           <SymptomAnalyticsSection
             heatmap={symptomHeatmap}
+            entries={moodEntries}
             cooccurrence={symptomCooccurrence}
             cooccurrenceLoading={symptomCooccurrenceLoading}
             phase={insightMaturity?.phase ?? null}
             {loading}
+            on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+            on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
           />
         {/if}
 
@@ -458,6 +529,9 @@
           data={cooccurrence}
           loading={cooccurrenceLoading}
           range={cooccurrenceRange}
+          sortMode={tagCooccurrenceSortMode}
+          enableClusterSort={insightMaturity?.phase === 'robust'}
+          on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
           on:rangeChange={(event) => {
             cooccurrenceRange = event.detail.range;
             void loadCooccurrence();
@@ -476,6 +550,27 @@
       details={cooccurrenceHistoryDetails}
       on:close={() => (cooccurrenceHistoryOpen = false)}
     />
+
+    <EntryHistorySheet
+      open={symptomHistoryOpen}
+      date={symptomHistoryDate}
+      loading={symptomHistoryLoading}
+      error={symptomHistoryError}
+      details={symptomHistoryDetails}
+      on:close={() => (symptomHistoryOpen = false)}
+    />
+
+    <SymptomCooccurrenceDetailSheet
+      open={symptomDetailOpen}
+      cell={symptomDetailCell}
+      on:close={() => (symptomDetailOpen = false)}
+      on:openDisclaimer={() => {
+        symptomDetailOpen = false;
+        disclaimerOpen = true;
+      }}
+    />
+
+    <CorrelationDisclaimer open={disclaimerOpen} on:close={() => (disclaimerOpen = false)} />
   {/if}
 </main>
 

@@ -87,18 +87,22 @@
     {
       "screen": "Insights",
       "routes": ["/insights", "/insights/disclaimer"],
-      "figmaNodes": ["21:282", "98:1573", "98:1541", "28:1080"],
+      "figmaNodes": ["98:1573", "141:3841", "144:59", "144:97", "144:3995", "144:4086"],
       "primaryComponents": [
         "MobileInsightLead",
         "InsightFeed",
         "InsightCard",
         "InsightMatrix",
-        "InsightStageHeader"
+        "InsightStageHeader",
+        "TagGroupsSection",
+        "SymptomCooccurrenceHeatmap",
+        "SymptomCooccurrenceDetailSheet",
+        "EntryHistorySheet"
       ],
-      "mobileStatus": "green",
+      "mobileStatus": "yellow",
       "webStatus": "green",
-      "problemType": "Sprint 3 Figma + code hierarchy aligned",
-      "recommendation": "Use Sprint 3 flow `98:1573`; legacy `28:615` is not canonical."
+      "problemType": "Sprint 9 analytics component sets on Foundations; mobile drill-down via sheets",
+      "recommendation": "Sprint 3 feed/matrix (`98:1573`) + Sprint 9 analytics flow (`141:3841`). Code Connect publish still blocked."
     },
     {
       "screen": "Settings",

@@ -128,8 +128,27 @@ uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 The values above are generated for local test runs. Do not reuse local test
 values in deployed environments.
 
-Current migration head is **013** (`013_add_cycle_day_to_entries.py`), which
-adds nullable `entries.cycle_day`.
+Current migration head is documented in `backend/migrations/versions/` (run
+`alembic heads` after sync).
+
+## M7 full-stack QA seed
+
+After Postgres is running and migrations are applied, seed a verified QA user
+with 100 days of analytics-ready entries (bypasses the 7-day API backdate window):
+
+```powershell
+cd backend
+uv run --python 3.12 --extra dev --extra analytics python scripts/seed_m7_qa.py --reset
+```
+
+Login: `m7-qa@localhost.dev` / `M7qaSeed1` — use `/insights` without developer
+mock visualizations. Verify API responses:
+
+```powershell
+uv run --python 3.12 python scripts/verify_m7_qa_api.py
+```
+
+See [`docs/quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md).
 
 ## Database roles and RLS
 

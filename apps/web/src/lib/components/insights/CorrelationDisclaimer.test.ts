@@ -28,12 +28,13 @@ describe('CorrelationDisclaimer', () => {
     expect(modal.getAttribute('aria-modal')).toBe('true');
   });
 
-  it('renders all 4 content sections', () => {
+  it('renders all 5 content sections', () => {
     render(CorrelationDisclaimer, { props: { open: true } });
     expect(screen.getByTestId('cd-section-1')).toBeTruthy();
     expect(screen.getByTestId('cd-section-2')).toBeTruthy();
     expect(screen.getByTestId('cd-section-3')).toBeTruthy();
     expect(screen.getByTestId('cd-section-4')).toBeTruthy();
+    expect(screen.getByTestId('cd-section-5')).toBeTruthy();
   });
 
   it('dispatches close on close-button click', async () => {

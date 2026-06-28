@@ -2,18 +2,23 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TagCooccurrenceRange, TagCooccurrenceResponse } from '$lib/api/insights';
+  import type { CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
   import {
     buildTagCooccurrenceMatrix,
     cooccurrenceIntensityLevel,
+    orderTagCooccurrenceMatrix,
   } from '$lib/utils/tagCooccurrenceMatrix';
 
   export let data: TagCooccurrenceResponse | null = null;
   export let loading = false;
   export let range: TagCooccurrenceRange = '90d';
   export let minPairsForDisplay = 5;
+  export let sortMode: CooccurrenceSortMode = 'alphabetical';
+  export let enableClusterSort = false;
 
   const dispatch = createEventDispatcher<{
     rangeChange: { range: TagCooccurrenceRange };
+    sortModeChange: { sortMode: CooccurrenceSortMode };
     selectPair: {
       tagAId: string;
       tagBId: string;
@@ -26,15 +31,92 @@
 
   const rangeOptions: TagCooccurrenceRange[] = ['30d', '90d', '1y'];
 
-  $: matrix = data ? buildTagCooccurrenceMatrix(data.pairs) : { tags: [], counts: [] };
+  let focusedKey: string | null = null;
+
+  $: rawMatrix = data ? buildTagCooccurrenceMatrix(data.pairs) : { tags: [], counts: [] };
+  $: matrix = orderTagCooccurrenceMatrix(rawMatrix, sortMode);
   $: maxCount = matrix.counts.flat().reduce((peak, count) => Math.max(peak, count), 0);
   $: hasEnoughPairs = (data?.pairs.length ?? 0) >= minPairsForDisplay;
   $: showSkeleton = loading && !data;
+  $: interactiveCells = matrix.tags.flatMap((rowTag, rowIndex) =>
+    matrix.tags.flatMap((colTag, colIndex) => {
+      if (rowIndex === colIndex) return [];
+      const count = matrix.counts[rowIndex]?.[colIndex] ?? 0;
+      if (count <= 0) return [];
+      const key = `${rowTag.tag_id}:${colTag.tag_id}`;
+      return [{ key, rowIndex, colIndex, rowTag, colTag, count }];
+    })
+  );
+  $: if (interactiveCells.length > 0 && !focusedKey) {
+    focusedKey = interactiveCells[0]?.key ?? null;
+  }
 
   function rangeLabel(option: TagCooccurrenceRange): string {
     if (option === '30d') return $_('insights.cooccurrence.range_30d');
     if (option === '90d') return $_('insights.cooccurrence.range_90d');
     return $_('insights.cooccurrence.range_1y');
+  }
+
+  function toggleSortMode(): void {
+    const next = sortMode === 'alphabetical' ? 'clustered' : 'alphabetical';
+    dispatch('sortModeChange', { sortMode: next });
+  }
+
+  function focusCell(key: string): void {
+    focusedKey = key;
+    document.querySelector<HTMLButtonElement>(`[data-tag-co-cell="${key}"]`)?.focus();
+  }
+
+  function selectPair(
+    rowTag: (typeof matrix.tags)[number],
+    colTag: (typeof matrix.tags)[number]
+  ): void {
+    if (!data) return;
+    dispatch('selectPair', {
+      tagAId: rowTag.tag_id,
+      tagBId: colTag.tag_id,
+      tagAName: rowTag.name,
+      tagBName: colTag.name,
+      startDate: data.start_date,
+      endDate: data.end_date,
+    });
+  }
+
+  function handleCellKeydown(
+    event: KeyboardEvent,
+    key: string,
+    rowIndex: number,
+    colIndex: number,
+    rowTag: (typeof matrix.tags)[number],
+    colTag: (typeof matrix.tags)[number]
+  ): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      selectPair(rowTag, colTag);
+      return;
+    }
+
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+
+    let next: (typeof interactiveCells)[number] | undefined;
+    if (event.key === 'ArrowRight') {
+      const index = interactiveCells.findIndex((item) => item.key === key);
+      next = interactiveCells[index + 1];
+    } else if (event.key === 'ArrowLeft') {
+      const index = interactiveCells.findIndex((item) => item.key === key);
+      next = interactiveCells[index - 1];
+    } else if (event.key === 'ArrowDown') {
+      next = interactiveCells.find(
+        (item) => item.colIndex === colIndex && item.rowIndex > rowIndex
+      );
+    } else {
+      next = [...interactiveCells]
+        .reverse()
+        .find((item) => item.colIndex === colIndex && item.rowIndex < rowIndex);
+    }
+
+    if (next) focusCell(next.key);
   }
 </script>
 
@@ -49,6 +131,18 @@
       role="group"
       aria-label={$_('insights.cooccurrence.range_label')}
     >
+      {#if enableClusterSort}
+        <button
+          type="button"
+          class="cooccurrence__sort"
+          data-testid="tag-cooccurrence-sort-toggle"
+          on:click={toggleSortMode}
+        >
+          {sortMode === 'clustered'
+            ? $_('insights.cooccurrence.sort_alphabetical')
+            : $_('insights.cooccurrence.sort_clustered')}
+        </button>
+      {/if}
       {#each rangeOptions as option}
         <button
           type="button"
@@ -92,25 +186,23 @@
                 aria-hidden="true"
               ></div>
             {:else if count > 0}
+              {@const cellKey = `${rowTag.tag_id}:${colTag.tag_id}`}
               <button
                 type="button"
                 class={`cooccurrence__cell cooccurrence__cell--${level}`}
                 role="gridcell"
+                tabindex={focusedKey === cellKey ? 0 : -1}
+                data-tag-co-cell={cellKey}
+                data-testid="tag-cooccurrence-cell"
                 aria-label={$_('insights.cooccurrence.cell_aria', {
                   values: { tagA: rowTag.name, tagB: colTag.name, count },
                 })}
                 title={$_('insights.cooccurrence.cell_title', {
                   values: { tagA: rowTag.name, tagB: colTag.name, count },
                 })}
-                on:click={() =>
-                  dispatch('selectPair', {
-                    tagAId: rowTag.tag_id,
-                    tagBId: colTag.tag_id,
-                    tagAName: rowTag.name,
-                    tagBName: colTag.name,
-                    startDate: data.start_date,
-                    endDate: data.end_date,
-                  })}
+                on:click={() => selectPair(rowTag, colTag)}
+                on:keydown={(event) =>
+                  handleCellKeydown(event, cellKey, rowIndex, colIndex, rowTag, colTag)}
               >
                 <span>{count}</span>
               </button>
@@ -187,6 +279,14 @@
     font-size: var(--text-xs);
     font-weight: 700;
     color: var(--color-text-muted);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .cooccurrence__sort {
+    margin-right: var(--space-1);
+    color: var(--color-primary) !important;
   }
 
   .cooccurrence__range--active {

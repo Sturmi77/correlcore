@@ -449,7 +449,7 @@ Summary:
 - [ ] FDR correction (BH) applied across the full symptom×tag family
 - [ ] Lasso (#144) includes symptoms as binary features in the design matrix
 - [ ] Lag analysis (#145) includes symptoms as both input and target variables
-- [ ] Hierarchical clustering (#150) uses combined symptom+tag Jaccard distance matrix
+- [x] Hierarchical clustering (#150) heatmap axis reorder at `robust` (Jaccard profiles; tag-cluster API combined matrix remains future work)
 - [ ] `SymptomCooccurrenceHeatmap` renders in `/insights` route with Lift-based colouring from `provisional`
 - [ ] `SymptomCalendarHeatmap` renders from `early_patterns` (descriptive only)
 - [ ] `SymptomTrendOverlay` renders DualAxisChart from `early_patterns`

@@ -90,6 +90,9 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await expect(symptomToggle).toBeChecked();
 
   await page.getByRole('heading', { name: 'Patterns', exact: true }).scrollIntoViewIfNeeded();
+  await page.getByTestId('symptom-cooccurrence-cell').first().tap();
+  await expect(page.getByTestId('symptom-cooccurrence-detail-sheet')).toBeVisible();
+  await page.getByTestId('symptom-cooccurrence-detail-close').tap();
   await page.getByRole('button', { name: '1Y' }).tap();
   await expect(page.getByRole('button', { name: '1Y' })).toHaveAttribute('aria-pressed', 'true');
   await page

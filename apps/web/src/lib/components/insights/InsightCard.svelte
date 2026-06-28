@@ -19,6 +19,7 @@
    */
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { isWeekdayConfounded } from '$lib/utils/insightConfounder';
   import InsightConfidenceScale from './InsightConfidenceScale.svelte';
   import InsightMaturityBadge from './InsightMaturityBadge.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
@@ -100,6 +101,7 @@
     return pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
   }
 
+  $: isConfounded = insight ? isWeekdayConfounded(insight) : false;
   $: title = insight ? buildTitle(insight) : '';
   $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '→';
   $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
@@ -141,6 +143,7 @@
   <article
     class="insight-card"
     class:insight-card--featured={featured}
+    class:insight-card--confounded={isConfounded}
     data-testid="insight-card"
     data-expanded={expanded ? 'true' : 'false'}
     data-direction={dirClass}
@@ -175,6 +178,12 @@
     <p class="insight-card__statement" data-testid="insight-card-statement">
       {insight.statement ?? $_('home.insight.empty_statement')}
     </p>
+
+    {#if isConfounded}
+      <p class="insight-card__confounder" data-testid="insight-card-confounder">
+        {$_('insights.weekday_confounded_note')}
+      </p>
+    {/if}
 
     <p class="insight-card__meta" data-testid="insight-card-meta">
       {$_('insights.card.sample_meta', {
@@ -348,6 +357,15 @@
   .insight-card--featured {
     border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
     background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+  }
+  .insight-card--confounded {
+    opacity: 0.88;
+    border-style: dashed;
+  }
+  .insight-card__confounder {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
   }
   .insight-card__header {
     display: flex;

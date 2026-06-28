@@ -46,6 +46,7 @@ from app.services.symptom_analytics import (
     compute_symptom_tag_associations,
 )
 from app.services.tag_service import active_tag_predicate
+from app.services.weekday_confounder import is_metric_association_weekday_confounded
 
 logger = logging.getLogger(__name__)
 
@@ -440,7 +441,16 @@ def _pointbiserial_candidates(
                 untagged_count,
                 tagged_mood,
                 untagged_mood,
-                is_weekday_biased(entries, tag_id),
+                is_weekday_biased(entries, tag_id)
+                or is_metric_association_weekday_confounded(
+                    [entry.entry_date for entry in entries],
+                    mood_values,
+                    binary,
+                    raw_coefficient=coefficient,
+                    raw_p_value=p_value,
+                    min_effect=MIN_ABS_EFFECT_SIZE,
+                    alpha=FDR_ALPHA,
+                ),
             )
         )
 

@@ -163,6 +163,28 @@ matrix alignment, and shared-entry sheet open/close behavior.
 ## Remaining Improvement Suggestions
 
 1. Add component tests for `TagGroupsSection`, `SymptomAnalyticsSection`, and
-   `SymptomCooccurrenceHeatmap`.
-2. Add deterministic M7 demo seed tooling for 90+ entries so full-stack GUI QA
-   can run without developer mock visualizations.
+   `SymptomCooccurrenceHeatmap` (tracked in Sprint 6).
+2. ~~Add deterministic M7 demo seed tooling for 90+ entries~~ — **Done Sprint 5:**
+   `backend/scripts/seed_m7_qa.py` (see [`M7_QUALITY_GATE.md`](M7_QUALITY_GATE.md)).
+
+## Full-Stack QA with Seed (Sprint 5)
+
+Use the deterministic QA user instead of developer mock visualizations:
+
+```bash
+cd backend
+uv run --python 3.12 --extra dev --extra analytics python scripts/seed_m7_qa.py --reset
+```
+
+| Step         | Detail                                                             |
+| ------------ | ------------------------------------------------------------------ |
+| Login        | `m7-qa@localhost.dev` / `M7qaSeed1`                                |
+| Verify email | User is created verified; no Mailpit step required                 |
+| `/insights`  | Disable „Force visualizations with mock data“ in Dev Mode          |
+| Expect       | `symptom_cluster`, symptom co-occurrence, tag groups from live API |
+
+Document GUI results in this file after an optional manual pass.
+
+**Sprint 5 sign-off (2026-06-28):** Automated full-stack validation documented in
+[`M7_SPRINT5_FULLSTACK_QA.md`](M7_SPRINT5_FULLSTACK_QA.md). CI runs
+`test_m7_qa_seed_integration.py` on pgvector Postgres after migrations.

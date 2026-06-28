@@ -1,4 +1,5 @@
 import type { TagCooccurrencePair, TagCooccurrenceTagRef } from '$lib/api/insights';
+import { orderAxisIds, type CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
 
 export interface TagCooccurrenceAxisTag {
   tag_id: string;
@@ -53,6 +54,37 @@ export function buildTagCooccurrenceMatrix(
   );
 
   return { tags, counts };
+}
+
+export function tagCooccurrenceProfiles(matrix: TagCooccurrenceMatrix): Map<string, number[]> {
+  return new Map(
+    matrix.tags.map((tag, rowIndex) => [
+      tag.tag_id,
+      matrix.counts[rowIndex].map((value, colIndex) => (rowIndex === colIndex ? 0 : value)),
+    ])
+  );
+}
+
+export function orderTagCooccurrenceMatrix(
+  matrix: TagCooccurrenceMatrix,
+  sortMode: CooccurrenceSortMode
+): TagCooccurrenceMatrix {
+  const profiles = tagCooccurrenceProfiles(matrix);
+  const orderedIds = orderAxisIds(
+    matrix.tags.map((tag) => tag.tag_id),
+    profiles,
+    sortMode,
+    (id) => matrix.tags.find((tag) => tag.tag_id === id)?.name ?? id
+  );
+  const indexById = new Map(matrix.tags.map((tag, index) => [tag.tag_id, index]));
+  const order = orderedIds
+    .map((id) => indexById.get(id))
+    .filter((index): index is number => index !== undefined);
+
+  return {
+    tags: order.map((index) => matrix.tags[index]),
+    counts: order.map((row) => order.map((col) => matrix.counts[row][col])),
+  };
 }
 
 export function cooccurrenceIntensityLevel(count: number, max: number): number {

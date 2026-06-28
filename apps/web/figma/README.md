@@ -34,7 +34,7 @@ library and a Dev or Full seat on an Organization or Enterprise plan.
 
 ## Code Connect templates
 
-Local templates in [`components/`](./components/) (20 files).
+Local templates in [`components/`](./components/) (26 files).
 
 ### Publish (Sprint H)
 
@@ -152,6 +152,35 @@ reference.
 
 Closeout tracking: [`docs/MOBILE_INSIGHTS_PHASE3_SPRINT_PLAN.md`](../../docs/MOBILE_INSIGHTS_PHASE3_SPRINT_PLAN.md)
 
+## Web Insights Sprint 9 (M7 spec complete)
+
+Analytics interaction frames (2026-06-28). Sprint 9 component sets live on **Foundations**
+(`correlcore-sprint9-component-sets-2026-06-28-v1`):
+
+- **Flow board:** https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=141-3841
+- **Desktop analytics expanded:** https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=141-3915
+- **Desktop symptom analytics:** https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=146-4289
+- **Mobile detail sheet:** https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=141-3968
+- **Mobile entry history:** https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=141-3990
+- **Dark mode previews:** https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=146-3983 (4 screens)
+
+Component sets + Code Connect templates (local; publish still needs Dev/Full seat):
+
+| Component                        | Figma set  | Variant axes               | Template                                             |
+| -------------------------------- | ---------- | -------------------------- | ---------------------------------------------------- |
+| `InsightCard`                    | `79:55`    | `State` incl. `Confounded` | `components/InsightCard.figma.ts`                    |
+| `TagGroupsSection`               | `144:59`   | `Kind` × `State`           | `components/TagGroupsSection.figma.ts`               |
+| `SymptomCooccurrenceDetailSheet` | `144:97`   | `Confounder`               | `components/SymptomCooccurrenceDetailSheet.figma.ts` |
+| `SymptomCooccurrenceHeatmap`     | `144:3995` | `Phase` × `Sort`           | `components/SymptomCooccurrenceHeatmap.figma.ts`     |
+| `TagCooccurrenceHeatmap`         | `144:4086` | `Range` × `Sort`           | `components/TagCooccurrenceHeatmap.figma.ts`         |
+| `SymptomCalendarHeatmap`         | `144:4120` | `Phase`                    | `components/SymptomCalendarHeatmap.figma.ts`         |
+| `EntryHistorySheet`              | `144:4145` | `State`                    | `components/EntryHistorySheet.figma.ts`              |
+| `CooccurrenceEntrySheet`         | `144:4169` | `State`                    | `components/CooccurrenceEntrySheet.figma.ts`         |
+| `SymptomTrendOverlay`            | `144:4189` | `Phase`                    | `components/SymptomTrendOverlay.figma.ts`            |
+| `SymptomAnalyticsSection`        | `146:4151` | `State`                    | `components/SymptomAnalyticsSection.figma.ts`        |
+
+Flow-board screens use component-set **instances**. Remaining gap: Code Connect publish (Dev/Full seat).
+
 ## Mobile Supporting Flows Sprint 4
 
 Production-aligned Sprint 4 frames (2026-06-26). Code reference: `main` @ PR #234.
@@ -243,6 +272,7 @@ other component instances).
 | 3 Insights   | [98:1573](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1573)   | [129:453](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-453) · 5 screens    |
 | 4 Supporting | [105:1626](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=105-1626) | [129:3739](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-3739) · 29 screens |
 | 5 Home       | [121:2292](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2292) | [127:2586](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=127-2586) · 3 screens  |
+| 9 Analytics  | [141:3841](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=141-3841) | [146:3983](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=146-3983) · 4 screens  |
 
 Cross-sprint minimum parity matrix (Theme Reference / Dark):
 

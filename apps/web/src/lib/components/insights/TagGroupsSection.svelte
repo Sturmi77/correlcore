@@ -1,19 +1,43 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import type { TagClustersResponse } from '$lib/api/insights';
+  import type { TagClusterMember, TagClustersResponse } from '$lib/api/insights';
 
   export let data: TagClustersResponse | null = null;
   export let loading = false;
 
   $: showSkeleton = loading && !data;
   $: clusters = data?.status === 'ok' ? data.clusters : [];
+  $: mixedClusters = data?.cluster_kind === 'mixed';
+
+  function memberLabel(member: TagClusterMember): string {
+    if (member.kind === 'symptom' && member.icon) {
+      return `${member.icon} ${member.name}`;
+    }
+    return member.name;
+  }
+
+  function clusterMembers(cluster: (typeof clusters)[number]): TagClusterMember[] {
+    if (cluster.members.length > 0) return cluster.members;
+    return cluster.tags.map((tag) => ({
+      kind: 'tag' as const,
+      signal_id: tag.tag_id,
+      slug: tag.slug,
+      name: tag.name,
+      category: tag.category,
+      color: tag.color,
+    }));
+  }
 </script>
 
 <section class="tag-groups" data-loading={loading ? 'true' : 'false'}>
   <header class="tag-groups__header">
     <div>
       <h2>{$_('insights.tag_groups.heading')}</h2>
-      <p>{$_('insights.tag_groups.subtitle')}</p>
+      <p>
+        {mixedClusters
+          ? $_('insights.tag_groups.subtitle_mixed')
+          : $_('insights.tag_groups.subtitle')}
+      </p>
     </div>
   </header>
 
@@ -29,7 +53,7 @@
         {$_('insights.tag_groups.insufficient', {
           values: {
             entries: data.entry_count,
-            tags: data.active_tag_count,
+            tags: data.active_signal_count || data.active_tag_count,
           },
         })}
       </p>
@@ -47,8 +71,13 @@
             >
           </div>
           <ul class="tag-groups__chips" aria-label={cluster.label}>
-            {#each cluster.tags as tag}
-              <li>{tag.name}</li>
+            {#each clusterMembers(cluster) as member (member.signal_id)}
+              <li
+                class:tag-groups__chip--symptom={member.kind === 'symptom'}
+                style={member.color ? `--chip-color: ${member.color}` : undefined}
+              >
+                {memberLabel(member)}
+              </li>
             {/each}
           </ul>
         </article>
@@ -137,6 +166,12 @@
     color: var(--color-primary);
     font-size: var(--text-xs);
     font-weight: 700;
+  }
+
+  .tag-groups__chip--symptom {
+    background: color-mix(in srgb, var(--color-warning) 18%, var(--color-surface));
+    color: var(--color-text);
+    border: 1px dashed var(--color-border);
   }
 
   .tag-groups__skeleton {
