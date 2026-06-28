@@ -2,5 +2,6 @@
 useDefault = true
 
 [allowlist]
-description = "Public CorrelCore Figma file identifier"
+description = "Public identifiers and CI test fixture env vars (non-production)"
 regexes = ['''XjijHnzMJubA1iuPQxHOwS''']
+paths = ['''\.github/workflows/ci-api\.yml$''']
