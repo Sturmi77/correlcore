@@ -23,7 +23,12 @@ Canonical references:
 | **Figma**   | ✅         | ✅ (2026-06-26)  | ✅ (2026-06-26)    | ✅      |
 | **Docs/QA** | ✅         | ✅               | ✅                 | ✅      |
 
-**Mobile closeout (Phases 0–4) is complete.** Next track: Phase 5 desktop consolidation.
+**Mobile closeout (Phases 0–4) is complete.**
+
+**Next tracks:**
+
+1. **Production-grade design system** — [`FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md`](FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md) (Sprints E–I: dark/light Figma, missing screens, Code Connect publish)
+2. **Phase 5 desktop consolidation** — wide-screen density (separate plan)
 
 ---
 

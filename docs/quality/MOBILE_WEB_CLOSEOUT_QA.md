@@ -76,7 +76,7 @@ side rail at ≥768 px. Validated via `surface-contract.test.ts` + layout CSS.
 - Mobile 390: `mobile-insight-lead` before view tabs; confidence + maturity;
   no duplicate percent badge; no horizontal overflow.
 - Mobile 430: matrix tab hides lead; findings restores lead; symptom feed +
-  “Deepen analysis” reachable via touch.
+  “Deepen analysis” reachable via touch. Figma: Matrix · 430 (`121:2781`).
 - Desktop 1280: no `mobile-insight-lead`; stage header + four-card feed;
   matrix tab works.
 
@@ -117,7 +117,7 @@ side rail at ≥768 px. Validated via `surface-contract.test.ts` + layout CSS.
 - Reminders and account deletion settings placeholders
 - Dexie / background sync queue (ADR-0009 — Entry-owned retry only)
 - Phase 5 desktop consolidation (wide-screen density)
-- Published-library Code Connect activation
+- Published-library Code Connect activation — **Sprint H deferred** (Figma Dev/Full seat). See [`FIGMA_PRODUCTION_GRADE_QA.md`](FIGMA_PRODUCTION_GRADE_QA.md).
 - Dedicated Playwright coverage for full auth/onboarding state matrix
 
 Track defects with GitHub label `mobile` if found post-release.

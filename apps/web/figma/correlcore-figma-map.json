@@ -10,8 +10,51 @@
     "correlcore-mobile-entry-sprint1-2026-06-23-v1",
     "correlcore-mobile-trends-sprint2-2026-06-23-v1",
     "correlcore-mobile-insights-sprint3-2026-06-26-v1",
-    "correlcore-mobile-supporting-sprint4-2026-06-26-v1"
+    "correlcore-mobile-supporting-sprint4-2026-06-26-v1",
+    "correlcore-production-grade-sprint-e-2026-06-27-v1",
+    "correlcore-production-grade-sprint-f-2026-06-27-v1",
+    "correlcore-dark-previews-all-sprints-2026-06-27-v1",
+    "correlcore-production-grade-sprint-g-2026-06-27-v1",
+    "correlcore-production-grade-sprint-i-2026-06-27-v1"
   ],
+  "themeReference": {
+    "name": "Theme Reference / Dark",
+    "nodeId": "120:2096",
+    "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=120-2096",
+    "status": "implemented",
+    "runId": "correlcore-production-grade-sprint-e-2026-06-27-v1",
+    "variableCollection": {
+      "name": "CorrelCore / Color",
+      "collectionId": "VariableCollectionId:1:41",
+      "modes": [
+        { "name": "Light", "modeId": "1:1" },
+        { "name": "Dark", "modeId": "120:0" }
+      ],
+      "source": "apps/web/src/app.css"
+    },
+    "children": [
+      {
+        "name": "Mobile Entry / Quick Capture · Dark",
+        "nodeId": "126:6",
+        "sourceLightNodeId": "49:1091"
+      },
+      {
+        "name": "Mobile Trends / Summary · Dark",
+        "nodeId": "126:84",
+        "sourceLightNodeId": "59:1293"
+      },
+      {
+        "name": "Mobile Insights / Default · Dark",
+        "nodeId": "126:144",
+        "sourceLightNodeId": "98:1579"
+      },
+      {
+        "name": "Mobile Settings / Default · Dark",
+        "nodeId": "126:221",
+        "sourceLightNodeId": "105:1634"
+      }
+    ]
+  },
   "componentSets": [
     {
       "name": "Button",
@@ -74,14 +117,16 @@
       "nodeId": "17:18",
       "source": "apps/web/src/lib/components/entries/TagPicker.svelte",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=17-18",
-      "status": "created-design-subcomponent"
+      "status": "created-design-subcomponent",
+      "codeConnectTemplate": "components/TagChip.figma.ts"
     },
     {
       "name": "FormField",
       "nodeId": "17:58",
       "source": "apps/web/src/lib/components/entries/TagPicker.svelte",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=17-58",
-      "status": "created-design-subcomponent"
+      "status": "created-design-subcomponent",
+      "codeConnectTemplate": "components/FormField.figma.ts"
     },
     {
       "name": "MetricCard",
@@ -116,39 +161,112 @@
       "nodeId": "98:1541",
       "source": "apps/web/src/lib/components/insights/MobileInsightLead.svelte",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1541",
-      "status": "created"
+      "status": "created",
+      "codeConnectTemplate": "components/MobileInsightLead.figma.ts"
+    },
+    {
+      "name": "InsightCard",
+      "nodeId": "79:55",
+      "source": "apps/web/src/lib/components/insights/InsightCard.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-55",
+      "status": "created",
+      "codeConnectTemplate": "components/InsightCard.figma.ts",
+      "variants": ["State=Ready", "State=Loading", "State=Empty", "State=Error"]
+    },
+    {
+      "name": "InsightStageHeader",
+      "nodeId": "79:111",
+      "source": "apps/web/src/lib/components/insights/InsightStageHeader.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-111",
+      "status": "created",
+      "codeConnectTemplate": "components/InsightStageHeader.figma.ts",
+      "variants": ["Phase=Collecting", "Phase=Early", "Phase=Robust"]
+    },
+    {
+      "name": "InsightQualityMeter",
+      "nodeId": "79:83",
+      "source": "apps/web/src/lib/components/insights/InsightQualityMeter.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-83",
+      "status": "created-legacy-reference",
+      "codeConnectTemplate": "components/InsightQualityMeter.figma.ts",
+      "variants": ["Level=Early", "Level=Provisional", "Level=Robust"],
+      "note": "Legacy reference; production UI uses InsightStageHeader."
+    },
+    {
+      "name": "MobileTrendsSummary",
+      "nodeId": "131:31",
+      "source": "apps/web/src/lib/components/trends/MobileTrendsSummary.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-31",
+      "status": "created",
+      "codeConnectTemplate": "components/MobileTrendsSummary.figma.ts",
+      "variants": ["State=Ready", "State=Empty"],
+      "runId": "correlcore-production-grade-sprint-g-2026-06-27-v1"
+    },
+    {
+      "name": "InsightMatrix",
+      "nodeId": "131:62",
+      "source": "apps/web/src/lib/components/insights/InsightMatrix.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-62",
+      "status": "created",
+      "codeConnectTemplate": "components/InsightMatrix.figma.ts",
+      "variants": ["Variant=List", "Variant=Chart"],
+      "runId": "correlcore-production-grade-sprint-g-2026-06-27-v1"
+    },
+    {
+      "name": "SymptomChecker",
+      "nodeId": "131:3914",
+      "source": "apps/web/src/lib/components/entries/SymptomChecker.svelte",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-3914",
+      "status": "created",
+      "variants": ["Symptom=Headache", "Symptom=Off"],
+      "runId": "correlcore-production-grade-sprint-g-2026-06-27-v1"
     }
   ],
+  "variantDocumentation": {
+    "name": "Sprint G / Component variant docs",
+    "nodeId": "131:3864",
+    "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-3864",
+    "runId": "correlcore-production-grade-sprint-g-2026-06-27-v1",
+    "sections": [
+      { "name": "TagPicker chip states", "sourceNodeIds": ["50:1166", "56:2", "56:4"] },
+      { "name": "SymptomChecker intensity grid", "sourceNodeIds": ["50:1178"] }
+    ]
+  },
   "screens": [
     {
       "name": "Home / Componentized",
       "nodeId": "21:3",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-3",
-      "status": "created"
+      "status": "deprecated-reference-only",
+      "deprecatedNote": "Pre-Sprint componentized screen; not canonical for implementation."
     },
     {
       "name": "Entry Form / Componentized",
       "nodeId": "21:69",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-69",
-      "status": "created"
+      "status": "deprecated-reference-only",
+      "deprecatedNote": "Use Sprint 1 flow 48:1089."
     },
     {
       "name": "Trends / Componentized",
       "nodeId": "21:151",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-151",
-      "status": "created"
+      "status": "deprecated-reference-only",
+      "deprecatedNote": "Use Sprint 2 flow 59:1285."
     },
     {
       "name": "Insights / Componentized",
       "nodeId": "21:282",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=21-282",
-      "status": "created"
+      "status": "deprecated-reference-only",
+      "deprecatedNote": "Use Sprint 3 flow 98:1573."
     },
     {
       "name": "Mobile / App Flow",
       "nodeId": "28:328",
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-328",
-      "status": "created-mobile-web-split",
+      "status": "deprecated",
+      "deprecatedNote": "Use Sprint 1–4 implementation flows.",
       "children": [
         {
           "name": "Mobile / Today",
@@ -168,7 +286,9 @@
         {
           "name": "Mobile / Insights",
           "nodeId": "28:615",
-          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-615"
+          "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=28-615",
+          "status": "deprecated",
+          "deprecatedNote": "Use Sprint 3 flow 98:1573."
         }
       ]
     },
@@ -221,6 +341,12 @@
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=48-1089",
       "status": "implemented-and-verified",
       "runId": "correlcore-mobile-entry-sprint1-2026-06-23-v1",
+      "darkModePreviews": {
+        "nodeId": "129:6",
+        "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-6",
+        "screenCount": 5,
+        "runId": "correlcore-dark-previews-all-sprints-2026-06-27-v1"
+      },
       "children": [
         {
           "name": "Mobile Entry / Quick Capture",
@@ -250,6 +376,12 @@
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285",
       "status": "implemented-and-verified",
       "runId": "correlcore-mobile-trends-sprint2-2026-06-23-v1",
+      "darkModePreviews": {
+        "nodeId": "129:147",
+        "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-147",
+        "screenCount": 3,
+        "runId": "correlcore-dark-previews-all-sprints-2026-06-27-v1"
+      },
       "children": [
         {
           "name": "Mobile Trends / Summary",
@@ -271,11 +403,27 @@
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1573",
       "status": "implemented-and-verified",
       "runId": "correlcore-mobile-insights-sprint3-2026-06-26-v1",
+      "darkModePreviews": {
+        "nodeId": "129:453",
+        "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-453",
+        "screenCount": 5,
+        "runId": "correlcore-dark-previews-all-sprints-2026-06-27-v1"
+      },
       "children": [
-        { "name": "Mobile / Insights / Sprint 3 / Default", "nodeId": "98:1579" },
+        {
+          "name": "Mobile / Insights / Sprint 3 / Default",
+          "nodeId": "98:1579",
+          "layoutNote": "Sprint E: removed overflow Weitere Muster block; flexible spacer + AppNav at y=760 within 844 px."
+        },
         { "name": "Mobile / Insights / Sprint 3 / Empty", "nodeId": "99:1505" },
         { "name": "Mobile / Insights / Sprint 3 / Loading", "nodeId": "99:1554" },
-        { "name": "Mobile / Insights / Sprint 3 / Matrix", "nodeId": "99:1607" }
+        { "name": "Mobile / Insights / Sprint 3 / Matrix", "nodeId": "99:1607" },
+        {
+          "name": "Mobile / Insights / Sprint 3 / Matrix · 430",
+          "nodeId": "121:2781",
+          "screenSizePx": "430x932",
+          "runId": "correlcore-production-grade-sprint-f-2026-06-27-v1"
+        }
       ]
     },
     {
@@ -284,6 +432,12 @@
       "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=105-1626",
       "status": "figma-parity-complete",
       "runId": "correlcore-mobile-supporting-sprint4-2026-06-26-v1",
+      "darkModePreviews": {
+        "nodeId": "129:3739",
+        "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-3739",
+        "screenCount": 29,
+        "runId": "correlcore-dark-previews-all-sprints-2026-06-27-v1"
+      },
       "layoutBoardWidthPx": 1680,
       "screenSizePx": "390x844",
       "rowGroups": [
@@ -295,7 +449,9 @@
         { "name": "B4 Auth recovery (cont.)", "nodeId": "111:2123" },
         { "name": "B4 Resend verification", "nodeId": "105:2116" },
         { "name": "B5 Onboarding", "nodeId": "105:2137" },
-        { "name": "B6 Overlays", "nodeId": "105:2187" }
+        { "name": "B6 Overlays", "nodeId": "105:2187" },
+        { "name": "B1b Tag management", "nodeId": "121:2778" },
+        { "name": "B4b Auth entry", "nodeId": "121:2659" }
       ],
       "children": [
         { "name": "Mobile / Settings / Sprint 4 / Default", "nodeId": "105:1634" },
@@ -319,7 +475,34 @@
         { "name": "Mobile / Onboarding / Sprint 4 / Profile", "nodeId": "105:2152" },
         { "name": "Mobile / Onboarding / Sprint 4 / Submission error", "nodeId": "105:2164" },
         { "name": "Mobile / Overlays / Sprint 4 / Offline banner", "nodeId": "105:2190" },
-        { "name": "Mobile / Overlays / Sprint 4 / Update banner", "nodeId": "105:2228" }
+        { "name": "Mobile / Overlays / Sprint 4 / Update banner", "nodeId": "105:2228" },
+        { "name": "Mobile / Tags / Sprint 4 / Default", "nodeId": "121:2662" },
+        { "name": "Mobile / Tags / Sprint 4 / Create tag", "nodeId": "121:2703" },
+        { "name": "Mobile / Tags / Sprint 4 / Empty", "nodeId": "121:2741" },
+        { "name": "Mobile / Auth / Sprint 4 / Login default", "nodeId": "121:2585" },
+        { "name": "Mobile / Auth / Sprint 4 / Login error", "nodeId": "121:2600" },
+        { "name": "Mobile / Auth / Sprint 4 / Register default", "nodeId": "121:2619" },
+        { "name": "Mobile / Auth / Sprint 4 / Register strength", "nodeId": "121:2638" }
+      ]
+    },
+    {
+      "name": "Mobile Home / Sprint 5 Flow",
+      "nodeId": "121:2292",
+      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2292",
+      "status": "figma-parity-complete",
+      "runId": "correlcore-production-grade-sprint-f-2026-06-27-v1",
+      "darkModePreviews": {
+        "nodeId": "127:2586",
+        "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=127-2586",
+        "screenCount": 3,
+        "runId": "correlcore-dark-previews-all-sprints-2026-06-27-v1"
+      },
+      "layoutBoardWidthPx": 1680,
+      "screenSizePx": "390x844",
+      "children": [
+        { "name": "Mobile / Home / Sprint 5 / Default", "nodeId": "121:2296" },
+        { "name": "Mobile / Home / Sprint 5 / Loading", "nodeId": "121:2361" },
+        { "name": "Mobile / Home / Sprint 5 / Empty", "nodeId": "121:2425" }
       ]
     }
   ]

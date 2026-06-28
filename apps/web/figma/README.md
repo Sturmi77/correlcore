@@ -28,7 +28,63 @@ library and a Dev or Full seat on an Organization or Enterprise plan.
 - InsightQualityMeter: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-83
 - InsightStageHeader: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-111
 - MobileInsightLead: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1541
-  (Code Connect: [`components/MobileInsightLead.figma.ts`](./components/MobileInsightLead.figma.ts))
+- MobileTrendsSummary: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-31
+- InsightMatrix: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-62
+- SymptomChecker: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-3914
+
+## Code Connect templates
+
+Local templates in [`components/`](./components/) (20 files).
+
+### Publish (Sprint H)
+
+Prerequisites: Figma **Organization/Enterprise** plan, **Dev or Full** seat on the
+token owner, component library published.
+
+```bash
+# From repo root — dry-run (no token required for parse validation)
+npx @figma/code-connect@latest connect publish --dry-run
+
+# Publish (set token once in shell or CI secret)
+$env:FIGMA_ACCESS_TOKEN = "<personal-access-token>"   # PowerShell
+npx @figma/code-connect@latest connect publish
+```
+
+Token scopes: **Code Connect → Write**, **File content → Read**.
+Generate at: Figma → Settings → Security → Personal access tokens.
+
+Verify after publish: Dev Mode on Button `6:64` shows Svelte snippet; or MCP
+`get_code_connect_map` for node `6:64`.
+
+| Template            | Figma node | Code source                         |
+| ------------------- | ---------- | ----------------------------------- |
+| AppNav              | 14-179     | AppNav.svelte                       |
+| Button              | 6-64       | Button.svelte                       |
+| ComparisonHeatmap   | 20-268     | ComparisonHeatmap.svelte            |
+| FormField           | 17-58      | TagPicker.svelte (field pattern)    |
+| HomeSummary         | 19-113     | HomeSummary.svelte                  |
+| InlineAlert         | 10-43      | InlineAlert.svelte                  |
+| InsightCard         | 79-55      | InsightCard.svelte                  |
+| InsightMatrix       | 131-62     | InsightMatrix.svelte                |
+| InsightQualityMeter | 79-83      | InsightQualityMeter.svelte (legacy) |
+| InsightStageHeader  | 79-111     | InsightStageHeader.svelte           |
+| MetricCard          | 19-53      | MetricCard.svelte                   |
+| MetricTimeseries    | 20-102     | MetricTimeseries.svelte             |
+| MobileInsightLead   | 98-1541    | MobileInsightLead.svelte            |
+| MobileTrendsSummary | 131-31     | MobileTrendsSummary.svelte          |
+| Panel               | 9-27       | Panel.svelte                        |
+| ScaleSlider         | 16-107     | ScaleSlider.svelte                  |
+| ScreenHeader        | 11-33      | ScreenHeader.svelte                 |
+| SegmentedControl    | 12-45      | SegmentedControl.svelte             |
+| TabBar              | 13-45      | TabBar.svelte                       |
+| TagChip             | 17-18      | TagPicker.svelte (chip pattern)     |
+
+## Sprint G variant documentation
+
+Board: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=131-3864
+
+Extracts TagPicker chip states and SymptomChecker intensity grid from Sprint 1
+Entry / Details Expanded (`50:1153`).
 
 ## Componentized screens
 
@@ -149,10 +205,95 @@ queue (ADR-0009).
 
 Closeout tracking: [`docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md`](../../docs/MOBILE_CLOSEOUT_SPRINT_PLAN.md)
 
+## Theme modes (Sprint E)
+
+Semantic colors live in the **CorrelCore / Color** variable collection with
+**Light** and **Dark** modes, aligned to `apps/web/src/app.css` and ADR-0027
+contrast pairs. Foundation components (`Button`, `Panel`, `InlineAlert`,
+`ScreenHeader`, `AppNav`) bind to `color/*` tokens and respond to mode toggles.
+
+**Surface rule:** Card/screen backgrounds use `color/surface`, `color/surface-2`,
+or `color/bg` — not hardcoded white. Required for Dark reference frames
+(`120:2096`) and mode toggles on sprint boards.
+
+**Dark mode on instances:** Toggling **CorrelCore / Color → Dark** on a parent
+frame does **not** always propagate into nested component instances (e.g.
+`AppNav`). Dark reference clones set explicit Dark mode recursively on every
+node. Do not judge dark parity from light sprint frames alone.
+
+**AppNav:** Mobile variants use `color/surface` at 92% opacity + `color/border`
+top stroke (matches `app.css` `color-mix` + border).
+
+Dark reference screens (minimum parity matrix):
+
+- Board: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=120-2096
+- Entry · Dark: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=126-6
+- Trends · Dark: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=126-84
+- Insights · Dark: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=126-144
+- Settings · Dark: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=126-221
+
+Each sprint board (1–5) includes a **Dark mode previews** row below the light
+states. Clones use explicit Dark mode on every node (required for `AppNav` and
+other component instances).
+
+| Sprint       | Board                                                                            | Dark previews row                                                                             |
+| ------------ | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1 Entry      | [48:1089](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=48-1089)   | [129:6](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-6) · 5 screens        |
+| 2 Trends     | [59:1285](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=59-1285)   | [129:147](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-147) · 3 screens    |
+| 3 Insights   | [98:1573](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=98-1573)   | [129:453](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-453) · 5 screens    |
+| 4 Supporting | [105:1626](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=105-1626) | [129:3739](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=129-3739) · 29 screens |
+| 5 Home       | [121:2292](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2292) | [127:2586](https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=127-2586) · 3 screens  |
+
+Cross-sprint minimum parity matrix (Theme Reference / Dark):
+
+## Deprecated / reference-only frames
+
+| Frame                      | Node     | Status         | Use instead             |
+| -------------------------- | -------- | -------------- | ----------------------- |
+| Mobile / App Flow          | `28:328` | DEPRECATED     | Sprint 1–4 flows        |
+| Mobile / Insights (legacy) | `28:615` | DEPRECATED     | Sprint 3 `98:1573`      |
+| Home / Componentized       | `21:3`   | Reference only | Sprint 5 Home (planned) |
+| Entry Form / Componentized | `21:69`  | Reference only | Sprint 1 `48:1089`      |
+| Trends / Componentized     | `21:151` | Reference only | Sprint 2 `59:1285`      |
+| Insights / Componentized   | `21:282` | Reference only | Sprint 3 `98:1573`      |
+
+Badges are visible on canvas (Sprint E, 2026-06-27).
+
 ## Pending Figma work
+
+Production-grade closeout — **Sprint E–F complete**; remaining Sprints G–I:
+[`docs/FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md`](../../docs/FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md)
+
+## Mobile Home Sprint 5
+
+- Flow board: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2292
+- Default: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2296
+- Loading: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2361
+- Empty: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2425
+
+Three zones per ADR-0017: today context (`ScreenHeader`), daily brief (`HomeSummary` +
+panel), entry CTA + `AppNav · Today`.
+
+### Sprint 4 extensions (Sprint F)
+
+**B1b — Tag management**
+
+- Default: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2662
+- Create tag: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2703
+- Empty: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2741
+
+**B4b — Auth entry**
+
+- Login default: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2585
+- Login error: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2600
+- Register default: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2619
+- Register strength: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2638
+
+**Sprint 3 — Matrix @ 430 px**
+
+- https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2781
 
 ### Out of scope here
 
 - Phase 5 desktop consolidation
-- Published-library Code Connect activation (Figma seat/plan gate)
 - Native mobile app split decision after product and platform scope is clear
