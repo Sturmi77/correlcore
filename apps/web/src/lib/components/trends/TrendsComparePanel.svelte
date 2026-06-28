@@ -10,6 +10,7 @@
     TimeseriesRange,
   } from '$lib/api/stats';
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
+  import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
@@ -42,7 +43,12 @@
   }>();
 
   // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
+  // #214 finding 4: scale day columns from root rem for accessible touch targets.
+  let axisLayout = compareDailyAxisLayout;
+
   onMount(() => {
+    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    axisLayout = compareDailyAxisLayoutFromRoot(rootPx);
     timelineCursor.reset();
   });
   onDestroy(() => {
@@ -217,7 +223,7 @@
         {enabled}
         {loading}
         {axisDates}
-        axisLayout={compareDailyAxisLayout}
+        {axisLayout}
         {markers}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
@@ -229,7 +235,7 @@
         {enabled}
         {loading}
         {axisDates}
-        axisLayout={compareDailyAxisLayout}
+        {axisLayout}
         {markers}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
@@ -243,7 +249,7 @@
       {showSymptoms}
       {loading}
       dates={axisDates}
-      axisLayout={compareDailyAxisLayout}
+      {axisLayout}
       {markers}
       enableCursor
       {sortMode}
