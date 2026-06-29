@@ -12,8 +12,10 @@
    * to show the correlation matrix for pointbiserial insights.
    */
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
+  import { insightStore } from '$lib/stores/insights';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
   import {
@@ -74,6 +76,7 @@
 
   let insights: InsightResponse[] = [];
   let loading = false;
+  let insightsLoaded = false;
   let error: string | null = null;
   let insightMaturity: InsightMaturity | null = null;
   let userPreferences: UserPreferencesResponse | null = null;
@@ -283,6 +286,13 @@
     }
   }
 
+  function bootstrapInsightsFromStore(): void {
+    const cached = get(insightStore);
+    if (cached.insights.length === 0) return;
+    insights = cached.insights;
+    insightMaturity = cached.insightMaturity;
+  }
+
   async function loadInsights(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     loading = true;
@@ -342,7 +352,15 @@
       inactiveTagIds = [];
     } finally {
       loading = false;
+      insightsLoaded = true;
     }
+  }
+
+  $: feedLoading = loading || ($auth.status === 'authenticated' && !insightsLoaded);
+
+  $: if ($auth.status === 'authenticated' && !insightsLoaded && !loading) {
+    bootstrapInsightsFromStore();
+    void loadInsights();
   }
 
   function syncCompactInsights(): void {
@@ -354,7 +372,6 @@
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     syncCompactInsights();
     mobileMedia?.addEventListener('change', syncCompactInsights);
-    void loadInsights();
 
     return () => mobileMedia?.removeEventListener('change', syncCompactInsights);
   });
@@ -441,7 +458,7 @@
       />
     {/if}
 
-    {#if compactInsights && detailView === 'findings' && !loading && !error && primaryMobileInsight}
+    {#if compactInsights && detailView === 'findings' && !feedLoading && !error && primaryMobileInsight}
       <MobileInsightLead
         insight={primaryMobileInsight}
         maturity={insightMaturity}
@@ -450,7 +467,7 @@
         showMilestone={showMaturityMilestone}
         on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
       />
-    {:else if compactInsights && detailView === 'findings' && !loading && !error && insightMaturity}
+    {:else if compactInsights && detailView === 'findings' && !feedLoading && !error && insightMaturity}
       <InsightStageHeader
         maturity={insightMaturity}
         showMilestone={showMaturityMilestone}
@@ -468,7 +485,7 @@
 
     {#if detailView === 'matrix'}
       <InsightMatrix {insights} />
-    {:else if compactInsights && primaryMobileInsight && !loading && !error}
+    {:else if compactInsights && primaryMobileInsight && !feedLoading && !error}
       {#if remainingMobileInsights.length > 0}
         <section class="insights-page__more" data-testid="mobile-insights-more">
           <h2>{$_('insights.mobile.more_heading')}</h2>
@@ -486,7 +503,7 @@
       <InsightFeed
         {insights}
         maturity={insightMaturity}
-        {loading}
+        loading={feedLoading}
         {error}
         {entryCount}
         {inactiveTagIds}
@@ -610,6 +627,8 @@
     display: grid;
     gap: var(--space-4);
     padding: 0 var(--space-4) var(--space-4);
+    min-width: 0;
+    overflow-x: clip;
   }
 
   .insights-page__layer-toggle {

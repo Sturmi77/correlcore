@@ -63,6 +63,7 @@ describe('SymptomAnalyticsSection', () => {
     expect(
       screen.getAllByRole('heading', { name: 'Headache', level: 3 }).length
     ).toBeGreaterThanOrEqual(2);
+    expect(screen.getByLabelText('insights.symptoms.calendar_legend')).toBeTruthy();
   });
 
   it('dispatches selectDate from calendar cells', async () => {

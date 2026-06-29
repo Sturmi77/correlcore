@@ -8,6 +8,8 @@
 
   export let heatmap: TagHeatmapResponse | null = null;
   export let loading = false;
+  /** Keep cells compact on touch devices (e.g. habits detail with many days). */
+  export let compact = false;
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string; tagId: string } }>();
 
@@ -50,7 +52,7 @@
   }
 </script>
 
-<section class="heatmap" data-loading={loading ? 'true' : 'false'}>
+<section class="heatmap" class:heatmap--compact={compact} data-loading={loading ? 'true' : 'false'}>
   <div class="heatmap__head">
     <h2>{$_('trends.heatmap.heading')}</h2>
     {#if heatmap}
@@ -242,15 +244,25 @@
   }
 
   @media (pointer: coarse) {
-    .heatmap__grid {
+    .heatmap:not(.heatmap--compact) .heatmap__grid {
       grid-template-columns: minmax(7rem, 9rem) repeat(var(--day-count), 2.75rem);
       gap: 0.25rem;
     }
 
-    .heatmap__cell {
+    .heatmap:not(.heatmap--compact) .heatmap__cell {
       width: 2.75rem;
       height: 2.75rem;
     }
+  }
+
+  .heatmap--compact .heatmap__grid {
+    grid-template-columns: minmax(4.5rem, 6rem) repeat(var(--day-count), 0.65rem);
+    gap: 0.15rem;
+  }
+
+  .heatmap--compact .heatmap__cell {
+    width: 0.65rem;
+    height: 0.65rem;
   }
 
   @media (max-width: 520px) {
