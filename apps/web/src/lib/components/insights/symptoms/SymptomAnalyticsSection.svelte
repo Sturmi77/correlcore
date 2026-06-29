@@ -166,6 +166,7 @@
     border: 1px solid var(--color-border-chart);
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
+    min-width: 0;
   }
 
   .symptom-analytics__header,
@@ -215,5 +216,17 @@
   .symptom-analytics__toggle:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+
+  @media (max-width: 520px) {
+    .symptom-analytics {
+      padding: var(--space-3);
+      gap: var(--space-3);
+    }
+
+    .symptom-analytics__subheader {
+      flex-wrap: wrap;
+      align-items: center;
+    }
   }
 </style>

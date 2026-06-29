@@ -907,6 +907,7 @@
       "calendar_cell_aria": "{date}, {name}: {state}",
       "calendar_present": "vorhanden",
       "calendar_absent": "nicht vorhanden",
+      "calendar_legend": "Kalender-Legende",
       "trend_heading": "Symptom- und Stimmungsverlauf",
       "trend_subtitle": "Rollierendes {window}-Tage-Fenster ueber die letzten {days} Tage",
       "trend_aria": "Symptomhaeufigkeit und Stimmungstrend fuer {name}",

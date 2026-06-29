@@ -139,6 +139,7 @@
           <TagHeatmap
             heatmap={detailHeatmap}
             {loading}
+            compact
             on:selectDate={(event) => dispatch('selectDate', event.detail)}
           />
         </article>
@@ -152,6 +153,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    min-width: 0;
+    max-width: 100%;
   }
 
   .habits__header,
@@ -186,6 +189,7 @@
     grid-template-columns: minmax(15rem, 0.75fr) minmax(0, 1.25fr);
     gap: var(--space-4);
     align-items: start;
+    min-width: 0;
   }
 
   .habits__list {
@@ -245,6 +249,7 @@
   .habits__detail {
     display: grid;
     gap: var(--space-4);
+    min-width: 0;
   }
 
   .habits__detail-head > strong {
@@ -313,6 +318,7 @@
       border: 1px solid var(--color-border-chart);
       background: var(--color-surface-chart-bg);
       padding: var(--space-3);
+      overflow-x: auto;
     }
 
     .habits__stats {

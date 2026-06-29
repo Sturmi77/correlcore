@@ -155,6 +155,7 @@
   .symptom-trend__chart {
     width: 100%;
     height: auto;
+    max-height: 7rem;
     display: block;
   }
 
@@ -221,5 +222,24 @@
 
   .symptom-trend__swatch--mood {
     background: var(--color-mood-primary, var(--color-primary));
+  }
+
+  @media (max-width: 520px) {
+    .symptom-trend {
+      padding: var(--space-2);
+      gap: var(--space-1);
+    }
+
+    .symptom-trend__chart {
+      max-height: 5.25rem;
+    }
+
+    .symptom-trend__header p {
+      font-size: var(--text-xs);
+    }
+
+    .symptom-trend__legend {
+      gap: var(--space-2);
+    }
   }
 </style>

@@ -485,6 +485,7 @@
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
+    min-width: 0;
   }
 
   .trends__panel--compare {

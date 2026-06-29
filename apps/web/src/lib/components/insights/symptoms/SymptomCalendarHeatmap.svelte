@@ -73,6 +73,19 @@
       {/if}
     {/each}
   </div>
+
+  <div class="symptom-calendar__legend" aria-label={$_('insights.symptoms.calendar_legend')}>
+    <span class="symptom-calendar__legend-item">
+      <span class="symptom-calendar__swatch symptom-calendar__swatch--absent" aria-hidden="true"
+      ></span>
+      {$_('insights.symptoms.calendar_absent')}
+    </span>
+    <span class="symptom-calendar__legend-item">
+      <span class="symptom-calendar__swatch symptom-calendar__swatch--present" aria-hidden="true"
+      ></span>
+      {$_('insights.symptoms.calendar_present')}
+    </span>
+  </div>
 </article>
 
 <style>
@@ -83,6 +96,7 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface);
+    min-width: 0;
   }
 
   .symptom-calendar__header h3,
@@ -114,6 +128,36 @@
     gap: 2px;
     overflow-x: auto;
     padding-bottom: var(--space-1);
+    max-width: 100%;
+  }
+
+  .symptom-calendar__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .symptom-calendar__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .symptom-calendar__swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .symptom-calendar__swatch--absent {
+    background: var(--color-surface-offset);
+  }
+
+  .symptom-calendar__swatch--present {
+    background: var(--color-warning);
   }
 
   .symptom-calendar__cell {

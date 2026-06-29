@@ -53,6 +53,11 @@ describe('TagHeatmap', () => {
     expect(screen.getByLabelText('Focus, 2026-05-03: 3')).toBeTruthy();
   });
 
+  it('marks compact heatmaps for dense mobile layouts', () => {
+    const { container } = render(TagHeatmap, { props: { heatmap, loading: false, compact: true } });
+    expect(container.querySelector('.heatmap--compact')).toBeTruthy();
+  });
+
   it('renders skeleton and empty states', () => {
     const loading = render(TagHeatmap, { props: { heatmap: null, loading: true } });
     expect(loading.getByLabelText('trends.heatmap.loading')).toBeTruthy();
