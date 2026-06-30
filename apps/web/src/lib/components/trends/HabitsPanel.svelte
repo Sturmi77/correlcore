@@ -82,12 +82,14 @@
   }
 
   onMount(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    const browserWindow = globalThis.window;
+    if (!browserWindow || typeof browserWindow.matchMedia !== 'function') {
       return;
     }
-    mobileMedia = window.matchMedia('(max-width: 760px)');
-    handleMobileChange(mobileMedia);
-    mobileMedia.addEventListener('change', handleMobileChange);
+    const media = browserWindow.matchMedia('(max-width: 760px)');
+    mobileMedia = media;
+    handleMobileChange(media);
+    media.addEventListener('change', handleMobileChange);
   });
 
   onDestroy(() => {
