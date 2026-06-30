@@ -200,7 +200,10 @@ def _entry_payload_from_model(
     *,
     tag_ids: list[uuid.UUID],
     symptoms: dict[str, int],
+    for_revision_log: bool = False,
 ) -> dict[str, Any]:
+    """Build entry sync payload. Revision-log rows must not store plaintext notes."""
+    note_value = None if for_revision_log else entry.note_enc
     return {
         "entry_date": entry.entry_date.isoformat(),
         "slot": entry.slot.value,
@@ -209,10 +212,62 @@ def _entry_payload_from_model(
         "stress": entry.stress,
         "cycle_day": entry.cycle_day,
         "work_context": entry.work_context.value,
-        "note": entry.note_enc,
+        "note": note_value,
         "tag_ids": [str(tag_id) for tag_id in tag_ids],
         "symptoms": symptoms,
     }
+
+
+async def _hydrate_entry_pull_payload(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entity_id: uuid.UUID,
+    data: dict[str, Any],
+) -> dict[str, Any]:
+    """Attach live note text to pull deltas; revision log stores note=None only."""
+    result = await db.execute(select(Entry).where(Entry.id == entity_id, Entry.user_id == user_id))
+    entry = result.scalar_one_or_none()
+    if entry is None:
+        return data
+    hydrated = dict(data)
+    hydrated["note"] = entry.note_enc
+    return hydrated
+
+
+def _revision_to_change(row: SyncRevisionLog) -> SyncChange:
+    return SyncChange(
+        seq=int(row.user_rev),
+        id=row.entity_id,
+        table=_entity_type_to_table(row.entity_type),
+        operation=row.operation,  # type: ignore[arg-type]
+        data=row.payload,
+        updated_at=row.entity_updated_at,
+    )
+
+
+async def _revision_to_pull_change(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    row: SyncRevisionLog,
+) -> SyncChange:
+    data = dict(row.payload)
+    if row.entity_type == "entry" and row.operation == "upsert":
+        data = await _hydrate_entry_pull_payload(
+            db,
+            user_id=user_id,
+            entity_id=row.entity_id,
+            data=data,
+        )
+    return SyncChange(
+        seq=int(row.user_rev),
+        id=row.entity_id,
+        table=_entity_type_to_table(row.entity_type),
+        operation=row.operation,  # type: ignore[arg-type]
+        data=data,
+        updated_at=row.entity_updated_at,
+    )
 
 
 def _tag_payload_from_model(tag: Tag) -> dict[str, Any]:
@@ -235,17 +290,6 @@ def _symptom_payload_from_model(symptom: Symptom) -> dict[str, Any]:
         "name": symptom.display_name,
         "icon": symptom.icon,
     }
-
-
-def _revision_to_change(row: SyncRevisionLog) -> SyncChange:
-    return SyncChange(
-        seq=0,
-        id=row.entity_id,
-        table=_entity_type_to_table(row.entity_type),
-        operation=row.operation,  # type: ignore[arg-type]
-        data=row.payload,
-        updated_at=row.entity_updated_at,
-    )
 
 
 def _entity_type_to_table(entity_type: str) -> SyncTableName:
@@ -349,6 +393,7 @@ async def _merge_entry_upsert(
                 entry,
                 tag_ids=payload.tag_ids,
                 symptoms=_normalize_symptoms_payload(payload.symptoms),
+                for_revision_log=True,
             ),
             entity_updated_at=entry.updated_at,
         )
@@ -399,7 +444,9 @@ async def _merge_entry_upsert(
             entity_type="entry",
             entity_id=entry.id,
             operation="upsert",
-            payload=_entry_payload_from_model(entry, tag_ids=tag_ids, symptoms=symptoms),
+            payload=_entry_payload_from_model(
+                entry, tag_ids=tag_ids, symptoms=symptoms, for_revision_log=True
+            ),
             entity_updated_at=entry.updated_at,
         )
         return conflicts
@@ -455,6 +502,10 @@ async def _merge_entry_delete(
     result = await db.execute(select(Entry).where(Entry.id == change.id, Entry.user_id == user_id))
     entry = result.scalar_one_or_none()
     if entry is None:
+        return []
+    client_ts = _ensure_utc(change.updated_at)
+    server_ts = _ensure_utc(entry.updated_at)
+    if not _client_wins(client_ts, server_ts):
         return []
     await db.delete(entry)
     await db.flush()
@@ -771,9 +822,12 @@ async def pull_changes(
 
     revision = await _get_or_create_user_revision(db, user_id=user_id)
     cursor_rev = page[-1].user_rev if page else int(revision.current_rev)
+    changes: list[SyncChange] = []
+    for row in page:
+        changes.append(await _revision_to_pull_change(db, user_id=user_id, row=row))
     response = SyncPullResponse(
         cursor=encode_cursor(user_rev=cursor_rev, wall=now),
-        changes=[_revision_to_change(row) for row in page],
+        changes=changes,
         has_more=has_more,
         server_time=now,
     )

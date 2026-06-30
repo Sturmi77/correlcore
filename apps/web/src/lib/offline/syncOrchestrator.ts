@@ -140,7 +140,6 @@ export async function pushPending(): Promise<boolean> {
     await markChangeStatus(row.seq!, 'acked');
   }
 
-  await setSyncMeta(SYNC_META_KEYS.lastPullCursor, response.cursor);
   await setSyncMeta(SYNC_META_KEYS.lastPushAt, new Date().toISOString());
 
   for (const row of pending) {

@@ -71,8 +71,15 @@ def test_sanitize_conflict_value_redacts_note_plaintext_keys() -> None:
     assert "secret" not in str(redacted)
 
 
-def test_sanitize_conflict_value_passes_through_mood_values() -> None:
-    assert sanitize_conflict_value("mood_score", {"value": 4}) == {"value": 4}
+def test_sanitize_conflict_value_redacts_mood_values() -> None:
+    assert sanitize_conflict_value("mood_score", {"value": 4}) == {
+        "changed": True,
+        "redacted": True,
+    }
+    assert sanitize_conflict_value("symptoms", {"map": {"id": 2}}) == {
+        "changed": True,
+        "redacted": True,
+    }
 
 
 @pytest.mark.asyncio

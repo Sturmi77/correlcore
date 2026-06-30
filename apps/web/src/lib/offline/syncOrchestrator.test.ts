@@ -76,6 +76,27 @@ describe('syncOrchestrator', () => {
     expect(seq).toBeGreaterThan(0);
   });
 
+  it('does not overwrite the pull cursor after push', async () => {
+    await setSyncMeta(SYNC_META_KEYS.lastPullCursor, 'cursor-before-push');
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: {},
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+    pushSyncChanges.mockResolvedValue({
+      cursor: 'cursor-after-push',
+      applied: 1,
+      skipped: 0,
+      conflicts: [],
+      idempotent_replay: false,
+    });
+    await pushPending();
+    expect(await getSyncMeta(SYNC_META_KEYS.lastPullCursor)).toBe('cursor-before-push');
+  });
+
   it('stores conflict note without throwing', async () => {
     await appendChange({
       batch_id: 'batch-1',

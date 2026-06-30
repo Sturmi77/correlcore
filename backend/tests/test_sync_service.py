@@ -91,6 +91,23 @@ def test_decode_cursor_rejects_garbage() -> None:
         decode_cursor("not-a-valid-cursor")
 
 
+def test_revision_to_change_uses_user_rev() -> None:
+    from app.models.sync_engine import SyncRevisionLog
+    from app.services.sync_service import _revision_to_change
+
+    row = SyncRevisionLog(
+        user_id=uuid.uuid4(),
+        user_rev=17,
+        entity_type="entry",
+        entity_id=uuid.uuid4(),
+        operation="upsert",
+        payload={"entry_date": "2026-06-30"},
+        entity_updated_at=datetime.now(UTC),
+    )
+    change = _revision_to_change(row)
+    assert change.seq == 17
+
+
 @pytest.mark.asyncio
 async def test_push_idempotency_replays_stored_batch() -> None:
     user = make_user()

@@ -8,6 +8,7 @@ export {
   markChangeStatus,
 } from './changeLog';
 export {
+  destroyOfflineDatabase,
   OFFLINE_DB_NAME,
   OFFLINE_DB_VERSION,
   CorrelCoreOfflineDB,
@@ -21,6 +22,7 @@ export {
   OFFLINE_SYNC_STORAGE_KEY,
   setOfflineSyncEnabled,
 } from './featureFlag';
+export { clearOfflineDataForLogout } from './session';
 export { deleteSyncMeta, getSyncMeta, setSyncMeta } from './syncMeta';
 export {
   initializeSyncOrchestrator,

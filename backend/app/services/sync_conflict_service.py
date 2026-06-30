@@ -17,19 +17,25 @@ from app.schemas.sync import SyncEntityType
 logger = logging.getLogger(__name__)
 
 _NOTE_FIELD = "note"
+_SCALAR_HEALTH_FIELDS = frozenset({"mood_score", "energy", "stress"})
+_SYMPTOMS_FIELD = "symptoms"
 _REDACTED_NOTE_VALUE = {"present": True, "changed": True, "redacted": True}
+_REDACTED_HEALTH_VALUE = {"changed": True, "redacted": True}
 _FORBIDDEN_NOTE_KEYS = frozenset({"text", "note", "plaintext", "content", "value"})
 
 
 def sanitize_conflict_value(field_name: str, value: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Ensure note conflicts never leak plaintext on the wire."""
+    """Ensure conflict payloads never leak Art.-9 health values (ADR-0036 §2.1)."""
     if value is None:
         return None
-    if field_name != _NOTE_FIELD:
+    if field_name == _NOTE_FIELD:
+        if any(key in value for key in _FORBIDDEN_NOTE_KEYS):
+            return dict(_REDACTED_NOTE_VALUE)
         return value
-
-    if any(key in value for key in _FORBIDDEN_NOTE_KEYS):
-        return dict(_REDACTED_NOTE_VALUE)
+    if field_name in _SCALAR_HEALTH_FIELDS:
+        return dict(_REDACTED_HEALTH_VALUE)
+    if field_name == _SYMPTOMS_FIELD:
+        return dict(_REDACTED_HEALTH_VALUE)
     return value
 
 

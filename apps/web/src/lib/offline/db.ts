@@ -49,3 +49,12 @@ export async function resetOfflineDbForTests(name = OFFLINE_DB_NAME): Promise<Co
   await dbInstance.open();
   return dbInstance;
 }
+
+/** Logout helper — delete the origin database and drop the singleton. */
+export async function destroyOfflineDatabase(name = OFFLINE_DB_NAME): Promise<void> {
+  if (dbInstance?.isOpen()) {
+    dbInstance.close();
+  }
+  await Dexie.delete(name);
+  dbInstance = null;
+}
