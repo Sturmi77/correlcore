@@ -1088,43 +1088,207 @@ oder `null`, wenn noch kein Insight existiert.
 
 ---
 
-## 10. Sync (Offline-Sync, geplant)
+## 10. Sync (Offline-Sync, M4.1)
 
-Die Sync-API ist noch nicht implementiert. M4 quick wins lieferten PWA shell
-caching, aber keine Dexie-Queue. Der Router enthaelt den Sync-Mount bewusst
-nur als Future-Kommentar; Follow-ups sind Dexie-Queue, `/sync/push`,
-`/sync/pull` und das `sync_conflicts`-Log.
+**Status:** Contract frozen in [ADR-0036](adr/0036-offline-sync-v1-scope.md) (Sprint 0).
+Endpoints und Service-Logik werden in M4.1 Sprint 1–2 implementiert. Pydantic-
+Schemas: `backend/app/schemas/sync.py`.
+
+M4 lieferte PWA-Shell-Caching und form-level Offline-Retry; M4.1 ergänzt Dexie-
+Queue, Delta-Sync und `sync_conflicts`-Logging.
 
 ```
-POST   /api/v1/sync/push    Client-Änderungen hochladen
-GET    /api/v1/sync/pull    Delta seit Cursor herunterladen
+POST   /api/v1/sync/push              Client-Änderungen hochladen (verified user)
+GET    /api/v1/sync/pull              Delta seit Cursor herunterladen (verified user)
+GET    /api/v1/user/sync-conflicts    Read-only Konflikt-Historie (Sprint 1)
 ```
 
-### Push-Request
+Alle Sync-Endpunkte erfordern `get_current_verified_user`. Logs und Conflict-
+Responses enthalten **keine** Klartext-Gesundheitswerte (ADR-0036 §2.1).
+
+### Synced entities (v1)
+
+| Entity | Push | Pull |
+| ------ | ---- | ---- |
+| Entries (+ tag/symptom links) | Ja | Ja |
+| Custom tags | Ja | Ja |
+| Custom symptoms | Ja | Ja |
+| Insights, analytics, worker data | Nein | Ja (server-authoritative) |
+
+Merge: **Last-Write-Wins** pro Feld (`updated_at`); Server gewinnt bei Gleichstand.
+LWW-Konflikte auf kritischen Feldern (`mood_score`, `energy`, `stress`, `note`,
+`symptoms`) werden in `sync_conflicts` geloggt — **nicht** als HTTP `409`.
+
+### Cursor
+
+Pull-Cursor ist opaque (Base64url-JSON, nicht vom Client parsen). Erster Pull ohne
+`since` liefert Änderungen der letzten 30 Tage. Folge-Pulls nutzen
+`GET /api/v1/sync/pull?since=<cursor>`.
+
+Beispiel-Cursor-Inhalt (nur zur Dokumentation — Clients behandeln ihn als opaque string):
+
+```json
+{"user_rev": 12345, "wall": "2026-06-30T12:00:00.000000Z"}
+```
+
+### `POST /api/v1/sync/push`
+
+Lädt einen Batch aus der Client-`change_log`-Outbox hoch. Idempotent auf
+`(client_id, batch_id)` — Replay liefert `200` mit `idempotent_replay: true`
+ohne erneute DB-Mutation.
+
+**Request**
 
 ```json
 {
-  "client_id": "device-uuid",
+  "client_id": "550e8400-e29b-41d4-a716-446655440000",
+  "batch_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
   "changes": [
     {
-      "id": "entry-uuid",
+      "seq": 1,
+      "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
       "table": "entries",
-      "data": {...},
-      "updated_at": "2026-04-20T16:55:00Z"
+      "operation": "upsert",
+      "data": {
+        "entry_date": "2026-06-30",
+        "slot": "day",
+        "mood_score": 4,
+        "energy": 3,
+        "stress": 2,
+        "work_context": "homeoffice",
+        "note": "Guter Tag",
+        "tag_ids": ["a1b2c3d4-e5f6-7890-abcd-ef1234567890"],
+        "symptoms": {"b2c3d4e5-f6a7-8901-bcde-f12345678901": 2}
+      },
+      "updated_at": "2026-06-30T16:55:00.000000Z"
     }
   ]
 }
 ```
 
-### Pull-Response
+| Feld | Typ | Beschreibung |
+| ---- | --- | ------------ |
+| `client_id` | UUID | Stabile Geräte-/Browser-Identität |
+| `batch_id` | UUID | Idempotency-Key pro HTTP-Request |
+| `changes[].seq` | int ≥ 1 | Monotone Sequenz pro `client_id` |
+| `changes[].table` | `entries` \| `tags` \| `symptoms` | Ziel-Tabelle |
+| `changes[].operation` | `upsert` \| `delete` | Default `upsert` |
+
+**Response `200`**
 
 ```json
 {
-  "cursor": "eyJjdXJzb3IiOiAxMjM0NX0=",
-  "changes": [...],
-  "conflicts": [...]
+  "cursor": "eyJ1c2VyX3JldiI6IDEyMzQ1LCAid2FsbCI6ICIyMDI2LTA2LTMwVDEyOjAwOjAwWiJ9",
+  "applied": 1,
+  "skipped": 0,
+  "conflicts": [
+    {
+      "entity_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "entity_type": "entry",
+      "field_name": "mood_score",
+      "client_ts": "2026-06-30T16:55:00.000000Z",
+      "server_ts": "2026-06-30T16:54:30.000000Z",
+      "winner": "server",
+      "client_value": {"value": 4},
+      "server_value": {"value": 3}
+    }
+  ],
+  "idempotent_replay": false
 }
 ```
+
+| Feld | Beschreibung |
+| ---- | ------------ |
+| `conflicts` | Merge-Konflikte — Server-Wert wurde angewendet; **kein** HTTP `409` |
+| `idempotent_replay` | `true` wenn `batch_id` bereits verarbeitet wurde |
+
+**Fehler**
+
+| Code | Wann |
+| ---- | ---- |
+| `400` | Ungültige `seq`-Reihenfolge, unbekannte `table`, leerer Batch |
+| `401` / `403` | Nicht authentifiziert / nicht verifiziert |
+| `422` | Pydantic-Validierung (z. B. `mood_score` außerhalb 1..5) |
+
+`409 Conflict` ist **nicht** der LWW-Konflikt-Pfad — reserviert für harte
+Invarianten (z. B. Slot-Kollision im Online-CRUD).
+
+### `GET /api/v1/sync/pull`
+
+**Query**
+
+| Parameter | Typ | Default | Beschreibung |
+| --------- | --- | ------- | ------------ |
+| `since` | string | — | Opaque Cursor; fehlt → letzte 30 Tage |
+| `limit` | int | 200 | Max. Änderungen pro Response (1..500) |
+
+**Response `200`**
+
+```json
+{
+  "cursor": "eyJ1c2VyX3JldiI6IDEyMzQ2LCAid2FsbCI6ICIyMDI2LTA2LTMwVDEyOjA1OjAwWiJ9",
+  "changes": [
+    {
+      "seq": 0,
+      "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "table": "entries",
+      "operation": "upsert",
+      "data": {
+        "entry_date": "2026-06-30",
+        "slot": "day",
+        "mood_score": 3,
+        "energy": 3,
+        "stress": 2,
+        "work_context": "homeoffice",
+        "note": null,
+        "tag_ids": [],
+        "symptoms": {}
+      },
+      "updated_at": "2026-06-30T16:54:30.000000Z"
+    }
+  ],
+  "has_more": false,
+  "server_time": "2026-06-30T17:00:00.000000Z"
+}
+```
+
+Pull-`changes[].seq` ist `0` (server-origin); nur Push-Changes tragen Client-`seq`.
+
+### `GET /api/v1/user/sync-conflicts`
+
+Read-only Konflikt-Historie (Sprint 1). Paginiert mit `limit` (1..200, Default 50)
+und `offset`. Optional `entity_type=entry|tag|symptom`.
+
+**Response `200`**
+
+```json
+{
+  "items": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "entity_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "entity_type": "entry",
+      "field_name": "note",
+      "client_ts": "2026-06-30T16:55:00.000000Z",
+      "server_ts": "2026-06-30T16:54:30.000000Z",
+      "created_at": "2026-06-30T16:55:01.000000Z",
+      "resolved_at": null,
+      "client_value": {"present": true, "changed": true},
+      "server_value": {"present": false}
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+`note`-Konflikte liefern nur redacted Marker — **niemals** Klartext.
+
+### Client IndexedDB (Dexie v1)
+
+Lokale Tabellen (Sprint 3): `entries_local`, `change_log`, `sync_meta`.
+ERD und Felddefinitionen: [ADR-0036 §5](adr/0036-offline-sync-v1-scope.md).
 
 ---
 

@@ -43,6 +43,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0033](0033-sensitive-health-data-handling-cycle-signals.md) | Sensitive Health Data Handling for Cycle Signals             | Accepted      | 2026-05-28 |
 | [ADR-0034](0034-onboarding-cycle-tracking-toggle.md)             | Onboarding Cycle Tracking Toggle                             | Accepted      | 2026-05-28 |
 | [ADR-0035](0035-temporal-correspondence-pattern.md)              | Temporal Correspondence Pattern for Trend+Heatmap Alignment  | Accepted      | 2026-05-30 |
+| [ADR-0036](0036-offline-sync-v1-scope.md)                      | Offline-Sync v1 Scope & Implementation Contract (M4.1)       | Accepted      | 2026-06-30 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -141,6 +142,10 @@ Die Trend-Visualisierung in `/trends` (und später `/insights`) wird auf ein dre
 ### ADR-0025 – Symptom Analytics: Univariate, Co-Occurrence, Multivariate
 
 Symptome werden in drei analytischen Ebenen behandelt: **univariat** (Pointbiserial, Mann-Whitney-U, Cliff's Delta gegen Mood/Energy/Stress), **Ko-Okkurrenz** (Phi, Jaccard, Lift/PMI, Fisher Exact gegen Tags) und **multivariat** (Symptome als binäre Features in Lasso #144, Lag-Analyse #145, hierarchischem Clustering #150). Phase-Gating folgt ADR-0021: Level 1 und 2 ab `provisional` (≥15 Einträge), Level 3 ab `robust` (≥30). Methodische Guardrails sind zwingend: FDR-Korrektur (Benjamini-Hochberg) über alle Symptom-Tests, Min-Frequenz 5× pro Symptom, Wiederverwendung des bestehenden Weekday-Confounder-Checks, durchgehend Assoziations-statt-Kausalitäts-Sprache. Engine-seitig neuer Modul `symptom_analytics.py` integriert in den bestehenden Nightly-Worker; keine Schema-Änderung. API: neue Insight-Typen `symptom_mood_association`, `symptom_tag_cooccurrence`, `symptom_cluster` ohne Breaking Changes. Frontend integriert in den bestehenden `/insights`-Feed (keine separate Route) plus drei neue Visualisierungen (Co-Occurrence-Heatmap, Symptom-Kalender-Heatmap, Symptom-Trend-Overlay). Symptom-Intensität (0–3) bleibt explizit Future Work. Vollständige Spezifikation in `docs/features/symptom-analytics.md` und `docs/frontend/SYMPTOM_VISUALIZATION.md`.
+
+### ADR-0036 – Offline-Sync v1 Scope (M4.1)
+
+M4.1 implementiert Dexie.js, `/sync/push`, `/sync/pull` und `sync_conflicts` nach dem in Sprint 0 eingefrorenen Contract. LWW pro Feld bleibt Merge-Prinzip (ADR-0003); LWW-Konflikte werden nicht als HTTP 409, sondern als `conflicts[]` im Push-Response und in `sync_conflicts` geloggt. `note_enc`-Konflikte speichern nur redacted Metadata (kein Plaintext). Cursor ist opaque Base64url-JSON mit monotonic `user_rev` pro User. Idempotenz über `(client_id, batch_id)`.
 
 ---
 
