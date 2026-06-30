@@ -50,7 +50,7 @@ describe('TagHeatmap', () => {
     expect(scroller.scrollLeft).toBe(1200);
     expect(screen.getByText('trends.heatmap.less')).toBeTruthy();
     expect(screen.getByText('trends.heatmap.more')).toBeTruthy();
-    expect(screen.getByLabelText('Focus, 2026-05-03: 3')).toBeTruthy();
+    expect(screen.getByLabelText('Focus, 2026-05-03: 3').tagName).toBe('BUTTON');
   });
 
   it('marks compact heatmaps for dense mobile layouts', () => {

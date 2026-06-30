@@ -3,6 +3,7 @@
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TagHeatmapResponse } from '$lib/api/stats';
+  import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
   import { heatmapLevel } from '$lib/utils/charts';
   import { shiftIsoDate } from '$lib/utils/streak';
 
@@ -73,13 +74,13 @@
           <div class="heatmap__tag" title={tag.name}>{tag.name}</div>
           {#each dates as date}
             {@const count = countFor(tagIndex, date)}
-            <a
+            <button
+              type="button"
               class={`heatmap__cell heatmap__cell--${heatmapLevel(count, maxCount)}`}
-              href={`/entries/day/${date}?tag_id=${tag.tag_id}`}
               aria-label={`${tag.name}, ${date}: ${count}`}
               title={`${tag.name}, ${date}: ${count}`}
-              on:click|preventDefault={() => dispatch('selectDate', { date, tagId: tag.tag_id })}
-            ></a>
+              on:click={() => dispatch('selectDate', { date, tagId: tag.tag_id })}
+            ></button>
           {/each}
         {/each}
       </div>
@@ -94,7 +95,7 @@
   {:else if !loading}
     <div class="heatmap__empty">
       <p>{$_('trends.heatmap.empty')}</p>
-      <a class="btn btn-sm variant-soft-primary" href="/entries/new">{$_('trends.empty_cta')}</a>
+      <EntryLaunchButton>{$_('trends.empty_cta')}</EntryLaunchButton>
     </div>
   {/if}
 </section>
@@ -157,6 +158,11 @@
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-chart);
     background: var(--color-surface-dynamic);
+  }
+
+  button.heatmap__cell {
+    padding: 0;
+    cursor: pointer;
   }
 
   .heatmap__cell:focus {

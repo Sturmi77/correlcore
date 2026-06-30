@@ -60,7 +60,7 @@ Legend: **Mobile** / **Web** = surface readiness (green / yellow / red).
 | Screen            | Routes                                                               | Mobile | Web    | Figma sprint            | E2E                                                |
 | ----------------- | -------------------------------------------------------------------- | ------ | ------ | ----------------------- | -------------------------------------------------- |
 | Home / Today      | `/`                                                                  | Green  | Green  | S5 `121:2292`           | Dark theme smoke                                   |
-| Entry             | `/entries/new`, `/entries/day/[date]`                                | Green  | Yellow | S1 `48:1089`            | `mobile-entry-foundation`                          |
+| Entry             | `/entries/new`, `/entries/day/[date]`                                | Green  | Green  | S1 `48:1089`            | `mobile-entry-foundation`                          |
 | Trends            | `/trends`                                                            | Green  | Green  | S2 `59:1285`            | `mobile-trends-foundation`                         |
 | Insights          | `/insights`, `/insights/disclaimer`                                  | Green  | Green  | S3 `98:1573`            | `mobile-insights-foundation`, `m7-insights-mobile` |
 | Settings          | `/settings`, `/settings/tags`, `/settings/symptoms`, `/settings/app` | Green  | Green  | S4 `105:1626`, Tags B1b | `mobile-supporting-flows`                          |

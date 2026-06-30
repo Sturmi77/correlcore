@@ -11,7 +11,7 @@
    * recent-entries list on Home — those live under Trends / Insights.
    */
 
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
@@ -43,7 +43,13 @@
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
-  import { isOpenEntryRequested } from '$lib/navigation/openEntry';
+  import {
+    entryDateFromSearchParams,
+    entryWorkspacePath,
+    isOpenEntryRequested,
+  } from '$lib/navigation/openEntry';
+  import { prefersEntrySheet } from '$lib/navigation/entryNavigation';
+  import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
   const HOME_SPARKLINE_DAYS = 7;
   const HOME_SPARKLINE_MIN_ENTRIES = 3;
@@ -63,6 +69,8 @@
   let entrySheetDate = todayIso;
   let openEntryHandled = false;
   let firstEntrySheetOpened = false;
+  let preferEntrySheet = true;
+  let entryViewportMedia: MediaQueryList | null = null;
 
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
@@ -79,9 +87,21 @@
       dashboardSummary?.entry_count === 0
   );
 
+  function syncEntrySurface(): void {
+    preferEntrySheet = prefersEntrySheet();
+  }
+
+  function openEntry(date: string = todayIso): void {
+    if (preferEntrySheet) {
+      entrySheetDate = date;
+      entrySheetOpen = true;
+      return;
+    }
+    void goto(entryWorkspacePath(date));
+  }
+
   function openEntrySheet(date: string = todayIso) {
-    entrySheetDate = date;
-    entrySheetOpen = true;
+    openEntry(date);
   }
 
   function onEntrySheetSaved() {
@@ -93,6 +113,7 @@
     const url = new URL($page.url);
     if (!isOpenEntryRequested(url.searchParams)) return;
     url.searchParams.delete('openEntry');
+    url.searchParams.delete('date');
     const next = `${url.pathname}${url.search}${url.hash}`;
     void goto(next || '/', { replaceState: true, keepFocus: true, noScroll: true });
   }
@@ -101,7 +122,8 @@
     if (openEntryHandled || !dashboardLoaded || get(auth).status !== 'authenticated') return;
     if (!isOpenEntryRequested($page.url.searchParams)) return;
     openEntryHandled = true;
-    openEntrySheet(todayIso);
+    const date = entryDateFromSearchParams($page.url.searchParams) ?? todayIso;
+    openEntry(date);
     stripOpenEntryQuery();
   }
 
@@ -173,7 +195,7 @@
     !isOpenEntryRequested($page.url.searchParams)
   ) {
     firstEntrySheetOpened = true;
-    openEntrySheet(todayIso);
+    openEntry(todayIso);
   }
 
   async function dismissFirstWeekBanner(): Promise<void> {
@@ -207,6 +229,16 @@
       void loadDashboard();
       void loadInsights();
     }
+    if (typeof window !== 'undefined') {
+      entryViewportMedia =
+        window.matchMedia(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
+      syncEntrySurface();
+      entryViewportMedia?.addEventListener('change', syncEntrySurface);
+    }
+  });
+
+  onDestroy(() => {
+    entryViewportMedia?.removeEventListener('change', syncEntrySurface);
   });
 </script>
 
@@ -293,12 +325,14 @@
       </Button>
     </section>
 
+    {#if preferEntrySheet}
     <EntrySheet
       bind:open={entrySheetOpen}
       initialDate={entrySheetDate}
       onboardingTagsEnabled={showOnboardingTags}
       on:saved={onEntrySheetSaved}
     />
+  {/if}
   </div>
 {:else}
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">

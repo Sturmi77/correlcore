@@ -41,4 +41,10 @@ describe('/ home screen ownership contract', () => {
     expect(source).toContain('data-testid="home-cta"');
     expect(todayContextSource).toContain('data-testid="home-today-action"');
   });
+
+  it('routes desktop entry opens through the workspace path', () => {
+    expect(source).toContain('entryWorkspacePath');
+    expect(source).toContain('prefersEntrySheet');
+    expect(source).toContain('{#if preferEntrySheet}');
+  });
 });

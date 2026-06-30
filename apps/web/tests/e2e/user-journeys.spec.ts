@@ -453,8 +453,10 @@ test.describe('W1 Account & Vertrauen', () => {
       timeout: APP_READY_TIMEOUT_MS,
     });
     await page.getByRole('button', { name: 'Verify email' }).click();
-    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page).toHaveURL(/\/entries\/new/, { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
+      timeout: APP_READY_TIMEOUT_MS,
+    });
   });
 });
 
@@ -527,6 +529,16 @@ test.describe('W3 Tägliche Eingabe', () => {
 
     await page.getByTestId('entry-sheet-close').click();
     await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
+  });
+
+  test('desktop home CTA opens the entry workspace page', async ({ page }) => {
+    await installJourneyApi(page, { profile: 'week_user' });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/');
+
+    await page.getByTestId('home-cta').click();
+    await expect(page).toHaveURL(/\/entries\/new/, { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible();
   });
 
   test('desktop entry page keeps optional details expanded', async ({ page }) => {

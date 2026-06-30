@@ -8,6 +8,7 @@
     cooccurrenceIntensityLevel,
     orderTagCooccurrenceMatrix,
   } from '$lib/utils/tagCooccurrenceMatrix';
+  import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
 
   export let data: TagCooccurrenceResponse | null = null;
   export let loading = false;
@@ -227,7 +228,7 @@
   {:else if !loading}
     <div class="cooccurrence__empty">
       <p>{$_('insights.cooccurrence.empty')}</p>
-      <a class="btn btn-sm variant-soft-primary" href="/entries/new">{$_('trends.empty_cta')}</a>
+      <EntryLaunchButton>{$_('trends.empty_cta')}</EntryLaunchButton>
     </div>
   {/if}
 </section>
