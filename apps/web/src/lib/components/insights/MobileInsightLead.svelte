@@ -21,19 +21,25 @@
     <p>{$_('insights.mobile.context', { values: { days: 90, n: entryCount } })}</p>
   </header>
 
-  <InsightCard {insight} {inactiveTagIds} featured showConfidenceSummary />
+  <InsightCard
+    {insight}
+    {maturity}
+    {inactiveTagIds}
+    featured
+    showConfidenceSummary
+  />
 
   <p class="mobile-lead__note" data-testid="mobile-insight-correlation-note">
     {$_('insights.mobile.correlation_note')}
     <a href="/insights/disclaimer">{$_('insights.mobile.correlation_link')}</a>
   </p>
 
-  {#if maturity}
-    <div class="mobile-lead__maturity" data-testid="mobile-insight-maturity">
-      <p class="mobile-lead__section-label">{$_('insights.mobile.maturity_heading')}</p>
+  {#if showMilestone && maturity}
+    <div data-testid="mobile-insight-maturity">
       <InsightStageHeader
         {maturity}
         {showMilestone}
+        milestoneOnly
         on:dismissMilestone={(event) => dispatch('dismissMilestone', event.detail)}
       />
     </div>
@@ -50,8 +56,7 @@
   .mobile-lead__header,
   .mobile-lead__header h2,
   .mobile-lead__header p,
-  .mobile-lead__note,
-  .mobile-lead__section-label {
+  .mobile-lead__note {
     margin: 0;
   }
 
@@ -61,8 +66,7 @@
     gap: var(--space-1);
   }
 
-  .mobile-lead__eyebrow,
-  .mobile-lead__section-label {
+  .mobile-lead__eyebrow {
     color: var(--color-text-muted);
     font-size: var(--text-xs);
     font-weight: 700;
@@ -90,11 +94,5 @@
     font-weight: 700;
     text-decoration: underline;
     text-underline-offset: 2px;
-  }
-
-  .mobile-lead__maturity {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
   }
 </style>

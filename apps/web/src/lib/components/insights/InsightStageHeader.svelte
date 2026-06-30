@@ -9,6 +9,8 @@
 
   export let maturity: InsightMaturity;
   export let showMilestone = false;
+  /** When true, render only the dismissible milestone strip (mobile lead). */
+  export let milestoneOnly = false;
 
   const dispatch = createEventDispatcher<{ dismissMilestone: { key: string } }>();
 
@@ -38,10 +40,12 @@
 
 <section
   class="stage"
+  class:stage--milestone-only={milestoneOnly}
   data-testid="insight-stage-header"
   data-phase={maturity.phase}
   aria-label={$_('insights.stage.aria_label')}
 >
+  {#if !milestoneOnly}
   <div class="stage__row">
     <div class="stage__status">
       <span class="stage__marker" aria-hidden="true">{maturity.phase_index}/4</span>
@@ -92,6 +96,7 @@
       </IconButton>
     </div>
   </div>
+  {/if}
 
   {#if showMilestone && milestoneKey}
     <div
@@ -123,6 +128,12 @@
     border: 1px solid var(--color-border-chart);
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
+  }
+
+  .stage--milestone-only {
+    padding: 0;
+    border: none;
+    background: transparent;
   }
 
   .stage__row,

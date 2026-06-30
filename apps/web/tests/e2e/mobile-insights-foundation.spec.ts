@@ -1,81 +1,26 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { installInsightsApiMock } from './helpers/insightsApiMock';
 
 test.use({ hasTouch: true });
-
-const user = {
-  id: '00000000-0000-4000-8000-000000000008',
-  email: 'mobile-insights@example.com',
-  display_name: 'Mobile Insights',
-  is_verified: true,
-};
-
-const preferences = {
-  user_id: user.id,
-  analytics_enabled: true,
-  onboarding_retro_completed: true,
-  onboarding_profile_completed: true,
-  dismissed_insight_keys: [],
-  reached_milestone_keys: [],
-  last_seen_insight_at: null,
-  created_at: '2026-06-01T00:00:00Z',
-  updated_at: '2026-06-01T00:00:00Z',
-};
-
-async function installInsightsMockMode(page: Page) {
-  await page.addInitScript(() => {
-    window.localStorage.setItem('correlcore-locale', 'en');
-    window.localStorage.setItem('dev_mode_enabled', 'true');
-    window.localStorage.setItem('dev_force_viz', 'true');
-    window.localStorage.setItem('cc_insights_symptoms', 'true');
-  });
-
-  await page.route('**/api/v1/**', async (route) => {
-    const request = route.request();
-    const path = new URL(request.url()).pathname.replace('/api/v1', '');
-
-    if (path === '/auth/me' && request.method() === 'GET') {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(user),
-      });
-    }
-    if (path === '/user/preferences' && request.method() === 'GET') {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(preferences),
-      });
-    }
-
-    return route.fulfill({
-      status: 404,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        detail: `Unhandled mobile insights route: ${request.method()} ${path}`,
-      }),
-    });
-  });
-}
 
 test('390px prioritizes the strongest signal, confidence, and maturity', async ({ page }) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  await installInsightsMockMode(page);
+  await installInsightsApiMock(page);
   await page.goto('/insights');
 
   const lead = page.getByTestId('mobile-insight-lead');
   const confidence = page.getByTestId('insight-card-confidence-summary');
-  const maturity = page.getByTestId('mobile-insight-maturity');
   const viewTabs = page.getByTestId('insights-view-tabs');
 
   await expect(viewTabs).toBeVisible({ timeout: 30_000 });
   await expect(lead).toBeVisible({ timeout: 30_000 });
-  await expect(lead.getByTestId('insight-card-title')).toContainText(/mood.*Energy/i);
+  await expect(lead.getByTestId('insight-card-title')).toContainText(/Energy/i);
   await expect(confidence).toBeVisible();
   await expect(page.getByTestId('insight-confidence-score-percent')).toHaveCount(0);
   await expect(page.getByTestId('mobile-insight-correlation-note')).toBeVisible();
-  await expect(maturity).toBeVisible();
+  await expect(lead.getByTestId('insight-maturity-badge')).toBeVisible();
+  await expect(page.getByTestId('insight-stage-meta')).toHaveCount(0);
 
   const order = await page.evaluate(() => {
     const leadNode = document.querySelector('[data-testid="mobile-insight-lead"]');
@@ -94,7 +39,7 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
 
 test('430px keeps matrices and analytics behind explicit detail actions', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await installInsightsMockMode(page);
+  await installInsightsApiMock(page);
   await page.goto('/insights');
 
   await page.getByTestId('insights-view-matrix').tap();
@@ -123,7 +68,7 @@ test('430px keeps matrices and analytics behind explicit detail actions', async 
 
 test('desktop preserves the existing analysis-first composition', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await installInsightsMockMode(page);
+  await installInsightsApiMock(page);
   await page.goto('/insights');
 
   await expect(page.getByTestId('mobile-insight-lead')).toHaveCount(0);

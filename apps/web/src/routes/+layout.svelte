@@ -7,6 +7,7 @@
   import { setupI18n } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
   import { auth, hydrate } from '$lib/stores/auth';
+  import { syncDevModeFromStorage } from '$lib/stores/devMode';
   import AppNav from '$lib/components/common/AppNav.svelte';
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
@@ -29,6 +30,7 @@
   // paint to avoid a flash of wrong theme; here we mirror it into the store
   // so reactive consumers (toggle button, etc.) start in the correct state.
   onMount(() => {
+    syncDevModeFromStorage();
     pwaLifecycle.initialize();
     const saved = (() => {
       try {

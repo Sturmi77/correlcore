@@ -12,6 +12,8 @@
    */
 
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
+  import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { auth, currentUser } from '$lib/stores/auth';
@@ -41,8 +43,10 @@
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
+  import { isOpenEntryRequested } from '$lib/navigation/openEntry';
 
   const HOME_SPARKLINE_DAYS = 7;
+  const HOME_SPARKLINE_MIN_ENTRIES = 3;
   const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
 
   const todayIso = localIsoDate(new Date());
@@ -57,6 +61,7 @@
   let dashboardLoaded = false;
   let entrySheetOpen = false;
   let entrySheetDate = todayIso;
+  let openEntryHandled = false;
 
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
@@ -65,6 +70,8 @@
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
+  $: dayEntriesForSparkline = recentEntries.filter((entry) => entry.slot === 'day');
+  $: showHomeSparkline = dayEntriesForSparkline.length >= HOME_SPARKLINE_MIN_ENTRIES;
 
   function openEntrySheet(date: string = todayIso) {
     entrySheetDate = date;
@@ -76,10 +83,26 @@
     void loadInsights();
   }
 
+  function stripOpenEntryQuery(): void {
+    const url = new URL($page.url);
+    if (!isOpenEntryRequested(url.searchParams)) return;
+    url.searchParams.delete('openEntry');
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    void goto(next || '/', { replaceState: true, keepFocus: true, noScroll: true });
+  }
+
+  function maybeOpenEntryFromQuery(): void {
+    if (openEntryHandled || !dashboardLoaded || get(auth).status !== 'authenticated') return;
+    if (!isOpenEntryRequested($page.url.searchParams)) return;
+    openEntryHandled = true;
+    openEntrySheet(todayIso);
+    stripOpenEntryQuery();
+  }
+
   async function loadDashboard(): Promise<void> {
     dashboardLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         recentEntries = mockEntries.slice(0, HOME_SPARKLINE_DAYS);
         todayEntry = findEntryForDate(recentEntries, todayIso);
         dashboardSummary = { ...mockDashboardSummary, entry_count: $devPhase.entryCount };
@@ -129,6 +152,10 @@
     void loadInsights();
   }
 
+  $: if (dashboardLoaded && $auth.status === 'authenticated') {
+    maybeOpenEntryFromQuery();
+  }
+
   $: if (
     dashboardLoaded &&
     $auth.status === 'authenticated' &&
@@ -166,7 +193,7 @@
   }
 
   onMount(() => {
-    if ($auth.status === 'authenticated' && !dashboardLoaded) {
+    if (get(auth).status === 'authenticated' && !dashboardLoaded) {
       void loadDashboard();
       void loadInsights();
     }
@@ -223,12 +250,14 @@
 
     <!-- Zone 3: sparkline + primary CTA -->
     <section class="home-zone home-zone--foot" data-testid="home-zone-sparkline-cta">
-      <HomeSparkline
-        entries={recentEntries}
-        {todayIso}
-        days={HOME_SPARKLINE_DAYS}
-        loading={dashboardLoading && !dashboardLoaded}
-      />
+      {#if showHomeSparkline}
+        <HomeSparkline
+          entries={recentEntries}
+          {todayIso}
+          days={HOME_SPARKLINE_DAYS}
+          loading={dashboardLoading && !dashboardLoaded}
+        />
+      {/if}
 
       <Button
         type="button"

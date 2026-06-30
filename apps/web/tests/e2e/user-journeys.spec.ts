@@ -468,7 +468,7 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
 
     await page.getByRole('button', { name: 'Skip', exact: true }).click();
     await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByTestId('home-cta')).toBeVisible();
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
   });
 
@@ -482,6 +482,7 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await page.getByRole('button', { name: 'Start tracking' }).click();
 
     await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
   });
 });
