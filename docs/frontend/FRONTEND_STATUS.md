@@ -31,17 +31,17 @@ at **768 px** (bottom nav → side rail). See [ADR-0017](../adr/0017-frontend-sc
 
 ### Required for production (all satisfied)
 
-| Gate                   | Command / job          | Local evidence (2026-06-27)                              |
-| ---------------------- | ---------------------- | -------------------------------------------------------- |
-| Lint + Svelte check    | `pnpm lint`            | CI `ci-web.yml`                                          |
-| Format                 | `pnpm format:check`    | CI                                                       |
-| Typecheck              | `pnpm typecheck`       | CI                                                       |
-| Unit / component tests | `pnpm test`            | **97 files, 473 tests passed**                           |
-| Contrast (ADR-0027)    | `pnpm check:contrast`  | CI (source tokens; avoid stale `apps/web/build` locally) |
-| Production build       | `pnpm build`           | CI                                                       |
-| E2E smoke              | `pnpm test:e2e:smoke`  | CI — login, entry, trends, insights                      |
+| Gate                    | Command / job            | Local evidence (2026-06-27)                                     |
+| ----------------------- | ------------------------ | --------------------------------------------------------------- |
+| Lint + Svelte check     | `pnpm lint`              | CI `ci-web.yml`                                                 |
+| Format                  | `pnpm format:check`      | CI                                                              |
+| Typecheck               | `pnpm typecheck`         | CI                                                              |
+| Unit / component tests  | `pnpm test`              | **97 files, 473 tests passed**                                  |
+| Contrast (ADR-0027)     | `pnpm check:contrast`    | CI (source tokens; avoid stale `apps/web/build` locally)        |
+| Production build        | `pnpm build`             | CI                                                              |
+| E2E smoke               | `pnpm test:e2e:smoke`    | CI — login, entry, trends, insights                             |
 | User journey regression | `pnpm test:e2e:journeys` | W1–W7 auth/onboarding/maturity matrix (`user-journeys.spec.ts`) |
-| Mobile regression      | `pnpm test:e2e:mobile` | **18/18 passed** (serial, `--workers=1`)                 |
+| Mobile regression       | `pnpm test:e2e:mobile`   | **18/18 passed** (serial, `--workers=1`)                        |
 
 ### Not required for production deploy
 

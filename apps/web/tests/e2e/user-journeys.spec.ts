@@ -129,8 +129,7 @@ async function installJourneyApi(
   let onboardingCompleted = profile !== 'new_user';
   const user =
     profile === 'new_user' ? users.new : profile === 'week_user' ? users.week : users.month;
-  const entryCount =
-    profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 32;
+  const entryCount = profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 32;
   const entries = makeEntries(entryCount, user.id);
   const writes: string[] = [];
 
@@ -497,9 +496,7 @@ test.describe('W3 Tägliche Eingabe', () => {
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
 
     await page.getByRole('button', { name: 'Increase mood' }).click();
-    await expect
-      .poll(() => api.writes.some((write) => write === 'POST /entries'))
-      .toBe(true);
+    await expect.poll(() => api.writes.some((write) => write === 'POST /entries')).toBe(true);
     await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'saved');
 
     await page.getByTestId('entry-sheet-close').click();

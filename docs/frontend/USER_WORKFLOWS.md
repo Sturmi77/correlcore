@@ -14,10 +14,10 @@ Goal-Directed Task Analysis (GDTA): each workflow is defined by **persona × goa
 
 ## Personas
 
-| ID | Persona | Primary goals |
-|----|---------|---------------|
-| P1 | **Reflektive Self-Optimizer** (30–50 J.) | Daily tracking, habit correlations, weekly review |
-| P2 | **Health-Aware Recoverer** | Symptom patterns, doctor supplement, privacy control |
+| ID  | Persona                                  | Primary goals                                        |
+| --- | ---------------------------------------- | ---------------------------------------------------- |
+| P1  | **Reflektive Self-Optimizer** (30–50 J.) | Daily tracking, habit correlations, weekly review    |
+| P2  | **Health-Aware Recoverer**               | Symptom patterns, doctor supplement, privacy control |
 
 Source: [`DESIGN_DOCUMENT.md`](../DESIGN_DOCUMENT.md) §1.3.
 
@@ -25,11 +25,11 @@ Source: [`DESIGN_DOCUMENT.md`](../DESIGN_DOCUMENT.md) §1.3.
 
 ## Surface model
 
-| Surface | Role | Primary workflows |
-|---------|------|-------------------|
-| **Mobile** (≤768px) | Capture, check-in, lightweight review | W1–W5, W10 |
-| **Web** (≥768px) | Analysis, comparison, management | W3–W9 |
-| **Both** | Shared routes; density differs at 768px breakpoint | All |
+| Surface             | Role                                               | Primary workflows |
+| ------------------- | -------------------------------------------------- | ----------------- |
+| **Mobile** (≤768px) | Capture, check-in, lightweight review              | W1–W5, W10        |
+| **Web** (≥768px)    | Analysis, comparison, management                   | W3–W9             |
+| **Both**            | Shared routes; density differs at 768px breakpoint | All               |
 
 Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab — opened via Home CTA (`EntrySheet`) or `/entries/new` deep links (ADR-0017).
 
@@ -37,18 +37,18 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 
 ## Workflow index
 
-| ID | Workflow | Frequency | Personas | Maturity dependency |
-|----|----------|-----------|----------|---------------------|
-| [W1](#w1-account--vertrauen) | Account & Vertrauen | once | P1, P2 | none |
-| [W2](#w2-cold-start--onboarding) | Cold Start / Onboarding | once | P1, P2 | none |
-| [W3](#w3-tägliche-eingabe) | Tägliche Eingabe | daily | P1, P2 | none |
-| [W4](#w4-rückdatierte-eingabe) | Rückdatierte Eingabe | occasional | P1, P2 | none |
-| [W5](#w5-erste-erkenntnis) | Erste Erkenntnis | week 1–2 | P1, P2 | `collecting` → `early_patterns` |
-| [W6](#w6-wöchentliche-analyse) | Wöchentliche Analyse | weekly | P1, P2 | `early_patterns`+ |
-| [W7](#w7-habit-review) | Habit-Review | weekly | P1 | habits configured |
-| [W8](#w8-vokabular-pflegen) | Vokabular pflegen | rare | P1, P2 | none |
-| [W9](#w9-datenexport--privacy) | Datenexport / Privacy | rare | P2 | none |
-| [W10](#w10-pwa--offline) | PWA / Offline | once + ongoing | P1, P2 | none |
+| ID                               | Workflow                | Frequency      | Personas | Maturity dependency             |
+| -------------------------------- | ----------------------- | -------------- | -------- | ------------------------------- |
+| [W1](#w1-account--vertrauen)     | Account & Vertrauen     | once           | P1, P2   | none                            |
+| [W2](#w2-cold-start--onboarding) | Cold Start / Onboarding | once           | P1, P2   | none                            |
+| [W3](#w3-tägliche-eingabe)       | Tägliche Eingabe        | daily          | P1, P2   | none                            |
+| [W4](#w4-rückdatierte-eingabe)   | Rückdatierte Eingabe    | occasional     | P1, P2   | none                            |
+| [W5](#w5-erste-erkenntnis)       | Erste Erkenntnis        | week 1–2       | P1, P2   | `collecting` → `early_patterns` |
+| [W6](#w6-wöchentliche-analyse)   | Wöchentliche Analyse    | weekly         | P1, P2   | `early_patterns`+               |
+| [W7](#w7-habit-review)           | Habit-Review            | weekly         | P1       | habits configured               |
+| [W8](#w8-vokabular-pflegen)      | Vokabular pflegen       | rare           | P1, P2   | none                            |
+| [W9](#w9-datenexport--privacy)   | Datenexport / Privacy   | rare           | P2       | none                            |
+| [W10](#w10-pwa--offline)         | PWA / Offline           | once + ongoing | P1, P2   | none                            |
 
 ---
 
@@ -57,6 +57,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Create account, verify email, sign in securely.
 
 **Success criteria:**
+
 - User can register with email + password
 - Email is verified before full API access
 - User lands on intended post-login route (`?next=`)
@@ -64,6 +65,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Entry routes:** `/auth/register`, `/auth/login`, `/auth/check-email`, `/auth/verify-email`, `/auth/resend-verification`
 
 **Key files:**
+
 - `apps/web/src/routes/auth/register/+page.svelte`
 - `apps/web/src/routes/auth/login/+page.svelte`
 - `apps/web/src/routes/auth/verify-email/+page.svelte`
@@ -80,6 +82,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Select tracking vocabulary (tags) and reach first usable Home screen.
 
 **Success criteria:**
+
 - User completes or skips tag onboarding
 - `onboarding_retro_completed` preference is set
 - User is not redirected back to onboarding on subsequent Home visits
@@ -88,11 +91,13 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Entry routes:** `/` → redirect → `/onboarding` → `/`
 
 **Primary flow (ADR-0030):** 3-step guided wizard at `/onboarding`:
+
 1. Intro (skip or continue)
 2. Tag suggestions + custom tags
 3. Summary → `POST /onboarding/complete` → Home
 
 **Legacy routes (still reachable, bypassed by primary flow):**
+
 - `/onboarding/retro` — 7-day mood backfill
 - `/onboarding/profile` — optional profile questionnaire
 
@@ -109,18 +114,21 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Log today's mood/energy/stress (and optional tags/symptoms) in ≤60 seconds.
 
 **Success criteria:**
+
 - Entry auto-saves within 800ms debounce (ADR-0013)
 - User sees save status badge
 - Home refreshes brief + sparkline after save
 - No explicit submit button required
 
 **Entry routes:**
+
 - **Mobile primary:** `/` → "Log today" → `EntrySheet` (bottom sheet)
 - **Alternate:** `/entries/new` (full page; used from Trends empty states, day view, deep links)
 
 **Fields:** mood (required default 3), energy, stress, work_context (auto-default), tags, symptoms, note, cycle_day (optional, behind "More").
 
 **Key files:**
+
 - `apps/web/src/routes/+page.svelte`
 - `apps/web/src/lib/components/entries/EntrySheet.svelte`
 - `apps/web/src/lib/components/entries/EntryForm.svelte`
@@ -134,11 +142,13 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Add or edit an entry for a past day (up to 7 days back).
 
 **Success criteria:**
+
 - User selects date within 7-day window
 - Existing entry loads for edit (PATCH) or new entry created (POST)
 - Day delta card shows comparison vs previous day
 
 **Entry routes:**
+
 - `/entries/new?date=YYYY-MM-DD`
 - `/entries/day/[date]` → link to edit
 - Trends/Insights heatmap drill-down → `/entries/day/[date]` or `EntryHistorySheet`
@@ -152,6 +162,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Understand when insights appear and read first meaningful finding.
 
 **Success criteria:**
+
 - User sees maturity phase explanation
 - Phase-appropriate empty state or first insight card is visible
 - User understands next milestone (entries until next phase)
@@ -160,12 +171,12 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 
 **Maturity phases** ([ADR-0021](../adr/0021-insight-maturity-phases.md)):
 
-| Phase | Entries | User-visible change |
-|-------|---------|---------------------|
-| `collecting` | 1–6 | Empty states, phase copy |
-| `early_patterns` | 7–13 | First weekday pattern, weak signals |
-| `provisional` | 14–29 | Stronger correlation cards |
-| `robust` | 30+ | Full confidence |
+| Phase            | Entries | User-visible change                 |
+| ---------------- | ------- | ----------------------------------- |
+| `collecting`     | 1–6     | Empty states, phase copy            |
+| `early_patterns` | 7–13    | First weekday pattern, weak signals |
+| `provisional`    | 14–29   | Stronger correlation cards          |
+| `robust`         | 30+     | Full confidence                     |
 
 **Components:** `HomeDailyBrief`, `InsightStageHeader`, `InsightFeed`, `InsightJourneyExplainer`.
 
@@ -178,6 +189,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Compare metrics over time, explore tag/symptom patterns, drill into specific days.
 
 **Success criteria:**
+
 - User can switch time range (week/month/quarter/year)
 - Compare tab shows mood/energy/stress on shared axis (desktop)
 - Mobile shows summary first, detail on demand
@@ -198,6 +210,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Review adherence rate for tags marked as habits (`build`/`reduce` goals).
 
 **Success criteria:**
+
 - User sees habit list with adherence percentage (not streak counter)
 - User can configure habits in Settings → Tags
 - Empty state links to tag management when no habits exist
@@ -215,6 +228,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Create, edit, hide, or delete custom tags and symptoms.
 
 **Success criteria:**
+
 - CRUD operations persist immediately
 - Habit goals configurable per tag
 - Changes appear in next entry's TagPicker/SymptomChecker
@@ -230,6 +244,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Export personal data, control analytics, manage account.
 
 **Success criteria:**
+
 - CSV/JSON export downloads successfully
 - Analytics toggle persists via preferences API
 - Account deletion available (with confirmation)
@@ -247,6 +262,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 **Goal:** Install app to home screen; continue logging when offline.
 
 **Success criteria:**
+
 - Install prompt or manual instructions visible
 - Offline entry queues and retries (Entry-owned retry)
 - `/offline` fallback page on failed navigation
@@ -277,28 +293,28 @@ flowchart TD
 
 ## Route reference (all workflows)
 
-| Route | Workflow(s) | AppNav |
-|-------|-------------|--------|
-| `/auth/*` | W1 | hidden |
-| `/onboarding` | W2 | hidden |
-| `/onboarding/retro`, `/onboarding/profile` | W2 (legacy) | hidden |
-| `/` | W2, W3, W5, W10 | yes |
-| `/entries/new`, `/entries/day/[date]` | W3, W4 | yes (page mode) |
-| `/insights`, `/insights/disclaimer` | W5, W6 | yes |
-| `/trends` | W6, W7 | yes |
-| `/settings`, `/settings/tags`, `/settings/symptoms`, `/settings/app` | W7, W8, W9, W10 | yes |
-| `/offline` | W10 | hidden |
+| Route                                                                | Workflow(s)     | AppNav          |
+| -------------------------------------------------------------------- | --------------- | --------------- |
+| `/auth/*`                                                            | W1              | hidden          |
+| `/onboarding`                                                        | W2              | hidden          |
+| `/onboarding/retro`, `/onboarding/profile`                           | W2 (legacy)     | hidden          |
+| `/`                                                                  | W2, W3, W5, W10 | yes             |
+| `/entries/new`, `/entries/day/[date]`                                | W3, W4          | yes (page mode) |
+| `/insights`, `/insights/disclaimer`                                  | W5, W6          | yes             |
+| `/trends`                                                            | W6, W7          | yes             |
+| `/settings`, `/settings/tags`, `/settings/symptoms`, `/settings/app` | W7, W8, W9, W10 | yes             |
+| `/offline`                                                           | W10             | hidden          |
 
 ---
 
 ## Evidence sources
 
-| Source | Use |
-|--------|-----|
-| Code routes (`apps/web/src/routes/`) | Step inventory |
-| [`surfaceContract.ts`](../../apps/web/src/lib/ui/surfaceContract.ts) | Screen definitions |
-| [`mobile-web-audit.json`](../../apps/web/figma/mobile-web-audit.json) | Design ↔ code parity |
-| Playwright `user-journeys.spec.ts` | Automated journey regression |
-| [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md) | Step matrices + optimization scores |
-| [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md) | GitHub issue index O-01–O-20 |
-| [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md) | Sprint plan and dependencies |
+| Source                                                                               | Use                                 |
+| ------------------------------------------------------------------------------------ | ----------------------------------- |
+| Code routes (`apps/web/src/routes/`)                                                 | Step inventory                      |
+| [`surfaceContract.ts`](../../apps/web/src/lib/ui/surfaceContract.ts)                 | Screen definitions                  |
+| [`mobile-web-audit.json`](../../apps/web/figma/mobile-web-audit.json)                | Design ↔ code parity                |
+| Playwright `user-journeys.spec.ts`                                                   | Automated journey regression        |
+| [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md)                                             | Step matrices + optimization scores |
+| [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md)                                 | GitHub issue index O-01–O-20        |
+| [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md) | Sprint plan and dependencies        |
