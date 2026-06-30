@@ -72,6 +72,7 @@
   let streak: EntryStreakResponse | null = null;
   let habitStats: HabitStatsResponse[] = [];
   let habitTags: TagResponse[] = [];
+  let allTags: TagResponse[] = [];
   let habitWindow: HabitWindow = 28;
   let cycleEntries: EntryResponse[] = [];
   let metrics: Record<MetricKey, boolean> = {
@@ -115,6 +116,7 @@
         streak = mockEntryStreak;
         habitStats = mockHabits.map((habit) => ({ ...habit, window: habitWindow }));
         habitTags = mockHabitTags;
+        allTags = mockHabitTags;
         cycleEntries = mockEntries.filter((entry) => entry.cycle_day !== null);
         return;
       }
@@ -150,6 +152,7 @@
       symptomHeatmap = nextSymptomHeatmap;
       streak = nextStreak;
       habitStats = nextHabitStats.habits;
+      allTags = nextTags;
       habitTags = nextTags.filter((tag) => tag.habit_type !== 'none');
       cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
     } catch (err) {
@@ -438,6 +441,7 @@
         <HabitsPanel
           habits={habitStats}
           tags={habitTags}
+          availableTags={allTags}
           {heatmap}
           window={habitWindow}
           {loading}
@@ -446,6 +450,7 @@
             void loadTrends();
           }}
           on:selectDate={(event) => void openHistory(event.detail.date)}
+          on:habitSetup={() => void loadTrends()}
         />
       </div>
     {/if}

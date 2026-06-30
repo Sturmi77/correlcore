@@ -1,8 +1,18 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { page } from '$app/stores';
+  import Button from '$lib/components/common/Button.svelte';
+  import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
   $: email = $page.url.searchParams.get('email') ?? '';
+
+  let showMailAppLink = false;
+
+  onMount(() => {
+    showMailAppLink =
+      window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`).matches ?? false;
+  });
 </script>
 
 <svelte:head>
@@ -35,6 +45,14 @@
     })}
   {/if}
 </p>
+
+{#if showMailAppLink}
+  <div class="auth-mail-action">
+    <Button href="mailto:" variant="secondary" size="sm" data-testid="check-email-open-mail">
+      {$_('auth.check_email.open_mail_app')}
+    </Button>
+  </div>
+{/if}
 
 <ul class="auth-hints">
   <li>{$_('auth.check_email.ttl_hint')}</li>
@@ -73,6 +91,12 @@
     font-size: var(--text-sm);
     line-height: 1.6;
     text-align: center;
+    margin-bottom: var(--space-4);
+  }
+
+  .auth-mail-action {
+    display: flex;
+    justify-content: center;
     margin-bottom: var(--space-4);
   }
 

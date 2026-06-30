@@ -499,6 +499,11 @@
     "loading": "Lade Gewohnheiten",
     "empty": "Markiere Tags in den Einstellungen als Aufbau- oder Reduktionsgewohnheit, um hier Adherence zu sehen.",
     "empty_cta": "Tags verwalten",
+    "empty_setup_body": "Mache aus einem vorhandenen Tag eine Aufbau- oder Reduktionsgewohnheit, um Adherence hier zu sehen.",
+    "empty_no_tags": "Lege zuerst einen Tag an und markiere ihn dann als Gewohnheit.",
+    "setup_tag_label": "Tag",
+    "setup_tag_placeholder": "Tag waehlen",
+    "setup_submit": "Gewohnheit hinzufuegen",
     "list_label": "Gewohnheitenliste",
     "days_tracked": "Erfasste Tage",
     "target_days": "Zieltage",
@@ -1010,6 +1015,7 @@
       "progress": "Onboarding-Fortschritt",
       "tags_title": "Nuetzliche Tags auswaehlen",
       "tags_body": "Starte mit einer kleinen Auswahl. Freitext-Tags bleiben immer moeglich.",
+      "habit_hint": "Tags wie Spazieren oder Meditation kannst du spaeter unter Einstellungen → Tags als Aufbau- oder Reduktionsgewohnheit markieren und in Trends verfolgen.",
       "custom": "Eigener Tag",
       "add_tag": "Tag hinzufuegen",
       "summary_title": "Bereit zum Start",
@@ -1141,7 +1147,8 @@
       "body": "Wir haben dir eine Best\u00e4tigungs-E-Mail an {email} geschickt. Bitte klicke auf den Link in der Mail, um dein Konto zu aktivieren.",
       "ttl_hint": "Der Link ist 24 Stunden g\u00fcltig.",
       "spam_hint": "Mail nicht im Posteingang? Schau auch im Spam-Ordner nach.",
-      "resend_link": "Best\u00e4tigungs-E-Mail erneut senden"
+      "resend_link": "Best\u00e4tigungs-E-Mail erneut senden",
+      "open_mail_app": "Mail-App oeffnen"
     },
     "verify": {
       "title": "E-Mail-Adresse best\u00e4tigen",

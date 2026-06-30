@@ -499,6 +499,11 @@
     "loading": "Loading habit stats",
     "empty": "Mark tags as build or reduce habits in Settings to see adherence here.",
     "empty_cta": "Manage tags",
+    "empty_setup_body": "Turn an existing tag into a build or reduce habit to track adherence here.",
+    "empty_no_tags": "Create a tag first, then mark it as a habit.",
+    "setup_tag_label": "Tag",
+    "setup_tag_placeholder": "Choose a tag",
+    "setup_submit": "Add habit",
     "list_label": "Habit list",
     "days_tracked": "Tracked days",
     "target_days": "Target days",
@@ -1010,6 +1015,7 @@
       "progress": "Onboarding progress",
       "tags_title": "Pick useful tags",
       "tags_body": "Start with a small set. Free-text tags are always available.",
+      "habit_hint": "Tags like Walk or Meditation can later be marked as build or reduce habits under Settings → Tags to track adherence in Trends.",
       "custom": "Custom tag",
       "add_tag": "Add tag",
       "summary_title": "Ready to start",
@@ -1141,7 +1147,8 @@
       "body": "We have sent a verification email to {email}. Please click the link in that email to activate your account.",
       "ttl_hint": "The link is valid for 24 hours.",
       "spam_hint": "Mail not in your inbox? Please check the spam folder.",
-      "resend_link": "Resend verification email"
+      "resend_link": "Resend verification email",
+      "open_mail_app": "Open mail app"
     },
     "verify": {
       "title": "Verify email address",
