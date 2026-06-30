@@ -1,6 +1,6 @@
 # PWA Hardening
 
-Last updated: 2026-05-28
+Last updated: 2026-06-30
 
 ## Install Flow
 
@@ -22,9 +22,31 @@ The service worker explicitly skips `/api/*`, so authenticated API responses,
 health data, entries, tags, and insights are not cached by the browser Cache
 API.
 
-M4 does not implement offline entry creation or background sync. Full Dexie
-offline-first sync, sync conflict logs, and push/pull endpoints remain follow-up
-scope after M4.
+## Offline-First Sync (M4.1)
+
+Full Dexie-backed offline sync is implemented behind a feature flag for
+verified users. See [ADR-0036](../adr/0036-offline-sync-v1-scope.md) and
+[`M4.1_SPRINT_PLAN.md`](../M4.1_SPRINT_PLAN.md).
+
+| Component | Location |
+| --------- | -------- |
+| Local DB | `apps/web/src/lib/offline/db.ts` — IndexedDB via Dexie (`correlcore-offline`) |
+| Change outbox | `change_log` table — append-only, monotone `seq` |
+| Sync orchestrator | `syncOrchestrator.ts` — push on reconnect / visibility |
+| API | `POST /api/v1/sync/push`, `GET /api/v1/sync/pull` |
+| Conflict history | `GET /api/v1/user/sync-conflicts` (90-day retention) |
+
+**Enable for testing**
+
+- Settings → App & offline → “Enable offline sync”, or
+- `localStorage.setItem('cc_offline_sync_enabled', 'true')`, or
+- Build-time `VITE_OFFLINE_SYNC_ENABLED=true`
+
+**Default:** off — online autosave (ADR-0013) remains the default path.
+
+**Privacy:** push/pull payloads may contain Art. 9 health data; conflict log
+rows redact plaintext notes. Background upload runs only after explicit user
+sync (reconnect, visibility, or “Sync now”) — not silently.
 
 ## Manifest and iOS Meta
 
@@ -39,6 +61,7 @@ The manifest uses:
 
 ## Roadmap Note
 
-Native Android widgets are not part of M4. The current roadmap keeps them in a
+Native Android widgets are not part of M4/M4.1. The current roadmap keeps them in a
 later Android path via TWA/Glance once the PWA baseline and Play Store strategy
-are settled.
+are settled. Push notifications and app lock are **M4.2** (blocked on reliable
+offline sync — now unblocked).

@@ -8,6 +8,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **M4.1 — Offline-first sync (complete).** Dexie.js local persistence
+  (`correlcore-offline`), append-only `change_log`, stable `client_id`, and
+  `sync_meta` cursors. Backend: `POST /api/v1/sync/push`, `GET /api/v1/sync/pull`
+  with per-field LWW merge, opaque `user_rev` cursor, idempotent
+  `(client_id, batch_id)` batches, and `sync_conflicts` log with 90-day retention
+  (`GET /api/v1/user/sync-conflicts`). Frontend: local-first entry saves behind
+  `canUseOfflineSync()` (verified users + feature flag), `syncOrchestrator`
+  push/pull on reconnect, Settings → App & offline sync summary. Contract:
+  [ADR-0036](docs/adr/0036-offline-sync-v1-scope.md). Visual QA:
+  [`docs/quality/M4.1_VISUAL_QA.md`](docs/quality/M4.1_VISUAL_QA.md). Closes #10, #24.
+
 ### Changed
 
 - **GitHub tracker hygiene (post-closeout).** Closed stale M3 issues (#15–#17); relabeled
