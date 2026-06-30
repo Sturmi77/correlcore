@@ -3,8 +3,8 @@
 Contract
 --------
 These models mirror :doc:`docs/adr/0036-offline-sync-v1-scope.md` and
-``docs/API.md`` §10. Sprint 0 ships the schema skeleton only — routers and
-service logic land in Sprint 2.
+``docs/API.md`` §10. Sprint 2 implements push/pull via
+``backend/app/services/sync_service.py``.
 
 Privacy
 -------

@@ -123,6 +123,8 @@ class Settings(BaseSettings):
     UNVERIFIED_CLEANUP_DAYS: int = Field(default=7, ge=1)
     # Sync conflict log retention (ADR-0003 / ADR-0036 §7).
     SYNC_CONFLICT_RETENTION_DAYS: int = Field(default=90, ge=1)
+    # Initial pull window when ``since`` cursor is omitted (ADR-0036 §3).
+    SYNC_INITIAL_PULL_DAYS: int = Field(default=30, ge=1)
     # Minimum pairwise usage count before a tag can produce a tag->mood insight.
     # This is intentionally stricter than the global entry-count tier because
     # rare tags have too little statistical power even inside a large history.

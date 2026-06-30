@@ -16,6 +16,12 @@ from app.models.symptom import (  # noqa: F401
     default_symptom_uuid,
 )
 from app.models.sync_conflict import SyncConflict  # noqa: F401
+from app.models.sync_engine import (  # noqa: F401
+    SyncClientState,
+    SyncPushBatch,
+    SyncRevisionLog,
+    SyncUserRevision,
+)
 from app.models.tag import EntryTag, Tag, TagCategory  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.user_encryption_key import UserEncryptionKey  # noqa: F401
@@ -36,6 +42,10 @@ __all__ = [
     "InsightType",
     "Symptom",
     "SyncConflict",
+    "SyncClientState",
+    "SyncPushBatch",
+    "SyncRevisionLog",
+    "SyncUserRevision",
     "Tag",
     "TagCategory",
     "User",

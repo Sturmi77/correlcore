@@ -1090,9 +1090,8 @@ oder `null`, wenn noch kein Insight existiert.
 
 ## 10. Sync (Offline-Sync, M4.1)
 
-**Status:** Contract frozen in [ADR-0036](adr/0036-offline-sync-v1-scope.md) (Sprint 0).
-Endpoints und Service-Logik werden in M4.1 Sprint 1–2 implementiert. Pydantic-
-Schemas: `backend/app/schemas/sync.py`.
+**Status:** Push/pull implemented in M4.1 Sprint 2; contract in [ADR-0036](adr/0036-offline-sync-v1-scope.md).
+Pydantic schemas: `backend/app/schemas/sync.py`. Service: `backend/app/services/sync_service.py`.
 
 M4 lieferte PWA-Shell-Caching und form-level Offline-Retry; M4.1 ergänzt Dexie-
 Queue, Delta-Sync und `sync_conflicts`-Logging.

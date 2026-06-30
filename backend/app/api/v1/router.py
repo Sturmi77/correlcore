@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     health,
     insights,
     onboarding,
+    sync,
     symptoms,
     tags,
     user,
@@ -63,5 +64,6 @@ api_router.include_router(tags.entry_tags_router, prefix="/entries", tags=["tags
 api_router.include_router(symptoms.symptoms_router, prefix="/symptoms", tags=["symptoms"])
 api_router.include_router(symptoms.entry_symptoms_router, prefix="/entries", tags=["symptoms"])
 
+api_router.include_router(sync.router, prefix="/sync", tags=["sync"])
+
 # Future routers (M1+):
-# api_router.include_router(sync.router, prefix="/sync", tags=["sync"])
