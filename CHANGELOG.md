@@ -10,6 +10,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **M5-C1 habit dashboard polish.** Habit list shows adherence + window summary and correlation
+  hint; detail adds adherence bar, predictor copy, insufficient-data state, and mobile bottom sheet.
+  Backend adds `correlation_metric` on habit stats. See #157/#159.
+
 - **M7 milestone complete (Sprint M7-C).** Formal closeout: audit findings and deferred-work
   index in [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md); quality gate verdict
   **M7 Complete** in [`docs/quality/M7_QUALITY_GATE.md`](docs/quality/M7_QUALITY_GATE.md);

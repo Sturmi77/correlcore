@@ -31,6 +31,12 @@ def _scalars_result(values: list[object]) -> MagicMock:
     return result
 
 
+def _row_one_result(value: object | None) -> MagicMock:
+    result = MagicMock()
+    result.one_or_none.return_value = value
+    return result
+
+
 def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
     result = MagicMock()
     result.all.return_value = values
@@ -46,7 +52,7 @@ async def test_habit_stats_build_uses_target_frequency() -> None:
         side_effect=[
             _scalar_result(habit),
             _row_result([(date(2026, 5, 1),), (date(2026, 5, 2),)]),
-            _scalar_result(0.42),
+            _row_one_result((0.42, "mood")),
         ]
     )
 
@@ -62,6 +68,7 @@ async def test_habit_stats_build_uses_target_frequency() -> None:
     assert out.days_tracked == 2
     assert out.adherence_rate == 66.7
     assert out.correlation_score == 0.42
+    assert out.correlation_metric == "mood"
 
 
 @pytest.mark.asyncio
@@ -73,7 +80,7 @@ async def test_habit_stats_reduce_stays_full_when_within_target() -> None:
         side_effect=[
             _scalar_result(habit),
             _row_result([(date(2026, 5, 1),), (date(2026, 5, 2),)]),
-            _scalar_result(None),
+            _row_one_result(None),
         ]
     )
 
@@ -106,7 +113,7 @@ async def test_habit_stats_reduce_decreases_after_target_range() -> None:
                     (date(2026, 5, 3),),
                 ]
             ),
-            _scalar_result(None),
+            _row_one_result(None),
         ]
     )
 
@@ -141,7 +148,7 @@ async def test_list_habit_stats_returns_all_habits() -> None:
             _scalars_result([habit]),
             _scalar_result(habit),
             _row_result([]),
-            _scalar_result(None),
+            _row_one_result(None),
         ]
     )
 

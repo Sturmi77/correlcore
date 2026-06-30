@@ -17,6 +17,7 @@ from app.schemas.habit import HabitListResponse, HabitStatsResponse, HabitWindow
 from app.services.tag_service import active_tag_predicate
 
 HABIT_WINDOWS: set[int] = {7, 14, 28, 90}
+MIN_DAYS_FOR_ADHERENCE_DISPLAY = 7
 
 
 class HabitNotFoundError(Exception):
@@ -50,14 +51,14 @@ def _adherence_rate(
     return round(max(0.0, 100.0 * (1 - overage / possible_overage)), 1)
 
 
-async def _latest_correlation_score(
+async def _latest_correlation(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
     tag_id: uuid.UUID,
-) -> float | None:
+) -> tuple[float | None, str | None]:
     result = await db.execute(
-        select(Insight.effect_size)
+        select(Insight.effect_size, Insight.metric)
         .where(
             Insight.user_id == user_id,
             Insight.subject_type == "tag",
@@ -67,7 +68,10 @@ async def _latest_correlation_score(
         .order_by(Insight.generated_at.desc())
         .limit(1)
     )
-    return result.scalar_one_or_none()
+    row = result.one_or_none()
+    if row is None:
+        return None, None
+    return row[0], row[1]
 
 
 async def _tracked_dates_for_tag(
@@ -138,7 +142,9 @@ async def get_habit_stats(
     days_total = window
     target_days = _target_days(target_frequency=tag.target_frequency, days_total=days_total)
     days_tracked = len(tracked_dates)
-    correlation_score = await _latest_correlation_score(db, user_id=user_id, tag_id=tag.id)
+    correlation_score, correlation_metric = await _latest_correlation(
+        db, user_id=user_id, tag_id=tag.id
+    )
 
     return HabitStatsResponse(
         tag_id=tag.id,
@@ -157,6 +163,7 @@ async def get_habit_stats(
             days_total=days_total,
         ),
         correlation_score=correlation_score,
+        correlation_metric=correlation_metric,
     )
 
 

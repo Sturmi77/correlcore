@@ -15,6 +15,7 @@ export interface HabitStatsResponse {
   target_days: number;
   adherence_rate: number;
   correlation_score: number | null;
+  correlation_metric: string | null;
 }
 
 export interface HabitListResponse {

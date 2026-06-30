@@ -37,6 +37,7 @@ describe('habits store', () => {
           target_days: 16,
           adherence_rate: 62.5,
           correlation_score: null,
+          correlation_metric: null,
         },
       ],
     });
