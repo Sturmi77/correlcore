@@ -56,12 +56,14 @@ Deferred to **M4.1 — Offline-First Sync**: Dexie delta sync (#10), conflict lo
 
 | Gate                                | Result       |
 | ----------------------------------- | ------------ |
-| GitHub CI on PR branch              | Pending push |
+| GitHub CI on PR branch (#243)       | Pass (2026-06-30) |
 | Local `.\scripts\local-quality.ps1` | Rerun on contributor machine before merge |
 
 ## Manual device notes
 
-`beforeinstallprompt` and iOS Add-to-Home-Screen behaviour remain browser-controlled; spot-check on Android Chrome and iOS Safari when preparing a release build.
+`beforeinstallprompt` and iOS Add-to-Home-Screen behaviour remain browser-controlled.
+Automated closeout covers install-banner UX; native install-prompt spot-check on Android Chrome
+and iOS Safari is tracked for beta/release prep (M9).
 
 ## Result
 

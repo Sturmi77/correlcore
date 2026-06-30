@@ -4,7 +4,7 @@ Last updated: 2026-06-30
 
 Tracking document for [`docs/M4_SPRINT_PLAN.md`](M4_SPRINT_PLAN.md). M4 delivered quick wins
 and PWA/mobile hardening. Full Dexie offline sync, sync conflict logs, Capacitor, Web Push,
-and Notes Composer are follow-ups (M4.1 / M11).
+and Notes Composer are follow-ups (M4.1 offline sync, M4.2 push/app lock, M11 Capacitor).
 
 **Milestone completeness:** Implementation merged on `main` (PR #211). M4-C closeout complete
 (2026-06-30). Visual QA signed off in [`docs/quality/M4_VISUAL_QA.md`](quality/M4_VISUAL_QA.md).
