@@ -1,9 +1,13 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { appendChange, getLastAppliedSeq, listPendingChanges } from './changeLog';
-import { getOrCreateClientId } from './clientId';
+import { CLIENT_ID_STORAGE_KEY, getOrCreateClientId } from './clientId';
 import { getOfflineDb, resetOfflineDbForTests } from './db';
 import { isOfflineSyncEnabled } from './featureFlag';
+import {
+  clearOfflineDataForAnonymousSession,
+  prepareOfflineDataForAuthenticatedUser,
+} from './session';
 import { getSyncMeta, setSyncMeta } from './syncMeta';
 import { SYNC_META_KEYS } from './types';
 import type { LocalEntry } from './types';
@@ -95,5 +99,56 @@ describe('offline Dexie foundation', () => {
 
   it('defaults offline sync feature flag to off', () => {
     expect(isOfflineSyncEnabled()).toBe(false);
+  });
+
+  it('keeps offline data when the authenticated user is unchanged', async () => {
+    const db = getOfflineDb();
+    await setSyncMeta(SYNC_META_KEYS.ownerUserId, 'usr_1');
+    await db.entries.put(sampleEntry('e1'));
+
+    await prepareOfflineDataForAuthenticatedUser('usr_1');
+
+    expect(await db.entries.get('e1')).toEqual(sampleEntry('e1'));
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_1');
+  });
+
+  it('wipes offline data and client identity when the authenticated user changes', async () => {
+    const db = getOfflineDb();
+    await setSyncMeta(SYNC_META_KEYS.ownerUserId, 'usr_1');
+    await db.entries.put(sampleEntry('e1'));
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: { id: 'e1' },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+    const previousClientId = await getOrCreateClientId();
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(previousClientId);
+
+    await prepareOfflineDataForAuthenticatedUser('usr_2');
+
+    const freshDb = getOfflineDb();
+    expect(await freshDb.entries.count()).toBe(0);
+    expect(await freshDb.change_log.count()).toBe(0);
+    expect(await getSyncMeta(SYNC_META_KEYS.clientId)).toBeNull();
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBeNull();
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_2');
+  });
+
+  it('wipes offline data and client identity for a confirmed anonymous session', async () => {
+    const db = getOfflineDb();
+    await setSyncMeta(SYNC_META_KEYS.ownerUserId, 'usr_1');
+    await db.entries.put(sampleEntry('e1'));
+    const previousClientId = await getOrCreateClientId();
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(previousClientId);
+
+    await clearOfflineDataForAnonymousSession();
+
+    const freshDb = getOfflineDb();
+    expect(await freshDb.entries.count()).toBe(0);
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBeNull();
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBeNull();
   });
 });

@@ -27,7 +27,11 @@ export {
   OFFLINE_SYNC_STORAGE_KEY,
   setOfflineSyncEnabled,
 } from './featureFlag';
-export { clearOfflineDataForLogout } from './session';
+export {
+  clearOfflineDataForAnonymousSession,
+  clearOfflineDataForLogout,
+  prepareOfflineDataForAuthenticatedUser,
+} from './session';
 export { deleteSyncMeta, getSyncMeta, setSyncMeta } from './syncMeta';
 export {
   initializeSyncOrchestrator,
