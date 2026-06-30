@@ -86,6 +86,12 @@
       !userPreferences.onboarding_retro_completed &&
       dashboardSummary?.entry_count === 0
   );
+  $: showPwaInstallBanner = Boolean(
+    $pwaInstallStore.promptEvent &&
+      !$pwaInstallStore.dismissed &&
+      !$pwaInstallStore.installed &&
+      ((dashboardSummary?.entry_count ?? 0) >= 1 || userPreferences?.onboarding_retro_completed)
+  );
 
   function syncEntrySurface(): void {
     preferEntrySheet = prefersEntrySheet();
@@ -248,7 +254,7 @@
 
 {#if $auth.status === 'authenticated'}
   <div class="home-screen">
-    {#if $pwaInstallStore.promptEvent && !$pwaInstallStore.dismissed && !$pwaInstallStore.installed}
+    {#if showPwaInstallBanner}
       <section class="home-install" data-testid="pwa-install-banner">
         <div>
           <h2>{$_('pwa.install.title')}</h2>

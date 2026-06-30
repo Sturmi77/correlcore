@@ -9,27 +9,27 @@
 
 ## Issue index (O-01 – O-20)
 
-| ID   | GitHub                                                    | Sprint   | Impact | Effort | Title                                            |
-| ---- | --------------------------------------------------------- | -------- | ------ | ------ | ------------------------------------------------ |
-| O-01 | [#250](https://github.com/Sturmi77/correlcore/issues/250) | A        | High   | Low    | Consolidate Insights maturity UI on mobile       |
-| O-02 | [#251](https://github.com/Sturmi77/correlcore/issues/251) | A        | High   | Low    | Open EntrySheet after onboarding complete        |
-| O-03 | [#252](https://github.com/Sturmi77/correlcore/issues/252) | A        | Medium | Low    | Insights empty-state CTA opens entry directly    |
-| O-04 | [#253](https://github.com/Sturmi77/correlcore/issues/253) | B        | Medium | Low    | Redirect legacy onboarding routes                |
-| O-05 | [#254](https://github.com/Sturmi77/correlcore/issues/254) | A        | Low    | Low    | Hide Home sparkline until ≥3 entries             |
-| O-06 | [#260](https://github.com/Sturmi77/correlcore/issues/260) | C        | High   | High   | Integrate tag selection into first entry         |
-| O-07 | [#261](https://github.com/Sturmi77/correlcore/issues/261) | C        | High   | Medium | Auto-login after email verification              |
-| O-08 | [#262](https://github.com/Sturmi77/correlcore/issues/262) | E        | Medium | High   | Unify desktop entry surface                      |
-| O-09 | [#263](https://github.com/Sturmi77/correlcore/issues/263) | B        | Medium | Medium | Habit hint in onboarding tag step                |
-| O-11 | [#273](https://github.com/Sturmi77/correlcore/issues/273) | B        | Low    | Low    | Check-email mobile mail-app deep link            |
-| O-12 | [#264](https://github.com/Sturmi77/correlcore/issues/264) | D        | High   | Medium | Home Daily Brief brief-first layout              |
-| O-13 | [#266](https://github.com/Sturmi77/correlcore/issues/266) | D        | Medium | Medium | Home bridge for weekly analysis review           |
-| O-14 | [#268](https://github.com/Sturmi77/correlcore/issues/268) | B        | Medium | Low    | Gate Insights matrix/co-occurrence by maturity   |
-| O-15 | [#271](https://github.com/Sturmi77/correlcore/issues/271) | D        | Medium | Medium | Trends global sticky range control (desktop)     |
-| O-16 | [#265](https://github.com/Sturmi77/correlcore/issues/265) | B        | Medium | Medium | Inline habit setup on empty Habits panel         |
-| O-17 | [#267](https://github.com/Sturmi77/correlcore/issues/267) | E        | Medium | Medium | Heatmap drill-down via EntryHistorySheet         |
-| O-18 | [#269](https://github.com/Sturmi77/correlcore/issues/269) | Deferred | Medium | Low    | Defer PWA install banner until after first entry |
-| O-19 | [#270](https://github.com/Sturmi77/correlcore/issues/270) | Deferred | Low    | Low    | Improve export discoverability in Settings       |
-| O-20 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | Blocked  | Medium | High   | Password reset UI (backend missing)              |
+| ID   | GitHub                                                    | Sprint  | Impact | Effort | Title                                            |
+| ---- | --------------------------------------------------------- | ------- | ------ | ------ | ------------------------------------------------ |
+| O-01 | [#250](https://github.com/Sturmi77/correlcore/issues/250) | A       | High   | Low    | Consolidate Insights maturity UI on mobile       |
+| O-02 | [#251](https://github.com/Sturmi77/correlcore/issues/251) | A       | High   | Low    | Open EntrySheet after onboarding complete        |
+| O-03 | [#252](https://github.com/Sturmi77/correlcore/issues/252) | A       | Medium | Low    | Insights empty-state CTA opens entry directly    |
+| O-04 | [#253](https://github.com/Sturmi77/correlcore/issues/253) | B       | Medium | Low    | Redirect legacy onboarding routes                |
+| O-05 | [#254](https://github.com/Sturmi77/correlcore/issues/254) | A       | Low    | Low    | Hide Home sparkline until ≥3 entries             |
+| O-06 | [#260](https://github.com/Sturmi77/correlcore/issues/260) | C       | High   | High   | Integrate tag selection into first entry         |
+| O-07 | [#261](https://github.com/Sturmi77/correlcore/issues/261) | C       | High   | Medium | Auto-login after email verification              |
+| O-08 | [#262](https://github.com/Sturmi77/correlcore/issues/262) | E       | Medium | High   | Unify desktop entry surface                      |
+| O-09 | [#263](https://github.com/Sturmi77/correlcore/issues/263) | B       | Medium | Medium | Habit hint in onboarding tag step                |
+| O-11 | [#273](https://github.com/Sturmi77/correlcore/issues/273) | B       | Low    | Low    | Check-email mobile mail-app deep link            |
+| O-12 | [#264](https://github.com/Sturmi77/correlcore/issues/264) | D       | High   | Medium | Home Daily Brief brief-first layout              |
+| O-13 | [#266](https://github.com/Sturmi77/correlcore/issues/266) | D       | Medium | Medium | Home bridge for weekly analysis review           |
+| O-14 | [#268](https://github.com/Sturmi77/correlcore/issues/268) | B       | Medium | Low    | Gate Insights matrix/co-occurrence by maturity   |
+| O-15 | [#271](https://github.com/Sturmi77/correlcore/issues/271) | D       | Medium | Medium | Trends global sticky range control (desktop)     |
+| O-16 | [#265](https://github.com/Sturmi77/correlcore/issues/265) | B       | Medium | Medium | Inline habit setup on empty Habits panel         |
+| O-17 | [#267](https://github.com/Sturmi77/correlcore/issues/267) | E       | Medium | Medium | Heatmap drill-down via EntryHistorySheet         |
+| O-18 | [#269](https://github.com/Sturmi77/correlcore/issues/269) | F       | Medium | Low    | Defer PWA install banner until after first entry |
+| O-19 | [#270](https://github.com/Sturmi77/correlcore/issues/270) | F       | Low    | Low    | Improve export discoverability in Settings       |
+| O-20 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | Blocked | Medium | High   | Password reset UI (backend missing)              |
 
 > **Note:** O-10 is intentionally unused (reserved). Former “O-10 password / O-11 Phase 5 / O-12 Figma” map to **O-20**, **O-08**, and out-of-scope Figma Sprint H respectively.
 
@@ -46,7 +46,7 @@ See [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_
 | **C — Auth & onboarding** | #261, #260 (after #251)       | Shorter new-user funnel            |
 | **D — Analysis IA**       | #264, #266, #271 (after #250) | Brief-first Home, weekly review    |
 | **E — Desktop polish**    | #262, #267                    | Entry surface + drill-down         |
-| **Deferred**              | #269, #270                    | PWA timing, export UX              |
+| **F — Deferred backlog**  | #269, #270                    | PWA timing, export UX              |
 | **Blocked**               | #272                          | Password reset                     |
 
 ---

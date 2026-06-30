@@ -537,6 +537,7 @@
     "auth_required": "Please sign in to export your data.",
     "section": {
       "tracking": "Tracking",
+      "export": "Data export",
       "analysis": "Analysis",
       "privacy": "Privacy & Data",
       "appearance": "Appearance",
@@ -556,6 +557,8 @@
       "error": "Could not save analysis settings."
     },
     "privacy": {
+      "heading": "Privacy & account data",
+      "body": "Account deletion and other privacy controls will live here.",
       "delete_placeholder": "Delete account (M9)"
     },
     "appearance": {

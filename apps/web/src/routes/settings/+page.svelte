@@ -188,31 +188,9 @@
       </div>
     </section>
 
-    <section class="settings__panel" data-testid="settings-section-analysis">
+    <section class="settings__panel" data-testid="settings-section-export">
       <div class="settings__panel-head">
-        <span class="settings__section-kicker">{$_('settings.section.analysis')}</span>
-        <h2>{$_('settings.analysis.heading')}</h2>
-        <p>{$_('settings.analysis.body')}</p>
-      </div>
-      <label class="settings__toggle-label">
-        <input
-          type="checkbox"
-          class="settings__toggle"
-          checked={preferences?.analytics_enabled ?? true}
-          disabled={preferencesBusy}
-          data-testid="analytics-toggle"
-          on:change={(e) => void toggleAnalytics(e.currentTarget.checked)}
-        />
-        <span>{$_('settings.analysis.analytics_enabled')}</span>
-      </label>
-      {#if preferencesError}
-        <InlineAlert variant="error" message={preferencesError} />
-      {/if}
-    </section>
-
-    <section class="settings__panel" data-testid="settings-section-privacy">
-      <div class="settings__panel-head">
-        <span class="settings__section-kicker">{$_('settings.section.privacy')}</span>
+        <span class="settings__section-kicker">{$_('settings.section.export')}</span>
         <h2>{$_('settings.export.heading')}</h2>
         <p>{$_('settings.export.body')}</p>
       </div>
@@ -244,13 +222,45 @@
         >
           {busy === 'csv' ? $_('settings.export.busy') : $_('settings.export.csv')}
         </Button>
-        <span class="settings__placeholder settings__placeholder--danger">
-          {$_('settings.privacy.delete_placeholder')}
-        </span>
       </div>
       {#if error}
         <InlineAlert variant="error" message={error} />
       {/if}
+    </section>
+
+    <section class="settings__panel" data-testid="settings-section-analysis">
+      <div class="settings__panel-head">
+        <span class="settings__section-kicker">{$_('settings.section.analysis')}</span>
+        <h2>{$_('settings.analysis.heading')}</h2>
+        <p>{$_('settings.analysis.body')}</p>
+      </div>
+      <label class="settings__toggle-label">
+        <input
+          type="checkbox"
+          class="settings__toggle"
+          checked={preferences?.analytics_enabled ?? true}
+          disabled={preferencesBusy}
+          data-testid="analytics-toggle"
+          on:change={(e) => void toggleAnalytics(e.currentTarget.checked)}
+        />
+        <span>{$_('settings.analysis.analytics_enabled')}</span>
+      </label>
+      {#if preferencesError}
+        <InlineAlert variant="error" message={preferencesError} />
+      {/if}
+    </section>
+
+    <section class="settings__panel" data-testid="settings-section-privacy">
+      <div class="settings__panel-head">
+        <span class="settings__section-kicker">{$_('settings.section.privacy')}</span>
+        <h2>{$_('settings.privacy.heading')}</h2>
+        <p>{$_('settings.privacy.body')}</p>
+      </div>
+      <div class="settings__actions">
+        <span class="settings__placeholder settings__placeholder--danger">
+          {$_('settings.privacy.delete_placeholder')}
+        </span>
+      </div>
     </section>
 
     <section class="settings__panel" data-testid="settings-section-appearance">
