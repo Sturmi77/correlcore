@@ -161,6 +161,7 @@ Task: <your specific task here>
 | [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)           | Rename and deployment migration notes from MoodSync to CorrelCore |
 | [Closeout Sprint Plan](docs/CLOSEOUT_SPRINT_PLAN.md)                  | M4/M5/M7 closeout sequence, audit findings, deferred-work index   |
 | [M4 Sprint Status](docs/M4_SPRINT_STATUS.md)                          | M4 quick wins + PWA hardening tracking                            |
+| [M4.1 Sprint Plan](docs/M4.1_SPRINT_PLAN.md)                          | Offline-first Dexie sync implementation plan                      |
 | [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                          | M5 Habits Core tracking                                           |
 | [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering            |
 | [M7 Sprint 9](docs/M7_SPRINT9_PLAN.md)                                | Spec-complete closeout: interaction, feed UX, cluster API, a11y   |
