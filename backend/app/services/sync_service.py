@@ -22,6 +22,7 @@ from app.models.sync_engine import (
     SyncUserRevision,
 )
 from app.models.tag import Tag, TagCategory
+from app.schemas.entry import BACKDATE_DAYS_LIMIT
 from app.schemas.symptom import SymptomEntry
 from app.schemas.sync import (
     SyncChange,
@@ -36,7 +37,7 @@ from app.schemas.sync import (
     SyncTableName,
     SyncTagPayload,
 )
-from app.services.entry_service import BACKDATE_DAYS_LIMIT, _within_backdate_window
+from app.services.entry_service import _within_backdate_window
 from app.services.symptom_service import assign_symptoms_to_entry, list_symptoms_for_entry
 from app.services.sync_conflict_service import create_sync_conflict, sanitize_conflict_value
 from app.services.tag_service import assign_tags_to_entry, list_tags_for_entry
@@ -103,7 +104,7 @@ def _note_presence_marker(note: str | None) -> dict[str, bool]:
     return {"present": bool(note and note.strip())}
 
 
-def _symptoms_map(rows: list) -> dict[str, int]:
+def _symptoms_map(rows: list[Any]) -> dict[str, int]:
     return {str(row.symptom_id): int(row.intensity) for row in rows}
 
 

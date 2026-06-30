@@ -12,8 +12,8 @@ from app.api.v1.endpoints import (
     health,
     insights,
     onboarding,
-    sync,
     symptoms,
+    sync,
     tags,
     user,
 )

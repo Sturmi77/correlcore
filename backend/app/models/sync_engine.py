@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -46,7 +47,7 @@ class SyncRevisionLog(Base):
     entity_type: Mapped[str] = mapped_column(Text, nullable=False)
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     operation: Mapped[str] = mapped_column(Text, nullable=False)
-    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     entity_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -69,7 +70,7 @@ class SyncPushBatch(Base):
     cursor: Mapped[str] = mapped_column(Text, nullable=False)
     applied: Mapped[int] = mapped_column(Integer, nullable=False)
     skipped: Mapped[int] = mapped_column(Integer, nullable=False)
-    conflicts: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    conflicts: Mapped[list[Any]] = mapped_column(JSONB, nullable=False, default=list)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

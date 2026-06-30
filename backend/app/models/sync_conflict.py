@@ -13,6 +13,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -51,8 +52,8 @@ class SyncConflict(Base):
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     entity_type: Mapped[str] = mapped_column(Text, nullable=False)
     field_name: Mapped[str] = mapped_column(Text, nullable=False)
-    client_value: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    server_value: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    client_value: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    server_value: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     client_ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     server_ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     resolved_at: Mapped[datetime | None] = mapped_column(
