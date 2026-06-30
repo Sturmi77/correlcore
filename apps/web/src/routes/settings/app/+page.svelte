@@ -1,14 +1,41 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
+  import { get } from 'svelte/store';
   import Button from '$lib/components/common/Button.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import { currentUser } from '$lib/stores/auth';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
+  import {
+    isOfflineSyncEnabled,
+    setOfflineSyncEnabled,
+  } from '$lib/offline/featureFlag';
+  import { scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
 
-  onMount(() => pwaLifecycle.initialize());
+  let offlineSyncToggle = false;
+
+  onMount(() => {
+    pwaLifecycle.initialize();
+    offlineSyncToggle = isOfflineSyncEnabled();
+  });
+
+  function formatSyncTime(value: string | null): string {
+    const translate = get(_);
+    if (!value) return translate('settings.app.sync_never');
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return translate('settings.app.sync_never');
+    return date.toLocaleString(get(locale) ?? undefined);
+  }
+
+  function onOfflineSyncToggle(event: Event) {
+    const checked = (event.currentTarget as HTMLInputElement).checked;
+    offlineSyncToggle = checked;
+    setOfflineSyncEnabled(checked);
+    if (checked) scheduleSync();
+  }
 </script>
 
 <svelte:head>
@@ -43,6 +70,43 @@
       </span>
     </div>
   </Panel>
+
+  {#if $currentUser?.is_verified}
+    <Panel variant="bordered">
+      <div class="app-settings__section app-settings__section--stacked">
+        <div>
+          <h2>{$_('settings.app.offline_sync_heading')}</h2>
+          <p>{$_('settings.app.offline_sync_body')}</p>
+        </div>
+        <label class="app-settings__toggle">
+          <span>{$_('settings.app.offline_sync_toggle')}</span>
+          <input
+            type="checkbox"
+            checked={offlineSyncToggle}
+            on:change={onOfflineSyncToggle}
+            data-testid="offline-sync-toggle"
+          />
+        </label>
+        <dl class="app-settings__sync-meta">
+          <div>
+            <dt>{$_('settings.app.sync_last_push')}</dt>
+            <dd data-testid="sync-last-push">{formatSyncTime($syncOrchestrator.lastPushAt)}</dd>
+          </div>
+          <div>
+            <dt>{$_('settings.app.sync_last_pull')}</dt>
+            <dd data-testid="sync-last-pull">{formatSyncTime($syncOrchestrator.lastPullAt)}</dd>
+          </div>
+          <div>
+            <dt>{$_('settings.app.sync_pending')}</dt>
+            <dd data-testid="sync-pending-count">{$syncOrchestrator.pendingCount}</dd>
+          </div>
+        </dl>
+        <Button variant="secondary" on:click={() => scheduleSync()}>
+          {$_('settings.app.sync_now')}
+        </Button>
+      </div>
+    </Panel>
+  {/if}
 
   <Panel variant="bordered">
     <div class="app-settings__section">
@@ -110,6 +174,11 @@
     gap: var(--space-4);
   }
 
+  .app-settings__section--stacked {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .app-settings h2,
   .app-settings p {
     margin: 0;
@@ -135,6 +204,37 @@
 
   .app-settings__status.online {
     color: var(--color-success);
+  }
+
+  .app-settings__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .app-settings__sync-meta {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  .app-settings__sync-meta div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .app-settings__sync-meta dt {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+
+  .app-settings__sync-meta dd {
+    margin: 0;
+    font-weight: 600;
   }
 
   @media (max-width: 520px) {

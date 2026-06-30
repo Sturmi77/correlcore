@@ -9,13 +9,20 @@ const user = {
 
 const entryId = '10000000-0000-4000-8000-000000000091';
 
-async function installEntryApi(page: Page, options: { historical?: boolean } = {}) {
+async function installEntryApi(
+  page: Page,
+  options: { historical?: boolean; offlineSync?: boolean } = {}
+) {
   let failWrites = false;
   const writes: string[] = [];
+  const syncWrites: string[] = [];
 
-  await page.addInitScript(() => {
+  await page.addInitScript((offlineSync) => {
     window.localStorage.setItem('correlcore-locale', 'en');
-  });
+    if (offlineSync) {
+      window.localStorage.setItem('cc_offline_sync_enabled', 'true');
+    }
+  }, options.offlineSync ?? false);
 
   await page.route('**/api/v1/**', async (route) => {
     const request = route.request();
@@ -89,6 +96,27 @@ async function installEntryApi(page: Page, options: { historical?: boolean } = {
       });
     }
 
+    if (path === '/sync/push' && method === 'POST') {
+      if (failWrites) return route.abort('internetdisconnected');
+      syncWrites.push('POST /sync/push');
+      return json(200, {
+        cursor: 'cursor-e2e',
+        applied: 1,
+        skipped: 0,
+        conflicts: [],
+        idempotent_replay: false,
+      });
+    }
+
+    if (path === '/sync/pull' && method === 'GET') {
+      return json(200, {
+        cursor: 'cursor-e2e',
+        changes: [],
+        has_more: false,
+        server_time: '2026-06-30T12:00:00.000Z',
+      });
+    }
+
     if ((path === '/tags/default' || path === '/tags') && method === 'GET') {
       return json(200, [
         {
@@ -129,6 +157,7 @@ async function installEntryApi(page: Page, options: { historical?: boolean } = {
 
   return {
     writes,
+    syncWrites,
     setOffline(value: boolean) {
       failWrites = value;
     },
@@ -190,6 +219,35 @@ test('offline autosave remains editable and recovers through retry', async ({ pa
 
   await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'saved');
   expect(api.writes).toContain('POST /entries');
+});
+
+test('offline dexie entry saves locally and syncs after reconnect', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const api = await installEntryApi(page, { offlineSync: true });
+  await page.goto('/entries/new');
+
+  api.setOffline(true);
+  await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+  await page.getByRole('button', { name: 'Increase mood' }).click();
+
+  await expect(page.getByText('Offline — saved on this device. Will sync when online.')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'saved');
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByTestId('entry-edit-hint')).toBeVisible({ timeout: 15_000 });
+
+  api.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.getByTestId('save-status').click().catch(() => undefined);
+
+  await expect
+    .poll(() => api.syncWrites.includes('POST /sync/push'), { timeout: 15_000 })
+    .toBe(true);
 });
 
 test('desktop keeps optional entry details expanded', async ({ page }) => {

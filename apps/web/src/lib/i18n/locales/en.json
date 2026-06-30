@@ -210,10 +210,17 @@
       "dirty": "Will save shortly\u2026",
       "saving": "Saving\u2026",
       "saved_at": "Saved at {time}",
+      "synced_at": "Synced at {time}",
+      "local": "Saved on this device",
+      "syncing": "Syncing\u2026",
+      "offline_local": "Offline \u2014 saved on this device. Will sync when online.",
       "error": "Failed to save.",
       "retry": "Retry",
       "offline": "Offline \u2014 changes are not being saved.",
       "leave_warning": "There are unsaved changes. Are you sure you want to leave?"
+    },
+    "offline_sync": {
+      "conflict_note": "Some fields were updated from another device. Your latest synced version is shown."
     },
     "more_toggle": "Add optional details",
     "more_hide": "Hide optional details",
@@ -640,7 +647,15 @@
       "update_available": "A new version is ready to activate.",
       "update_current": "No waiting update was found.",
       "check_update": "Check for update",
-      "sync_note": "Unsaved daily entries stay visible on their entry screen. Reconnect there and use Retry; CorrelCore does not silently upload health data in the background."
+      "offline_sync_heading": "Offline sync",
+      "offline_sync_body": "Save daily entries on this device and upload them when you are back online.",
+      "offline_sync_toggle": "Enable offline sync",
+      "sync_last_push": "Last upload",
+      "sync_last_pull": "Last download",
+      "sync_pending": "Pending changes",
+      "sync_now": "Sync now",
+      "sync_never": "Not yet",
+      "sync_note": "With offline sync enabled, daily entries are stored on this device first. Use Sync now or open an entry after reconnecting."
     },
     "dev": {
       "heading": "Developer View",

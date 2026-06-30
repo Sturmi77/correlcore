@@ -210,10 +210,17 @@
       "dirty": "Wird in K\u00fcrze gespeichert\u2026",
       "saving": "Wird gespeichert\u2026",
       "saved_at": "Gespeichert um {time}",
+      "synced_at": "Synchronisiert um {time}",
+      "local": "Auf diesem Geraet gespeichert",
+      "syncing": "Synchronisiere\u2026",
+      "offline_local": "Offline \u2014 auf diesem Geraet gespeichert. Wird synchronisiert, sobald du online bist.",
       "error": "Fehler beim Speichern.",
       "retry": "Erneut versuchen",
       "offline": "Keine Verbindung \u2014 Eingaben werden nicht gespeichert.",
       "leave_warning": "Es laufen noch ungespeicherte \u00c4nderungen. M\u00f6chtest du die Seite wirklich verlassen?"
+    },
+    "offline_sync": {
+      "conflict_note": "Einige Felder wurden auf einem anderen Geraet aktualisiert. Die zuletzt synchronisierte Version wird angezeigt."
     },
     "scale": {
       "mood_low": "sehr schlecht",
@@ -640,7 +647,15 @@
       "update_available": "Eine neue Version kann aktiviert werden.",
       "update_current": "Kein wartendes Update gefunden.",
       "check_update": "Auf Update pruefen",
-      "sync_note": "Nicht gespeicherte Eintraege bleiben im Eingabe-Screen sichtbar. Stelle dort die Verbindung wieder her und nutze Erneut versuchen; CorrelCore laedt Gesundheitsdaten nicht unbemerkt im Hintergrund hoch."
+      "offline_sync_heading": "Offline-Sync",
+      "offline_sync_body": "Speichere Tageseintraege auf diesem Geraet und lade sie hoch, sobald du wieder online bist.",
+      "offline_sync_toggle": "Offline-Sync aktivieren",
+      "sync_last_push": "Letzter Upload",
+      "sync_last_pull": "Letzter Download",
+      "sync_pending": "Ausstehende Aenderungen",
+      "sync_now": "Jetzt synchronisieren",
+      "sync_never": "Noch nicht",
+      "sync_note": "Mit aktiviertem Offline-Sync werden Tageseintraege zuerst auf diesem Geraet gespeichert. Nutze Jetzt synchronisieren oder oeffne einen Eintrag nach dem Wiederverbinden."
     },
     "dev": {
       "heading": "Entwickleransicht",

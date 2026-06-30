@@ -15,12 +15,25 @@ export {
   resetOfflineDbForTests,
 } from './db';
 export {
+  canUseOfflineSync,
   clearOfflineSyncOverride,
   isOfflineSyncEnabled,
   OFFLINE_SYNC_STORAGE_KEY,
   setOfflineSyncEnabled,
 } from './featureFlag';
 export { deleteSyncMeta, getSyncMeta, setSyncMeta } from './syncMeta';
+export {
+  initializeSyncOrchestrator,
+  onLocalEntrySaved,
+  peekSyncOrchestrator,
+  pullSince,
+  pushPending,
+  resetSyncOrchestratorForTests,
+  scheduleSync,
+  syncAll,
+  syncOrchestrator,
+} from './syncOrchestrator';
+export type { OfflineSyncBadgeState, SyncOrchestratorState } from './syncOrchestrator';
 export type {
   ChangeLogOperation,
   ChangeLogRow,

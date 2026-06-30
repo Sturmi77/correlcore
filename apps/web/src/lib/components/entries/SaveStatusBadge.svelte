@@ -16,11 +16,13 @@
 
   import { _ } from 'svelte-i18n';
   import type { AutoSaveStatus } from '$lib/utils/autoSave';
+  import type { OfflineSyncBadgeState } from '$lib/offline/syncOrchestrator';
 
   export let status: AutoSaveStatus = 'idle';
   export let lastSavedAt: number | null = null;
   export let lastError: string | null = null;
   export let offline = false;
+  export let offlineSyncBadge: OfflineSyncBadgeState | null = null;
   export let onRetry: (() => void) | null = null;
   export let testId = 'save-status';
 
@@ -32,18 +34,34 @@
     return `${hh}:${mm}`;
   }
 
-  $: tone = offline ? 'offline' : status;
+  $: showOfflineSync =
+    offlineSyncBadge !== null && status !== 'dirty' && status !== 'saving';
+  $: tone = showOfflineSync ? offlineSyncBadge : offline ? 'offline' : status;
 </script>
 
-{#if status !== 'idle'}
+{#if status !== 'idle' || showOfflineSync}
   <div
     class="save-status save-status--{tone}"
     role="status"
     aria-live="polite"
     data-testid={testId}
-    data-status={status}
+    data-status={showOfflineSync ? offlineSyncBadge : status}
   >
-    {#if offline}
+    {#if showOfflineSync && offlineSyncBadge === 'offline'}
+      <span class="save-status__warn" aria-hidden="true">!</span>
+      <span class="save-status__text">{$_('entry.autosave.offline_local')}</span>
+    {:else if showOfflineSync && offlineSyncBadge === 'local'}
+      <span class="save-status__dot" aria-hidden="true"></span>
+      <span class="save-status__text">{$_('entry.autosave.local')}</span>
+    {:else if showOfflineSync && offlineSyncBadge === 'syncing'}
+      <span class="save-status__spinner" aria-hidden="true"></span>
+      <span class="save-status__text">{$_('entry.autosave.syncing')}</span>
+    {:else if showOfflineSync && offlineSyncBadge === 'synced'}
+      <span class="save-status__check" aria-hidden="true">✓</span>
+      <span class="save-status__text">
+        {$_('entry.autosave.synced_at', { values: { time: formatTime(lastSavedAt) } })}
+      </span>
+    {:else if offline}
       <span class="save-status__warn" aria-hidden="true">!</span>
       <span class="save-status__text">{$_('entry.autosave.offline')}</span>
       {#if status === 'error' && onRetry}
@@ -127,12 +145,25 @@
     flex-wrap: wrap;
   }
 
-  .save-status--offline {
+  .save-status--offline,
+  .save-status--local {
     color: var(--color-warning);
     background: color-mix(in srgb, var(--color-warning) 10%, transparent);
     border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
     flex-wrap: wrap;
     white-space: normal;
+  }
+
+  .save-status--syncing {
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  }
+
+  .save-status--synced {
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
   }
 
   .save-status__dot {

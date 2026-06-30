@@ -1,6 +1,9 @@
 /**
- * Offline sync feature gate — default off until Sprint 4 wires entry UI.
+ * Offline sync feature gate — default off until enabled for verified users.
  */
+
+import { get } from 'svelte/store';
+import { currentUser } from '$lib/stores/auth';
 
 export const OFFLINE_SYNC_STORAGE_KEY = 'cc_offline_sync_enabled';
 
@@ -27,6 +30,13 @@ export function isOfflineSyncEnabled(): boolean {
 
   const envFlag = import.meta.env.VITE_OFFLINE_SYNC_ENABLED;
   return envFlag === 'true' || envFlag === '1';
+}
+
+/** Gate for production entry path — verified users with flag/env/preference on. */
+export function canUseOfflineSync(): boolean {
+  const user = get(currentUser);
+  if (!user?.is_verified) return false;
+  return isOfflineSyncEnabled();
 }
 
 /** Dev/test override stored in localStorage. */
