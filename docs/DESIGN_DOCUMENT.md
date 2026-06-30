@@ -1019,19 +1019,21 @@ und Web Push sind Follow-ups nach M4.
 
 #### Akzeptanzkriterien M7
 
-- [ ] Lasso-Regression produziert reproduzierbare Ergebnisse bei gleichen Eingabedaten
-- [ ] Lasso-Designmatrix enthält Symptome als binäre Features (nicht als separate Pipeline)
-- [ ] Lag-Analyse konfigurierbar (1–7 Tage Verzögerung)
-- [ ] Lag-Analyse berücksichtigt Symptome als Eingangs- und Zielvariablen
-- [ ] Symptom×Tag-Ko-Okkurrenz-Insights erscheinen ab Phase `provisional` mit FDR-Korrektur (BH)
-- [ ] Symptom-Ko-Okkurrenz-Heatmap und Symptom-Kalender-Heatmap im `/insights`-Feed integriert
-- [ ] Insight Digest als optionale wöchentliche Push-Notification
-- [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+- [x] Lasso-Regression produziert reproduzierbare Ergebnisse bei gleichen Eingabedaten
+- [x] Lasso-Designmatrix enthält Symptome als binäre Features (nicht als separate Pipeline)
+- [x] Lag-Analyse konfigurierbar (1–7 Tage Verzögerung)
+- [x] Lag-Analyse berücksichtigt Symptome als Eingangs- und Zielvariablen
+- [x] Symptom×Tag-Ko-Okkurrenz-Insights erscheinen ab Phase `provisional` mit FDR-Korrektur (BH)
+- [x] Symptom-Ko-Okkurrenz-Heatmap und Symptom-Kalender-Heatmap im `/insights`-Feed integriert
+- [ ] Insight Digest als optionale wöchentliche Push-Notification — **deferred M7-S8** (#147)
+- [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust — **deferred M7-S8** (#148)
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+      ([`quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md), 2026-06-30)
 
 #### DSGVO-Checkpoint M7
 
-- [ ] 🔒 DSGVO: LLM verarbeitet keine Daten außerhalb der lokalen Instanz (kein Cloud-LLM ohne explizite User-Zustimmung)
+- [x] 🔒 DSGVO: LLM verarbeitet keine Daten außerhalb der lokalen Instanz (kein Cloud-LLM ohne
+      explizite User-Zustimmung) — erfüllt durch Verzicht auf LLM im M7-Kern; Ollama optional M7-S8
 
 ---
 

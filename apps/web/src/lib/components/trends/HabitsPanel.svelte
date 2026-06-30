@@ -82,6 +82,9 @@
   }
 
   onMount(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
     mobileMedia = window.matchMedia('(max-width: 760px)');
     handleMobileChange(mobileMedia);
     mobileMedia.addEventListener('change', handleMobileChange);
@@ -145,7 +148,6 @@
         <HabitDetailBody
           {selected}
           {detailHeatmap}
-          {window}
           {loading}
           on:selectDate={(event) => dispatch('selectDate', event.detail)}
         />

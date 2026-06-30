@@ -55,7 +55,6 @@
       <HabitDetailBody
         {selected}
         {detailHeatmap}
-        {window}
         {loading}
         on:selectDate={(event) => dispatch('selectDate', event.detail)}
       />

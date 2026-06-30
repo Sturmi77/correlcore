@@ -1,6 +1,18 @@
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HabitsPanel from './HabitsPanel.svelte';
+
+beforeEach(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  });
+});
 
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');

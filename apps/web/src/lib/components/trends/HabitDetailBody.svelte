@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import type { HabitStatsResponse, HabitWindow } from '$lib/api/habits';
+  import type { HabitStatsResponse } from '$lib/api/habits';
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import type { TagResponse } from '$lib/api/tags';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
@@ -10,7 +10,6 @@
 
   export let selected: { habit: HabitStatsResponse; tag: TagResponse };
   export let detailHeatmap: TagHeatmapResponse | null = null;
-  export let window: HabitWindow = 28;
   export let loading = false;
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string; tagId: string } }>();

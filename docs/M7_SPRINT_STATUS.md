@@ -1,6 +1,6 @@
 # M7 Sprint Status - Insights v2
 
-Last updated: 2026-06-28
+Last updated: 2026-06-30
 
 Tracking document for [`docs/M7_SPRINT_PLAN.md`](M7_SPRINT_PLAN.md).
 
@@ -14,7 +14,9 @@ Tracking document for [`docs/M7_SPRINT_PLAN.md`](M7_SPRINT_PLAN.md).
 
 | **Spec complete** (Sprint 9) | **Done** (2026-06-28) |
 
-| **Optional** (Sprint 8 LLM/Digest) | Pending |
+| **Milestone closeout** (Sprint M7-C) | **Done** (2026-06-30) |
+
+| **Optional** (Sprint 8 LLM/Digest) | Deferred → M7-S8 |
 
 ## Overview
 
@@ -38,9 +40,11 @@ Tracking document for [`docs/M7_SPRINT_PLAN.md`](M7_SPRINT_PLAN.md).
 
 | 7 | Should/Could Analytics | **Done** |
 
-| 8 | Optional LLM/Digest | Pending |
+| 8 | Optional LLM/Digest | Deferred → M7-S8 |
 
 | 9 | Spec Complete | **Done** |
+
+| M7-C | Milestone Closeout | **Done** |
 
 ## Sprint 9 - Done (Spec Complete)
 
@@ -164,26 +168,23 @@ Full plan: [`M7_SPRINT9_PLAN.md`](M7_SPRINT9_PLAN.md).
 
 - [x] Merged on `main` (PR #223, #224).
 
-- [ ] Combined symptom+tag Jaccard clusters → **Sprint 9 Paket D**.
+- [x] Combined symptom+tag Jaccard clusters — Sprint 9 Paket D (PR #238).
 
-## Remaining Work
+## Sprint M7-C - Done (2026-06-30)
 
-### Sprint 9 (required for spec complete)
+- [x] Closeout plan with audit findings: [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md).
+- [x] Quality gate updated to **M7 Complete**: [`quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md).
+- [x] Sprint 9 visual QA sign-off: [`quality/M7_SPRINT9_VISUAL_QA.md`](quality/M7_SPRINT9_VISUAL_QA.md).
+- [x] GitHub issues #146 and #150 closed (shipped Sprints 7/9).
+- [x] #149, #147, #148 documented as deferred (post-M7 / M7-S8).
+- [x] `README.md` and `CHANGELOG.md` updated for M7 Complete.
 
-See [`M7_SPRINT9_PLAN.md`](M7_SPRINT9_PLAN.md).
+## Deferred (not M7 closeout blockers)
 
-### Sprint 8 (optional)
-
-- [ ] Ollama (#148) and weekly digest (#147).
-
-## Known Follow-ups (outside Sprint 9)
-
-- GitHub milestone and issue title hygiene (#146–#150 still labeled M8).
-
-- Cycle×lifestyle analytics → M7.1 ([`features/cycle-tracking.md`](features/cycle-tracking.md)).
-
-- Sleep×symptom → M8.
-
-- Changepoint (#149) → post-M7.
-
-- M4/M5 closeout remains separate from M7.
+| Topic                     | Target milestone | Issues                                                     |
+| ------------------------- | ---------------- | ---------------------------------------------------------- |
+| Ollama + weekly digest    | M7-S8 (optional) | #148, #147                                                 |
+| Changepoint detection     | post-M7          | #149                                                       |
+| Cycle×lifestyle analytics | M7.1             | [`features/cycle-tracking.md`](features/cycle-tracking.md) |
+| Sleep×symptom             | M8               | [`M8_NOTES.md`](M8_NOTES.md)                               |
+| M4/M5 formal closeout     | M4-C / M5-C      | [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md)       |
