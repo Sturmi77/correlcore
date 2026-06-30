@@ -1028,12 +1028,12 @@ und Web Push sind Follow-ups nach M4.
 - [ ] Insight Digest als optionale wöchentliche Push-Notification — **deferred M7-S8** (#147)
 - [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust — **deferred M7-S8** (#148)
 - [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
-  ([`quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md), 2026-06-30)
+      ([`quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md), 2026-06-30)
 
 #### DSGVO-Checkpoint M7
 
 - [x] 🔒 DSGVO: LLM verarbeitet keine Daten außerhalb der lokalen Instanz (kein Cloud-LLM ohne
-  explizite User-Zustimmung) — erfüllt durch Verzicht auf LLM im M7-Kern; Ollama optional M7-S8
+      explizite User-Zustimmung) — erfüllt durch Verzicht auf LLM im M7-Kern; Ollama optional M7-S8
 
 ---
 

@@ -181,10 +181,10 @@ Full plan: [`M7_SPRINT9_PLAN.md`](M7_SPRINT9_PLAN.md).
 
 ## Deferred (not M7 closeout blockers)
 
-| Topic | Target milestone | Issues |
-| ----- | ---------------- | ------ |
-| Ollama + weekly digest | M7-S8 (optional) | #148, #147 |
-| Changepoint detection | post-M7 | #149 |
-| Cycle×lifestyle analytics | M7.1 | [`features/cycle-tracking.md`](features/cycle-tracking.md) |
-| Sleep×symptom | M8 | [`M8_NOTES.md`](M8_NOTES.md) |
-| M4/M5 formal closeout | M4-C / M5-C | [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md) |
+| Topic                     | Target milestone | Issues                                                     |
+| ------------------------- | ---------------- | ---------------------------------------------------------- |
+| Ollama + weekly digest    | M7-S8 (optional) | #148, #147                                                 |
+| Changepoint detection     | post-M7          | #149                                                       |
+| Cycle×lifestyle analytics | M7.1             | [`features/cycle-tracking.md`](features/cycle-tracking.md) |
+| Sleep×symptom             | M8               | [`M8_NOTES.md`](M8_NOTES.md)                               |
+| M4/M5 formal closeout     | M4-C / M5-C      | [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md)       |
