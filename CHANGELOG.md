@@ -6,9 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — M4 closeout pending
+## [Unreleased]
 
 ### Changed
+
+- **GitHub tracker hygiene (post-closeout).** Closed stale M3 issues (#15–#17); relabeled
+  #31→M8, #147/#148→M7-S8, #149→post-M7, #27→M11; closed shipped milestones M0–M3 on GitHub.
+  See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md) §1.3.
 
 - **M4-C quick wins + PWA closeout.** Visual QA sign-off in
   [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md). Offline sync (#10) and conflict
