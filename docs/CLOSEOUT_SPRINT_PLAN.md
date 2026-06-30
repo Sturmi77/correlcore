@@ -95,21 +95,21 @@ Roadmap status in `README.md` and `docs/M*_SPRINT_STATUS.md` is authoritative.
 
 Every item explicitly excluded from M4/M5/M7 closeout maps here.
 
-| Roadmap ID  | Title                        | Scope summary                                              | GitHub issues / refs                                                                |
-| ----------- | ---------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Roadmap ID  | Title                        | Scope summary                                              | GitHub issues / refs                                                                                |
+| ----------- | ---------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | **M4.1**    | Offline-First Sync           | Dexie.js, delta sync, conflict log, retry queue            | #10, #24; [M4.1_SPRINT_PLAN.md](M4.1_SPRINT_PLAN.md) · [ADR-0009](adr/0009-offline-sync-nach-m4.md) |
-| **M4.2**    | Push & App Lock              | UnifiedPush / FCM, app lock, install polish                | Original M4 scope; blocked by M4.1 for offline push UX                              |
-| **M5.1**    | Tag co-occurrence (shipped)  | Patterns heatmap on `/insights`                            | Closeout done 2026-05-29 — [`quality/M5_1_VISUAL_QA.md`](quality/M5_1_VISUAL_QA.md) |
-| **M7-S8**   | Insights optional LLM/Digest | Ollama statements, weekly push digest                      | #147, #148 (`milestone:M7-S8`); requires M4.2 push                                  |
-| **post-M7** | Changepoint analytics        | `ruptures` mood time-series breaks                         | #149 (no milestone label)                                                           |
-| **M7.1**    | Cycle × lifestyle insights   | Cycle phase bands, lifestyle correlation                   | [`features/cycle-tracking.md`](features/cycle-tracking.md)                          |
-| **M8**      | Sleep & Health Connect       | Sleep fields, HC import, sleep↔mood, notes signals         | #31, #201–#202, [`M8_NOTES.md`](M8_NOTES.md)                                        |
-| **M9**      | Beta hardening               | GlitchTip, external testers, monitoring, GDPR self-service | #29, [`milestone:M9`]                                                               |
-| **M9+**     | Security hardening           | Slug HMAC for custom symptoms                              | #62                                                                                 |
-| **M10**     | Public selfhost v1.0         | GitHub release, Docker Hub, landing page                   | GitHub milestone #7                                                                 |
-| **M11**     | Android Play Store           | Capacitor shell, Health Connect native                     | #27, [ADR-0002](adr/0002-capacitor-statt-twa.md)                                    |
-| **M12**     | SaaS mode                    | Managed hosting, Authentik OIDC                            | [ADR-0004](adr/0004-auth-strategie.md)                                              |
-| **M13**     | Photo & media                | MinIO upload, EXIF strip, gallery                          | #28 (GitHub label `milestone:M6`)                                                   |
+| **M4.2**    | Push & App Lock              | UnifiedPush / FCM, app lock, install polish                | Original M4 scope; blocked by M4.1 for offline push UX                                              |
+| **M5.1**    | Tag co-occurrence (shipped)  | Patterns heatmap on `/insights`                            | Closeout done 2026-05-29 — [`quality/M5_1_VISUAL_QA.md`](quality/M5_1_VISUAL_QA.md)                 |
+| **M7-S8**   | Insights optional LLM/Digest | Ollama statements, weekly push digest                      | #147, #148 (`milestone:M7-S8`); requires M4.2 push                                                  |
+| **post-M7** | Changepoint analytics        | `ruptures` mood time-series breaks                         | #149 (no milestone label)                                                                           |
+| **M7.1**    | Cycle × lifestyle insights   | Cycle phase bands, lifestyle correlation                   | [`features/cycle-tracking.md`](features/cycle-tracking.md)                                          |
+| **M8**      | Sleep & Health Connect       | Sleep fields, HC import, sleep↔mood, notes signals         | #31, #201–#202, [`M8_NOTES.md`](M8_NOTES.md)                                                        |
+| **M9**      | Beta hardening               | GlitchTip, external testers, monitoring, GDPR self-service | #29, [`milestone:M9`]                                                                               |
+| **M9+**     | Security hardening           | Slug HMAC for custom symptoms                              | #62                                                                                                 |
+| **M10**     | Public selfhost v1.0         | GitHub release, Docker Hub, landing page                   | GitHub milestone #7                                                                                 |
+| **M11**     | Android Play Store           | Capacitor shell, Health Connect native                     | #27, [ADR-0002](adr/0002-capacitor-statt-twa.md)                                                    |
+| **M12**     | SaaS mode                    | Managed hosting, Authentik OIDC                            | [ADR-0004](adr/0004-auth-strategie.md)                                                              |
+| **M13**     | Photo & media                | MinIO upload, EXIF strip, gallery                          | #28 (GitHub label `milestone:M6`)                                                                   |
 
 **Notes epic (#194–#202):** Retroactive M1–M3 note fields plus M8 analysis integration — tracked under **M8**,
 not M7 closeout.
