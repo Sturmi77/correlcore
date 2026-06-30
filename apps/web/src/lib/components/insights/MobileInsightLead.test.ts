@@ -42,19 +42,26 @@ const maturity: InsightMaturity = {
 };
 
 describe('MobileInsightLead', () => {
-  it('renders the strongest signal with visible confidence before maturity', () => {
+  it('renders the strongest signal with maturity on the featured card', () => {
     render(MobileInsightLead, { props: { insight, maturity, entryCount: 42 } });
 
     const lead = screen.getByTestId('mobile-insight-lead');
     const confidence = screen.getByTestId('insight-card-confidence-summary');
-    const maturityContext = screen.getByTestId('mobile-insight-maturity');
+    const badge = screen.getByTestId('insight-maturity-badge');
 
     expect(lead.contains(confidence)).toBe(true);
-    expect(lead.contains(maturityContext)).toBe(true);
-    expect(screen.queryByTestId('insight-maturity-badge')).toBeNull();
-    expect(
-      confidence.compareDocumentPosition(maturityContext) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(lead.contains(badge)).toBe(true);
+    expect(screen.queryByTestId('insight-stage-meta')).toBeNull();
+    expect(screen.queryByTestId('mobile-insight-maturity')).toBeNull();
+  });
+
+  it('shows milestone-only strip when requested', () => {
+    render(MobileInsightLead, {
+      props: { insight, maturity, entryCount: 42, showMilestone: true },
+    });
+
+    expect(screen.getByTestId('mobile-insight-maturity')).toBeTruthy();
+    expect(screen.queryByTestId('insight-stage-meta')).toBeNull();
   });
 
   it('keeps non-causal guidance visible beside the lead insight', () => {

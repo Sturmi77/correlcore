@@ -14,6 +14,7 @@
     type TagSuggestionGroup,
   } from '$lib/api/onboarding';
   import { TAG_CATEGORIES, type TagCategory } from '$lib/api/tags';
+  import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
 
   let step = 0;
   let groups: TagSuggestionGroup[] = [];
@@ -72,7 +73,7 @@
         return;
       }
       await completeOnboarding(tags);
-      await goto('/');
+      await goto(OPEN_ENTRY_HOME_PATH);
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
     } finally {

@@ -25,6 +25,7 @@
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
   import InsightCard from './InsightCard.svelte';
   import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
+  import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
   import { rankInsights } from '$lib/utils/insightRanking';
 
   export let insights: InsightResponse[] = [];
@@ -165,7 +166,7 @@
       title={$_(emptyTitleKey)}
       body={$_(emptyBodyKey)}
       actionLabel={$_('insights.feed.empty_cta')}
-      actionHref="/"
+      actionHref={OPEN_ENTRY_HOME_PATH}
       compact
       testId="insight-feed-empty"
     >

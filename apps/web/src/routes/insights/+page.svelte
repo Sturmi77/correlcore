@@ -125,10 +125,10 @@
   }
 
   async function loadCooccurrence(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     cooccurrenceLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
         return;
       }
@@ -141,10 +141,10 @@
   }
 
   async function loadTagClusters(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     tagClustersLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         tagClusters = mockTagClusters;
         return;
       }
@@ -157,10 +157,10 @@
   }
 
   async function loadSymptomCooccurrence(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     symptomCooccurrenceLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
         return;
       }
@@ -182,7 +182,7 @@
     symptomHistoryError = '';
     symptomHistoryDetails = [];
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         symptomHistoryDetails = mockEntries
           .filter((entry) => entry.entry_date === date)
           .map((entry) => ({
@@ -241,7 +241,7 @@
     cooccurrenceHistoryError = '';
     cooccurrenceHistoryDetails = [];
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         cooccurrenceHistoryDetails = mockEntries
           .filter((entry) => entry.entry_date >= startDate && entry.entry_date <= endDate)
           .slice(0, 3)
@@ -294,11 +294,11 @@
   }
 
   async function loadInsights(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     loading = true;
     error = null;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         insights = mockInsights;
         insightMaturity = mockInsightMaturity;
         userPreferences = mockUserPreferences;
