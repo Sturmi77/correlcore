@@ -47,10 +47,14 @@ describe('isHabitAdherenceInsufficient', () => {
 
   it('keeps high-target habits gated until seven tracked days', () => {
     expect(
-      isHabitAdherenceInsufficient(habit({ target_days: 16, days_tracked: 2, adherence_rate: 12.5 }))
+      isHabitAdherenceInsufficient(
+        habit({ target_days: 16, days_tracked: 2, adherence_rate: 12.5 })
+      )
     ).toBe(true);
     expect(
-      isHabitAdherenceInsufficient(habit({ target_days: 16, days_tracked: 7, adherence_rate: 43.8 }))
+      isHabitAdherenceInsufficient(
+        habit({ target_days: 16, days_tracked: 7, adherence_rate: 43.8 })
+      )
     ).toBe(false);
   });
 

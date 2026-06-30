@@ -5,10 +5,7 @@
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import type { TagResponse } from '$lib/api/tags';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
-  import {
-    habitMetricI18nKey,
-    isHabitAdherenceInsufficient,
-  } from '$lib/utils/habitMetrics';
+  import { habitMetricI18nKey, isHabitAdherenceInsufficient } from '$lib/utils/habitMetrics';
 
   export let selected: { habit: HabitStatsResponse; tag: TagResponse };
   export let detailHeatmap: TagHeatmapResponse | null = null;
