@@ -27,7 +27,7 @@ from __future__ import annotations
 import logging
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps.auth import get_current_user, get_current_verified_user
@@ -35,10 +35,12 @@ from app.core.auth_cookies import clear_auth_cookies
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
 from app.models.user import User
+from app.schemas.sync import SyncConflictListItem, SyncConflictListResponse, SyncEntityType
 from app.schemas.user import DeleteAccountRequest
 from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
 from app.schemas.user_profile import UserProfileResponse, UserProfileUpsert
 from app.services.export_service import build_export_envelope, export_filename, render_export_zip
+from app.services.sync_conflict_service import list_sync_conflicts, sanitize_conflict_value
 from app.services.user_preferences_service import (
     get_or_create_user_preferences,
     update_user_preferences,
@@ -89,6 +91,43 @@ async def put_my_profile(
 ) -> UserProfileResponse:
     profile = await upsert_user_profile(db, user_id=current_user.id, payload=payload)
     return UserProfileResponse.model_validate(profile)
+
+
+@router.get(
+    "/sync-conflicts",
+    response_model=SyncConflictListResponse,
+    summary="List sync merge conflicts for the current user (read-only)",
+)
+async def list_my_sync_conflicts(
+    entity_type: SyncEntityType | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> SyncConflictListResponse:
+    rows, total = await list_sync_conflicts(
+        db,
+        user_id=current_user.id,
+        entity_type=entity_type,
+        limit=limit,
+        offset=offset,
+    )
+    items = [
+        SyncConflictListItem(
+            id=row.id,
+            entity_id=row.entity_id,
+            entity_type=row.entity_type,  # type: ignore[arg-type]
+            field_name=row.field_name,
+            client_ts=row.client_ts,
+            server_ts=row.server_ts,
+            created_at=row.created_at,
+            resolved_at=row.resolved_at,
+            client_value=sanitize_conflict_value(row.field_name, row.client_value),
+            server_value=sanitize_conflict_value(row.field_name, row.server_value),
+        )
+        for row in rows
+    ]
+    return SyncConflictListResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.get(

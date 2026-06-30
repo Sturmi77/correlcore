@@ -1256,8 +1256,8 @@ Pull-`changes[].seq` ist `0` (server-origin); nur Push-Changes tragen Client-`se
 
 ### `GET /api/v1/user/sync-conflicts`
 
-Read-only Konflikt-Historie (Sprint 1). Paginiert mit `limit` (1..200, Default 50)
-und `offset`. Optional `entity_type=entry|tag|symptom`.
+Read-only Konflikt-Historie (M4.1 Sprint 1). Paginiert mit `limit` (1..200, Default 50)
+und `offset`. Optional `entity_type=entry|tag|symptom`. Erfordert verifizierten User.
 
 **Response `200`**
 

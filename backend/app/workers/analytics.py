@@ -17,6 +17,7 @@ from app.services.insight_worker_service import (
     generate_insights_for_job,
     list_insight_generation_jobs,
 )
+from app.services.sync_conflict_service import cleanup_stale_sync_conflicts
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class DailyRunSummary:
     """Aggregated result for all daily worker jobs."""
 
     deleted_unverified_accounts: int
+    deleted_sync_conflicts: int
     insight_run: InsightRunSummary
 
 
@@ -54,16 +56,17 @@ def seconds_until_next_cleanup(now: datetime | None = None) -> float:
 async def run_cleanup_once(
     *,
     session_factory: SessionFactory = AsyncSessionLocal,
-) -> int:
-    """Run the cleanup in its own transaction and return deleted rows."""
+) -> tuple[int, int]:
+    """Run retention cleanups in one transaction and return deleted row counts."""
     async with session_factory() as session:
         try:
-            deleted_count = await cleanup_unverified_accounts(session)
+            deleted_accounts = await cleanup_unverified_accounts(session)
+            deleted_conflicts = await cleanup_stale_sync_conflicts(session)
             await session.commit()
-            return deleted_count
+            return deleted_accounts, deleted_conflicts
         except Exception:
             await session.rollback()
-            logger.exception("unverified account cleanup failed")
+            logger.exception("daily retention cleanup failed")
             raise
 
 
@@ -129,9 +132,13 @@ async def run_daily_jobs_once(
     """Run the daily worker bundle once."""
 
     current = now or datetime.now(UTC)
-    deleted = await run_cleanup_once(session_factory=session_factory)
+    deleted_accounts, deleted_conflicts = await run_cleanup_once(session_factory=session_factory)
     insight_run = await run_insights_once(as_of=current, session_factory=session_factory)
-    return DailyRunSummary(deleted_unverified_accounts=deleted, insight_run=insight_run)
+    return DailyRunSummary(
+        deleted_unverified_accounts=deleted_accounts,
+        deleted_sync_conflicts=deleted_conflicts,
+        insight_run=insight_run,
+    )
 
 
 async def run_worker(*, sleep: CleanupSleep = asyncio.sleep) -> None:

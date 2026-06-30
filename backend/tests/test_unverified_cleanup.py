@@ -150,8 +150,9 @@ async def test_run_cleanup_once_accepts_session_factory() -> None:
 
     session = FakeSession()
 
-    deleted = await run_cleanup_once(session_factory=lambda: session)
+    deleted_accounts, deleted_conflicts = await run_cleanup_once(session_factory=lambda: session)
 
-    assert deleted == 0
+    assert deleted_accounts == 0
+    assert deleted_conflicts == 0
     assert session.commit.await_count == 1
     assert session.rollback.await_count == 0

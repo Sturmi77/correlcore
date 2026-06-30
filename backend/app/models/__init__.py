@@ -15,6 +15,7 @@ from app.models.symptom import (  # noqa: F401
     Symptom,
     default_symptom_uuid,
 )
+from app.models.sync_conflict import SyncConflict  # noqa: F401
 from app.models.tag import EntryTag, Tag, TagCategory  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.user_encryption_key import UserEncryptionKey  # noqa: F401
@@ -34,6 +35,7 @@ __all__ = [
     "InsightTier",
     "InsightType",
     "Symptom",
+    "SyncConflict",
     "Tag",
     "TagCategory",
     "User",
