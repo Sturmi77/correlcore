@@ -41,6 +41,7 @@
     "brief": {
       "label": "Daily Brief",
       "heading": "Heute auf einen Blick",
+      "bridge_label": "Wochenanalyse",
       "insight_fallback": "Oeffne Erkenntnisse fuer Kontext und Rohdaten.",
       "phase_fallback": "Deine aktuelle Erkenntnisphase ist aktiv. Details bleiben in Erkenntnisse verfuegbar.",
       "collecting_title": "Heutigen Kontext sammeln",

@@ -120,6 +120,8 @@ describe('/trends page', () => {
   it('renders canonical tabs and switches to Health', async () => {
     render(Page);
 
+    expect(await screen.findByTestId('trends-sticky-toolbar')).toBeTruthy();
+    expect(await screen.findByTestId('trends-range-control')).toBeTruthy();
     expect(await screen.findByTestId('trends-tab-compare')).toBeTruthy();
     const health = screen.getByTestId('trends-tab-health');
     expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();

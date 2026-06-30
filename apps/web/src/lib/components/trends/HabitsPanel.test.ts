@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HabitsPanel from './HabitsPanel.svelte';
 
@@ -83,13 +83,9 @@ describe('HabitsPanel', () => {
     expect(screen.getByText('Walk predictor r=0.72')).toBeTruthy();
   });
 
-  it('dispatches window changes', async () => {
-    const spy = vi.fn();
-    render(HabitsPanel, { props: { habits, tags, window: 28 }, events: { windowChange: spy } });
-
-    await fireEvent.click(screen.getByTestId('habits-window-14'));
-
-    expect(spy).toHaveBeenCalled();
+  it('shows the active global range window label', () => {
+    render(HabitsPanel, { props: { habits, tags, window: 28 } });
+    expect(screen.getByTestId('habits-window-label').textContent).toContain('last 28 days');
   });
 
   it('shows inline habit setup when tags are available', () => {

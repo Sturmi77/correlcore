@@ -3,9 +3,9 @@
    * Home route — ADR-0017 Screen 1 (M3.5 Sprint 4).
    *
    * Authenticated home uses exactly three information zones:
-   *   1. Today context (date, work context, entry status)
-   *   2. Daily Brief: latest insight summary OR phase fallback (best-effort)
-   *   3. 7-day mood sparkline + primary entry CTA
+   *   1. Today context (date, work context, compact log/edit action)
+   *   2. Daily Brief: latest insight summary OR phase fallback (brief-first)
+   *   3. 7-day mood sparkline + secondary entry CTA
    *
    * Insight load never blocks the CTA. No matrix, summary grid, or
    * recent-entries list on Home — those live under Trends / Insights.
@@ -237,9 +237,14 @@
       </section>
     {/if}
 
-    <!-- Zone 1: date + work context + entry status -->
-    <section class="home-zone" data-testid="home-zone-context">
-      <HomeTodayContext {todayIso} {todayEntry} loading={dashboardLoading && !dashboardLoaded} />
+    <!-- Zone 1: date + work context + compact entry action -->
+    <section class="home-zone home-zone--context" data-testid="home-zone-context">
+      <HomeTodayContext
+        {todayIso}
+        {todayEntry}
+        loading={dashboardLoading && !dashboardLoaded}
+        on:logToday={() => openEntrySheet(todayIso)}
+      />
     </section>
 
     <!-- Zone 2: daily brief (best-effort) -->
@@ -271,10 +276,10 @@
 
       <Button
         type="button"
-        variant={todayEntry ? 'secondary' : 'primary'}
-        size="lg"
+        variant={todayEntry ? 'ghost' : 'primary'}
+        size={todayEntry ? 'md' : 'lg'}
         fullWidth
-        stacked
+        stacked={!todayEntry}
         className="home-cta"
         data-testid="home-cta"
         on:click={() => openEntrySheet(todayIso)}
@@ -367,6 +372,19 @@
     gap: var(--space-4);
   }
 
+  .home-zone--context {
+    order: 1;
+  }
+
+  :global([data-testid='home-zone-insight']) {
+    order: 2;
+  }
+
+  .home-zone--foot {
+    order: 3;
+    gap: var(--space-5);
+  }
+
   .home-install {
     display: flex;
     align-items: center;
@@ -398,10 +416,6 @@
     gap: var(--space-2);
     flex-wrap: wrap;
     justify-content: flex-end;
-  }
-
-  .home-zone--foot {
-    gap: var(--space-5);
   }
 
   :global(.home-cta) {

@@ -11,10 +11,10 @@ const insightFeedSource = readFileSync(
 );
 
 describe('control primitive contract', () => {
-  it('uses SegmentedControl for trend range filters', () => {
-    expect(trendsSource).toContain('$lib/components/common/SegmentedControl.svelte');
-    expect(trendsSource).toContain('<SegmentedControl');
-    expect(trendsSource).not.toContain('trends__segments');
+  it('uses a dedicated sticky toolbar for the global Trends range', () => {
+    expect(trendsSource).toContain('trends__sticky-toolbar');
+    expect(trendsSource).toContain('data-testid="trends-sticky-toolbar"');
+    expect(trendsSource).not.toContain('trends__controls');
   });
 
   it('uses TabBar for Trends and Insights tabs', () => {

@@ -25,13 +25,20 @@ describe('/ home screen ownership contract', () => {
     expect(source).not.toContain('handleLogout');
   });
 
-  it('does not add secondary links to the insights screen from Home surfaces', () => {
-    expect(homeDailyBriefSource).not.toContain('href="/insights"');
+  it('exposes weekly analysis bridge links from the daily brief', () => {
+    expect(homeDailyBriefSource).toContain('href="/insights"');
+    expect(homeDailyBriefSource).toContain('href="/trends"');
+    expect(homeDailyBriefSource).toContain('data-testid="home-weekly-bridge"');
     expect(firstWeekBannerSource).not.toContain('href="/insights"');
   });
 
-  it('uses the shared Button primitive for the primary CTA', () => {
+  it('uses the shared Button primitive for entry actions', () => {
+    const todayContextSource = readFileSync(
+      resolve('src/lib/components/home/HomeTodayContext.svelte'),
+      'utf8'
+    );
     expect(source).toContain('$lib/components/common/Button.svelte');
     expect(source).toContain('data-testid="home-cta"');
+    expect(todayContextSource).toContain('data-testid="home-today-action"');
   });
 });
