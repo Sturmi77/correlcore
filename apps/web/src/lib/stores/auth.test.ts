@@ -19,7 +19,14 @@ vi.mock('$lib/stores/insights', () => ({
   resetInsightStore: vi.fn(),
 }));
 
+vi.mock('$lib/offline/session', () => ({
+  clearOfflineDataForAnonymousSession: vi.fn(),
+  clearOfflineDataForLogout: vi.fn(),
+  prepareOfflineDataForAuthenticatedUser: vi.fn(),
+}));
+
 import * as authApi from '$lib/api/auth';
+import * as offlineSession from '$lib/offline/session';
 import { resetInsightStore } from '$lib/stores/insights';
 import {
   _resetForTests,
@@ -65,6 +72,7 @@ describe('hydrate', () => {
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
     expect(get(currentUser)).toEqual(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
   });
 
   it('transitions to anonymous when /me returns null', async () => {
@@ -72,12 +80,14 @@ describe('hydrate', () => {
     await hydrate();
     expect(get(auth)).toEqual({ status: 'anonymous' });
     expect(get(isAuthenticated)).toBe(false);
+    expect(offlineSession.clearOfflineDataForAnonymousSession).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to anonymous on network error', async () => {
     vi.mocked(authApi.fetchCurrentUser).mockRejectedValueOnce(new Error('network'));
     await hydrate();
     expect(get(auth)).toEqual({ status: 'anonymous' });
+    expect(offlineSession.clearOfflineDataForAnonymousSession).not.toHaveBeenCalled();
   });
 
   it('is idempotent — only calls fetchCurrentUser once', async () => {
@@ -99,22 +109,25 @@ describe('login / logout / setUser', () => {
     const user = await login({ email: 'a@b.de', password: 'pw12345678' });
     expect(user).toEqual(fakeUser);
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 
   it('logout clears state even when API call fails', async () => {
-    setUser(fakeUser);
+    await setUser(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
     vi.mocked(resetInsightStore).mockClear();
     vi.mocked(authApi.logout).mockRejectedValueOnce(new Error('boom'));
     await logout();
     expect(get(auth)).toEqual({ status: 'anonymous' });
+    expect(offlineSession.clearOfflineDataForLogout).toHaveBeenCalledTimes(1);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 
-  it('setUser sets authenticated state without an API call', () => {
-    setUser(fakeUser);
+  it('setUser sets authenticated state without an API call', async () => {
+    await setUser(fakeUser);
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 });

@@ -20,7 +20,11 @@ import {
   type UserResponse,
 } from '$lib/api/auth';
 import { resetInsightStore } from '$lib/stores/insights';
-import { clearOfflineDataForLogout } from '$lib/offline/session';
+import {
+  clearOfflineDataForAnonymousSession,
+  clearOfflineDataForLogout,
+  prepareOfflineDataForAuthenticatedUser,
+} from '$lib/offline/session';
 
 export type AuthState =
   | { status: 'loading' }
@@ -46,8 +50,10 @@ export async function hydrate(): Promise<AuthState> {
   try {
     const user = await fetchCurrentUser();
     if (user) {
+      await prepareOfflineDataForAuthenticatedUser(user.id);
       _auth.set({ status: 'authenticated', user });
     } else {
+      await clearOfflineDataForAnonymousSession();
       _auth.set({ status: 'anonymous' });
     }
   } catch {
@@ -59,6 +65,7 @@ export async function hydrate(): Promise<AuthState> {
 
 export async function login(payload: LoginPayload): Promise<UserResponse> {
   const res = await apiLogin(payload);
+  await prepareOfflineDataForAuthenticatedUser(res.user.id);
   resetInsightStore();
   _auth.set({ status: 'authenticated', user: res.user });
   return res.user;
@@ -79,7 +86,8 @@ export async function logout(): Promise<void> {
  * Set the user manually after a flow that already established a session
  * (e.g. after verify-email + login in the same request chain).
  */
-export function setUser(user: UserResponse): void {
+export async function setUser(user: UserResponse): Promise<void> {
+  await prepareOfflineDataForAuthenticatedUser(user.id);
   resetInsightStore();
   _auth.set({ status: 'authenticated', user });
 }

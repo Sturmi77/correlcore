@@ -42,6 +42,7 @@ export interface SyncMetaRow {
 
 export const SYNC_META_KEYS = {
   clientId: 'client_id',
+  ownerUserId: 'owner_user_id',
   lastPullCursor: 'last_pull_cursor',
   lastPushAt: 'last_push_at',
   lastPullAt: 'last_pull_at',
