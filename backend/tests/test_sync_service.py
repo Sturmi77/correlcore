@@ -153,7 +153,10 @@ async def test_sync_pull_endpoint_requires_verified_user(async_client: AsyncClie
 
 
 def test_migration_018_declares_sync_engine_tables() -> None:
-    path = Path(__file__).resolve().parents[1] / "migrations/versions/018_add_sync_engine_infrastructure.py"
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations/versions/018_add_sync_engine_infrastructure.py"
+    )
     source = path.read_text(encoding="utf-8")
     assert 'revision: str = "018"' in source
     assert "sync_revision_log" in source
@@ -207,7 +210,9 @@ async def test_push_new_entry_visible_in_database() -> None:
     async with AsyncSessionLocal() as session:
         await bind_rls_current_user(session, user.id)
         entry = (
-            await session.execute(select(Entry).where(Entry.id == entry_id, Entry.user_id == user.id))
+            await session.execute(
+                select(Entry).where(Entry.id == entry_id, Entry.user_id == user.id)
+            )
         ).scalar_one_or_none()
         assert entry is not None
         assert entry.mood_score == 4
@@ -336,16 +341,18 @@ async def test_stale_client_edit_logs_conflict_and_keeps_server_value() -> None:
                 ),
             )
             conflicts = (
-                await session.execute(
-                    select(SyncConflict).where(
-                        SyncConflict.user_id == user.id,
-                        SyncConflict.entity_id == entry_id,
+                (
+                    await session.execute(
+                        select(SyncConflict).where(
+                            SyncConflict.user_id == user.id,
+                            SyncConflict.entity_id == entry_id,
+                        )
                     )
                 )
-            ).scalars().all()
-            entry = (
-                await session.execute(select(Entry).where(Entry.id == entry_id))
-            ).scalar_one()
+                .scalars()
+                .all()
+            )
+            entry = (await session.execute(select(Entry).where(Entry.id == entry_id))).scalar_one()
             await session.commit()
         finally:
             reset_current_user_dek(dek_token)
@@ -408,12 +415,16 @@ async def test_pull_is_scoped_to_authenticated_user() -> None:
     async with AsyncSessionLocal() as session:
         user_a = await register_user(
             session,
-            RegisterRequest(email=f"sync-a-{uuid.uuid4().hex[:8]}@localhost.dev", password="test-password-12"),
+            RegisterRequest(
+                email=f"sync-a-{uuid.uuid4().hex[:8]}@localhost.dev", password="test-password-12"
+            ),
         )
         user_a.is_verified = True
         user_b = await register_user(
             session,
-            RegisterRequest(email=f"sync-b-{uuid.uuid4().hex[:8]}@localhost.dev", password="test-password-12"),
+            RegisterRequest(
+                email=f"sync-b-{uuid.uuid4().hex[:8]}@localhost.dev", password="test-password-12"
+            ),
         )
         user_b.is_verified = True
         await session.commit()

@@ -99,9 +99,7 @@ async def cleanup_stale_sync_conflicts(
     threshold = effective_now - timedelta(days=days)
 
     result = await db.execute(
-        delete(SyncConflict)
-        .where(SyncConflict.created_at < threshold)
-        .returning(SyncConflict.id)
+        delete(SyncConflict).where(SyncConflict.created_at < threshold).returning(SyncConflict.id)
     )
     deleted_ids = [str(row_id) for row_id in result.scalars().all()]
 

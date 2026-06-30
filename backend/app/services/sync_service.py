@@ -219,7 +219,9 @@ def _tag_payload_from_model(tag: Tag) -> dict[str, Any]:
     return {
         "slug": tag.slug,
         "name": tag.name,
-        "category": tag.category.value if isinstance(tag.category, TagCategory) else str(tag.category),
+        "category": tag.category.value
+        if isinstance(tag.category, TagCategory)
+        else str(tag.category),
         "icon": tag.icon,
         "color": tag.color,
         "habit_type": tag.habit_type,
@@ -302,9 +304,7 @@ async def _merge_entry_upsert(
 ) -> list[SyncConflictReport]:
     payload = SyncEntryPayload.model_validate(change.data)
     if not _within_backdate_window(payload.entry_date):
-        raise SyncBadRequestError(
-            f"entry_date must be within the last {BACKDATE_DAYS_LIMIT} days"
-        )
+        raise SyncBadRequestError(f"entry_date must be within the last {BACKDATE_DAYS_LIMIT} days")
 
     client_ts = _ensure_utc(change.updated_at)
     result = await db.execute(select(Entry).where(Entry.id == change.id, Entry.user_id == user_id))
@@ -355,7 +355,9 @@ async def _merge_entry_upsert(
         return conflicts
 
     server_ts = _ensure_utc(entry.updated_at)
-    current_symptoms = _symptoms_map(await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id))
+    current_symptoms = _symptoms_map(
+        await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id)
+    )
     incoming_symptoms = _normalize_symptoms_payload(payload.symptoms)
 
     scalar_fields: list[tuple[str, Any, Any, Any]] = [
@@ -385,8 +387,12 @@ async def _merge_entry_upsert(
             symptoms=symptom_entries,
         )
         await db.flush()
-        tag_ids = [tag.id for tag in await list_tags_for_entry(db, user_id=user_id, entry_id=entry.id)]
-        symptoms = _symptoms_map(await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id))
+        tag_ids = [
+            tag.id for tag in await list_tags_for_entry(db, user_id=user_id, entry_id=entry.id)
+        ]
+        symptoms = _symptoms_map(
+            await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id)
+        )
         await _append_revision_log(
             db,
             user_id=user_id,
@@ -400,9 +406,7 @@ async def _merge_entry_upsert(
 
     for field_name, client_val, _server_val, server_report in scalar_fields:
         client_report = (
-            _note_presence_marker(client_val)
-            if field_name == "note"
-            else {"value": client_val}
+            _note_presence_marker(client_val) if field_name == "note" else {"value": client_val}
         )
         if field_name == "note":
             client_cmp = _note_presence_marker(client_val)
