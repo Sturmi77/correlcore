@@ -15,41 +15,54 @@ to a future roadmap milestone.
 
 ### 1.1 Milestone code vs. formal closeout
 
-| Milestone | Code on `main`                      | Formal closeout      | Primary gap                                                       |
-| --------- | ----------------------------------- | -------------------- | ----------------------------------------------------------------- |
-| **M7**    | Spec complete (PR #238, 2026-06-28) | Sprint **M7-C**      | GitHub hygiene (#146–#150), quality-gate doc drift, README status |
-| **M5**    | Habits Core (PR #212)               | Sprints **M5-C1/C2** | #157, #159 (Adherence UI, correlation contribution)               |
-| **M4**    | Quick wins + PWA (PR #211)          | Sprint **M4-C**      | Rendered QA pending; #10/#24 still on M4 milestone                |
+| Milestone | Code on `main`                      | Formal closeout | Status (2026-06-30) |
+| --------- | ----------------------------------- | --------------- | ------------------- |
+| **M7**    | Spec complete (PR #238)             | Sprint **M7-C** | **Complete** ✓      |
+| **M5**    | Habits Core (PR #212)               | **M5-C1/C2**    | **Complete** ✓      |
+| **M4**    | Quick wins + PWA (PR #211)          | Sprint **M4-C** | **Complete** ✓      |
 
-### 1.2 GitHub milestone tracker drift
+### 1.2 GitHub milestone tracker (post-hygiene)
 
-GitHub milestones (numeric IDs) do **not** match roadmap IDs (M0–M13):
+GitHub milestones (numeric IDs) do **not** match roadmap IDs (M0–M13). After closeout hygiene:
 
-| GitHub milestone # | GitHub title        | Roadmap ID | Issue progress                |
-| ------------------ | ------------------- | ---------- | ----------------------------- |
-| 5                  | M4 — Mobile Polish  | M4         | 2 open (#10, #24), 0 closed   |
-| 6                  | M5 — Habits & Ziele | M5         | 0 issues linked               |
-| 4                  | M3 — Insights v1    | M3         | 3 open (stale — code shipped) |
+| GitHub milestone # | GitHub title              | Roadmap ID | Status                          |
+| ------------------ | ------------------------- | ---------- | ------------------------------- |
+| 1–4                | M0–M3                     | M0–M3      | **Closed** (shipped)            |
+| 5–6                | M4, M5                    | M4, M5     | **Closed** (closeout done)      |
+| 8                  | M4.1 — Offline-First Sync | M4.1       | **Open** — #10, #24             |
+| 7                  | M10 — Public Selfhost     | M10        | **Open** — release tracking     |
 
-Roadmap status in `README.md` and `docs/M*_SPRINT_STATUS.md` is more accurate than GitHub
-milestone percentages.
+Roadmap status in `README.md` and `docs/M*_SPRINT_STATUS.md` is authoritative.
 
-### 1.3 Open issues by closeout relevance
+### 1.3 Issue tracker hygiene (completed 2026-06-30)
+
+| Action | Issues |
+| ------ | ------ |
+| Closed (shipped M3) | #15, #16, #17 |
+| Rescoped → M4.1 | #10, #24 |
+| Rescoped → M11 | #27 |
+| Relabeled M7 → M8 | #31 |
+| Relabeled → M7-S8 (optional) | #147, #148 |
+| Relabeled → post-M7 | #149 |
+| Closed (M5 closeout) | #157, #159 |
+| Closed (M7 closeout) | #146, #150 |
+
+### 1.4 Open issues by closeout relevance (historical)
 
 **M4 blockers for closeout (rescope, not implement):**
 
 | Issue                                                   | Title                | Action                      |
 | ------------------------------------------------------- | -------------------- | --------------------------- |
-| [#10](https://github.com/Sturmi77/correlcore/issues/10) | Offline-Sync (Dexie) | → **M4.1**                  |
-| [#24](https://github.com/Sturmi77/correlcore/issues/24) | Sync Conflict-Log    | → **M4.1**                  |
-| [#27](https://github.com/Sturmi77/correlcore/issues/27) | Capacitor-Strategie  | → **M11** (ADR-0002 exists) |
+| [#10](https://github.com/Sturmi77/correlcore/issues/10) | Offline-Sync (Dexie) | → **M4.1** ✓                |
+| [#24](https://github.com/Sturmi77/correlcore/issues/24) | Sync Conflict-Log    | → **M4.1** ✓                |
+| [#27](https://github.com/Sturmi77/correlcore/issues/27) | Capacitor-Strategie  | → **M11** ✓                 |
 
 **M5 blockers for closeout (implement):**
 
 | Issue                                                     | Title                            | Action            |
 | --------------------------------------------------------- | -------------------------------- | ----------------- |
-| [#157](https://github.com/Sturmi77/correlcore/issues/157) | Adherence Rate + no-gamification | Close after M5-C1 |
-| [#159](https://github.com/Sturmi77/correlcore/issues/159) | Habit Dashboard UI               | Close after M5-C1 |
+| [#157](https://github.com/Sturmi77/correlcore/issues/157) | Adherence Rate + no-gamification | Closed ✓          |
+| [#159](https://github.com/Sturmi77/correlcore/issues/159) | Habit Dashboard UI               | Closed ✓          |
 
 **M7 hygiene (shipped — close or relabel):**
 
@@ -57,20 +70,20 @@ milestone percentages.
 | --------------------------------------------------------- | ----------------------- | ---------- | ----------------------- |
 | [#144](https://github.com/Sturmi77/correlcore/issues/144) | Lasso + TimeSeriesSplit | Sprint 1   | Closed ✓                |
 | [#145](https://github.com/Sturmi77/correlcore/issues/145) | Lag 1–7d                | Sprint 1   | Closed ✓                |
-| [#146](https://github.com/Sturmi77/correlcore/issues/146) | Weekday OLS confounder  | Sprint 7   | Close in M7-C           |
-| [#150](https://github.com/Sturmi77/correlcore/issues/150) | Combined clusters API   | Sprint 9   | Close in M7-C           |
-| [#149](https://github.com/Sturmi77/correlcore/issues/149) | Changepoint (ruptures)  | —          | Keep open → **post-M7** |
-| [#147](https://github.com/Sturmi77/correlcore/issues/147) | Weekly digest           | —          | → **M7-S8** (optional)  |
-| [#148](https://github.com/Sturmi77/correlcore/issues/148) | Ollama LLM              | —          | → **M7-S8** (optional)  |
+| [#146](https://github.com/Sturmi77/correlcore/issues/146) | Weekday OLS confounder  | Sprint 7   | Closed ✓                |
+| [#150](https://github.com/Sturmi77/correlcore/issues/150) | Combined clusters API   | Sprint 9   | Closed ✓                |
+| [#149](https://github.com/Sturmi77/correlcore/issues/149) | Changepoint (ruptures)  | —          | **post-M7** ✓           |
+| [#147](https://github.com/Sturmi77/correlcore/issues/147) | Weekly digest           | —          | **M7-S8** ✓             |
+| [#148](https://github.com/Sturmi77/correlcore/issues/148) | Ollama LLM              | —          | **M7-S8** ✓             |
 
-**Mislabeled issues (wrong milestone label):**
+**Mislabeled issues (resolved):**
 
-| Issue                                                          | Current label                   | Correct target                |
-| -------------------------------------------------------------- | ------------------------------- | ----------------------------- |
-| [#31](https://github.com/Sturmi77/correlcore/issues/31)        | `milestone:M7` (Health Connect) | **M8**                        |
-| [#146–#150](https://github.com/Sturmi77/correlcore/issues/146) | Title prefix `M8:`              | Rename to `M7:` where shipped |
+| Issue                                                          | Was                    | Now           |
+| -------------------------------------------------------------- | ---------------------- | ------------- |
+| [#31](https://github.com/Sturmi77/correlcore/issues/31)        | `milestone:M7`         | **M8** ✓      |
+| [#147–#149](https://github.com/Sturmi77/correlcore/issues/147) | `milestone:M8` (wrong) | M7-S8/post-M7 ✓ |
 
-### 1.4 Scope decision (binding for closeout)
+### 1.5 Scope decision (binding for closeout)
 
 - **M4 closes without Dexie offline sync.** Quick wins + PWA shell only. Offline-first is **M4.1**.
 - **M5 closes without tag co-occurrence heatmap** (already shipped as M5.1 quick win).
@@ -87,8 +100,8 @@ Every item explicitly excluded from M4/M5/M7 closeout maps here.
 | **M4.1**    | Offline-First Sync           | Dexie.js, delta sync, conflict log, retry queue            | #10, #24; [ADR-0009](adr/0009-offline-sync-nach-m4.md)                              |
 | **M4.2**    | Push & App Lock              | UnifiedPush / FCM, app lock, install polish                | Original M4 scope; blocked by M4.1 for offline push UX                              |
 | **M5.1**    | Tag co-occurrence (shipped)  | Patterns heatmap on `/insights`                            | Closeout done 2026-05-29 — [`quality/M5_1_VISUAL_QA.md`](quality/M5_1_VISUAL_QA.md) |
-| **M7-S8**   | Insights optional LLM/Digest | Ollama statements, weekly push digest                      | #147, #148; requires local LLM + M4.2 push                                          |
-| **post-M7** | Changepoint analytics        | `ruptures` mood time-series breaks                         | #149                                                                                |
+| **M7-S8**   | Insights optional LLM/Digest | Ollama statements, weekly push digest                      | #147, #148 (`milestone:M7-S8`); requires M4.2 push                                   |
+| **post-M7** | Changepoint analytics        | `ruptures` mood time-series breaks                         | #149 (no milestone label)                                                           |
 | **M7.1**    | Cycle × lifestyle insights   | Cycle phase bands, lifestyle correlation                   | [`features/cycle-tracking.md`](features/cycle-tracking.md)                          |
 | **M8**      | Sleep & Health Connect       | Sleep fields, HC import, sleep↔mood, notes signals         | #31, #201–#202, [`M8_NOTES.md`](M8_NOTES.md)                                        |
 | **M9**      | Beta hardening               | GlitchTip, external testers, monitoring, GDPR self-service | #29, [`milestone:M9`]                                                               |
