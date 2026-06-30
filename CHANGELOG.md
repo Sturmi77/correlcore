@@ -10,6 +10,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **M5-C1 habit dashboard polish.** Habit list shows adherence + window summary and correlation
+  hint; detail adds adherence bar, predictor copy, insufficient-data state, and mobile bottom sheet.
+  Backend adds `correlation_metric` on habit stats. See #157/#159.
+
 - **M7 Sprint 9 complete — spec complete.** Entry-history drawer and symptom×tag detail sheet on
   `/insights`; confounded insight cards with ranking tie-break; heatmap keyboard navigation, tag
   cluster sort at `robust`, and mixed signal clusters API (`members[]` with tags + symptoms). Quality

@@ -25,6 +25,7 @@ class HabitStatsResponse(BaseModel):
     target_days: int = Field(ge=0)
     adherence_rate: float = Field(ge=0, le=100)
     correlation_score: float | None = None
+    correlation_metric: str | None = None
 
 
 class HabitListResponse(BaseModel):

@@ -152,6 +152,7 @@ export const mockHabits: HabitStatsResponse[] = [
     target_days: 16,
     adherence_rate: 75,
     correlation_score: 0.48,
+    correlation_metric: 'mood',
   },
   {
     tag_id: 'mock-tag-focus',
@@ -165,6 +166,7 @@ export const mockHabits: HabitStatsResponse[] = [
     target_days: 20,
     adherence_rate: 100,
     correlation_score: null,
+    correlation_metric: null,
   },
 ];
 

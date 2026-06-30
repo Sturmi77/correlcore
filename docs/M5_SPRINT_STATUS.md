@@ -1,6 +1,6 @@
 # M5 Sprint Status - Habits Core ohne Gamification
 
-Last updated: 2026-05-29
+Last updated: 2026-06-30
 
 Tracking document for [`docs/M5_SPRINT_PLAN.md`](M5_SPRINT_PLAN.md).
 
@@ -15,7 +15,7 @@ Tracking document for [`docs/M5_SPRINT_PLAN.md`](M5_SPRINT_PLAN.md).
 | 1      | Backend Habit Contracts | Done            |
 | 2      | Habit Configuration UI  | Done            |
 | 3      | Trends Habits Tab       | Done            |
-| 4      | No-Gamification Polish  | In verification |
+| 4      | No-Gamification Polish  | Done            |
 | 5      | Closeout                | Pending         |
 
 ## Completed
@@ -27,6 +27,11 @@ Tracking document for [`docs/M5_SPRINT_PLAN.md`](M5_SPRINT_PLAN.md).
 - [x] `/trends` includes a Habits tab with list, window control and detail.
 - [x] Habit detail reuses the M2 tag heatmap filtered to the selected habit.
 - [x] EN/DE copy avoids streak, reward, badge and urgency framing.
+- [x] Habit list shows adherence badge with window context and correlation summary (#159).
+- [x] Habit detail shows adherence progress bar, heatmap, and correlation predictor copy (#159).
+- [x] Mobile bottom-sheet detail via `HabitDetailSheet` (#159).
+- [x] Insufficient-data empty state when fewer than 7 tracked days (#159).
+- [x] `correlation_metric` exposed on habit stats API for mood/metric labeling.
 
 ## Remaining Closeout
 

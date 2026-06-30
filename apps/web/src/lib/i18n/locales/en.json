@@ -497,6 +497,13 @@
     "target_days": "Target days",
     "target_frequency": "Weekly target",
     "correlation": "Correlation contribution",
+    "correlation_brief": "r={score} {metric}",
+    "correlation_pending": "No correlation data yet",
+    "correlation_predictor": "{name} is a notable {metric} predictor (r={score})",
+    "adherence_meter": "Adherence rate",
+    "insufficient_data": "Not enough data yet. Keep tracking to see your adherence rate.",
+    "window_last": "last {n} days",
+    "sheet_close": "Close habit detail",
     "type": {
       "build": "Build",
       "reduce": "Reduce"

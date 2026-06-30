@@ -5,9 +5,17 @@ import HabitsPanel from './HabitsPanel.svelte';
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
   return {
-    _: readable((key: string, options?: { values?: Record<string, unknown> }) =>
-      options?.values?.n ? `${key}:${options.values.n}` : key
-    ),
+    _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
+      const values = options?.values ?? {};
+      if (key === 'habits.window_last') return `last ${values.n} days`;
+      if (key === 'habits.correlation_brief') return `r=${values.score} ${values.metric}`;
+      if (key === 'habits.correlation_pending') return 'No correlation data yet';
+      if (key === 'habits.correlation_predictor') {
+        return `${values.name} predictor r=${values.score}`;
+      }
+      if (key === 'habits.insufficient_data') return 'Not enough data yet';
+      return options?.values?.n ? `${key}:${options.values.n}` : key;
+    }),
   };
 });
 
@@ -42,16 +50,18 @@ const habits = [
     target_days: 16,
     adherence_rate: 62.5,
     correlation_score: 0.72,
+    correlation_metric: 'mood',
   },
 ];
 
 describe('HabitsPanel', () => {
-  it('renders habit rows and detail metrics', () => {
+  it('renders habit rows with adherence and correlation summary', () => {
     render(HabitsPanel, { props: { habits, tags, window: 28 } });
 
     expect(screen.getAllByText('Walk')).toHaveLength(2);
-    expect(screen.getAllByText('63%')[0]).toBeTruthy();
-    expect(screen.getByText('0.72')).toBeTruthy();
+    expect(screen.getByText(/63% · last 28 days/)).toBeTruthy();
+    expect(screen.getByText('r=0.72 mood')).toBeTruthy();
+    expect(screen.getByText('Walk predictor r=0.72')).toBeTruthy();
   });
 
   it('dispatches window changes', async () => {
@@ -67,5 +77,18 @@ describe('HabitsPanel', () => {
     render(HabitsPanel, { props: { habits: [], tags: [], window: 28 } });
 
     expect(screen.getByText('habits.empty')).toBeTruthy();
+  });
+
+  it('shows insufficient-data state for sparse habits', () => {
+    render(HabitsPanel, {
+      props: {
+        habits: [{ ...habits[0], days_tracked: 2 }],
+        tags,
+        window: 28,
+      },
+    });
+
+    expect(screen.getByTestId('habit-insufficient-data')).toBeTruthy();
+    expect(screen.getByText('Not enough data yet')).toBeTruthy();
   });
 });
