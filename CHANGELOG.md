@@ -6,9 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — M4/M5 closeout pending
+## [Unreleased] — M4 closeout pending
 
 ### Changed
+
+- **M4-C quick wins + PWA closeout.** Visual QA sign-off in
+  [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md). Offline sync (#10) and conflict
+  log (#24) rescoped to M4.1; Capacitor strategy (#27) → M11. Milestones M4/M5 closed on GitHub.
 
 - **M5-C2 Habits Core closeout.** Target-aware insufficient-data gating (heatmap stays visible
   for sparse habits); correlation metric labels normalized (`mood_score` → mood). Visual QA in
