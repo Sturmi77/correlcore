@@ -40,6 +40,7 @@ at **768 px** (bottom nav → side rail). See [ADR-0017](../adr/0017-frontend-sc
 | Contrast (ADR-0027)    | `pnpm check:contrast`  | CI (source tokens; avoid stale `apps/web/build` locally) |
 | Production build       | `pnpm build`           | CI                                                       |
 | E2E smoke              | `pnpm test:e2e:smoke`  | CI — login, entry, trends, insights                      |
+| User journey regression | `pnpm test:e2e:journeys` | W1–W7 auth/onboarding/maturity matrix (`user-journeys.spec.ts`) |
 | Mobile regression      | `pnpm test:e2e:mobile` | **18/18 passed** (serial, `--workers=1`)                 |
 
 ### Not required for production deploy
@@ -149,7 +150,10 @@ instance inheritance limitation).
 | Theme parity      | `mobile-theme-parity.spec.ts`                        | Dark @390, five primary routes          |
 | Surface           | `surface-foundation.spec.ts`                         | Shell primitives                        |
 
-**Total mobile suite:** 18 tests via `npm run test:e2e:mobile` (run with `--workers=1`).
+**Total mobile suite:** 18 tests via `npm run test:e2e:mobile` (run with `--workers=1`).  
+**User journeys:** 12 tests via `pnpm test:e2e:journeys` — auth/onboarding/maturity matrix.
+
+**GUI optimization:** [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md) · Issues [#250](https://github.com/Sturmi77/correlcore/issues/250)–[#272](https://github.com/Sturmi77/correlcore/issues/272)
 
 ### CI pipeline (`ci-web.yml`)
 
