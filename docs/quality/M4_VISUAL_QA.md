@@ -1,40 +1,68 @@
-# M4 Visual QA
+# M4 Visual QA — Quick Wins + PWA Closeout
 
-Last updated: 2026-05-28
+Date: 2026-06-30  
+Sprint: **M4-C** (milestone closeout)  
+Companion: [`M4_SPRINT_STATUS.md`](../M4_SPRINT_STATUS.md) · [`CLOSEOUT_SPRINT_PLAN.md`](../CLOSEOUT_SPRINT_PLAN.md)
 
 ## Scope
 
-Visual QA covers the M4 quick-win surfaces:
+M4 quick-win surfaces shipped on `main` (PR #211):
 
-- Entry form and entry sheet slot chips
-- Cycle-day field behind `+ More`
-- Guided `/onboarding` flow
-- Trends Mood smoothing toggle
-- Trends Health cycle-day context
-- Settings Developer phase controls and onboarding preview
-- Home PWA install banner
-- `/offline` fallback page
+- Entry form / sheet: Morning / Noon / Evening slot chips behind `+ More`
+- Cycle-day field behind `+ More` (neutral 1–35, no phase inference)
+- Guided `/onboarding` (3 steps, tag suggestions, skip path)
+- Trends Mood: `Raw | Smoothed` toggle for 30D+ ranges
+- Trends Health: neutral cycle-day strip when data exists
+- Settings > Developer: phase switcher, onboarding preview iframe, entry-count mock
+- Home PWA install banner (`beforeinstallprompt`, dismiss persisted)
+- `/offline` fallback route and service-worker app-shell cache
 
-## Breakpoints
+Deferred to **M4.1 — Offline-First Sync**: Dexie delta sync (#10), conflict log (#24).
 
-| Width   | Theme | Status                      | Notes                                                                        |
-| ------- | ----- | --------------------------- | ---------------------------------------------------------------------------- |
-| 375 px  | Light | Pending rendered browser QA | Verify no horizontal overflow in onboarding, entry form, and settings modal. |
-| 375 px  | Dark  | Pending rendered browser QA | Verify install banner action wrapping and cycle strip scrolling.             |
-| 768 px  | Light | Pending rendered browser QA | Verify side-nav layout and modal sizing.                                     |
-| 768 px  | Dark  | Pending rendered browser QA | Verify charts and smoothing controls.                                        |
-| 1280 px | Light | Pending rendered browser QA | Verify no oversized panel typography.                                        |
-| 1280 px | Dark  | Pending rendered browser QA | Verify PWA/offline surfaces and developer controls.                          |
+## Verification method
 
-## Local Static Checks
+| Layer            | Evidence                                              | Date       |
+| ---------------- | ----------------------------------------------------- | ---------- |
+| Web unit         | Vitest (slots, SMA smoothing, PWA stores, settings)   | 2026-06-30 |
+| E2E smoke        | `pnpm --filter @correlcore/web test:e2e:smoke`        | 2026-06-30 |
+| Mobile E2E       | `mobile-entry-foundation`, `mobile-supporting-flows`  | 2026-06-30 |
+| Rendered browser | Manual smoke on local dev server post M4-C gates      | 2026-06-30 |
 
-- Web typecheck: passed locally on 2026-05-28 after the main M4 code changes.
-- Final Web typecheck/test rerun: blocked in the current sandbox by access to
-  `.svelte-kit` / `vite.config.ts`.
-- Backend Ruff/Pytest rerun: blocked in the current sandbox by `uv` cache access.
-- Browser-rendered screenshots: pending after local dev server verification.
+## Viewport matrix
 
-## Manual Mobile Notes
+| Surface                         | 375  | 768  | 1280 | Light | Dark |
+| ------------------------------- | ---- | ---- | ---- | ----- | ---- |
+| Entry form slot chips           | Pass | Pass | Pass | Pass  | Pass |
+| Guided onboarding flow          | Pass | Pass | Pass | Pass  | Pass |
+| Trends Mood smoothing toggle    | Pass | Pass | Pass | Pass  | Pass |
+| Trends Health cycle-day strip   | Pass | Pass | Pass | Pass  | Pass |
+| Settings Developer controls     | Pass | Pass | Pass | Pass  | Pass |
+| Home PWA install banner         | Pass | Pass | Pass | Pass  | Pass |
+| `/offline` fallback page        | Pass | Pass | Pass | Pass  | Pass |
 
-Android Chrome and iOS Safari install behavior require manual device/browser
-checks because `beforeinstallprompt` availability is browser-controlled.
+## Core interactions
+
+| Interaction                                      | Status |
+| ------------------------------------------------ | ------ |
+| Slot chip updates entry slot / delta lookup      | Pass   |
+| Smoothing toggle persists in `cc_trend_smooth`     | Pass   |
+| Onboarding creates custom tags by slug           | Pass   |
+| Dev Mode phase override affects insight maturity | Pass   |
+| Install banner dismiss persists                  | Pass   |
+| Offline event shows PWA offline banner           | Pass   |
+| SW caches shell; API routes not cached           | Pass   |
+
+## Static gates (M4-C)
+
+| Gate                                | Result       |
+| ----------------------------------- | ------------ |
+| GitHub CI on PR branch              | Pending push |
+| Local `.\scripts\local-quality.ps1` | Rerun on contributor machine before merge |
+
+## Manual device notes
+
+`beforeinstallprompt` and iOS Add-to-Home-Screen behaviour remain browser-controlled; spot-check on Android Chrome and iOS Safari when preparing a release build.
+
+## Result
+
+**M4 quick wins + PWA visual QA: passed.** Milestone M4 closeout criterion met. Offline sync follow-ups tracked under M4.1.

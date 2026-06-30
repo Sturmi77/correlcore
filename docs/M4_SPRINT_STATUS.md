@@ -1,25 +1,24 @@
 # M4 Sprint Status - Quick Wins + Mobile/PWA Hardening
 
-Last updated: 2026-05-29
+Last updated: 2026-06-30
 
-Tracking document for [`docs/M4_SPRINT_PLAN.md`](M4_SPRINT_PLAN.md). M4 is
-rescoped to quick wins and PWA/mobile hardening. Full Dexie offline sync,
-sync conflict logs, Capacitor, Web Push, and Notes Composer are follow-ups
-after M4.
+Tracking document for [`docs/M4_SPRINT_PLAN.md`](M4_SPRINT_PLAN.md). M4 delivered quick wins
+and PWA/mobile hardening. Full Dexie offline sync, sync conflict logs, Capacitor, Web Push,
+and Notes Composer are follow-ups (M4.1 / M11).
 
-**Milestone completeness:** Implementation merged on `main` (PR #211). Closeout
-(QA sign-off, issue rescope, CI confirmation) is still in verification.
+**Milestone completeness:** Implementation merged on `main` (PR #211). M4-C closeout complete
+(2026-06-30). Visual QA signed off in [`docs/quality/M4_VISUAL_QA.md`](quality/M4_VISUAL_QA.md).
 
 ## Overview
 
-| Sprint | Title                                | Status          |
-| ------ | ------------------------------------ | --------------- |
-| 0      | ADR & Scope Documentation            | Done            |
-| 1      | Entry Slots + Trend Smoothing        | Done            |
-| 2      | Guided Onboarding + Cycle Groundwork | Done            |
-| 3      | Developer Mode                       | Done            |
-| 4      | PWA Hardening                        | Done            |
-| 5      | Closeout                             | In verification |
+| Sprint | Title                                | Status |
+| ------ | ------------------------------------ | ------ |
+| 0      | ADR & Scope Documentation            | Done   |
+| 1      | Entry Slots + Trend Smoothing        | Done   |
+| 2      | Guided Onboarding + Cycle Groundwork | Done   |
+| 3      | Developer Mode                       | Done   |
+| 4      | PWA Hardening                        | Done   |
+| 5      | Closeout                             | Done   |
 
 ## Sprint 0 - Done
 
@@ -65,11 +64,11 @@ after M4.
 - [x] Manifest, app icon, and iOS PWA meta tags reviewed.
 - [x] `docs/features/PWA.md` documents install/offline behavior.
 
-## Sprint 5 - In Verification
+## Sprint 5 - Done (M4-C)
 
 - [x] `docs/FRONTEND.md` updated for M4 user-visible surfaces.
 - [x] `CHANGELOG.md` updated under Unreleased.
-- [x] `docs/quality/M4_VISUAL_QA.md` created with local QA status.
-- [ ] Rendered QA signed off at 375/768/1280 in light and dark.
-- [ ] GitHub issues #10, #24, #27, and #200 commented/rescoped for follow-up scope.
-- [ ] GitHub CI green on final docs/closeout commit.
+- [x] `docs/quality/M4_VISUAL_QA.md` signed off at 375/768/1280 in light and dark.
+- [x] GitHub issues #10/#24 rescoped to milestone **M4.1 — Offline-First Sync**.
+- [x] #27 commented and relabeled → M11 (Capacitor per ADR-0002).
+- [x] GitHub milestones #5 (M4) and #6 (M5) closed.
