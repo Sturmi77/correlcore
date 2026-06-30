@@ -20,6 +20,7 @@ import {
   type UserResponse,
 } from '$lib/api/auth';
 import { resetInsightStore } from '$lib/stores/insights';
+import { clearOfflineDataForLogout } from '$lib/offline/session';
 
 export type AuthState =
   | { status: 'loading' }
@@ -69,6 +70,7 @@ export async function logout(): Promise<void> {
   } catch {
     // Best-effort — even if the call fails, clear local state.
   }
+  await clearOfflineDataForLogout();
   resetInsightStore();
   _auth.set({ status: 'anonymous' });
 }

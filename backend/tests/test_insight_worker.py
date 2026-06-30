@@ -221,9 +221,9 @@ async def test_run_insights_once_isolates_per_user_failures() -> None:
 async def test_run_daily_jobs_once_runs_cleanup_then_insights() -> None:
     calls: list[str] = []
 
-    async def fake_cleanup(*, session_factory: Callable[[], object]) -> int:
+    async def fake_cleanup(*, session_factory: Callable[[], object]) -> tuple[int, int]:
         calls.append("cleanup")
-        return 1
+        return 1, 2
 
     async def fake_insights(*, as_of: datetime, session_factory: Callable[[], object]) -> object:
         calls.append(f"insights:{as_of.date().isoformat()}")
@@ -237,4 +237,5 @@ async def test_run_daily_jobs_once_runs_cleanup_then_insights() -> None:
 
     assert calls == ["cleanup", "insights:2026-05-12"]
     assert summary.deleted_unverified_accounts == 1
+    assert summary.deleted_sync_conflicts == 2
     assert summary.insight_run.generated_insights == 4

@@ -48,6 +48,18 @@
   import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
   import { isoDate } from '$lib/utils/entryForm';
+  import { canUseOfflineSync } from '$lib/offline/featureFlag';
+  import {
+    onLocalEntrySaved,
+    scheduleSync,
+    syncOrchestrator,
+  } from '$lib/offline/syncOrchestrator';
+  import {
+    findLocalEntryByDateSlot,
+    localEntryToFormFields,
+    saveEntryOffline,
+    type EntryFormSnapshot,
+  } from '$lib/stores/entriesOffline';
 
   export let mode: 'page' | 'sheet' = 'page';
   /** ISO date `YYYY-MM-DD` for the entry being edited. */
@@ -96,6 +108,10 @@
   let dayDelta: EntryDeltaResponse | null = null;
   let dayDeltaLoading = false;
   let dayDeltaToken = 0;
+  let offlineSyncConflictKey: string | null = null;
+
+  $: offlineSyncBadge = $syncOrchestrator.badge;
+  $: offlineSyncConflictKey = $syncOrchestrator.conflictNote;
 
   // Keep the work-context default in sync if the user picks a different
   // day, but only until they manually change it themselves.
@@ -167,6 +183,29 @@
     // changes from auto-save triggers).
     autoSave.reset();
     try {
+      if (canUseOfflineSync()) {
+        const local = await findLocalEntryByDateSlot(date, slot);
+        if (local) {
+          existingEntryId = local.id;
+          const fields = localEntryToFormFields(local);
+          selectedSlot = fields.selectedSlot;
+          moodScore = fields.moodScore;
+          energy = fields.energy;
+          stress = fields.stress;
+          cycleDay = fields.cycleDay;
+          cycleDayInvalid = false;
+          workContext = fields.workContext;
+          workContextTouched = true;
+          note = fields.note;
+          selectedTagIds = fields.selectedTagIds;
+          selectedSymptoms = fields.selectedSymptoms;
+          if (typeof navigator !== 'undefined' && navigator.onLine) {
+            void refreshDayDelta(date, selectedSlot);
+          }
+          return;
+        }
+      }
+
       const matches = await listEntries({
         start_date: date,
         end_date: date,
@@ -259,6 +298,9 @@
 
   function handleOnline() {
     offline = false;
+    if (canUseOfflineSync()) {
+      scheduleSync();
+    }
   }
 
   function handleOffline() {
@@ -290,18 +332,7 @@
   // Auto-save controller (ADR-0013)
   // ---------------------------------------------------------------------
 
-  interface FormSnapshot {
-    entry_date: string;
-    mood_score: number;
-    energy: number;
-    stress: number;
-    slot: EntrySlot;
-    cycle_day: number | null;
-    work_context: WorkContext;
-    note: string;
-    selectedTagIds: string[];
-    selectedSymptoms: SymptomEntry[];
-  }
+  interface FormSnapshot extends EntryFormSnapshot {}
 
   function snapshot(): FormSnapshot {
     return {
@@ -328,6 +359,17 @@
     if (snap.cycle_day !== null && (snap.cycle_day < 1 || snap.cycle_day > 35)) {
       throw new Error('invalid_cycle_day');
     }
+
+    if (canUseOfflineSync()) {
+      const result = await saveEntryOffline(existingEntryId, snap);
+      existingEntryId = result.entryId;
+      onLocalEntrySaved();
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        void refreshDayDelta(snap.entry_date, snap.slot);
+      }
+      return;
+    }
+
     let entryId: string;
     if (existingEntryId) {
       const updated = await updateEntry(existingEntryId, {
@@ -458,7 +500,9 @@
   // error banner; mapping unknown errors to the generic key keeps the
   // user from seeing raw stack traces.
   $: if (autoSaveSnap.status === 'error' && autoSaveSnap.lastError) {
-    if (autoSaveSnap.lastError.startsWith('Network error on ')) offline = true;
+    if (!canUseOfflineSync() && autoSaveSnap.lastError.startsWith('Network error on ')) {
+      offline = true;
+    }
     errorKey = 'entry.error_generic';
   } else if (autoSaveSnap.status === 'saving' || autoSaveSnap.status === 'saved') {
     if (typeof navigator === 'undefined' || navigator.onLine) offline = false;
@@ -493,7 +537,14 @@
         lastSavedAt={autoSaveSnap.lastSavedAt}
         lastError={autoSaveSnap.lastError}
         {offline}
-        onRetry={() => void autoSave.retry()}
+        offlineSyncBadge={canUseOfflineSync() ? offlineSyncBadge : null}
+        onRetry={() => {
+          if (canUseOfflineSync()) {
+            scheduleSync();
+            return;
+          }
+          void autoSave.retry();
+        }}
       />
       {#if mode === 'page'}
         <ThemeToggle testId="entry-theme-toggle" />
@@ -669,6 +720,12 @@
     <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
     <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
   </section>
+
+  {#if offlineSyncConflictKey}
+    <p class="entry-hint" role="status" data-testid="entry-sync-conflict-note">
+      {$_(offlineSyncConflictKey)}
+    </p>
+  {/if}
 
   {#if errorKey}
     <p class="entry-error" role="alert">{$_(errorKey)}</p>

@@ -11,6 +11,8 @@
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
+  import { initializeSyncOrchestrator, scheduleSync } from '$lib/offline/syncOrchestrator';
+  import { get } from 'svelte/store';
 
   // svelte-i18n's `init()` registers the locale dictionary asynchronously
   // (locale files are dynamic imports). We must NOT render any child that
@@ -30,6 +32,15 @@
   // so reactive consumers (toggle button, etc.) start in the correct state.
   onMount(() => {
     pwaLifecycle.initialize();
+    const cleanupSync = initializeSyncOrchestrator((listener) => {
+      let previousOnline = get(pwaLifecycle).online;
+      return pwaLifecycle.subscribe((state) => {
+        if (state.online !== previousOnline) {
+          previousOnline = state.online;
+          listener(state.online);
+        }
+      });
+    });
     const saved = (() => {
       try {
         return localStorage.getItem('correlcore-theme') as 'light' | 'dark' | null;
@@ -40,7 +51,8 @@
     if (saved) {
       theme.set(saved);
     }
-    void hydrate();
+    void hydrate().then(() => scheduleSync());
+    return cleanupSync;
   });
 
   // Reactive guard: any time auth or route changes, redirect if needed.
