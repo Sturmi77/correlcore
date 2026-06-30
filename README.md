@@ -36,7 +36,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M3.7** — Color system hardening: complete semantic tokens, legacy primary alias cleanup, ADR-0027 contrast gate, light-mode QA documentation, and Web CI integration. Release-complete locally after rendered QA on 2026-05-28. See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).
 - [x] **M4 (partial)** — Quick wins + PWA hardening: entry slots, cycle day, guided onboarding, Dev Mode mocks, install banner, service worker (app shell), `/offline` fallback. Follow-ups: Dexie offline sync, sync-conflict log, Web Push, app lock. See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/features/PWA.md`](docs/features/PWA.md).
 - [x] **M5 (Habits Core)** — Goal-based habit adherence (`build`/`reduce`), `/api/v1/habits`, Settings tag configuration, Trends Habits tab. Co-occurrence deferred to M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md).
-- [x] **M7** — Insights v2: Lasso, lag, symptom analytics, tag clustering (core Sprints 1–7 on `main`; **Sprint 9** spec-complete). See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/M7_SPRINT9_PLAN.md`](docs/M7_SPRINT9_PLAN.md).
+- [x] **M7** — Insights v2: Lasso, lag, symptom analytics, tag clustering, Sprint 9 interaction UX — **Complete** (2026-06-30). See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/quality/M7_QUALITY_GATE.md`](docs/quality/M7_QUALITY_GATE.md). Optional LLM/digest → M7-S8.
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
 - [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation
 - [ ] **M10** — Public selfhost release v1.0
@@ -57,7 +57,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **M3.7**  | Complete                                  | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                                                  |
 | **M4**    | Partial                                   | Quick wins + PWA hardening merged on `main`; Dexie sync, conflict log, push, and app lock remain follow-ups. See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md). |
 | **M5**    | Partial                                   | Habits Core merged on `main`; rendered QA and issue closeout still pending. Co-occurrence is M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md).                                                                      |
-| **M7**    | **Spec complete** (Sprints 1–9 on `main`) | Core + Sprint 9 interaction, feed UX, mixed clusters. See [`docs/M7_SPRINT9_PLAN.md`](docs/M7_SPRINT9_PLAN.md).                                                                                                                             |
+| **M7**    | **Complete** (2026-06-30)                 | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md). |
 
 ---
 
@@ -159,6 +159,7 @@ Task: <your specific task here>
 | [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                         | Competitive and market analysis, monetisation, marketing          |
 | [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan      |
 | [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)           | Rename and deployment migration notes from MoodSync to CorrelCore |
+| [Closeout Sprint Plan](docs/CLOSEOUT_SPRINT_PLAN.md)                  | M4/M5/M7 closeout sequence, audit findings, deferred-work index  |
 | [M4 Sprint Status](docs/M4_SPRINT_STATUS.md)                          | M4 quick wins + PWA hardening tracking                            |
 | [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                          | M5 Habits Core tracking                                           |
 | [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering            |
