@@ -47,4 +47,11 @@ describe('/ home screen ownership contract', () => {
     expect(source).toContain('prefersEntrySheet');
     expect(source).toContain('{#if preferEntrySheet}');
   });
+
+  it('defers the PWA install banner until after the first entry or onboarding', () => {
+    expect(source).toContain('showPwaInstallBanner');
+    expect(source).toContain('onboarding_retro_completed');
+    expect(source).toContain('entry_count ?? 0) >= 1');
+    expect(source).toContain('{#if showPwaInstallBanner}');
+  });
 });

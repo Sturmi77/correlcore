@@ -530,6 +530,7 @@
     "auth_required": "Bitte melde dich an, um deine Daten zu exportieren.",
     "section": {
       "tracking": "Tracking",
+      "export": "Datenexport",
       "analysis": "Analyse",
       "privacy": "Datenschutz & Daten",
       "appearance": "Darstellung",
@@ -549,6 +550,8 @@
       "error": "Analyse-Einstellungen konnten nicht gespeichert werden."
     },
     "privacy": {
+      "heading": "Datenschutz & Kontodaten",
+      "body": "Account-Loeschung und weitere Datenschutzoptionen folgen hier.",
       "delete_placeholder": "Account loeschen (M9)"
     },
     "appearance": {
