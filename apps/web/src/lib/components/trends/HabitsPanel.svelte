@@ -139,7 +139,11 @@
               >
             </span>
             <span class="habits__metric">
-              <strong>{pct(row.habit.adherence_rate)} · {$_('habits.window_last', { values: { n: window } })}</strong>
+              <strong
+                >{pct(row.habit.adherence_rate)} · {$_('habits.window_last', {
+                  values: { n: window },
+                })}</strong
+              >
               <small>{correlationListLabel(row.habit)}</small>
             </span>
           </button>

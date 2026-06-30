@@ -9,14 +9,14 @@ Tracking document for [`docs/M5_SPRINT_PLAN.md`](M5_SPRINT_PLAN.md).
 
 ## Overview
 
-| Sprint | Title                   | Status          |
-| ------ | ----------------------- | --------------- |
-| 0      | Scope & Docs            | Done            |
-| 1      | Backend Habit Contracts | Done            |
-| 2      | Habit Configuration UI  | Done            |
-| 3      | Trends Habits Tab       | Done            |
-| 4      | No-Gamification Polish  | Done            |
-| 5      | Closeout                | Pending         |
+| Sprint | Title                   | Status  |
+| ------ | ----------------------- | ------- |
+| 0      | Scope & Docs            | Done    |
+| 1      | Backend Habit Contracts | Done    |
+| 2      | Habit Configuration UI  | Done    |
+| 3      | Trends Habits Tab       | Done    |
+| 4      | No-Gamification Polish  | Done    |
+| 5      | Closeout                | Pending |
 
 ## Completed
 
