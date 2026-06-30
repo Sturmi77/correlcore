@@ -9,6 +9,7 @@
   } from '$lib/components/common/SegmentedControl.svelte';
   import HabitDetailBody from '$lib/components/trends/HabitDetailBody.svelte';
   import HabitDetailSheet from '$lib/components/trends/HabitDetailSheet.svelte';
+  import { habitMetricI18nKey } from '$lib/utils/habitMetrics';
 
   export let habits: HabitStatsResponse[] = [];
   export let tags: TagResponse[] = [];
@@ -49,10 +50,10 @@
   }
 
   function metricLabel(metric: string | null | undefined): string {
-    if (!metric) return '';
-    const key = `trends.metric.${metric}`;
+    const key = habitMetricI18nKey(metric);
+    if (!key) return '';
     const translated = $_(key);
-    return translated === key ? metric : translated;
+    return translated === key ? (metric ?? '') : translated;
   }
 
   function correlationListLabel(habit: HabitStatsResponse): string {

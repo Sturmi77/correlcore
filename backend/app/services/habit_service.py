@@ -19,6 +19,19 @@ from app.services.tag_service import active_tag_predicate
 HABIT_WINDOWS: set[int] = {7, 14, 28, 90}
 MIN_DAYS_FOR_ADHERENCE_DISPLAY = 7
 
+_CORRELATION_METRIC_LABELS: dict[str, str] = {
+    "mood_score": "mood",
+    "mood_avg": "mood",
+    "energy_avg": "energy",
+    "stress_avg": "stress",
+}
+
+
+def _normalize_correlation_metric(metric: str | None) -> str | None:
+    if metric is None:
+        return None
+    return _CORRELATION_METRIC_LABELS.get(metric, metric)
+
 
 class HabitNotFoundError(Exception):
     """Raised when a requested habit tag is not visible to the user."""
@@ -71,7 +84,7 @@ async def _latest_correlation(
     row = result.one_or_none()
     if row is None:
         return None, None
-    return row[0], row[1]
+    return row[0], _normalize_correlation_metric(row[1])
 
 
 async def _tracked_dates_for_tag(

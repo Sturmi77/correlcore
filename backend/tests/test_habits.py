@@ -52,7 +52,7 @@ async def test_habit_stats_build_uses_target_frequency() -> None:
         side_effect=[
             _scalar_result(habit),
             _row_result([(date(2026, 5, 1),), (date(2026, 5, 2),)]),
-            _row_one_result((0.42, "mood")),
+            _row_one_result((0.42, "mood_score")),
         ]
     )
 

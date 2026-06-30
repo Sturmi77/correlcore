@@ -6,9 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — M7-C closeout + M4/M5 pending
+## [Unreleased] — M4/M5 closeout pending
 
 ### Changed
+
+- **M5-C2 Habits Core closeout.** Target-aware insufficient-data gating (heatmap stays visible
+  for sparse habits); correlation metric labels normalized (`mood_score` → mood). Visual QA in
+  [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md). Closes #157/#159.
 
 - **M5-C1 habit dashboard polish.** Habit list shows adherence + window summary and correlation
   hint; detail adds adherence bar, predictor copy, insufficient-data state, and mobile bottom sheet.
