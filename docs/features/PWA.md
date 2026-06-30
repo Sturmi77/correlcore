@@ -28,13 +28,13 @@ Full Dexie-backed offline sync is implemented behind a feature flag for
 verified users. See [ADR-0036](../adr/0036-offline-sync-v1-scope.md) and
 [`M4.1_SPRINT_PLAN.md`](../M4.1_SPRINT_PLAN.md).
 
-| Component | Location |
-| --------- | -------- |
-| Local DB | `apps/web/src/lib/offline/db.ts` — IndexedDB via Dexie (`correlcore-offline`) |
-| Change outbox | `change_log` table — append-only, monotone `seq` |
-| Sync orchestrator | `syncOrchestrator.ts` — push on reconnect / visibility |
-| API | `POST /api/v1/sync/push`, `GET /api/v1/sync/pull` |
-| Conflict history | `GET /api/v1/user/sync-conflicts` (90-day retention) |
+| Component         | Location                                                                      |
+| ----------------- | ----------------------------------------------------------------------------- |
+| Local DB          | `apps/web/src/lib/offline/db.ts` — IndexedDB via Dexie (`correlcore-offline`) |
+| Change outbox     | `change_log` table — append-only, monotone `seq`                              |
+| Sync orchestrator | `syncOrchestrator.ts` — push on reconnect / visibility                        |
+| API               | `POST /api/v1/sync/push`, `GET /api/v1/sync/pull`                             |
+| Conflict history  | `GET /api/v1/user/sync-conflicts` (90-day retention)                          |
 
 **Enable for testing**
 

@@ -1,4 +1,9 @@
-export { getOrCreateClientId, clearClientId, peekClientId, CLIENT_ID_STORAGE_KEY } from './clientId';
+export {
+  getOrCreateClientId,
+  clearClientId,
+  peekClientId,
+  CLIENT_ID_STORAGE_KEY,
+} from './clientId';
 export {
   appendChange,
   getChange,

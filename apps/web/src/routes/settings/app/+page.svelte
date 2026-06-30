@@ -9,10 +9,7 @@
   import { currentUser } from '$lib/stores/auth';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
-  import {
-    isOfflineSyncEnabled,
-    setOfflineSyncEnabled,
-  } from '$lib/offline/featureFlag';
+  import { isOfflineSyncEnabled, setOfflineSyncEnabled } from '$lib/offline/featureFlag';
   import { scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
 
   let offlineSyncToggle = false;

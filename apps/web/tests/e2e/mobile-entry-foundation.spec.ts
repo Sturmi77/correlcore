@@ -230,7 +230,9 @@ test('offline dexie entry saves locally and syncs after reconnect', async ({ pag
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
   await page.getByRole('button', { name: 'Increase mood' }).click();
 
-  await expect(page.getByText('Offline — saved on this device. Will sync when online.')).toBeVisible({
+  await expect(
+    page.getByText('Offline — saved on this device. Will sync when online.')
+  ).toBeVisible({
     timeout: 15_000,
   });
   await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'saved');
@@ -243,7 +245,10 @@ test('offline dexie entry saves locally and syncs after reconnect', async ({ pag
 
   api.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await page.getByTestId('save-status').click().catch(() => undefined);
+  await page
+    .getByTestId('save-status')
+    .click()
+    .catch(() => undefined);
 
   await expect
     .poll(() => api.syncWrites.includes('POST /sync/push'), { timeout: 15_000 })

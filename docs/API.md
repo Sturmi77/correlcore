@@ -1107,11 +1107,11 @@ Responses enthalten **keine** Klartext-Gesundheitswerte (ADR-0036 §2.1).
 
 ### Synced entities (v1)
 
-| Entity | Push | Pull |
-| ------ | ---- | ---- |
-| Entries (+ tag/symptom links) | Ja | Ja |
-| Custom tags | Ja | Ja |
-| Custom symptoms | Ja | Ja |
+| Entity                           | Push | Pull                      |
+| -------------------------------- | ---- | ------------------------- |
+| Entries (+ tag/symptom links)    | Ja   | Ja                        |
+| Custom tags                      | Ja   | Ja                        |
+| Custom symptoms                  | Ja   | Ja                        |
 | Insights, analytics, worker data | Nein | Ja (server-authoritative) |
 
 Merge: **Last-Write-Wins** pro Feld (`updated_at`); Server gewinnt bei Gleichstand.
@@ -1127,7 +1127,7 @@ Pull-Cursor ist opaque (Base64url-JSON, nicht vom Client parsen). Erster Pull oh
 Beispiel-Cursor-Inhalt (nur zur Dokumentation — Clients behandeln ihn als opaque string):
 
 ```json
-{"user_rev": 12345, "wall": "2026-06-30T12:00:00.000000Z"}
+{ "user_rev": 12345, "wall": "2026-06-30T12:00:00.000000Z" }
 ```
 
 ### `POST /api/v1/sync/push`
@@ -1157,7 +1157,7 @@ ohne erneute DB-Mutation.
         "work_context": "homeoffice",
         "note": "Guter Tag",
         "tag_ids": ["a1b2c3d4-e5f6-7890-abcd-ef1234567890"],
-        "symptoms": {"b2c3d4e5-f6a7-8901-bcde-f12345678901": 2}
+        "symptoms": { "b2c3d4e5-f6a7-8901-bcde-f12345678901": 2 }
       },
       "updated_at": "2026-06-30T16:55:00.000000Z"
     }
@@ -1165,13 +1165,13 @@ ohne erneute DB-Mutation.
 }
 ```
 
-| Feld | Typ | Beschreibung |
-| ---- | --- | ------------ |
-| `client_id` | UUID | Stabile Geräte-/Browser-Identität |
-| `batch_id` | UUID | Idempotency-Key pro HTTP-Request |
-| `changes[].seq` | int ≥ 1 | Monotone Sequenz pro `client_id` |
-| `changes[].table` | `entries` \| `tags` \| `symptoms` | Ziel-Tabelle |
-| `changes[].operation` | `upsert` \| `delete` | Default `upsert` |
+| Feld                  | Typ                               | Beschreibung                      |
+| --------------------- | --------------------------------- | --------------------------------- |
+| `client_id`           | UUID                              | Stabile Geräte-/Browser-Identität |
+| `batch_id`            | UUID                              | Idempotency-Key pro HTTP-Request  |
+| `changes[].seq`       | int ≥ 1                           | Monotone Sequenz pro `client_id`  |
+| `changes[].table`     | `entries` \| `tags` \| `symptoms` | Ziel-Tabelle                      |
+| `changes[].operation` | `upsert` \| `delete`              | Default `upsert`                  |
 
 **Response `200`**
 
@@ -1188,26 +1188,26 @@ ohne erneute DB-Mutation.
       "client_ts": "2026-06-30T16:55:00.000000Z",
       "server_ts": "2026-06-30T16:54:30.000000Z",
       "winner": "server",
-      "client_value": {"value": 4},
-      "server_value": {"value": 3}
+      "client_value": { "value": 4 },
+      "server_value": { "value": 3 }
     }
   ],
   "idempotent_replay": false
 }
 ```
 
-| Feld | Beschreibung |
-| ---- | ------------ |
-| `conflicts` | Merge-Konflikte — Server-Wert wurde angewendet; **kein** HTTP `409` |
-| `idempotent_replay` | `true` wenn `batch_id` bereits verarbeitet wurde |
+| Feld                | Beschreibung                                                        |
+| ------------------- | ------------------------------------------------------------------- |
+| `conflicts`         | Merge-Konflikte — Server-Wert wurde angewendet; **kein** HTTP `409` |
+| `idempotent_replay` | `true` wenn `batch_id` bereits verarbeitet wurde                    |
 
 **Fehler**
 
-| Code | Wann |
-| ---- | ---- |
-| `400` | Ungültige `seq`-Reihenfolge, unbekannte `table`, leerer Batch |
-| `401` / `403` | Nicht authentifiziert / nicht verifiziert |
-| `422` | Pydantic-Validierung (z. B. `mood_score` außerhalb 1..5) |
+| Code          | Wann                                                          |
+| ------------- | ------------------------------------------------------------- |
+| `400`         | Ungültige `seq`-Reihenfolge, unbekannte `table`, leerer Batch |
+| `401` / `403` | Nicht authentifiziert / nicht verifiziert                     |
+| `422`         | Pydantic-Validierung (z. B. `mood_score` außerhalb 1..5)      |
 
 `409 Conflict` ist **nicht** der LWW-Konflikt-Pfad — reserviert für harte
 Invarianten (z. B. Slot-Kollision im Online-CRUD).
@@ -1216,10 +1216,10 @@ Invarianten (z. B. Slot-Kollision im Online-CRUD).
 
 **Query**
 
-| Parameter | Typ | Default | Beschreibung |
-| --------- | --- | ------- | ------------ |
-| `since` | string | — | Opaque Cursor; fehlt → letzte 30 Tage |
-| `limit` | int | 200 | Max. Änderungen pro Response (1..500) |
+| Parameter | Typ    | Default | Beschreibung                          |
+| --------- | ------ | ------- | ------------------------------------- |
+| `since`   | string | —       | Opaque Cursor; fehlt → letzte 30 Tage |
+| `limit`   | int    | 200     | Max. Änderungen pro Response (1..500) |
 
 **Response `200`**
 
@@ -1272,8 +1272,8 @@ und `offset`. Optional `entity_type=entry|tag|symptom`. Erfordert verifizierten 
       "server_ts": "2026-06-30T16:54:30.000000Z",
       "created_at": "2026-06-30T16:55:01.000000Z",
       "resolved_at": null,
-      "client_value": {"present": true, "changed": true},
-      "server_value": {"present": false}
+      "client_value": { "present": true, "changed": true },
+      "server_value": { "present": false }
     }
   ],
   "total": 1,

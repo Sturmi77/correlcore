@@ -49,11 +49,7 @@
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
   import { isoDate } from '$lib/utils/entryForm';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
-  import {
-    onLocalEntrySaved,
-    scheduleSync,
-    syncOrchestrator,
-  } from '$lib/offline/syncOrchestrator';
+  import { onLocalEntrySaved, scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
   import {
     findLocalEntryByDateSlot,
     localEntryToFormFields,

@@ -43,7 +43,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0033](0033-sensitive-health-data-handling-cycle-signals.md) | Sensitive Health Data Handling for Cycle Signals             | Accepted      | 2026-05-28 |
 | [ADR-0034](0034-onboarding-cycle-tracking-toggle.md)             | Onboarding Cycle Tracking Toggle                             | Accepted      | 2026-05-28 |
 | [ADR-0035](0035-temporal-correspondence-pattern.md)              | Temporal Correspondence Pattern for Trend+Heatmap Alignment  | Accepted      | 2026-05-30 |
-| [ADR-0036](0036-offline-sync-v1-scope.md)                      | Offline-Sync v1 Scope & Implementation Contract (M4.1)       | Accepted      | 2026-06-30 |
+| [ADR-0036](0036-offline-sync-v1-scope.md)                        | Offline-Sync v1 Scope & Implementation Contract (M4.1)       | Accepted      | 2026-06-30 |
 
 ## Kurzübersicht der Entscheidungen
 

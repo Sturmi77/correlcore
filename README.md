@@ -15,12 +15,12 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 
 **CorrelCore** fills this gap:
 
-| Promise                                | Description                                                                                                |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Correlations, not raw data**         | The app explains why days were good or bad                                                                 |
+| Promise                                | Description                                                                                                            |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Correlations, not raw data**         | The app explains why days were good or bad                                                                             |
 | **Selfhosted now, offline-ready next** | Your health data stays on your instance; PWA shell caching is live; Dexie offline sync ships in M4.1 (feature-flagged) |
-| **60 seconds per day**                 | No more, or it simply won't get done                                                                       |
-| **No gamification, ever**              | You track your habits — not how often you open the app                                                     |
+| **60 seconds per day**                 | No more, or it simply won't get done                                                                                   |
+| **No gamification, ever**              | You track your habits — not how often you open the app                                                                 |
 
 ---
 
@@ -49,17 +49,17 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ### Current Milestone Status
 
-| Milestone | Status                    | Notes                                                                                                                                                                                                                    |
-| --------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **M3**    | Complete                  | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                     |
-| **M3.1**  | Complete                  | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md). |
-| **M3.5**  | Complete                  | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).     |
-| **M3.6**  | Complete                  | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).          |
-| **M3.7**  | Complete                  | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                               |
-| **M4**    | **Complete** (2026-06-30) | Quick wins + PWA hardening closed out. Dexie sync/conflict log → M4.1 (#10/#24). See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md).          |
+| Milestone | Status                    | Notes                                                                                                                                                                                                                                                    |
+| --------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M3**    | Complete                  | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                                                     |
+| **M3.1**  | Complete                  | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md).                                 |
+| **M3.5**  | Complete                  | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).                                     |
+| **M3.6**  | Complete                  | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).                                          |
+| **M3.7**  | Complete                  | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                                                               |
+| **M4**    | **Complete** (2026-06-30) | Quick wins + PWA hardening closed out. Dexie sync/conflict log → M4.1 (#10/#24). See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md).                                          |
 | **M4.1**  | **Complete** (2026-06-30) | Offline-first Dexie sync, push/pull API, conflict log, local-first entries. Visual QA signed off. Closes #10/#24. See [`docs/M4.1_SPRINT_STATUS.md`](docs/M4.1_SPRINT_STATUS.md) and [`docs/quality/M4.1_VISUAL_QA.md`](docs/quality/M4.1_VISUAL_QA.md). |
-| **M5**    | **Complete** (2026-06-30) | Habits Core + M5-C1/C2 closeout. Visual QA signed off. Co-occurrence is M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md) and [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md).     |
-| **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                           |
+| **M5**    | **Complete** (2026-06-30) | Habits Core + M5-C1/C2 closeout. Visual QA signed off. Co-occurrence is M5.1/backlog. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md) and [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md).                                     |
+| **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                           |
 
 ---
 
@@ -76,7 +76,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **Object Storage** | MinIO                                                                                   | Selfhost-compatible S3 foundation; photo upload and EXIF strip are M13 scope                                |
 | **Reverse Proxy**  | Traefik v3                                                                              | Automatic TLS, Docker label routing                                                                         |
 | **Auth**           | Native JWT phase 1, Authentik from M12                                                  | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                       |
-| **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                      | Push/pull LWW merge, conflict log, local-first entry path; default off until user enables in Settings |
+| **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                   | Push/pull LWW merge, conflict log, local-first entry path; default off until user enables in Settings       |
 | **Analytics**      | pandas + scikit-learn                                                                   | M7: Lasso, lag, symptom analytics; correlation engine live since M3                                         |
 | **Migrations**     | Alembic                                                                                 | Schema versioning                                                                                           |
 | **Monitoring**     | GlitchTip + Uptime Kuma                                                                 | Selfhosted error tracking                                                                                   |
@@ -164,7 +164,7 @@ Task: <your specific task here>
 | [Closeout Sprint Plan](docs/CLOSEOUT_SPRINT_PLAN.md)                  | M4/M5/M7 closeout sequence, audit findings, deferred-work index   |
 | [M4 Sprint Status](docs/M4_SPRINT_STATUS.md)                          | M4 quick wins + PWA hardening tracking                            |
 | [M4.1 Sprint Plan](docs/M4.1_SPRINT_PLAN.md)                          | Offline-first Dexie sync implementation plan                      |
-| [M4.1 Visual QA](docs/quality/M4.1_VISUAL_QA.md)                    | M4.1 offline sync closeout sign-off                               |
+| [M4.1 Visual QA](docs/quality/M4.1_VISUAL_QA.md)                      | M4.1 offline sync closeout sign-off                               |
 | [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                          | M5 Habits Core tracking                                           |
 | [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering            |
 | [M7 Sprint 9](docs/M7_SPRINT9_PLAN.md)                                | Spec-complete closeout: interaction, feed UX, cluster API, a11y   |

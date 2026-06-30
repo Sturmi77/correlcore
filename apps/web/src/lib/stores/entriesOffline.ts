@@ -151,7 +151,10 @@ export async function applyPulledEntry(
     symptoms:
       data.symptoms && typeof data.symptoms === 'object'
         ? Object.fromEntries(
-            Object.entries(data.symptoms as Record<string, number>).map(([k, v]) => [String(k), Number(v)])
+            Object.entries(data.symptoms as Record<string, number>).map(([k, v]) => [
+              String(k),
+              Number(v),
+            ])
           )
         : {},
     updated_at: updatedAt,

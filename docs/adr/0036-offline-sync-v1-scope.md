@@ -18,11 +18,11 @@ Lieferzeitpunkt nach M4. Dieses ADR **friert den v1-Implementierungsvertrag ein*
 
 ### 1. Synced Entities (v1)
 
-| Entity | Server-Tabelle(n) | Push | Pull | Notes |
-| ------ | ----------------- | ---- | ---- | ----- |
-| **Entry** | `entries`, `entry_tags`, `entry_symptoms` | Ja | Ja | Primärer Offline-Use-Case |
-| **Tag** (custom) | `tags` | Ja (nur `user_id IS NOT NULL`) | Ja | Curated Defaults sind read-only |
-| **Symptom** (custom) | `symptoms` | Ja (nur custom rows) | Ja | Default-Symptome sind read-only |
+| Entity               | Server-Tabelle(n)                         | Push                           | Pull | Notes                           |
+| -------------------- | ----------------------------------------- | ------------------------------ | ---- | ------------------------------- |
+| **Entry**            | `entries`, `entry_tags`, `entry_symptoms` | Ja                             | Ja   | Primärer Offline-Use-Case       |
+| **Tag** (custom)     | `tags`                                    | Ja (nur `user_id IS NOT NULL`) | Ja   | Curated Defaults sind read-only |
+| **Symptom** (custom) | `symptoms`                                | Ja (nur custom rows)           | Ja   | Default-Symptome sind read-only |
 
 **Server-authoritative (Pull-only, kein Client-Push):**
 
@@ -37,32 +37,32 @@ Merge-Prinzip: **Last-Write-Wins (LWW)** pro Feld. Entscheidend ist `updated_at`
 
 #### Entry scalar fields
 
-| Feld | Merge | Conflict-Log (#24) | Notes |
-| ---- | ----- | ------------------ | ----- |
-| `mood_score` | LWW | Ja | 1..5 |
-| `energy` | LWW | Ja | 1..5 |
-| `stress` | LWW | Ja | 1..5 |
-| `note` / `note_enc` | LWW | Ja (metadata only) | Siehe §2.1 |
-| `work_context` | LWW | Nein | Enum |
-| `cycle_day` | LWW | Nein | Optional 1..35 |
-| `slot` | Server wins on create | Nein | Immutable nach Create |
-| `entry_date` | Server wins on create | Nein | Immutable nach Create |
-| `source` | Server wins on create | Nein | Set at create |
+| Feld                | Merge                 | Conflict-Log (#24) | Notes                 |
+| ------------------- | --------------------- | ------------------ | --------------------- |
+| `mood_score`        | LWW                   | Ja                 | 1..5                  |
+| `energy`            | LWW                   | Ja                 | 1..5                  |
+| `stress`            | LWW                   | Ja                 | 1..5                  |
+| `note` / `note_enc` | LWW                   | Ja (metadata only) | Siehe §2.1            |
+| `work_context`      | LWW                   | Nein               | Enum                  |
+| `cycle_day`         | LWW                   | Nein               | Optional 1..35        |
+| `slot`              | Server wins on create | Nein               | Immutable nach Create |
+| `entry_date`        | Server wins on create | Nein               | Immutable nach Create |
+| `source`            | Server wins on create | Nein               | Set at create         |
 
 #### Entry relation fields
 
-| Feld | Merge | Conflict-Log | Notes |
-| ---- | ----- | ------------ | ----- |
-| `tag_ids` | LWW auf Assignment-Set (`updated_at` des Entry) | Nein | Replace semantics |
-| `symptoms` | LWW auf Intensity-Map | Ja | Map `{symptom_id: intensity}` |
+| Feld       | Merge                                           | Conflict-Log | Notes                         |
+| ---------- | ----------------------------------------------- | ------------ | ----------------------------- |
+| `tag_ids`  | LWW auf Assignment-Set (`updated_at` des Entry) | Nein         | Replace semantics             |
+| `symptoms` | LWW auf Intensity-Map                           | Ja           | Map `{symptom_id: intensity}` |
 
 #### Tag / Symptom (custom master rows)
 
-| Feld | Merge | Conflict-Log |
-| ---- | ----- | ------------ |
-| `name`, `icon`, `color`, `category` (tags) | LWW | Nein |
-| `habit_type`, `target_frequency` (tags) | LWW | Nein |
-| `name` (symptoms) | LWW | Nein |
+| Feld                                       | Merge | Conflict-Log |
+| ------------------------------------------ | ----- | ------------ |
+| `name`, `icon`, `color`, `category` (tags) | LWW   | Nein         |
+| `habit_type`, `target_frequency` (tags)    | LWW   | Nein         |
+| `name` (symptoms)                          | LWW   | Nein         |
 
 ### 2.1 Encrypted `note_enc` — Conflict-Log ohne Plaintext
 
@@ -86,13 +86,13 @@ Pull-Cursor ist **opaque** für Clients (opaque string, nicht parsen).
 **Encoding:** Base64url (ohne Padding) über JSON:
 
 ```json
-{"user_rev": 12345, "wall": "2026-06-30T12:00:00.000000Z"}
+{ "user_rev": 12345, "wall": "2026-06-30T12:00:00.000000Z" }
 ```
 
-| Feld | Bedeutung |
-| ---- | --------- |
+| Feld       | Bedeutung                                                                                      |
+| ---------- | ---------------------------------------------------------------------------------------------- |
 | `user_rev` | Monotonic integer pro User — inkrementiert bei jedem server-seitigen Write auf synced entities |
-| `wall` | ISO-8601 UTC — Tie-Breaker und Audit; nicht allein für Delta-Selektion |
+| `wall`     | ISO-8601 UTC — Tie-Breaker und Audit; nicht allein für Delta-Selektion                         |
 
 - **Erster Pull** (`since` fehlt oder leer): liefert Änderungen der letzten **30 Tage**
   (konfigurierbar, Default 30). Cursor in Response setzt `user_rev` auf aktuellen Stand.
@@ -104,11 +104,11 @@ Pull-Cursor ist **opaque** für Clients (opaque string, nicht parsen).
 
 Push-Idempotenz verhindert Doppel-Writes bei Netzwerk-Retries.
 
-| Key | Scope | Rule |
-| --- | ----- | ---- |
-| `client_id` | Pro Browser-Origin | Stabile UUID in `localStorage` (ein Tab-Set pro Origin) |
-| `batch_id` | Pro Push-Request | Client-generierte UUID; Server speichert verarbeitete `(user_id, client_id, batch_id)` |
-| `seq` | Pro Change in `change_log` | Monotone Integer pro `client_id`; strictly increasing |
+| Key         | Scope                      | Rule                                                                                   |
+| ----------- | -------------------------- | -------------------------------------------------------------------------------------- |
+| `client_id` | Pro Browser-Origin         | Stabile UUID in `localStorage` (ein Tab-Set pro Origin)                                |
+| `batch_id`  | Pro Push-Request           | Client-generierte UUID; Server speichert verarbeitete `(user_id, client_id, batch_id)` |
+| `seq`       | Pro Change in `change_log` | Monotone Integer pro `client_id`; strictly increasing                                  |
 
 **Replay-Regel:** Identischer `(client_id, batch_id)` → `200 OK` mit gespeichertem
 Ergebnis (gleiche `cursor`, gleiche `conflicts`), **keine** erneute DB-Mutation.
@@ -169,25 +169,25 @@ Append-only Outbox. `operation`: `upsert` | `delete`. `status`: `pending` | `ack
 
 Key-Value Store:
 
-| Key | Value |
-| --- | ----- |
-| `client_id` | UUID string |
+| Key                | Value                                   |
+| ------------------ | --------------------------------------- |
+| `client_id`        | UUID string                             |
 | `last_pull_cursor` | Opaque cursor from last successful pull |
-| `last_push_at` | ISO timestamp |
-| `last_pull_at` | ISO timestamp |
+| `last_push_at`     | ISO timestamp                           |
+| `last_pull_at`     | ISO timestamp                           |
 
 **Multi-Tab:** Ein `client_id` pro Origin. Push-Serialisierung via `BroadcastChannel`
 oder Leader-Election (Sprint 4) — nicht in Sprint 0 implementiert, aber Contract reserviert.
 
 ### 6. HTTP Error Semantics
 
-| Code | Wann | Body |
-| ---- | ---- | ---- |
-| `200` | Push/Pull erfolgreich | `SyncPushResponse` / `SyncPullResponse` |
-| `400` | Schema-/Seq-Fehler | FastAPI `detail` |
-| `401` / `403` | Auth | Standard |
-| `409` | **Nicht** für LWW-Konflikte | Reserviert für harte Invarianten (z. B. Slot-Kollision bei Online-CRUD) |
-| `422` | Validierungsfehler | FastAPI `detail` |
+| Code          | Wann                        | Body                                                                    |
+| ------------- | --------------------------- | ----------------------------------------------------------------------- |
+| `200`         | Push/Pull erfolgreich       | `SyncPushResponse` / `SyncPullResponse`                                 |
+| `400`         | Schema-/Seq-Fehler          | FastAPI `detail`                                                        |
+| `401` / `403` | Auth                        | Standard                                                                |
+| `409`         | **Nicht** für LWW-Konflikte | Reserviert für harte Invarianten (z. B. Slot-Kollision bei Online-CRUD) |
+| `422`         | Validierungsfehler          | FastAPI `detail`                                                        |
 
 **LWW-Konflikte** werden **nicht** als HTTP `409` signalisiert. Stattdessen enthält
 `SyncPushResponse.conflicts[]` einen `SyncConflictReport` pro betroffenem kritischen Feld.
@@ -207,12 +207,12 @@ Retention: **90 Tage** via APScheduler (Sprint 1).
 
 ## Alternativen erwogen
 
-| Option | Ergebnis |
-| ------ | -------- |
-| CRDT / OT für Notes | Verworfen (ADR-0003) |
-| HTTP 409 bei jedem LWW-Konflikt | Verworfen — würde Retry-Queues blockieren |
-| Plaintext in `sync_conflicts` | Verworfen — DSGVO / Art. 9 |
-| Per-Field Cursor statt `user_rev` | Verworfen — zu komplex für v1 |
+| Option                            | Ergebnis                                  |
+| --------------------------------- | ----------------------------------------- |
+| CRDT / OT für Notes               | Verworfen (ADR-0003)                      |
+| HTTP 409 bei jedem LWW-Konflikt   | Verworfen — würde Retry-Queues blockieren |
+| Plaintext in `sync_conflicts`     | Verworfen — DSGVO / Art. 9                |
+| Per-Field Cursor statt `user_rev` | Verworfen — zu komplex für v1             |
 
 ## Konsequenzen
 
@@ -224,11 +224,11 @@ Retention: **90 Tage** via APScheduler (Sprint 1).
 
 ## Implementierungs-Mapping
 
-| Sprint | ADR-0036 Abschnitt |
-| ------ | ------------------ |
-| 0 | Gesamtes ADR (dieses Dokument) |
-| 1 | §7 Conflict-Log + Read API |
-| 2 | §1–4, §6 Push/Pull |
-| 3 | §5 Dexie ERD |
-| 4 | §5 Orchestrator + Feature-Flag |
-| 5 | Contract frozen — nur QA/Docs |
+| Sprint | ADR-0036 Abschnitt             |
+| ------ | ------------------------------ |
+| 0      | Gesamtes ADR (dieses Dokument) |
+| 1      | §7 Conflict-Log + Read API     |
+| 2      | §1–4, §6 Push/Pull             |
+| 3      | §5 Dexie ERD                   |
+| 4      | §5 Orchestrator + Feature-Flag |
+| 5      | Contract frozen — nur QA/Docs  |
