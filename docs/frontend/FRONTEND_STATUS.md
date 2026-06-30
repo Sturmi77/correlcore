@@ -40,6 +40,7 @@ at **768 px** (bottom nav → side rail). See [ADR-0017](../adr/0017-frontend-sc
 | Contrast (ADR-0027)    | `pnpm check:contrast`  | CI (source tokens; avoid stale `apps/web/build` locally) |
 | Production build       | `pnpm build`           | CI                                                       |
 | E2E smoke              | `pnpm test:e2e:smoke`  | CI — login, entry, trends, insights                      |
+| User journey regression | `pnpm test:e2e:journeys` | W1–W7 auth/onboarding/maturity matrix (`user-journeys.spec.ts`) |
 | Mobile regression      | `pnpm test:e2e:mobile` | **18/18 passed** (serial, `--workers=1`)                 |
 
 ### Not required for production deploy
