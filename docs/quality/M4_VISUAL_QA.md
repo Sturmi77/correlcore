@@ -21,31 +21,31 @@ Deferred to **M4.1 — Offline-First Sync**: Dexie delta sync (#10), conflict lo
 
 ## Verification method
 
-| Layer            | Evidence                                              | Date       |
-| ---------------- | ----------------------------------------------------- | ---------- |
-| Web unit         | Vitest (slots, SMA smoothing, PWA stores, settings)   | 2026-06-30 |
-| E2E smoke        | `pnpm --filter @correlcore/web test:e2e:smoke`        | 2026-06-30 |
-| Mobile E2E       | `mobile-entry-foundation`, `mobile-supporting-flows`  | 2026-06-30 |
-| Rendered browser | Manual smoke on local dev server post M4-C gates      | 2026-06-30 |
+| Layer            | Evidence                                             | Date       |
+| ---------------- | ---------------------------------------------------- | ---------- |
+| Web unit         | Vitest (slots, SMA smoothing, PWA stores, settings)  | 2026-06-30 |
+| E2E smoke        | `pnpm --filter @correlcore/web test:e2e:smoke`       | 2026-06-30 |
+| Mobile E2E       | `mobile-entry-foundation`, `mobile-supporting-flows` | 2026-06-30 |
+| Rendered browser | Manual smoke on local dev server post M4-C gates     | 2026-06-30 |
 
 ## Viewport matrix
 
-| Surface                         | 375  | 768  | 1280 | Light | Dark |
-| ------------------------------- | ---- | ---- | ---- | ----- | ---- |
-| Entry form slot chips           | Pass | Pass | Pass | Pass  | Pass |
-| Guided onboarding flow          | Pass | Pass | Pass | Pass  | Pass |
-| Trends Mood smoothing toggle    | Pass | Pass | Pass | Pass  | Pass |
-| Trends Health cycle-day strip   | Pass | Pass | Pass | Pass  | Pass |
-| Settings Developer controls     | Pass | Pass | Pass | Pass  | Pass |
-| Home PWA install banner         | Pass | Pass | Pass | Pass  | Pass |
-| `/offline` fallback page        | Pass | Pass | Pass | Pass  | Pass |
+| Surface                       | 375  | 768  | 1280 | Light | Dark |
+| ----------------------------- | ---- | ---- | ---- | ----- | ---- |
+| Entry form slot chips         | Pass | Pass | Pass | Pass  | Pass |
+| Guided onboarding flow        | Pass | Pass | Pass | Pass  | Pass |
+| Trends Mood smoothing toggle  | Pass | Pass | Pass | Pass  | Pass |
+| Trends Health cycle-day strip | Pass | Pass | Pass | Pass  | Pass |
+| Settings Developer controls   | Pass | Pass | Pass | Pass  | Pass |
+| Home PWA install banner       | Pass | Pass | Pass | Pass  | Pass |
+| `/offline` fallback page      | Pass | Pass | Pass | Pass  | Pass |
 
 ## Core interactions
 
 | Interaction                                      | Status |
 | ------------------------------------------------ | ------ |
 | Slot chip updates entry slot / delta lookup      | Pass   |
-| Smoothing toggle persists in `cc_trend_smooth`     | Pass   |
+| Smoothing toggle persists in `cc_trend_smooth`   | Pass   |
 | Onboarding creates custom tags by slug           | Pass   |
 | Dev Mode phase override affects insight maturity | Pass   |
 | Install banner dismiss persists                  | Pass   |
@@ -54,9 +54,9 @@ Deferred to **M4.1 — Offline-First Sync**: Dexie delta sync (#10), conflict lo
 
 ## Static gates (M4-C)
 
-| Gate                                | Result       |
-| ----------------------------------- | ------------ |
-| GitHub CI on PR branch (#243)       | Pass (2026-06-30) |
+| Gate                                | Result                                    |
+| ----------------------------------- | ----------------------------------------- |
+| GitHub CI on PR branch (#243)       | Pass (2026-06-30)                         |
 | Local `.\scripts\local-quality.ps1` | Rerun on contributor machine before merge |
 
 ## Manual device notes
