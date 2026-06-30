@@ -62,6 +62,7 @@
   let entrySheetOpen = false;
   let entrySheetDate = todayIso;
   let openEntryHandled = false;
+  let firstEntrySheetOpened = false;
 
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
@@ -72,6 +73,11 @@
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
   $: dayEntriesForSparkline = recentEntries.filter((entry) => entry.slot === 'day');
   $: showHomeSparkline = dayEntriesForSparkline.length >= HOME_SPARKLINE_MIN_ENTRIES;
+  $: showOnboardingTags = Boolean(
+    userPreferences &&
+      !userPreferences.onboarding_retro_completed &&
+      dashboardSummary?.entry_count === 0
+  );
 
   function openEntrySheet(date: string = todayIso) {
     entrySheetDate = date;
@@ -161,9 +167,13 @@
     $auth.status === 'authenticated' &&
     dashboardSummary?.entry_count === 0 &&
     userPreferences &&
-    !userPreferences.onboarding_retro_completed
+    !userPreferences.onboarding_retro_completed &&
+    !firstEntrySheetOpened &&
+    !entrySheetOpen &&
+    !isOpenEntryRequested($page.url.searchParams)
   ) {
-    void goto('/onboarding', { replaceState: true });
+    firstEntrySheetOpened = true;
+    openEntrySheet(todayIso);
   }
 
   async function dismissFirstWeekBanner(): Promise<void> {
@@ -281,6 +291,7 @@
     <EntrySheet
       bind:open={entrySheetOpen}
       initialDate={entrySheetDate}
+      onboardingTagsEnabled={showOnboardingTags}
       on:saved={onEntrySheetSaved}
     />
   </div>

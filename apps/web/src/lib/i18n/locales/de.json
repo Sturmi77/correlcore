@@ -227,6 +227,10 @@
     },
     "more_toggle": "Optionale Details hinzuf\u00fcgen",
     "more_hide": "Optionale Details ausblenden",
+    "onboarding_tags": {
+      "title": "Was m\u00f6chtest du tracken?",
+      "hint": "W\u00e4hle ein paar Start-Tags \u2014 sp\u00e4ter kannst du jeden Tag in Insights als Gewohnheit festlegen."
+    },
     "sheet": {
       "title": "Wie war dein Tag?",
       "close": "Eintrag schlie\u00dfen",
@@ -1140,7 +1144,7 @@
       "body": "Klicke auf den Button, um deine E-Mail-Adresse zu best\u00e4tigen und dein Konto zu aktivieren.",
       "submit": "E-Mail best\u00e4tigen",
       "success_title": "E-Mail best\u00e4tigt",
-      "success_body": "Dein Konto ist nun aktiv. Du kannst dich jetzt anmelden.",
+      "success_body": "Dein Konto ist aktiv. Wir \u00f6ffnen deinen ersten Eintrag\u2026",
       "error_title": "Best\u00e4tigung fehlgeschlagen",
       "error_body": "Der Link ist ung\u00fcltig oder abgelaufen. Fordere bitte eine neue Best\u00e4tigungs-Mail an.",
       "missing_token": "Es wurde kein Best\u00e4tigungs-Token in der URL gefunden.",

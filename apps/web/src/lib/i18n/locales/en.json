@@ -217,6 +217,10 @@
     },
     "more_toggle": "Add optional details",
     "more_hide": "Hide optional details",
+    "onboarding_tags": {
+      "title": "What do you want to track?",
+      "hint": "Pick a few starting tags — you can turn any tag into a habit later in Insights."
+    },
     "sheet": {
       "title": "How was your day?",
       "close": "Close entry",
@@ -1140,7 +1144,7 @@
       "body": "Click the button below to confirm your email address and activate your account.",
       "submit": "Verify email",
       "success_title": "Email verified",
-      "success_body": "Your account is now active. You can sign in.",
+      "success_body": "Your account is active. Taking you to your first entry…",
       "error_title": "Verification failed",
       "error_body": "The link is invalid or has expired. Please request a new verification email.",
       "missing_token": "No verification token found in the URL.",

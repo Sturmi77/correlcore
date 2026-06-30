@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Button from '$lib/components/common/Button.svelte';
@@ -28,7 +27,6 @@
 
   $: selectedTags = [...selected.values()];
   $: progressLabel = `${step + 1}/3`;
-  $: isPreview = $page.url.searchParams.get('preview') === '1';
 
   onMount(async () => {
     try {
@@ -68,10 +66,6 @@
     busy = true;
     error = '';
     try {
-      if (isPreview) {
-        step = 0;
-        return;
-      }
       await completeOnboarding(tags);
       await goto(OPEN_ENTRY_HOME_PATH);
     } catch (err) {

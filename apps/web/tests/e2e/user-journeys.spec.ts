@@ -127,7 +127,7 @@ async function installJourneyApi(
   const { profile } = options;
   let authenticated = options.authenticated ?? true;
   let onboardingCompleted = profile !== 'new_user';
-  const user =
+  let user =
     profile === 'new_user' ? users.new : profile === 'week_user' ? users.week : users.month;
   const entryCount =
     profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 32;
@@ -161,7 +161,14 @@ async function installJourneyApi(
 
     if (path === '/auth/verify-email' && method === 'POST') {
       writes.push('POST /auth/verify-email');
-      return json(200, { detail: 'Email verified' });
+      authenticated = true;
+      user = { ...user, is_verified: true };
+      return json(200, {
+        access_token: 'journey-access-token',
+        token_type: 'bearer',
+        expires_in: 900,
+        user,
+      });
     }
 
     if (path === '/auth/login' && method === 'POST') {
@@ -447,41 +454,59 @@ test.describe('W1 Account & Vertrauen', () => {
       timeout: APP_READY_TIMEOUT_MS,
     });
     await page.getByRole('button', { name: 'Verify email' }).click();
-    await expect(page.getByRole('link', { name: /sign in|log in/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
   });
 });
 
 test.describe('W2 Cold Start / Onboarding @390', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('new user is redirected from home to guided onboarding', async ({ page }) => {
+  test('new user home opens first-entry sheet with tag suggestions', async ({ page }) => {
     await installJourneyApi(page, { profile: 'new_user' });
     await page.goto('/');
 
-    await expect(page).toHaveURL(/\/onboarding$/, { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
+  });
+
+  test('onboarding route redirects to home entry sheet', async ({ page }) => {
+    await installJourneyApi(page, { profile: 'new_user' });
+    await page.goto('/onboarding');
+
+    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+  });
+
+  test('onboarding preview wizard remains available', async ({ page }) => {
+    await installJourneyApi(page, { profile: 'new_user' });
+    await page.goto('/onboarding?preview=1');
+
+    await expect(page).toHaveURL(/\/onboarding\?preview=1$/, { timeout: APP_READY_TIMEOUT_MS });
     await expect(page.getByRole('heading', { name: 'Set up your tracking' })).toBeVisible();
   });
 
-  test('onboarding skip completes and returns to home CTA', async ({ page }) => {
+  test('onboarding preview skip completes and returns to home CTA', async ({ page }) => {
     const api = await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/onboarding');
+    await page.goto('/onboarding?preview=1');
 
     await page.getByRole('button', { name: 'Skip', exact: true }).click();
-    await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
   });
 
-  test('onboarding tag flow reaches start tracking', async ({ page }) => {
+  test('onboarding preview tag flow reaches start tracking', async ({ page }) => {
     const api = await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/onboarding');
+    await page.goto('/onboarding?preview=1');
 
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByRole('button', { name: 'Running' }).click();
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByRole('button', { name: 'Start tracking' }).click();
 
-    await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
   });
@@ -524,10 +549,11 @@ test.describe('W5 Erste Erkenntnis', () => {
     await installJourneyApi(page, { profile: 'new_user' });
     await page.setViewportSize({ width: 390, height: 844 });
 
-    // Skip onboarding to inspect home collecting state
-    await page.goto('/onboarding');
-    await page.getByRole('button', { name: 'Skip', exact: true }).click();
-    await expect(page).toHaveURL('/');
+    // New users land on home with the entry sheet open — close it to inspect collecting state.
+    await page.goto('/');
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await page.getByTestId('entry-sheet-close').click();
+    await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
 
     await expect(page.getByTestId('home-daily-brief')).toBeVisible({
       timeout: APP_READY_TIMEOUT_MS,
