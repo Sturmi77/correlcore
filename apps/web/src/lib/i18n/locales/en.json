@@ -41,6 +41,7 @@
     "brief": {
       "label": "Daily brief",
       "heading": "Today at a glance",
+      "bridge_label": "Weekly analysis",
       "insight_fallback": "Open Insights for the full context and underlying data.",
       "phase_fallback": "Your current insight phase is active. Details stay available in Insights.",
       "collecting_title": "Collecting today's context",

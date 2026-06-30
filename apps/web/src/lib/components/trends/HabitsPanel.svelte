@@ -6,9 +6,6 @@
   import { updateTag, type HabitType, type TagResponse } from '$lib/api/tags';
   import Button from '$lib/components/common/Button.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
-  import SegmentedControl, {
-    type SegmentedControlOption,
-  } from '$lib/components/common/SegmentedControl.svelte';
   import HabitDetailBody from '$lib/components/trends/HabitDetailBody.svelte';
   import HabitDetailSheet from '$lib/components/trends/HabitDetailSheet.svelte';
   import { habitMetricI18nKey } from '$lib/utils/habitMetrics';
@@ -21,12 +18,10 @@
   export let loading = false;
 
   const dispatch = createEventDispatcher<{
-    windowChange: { window: HabitWindow };
     selectDate: { date: string; tagId: string };
     habitSetup: void;
   }>();
 
-  const windowOptions: HabitWindow[] = [7, 14, 28, 90];
   let selectedTagId: string | null = null;
   let mobile = false;
   let sheetOpen = false;
@@ -53,13 +48,6 @@
     selected && heatmap
       ? { ...heatmap, tags: heatmap.tags.filter((tag) => tag.tag_id === selected.habit.tag_id) }
       : null;
-  $: controlOptions = windowOptions.map(
-    (value): SegmentedControlOption => ({
-      id: String(value),
-      label: $_('habits.window_days', { values: { n: value } }),
-      testId: `habits-window-${value}`,
-    })
-  );
 
   function pct(value: number): string {
     return `${Math.round(value)}%`;
@@ -139,15 +127,10 @@
     <div>
       <h2>{$_('habits.heading')}</h2>
       <p>{$_('habits.subtitle')}</p>
+      <p class="habits__window" data-testid="habits-window-label">
+        {$_('habits.window_last', { values: { n: window } })}
+      </p>
     </div>
-    <SegmentedControl
-      value={String(window)}
-      options={controlOptions}
-      ariaLabel={$_('habits.window_label')}
-      testId="habits-window-control"
-      on:change={(event) =>
-        dispatch('windowChange', { window: Number(event.detail.value) as HabitWindow })}
-    />
   </header>
 
   {#if loading && habitRows.length === 0}
@@ -281,6 +264,17 @@
   }
 
   .habits__header p,
+  .habits__window {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .habits__window {
+    margin-top: var(--space-1);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
   .habits__state,
   .habits__empty {
     color: var(--color-text-muted);

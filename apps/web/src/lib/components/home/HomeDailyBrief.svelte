@@ -54,26 +54,28 @@
   $: tagLabel = topTagLabel(tagHeatmap);
   $: symptomLabel = topSymptomLabel(symptomHeatmap);
   $: phaseLabel = maturity ? $_(`maturity.${maturity.phase}.label`) : null;
+  $: showWeeklyBridge = Boolean(
+    latestInsight || (maturity && maturity.phase !== 'collecting') || entries.length >= 3
+  );
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
   <header class="daily-brief__header">
-    <div>
-      <p>{$_('home.brief.label')}</p>
-      <h2>{$_('home.brief.heading')}</h2>
-    </div>
+    <p>{$_('home.brief.label')}</p>
   </header>
 
-  <div class="daily-brief__insight">
+  <div class="daily-brief__lead">
     {#if latestInsight}
-      <strong>{latestInsight.subject_label ?? latestInsight.metric}</strong>
-      <p>{latestInsight.statement ?? $_('home.brief.insight_fallback')}</p>
+      <h2 class="daily-brief__title">{latestInsight.subject_label ?? latestInsight.metric}</h2>
+      <p class="daily-brief__statement">
+        {latestInsight.statement ?? $_('home.brief.insight_fallback')}
+      </p>
     {:else if phaseLabel}
-      <strong>{phaseLabel}</strong>
-      <p>{$_('home.brief.phase_fallback')}</p>
+      <h2 class="daily-brief__title">{phaseLabel}</h2>
+      <p class="daily-brief__statement">{$_('home.brief.phase_fallback')}</p>
     {:else}
-      <strong>{$_('home.brief.collecting_title')}</strong>
-      <p>{$_('home.brief.collecting_body')}</p>
+      <h2 class="daily-brief__title">{$_('home.brief.collecting_title')}</h2>
+      <p class="daily-brief__statement">{$_('home.brief.collecting_body')}</p>
     {/if}
   </div>
 
@@ -91,28 +93,27 @@
       <dd>{symptomLabel ?? $_('home.brief.none')}</dd>
     </div>
   </dl>
+
+  {#if showWeeklyBridge}
+    <nav class="daily-brief__bridge" aria-label={$_('home.brief.bridge_label')} data-testid="home-weekly-bridge">
+      <a href="/insights" data-testid="home-bridge-insights">{$_('home.explore_insights')}</a>
+      <a href="/trends" data-testid="home-bridge-trends">{$_('home.view_trends')}</a>
+    </nav>
+  {/if}
 </section>
 
 <style>
   .daily-brief {
     display: grid;
     gap: var(--space-4);
-    padding: var(--space-4);
+    padding: var(--space-5);
     border: 1px solid var(--color-border-chart);
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
   }
 
-  .daily-brief__header {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-    align-items: flex-start;
-  }
-
   .daily-brief__header p,
-  .daily-brief__header h2,
-  .daily-brief__insight p,
+  .daily-brief__lead p,
   .daily-brief__facts {
     margin: 0;
   }
@@ -122,26 +123,26 @@
     font-size: var(--text-xs);
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
-  .daily-brief__header h2 {
-    margin-top: var(--space-1);
-    font-size: var(--text-lg);
-  }
-
-  .daily-brief__insight {
+  .daily-brief__lead {
     display: grid;
-    gap: var(--space-1);
+    gap: var(--space-2);
   }
 
-  .daily-brief__insight strong {
-    font-size: var(--text-base);
+  .daily-brief__title {
+    margin: 0;
+    font-size: clamp(1.125rem, 2.5vw, 1.35rem);
+    font-weight: 650;
+    line-height: 1.25;
   }
 
-  .daily-brief__insight p {
+  .daily-brief__statement {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
-    line-height: 1.5;
+    line-height: 1.55;
+    max-width: 42rem;
   }
 
   .daily-brief__facts {
@@ -169,11 +170,26 @@
     font-weight: 700;
   }
 
-  @media (max-width: 520px) {
-    .daily-brief__header {
-      flex-direction: column;
-    }
+  .daily-brief__bridge {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding-top: var(--space-1);
+    border-top: 1px solid var(--color-border);
+  }
 
+  .daily-brief__bridge a {
+    color: var(--color-primary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .daily-brief__bridge a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 520px) {
     .daily-brief__facts {
       grid-template-columns: 1fr;
     }
