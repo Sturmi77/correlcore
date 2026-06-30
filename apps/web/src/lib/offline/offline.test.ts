@@ -137,6 +137,31 @@ describe('offline Dexie foundation', () => {
     expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_2');
   });
 
+  it('wipes unknown-owner migrated offline data before assigning it to the current user', async () => {
+    const db = getOfflineDb();
+    await db.entries.put(sampleEntry('legacy-entry'));
+    await appendChange({
+      batch_id: 'legacy-batch',
+      entity_type: 'entry',
+      entity_id: 'legacy-entry',
+      operation: 'upsert',
+      payload: { id: 'legacy-entry' },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+    const legacyClientId = await getOrCreateClientId();
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBeNull();
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(legacyClientId);
+
+    await prepareOfflineDataForAuthenticatedUser('usr_2');
+
+    const freshDb = getOfflineDb();
+    expect(await freshDb.entries.count()).toBe(0);
+    expect(await freshDb.change_log.count()).toBe(0);
+    expect(await getSyncMeta(SYNC_META_KEYS.clientId)).toBeNull();
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBeNull();
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_2');
+  });
+
   it('wipes offline data and client identity for a confirmed anonymous session', async () => {
     const db = getOfflineDb();
     await setSyncMeta(SYNC_META_KEYS.ownerUserId, 'usr_1');
