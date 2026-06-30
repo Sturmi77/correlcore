@@ -23,6 +23,16 @@ tag is reused instead of producing a conflict. Completion sets the existing
 preferences `onboarding_retro_completed=true` and
 `onboarding_profile_completed=true`.
 
+## Amendment (2026-06-30) — Tags in first entry (O-06)
+
+Tag suggestions move from the default `/onboarding` wizard into the first
+`EntrySheet` on Home. `/onboarding` redirects to `/?openEntry=1`; the full
+three-step wizard remains at `/onboarding?preview=1` for QA and regression.
+
+`POST /api/v1/onboarding/complete` is still called on the first autosave when
+onboarding tag hints are shown, preserving idempotent slug handling and
+`onboarding_retro_completed` semantics.
+
 ## Consequences
 
 - No new user-level onboarding timestamp is added in M4.

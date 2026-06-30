@@ -5,6 +5,7 @@
 
   export let open = false;
   export let initialDate: string;
+  export let onboardingTagsEnabled = false;
 
   const dispatch = createEventDispatcher<{ close: void; saved: void }>();
 
@@ -98,6 +99,7 @@
             bind:this={entryForm}
             mode="sheet"
             {initialDate}
+            {onboardingTagsEnabled}
             on:close={handleFormClose}
             on:saved={handleFormSaved}
           />

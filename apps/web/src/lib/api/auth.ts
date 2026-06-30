@@ -70,9 +70,9 @@ export async function fetchCurrentUser(): Promise<UserResponse | null> {
   }
 }
 
-/** POST /auth/verify-email — confirms a user's email via the token from mail. */
-export async function verifyEmail(token: string): Promise<MessageResponse> {
-  return apiFetch<MessageResponse>('/auth/verify-email', {
+/** POST /auth/verify-email — confirms email and establishes a session via cookies. */
+export async function verifyEmail(token: string): Promise<TokenResponse> {
+  return apiFetch<TokenResponse>('/auth/verify-email', {
     method: 'POST',
     json: { token },
     skipAuthRefresh: true, // verify is a public endpoint

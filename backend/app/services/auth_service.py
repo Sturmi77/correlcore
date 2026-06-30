@@ -231,6 +231,16 @@ def _build_token_pair(user: User) -> tuple[str, str, str]:
     return access, refresh, jti
 
 
+async def issue_session_tokens(
+    token_store: TokenStore,
+    user: User,
+) -> tuple[str, str]:
+    """Issue a fresh access/refresh pair and persist the refresh JTI."""
+    access, refresh, jti = _build_token_pair(user)
+    await token_store.store(str(user.id), jti)
+    return access, refresh
+
+
 # ---------------------------------------------------------------------------
 # Register
 # ---------------------------------------------------------------------------
@@ -354,8 +364,7 @@ async def login_user(
         )
         raise EmailNotVerifiedError("Email not verified")
 
-    access, refresh, jti = _build_token_pair(user)
-    await token_store.store(str(user.id), jti)
+    access, refresh = await issue_session_tokens(token_store, user)
 
     logger.info("user logged in", extra={"user_id": str(user.id)})
     return access, refresh, user

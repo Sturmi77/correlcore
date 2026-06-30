@@ -1,7 +1,10 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { verifyEmail } from '$lib/api/auth';
+  import { setUser } from '$lib/stores/auth';
+  import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
 
   type Phase = 'idle' | 'busy' | 'success' | 'error' | 'missing-token';
 
@@ -21,8 +24,9 @@
     if (!token || phase === 'busy' || phase === 'success') return;
     phase = 'busy';
     try {
-      await verifyEmail(token);
-      phase = 'success';
+      const session = await verifyEmail(token);
+      setUser(session.user);
+      await goto(OPEN_ENTRY_HOME_PATH);
     } catch {
       // Backend returns a generic 400 for invalid/expired/used tokens
       // (anti-enumeration). ApiError and NetworkError both surface as
@@ -54,11 +58,6 @@
     <h1 class="auth-page-title">{$_('auth.verify.success_title')}</h1>
   </header>
   <p class="auth-body">{$_('auth.verify.success_body')}</p>
-  <nav class="auth-links">
-    <a href="/auth/login" class="btn variant-filled-primary auth-submit">
-      {$_('auth.verify.go_to_login')}
-    </a>
-  </nav>
 {:else if phase === 'error'}
   <header class="auth-page-header">
     <div class="auth-icon auth-icon-error" aria-hidden="true">
