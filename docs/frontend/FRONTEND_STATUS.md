@@ -150,7 +150,10 @@ instance inheritance limitation).
 | Theme parity      | `mobile-theme-parity.spec.ts`                        | Dark @390, five primary routes          |
 | Surface           | `surface-foundation.spec.ts`                         | Shell primitives                        |
 
-**Total mobile suite:** 18 tests via `npm run test:e2e:mobile` (run with `--workers=1`).
+**Total mobile suite:** 18 tests via `npm run test:e2e:mobile` (run with `--workers=1`).  
+**User journeys:** 12 tests via `pnpm test:e2e:journeys` — auth/onboarding/maturity matrix.
+
+**GUI optimization:** [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md) · Issues [#250](https://github.com/Sturmi77/correlcore/issues/250)–[#272](https://github.com/Sturmi77/correlcore/issues/272)
 
 ### CI pipeline (`ci-web.yml`)
 

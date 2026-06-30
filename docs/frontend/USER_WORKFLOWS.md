@@ -300,3 +300,5 @@ flowchart TD
 | [`mobile-web-audit.json`](../../apps/web/figma/mobile-web-audit.json) | Design ↔ code parity |
 | Playwright `user-journeys.spec.ts` | Automated journey regression |
 | [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md) | Step matrices + optimization scores |
+| [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md) | GitHub issue index O-01–O-20 |
+| [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md) | Sprint plan and dependencies |

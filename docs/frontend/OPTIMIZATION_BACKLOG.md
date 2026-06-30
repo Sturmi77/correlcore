@@ -1,253 +1,93 @@
 # CorrelCore — GUI Optimization Backlog
 
 **Date:** 2026-06-30  
-**Source:** [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md)  
-**Labels:** `workflow`, `friction`, `quick-win`, `needs-adr`, `ux`
-
-Prioritized implementation items derived from workflow walkthrough. Create GitHub issues from these templates.
-
----
-
-## Quick wins (implement first)
-
-### O-01 — Consolidate Insights maturity UI on mobile
-
-| Field | Value |
-|-------|-------|
-| **GitHub** | [#250](https://github.com/Sturmi77/correlcore/issues/250) |
-| **Labels** | `friction`, `quick-win`, `workflow`, `ux` |
-| **Workflows** | W5, W6 |
-| **Class** | Eliminieren |
-| **Friction score** | 4 (duplicate lead + stage header) |
-| **ADR conflict** | No — ADR-0021 phases remain visible |
-
-**Problem:** On mobile Insights (`/insights`), `MobileInsightLead` and `InsightStageHeader` both communicate maturity and top finding, wasting first-viewport space (see [`FRONTEND_STREAMLINE_CONCEPT.md`](../FRONTEND_STREAMLINE_CONCEPT.md)).
-
-**Proposal:** Show exactly one status block per screen. Keep `MobileInsightLead` OR compact `InsightStageHeader`, not both.
-
-**Acceptance criteria:**
-- [ ] Mobile 390px: single maturity/status region above view tabs
-- [ ] Desktop 1280px: unchanged analysis-first layout
-- [ ] `mobile-insights-foundation.spec.ts` and `user-journeys.spec.ts` pass
-
-**Files:** `apps/web/src/routes/insights/+page.svelte`, `MobileInsightLead.svelte`, `InsightStageHeader.svelte`
+**Epic PR:** [#255](https://github.com/Sturmi77/correlcore/pull/255)  
+**Implementation plan:** [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md)  
+**Source audit:** [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md) · [`USER_WORKFLOWS.md`](USER_WORKFLOWS.md)
 
 ---
 
-### O-02 — Open EntrySheet after onboarding complete
+## Issue index (O-01 – O-20)
 
-| Field | Value |
-|-------|-------|
-| **GitHub** | [#251](https://github.com/Sturmi77/correlcore/issues/251) |
-| **Labels** | `friction`, `quick-win`, `workflow`, `ux` |
-| **Workflows** | W2, W3 |
-| **Class** | Vorverlagern |
-| **Friction score** | 3 (extra home stop before first entry) |
-| **ADR conflict** | No |
+| ID | GitHub | Sprint | Impact | Effort | Title |
+|----|--------|--------|--------|--------|-------|
+| O-01 | [#250](https://github.com/Sturmi77/correlcore/issues/250) | A | High | Low | Consolidate Insights maturity UI on mobile |
+| O-02 | [#251](https://github.com/Sturmi77/correlcore/issues/251) | A | High | Low | Open EntrySheet after onboarding complete |
+| O-03 | [#252](https://github.com/Sturmi77/correlcore/issues/252) | A | Medium | Low | Insights empty-state CTA opens entry directly |
+| O-04 | [#253](https://github.com/Sturmi77/correlcore/issues/253) | B | Medium | Low | Redirect legacy onboarding routes |
+| O-05 | [#254](https://github.com/Sturmi77/correlcore/issues/254) | A | Low | Low | Hide Home sparkline until ≥3 entries |
+| O-06 | [#260](https://github.com/Sturmi77/correlcore/issues/260) | C | High | High | Integrate tag selection into first entry |
+| O-07 | [#261](https://github.com/Sturmi77/correlcore/issues/261) | C | High | Medium | Auto-login after email verification |
+| O-08 | [#262](https://github.com/Sturmi77/correlcore/issues/262) | E | Medium | High | Unify desktop entry surface |
+| O-09 | [#263](https://github.com/Sturmi77/correlcore/issues/263) | B | Medium | Medium | Habit hint in onboarding tag step |
+| O-11 | [#273](https://github.com/Sturmi77/correlcore/issues/273) | B | Low | Low | Check-email mobile mail-app deep link |
+| O-12 | [#264](https://github.com/Sturmi77/correlcore/issues/264) | D | High | Medium | Home Daily Brief brief-first layout |
+| O-13 | [#266](https://github.com/Sturmi77/correlcore/issues/266) | D | Medium | Medium | Home bridge for weekly analysis review |
+| O-14 | [#268](https://github.com/Sturmi77/correlcore/issues/268) | B | Medium | Low | Gate Insights matrix/co-occurrence by maturity |
+| O-15 | [#271](https://github.com/Sturmi77/correlcore/issues/271) | D | Medium | Medium | Trends global sticky range control (desktop) |
+| O-16 | [#265](https://github.com/Sturmi77/correlcore/issues/265) | B | Medium | Medium | Inline habit setup on empty Habits panel |
+| O-17 | [#267](https://github.com/Sturmi77/correlcore/issues/267) | E | Medium | Medium | Heatmap drill-down via EntryHistorySheet |
+| O-18 | [#269](https://github.com/Sturmi77/correlcore/issues/269) | Deferred | Medium | Low | Defer PWA install banner until after first entry |
+| O-19 | [#270](https://github.com/Sturmi77/correlcore/issues/270) | Deferred | Low | Low | Improve export discoverability in Settings |
+| O-20 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | Blocked | Medium | High | Password reset UI (backend missing) |
 
-**Problem:** After onboarding "Start tracking", user lands on Home and must tap CTA again to log first entry (FRICTION_AUDIT W2 step 9).
-
-**Proposal:** On `completeOnboarding` success, navigate to `/` with query `?openEntry=1` or dispatch open EntrySheet from Home mount when `entry_count === 0` post-onboarding.
-
-**Acceptance criteria:**
-- [ ] Completing onboarding opens EntrySheet automatically once
-- [ ] Skip path also offers optional immediate entry
-- [ ] `user-journeys.spec.ts` onboarding tests updated
-
-**Files:** `apps/web/src/routes/onboarding/+page.svelte`, `apps/web/src/routes/+page.svelte`
-
----
-
-### O-03 — Insights empty-state CTA opens entry directly
-
-| Field | Value |
-|-------|-------|
-| **GitHub** | [#252](https://github.com/Sturmi77/correlcore/issues/252) |
-| **Labels** | `friction`, `quick-win`, `workflow`, `ux` |
-| **Workflows** | W5 |
-| **Class** | Umleiten |
-| **Friction score** | 2 |
-| **ADR conflict** | No |
-
-**Problem:** Collecting-phase Insights empty state links to Home, requiring another tap for entry.
-
-**Proposal:** CTA triggers `goto('/?openEntry=1')` or uses shared entry-open event.
-
-**Acceptance criteria:**
-- [ ] Empty state CTA reaches entry capture in one tap from Insights
-- [ ] Works on mobile and desktop
-
-**Files:** `apps/web/src/lib/components/insights/InsightFeed.svelte`
+> **Note:** O-10 is intentionally unused (reserved). Former “O-10 password / O-11 Phase 5 / O-12 Figma” map to **O-20**, **O-08**, and out-of-scope Figma Sprint H respectively.
 
 ---
 
-### O-04 — Redirect legacy onboarding routes
+## Sprint execution order
 
-| Field | Value |
-|-------|-------|
-| **GitHub** | [#253](https://github.com/Sturmi77/correlcore/issues/253) |
-| **Labels** | `friction`, `quick-win`, `workflow`, `ux` |
-| **Workflows** | W2 |
-| **Class** | Eliminieren |
-| **Friction score** | 8 (legacy retro + profile path) |
-| **ADR conflict** | No — ADR-0030 supersedes |
+See [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md) for dependencies, technical patterns, and exit criteria.
 
-**Problem:** `/onboarding/retro` and `/onboarding/profile` remain reachable via deep link but are bypassed by guided onboarding, causing confusion.
-
-**Proposal:** Replace pages with `goto('/onboarding', { replaceState: true })` or show deprecation notice + redirect.
-
-**Acceptance criteria:**
-- [ ] Direct navigation to legacy routes redirects to `/onboarding`
-- [ ] No broken links in docs or Settings dev preview
-
-**Files:** `apps/web/src/routes/onboarding/retro/+page.svelte`, `apps/web/src/routes/onboarding/profile/+page.svelte`
+| Sprint | Issues | Goal |
+|--------|--------|------|
+| **A — Quick wins** | #250, #251, #252, #254 | First-week friction removal |
+| **B — Cleanup** | #253, #263, #268, #265, #273 | Legacy paths, habits, matrix gates |
+| **C — Auth & onboarding** | #261, #260 (after #251) | Shorter new-user funnel |
+| **D — Analysis IA** | #264, #266, #271 (after #250) | Brief-first Home, weekly review |
+| **E — Desktop polish** | #262, #267 | Entry surface + drill-down |
+| **Deferred** | #269, #270 | PWA timing, export UX |
+| **Blocked** | #272 | Password reset |
 
 ---
 
-### O-05 — Hide Home sparkline until sufficient data
+## Workflow coverage matrix
 
-| Field | Value |
-|-------|-------|
-| **GitHub** | [#254](https://github.com/Sturmi77/correlcore/issues/254) |
-| **Labels** | `friction`, `quick-win`, `workflow`, `ux` |
-| **Workflows** | W5 |
-| **Class** | Vereinfachen |
-| **Friction score** | 2 |
-| **ADR conflict** | No |
-
-**Problem:** Sparkline with 1–2 points adds visual noise without insight (FRICTION_AUDIT W5 collecting).
-
-**Proposal:** Render `HomeSparkline` only when `recentEntries.length >= 3`.
-
-**Acceptance criteria:**
-- [ ] 0–2 entries: sparkline hidden, CTA remains
-- [ ] 3+ entries: sparkline visible as today
-
-**Files:** `apps/web/src/routes/+page.svelte`, `HomeSparkline.svelte`
+| Workflow | Issues |
+|----------|--------|
+| W1 Account | #261, #273, #272 |
+| W2 Onboarding | #251, #253, #260, #263 |
+| W3 Daily entry | #251, #260, #262 |
+| W4 Backdate | #262, #267 |
+| W5 First insight | #250, #252, #254, #264, #268 |
+| W6 Weekly analysis | #250, #264, #266, #268, #271, #267 |
+| W7 Habits | #263, #265 |
+| W8 Vocabulary | — (low friction, no ticket) |
+| W9 Export | #270 |
+| W10 PWA | #269 |
 
 ---
 
-## Strategic items (higher effort)
+## Optimization classes legend
 
-### O-06 — Integrate tag selection into first entry
-
-| Field | Value |
-|-------|-------|
-| **Labels** | `friction`, `workflow`, `ux`, `needs-adr` |
-| **Workflows** | W2, W3 |
-| **Class** | Vorverlagern |
-| **Friction score** | 6+ |
-| **ADR conflict** | Yes — ADR-0030 update required |
-
-**Problem:** Separate 3-step onboarding delays time-to-first-entry by ~2 minutes.
-
-**Proposal:** Collapse tag onboarding into first `EntrySheet` session with inline suggestions; keep `POST /onboarding/complete` on first save or skip.
-
-**Acceptance criteria:**
-- [ ] New user can log first entry without separate onboarding wizard
-- [ ] Tag suggestions still offered inline
-- [ ] ADR documents scope change
+`Eliminieren` · `Vorverlagern` · `Zusammenführen` · `Vereinfachen` · `Umleiten` · `Nicht ändern`
 
 ---
 
-### O-07 — Auto-login after email verification
+## Governance
 
-| Field | Value |
-|-------|-------|
-| **Labels** | `friction`, `workflow`, `ux`, `needs-adr` |
-| **Workflows** | W1 |
-| **Class** | Zusammenführen |
-| **Friction score** | 4 |
-| **ADR conflict** | Yes — ADR-0004 |
-
-**Problem:** Register → check-email → verify → login is four screens before first app use.
-
-**Proposal:** Issue short-lived session cookie on successful verify; redirect to `/` or onboarding.
-
-**Acceptance criteria:**
-- [ ] Verified user reaches app without manual login step
-- [ ] Security review: token burn, session fixation
-- [ ] ADR-0004 amendment
+- No 6th nav tab (ADR-0017)
+- No gamification (DESIGN_DOCUMENT §1.4)
+- Insight maturity model unchanged in meaning (ADR-0021); display may consolidate
+- ADR required before: #260 (ADR-0030), #261 (ADR-0004)
 
 ---
 
-### O-08 — Unify desktop entry surface
-
-| Field | Value |
-|-------|-------|
-| **Labels** | `friction`, `workflow`, `ux` |
-| **Workflows** | W3, W4 |
-| **Class** | Zusammenführen |
-| **Friction score** | 4 |
-| **ADR conflict** | No |
-
-**Problem:** Desktop users encounter both `EntrySheet` (Home) and `/entries/new` (deep links) with different chrome.
-
-**Proposal:** Phase 5 — standardize on one desktop capture pattern; align Trends empty-state CTAs.
-
-**Acceptance criteria:**
-- [ ] Single documented desktop entry path
-- [ ] `FRONTEND_STATUS.md` Entry web status → green
-
----
-
-### O-09 — Habit hint in onboarding tag step
-
-| Field | Value |
-|-------|-------|
-| **Labels** | `friction`, `workflow`, `ux` |
-| **Workflows** | W2, W7 |
-| **Class** | Vorverlagern |
-| **Friction score** | 3 |
-| **ADR conflict** | Related to ADR-0034 (cycle toggle) |
-
-**Problem:** Habit configuration only discoverable in Settings; Habits tab empty without prior setup.
-
-**Proposal:** Optional "Track as habit" toggle on selected tags during onboarding; link to ADR-0034 cycle opt-in.
-
----
-
-## Deferred / out of scope (document only)
-
-| ID | Item | Reason |
-|----|------|--------|
-| O-10 | Password reset UI | Backend not implemented |
-| O-11 | Phase 5 desktop entry workspace | Separate track |
-| O-12 | Figma Code Connect publish | Design tooling, not user flow |
-
----
-
-## Priority matrix
-
-| ID | Impact | Effort | Quadrant |
-|----|--------|--------|----------|
-| O-01 | High | Low | Quick win |
-| O-02 | High | Low | Quick win |
-| O-03 | Medium | Low | Quick win |
-| O-04 | Medium | Low | Quick win |
-| O-05 | Low | Low | Quick win |
-| O-06 | High | High | Strategic |
-| O-07 | High | Medium | Strategic |
-| O-08 | Medium | High | Strategic |
-| O-09 | Medium | Medium | Strategic |
-
----
-
-## Suggested sprint grouping
-
-**Sprint A (quick wins):** O-01, O-02, O-03, O-05  
-**Sprint B (cleanup):** O-04, O-09  
-**Sprint C (strategic):** O-06, O-07, O-08 (each needs design + ADR review)
-
----
-
-## Issue creation command template
+## Regression commands
 
 ```bash
-gh issue create \
-  --title "ux: O-01 Consolidate Insights maturity UI on mobile" \
-  --label "friction,quick-win,workflow,ux" \
-  --body-file docs/frontend/issues/O-01.md
+pnpm lint && pnpm typecheck && pnpm test
+pnpm --filter @correlcore/web test:e2e:journeys --workers=1
+pnpm --filter @correlcore/web test:e2e:mobile --workers=1
+pnpm --filter @correlcore/web test:e2e:smoke
 ```
-
-Copy acceptance criteria from sections above into per-issue files when creating tickets.

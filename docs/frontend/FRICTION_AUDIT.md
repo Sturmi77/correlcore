@@ -204,7 +204,8 @@
 
 ## Prioritized optimization backlog
 
-See [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md) for GitHub-issue-ready entries.
+See [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md) for the full GitHub issue index (#250–#272).  
+**Implementation plan:** [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md)
 
 ### Quick wins (impact × low effort)
 
