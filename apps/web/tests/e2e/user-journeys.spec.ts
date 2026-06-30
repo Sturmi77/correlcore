@@ -299,29 +299,31 @@ async function installJourneyApi(
           color: null,
           is_default: false,
           is_hidden: false,
-          habit_type: 'none',
-          target_frequency: null,
+          habit_type: 'none' as const,
+          target_frequency: null as number | null,
           created_at: now,
           updated_at: now,
         },
+        ...(profile === 'month_user'
+          ? [
+              {
+                id: habitTagId,
+                user_id: user.id,
+                slug: 'meditation',
+                name: 'Meditation',
+                category: 'health',
+                icon: null,
+                color: null,
+                is_default: false,
+                is_hidden: false,
+                habit_type: 'build' as const,
+                target_frequency: 5,
+                created_at: now,
+                updated_at: now,
+              },
+            ]
+          : []),
       ];
-      if (profile === 'month_user') {
-        tags.push({
-          id: habitTagId,
-          user_id: user.id,
-          slug: 'meditation',
-          name: 'Meditation',
-          category: 'health',
-          icon: null,
-          color: null,
-          is_default: false,
-          is_hidden: false,
-          habit_type: 'build',
-          target_frequency: 5,
-          created_at: now,
-          updated_at: now,
-        });
-      }
       return json(200, tags);
     }
 
