@@ -97,7 +97,7 @@ Every item explicitly excluded from M4/M5/M7 closeout maps here.
 
 | Roadmap ID  | Title                        | Scope summary                                              | GitHub issues / refs                                                                |
 | ----------- | ---------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **M4.1**    | Offline-First Sync           | Dexie.js, delta sync, conflict log, retry queue            | #10, #24; [ADR-0009](adr/0009-offline-sync-nach-m4.md)                              |
+| **M4.1**    | Offline-First Sync           | Dexie.js, delta sync, conflict log, retry queue            | #10, #24; [M4.1_SPRINT_PLAN.md](M4.1_SPRINT_PLAN.md) · [ADR-0009](adr/0009-offline-sync-nach-m4.md) |
 | **M4.2**    | Push & App Lock              | UnifiedPush / FCM, app lock, install polish                | Original M4 scope; blocked by M4.1 for offline push UX                              |
 | **M5.1**    | Tag co-occurrence (shipped)  | Patterns heatmap on `/insights`                            | Closeout done 2026-05-29 — [`quality/M5_1_VISUAL_QA.md`](quality/M5_1_VISUAL_QA.md) |
 | **M7-S8**   | Insights optional LLM/Digest | Ollama statements, weekly push digest                      | #147, #148 (`milestone:M7-S8`); requires M4.2 push                                   |
