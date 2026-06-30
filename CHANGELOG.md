@@ -6,9 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — M4/M5 auf main
+## [Unreleased] — M7-C closeout + M4/M5 pending
 
 ### Changed
+
+- **M7 milestone complete (Sprint M7-C).** Formal closeout: audit findings and deferred-work
+  index in [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md); quality gate verdict
+  **M7 Complete** in [`docs/quality/M7_QUALITY_GATE.md`](docs/quality/M7_QUALITY_GATE.md);
+  Sprint 9 visual QA sign-off [`docs/quality/M7_SPRINT9_VISUAL_QA.md`](docs/quality/M7_SPRINT9_VISUAL_QA.md);
+  GitHub #146/#150 closed. Optional LLM/digest (#147/#148) → M7-S8; changepoint (#149) → post-M7.
 
 - **M7 Sprint 9 complete — spec complete.** Entry-history drawer and symptom×tag detail sheet on
   `/insights`; confounded insight cards with ranking tie-break; heatmap keyboard navigation, tag
