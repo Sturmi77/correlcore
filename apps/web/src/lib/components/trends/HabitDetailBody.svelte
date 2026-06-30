@@ -5,8 +5,10 @@
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import type { TagResponse } from '$lib/api/tags';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
-
-  export const MIN_HABIT_DAYS = 7;
+  import {
+    habitMetricI18nKey,
+    isHabitAdherenceInsufficient,
+  } from '$lib/utils/habitMetrics';
 
   export let selected: { habit: HabitStatsResponse; tag: TagResponse };
   export let detailHeatmap: TagHeatmapResponse | null = null;
@@ -19,13 +21,13 @@
   }
 
   function metricLabel(metric: string | null | undefined): string {
-    if (!metric) return '';
-    const key = `trends.metric.${metric}`;
+    const key = habitMetricI18nKey(metric);
+    if (!key) return '';
     const translated = $_(key);
-    return translated === key ? metric : translated;
+    return translated === key ? (metric ?? '') : translated;
   }
 
-  $: insufficient = selected.habit.days_tracked < MIN_HABIT_DAYS;
+  $: insufficient = isHabitAdherenceInsufficient(selected.habit);
 </script>
 
 <article class="habit-detail" data-testid="habit-detail">
@@ -81,14 +83,14 @@
         </p>
       </section>
     {/if}
-
-    <TagHeatmap
-      heatmap={detailHeatmap}
-      {loading}
-      compact
-      on:selectDate={(event) => dispatch('selectDate', event.detail)}
-    />
   {/if}
+
+  <TagHeatmap
+    heatmap={detailHeatmap}
+    {loading}
+    compact
+    on:selectDate={(event) => dispatch('selectDate', event.detail)}
+  />
 </article>
 
 <style>

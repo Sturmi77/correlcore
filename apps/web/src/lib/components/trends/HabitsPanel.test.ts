@@ -26,6 +26,7 @@ vi.mock('svelte-i18n', async () => {
         return `${values.name} predictor r=${values.score}`;
       }
       if (key === 'habits.insufficient_data') return 'Not enough data yet';
+      if (key === 'trends.metric.mood') return 'mood';
       return options?.values?.n ? `${key}:${options.values.n}` : key;
     }),
   };
@@ -91,10 +92,10 @@ describe('HabitsPanel', () => {
     expect(screen.getByText('habits.empty')).toBeTruthy();
   });
 
-  it('shows insufficient-data state for sparse habits', () => {
+  it('shows insufficient-data state for sparse high-target habits', () => {
     render(HabitsPanel, {
       props: {
-        habits: [{ ...habits[0], days_tracked: 2 }],
+        habits: [{ ...habits[0], days_tracked: 2, target_days: 16 }],
         tags,
         window: 28,
       },
@@ -102,5 +103,39 @@ describe('HabitsPanel', () => {
 
     expect(screen.getByTestId('habit-insufficient-data')).toBeTruthy();
     expect(screen.getByText('Not enough data yet')).toBeTruthy();
+  });
+
+  it('shows adherence stats for met low-frequency habits before seven occurrences', () => {
+    render(HabitsPanel, {
+      props: {
+        habits: [
+          {
+            ...habits[0],
+            window: 7,
+            days_total: 7,
+            target_days: 3,
+            days_tracked: 3,
+            adherence_rate: 100,
+          },
+        ],
+        tags,
+        window: 7,
+      },
+    });
+
+    expect(screen.queryByTestId('habit-insufficient-data')).toBeNull();
+    expect(screen.getByRole('meter')).toBeTruthy();
+  });
+
+  it('normalizes mood_score correlation labels', () => {
+    render(HabitsPanel, {
+      props: {
+        habits: [{ ...habits[0], correlation_metric: 'mood_score' }],
+        tags,
+        window: 28,
+      },
+    });
+
+    expect(screen.getByText('r=0.72 mood')).toBeTruthy();
   });
 });

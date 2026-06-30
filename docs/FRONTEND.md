@@ -454,7 +454,7 @@ Time range: [7D] [30D] [90D] [1Y]
 - Mobile uses one controlled horizontal timeline scroller with sticky row labels and compact layer controls. Desktop uses a wider analysis canvas, sticky controls, and may keep an entry-detail panel open beside the chart.
 - Health tab may show a cycle-day strip when entries contain `cycle_day`; it must not infer phases or provide medical interpretation.
 - Habits tab shows goal-based adherence for `build` / `reduce` habit tags, with a 7/14/28/90 day window selector.
-- Habit detail reuses the neutral tag heatmap and may show a correlation contribution from existing insights; no streak counters, badges, points, rewards or urgency framing.
+- Habit detail reuses the neutral tag heatmap and may show a correlation contribution from existing insights; insufficient-data copy is target-aware (heatmap remains visible); no streak counters, badges, points, rewards or urgency framing.
 
 ---
 
