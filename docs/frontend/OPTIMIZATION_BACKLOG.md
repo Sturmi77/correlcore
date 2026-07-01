@@ -44,8 +44,8 @@
 | O-21 | H      | High   | Medium | **Done** #289     | Entry: tags/symptoms/time slots always visible    |
 | O-30 | H      | Medium | Low    | **Done** #288     | Spacing foundation (`screen-stack`, tokens)       |
 | O-23 | H      | High   | Medium | **Done** Sprint H | Global `analysisRange` (Trends + Insights)        |
-| O-22 | H      | High   | Medium | Partial           | Insights single control row (chips + matrix link) |
-| O-24 | H      | Medium | Low    | Open              | Symptom analytics via category filter             |
+| O-22 | H      | High   | Medium | **Done** Sprint H | Insights single control row (chips + matrix link) |
+| O-24 | H      | Medium | Low    | **Done** Sprint H | Symptom analytics via category filter             |
 | O-40 | I      | Medium | Medium | Partial           | Cross-link Trends ↔ Insights top finding          |
 | O-41 | M      | Medium | High   | Open              | Trends Compare + Health tab consolidation         |
 | O-39 | I      | Medium | Low    | Partial           | Home brief: entries-until-milestone inline        |
@@ -74,7 +74,7 @@
 
 | Sprint                      | Issues                       | Goal                     |
 | --------------------------- | ---------------------------- | ------------------------ |
-| **H — Analyse-Kern**        | O-22, O-24 (O-23 ✅)         | Insights IA (Range done) |
+| **H — Analyse-Kern**        | O-23, O-22, O-24 ✅          | Insights IA complete     |
 | **I — Home & Links**        | O-39, O-40                   | Weekly review bridge     |
 | **J — Entry & Desktop**     | O-36, O-08, O-38             | W3/W4 audit rest         |
 | **K — Onboarding & Habits** | O-37, O-09                   | W2/W7 audit rest         |
@@ -91,8 +91,8 @@
 | W2 Onboarding      | O-37                                           |
 | W3 Daily entry     | O-36, O-08, O-38, ~~O-21~~                     |
 | W4 Backdate        | O-08                                           |
-| W5 First insight   | O-22, O-34, O-39                               |
-| W6 Weekly analysis | O-23, O-22, O-24, O-13, O-40, O-41, O-26, O-29 |
+| W5 First insight   | O-34, O-39                                     |
+| W6 Weekly analysis | O-13, O-40, O-41, O-26, O-29                   |
 | W7 Habits          | O-09                                           |
 | W8 Vocabulary      | O-27                                           |
 | W9 Export          | — (complete)                                   |

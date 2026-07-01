@@ -170,6 +170,21 @@ describe('InsightFeed', () => {
     expect(list.querySelectorAll('li').length).toBe(1);
   });
 
+  it('uses external filterTab when provided', async () => {
+    const moodInsight = makeInsight({ id: 'm', metric: 'mood' });
+    const sleepInsight = makeInsight({ id: 's', metric: 'sleep' });
+    render(InsightFeed, {
+      props: {
+        insights: [moodInsight, sleepInsight],
+        filterTab: 'mood',
+        showFilters: false,
+      },
+    });
+    const list = screen.getByTestId('insight-feed-list');
+    expect(list.querySelectorAll('li').length).toBe(1);
+    expect(screen.queryByTestId('insight-feed-tabs')).toBeNull();
+  });
+
   // ── Header ────────────────────────────────────────────────────────
   it('does not render a duplicate screen title', () => {
     render(InsightFeed, { props: { insights: [] } });

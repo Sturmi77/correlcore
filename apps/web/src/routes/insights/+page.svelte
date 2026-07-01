@@ -41,7 +41,7 @@
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
+  import TabBar from '$lib/components/common/TabBar.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
@@ -69,7 +69,11 @@
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
-  import { rankInsights } from '$lib/utils/insightRanking';
+  import {
+    getInsightFeedFilterTabs,
+    rankedInsightsForTab,
+    type InsightFeedFilterTab,
+  } from '$lib/utils/insightFeedFilter';
   import { countMatrixInsights, MATRIX_TAB_MIN_INSIGHTS } from '$lib/utils/insightMatrixGate';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
@@ -118,15 +122,9 @@
   let cooccurrenceRequestId = 0;
   let symptomCooccurrenceRequested = false;
   let symptomCooccurrenceRequestId = 0;
-  let showInsightSymptoms = true;
+  let filterTab: InsightFeedFilterTab = 'all';
   let compactInsights = false;
   let mobileMedia: MediaQueryList | null = null;
-
-  const INSIGHT_SYMPTOMS_STORAGE_KEY = 'cc_insights_symptoms';
-  const detailViewTabs: { id: DetailView; label: string }[] = [
-    { id: 'findings', label: 'insights.page.findings_view' },
-    { id: 'matrix', label: 'insights.page.matrix_view' },
-  ];
 
   const analysisRangeOptions: { id: TimeseriesRange; label: string }[] = [
     { id: 'week', label: 'trends.range.week' },
@@ -161,12 +159,7 @@
     })
   );
 
-  function setShowInsightSymptoms(value: boolean): void {
-    showInsightSymptoms = value;
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(INSIGHT_SYMPTOMS_STORAGE_KEY, value ? 'true' : 'false');
-    }
-  }
+  $: filterTabOptions = getInsightFeedFilterTabs($_);
 
   async function loadCooccurrence(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
@@ -453,7 +446,6 @@
   }
 
   onMount(() => {
-    showInsightSymptoms = localStorage.getItem(INSIGHT_SYMPTOMS_STORAGE_KEY) !== 'false';
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     syncCompactInsights();
     mobileMedia?.addEventListener('change', syncCompactInsights);
@@ -466,17 +458,16 @@
     userPreferences?.reached_milestone_keys
   );
   $: showSymptomAnalytics =
-    showInsightSymptoms && (!insightMaturity || insightMaturity.phase !== 'collecting');
+    filterTab === 'symptoms' && (!insightMaturity || insightMaturity.phase !== 'collecting');
   $: matrixInsightCount = countMatrixInsights(insights);
   $: showMatrixTab = matrixInsightCount >= MATRIX_TAB_MIN_INSIGHTS;
   $: showAdvancedAnalytics = Boolean(insightMaturity && insightMaturity.phase !== 'collecting');
-  $: visibleDetailViewTabs = detailViewTabs.filter((tab) => tab.id !== 'matrix' || showMatrixTab);
   $: if (!showMatrixTab && detailView === 'matrix') {
     detailView = 'findings';
   }
-  $: rankedInsights = rankInsights(insights);
-  $: primaryMobileInsight = rankedInsights[0] ?? null;
-  $: remainingMobileInsights = rankedInsights.slice(1);
+  $: filteredRankedInsights = rankedInsightsForTab(insights, filterTab);
+  $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
+  $: remainingMobileInsights = filteredRankedInsights.slice(1);
 
   async function dismissMaturityMilestone(key: string): Promise<void> {
     const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
@@ -517,14 +508,6 @@
       void loadSymptomCooccurrence();
     }
   }
-
-  $: detailViewOptions = visibleDetailViewTabs.map(
-    (tab): TabBarOption => ({
-      id: tab.id,
-      label: $_(tab.label),
-      testId: `insights-view-${tab.id}`,
-    })
-  );
 </script>
 
 <svelte:head>
@@ -579,38 +562,66 @@
       />
     {/if}
 
-    <TabBar
-      value={detailView}
-      options={detailViewOptions}
-      ariaLabel={$_('insights.page.detail_views')}
-      testId="insights-view-tabs"
-      on:change={(event) => (detailView = event.detail.value as DetailView)}
-    />
-
     {#if detailView === 'matrix'}
+      <div class="insights-page__findings-toolbar" data-testid="insights-findings-toolbar">
+        <button
+          type="button"
+          class="insights-page__view-link"
+          data-testid="insights-findings-link"
+          on:click={() => (detailView = 'findings')}
+        >
+          {$_('insights.page.findings_view')}
+        </button>
+      </div>
       <InsightMatrix {insights} />
-    {:else if compactInsights && primaryMobileInsight && remainingMobileInsights.length > 0 && !feedLoading && !error}
-      <section class="insights-page__more" data-testid="mobile-insights-more">
-        <h2>{$_('insights.mobile.more_heading')}</h2>
+    {:else}
+      <div class="insights-page__findings-toolbar" data-testid="insights-findings-toolbar">
+        <TabBar
+          value={filterTab}
+          options={filterTabOptions}
+          ariaLabel={$_('insights.feed.filter_label')}
+          testId="insights-filter-tabs"
+          on:change={(event) => (filterTab = event.detail.value as InsightFeedFilterTab)}
+        />
+        {#if showMatrixTab}
+          <button
+            type="button"
+            class="insights-page__view-link"
+            data-testid="insights-matrix-link"
+            on:click={() => (detailView = 'matrix')}
+          >
+            {$_('insights.page.matrix_view')}
+          </button>
+        {/if}
+      </div>
+
+      {#if compactInsights && primaryMobileInsight && remainingMobileInsights.length > 0 && !feedLoading && !error}
+        <section class="insights-page__more" data-testid="mobile-insights-more">
+          <h2>{$_('insights.mobile.more_heading')}</h2>
+          <InsightFeed
+            insights={remainingMobileInsights}
+            maturity={insightMaturity}
+            {entryCount}
+            {inactiveTagIds}
+            {filterTab}
+            showContext={false}
+            showFilters={false}
+            on:retry={loadInsights}
+          />
+        </section>
+      {:else if !compactInsights || !primaryMobileInsight || feedLoading || error}
         <InsightFeed
-          insights={remainingMobileInsights}
+          {insights}
           maturity={insightMaturity}
+          loading={feedLoading}
+          {error}
           {entryCount}
           {inactiveTagIds}
-          showContext={false}
+          {filterTab}
+          showFilters={false}
           on:retry={loadInsights}
         />
-      </section>
-    {:else if !compactInsights || !primaryMobileInsight || feedLoading || error}
-      <InsightFeed
-        {insights}
-        maturity={insightMaturity}
-        loading={feedLoading}
-        {error}
-        {entryCount}
-        {inactiveTagIds}
-        on:retry={loadInsights}
-      />
+      {/if}
     {/if}
 
     {#if showAdvancedAnalytics}
@@ -621,15 +632,6 @@
         </summary>
 
         <div class="insights-page__analytics-body">
-          <label class="insights-page__layer-toggle">
-            <input
-              type="checkbox"
-              checked={showInsightSymptoms}
-              on:change={(event) => setShowInsightSymptoms(event.currentTarget.checked)}
-            />
-            <span>{$_('insights.page.symptoms_toggle')}</span>
-          </label>
-
           {#if showSymptomAnalytics}
             <SymptomAnalyticsSection
               heatmap={symptomHeatmap}
@@ -746,14 +748,34 @@
     overflow-x: clip;
   }
 
-  .insights-page__layer-toggle {
-    min-height: 44px;
-    display: inline-flex;
+  .insights-page__findings-toolbar {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
     gap: var(--space-2);
-    color: var(--color-text-muted);
+  }
+
+  .insights-page__view-link {
+    min-height: 44px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+    border-radius: var(--radius-full);
+    padding: var(--space-2) var(--space-3);
+    color: var(--color-primary);
+    font: inherit;
     font-size: var(--text-sm);
-    font-weight: 700;
+    font-weight: 650;
+    background: var(--color-primary-highlight);
+    transition:
+      background-color var(--transition-interactive),
+      border-color var(--transition-interactive),
+      color var(--transition-interactive);
+  }
+
+  .insights-page__view-link:hover,
+  .insights-page__view-link:focus-visible {
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-primary-highlight) 80%, var(--color-surface));
   }
 
   .insights-page__more {

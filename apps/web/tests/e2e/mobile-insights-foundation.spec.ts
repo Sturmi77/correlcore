@@ -11,9 +11,9 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
 
   const lead = page.getByTestId('mobile-insight-lead');
   const confidence = page.getByTestId('insight-card-confidence-summary');
-  const viewTabs = page.getByTestId('insights-view-tabs');
+  const findingsToolbar = page.getByTestId('insights-findings-toolbar');
 
-  await expect(viewTabs).toBeVisible({ timeout: 30_000 });
+  await expect(findingsToolbar).toBeVisible({ timeout: 30_000 });
   await expect(lead).toBeVisible({ timeout: 30_000 });
   await expect(lead.getByTestId('insight-card-title')).toContainText(/Energy/i);
   await expect(confidence).toBeVisible();
@@ -24,11 +24,11 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
 
   const order = await page.evaluate(() => {
     const leadNode = document.querySelector('[data-testid="mobile-insight-lead"]');
-    const tabsNode = document.querySelector('[data-testid="insights-view-tabs"]');
-    return Boolean(leadNode && tabsNode && leadNode.compareDocumentPosition(tabsNode) & 4);
+    const toolbarNode = document.querySelector('[data-testid="insights-findings-toolbar"]');
+    return Boolean(leadNode && toolbarNode && leadNode.compareDocumentPosition(toolbarNode) & 4);
   });
   expect(order).toBe(true);
-  await expect(viewTabs).toBeVisible();
+  await expect(findingsToolbar).toBeVisible();
 
   const layout = await page.evaluate(() => ({
     viewport: window.innerWidth,
@@ -42,13 +42,13 @@ test('430px keeps matrices and analytics behind explicit detail actions', async 
   await installInsightsApiMock(page);
   await page.goto('/insights');
 
-  await page.getByTestId('insights-view-matrix').tap();
+  await page.getByTestId('insights-matrix-link').tap();
   await expect(page.getByTestId('insight-matrix')).toBeVisible();
   await expect(page.getByTestId('mobile-insight-lead')).toHaveCount(0);
 
-  await page.getByTestId('insights-view-findings').tap();
+  await page.getByTestId('insights-findings-link').tap();
   await expect(page.getByTestId('mobile-insight-lead')).toBeVisible();
-  await page.getByTestId('insight-feed-tab-symptoms').tap();
+  await page.getByTestId('insights-filter-tab-symptoms').tap();
   await expect(
     page
       .getByTestId('mobile-insights-more')
@@ -76,7 +76,7 @@ test('desktop preserves the existing analysis-first composition', async ({ page 
   await expect(page.getByTestId('insight-feed')).toBeVisible();
   await expect(page.getByTestId('insight-card')).toHaveCount(4);
 
-  await page.getByTestId('insights-view-matrix').click();
+  await page.getByTestId('insights-matrix-link').click();
   await expect(page.getByTestId('insight-matrix')).toBeVisible();
 
   const layout = await page.evaluate(() => ({
