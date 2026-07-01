@@ -14,7 +14,6 @@
   import EntrySheet from './EntrySheet.svelte';
 
   let sheetOpen = false;
-  let openEntryHandled = false;
 
   $: sheetOpen = $entrySheetStore.open;
   $: if (!sheetOpen && $entrySheetStore.open) {
@@ -31,13 +30,12 @@
   }
 
   function maybeOpenFromQuery(): void {
-    if (get(auth).status !== 'authenticated' || openEntryHandled) return;
+    if (get(auth).status !== 'authenticated') return;
     const params =
       typeof window !== 'undefined'
         ? new URL(window.location.href).searchParams
         : $page.url.searchParams;
     if (!isOpenEntryRequested(params)) return;
-    openEntryHandled = true;
     const date = entryDateFromSearchParams(params) ?? isoDate(new Date());
     openEntrySheet(date);
     stripOpenEntryQuery();
@@ -51,7 +49,6 @@
   onMount(() => {
     const unsubscribeAuth = auth.subscribe((state) => {
       if (state.status !== 'authenticated') {
-        openEntryHandled = false;
         closeEntrySheet();
         sheetOpen = false;
         return;

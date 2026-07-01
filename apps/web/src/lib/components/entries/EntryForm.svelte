@@ -113,6 +113,7 @@
   // — needed during hydration so loading an existing entry doesn't
   // immediately schedule a save back to the server.
   let hydrating = false;
+  let applyingSmartDefaults = false;
   let dayDelta: EntryDeltaResponse | null = null;
   let dayDeltaLoading = false;
   let dayDeltaToken = 0;
@@ -160,16 +161,24 @@
   }
 
   async function applySmartDefaults(date: string, slot: EntrySlot, token: number): Promise<void> {
+    let appliedDefaults = false;
     try {
       const result = await fetchEntryDelta({ entry_date: date, slot });
-      if (token !== loadToken || existingEntryId) return;
+      if (token !== loadToken || existingEntryId || autoSave.peek().status !== 'idle') return;
       const defaults = scaleDefaultsFromPrevious(result.previous);
       if (!defaults) return;
+      applyingSmartDefaults = true;
+      appliedDefaults = true;
       moodScore = defaults.mood_score;
       energy = defaults.energy;
       stress = defaults.stress;
+      await Promise.resolve();
     } catch {
       // Keep neutral defaults when the comparison endpoint is unavailable.
+    } finally {
+      if (appliedDefaults) {
+        applyingSmartDefaults = false;
+      }
     }
   }
 
@@ -503,7 +512,7 @@
   $: autoSaveSnap = $autoSaveState;
 
   function markDirty() {
-    if (hydrating || loading) return;
+    if (hydrating || loading || applyingSmartDefaults) return;
     // Per-route guard: don't try to auto-save when the user has dialed
     // into a load-error — they need to retry the load first.
     autoSave.markDirty();
