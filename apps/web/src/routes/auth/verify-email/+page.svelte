@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { verifyEmail } from '$lib/api/auth';
   import { setUser } from '$lib/stores/auth';
@@ -8,17 +8,21 @@
 
   type Phase = 'idle' | 'busy' | 'success' | 'error' | 'missing-token';
 
-  $: token = $page.url.searchParams.get('token');
+  let token: string | null = null;
   let phase: Phase = 'idle';
 
-  // Distinguish "no token in URL" from "token present, awaiting click".
-  // We deliberately do NOT auto-submit — link previews / safe-link rewriters
-  // (Outlook, antivirus, mail-scanner bots) follow the URL on hover/receive
-  // and would burn the single-use token before the user clicks. The user
-  // must explicitly press the button (active-consent pattern, DSGVO-friendly).
-  $: if (token === null && phase === 'idle') {
-    phase = 'missing-token';
-  }
+  onMount(() => {
+    const url = new URL(window.location.href);
+    token = url.searchParams.get('token');
+    if (token === null) {
+      phase = 'missing-token';
+      return;
+    }
+    // Strip the single-use token from the address bar so it does not linger
+    // in browser history after the user lands from the email link.
+    url.searchParams.delete('token');
+    history.replaceState(history.state, '', `${url.pathname}${url.search}`);
+  });
 
   async function onConfirm() {
     if (!token || phase === 'busy' || phase === 'success') return;

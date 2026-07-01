@@ -312,6 +312,9 @@
     if (canUseOfflineSync()) {
       scheduleSync();
     }
+    if (onboardingTagsEnabled && !onboardingMarkedComplete) {
+      markDirty();
+    }
   }
 
   function handleOffline() {
@@ -419,6 +422,13 @@
 
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
+    if (
+      canUseOfflineSync() &&
+      typeof navigator !== 'undefined' &&
+      !navigator.onLine
+    ) {
+      return snap;
+    }
     const tags = [...selectedSuggestions.values()].map((tag) => ({
       slug: tag.slug,
       name: tag.name,

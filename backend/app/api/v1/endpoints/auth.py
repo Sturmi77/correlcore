@@ -10,6 +10,7 @@ on the single endpoint that needs it, reducing the attack surface.
 Rate-limiting (SlowAPI):
 - POST /register: 5 requests / minute per IP → 429 on breach (Issue #65, SA-2)
 - POST /login:    5 requests / minute per IP → 429 on breach
+- POST /verify-email: 10 requests / minute per IP → 429 on breach
 - POST /resend-verification: 3 requests / minute per IP
 """
 
@@ -137,7 +138,9 @@ async def register(
     response_model=TokenResponse,
     summary="Verify email and establish an authenticated session",
 )
+@limiter.limit("10/minute")
 async def verify_email_endpoint(
+    request: Request,
     data: VerifyEmailRequest,
     response: Response,
     db: AsyncSession = Depends(get_session),

@@ -203,6 +203,8 @@ async def test_endpoint_verify_email_invalid_returns_400(async_client: AsyncClie
             json={"token": "x" * 32},
         )
     assert r.status_code == 400
+    assert "access_token" not in r.cookies
+    assert "refresh_token" not in r.cookies
 
 
 @pytest.mark.asyncio
