@@ -91,7 +91,7 @@
   <title>{$_('settings.symptoms.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="symptom-settings">
+<main class="symptom-settings screen-stack">
   <ScreenHeader
     title={$_('settings.symptoms.title')}
     subtitle={$_('settings.symptoms.subtitle')}
@@ -201,9 +201,6 @@
   .symptom-settings {
     width: min(100%, 54rem);
     margin: 0 auto;
-    padding: var(--space-4);
-    display: grid;
-    gap: var(--space-4);
   }
 
   .symptom-settings__section {

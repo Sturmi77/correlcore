@@ -151,7 +151,7 @@ describe('/trends page', () => {
     expect(screen.queryByTestId('mobile-trends-summary')).toBeNull();
   });
 
-  it('uses summary-first composition on mobile and reveals the existing detail canvas', async () => {
+  it('uses scroll-first composition on mobile with summary, filters, and detail canvas', async () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: vi.fn(() => ({
@@ -168,13 +168,8 @@ describe('/trends page', () => {
 
     render(Page);
     expect(await screen.findByTestId('mobile-trends-summary')).toBeTruthy();
-    expect(screen.queryByTestId('mobile-trends-detail')).toBeNull();
-
-    const toggle = screen.getByTestId('mobile-trends-detail-toggle');
-    await fireEvent.click(toggle);
-
-    await waitFor(() => expect(screen.getByTestId('mobile-trends-detail')).toBeTruthy());
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('mobile-trends-detail')).toBeTruthy();
     expect(screen.getByTestId('trends-compare-filters')).toBeTruthy();
+    expect(screen.queryByTestId('mobile-trends-detail-toggle')).toBeNull();
   });
 });

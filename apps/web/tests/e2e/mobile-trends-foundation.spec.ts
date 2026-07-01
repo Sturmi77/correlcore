@@ -112,11 +112,8 @@ test('mobile trends starts with an understandable summary and no page overflow',
   await expect(summary.getByText('Stress')).toBeVisible();
   await expect(summary.getByText('Focus')).toBeVisible();
   await expect(summary.getByText('Fatigue')).toBeVisible();
-  await expect(page.getByTestId('mobile-trends-detail')).toHaveCount(0);
-
-  const toggle = page.getByTestId('mobile-trends-detail-toggle');
-  const toggleBox = await toggle.boundingBox();
-  expect(toggleBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  await expect(page.getByTestId('mobile-trends-detail')).toBeVisible();
+  await expect(page.getByTestId('mobile-trends-detail-toggle')).toHaveCount(0);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
   ).toBeLessThanOrEqual(0);
@@ -126,16 +123,16 @@ test('mobile trends starts with an understandable summary and no page overflow',
   await expect.poll(() => api.requestedRanges.includes('month')).toBe(true);
 });
 
-test('mobile detail action reveals the existing analysis canvas at 430px', async ({ page }) => {
+test('mobile compare filters and analysis canvas are reachable by scroll at 430px', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await installTrendsApi(page);
   await page.goto('/trends');
-  const toggle = page.getByTestId('mobile-trends-detail-toggle');
-  await expect(toggle).toBeVisible({ timeout: 60_000 });
-  await toggle.click();
 
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByTestId('mobile-trends-summary')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
+  await page.getByTestId('trends-compare-panel').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
@@ -156,5 +153,4 @@ test('desktop keeps the full comparison canvas and filters visible', async ({ pa
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
   await expect(page.getByTestId('mobile-trends-summary')).toHaveCount(0);
-  await expect(page.getByTestId('mobile-trends-detail-toggle')).toHaveCount(0);
 });

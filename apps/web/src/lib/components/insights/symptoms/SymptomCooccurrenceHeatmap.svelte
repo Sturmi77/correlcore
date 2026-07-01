@@ -290,7 +290,7 @@
   .symptom-cooccurrence__grid {
     display: grid;
     grid-template-columns: minmax(7rem, 10rem) repeat(var(--tag-count), minmax(3rem, 1fr));
-    gap: 0.2rem;
+    gap: var(--heatmap-matrix-gap);
     min-width: max-content;
   }
 
@@ -395,7 +395,7 @@
   @media (max-width: 520px) {
     .symptom-cooccurrence__grid {
       grid-template-columns: minmax(7rem, 8rem) repeat(var(--tag-count), minmax(3.25rem, 3.75rem));
-      gap: 0.3rem;
+      gap: var(--heatmap-matrix-gap-mobile);
     }
 
     .symptom-cooccurrence__corner,

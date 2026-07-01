@@ -134,7 +134,7 @@
   .heatmap__grid {
     display: grid;
     grid-template-columns: minmax(7rem, 9rem) repeat(var(--day-count), 0.8rem);
-    gap: 0.18rem;
+    gap: var(--heatmap-cell-gap);
     min-width: max-content;
     align-items: center;
   }
@@ -252,7 +252,7 @@
   @media (pointer: coarse) {
     .heatmap:not(.heatmap--compact) .heatmap__grid {
       grid-template-columns: minmax(7rem, 9rem) repeat(var(--day-count), 2.75rem);
-      gap: 0.25rem;
+      gap: var(--heatmap-cell-gap-coarse);
     }
 
     .heatmap:not(.heatmap--compact) .heatmap__cell {
@@ -263,7 +263,7 @@
 
   .heatmap--compact .heatmap__grid {
     grid-template-columns: minmax(4.5rem, 6rem) repeat(var(--day-count), 0.65rem);
-    gap: 0.15rem;
+    gap: var(--heatmap-cell-gap-compact);
   }
 
   .heatmap--compact .heatmap__cell {

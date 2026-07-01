@@ -54,13 +54,13 @@
 | O-38 | J      | Medium | Low    | **Done** Sprint J | Empty CTAs open EntrySheet inline                 |
 | O-37 | K      | Medium | Medium | **Done** Sprint K | Onboarding: skip summary ≤3 tags, merge intro     |
 | O-09 | K      | Medium | Medium | **Done** Sprint K | Habit hint in onboarding tag step                 |
-| O-26 | L      | Medium | Low    | Open              | Trends mobile detail toggle vs scroll             |
-| O-29 | L      | Low    | Low    | Open              | Compare filters only when mobile detail open      |
-| O-31 | L      | Low    | Low    | Open              | Settings sub-routes → `screen-stack`              |
-| O-32 | L      | Low    | Low    | Open              | Heatmap micro-gaps → tokens                       |
-| O-33 | L      | Low    | Low    | Open              | `ScreenHeader` gap token                          |
-| O-34 | L      | Medium | Low    | Open              | Compact InsightStageHeader on mobile              |
-| O-35 | L      | Low    | Low    | Open              | Contract test: no double route padding            |
+| O-26 | L      | Medium | Low    | **Done** Sprint L | Trends mobile detail toggle vs scroll             |
+| O-29 | L      | Low    | Low    | **Done** Sprint L | Compare filters only when mobile detail open      |
+| O-31 | L      | Low    | Low    | **Done** Sprint L | Settings sub-routes → `screen-stack`              |
+| O-32 | L      | Low    | Low    | **Done** Sprint L | Heatmap micro-gaps → tokens                       |
+| O-33 | L      | Low    | Low    | **Done** Sprint L | `ScreenHeader` gap token                          |
+| O-34 | L      | Medium | Low    | **Done** Sprint L | Compact InsightStageHeader on mobile              |
+| O-35 | L      | Low    | Low    | **Done** Sprint L | Contract test: no double route padding            |
 | O-25 | M      | Medium | High   | Open              | Entry quick vs full at open                       |
 | O-27 | M      | Low    | Medium | Open              | Settings vocabulary hub (W8)                      |
 | O-28 | M      | Medium | High   | Open              | Account deletion (M9)                             |

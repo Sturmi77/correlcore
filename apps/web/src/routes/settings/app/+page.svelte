@@ -39,7 +39,7 @@
   <title>{$_('settings.app.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="app-settings">
+<main class="app-settings screen-stack">
   <ScreenHeader title={$_('settings.app.title')} subtitle={$_('settings.app.subtitle')} compact>
     <Button slot="actions" href="/settings" variant="ghost" size="sm">
       {$_('settings.app.back_settings')}
@@ -159,9 +159,6 @@
   .app-settings {
     width: min(100%, 44rem);
     margin: 0 auto;
-    padding: var(--space-4);
-    display: grid;
-    gap: var(--space-4);
   }
 
   .app-settings__section {

@@ -306,7 +306,7 @@
   .cooccurrence__grid {
     display: grid;
     grid-template-columns: minmax(6rem, 8rem) repeat(var(--tag-count), minmax(2.75rem, 1fr));
-    gap: 0.2rem;
+    gap: var(--heatmap-matrix-gap);
     min-width: max-content;
     align-items: stretch;
   }
@@ -460,7 +460,7 @@
 
     .cooccurrence__grid {
       grid-template-columns: minmax(7rem, 8rem) repeat(var(--tag-count), minmax(3.25rem, 3.75rem));
-      gap: 0.3rem;
+      gap: var(--heatmap-matrix-gap-mobile);
     }
 
     .cooccurrence__corner,

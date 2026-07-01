@@ -48,7 +48,7 @@
   .mobile-lead {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--screen-gap-tight);
   }
 
   .mobile-lead__header,
@@ -72,7 +72,7 @@
   }
 
   .mobile-lead__header h2 {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
     line-height: 1.25;
   }
 

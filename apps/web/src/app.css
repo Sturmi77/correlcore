@@ -31,6 +31,15 @@
   --screen-gap-loose: var(--space-6);
   --screen-padding-block: var(--space-4);
   --screen-padding-block-end: var(--space-8);
+  --screen-header-gap: var(--space-2);
+
+  /* Heatmap micro-gaps (O-32) */
+  --heatmap-cell-gap: 0.18rem;
+  --heatmap-cell-gap-compact: 0.15rem;
+  --heatmap-cell-gap-coarse: 0.25rem;
+  --heatmap-matrix-gap: 0.2rem;
+  --heatmap-matrix-gap-mobile: 0.3rem;
+  --heatmap-calendar-gap: 2px;
 
   /* GAP-10: Radius-Token-System */
   --radius-sm: 0.25rem;
@@ -368,6 +377,10 @@ button {
   flex-direction: column;
   gap: var(--screen-gap);
   padding-block: var(--screen-padding-block) var(--screen-padding-block-end);
+}
+
+.screen-stack > .screen-header {
+  margin-block-end: calc(var(--screen-header-gap) - var(--screen-gap));
 }
 
 .screen-stack--tight {

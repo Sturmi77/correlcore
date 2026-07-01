@@ -224,7 +224,7 @@
   <title>{$_('settings.tags.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="tag-settings">
+<main class="tag-settings screen-stack">
   <ScreenHeader title={$_('settings.tags.title')} subtitle={$_('settings.tags.subtitle')} compact>
     <Button slot="actions" href="/settings" variant="ghost" size="sm">
       {$_('settings.tags.back_settings')}
@@ -520,10 +520,6 @@
   .tag-settings {
     width: min(100%, 62rem);
     margin: 0 auto;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
   }
 
   .tag-settings__section {
@@ -681,10 +677,6 @@
   }
 
   @media (max-width: 520px) {
-    .tag-settings {
-      padding: 1rem;
-    }
-
     .tag-settings__fields {
       grid-template-columns: 1fr;
     }

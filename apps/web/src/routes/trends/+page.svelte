@@ -93,7 +93,6 @@
   let showTagRows = true;
   let showSymptomRows = false;
   let compactTrends = false;
-  let mobileDetailsOpen = false;
   let mobileMedia: MediaQueryList | null = null;
 
   const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
@@ -281,7 +280,6 @@
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     const updateCompactTrends = () => {
       compactTrends = mobileMedia?.matches ?? false;
-      if (!compactTrends) mobileDetailsOpen = false;
     };
     updateCompactTrends();
     mobileMedia?.addEventListener('change', updateCompactTrends);
@@ -324,27 +322,9 @@
       testId="trends-tabs"
       on:change={(event) => {
         activeTab = event.detail.value as TrendTab;
-        mobileDetailsOpen = false;
         void loadTrends();
       }}
     />
-
-    {#if activeTab === 'compare' && !compactTrends}
-      <section class="trends__compare-filters" aria-label={$_('trends.controls')}>
-        <TrendsCompareFilters
-          {smoothing}
-          {smoothingAvailable}
-          {metrics}
-          {selectedCategory}
-          on:smoothingChange={(event) => setSmoothing(event.detail.value)}
-          on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-          on:categoryChange={(event) => {
-            selectedCategory = event.detail.category;
-            void loadTrends();
-          }}
-        />
-      </section>
-    {/if}
 
     {#if error}
       <InlineAlert variant="error" message={error} />
@@ -363,59 +343,57 @@
           {range}
           {loading}
         />
-        <Button
-          variant="secondary"
-          fullWidth
-          data-testid="mobile-trends-detail-toggle"
-          aria-expanded={mobileDetailsOpen}
-          aria-controls="mobile-trends-detail"
-          on:click={() => (mobileDetailsOpen = !mobileDetailsOpen)}
-        >
-          {mobileDetailsOpen ? $_('trends.mobile.hide_details') : $_('trends.mobile.show_details')}
-        </Button>
+        <section class="trends__detail-controls" aria-label={$_('trends.mobile.detail_filters')}>
+          <TrendsCompareFilters
+            {smoothing}
+            {smoothingAvailable}
+            {metrics}
+            {selectedCategory}
+            on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+            on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+            on:categoryChange={(event) => {
+              selectedCategory = event.detail.category;
+              void loadTrends();
+            }}
+          />
+        </section>
+      {:else}
+        <section class="trends__compare-filters" aria-label={$_('trends.controls')}>
+          <TrendsCompareFilters
+            {smoothing}
+            {smoothingAvailable}
+            {metrics}
+            {selectedCategory}
+            on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+            on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+            on:categoryChange={(event) => {
+              selectedCategory = event.detail.category;
+              void loadTrends();
+            }}
+          />
+        </section>
       {/if}
 
-      {#if !compactTrends || mobileDetailsOpen}
-        <div id="mobile-trends-detail" class="trends__detail" data-testid="mobile-trends-detail">
-          {#if compactTrends}
-            <section
-              class="trends__detail-controls"
-              aria-label={$_('trends.mobile.detail_filters')}
-            >
-              <TrendsCompareFilters
-                {smoothing}
-                {smoothingAvailable}
-                {metrics}
-                {selectedCategory}
-                on:smoothingChange={(event) => setSmoothing(event.detail.value)}
-                on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-                on:categoryChange={(event) => {
-                  selectedCategory = event.detail.category;
-                  void loadTrends();
-                }}
-              />
-            </section>
-          {/if}
-          <div
-            class="trends__panel trends__panel--compare"
-            role="tabpanel"
-            aria-label={$_('trends.tabs.compare')}
-          >
-            <TrendsComparePanel
-              points={displayTimeseries?.points ?? []}
-              {range}
-              enabled={metrics}
-              tagHeatmap={heatmap}
-              {symptomHeatmap}
-              showTags={showTagRows}
-              showSymptoms={showSymptomRows}
-              {loading}
-              on:selectDate={(event) => void openHistory(event.detail.date)}
-              on:layerChange={(event) => setCompareLayers(event.detail)}
-            />
-          </div>
+      <div id="mobile-trends-detail" class="trends__detail" data-testid="mobile-trends-detail">
+        <div
+          class="trends__panel trends__panel--compare"
+          role="tabpanel"
+          aria-label={$_('trends.tabs.compare')}
+        >
+          <TrendsComparePanel
+            points={displayTimeseries?.points ?? []}
+            {range}
+            enabled={metrics}
+            tagHeatmap={heatmap}
+            {symptomHeatmap}
+            showTags={showTagRows}
+            showSymptoms={showSymptomRows}
+            {loading}
+            on:selectDate={(event) => void openHistory(event.detail.date)}
+            on:layerChange={(event) => setCompareLayers(event.detail)}
+          />
         </div>
-      {/if}
+      </div>
     {:else if activeTab === 'health'}
       <div
         class="trends__panel trends__health"
