@@ -233,8 +233,8 @@
       "default_low": "niedrig",
       "default_high": "hoch"
     },
-    "more_toggle": "Optionale Details hinzuf\u00fcgen",
-    "more_hide": "Optionale Details ausblenden",
+    "optional_extras_toggle": "Notiz oder Zyklustag",
+    "optional_extras_hide": "Notiz und Zyklustag ausblenden",
     "onboarding_tags": {
       "title": "Was m\u00f6chtest du tracken?",
       "hint": "W\u00e4hle ein paar Start-Tags \u2014 sp\u00e4ter kannst du jeden Tag in Insights als Gewohnheit festlegen."

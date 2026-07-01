@@ -80,10 +80,10 @@
 | 3   | Sheet | Mood slider (default 3) | Adjust or accept default | Auto-save scheduled (800ms)            | yes      | 0–2  | 5s        | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Vereinfachen | Smart default from yesterday | no           |
 | 4   | Sheet | Energy / stress sliders | Optional adjust          | Debounced save                         | optional | 0–4  | 10s       | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | Defaults OK for 60s rule     | no           |
 | 5   | Sheet | Work context chips      | Optional tap             | Field updates                          | optional | 0–1  | 3s        | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | Auto-default by weekday      | no           |
-| 6   | Sheet | "More" expand           | Tap (compact mode)       | Tags, symptoms, note visible           | optional | 1    | 2s        | 0   | 0   | 1   | 0   | 0   | 0   | 1     | Nicht ändern | Progressive disclosure OK    | no           |
-| 7   | Sheet | TagPicker               | Select tags              | `PUT /entries/{id}/tags`               | optional | 1–3  | 15s       | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | —                            | no           |
-| 8   | Sheet | SaveStatusBadge         | Observe                  | "Saved" confirmation                   | yes      | 0    | 1s        | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | ADR-0013                     | no           |
-| 9   | Sheet | Close (swipe/down)      | Dismiss sheet            | Returns to Home; dashboard refreshes   | yes      | 1    | 1s        | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | —                            | no           |
+| 6   | Sheet | Tags + symptoms         | Select without expand (O-21) | Tags/symptoms auto-save              | optional | 0–3  | 15s       | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | Core fields always visible on mobile | no           |
+| 7   | Sheet | Note/cycle toggle       | Tap (compact mode only)      | Note + cycle fields visible          | optional | 0–1  | 2s        | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | Rare fields stay behind disclosure   | no           |
+| 8   | Sheet | SaveStatusBadge         | Observe                      | "Saved" confirmation                   | yes      | 0    | 1s        | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | ADR-0013                             | no           |
+| 9   | Sheet | Close (swipe/down)      | Dismiss sheet                | Returns to Home; dashboard refreshes   | yes      | 1    | 1s        | 0   | 0   | 0   | 0   | 0   | 0   | 0     | Nicht ändern | —                                    | no           |
 
 **Mobile minimum path:** 2 taps (open sheet, close), ~10s with defaults — **within 60s rule**.
 
@@ -95,7 +95,7 @@
 | Page mode shows theme toggle + back nav | Extra chrome vs sheet                                | 2     | Vereinfachen   | Phase 5 desktop workspace polish                            |
 | Empty Trends CTA → `/entries/new`       | Context break from Trends                            | 3     | Umleiten       | Open EntrySheet inline where possible                       |
 
-**W3 summary:** Mobile path is lean (total friction **1** on optional expand). Desktop dual-surface is main friction.
+**W3 summary:** Mobile path is lean (no extra tap for tags/symptoms since O-21). Desktop dual-surface is main friction.
 
 ---
 

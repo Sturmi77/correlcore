@@ -223,8 +223,8 @@
     "offline_sync": {
       "conflict_note": "Some fields were updated from another device. Your latest synced version is shown."
     },
-    "more_toggle": "Add optional details",
-    "more_hide": "Hide optional details",
+    "optional_extras_toggle": "Add note or cycle day",
+    "optional_extras_hide": "Hide note and cycle day",
     "onboarding_tags": {
       "title": "What do you want to track?",
       "hint": "Pick a few starting tags — you can turn any tag into a habit later in Insights."

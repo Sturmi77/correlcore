@@ -79,7 +79,8 @@
   let entryDate: string = initialDate;
   // Keep SSR and the first client render identical; viewport adaptation happens on mount.
   let compactEntry = mode === 'sheet';
-  let showMore = !compactEntry;
+  /** Note + cycle day only; tags/symptoms/time slots stay visible (O-21). */
+  let showOptionalExtras = !compactEntry;
   let optionalTouched = false;
   let selectedSlot: EntrySlot = 'day';
   let moodScore = 3;
@@ -273,6 +274,7 @@
         // to count as user edits.
         await Promise.resolve();
         hydrating = false;
+        syncOptionalExtrasVisibility();
       }
     }
   }
@@ -296,15 +298,28 @@
     cycleDayInvalid = cycleDay !== null && (cycleDay < 1 || cycleDay > 35);
   }
 
-  function toggleOptionalDetails() {
+  function hasOptionalExtrasContent(): boolean {
+    return note.trim().length > 0 || cycleDay !== null;
+  }
+
+  function toggleOptionalExtras() {
     optionalTouched = true;
-    showMore = !showMore;
+    showOptionalExtras = !showOptionalExtras;
+  }
+
+  function syncOptionalExtrasVisibility() {
+    if (!compactEntry) {
+      showOptionalExtras = true;
+      return;
+    }
+    if (!optionalTouched) {
+      showOptionalExtras = hasOptionalExtrasContent();
+    }
   }
 
   function syncCompactEntry() {
     compactEntry = mode === 'sheet' || Boolean(mobileMedia?.matches);
-    if (!compactEntry) showMore = true;
-    else if (!optionalTouched) showMore = false;
+    syncOptionalExtrasVisibility();
   }
 
   function handleOnline() {
@@ -700,52 +715,52 @@
     </label>
   </section>
 
+  <section class="entry-section" aria-labelledby="entry-section-time">
+    <h2 id="entry-section-time" class="entry-section__title">{$_('entry.section.time')}</h2>
+    <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
+      {#each ENTRY_SLOTS as slot}
+        <button
+          type="button"
+          class:active={selectedSlot === slot}
+          aria-pressed={selectedSlot === slot}
+          on:click={() => setSlot(slot)}
+        >
+          {$_(`entry.time_slot.${slot}`)}
+        </button>
+      {/each}
+    </div>
+    <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
+  </section>
+
+  <section class="entry-section" aria-labelledby="entry-section-tags">
+    <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
+    <TagPicker bind:selected={selectedTagIds} />
+  </section>
+
+  <section class="entry-section" aria-labelledby="entry-section-symptoms">
+    <h2 id="entry-section-symptoms" class="entry-section__title">
+      {$_('entry.section.symptoms')}
+    </h2>
+    <SymptomChecker bind:selected={selectedSymptoms} />
+  </section>
+
   {#if compactEntry}
     <Button
       type="button"
       variant="ghost"
       fullWidth
-      className="entry-more-toggle"
-      data-testid="entry-more-toggle"
-      aria-expanded={showMore}
-      aria-controls="entry-optional-fields"
-      on:click={toggleOptionalDetails}
+      className="entry-optional-extras-toggle"
+      data-testid="entry-optional-extras-toggle"
+      aria-expanded={showOptionalExtras}
+      aria-controls="entry-optional-extras"
+      on:click={toggleOptionalExtras}
     >
-      {showMore ? $_('entry.more_hide') : $_('entry.more_toggle')}
+      {showOptionalExtras ? $_('entry.optional_extras_hide') : $_('entry.optional_extras_toggle')}
     </Button>
   {/if}
 
-  {#if showMore}
-    <div id="entry-optional-fields" class="entry-optional-fields">
-      <section class="entry-section" aria-labelledby="entry-section-time">
-        <h2 id="entry-section-time" class="entry-section__title">{$_('entry.section.time')}</h2>
-        <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
-          {#each ENTRY_SLOTS as slot}
-            <button
-              type="button"
-              class:active={selectedSlot === slot}
-              aria-pressed={selectedSlot === slot}
-              on:click={() => setSlot(slot)}
-            >
-              {$_(`entry.time_slot.${slot}`)}
-            </button>
-          {/each}
-        </div>
-        <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
-      </section>
-
-      <section class="entry-section" aria-labelledby="entry-section-tags">
-        <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
-        <TagPicker bind:selected={selectedTagIds} />
-      </section>
-
-      <section class="entry-section" aria-labelledby="entry-section-symptoms">
-        <h2 id="entry-section-symptoms" class="entry-section__title">
-          {$_('entry.section.symptoms')}
-        </h2>
-        <SymptomChecker bind:selected={selectedSymptoms} />
-      </section>
-
+  {#if showOptionalExtras}
+    <div id="entry-optional-extras" class="entry-optional-extras">
       <section class="entry-section" aria-labelledby="entry-section-note">
         <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
         <label class="entry-field">
@@ -823,13 +838,13 @@
     margin: 0;
   }
 
-  .entry-optional-fields {
+  .entry-optional-extras {
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
   }
 
-  :global(.entry-more-toggle) {
+  :global(.entry-optional-extras-toggle) {
     width: 100%;
     justify-content: center;
   }
@@ -983,7 +998,7 @@
     }
 
     .entry-form,
-    .entry-optional-fields {
+    .entry-optional-extras {
       gap: var(--screen-gap);
     }
 
