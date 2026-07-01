@@ -183,13 +183,13 @@ flowchart TD
 
 ---
 
-### Still blocked → planned as Sprint G
+### Sprint G — Password reset (O-20) ✅
 
-| Issue                                                     | Item                | Plan                                                         |
-| --------------------------------------------------------- | ------------------- | ------------------------------------------------------------ |
-| [#272](https://github.com/Sturmi77/correlcore/issues/272) | O-20 Password reset | [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md) |
+| Issue | Title | Workflows |
+|-------|-------|-----------|
+| [#272](https://github.com/Sturmi77/correlcore/issues/272) | O-20 Password reset | W1 |
 
-**Sprint G** implements backend + frontend + E2E. Reuses email-verification token pattern (ADR-0004).
+Plan: [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md). Closes the O-01–O-20 GUI optimization backlog.
 
 ---
 

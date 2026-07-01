@@ -54,6 +54,16 @@ HttpOnly access/refresh cookies as `POST /login`. The verify button on the
 frontend remains a deliberate user action (anti mail-scanner). After success
 the client redirects to `/?openEntry=1` instead of `/auth/login`.
 
+## Amendment (2026-07-01) — Password reset (O-20)
+
+- `POST /api/v1/auth/forgot-password` always returns `202` with a generic message
+  (anti-enumeration). Mails are sent only for **verified, active** accounts.
+- `POST /api/v1/auth/reset-password` consumes a single-use token (1h TTL), updates
+  the password, revokes all refresh tokens in Redis, and issues a new JWT session
+  via the same HttpOnly cookies as login/verify.
+- Unverified accounts must use `resend-verification`, not password reset.
+- Rate limits: forgot `3/min`, reset `10/min` per IP.
+
 ## Konsequenzen
 
 - **Selfhost-Stack wird schlanker:** Kein `authentik`- und kein `authentik-postgres`-Container in der Standard-Compose-Konfiguration.

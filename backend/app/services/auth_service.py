@@ -36,6 +36,7 @@ from app.core.security import (
 from app.db.redis_client import TokenStore
 from app.db.session import bind_rls_current_user
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.password_reset_token import PasswordResetToken
 from app.models.user import User
 from app.models.user_encryption_key import UserEncryptionKey
 from app.schemas.auth import RegisterRequest
@@ -69,6 +70,13 @@ class VerificationError(Exception):
 
     Error message is intentionally generic to avoid leaking whether a
     token existed-but-expired vs. never-existed (timing/enumeration).
+    """
+
+
+class PasswordResetError(Exception):
+    """Password reset failed — maps to HTTP 400.
+
+    Error message is intentionally generic to avoid leaking token state.
     """
 
 
@@ -221,6 +229,97 @@ async def request_verification_resend(
         return None
     plaintext = await create_verification_token(db, user)
     return user, plaintext
+
+
+# ---------------------------------------------------------------------------
+# Password reset (O-20)
+# ---------------------------------------------------------------------------
+
+_PASSWORD_RESET_GENERIC_ERROR = "Invalid or expired password reset token"
+
+
+async def create_password_reset_token(
+    db: AsyncSession,
+    user: User,
+) -> str:
+    """Create a fresh single-use password-reset token for ``user``.
+
+    Prior unused tokens for the same user are deleted ("latest wins").
+    Returns the plaintext token for the email link — never log it.
+    """
+    await db.execute(delete(PasswordResetToken).where(PasswordResetToken.user_id == user.id))
+
+    plaintext = secrets.token_urlsafe(_TOKEN_BYTES)
+    record = PasswordResetToken(
+        user_id=user.id,
+        token_hash=_hash_token(plaintext),
+        expires_at=datetime.now(UTC) + timedelta(hours=settings.PASSWORD_RESET_TTL_HOURS),
+    )
+    db.add(record)
+    await db.flush()
+    logger.info(
+        "password reset token issued",
+        extra={"user_id": str(user.id), "token_id": str(record.id)},
+    )
+    return plaintext
+
+
+async def request_password_reset(
+    db: AsyncSession,
+    email: str,
+) -> tuple[User, str] | None:
+    """Issue a password-reset mail for verified active users only.
+
+    Returns ``(user, plaintext_token)`` when applicable, else ``None``.
+    The endpoint must always respond with the same generic 202 message.
+    """
+    user = await _get_user_by_email(db, email)
+    if user is None or not user.is_active or not user.is_verified:
+        return None
+    plaintext = await create_password_reset_token(db, user)
+    return user, plaintext
+
+
+async def reset_password(
+    db: AsyncSession,
+    plaintext_token: str,
+    new_password: str,
+) -> User:
+    """Consume a reset token and set a new password for the user."""
+    token_hash = _hash_token(plaintext_token)
+
+    result = await db.execute(
+        select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash)
+    )
+    token = result.scalar_one_or_none()
+
+    if token is None:
+        logger.warning("reset-password: unknown token")
+        raise PasswordResetError(_PASSWORD_RESET_GENERIC_ERROR)
+
+    if token.used_at is not None:
+        logger.warning(
+            "reset-password: token replay",
+            extra={"user_id": str(token.user_id), "token_id": str(token.id)},
+        )
+        raise PasswordResetError(_PASSWORD_RESET_GENERIC_ERROR)
+
+    if token.expires_at < datetime.now(UTC):
+        logger.info(
+            "reset-password: token expired",
+            extra={"user_id": str(token.user_id), "token_id": str(token.id)},
+        )
+        raise PasswordResetError(_PASSWORD_RESET_GENERIC_ERROR)
+
+    user = await _get_user_by_id(db, token.user_id)
+    if user is None or not user.is_active:
+        raise PasswordResetError(_PASSWORD_RESET_GENERIC_ERROR)
+
+    user.hashed_password = hash_password(new_password)
+    token.used_at = datetime.now(UTC)
+    await db.flush()
+    logger.info("user password reset", extra={"user_id": str(user.id)})
+    return user
 
 
 def _build_token_pair(user: User) -> tuple[str, str, str]:

@@ -96,6 +96,9 @@
     <a href="/auth/register">{$_('auth.login.register_link')}</a>
   </p>
   <p>
+    <a href="/auth/forgot-password">{$_('auth.login.forgot_password')}</a>
+  </p>
+  <p>
     <a href="/auth/resend-verification">{$_('auth.check_email.resend_link')}</a>
   </p>
 </nav>

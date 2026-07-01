@@ -1177,6 +1177,26 @@
       "success": "If the email is registered and unverified, a new verification mail has been sent.",
       "error_rate_limit": "Too many requests. Please try again in a minute."
     },
+    "forgot": {
+      "title": "Forgot password",
+      "body": "Enter your email address. If a matching verified account exists, we will send a password reset link.",
+      "submit": "Send reset link",
+      "success": "If the email is registered, a password reset mail has been sent.",
+      "error_rate_limit": "Too many requests. Please try again in a minute."
+    },
+    "reset": {
+      "title": "Set a new password",
+      "body": "Choose a new password for your account. The link from your email is single-use.",
+      "submit": "Update password",
+      "password_confirm": "Confirm password",
+      "password_confirm_placeholder": "Repeat your new password",
+      "password_mismatch": "Passwords do not match.",
+      "error_title": "Reset failed",
+      "error_invalid": "The link is invalid or has expired. Please request a new reset email.",
+      "error_weak_password": "The password does not meet the minimum requirements.",
+      "missing_token": "No reset token found in the URL.",
+      "go_to_forgot": "Request new reset email"
+    },
     "logout": {
       "label": "Sign out"
     }

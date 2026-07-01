@@ -1177,6 +1177,26 @@
       "success": "Falls die E-Mail-Adresse bei uns registriert und noch nicht best\u00e4tigt ist, wurde eine neue Mail gesendet.",
       "error_rate_limit": "Zu viele Anfragen. Bitte in einer Minute erneut probieren."
     },
+    "forgot": {
+      "title": "Passwort vergessen",
+      "body": "Gib deine E-Mail-Adresse ein. Falls ein passendes, best\u00e4tigtes Konto existiert, senden wir dir einen Link zum Zur\u00fccksetzen.",
+      "submit": "Reset-Link senden",
+      "success": "Falls die E-Mail-Adresse registriert ist, wurde eine Reset-Mail gesendet.",
+      "error_rate_limit": "Zu viele Anfragen. Bitte in einer Minute erneut probieren."
+    },
+    "reset": {
+      "title": "Neues Passwort setzen",
+      "body": "W\u00e4hle ein neues Passwort f\u00fcr dein Konto. Der Link aus der E-Mail ist nur einmal g\u00fcltig.",
+      "submit": "Passwort aktualisieren",
+      "password_confirm": "Passwort best\u00e4tigen",
+      "password_confirm_placeholder": "Neues Passwort wiederholen",
+      "password_mismatch": "Die Passw\u00f6rter stimmen nicht \u00fcberein.",
+      "error_title": "Zur\u00fccksetzen fehlgeschlagen",
+      "error_invalid": "Der Link ist ung\u00fcltig oder abgelaufen. Bitte fordere eine neue Reset-Mail an.",
+      "error_weak_password": "Das Passwort erf\u00fcllt die Mindestanforderungen nicht.",
+      "missing_token": "Kein Reset-Token in der URL gefunden.",
+      "go_to_forgot": "Neue Reset-Mail anfordern"
+    },
     "logout": {
       "label": "Abmelden"
     }

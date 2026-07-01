@@ -87,3 +87,24 @@ export async function resendVerification(email: string): Promise<MessageResponse
     skipAuthRefresh: true, // public endpoint
   });
 }
+
+/** POST /auth/forgot-password — always returns 202 (anti-enumeration). */
+export async function requestPasswordReset(email: string): Promise<MessageResponse> {
+  return apiFetch<MessageResponse>('/auth/forgot-password', {
+    method: 'POST',
+    json: { email },
+    skipAuthRefresh: true,
+  });
+}
+
+/** POST /auth/reset-password — sets new password and establishes a session. */
+export async function resetPassword(payload: {
+  token: string;
+  password: string;
+}): Promise<TokenResponse> {
+  return apiFetch<TokenResponse>('/auth/reset-password', {
+    method: 'POST',
+    json: payload,
+    skipAuthRefresh: true,
+  });
+}
