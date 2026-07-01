@@ -2,11 +2,7 @@ import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import type { Writable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  closeEntrySheet,
-  entrySheetSnapshot,
-  resetEntrySheetStore,
-} from '$lib/stores/entrySheet';
+import { closeEntrySheet, entrySheetSnapshot, resetEntrySheetStore } from '$lib/stores/entrySheet';
 import GlobalEntrySheet from './GlobalEntrySheet.svelte';
 
 type AuthTestState = {

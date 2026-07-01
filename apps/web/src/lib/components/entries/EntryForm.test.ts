@@ -132,7 +132,9 @@ async function flushAsync(): Promise<void> {
   await tick();
 }
 
-function deltaWithPrevious(overrides: Partial<EntryDeltaResponse['previous']> = {}): EntryDeltaResponse {
+function deltaWithPrevious(
+  overrides: Partial<EntryDeltaResponse['previous']> = {}
+): EntryDeltaResponse {
   return {
     today: null,
     previous: {
