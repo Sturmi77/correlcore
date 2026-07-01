@@ -103,7 +103,7 @@ test.describe('mobile theme parity @390', () => {
   test('dark theme renders primary mobile routes without shell overflow', async ({ page }) => {
     test.setTimeout(120_000);
     await expectDarkShell(page, '/');
-    await expectDarkShell(page, '/entries/new');
+    await expectDarkShell(page, '/?openEntry=1');
     await expectDarkShell(page, '/trends');
     await expectDarkShell(page, '/insights');
     await expectDarkShell(page, '/settings');

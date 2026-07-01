@@ -1,13 +1,15 @@
-import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 import { buildOpenEntryPath, entryWorkspacePath, type EntryNavigationDate } from './openEntry';
 
-/** Mobile and narrow viewports use the Home entry sheet; desktop uses `/entries/new`. */
-export function prefersEntrySheet(width?: number): boolean {
-  if (width !== undefined) return width < DESKTOP_SHELL_BREAKPOINT_PX;
-  if (typeof window === 'undefined') return true;
-  return window.matchMedia(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`).matches;
+/** All viewports use the Home entry sheet (O-08). */
+export function prefersEntrySheet(_width?: number): boolean {
+  return true;
 }
 
-export function resolveEntryPath(date?: EntryNavigationDate, width?: number): string {
-  return prefersEntrySheet(width) ? buildOpenEntryPath(date) : entryWorkspacePath(date);
+export function resolveEntryPath(date?: EntryNavigationDate, _width?: number): string {
+  return buildOpenEntryPath(date);
+}
+
+/** @deprecated Legacy desktop workspace path — redirects to the global entry sheet. */
+export function legacyEntryWorkspacePath(date?: EntryNavigationDate): string {
+  return entryWorkspacePath(date);
 }

@@ -10,6 +10,7 @@
   import { syncDevModeFromStorage } from '$lib/stores/devMode';
   import AppNav from '$lib/components/common/AppNav.svelte';
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
+  import GlobalEntrySheet from '$lib/components/entries/GlobalEntrySheet.svelte';
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
   import { initializeSyncOrchestrator, scheduleSync } from '$lib/offline/syncOrchestrator';
@@ -112,6 +113,7 @@
       </main>
       <AppNav />
       <PwaStatusBanner />
+      <GlobalEntrySheet />
     </div>
   {:else}
     <!--

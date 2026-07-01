@@ -471,10 +471,8 @@ test.describe('W1 Account & Vertrauen', () => {
       timeout: APP_READY_TIMEOUT_MS,
     });
     await page.getByRole('button', { name: 'Verify email' }).click();
-    await expect(page).toHaveURL(/\/entries\/new/, { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
-      timeout: APP_READY_TIMEOUT_MS,
-    });
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/);
   });
 
   test('password reset requires explicit confirm', async ({ page }) => {
@@ -573,26 +571,23 @@ test.describe('W3 Tägliche Eingabe', () => {
     await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
   });
 
-  test('desktop home CTA opens the entry workspace page', async ({ page }) => {
+  test('desktop home CTA opens the entry sheet inline', async ({ page }) => {
     await installJourneyApi(page, { profile: 'week_user' });
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');
 
     await page.getByTestId('home-cta').click();
-    await expect(page).toHaveURL(/\/entries\/new/, { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible();
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page).toHaveURL('/');
   });
 
-  test('desktop entry page keeps tags and optional note fields expanded', async ({ page }) => {
+  test('desktop entry route redirects into the global entry sheet', async ({ page }) => {
     await installJourneyApi(page, { profile: 'week_user' });
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/entries/new');
 
-    await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
-      timeout: APP_READY_TIMEOUT_MS,
-    });
-    await expect(page.locator('#entry-section-tags')).toBeVisible();
-    await expect(page.locator('#entry-section-note')).toBeVisible();
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page).toHaveURL('/');
   });
 });
 

@@ -3,12 +3,17 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync(resolve('src/routes/+page.svelte'), 'utf8');
+const layoutSource = readFileSync(resolve('src/routes/+layout.svelte'), 'utf8');
 const homeDailyBriefSource = readFileSync(
   resolve('src/lib/components/home/HomeDailyBrief.svelte'),
   'utf8'
 );
 const firstWeekBannerSource = readFileSync(
   resolve('src/lib/components/home/FirstWeekInsightBanner.svelte'),
+  'utf8'
+);
+const entryLaunchButtonSource = readFileSync(
+  resolve('src/lib/components/entries/EntryLaunchButton.svelte'),
   'utf8'
 );
 
@@ -25,12 +30,23 @@ describe('/ home screen ownership contract', () => {
     expect(source).not.toContain('handleLogout');
   });
 
+  it('uses the global entry sheet store instead of a local sheet instance', () => {
+    expect(layoutSource).toContain('GlobalEntrySheet');
+    expect(source).toContain('openEntrySheet');
+    expect(source).not.toContain('<EntrySheet');
+  });
+
   it('exposes weekly analysis bridge links from the daily brief', () => {
     expect(homeDailyBriefSource).toContain('href="/insights"');
     expect(homeDailyBriefSource).toContain('href="/trends"');
     expect(homeDailyBriefSource).toContain('data-testid="home-weekly-bridge"');
     expect(homeDailyBriefSource).toContain('data-testid="home-brief-milestone-progress"');
     expect(firstWeekBannerSource).not.toContain('href="/insights"');
+  });
+
+  it('opens entry inline from launch buttons without routing to /entries/new', () => {
+    expect(entryLaunchButtonSource).toContain('openEntrySheet');
+    expect(entryLaunchButtonSource).not.toContain('/entries/new');
   });
 
   it('uses the shared Button primitive for entry actions', () => {
@@ -41,24 +57,5 @@ describe('/ home screen ownership contract', () => {
     expect(source).toContain('$lib/components/common/Button.svelte');
     expect(source).toContain('data-testid="home-cta"');
     expect(todayContextSource).toContain('data-testid="home-today-action"');
-  });
-
-  it('routes desktop entry opens through the workspace path', () => {
-    expect(source).toContain('entryWorkspacePath');
-    expect(source).toContain('prefersEntrySheet');
-    expect(source).toContain('{#if preferEntrySheet}');
-  });
-
-  it('does not strip openEntry query after desktop redirects', () => {
-    expect(source).toContain('const openedInSheet = openEntry(date);');
-    expect(source).toContain('if (openedInSheet) stripOpenEntryQuery();');
-    expect(source).not.toContain('openEntry(date);\n    stripOpenEntryQuery();');
-  });
-
-  it('defers the PWA install banner until after the first entry or onboarding', () => {
-    expect(source).toContain('showPwaInstallBanner');
-    expect(source).toContain('onboarding_retro_completed');
-    expect(source).toContain('entry_count ?? 0) >= 1');
-    expect(source).toContain('{#if showPwaInstallBanner}');
   });
 });

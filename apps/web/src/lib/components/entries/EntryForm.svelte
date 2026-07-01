@@ -56,6 +56,7 @@
   import { refreshTags } from '$lib/stores/tags';
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
   import { isoDate } from '$lib/utils/entryForm';
+  import { NEUTRAL_SCALE_DEFAULT, scaleDefaultsFromPrevious } from '$lib/utils/entrySmartDefaults';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
   import { onLocalEntrySaved, scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
   import {
@@ -78,14 +79,14 @@
 
   let entryDate: string = initialDate;
   // Keep SSR and the first client render identical; viewport adaptation happens on mount.
-  let compactEntry = mode === 'sheet';
+  let compactEntry = false;
   /** Note + cycle day only; tags/symptoms/time slots stay visible (O-21). */
   let showOptionalExtras = !compactEntry;
   let optionalTouched = false;
   let selectedSlot: EntrySlot = 'day';
-  let moodScore = 3;
-  let energy = 3;
-  let stress = 3;
+  let moodScore = NEUTRAL_SCALE_DEFAULT;
+  let energy = NEUTRAL_SCALE_DEFAULT;
+  let stress = NEUTRAL_SCALE_DEFAULT;
   let cycleDay: number | null = null;
   let workContext: WorkContext = defaultWorkContextForDate(new Date(initialDate + 'T00:00:00'));
   let note = '';
@@ -142,9 +143,9 @@
   function resetForm(forDate: string, slot: EntrySlot = 'day') {
     existingEntryId = null;
     dayDelta = null;
-    moodScore = 3;
-    energy = 3;
-    stress = 3;
+    moodScore = NEUTRAL_SCALE_DEFAULT;
+    energy = NEUTRAL_SCALE_DEFAULT;
+    stress = NEUTRAL_SCALE_DEFAULT;
     selectedSlot = slot;
     cycleDay = null;
     cycleDayInvalid = false;
@@ -155,6 +156,20 @@
     const d = new Date(forDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
       workContext = defaultWorkContextForDate(d);
+    }
+  }
+
+  async function applySmartDefaults(date: string, slot: EntrySlot, token: number): Promise<void> {
+    try {
+      const result = await fetchEntryDelta({ entry_date: date, slot });
+      if (token !== loadToken || existingEntryId) return;
+      const defaults = scaleDefaultsFromPrevious(result.previous);
+      if (!defaults) return;
+      moodScore = defaults.mood_score;
+      energy = defaults.energy;
+      stress = defaults.stress;
+    } catch {
+      // Keep neutral defaults when the comparison endpoint is unavailable.
     }
   }
 
@@ -229,6 +244,7 @@
       );
       if (!matchingEntry) {
         resetForm(date, slot);
+        void applySmartDefaults(date, slot, myToken);
         return;
       }
       existingEntryId = matchingEntry.id;
@@ -318,7 +334,7 @@
   }
 
   function syncCompactEntry() {
-    compactEntry = mode === 'sheet' || Boolean(mobileMedia?.matches);
+    compactEntry = Boolean(mobileMedia?.matches);
     syncOptionalExtrasVisibility();
   }
 

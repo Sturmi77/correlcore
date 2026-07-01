@@ -312,6 +312,7 @@ test('desktop keeps note and cycle fields expanded without toggle', async ({ pag
   await installEntryApi(page);
   await page.goto('/entries/new');
 
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('entry-optional-extras-toggle')).toHaveCount(0);
   await expect(page.locator('#entry-section-tags')).toBeVisible();
   await expect(page.locator('#entry-section-note')).toBeVisible();

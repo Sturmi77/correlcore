@@ -13,7 +13,7 @@
 | Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                |
 | Phase 2 open  | O-22–O-42                | Planned — see Phase 2 §3 audit matrix |
 
-**Open audit themes:** dual entry surfaces (W3/W4), Insights control density (W5/W6), global analysis window (W6), onboarding polish (W2), smart entry defaults (W3), spacing hardening (O-31–O-35).
+**Open audit themes:** Insights control density (W5/W6), onboarding polish (W2), spacing hardening (O-31–O-35), Trends tab consolidation (W6).
 
 **Scoring:** 0 = no friction, 3 = high friction (per criterion); **Total** = sum of 6 criteria (max 18)
 
@@ -205,8 +205,8 @@
 | ----------------------------- | ------------------ | --------------- | ------------------------------------ | ------------------- | -------------------------- |
 | Auth funnel length            | W1                 | high            | Zusammenführen (verify → auto-login) | **Erledigt**        | O-07, O-11, O-20           |
 | Onboarding before first entry | W2                 | high            | Vorverlagern                         | Teilweise           | O-02, O-04, O-06, **O-37** |
-| Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | Offen               | **O-08**, O-38             |
-| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, O-22 ✅, O-34  |
+| Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | **Erledigt**        | O-08 ✅, O-38 ✅           |
+| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, O-22 ✅, O-34 |
 | Legacy onboarding routes      | W2                 | medium          | Eliminieren                          | **Erledigt**        | O-04                       |
 | Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-41                       |
 | Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         | Teilweise           | O-09 (O-16 done)           |
@@ -232,10 +232,9 @@
 
 ### Phase 2 next (from audit + planning)
 
-1. **O-36** Smart entry defaults (W3) / Sprint J
-2. **O-08** Desktop entry surface (W3/W4)
-3. **O-37** Onboarding polish (W2)
-4. **O-41** Trends tab consolidation (W6)
+1. **O-37** Onboarding polish (W2) / Sprint K
+2. **O-09** Habit hint in onboarding tag step (W7) / Sprint K
+3. **O-41** Trends tab consolidation (W6) / Sprint M
 
 ---
 
