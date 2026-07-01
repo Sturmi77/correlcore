@@ -43,6 +43,7 @@
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
+  import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
 
   const HOME_SPARKLINE_DAYS = 7;
   const HOME_SPARKLINE_MIN_ENTRIES = 3;
@@ -71,10 +72,9 @@
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
   $: dayEntriesForSparkline = recentEntries.filter((entry) => entry.slot === 'day');
   $: showHomeSparkline = dayEntriesForSparkline.length >= HOME_SPARKLINE_MIN_ENTRIES;
-  $: showOnboardingTags = Boolean(
-    userPreferences &&
-    !userPreferences.onboarding_retro_completed &&
-    dashboardSummary?.entry_count === 0
+  $: showOnboardingTags = shouldShowOnboardingTags(
+    userPreferences,
+    dashboardSummary?.entry_count
   );
   $: showPwaInstallBanner = Boolean(
     $pwaInstallStore.promptEvent &&

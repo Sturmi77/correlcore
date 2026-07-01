@@ -14,6 +14,7 @@
   } from '$lib/api/onboarding';
   import { TAG_CATEGORIES, type TagCategory } from '$lib/api/tags';
   import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
+  import { shouldSkipOnboardingSummary } from '$lib/utils/onboardingEntry';
 
   let step = 0;
   let groups: TagSuggestionGroup[] = [];
@@ -26,7 +27,9 @@
   const customCategories = TAG_CATEGORIES;
 
   $: selectedTags = [...selected.values()];
-  $: progressLabel = `${step + 1}/3`;
+  $: showSummaryStep = !shouldSkipOnboardingSummary(selectedTags.length);
+  $: progressTotal = showSummaryStep ? 2 : 1;
+  $: progressLabel = `${step + 1}/${progressTotal}`;
 
   onMount(async () => {
     try {
@@ -74,6 +77,14 @@
       busy = false;
     }
   }
+
+  function continueFromTags() {
+    if (shouldSkipOnboardingSummary(selectedTags.length)) {
+      void finish();
+      return;
+    }
+    step = 1;
+  }
 </script>
 
 <svelte:head>
@@ -82,7 +93,7 @@
 
 <main class="onboarding-flow">
   <div class="onboarding-flow__progress" aria-label={$_('onboarding.guided.progress')}>
-    {#each [0, 1, 2] as item}
+    {#each Array(progressTotal) as _, item}
       <span class:active={item === step}></span>
     {/each}
     <small>{progressLabel}</small>
@@ -94,20 +105,8 @@
 
   {#if step === 0}
     <Panel variant="bordered">
-      <h1>{$_('onboarding.guided.title')}</h1>
-      <p>{$_('onboarding.guided.intro')}</p>
-      <div class="onboarding-flow__actions">
-        <Button variant="ghost" on:click={() => finish([])} disabled={busy}>
-          {$_('onboarding.skip')}
-        </Button>
-        <Button variant="primary" on:click={() => (step = 1)}>
-          {$_('onboarding.continue')}
-        </Button>
-      </div>
-    </Panel>
-  {:else if step === 1}
-    <Panel variant="bordered">
       <h1>{$_('onboarding.guided.tags_title')}</h1>
+      <p data-testid="onboarding-intro">{$_('onboarding.guided.intro')}</p>
       <p>{$_('onboarding.guided.tags_body')}</p>
       <p class="onboarding-flow__habit-hint" data-testid="onboarding-habit-hint">
         {$_('onboarding.guided.habit_hint')}
@@ -152,8 +151,8 @@
         <Button variant="ghost" on:click={() => finish([])} disabled={busy}>
           {$_('onboarding.skip')}
         </Button>
-        <Button variant="primary" on:click={() => (step = 2)}>
-          {$_('onboarding.continue')}
+        <Button variant="primary" on:click={continueFromTags} loading={busy}>
+          {showSummaryStep ? $_('onboarding.continue') : $_('onboarding.guided.start')}
         </Button>
       </div>
     </Panel>
@@ -167,7 +166,7 @@
         {/each}
       </div>
       <div class="onboarding-flow__actions">
-        <Button variant="ghost" on:click={() => (step = 1)} disabled={busy}>
+        <Button variant="ghost" on:click={() => (step = 0)} disabled={busy}>
           {$_('onboarding.guided.back')}
         </Button>
         <Button variant="primary" on:click={() => finish()} loading={busy}>

@@ -63,14 +63,14 @@ _Erledigt aus W5:_ O-03 (Empty CTA), O-05 (Sparkline-Gate), O-14 (Matrix/Co-occu
 
 | ID   | Impact | Effort | Titel                                                                        | Klasse                     | Audit-Quelle | Status                 |
 | ---- | ------ | ------ | ---------------------------------------------------------------------------- | -------------------------- | ------------ | ---------------------- |
-| O-37 | Medium | Medium | Onboarding straffen: Intro in ersten Entry; Summary bei ≤3 Tags überspringen | Vorverlagern / Eliminieren | W2 #52, #57  | Teilweise (O-02, O-06) |
+| O-37 | Medium | Medium | Onboarding straffen: Intro in ersten Entry; Summary bei ≤3 Tags überspringen | Vorverlagern / Eliminieren | W2 #52, #57  | **Erledigt**                        |
 | —    | —      | —      | Legacy `/onboarding/retro` + `/profile`                                      | Eliminieren                | W2 legacy    | **Erledigt** (O-04)    |
 
 ### 2.5 Habits, Settings, Vertrauen
 
 | ID   | Impact | Effort | Titel                                         | Klasse         | Audit-Quelle                         | Status       |
 | ---- | ------ | ------ | --------------------------------------------- | -------------- | ------------------------------------ | ------------ |
-| O-09 | Medium | Medium | Habit-Hinweis im Onboarding-Tag-Schritt       | Vorverlagern   | W7 #169, Cross-cutting „Habit setup“ | Teilweise    |
+| O-09 | Medium | Medium | Habit-Hinweis im Onboarding-Tag-Schritt       | Vorverlagern   | W7 #169, Cross-cutting „Habit setup“ | **Erledigt** |
 | O-16 | Medium | Medium | Inline Habit-Setup bei leerem Habits-Panel    | Umleiten       | W7 #172                              | **Erledigt** |
 | O-27 | Low    | Medium | Settings-Vokabular-Hub (Tags/Symptome/Habits) | Zusammenführen | W8                                   | Offen        |
 | O-28 | Medium | High   | Account-Löschung (M9)                         | Vereinfachen   | DSGVO / Vertrauen                    | Offen        |
@@ -101,8 +101,8 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **W1**   | Post-verify Login-Schritt       | —      | **Erledigt** (O-07) |
 | **W1**   | Kein Password-Reset             | —      | **Erledigt** (O-20) |
 | **W1**   | Check-email Mail-App-Link       | —      | **Erledigt** (O-11) |
-| **W2**   | Intro-Panel vor erstem Entry    | O-37   | Medium              |
-| **W2**   | Summary bei wenigen Tags        | O-37   | Medium              |
+| **W2**   | Intro-Panel vor erstem Entry    | —          | **Erledigt** (O-37) |
+| **W2**   | Summary bei wenigen Tags        | —          | **Erledigt** (O-37) |
 | **W2**   | Post-onboarding leerer Brief    | —      | **Erledigt** (O-02) |
 | **W2**   | Legacy retro/profile            | —      | **Erledigt** (O-04) |
 | **W3**   | Smart default von gestern       | —      | **Erledigt** (O-36) |
@@ -119,7 +119,7 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **W6**   | Trends ↔ Insights getrennt      | O-41   | Medium              |
 | **W6**   | Compare + Health Tabs           | O-41   | Medium              |
 | **W6**   | Heatmap → Route statt Sheet     | —      | **Erledigt** (O-17) |
-| **W7**   | Habit-Setup nicht in Onboarding | O-09   | Medium              |
+| **W7**   | Habit-Setup nicht in Onboarding | —          | **Erledigt** (O-09) |
 | **W7**   | Leeres Habits-Panel             | —      | **Erledigt** (O-16) |
 | **W8**   | Vokabular-Subnavigation         | O-27   | Low                 |
 | **W9**   | Export in Settings versteckt    | —      | **Erledigt** (O-19) |
@@ -130,12 +130,12 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | Theme                           | Status        | Offene Tickets     |
 | ------------------------------- | ------------- | ------------------ |
 | Auth-Funnel-Länge               | **Erledigt**  | —                  |
-| Onboarding vor erstem Entry     | **Teilweise** | O-37               |
+| Onboarding vor erstem Entry     | **Erledigt**  | —                  |
 | Dual Entry Surfaces             | **Erledigt**  | —                  |
 | Duplicate maturity UI           | **Teilweise** | O-34               |
 | Legacy Onboarding               | **Erledigt**  | —                  |
 | Analyse auf 2 Nav-Tabs verteilt | **Teilweise** | O-41               |
-| Habit-Setup nicht in Onboarding | **Teilweise** | O-09               |
+| Habit-Setup nicht in Onboarding | **Erledigt**  | —                  |
 | Kein Password-Reset             | **Erledigt**  | —                  |
 | Spacing / Dichte Mobile         | **Teilweise** | O-30 ✅, O-31–O-35 |
 
@@ -148,11 +148,11 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **H — Analyse-Kern**        | O-23, O-22, O-24 ✅          | Ein Zeitfenster; Insights findings-first |
 | **I — Home & Verknüpfung**  | O-39, O-40, O-13 ✅          | Wöchentliche Review ohne Tab-Hopping     |
 | **J — Entry & Desktop**     | O-36, O-08, O-38 ✅          | W3/W4 Rest; Desktop-Konsistenz           |
-| **K — Onboarding & Habits** | O-37, O-09                   | W2/W7 Rest                               |
+| **K — Onboarding & Habits** | O-37, O-09 ✅                | W2/W7 Rest                               |
 | **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34  | Mobile-Dichte, Trends/Insights kompakter |
 | **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42 | Größere IA-/Backend-Themen               |
 
-**Nächster konkreter PR:** **Sprint K** (O-37, O-09) oder **Sprint L** (Spacing).
+**Nächster konkreter PR:** **Sprint L** (O-31–O-35 Spacing) oder **Sprint M** (O-41).
 
 ---
 

@@ -252,6 +252,32 @@ async function installJourneyApi(
                 icon: null,
                 color: null,
               },
+              {
+                slug: 'walk',
+                name: 'Walk',
+                category: 'sport',
+                icon: null,
+                color: null,
+              },
+            ],
+          },
+          {
+            category: 'wellness',
+            suggestions: [
+              {
+                slug: 'meditation',
+                name: 'Meditation',
+                category: 'wellness',
+                icon: null,
+                color: null,
+              },
+              {
+                slug: 'yoga',
+                name: 'Yoga',
+                category: 'wellness',
+                icon: null,
+                color: null,
+              },
             ],
           },
         ],
@@ -509,15 +535,18 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
 
     await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('onboarding-intro')).toBeVisible();
+    await expect(page.getByTestId('onboarding-habit-hint')).toBeVisible();
     await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
   });
 
-  test('onboarding route redirects to home entry sheet', async ({ page }) => {
+  test('onboarding route redirects to home entry sheet with tag suggestions', async ({ page }) => {
     await installJourneyApi(page, { profile: 'new_user' });
     await page.goto('/onboarding');
 
     await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
   });
 
   test('onboarding preview wizard remains available', async ({ page }) => {
@@ -525,7 +554,8 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await page.goto('/onboarding?preview=1');
 
     await expect(page).toHaveURL(/\/onboarding\?preview=1$/, { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByRole('heading', { name: 'Set up your tracking' })).toBeVisible();
+    await expect(page.getByTestId('onboarding-intro')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pick useful tags' })).toBeVisible();
   });
 
   test('onboarding preview skip completes and returns to home CTA', async ({ page }) => {
@@ -538,17 +568,33 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     expect(api.writes).toContain('POST /onboarding/complete');
   });
 
-  test('onboarding preview tag flow reaches start tracking', async ({ page }) => {
+  test('onboarding preview tag flow skips summary for three or fewer tags', async ({ page }) => {
     const api = await installJourneyApi(page, { profile: 'new_user' });
     await page.goto('/onboarding?preview=1');
 
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByRole('button', { name: 'Running' }).click();
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page.getByRole('button', { name: 'Walk' }).click();
     await page.getByRole('button', { name: 'Start tracking' }).click();
 
     await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    expect(api.writes).toContain('POST /onboarding/complete');
+    await expect(page.getByRole('heading', { name: 'Ready to start' })).toHaveCount(0);
+  });
+
+  test('onboarding preview tag flow shows summary for more than three tags', async ({ page }) => {
+    const api = await installJourneyApi(page, { profile: 'new_user' });
+    await page.goto('/onboarding?preview=1');
+
+    await page.getByRole('button', { name: 'Running' }).click();
+    await page.getByRole('button', { name: 'Walk' }).click();
+    await page.getByRole('button', { name: 'Meditation' }).click();
+    await page.getByRole('button', { name: 'Yoga' }).click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Ready to start' })).toBeVisible();
+    await page.getByRole('button', { name: 'Start tracking' }).click();
+
+    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
   });
 });
