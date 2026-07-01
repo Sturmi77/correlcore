@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EntryDeltaResponse } from '$lib/api/entries';
-import { fetchEntryDelta, listEntries } from '$lib/api/entries';
+import type { EntryDeltaResponse, EntryResponse } from '$lib/api/entries';
+import { fetchEntryDelta, listEntries, updateEntry } from '$lib/api/entries';
 import { submitEntry } from '$lib/stores/entries';
 import EntryForm from './EntryForm.svelte';
 
@@ -255,6 +255,70 @@ describe('EntryForm slot changes', () => {
         slot: 'morning',
         note: 'draft before slot switch',
       })
+    );
+  });
+
+  it('persists a selected slot after an in-flight draft create completes', async () => {
+    const create = testHelpers.deferred<EntryResponse>();
+    vi.mocked(submitEntry).mockReturnValue(create.promise);
+    vi.mocked(updateEntry).mockResolvedValue({
+      id: 'created-entry',
+      user_id: 'user-1',
+      entry_date: '2026-06-02',
+      slot: 'morning',
+      mood_score: 4,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      source: 'manual',
+      work_context: 'homeoffice',
+      note: null,
+      created_at: '2026-06-02T12:00:00Z',
+      updated_at: '2026-06-02T12:01:00Z',
+    });
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+    await fireEvent.click(screen.getByLabelText('entry.mood_increment'));
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ slot: 'day', mood_score: 4 })
+    );
+
+    await fireEvent.click(screen.getByRole('button', { name: 'entry.time_slot.morning' }));
+    await flushAsync();
+    expect(
+      screen.getByRole('button', { name: 'entry.time_slot.morning' }).getAttribute('aria-pressed')
+    ).toBe('true');
+
+    create.resolve({
+      id: 'created-entry',
+      user_id: 'user-1',
+      entry_date: '2026-06-02',
+      slot: 'day',
+      mood_score: 4,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      source: 'manual',
+      work_context: 'homeoffice',
+      note: null,
+      created_at: '2026-06-02T12:00:00Z',
+      updated_at: '2026-06-02T12:00:00Z',
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).toHaveBeenCalledWith(
+      'created-entry',
+      expect.objectContaining({ slot: 'morning', mood_score: 4 })
     );
   });
 });

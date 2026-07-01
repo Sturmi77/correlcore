@@ -425,12 +425,24 @@
     }
   }
 
+  async function flushSlotAfterInFlightSave(): Promise<void> {
+    await waitForAutoSaveNotSaving();
+    const status = autoSave.peek().status;
+    if (status === 'saved' || status === 'idle') {
+      markDirty();
+    }
+    await autoSave.flushNow();
+  }
+
   async function setSlot(slot: EntrySlot) {
     const nextSlot = selectedSlot === slot ? 'day' : slot;
     const status = autoSave.peek().status;
     if (!existingEntryId && (status === 'dirty' || status === 'saving' || status === 'error')) {
       selectedSlot = nextSlot;
       markDirty();
+      if (status === 'saving') {
+        void flushSlotAfterInFlightSave();
+      }
       void refreshDayDelta(entryDate, nextSlot);
       return;
     }
