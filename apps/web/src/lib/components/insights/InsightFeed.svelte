@@ -22,10 +22,15 @@
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import EmptyState from '$lib/components/common/EmptyState.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
-  import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
+  import TabBar from '$lib/components/common/TabBar.svelte';
   import InsightCard from './InsightCard.svelte';
   import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
   import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
+  import {
+    filterInsightsByTab,
+    getInsightFeedFilterTabs,
+    type InsightFeedFilterTab,
+  } from '$lib/utils/insightFeedFilter';
   import { rankInsights } from '$lib/utils/insightRanking';
 
   export let insights: InsightResponse[] = [];
@@ -36,48 +41,18 @@
   export let inactiveTagIds: readonly string[] = [];
   export let showContext = true;
   export let showFilters = true;
+  /** When set, the parent owns filter UI and state (O-22). */
+  export let filterTab: InsightFeedFilterTab | undefined = undefined;
 
   const dispatch = createEventDispatcher<{ retry: void }>();
 
-  type FilterTab = 'all' | 'mood' | 'symptoms' | 'sleep';
-  let activeTab: FilterTab = 'all';
+  let internalFilterTab: InsightFeedFilterTab = 'all';
   let disclaimerOpen = false;
 
-  const TABS: { id: FilterTab; label: string }[] = [
-    { id: 'all', label: 'insights.feed.tab_all' },
-    { id: 'mood', label: 'insights.feed.tab_mood' },
-    { id: 'symptoms', label: 'insights.feed.tab_symptoms' },
-    { id: 'sleep', label: 'insights.feed.tab_sleep' },
-  ];
+  $: activeTab = filterTab ?? internalFilterTab;
+  $: filterTabOptions = getInsightFeedFilterTabs($_, 'insight-feed-tab');
 
-  const METRIC_MAP: Record<FilterTab, string[]> = {
-    all: [],
-    mood: ['mood'],
-    symptoms: ['symptom', 'symptoms'],
-    sleep: ['sleep'],
-  };
-
-  function insightMatches(i: InsightResponse, keywords: string[]): boolean {
-    const tokens = [
-      i.metric,
-      i.insight_type,
-      i.subject_type,
-      i.subject_label,
-      typeof i.payload?.kind === 'string' ? i.payload.kind : '',
-      typeof i.flags?.kind === 'string' ? i.flags.kind : '',
-    ]
-      .filter(Boolean)
-      .map((token) => String(token).toLowerCase());
-    return keywords.some((keyword) => tokens.some((token) => token.includes(keyword)));
-  }
-
-  $: filtered = rankInsights(
-    insights.filter((i) => {
-      if (activeTab === 'all') return true;
-      const keywords = METRIC_MAP[activeTab];
-      return insightMatches(i, keywords);
-    })
-  );
+  $: filtered = rankInsights(filterInsightsByTab(insights, activeTab));
   $: isPhaseEmpty = Boolean(maturity && insights.length === 0);
   $: emptyTitleKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.title`
@@ -85,13 +60,6 @@
   $: emptyBodyKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.body`
     : 'insights.feed.empty_body';
-  $: filterTabOptions = TABS.map(
-    (tab): TabBarOption => ({
-      id: tab.id,
-      label: $_(tab.label),
-      testId: `insight-feed-tab-${tab.id}`,
-    })
-  );
 
   const SKELETON_COUNT = 3;
   const skeletonItems: number[] = Array.from({ length: SKELETON_COUNT }, (_, idx) => idx);
@@ -134,7 +102,7 @@
       options={filterTabOptions}
       ariaLabel={$_('insights.feed.filter_label')}
       testId="insight-feed-tabs"
-      on:change={(event) => (activeTab = event.detail.value as FilterTab)}
+      on:change={(event) => (internalFilterTab = event.detail.value as InsightFeedFilterTab)}
     />
   {/if}
 

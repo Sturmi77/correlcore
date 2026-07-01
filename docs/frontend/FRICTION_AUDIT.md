@@ -206,9 +206,9 @@
 | Auth funnel length            | W1                 | high            | Zusammenführen (verify → auto-login) | **Erledigt**        | O-07, O-11, O-20           |
 | Onboarding before first entry | W2                 | high            | Vorverlagern                         | Teilweise           | O-02, O-04, O-06, **O-37** |
 | Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | Offen               | **O-08**, O-38             |
-| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, **O-22**, O-34 |
+| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, O-22 ✅, O-34 |
 | Legacy onboarding routes      | W2                 | medium          | Eliminieren                          | **Erledigt**        | O-04                       |
-| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-13, **O-23**, O-40, O-41 |
+| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-13, O-23 ✅, O-40, O-41 |
 | Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         | Teilweise           | O-09 (O-16 done)           |
 | No password reset             | W1                 | medium          | Backend scope                        | **Erledigt**        | O-20                       |
 | Mobile spacing / density      | W3–W6              | medium          | Vereinfachen                         | Teilweise           | O-30 ✅, **O-31–O-35**     |
@@ -232,11 +232,10 @@
 
 ### Phase 2 next (from audit + planning)
 
-1. **O-23** Global analysis range (W6)
-2. **O-22 + O-24** Insights IA (W5/W6)
-3. **O-36** Smart entry defaults (W3)
-4. **O-08** Desktop entry surface (W3/W4)
-5. **O-37** Onboarding polish (W2)
+1. **O-39 + O-40** Home & Trends ↔ Insights bridge (Sprint I)
+2. **O-36** Smart entry defaults (W3)
+3. **O-08** Desktop entry surface (W3/W4)
+4. **O-37** Onboarding polish (W2)
 
 ---
 

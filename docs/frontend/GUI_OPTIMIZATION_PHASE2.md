@@ -16,6 +16,8 @@ Phase 1 removed funnel friction, duplicate maturity UI, and legacy paths. Phase 
 | O-30      | #288       | Spacing Foundation (`screen-stack`, `--space-5`, Mobile-Dichte)               |
 | O-21      | #289       | Entry Flatten — Tags/Symptome/Zeitslots immer sichtbar                        |
 | O-23      | Sprint H   | Globales `analysisRange` (Trends + Insights, persistiert)                     |
+| O-22      | Sprint H   | Insights: eine Kontrollzeile (Kategorie-Chips + Matrix-Link)                  |
+| O-24      | Sprint H   | Symptom-Analytik über Kategorie-Filter statt Checkbox                         |
 
 ---
 
@@ -28,8 +30,8 @@ Legende Status: **Offen** · **Teilweise** (Foundation da, Audit-Punkt nicht vol
 | ID   | Impact | Effort | Titel                                                                 | Klasse         | Audit-Quelle                                         | Status                       |
 | ---- | ------ | ------ | --------------------------------------------------------------------- | -------------- | ---------------------------------------------------- | ---------------------------- |
 | O-23 | High   | Medium | Globales `analysisRange` für Trends + Insights                        | Zusammenführen | W6 #157, Cross-cutting „Zeiträume“                   | **Erledigt**                 |
-| O-22 | High   | Medium | Insights: eine Kontrollzeile (Chips + Matrix-Link)                    | Zusammenführen | W5 #113, W6 #147, Cross-cutting „Duplicate maturity“ | Teilweise (O-01, O-14)       |
-| O-24 | Medium | Low    | Symptom-Analytik über Kategorie-Filter statt Checkbox                 | Eliminieren    | W6 Insights controls                                 | Offen                        |
+| O-22 | High   | Medium | Insights: eine Kontrollzeile (Chips + Matrix-Link)                    | Zusammenführen | W5 #113, W6 #147, Cross-cutting „Duplicate maturity“ | **Erledigt**                 |
+| O-24 | Medium | Low    | Symptom-Analytik über Kategorie-Filter statt Checkbox                 | Eliminieren    | W6 Insights controls                                 | **Erledigt**                 |
 | O-40 | Medium | Medium | Cross-link Trends ↔ Insights (Top-Finding)                            | Zusammenführen | W6 #146                                              | Teilweise (O-13 Home bridge) |
 | O-41 | Medium | High   | Trends Compare + Health auf gemeinsame Zeitachse / Tab-Konsolidierung | Zusammenführen | W6 Desktop #155, FRONTEND_STREAMLINE                 | Offen                        |
 
@@ -105,9 +107,9 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **W3**   | Tags/Symptome hinter Toggle     | —          | **Erledigt** (O-21) |
 | **W4**   | Rückdatierung Sheet vs. Page    | O-08       | Medium              |
 | **W5**   | Meilenstein inline im Brief     | O-39       | Medium              |
-| **W5**   | Duplicate maturity UI           | O-22, O-34 | High                |
+| **W5**   | Duplicate maturity UI           | O-34       | Medium              |
 | **W5**   | Matrix/Co-occurrence leer       | —          | **Erledigt** (O-14) |
-| **W6**   | Matrix als eigener Tab          | O-22       | High                |
+| **W6**   | Matrix als eigener Tab          | —          | **Erledigt** (O-22) |
 | **W6**   | Range pro Widget                | O-23       | High                |
 | **W6**   | Trends ↔ Insights getrennt      | O-13, O-40 | Medium              |
 | **W6**   | Compare + Health Tabs           | O-41       | Medium              |
@@ -125,7 +127,7 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | Auth-Funnel-Länge               | **Erledigt**  | —                      |
 | Onboarding vor erstem Entry     | **Teilweise** | O-37                   |
 | Dual Entry Surfaces             | **Offen**     | O-08, O-38             |
-| Duplicate maturity UI           | **Teilweise** | O-22, O-34             |
+| Duplicate maturity UI           | **Teilweise** | O-34                     |
 | Legacy Onboarding               | **Erledigt**  | —                      |
 | Analyse auf 2 Nav-Tabs verteilt | **Teilweise** | O-13, O-23, O-40, O-41 |
 | Habit-Setup nicht in Onboarding | **Teilweise** | O-09                   |
@@ -138,14 +140,14 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 
 | Sprint                      | Issues                        | Ziel                                     |
 | --------------------------- | ----------------------------- | ---------------------------------------- |
-| **H — Analyse-Kern**        | O-23 → O-22 + O-24            | Ein Zeitfenster; Insights findings-first |
+| **H — Analyse-Kern**        | O-23, O-22, O-24 ✅           | Ein Zeitfenster; Insights findings-first |
 | **I — Home & Verknüpfung**  | O-39, O-40 (+ O-13 vertiefen) | Wöchentliche Review ohne Tab-Hopping     |
 | **J — Entry & Desktop**     | O-36, O-08, O-38              | W3/W4 Rest; Desktop-Konsistenz           |
 | **K — Onboarding & Habits** | O-37, O-09                    | W2/W7 Rest                               |
 | **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34   | Mobile-Dichte, Trends/Insights kompakter |
 | **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42  | Größere IA-/Backend-Themen               |
 
-**Nächster konkreter PR:** **O-22 + O-24** (Insights IA) als ein Paket.
+**Nächster konkreter PR:** **O-39 + O-40** (Home & Verknüpfung, Sprint I).
 
 ---
 
