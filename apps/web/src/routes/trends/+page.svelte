@@ -30,6 +30,7 @@
   } from '$lib/dev/mockTrends';
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
+  import { insightStore, loadInsights } from '$lib/stores/insights';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import { rangeToDays, rangeToHabitWindow } from '$lib/utils/trendsRange';
@@ -48,6 +49,7 @@
   } from '$lib/components/common/SegmentedControl.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
+  import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
   type TrendTab = 'compare' | 'health' | 'habits';
@@ -271,6 +273,7 @@
     timeseries && smoothing && smoothingAvailable
       ? { ...timeseries, points: smoothTimeseriesPoints(timeseries.points) }
       : timeseries;
+  $: topInsight = $insightStore.latest;
 
   onMount(() => {
     smoothing = localStorage.getItem(SMOOTHING_STORAGE_KEY) === 'true';
@@ -283,6 +286,7 @@
     updateCompactTrends();
     mobileMedia?.addEventListener('change', updateCompactTrends);
     void loadTrends();
+    void loadInsights();
     return () => mobileMedia?.removeEventListener('change', updateCompactTrends);
   });
 </script>
@@ -344,6 +348,10 @@
 
     {#if error}
       <InlineAlert variant="error" message={error} />
+    {/if}
+
+    {#if activeTab === 'compare' && topInsight}
+      <AnalysisCrossLink insight={topInsight} direction="to-insights" />
     {/if}
 
     {#if activeTab === 'compare'}

@@ -71,4 +71,9 @@ describe('MobileInsightLead', () => {
     expect(note).toBeTruthy();
     expect(within(note).getByRole('link').getAttribute('href')).toBe('/insights/disclaimer');
   });
+
+  it('links the featured insight back to trends', () => {
+    render(MobileInsightLead, { props: { insight } });
+    expect(screen.getByTestId('analysis-cross-link-trends').getAttribute('href')).toBe('/trends');
+  });
 });

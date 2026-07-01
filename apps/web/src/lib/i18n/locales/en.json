@@ -23,6 +23,12 @@
     "toggle_light": "Switch to light mode",
     "toggle_dark": "Switch to dark mode"
   },
+  "analysis": {
+    "cross_link": {
+      "top_insight": "Top insight: {label} → Insights",
+      "view_trends": "View related trends →"
+    }
+  },
   "home": {
     "greeting_morning": "Good morning",
     "greeting_day": "Hello",

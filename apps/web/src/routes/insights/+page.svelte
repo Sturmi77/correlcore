@@ -80,6 +80,7 @@
   import SegmentedControl, {
     type SegmentedControlOption,
   } from '$lib/components/common/SegmentedControl.svelte';
+  import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { timeseriesRangeToCooccurrence } from '$lib/utils/analysisRange';
   import type { TimeseriesRange } from '$lib/api/stats';
 
@@ -594,6 +595,10 @@
           </button>
         {/if}
       </div>
+
+      {#if !compactInsights && primaryMobileInsight}
+        <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
+      {/if}
 
       {#if compactInsights && primaryMobileInsight && remainingMobileInsights.length > 0 && !feedLoading && !error}
         <section class="insights-page__more" data-testid="mobile-insights-more">

@@ -5,6 +5,8 @@
   import InsightCard from './InsightCard.svelte';
   import InsightStageHeader from './InsightStageHeader.svelte';
 
+  import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
+
   export let insight: InsightResponse;
   export let maturity: InsightMaturity | null = null;
   export let entryCount = 0;
@@ -27,6 +29,8 @@
     {$_('insights.mobile.correlation_note')}
     <a href="/insights/disclaimer">{$_('insights.mobile.correlation_link')}</a>
   </p>
+
+  <AnalysisCrossLink {insight} direction="to-trends" />
 
   {#if showMilestone && maturity}
     <div data-testid="mobile-insight-maturity">
