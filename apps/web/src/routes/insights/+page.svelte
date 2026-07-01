@@ -114,6 +114,10 @@
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let symptomCooccurrence: SymptomTagCooccurrenceResponse | null = null;
   let symptomCooccurrenceLoading = false;
+  let cooccurrenceRequested = false;
+  let cooccurrenceRequestId = 0;
+  let symptomCooccurrenceRequested = false;
+  let symptomCooccurrenceRequestId = 0;
   let showInsightSymptoms = true;
   let compactInsights = false;
   let mobileMedia: MediaQueryList | null = null;
@@ -141,8 +145,10 @@
   ) {
     const hadPrevious = lastAnalysisRangeForCooccurrence !== null;
     lastAnalysisRangeForCooccurrence = $analysisRange;
-    if (hadPrevious && (cooccurrence !== null || symptomCooccurrence !== null)) {
+    if (hadPrevious && cooccurrenceRequested) {
       void loadCooccurrence();
+    }
+    if (hadPrevious && symptomCooccurrenceRequested) {
       void loadSymptomCooccurrence();
     }
   }
@@ -164,17 +170,25 @@
 
   async function loadCooccurrence(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
+    cooccurrenceRequested = true;
+    const requestedRange = cooccurrenceRange;
+    const requestId = ++cooccurrenceRequestId;
     cooccurrenceLoading = true;
     try {
-      if (get(devForceVisualizations)) {
-        cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
-        return;
+      const nextCooccurrence = get(devForceVisualizations)
+        ? mockTagCooccurrenceByRange[requestedRange]
+        : await fetchTagCooccurrence({ range: requestedRange, min_count: 2 });
+      if (requestId === cooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+        cooccurrence = nextCooccurrence;
       }
-      cooccurrence = await fetchTagCooccurrence({ range: cooccurrenceRange, min_count: 2 });
     } catch {
-      cooccurrence = null;
+      if (requestId === cooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+        cooccurrence = null;
+      }
     } finally {
-      cooccurrenceLoading = false;
+      if (requestId === cooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+        cooccurrenceLoading = false;
+      }
     }
   }
 
@@ -196,20 +210,28 @@
 
   async function loadSymptomCooccurrence(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
+    symptomCooccurrenceRequested = true;
+    const requestedRange = cooccurrenceRange;
+    const requestId = ++symptomCooccurrenceRequestId;
     symptomCooccurrenceLoading = true;
     try {
-      if (get(devForceVisualizations)) {
-        symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
-        return;
+      const nextSymptomCooccurrence = get(devForceVisualizations)
+        ? mockSymptomTagCooccurrenceByRange[requestedRange]
+        : await fetchSymptomTagCooccurrence({
+            range: requestedRange,
+            min_count: 3,
+          });
+      if (requestId === symptomCooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+        symptomCooccurrence = nextSymptomCooccurrence;
       }
-      symptomCooccurrence = await fetchSymptomTagCooccurrence({
-        range: cooccurrenceRange,
-        min_count: 3,
-      });
     } catch {
-      symptomCooccurrence = null;
+      if (requestId === symptomCooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+        symptomCooccurrence = null;
+      }
     } finally {
-      symptomCooccurrenceLoading = false;
+      if (requestId === symptomCooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+        symptomCooccurrenceLoading = false;
+      }
     }
   }
 
