@@ -153,6 +153,9 @@ async def send_already_registered_email(
     html_body = _render("already_registered.html.j2", **ctx)
 
     msg = EmailMessage()
+    msg["Subject"] = "CorrelCore - Diese Adresse ist bereits registriert"
+    msg["From"] = settings.SMTP_FROM
+    msg["To"] = to_email
     msg.set_content(text_body)
     msg.add_alternative(html_body, subtype="html")
 
