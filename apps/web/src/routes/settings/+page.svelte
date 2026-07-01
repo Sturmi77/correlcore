@@ -164,7 +164,7 @@
   <title>{$_('settings.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="settings">
+<main class="settings screen-stack">
   <ScreenHeader title={$_('settings.title')} subtitle={$_('settings.subtitle')} />
 
   {#if $auth.status !== 'authenticated'}
@@ -444,22 +444,20 @@
   .settings {
     width: min(100%, 46rem);
     margin: 0 auto;
-    padding: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
   }
 
   .settings__panel-head p {
-    margin: 0.25rem 0 0;
+    margin: var(--space-1) 0 0;
     opacity: 0.72;
   }
 
   .settings__panel {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
+    gap: var(--screen-gap);
+    padding: var(--space-4);
     border-radius: 0.5rem;
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);

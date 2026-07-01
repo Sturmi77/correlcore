@@ -203,7 +203,7 @@
   .if-feed {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: var(--screen-gap);
   }
 
   .if-context-row {
@@ -246,6 +246,6 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--screen-gap-tight);
   }
 </style>

@@ -284,7 +284,7 @@
   <title>{$_('trends.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="trends">
+<main class="trends screen-stack">
   <ScreenHeader title={$_('trends.title')} subtitle={$_('trends.subtitle')} />
 
   {#if $auth.status !== 'authenticated'}
@@ -472,17 +472,15 @@
   .trends {
     width: min(100%, 76rem);
     margin: 0 auto;
-    padding: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
   }
 
   .trends__sticky-toolbar {
     position: sticky;
-    top: calc(var(--app-header-height, 0px) + 0.5rem);
+    top: calc(var(--app-header-height, 0px) + var(--space-2));
     z-index: 3;
-    padding: 0.75rem;
+    padding: var(--space-3);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--color-surface) 94%, transparent);
@@ -490,7 +488,7 @@
   }
 
   .trends__compare-filters {
-    padding: 0.75rem;
+    padding: var(--space-3);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface);
@@ -500,12 +498,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--screen-gap);
   }
 
   .trends__panel,
   .trends__consistency {
-    padding: 1rem;
+    padding: var(--space-4);
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
@@ -608,10 +606,6 @@
   }
 
   @media (max-width: 640px) {
-    .trends {
-      padding: 1rem;
-    }
-
     .trends__sticky-toolbar {
       position: static;
     }
