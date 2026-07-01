@@ -815,7 +815,8 @@
       "matrix_view": "Matrix",
       "symptoms_toggle": "Symptome einblenden",
       "analytics_summary": "Analyse vertiefen",
-      "analytics_hint": "Symptome und gemeinsame Tags"
+      "analytics_hint": "Symptome und gemeinsame Tags",
+      "analysis_range_label": "Analysezeitraum"
     },
     "mobile": {
       "eyebrow": "Mobile Zusammenfassung",

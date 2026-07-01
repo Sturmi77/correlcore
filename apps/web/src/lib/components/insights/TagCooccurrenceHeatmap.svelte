@@ -13,6 +13,7 @@
   export let data: TagCooccurrenceResponse | null = null;
   export let loading = false;
   export let range: TagCooccurrenceRange = '90d';
+  export let showRangeSelector = true;
   export let minPairsForDisplay = 5;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let enableClusterSort = false;
@@ -144,16 +145,18 @@
             : $_('insights.cooccurrence.sort_clustered')}
         </button>
       {/if}
-      {#each rangeOptions as option}
-        <button
-          type="button"
-          class:cooccurrence__range--active={range === option}
-          aria-pressed={range === option}
-          on:click={() => dispatch('rangeChange', { range: option })}
-        >
-          {rangeLabel(option)}
-        </button>
-      {/each}
+      {#if showRangeSelector}
+        {#each rangeOptions as option}
+          <button
+            type="button"
+            class:cooccurrence__range--active={range === option}
+            aria-pressed={range === option}
+            on:click={() => dispatch('rangeChange', { range: option })}
+          >
+            {rangeLabel(option)}
+          </button>
+        {/each}
+      {/if}
     </div>
   </div>
 

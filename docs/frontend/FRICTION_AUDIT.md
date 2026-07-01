@@ -166,7 +166,7 @@
 | ---------------------------------------- | ----- | -------------- | ------------------------------------------ | -------- |
 | Trends Compare + Health on separate tabs | 2     | Zusammenführen | Shared time axis (partially done ADR-0035) |
 | Insights analysis-first layout           | 0     | Nicht ändern   | —                                          |
-| Range selector repeated per tab          | 2     | Vereinfachen   | Global range control sticky in header      |
+| Range selector repeated per tab          | 2     | Vereinfachen   | Global range control sticky in header      | **Erledigt** (O-15, O-23) |
 
 **W6 summary:** Mobile requires **2 nav tabs** (Trends + Insights) for full weekly review — consider Home brief as bridge.
 

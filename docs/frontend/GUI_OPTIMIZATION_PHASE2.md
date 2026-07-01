@@ -15,6 +15,7 @@ Phase 1 removed funnel friction, duplicate maturity UI, and legacy paths. Phase 
 | O-01–O-20 | #281, #284 | Phase-1-Backlog (Auth, Onboarding, Home, Trends, PWA, Export, Password reset) |
 | O-30      | #288       | Spacing Foundation (`screen-stack`, `--space-5`, Mobile-Dichte)               |
 | O-21      | #289       | Entry Flatten — Tags/Symptome/Zeitslots immer sichtbar                        |
+| O-23      | Sprint H   | Globales `analysisRange` (Trends + Insights, persistiert)                     |
 
 ---
 
@@ -26,7 +27,7 @@ Legende Status: **Offen** · **Teilweise** (Foundation da, Audit-Punkt nicht vol
 
 | ID   | Impact | Effort | Titel                                                                 | Klasse         | Audit-Quelle                                         | Status                       |
 | ---- | ------ | ------ | --------------------------------------------------------------------- | -------------- | ---------------------------------------------------- | ---------------------------- |
-| O-23 | High   | Medium | Globales `analysisRange` für Trends + Insights                        | Zusammenführen | W6 #157, Cross-cutting „Zeiträume“                   | Offen                        |
+| O-23 | High   | Medium | Globales `analysisRange` für Trends + Insights                        | Zusammenführen | W6 #157, Cross-cutting „Zeiträume“                   | **Erledigt**                 |
 | O-22 | High   | Medium | Insights: eine Kontrollzeile (Chips + Matrix-Link)                    | Zusammenführen | W5 #113, W6 #147, Cross-cutting „Duplicate maturity“ | Teilweise (O-01, O-14)       |
 | O-24 | Medium | Low    | Symptom-Analytik über Kategorie-Filter statt Checkbox                 | Eliminieren    | W6 Insights controls                                 | Offen                        |
 | O-40 | Medium | Medium | Cross-link Trends ↔ Insights (Top-Finding)                            | Zusammenführen | W6 #146                                              | Teilweise (O-13 Home bridge) |
@@ -144,7 +145,7 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34   | Mobile-Dichte, Trends/Insights kompakter |
 | **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42  | Größere IA-/Backend-Themen               |
 
-**Nächster konkreter PR:** **O-23** (globales `analysisRange`), danach **O-22 + O-24** als ein Insights-Paket.
+**Nächster konkreter PR:** **O-22 + O-24** (Insights IA) als ein Paket.
 
 ---
 
