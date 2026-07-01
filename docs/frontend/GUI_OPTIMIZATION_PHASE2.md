@@ -38,7 +38,7 @@ Legende Status: **Offen** · **Teilweise** (Foundation da, Audit-Punkt nicht vol
 | O-22 | High   | Medium | Insights: eine Kontrollzeile (Chips + Matrix-Link)                    | Zusammenführen | W5 #113, W6 #147, Cross-cutting „Duplicate maturity“ | **Erledigt** |
 | O-24 | Medium | Low    | Symptom-Analytik über Kategorie-Filter statt Checkbox                 | Eliminieren    | W6 Insights controls                                 | **Erledigt** |
 | O-40 | Medium | Medium | Cross-link Trends ↔ Insights (Top-Finding)                            | Zusammenführen | W6 #146                                              | **Erledigt** |
-| O-41 | Medium | High   | Trends Compare + Health auf gemeinsame Zeitachse / Tab-Konsolidierung | Zusammenführen | W6 Desktop #155, FRONTEND_STREAMLINE                 | Offen        |
+| O-41 | Medium | High   | Trends Compare + Health auf gemeinsame Zeitachse / Tab-Konsolidierung | Zusammenführen | W6 Desktop #155, FRONTEND_STREAMLINE                 | Erledigt Sprint M |
 
 ### 2.2 Entry & Desktop
 
@@ -47,8 +47,8 @@ Legende Status: **Offen** · **Teilweise** (Foundation da, Audit-Punkt nicht vol
 | O-08 | Medium | High   | Desktop Entry-Surface vereinheitlichen (Sheet vs. `/entries/new`) | Zusammenführen | W3 Desktop #94, W4, Cross-cutting „Dual entry“ | **Erledigt** |
 | O-38 | Medium | Low    | Trends/Leer-CTA → EntrySheet inline statt Route-Wechsel           | Umleiten       | W3 Desktop #96                                 | **Erledigt** |
 | O-36 | Medium | Medium | Smart Entry-Defaults (Mood/Energie von gestern)                   | Vereinfachen   | W3 #80                                         | **Erledigt** |
-| O-25 | Medium | High   | Entry „Schnell“ vs. „Vollständig“ beim Öffnen                     | Umleiten       | Phase-2-Reserve                                | Offen        |
-| O-42 | Low    | Low    | Tageszeit-Slots in Datumszeile integrieren                        | Vereinfachen   | Phase-2 §4                                     | Offen        |
+| O-25 | Medium | High   | Entry „Schnell“ vs. „Vollständig“ beim Öffnen                     | Umleiten       | Phase-2-Reserve                                | Erledigt Sprint M |
+| O-42 | Low    | Low    | Tageszeit-Slots in Datumszeile integrieren                        | Vereinfachen   | Phase-2 §4                                     | Erledigt Sprint M |
 
 ### 2.3 Home & erste Erkenntnis
 
@@ -72,8 +72,8 @@ _Erledigt aus W5:_ O-03 (Empty CTA), O-05 (Sparkline-Gate), O-14 (Matrix/Co-occu
 | ---- | ------ | ------ | --------------------------------------------- | -------------- | ------------------------------------ | ------------ |
 | O-09 | Medium | Medium | Habit-Hinweis im Onboarding-Tag-Schritt       | Vorverlagern   | W7 #169, Cross-cutting „Habit setup“ | **Erledigt** |
 | O-16 | Medium | Medium | Inline Habit-Setup bei leerem Habits-Panel    | Umleiten       | W7 #172                              | **Erledigt** |
-| O-27 | Low    | Medium | Settings-Vokabular-Hub (Tags/Symptome/Habits) | Zusammenführen | W8                                   | Offen        |
-| O-28 | Medium | High   | Account-Löschung (M9)                         | Vereinfachen   | DSGVO / Vertrauen                    | Offen        |
+| O-27 | Low    | Medium | Settings-Vokabular-Hub (Tags/Symptome/Habits) | Zusammenführen | W8                                   | Erledigt Sprint M |
+| O-28 | Medium | High   | Account-Löschung (M9)                         | Vereinfachen   | DSGVO / Vertrauen                    | Erledigt Sprint M |
 
 _Erledigt aus W1:_ O-07 (Verify auto-login), O-11 (Mail deep link), O-20 (Password reset).
 
@@ -81,13 +81,13 @@ _Erledigt aus W1:_ O-07 (Verify auto-login), O-11 (Mail deep link), O-20 (Passwo
 
 | ID   | Impact | Effort | Titel                                                     | Klasse       | Audit-Quelle           | Status |
 | ---- | ------ | ------ | --------------------------------------------------------- | ------------ | ---------------------- | ------ |
-| O-26 | Medium | Low    | Trends Mobile: Detail-Toggle vs. Scroll                   | Vereinfachen | Analog O-21            | Offen  |
-| O-29 | Low    | Low    | Compare-Filter nur bei geöffnetem Mobile-Detail           | Vereinfachen | Trends control density | Offen  |
-| O-31 | Low    | Low    | Settings-Unterrouten auf `screen-stack`                   | Vereinfachen | Spacing-Audit          | Offen  |
-| O-32 | Low    | Low    | Heatmap-Mikro-Gaps auf Tokens                             | Vereinfachen | Spacing-Audit          | Offen  |
-| O-33 | Low    | Low    | `ScreenHeader` → erster Block: `--screen-header-gap`      | Vereinfachen | Spacing-Audit          | Offen  |
-| O-34 | Medium | Low    | InsightStageHeader / MobileInsightLead kompakter (Mobile) | Vereinfachen | W5/W6 + Spacing        | Offen  |
-| O-35 | Low    | Low    | Contract-Test: kein Route-Root-Padding in `page-shell`    | Vereinfachen | Spacing-Audit          | Offen  |
+| O-26 | Medium | Low    | Trends Mobile: Detail-Toggle vs. Scroll                   | Vereinfachen | Analog O-21            | Erledigt Sprint L |
+| O-29 | Low    | Low    | Compare-Filter nur bei geöffnetem Mobile-Detail           | Vereinfachen | Trends control density | Erledigt Sprint L |
+| O-31 | Low    | Low    | Settings-Unterrouten auf `screen-stack`                   | Vereinfachen | Spacing-Audit          | Erledigt Sprint L |
+| O-32 | Low    | Low    | Heatmap-Mikro-Gaps auf Tokens                             | Vereinfachen | Spacing-Audit          | Erledigt Sprint L |
+| O-33 | Low    | Low    | `ScreenHeader` → erster Block: `--screen-header-gap`      | Vereinfachen | Spacing-Audit          | Erledigt Sprint L |
+| O-34 | Medium | Low    | InsightStageHeader / MobileInsightLead kompakter (Mobile) | Vereinfachen | W5/W6 + Spacing        | Erledigt Sprint L |
+| O-35 | Low    | Low    | Contract-Test: kein Route-Root-Padding in `page-shell`    | Vereinfachen | Spacing-Audit          | Erledigt Sprint L |
 
 ---
 
@@ -150,7 +150,7 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **J — Entry & Desktop**     | O-36, O-08, O-38 ✅          | W3/W4 Rest; Desktop-Konsistenz           |
 | **K — Onboarding & Habits** | O-37, O-09 ✅                | W2/W7 Rest                               |
 | **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34  | Mobile-Dichte, Trends/Insights kompakter |
-| **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42 | Größere IA-/Backend-Themen               |
+| **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42 ✅ | Größere IA-/Backend-Themen               |
 
 **Nächster konkreter PR:** **Sprint L** (O-31–O-35 Spacing) oder **Sprint M** (O-41).
 

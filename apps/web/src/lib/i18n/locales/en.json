@@ -240,6 +240,11 @@
       "close": "Close entry",
       "done": "Done"
     },
+    "open_mode": {
+      "label": "Entry detail level",
+      "quick": "Quick",
+      "full": "Full"
+    },
     "scale": {
       "mood_low": "very bad",
       "mood_high": "very good",
@@ -543,6 +548,7 @@
     "auth_required": "Please sign in to export your data.",
     "section": {
       "tracking": "Tracking",
+      "vocabulary": "Vocabulary",
       "export": "Data export",
       "analysis": "Analysis",
       "privacy": "Privacy & Data",
@@ -555,6 +561,16 @@
       "body": "Adjust the inputs available in the daily entry flow.",
       "reminders_placeholder": "Reminders (later)"
     },
+    "vocabulary": {
+      "heading": "Tracking vocabulary",
+      "body": "Manage tags, symptoms, and habits used in entries and analysis.",
+      "tags": "Tags",
+      "tags_body": "Rename, recolor, hide, or reset tags.",
+      "symptoms": "Symptoms",
+      "symptoms_body": "Customize symptom names and visibility.",
+      "habits": "Habits",
+      "habits_body": "Mark tags as build or reduce habits for Trends."
+    },
     "analysis": {
       "heading": "Analysis",
       "body": "Control whether your entries are used for local patterns and insights.",
@@ -564,8 +580,17 @@
     },
     "privacy": {
       "heading": "Privacy & account data",
-      "body": "Account deletion and other privacy controls will live here.",
-      "delete_placeholder": "Delete account (M9)"
+      "body": "Export your data above or permanently delete your account here.",
+      "delete_placeholder": "Delete account (M9)",
+      "delete_action": "Delete account",
+      "delete_title": "Delete your account?",
+      "delete_body": "This permanently removes your entries, tags, symptoms, and account. Enter your password to confirm.",
+      "delete_password": "Current password",
+      "delete_confirm": "Delete permanently",
+      "delete_cancel": "Cancel",
+      "delete_busy": "Deleting account\u2026",
+      "delete_error": "Could not delete account. Try again later.",
+      "delete_invalid_password": "Password is incorrect."
     },
     "appearance": {
       "heading": "Appearance",

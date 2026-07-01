@@ -117,19 +117,15 @@ describe('/trends page', () => {
     });
   });
 
-  it('renders canonical tabs and switches to Health', async () => {
+  it('renders compare and habits tabs with health context on compare', async () => {
     render(Page);
 
     expect(await screen.findByTestId('trends-sticky-toolbar')).toBeTruthy();
     expect(await screen.findByTestId('trends-range-control')).toBeTruthy();
     expect(await screen.findByTestId('trends-tab-compare')).toBeTruthy();
-    const health = screen.getByTestId('trends-tab-health');
+    expect(screen.queryByTestId('trends-tab-health')).toBeNull();
     expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();
-
-    await fireEvent.click(health);
-    await waitFor(() => {
-      expect(health.getAttribute('aria-selected')).toBe('true');
-    });
+    expect(screen.getByTestId('trends-health-context')).toBeTruthy();
     expect(screen.getByText('trends.health.heading')).toBeTruthy();
   });
 

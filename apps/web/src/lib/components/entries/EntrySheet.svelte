@@ -2,6 +2,7 @@
   import { createEventDispatcher, onDestroy } from 'svelte';
   import { _ } from 'svelte-i18n';
   import EntryForm from '$lib/components/entries/EntryForm.svelte';
+  import { getEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
 
   export let open = false;
   export let initialDate: string;
@@ -12,6 +13,11 @@
   let panelEl: HTMLDivElement | null = null;
   let entryForm: EntryForm;
   let returnFocusEl: HTMLElement | null = null;
+  let openMode: EntryOpenMode = 'full';
+
+  $: if (open) {
+    openMode = getEntryOpenMode();
+  }
 
   async function close() {
     const ok = entryForm ? await entryForm.requestClose() : true;
@@ -99,6 +105,7 @@
             bind:this={entryForm}
             mode="sheet"
             {initialDate}
+            {openMode}
             {onboardingTagsEnabled}
             on:close={handleFormClose}
             on:saved={handleFormSaved}

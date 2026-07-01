@@ -47,7 +47,7 @@
 | O-22 | H      | High   | Medium | **Done** Sprint H | Insights single control row (chips + matrix link) |
 | O-24 | H      | Medium | Low    | **Done** Sprint H | Symptom analytics via category filter             |
 | O-40 | I      | Medium | Medium | **Done** Sprint I | Cross-link Trends ↔ Insights top finding          |
-| O-41 | M      | Medium | High   | Open              | Trends Compare + Health tab consolidation         |
+| O-41 | M      | Medium | High   | **Done** Sprint M | Trends Compare + Health tab consolidation         |
 | O-39 | I      | Medium | Low    | **Done** Sprint I | Home brief: entries-until-milestone inline        |
 | O-36 | J      | Medium | Medium | **Done** Sprint J | Smart entry defaults from yesterday               |
 | O-08 | J      | Medium | High   | **Done** Sprint J | Unify desktop entry surface                       |
@@ -61,10 +61,10 @@
 | O-33 | L      | Low    | Low    | **Done** Sprint L | `ScreenHeader` gap token                          |
 | O-34 | L      | Medium | Low    | **Done** Sprint L | Compact InsightStageHeader on mobile              |
 | O-35 | L      | Low    | Low    | **Done** Sprint L | Contract test: no double route padding            |
-| O-25 | M      | Medium | High   | Open              | Entry quick vs full at open                       |
-| O-27 | M      | Low    | Medium | Open              | Settings vocabulary hub (W8)                      |
-| O-28 | M      | Medium | High   | Open              | Account deletion (M9)                             |
-| O-42 | M      | Low    | Low    | Open              | Time slots in date row                            |
+| O-25 | M      | Medium | High   | **Done** Sprint M | Entry quick vs full at open                       |
+| O-27 | M      | Low    | Medium | **Done** Sprint M | Settings vocabulary hub (W8)                      |
+| O-28 | M      | Medium | High   | **Done** Sprint M | Account deletion (M9)                             |
+| O-42 | M      | Low    | Low    | **Done** Sprint M | Time slots in date row                            |
 
 **Audit mapping:** [`GUI_OPTIMIZATION_PHASE2.md` §3](GUI_OPTIMIZATION_PHASE2.md#3-friction-audit--abdeckungsmatrix)
 
@@ -77,9 +77,15 @@
 | **H — Analyse-Kern**        | O-23, O-22, O-24 ✅          | Insights IA complete          |
 | **I — Home & Links**        | O-39, O-40, O-13 ✅          | Weekly review bridge complete |
 | **J — Entry & Desktop**     | O-36, O-08, O-38 ✅          | W3/W4 audit rest              |
+<<<<<<< HEAD
 | **K — Onboarding & Habits** | O-37, O-09 ✅                | W2/W7 audit rest              |
 | **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34  | Mobile density                |
 | **M — Strategic**           | O-41, O-25, O-27, O-28, O-42 | Larger IA / backend           |
+=======
+| **K — Onboarding & Habits** | O-37, O-09 ✅               | W2/W7 audit rest              |
+| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34 ✅ | Mobile density                |
+| **M — Strategic**           | O-41, O-25, O-27, O-28, O-42 ✅ | Larger IA / backend           |
+>>>>>>> 7ae54e5 (feat(web): Sprint M — strategic IA (O-41, O-25, O-27, O-28, O-42))
 
 ---
 
@@ -88,6 +94,7 @@
 | Workflow           | Open Phase-2 issues                    |
 | ------------------ | -------------------------------------- |
 | W1 Account         | — (complete)                           |
+<<<<<<< HEAD
 | W2 Onboarding      | —                                      |
 | W3 Daily entry     | ~~O-36~~, ~~O-08~~, ~~O-38~~, ~~O-21~~ |
 | W4 Backdate        | ~~O-08~~                               |
@@ -95,6 +102,15 @@
 | W6 Weekly analysis | O-41, O-26, O-29                       |
 | W7 Habits          | —                                      |
 | W8 Vocabulary      | O-27                                   |
+=======
+| W2 Onboarding      | ~~O-37~~, ~~O-09~~                       |
+| W3 Daily entry     | ~~O-36~~, ~~O-08~~, ~~O-38~~, ~~O-21~~, ~~O-25~~, ~~O-42~~ |
+| W4 Backdate        | ~~O-08~~                               |
+| W5 First insight   | —                                        |
+| W6 Weekly analysis | ~~O-41~~, ~~O-26~~, ~~O-29~~                   |
+| W7 Habits          | ~~O-09~~                                   |
+| W8 Vocabulary      | ~~O-27~~, ~~O-28~~                                   |
+>>>>>>> 7ae54e5 (feat(web): Sprint M — strategic IA (O-41, O-25, O-27, O-28, O-42))
 | W9 Export          | — (complete)                           |
 | W10 PWA            | — (complete)                           |
 

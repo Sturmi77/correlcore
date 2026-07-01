@@ -36,6 +36,7 @@
   import { rangeToDays, rangeToHabitWindow } from '$lib/utils/trendsRange';
   import TrendsComparePanel from '$lib/components/trends/TrendsComparePanel.svelte';
   import TrendsCompareFilters from '$lib/components/trends/TrendsCompareFilters.svelte';
+  import TrendsHealthContext from '$lib/components/trends/TrendsHealthContext.svelte';
   import MobileTrendsSummary from '$lib/components/trends/MobileTrendsSummary.svelte';
   import HabitsPanel from '$lib/components/trends/HabitsPanel.svelte';
   import EntryHistorySheet, {
@@ -52,7 +53,7 @@
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
-  type TrendTab = 'compare' | 'health' | 'habits';
+  type TrendTab = 'compare' | 'habits';
 
   const rangeOptions: { id: TimeseriesRange; label: string }[] = [
     { id: 'week', label: 'trends.range.week' },
@@ -63,7 +64,6 @@
 
   const tabs: { id: TrendTab; label: string }[] = [
     { id: 'compare', label: 'trends.tabs.compare' },
-    { id: 'health', label: 'trends.tabs.health' },
     { id: 'habits', label: 'trends.tabs.habits' },
   ];
 
@@ -393,47 +393,7 @@
             on:layerChange={(event) => setCompareLayers(event.detail)}
           />
         </div>
-      </div>
-    {:else if activeTab === 'health'}
-      <div
-        class="trends__panel trends__health"
-        role="tabpanel"
-        aria-label={$_('trends.tabs.health')}
-      >
-        <div>
-          <h2>{$_('trends.health.heading')}</h2>
-          <p>{$_('trends.health.body')}</p>
-        </div>
-        <section class="trends__consistency" aria-label={$_('trends.consistency.heading')}>
-          <div>
-            <span>{$_('trends.consistency.current')}</span>
-            <strong>{streak?.current_streak ?? '-'}</strong>
-          </div>
-          <div>
-            <span>{$_('trends.consistency.longest')}</span>
-            <strong>{streak?.longest_streak ?? '-'}</strong>
-          </div>
-          <div>
-            <span>{$_('trends.consistency.total')}</span>
-            <strong>{streak?.total_entry_days ?? '-'}</strong>
-          </div>
-        </section>
-        {#if cycleEntries.length > 0}
-          <section class="trends__cycle" aria-label={$_('trends.cycle.heading')}>
-            <div>
-              <h3>{$_('trends.cycle.heading')}</h3>
-              <p>{$_('trends.cycle.body')}</p>
-            </div>
-            <div class="trends__cycle-strip">
-              {#each cycleEntries.slice(0, 14) as entry}
-                <span title={`${entry.entry_date}: ${entry.cycle_day}`}>
-                  <small>{entry.entry_date.slice(5)}</small>
-                  <strong>{entry.cycle_day}</strong>
-                </span>
-              {/each}
-            </div>
-          </section>
-        {/if}
+        <TrendsHealthContext {streak} {cycleEntries} />
       </div>
     {:else}
       <div class="trends__panel" role="tabpanel" aria-label={$_('trends.tabs.habits')}>
@@ -487,15 +447,7 @@
     background: var(--color-surface);
   }
 
-  .trends__consistency {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--screen-gap);
-  }
-
-  .trends__panel,
-  .trends__consistency {
+  .trends__panel {
     padding: var(--space-4);
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
@@ -518,93 +470,9 @@
     border-block: 1px solid var(--color-border);
   }
 
-  .trends__consistency {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .trends__consistency div {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-
-  .trends__consistency span {
-    font-size: 0.78rem;
-    opacity: 0.7;
-  }
-
-  .trends__consistency strong {
-    font-size: 1.55rem;
-  }
-
-  .trends__health {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-  }
-
-  .trends__health h2 {
-    margin: 0;
-    font-size: var(--text-lg);
-  }
-
-  .trends__health p {
-    margin: var(--space-1) 0 0;
-    color: var(--color-text-muted);
-  }
-
-  .trends__cycle {
-    display: grid;
-    gap: var(--space-3);
-    padding: var(--space-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-surface-2) 72%, transparent);
-  }
-
-  .trends__cycle h3,
-  .trends__cycle p {
-    margin: 0;
-  }
-
-  .trends__cycle h3 {
-    font-size: var(--text-base);
-  }
-
-  .trends__cycle-strip {
-    display: flex;
-    gap: var(--space-2);
-    overflow-x: auto;
-    padding-bottom: var(--space-1);
-  }
-
-  .trends__cycle-strip span {
-    min-width: 3.75rem;
-    min-height: 3.75rem;
-    display: grid;
-    place-items: center;
-    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
-  }
-
-  .trends__cycle-strip small {
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-  }
-
-  .trends__cycle-strip strong {
-    font-size: var(--text-lg);
-  }
-
   @media (max-width: 640px) {
     .trends__sticky-toolbar {
       position: static;
-    }
-
-    .trends__consistency {
-      grid-template-columns: 1fr;
     }
   }
 </style>
