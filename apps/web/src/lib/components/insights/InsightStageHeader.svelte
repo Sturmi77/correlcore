@@ -234,6 +234,22 @@
     text-underline-offset: 2px;
   }
 
+  @media (max-width: 767px) {
+    .stage {
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+    }
+
+    .stage__marker {
+      min-width: 2rem;
+      min-height: 1.4rem;
+    }
+
+    .stage__track {
+      width: 3rem;
+    }
+  }
+
   @media (max-width: 420px) {
     .stage__row {
       align-items: flex-start;

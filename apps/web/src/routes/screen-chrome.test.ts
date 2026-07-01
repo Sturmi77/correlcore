@@ -7,6 +7,8 @@ const routeSources = {
   trends: readFileSync(resolve('src/routes/trends/+page.svelte'), 'utf8'),
   settings: readFileSync(resolve('src/routes/settings/+page.svelte'), 'utf8'),
   tagSettings: readFileSync(resolve('src/routes/settings/tags/+page.svelte'), 'utf8'),
+  appSettings: readFileSync(resolve('src/routes/settings/app/+page.svelte'), 'utf8'),
+  symptomSettings: readFileSync(resolve('src/routes/settings/symptoms/+page.svelte'), 'utf8'),
 };
 
 describe('screen chrome contract', () => {
@@ -15,6 +17,12 @@ describe('screen chrome contract', () => {
       expect(source).toContain('$lib/components/common/ScreenHeader.svelte');
       expect(source).toContain('<ScreenHeader');
     }
+  });
+
+  it('uses screen-stack on settings sub-routes', () => {
+    expect(routeSources.tagSettings).toContain('screen-stack');
+    expect(routeSources.appSettings).toContain('screen-stack');
+    expect(routeSources.symptomSettings).toContain('screen-stack');
   });
 
   it('does not duplicate Home navigation in primary route headers', () => {

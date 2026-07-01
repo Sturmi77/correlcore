@@ -293,7 +293,7 @@
     display: grid;
     grid-template-columns: var(--axis-label-width) repeat(var(--day-count), var(--axis-day-width));
     column-gap: var(--axis-gap);
-    row-gap: 0.18rem;
+    row-gap: var(--heatmap-cell-gap);
     min-width: max-content;
     align-items: center;
   }

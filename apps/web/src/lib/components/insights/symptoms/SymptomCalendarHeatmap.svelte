@@ -125,7 +125,7 @@
     grid-auto-flow: column;
     grid-template-rows: repeat(7, 12px);
     grid-auto-columns: 12px;
-    gap: 2px;
+    gap: var(--heatmap-calendar-gap);
     overflow-x: auto;
     padding-bottom: var(--space-1);
     max-width: 100%;
