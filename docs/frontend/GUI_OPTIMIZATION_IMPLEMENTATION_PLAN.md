@@ -185,9 +185,9 @@ flowchart TD
 
 ### Sprint G — Password reset (O-20) ✅
 
-| Issue | Title | Workflows |
-|-------|-------|-----------|
-| [#272](https://github.com/Sturmi77/correlcore/issues/272) | O-20 Password reset | W1 |
+| Issue                                                     | Title               | Workflows |
+| --------------------------------------------------------- | ------------------- | --------- |
+| [#272](https://github.com/Sturmi77/correlcore/issues/272) | O-20 Password reset | W1        |
 
 Plan: [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md). Closes the O-01–O-20 GUI optimization backlog.
 

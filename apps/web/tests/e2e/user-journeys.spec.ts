@@ -172,7 +172,9 @@ async function installJourneyApi(
 
     if (path === '/auth/forgot-password' && method === 'POST') {
       writes.push('POST /auth/forgot-password');
-      return json(202, { message: 'If the email is registered, a password reset mail has been sent.' });
+      return json(202, {
+        message: 'If the email is registered, a password reset mail has been sent.',
+      });
     }
 
     if (path === '/auth/reset-password' && method === 'POST') {
@@ -494,7 +496,9 @@ test.describe('W1 Account & Vertrauen', () => {
 
     await page.locator('input[type="email"]').fill(users.week.email);
     await page.getByRole('button', { name: 'Send reset link' }).click();
-    await expect(page.getByText('If the email is registered, a password reset mail has been sent.')).toBeVisible();
+    await expect(
+      page.getByText('If the email is registered, a password reset mail has been sent.')
+    ).toBeVisible();
   });
 });
 
