@@ -185,8 +185,8 @@ flowchart TD
 
 ### Still blocked → planned as Sprint G
 
-| Issue | Item | Plan |
-|-------|------|------|
+| Issue                                                     | Item                | Plan                                                         |
+| --------------------------------------------------------- | ------------------- | ------------------------------------------------------------ |
 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | O-20 Password reset | [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md) |
 
 **Sprint G** implements backend + frontend + E2E. Reuses email-verification token pattern (ADR-0004).
