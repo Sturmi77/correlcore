@@ -223,7 +223,7 @@ describe('EntryForm slot changes', () => {
     vi.clearAllMocks();
   });
 
-  it('flushes dirty edits before hydrating another time slot', async () => {
+  it('keeps dirty draft edits when selecting a time slot', async () => {
     const { container } = render(EntryForm, {
       props: { initialDate: '2026-06-02' },
     });
@@ -240,11 +240,19 @@ describe('EntryForm slot changes', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'entry.time_slot.morning' }));
     await flushAsync();
 
+    expect(
+      screen.getByRole('button', { name: 'entry.time_slot.morning' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('dirty');
+
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
     expect(submitEntry).toHaveBeenCalledTimes(1);
     expect(submitEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         entry_date: '2026-06-02',
-        slot: 'day',
+        slot: 'morning',
         note: 'draft before slot switch',
       })
     );

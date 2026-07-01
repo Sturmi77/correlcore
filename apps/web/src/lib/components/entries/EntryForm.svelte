@@ -427,6 +427,14 @@
 
   async function setSlot(slot: EntrySlot) {
     const nextSlot = selectedSlot === slot ? 'day' : slot;
+    const status = autoSave.peek().status;
+    if (!existingEntryId && (status === 'dirty' || status === 'saving' || status === 'error')) {
+      selectedSlot = nextSlot;
+      markDirty();
+      void refreshDayDelta(entryDate, nextSlot);
+      return;
+    }
+
     if (!(await settleAutosaveBeforeHydration())) return;
     await loadForDate(entryDate, nextSlot);
   }
