@@ -61,10 +61,10 @@ _Erledigt aus W5:_ O-03 (Empty CTA), O-05 (Sparkline-Gate), O-14 (Matrix/Co-occu
 
 ### 2.4 Onboarding (Rest aus W2)
 
-| ID   | Impact | Effort | Titel                                                                        | Klasse                     | Audit-Quelle | Status                 |
-| ---- | ------ | ------ | ---------------------------------------------------------------------------- | -------------------------- | ------------ | ---------------------- |
-| O-37 | Medium | Medium | Onboarding straffen: Intro in ersten Entry; Summary bei ≤3 Tags überspringen | Vorverlagern / Eliminieren | W2 #52, #57  | **Erledigt**                        |
-| —    | —      | —      | Legacy `/onboarding/retro` + `/profile`                                      | Eliminieren                | W2 legacy    | **Erledigt** (O-04)    |
+| ID   | Impact | Effort | Titel                                                                        | Klasse                     | Audit-Quelle | Status              |
+| ---- | ------ | ------ | ---------------------------------------------------------------------------- | -------------------------- | ------------ | ------------------- |
+| O-37 | Medium | Medium | Onboarding straffen: Intro in ersten Entry; Summary bei ≤3 Tags überspringen | Vorverlagern / Eliminieren | W2 #52, #57  | **Erledigt**        |
+| —    | —      | —      | Legacy `/onboarding/retro` + `/profile`                                      | Eliminieren                | W2 legacy    | **Erledigt** (O-04) |
 
 ### 2.5 Habits, Settings, Vertrauen
 
@@ -101,8 +101,8 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **W1**   | Post-verify Login-Schritt       | —      | **Erledigt** (O-07) |
 | **W1**   | Kein Password-Reset             | —      | **Erledigt** (O-20) |
 | **W1**   | Check-email Mail-App-Link       | —      | **Erledigt** (O-11) |
-| **W2**   | Intro-Panel vor erstem Entry    | —          | **Erledigt** (O-37) |
-| **W2**   | Summary bei wenigen Tags        | —          | **Erledigt** (O-37) |
+| **W2**   | Intro-Panel vor erstem Entry    | —      | **Erledigt** (O-37) |
+| **W2**   | Summary bei wenigen Tags        | —      | **Erledigt** (O-37) |
 | **W2**   | Post-onboarding leerer Brief    | —      | **Erledigt** (O-02) |
 | **W2**   | Legacy retro/profile            | —      | **Erledigt** (O-04) |
 | **W3**   | Smart default von gestern       | —      | **Erledigt** (O-36) |
@@ -119,7 +119,7 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **W6**   | Trends ↔ Insights getrennt      | O-41   | Medium              |
 | **W6**   | Compare + Health Tabs           | O-41   | Medium              |
 | **W6**   | Heatmap → Route statt Sheet     | —      | **Erledigt** (O-17) |
-| **W7**   | Habit-Setup nicht in Onboarding | —          | **Erledigt** (O-09) |
+| **W7**   | Habit-Setup nicht in Onboarding | —      | **Erledigt** (O-09) |
 | **W7**   | Leeres Habits-Panel             | —      | **Erledigt** (O-16) |
 | **W8**   | Vokabular-Subnavigation         | O-27   | Low                 |
 | **W9**   | Export in Settings versteckt    | —      | **Erledigt** (O-19) |

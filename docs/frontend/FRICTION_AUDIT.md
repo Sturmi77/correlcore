@@ -201,18 +201,18 @@
 
 ## Cross-cutting friction themes
 
-| Theme                         | Affected workflows | Aggregate score | Recommended class                    | Status (2026-07-01) | Tickets                    |
-| ----------------------------- | ------------------ | --------------- | ------------------------------------ | ------------------- | -------------------------- |
-| Auth funnel length            | W1                 | high            | Zusammenführen (verify → auto-login) | **Erledigt**        | O-07, O-11, O-20           |
-| Onboarding before first entry | W2                 | high            | Vorverlagern                         | **Erledigt**        | O-02, O-04, O-06, O-37 ✅  |
-| Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | **Erledigt**        | O-08 ✅, O-38 ✅           |
-| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, O-22 ✅, O-34  |
-| Legacy onboarding routes      | W2                 | medium          | Eliminieren                          | **Erledigt**        | O-04                       |
-| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-41                       |
-| Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         | **Erledigt**        | O-09 ✅ (O-16 done)        |
-| No password reset             | W1                 | medium          | Backend scope                        | **Erledigt**        | O-20                       |
-| Mobile spacing / density      | W3–W6              | medium          | Vereinfachen                         | Teilweise           | O-30 ✅, **O-31–O-35**     |
-| Entry core fields hidden      | W3                 | medium          | Vereinfachen                         | **Erledigt**        | O-21                       |
+| Theme                         | Affected workflows | Aggregate score | Recommended class                    | Status (2026-07-01) | Tickets                   |
+| ----------------------------- | ------------------ | --------------- | ------------------------------------ | ------------------- | ------------------------- |
+| Auth funnel length            | W1                 | high            | Zusammenführen (verify → auto-login) | **Erledigt**        | O-07, O-11, O-20          |
+| Onboarding before first entry | W2                 | high            | Vorverlagern                         | **Erledigt**        | O-02, O-04, O-06, O-37 ✅ |
+| Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | **Erledigt**        | O-08 ✅, O-38 ✅          |
+| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, O-22 ✅, O-34 |
+| Legacy onboarding routes      | W2                 | medium          | Eliminieren                          | **Erledigt**        | O-04                      |
+| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-41                      |
+| Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         | **Erledigt**        | O-09 ✅ (O-16 done)       |
+| No password reset             | W1                 | medium          | Backend scope                        | **Erledigt**        | O-20                      |
+| Mobile spacing / density      | W3–W6              | medium          | Vereinfachen                         | Teilweise           | O-30 ✅, **O-31–O-35**    |
+| Entry core fields hidden      | W3                 | medium          | Vereinfachen                         | **Erledigt**        | O-21                      |
 
 ---
 

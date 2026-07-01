@@ -7,9 +7,7 @@ export function shouldShowOnboardingTags(
   preferences: UserPreferencesResponse | null | undefined,
   entryCount: number | null | undefined
 ): boolean {
-  return Boolean(
-    preferences && !preferences.onboarding_retro_completed && (entryCount ?? 0) === 0
-  );
+  return Boolean(preferences && !preferences.onboarding_retro_completed && (entryCount ?? 0) === 0);
 }
 
 export function shouldSkipOnboardingSummary(tagCount: number): boolean {

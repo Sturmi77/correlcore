@@ -37,9 +37,7 @@ describe('onboardingEntry', () => {
       created_at: '',
       updated_at: '',
     };
-    expect(shouldShowOnboardingTags({ ...prefs, onboarding_retro_completed: true }, 0)).toBe(
-      false
-    );
+    expect(shouldShowOnboardingTags({ ...prefs, onboarding_retro_completed: true }, 0)).toBe(false);
     expect(shouldShowOnboardingTags(prefs, 2)).toBe(false);
   });
 

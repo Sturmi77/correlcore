@@ -72,10 +72,7 @@
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
   $: dayEntriesForSparkline = recentEntries.filter((entry) => entry.slot === 'day');
   $: showHomeSparkline = dayEntriesForSparkline.length >= HOME_SPARKLINE_MIN_ENTRIES;
-  $: showOnboardingTags = shouldShowOnboardingTags(
-    userPreferences,
-    dashboardSummary?.entry_count
-  );
+  $: showOnboardingTags = shouldShowOnboardingTags(userPreferences, dashboardSummary?.entry_count);
   $: showPwaInstallBanner = Boolean(
     $pwaInstallStore.promptEvent &&
     !$pwaInstallStore.dismissed &&

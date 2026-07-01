@@ -88,7 +88,7 @@
 | Workflow           | Open Phase-2 issues                    |
 | ------------------ | -------------------------------------- |
 | W1 Account         | — (complete)                           |
-| W2 Onboarding      | —                                        |
+| W2 Onboarding      | —                                      |
 | W3 Daily entry     | ~~O-36~~, ~~O-08~~, ~~O-38~~, ~~O-21~~ |
 | W4 Backdate        | ~~O-08~~                               |
 | W5 First insight   | O-34                                   |
