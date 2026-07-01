@@ -1,8 +1,20 @@
 # CorrelCore — GUI Friction Audit
 
-**Date:** 2026-06-30  
+**Date:** 2026-06-30 (status updated 2026-07-01)  
 **Method:** Code-based step inventory + viewport walkthrough (390×844 mobile, 1280×900 desktop)  
 **Workflow reference:** [`USER_WORKFLOWS.md`](USER_WORKFLOWS.md)  
+**Backlog / planning:** [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md) · [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md)
+
+### Resolution status (summary)
+
+| Phase         | Scope                    | Status                                |
+| ------------- | ------------------------ | ------------------------------------- |
+| Phase 1       | O-01–O-20                | **Complete** on `main`                |
+| Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                |
+| Phase 2 open  | O-22–O-42                | Planned — see Phase 2 §3 audit matrix |
+
+**Open audit themes:** dual entry surfaces (W3/W4), Insights control density (W5/W6), global analysis window (W6), onboarding polish (W2), smart entry defaults (W3), spacing hardening (O-31–O-35).
+
 **Scoring:** 0 = no friction, 3 = high friction (per criterion); **Total** = sum of 6 criteria (max 18)
 
 ### Scoring criteria
@@ -189,38 +201,42 @@
 
 ## Cross-cutting friction themes
 
-| Theme                         | Affected workflows | Aggregate score | Recommended class                    |
-| ----------------------------- | ------------------ | --------------- | ------------------------------------ |
-| Auth funnel length            | W1                 | high            | Zusammenführen (verify → auto-login) |
-| Onboarding before first entry | W2                 | high            | Vorverlagern                         |
-| Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       |
-| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          |
-| Legacy onboarding routes      | W2                 | medium          | Eliminieren                          |
-| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         |
-| Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         |
-| No password reset             | W1                 | medium          | Backend scope (note only)            |
+| Theme                         | Affected workflows | Aggregate score | Recommended class                    | Status (2026-07-01) | Tickets                    |
+| ----------------------------- | ------------------ | --------------- | ------------------------------------ | ------------------- | -------------------------- |
+| Auth funnel length            | W1                 | high            | Zusammenführen (verify → auto-login) | **Erledigt**        | O-07, O-11, O-20           |
+| Onboarding before first entry | W2                 | high            | Vorverlagern                         | Teilweise           | O-02, O-04, O-06, **O-37** |
+| Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | Offen               | **O-08**, O-38             |
+| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, **O-22**, O-34 |
+| Legacy onboarding routes      | W2                 | medium          | Eliminieren                          | **Erledigt**        | O-04                       |
+| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-13, **O-23**, O-40, O-41 |
+| Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         | Teilweise           | O-09 (O-16 done)           |
+| No password reset             | W1                 | medium          | Backend scope                        | **Erledigt**        | O-20                       |
+| Mobile spacing / density      | W3–W6              | medium          | Vereinfachen                         | Teilweise           | O-30 ✅, **O-31–O-35**     |
+| Entry core fields hidden      | W3                 | medium          | Vereinfachen                         | **Erledigt**        | O-21                       |
 
 ---
 
 ## Prioritized optimization backlog
 
-See [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md) for the full GitHub issue index (#250–#272).  
-**Implementation plan:** [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md)
+**Phase 1 (O-01–O-20):** complete — see [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md).
 
-### Quick wins (impact × low effort)
+**Phase 2 (O-21+):** open items and full friction-audit mapping — see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md).
 
-1. **O-01** Eliminieren duplicate maturity on Insights mobile (`MobileInsightLead` + `InsightStageHeader`)
+### Phase 1 quick wins (historical — all shipped)
+
+1. **O-01** Eliminieren duplicate maturity on Insights mobile
 2. **O-02** Vorverlagern open EntrySheet after onboarding complete
-3. **O-03** Umleiten Insights empty-state CTA → EntrySheet (not Home round-trip)
-4. **O-04** Eliminieren legacy `/onboarding/retro` and `/onboarding/profile` or redirect to `/onboarding`
+3. **O-03** Umleiten Insights empty-state CTA → EntrySheet
+4. **O-04** Eliminieren legacy onboarding routes
 5. **O-05** Vereinfachen hide Home sparkline until ≥3 entry points
 
-### Strategic (higher effort)
+### Phase 2 next (from audit + planning)
 
-6. **O-06** Vorverlagern tag selection into first entry (collapse W2 into W3)
-7. **O-07** Zusammenführen verify-email → auto-login session
-8. **O-08** Zusammenführen desktop entry surface (sheet vs page)
-9. **O-09** Vorverlagern habit-type hint in onboarding tag step (ADR-0034 cycle toggle related)
+1. **O-23** Global analysis range (W6)
+2. **O-22 + O-24** Insights IA (W5/W6)
+3. **O-36** Smart entry defaults (W3)
+4. **O-08** Desktop entry surface (W3/W4)
+5. **O-37** Onboarding polish (W2)
 
 ---
 

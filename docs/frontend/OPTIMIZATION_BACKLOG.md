@@ -33,7 +33,70 @@
 
 > **Note:** O-10 is intentionally unused (reserved). Former “O-10 password / O-11 Phase 5 / O-12 Figma” map to **O-20**, **O-08**, and out-of-scope Figma Sprint H respectively.
 
-**Phase 2 (O-21+):** see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md) — IA, Entry flatten, global analysis range, mobile spacing (O-30).
+**Phase 2 (O-21+):** see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md) — vollständiger Plan inkl. offener Friction-Audit-Punkte.
+
+---
+
+## Issue index (O-21 – O-42) — Phase 2
+
+| ID   | Sprint | Impact | Effort | Status        | Title                                             |
+| ---- | ------ | ------ | ------ | ------------- | ------------------------------------------------- |
+| O-21 | H      | High   | Medium | **Done** #289 | Entry: tags/symptoms/time slots always visible    |
+| O-30 | H      | Medium | Low    | **Done** #288 | Spacing foundation (`screen-stack`, tokens)       |
+| O-23 | H      | High   | Medium | Open          | Global `analysisRange` (Trends + Insights)        |
+| O-22 | H      | High   | Medium | Partial       | Insights single control row (chips + matrix link) |
+| O-24 | H      | Medium | Low    | Open          | Symptom analytics via category filter             |
+| O-40 | I      | Medium | Medium | Partial       | Cross-link Trends ↔ Insights top finding          |
+| O-41 | M      | Medium | High   | Open          | Trends Compare + Health tab consolidation         |
+| O-39 | I      | Medium | Low    | Partial       | Home brief: entries-until-milestone inline        |
+| O-36 | J      | Medium | Medium | Open          | Smart entry defaults from yesterday               |
+| O-08 | J      | Medium | High   | Open          | Unify desktop entry surface                       |
+| O-38 | J      | Medium | Low    | Partial       | Empty CTAs open EntrySheet inline                 |
+| O-37 | K      | Medium | Medium | Partial       | Onboarding: skip summary ≤3 tags, merge intro     |
+| O-09 | K      | Medium | Medium | Partial       | Habit hint in onboarding tag step                 |
+| O-26 | L      | Medium | Low    | Open          | Trends mobile detail toggle vs scroll             |
+| O-29 | L      | Low    | Low    | Open          | Compare filters only when mobile detail open      |
+| O-31 | L      | Low    | Low    | Open          | Settings sub-routes → `screen-stack`              |
+| O-32 | L      | Low    | Low    | Open          | Heatmap micro-gaps → tokens                       |
+| O-33 | L      | Low    | Low    | Open          | `ScreenHeader` gap token                          |
+| O-34 | L      | Medium | Low    | Open          | Compact InsightStageHeader on mobile              |
+| O-35 | L      | Low    | Low    | Open          | Contract test: no double route padding            |
+| O-25 | M      | Medium | High   | Open          | Entry quick vs full at open                       |
+| O-27 | M      | Low    | Medium | Open          | Settings vocabulary hub (W8)                      |
+| O-28 | M      | Medium | High   | Open          | Account deletion (M9)                             |
+| O-42 | M      | Low    | Low    | Open          | Time slots in date row                            |
+
+**Audit mapping:** [`GUI_OPTIMIZATION_PHASE2.md` §3](GUI_OPTIMIZATION_PHASE2.md#3-friction-audit--abdeckungsmatrix)
+
+---
+
+## Sprint execution order (Phase 2)
+
+| Sprint                      | Issues                       | Goal                       |
+| --------------------------- | ---------------------------- | -------------------------- |
+| **H — Analyse-Kern**        | O-23, O-22, O-24             | Global range + Insights IA |
+| **I — Home & Links**        | O-39, O-40                   | Weekly review bridge       |
+| **J — Entry & Desktop**     | O-36, O-08, O-38             | W3/W4 audit rest           |
+| **K — Onboarding & Habits** | O-37, O-09                   | W2/W7 audit rest           |
+| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34  | Mobile density             |
+| **M — Strategic**           | O-41, O-25, O-27, O-28, O-42 | Larger IA / backend        |
+
+---
+
+## Workflow coverage matrix (Phase 2 additions)
+
+| Workflow           | Open Phase-2 issues                            |
+| ------------------ | ---------------------------------------------- |
+| W1 Account         | — (complete)                                   |
+| W2 Onboarding      | O-37                                           |
+| W3 Daily entry     | O-36, O-08, O-38, ~~O-21~~                     |
+| W4 Backdate        | O-08                                           |
+| W5 First insight   | O-22, O-34, O-39                               |
+| W6 Weekly analysis | O-23, O-22, O-24, O-13, O-40, O-41, O-26, O-29 |
+| W7 Habits          | O-09                                           |
+| W8 Vocabulary      | O-27                                           |
+| W9 Export          | — (complete)                                   |
+| W10 PWA            | — (complete)                                   |
 
 ---
 
