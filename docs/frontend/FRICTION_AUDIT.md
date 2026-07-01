@@ -162,8 +162,8 @@
 
 ### Desktop (1280×900)
 
-| #                                        | Issue | Total          | Class                                      | Proposal |
-| ---------------------------------------- | ----- | -------------- | ------------------------------------------ | -------- |
+| #                                        | Issue | Total          | Class                                      | Proposal                  |
+| ---------------------------------------- | ----- | -------------- | ------------------------------------------ | ------------------------- |
 | Trends Compare + Health on separate tabs | 2     | Zusammenführen | Shared time axis (partially done ADR-0035) |
 | Insights analysis-first layout           | 0     | Nicht ändern   | —                                          |
 | Range selector repeated per tab          | 2     | Vereinfachen   | Global range control sticky in header      | **Erledigt** (O-15, O-23) |
