@@ -21,18 +21,18 @@ Phase 1 removed funnel friction, duplicate maturity UI, and legacy paths. Phase 
 
 ## 2. Backlog O-21 – O-30
 
-| ID       | Impact     | Effort  | Title                                                          | Klasse           |
-| -------- | ---------- | ------- | -------------------------------------------------------------- | ---------------- |
+| ID       | Impact     | Effort  | Title                                                             | Klasse           |
+| -------- | ---------- | ------- | ----------------------------------------------------------------- | ---------------- |
 | O-21     | High       | Medium  | Entry: Tags + Symptome immer sichtbar; Toggle nur Notiz/Zyklus ✅ | Vereinfachen     |
-| O-22     | High       | Medium  | Insights: eine Kontrollzeile (Kategorie-Chips + Matrix-Link)   | Zusammenführen   |
-| O-23     | High       | Medium  | Globales `analysisRange` für Trends + Insights                 | Zusammenführen   |
-| O-24     | Medium     | Low     | Symptom-Analytik über Kategorie-Filter statt Checkbox          | Eliminieren      |
-| O-25     | Medium     | High    | Entry: „Schnell“ vs. „Vollständig“ beim Öffnen                 | Umleiten         |
-| O-26     | Medium     | Low     | Trends Mobile: Detail-Toggle vs. Scroll prüfen                 | Vereinfachen     |
-| O-27     | Low        | Medium  | Settings-Vokabular-Hub (W8)                                    | Zusammenführen   |
-| O-28     | Medium     | High    | Account-Löschung (M9)                                          | Vereinfachen     |
-| O-29     | Low        | Low     | Trends Compare-Filter nur bei geöffnetem Mobile-Detail         | Vereinfachen     |
-| **O-30** | **Medium** | **Low** | **Spacing-System: Token, screen-stack, Mobile-Dichte**         | **Vereinfachen** |
+| O-22     | High       | Medium  | Insights: eine Kontrollzeile (Kategorie-Chips + Matrix-Link)      | Zusammenführen   |
+| O-23     | High       | Medium  | Globales `analysisRange` für Trends + Insights                    | Zusammenführen   |
+| O-24     | Medium     | Low     | Symptom-Analytik über Kategorie-Filter statt Checkbox             | Eliminieren      |
+| O-25     | Medium     | High    | Entry: „Schnell“ vs. „Vollständig“ beim Öffnen                    | Umleiten         |
+| O-26     | Medium     | Low     | Trends Mobile: Detail-Toggle vs. Scroll prüfen                    | Vereinfachen     |
+| O-27     | Low        | Medium  | Settings-Vokabular-Hub (W8)                                       | Zusammenführen   |
+| O-28     | Medium     | High    | Account-Löschung (M9)                                             | Vereinfachen     |
+| O-29     | Low        | Low     | Trends Compare-Filter nur bei geöffnetem Mobile-Detail            | Vereinfachen     |
+| **O-30** | **Medium** | **Low** | **Spacing-System: Token, screen-stack, Mobile-Dichte**            | **Vereinfachen** |
 
 ---
 
