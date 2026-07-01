@@ -32,11 +32,17 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await page.getByTestId('insights-filter-tab-symptoms').tap();
   await page.getByText('Deepen analysis', { exact: true }).tap();
 
-  await expect(page.getByRole('heading', { name: 'Symptoms in insights', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
+  ).toBeVisible();
   await page.getByTestId('insights-filter-tab-mood').tap();
-  await expect(page.getByRole('heading', { name: 'Symptoms in insights', exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
+  ).toHaveCount(0);
   await page.getByTestId('insights-filter-tab-symptoms').tap();
-  await expect(page.getByRole('heading', { name: 'Symptoms in insights', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
+  ).toBeVisible();
 
   await page.getByRole('heading', { name: 'Patterns', exact: true }).scrollIntoViewIfNeeded();
   await page.getByTestId('symptom-cooccurrence-cell').first().tap();

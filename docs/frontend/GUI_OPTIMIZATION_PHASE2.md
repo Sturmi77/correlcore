@@ -127,7 +127,7 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | Auth-Funnel-Länge               | **Erledigt**  | —                      |
 | Onboarding vor erstem Entry     | **Teilweise** | O-37                   |
 | Dual Entry Surfaces             | **Offen**     | O-08, O-38             |
-| Duplicate maturity UI           | **Teilweise** | O-34                     |
+| Duplicate maturity UI           | **Teilweise** | O-34                   |
 | Legacy Onboarding               | **Erledigt**  | —                      |
 | Analyse auf 2 Nav-Tabs verteilt | **Teilweise** | O-13, O-23, O-40, O-41 |
 | Habit-Setup nicht in Onboarding | **Teilweise** | O-09                   |
