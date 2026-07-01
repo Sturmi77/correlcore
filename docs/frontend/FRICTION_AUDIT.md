@@ -232,10 +232,10 @@
 
 ### Phase 2 next (from audit + planning)
 
-1. **O-39 + O-40** Home & Trends ↔ Insights bridge (Sprint I)
-2. **O-36** Smart entry defaults (W3)
-3. **O-08** Desktop entry surface (W3/W4)
-4. **O-37** Onboarding polish (W2)
+1. **O-36** Smart entry defaults (W3) / Sprint J
+2. **O-08** Desktop entry surface (W3/W4)
+3. **O-37** Onboarding polish (W2)
+4. **O-41** Trends tab consolidation (W6)
 
 ---
 
