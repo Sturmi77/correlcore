@@ -97,13 +97,14 @@
     preferEntrySheet = prefersEntrySheet();
   }
 
-  function openEntry(date: string = todayIso): void {
+  function openEntry(date: string = todayIso): boolean {
     if (preferEntrySheet) {
       entrySheetDate = date;
       entrySheetOpen = true;
-      return;
+      return true;
     }
     void goto(entryWorkspacePath(date));
+    return false;
   }
 
   function openEntrySheet(date: string = todayIso) {
@@ -129,8 +130,8 @@
     if (!isOpenEntryRequested($page.url.searchParams)) return;
     openEntryHandled = true;
     const date = entryDateFromSearchParams($page.url.searchParams) ?? todayIso;
-    openEntry(date);
-    stripOpenEntryQuery();
+    const openedInSheet = openEntry(date);
+    if (openedInSheet) stripOpenEntryQuery();
   }
 
   async function loadDashboard(): Promise<void> {
