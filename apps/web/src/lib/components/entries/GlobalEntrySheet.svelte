@@ -9,10 +9,7 @@
     notifyEntrySheetSaved,
     openEntrySheet,
   } from '$lib/stores/entrySheet';
-  import {
-    entryDateFromSearchParams,
-    isOpenEntryRequested,
-  } from '$lib/navigation/openEntry';
+  import { entryDateFromSearchParams, isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { isoDate } from '$lib/utils/entryForm';
   import EntrySheet from './EntrySheet.svelte';
 

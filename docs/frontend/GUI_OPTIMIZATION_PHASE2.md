@@ -42,13 +42,13 @@ Legende Status: **Offen** · **Teilweise** (Foundation da, Audit-Punkt nicht vol
 
 ### 2.2 Entry & Desktop
 
-| ID   | Impact | Effort | Titel                                                             | Klasse         | Audit-Quelle                                   | Status                              |
-| ---- | ------ | ------ | ----------------------------------------------------------------- | -------------- | ---------------------------------------------- | ----------------------------------- |
-| O-08 | Medium | High   | Desktop Entry-Surface vereinheitlichen (Sheet vs. `/entries/new`) | Zusammenführen | W3 Desktop #94, W4, Cross-cutting „Dual entry“ | **Erledigt**                        |
-| O-38 | Medium | Low    | Trends/Leer-CTA → EntrySheet inline statt Route-Wechsel           | Umleiten       | W3 Desktop #96                                 | **Erledigt**                        |
-| O-36 | Medium | Medium | Smart Entry-Defaults (Mood/Energie von gestern)                   | Vereinfachen   | W3 #80                                         | **Erledigt**                        |
-| O-25 | Medium | High   | Entry „Schnell“ vs. „Vollständig“ beim Öffnen                     | Umleiten       | Phase-2-Reserve                                | Offen                               |
-| O-42 | Low    | Low    | Tageszeit-Slots in Datumszeile integrieren                        | Vereinfachen   | Phase-2 §4                                     | Offen                               |
+| ID   | Impact | Effort | Titel                                                             | Klasse         | Audit-Quelle                                   | Status       |
+| ---- | ------ | ------ | ----------------------------------------------------------------- | -------------- | ---------------------------------------------- | ------------ |
+| O-08 | Medium | High   | Desktop Entry-Surface vereinheitlichen (Sheet vs. `/entries/new`) | Zusammenführen | W3 Desktop #94, W4, Cross-cutting „Dual entry“ | **Erledigt** |
+| O-38 | Medium | Low    | Trends/Leer-CTA → EntrySheet inline statt Route-Wechsel           | Umleiten       | W3 Desktop #96                                 | **Erledigt** |
+| O-36 | Medium | Medium | Smart Entry-Defaults (Mood/Energie von gestern)                   | Vereinfachen   | W3 #80                                         | **Erledigt** |
+| O-25 | Medium | High   | Entry „Schnell“ vs. „Vollständig“ beim Öffnen                     | Umleiten       | Phase-2-Reserve                                | Offen        |
+| O-42 | Low    | Low    | Tageszeit-Slots in Datumszeile integrieren                        | Vereinfachen   | Phase-2 §4                                     | Offen        |
 
 ### 2.3 Home & erste Erkenntnis
 
@@ -96,61 +96,61 @@ _Erledigt aus W1:_ O-07 (Verify auto-login), O-11 (Mail deep link), O-20 (Passwo
 Vollständige Schritt-Inventare: [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md).  
 Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnung.
 
-| Workflow | Audit-Punkt                     | Ticket     | Priorität           |
-| -------- | ------------------------------- | ---------- | ------------------- |
-| **W1**   | Post-verify Login-Schritt       | —          | **Erledigt** (O-07) |
-| **W1**   | Kein Password-Reset             | —          | **Erledigt** (O-20) |
-| **W1**   | Check-email Mail-App-Link       | —          | **Erledigt** (O-11) |
-| **W2**   | Intro-Panel vor erstem Entry    | O-37       | Medium              |
-| **W2**   | Summary bei wenigen Tags        | O-37       | Medium              |
-| **W2**   | Post-onboarding leerer Brief    | —          | **Erledigt** (O-02) |
-| **W2**   | Legacy retro/profile            | —          | **Erledigt** (O-04) |
-| **W3**   | Smart default von gestern       | —          | **Erledigt** (O-36) |
-| **W3**   | Dual Entry Desktop              | —          | **Erledigt** (O-08) |
-| **W3**   | Entry-Page Chrome (Theme/Nav)   | —          | **Erledigt** (O-08) |
-| **W3**   | Trends CTA → Route statt Sheet  | —          | **Erledigt** (O-38) |
-| **W3**   | Tags/Symptome hinter Toggle     | —          | **Erledigt** (O-21) |
-| **W4**   | Rückdatierung Sheet vs. Page    | —          | **Erledigt** (O-08) |
-| **W5**   | Meilenstein inline im Brief     | —          | **Erledigt** (O-39) |
-| **W5**   | Duplicate maturity UI           | O-34       | Medium              |
-| **W5**   | Matrix/Co-occurrence leer       | —          | **Erledigt** (O-14) |
-| **W6**   | Matrix als eigener Tab          | —          | **Erledigt** (O-22) |
-| **W6**   | Range pro Widget                | O-23       | High                |
-| **W6**   | Trends ↔ Insights getrennt      | O-41       | Medium              |
-| **W6**   | Compare + Health Tabs           | O-41       | Medium              |
-| **W6**   | Heatmap → Route statt Sheet     | —          | **Erledigt** (O-17) |
-| **W7**   | Habit-Setup nicht in Onboarding | O-09       | Medium              |
-| **W7**   | Leeres Habits-Panel             | —          | **Erledigt** (O-16) |
-| **W8**   | Vokabular-Subnavigation         | O-27       | Low                 |
-| **W9**   | Export in Settings versteckt    | —          | **Erledigt** (O-19) |
-| **W10**  | PWA-Banner vor erstem Entry     | —          | **Erledigt** (O-18) |
+| Workflow | Audit-Punkt                     | Ticket | Priorität           |
+| -------- | ------------------------------- | ------ | ------------------- |
+| **W1**   | Post-verify Login-Schritt       | —      | **Erledigt** (O-07) |
+| **W1**   | Kein Password-Reset             | —      | **Erledigt** (O-20) |
+| **W1**   | Check-email Mail-App-Link       | —      | **Erledigt** (O-11) |
+| **W2**   | Intro-Panel vor erstem Entry    | O-37   | Medium              |
+| **W2**   | Summary bei wenigen Tags        | O-37   | Medium              |
+| **W2**   | Post-onboarding leerer Brief    | —      | **Erledigt** (O-02) |
+| **W2**   | Legacy retro/profile            | —      | **Erledigt** (O-04) |
+| **W3**   | Smart default von gestern       | —      | **Erledigt** (O-36) |
+| **W3**   | Dual Entry Desktop              | —      | **Erledigt** (O-08) |
+| **W3**   | Entry-Page Chrome (Theme/Nav)   | —      | **Erledigt** (O-08) |
+| **W3**   | Trends CTA → Route statt Sheet  | —      | **Erledigt** (O-38) |
+| **W3**   | Tags/Symptome hinter Toggle     | —      | **Erledigt** (O-21) |
+| **W4**   | Rückdatierung Sheet vs. Page    | —      | **Erledigt** (O-08) |
+| **W5**   | Meilenstein inline im Brief     | —      | **Erledigt** (O-39) |
+| **W5**   | Duplicate maturity UI           | O-34   | Medium              |
+| **W5**   | Matrix/Co-occurrence leer       | —      | **Erledigt** (O-14) |
+| **W6**   | Matrix als eigener Tab          | —      | **Erledigt** (O-22) |
+| **W6**   | Range pro Widget                | O-23   | High                |
+| **W6**   | Trends ↔ Insights getrennt      | O-41   | Medium              |
+| **W6**   | Compare + Health Tabs           | O-41   | Medium              |
+| **W6**   | Heatmap → Route statt Sheet     | —      | **Erledigt** (O-17) |
+| **W7**   | Habit-Setup nicht in Onboarding | O-09   | Medium              |
+| **W7**   | Leeres Habits-Panel             | —      | **Erledigt** (O-16) |
+| **W8**   | Vokabular-Subnavigation         | O-27   | Low                 |
+| **W9**   | Export in Settings versteckt    | —      | **Erledigt** (O-19) |
+| **W10**  | PWA-Banner vor erstem Entry     | —      | **Erledigt** (O-18) |
 
 ### Cross-cutting themes (aktualisiert)
 
-| Theme                           | Status        | Offene Tickets         |
-| ------------------------------- | ------------- | ---------------------- |
-| Auth-Funnel-Länge               | **Erledigt**  | —                      |
-| Onboarding vor erstem Entry     | **Teilweise** | O-37                   |
-| Dual Entry Surfaces             | **Erledigt**  | —                      |
-| Duplicate maturity UI           | **Teilweise** | O-34                   |
-| Legacy Onboarding               | **Erledigt**  | —                      |
-| Analyse auf 2 Nav-Tabs verteilt | **Teilweise** | O-41                   |
-| Habit-Setup nicht in Onboarding | **Teilweise** | O-09                   |
-| Kein Password-Reset             | **Erledigt**  | —                      |
-| Spacing / Dichte Mobile         | **Teilweise** | O-30 ✅, O-31–O-35     |
+| Theme                           | Status        | Offene Tickets     |
+| ------------------------------- | ------------- | ------------------ |
+| Auth-Funnel-Länge               | **Erledigt**  | —                  |
+| Onboarding vor erstem Entry     | **Teilweise** | O-37               |
+| Dual Entry Surfaces             | **Erledigt**  | —                  |
+| Duplicate maturity UI           | **Teilweise** | O-34               |
+| Legacy Onboarding               | **Erledigt**  | —                  |
+| Analyse auf 2 Nav-Tabs verteilt | **Teilweise** | O-41               |
+| Habit-Setup nicht in Onboarding | **Teilweise** | O-09               |
+| Kein Password-Reset             | **Erledigt**  | —                  |
+| Spacing / Dichte Mobile         | **Teilweise** | O-30 ✅, O-31–O-35 |
 
 ---
 
 ## 4. Empfohlene Sprint-Reihenfolge
 
-| Sprint                      | Issues                        | Ziel                                     |
-| --------------------------- | ----------------------------- | ---------------------------------------- |
-| **H — Analyse-Kern**        | O-23, O-22, O-24 ✅           | Ein Zeitfenster; Insights findings-first |
-| **I — Home & Verknüpfung**  | O-39, O-40, O-13 ✅           | Wöchentliche Review ohne Tab-Hopping     |
-| **J — Entry & Desktop**     | O-36, O-08, O-38 ✅           | W3/W4 Rest; Desktop-Konsistenz           |
-| **K — Onboarding & Habits** | O-37, O-09                    | W2/W7 Rest                               |
-| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34   | Mobile-Dichte, Trends/Insights kompakter |
-| **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42  | Größere IA-/Backend-Themen               |
+| Sprint                      | Issues                       | Ziel                                     |
+| --------------------------- | ---------------------------- | ---------------------------------------- |
+| **H — Analyse-Kern**        | O-23, O-22, O-24 ✅          | Ein Zeitfenster; Insights findings-first |
+| **I — Home & Verknüpfung**  | O-39, O-40, O-13 ✅          | Wöchentliche Review ohne Tab-Hopping     |
+| **J — Entry & Desktop**     | O-36, O-08, O-38 ✅          | W3/W4 Rest; Desktop-Konsistenz           |
+| **K — Onboarding & Habits** | O-37, O-09                   | W2/W7 Rest                               |
+| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34  | Mobile-Dichte, Trends/Insights kompakter |
+| **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42 | Größere IA-/Backend-Themen               |
 
 **Nächster konkreter PR:** **Sprint K** (O-37, O-09) oder **Sprint L** (Spacing).
 

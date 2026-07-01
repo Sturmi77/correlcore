@@ -18,10 +18,7 @@ export const entrySheetSaveSignal = writable(0);
 
 export const entrySheetStore = { subscribe: _state.subscribe };
 
-export function openEntrySheet(
-  date?: string,
-  options?: { onboardingTags?: boolean }
-): void {
+export function openEntrySheet(date?: string, options?: { onboardingTags?: boolean }): void {
   _state.update(() => ({
     open: true,
     date: date ?? isoDate(new Date()),

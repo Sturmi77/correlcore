@@ -41,11 +41,7 @@
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
-  import {
-    entrySheetSaveSignal,
-    entrySheetStore,
-    openEntrySheet,
-  } from '$lib/stores/entrySheet';
+  import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
 
   const HOME_SPARKLINE_DAYS = 7;

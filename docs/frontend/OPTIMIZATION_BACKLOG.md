@@ -85,18 +85,18 @@
 
 ## Workflow coverage matrix (Phase 2 additions)
 
-| Workflow           | Open Phase-2 issues          |
-| ------------------ | ---------------------------- |
-| W1 Account         | — (complete)                 |
-| W2 Onboarding      | O-37                         |
+| Workflow           | Open Phase-2 issues                    |
+| ------------------ | -------------------------------------- |
+| W1 Account         | — (complete)                           |
+| W2 Onboarding      | O-37                                   |
 | W3 Daily entry     | ~~O-36~~, ~~O-08~~, ~~O-38~~, ~~O-21~~ |
-| W4 Backdate        | ~~O-08~~                     |
-| W5 First insight   | O-34                         |
-| W6 Weekly analysis | O-41, O-26, O-29             |
-| W7 Habits          | O-09                         |
-| W8 Vocabulary      | O-27                         |
-| W9 Export          | — (complete)                 |
-| W10 PWA            | — (complete)                 |
+| W4 Backdate        | ~~O-08~~                               |
+| W5 First insight   | O-34                                   |
+| W6 Weekly analysis | O-41, O-26, O-29                       |
+| W7 Habits          | O-09                                   |
+| W8 Vocabulary      | O-27                                   |
+| W9 Export          | — (complete)                           |
+| W10 PWA            | — (complete)                           |
 
 ---
 
