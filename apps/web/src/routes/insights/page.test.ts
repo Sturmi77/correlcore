@@ -25,7 +25,25 @@ const testHelpers = vi.hoisted(() => {
     start_date: string;
     end_date: string;
     min_count: number;
-    pairs: [];
+    pairs: {
+      tag_a: {
+        tag_id: string;
+        slug: string;
+        name: string;
+        category: string;
+        color: null;
+      };
+      tag_b: {
+        tag_id: string;
+        slug: string;
+        name: string;
+        category: string;
+        color: null;
+      };
+      count: number;
+      pct_of_a: number;
+      pct_of_b: number;
+    }[];
   }>[] = [];
 
   function mockComponent(testId: string, renderText?: (props: Record<string, unknown>) => string) {
@@ -59,13 +77,39 @@ const testHelpers = vi.hoisted(() => {
 });
 
 function tagCooccurrenceResponse(range: TagCooccurrenceRange) {
+  const tag = (id: string) => ({
+    tag_id: `${range}-${id}`,
+    slug: `${range}-${id}`,
+    name: `${range} tag ${id}`,
+    category: 'test',
+    color: null,
+  });
+  const pair = (a: string, b: string, count: number) => ({
+    tag_a: tag(a),
+    tag_b: tag(b),
+    count,
+    pct_of_a: 50,
+    pct_of_b: 50,
+  });
+
   return {
     range,
     start_date: '2026-05-01',
     end_date: '2026-05-31',
     min_count: 2,
-    pairs: [],
+    pairs: [
+      pair('a', 'b', 5),
+      pair('a', 'c', 4),
+      pair('a', 'd', 3),
+      pair('a', 'e', 2),
+      pair('a', 'f', 2),
+    ],
   };
+}
+
+async function flushPromises(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 vi.mock('svelte-i18n', async () => {
@@ -185,12 +229,6 @@ vi.mock('$lib/components/insights/CooccurrenceEntrySheet.svelte', () => ({
 vi.mock('$lib/components/insights/CorrelationDisclaimer.svelte', () => ({
   default: testHelpers.mockComponent('correlation-disclaimer'),
 }));
-vi.mock('$lib/components/insights/TagCooccurrenceHeatmap.svelte', () => ({
-  default: testHelpers.mockComponent('tag-cooccurrence-heatmap', (props) => {
-    const data = props.data as { range?: string } | null | undefined;
-    return data?.range ?? 'no-range';
-  }),
-}));
 vi.mock('$lib/components/insights/TagGroupsSection.svelte', () => ({
   default: testHelpers.mockComponent('tag-groups-section'),
 }));
@@ -230,13 +268,14 @@ describe('/insights page analysis range', () => {
     testHelpers.tagCooccurrenceRequests[1]?.resolve(tagCooccurrenceResponse('1y'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('tag-cooccurrence-heatmap').textContent).toBe('1y');
+      expect(screen.getAllByText('1y tag a').length).toBeGreaterThan(0);
     });
+    expect(screen.queryByText('30d tag a')).toBeNull();
 
     testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('30d'));
+    await flushPromises();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('tag-cooccurrence-heatmap').textContent).toBe('1y');
-    });
+    expect(screen.getAllByText('1y tag a').length).toBeGreaterThan(0);
+    expect(screen.queryByText('30d tag a')).toBeNull();
   });
 });
