@@ -270,7 +270,8 @@ test('offline autosave remains editable and recovers through retry', async ({ pa
 test('offline dexie entry saves locally and syncs after reconnect', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const api = await installEntryApi(page, { offlineSync: true });
-  await page.goto('/entries/new');
+  await page.goto('/?openEntry=1');
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: 60_000 });
 
   api.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
@@ -284,9 +285,8 @@ test('offline dexie entry saves locally and syncs after reconnect', async ({ pag
   await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'saved');
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
-    timeout: 60_000,
-  });
+  await page.goto('/?openEntry=1');
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('entry-edit-hint')).toBeVisible({ timeout: 15_000 });
 
   api.setOffline(false);
