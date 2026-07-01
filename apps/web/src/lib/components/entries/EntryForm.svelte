@@ -392,9 +392,43 @@
     setEntryOpenMode(next);
   }
 
-  function setSlot(slot: EntrySlot) {
+  function waitForAutoSaveNotSaving(): Promise<void> {
+    if (autoSave.peek().status !== 'saving') return Promise.resolve();
+
+    return new Promise((resolve) => {
+      let unsubscribe = () => {};
+      unsubscribe = autoSaveState.subscribe((state) => {
+        if (state.status !== 'saving') {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
+  async function settleAutosaveBeforeHydration(): Promise<boolean> {
+    let flushed = false;
+
+    while (true) {
+      const status = autoSave.peek().status;
+      if (status === 'dirty' || status === 'error') {
+        if (flushed) return false;
+        flushed = true;
+        await autoSave.flushNow();
+        continue;
+      }
+      if (status === 'saving') {
+        await waitForAutoSaveNotSaving();
+        continue;
+      }
+      return true;
+    }
+  }
+
+  async function setSlot(slot: EntrySlot) {
     const nextSlot = selectedSlot === slot ? 'day' : slot;
-    void loadForDate(entryDate, nextSlot);
+    if (!(await settleAutosaveBeforeHydration())) return;
+    await loadForDate(entryDate, nextSlot);
   }
 
   // ---------------------------------------------------------------------

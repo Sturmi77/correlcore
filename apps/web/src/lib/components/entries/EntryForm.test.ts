@@ -205,3 +205,48 @@ describe('EntryForm smart defaults', () => {
     );
   });
 });
+
+describe('EntryForm slot changes', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(listEntries).mockResolvedValue([]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('flushes dirty edits before hydrating another time slot', async () => {
+    const { container } = render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'draft before slot switch' },
+    });
+    await flushAsync();
+
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('dirty');
+
+    await fireEvent.click(screen.getByRole('button', { name: 'entry.time_slot.morning' }));
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledTimes(1);
+    expect(submitEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entry_date: '2026-06-02',
+        slot: 'day',
+        note: 'draft before slot switch',
+      })
+    );
+  });
+});
