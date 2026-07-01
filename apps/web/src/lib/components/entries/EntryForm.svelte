@@ -29,6 +29,7 @@
   import DayDeltaCard from '$lib/components/entries/DayDeltaCard.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import SegmentedControl from '$lib/components/common/SegmentedControl.svelte';
   import {
     fetchEntryDelta,
     listEntries,
@@ -57,6 +58,7 @@
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
   import { isoDate } from '$lib/utils/entryForm';
   import { NEUTRAL_SCALE_DEFAULT, scaleDefaultsFromPrevious } from '$lib/utils/entrySmartDefaults';
+  import { setEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
   import { onLocalEntrySaved, scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
   import {
@@ -67,6 +69,8 @@
   } from '$lib/stores/entriesOffline';
 
   export let mode: 'page' | 'sheet' = 'page';
+  /** Quick capture hides tags, symptoms, and optional extras (O-25). */
+  export let openMode: EntryOpenMode = 'full';
   /** When true, show onboarding tag suggestions and finalize onboarding on first save. */
   export let onboardingTagsEnabled = false;
   /** ISO date `YYYY-MM-DD` for the entry being edited. */
@@ -377,6 +381,17 @@
   ];
   const ENTRY_SLOTS: Exclude<EntrySlot, 'day'>[] = ['morning', 'noon', 'evening'];
 
+  $: quickEntry = openMode === 'quick';
+  $: openModeOptions = [
+    { id: 'quick' as const, label: $_('entry.open_mode.quick'), testId: 'entry-open-mode-quick' },
+    { id: 'full' as const, label: $_('entry.open_mode.full'), testId: 'entry-open-mode-full' },
+  ];
+
+  function setOpenMode(next: EntryOpenMode): void {
+    openMode = next;
+    setEntryOpenMode(next);
+  }
+
   function setSlot(slot: EntrySlot) {
     const nextSlot = selectedSlot === slot ? 'day' : slot;
     void loadForDate(entryDate, nextSlot);
@@ -649,6 +664,15 @@
       {/if}
     </div>
   </div>
+  {#if mode === 'sheet'}
+    <SegmentedControl
+      value={openMode}
+      options={openModeOptions}
+      ariaLabel={$_('entry.open_mode.label')}
+      testId="entry-open-mode-control"
+      on:change={(event) => setOpenMode(event.detail.value as EntryOpenMode)}
+    />
+  {/if}
 </header>
 
 <form
@@ -661,17 +685,32 @@
 >
   <section class="entry-section" aria-labelledby="entry-section-date">
     <h2 id="entry-section-date" class="entry-section__title">{$_('entry.section.date')}</h2>
-    <label class="entry-field">
-      <span class="entry-label">{$_('entry.date_label')}</span>
-      <input
-        type="date"
-        class="input"
-        bind:value={entryDate}
-        min={isoDate(sevenDaysAgo)}
-        max={isoDate(today)}
-        required
-      />
-    </label>
+    <div class="entry-date-row">
+      <label class="entry-field entry-field--date">
+        <span class="entry-label">{$_('entry.date_label')}</span>
+        <input
+          type="date"
+          class="input"
+          bind:value={entryDate}
+          min={isoDate(sevenDaysAgo)}
+          max={isoDate(today)}
+          required
+        />
+      </label>
+      <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
+        {#each ENTRY_SLOTS as slot}
+          <button
+            type="button"
+            class:active={selectedSlot === slot}
+            aria-pressed={selectedSlot === slot}
+            on:click={() => setSlot(slot)}
+          >
+            {$_(`entry.time_slot.${slot}`)}
+          </button>
+        {/each}
+      </div>
+    </div>
+    <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
   </section>
 
   {#if onboardingTagsEnabled}
@@ -740,23 +779,7 @@
     </label>
   </section>
 
-  <section class="entry-section" aria-labelledby="entry-section-time">
-    <h2 id="entry-section-time" class="entry-section__title">{$_('entry.section.time')}</h2>
-    <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
-      {#each ENTRY_SLOTS as slot}
-        <button
-          type="button"
-          class:active={selectedSlot === slot}
-          aria-pressed={selectedSlot === slot}
-          on:click={() => setSlot(slot)}
-        >
-          {$_(`entry.time_slot.${slot}`)}
-        </button>
-      {/each}
-    </div>
-    <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
-  </section>
-
+  {#if !quickEntry}
   <section class="entry-section" aria-labelledby="entry-section-tags">
     <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
     <TagPicker bind:selected={selectedTagIds} />
@@ -830,6 +853,7 @@
     <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
     <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
   </section>
+  {/if}
 
   {#if offlineSyncConflictKey}
     <p class="entry-hint" role="status" data-testid="entry-sync-conflict-note">
@@ -963,6 +987,22 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+
+  .entry-date-row {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .entry-field--date {
+    min-width: 0;
+  }
+
+  @media (min-width: 480px) {
+    .entry-date-row {
+      grid-template-columns: minmax(10rem, 14rem) 1fr;
+      align-items: end;
+    }
   }
 
   .entry-chip-row {

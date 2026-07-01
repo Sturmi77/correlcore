@@ -265,8 +265,8 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
     timeout: APP_READY_TIMEOUT_MS,
   });
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible();
-  await page.getByTestId('trends-tab-health').click();
-  await expect(page.locator('.trends__consistency strong').first()).toHaveText('3');
+  await expect(page.getByTestId('trends-health-context')).toBeVisible();
+  await expect(page.locator('.trends-health__consistency strong').first()).toHaveText('3');
 
   await page.goto('/insights');
   await expect(page.getByText(/fridays currently line up/i)).toBeVisible();

@@ -69,6 +69,10 @@ vi.mock('$lib/api/preferences', () => ({
   })),
 }));
 
+vi.mock('$lib/api/user', () => ({
+  deleteAccount: vi.fn(async () => undefined),
+}));
+
 describe('/settings Sprint 7', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -77,7 +81,11 @@ describe('/settings Sprint 7', () => {
   it('renders the canonical settings sections', async () => {
     render(Page);
 
-    expect(await screen.findByTestId('settings-section-tracking')).toBeTruthy();
+    expect(await screen.findByTestId('settings-section-vocabulary')).toBeTruthy();
+    expect(screen.getByTestId('settings-vocab-tags')).toBeTruthy();
+    expect(screen.getByTestId('settings-vocab-symptoms')).toBeTruthy();
+    expect(screen.getByTestId('settings-vocab-habits')).toBeTruthy();
+    expect(screen.getByTestId('settings-delete-account')).toBeTruthy();
     expect(screen.getByTestId('settings-section-export')).toBeTruthy();
     expect(screen.getByTestId('settings-section-analysis')).toBeTruthy();
     expect(screen.getByTestId('settings-section-privacy')).toBeTruthy();

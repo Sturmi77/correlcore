@@ -22,6 +22,7 @@
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
+  import { deleteAccount } from '$lib/api/user';
   import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
   import {
     fetchUserPreferences,
@@ -37,6 +38,10 @@
   let preferences: UserPreferencesResponse | null = null;
   let preferencesBusy = false;
   let preferencesError = '';
+  let deleteDialogOpen = false;
+  let deletePassword = '';
+  let deleteBusy = false;
+  let deleteError = '';
 
   async function handleDownload(kind: ExportKind): Promise<void> {
     busy = kind;
@@ -79,6 +84,39 @@
   async function handleLogout(): Promise<void> {
     await logout();
     await goto('/', { replaceState: true });
+  }
+
+  function openDeleteDialog(): void {
+    deletePassword = '';
+    deleteError = '';
+    deleteDialogOpen = true;
+  }
+
+  function closeDeleteDialog(): void {
+    if (deleteBusy) return;
+    deleteDialogOpen = false;
+    deletePassword = '';
+    deleteError = '';
+  }
+
+  async function confirmDeleteAccount(): Promise<void> {
+    if (!deletePassword.trim()) return;
+    deleteBusy = true;
+    deleteError = '';
+    try {
+      await deleteAccount({ password: deletePassword });
+      await logout();
+      await goto('/', { replaceState: true });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        deleteError = $_('settings.privacy.delete_invalid_password');
+      } else {
+        deleteError =
+          err instanceof Error ? err.message : $_('settings.privacy.delete_error');
+      }
+    } finally {
+      deleteBusy = false;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -173,18 +211,33 @@
       <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
     </Panel>
   {:else}
-    <section class="settings__panel" data-testid="settings-section-tracking">
+    <section class="settings__panel" data-testid="settings-section-vocabulary">
       <div class="settings__panel-head">
-        <span class="settings__section-kicker">{$_('settings.section.tracking')}</span>
-        <h2>{$_('settings.tracking.heading')}</h2>
-        <p>{$_('settings.tracking.body')}</p>
+        <span class="settings__section-kicker">{$_('settings.section.vocabulary')}</span>
+        <h2>{$_('settings.vocabulary.heading')}</h2>
+        <p>{$_('settings.vocabulary.body')}</p>
       </div>
-      <div class="settings__actions">
-        <Button href="/settings/tags" variant="secondary">{$_('settings.tags.open')}</Button>
-        <Button href="/settings/symptoms" variant="secondary">
-          {$_('settings.symptoms.open')}
-        </Button>
-        <span class="settings__placeholder">{$_('settings.tracking.reminders_placeholder')}</span>
+      <div class="settings__vocabulary-grid">
+        <a class="settings__vocabulary-card" href="/settings/tags" data-testid="settings-vocab-tags">
+          <strong>{$_('settings.vocabulary.tags')}</strong>
+          <span>{$_('settings.vocabulary.tags_body')}</span>
+        </a>
+        <a
+          class="settings__vocabulary-card"
+          href="/settings/symptoms"
+          data-testid="settings-vocab-symptoms"
+        >
+          <strong>{$_('settings.vocabulary.symptoms')}</strong>
+          <span>{$_('settings.vocabulary.symptoms_body')}</span>
+        </a>
+        <a
+          class="settings__vocabulary-card"
+          href="/settings/tags"
+          data-testid="settings-vocab-habits"
+        >
+          <strong>{$_('settings.vocabulary.habits')}</strong>
+          <span>{$_('settings.vocabulary.habits_body')}</span>
+        </a>
       </div>
     </section>
 
@@ -257,9 +310,14 @@
         <p>{$_('settings.privacy.body')}</p>
       </div>
       <div class="settings__actions">
-        <span class="settings__placeholder settings__placeholder--danger">
-          {$_('settings.privacy.delete_placeholder')}
-        </span>
+        <Button
+          variant="danger"
+          type="button"
+          data-testid="settings-delete-account"
+          on:click={openDeleteDialog}
+        >
+          {$_('settings.privacy.delete_action')}
+        </Button>
       </div>
     </section>
 
@@ -407,6 +465,66 @@
   </div>
 {/if}
 
+{#if deleteDialogOpen}
+  <div
+    class="settings__modal-backdrop"
+    role="presentation"
+    data-testid="settings-delete-backdrop"
+    on:click={closeDeleteDialog}
+  >
+    <dialog
+      open
+      class="settings__modal settings__modal--compact"
+      aria-modal="true"
+      aria-labelledby="delete-account-title"
+      data-testid="settings-delete-dialog"
+      on:click|stopPropagation
+    >
+      <div class="settings__modal-head">
+        <h2 id="delete-account-title">{$_('settings.privacy.delete_title')}</h2>
+        <IconButton
+          type="button"
+          ariaLabel={$_('settings.privacy.delete_cancel')}
+          title={$_('settings.privacy.delete_cancel')}
+          on:click={closeDeleteDialog}
+        >
+          x
+        </IconButton>
+      </div>
+      <div class="settings__delete-body">
+        <p>{$_('settings.privacy.delete_body')}</p>
+        <label class="settings__field">
+          <span>{$_('settings.privacy.delete_password')}</span>
+          <input
+            type="password"
+            autocomplete="current-password"
+            bind:value={deletePassword}
+            data-testid="settings-delete-password"
+          />
+        </label>
+        {#if deleteError}
+          <InlineAlert variant="error" message={deleteError} />
+        {/if}
+        <div class="settings__actions">
+          <Button variant="ghost" type="button" on:click={closeDeleteDialog} disabled={deleteBusy}>
+            {$_('settings.privacy.delete_cancel')}
+          </Button>
+          <Button
+            variant="danger"
+            type="button"
+            loading={deleteBusy}
+            disabled={deleteBusy || !deletePassword.trim()}
+            data-testid="settings-delete-confirm"
+            on:click={() => void confirmDeleteAccount()}
+          >
+            {deleteBusy ? $_('settings.privacy.delete_busy') : $_('settings.privacy.delete_confirm')}
+          </Button>
+        </div>
+      </div>
+    </dialog>
+  </div>
+{/if}
+
 {#if $devMode && $devPhase.onboardingPreviewOpen}
   <div
     class="settings__modal-backdrop"
@@ -488,20 +606,60 @@
     gap: 0.65rem;
   }
 
-  .settings__placeholder {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-2) var(--space-3);
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
+  .settings__vocabulary-grid {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   }
 
-  .settings__placeholder--danger {
-    border-color: color-mix(in srgb, var(--color-error) 32%, var(--color-border));
-    color: var(--color-error);
+  .settings__vocabulary-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-height: 5.5rem;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease;
+  }
+
+  .settings__vocabulary-card:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary-soft) 28%, var(--color-surface));
+  }
+
+  .settings__vocabulary-card strong {
+    font-size: var(--text-base);
+  }
+
+  .settings__vocabulary-card span {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    line-height: 1.45;
+  }
+
+  .settings__delete-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .settings__delete-body p {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  .settings__modal--compact {
+    width: min(100%, 28rem);
+    height: auto;
+    max-height: min(88dvh, 28rem);
   }
 
   /* Developer Mode toggle — min 44px touch target */
