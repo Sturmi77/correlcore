@@ -3,7 +3,7 @@
  */
 
 import { CLIENT_ID_STORAGE_KEY } from './clientId';
-import { destroyOfflineDatabase, getOfflineDb } from './db';
+import { destroyOfflineDatabase, getOfflineDb, type CorrelCoreOfflineDB } from './db';
 import { resetSyncOrchestratorForTests } from './syncOrchestrator';
 import { SYNC_META_KEYS } from './types';
 
@@ -26,6 +26,15 @@ export async function clearOfflineDataForAnonymousSession(): Promise<void> {
   await clearOfflineDataForLogout();
 }
 
+async function hasUnknownOwnerData(db: CorrelCoreOfflineDB): Promise<boolean> {
+  const [entryCount, changeCount, metaCount] = await Promise.all([
+    db.entries.count(),
+    db.change_log.count(),
+    db.sync_meta.count(),
+  ]);
+  return entryCount > 0 || changeCount > 0 || metaCount > 0;
+}
+
 /** Ensure origin-scoped offline data belongs to the authenticated account. */
 export async function prepareOfflineDataForAuthenticatedUser(userId: string): Promise<void> {
   if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
@@ -35,7 +44,10 @@ export async function prepareOfflineDataForAuthenticatedUser(userId: string): Pr
   const db = getOfflineDb();
   const existingOwner = await db.sync_meta.get(SYNC_META_KEYS.ownerUserId);
 
-  if (existingOwner?.value && existingOwner.value !== userId) {
+  if (
+    (existingOwner?.value && existingOwner.value !== userId) ||
+    (!existingOwner?.value && (await hasUnknownOwnerData(db)))
+  ) {
     await clearOfflineDataForLogout();
   }
 
