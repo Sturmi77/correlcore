@@ -12,10 +12,15 @@
 </script>
 
 <section class="onboarding-tags" aria-labelledby="entry-onboarding-tags-title">
+  <p class="onboarding-tags__intro" data-testid="onboarding-intro">
+    {$_('onboarding.guided.intro')}
+  </p>
   <h2 id="entry-onboarding-tags-title" class="onboarding-tags__title">
     {$_('entry.onboarding_tags.title')}
   </h2>
-  <p class="onboarding-tags__hint">{$_('entry.onboarding_tags.hint')}</p>
+  <p class="onboarding-tags__habit-hint" data-testid="onboarding-habit-hint">
+    {$_('onboarding.guided.habit_hint')}
+  </p>
 
   {#if loading}
     <p class="onboarding-tags__loading">{$_('tag.loading')}</p>
@@ -51,6 +56,13 @@
     gap: var(--space-3);
   }
 
+  .onboarding-tags__intro {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
   .onboarding-tags__title {
     margin: 0;
     font-size: var(--text-sm);
@@ -59,15 +71,15 @@
     letter-spacing: 0.02em;
   }
 
-  .onboarding-tags__hint {
+  .onboarding-tags__habit-hint {
     margin: 0;
     font-size: var(--text-sm);
-    line-height: 1.45;
-    color: var(--color-text);
-    padding: var(--space-2) var(--space-3);
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    padding: var(--space-3);
     border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
-    border-left: 3px solid var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
   }
 
   .onboarding-tags__loading {

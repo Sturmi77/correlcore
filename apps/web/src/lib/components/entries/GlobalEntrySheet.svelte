@@ -9,8 +9,11 @@
     notifyEntrySheetSaved,
     openEntrySheet,
   } from '$lib/stores/entrySheet';
+  import { fetchDashboardSummary } from '$lib/api/dashboard';
+  import { fetchUserPreferences } from '$lib/api/preferences';
   import { entryDateFromSearchParams, isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { isoDate } from '$lib/utils/entryForm';
+  import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
   import EntrySheet from './EntrySheet.svelte';
 
   let sheetOpen = false;
@@ -29,7 +32,7 @@
     history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
-  function maybeOpenFromQuery(): void {
+  async function maybeOpenFromQuery(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
     const params =
       typeof window !== 'undefined'
@@ -37,7 +40,17 @@
         : $page.url.searchParams;
     if (!isOpenEntryRequested(params)) return;
     const date = entryDateFromSearchParams(params) ?? isoDate(new Date());
-    openEntrySheet(date);
+    let onboardingTags = false;
+    try {
+      const [preferences, summary] = await Promise.all([
+        fetchUserPreferences(),
+        fetchDashboardSummary(date),
+      ]);
+      onboardingTags = shouldShowOnboardingTags(preferences, summary.entry_count);
+    } catch {
+      onboardingTags = false;
+    }
+    openEntrySheet(date, { onboardingTags });
     stripOpenEntryQuery();
   }
 
@@ -53,14 +66,14 @@
         sheetOpen = false;
         return;
       }
-      maybeOpenFromQuery();
+      void maybeOpenFromQuery();
     });
 
     const unsubscribePage = page.subscribe(() => {
-      maybeOpenFromQuery();
+      void maybeOpenFromQuery();
     });
 
-    maybeOpenFromQuery();
+    void maybeOpenFromQuery();
 
     return () => {
       unsubscribeAuth();
