@@ -472,7 +472,7 @@
   <title>{$_('insights.page.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="insights-page">
+<main class="insights-page screen-stack screen-stack--tight">
   <ScreenHeader title={$_('insights.page.title')} subtitle={$_('insights.page.subtitle')} />
 
   {#if $auth.status !== 'authenticated'}
@@ -628,8 +628,6 @@
   .insights-page {
     display: flex;
     flex-direction: column;
-    gap: var(--space-5);
-    padding: var(--space-4) 0 var(--space-8);
   }
 
   .insights-page__analytics {

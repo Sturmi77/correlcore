@@ -33,6 +33,8 @@
 
 > **Note:** O-10 is intentionally unused (reserved). Former “O-10 password / O-11 Phase 5 / O-12 Figma” map to **O-20**, **O-08**, and out-of-scope Figma Sprint H respectively.
 
+**Phase 2 (O-21+):** see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md) — IA, Entry flatten, global analysis range, mobile spacing (O-30).
+
 ---
 
 ## Sprint execution order

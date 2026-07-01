@@ -254,7 +254,7 @@
 </svelte:head>
 
 {#if $auth.status === 'authenticated'}
-  <div class="home-screen">
+  <div class="home-screen screen-stack screen-stack--loose">
     {#if showPwaInstallBanner}
       <section class="home-install" data-testid="pwa-install-banner">
         <div>
@@ -402,9 +402,6 @@
   .home-screen {
     display: flex;
     flex-direction: column;
-    gap: var(--space-6);
-    padding-top: var(--space-4);
-    padding-bottom: var(--space-8);
   }
 
   .home-zone {
@@ -423,7 +420,7 @@
 
   .home-zone--foot {
     order: 3;
-    gap: var(--space-5);
+    gap: var(--screen-gap);
   }
 
   .home-install {

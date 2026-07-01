@@ -169,8 +169,15 @@
     flex: 1;
     overflow-y: auto;
     padding: var(--space-4);
-    padding-top: var(--space-6);
-    padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+
+  @media (max-width: 767px) {
+    .entry-sheet__body {
+      padding-inline: var(--space-3);
+      padding-top: var(--space-3);
+      padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    }
   }
 
   @media (min-width: 768px) {

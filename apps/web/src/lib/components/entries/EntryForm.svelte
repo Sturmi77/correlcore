@@ -984,11 +984,11 @@
 
     .entry-form,
     .entry-optional-fields {
-      gap: var(--space-5);
+      gap: var(--screen-gap);
     }
 
     .entry-section {
-      padding: 0 0 var(--space-5);
+      padding: 0 0 var(--screen-gap);
       border: 0;
       border-bottom: 1px solid var(--color-border);
       border-radius: 0;
