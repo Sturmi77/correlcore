@@ -48,6 +48,12 @@ describe('/ home screen ownership contract', () => {
     expect(source).toContain('{#if preferEntrySheet}');
   });
 
+  it('does not strip openEntry query after desktop redirects', () => {
+    expect(source).toContain('const openedInSheet = openEntry(date);');
+    expect(source).toContain('if (openedInSheet) stripOpenEntryQuery();');
+    expect(source).not.toContain('openEntry(date);\n    stripOpenEntryQuery();');
+  });
+
   it('defers the PWA install banner until after the first entry or onboarding', () => {
     expect(source).toContain('showPwaInstallBanner');
     expect(source).toContain('onboarding_retro_completed');
