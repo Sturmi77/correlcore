@@ -337,8 +337,7 @@
         insightMaturity = insightsResult.value.insight_maturity;
       } else {
         const insightErr = insightsResult.reason;
-        error =
-          insightErr instanceof Error ? insightErr.message : $_('error.generic');
+        error = insightErr instanceof Error ? insightErr.message : $_('error.generic');
         if (insights.length === 0) {
           insightMaturity = null;
         }
