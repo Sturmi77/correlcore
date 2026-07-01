@@ -316,22 +316,47 @@
 
       const todayIso = localIsoDate(new Date());
       const startIso = shiftIsoDate(todayIso, -89);
-      const [response, entryResponse, tagResponse, defaultTags, preferences, nextSymptomHeatmap] =
-        await Promise.all([
-          listLatestInsights({ limit: 50 }),
-          listEntries({ start_date: startIso, end_date: todayIso }),
-          listVisibleTags({ include_hidden: true }).catch(() => []),
-          listDefaultTags().catch(() => []),
-          fetchUserPreferences().catch(() => null),
-          fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }).catch(() => null),
-        ]);
-      insights = response.insights;
-      insightMaturity = response.insight_maturity;
-      userPreferences = preferences;
-      symptomHeatmap = nextSymptomHeatmap;
-      dayEntryDates = dayEntryDatesFromIsoEntries(entryResponse);
-      moodEntries = entryResponse;
-      entryCount = dayEntryDates.length;
+      const [
+        insightsResult,
+        entryResult,
+        tagResult,
+        defaultTagsResult,
+        preferencesResult,
+        symptomHeatmapResult,
+      ] = await Promise.allSettled([
+        listLatestInsights({ limit: 50 }),
+        listEntries({ start_date: startIso, end_date: todayIso }),
+        listVisibleTags({ include_hidden: true }),
+        listDefaultTags(),
+        fetchUserPreferences(),
+        fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
+      ]);
+
+      if (insightsResult.status === 'fulfilled') {
+        insights = insightsResult.value.insights;
+        insightMaturity = insightsResult.value.insight_maturity;
+      } else {
+        const insightErr = insightsResult.reason;
+        error =
+          insightErr instanceof Error ? insightErr.message : $_('error.generic');
+        if (insights.length === 0) {
+          insightMaturity = null;
+        }
+      }
+
+      userPreferences =
+        preferencesResult.status === 'fulfilled' ? preferencesResult.value : userPreferences;
+      symptomHeatmap =
+        symptomHeatmapResult.status === 'fulfilled' ? symptomHeatmapResult.value : symptomHeatmap;
+
+      if (entryResult.status === 'fulfilled') {
+        dayEntryDates = dayEntryDatesFromIsoEntries(entryResult.value);
+        moodEntries = entryResult.value;
+        entryCount = dayEntryDates.length;
+      }
+
+      const tagResponse = tagResult.status === 'fulfilled' ? tagResult.value : [];
+      const defaultTags = defaultTagsResult.status === 'fulfilled' ? defaultTagsResult.value : [];
       const inactiveSlugs = new Set(
         tagResponse.filter((tag) => tag.is_hidden).map((tag) => tag.slug)
       );
@@ -341,16 +366,17 @@
       ];
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
-      insights = [];
-      insightMaturity = null;
-      userPreferences = null;
-      symptomHeatmap = null;
-      symptomCooccurrence = null;
-      tagClusters = null;
-      dayEntryDates = [];
-      moodEntries = [];
-      entryCount = 0;
-      inactiveTagIds = [];
+      if (insights.length === 0) {
+        insightMaturity = null;
+        userPreferences = null;
+        symptomHeatmap = null;
+        symptomCooccurrence = null;
+        tagClusters = null;
+        dayEntryDates = [];
+        moodEntries = [];
+        entryCount = 0;
+        inactiveTagIds = [];
+      }
     } finally {
       loading = false;
       insightsLoaded = true;
@@ -385,8 +411,7 @@
     showInsightSymptoms && (!insightMaturity || insightMaturity.phase !== 'collecting');
   $: matrixInsightCount = countMatrixInsights(insights);
   $: showMatrixTab = matrixInsightCount >= MATRIX_TAB_MIN_INSIGHTS;
-  $: showAdvancedAnalytics =
-    Boolean(insightMaturity && insightMaturity.phase !== 'collecting') && showMatrixTab;
+  $: showAdvancedAnalytics = Boolean(insightMaturity && insightMaturity.phase !== 'collecting');
   $: visibleDetailViewTabs = detailViewTabs.filter((tab) => tab.id !== 'matrix' || showMatrixTab);
   $: if (!showMatrixTab && detailView === 'matrix') {
     detailView = 'findings';
@@ -494,21 +519,19 @@
 
     {#if detailView === 'matrix'}
       <InsightMatrix {insights} />
-    {:else if compactInsights && primaryMobileInsight && !feedLoading && !error}
-      {#if remainingMobileInsights.length > 0}
-        <section class="insights-page__more" data-testid="mobile-insights-more">
-          <h2>{$_('insights.mobile.more_heading')}</h2>
-          <InsightFeed
-            insights={remainingMobileInsights}
-            maturity={insightMaturity}
-            {entryCount}
-            {inactiveTagIds}
-            showContext={false}
-            on:retry={loadInsights}
-          />
-        </section>
-      {/if}
-    {:else}
+    {:else if compactInsights && primaryMobileInsight && remainingMobileInsights.length > 0 && !feedLoading && !error}
+      <section class="insights-page__more" data-testid="mobile-insights-more">
+        <h2>{$_('insights.mobile.more_heading')}</h2>
+        <InsightFeed
+          insights={remainingMobileInsights}
+          maturity={insightMaturity}
+          {entryCount}
+          {inactiveTagIds}
+          showContext={false}
+          on:retry={loadInsights}
+        />
+      </section>
+    {:else if !compactInsights || !primaryMobileInsight || feedLoading || error}
       <InsightFeed
         {insights}
         maturity={insightMaturity}
