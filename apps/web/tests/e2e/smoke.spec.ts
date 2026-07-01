@@ -234,19 +234,15 @@ test('login redirects to a protected workflow', async ({ page }) => {
   await page.locator('input[type="password"]').fill('CorrectHorse123!');
   await page.locator('button[type="submit"]').click();
 
-  await expect(page).toHaveURL(/\/entries\/new$/);
-  await expect(page.getByRole('heading', { name: /log your day|tag erfassen/i })).toBeVisible({
-    timeout: APP_READY_TIMEOUT_MS,
-  });
+  await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/);
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
 });
 
 test('entry creation autosaves the core daily metrics', async ({ page }) => {
   const api = await installSmokeApi(page, { authenticated: true });
 
   await page.goto('/entries/new');
-  await expect(page.getByRole('heading', { name: /log your day|tag erfassen/i })).toBeVisible({
-    timeout: APP_READY_TIMEOUT_MS,
-  });
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
 
   await page.locator('#entry-mood').evaluate((element) => {
     const input = element as HTMLInputElement;

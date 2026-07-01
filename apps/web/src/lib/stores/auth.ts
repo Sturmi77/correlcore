@@ -20,6 +20,7 @@ import {
   type UserResponse,
 } from '$lib/api/auth';
 import { resetInsightStore } from '$lib/stores/insights';
+import { resetEntrySheetStore } from '$lib/stores/entrySheet';
 import {
   clearOfflineDataForLogout,
   drainOfflineSyncForSessionChange,
@@ -67,6 +68,7 @@ export async function login(payload: LoginPayload): Promise<UserResponse> {
   const res = await apiLogin(payload);
   await prepareOfflineDataForAuthenticatedUser(res.user.id);
   resetInsightStore();
+  resetEntrySheetStore();
   _auth.set({ status: 'authenticated', user: res.user });
   return res.user;
 }
@@ -80,6 +82,7 @@ export async function logout(): Promise<void> {
   }
   await clearOfflineDataForLogout();
   resetInsightStore();
+  resetEntrySheetStore();
   _auth.set({ status: 'anonymous' });
 }
 
@@ -90,6 +93,7 @@ export async function logout(): Promise<void> {
 export async function setUser(user: UserResponse): Promise<void> {
   await prepareOfflineDataForAuthenticatedUser(user.id);
   resetInsightStore();
+  resetEntrySheetStore();
   _auth.set({ status: 'authenticated', user });
 }
 

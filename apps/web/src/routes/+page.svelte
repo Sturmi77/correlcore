@@ -11,11 +11,10 @@
    * recent-entries list on Home — those live under Trends / Insights.
    */
 
-  import { onDestroy, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
-  import { goto } from '$app/navigation';
   import { auth, currentUser } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchDashboardSummary, type DashboardSummaryResponse } from '$lib/api/dashboard';
@@ -42,14 +41,12 @@
   import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
-  import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
   import {
-    entryDateFromSearchParams,
-    entryWorkspacePath,
-    isOpenEntryRequested,
-  } from '$lib/navigation/openEntry';
-  import { prefersEntrySheet } from '$lib/navigation/entryNavigation';
-  import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
+    entrySheetSaveSignal,
+    entrySheetStore,
+    openEntrySheet,
+  } from '$lib/stores/entrySheet';
+  import { isOpenEntryRequested } from '$lib/navigation/openEntry';
 
   const HOME_SPARKLINE_DAYS = 7;
   const HOME_SPARKLINE_MIN_ENTRIES = 3;
@@ -65,12 +62,9 @@
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
-  let entrySheetOpen = false;
-  let entrySheetDate = todayIso;
-  let openEntryHandled = false;
   let firstEntrySheetOpened = false;
-  let preferEntrySheet = true;
-  let entryViewportMedia: MediaQueryList | null = null;
+
+  $: entrySheetOpen = $entrySheetStore.open;
 
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
@@ -93,45 +87,8 @@
     ((dashboardSummary?.entry_count ?? 0) >= 1 || userPreferences?.onboarding_retro_completed)
   );
 
-  function syncEntrySurface(): void {
-    preferEntrySheet = prefersEntrySheet();
-  }
-
-  function openEntry(date: string = todayIso): boolean {
-    if (preferEntrySheet) {
-      entrySheetDate = date;
-      entrySheetOpen = true;
-      return true;
-    }
-    void goto(entryWorkspacePath(date));
-    return false;
-  }
-
-  function openEntrySheet(date: string = todayIso) {
-    openEntry(date);
-  }
-
-  function onEntrySheetSaved() {
-    void loadDashboard();
-    void loadInsights();
-  }
-
-  function stripOpenEntryQuery(): void {
-    const url = new URL($page.url);
-    if (!isOpenEntryRequested(url.searchParams)) return;
-    url.searchParams.delete('openEntry');
-    url.searchParams.delete('date');
-    const next = `${url.pathname}${url.search}${url.hash}`;
-    void goto(next || '/', { replaceState: true, keepFocus: true, noScroll: true });
-  }
-
-  function maybeOpenEntryFromQuery(): void {
-    if (openEntryHandled || !dashboardLoaded || get(auth).status !== 'authenticated') return;
-    if (!isOpenEntryRequested($page.url.searchParams)) return;
-    openEntryHandled = true;
-    const date = entryDateFromSearchParams($page.url.searchParams) ?? todayIso;
-    const openedInSheet = openEntry(date);
-    if (openedInSheet) stripOpenEntryQuery();
+  function openEntry(date: string = todayIso): void {
+    openEntrySheet(date, { onboardingTags: showOnboardingTags });
   }
 
   async function loadDashboard(): Promise<void> {
@@ -187,10 +144,6 @@
     void loadInsights();
   }
 
-  $: if (dashboardLoaded && $auth.status === 'authenticated') {
-    maybeOpenEntryFromQuery();
-  }
-
   $: if (
     dashboardLoaded &&
     $auth.status === 'authenticated' &&
@@ -236,16 +189,11 @@
       void loadDashboard();
       void loadInsights();
     }
-    if (typeof window !== 'undefined') {
-      entryViewportMedia =
-        window.matchMedia(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
-      syncEntrySurface();
-      entryViewportMedia?.addEventListener('change', syncEntrySurface);
-    }
-  });
-
-  onDestroy(() => {
-    entryViewportMedia?.removeEventListener('change', syncEntrySurface);
+    return entrySheetSaveSignal.subscribe((count) => {
+      if (count === 0) return;
+      void loadDashboard();
+      void loadInsights();
+    });
   });
 </script>
 
@@ -282,7 +230,7 @@
         {todayIso}
         {todayEntry}
         loading={dashboardLoading && !dashboardLoaded}
-        on:logToday={() => openEntrySheet(todayIso)}
+        on:logToday={() => openEntry(todayIso)}
       />
     </section>
 
@@ -321,7 +269,7 @@
         stacked={!todayEntry}
         className="home-cta"
         data-testid="home-cta"
-        on:click={() => openEntrySheet(todayIso)}
+        on:click={() => openEntry(todayIso)}
       >
         {#if todayEntry}
           <span class="text-lg font-semibold">{$_('home.cta_edit_entry')}</span>
@@ -331,15 +279,6 @@
         <span class="text-sm home-cta__hint">{$_('entry.subtitle')}</span>
       </Button>
     </section>
-
-    {#if preferEntrySheet}
-      <EntrySheet
-        bind:open={entrySheetOpen}
-        initialDate={entrySheetDate}
-        onboardingTagsEnabled={showOnboardingTags}
-        on:saved={onEntrySheetSaved}
-      />
-    {/if}
   </div>
 {:else}
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">
