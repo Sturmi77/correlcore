@@ -317,6 +317,7 @@ async def reset_password(
 
     user.hashed_password = hash_password(new_password)
     token.used_at = datetime.now(UTC)
+    await db.execute(delete(PasswordResetToken).where(PasswordResetToken.user_id == user.id))
     await db.flush()
     logger.info("user password reset", extra={"user_id": str(user.id)})
     return user

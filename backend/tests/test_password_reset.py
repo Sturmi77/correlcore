@@ -75,11 +75,14 @@ async def test_reset_password_used_token_raises_generic() -> None:
 async def test_reset_password_success_updates_hash() -> None:
     user = make_user()
     record, plaintext = make_password_reset_token(user)
-    db = make_db_session_with_results(record, user)
+    db = make_db_session_with_results(record, user, None)
     returned = await reset_password(db, plaintext, "NewPass1")
     assert returned is user
     assert verify_password("NewPass1", user.hashed_password)
     assert record.used_at is not None
+    delete_statement = db.execute.await_args_list[2].args[0]
+    assert "DELETE FROM password_reset_tokens" in str(delete_statement)
+    assert "password_reset_tokens.user_id" in str(delete_statement)
 
 
 @pytest.mark.asyncio

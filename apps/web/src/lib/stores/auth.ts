@@ -21,7 +21,6 @@ import {
 } from '$lib/api/auth';
 import { resetInsightStore } from '$lib/stores/insights';
 import {
-  clearOfflineDataForAnonymousSession,
   clearOfflineDataForLogout,
   prepareOfflineDataForAuthenticatedUser,
 } from '$lib/offline/session';
@@ -53,7 +52,6 @@ export async function hydrate(): Promise<AuthState> {
       await prepareOfflineDataForAuthenticatedUser(user.id);
       _auth.set({ status: 'authenticated', user });
     } else {
-      await clearOfflineDataForAnonymousSession();
       _auth.set({ status: 'anonymous' });
     }
   } catch {

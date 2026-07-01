@@ -75,12 +75,12 @@ describe('hydrate', () => {
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
   });
 
-  it('transitions to anonymous when /me returns null', async () => {
+  it('transitions to anonymous without wiping offline data when /me returns null', async () => {
     vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(null);
     await hydrate();
     expect(get(auth)).toEqual({ status: 'anonymous' });
     expect(get(isAuthenticated)).toBe(false);
-    expect(offlineSession.clearOfflineDataForAnonymousSession).toHaveBeenCalledTimes(1);
+    expect(offlineSession.clearOfflineDataForAnonymousSession).not.toHaveBeenCalled();
   });
 
   it('falls back to anonymous on network error', async () => {
