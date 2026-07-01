@@ -7,7 +7,11 @@
   export let cycleEntries: EntryResponse[] = [];
 </script>
 
-<section class="trends-health" data-testid="trends-health-context" aria-label={$_('trends.health.heading')}>
+<section
+  class="trends-health"
+  data-testid="trends-health-context"
+  aria-label={$_('trends.health.heading')}
+>
   <div class="trends-health__intro">
     <h2>{$_('trends.health.heading')}</h2>
     <p>{$_('trends.health.body')}</p>

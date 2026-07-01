@@ -780,79 +780,79 @@
   </section>
 
   {#if !quickEntry}
-  <section class="entry-section" aria-labelledby="entry-section-tags">
-    <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
-    <TagPicker bind:selected={selectedTagIds} />
-  </section>
+    <section class="entry-section" aria-labelledby="entry-section-tags">
+      <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
+      <TagPicker bind:selected={selectedTagIds} />
+    </section>
 
-  <section class="entry-section" aria-labelledby="entry-section-symptoms">
-    <h2 id="entry-section-symptoms" class="entry-section__title">
-      {$_('entry.section.symptoms')}
-    </h2>
-    <SymptomChecker bind:selected={selectedSymptoms} />
-  </section>
+    <section class="entry-section" aria-labelledby="entry-section-symptoms">
+      <h2 id="entry-section-symptoms" class="entry-section__title">
+        {$_('entry.section.symptoms')}
+      </h2>
+      <SymptomChecker bind:selected={selectedSymptoms} />
+    </section>
 
-  {#if compactEntry}
-    <Button
-      type="button"
-      variant="ghost"
-      fullWidth
-      className="entry-optional-extras-toggle"
-      data-testid="entry-optional-extras-toggle"
-      aria-expanded={showOptionalExtras}
-      aria-controls="entry-optional-extras"
-      on:click={toggleOptionalExtras}
-    >
-      {showOptionalExtras ? $_('entry.optional_extras_hide') : $_('entry.optional_extras_toggle')}
-    </Button>
-  {/if}
+    {#if compactEntry}
+      <Button
+        type="button"
+        variant="ghost"
+        fullWidth
+        className="entry-optional-extras-toggle"
+        data-testid="entry-optional-extras-toggle"
+        aria-expanded={showOptionalExtras}
+        aria-controls="entry-optional-extras"
+        on:click={toggleOptionalExtras}
+      >
+        {showOptionalExtras ? $_('entry.optional_extras_hide') : $_('entry.optional_extras_toggle')}
+      </Button>
+    {/if}
 
-  {#if showOptionalExtras}
-    <div id="entry-optional-extras" class="entry-optional-extras">
-      <section class="entry-section" aria-labelledby="entry-section-note">
-        <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
-        <label class="entry-field">
-          <span class="sr-only">{$_('entry.note_placeholder')}</span>
-          <textarea
-            class="input"
-            rows="4"
-            maxlength="4000"
-            bind:value={note}
-            placeholder={$_('entry.note_placeholder')}
-          ></textarea>
-        </label>
-      </section>
+    {#if showOptionalExtras}
+      <div id="entry-optional-extras" class="entry-optional-extras">
+        <section class="entry-section" aria-labelledby="entry-section-note">
+          <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
+          <label class="entry-field">
+            <span class="sr-only">{$_('entry.note_placeholder')}</span>
+            <textarea
+              class="input"
+              rows="4"
+              maxlength="4000"
+              bind:value={note}
+              placeholder={$_('entry.note_placeholder')}
+            ></textarea>
+          </label>
+        </section>
 
-      <section class="entry-section" aria-labelledby="entry-section-cycle">
-        <h2 id="entry-section-cycle" class="entry-section__title">{$_('entry.section.cycle')}</h2>
-        <label class="entry-field">
-          <span class="entry-label">{$_('entry.cycle_day.label')}</span>
-          <input
-            type="number"
-            class="input"
-            min="1"
-            max="35"
-            value={cycleDay ?? ''}
-            on:input={onCycleDayInput}
-            aria-invalid={cycleDayInvalid}
-            aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
-            placeholder={$_('entry.cycle_day.placeholder')}
-          />
-        </label>
-        <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
-        {#if cycleDayInvalid}
-          <p id="entry-cycle-error" class="entry-error" role="alert">
-            {$_('entry.cycle_day.error_range')}
-          </p>
-        {/if}
-      </section>
-    </div>
-  {/if}
+        <section class="entry-section" aria-labelledby="entry-section-cycle">
+          <h2 id="entry-section-cycle" class="entry-section__title">{$_('entry.section.cycle')}</h2>
+          <label class="entry-field">
+            <span class="entry-label">{$_('entry.cycle_day.label')}</span>
+            <input
+              type="number"
+              class="input"
+              min="1"
+              max="35"
+              value={cycleDay ?? ''}
+              on:input={onCycleDayInput}
+              aria-invalid={cycleDayInvalid}
+              aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
+              placeholder={$_('entry.cycle_day.placeholder')}
+            />
+          </label>
+          <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
+          {#if cycleDayInvalid}
+            <p id="entry-cycle-error" class="entry-error" role="alert">
+              {$_('entry.cycle_day.error_range')}
+            </p>
+          {/if}
+        </section>
+      </div>
+    {/if}
 
-  <section class="entry-section" aria-labelledby="entry-section-delta">
-    <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
-    <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
-  </section>
+    <section class="entry-section" aria-labelledby="entry-section-delta">
+      <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
+      <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
+    </section>
   {/if}
 
   {#if offlineSyncConflictKey}

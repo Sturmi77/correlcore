@@ -111,8 +111,7 @@
       if (err instanceof ApiError && err.status === 401) {
         deleteError = $_('settings.privacy.delete_invalid_password');
       } else {
-        deleteError =
-          err instanceof Error ? err.message : $_('settings.privacy.delete_error');
+        deleteError = err instanceof Error ? err.message : $_('settings.privacy.delete_error');
       }
     } finally {
       deleteBusy = false;
@@ -218,7 +217,11 @@
         <p>{$_('settings.vocabulary.body')}</p>
       </div>
       <div class="settings__vocabulary-grid">
-        <a class="settings__vocabulary-card" href="/settings/tags" data-testid="settings-vocab-tags">
+        <a
+          class="settings__vocabulary-card"
+          href="/settings/tags"
+          data-testid="settings-vocab-tags"
+        >
           <strong>{$_('settings.vocabulary.tags')}</strong>
           <span>{$_('settings.vocabulary.tags_body')}</span>
         </a>
@@ -517,7 +520,9 @@
             data-testid="settings-delete-confirm"
             on:click={() => void confirmDeleteAccount()}
           >
-            {deleteBusy ? $_('settings.privacy.delete_busy') : $_('settings.privacy.delete_confirm')}
+            {deleteBusy
+              ? $_('settings.privacy.delete_busy')
+              : $_('settings.privacy.delete_confirm')}
           </Button>
         </div>
       </div>
