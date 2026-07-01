@@ -29,6 +29,7 @@ describe('/ home screen ownership contract', () => {
     expect(homeDailyBriefSource).toContain('href="/insights"');
     expect(homeDailyBriefSource).toContain('href="/trends"');
     expect(homeDailyBriefSource).toContain('data-testid="home-weekly-bridge"');
+    expect(homeDailyBriefSource).toContain('data-testid="home-brief-milestone-progress"');
     expect(firstWeekBannerSource).not.toContain('href="/insights"');
   });
 

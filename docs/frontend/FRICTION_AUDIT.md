@@ -208,7 +208,7 @@
 | Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | Offen               | **O-08**, O-38             |
 | Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, O-22 ✅, O-34  |
 | Legacy onboarding routes      | W2                 | medium          | Eliminieren                          | **Erledigt**        | O-04                       |
-| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-13, O-23 ✅, O-40, O-41  |
+| Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | Teilweise           | O-41                     |
 | Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         | Teilweise           | O-09 (O-16 done)           |
 | No password reset             | W1                 | medium          | Backend scope                        | **Erledigt**        | O-20                       |
 | Mobile spacing / density      | W3–W6              | medium          | Vereinfachen                         | Teilweise           | O-30 ✅, **O-31–O-35**     |
@@ -232,10 +232,10 @@
 
 ### Phase 2 next (from audit + planning)
 
-1. **O-39 + O-40** Home & Trends ↔ Insights bridge (Sprint I)
-2. **O-36** Smart entry defaults (W3)
-3. **O-08** Desktop entry surface (W3/W4)
-4. **O-37** Onboarding polish (W2)
+1. **O-36** Smart entry defaults (W3) / Sprint J
+2. **O-08** Desktop entry surface (W3/W4)
+3. **O-37** Onboarding polish (W2)
+4. **O-41** Trends tab consolidation (W6)
 
 ---
 

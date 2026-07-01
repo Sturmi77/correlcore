@@ -23,6 +23,12 @@
     "toggle_light": "Zum hellen Modus wechseln",
     "toggle_dark": "Zum dunklen Modus wechseln"
   },
+  "analysis": {
+    "cross_link": {
+      "top_insight": "Top-Erkenntnis: {label} → Erkenntnisse",
+      "view_trends": "Passende Trends ansehen →"
+    }
+  },
   "home": {
     "greeting_morning": "Guten Morgen",
     "greeting_day": "Hallo",

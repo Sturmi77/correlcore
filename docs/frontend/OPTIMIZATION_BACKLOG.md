@@ -46,9 +46,9 @@
 | O-23 | H      | High   | Medium | **Done** Sprint H | Global `analysisRange` (Trends + Insights)        |
 | O-22 | H      | High   | Medium | **Done** Sprint H | Insights single control row (chips + matrix link) |
 | O-24 | H      | Medium | Low    | **Done** Sprint H | Symptom analytics via category filter             |
-| O-40 | I      | Medium | Medium | Partial           | Cross-link Trends ↔ Insights top finding          |
+| O-40 | I      | Medium | Medium | **Done** Sprint I | Cross-link Trends ↔ Insights top finding          |
 | O-41 | M      | Medium | High   | Open              | Trends Compare + Health tab consolidation         |
-| O-39 | I      | Medium | Low    | Partial           | Home brief: entries-until-milestone inline        |
+| O-39 | I      | Medium | Low    | **Done** Sprint I | Home brief: entries-until-milestone inline        |
 | O-36 | J      | Medium | Medium | Open              | Smart entry defaults from yesterday               |
 | O-08 | J      | Medium | High   | Open              | Unify desktop entry surface                       |
 | O-38 | J      | Medium | Low    | Partial           | Empty CTAs open EntrySheet inline                 |
@@ -72,19 +72,20 @@
 
 ## Sprint execution order (Phase 2)
 
-| Sprint                      | Issues                       | Goal                 |
-| --------------------------- | ---------------------------- | -------------------- |
-| **H — Analyse-Kern**        | O-23, O-22, O-24 ✅          | Insights IA complete |
-| **I — Home & Links**        | O-39, O-40                   | Weekly review bridge |
-| **J — Entry & Desktop**     | O-36, O-08, O-38             | W3/W4 audit rest     |
-| **K — Onboarding & Habits** | O-37, O-09                   | W2/W7 audit rest     |
-| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34  | Mobile density       |
-| **M — Strategic**           | O-41, O-25, O-27, O-28, O-42 | Larger IA / backend  |
+| Sprint                      | Issues                       | Goal                     |
+| --------------------------- | ---------------------------- | ------------------------ |
+| **H — Analyse-Kern**        | O-23, O-22, O-24 ✅          | Insights IA complete     |
+| **I — Home & Links**        | O-39, O-40, O-13 ✅          | Weekly review bridge complete |
+| **J — Entry & Desktop**     | O-36, O-08, O-38             | W3/W4 audit rest         |
+| **K — Onboarding & Habits** | O-37, O-09                   | W2/W7 audit rest         |
+| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34  | Mobile density           |
+| **M — Strategic**           | O-41, O-25, O-27, O-28, O-42 | Larger IA / backend      |
 
 ---
 
 ## Workflow coverage matrix (Phase 2 additions)
 
+<<<<<<< HEAD
 | Workflow           | Open Phase-2 issues          |
 | ------------------ | ---------------------------- |
 | W1 Account         | — (complete)                 |
@@ -97,6 +98,20 @@
 | W8 Vocabulary      | O-27                         |
 | W9 Export          | — (complete)                 |
 | W10 PWA            | — (complete)                 |
+=======
+| Workflow           | Open Phase-2 issues                            |
+| ------------------ | ---------------------------------------------- |
+| W1 Account         | — (complete)                                   |
+| W2 Onboarding      | O-37                                           |
+| W3 Daily entry     | O-36, O-08, O-38, ~~O-21~~                     |
+| W4 Backdate        | O-08                                           |
+| W5 First insight   | O-34                                           |
+| W6 Weekly analysis | O-41, O-26, O-29                               |
+| W7 Habits          | O-09                                           |
+| W8 Vocabulary      | O-27                                           |
+| W9 Export          | — (complete)                                   |
+| W10 PWA            | — (complete)                                   |
+>>>>>>> b09ca77 (feat(web): Sprint I — O-39/O-40/O-13 home links and analysis cross-links)
 
 ---
 
