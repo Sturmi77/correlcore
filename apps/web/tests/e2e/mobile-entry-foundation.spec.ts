@@ -206,7 +206,9 @@ for (const viewport of [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'mobile-large', width: 430, height: 932 },
 ]) {
-  test(`${viewport.name} keeps optional entry details compact and touch safe`, async ({ page }) => {
+  test(`${viewport.name} keeps tags and symptoms visible; note and cycle behind toggle`, async ({
+    page,
+  }) => {
     test.setTimeout(90_000);
     await page.setViewportSize(viewport);
     await installEntryApi(page);
@@ -217,16 +219,20 @@ for (const viewport of [
       timeout: 60_000,
     });
 
-    const toggle = page.getByTestId('entry-more-toggle');
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false', { timeout: 15_000 });
-    await expect(page.locator('#entry-section-tags')).not.toBeVisible();
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-
     const tag = page.getByRole('button', { name: 'Focus' });
     const symptom = page.getByRole('button', { name: 'Mild' });
+    await expect(page.locator('#entry-section-tags')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('#entry-section-symptoms')).toBeVisible();
     await expect(tag).toBeVisible();
     await expect(symptom).toBeVisible();
+
+    const toggle = page.getByTestId('entry-optional-extras-toggle');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#entry-section-note')).not.toBeVisible();
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#entry-section-note')).toBeVisible();
 
     for (const control of [toggle, tag, symptom]) {
       const box = await control.boundingBox();
@@ -301,13 +307,14 @@ test('offline dexie entry saves locally and syncs after reconnect', async ({ pag
     .toBe(true);
 });
 
-test('desktop keeps optional entry details expanded', async ({ page }) => {
+test('desktop keeps note and cycle fields expanded without toggle', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await installEntryApi(page);
   await page.goto('/entries/new');
 
-  await expect(page.getByTestId('entry-more-toggle')).toHaveCount(0);
+  await expect(page.getByTestId('entry-optional-extras-toggle')).toHaveCount(0);
   await expect(page.locator('#entry-section-tags')).toBeVisible();
+  await expect(page.locator('#entry-section-note')).toBeVisible();
 });
 
 test('historical day outside the edit window is read-only', async ({ page }) => {

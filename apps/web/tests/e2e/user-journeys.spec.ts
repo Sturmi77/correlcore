@@ -583,7 +583,7 @@ test.describe('W3 Tägliche Eingabe', () => {
     await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible();
   });
 
-  test('desktop entry page keeps optional details expanded', async ({ page }) => {
+  test('desktop entry page keeps tags and optional note fields expanded', async ({ page }) => {
     await installJourneyApi(page, { profile: 'week_user' });
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/entries/new');
@@ -592,6 +592,7 @@ test.describe('W3 Tägliche Eingabe', () => {
       timeout: APP_READY_TIMEOUT_MS,
     });
     await expect(page.locator('#entry-section-tags')).toBeVisible();
+    await expect(page.locator('#entry-section-note')).toBeVisible();
   });
 });
 

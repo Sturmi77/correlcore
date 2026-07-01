@@ -59,7 +59,7 @@ side rail at ≥768 px. Validated via `surface-contract.test.ts` + layout CSS.
 
 ### Entry (`/entries/new`, `/entries/day/[date]`)
 
-- Mobile: optional details collapsed by default; `entry-more-toggle` ≥44 px;
+- Mobile: tags/symptoms always visible; `entry-optional-extras-toggle` ≥44 px for note/cycle only;
   tags/symptoms reachable after expand; no page-level horizontal overflow.
 - Offline: explicit banner + retry; no silent queue (ADR-0009).
 - Desktop (1280): no compact toggle; tag section visible without expand.

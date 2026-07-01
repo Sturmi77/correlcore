@@ -23,7 +23,7 @@ Phase 1 removed funnel friction, duplicate maturity UI, and legacy paths. Phase 
 
 | ID       | Impact     | Effort  | Title                                                          | Klasse           |
 | -------- | ---------- | ------- | -------------------------------------------------------------- | ---------------- |
-| O-21     | High       | Medium  | Entry: Tags + Symptome immer sichtbar; Toggle nur Notiz/Zyklus | Vereinfachen     |
+| O-21     | High       | Medium  | Entry: Tags + Symptome immer sichtbar; Toggle nur Notiz/Zyklus ✅ | Vereinfachen     |
 | O-22     | High       | Medium  | Insights: eine Kontrollzeile (Kategorie-Chips + Matrix-Link)   | Zusammenführen   |
 | O-23     | High       | Medium  | Globales `analysisRange` für Trends + Insights                 | Zusammenführen   |
 | O-24     | Medium     | Low     | Symptom-Analytik über Kategorie-Filter statt Checkbox          | Eliminieren      |
