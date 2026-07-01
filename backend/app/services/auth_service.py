@@ -289,7 +289,9 @@ async def reset_password(
     token_hash = _hash_token(plaintext_token)
 
     result = await db.execute(
-        select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash)
+        select(PasswordResetToken)
+        .where(PasswordResetToken.token_hash == token_hash)
+        .with_for_update()
     )
     token = result.scalar_one_or_none()
 
