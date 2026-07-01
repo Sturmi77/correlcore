@@ -230,13 +230,13 @@ describe('/insights page analysis range', () => {
     testHelpers.tagCooccurrenceRequests[1]?.resolve(tagCooccurrenceResponse('1y'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('tag-cooccurrence-heatmap')).toHaveTextContent('1y');
+      expect(screen.getByTestId('tag-cooccurrence-heatmap').textContent).toBe('1y');
     });
 
     testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('30d'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('tag-cooccurrence-heatmap')).toHaveTextContent('1y');
+      expect(screen.getByTestId('tag-cooccurrence-heatmap').textContent).toBe('1y');
     });
   });
 });
