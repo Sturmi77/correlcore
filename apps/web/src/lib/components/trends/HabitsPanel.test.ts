@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HabitsPanel from './HabitsPanel.svelte';
 
@@ -27,10 +27,16 @@ vi.mock('svelte-i18n', async () => {
       }
       if (key === 'habits.insufficient_data') return 'Not enough data yet';
       if (key === 'trends.metric.mood') return 'mood';
+      if (key === 'settings.tags.habit_build') return 'Build';
+      if (key === 'settings.tags.habit_reduce') return 'Reduce';
       return options?.values?.n ? `${key}:${options.values.n}` : key;
     }),
   };
 });
+
+vi.mock('$lib/api/tags', () => ({
+  updateTag: vi.fn().mockResolvedValue({}),
+}));
 
 const tags = [
   {
@@ -77,19 +83,40 @@ describe('HabitsPanel', () => {
     expect(screen.getByText('Walk predictor r=0.72')).toBeTruthy();
   });
 
-  it('dispatches window changes', async () => {
-    const spy = vi.fn();
-    render(HabitsPanel, { props: { habits, tags, window: 28 }, events: { windowChange: spy } });
-
-    await fireEvent.click(screen.getByTestId('habits-window-14'));
-
-    expect(spy).toHaveBeenCalled();
+  it('shows the active global range window label', () => {
+    render(HabitsPanel, { props: { habits, tags, window: 28 } });
+    expect(screen.getByTestId('habits-window-label').textContent).toContain('last 28 days');
   });
 
-  it('shows neutral empty state', () => {
-    render(HabitsPanel, { props: { habits: [], tags: [], window: 28 } });
+  it('shows inline habit setup when tags are available', () => {
+    render(HabitsPanel, {
+      props: {
+        habits: [],
+        tags: [],
+        availableTags: [
+          {
+            id: 'tag-2',
+            user_id: 'user-1',
+            slug: 'read',
+            name: 'Read',
+            category: 'leisure',
+            icon: null,
+            color: null,
+            is_default: false,
+            is_hidden: false,
+            habit_type: 'none',
+            target_frequency: null,
+            created_at: '2026-05-01T00:00:00Z',
+            updated_at: '2026-05-01T00:00:00Z',
+          },
+        ],
+        window: 28,
+      },
+    });
 
-    expect(screen.getByText('habits.empty')).toBeTruthy();
+    expect(screen.getByTestId('habits-empty-setup')).toBeTruthy();
+    expect(screen.getByTestId('habits-setup-tag')).toBeTruthy();
+    expect(screen.getByText('habits.empty_setup_body')).toBeTruthy();
   });
 
   it('shows insufficient-data state for sparse high-target habits', () => {

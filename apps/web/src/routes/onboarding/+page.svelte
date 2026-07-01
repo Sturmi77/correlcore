@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Button from '$lib/components/common/Button.svelte';
@@ -14,6 +13,7 @@
     type TagSuggestionGroup,
   } from '$lib/api/onboarding';
   import { TAG_CATEGORIES, type TagCategory } from '$lib/api/tags';
+  import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
 
   let step = 0;
   let groups: TagSuggestionGroup[] = [];
@@ -27,7 +27,6 @@
 
   $: selectedTags = [...selected.values()];
   $: progressLabel = `${step + 1}/3`;
-  $: isPreview = $page.url.searchParams.get('preview') === '1';
 
   onMount(async () => {
     try {
@@ -67,12 +66,8 @@
     busy = true;
     error = '';
     try {
-      if (isPreview) {
-        step = 0;
-        return;
-      }
       await completeOnboarding(tags);
-      await goto('/');
+      await goto(OPEN_ENTRY_HOME_PATH);
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
     } finally {
@@ -114,6 +109,9 @@
     <Panel variant="bordered">
       <h1>{$_('onboarding.guided.tags_title')}</h1>
       <p>{$_('onboarding.guided.tags_body')}</p>
+      <p class="onboarding-flow__habit-hint" data-testid="onboarding-habit-hint">
+        {$_('onboarding.guided.habit_hint')}
+      </p>
       {#if loading}
         <p>{$_('tag.loading')}</p>
       {:else}
@@ -194,6 +192,16 @@
   .onboarding-flow h2,
   .onboarding-flow p {
     margin: 0;
+  }
+
+  .onboarding-flow__habit-hint {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
   }
 
   .onboarding-flow__progress,

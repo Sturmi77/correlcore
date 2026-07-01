@@ -3,15 +3,17 @@
    * Home route — ADR-0017 Screen 1 (M3.5 Sprint 4).
    *
    * Authenticated home uses exactly three information zones:
-   *   1. Today context (date, work context, entry status)
-   *   2. Daily Brief: latest insight summary OR phase fallback (best-effort)
-   *   3. 7-day mood sparkline + primary entry CTA
+   *   1. Today context (date, work context, compact log/edit action)
+   *   2. Daily Brief: latest insight summary OR phase fallback (brief-first)
+   *   3. 7-day mood sparkline + secondary entry CTA
    *
    * Insight load never blocks the CTA. No matrix, summary grid, or
    * recent-entries list on Home — those live under Trends / Insights.
    */
 
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
+  import { get } from 'svelte/store';
+  import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { auth, currentUser } from '$lib/stores/auth';
@@ -41,8 +43,16 @@
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import EntrySheet from '$lib/components/entries/EntrySheet.svelte';
+  import {
+    entryDateFromSearchParams,
+    entryWorkspacePath,
+    isOpenEntryRequested,
+  } from '$lib/navigation/openEntry';
+  import { prefersEntrySheet } from '$lib/navigation/entryNavigation';
+  import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
   const HOME_SPARKLINE_DAYS = 7;
+  const HOME_SPARKLINE_MIN_ENTRIES = 3;
   const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
 
   const todayIso = localIsoDate(new Date());
@@ -57,6 +67,10 @@
   let dashboardLoaded = false;
   let entrySheetOpen = false;
   let entrySheetDate = todayIso;
+  let openEntryHandled = false;
+  let firstEntrySheetOpened = false;
+  let preferEntrySheet = true;
+  let entryViewportMedia: MediaQueryList | null = null;
 
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
@@ -65,10 +79,35 @@
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
+  $: dayEntriesForSparkline = recentEntries.filter((entry) => entry.slot === 'day');
+  $: showHomeSparkline = dayEntriesForSparkline.length >= HOME_SPARKLINE_MIN_ENTRIES;
+  $: showOnboardingTags = Boolean(
+    userPreferences &&
+      !userPreferences.onboarding_retro_completed &&
+      dashboardSummary?.entry_count === 0
+  );
+  $: showPwaInstallBanner = Boolean(
+    $pwaInstallStore.promptEvent &&
+      !$pwaInstallStore.dismissed &&
+      !$pwaInstallStore.installed &&
+      ((dashboardSummary?.entry_count ?? 0) >= 1 || userPreferences?.onboarding_retro_completed)
+  );
+
+  function syncEntrySurface(): void {
+    preferEntrySheet = prefersEntrySheet();
+  }
+
+  function openEntry(date: string = todayIso): void {
+    if (preferEntrySheet) {
+      entrySheetDate = date;
+      entrySheetOpen = true;
+      return;
+    }
+    void goto(entryWorkspacePath(date));
+  }
 
   function openEntrySheet(date: string = todayIso) {
-    entrySheetDate = date;
-    entrySheetOpen = true;
+    openEntry(date);
   }
 
   function onEntrySheetSaved() {
@@ -76,10 +115,28 @@
     void loadInsights();
   }
 
+  function stripOpenEntryQuery(): void {
+    const url = new URL($page.url);
+    if (!isOpenEntryRequested(url.searchParams)) return;
+    url.searchParams.delete('openEntry');
+    url.searchParams.delete('date');
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    void goto(next || '/', { replaceState: true, keepFocus: true, noScroll: true });
+  }
+
+  function maybeOpenEntryFromQuery(): void {
+    if (openEntryHandled || !dashboardLoaded || get(auth).status !== 'authenticated') return;
+    if (!isOpenEntryRequested($page.url.searchParams)) return;
+    openEntryHandled = true;
+    const date = entryDateFromSearchParams($page.url.searchParams) ?? todayIso;
+    openEntry(date);
+    stripOpenEntryQuery();
+  }
+
   async function loadDashboard(): Promise<void> {
     dashboardLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         recentEntries = mockEntries.slice(0, HOME_SPARKLINE_DAYS);
         todayEntry = findEntryForDate(recentEntries, todayIso);
         dashboardSummary = { ...mockDashboardSummary, entry_count: $devPhase.entryCount };
@@ -129,14 +186,22 @@
     void loadInsights();
   }
 
+  $: if (dashboardLoaded && $auth.status === 'authenticated') {
+    maybeOpenEntryFromQuery();
+  }
+
   $: if (
     dashboardLoaded &&
     $auth.status === 'authenticated' &&
     dashboardSummary?.entry_count === 0 &&
     userPreferences &&
-    !userPreferences.onboarding_retro_completed
+    !userPreferences.onboarding_retro_completed &&
+    !firstEntrySheetOpened &&
+    !entrySheetOpen &&
+    !isOpenEntryRequested($page.url.searchParams)
   ) {
-    void goto('/onboarding', { replaceState: true });
+    firstEntrySheetOpened = true;
+    openEntry(todayIso);
   }
 
   async function dismissFirstWeekBanner(): Promise<void> {
@@ -166,10 +231,20 @@
   }
 
   onMount(() => {
-    if ($auth.status === 'authenticated' && !dashboardLoaded) {
+    if (get(auth).status === 'authenticated' && !dashboardLoaded) {
       void loadDashboard();
       void loadInsights();
     }
+    if (typeof window !== 'undefined') {
+      entryViewportMedia =
+        window.matchMedia(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
+      syncEntrySurface();
+      entryViewportMedia?.addEventListener('change', syncEntrySurface);
+    }
+  });
+
+  onDestroy(() => {
+    entryViewportMedia?.removeEventListener('change', syncEntrySurface);
   });
 </script>
 
@@ -179,7 +254,7 @@
 
 {#if $auth.status === 'authenticated'}
   <div class="home-screen">
-    {#if $pwaInstallStore.promptEvent && !$pwaInstallStore.dismissed && !$pwaInstallStore.installed}
+    {#if showPwaInstallBanner}
       <section class="home-install" data-testid="pwa-install-banner">
         <div>
           <h2>{$_('pwa.install.title')}</h2>
@@ -200,9 +275,14 @@
       </section>
     {/if}
 
-    <!-- Zone 1: date + work context + entry status -->
-    <section class="home-zone" data-testid="home-zone-context">
-      <HomeTodayContext {todayIso} {todayEntry} loading={dashboardLoading && !dashboardLoaded} />
+    <!-- Zone 1: date + work context + compact entry action -->
+    <section class="home-zone home-zone--context" data-testid="home-zone-context">
+      <HomeTodayContext
+        {todayIso}
+        {todayEntry}
+        loading={dashboardLoading && !dashboardLoaded}
+        on:logToday={() => openEntrySheet(todayIso)}
+      />
     </section>
 
     <!-- Zone 2: daily brief (best-effort) -->
@@ -223,19 +303,21 @@
 
     <!-- Zone 3: sparkline + primary CTA -->
     <section class="home-zone home-zone--foot" data-testid="home-zone-sparkline-cta">
-      <HomeSparkline
-        entries={recentEntries}
-        {todayIso}
-        days={HOME_SPARKLINE_DAYS}
-        loading={dashboardLoading && !dashboardLoaded}
-      />
+      {#if showHomeSparkline}
+        <HomeSparkline
+          entries={recentEntries}
+          {todayIso}
+          days={HOME_SPARKLINE_DAYS}
+          loading={dashboardLoading && !dashboardLoaded}
+        />
+      {/if}
 
       <Button
         type="button"
-        variant={todayEntry ? 'secondary' : 'primary'}
-        size="lg"
+        variant={todayEntry ? 'ghost' : 'primary'}
+        size={todayEntry ? 'md' : 'lg'}
         fullWidth
-        stacked
+        stacked={!todayEntry}
         className="home-cta"
         data-testid="home-cta"
         on:click={() => openEntrySheet(todayIso)}
@@ -249,11 +331,14 @@
       </Button>
     </section>
 
+    {#if preferEntrySheet}
     <EntrySheet
       bind:open={entrySheetOpen}
       initialDate={entrySheetDate}
+      onboardingTagsEnabled={showOnboardingTags}
       on:saved={onEntrySheetSaved}
     />
+  {/if}
   </div>
 {:else}
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">
@@ -327,6 +412,19 @@
     gap: var(--space-4);
   }
 
+  .home-zone--context {
+    order: 1;
+  }
+
+  :global([data-testid='home-zone-insight']) {
+    order: 2;
+  }
+
+  .home-zone--foot {
+    order: 3;
+    gap: var(--space-5);
+  }
+
   .home-install {
     display: flex;
     align-items: center;
@@ -358,10 +456,6 @@
     gap: var(--space-2);
     flex-wrap: wrap;
     justify-content: flex-end;
-  }
-
-  .home-zone--foot {
-    gap: var(--space-5);
   }
 
   :global(.home-cta) {

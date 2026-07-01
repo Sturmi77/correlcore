@@ -14,7 +14,7 @@
     type TimeseriesRange,
     type TimeseriesResponse,
   } from '$lib/api/stats';
-  import { listHabits, type HabitStatsResponse, type HabitWindow } from '$lib/api/habits';
+  import { listHabits, type HabitStatsResponse } from '$lib/api/habits';
   import { listSymptomsForEntry, listVisibleSymptoms } from '$lib/api/symptoms';
   import { listTagsForEntry, listVisibleTags, type TagResponse } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
@@ -31,6 +31,7 @@
   import { devForceVisualizations } from '$lib/stores/devMode';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
+  import { rangeToDays, rangeToHabitWindow } from '$lib/utils/trendsRange';
   import TrendsComparePanel from '$lib/components/trends/TrendsComparePanel.svelte';
   import TrendsCompareFilters from '$lib/components/trends/TrendsCompareFilters.svelte';
   import MobileTrendsSummary from '$lib/components/trends/MobileTrendsSummary.svelte';
@@ -72,7 +73,7 @@
   let streak: EntryStreakResponse | null = null;
   let habitStats: HabitStatsResponse[] = [];
   let habitTags: TagResponse[] = [];
-  let habitWindow: HabitWindow = 28;
+  let allTags: TagResponse[] = [];
   let cycleEntries: EntryResponse[] = [];
   let metrics: Record<MetricKey, boolean> = {
     mood_avg: true,
@@ -97,8 +98,7 @@
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
 
   function dateWindow(days?: number): { start_date: string; end_date: string } {
-    const option = rangeOptions.find((item) => item.id === range) ?? rangeOptions[0];
-    const windowDays = days ?? option.days;
+    const windowDays = days ?? rangeToDays(range);
     const end_date = localIsoDate(new Date());
     return { start_date: shiftIsoDate(end_date, -(windowDays - 1)), end_date };
   }
@@ -113,12 +113,17 @@
         heatmap = mockTagHeatmap;
         symptomHeatmap = mockSymptomHeatmap;
         streak = mockEntryStreak;
-        habitStats = mockHabits.map((habit) => ({ ...habit, window: habitWindow }));
+        habitStats = mockHabits.map((habit) => ({
+          ...habit,
+          window: rangeToHabitWindow(range),
+        }));
         habitTags = mockHabitTags;
+        allTags = mockHabitTags;
         cycleEntries = mockEntries.filter((entry) => entry.cycle_day !== null);
         return;
       }
 
+      const habitWindow = rangeToHabitWindow(range);
       const { start_date, end_date } = dateWindow(activeTab === 'habits' ? habitWindow : undefined);
       const [
         nextTimeseries,
@@ -150,6 +155,7 @@
       symptomHeatmap = nextSymptomHeatmap;
       streak = nextStreak;
       habitStats = nextHabitStats.habits;
+      allTags = nextTags;
       habitTags = nextTags.filter((tag) => tag.habit_type !== 'none');
       cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
     } catch (err) {
@@ -238,6 +244,7 @@
   $: if ($auth.status === 'authenticated' && timeseries && timeseries.range !== range && !loading) {
     void loadTrends();
   }
+  $: habitWindow = rangeToHabitWindow(range);
   $: rangeControlOptions = rangeOptions.map(
     (option): SegmentedControlOption => ({
       id: option.id,
@@ -286,7 +293,7 @@
       <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
     </Panel>
   {:else}
-    <section class="trends__controls" aria-label={$_('trends.controls')}>
+    <div class="trends__sticky-toolbar" data-testid="trends-sticky-toolbar">
       <SegmentedControl
         value={range}
         options={rangeControlOptions}
@@ -297,22 +304,7 @@
           void loadTrends();
         }}
       />
-
-      {#if activeTab === 'compare' && !compactTrends}
-        <TrendsCompareFilters
-          {smoothing}
-          {smoothingAvailable}
-          {metrics}
-          {selectedCategory}
-          on:smoothingChange={(event) => setSmoothing(event.detail.value)}
-          on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-          on:categoryChange={(event) => {
-            selectedCategory = event.detail.category;
-            void loadTrends();
-          }}
-        />
-      {/if}
-    </section>
+    </div>
 
     <TabBar
       value={activeTab}
@@ -325,6 +317,23 @@
         void loadTrends();
       }}
     />
+
+    {#if activeTab === 'compare' && !compactTrends}
+      <section class="trends__compare-filters" aria-label={$_('trends.controls')}>
+        <TrendsCompareFilters
+          {smoothing}
+          {smoothingAvailable}
+          {metrics}
+          {selectedCategory}
+          on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+          on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+          on:categoryChange={(event) => {
+            selectedCategory = event.detail.category;
+            void loadTrends();
+          }}
+        />
+      </section>
+    {/if}
 
     {#if error}
       <InlineAlert variant="error" message={error} />
@@ -438,14 +447,12 @@
         <HabitsPanel
           habits={habitStats}
           tags={habitTags}
+          availableTags={allTags}
           {heatmap}
           window={habitWindow}
           {loading}
-          on:windowChange={(event) => {
-            habitWindow = event.detail.window;
-            void loadTrends();
-          }}
           on:selectDate={(event) => void openHistory(event.detail.date)}
+          on:habitSetup={() => void loadTrends()}
         />
       </div>
     {/if}
@@ -471,7 +478,24 @@
     gap: 1rem;
   }
 
-  .trends__controls,
+  .trends__sticky-toolbar {
+    position: sticky;
+    top: calc(var(--app-header-height, 0px) + 0.5rem);
+    z-index: 3;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  .trends__compare-filters {
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
   .trends__consistency {
     display: flex;
     align-items: center;
@@ -491,18 +515,6 @@
   .trends__panel--compare {
     padding: 0;
     overflow: hidden;
-  }
-
-  .trends__controls {
-    flex-wrap: wrap;
-    position: sticky;
-    top: calc(var(--app-header-height, 0px) + 0.5rem);
-    z-index: 2;
-    padding: 0.75rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-    backdrop-filter: blur(14px);
   }
 
   .trends__detail {
@@ -600,9 +612,7 @@
       padding: 1rem;
     }
 
-    .trends__controls {
-      align-items: stretch;
-      flex-direction: column;
+    .trends__sticky-toolbar {
       position: static;
     }
 

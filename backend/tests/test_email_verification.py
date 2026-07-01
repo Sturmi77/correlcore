@@ -39,6 +39,8 @@ from app.services.auth_service import (
     verify_email,
 )
 from tests.conftest import (
+    VALID_ACCESS_TOKEN,
+    VALID_REFRESH_TOKEN,
     make_db_session_with_results,
     make_user,
     make_verification_token,
@@ -164,17 +166,29 @@ async def test_resend_returns_none_for_already_verified() -> None:
 
 @pytest.mark.asyncio
 async def test_endpoint_verify_email_success(async_client: AsyncClient) -> None:
-    with patch(
-        "app.api.v1.endpoints.auth.verify_email",
-        new_callable=AsyncMock,
-    ) as mock_verify:
-        mock_verify.return_value = make_user(verified=True)
+    user = make_user(verified=True)
+    with (
+        patch(
+            "app.api.v1.endpoints.auth.verify_email",
+            new_callable=AsyncMock,
+            return_value=user,
+        ),
+        patch(
+            "app.api.v1.endpoints.auth.issue_session_tokens",
+            new_callable=AsyncMock,
+            return_value=(VALID_ACCESS_TOKEN, VALID_REFRESH_TOKEN),
+        ),
+    ):
         r = await async_client.post(
             "/api/v1/auth/verify-email",
             json={"token": "x" * 32},
         )
     assert r.status_code == 200
-    assert "verified" in r.json()["message"].lower()
+    data = r.json()
+    assert data["access_token"] == VALID_ACCESS_TOKEN
+    assert data["user"]["email"] == user.email
+    assert "access_token" in r.cookies
+    assert "refresh_token" in r.cookies
 
 
 @pytest.mark.asyncio
@@ -189,6 +203,8 @@ async def test_endpoint_verify_email_invalid_returns_400(async_client: AsyncClie
             json={"token": "x" * 32},
         )
     assert r.status_code == 400
+    assert "access_token" not in r.cookies
+    assert "refresh_token" not in r.cookies
 
 
 @pytest.mark.asyncio

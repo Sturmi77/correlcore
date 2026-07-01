@@ -34,6 +34,44 @@ async function installEntryApi(
 
     if (path === '/auth/me' && method === 'GET') return json(200, user);
 
+    if (path.startsWith('/dashboard/summary')) {
+      return json(200, {
+        entry_count: options.historical ? 1 : 0,
+        insight_tier: 'none',
+        confidence_score: 0,
+      });
+    }
+
+    if (path === '/user/preferences' && method === 'GET') {
+      return json(200, {
+        user_id: user.id,
+        analytics_enabled: true,
+        onboarding_retro_completed: true,
+        onboarding_profile_completed: true,
+        dismissed_insight_keys: [],
+        reached_milestone_keys: [],
+        last_seen_insight_at: null,
+        created_at: '2026-06-01T00:00:00Z',
+        updated_at: '2026-06-01T00:00:00Z',
+      });
+    }
+
+    if (path === '/insights' && method === 'GET') {
+      return json(200, { insight_maturity: null, insights: [] });
+    }
+
+    if (path === '/insights/latest' && method === 'GET') {
+      return json(200, { insight_maturity: null, insights: [] });
+    }
+
+    if (path.startsWith('/stats/tags/heatmap')) {
+      return json(200, { start_date: '2026-06-01', end_date: '2026-06-23', tags: [] });
+    }
+
+    if (path.startsWith('/stats/symptoms/heatmap')) {
+      return json(200, { start_date: '2026-06-01', end_date: '2026-06-23', symptoms: [] });
+    }
+
     if (path === '/entries' && method === 'GET') {
       if (!options.historical) return json(200, []);
       return json(200, [
@@ -173,7 +211,9 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await installEntryApi(page);
     await page.goto('/entries/new');
-    await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
+    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: 60_000 });
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole('heading', { name: 'How was your day?' })).toBeVisible({
       timeout: 60_000,
     });
 
@@ -202,7 +242,9 @@ for (const viewport of [
 test('offline autosave remains editable and recovers through retry', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const api = await installEntryApi(page);
-  await page.goto('/entries/new');
+  await page.goto('/?openEntry=1');
+
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: 60_000 });
 
   api.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
@@ -211,6 +253,10 @@ test('offline autosave remains editable and recovers through retry', async ({ pa
   await expect(page.getByText('Offline — changes are not being saved.')).toBeVisible({
     timeout: 15_000,
   });
+  await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'error', {
+    timeout: 15_000,
+  });
+  await expect(page.getByTestId('save-status-retry')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole('slider', { name: 'How was your day?' })).toBeEnabled();
 
   api.setOffline(false);
@@ -224,7 +270,8 @@ test('offline autosave remains editable and recovers through retry', async ({ pa
 test('offline dexie entry saves locally and syncs after reconnect', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const api = await installEntryApi(page, { offlineSync: true });
-  await page.goto('/entries/new');
+  await page.goto('/?openEntry=1');
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: 60_000 });
 
   api.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
@@ -238,9 +285,8 @@ test('offline dexie entry saves locally and syncs after reconnect', async ({ pag
   await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'saved');
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
-    timeout: 60_000,
-  });
+  await page.goto('/?openEntry=1');
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('entry-edit-hint')).toBeVisible({ timeout: 15_000 });
 
   api.setOffline(false);

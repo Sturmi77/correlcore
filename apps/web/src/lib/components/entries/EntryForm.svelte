@@ -23,6 +23,7 @@
   import { goto } from '$app/navigation';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
+  import OnboardingTagSuggestions from '$lib/components/entries/OnboardingTagSuggestions.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
   import SaveStatusBadge from '$lib/components/entries/SaveStatusBadge.svelte';
   import DayDeltaCard from '$lib/components/entries/DayDeltaCard.svelte';
@@ -40,12 +41,19 @@
   import { submitEntry } from '$lib/stores/entries';
   import { assignTagsToEntry, listTagsForEntry } from '$lib/api/tags';
   import {
+    completeOnboarding,
+    fetchTagSuggestions,
+    type TagSuggestion,
+    type TagSuggestionGroup,
+  } from '$lib/api/onboarding';
+  import {
     assignSymptomsToEntry,
     listSymptomsForEntry,
     type SymptomEntry,
   } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
   import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
+  import { refreshTags } from '$lib/stores/tags';
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
   import { isoDate } from '$lib/utils/entryForm';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
@@ -58,6 +66,8 @@
   } from '$lib/stores/entriesOffline';
 
   export let mode: 'page' | 'sheet' = 'page';
+  /** When true, show onboarding tag suggestions and finalize onboarding on first save. */
+  export let onboardingTagsEnabled = false;
   /** ISO date `YYYY-MM-DD` for the entry being edited. */
   export let initialDate: string;
 
@@ -105,9 +115,14 @@
   let dayDeltaLoading = false;
   let dayDeltaToken = 0;
   let offlineSyncConflictKey: string | null = null;
+  let suggestionGroups: TagSuggestionGroup[] = [];
+  let selectedSuggestions = new Map<string, TagSuggestion>();
+  let suggestionsLoading = false;
+  let onboardingMarkedComplete = false;
 
   $: offlineSyncBadge = $syncOrchestrator.badge;
   $: offlineSyncConflictKey = $syncOrchestrator.conflictNote;
+  $: selectedSuggestionSlugs = new Set(selectedSuggestions.keys());
 
   // Keep the work-context default in sync if the user picks a different
   // day, but only until they manually change it themselves.
@@ -297,6 +312,9 @@
     if (canUseOfflineSync()) {
       scheduleSync();
     }
+    if (onboardingTagsEnabled && !onboardingMarkedComplete) {
+      markDirty();
+    }
   }
 
   function handleOffline() {
@@ -355,13 +373,14 @@
     if (snap.cycle_day !== null && (snap.cycle_day < 1 || snap.cycle_day > 35)) {
       throw new Error('invalid_cycle_day');
     }
+    const resolvedSnap = await resolveOnboardingTags(snap);
 
     if (canUseOfflineSync()) {
-      const result = await saveEntryOffline(existingEntryId, snap);
+      const result = await saveEntryOffline(existingEntryId, resolvedSnap);
       existingEntryId = result.entryId;
       onLocalEntrySaved();
       if (typeof navigator !== 'undefined' && navigator.onLine) {
-        void refreshDayDelta(snap.entry_date, snap.slot);
+        void refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
       }
       return;
     }
@@ -369,25 +388,25 @@
     let entryId: string;
     if (existingEntryId) {
       const updated = await updateEntry(existingEntryId, {
-        mood_score: snap.mood_score,
-        energy: snap.energy,
-        stress: snap.stress,
-        slot: snap.slot,
-        cycle_day: snap.cycle_day,
-        work_context: snap.work_context,
-        note: snap.note,
+        mood_score: resolvedSnap.mood_score,
+        energy: resolvedSnap.energy,
+        stress: resolvedSnap.stress,
+        slot: resolvedSnap.slot,
+        cycle_day: resolvedSnap.cycle_day,
+        work_context: resolvedSnap.work_context,
+        note: resolvedSnap.note,
       });
       entryId = updated.id;
     } else {
       const created = await submitEntry({
-        entry_date: snap.entry_date,
-        slot: snap.slot,
-        mood_score: snap.mood_score,
-        energy: snap.energy,
-        stress: snap.stress,
-        cycle_day: snap.cycle_day,
-        work_context: snap.work_context,
-        note: snap.note ? snap.note : undefined,
+        entry_date: resolvedSnap.entry_date,
+        slot: resolvedSnap.slot,
+        mood_score: resolvedSnap.mood_score,
+        energy: resolvedSnap.energy,
+        stress: resolvedSnap.stress,
+        cycle_day: resolvedSnap.cycle_day,
+        work_context: resolvedSnap.work_context,
+        note: resolvedSnap.note ? resolvedSnap.note : undefined,
       });
       entryId = created.id;
       // POST → PATCH-Flip: store the id so subsequent saves go via
@@ -396,9 +415,55 @@
       existingEntryId = entryId;
     }
 
-    await assignTagsToEntry(entryId, snap.selectedTagIds);
-    await assignSymptomsToEntry(entryId, snap.selectedSymptoms);
-    await refreshDayDelta(snap.entry_date, snap.slot);
+    await assignTagsToEntry(entryId, resolvedSnap.selectedTagIds);
+    await assignSymptomsToEntry(entryId, resolvedSnap.selectedSymptoms);
+    await refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
+  }
+
+  async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
+    if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
+    if (
+      canUseOfflineSync() &&
+      typeof navigator !== 'undefined' &&
+      !navigator.onLine
+    ) {
+      return snap;
+    }
+    const tags = [...selectedSuggestions.values()].map((tag) => ({
+      slug: tag.slug,
+      name: tag.name,
+      category: tag.category,
+      icon: tag.icon,
+      color: tag.color,
+    }));
+    const result = await completeOnboarding(tags);
+    onboardingMarkedComplete = true;
+    await refreshTags();
+    const createdIds = result.created_tags.map((tag) => tag.id);
+    return {
+      ...snap,
+      selectedTagIds: [...new Set([...snap.selectedTagIds, ...createdIds])],
+    };
+  }
+
+  function toggleOnboardingSuggestion(tag: TagSuggestion) {
+    selectedSuggestions = new Map(selectedSuggestions);
+    if (selectedSuggestions.has(tag.slug)) selectedSuggestions.delete(tag.slug);
+    else selectedSuggestions.set(tag.slug, tag);
+    markDirty();
+  }
+
+  async function loadOnboardingSuggestions() {
+    if (!onboardingTagsEnabled) return;
+    suggestionsLoading = true;
+    try {
+      const response = await fetchTagSuggestions();
+      suggestionGroups = response.groups;
+    } catch {
+      suggestionGroups = [];
+    } finally {
+      suggestionsLoading = false;
+    }
   }
 
   const autoSave = createAutoSave<FormSnapshot>({
@@ -474,6 +539,7 @@
     // clicks (still relevant under auto-save).
     const el = document.getElementById('entry-mood');
     el?.focus();
+    void loadOnboardingSuggestions();
     mobileMedia = window.matchMedia('(max-width: 767px)');
     syncCompactEntry();
     mobileMedia.addEventListener('change', syncCompactEntry);
@@ -571,6 +637,18 @@
       />
     </label>
   </section>
+
+  {#if onboardingTagsEnabled}
+    <section class="entry-section" aria-labelledby="entry-section-onboarding-tags">
+      <OnboardingTagSuggestions
+        groups={suggestionGroups}
+        loading={suggestionsLoading}
+        selectedSlugs={selectedSuggestionSlugs}
+        disabled={loading || autoSaveSnap.status === 'saving'}
+        on:toggle={(event) => toggleOnboardingSuggestion(event.detail)}
+      />
+    </section>
+  {/if}
 
   <section class="entry-section" aria-labelledby="entry-section-metrics">
     <h2 id="entry-section-metrics" class="entry-section__title">{$_('entry.section.metrics')}</h2>

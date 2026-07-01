@@ -1,28 +1,36 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { verifyEmail } from '$lib/api/auth';
+  import { setUser } from '$lib/stores/auth';
+  import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
 
   type Phase = 'idle' | 'busy' | 'success' | 'error' | 'missing-token';
 
-  $: token = $page.url.searchParams.get('token');
+  let token: string | null = null;
   let phase: Phase = 'idle';
 
-  // Distinguish "no token in URL" from "token present, awaiting click".
-  // We deliberately do NOT auto-submit — link previews / safe-link rewriters
-  // (Outlook, antivirus, mail-scanner bots) follow the URL on hover/receive
-  // and would burn the single-use token before the user clicks. The user
-  // must explicitly press the button (active-consent pattern, DSGVO-friendly).
-  $: if (token === null && phase === 'idle') {
-    phase = 'missing-token';
-  }
+  onMount(() => {
+    const url = new URL(window.location.href);
+    token = url.searchParams.get('token');
+    if (token === null) {
+      phase = 'missing-token';
+      return;
+    }
+    // Strip the single-use token from the address bar so it does not linger
+    // in browser history after the user lands from the email link.
+    url.searchParams.delete('token');
+    history.replaceState(history.state, '', `${url.pathname}${url.search}`);
+  });
 
   async function onConfirm() {
     if (!token || phase === 'busy' || phase === 'success') return;
     phase = 'busy';
     try {
-      await verifyEmail(token);
-      phase = 'success';
+      const session = await verifyEmail(token);
+      setUser(session.user);
+      await goto(OPEN_ENTRY_HOME_PATH);
     } catch {
       // Backend returns a generic 400 for invalid/expired/used tokens
       // (anti-enumeration). ApiError and NetworkError both surface as
@@ -54,11 +62,6 @@
     <h1 class="auth-page-title">{$_('auth.verify.success_title')}</h1>
   </header>
   <p class="auth-body">{$_('auth.verify.success_body')}</p>
-  <nav class="auth-links">
-    <a href="/auth/login" class="btn variant-filled-primary auth-submit">
-      {$_('auth.verify.go_to_login')}
-    </a>
-  </nav>
 {:else if phase === 'error'}
   <header class="auth-page-header">
     <div class="auth-icon auth-icon-error" aria-hidden="true">

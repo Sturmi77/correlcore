@@ -78,7 +78,7 @@ describe('InsightFeed', () => {
   it('empty state contains a link back to home', () => {
     render(InsightFeed, { props: { insights: [] } });
     const cta = screen.getByRole('link');
-    expect(cta.getAttribute('href')).toBe('/');
+    expect(cta.getAttribute('href')).toBe('/?openEntry=1');
   });
 
   it('uses phase-aware empty copy when no insights exist yet', () => {

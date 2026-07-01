@@ -17,6 +17,7 @@
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
+  import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
 
   export let points: TimeseriesPoint[] = [];
   export let range: TimeseriesRange = 'week';
@@ -275,11 +276,11 @@
               style={`--metric-color: ${metric.style.color}; --metric-dasharray: ${metric.style.dasharray || 'none'}`}
             />
             {#each metric.points as point}
-              <a
-                href={`/entries/day/${point.label}`}
+              <button
+                type="button"
                 class="timeseries__point-button"
                 aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
-                on:click|preventDefault={() => dispatch('selectDate', { date: point.label })}
+                on:click={() => dispatch('selectDate', { date: point.label })}
               >
                 <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
                   <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
@@ -305,7 +306,7 @@
                     points={trianglePoints(point.x, point.y, pointRadius + 1)}
                   />
                 {/if}
-              </a>
+              </button>
             {/each}
           {/if}
         {/each}
@@ -316,7 +317,7 @@
   {#if !loading && !hasData}
     <div class="timeseries__empty">
       <p>{$_('trends.timeseries.empty')}</p>
-      <a class="btn btn-sm variant-soft-primary" href="/entries/new">{$_('trends.empty_cta')}</a>
+      <EntryLaunchButton>{$_('trends.empty_cta')}</EntryLaunchButton>
     </div>
   {/if}
 </section>

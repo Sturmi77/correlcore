@@ -78,6 +78,7 @@ describe('/settings Sprint 7', () => {
     render(Page);
 
     expect(await screen.findByTestId('settings-section-tracking')).toBeTruthy();
+    expect(screen.getByTestId('settings-section-export')).toBeTruthy();
     expect(screen.getByTestId('settings-section-analysis')).toBeTruthy();
     expect(screen.getByTestId('settings-section-privacy')).toBeTruthy();
     expect(screen.getByTestId('settings-section-appearance')).toBeTruthy();

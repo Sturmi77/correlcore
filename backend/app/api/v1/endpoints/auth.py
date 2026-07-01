@@ -10,6 +10,7 @@ on the single endpoint that needs it, reducing the attack surface.
 Rate-limiting (SlowAPI):
 - POST /register: 5 requests / minute per IP → 429 on breach (Issue #65, SA-2)
 - POST /login:    5 requests / minute per IP → 429 on breach
+- POST /verify-email: 10 requests / minute per IP → 429 on breach
 - POST /resend-verification: 3 requests / minute per IP
 """
 
@@ -54,6 +55,7 @@ from app.services.auth_service import (
     AuthError,
     EmailNotVerifiedError,
     VerificationError,
+    issue_session_tokens,
     login_user,
     logout_user,
     refresh_tokens,
@@ -133,22 +135,33 @@ async def register(
 
 @router.post(
     "/verify-email",
-    response_model=MessageResponse,
-    summary="Verify a user's email via the token from the welcome mail",
+    response_model=TokenResponse,
+    summary="Verify email and establish an authenticated session",
 )
+@limiter.limit("10/minute")
 async def verify_email_endpoint(
+    request: Request,
     data: VerifyEmailRequest,
+    response: Response,
     db: AsyncSession = Depends(get_session),
-) -> MessageResponse:
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenResponse:
     try:
-        await verify_email(db, data.token)
+        user = await verify_email(db, data.token)
     except VerificationError as exc:
         # Always 400 with a generic message — see service docstring
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
-    return MessageResponse(message="Email verified. You can now sign in.")
+    token_store = TokenStore(redis)
+    access, refresh = await issue_session_tokens(token_store, user)
+    set_auth_cookies(response, access, refresh)
+    return TokenResponse(
+        access_token=access,
+        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
+        user=UserResponse.model_validate(user),
+    )
 
 
 # ---------------------------------------------------------------------------

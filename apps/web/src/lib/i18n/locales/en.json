@@ -41,6 +41,7 @@
     "brief": {
       "label": "Daily brief",
       "heading": "Today at a glance",
+      "bridge_label": "Weekly analysis",
       "insight_fallback": "Open Insights for the full context and underlying data.",
       "phase_fallback": "Your current insight phase is active. Details stay available in Insights.",
       "collecting_title": "Collecting today's context",
@@ -224,6 +225,10 @@
     },
     "more_toggle": "Add optional details",
     "more_hide": "Hide optional details",
+    "onboarding_tags": {
+      "title": "What do you want to track?",
+      "hint": "Pick a few starting tags — you can turn any tag into a habit later in Insights."
+    },
     "sheet": {
       "title": "How was your day?",
       "close": "Close entry",
@@ -499,6 +504,11 @@
     "loading": "Loading habit stats",
     "empty": "Mark tags as build or reduce habits in Settings to see adherence here.",
     "empty_cta": "Manage tags",
+    "empty_setup_body": "Turn an existing tag into a build or reduce habit to track adherence here.",
+    "empty_no_tags": "Create a tag first, then mark it as a habit.",
+    "setup_tag_label": "Tag",
+    "setup_tag_placeholder": "Choose a tag",
+    "setup_submit": "Add habit",
     "list_label": "Habit list",
     "days_tracked": "Tracked days",
     "target_days": "Target days",
@@ -527,6 +537,7 @@
     "auth_required": "Please sign in to export your data.",
     "section": {
       "tracking": "Tracking",
+      "export": "Data export",
       "analysis": "Analysis",
       "privacy": "Privacy & Data",
       "appearance": "Appearance",
@@ -546,6 +557,8 @@
       "error": "Could not save analysis settings."
     },
     "privacy": {
+      "heading": "Privacy & account data",
+      "body": "Account deletion and other privacy controls will live here.",
       "delete_placeholder": "Delete account (M9)"
     },
     "appearance": {
@@ -1010,6 +1023,7 @@
       "progress": "Onboarding progress",
       "tags_title": "Pick useful tags",
       "tags_body": "Start with a small set. Free-text tags are always available.",
+      "habit_hint": "Tags like Walk or Meditation can later be marked as build or reduce habits under Settings → Tags to track adherence in Trends.",
       "custom": "Custom tag",
       "add_tag": "Add tag",
       "summary_title": "Ready to start",
@@ -1141,14 +1155,15 @@
       "body": "We have sent a verification email to {email}. Please click the link in that email to activate your account.",
       "ttl_hint": "The link is valid for 24 hours.",
       "spam_hint": "Mail not in your inbox? Please check the spam folder.",
-      "resend_link": "Resend verification email"
+      "resend_link": "Resend verification email",
+      "open_mail_app": "Open mail app"
     },
     "verify": {
       "title": "Verify email address",
       "body": "Click the button below to confirm your email address and activate your account.",
       "submit": "Verify email",
       "success_title": "Email verified",
-      "success_body": "Your account is now active. You can sign in.",
+      "success_body": "Your account is active. Taking you to your first entry…",
       "error_title": "Verification failed",
       "error_body": "The link is invalid or has expired. Please request a new verification email.",
       "missing_token": "No verification token found in the URL.",

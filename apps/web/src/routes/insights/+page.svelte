@@ -69,6 +69,7 @@
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
   import { rankInsights } from '$lib/utils/insightRanking';
+  import { countMatrixInsights, MATRIX_TAB_MIN_INSIGHTS } from '$lib/utils/insightMatrixGate';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
@@ -125,10 +126,10 @@
   }
 
   async function loadCooccurrence(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     cooccurrenceLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
         return;
       }
@@ -141,10 +142,10 @@
   }
 
   async function loadTagClusters(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     tagClustersLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         tagClusters = mockTagClusters;
         return;
       }
@@ -157,10 +158,10 @@
   }
 
   async function loadSymptomCooccurrence(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     symptomCooccurrenceLoading = true;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
         return;
       }
@@ -182,7 +183,7 @@
     symptomHistoryError = '';
     symptomHistoryDetails = [];
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         symptomHistoryDetails = mockEntries
           .filter((entry) => entry.entry_date === date)
           .map((entry) => ({
@@ -241,7 +242,7 @@
     cooccurrenceHistoryError = '';
     cooccurrenceHistoryDetails = [];
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         cooccurrenceHistoryDetails = mockEntries
           .filter((entry) => entry.entry_date >= startDate && entry.entry_date <= endDate)
           .slice(0, 3)
@@ -294,11 +295,11 @@
   }
 
   async function loadInsights(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
+    if (get(auth).status !== 'authenticated') return;
     loading = true;
     error = null;
     try {
-      if ($devForceVisualizations) {
+      if (get(devForceVisualizations)) {
         insights = mockInsights;
         insightMaturity = mockInsightMaturity;
         userPreferences = mockUserPreferences;
@@ -382,6 +383,16 @@
   );
   $: showSymptomAnalytics =
     showInsightSymptoms && (!insightMaturity || insightMaturity.phase !== 'collecting');
+  $: matrixInsightCount = countMatrixInsights(insights);
+  $: showMatrixTab = matrixInsightCount >= MATRIX_TAB_MIN_INSIGHTS;
+  $: showAdvancedAnalytics =
+    Boolean(insightMaturity && insightMaturity.phase !== 'collecting') && showMatrixTab;
+  $: visibleDetailViewTabs = detailViewTabs.filter(
+    (tab) => tab.id !== 'matrix' || showMatrixTab
+  );
+  $: if (!showMatrixTab && detailView === 'matrix') {
+    detailView = 'findings';
+  }
   $: rankedInsights = rankInsights(insights);
   $: primaryMobileInsight = rankedInsights[0] ?? null;
   $: remainingMobileInsights = rankedInsights.slice(1);
@@ -426,7 +437,7 @@
     }
   }
 
-  $: detailViewOptions = detailViewTabs.map(
+  $: detailViewOptions = visibleDetailViewTabs.map(
     (tab): TabBarOption => ({
       id: tab.id,
       label: $_(tab.label),
@@ -511,53 +522,55 @@
       />
     {/if}
 
-    <details class="insights-page__analytics" on:toggle={handleAnalyticsToggle}>
-      <summary>
-        <span>{$_('insights.page.analytics_summary')}</span>
-        <small>{$_('insights.page.analytics_hint')}</small>
-      </summary>
+    {#if showAdvancedAnalytics}
+      <details class="insights-page__analytics" on:toggle={handleAnalyticsToggle}>
+        <summary>
+          <span>{$_('insights.page.analytics_summary')}</span>
+          <small>{$_('insights.page.analytics_hint')}</small>
+        </summary>
 
-      <div class="insights-page__analytics-body">
-        <label class="insights-page__layer-toggle">
-          <input
-            type="checkbox"
-            checked={showInsightSymptoms}
-            on:change={(event) => setShowInsightSymptoms(event.currentTarget.checked)}
+        <div class="insights-page__analytics-body">
+          <label class="insights-page__layer-toggle">
+            <input
+              type="checkbox"
+              checked={showInsightSymptoms}
+              on:change={(event) => setShowInsightSymptoms(event.currentTarget.checked)}
+            />
+            <span>{$_('insights.page.symptoms_toggle')}</span>
+          </label>
+
+          {#if showSymptomAnalytics}
+            <SymptomAnalyticsSection
+              heatmap={symptomHeatmap}
+              entries={moodEntries}
+              cooccurrence={symptomCooccurrence}
+              cooccurrenceLoading={symptomCooccurrenceLoading}
+              phase={insightMaturity?.phase ?? null}
+              {loading}
+              on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+              on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
+            />
+          {/if}
+
+          <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
+
+          <TagCooccurrenceHeatmap
+            data={cooccurrence}
+            loading={cooccurrenceLoading}
+            range={cooccurrenceRange}
+            sortMode={tagCooccurrenceSortMode}
+            enableClusterSort={insightMaturity?.phase === 'robust'}
+            on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
+            on:rangeChange={(event) => {
+              cooccurrenceRange = event.detail.range;
+              void loadCooccurrence();
+              void loadSymptomCooccurrence();
+            }}
+            on:selectPair={(event) => void openCooccurrenceHistory(event)}
           />
-          <span>{$_('insights.page.symptoms_toggle')}</span>
-        </label>
-
-        {#if showSymptomAnalytics}
-          <SymptomAnalyticsSection
-            heatmap={symptomHeatmap}
-            entries={moodEntries}
-            cooccurrence={symptomCooccurrence}
-            cooccurrenceLoading={symptomCooccurrenceLoading}
-            phase={insightMaturity?.phase ?? null}
-            {loading}
-            on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
-            on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
-          />
-        {/if}
-
-        <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
-
-        <TagCooccurrenceHeatmap
-          data={cooccurrence}
-          loading={cooccurrenceLoading}
-          range={cooccurrenceRange}
-          sortMode={tagCooccurrenceSortMode}
-          enableClusterSort={insightMaturity?.phase === 'robust'}
-          on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
-          on:rangeChange={(event) => {
-            cooccurrenceRange = event.detail.range;
-            void loadCooccurrence();
-            void loadSymptomCooccurrence();
-          }}
-          on:selectPair={(event) => void openCooccurrenceHistory(event)}
-        />
-      </div>
-    </details>
+        </div>
+      </details>
+    {/if}
 
     <CooccurrenceEntrySheet
       open={cooccurrenceHistoryOpen}

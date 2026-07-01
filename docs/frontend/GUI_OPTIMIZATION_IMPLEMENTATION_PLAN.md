@@ -170,13 +170,24 @@ flowchart TD
 
 ---
 
-### Deferred backlog
+### Sprint F — Deferred backlog
 
-| Issue                                                     | Item                               | Blocker             |
-| --------------------------------------------------------- | ---------------------------------- | ------------------- |
-| [#269](https://github.com/Sturmi77/correlcore/issues/269) | O-18 PWA install after first entry | Product timing      |
-| [#270](https://github.com/Sturmi77/correlcore/issues/270) | O-19 Export section prominence     | Low priority        |
-| [#272](https://github.com/Sturmi77/correlcore/issues/272) | O-20 Password reset UI             | Backend API missing |
+**Goal:** Polish remaining low-friction items without backend dependencies.
+
+| Issue | Title | Workflows |
+|-------|-------|-----------|
+| [#269](https://github.com/Sturmi77/correlcore/issues/269) | O-18 PWA install after first entry | W10 |
+| [#270](https://github.com/Sturmi77/correlcore/issues/270) | O-19 Export section prominence | W9 |
+
+**Exit criteria:** New users see entry CTA before PWA banner; export panel visible near top of Settings on mobile.
+
+---
+
+### Still blocked
+
+| Issue                                                     | Item                   | Blocker                                                         |
+| --------------------------------------------------------- | ---------------------- | --------------------------------------------------------------- |
+| [#272](https://github.com/Sturmi77/correlcore/issues/272) | O-20 Password reset UI | Backend API missing (`POST /auth/forgot-password` / reset flow) |
 
 ---
 

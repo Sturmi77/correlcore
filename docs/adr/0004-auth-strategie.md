@@ -24,7 +24,7 @@
 - **Cookie-Flags:** `HttpOnly`, `Secure`, `SameSite=Strict` – kein Token-Zugriff via JavaScript, CSRF-Schutz
 - **Rate-Limiting:** Max. 5 Login-Versuche / Minute pro IP via SlowAPI; nach 10 Fehlversuchen temporärer Account-Lock
 - **Passwort-Hashing:** PBKDF2-HMAC-SHA256 (via `passlib`) mit Argon2 als bevorzugtem Algorithmus; bcrypt als Fallback
-- **E-Mail-Verifikation:** Pflicht bei Registrierung (Token per E-Mail, 24h TTL)
+- **E-Mail-Verifikation:** Pflicht bei Registrierung (Token per E-Mail, 24h TTL). Nach erfolgreicher Verifikation stellt `POST /auth/verify-email` unmittelbar eine JWT-Session aus (gleiche Cookie-Strategie wie Login), damit neue Nutzer ohne separaten Login-Schritt den ersten Eintrag starten können.
 - **MFA:** TOTP via `pyotp` (Google Authenticator / Authy kompatibel) – optionales Opt-in ab M3
 
 ### Phase 2 – Authentik als OIDC-Provider (SaaS, M12+)
@@ -46,6 +46,13 @@
 | **Keycloak**                | Enterprise-grade, SAML/LDAP/SSO, große Community                                              | Noch schwergewichtiger als Authentik (~1 GB RAM), JVM-basiert, Selfhost-Overhead inakzeptabel |
 
 ---
+
+## Amendment (2026-06-30) — Post-verify session (O-07)
+
+`POST /api/v1/auth/verify-email` returns a `TokenResponse` and sets the same
+HttpOnly access/refresh cookies as `POST /login`. The verify button on the
+frontend remains a deliberate user action (anti mail-scanner). After success
+the client redirects to `/?openEntry=1` instead of `/auth/login`.
 
 ## Konsequenzen
 
