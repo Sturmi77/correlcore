@@ -66,12 +66,18 @@
   } from '$lib/dev/mockTrends';
   import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
   import { devForceVisualizations } from '$lib/stores/devMode';
+  import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
   import { rankInsights } from '$lib/utils/insightRanking';
   import { countMatrixInsights, MATRIX_TAB_MIN_INSIGHTS } from '$lib/utils/insightMatrixGate';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
+  import SegmentedControl, {
+    type SegmentedControlOption,
+  } from '$lib/components/common/SegmentedControl.svelte';
+  import { timeseriesRangeToCooccurrence } from '$lib/utils/analysisRange';
+  import type { TimeseriesRange } from '$lib/api/stats';
 
   type DetailView = 'findings' | 'matrix';
 
@@ -86,7 +92,7 @@
   let moodEntries: EntryResponse[] = [];
   let inactiveTagIds: string[] = [];
   let detailView: DetailView = 'findings';
-  let cooccurrenceRange: TagCooccurrenceRange = '90d';
+  let cooccurrenceRange: TagCooccurrenceRange = '30d';
   let cooccurrence: TagCooccurrenceResponse | null = null;
   let cooccurrenceLoading = false;
   let tagClusters: TagClustersResponse | null = null;
@@ -117,6 +123,37 @@
     { id: 'findings', label: 'insights.page.findings_view' },
     { id: 'matrix', label: 'insights.page.matrix_view' },
   ];
+
+  const analysisRangeOptions: { id: TimeseriesRange; label: string }[] = [
+    { id: 'week', label: 'trends.range.week' },
+    { id: 'month', label: 'trends.range.month' },
+    { id: 'quarter', label: 'trends.range.quarter' },
+    { id: 'year', label: 'trends.range.year' },
+  ];
+
+  $: cooccurrenceRange = timeseriesRangeToCooccurrence($analysisRange);
+
+  let lastAnalysisRangeForCooccurrence: TimeseriesRange | null = null;
+  $: if (
+    $auth.status === 'authenticated' &&
+    insightsLoaded &&
+    $analysisRange !== lastAnalysisRangeForCooccurrence
+  ) {
+    const hadPrevious = lastAnalysisRangeForCooccurrence !== null;
+    lastAnalysisRangeForCooccurrence = $analysisRange;
+    if (hadPrevious && (cooccurrence !== null || symptomCooccurrence !== null)) {
+      void loadCooccurrence();
+      void loadSymptomCooccurrence();
+    }
+  }
+
+  $: analysisRangeControlOptions = analysisRangeOptions.map(
+    (option): SegmentedControlOption => ({
+      id: option.id,
+      label: $_(option.label),
+      testId: `insights-range-${option.id}`,
+    })
+  );
 
   function setShowInsightSymptoms(value: boolean): void {
     showInsightSymptoms = value;
@@ -483,6 +520,18 @@
       </Button>
     </Panel>
   {:else}
+    <div class="insights-page__sticky-toolbar" data-testid="insights-sticky-toolbar">
+      <SegmentedControl
+        value={$analysisRange}
+        options={analysisRangeControlOptions}
+        ariaLabel={$_('insights.page.analysis_range_label')}
+        testId="insights-range-control"
+        on:change={(event) => {
+          setAnalysisRange(event.detail.value as TimeseriesRange);
+        }}
+      />
+    </div>
+
     {#if !compactInsights && insightMaturity}
       <InsightStageHeader
         maturity={insightMaturity}
@@ -578,14 +627,10 @@
             data={cooccurrence}
             loading={cooccurrenceLoading}
             range={cooccurrenceRange}
+            showRangeSelector={false}
             sortMode={tagCooccurrenceSortMode}
             enableClusterSort={insightMaturity?.phase === 'robust'}
             on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
-            on:rangeChange={(event) => {
-              cooccurrenceRange = event.detail.range;
-              void loadCooccurrence();
-              void loadSymptomCooccurrence();
-            }}
             on:selectPair={(event) => void openCooccurrenceHistory(event)}
           />
         </div>
@@ -628,6 +673,23 @@
   .insights-page {
     display: flex;
     flex-direction: column;
+  }
+
+  .insights-page__sticky-toolbar {
+    position: sticky;
+    top: calc(var(--app-header-height, 0px) + var(--space-2));
+    z-index: 3;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  @media (max-width: 640px) {
+    .insights-page__sticky-toolbar {
+      position: static;
+    }
   }
 
   .insights-page__analytics {

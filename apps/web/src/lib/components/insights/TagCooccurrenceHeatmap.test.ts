@@ -158,6 +158,14 @@ describe('TagCooccurrenceHeatmap', () => {
     expect(screen.getByLabelText('insights.cooccurrence.loading')).toBeTruthy();
   });
 
+  it('hides range controls when showRangeSelector is false', () => {
+    render(TagCooccurrenceHeatmap, {
+      props: { data, loading: false, range: '90d', showRangeSelector: false },
+    });
+
+    expect(screen.queryByRole('button', { name: 'insights.cooccurrence.range_1y' })).toBeNull();
+  });
+
   it('dispatches range changes from the range control', async () => {
     const handler = vi.fn();
     render(TagCooccurrenceHeatmap, {

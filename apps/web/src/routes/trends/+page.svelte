@@ -29,6 +29,7 @@
     mockTimeseries,
   } from '$lib/dev/mockTrends';
   import { devForceVisualizations } from '$lib/stores/devMode';
+  import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import { rangeToDays, rangeToHabitWindow } from '$lib/utils/trendsRange';
@@ -51,11 +52,11 @@
 
   type TrendTab = 'compare' | 'health' | 'habits';
 
-  const rangeOptions: { id: TimeseriesRange; label: string; days: number }[] = [
-    { id: 'week', label: 'trends.range.week', days: 7 },
-    { id: 'month', label: 'trends.range.month', days: 30 },
-    { id: 'quarter', label: 'trends.range.quarter', days: 90 },
-    { id: 'year', label: 'trends.range.year', days: 365 },
+  const rangeOptions: { id: TimeseriesRange; label: string }[] = [
+    { id: 'week', label: 'trends.range.week' },
+    { id: 'month', label: 'trends.range.month' },
+    { id: 'quarter', label: 'trends.range.quarter' },
+    { id: 'year', label: 'trends.range.year' },
   ];
 
   const tabs: { id: TrendTab; label: string }[] = [
@@ -65,7 +66,6 @@
   ];
 
   let activeTab: TrendTab = 'compare';
-  let range: TimeseriesRange = 'week';
   let selectedCategory: TagCategory | 'all' = 'all';
   let timeseries: TimeseriesResponse | null = null;
   let heatmap: TagHeatmapResponse | null = null;
@@ -96,6 +96,8 @@
 
   const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
+
+  $: range = $analysisRange;
 
   function dateWindow(days?: number): { start_date: string; end_date: string } {
     const windowDays = days ?? rangeToDays(range);
@@ -241,7 +243,12 @@
     }
   }
 
-  $: if ($auth.status === 'authenticated' && timeseries && timeseries.range !== range && !loading) {
+  $: if (
+    $auth.status === 'authenticated' &&
+    timeseries &&
+    timeseries.range !== $analysisRange &&
+    !loading
+  ) {
     void loadTrends();
   }
   $: habitWindow = rangeToHabitWindow(range);
@@ -295,12 +302,12 @@
   {:else}
     <div class="trends__sticky-toolbar" data-testid="trends-sticky-toolbar">
       <SegmentedControl
-        value={range}
+        value={$analysisRange}
         options={rangeControlOptions}
         ariaLabel={$_('trends.controls')}
         testId="trends-range-control"
         on:change={(event) => {
-          range = event.detail.value as TimeseriesRange;
+          setAnalysisRange(event.detail.value as TimeseriesRange);
           void loadTrends();
         }}
       />
