@@ -62,7 +62,11 @@ export async function installInsightsApiMock(page: Page): Promise<void> {
       return json(route, 200, mockSymptomHeatmap);
     }
     if (path.startsWith('/entries/stats/tags') && method === 'GET') {
-      return json(route, 200, { start_date: mockSymptomHeatmap.start_date, end_date: mockSymptomHeatmap.end_date, tags: [] });
+      return json(route, 200, {
+        start_date: mockSymptomHeatmap.start_date,
+        end_date: mockSymptomHeatmap.end_date,
+        tags: [],
+      });
     }
     if (path.startsWith('/entries/stats/streak') && method === 'GET') {
       return json(route, 200, {
@@ -74,15 +78,25 @@ export async function installInsightsApiMock(page: Page): Promise<void> {
       });
     }
     if (path.startsWith('/insights/tag-cooccurrence') && method === 'GET') {
-      const range = (url.searchParams.get('range') ?? '90d') as keyof typeof mockTagCooccurrenceByRange;
-      return json(route, 200, mockTagCooccurrenceByRange[range] ?? mockTagCooccurrenceByRange['90d']);
+      const range = (url.searchParams.get('range') ??
+        '90d') as keyof typeof mockTagCooccurrenceByRange;
+      return json(
+        route,
+        200,
+        mockTagCooccurrenceByRange[range] ?? mockTagCooccurrenceByRange['90d']
+      );
     }
     if (path === '/insights/tag-clusters' && method === 'GET') {
       return json(route, 200, mockTagClusters);
     }
     if (path.startsWith('/insights/symptom-tag-cooccurrence') && method === 'GET') {
-      const range = (url.searchParams.get('range') ?? '90d') as keyof typeof mockSymptomTagCooccurrenceByRange;
-      return json(route, 200, mockSymptomTagCooccurrenceByRange[range] ?? mockSymptomTagCooccurrenceByRange['90d']);
+      const range = (url.searchParams.get('range') ??
+        '90d') as keyof typeof mockSymptomTagCooccurrenceByRange;
+      return json(
+        route,
+        200,
+        mockSymptomTagCooccurrenceByRange[range] ?? mockSymptomTagCooccurrenceByRange['90d']
+      );
     }
     if ((path === '/insights' || path === '/insights/latest') && method === 'GET') {
       return json(route, 200, {

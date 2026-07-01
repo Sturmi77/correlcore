@@ -13,7 +13,9 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await page.goto('/insights');
   await expect(page.getByTestId('insights-view-tabs')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('mobile-insight-lead')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId('mobile-insight-lead').getByTestId('insight-maturity-badge')).toBeVisible();
+  await expect(
+    page.getByTestId('mobile-insight-lead').getByTestId('insight-maturity-badge')
+  ).toBeVisible();
   await expect(page.getByTestId('insight-stage-meta')).toHaveCount(0);
 
   await page.getByTestId('insight-feed-tab-symptoms').tap();

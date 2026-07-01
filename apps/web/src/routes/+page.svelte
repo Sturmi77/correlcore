@@ -83,14 +83,14 @@
   $: showHomeSparkline = dayEntriesForSparkline.length >= HOME_SPARKLINE_MIN_ENTRIES;
   $: showOnboardingTags = Boolean(
     userPreferences &&
-      !userPreferences.onboarding_retro_completed &&
-      dashboardSummary?.entry_count === 0
+    !userPreferences.onboarding_retro_completed &&
+    dashboardSummary?.entry_count === 0
   );
   $: showPwaInstallBanner = Boolean(
     $pwaInstallStore.promptEvent &&
-      !$pwaInstallStore.dismissed &&
-      !$pwaInstallStore.installed &&
-      ((dashboardSummary?.entry_count ?? 0) >= 1 || userPreferences?.onboarding_retro_completed)
+    !$pwaInstallStore.dismissed &&
+    !$pwaInstallStore.installed &&
+    ((dashboardSummary?.entry_count ?? 0) >= 1 || userPreferences?.onboarding_retro_completed)
   );
 
   function syncEntrySurface(): void {
@@ -332,13 +332,13 @@
     </section>
 
     {#if preferEntrySheet}
-    <EntrySheet
-      bind:open={entrySheetOpen}
-      initialDate={entrySheetDate}
-      onboardingTagsEnabled={showOnboardingTags}
-      on:saved={onEntrySheetSaved}
-    />
-  {/if}
+      <EntrySheet
+        bind:open={entrySheetOpen}
+        initialDate={entrySheetDate}
+        onboardingTagsEnabled={showOnboardingTags}
+        on:saved={onEntrySheetSaved}
+      />
+    {/if}
   </div>
 {:else}
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">

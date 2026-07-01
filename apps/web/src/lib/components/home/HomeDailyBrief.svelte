@@ -95,7 +95,11 @@
   </dl>
 
   {#if showWeeklyBridge}
-    <nav class="daily-brief__bridge" aria-label={$_('home.brief.bridge_label')} data-testid="home-weekly-bridge">
+    <nav
+      class="daily-brief__bridge"
+      aria-label={$_('home.brief.bridge_label')}
+      data-testid="home-weekly-bridge"
+    >
       <a href="/insights" data-testid="home-bridge-insights">{$_('home.explore_insights')}</a>
       <a href="/trends" data-testid="home-bridge-trends">{$_('home.view_trends')}</a>
     </nav>

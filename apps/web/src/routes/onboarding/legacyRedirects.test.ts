@@ -3,10 +3,7 @@ import { load as loadOnboarding } from './+page.server';
 import { load as loadRetro } from './retro/+page.server';
 import { load as loadProfile } from './profile/+page.server';
 
-async function expectRedirect(
-  load: () => unknown,
-  location: string
-): Promise<void> {
+async function expectRedirect(load: () => unknown, location: string): Promise<void> {
   try {
     await load();
     expect.unreachable('expected redirect');

@@ -143,7 +143,8 @@
       {/if}
       {#if setupCandidates.length === 0}
         <p>{$_('habits.empty_no_tags')}</p>
-        <a class="btn btn-sm variant-soft-primary" href="/settings/tags">{$_('habits.empty_cta')}</a>
+        <a class="btn btn-sm variant-soft-primary" href="/settings/tags">{$_('habits.empty_cta')}</a
+        >
       {:else}
         <form class="habits__setup" on:submit|preventDefault={submitHabitSetup}>
           <label>

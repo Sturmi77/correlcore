@@ -46,56 +46,56 @@
   aria-label={$_('insights.stage.aria_label')}
 >
   {#if !milestoneOnly}
-  <div class="stage__row">
-    <div class="stage__status">
-      <span class="stage__marker" aria-hidden="true">{maturity.phase_index}/4</span>
-      <div class="stage__copy">
-        <p class="stage__label">{$_('insights.stage.readiness_label')}</p>
-        <p class="stage__line" data-testid="insight-stage-meta">
-          <strong>{phaseLabel}</strong>
-          <span aria-hidden="true"> · </span>
-          {#if maturity.phase === 'robust'}
-            {$_('maturity.journey.robust_meta', {
-              values: { current: maturity.current_entries },
-            })}
-          {:else}
-            {$_('maturity.journey.compact_entries_until_next', {
-              values: {
-                current: maturity.current_entries,
-                next: maturity.next_phase_at ?? maturity.current_entries,
-                remaining: maturity.entries_until_next ?? 0,
-                nextPhase: maturity.next_phase_label ?? '',
-              },
-            })}
-          {/if}
-        </p>
+    <div class="stage__row">
+      <div class="stage__status">
+        <span class="stage__marker" aria-hidden="true">{maturity.phase_index}/4</span>
+        <div class="stage__copy">
+          <p class="stage__label">{$_('insights.stage.readiness_label')}</p>
+          <p class="stage__line" data-testid="insight-stage-meta">
+            <strong>{phaseLabel}</strong>
+            <span aria-hidden="true"> · </span>
+            {#if maturity.phase === 'robust'}
+              {$_('maturity.journey.robust_meta', {
+                values: { current: maturity.current_entries },
+              })}
+            {:else}
+              {$_('maturity.journey.compact_entries_until_next', {
+                values: {
+                  current: maturity.current_entries,
+                  next: maturity.next_phase_at ?? maturity.current_entries,
+                  remaining: maturity.entries_until_next ?? 0,
+                  nextPhase: maturity.next_phase_label ?? '',
+                },
+              })}
+            {/if}
+          </p>
+        </div>
       </div>
-    </div>
 
-    <div class="stage__controls">
-      <div
-        class="stage__track"
-        role="meter"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={fillPercent}
-        aria-label={$_('maturity.journey.progress_aria')}
-        title={phaseDescription}
-      >
-        <span style={`width: ${fillPercent}%`}></span>
+      <div class="stage__controls">
+        <div
+          class="stage__track"
+          role="meter"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={fillPercent}
+          aria-label={$_('maturity.journey.progress_aria')}
+          title={phaseDescription}
+        >
+          <span style={`width: ${fillPercent}%`}></span>
+        </div>
+        <IconButton
+          ariaLabel={$_('maturity.journey.help_cta')}
+          title={$_('maturity.journey.help_cta')}
+          size="sm"
+          variant="ghost"
+          data-testid="insight-stage-help"
+          on:click={() => (explainerOpen = true)}
+        >
+          <HelpCircle size={18} aria-hidden="true" />
+        </IconButton>
       </div>
-      <IconButton
-        ariaLabel={$_('maturity.journey.help_cta')}
-        title={$_('maturity.journey.help_cta')}
-        size="sm"
-        variant="ghost"
-        data-testid="insight-stage-help"
-        on:click={() => (explainerOpen = true)}
-      >
-        <HelpCircle size={18} aria-hidden="true" />
-      </IconButton>
     </div>
-  </div>
   {/if}
 
   {#if showMilestone && milestoneKey}

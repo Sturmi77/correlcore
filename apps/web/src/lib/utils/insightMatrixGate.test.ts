@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { InsightResponse } from '$lib/api/insights';
-import {
-  countMatrixInsights,
-  isMatrixInsight,
-  MATRIX_TAB_MIN_INSIGHTS,
-} from './insightMatrixGate';
+import { countMatrixInsights, isMatrixInsight, MATRIX_TAB_MIN_INSIGHTS } from './insightMatrixGate';
 
 function insight(partial: Partial<InsightResponse> & Pick<InsightResponse, 'id'>): InsightResponse {
   return {

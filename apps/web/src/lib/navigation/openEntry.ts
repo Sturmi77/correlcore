@@ -12,7 +12,9 @@ export function isOpenEntryRequested(searchParams: URLSearchParams): boolean {
   return searchParams.get(OPEN_ENTRY_QUERY) === '1';
 }
 
-export function entryDateFromSearchParams(searchParams: URLSearchParams): EntryNavigationDate | null {
+export function entryDateFromSearchParams(
+  searchParams: URLSearchParams
+): EntryNavigationDate | null {
   const raw = searchParams.get(ENTRY_DATE_QUERY);
   if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
   return raw;

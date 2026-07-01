@@ -387,9 +387,7 @@
   $: showMatrixTab = matrixInsightCount >= MATRIX_TAB_MIN_INSIGHTS;
   $: showAdvancedAnalytics =
     Boolean(insightMaturity && insightMaturity.phase !== 'collecting') && showMatrixTab;
-  $: visibleDetailViewTabs = detailViewTabs.filter(
-    (tab) => tab.id !== 'matrix' || showMatrixTab
-  );
+  $: visibleDetailViewTabs = detailViewTabs.filter((tab) => tab.id !== 'matrix' || showMatrixTab);
   $: if (!showMatrixTab && detailView === 'matrix') {
     detailView = 'findings';
   }

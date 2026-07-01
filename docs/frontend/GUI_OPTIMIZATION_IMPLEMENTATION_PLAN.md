@@ -174,10 +174,10 @@ flowchart TD
 
 **Goal:** Polish remaining low-friction items without backend dependencies.
 
-| Issue | Title | Workflows |
-|-------|-------|-----------|
-| [#269](https://github.com/Sturmi77/correlcore/issues/269) | O-18 PWA install after first entry | W10 |
-| [#270](https://github.com/Sturmi77/correlcore/issues/270) | O-19 Export section prominence | W9 |
+| Issue                                                     | Title                              | Workflows |
+| --------------------------------------------------------- | ---------------------------------- | --------- |
+| [#269](https://github.com/Sturmi77/correlcore/issues/269) | O-18 PWA install after first entry | W10       |
+| [#270](https://github.com/Sturmi77/correlcore/issues/270) | O-19 Export section prominence     | W9        |
 
 **Exit criteria:** New users see entry CTA before PWA banner; export panel visible near top of Settings on mobile.
 
