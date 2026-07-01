@@ -221,8 +221,9 @@ describe('syncOrchestrator', () => {
     });
 
     const syncPromise = syncAll();
-    await Promise.resolve();
-    expect(pushSyncChanges).toHaveBeenCalledOnce();
+    await vi.waitFor(() => {
+      expect(pushSyncChanges).toHaveBeenCalledOnce();
+    });
 
     let drained = false;
     const drainPromise = drainOfflineSyncForSessionChange().then(() => {
