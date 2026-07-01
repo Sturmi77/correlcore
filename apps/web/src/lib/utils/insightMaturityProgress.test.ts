@@ -31,6 +31,8 @@ describe('insightMaturityProgress', () => {
 
   it('computes progress percent within the current phase span', () => {
     expect(maturityProgressPercent(collecting)).toBe(57);
-    expect(maturityProgressPercent({ ...collecting, phase: 'robust', next_phase_at: null })).toBe(100);
+    expect(maturityProgressPercent({ ...collecting, phase: 'robust', next_phase_at: null })).toBe(
+      100
+    );
   });
 });

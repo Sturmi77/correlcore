@@ -5,7 +5,11 @@ import type { InsightMaturity } from '$lib/api/insights';
 
 vi.mock('svelte-i18n', () => ({
   _: {
-    subscribe: (run: (formatter: (key: string, options?: { values?: Record<string, unknown> }) => string) => void) => {
+    subscribe: (
+      run: (
+        formatter: (key: string, options?: { values?: Record<string, unknown> }) => string
+      ) => void
+    ) => {
       run((key: string, options?: { values?: Record<string, unknown> }) => {
         if (key === 'maturity.journey.compact_entries_until_next') {
           return `${options?.values?.remaining} more until next phase`;

@@ -5,7 +5,11 @@ import type { InsightResponse } from '$lib/api/insights';
 
 vi.mock('svelte-i18n', () => ({
   _: {
-    subscribe: (run: (formatter: (key: string, options?: { values?: Record<string, unknown> }) => string) => void) => {
+    subscribe: (
+      run: (
+        formatter: (key: string, options?: { values?: Record<string, unknown> }) => string
+      ) => void
+    ) => {
       run((key: string, options?: { values?: Record<string, unknown> }) => {
         if (key === 'analysis.cross_link.top_insight') {
           return `Top insight: ${options?.values?.label}`;
@@ -29,7 +33,9 @@ describe('AnalysisCrossLink', () => {
     render(AnalysisCrossLink, { props: { insight, direction: 'to-insights' } });
     const link = screen.getByTestId('analysis-cross-link-insights');
     expect(link.getAttribute('href')).toBe('/insights');
-    expect(screen.getByTestId('analysis-cross-link-insights').textContent).toContain('Top insight: Energy');
+    expect(screen.getByTestId('analysis-cross-link-insights').textContent).toContain(
+      'Top insight: Energy'
+    );
   });
 
   it('links to trends from the featured insight', () => {
