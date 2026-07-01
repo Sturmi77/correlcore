@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { resetPassword } from '$lib/api/auth';
+  import { drainOfflineSyncForSessionChange } from '$lib/offline/session';
   import { setUser } from '$lib/stores/auth';
   import PasswordStrength from '$lib/components/auth/PasswordStrength.svelte';
   import { evaluatePassword } from '$lib/utils/passwordStrength';
@@ -47,8 +48,9 @@
     errorKey = null;
     phase = 'busy';
     try {
+      await drainOfflineSyncForSessionChange();
       const session = await resetPassword({ token, password });
-      setUser(session.user);
+      await setUser(session.user);
       await goto('/', { replaceState: true });
     } catch (err) {
       errorKey = mapApiError(err, ERROR_MAP);

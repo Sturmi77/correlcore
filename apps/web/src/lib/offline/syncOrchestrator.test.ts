@@ -5,6 +5,7 @@ import { appendChange } from './changeLog';
 import { resetOfflineDbForTests } from './db';
 import { setOfflineSyncEnabled } from './featureFlag';
 import {
+  drainOfflineSyncForSessionChange,
   peekSyncOrchestrator,
   pullSince,
   pushPending,
@@ -187,5 +188,62 @@ describe('syncOrchestrator', () => {
     const entry = await getOfflineDb().entries.get('server-entry-1');
     expect(entry?.mood_score).toBe(4);
     expect(await getSyncMeta(SYNC_META_KEYS.lastPullCursor)).toBe('cursor-new');
+  });
+
+  it('drains an in-flight sync before a session-cookie change proceeds', async () => {
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'day' },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    let releasePush!: () => void;
+    pushSyncChanges.mockReturnValue(
+      new Promise((resolve) => {
+        releasePush = () =>
+          resolve({
+            cursor: 'cursor-1',
+            applied: 1,
+            skipped: 0,
+            conflicts: [],
+            idempotent_replay: false,
+          });
+      })
+    );
+    pullSyncChanges.mockResolvedValue({
+      cursor: 'cursor-1',
+      changes: [],
+      has_more: false,
+      server_time: '2026-06-30T12:01:00.000Z',
+    });
+
+    const syncPromise = syncAll();
+    await vi.waitFor(() => {
+      expect(pushSyncChanges).toHaveBeenCalledOnce();
+    });
+
+    let drained = false;
+    const drainPromise = drainOfflineSyncForSessionChange().then(() => {
+      drained = true;
+    });
+    await Promise.resolve();
+    expect(drained).toBe(false);
+
+    releasePush();
+    await drainPromise;
+    await syncPromise;
+
+    expect(drained).toBe(true);
+    expect(peekSyncOrchestrator()).toEqual({
+      badge: null,
+      pendingCount: 0,
+      lastPushAt: null,
+      lastPullAt: null,
+      conflictNote: null,
+      syncing: false,
+    });
   });
 });

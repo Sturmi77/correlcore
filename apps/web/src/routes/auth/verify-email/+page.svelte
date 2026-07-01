@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { verifyEmail } from '$lib/api/auth';
+  import { drainOfflineSyncForSessionChange } from '$lib/offline/session';
   import { setUser } from '$lib/stores/auth';
   import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
 
@@ -28,8 +29,9 @@
     if (!token || phase === 'busy' || phase === 'success') return;
     phase = 'busy';
     try {
+      await drainOfflineSyncForSessionChange();
       const session = await verifyEmail(token);
-      setUser(session.user);
+      await setUser(session.user);
       await goto(OPEN_ENTRY_HOME_PATH);
     } catch {
       // Backend returns a generic 400 for invalid/expired/used tokens
