@@ -170,6 +170,22 @@ async function installJourneyApi(
       });
     }
 
+    if (path === '/auth/forgot-password' && method === 'POST') {
+      writes.push('POST /auth/forgot-password');
+      return json(202, { message: 'If the email is registered, a password reset mail has been sent.' });
+    }
+
+    if (path === '/auth/reset-password' && method === 'POST') {
+      writes.push('POST /auth/reset-password');
+      authenticated = true;
+      return json(200, {
+        access_token: 'journey-access-token',
+        token_type: 'bearer',
+        expires_in: 900,
+        user,
+      });
+    }
+
     if (path === '/auth/login' && method === 'POST') {
       authenticated = true;
       writes.push('POST /auth/login');
@@ -457,6 +473,28 @@ test.describe('W1 Account & Vertrauen', () => {
     await expect(page.getByRole('heading', { name: 'Log your day' })).toBeVisible({
       timeout: APP_READY_TIMEOUT_MS,
     });
+  });
+
+  test('password reset requires explicit confirm', async ({ page }) => {
+    await installJourneyApi(page, { profile: 'week_user', authenticated: false });
+    await page.goto('/auth/reset-password?token=journey-reset-token');
+
+    await expect(page.getByRole('heading', { name: 'Set a new password' })).toBeVisible({
+      timeout: APP_READY_TIMEOUT_MS,
+    });
+    await page.locator('input[autocomplete="new-password"]').first().fill('NewHorse123!');
+    await page.locator('input[autocomplete="new-password"]').nth(1).fill('NewHorse123!');
+    await page.getByRole('button', { name: 'Update password' }).click();
+    await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
+  });
+
+  test('forgot password shows generic success', async ({ page }) => {
+    await installJourneyApi(page, { profile: 'week_user', authenticated: false });
+    await page.goto('/auth/forgot-password');
+
+    await page.locator('input[type="email"]').fill(users.week.email);
+    await page.getByRole('button', { name: 'Send reset link' }).click();
+    await expect(page.getByText('If the email is registered, a password reset mail has been sent.')).toBeVisible();
   });
 });
 

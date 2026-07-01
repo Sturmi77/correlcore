@@ -29,7 +29,7 @@
 | O-17 | [#267](https://github.com/Sturmi77/correlcore/issues/267) | E           | Medium | Medium | Heatmap drill-down via EntryHistorySheet                                      |
 | O-18 | [#269](https://github.com/Sturmi77/correlcore/issues/269) | F           | Medium | Low    | Defer PWA install banner until after first entry                              |
 | O-19 | [#270](https://github.com/Sturmi77/correlcore/issues/270) | F           | Low    | Low    | Improve export discoverability in Settings                                    |
-| O-20 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | G (planned) | Medium | High   | Password reset — [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md) |
+| O-20 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | G | Medium | High | Password reset — [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md) |
 
 > **Note:** O-10 is intentionally unused (reserved). Former “O-10 password / O-11 Phase 5 / O-12 Figma” map to **O-20**, **O-08**, and out-of-scope Figma Sprint H respectively.
 
@@ -47,7 +47,7 @@ See [`GUI_OPTIMIZATION_IMPLEMENTATION_PLAN.md`](GUI_OPTIMIZATION_IMPLEMENTATION_
 | **D — Analysis IA**       | #264, #266, #271 (after #250) | Brief-first Home, weekly review    |
 | **E — Desktop polish**    | #262, #267                    | Entry surface + drill-down         |
 | **F — Deferred backlog**  | #269, #270                    | PWA timing, export UX              |
-| **G — Password reset**    | #272                          | Forgot/reset flow (planned)        |
+| **G — Password reset**    | #272                          | Forgot/reset flow (O-20)           |
 | **Blocked**               | —                             | —                                  |
 
 ---

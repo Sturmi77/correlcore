@@ -3,7 +3,7 @@
 **Date:** 2026-07-01  
 **Issue:** [#272](https://github.com/Sturmi77/correlcore/issues/272)  
 **Workflow:** W1 Account & Vertrauen  
-**Status:** Planned — **not implemented**  
+**Status:** Implemented (Sprint G)  
 **Depends on:** Native JWT auth (ADR-0004), existing email infrastructure (Issue #39)
 
 ---

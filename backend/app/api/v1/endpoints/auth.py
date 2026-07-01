@@ -11,6 +11,8 @@ Rate-limiting (SlowAPI):
 - POST /register: 5 requests / minute per IP → 429 on breach (Issue #65, SA-2)
 - POST /login:    5 requests / minute per IP → 429 on breach
 - POST /verify-email: 10 requests / minute per IP → 429 on breach
+- POST /forgot-password: 3 requests / minute per IP → 429 on breach
+- POST /reset-password: 10 requests / minute per IP → 429 on breach
 - POST /resend-verification: 3 requests / minute per IP
 """
 
@@ -42,11 +44,13 @@ from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.auth import (
+    ForgotPasswordRequest,
     LoginRequest,
     MessageResponse,
     RefreshRequest,
     RegisterRequest,
     ResendVerificationRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserResponse,
     VerifyEmailRequest,
@@ -54,17 +58,21 @@ from app.schemas.auth import (
 from app.services.auth_service import (
     AuthError,
     EmailNotVerifiedError,
+    PasswordResetError,
     VerificationError,
     issue_session_tokens,
     login_user,
     logout_user,
     refresh_tokens,
+    request_password_reset,
     request_registration,
     request_verification_resend,
+    reset_password,
     verify_email,
 )
 from app.services.email_service import (
     send_already_registered_email,
+    send_password_reset_email,
     send_verification_email,
 )
 
@@ -194,6 +202,76 @@ async def resend_verification(
     # Same response whether or not an email exists — prevents enumeration
     return MessageResponse(
         message="If the email is registered and unverified, a verification mail has been sent."
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /forgot-password  (O-20)
+# ---------------------------------------------------------------------------
+
+_FORGOT_PASSWORD_GENERIC_MESSAGE = (
+    "If the email is registered, a password reset mail has been sent."
+)
+
+
+@router.post(
+    "/forgot-password",
+    response_model=MessageResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Request a password reset email (always returns 202)",
+)
+@limiter.limit("3/minute")
+async def forgot_password(
+    request: Request,
+    data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_session),
+) -> MessageResponse:
+    result = await request_password_reset(db, data.email)
+    if result is not None:
+        user, plaintext_token = result
+        background_tasks.add_task(
+            send_password_reset_email,
+            to_email=user.email,
+            display_name=user.display_name,
+            token=plaintext_token,
+        )
+    return MessageResponse(message=_FORGOT_PASSWORD_GENERIC_MESSAGE)
+
+
+# ---------------------------------------------------------------------------
+# POST /reset-password  (O-20)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/reset-password",
+    response_model=TokenResponse,
+    summary="Reset password and establish an authenticated session",
+)
+@limiter.limit("10/minute")
+async def reset_password_endpoint(
+    request: Request,
+    data: ResetPasswordRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_session),
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenResponse:
+    try:
+        user = await reset_password(db, data.token, data.password)
+    except PasswordResetError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    token_store = TokenStore(redis)
+    await token_store.revoke_all(str(user.id))
+    access, refresh = await issue_session_tokens(token_store, user)
+    set_auth_cookies(response, access, refresh)
+    return TokenResponse(
+        access_token=access,
+        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
+        user=UserResponse.model_validate(user),
     )
 
 

@@ -53,6 +53,7 @@ from app.core.crypto import (
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.entry import Entry, EntrySlot, EntrySource, WorkContext
+from app.models.password_reset_token import PasswordResetToken
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user import User
@@ -259,6 +260,25 @@ def make_verification_token(
     """
     plaintext = plaintext or secrets.token_urlsafe(32)
     record = EmailVerificationToken()
+    record.id = uuid.uuid4()
+    record.user_id = user.id
+    record.token_hash = _hash_token(plaintext)
+    record.expires_at = datetime.now(UTC) + expires_in
+    record.used_at = datetime.now(UTC) if used else None
+    record.created_at = datetime.now(UTC)
+    return record, plaintext
+
+
+def make_password_reset_token(
+    user: User,
+    *,
+    plaintext: str | None = None,
+    expires_in: timedelta = timedelta(hours=1),
+    used: bool = False,
+) -> tuple[PasswordResetToken, str]:
+    """Build a :class:`PasswordResetToken` paired with its plaintext."""
+    plaintext = plaintext or secrets.token_urlsafe(32)
+    record = PasswordResetToken()
     record.id = uuid.uuid4()
     record.user_id = user.id
     record.token_hash = _hash_token(plaintext)

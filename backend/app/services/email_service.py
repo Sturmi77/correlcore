@@ -60,6 +60,12 @@ def build_login_url() -> str:
     return f"{base}/auth/login"
 
 
+def build_password_reset_url(token: str) -> str:
+    """Build the password-reset URL the user clicks in the email."""
+    base = settings.FRONTEND_BASE_URL.rstrip("/")
+    return f"{base}/auth/reset-password?token={token}"
+
+
 async def _send(message: EmailMessage) -> None:
     """Send an EmailMessage. Swallows errors (logs them) so business flows
     are never broken by transient SMTP issues. Always log the recipient
@@ -148,6 +154,33 @@ async def send_already_registered_email(
 
     msg = EmailMessage()
     msg["Subject"] = "CorrelCore - Diese Adresse ist bereits registriert"
+    msg["From"] = settings.SMTP_FROM
+    msg["To"] = to_email
+    msg.set_content(text_body)
+    msg.add_alternative(html_body, subtype="html")
+
+    await _send(msg)
+
+
+async def send_password_reset_email(
+    *,
+    to_email: str,
+    display_name: str | None,
+    token: str,
+) -> None:
+    """Compose and send the password reset mail (O-20)."""
+    reset_url = build_password_reset_url(token)
+    ctx = {
+        "display_name": display_name,
+        "reset_url": reset_url,
+        "ttl_hours": settings.PASSWORD_RESET_TTL_HOURS,
+    }
+
+    text_body = _render("password_reset.txt.j2", **ctx)
+    html_body = _render("password_reset.html.j2", **ctx)
+
+    msg = EmailMessage()
+    msg["Subject"] = "CorrelCore - Passwort zurücksetzen"
     msg["From"] = settings.SMTP_FROM
     msg["To"] = to_email
     msg.set_content(text_body)

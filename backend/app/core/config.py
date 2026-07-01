@@ -117,6 +117,8 @@ class Settings(BaseSettings):
 
     # Email verification (ADR-0004: 24h TTL)
     EMAIL_VERIFICATION_TTL_HOURS: int = 24
+    # Password reset (O-20: shorter TTL than verification)
+    PASSWORD_RESET_TTL_HOURS: int = 1
     # Storage limitation (DSGVO Art. 5(1)(e)): unverified accounts that
     # never click the mail link are hard-deleted by the worker after this
     # many days so email addresses do not remain blocked forever.
