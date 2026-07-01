@@ -22,6 +22,7 @@ vi.mock('$lib/stores/insights', () => ({
 vi.mock('$lib/offline/session', () => ({
   clearOfflineDataForAnonymousSession: vi.fn(),
   clearOfflineDataForLogout: vi.fn(),
+  drainOfflineSyncForSessionChange: vi.fn(),
   prepareOfflineDataForAuthenticatedUser: vi.fn(),
 }));
 
@@ -75,12 +76,12 @@ describe('hydrate', () => {
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
   });
 
-  it('transitions to anonymous when /me returns null', async () => {
+  it('transitions to anonymous without wiping offline data when /me returns null', async () => {
     vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(null);
     await hydrate();
     expect(get(auth)).toEqual({ status: 'anonymous' });
     expect(get(isAuthenticated)).toBe(false);
-    expect(offlineSession.clearOfflineDataForAnonymousSession).toHaveBeenCalledTimes(1);
+    expect(offlineSession.clearOfflineDataForAnonymousSession).not.toHaveBeenCalled();
   });
 
   it('falls back to anonymous on network error', async () => {
@@ -99,6 +100,33 @@ describe('hydrate', () => {
 });
 
 describe('login / logout / setUser', () => {
+  it('login drains in-flight offline sync before replacing session cookies', async () => {
+    let releaseDrain!: () => void;
+    vi.mocked(offlineSession.drainOfflineSyncForSessionChange).mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        releaseDrain = resolve;
+      })
+    );
+    vi.mocked(authApi.login).mockResolvedValueOnce({
+      access_token: 't',
+      token_type: 'bearer',
+      expires_in: 900,
+      user: fakeUser,
+    });
+
+    const loginPromise = login({ email: 'a@b.de', password: 'pw12345678' });
+    await Promise.resolve();
+    expect(authApi.login).not.toHaveBeenCalled();
+
+    releaseDrain();
+    const user = await loginPromise;
+
+    expect(user).toEqual(fakeUser);
+    expect(
+      vi.mocked(offlineSession.drainOfflineSyncForSessionChange).mock.invocationCallOrder[0]
+    ).toBeLessThan(vi.mocked(authApi.login).mock.invocationCallOrder[0]);
+  });
+
   it('login updates the store with the returned user', async () => {
     vi.mocked(authApi.login).mockResolvedValueOnce({
       access_token: 't',
@@ -110,6 +138,7 @@ describe('login / logout / setUser', () => {
     expect(user).toEqual(fakeUser);
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
+    expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(1);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 
@@ -120,6 +149,7 @@ describe('login / logout / setUser', () => {
     vi.mocked(authApi.logout).mockRejectedValueOnce(new Error('boom'));
     await logout();
     expect(get(auth)).toEqual({ status: 'anonymous' });
+    expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(1);
     expect(offlineSession.clearOfflineDataForLogout).toHaveBeenCalledTimes(1);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });

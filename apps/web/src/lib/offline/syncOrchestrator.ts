@@ -51,6 +51,14 @@ let syncInFlight: Promise<void> | null = null;
 let initialized = false;
 let onlineUnsubscribe: (() => void) | null = null;
 
+function resetSyncOrchestratorState(): void {
+  onlineUnsubscribe?.();
+  onlineUnsubscribe = null;
+  initialized = false;
+  syncInFlight = null;
+  store.set(initialState);
+}
+
 function tableForEntityType(entityType: OfflineEntityType): SyncTableName {
   if (entityType === 'entry') return 'entries';
   if (entityType === 'tag') return 'tags';
@@ -208,6 +216,18 @@ export function scheduleSync(): void {
   });
 }
 
+export async function drainOfflineSyncForSessionChange(): Promise<void> {
+  const inFlight = syncInFlight;
+  if (inFlight) {
+    try {
+      await inFlight;
+    } catch {
+      // Failed pushes stay pending locally; the session transition must still continue.
+    }
+  }
+  resetSyncOrchestratorState();
+}
+
 export function onLocalEntrySaved(): void {
   if (!canUseOfflineSync()) return;
   const online = typeof navigator === 'undefined' ? true : navigator.onLine;
@@ -261,11 +281,7 @@ export function initializeSyncOrchestrator(
 
 /** Test helper — reset singleton orchestrator hooks. */
 export function resetSyncOrchestratorForTests(): void {
-  onlineUnsubscribe?.();
-  onlineUnsubscribe = null;
-  initialized = false;
-  syncInFlight = null;
-  store.set(initialState);
+  resetSyncOrchestratorState();
 }
 
 /** Test helper — read orchestrator state synchronously. */

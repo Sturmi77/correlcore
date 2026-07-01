@@ -4,8 +4,15 @@
 
 import { CLIENT_ID_STORAGE_KEY } from './clientId';
 import { destroyOfflineDatabase, getOfflineDb, type CorrelCoreOfflineDB } from './db';
-import { resetSyncOrchestratorForTests } from './syncOrchestrator';
+import {
+  drainOfflineSyncForSessionChange as drainSyncOrchestratorForSessionChange,
+  resetSyncOrchestratorForTests,
+} from './syncOrchestrator';
 import { SYNC_META_KEYS } from './types';
+
+export async function drainOfflineSyncForSessionChange(): Promise<void> {
+  await drainSyncOrchestratorForSessionChange();
+}
 
 /** Wipe Dexie data and client identity so the next account starts clean. */
 export async function clearOfflineDataForLogout(): Promise<void> {
