@@ -143,6 +143,13 @@ describe('InsightCard', () => {
     expect(screen.getByTestId('insight-confidence-score-percent')).toBeTruthy();
   });
 
+  it('hides the maturity badge when page chrome owns phase display', () => {
+    render(InsightCard, {
+      props: { insight: INSIGHT, maturity: MATURITY, showMaturityBadge: false },
+    });
+    expect(screen.queryByTestId('insight-maturity-badge')).toBeNull();
+  });
+
   it('renders a maturity badge when maturity is provided', () => {
     render(InsightCard, { props: { insight: INSIGHT, maturity: MATURITY } });
     const badge = screen.getByTestId('insight-maturity-badge');

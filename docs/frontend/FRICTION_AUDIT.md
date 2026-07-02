@@ -11,7 +11,7 @@
 | ------------- | ------------------------ | ------------------------------------- |
 | Phase 1       | O-01–O-20                | **Complete** on `main`                |
 | Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                |
-| Phase 2 open  | O-22–O-42                | Planned — see Phase 2 §3 audit matrix |
+| Phase 2 open  | —                        | **Complete** (O-21–O-42 + O-01/O-14 polish) |
 
 **Open audit themes:** Insights control density (W5/W6), spacing hardening (O-31–O-35), Trends tab consolidation (W6).
 
@@ -206,7 +206,7 @@
 | Auth funnel length            | W1                 | high            | Zusammenführen (verify → auto-login) | **Erledigt**        | O-07, O-11, O-20             |
 | Onboarding before first entry | W2                 | high            | Vorverlagern                         | **Erledigt**        | O-02, O-04, O-06, O-37 ✅    |
 | Dual entry surfaces           | W3, W4             | medium          | Zusammenführen                       | **Erledigt**        | O-08 ✅, O-38 ✅             |
-| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | Teilweise           | O-01, O-14, O-22 ✅, O-34 ✅ |
+| Duplicate maturity UI         | W5, W6             | high            | Eliminieren                          | **Erledigt**        | O-01, O-14, O-22 ✅, O-34 ✅ |
 | Legacy onboarding routes      | W2                 | medium          | Eliminieren                          | **Erledigt**        | O-04                         |
 | Analysis split across 2 tabs  | W6                 | medium          | Umleiten (Home brief bridge)         | **Erledigt**        | O-41 ✅                      |
 | Habit setup not in onboarding | W7                 | medium          | Vorverlagern                         | **Erledigt**        | O-09 ✅ (O-16 done)          |
@@ -220,26 +220,19 @@
 
 **Phase 1 (O-01–O-20):** complete — see [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md).
 
-**Phase 2 (O-21+):** open items and full friction-audit mapping — see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md).
+**Phase 2 (O-21–O-42):** complete — see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md).
+
+### Phase 2 closure (July 2026)
+
+1. **O-01** — Page-level maturity chrome OR per-card badge on Insights, never both
+2. **O-14** — Matrix tab and co-occurrence panels gated by maturity and data presence
 
 ### Phase 1 quick wins (historical — all shipped)
 
-1. **O-01** Eliminieren duplicate maturity on Insights mobile
-2. **O-02** Vorverlagern open EntrySheet after onboarding complete
-3. **O-03** Umleiten Insights empty-state CTA → EntrySheet
-4. **O-04** Eliminieren legacy onboarding routes
-5. **O-05** Vereinfachen hide Home sparkline until ≥3 entry points
-
-### Phase 2 next (from audit + planning)
-
-<<<<<<< HEAD
-
-1. **O-41** Trends tab consolidation (W6) / Sprint M
-2. # **O-31–O-35** Spacing hardening (W3–W6) / Sprint L
-3. **O-37** Onboarding polish (W2) / Sprint K
-4. **O-09** Habit hint in onboarding tag step (W7) / Sprint K
-5. ~~**O-41** Trends tab consolidation (W6) / Sprint M~~ — done
-   > > > > > > > 7ae54e5 (feat(web): Sprint M — strategic IA (O-41, O-25, O-27, O-28, O-42))
+1. **O-02** Vorverlagern open EntrySheet after onboarding complete
+2. **O-03** Umleiten Insights empty-state CTA → EntrySheet
+3. **O-04** Eliminieren legacy onboarding routes
+4. **O-05** Vereinfachen hide Home sparkline until ≥3 entry points
 
 ---
 

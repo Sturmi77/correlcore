@@ -22,6 +22,7 @@
   import SymptomCalendarHeatmap from './SymptomCalendarHeatmap.svelte';
   import SymptomCooccurrenceHeatmap from './SymptomCooccurrenceHeatmap.svelte';
   import SymptomTrendOverlay from './SymptomTrendOverlay.svelte';
+  import { canShowSymptomCooccurrence } from '$lib/utils/insightAnalyticsGate';
 
   export let heatmap: SymptomHeatmapResponse | null = null;
   export let entries: EntryResponse[] = [];
@@ -49,6 +50,8 @@
     : eligibleSymptoms.slice(0, SYMPTOM_TREND_MAX_VISIBLE);
   $: moodByDate = buildMoodByDate(entries);
   $: trendDates = heatmap ? trendDatesForHeatmap(heatmap.start_date, heatmap.end_date) : [];
+  $: showCooccurrencePanel =
+    canShowSymptomCooccurrence(phase) && (cooccurrenceLoading || (cooccurrence?.cells.length ?? 0) > 0);
 </script>
 
 <section class="symptom-analytics" aria-labelledby="symptom-analytics-heading">
@@ -130,32 +133,34 @@
     </section>
   {/if}
 
-  <section class="symptom-analytics__subsection" aria-labelledby="symptom-cooccurrence-heading">
-    <header class="symptom-analytics__subheader">
-      <h3 id="symptom-cooccurrence-heading">{$_('insights.symptoms.cooccurrence_heading')}</h3>
-      {#if phase === 'robust'}
-        <button
-          type="button"
-          class="symptom-analytics__toggle"
-          on:click={() =>
-            (cooccurrenceSortMode =
-              cooccurrenceSortMode === 'alphabetical' ? 'clustered' : 'alphabetical')}
-        >
-          {cooccurrenceSortMode === 'clustered'
-            ? $_('insights.symptoms.cooccurrence_sort_alphabetical')
-            : $_('insights.symptoms.cooccurrence_sort_clustered')}
-        </button>
-      {/if}
-    </header>
-    <SymptomCooccurrenceHeatmap
-      data={cooccurrence}
-      loading={cooccurrenceLoading}
-      {phase}
-      sortMode={cooccurrenceSortMode}
-      hideHeading={true}
-      on:selectCell={(event) => dispatch('selectCell', event.detail)}
-    />
-  </section>
+  {#if showCooccurrencePanel}
+    <section class="symptom-analytics__subsection" aria-labelledby="symptom-cooccurrence-heading">
+      <header class="symptom-analytics__subheader">
+        <h3 id="symptom-cooccurrence-heading">{$_('insights.symptoms.cooccurrence_heading')}</h3>
+        {#if phase === 'robust'}
+          <button
+            type="button"
+            class="symptom-analytics__toggle"
+            on:click={() =>
+              (cooccurrenceSortMode =
+                cooccurrenceSortMode === 'alphabetical' ? 'clustered' : 'alphabetical')}
+          >
+            {cooccurrenceSortMode === 'clustered'
+              ? $_('insights.symptoms.cooccurrence_sort_alphabetical')
+              : $_('insights.symptoms.cooccurrence_sort_clustered')}
+          </button>
+        {/if}
+      </header>
+      <SymptomCooccurrenceHeatmap
+        data={cooccurrence}
+        loading={cooccurrenceLoading}
+        {phase}
+        sortMode={cooccurrenceSortMode}
+        hideHeading={true}
+        on:selectCell={(event) => dispatch('selectCell', event.detail)}
+      />
+    </section>
+  {/if}
 </section>
 
 <style>
