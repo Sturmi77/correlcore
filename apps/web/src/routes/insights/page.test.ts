@@ -382,6 +382,11 @@ describe('/insights page analysis range', () => {
 
     expect(screen.getByText('symptom-window:fresh-month-window:entries:1')).toBeTruthy();
     expect(screen.queryByText('symptom-window:stale-year-window:entries:1')).toBeNull();
+
+    for (const request of testHelpers.tagCooccurrenceRequests) {
+      request.resolve(tagCooccurrenceResponse('30d'));
+    }
+    await flushPromises();
   });
 
   it('does not refetch co-occurrence when switching between equivalent API windows', async () => {
