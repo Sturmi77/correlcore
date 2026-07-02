@@ -392,9 +392,63 @@
     setEntryOpenMode(next);
   }
 
-  function setSlot(slot: EntrySlot) {
+  function waitForAutoSaveNotSaving(): Promise<void> {
+    if (autoSave.peek().status !== 'saving') return Promise.resolve();
+
+    return new Promise((resolve) => {
+      let unsubscribe = () => {};
+      unsubscribe = autoSaveState.subscribe((state) => {
+        if (state.status !== 'saving') {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
+  async function settleAutosaveBeforeHydration(): Promise<boolean> {
+    let flushed = false;
+
+    while (true) {
+      const status = autoSave.peek().status;
+      if (status === 'dirty' || status === 'error') {
+        if (flushed) return false;
+        flushed = true;
+        await autoSave.flushNow();
+        continue;
+      }
+      if (status === 'saving') {
+        await waitForAutoSaveNotSaving();
+        continue;
+      }
+      return true;
+    }
+  }
+
+  async function flushSlotAfterInFlightSave(): Promise<void> {
+    await waitForAutoSaveNotSaving();
+    const status = autoSave.peek().status;
+    if (status === 'saved' || status === 'idle') {
+      markDirty();
+    }
+    await autoSave.flushNow();
+  }
+
+  async function setSlot(slot: EntrySlot) {
     const nextSlot = selectedSlot === slot ? 'day' : slot;
-    void loadForDate(entryDate, nextSlot);
+    const status = autoSave.peek().status;
+    if (!existingEntryId && (status === 'dirty' || status === 'saving' || status === 'error')) {
+      selectedSlot = nextSlot;
+      markDirty();
+      if (status === 'saving') {
+        void flushSlotAfterInFlightSave();
+      }
+      void refreshDayDelta(entryDate, nextSlot);
+      return;
+    }
+
+    if (!(await settleAutosaveBeforeHydration())) return;
+    await loadForDate(entryDate, nextSlot);
   }
 
   // ---------------------------------------------------------------------

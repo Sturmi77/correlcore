@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EntryDeltaResponse } from '$lib/api/entries';
-import { fetchEntryDelta, listEntries } from '$lib/api/entries';
+import type { EntryDeltaResponse, EntryResponse } from '$lib/api/entries';
+import { fetchEntryDelta, listEntries, updateEntry } from '$lib/api/entries';
 import { submitEntry } from '$lib/stores/entries';
 import EntryForm from './EntryForm.svelte';
 
@@ -202,6 +202,123 @@ describe('EntryForm smart defaults', () => {
         energy: 2,
         stress: 5,
       })
+    );
+  });
+});
+
+describe('EntryForm slot changes', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(listEntries).mockResolvedValue([]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('keeps dirty draft edits when selecting a time slot', async () => {
+    const { container } = render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'draft before slot switch' },
+    });
+    await flushAsync();
+
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('dirty');
+
+    await fireEvent.click(screen.getByRole('button', { name: 'entry.time_slot.morning' }));
+    await flushAsync();
+
+    expect(
+      screen.getByRole('button', { name: 'entry.time_slot.morning' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('dirty');
+
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledTimes(1);
+    expect(submitEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entry_date: '2026-06-02',
+        slot: 'morning',
+        note: 'draft before slot switch',
+      })
+    );
+  });
+
+  it('persists a selected slot after an in-flight draft create completes', async () => {
+    const create = testHelpers.deferred<EntryResponse>();
+    vi.mocked(submitEntry).mockReturnValue(create.promise);
+    vi.mocked(updateEntry).mockResolvedValue({
+      id: 'created-entry',
+      user_id: 'user-1',
+      entry_date: '2026-06-02',
+      slot: 'morning',
+      mood_score: 4,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: null,
+      created_at: '2026-06-02T12:00:00Z',
+      updated_at: '2026-06-02T12:01:00Z',
+    });
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+    await fireEvent.click(screen.getByLabelText('entry.mood_increment'));
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ slot: 'day', mood_score: 4 })
+    );
+
+    await fireEvent.click(screen.getByRole('button', { name: 'entry.time_slot.morning' }));
+    await flushAsync();
+    expect(
+      screen.getByRole('button', { name: 'entry.time_slot.morning' }).getAttribute('aria-pressed')
+    ).toBe('true');
+
+    create.resolve({
+      id: 'created-entry',
+      user_id: 'user-1',
+      entry_date: '2026-06-02',
+      slot: 'day',
+      mood_score: 4,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: null,
+      created_at: '2026-06-02T12:00:00Z',
+      updated_at: '2026-06-02T12:00:00Z',
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).toHaveBeenCalledWith(
+      'created-entry',
+      expect.objectContaining({ slot: 'morning', mood_score: 4 })
     );
   });
 });
