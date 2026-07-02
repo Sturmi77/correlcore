@@ -45,6 +45,8 @@
   export let showMaturityBadge = true;
   /** When set, the parent owns filter UI and state (O-22). */
   export let filterTab: InsightFeedFilterTab | undefined = undefined;
+  /** Analysis window in days for the context subtitle (O-46). */
+  export let analysisRangeDays = 90;
 
   const dispatch = createEventDispatcher<{ retry: void }>();
 
@@ -71,7 +73,7 @@
   {#if showContext}
     <div class="if-context-row">
       <p class="if-context" data-testid="insight-feed-context">
-        {$_('insights.feed.subtitle', { values: { days: 90, n: entryCount } })}
+        {$_('insights.feed.subtitle', { values: { days: analysisRangeDays, n: entryCount } })}
       </p>
       <button
         class="if-disclaimer-btn"

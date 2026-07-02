@@ -232,6 +232,15 @@ See [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md). Focus: mobile In
 1. **O-01** — Page-level maturity chrome OR per-card badge on Insights, never both
 2. **O-14** — Matrix tab and co-occurrence panels gated by maturity and data presence
 
+**Phase 3 (O-43–O-56):** complete — see [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md).
+
+### Phase 3 closure (July 2026)
+
+1. **O-43–O-46** — Mobile Insights feed correctness, SWR loading, dynamic subtitle
+2. **O-47–O-49** — Two-row toolbar, permanent analytics, symptom block decoupled from filter tab
+3. **O-50–O-53** — Responsive symptom charts, mobile 90d cap, calendar interpretation copy
+4. **O-54–O-56** — Home single CTA path, sparkline removed, Top Insight facts row
+
 ### Phase 1 quick wins (historical — all shipped)
 
 1. **O-02** Vorverlagern open EntrySheet after onboarding complete

@@ -37,7 +37,9 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
 });
 
-test('430px keeps matrices and analytics behind explicit detail actions', async ({ page }) => {
+test('430px keeps matrices behind explicit detail actions and shows analytics by default', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await installInsightsApiMock(page);
   await page.goto('/insights');
@@ -56,7 +58,7 @@ test('430px keeps matrices and analytics behind explicit detail actions', async 
       .first()
   ).toBeVisible();
 
-  await page.getByText('Deepen analysis', { exact: true }).tap();
+  await expect(page.getByTestId('insights-analytics-panel')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Patterns', exact: true })).toBeVisible();
 
   const layout = await page.evaluate(() => ({

@@ -59,6 +59,9 @@
       "delta_flat": "Stable",
       "top_tag": "Notable tag",
       "top_symptom": "Notable symptom",
+      "top_insight": "Top insight",
+      "top_insight_confidence": "{value}% confidence",
+      "top_insight_fallback": "Log a few more days to surface your strongest pattern here.",
       "none": "None"
     },
     "recent": {
@@ -975,6 +978,7 @@
       "calendar_present": "present",
       "calendar_absent": "absent",
       "calendar_legend": "Calendar legend",
+      "calendar_how_to_read": "Each cell is one day. Darker cells mean the symptom was logged that day; tap a cell to review entries.",
       "trend_heading": "Symptom and mood trends",
       "trend_subtitle": "Rolling {window}-day view across the last {days} days",
       "trend_aria": "Symptom frequency and mood trend for {name}",

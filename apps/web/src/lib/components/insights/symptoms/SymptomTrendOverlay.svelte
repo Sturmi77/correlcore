@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightMaturityPhase } from '$lib/api/insights';
   import type { SymptomTrendPoint } from '$lib/utils/symptomAnalyticsViews';
@@ -9,30 +10,42 @@
   export let rollingWindowDays = 7;
   export let showUncertaintyRibbon = true;
 
-  const width = 320;
   const height = 140;
-  const padLeft = 36;
-  const padRight = 36;
   const padTop = 12;
   const padBottom = 24;
-  const plotWidth = width - padLeft - padRight;
-  const plotHeight = height - padTop - padBottom;
+  const minWidth = 280;
+  const maxWidth = 480;
+
+  let chartWidth = 320;
+  let chartHost: HTMLElement | null = null;
+
+  $: padLeft = chartWidth < 360 ? 28 : 36;
+  $: padRight = chartWidth < 360 ? 28 : 36;
+  $: plotWidth = chartWidth - padLeft - padRight;
+  $: plotHeight = height - padTop - padBottom;
+  $: labelSize = chartWidth < 360 ? 9 : 10;
 
   $: ribbonEnabled =
     showUncertaintyRibbon && phase !== 'robust' && phase !== null && data.length > 0;
 
   type Point = { x: number; ySymptom: number; yMood: number | null; point: SymptomTrendPoint };
 
-  $: geometry = buildGeometry(data);
+  $: geometry = buildGeometry(data, plotWidth, padLeft, padTop, plotHeight);
 
-  function buildGeometry(points: SymptomTrendPoint[]): Point[] {
+  function buildGeometry(
+    points: SymptomTrendPoint[],
+    width: number,
+    leftPad: number,
+    topPad: number,
+    height: number
+  ): Point[] {
     if (points.length === 0) return [];
-    const step = points.length > 1 ? plotWidth / (points.length - 1) : 0;
+    const step = points.length > 1 ? width / (points.length - 1) : 0;
     return points.map((point, index) => ({
-      x: padLeft + step * index,
-      ySymptom: padTop + (1 - point.symptomFrequency) * plotHeight,
+      x: leftPad + step * index,
+      ySymptom: topPad + (1 - point.symptomFrequency) * height,
       yMood:
-        point.moodAverage === null ? null : padTop + (1 - (point.moodAverage - 1) / 4) * plotHeight,
+        point.moodAverage === null ? null : topPad + (1 - (point.moodAverage - 1) / 4) * height,
       point,
     }));
   }
@@ -69,6 +82,17 @@
     if (upper.length === 0) return '';
     return `M${upper.join(' L')} L${lower.join(' L')} Z`;
   }
+
+  onMount(() => {
+    const updateWidth = () => {
+      const hostWidth = chartHost?.clientWidth ?? minWidth;
+      chartWidth = Math.max(minWidth, Math.min(maxWidth, hostWidth));
+    };
+    updateWidth();
+    const observer = chartHost ? new ResizeObserver(updateWidth) : null;
+    if (chartHost) observer?.observe(chartHost);
+    return () => observer?.disconnect();
+  });
 </script>
 
 <article class="symptom-trend" aria-labelledby="symptom-trend-heading">
@@ -82,12 +106,14 @@
   </header>
 
   {#if data.length > 0}
-    <svg
-      class="symptom-trend__chart"
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-label={$_('insights.symptoms.trend_aria', { values: { name: symptomName } })}
-    >
+    <div class="symptom-trend__chart-host" bind:this={chartHost}>
+      <svg
+        class="symptom-trend__chart"
+        viewBox={`0 0 ${chartWidth} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label={$_('insights.symptoms.trend_aria', { values: { name: symptomName } })}
+      >
       <line
         x1={padLeft}
         y1={padTop + plotHeight}
@@ -107,13 +133,19 @@
         <path d={symptomPath} class="symptom-trend__line symptom-trend__line--symptom" />
       {/if}
 
-      <text x={4} y={padTop + 4} class="symptom-trend__ylabel"
+      <text x={4} y={padTop + 4} class="symptom-trend__ylabel" style={`font-size: ${labelSize}px`}
         >{$_('insights.symptoms.trend_freq')}</text
       >
-      <text x={width - 4} y={padTop + 4} class="symptom-trend__ylabel symptom-trend__ylabel--right">
+      <text
+        x={chartWidth - 4}
+        y={padTop + 4}
+        class="symptom-trend__ylabel symptom-trend__ylabel--right"
+        style={`font-size: ${labelSize}px`}
+      >
         {$_('insights.symptoms.trend_mood')}
       </text>
-    </svg>
+      </svg>
+    </div>
 
     <ul class="symptom-trend__legend" aria-hidden="true">
       <li>
@@ -150,6 +182,11 @@
   .symptom-trend__empty {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .symptom-trend__chart-host {
+    width: 100%;
+    min-width: 0;
   }
 
   .symptom-trend__chart {

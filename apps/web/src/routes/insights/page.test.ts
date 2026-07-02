@@ -297,8 +297,6 @@ describe('/insights page analysis range', () => {
   it('reloads requested analytics on range change and ignores stale co-occurrence responses', async () => {
     render(Page);
 
-    await fireEvent.click(await screen.findByText('insights.page.analytics_summary'));
-
     await waitFor(() => {
       expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '30d', min_count: 2 });
     });
@@ -390,8 +388,6 @@ describe('/insights page analysis range', () => {
 
   it('does not refetch co-occurrence when switching between equivalent API windows', async () => {
     render(Page);
-
-    await fireEvent.click(await screen.findByText('insights.page.analytics_summary'));
 
     await waitFor(() => {
       expect(fetchTagCooccurrence).toHaveBeenCalledTimes(1);

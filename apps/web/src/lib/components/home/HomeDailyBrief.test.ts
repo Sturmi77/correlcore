@@ -47,7 +47,7 @@ describe('HomeDailyBrief', () => {
     expect(screen.getByRole('meter')).toBeTruthy();
   });
 
-  it('enriches weekly bridge links with insight and trend previews', () => {
+  it('enriches weekly bridge links with insight previews', () => {
     render(HomeDailyBrief, {
       props: {
         maturity: collectingMaturity,
@@ -56,19 +56,16 @@ describe('HomeDailyBrief', () => {
           id: 'i1',
           subject_label: 'Energy',
           metric: 'energy',
-        } as never,
-        tagHeatmap: {
-          tags: [
-            {
-              name: 'Walk',
-              days: [{ date: '2026-06-01', count: 2 }],
-            },
-          ],
+          statement: 'Energy tracks with your walks.',
+          confidence: 0.72,
         } as never,
       },
     });
 
     expect(screen.getByTestId('home-bridge-insights').textContent).toContain('Energy');
-    expect(screen.getByTestId('home-bridge-trends').textContent).toContain('Walk');
+    expect(screen.getByTestId('home-bridge-trends').textContent).toContain('Energy');
+    expect(screen.getByTestId('home-brief-top-insight').textContent).toContain(
+      'Energy tracks with your walks.'
+    );
   });
 });

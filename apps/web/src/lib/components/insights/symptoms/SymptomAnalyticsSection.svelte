@@ -8,8 +8,10 @@
     SymptomTagCooccurrenceResponse,
   } from '$lib/api/insights';
   import type { SymptomHeatmapResponse } from '$lib/api/stats';
+  import { onMount } from 'svelte';
   import ComparisonHeatmap from '$lib/components/trends/ComparisonHeatmap.svelte';
   import { buildIsoDateRange, compareDailyAxisLayout } from '$lib/utils/charts';
+  import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
   import {
     SYMPTOM_CALENDAR_MAX_VISIBLE,
     SYMPTOM_TREND_MAX_VISIBLE,
@@ -39,6 +41,12 @@
   let showAllCalendars = false;
   let showAllTrends = false;
   let cooccurrenceSortMode: 'alphabetical' | 'clustered' = 'alphabetical';
+  let axisLayout = compareDailyAxisLayout;
+
+  onMount(() => {
+    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    axisLayout = compareDailyAxisLayoutFromRoot(rootPx);
+  });
 
   $: dates = heatmap ? buildIsoDateRange(heatmap.start_date, heatmap.end_date) : [];
   $: eligibleSymptoms = heatmap ? rankEligibleSymptoms(heatmap.symptoms) : [];
@@ -70,7 +78,7 @@
     showSymptoms={true}
     {loading}
     {dates}
-    axisLayout={compareDailyAxisLayout}
+    {axisLayout}
     headingKey="insights.symptoms.heatmap_heading"
     emptyKey="insights.symptoms.empty"
     on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
