@@ -79,27 +79,27 @@
 | **I — Home & Links**    | O-39, O-40, O-13 ✅ | Weekly review bridge complete |
 | **J — Entry & Desktop** | O-36, O-08, O-38 ✅ | W3/W4 audit rest              |
 
-| **K — Onboarding & Habits** | O-37, O-09 ✅                   | W2/W7 audit rest              |
-| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34 ✅ | Mobile density                |
-| **M — Strategic**           | O-41, O-25, O-27, O-28, O-42 ✅ | Larger IA / backend           |
-| **Polish — Closure**        | O-01, O-14 ✅                    | Maturity dedup + analytics gates |
+| **K — Onboarding & Habits** | O-37, O-09 ✅ | W2/W7 audit rest |
+| **L — Spacing & Polish** | O-31–O-35, O-26, O-29, O-34 ✅ | Mobile density |
+| **M — Strategic** | O-41, O-25, O-27, O-28, O-42 ✅ | Larger IA / backend |
+| **Polish — Closure** | O-01, O-14 ✅ | Maturity dedup + analytics gates |
 
 ---
 
 ## Workflow coverage matrix (Phase 2 additions)
 
-| Workflow           | Open Phase-2 issues                                              |
-| ------------------ | ---------------------------------------------------------------- |
-| W1 Account         | — (complete)                                                     |
-| W2 Onboarding      | ~~O-37~~, ~~O-09~~                                               |
-| W3 Daily entry     | ~~O-36~~, ~~O-08~~, ~~O-38~~, ~~O-21~~, ~~O-25~~, ~~O-42~~      |
-| W4 Backdate        | ~~O-08~~                                                         |
-| W5 First insight   | ~~O-34~~, ~~O-01~~                                               |
-| W6 Weekly analysis | ~~O-41~~, ~~O-26~~, ~~O-29~~, ~~O-14~~                           |
-| W7 Habits          | ~~O-09~~                                                         |
-| W8 Vocabulary      | ~~O-27~~, ~~O-28~~                                               |
-| W9 Export          | — (complete)                                                     |
-| W10 PWA            | — (complete)                                                     |
+| Workflow           | Open Phase-2 issues                                        |
+| ------------------ | ---------------------------------------------------------- |
+| W1 Account         | — (complete)                                               |
+| W2 Onboarding      | ~~O-37~~, ~~O-09~~                                         |
+| W3 Daily entry     | ~~O-36~~, ~~O-08~~, ~~O-38~~, ~~O-21~~, ~~O-25~~, ~~O-42~~ |
+| W4 Backdate        | ~~O-08~~                                                   |
+| W5 First insight   | ~~O-34~~, ~~O-01~~                                         |
+| W6 Weekly analysis | ~~O-41~~, ~~O-26~~, ~~O-29~~, ~~O-14~~                     |
+| W7 Habits          | ~~O-09~~                                                   |
+| W8 Vocabulary      | ~~O-27~~, ~~O-28~~                                         |
+| W9 Export          | — (complete)                                               |
+| W10 PWA            | — (complete)                                               |
 
 ---
 

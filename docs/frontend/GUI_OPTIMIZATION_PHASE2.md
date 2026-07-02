@@ -98,48 +98,48 @@ _Erledigt aus W1:_ O-07 (Verify auto-login), O-11 (Mail deep link), O-20 (Passwo
 Vollständige Schritt-Inventare: [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md).  
 Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnung.
 
-| Workflow | Audit-Punkt                     | Ticket | Priorität           |
-| -------- | ------------------------------- | ------ | ------------------- |
-| **W1**   | Post-verify Login-Schritt       | —      | **Erledigt** (O-07) |
-| **W1**   | Kein Password-Reset             | —      | **Erledigt** (O-20) |
-| **W1**   | Check-email Mail-App-Link       | —      | **Erledigt** (O-11) |
-| **W2**   | Intro-Panel vor erstem Entry    | —      | **Erledigt** (O-37) |
-| **W2**   | Summary bei wenigen Tags        | —      | **Erledigt** (O-37) |
-| **W2**   | Post-onboarding leerer Brief    | —      | **Erledigt** (O-02) |
-| **W2**   | Legacy retro/profile            | —      | **Erledigt** (O-04) |
-| **W3**   | Smart default von gestern       | —      | **Erledigt** (O-36) |
-| **W3**   | Dual Entry Desktop              | —      | **Erledigt** (O-08) |
-| **W3**   | Entry-Page Chrome (Theme/Nav)   | —      | **Erledigt** (O-08) |
-| **W3**   | Trends CTA → Route statt Sheet  | —      | **Erledigt** (O-38) |
-| **W3**   | Tags/Symptome hinter Toggle     | —      | **Erledigt** (O-21) |
-| **W4**   | Rückdatierung Sheet vs. Page    | —      | **Erledigt** (O-08) |
-| **W5**   | Meilenstein inline im Brief     | —      | **Erledigt** (O-39) |
+| Workflow | Audit-Punkt                     | Ticket | Priorität                 |
+| -------- | ------------------------------- | ------ | ------------------------- |
+| **W1**   | Post-verify Login-Schritt       | —      | **Erledigt** (O-07)       |
+| **W1**   | Kein Password-Reset             | —      | **Erledigt** (O-20)       |
+| **W1**   | Check-email Mail-App-Link       | —      | **Erledigt** (O-11)       |
+| **W2**   | Intro-Panel vor erstem Entry    | —      | **Erledigt** (O-37)       |
+| **W2**   | Summary bei wenigen Tags        | —      | **Erledigt** (O-37)       |
+| **W2**   | Post-onboarding leerer Brief    | —      | **Erledigt** (O-02)       |
+| **W2**   | Legacy retro/profile            | —      | **Erledigt** (O-04)       |
+| **W3**   | Smart default von gestern       | —      | **Erledigt** (O-36)       |
+| **W3**   | Dual Entry Desktop              | —      | **Erledigt** (O-08)       |
+| **W3**   | Entry-Page Chrome (Theme/Nav)   | —      | **Erledigt** (O-08)       |
+| **W3**   | Trends CTA → Route statt Sheet  | —      | **Erledigt** (O-38)       |
+| **W3**   | Tags/Symptome hinter Toggle     | —      | **Erledigt** (O-21)       |
+| **W4**   | Rückdatierung Sheet vs. Page    | —      | **Erledigt** (O-08)       |
+| **W5**   | Meilenstein inline im Brief     | —      | **Erledigt** (O-39)       |
 | **W5**   | Duplicate maturity UI           | —      | **Erledigt** (O-01, O-34) |
-| **W5**   | Matrix/Co-occurrence leer       | —      | **Erledigt** (O-14) |
-| **W6**   | Matrix als eigener Tab          | —      | **Erledigt** (O-22) |
-| **W6**   | Range pro Widget                | O-23   | High                |
-| **W6**   | Trends ↔ Insights getrennt      | —      | **Erledigt** (O-41) |
-| **W6**   | Compare + Health Tabs           | —      | **Erledigt** (O-41) |
-| **W6**   | Heatmap → Route statt Sheet     | —      | **Erledigt** (O-17) |
-| **W7**   | Habit-Setup nicht in Onboarding | —      | **Erledigt** (O-09) |
-| **W7**   | Leeres Habits-Panel             | —      | **Erledigt** (O-16) |
-| **W8**   | Vokabular-Subnavigation         | —      | **Erledigt** (O-27) |
-| **W9**   | Export in Settings versteckt    | —      | **Erledigt** (O-19) |
-| **W10**  | PWA-Banner vor erstem Entry     | —      | **Erledigt** (O-18) |
+| **W5**   | Matrix/Co-occurrence leer       | —      | **Erledigt** (O-14)       |
+| **W6**   | Matrix als eigener Tab          | —      | **Erledigt** (O-22)       |
+| **W6**   | Range pro Widget                | O-23   | High                      |
+| **W6**   | Trends ↔ Insights getrennt      | —      | **Erledigt** (O-41)       |
+| **W6**   | Compare + Health Tabs           | —      | **Erledigt** (O-41)       |
+| **W6**   | Heatmap → Route statt Sheet     | —      | **Erledigt** (O-17)       |
+| **W7**   | Habit-Setup nicht in Onboarding | —      | **Erledigt** (O-09)       |
+| **W7**   | Leeres Habits-Panel             | —      | **Erledigt** (O-16)       |
+| **W8**   | Vokabular-Subnavigation         | —      | **Erledigt** (O-27)       |
+| **W9**   | Export in Settings versteckt    | —      | **Erledigt** (O-19)       |
+| **W10**  | PWA-Banner vor erstem Entry     | —      | **Erledigt** (O-18)       |
 
 ### Cross-cutting themes (aktualisiert)
 
-| Theme                           | Status        | Offene Tickets     |
-| ------------------------------- | ------------- | ------------------ |
-| Auth-Funnel-Länge               | **Erledigt**  | —                  |
-| Onboarding vor erstem Entry     | **Erledigt**  | —                  |
-| Dual Entry Surfaces             | **Erledigt**  | —                  |
-| Duplicate maturity UI           | **Erledigt**  | O-01, O-34        |
-| Legacy Onboarding               | **Erledigt**  | —                  |
-| Analyse auf 2 Nav-Tabs verteilt | **Erledigt**  | O-41               |
-| Habit-Setup nicht in Onboarding | **Erledigt**  | —                  |
-| Kein Password-Reset             | **Erledigt**  | —                  |
-| Spacing / Dichte Mobile         | **Erledigt**  | O-30–O-35          |
+| Theme                           | Status       | Offene Tickets |
+| ------------------------------- | ------------ | -------------- |
+| Auth-Funnel-Länge               | **Erledigt** | —              |
+| Onboarding vor erstem Entry     | **Erledigt** | —              |
+| Dual Entry Surfaces             | **Erledigt** | —              |
+| Duplicate maturity UI           | **Erledigt** | O-01, O-34     |
+| Legacy Onboarding               | **Erledigt** | —              |
+| Analyse auf 2 Nav-Tabs verteilt | **Erledigt** | O-41           |
+| Habit-Setup nicht in Onboarding | **Erledigt** | —              |
+| Kein Password-Reset             | **Erledigt** | —              |
+| Spacing / Dichte Mobile         | **Erledigt** | O-30–O-35      |
 
 ---
 

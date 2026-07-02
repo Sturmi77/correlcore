@@ -270,6 +270,9 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
 
   await page.goto('/insights');
   await expect(page.getByText(/fridays currently line up/i)).toBeVisible();
-  await expect(page.getByTestId('insight-stage-header')).toHaveAttribute('data-phase', 'provisional');
+  await expect(page.getByTestId('insight-stage-header')).toHaveAttribute(
+    'data-phase',
+    'provisional'
+  );
   await expect(page.getByTestId('insight-stage-meta')).toBeVisible();
 });

@@ -7,10 +7,10 @@
 
 ### Resolution status (summary)
 
-| Phase         | Scope                    | Status                                |
-| ------------- | ------------------------ | ------------------------------------- |
-| Phase 1       | O-01–O-20                | **Complete** on `main`                |
-| Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                |
+| Phase         | Scope                    | Status                                      |
+| ------------- | ------------------------ | ------------------------------------------- |
+| Phase 1       | O-01–O-20                | **Complete** on `main`                      |
+| Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                      |
 | Phase 2 open  | —                        | **Complete** (O-21–O-42 + O-01/O-14 polish) |
 
 **Open audit themes:** Insights control density (W5/W6), spacing hardening (O-31–O-35), Trends tab consolidation (W6).
