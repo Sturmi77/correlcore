@@ -180,7 +180,7 @@
         listEntries({ start_date, end_date }),
         fetchSymptomHeatmap({ start_date, end_date }),
       ]);
-      if (requestId !== symptomWindowRequestId || requestedRange !== get(analysisRange)) return;
+      if (requestId !== symptomWindowRequestId || requestedRange !== insightsRangeForData()) return;
       if (entryResult.status === 'fulfilled') {
         dayEntryDates = dayEntryDatesFromIsoEntries(entryResult.value);
         moodEntries = entryResult.value;
@@ -448,15 +448,9 @@
         return;
       }
 
-<<<<<<< HEAD
-      const requestedAnalysisRange = get(analysisRange);
+      const requestedAnalysisRange = insightsRangeForData();
       const { start_date: startIso, end_date: todayIso } =
         analysisDateWindow(requestedAnalysisRange);
-=======
-      const rangeForWindow =
-        compactInsights && get(analysisRange) === 'year' ? 'quarter' : get(analysisRange);
-      const { start_date: startIso, end_date: todayIso } = analysisDateWindow(rangeForWindow);
->>>>>>> 7d8bb2b (feat(web): GUI Phase 3 Sprints P3-A–P3-D (O-43–O-56))
       const [
         insightsResult,
         entryResult,
