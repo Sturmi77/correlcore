@@ -113,6 +113,12 @@
   // fetch returned) are discarded so the form doesn't snap back to
   // outdated data.
   let loadToken = 0;
+  let dateChangeToken = 0;
+  let handledEntryDate: string | null = null;
+  // The date whose fields are currently hydrated in the form. While the
+  // date input is moving to a new value, pending autosaves must still
+  // persist against this previous date.
+  let loadedEntryDate: string = initialDate;
   let slotChangeToken = 0;
   // While `true`, reactive watchers on form fields skip `markDirty()`
   // — needed during hydration so loading an existing entry doesn't
@@ -227,6 +233,7 @@
     try {
       if (canUseOfflineSync()) {
         const local = await findLocalEntryByDateSlot(date, slot);
+        if (myToken !== loadToken) return;
         if (local) {
           existingEntryId = local.id;
           const fields = localEntryToFormFields(local);
@@ -244,6 +251,7 @@
           if (typeof navigator !== 'undefined' && navigator.onLine) {
             void refreshDayDelta(date, selectedSlot);
           }
+          loadedEntryDate = date;
           return;
         }
       }
@@ -259,6 +267,7 @@
       );
       if (!matchingEntry) {
         resetForm(date, slot);
+        loadedEntryDate = date;
         void applySmartDefaults(date, slot, myToken);
         return;
       }
@@ -291,11 +300,13 @@
           intensity: s.intensity,
         }));
       }
+      loadedEntryDate = date;
       void refreshDayDelta(date, selectedSlot);
     } catch (err) {
       if (myToken !== loadToken) return;
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
       resetForm(date, slot);
+      loadedEntryDate = date;
     } finally {
       if (myToken === loadToken) {
         loading = false;
@@ -310,11 +321,28 @@
     }
   }
 
+  async function handleEntryDateChange(date: string): Promise<void> {
+    const myToken = ++dateChangeToken;
+    if (date !== loadedEntryDate) {
+      const settled = await settleAutosaveBeforeHydration();
+      if (myToken !== dateChangeToken) return;
+      if (!settled) {
+        handledEntryDate = loadedEntryDate;
+        entryDate = loadedEntryDate;
+        return;
+      }
+    }
+    await loadForDate(date);
+  }
+
   // Reactively reload whenever the user picks a different date. The
   // initial call is also covered: once ``entryDate`` is initialised
   // above, this reactive block fires on mount.
   $: if (entryDate) {
-    void loadForDate(entryDate);
+    if (entryDate !== handledEntryDate) {
+      handledEntryDate = entryDate;
+      void handleEntryDateChange(entryDate);
+    }
   }
 
   function onWorkContextChange(e: Event) {
@@ -494,7 +522,7 @@
 
   function snapshot(): FormSnapshot {
     return {
-      entry_date: entryDate,
+      entry_date: loadedEntryDate,
       mood_score: moodScore,
       energy,
       stress,

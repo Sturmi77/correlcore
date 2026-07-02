@@ -258,6 +258,43 @@ describe('EntryForm slot changes', () => {
     );
   });
 
+  it('flushes dirty edits against the previous date before hydrating a new date', async () => {
+    const { container } = render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'draft before date change' },
+    });
+    await flushAsync();
+
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('dirty');
+
+    await fireEvent.input(screen.getByLabelText('entry.date_label'), {
+      target: { value: '2026-06-03' },
+    });
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledTimes(1);
+    expect(submitEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entry_date: '2026-06-02',
+        slot: 'day',
+        note: 'draft before date change',
+      })
+    );
+    expect(listEntries).toHaveBeenCalledWith({
+      start_date: '2026-06-03',
+      end_date: '2026-06-03',
+      limit: 5,
+    });
+    expect(
+      (screen.getByPlaceholderText('entry.note_placeholder') as HTMLTextAreaElement).value
+    ).toBe('');
+  });
+
   it('persists a selected slot after an in-flight draft create completes', async () => {
     const create = testHelpers.deferred<EntryResponse>();
     vi.mocked(submitEntry).mockReturnValue(create.promise);
