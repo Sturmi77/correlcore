@@ -345,6 +345,9 @@ describe('/insights page analysis range', () => {
   it('ignores stale symptom analytics responses after rapid range changes', async () => {
     render(Page);
 
+    await fireEvent.click(await screen.findByTestId('insights-filter-tab-symptoms'));
+    await fireEvent.click(screen.getByText('insights.page.analytics_summary'));
+
     await waitFor(() => {
       expect(screen.getByText('symptom-window:2026-05-01:entries:0')).toBeTruthy();
     });
