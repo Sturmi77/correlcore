@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -285,14 +285,18 @@ describe('EntryForm slot changes', () => {
         note: 'draft before date change',
       })
     );
-    expect(listEntries).toHaveBeenCalledWith({
-      start_date: '2026-06-03',
-      end_date: '2026-06-03',
-      limit: 5,
+    await waitFor(() => {
+      expect(listEntries).toHaveBeenCalledWith({
+        start_date: '2026-06-03',
+        end_date: '2026-06-03',
+        limit: 5,
+      });
     });
-    expect(
-      (screen.getByPlaceholderText('entry.note_placeholder') as HTMLTextAreaElement).value
-    ).toBe('');
+    await waitFor(() => {
+      expect(
+        (screen.getByPlaceholderText('entry.note_placeholder') as HTMLTextAreaElement).value
+      ).toBe('');
+    });
   });
 
   it('persists a selected slot after an in-flight draft create completes', async () => {
