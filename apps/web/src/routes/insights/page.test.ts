@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
 import { fetchTagCooccurrence } from '$lib/api/insights';
+import { fetchSymptomHeatmap } from '$lib/api/stats';
+import { listEntries } from '$lib/api/entries';
 import Page from './+page.svelte';
 
 type Deferred<T> = {
@@ -277,5 +279,49 @@ describe('/insights page analysis range', () => {
 
     expect(screen.getAllByText('1y tag a').length).toBeGreaterThan(0);
     expect(screen.queryByText('30d tag a')).toBeNull();
+  });
+
+  it('reloads symptom analytics for the selected analysis range', async () => {
+    render(Page);
+
+    await waitFor(() => {
+      expect(fetchSymptomHeatmap).toHaveBeenCalled();
+    });
+
+    const initialCall = vi.mocked(fetchSymptomHeatmap).mock.calls.at(-1)?.[0];
+    expect(initialCall?.start_date).toBeTruthy();
+    expect(initialCall?.end_date).toBeTruthy();
+
+    vi.mocked(fetchSymptomHeatmap).mockClear();
+    vi.mocked(listEntries).mockClear();
+
+    await fireEvent.click(screen.getByTestId('insights-range-year'));
+
+    await waitFor(() => {
+      expect(fetchSymptomHeatmap).toHaveBeenCalled();
+      expect(listEntries).toHaveBeenCalled();
+    });
+
+    const nextHeatmapCall = vi.mocked(fetchSymptomHeatmap).mock.calls.at(-1)?.[0];
+    const nextEntriesCall = vi.mocked(listEntries).mock.calls.at(-1)?.[0];
+    expect(nextHeatmapCall?.start_date).not.toBe(initialCall?.start_date);
+    expect(nextEntriesCall?.start_date).toBe(nextHeatmapCall?.start_date);
+    expect(nextEntriesCall?.end_date).toBe(nextHeatmapCall?.end_date);
+  });
+
+  it('does not refetch co-occurrence when switching between equivalent API windows', async () => {
+    render(Page);
+
+    await fireEvent.click(await screen.findByText('insights.page.analytics_summary'));
+
+    await waitFor(() => {
+      expect(fetchTagCooccurrence).toHaveBeenCalledTimes(1);
+    });
+
+    await fireEvent.click(screen.getByTestId('insights-range-month'));
+
+    await flushPromises();
+
+    expect(fetchTagCooccurrence).toHaveBeenCalledTimes(1);
   });
 });

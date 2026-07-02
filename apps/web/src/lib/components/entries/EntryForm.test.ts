@@ -321,4 +321,113 @@ describe('EntryForm slot changes', () => {
       expect.objectContaining({ slot: 'morning', mood_score: 4 })
     );
   });
+
+  it('hydrates an occupied slot instead of posting a duplicate draft', async () => {
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        id: 'morning-entry',
+        user_id: 'user-1',
+        entry_date: '2026-06-02',
+        slot: 'morning',
+        mood_score: 2,
+        energy: 3,
+        stress: 4,
+        cycle_day: null,
+        source: 'direct',
+        work_context: 'homeoffice',
+        note: 'existing morning note',
+        created_at: '2026-06-02T08:00:00Z',
+        updated_at: '2026-06-02T08:00:00Z',
+      },
+    ]);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'draft on blank day slot' },
+    });
+    await flushAsync();
+
+    await fireEvent.click(screen.getByRole('button', { name: 'entry.time_slot.morning' }));
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(submitEntry).not.toHaveBeenCalledWith(expect.objectContaining({ slot: 'morning' }));
+    expect(
+      (screen.getByPlaceholderText('entry.note_placeholder') as HTMLTextAreaElement).value
+    ).toBe('existing morning note');
+  });
+
+  it('uses the last slot click after autosave settles on an existing entry', async () => {
+    vi.mocked(listEntries).mockImplementation(async (query = {}) => {
+      const { start_date, end_date } = query;
+      if (start_date !== '2026-06-02' || end_date !== '2026-06-02') return [];
+      return [
+        {
+          id: 'day-entry',
+          user_id: 'user-1',
+          entry_date: '2026-06-02',
+          slot: 'day',
+          mood_score: 3,
+          energy: 3,
+          stress: 3,
+          cycle_day: null,
+          source: 'direct',
+          work_context: 'homeoffice',
+          note: 'day note',
+          created_at: '2026-06-02T12:00:00Z',
+          updated_at: '2026-06-02T12:00:00Z',
+        },
+        {
+          id: 'evening-entry',
+          user_id: 'user-1',
+          entry_date: '2026-06-02',
+          slot: 'evening',
+          mood_score: 1,
+          energy: 2,
+          stress: 5,
+          cycle_day: null,
+          source: 'direct',
+          work_context: 'homeoffice',
+          note: 'evening note',
+          created_at: '2026-06-02T20:00:00Z',
+          updated_at: '2026-06-02T20:00:00Z',
+        },
+      ];
+    });
+
+    const { container } = render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited day note' },
+    });
+    await flushAsync();
+
+    const morningButton = screen.getByRole('button', { name: 'entry.time_slot.morning' });
+    const eveningButton = screen.getByRole('button', { name: 'entry.time_slot.evening' });
+
+    void fireEvent.click(morningButton);
+    await flushAsync();
+    await fireEvent.click(eveningButton);
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).toHaveBeenCalledWith(
+      'day-entry',
+      expect.objectContaining({ note: 'edited day note' })
+    );
+    expect(
+      (screen.getByPlaceholderText('entry.note_placeholder') as HTMLTextAreaElement).value
+    ).toBe('evening note');
+    expect(eveningButton.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('idle');
+  });
 });
