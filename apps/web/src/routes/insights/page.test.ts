@@ -58,6 +58,7 @@ const testHelpers = vi.hoisted(() => {
       };
 
       update();
+      const refresh = renderText ? setInterval(update, 1) : undefined;
       anchor.parentNode?.insertBefore(el, anchor);
 
       return {
@@ -69,6 +70,7 @@ const testHelpers = vi.hoisted(() => {
           update();
         },
         $destroy() {
+          if (refresh) clearInterval(refresh);
           el.remove();
         },
       };
