@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
 import { fetchTagCooccurrence } from '$lib/api/insights';
 import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
@@ -278,6 +278,10 @@ vi.mock('$lib/components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte
 vi.mock('$lib/components/trends/EntryHistorySheet.svelte', () => ({
   default: testHelpers.mockComponent('entry-history-sheet'),
 }));
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('/insights page analysis range', () => {
   beforeEach(() => {
