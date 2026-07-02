@@ -89,9 +89,12 @@
       chartWidth = Math.max(minWidth, Math.min(maxWidth, hostWidth));
     };
     updateWidth();
-    const observer = chartHost ? new ResizeObserver(updateWidth) : null;
-    if (chartHost) observer?.observe(chartHost);
-    return () => observer?.disconnect();
+    if (typeof ResizeObserver === 'undefined' || !chartHost) {
+      return;
+    }
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(chartHost);
+    return () => observer.disconnect();
   });
 </script>
 
