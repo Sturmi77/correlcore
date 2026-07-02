@@ -54,20 +54,20 @@
 | O-51 | P3-C   | High     | Medium | Open   | SymptomTrendOverlay responsive + readable axes                     |
 | O-52 | P3-C   | High     | Low    | Open   | Mobile Insights: cap analysis range at 90d (quarter)               |
 | O-53 | P3-C   | Medium   | Medium | Open   | Symptom calendar legend + interpretation copy                      |
-| O-54 | P3-D   | High     | Low    | Open   | Remove Home Zone-3 CTA when today's entry exists                 |
-| O-55 | P3-D   | Medium   | Low    | Open   | Remove Home sparkline (O-05 reversed)                             |
+| O-54 | P3-D   | High     | Low    | Open   | Remove Home Zone-3 CTA when today's entry exists                   |
+| O-55 | P3-D   | Medium   | Low    | Open   | Remove Home sparkline (O-05 reversed)                              |
 | O-56 | P3-D   | High     | Medium | Open   | Home Daily Brief: facts row → Top Insight snippet                  |
 
 ---
 
 ## Sprint execution order (Phase 3)
 
-| Sprint                    | Issues        | Goal                                      |
-| ------------------------- | ------------- | ----------------------------------------- |
-| **P3-A — Mobile fix**     | O-43–O-46     | Insights render correctly on phone        |
-| **P3-B — Insights IA**    | O-47–O-49     | Toolbar + permanent analytics             |
-| **P3-C — Charts**         | O-50–O-53     | Interpretable charts, mobile 90d cap      |
-| **P3-D — Home brief**     | O-54–O-56     | Single CTA, no sparkline, top insight     |
+| Sprint                 | Issues    | Goal                                  |
+| ---------------------- | --------- | ------------------------------------- |
+| **P3-A — Mobile fix**  | O-43–O-46 | Insights render correctly on phone    |
+| **P3-B — Insights IA** | O-47–O-49 | Toolbar + permanent analytics         |
+| **P3-C — Charts**      | O-50–O-53 | Interpretable charts, mobile 90d cap  |
+| **P3-D — Home brief**  | O-54–O-56 | Single CTA, no sparkline, top insight |
 
 See [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) for root causes, acceptance criteria, and PR branch names.
 
