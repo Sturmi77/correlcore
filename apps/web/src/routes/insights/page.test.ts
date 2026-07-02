@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
 import { fetchTagCooccurrence } from '$lib/api/insights';
-import { fetchSymptomHeatmap } from '$lib/api/stats';
-import { listEntries } from '$lib/api/entries';
+import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
+import { listEntries, type EntryResponse } from '$lib/api/entries';
 import Page from './+page.svelte';
 
 type Deferred<T> = {
@@ -106,6 +106,32 @@ function tagCooccurrenceResponse(range: TagCooccurrenceRange) {
       pair('a', 'e', 2),
       pair('a', 'f', 2),
     ],
+  };
+}
+
+function entryResponse(entryDate: string): EntryResponse {
+  return {
+    id: `entry-${entryDate}`,
+    user_id: 'user-1',
+    entry_date: entryDate,
+    slot: 'day',
+    mood_score: 4,
+    energy: 4,
+    stress: 2,
+    cycle_day: null,
+    source: 'direct',
+    work_context: 'homeoffice',
+    note: null,
+    created_at: `${entryDate}T12:00:00Z`,
+    updated_at: `${entryDate}T12:00:00Z`,
+  };
+}
+
+function symptomHeatmapResponse(startDate: string): SymptomHeatmapResponse {
+  return {
+    start_date: startDate,
+    end_date: startDate,
+    symptoms: [],
   };
 }
 
@@ -235,7 +261,14 @@ vi.mock('$lib/components/insights/TagGroupsSection.svelte', () => ({
   default: testHelpers.mockComponent('tag-groups-section'),
 }));
 vi.mock('$lib/components/insights/symptoms/SymptomAnalyticsSection.svelte', () => ({
-  default: testHelpers.mockComponent('symptom-analytics-section'),
+  default: testHelpers.mockComponent(
+    'symptom-analytics-section',
+    (props: Record<string, unknown>) => {
+      const heatmap = props.heatmap as SymptomHeatmapResponse | null;
+      const entries = props.entries as EntryResponse[] | undefined;
+      return `symptom-window:${heatmap?.start_date ?? 'none'}:entries:${entries?.length ?? 0}`;
+    }
+  ),
 }));
 vi.mock('$lib/components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte', () => ({
   default: testHelpers.mockComponent('symptom-detail-sheet'),
@@ -307,6 +340,43 @@ describe('/insights page analysis range', () => {
     expect(nextHeatmapCall?.start_date).not.toBe(initialCall?.start_date);
     expect(nextEntriesCall?.start_date).toBe(nextHeatmapCall?.start_date);
     expect(nextEntriesCall?.end_date).toBe(nextHeatmapCall?.end_date);
+  });
+
+  it('ignores stale symptom analytics responses after rapid range changes', async () => {
+    render(Page);
+
+    await waitFor(() => {
+      expect(screen.getByText('symptom-window:2026-05-01:entries:0')).toBeTruthy();
+    });
+
+    const staleEntries = testHelpers.deferred<EntryResponse[]>();
+    const staleHeatmap = testHelpers.deferred<SymptomHeatmapResponse>();
+    vi.mocked(listEntries)
+      .mockClear()
+      .mockReturnValueOnce(staleEntries.promise)
+      .mockResolvedValueOnce([entryResponse('2026-06-30')]);
+    vi.mocked(fetchSymptomHeatmap)
+      .mockClear()
+      .mockReturnValueOnce(staleHeatmap.promise)
+      .mockResolvedValueOnce(symptomHeatmapResponse('fresh-month-window'));
+
+    await fireEvent.click(screen.getByTestId('insights-range-year'));
+    await waitFor(() => {
+      expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(1);
+    });
+
+    await fireEvent.click(screen.getByTestId('insights-range-month'));
+    await waitFor(() => {
+      expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(2);
+      expect(screen.getByText('symptom-window:fresh-month-window:entries:1')).toBeTruthy();
+    });
+
+    staleEntries.resolve([entryResponse('2025-07-01')]);
+    staleHeatmap.resolve(symptomHeatmapResponse('stale-year-window'));
+    await flushPromises();
+
+    expect(screen.getByText('symptom-window:fresh-month-window:entries:1')).toBeTruthy();
+    expect(screen.queryByText('symptom-window:stale-year-window:entries:1')).toBeNull();
   });
 
   it('does not refetch co-occurrence when switching between equivalent API windows', async () => {
