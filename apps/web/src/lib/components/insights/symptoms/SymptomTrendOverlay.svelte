@@ -117,36 +117,36 @@
         role="img"
         aria-label={$_('insights.symptoms.trend_aria', { values: { name: symptomName } })}
       >
-      <line
-        x1={padLeft}
-        y1={padTop + plotHeight}
-        x2={padLeft + plotWidth}
-        y2={padTop + plotHeight}
-        class="symptom-trend__axis"
-      />
+        <line
+          x1={padLeft}
+          y1={padTop + plotHeight}
+          x2={padLeft + plotWidth}
+          y2={padTop + plotHeight}
+          class="symptom-trend__axis"
+        />
 
-      {#if ribbonPath}
-        <path d={ribbonPath} class="symptom-trend__ribbon" />
-      {/if}
+        {#if ribbonPath}
+          <path d={ribbonPath} class="symptom-trend__ribbon" />
+        {/if}
 
-      {#if moodPath}
-        <path d={moodPath} class="symptom-trend__line symptom-trend__line--mood" />
-      {/if}
-      {#if symptomPath}
-        <path d={symptomPath} class="symptom-trend__line symptom-trend__line--symptom" />
-      {/if}
+        {#if moodPath}
+          <path d={moodPath} class="symptom-trend__line symptom-trend__line--mood" />
+        {/if}
+        {#if symptomPath}
+          <path d={symptomPath} class="symptom-trend__line symptom-trend__line--symptom" />
+        {/if}
 
-      <text x={4} y={padTop + 4} class="symptom-trend__ylabel" style={`font-size: ${labelSize}px`}
-        >{$_('insights.symptoms.trend_freq')}</text
-      >
-      <text
-        x={chartWidth - 4}
-        y={padTop + 4}
-        class="symptom-trend__ylabel symptom-trend__ylabel--right"
-        style={`font-size: ${labelSize}px`}
-      >
-        {$_('insights.symptoms.trend_mood')}
-      </text>
+        <text x={4} y={padTop + 4} class="symptom-trend__ylabel" style={`font-size: ${labelSize}px`}
+          >{$_('insights.symptoms.trend_freq')}</text
+        >
+        <text
+          x={chartWidth - 4}
+          y={padTop + 4}
+          class="symptom-trend__ylabel symptom-trend__ylabel--right"
+          style={`font-size: ${labelSize}px`}
+        >
+          {$_('insights.symptoms.trend_mood')}
+        </text>
       </svg>
     </div>
 

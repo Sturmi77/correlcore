@@ -7,11 +7,11 @@
 
 ### Resolution status (summary)
 
-| Phase         | Scope                    | Status                                                                   |
-| ------------- | ------------------------ | ------------------------------------------------------------------------ |
-| Phase 1       | O-01–O-20                | **Complete** on `main`                                                   |
-| Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                                                   |
-| Phase 2 open  | —                        | **Complete** (O-21–O-42 + O-01/O-14 polish)                              |
+| Phase         | Scope                    | Status                                                                    |
+| ------------- | ------------------------ | ------------------------------------------------------------------------- |
+| Phase 1       | O-01–O-20                | **Complete** on `main`                                                    |
+| Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                                                    |
+| Phase 2 open  | —                        | **Complete** (O-21–O-42 + O-01/O-14 polish)                               |
 | Phase 3       | O-43–O-56                | **Complete** — [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) |
 
 **Open audit themes (Phase 3):** Resolved in PR #305 — mobile Insights feed, permanent analytics, Home top-insight brief, chart interpretability.

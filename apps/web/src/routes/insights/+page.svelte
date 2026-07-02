@@ -558,7 +558,11 @@
     compactInsights && primaryMobileInsight ? remainingMobileInsights : filteredRankedInsights;
   $: showInsightFeed =
     detailView === 'findings' &&
-    (feedInsights.length > 0 || feedLoading || Boolean(error) || !compactInsights || !primaryMobileInsight);
+    (feedInsights.length > 0 ||
+      feedLoading ||
+      Boolean(error) ||
+      !compactInsights ||
+      !primaryMobileInsight);
 
   function ensureAnalyticsLoaded(): void {
     if (!cooccurrenceRequested && !cooccurrenceLoading) {
@@ -601,7 +605,6 @@
       // Optimistic dismissal for this session.
     }
   }
-
 </script>
 
 <svelte:head>
@@ -623,7 +626,7 @@
       analysisRange={toolbarAnalysisRange}
       analysisRangeOptions={analysisRangeControlOptions}
       {filterTab}
-      filterTabOptions={filterTabOptions}
+      {filterTabOptions}
       {showMatrixTab}
       {detailView}
       on:rangeChange={(event) => setAnalysisRange(event.detail.value)}

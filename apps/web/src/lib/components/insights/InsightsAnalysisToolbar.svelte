@@ -24,7 +24,10 @@
 </script>
 
 <div class="insights-toolbar" data-testid="insights-analysis-toolbar">
-  <div class="insights-toolbar__row insights-toolbar__row--range" data-testid="insights-sticky-toolbar">
+  <div
+    class="insights-toolbar__row insights-toolbar__row--range"
+    data-testid="insights-sticky-toolbar"
+  >
     <SegmentedControl
       value={analysisRange}
       options={analysisRangeOptions}

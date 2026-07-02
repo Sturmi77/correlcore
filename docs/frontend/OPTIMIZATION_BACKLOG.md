@@ -109,22 +109,22 @@ See [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) for root causes, 
 
 ## Issue index (O-43 – O-56) — Phase 3
 
-| ID   | Sprint | Impact   | Effort | Status | Title                                              |
-| ---- | ------ | -------- | ------ | ------ | -------------------------------------------------- |
-| O-43 | P3-A   | Critical | Medium | **Done** | Fix mobile Insights feed empty-state gap           |
-| O-44 | P3-A   | High     | Low    | **Done** | Stale-while-revalidate insight loading           |
-| O-45 | P3-A   | High     | Low    | **Done** | SSR-safe `compactInsights` hydration             |
-| O-46 | P3-A   | Medium   | Low    | **Done** | Dynamic InsightFeed subtitle from `analysisRange`  |
-| O-47 | P3-B   | High     | Medium | **Done** | Two-row Insights analysis toolbar                |
-| O-48 | P3-B   | High     | Medium | **Done** | Permanent analytics (no accordion)               |
-| O-49 | P3-B   | High     | Low    | **Done** | Decouple symptom analytics from filter tab       |
-| O-50 | P3-C   | High     | Medium | **Done** | Responsive heatmap axis on Insights              |
-| O-51 | P3-C   | High     | Medium | **Done** | Responsive `SymptomTrendOverlay`                 |
-| O-52 | P3-C   | High     | Low    | **Done** | Mobile Insights 90d range cap                    |
-| O-53 | P3-C   | Medium   | Medium | **Done** | Symptom calendar legend + interpretation         |
-| O-54 | P3-D   | High     | Low    | **Done** | Conditional Home Zone-3 CTA                      |
-| O-55 | P3-D   | Medium   | Low    | **Done** | Remove Home sparkline                              |
-| O-56 | P3-D   | High     | Medium | **Done** | Home facts row → Top Insight snippet             |
+| ID   | Sprint | Impact   | Effort | Status   | Title                                             |
+| ---- | ------ | -------- | ------ | -------- | ------------------------------------------------- |
+| O-43 | P3-A   | Critical | Medium | **Done** | Fix mobile Insights feed empty-state gap          |
+| O-44 | P3-A   | High     | Low    | **Done** | Stale-while-revalidate insight loading            |
+| O-45 | P3-A   | High     | Low    | **Done** | SSR-safe `compactInsights` hydration              |
+| O-46 | P3-A   | Medium   | Low    | **Done** | Dynamic InsightFeed subtitle from `analysisRange` |
+| O-47 | P3-B   | High     | Medium | **Done** | Two-row Insights analysis toolbar                 |
+| O-48 | P3-B   | High     | Medium | **Done** | Permanent analytics (no accordion)                |
+| O-49 | P3-B   | High     | Low    | **Done** | Decouple symptom analytics from filter tab        |
+| O-50 | P3-C   | High     | Medium | **Done** | Responsive heatmap axis on Insights               |
+| O-51 | P3-C   | High     | Medium | **Done** | Responsive `SymptomTrendOverlay`                  |
+| O-52 | P3-C   | High     | Low    | **Done** | Mobile Insights 90d range cap                     |
+| O-53 | P3-C   | Medium   | Medium | **Done** | Symptom calendar legend + interpretation          |
+| O-54 | P3-D   | High     | Low    | **Done** | Conditional Home Zone-3 CTA                       |
+| O-55 | P3-D   | Medium   | Low    | **Done** | Remove Home sparkline                             |
+| O-56 | P3-D   | High     | Medium | **Done** | Home facts row → Top Insight snippet              |
 
 **Phase 3 status:** all O-43–O-56 items **Done** — see [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md).
 
