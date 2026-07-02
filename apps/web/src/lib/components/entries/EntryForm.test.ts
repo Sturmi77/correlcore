@@ -363,7 +363,8 @@ describe('EntryForm slot changes', () => {
   });
 
   it('uses the last slot click after autosave settles on an existing entry', async () => {
-    vi.mocked(listEntries).mockImplementation(async ({ start_date, end_date }) => {
+    vi.mocked(listEntries).mockImplementation(async (query = {}) => {
+      const { start_date, end_date } = query;
       if (start_date !== '2026-06-02' || end_date !== '2026-06-02') return [];
       return [
         {
