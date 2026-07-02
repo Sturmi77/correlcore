@@ -35,6 +35,42 @@
 
 **Phase 2 (O-21–O-42):** **Complete** (July 2026) — see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md). Residual polish **O-01 / O-14** closed in Phase-2 closure PR.
 
+**Phase 3 (O-43–O-56):** **Open** — see [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md). User findings: Heute brief + Erkenntnisse mobile/interpretability.
+
+---
+
+## Issue index (O-43 – O-56) — Phase 3
+
+| ID   | Sprint | Impact   | Effort | Status | Title                                                              |
+| ---- | ------ | -------- | ------ | ------ | ------------------------------------------------------------------ |
+| O-43 | P3-A   | Critical | Medium | Open   | Fix mobile Insights empty state when insights exist (robust phase) |
+| O-44 | P3-A   | High     | Low    | Open   | Stale-while-revalidate for Insights feed during reload             |
+| O-45 | P3-A   | High     | Low    | Open   | SSR-safe `compactInsights` (no mobile layout flash)                |
+| O-46 | P3-A   | Medium   | Low    | Open   | InsightFeed subtitle follows `analysisRange`, not fixed 90d        |
+| O-47 | P3-B   | High     | Medium | Open   | Insights zweizeilige sticky toolbar (range + filter)               |
+| O-48 | P3-B   | High     | Medium | Open   | Permanent analytics section (remove accordion)                     |
+| O-49 | P3-B   | High     | Low    | Open   | Symptom analytics decoupled from filter tab (revise O-24)          |
+| O-50 | P3-C   | High     | Medium | Open   | Insights heatmaps: responsive axis layout (Trends parity)          |
+| O-51 | P3-C   | High     | Medium | Open   | SymptomTrendOverlay responsive + readable axes                     |
+| O-52 | P3-C   | High     | Low    | Open   | Mobile Insights: cap analysis range at 90d (quarter)               |
+| O-53 | P3-C   | Medium   | Medium | Open   | Symptom calendar legend + interpretation copy                      |
+| O-54 | P3-D   | High     | Low    | Open   | Remove Home Zone-3 CTA when today's entry exists                 |
+| O-55 | P3-D   | Medium   | Low    | Open   | Remove Home sparkline (O-05 reversed)                             |
+| O-56 | P3-D   | High     | Medium | Open   | Home Daily Brief: facts row → Top Insight snippet                  |
+
+---
+
+## Sprint execution order (Phase 3)
+
+| Sprint                    | Issues        | Goal                                      |
+| ------------------------- | ------------- | ----------------------------------------- |
+| **P3-A — Mobile fix**     | O-43–O-46     | Insights render correctly on phone        |
+| **P3-B — Insights IA**    | O-47–O-49     | Toolbar + permanent analytics             |
+| **P3-C — Charts**         | O-50–O-53     | Interpretable charts, mobile 90d cap      |
+| **P3-D — Home brief**     | O-54–O-56     | Single CTA, no sparkline, top insight     |
+
+See [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) for root causes, acceptance criteria, and PR branch names.
+
 ---
 
 ## Issue index (O-21 – O-42) — Phase 2

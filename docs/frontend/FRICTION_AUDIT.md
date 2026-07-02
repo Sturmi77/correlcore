@@ -12,8 +12,9 @@
 | Phase 1       | O-01–O-20                | **Complete** on `main`                      |
 | Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                      |
 | Phase 2 open  | —                        | **Complete** (O-21–O-42 + O-01/O-14 polish) |
+| Phase 3 open  | O-43–O-56                | **Planned** — [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) |
 
-**Open audit themes:** Insights control density (W5/W6), spacing hardening (O-31–O-35), Trends tab consolidation (W6).
+**Open audit themes (Phase 3):** Mobile Insights empty-state bug (W5), analytics discoverability (W6), Home brief signal quality (W5), chart interpretability (W6).
 
 **Scoring:** 0 = no friction, 3 = high friction (per criterion); **Total** = sum of 6 criteria (max 18)
 
@@ -221,6 +222,10 @@
 **Phase 1 (O-01–O-20):** complete — see [`OPTIMIZATION_BACKLOG.md`](OPTIMIZATION_BACKLOG.md).
 
 **Phase 2 (O-21–O-42):** complete — see [`GUI_OPTIMIZATION_PHASE2.md`](GUI_OPTIMIZATION_PHASE2.md).
+
+### Phase 3 (planned — July 2026)
+
+See [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md). Focus: mobile Insights correctness (O-43), permanent analytics (O-48), chart interpretability (O-50–O-53), Home top-insight brief (O-54–O-56).
 
 ### Phase 2 closure (July 2026)
 

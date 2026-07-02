@@ -185,3 +185,9 @@ Siehe §2.6 und [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md) (keine Änderung am tec
 - Keine Gamification
 - Insight-Phasenmodell inhaltlich unverändert (ADR-0021)
 - ADR vor: O-41 (Trends-Tabs), O-28 (Account deletion)
+
+---
+
+## 8. Successor
+
+**Phase 3** (O-43–O-56): [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) — Heute brief cleanup + Erkenntnisse mobile/interpretability (July 2026).
