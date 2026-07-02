@@ -60,10 +60,50 @@ describe('SymptomAnalyticsSection', () => {
 
     expect(screen.getByText('insights.symptoms.calendar_heading')).toBeTruthy();
     expect(screen.getByText('insights.symptoms.trend_heading')).toBeTruthy();
+    expect(screen.queryByText('insights.symptoms.cooccurrence_heading')).toBeNull();
     expect(
       screen.getAllByRole('heading', { name: 'Headache', level: 3 }).length
     ).toBeGreaterThanOrEqual(2);
     expect(screen.getByLabelText('insights.symptoms.calendar_legend')).toBeTruthy();
+  });
+
+  it('shows symptom co-occurrence from provisional phase when data exists', () => {
+    render(SymptomAnalyticsSection, {
+      props: {
+        heatmap,
+        entries: [],
+        phase: 'provisional',
+        cooccurrence: {
+          range: '90d',
+          start_date: '2026-01-01',
+          end_date: '2026-01-14',
+          min_count: 2,
+          cells: [
+            {
+              symptom: { symptom_id: 'sym-1', slug: 'headache', name: 'Headache', icon: null },
+              tag: {
+                tag_id: 'tag-1',
+                slug: 'focus',
+                name: 'Focus',
+                category: 'work',
+                color: null,
+              },
+              phi: 0.2,
+              co_count: 3,
+              jaccard: 0.4,
+              lift: 1.2,
+              symptom_count: 4,
+              tag_count: 5,
+              total_count: 10,
+              p_value_corrected: 0.1,
+              confounder: null,
+            },
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByText('insights.symptoms.cooccurrence_heading')).toBeTruthy();
   });
 
   it('dispatches selectDate from calendar cells', async () => {

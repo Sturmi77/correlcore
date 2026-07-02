@@ -23,12 +23,14 @@ Phase 1 removed funnel friction, duplicate maturity UI, and legacy paths. Phase 
 | O-36      | Sprint J   | Smart Entry-Defaults (Mood/Energie von gestern)                               |
 | O-08      | Sprint J   | Desktop Entry-Surface vereinheitlichen (global EntrySheet)                    |
 | O-38      | Sprint J   | Trends/Leer-CTA öffnet EntrySheet inline                                      |
+| O-01      | Closure    | Insights: ein Maturity-Block — keine doppelten Card-Badges                    |
+| O-14      | Closure    | Matrix/Co-occurrence nach Reifegrad + Datenlage                               |
 
 ---
 
-## 2. Backlog O-22 – O-42 (offen)
+## 2. Backlog O-22 – O-42 — **Complete**
 
-Legende Status: **Offen** · **Teilweise** (Foundation da, Audit-Punkt nicht vollständig) · **Erledigt**
+Legende Status: **Erledigt** (Sprints H–M + polish closure, Juli 2026)
 
 ### 2.1 Analyse-IA (höchste Priorität)
 
@@ -112,16 +114,16 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **W3**   | Tags/Symptome hinter Toggle     | —      | **Erledigt** (O-21) |
 | **W4**   | Rückdatierung Sheet vs. Page    | —      | **Erledigt** (O-08) |
 | **W5**   | Meilenstein inline im Brief     | —      | **Erledigt** (O-39) |
-| **W5**   | Duplicate maturity UI           | O-34   | Medium              |
+| **W5**   | Duplicate maturity UI           | —      | **Erledigt** (O-01, O-34) |
 | **W5**   | Matrix/Co-occurrence leer       | —      | **Erledigt** (O-14) |
 | **W6**   | Matrix als eigener Tab          | —      | **Erledigt** (O-22) |
 | **W6**   | Range pro Widget                | O-23   | High                |
-| **W6**   | Trends ↔ Insights getrennt      | O-41   | Medium              |
-| **W6**   | Compare + Health Tabs           | O-41   | Medium              |
+| **W6**   | Trends ↔ Insights getrennt      | —      | **Erledigt** (O-41) |
+| **W6**   | Compare + Health Tabs           | —      | **Erledigt** (O-41) |
 | **W6**   | Heatmap → Route statt Sheet     | —      | **Erledigt** (O-17) |
 | **W7**   | Habit-Setup nicht in Onboarding | —      | **Erledigt** (O-09) |
 | **W7**   | Leeres Habits-Panel             | —      | **Erledigt** (O-16) |
-| **W8**   | Vokabular-Subnavigation         | O-27   | Low                 |
+| **W8**   | Vokabular-Subnavigation         | —      | **Erledigt** (O-27) |
 | **W9**   | Export in Settings versteckt    | —      | **Erledigt** (O-19) |
 | **W10**  | PWA-Banner vor erstem Entry     | —      | **Erledigt** (O-18) |
 
@@ -132,12 +134,12 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | Auth-Funnel-Länge               | **Erledigt**  | —                  |
 | Onboarding vor erstem Entry     | **Erledigt**  | —                  |
 | Dual Entry Surfaces             | **Erledigt**  | —                  |
-| Duplicate maturity UI           | **Teilweise** | O-34               |
+| Duplicate maturity UI           | **Erledigt**  | O-01, O-34        |
 | Legacy Onboarding               | **Erledigt**  | —                  |
-| Analyse auf 2 Nav-Tabs verteilt | **Teilweise** | O-41               |
+| Analyse auf 2 Nav-Tabs verteilt | **Erledigt**  | O-41               |
 | Habit-Setup nicht in Onboarding | **Erledigt**  | —                  |
 | Kein Password-Reset             | **Erledigt**  | —                  |
-| Spacing / Dichte Mobile         | **Teilweise** | O-30 ✅, O-31–O-35 |
+| Spacing / Dichte Mobile         | **Erledigt**  | O-30–O-35          |
 
 ---
 
@@ -149,10 +151,11 @@ Unten nur **noch offene oder teilweise offene** Audit-Punkte mit Ticket-Zuordnun
 | **I — Home & Verknüpfung**  | O-39, O-40, O-13 ✅             | Wöchentliche Review ohne Tab-Hopping     |
 | **J — Entry & Desktop**     | O-36, O-08, O-38 ✅             | W3/W4 Rest; Desktop-Konsistenz           |
 | **K — Onboarding & Habits** | O-37, O-09 ✅                   | W2/W7 Rest                               |
-| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34     | Mobile-Dichte, Trends/Insights kompakter |
+| **L — Spacing & Polish**    | O-31–O-35, O-26, O-29, O-34 ✅  | Mobile-Dichte, Trends/Insights kompakter |
 | **M — Strategisch**         | O-41, O-25, O-27, O-28, O-42 ✅ | Größere IA-/Backend-Themen               |
+| **Polish — Closure**        | O-01, O-14 ✅                   | Maturity dedup + analytics gates         |
 
-**Nächster konkreter PR:** **Sprint L** (O-31–O-35 Spacing) oder **Sprint M** (O-41).
+**Phase 2:** complete on `main` (July 2026).
 
 ---
 
@@ -170,7 +173,9 @@ Siehe §2.6 und [`FRICTION_AUDIT.md`](FRICTION_AUDIT.md) (keine Änderung am tec
 - Kein Route-Root mit horizontalem Padding innerhalb `page-shell`
 - Alle `--space-*` Tokens definiert und verwendet
 - Nutzer mit täglichen Symptom-Logs: **0 Extra-Taps** für Symptom-Erfassung ✅ (O-21)
-- **Jeder offene Friction-Audit-Punkt** ist einem O-Ticket zugeordnet (§3)
+- **Jeder offene Friction-Audit-Punkt** ist einem O-Ticket zugeordnet (§3) ✅
+- Keine doppelte Maturity-Anzeige auf Insights (O-01) ✅
+- Matrix/Co-occurrence nur ab passender Reife + Daten (O-14) ✅
 
 ---
 

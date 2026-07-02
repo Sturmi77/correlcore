@@ -170,13 +170,13 @@ async function installSmokeApi(page: Page, options: { authenticated: boolean }) 
     if (path === '/insights/latest' && method === 'GET') {
       return json(200, {
         insight_maturity: {
-          phase: 'developing',
+          phase: 'provisional',
           phase_index: 3,
           current_entries: 18,
           next_phase_at: 30,
-          next_phase_label: 'Robust',
+          next_phase_label: 'robust',
           entries_until_next: 12,
-          user_message_key: 'insights.maturity.developing',
+          user_message_key: 'maturity.provisional.description',
         },
         insights: [
           {
@@ -270,8 +270,6 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
 
   await page.goto('/insights');
   await expect(page.getByText(/fridays currently line up/i)).toBeVisible();
-  await expect(page.getByTestId('insight-maturity-badge')).toHaveAttribute(
-    'data-phase',
-    'developing'
-  );
+  await expect(page.getByTestId('insight-stage-header')).toHaveAttribute('data-phase', 'provisional');
+  await expect(page.getByTestId('insight-stage-meta')).toBeVisible();
 });

@@ -33,6 +33,8 @@
   export let enableExploreEvents = false;
   export let featured = false;
   export let showConfidenceSummary = false;
+  /** Hide per-card phase badge when page-level maturity chrome is shown (O-01). */
+  export let showMaturityBadge = true;
 
   const dispatch = createEventDispatcher<{
     retry: void;
@@ -171,7 +173,7 @@
       </button>
     </header>
 
-    {#if maturity}
+    {#if maturity && showMaturityBadge}
       <InsightMaturityBadge {maturity} entryCount={insight.sample_n ?? 0} />
     {/if}
 

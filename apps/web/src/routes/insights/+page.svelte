@@ -74,7 +74,12 @@
     rankedInsightsForTab,
     type InsightFeedFilterTab,
   } from '$lib/utils/insightFeedFilter';
-  import { countMatrixInsights, MATRIX_TAB_MIN_INSIGHTS } from '$lib/utils/insightMatrixGate';
+  import {
+    canShowAdvancedAnalytics,
+    canShowMatrixTab,
+    canShowTagCooccurrence,
+    hasTagCooccurrenceData,
+  } from '$lib/utils/insightAnalyticsGate';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
   import SegmentedControl, {
@@ -458,11 +463,14 @@
     insightMaturity,
     userPreferences?.reached_milestone_keys
   );
+  $: pageMaturityChrome = Boolean(insightMaturity);
   $: showSymptomAnalytics =
-    filterTab === 'symptoms' && (!insightMaturity || insightMaturity.phase !== 'collecting');
-  $: matrixInsightCount = countMatrixInsights(insights);
-  $: showMatrixTab = matrixInsightCount >= MATRIX_TAB_MIN_INSIGHTS;
-  $: showAdvancedAnalytics = Boolean(insightMaturity && insightMaturity.phase !== 'collecting');
+    filterTab === 'symptoms' && canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
+  $: showMatrixTab = canShowMatrixTab(insightMaturity?.phase ?? null, insights);
+  $: showAdvancedAnalytics = canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
+  $: showTagCooccurrencePanel =
+    canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
+    (cooccurrenceLoading || hasTagCooccurrenceData(cooccurrence));
   $: if (!showMatrixTab && detailView === 'matrix') {
     detailView = 'findings';
   }
@@ -611,6 +619,7 @@
             {filterTab}
             showContext={false}
             showFilters={false}
+            showMaturityBadge={false}
             on:retry={loadInsights}
           />
         </section>
@@ -624,6 +633,7 @@
           {inactiveTagIds}
           {filterTab}
           showFilters={false}
+          showMaturityBadge={!pageMaturityChrome}
           on:retry={loadInsights}
         />
       {/if}
@@ -652,16 +662,18 @@
 
           <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
 
-          <TagCooccurrenceHeatmap
-            data={cooccurrence}
-            loading={cooccurrenceLoading}
-            range={cooccurrenceRange}
-            showRangeSelector={false}
-            sortMode={tagCooccurrenceSortMode}
-            enableClusterSort={insightMaturity?.phase === 'robust'}
-            on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
-            on:selectPair={(event) => void openCooccurrenceHistory(event)}
-          />
+          {#if showTagCooccurrencePanel}
+            <TagCooccurrenceHeatmap
+              data={cooccurrence}
+              loading={cooccurrenceLoading}
+              range={cooccurrenceRange}
+              showRangeSelector={false}
+              sortMode={tagCooccurrenceSortMode}
+              enableClusterSort={insightMaturity?.phase === 'robust'}
+              on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
+              on:selectPair={(event) => void openCooccurrenceHistory(event)}
+            />
+          {/if}
         </div>
       </details>
     {/if}

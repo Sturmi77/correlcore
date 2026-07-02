@@ -41,6 +41,8 @@
   export let inactiveTagIds: readonly string[] = [];
   export let showContext = true;
   export let showFilters = true;
+  /** When false, cards omit phase badges because maturity is shown in page chrome (O-01). */
+  export let showMaturityBadge = true;
   /** When set, the parent owns filter UI and state (O-22). */
   export let filterTab: InsightFeedFilterTab | undefined = undefined;
 
@@ -158,7 +160,7 @@
     <ul class="if-list" data-testid="insight-feed-list">
       {#each filtered as insight (insight.id)}
         <li>
-          <InsightCard {insight} {maturity} {inactiveTagIds} />
+          <InsightCard {insight} {maturity} {inactiveTagIds} {showMaturityBadge} />
         </li>
       {/each}
     </ul>
