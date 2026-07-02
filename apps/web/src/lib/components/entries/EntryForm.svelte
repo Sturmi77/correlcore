@@ -113,6 +113,7 @@
   // fetch returned) are discarded so the form doesn't snap back to
   // outdated data.
   let loadToken = 0;
+  let slotChangeToken = 0;
   // While `true`, reactive watchers on form fields skip `markDirty()`
   // — needed during hydration so loading an existing entry doesn't
   // immediately schedule a save back to the server.
@@ -434,21 +435,54 @@
     await autoSave.flushNow();
   }
 
+  async function entryExistsForSlot(date: string, slot: EntrySlot): Promise<boolean> {
+    if (canUseOfflineSync()) {
+      const local = await findLocalEntryByDateSlot(date, slot);
+      if (local) return true;
+    }
+    const matches = await listEntries({
+      start_date: date,
+      end_date: date,
+      limit: 5,
+    });
+    return matches.some((entry) => entry.entry_date === date && entry.slot === slot);
+  }
+
   async function setSlot(slot: EntrySlot) {
+    const myToken = ++slotChangeToken;
     const nextSlot = selectedSlot === slot ? 'day' : slot;
-    const status = autoSave.peek().status;
-    if (!existingEntryId && (status === 'dirty' || status === 'saving' || status === 'error')) {
-      selectedSlot = nextSlot;
-      markDirty();
-      if (status === 'saving') {
-        void flushSlotAfterInFlightSave();
-      }
-      void refreshDayDelta(entryDate, nextSlot);
+
+    async function hydrateSelectedSlot(): Promise<void> {
+      if (!(await settleAutosaveBeforeHydration())) return;
+      if (myToken !== slotChangeToken) return;
+      await loadForDate(entryDate, nextSlot);
+    }
+
+    const occupied = await entryExistsForSlot(entryDate, nextSlot);
+    if (occupied) {
+      await hydrateSelectedSlot();
       return;
     }
 
-    if (!(await settleAutosaveBeforeHydration())) return;
-    await loadForDate(entryDate, nextSlot);
+    const status = autoSave.peek().status;
+    const saving = status === 'saving';
+    const dirtyOrError = status === 'dirty' || status === 'error';
+    const draftCreatePath = !existingEntryId && (dirtyOrError || saving);
+    const finishingCreatePipeline = Boolean(existingEntryId) && saving;
+
+    if (draftCreatePath || finishingCreatePipeline) {
+      selectedSlot = nextSlot;
+      markDirty();
+      if (saving) {
+        void flushSlotAfterInFlightSave();
+      }
+      if (draftCreatePath) {
+        void refreshDayDelta(entryDate, nextSlot);
+      }
+      return;
+    }
+
+    await hydrateSelectedSlot();
   }
 
   // ---------------------------------------------------------------------

@@ -100,25 +100,29 @@
 
   $: range = $analysisRange;
 
-  function dateWindow(days?: number): { start_date: string; end_date: string } {
-    const windowDays = days ?? rangeToDays(range);
+  function dateWindow(
+    activeRange: TimeseriesRange,
+    days?: number
+  ): { start_date: string; end_date: string } {
+    const windowDays = days ?? rangeToDays(activeRange);
     const end_date = localIsoDate(new Date());
     return { start_date: shiftIsoDate(end_date, -(windowDays - 1)), end_date };
   }
 
-  async function loadTrends(): Promise<void> {
+  async function loadTrends(rangeOverride?: TimeseriesRange): Promise<void> {
     if ($auth.status !== 'authenticated') return;
+    const activeRange = rangeOverride ?? range;
     loading = true;
     error = '';
     try {
       if ($devForceVisualizations) {
-        timeseries = { ...mockTimeseries, range };
+        timeseries = { ...mockTimeseries, range: activeRange };
         heatmap = mockTagHeatmap;
         symptomHeatmap = mockSymptomHeatmap;
         streak = mockEntryStreak;
         habitStats = mockHabits.map((habit) => ({
           ...habit,
-          window: rangeToHabitWindow(range),
+          window: rangeToHabitWindow(activeRange),
         }));
         habitTags = mockHabitTags;
         allTags = mockHabitTags;
@@ -126,8 +130,11 @@
         return;
       }
 
-      const habitWindow = rangeToHabitWindow(range);
-      const { start_date, end_date } = dateWindow(activeTab === 'habits' ? habitWindow : undefined);
+      const habitWindow = rangeToHabitWindow(activeRange);
+      const { start_date, end_date } = dateWindow(
+        activeRange,
+        activeTab === 'habits' ? habitWindow : undefined
+      );
       const [
         nextTimeseries,
         nextHeatmap,
@@ -137,7 +144,7 @@
         nextHabitStats,
         nextTags,
       ] = await Promise.all([
-        fetchTimeseries(range),
+        fetchTimeseries(activeRange),
         fetchTagHeatmap({
           start_date,
           end_date,
@@ -250,7 +257,7 @@
     timeseries.range !== $analysisRange &&
     !loading
   ) {
-    void loadTrends();
+    void loadTrends($analysisRange);
   }
   $: habitWindow = rangeToHabitWindow(range);
   $: rangeControlOptions = rangeOptions.map(
@@ -309,8 +316,9 @@
         ariaLabel={$_('trends.controls')}
         testId="trends-range-control"
         on:change={(event) => {
-          setAnalysisRange(event.detail.value as TimeseriesRange);
-          void loadTrends();
+          const nextRange = event.detail.value as TimeseriesRange;
+          setAnalysisRange(nextRange);
+          void loadTrends(nextRange);
         }}
       />
     </div>

@@ -1,5 +1,7 @@
 import type { TagCooccurrenceRange } from '$lib/api/insights';
 import type { TimeseriesRange } from '$lib/api/stats';
+import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
+import { rangeToDays } from '$lib/utils/trendsRange';
 
 export const ANALYSIS_RANGE_OPTIONS: TimeseriesRange[] = ['week', 'month', 'quarter', 'year'];
 
@@ -24,6 +26,16 @@ export function timeseriesRangeToCooccurrence(range: TimeseriesRange): TagCooccu
 }
 
 /** Reverse map for migrating legacy co-occurrence-only preferences. */
+/** Calendar window for symptom heatmaps and entry-backed analytics. */
+export function analysisDateWindow(
+  range: TimeseriesRange,
+  referenceDate: Date = new Date()
+): { start_date: string; end_date: string } {
+  const end_date = localIsoDate(referenceDate);
+  const windowDays = rangeToDays(range);
+  return { start_date: shiftIsoDate(end_date, -(windowDays - 1)), end_date };
+}
+
 export function cooccurrenceRangeToTimeseries(range: TagCooccurrenceRange): TimeseriesRange {
   switch (range) {
     case '90d':

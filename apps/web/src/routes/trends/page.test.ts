@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setAnalysisRange } from '$lib/stores/analysisRange';
+import { fetchTimeseries } from '$lib/api/stats';
 import Page from './+page.svelte';
 
 vi.mock('svelte-i18n', async () => {
@@ -167,5 +169,23 @@ describe('/trends page', () => {
     expect(screen.getByTestId('mobile-trends-detail')).toBeTruthy();
     expect(screen.getByTestId('trends-compare-filters')).toBeTruthy();
     expect(screen.queryByTestId('mobile-trends-detail-toggle')).toBeNull();
+  });
+
+  it('loads the newly selected range immediately when the control changes', async () => {
+    localStorage.clear();
+    setAnalysisRange('week');
+    vi.mocked(fetchTimeseries).mockClear();
+
+    render(Page);
+    await screen.findByTestId('trends-range-control');
+
+    await fireEvent.click(screen.getByTestId('trends-range-year'));
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('year');
+    });
+
+    const callsAfterRangeChange = vi.mocked(fetchTimeseries).mock.calls.slice(1);
+    expect(callsAfterRangeChange.every((call) => call[0] === 'year')).toBe(true);
   });
 });

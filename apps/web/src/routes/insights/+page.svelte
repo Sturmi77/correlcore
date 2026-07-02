@@ -80,13 +80,12 @@
     canShowTagCooccurrence,
     hasTagCooccurrenceData,
   } from '$lib/utils/insightAnalyticsGate';
-  import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
   import SegmentedControl, {
     type SegmentedControlOption,
   } from '$lib/components/common/SegmentedControl.svelte';
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
-  import { timeseriesRangeToCooccurrence } from '$lib/utils/analysisRange';
+  import { timeseriesRangeToCooccurrence, analysisDateWindow } from '$lib/utils/analysisRange';
   import type { TimeseriesRange } from '$lib/api/stats';
 
   type DetailView = 'findings' | 'matrix';
@@ -131,6 +130,7 @@
   let filterTab: InsightFeedFilterTab = 'all';
   let compactInsights = false;
   let mobileMedia: MediaQueryList | null = null;
+  let analyticsPanelOpen = false;
 
   const analysisRangeOptions: { id: TimeseriesRange; label: string }[] = [
     { id: 'week', label: 'trends.range.week' },
@@ -142,18 +142,73 @@
   $: cooccurrenceRange = timeseriesRangeToCooccurrence($analysisRange);
 
   let lastAnalysisRangeForCooccurrence: TimeseriesRange | null = null;
+  let lastAnalysisRangeForSymptomData: TimeseriesRange | null = null;
+
+  function cooccurrenceApiRangeFor(timeseriesRange: TimeseriesRange): TagCooccurrenceRange {
+    return timeseriesRangeToCooccurrence(timeseriesRange);
+  }
+
+  async function reloadSymptomWindowData(): Promise<void> {
+    if (get(auth).status !== 'authenticated') return;
+    const { start_date, end_date } = analysisDateWindow($analysisRange);
+    try {
+      if (get(devForceVisualizations)) {
+        moodEntries = mockEntries;
+        dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
+        entryCount = dayEntryDates.length;
+        symptomHeatmap = mockSymptomHeatmap;
+        return;
+      }
+
+      const [entryResult, symptomHeatmapResult] = await Promise.allSettled([
+        listEntries({ start_date, end_date }),
+        fetchSymptomHeatmap({ start_date, end_date }),
+      ]);
+      if (entryResult.status === 'fulfilled') {
+        dayEntryDates = dayEntryDatesFromIsoEntries(entryResult.value);
+        moodEntries = entryResult.value;
+        entryCount = dayEntryDates.length;
+      }
+      if (symptomHeatmapResult.status === 'fulfilled') {
+        symptomHeatmap = symptomHeatmapResult.value;
+      }
+    } catch {
+      // Keep the previous window visible on transient failures.
+    }
+  }
+
+  $: if ($auth.status === 'authenticated' && $analysisRange !== lastAnalysisRangeForCooccurrence) {
+    const previousRange = lastAnalysisRangeForCooccurrence;
+    const nextRange = $analysisRange;
+    lastAnalysisRangeForCooccurrence = nextRange;
+
+    if (previousRange !== null) {
+      const previousApiRange = cooccurrenceApiRangeFor(previousRange);
+      const nextApiRange = cooccurrenceApiRangeFor(nextRange);
+      const apiWindowChanged = previousApiRange !== nextApiRange;
+
+      if (apiWindowChanged && (cooccurrenceRequested || cooccurrenceLoading)) {
+        void loadCooccurrence();
+      }
+      if (apiWindowChanged && (symptomCooccurrenceRequested || symptomCooccurrenceLoading)) {
+        void loadSymptomCooccurrence();
+      }
+      if (get(devForceVisualizations) && analyticsPanelOpen) {
+        void loadCooccurrence();
+        void loadSymptomCooccurrence();
+      }
+    }
+  }
+
   $: if (
     $auth.status === 'authenticated' &&
     insightsLoaded &&
-    $analysisRange !== lastAnalysisRangeForCooccurrence
+    $analysisRange !== lastAnalysisRangeForSymptomData
   ) {
-    const hadPrevious = lastAnalysisRangeForCooccurrence !== null;
-    lastAnalysisRangeForCooccurrence = $analysisRange;
-    if (hadPrevious && cooccurrenceRequested) {
-      void loadCooccurrence();
-    }
-    if (hadPrevious && symptomCooccurrenceRequested) {
-      void loadSymptomCooccurrence();
+    const hadPrevious = lastAnalysisRangeForSymptomData !== null;
+    lastAnalysisRangeForSymptomData = $analysisRange;
+    if (hadPrevious) {
+      void reloadSymptomWindowData();
     }
   }
 
@@ -185,7 +240,7 @@
         cooccurrence = null;
       }
     } finally {
-      if (requestId === cooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+      if (requestId === cooccurrenceRequestId) {
         cooccurrenceLoading = false;
       }
     }
@@ -228,7 +283,7 @@
         symptomCooccurrence = null;
       }
     } finally {
-      if (requestId === symptomCooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+      if (requestId === symptomCooccurrenceRequestId) {
         symptomCooccurrenceLoading = false;
       }
     }
@@ -372,8 +427,7 @@
         return;
       }
 
-      const todayIso = localIsoDate(new Date());
-      const startIso = shiftIsoDate(todayIso, -89);
+      const { start_date: startIso, end_date: todayIso } = analysisDateWindow($analysisRange);
       const [
         insightsResult,
         entryResult,
@@ -506,6 +560,7 @@
 
   function handleAnalyticsToggle(event: Event): void {
     const open = event.currentTarget instanceof HTMLDetailsElement && event.currentTarget.open;
+    analyticsPanelOpen = open;
     if (!open) return;
     if (!cooccurrence && !cooccurrenceLoading) {
       void loadCooccurrence();
