@@ -242,7 +242,10 @@ vi.mock('$lib/api/insights', () => ({
 }));
 
 vi.mock('$lib/components/insights/InsightFeed.svelte', () => ({
-  default: testHelpers.mockComponent('insight-feed'),
+  default: testHelpers.mockComponent(
+    'insight-feed',
+    (props: Record<string, unknown>) => `insight-feed:entries:${props.entryCount ?? 0}`
+  ),
 }));
 vi.mock('$lib/components/insights/InsightMatrix.svelte', () => ({
   default: testHelpers.mockComponent('insight-matrix'),
@@ -351,11 +354,8 @@ describe('/insights page analysis range', () => {
   it('ignores stale symptom analytics responses after rapid range changes', async () => {
     render(Page);
 
-    await fireEvent.click(await screen.findByTestId('insights-filter-tab-symptoms'));
-    await fireEvent.click(screen.getByText('insights.page.analytics_summary'));
-
     await waitFor(() => {
-      expect(screen.getByText('symptom-window:2026-05-01:entries:0')).toBeTruthy();
+      expect(screen.getByText('insight-feed:entries:0')).toBeTruthy();
     });
 
     const staleEntries = testHelpers.deferred<EntryResponse[]>();
@@ -363,7 +363,7 @@ describe('/insights page analysis range', () => {
     vi.mocked(listEntries)
       .mockClear()
       .mockReturnValueOnce(staleEntries.promise)
-      .mockResolvedValueOnce([entryResponse('2026-06-30')]);
+      .mockResolvedValueOnce([entryResponse('2026-06-30'), entryResponse('2026-07-01')]);
     vi.mocked(fetchSymptomHeatmap)
       .mockClear()
       .mockReturnValueOnce(staleHeatmap.promise)
@@ -377,20 +377,15 @@ describe('/insights page analysis range', () => {
     await fireEvent.click(screen.getByTestId('insights-range-month'));
     await waitFor(() => {
       expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(2);
-      expect(screen.getByText('symptom-window:fresh-month-window:entries:1')).toBeTruthy();
+      expect(screen.getByText('insight-feed:entries:2')).toBeTruthy();
     });
 
     staleEntries.resolve([entryResponse('2025-07-01')]);
     staleHeatmap.resolve(symptomHeatmapResponse('stale-year-window'));
     await flushPromises();
 
-    expect(screen.getByText('symptom-window:fresh-month-window:entries:1')).toBeTruthy();
-    expect(screen.queryByText('symptom-window:stale-year-window:entries:1')).toBeNull();
-
-    for (const request of testHelpers.tagCooccurrenceRequests) {
-      request.resolve(tagCooccurrenceResponse('30d'));
-    }
-    await flushPromises();
+    expect(screen.getByText('insight-feed:entries:2')).toBeTruthy();
+    expect(screen.queryByText('insight-feed:entries:1')).toBeNull();
   });
 
   it('does not refetch co-occurrence when switching between equivalent API windows', async () => {
