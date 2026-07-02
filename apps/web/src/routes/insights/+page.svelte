@@ -127,6 +127,7 @@
   let cooccurrenceRequestId = 0;
   let symptomCooccurrenceRequested = false;
   let symptomCooccurrenceRequestId = 0;
+  let symptomWindowRequestId = 0;
   let filterTab: InsightFeedFilterTab = 'all';
   let compactInsights = false;
   let mobileMedia: MediaQueryList | null = null;
@@ -150,7 +151,9 @@
 
   async function reloadSymptomWindowData(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
-    const { start_date, end_date } = analysisDateWindow($analysisRange);
+    const requestedRange = get(analysisRange);
+    const requestId = ++symptomWindowRequestId;
+    const { start_date, end_date } = analysisDateWindow(requestedRange);
     try {
       if (get(devForceVisualizations)) {
         moodEntries = mockEntries;
@@ -164,6 +167,7 @@
         listEntries({ start_date, end_date }),
         fetchSymptomHeatmap({ start_date, end_date }),
       ]);
+      if (requestId !== symptomWindowRequestId || requestedRange !== get(analysisRange)) return;
       if (entryResult.status === 'fulfilled') {
         dayEntryDates = dayEntryDatesFromIsoEntries(entryResult.value);
         moodEntries = entryResult.value;
@@ -427,7 +431,9 @@
         return;
       }
 
-      const { start_date: startIso, end_date: todayIso } = analysisDateWindow($analysisRange);
+      const requestedAnalysisRange = get(analysisRange);
+      const { start_date: startIso, end_date: todayIso } =
+        analysisDateWindow(requestedAnalysisRange);
       const [
         insightsResult,
         entryResult,
@@ -465,6 +471,7 @@
         moodEntries = entryResult.value;
         entryCount = dayEntryDates.length;
       }
+      lastAnalysisRangeForSymptomData = requestedAnalysisRange;
 
       const tagResponse = tagResult.status === 'fulfilled' ? tagResult.value : [];
       const defaultTags = defaultTagsResult.status === 'fulfilled' ? defaultTagsResult.value : [];

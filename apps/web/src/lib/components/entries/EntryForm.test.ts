@@ -322,6 +322,91 @@ describe('EntryForm slot changes', () => {
     );
   });
 
+  it('does not move an existing entry when an empty slot is clicked during an in-flight save', async () => {
+    const patch = testHelpers.deferred<EntryResponse>();
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        id: 'day-entry',
+        user_id: 'user-1',
+        entry_date: '2026-06-02',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 3,
+        cycle_day: null,
+        source: 'direct',
+        work_context: 'homeoffice',
+        note: 'day note',
+        created_at: '2026-06-02T12:00:00Z',
+        updated_at: '2026-06-02T12:00:00Z',
+      },
+    ]);
+    vi.mocked(updateEntry).mockReturnValueOnce(patch.promise).mockResolvedValue({
+      id: 'day-entry',
+      user_id: 'user-1',
+      entry_date: '2026-06-02',
+      slot: 'day',
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: 'edited day note',
+      created_at: '2026-06-02T12:00:00Z',
+      updated_at: '2026-06-02T12:01:00Z',
+    });
+
+    const { container } = render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited day note' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).toHaveBeenCalledWith(
+      'day-entry',
+      expect.objectContaining({ slot: 'day', note: 'edited day note' })
+    );
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('saving');
+
+    await fireEvent.click(screen.getByRole('button', { name: 'entry.time_slot.morning' }));
+    await flushAsync();
+
+    patch.resolve({
+      id: 'day-entry',
+      user_id: 'user-1',
+      entry_date: '2026-06-02',
+      slot: 'day',
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: 'edited day note',
+      created_at: '2026-06-02T12:00:00Z',
+      updated_at: '2026-06-02T12:01:00Z',
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).toHaveBeenCalledTimes(1);
+    expect(
+      (screen.getByPlaceholderText('entry.note_placeholder') as HTMLTextAreaElement).value
+    ).toBe('');
+    expect(
+      screen.getByRole('button', { name: 'entry.time_slot.morning' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('idle');
+  });
+
   it('hydrates an occupied slot instead of posting a duplicate draft', async () => {
     vi.mocked(listEntries).mockResolvedValue([
       {

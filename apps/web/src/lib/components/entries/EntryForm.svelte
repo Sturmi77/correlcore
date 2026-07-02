@@ -118,6 +118,7 @@
   // — needed during hydration so loading an existing entry doesn't
   // immediately schedule a save back to the server.
   let hydrating = false;
+  let createSaveInFlight = false;
   let applyingSmartDefaults = false;
   let dayDelta: EntryDeltaResponse | null = null;
   let dayDeltaLoading = false;
@@ -468,7 +469,7 @@
     const saving = status === 'saving';
     const dirtyOrError = status === 'dirty' || status === 'error';
     const draftCreatePath = !existingEntryId && (dirtyOrError || saving);
-    const finishingCreatePipeline = Boolean(existingEntryId) && saving;
+    const finishingCreatePipeline = Boolean(existingEntryId) && saving && createSaveInFlight;
 
     if (draftCreatePath || finishingCreatePipeline) {
       selectedSlot = nextSlot;
@@ -516,51 +517,58 @@
     if (snap.cycle_day !== null && (snap.cycle_day < 1 || snap.cycle_day > 35)) {
       throw new Error('invalid_cycle_day');
     }
-    const resolvedSnap = await resolveOnboardingTags(snap);
+    const startedAsCreate = !existingEntryId;
+    if (startedAsCreate) createSaveInFlight = true;
 
-    if (canUseOfflineSync()) {
-      const result = await saveEntryOffline(existingEntryId, resolvedSnap);
-      existingEntryId = result.entryId;
-      onLocalEntrySaved();
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
-        void refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
+    try {
+      const resolvedSnap = await resolveOnboardingTags(snap);
+
+      if (canUseOfflineSync()) {
+        const result = await saveEntryOffline(existingEntryId, resolvedSnap);
+        existingEntryId = result.entryId;
+        onLocalEntrySaved();
+        if (typeof navigator !== 'undefined' && navigator.onLine) {
+          void refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
+        }
+        return;
       }
-      return;
-    }
 
-    let entryId: string;
-    if (existingEntryId) {
-      const updated = await updateEntry(existingEntryId, {
-        mood_score: resolvedSnap.mood_score,
-        energy: resolvedSnap.energy,
-        stress: resolvedSnap.stress,
-        slot: resolvedSnap.slot,
-        cycle_day: resolvedSnap.cycle_day,
-        work_context: resolvedSnap.work_context,
-        note: resolvedSnap.note,
-      });
-      entryId = updated.id;
-    } else {
-      const created = await submitEntry({
-        entry_date: resolvedSnap.entry_date,
-        slot: resolvedSnap.slot,
-        mood_score: resolvedSnap.mood_score,
-        energy: resolvedSnap.energy,
-        stress: resolvedSnap.stress,
-        cycle_day: resolvedSnap.cycle_day,
-        work_context: resolvedSnap.work_context,
-        note: resolvedSnap.note ? resolvedSnap.note : undefined,
-      });
-      entryId = created.id;
-      // POST → PATCH-Flip: store the id so subsequent saves go via
-      // updateEntry. This is the same flow that defused the 409 race
-      // we hit in PR #117.
-      existingEntryId = entryId;
-    }
+      let entryId: string;
+      if (existingEntryId) {
+        const updated = await updateEntry(existingEntryId, {
+          mood_score: resolvedSnap.mood_score,
+          energy: resolvedSnap.energy,
+          stress: resolvedSnap.stress,
+          slot: resolvedSnap.slot,
+          cycle_day: resolvedSnap.cycle_day,
+          work_context: resolvedSnap.work_context,
+          note: resolvedSnap.note,
+        });
+        entryId = updated.id;
+      } else {
+        const created = await submitEntry({
+          entry_date: resolvedSnap.entry_date,
+          slot: resolvedSnap.slot,
+          mood_score: resolvedSnap.mood_score,
+          energy: resolvedSnap.energy,
+          stress: resolvedSnap.stress,
+          cycle_day: resolvedSnap.cycle_day,
+          work_context: resolvedSnap.work_context,
+          note: resolvedSnap.note ? resolvedSnap.note : undefined,
+        });
+        entryId = created.id;
+        // POST → PATCH-Flip: store the id so subsequent saves go via
+        // updateEntry. This is the same flow that defused the 409 race
+        // we hit in PR #117.
+        existingEntryId = entryId;
+      }
 
-    await assignTagsToEntry(entryId, resolvedSnap.selectedTagIds);
-    await assignSymptomsToEntry(entryId, resolvedSnap.selectedSymptoms);
-    await refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
+      await assignTagsToEntry(entryId, resolvedSnap.selectedTagIds);
+      await assignSymptomsToEntry(entryId, resolvedSnap.selectedSymptoms);
+      await refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
+    } finally {
+      if (startedAsCreate) createSaveInFlight = false;
+    }
   }
 
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
