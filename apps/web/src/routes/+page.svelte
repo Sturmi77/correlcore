@@ -5,7 +5,7 @@
    * Authenticated home uses exactly three information zones:
    *   1. Today context (date, work context, compact log/edit action)
    *   2. Daily Brief: latest insight summary OR phase fallback (brief-first)
-   *   3. 7-day mood sparkline + secondary entry CTA
+   *   3. Primary entry CTA when today is not logged yet
    *
    * Insight load never blocks the CTA. No matrix, summary grid, or
    * recent-entries list on Home — those live under Trends / Insights.
@@ -18,12 +18,6 @@
   import { auth, currentUser } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchDashboardSummary, type DashboardSummaryResponse } from '$lib/api/dashboard';
-  import {
-    fetchSymptomHeatmap,
-    fetchTagHeatmap,
-    type SymptomHeatmapResponse,
-    type TagHeatmapResponse,
-  } from '$lib/api/stats';
   import { insightStore, rankedInsights, loadInsights } from '$lib/stores/insights';
   import {
     fetchUserPreferences,
@@ -38,15 +32,12 @@
   import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
-  import HomeSparkline from '$lib/components/home/HomeSparkline.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
 
-  const HOME_SPARKLINE_DAYS = 7;
-  const HOME_SPARKLINE_MIN_ENTRIES = 3;
   const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
 
   const todayIso = localIsoDate(new Date());
@@ -55,8 +46,6 @@
   let recentEntries: EntryResponse[] = [];
   let dashboardSummary: DashboardSummaryResponse | null = null;
   let userPreferences: UserPreferencesResponse | null = null;
-  let tagHeatmap: TagHeatmapResponse | null = null;
-  let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
   let firstEntrySheetOpened = false;
@@ -70,8 +59,6 @@
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
   $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
-  $: dayEntriesForSparkline = recentEntries.filter((entry) => entry.slot === 'day');
-  $: showHomeSparkline = dayEntriesForSparkline.length >= HOME_SPARKLINE_MIN_ENTRIES;
   $: showOnboardingTags = shouldShowOnboardingTags(userPreferences, dashboardSummary?.entry_count);
   $: showPwaInstallBanner = Boolean(
     $pwaInstallStore.promptEvent &&
@@ -88,11 +75,9 @@
     dashboardLoading = true;
     try {
       if (get(devForceVisualizations)) {
-        recentEntries = mockEntries.slice(0, HOME_SPARKLINE_DAYS);
+        recentEntries = mockEntries.slice(0, 7);
         todayEntry = findEntryForDate(recentEntries, todayIso);
         dashboardSummary = { ...mockDashboardSummary, entry_count: $devPhase.entryCount };
-        tagHeatmap = null;
-        symptomHeatmap = null;
         userPreferences = {
           ...mockUserPreferences,
           onboarding_retro_completed: $devPhase.onboardingCompleted,
@@ -101,15 +86,12 @@
         return;
       }
 
-      const start = shiftIsoDate(todayIso, -(HOME_SPARKLINE_DAYS - 1));
-      const [entriesResult, summaryResult, preferencesResult, tagsResult, symptomsResult] =
-        await Promise.allSettled([
-          listEntries({ start_date: start, end_date: todayIso }),
-          fetchDashboardSummary(todayIso),
-          fetchUserPreferences(),
-          fetchTagHeatmap({ start_date: start, end_date: todayIso }),
-          fetchSymptomHeatmap({ start_date: start, end_date: todayIso }),
-        ]);
+      const start = shiftIsoDate(todayIso, -6);
+      const [entriesResult, summaryResult, preferencesResult] = await Promise.allSettled([
+        listEntries({ start_date: start, end_date: todayIso }),
+        fetchDashboardSummary(todayIso),
+        fetchUserPreferences(),
+      ]);
 
       if (entriesResult.status === 'rejected') throw entriesResult.reason;
 
@@ -117,15 +99,11 @@
       todayEntry = findEntryForDate(recentEntries, todayIso);
       dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
       userPreferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : null;
-      tagHeatmap = tagsResult.status === 'fulfilled' ? tagsResult.value : null;
-      symptomHeatmap = symptomsResult.status === 'fulfilled' ? symptomsResult.value : null;
     } catch {
       recentEntries = [];
       todayEntry = null;
       dashboardSummary = null;
       userPreferences = null;
-      tagHeatmap = null;
-      symptomHeatmap = null;
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
@@ -237,41 +215,28 @@
           {latestInsight}
           maturity={insightMaturity}
           loading={insightLoading && !latestInsight}
-          {tagHeatmap}
-          {symptomHeatmap}
         />
       {/if}
     </section>
 
-    <!-- Zone 3: sparkline + primary CTA -->
-    <section class="home-zone home-zone--foot" data-testid="home-zone-sparkline-cta">
-      {#if showHomeSparkline}
-        <HomeSparkline
-          entries={recentEntries}
-          {todayIso}
-          days={HOME_SPARKLINE_DAYS}
-          loading={dashboardLoading && !dashboardLoaded}
-        />
-      {/if}
-
-      <Button
-        type="button"
-        variant={todayEntry ? 'ghost' : 'primary'}
-        size={todayEntry ? 'md' : 'lg'}
-        fullWidth
-        stacked={!todayEntry}
-        className="home-cta"
-        data-testid="home-cta"
-        on:click={() => openEntry(todayIso)}
-      >
-        {#if todayEntry}
-          <span class="text-lg font-semibold">{$_('home.cta_edit_entry')}</span>
-        {:else}
+    <!-- Zone 3: primary CTA when today is not logged -->
+    {#if !todayEntry}
+      <section class="home-zone home-zone--foot" data-testid="home-zone-cta">
+        <Button
+          type="button"
+          variant="primary"
+          size="lg"
+          fullWidth
+          stacked
+          className="home-cta"
+          data-testid="home-cta"
+          on:click={() => openEntry(todayIso)}
+        >
           <span class="text-lg font-semibold">{$_('home.cta_log_today')}</span>
-        {/if}
-        <span class="text-sm home-cta__hint">{$_('entry.subtitle')}</span>
-      </Button>
-    </section>
+          <span class="text-sm home-cta__hint">{$_('entry.subtitle')}</span>
+        </Button>
+      </section>
+    {/if}
   </div>
 {:else}
   <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">

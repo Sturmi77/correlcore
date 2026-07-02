@@ -2,62 +2,20 @@
   import { _ } from 'svelte-i18n';
   import type { EntryResponse } from '$lib/api/entries';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
-  import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats';
   import { topInsightLabel } from '$lib/utils/analysisCrossLinks';
   import {
     maturityProgressMessage,
     maturityProgressPercent,
   } from '$lib/utils/insightMaturityProgress';
+  import { rankInsights } from '$lib/utils/insightRanking';
 
   export let entries: EntryResponse[] = [];
   export let latestInsight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
-  export let tagHeatmap: TagHeatmapResponse | null = null;
-  export let symptomHeatmap: SymptomHeatmapResponse | null = null;
   export let loading = false;
 
-  function moodDelta(list: readonly EntryResponse[]): number | null {
-    const dayEntries = list
-      .filter((entry) => entry.slot === 'day')
-      .sort((a, b) => a.entry_date.localeCompare(b.entry_date));
-    if (dayEntries.length < 2) return null;
-    return dayEntries[dayEntries.length - 1].mood_score - dayEntries[0].mood_score;
-  }
-
-  function topTagLabel(heatmap: TagHeatmapResponse | null): string | null {
-    const top = heatmap?.tags
-      .map((tag) => ({
-        name: tag.name,
-        count: tag.days.reduce((sum, day) => sum + day.count, 0),
-      }))
-      .filter((tag) => tag.count > 0)
-      .sort((a, b) => b.count - a.count)[0];
-    return top ? `${top.name} (${top.count})` : null;
-  }
-
-  function topSymptomLabel(heatmap: SymptomHeatmapResponse | null): string | null {
-    const top = heatmap?.symptoms
-      .map((symptom) => ({
-        name: symptom.name,
-        count: symptom.days.reduce((sum, day) => sum + day.count, 0),
-        maxIntensity: Math.max(0, ...symptom.days.map((day) => day.max_intensity)),
-      }))
-      .filter((symptom) => symptom.count > 0)
-      .sort((a, b) => b.count - a.count || b.maxIntensity - a.maxIntensity)[0];
-    return top ? `${top.name} (${top.count})` : null;
-  }
-
-  $: delta = moodDelta(entries);
-  $: deltaLabel =
-    delta === null
-      ? $_('home.brief.delta_empty')
-      : delta > 0
-        ? $_('home.brief.delta_up', { values: { value: delta } })
-        : delta < 0
-          ? $_('home.brief.delta_down', { values: { value: Math.abs(delta) } })
-          : $_('home.brief.delta_flat');
-  $: tagLabel = topTagLabel(tagHeatmap);
-  $: symptomLabel = topSymptomLabel(symptomHeatmap);
+  $: rankedInsights = latestInsight ? rankInsights([latestInsight]) : [];
+  $: topInsight = rankedInsights[0] ?? null;
   $: phaseLabel = maturity ? $_(`maturity.${maturity.phase}.label`) : null;
   $: milestoneProgress = maturity ? maturityProgressMessage(maturity, $_) : null;
   $: milestonePercent = maturity ? maturityProgressPercent(maturity) : 0;
@@ -66,7 +24,9 @@
     latestInsight || (maturity && maturity.phase !== 'collecting') || entries.length >= 3
   );
   $: insightBridgePreview = latestInsight ? topInsightLabel(latestInsight) : null;
-  $: trendsBridgePreview = tagLabel ?? symptomLabel;
+  $: trendsBridgePreview = insightBridgePreview;
+  $: topInsightConfidence =
+    topInsight?.confidence != null ? Math.round(topInsight.confidence * 100) : null;
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
@@ -107,20 +67,21 @@
     {/if}
   </div>
 
-  <dl class="daily-brief__facts">
-    <div>
-      <dt>{$_('home.brief.mood_delta')}</dt>
-      <dd>{deltaLabel}</dd>
-    </div>
-    <div>
-      <dt>{$_('home.brief.top_tag')}</dt>
-      <dd>{tagLabel ?? $_('home.brief.none')}</dd>
-    </div>
-    <div>
-      <dt>{$_('home.brief.top_symptom')}</dt>
-      <dd>{symptomLabel ?? $_('home.brief.none')}</dd>
-    </div>
-  </dl>
+  <section class="daily-brief__top-insight" data-testid="home-brief-top-insight" aria-live="polite">
+    <p class="daily-brief__top-insight-label">{$_('home.brief.top_insight')}</p>
+    {#if topInsight}
+      <p class="daily-brief__top-insight-statement">
+        {topInsight.statement ?? topInsight.subject_label ?? topInsight.metric}
+      </p>
+      {#if topInsightConfidence != null}
+        <p class="daily-brief__top-insight-confidence">
+          {$_('home.brief.top_insight_confidence', { values: { value: topInsightConfidence } })}
+        </p>
+      {/if}
+    {:else}
+      <p class="daily-brief__top-insight-fallback">{$_('home.brief.top_insight_fallback')}</p>
+    {/if}
+  </section>
 
   {#if showWeeklyBridge}
     <nav
@@ -156,7 +117,7 @@
 
   .daily-brief__header p,
   .daily-brief__lead p,
-  .daily-brief__facts {
+  .daily-brief__top-insight p {
     margin: 0;
   }
 
@@ -207,29 +168,34 @@
     background: var(--color-primary);
   }
 
-  .daily-brief__facts {
+  .daily-brief__top-insight {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-2);
-  }
-
-  .daily-brief__facts div {
-    display: grid;
-    gap: var(--space-1);
     padding: var(--space-3);
     border-radius: var(--radius-sm);
     background: var(--color-surface);
+    border: 1px solid var(--color-border);
   }
 
-  .daily-brief__facts dt {
+  .daily-brief__top-insight-label {
     color: var(--color-text-muted);
     font-size: var(--text-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
-  .daily-brief__facts dd {
-    margin: 0;
+  .daily-brief__top-insight-statement {
     font-size: var(--text-sm);
-    font-weight: 700;
+    line-height: 1.55;
+    font-weight: 600;
+  }
+
+  .daily-brief__top-insight-confidence,
+  .daily-brief__top-insight-fallback {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    line-height: 1.45;
   }
 
   .daily-brief__bridge {
@@ -271,7 +237,6 @@
   }
 
   @media (max-width: 520px) {
-    .daily-brief__facts,
     .daily-brief__bridge {
       grid-template-columns: 1fr;
     }

@@ -12,6 +12,7 @@
    * to show the correlation matrix for pointbiserial insights.
    */
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
   import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
@@ -41,8 +42,8 @@
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import TabBar from '$lib/components/common/TabBar.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
+  import InsightsAnalysisToolbar from '$lib/components/insights/InsightsAnalysisToolbar.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
   import MobileInsightLead from '$lib/components/insights/MobileInsightLead.svelte';
@@ -81,11 +82,9 @@
     hasTagCooccurrenceData,
   } from '$lib/utils/insightAnalyticsGate';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
-  import SegmentedControl, {
-    type SegmentedControlOption,
-  } from '$lib/components/common/SegmentedControl.svelte';
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { timeseriesRangeToCooccurrence, analysisDateWindow } from '$lib/utils/analysisRange';
+  import { rangeToDays } from '$lib/utils/trendsRange';
   import type { TimeseriesRange } from '$lib/api/stats';
 
   type DetailView = 'findings' | 'matrix';
@@ -129,9 +128,14 @@
   let symptomCooccurrenceRequestId = 0;
   let symptomWindowRequestId = 0;
   let filterTab: InsightFeedFilterTab = 'all';
-  let compactInsights = false;
+
+  function readCompactInsights(): boolean {
+    if (!browser) return false;
+    return window.matchMedia(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`).matches;
+  }
+
+  let compactInsights = readCompactInsights();
   let mobileMedia: MediaQueryList | null = null;
-  let analyticsPanelOpen = false;
 
   const analysisRangeOptions: { id: TimeseriesRange; label: string }[] = [
     { id: 'week', label: 'trends.range.week' },
@@ -140,7 +144,12 @@
     { id: 'year', label: 'trends.range.year' },
   ];
 
-  $: cooccurrenceRange = timeseriesRangeToCooccurrence($analysisRange);
+  $: insightsEffectiveRange =
+    compactInsights && $analysisRange === 'year' ? 'quarter' : $analysisRange;
+  $: cooccurrenceRange = timeseriesRangeToCooccurrence(insightsEffectiveRange);
+  $: analysisRangeDays = rangeToDays(insightsEffectiveRange);
+  $: toolbarAnalysisRange =
+    compactInsights && $analysisRange === 'year' ? 'quarter' : $analysisRange;
 
   let lastAnalysisRangeForCooccurrence: TimeseriesRange | null = null;
   let lastAnalysisRangeForSymptomData: TimeseriesRange | null = null;
@@ -149,9 +158,13 @@
     return timeseriesRangeToCooccurrence(timeseriesRange);
   }
 
+  function insightsRangeForData(range: TimeseriesRange = get(analysisRange)): TimeseriesRange {
+    return compactInsights && range === 'year' ? 'quarter' : range;
+  }
+
   async function reloadSymptomWindowData(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
-    const requestedRange = get(analysisRange);
+    const requestedRange = insightsRangeForData();
     const requestId = ++symptomWindowRequestId;
     const { start_date, end_date } = analysisDateWindow(requestedRange);
     try {
@@ -167,7 +180,7 @@
         listEntries({ start_date, end_date }),
         fetchSymptomHeatmap({ start_date, end_date }),
       ]);
-      if (requestId !== symptomWindowRequestId || requestedRange !== get(analysisRange)) return;
+      if (requestId !== symptomWindowRequestId || requestedRange !== insightsRangeForData()) return;
       if (entryResult.status === 'fulfilled') {
         dayEntryDates = dayEntryDatesFromIsoEntries(entryResult.value);
         moodEntries = entryResult.value;
@@ -181,9 +194,12 @@
     }
   }
 
-  $: if ($auth.status === 'authenticated' && $analysisRange !== lastAnalysisRangeForCooccurrence) {
+  $: if (
+    $auth.status === 'authenticated' &&
+    insightsEffectiveRange !== lastAnalysisRangeForCooccurrence
+  ) {
     const previousRange = lastAnalysisRangeForCooccurrence;
-    const nextRange = $analysisRange;
+    const nextRange = insightsEffectiveRange;
     lastAnalysisRangeForCooccurrence = nextRange;
 
     if (previousRange !== null) {
@@ -197,7 +213,7 @@
       if (apiWindowChanged && (symptomCooccurrenceRequested || symptomCooccurrenceLoading)) {
         void loadSymptomCooccurrence();
       }
-      if (get(devForceVisualizations) && analyticsPanelOpen) {
+      if (get(devForceVisualizations) && showAdvancedAnalytics) {
         void loadCooccurrence();
         void loadSymptomCooccurrence();
       }
@@ -207,22 +223,23 @@
   $: if (
     $auth.status === 'authenticated' &&
     insightsLoaded &&
-    $analysisRange !== lastAnalysisRangeForSymptomData
+    insightsEffectiveRange !== lastAnalysisRangeForSymptomData
   ) {
     const hadPrevious = lastAnalysisRangeForSymptomData !== null;
-    lastAnalysisRangeForSymptomData = $analysisRange;
+    lastAnalysisRangeForSymptomData = insightsEffectiveRange;
     if (hadPrevious) {
       void reloadSymptomWindowData();
     }
   }
 
-  $: analysisRangeControlOptions = analysisRangeOptions.map(
-    (option): SegmentedControlOption => ({
-      id: option.id,
-      label: $_(option.label),
-      testId: `insights-range-${option.id}`,
-    })
-  );
+  $: visibleAnalysisRangeOptions = compactInsights
+    ? analysisRangeOptions.filter((option) => option.id !== 'year')
+    : analysisRangeOptions;
+  $: analysisRangeControlOptions = visibleAnalysisRangeOptions.map((option) => ({
+    id: option.id,
+    label: $_(option.label),
+    testId: `insights-range-${option.id}`,
+  }));
 
   $: filterTabOptions = getInsightFeedFilterTabs($_);
 
@@ -431,7 +448,7 @@
         return;
       }
 
-      const requestedAnalysisRange = get(analysisRange);
+      const requestedAnalysisRange = insightsRangeForData();
       const { start_date: startIso, end_date: todayIso } =
         analysisDateWindow(requestedAnalysisRange);
       const [
@@ -501,7 +518,7 @@
     }
   }
 
-  $: feedLoading = loading || ($auth.status === 'authenticated' && !insightsLoaded);
+  $: feedLoading = loading && insights.length === 0;
 
   $: if ($auth.status === 'authenticated' && !insightsLoaded && !loading) {
     bootstrapInsightsFromStore();
@@ -509,7 +526,7 @@
   }
 
   function syncCompactInsights(): void {
-    compactInsights = mobileMedia?.matches ?? false;
+    compactInsights = readCompactInsights();
   }
 
   onMount(() => {
@@ -525,8 +542,7 @@
     userPreferences?.reached_milestone_keys
   );
   $: pageMaturityChrome = Boolean(insightMaturity);
-  $: showSymptomAnalytics =
-    filterTab === 'symptoms' && canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
+  $: showSymptomAnalytics = canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
   $: showMatrixTab = canShowMatrixTab(insightMaturity?.phase ?? null, insights);
   $: showAdvancedAnalytics = canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
   $: showTagCooccurrencePanel =
@@ -538,6 +554,27 @@
   $: filteredRankedInsights = rankedInsightsForTab(insights, filterTab);
   $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
   $: remainingMobileInsights = filteredRankedInsights.slice(1);
+  $: feedInsights =
+    compactInsights && primaryMobileInsight ? remainingMobileInsights : filteredRankedInsights;
+  $: showInsightFeed =
+    detailView === 'findings' &&
+    (feedInsights.length > 0 || feedLoading || Boolean(error) || !compactInsights || !primaryMobileInsight);
+
+  function ensureAnalyticsLoaded(): void {
+    if (!cooccurrenceRequested && !cooccurrenceLoading) {
+      void loadCooccurrence();
+    }
+    if (!tagClusters && !tagClustersLoading) {
+      void loadTagClusters();
+    }
+    if (!symptomCooccurrenceRequested && !symptomCooccurrenceLoading) {
+      void loadSymptomCooccurrence();
+    }
+  }
+
+  $: if (showAdvancedAnalytics && $auth.status === 'authenticated' && insightsLoaded) {
+    ensureAnalyticsLoaded();
+  }
 
   async function dismissMaturityMilestone(key: string): Promise<void> {
     const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
@@ -565,20 +602,6 @@
     }
   }
 
-  function handleAnalyticsToggle(event: Event): void {
-    const open = event.currentTarget instanceof HTMLDetailsElement && event.currentTarget.open;
-    analyticsPanelOpen = open;
-    if (!open) return;
-    if (!cooccurrence && !cooccurrenceLoading) {
-      void loadCooccurrence();
-    }
-    if (!tagClusters && !tagClustersLoading) {
-      void loadTagClusters();
-    }
-    if (!symptomCooccurrence && !symptomCooccurrenceLoading) {
-      void loadSymptomCooccurrence();
-    }
-  }
 </script>
 
 <svelte:head>
@@ -596,17 +619,18 @@
       </Button>
     </Panel>
   {:else}
-    <div class="insights-page__sticky-toolbar" data-testid="insights-sticky-toolbar">
-      <SegmentedControl
-        value={$analysisRange}
-        options={analysisRangeControlOptions}
-        ariaLabel={$_('insights.page.analysis_range_label')}
-        testId="insights-range-control"
-        on:change={(event) => {
-          setAnalysisRange(event.detail.value as TimeseriesRange);
-        }}
-      />
-    </div>
+    <InsightsAnalysisToolbar
+      analysisRange={toolbarAnalysisRange}
+      analysisRangeOptions={analysisRangeControlOptions}
+      {filterTab}
+      filterTabOptions={filterTabOptions}
+      {showMatrixTab}
+      {detailView}
+      on:rangeChange={(event) => setAnalysisRange(event.detail.value)}
+      on:filterChange={(event) => (filterTab = event.detail.value)}
+      on:matrixClick={() => (detailView = 'matrix')}
+      on:findingsClick={() => (detailView = 'findings')}
+    />
 
     {#if !compactInsights && insightMaturity}
       <InsightStageHeader
@@ -634,79 +658,53 @@
     {/if}
 
     {#if detailView === 'matrix'}
-      <div class="insights-page__findings-toolbar" data-testid="insights-findings-toolbar">
-        <button
-          type="button"
-          class="insights-page__view-link"
-          data-testid="insights-findings-link"
-          on:click={() => (detailView = 'findings')}
-        >
-          {$_('insights.page.findings_view')}
-        </button>
-      </div>
       <InsightMatrix {insights} />
     {:else}
-      <div class="insights-page__findings-toolbar" data-testid="insights-findings-toolbar">
-        <TabBar
-          value={filterTab}
-          options={filterTabOptions}
-          ariaLabel={$_('insights.feed.filter_label')}
-          testId="insights-filter-tabs"
-          on:change={(event) => (filterTab = event.detail.value as InsightFeedFilterTab)}
-        />
-        {#if showMatrixTab}
-          <button
-            type="button"
-            class="insights-page__view-link"
-            data-testid="insights-matrix-link"
-            on:click={() => (detailView = 'matrix')}
-          >
-            {$_('insights.page.matrix_view')}
-          </button>
-        {/if}
-      </div>
-
       {#if !compactInsights && primaryMobileInsight}
         <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
       {/if}
 
-      {#if compactInsights && primaryMobileInsight && remainingMobileInsights.length > 0 && !feedLoading && !error}
-        <section class="insights-page__more" data-testid="mobile-insights-more">
-          <h2>{$_('insights.mobile.more_heading')}</h2>
+      {#if showInsightFeed}
+        {#if compactInsights && feedInsights.length > 0 && primaryMobileInsight}
+          <section class="insights-page__more" data-testid="mobile-insights-more">
+            <h2>{$_('insights.mobile.more_heading')}</h2>
+            <InsightFeed
+              insights={feedInsights}
+              maturity={insightMaturity}
+              {entryCount}
+              {analysisRangeDays}
+              {inactiveTagIds}
+              {filterTab}
+              showContext={false}
+              showFilters={false}
+              showMaturityBadge={false}
+              on:retry={loadInsights}
+            />
+          </section>
+        {:else}
           <InsightFeed
-            insights={remainingMobileInsights}
+            insights={feedInsights}
             maturity={insightMaturity}
+            loading={feedLoading}
+            {error}
             {entryCount}
+            {analysisRangeDays}
             {inactiveTagIds}
             {filterTab}
-            showContext={false}
             showFilters={false}
-            showMaturityBadge={false}
+            showMaturityBadge={!pageMaturityChrome}
             on:retry={loadInsights}
           />
-        </section>
-      {:else if !compactInsights || !primaryMobileInsight || feedLoading || error}
-        <InsightFeed
-          {insights}
-          maturity={insightMaturity}
-          loading={feedLoading}
-          {error}
-          {entryCount}
-          {inactiveTagIds}
-          {filterTab}
-          showFilters={false}
-          showMaturityBadge={!pageMaturityChrome}
-          on:retry={loadInsights}
-        />
+        {/if}
       {/if}
     {/if}
 
     {#if showAdvancedAnalytics}
-      <details class="insights-page__analytics" on:toggle={handleAnalyticsToggle}>
-        <summary>
-          <span>{$_('insights.page.analytics_summary')}</span>
-          <small>{$_('insights.page.analytics_hint')}</small>
-        </summary>
+      <section class="insights-page__analytics" data-testid="insights-analytics-panel">
+        <header class="insights-page__analytics-header">
+          <h2>{$_('insights.page.analytics_summary')}</h2>
+          <p>{$_('insights.page.analytics_hint')}</p>
+        </header>
 
         <div class="insights-page__analytics-body">
           {#if showSymptomAnalytics}
@@ -737,7 +735,7 @@
             />
           {/if}
         </div>
-      </details>
+      </section>
     {/if}
 
     <CooccurrenceEntrySheet
@@ -778,83 +776,39 @@
     flex-direction: column;
   }
 
-  .insights-page__sticky-toolbar {
-    position: sticky;
-    top: calc(var(--app-header-height, 0px) + var(--space-2));
-    z-index: 3;
-    padding: var(--space-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-    backdrop-filter: blur(14px);
-  }
-
-  @media (max-width: 640px) {
-    .insights-page__sticky-toolbar {
-      position: static;
-    }
-  }
-
   .insights-page__analytics {
     border: 1px solid var(--color-border-chart);
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
+    min-width: 0;
   }
 
-  .insights-page__analytics summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    min-height: 44px;
-    padding: var(--space-3) var(--space-4);
-    cursor: pointer;
-    font-weight: 700;
+  .insights-page__analytics-header {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-4) 0;
   }
 
-  .insights-page__analytics summary small {
+  .insights-page__analytics-header h2,
+  .insights-page__analytics-header p {
+    margin: 0;
+  }
+
+  .insights-page__analytics-header h2 {
+    font-size: var(--text-lg);
+  }
+
+  .insights-page__analytics-header p {
     color: var(--color-text-muted);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    text-align: right;
+    font-size: var(--text-sm);
   }
 
   .insights-page__analytics-body {
     display: grid;
     gap: var(--space-4);
-    padding: 0 var(--space-4) var(--space-4);
+    padding: var(--space-4);
     min-width: 0;
     overflow-x: clip;
-  }
-
-  .insights-page__findings-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2);
-  }
-
-  .insights-page__view-link {
-    min-height: 44px;
-    border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
-    border-radius: var(--radius-full);
-    padding: var(--space-2) var(--space-3);
-    color: var(--color-primary);
-    font: inherit;
-    font-size: var(--text-sm);
-    font-weight: 650;
-    background: var(--color-primary-highlight);
-    transition:
-      background-color var(--transition-interactive),
-      border-color var(--transition-interactive),
-      color var(--transition-interactive);
-  }
-
-  .insights-page__view-link:hover,
-  .insights-page__view-link:focus-visible {
-    color: var(--color-text);
-    background: color-mix(in srgb, var(--color-primary-highlight) 80%, var(--color-surface));
   }
 
   .insights-page__more {
@@ -866,16 +820,5 @@
   .insights-page__more h2 {
     margin: 0;
     font-size: var(--text-lg);
-  }
-
-  @media (max-width: 420px) {
-    .insights-page__analytics summary {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-    .insights-page__analytics summary small {
-      text-align: left;
-    }
   }
 </style>

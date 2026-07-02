@@ -56,6 +56,8 @@ describe('/ home screen ownership contract', () => {
     );
     expect(source).toContain('$lib/components/common/Button.svelte');
     expect(source).toContain('data-testid="home-cta"');
+    expect(source).toContain('{#if !todayEntry}');
+    expect(source).not.toContain('HomeSparkline');
     expect(todayContextSource).toContain('data-testid="home-today-action"');
   });
 });

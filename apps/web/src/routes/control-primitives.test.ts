@@ -27,8 +27,10 @@ describe('control primitive contract', () => {
     expect(insightFeedSource).not.toContain('if-tabs');
     expect(insightFeedSource).not.toContain('if-tab');
 
-    expect(insightsRouteSource).toContain('$lib/components/common/TabBar.svelte');
-    expect(insightsRouteSource).toContain('<TabBar');
+    expect(insightsRouteSource).toContain(
+      '$lib/components/insights/InsightsAnalysisToolbar.svelte'
+    );
+    expect(insightsRouteSource).toContain('<InsightsAnalysisToolbar');
     expect(insightsRouteSource).not.toContain('insights-page__view-toggle');
   });
 

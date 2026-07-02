@@ -12,9 +12,9 @@
 | Phase 1       | O-01–O-20                | **Complete** on `main`                                                   |
 | Phase 2 early | O-30 (#288), O-21 (#289) | **Complete** on `main`                                                   |
 | Phase 2 open  | —                        | **Complete** (O-21–O-42 + O-01/O-14 polish)                              |
-| Phase 3 open  | O-43–O-56                | **Planned** — [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) |
+| Phase 3       | O-43–O-56                | **Complete** — [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md) |
 
-**Open audit themes (Phase 3):** Mobile Insights empty-state bug (W5), analytics discoverability (W6), Home brief signal quality (W5), chart interpretability (W6).
+**Open audit themes (Phase 3):** Resolved in PR #305 — mobile Insights feed, permanent analytics, Home top-insight brief, chart interpretability.
 
 **Scoring:** 0 = no friction, 3 = high friction (per criterion); **Total** = sum of 6 criteria (max 18)
 
@@ -231,6 +231,15 @@ See [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md). Focus: mobile In
 
 1. **O-01** — Page-level maturity chrome OR per-card badge on Insights, never both
 2. **O-14** — Matrix tab and co-occurrence panels gated by maturity and data presence
+
+**Phase 3 (O-43–O-56):** complete — see [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md).
+
+### Phase 3 closure (July 2026)
+
+1. **O-43–O-46** — Mobile Insights feed correctness, SWR loading, dynamic subtitle
+2. **O-47–O-49** — Two-row toolbar, permanent analytics, symptom block decoupled from filter tab
+3. **O-50–O-53** — Responsive symptom charts, mobile 90d cap, calendar interpretation copy
+4. **O-54–O-56** — Home single CTA path, sparkline removed, Top Insight facts row
 
 ### Phase 1 quick wins (historical — all shipped)
 

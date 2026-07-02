@@ -86,6 +86,7 @@
       {$_('insights.symptoms.calendar_present')}
     </span>
   </div>
+  <p class="symptom-calendar__how-to-read">{$_('insights.symptoms.calendar_how_to_read')}</p>
 </article>
 
 <style>
@@ -194,5 +195,13 @@
       width: 10px;
       height: 10px;
     }
+  }
+
+  .symptom-calendar__how-to-read {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.45;
+    max-width: 36rem;
   }
 </style>

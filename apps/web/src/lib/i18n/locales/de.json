@@ -59,6 +59,9 @@
       "delta_flat": "Stabil",
       "top_tag": "Auffaelliger Tag",
       "top_symptom": "Auffaelliges Symptom",
+      "top_insight": "Top-Erkenntnis",
+      "top_insight_confidence": "{value}% Konfidenz",
+      "top_insight_fallback": "Noch ein paar Tage loggen, dann erscheint hier dein staerkstes Muster.",
       "none": "Keine"
     },
     "recent": {
@@ -975,6 +978,7 @@
       "calendar_present": "vorhanden",
       "calendar_absent": "nicht vorhanden",
       "calendar_legend": "Kalender-Legende",
+      "calendar_how_to_read": "Jede Zelle steht fuer einen Tag. Dunklere Zellen bedeuten, dass das Symptom an dem Tag geloggt wurde; tippe auf eine Zelle fuer die Eintraege.",
       "trend_heading": "Symptom- und Stimmungsverlauf",
       "trend_subtitle": "Rollierendes {window}-Tage-Fenster ueber die letzten {days} Tage",
       "trend_aria": "Symptomhaeufigkeit und Stimmungstrend fuer {name}",
