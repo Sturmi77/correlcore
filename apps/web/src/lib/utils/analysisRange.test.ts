@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { analysisDateWindow, cooccurrenceRangeToTimeseries, timeseriesRangeToCooccurrence } from './analysisRange';
+import {
+  analysisDateWindow,
+  cooccurrenceRangeToTimeseries,
+  timeseriesRangeToCooccurrence,
+} from './analysisRange';
 
 describe('analysisRange utils', () => {
   it('maps timeseries ranges to co-occurrence API windows', () => {
