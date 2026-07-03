@@ -349,6 +349,28 @@ describe('/insights page analysis range', () => {
     expect(nextEntriesCall?.end_date).toBe(nextHeatmapCall?.end_date);
   });
 
+  it('does not mix symptom heatmap and entry windows when a range reload partially fails', async () => {
+    render(Page);
+
+    await waitFor(() => {
+      expect(screen.getByText('symptom-window:2026-05-01:entries:0')).toBeTruthy();
+    });
+
+    vi.mocked(fetchSymptomHeatmap).mockClear().mockRejectedValueOnce(new Error('timeout'));
+    vi.mocked(listEntries).mockClear().mockResolvedValueOnce([entryResponse('2025-07-01')]);
+
+    await fireEvent.click(screen.getByTestId('insights-range-year'));
+
+    await waitFor(() => {
+      expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(1);
+      expect(listEntries).toHaveBeenCalledTimes(1);
+    });
+    await flushPromises();
+
+    expect(screen.queryByText('symptom-window:2026-05-01:entries:1')).toBeNull();
+    expect(screen.getByText('symptom-window:none:entries:0')).toBeTruthy();
+  });
+
   it('ignores stale symptom analytics responses after rapid range changes', async () => {
     render(Page);
 

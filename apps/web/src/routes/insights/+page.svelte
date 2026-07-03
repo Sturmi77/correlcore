@@ -127,6 +127,7 @@
   let symptomCooccurrenceRequested = false;
   let symptomCooccurrenceRequestId = 0;
   let symptomWindowRequestId = 0;
+  let symptomWindowLoading = false;
   let filterTab: InsightFeedFilterTab = 'all';
 
   function readCompactInsights(): boolean {
@@ -162,35 +163,53 @@
     return compactInsights && range === 'year' ? 'quarter' : range;
   }
 
+  function clearSymptomWindowData(): void {
+    dayEntryDates = [];
+    moodEntries = [];
+    entryCount = 0;
+    symptomHeatmap = null;
+  }
+
+  function applySymptomWindowData(
+    entries: EntryResponse[],
+    heatmap: SymptomHeatmapResponse,
+    range: TimeseriesRange
+  ): void {
+    dayEntryDates = dayEntryDatesFromIsoEntries(entries);
+    moodEntries = entries;
+    entryCount = dayEntryDates.length;
+    symptomHeatmap = heatmap;
+    lastAnalysisRangeForSymptomData = range;
+  }
+
   async function reloadSymptomWindowData(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
     const requestedRange = insightsRangeForData();
     const requestId = ++symptomWindowRequestId;
     const { start_date, end_date } = analysisDateWindow(requestedRange);
+    if (requestedRange !== lastAnalysisRangeForSymptomData) {
+      clearSymptomWindowData();
+      lastAnalysisRangeForSymptomData = requestedRange;
+    }
+    symptomWindowLoading = true;
     try {
       if (get(devForceVisualizations)) {
-        moodEntries = mockEntries;
-        dayEntryDates = dayEntryDatesFromIsoEntries(mockEntries);
-        entryCount = dayEntryDates.length;
-        symptomHeatmap = mockSymptomHeatmap;
+        applySymptomWindowData(mockEntries, mockSymptomHeatmap, requestedRange);
         return;
       }
 
-      const [entryResult, symptomHeatmapResult] = await Promise.allSettled([
+      const [entries, heatmap] = await Promise.all([
         listEntries({ start_date, end_date }),
         fetchSymptomHeatmap({ start_date, end_date }),
       ]);
       if (requestId !== symptomWindowRequestId || requestedRange !== insightsRangeForData()) return;
-      if (entryResult.status === 'fulfilled') {
-        dayEntryDates = dayEntryDatesFromIsoEntries(entryResult.value);
-        moodEntries = entryResult.value;
-        entryCount = dayEntryDates.length;
-      }
-      if (symptomHeatmapResult.status === 'fulfilled') {
-        symptomHeatmap = symptomHeatmapResult.value;
-      }
+      applySymptomWindowData(entries, heatmap, requestedRange);
     } catch {
-      // Keep the previous window visible on transient failures.
+      // Keep the current range empty rather than mixing entries and heatmap from different windows.
+    } finally {
+      if (requestId === symptomWindowRequestId) {
+        symptomWindowLoading = false;
+      }
     }
   }
 
@@ -225,11 +244,7 @@
     insightsLoaded &&
     insightsEffectiveRange !== lastAnalysisRangeForSymptomData
   ) {
-    const hadPrevious = lastAnalysisRangeForSymptomData !== null;
-    lastAnalysisRangeForSymptomData = insightsEffectiveRange;
-    if (hadPrevious) {
-      void reloadSymptomWindowData();
-    }
+    void reloadSymptomWindowData();
   }
 
   $: visibleAnalysisRangeOptions = compactInsights
@@ -453,18 +468,19 @@
         analysisDateWindow(requestedAnalysisRange);
       const [
         insightsResult,
-        entryResult,
+        symptomWindowResult,
         tagResult,
         defaultTagsResult,
         preferencesResult,
-        symptomHeatmapResult,
       ] = await Promise.allSettled([
         listLatestInsights({ limit: 50 }),
-        listEntries({ start_date: startIso, end_date: todayIso }),
+        Promise.all([
+          listEntries({ start_date: startIso, end_date: todayIso }),
+          fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
+        ]),
         listVisibleTags({ include_hidden: true }),
         listDefaultTags(),
         fetchUserPreferences(),
-        fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
       ]);
 
       if (insightsResult.status === 'fulfilled') {
@@ -480,15 +496,16 @@
 
       userPreferences =
         preferencesResult.status === 'fulfilled' ? preferencesResult.value : userPreferences;
-      symptomHeatmap =
-        symptomHeatmapResult.status === 'fulfilled' ? symptomHeatmapResult.value : symptomHeatmap;
 
-      if (entryResult.status === 'fulfilled') {
-        dayEntryDates = dayEntryDatesFromIsoEntries(entryResult.value);
-        moodEntries = entryResult.value;
-        entryCount = dayEntryDates.length;
+      if (requestedAnalysisRange === insightsRangeForData()) {
+        if (symptomWindowResult.status === 'fulfilled') {
+          const [entries, heatmap] = symptomWindowResult.value;
+          applySymptomWindowData(entries, heatmap, requestedAnalysisRange);
+        } else if (lastAnalysisRangeForSymptomData !== requestedAnalysisRange) {
+          clearSymptomWindowData();
+          lastAnalysisRangeForSymptomData = requestedAnalysisRange;
+        }
       }
-      lastAnalysisRangeForSymptomData = requestedAnalysisRange;
 
       const tagResponse = tagResult.status === 'fulfilled' ? tagResult.value : [];
       const defaultTags = defaultTagsResult.status === 'fulfilled' ? defaultTagsResult.value : [];
@@ -717,7 +734,7 @@
               cooccurrence={symptomCooccurrence}
               cooccurrenceLoading={symptomCooccurrenceLoading}
               phase={insightMaturity?.phase ?? null}
-              {loading}
+              loading={loading || symptomWindowLoading}
               on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
               on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
             />
