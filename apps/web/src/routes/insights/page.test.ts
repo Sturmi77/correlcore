@@ -381,7 +381,9 @@ describe('/insights page analysis range', () => {
 
     expect(screen.queryByText('symptom-window:2026-06-01:entries:1')).toBeNull();
     expect(screen.queryByText('insight-feed:entries:1')).toBeNull();
-    expect(screen.getByText('insight-feed:entries:0')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText('insight-feed:entries:0')).toBeTruthy();
+    });
   });
 
   it('ignores stale symptom analytics responses after rapid range changes', async () => {
