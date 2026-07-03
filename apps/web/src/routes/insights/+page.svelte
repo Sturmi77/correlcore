@@ -187,10 +187,8 @@
     const requestedRange = insightsRangeForData();
     const requestId = ++symptomWindowRequestId;
     const { start_date, end_date } = analysisDateWindow(requestedRange);
-    if (requestedRange !== lastAnalysisRangeForSymptomData) {
-      clearSymptomWindowData();
-      lastAnalysisRangeForSymptomData = requestedRange;
-    }
+    clearSymptomWindowData();
+    lastAnalysisRangeForSymptomData = requestedRange;
     symptomWindowLoading = true;
     try {
       if (get(devForceVisualizations)) {
