@@ -350,10 +350,17 @@ describe('/insights page analysis range', () => {
   });
 
   it('does not mix symptom heatmap and entry windows when a range reload partially fails', async () => {
+    vi.mocked(fetchSymptomHeatmap).mockResolvedValueOnce(symptomHeatmapResponse('2026-06-01'));
+    vi.mocked(listEntries).mockResolvedValueOnce([
+      entryResponse('2026-06-01'),
+      entryResponse('2026-06-02'),
+    ]);
+
     render(Page);
 
     await waitFor(() => {
-      expect(screen.getByText('symptom-window:2026-05-01:entries:0')).toBeTruthy();
+      expect(screen.getByText('symptom-window:2026-06-01:entries:2')).toBeTruthy();
+      expect(screen.getByText('insight-feed:entries:2')).toBeTruthy();
     });
     await waitFor(() => {
       expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(1);
@@ -372,8 +379,9 @@ describe('/insights page analysis range', () => {
     });
     await flushPromises();
 
-    expect(screen.queryByText('symptom-window:2026-05-01:entries:1')).toBeNull();
-    expect(screen.getByText('symptom-window:none:entries:0')).toBeTruthy();
+    expect(screen.queryByText('symptom-window:2026-06-01:entries:1')).toBeNull();
+    expect(screen.queryByText('insight-feed:entries:1')).toBeNull();
+    expect(screen.getByText('insight-feed:entries:0')).toBeTruthy();
   });
 
   it('ignores stale symptom analytics responses after rapid range changes', async () => {
