@@ -469,22 +469,17 @@
       const requestedAnalysisRange = insightsRangeForData();
       const { start_date: startIso, end_date: todayIso } =
         analysisDateWindow(requestedAnalysisRange);
-      const [
-        insightsResult,
-        symptomWindowResult,
-        tagResult,
-        defaultTagsResult,
-        preferencesResult,
-      ] = await Promise.allSettled([
-        listLatestInsights({ limit: 50 }),
-        Promise.all([
-          listEntries({ start_date: startIso, end_date: todayIso }),
-          fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
-        ]),
-        listVisibleTags({ include_hidden: true }),
-        listDefaultTags(),
-        fetchUserPreferences(),
-      ]);
+      const [insightsResult, symptomWindowResult, tagResult, defaultTagsResult, preferencesResult] =
+        await Promise.allSettled([
+          listLatestInsights({ limit: 50 }),
+          Promise.all([
+            listEntries({ start_date: startIso, end_date: todayIso }),
+            fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
+          ]),
+          listVisibleTags({ include_hidden: true }),
+          listDefaultTags(),
+          fetchUserPreferences(),
+        ]);
 
       if (insightsResult.status === 'fulfilled') {
         insights = insightsResult.value.insights;

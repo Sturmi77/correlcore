@@ -369,7 +369,9 @@ describe('/insights page analysis range', () => {
     await flushPromises();
 
     vi.mocked(fetchSymptomHeatmap).mockClear().mockRejectedValueOnce(new Error('timeout'));
-    vi.mocked(listEntries).mockClear().mockResolvedValueOnce([entryResponse('2025-07-01')]);
+    vi.mocked(listEntries)
+      .mockClear()
+      .mockResolvedValueOnce([entryResponse('2025-07-01')]);
 
     await fireEvent.click(screen.getByTestId('insights-range-year'));
 
