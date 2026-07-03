@@ -723,6 +723,13 @@
       "preview_onboarding": "Onboarding ansehen",
       "preview_title": "Onboarding-Vorschau",
       "preview_close": "Vorschau schliessen",
+      "advanced": "Erweiterte Overrides",
+      "coverage": {
+        "collecting": "{count} Mock-Eintraege. Zeigt phasenbezogene Leerzustaende und gesperrte Analysen.",
+        "early_patterns": "{count} Mock-Eintraege. Zeigt erste Hinweise, Trends und einfache Vergleiche.",
+        "provisional": "{count} Mock-Eintraege. Zeigt vorlaeufige Korrelationen mit Unsicherheitshinweisen.",
+        "robust": "{count} Mock-Eintraege. Zeigt alle Analyse- und Cooccurrence-Varianten."
+      },
       "phase": {
         "collecting": "Daten sammeln",
         "early_patterns": "Erste Muster",

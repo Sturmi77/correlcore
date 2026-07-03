@@ -34,6 +34,7 @@ import {
   dismissInsight,
   resetInsightStore,
 } from './insights';
+import { devForceVisualizationsControl, devMode, devPhase } from './devMode';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,7 @@ const insightList = (insights: InsightResponse[]) => ({
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  devMode.set(false);
   resetInsightStore();
   vi.clearAllMocks();
 });
@@ -149,6 +151,19 @@ describe('loadInsights()', () => {
 
     const state = get(insightStore);
     expect(state.latest).toBeNull();
+  });
+
+  it('loads the selected dev phase fixture when force visualizations are enabled', async () => {
+    devMode.set(true);
+    devForceVisualizationsControl.set(true);
+    devPhase.setPreset('collecting');
+
+    await loadInsights();
+
+    const state = get(insightStore);
+    expect(vi.mocked(listInsights)).not.toHaveBeenCalled();
+    expect(state.insightMaturity?.phase).toBe('collecting');
+    expect(state.insights).toEqual([]);
   });
 });
 

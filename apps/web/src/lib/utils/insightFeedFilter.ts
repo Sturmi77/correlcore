@@ -1,8 +1,14 @@
 import type { InsightResponse } from '$lib/api/insights';
 import { rankInsights } from '$lib/utils/insightRanking';
-import type { TabBarOption } from '$lib/components/common/TabBar.svelte';
 
 export type InsightFeedFilterTab = 'all' | 'mood' | 'symptoms' | 'sleep';
+
+type TabBarOptionLike = {
+  id: string;
+  label: string;
+  disabled?: boolean;
+  testId?: string;
+};
 
 export const INSIGHT_FEED_FILTER_TABS: { id: InsightFeedFilterTab; label: string }[] = [
   { id: 'all', label: 'insights.feed.tab_all' },
@@ -35,7 +41,7 @@ function insightMatches(i: InsightResponse, keywords: string[]): boolean {
 export function getInsightFeedFilterTabs(
   translate: (key: string) => string,
   testIdPrefix = 'insights-filter-tab'
-): TabBarOption[] {
+): TabBarOptionLike[] {
   return INSIGHT_FEED_FILTER_TABS.map((tab) => ({
     id: tab.id,
     label: translate(tab.label),

@@ -1,4 +1,5 @@
 import { derived, writable } from 'svelte/store';
+import { DEV_PHASE_PRESETS, type DevPhasePresetId } from '$lib/dev/phaseFixtures';
 
 /**
  * devMode store — Issue #165, ADR-0019
@@ -17,19 +18,19 @@ import { derived, writable } from 'svelte/store';
 export const DEV_MODE_STORAGE_KEY = 'dev_mode_enabled';
 export const DEV_FORCE_VIZ_STORAGE_KEY = 'dev_force_viz';
 
-export type DevInsightMaturity = 'collecting' | 'early_patterns' | 'provisional' | 'robust';
+export type DevInsightMaturity = DevPhasePresetId;
 
 export interface DevPhaseState {
-  insightMaturity: DevInsightMaturity;
+  presetId: DevPhasePresetId;
   onboardingCompleted: boolean;
   entryCount: number;
   onboardingPreviewOpen: boolean;
 }
 
 const DEFAULT_DEV_PHASE: DevPhaseState = {
-  insightMaturity: 'collecting',
+  presetId: 'collecting',
   onboardingCompleted: true,
-  entryCount: 0,
+  entryCount: DEV_PHASE_PRESETS.collecting.defaultEntryCount,
   onboardingPreviewOpen: false,
 };
 
@@ -91,8 +92,19 @@ function createDevPhaseStore() {
   const { subscribe, set, update } = writable<DevPhaseState>({ ...DEFAULT_DEV_PHASE });
   return {
     subscribe,
+    setPreset(presetId: DevPhasePresetId) {
+      update((state) => ({
+        ...state,
+        presetId,
+        entryCount: DEV_PHASE_PRESETS[presetId].defaultEntryCount,
+      }));
+    },
     setInsightMaturity(insightMaturity: DevInsightMaturity) {
-      update((state) => ({ ...state, insightMaturity }));
+      update((state) => ({
+        ...state,
+        presetId: insightMaturity,
+        entryCount: DEV_PHASE_PRESETS[insightMaturity].defaultEntryCount,
+      }));
     },
     setOnboardingCompleted(onboardingCompleted: boolean) {
       update((state) => ({ ...state, onboardingCompleted }));

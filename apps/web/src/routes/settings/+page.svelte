@@ -10,6 +10,7 @@
     devMode,
     type DevInsightMaturity,
   } from '$lib/stores/devMode';
+  import { DEV_PHASE_PRESETS, type DevPhasePresetId } from '$lib/dev/phaseFixtures';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
   import Button from '$lib/components/common/Button.svelte';
   import IconButton from '$lib/components/common/IconButton.svelte';
@@ -132,6 +133,7 @@
     'provisional',
     'robust',
   ];
+  $: selectedDevPreset = DEV_PHASE_PRESETS[$devPhase.presetId];
 
   async function checkDevView(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
@@ -400,38 +402,47 @@
             <label class="settings__field">
               <span>{$_('settings.developer.phase_label')}</span>
               <select
-                value={$devPhase.insightMaturity}
+                value={$devPhase.presetId}
                 data-testid="developer-phase-select"
-                on:change={(e) =>
-                  devPhase.setInsightMaturity(e.currentTarget.value as DevInsightMaturity)}
+                on:change={(e) => devPhase.setPreset(e.currentTarget.value as DevPhasePresetId)}
               >
                 {#each devInsightPhases as phase}
                   <option value={phase}>{$_(`settings.developer.phase.${phase}`)}</option>
                 {/each}
               </select>
             </label>
-            <label class="settings__field">
-              <span>{$_('settings.developer.entry_count_label')}</span>
-              <input
-                type="number"
-                min="0"
-                max="200"
-                value={$devPhase.entryCount}
-                data-testid="developer-entry-count"
-                on:input={(e) => updateDevEntryCount(e.currentTarget.value)}
-              />
-            </label>
           </div>
-          <label class="settings__toggle-label">
-            <input
-              type="checkbox"
-              class="settings__toggle"
-              checked={$devPhase.onboardingCompleted}
-              data-testid="developer-onboarding-toggle"
-              on:change={(e) => devPhase.setOnboardingCompleted(e.currentTarget.checked)}
-            />
-            <span>{$_('settings.developer.onboarding_completed')}</span>
-          </label>
+          <p class="settings__dev-summary" data-testid="developer-phase-summary">
+            {$_(selectedDevPreset.coverageKey, {
+              values: { count: $devPhase.entryCount },
+            })}
+          </p>
+          <details class="settings__dev-advanced">
+            <summary>{$_('settings.developer.advanced')}</summary>
+            <div class="settings__dev-grid">
+              <label class="settings__field">
+                <span>{$_('settings.developer.entry_count_label')}</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="200"
+                  value={$devPhase.entryCount}
+                  data-testid="developer-entry-count"
+                  on:input={(e) => updateDevEntryCount(e.currentTarget.value)}
+                />
+              </label>
+              <label class="settings__toggle-label">
+                <input
+                  type="checkbox"
+                  class="settings__toggle"
+                  checked={$devPhase.onboardingCompleted}
+                  data-testid="developer-onboarding-toggle"
+                  on:change={(e) => devPhase.setOnboardingCompleted(e.currentTarget.checked)}
+                />
+                <span>{$_('settings.developer.onboarding_completed')}</span>
+              </label>
+            </div>
+          </details>
           <div class="settings__actions">
             <Button
               variant="secondary"
@@ -708,6 +719,28 @@
     padding: 0 var(--space-3);
     background: var(--color-surface);
     color: var(--color-text);
+  }
+
+  .settings__dev-summary {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
+  .settings__dev-advanced {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .settings__dev-advanced summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-weight: 700;
   }
 
   .settings__modal-backdrop {
