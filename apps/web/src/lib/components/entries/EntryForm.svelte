@@ -139,11 +139,11 @@
   $: offlineSyncConflictKey = $syncOrchestrator.conflictNote;
   $: selectedSuggestionSlugs = new Set(selectedSuggestions.keys());
 
-  // Keep the work-context default in sync if the user picks a different
-  // day, but only until they manually change it themselves.
+  // Keep the work-context default in sync with the hydrated form date,
+  // but only until the user manually changes it themselves.
   let workContextTouched = false;
-  $: if (!workContextTouched && entryDate && !existingEntryId) {
-    const d = new Date(entryDate + 'T00:00:00');
+  $: if (!workContextTouched && loadedEntryDate && !existingEntryId) {
+    const d = new Date(loadedEntryDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
       workContext = defaultWorkContextForDate(d);
     }
