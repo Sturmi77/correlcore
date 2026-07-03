@@ -355,6 +355,11 @@ describe('/insights page analysis range', () => {
     await waitFor(() => {
       expect(screen.getByText('symptom-window:2026-05-01:entries:0')).toBeTruthy();
     });
+    await waitFor(() => {
+      expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(1);
+      expect(listEntries).toHaveBeenCalledTimes(1);
+    });
+    await flushPromises();
 
     vi.mocked(fetchSymptomHeatmap).mockClear().mockRejectedValueOnce(new Error('timeout'));
     vi.mocked(listEntries).mockClear().mockResolvedValueOnce([entryResponse('2025-07-01')]);
