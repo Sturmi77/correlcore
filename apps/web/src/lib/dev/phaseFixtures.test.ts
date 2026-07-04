@@ -41,7 +41,7 @@ describe('dev phase fixtures', () => {
     expect(collecting.tagCooccurrenceByRange['90d'].pairs).toEqual([]);
     expect(collecting.tagClusters.status).toBe('insufficient_data');
     expect(robust.insights.length).toBeGreaterThan(2);
-    expect(robust.tagCooccurrenceByRange['90d'].pairs.length).toBeGreaterThan(0);
+    expect(robust.tagCooccurrenceByRange['90d'].pairs.length).toBeGreaterThanOrEqual(5);
     expect(robust.tagClusters.status).toBe('ok');
   });
 
