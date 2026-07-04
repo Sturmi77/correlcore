@@ -260,7 +260,7 @@ describe('EntryForm slot changes', () => {
 
   it('flushes dirty edits against the previous date before hydrating a new date', async () => {
     const { container } = render(EntryForm, {
-      props: { initialDate: '2026-06-02' },
+      props: { initialDate: '2026-06-05' },
     });
 
     await flushAsync();
@@ -273,22 +273,23 @@ describe('EntryForm slot changes', () => {
     expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('dirty');
 
     await fireEvent.input(screen.getByLabelText('entry.date_label'), {
-      target: { value: '2026-06-03' },
+      target: { value: '2026-06-06' },
     });
     await flushAsync();
 
     expect(submitEntry).toHaveBeenCalledTimes(1);
     expect(submitEntry).toHaveBeenCalledWith(
       expect.objectContaining({
-        entry_date: '2026-06-02',
+        entry_date: '2026-06-05',
         slot: 'day',
+        work_context: 'homeoffice',
         note: 'draft before date change',
       })
     );
     await waitFor(() => {
       expect(listEntries).toHaveBeenCalledWith({
-        start_date: '2026-06-03',
-        end_date: '2026-06-03',
+        start_date: '2026-06-06',
+        end_date: '2026-06-06',
         limit: 5,
       });
     });
