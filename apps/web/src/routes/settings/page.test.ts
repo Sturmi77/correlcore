@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import Page from './+page.svelte';
+import { devMode } from '$lib/stores/devMode';
 
 vi.mock('svelte-i18n', async () => {
   const { readable, writable } = await import('svelte/store');
@@ -75,6 +76,7 @@ vi.mock('$lib/api/user', () => ({
 
 describe('/settings Sprint 7', () => {
   beforeEach(() => {
+    devMode.set(false);
     localStorage.clear();
   });
 
@@ -107,6 +109,23 @@ describe('/settings Sprint 7', () => {
       expect(screen.getByTestId('developer-section')).toBeTruthy();
     });
     expect(screen.getByTestId('force-viz-toggle')).toBeTruthy();
+  });
+
+  it('applies the selected developer phase preset entry count', async () => {
+    render(Page);
+
+    const version = screen.getByTestId('version-string');
+    for (let i = 0; i < 7; i++) {
+      await fireEvent.click(version);
+    }
+
+    const phaseSelect = await screen.findByTestId('developer-phase-select');
+    await fireEvent.change(phaseSelect, { target: { value: 'robust' } });
+    await fireEvent.click(screen.getByText('settings.developer.advanced'));
+
+    await waitFor(() => {
+      expect((screen.getByTestId('developer-entry-count') as HTMLInputElement).value).toBe('42');
+    });
   });
 
   it('switches locale through the segmented language control', async () => {

@@ -127,10 +127,21 @@ describe('devMode force visualizations', () => {
     devMode.set(false);
 
     expect(get(devPhase)).toEqual({
-      insightMaturity: 'collecting',
+      presetId: 'collecting',
       onboardingCompleted: true,
-      entryCount: 0,
+      entryCount: 3,
       onboardingPreviewOpen: false,
+    });
+  });
+
+  it('sets the default entry count when a phase preset is selected', async () => {
+    const { devPhase } = await import('./devMode');
+
+    devPhase.setPreset('robust');
+
+    expect(get(devPhase)).toMatchObject({
+      presetId: 'robust',
+      entryCount: 42,
     });
   });
 });

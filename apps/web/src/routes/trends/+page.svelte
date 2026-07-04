@@ -19,16 +19,8 @@
   import { listTagsForEntry, listVisibleTags, type TagResponse } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
   import type { TagCategory } from '$lib/api/tags';
-  import { mockEntries } from '$lib/dev/mockEntries';
-  import {
-    mockEntryStreak,
-    mockHabitTags,
-    mockHabits,
-    mockSymptomHeatmap,
-    mockTagHeatmap,
-    mockTimeseries,
-  } from '$lib/dev/mockTrends';
-  import { devForceVisualizations } from '$lib/stores/devMode';
+  import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
+  import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { insightStore, loadInsights } from '$lib/stores/insights';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
@@ -94,6 +86,7 @@
   let showSymptomRows = false;
   let compactTrends = false;
   let mobileMedia: MediaQueryList | null = null;
+  let activeDevFixtureKey = '';
 
   const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
@@ -109,28 +102,31 @@
     return { start_date: shiftIsoDate(end_date, -(windowDays - 1)), end_date };
   }
 
+  function devFixtureKey(): string {
+    return `${$devPhase.presetId}:${$devPhase.entryCount}:${$devPhase.onboardingCompleted}`;
+  }
+
   async function loadTrends(rangeOverride?: TimeseriesRange): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     const activeRange = rangeOverride ?? range;
+    const habitWindow = rangeToHabitWindow(activeRange);
     loading = true;
     error = '';
     try {
       if ($devForceVisualizations) {
-        timeseries = { ...mockTimeseries, range: activeRange };
-        heatmap = mockTagHeatmap;
-        symptomHeatmap = mockSymptomHeatmap;
-        streak = mockEntryStreak;
-        habitStats = mockHabits.map((habit) => ({
-          ...habit,
-          window: rangeToHabitWindow(activeRange),
-        }));
-        habitTags = mockHabitTags;
-        allTags = mockHabitTags;
-        cycleEntries = mockEntries.filter((entry) => entry.cycle_day !== null);
+        const fixture = getDevPhaseFixture($devPhase);
+        activeDevFixtureKey = devFixtureKey();
+        timeseries = { ...fixture.timeseries, range: activeRange };
+        heatmap = fixture.tagHeatmap;
+        symptomHeatmap = fixture.symptomHeatmap;
+        streak = fixture.streak;
+        habitStats = fixture.habitStats.map((habit) => ({ ...habit, window: habitWindow }));
+        habitTags = fixture.habitTags;
+        allTags = fixture.habitTags;
+        cycleEntries = fixture.entries.filter((entry) => entry.cycle_day !== null);
         return;
       }
 
-      const habitWindow = rangeToHabitWindow(activeRange);
       const { start_date, end_date } = dateWindow(
         activeRange,
         activeTab === 'habits' ? habitWindow : undefined
@@ -215,12 +211,16 @@
     historyDetails = [];
     try {
       if ($devForceVisualizations) {
-        historyDetails = mockEntries
+        const fixture = getDevPhaseFixture($devPhase);
+        historyDetails = fixture.entries
           .filter((entry) => entry.entry_date === date)
           .map((entry) => ({
             entry,
             tags: ['Focus work'],
-            symptoms: [],
+            symptoms: fixture.symptomHeatmap.symptoms.map((symptom) => ({
+              name: symptom.name,
+              intensity: symptom.days.find((day) => day.date === date)?.max_intensity ?? 1,
+            })),
           }));
         return;
       }
@@ -260,6 +260,15 @@
     void loadTrends($analysisRange);
   }
   $: habitWindow = rangeToHabitWindow(range);
+  $: if (
+    $auth.status === 'authenticated' &&
+    $devForceVisualizations &&
+    timeseries &&
+    !loading &&
+    activeDevFixtureKey !== devFixtureKey()
+  ) {
+    void loadTrends();
+  }
   $: rangeControlOptions = rangeOptions.map(
     (option): SegmentedControlOption => ({
       id: option.id,

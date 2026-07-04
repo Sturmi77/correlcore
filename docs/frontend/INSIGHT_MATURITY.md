@@ -213,3 +213,20 @@ The frontend MUST NOT compute the phase independently from entry count — it al
 - [ ] All copy follows tone guidelines per phase
 - [ ] All `maturity.*` i18n keys are defined
 - [ ] API `insight_maturity` object is present in all insight endpoint responses
+
+---
+
+## 7. Developer Mode Phase Presets
+
+Developer mode provides local-only phase presets for GUI QA. After unlocking Developer Mode in Settings,
+enable "Force visualizations with mock data" and choose one maturity phase. The frontend then resolves all
+mock Home, Insights, Trends, preferences, and analytics data from `src/lib/dev/phaseFixtures.ts`.
+
+| Preset           | Default entries | Expected GUI coverage                                                     |
+| ---------------- | --------------- | ------------------------------------------------------------------------- |
+| `collecting`     | 3               | Phase 1/4 journey, phase-aware empty insight feed, analytics locked/empty |
+| `early_patterns` | 9               | First hints, trends, simple comparisons, no robust correlation language   |
+| `provisional`    | 21              | Provisional correlations, uncertainty copy, partial co-occurrence data    |
+| `robust`         | 42              | Full insight cards, symptom/tag co-occurrence, clusters, explore flows    |
+
+The presets are frontend-only fixtures. They do not seed the backend, change API contracts, or persist user data.

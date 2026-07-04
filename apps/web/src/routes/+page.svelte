@@ -24,8 +24,8 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import { mockDashboardSummary, mockEntries, mockUserPreferences } from '$lib/dev/mockEntries';
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
+  import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
   import { shiftIsoDate } from '$lib/utils/streak';
@@ -48,6 +48,7 @@
   let userPreferences: UserPreferencesResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
+  let activeDevFixtureKey = '';
   let firstEntrySheetOpened = false;
 
   $: entrySheetOpen = $entrySheetStore.open;
@@ -71,18 +72,20 @@
     openEntrySheet(date, { onboardingTags: showOnboardingTags });
   }
 
+  function devFixtureKey(): string {
+    return `${$devPhase.presetId}:${$devPhase.entryCount}:${$devPhase.onboardingCompleted}`;
+  }
+
   async function loadDashboard(): Promise<void> {
     dashboardLoading = true;
     try {
       if (get(devForceVisualizations)) {
-        recentEntries = mockEntries.slice(0, 7);
+        const fixture = getDevPhaseFixture($devPhase);
+        activeDevFixtureKey = devFixtureKey();
+        recentEntries = fixture.entries.slice(0, 7);
         todayEntry = findEntryForDate(recentEntries, todayIso);
-        dashboardSummary = { ...mockDashboardSummary, entry_count: $devPhase.entryCount };
-        userPreferences = {
-          ...mockUserPreferences,
-          onboarding_retro_completed: $devPhase.onboardingCompleted,
-          onboarding_profile_completed: $devPhase.onboardingCompleted,
-        };
+        dashboardSummary = fixture.dashboard;
+        userPreferences = fixture.preferences;
         return;
       }
 
@@ -111,6 +114,17 @@
   }
 
   $: if ($auth.status === 'authenticated' && !dashboardLoaded && !dashboardLoading) {
+    void loadDashboard();
+    void loadInsights();
+  }
+
+  $: if (
+    $auth.status === 'authenticated' &&
+    $devForceVisualizations &&
+    dashboardLoaded &&
+    !dashboardLoading &&
+    activeDevFixtureKey !== devFixtureKey()
+  ) {
     void loadDashboard();
     void loadInsights();
   }

@@ -723,6 +723,13 @@
       "preview_onboarding": "Preview onboarding",
       "preview_title": "Onboarding preview",
       "preview_close": "Close preview",
+      "advanced": "Advanced overrides",
+      "coverage": {
+        "collecting": "{count} mock entries. Shows phase-aware empty states and locked analytics.",
+        "early_patterns": "{count} mock entries. Shows first hints, trends and simple comparisons.",
+        "provisional": "{count} mock entries. Shows provisional correlations with uncertainty copy.",
+        "robust": "{count} mock entries. Shows the full analytics and co-occurrence surfaces."
+      },
       "phase": {
         "collecting": "Collecting",
         "early_patterns": "First patterns",

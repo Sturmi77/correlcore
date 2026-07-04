@@ -57,16 +57,8 @@
     type EntryHistoryDetail,
   } from '$lib/components/trends/EntryHistorySheet.svelte';
   import type { CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
-  import { mockEntries } from '$lib/dev/mockEntries';
-  import { mockUserPreferences } from '$lib/dev/mockEntries';
-  import {
-    mockSymptomHeatmap,
-    mockSymptomTagCooccurrenceByRange,
-    mockTagClusters,
-    mockTagCooccurrenceByRange,
-  } from '$lib/dev/mockTrends';
-  import { mockInsightMaturity, mockInsights } from '$lib/dev/mockInsights';
-  import { devForceVisualizations } from '$lib/stores/devMode';
+  import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
+  import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
@@ -137,6 +129,7 @@
 
   let compactInsights = readCompactInsights();
   let mobileMedia: MediaQueryList | null = null;
+  let activeDevFixtureKey = '';
 
   const analysisRangeOptions: { id: TimeseriesRange; label: string }[] = [
     { id: 'week', label: 'trends.range.week' },
@@ -199,7 +192,8 @@
     symptomWindowLoading = true;
     try {
       if (get(devForceVisualizations)) {
-        applySymptomWindowData(mockEntries, mockSymptomHeatmap, requestedRange);
+        const fixture = getDevPhaseFixture(get(devPhase));
+        applySymptomWindowData(fixture.entries, fixture.symptomHeatmap, requestedRange);
         return;
       }
 
@@ -263,6 +257,10 @@
 
   $: filterTabOptions = getInsightFeedFilterTabs($_);
 
+  function devFixtureKey(): string {
+    return `${$devPhase.presetId}:${$devPhase.entryCount}:${$devPhase.onboardingCompleted}`;
+  }
+
   async function loadCooccurrence(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
     cooccurrenceRequested = true;
@@ -271,7 +269,7 @@
     cooccurrenceLoading = true;
     try {
       const nextCooccurrence = get(devForceVisualizations)
-        ? mockTagCooccurrenceByRange[requestedRange]
+        ? getDevPhaseFixture(get(devPhase)).tagCooccurrenceByRange[requestedRange]
         : await fetchTagCooccurrence({ range: requestedRange, min_count: 2 });
       if (requestId === cooccurrenceRequestId && requestedRange === cooccurrenceRange) {
         cooccurrence = nextCooccurrence;
@@ -292,7 +290,7 @@
     tagClustersLoading = true;
     try {
       if (get(devForceVisualizations)) {
-        tagClusters = mockTagClusters;
+        tagClusters = getDevPhaseFixture(get(devPhase)).tagClusters;
         return;
       }
       tagClusters = await fetchTagClusters();
@@ -311,7 +309,7 @@
     symptomCooccurrenceLoading = true;
     try {
       const nextSymptomCooccurrence = get(devForceVisualizations)
-        ? mockSymptomTagCooccurrenceByRange[requestedRange]
+        ? getDevPhaseFixture(get(devPhase)).symptomTagCooccurrenceByRange[requestedRange]
         : await fetchSymptomTagCooccurrence({
             range: requestedRange,
             min_count: 3,
@@ -338,7 +336,8 @@
     symptomHistoryDetails = [];
     try {
       if (get(devForceVisualizations)) {
-        symptomHistoryDetails = mockEntries
+        const fixture = getDevPhaseFixture(get(devPhase));
+        symptomHistoryDetails = fixture.entries
           .filter((entry) => entry.entry_date === date)
           .map((entry) => ({
             entry,
@@ -397,7 +396,8 @@
     cooccurrenceHistoryDetails = [];
     try {
       if (get(devForceVisualizations)) {
-        cooccurrenceHistoryDetails = mockEntries
+        const fixture = getDevPhaseFixture(get(devPhase));
+        cooccurrenceHistoryDetails = fixture.entries
           .filter((entry) => entry.entry_date >= startDate && entry.entry_date <= endDate)
           .slice(0, 3)
           .map((entry) => ({
@@ -453,20 +453,22 @@
     loading = true;
     error = null;
     try {
+      const requestedAnalysisRange = insightsRangeForData();
       if (get(devForceVisualizations)) {
-        const requestedAnalysisRange = insightsRangeForData();
-        insights = mockInsights;
-        insightMaturity = mockInsightMaturity;
-        userPreferences = mockUserPreferences;
-        symptomCooccurrence = mockSymptomTagCooccurrenceByRange[cooccurrenceRange];
-        tagClusters = mockTagClusters;
-        cooccurrence = mockTagCooccurrenceByRange[cooccurrenceRange];
-        applySymptomWindowData(mockEntries, mockSymptomHeatmap, requestedAnalysisRange);
+        const fixture = getDevPhaseFixture(get(devPhase));
+        activeDevFixtureKey = devFixtureKey();
+        insights = fixture.insights;
+        insightMaturity = fixture.maturity;
+        userPreferences = fixture.preferences;
+        symptomHeatmap = fixture.symptomHeatmap;
+        symptomCooccurrence = fixture.symptomTagCooccurrenceByRange[cooccurrenceRange];
+        tagClusters = fixture.tagClusters;
+        cooccurrence = fixture.tagCooccurrenceByRange[cooccurrenceRange];
+        applySymptomWindowData(fixture.entries, fixture.symptomHeatmap, requestedAnalysisRange);
         inactiveTagIds = [];
         return;
       }
 
-      const requestedAnalysisRange = insightsRangeForData();
       const { start_date: startIso, end_date: todayIso } =
         analysisDateWindow(requestedAnalysisRange);
       const [insightsResult, symptomWindowResult, tagResult, defaultTagsResult, preferencesResult] =
@@ -534,6 +536,16 @@
 
   $: if ($auth.status === 'authenticated' && !insightsLoaded && !loading) {
     bootstrapInsightsFromStore();
+    void loadInsights();
+  }
+
+  $: if (
+    $auth.status === 'authenticated' &&
+    $devForceVisualizations &&
+    insightsLoaded &&
+    !loading &&
+    activeDevFixtureKey !== devFixtureKey()
+  ) {
     void loadInsights();
   }
 
