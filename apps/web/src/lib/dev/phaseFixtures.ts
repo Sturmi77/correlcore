@@ -512,6 +512,20 @@ function makePairResponse(
             pct_of_a: 50,
             pct_of_b: 60,
           },
+          {
+            tag_a: tagRefs.read,
+            tag_b: tagRefs.walk,
+            count: Math.max(2, entryCount / 16),
+            pct_of_a: 66.7,
+            pct_of_b: 33.3,
+          },
+          {
+            tag_a: tagRefs.read,
+            tag_b: tagRefs.coffee,
+            count: Math.max(2, entryCount / 18),
+            pct_of_a: 66.7,
+            pct_of_b: 40,
+          },
         ].map((pair) => ({ ...pair, count: Math.round(pair.count) }))
       : [],
   };
