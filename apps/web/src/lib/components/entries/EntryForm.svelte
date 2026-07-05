@@ -478,6 +478,8 @@
   }
 
   async function setSlot(slot: EntrySlot) {
+    if (loading || entryDate !== loadedEntryDate) return;
+
     const myToken = ++slotChangeToken;
     const nextSlot = selectedSlot === slot ? 'day' : slot;
 
@@ -827,6 +829,7 @@
             type="button"
             class:active={selectedSlot === slot}
             aria-pressed={selectedSlot === slot}
+            disabled={loading || entryDate !== loadedEntryDate}
             on:click={() => setSlot(slot)}
           >
             {$_(`entry.time_slot.${slot}`)}
@@ -1152,6 +1155,11 @@
     background: var(--color-primary-soft);
     color: var(--color-primary);
     font-weight: 650;
+  }
+
+  .entry-chip-row button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 
   .entry-label {
