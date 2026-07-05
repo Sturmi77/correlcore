@@ -168,6 +168,7 @@ Task: <your specific task here>
 | [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                          | M5 Habits Core tracking                                           |
 | [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering            |
 | [M7 Sprint 9](docs/M7_SPRINT9_PLAN.md)                                | Spec-complete closeout: interaction, feed UX, cluster API, a11y   |
+| [Phase & Insight Matrix](docs/PHASE_INSIGHT_MATRIX.md)                | Developer reference: maturity phases, unlock gates, per-insight computation, thresholds |
 | [M8 Notes](docs/M8_NOTES.md)                                          | Sleep, Health Connect, cycle deep integration                     |
 | [M7/M8 swap](docs/M7_M8_MILESTONE_SWAP.md)                            | Milestone reorder rationale and consequence index (2026-05-29)    |
 | [M5.1 Visual QA](docs/quality/M5_1_VISUAL_QA.md)                      | Tag co-occurrence heatmap closeout (2026-05-29)                   |
