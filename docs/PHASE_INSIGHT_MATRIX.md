@@ -33,6 +33,22 @@ Es gibt in CorrelCore **zwei getrennte, aber gekoppelte Stufensysteme**. Das ist
 > Diese Divergenz ist gewollt (siehe [§5](#5-bekannte-schwellen-divergenzen--gotchas)), muss aber bei jeder
 > Erweiterung mitgedacht werden.
 
+### Inhalt
+
+1. [Überblick — Phasen & Unlock-Schwellen](#1-überblick--phasen--unlock-schwellen)
+2. [Capability-Unlock-Matrix](#2-capability-unlock-matrix)
+3. [Phasendetails — was der User pro Phase sieht](#3-phasendetails--was-der-user-pro-phase-sieht)
+4. [Insight-Katalog — Berechnung, Eingaben, erwartete Aussage](#4-insight-katalog--berechnung-eingaben-erwartete-aussage)
+5. [Bekannte Schwellen-Divergenzen & Gotchas](#5-bekannte-schwellen-divergenzen--gotchas)
+6. [Erweiterbarkeit — geplante & künftige Dimensionen](#6-erweiterbarkeit--geplante--künftige-dimensionen)
+7. [End-to-End-Datenfluss (Sequenz)](#7-end-to-end-datenfluss-sequenz)
+8. [Debug-Entscheidungsbaum „Warum sehe ich (k)einen Insight?“](#8-debug-entscheidungsbaum-warum-sehe-ich-keinen-insight)
+9. [Konstanten-Schnellreferenz](#9-konstanten-schnellreferenz)
+10. [Insight-Objekt — Feldreferenz & Beispiel-Payload](#10-insight-objekt--feldreferenz--beispiel-payload)
+11. [Glossar](#11-glossar)
+12. [Quellen (Repo-intern)](#12-quellen-repo-intern)
+13. [Wartung & Änderungshistorie](#13-wartung--änderungshistorie)
+
 ---
 
 ## 1. Überblick — Phasen & Unlock-Schwellen
@@ -49,6 +65,36 @@ Es gibt in CorrelCore **zwei getrennte, aber gekoppelte Stufensysteme**. Das ist
 **Freischaltbedingung (formal):** Der User erreicht Phase _n_, sobald die Anzahl **eindeutiger Eintragstage**
 den unteren Schwellenwert erreicht. Es gibt kein Zurückfallen im UI-Contract (die Phase leitet sich rein aus
 dem aktuellen Count ab; ein sinkender Count wäre nur durch Löschungen möglich).
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> collecting: erster Eintrag
+    collecting --> early_patterns: entry_days ≥ 7
+    early_patterns --> provisional: entry_days ≥ 14
+    provisional --> robust: entry_days ≥ 30
+    robust --> [*]
+
+    note right of collecting
+        Phase 1 · Tag 1–6
+        Streaks, Counts, History
+    end note
+    note right of early_patterns
+        Phase 2 · Tag 7–13
+        Trends, Heatmaps, Weekday
+    end note
+    note right of provisional
+        Phase 3 · Tag 14–29
+        Korrelationen (provisorisch)
+    end note
+    note right of robust
+        Phase 4 · Tag 30+
+        Robuste Insights, ML ab 90
+    end note
+```
+
+> Jeder Übergang löst genau **eine** Milestone-Card aus (i18n `maturity.milestone.*`), die nach Dismiss über
+> `reached_milestone_keys[]` persistiert wird (`insightMaturityMilestones.ts` → `shouldShowMaturityMilestone`).
 
 ### API-Vertrag (in **jeder** `/api/v1/insights/*`-Response verpflichtend)
 
@@ -152,6 +198,38 @@ mit `effect_size !== null` **und** `confidence >= 0.2`. `MATRIX_TAB_MIN_INSIGHTS
 
 Alle Werte aus `backend/app/services/insight_engine.py`, `multivariate_analytics.py`, `symptom_analytics.py`,
 `weekday_confounder.py`. Persistiertes Schema: `backend/app/models/insight.py` (`Insight`).
+
+### 4.0.1 Engine-Pipeline (`generate_insight_candidates`)
+
+Ablauf pro Worker-Lauf, exakt in Code-Reihenfolge (`insight_engine.py`):
+
+```mermaid
+flowchart TD
+    A([Roh-Entries entry_date < as_of]) --> B[_dedupe_daily_entries\nMulti-Slot -> 1 Tagesvektor]
+    B --> C{daily_entries leer?}
+    C -- ja --> Z([return - keine Insights])
+    C -- nein --> D[confidence_tier_for_sample\nAnzahl daily_entries]
+    D --> E{tier == NONE?\nlt 3 Tage}
+    E -- ja --> Z
+    E -- nein --> F[_canonicalize_tag_aliases\nSlug-basiert dedupen]
+    F --> G[Compute-Familien\nmit demselben tier]
+
+    G --> H1[A Weekday-Pattern\nab 7]
+    G --> H2[B Spearman\nab 15]
+    G --> H3[C Point-biserial\nab 15 + Tag ge 10]
+    G --> H4[D Symptom-Mood\nab 15]
+    G --> H5[E Symptom-Tag\nab 15]
+    G --> H6[F LASSO\nab 90]
+    G --> H7[G Lag\nab 90]
+
+    H1 & H2 & H3 & H4 & H5 & H6 & H7 --> I[pro Familie:\nEffektgroesse-Filter ge 0.25\n+ BH-FDR-Korrektur\n+ Weekday-Confounder-Check]
+    I --> J[sort by\n-confidence, dann -abs effect,\ntype, metric, subject]
+    J --> K([InsightCandidate-Liste\nWorker persistiert verschluesselt])
+```
+
+- Der **Tier ist pro Lauf global** (aus der Tagesanzahl), wird aber von jeder Familie nochmals durch ihre
+  **eigene** Mindestschwelle gefiltert — deshalb die „ab N"-Annotationen an den Zweigen.
+- Persistenz: der Worker (`insight_worker_service.py`) bindet den DEK des Users und schreibt `statement_enc` verschlüsselt (`Insight.statement_enc`).
 
 ### 4.0 Gemeinsame Konzepte
 
@@ -302,7 +380,257 @@ Das Modell ist bewusst additiv. Beim Hinzufügen einer neuen Insight-/Trend-Dime
 
 ---
 
-## 7. Quellen (Repo-intern)
+## 7. End-to-End-Datenfluss (Sequenz)
+
+Vom Roh-Eintrag bis zum gerenderten Insight-Feed. Zeigt, **wo** dedupliziert, temporal gefiltert,
+verschlüsselt und im Frontend gegated wird.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant API as FastAPI (/api/v1/insights)
+    participant SVC as insight_service
+    participant ENG as insight_engine
+    participant SUB as Fach-Services<br/>(symptom_/multivariate_/weekday_confounder)
+    participant WRK as insight_worker_service
+    participant DB as PostgreSQL
+    participant FE as Frontend (Gates)
+
+    U->>API: Tages-Eintrag(e) speichern
+    API->>DB: persist entries (raw, mehrere Slots/Tag möglich)
+    Note over SVC,DB: Analytics-Trigger (on-demand / Worker)
+    SVC->>DB: _load_analytics_inputs (entry_date < as_of)
+    SVC->>SVC: _dedupe_daily_entries → Tagesvektoren
+    SVC->>SVC: calculate_insight_maturity()<br/>COUNT(DISTINCT entry_date) → phase
+    SVC->>ENG: generate_insight_candidates(inputs, as_of)
+    ENG->>ENG: confidence_tier_for_sample(n)
+    ENG->>SUB: weekday / spearman / pointbiserial / symptom_* / lasso / lag
+    SUB->>SUB: Min-Schwellen + Effektgröße + BH-FDR je Familie
+    SUB->>SUB: Wochentags-Confounder (OLS/HAC)
+    SUB-->>ENG: qualifizierte Kandidaten
+    ENG->>ENG: _confidence + sort(-conf,-|effect|,type,metric,label)
+    ENG-->>SVC: Insight-Kandidaten
+    SVC->>WRK: statement rendern
+    WRK->>WRK: EncryptedString (DEK) → statement_enc
+    WRK->>DB: Insights persistieren (statement_enc)
+    API->>DB: Insights + insight_maturity lesen
+    API-->>FE: Response {insights[], insight_maturity{phase,...}}
+    FE->>FE: insightAnalyticsGate.ts (phase-basierte Gates)
+    FE-->>U: sichtbarer Feed / Matrix-Tab / Empty-State
+```
+
+> **Merke:** Die Phase entsteht in `insight_service`, die einzelnen Insights in `insight_engine` + Fach-Services.
+> Das Frontend **rechnet nie** — es konsumiert nur `phase` und die gelieferte Insight-Liste.
+
+---
+
+## 8. Debug-Entscheidungsbaum „Warum sehe ich (k)einen Insight?“
+
+Hilfe für QA/Support/Entwickler:innen, wenn ein erwarteter Insight **nicht** erscheint. Von oben nach unten prüfen.
+
+```mermaid
+flowchart TD
+    A([Erwarteter Insight fehlt]) --> B{Eindeutige<br/>Eintragstage?}
+    B -->|< 3| B1[Tier = none<br/>→ gar keine Insights]
+    B -->|>= 3| C{Passt die Phase<br/>zur Kategorie?}
+    C -->|nein| C1[Gate blockt im FE<br/>insightAnalyticsGate.ts<br/>z.B. Matrix erst ab early_patterns]
+    C -->|ja| D{Familien-Mindest-<br/>Eintragstage erreicht?}
+    D -->|nein| D1[z.B. bivariate < 15<br/>ML/Lag < 90<br/>weekday < 7]
+    D -->|ja| E{Gruppen-/Nutzungs-<br/>Schwellen erreicht?}
+    E -->|nein| E1[Tag < 10 Nutzungen<br/>Symptom < 5<br/>Gruppe < 2/5]
+    E -->|ja| F{Effektgroesse<br/>>= Schwelle?}
+    F -->|nein| F1[abs Effekt < 0.25<br/>bzw. weekday-delta < 0.5]
+    F -->|ja| G{BH-FDR<br/>signifikant?}
+    G -->|nein| G1[p_corrected ueber alpha<br/>verworfen]
+    G -->|ja| H{Wochentags-<br/>Confounder?}
+    H -->|voll konfundiert| H1[als confounded markiert<br/>ggf. verworfen]
+    H -->|ok/Hinweis| I{Matrix-Tab:<br/>confidence >= 0.2<br/>und >= 2 Insights?}
+    I -->|nein| I1[Insight existiert,<br/>aber Matrix-Tab bleibt leer]
+    I -->|ja| J([Insight/Trend sichtbar])
+```
+
+**Schnell-Checkliste (Reihenfolge = Filterkette):**
+
+1. `COUNT(DISTINCT entry_date)` ≥ 3? (sonst Tier `none`)
+2. Phase erlaubt die Kategorie? (`insightAnalyticsGate.ts`)
+3. Familien-Mindestschwelle erreicht? (weekday 7 / bivariate 15 / symptom 15 / ML+Lag 90)
+4. Gruppen-/Nutzungsschwellen? (Tag ≥ 10, Symptom ≥ 5, Vergleichsgruppe ≥ 2 bzw. 5)
+5. `|Effekt|` ≥ Schwelle? (0.25 bivariate; weekday-delta 0.5)
+6. BH-FDR signifikant? (α = 0.05 bivariate, 0.10 Symptom/ML/Lag)
+7. Wochentags-Confounder bestanden? (sonst Hinweis/verworfen)
+8. Matrix-Tab zusätzlich: `confidence ≥ 0.2` **und** ≥ 2 qualifizierende Insights.
+
+---
+
+## 9. Konstanten-Schnellreferenz
+
+Alle im Fluss relevanten Schwellen an **einer** Stelle — für schnelles Nachschlagen beim Debuggen.
+Bei Code-Änderung: hier **und** an der Detailstelle (§4) nachführen.
+
+### Phasen (UI-Gating) — `insight_service.py`
+
+| Konstante / Grenze | Wert | Bedeutung |
+| --- | --- | --- |
+| Phase 1 `collecting` | 1–6 Tage | Sammeln, keine Analytics |
+| Phase 2 `early_patterns` | 7–13 Tage | erste Muster (weekday) |
+| Phase 3 `provisional` | 14–29 Tage | bivariate/Symptom (Engine erst ab 15) |
+| Phase 4 `robust` | 30+ Tage | volle Analytics; ML erst ab 90 |
+
+### Confidence-Tier (statistisch) — `insight_engine.py`
+
+| Konstante | Wert |
+| --- | --- |
+| `EARLY_ENTRY_COUNT` | 3 |
+| `PRELIMINARY_ENTRY_COUNT` | 8 |
+| `DEVELOPING_ENTRY_COUNT` | 15 |
+| `ROBUST_ENTRY_COUNT` | 30 |
+
+### Engine / Bivariate / Weekday
+
+| Konstante | Wert | Datei |
+| --- | --- | --- |
+| `MIN_WEEKDAY_ENTRIES` | 7 | `insight_engine.py` |
+| `MIN_WEEKDAY_DELTA` | 0.5 | `insight_engine.py` |
+| `MIN_BIVARIATE_ENTRIES` | 15 | `insight_engine.py` |
+| `MIN_TAG_GROUP_SIZE` | 2 | `insight_engine.py` |
+| `MIN_ABS_EFFECT_SIZE` | 0.25 | `insight_engine.py` |
+| `FDR_ALPHA` | 0.05 | `insight_engine.py` |
+| `ANALYTICS_MIN_TAG_USAGES` | 10 | `config.py` |
+
+### Symptom-Analytics — `symptom_analytics.py`
+
+| Konstante | Wert |
+| --- | --- |
+| `MIN_SYMPTOM_ANALYTICS_ENTRIES` | 15 |
+| `MIN_SYMPTOM_USAGES` | 5 |
+| `SYMPTOM_FDR_ALPHA` | 0.10 |
+| `MIN_CARD_LIFT_DELTA` | 0.67 |
+| `MIN_HEATMAP_LIFT_DELTA` | 0.50 |
+
+### Multivariate / ML / Lag — `multivariate_analytics.py`
+
+| Konstante | Wert |
+| --- | --- |
+| `MIN_ML_ENTRIES` | 90 |
+| `MAX_LAG_DAYS` | 7 |
+| `MIN_BINARY_FEATURE_USAGES` | 5 |
+| `MIN_LAG_OBSERVATIONS` | 10 |
+| `MIN_ABS_LASSO_COEFFICIENT` | 0.05 |
+| `MIN_ABS_LAG_CORRELATION` | 0.25 |
+| `LAG_FDR_ALPHA` | 0.10 |
+| `TIMESERIES_SPLITS` | 5 |
+
+### Weekday-Confounder — `weekday_confounder.py`
+
+| Konstante | Wert |
+| --- | --- |
+| Methode | OLS + Newey-West/HAC |
+| `MIN_OLS_ROWS` | 10 |
+| `alpha` | 0.10 |
+| `min_effect` | 0.25 |
+
+### Frontend-Gates — `insightAnalyticsGate.ts`
+
+| Gate | Bedingung |
+| --- | --- |
+| `canShowAdvancedAnalytics` | Phase ≠ `collecting` |
+| `canShowTagCooccurrence` | `early_patterns`+ |
+| `canShowMatrixTab` | `early_patterns`+ **und** ≥ 2 Matrix-Insights |
+| `canShowSymptomCooccurrence` | `provisional`+ |
+| `MATRIX_TAB_MIN_INSIGHTS` | 2 |
+| `isMatrixInsight` | `pointbiserial`/`symptom_mood_association`, `effect_size ≠ null`, `confidence ≥ 0.2` |
+
+### Dev-QA-Fixtures — `phaseFixtures.ts`
+
+| Preset | Eintragstage |
+| --- | --- |
+| `collecting` | 3 |
+| `early_patterns` | 9 |
+| `provisional` | 21 |
+| `robust` | 42 |
+
+> ⚠️ Kein Fixture deckt `MIN_ML_ENTRIES = 90` ab — LASSO/Lag lassen sich damit nicht über die Presets testen.
+
+---
+
+## 10. Insight-Objekt — Feldreferenz & Beispiel-Payload
+
+Struktur eines einzelnen Insights in der API-Response (`schemas/insight.py`). Persistierte Felder sind
+verschlüsselt, wo mit 🔒 markiert.
+
+| Feld | Typ | Bedeutung |
+| --- | --- | --- |
+| `id` | UUID | Primärschlüssel |
+| `insight_type` | enum | eine der 7 Familien (`weekday_pattern`, `spearman`, `pointbiserial`, `symptom_mood_association`, `symptom_tag_cooccurrence`, `symptom_cluster`) |
+| `statement` | string 🔒 | gerenderter, nicht-kausaler Text (DB-Feld `statement_enc`, im API-Schema als `statement` aliased) |
+| `confidence` | float (0–1) | interner Score, **wird dem User nie als Zahl gezeigt** |
+| `tier` | enum | `early` / `preliminary` / `developing` / `robust` |
+| `effect_size` | float \| null | familienabhängige Effektgröße (rho / coefficient / phi / delta) |
+| `payload` | object | familienspezifische Rohwerte (siehe §4.2) |
+| `weekday_confounded` | bool | true, wenn Muster nach Wochentags-Adjustierung wegfällt/abgeschwächt |
+| `as_of` | date | Stichtag der Berechnung (`entry_date < as_of`) |
+| `created_at` / `updated_at` | datetime | Persistenz-Metadaten (nicht für Analytics genutzt) |
+
+### Beispiel-Response (illustrativ)
+
+```jsonc
+{
+  "insights": [
+    {
+      "id": "a1b2c3d4-...",
+      "insight_type": "pointbiserial",
+      "statement": "Days tagged Walk currently line up with higher mood scores in your data. Treat this as a pattern to reflect on, not a cause.",
+      "confidence": 0.62,
+      "tier": "developing",
+      "effect_size": 0.41,
+      "weekday_confounded": false,
+      "payload": {
+        "tagged_count": 12,
+        "untagged_count": 9,
+        "tagged_mood_avg": 3.9,
+        "untagged_mood_avg": 3.1,
+        "p_corrected": 0.021
+      },
+      "as_of": "2026-07-05"
+    }
+  ],
+  "insight_maturity": {
+    "phase": "provisional",
+    "phase_index": 3,
+    "current_entries": 21,
+    "next_phase_at": 30,
+    "next_phase_label": "Robust Insights",
+    "entries_until_next": 9,
+    "user_message_key": "maturity.provisional.body"
+  }
+}
+```
+
+> Der Block `insight_maturity` ist in **jeder** `/api/v1/insights/*`-Response verpflichtend (siehe §1) und die
+> **einzige** Phasenquelle fürs Frontend.
+
+---
+
+## 11. Glossar
+
+| Begriff | Definition |
+| --- | --- |
+| **Eintragstag** | Ein Kalendertag mit ≥ 1 Eintrag. Analytics-Grundeinheit; `COUNT(DISTINCT entry_date)`. Mehrere Slots/Tag → ein Tagesvektor. |
+| **Tagesvektor** | Dedupliziertes Tages-Aggregat (`mood_score`, `energy`, `stress`, Tag-/Symptom-Mengen) via `_dedupe_daily_entries()`. |
+| **Phase (Insight Maturity)** | UI-Gating-Stufe (`collecting`…`robust`). Bestimmt Sichtbarkeit im Frontend. |
+| **Tier (Confidence)** | Statistische Verlässlichkeitsstufe eines konkreten Insights (`none`…`robust`). |
+| **Confidence-Score** | Interner Zahlwert `tier_weight · effect_weight · p_weight`; nie als Zahl im UI. |
+| **Effektgröße** | Familienabhängig: `rho` (Spearman), `coefficient` (Point-biserial), `phi`/`lift` (Co-occurrence), `delta` (Weekday), Koeffizient (LASSO), `correlation` (Lag). |
+| **BH-FDR** | Benjamini-Hochberg False-Discovery-Rate-Korrektur pro Insight-Familie. |
+| **Confounder-Check** | Wochentags-OLS (HAC/Newey-West); prüft, ob ein Muster nur ein Wochentagseffekt ist. |
+| **Matrix / Correlation-Matrix** | Frontend-Tab aus Point-biserial + Symptom-Mood-Insights (`isMatrixInsight`, ab 2 qualifizierenden). |
+| **`as_of`** | Stichtag: Analytics nutzt nur `entry_date < as_of` (kein Look-ahead-Bias). |
+| **work_context** | Kontextfeld (`homeoffice`/`office`/`vacation`/`sick`/`weekend`/`travel`); existiert, noch **kein** eigener Insight-Typ. |
+
+---
+
+## 12. Quellen (Repo-intern)
 
 - Phasenmodell / API-Vertrag: `docs/adr/0021-insight-maturity-phases.md`, `docs/frontend/INSIGHT_MATURITY.md`, `docs/DESIGN_DOCUMENT.md` (§ „Insight Maturity", M3.6)
 - Phasenberechnung: `backend/app/services/insight_service.py` → `calculate_insight_maturity()`
@@ -312,3 +640,23 @@ Das Modell ist bewusst additiv. Beim Hinzufügen einer neuen Insight-/Trend-Dime
 - Frontend-Gates: `apps/web/src/lib/utils/insightAnalyticsGate.ts`, `insightMatrixGate.ts`, `insightMaturityMilestones.ts`
 - Dev-QA-Fixtures: `apps/web/src/lib/dev/phaseFixtures.ts`
 - Office/Wearables/Zyklus (geplant): `docs/DESIGN_DOCUMENT.md` §2.7/§2.8, ADR-0031/0032/0033
+
+---
+
+## 13. Wartung & Änderungshistorie
+
+**Pflege-Regel:** Diese Datei ist an den Code gekoppelt. Bei Änderungen an Phasen-Schwellen, Engine-Konstanten,
+Gates oder dem `insight_maturity`-Vertrag ist sie im **selben PR** nachzuführen. Besonders betroffen:
+
+- **Konstanten** → §4.2 **und** die Schnellreferenz §9 (beide Stellen synchron halten).
+- **Neue Insight-Familie / Kontext-Dimension** → Checkliste in §6 abarbeiten (u.a. §2-Matrix, §4.2, §9, Gate).
+- **API-Vertrag** (`insight_maturity`, Feldnamen) → §1, §10 Beispiel-Payload.
+- **Diagramme** (PNG unter `assets/phase_matrix/` + Mermaid in §1/§4/§7/§8) bei Strukturänderungen regenerieren.
+
+> Konvention: Stabile Vertragswerte (Phase-Keys, `insight_type`, i18n-Keys, Feldnamen) bleiben in Original-Schreibweise;
+> erklärender Fließtext ist auf Deutsch (Abweichung von der „Docs auf Englisch“-Regel ist bewusst und mit dem Owner abgestimmt).
+
+| Datum | Änderung | PR |
+| --- | --- | --- |
+| 2026-07-05 | Initiale Fassung: Phasen, Capability-Matrix, Insight-Katalog, PNG-Diagramme | #312 |
+| 2026-07-05 | Mermaid-Diagramme (Phasen-State, Engine-Pipeline, Datenfluss, Debug-Baum), TOC, Konstanten-Schnellreferenz, Feld-/Payload-Referenz, Glossar, Wartungshinweis | #312 |
