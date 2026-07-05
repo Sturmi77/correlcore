@@ -334,6 +334,73 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Erwartete Aussage:** „Poor sleep logged 1 day(s) earlier currently lines up with lower mood. Treat this as a time-shifted pattern, not a cause."
 - **Erste Phase mit Sichtbarkeit:** **Phase 4** (≥ 90 Tage).
 
+### 4.3 Worked Examples — durchgerechnet je Familie
+
+Jeweils ein **erfundenes, aber realistisches** Zahlenbeispiel: von den Eingangsdaten über Schwellen-Check,
+Effektgröße und FDR bis zum gerenderten Statement. Zweck: Bei einem unklaren Insight nachvollziehen können,
+**warum** er (nicht) erzeugt wurde. Zahlen sind illustrativ, nicht aus echten Läufen.
+
+> Notation: `n` = Eintragstage im Fenster; „✅/❌ Schwelle" = Vergleich gegen die Konstante aus §9.
+
+#### A) `weekday_pattern` — Montags-Delta
+
+- **Eingabe:** `n = 21`. Mittelwerte `mood_score` je Wochentag: Mo 2.6, Di 3.2, Mi 3.3, Do 3.1, Fr 3.6, Sa 3.8, So 3.4. Gesamtmittel `overall_mood_avg = 3.28`.
+- **Auswahl:** größte |Abweichung| → Montag: `delta = 2.6 − 3.28 = −0.68`.
+- **Schwellen:** `n = 21 ≥ MIN_WEEKDAY_ENTRIES (7)` ✅ · `|delta| = 0.68 ≥ MIN_WEEKDAY_DELTA (0.5)` ✅ · kein p-Wert (`method="weekday_delta"`).
+- **`early_pattern`-Flag:** `n < 15`? Nein (`21`) → Flag `false`.
+- **Ergebnis:** Insight wird erzeugt. Statement: „Mondays currently line up with lower mood than your overall average. This is an early calendar pattern, not a diagnosis."
+- **Gegenprobe (kein Insight):** wäre Mo 3.0 → `delta = −0.28`, `< 0.5` ❌ → verworfen.
+
+#### B) `spearman` — energy ↔ mood
+
+- **Eingabe:** `n = 18` Tagesvektoren, Paare `(energy, mood_score)`, ≥ 2 verschiedene Werte je Metrik.
+- **Berechnung:** `spearmanr` → `rho = 0.52`, roh `p = 0.006`. BH-FDR über die 2 bivariaten Paare → `p_corrected = 0.011`.
+- **Schwellen:** `n = 18 ≥ MIN_BIVARIATE_ENTRIES (15)` ✅ · `|rho| = 0.52 ≥ 0.25` ✅ · `p_corrected = 0.011 < FDR_ALPHA (0.05)` ✅.
+- **Ergebnis:** Insight erzeugt, `effect_size = 0.52`. Statement: „In your entries so far, energy tends to be higher when mood is higher. This is a data pattern, not a diagnosis."
+- **Gegenprobe:** bei `n = 14` würde die Familie gar nicht laufen (Phase 3 ab Tag 14, Engine aber erst ab 15 → §5-Gotcha).
+
+#### C) `pointbiserial` — Tag „Walk" ↔ mood
+
+- **Eingabe:** `n = 21`. Tag „Walk": 12 getaggte Tage (`tagged_mood_avg = 3.9`), 9 ungetaggte (`untagged_mood_avg = 3.1`).
+- **Berechnung:** `pointbiserialr(tag_presence, mood)` → `coefficient = 0.41`, `p_corrected = 0.021` (BH-FDR über alle Tag-Paare).
+- **Schwellen:** `n = 21 ≥ 15` ✅ · getaggte Tage `12 ≥ ANALYTICS_MIN_TAG_USAGES (10)` ✅ · ungetaggte `9 ≥ MIN_TAG_GROUP_SIZE (2)` ✅ · `|coef| = 0.41 ≥ 0.25` ✅ · FDR ✅.
+- **Confounder:** Wochentags-OLS → Tag-Effekt bleibt signifikant → `weekday_confounded = false`.
+- **Ergebnis:** Insight erzeugt, `effect_size = 0.41`, `confidence ≈ 0.62 ≥ 0.2` → **qualifiziert für Matrix-Tab**. (Entspricht der Beispiel-Payload in §10.)
+- **Gegenprobe:** nur 8 getaggte Tage → `8 < 10` ❌ → kein Insight (selten genutzter Tag).
+
+#### D) `symptom_mood_association` — „Headache" ↔ energy
+
+- **Eingabe:** `n = 20`. Symptom „Headache" an `symptom_n = 6` Tagen (`symptom_metric_avg = 2.4`), Vergleichsgruppe `comparison_n = 14` (`comparison_metric_avg = 3.3`).
+- **Berechnung:** Point-biserial Symptom-Präsenz ↔ energy → `coefficient = −0.38`, `p_corrected = 0.048` (BH-FDR mit `SYMPTOM_FDR_ALPHA = 0.10`).
+- **Schwellen:** `n = 20 ≥ MIN_SYMPTOM_ANALYTICS_ENTRIES (15)` ✅ · Symptom-Tage `6 ≥ MIN_SYMPTOM_USAGES (5)` ✅ · Vergleichsgruppe `14 ≥ 5` ✅ · `|coef| = 0.38 ≥ 0.25` ✅ · `0.048 < 0.10` ✅.
+- **Ergebnis:** Insight erzeugt. Statement: „Days with Headache currently line up with lower energy in your data. Treat this as an association, not a cause."
+- **Gegenprobe:** nur 4 Headache-Tage → `4 < 5` ❌ → verworfen.
+
+#### E) `symptom_tag_cooccurrence` — „Headache" ↔ „Coffee"
+
+- **Eingabe:** `n = 22`. „Headache" an 7 Tagen, „Coffee" an 9 Tagen, gemeinsam `co_count = 5`.
+- **Berechnung:** Kontingenz → `lift = 1.74`, `phi = 0.44`, `jaccard = 0.45`; BH-FDR (`α = 0.10`) signifikant.
+- **Schwellen:** `n = 22 ≥ 15` ✅ · Symptom `7 ≥ 5` & Tag `9 ≥ 5` ✅ · Karten-Schwelle `lift − 1 = 0.74 ≥ MIN_CARD_LIFT_DELTA (0.67)` ✅ (Heatmap-Schwelle 0.50 ebenfalls ✅) · Confounder-Check bestanden.
+- **Effektgröße:** `phi = 0.44` (Fallback `lift − 1` nur falls `phi == 0`).
+- **Ergebnis:** Karte **und** Heatmap-Zelle. Statement: „Headache currently appears together with Coffee more than expected from their individual frequencies. This is a co-occurrence pattern, not a cause."
+- **Gegenprobe:** `lift = 1.5` → `lift − 1 = 0.5 < 0.67` ❌ als Karte (erschiene aber noch in der Heatmap, da `0.5 ≥ 0.50`).
+
+#### F) `symptom_cluster` (`method="lasso"`) — multivariat
+
+- **Eingabe:** `n = 96` (≥ 90). Design-Matrix aus Metriken + binären Tag-/Symptom-Features (nur Features mit `≥ MIN_BINARY_FEATURE_USAGES = 5` Nutzungen). Target `mood_score`.
+- **Berechnung:** LASSO mit TimeSeriesSplit-CV (`TIMESERIES_SPLITS = 5`) → gewähltes `alpha = 0.03`, `cv_score = 0.31`. Koeffizienten: Walk `+0.22`, Coffee `−0.09`, Sleep `+0.14`, Rest `≈ 0`.
+- **Schwellen:** `n = 96 ≥ MIN_ML_ENTRIES (90)` ✅ · beibehalten werden nur `|coef| ≥ MIN_ABS_LASSO_COEFFICIENT (0.05)` → Walk, Coffee, Sleep ✅ (Rest verworfen).
+- **Ergebnis:** Statement: „Across your tracked signals, mood currently varies most with Walk, Sleep, Coffee. This is a multivariate pattern, not a cause." (`effect_size` = größter |coef| = 0.22).
+- **Gegenprobe:** `n = 80` → `< 90` ❌ → die ganze Familie läuft nicht (auch kein Dev-Fixture deckt das ab, §9-Hinweis).
+
+#### G) `symptom_cluster` (`method="lag"`) — zeitversetzt
+
+- **Eingabe:** `n = 96`. Feature „poor sleep" (binär), Target `mood_score`. Lags `1..MAX_LAG_DAYS (7)`; je Lag-Paar `≥ MIN_LAG_OBSERVATIONS = 10` Beobachtungen.
+- **Berechnung:** Kreuzkorrelation → Lag 1: `correlation = −0.31`, `p_value_corrected = 0.04` (BH-FDR, `LAG_FDR_ALPHA = 0.10`). Lags 2–7 unter Schwelle.
+- **Schwellen:** `n ≥ 90` ✅ · Lag-1-Beobachtungen `= 41 ≥ 10` ✅ · `|correlation| = 0.31 ≥ MIN_ABS_LAG_CORRELATION (0.25)` ✅ · `0.04 < 0.10` ✅.
+- **Ergebnis:** Statement: „Poor sleep logged 1 day(s) earlier currently lines up with lower mood. Treat this as a time-shifted pattern, not a cause." (`lag_days = 1`, `effect_size = −0.31`).
+- **Gegenprobe:** `|correlation| = 0.2` → `< 0.25` ❌ → kein Lag-Insight.
+
 ---
 
 ## 5. Bekannte Schwellen-Divergenzen & Gotchas
@@ -640,6 +707,7 @@ verschlüsselt, wo mit 🔒 markiert.
 - Frontend-Gates: `apps/web/src/lib/utils/insightAnalyticsGate.ts`, `insightMatrixGate.ts`, `insightMaturityMilestones.ts`
 - Dev-QA-Fixtures: `apps/web/src/lib/dev/phaseFixtures.ts`
 - Office/Wearables/Zyklus (geplant): `docs/DESIGN_DOCUMENT.md` §2.7/§2.8, ADR-0031/0032/0033
+- Doku-Index / Einstieg: [`README.md`](../README.md) → Abschnitt **Documentation** (dort ist dieses Dokument als „Phase & Insight Matrix" verlinkt)
 
 ---
 
@@ -660,3 +728,4 @@ Gates oder dem `insight_maturity`-Vertrag ist sie im **selben PR** nachzuführen
 | --- | --- | --- |
 | 2026-07-05 | Initiale Fassung: Phasen, Capability-Matrix, Insight-Katalog, PNG-Diagramme | #312 |
 | 2026-07-05 | Mermaid-Diagramme (Phasen-State, Engine-Pipeline, Datenfluss, Debug-Baum), TOC, Konstanten-Schnellreferenz, Feld-/Payload-Referenz, Glossar, Wartungshinweis | #312 |
+| 2026-07-05 | Worked Examples je Insight-Familie (§4.3) inkl. Gegenproben; README-Doku-Index-Link (bidirektional) | #312 |
