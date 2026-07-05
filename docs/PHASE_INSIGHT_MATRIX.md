@@ -409,15 +409,15 @@ Gedacht fürs Debugging: „Diese Karte sieht falsch aus" → zuständige Backen
 
 #### 4.4.1 Richtung Backend → Frontend (pro `insight_type`)
 
-| `insight_type`                       | Backend-Compute (§4.2)                                         | Primäre GUI-Komponente(n)                                                                                                                                                                                            | Zusatz-/Aggregat-View                                                                                                                                                                                                                             | Screenshot                                                                            |
-| ------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `weekday_pattern`                    | `_weekday_candidates` (`insight_engine.py`)                    | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte) im [`InsightFeed.svelte`](../apps/web/src/lib/components/insights/InsightFeed.svelte)                                             | Wochentag-Trend: [`MetricTimeseries.svelte`](../apps/web/src/lib/components/trends/MetricTimeseries.svelte) (Route `/trends`)                                                                                                                     | [slot](assets/phase_matrix/screenshots/) `InsightCard__early_patterns.png`            |
-| `spearman`                           | `spearmanr` + BH-FDR (`insight_engine.py`)                     | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | —                                                                                                                                                                                                                                                 | [slot](assets/phase_matrix/screenshots/) `InsightCard__provisional.png`               |
-| `pointbiserial`                      | `pointbiserialr` + Confounder (`insight_engine.py`)            | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | **Correlation-Matrix:** [`InsightMatrix.svelte`](../apps/web/src/lib/components/insights/InsightMatrix.svelte) (`isMatrixInsight`)                                                                                                                | [slot](assets/phase_matrix/screenshots/) `InsightMatrix__provisional.png`             |
-| `symptom_mood_association`           | `compute_symptom_metric_associations` (`symptom_analytics.py`) | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte) (Sonderpfad Zeile ~74)                                                                                                            | **Correlation-Matrix:** [`InsightMatrix.svelte`](../apps/web/src/lib/components/insights/InsightMatrix.svelte); [`SymptomAnalyticsSection.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomAnalyticsSection.svelte)               | [slot](assets/phase_matrix/screenshots/) `InsightMatrix__provisional.png`             |
-| `symptom_tag_cooccurrence`           | Kontingenz/Lift (`symptom_analytics.py`)                       | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte) (Sonderpfad Zeile ~78) + [`CooccurrenceEntrySheet.svelte`](../apps/web/src/lib/components/insights/CooccurrenceEntrySheet.svelte) | **Heatmaps:** [`TagCooccurrenceHeatmap.svelte`](../apps/web/src/lib/components/insights/TagCooccurrenceHeatmap.svelte), [`SymptomCooccurrenceHeatmap.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomCooccurrenceHeatmap.svelte) | [slot](assets/phase_matrix/screenshots/) `TagCooccurrenceHeatmap__provisional.png`    |
-| `symptom_cluster` (`method="lasso"`) | `run_lasso_models` (`multivariate_analytics.py`)               | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | [`SymptomAnalyticsSection.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomAnalyticsSection.svelte)                                                                                                                               | [slot](assets/phase_matrix/screenshots/) `InsightCard__robust.png` (ML braucht ≥ 90)  |
-| `symptom_cluster` (`method="lag"`)   | `run_lag_analysis` (`multivariate_analytics.py`)               | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | [`SymptomTrendOverlay.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomTrendOverlay.svelte)                                                                                                                                       | [slot](assets/phase_matrix/screenshots/) `InsightCard__robust.png` (Lag braucht ≥ 90) |
+| `insight_type`                       | Backend-Compute (§4.2)                                         | Primäre GUI-Komponente(n)                                                                                                                                                                                            | Zusatz-/Aggregat-View                                                                                                                                                                                                                             | Screenshot                                                                                                                                                                           |
+| ------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `weekday_pattern`                    | `_weekday_candidates` (`insight_engine.py`)                    | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte) im [`InsightFeed.svelte`](../apps/web/src/lib/components/insights/InsightFeed.svelte)                                             | Wochentag-Trend: [`MetricTimeseries.svelte`](../apps/web/src/lib/components/trends/MetricTimeseries.svelte) (Route `/trends`)                                                                                                                     | [`InsightCard__robust.png`](assets/phase_matrix/screenshots/InsightCard__robust.png), [`MetricTimeseries__robust.png`](assets/phase_matrix/screenshots/MetricTimeseries__robust.png) |
+| `spearman`                           | `spearmanr` + BH-FDR (`insight_engine.py`)                     | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | —                                                                                                                                                                                                                                                 | [`InsightCard__robust.png`](assets/phase_matrix/screenshots/InsightCard__robust.png)                                                                                                 |
+| `pointbiserial`                      | `pointbiserialr` + Confounder (`insight_engine.py`)            | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | **Correlation-Matrix:** [`InsightMatrix.svelte`](../apps/web/src/lib/components/insights/InsightMatrix.svelte) (`isMatrixInsight`)                                                                                                                | [`InsightMatrix__robust.png`](assets/phase_matrix/screenshots/InsightMatrix__robust.png)                                                                                             |
+| `symptom_mood_association`           | `compute_symptom_metric_associations` (`symptom_analytics.py`) | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte) (Sonderpfad Zeile ~74)                                                                                                            | **Correlation-Matrix:** [`InsightMatrix.svelte`](../apps/web/src/lib/components/insights/InsightMatrix.svelte); [`SymptomAnalyticsSection.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomAnalyticsSection.svelte)               | [`InsightMatrix__robust.png`](assets/phase_matrix/screenshots/InsightMatrix__robust.png)                                                                                             |
+| `symptom_tag_cooccurrence`           | Kontingenz/Lift (`symptom_analytics.py`)                       | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte) (Sonderpfad Zeile ~78) + [`CooccurrenceEntrySheet.svelte`](../apps/web/src/lib/components/insights/CooccurrenceEntrySheet.svelte) | **Heatmaps:** [`TagCooccurrenceHeatmap.svelte`](../apps/web/src/lib/components/insights/TagCooccurrenceHeatmap.svelte), [`SymptomCooccurrenceHeatmap.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomCooccurrenceHeatmap.svelte) | [`TagCooccurrenceHeatmap__robust.png`](assets/phase_matrix/screenshots/TagCooccurrenceHeatmap__robust.png)                                                                           |
+| `symptom_cluster` (`method="lasso"`) | `run_lasso_models` (`multivariate_analytics.py`)               | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | [`SymptomAnalyticsSection.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomAnalyticsSection.svelte)                                                                                                                               | [`InsightCard__robust.png`](assets/phase_matrix/screenshots/InsightCard__robust.png) (ML braucht ≥ 90)                                                                               |
+| `symptom_cluster` (`method="lag"`)   | `run_lag_analysis` (`multivariate_analytics.py`)               | [`InsightCard.svelte`](../apps/web/src/lib/components/insights/InsightCard.svelte)                                                                                                                                   | [`SymptomTrendOverlay.svelte`](../apps/web/src/lib/components/insights/symptoms/SymptomTrendOverlay.svelte)                                                                                                                                       | [`InsightCard__robust.png`](assets/phase_matrix/screenshots/InsightCard__robust.png) (Lag braucht ≥ 90)                                                                              |
 
 #### 4.4.2 Richtung Frontend → Backend (pro GUI-Komponente)
 
@@ -441,19 +441,53 @@ Gedacht fürs Debugging: „Diese Karte sieht falsch aus" → zuständige Backen
 
 #### 4.4.3 Screenshots
 
-Die „Screenshot"-Slots oben verweisen auf [`assets/phase_matrix/screenshots/`](assets/phase_matrix/screenshots/).
-Da das Repo (noch) keine gerenderten UI-Screenshots enthält, ist dort eine **reproduzierbare Aufnahme-Anleitung**
-hinterlegt (Dev Mode + Phase-Preset). Sobald eine Datei `<Komponente>__<preset>.png` existiert, kann sie hier
-direkt eingebettet werden, z.B.:
-
-```markdown
-![InsightMatrix im Preset provisional](assets/phase_matrix/screenshots/InsightMatrix__provisional.png)
-```
-
-**Aufnahme-Kurzrezept:** Web-App lokal starten → **Settings → Developer** → Dev Mode + Phase-Preset wählen
-(`DEV_PHASE_PRESETS` in `phaseFixtures.ts`; Routen `/`, `/insights`, `/trends` lesen `getDevPhaseFixture`) →
-Komponente aufnehmen → als `<Komponente>__<preset>.png` ablegen. Details:
+Alle Screenshots liegen in [`assets/phase_matrix/screenshots/`](assets/phase_matrix/screenshots/) und wurden
+**reproduzierbar** aus der laufenden Web-App im **Dev Mode + `dev_force_viz`** mit den vier Phase-Presets
+(`DEV_PHASE_PRESETS` in `phaseFixtures.ts`) aufgenommen — die Insight-Daten stammen aus `getDevPhaseFixture`,
+nicht aus einer echten Nutzer-Datenbank. Aufnahme-Details und Aktualisierungs-Rezept:
 [`screenshots/README.md`](assets/phase_matrix/screenshots/README.md).
+
+**Phasen-Progression (Route `/insights`, `InsightStageHeader` + `InsightFeed`).** Zeigt die vier Gates aus §1
+– identischer Screen, nur `presetId` variiert:
+
+| Phase                  | `InsightStageHeader` (Badge + Fortschritt)                                                            | `InsightFeed` (sichtbare Karten)                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `collecting` (1/4)     | ![StageHeader collecting](assets/phase_matrix/screenshots/InsightStageHeader__collecting.png)         | ![Feed collecting](assets/phase_matrix/screenshots/InsightFeed__collecting.png)         |
+| `early_patterns` (2/4) | ![StageHeader early_patterns](assets/phase_matrix/screenshots/InsightStageHeader__early_patterns.png) | ![Feed early_patterns](assets/phase_matrix/screenshots/InsightFeed__early_patterns.png) |
+| `provisional` (3/4)    | ![StageHeader provisional](assets/phase_matrix/screenshots/InsightStageHeader__provisional.png)       | ![Feed provisional](assets/phase_matrix/screenshots/InsightFeed__provisional.png)       |
+| `robust` (4/4)         | ![StageHeader robust](assets/phase_matrix/screenshots/InsightStageHeader__robust.png)                 | ![Feed robust](assets/phase_matrix/screenshots/InsightFeed__robust.png)                 |
+
+> Debug-Lesart: In `collecting` ist der Feed leer (`insight-feed-empty`, 0 Karten), ab `early_patterns` erscheinen
+> Karten, in `robust` ist die volle Engine aktiv. Der Fortschrittstext (`… noch N bis <nächste Phase>`) kommt aus
+> `insight_maturity.entries_until_next` (§1 / §10).
+
+**Komponenten-Galerie (Preset `robust`).** Die in §4.4.1/4.4.2 referenzierten Komponenten im gerenderten Zustand:
+
+_`InsightCard.svelte` — einzelne Insight-Karte (`mood → Energy`, Meta `Basierend auf 42 Einträgen · 90 Tage`):_
+
+![InsightCard robust](assets/phase_matrix/screenshots/InsightCard__robust.png)
+
+_`InsightMatrix.svelte` — Correlation-Matrix-Tab (Spalten `EFFEKT`/`KONFIDENZ`; Gate: `pointbiserial` +
+`symptom_mood_association` mit `effect_size ≠ null`, `confidence ≥ 0.2`, `MATRIX_TAB_MIN_INSIGHTS = 2`):_
+
+![InsightMatrix robust](assets/phase_matrix/screenshots/InsightMatrix__robust.png)
+
+_`TagCooccurrenceHeatmap.svelte` — Tag×Tag-Co-occurrence (Route `/trends`):_
+
+![TagCooccurrenceHeatmap robust](assets/phase_matrix/screenshots/TagCooccurrenceHeatmap__robust.png)
+
+_`MetricTimeseries.svelte` — Metrik-Zeitreihe (Stimmung/Energie/Stress, Route `/trends`):_
+
+![MetricTimeseries robust](assets/phase_matrix/screenshots/MetricTimeseries__robust.png)
+
+_Home-Insight-Zone (Route `/`, `Daily Brief` mit `TOP-ERKENNTNIS` + Cross-Links → `/insights`, `/trends`):_
+
+![HomeInsightZone robust](assets/phase_matrix/screenshots/HomeInsightZone__robust.png)
+
+> **Aufnahme-Kurzrezept (Aktualisierung):** Web-App lokal starten → **Settings → Developer** → Dev Mode +
+> `dev_force_viz` aktivieren → Phase-Preset wählen → Route `/`, `/insights` bzw. `/trends` aufrufen → Komponente
+> aufnehmen → als `<Komponente>__<preset>.png` ablegen. Voll automatisiert via Playwright — siehe
+> [`screenshots/README.md`](assets/phase_matrix/screenshots/README.md).
 
 ---
 
@@ -481,7 +515,7 @@ Das Modell ist bewusst additiv. Beim Hinzufügen einer neuen Insight-/Trend-Dime
 - [ ] Compute-Funktion + Statement in `insight_engine.py` (oder Fach-Service) mit **eigenen** Min-Schwellen & FDR-Familie.
 - [ ] In `generate_insight_candidates()` einhängen (Tier wird global gesetzt).
 - [ ] Phase-Zuordnung in dieser Matrix (§2) + ggf. neues Gate in `insightAnalyticsGate.ts`.
-- [ ] Backend↔Frontend-Landkarte (§4.4) ergänzen: zuständige Svelte-Komponente(n) + Screenshot-Slot.
+- [ ] Backend↔Frontend-Landkarte (§4.4) ergänzen: zuständige Svelte-Komponente(n) + Screenshot (`<Komponente>__<preset>.png`, Aufnahme siehe §4.4.3).
 - [ ] i18n-Keys (`maturity.*` bzw. neue `insight.*`), Copy-Tonalität je Phase (nicht-kausal).
 - [ ] Dev-Fixture in `phaseFixtures.ts` erweitern (GUI-QA je Preset).
 - [ ] DSGVO-Checkpoint: keine sensiblen Rohdaten in `insight_maturity`/Notification-Payloads.
@@ -779,9 +813,9 @@ Gates oder dem `insight_maturity`-Vertrag ist sie im **selben PR** nachzuführen
 > Konvention: Stabile Vertragswerte (Phase-Keys, `insight_type`, i18n-Keys, Feldnamen) bleiben in Original-Schreibweise;
 > erklärender Fließtext ist auf Deutsch (Abweichung von der „Docs auf Englisch“-Regel ist bewusst und mit dem Owner abgestimmt).
 
-| Datum      | Änderung                                                                                                                                                     | PR   |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
-| 2026-07-05 | Initiale Fassung: Phasen, Capability-Matrix, Insight-Katalog, PNG-Diagramme                                                                                  | #312 |
-| 2026-07-05 | Mermaid-Diagramme (Phasen-State, Engine-Pipeline, Datenfluss, Debug-Baum), TOC, Konstanten-Schnellreferenz, Feld-/Payload-Referenz, Glossar, Wartungshinweis | #312 |
-| 2026-07-05 | Worked Examples je Insight-Familie (§4.3) inkl. Gegenproben; README-Doku-Index-Link (bidirektional)                                                          | #312 |
-| 2026-07-05 | Backend↔Frontend-Landkarte (§4.4): `insight_type`↔Svelte-Komponenten (beide Richtungen), Screenshot-Slots + Aufnahme-Rezept (Dev-Mode-Presets)               | #313 |
+| Datum      | Änderung                                                                                                                                                                                                        | PR   |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| 2026-07-05 | Initiale Fassung: Phasen, Capability-Matrix, Insight-Katalog, PNG-Diagramme                                                                                                                                     | #312 |
+| 2026-07-05 | Mermaid-Diagramme (Phasen-State, Engine-Pipeline, Datenfluss, Debug-Baum), TOC, Konstanten-Schnellreferenz, Feld-/Payload-Referenz, Glossar, Wartungshinweis                                                    | #312 |
+| 2026-07-05 | Worked Examples je Insight-Familie (§4.3) inkl. Gegenproben; README-Doku-Index-Link (bidirektional)                                                                                                             | #312 |
+| 2026-07-05 | Backend↔Frontend-Landkarte (§4.4): `insight_type`↔Svelte-Komponenten (beide Richtungen), eingebettete UI-Screenshots (Phasen-Progression + Komponenten-Galerie) + Playwright-Aufnahme-Rezept (Dev-Mode-Presets) | #313 |
