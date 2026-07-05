@@ -364,6 +364,68 @@ describe('EntryForm slot changes', () => {
     );
   });
 
+  it('ignores slot clicks while a date-change save is still settling', async () => {
+    const create = testHelpers.deferred<EntryResponse>();
+    vi.mocked(submitEntry).mockReturnValue(create.promise);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-05' },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'friday draft' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ entry_date: '2026-06-05', slot: 'day', note: 'friday draft' })
+    );
+
+    await fireEvent.input(screen.getByLabelText('entry.date_label'), {
+      target: { value: '2026-06-06' },
+    });
+    await flushAsync();
+
+    const morningButton = screen.getByRole('button', { name: 'entry.time_slot.morning' });
+    expect(morningButton.hasAttribute('disabled')).toBe(true);
+
+    await fireEvent.click(morningButton);
+    await flushAsync();
+
+    expect(morningButton.getAttribute('aria-pressed')).toBe('false');
+
+    create.resolve({
+      id: 'created-entry',
+      user_id: 'user-1',
+      entry_date: '2026-06-05',
+      slot: 'day',
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: 'friday draft',
+      created_at: '2026-06-05T12:00:00Z',
+      updated_at: '2026-06-05T12:00:00Z',
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(listEntries).toHaveBeenCalledWith({
+        start_date: '2026-06-06',
+        end_date: '2026-06-06',
+        limit: 5,
+      });
+    });
+  });
+
   it('does not move an existing entry when an empty slot is clicked during an in-flight save', async () => {
     const patch = testHelpers.deferred<EntryResponse>();
     vi.mocked(listEntries).mockResolvedValue([
