@@ -442,12 +442,53 @@ Gedacht fürs Debugging: „Diese Karte sieht falsch aus" → zuständige Backen
 #### 4.4.3 Screenshots
 
 Alle Screenshots liegen in [`assets/phase_matrix/screenshots/`](assets/phase_matrix/screenshots/) und wurden
-**reproduzierbar** aus der laufenden Web-App im **Dev Mode + `dev_force_viz`** mit den vier Phase-Presets
+**reproduzierbar** aus der laufenden App im **Dev Mode + `dev_force_viz`** mit den vier Phase-Presets
 (`DEV_PHASE_PRESETS` in `phaseFixtures.ts`) aufgenommen — die Insight-Daten stammen aus `getDevPhaseFixture`,
 nicht aus einer echten Nutzer-Datenbank. Aufnahme-Details und Aktualisierungs-Rezept:
 [`screenshots/README.md`](assets/phase_matrix/screenshots/README.md).
 
-**Phasen-Progression (Route `/insights`, `InsightStageHeader` + `InsightFeed`).** Zeigt die vier Gates aus §1
+> **Priorität Mobile → Web.** CorrelCore ist mobile-first: unterhalb von `DESKTOP_SHELL_BREAKPOINT_PX = 768`
+> (`surfaceContract.ts`) rendert die `mobile-daily`-Surface (eigene Komponenten wie `MobileInsightLead`,
+> Bottom-Tab-Nav), darüber die `web-analysis`-Surface. Deshalb stehen hier **zuerst die mobilen Screenshots**
+> (Viewport 390×844), darunter als Referenz die Desktop-Varianten. Mobile-Dateien tragen das Präfix `mobile__`.
+
+##### A) Mobile-Surface (`mobile-daily`, 390×844) — primär
+
+**A.1 Phasen-Progression (Route `/insights`).** Auf Mobile fasst die `mobile-daily`-Surface Phase-Badge,
+`MobileInsightLead` (stärkstes Signal) und Empty-/Feed-State auf einer Seite zusammen — je Preset ein Screen:
+
+| Phase                  | Mobile `/insights` (`mobile-daily`)                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `collecting` (1/4)     | ![Mobile Insights collecting](assets/phase_matrix/screenshots/mobile__InsightsPage__collecting.png)         |
+| `early_patterns` (2/4) | ![Mobile Insights early_patterns](assets/phase_matrix/screenshots/mobile__InsightsPage__early_patterns.png) |
+| `provisional` (3/4)    | ![Mobile Insights provisional](assets/phase_matrix/screenshots/mobile__InsightsPage__provisional.png)       |
+| `robust` (4/4)         | ![Mobile Insights robust](assets/phase_matrix/screenshots/mobile__InsightsPage__robust.png)                 |
+
+> Debug-Lesart (mobile): In `collecting` erscheint statt Karten der Empty-State „Wir sammeln noch deine
+> Grundlage" (`insight-feed-empty`); ab `early_patterns` zeigt `mobile-insight-lead` das priorisierte Signal
+> inkl. Reifegrad-Badge (`insight-maturity-badge`) und `ERKENNTNISQUALITAET`-Meter.
+
+**A.2 Mobile-Komponenten (Preset `robust`).**
+
+_`MobileInsightLead` (`mobile-insight-lead`) — priorisiertes Signal auf `/insights`, mit Reifegrad-Badge + Qualitäts-Meter:_
+
+![Mobile InsightLead robust](assets/phase_matrix/screenshots/mobile__MobileInsightLead__robust.png)
+
+_Mobile-Trends-Übersicht (`mobile-trends-summary`, „Auf einen Blick" auf `/trends`):_
+
+![Mobile Trends Summary robust](assets/phase_matrix/screenshots/mobile__TrendsSummary__robust.png)
+
+_Home (`/`) auf Mobile — Insight-Zone im Kontext der Bottom-Tab-Navigation:_
+
+![Mobile Home robust](assets/phase_matrix/screenshots/mobile__HomePage__robust.png)
+
+_Mobile-Trends-Detail (`mobile-trends-detail`) — aufgeklappte Metrik/Korrelations-Ansicht auf `/trends`:_
+
+![Mobile Trends Detail robust](assets/phase_matrix/screenshots/mobile__TrendsDetail__robust.png)
+
+##### B) Web-Surface (`web-analysis`, ≥ 768 px) — Referenz
+
+**B.1 Phasen-Progression (Route `/insights`, `InsightStageHeader` + `InsightFeed`).** Zeigt die vier Gates aus §1
 – identischer Screen, nur `presetId` variiert:
 
 | Phase                  | `InsightStageHeader` (Badge + Fortschritt)                                                            | `InsightFeed` (sichtbare Karten)                                                        |
@@ -461,7 +502,7 @@ nicht aus einer echten Nutzer-Datenbank. Aufnahme-Details und Aktualisierungs-Re
 > Karten, in `robust` ist die volle Engine aktiv. Der Fortschrittstext (`… noch N bis <nächste Phase>`) kommt aus
 > `insight_maturity.entries_until_next` (§1 / §10).
 
-**Komponenten-Galerie (Preset `robust`).** Die in §4.4.1/4.4.2 referenzierten Komponenten im gerenderten Zustand:
+**B.2 Komponenten-Galerie (Preset `robust`).** Die in §4.4.1/4.4.2 referenzierten Komponenten im gerenderten Zustand:
 
 _`InsightCard.svelte` — einzelne Insight-Karte (`mood → Energy`, Meta `Basierend auf 42 Einträgen · 90 Tage`):_
 
@@ -813,9 +854,9 @@ Gates oder dem `insight_maturity`-Vertrag ist sie im **selben PR** nachzuführen
 > Konvention: Stabile Vertragswerte (Phase-Keys, `insight_type`, i18n-Keys, Feldnamen) bleiben in Original-Schreibweise;
 > erklärender Fließtext ist auf Deutsch (Abweichung von der „Docs auf Englisch“-Regel ist bewusst und mit dem Owner abgestimmt).
 
-| Datum      | Änderung                                                                                                                                                                                                        | PR   |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| 2026-07-05 | Initiale Fassung: Phasen, Capability-Matrix, Insight-Katalog, PNG-Diagramme                                                                                                                                     | #312 |
-| 2026-07-05 | Mermaid-Diagramme (Phasen-State, Engine-Pipeline, Datenfluss, Debug-Baum), TOC, Konstanten-Schnellreferenz, Feld-/Payload-Referenz, Glossar, Wartungshinweis                                                    | #312 |
-| 2026-07-05 | Worked Examples je Insight-Familie (§4.3) inkl. Gegenproben; README-Doku-Index-Link (bidirektional)                                                                                                             | #312 |
-| 2026-07-05 | Backend↔Frontend-Landkarte (§4.4): `insight_type`↔Svelte-Komponenten (beide Richtungen), eingebettete UI-Screenshots (Phasen-Progression + Komponenten-Galerie) + Playwright-Aufnahme-Rezept (Dev-Mode-Presets) | #314 |
+| Datum      | Änderung                                                                                                                                                                                                                                                                                                                                              | PR   |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| 2026-07-05 | Initiale Fassung: Phasen, Capability-Matrix, Insight-Katalog, PNG-Diagramme                                                                                                                                                                                                                                                                           | #312 |
+| 2026-07-05 | Mermaid-Diagramme (Phasen-State, Engine-Pipeline, Datenfluss, Debug-Baum), TOC, Konstanten-Schnellreferenz, Feld-/Payload-Referenz, Glossar, Wartungshinweis                                                                                                                                                                                          | #312 |
+| 2026-07-05 | Worked Examples je Insight-Familie (§4.3) inkl. Gegenproben; README-Doku-Index-Link (bidirektional)                                                                                                                                                                                                                                                   | #312 |
+| 2026-07-05 | Backend↔Frontend-Landkarte (§4.4): `insight_type`↔Svelte-Komponenten (beide Richtungen), eingebettete UI-Screenshots (Phasen-Progression + Komponenten-Galerie) + Playwright-Aufnahme-Rezept (Dev-Mode-Presets); §4.4.3 mobile-first umstrukturiert: Mobile-Surface (`mobile-daily`, 390×844, Präfix `mobile__`) priorisiert **vor** der Web-Referenz | #314 |

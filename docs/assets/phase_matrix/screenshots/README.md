@@ -8,6 +8,11 @@ Frontend-Screenshots, die in [`../../../PHASE_INSIGHT_MATRIX.md`](../../../PHASE
 `<Komponente>__<preset>.png` — z.B. `InsightCard__robust.png`, `InsightStageHeader__collecting.png`.
 `<preset>` ist eine der Dev-Phasen (`collecting` / `early_patterns` / `provisional` / `robust`).
 
+**Mobile-Varianten** tragen zusätzlich das Präfix `mobile__` — z.B. `mobile__InsightsPage__robust.png`.
+Sie werden aus der `mobile-daily`-Surface (Viewport **390×844**, DPR 3, Route unterhalb
+`DESKTOP_SHELL_BREAKPOINT_PX = 768`) aufgenommen und stehen in der Referenz (§4.4.3 A) **vor** den
+Desktop-Varianten, weil CorrelCore mobile-first ist.
+
 ## Vorhandene Aufnahmen
 
 Phasen-Progression (Route `/insights`):
@@ -23,6 +28,14 @@ Komponenten-Galerie (Preset `robust`):
 - `MetricTimeseries__robust.png` — Metrik-Zeitreihe (`/trends`)
 - `TrendsComparePanel__robust.png`, `TrendsHealthContext__robust.png` — Trends-Kontext
 - `HomeInsightZone__robust.png` — Daily-Brief-Insight-Zone (`/`)
+
+Mobile-Surface (`mobile-daily`, 390×844, Präfix `mobile__`):
+
+- `mobile__InsightsPage__{collecting,early_patterns,provisional,robust}.png` — Phasen-Progression auf `/insights`
+- `mobile__MobileInsightLead__robust.png` — `MobileInsightLead` (`mobile-insight-lead`), priorisiertes Signal
+- `mobile__TrendsSummary__robust.png` — „Auf einen Blick" (`mobile-trends-summary`, `/trends`)
+- `mobile__TrendsDetail__robust.png` — aufgeklappte Detail-Ansicht (`mobile-trends-detail`, `/trends`)
+- `mobile__HomePage__robust.png` — Home (`/`) inkl. Bottom-Tab-Navigation
 
 > Alle Bilder stammen aus **Dev Mode + `dev_force_viz`** mit den Phase-Presets — die Insight-Daten
 > kommen aus `getDevPhaseFixture` (`apps/web/src/lib/dev/phaseFixtures.ts`), **nicht** aus einer echten
@@ -43,8 +56,10 @@ Komponenten-Galerie (Preset `robust`):
 
 ## Automatisierte Aufnahme (Playwright, empfohlen)
 
-Die vorhandenen Bilder wurden mit Playwright headless (Chromium, Viewport 1440×1600, `deviceScaleFactor: 2`,
-Dark-Theme) erzeugt. Kernschritte des Skripts:
+Die Desktop-Bilder wurden mit Playwright headless (Chromium, Viewport 1440×1600, `deviceScaleFactor: 2`,
+Dark-Theme) erzeugt; die Mobile-Bilder mit einem eigenen Kontext (Viewport **390×844**, `deviceScaleFactor: 3`,
+mobiler User-Agent) — dieser triggert unterhalb von `DESKTOP_SHELL_BREAKPOINT_PX = 768` die `mobile-daily`-Surface
+(`MobileInsightLead`, Bottom-Tab-Nav). Kernschritte des Skripts:
 
 - `addInitScript`: `localStorage` setzen — `dev_mode_enabled=true`, `dev_force_viz=true`, `correlcore-locale=de`.
 - `page.route('**/api/v1/**', …)`: Auth (`/auth/me` → Mock-User) + Basis-Endpunkte mocken. Die Insights selbst
