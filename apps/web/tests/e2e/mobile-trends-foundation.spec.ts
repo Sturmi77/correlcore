@@ -93,7 +93,47 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
         as_of: '2026-06-23',
       });
     }
-    if (path === '/entries') return json(200, []);
+    if (path === '/entries') {
+      const endDate = url.searchParams.get('end_date') ?? '2026-06-23';
+      const startDate = url.searchParams.get('start_date') ?? endDate;
+      return json(
+        200,
+        options.empty
+          ? []
+          : [
+              {
+                id: 'trend-entry-office',
+                user_id: user.id,
+                entry_date: endDate,
+                slot: 'day',
+                mood_score: 4,
+                energy: 3,
+                stress: 2,
+                cycle_day: null,
+                source: 'manual',
+                work_context: 'office',
+                note: null,
+                created_at: `${endDate}T09:00:00Z`,
+                updated_at: `${endDate}T09:00:00Z`,
+              },
+              {
+                id: 'trend-entry-homeoffice',
+                user_id: user.id,
+                entry_date: startDate,
+                slot: 'day',
+                mood_score: 3,
+                energy: 4,
+                stress: 3,
+                cycle_day: null,
+                source: 'manual',
+                work_context: 'homeoffice',
+                note: null,
+                created_at: `${startDate}T09:00:00Z`,
+                updated_at: `${startDate}T09:00:00Z`,
+              },
+            ]
+      );
+    }
     return json(404, { detail: `Unhandled trends mock route: ${request.method()} ${path}` });
   });
 
@@ -134,6 +174,10 @@ test('mobile compare filters and analysis canvas are reachable by scroll at 430p
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
   await page.getByTestId('trends-compare-panel').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible();
+  await expect(page.getByLabel('Work context')).toBeChecked();
+  await expect(page.getByText('Office').first()).toBeVisible();
+  await page.getByLabel('Work context').uncheck();
+  await expect(page.getByText('Office').first()).toHaveCount(0);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
   ).toBeLessThanOrEqual(0);
@@ -152,5 +196,7 @@ test('desktop keeps the full comparison canvas and filters visible', async ({ pa
   await page.goto('/trends');
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
+  await expect(page.getByLabel('Work context')).toBeChecked();
+  await expect(page.getByText('Office').first()).toBeVisible();
   await expect(page.getByTestId('mobile-trends-summary')).toHaveCount(0);
 });

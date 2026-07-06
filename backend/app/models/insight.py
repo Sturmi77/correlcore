@@ -42,6 +42,8 @@ class InsightType(StrEnum):
     POINTBISERIAL = "pointbiserial"
     SPEARMAN = "spearman"
     WEEKDAY_PATTERN = "weekday_pattern"
+    WORK_CONTEXT_PATTERN = "work_context_pattern"
+    WEEKDAY_CONTEXT_PATTERN = "weekday_context_pattern"
     SYMPTOM_CLUSTER = "symptom_cluster"
     SYMPTOM_MOOD_ASSOCIATION = "symptom_mood_association"
     SYMPTOM_TAG_COOCCURRENCE = "symptom_tag_cooccurrence"

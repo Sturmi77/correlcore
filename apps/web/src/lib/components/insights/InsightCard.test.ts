@@ -18,6 +18,9 @@ vi.mock('svelte-i18n', async () => {
         return `Based on ${options?.values?.n} entries`;
       if (key === 'insights.card.sample_meta')
         return `Based on ${options?.values?.n} entries · ${options?.values?.days} days`;
+      if (key === 'trends.metric.mood') return 'Mood';
+      if (key === 'trends.metric.energy') return 'Energy';
+      if (key === 'trends.metric.stress') return 'Stress';
       return key;
     }),
   };
@@ -252,5 +255,37 @@ describe('InsightCard', () => {
 
     expect(screen.getByTestId('insight-card-confounder')).toBeTruthy();
     expect(screen.getByTestId('insight-card').className).toContain('insight-card--confounded');
+  });
+
+  it('renders work context pattern cards with context badge and title label', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...INSIGHT,
+          insight_type: 'work_context_pattern',
+          metric: 'mood_score',
+          subject_label: null,
+          payload: { work_context: 'office', work_context_label: 'Office' },
+        },
+      },
+    });
+
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('Mood -> Office');
+    expect(screen.getByTestId('insight-card-context-badge')).toBeTruthy();
+  });
+
+  it('uses work-context confounder copy when marked by flags', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...INSIGHT,
+          flags: { work_context_confounded: true },
+        },
+      },
+    });
+
+    expect(screen.getByTestId('insight-card-confounder').textContent).toContain(
+      'insights.work_context_confounded_note'
+    );
   });
 });

@@ -28,8 +28,44 @@ function json(route: import('@playwright/test').Route, status: number, body: unk
   });
 }
 
+type InsightsApiMockOptions = {
+  includeContextInsight?: boolean;
+};
+
+const contextInsight = {
+  id: '20000000-0000-4000-8000-000000000context',
+  user_id: user.id,
+  insight_type: 'work_context_pattern',
+  tier: 'early',
+  metric: 'mood_score',
+  subject_type: 'work_context',
+  subject_id: null,
+  subject_label: 'Office',
+  effect_size: 0.31,
+  confidence: 0.49,
+  sample_n: 9,
+  statement: 'Office days currently sit above your overall mood average in this early sample.',
+  flags: { causal_claim: false, early_pattern: true },
+  payload: {
+    work_context: 'office',
+    work_context_label: 'Office',
+    context_count: 4,
+    comparison_count: 5,
+    context_mean: 4.1,
+    overall_mean: 3.2,
+    early_pattern: true,
+  },
+  generated_for_date: '2026-06-30',
+  generated_at: '2026-06-30T09:00:00Z',
+  created_at: '2026-06-30T09:00:00Z',
+  updated_at: '2026-06-30T09:00:00Z',
+} as const;
+
 /** Auth + insights API mocks for mobile insights E2E (API-backed; dev_force_viz optional). */
-export async function installInsightsApiMock(page: Page): Promise<void> {
+export async function installInsightsApiMock(
+  page: Page,
+  options: InsightsApiMockOptions = {}
+): Promise<void> {
   await page.addInitScript(() => {
     window.localStorage.setItem('correlcore-locale', 'en');
     window.localStorage.setItem('cc_insights_symptoms', 'true');
@@ -101,7 +137,7 @@ export async function installInsightsApiMock(page: Page): Promise<void> {
     if ((path === '/insights' || path === '/insights/latest') && method === 'GET') {
       return json(route, 200, {
         insight_maturity: mockInsightMaturity,
-        insights: mockInsights,
+        insights: options.includeContextInsight ? [...mockInsights, contextInsight] : mockInsights,
       });
     }
 

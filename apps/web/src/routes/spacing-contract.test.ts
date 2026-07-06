@@ -32,7 +32,9 @@ function collectPageFiles(dir: string, base = ''): string[] {
 }
 
 function routePathFromFile(filePath: string): string {
-  const relative = filePath.replace(`${ROUTES_DIR}`, '').replace('/+page.svelte', '');
+  const normalized = filePath.replaceAll('\\', '/');
+  const routesDir = ROUTES_DIR.replaceAll('\\', '/');
+  const relative = normalized.replace(`${routesDir}`, '').replace('/+page.svelte', '');
   if (!relative || relative === '') return '/';
   return relative;
 }

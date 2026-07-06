@@ -121,4 +121,33 @@ describe('SymptomCooccurrenceHeatmap', () => {
     expect(container.querySelector('.symptom-cooccurrence__cell--confounded')).toBeTruthy();
     expect(screen.getByText(/cooccurrence_confounder_note/)).toBeTruthy();
   });
+
+  it('marks work-context and calendar-context confounders as confounded', async () => {
+    const contextData = {
+      ...data,
+      cells: [
+        {
+          ...data.cells[0],
+          confounder: 'work_context' as const,
+        },
+      ],
+    };
+
+    const { container, rerender } = render(SymptomCooccurrenceHeatmap, {
+      props: { data: contextData, phase: 'robust' },
+    });
+
+    expect(container.querySelector('.symptom-cooccurrence__cell--confounded')).toBeTruthy();
+    expect(screen.getByLabelText(/insights.work_context_confounded_note/)).toBeTruthy();
+
+    await rerender({
+      data: {
+        ...data,
+        cells: [{ ...data.cells[0], confounder: 'calendar_context' as const }],
+      },
+      phase: 'robust',
+    });
+
+    expect(screen.getByLabelText(/insights.calendar_context_confounded_note/)).toBeTruthy();
+  });
 });

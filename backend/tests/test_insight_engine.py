@@ -7,16 +7,20 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from app.models.entry import WorkContext
 from app.models.insight import InsightTier, InsightType
 from app.services.insight_engine import (
     AnalyticsEntry,
     SymptomSnapshot,
     TagSnapshot,
+    _canonicalize_tag_aliases,
+    _dedupe_daily_entries,
     confidence_tier_for_sample,
     display_metric_value,
     generate_and_store_insights,
     generate_insight_candidates,
     is_weekday_biased,
+    is_work_context_biased,
     load_analytics_data,
 )
 from tests.conftest import make_entry, make_symptom, make_tag, make_user
@@ -42,6 +46,7 @@ def _entry(
     mood: int,
     energy: int,
     stress: int,
+    work_context: WorkContext = WorkContext.HOMEOFFICE,
     tag_ids: frozenset[uuid.UUID] = frozenset(),
     symptom_ids: frozenset[uuid.UUID] = frozenset(),
 ) -> AnalyticsEntry:
@@ -51,6 +56,7 @@ def _entry(
         mood_score=mood,
         energy=energy,
         stress=stress,
+        work_context=work_context,
         tag_ids=tag_ids,
         symptom_ids=symptom_ids,
     )
@@ -97,6 +103,153 @@ def test_weekday_pattern_is_available_before_bivariate_correlation() -> None:
     }
 
 
+def test_work_context_pattern_is_available_after_seven_entries() -> None:
+    start = date(2026, 5, 4)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset in {0, 2} else 3,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE if offset in {0, 2} else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(7)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 11))
+    candidate = next(c for c in candidates if c.insight_type == InsightType.WORK_CONTEXT_PATTERN)
+
+    assert candidate.tier == InsightTier.EARLY
+    assert candidate.subject_label == "Office"
+    assert candidate.flags["early_pattern"] is True
+    assert candidate.payload["work_context"] == "office"
+    assert candidate.payload["context_entry_count"] == 2
+    assert candidate.payload["comparison_entry_count"] == 5
+    assert candidate.payload["work_context_entry_counts"] == {
+        "homeoffice": 5,
+        "office": 2,
+    }
+
+
+def test_context_patterns_wait_for_seven_entries() -> None:
+    start = date(2026, 5, 4)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset < 2 else 3,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE if offset < 2 else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(6)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 10))
+
+    assert all(
+        candidate.insight_type != InsightType.WORK_CONTEXT_PATTERN for candidate in candidates
+    )
+    assert all(
+        candidate.insight_type != InsightType.WEEKDAY_CONTEXT_PATTERN for candidate in candidates
+    )
+
+
+def test_work_context_pattern_skips_rare_contexts() -> None:
+    start = date(2026, 5, 4)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset == 0 else 3,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE if offset == 0 else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(7)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 11))
+
+    assert all(
+        candidate.insight_type != InsightType.WORK_CONTEXT_PATTERN for candidate in candidates
+    )
+
+
+def test_weekday_context_pattern_requires_sufficient_cell_size() -> None:
+    start = date(2026, 5, 4)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset in {0, 7} else 3,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE if offset in {0, 7} else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(14)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 18))
+    candidate = next(c for c in candidates if c.insight_type == InsightType.WEEKDAY_CONTEXT_PATTERN)
+
+    assert candidate.subject_label == "Mondays in Office"
+    assert candidate.payload["weekday"] == 0
+    assert candidate.payload["work_context"] == "office"
+    assert candidate.payload["cell_entry_count"] == 2
+    assert candidate.payload["comparison_entry_count"] == 12
+
+
+def test_weekday_context_pattern_skips_single_entry_cells() -> None:
+    start = date(2026, 5, 4)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset in {0, 1} else 3,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE if offset in {0, 1} else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(14)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 18))
+
+    assert all(
+        candidate.insight_type != InsightType.WEEKDAY_CONTEXT_PATTERN for candidate in candidates
+    )
+
+
+def test_daily_dedupe_preserves_work_context_from_first_slot() -> None:
+    day = date(2026, 5, 4)
+    entries = [
+        _entry(day, mood=4, energy=3, stress=2, work_context=WorkContext.OFFICE),
+        _entry(day, mood=2, energy=5, stress=4, work_context=WorkContext.HOMEOFFICE),
+    ]
+
+    daily = _dedupe_daily_entries(entries)
+
+    assert len(daily) == 1
+    assert daily[0].work_context is WorkContext.OFFICE
+    assert daily[0].mood_score == 3
+
+
+def test_tag_alias_canonicalization_preserves_work_context() -> None:
+    default_id = uuid.uuid4()
+    override_id = uuid.uuid4()
+    default = TagSnapshot(id=default_id, label="Focus", slug="focus", is_default=True)
+    override = TagSnapshot(id=override_id, label="Fokus", slug="focus", is_default=False)
+    entry = _entry(
+        date(2026, 5, 4),
+        mood=4,
+        energy=3,
+        stress=2,
+        work_context=WorkContext.TRAVEL,
+        tag_ids=frozenset({default_id}),
+    )
+
+    entries, _ = _canonicalize_tag_aliases([entry], [default, override])
+
+    assert entries[0].work_context is WorkContext.TRAVEL
+
+
 def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     sport_id = uuid.uuid4()
     sport = TagSnapshot(id=sport_id, label="Sport", slug="sport")
@@ -130,6 +283,51 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     assert tag_candidate.subject_id == sport_id
     assert tag_candidate.payload["tag_slug"] == "sport"
     assert tag_candidate.payload["tagged_count"] == 15
+
+
+def test_pointbiserial_marks_work_context_confounder() -> None:
+    tag_id = uuid.uuid4()
+    tag = TagSnapshot(id=tag_id, label="Office-heavy", slug="office_heavy")
+    start = date(2026, 4, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset < 10 else 2,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE if offset < 10 else WorkContext.HOMEOFFICE,
+            tag_ids=frozenset({tag_id}) if offset < 10 else frozenset(),
+        )
+        for offset in range(30)
+    ]
+
+    candidates = generate_insight_candidates(entries, [tag], as_of=date(2026, 5, 1))
+    candidate = next(c for c in candidates if c.insight_type == InsightType.POINTBISERIAL)
+
+    assert candidate.flags["weekday_confounded"] is False
+    assert candidate.flags["work_context_confounded"] is True
+    assert candidate.flags["calendar_context_confounded"] is True
+    assert candidate.payload["confounder"] == "work_context"
+    assert candidate.payload["confounders"] == ["work_context"]
+    assert "work contexts" in candidate.statement
+
+
+def test_work_context_biased_uses_available_context_day_baseline() -> None:
+    tag_id = uuid.uuid4()
+    start = date(2026, 1, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=3,
+            energy=3,
+            stress=3,
+            tag_ids=frozenset({tag_id}) if offset < 20 or 25 <= offset < 29 else frozenset(),
+            work_context=WorkContext.OFFICE if offset < 25 else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(30)
+    ]
+
+    assert is_work_context_biased(entries, tag_id) is False
 
 
 def test_pointbiserial_collapses_default_and_override_with_same_slug() -> None:
@@ -334,6 +532,23 @@ async def test_load_analytics_data_includes_visible_symptoms() -> None:
     where_sql = str(symptom_stmt.whereclause)
     assert "entry_symptoms.user_id = :user_id_1" in where_sql
     assert "entry_symptoms.intensity > :intensity_1" in where_sql
+
+
+@pytest.mark.asyncio
+async def test_load_analytics_data_includes_work_context() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 1)
+    entry = make_entry(
+        user,
+        entry_date=as_of - timedelta(days=1),
+        work_context=WorkContext.TRAVEL,
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[_scalar_result([entry]), _row_result([]), _row_result([])])
+
+    entries, _, _ = await load_analytics_data(db, user_id=user.id, as_of=as_of)
+
+    assert entries[0].work_context is WorkContext.TRAVEL
 
 
 def test_hidden_or_sparse_tag_groups_do_not_create_tag_insights() -> None:

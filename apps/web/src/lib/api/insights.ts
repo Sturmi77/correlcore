@@ -8,7 +8,13 @@
 
 import { api } from './client';
 
-export type InsightType = 'pointbiserial' | 'spearman' | 'weekday_pattern' | (string & {});
+export type InsightType =
+  | 'pointbiserial'
+  | 'spearman'
+  | 'weekday_pattern'
+  | 'work_context_pattern'
+  | 'weekday_context_pattern'
+  | (string & {});
 export type InsightTier = 'none' | 'early' | 'preliminary' | 'developing' | 'robust';
 export type InsightMaturityPhase = 'collecting' | 'early_patterns' | 'provisional' | 'robust';
 
@@ -121,6 +127,8 @@ export interface SymptomTagCooccurrenceSymptomRef {
   icon: string | null;
 }
 
+export type SymptomTagCooccurrenceConfounder = 'weekday' | 'work_context' | 'calendar_context';
+
 export interface SymptomTagCooccurrenceCell {
   symptom: SymptomTagCooccurrenceSymptomRef;
   tag: TagCooccurrenceTagRef;
@@ -132,7 +140,7 @@ export interface SymptomTagCooccurrenceCell {
   tag_count: number;
   total_count: number;
   p_value_corrected: number;
-  confounder: string | null;
+  confounder: SymptomTagCooccurrenceConfounder | null;
 }
 
 export interface SymptomTagCooccurrenceResponse {

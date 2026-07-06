@@ -12,8 +12,11 @@ from typing import Any, Literal
 from scipy.stats import chisquare, fisher_exact, pointbiserialr
 from statsmodels.stats.multitest import multipletests
 
+from app.models.entry import WorkContext
 from app.services.weekday_confounder import (
+    is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
+    is_pair_cooccurrence_calendar_context_confounded,
     is_pair_cooccurrence_weekday_confounded,
 )
 
@@ -40,6 +43,7 @@ class DailySymptomEntry:
     stress: int
     tag_ids: frozenset[uuid.UUID]
     symptom_ids: frozenset[uuid.UUID]
+    work_context: WorkContext = WorkContext.HOMEOFFICE
 
 
 @dataclass(frozen=True)
@@ -68,6 +72,8 @@ class SymptomMetricAssociation:
     symptom_metric_avg: float
     comparison_metric_avg: float
     weekday_confounded: bool
+    work_context_confounded: bool
+    calendar_context_confounded: bool
     sample_n: int
 
 
@@ -85,6 +91,8 @@ class SymptomTagAssociation:
     tag_count: int
     total_count: int
     weekday_confounded: bool
+    work_context_confounded: bool
+    calendar_context_confounded: bool
 
 
 def _finite_float(value: Any) -> float | None:
@@ -144,6 +152,43 @@ def is_weekday_biased_signal(
     return p_value is not None and p_value < threshold_p
 
 
+def is_work_context_biased_signal(
+    entries: Sequence[DailySymptomEntry],
+    signal_id: uuid.UUID,
+    *,
+    kind: Literal["tag", "symptom"],
+    min_count: int = MIN_SYMPTOM_USAGES,
+    threshold_p: float = SYMPTOM_FDR_ALPHA,
+) -> bool:
+    """Return True when a tag or symptom is concentrated in specific work contexts."""
+
+    if len(entries) < 30:
+        return False
+
+    def present(entry: DailySymptomEntry) -> bool:
+        return signal_id in (entry.tag_ids if kind == "tag" else entry.symptom_ids)
+
+    contexts = sorted({entry.work_context for entry in entries}, key=lambda item: item.value)
+    if len(contexts) < 2:
+        return False
+
+    observed = [
+        sum(1 for entry in entries if present(entry) and entry.work_context == context)
+        for context in contexts
+    ]
+    total = sum(observed)
+    if total < min_count:
+        return False
+
+    context_counts = [
+        sum(1 for entry in entries if entry.work_context == context) for context in contexts
+    ]
+    expected = [total * context_count / len(entries) for context_count in context_counts]
+    result = chisquare(observed, f_exp=expected)
+    p_value = _finite_float(result.pvalue)
+    return p_value is not None and p_value < threshold_p
+
+
 def compute_symptom_metric_associations(
     entries: Sequence[DailySymptomEntry],
     symptoms: Mapping[uuid.UUID, SymptomRef],
@@ -159,7 +204,7 @@ def compute_symptom_metric_associations(
 
     associations: list[SymptomMetricAssociation] = []
     for metric in METRIC_TARGETS:
-        raw: list[tuple[SymptomRef, float, float, int, int, float, float, bool]] = []
+        raw: list[tuple[SymptomRef, float, float, int, int, float, float, bool, bool, bool]] = []
         metric_values = [_metric_value(entry, metric) for entry in entries]
         if len(set(metric_values)) < 2:
             continue
@@ -189,6 +234,36 @@ def compute_symptom_metric_associations(
                 )
                 / comparison_count
             )
+            weekday_confounded = is_weekday_biased_signal(
+                entries, symptom_id, kind="symptom"
+            ) or is_metric_association_weekday_confounded(
+                [entry.entry_date for entry in entries],
+                metric_values,
+                binary,
+                raw_coefficient=coefficient,
+                raw_p_value=p_value,
+                min_effect=min_abs_effect_size,
+                alpha=SYMPTOM_FDR_ALPHA,
+            )
+            work_context_confounded = is_work_context_biased_signal(
+                entries,
+                symptom_id,
+                kind="symptom",
+            )
+            calendar_context_confounded = (
+                weekday_confounded
+                or work_context_confounded
+                or is_metric_association_calendar_context_confounded(
+                    [entry.entry_date for entry in entries],
+                    [entry.work_context.value for entry in entries],
+                    metric_values,
+                    binary,
+                    raw_coefficient=coefficient,
+                    raw_p_value=p_value,
+                    min_effect=min_abs_effect_size,
+                    alpha=SYMPTOM_FDR_ALPHA,
+                )
+            )
             raw.append(
                 (
                     symptom,
@@ -198,16 +273,9 @@ def compute_symptom_metric_associations(
                     comparison_count,
                     symptom_avg,
                     comparison_avg,
-                    is_weekday_biased_signal(entries, symptom_id, kind="symptom")
-                    or is_metric_association_weekday_confounded(
-                        [entry.entry_date for entry in entries],
-                        metric_values,
-                        binary,
-                        raw_coefficient=coefficient,
-                        raw_p_value=p_value,
-                        min_effect=min_abs_effect_size,
-                        alpha=SYMPTOM_FDR_ALPHA,
-                    ),
+                    weekday_confounded,
+                    work_context_confounded,
+                    calendar_context_confounded,
                 )
             )
 
@@ -220,6 +288,8 @@ def compute_symptom_metric_associations(
             symptom_avg,
             comparison_avg,
             weekday_confounded,
+            work_context_confounded,
+            calendar_context_confounded,
         ), (significant, p_corrected) in zip(
             raw,
             _fdr_correct([item[2] for item in raw]),
@@ -239,6 +309,8 @@ def compute_symptom_metric_associations(
                     symptom_metric_avg=round(symptom_avg, 2),
                     comparison_metric_avg=round(comparison_avg, 2),
                     weekday_confounded=weekday_confounded,
+                    work_context_confounded=work_context_confounded,
+                    calendar_context_confounded=calendar_context_confounded,
                     sample_n=len(entries),
                 )
             )
@@ -302,7 +374,9 @@ def compute_symptom_tag_associations(
     }
     tag_counts = {tag_id: sum(1 for entry in entries if tag_id in entry.tag_ids) for tag_id in tags}
 
-    raw: list[tuple[SymptomRef, TagRef, int, int, int, int, float, float, float, float, bool]] = []
+    raw: list[
+        tuple[SymptomRef, TagRef, int, int, int, int, float, float, float, float, bool, bool, bool]
+    ] = []
     for symptom_id, symptom in sorted(symptoms.items(), key=lambda item: item[1].slug):
         if symptom_counts[symptom_id] < min_symptom_usages:
             continue
@@ -324,6 +398,20 @@ def compute_symptom_tag_associations(
                 [1 if tag_id in entry.tag_ids else 0 for entry in entries],
                 alpha=SYMPTOM_FDR_ALPHA,
             )
+            work_context_confounded = is_work_context_biased_signal(
+                entries, symptom_id, kind="symptom"
+            ) and is_work_context_biased_signal(entries, tag_id, kind="tag")
+            calendar_context_confounded = (
+                weekday_confounded
+                or work_context_confounded
+                or is_pair_cooccurrence_calendar_context_confounded(
+                    [entry.entry_date for entry in entries],
+                    [entry.work_context.value for entry in entries],
+                    [1 if symptom_id in entry.symptom_ids else 0 for entry in entries],
+                    [1 if tag_id in entry.tag_ids else 0 for entry in entries],
+                    alpha=SYMPTOM_FDR_ALPHA,
+                )
+            )
             raw.append(
                 (
                     symptom,
@@ -337,6 +425,8 @@ def compute_symptom_tag_associations(
                     lift,
                     p_value,
                     weekday_confounded,
+                    work_context_confounded,
+                    calendar_context_confounded,
                 )
             )
 
@@ -353,6 +443,8 @@ def compute_symptom_tag_associations(
         lift,
         p_value,
         weekday_confounded,
+        work_context_confounded,
+        calendar_context_confounded,
     ), (significant, p_corrected) in zip(
         raw,
         _fdr_correct([item[9] for item in raw]),
@@ -374,6 +466,8 @@ def compute_symptom_tag_associations(
                 tag_count=tag_count,
                 total_count=total,
                 weekday_confounded=weekday_confounded,
+                work_context_confounded=work_context_confounded,
+                calendar_context_confounded=calendar_context_confounded,
             )
         )
 

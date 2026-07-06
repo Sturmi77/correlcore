@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
-from app.models.entry import Entry
+from app.models.entry import Entry, WorkContext
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
@@ -46,7 +46,10 @@ from app.services.symptom_analytics import (
     compute_symptom_tag_associations,
 )
 from app.services.tag_service import active_tag_predicate
-from app.services.weekday_confounder import is_metric_association_weekday_confounded
+from app.services.weekday_confounder import (
+    is_metric_association_calendar_context_confounded,
+    is_metric_association_weekday_confounded,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +62,8 @@ MIN_BIVARIATE_ENTRIES = DEVELOPING_ENTRY_COUNT
 MIN_TAG_GROUP_SIZE = 2
 MIN_ABS_EFFECT_SIZE = 0.25
 MIN_WEEKDAY_DELTA = 0.5
+MIN_CONTEXT_GROUP_SIZE = 2
+MIN_CONTEXT_DELTA = 0.5
 FDR_ALPHA = 0.05
 
 MetricName = Literal["mood_score", "energy", "stress"]
@@ -69,6 +74,14 @@ _METRIC_LABELS: dict[MetricName, str] = {
     "stress": "stress",
 }
 _WEEKDAY_LABELS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+_WORK_CONTEXT_LABELS: dict[WorkContext, str] = {
+    WorkContext.HOMEOFFICE: "Home office",
+    WorkContext.OFFICE: "Office",
+    WorkContext.TRAVEL: "Travel",
+    WorkContext.VACATION: "Vacation",
+    WorkContext.SICK: "Sick leave",
+    WorkContext.WEEKEND: "Weekend",
+}
 
 
 @dataclass(frozen=True)
@@ -80,6 +93,7 @@ class AnalyticsEntry:
     mood_score: int
     energy: int
     stress: int
+    work_context: WorkContext = WorkContext.HOMEOFFICE
     tag_ids: frozenset[uuid.UUID] = field(default_factory=frozenset)
     symptom_ids: frozenset[uuid.UUID] = field(default_factory=frozenset)
 
@@ -190,6 +204,10 @@ def _direction(effect_size: float | None, positive: str, negative: str) -> str:
     return positive if effect_size is not None and effect_size >= 0 else negative
 
 
+def _mean(values: Sequence[int]) -> float:
+    return sum(values) / len(values)
+
+
 def _base_flags(
     *,
     p_value: float | None,
@@ -241,10 +259,82 @@ def is_weekday_biased(
     return p_value is not None and p_value < threshold_p
 
 
-def _weekday_confounded_statement(statement: str, *, weekday_confounded: bool) -> str:
-    if not weekday_confounded:
+def is_work_context_biased(
+    entries: Sequence[AnalyticsEntry],
+    tag_id: uuid.UUID,
+    *,
+    min_count: int = MIN_TAG_GROUP_SIZE,
+    threshold_p: float = FDR_ALPHA,
+) -> bool:
+    """Return True when a tag is concentrated in specific work contexts."""
+
+    if len(entries) < ROBUST_ENTRY_COUNT:
+        return False
+
+    contexts = sorted({entry.work_context for entry in entries}, key=lambda item: item.value)
+    if len(contexts) < 2:
+        return False
+
+    observed = [
+        sum(1 for entry in entries if tag_id in entry.tag_ids and entry.work_context == context)
+        for context in contexts
+    ]
+    total = sum(observed)
+    if total < min_count:
+        return False
+
+    context_counts = [
+        sum(1 for entry in entries if entry.work_context == context) for context in contexts
+    ]
+    expected = [total * context_count / len(entries) for context_count in context_counts]
+    result = chisquare(observed, f_exp=expected)
+    p_value = _finite_float(result.pvalue)
+    return p_value is not None and p_value < threshold_p
+
+
+def _confounders(
+    *,
+    weekday_confounded: bool,
+    work_context_confounded: bool,
+    calendar_context_confounded: bool,
+) -> list[str]:
+    values: list[str] = []
+    if weekday_confounded:
+        values.append("weekday")
+    if work_context_confounded:
+        values.append("work_context")
+    if calendar_context_confounded and not values:
+        values.append("calendar_context")
+    return values
+
+
+def _primary_confounder(confounders: Sequence[str]) -> str | None:
+    return confounders[0] if confounders else None
+
+
+def _context_confounded_statement(
+    statement: str,
+    *,
+    weekday_confounded: bool,
+    work_context_confounded: bool,
+    calendar_context_confounded: bool,
+) -> str:
+    if not calendar_context_confounded:
         return statement
-    return f"{statement} Note: this pattern occurs primarily on specific weekdays."
+    if work_context_confounded:
+        return f"{statement} Note: this pattern occurs primarily in specific work contexts."
+    if weekday_confounded:
+        return f"{statement} Note: this pattern occurs primarily on specific weekdays."
+    return f"{statement} Note: this pattern may be explained by calendar or work-context patterns."
+
+
+def _weekday_confounded_statement(statement: str, *, weekday_confounded: bool) -> str:
+    return _context_confounded_statement(
+        statement,
+        weekday_confounded=weekday_confounded,
+        work_context_confounded=False,
+        calendar_context_confounded=weekday_confounded,
+    )
 
 
 def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEntry]:
@@ -268,6 +358,7 @@ def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEn
                 mood_score=round(sum(row.mood_score for row in rows) / len(rows)),
                 energy=round(sum(row.energy for row in rows) / len(rows)),
                 stress=round(sum(row.stress for row in rows) / len(rows)),
+                work_context=first.work_context,
                 tag_ids=frozenset(tag_id for row in rows for tag_id in row.tag_ids),
                 symptom_ids=frozenset(symptom_id for row in rows for symptom_id in row.symptom_ids),
             )
@@ -310,6 +401,7 @@ def _canonicalize_tag_aliases(
             mood_score=entry.mood_score,
             energy=entry.energy,
             stress=entry.stress,
+            work_context=entry.work_context,
             tag_ids=frozenset(aliases.get(tag_id, tag_id) for tag_id in entry.tag_ids),
             symptom_ids=entry.symptom_ids,
         )
@@ -403,6 +495,8 @@ def _pointbiserial_candidates(
             float,
             float,
             bool,
+            bool,
+            bool,
         ]
     ] = []
     for tag_id, tag in sorted(tags.items(), key=lambda item: item[1].slug):
@@ -418,6 +512,33 @@ def _pointbiserial_candidates(
         p_value = _finite_float(result.pvalue)
         if coefficient is None or p_value is None or abs(coefficient) < MIN_ABS_EFFECT_SIZE:
             continue
+
+        weekday_confounded = is_weekday_biased(entries, tag_id) or (
+            is_metric_association_weekday_confounded(
+                [entry.entry_date for entry in entries],
+                mood_values,
+                binary,
+                raw_coefficient=coefficient,
+                raw_p_value=p_value,
+                min_effect=MIN_ABS_EFFECT_SIZE,
+                alpha=FDR_ALPHA,
+            )
+        )
+        work_context_confounded = is_work_context_biased(entries, tag_id)
+        calendar_context_confounded = (
+            weekday_confounded
+            or work_context_confounded
+            or is_metric_association_calendar_context_confounded(
+                [entry.entry_date for entry in entries],
+                [entry.work_context.value for entry in entries],
+                mood_values,
+                binary,
+                raw_coefficient=coefficient,
+                raw_p_value=p_value,
+                min_effect=MIN_ABS_EFFECT_SIZE,
+                alpha=FDR_ALPHA,
+            )
+        )
 
         tagged_mood = (
             sum(entry.mood_score for entry, present in zip(entries, binary, strict=True) if present)
@@ -441,16 +562,9 @@ def _pointbiserial_candidates(
                 untagged_count,
                 tagged_mood,
                 untagged_mood,
-                is_weekday_biased(entries, tag_id)
-                or is_metric_association_weekday_confounded(
-                    [entry.entry_date for entry in entries],
-                    mood_values,
-                    binary,
-                    raw_coefficient=coefficient,
-                    raw_p_value=p_value,
-                    min_effect=MIN_ABS_EFFECT_SIZE,
-                    alpha=FDR_ALPHA,
-                ),
+                weekday_confounded,
+                work_context_confounded,
+                calendar_context_confounded,
             )
         )
 
@@ -465,6 +579,8 @@ def _pointbiserial_candidates(
         tagged_mood,
         untagged_mood,
         weekday_confounded,
+        work_context_confounded,
+        calendar_context_confounded,
     ), (significant, p_corrected) in zip(
         raw,
         _fdr_results([item[3] for item in raw]),
@@ -477,9 +593,16 @@ def _pointbiserial_candidates(
             f"Days tagged {tag.label} currently line up with {direction} mood scores "
             "in your data. Treat this as a pattern to reflect on, not a cause."
         )
-        statement = _weekday_confounded_statement(
+        statement = _context_confounded_statement(
             statement,
             weekday_confounded=weekday_confounded,
+            work_context_confounded=work_context_confounded,
+            calendar_context_confounded=calendar_context_confounded,
+        )
+        confounders = _confounders(
+            weekday_confounded=weekday_confounded,
+            work_context_confounded=work_context_confounded,
+            calendar_context_confounded=calendar_context_confounded,
         )
         candidates.append(
             InsightCandidate(
@@ -500,6 +623,8 @@ def _pointbiserial_candidates(
                         method="pointbiserial",
                     ),
                     "weekday_confounded": weekday_confounded,
+                    "work_context_confounded": work_context_confounded,
+                    "calendar_context_confounded": calendar_context_confounded,
                     "min_tag_usages": settings.ANALYTICS_MIN_TAG_USAGES,
                 },
                 payload={
@@ -509,6 +634,8 @@ def _pointbiserial_candidates(
                     "tagged_mood_avg": round(tagged_mood, 2),
                     "untagged_mood_avg": round(untagged_mood, 2),
                     "p_corrected": round(p_corrected, 4),
+                    "confounder": _primary_confounder(confounders),
+                    "confounders": confounders,
                 },
                 generated_for_date=generated_for_date,
             )
@@ -578,6 +705,167 @@ def _weekday_candidates(
                 },
                 "overall_mood_avg": round(overall_avg, 2),
                 "weekday_entry_count": len(by_weekday[weekday]),
+            },
+            generated_for_date=generated_for_date,
+        )
+    ]
+
+
+def _work_context_candidates(
+    entries: Sequence[AnalyticsEntry],
+    *,
+    tier: InsightTier,
+    generated_for_date: date_type,
+) -> list[InsightCandidate]:
+    if len(entries) < MIN_WEEKDAY_ENTRIES:
+        return []
+
+    overall_values = [entry.mood_score for entry in entries]
+    overall_avg = _mean(overall_values)
+    by_context: dict[WorkContext, list[int]] = defaultdict(list)
+    for entry in entries:
+        by_context[entry.work_context].append(entry.mood_score)
+
+    candidates: list[tuple[WorkContext, float, float, int, int]] = []
+    for work_context, values in by_context.items():
+        comparison_count = len(entries) - len(values)
+        if len(values) < MIN_CONTEXT_GROUP_SIZE or comparison_count < MIN_CONTEXT_GROUP_SIZE:
+            continue
+        avg = _mean(values)
+        delta = avg - overall_avg
+        if abs(delta) >= MIN_CONTEXT_DELTA:
+            candidates.append((work_context, avg, delta, len(values), comparison_count))
+
+    if not candidates:
+        return []
+
+    work_context, avg, delta, context_count, comparison_count = max(
+        candidates,
+        key=lambda item: abs(item[2]),
+    )
+    effect_size = round(delta, 4)
+    label = _WORK_CONTEXT_LABELS[work_context]
+    direction = _direction(delta, "higher", "lower")
+    statement = (
+        f"{label} days currently line up with {direction} mood than your overall average. "
+        "This is an early context pattern, not a diagnosis."
+    )
+    return [
+        InsightCandidate(
+            insight_type=InsightType.WORK_CONTEXT_PATTERN,
+            tier=tier,
+            metric="mood_score",
+            subject_type="work_context",
+            subject_id=None,
+            subject_label=label,
+            effect_size=effect_size,
+            confidence=_confidence(effect_size, None, tier),
+            sample_n=len(entries),
+            statement=statement,
+            flags={
+                **_base_flags(p_value=None, method="work_context_delta"),
+                "early_pattern": len(entries) < DEVELOPING_ENTRY_COUNT,
+            },
+            payload={
+                "work_context": work_context.value,
+                "work_context_label": label,
+                "work_context_mood_avg": round(avg, 2),
+                "work_context_mood_avgs": {
+                    context.value: round(_mean(values), 2)
+                    for context, values in sorted(
+                        by_context.items(), key=lambda item: item[0].value
+                    )
+                },
+                "work_context_entry_counts": {
+                    context.value: len(values)
+                    for context, values in sorted(
+                        by_context.items(), key=lambda item: item[0].value
+                    )
+                },
+                "overall_mood_avg": round(overall_avg, 2),
+                "context_entry_count": context_count,
+                "comparison_entry_count": comparison_count,
+            },
+            generated_for_date=generated_for_date,
+        )
+    ]
+
+
+def _weekday_context_candidates(
+    entries: Sequence[AnalyticsEntry],
+    *,
+    tier: InsightTier,
+    generated_for_date: date_type,
+) -> list[InsightCandidate]:
+    if len(entries) < MIN_WEEKDAY_ENTRIES:
+        return []
+    if len({entry.work_context for entry in entries}) < 2:
+        return []
+
+    overall_values = [entry.mood_score for entry in entries]
+    overall_avg = _mean(overall_values)
+    by_cell: dict[tuple[int, WorkContext], list[int]] = defaultdict(list)
+    for entry in entries:
+        by_cell[(entry.entry_date.weekday(), entry.work_context)].append(entry.mood_score)
+
+    candidates: list[tuple[int, WorkContext, float, float, int, int]] = []
+    for (weekday, work_context), values in by_cell.items():
+        comparison_count = len(entries) - len(values)
+        if len(values) < MIN_CONTEXT_GROUP_SIZE or comparison_count < MIN_CONTEXT_GROUP_SIZE:
+            continue
+        avg = _mean(values)
+        delta = avg - overall_avg
+        if abs(delta) >= MIN_CONTEXT_DELTA:
+            candidates.append((weekday, work_context, avg, delta, len(values), comparison_count))
+
+    if not candidates:
+        return []
+
+    weekday, work_context, avg, delta, cell_count, comparison_count = max(
+        candidates,
+        key=lambda item: abs(item[3]),
+    )
+    effect_size = round(delta, 4)
+    weekday_label = _WEEKDAY_LABELS[weekday]
+    context_label = _WORK_CONTEXT_LABELS[work_context]
+    subject_label = f"{weekday_label}s in {context_label}"
+    direction = _direction(delta, "higher", "lower")
+    statement = (
+        f"{subject_label} currently line up with {direction} mood than your overall average. "
+        "This is an early calendar/context pattern, not a diagnosis."
+    )
+    return [
+        InsightCandidate(
+            insight_type=InsightType.WEEKDAY_CONTEXT_PATTERN,
+            tier=tier,
+            metric="mood_score",
+            subject_type="weekday_context",
+            subject_id=None,
+            subject_label=subject_label,
+            effect_size=effect_size,
+            confidence=_confidence(effect_size, None, tier),
+            sample_n=len(entries),
+            statement=statement,
+            flags={
+                **_base_flags(p_value=None, method="weekday_context_delta"),
+                "early_pattern": len(entries) < DEVELOPING_ENTRY_COUNT,
+            },
+            payload={
+                "weekday": weekday,
+                "weekday_label": weekday_label,
+                "work_context": work_context.value,
+                "work_context_label": context_label,
+                "weekday_context_mood_avg": round(avg, 2),
+                "overall_mood_avg": round(overall_avg, 2),
+                "cell_entry_count": cell_count,
+                "comparison_entry_count": comparison_count,
+                "weekday_context_entry_counts": {
+                    f"{day}:{context.value}": len(values)
+                    for (day, context), values in sorted(
+                        by_cell.items(),
+                        key=lambda item: (item[0][0], item[0][1].value),
+                    )
+                },
             },
             generated_for_date=generated_for_date,
         )
@@ -770,6 +1058,7 @@ def _symptom_entries(entries: Sequence[AnalyticsEntry]) -> list[DailySymptomEntr
             stress=entry.stress,
             tag_ids=entry.tag_ids,
             symptom_ids=entry.symptom_ids,
+            work_context=entry.work_context,
         )
         for entry in entries
     ]
@@ -793,9 +1082,11 @@ def _symptom_metric_statement(finding: SymptomMetricAssociation) -> str:
         f"{_METRIC_LABELS[finding.metric]} in your data. "
         "Treat this as an association, not a cause."
     )
-    return _weekday_confounded_statement(
+    return _context_confounded_statement(
         statement,
         weekday_confounded=finding.weekday_confounded,
+        work_context_confounded=finding.work_context_confounded,
+        calendar_context_confounded=finding.calendar_context_confounded,
     )
 
 
@@ -809,9 +1100,11 @@ def _symptom_tag_statement(finding: SymptomTagAssociation) -> str:
         "more than expected from their individual frequencies. "
         "This is a co-occurrence pattern, not a cause."
     )
-    return _weekday_confounded_statement(
+    return _context_confounded_statement(
         statement,
         weekday_confounded=finding.weekday_confounded,
+        work_context_confounded=finding.work_context_confounded,
+        calendar_context_confounded=finding.calendar_context_confounded,
     )
 
 
@@ -828,6 +1121,11 @@ def _symptom_metric_candidates(
     )
     candidates: list[InsightCandidate] = []
     for finding in findings:
+        confounders = _confounders(
+            weekday_confounded=finding.weekday_confounded,
+            work_context_confounded=finding.work_context_confounded,
+            calendar_context_confounded=finding.calendar_context_confounded,
+        )
         candidates.append(
             InsightCandidate(
                 insight_type=InsightType.SYMPTOM_MOOD_ASSOCIATION,
@@ -847,6 +1145,8 @@ def _symptom_metric_candidates(
                         method="pointbiserial",
                     ),
                     "weekday_confounded": finding.weekday_confounded,
+                    "work_context_confounded": finding.work_context_confounded,
+                    "calendar_context_confounded": finding.calendar_context_confounded,
                     "min_symptom_usages": 5,
                 },
                 payload={
@@ -863,7 +1163,8 @@ def _symptom_metric_candidates(
                     "comparison_n": finding.comparison_count,
                     "symptom_metric_avg": finding.symptom_metric_avg,
                     "comparison_metric_avg": finding.comparison_metric_avg,
-                    "confounder": "weekday" if finding.weekday_confounded else None,
+                    "confounder": _primary_confounder(confounders),
+                    "confounders": confounders,
                 },
                 generated_for_date=generated_for_date,
             )
@@ -887,6 +1188,11 @@ def _symptom_tag_candidates(
     candidates: list[InsightCandidate] = []
     for finding in findings:
         effect_size = finding.phi if finding.phi != 0 else finding.lift - 1.0
+        confounders = _confounders(
+            weekday_confounded=finding.weekday_confounded,
+            work_context_confounded=finding.work_context_confounded,
+            calendar_context_confounded=finding.calendar_context_confounded,
+        )
         candidates.append(
             InsightCandidate(
                 insight_type=InsightType.SYMPTOM_TAG_COOCCURRENCE,
@@ -906,6 +1212,8 @@ def _symptom_tag_candidates(
                         method="fisher_exact_lift",
                     ),
                     "weekday_confounded": finding.weekday_confounded,
+                    "work_context_confounded": finding.work_context_confounded,
+                    "calendar_context_confounded": finding.calendar_context_confounded,
                     "min_symptom_usages": 5,
                     "min_tag_usages": 5,
                 },
@@ -925,7 +1233,8 @@ def _symptom_tag_candidates(
                     "tag_count": finding.tag_count,
                     "total_count": finding.total_count,
                     "p_value_corrected": finding.p_corrected,
-                    "confounder": "weekday" if finding.weekday_confounded else None,
+                    "confounder": _primary_confounder(confounders),
+                    "confounders": confounders,
                 },
                 generated_for_date=generated_for_date,
             )
@@ -956,6 +1265,12 @@ def generate_insight_candidates(
     symptom_list = sorted(symptoms, key=lambda symptom: symptom.slug)
     candidates = [
         *_weekday_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
+        *_work_context_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
+        *_weekday_context_candidates(
+            daily_entries,
+            tier=tier,
+            generated_for_date=generated_for_date,
+        ),
         *_spearman_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
         *_pointbiserial_candidates(
             daily_entries,
@@ -1072,6 +1387,7 @@ async def _load_analytics_inputs(
             mood_score=entry.mood_score,
             energy=entry.energy,
             stress=entry.stress,
+            work_context=entry.work_context,
             tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
             symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
         )

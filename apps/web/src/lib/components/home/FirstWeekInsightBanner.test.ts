@@ -21,4 +21,18 @@ describe('FirstWeekInsightBanner', () => {
     await fireEvent.click(screen.getByLabelText('home.first_week_banner.dismiss'));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
+
+  it('uses context copy and statement for work-context insights', () => {
+    render(FirstWeekInsightBanner, {
+      props: {
+        insight: {
+          insight_type: 'work_context_pattern',
+          statement: 'Office days are currently above your average.',
+        } as never,
+      },
+    });
+
+    expect(screen.getByText('home.context_banner.title')).toBeTruthy();
+    expect(screen.getByText('Office days are currently above your average.')).toBeTruthy();
+  });
 });

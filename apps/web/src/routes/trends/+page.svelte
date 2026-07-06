@@ -26,6 +26,10 @@
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import { rangeToDays, rangeToHabitWindow } from '$lib/utils/trendsRange';
+  import {
+    buildWorkContextHeatmap,
+    type WorkContextHeatmapResponse,
+  } from '$lib/utils/workContextHeatmap';
   import TrendsComparePanel from '$lib/components/trends/TrendsComparePanel.svelte';
   import TrendsCompareFilters from '$lib/components/trends/TrendsCompareFilters.svelte';
   import TrendsHealthContext from '$lib/components/trends/TrendsHealthContext.svelte';
@@ -69,6 +73,7 @@
   let habitTags: TagResponse[] = [];
   let allTags: TagResponse[] = [];
   let cycleEntries: EntryResponse[] = [];
+  let workContextHeatmap: WorkContextHeatmapResponse | null = null;
   let metrics: Record<MetricKey, boolean> = {
     mood_avg: true,
     energy_avg: true,
@@ -84,6 +89,7 @@
   let smoothing = false;
   let showTagRows = true;
   let showSymptomRows = false;
+  let showWorkContextRows = true;
   let compactTrends = false;
   let mobileMedia: MediaQueryList | null = null;
   let activeDevFixtureKey = '';
@@ -124,6 +130,7 @@
         habitTags = fixture.habitTags;
         allTags = fixture.habitTags;
         cycleEntries = fixture.entries.filter((entry) => entry.cycle_day !== null);
+        workContextHeatmap = buildWorkContextHeatmap(fixture.entries, dateWindow(activeRange));
         return;
       }
 
@@ -164,6 +171,7 @@
       allTags = nextTags;
       habitTags = nextTags.filter((tag) => tag.habit_type !== 'none');
       cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
+      workContextHeatmap = buildWorkContextHeatmap(nextEntries, { start_date, end_date });
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
     } finally {
@@ -182,9 +190,14 @@
     }
   }
 
-  function setCompareLayers(next: { showTags: boolean; showSymptoms: boolean }): void {
+  function setCompareLayers(next: {
+    showTags: boolean;
+    showSymptoms: boolean;
+    showWorkContexts: boolean;
+  }): void {
     showTagRows = next.showTags;
     showSymptomRows = next.showSymptoms;
+    showWorkContextRows = next.showWorkContexts;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(COMPARE_LAYERS_STORAGE_KEY, JSON.stringify(next));
     }
@@ -195,9 +208,16 @@
     try {
       const raw = localStorage.getItem(COMPARE_LAYERS_STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<{ showTags: boolean; showSymptoms: boolean }>;
+      const parsed = JSON.parse(raw) as Partial<{
+        showTags: boolean;
+        showSymptoms: boolean;
+        showWorkContexts: boolean;
+      }>;
       if (typeof parsed.showTags === 'boolean') showTagRows = parsed.showTags;
       if (typeof parsed.showSymptoms === 'boolean') showSymptomRows = parsed.showSymptoms;
+      if (typeof parsed.showWorkContexts === 'boolean') {
+        showWorkContextRows = parsed.showWorkContexts;
+      }
     } catch {
       localStorage.removeItem(COMPARE_LAYERS_STORAGE_KEY);
     }
@@ -403,8 +423,10 @@
             enabled={metrics}
             tagHeatmap={heatmap}
             {symptomHeatmap}
+            {workContextHeatmap}
             showTags={showTagRows}
             showSymptoms={showSymptomRows}
+            showWorkContexts={showWorkContextRows}
             {loading}
             on:selectDate={(event) => void openHistory(event.detail.date)}
             on:layerChange={(event) => setCompareLayers(event.detail)}

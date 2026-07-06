@@ -42,4 +42,19 @@ describe('insightFeedFilter', () => {
     const tag = makeInsight({ metric: 'mood', subject_type: 'tag' });
     expect(filterInsightsByTab([symptom, tag], 'symptoms')).toEqual([symptom]);
   });
+
+  it('filters calendar and work context insights in context tab', () => {
+    const weekday = makeInsight({ id: 'weekday', insight_type: 'weekday_pattern' });
+    const workContext = makeInsight({
+      id: 'work',
+      insight_type: 'work_context_pattern',
+      payload: { work_context: 'office' },
+    });
+    const mood = makeInsight({ id: 'mood', insight_type: 'spearman', metric: 'mood' });
+
+    expect(filterInsightsByTab([weekday, workContext, mood], 'context')).toEqual([
+      weekday,
+      workContext,
+    ]);
+  });
 });

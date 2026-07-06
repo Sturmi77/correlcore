@@ -55,6 +55,19 @@ describe('insight ranking', () => {
     ]);
   });
 
+  it('downgrades work-context confounded ties too', () => {
+    const confounded = makeInsight({
+      id: 'conf',
+      flags: { work_context_confounded: true },
+    });
+    const clean = makeInsight({ id: 'clean' });
+
+    expect(rankInsights([confounded, clean]).map((insight) => insight.id)).toEqual([
+      'clean',
+      'conf',
+    ]);
+  });
+
   it('uses generation time and id as deterministic tie breakers', () => {
     const older = makeInsight({ id: 'older', generated_at: '2026-06-19T10:00:00Z' });
     const newerB = makeInsight({ id: 'b', generated_at: '2026-06-20T10:00:00Z' });

@@ -61,6 +61,7 @@ def _dedupe_daily_symptom_entries(entries: list[DailySymptomEntry]) -> list[Dail
 
     daily_entries: list[DailySymptomEntry] = []
     for entry_date, rows in sorted(grouped.items()):
+        first = rows[0]
         daily_entries.append(
             DailySymptomEntry(
                 entry_date=entry_date,
@@ -69,6 +70,7 @@ def _dedupe_daily_symptom_entries(entries: list[DailySymptomEntry]) -> list[Dail
                 stress=round(sum(row.stress for row in rows) / len(rows)),
                 tag_ids=frozenset(tag_id for row in rows for tag_id in row.tag_ids),
                 symptom_ids=frozenset(symptom_id for row in rows for symptom_id in row.symptom_ids),
+                work_context=first.work_context,
             )
         )
     return daily_entries
@@ -507,6 +509,7 @@ async def get_symptom_tag_cooccurrence(
                 stress=entry.stress,
                 tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
                 symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
+                work_context=entry.work_context,
             )
             for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
         ]
@@ -540,7 +543,15 @@ async def get_symptom_tag_cooccurrence(
             tag_count=association.tag_count,
             total_count=association.total_count,
             p_value_corrected=association.p_corrected,
-            confounder="weekday" if association.weekday_confounded else None,
+            confounder=(
+                "work_context"
+                if association.work_context_confounded
+                else "weekday"
+                if association.weekday_confounded
+                else "calendar_context"
+                if association.calendar_context_confounded
+                else None
+            ),
         )
         for association in associations
         if association.co_count >= min_count

@@ -70,7 +70,7 @@ for (const viewport of [
     await installSupportingFlowApi(page);
     await page.goto('/settings');
 
-    const symptomsLink = page.getByRole('link', { name: 'Manage symptoms' });
+    const symptomsLink = page.getByTestId('settings-vocab-symptoms');
     const appLink = page.getByRole('link', { name: 'App & offline' });
     await expect(symptomsLink).toBeVisible({ timeout: 15_000 });
     await expect(appLink).toBeVisible();
@@ -97,7 +97,7 @@ test('connection loss surfaces a global retry state', async ({ context, page }) 
   await page.setViewportSize({ width: 390, height: 844 });
   await installSupportingFlowApi(page);
   await page.goto('/settings');
-  await expect(page.getByRole('link', { name: 'Manage symptoms' })).toBeVisible({
+  await expect(page.getByTestId('settings-vocab-symptoms')).toBeVisible({
     timeout: 15_000,
   });
 

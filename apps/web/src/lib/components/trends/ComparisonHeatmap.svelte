@@ -10,12 +10,15 @@
     type DailyAxisLayout,
   } from '$lib/utils/charts';
   import { timelineCursor } from '$lib/stores/timelineCursor';
+  import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import type { EventMarker } from './EventMarkerLayer.svelte';
 
   export let tagHeatmap: TagHeatmapResponse | null = null;
   export let symptomHeatmap: SymptomHeatmapResponse | null = null;
+  export let workContextHeatmap: WorkContextHeatmapResponse | null = null;
   export let showTags = true;
   export let showSymptoms = false;
+  export let showWorkContexts = true;
   export let loading = false;
   export let dates: string[] = [];
   export let axisLayout: DailyAxisLayout = compareDailyAxisLayout;
@@ -59,7 +62,7 @@
   type Row = {
     id: string;
     label: string;
-    kind: 'tag' | 'symptom';
+    kind: 'tag' | 'symptom' | 'work_context';
     days: { date: string; count: number; max_intensity?: number }[];
   };
 
@@ -69,7 +72,8 @@
   function valueFor(row: Row, date: string): number {
     const day = row.days.find((item) => item.date === date);
     if (!day) return 0;
-    return row.kind === 'symptom' ? (day.max_intensity ?? day.count) : day.count;
+    if (row.kind === 'symptom') return day.max_intensity ?? day.count;
+    return day.count;
   }
 
   async function scrollToLatest(): Promise<void> {
@@ -77,8 +81,10 @@
     if (scroller) scroller.scrollLeft = scroller.scrollWidth;
   }
 
-  $: startDate = tagHeatmap?.start_date ?? symptomHeatmap?.start_date ?? '';
-  $: endDate = tagHeatmap?.end_date ?? symptomHeatmap?.end_date ?? '';
+  $: startDate =
+    tagHeatmap?.start_date ?? symptomHeatmap?.start_date ?? workContextHeatmap?.start_date ?? '';
+  $: endDate =
+    tagHeatmap?.end_date ?? symptomHeatmap?.end_date ?? workContextHeatmap?.end_date ?? '';
   $: axisDates =
     dates.length > 0 ? dates : startDate && endDate ? buildIsoDateRange(startDate, endDate) : [];
   $: rawRows = [
@@ -99,6 +105,16 @@
             label: symptom.name,
             kind: 'symptom',
             days: symptom.days,
+          })
+        )
+      : []),
+    ...(showWorkContexts
+      ? (workContextHeatmap?.contexts ?? []).map(
+          (context): Row => ({
+            id: `work_context:${context.context}`,
+            label: $_(`entry.work_context.${context.context}`),
+            kind: 'work_context',
+            days: context.days,
           })
         )
       : []),
@@ -324,6 +340,11 @@
     color: var(--color-primary);
   }
 
+  .compare-heatmap__label[data-kind='work_context'] .compare-heatmap__label-text {
+    color: var(--color-text-muted);
+    font-weight: 700;
+  }
+
   .compare-heatmap__pin {
     /* Theme-token only — no hue hardcoded. ADR-0035 §10. */
     background: transparent;
@@ -410,6 +431,13 @@
 
   .compare-heatmap__cell[data-kind='symptom'].compare-heatmap__cell--4 {
     background: color-mix(in srgb, var(--color-primary) 72%, var(--color-surface));
+  }
+
+  .compare-heatmap__cell[data-kind='work_context'].compare-heatmap__cell--1,
+  .compare-heatmap__cell[data-kind='work_context'].compare-heatmap__cell--2,
+  .compare-heatmap__cell[data-kind='work_context'].compare-heatmap__cell--3,
+  .compare-heatmap__cell[data-kind='work_context'].compare-heatmap__cell--4 {
+    background: color-mix(in srgb, var(--color-text-muted) 34%, var(--color-surface));
   }
 
   .compare-heatmap__legend {

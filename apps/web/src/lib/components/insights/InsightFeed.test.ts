@@ -119,12 +119,13 @@ describe('InsightFeed', () => {
   });
 
   // ── Filter tabs ───────────────────────────────────────────────────
-  it('renders all 4 filter tabs', () => {
+  it('renders all 5 filter tabs', () => {
     render(InsightFeed, { props: { insights: [] } });
     expect(screen.getByTestId('insight-feed-tab-all')).toBeTruthy();
     expect(screen.getByTestId('insight-feed-tab-mood')).toBeTruthy();
     expect(screen.getByTestId('insight-feed-tab-symptoms')).toBeTruthy();
     expect(screen.getByTestId('insight-feed-tab-sleep')).toBeTruthy();
+    expect(screen.getByTestId('insight-feed-tab-context')).toBeTruthy();
   });
 
   it('all tab is selected by default', () => {
@@ -168,6 +169,22 @@ describe('InsightFeed', () => {
     await fireEvent.click(screen.getByTestId('insight-feed-tab-symptoms'));
     const list = screen.getByTestId('insight-feed-list');
     expect(list.querySelectorAll('li').length).toBe(1);
+  });
+
+  it('context tab shows calendar and office context insights only', async () => {
+    const contextInsight = makeInsight({
+      id: 'context',
+      insight_type: 'work_context_pattern',
+      payload: { work_context: 'office' },
+    });
+    const tagInsight = makeInsight({ id: 'tag', metric: 'mood', subject_type: 'tag' });
+    render(InsightFeed, { props: { insights: [contextInsight, tagInsight] } });
+
+    await fireEvent.click(screen.getByTestId('insight-feed-tab-context'));
+
+    const list = screen.getByTestId('insight-feed-list');
+    expect(list.querySelectorAll('li').length).toBe(1);
+    expect(screen.getByTestId('insight-card-context-badge')).toBeTruthy();
   });
 
   it('uses external filterTab when provided', async () => {

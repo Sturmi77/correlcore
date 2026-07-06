@@ -1,12 +1,24 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import type { SymptomTagCooccurrenceCell } from '$lib/api/insights';
+  import type {
+    SymptomTagCooccurrenceCell,
+    SymptomTagCooccurrenceConfounder,
+  } from '$lib/api/insights';
 
   export let open = false;
   export let cell: SymptomTagCooccurrenceCell | null = null;
 
   const dispatch = createEventDispatcher<{ close: void; openDisclaimer: void }>();
+
+  function confounderNoteKey(confounder: SymptomTagCooccurrenceConfounder | null): string | null {
+    if (confounder === 'weekday') return 'insights.weekday_confounded_note';
+    if (confounder === 'work_context') return 'insights.work_context_confounded_note';
+    if (confounder === 'calendar_context') return 'insights.calendar_context_confounded_note';
+    return null;
+  }
+
+  $: confounderNote = cell ? confounderNoteKey(cell.confounder) : null;
 </script>
 
 {#if open && cell}
@@ -43,8 +55,8 @@
         </button>
       </header>
 
-      {#if cell.confounder === 'weekday'}
-        <p class="symptom-detail__confounder">{$_('insights.weekday_confounded_note')}</p>
+      {#if confounderNote}
+        <p class="symptom-detail__confounder">{$_(confounderNote)}</p>
       {/if}
 
       <dl class="symptom-detail__metrics">

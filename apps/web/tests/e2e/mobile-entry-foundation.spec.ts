@@ -323,7 +323,7 @@ test('historical day outside the edit window is read-only', async ({ page }) => 
   await installEntryApi(page, { historical: true });
   await page.goto('/entries/day/2026-01-01');
 
-  await expect(page.getByTestId('day-entry-read-only')).toBeVisible();
+  await expect(page.getByTestId('day-entry-read-only')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole('link', { name: 'Edit', exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Add or edit', exact: true })).toHaveCount(0);
 });

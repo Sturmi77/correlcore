@@ -4,6 +4,7 @@
   import type {
     InsightMaturityPhase,
     SymptomTagCooccurrenceCell,
+    SymptomTagCooccurrenceConfounder,
     SymptomTagCooccurrenceResponse,
   } from '$lib/api/insights';
   import { orderAxisIds, type CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
@@ -94,9 +95,24 @@
     return profiles;
   }
 
+  function isConfoundedCell(cell: SymptomTagCooccurrenceCell): boolean {
+    return (
+      cell.confounder === 'weekday' ||
+      cell.confounder === 'work_context' ||
+      cell.confounder === 'calendar_context'
+    );
+  }
+
+  function confounderNoteKey(confounder: SymptomTagCooccurrenceConfounder | null): string | null {
+    if (confounder === 'weekday') return 'insights.weekday_confounded_note';
+    if (confounder === 'work_context') return 'insights.work_context_confounded_note';
+    if (confounder === 'calendar_context') return 'insights.calendar_context_confounded_note';
+    return null;
+  }
+
   function cellLevel(cell: SymptomTagCooccurrenceCell): string {
     if (!showLift) return 'count';
-    if (cell.confounder === 'weekday') return 'confounded';
+    if (isConfoundedCell(cell)) return 'confounded';
     if (cell.lift >= 2) return 'high-positive';
     if (cell.lift >= 1.5) return 'positive';
     if (cell.lift <= 0.5) return 'high-negative';
@@ -124,8 +140,9 @@
         lift: cell.lift.toFixed(2),
       },
     });
-    if (cell.confounder === 'weekday') {
-      return `${base} ${$_('insights.weekday_confounded_note')}`;
+    const noteKey = confounderNoteKey(cell.confounder);
+    if (noteKey) {
+      return `${base} ${$_(noteKey)}`;
     }
     return base;
   }
@@ -249,7 +266,10 @@
       {showLift
         ? $_('insights.symptoms.cooccurrence_lift_legend')
         : $_('insights.symptoms.cooccurrence_count_legend')}
-      {#if showLift && symptoms.some( (symptom) => tags.some((tag) => cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`)?.confounder === 'weekday') )}
+      {#if showLift && symptoms.some((symptom) => tags.some((tag) => {
+            const cell = cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`);
+            return cell ? isConfoundedCell(cell) : false;
+          }))}
         {' '}{$_('insights.symptoms.cooccurrence_confounder_note')}
       {/if}
     </p>

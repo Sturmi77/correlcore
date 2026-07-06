@@ -22,12 +22,12 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
   await expect(lead.getByTestId('insight-maturity-badge')).toBeVisible();
   await expect(page.getByTestId('insight-stage-meta')).toHaveCount(0);
 
-  const order = await page.evaluate(() => {
+  const toolbarPrecedesLead = await page.evaluate(() => {
     const leadNode = document.querySelector('[data-testid="mobile-insight-lead"]');
     const toolbarNode = document.querySelector('[data-testid="insights-findings-toolbar"]');
-    return Boolean(leadNode && toolbarNode && leadNode.compareDocumentPosition(toolbarNode) & 4);
+    return Boolean(leadNode && toolbarNode && toolbarNode.compareDocumentPosition(leadNode) & 4);
   });
-  expect(order).toBe(true);
+  expect(toolbarPrecedesLead).toBe(true);
   await expect(findingsToolbar).toBeVisible();
 
   const layout = await page.evaluate(() => ({
@@ -60,6 +60,29 @@ test('430px keeps matrices behind explicit detail actions and shows analytics by
 
   await expect(page.getByTestId('insights-analytics-panel')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Patterns', exact: true })).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
+});
+
+test('390px context filter surfaces early work-context insight without overflow', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installInsightsApiMock(page, { includeContextInsight: true });
+  await page.goto('/insights');
+
+  await expect(page.getByTestId('insights-findings-toolbar')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('insights-filter-tab-context').tap();
+
+  const lead = page.getByTestId('mobile-insight-lead');
+  await expect(lead).toBeVisible({ timeout: 30_000 });
+  await expect(lead.getByTestId('insight-card-title')).toContainText(/Mood -> Office/i);
+  await expect(lead).toContainText(/Office days currently sit above/i);
+  await expect(page.getByTestId('mobile-insights-more')).toHaveCount(0);
 
   const layout = await page.evaluate(() => ({
     viewport: window.innerWidth,
