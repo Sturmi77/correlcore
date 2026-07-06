@@ -395,10 +395,9 @@ def compute_symptom_tag_associations(
                 [1 if tag_id in entry.tag_ids else 0 for entry in entries],
                 alpha=SYMPTOM_FDR_ALPHA,
             )
-            work_context_confounded = (
-                is_work_context_biased_signal(entries, symptom_id, kind="symptom")
-                and is_work_context_biased_signal(entries, tag_id, kind="tag")
-            )
+            work_context_confounded = is_work_context_biased_signal(
+                entries, symptom_id, kind="symptom"
+            ) and is_work_context_biased_signal(entries, tag_id, kind="tag")
             calendar_context_confounded = (
                 weekday_confounded
                 or work_context_confounded

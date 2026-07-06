@@ -116,9 +116,7 @@ def test_work_context_pattern_is_available_after_seven_entries() -> None:
     ]
 
     candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 11))
-    candidate = next(
-        c for c in candidates if c.insight_type == InsightType.WORK_CONTEXT_PATTERN
-    )
+    candidate = next(c for c in candidates if c.insight_type == InsightType.WORK_CONTEXT_PATTERN)
 
     assert candidate.tier == InsightTier.EARLY
     assert candidate.subject_label == "Office"
@@ -147,7 +145,9 @@ def test_context_patterns_wait_for_seven_entries() -> None:
 
     candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 10))
 
-    assert all(candidate.insight_type != InsightType.WORK_CONTEXT_PATTERN for candidate in candidates)
+    assert all(
+        candidate.insight_type != InsightType.WORK_CONTEXT_PATTERN for candidate in candidates
+    )
     assert all(
         candidate.insight_type != InsightType.WEEKDAY_CONTEXT_PATTERN for candidate in candidates
     )
@@ -168,7 +168,9 @@ def test_work_context_pattern_skips_rare_contexts() -> None:
 
     candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 11))
 
-    assert all(candidate.insight_type != InsightType.WORK_CONTEXT_PATTERN for candidate in candidates)
+    assert all(
+        candidate.insight_type != InsightType.WORK_CONTEXT_PATTERN for candidate in candidates
+    )
 
 
 def test_weekday_context_pattern_requires_sufficient_cell_size() -> None:
@@ -185,9 +187,7 @@ def test_weekday_context_pattern_requires_sufficient_cell_size() -> None:
     ]
 
     candidates = generate_insight_candidates(entries, as_of=date(2026, 5, 18))
-    candidate = next(
-        c for c in candidates if c.insight_type == InsightType.WEEKDAY_CONTEXT_PATTERN
-    )
+    candidate = next(c for c in candidates if c.insight_type == InsightType.WEEKDAY_CONTEXT_PATTERN)
 
     assert candidate.subject_label == "Mondays in Office"
     assert candidate.payload["weekday"] == 0
@@ -525,9 +525,7 @@ async def test_load_analytics_data_includes_work_context() -> None:
         work_context=WorkContext.TRAVEL,
     )
     db = MagicMock()
-    db.execute = AsyncMock(
-        side_effect=[_scalar_result([entry]), _row_result([]), _row_result([])]
-    )
+    db.execute = AsyncMock(side_effect=[_scalar_result([entry]), _row_result([]), _row_result([])])
 
     entries, _, _ = await load_analytics_data(db, user_id=user.id, as_of=as_of)
 

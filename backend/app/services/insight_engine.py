@@ -769,11 +769,15 @@ def _work_context_candidates(
                 "work_context_mood_avg": round(avg, 2),
                 "work_context_mood_avgs": {
                     context.value: round(_mean(values), 2)
-                    for context, values in sorted(by_context.items(), key=lambda item: item[0].value)
+                    for context, values in sorted(
+                        by_context.items(), key=lambda item: item[0].value
+                    )
                 },
                 "work_context_entry_counts": {
                     context.value: len(values)
-                    for context, values in sorted(by_context.items(), key=lambda item: item[0].value)
+                    for context, values in sorted(
+                        by_context.items(), key=lambda item: item[0].value
+                    )
                 },
                 "overall_mood_avg": round(overall_avg, 2),
                 "context_entry_count": context_count,
