@@ -20,6 +20,7 @@ import { listInsights, type InsightMaturity, type InsightResponse } from '$lib/a
 import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
 import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
 import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
+import { rankInsights } from '$lib/utils/insightRanking';
 
 export interface InsightStoreState {
   insights: InsightResponse[];
@@ -47,13 +48,7 @@ export const insightStore = { subscribe: _state.subscribe };
 
 /** Derived: all non-dismissed insights sorted by confidence × effect_size desc. */
 export const rankedInsights = derived(_state, ($s) =>
-  $s.insights
-    .filter((i) => !$s.dismissedIds.includes(i.id))
-    .sort(
-      (a, b) =>
-        (b.confidence ?? 0) * Math.abs(b.effect_size ?? 0) -
-        (a.confidence ?? 0) * Math.abs(a.effect_size ?? 0)
-    )
+  rankInsights($s.insights.filter((i) => !$s.dismissedIds.includes(i.id)))
 );
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -62,12 +57,7 @@ export const rankedInsights = derived(_state, ($s) =>
 function pickLatest(insights: InsightResponse[], dismissedIds: string[]): InsightResponse | null {
   const visible = insights.filter((i) => !dismissedIds.includes(i.id));
   if (visible.length === 0) return null;
-  return visible.reduce((best, curr) =>
-    (curr.confidence ?? 0) * Math.abs(curr.effect_size ?? 0) >
-    (best.confidence ?? 0) * Math.abs(best.effect_size ?? 0)
-      ? curr
-      : best
-  );
+  return rankInsights(visible)[0] ?? null;
 }
 
 /**

@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
 import { fetchTimeseries } from '$lib/api/stats';
+import { listEntries } from '$lib/api/entries';
 import Page from './+page.svelte';
 
 vi.mock('svelte-i18n', async () => {
@@ -84,7 +85,23 @@ vi.mock('$lib/api/habits', () => ({
 }));
 
 vi.mock('$lib/api/entries', () => ({
-  listEntries: vi.fn(async () => []),
+  listEntries: vi.fn(async (query?: { end_date?: string }) => [
+    {
+      id: 'entry-office',
+      user_id: 'user-1',
+      entry_date: query?.end_date ?? '2026-05-16',
+      slot: 'day',
+      mood_score: 4,
+      energy: 3,
+      stress: 2,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'office',
+      note: null,
+      created_at: '2026-05-16T08:00:00Z',
+      updated_at: '2026-05-16T08:00:00Z',
+    },
+  ]),
 }));
 
 vi.mock('$lib/api/tags', async () => {
@@ -149,6 +166,13 @@ describe('/trends page', () => {
     expect(screen.queryByTestId('mobile-trends-summary')).toBeNull();
   });
 
+  it('renders work context as a compare context row', async () => {
+    render(Page);
+
+    expect(await screen.findByText('entry.work_context.office')).toBeTruthy();
+    expect(screen.getByText('trends.compare.work_contexts')).toBeTruthy();
+  });
+
   it('uses scroll-first composition on mobile with summary, filters, and detail canvas', async () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
@@ -175,6 +199,7 @@ describe('/trends page', () => {
     localStorage.clear();
     setAnalysisRange('week');
     vi.mocked(fetchTimeseries).mockClear();
+    vi.mocked(listEntries).mockClear();
 
     render(Page);
     await screen.findByTestId('trends-range-control');

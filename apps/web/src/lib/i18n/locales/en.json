@@ -130,6 +130,10 @@
       "view": "View pattern",
       "dismiss": "Dismiss notice"
     },
+    "context_banner": {
+      "title": "A first context pattern is visible.",
+      "body": "A cautious summary compares your calendar or work situation with your current baseline."
+    },
     "weekday_pattern": {
       "heading": "Your First Week In Numbers",
       "early_signal": "Early signal",
@@ -461,14 +465,15 @@
     },
     "compare": {
       "heading": "Compare",
-      "body": "Mood, energy and stress share one timeline with tag and symptom rows below.",
+      "body": "Mood, energy and stress share one timeline with tag, work-context and symptom rows below.",
       "layers": "Layers",
       "shared_axis": "Shared timeline for trendline and context rows",
       "tags": "Tags",
       "symptoms": "Symptoms",
+      "work_contexts": "Work context",
       "heatmap_heading": "Context rows",
       "loading": "Loading comparison layers",
-      "empty_layers": "Enable tags or symptoms to compare context on the shared timeline.",
+      "empty_layers": "Enable tags, work context or symptoms to compare context on the shared timeline.",
       "mode_label": "Display",
       "mode_lines": "Lines",
       "mode_strips": "Strips",
@@ -882,6 +887,7 @@
       "tab_mood": "Mood",
       "tab_symptoms": "Symptoms",
       "tab_sleep": "Sleep",
+      "tab_context": "Context",
       "empty_title": "No insights in this view",
       "empty_body": "When enough matching data is available, descriptive patterns appear here.",
       "empty_cta": "Go to home",
@@ -1012,6 +1018,12 @@
       "strong_finding": "Strong finding",
       "very_strong_finding": "Very strong finding"
     },
+    "context": {
+      "badge": "Context",
+      "fallback": "Context",
+      "weekday": "Weekday",
+      "work_context": "Work context"
+    },
     "card": {
       "expand": "Show details",
       "collapse": "Hide details",
@@ -1053,7 +1065,9 @@
     "energy_mood_positive": "Your energy level and mood show a clear association (r={r}, based on {n} days). On higher-energy days, your mood tends to be higher in your data.",
     "energy_mood_negative": "Your energy level and mood show an unexpected association (r={r}, based on {n} days). Higher energy tends to line up with lower mood in your data.",
     "stress_mood": "Stress and mood show a clear association (r={r}, based on {n} days). This is a data pattern, not a medical statement.",
-    "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays."
+    "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays.",
+    "work_context_confounded_note": "Note: this pattern may mainly reflect your work situation.",
+    "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap."
   },
   "onboarding": {
     "skip": "Skip",

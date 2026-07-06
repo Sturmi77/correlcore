@@ -1,14 +1,25 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import type { InsightResponse } from '$lib/api/insights';
+
+  export let insight: InsightResponse | null = null;
 
   const dispatch = createEventDispatcher<{ dismiss: void }>();
+
+  $: isWorkContext =
+    insight?.insight_type === 'work_context_pattern' ||
+    insight?.insight_type === 'weekday_context_pattern';
+  $: titleKey = isWorkContext ? 'home.context_banner.title' : 'home.first_week_banner.title';
+  $: bodyKey = isWorkContext ? 'home.context_banner.body' : 'home.first_week_banner.body';
 </script>
 
 <section class="first-week-banner" data-testid="first-week-banner">
   <div class="first-week-banner__copy">
-    <p class="first-week-banner__title">{$_('home.first_week_banner.title')}</p>
-    <p class="first-week-banner__body">{$_('home.first_week_banner.body')}</p>
+    <p class="first-week-banner__title">{$_(titleKey)}</p>
+    <p class="first-week-banner__body">
+      {insight?.statement ?? $_(bodyKey)}
+    </p>
   </div>
   <div class="first-week-banner__actions">
     <button

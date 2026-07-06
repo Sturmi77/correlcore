@@ -130,6 +130,10 @@
       "view": "Muster ansehen",
       "dismiss": "Hinweis ausblenden"
     },
+    "context_banner": {
+      "title": "Ein erster Kontext-Hinweis ist sichtbar.",
+      "body": "Eine vorsichtige Zusammenfassung vergleicht Kalender- oder Arbeitssituation mit deinem aktuellen Durchschnitt."
+    },
     "weekday_pattern": {
       "heading": "Deine erste Woche in Zahlen",
       "early_signal": "Fruehes Signal",
@@ -461,14 +465,15 @@
     },
     "compare": {
       "heading": "Vergleichen",
-      "body": "Stimmung, Energie und Stress liegen auf derselben Zeitachse wie Tag- und Symptomzeilen.",
+      "body": "Stimmung, Energie und Stress liegen auf derselben Zeitachse wie Tag-, Arbeitskontext- und Symptomzeilen.",
       "layers": "Ebenen",
       "shared_axis": "Gemeinsame Zeitachse fuer Trendlinie und Kontextzeilen",
       "tags": "Tags",
       "symptoms": "Symptome",
+      "work_contexts": "Arbeitssituation",
       "heatmap_heading": "Kontextzeilen",
       "loading": "Lade Vergleichsebenen",
-      "empty_layers": "Aktiviere Tags oder Symptome, um Kontext auf derselben Zeitachse zu vergleichen.",
+      "empty_layers": "Aktiviere Tags, Arbeitssituation oder Symptome, um Kontext auf derselben Zeitachse zu vergleichen.",
       "mode_label": "Darstellung",
       "mode_lines": "Linien",
       "mode_strips": "Streifen",
@@ -882,6 +887,7 @@
       "tab_mood": "Stimmung",
       "tab_symptoms": "Symptome",
       "tab_sleep": "Schlaf",
+      "tab_context": "Kontext",
       "empty_title": "Keine Erkenntnisse in dieser Ansicht",
       "empty_body": "Sobald genuegend passende Daten vorhanden sind, erscheinen hier beschreibende Muster.",
       "empty_cta": "Zur Startseite",
@@ -1012,6 +1018,12 @@
       "strong_finding": "Starker Befund",
       "very_strong_finding": "Sehr starker Befund"
     },
+    "context": {
+      "badge": "Kontext",
+      "fallback": "Kontext",
+      "weekday": "Wochentag",
+      "work_context": "Arbeitssituation"
+    },
     "card": {
       "expand": "Details anzeigen",
       "collapse": "Details ausblenden",
@@ -1053,7 +1065,9 @@
     "energy_mood_positive": "Dein Energielevel und deine Stimmung zeigen einen klaren Zusammenhang (r={r}, basierend auf {n} Tagen). An Tagen mit hoeherer Energie ist deine Stimmung in deinen Daten tendenziell hoeher.",
     "energy_mood_negative": "Dein Energielevel und deine Stimmung zeigen einen unerwarteten Zusammenhang (r={r}, basierend auf {n} Tagen). Hoehere Energie geht in deinen Daten tendenziell mit niedrigerer Stimmung einher.",
     "stress_mood": "Stress und Stimmung zeigen einen klaren Zusammenhang (r={r}, basierend auf {n} Tagen). Das ist ein Datenmuster, keine medizinische Aussage.",
-    "weekday_confounded_note": "Hinweis: Dieses Muster tritt vorwiegend an bestimmten Wochentagen auf."
+    "weekday_confounded_note": "Hinweis: Dieses Muster tritt vorwiegend an bestimmten Wochentagen auf.",
+    "work_context_confounded_note": "Hinweis: Dieses Muster kann vor allem mit deiner Arbeitssituation zusammenhaengen.",
+    "calendar_context_confounded_note": "Hinweis: Dieses Muster kann vor allem Kalender- oder Arbeitskontext-Ueberlappungen zeigen."
   },
   "onboarding": {
     "skip": "Ueberspringen",

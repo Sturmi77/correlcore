@@ -1,7 +1,8 @@
 import type { InsightResponse } from '$lib/api/insights';
+import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
 import { rankInsights } from '$lib/utils/insightRanking';
 
-export type InsightFeedFilterTab = 'all' | 'mood' | 'symptoms' | 'sleep';
+export type InsightFeedFilterTab = 'all' | 'mood' | 'symptoms' | 'sleep' | 'context';
 
 type TabBarOptionLike = {
   id: string;
@@ -15,6 +16,7 @@ export const INSIGHT_FEED_FILTER_TABS: { id: InsightFeedFilterTab; label: string
   { id: 'mood', label: 'insights.feed.tab_mood' },
   { id: 'symptoms', label: 'insights.feed.tab_symptoms' },
   { id: 'sleep', label: 'insights.feed.tab_sleep' },
+  { id: 'context', label: 'insights.feed.tab_context' },
 ];
 
 const METRIC_MAP: Record<InsightFeedFilterTab, string[]> = {
@@ -22,6 +24,7 @@ const METRIC_MAP: Record<InsightFeedFilterTab, string[]> = {
   mood: ['mood'],
   symptoms: ['symptom', 'symptoms'],
   sleep: ['sleep'],
+  context: [],
 };
 
 function insightMatches(i: InsightResponse, keywords: string[]): boolean {
@@ -55,6 +58,7 @@ export function filterInsightsByTab(
 ): InsightResponse[] {
   return insights.filter((insight) => {
     if (activeTab === 'all') return true;
+    if (activeTab === 'context') return isCalendarContextInsight(insight);
     return insightMatches(insight, METRIC_MAP[activeTab]);
   });
 }

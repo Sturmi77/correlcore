@@ -19,7 +19,12 @@
    */
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { isWeekdayConfounded } from '$lib/utils/insightConfounder';
+  import {
+    isCalendarContextConfounded,
+    isCalendarContextInsight,
+    primaryInsightConfounder,
+    type InsightConfounder,
+  } from '$lib/utils/insightConfounder';
   import InsightConfidenceScale from './InsightConfidenceScale.svelte';
   import InsightMaturityBadge from './InsightMaturityBadge.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
@@ -70,6 +75,46 @@
     return typeof value === 'string' && value.length > 0 ? value : null;
   }
 
+  function payloadNumber(ins: InsightResponse, key: string): number | null {
+    const value = ins.payload?.[key];
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  }
+
+  function workContextLabel(ins: InsightResponse): string | null {
+    const explicit = payloadString(ins, 'work_context_label');
+    if (explicit) return explicit;
+    const context = payloadString(ins, 'work_context');
+    if (!context) return null;
+    const translated = $_(`entry.work_context.${context}`);
+    return translated === `entry.work_context.${context}` ? context : translated;
+  }
+
+  function weekdayLabel(ins: InsightResponse): string | null {
+    const explicit =
+      payloadString(ins, 'weekday_label') ??
+      payloadString(ins, 'weekday_name') ??
+      payloadString(ins, 'weekday');
+    if (explicit) return explicit;
+    const weekday = payloadNumber(ins, 'weekday');
+    const keys = [
+      'home.weekday.mon',
+      'home.weekday.tue',
+      'home.weekday.wed',
+      'home.weekday.thu',
+      'home.weekday.fri',
+      'home.weekday.sat',
+      'home.weekday.sun',
+    ];
+    return weekday === null ? null : $_(keys[weekday] ?? 'home.weekday.mon');
+  }
+
+  function metricLabel(metric: string | null | undefined): string {
+    if (metric === 'mood' || metric === 'mood_score' || !metric) return $_('trends.metric.mood');
+    if (metric === 'energy' || metric === 'energy_avg') return $_('trends.metric.energy');
+    if (metric === 'stress' || metric === 'stress_avg') return $_('trends.metric.stress');
+    return metric;
+  }
+
   function buildTitle(ins: InsightResponse): string {
     if (ins.insight_type === 'symptom_mood_association') {
       const symptom = payloadString(ins, 'symptom_name') ?? ins.subject_label ?? 'Symptoms';
@@ -80,9 +125,24 @@
       const tag = payloadString(ins, 'tag_name') ?? ins.subject_label ?? 'Insight';
       return `${symptom} + ${tag}`;
     }
+    if (ins.insight_type === 'work_context_pattern') {
+      const context = workContextLabel(ins) ?? ins.subject_label ?? $_('insights.context.fallback');
+      return `${metricLabel(ins.metric)} -> ${context}`;
+    }
+    if (ins.insight_type === 'weekday_context_pattern') {
+      const weekday = weekdayLabel(ins) ?? ins.subject_label ?? $_('insights.context.weekday');
+      const context = workContextLabel(ins) ?? $_('insights.context.work_context');
+      return `${metricLabel(ins.metric)} -> ${weekday} + ${context}`;
+    }
     const a = ins.metric ?? '?';
     const b = ins.subject_label ?? null;
     return b ? `${a} → ${b}` : a;
+  }
+
+  function confounderNoteKey(confounder: InsightConfounder | null): string {
+    if (confounder === 'work_context') return 'insights.work_context_confounded_note';
+    if (confounder === 'calendar_context') return 'insights.calendar_context_confounded_note';
+    return 'insights.weekday_confounded_note';
   }
 
   const SVG_W = 280;
@@ -103,7 +163,9 @@
     return pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
   }
 
-  $: isConfounded = insight ? isWeekdayConfounded(insight) : false;
+  $: isConfounded = insight ? isCalendarContextConfounded(insight) : false;
+  $: primaryConfounder = insight ? primaryInsightConfounder(insight) : null;
+  $: isContextInsight = insight ? isCalendarContextInsight(insight) : false;
   $: title = insight ? buildTitle(insight) : '';
   $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '→';
   $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
@@ -159,6 +221,11 @@
       >
       <h3 class="insight-card__title" data-testid="insight-card-title">
         {title}
+        {#if isContextInsight}
+          <span class="insight-card__context-badge" data-testid="insight-card-context-badge">
+            {$_('insights.context.badge')}
+          </span>
+        {/if}
         {#if isInactiveTag}
           <span class="insight-card__inactive-badge">{$_('insights.card.inactive_tag_badge')}</span>
         {/if}
@@ -183,7 +250,7 @@
 
     {#if isConfounded}
       <p class="insight-card__confounder" data-testid="insight-card-confounder">
-        {$_('insights.weekday_confounded_note')}
+        {$_(confounderNoteKey(primaryConfounder))}
       </p>
     {/if}
 
@@ -397,7 +464,8 @@
     margin: 0;
     line-height: 1.3;
   }
-  .insight-card__inactive-badge {
+  .insight-card__inactive-badge,
+  .insight-card__context-badge {
     display: inline-flex;
     margin-left: var(--space-2, 0.5rem);
     padding: 0.1rem 0.4rem;
@@ -407,6 +475,10 @@
     font-size: var(--text-xs, 0.75rem);
     font-weight: 500;
     white-space: nowrap;
+  }
+  .insight-card__context-badge {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    color: var(--color-primary);
   }
   .insight-card__dismiss {
     flex-shrink: 0;

@@ -28,6 +28,7 @@
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
+  import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
   import { shiftIsoDate } from '$lib/utils/streak';
   import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
@@ -38,7 +39,8 @@
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
 
-  const FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
+  const EARLY_CONTEXT_PATTERN_KEY = 'early_context_pattern';
+  const LEGACY_FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
 
   const todayIso = localIsoDate(new Date());
 
@@ -56,10 +58,12 @@
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
   $: insightLoading = $insightStore.loading;
-  $: weekdayInsight = $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
+  $: contextInsight = $rankedInsights.find((i) => isCalendarContextInsight(i)) ?? null;
   $: firstWeekDismissed =
-    userPreferences?.dismissed_insight_keys.includes(FIRST_WEEK_PATTERN_KEY) ?? false;
-  $: showFirstWeekBanner = Boolean(weekdayInsight && !firstWeekDismissed);
+    userPreferences?.dismissed_insight_keys.some((key) =>
+      [EARLY_CONTEXT_PATTERN_KEY, LEGACY_FIRST_WEEK_PATTERN_KEY].includes(key)
+    ) ?? false;
+  $: showFirstWeekBanner = Boolean(contextInsight && !firstWeekDismissed);
   $: showOnboardingTags = shouldShowOnboardingTags(userPreferences, dashboardSummary?.entry_count);
   $: showPwaInstallBanner = Boolean(
     $pwaInstallStore.promptEvent &&
@@ -145,7 +149,7 @@
 
   async function dismissFirstWeekBanner(): Promise<void> {
     const dismissed = new Set(userPreferences?.dismissed_insight_keys ?? []);
-    dismissed.add(FIRST_WEEK_PATTERN_KEY);
+    dismissed.add(EARLY_CONTEXT_PATTERN_KEY);
     const optimistic = {
       ...(userPreferences ?? {
         user_id: $currentUser?.id ?? '',
@@ -222,7 +226,7 @@
     <!-- Zone 2: daily brief (best-effort) -->
     <section class="home-zone" data-testid="home-zone-insight">
       {#if showFirstWeekBanner}
-        <FirstWeekInsightBanner on:dismiss={dismissFirstWeekBanner} />
+        <FirstWeekInsightBanner insight={contextInsight} on:dismiss={dismissFirstWeekBanner} />
       {:else}
         <HomeDailyBrief
           entries={recentEntries}

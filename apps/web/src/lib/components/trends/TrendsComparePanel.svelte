@@ -11,6 +11,7 @@
   } from '$lib/api/stats';
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
   import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
+  import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
@@ -22,8 +23,10 @@
   export let enabled: Record<MetricKey, boolean>;
   export let tagHeatmap: TagHeatmapResponse | null = null;
   export let symptomHeatmap: SymptomHeatmapResponse | null = null;
+  export let workContextHeatmap: WorkContextHeatmapResponse | null = null;
   export let showTags = true;
   export let showSymptoms = false;
+  export let showWorkContexts = true;
   export let loading = false;
   /**
    * Sprint 1 (ADR-0035): event markers shared across metric chart and
@@ -39,7 +42,7 @@
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string };
-    layerChange: { showTags: boolean; showSymptoms: boolean };
+    layerChange: { showTags: boolean; showSymptoms: boolean; showWorkContexts: boolean };
   }>();
 
   // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
@@ -126,10 +129,15 @@
   }
 
   $: axisStart =
-    tagHeatmap?.start_date ?? symptomHeatmap?.start_date ?? points[0]?.period_start ?? '';
+    tagHeatmap?.start_date ??
+    symptomHeatmap?.start_date ??
+    workContextHeatmap?.start_date ??
+    points[0]?.period_start ??
+    '';
   $: axisEnd =
     tagHeatmap?.end_date ??
     symptomHeatmap?.end_date ??
+    workContextHeatmap?.end_date ??
     points[points.length - 1]?.period_end ??
     points[points.length - 1]?.period_start ??
     '';
@@ -156,6 +164,7 @@
             dispatch('layerChange', {
               showTags: event.currentTarget.checked,
               showSymptoms,
+              showWorkContexts,
             })}
         />
         {$_('trends.compare.tags')}
@@ -168,9 +177,23 @@
             dispatch('layerChange', {
               showTags,
               showSymptoms: event.currentTarget.checked,
+              showWorkContexts,
             })}
         />
         {$_('trends.compare.symptoms')}
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={showWorkContexts}
+          on:change={(event) =>
+            dispatch('layerChange', {
+              showTags,
+              showSymptoms,
+              showWorkContexts: event.currentTarget.checked,
+            })}
+        />
+        {$_('trends.compare.work_contexts')}
       </label>
     </div>
   </header>
@@ -245,8 +268,10 @@
     <ComparisonHeatmap
       {tagHeatmap}
       {symptomHeatmap}
+      {workContextHeatmap}
       {showTags}
       {showSymptoms}
+      {showWorkContexts}
       {loading}
       dates={axisDates}
       {axisLayout}

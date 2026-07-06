@@ -36,9 +36,13 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
     page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
   ).toBeVisible();
   await page.getByTestId('insights-filter-tab-mood').tap();
+  await expect(page.getByTestId('insights-filter-tab-mood')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
   await expect(
     page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
-  ).toHaveCount(0);
+  ).toBeVisible();
   await page.getByTestId('insights-filter-tab-symptoms').tap();
   await expect(
     page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
@@ -48,8 +52,8 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await page.getByTestId('symptom-cooccurrence-cell').first().tap();
   await expect(page.getByTestId('symptom-cooccurrence-detail-sheet')).toBeVisible();
   await page.getByTestId('symptom-cooccurrence-detail-close').tap();
-  await page.getByRole('button', { name: '1Y' }).tap();
-  await expect(page.getByRole('button', { name: '1Y' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: '90D' }).tap();
+  await expect(page.getByRole('button', { name: '90D' })).toHaveAttribute('aria-pressed', 'true');
   const tagCooccurrenceCell = page
     .getByRole('gridcell', { name: /Focus work and Walk together/i })
     .first();
