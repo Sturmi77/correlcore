@@ -5,7 +5,11 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from app.models.entry import WorkContext
-from app.services.symptom_analytics import DailySymptomEntry, compute_symptom_metric_associations
+from app.services.symptom_analytics import (
+    DailySymptomEntry,
+    compute_symptom_metric_associations,
+    is_work_context_biased_signal,
+)
 from app.services.symptom_analytics import SymptomRef as AnalyticsSymptomRef
 from app.services.weekday_confounder import (
     is_metric_association_calendar_context_confounded,
@@ -226,3 +230,28 @@ def test_symptom_metric_candidates_mark_work_context_confounded() -> None:
     assert findings
     assert any(finding.work_context_confounded for finding in findings)
     assert any(finding.calendar_context_confounded for finding in findings)
+
+
+def test_symptom_work_context_bias_uses_available_context_day_baseline() -> None:
+    import uuid
+
+    symptom_id = uuid.uuid4()
+    tag_id = uuid.uuid4()
+    start = date(2026, 1, 1)
+    entries = [
+        DailySymptomEntry(
+            entry_date=start + timedelta(days=offset),
+            mood_score=3,
+            energy=3,
+            stress=3,
+            tag_ids=frozenset({tag_id}) if offset < 20 or 25 <= offset < 29 else frozenset(),
+            symptom_ids=frozenset({symptom_id})
+            if offset < 20 or 25 <= offset < 29
+            else frozenset(),
+            work_context=WorkContext.OFFICE if offset < 25 else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(30)
+    ]
+
+    assert is_work_context_biased_signal(entries, tag_id, kind="tag") is False
+    assert is_work_context_biased_signal(entries, symptom_id, kind="symptom") is False

@@ -971,7 +971,7 @@
       "cooccurrence_empty": "Noch keine stabilen Symptom-Tag-Muster in diesem Zeitraum.",
       "cooccurrence_sort_clustered": "Nach Aehnlichkeit clustern",
       "cooccurrence_sort_alphabetical": "Alphabetisch sortieren",
-      "cooccurrence_confounder_note": "Gestrichelte Zellen koennen Wochentags-Ueberlappungen statt direkter Zusammenhaenge zeigen.",
+      "cooccurrence_confounder_note": "Gestrichelte Zellen koennen Kalender- oder Arbeitskontext-Ueberlappungen statt direkter Zusammenhaenge zeigen.",
       "cooccurrence_cell_base_rate": "{symptom} + {tag}: Lift {lift}, {co} von {symptomDays} Symptomtagen und {tagDays} Tag-Tagen",
       "detail_eyebrow": "Symptom × Tag-Muster",
       "detail_lift": "Lift",

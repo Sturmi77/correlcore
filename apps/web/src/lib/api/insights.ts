@@ -127,6 +127,8 @@ export interface SymptomTagCooccurrenceSymptomRef {
   icon: string | null;
 }
 
+export type SymptomTagCooccurrenceConfounder = 'weekday' | 'work_context' | 'calendar_context';
+
 export interface SymptomTagCooccurrenceCell {
   symptom: SymptomTagCooccurrenceSymptomRef;
   tag: TagCooccurrenceTagRef;
@@ -138,7 +140,7 @@ export interface SymptomTagCooccurrenceCell {
   tag_count: number;
   total_count: number;
   p_value_corrected: number;
-  confounder: string | null;
+  confounder: SymptomTagCooccurrenceConfounder | null;
 }
 
 export interface SymptomTagCooccurrenceResponse {

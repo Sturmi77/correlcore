@@ -283,7 +283,10 @@ def is_work_context_biased(
     if total < min_count:
         return False
 
-    expected = [total / len(contexts)] * len(contexts)
+    context_counts = [
+        sum(1 for entry in entries if entry.work_context == context) for context in contexts
+    ]
+    expected = [total * context_count / len(entries) for context_count in context_counts]
     result = chisquare(observed, f_exp=expected)
     p_value = _finite_float(result.pvalue)
     return p_value is not None and p_value < threshold_p

@@ -971,7 +971,7 @@
       "cooccurrence_empty": "No stable symptom-tag patterns in this range yet.",
       "cooccurrence_sort_clustered": "Cluster by similarity",
       "cooccurrence_sort_alphabetical": "Sort A–Z",
-      "cooccurrence_confounder_note": "Dashed cells may reflect weekday overlap rather than a direct link.",
+      "cooccurrence_confounder_note": "Dashed cells may reflect calendar or work-context overlap rather than a direct link.",
       "cooccurrence_cell_base_rate": "{symptom} + {tag}: lift {lift}, {co} of {symptomDays} symptom days and {tagDays} tag days",
       "detail_eyebrow": "Symptom × tag pattern",
       "detail_lift": "Lift",

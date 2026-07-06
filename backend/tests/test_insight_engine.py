@@ -20,6 +20,7 @@ from app.services.insight_engine import (
     generate_and_store_insights,
     generate_insight_candidates,
     is_weekday_biased,
+    is_work_context_biased,
     load_analytics_data,
 )
 from tests.conftest import make_entry, make_symptom, make_tag, make_user
@@ -309,6 +310,24 @@ def test_pointbiserial_marks_work_context_confounder() -> None:
     assert candidate.payload["confounder"] == "work_context"
     assert candidate.payload["confounders"] == ["work_context"]
     assert "work contexts" in candidate.statement
+
+
+def test_work_context_biased_uses_available_context_day_baseline() -> None:
+    tag_id = uuid.uuid4()
+    start = date(2026, 1, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=3,
+            energy=3,
+            stress=3,
+            tag_ids=frozenset({tag_id}) if offset < 20 or 25 <= offset < 29 else frozenset(),
+            work_context=WorkContext.OFFICE if offset < 25 else WorkContext.HOMEOFFICE,
+        )
+        for offset in range(30)
+    ]
+
+    assert is_work_context_biased(entries, tag_id) is False
 
 
 def test_pointbiserial_collapses_default_and_override_with_same_slug() -> None:
