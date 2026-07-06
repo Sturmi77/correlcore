@@ -30,3 +30,26 @@ export function isHabitAdherenceInsufficient(habit: HabitStatsResponse): boolean
   const threshold = Math.min(MIN_HABIT_CALENDAR_DAYS, habit.target_days);
   return habit.days_tracked < threshold;
 }
+
+export function habitStatusI18nKey(habit: HabitStatsResponse): string {
+  if (habit.habit_type === 'reduce') {
+    return habit.days_tracked <= habit.target_days
+      ? 'habits.status.within_target'
+      : 'habits.status.above_target';
+  }
+  return 'habits.status.progress';
+}
+
+export function habitGoalI18nKey(habit: HabitStatsResponse): string {
+  return habit.habit_type === 'reduce' ? 'habits.goal.reduce' : 'habits.goal.build';
+}
+
+export function habitProgressValue(habit: HabitStatsResponse): number {
+  return Math.max(0, Math.min(100, Math.round(habit.adherence_rate)));
+}
+
+export function formatHabitDelta(delta: number): string {
+  const rounded = Math.round(delta);
+  if (rounded > 0) return `+${rounded}`;
+  return `${rounded}`;
+}

@@ -25,7 +25,13 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'habits.correlation_predictor') {
         return `${values.name} predictor r=${values.score}`;
       }
+      if (key === 'habits.goal.build') return `${values.tracked} of ${values.target} target days`;
+      if (key === 'habits.goal.reduce') return `${values.tracked} of max ${values.target} days`;
+      if (key === 'habits.trend.delta') return `${values.delta} pp vs previous period`;
       if (key === 'habits.insufficient_data') return 'Not enough data yet';
+      if (key === 'habits.status.progress') return 'Toward weekly target';
+      if (key === 'habits.status.within_target') return 'Within target range';
+      if (key === 'habits.status.above_target') return 'Above target range';
       if (key === 'trends.metric.mood') return 'mood';
       if (key === 'settings.tags.habit_build') return 'Build';
       if (key === 'settings.tags.habit_reduce') return 'Reduce';
@@ -68,6 +74,9 @@ const habits = [
     days_total: 28,
     target_days: 16,
     adherence_rate: 62.5,
+    previous_adherence_rate: 50,
+    adherence_delta: 12.5,
+    trend_direction: 'up' as const,
     correlation_score: 0.72,
     correlation_metric: 'mood',
   },
@@ -78,7 +87,9 @@ describe('HabitsPanel', () => {
     render(HabitsPanel, { props: { habits, tags, window: 28 } });
 
     expect(screen.getAllByText('Walk')).toHaveLength(2);
-    expect(screen.getByText(/63% · last 28 days/)).toBeTruthy();
+    expect(screen.queryByText(/63%.*last 28 days/)).toBeNull();
+    expect(screen.getAllByText('10 of 16 target days')).toHaveLength(2);
+    expect(screen.getAllByText('+13 pp vs previous period')).toHaveLength(2);
     expect(screen.getByText('r=0.72 mood')).toBeTruthy();
     expect(screen.getByText('Walk predictor r=0.72')).toBeTruthy();
   });

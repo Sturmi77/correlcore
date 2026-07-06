@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { HabitStatsResponse } from '$lib/api/habits';
 import {
+  formatHabitDelta,
+  habitGoalI18nKey,
   habitMetricI18nKey,
+  habitProgressValue,
+  habitStatusI18nKey,
   isHabitAdherenceInsufficient,
   MIN_HABIT_CALENDAR_DAYS,
 } from './habitMetrics';
@@ -18,6 +22,9 @@ function habit(overrides: Partial<HabitStatsResponse> = {}): HabitStatsResponse 
     days_total: 28,
     target_days: 16,
     adherence_rate: 62.5,
+    previous_adherence_rate: null,
+    adherence_delta: null,
+    trend_direction: 'unknown',
     correlation_score: null,
     correlation_metric: null,
     ...overrides,
@@ -29,6 +36,33 @@ describe('habitMetricI18nKey', () => {
     expect(habitMetricI18nKey('mood_score')).toBe('trends.metric.mood');
     expect(habitMetricI18nKey('energy')).toBe('trends.metric.energy');
     expect(habitMetricI18nKey('stress_avg')).toBe('trends.metric.stress');
+  });
+});
+
+describe('habit status helpers', () => {
+  it('maps build and reduce goals to i18n keys', () => {
+    expect(habitGoalI18nKey(habit({ habit_type: 'build' }))).toBe('habits.goal.build');
+    expect(habitGoalI18nKey(habit({ habit_type: 'reduce' }))).toBe('habits.goal.reduce');
+  });
+
+  it('describes reduce habits by target range', () => {
+    expect(
+      habitStatusI18nKey(habit({ habit_type: 'reduce', days_tracked: 2, target_days: 3 }))
+    ).toBe('habits.status.within_target');
+    expect(
+      habitStatusI18nKey(habit({ habit_type: 'reduce', days_tracked: 4, target_days: 3 }))
+    ).toBe('habits.status.above_target');
+  });
+
+  it('rounds visual progress and clamps it to meter bounds', () => {
+    expect(habitProgressValue(habit({ adherence_rate: 62.5 }))).toBe(63);
+    expect(habitProgressValue(habit({ adherence_rate: 120 }))).toBe(100);
+  });
+
+  it('formats percentage point deltas with a plus sign only when positive', () => {
+    expect(formatHabitDelta(12.5)).toBe('+13');
+    expect(formatHabitDelta(-4.8)).toBe('-5');
+    expect(formatHabitDelta(0)).toBe('0');
   });
 });
 

@@ -2,6 +2,7 @@ import { api } from './client';
 import type { HabitType } from './tags';
 
 export type HabitWindow = 7 | 14 | 28 | 90;
+export type HabitTrendDirection = 'up' | 'down' | 'flat' | 'unknown';
 
 export interface HabitStatsResponse {
   tag_id: string;
@@ -14,6 +15,9 @@ export interface HabitStatsResponse {
   days_total: number;
   target_days: number;
   adherence_rate: number;
+  previous_adherence_rate: number | null;
+  adherence_delta: number | null;
+  trend_direction: HabitTrendDirection;
   correlation_score: number | null;
   correlation_metric: string | null;
 }

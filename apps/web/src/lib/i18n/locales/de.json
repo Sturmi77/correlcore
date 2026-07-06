@@ -532,14 +532,27 @@
     "correlation_pending": "Noch keine Korrelationsdaten",
     "correlation_predictor": "{name} ist ein relevanter {metric}-Prädiktor (r={score})",
     "adherence_meter": "Adherence-Rate",
+    "adherence_meter_text": "{percent}; {goal}",
     "insufficient_data": "Noch nicht genug Daten. Tracke weiter, um deine Adherence-Rate zu sehen.",
     "window_last": "letzte {n} Tage",
+    "period": "Zeitraum",
     "sheet_close": "Gewohnheitsdetail schließen",
+    "goal": {
+      "label": "Ziel",
+      "build": "{tracked} von {target} Zieltagen",
+      "reduce": "{tracked} von max. {target} Tagen"
+    },
+    "trend": {
+      "label": "Tendenz",
+      "delta": "{delta} pp zum vorherigen Zeitraum",
+      "unknown": "Noch kein Vergleichszeitraum"
+    },
     "type": {
       "build": "Aufbauen",
       "reduce": "Reduzieren"
     },
     "status": {
+      "label": "Status",
       "progress": "Richtung Wochenziel",
       "within_target": "Im Zielbereich",
       "above_target": "Ueber dem Zielbereich"

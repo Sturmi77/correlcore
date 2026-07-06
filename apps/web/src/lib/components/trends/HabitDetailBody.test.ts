@@ -11,6 +11,14 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'habits.days_tracked') return 'Tracked days';
       if (key === 'habits.target_days') return 'Target days';
       if (key === 'habits.target_frequency') return 'Weekly target';
+      if (key === 'habits.goal.label') return 'Goal';
+      if (key === 'habits.goal.build') return '3 of 3 target days';
+      if (key === 'habits.status.label') return 'Status';
+      if (key === 'habits.status.progress') return 'Toward weekly target';
+      if (key === 'habits.trend.label') return 'Tendency';
+      if (key === 'habits.trend.unknown') return 'No comparison period yet';
+      if (key === 'habits.period') return 'Period';
+      if (key === 'habits.adherence_meter_text') return '100%; 3 of 3 target days';
       if (key === 'habits.type.build') return 'Build habit';
       return key;
     }),
@@ -62,6 +70,9 @@ const baseHabit = {
   days_total: 28,
   target_days: 16,
   adherence_rate: 62.5,
+  previous_adherence_rate: null,
+  adherence_delta: null,
+  trend_direction: 'unknown' as const,
   correlation_score: null,
   correlation_metric: null,
 };
@@ -103,5 +114,9 @@ describe('HabitDetailBody', () => {
 
     expect(screen.queryByTestId('habit-insufficient-data')).toBeNull();
     expect(screen.getByRole('meter')).toBeTruthy();
+    expect(screen.getByRole('meter').getAttribute('aria-valuetext')).toBe(
+      '100%; 3 of 3 target days'
+    );
+    expect(screen.getByText('Toward weekly target')).toBeTruthy();
   });
 });

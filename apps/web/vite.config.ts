@@ -5,6 +5,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [tailwindcss(), svelteTesting(), sveltekit()],
+  optimizeDeps: {
+    exclude: ['lucide-svelte'],
+  },
   build: {
     // Performance budget: JS < 150 KB gz
     reportCompressedSize: true,
