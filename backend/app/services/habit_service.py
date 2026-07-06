@@ -13,7 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.entry import Entry
 from app.models.insight import Insight
 from app.models.tag import EntryTag, Tag
-from app.schemas.habit import HabitListResponse, HabitStatsResponse, HabitWindow
+from app.schemas.habit import (
+    HabitListResponse,
+    HabitStatsResponse,
+    HabitTrendDirection,
+    HabitWindow,
+)
 from app.services.tag_service import active_tag_predicate
 
 HABIT_WINDOWS: set[int] = {7, 14, 28, 90}
@@ -72,7 +77,7 @@ def _has_enough_habit_data(*, days_tracked: int, target_days: int) -> bool:
     return days_tracked >= threshold
 
 
-def _trend_direction(delta: float | None) -> str:
+def _trend_direction(delta: float | None) -> HabitTrendDirection:
     if delta is None:
         return "unknown"
     if abs(delta) < HABIT_TREND_FLAT_THRESHOLD:
