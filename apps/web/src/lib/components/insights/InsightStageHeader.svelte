@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { HelpCircle } from 'lucide-svelte';
+  import HelpCircle from 'lucide-svelte/icons/help-circle';
   import type { InsightMaturity, InsightMaturityPhase } from '$lib/api/insights';
   import IconButton from '$lib/components/common/IconButton.svelte';
   import { maturityMilestoneKey } from '$lib/utils/insightMaturityMilestones';

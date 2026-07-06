@@ -269,7 +269,9 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
   await expect(page.locator('.trends-health__consistency strong').first()).toHaveText('3');
 
   await page.goto('/insights');
-  await expect(page.getByText(/fridays currently line up/i)).toBeVisible();
+  await expect(page.getByText(/fridays currently line up/i)).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
   await expect(page.getByTestId('insight-stage-header')).toHaveAttribute(
     'data-phase',
     'provisional'

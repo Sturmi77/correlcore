@@ -13,11 +13,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.entry import Entry
 from app.models.insight import Insight
 from app.models.tag import EntryTag, Tag
-from app.schemas.habit import HabitListResponse, HabitStatsResponse, HabitWindow
+from app.schemas.habit import (
+    HabitListResponse,
+    HabitStatsResponse,
+    HabitTrendDirection,
+    HabitWindow,
+)
 from app.services.tag_service import active_tag_predicate
 
 HABIT_WINDOWS: set[int] = {7, 14, 28, 90}
 MIN_DAYS_FOR_ADHERENCE_DISPLAY = 7
+HABIT_TREND_FLAT_THRESHOLD = 5.0
 
 _CORRELATION_METRIC_LABELS: dict[str, str] = {
     "mood_score": "mood",
@@ -62,6 +68,21 @@ def _adherence_rate(
     possible_overage = max(1, days_total - target_days)
     overage = min(possible_overage, days_tracked - target_days)
     return round(max(0.0, 100.0 * (1 - overage / possible_overage)), 1)
+
+
+def _has_enough_habit_data(*, days_tracked: int, target_days: int) -> bool:
+    if days_tracked == 0:
+        return False
+    threshold = min(MIN_DAYS_FOR_ADHERENCE_DISPLAY, target_days)
+    return days_tracked >= threshold
+
+
+def _trend_direction(delta: float | None) -> HabitTrendDirection:
+    if delta is None:
+        return "unknown"
+    if abs(delta) < HABIT_TREND_FLAT_THRESHOLD:
+        return "flat"
+    return "up" if delta > 0 else "down"
 
 
 async def _latest_correlation(
@@ -152,9 +173,46 @@ async def get_habit_stats(
         start_date=start_date,
         end_date=end_date,
     )
+    previous_end_date = start_date - timedelta(days=1)
+    previous_start_date = previous_end_date - timedelta(days=window - 1)
+    previous_tracked_dates = await _tracked_dates_for_tag(
+        db,
+        user_id=user_id,
+        tag_id=tag.id,
+        start_date=previous_start_date,
+        end_date=previous_end_date,
+    )
     days_total = window
     target_days = _target_days(target_frequency=tag.target_frequency, days_total=days_total)
     days_tracked = len(tracked_dates)
+    previous_days_tracked = len(previous_tracked_dates)
+    adherence_rate = _adherence_rate(
+        habit_type=tag.habit_type,
+        days_tracked=days_tracked,
+        target_days=target_days,
+        days_total=days_total,
+    )
+    has_enough_current_data = _has_enough_habit_data(
+        days_tracked=days_tracked, target_days=target_days
+    )
+    has_enough_previous_data = _has_enough_habit_data(
+        days_tracked=previous_days_tracked, target_days=target_days
+    )
+    previous_adherence_rate = (
+        _adherence_rate(
+            habit_type=tag.habit_type,
+            days_tracked=previous_days_tracked,
+            target_days=target_days,
+            days_total=days_total,
+        )
+        if has_enough_current_data and has_enough_previous_data
+        else None
+    )
+    adherence_delta = (
+        round(adherence_rate - previous_adherence_rate, 1)
+        if previous_adherence_rate is not None
+        else None
+    )
     correlation_score, correlation_metric = await _latest_correlation(
         db, user_id=user_id, tag_id=tag.id
     )
@@ -169,12 +227,10 @@ async def get_habit_stats(
         days_tracked=days_tracked,
         days_total=days_total,
         target_days=target_days,
-        adherence_rate=_adherence_rate(
-            habit_type=tag.habit_type,
-            days_tracked=days_tracked,
-            target_days=target_days,
-            days_total=days_total,
-        ),
+        adherence_rate=adherence_rate,
+        previous_adherence_rate=previous_adherence_rate,
+        adherence_delta=adherence_delta,
+        trend_direction=_trend_direction(adherence_delta),
         correlation_score=correlation_score,
         correlation_metric=correlation_metric,
     )

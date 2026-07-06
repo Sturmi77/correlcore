@@ -52,6 +52,7 @@ async def test_habit_stats_build_uses_target_frequency() -> None:
         side_effect=[
             _scalar_result(habit),
             _row_result([(date(2026, 5, 1),), (date(2026, 5, 2),)]),
+            _row_result([]),
             _row_one_result((0.42, "mood_score")),
         ]
     )
@@ -67,6 +68,9 @@ async def test_habit_stats_build_uses_target_frequency() -> None:
     assert out.target_days == 3
     assert out.days_tracked == 2
     assert out.adherence_rate == 66.7
+    assert out.previous_adherence_rate is None
+    assert out.adherence_delta is None
+    assert out.trend_direction == "unknown"
     assert out.correlation_score == 0.42
     assert out.correlation_metric == "mood"
 
@@ -80,6 +84,7 @@ async def test_habit_stats_reduce_stays_full_when_within_target() -> None:
         side_effect=[
             _scalar_result(habit),
             _row_result([(date(2026, 5, 1),), (date(2026, 5, 2),)]),
+            _row_result([(date(2026, 4, 28),), (date(2026, 4, 29),)]),
             _row_one_result(None),
         ]
     )
@@ -95,6 +100,9 @@ async def test_habit_stats_reduce_stays_full_when_within_target() -> None:
     assert out.target_days == 2
     assert out.days_tracked == 2
     assert out.adherence_rate == 100
+    assert out.previous_adherence_rate == 100
+    assert out.adherence_delta == 0
+    assert out.trend_direction == "flat"
     assert out.correlation_score is None
 
 
@@ -113,6 +121,7 @@ async def test_habit_stats_reduce_decreases_after_target_range() -> None:
                     (date(2026, 5, 3),),
                 ]
             ),
+            _row_result([(date(2026, 4, 28),), (date(2026, 4, 29),)]),
             _row_one_result(None),
         ]
     )
@@ -126,6 +135,62 @@ async def test_habit_stats_reduce_decreases_after_target_range() -> None:
     )
 
     assert out.adherence_rate == 80
+    assert out.previous_adherence_rate == 100
+    assert out.adherence_delta == -20
+    assert out.trend_direction == "down"
+
+
+@pytest.mark.asyncio
+async def test_habit_stats_build_trend_compares_previous_window() -> None:
+    user = make_user()
+    habit = make_tag(user, habit_type="build", target_frequency=4)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(habit),
+            _row_result(
+                [
+                    (date(2026, 5, 1),),
+                    (date(2026, 5, 2),),
+                    (date(2026, 5, 3),),
+                    (date(2026, 5, 4),),
+                    (date(2026, 5, 5),),
+                    (date(2026, 5, 6),),
+                    (date(2026, 5, 7),),
+                    (date(2026, 5, 8),),
+                    (date(2026, 5, 9),),
+                    (date(2026, 5, 10),),
+                ]
+            ),
+            _row_result(
+                [
+                    (date(2026, 4, 3),),
+                    (date(2026, 4, 4),),
+                    (date(2026, 4, 5),),
+                    (date(2026, 4, 6),),
+                    (date(2026, 4, 7),),
+                    (date(2026, 4, 8),),
+                    (date(2026, 4, 9),),
+                    (date(2026, 4, 10),),
+                ]
+            ),
+            _row_one_result(None),
+        ]
+    )
+
+    out = await get_habit_stats(
+        db,
+        user_id=user.id,
+        tag_id=habit.id,
+        window=28,
+        as_of=date(2026, 5, 28),
+    )
+
+    assert out.target_days == 16
+    assert out.adherence_rate == 62.5
+    assert out.previous_adherence_rate == 50
+    assert out.adherence_delta == 12.5
+    assert out.trend_direction == "up"
 
 
 @pytest.mark.asyncio
@@ -147,6 +212,7 @@ async def test_list_habit_stats_returns_all_habits() -> None:
         side_effect=[
             _scalars_result([habit]),
             _scalar_result(habit),
+            _row_result([]),
             _row_result([]),
             _row_one_result(None),
         ]

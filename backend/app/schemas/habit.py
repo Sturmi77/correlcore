@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from app.schemas.tag import HabitType
 
 HabitWindow = Literal[7, 14, 28, 90]
+HabitTrendDirection = Literal["up", "down", "flat", "unknown"]
 
 
 class HabitStatsResponse(BaseModel):
@@ -24,6 +25,9 @@ class HabitStatsResponse(BaseModel):
     days_total: int = Field(ge=0)
     target_days: int = Field(ge=0)
     adherence_rate: float = Field(ge=0, le=100)
+    previous_adherence_rate: float | None = Field(default=None, ge=0, le=100)
+    adherence_delta: float | None = None
+    trend_direction: HabitTrendDirection = "unknown"
     correlation_score: float | None = None
     correlation_metric: str | None = None
 

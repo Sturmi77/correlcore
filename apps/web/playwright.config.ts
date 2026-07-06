@@ -10,6 +10,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    serviceWorkers: 'block',
     trace: 'retain-on-failure',
   },
   webServer: {

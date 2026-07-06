@@ -5,7 +5,14 @@
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import type { TagResponse } from '$lib/api/tags';
   import TagHeatmap from '$lib/components/trends/TagHeatmap.svelte';
-  import { habitMetricI18nKey, isHabitAdherenceInsufficient } from '$lib/utils/habitMetrics';
+  import {
+    formatHabitDelta,
+    habitGoalI18nKey,
+    habitMetricI18nKey,
+    habitProgressValue,
+    habitStatusI18nKey,
+    isHabitAdherenceInsufficient,
+  } from '$lib/utils/habitMetrics';
 
   export let selected: { habit: HabitStatsResponse; tag: TagResponse };
   export let detailHeatmap: TagHeatmapResponse | null = null;
@@ -24,7 +31,33 @@
     return translated === key ? (metric ?? '') : translated;
   }
 
+  function goalLabel(habit: HabitStatsResponse): string {
+    return $_(habitGoalI18nKey(habit), {
+      values: {
+        tracked: habit.days_tracked,
+        target: habit.target_days,
+      },
+    });
+  }
+
+  function trendLabel(habit: HabitStatsResponse): string {
+    if (habit.adherence_delta === null || habit.trend_direction === 'unknown') {
+      return $_('habits.trend.unknown');
+    }
+    return $_('habits.trend.delta', {
+      values: {
+        delta: formatHabitDelta(habit.adherence_delta),
+      },
+    });
+  }
+
   $: insufficient = isHabitAdherenceInsufficient(selected.habit);
+  $: meterText = $_('habits.adherence_meter_text', {
+    values: {
+      percent: pct(selected.habit.adherence_rate),
+      goal: goalLabel(selected.habit),
+    },
+  });
 </script>
 
 <article class="habit-detail" data-testid="habit-detail">
@@ -48,9 +81,29 @@
       aria-valuemax="100"
       aria-valuenow={selected.habit.adherence_rate}
       aria-label={$_('habits.adherence_meter')}
+      aria-valuetext={meterText}
     >
-      <span style={`width: ${selected.habit.adherence_rate}%`}></span>
+      <span style={`width: ${habitProgressValue(selected.habit)}%`}></span>
     </div>
+
+    <dl class="habit-detail__summary">
+      <div>
+        <dt>{$_('habits.status.label')}</dt>
+        <dd>{$_(habitStatusI18nKey(selected.habit))}</dd>
+      </div>
+      <div>
+        <dt>{$_('habits.goal.label')}</dt>
+        <dd>{goalLabel(selected.habit)}</dd>
+      </div>
+      <div>
+        <dt>{$_('habits.trend.label')}</dt>
+        <dd>{trendLabel(selected.habit)}</dd>
+      </div>
+      <div>
+        <dt>{$_('habits.period')}</dt>
+        <dd>{selected.habit.start_date} - {selected.habit.end_date}</dd>
+      </div>
+    </dl>
 
     <dl class="habit-detail__stats">
       <div>
@@ -136,7 +189,15 @@
     margin: 0;
   }
 
+  .habit-detail__summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+    margin: 0;
+  }
+
   .habit-detail__stats div,
+  .habit-detail__summary div,
   .habit-detail__correlation {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
@@ -145,12 +206,14 @@
   }
 
   .habit-detail__stats dt,
+  .habit-detail__summary dt,
   .habit-detail__muted {
     color: var(--color-text-muted);
     font-size: var(--text-xs);
   }
 
-  .habit-detail__stats dd {
+  .habit-detail__stats dd,
+  .habit-detail__summary dd {
     margin: 0.2rem 0 0;
     font-weight: 650;
   }
@@ -166,6 +229,7 @@
   }
 
   @media (max-width: 760px) {
+    .habit-detail__summary,
     .habit-detail__stats {
       grid-template-columns: 1fr;
     }

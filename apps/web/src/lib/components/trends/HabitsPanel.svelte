@@ -8,7 +8,16 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import HabitDetailBody from '$lib/components/trends/HabitDetailBody.svelte';
   import HabitDetailSheet from '$lib/components/trends/HabitDetailSheet.svelte';
-  import { habitMetricI18nKey } from '$lib/utils/habitMetrics';
+  import {
+    formatHabitDelta,
+    habitGoalI18nKey,
+    habitMetricI18nKey,
+    habitProgressValue,
+    habitStatusI18nKey,
+  } from '$lib/utils/habitMetrics';
+  import Minus from 'lucide-svelte/icons/minus';
+  import TrendingDown from 'lucide-svelte/icons/trending-down';
+  import TrendingUp from 'lucide-svelte/icons/trending-up';
 
   export let habits: HabitStatsResponse[] = [];
   export let tags: TagResponse[] = [];
@@ -68,6 +77,26 @@
       values: {
         score: habit.correlation_score.toFixed(2),
         metric: metricLabel(habit.correlation_metric),
+      },
+    });
+  }
+
+  function goalLabel(habit: HabitStatsResponse): string {
+    return $_(habitGoalI18nKey(habit), {
+      values: {
+        tracked: habit.days_tracked,
+        target: habit.target_days,
+      },
+    });
+  }
+
+  function trendLabel(habit: HabitStatsResponse): string {
+    if (habit.adherence_delta === null || habit.trend_direction === 'unknown') {
+      return '';
+    }
+    return $_('habits.trend.delta', {
+      values: {
+        delta: formatHabitDelta(habit.adherence_delta),
       },
     });
   }
@@ -205,13 +234,39 @@
                 )}</small
               >
             </span>
-            <span class="habits__metric">
-              <strong
-                >{pct(row.habit.adherence_rate)} · {$_('habits.window_last', {
-                  values: { n: window },
-                })}</strong
+            <span class="habits__row-body">
+              <span class="habits__goal">
+                <span>{goalLabel(row.habit)}</span>
+                <strong>{pct(row.habit.adherence_rate)}</strong>
+              </span>
+              <span
+                class="habits__row-bar"
+                aria-hidden="true"
+                style={`--habit-progress: ${habitProgressValue(row.habit)}%`}
               >
-              <small>{correlationListLabel(row.habit)}</small>
+                <span></span>
+              </span>
+              <span class="habits__row-meta">
+                <small>{$_(habitStatusI18nKey(row.habit))}</small>
+                {#if trendLabel(row.habit)}
+                  <small
+                    class:habits__trend--up={row.habit.trend_direction === 'up'}
+                    class:habits__trend--down={row.habit.trend_direction === 'down'}
+                    class:habits__trend--flat={row.habit.trend_direction === 'flat'}
+                    class="habits__trend"
+                  >
+                    {#if row.habit.trend_direction === 'up'}
+                      <TrendingUp size={14} aria-hidden="true" />
+                    {:else if row.habit.trend_direction === 'down'}
+                      <TrendingDown size={14} aria-hidden="true" />
+                    {:else}
+                      <Minus size={14} aria-hidden="true" />
+                    {/if}
+                    {trendLabel(row.habit)}
+                  </small>
+                {/if}
+              </span>
+              <small class="habits__correlation">{correlationListLabel(row.habit)}</small>
             </span>
           </button>
         {/each}
@@ -299,7 +354,7 @@
   }
 
   .habits__list button {
-    min-height: 4.25rem;
+    min-height: 6.25rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     background: var(--color-surface);
@@ -320,7 +375,7 @@
   }
 
   .habits__row-title,
-  .habits__metric {
+  .habits__row-body {
     display: grid;
     gap: 0.15rem;
   }
@@ -337,15 +392,74 @@
   }
 
   .habits__row-title small,
-  .habits__metric small {
+  .habits__row-body small {
     color: var(--color-text-muted);
     font-size: var(--text-xs);
   }
 
-  .habits__metric {
-    text-align: right;
+  .habits__row-body {
     font-variant-numeric: tabular-nums;
-    max-width: 48%;
+    width: min(19rem, 52%);
+    min-width: 12rem;
+  }
+
+  .habits__goal,
+  .habits__row-meta,
+  .habits__trend {
+    display: flex;
+    align-items: center;
+  }
+
+  .habits__goal,
+  .habits__row-meta {
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .habits__goal span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .habits__goal strong {
+    font-size: var(--text-sm);
+    line-height: 1;
+  }
+
+  .habits__row-bar {
+    display: block;
+    height: 0.45rem;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    background: oklch(from var(--color-text) l c h / 0.08);
+  }
+
+  .habits__row-bar span {
+    display: block;
+    width: var(--habit-progress);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary);
+  }
+
+  .habits__trend {
+    gap: 0.2rem;
+    white-space: nowrap;
+  }
+
+  .habits__trend--up,
+  .habits__trend--flat {
+    color: var(--color-text-muted);
+  }
+
+  .habits__trend--down {
+    color: var(--color-warning);
+  }
+
+  .habits__correlation {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .habits__empty {
@@ -384,8 +498,14 @@
       flex-direction: column;
     }
 
-    .habits__metric {
-      max-width: 55%;
+    .habits__list button {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .habits__row-body {
+      width: 100%;
+      min-width: 0;
     }
   }
 </style>

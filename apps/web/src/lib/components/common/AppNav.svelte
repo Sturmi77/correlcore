@@ -1,7 +1,10 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
-  import { ChartLine, House, Lightbulb, Settings } from 'lucide-svelte';
+  import ChartLine from 'lucide-svelte/icons/chart-line';
+  import House from 'lucide-svelte/icons/house';
+  import Lightbulb from 'lucide-svelte/icons/lightbulb';
+  import Settings from 'lucide-svelte/icons/settings';
   import { isNavItemActive, NAV_ITEMS, type NavItemConfig } from '$lib/navigation/appNav';
 
   const ICONS: Record<NavItemConfig['icon'], typeof House> = {
