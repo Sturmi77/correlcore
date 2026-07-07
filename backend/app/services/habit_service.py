@@ -19,7 +19,7 @@ from app.schemas.habit import (
     HabitTrendDirection,
     HabitWindow,
 )
-from app.services.tag_service import active_tag_predicate
+from app.services.tag_service import visible_tag_predicate
 
 HABIT_WINDOWS: set[int] = {7, 14, 28, 90}
 MIN_DAYS_FOR_ADHERENCE_DISPLAY = 7
@@ -135,7 +135,8 @@ async def list_habit_tags(db: AsyncSession, *, user_id: uuid.UUID) -> list[Tag]:
     result = await db.execute(
         select(Tag)
         .where(
-            active_tag_predicate(user_id),
+            visible_tag_predicate(user_id),
+            Tag.is_hidden.is_(False),
             Tag.habit_type.in_(("build", "reduce")),
             Tag.target_frequency.is_not(None),
         )
@@ -157,7 +158,8 @@ async def get_habit_stats(
     result = await db.execute(
         select(Tag).where(
             Tag.id == tag_id,
-            active_tag_predicate(user_id),
+            visible_tag_predicate(user_id),
+            Tag.is_hidden.is_(False),
             Tag.habit_type.in_(("build", "reduce")),
             Tag.target_frequency.is_not(None),
         )

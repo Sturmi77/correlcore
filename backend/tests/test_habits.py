@@ -13,7 +13,12 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
 from app.models.user import User
 from app.schemas.habit import HabitListResponse, HabitStatsResponse
-from app.services.habit_service import HabitNotFoundError, get_habit_stats, list_habit_stats
+from app.services.habit_service import (
+    HabitNotFoundError,
+    get_habit_stats,
+    list_habit_stats,
+    list_habit_tags,
+)
 from tests.conftest import make_tag, make_user
 
 
@@ -201,6 +206,28 @@ async def test_habit_stats_raises_for_non_habit() -> None:
 
     with pytest.raises(HabitNotFoundError):
         await get_habit_stats(db, user_id=user.id, tag_id=uuid.uuid4(), window=28)
+
+    stmt = db.execute.await_args.args[0]
+    where_text = str(stmt.whereclause)
+    assert "tags.user_id = :" in where_text
+    assert "tags.is_default IS true" in where_text
+    assert "tags.is_hidden IS false" in where_text
+
+
+@pytest.mark.asyncio
+async def test_list_habit_tags_only_queries_visible_tags() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalars_result([]))
+
+    out = await list_habit_tags(db, user_id=user.id)
+
+    assert out == []
+    stmt = db.execute.await_args.args[0]
+    where_text = str(stmt.whereclause)
+    assert "tags.user_id = :" in where_text
+    assert "tags.is_default IS true" in where_text
+    assert "tags.is_hidden IS false" in where_text
 
 
 @pytest.mark.asyncio
