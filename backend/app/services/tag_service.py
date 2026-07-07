@@ -142,6 +142,11 @@ def _visible_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
     return (Tag.user_id == user_id) | (Tag.is_default.is_(True) & ~shadowed_default)
 
 
+def visible_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
+    """Return the public visibility predicate for defaults plus user overrides."""
+    return _visible_tag_predicate(user_id)
+
+
 def active_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
     """Return true for tags that should participate in new user calculations.
 
