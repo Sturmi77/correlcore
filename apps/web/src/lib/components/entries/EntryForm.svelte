@@ -39,6 +39,7 @@
     type EntrySlot,
     type WorkContext,
   } from '$lib/api/entries';
+  import type { WorkContextTypical } from '$lib/api/profile';
   import { submitEntry } from '$lib/stores/entries';
   import { assignTagsToEntry, listTagsForEntry } from '$lib/api/tags';
   import {
@@ -75,6 +76,7 @@
   export let onboardingTagsEnabled = false;
   /** ISO date `YYYY-MM-DD` for the entry being edited. */
   export let initialDate: string;
+  export let workContextTypical: WorkContextTypical | null = null;
 
   const dispatch = createEventDispatcher<{ close: void; saved: void }>();
 
@@ -92,7 +94,10 @@
   let energy = NEUTRAL_SCALE_DEFAULT;
   let stress = NEUTRAL_SCALE_DEFAULT;
   let cycleDay: number | null = null;
-  let workContext: WorkContext = defaultWorkContextForDate(new Date(initialDate + 'T00:00:00'));
+  let workContext: WorkContext = defaultWorkContextForDate(
+    new Date(initialDate + 'T00:00:00'),
+    workContextTypical
+  );
   let note = '';
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
@@ -145,7 +150,7 @@
   $: if (!workContextTouched && loadedEntryDate && !existingEntryId) {
     const d = new Date(loadedEntryDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
-      workContext = defaultWorkContextForDate(d);
+      workContext = defaultWorkContextForDate(d, workContextTypical);
     }
   }
 
@@ -168,7 +173,7 @@
     workContextTouched = false;
     const d = new Date(forDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
-      workContext = defaultWorkContextForDate(d);
+      workContext = defaultWorkContextForDate(d, workContextTypical);
     }
   }
 

@@ -1,10 +1,20 @@
 import { api } from './client';
 import type { InsightTier } from './insights';
+import type { WorkContext } from './entries';
+
+export interface WorkContextSummaryItem {
+  work_context: WorkContext;
+  entry_count: number;
+  mood_avg: number | null;
+  energy_avg: number | null;
+  stress_avg: number | null;
+}
 
 export interface DashboardSummaryResponse {
   entry_count: number;
   insight_tier: InsightTier;
   confidence_score: number;
+  work_context_summary: WorkContextSummaryItem[];
 }
 
 export async function fetchDashboardSummary(asOf?: string): Promise<DashboardSummaryResponse> {

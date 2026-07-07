@@ -217,6 +217,18 @@ async function installSmokeApi(page: Page, options: { authenticated: boolean }) 
       });
     }
 
+    if (path === '/user/profile' && method === 'GET') {
+      return json(200, {
+        user_id: user.id,
+        sleep_hours_typical: null,
+        work_context_typical: 'office',
+        sport_frequency: null,
+        insight_curiosity: null,
+        created_at: now,
+        updated_at: now,
+      });
+    }
+
     return json(404, { detail: `Unhandled smoke API route: ${method} ${path}` });
   });
 

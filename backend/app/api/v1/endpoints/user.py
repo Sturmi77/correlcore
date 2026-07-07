@@ -45,7 +45,7 @@ from app.services.user_preferences_service import (
     get_or_create_user_preferences,
     update_user_preferences,
 )
-from app.services.user_profile_service import upsert_user_profile
+from app.services.user_profile_service import get_or_create_user_profile, upsert_user_profile
 from app.services.user_service import UserDeletionError, delete_user_account
 
 logger = logging.getLogger(__name__)
@@ -90,6 +90,19 @@ async def put_my_profile(
     db: AsyncSession = Depends(get_session),
 ) -> UserProfileResponse:
     profile = await upsert_user_profile(db, user_id=current_user.id, payload=payload)
+    return UserProfileResponse.model_validate(profile)
+
+
+@router.get(
+    "/profile",
+    response_model=UserProfileResponse,
+    summary="Return the current user's optional onboarding profile",
+)
+async def get_my_profile(
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> UserProfileResponse:
+    profile = await get_or_create_user_profile(db, user_id=current_user.id)
     return UserProfileResponse.model_validate(profile)
 
 

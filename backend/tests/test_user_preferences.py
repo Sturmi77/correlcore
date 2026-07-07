@@ -10,11 +10,16 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
 from app.models.user import User
 from app.models.user_preference import UserPreference
-from app.models.user_profile import InsightCuriosity, SleepHoursTypical, UserProfile
+from app.models.user_profile import (
+    InsightCuriosity,
+    SleepHoursTypical,
+    UserProfile,
+    WorkContextTypical,
+)
 from app.schemas.user_preferences import UserPreferencesUpdate
 from app.schemas.user_profile import UserProfileUpsert
 from app.services.user_preferences_service import update_user_preferences
-from app.services.user_profile_service import upsert_user_profile
+from app.services.user_profile_service import get_or_create_user_profile, upsert_user_profile
 from tests.conftest import make_user
 
 
@@ -124,3 +129,50 @@ async def test_upsert_user_profile_updates_optional_answers() -> None:
     assert out.sleep_hours_typical == SleepHoursTypical.H7
     assert out.insight_curiosity == InsightCuriosity.ENERGY_SLEEP
     db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_or_create_user_profile_creates_blank_profile() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(None))
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    out = await get_or_create_user_profile(db, user_id=user.id)
+
+    assert out.user_id == user.id
+    assert out.work_context_typical is None
+    db.add.assert_called_once()
+    db.flush.assert_awaited_once()
+    db.refresh.assert_awaited_once_with(out)
+
+
+@pytest.mark.asyncio
+async def test_profile_endpoint_returns_profile_state(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    profile = _make_profile(user)
+    profile.work_context_typical = WorkContextTypical.OFFICE
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.user.get_or_create_user_profile",
+            new_callable=AsyncMock,
+            return_value=profile,
+        ):
+            response = await async_client.get(
+                "/api/v1/user/profile",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["work_context_typical"] == "office"

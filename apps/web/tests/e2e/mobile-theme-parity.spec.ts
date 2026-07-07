@@ -46,11 +46,27 @@ async function installDarkThemeApi(page: Page) {
       });
     }
     if (path === '/user/preferences' && method === 'GET') return json(200, preferences);
+    if (path === '/user/profile' && method === 'GET') {
+      return json(200, {
+        user_id: user.id,
+        sleep_hours_typical: null,
+        work_context_typical: null,
+        sport_frequency: null,
+        insight_curiosity: null,
+        created_at: '2026-06-01T00:00:00Z',
+        updated_at: '2026-06-01T00:00:00Z',
+      });
+    }
     if (path === '/entries' && method === 'GET') return json(200, []);
     if (path === '/tags' && method === 'GET') return json(200, []);
     if (path === '/symptoms' && method === 'GET') return json(200, []);
     if (path.startsWith('/dashboard/summary')) {
-      return json(200, { entry_count: 0, insight_tier: 'none', confidence_score: 0 });
+      return json(200, {
+        entry_count: 0,
+        insight_tier: 'none',
+        confidence_score: 0,
+        work_context_summary: [],
+      });
     }
     if (path.startsWith('/entries/stats/timeseries')) {
       return json(200, { range: 'week', points: [] });

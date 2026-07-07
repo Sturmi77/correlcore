@@ -11,4 +11,13 @@ describe('defaultWorkContextForDate', () => {
     expect(defaultWorkContextForDate(new Date('2026-05-15T12:00:00'))).toBe('homeoffice');
     expect(defaultWorkContextForDate(new Date('2026-05-13T12:00:00'))).toBe('homeoffice');
   });
+
+  it('uses profile preference for weekday defaults when the mapping is unambiguous', () => {
+    expect(defaultWorkContextForDate(new Date('2026-05-15T12:00:00'), 'office')).toBe('office');
+    expect(defaultWorkContextForDate(new Date('2026-05-15T12:00:00'), 'remote')).toBe('homeoffice');
+  });
+
+  it('keeps weekend default even when a profile preference exists', () => {
+    expect(defaultWorkContextForDate(new Date('2026-05-16T12:00:00'), 'office')).toBe('weekend');
+  });
 });

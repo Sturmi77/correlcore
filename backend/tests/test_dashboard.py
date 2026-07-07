@@ -8,6 +8,7 @@ from httpx import AsyncClient
 
 from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
+from app.models.entry import WorkContext
 from app.models.insight import InsightTier
 from app.models.user import User
 from app.schemas.dashboard import DashboardSummaryResponse
@@ -19,6 +20,12 @@ from tests.conftest import make_user
 def _scalar_one_result(value: object) -> MagicMock:
     result = MagicMock()
     result.scalar_one.return_value = value
+    return result
+
+
+def _all_result(value: object) -> MagicMock:
+    result = MagicMock()
+    result.all.return_value = value
     return result
 
 
@@ -52,16 +59,24 @@ def test_insight_confidence_score_keeps_improving_after_robust_threshold() -> No
 async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
     user = make_user()
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_scalar_one_result(15))
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_result(15),
+            _all_result([(WorkContext.OFFICE, 8, 3.75, 3.5, 2.25)]),
+        ]
+    )
 
     out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
 
     assert out.entry_count == 15
     assert out.insight_tier == InsightTier.DEVELOPING
     assert out.confidence_score == insight_confidence_score(15)
-    stmt = db.execute.await_args.args[0]
-    assert "count(distinct(entries.entry_date))" in str(stmt)
-    assert "entries.entry_date <= :entry_date_1" in str(stmt.whereclause)
+    assert out.work_context_summary[0].work_context == WorkContext.OFFICE
+    assert out.work_context_summary[0].entry_count == 8
+    assert out.work_context_summary[0].mood_avg == 3.75
+    count_stmt = db.execute.await_args_list[0].args[0]
+    assert "count(distinct(entries.entry_date))" in str(count_stmt)
+    assert "entries.entry_date <= :entry_date_1" in str(count_stmt.whereclause)
 
 
 @pytest.mark.asyncio
@@ -81,6 +96,15 @@ async def test_dashboard_summary_endpoint_returns_confidence_fields(
                 entry_count=30,
                 insight_tier=InsightTier.ROBUST,
                 confidence_score=0.9,
+                work_context_summary=[
+                    {
+                        "work_context": WorkContext.OFFICE,
+                        "entry_count": 12,
+                        "mood_avg": 3.8,
+                        "energy_avg": 3.4,
+                        "stress_avg": 2.6,
+                    }
+                ],
             ),
         ) as summary:
             response = await async_client.get(
@@ -96,4 +120,13 @@ async def test_dashboard_summary_endpoint_returns_confidence_fields(
         "entry_count": 30,
         "insight_tier": "robust",
         "confidence_score": 0.9,
+        "work_context_summary": [
+            {
+                "work_context": "office",
+                "entry_count": 12,
+                "mood_avg": 3.8,
+                "energy_avg": 3.4,
+                "stress_avg": 2.6,
+            }
+        ],
     }

@@ -62,6 +62,9 @@
       "top_insight": "Top insight",
       "top_insight_confidence": "{value}% confidence",
       "top_insight_fallback": "Log a few more days to surface your strongest pattern here.",
+      "work_context_heading": "Work context pattern",
+      "work_context_hint": "All tracked days",
+      "work_context_value": "{count}d, mood avg {mood}",
       "none": "None"
     },
     "recent": {
