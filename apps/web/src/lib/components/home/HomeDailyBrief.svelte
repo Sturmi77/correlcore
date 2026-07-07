@@ -1,5 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
+  import type { WorkContextSummaryItem } from '$lib/api/dashboard';
   import type { EntryResponse } from '$lib/api/entries';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { topInsightLabel } from '$lib/utils/analysisCrossLinks';
@@ -12,7 +13,12 @@
   export let entries: EntryResponse[] = [];
   export let latestInsight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
+  export let workContextSummary: WorkContextSummaryItem[] = [];
   export let loading = false;
+
+  function formatAverage(value: number | null): string {
+    return value === null ? $_('home.brief.none') : value.toFixed(1);
+  }
 
   $: rankedInsights = latestInsight ? rankInsights([latestInsight]) : [];
   $: topInsight = rankedInsights[0] ?? null;
@@ -27,6 +33,12 @@
   $: trendsBridgePreview = insightBridgePreview;
   $: topInsightConfidence =
     topInsight?.confidence != null ? Math.round(topInsight.confidence * 100) : null;
+  $: visibleWorkContexts = workContextSummary
+    .filter((item) => item.entry_count > 0)
+    .slice()
+    .sort((a, b) => b.entry_count - a.entry_count || a.work_context.localeCompare(b.work_context))
+    .slice(0, 4);
+  $: maxWorkContextCount = Math.max(1, ...visibleWorkContexts.map((item) => item.entry_count));
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
@@ -82,6 +94,35 @@
       <p class="daily-brief__top-insight-fallback">{$_('home.brief.top_insight_fallback')}</p>
     {/if}
   </section>
+
+  {#if visibleWorkContexts.length}
+    <section class="daily-brief__work-context" aria-label={$_('home.brief.work_context_heading')}>
+      <div class="daily-brief__work-context-header">
+        <h3>{$_('home.brief.work_context_heading')}</h3>
+        <span>{$_('home.brief.work_context_hint')}</span>
+      </div>
+      <div class="daily-brief__work-context-list">
+        {#each visibleWorkContexts as item}
+          <div class="daily-brief__work-context-row">
+            <span>{$_(`entry.work_context.${item.work_context}`)}</span>
+            <div
+              class="daily-brief__work-context-bar"
+              aria-hidden="true"
+              style={`--bar-width: ${(item.entry_count / maxWorkContextCount) * 100}%`}
+            ></div>
+            <strong>
+              {$_('home.brief.work_context_value', {
+                values: {
+                  count: item.entry_count,
+                  mood: formatAverage(item.mood_avg),
+                },
+              })}
+            </strong>
+          </div>
+        {/each}
+      </div>
+    </section>
+  {/if}
 
   {#if showWeeklyBridge}
     <nav
@@ -198,6 +239,63 @@
     line-height: 1.45;
   }
 
+  .daily-brief__work-context {
+    display: grid;
+    gap: var(--space-3);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .daily-brief__work-context-header {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+
+  .daily-brief__work-context-header h3 {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .daily-brief__work-context-header span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .daily-brief__work-context-list {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .daily-brief__work-context-row {
+    display: grid;
+    grid-template-columns: minmax(6rem, 0.9fr) minmax(5rem, 1.4fr) minmax(5rem, auto);
+    gap: var(--space-2);
+    align-items: center;
+    font-size: var(--text-sm);
+  }
+
+  .daily-brief__work-context-row > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .daily-brief__work-context-row strong {
+    justify-self: end;
+    white-space: nowrap;
+  }
+
+  .daily-brief__work-context-bar {
+    min-width: 0;
+    height: 0.55rem;
+    border-radius: var(--radius-full);
+    background:
+      linear-gradient(var(--color-primary), var(--color-primary)) left center / var(--bar-width)
+        100% no-repeat,
+      var(--color-surface);
+  }
+
   .daily-brief__bridge {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -239,6 +337,19 @@
   @media (max-width: 520px) {
     .daily-brief__bridge {
       grid-template-columns: 1fr;
+    }
+
+    .daily-brief__work-context-header {
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .daily-brief__work-context-row {
+      grid-template-columns: 1fr;
+    }
+
+    .daily-brief__work-context-row strong {
+      justify-self: start;
     }
   }
 </style>

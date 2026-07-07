@@ -18,6 +18,10 @@ export interface UserProfileResponse extends UserProfilePayload {
   updated_at: string;
 }
 
+export async function fetchUserProfile(): Promise<UserProfileResponse> {
+  return api.get<UserProfileResponse>('/user/profile');
+}
+
 export async function upsertUserProfile(payload: UserProfilePayload): Promise<UserProfileResponse> {
   return api.put<UserProfileResponse>('/user/profile', payload);
 }

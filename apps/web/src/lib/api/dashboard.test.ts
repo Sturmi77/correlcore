@@ -19,6 +19,7 @@ describe('dashboard API client', () => {
       entry_count: 15,
       insight_tier: 'developing',
       confidence_score: 0.65,
+      work_context_summary: [],
     });
 
     await fetchDashboardSummary('2026-05-12');

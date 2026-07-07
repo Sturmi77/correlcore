@@ -11,17 +11,24 @@ from app.models.user_profile import UserProfile
 from app.schemas.user_profile import UserProfileUpsert
 
 
+async def get_or_create_user_profile(db: AsyncSession, *, user_id: uuid.UUID) -> UserProfile:
+    result = await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+    profile = result.scalar_one_or_none()
+    if profile is None:
+        profile = UserProfile(user_id=user_id)
+        db.add(profile)
+        await db.flush()
+        await db.refresh(profile)
+    return profile
+
+
 async def upsert_user_profile(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
     payload: UserProfileUpsert,
 ) -> UserProfile:
-    result = await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
-    profile = result.scalar_one_or_none()
-    if profile is None:
-        profile = UserProfile(user_id=user_id)
-        db.add(profile)
+    profile = await get_or_create_user_profile(db, user_id=user_id)
 
     for key, value in payload.model_dump().items():
         setattr(profile, key, value)

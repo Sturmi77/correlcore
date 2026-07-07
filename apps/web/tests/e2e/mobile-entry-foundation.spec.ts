@@ -39,6 +39,7 @@ async function installEntryApi(
         entry_count: options.historical ? 1 : 0,
         insight_tier: 'none',
         confidence_score: 0,
+        work_context_summary: [],
       });
     }
 
@@ -51,6 +52,18 @@ async function installEntryApi(
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         last_seen_insight_at: null,
+        created_at: '2026-06-01T00:00:00Z',
+        updated_at: '2026-06-01T00:00:00Z',
+      });
+    }
+
+    if (path === '/user/profile' && method === 'GET') {
+      return json(200, {
+        user_id: user.id,
+        sleep_hours_typical: null,
+        work_context_typical: 'remote',
+        sport_frequency: null,
+        insight_curiosity: null,
         created_at: '2026-06-01T00:00:00Z',
         updated_at: '2026-06-01T00:00:00Z',
       });

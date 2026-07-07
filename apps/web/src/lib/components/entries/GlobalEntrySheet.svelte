@@ -11,12 +11,15 @@
   } from '$lib/stores/entrySheet';
   import { fetchDashboardSummary } from '$lib/api/dashboard';
   import { fetchUserPreferences } from '$lib/api/preferences';
+  import { fetchUserProfile, type WorkContextTypical } from '$lib/api/profile';
   import { entryDateFromSearchParams, isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { isoDate } from '$lib/utils/entryForm';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
   import EntrySheet from './EntrySheet.svelte';
 
   let sheetOpen = false;
+  let workContextTypical: WorkContextTypical | null = null;
+  let profileLoaded = false;
 
   $: sheetOpen = $entrySheetStore.open;
   $: if (!sheetOpen && $entrySheetStore.open) {
@@ -54,6 +57,17 @@
     stripOpenEntryQuery();
   }
 
+  async function loadProfileDefault(): Promise<void> {
+    if (profileLoaded || get(auth).status !== 'authenticated') return;
+    profileLoaded = true;
+    try {
+      const profile = await fetchUserProfile();
+      workContextTypical = profile.work_context_typical ?? null;
+    } catch {
+      workContextTypical = null;
+    }
+  }
+
   function handleSheetClose(): void {
     closeEntrySheet();
     sheetOpen = false;
@@ -64,8 +78,11 @@
       if (state.status !== 'authenticated') {
         closeEntrySheet();
         sheetOpen = false;
+        workContextTypical = null;
+        profileLoaded = false;
         return;
       }
+      void loadProfileDefault();
       void maybeOpenFromQuery();
     });
 
@@ -87,6 +104,7 @@
     bind:open={sheetOpen}
     initialDate={$entrySheetStore.date}
     onboardingTagsEnabled={$entrySheetStore.onboardingTagsEnabled}
+    {workContextTypical}
     on:close={handleSheetClose}
     on:saved={() => notifyEntrySheetSaved()}
   />

@@ -35,6 +35,7 @@
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
+  import WeekdayPatternChart from '$lib/components/home/WeekdayPatternChart.svelte';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
@@ -59,6 +60,7 @@
   $: insightMaturity = $insightStore.insightMaturity;
   $: insightLoading = $insightStore.loading;
   $: contextInsight = $rankedInsights.find((i) => isCalendarContextInsight(i)) ?? null;
+  $: weekdayInsight = $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.some((key) =>
       [EARLY_CONTEXT_PATTERN_KEY, LEGACY_FIRST_WEEK_PATTERN_KEY].includes(key)
@@ -227,13 +229,16 @@
     <section class="home-zone" data-testid="home-zone-insight">
       {#if showFirstWeekBanner}
         <FirstWeekInsightBanner insight={contextInsight} on:dismiss={dismissFirstWeekBanner} />
-      {:else}
-        <HomeDailyBrief
-          entries={recentEntries}
-          {latestInsight}
-          maturity={insightMaturity}
-          loading={insightLoading && !latestInsight}
-        />
+      {/if}
+      <HomeDailyBrief
+        entries={recentEntries}
+        {latestInsight}
+        maturity={insightMaturity}
+        loading={insightLoading && !latestInsight}
+        workContextSummary={dashboardSummary?.work_context_summary ?? []}
+      />
+      {#if weekdayInsight}
+        <WeekdayPatternChart insight={weekdayInsight} />
       {/if}
     </section>
 

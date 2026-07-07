@@ -15,5 +15,5 @@
 </script>
 
 <svelte:head>
-  <title>{$_('entry.title')} — {$_('app.name')}</title>
+  <title>{$_('entry.title')} - {$_('app.name')}</title>
 </svelte:head>

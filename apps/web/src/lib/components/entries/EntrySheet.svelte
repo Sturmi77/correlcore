@@ -1,12 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import type { WorkContextTypical } from '$lib/api/profile';
   import EntryForm from '$lib/components/entries/EntryForm.svelte';
   import { getEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
 
   export let open = false;
   export let initialDate: string;
   export let onboardingTagsEnabled = false;
+  export let workContextTypical: WorkContextTypical | null = null;
 
   const dispatch = createEventDispatcher<{ close: void; saved: void }>();
 
@@ -107,6 +109,7 @@
             {initialDate}
             {openMode}
             {onboardingTagsEnabled}
+            {workContextTypical}
             on:close={handleFormClose}
             on:saved={handleFormSaved}
           />

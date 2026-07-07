@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import HomeDailyBrief from './HomeDailyBrief.svelte';
+import { describe, expect, it, vi } from 'vitest';
 import type { InsightMaturity } from '$lib/api/insights';
+import HomeDailyBrief from './HomeDailyBrief.svelte';
 
 vi.mock('svelte-i18n', () => ({
   _: {
@@ -14,6 +14,7 @@ vi.mock('svelte-i18n', () => ({
         if (key === 'maturity.journey.compact_entries_until_next') {
           return `${options?.values?.remaining} more until next phase`;
         }
+        if (options?.values) return `${key} ${JSON.stringify(options.values)}`;
         if (key.startsWith('maturity.')) return key;
         return key;
       });
@@ -67,5 +68,33 @@ describe('HomeDailyBrief', () => {
     expect(screen.getByTestId('home-brief-top-insight').textContent).toContain(
       'Energy tracks with your walks.'
     );
+  });
+
+  it('renders work context summary rows when dashboard data is present', () => {
+    render(HomeDailyBrief, {
+      props: {
+        workContextSummary: [
+          {
+            work_context: 'office',
+            entry_count: 8,
+            mood_avg: 3.75,
+            energy_avg: 3.4,
+            stress_avg: 2.8,
+          },
+          {
+            work_context: 'homeoffice',
+            entry_count: 5,
+            mood_avg: 4.1,
+            energy_avg: 3.8,
+            stress_avg: 2.1,
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByText('home.brief.work_context_heading')).toBeTruthy();
+    expect(screen.getByText('entry.work_context.office')).toBeTruthy();
+    expect(screen.getByText('entry.work_context.homeoffice')).toBeTruthy();
+    expect(screen.getByText(/"count":8/)).toBeTruthy();
   });
 });

@@ -12,6 +12,10 @@ const firstWeekBannerSource = readFileSync(
   resolve('src/lib/components/home/FirstWeekInsightBanner.svelte'),
   'utf8'
 );
+const globalEntrySheetSource = readFileSync(
+  resolve('src/lib/components/entries/GlobalEntrySheet.svelte'),
+  'utf8'
+);
 const entryLaunchButtonSource = readFileSync(
   resolve('src/lib/components/entries/EntryLaunchButton.svelte'),
   'utf8'
@@ -59,5 +63,11 @@ describe('/ home screen ownership contract', () => {
     expect(source).toContain('{#if !todayEntry}');
     expect(source).not.toContain('HomeSparkline');
     expect(todayContextSource).toContain('data-testid="home-today-action"');
+  });
+
+  it('surfaces weekday and work-context patterns without adding a separate dashboard zone', () => {
+    expect(source).toContain('WeekdayPatternChart');
+    expect(source).toContain('workContextSummary={dashboardSummary?.work_context_summary ?? []}');
+    expect(globalEntrySheetSource).toContain('{workContextTypical}');
   });
 });

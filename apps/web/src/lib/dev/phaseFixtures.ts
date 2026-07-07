@@ -717,6 +717,32 @@ export function getDevPhaseFixture(state: DevPhaseStateLike): DevPhaseFixture {
               : 'early',
       confidence_score:
         state.presetId === 'robust' ? 0.66 : state.presetId === 'provisional' ? 0.48 : 0.22,
+      work_context_summary: [
+        {
+          work_context: 'office' as const,
+          entry_count: Math.max(0, Math.round(entryCount * 0.45)),
+          mood_avg: 3.4,
+          energy_avg: 3.2,
+          stress_avg: 3.6,
+        },
+        {
+          work_context: 'homeoffice' as const,
+          entry_count: Math.max(0, Math.round(entryCount * 0.38)),
+          mood_avg: 3.9,
+          energy_avg: 3.7,
+          stress_avg: 2.8,
+        },
+        {
+          work_context: 'weekend' as const,
+          entry_count: Math.max(
+            0,
+            entryCount - Math.round(entryCount * 0.45) - Math.round(entryCount * 0.38)
+          ),
+          mood_avg: 4.2,
+          energy_avg: 3.8,
+          stress_avg: 2.2,
+        },
+      ].filter((item) => item.entry_count > 0),
     },
     preferences: makePreferences(state.onboardingCompleted, state.presetId),
     timeseries: makeTimeseries(entries),
