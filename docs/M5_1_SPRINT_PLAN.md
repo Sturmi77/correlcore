@@ -12,14 +12,14 @@ plan covers the **UX polish** scope defined in DESIGN_DOCUMENT v0.13.
 
 ## Overview
 
-| Sprint | Title                      | Issues (GitHub)              | Exit                                              |
-| ------ | -------------------------- | ---------------------------- | ------------------------------------------------- |
-| 0      | Scope & audit              | —                            | Issue matrix complete; tracking docs in place     |
-| 1      | Onboarding & Entry bridge  | #251, #260, #261, #263       | W2 funnel verified; verify → entry without login  |
-| 2      | Home & Insights UX         | #252, #254†, #264, #266, #268 | Brief-first Home; maturity-gated analytics      |
-| 3      | Entry & Habits surfaces    | #262, #265, #267              | Unified entry sheet; inline habit setup           |
-| 4      | PWA, Settings & Desktop    | #269, #270, #271, #273        | Contextual PWA/export; sticky Trends range        |
-| 5      | Milestone closeout (M5.1-C) | —                           | Visual QA, docs, quality gate, GitHub hygiene     |
+| Sprint | Title                       | Issues (GitHub)               | Exit                                             |
+| ------ | --------------------------- | ----------------------------- | ------------------------------------------------ |
+| 0      | Scope & audit               | —                             | Issue matrix complete; tracking docs in place    |
+| 1      | Onboarding & Entry bridge   | #251, #260, #261, #263        | W2 funnel verified; verify → entry without login |
+| 2      | Home & Insights UX          | #252, #254†, #264, #266, #268 | Brief-first Home; maturity-gated analytics       |
+| 3      | Entry & Habits surfaces     | #262, #265, #267              | Unified entry sheet; inline habit setup          |
+| 4      | PWA, Settings & Desktop     | #269, #270, #271, #273        | Contextual PWA/export; sticky Trends range       |
+| 5      | Milestone closeout (M5.1-C) | —                             | Visual QA, docs, quality gate, GitHub hygiene    |
 
 † **#254 (O-05):** Original sparkline ≥3-entry gate superseded by Phase-3 **O-55**
 (sparkline removed). Acceptance satisfied via removal.
@@ -51,10 +51,10 @@ flowchart TD
   S4 --> S5
 ```
 
-| Dependency | Reason                                      |
-| ---------- | ------------------------------------------- |
-| #251 → #260 | `openEntry` contract before inline tags     |
-| #261 → W2   | Post-verify session before seamless funnel  |
+| Dependency    | Reason                                     |
+| ------------- | ------------------------------------------ |
+| #251 → #260   | `openEntry` contract before inline tags    |
+| #261 → W2     | Post-verify session before seamless funnel |
 | Sprint 5 → M9 | Beta testers after UX flows are signed off |
 
 ## Sprint 0 — Scope & audit
@@ -127,13 +127,13 @@ pnpm --filter @correlcore/web test:e2e:smoke
 
 ## Success metrics
 
-| Metric                         | Target (from GUI optimization audit) |
-| ------------------------------ | ------------------------------------ |
-| W1 account funnel              | ≤5 steps, ≤3 screens                 |
-| W2 first entry                 | ≤4 steps, ≤60s                       |
-| Duplicate maturity UI          | 1 block per screen                   |
-| Legacy onboarding reachable    | Redirect only                        |
-| End-to-end without dead ends   | Mobile 390/430 + Desktop 1280+       |
+| Metric                       | Target (from GUI optimization audit) |
+| ---------------------------- | ------------------------------------ |
+| W1 account funnel            | ≤5 steps, ≤3 screens                 |
+| W2 first entry               | ≤4 steps, ≤60s                       |
+| Duplicate maturity UI        | 1 block per screen                   |
+| Legacy onboarding reachable  | Redirect only                        |
+| End-to-end without dead ends | Mobile 390/430 + Desktop 1280+       |
 
 ## References
 

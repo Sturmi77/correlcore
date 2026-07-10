@@ -12,36 +12,36 @@ Visual QA signed off in [`docs/quality/M5_1_UX_VISUAL_QA.md`](quality/M5_1_UX_VI
 
 ## Overview
 
-| Sprint | Title                      | Status |
-| ------ | -------------------------- | ------ |
-| 0      | Scope & audit              | Done   |
-| 1      | Onboarding & Entry bridge  | Done   |
-| 2      | Home & Insights UX         | Done   |
-| 3      | Entry & Habits surfaces    | Done   |
-| 4      | PWA, Settings & Desktop    | Done   |
-| 5      | Milestone closeout (M5.1-C) | Done  |
+| Sprint | Title                       | Status |
+| ------ | --------------------------- | ------ |
+| 0      | Scope & audit               | Done   |
+| 1      | Onboarding & Entry bridge   | Done   |
+| 2      | Home & Insights UX          | Done   |
+| 3      | Entry & Habits surfaces     | Done   |
+| 4      | PWA, Settings & Desktop     | Done   |
+| 5      | Milestone closeout (M5.1-C) | Done   |
 
 ## Issue audit matrix
 
-| Issue | O-xx | Status | Evidence |
-| ----- | ---- | ------ | -------- |
-| #251  | O-02 | Done   | `openEntry.ts`, `GlobalEntrySheet.svelte`, `+page.svelte` auto-open |
-| #260  | O-06 | Done   | `OnboardingTagSuggestions.svelte`, ADR-0030 amendment |
-| #261  | O-07 | Done   | `auth.py` verify-email session; `verify-email/+page.svelte` |
-| #263  | O-09 | Done   | `onboarding-habit-hint` in `OnboardingTagSuggestions.svelte` |
-| #252  | O-03 | Done   | `InsightFeed.svelte` → `OPEN_ENTRY_HOME_PATH` |
-| #254  | O-05 | Done†  | Superseded by O-55 sparkline removal |
-| #264  | O-12 | Done   | `HomeDailyBrief.svelte` brief-first layout |
-| #266  | O-13 | Done   | `home-weekly-bridge` in `HomeDailyBrief.svelte` |
-| #268  | O-14 | Done   | `insightAnalyticsGate.ts` |
-| #262  | O-08 | Done   | `entryNavigation.ts`, `/entries/new` redirect |
-| #265  | O-16 | Done   | `HabitsPanel.svelte` `habits-empty-setup` |
-| #267  | O-17 | Done   | Heatmap `selectDate` → `EntryHistorySheet` |
-| #269  | O-18 | Done   | `+page.svelte` PWA gate on `entry_count` |
-| #270  | O-19 | Done   | `settings-section-export` on Settings hub |
-| #271  | O-15 | Done   | `trends-sticky-toolbar`, `analysisRange` store |
-| #273  | O-11 | Done   | `check-email-open-mail` mailto link |
-| #272  | O-20 | Deferred | Out of M5.1 scope — backend dependency |
+| Issue | O-xx | Status   | Evidence                                                            |
+| ----- | ---- | -------- | ------------------------------------------------------------------- |
+| #251  | O-02 | Done     | `openEntry.ts`, `GlobalEntrySheet.svelte`, `+page.svelte` auto-open |
+| #260  | O-06 | Done     | `OnboardingTagSuggestions.svelte`, ADR-0030 amendment               |
+| #261  | O-07 | Done     | `auth.py` verify-email session; `verify-email/+page.svelte`         |
+| #263  | O-09 | Done     | `onboarding-habit-hint` in `OnboardingTagSuggestions.svelte`        |
+| #252  | O-03 | Done     | `InsightFeed.svelte` → `OPEN_ENTRY_HOME_PATH`                       |
+| #254  | O-05 | Done†    | Superseded by O-55 sparkline removal                                |
+| #264  | O-12 | Done     | `HomeDailyBrief.svelte` brief-first layout                          |
+| #266  | O-13 | Done     | `home-weekly-bridge` in `HomeDailyBrief.svelte`                     |
+| #268  | O-14 | Done     | `insightAnalyticsGate.ts`                                           |
+| #262  | O-08 | Done     | `entryNavigation.ts`, `/entries/new` redirect                       |
+| #265  | O-16 | Done     | `HabitsPanel.svelte` `habits-empty-setup`                           |
+| #267  | O-17 | Done     | Heatmap `selectDate` → `EntryHistorySheet`                          |
+| #269  | O-18 | Done     | `+page.svelte` PWA gate on `entry_count`                            |
+| #270  | O-19 | Done     | `settings-section-export` on Settings hub                           |
+| #271  | O-15 | Done     | `trends-sticky-toolbar`, `analysisRange` store                      |
+| #273  | O-11 | Done     | `check-email-open-mail` mailto link                                 |
+| #272  | O-20 | Deferred | Out of M5.1 scope — backend dependency                              |
 
 † O-55 (Phase 3) removed `HomeSparkline` from Home entirely.
 
@@ -86,13 +86,13 @@ Visual QA signed off in [`docs/quality/M5_1_UX_VISUAL_QA.md`](quality/M5_1_UX_VI
 
 ## Static gates (M5.1-C)
 
-| Gate | Result |
-| ---- | ------ |
-| `pnpm lint` | Run on PR branch |
-| `pnpm typecheck` | Run on PR branch |
-| `pnpm test` | Run on PR branch |
+| Gate                | Result           |
+| ------------------- | ---------------- |
+| `pnpm lint`         | Run on PR branch |
+| `pnpm typecheck`    | Run on PR branch |
+| `pnpm test`         | Run on PR branch |
 | `test:e2e:journeys` | Run on PR branch |
-| `test:e2e:smoke` | Run on PR branch |
+| `test:e2e:smoke`    | Run on PR branch |
 
 ## Result
 
