@@ -47,13 +47,16 @@
 
 **Next recommended sprint**
 
-Sprint **H** when Figma seat is available; otherwise Phase 5 desktop consolidation.
+**M9 — Beta Hardening** is the next main milestone after M5.1 UX polish closeout
+(2026-07-10). See [`docs/M5_1_SPRINT_STATUS.md`](../M5_1_SPRINT_STATUS.md).
 
-Between Habits core (M5) and Beta Hardening (M9), a dedicated UX consolidation
-milestone **M5.1 — UX Polish & Flow Consolidation** groups the remaining
-`ux(O-xx)` issues for onboarding, Home, Insights, Habits, and PWA polish. See
-[`docs/M5_1_UX_POLISH_PLAN.md`](../M5_1_UX_POLISH_PLAN.md) for the full issue
-ledger and exit criteria.
+Sprint **H** (Figma Code Connect publish) remains optional when a Figma seat is
+available; Phase 5 desktop consolidation can proceed in parallel.
+
+**M5.1 — UX Polish & Flow Consolidation** is **complete** (2026-07-10). The
+`ux(O-xx)` issues for onboarding, Home, Insights, Habits, and PWA polish were
+delivered via GUI optimization Phases 1–3 and formally closed in
+[`docs/M5_1_UX_POLISH_PLAN.md`](../M5_1_UX_POLISH_PLAN.md).
 
 ## Success criteria
 
