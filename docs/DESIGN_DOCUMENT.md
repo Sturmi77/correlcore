@@ -7,9 +7,9 @@
 > redesigned: streak logic replaced by Adherence Rate + Calendar Heatmap +
 > Correlation Contribution; M2 entry-streak relabeled to Tracking Consistency —
 > Issues #157, #158, #159.
-**Autor:** Solo-Entwickler / Einmann-Unternehmen
-**Arbeitstitel:** CorrelCore
-**Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
+> **Autor:** Solo-Entwickler / Einmann-Unternehmen
+> **Arbeitstitel:** CorrelCore
+> **Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
 
 ---
 
