@@ -70,4 +70,10 @@ describe('/ home screen ownership contract', () => {
     expect(source).toContain('workContextSummary={dashboardSummary?.work_context_summary ?? []}');
     expect(globalEntrySheetSource).toContain('{workContextTypical}');
   });
+
+  it('defers the PWA install banner until after the first entry or retro onboarding', () => {
+    expect(source).toContain('data-testid="pwa-install-banner"');
+    expect(source).toContain('(dashboardSummary?.entry_count ?? 0) >= 1');
+    expect(source).toContain('userPreferences?.onboarding_retro_completed');
+  });
 });

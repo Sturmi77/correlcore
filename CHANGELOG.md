@@ -10,6 +10,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M5.1 — UX Polish & Flow Consolidation (complete).** Formal closeout of the
+  `ux(O-xx)` issue cluster (#251–#273) between M5 and M9: onboarding → first
+  entry funnel, Home brief-first layout, maturity-gated Insights analytics,
+  unified entry sheet, inline habit setup, contextual PWA/export flows, and
+  desktop Trends sticky range. Implementation delivered via GUI optimization
+  Phases 1–3; this release adds sprint tracking, visual QA sign-off, and
+  milestone docs. Closes #251–#271, #273. #272 (password reset) remains open.
+  See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md) and
+  [`docs/quality/M5_1_UX_VISUAL_QA.md`](docs/quality/M5_1_UX_VISUAL_QA.md).
+
 - **M4.1 — Offline-first sync (complete).** Dexie.js local persistence
   (`correlcore-offline`), append-only `change_log`, stable `client_id`, and
   `sync_meta` cursors. Backend: `POST /api/v1/sync/push`, `GET /api/v1/sync/pull`

@@ -94,15 +94,18 @@ extended analysis without constant reset.
 
 M5.1 is **Done** when:
 
-- [ ] All in-scope UX issues are closed or explicitly deferred to a post-v1.0
-      polish track with rationale.
-- [ ] Onboarding, Home, Entry, Insights, and Habits flows can be traversed
+- [x] All in-scope UX issues are closed or explicitly deferred to a post-v1.0
+      polish track with rationale (#272 deferred — password reset backend).
+- [x] Onboarding, Home, Entry, Insights, and Habits flows can be traversed
       end-to-end on mobile (390/430 px) and desktop (1280+ px) without dead ends or
       confusing detours.
-- [ ] PWA install, export, and email verification flows feel contextual and are
+- [x] PWA install, export, and email verification flows feel contextual and are
       covered by minimal E2E tests.
-- [ ] The design document and frontend implementation plan both reflect M5.1 as
+- [x] The design document and frontend implementation plan both reflect M5.1 as
       completed and M9 as the next main milestone.
+
+**Closeout:** 2026-07-10 — see [`M5_1_SPRINT_STATUS.md`](M5_1_SPRINT_STATUS.md) and
+[`quality/M5_1_UX_VISUAL_QA.md`](quality/M5_1_UX_VISUAL_QA.md).
 
 ---
 
