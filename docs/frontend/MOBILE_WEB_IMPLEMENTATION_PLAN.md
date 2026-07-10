@@ -49,6 +49,12 @@
 
 Sprint **H** when Figma seat is available; otherwise Phase 5 desktop consolidation.
 
+Between Habits core (M5) and Beta Hardening (M9), a dedicated UX consolidation
+milestone **M5.1 — UX Polish & Flow Consolidation** groups the remaining
+`ux(O-xx)` issues for onboarding, Home, Insights, Habits, and PWA polish. See
+[`docs/M5_1_UX_POLISH_PLAN.md`](../M5_1_UX_POLISH_PLAN.md) for the full issue
+ledger and exit criteria.
+
 ## Success criteria
 
 - Daily entry is complete, accessible, recoverable, and usable at 390 px.

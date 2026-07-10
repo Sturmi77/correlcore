@@ -1,7 +1,12 @@
 # Design-Dokument: CorrelCore — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.12 (No-gamification promise added; M5 habits redesigned: streak logic replaced by Adherence Rate + Calendar Heatmap + Correlation Contribution; M2 entry-streak relabeled to Tracking Consistency — Issues #157, #158, #159)
-**Datum:** 2026-05-11
+**Version:** 0.13 (Mobile closeout Phases 0–4 delivered; M4.1 Offline-First Sync delivered; M5 Habits core delivered; new intermediate milestone M5.1 — UX Polish & Flow Consolidation added; M9 positioned as next main milestone — Issues #251–#273)
+**Datum:** 2026-07-10
+
+> **Vorherige Version:** 0.12 (2026-05-11) — No-gamification promise added; M5 habits
+> redesigned: streak logic replaced by Adherence Rate + Calendar Heatmap +
+> Correlation Contribution; M2 entry-streak relabeled to Tracking Consistency —
+> Issues #157, #158, #159.
 **Autor:** Solo-Entwickler / Einmann-Unternehmen
 **Arbeitstitel:** CorrelCore
 **Zweck:** Single Source of Truth für Projekt, Architektur, Frontend-Prinzipien und Roadmap. Dient gleichzeitig als Kontext-Datei für KI-Assistenten (Claude, Perplexity, Cursor, Copilot).
@@ -937,13 +942,25 @@ ADR-0021 macht Insight-Reifephasen zu einem First-Class-Konzept in Backend, API 
 
 ---
 
-### M4 — Quick Wins + Mobile/PWA-Hardening (Woche 11–12)
+### M4 — Quick Wins + Mobile/PWA-Hardening (Woche 11–12) ✅ CORE GELIEFERT
+
+> **Statusupdate (2026-07-10):** M4 wird als **„core delivered, UX-polish pending"**
+> geführt. Mobile Closeout Phasen 0–4 sind laut
+> [`MOBILE_CLOSEOUT_SPRINT_PLAN.md`](MOBILE_CLOSEOUT_SPRINT_PLAN.md) und
+> [`frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md`](frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md)
+> abgeschlossen (Entry, Trends, Insights-Hierarchie, Supporting Flows, PWA-Lifecycle,
+> Offline-Recovery, mobile Touch-UX). `entries.slot`-bezogene UI-Fixes (Autosave,
+> Slot-Races, Draft-Loss), Guided Onboarding, Home-Bridges, mobile Insights und
+> Heatmap-Drilldown sind in Code vorhanden. Verbleibende UX-Feinheiten hängen an
+> offenen `ux(O-xx)`-Issues und werden nicht als eigener Feature-Meilenstein
+> weitergeführt, sondern im neuen Zwischenschritt **M5.1** konsolidiert.
 
 M4 ist auf Quick Wins und PWA-Hardening rescoped. Verbindlich sind
 `entries.slot` (kein neues `time_slot`), `cycle_day`, Guided Onboarding,
 clientseitige Trend-Glaettung, Dev-Mode-Overrides und Service-Worker-Haertung.
-Vollstaendiger Dexie Offline-Sync, Sync-Conflict-Log, Capacitor, Notes-Composer
-und Web Push sind Follow-ups nach M4.
+Dexie Offline-Sync und Sync-Conflict-Log wurden entgegen der ursprünglichen
+Planung bereits als eigenständiger Milestone **M4.1** vorgezogen und geliefert
+(siehe unten). Capacitor, Notes-Composer und Web Push bleiben Follow-ups.
 
 - Bestehendes `entries.slot`-Feld in API und UI vollständig nutzbar machen
 - `cycle_day` als neutrales optionales Entry-Feld vorbereiten
@@ -971,7 +988,55 @@ und Web Push sind Follow-ups nach M4.
 
 ---
 
-### M5 — Habits & Ziele (Woche 13–14)
+### M4.1 — Offline-First Sync ✅ IMPLEMENTIERT
+
+> M4.1 ist als eigenständiger Milestone im Repository hinterlegt
+> (`M4.1 — Offline-First Sync`, 2/2 Issues geschlossen) und konsolidiert die
+> Offline-first-Sync-Architektur (Dexie + Push/Pull + Conflict-Log). Ursprünglich
+> als Follow-up nach M4 geplant, wurde dieser Track vorgezogen und geliefert.
+> Details: [`M4.1_SPRINT_PLAN.md`](M4.1_SPRINT_PLAN.md),
+> [`M4.1_SPRINT_STATUS.md`](M4.1_SPRINT_STATUS.md),
+> [`M4.1_FOLLOWUPS.md`](M4.1_FOLLOWUPS.md).
+
+**Scope (ursprünglicher Plan):**
+
+- Dexie.js IndexedDB Foundation für lokale Datenhaltung
+- Sync-Engine mit `POST /sync/push` und `GET /sync/pull` (Delta-basiert)
+- Sync-Conflict-Log-Tabelle (LWW + transparentes Conflict-Reporting)
+- Offline Entry Path (lokale Queue, Retry, Offline-Feedback in der UI)
+
+**Aktueller Stand (2026-07-10):**
+
+- Die Milestone-Issues `M4: Offline-Sync (IndexedDB + Sync-Endpoint)` und
+  `Sync Conflict-Log Tabelle` sind geschlossen (2/2).
+- Die zugehörigen Sprints (Sprint 0–4) für Backend und Frontend sind gemergt und
+  im Repo dokumentiert.
+- Mobile Closeout und Codex-Reviews referenzieren die Offline-Architektur bereits
+  als gegebenen Vertrag.
+
+**Neuer Status:**
+M4.1 wird als **implementiert** geführt. Weitere Hardening- und QA-Maßnahmen
+laufen über den Codex/Quality-Gate-Pfad, nicht als eigener Feature-Meilenstein.
+
+#### Akzeptanzkriterien M4.1
+
+- [x] Dexie/IndexedDB-Foundation für lokale Entry-Haltung vorhanden
+- [x] `POST /sync/push` und `GET /sync/pull` (Delta-basiert) implementiert
+- [x] Sync-Conflict-Log-Tabelle mit LWW und transparentem Conflict-Reporting
+- [x] Offline Entry Path mit lokaler Queue, Retry und Offline-Feedback in der UI
+
+---
+
+### M5 — Habits & Ziele (Woche 13–14) ✅ CORE GELIEFERT, UX-POLISH IN M5.1
+
+> **Statusupdate (2026-07-10):** M5-Milestone ist im Repo als geschlossen markiert;
+> Habit-bezogene PRs (u. a. „Sprint K: Onboarding & Habits", „Improve habit
+> visualization", „Fix habit tag visibility scoping") sind gemergt. Habit-Tags,
+> Sichtbarkeits-/Scoping-Logik und Habit-Visualisierungen in Trends/Insights sind
+> in Code vorhanden. Offene Habit-UX-Themen (z. B. „Inline habit setup on empty
+> Habits panel", „Habit hint in onboarding tag step") sind als `ux(O-xx)`-Issues
+> erfasst und werden nach **M5.1** verschoben. M5 gilt damit als **Habits core
+> delivered, polish remaining**.
 
 **Designprinzip:** Keine Gamification. Streaks sind durch drei nicht-gamifizierende Metriken ersetzt (Issues #157, #159).
 
@@ -1000,6 +1065,78 @@ und Web Push sind Follow-ups nach M4.
 #### DSGVO-Checkpoint M5
 
 - [ ] 🔒 DSGVO: Habit-Daten unterliegen derselben Verschlüsselung und RLS wie Entry-Daten
+
+---
+
+### M5.1 — UX Polish & Flow Consolidation (Zwischenmeilenstein)
+
+> **Neu (2026-07-10):** Zwischenmeilenstein zwischen M5 (Habits core) und M9
+> (Beta-Härtung). Bündelt die offenen `ux(O-xx)`-Issues zu einem
+> Konsolidierungssprint. **Kein** neuer großer Backend-Block. Detaillierter
+> Issue-Ledger: [`M5_1_UX_POLISH_PLAN.md`](M5_1_UX_POLISH_PLAN.md).
+
+**Zweck:** Bestehende Mobile-, Onboarding-, Insights- und Habit-Flows auf einen
+konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domänen zu
+öffnen.
+
+**Scope (geordnet nach UX-Cluster):**
+
+1. **Onboarding & Entry-Brücke**
+   - `ux(O-02): Open EntrySheet after onboarding complete` (#251)
+   - `ux(O-06): Integrate tag selection into first entry` (#260)
+   - `ux(O-07): Auto-login after email verification` (#261)
+   - `ux(O-09): Habit hint in onboarding tag step` (#263)
+
+2. **Home & Insights UX**
+   - `ux(O-03): Insights empty-state CTA opens entry directly` (#252)
+   - `ux(O-05): Hide Home sparkline until sufficient data` (#254)
+   - `ux(O-12): Home Daily Brief brief-first layout` (#264)
+   - `ux(O-13): Home bridge for weekly analysis review` (#266)
+   - `ux(O-14): Gate Insights matrix and co-occurrence by maturity` (#268)
+
+3. **Entry & Habits Surfaces**
+   - `ux(O-08): Unify desktop entry surface` (#262)
+   - `ux(O-16): Inline habit setup on empty Habits panel` (#265)
+   - `ux(O-17): Heatmap drill-down via EntryHistorySheet` (#267)
+
+4. **PWA & Settings Polish**
+   - `ux(O-18): Defer PWA install banner until after first entry` (#269)
+   - `ux(O-19): Improve export discoverability in Settings` (#270)
+   - `ux(O-11): Check-email mobile mail-app deep link` (#273)
+
+5. **Desktop Analysis Polish**
+   - `ux(O-15): Trends global sticky range control (desktop)` (#271)
+
+**Out of Scope in M5.1:**
+
+- Passwort-Reset-Backend selbst (`ux(O-20): Password reset UI`, #272) bleibt
+  geblockt, bis die Backend-Implementierung steht — siehe
+  [`frontend/O-20_PASSWORD_RESET_PLAN.md`](frontend/O-20_PASSWORD_RESET_PLAN.md).
+- Native Mobile Shell (Capacitor, M11).
+- Health Connect / Health-Daten-Consent (M8, DSGVO-spezifisch).
+- Neue große Backend-Domänen außer kleinen UX-enabling APIs.
+
+#### Akzeptanzkriterien M5.1
+
+- [ ] Onboarding endet konsistent in einem ersten sinnvollen Entry- oder
+      Review-Moment, ohne Sackgassen
+- [ ] Home und Insights kommunizieren den nächsten sinnvollen Schritt abhängig von
+      Insight-Maturity-Status und Datenreife klar
+- [ ] Habits sind als etablierter Bestandteil von Home/Onboarding/Heatmap-Drilldowns
+      erfahrbar, nicht als isolierter Nebenpfad
+- [ ] PWA- und Export-Momente sind kontextuell (nach erstem Entry, in Settings gut
+      auffindbar) und nicht zu früh oder versteckt
+- [ ] Die gelisteten `ux(O-xx)`-Issues sind entweder geschlossen oder bewusst als
+      Post-v1.0-Polish dokumentiert
+- [ ] Onboarding-, Home-, Entry-, Insights- und Habit-Flows sind end-to-end auf
+      Mobile (390/430 px) und Desktop (1280+ px) ohne Sackgassen durchlaufbar
+- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt
+      und bestanden
+
+#### DSGVO-Checkpoint M5.1
+
+- [ ] 🔒 DSGVO: Keine neuen personenbezogenen Datenkategorien; UX-Polish ändert keine
+      bestehenden Consent- oder Speicher-Verträge
 
 ---
 
@@ -1064,7 +1201,14 @@ und Web Push sind Follow-ups nach M4.
 
 ---
 
-### M9 — Beta-Härtung (Woche 22–24)
+### M9 — Beta-Härtung (Woche 22–24) — NÄCHSTER HAUPTMEILENSTEIN
+
+> **Statusupdate (2026-07-10):** M9 folgt unmittelbar nach M5.1. Der Feature-Umfang
+> für das geplante MVP (Entry, Trends, Habits, Insights v1 + Maturity, Mobile/PWA,
+> Offline-First Sync) ist zu diesem Zeitpunkt gegeben. M9 fokussiert ausschließlich
+> auf Betriebssicherheit, Datenschutzpfade, Backup-Strategie und externe
+> Testbarkeit vor M10 (Public Selfhost v1.0). M5.1 darf keine neuen
+> Backend-Health-Daten-Integrationen einführen oder Kern-Domänen-Verträge ändern.
 
 - Monitoring, GlitchTip-Error-Tracking
 - Backup/Restore-Dokumentation
