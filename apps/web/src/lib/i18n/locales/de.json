@@ -112,17 +112,7 @@
       }
     },
     "confidence_scale": {
-      "heading": "Erkenntnisqualitaet",
-      "low": "Begrenzte Daten",
-      "high": "Praeziser",
-      "entry_count": "Basierend auf {n} Eintraegen",
-      "tier": {
-        "none": "Erste Datenpunkte werden gesammelt",
-        "early": "Fruehe Signale aktiv",
-        "preliminary": "Vorlaeufige Muster aktiv",
-        "developing": "Korrelationen aktiv",
-        "robust": "Volle Analyse aktiv"
-      }
+      "entry_count": "Basierend auf {n} Eintraegen"
     },
     "first_week_banner": {
       "title": "Dein erstes Wochenmuster ist bereit.",
@@ -826,14 +816,9 @@
       "hint": "Die vollstaendige Insight-Engine ist aktiv."
     },
     "journey": {
-      "aria_label": "Fortschritt der Erkenntnisreife",
-      "phase_heading": "Phase {phaseIndex} von 4: {label}",
-      "entries_until_next": "{current} Einträge erfasst · noch {remaining} bis {nextPhase}",
       "compact_entries_until_next": "{current}/{next} Einträge · noch {remaining} bis {nextPhase}",
       "robust_meta": "{current} Einträge erfasst · volle Insight-Engine aktiv",
       "help_cta": "Wie entstehen Erkenntnisse?",
-      "collapse": "Einklappen",
-      "expand": "Aufklappen",
       "progress_aria": "Fortschritt zur naechsten Erkenntnisphase"
     },
     "explainer": {
@@ -935,15 +920,6 @@
           "body": "Die Insight-Engine ist aktiv. Aendere den Filter oder erfasse weiter, damit neue Muster sichtbar werden."
         }
       }
-    },
-    "quality_meter": {
-      "heading": "Erkenntnisqualitaet",
-      "getting_started": "Deine Daten werden gesammelt. Erste Muster werden ab etwa 30 Eintraegen sichtbar.",
-      "building_pace": "{current}/{target}. Bei deiner aktuellen Tracking-Frequenz: ca. {weeks} Wochen bis zur ersten Erkenntnis.",
-      "building_no_recent": "{current}/{target}. Keine aktuellen Eintraege gefunden. Eine Zeitschaetzung bis zur ersten Erkenntnis kann nicht berechnet werden.",
-      "ready_low": "Erste Erkenntnis sichtbar. Die Konfidenz wird pro Erkenntnis angezeigt.",
-      "ready_full": "Vollstaendige Erkenntnisse sind verfuegbar.",
-      "entry_total": "Basierend auf {n} Eintraegen"
     },
     "matrix": {
       "heading": "Korrelations-Matrix",

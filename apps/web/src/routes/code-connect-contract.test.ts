@@ -68,19 +68,6 @@ describe('Code Connect template contract', () => {
     expect(readFileSync(component, 'utf8')).toContain('export let maturity');
   });
 
-  it('maps InsightQualityMeter to an importable implementation', () => {
-    const source = readFileSync(resolve(templateDir, 'InsightQualityMeter.figma.ts'), 'utf8');
-    const component = resolve('src/lib/components/insights/InsightQualityMeter.svelte');
-
-    expect(source).toContain(
-      '// source=apps/web/src/lib/components/insights/InsightQualityMeter.svelte'
-    );
-    expect(source).toContain(
-      'import InsightQualityMeter from "$lib/components/insights/InsightQualityMeter.svelte";'
-    );
-    expect(readFileSync(component, 'utf8')).toContain('export let dayEntryDates');
-  });
-
   it('maps TagChip to TagPicker chip usage', () => {
     const source = readFileSync(resolve(templateDir, 'TagChip.figma.ts'), 'utf8');
     const component = resolve('src/lib/components/entries/TagPicker.svelte');

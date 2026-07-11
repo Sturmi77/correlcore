@@ -112,17 +112,7 @@
       }
     },
     "confidence_scale": {
-      "heading": "Insight Quality",
-      "low": "Limited data",
-      "high": "More precise",
-      "entry_count": "Based on {n} entries",
-      "tier": {
-        "none": "Collecting first data points",
-        "early": "Early signals active",
-        "preliminary": "Preliminary patterns active",
-        "developing": "Correlations active",
-        "robust": "Full analysis active"
-      }
+      "entry_count": "Based on {n} entries"
     },
     "first_week_banner": {
       "title": "Your first week pattern is ready.",
@@ -826,14 +816,9 @@
       "hint": "The full insight engine is active."
     },
     "journey": {
-      "aria_label": "Insight maturity progress",
-      "phase_heading": "Phase {phaseIndex} of 4: {label}",
-      "entries_until_next": "{current} entries tracked · {remaining} more until {nextPhase}",
       "compact_entries_until_next": "{current}/{next} entries · {remaining} more until {nextPhase}",
       "robust_meta": "{current} entries tracked · full insight engine active",
       "help_cta": "How do insights work?",
-      "collapse": "Collapse",
-      "expand": "Expand",
       "progress_aria": "Progress toward the next insight phase"
     },
     "explainer": {
@@ -935,15 +920,6 @@
           "body": "The insight engine is active. Change the filter or keep tracking so new patterns can appear."
         }
       }
-    },
-    "quality_meter": {
-      "heading": "Insight quality",
-      "getting_started": "Your data is being collected. First patterns become visible around 30 entries.",
-      "building_pace": "{current}/{target}. At your current tracking pace: about {weeks} weeks until first insight.",
-      "building_no_recent": "{current}/{target}. No recent entries found. Estimated time to first insight cannot be calculated.",
-      "ready_low": "First insight visible. The confidence label is shown per insight.",
-      "ready_full": "Full insights are available.",
-      "entry_total": "Based on {n} entries"
     },
     "matrix": {
       "heading": "Correlation Matrix",

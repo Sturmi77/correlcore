@@ -25,8 +25,7 @@
     primaryInsightConfounder,
     type InsightConfounder,
   } from '$lib/utils/insightConfounder';
-  import InsightConfidenceScale from './InsightConfidenceScale.svelte';
-  import InsightMaturityBadge from './InsightMaturityBadge.svelte';
+  import InsightEvidence from './InsightEvidence.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
@@ -241,17 +240,22 @@
       {#if isInactiveTag}
         <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
       {/if}
-      {#if maturity && showMaturityBadge}
-        <InsightMaturityBadge {maturity} entryCount={insight.sample_n ?? 0} />
-      {/if}
+      <InsightEvidence
+        {maturity}
+        {showMaturityBadge}
+        confidenceScore={insight.confidence ?? 0}
+        currentTier={insight.tier}
+        showConfidence={false}
+      />
     </p>
 
     {#if showConfidenceSummary && !expanded}
       <div class="insight-card__confidence-summary" data-testid="insight-card-confidence-summary">
-        <InsightConfidenceScale
+        <InsightEvidence
           confidenceScore={insight.confidence ?? 0}
           currentTier={insight.tier}
           entryCount={insight.sample_n ?? 0}
+          showSample
         />
       </div>
     {/if}
@@ -294,12 +298,13 @@
         class="insight-card__level2"
         data-testid="insight-card-level2"
       >
-        <InsightConfidenceScale
+        <InsightEvidence
           confidenceScore={insight.confidence ?? 0}
           currentTier={insight.tier}
           entryCount={insight.sample_n ?? 0}
+          showSample
+          detailed
           loading={false}
-          showRawPercent
         />
 
         <dl class="insight-card__meta-grid" data-testid="insight-card-tech-meta">
