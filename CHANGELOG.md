@@ -27,6 +27,11 @@ Since `0.6.0`, this release includes milestones **M1–M9** (daily entry through
 
 ### Added
 
+- **M10 Sprint 6 — Milestone closeout (M10-C).** Quality gate
+  ([`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md)) and visual QA
+  ([`docs/quality/M10_VISUAL_QA.md`](docs/quality/M10_VISUAL_QA.md)); version **`1.0.0`**
+  in manifests; final `v1.0.0` tag procedure; GitHub milestone #7 closeout.
+
 - **M10 Sprint 5 — Version & go-public prep.** CHANGELOG `[1.0.0]` section; AGPL-3.0-or-later metadata in root, web, and backend manifests; `v1.0.0-rc.1` release candidate tag; go-public operator checklist ([`docs/selfhost/GO_PUBLIC_CHECKLIST.md`](docs/selfhost/GO_PUBLIC_CHECKLIST.md)).
 
 - **M10 Sprint 4 — Landing & legal.** Marketing landing page for anonymous users
@@ -632,4 +637,4 @@ Since `0.6.0`, this release includes milestones **M1–M9** (daily entry through
 
 ---
 
-_Nächstes Release: see `[Unreleased]` above. Final **v1.0.0** tag planned in M10 Sprint 6._
+_Nächstes Release: see `[Unreleased]` above. **v1.0.0** tag documented in [`docs/selfhost/GO_PUBLIC_CHECKLIST.md`](docs/selfhost/GO_PUBLIC_CHECKLIST.md) — push post-merge to `main`._

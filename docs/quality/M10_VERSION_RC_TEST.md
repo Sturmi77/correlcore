@@ -15,9 +15,9 @@ and release candidate tag readiness.
 | CHANGELOG has `## [1.0.0]`       | Yes                                    | PASS   |
 | `[Unreleased]` empty or minimal  | Yes                                    | PASS   |
 | Root `package.json` `license`    | `AGPL-3.0-or-later`                    | PASS   |
-| Root `package.json` `version`    | `1.0.0-rc.1`                           | PASS   |
-| `@correlcore/web` version        | `1.0.0-rc.1`                           | PASS   |
-| Backend `pyproject.toml` version | `1.0.0-rc.1`                           | PASS   |
+| Root `package.json` `version`    | `1.0.0`                                | PASS   |
+| `@correlcore/web` version        | `1.0.0`                                | PASS   |
+| Backend `pyproject.toml` version | `1.0.0`                                | PASS   |
 | `SECURITY.md` contact            | `security@correlcore.app`              | PASS   |
 | Go-public checklist doc          | `docs/selfhost/GO_PUBLIC_CHECKLIST.md` | PASS   |
 
