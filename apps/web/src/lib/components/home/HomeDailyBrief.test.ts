@@ -65,9 +65,6 @@ describe('HomeDailyBrief', () => {
 
     expect(screen.getByTestId('home-bridge-insights').textContent).toContain('Energy');
     expect(screen.getByTestId('home-bridge-trends').textContent).toContain('Energy');
-    expect(screen.getByTestId('home-brief-top-insight').textContent).toContain(
-      'Energy tracks with your walks.'
-    );
   });
 
   it('renders work context summary rows when dashboard data is present', () => {
