@@ -92,6 +92,31 @@ docker buildx imagetools inspect ghcr.io/sturmi77/correlcore-api:v1.0.0-rc.1
 
 ## Final release (Sprint 6)
 
+After quality gate and visual QA PASS on `main`:
+
+```bash
+git pull origin main
+git tag -a v1.0.0 -m "CorrelCore v1.0.0 — public selfhost release"
+git push origin v1.0.0
+```
+
+This triggers:
+
+- [`release-images.yml`](../.github/workflows/release-images.yml) — image tags `v1.0.0`, `latest`
+- [`github-release.yml`](../.github/workflows/github-release.yml) — GitHub Release (non-prerelease)
+
+Then close GitHub milestone #7 (M10 Public Selfhost).
+
+Verify images:
+
+```bash
+docker buildx imagetools inspect ghcr.io/sturmi77/correlcore-api:v1.0.0
+```
+
+---
+
+## Final release checklist (Sprint 6)
+
 - Quality gate [`M10_QUALITY_GATE.md`](../quality/M10_QUALITY_GATE.md) — PASS
 - Visual QA [`M10_VISUAL_QA.md`](../quality/M10_VISUAL_QA.md) — PASS
 - Tag **`v1.0.0`** (non-prerelease)

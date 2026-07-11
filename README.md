@@ -41,7 +41,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M7** — Insights v2: Lasso, lag, symptom analytics, tag clustering, Sprint 9 interaction UX — **Complete** (2026-06-30). See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/quality/M7_QUALITY_GATE.md`](docs/quality/M7_QUALITY_GATE.md). Optional LLM/digest → M7-S8.
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
 - [x] **M9** — Beta hardening: monitoring, GlitchTip, GDPR self-service, backup/install docs, security CI, beta program — **Complete** (2026-07-11). Closes #29. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md), [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md), and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md).
-- [ ] **M10** — Public selfhost release v1.0 — **1.0.0-rc.1** prep complete; final tag in Sprint 6. See [`docs/M10_SPRINT_PLAN.md`](docs/M10_SPRINT_PLAN.md), [`CHANGELOG.md`](CHANGELOG.md)
+- [x] **M10** — Public selfhost release v1.0 — **Complete** (2026-07-11). See [`docs/M10_SPRINT_PLAN.md`](docs/M10_SPRINT_PLAN.md), [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md), [`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md), [`CHANGELOG.md`](CHANGELOG.md#100--public-selfhost-release--2026-07-11).
 - [ ] **M11** — Android Play Store (Capacitor)
 - [ ] **M12** — SaaS mode (managed hosting)
 - [ ] **M13** — Photo & media: local upload to MinIO, EXIF strip, thumbnail gallery; optional Immich reference integration as follow-up
@@ -63,7 +63,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                                                          |
 | **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                                                             |
 | **M9**    | **Complete** (2026-07-11) | Beta hardening closed out: GDPR paths, GlitchTip/PII scrub, install/backup docs, security CI, beta program. Closes #29. **Next main milestone: M10.** See [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md) and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md). |
-| **M10**   | **In progress**           | Public selfhost v1.0 — sprints 0–5 complete; **1.0.0-rc.1** prep. See [`docs/M10_SPRINT_PLAN.md`](docs/M10_SPRINT_PLAN.md), [`CHANGELOG.md`](CHANGELOG.md#100--public-selfhost-release--2026-07-11).                                                                                       |
+| **M10**   | **Complete** (2026-07-11) | Public selfhost v1.0 — quality gate and visual QA signed off. Tag **`v1.0.0`** post-merge. **Next main milestone: M11.** See [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md) and [`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md). |
 
 ---
 

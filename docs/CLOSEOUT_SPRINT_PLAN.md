@@ -30,7 +30,7 @@ GitHub milestones (numeric IDs) do **not** match roadmap IDs (M0–M13). After c
 | 1–4                | M0–M3                     | M0–M3      | **Closed** (shipped)                        |
 | 5–6                | M4, M5                    | M4, M5     | **Closed** (closeout done)                  |
 | 8                  | M4.1 — Offline-First Sync | M4.1       | **Complete** (2026-06-30) — #10, #24 closed |
-| 7                  | M10 — Public Selfhost     | M10        | **Open** — release tracking                 |
+| 7                  | M10 — Public Selfhost     | M10        | **Ready to close** — Sprint 6 complete; tag `v1.0.0` post-merge |
 
 Roadmap status in `README.md` and `docs/M*_SPRINT_STATUS.md` is authoritative.
 

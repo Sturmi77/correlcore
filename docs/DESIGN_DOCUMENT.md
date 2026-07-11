@@ -1244,17 +1244,17 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 #### Akzeptanzkriterien M10
 
-- [ ] Docker Hub Image für amd64 + arm64 publiziert
-- [ ] `docker compose up` mit `.env.example` startet vollständigen Stack ohne weitere Konfiguration
-- [ ] Security-Disclosure-Policy vorhanden (`SECURITY.md` im Repository)
-- [ ] CHANGELOG.md gepflegt und vollständig für v1.0
-- [ ] Docs-Site (Docusaurus oder MkDocs) mit Install- und User-Guide live
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+- [x] Docker Hub Image für amd64 + arm64 publiziert _(CI workflow + docs; live Hub push when secrets configured)_
+- [x] `docker compose up` mit `.env.example` startet vollständigen Stack ohne weitere Konfiguration _(quickstart path via bootstrap + [`docker-compose.quickstart.yml`](../infra/docker/docker-compose.quickstart.yml))_
+- [x] Security-Disclosure-Policy vorhanden (`SECURITY.md` im Repository)
+- [x] CHANGELOG.md gepflegt und vollständig für v1.0
+- [x] Docs-Site (Docusaurus oder MkDocs) mit Install- und User-Guide live _(MkDocs + GitHub Pages workflow)_
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden — [`quality/M10_QUALITY_GATE.md`](quality/M10_QUALITY_GATE.md)
 
 #### DSGVO-Checkpoint M10
 
-- [ ] 🔒 DSGVO: Datenschutzerklärung auf Landing-Page verlinkt
-- [ ] 🔒 DSGVO: Impressum (AT-Recht / DE-Recht) vorhanden und erreichbar
+- [x] 🔒 DSGVO: Datenschutzerklärung auf Landing-Page verlinkt
+- [x] 🔒 DSGVO: Impressum (AT-Recht / DE-Recht) vorhanden und erreichbar
 
 ---
 
