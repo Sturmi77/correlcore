@@ -16,8 +16,9 @@ export function initClientErrorTracking(): void {
   Sentry.init({
     dsn,
     environment: env.PUBLIC_GLITCHTIP_ENVIRONMENT?.trim() || import.meta.env.MODE,
-    beforeSend(event) {
-      return scrubSentryEvent(event);
+    beforeSend(event, _hint) {
+      scrubSentryEvent(event as Parameters<typeof scrubSentryEvent>[0]);
+      return event;
     },
     tracesSampleRate: 0,
   });

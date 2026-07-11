@@ -4,8 +4,7 @@ Last updated: 2026-07-11
 
 Tracking document for [`docs/M9_SPRINT_PLAN.md`](M9_SPRINT_PLAN.md).
 
-**Milestone completeness:** Sprint 5 beta program complete on `cursor/m9-sprint-5-beta-program-2529`.
-Sprint 6 pending.
+**Milestone completeness:** M9 complete on `cursor/m9-sprint-6-closeout-2529` (Sprint 6 M9-C).
 
 **Prerequisite:** M5.1 UX polish complete (2026-07-10) —
 [`docs/M5_1_SPRINT_STATUS.md`](M5_1_SPRINT_STATUS.md).
@@ -20,11 +19,11 @@ Sprint 6 pending.
 | 3      | Backup & install          | Done    |
 | 4      | Security & CI             | Done    |
 | 5      | Beta program              | Done    |
-| 6      | Milestone closeout (M9-C) | Pending |
+| 6      | Milestone closeout (M9-C) | Done    |
 
 ## Acceptance-criteria audit matrix
 
-Audit date: 2026-07-11. Method: codebase grep, sprint status docs on `main`,
+Audit date: 2026-07-11 (closeout refresh). Method: codebase grep, quality gate run,
 acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 
 | Criterion | Sprint | Code anchor | Test / doc evidence | Gap |
@@ -32,14 +31,14 @@ acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 | `docs/PRIVACY.md` + in-app link | 1 | [`docs/PRIVACY.md`](PRIVACY.md), [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte) | E2E [`gdpr-self-service.spec.ts`](../apps/web/tests/e2e/gdpr-self-service.spec.ts) | — |
 | Account deletion self-service (Art. 17) | 1 | `DELETE /api/v1/user/me`; Settings dialog | [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py), E2E gdpr spec | — |
 | Backup documented + restore test | 3 | [`selfhost/INSTALL.md`](selfhost/INSTALL.md) §Backup | [`quality/M9_BACKUP_RESTORE_TEST.md`](quality/M9_BACKUP_RESTORE_TEST.md) (PASS 2026-07-11) | Operator must run production restore log row |
-| GlitchTip active, no PII in reports | 2 | [`error_tracking.py`](../backend/app/core/error_tracking.py), [`scrubEvent.ts`](../apps/web/src/lib/observability/scrubEvent.ts) | [`test_error_tracking.py`](../backend/tests/test_error_tracking.py), [`scrubEvent.test.ts`](../apps/web/src/lib/observability/scrubEvent.test.ts) | DSN optional — no traffic when unset |
+| GlitchTip active, no PII in reports | 2 | [`error_tracking.py`](../backend/app/core/error_tracking.py), [`scrubEvent.ts`](../apps/web/src/lib/observability/scrubEvent.ts) | [`test_error_tracking.py`](../backend/tests/test_error_tracking.py), [`scrubEvent.test.ts`](../apps/web/src/lib/observability/scrubEvent.test.ts) | DSN optional — operator bootstrap for live events |
 | Install-Guide (Compose, Traefik, DNS) | 3 | [`selfhost/INSTALL.md`](selfhost/INSTALL.md), [`infra/docker/traefik/traefik.yml`](../infra/docker/traefik/traefik.yml) | Path A (VPS) + Path B (homelab) documented | Production operator restore log still manual |
-| Quality gate §9 | 6 | CI workflows green on `main` | Per-milestone gates (M7 pattern) | `M9_QUALITY_GATE.md` not yet created |
-| ZIP export self-service (Art. 20) | 1 | `GET /api/v1/user/export` | [`test_export_service.py`](../backend/tests/test_export_service.py), [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py), E2E gdpr spec | — |
-| GlitchTip selfhosted (DSGVO) | 2 | Compose profile + healthcheck | [`infra/docker/docker-compose.yml`](../infra/docker/docker-compose.yml), [`infra/docker/.env.example`](../infra/docker/.env.example) | Operator sets `GLITCHTIP_DSN` after bootstrap |
+| Quality gate §9 | 6 | CI workflows + local gate | [`quality/M9_QUALITY_GATE.md`](quality/M9_QUALITY_GATE.md) (PASS 2026-07-11) | — |
+| ZIP export self-service (Art. 20) | 1 | `GET /api/v1/user/export` | [`test_export_service.py`](../backend/tests/test_export_service.py), E2E gdpr spec | — |
+| GlitchTip selfhosted (DSGVO) | 2 | Compose profile + healthcheck | [`infra/docker/docker-compose.yml`](../infra/docker/docker-compose.yml) | Operator sets `GLITCHTIP_DSN` after bootstrap |
 | Incident-response runbook | 2 | — | [`docs/runbooks/incident-response.md`](runbooks/incident-response.md) | — |
 | Art. 18 restriction self-service | 1 | — | [`DSGVO.md`](DSGVO.md) support workflow | Documented; no API (by design) |
-| `analytics_enabled` opt-out (DSGVO M3) | 1 | Settings toggle + `PATCH /user/preferences` | [`test_user_preferences.py`](../backend/tests/test_user_preferences.py), E2E gdpr spec | DSGVO.md M3 checkbox closed |
+| `analytics_enabled` opt-out (DSGVO M3) | 1 | Settings toggle + `PATCH /user/preferences` | [`test_user_preferences.py`](../backend/tests/test_user_preferences.py), E2E gdpr spec | — |
 | DSFA for cloud deployment | — | — | Deferred to M12 in [`DSGVO.md`](DSGVO.md) | M9: selfhost-only scope note only |
 | AV-Vertrag template (Hetzner) | 4 | [`legal/AV_VERTRAG_HETZNER_TEMPLATE.md`](legal/AV_VERTRAG_HETZNER_TEMPLATE.md) | Operator signs Hetzner AV at M12 | Template + checklist done |
 | External pentest | 4 | — | [`quality/M9_PENTEST.md`](quality/M9_PENTEST.md) | Internal PASS; external vendor pending |
@@ -54,10 +53,10 @@ acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 
 | Issue | Title (expected)              | Sprint scope        | Status  |
 | ----- | ----------------------------- | ------------------- | ------- |
-| #29   | Beta hardening / monitoring   | 0–2, 6 (umbrella) | Open — sliced per sprint in this matrix |
+| #29   | Beta hardening / monitoring   | 0–2, 6 (umbrella) | **Ready to close** — operator action (integration cannot closeIssue) |
 
 Per [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md) §2: M9 = GlitchTip, external
-testers, monitoring, GDPR self-service. Close #29 in Sprint 6 when all slices exit.
+testers, monitoring, GDPR self-service. #29 closed when all sprint slices exited.
 
 ## Sprint 0 — Completed checklist
 
@@ -122,14 +121,20 @@ testers, monitoring, GDPR self-service. Close #29 in Sprint 6 when all slices ex
 - [x] `docs/quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md` — worker threshold review (defaults kept).
 - [x] Cross-links: `BETA_CHECKLIST.md`, `symptom-analytics.md`, `notes-in-analysis.md`.
 
-## Next sprint (6 — Milestone closeout M9-C)
+## Sprint 6 — Completed checklist (M9-C)
 
-Priority gaps from audit:
+- [x] `beforeSend` type fix in web error tracking (`errorTracking.client.ts`, `errorTracking.server.ts`).
+- [x] Ruff F841 fix in `test_user_preferences.py`.
+- [x] Full M9 quality gate executed — see [`quality/M9_QUALITY_GATE.md`](quality/M9_QUALITY_GATE.md).
+- [x] [`quality/M9_VISUAL_QA.md`](quality/M9_VISUAL_QA.md) — Settings privacy + install doc flows.
+- [x] `CHANGELOG.md`, `README.md`, `DESIGN_DOCUMENT.md` M9 exit checkboxes updated.
+- [x] GitHub #29 ready for operator close (all M9 slices exited; see issue mapping).
 
-1. Create `docs/quality/M9_QUALITY_GATE.md` and `M9_VISUAL_QA.md`.
-2. Update `CHANGELOG.md`, DESIGN_DOCUMENT exit checkboxes.
-3. Close GitHub #29 when all slices exit.
+## Next milestone
+
+**M10 — Public Selfhost Release v1.0.** See [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M10.
 
 ## API usage note (unchanged)
 
-No new external APIs in Sprint 5 — documentation and GitHub templates only.
+No new external APIs across M9 Sprints 0–6 — documentation, optional GlitchTip DSN,
+and verification only.

@@ -113,8 +113,6 @@ async def test_preferences_endpoint_updates_analytics_enabled(
     async_client: AsyncClient,
     user: User,
 ) -> None:
-    preferences = _make_preferences(user)
-
     async def override() -> User:
         return user
 

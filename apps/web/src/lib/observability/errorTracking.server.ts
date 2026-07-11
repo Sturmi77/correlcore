@@ -21,8 +21,9 @@ export function initServerErrorTracking(): void {
       publicEnv.PUBLIC_GLITCHTIP_ENVIRONMENT?.trim() ||
       privateEnv.APP_ENV ||
       'production',
-    beforeSend(event) {
-      return scrubSentryEvent(event);
+    beforeSend(event, _hint) {
+      scrubSentryEvent(event as Parameters<typeof scrubSentryEvent>[0]);
+      return event;
     },
     tracesSampleRate: 0,
   });
