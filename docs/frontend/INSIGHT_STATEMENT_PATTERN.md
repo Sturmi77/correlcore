@@ -5,7 +5,7 @@ Last updated: 2026-07-11
 
 ## Purpose
 
-CorrelCore's core value proposition is explaining *why* days were good or bad —
+CorrelCore's core value proposition is explaining _why_ days were good or bad —
 "Zusammenhänge statt Rohdaten" (DESIGN_DOCUMENT.md §1.4). The backend already
 generates clear, human-readable sentences for this (`Insight.statement`, see
 `backend/app/services/insight_engine.py`), for example:
@@ -34,11 +34,11 @@ same data model.
 
 ## The three levels
 
-| Level | Content | Treatment |
-|---|---|---|
-| **0 — Always visible, dominant** | `insight.statement` | Largest text in the element, full text color (not muted), never truncated, no other bold/large element competes on this level |
-| **1 — Secondary, supporting** | Direction (↗/↘/→), confidence as a compact visual signal (not a raw number) | Smaller, as an icon/color accent beside or before the statement — never its own line with its own weight |
-| **2 — On demand only** | Technical label (`mood_score → Homeoffice`), sample N, tier/maturity badge, effect size, disclaimer link | Only in the expanded/detail state, or as a small, muted caption — never an `<h2>`/`<h3>` |
+| Level                            | Content                                                                                                  | Treatment                                                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **0 — Always visible, dominant** | `insight.statement`                                                                                      | Largest text in the element, full text color (not muted), never truncated, no other bold/large element competes on this level |
+| **1 — Secondary, supporting**    | Direction (↗/↘/→), confidence as a compact visual signal (not a raw number)                              | Smaller, as an icon/color accent beside or before the statement — never its own line with its own weight                      |
+| **2 — On demand only**           | Technical label (`mood_score → Homeoffice`), sample N, tier/maturity badge, effect size, disclaimer link | Only in the expanded/detail state, or as a small, muted caption — never an `<h2>`/`<h3>`                                      |
 
 Target layout (collapsed state):
 
@@ -64,6 +64,7 @@ Days tagged Homeoffice currently line up with lower mood scores...        ← sm
 ## Application per component
 
 **`InsightCard.svelte`**
+
 - `insight.statement` becomes the first, largest text element in the header
   (replacing `buildTitle()` in that role).
 - `buildTitle()`'s result becomes a small caption below the statement, or is
@@ -76,12 +77,14 @@ Days tagged Homeoffice currently line up with lower mood scores...        ← sm
   information.
 
 **`InsightFeed.svelte`**
+
 - Actually use the existing `featured` prop: the first item of the
   already-correct `rankInsights()` ordering gets `featured` (more weight,
   more whitespace); the rest stay compact. The ranking is already right —
   it just isn't visually expressed.
 
 **`HomeDailyBrief.svelte`**
+
 - `.daily-brief__title` (currently `subject_label ?? metric`, the largest/
   boldest text) and `.daily-brief__statement` (currently small/muted) swap
   weight: the statement becomes the `h2`-level line, the label becomes a
@@ -91,9 +94,10 @@ Days tagged Homeoffice currently line up with lower mood scores...        ← sm
   further action needed there beyond the hierarchy swap above.
 
 **`MobileInsightLead.svelte`**
+
 - Inherits the fix automatically once `InsightCard` is updated. The eyebrow
   ("Insights") and heading ("Strongest pattern") stay as framing — they
-  label the *context*, not the insight itself.
+  label the _context_, not the insight itself.
 
 ## Explicitly out of scope
 
