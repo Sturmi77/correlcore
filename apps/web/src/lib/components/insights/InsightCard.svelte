@@ -197,17 +197,9 @@
         aria-hidden="true"
         data-testid="insight-card-direction">{glyph}</span
       >
-      <h3 class="insight-card__title" data-testid="insight-card-title">
-        {title}
-        {#if isContextInsight}
-          <span class="insight-card__context-badge" data-testid="insight-card-context-badge">
-            {$_('insights.context.badge')}
-          </span>
-        {/if}
-        {#if isInactiveTag}
-          <span class="insight-card__inactive-badge">{$_('insights.card.inactive_tag_badge')}</span>
-        {/if}
-      </h3>
+      <p class="insight-card__statement" data-testid="insight-card-statement">
+        {insight.statement ?? $_('home.insight.empty_statement')}
+      </p>
       <button
         class="insight-card__dismiss"
         aria-label={$_('insights.card.dismiss_aria', { values: { title } })}
@@ -218,12 +210,16 @@
       </button>
     </header>
 
-    {#if maturity && showMaturityBadge}
-      <InsightMaturityBadge {maturity} entryCount={insight.sample_n ?? 0} />
-    {/if}
-
-    <p class="insight-card__statement" data-testid="insight-card-statement">
-      {insight.statement ?? $_('home.insight.empty_statement')}
+    <p class="insight-card__caption" data-testid="insight-card-title">
+      {title}
+      {#if isContextInsight}
+        <span class="insight-card__context-badge" data-testid="insight-card-context-badge">
+          {$_('insights.context.badge')}
+        </span>
+      {/if}
+      {#if isInactiveTag}
+        <span class="insight-card__inactive-badge">{$_('insights.card.inactive_tag_badge')}</span>
+      {/if}
     </p>
 
     {#if isConfounded}
@@ -244,6 +240,9 @@
       })}
       {#if isInactiveTag}
         <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
+      {/if}
+      {#if maturity && showMaturityBadge}
+        <InsightMaturityBadge {maturity} entryCount={insight.sample_n ?? 0} />
       {/if}
     </p>
 
@@ -365,7 +364,7 @@
   }
   .insight-card__header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-2, 0.5rem);
   }
   .insight-card__direction {
@@ -374,6 +373,7 @@
     width: 1.5rem;
     text-align: center;
     flex-shrink: 0;
+    line-height: 1.4;
   }
   .insight-card__direction--positive {
     color: var(--color-success);
@@ -384,10 +384,10 @@
   .insight-card__direction--neutral {
     color: var(--color-text-muted);
   }
-  .insight-card__title {
-    flex: 1;
-    font-size: var(--text-sm, 0.875rem);
-    font-weight: 600;
+  .insight-card__caption {
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 500;
+    color: var(--color-text-faint);
     margin: 0;
     line-height: 1.3;
   }
@@ -429,15 +429,24 @@
     background: var(--color-surface-offset);
   }
   .insight-card__statement {
-    font-size: var(--text-sm, 0.875rem);
-    line-height: 1.55;
-    color: var(--color-text);
+    flex: 1;
+    font-size: var(--text-base, 1rem);
+    font-weight: 550;
+    line-height: 1.4;
+    color: var(--color-fg);
     margin: 0;
+  }
+  .insight-card--featured .insight-card__statement {
+    font-size: var(--text-lg, 1.125rem);
   }
   .insight-card__meta {
     font-size: var(--text-xs, 0.75rem);
     color: var(--color-text-muted);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    flex-wrap: wrap;
   }
   .insight-card__inactive-hint::before {
     content: ' · ';

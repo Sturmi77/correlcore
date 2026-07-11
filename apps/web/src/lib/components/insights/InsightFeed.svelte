@@ -160,9 +160,15 @@
     <!-- Feed -->
   {:else if !error}
     <ul class="if-list" data-testid="insight-feed-list">
-      {#each filtered as insight (insight.id)}
+      {#each filtered as insight, index (insight.id)}
         <li>
-          <InsightCard {insight} {maturity} {inactiveTagIds} {showMaturityBadge} />
+          <InsightCard
+            {insight}
+            {maturity}
+            {inactiveTagIds}
+            {showMaturityBadge}
+            featured={index === 0}
+          />
         </li>
       {/each}
     </ul>
