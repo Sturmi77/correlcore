@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "CorrelCore",
-    "version": "0.0.1",
+    "version": "1.0.0-rc.1",
     "tagline": "Understand why some days are good and others are bad."
   },
   "nav": {
