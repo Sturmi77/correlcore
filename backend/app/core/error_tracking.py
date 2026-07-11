@@ -125,6 +125,13 @@ def scrub_sentry_event(event: dict[str, Any], hint: dict[str, Any]) -> dict[str,
     return event
 
 
+def _before_send(event: Any, hint: dict[str, Any]) -> Any:
+    """Adapter for sentry_sdk ``before_send`` — scrub in place, preserve Event type."""
+    if isinstance(event, dict):
+        scrub_sentry_event(event, hint)
+    return event
+
+
 def init_error_tracking(settings: Settings) -> bool:
     """Initialise Sentry/GlitchTip when ``GLITCHTIP_DSN`` is configured."""
     dsn = settings.GLITCHTIP_DSN.strip()
@@ -145,7 +152,7 @@ def init_error_tracking(settings: Settings) -> bool:
             StarletteIntegration(),
             FastApiIntegration(),
         ],
-        before_send=scrub_sentry_event,
+        before_send=_before_send,
         send_default_pii=False,
         traces_sample_rate=settings.GLITCHTIP_TRACES_SAMPLE_RATE,
     )

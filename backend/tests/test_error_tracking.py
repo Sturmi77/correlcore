@@ -82,4 +82,4 @@ def test_init_error_tracking_initialises_when_dsn_set() -> None:
     assert kwargs["environment"] == "staging"
     assert kwargs["send_default_pii"] is False
     assert kwargs["traces_sample_rate"] == 0.0
-    assert kwargs["before_send"] is scrub_sentry_event
+    assert kwargs["before_send"].__name__ == "_before_send"
