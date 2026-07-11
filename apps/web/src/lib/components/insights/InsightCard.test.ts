@@ -198,11 +198,12 @@ describe('InsightCard', () => {
   });
 
   // ── Expanding to Level 2 ─────────────────────────────────────────
-  it('clicking expand toggle shows the chart container', async () => {
+  it('clicking expand toggle shows the level 2 detail section', async () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     const toggle = screen.getByTestId('insight-card-toggle');
     await fireEvent.click(toggle);
-    expect(screen.getByTestId('insight-card-chart')).toBeTruthy();
+    expect(screen.getByTestId('insight-card-level2')).toBeTruthy();
+    expect(screen.getByTestId('insight-card-tech-meta')).toBeTruthy();
   });
 
   it('aria-expanded is true after expanding', async () => {

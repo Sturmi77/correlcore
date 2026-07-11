@@ -1066,7 +1066,6 @@
       "meta_type": "Method",
       "meta_sample": "Entries",
       "export_csv": "Export data (CSV)",
-      "chart_aria": "Dual-axis sparkline for {title}",
       "loading_aria": "Loading insight",
       "error_body": "This insight could not be loaded.",
       "retry": "Retry",

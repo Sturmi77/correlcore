@@ -1066,7 +1066,6 @@
       "meta_type": "Methode",
       "meta_sample": "Eintraege",
       "export_csv": "Daten exportieren (CSV)",
-      "chart_aria": "Dual-Achsen-Sparkline fuer {title}",
       "loading_aria": "Erkenntnis wird geladen",
       "error_body": "Erkenntnis konnte nicht geladen werden.",
       "retry": "Erneut versuchen",
