@@ -78,10 +78,10 @@ See Phase 4 issue body in repository issues (labels: `bug`, `ux`, `mobile`).
 
 Follow-up to mobile UX review after P4 merge candidate [#339](https://github.com/Sturmi77/correlcore/pull/339).
 
-| ID   | Sprint | Impact   | Effort | Status | Title                                                         |
-| ---- | ------ | -------- | ------ | ------ | ------------------------------------------------------------- |
-| O-63 | P4-D   | High     | Low    | Open   | Home: encode work-context bars by mood, not entry frequency   |
-| O-64 | P4-C   | High     | Medium | Open   | Trends mobile: compact quick filters + compare settings sheet |
+| ID   | Sprint | Impact | Effort | Status | Title                                                         |
+| ---- | ------ | ------ | ------ | ------ | ------------------------------------------------------------- |
+| O-63 | P4-D   | High   | Low    | Open   | Home: encode work-context bars by mood, not entry frequency   |
+| O-64 | P4-C   | High   | Medium | Open   | Trends mobile: compact quick filters + compare settings sheet |
 
 ### O-63 — Home work-context pattern
 

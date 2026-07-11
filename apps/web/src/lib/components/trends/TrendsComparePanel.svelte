@@ -151,88 +151,88 @@
 <section class="compare" class:compare--compact={compactChrome} data-testid="trends-compare-panel">
   {#if !compactChrome}
     <header class="compare__header">
-    <div>
-      <h2>{$_('trends.compare.heading')}</h2>
-      <p>{$_('trends.compare.body')}</p>
-    </div>
-    <div class="compare__layers" aria-label={$_('trends.compare.layers')}>
-      <label>
-        <input
-          type="checkbox"
-          checked={showTags}
-          on:change={(event) =>
-            dispatch('layerChange', {
-              showTags: event.currentTarget.checked,
-              showSymptoms,
-              showWorkContexts,
-            })}
-        />
-        {$_('trends.compare.tags')}
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={showSymptoms}
-          on:change={(event) =>
-            dispatch('layerChange', {
-              showTags,
-              showSymptoms: event.currentTarget.checked,
-              showWorkContexts,
-            })}
-        />
-        {$_('trends.compare.symptoms')}
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={showWorkContexts}
-          on:change={(event) =>
-            dispatch('layerChange', {
-              showTags,
-              showSymptoms,
-              showWorkContexts: event.currentTarget.checked,
-            })}
-        />
-        {$_('trends.compare.work_contexts')}
-      </label>
-    </div>
+      <div>
+        <h2>{$_('trends.compare.heading')}</h2>
+        <p>{$_('trends.compare.body')}</p>
+      </div>
+      <div class="compare__layers" aria-label={$_('trends.compare.layers')}>
+        <label>
+          <input
+            type="checkbox"
+            checked={showTags}
+            on:change={(event) =>
+              dispatch('layerChange', {
+                showTags: event.currentTarget.checked,
+                showSymptoms,
+                showWorkContexts,
+              })}
+          />
+          {$_('trends.compare.tags')}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showSymptoms}
+            on:change={(event) =>
+              dispatch('layerChange', {
+                showTags,
+                showSymptoms: event.currentTarget.checked,
+                showWorkContexts,
+              })}
+          />
+          {$_('trends.compare.symptoms')}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showWorkContexts}
+            on:change={(event) =>
+              dispatch('layerChange', {
+                showTags,
+                showSymptoms,
+                showWorkContexts: event.currentTarget.checked,
+              })}
+          />
+          {$_('trends.compare.work_contexts')}
+        </label>
+      </div>
     </header>
 
     <div class="compare__controls" data-testid="trends-compare-controls">
-    <div class="compare__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
-      <span class="compare__control-label">{$_('trends.compare.mode_label')}</span>
-      <button
-        type="button"
-        class="compare__chip"
-        class:compare__chip--active={mode === 'lines'}
-        aria-pressed={mode === 'lines'}
-        on:click={() => setMode('lines')}
-      >
-        {$_('trends.compare.mode_lines')}
-      </button>
-      <button
-        type="button"
-        class="compare__chip"
-        class:compare__chip--active={mode === 'strips'}
-        aria-pressed={mode === 'strips'}
-        on:click={() => setMode('strips')}
-      >
-        {$_('trends.compare.mode_strips')}
-      </button>
-    </div>
+      <div class="compare__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
+        <span class="compare__control-label">{$_('trends.compare.mode_label')}</span>
+        <button
+          type="button"
+          class="compare__chip"
+          class:compare__chip--active={mode === 'lines'}
+          aria-pressed={mode === 'lines'}
+          on:click={() => setMode('lines')}
+        >
+          {$_('trends.compare.mode_lines')}
+        </button>
+        <button
+          type="button"
+          class="compare__chip"
+          class:compare__chip--active={mode === 'strips'}
+          aria-pressed={mode === 'strips'}
+          on:click={() => setMode('strips')}
+        >
+          {$_('trends.compare.mode_strips')}
+        </button>
+      </div>
 
-    <label class="compare__sort">
-      <span class="compare__control-label">{$_('trends.compare.sort_label')}</span>
-      <select
-        value={sortMode}
-        on:change={(event) => setSortMode(event.currentTarget.value as CompareSortMode)}
-      >
-        <option value="frequency">{$_('trends.compare.sort_frequency')}</option>
-        <option value="recent">{$_('trends.compare.sort_recent')}</option>
-        <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
-        <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
-      </select>
-    </label>
+      <label class="compare__sort">
+        <span class="compare__control-label">{$_('trends.compare.sort_label')}</span>
+        <select
+          value={sortMode}
+          on:change={(event) => setSortMode(event.currentTarget.value as CompareSortMode)}
+        >
+          <option value="frequency">{$_('trends.compare.sort_frequency')}</option>
+          <option value="recent">{$_('trends.compare.sort_recent')}</option>
+          <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
+          <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
+        </select>
+      </label>
     </div>
   {/if}
 

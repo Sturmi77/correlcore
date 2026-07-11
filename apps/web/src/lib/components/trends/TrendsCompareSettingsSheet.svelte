@@ -114,7 +114,11 @@
           </label>
         </fieldset>
 
-        <div class="compare-settings__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
+        <div
+          class="compare-settings__mode"
+          role="group"
+          aria-label={$_('trends.compare.mode_label')}
+        >
           <span class="compare-settings__label">{$_('trends.compare.mode_label')}</span>
           <button
             type="button"

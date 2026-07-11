@@ -44,10 +44,7 @@ export function readCompareSortMode(): CompareSortMode {
     COMPARE_SORT_KEY,
     'frequency',
     (value) =>
-      value === 'frequency' ||
-      value === 'recent' ||
-      value === 'correlation' ||
-      value === 'pinned'
+      value === 'frequency' || value === 'recent' || value === 'correlation' || value === 'pinned'
   );
 }
 
@@ -61,9 +58,6 @@ export function isCompareMode(value: unknown): value is CompareMode {
 
 export function isCompareSortMode(value: unknown): value is CompareSortMode {
   return (
-    value === 'frequency' ||
-    value === 'recent' ||
-    value === 'correlation' ||
-    value === 'pinned'
+    value === 'frequency' || value === 'recent' || value === 'correlation' || value === 'pinned'
   );
 }

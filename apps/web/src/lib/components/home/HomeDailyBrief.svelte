@@ -41,7 +41,10 @@
   $: workContextMoodValues = visibleWorkContexts
     .map((item) => item.mood_avg)
     .filter((value): value is number => value !== null);
-  $: maxWorkContextMood = Math.max(5, ...(workContextMoodValues.length ? workContextMoodValues : [5]));
+  $: maxWorkContextMood = Math.max(
+    5,
+    ...(workContextMoodValues.length ? workContextMoodValues : [5])
+  );
   $: minWorkContextMood = workContextMoodValues.length ? Math.min(...workContextMoodValues) : null;
 </script>
 
@@ -111,7 +114,9 @@
             class="daily-brief__work-context-row"
             data-highlight={item.mood_avg !== null && item.mood_avg === maxWorkContextMood
               ? 'high'
-              : item.mood_avg !== null && minWorkContextMood !== null && item.mood_avg === minWorkContextMood
+              : item.mood_avg !== null &&
+                  minWorkContextMood !== null &&
+                  item.mood_avg === minWorkContextMood
                 ? 'low'
                 : 'none'}
           >
@@ -302,7 +307,10 @@
     height: 0.55rem;
     border-radius: var(--radius-full);
     background:
-      linear-gradient(var(--bar-color, var(--color-primary)), var(--bar-color, var(--color-primary)))
+      linear-gradient(
+          var(--bar-color, var(--color-primary)),
+          var(--bar-color, var(--color-primary))
+        )
         left center / var(--bar-width) 100% no-repeat,
       var(--color-surface);
   }
