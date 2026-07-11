@@ -144,6 +144,12 @@
       "empty_statement": "Dieses Wochenmuster hat noch keinen Text.",
       "hint": "Basierend auf einer Woche Daten. Muster brauchen mehr Daten, um stabiler zu werden."
     },
+    "weekday_overview": {
+      "heading": "Deine Woche auf einen Blick",
+      "aria": "Uebersicht der Wochentage mit Stimmung und ersten Mustern",
+      "no_finding": "—",
+      "hint": "Stimmungsbalken und erste Muster pro Wochentag. Mehr Eintraege machen die Muster stabiler."
+    },
     "sparkline": {
       "heading": "Stimmungs-Verlauf",
       "caption": "Letzte {n} Tage",

@@ -43,6 +43,23 @@
 
 **Phase 3 (O-43–O-56):** **Open** — see [`GUI_OPTIMIZATION_PHASE3.md`](GUI_OPTIMIZATION_PHASE3.md). User findings: Heute brief + Erkenntnisse mobile/interpretability.
 
+**Phase 4 (O-57–O-62):** **Open** — see [`GUI_OPTIMIZATION_PHASE4.md`](GUI_OPTIMIZATION_PHASE4.md). Mobile UX findings: Home CTA, weekday overview, heatmap density, Trends sticky chrome, Insights overflow.
+
+---
+
+## Issue index (O-57 – O-62) — Phase 4
+
+| ID   | Sprint | Impact   | Effort | Status | Title                                                        |
+| ---- | ------ | -------- | ------ | ------ | ------------------------------------------------------------ |
+| O-57 | P4-D   | High     | Low    | Open   | Home: single primary CTA when today has no entry             |
+| O-58 | P4-D   | High     | Medium | Open   | Home: weekday overview with per-day findings                 |
+| O-59 | P4-B   | Medium   | Medium | Open   | Heatmaps: hide empty rows/columns in selected range (mobile) |
+| O-60 | P4-C   | High     | Medium | Open   | Trends: fixed Y-axis / legend on horizontal scroll           |
+| O-61 | P4-C   | Medium   | Medium | Open   | Trends: floating toolbar like Insights (incl. mobile)        |
+| O-62 | P4-A   | Critical | Medium | Open   | Insights: Symptom calendar/progression viewport overflow fix |
+
+GitHub: [#338](https://github.com/Sturmi77/correlcore/issues/338) — `[UX] Mobile: Home-CTA, Wochentags-Übersicht, Heatmap-Dichte, Trends-Sticky, Insights-Overflow`
+
 ---
 
 ## Issue index (O-43 – O-56) — Phase 3

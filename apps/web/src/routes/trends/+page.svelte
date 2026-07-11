@@ -30,6 +30,7 @@
     buildWorkContextHeatmap,
     type WorkContextHeatmapResponse,
   } from '$lib/utils/workContextHeatmap';
+  import TrendsAnalysisToolbar from '$lib/components/trends/TrendsAnalysisToolbar.svelte';
   import TrendsComparePanel from '$lib/components/trends/TrendsComparePanel.svelte';
   import TrendsCompareFilters from '$lib/components/trends/TrendsCompareFilters.svelte';
   import TrendsHealthContext from '$lib/components/trends/TrendsHealthContext.svelte';
@@ -41,11 +42,9 @@
   import Button from '$lib/components/common/Button.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
-  import SegmentedControl, {
-    type SegmentedControlOption,
-  } from '$lib/components/common/SegmentedControl.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
+  import type { SegmentedControlOption } from '$lib/components/common/SegmentedControl.svelte';
+  import type { TabBarOption } from '$lib/components/common/TabBar.svelte';
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
 
@@ -338,30 +337,37 @@
       <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
     </Panel>
   {:else}
-    <div class="trends__sticky-toolbar" data-testid="trends-sticky-toolbar">
-      <SegmentedControl
-        value={$analysisRange}
-        options={rangeControlOptions}
-        ariaLabel={$_('trends.controls')}
-        testId="trends-range-control"
-        on:change={(event) => {
-          const nextRange = event.detail.value as TimeseriesRange;
-          setAnalysisRange(nextRange);
-          void loadTrends(nextRange);
-        }}
-      />
-    </div>
-
-    <TabBar
-      value={activeTab}
-      options={trendTabOptions}
-      ariaLabel={$_('trends.tabs.label')}
-      testId="trends-tabs"
-      on:change={(event) => {
+    <TrendsAnalysisToolbar
+      analysisRange={$analysisRange}
+      analysisRangeOptions={rangeControlOptions}
+      activeTab={activeTab}
+      tabOptions={trendTabOptions}
+      showCompareFilters={activeTab === 'compare'}
+      on:rangeChange={(event) => {
+        const nextRange = event.detail.value as TimeseriesRange;
+        setAnalysisRange(nextRange);
+        void loadTrends(nextRange);
+      }}
+      on:tabChange={(event) => {
         activeTab = event.detail.value as TrendTab;
         void loadTrends();
       }}
-    />
+    >
+      <svelte:fragment slot="compare-filters">
+        <TrendsCompareFilters
+          {smoothing}
+          {smoothingAvailable}
+          {metrics}
+          {selectedCategory}
+          on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+          on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+          on:categoryChange={(event) => {
+            selectedCategory = event.detail.category;
+            void loadTrends();
+          }}
+        />
+      </svelte:fragment>
+    </TrendsAnalysisToolbar>
 
     {#if error}
       <InlineAlert variant="error" message={error} />
@@ -380,35 +386,6 @@
           {range}
           {loading}
         />
-        <section class="trends__detail-controls" aria-label={$_('trends.mobile.detail_filters')}>
-          <TrendsCompareFilters
-            {smoothing}
-            {smoothingAvailable}
-            {metrics}
-            {selectedCategory}
-            on:smoothingChange={(event) => setSmoothing(event.detail.value)}
-            on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-            on:categoryChange={(event) => {
-              selectedCategory = event.detail.category;
-              void loadTrends();
-            }}
-          />
-        </section>
-      {:else}
-        <section class="trends__compare-filters" aria-label={$_('trends.controls')}>
-          <TrendsCompareFilters
-            {smoothing}
-            {smoothingAvailable}
-            {metrics}
-            {selectedCategory}
-            on:smoothingChange={(event) => setSmoothing(event.detail.value)}
-            on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-            on:categoryChange={(event) => {
-              selectedCategory = event.detail.category;
-              void loadTrends();
-            }}
-          />
-        </section>
       {/if}
 
       <div id="mobile-trends-detail" class="trends__detail" data-testid="mobile-trends-detail">
@@ -428,6 +405,7 @@
             showSymptoms={showSymptomRows}
             showWorkContexts={showWorkContextRows}
             {loading}
+            pruneSparseAxes={compactTrends}
             on:selectDate={(event) => void openHistory(event.detail.date)}
             on:layerChange={(event) => setCompareLayers(event.detail)}
           />
@@ -468,24 +446,6 @@
     flex-direction: column;
   }
 
-  .trends__sticky-toolbar {
-    position: sticky;
-    top: calc(var(--app-header-height, 0px) + var(--space-2));
-    z-index: 3;
-    padding: var(--space-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-    backdrop-filter: blur(14px);
-  }
-
-  .trends__compare-filters {
-    padding: var(--space-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-  }
-
   .trends__panel {
     padding: var(--space-4);
     border-radius: var(--radius-md);
@@ -502,16 +462,5 @@
   .trends__detail {
     display: grid;
     gap: var(--space-3);
-  }
-
-  .trends__detail-controls {
-    padding-block: var(--space-3);
-    border-block: 1px solid var(--color-border);
-  }
-
-  @media (max-width: 640px) {
-    .trends__sticky-toolbar {
-      position: static;
-    }
   }
 </style>

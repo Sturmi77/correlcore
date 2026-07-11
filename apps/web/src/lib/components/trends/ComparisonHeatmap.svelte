@@ -9,6 +9,7 @@
     heatmapLevel,
     type DailyAxisLayout,
   } from '$lib/utils/charts';
+  import { pruneHeatmapAxes } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import type { EventMarker } from './EventMarkerLayer.svelte';
@@ -53,6 +54,11 @@
    * when sortMode === 'correlation'. Values are |r| in [0, 1].
    */
   export let correlationScores: Record<string, number> = {};
+  /**
+   * When true, rows and date columns with zero values in the selected range are hidden.
+   * Defaults to false for desktop context preservation.
+   */
+  export let pruneSparseAxes = false;
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string; rowId: string };
@@ -148,14 +154,13 @@
   }
 
   $: pinnedOrder = new Map(pinned.map((id, idx) => [id, idx]));
-  $: rows = [...rawRows].sort((a, b) => {
+  $: sortedRows = [...rawRows].sort((a, b) => {
     const aPin = pinnedOrder.get(a.id);
     const bPin = pinnedOrder.get(b.id);
     if (aPin !== undefined && bPin !== undefined) return aPin - bPin;
     if (aPin !== undefined) return -1;
     if (bPin !== undefined) return 1;
     if (sortMode === 'pinned') {
-      // After pinned rows, fall back to frequency.
       return (
         b.days.reduce((s, d) => s + (d.count ?? 0), 0) -
           a.days.reduce((s, d) => s + (d.count ?? 0), 0) || a.label.localeCompare(b.label)
@@ -165,10 +170,18 @@
     if (delta !== 0) return delta;
     return a.label.localeCompare(b.label);
   });
-  $: maxValue = Math.max(0, ...rows.flatMap((row) => axisDates.map((date) => valueFor(row, date))));
-  $: scrollKey = `${startDate}:${endDate}:${rows.length}`;
+  $: prunedAxes = pruneSparseAxes
+    ? pruneHeatmapAxes(sortedRows, axisDates, (row, date) => valueFor(row, date))
+    : { rows: sortedRows, dates: axisDates };
+  $: rows = prunedAxes.rows;
+  $: visibleAxisDates = prunedAxes.dates;
+  $: maxValue = Math.max(
+    0,
+    ...rows.flatMap((row) => visibleAxisDates.map((date) => valueFor(row, date)))
+  );
+  $: scrollKey = `${startDate}:${endDate}:${rows.length}:${visibleAxisDates.length}`;
   $: gridStyle = [
-    `--day-count: ${axisDates.length}`,
+    `--day-count: ${visibleAxisDates.length}`,
     `--axis-label-width: ${axisLayout.labelWidth}px`,
     `--axis-day-width: ${axisLayout.dayWidth}px`,
     `--axis-gap: ${axisLayout.dayGap}px`,
@@ -201,8 +214,8 @@
 <section class="compare-heatmap" data-loading={loading ? 'true' : 'false'}>
   <header class="compare-heatmap__head">
     <h3>{$_(headingKey)}</h3>
-    {#if axisDates.length > 0}
-      <span>{axisDates[0]} - {axisDates[axisDates.length - 1]}</span>
+    {#if visibleAxisDates.length > 0}
+      <span>{visibleAxisDates[0]} - {visibleAxisDates[visibleAxisDates.length - 1]}</span>
     {/if}
   </header>
 
@@ -232,7 +245,7 @@
             </button>
             <span class="compare-heatmap__label-text">{row.label}</span>
           </div>
-          {#each axisDates as date}
+          {#each visibleAxisDates as date}
             {@const value = valueFor(row, date)}
             <button
               type="button"
