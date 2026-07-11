@@ -14,6 +14,7 @@ from starlette.responses import Response
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.error_tracking import init_error_tracking
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
 from app.core.request_id import RequestIDMiddleware
@@ -24,6 +25,7 @@ from app.services.health_service import check_liveness
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan — startup and shutdown hooks."""
     setup_logging()
+    init_error_tracking(settings)
     # Connection pools are opened lazily by their dependencies. Keep the
     # lifespan hook focused on process-wide setup until a measured startup
     # warmup or explicit shutdown hook is required.

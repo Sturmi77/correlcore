@@ -614,7 +614,9 @@
       "delete_cancel": "Abbrechen",
       "delete_busy": "Account wird geloescht\u2026",
       "delete_error": "Account konnte nicht geloescht werden. Bitte spaeter erneut versuchen.",
-      "delete_invalid_password": "Passwort ist falsch."
+      "delete_invalid_password": "Passwort ist falsch.",
+      "policy_link": "Datenschutzerklaerung",
+      "policy_body": "Lies, wie diese Installation deine Gesundheitsdaten verarbeitet und welche Rechte du hast."
     },
     "appearance": {
       "heading": "Darstellung",
@@ -1272,6 +1274,50 @@
     },
     "logout": {
       "label": "Abmelden"
+    }
+  },
+  "privacy": {
+    "page_title": "Datenschutzerklaerung",
+    "page_subtitle": "Wie diese CorrelCore-Installation mit deinen Daten umgeht",
+    "intro": "Diese Erklaerung gilt fuer deine Nutzung dieser CorrelCore-Instanz. Bei Selfhost-Betrieb ist der Betreiber der Verantwortliche. Der vollstaendige Rechtstext liegt auch in docs/PRIVACY.md im Repository.",
+    "back_settings": "Zurueck zu Einstellungen",
+    "sections": {
+      "controller": {
+        "heading": "Wer ist verantwortlich?",
+        "body": "Bei einer selbst gehosteten Instanz ist die Person oder Organisation, die den Server betreibt, Verantwortlicher im Sinne der DSGVO. CorrelCore ist die Software; standardmaessig gibt es keinen zentralen Cloud-Verarbeiter."
+      },
+      "data": {
+        "heading": "Welche Daten werden verarbeitet?",
+        "body": "Stimmung, Energie, Stress, Symptome, optionale Notizen, Tags, Gewohnheiten und Kontodaten (E-Mail, Anzeigename). Gesundheitsbezogene Felder werden at-rest verschluesselt. Es werden keine Third-Party-Werbe- oder Analyse-Tracker verwendet."
+      },
+      "legal": {
+        "heading": "Rechtsgrundlagen",
+        "body": "Gesundheitstagebuch-Daten werden auf Grundlage deiner Einwilligung verarbeitet (Art. 6 Abs. 1 lit. a, Art. 9 Abs. 2 lit. a DSGVO). Kontofunktionen dienen der Vertragserfuellung. Du kannst die Einwilligung durch Deaktivieren der Analyse oder Loeschen des Kontos widerrufen."
+      },
+      "security": {
+        "heading": "Sicherheit",
+        "body": "TLS beim Transport, App-Verschluesselung fuer sensible Felder, Row-Level-Security, Rate-Limiting und strukturierte Logs ohne Klartext-Gesundheitsdaten. Backups liegen beim Betreiber; verschluesselte restic-Backups werden empfohlen."
+      },
+      "rights": {
+        "heading": "Deine Rechte",
+        "body": "Auskunft und Uebertragbarkeit: Export ZIP/JSON/CSV in den Einstellungen. Loeschung: Account loeschen in den Einstellungen (Passwort erforderlich). Widerspruch gegen Analyse: \"Analyse aktiviert\" deaktivieren. Einschraenkung (Art. 18): Instanz-Betreiber kontaktieren — siehe DSGVO.md."
+      },
+      "sharing": {
+        "heading": "Weitergabe",
+        "body": "Gesundheitsdaten werden nicht an Cloud-LLMs, Werbenetzwerke oder externe Analyse-Dienste gesendet. Optionales selfhosted Error-Tracking (GlitchTip) darf keine Klartext-Gesundheitsfelder enthalten."
+      },
+      "retention": {
+        "heading": "Aufbewahrung",
+        "body": "Eintraege bleiben bis zur Loeschung durch dich oder dein Konto. Erzeugte Insights nutzen ein rollierendes Fenster. Nicht verifizierte Konten koennen nach sieben Tagen entfernt werden."
+      },
+      "changes": {
+        "heading": "Aenderungen",
+        "body": "Diese Erklaerung wird bei wesentlichen Aenderungen aktualisiert. Die In-App-Seite und docs/PRIVACY.md im Repository sind massgebliche Quellen fuer Selfhost-Nutzer."
+      },
+      "contact": {
+        "heading": "Kontakt",
+        "body": "Datenschutzanfragen: Instanz-Betreiber kontaktieren. Sicherheitsmeldungen: siehe SECURITY.md im Repository."
+      }
     }
   }
 }

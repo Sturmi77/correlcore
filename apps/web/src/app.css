@@ -92,6 +92,7 @@
 
   /* Primary-Varianten */
   --color-primary: #7c6af5;
+  --color-primary-soft: var(--color-primary-highlight);
   --color-primary-hover: #9587ff;
   --color-primary-active: #6a5be0;
   --color-primary-highlight: #2b2742;
@@ -161,6 +162,7 @@
 
   /* Primary-Varianten */
   --color-primary: #6356d9;
+  --color-primary-soft: var(--color-primary-highlight);
   --color-primary-hover: #5548c5;
   --color-primary-active: #4338a8;
   --color-primary-highlight: #ebe9ff;
@@ -224,6 +226,7 @@
     --color-text-faint: #6b6a68;
     --color-text-inverse: #2b2a28;
     --color-primary: #7c6af5;
+    --color-primary-soft: var(--color-primary-highlight);
     --color-primary-hover: #9587ff;
     --color-primary-active: #6a5be0;
     --color-primary-highlight: #2b2742;

@@ -52,7 +52,13 @@
  * time would defeat the purpose of the proxy.
  */
 
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
+import {
+  captureServerException,
+  initServerErrorTracking,
+} from '$lib/observability/errorTracking.server';
+
+initServerErrorTracking();
 
 // Hop-by-hop headers per RFC 7230 §6.1 — never forwarded by a proxy.
 const HOP_BY_HOP_HEADERS = new Set([
@@ -165,4 +171,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     statusText: upstreamResponse.statusText,
     headers: responseHeaders,
   });
+};
+
+export const handleError: HandleServerError = ({ error }) => {
+  captureServerException(error);
+  return { message: 'Internal Error' };
 };

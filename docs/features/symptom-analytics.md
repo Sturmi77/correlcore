@@ -467,8 +467,8 @@ Summary:
 
 ### M9
 
-- [ ] Beta feedback on symptom analytics usability collected and reviewed
-- [ ] Decision on intensity scope (keep as Future Work / promote to next milestone) recorded as ADR addendum or new ADR
+- [x] Beta feedback on symptom analytics usability collected and reviewed — [`quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md`](../quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md)
+- [x] Decision on intensity scope (keep as Future Work / promote to next milestone) recorded — **keep binary through beta**; revisit if ≥3 tester requests (see review doc)
 
 ---
 
@@ -537,4 +537,4 @@ volumes support it.
   - [#144](https://github.com/Sturmi77/correlcore/issues/144) — Lasso multi-variable regression
   - [#145](https://github.com/Sturmi77/correlcore/issues/145) — Lag analysis
   - [#150](https://github.com/Sturmi77/correlcore/issues/150) — Hierarchical tag clustering
-- **M9:** Beta feedback review (to be created)
+- **M9:** Beta feedback review — [`quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md`](../quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md)

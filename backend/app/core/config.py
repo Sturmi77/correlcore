@@ -131,6 +131,13 @@ class Settings(BaseSettings):
     # This is intentionally stricter than the global entry-count tier because
     # rare tags have too little statistical power even inside a large history.
     ANALYTICS_MIN_TAG_USAGES: int = Field(default=10, ge=2)
+
+    # Error tracking (M9) — optional selfhosted GlitchTip via Sentry protocol.
+    # Leave empty for zero outbound error-reporting traffic.
+    GLITCHTIP_DSN: str = ""
+    GLITCHTIP_ENVIRONMENT: str = ""
+    GLITCHTIP_TRACES_SAMPLE_RATE: float = Field(default=0.0, ge=0.0, le=1.0)
+
     # Public base URL used to build the verify link in outgoing mails.
     # Frontend route handles the GET and calls the API.
     FRONTEND_BASE_URL: str = "http://localhost:5173"

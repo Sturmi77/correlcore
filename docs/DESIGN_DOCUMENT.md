@@ -1201,17 +1201,15 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ---
 
-### M9 — Beta-Härtung (Woche 22–24) — NÄCHSTER HAUPTMEILENSTEIN
+### M9 — Beta-Härtung (Woche 22–24) — ABGESCHLOSSEN
 
-> **Statusupdate (2026-07-10):** M9 folgt unmittelbar nach M5.1. Der Feature-Umfang
-> für das geplante MVP (Entry, Trends, Habits, Insights v1 + Maturity, Mobile/PWA,
-> Offline-First Sync) ist zu diesem Zeitpunkt gegeben. M9 fokussiert ausschließlich
-> auf Betriebssicherheit, Datenschutzpfade, Backup-Strategie und externe
-> Testbarkeit vor M10 (Public Selfhost v1.0). M5.1 darf keine neuen
-> Backend-Health-Daten-Integrationen einführen oder Kern-Domänen-Verträge ändern.
+> **Statusupdate (2026-07-11):** M9 ist abgeschlossen (Sprint 6 closeout).
+> Betriebssicherheit, Datenschutzpfade, Backup-Strategie und externe
+> Testbarkeit sind für M10 (Public Selfhost v1.0) vorbereitet.
 >
 > **Sprintplanung:** [`M9_SPRINT_PLAN.md`](M9_SPRINT_PLAN.md) ·
-> [`M9_SPRINT_STATUS.md`](M9_SPRINT_STATUS.md) (Sprint 0 audit: 2026-07-11)
+> [`M9_SPRINT_STATUS.md`](M9_SPRINT_STATUS.md) ·
+> [`quality/M9_QUALITY_GATE.md`](quality/M9_QUALITY_GATE.md)
 
 - Monitoring, GlitchTip-Error-Tracking
 - Backup/Restore-Dokumentation
@@ -1221,19 +1219,19 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 #### Akzeptanzkriterien M9
 
-- [ ] Vollständige Datenschutzerklärung vorhanden (`docs/PRIVACY.md` + in-app verlinkbar)
-- [ ] Account-Löschung (Right to Erasure, Art. 17 DSGVO) als Self-Service implementiert
-- [ ] Backup-Prozess dokumentiert und Restore-Test erfolgreich durchgeführt
-- [ ] GlitchTip Error-Tracking aktiv, kein PII in Error-Reports
-- [ ] Install-Guide für Selfhost vollständig (Docker Compose, Traefik, DNS)
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+- [x] Vollständige Datenschutzerklärung vorhanden (`docs/PRIVACY.md` + in-app verlinkbar)
+- [x] Account-Löschung (Right to Erasure, Art. 17 DSGVO) als Self-Service implementiert
+- [x] Backup-Prozess dokumentiert und Restore-Test erfolgreich durchgeführt ([`selfhost/INSTALL.md`](selfhost/INSTALL.md), [`quality/M9_BACKUP_RESTORE_TEST.md`](quality/M9_BACKUP_RESTORE_TEST.md))
+- [x] GlitchTip Error-Tracking aktiv, kein PII in Error-Reports (optional DSN; PII scrub in API + Web)
+- [x] Install-Guide für Selfhost vollständig (Docker Compose, Traefik, DNS) — [`selfhost/INSTALL.md`](selfhost/INSTALL.md)
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden — [`quality/M9_QUALITY_GATE.md`](quality/M9_QUALITY_GATE.md)
 
 #### DSGVO-Checkpoint M9
 
-- [ ] 🔒 DSGVO: Datenschutz-Folgeabschätzung (DSFA) für Cloud-Deployment dokumentiert (falls SaaS geplant)
-- [ ] 🔒 DSGVO: AV-Vertrag-Template für Cloud-Hoster (Hetzner) vorhanden
-- [ ] 🔒 DSGVO: Vollständiger JSON+ZIP-Datenexport (Art. 20 DSGVO) als Self-Service implementiert und getestet
-- [ ] 🔒 DSGVO: GlitchTip-Instanz selfhosted oder DSGVO-konformer Anbieter
+- [ ] 🔒 DSGVO: Datenschutz-Folgeabschätzung (DSFA) für Cloud-Deployment dokumentiert (falls SaaS geplant) — deferred M12
+- [x] 🔒 DSGVO: AV-Vertrag-Template für Cloud-Hoster (Hetzner) vorhanden — [`legal/AV_VERTRAG_HETZNER_TEMPLATE.md`](legal/AV_VERTRAG_HETZNER_TEMPLATE.md)
+- [x] 🔒 DSGVO: Vollständiger JSON+ZIP-Datenexport (Art. 20 DSGVO) als Self-Service implementiert und getestet
+- [x] 🔒 DSGVO: GlitchTip-Instanz selfhosted oder DSGVO-konformer Anbieter (Compose profile `monitoring`; optional DSN)
 
 ---
 
@@ -1431,7 +1429,7 @@ Jeder Milestone darf erst auf `done` gesetzt werden, wenn beide Audits durchgef�
 - [ ] **DSGVO-Pfad**: Neue Felder im Erasure-Pfad (`DELETE /user/me`)
 - [ ] **Anti-Enumeration**: Neue öffentliche Endpoints liefern generische Antworten
 - [ ] **Headers / Cookies**: Bei neuen Cookies HttpOnly + Secure + `SameSite=strict`
-- [ ] **Dependency-Scan**: `pip-audit` und `pnpm audit --prod` ohne `high`/`critical`-Findings
+- [x] **Dependency-Scan**: `pip-audit` und `pnpm audit --prod` ohne `high`/`critical`-Findings (CI: [`ci-security.yml`](../.github/workflows/ci-security.yml))
 - [ ] **Secrets-Scan**: Repo gegen `.env`-Leaks geprüft; neue Env-Vars in `.env.example`
 
 ---

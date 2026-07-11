@@ -10,6 +10,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M9 — Beta Hardening (complete).** Formal closeout of ops, privacy, backup,
+  observability, security CI, and beta program between M5.1 and M10: `PRIVACY.md`
+  + in-app link, GDPR self-service E2E (delete, ZIP export, analytics opt-out),
+  optional selfhosted GlitchTip with PII scrub, consolidated
+  [`docs/selfhost/INSTALL.md`](docs/selfhost/INSTALL.md), backup restore protocol,
+  CI dependency audits + style-contract lint, beta onboarding/triage docs, and
+  milestone quality gate. Closes #29 (operator: close issue on GitHub). See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md),
+  [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md), and
+  [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md).
+
 - **M5.1 — UX Polish & Flow Consolidation (complete).** Formal closeout of the
   `ux(O-xx)` issue cluster (#251–#273) between M5 and M9: onboarding → first
   entry funnel, Home brief-first layout, maturity-gated Insights analytics,

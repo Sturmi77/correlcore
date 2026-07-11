@@ -15,15 +15,15 @@ not a blocker for M9.
 
 ## Overview
 
-| Sprint | Title                     | Issues (GitHub) | Exit criterion                                             |
-| ------ | ------------------------- | --------------- | ---------------------------------------------------------- |
-| 0      | Scope & audit             | #29             | Issue matrix complete; tracking docs in place              |
-| 1      | GDPR self-service         | #29 (partial)   | PRIVACY.md + in-app link; delete/export E2E; Art. 18 doc   |
-| 2      | Observability             | #29 (partial)   | Selfhosted GlitchTip active; PII-free events; incident RB  |
-| 3      | Backup & install          | —               | restic/LUKS docs; restore test; consolidated Install-Guide |
-| 4      | Security & CI             | —               | Audit CI gates; style-contract lint; pentest complete      |
-| 5      | Beta program              | —               | 5–10 testers onboarded; feedback triaged                   |
-| 6      | Milestone closeout (M9-C) | #29             | Quality gate, visual QA, README/CHANGELOG, GitHub hygiene  |
+| Sprint | Title                       | Issues (GitHub) | Exit criterion                                              |
+| ------ | --------------------------- | --------------- | ----------------------------------------------------------- |
+| 0      | Scope & audit               | #29             | Issue matrix complete; tracking docs in place                 |
+| 1      | GDPR self-service           | #29 (partial)   | PRIVACY.md + in-app link; delete/export E2E; Art. 18 doc    |
+| 2      | Observability               | #29 (partial)   | Selfhosted GlitchTip active; PII-free events; incident RB   |
+| 3      | Backup & install            | —               | restic/LUKS docs; restore test; consolidated Install-Guide  |
+| 4      | Security & CI               | —               | Audit CI gates; style-contract lint; pentest complete       |
+| 5      | Beta program                | —               | 5–10 testers onboarded; feedback triaged                    |
+| 6      | Milestone closeout (M9-C)   | #29             | Quality gate, visual QA, README/CHANGELOG, GitHub hygiene   |
 
 ## API usage minimization (binding)
 
@@ -32,15 +32,15 @@ and to how sprints are executed.
 
 ### Product architecture
 
-| Rule                                                     | Rationale                                                                                                                  |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| No cloud LLM, no Ollama (#148), no weekly digest (#147)  | Deferred to M7-S8; see [`quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md)                                          |
-| GlitchTip selfhosted only (Compose profile `monitoring`) | DSGVO checkpoint; optional DSN — app runs with zero error-reporting traffic when unset                                     |
-| No third-party analytics or feedback SaaS                | Beta feedback via email / structured GitHub issues                                                                         |
-| No new REST endpoints unless audit proves a gap          | Delete, export, preferences already ship in [`backend/app/api/v1/endpoints/user.py`](backend/app/api/v1/endpoints/user.py) |
-| Heavy analytics stay in nightly worker                   | [`backend/app/workers/analytics.py`](backend/app/workers/analytics.py); respect `analytics_enabled`                        |
-| Notes-in-analysis M9: config threshold review only       | Per-entry opt-out API deferred to M10                                                                                      |
-| Full DSFA → M12                                          | M9 documents selfhost-only scope note                                                                                      |
+| Rule | Rationale |
+| ---- | --------- |
+| No cloud LLM, no Ollama (#148), no weekly digest (#147) | Deferred to M7-S8; see [`quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md) |
+| GlitchTip selfhosted only (Compose profile `monitoring`) | DSGVO checkpoint; optional DSN — app runs with zero error-reporting traffic when unset |
+| No third-party analytics or feedback SaaS | Beta feedback via email / structured GitHub issues |
+| No new REST endpoints unless audit proves a gap | Delete, export, preferences already ship in [`backend/app/api/v1/endpoints/user.py`](backend/app/api/v1/endpoints/user.py) |
+| Heavy analytics stay in nightly worker | [`backend/app/workers/analytics.py`](backend/app/workers/analytics.py); respect `analytics_enabled` |
+| Notes-in-analysis M9: config threshold review only | Per-entry opt-out API deferred to M10 |
+| Full DSFA → M12 | M9 documents selfhost-only scope note |
 
 ### Implementation workflow
 
@@ -51,15 +51,15 @@ and to how sprints are executed.
 
 ## Out of scope / deferred
 
-| Item                               | Target  | API-minimization reason            |
-| ---------------------------------- | ------- | ---------------------------------- |
-| Ollama / weekly digest (#147–#148) | M7-S8   | LLM / push infra                   |
-| M8 Sleep / Health Connect (#31)    | M8      | Wearable API integration           |
-| Slug HMAC (#62)                    | M9+     | Crypto refactor, not beta blocker  |
-| Per-entry notes opt-out API        | M10     | New API surface                    |
-| DSFA (full)                        | M12     | Cloud SaaS launch                  |
-| CRDT conflict-resolution UI        | M9+     | Sync API extension                 |
-| Uptime Kuma / Loki / Prometheus    | post-M9 | No `/metrics` by design (ADR-0007) |
+| Item                              | Target  | API-minimization reason              |
+| --------------------------------- | ------- | ------------------------------------ |
+| Ollama / weekly digest (#147–#148)| M7-S8   | LLM / push infra                     |
+| M8 Sleep / Health Connect (#31)   | M8      | Wearable API integration             |
+| Slug HMAC (#62)                   | M9+     | Crypto refactor, not beta blocker    |
+| Per-entry notes opt-out API       | M10     | New API surface                      |
+| DSFA (full)                       | M12     | Cloud SaaS launch                    |
+| CRDT conflict-resolution UI       | M9+     | Sync API extension                   |
+| Uptime Kuma / Loki / Prometheus   | post-M9 | No `/metrics` by design (ADR-0007)   |
 
 ## Dependency graph
 
@@ -81,13 +81,13 @@ flowchart TD
   S6 --> M10[M10 Public Selfhost]
 ```
 
-| Dependency     | Reason                                            |
-| -------------- | ------------------------------------------------- |
-| M5.1 → M9      | Beta testers after UX flows signed off            |
-| Sprint 1 → 5   | Privacy policy before external testers            |
-| Sprint 2+3 → 5 | Monitoring + backup docs before tester onboarding |
-| Sprint 4 → 5   | Pentest before public beta                        |
-| M9 → M10       | Exit = stable enough for public selfhost release  |
+| Dependency    | Reason                                                        |
+| ------------- | ------------------------------------------------------------- |
+| M5.1 → M9     | Beta testers after UX flows signed off                        |
+| Sprint 1 → 5  | Privacy policy before external testers                        |
+| Sprint 2+3 → 5| Monitoring + backup docs before tester onboarding             |
+| Sprint 4 → 5  | Pentest before public beta                                    |
+| M9 → M10      | Exit = stable enough for public selfhost release              |
 
 ## Sprint 0 — Scope & audit
 
@@ -183,22 +183,25 @@ flowchart TD
 
 ```bash
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm check:style-contract
 cd backend && uv run --python 3.12 ruff check . && uv run --python 3.12 pytest
+cd backend && uv run --python 3.12 pip-audit --skip-editable --ignore-vuln PYSEC-2026-1325
+pnpm audit --prod --audit-level=high
 pnpm --filter @correlcore/web test:e2e:smoke
 pnpm --filter @correlcore/web test:e2e:gdpr --workers=1
 ```
 
 ## Success metrics
 
-| Metric                        | Target                                        |
-| ----------------------------- | --------------------------------------------- |
-| GDPR self-service E2E         | Delete + ZIP export + privacy link: 100% pass |
-| GlitchTip PII leak (staging)  | 0 events with mood/notes/email                |
-| Restore test                  | 1 documented successful backup→restore cycle  |
-| Beta testers                  | 5–10 active; ≥1 feedback round complete       |
-| Pentest                       | 0 open Critical/High at M9 exit               |
-| New external API integrations | 0                                             |
-| New REST endpoints            | 0 (unless audit documents a gap)              |
+| Metric                         | Target                                      |
+| ------------------------------ | ------------------------------------------- |
+| GDPR self-service E2E          | Delete + ZIP export + privacy link: 100% pass |
+| GlitchTip PII leak (staging)   | 0 events with mood/notes/email              |
+| Restore test                   | 1 documented successful backup→restore cycle |
+| Beta testers                   | 5–10 active; ≥1 feedback round complete     |
+| Pentest                        | 0 open Critical/High at M9 exit             |
+| New external API integrations  | 0                                           |
+| New REST endpoints             | 0 (unless audit documents a gap)            |
 
 ## References
 

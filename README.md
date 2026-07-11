@@ -40,7 +40,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M5.1 (UX Polish)** — Flow consolidation for onboarding, Home, Insights, Habits, PWA, and desktop Trends (`ux(O-xx)` #251–#273); tag co-occurrence quick win — **Complete** (2026-07-10). See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md), [`docs/quality/M5_1_UX_VISUAL_QA.md`](docs/quality/M5_1_UX_VISUAL_QA.md), and [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).
 - [x] **M7** — Insights v2: Lasso, lag, symptom analytics, tag clustering, Sprint 9 interaction UX — **Complete** (2026-06-30). See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/quality/M7_QUALITY_GATE.md`](docs/quality/M7_QUALITY_GATE.md). Optional LLM/digest → M7-S8.
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
-- [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).
+- [x] **M9** — Beta hardening: monitoring, GlitchTip, GDPR self-service, backup/install docs, security CI, beta program — **Complete** (2026-07-11). Closes #29. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md), [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md), and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md).
 - [ ] **M10** — Public selfhost release v1.0
 - [ ] **M11** — Android Play Store (Capacitor)
 - [ ] **M12** — SaaS mode (managed hosting)
@@ -50,19 +50,19 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ### Current Milestone Status
 
-| Milestone | Status                     | Notes                                                                                                                                                                                                                                                    |
-| --------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **M3**    | Complete                   | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                                                     |
-| **M3.1**  | Complete                   | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md).                                 |
-| **M3.5**  | Complete                   | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).                                     |
-| **M3.6**  | Complete                   | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).                                          |
-| **M3.7**  | Complete                   | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                                                               |
-| **M4**    | **Complete** (2026-06-30)  | Quick wins + PWA hardening closed out. Dexie sync/conflict log → M4.1 (#10/#24). See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md).                                          |
-| **M4.1**  | **Complete** (2026-06-30)  | Offline-first Dexie sync, push/pull API, conflict log, local-first entries. Visual QA signed off. Closes #10/#24. See [`docs/M4.1_SPRINT_STATUS.md`](docs/M4.1_SPRINT_STATUS.md) and [`docs/quality/M4.1_VISUAL_QA.md`](docs/quality/M4.1_VISUAL_QA.md). |
-| **M5**    | **Complete** (2026-06-30)  | Habits Core + M5-C1/C2 closeout. Visual QA signed off. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md) and [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md).                                                                    |
-| **M5.1**  | **Complete** (2026-07-10)  | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                        |
-| **M7**    | **Complete** (2026-06-30)  | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                           |
-| **M9**    | **In progress** (Sprint 0) | Beta hardening after M5.1. Sprint 0 audit complete; Sprints 1–6 pending. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).                                                              |
+| Milestone | Status                    | Notes                                                                                                                                                                                                                                                    |
+| --------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M3**    | Complete                  | Insights v1 is closed with backend analytics, worker generation, read APIs, Home preview, cold-start onboarding, and day-over-day delta. See [`docs/M3_SPRINT_STATUS.md`](docs/M3_SPRINT_STATUS.md).                                                     |
+| **M3.1**  | Complete                  | Focused Insights polish after M3: InsightCard/InsightFeed, non-blocking store behaviour, disclaimer route/modal, and neutral correlation matrix styling. See [`docs/M3.1_SPRINT_STATUS.md`](docs/M3.1_SPRINT_STATUS.md).                                 |
+| **M3.5**  | Complete                  | Frontend/mobile optimisation release-complete after rendered QA (2026-05-27). See [`docs/M3_5_SPRINT_STATUS.md`](docs/M3_5_SPRINT_STATUS.md) and [`docs/quality/M3_5_VISUAL_QA.md`](docs/quality/M3_5_VISUAL_QA.md).                                     |
+| **M3.6**  | Complete                  | Insight maturity phases release-complete after rendered QA (2026-05-27). See [`docs/M3_6_SPRINT_STATUS.md`](docs/M3_6_SPRINT_STATUS.md) and [`docs/quality/M3_6_VISUAL_QA.md`](docs/quality/M3_6_VISUAL_QA.md).                                          |
+| **M3.7**  | Complete                  | Color system hardening release-complete locally after rendered light-mode QA (2026-05-28). See [`docs/M3_7_SPRINT_STATUS.md`](docs/M3_7_SPRINT_STATUS.md).                                                                                               |
+| **M4**    | **Complete** (2026-06-30) | Quick wins + PWA hardening closed out. Dexie sync/conflict log → M4.1 (#10/#24). See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md).                                          |
+| **M4.1**  | **Complete** (2026-06-30) | Offline-first Dexie sync, push/pull API, conflict log, local-first entries. Visual QA signed off. Closes #10/#24. See [`docs/M4.1_SPRINT_STATUS.md`](docs/M4.1_SPRINT_STATUS.md) and [`docs/quality/M4.1_VISUAL_QA.md`](docs/quality/M4.1_VISUAL_QA.md). |
+| **M5**    | **Complete** (2026-06-30) | Habits Core + M5-C1/C2 closeout. Visual QA signed off. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md) and [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md).                                                                    |
+| **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                        |
+| **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                           |
+| **M9**    | **Complete** (2026-07-11) | Beta hardening closed out: GDPR paths, GlitchTip/PII scrub, install/backup docs, security CI, beta program. Closes #29. **Next main milestone: M10.** See [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md) and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md). |
 
 ---
 
@@ -89,22 +89,27 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ## Quickstart (Selfhost)
 
+Full install guide: [`docs/selfhost/INSTALL.md`](docs/selfhost/INSTALL.md) (Traefik, DNS, backup, homelab variant).
+
 ### Prerequisites
 
 - Docker >= 24 + Docker Compose v2
-- A domain with DNS pointing to your server
+- A domain with DNS pointing to your server (public VPS path)
 
 ### Setup
 
 ```bash
 git clone https://github.com/Sturmi77/correlcore.git
-cd correlcore
-cp infra/docker/.env.example infra/docker/.env
-# Edit .env: set DOMAIN, SECRET_KEY, POSTGRES_PASSWORD, ...
-docker compose -f infra/docker/docker-compose.yml up -d
+cd correlcore/infra/docker
+cp .env.example .env
+# Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
+# Set acme email in traefik/traefik.yml to match LETSENCRYPT_EMAIL
+docker compose up -d
 ```
 
 After startup, CorrelCore is available at `https://your-domain.tld`
+
+Homelab / Tailnet without public DNS: see [`infra/dockhand/README.md`](infra/dockhand/README.md).
 
 > **Note:** CorrelCore is under active development (pre-alpha). Production use is recommended from v1.0 onwards.
 

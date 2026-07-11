@@ -344,7 +344,7 @@
                 y1={PAD + (1 - frac) * (SVG_H - PAD * 2)}
                 x2={SVG_W - PAD}
                 y2={PAD + (1 - frac) * (SVG_H - PAD * 2)}
-                stroke="var(--color-divider)"
+                stroke="var(--color-border)"
                 stroke-width="0.5"
               />
             {/each}
@@ -359,7 +359,7 @@
             <polyline
               points={seriesB}
               fill="none"
-              stroke="var(--color-orange)"
+              stroke="var(--color-warning)"
               stroke-width="1.5"
               stroke-linejoin="round"
               stroke-linecap="round"
@@ -452,7 +452,7 @@
     color: var(--color-success);
   }
   .insight-card__direction--negative {
-    color: var(--color-notification);
+    color: var(--color-primary);
   }
   .insight-card__direction--neutral {
     color: var(--color-text-muted);
@@ -598,7 +598,7 @@
     background: var(--color-primary);
   }
   .insight-card__legend-dot--secondary {
-    background: var(--color-orange);
+    background: var(--color-warning);
   }
   .insight-card__legend-label {
     font-size: var(--text-xs, 0.72rem);

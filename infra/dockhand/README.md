@@ -290,6 +290,9 @@ und der Plattenverbrauch bleibt vorhersehbar.
 
 ## Backup
 
+Consolidated backup, restic, and restore procedure:
+[`docs/selfhost/INSTALL.md`](../../docs/selfhost/INSTALL.md) §Backup.
+
 ```bash
 # Postgres-Dump
 docker exec correlcore-postgres pg_dump -U correlcore correlcore \

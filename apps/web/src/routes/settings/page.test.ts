@@ -88,6 +88,7 @@ describe('/settings Sprint 7', () => {
     expect(screen.getByTestId('settings-vocab-symptoms')).toBeTruthy();
     expect(screen.getByTestId('settings-vocab-habits')).toBeTruthy();
     expect(screen.getByTestId('settings-delete-account')).toBeTruthy();
+    expect(screen.getByTestId('settings-privacy-policy')).toBeTruthy();
     expect(screen.getByTestId('settings-section-export')).toBeTruthy();
     expect(screen.getByTestId('settings-section-analysis')).toBeTruthy();
     expect(screen.getByTestId('settings-section-privacy')).toBeTruthy();

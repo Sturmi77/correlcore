@@ -9,8 +9,9 @@ license = { text = "AGPL-3.0" }
 dependencies = [
   # Web framework
   "fastapi>=0.111.0",
+  "starlette>=1.3.1",
   "uvicorn[standard]>=0.30.0",
-  "python-multipart>=0.0.9",
+  "python-multipart>=0.0.31",
   # Database
   "sqlalchemy>=2.0.0",
   "asyncpg>=0.29.0",
@@ -20,19 +21,20 @@ dependencies = [
   "redis>=5.0.0",
   # Validation / settings
   "pydantic>=2.7.0",
-  "pydantic-settings>=2.3.0",
+  "pydantic-settings>=2.14.2",
   "email-validator>=2.2.0",
   # Auth (Phase 1: native JWT — ADR-0004)
   "python-jose[cryptography]>=3.3.0",
   "passlib[bcrypt]>=1.7.4",
   "bcrypt<5.0.0",
   # Encryption at-rest (ADR-0005)
-  "cryptography>=42.0.0",
+  "cryptography>=48.0.1",
   # Email (async SMTP — Issue #39)
-  "aiosmtplib>=3.0.0",
+  "aiosmtplib>=5.1.1",
   "jinja2>=3.1.0",
   # Rate limiting
   "slowapi>=0.1.9",
+  "sentry-sdk[fastapi]>=2.19.0",
 ]
 
 [project.optional-dependencies]
@@ -53,6 +55,7 @@ dev = [
   "httpx>=0.27.0",
   "ruff>=0.5.0",
   "mypy>=1.10.0",
+  "pip-audit>=2.7.0",
 ]
 
 [build-system]
@@ -99,4 +102,9 @@ testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=70"
 markers = [
   "integration: tests that require external services such as PostgreSQL or Redis",
+]
+
+[tool.uv]
+override-dependencies = [
+  "idna>=3.15",
 ]

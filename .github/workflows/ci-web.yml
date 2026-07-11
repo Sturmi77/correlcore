@@ -10,6 +10,7 @@ on:
       - 'package.json'
       - 'pnpm-workspace.yaml'
       - 'scripts/check-contrast.mjs'
+      - 'scripts/check-style-contract.mjs'
       - 'eslint.config.js'
       - '.prettierrc'
       - '.prettierignore'
@@ -23,6 +24,7 @@ on:
       - 'package.json'
       - 'pnpm-workspace.yaml'
       - 'scripts/check-contrast.mjs'
+      - 'scripts/check-style-contract.mjs'
       - 'eslint.config.js'
       - '.prettierrc'
       - '.prettierignore'
@@ -145,6 +147,30 @@ jobs:
 
       - name: Contrast check
         run: pnpm check:contrast
+        working-directory: .
+
+  style-contract:
+    name: Style contract lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Style contract check
+        run: pnpm check:style-contract
         working-directory: .
 
   test:

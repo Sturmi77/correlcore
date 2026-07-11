@@ -24,3 +24,41 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-audit:
+    name: Dependency audit (pip-audit + pnpm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: 'latest'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Backend pip-audit
+        working-directory: backend
+        run: |
+          uv sync --python 3.12 --extra dev --extra analytics --frozen
+          # ecdsa via python-jose: HS256-only JWT (ADR-0004); no upstream fix (PYSEC-2026-1325)
+          uv run --python 3.12 pip-audit --skip-editable --ignore-vuln PYSEC-2026-1325
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Frontend pnpm audit (production)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --prod --audit-level=high

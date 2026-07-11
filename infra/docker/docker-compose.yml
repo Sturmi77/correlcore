@@ -105,6 +105,8 @@ services:
       DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
       IMAGE_TAG: ${IMAGE_TAG:-latest}
       IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+      GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
+      GLITCHTIP_ENVIRONMENT: ${APP_ENV:-production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -141,6 +143,12 @@ services:
     container_name: correlcore-web
     restart: unless-stopped
     env_file: .env
+    environment:
+      INTERNAL_API_URL: http://api:8000
+      GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
+      GLITCHTIP_ENVIRONMENT: ${APP_ENV:-production}
+      PUBLIC_GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
+      PUBLIC_GLITCHTIP_ENVIRONMENT: ${APP_ENV:-production}
     depends_on:
       - api
     labels:
@@ -340,6 +348,12 @@ services:
       - edge
     profiles:
       - monitoring
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8000/ > /dev/null 2>&1 || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 volumes:
   postgres_data:

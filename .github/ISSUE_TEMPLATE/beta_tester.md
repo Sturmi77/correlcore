@@ -28,4 +28,6 @@ Danke für dein Interesse! CorrelCore sucht Beta-Tester für die geschlossene Al
 
 ---
 
+_Full operator guide: [`docs/selfhost/BETA_ONBOARDING.md`](../../docs/selfhost/BETA_ONBOARDING.md) · Feedback: [`.github/ISSUE_TEMPLATE/beta_feedback.md`](../../.github/ISSUE_TEMPLATE/beta_feedback.md)_
+
 _Beta-Tester erhalten eine kostenlose Lifetime-Lizenz als Dankeschön._
