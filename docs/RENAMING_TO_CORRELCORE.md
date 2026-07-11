@@ -42,7 +42,9 @@ Temporary compatibility option:
 
 ## GHCR and Release Workflow
 
-`release-images.yml` now publishes:
+`release-images.yml` publishes multi-arch (`linux/amd64`, `linux/arm64`) images to:
+
+**GHCR (default):**
 
 - `ghcr.io/sturmi77/correlcore-api:latest`
 - `ghcr.io/sturmi77/correlcore-api:main`
@@ -50,5 +52,13 @@ Temporary compatibility option:
 - `ghcr.io/sturmi77/correlcore-web:latest`
 - `ghcr.io/sturmi77/correlcore-web:main`
 - `ghcr.io/sturmi77/correlcore-web:sha-<short>`
+
+**Docker Hub (M10 Sprint 2, when CI secrets configured):**
+
+- `docker.io/<username>/correlcore-api` (same tags)
+- `docker.io/<username>/correlcore-web` (same tags)
+
+Compose override: `IMAGE_REGISTRY=ghcr.io/sturmi77` (default) or `docker.io/<username>`.
+See [`selfhost/CONTAINER_IMAGES.md`](selfhost/CONTAINER_IMAGES.md).
 
 Existing deployments that still reference `moodsync-api` or `moodsync-web` should be updated to the new image names during the same maintenance window.

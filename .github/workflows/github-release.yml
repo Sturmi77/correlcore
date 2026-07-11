@@ -1,0 +1,56 @@
+name: Release — GitHub Release
+
+# Creates a GitHub Release when a v* tag is pushed.
+# Release notes are extracted from CHANGELOG.md when a matching ## [x.y.z] section exists.
+# Container images are built separately by release-images.yml (same tag trigger).
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract changelog section
+        id: notes
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          OUT="${RUNNER_TEMP}/release_notes.md"
+
+          awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              header = $0
+              sub(/^## \[/, "", header)
+              sub(/\].*$/, "", header)
+              if (header == ver) found = 1
+              next
+            }
+            found { print }
+          ' CHANGELOG.md > "$OUT"
+
+          if [[ -s "$OUT" ]]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No CHANGELOG section for version ${VERSION}. Using auto-generated notes." > "$OUT"
+          fi
+          echo "path=${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: CorrelCore ${{ github.ref_name }}
+          body_path: ${{ steps.notes.outputs.path }}
+          generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          draft: false

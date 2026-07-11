@@ -10,6 +10,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M10 Sprint 2 — Container publish & release.** Multi-arch (`linux/amd64`,
+  `linux/arm64`) image builds in `release-images.yml`; optional Docker Hub mirror
+  when `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` CI secrets are set; GitHub Release
+  workflow on `v*` tags with CHANGELOG section extraction; `IMAGE_REGISTRY` compose
+  override (default `ghcr.io/sturmi77`). See
+  [`docs/selfhost/CONTAINER_IMAGES.md`](docs/selfhost/CONTAINER_IMAGES.md) and
+  [`docs/quality/M10_RELEASE_PUBLISH_TEST.md`](docs/quality/M10_RELEASE_PUBLISH_TEST.md).
+
+- **M10 Sprint 1 — Compose & install parity.** Production compose: `migrate`
+  init, YAML-DRY anchors, MinIO removed (photos → M13); quickstart compose +
+  bootstrap script; INSTALL Path B first. See
+  [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md).
+
 - **M9 — Beta Hardening (complete).** Formal closeout of ops, privacy, backup,
   observability, security CI, and beta program between M5.1 and M10: `PRIVACY.md`
   - in-app link, GDPR self-service E2E (delete, ZIP export, analytics opt-out),
