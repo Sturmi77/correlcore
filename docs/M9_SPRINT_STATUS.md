@@ -4,8 +4,8 @@ Last updated: 2026-07-11
 
 Tracking document for [`docs/M9_SPRINT_PLAN.md`](M9_SPRINT_PLAN.md).
 
-**Milestone completeness:** Sprint 2 observability complete on `cursor/m9-sprint-2-observability-2529`.
-Sprints 3–6 pending.
+**Milestone completeness:** Sprint 3 backup & install complete on `cursor/m9-sprint-3-backup-install-2529`.
+Sprints 4–6 pending.
 
 **Prerequisite:** M5.1 UX polish complete (2026-07-10) —
 [`docs/M5_1_SPRINT_STATUS.md`](M5_1_SPRINT_STATUS.md).
@@ -17,7 +17,7 @@ Sprints 3–6 pending.
 | 0      | Scope & audit             | Done    |
 | 1      | GDPR self-service         | Done    |
 | 2      | Observability             | Done    |
-| 3      | Backup & install          | Pending |
+| 3      | Backup & install          | Done    |
 | 4      | Security & CI             | Pending |
 | 5      | Beta program              | Pending |
 | 6      | Milestone closeout (M9-C) | Pending |
@@ -31,9 +31,9 @@ acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 | --------- | ------ | ----------- | ------------------- | --- |
 | `docs/PRIVACY.md` + in-app link | 1 | [`docs/PRIVACY.md`](PRIVACY.md), [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte) | E2E [`gdpr-self-service.spec.ts`](../apps/web/tests/e2e/gdpr-self-service.spec.ts) | — |
 | Account deletion self-service (Art. 17) | 1 | `DELETE /api/v1/user/me`; Settings dialog | [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py), E2E gdpr spec | — |
-| Backup documented + restore test | 3 | restic mentioned in [`DSGVO.md`](DSGVO.md), [`adr/0005`](adr/0005-verschluesselung-at-rest.md) | [`RUNBOOK_KEY_ROTATION.md`](RUNBOOK_KEY_ROTATION.md) mentions `pg_dump` | No consolidated backup runbook; no restore test protocol |
+| Backup documented + restore test | 3 | [`selfhost/INSTALL.md`](selfhost/INSTALL.md) §Backup | [`quality/M9_BACKUP_RESTORE_TEST.md`](quality/M9_BACKUP_RESTORE_TEST.md) (PASS 2026-07-11) | Operator must run production restore log row |
 | GlitchTip active, no PII in reports | 2 | [`error_tracking.py`](../backend/app/core/error_tracking.py), [`scrubEvent.ts`](../apps/web/src/lib/observability/scrubEvent.ts) | [`test_error_tracking.py`](../backend/tests/test_error_tracking.py), [`scrubEvent.test.ts`](../apps/web/src/lib/observability/scrubEvent.test.ts) | DSN optional — no traffic when unset |
-| Install-Guide (Compose, Traefik, DNS) | 3 | [`infra/dockhand/README.md`](../infra/dockhand/README.md), [`RUNBOOK_DEPLOYMENT.md`](RUNBOOK_DEPLOYMENT.md) | Partial homelab/Tailscale notes | No single `docs/selfhost/INSTALL.md`; Traefik+DNS path fragmented |
+| Install-Guide (Compose, Traefik, DNS) | 3 | [`selfhost/INSTALL.md`](selfhost/INSTALL.md), [`infra/docker/traefik/traefik.yml`](../infra/docker/traefik/traefik.yml) | Path A (VPS) + Path B (homelab) documented | Production operator restore log still manual |
 | Quality gate §9 | 6 | CI workflows green on `main` | Per-milestone gates (M7 pattern) | `M9_QUALITY_GATE.md` not yet created |
 | ZIP export self-service (Art. 20) | 1 | `GET /api/v1/user/export` | [`test_export_service.py`](../backend/tests/test_export_service.py), [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py), E2E gdpr spec | — |
 | GlitchTip selfhosted (DSGVO) | 2 | Compose profile + healthcheck | [`infra/docker/docker-compose.yml`](../infra/docker/docker-compose.yml), [`infra/docker/.env.example`](../infra/docker/.env.example) | Operator sets `GLITCHTIP_DSN` after bootstrap |
@@ -45,7 +45,7 @@ acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 | External pentest | 4 | — | [`M4_RELEASE_READINESS.md`](quality/M4_RELEASE_READINESS.md) P1 | Not yet commissioned |
 | `pip-audit` / `pnpm audit` CI gate | 4 | — | — | Not in [`.github/workflows/`](../.github/workflows/) |
 | Style-contract lint | 4 | — | [`UI_COMPONENT_SYSTEM.md`](frontend/UI_COMPONENT_SYSTEM.md) §9 | Lint rule not implemented |
-| LUKS + restic in Install-Guide | 3 | — | ADR-0005 M9 row | Documentation pending |
+| LUKS + restic in Install-Guide | 3 | [`selfhost/INSTALL.md`](selfhost/INSTALL.md) §LUKS, §restic | ADR-0005 aligned | — |
 | 5–10 beta testers + feedback | 5 | — | — | Program not started |
 | Symptom analytics beta review | 5 | — | [`features/symptom-analytics.md`](features/symptom-analytics.md) §M9 | Review pending |
 | Notes-in-analysis threshold review | 5 | Worker thresholds in config | [`features/notes-in-analysis.md`](features/notes-in-analysis.md) | Config review only; per-entry opt-out → M10 |
@@ -96,13 +96,23 @@ testers, monitoring, GDPR self-service. Close #29 in Sprint 6 when all slices ex
 - [x] `docs/runbooks/incident-response.md` created; linked from `DSGVO.md`.
 - [x] `GLITCHTIP_DSN` documented in `infra/docker/.env.example`; wired to `api` + `web` services.
 
-## Next sprint (3 — Backup & install)
+## Sprint 3 — Completed checklist
+
+- [x] `docs/selfhost/INSTALL.md` — consolidated VPS (Traefik, DNS, secrets) + homelab pointer.
+- [x] `infra/docker/traefik/traefik.yml` — static Traefik config for production compose.
+- [x] Backup section: `pg_dump` + restic + LUKS notes (ADR-0005).
+- [x] `docs/quality/M9_BACKUP_RESTORE_TEST.md` — protocol + PASS result (2026-07-11).
+- [x] `docs/selfhost/BETA_CHECKLIST.md` + link to `USER_WORKFLOWS.md`.
+- [x] README Quickstart points to install guide.
+
+## Next sprint (4 — Security & CI)
 
 Priority gaps from audit:
 
-1. Create `docs/selfhost/INSTALL.md` (Compose, Traefik, DNS, secrets).
-2. Document restic + LUKS backup strategy; run restore test protocol.
-3. Link install guide from README / operator docs.
+1. CI job: `pip-audit` + `pnpm audit --audit-level=high`.
+2. Style-contract lint for design tokens.
+3. External pentest → `docs/quality/M9_PENTEST.md`.
+4. AV-Vertrag template (Hetzner).
 
 ## API usage note (unchanged)
 

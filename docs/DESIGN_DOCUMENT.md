@@ -1223,9 +1223,9 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 - [x] Vollständige Datenschutzerklärung vorhanden (`docs/PRIVACY.md` + in-app verlinkbar)
 - [x] Account-Löschung (Right to Erasure, Art. 17 DSGVO) als Self-Service implementiert
-- [ ] Backup-Prozess dokumentiert und Restore-Test erfolgreich durchgeführt
+- [x] Backup-Prozess dokumentiert und Restore-Test erfolgreich durchgeführt ([`selfhost/INSTALL.md`](selfhost/INSTALL.md), [`quality/M9_BACKUP_RESTORE_TEST.md`](quality/M9_BACKUP_RESTORE_TEST.md))
 - [ ] GlitchTip Error-Tracking aktiv, kein PII in Error-Reports
-- [ ] Install-Guide für Selfhost vollständig (Docker Compose, Traefik, DNS)
+- [x] Install-Guide für Selfhost vollständig (Docker Compose, Traefik, DNS) — [`selfhost/INSTALL.md`](selfhost/INSTALL.md)
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M9

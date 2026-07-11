@@ -1,0 +1,31 @@
+# CorrelCore — Traefik static configuration (production stack)
+# Mount path: infra/docker/traefik/traefik.yml → /etc/traefik/traefik.yml
+#
+# Before first deploy: set acme.email to the same address as LETSENCRYPT_EMAIL in .env.
+
+api:
+  dashboard: false
+  insecure: false
+
+log:
+  level: INFO
+
+entryPoints:
+  web:
+    address: ':80'
+  websecure:
+    address: ':443'
+
+providers:
+  docker:
+    endpoint: 'tcp://socket-proxy:2375'
+    exposedByDefault: false
+    network: edge
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@example.com
+      storage: /etc/traefik/acme/acme.json
+      httpChallenge:
+        entryPoint: web

@@ -40,7 +40,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M5.1 (UX Polish)** — Flow consolidation for onboarding, Home, Insights, Habits, PWA, and desktop Trends (`ux(O-xx)` #251–#273); tag co-occurrence quick win — **Complete** (2026-07-10). See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md), [`docs/quality/M5_1_UX_VISUAL_QA.md`](docs/quality/M5_1_UX_VISUAL_QA.md), and [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).
 - [x] **M7** — Insights v2: Lasso, lag, symptom analytics, tag clustering, Sprint 9 interaction UX — **Complete** (2026-06-30). See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/quality/M7_QUALITY_GATE.md`](docs/quality/M7_QUALITY_GATE.md). Optional LLM/digest → M7-S8.
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
-- [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation (Sprints 1–2 complete). See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).
+- [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation (Sprints 1–3 complete). See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).
 - [ ] **M10** — Public selfhost release v1.0
 - [ ] **M11** — Android Play Store (Capacitor)
 - [ ] **M12** — SaaS mode (managed hosting)
@@ -62,7 +62,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **M5**    | **Complete** (2026-06-30) | Habits Core + M5-C1/C2 closeout. Visual QA signed off. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md) and [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md).                                                                    |
 | **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                        |
 | **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                           |
-| **M9**    | **In progress** (Sprint 2) | Beta hardening: GDPR + observability (GlitchTip SDK, incident runbook) done. Sprints 3–6 pending. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).                                                              |
+| **M9**    | **In progress** (Sprint 3) | Beta hardening: GDPR, observability, backup/install guide done. Sprints 4–6 pending. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).                                                              |
 
 ---
 
@@ -89,22 +89,27 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 
 ## Quickstart (Selfhost)
 
+Full install guide: [`docs/selfhost/INSTALL.md`](docs/selfhost/INSTALL.md) (Traefik, DNS, backup, homelab variant).
+
 ### Prerequisites
 
 - Docker >= 24 + Docker Compose v2
-- A domain with DNS pointing to your server
+- A domain with DNS pointing to your server (public VPS path)
 
 ### Setup
 
 ```bash
 git clone https://github.com/Sturmi77/correlcore.git
-cd correlcore
-cp infra/docker/.env.example infra/docker/.env
-# Edit .env: set DOMAIN, SECRET_KEY, POSTGRES_PASSWORD, ...
-docker compose -f infra/docker/docker-compose.yml up -d
+cd correlcore/infra/docker
+cp .env.example .env
+# Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
+# Set acme email in traefik/traefik.yml to match LETSENCRYPT_EMAIL
+docker compose up -d
 ```
 
 After startup, CorrelCore is available at `https://your-domain.tld`
+
+Homelab / Tailnet without public DNS: see [`infra/dockhand/README.md`](infra/dockhand/README.md).
 
 > **Note:** CorrelCore is under active development (pre-alpha). Production use is recommended from v1.0 onwards.
 
