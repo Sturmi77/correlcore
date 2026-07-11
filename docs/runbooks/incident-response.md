@@ -13,12 +13,12 @@ Offenlegung.
 
 ## 1. Wann dieses Runbook greift
 
-| Ereignis | Beispiel | Meldepflicht |
-| -------- | -------- | ------------ |
-| Unbefugter Zugriff | kompromittierte Admin-Zugänge, offene DB-Port | oft ja |
-| Datenleck | Backup-Diebstahl, Log-Exfiltration mit Gesundheitsdaten | ja bei Art.-9-Daten |
-| Verfügbarkeitsvorfall ohne Datenabfluss | API-Ausfall, Redis-Ausfall | in der Regel nein |
-| Fehlkonfiguration Error-Tracking | PII in GlitchTip-Events | internes Incident; ggf. Meldepflicht |
+| Ereignis                                | Beispiel                                                | Meldepflicht                         |
+| --------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
+| Unbefugter Zugriff                      | kompromittierte Admin-Zugänge, offene DB-Port           | oft ja                               |
+| Datenleck                               | Backup-Diebstahl, Log-Exfiltration mit Gesundheitsdaten | ja bei Art.-9-Daten                  |
+| Verfügbarkeitsvorfall ohne Datenabfluss | API-Ausfall, Redis-Ausfall                              | in der Regel nein                    |
+| Fehlkonfiguration Error-Tracking        | PII in GlitchTip-Events                                 | internes Incident; ggf. Meldepflicht |
 
 **Faustregel:** Sobald **personenbezogene Gesundheitsdaten** (Art. 9 DSGVO) in
 falschen Händen sein könnten → Incident-Prozess starten.
@@ -47,11 +47,11 @@ Checkliste:
 
 ## 3. Bewertung (2–24 Stunden)
 
-| Frage | Ja → |
-| ----- | ---- |
-| Art.-9-Daten (Mood, Symptome, Notizen) betroffen? | **Meldepflicht prüfen** (meist ja) |
-| Nur E-Mail/Metadaten ohne Gesundheitsinhalt? | Risikoanalyse; Meldung je nach Eintrittswahrscheinlichkeit |
-| Daten verschlüsselt und Schlüssel nicht kompromittiert? | Risiko reduziert, dokumentieren |
+| Frage                                                   | Ja →                                                       |
+| ------------------------------------------------------- | ---------------------------------------------------------- |
+| Art.-9-Daten (Mood, Symptome, Notizen) betroffen?       | **Meldepflicht prüfen** (meist ja)                         |
+| Nur E-Mail/Metadaten ohne Gesundheitsinhalt?            | Risikoanalyse; Meldung je nach Eintrittswahrscheinlichkeit |
+| Daten verschlüsselt und Schlüssel nicht kompromittiert? | Risiko reduziert, dokumentieren                            |
 
 Dokumentiere in einem internen Incident-Record (Markdown/Ticket):
 
@@ -92,12 +92,12 @@ Freiheiten bedeutet.
 
 Error-Tracking ist **optional** (`GLITCHTIP_DSN` leer = kein Traffic).
 
-| Regel | Umsetzung |
-| ----- | --------- |
-| Selfhosted only | Compose-Profil `monitoring`, kein SaaS-Sentry |
-| Kein PII in Events | `before_send`-Scrub in API + Web |
-| Zugriff auf GlitchTip | Nur Betreiber; separates Admin-Passwort |
-| Retention | 90 Tage (siehe DSGVO.md §9) |
+| Regel                 | Umsetzung                                     |
+| --------------------- | --------------------------------------------- |
+| Selfhosted only       | Compose-Profil `monitoring`, kein SaaS-Sentry |
+| Kein PII in Events    | `before_send`-Scrub in API + Web              |
+| Zugriff auf GlitchTip | Nur Betreiber; separates Admin-Passwort       |
+| Retention             | 90 Tage (siehe DSGVO.md §9)                   |
 
 Nach einem Verdacht auf PII in GlitchTip:
 
@@ -118,11 +118,11 @@ Nach einem Verdacht auf PII in GlitchTip:
 
 ## 8. Kontakte
 
-| Rolle | Kanal |
-| ----- | ----- |
-| Sicherheitslücken (Produkt) | [`SECURITY.md`](../../SECURITY.md) |
-| Instanz-Betreiber (Selfhost) | vom Betreiber dokumentiert (Impressum/Support) |
-| CorrelCore Maintainers | GitHub Security Advisories / security@correlcore.app |
+| Rolle                        | Kanal                                                |
+| ---------------------------- | ---------------------------------------------------- |
+| Sicherheitslücken (Produkt)  | [`SECURITY.md`](../../SECURITY.md)                   |
+| Instanz-Betreiber (Selfhost) | vom Betreiber dokumentiert (Impressum/Support)       |
+| CorrelCore Maintainers       | GitHub Security Advisories / security@correlcore.app |
 
 ---
 

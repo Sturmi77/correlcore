@@ -14,9 +14,9 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 
 ## Deployment paths
 
-| Path | Compose file | TLS / exposure | Best for |
-| ---- | ------------ | -------------- | -------- |
-| **A — Public VPS** | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml) | Traefik + Let's Encrypt on 80/443 | Internet-facing beta / production |
+| Path                      | Compose file                                                                                                                                                         | TLS / exposure                                  | Best for                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------- |
+| **A — Public VPS**        | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                                                                                           | Traefik + Let's Encrypt on 80/443               | Internet-facing beta / production       |
 | **B — Homelab / Tailnet** | [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) or [`infra/docker/docker-compose.user-test.yml`](../../infra/docker/docker-compose.user-test.yml) | No Traefik; bind to `TAILSCALE_IP` or `0.0.0.0` | Dockhand, Dockge, Synology, private LAN |
 
 Path A is the M9 acceptance target (Compose + Traefik + DNS). Path B is documented in
@@ -37,9 +37,9 @@ Path A is the M9 acceptance target (Compose + Traefik + DNS). Path B is document
 
 Create DNS records pointing to your server **before** starting Traefik (HTTP-01 challenge).
 
-| Record | Type | Value | Purpose |
-| ------ | ---- | ----- | ------- |
-| `correlcore.example.com` | A / AAAA | `<server-ip>` | Web + API (`/api` via Traefik) |
+| Record                          | Type     | Value         | Purpose                               |
+| ------------------------------- | -------- | ------------- | ------------------------------------- |
+| `correlcore.example.com`        | A / AAAA | `<server-ip>` | Web + API (`/api` via Traefik)        |
 | `errors.correlcore.example.com` | A / AAAA | `<server-ip>` | GlitchTip (profile `monitoring` only) |
 
 Replace `correlcore.example.com` with your real `DOMAIN` value.
@@ -74,19 +74,19 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(24))'
 
 Edit `.env` and set at minimum:
 
-| Variable | Notes |
-| -------- | ----- |
-| `DOMAIN` | Apex host, e.g. `correlcore.example.com` |
-| `LETSENCRYPT_EMAIL` | ACME registration email |
-| `SECRET_KEY` | ≥ 32 bytes, URL-safe |
-| `ENCRYPTION_KEY` | Fernet key — **store outside the server backup** |
-| `POSTGRES_PASSWORD` | ≥ 20 chars, no `@` or `/` |
-| `APP_DB_PASSWORD` | Separate from `POSTGRES_PASSWORD` |
-| `REDIS_PASSWORD` | ≥ 20 chars recommended |
-| `MINIO_ROOT_PASSWORD` | MinIO root credential |
-| `CORS_ORIGINS` | `https://${DOMAIN}` in production |
-| `FRONTEND_BASE_URL` | `https://${DOMAIN}` |
-| `APP_ENV` | `production` or `staging` |
+| Variable              | Notes                                            |
+| --------------------- | ------------------------------------------------ |
+| `DOMAIN`              | Apex host, e.g. `correlcore.example.com`         |
+| `LETSENCRYPT_EMAIL`   | ACME registration email                          |
+| `SECRET_KEY`          | ≥ 32 bytes, URL-safe                             |
+| `ENCRYPTION_KEY`      | Fernet key — **store outside the server backup** |
+| `POSTGRES_PASSWORD`   | ≥ 20 chars, no `@` or `/`                        |
+| `APP_DB_PASSWORD`     | Separate from `POSTGRES_PASSWORD`                |
+| `REDIS_PASSWORD`      | ≥ 20 chars recommended                           |
+| `MINIO_ROOT_PASSWORD` | MinIO root credential                            |
+| `CORS_ORIGINS`        | `https://${DOMAIN}` in production                |
+| `FRONTEND_BASE_URL`   | `https://${DOMAIN}`                              |
+| `APP_ENV`             | `production` or `staging`                        |
 
 > **ENCRYPTION_KEY warning (ADR-0005):** Encrypted mood notes and custom symptom names
 > cannot be decrypted without this key — even from a valid database backup. Store it in a
@@ -101,7 +101,7 @@ Before first deploy, set the ACME email to match `LETSENCRYPT_EMAIL`:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: admin@example.com   # ← same as LETSENCRYPT_EMAIL in .env
+      email: admin@example.com # ← same as LETSENCRYPT_EMAIL in .env
 ```
 
 Traefik obtains certificates via HTTP-01 on port 80. Security headers and HTTPS redirect
@@ -204,13 +204,13 @@ and **`ENCRYPTION_KEY` must never live only inside the same backup bundle**.
 
 ### What to back up
 
-| Asset | Method | Retention suggestion |
-| ----- | ------ | -------------------- |
-| PostgreSQL (`correlcore` DB) | `pg_dump` (logical) | Daily, 30 days |
-| GlitchTip DB (if monitoring) | `pg_dump` database `glitchtip` | Weekly |
-| MinIO object data | restic path backup of volume | Daily |
-| Redis | Optional — session/rate-limit state; rebuild acceptable | — |
-| **Secrets** | `ENCRYPTION_KEY`, `SECRET_KEY`, restic password — **offline** | Permanent secure store |
+| Asset                        | Method                                                        | Retention suggestion   |
+| ---------------------------- | ------------------------------------------------------------- | ---------------------- |
+| PostgreSQL (`correlcore` DB) | `pg_dump` (logical)                                           | Daily, 30 days         |
+| GlitchTip DB (if monitoring) | `pg_dump` database `glitchtip`                                | Weekly                 |
+| MinIO object data            | restic path backup of volume                                  | Daily                  |
+| Redis                        | Optional — session/rate-limit state; rebuild acceptable       | —                      |
+| **Secrets**                  | `ENCRYPTION_KEY`, `SECRET_KEY`, restic password — **offline** | Permanent secure store |
 
 ### Daily PostgreSQL dump
 
@@ -341,13 +341,13 @@ Beta operators: [`BETA_ONBOARDING.md`](BETA_ONBOARDING.md) · Testers: [`BETA_CH
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| ------- | ------------ | --- |
-| Traefik won't start | Missing `traefik/traefik.yml` or bad ACME email | Check mount path; sync email with `.env` |
-| Certificate pending | DNS not propagated or port 80 blocked | Fix DNS / firewall; wait for propagation |
-| `bind: cannot assign requested address` (Synology) | Tailscale userspace mode | Set `TAILSCALE_IP=0.0.0.0` — see runbook §2 |
-| Login works but notes empty/garbled | Wrong `ENCRYPTION_KEY` after restore | Restore correct key from offline backup |
-| `migrate` exits 1 | DB credentials or stale volume | Check `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`, logs |
+| Symptom                                            | Likely cause                                    | Fix                                                |
+| -------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| Traefik won't start                                | Missing `traefik/traefik.yml` or bad ACME email | Check mount path; sync email with `.env`           |
+| Certificate pending                                | DNS not propagated or port 80 blocked           | Fix DNS / firewall; wait for propagation           |
+| `bind: cannot assign requested address` (Synology) | Tailscale userspace mode                        | Set `TAILSCALE_IP=0.0.0.0` — see runbook §2        |
+| Login works but notes empty/garbled                | Wrong `ENCRYPTION_KEY` after restore            | Restore correct key from offline backup            |
+| `migrate` exits 1                                  | DB credentials or stale volume                  | Check `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`, logs |
 
 Further reading: [`docs/runbooks/incident-response.md`](../runbooks/incident-response.md),
 [`docs/RUNBOOK_KEY_ROTATION.md`](../RUNBOOK_KEY_ROTATION.md).

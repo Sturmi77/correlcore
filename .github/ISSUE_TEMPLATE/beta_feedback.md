@@ -34,11 +34,7 @@ assignees: ''
 
 **Expected behaviour:**
 
-
-
 **Actual behaviour:**
-
-
 
 **Severity:** <!-- blocker | major | minor | suggestion -->
 

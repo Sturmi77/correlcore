@@ -25,18 +25,18 @@ credentials.
 
 ## Core flows (please complete in week 1)
 
-| # | Workflow | Steps | Pass? | Notes |
-| - | -------- | ----- | ----- | ----- |
-| 1 | **Register & verify** | Register → open verification email → log in | ☐ | |
-| 2 | **First entry** | Home → add mood entry (≤ 60 s) | ☐ | |
-| 3 | **Second day entry** | Add another entry on a different day | ☐ | |
-| 4 | **Trends** | Open Trends → view mood time series | ☐ | |
-| 5 | **Insights** | Open Insights → read at least one card | ☐ | |
-| 6 | **Habits** (if enabled) | Configure a habit in Settings → check Trends Habits tab | ☐ | |
-| 7 | **Settings / privacy** | Open Settings → Privacy → open policy link | ☐ | |
-| 8 | **Data export** | Settings → Export → download ZIP | ☐ | |
-| 9 | **Analytics opt-out** | Settings → disable analytics → save | ☐ | |
-| 10 | **Mobile or narrow window** | Repeat entry flow at ≤ 768 px width | ☐ | |
+| #   | Workflow                    | Steps                                                   | Pass? | Notes |
+| --- | --------------------------- | ------------------------------------------------------- | ----- | ----- |
+| 1   | **Register & verify**       | Register → open verification email → log in             | ☐     |       |
+| 2   | **First entry**             | Home → add mood entry (≤ 60 s)                          | ☐     |       |
+| 3   | **Second day entry**        | Add another entry on a different day                    | ☐     |       |
+| 4   | **Trends**                  | Open Trends → view mood time series                     | ☐     |       |
+| 5   | **Insights**                | Open Insights → read at least one card                  | ☐     |       |
+| 6   | **Habits** (if enabled)     | Configure a habit in Settings → check Trends Habits tab | ☐     |       |
+| 7   | **Settings / privacy**      | Open Settings → Privacy → open policy link              | ☐     |       |
+| 8   | **Data export**             | Settings → Export → download ZIP                        | ☐     |       |
+| 9   | **Analytics opt-out**       | Settings → disable analytics → save                     | ☐     |       |
+| 10  | **Mobile or narrow window** | Repeat entry flow at ≤ 768 px width                     | ☐     |       |
 
 Detailed step references: [`USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) (W1–W10).
 
@@ -69,22 +69,22 @@ Triage guide: [`BETA_FEEDBACK_TRIAGE.md`](BETA_FEEDBACK_TRIAGE.md)
 
 ### Severity guide
 
-| Level | Examples |
-| ----- | -------- |
-| **Blocker** | Cannot log in, data loss, export fails |
-| **Major** | Core workflow broken, misleading insight, privacy control missing |
-| **Minor** | UI glitch, copy issue, slow load |
-| **Suggestion** | UX improvement, feature idea → may defer to M10 |
+| Level          | Examples                                                          |
+| -------------- | ----------------------------------------------------------------- |
+| **Blocker**    | Cannot log in, data loss, export fails                            |
+| **Major**      | Core workflow broken, misleading insight, privacy control missing |
+| **Minor**      | UI glitch, copy issue, slow load                                  |
+| **Suggestion** | UX improvement, feature idea → may defer to M10                   |
 
 ---
 
 ## Operator triage (internal)
 
-| Priority | Action |
-| -------- | ------ |
-| P0 / blocker | Fix in M9 or pause beta onboarding |
-| P1 / major | Fix in M9 if scoped; else document workaround |
-| P2+ | Backlog → M10 / M9+ |
+| Priority     | Action                                        |
+| ------------ | --------------------------------------------- |
+| P0 / blocker | Fix in M9 or pause beta onboarding            |
+| P1 / major   | Fix in M9 if scoped; else document workaround |
+| P2+          | Backlog → M10 / M9+                           |
 
 Track feedback in GitHub issues with label `beta` (operator-defined).
 

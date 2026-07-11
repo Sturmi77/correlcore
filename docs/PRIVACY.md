@@ -30,15 +30,15 @@ dann die auf der Landing-Page verlinkte Datenschutzerklärung (M10/M12).
 
 ## 2. Welche Daten werden verarbeitet?
 
-| Kategorie | Beispiele | Art. 9 DSGVO |
-| --------- | --------- | ------------ |
-| Stimmungsdaten | mood, energy, stress | Ja |
-| Symptome | ausgewählte Symptome, Intensität | Ja |
-| Notizen | Freitext zu Einträgen | Potenziell |
-| Tags / Gewohnheiten | Aktivitäts- und Lifestyle-Tags | Nein (abstrakt) |
-| Konto | E-Mail, Anzeigename, Passwort-Hash | Nein |
-| Einwilligungen | `consent_log`, Analytics-Opt-Out | Nein |
-| Technisch | Session-Cookies, Request-IDs in Logs | Nein |
+| Kategorie           | Beispiele                            | Art. 9 DSGVO    |
+| ------------------- | ------------------------------------ | --------------- |
+| Stimmungsdaten      | mood, energy, stress                 | Ja              |
+| Symptome            | ausgewählte Symptome, Intensität     | Ja              |
+| Notizen             | Freitext zu Einträgen                | Potenziell      |
+| Tags / Gewohnheiten | Aktivitäts- und Lifestyle-Tags       | Nein (abstrakt) |
+| Konto               | E-Mail, Anzeigename, Passwort-Hash   | Nein            |
+| Einwilligungen      | `consent_log`, Analytics-Opt-Out     | Nein            |
+| Technisch           | Session-Cookies, Request-IDs in Logs | Nein            |
 
 **Nicht verarbeitet:** Third-Party-Tracking, Werbe-Pixel, Hintergrund-Ortung.
 Schlaf-/Wearable-Daten nur nach expliziter Einwilligung (M8, optional).
@@ -47,12 +47,12 @@ Schlaf-/Wearable-Daten nur nach expliziter Einwilligung (M8, optional).
 
 ## 3. Zwecke und Rechtsgrundlagen
 
-| Zweck | Rechtsgrundlage |
-| ----- | --------------- |
-| Tagebuch & Stimmungserfassung | Einwilligung Art. 6(1)(a), Art. 9(2)(a) |
-| Korrelationsanalyse / Insights | Einwilligung; Opt-Out über `analytics_enabled` |
-| Konto & Authentifizierung | Vertragserfüllung Art. 6(1)(b) |
-| Betrieb & Fehlerbehebung | Berechtigtes Interesse Art. 6(1)(f); keine Gesundheitsdaten in Logs |
+| Zweck                          | Rechtsgrundlage                                                     |
+| ------------------------------ | ------------------------------------------------------------------- |
+| Tagebuch & Stimmungserfassung  | Einwilligung Art. 6(1)(a), Art. 9(2)(a)                             |
+| Korrelationsanalyse / Insights | Einwilligung; Opt-Out über `analytics_enabled`                      |
+| Konto & Authentifizierung      | Vertragserfüllung Art. 6(1)(b)                                      |
+| Betrieb & Fehlerbehebung       | Berechtigtes Interesse Art. 6(1)(f); keine Gesundheitsdaten in Logs |
 
 Die Einwilligung bei Registrierung kann in den Einstellungen widerrufen werden
 (Analytics deaktivieren, Konto löschen).
@@ -71,14 +71,14 @@ Die Einwilligung bei Registrierung kann in den Einstellungen widerrufen werden
 
 ## 5. Deine Rechte (DSGVO Art. 15–22)
 
-| Recht | In der App |
-| ----- | ---------- |
-| **Auskunft** (Art. 15) | Datenexport (ZIP/JSON/CSV) unter Einstellungen |
-| **Berichtigung** (Art. 16) | Einträge und Profil bearbeiten |
-| **Löschung** (Art. 17) | „Account löschen“ unter Einstellungen → Datenschutz |
-| **Datenübertragbarkeit** (Art. 20) | GDPR-ZIP-Export |
-| **Widerspruch Analyse** (Art. 21) | Toggle „Analyse aktiviert“ in Einstellungen |
-| **Einschränkung** (Art. 18) | Support-Anfrage an Instanz-Betreiber (siehe [`DSGVO.md`](DSGVO.md) §4) |
+| Recht                              | In der App                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| **Auskunft** (Art. 15)             | Datenexport (ZIP/JSON/CSV) unter Einstellungen                         |
+| **Berichtigung** (Art. 16)         | Einträge und Profil bearbeiten                                         |
+| **Löschung** (Art. 17)             | „Account löschen“ unter Einstellungen → Datenschutz                    |
+| **Datenübertragbarkeit** (Art. 20) | GDPR-ZIP-Export                                                        |
+| **Widerspruch Analyse** (Art. 21)  | Toggle „Analyse aktiviert“ in Einstellungen                            |
+| **Einschränkung** (Art. 18)        | Support-Anfrage an Instanz-Betreiber (siehe [`DSGVO.md`](DSGVO.md) §4) |
 
 Antwortfrist für manuelle Anfragen (Art. 18): innerhalb von 72 Stunden.
 
@@ -94,12 +94,12 @@ selfhosted; es werden keine Klartext-Gesundheitsdaten übermittelt.
 
 ## 7. Aufbewahrung
 
-| Daten | Dauer |
-| ----- | ----- |
-| Einträge, Tags, Symptome | Bis Account-Löschung oder Nutzer-Löschung |
-| Analytics/Insights | Rolling Window (~90 Tage, Neuberechnung) |
-| Nicht verifizierte Accounts | 7 Tage (konfigurierbar) |
-| Error-Logs (GlitchTip) | 90 Tage |
+| Daten                       | Dauer                                     |
+| --------------------------- | ----------------------------------------- |
+| Einträge, Tags, Symptome    | Bis Account-Löschung oder Nutzer-Löschung |
+| Analytics/Insights          | Rolling Window (~90 Tage, Neuberechnung)  |
+| Nicht verifizierte Accounts | 7 Tage (konfigurierbar)                   |
+| Error-Logs (GlitchTip)      | 90 Tage                                   |
 
 ---
 

@@ -267,16 +267,16 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Milestone Mapping
 
-| Milestone               | Status                    | Work Package                                                                              |
-| ----------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
-| **M1** Core Entry       | ✅ Done → **RETROACTIVE** | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea                        |
-| **M2** Visualisation    | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips               |
-| **M3** Insights v1      | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                 |
-| **M4** Mobile Polish    | 🔲 Planned                | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview |
-| **M7** Insights v2      | 🔲 Planned                | Signal extraction service, `entry_note_signals` table, evidence block on insight cards    |
+| Milestone               | Status                    | Work Package                                                                                                                                                                    |
+| ----------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M1** Core Entry       | ✅ Done → **RETROACTIVE** | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea                                                                                                              |
+| **M2** Visualisation    | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips                                                                                                     |
+| **M3** Insights v1      | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                                                                                                       |
+| **M4** Mobile Polish    | 🔲 Planned                | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview                                                                                       |
+| **M7** Insights v2      | 🔲 Planned                | Signal extraction service, `entry_note_signals` table, evidence block on insight cards                                                                                          |
 | **M9** Beta             | In progress               | Threshold validation for live analytics engine — [`quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md`](../quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md). Per-entry note opt-out API → M10. |
-| **M10** Public Selfhost | 🔲 Planned                | Export includes notes/signals, backward compat, operator reprocess endpoint               |
-| **M11** Play Store      | 🔲 Planned                | Mobile UX hardening, no health-claim copy in signal descriptions                          |
+| **M10** Public Selfhost | 🔲 Planned                | Export includes notes/signals, backward compat, operator reprocess endpoint                                                                                                     |
+| **M11** Play Store      | 🔲 Planned                | Mobile UX hardening, no health-claim copy in signal descriptions                                                                                                                |
 
 ---
 

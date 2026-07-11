@@ -51,9 +51,7 @@ async function installGdprApi(page: Page, options?: { analyticsEnabled?: boolean
       });
 
     if (path === '/auth/me' && method === 'GET') {
-      return state.authenticated
-        ? json(200, user)
-        : json(401, { detail: 'Not authenticated' });
+      return state.authenticated ? json(200, user) : json(401, { detail: 'Not authenticated' });
     }
 
     if (path === '/auth/logout' && method === 'POST') {

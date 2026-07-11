@@ -13,23 +13,23 @@ PostgreSQL data integrity. This satisfies the M9 acceptance criterion:
 
 ## Scope
 
-| In scope | Out of scope |
-| -------- | ------------ |
-| Logical `pg_dump` / `psql` restore cycle | Full production stack DR drill |
-| restic `init` + `backup` + `snapshots` smoke | MinIO volume restore |
-| Probe table round-trip | GlitchTip DB restore |
-| Fernet field decryption | Requires live app + `ENCRYPTION_KEY` (operator checklist) |
+| In scope                                     | Out of scope                                              |
+| -------------------------------------------- | --------------------------------------------------------- |
+| Logical `pg_dump` / `psql` restore cycle     | Full production stack DR drill                            |
+| restic `init` + `backup` + `snapshots` smoke | MinIO volume restore                                      |
+| Probe table round-trip                       | GlitchTip DB restore                                      |
+| Fernet field decryption                      | Requires live app + `ENCRYPTION_KEY` (operator checklist) |
 
 ## Environment
 
-| Field | Value |
-| ----- | ----- |
-| Date | 2026-07-11 |
-| Host | Cursor Cloud agent VM |
-| Postgres image | `pgvector/pgvector:pg16` |
-| Container | `m9-restore-test-pg` |
-| restic image | `restic/restic:latest` |
-| Operator | Automated Sprint 3 verification |
+| Field          | Value                           |
+| -------------- | ------------------------------- |
+| Date           | 2026-07-11                      |
+| Host           | Cursor Cloud agent VM           |
+| Postgres image | `pgvector/pgvector:pg16`        |
+| Container      | `m9-restore-test-pg`            |
+| restic image   | `restic/restic:latest`          |
+| Operator       | Automated Sprint 3 verification |
 
 ## Procedure
 
@@ -99,13 +99,13 @@ restic -r /tmp/m9-restic-repo snapshots
 
 ## Outcome
 
-| Check | Status |
-| ----- | ------ |
-| `pg_dump` produces valid archive | Pass |
-| Empty DB restore via `psql` | Pass |
-| Probe row survives round-trip | Pass |
-| restic encrypted repo accepts backup | Pass |
-| restic snapshot listable | Pass |
+| Check                                | Status |
+| ------------------------------------ | ------ |
+| `pg_dump` produces valid archive     | Pass   |
+| Empty DB restore via `psql`          | Pass   |
+| Probe row survives round-trip        | Pass   |
+| restic encrypted repo accepts backup | Pass   |
+| restic snapshot listable             | Pass   |
 
 **Overall: PASS** — backup→restore cycle documented and executed successfully.
 
@@ -123,9 +123,9 @@ Before beta onboarding, each production instance operator should:
 
 ## Production restore log (operator-maintained)
 
-| Date | Instance | Operator | pg_restore | Notes decrypt | restic restore |
-| ---- | -------- | -------- | ---------- | ------------- | -------------- |
-| 2026-07-11 | m9-restore-test-pg (lab) | M9-S3 agent | N/A (psql) | N/A (no Fernet data) | smoke only |
+| Date       | Instance                 | Operator    | pg_restore | Notes decrypt        | restic restore |
+| ---------- | ------------------------ | ----------- | ---------- | -------------------- | -------------- |
+| 2026-07-11 | m9-restore-test-pg (lab) | M9-S3 agent | N/A (psql) | N/A (no Fernet data) | smoke only     |
 
 ## Cleanup (lab)
 

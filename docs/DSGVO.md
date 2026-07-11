@@ -99,11 +99,11 @@ vollständige Self-Service-UI kann in M10+ evaluiert werden.
 
 ### Cloud-Betrieb (CorrelCore Cloud, ab M12)
 
-| Auftragsverarbeiter             | Zweck                        | AV-Vertrag                  |
-| ------------------------------- | ---------------------------- | --------------------------- |
+| Auftragsverarbeiter             | Zweck                        | AV-Vertrag                                                                                                   |
+| ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Hetzner Online GmbH (Frankfurt) | Hosting / Infrastruktur      | https://www.hetzner.com/AV/ · [`legal/AV_VERTRAG_HETZNER_TEMPLATE.md`](legal/AV_VERTRAG_HETZNER_TEMPLATE.md) |
-| Resend Inc.                     | Transaktions-E-Mail          | vorhanden                   |
-| Stripe Payments Europe Ltd.     | Billing / Zahlungsabwicklung | vorhanden                   |
+| Resend Inc.                     | Transaktions-E-Mail          | vorhanden                                                                                                    |
+| Stripe Payments Europe Ltd.     | Billing / Zahlungsabwicklung | vorhanden                                                                                                    |
 
 Keine weiteren Auftragsverarbeiter.
 

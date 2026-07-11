@@ -11,11 +11,11 @@ email only.
 
 ## Intake
 
-| Source | Action |
-| ------ | ------ |
-| GitHub issue (label `beta`) | Primary queue |
-| Email | Convert to GitHub issue within 24h (redact PII from public title) |
-| Direct message | Same as email |
+| Source                      | Action                                                            |
+| --------------------------- | ----------------------------------------------------------------- |
+| GitHub issue (label `beta`) | Primary queue                                                     |
+| Email                       | Convert to GitHub issue within 24h (redact PII from public title) |
+| Direct message              | Same as email                                                     |
 
 Use template: [`.github/ISSUE_TEMPLATE/beta_feedback.md`](../../.github/ISSUE_TEMPLATE/beta_feedback.md)
 
@@ -23,12 +23,12 @@ Use template: [`.github/ISSUE_TEMPLATE/beta_feedback.md`](../../.github/ISSUE_TE
 
 ## Severity → priority mapping
 
-| Tester severity | Operator priority | SLA | Action |
-| --------------- | ----------------- | --- | ------ |
-| **blocker** | **P0** | 48h | Fix in M9 or pause onboarding |
-| **major** | **P1** | 1 week | Fix in M9 if scoped; else workaround doc |
-| **minor** | **P2** | Backlog | M10 / M9+ unless trivial fix |
-| **suggestion** | **P3** | Backlog | M10+; note in round summary |
+| Tester severity | Operator priority | SLA     | Action                                   |
+| --------------- | ----------------- | ------- | ---------------------------------------- |
+| **blocker**     | **P0**            | 48h     | Fix in M9 or pause onboarding            |
+| **major**       | **P1**            | 1 week  | Fix in M9 if scoped; else workaround doc |
+| **minor**       | **P2**            | Backlog | M10 / M9+ unless trivial fix             |
+| **suggestion**  | **P3**            | Backlog | M10+; note in round summary              |
 
 ### P0 examples
 
@@ -70,13 +70,13 @@ flowchart TD
 
 ### Per-issue labels (suggested)
 
-| Label | Meaning |
-| ----- | ------- |
-| `beta` | From beta program |
-| `p0` / `p1` / `p2` | Priority |
+| Label              | Meaning                                                      |
+| ------------------ | ------------------------------------------------------------ |
+| `beta`             | From beta program                                            |
+| `p0` / `p1` / `p2` | Priority                                                     |
 | `workflow:W3` etc. | Maps to [`USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) |
-| `m9-fix` | Scheduled for current milestone |
-| `m10` | Deferred |
+| `m9-fix`           | Scheduled for current milestone                              |
+| `m10`              | Deferred                                                     |
 
 ---
 
@@ -89,21 +89,26 @@ if it contains tester quotes with PII):
 ## Beta round <N> — <date>
 
 **Active testers:** <count>
-**Issues filed:** <count> (P0: _, P1: _, P2+: _)
+**Issues filed:** <count> (P0: _, P1: _, P2+: \_)
 
 ### Fixed in M9
+
 - #<issue> — <one line>
 
 ### Workarounds documented
+
 - #<issue> — <workaround>
 
 ### Deferred to M10 / M9+
+
 - #<issue> — <reason>
 
 ### Symptom analytics notes
+
 - <usability themes from M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md>
 
 ### Threshold / config decisions
+
 - <link M9_ANALYTICS_THRESHOLDS_REVIEW.md if changed>
 ```
 
@@ -116,12 +121,13 @@ if it contains tester quotes with PII):
 **Device / browser:** e.g. Android 14 / Chrome 124
 **Workflow:** W3 daily entry | W5 first insight | W9 export
 **Steps:**
+
 1. …
 2. …
-**Expected:** …
-**Actual:** …
-**Severity:** blocker | major | minor | suggestion
-**Screenshot:** (attach if possible)
+   **Expected:** …
+   **Actual:** …
+   **Severity:** blocker | major | minor | suggestion
+   **Screenshot:** (attach if possible)
 ```
 
 ---
@@ -135,11 +141,11 @@ issues provide sufficient signal for 5–10 testers.
 
 ## Escalation
 
-| Condition | Escalation |
-| --------- | ---------- |
-| ≥2 P0 in same week | Pause new invites; stabilize instance |
-| Privacy/export/delete P0 | Treat as incident — [`incident-response.md`](../runbooks/incident-response.md) |
-| Symptom insight misleading (P1) | Tag `symptom-analytics`; link review doc |
+| Condition                       | Escalation                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| ≥2 P0 in same week              | Pause new invites; stabilize instance                                          |
+| Privacy/export/delete P0        | Treat as incident — [`incident-response.md`](../runbooks/incident-response.md) |
+| Symptom insight misleading (P1) | Tag `symptom-analytics`; link review doc                                       |
 
 ---
 

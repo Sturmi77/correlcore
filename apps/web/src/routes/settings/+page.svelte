@@ -316,11 +316,7 @@
       </div>
       <p class="settings__privacy-note">{$_('settings.privacy.policy_body')}</p>
       <div class="settings__actions">
-        <Button
-          href="/privacy"
-          variant="secondary"
-          data-testid="settings-privacy-policy"
-        >
+        <Button href="/privacy" variant="secondary" data-testid="settings-privacy-policy">
           {$_('settings.privacy.policy_link')}
         </Button>
         <Button

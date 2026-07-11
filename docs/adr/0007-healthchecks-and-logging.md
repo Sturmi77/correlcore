@@ -149,13 +149,13 @@ Stacktraces dürfen Pfade und System-Variablen enthalten, aber keine Tagebuchein
 
 ## Implementierungs-Status
 
-| Komponente                       | Datei                                    | Status        |
-| -------------------------------- | ---------------------------------------- | ------------- |
-| Liveness/Readiness/Summary       | `backend/app/api/v1/endpoints/health.py` | ✅ PR #35     |
-| Probe-Service                    | `backend/app/services/health_service.py` | ✅ PR #35     |
-| JSON-Logging                     | `backend/app/core/logging.py`            | ✅ PR #35     |
-| Request-ID-Middleware            | `backend/app/core/request_id.py`         | ✅ PR #35     |
-| Docker-Healthchecks (6 Services) | `infra/docker/docker-compose.yml`        | ✅ PR #35     |
-| DSGVO-Log-Scrubbing-Test         | `backend/tests/test_log_scrubbing.py`    | ✅ Diese ADR  |
-| Worker-Healthcheck               | `infra/docker/docker-compose.yml`        | ⏳ Geplant M3 |
+| Komponente                       | Datei                                    | Status         |
+| -------------------------------- | ---------------------------------------- | -------------- |
+| Liveness/Readiness/Summary       | `backend/app/api/v1/endpoints/health.py` | ✅ PR #35      |
+| Probe-Service                    | `backend/app/services/health_service.py` | ✅ PR #35      |
+| JSON-Logging                     | `backend/app/core/logging.py`            | ✅ PR #35      |
+| Request-ID-Middleware            | `backend/app/core/request_id.py`         | ✅ PR #35      |
+| Docker-Healthchecks (6 Services) | `infra/docker/docker-compose.yml`        | ✅ PR #35      |
+| DSGVO-Log-Scrubbing-Test         | `backend/tests/test_log_scrubbing.py`    | ✅ Diese ADR   |
+| Worker-Healthcheck               | `infra/docker/docker-compose.yml`        | ⏳ Geplant M3  |
 | Glitchtip-Healthcheck            | `infra/docker/docker-compose.yml`        | ✅ M9 Sprint 2 |

@@ -25,10 +25,10 @@ Before inviting testers, confirm:
 
 ## Target cohort
 
-| Goal | Count | Personas (from [`USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md)) |
-| ---- | ----- | -------------------------------------------------------------------- |
-| Core beta | 5–10 | Mix of P1 (Self-Optimizer) and P2 (Health-Aware Recoverer) |
-| Stretch | +2 waitlist | Replace dropouts within week 1 |
+| Goal      | Count       | Personas (from [`USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md)) |
+| --------- | ----------- | -------------------------------------------------------------------- |
+| Core beta | 5–10        | Mix of P1 (Self-Optimizer) and P2 (Health-Aware Recoverer)           |
+| Stretch   | +2 waitlist | Replace dropouts within week 1                                       |
 
 **Recruitment channels (no tracking SaaS):**
 
@@ -88,11 +88,11 @@ For testers without reliable email or for controlled demos:
 
 Share credentials via **password manager secure send** or Signal — never in plain GitHub issues.
 
-| Account | Email | Purpose | Week-1 status |
-| ------- | ----- | ------- | ------------- |
-| _tester-01_ | _@_ | P1 daily tracking | invited |
-| _tester-02_ | _@_ | P2 privacy/export focus | invited |
-| … | | | |
+| Account     | Email | Purpose                 | Week-1 status |
+| ----------- | ----- | ----------------------- | ------------- |
+| _tester-01_ | _@_   | P1 daily tracking       | invited       |
+| _tester-02_ | _@_   | P2 privacy/export focus | invited       |
+| …           |       |                         |               |
 
 > **Do not commit** this table with real emails to the repository. Keep the live roster in your
 > operator wiki or encrypted doc; this template is structural only.
@@ -132,11 +132,11 @@ Thanks,
 
 Share these links (in email or pinned GitHub discussion):
 
-| Document | Purpose |
-| -------- | ------- |
-| [`BETA_CHECKLIST.md`](BETA_CHECKLIST.md) | Flows to complete in week 1 |
-| [`USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) | Detailed workflow reference |
-| [`PRIVACY.md`](../PRIVACY.md) | Legal / data processing summary |
+| Document                                             | Purpose                         |
+| ---------------------------------------------------- | ------------------------------- |
+| [`BETA_CHECKLIST.md`](BETA_CHECKLIST.md)             | Flows to complete in week 1     |
+| [`USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) | Detailed workflow reference     |
+| [`PRIVACY.md`](../PRIVACY.md)                        | Legal / data processing summary |
 
 **Symptom analytics focus (week 2):** ask testers with ≥15 entries to review Insights → Symptoms tab
 and co-occurrence heatmap; see [`M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md`](../quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md).
@@ -145,11 +145,11 @@ and co-occurrence heatmap; see [`M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md`](../qualit
 
 ## Feedback channels
 
-| Channel | When to use | Template |
-| ------- | ----------- | -------- |
-| **GitHub issue** | Default; structured, public to repo maintainers | [`.github/ISSUE_TEMPLATE/beta_feedback.md`](../../.github/ISSUE_TEMPLATE/beta_feedback.md) |
-| **Email** | Testers without GitHub | Same fields as issue template |
-| **Registration issue** | Initial interest only | [`beta_tester.md`](../../.github/ISSUE_TEMPLATE/beta_feedback.md) |
+| Channel                | When to use                                     | Template                                                                                   |
+| ---------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **GitHub issue**       | Default; structured, public to repo maintainers | [`.github/ISSUE_TEMPLATE/beta_feedback.md`](../../.github/ISSUE_TEMPLATE/beta_feedback.md) |
+| **Email**              | Testers without GitHub                          | Same fields as issue template                                                              |
+| **Registration issue** | Initial interest only                           | [`beta_tester.md`](../../.github/ISSUE_TEMPLATE/beta_feedback.md)                          |
 
 Apply label `beta` to all feedback issues. Triage per [`BETA_FEEDBACK_TRIAGE.md`](BETA_FEEDBACK_TRIAGE.md).
 
@@ -159,12 +159,12 @@ Apply label `beta` to all feedback issues. Triage per [`BETA_FEEDBACK_TRIAGE.md`
 
 ## Beta timeline (suggested)
 
-| Week | Operator | Testers |
-| ---- | -------- | ------- |
-| 0 | Deploy, pentest gate, send invites | — |
-| 1 | Daily triage; fix P0 within 48h | Complete BETA_CHECKLIST core flows |
-| 2 | Round-1 summary; symptom analytics prompts | Optional PWA + symptom review |
-| 3 | Close beta round; backlog → M10 | Final export/delete if leaving |
+| Week | Operator                                   | Testers                            |
+| ---- | ------------------------------------------ | ---------------------------------- |
+| 0    | Deploy, pentest gate, send invites         | —                                  |
+| 1    | Daily triage; fix P0 within 48h            | Complete BETA_CHECKLIST core flows |
+| 2    | Round-1 summary; symptom analytics prompts | Optional PWA + symptom review      |
+| 3    | Close beta round; backlog → M10            | Final export/delete if leaving     |
 
 **Exit criterion (Sprint 5):** ≥5 active testers, ≥1 complete feedback round triaged.
 
@@ -172,14 +172,14 @@ Apply label `beta` to all feedback issues. Triage per [`BETA_FEEDBACK_TRIAGE.md`
 
 ## Operator roster (fill locally — do not commit PII)
 
-| # | Codename | Persona | Platform | Invited | Active W1 | Feedback filed |
-| - | -------- | ------- | -------- | ------- | --------- | -------------- |
-| 1 | | P1 | | ☐ | ☐ | ☐ |
-| 2 | | P2 | | ☐ | ☐ | ☐ |
-| 3 | | P1 | | ☐ | ☐ | ☐ |
-| 4 | | P2 | | ☐ | ☐ | ☐ |
-| 5 | | P1 | | ☐ | ☐ | ☐ |
-| 6–10 | | | | ☐ | ☐ | ☐ |
+| #    | Codename | Persona | Platform | Invited | Active W1 | Feedback filed |
+| ---- | -------- | ------- | -------- | ------- | --------- | -------------- |
+| 1    |          | P1      |          | ☐       | ☐         | ☐              |
+| 2    |          | P2      |          | ☐       | ☐         | ☐              |
+| 3    |          | P1      |          | ☐       | ☐         | ☐              |
+| 4    |          | P2      |          | ☐       | ☐         | ☐              |
+| 5    |          | P1      |          | ☐       | ☐         | ☐              |
+| 6–10 |          |         |          | ☐       | ☐         | ☐              |
 
 ---
 
