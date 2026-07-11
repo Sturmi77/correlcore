@@ -32,7 +32,7 @@ describe('HomeTodayContext', () => {
     });
     expect(screen.getByTestId('home-today-status').textContent).toContain('home.no_entry_today');
     expect(screen.queryByTestId('home-work-context')).toBeNull();
-    expect(screen.getByTestId('home-today-action').textContent).toContain('home.cta_log_today');
+    expect(screen.queryByTestId('home-today-action')).toBeNull();
   });
 
   it('shows work context and tracked status when entry exists', () => {

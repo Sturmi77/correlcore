@@ -92,6 +92,7 @@ describe('HomeDailyBrief', () => {
     expect(screen.getByText('home.brief.work_context_heading')).toBeTruthy();
     expect(screen.getByText('entry.work_context.office')).toBeTruthy();
     expect(screen.getByText('entry.work_context.homeoffice')).toBeTruthy();
-    expect(screen.getByText(/"count":8/)).toBeTruthy();
+    expect(screen.getByText(/"mood":"4\.1"/)).toBeTruthy();
+    expect(screen.getByText(/"count":5/)).toBeTruthy();
   });
 });

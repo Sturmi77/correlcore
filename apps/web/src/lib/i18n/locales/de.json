@@ -60,8 +60,8 @@
       "top_tag": "Auffaelliger Tag",
       "top_symptom": "Auffaelliges Symptom",
       "work_context_heading": "Arbeitssituation-Muster",
-      "work_context_hint": "Alle erfassten Tage",
-      "work_context_value": "{count}T, Stimmung Schnitt {mood}",
+      "work_context_hint": "Stimmungsschnitt pro Situation",
+      "work_context_value": "{mood} · {count} Tage",
       "none": "Keine"
     },
     "recent": {
@@ -140,6 +140,12 @@
       "aria": "Balkendiagramm der durchschnittlichen Stimmung nach Wochentag",
       "empty_statement": "Dieses Wochenmuster hat noch keinen Text.",
       "hint": "Basierend auf einer Woche Daten. Muster brauchen mehr Daten, um stabiler zu werden."
+    },
+    "weekday_overview": {
+      "heading": "Deine Woche auf einen Blick",
+      "aria": "Uebersicht der Wochentage mit Stimmung und ersten Mustern",
+      "no_finding": "—",
+      "hint": "Stimmungsbalken und erste Muster pro Wochentag. Mehr Eintraege machen die Muster stabiler."
     },
     "sparkline": {
       "heading": "Stimmungs-Verlauf",
@@ -404,7 +410,12 @@
       "empty_body": "Erfasse weiter t\u00e4gliche Eintr\u00e4ge, damit Bewegungen und Kontext hier sichtbar werden.",
       "show_details": "Detaillierte Diagramme anzeigen",
       "hide_details": "Detaillierte Diagramme ausblenden",
-      "detail_filters": "Detaillierte Trend-Filter"
+      "detail_filters": "Detaillierte Trend-Filter",
+      "customize": "Anpassen"
+    },
+    "settings": {
+      "title": "Vergleich anpassen",
+      "close_aria": "Einstellungen schliessen"
     },
     "tabs": {
       "label": "Trend-Bereiche",

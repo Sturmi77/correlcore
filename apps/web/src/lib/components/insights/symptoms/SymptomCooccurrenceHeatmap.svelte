@@ -8,12 +8,14 @@
     SymptomTagCooccurrenceResponse,
   } from '$lib/api/insights';
   import { orderAxisIds, type CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
+  import { pruneCooccurrenceAxisIds } from '$lib/utils/heatmapPruning';
 
   export let data: SymptomTagCooccurrenceResponse | null = null;
   export let loading = false;
   export let phase: InsightMaturityPhase | null = null;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let hideHeading = false;
+  export let pruneSparseAxes = false;
 
   const dispatch = createEventDispatcher<{ selectCell: { cell: SymptomTagCooccurrenceCell } }>();
 
@@ -23,9 +25,16 @@
   $: tagProfiles = buildProfiles(data, 'tag');
   $: symptomIds = data
     ? orderAxisIds(
-        Array.from(
-          new Map(data.cells.map((cell) => [cell.symptom.symptom_id, cell.symptom])).keys()
-        ),
+        pruneSparseAxes
+          ? pruneCooccurrenceAxisIds(
+              Array.from(
+                new Map(data.cells.map((cell) => [cell.symptom.symptom_id, cell.symptom])).keys()
+              ),
+              symptomProfiles
+            )
+          : Array.from(
+              new Map(data.cells.map((cell) => [cell.symptom.symptom_id, cell.symptom])).keys()
+            ),
         symptomProfiles,
         sortMode,
         (id) => data!.cells.find((cell) => cell.symptom.symptom_id === id)?.symptom.slug ?? id
@@ -33,7 +42,12 @@
     : [];
   $: tagIds = data
     ? orderAxisIds(
-        Array.from(new Map(data.cells.map((cell) => [cell.tag.tag_id, cell.tag])).keys()),
+        pruneSparseAxes
+          ? pruneCooccurrenceAxisIds(
+              Array.from(new Map(data.cells.map((cell) => [cell.tag.tag_id, cell.tag])).keys()),
+              tagProfiles
+            )
+          : Array.from(new Map(data.cells.map((cell) => [cell.tag.tag_id, cell.tag])).keys()),
         tagProfiles,
         sortMode,
         (id) => data!.cells.find((cell) => cell.tag.tag_id === id)?.tag.slug ?? id

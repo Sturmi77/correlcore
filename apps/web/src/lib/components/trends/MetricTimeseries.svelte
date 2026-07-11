@@ -6,8 +6,8 @@
     buildDailyAxisLinePoints,
     buildLinePoints,
     compareDailyAxisLayout,
-    dailyAxisChartWidth,
     dailyAxisXForIndex,
+    dailyPlotContentWidth,
     formatTimeseriesTick,
     linePath,
     metricStyles,
@@ -59,15 +59,23 @@
   $: hasData = points.some((point) => point.entry_count > 0);
   $: showSkeleton = loading && points.length === 0;
   $: aligned = axisDates.length > 0;
-  $: width = aligned ? dailyAxisChartWidth(axisDates, axisLayout) : 720;
-  $: plotStart = aligned ? dailyAxisXForIndex(0, axisLayout) : paddingLeft;
+  $: plotLayout = aligned
+    ? {
+        labelWidth: 0,
+        dayWidth: axisLayout.dayWidth,
+        dayGap: axisLayout.dayGap,
+        rightPadding: axisLayout.rightPadding,
+      }
+    : axisLayout;
+  $: width = aligned ? dailyPlotContentWidth(axisDates, plotLayout) : 720;
+  $: plotStart = aligned ? plotLayout.dayGap : paddingLeft;
   $: plotEnd = aligned
-    ? dailyAxisXForIndex(Math.max(0, axisDates.length - 1), axisLayout)
+    ? dailyAxisXForIndex(Math.max(0, axisDates.length - 1), plotLayout)
     : width - paddingRight;
   $: innerW = plotEnd - plotStart;
   $: series = metrics.map((metric) => {
     const raw = aligned
-      ? buildDailyAxisLinePoints(points, metric.key, axisDates, innerH, axisLayout)
+      ? buildDailyAxisLinePoints(points, metric.key, axisDates, innerH, plotLayout)
       : buildLinePoints(points, metric.key, innerW, innerH);
     const shifted = raw.map((point) => ({
       ...point,
@@ -83,7 +91,7 @@
     const indexes = [0, Math.floor((labels.length - 1) / 2), labels.length - 1];
     return [...new Set(indexes)].map((index) => ({
       x: aligned
-        ? dailyAxisXForIndex(index, axisLayout)
+        ? dailyAxisXForIndex(index, plotLayout)
         : paddingLeft + (index / Math.max(1, labels.length - 1)) * innerW,
       label: formatTimeseriesTick(range, labels[index]),
     }));
@@ -106,11 +114,15 @@
   function nearestDateForX(clientX: number, hostEl: Element): string | null {
     if (!aligned || axisDates.length === 0) return null;
     const rect = hostEl.getBoundingClientRect();
-    const local = ((clientX - rect.left) / rect.width) * width;
+    const gutterWidth = aligned ? axisLayout.labelWidth : 0;
+    const plotRect = hostEl.querySelector('.timeseries__plot')?.getBoundingClientRect();
+    const plotLeft = plotRect?.left ?? rect.left + gutterWidth;
+    const plotWidth = plotRect?.width ?? rect.width - gutterWidth;
+    const local = ((clientX - plotLeft) / plotWidth) * width;
     let bestIndex = 0;
     let bestDelta = Infinity;
     for (let i = 0; i < axisDates.length; i += 1) {
-      const x = dailyAxisXForIndex(i, axisLayout);
+      const x = dailyAxisXForIndex(i, plotLayout);
       const delta = Math.abs(x - local);
       if (delta < bestDelta) {
         bestDelta = delta;
@@ -204,6 +216,7 @@
     <div
       class="timeseries__interactive"
       class:timeseries__interactive--active={enableCursor && aligned}
+      class:timeseries__interactive--split={aligned}
       role="slider"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.timeseries.aria')}
@@ -218,99 +231,211 @@
       on:blur={() => enableCursor && timelineCursor.hover(null)}
       on:keydown={handleKeyDown}
     >
-      <svg
-        class="timeseries__chart"
-        class:timeseries__chart--aligned={aligned}
-        class:timeseries__chart--interactive={enableCursor && aligned}
-        style={aligned ? `--timeseries-chart-width: ${width}px` : ''}
-        {width}
-        {height}
-        viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-label={$_('trends.timeseries.aria')}
-      >
-        {#if enableCursor && aligned && markers.length > 0}
-          <EventMarkerLayer {markers} {axisDates} {axisLayout} top={paddingTop} height={innerH} />
-        {/if}
-        <line
-          x1={plotStart}
-          x2={plotStart}
-          y1={paddingTop}
-          y2={height - paddingBottom}
-          class="timeseries__axis"
-        />
-        <line
-          x1={plotStart}
-          x2={plotEnd}
-          y1={height - paddingBottom}
-          y2={height - paddingBottom}
-          class="timeseries__axis"
-        />
-        <text x={plotStart - 8} y={paddingTop + 8} class="timeseries__axis-label" text-anchor="end">
-          {$_('trends.timeseries.score_axis')}
-        </text>
-
-        {#each [1, 2, 3, 4, 5] as tick}
-          {@const y = height - paddingBottom - ((tick - 1) / 4) * innerH}
-          <line x1={plotStart} x2={plotEnd} y1={y} y2={y} class="timeseries__grid" />
-          <text x={plotStart - 12} y={y + 4} class="timeseries__tick" text-anchor="end">
-            {tick}
-          </text>
-        {/each}
-
-        {#each xLabels as tick}
-          <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
-            {tick.label}
-          </text>
-        {/each}
-
-        {#if enableCursor && aligned}
-          <TimelineCursorOverlay {axisDates} {axisLayout} top={paddingTop} height={innerH} />
-        {/if}
-
-        {#each series as metric}
-          {#if enabled[metric.key] && metric.path}
-            <path
-              d={metric.path}
-              class="timeseries__line"
-              style={`--metric-color: ${metric.style.color}; --metric-dasharray: ${metric.style.dasharray || 'none'}`}
-            />
-            {#each metric.points as point}
-              <button
-                type="button"
-                class="timeseries__point-button"
-                aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
-                on:click={() => dispatch('selectDate', { date: point.label })}
-              >
-                <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
-                  <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
-                </circle>
-                {#if metric.style.shape === 'circle'}
-                  <circle
-                    class="timeseries__point"
-                    style={`--metric-color: ${metric.style.color}`}
-                    cx={point.x}
-                    cy={point.y}
-                    r={pointRadius}
-                  />
-                {:else if metric.style.shape === 'diamond'}
-                  <polygon
-                    class="timeseries__point"
-                    style={`--metric-color: ${metric.style.color}`}
-                    points={diamondPoints(point.x, point.y, pointRadius + 1)}
-                  />
-                {:else}
-                  <polygon
-                    class="timeseries__point"
-                    style={`--metric-color: ${metric.style.color}`}
-                    points={trianglePoints(point.x, point.y, pointRadius + 1)}
-                  />
-                {/if}
-              </button>
+      {#if aligned}
+        <div class="timeseries__chart-shell">
+          <div
+            class="timeseries__gutter"
+            style={`width: ${axisLayout.labelWidth}px; height: ${height}px`}
+            aria-hidden="true"
+          >
+            <span class="timeseries__gutter-label">{$_('trends.timeseries.score_axis')}</span>
+            {#each [1, 2, 3, 4, 5] as tick}
+              {@const y = paddingTop + ((5 - tick) / 4) * innerH}
+              <span class="timeseries__gutter-tick" style={`top: ${y}px`}>{tick}</span>
             {/each}
+          </div>
+          <svg
+            class="timeseries__chart timeseries__chart--aligned timeseries__chart--plot"
+            class:timeseries__chart--interactive={enableCursor && aligned}
+            style={`--timeseries-chart-width: ${width}px`}
+            {width}
+            {height}
+            viewBox={`0 0 ${width} ${height}`}
+            role="img"
+            aria-label={$_('trends.timeseries.aria')}
+          >
+            {#if enableCursor && markers.length > 0}
+              <EventMarkerLayer
+                {markers}
+                {axisDates}
+                axisLayout={plotLayout}
+                top={paddingTop}
+                height={innerH}
+              />
+            {/if}
+            <line
+              x1={plotStart}
+              x2={plotStart}
+              y1={paddingTop}
+              y2={height - paddingBottom}
+              class="timeseries__axis"
+            />
+            <line
+              x1={plotStart}
+              x2={plotEnd}
+              y1={height - paddingBottom}
+              y2={height - paddingBottom}
+              class="timeseries__axis"
+            />
+            {#each [1, 2, 3, 4, 5] as tick}
+              {@const y = height - paddingBottom - ((tick - 1) / 4) * innerH}
+              <line x1={plotStart} x2={plotEnd} y1={y} y2={y} class="timeseries__grid" />
+            {/each}
+            {#each xLabels as tick}
+              <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
+                {tick.label}
+              </text>
+            {/each}
+            {#if enableCursor}
+              <TimelineCursorOverlay
+                {axisDates}
+                axisLayout={plotLayout}
+                top={paddingTop}
+                height={innerH}
+              />
+            {/if}
+            {#each series as metric}
+              {#if enabled[metric.key] && metric.path}
+                <path
+                  d={metric.path}
+                  class="timeseries__line"
+                  style={`--metric-color: ${metric.style.color}; --metric-dasharray: ${metric.style.dasharray || 'none'}`}
+                />
+                {#each metric.points as point}
+                  <button
+                    type="button"
+                    class="timeseries__point-button"
+                    aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
+                    on:click={() => dispatch('selectDate', { date: point.label })}
+                  >
+                    <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
+                      <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
+                    </circle>
+                    {#if metric.style.shape === 'circle'}
+                      <circle
+                        class="timeseries__point"
+                        style={`--metric-color: ${metric.style.color}`}
+                        cx={point.x}
+                        cy={point.y}
+                        r={pointRadius}
+                      />
+                    {:else if metric.style.shape === 'diamond'}
+                      <polygon
+                        class="timeseries__point"
+                        style={`--metric-color: ${metric.style.color}`}
+                        points={diamondPoints(point.x, point.y, pointRadius + 1)}
+                      />
+                    {:else}
+                      <polygon
+                        class="timeseries__point"
+                        style={`--metric-color: ${metric.style.color}`}
+                        points={trianglePoints(point.x, point.y, pointRadius + 1)}
+                      />
+                    {/if}
+                  </button>
+                {/each}
+              {/if}
+            {/each}
+          </svg>
+        </div>
+      {:else}
+        <svg
+          class="timeseries__chart"
+          class:timeseries__chart--interactive={enableCursor && aligned}
+          {width}
+          {height}
+          viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label={$_('trends.timeseries.aria')}
+        >
+          {#if enableCursor && aligned && markers.length > 0}
+            <EventMarkerLayer {markers} {axisDates} {axisLayout} top={paddingTop} height={innerH} />
           {/if}
-        {/each}
-      </svg>
+          <line
+            x1={plotStart}
+            x2={plotStart}
+            y1={paddingTop}
+            y2={height - paddingBottom}
+            class="timeseries__axis"
+          />
+          <line
+            x1={plotStart}
+            x2={plotEnd}
+            y1={height - paddingBottom}
+            y2={height - paddingBottom}
+            class="timeseries__axis"
+          />
+          <text
+            x={plotStart - 8}
+            y={paddingTop + 8}
+            class="timeseries__axis-label"
+            text-anchor="end"
+          >
+            {$_('trends.timeseries.score_axis')}
+          </text>
+
+          {#each [1, 2, 3, 4, 5] as tick}
+            {@const y = height - paddingBottom - ((tick - 1) / 4) * innerH}
+            <line x1={plotStart} x2={plotEnd} y1={y} y2={y} class="timeseries__grid" />
+            <text x={plotStart - 12} y={y + 4} class="timeseries__tick" text-anchor="end">
+              {tick}
+            </text>
+          {/each}
+
+          {#each xLabels as tick}
+            <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
+              {tick.label}
+            </text>
+          {/each}
+
+          {#if enableCursor && aligned}
+            <TimelineCursorOverlay {axisDates} {axisLayout} top={paddingTop} height={innerH} />
+          {/if}
+
+          {#each series as metric}
+            {#if enabled[metric.key] && metric.path}
+              <path
+                d={metric.path}
+                class="timeseries__line"
+                style={`--metric-color: ${metric.style.color}; --metric-dasharray: ${metric.style.dasharray || 'none'}`}
+              />
+              {#each metric.points as point}
+                <button
+                  type="button"
+                  class="timeseries__point-button"
+                  aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
+                  on:click={() => dispatch('selectDate', { date: point.label })}
+                >
+                  <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
+                    <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
+                  </circle>
+                  {#if metric.style.shape === 'circle'}
+                    <circle
+                      class="timeseries__point"
+                      style={`--metric-color: ${metric.style.color}`}
+                      cx={point.x}
+                      cy={point.y}
+                      r={pointRadius}
+                    />
+                  {:else if metric.style.shape === 'diamond'}
+                    <polygon
+                      class="timeseries__point"
+                      style={`--metric-color: ${metric.style.color}`}
+                      points={diamondPoints(point.x, point.y, pointRadius + 1)}
+                    />
+                  {:else}
+                    <polygon
+                      class="timeseries__point"
+                      style={`--metric-color: ${metric.style.color}`}
+                      points={trianglePoints(point.x, point.y, pointRadius + 1)}
+                    />
+                  {/if}
+                </button>
+              {/each}
+            {/if}
+          {/each}
+        </svg>
+      {/if}
     </div>
   {/if}
 
@@ -366,6 +491,55 @@
     border-style: solid;
     border-image: initial;
     stroke-dasharray: var(--metric-dasharray);
+  }
+
+  .timeseries__interactive--split {
+    min-width: max-content;
+  }
+
+  .timeseries__chart-shell {
+    display: flex;
+    align-items: stretch;
+    min-width: max-content;
+  }
+
+  .timeseries__gutter {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    flex-shrink: 0;
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
+    border-right: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    isolation: isolate;
+  }
+
+  .timeseries__gutter-label {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    left: var(--space-1);
+    font-size: 10px;
+    color: var(--color-text-muted);
+    text-align: right;
+    max-width: 90%;
+  }
+
+  .timeseries__gutter-tick {
+    position: absolute;
+    right: var(--space-2);
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timeseries__chart--plot {
+    width: var(--timeseries-chart-width);
+    max-width: none;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    border-left: none;
   }
 
   .timeseries__chart {

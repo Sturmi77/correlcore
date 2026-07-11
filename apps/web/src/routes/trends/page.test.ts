@@ -173,7 +173,7 @@ describe('/trends page', () => {
     expect(screen.getByText('trends.compare.work_contexts')).toBeTruthy();
   });
 
-  it('uses scroll-first composition on mobile with summary, filters, and detail canvas', async () => {
+  it('uses scroll-first composition on mobile with summary, quick filters, and detail canvas', async () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: vi.fn(() => ({
@@ -191,7 +191,8 @@ describe('/trends page', () => {
     render(Page);
     expect(await screen.findByTestId('mobile-trends-summary')).toBeTruthy();
     expect(screen.getByTestId('mobile-trends-detail')).toBeTruthy();
-    expect(screen.getByTestId('trends-compare-filters')).toBeTruthy();
+    expect(screen.getByTestId('trends-compare-quick-filters')).toBeTruthy();
+    expect(screen.queryByTestId('trends-filters-toolbar')).toBeNull();
     expect(screen.queryByTestId('mobile-trends-detail-toggle')).toBeNull();
   });
 

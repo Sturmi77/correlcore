@@ -12,6 +12,14 @@
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
   import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
+  import {
+    readCompareMode,
+    readCompareSortMode,
+    writeCompareMode,
+    writeCompareSortMode,
+    type CompareMode,
+    type CompareSortMode,
+  } from '$lib/utils/comparePanelSettings';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
@@ -28,6 +36,10 @@
   export let showSymptoms = false;
   export let showWorkContexts = true;
   export let loading = false;
+  export let pruneSparseAxes = false;
+  export let compactChrome = false;
+  export let mode: CompareMode = readCompareMode();
+  export let sortMode: CompareSortMode = readCompareSortMode();
   /**
    * Sprint 1 (ADR-0035): event markers shared across metric chart and
    * heatmap rows. Computed by the parent page from insight maturity,
@@ -43,6 +55,8 @@
   const dispatch = createEventDispatcher<{
     selectDate: { date: string };
     layerChange: { showTags: boolean; showSymptoms: boolean; showWorkContexts: boolean };
+    modeChange: { value: CompareMode };
+    sortChange: { value: CompareSortMode };
   }>();
 
   // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
@@ -58,12 +72,6 @@
     timelineCursor.reset();
   });
 
-  // -------- Sprint 2 (ADR-0035): mode + sorting + pins ----------------
-  type CompareMode = 'lines' | 'strips';
-  type SortMode = 'frequency' | 'recent' | 'correlation' | 'pinned';
-
-  const MODE_KEY = 'cc_trend_compare_mode';
-  const SORT_KEY = 'cc_trend_compare_sort';
   const PINS_KEY = 'cc_trend_compare_pins';
 
   function readLocal<T>(key: string, fallback: T, isValid: (value: unknown) => boolean): T {
@@ -87,17 +95,6 @@
     }
   }
 
-  let mode: CompareMode = readLocal<CompareMode>(
-    MODE_KEY,
-    'lines',
-    (value) => value === 'lines' || value === 'strips'
-  );
-  let sortMode: SortMode = readLocal<SortMode>(
-    SORT_KEY,
-    'frequency',
-    (value) =>
-      value === 'frequency' || value === 'recent' || value === 'correlation' || value === 'pinned'
-  );
   let pinned: string[] = readLocal<string[]>(
     PINS_KEY,
     [],
@@ -106,12 +103,14 @@
 
   function setMode(next: CompareMode): void {
     mode = next;
-    writeLocal(MODE_KEY, next);
+    writeCompareMode(next);
+    dispatch('modeChange', { value: next });
   }
 
-  function setSortMode(next: SortMode): void {
+  function setSortMode(next: CompareSortMode): void {
     sortMode = next;
-    writeLocal(SORT_KEY, next);
+    writeCompareSortMode(next);
+    dispatch('sortChange', { value: next });
   }
 
   function handlePinToggle(event: CustomEvent<{ rowId: string; pinned: boolean }>): void {
@@ -149,91 +148,93 @@
   }
 </script>
 
-<section class="compare" data-testid="trends-compare-panel">
-  <header class="compare__header">
-    <div>
-      <h2>{$_('trends.compare.heading')}</h2>
-      <p>{$_('trends.compare.body')}</p>
-    </div>
-    <div class="compare__layers" aria-label={$_('trends.compare.layers')}>
-      <label>
-        <input
-          type="checkbox"
-          checked={showTags}
-          on:change={(event) =>
-            dispatch('layerChange', {
-              showTags: event.currentTarget.checked,
-              showSymptoms,
-              showWorkContexts,
-            })}
-        />
-        {$_('trends.compare.tags')}
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={showSymptoms}
-          on:change={(event) =>
-            dispatch('layerChange', {
-              showTags,
-              showSymptoms: event.currentTarget.checked,
-              showWorkContexts,
-            })}
-        />
-        {$_('trends.compare.symptoms')}
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={showWorkContexts}
-          on:change={(event) =>
-            dispatch('layerChange', {
-              showTags,
-              showSymptoms,
-              showWorkContexts: event.currentTarget.checked,
-            })}
-        />
-        {$_('trends.compare.work_contexts')}
-      </label>
-    </div>
-  </header>
+<section class="compare" class:compare--compact={compactChrome} data-testid="trends-compare-panel">
+  {#if !compactChrome}
+    <header class="compare__header">
+      <div>
+        <h2>{$_('trends.compare.heading')}</h2>
+        <p>{$_('trends.compare.body')}</p>
+      </div>
+      <div class="compare__layers" aria-label={$_('trends.compare.layers')}>
+        <label>
+          <input
+            type="checkbox"
+            checked={showTags}
+            on:change={(event) =>
+              dispatch('layerChange', {
+                showTags: event.currentTarget.checked,
+                showSymptoms,
+                showWorkContexts,
+              })}
+          />
+          {$_('trends.compare.tags')}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showSymptoms}
+            on:change={(event) =>
+              dispatch('layerChange', {
+                showTags,
+                showSymptoms: event.currentTarget.checked,
+                showWorkContexts,
+              })}
+          />
+          {$_('trends.compare.symptoms')}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showWorkContexts}
+            on:change={(event) =>
+              dispatch('layerChange', {
+                showTags,
+                showSymptoms,
+                showWorkContexts: event.currentTarget.checked,
+              })}
+          />
+          {$_('trends.compare.work_contexts')}
+        </label>
+      </div>
+    </header>
 
-  <div class="compare__controls" data-testid="trends-compare-controls">
-    <div class="compare__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
-      <span class="compare__control-label">{$_('trends.compare.mode_label')}</span>
-      <button
-        type="button"
-        class="compare__chip"
-        class:compare__chip--active={mode === 'lines'}
-        aria-pressed={mode === 'lines'}
-        on:click={() => setMode('lines')}
-      >
-        {$_('trends.compare.mode_lines')}
-      </button>
-      <button
-        type="button"
-        class="compare__chip"
-        class:compare__chip--active={mode === 'strips'}
-        aria-pressed={mode === 'strips'}
-        on:click={() => setMode('strips')}
-      >
-        {$_('trends.compare.mode_strips')}
-      </button>
-    </div>
+    <div class="compare__controls" data-testid="trends-compare-controls">
+      <div class="compare__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
+        <span class="compare__control-label">{$_('trends.compare.mode_label')}</span>
+        <button
+          type="button"
+          class="compare__chip"
+          class:compare__chip--active={mode === 'lines'}
+          aria-pressed={mode === 'lines'}
+          on:click={() => setMode('lines')}
+        >
+          {$_('trends.compare.mode_lines')}
+        </button>
+        <button
+          type="button"
+          class="compare__chip"
+          class:compare__chip--active={mode === 'strips'}
+          aria-pressed={mode === 'strips'}
+          on:click={() => setMode('strips')}
+        >
+          {$_('trends.compare.mode_strips')}
+        </button>
+      </div>
 
-    <label class="compare__sort">
-      <span class="compare__control-label">{$_('trends.compare.sort_label')}</span>
-      <select
-        value={sortMode}
-        on:change={(event) => setSortMode(event.currentTarget.value as SortMode)}
-      >
-        <option value="frequency">{$_('trends.compare.sort_frequency')}</option>
-        <option value="recent">{$_('trends.compare.sort_recent')}</option>
-        <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
-        <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
-      </select>
-    </label>
-  </div>
+      <label class="compare__sort">
+        <span class="compare__control-label">{$_('trends.compare.sort_label')}</span>
+        <select
+          value={sortMode}
+          on:change={(event) => setSortMode(event.currentTarget.value as CompareSortMode)}
+        >
+          <option value="frequency">{$_('trends.compare.sort_frequency')}</option>
+          <option value="recent">{$_('trends.compare.sort_recent')}</option>
+          <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
+          <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
+        </select>
+      </label>
+    </div>
+  {/if}
 
   <div
     class="compare__axis-scroller"
@@ -282,6 +283,7 @@
       {correlationScores}
       scrollable={false}
       autoScroll={false}
+      {pruneSparseAxes}
       on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
       on:pinToggle={handlePinToggle}
     />
@@ -292,6 +294,10 @@
   .compare {
     display: grid;
     gap: var(--space-4);
+  }
+
+  .compare--compact {
+    gap: 0;
   }
 
   .compare__header {

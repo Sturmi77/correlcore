@@ -60,8 +60,8 @@
       "top_tag": "Notable tag",
       "top_symptom": "Notable symptom",
       "work_context_heading": "Work context pattern",
-      "work_context_hint": "All tracked days",
-      "work_context_value": "{count}d, mood avg {mood}",
+      "work_context_hint": "Mood average per situation",
+      "work_context_value": "{mood} · {count} days",
       "none": "None"
     },
     "recent": {
@@ -140,6 +140,12 @@
       "aria": "Bar chart of average mood by weekday",
       "empty_statement": "This weekday pattern has no statement yet.",
       "hint": "Based on one week of data. Patterns need more data to become more stable."
+    },
+    "weekday_overview": {
+      "heading": "Your week at a glance",
+      "aria": "Weekday overview with mood and early findings",
+      "no_finding": "—",
+      "hint": "Mood bars and early findings per weekday. More entries make patterns more stable."
     },
     "sparkline": {
       "heading": "Mood trend",
@@ -404,7 +410,12 @@
       "empty_body": "Keep logging daily entries to make movement and context visible here.",
       "show_details": "Show detailed charts",
       "hide_details": "Hide detailed charts",
-      "detail_filters": "Detailed trend filters"
+      "detail_filters": "Detailed trend filters",
+      "customize": "Customize"
+    },
+    "settings": {
+      "title": "Customize compare view",
+      "close_aria": "Close settings"
     },
     "tabs": {
       "label": "Trend sections",

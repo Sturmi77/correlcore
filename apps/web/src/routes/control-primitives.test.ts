@@ -3,6 +3,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const trendsSource = readFileSync(resolve('src/routes/trends/+page.svelte'), 'utf8');
+const trendsToolbarSource = readFileSync(
+  resolve('src/lib/components/trends/TrendsAnalysisToolbar.svelte'),
+  'utf8'
+);
 const insightsRouteSource = readFileSync(resolve('src/routes/insights/+page.svelte'), 'utf8');
 const settingsSource = readFileSync(resolve('src/routes/settings/+page.svelte'), 'utf8');
 const insightFeedSource = readFileSync(
@@ -12,14 +16,16 @@ const insightFeedSource = readFileSync(
 
 describe('control primitive contract', () => {
   it('uses a dedicated sticky toolbar for the global Trends range', () => {
-    expect(trendsSource).toContain('trends__sticky-toolbar');
-    expect(trendsSource).toContain('data-testid="trends-sticky-toolbar"');
+    expect(trendsSource).toContain('TrendsAnalysisToolbar');
+    expect(trendsToolbarSource).toContain('trends-toolbar');
+    expect(trendsToolbarSource).toContain('data-testid="trends-sticky-toolbar"');
     expect(trendsSource).not.toContain('trends__controls');
   });
 
   it('uses TabBar for Trends and Insights tabs', () => {
-    expect(trendsSource).toContain('$lib/components/common/TabBar.svelte');
-    expect(trendsSource).toContain('<TabBar');
+    expect(trendsSource).toContain('TrendsAnalysisToolbar');
+    expect(trendsToolbarSource).toContain('$lib/components/common/TabBar.svelte');
+    expect(trendsToolbarSource).toContain('<TabBar');
     expect(trendsSource).not.toContain('trends__tabs');
 
     expect(insightFeedSource).toContain('$lib/components/common/TabBar.svelte');
