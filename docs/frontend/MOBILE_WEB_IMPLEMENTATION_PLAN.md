@@ -48,7 +48,9 @@
 **Next recommended sprint**
 
 **M9 — Beta Hardening** is the next main milestone after M5.1 UX polish closeout
-(2026-07-10). See [`docs/M5_1_SPRINT_STATUS.md`](../M5_1_SPRINT_STATUS.md).
+(2026-07-10). See [`docs/M5_1_SPRINT_STATUS.md`](../M5_1_SPRINT_STATUS.md),
+[`docs/M9_SPRINT_PLAN.md`](../M9_SPRINT_PLAN.md), and
+[`docs/M9_SPRINT_STATUS.md`](../M9_SPRINT_STATUS.md) (Sprint 0 audit: 2026-07-11).
 
 Sprint **H** (Figma Code Connect publish) remains optional when a Figma seat is
 available; Phase 5 desktop consolidation can proceed in parallel.

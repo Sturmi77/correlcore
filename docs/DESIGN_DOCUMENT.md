@@ -1209,6 +1209,9 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 > auf Betriebssicherheit, Datenschutzpfade, Backup-Strategie und externe
 > Testbarkeit vor M10 (Public Selfhost v1.0). M5.1 darf keine neuen
 > Backend-Health-Daten-Integrationen einführen oder Kern-Domänen-Verträge ändern.
+>
+> **Sprintplanung:** [`M9_SPRINT_PLAN.md`](M9_SPRINT_PLAN.md) ·
+> [`M9_SPRINT_STATUS.md`](M9_SPRINT_STATUS.md) (Sprint 0 audit: 2026-07-11)
 
 - Monitoring, GlitchTip-Error-Tracking
 - Backup/Restore-Dokumentation
