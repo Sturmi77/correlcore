@@ -25,18 +25,18 @@ Tracking document for [`docs/M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md).
 Audit date: 2026-07-11. Method: codebase review, DESIGN_DOCUMENT § M10, gap
 analysis vs M9 exit state.
 
-| Criterion                         | Sprint | Code anchor                                                                       | Test / doc evidence                                                         | Gap                                    |
-| --------------------------------- | ------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------- |
-| Docker Hub amd64 + arm64          | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | Multi-arch CI + [`CONTAINER_IMAGES.md`](selfhost/CONTAINER_IMAGES.md)       | Live Hub push after secrets configured |
-| `docker compose up` minimal setup | 1      | [`infra/docker/`](../infra/docker/)                                               | Quickstart + bootstrap shipped                                              | Live stack smoke (operator)            |
-| SECURITY.md                       | —      | [`SECURITY.md`](../SECURITY.md)                                                   | Present                                                                     | —                                      |
-| CHANGELOG v1.0.0                  | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                                                 | `[Unreleased]` only; last tag `[0.6.0]`                                     | Cut `[1.0.0]` at release               |
-| Docs site live                    | 3      | —                                                                                 | Repo markdown only                                                          | MkDocs site                            |
-| Landing + install/user docs       | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte)         | Pre-alpha badge; `/privacy` in-app only                                     | Landing, Impressum                     |
-| Quality gate §9                   | 6      | —                                                                                 | M9 gate as template                                                         | `M10_QUALITY_GATE.md`                  |
-| Privacy link on landing (DSGVO)   | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte)             | In-app only                                                                 | Landing footer                         |
-| Impressum (AT/DE)                 | 4      | —                                                                                 | Missing                                                                     | `/impressum` route                     |
-| GitHub release v1.0.0             | 2, 6   | [`.github/workflows/github-release.yml`](../.github/workflows/github-release.yml) | Workflow on `v*` tags; needs first tag post-merge                           | Tag `v1.0.0` at Sprint 6               |
+| Criterion                         | Sprint | Code anchor                                                                       | Test / doc evidence                                                   | Gap                                    |
+| --------------------------------- | ------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- |
+| Docker Hub amd64 + arm64          | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | Multi-arch CI + [`CONTAINER_IMAGES.md`](selfhost/CONTAINER_IMAGES.md) | Live Hub push after secrets configured |
+| `docker compose up` minimal setup | 1      | [`infra/docker/`](../infra/docker/)                                               | Quickstart + bootstrap shipped                                        | Live stack smoke (operator)            |
+| SECURITY.md                       | —      | [`SECURITY.md`](../SECURITY.md)                                                   | Present                                                               | —                                      |
+| CHANGELOG v1.0.0                  | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                                                 | `[Unreleased]` only; last tag `[0.6.0]`                               | Cut `[1.0.0]` at release               |
+| Docs site live                    | 3      | —                                                                                 | Repo markdown only                                                    | MkDocs site                            |
+| Landing + install/user docs       | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte)         | Pre-alpha badge; `/privacy` in-app only                               | Landing, Impressum                     |
+| Quality gate §9                   | 6      | —                                                                                 | M9 gate as template                                                   | `M10_QUALITY_GATE.md`                  |
+| Privacy link on landing (DSGVO)   | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte)             | In-app only                                                           | Landing footer                         |
+| Impressum (AT/DE)                 | 4      | —                                                                                 | Missing                                                               | `/impressum` route                     |
+| GitHub release v1.0.0             | 2, 6   | [`.github/workflows/github-release.yml`](../.github/workflows/github-release.yml) | Workflow on `v*` tags; needs first tag post-merge                     | Tag `v1.0.0` at Sprint 6               |
 
 ## Compose decisions (Sprint 0)
 

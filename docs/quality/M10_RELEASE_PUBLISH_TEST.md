@@ -11,12 +11,12 @@ mirror, GitHub Release on version tags, and `IMAGE_REGISTRY` compose override.
 
 ## Scope
 
-| In scope                         | Out of scope                    |
-| -------------------------------- | ------------------------------- |
-| Workflow YAML review             | Live Docker Hub account setup   |
+| In scope                         | Out of scope                     |
+| -------------------------------- | -------------------------------- |
+| Workflow YAML review             | Live Docker Hub account setup    |
 | Multi-arch `platforms` in CI     | Sprint 5 CHANGELOG `[1.0.0]` cut |
-| GitHub Release workflow on `v*`  | MkDocs site (Sprint 3)          |
-| Compose `IMAGE_REGISTRY` default | Full VPS deploy regression      |
+| GitHub Release workflow on `v*`  | MkDocs site (Sprint 3)           |
+| Compose `IMAGE_REGISTRY` default | Full VPS deploy regression       |
 
 ## Static checks (CI / maintainer)
 
@@ -82,10 +82,10 @@ docker compose -f docker-compose.quickstart.yml config | grep 'image:'
 
 ## Sign-off
 
-| Check                    | Status  | Date       |
-| ------------------------ | ------- | ---------- |
-| Workflow static review   | PASS    | 2026-07-11 |
-| Compose config override  | PASS    | 2026-07-11 |
-| Live GHCR multi-arch     | Pending | post-merge |
-| Live Docker Hub push     | Pending | secrets + re-run |
-| Live GitHub Release      | Pending | first `v*` tag after merge |
+| Check                   | Status  | Date                       |
+| ----------------------- | ------- | -------------------------- |
+| Workflow static review  | PASS    | 2026-07-11                 |
+| Compose config override | PASS    | 2026-07-11                 |
+| Live GHCR multi-arch    | Pending | post-merge                 |
+| Live Docker Hub push    | Pending | secrets + re-run           |
+| Live GitHub Release     | Pending | first `v*` tag after merge |
