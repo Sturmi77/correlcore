@@ -63,7 +63,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                                                          |
 | **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                                                             |
 | **M9**    | **Complete** (2026-07-11) | Beta hardening closed out: GDPR paths, GlitchTip/PII scrub, install/backup docs, security CI, beta program. Closes #29. **Next main milestone: M10.** See [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md) and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md). |
-| **M10**   | **Complete** (2026-07-11) | Public selfhost v1.0 — quality gate and visual QA signed off. Tag **`v1.0.0`** post-merge. **Next main milestone: M11.** See [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md) and [`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md). |
+| **M10**   | **Complete** (2026-07-11) | Public selfhost v1.0 — quality gate and visual QA signed off. Tag **`v1.0.0`** post-merge. **Next main milestone: M11.** See [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md) and [`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md).                          |
 
 ---
 

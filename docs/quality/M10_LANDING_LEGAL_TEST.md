@@ -40,10 +40,10 @@ this obligation.
 
 ## Sign-off
 
-| Check                    | Status | Date       |
-| ------------------------ | ------ | ---------- |
-| Landing component        | PASS   | 2026-07-11 |
-| Impressum route          | PASS   | 2026-07-11 |
-| Public privacy/impressum | PASS   | 2026-07-11 |
-| Auth footer links        | PASS   | 2026-07-11 |
+| Check                    | Status | Date                                                |
+| ------------------------ | ------ | --------------------------------------------------- |
+| Landing component        | PASS   | 2026-07-11                                          |
+| Impressum route          | PASS   | 2026-07-11                                          |
+| Public privacy/impressum | PASS   | 2026-07-11                                          |
+| Auth footer links        | PASS   | 2026-07-11                                          |
 | Rendered visual QA       | PASS   | 2026-07-11 — [`M10_VISUAL_QA.md`](M10_VISUAL_QA.md) |
