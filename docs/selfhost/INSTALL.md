@@ -1,6 +1,6 @@
 # CorrelCore — Selfhost Install Guide
 
-Last updated: 2026-07-11 (M9 Sprint 3)
+Last updated: 2026-07-11 (M10 Sprint 1)
 
 Canonical operator guide for deploying CorrelCore on your own infrastructure.
 Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
@@ -17,11 +17,75 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 
 | Path                      | Compose file                                                                                                                                                         | TLS / exposure                                  | Best for                                |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------- |
-| **A — Public VPS**        | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                                                                                           | Traefik + Let's Encrypt on 80/443               | Internet-facing beta / production       |
-| **B — Homelab / Tailnet** | [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) or [`infra/docker/docker-compose.user-test.yml`](../../infra/docker/docker-compose.user-test.yml) | No Traefik; bind to `TAILSCALE_IP` or `0.0.0.0` | Dockhand, Dockge, Synology, private LAN |
+| **B — Quickstart / Homelab** | [`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml)                                                                  | Bind to `TAILSCALE_IP`; Mailpit for email       | First eval, Tailscale, Dockhand        |
+| **A — Public VPS**        | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                                                                                           | Traefik + Let's Encrypt on 80/443               | Internet-facing production              |
+| **Legacy homelab**        | [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) or [`docker-compose.user-test.yml`](../../infra/docker/docker-compose.user-test.yml)              | Same as quickstart                              | Existing Dockhand adopters              |
 
-Path A is the M9 acceptance target (Compose + Traefik + DNS). Path B is documented in
-[`infra/dockhand/README.md`](../../infra/dockhand/README.md) — use it when you do not need a public domain.
+**Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
+
+Existing VPS operators upgrading from pre-M10 compose: [`M10_COMPOSE_UPGRADE.md`](M10_COMPOSE_UPGRADE.md).
+
+---
+
+## Path B — Quickstart / Homelab (recommended first)
+
+### Prerequisites
+
+- Docker ≥ 24 and Compose v2
+- Optional: Tailscale IP for remote access from your tailnet
+
+### 1. Bootstrap secrets
+
+From the repository root:
+
+```bash
+./scripts/bootstrap-selfhost-env.sh --quickstart
+```
+
+Optional overrides before bootstrap:
+
+```bash
+export TAILSCALE_IP=100.x.y.z   # or 0.0.0.0 on some Synology setups
+export WEB_HOST_PORT=3010
+./scripts/bootstrap-selfhost-env.sh --quickstart
+```
+
+This writes `infra/docker/.env` with generated secrets. **Store `ENCRYPTION_KEY` offline** (printed once).
+
+Manual alternative: copy [`.env.quickstart.example`](../../infra/docker/.env.quickstart.example) to `.env` and fill secrets.
+
+### 2. Start the stack
+
+```bash
+cd correlcore/infra/docker
+docker compose -f docker-compose.quickstart.yml up -d
+```
+
+Optional profiles:
+
+```bash
+# Insights generation + unverified-account cleanup (recommended for durable homelab)
+echo 'COMPOSE_PROFILES=worker' >> .env
+docker compose -f docker-compose.quickstart.yml up -d
+
+# Error tracking (GlitchTip on port 8080)
+docker compose -f docker-compose.quickstart.yml --profile monitoring up -d
+```
+
+### 3. Verify
+
+```bash
+docker compose -f docker-compose.quickstart.yml ps
+curl -sf "http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health"
+```
+
+Open the app at `http://${TAILSCALE_IP}:${WEB_HOST_PORT}` (default `http://127.0.0.1:3010`).
+
+Verify-email links appear in **Mailpit**: `http://${TAILSCALE_IP}:8025`.
+
+### 4. Upgrade to production VPS
+
+When ready for a public domain, follow Path A below. Your Postgres volume is separate per compose project — plan a migration or fresh start.
 
 ---
 
@@ -69,9 +133,11 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(48))'
 # ENCRYPTION_KEY (Fernet — CRITICAL, backup separately!)
 python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 
-# Database / Redis / MinIO passwords
+# Database / Redis passwords
 python3 -c 'import secrets; print(secrets.token_urlsafe(24))'
 ```
+
+Or use `./scripts/bootstrap-selfhost-env.sh --production` to generate secrets into `.env`, then set domain and SMTP manually.
 
 Edit `.env` and set at minimum:
 
@@ -84,10 +150,10 @@ Edit `.env` and set at minimum:
 | `POSTGRES_PASSWORD`   | ≥ 20 chars, no `@` or `/`                        |
 | `APP_DB_PASSWORD`     | Separate from `POSTGRES_PASSWORD`                |
 | `REDIS_PASSWORD`      | ≥ 20 chars recommended                           |
-| `MINIO_ROOT_PASSWORD` | MinIO root credential                            |
 | `CORS_ORIGINS`        | `https://${DOMAIN}` in production                |
 | `FRONTEND_BASE_URL`   | `https://${DOMAIN}`                              |
 | `APP_ENV`             | `production` or `staging`                        |
+| `SMTP_HOST`           | Real relay in production (not `mailpit`)         |
 
 > **ENCRYPTION_KEY warning (ADR-0005):** Encrypted mood notes and custom symptom names
 > cannot be decrypted without this key — even from a valid database backup. Store it in a
@@ -124,10 +190,9 @@ Optional profiles:
 ```bash
 # Error tracking (GlitchTip at https://errors.${DOMAIN})
 docker compose --profile monitoring up -d
-
-# Analytics worker + unverified-account cleanup
-docker compose --profile worker up -d
 ```
+
+The **analytics worker** starts automatically with the production stack (insights + GDPR account cleanup). No `--profile worker` needed on Path A.
 
 After first start with `monitoring`:
 
@@ -150,8 +215,8 @@ Check container health:
 docker compose ps
 ```
 
-Expected: `correlcore-api`, `correlcore-web`, `correlcore-postgres`, `correlcore-redis`,
-`correlcore-minio`, `correlcore-traefik` healthy or running.
+Expected: `correlcore-api`, `correlcore-web`, `correlcore-worker`, `correlcore-postgres`,
+`correlcore-redis`, `correlcore-traefik` healthy or running. `correlcore-migrate` exits 0.
 
 ### 6. LUKS volume encryption (VPS / Hetzner)
 
@@ -184,17 +249,29 @@ restic repo encryption and Fernet field encryption (Stufe 2) together.
 
 ---
 
-## Path B — Homelab / Tailnet (summary)
+## Path B legacy — Dockhand / user-test
 
-For private testing without public DNS:
-
-1. Use [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) (Dockhand Git stack or manual adopt).
-2. Copy secrets from [`infra/dockhand/.env.example`](../../infra/dockhand/.env.example).
-3. Set `TAILSCALE_IP` — on Synology with Tailscale userspace mode use `0.0.0.0` (see
-   [`RUNBOOK_DEPLOYMENT.md`](../RUNBOOK_DEPLOYMENT.md) §2).
-4. Web reachable at `http://<tailscale-ip>:3010`; API proxied via web (`INTERNAL_API_URL`).
+For existing Dockhand Git stacks, [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml)
+remains supported. New homelab installs should prefer
+[`docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml).
 
 Full variable reference: [`infra/dockhand/README.md`](../../infra/dockhand/README.md).
+
+---
+
+## External reverse proxy (advanced)
+
+If you already run nginx, Caddy, or Traefik on the host, you can bind CorrelCore web to
+localhost only and terminate TLS on the host proxy:
+
+1. Use quickstart compose or adapt production compose to expose web on `127.0.0.1:${WEB_HOST_PORT}` only.
+2. Point your host reverse proxy at `http://127.0.0.1:${WEB_HOST_PORT}` for `/` and ensure
+   `/api` is proxied to the same origin (SvelteKit proxies `/api/*` to the internal API — ADR-0011).
+3. Set `FRONTEND_BASE_URL` and `CORS_ORIGINS` to your public HTTPS origin.
+4. Set `COOKIE_SECURE=true` when serving over HTTPS.
+
+This avoids running a second Traefik inside Docker. Full compose profile support for this
+mode is planned for M10.1.
 
 ---
 
@@ -209,7 +286,6 @@ and **`ENCRYPTION_KEY` must never live only inside the same backup bundle**.
 | ---------------------------- | ------------------------------------------------------------- | ---------------------- |
 | PostgreSQL (`correlcore` DB) | `pg_dump` (logical)                                           | Daily, 30 days         |
 | GlitchTip DB (if monitoring) | `pg_dump` database `glitchtip`                                | Weekly                 |
-| MinIO object data            | restic path backup of volume                                  | Daily                  |
 | Redis                        | Optional — session/rate-limit state; rebuild acceptable       | —                      |
 | **Secrets**                  | `ENCRYPTION_KEY`, `SECRET_KEY`, restic password — **offline** | Permanent secure store |
 

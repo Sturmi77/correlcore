@@ -1,35 +1,54 @@
-# CorrelCore — Docker Compose Stack
-# Sicherheitsgehärtete Konfiguration (April 2026)
-# Änderungen gegenüber v0.1:
-#   - Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount [SEC-03]
-#   - Redis mit Passwort-Auth [SEC-01]
-#   - Security-Header-Middleware (HSTS, CSP, X-Frame) [SEC-05]
-#   - MinIO Console nur intern erreichbar [SEC-04]
-#   - MinIO SSE-S3 Encryption aktiviert [SEC-02]
-#   - Healthchecks auf allen Diensten
-#   - Conflict-Log-Migration via Alembic [SW-01]
+# CorrelCore — Docker Compose Stack (Production VPS)
+# M10 Sprint 1: migrate init, YAML-DRY, MinIO removed (photos → M13).
+# Security hardening: socket-proxy [SEC-03], Redis auth [SEC-01], Traefik headers [SEC-05].
+#
+# Start: docker compose up -d
+# Optional: docker compose --profile monitoring up -d
+# Upgrade guide: docs/selfhost/M10_COMPOSE_UPGRADE.md
 
 name: correlcore
 
+x-api-image: &api-image
+  image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+
+x-api-env: &api-env
+  APP_ENV: ${APP_ENV:-production}
+  COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+  DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+  RATE_LIMIT_TRUST_PROXY_HEADERS: 'true'
+  CORS_ORIGINS: ${CORS_ORIGINS:-https://${DOMAIN}}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-noreply@${DOMAIN}}
+  FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-https://${DOMAIN}}
+  UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
+  DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+  IMAGE_TAG: ${IMAGE_TAG:-latest}
+  IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+  GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
+  GLITCHTIP_ENVIRONMENT: ${APP_ENV:-production}
+
 services:
   # ── Docker Socket Proxy ────────────────────────────────────────────────────
-  # Statt direktem Socket-Mount: Tecnativa-Proxy filtert erlaubte Docker API Calls
-  # Löst: SEC-03 (Container-Escape-Risiko durch direkten Socket-Zugriff)
   socket-proxy:
     image: tecnativa/docker-socket-proxy:latest
     container_name: correlcore-socket-proxy
     restart: unless-stopped
     environment:
-      CONTAINERS: 1 # Traefik braucht Container-Labels lesen
-      NETWORKS: 1 # Traefik braucht Netzwerk-Info
-      SERVICES: 1 # optional, für Service Discovery
-      TASKS: 1 # optional
-      # Alles andere ist DEAKTIVIERT (kein POST, kein EXEC, kein BUILD)
+      CONTAINERS: 1
+      NETWORKS: 1
+      SERVICES: 1
+      TASKS: 1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - socket
-    # Socket-Proxy NICHT im edge-Netz — nur Traefik hat Zugriff
     security_opt:
       - no-new-privileges:true
 
@@ -42,7 +61,6 @@ services:
       - '80:80'
       - '443:443'
     environment:
-      # Traefik nutzt den Socket-Proxy, nicht den direkten Socket
       DOCKER_HOST: tcp://socket-proxy:2375
     volumes:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
@@ -55,7 +73,6 @@ services:
     security_opt:
       - no-new-privileges:true
     labels:
-      # Security-Header-Middleware für alle Routen
       - 'traefik.http.middlewares.security-headers.headers.stsSeconds=31536000'
       - 'traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true'
       - 'traefik.http.middlewares.security-headers.headers.stsPreload=true'
@@ -65,54 +82,43 @@ services:
       - 'traefik.http.middlewares.security-headers.headers.browserXssFilter=true'
       - 'traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin'
       - 'traefik.http.middlewares.security-headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=()'
-      # HTTP → HTTPS Redirect
       - 'traefik.http.middlewares.redirect-https.redirectscheme.scheme=https'
       - 'traefik.http.middlewares.redirect-https.redirectscheme.permanent=true'
       - 'traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)'
       - 'traefik.http.routers.http-catchall.entrypoints=web'
       - 'traefik.http.routers.http-catchall.middlewares=redirect-https'
 
-  # ── Backend API ────────────────────────────────────────────────────────────
-  api:
-    image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
-    container_name: correlcore-api
-    restart: unless-stopped
+  # ── Migrations-Init ────────────────────────────────────────────────────────
+  migrate:
+    <<: *api-image
+    container_name: correlcore-migrate
+    command: ['alembic', 'upgrade', 'head']
     env_file: .env
     environment:
-      APP_ENV: ${APP_ENV:-production}
-      # Encryption Key für App-Level-Feld-Verschlüsselung (ADR-0005)
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
-      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
-      RATE_LIMIT_TRUST_PROXY_HEADERS: 'true'
-      # MinIO — Variablennamen entsprechen backend/app/core/config.py (Issue #41)
-      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-correlcore}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_PHOTOS: ${MINIO_BUCKET_PHOTOS:-correlcore-photos}
-      MINIO_SECURE: ${MINIO_SECURE:-false}
-      # CORS
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://${DOMAIN}}
-      # SMTP (E-Mail-Verifikation, Issue #39)
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_FROM: ${SMTP_FROM:-noreply@${DOMAIN}}
-      UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
-      DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
-      IMAGE_TAG: ${IMAGE_TAG:-latest}
-      IMAGE_DIGEST: ${IMAGE_DIGEST:-}
-      GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
-      GLITCHTIP_ENVIRONMENT: ${APP_ENV:-production}
+      <<: *api-env
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+    networks:
+      - internal
+    restart: 'no'
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Backend API ────────────────────────────────────────────────────────────
+  api:
+    <<: *api-image
+    container_name: correlcore-api
+    restart: unless-stopped
+    env_file: .env
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
         condition: service_healthy
-      minio:
+      redis:
         condition: service_healthy
     labels:
       - 'traefik.enable=true'
@@ -120,7 +126,6 @@ services:
       - 'traefik.http.routers.api.entrypoints=websecure'
       - 'traefik.http.routers.api.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.api.middlewares=security-headers'
-      # Rate-Limiting für API (global)
       - 'traefik.http.middlewares.api-ratelimit.ratelimit.average=100'
       - 'traefik.http.middlewares.api-ratelimit.ratelimit.burst=50'
       - 'traefik.http.routers.api.middlewares=security-headers,api-ratelimit'
@@ -130,7 +135,6 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      # /health/live: liveness only — no external deps, safe for Docker restart logic
       test: ['CMD-SHELL', 'curl -sf http://localhost:8000/health/live || exit 1']
       interval: 30s
       timeout: 10s
@@ -150,7 +154,8 @@ services:
       PUBLIC_GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
       PUBLIC_GLITCHTIP_ENVIRONMENT: ${APP_ENV:-production}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.web.rule=Host(`${DOMAIN}`)'
@@ -163,7 +168,6 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      # SvelteKit node server listens on port 3000
       test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1']
       interval: 30s
       timeout: 10s
@@ -172,24 +176,15 @@ services:
 
   # ── Analytics Worker ───────────────────────────────────────────────────────
   worker:
-    image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+    <<: *api-image
     container_name: correlcore-worker
     restart: unless-stopped
-    command: python -m app.workers.analytics
+    command: ['python', '-m', 'app.workers.analytics']
     env_file: .env
-    environment:
-      APP_ENV: ${APP_ENV:-production}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
-      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
-      RATE_LIMIT_TRUST_PROXY_HEADERS: 'true'
-      UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
-      DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
-      IMAGE_TAG: ${IMAGE_TAG:-latest}
-      IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+    environment: *api-env
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -222,7 +217,6 @@ services:
       start_period: 20s
     networks:
       - internal
-    # Keine externe Port-Exposition!
     security_opt:
       - no-new-privileges:true
 
@@ -231,7 +225,6 @@ services:
     image: redis:7-alpine
     container_name: correlcore-redis
     restart: unless-stopped
-    # Passwort-Auth + AOF-Persistenz [SEC-01 Fix]
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
@@ -250,37 +243,7 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  # ── Objekt-Speicher ────────────────────────────────────────────────────────
-  minio:
-    image: minio/minio:latest
-    container_name: correlcore-minio
-    restart: unless-stopped
-    # SSE-S3 Encryption aktiviert [SEC-02 Fix]
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-correlcore}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      # Server-Side Encryption aktivieren
-      MINIO_KMS_AUTO_ENCRYPTION: 'on'
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - internal # NUR internes Netz — kein öffentlicher Zugriff auf Console [SEC-04 Fix]
-    # MinIO Console (9001) und API (9000) sind NICHT via Traefik öffentlich geroutet
-    # Zugriff auf Console: SSH-Tunnel oder VPN
-    security_opt:
-      - no-new-privileges:true
-
   # ── MailPit (Dev SMTP — Issue #39) ───────────────────────────────────────
-  # Fängt alle ausgehenden Mails ab (kein realer Versand). UI: http://localhost:8025
-  # In Produktion über .env das echte SMTP_HOST setzen — der mailpit-Container kann
-  # via `docker compose stop mailpit` deaktiviert werden ohne Compose-Edit.
   mailpit:
     image: axllent/mailpit:latest
     container_name: correlcore-mailpit
@@ -290,8 +253,6 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
     ports:
-      # Web-UI nur an localhost gebunden — kein externer Zugriff.
-      # SMTP (1025) ist nur über das interne Compose-Netz erreichbar.
       - '127.0.0.1:8025:8025'
     networks:
       - internal
@@ -303,27 +264,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # ── MinIO Bucket Bootstrap ─────────────────────────────────────────────────
-  minio-init:
-    image: minio/mc:latest
-    container_name: correlcore-minio-init
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-correlcore} ${MINIO_ROOT_PASSWORD} &&
-      mc mb -p local/correlcore || true &&
-      mc mb -p local/correlcore-photos || true &&
-      mc anonymous set none local/correlcore &&
-      mc anonymous set none local/correlcore-photos &&
-      echo 'MinIO Buckets initialisiert.'
-      "
-    networks:
-      - internal
-    restart: 'no'
-
-  # ── Monitoring ─────────────────────────────────────────────────────────────
+  # ── Monitoring (optional, --profile monitoring) ────────────────────────────
   glitchtip:
     image: glitchtip/glitchtip:latest
     container_name: correlcore-glitchtip
@@ -358,7 +299,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
   traefik_certs:
 
 networks:
@@ -366,6 +306,6 @@ networks:
     driver: bridge
   internal:
     driver: bridge
-    internal: true # Kein direkter Internet-Zugriff aus internen Diensten
+    internal: true
   socket:
-    driver: bridge # Dediziertes Netz nur für Traefik ↔ Socket-Proxy Kommunikation
+    driver: bridge

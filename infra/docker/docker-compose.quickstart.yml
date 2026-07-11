@@ -1,0 +1,223 @@
+# CorrelCore — Quickstart Compose (Homelab / Tailscale / eval)
+# M10 Sprint 1: canonical homelab path — no Traefik, no MinIO (photos → M13).
+#
+# Setup:
+#   ../../scripts/bootstrap-selfhost-env.sh --quickstart
+#   docker compose -f docker-compose.quickstart.yml up -d
+#
+# Homelab durable (insights + cleanup):
+#   echo 'COMPOSE_PROFILES=worker' >> .env
+#   docker compose -f docker-compose.quickstart.yml up -d
+#
+# See docs/selfhost/INSTALL.md Path B and docs/M10_SPRINT_PLAN.md.
+
+name: correlcore-quickstart
+
+x-api-image: &api-image
+  image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+  pull_policy: always
+
+x-api-env: &api-env
+  APP_ENV: ${APP_ENV:-staging}
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+  DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+  RATE_LIMIT_TRUST_PROXY_HEADERS: 'true'
+  CORS_ORIGINS: ${CORS_ORIGINS}
+  SMTP_HOST: ${SMTP_HOST:-mailpit}
+  SMTP_PORT: ${SMTP_PORT:-1025}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-noreply@correlcore.local}
+  FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://127.0.0.1:${WEB_HOST_PORT:-3010}}
+  UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
+  DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+  IMAGE_TAG: ${IMAGE_TAG:-latest}
+  IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+
+services:
+  migrate:
+    <<: *api-image
+    container_name: correlcore-quickstart-migrate
+    command: ['alembic', 'upgrade', 'head']
+    environment:
+      <<: *api-env
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: 'no'
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    <<: *api-image
+    container_name: correlcore-quickstart-api
+    restart: unless-stopped
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    expose:
+      - '8000'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'python -c "import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health/live\")" || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  web:
+    image: ghcr.io/sturmi77/correlcore-web:${IMAGE_TAG:-latest}
+    pull_policy: always
+    container_name: correlcore-quickstart-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      INTERNAL_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3010}:3000'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: correlcore-quickstart-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-correlcore}
+      POSTGRES_USER: ${POSTGRES_USER:-correlcore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      APP_DB_USER: ${APP_DB_USER:-correlcore_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7-alpine
+    container_name: correlcore-quickstart-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: correlcore-quickstart-mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:8025:8025'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:8025/api/v1/info']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    container_name: correlcore-quickstart-glitchtip
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-}
+      EMAIL_URL: smtp://mailpit:1025
+      DEFAULT_FROM_EMAIL: errors@correlcore.local
+      GLITCHTIP_DOMAIN: http://${TAILSCALE_IP:-127.0.0.1}:8080
+      ENABLE_USER_REGISTRATION: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '${TAILSCALE_IP:-127.0.0.1}:8080:8080'
+    networks:
+      - internal
+    profiles:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+
+  worker:
+    <<: *api-image
+    container_name: correlcore-quickstart-worker
+    restart: unless-stopped
+    command: ['python', '-m', 'app.workers.analytics']
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+    profiles:
+      - worker
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  internal:
+    driver: bridge
