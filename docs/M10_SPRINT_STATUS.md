@@ -4,39 +4,39 @@ Last updated: 2026-07-11
 
 Tracking document for [`docs/M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md).
 
-**Milestone completeness:** M10 planning documented; implementation not started.
+**Milestone completeness:** Sprint 0 complete; Sprint 1 implemented (compose parity).
 
 **Prerequisite:** M9 complete (2026-07-11) — [`docs/M9_SPRINT_STATUS.md`](M9_SPRINT_STATUS.md).
 
 ## Overview
 
-| Sprint | Title                       | Status      |
-| ------ | --------------------------- | ----------- |
-| 0      | Scope & audit               | In progress |
-| 1      | Compose & install parity    | Pending     |
-| 2      | Container publish & release | Pending     |
-| 3      | Docs site                   | Pending     |
-| 4      | Landing & legal             | Pending     |
-| 5      | Version, AGPL & go-public   | Pending     |
-| 6      | Milestone closeout (M10-C)  | Pending     |
+| Sprint | Title                       | Status   |
+| ------ | --------------------------- | -------- |
+| 0      | Scope & audit               | Complete |
+| 1      | Compose & install parity    | Complete |
+| 2      | Container publish & release | Pending  |
+| 3      | Docs site                   | Pending  |
+| 4      | Landing & legal             | Pending  |
+| 5      | Version, AGPL & go-public   | Pending  |
+| 6      | Milestone closeout (M10-C)  | Pending  |
 
 ## Acceptance-criteria audit matrix
 
 Audit date: 2026-07-11. Method: codebase review, DESIGN_DOCUMENT § M10, gap
 analysis vs M9 exit state.
 
-| Criterion                         | Sprint | Code anchor                                                                       | Test / doc evidence                     | Gap                                   |
-| --------------------------------- | ------ | --------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------- |
-| Docker Hub amd64 + arm64          | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | amd64 only today                        | Multi-arch + Docker Hub               |
-| `docker compose up` minimal setup | 1      | [`infra/docker/`](../infra/docker/)                                               | Quickstart + bootstrap planned          | Production still 12 containers pre-S1 |
-| SECURITY.md                       | —      | [`SECURITY.md`](../SECURITY.md)                                                   | Present                                 | —                                     |
-| CHANGELOG v1.0.0                  | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                                                 | `[Unreleased]` only; last tag `[0.6.0]` | Cut `[1.0.0]` at release              |
-| Docs site live                    | 3      | —                                                                                 | Repo markdown only                      | MkDocs site                           |
-| Landing + install/user docs       | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte)         | Pre-alpha badge; `/privacy` in-app only | Landing, Impressum                    |
-| Quality gate §9                   | 6      | —                                                                                 | M9 gate as template                     | `M10_QUALITY_GATE.md`                 |
-| Privacy link on landing (DSGVO)   | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte)             | In-app only                             | Landing footer                        |
-| Impressum (AT/DE)                 | 4      | —                                                                                 | Missing                                 | `/impressum` route                    |
-| GitHub release v1.0.0             | 2, 6   | —                                                                                 | GHCR images only                        | Release workflow + tag                |
+| Criterion                         | Sprint | Code anchor                                                                       | Test / doc evidence                         | Gap                     |
+| --------------------------------- | ------ | --------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------- |
+| Docker Hub amd64 + arm64          | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | amd64 only today                            | Multi-arch + Docker Hub |
+| `docker compose up` minimal setup | 1      | [`infra/docker/`](../infra/docker/)                                               | Quickstart + bootstrap shipped              | Live stack smoke (operator) |
+| SECURITY.md                       | —      | [`SECURITY.md`](../SECURITY.md)                                                   | Present                                     | —                       |
+| CHANGELOG v1.0.0                  | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                                                 | `[Unreleased]` only; last tag `[0.6.0]`     | Cut `[1.0.0]` at release |
+| Docs site live                    | 3      | —                                                                                 | Repo markdown only                          | MkDocs site             |
+| Landing + install/user docs       | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte)         | Pre-alpha badge; `/privacy` in-app only     | Landing, Impressum      |
+| Quality gate §9                   | 6      | —                                                                                 | M9 gate as template                         | `M10_QUALITY_GATE.md`   |
+| Privacy link on landing (DSGVO)   | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte)             | In-app only                                 | Landing footer          |
+| Impressum (AT/DE)                 | 4      | —                                                                                 | Missing                                     | `/impressum` route      |
+| GitHub release v1.0.0             | 2, 6   | —                                                                                 | GHCR images only                            | Release workflow + tag  |
 
 ## Compose decisions (Sprint 0)
 
@@ -62,7 +62,7 @@ Planning outcome: **D + E + F + B** for M10 Sprint 1; **A, C, G-compose → M10.
 | `/health/ready`          | Postgres, Redis, encryption only — **no MinIO**            |
 | Quickstart without MinIO | Running since M9 (user-test / dockhand compose)            |
 | App code                 | Dev-View probe only (`DEV_VIEW_ENABLED`)                   |
-| Production blocker       | `api.depends_on.minio` must be removed with services       |
+| Production blocker       | `api.depends_on.minio` removed in Sprint 1                 |
 | User-visible impact      | None (Dev-View shows `minio_connected: false` if enabled)  |
 | M13 re-add               | `--profile storage` or compose overlay                     |
 
@@ -82,9 +82,19 @@ See [`M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md) § COMPOSE_PROFILES matrix and
 - [ ] GitHub milestone #7 populated with issues.
 - [ ] Beta P2 backlog triaged to `m10` label.
 
+## Sprint 1 — Completed checklist
+
+- [x] Production compose: `migrate`, YAML anchors, `FRONTEND_BASE_URL`, MinIO removed.
+- [x] [`docker-compose.quickstart.yml`](../infra/docker/docker-compose.quickstart.yml).
+- [x] [`scripts/bootstrap-selfhost-env.sh`](../scripts/bootstrap-selfhost-env.sh) + `.env.quickstart.example`.
+- [x] [`INSTALL.md`](selfhost/INSTALL.md) restructured (Path B first, external proxy section).
+- [x] [`.env.example`](../infra/docker/.env.example) MinIO section commented (M13 note).
+- [x] [`quality/M10_COMPOSE_SMOKE_TEST.md`](quality/M10_COMPOSE_SMOKE_TEST.md).
+- [x] `docker compose config` validated for both compose files.
+
 ## Next milestone
 
-**M10 implementation** — Sprint 1 compose parity (see sprint plan).
+**M10 Sprint 2** — Multi-arch images, Docker Hub, GitHub release workflow.
 
 ## API usage note
 
