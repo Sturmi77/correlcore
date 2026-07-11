@@ -55,7 +55,7 @@
 name: correlcore
 
 x-api-image: &api-image
-  image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+  image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
   pull_policy: always
 
 x-api-env: &api-env
@@ -152,7 +152,7 @@ services:
   # VITE_API_BASE_URL wird ignoriert und ist hier bewusst nicht mehr gesetzt;
   # bitte auch aus der .env entfernen.
   web:
-    image: ghcr.io/sturmi77/correlcore-web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-web:${IMAGE_TAG:-latest}
     pull_policy: always
     container_name: correlcore-web
     restart: unless-stopped

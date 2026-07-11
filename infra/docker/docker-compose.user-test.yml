@@ -26,7 +26,7 @@
 name: correlcore-test
 
 x-api-image: &api-image
-  image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+  image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
   pull_policy: always
 
 x-api-env: &api-env
@@ -103,7 +103,7 @@ services:
 
   # ── Web Frontend ────────────────────────────────────────────────────────
   web:
-    image: ghcr.io/sturmi77/correlcore-web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-web:${IMAGE_TAG:-latest}
     pull_policy: always
     container_name: correlcore-test-web
     restart: unless-stopped

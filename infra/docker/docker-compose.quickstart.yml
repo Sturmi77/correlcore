@@ -14,7 +14,11 @@
 name: correlcore-quickstart
 
 x-api-image: &api-image
-  image: ghcr.io/sturmi77/correlcore-api:${IMAGE_TAG:-latest}
+  image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
+  pull_policy: always
+
+x-web-image: &web-image
+  image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-web:${IMAGE_TAG:-latest}
   pull_policy: always
 
 x-api-env: &api-env
@@ -83,8 +87,7 @@ services:
       start_period: 20s
 
   web:
-    image: ghcr.io/sturmi77/correlcore-web:${IMAGE_TAG:-latest}
-    pull_policy: always
+    <<: *web-image
     container_name: correlcore-quickstart-web
     restart: unless-stopped
     environment:

@@ -1,31 +1,52 @@
 name: Release — Container Images
 
-# Baut und published correlcore-api und correlcore-web nach GHCR.
-# - Push auf main → :latest + :main + :sha-<short>
-# - Tag v* (z. B. v0.2.0) → :v0.2.0 + :v0.2 + :latest
-# - manual dispatch → :manual-<sha>
+# Builds and publishes correlcore-api and correlcore-web (multi-arch).
+# - Push to main → :latest + :main + :sha-<short>
+# - Tag v* (e.g. v1.0.0) → :v1.0.0 + :v1.0 + :latest
+# - manual dispatch → same tag rules as branch/tag context
 #
-# Voraussetzung: Repo erlaubt GHCR-Pushes (Settings → Actions → Workflow permissions).
+# Registries:
+# - GHCR (always): ghcr.io/<owner>/correlcore-{api,web}
+# - Docker Hub (when secrets set): docker.io/<DOCKERHUB_USERNAME>/correlcore-{api,web}
+#
+# Required repo secrets for Docker Hub (M10 Sprint 2):
+#   DOCKERHUB_USERNAME, DOCKERHUB_TOKEN (read/write access token)
+#
+# GHCR push requires: Settings → Actions → Workflow permissions → read/write packages.
 
 on:
   push:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
-    # Seit ADR-0011 (interner Reverse-Proxy in apps/web/src/hooks.server.ts)
-    # ist VITE_API_BASE_URL=/api/v1 die einzige unterstuetzte Build-Time-Konfig.
-    # Der Web-Container leitet /api/* zur Laufzeit an INTERNAL_API_URL
-    # (Default http://api:8000) weiter; pro Topologie ist nur diese
-    # Runtime-ENV anzupassen, kein Rebuild noetig.
+    # Since ADR-0011 (internal reverse proxy in apps/web/src/hooks.server.ts)
+    # VITE_API_BASE_URL=/api/v1 is the only supported build-time config.
+    # Runtime topology uses INTERNAL_API_URL on the web container.
 
 permissions:
   contents: read
   packages: write
 
+env:
+  PLATFORMS: linux/amd64,linux/arm64
+
 jobs:
-  api:
-    name: Build & Push correlcore-api
+  build:
+    name: Build & Push ${{ matrix.image }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: correlcore-api
+            context: backend
+            dockerfile: backend/Dockerfile
+            cache_scope: api
+          - image: correlcore-web
+            context: .
+            dockerfile: apps/web/Dockerfile
+            cache_scope: web
+
     steps:
       - uses: actions/checkout@v4
 
@@ -39,11 +60,41 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Resolve image targets
+        id: targets
+        shell: bash
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          owner="${{ github.repository_owner }}"
+          name="${{ matrix.image }}"
+          {
+            echo "images<<EOF"
+            echo "ghcr.io/${owner}/${name}"
+            if [[ -n "${DOCKERHUB_USERNAME}" ]]; then
+              echo "docker.io/${DOCKERHUB_USERNAME}/${name}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build metadata (api)
+        if: matrix.image == 'correlcore-api'
+        id: build_meta
+        shell: bash
+        run: echo "build_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/correlcore-api
+          images: ${{ steps.targets.outputs.images }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -51,66 +102,36 @@ jobs:
             type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build metadata
-        id: build_meta
-        shell: bash
-        run: echo "build_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
-
-      - name: Build & push
+      - name: Build & push api
+        if: matrix.image == 'correlcore-api'
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ env.PLATFORMS }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,scope=api,mode=max
+          cache-from: type=gha,scope=${{ matrix.cache_scope }}
+          cache-to: type=gha,scope=${{ matrix.cache_scope }},mode=max
           provenance: false
           build-args: |
             GIT_COMMIT=${{ github.sha }}
             GIT_BRANCH=${{ github.ref_name }}
             BUILD_TIME=${{ steps.build_meta.outputs.build_time }}
 
-  web:
-    name: Build & Push correlcore-web
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/correlcore-web
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=sha-,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build & push
+      - name: Build & push web
+        if: matrix.image == 'correlcore-web'
         uses: docker/build-push-action@v6
         with:
-          # Build context = Repo-Root (pnpm workspace braucht Lockfile)
-          context: .
-          file: ./apps/web/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ env.PLATFORMS }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,scope=web,mode=max
+          cache-from: type=gha,scope=${{ matrix.cache_scope }}
+          cache-to: type=gha,scope=${{ matrix.cache_scope }},mode=max
           provenance: false
           build-args: |
             VITE_API_BASE_URL=/api/v1

@@ -8,6 +8,7 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml).
 
 **Related:** [`BETA_CHECKLIST.md`](BETA_CHECKLIST.md) · [`../frontend/USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) ·
+[`CONTAINER_IMAGES.md`](CONTAINER_IMAGES.md) ·
 [`M10_COMPOSE_UPGRADE.md`](M10_COMPOSE_UPGRADE.md) ·
 [`../adr/0005-verschluesselung-at-rest.md`](../adr/0005-verschluesselung-at-rest.md)
 
@@ -394,8 +395,11 @@ restic restore latest --target /tmp/restic-restore --path /var/backups/correlcor
 Pin images for reproducible deploys:
 
 ```env
-IMAGE_TAG=v0.3.0   # or sha-<short> from GHCR
+IMAGE_REGISTRY=ghcr.io/sturmi77   # or docker.io/<username> for Docker Hub
+IMAGE_TAG=v1.0.0                  # or sha-<short> from GHCR / Docker Hub
 ```
+
+See [`CONTAINER_IMAGES.md`](CONTAINER_IMAGES.md) for registry and tag details.
 
 ```bash
 docker compose pull
