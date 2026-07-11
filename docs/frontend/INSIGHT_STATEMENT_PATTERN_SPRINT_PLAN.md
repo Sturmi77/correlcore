@@ -12,11 +12,11 @@ solo pass.
 
 ## Already landed (Sprint 0, retroactive)
 
-| PR                                                              | Title                                                | Status     |
-| ----------------------------------------------------------------- | ----------------------------------------------------- | ---------- |
-| [#341](https://github.com/Sturmi77/correlcore/pull/341) | Remove duplicate insight display in `HomeDailyBrief`  | **Merged** |
-| [#342](https://github.com/Sturmi77/correlcore/pull/342) | Remove synthetic sparkline from expanded `InsightCard` | **Merged** |
-| [#343](https://github.com/Sturmi77/correlcore/pull/343) | Document all remaining proposals in `INSIGHT_STATEMENT_PATTERN.md` | Open |
+| PR                                                      | Title                                                              | Status     |
+| ------------------------------------------------------- | ------------------------------------------------------------------ | ---------- |
+| [#341](https://github.com/Sturmi77/correlcore/pull/341) | Remove duplicate insight display in `HomeDailyBrief`               | **Merged** |
+| [#342](https://github.com/Sturmi77/correlcore/pull/342) | Remove synthetic sparkline from expanded `InsightCard`             | **Merged** |
+| [#343](https://github.com/Sturmi77/correlcore/pull/343) | Document all remaining proposals in `INSIGHT_STATEMENT_PATTERN.md` | Open       |
 
 These removed two sources of misleading content (duplicated statement,
 fabricated trend line) without touching layout — a safe base for the
@@ -24,17 +24,17 @@ hierarchy work below.
 
 ## Overview
 
-| ID     | Sprint | Priority | Effort | Title                                                          |
-| ------ | ------ | -------- | ------ | ---------------------------------------------------------------- |
-| ISP-1  | 1      | High     | Medium | `InsightCard`: statement becomes Level 0, `buildTitle()` becomes a caption |
-| ISP-2  | 1      | High     | Low    | `HomeDailyBrief`: swap title/statement visual weight              |
-| ISP-3  | 1      | Medium   | Low    | `InsightFeed`: pass `featured` to the top-ranked insight          |
-| ISP-4  | 2      | Medium   | Medium | Consolidate 6 evidence components into one evidence row          |
-| ISP-5  | 3      | Low      | Low    | Metric-color identity (accent by `insight.metric`)                |
-| ISP-6  | 3      | Low      | Low    | Use `--text-xl` for the featured statement                        |
-| ISP-7  | 3      | Low      | Medium | Purposeful motion (reveal animation, `prefers-reduced-motion`-aware) |
-| ISP-8  | 3      | Low      | Low    | Card-elevation rule (interactive vs. static surfaces)              |
-| ISP-9  | 3      | Low      | Medium | Icon-size scale tokens (`--icon-sm/-md/-lg`)                      |
+| ID    | Sprint | Priority | Effort | Title                                                                      |
+| ----- | ------ | -------- | ------ | -------------------------------------------------------------------------- |
+| ISP-1 | 1      | High     | Medium | `InsightCard`: statement becomes Level 0, `buildTitle()` becomes a caption |
+| ISP-2 | 1      | High     | Low    | `HomeDailyBrief`: swap title/statement visual weight                       |
+| ISP-3 | 1      | Medium   | Low    | `InsightFeed`: pass `featured` to the top-ranked insight                   |
+| ISP-4 | 2      | Medium   | Medium | Consolidate 6 evidence components into one evidence row                    |
+| ISP-5 | 3      | Low      | Low    | Metric-color identity (accent by `insight.metric`)                         |
+| ISP-6 | 3      | Low      | Low    | Use `--text-xl` for the featured statement                                 |
+| ISP-7 | 3      | Low      | Medium | Purposeful motion (reveal animation, `prefers-reduced-motion`-aware)       |
+| ISP-8 | 3      | Low      | Low    | Card-elevation rule (interactive vs. static surfaces)                      |
+| ISP-9 | 3      | Low      | Medium | Icon-size scale tokens (`--icon-sm/-md/-lg`)                               |
 
 **Out of scope for this plan:** replacing the removed sparkline with a
 real historical-data chart (needs a backend endpoint decision, separate
@@ -52,12 +52,12 @@ flowchart TD
   S1 --> S3[Sprint 3 — Visual refresh]
 ```
 
-| Dependency  | Reason                                                                                     |
-| ----------- | -------------------------------------------------------------------------------------------- |
-| S1 → ISP-4  | The evidence row replaces markup inside `InsightCard`'s header/meta area — needs the new card shape from ISP-1 first, or the two changes will conflict in the same region. |
-| S1 → ISP-6  | `text-xl` targets the featured statement — that text has to already be the primary element (ISP-1) before its size matters. |
-| ISP-3 ⊥ S1  | Independent of the hierarchy swap — could ship in Sprint 1 as a quick win alongside ISP-1/ISP-2, or standalone earlier if useful as a smaller first PR. |
-| ISP-5/7/8/9 ⊥ each other | No cross-dependencies — can be split across separate small PRs in any order within Sprint 3. |
+| Dependency               | Reason                                                                                                                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1 → ISP-4               | The evidence row replaces markup inside `InsightCard`'s header/meta area — needs the new card shape from ISP-1 first, or the two changes will conflict in the same region. |
+| S1 → ISP-6               | `text-xl` targets the featured statement — that text has to already be the primary element (ISP-1) before its size matters.                                                |
+| ISP-3 ⊥ S1               | Independent of the hierarchy swap — could ship in Sprint 1 as a quick win alongside ISP-1/ISP-2, or standalone earlier if useful as a smaller first PR.                    |
+| ISP-5/7/8/9 ⊥ each other | No cross-dependencies — can be split across separate small PRs in any order within Sprint 3.                                                                               |
 
 ## Sprint 1 — Hierarchy (the core fix)
 
