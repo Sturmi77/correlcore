@@ -8,10 +8,10 @@
   export let insights: InsightResponse[] = [];
   export let weekdayInsight: InsightResponse | null = null;
 
-  $: cells = buildWeekdayOverviewCells(
-    weekdayInsight ? [weekdayInsight, ...insights] : insights
-  );
-  $: knownMood = cells.map((cell) => cell.moodAvg).filter((value): value is number => value !== null);
+  $: cells = buildWeekdayOverviewCells(weekdayInsight ? [weekdayInsight, ...insights] : insights);
+  $: knownMood = cells
+    .map((cell) => cell.moodAvg)
+    .filter((value): value is number => value !== null);
   $: maxMood = Math.max(5, ...(knownMood.length ? knownMood : [5]));
   $: minMood = knownMood.length ? Math.min(...knownMood) : null;
   $: showOverview = hasWeekdayOverviewContent(cells);

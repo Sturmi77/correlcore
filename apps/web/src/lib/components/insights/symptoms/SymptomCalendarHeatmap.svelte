@@ -73,7 +73,8 @@
             on:click={() => dispatch('selectDate', { date: cell.date! })}
           ></button>
         {:else}
-          <span class="symptom-calendar__cell symptom-calendar__cell--pad" role="presentation"></span>
+          <span class="symptom-calendar__cell symptom-calendar__cell--pad" role="presentation"
+          ></span>
         {/if}
       {/each}
     </div>

@@ -42,7 +42,10 @@
   </div>
 
   {#if showCompareFilters}
-    <div class="trends-toolbar__row trends-toolbar__row--filters" data-testid="trends-filters-toolbar">
+    <div
+      class="trends-toolbar__row trends-toolbar__row--filters"
+      data-testid="trends-filters-toolbar"
+    >
       <slot name="compare-filters" />
     </div>
   {/if}

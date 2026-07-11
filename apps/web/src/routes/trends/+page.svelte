@@ -340,7 +340,7 @@
     <TrendsAnalysisToolbar
       analysisRange={$analysisRange}
       analysisRangeOptions={rangeControlOptions}
-      activeTab={activeTab}
+      {activeTab}
       tabOptions={trendTabOptions}
       showCompareFilters={activeTab === 'compare'}
       on:rangeChange={(event) => {

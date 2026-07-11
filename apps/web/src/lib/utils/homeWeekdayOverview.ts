@@ -82,7 +82,10 @@ export function buildWeekdayOverviewCells(
   const weekdayInsight = insights.find((insight) => insight.insight_type === 'weekday_pattern');
   const moodAvgs = numericPayload(weekdayInsight?.payload?.weekday_mood_avgs);
 
-  const findingByDay = new Map<number, { label: string; type: WeekdayOverviewCell['findingType'] }>();
+  const findingByDay = new Map<
+    number,
+    { label: string; type: WeekdayOverviewCell['findingType'] }
+  >();
 
   for (const insight of insights) {
     if (insight.insight_type === 'weekday_pattern') continue;

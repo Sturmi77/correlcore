@@ -316,7 +316,12 @@
           />
 
           {#if enableCursor}
-            <TimelineCursorOverlay {axisDates} axisLayout={plotLayout} height={height - paddingBottom} top={0} />
+            <TimelineCursorOverlay
+              {axisDates}
+              axisLayout={plotLayout}
+              height={height - paddingBottom}
+              top={0}
+            />
           {/if}
         </svg>
       </div>

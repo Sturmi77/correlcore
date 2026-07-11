@@ -42,7 +42,7 @@ export function pruneHeatmapAxes<T extends HeatmapPrunableRow>(
   return { rows: activeRows, dates: activeDates };
 }
 
-  export function pruneCooccurrenceAxisIds(
+export function pruneCooccurrenceAxisIds(
   ids: readonly string[],
   profiles: Map<string, number[]>,
   minTotal = 1

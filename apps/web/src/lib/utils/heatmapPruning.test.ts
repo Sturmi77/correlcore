@@ -8,8 +8,20 @@ import {
 
 describe('heatmapPruning', () => {
   const rows = [
-    { id: 'a', days: [{ date: '2026-07-01', count: 2 }, { date: '2026-07-03', count: 0 }] },
-    { id: 'b', days: [{ date: '2026-07-01', count: 0 }, { date: '2026-07-03', count: 0 }] },
+    {
+      id: 'a',
+      days: [
+        { date: '2026-07-01', count: 2 },
+        { date: '2026-07-03', count: 0 },
+      ],
+    },
+    {
+      id: 'b',
+      days: [
+        { date: '2026-07-01', count: 0 },
+        { date: '2026-07-03', count: 0 },
+      ],
+    },
   ];
   const dates = ['2026-07-01', '2026-07-02', '2026-07-03'];
   const valueFor = (row: (typeof rows)[number], date: string) =>

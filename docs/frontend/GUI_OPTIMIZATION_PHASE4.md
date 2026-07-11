@@ -10,14 +10,14 @@ Phase 4 targets **mobile correctness** and **interpretability** for chart-heavy 
 
 ## Issue index (O-57 – O-62)
 
-| ID   | Sprint | Impact   | Effort | Status | Title                                                         |
-| ---- | ------ | -------- | ------ | ------ | ------------------------------------------------------------- |
-| O-57 | P4-D   | High     | Low    | Open   | Home: single primary CTA when today has no entry              |
-| O-58 | P4-D   | High     | Medium | Open   | Home: weekday overview with per-day findings (7 columns)      |
-| O-59 | P4-B   | Medium   | Medium | Open   | Heatmaps: hide empty rows/columns in selected range (mobile)  |
-| O-60 | P4-C   | High     | Medium | Open   | Trends: fixed Y-axis / legend on horizontal scroll            |
-| O-61 | P4-C   | Medium   | Medium | Open   | Trends: floating toolbar like Insights (incl. mobile)         |
-| O-62 | P4-A   | Critical | Medium | Open   | Insights: Symptom calendar/progression viewport overflow fix  |
+| ID   | Sprint | Impact   | Effort | Status | Title                                                        |
+| ---- | ------ | -------- | ------ | ------ | ------------------------------------------------------------ |
+| O-57 | P4-D   | High     | Low    | Open   | Home: single primary CTA when today has no entry             |
+| O-58 | P4-D   | High     | Medium | Open   | Home: weekday overview with per-day findings (7 columns)     |
+| O-59 | P4-B   | Medium   | Medium | Open   | Heatmaps: hide empty rows/columns in selected range (mobile) |
+| O-60 | P4-C   | High     | Medium | Open   | Trends: fixed Y-axis / legend on horizontal scroll           |
+| O-61 | P4-C   | Medium   | Medium | Open   | Trends: floating toolbar like Insights (incl. mobile)        |
+| O-62 | P4-A   | Critical | Medium | Open   | Insights: Symptom calendar/progression viewport overflow fix |
 
 O-50 (Insights responsive axis) is satisfied as part of P4-A (O-62).
 
