@@ -145,34 +145,12 @@
     return 'insights.weekday_confounded_note';
   }
 
-  const SVG_W = 280;
-  const SVG_H = 72;
-  const PAD = 10;
-
-  function sparkPoints(baseline: number, r: number, n: number): string {
-    const pts: [number, number][] = [];
-    const steps = Math.min(n, 12);
-    for (let i = 0; i < steps; i++) {
-      const t = i / Math.max(steps - 1, 1);
-      const x = PAD + t * (SVG_W - PAD * 2);
-      const noise = Math.sin(i * 2.1 + baseline * 10) * 0.18;
-      const y_norm = Math.min(1, Math.max(0, baseline + noise + r * t * 0.25));
-      const y = PAD + (1 - y_norm) * (SVG_H - PAD * 2);
-      pts.push([x, y]);
-    }
-    return pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
-  }
-
   $: isConfounded = insight ? isCalendarContextConfounded(insight) : false;
   $: primaryConfounder = insight ? primaryInsightConfounder(insight) : null;
   $: isContextInsight = insight ? isCalendarContextInsight(insight) : false;
   $: title = insight ? buildTitle(insight) : '';
   $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '→';
   $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
-  $: seriesA = insight ? sparkPoints(0.6, insight.effect_size ?? 0, insight.sample_n ?? 10) : '';
-  $: seriesB = insight
-    ? sparkPoints(0.45, -(insight.effect_size ?? 0) * 0.6, insight.sample_n ?? 10)
-    : '';
   $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
   $: isInactiveTag =
     insight?.subject_type === 'tag' &&
@@ -324,57 +302,6 @@
           loading={false}
           showRawPercent
         />
-
-        <div
-          class="insight-card__chart"
-          data-testid="insight-card-chart"
-          role="img"
-          aria-label={$_('insights.card.chart_aria', { values: { title } })}
-        >
-          <svg
-            viewBox="0 0 {SVG_W} {SVG_H}"
-            width={SVG_W}
-            height={SVG_H}
-            aria-hidden="true"
-            class="insight-card__sparkline"
-          >
-            {#each [0.25, 0.5, 0.75] as frac}
-              <line
-                x1={PAD}
-                y1={PAD + (1 - frac) * (SVG_H - PAD * 2)}
-                x2={SVG_W - PAD}
-                y2={PAD + (1 - frac) * (SVG_H - PAD * 2)}
-                stroke="var(--color-border)"
-                stroke-width="0.5"
-              />
-            {/each}
-            <polyline
-              points={seriesA}
-              fill="none"
-              stroke="var(--color-primary)"
-              stroke-width="1.5"
-              stroke-linejoin="round"
-              stroke-linecap="round"
-            />
-            <polyline
-              points={seriesB}
-              fill="none"
-              stroke="var(--color-warning)"
-              stroke-width="1.5"
-              stroke-linejoin="round"
-              stroke-linecap="round"
-              stroke-dasharray="4 2"
-            />
-          </svg>
-          <div class="insight-card__chart-legend">
-            <span class="insight-card__legend-dot insight-card__legend-dot--primary"></span>
-            <span class="insight-card__legend-label">{insight.metric}</span>
-            {#if insight.subject_label}
-              <span class="insight-card__legend-dot insight-card__legend-dot--secondary"></span>
-              <span class="insight-card__legend-label">{insight.subject_label}</span>
-            {/if}
-          </div>
-        </div>
 
         <dl class="insight-card__meta-grid" data-testid="insight-card-tech-meta">
           <div class="insight-card__meta-row">
@@ -568,41 +495,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-  .insight-card__chart {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2, 0.5rem);
-    background: var(--color-surface-2);
-    border-radius: var(--radius-md, 0.5rem);
-    padding: var(--space-3, 0.75rem);
-  }
-  .insight-card__sparkline {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  .insight-card__chart-legend {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2, 0.5rem);
-  }
-  .insight-card__legend-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .insight-card__legend-dot--primary {
-    background: var(--color-primary);
-  }
-  .insight-card__legend-dot--secondary {
-    background: var(--color-warning);
-  }
-  .insight-card__legend-label {
-    font-size: var(--text-xs, 0.72rem);
-    color: var(--color-text-muted);
   }
   .insight-card__meta-grid {
     display: grid;
