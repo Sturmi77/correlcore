@@ -82,8 +82,7 @@
         on:click={() => (disclaimerOpen = true)}
       >
         <svg
-          width="18"
-          height="18"
+          style="width: var(--icon-md); height: var(--icon-md)"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

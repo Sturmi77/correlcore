@@ -14,6 +14,13 @@
   --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
   --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
 
+  /* Icon scale (ISP-9) — values are the dominant size in each real cluster
+     found across lucide-svelte size={} usage (14/16 -> sm, 18/20/22 -> md),
+     not arbitrary round numbers. Brand-mark sizes (CorrelCoreLogo on the
+     landing page) are excluded — that's imagery, not a UI icon. */
+  --icon-sm: 0.875rem;
+  --icon-md: 1.125rem;
+
   /* Spacing — 4px system */
   --space-1: 0.25rem;
   --space-2: 0.5rem;

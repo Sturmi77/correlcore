@@ -5,6 +5,7 @@
   import type { InsightMaturity, InsightMaturityPhase } from '$lib/api/insights';
   import IconButton from '$lib/components/common/IconButton.svelte';
   import { maturityMilestoneKey } from '$lib/utils/insightMaturityMilestones';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import InsightJourneyExplainer from './InsightJourneyExplainer.svelte';
 
   export let maturity: InsightMaturity;
@@ -92,7 +93,7 @@
           data-testid="insight-stage-help"
           on:click={() => (explainerOpen = true)}
         >
-          <HelpCircle size={18} aria-hidden="true" />
+          <HelpCircle size={ICON_SIZE_MD} aria-hidden="true" />
         </IconButton>
       </div>
     </div>

@@ -96,6 +96,20 @@ describe('InsightCard', () => {
     expect(dir.textContent?.trim()).toBe('↘');
   });
 
+  it('accents the card by the metric via --insight-accent (ISP-5)', () => {
+    render(InsightCard, { props: { insight: { ...INSIGHT, metric: 'mood' } } });
+    expect(screen.getByTestId('insight-card').getAttribute('style')).toContain(
+      '--insight-accent: var(--color-metric-mood)'
+    );
+  });
+
+  it('falls back to the generic primary accent for non-core-metric insights', () => {
+    render(InsightCard, { props: { insight: { ...INSIGHT, metric: 'sleep_quality' } } });
+    expect(screen.getByTestId('insight-card').getAttribute('style')).toContain(
+      '--insight-accent: var(--color-primary)'
+    );
+  });
+
   it('renders title as "metric -> subject" format', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     expect(screen.getByTestId('insight-card-title').textContent).toContain('mood → sport');
