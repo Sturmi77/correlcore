@@ -8,7 +8,6 @@
     maturityProgressMessage,
     maturityProgressPercent,
   } from '$lib/utils/insightMaturityProgress';
-  import { rankInsights } from '$lib/utils/insightRanking';
   import {
     buildWorkContextDisplayItems,
     workContextMoodBarWidth,
@@ -24,8 +23,6 @@
     return value === null ? $_('home.brief.none') : value.toFixed(1);
   }
 
-  $: rankedInsights = latestInsight ? rankInsights([latestInsight]) : [];
-  $: topInsight = rankedInsights[0] ?? null;
   $: phaseLabel = maturity ? $_(`maturity.${maturity.phase}.label`) : null;
   $: milestoneProgress = maturity ? maturityProgressMessage(maturity, $_) : null;
   $: milestonePercent = maturity ? maturityProgressPercent(maturity) : 0;
@@ -35,8 +32,6 @@
   );
   $: insightBridgePreview = latestInsight ? topInsightLabel(latestInsight) : null;
   $: trendsBridgePreview = insightBridgePreview;
-  $: topInsightConfidence =
-    topInsight?.confidence != null ? Math.round(topInsight.confidence * 100) : null;
   $: visibleWorkContexts = buildWorkContextDisplayItems(workContextSummary);
   $: workContextMoodValues = visibleWorkContexts
     .map((item) => item.mood_avg)
@@ -85,22 +80,6 @@
       {/if}
     {/if}
   </div>
-
-  <section class="daily-brief__top-insight" data-testid="home-brief-top-insight" aria-live="polite">
-    <p class="daily-brief__top-insight-label">{$_('home.brief.top_insight')}</p>
-    {#if topInsight}
-      <p class="daily-brief__top-insight-statement">
-        {topInsight.statement ?? topInsight.subject_label ?? topInsight.metric}
-      </p>
-      {#if topInsightConfidence != null}
-        <p class="daily-brief__top-insight-confidence">
-          {$_('home.brief.top_insight_confidence', { values: { value: topInsightConfidence } })}
-        </p>
-      {/if}
-    {:else}
-      <p class="daily-brief__top-insight-fallback">{$_('home.brief.top_insight_fallback')}</p>
-    {/if}
-  </section>
 
   {#if visibleWorkContexts.length}
     <section class="daily-brief__work-context" aria-label={$_('home.brief.work_context_heading')}>
@@ -173,8 +152,7 @@
   }
 
   .daily-brief__header p,
-  .daily-brief__lead p,
-  .daily-brief__top-insight p {
+  .daily-brief__lead p {
     margin: 0;
   }
 
@@ -223,36 +201,6 @@
     height: 100%;
     border-radius: inherit;
     background: var(--color-primary);
-  }
-
-  .daily-brief__top-insight {
-    display: grid;
-    gap: var(--space-2);
-    padding: var(--space-3);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-  }
-
-  .daily-brief__top-insight-label {
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .daily-brief__top-insight-statement {
-    font-size: var(--text-sm);
-    line-height: 1.55;
-    font-weight: 600;
-  }
-
-  .daily-brief__top-insight-confidence,
-  .daily-brief__top-insight-fallback {
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-    line-height: 1.45;
   }
 
   .daily-brief__work-context {
