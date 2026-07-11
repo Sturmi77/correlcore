@@ -1431,7 +1431,7 @@ Jeder Milestone darf erst auf `done` gesetzt werden, wenn beide Audits durchgef�
 - [ ] **DSGVO-Pfad**: Neue Felder im Erasure-Pfad (`DELETE /user/me`)
 - [ ] **Anti-Enumeration**: Neue öffentliche Endpoints liefern generische Antworten
 - [ ] **Headers / Cookies**: Bei neuen Cookies HttpOnly + Secure + `SameSite=strict`
-- [ ] **Dependency-Scan**: `pip-audit` und `pnpm audit --prod` ohne `high`/`critical`-Findings
+- [x] **Dependency-Scan**: `pip-audit` und `pnpm audit --prod` ohne `high`/`critical`-Findings (CI: [`ci-security.yml`](../.github/workflows/ci-security.yml))
 - [ ] **Secrets-Scan**: Repo gegen `.env`-Leaks geprüft; neue Env-Vars in `.env.example`
 
 ---

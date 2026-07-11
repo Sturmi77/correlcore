@@ -1,12 +1,14 @@
 # CorrelCore — Beta Tester Checklist
 
-Last updated: 2026-07-11 (M9 Sprint 3)
+Last updated: 2026-07-11 (M9 Sprint 5)
 
 Use this checklist when onboarding **5–10 external beta testers** (M9 Sprint 5).
 Instance operators share the checklist link together with the instance URL and test account
 credentials.
 
+**Operator onboarding:** [`BETA_ONBOARDING.md`](BETA_ONBOARDING.md)  
 **Operator setup:** [`INSTALL.md`](INSTALL.md)  
+**Feedback triage:** [`BETA_FEEDBACK_TRIAGE.md`](BETA_FEEDBACK_TRIAGE.md)  
 **User workflows:** [`../frontend/USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md)  
 **Privacy policy:** [`../PRIVACY.md`](../PRIVACY.md)
 
@@ -51,6 +53,9 @@ Detailed step references: [`USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) (
 ## Feedback template
 
 Please send feedback via **GitHub issue** (preferred) or email to the operator.
+
+Template: [`.github/ISSUE_TEMPLATE/beta_feedback.md`](../../.github/ISSUE_TEMPLATE/beta_feedback.md)  
+Triage guide: [`BETA_FEEDBACK_TRIAGE.md`](BETA_FEEDBACK_TRIAGE.md)
 
 ```markdown
 **Instance URL:** …

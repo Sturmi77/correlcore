@@ -4,8 +4,8 @@ Last updated: 2026-07-11
 
 Tracking document for [`docs/M9_SPRINT_PLAN.md`](M9_SPRINT_PLAN.md).
 
-**Milestone completeness:** Sprint 4 security & CI complete on `cursor/m9-sprint-4-security-ci-2529`.
-Sprints 5–6 pending.
+**Milestone completeness:** Sprint 5 beta program complete on `cursor/m9-sprint-5-beta-program-2529`.
+Sprint 6 pending.
 
 **Prerequisite:** M5.1 UX polish complete (2026-07-10) —
 [`docs/M5_1_SPRINT_STATUS.md`](M5_1_SPRINT_STATUS.md).
@@ -19,7 +19,7 @@ Sprints 5–6 pending.
 | 2      | Observability             | Done    |
 | 3      | Backup & install          | Done    |
 | 4      | Security & CI             | Done    |
-| 5      | Beta program              | Pending |
+| 5      | Beta program              | Done    |
 | 6      | Milestone closeout (M9-C) | Pending |
 
 ## Acceptance-criteria audit matrix
@@ -46,9 +46,9 @@ acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 | `pip-audit` / `pnpm audit` CI gate | 4 | [`.github/workflows/ci-security.yml`](../.github/workflows/ci-security.yml) | `dependency-audit` job | ecdsa ignore documented |
 | Style-contract lint | 4 | [`scripts/check-style-contract.mjs`](../scripts/check-style-contract.mjs) | CI `style-contract` job in `ci-web.yml` | — |
 | LUKS + restic in Install-Guide | 3 | [`selfhost/INSTALL.md`](selfhost/INSTALL.md) §LUKS, §restic | ADR-0005 aligned | — |
-| 5–10 beta testers + feedback | 5 | — | — | Program not started |
-| Symptom analytics beta review | 5 | — | [`features/symptom-analytics.md`](features/symptom-analytics.md) §M9 | Review pending |
-| Notes-in-analysis threshold review | 5 | Worker thresholds in config | [`features/notes-in-analysis.md`](features/notes-in-analysis.md) | Config review only; per-entry opt-out → M10 |
+| 5–10 beta testers + feedback | 5 | [`selfhost/BETA_ONBOARDING.md`](selfhost/BETA_ONBOARDING.md), [`BETA_FEEDBACK_TRIAGE.md`](selfhost/BETA_FEEDBACK_TRIAGE.md) | [`.github/ISSUE_TEMPLATE/beta_feedback.md`](../.github/ISSUE_TEMPLATE/beta_feedback.md) | Operator runs cohort; roster not in repo |
+| Symptom analytics beta review | 5 | — | [`quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md`](quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md) | External round 1 pending |
+| Notes-in-analysis threshold review | 5 | Worker thresholds in config | [`quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md`](quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md) | Per-entry opt-out → M10 |
 
 ## GitHub issue mapping
 
@@ -113,14 +113,23 @@ testers, monitoring, GDPR self-service. Close #29 in Sprint 6 when all slices ex
 - [x] `docs/quality/M9_PENTEST.md` — internal assessment PASS; external scope documented.
 - [x] `docs/legal/AV_VERTRAG_HETZNER_TEMPLATE.md` — Hetzner AVV operator checklist.
 
-## Next sprint (5 — Beta program)
+## Sprint 5 — Completed checklist
+
+- [x] `docs/selfhost/BETA_ONBOARDING.md` — instance URL, test accounts, email template, roster.
+- [x] `docs/selfhost/BETA_FEEDBACK_TRIAGE.md` — P0/P1/P2 triage workflow.
+- [x] `.github/ISSUE_TEMPLATE/beta_feedback.md` — structured feedback template.
+- [x] `docs/quality/M9_SYMPTOM_ANALYTICS_BETA_REVIEW.md` — internal review + intensity decision.
+- [x] `docs/quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md` — worker threshold review (defaults kept).
+- [x] Cross-links: `BETA_CHECKLIST.md`, `symptom-analytics.md`, `notes-in-analysis.md`.
+
+## Next sprint (6 — Milestone closeout M9-C)
 
 Priority gaps from audit:
 
-1. Beta onboarding doc (instance URL, test accounts, feedback template).
-2. Symptom analytics usability review.
-3. Notes-in-analysis worker threshold review.
+1. Create `docs/quality/M9_QUALITY_GATE.md` and `M9_VISUAL_QA.md`.
+2. Update `CHANGELOG.md`, DESIGN_DOCUMENT exit checkboxes.
+3. Close GitHub #29 when all slices exit.
 
 ## API usage note (unchanged)
 
-No new external APIs in Sprint 4 — CI gates, dependency bumps, and documentation only.
+No new external APIs in Sprint 5 — documentation and GitHub templates only.

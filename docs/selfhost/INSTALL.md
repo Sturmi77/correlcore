@@ -335,7 +335,7 @@ The `migrate` service runs `alembic upgrade head` before API start. See
 End-user workflows (registration, daily entry, export, privacy settings) are catalogued in
 [`docs/frontend/USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md).
 
-Beta testers should follow [`BETA_CHECKLIST.md`](BETA_CHECKLIST.md).
+Beta operators: [`BETA_ONBOARDING.md`](BETA_ONBOARDING.md) · Testers: [`BETA_CHECKLIST.md`](BETA_CHECKLIST.md)
 
 ---
 
