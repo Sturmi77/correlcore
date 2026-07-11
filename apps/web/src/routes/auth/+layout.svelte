@@ -52,7 +52,8 @@
     <footer class="auth-footer">
       <nav class="auth-legal" aria-label={$_('landing.footer.nav_label')}>
         <a href="/privacy" data-testid="auth-footer-privacy">{$_('landing.footer.privacy')}</a>
-        <a href="/impressum" data-testid="auth-footer-impressum">{$_('landing.footer.impressum')}</a>
+        <a href="/impressum" data-testid="auth-footer-impressum">{$_('landing.footer.impressum')}</a
+        >
       </nav>
       <p class="auth-disclaimer">{$_('disclaimer.medical')}</p>
     </footer>

@@ -37,7 +37,7 @@ describe('M10 marketing landing and legal pages', () => {
   });
 
   it('provides impressum sections for AT/DE legal notice', () => {
-    expect(impressumSource).toContain("data-testid={`impressum-section-${key}`}");
+    expect(impressumSource).toContain('data-testid={`impressum-section-${key}`}');
     expect(impressumSource).toContain("'operator'");
     expect(impressumSource).toContain("'dispute'");
   });

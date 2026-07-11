@@ -10,12 +10,12 @@ links are reachable from landing and auth footer (DSGVO checkpoint M10).
 
 ## Scope
 
-| In scope | Out of scope |
-| -------- | ------------ |
-| Landing page for anonymous `/` | Operator-specific imprint customization UI |
-| `/impressum` route (AT/DE template) | Landing page visual QA sign-off (Sprint 6) |
-| `/privacy` public access | Custom domain docs |
-| Legal footer on landing, privacy, impressum, auth | |
+| In scope                                          | Out of scope                               |
+| ------------------------------------------------- | ------------------------------------------ |
+| Landing page for anonymous `/`                    | Operator-specific imprint customization UI |
+| `/impressum` route (AT/DE template)               | Landing page visual QA sign-off (Sprint 6) |
+| `/privacy` public access                          | Custom domain docs                         |
+| Legal footer on landing, privacy, impressum, auth |                                            |
 
 ## Static checks
 
@@ -40,10 +40,10 @@ this obligation.
 
 ## Sign-off
 
-| Check | Status | Date |
-| ----- | ------ | ---- |
-| Landing component | PASS | 2026-07-11 |
-| Impressum route | PASS | 2026-07-11 |
-| Public privacy/impressum | PASS | 2026-07-11 |
-| Auth footer links | PASS | 2026-07-11 |
-| Rendered visual QA | Pending | Sprint 6 |
+| Check                    | Status  | Date       |
+| ------------------------ | ------- | ---------- |
+| Landing component        | PASS    | 2026-07-11 |
+| Impressum route          | PASS    | 2026-07-11 |
+| Public privacy/impressum | PASS    | 2026-07-11 |
+| Auth footer links        | PASS    | 2026-07-11 |
+| Rendered visual QA       | Pending | Sprint 6   |

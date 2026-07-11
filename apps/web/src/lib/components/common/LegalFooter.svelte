@@ -7,7 +7,12 @@
   <nav class="legal-footer__nav" aria-label={$_('landing.footer.nav_label')}>
     <a href="/privacy" data-testid="legal-footer-privacy">{$_('landing.footer.privacy')}</a>
     <a href="/impressum" data-testid="legal-footer-impressum">{$_('landing.footer.impressum')}</a>
-    <a href={DOCS_SITE_URL} target="_blank" rel="noopener noreferrer" data-testid="legal-footer-docs">
+    <a
+      href={DOCS_SITE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid="legal-footer-docs"
+    >
       {$_('landing.footer.docs')}
     </a>
     <a href={REPO_URL} target="_blank" rel="noopener noreferrer" data-testid="legal-footer-source">
