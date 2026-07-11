@@ -8,7 +8,26 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] — Public Selfhost Release — 2026-07-11
+
+First public selfhost release (**M10**). CorrelCore is a privacy-first mood and habit
+tracker with correlation insights — deployable on your own infrastructure via Docker Compose.
+
+### Release highlights
+
+- **Selfhost compose:** quickstart homelab path, production VPS (Traefik), bootstrap script, MinIO removed (photos → M13)
+- **Published images:** multi-arch (`linux/amd64`, `linux/arm64`) on GHCR and optional Docker Hub; GitHub Release workflow
+- **Documentation:** MkDocs site ([GitHub Pages](https://sturmi77.github.io/correlcore/)) with install, user guide, API overview, privacy
+- **Landing & legal:** marketing home, `/impressum`, public `/privacy`, footer links (DSGVO M10)
+- **License:** AGPL-3.0-or-later (see `LICENSE`)
+
+Since `0.6.0`, this release includes milestones **M1–M9** (daily entry through beta hardening) and **M10** release engineering. See [`docs/M10_SPRINT_PLAN.md`](docs/M10_SPRINT_PLAN.md) and per-milestone docs under `docs/`.
+
 ### Added
+
+- **M10 Sprint 5 — Version & go-public prep.** CHANGELOG `[1.0.0]` section; AGPL-3.0-or-later metadata in root, web, and backend manifests; `v1.0.0-rc.1` release candidate tag; go-public operator checklist ([`docs/selfhost/GO_PUBLIC_CHECKLIST.md`](docs/selfhost/GO_PUBLIC_CHECKLIST.md)).
 
 - **M10 Sprint 4 — Landing & legal.** Marketing landing page for anonymous users
   (replaces pre-alpha badge), `/impressum` route with AT/DE template, public
@@ -591,7 +610,6 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - Tote ADR-Pfade in `docs/DESIGN_DOCUMENT.md` korrigiert: D-008 → [ADR-0002](docs/adr/0002-capacitor-statt-twa.md) (war `0002-mobile-strategie-capacitor-vs-twa.md`), D-009 → [ADR-0003](docs/adr/0003-sync-conflict-log.md) (war `0003-sync-conflict-handling.md`); Status von D-008/D-009 auf `✅ Entschieden` aktualisiert (passend zu den existierenden Accepted-ADRs).
 - Risiko-Tabelle aktualisiert: SEC-02 (`SECRET_KEY`-Mismatch, PR #43), SW-01 (Sync-Conflict-Log, ADR-0003 + Issue #24), ZS-01 (TWA → Capacitor, ADR-0002) jeweils auf `✅ behoben`.
 - ADR-Verzeichnis-Listing in der Repo-Tree-Skizze (Abschnitt 3.6) auf den tatsächlichen Stand (0001–0007) gebracht.
-
 ---
 
 ## [0.6.0] — M0 Fundament — 2026-04-28
@@ -613,4 +631,4 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-_Nächstes Release: M1 — Core Entry (Täglicher Eintrag, Tags, Symptome, Offline-Sync)_
+_Nächstes Release: see `[Unreleased]` above. Final **v1.0.0** tag planned in M10 Sprint 6._

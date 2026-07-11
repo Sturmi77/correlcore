@@ -1,7 +1,8 @@
 {
   "name": "@correlcore/web",
-  "version": "0.0.1",
+  "version": "1.0.0-rc.1",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "prepare": "svelte-kit sync",

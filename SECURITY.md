@@ -1,39 +1,41 @@
 # Security Policy
 
-## Unterstützte Versionen
+## Supported versions
 
-| Version         | Support |
-| --------------- | ------- |
-| latest (main)   | ✅      |
-| Ältere Releases | ❌      |
+| Version | Support |
+| ------- | ------- |
+| `1.0.x` (latest / `main`) | ✅ |
+| Older releases | ❌ |
 
-## Sicherheitslücke melden
+## Report a vulnerability
 
-**Bitte keine Security-Issues öffentlich im Issue-Tracker anlegen.**
+**Please do not open public GitHub issues for security vulnerabilities.**
 
-Sicherheitslücken an: **security@correlcore.app** (oder direkt an den Maintainer)
+Report to: **security@correlcore.app** (or contact the maintainer directly)
 
-Bitte folgende Informationen angeben:
+Include:
 
-- Beschreibung der Schwachstelle
-- Betroffene Komponente (API, Frontend, Infra, Auth)
-- Schritte zur Reproduktion
-- Potenzielle Auswirkung
+- Description of the vulnerability
+- Affected component (API, frontend, infrastructure, auth)
+- Steps to reproduce
+- Potential impact
 
-Wir reagieren innerhalb von **72 Stunden** und koordinieren einen koordinierten Disclosure-Prozess.
+We respond within **72 hours** and coordinate responsible disclosure.
 
-## Datenschutz-Vorfälle
+## Datenschutz-Vorfälle / Privacy incidents
 
-Bei Datenpannen die Gesundheitsdaten betreffen gilt zusätzlich:
+For incidents involving health data (Art. 9 GDPR):
 
-- Meldepflicht an die österreichische Datenschutzbehörde (DSB) innerhalb 72h
-- Information der betroffenen Nutzer wenn hohes Risiko besteht
-- Details: `docs/DSGVO.md` Sektion 8
+- Notify the Austrian Data Protection Authority (DSB) within 72h when required
+- Inform affected users when high risk applies
+- Details: [`docs/DSGVO.md`](docs/DSGVO.md) §8
 
-## Bekannte Sicherheitsmaßnahmen
+## Security architecture
 
-Architektur-relevante Security-Entscheidungen sind dokumentiert in:
+Documented in:
 
-- `docs/ARCHITECTURE.md` Sektion 7 (Datensicherheit)
-- `docs/DSGVO.md` (Datenschutz-Schutzkonzept)
-- `docs/adr/` (Architecture Decision Records)
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §7 (Datensicherheit)
+- [`docs/DSGVO.md`](docs/DSGVO.md)
+- [`docs/adr/`](docs/adr/) (Architecture Decision Records)
+
+Go-public verification: [`docs/selfhost/GO_PUBLIC_CHECKLIST.md`](docs/selfhost/GO_PUBLIC_CHECKLIST.md)
