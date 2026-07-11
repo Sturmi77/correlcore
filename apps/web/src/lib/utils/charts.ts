@@ -115,16 +115,25 @@ export function dailyAxisChartWidth(
   );
 }
 
+export function dailyPlotXForIndex(
+  index: number,
+  layout: Pick<DailyAxisLayout, 'dayWidth' | 'dayGap'> = compareDailyAxisLayout
+): number {
+  return index * (layout.dayWidth + layout.dayGap) + layout.dayWidth / 2;
+}
+
+export function dailyPlotContentWidth(
+  dates: readonly string[],
+  layout: Pick<DailyAxisLayout, 'dayWidth' | 'dayGap' | 'rightPadding'> = compareDailyAxisLayout
+): number {
+  return dailyAxisContentWidth(dates, layout) + layout.rightPadding;
+}
+
 export function dailyAxisXForIndex(
   index: number,
   layout: Pick<DailyAxisLayout, 'labelWidth' | 'dayWidth' | 'dayGap'> = compareDailyAxisLayout
 ): number {
-  return (
-    layout.labelWidth +
-    layout.dayGap +
-    index * (layout.dayWidth + layout.dayGap) +
-    layout.dayWidth / 2
-  );
+  return layout.labelWidth + layout.dayGap + dailyPlotXForIndex(index, layout);
 }
 
 export function dailyAxisXForDate(

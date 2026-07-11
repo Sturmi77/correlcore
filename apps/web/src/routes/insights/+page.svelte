@@ -742,6 +742,7 @@
               cooccurrenceLoading={symptomCooccurrenceLoading}
               phase={insightMaturity?.phase ?? null}
               loading={loading || symptomWindowLoading}
+              pruneSparseAxes={compactInsights}
               on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
               on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
             />
@@ -757,6 +758,7 @@
               showRangeSelector={false}
               sortMode={tagCooccurrenceSortMode}
               enableClusterSort={insightMaturity?.phase === 'robust'}
+              pruneSparseAxes={compactInsights}
               on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
               on:selectPair={(event) => void openCooccurrenceHistory(event)}
             />
@@ -835,7 +837,7 @@
     gap: var(--space-4);
     padding: var(--space-4);
     min-width: 0;
-    overflow-x: clip;
+    overflow-x: auto;
   }
 
   .insights-page__more {

@@ -8,6 +8,7 @@
     cooccurrenceIntensityLevel,
     orderTagCooccurrenceMatrix,
   } from '$lib/utils/tagCooccurrenceMatrix';
+  import { pruneTagCooccurrenceMatrix } from '$lib/utils/heatmapPruning';
   import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
 
   export let data: TagCooccurrenceResponse | null = null;
@@ -17,6 +18,7 @@
   export let minPairsForDisplay = 5;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let enableClusterSort = false;
+  export let pruneSparseAxes = false;
 
   const dispatch = createEventDispatcher<{
     rangeChange: { range: TagCooccurrenceRange };
@@ -36,7 +38,10 @@
   let focusedKey: string | null = null;
 
   $: rawMatrix = data ? buildTagCooccurrenceMatrix(data.pairs) : { tags: [], counts: [] };
-  $: matrix = orderTagCooccurrenceMatrix(rawMatrix, sortMode);
+  $: orderedMatrix = orderTagCooccurrenceMatrix(rawMatrix, sortMode);
+  $: matrix = pruneSparseAxes
+    ? pruneTagCooccurrenceMatrix(orderedMatrix.tags, orderedMatrix.counts)
+    : orderedMatrix;
   $: maxCount = matrix.counts.flat().reduce((peak, count) => Math.max(peak, count), 0);
   $: hasEnoughPairs = (data?.pairs.length ?? 0) >= minPairsForDisplay;
   $: showSkeleton = loading && !data;

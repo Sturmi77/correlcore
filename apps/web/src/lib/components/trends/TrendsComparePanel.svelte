@@ -28,6 +28,7 @@
   export let showSymptoms = false;
   export let showWorkContexts = true;
   export let loading = false;
+  export let pruneSparseAxes = false;
   /**
    * Sprint 1 (ADR-0035): event markers shared across metric chart and
    * heatmap rows. Computed by the parent page from insight maturity,
@@ -282,6 +283,7 @@
       {correlationScores}
       scrollable={false}
       autoScroll={false}
+      {pruneSparseAxes}
       on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
       on:pinToggle={handlePinToggle}
     />

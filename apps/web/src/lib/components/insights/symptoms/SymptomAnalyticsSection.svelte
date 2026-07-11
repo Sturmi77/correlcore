@@ -8,10 +8,9 @@
     SymptomTagCooccurrenceResponse,
   } from '$lib/api/insights';
   import type { SymptomHeatmapResponse } from '$lib/api/stats';
-  import { onMount } from 'svelte';
-  import ComparisonHeatmap from '$lib/components/trends/ComparisonHeatmap.svelte';
-  import { buildIsoDateRange, compareDailyAxisLayout } from '$lib/utils/charts';
   import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
+  import ComparisonHeatmap from '$lib/components/trends/ComparisonHeatmap.svelte';
+  import { buildIsoDateRange } from '$lib/utils/charts';
   import {
     SYMPTOM_CALENDAR_MAX_VISIBLE,
     SYMPTOM_TREND_MAX_VISIBLE,
@@ -32,6 +31,7 @@
   export let cooccurrenceLoading = false;
   export let phase: InsightMaturityPhase | null = null;
   export let loading = false;
+  export let pruneSparseAxes = false;
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string };
@@ -41,12 +41,7 @@
   let showAllCalendars = false;
   let showAllTrends = false;
   let cooccurrenceSortMode: 'alphabetical' | 'clustered' = 'alphabetical';
-  let axisLayout = compareDailyAxisLayout;
-
-  onMount(() => {
-    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    axisLayout = compareDailyAxisLayoutFromRoot(rootPx);
-  });
+  let axisLayout = compareDailyAxisLayoutFromRoot(16);
 
   $: dates = heatmap ? buildIsoDateRange(heatmap.start_date, heatmap.end_date) : [];
   $: eligibleSymptoms = heatmap ? rankEligibleSymptoms(heatmap.symptoms) : [];
@@ -71,18 +66,21 @@
     </div>
   </header>
 
-  <ComparisonHeatmap
-    tagHeatmap={null}
-    symptomHeatmap={heatmap}
-    showTags={false}
-    showSymptoms={true}
-    {loading}
-    {dates}
-    {axisLayout}
-    headingKey="insights.symptoms.heatmap_heading"
-    emptyKey="insights.symptoms.empty"
-    on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
-  />
+  <div class="symptom-analytics__heatmap-shell">
+    <ComparisonHeatmap
+      tagHeatmap={null}
+      symptomHeatmap={heatmap}
+      showTags={false}
+      showSymptoms={true}
+      {loading}
+      {dates}
+      {axisLayout}
+      {pruneSparseAxes}
+      headingKey="insights.symptoms.heatmap_heading"
+      emptyKey="insights.symptoms.empty"
+      on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+    />
+  </div>
 
   {#if heatmap && visibleCalendars.length > 0}
     <section class="symptom-analytics__subsection" aria-labelledby="symptom-calendar-heading">
@@ -166,6 +164,7 @@
         {phase}
         sortMode={cooccurrenceSortMode}
         hideHeading={true}
+        {pruneSparseAxes}
         on:selectCell={(event) => dispatch('selectCell', event.detail)}
       />
     </section>
@@ -181,6 +180,12 @@
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     min-width: 0;
+  }
+
+  .symptom-analytics__heatmap-shell {
+    min-width: 0;
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
   }
 
   .symptom-analytics__header,

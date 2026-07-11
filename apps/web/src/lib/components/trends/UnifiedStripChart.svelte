@@ -20,8 +20,8 @@
   import type { TimeseriesPoint } from '$lib/api/stats';
   import {
     compareDailyAxisLayout,
-    dailyAxisChartWidth,
     dailyAxisXForIndex,
+    dailyPlotContentWidth,
     type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
@@ -85,7 +85,13 @@
   $: visibleMetrics = metrics.filter((m) => enabled[m.key]);
   $: hasData = points.some((point) => point.entry_count > 0);
   $: showSkeleton = loading && points.length === 0;
-  $: width = dailyAxisChartWidth(axisDates, axisLayout);
+  $: plotLayout = {
+    labelWidth: 0,
+    dayWidth: axisLayout.dayWidth,
+    dayGap: axisLayout.dayGap,
+    rightPadding: axisLayout.rightPadding,
+  };
+  $: width = dailyPlotContentWidth(axisDates, plotLayout);
   $: height =
     paddingTop +
     visibleMetrics.length * stripHeight +
@@ -113,7 +119,7 @@
       const display =
         raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
       const encoded = metric.mapper.encode(display ?? NaN);
-      const cx = dailyAxisXForIndex(index, axisLayout);
+      const cx = dailyAxisXForIndex(index, plotLayout);
       const cellW = axisLayout.dayWidth;
       return {
         date,
@@ -146,12 +152,15 @@
 
   function nearestDateForX(clientX: number): string | null {
     if (!hostEl || axisDates.length === 0) return null;
-    const rect = hostEl.getBoundingClientRect();
-    const local = ((clientX - rect.left) / rect.width) * width;
+    const gutterWidth = axisLayout.labelWidth;
+    const plotRect = hostEl.querySelector('.strip__plot')?.getBoundingClientRect();
+    const plotLeft = plotRect?.left ?? hostEl.getBoundingClientRect().left + gutterWidth;
+    const plotWidth = plotRect?.width ?? hostEl.getBoundingClientRect().width - gutterWidth;
+    const local = ((clientX - plotLeft) / plotWidth) * width;
     let bestIndex = 0;
     let bestDelta = Infinity;
     for (let i = 0; i < axisDates.length; i += 1) {
-      const x = dailyAxisXForIndex(i, axisLayout);
+      const x = dailyAxisXForIndex(i, plotLayout);
       const delta = Math.abs(x - local);
       if (delta < bestDelta) {
         bestDelta = delta;
@@ -226,7 +235,6 @@
       class="strip__interactive"
       class:strip__interactive--active={enableCursor}
       bind:this={hostEl}
-      style={`--strip-chart-width: ${width}px`}
       role="slider"
       tabindex={enableCursor ? 0 : -1}
       aria-label={$_('trends.strip.aria')}
@@ -239,74 +247,79 @@
       on:pointerleave={handlePointerLeave}
       on:keydown={handleKeydown}
     >
-      <svg
-        class="strip__svg"
-        {width}
-        {height}
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="xMinYMin meet"
-        role="img"
-        aria-hidden="true"
-      >
-        {#each rows as row (row.key)}
-          <g class="strip__row" data-metric={row.key}>
-            <text
-              class="strip__label"
-              x={axisLayout.labelWidth - 8}
-              y={row.top + stripHeight / 2}
-              text-anchor="end"
-              dominant-baseline="middle"
-            >
+      <div class="strip__chart-shell">
+        <div
+          class="strip__gutter"
+          style={`width: ${axisLayout.labelWidth}px; height: ${height}px`}
+          aria-hidden="true"
+        >
+          {#each rows as row (row.key)}
+            <span class="strip__gutter-label" style={`top: ${row.top + stripHeight / 2}px`}>
               {$_(row.label)}
-            </text>
-            <rect
-              class="strip__track"
-              x={axisLayout.labelWidth + axisLayout.dayGap}
-              y={row.top}
-              width={width - axisLayout.labelWidth - axisLayout.dayGap - axisLayout.rightPadding}
-              height={stripHeight}
-              rx="4"
-            />
-            {#each row.cells as cell (cell.date)}
+            </span>
+          {/each}
+        </div>
+        <svg
+          class="strip__svg strip__plot"
+          style={`--strip-chart-width: ${width}px`}
+          {width}
+          {height}
+          viewBox={`0 0 ${width} ${height}`}
+          preserveAspectRatio="xMinYMin meet"
+          role="img"
+          aria-hidden="true"
+        >
+          {#each rows as row (row.key)}
+            <g class="strip__row" data-metric={row.key}>
               <rect
-                class="strip__cell"
-                data-date={cell.date}
-                data-sign={cell.sign}
-                x={cell.x}
+                class="strip__track"
+                x={plotLayout.dayGap}
                 y={row.top}
-                width={cell.width}
+                width={width - plotLayout.dayGap - plotLayout.rightPadding}
                 height={stripHeight}
-                fill={cell.fill}
-                opacity={cell.opacity}
-                on:click={() => handleCellClick(cell.date)}
-                on:keydown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    handleCellClick(cell.date);
-                  }
-                }}
-                role="button"
-                tabindex="-1"
-                aria-label={cell.displayValue === null
-                  ? `${$_(row.label)} — ${cell.date}`
-                  : `${$_(row.label)} — ${cell.date}: ${cell.displayValue.toFixed(1)}`}
+                rx="4"
               />
-            {/each}
-          </g>
-        {/each}
+              {#each row.cells as cell (cell.date)}
+                <rect
+                  class="strip__cell"
+                  data-date={cell.date}
+                  data-sign={cell.sign}
+                  x={cell.x}
+                  y={row.top}
+                  width={cell.width}
+                  height={stripHeight}
+                  fill={cell.fill}
+                  opacity={cell.opacity}
+                  on:click={() => handleCellClick(cell.date)}
+                  on:keydown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleCellClick(cell.date);
+                    }
+                  }}
+                  role="button"
+                  tabindex="-1"
+                  aria-label={cell.displayValue === null
+                    ? `${$_(row.label)} — ${cell.date}`
+                    : `${$_(row.label)} — ${cell.date}: ${cell.displayValue.toFixed(1)}`}
+                />
+              {/each}
+            </g>
+          {/each}
 
-        <EventMarkerLayer
-          {markers}
-          {axisDates}
-          {axisLayout}
-          height={height - paddingBottom}
-          top={0}
-        />
+          <EventMarkerLayer
+            {markers}
+            {axisDates}
+            axisLayout={plotLayout}
+            height={height - paddingBottom}
+            top={0}
+          />
 
-        {#if enableCursor}
-          <TimelineCursorOverlay {axisDates} {axisLayout} height={height - paddingBottom} top={0} />
-        {/if}
-      </svg>
+          {#if enableCursor}
+            <TimelineCursorOverlay {axisDates} axisLayout={plotLayout} height={height - paddingBottom} top={0} />
+          {/if}
+        </svg>
+      </div>
     </div>
   {/if}
 </figure>
@@ -318,11 +331,44 @@
     gap: var(--space-2);
   }
 
+  .strip__chart-shell {
+    display: flex;
+    align-items: stretch;
+    min-width: max-content;
+  }
+
+  .strip__gutter {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    flex-shrink: 0;
+    background: var(--color-surface-chart-bg);
+    border: 1px solid var(--color-border-chart);
+    border-right: none;
+  }
+
+  .strip__gutter-label {
+    position: absolute;
+    right: var(--space-2);
+    transform: translateY(-50%);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-fg);
+    text-align: right;
+    max-width: calc(100% - var(--space-2));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .strip__svg {
     display: block;
     width: var(--strip-chart-width);
     max-width: none;
     height: auto;
+    border: 1px solid var(--color-border-chart);
+    border-left: none;
+    background: var(--color-surface-chart-bg);
   }
 
   /*
@@ -332,7 +378,6 @@
    */
   .strip__interactive {
     display: block;
-    width: var(--strip-chart-width);
     min-width: max-content;
     outline: none;
     border-radius: var(--radius-md, 8px);
@@ -354,12 +399,6 @@
   .strip__cell:hover {
     /* Slight lift, theme-agnostic. */
     filter: brightness(1.06);
-  }
-
-  .strip__label {
-    fill: var(--color-fg);
-    font-size: var(--text-sm);
-    font-weight: 600;
   }
 
   .strip__skeleton {

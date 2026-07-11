@@ -40,7 +40,7 @@
     </div>
   </div>
 
-  {#if !loading}
+  {#if !loading && todayEntry}
     <Button
       type="button"
       size="sm"

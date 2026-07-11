@@ -144,6 +144,12 @@
       "empty_statement": "This weekday pattern has no statement yet.",
       "hint": "Based on one week of data. Patterns need more data to become more stable."
     },
+    "weekday_overview": {
+      "heading": "Your week at a glance",
+      "aria": "Weekday overview with mood and early findings",
+      "no_finding": "—",
+      "hint": "Mood bars and early findings per weekday. More entries make patterns more stable."
+    },
     "sparkline": {
       "heading": "Mood trend",
       "caption": "Last {n} days",

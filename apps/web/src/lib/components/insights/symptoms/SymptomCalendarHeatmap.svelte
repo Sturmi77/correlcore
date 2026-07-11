@@ -36,42 +36,47 @@
   </header>
 
   <div
-    class="symptom-calendar__grid"
-    role="grid"
-    aria-label={$_('insights.symptoms.calendar_aria', { values: { name: symptom.name } })}
-    style={`--week-count: ${cells.length / 7}`}
+    class="symptom-calendar__grid-wrap"
+    data-scrollable={cells.length / 7 > 8 ? 'true' : 'false'}
   >
-    {#each cells as cell}
-      {#if cell.date}
-        <button
-          type="button"
-          class="symptom-calendar__cell"
-          class:symptom-calendar__cell--present={cell.present}
-          role="gridcell"
-          aria-label={$_('insights.symptoms.calendar_cell_aria', {
-            values: {
-              date: cell.date,
-              name: symptom.name,
-              state: cell.present
-                ? $_('insights.symptoms.calendar_present')
-                : $_('insights.symptoms.calendar_absent'),
-            },
-          })}
-          title={$_('insights.symptoms.calendar_cell_aria', {
-            values: {
-              date: cell.date,
-              name: symptom.name,
-              state: cell.present
-                ? $_('insights.symptoms.calendar_present')
-                : $_('insights.symptoms.calendar_absent'),
-            },
-          })}
-          on:click={() => dispatch('selectDate', { date: cell.date! })}
-        ></button>
-      {:else}
-        <span class="symptom-calendar__cell symptom-calendar__cell--pad" role="presentation"></span>
-      {/if}
-    {/each}
+    <div
+      class="symptom-calendar__grid"
+      role="grid"
+      aria-label={$_('insights.symptoms.calendar_aria', { values: { name: symptom.name } })}
+      style={`--week-count: ${cells.length / 7}`}
+    >
+      {#each cells as cell}
+        {#if cell.date}
+          <button
+            type="button"
+            class="symptom-calendar__cell"
+            class:symptom-calendar__cell--present={cell.present}
+            role="gridcell"
+            aria-label={$_('insights.symptoms.calendar_cell_aria', {
+              values: {
+                date: cell.date,
+                name: symptom.name,
+                state: cell.present
+                  ? $_('insights.symptoms.calendar_present')
+                  : $_('insights.symptoms.calendar_absent'),
+              },
+            })}
+            title={$_('insights.symptoms.calendar_cell_aria', {
+              values: {
+                date: cell.date,
+                name: symptom.name,
+                state: cell.present
+                  ? $_('insights.symptoms.calendar_present')
+                  : $_('insights.symptoms.calendar_absent'),
+              },
+            })}
+            on:click={() => dispatch('selectDate', { date: cell.date! })}
+          ></button>
+        {:else}
+          <span class="symptom-calendar__cell symptom-calendar__cell--pad" role="presentation"></span>
+        {/if}
+      {/each}
+    </div>
   </div>
 
   <div class="symptom-calendar__legend" aria-label={$_('insights.symptoms.calendar_legend')}>
@@ -121,15 +126,33 @@
     color: var(--color-text-muted);
   }
 
+  .symptom-calendar__grid-wrap {
+    position: relative;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .symptom-calendar__grid-wrap[data-scrollable='true']::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1.5rem;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(to left, var(--color-surface), transparent);
+  }
+
   .symptom-calendar__grid {
     display: grid;
     grid-auto-flow: column;
     grid-template-rows: repeat(7, 12px);
     grid-auto-columns: 12px;
     gap: var(--heatmap-calendar-gap);
-    overflow-x: auto;
-    padding-bottom: var(--space-1);
-    max-width: 100%;
+    width: max-content;
+    max-width: none;
   }
 
   .symptom-calendar__legend {

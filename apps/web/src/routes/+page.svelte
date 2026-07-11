@@ -34,7 +34,7 @@
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
-  import WeekdayPatternChart from '$lib/components/home/WeekdayPatternChart.svelte';
+  import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
@@ -237,9 +237,7 @@
         loading={insightLoading && !latestInsight}
         workContextSummary={dashboardSummary?.work_context_summary ?? []}
       />
-      {#if weekdayInsight}
-        <WeekdayPatternChart insight={weekdayInsight} />
-      {/if}
+      <HomeWeekdayOverview insights={$rankedInsights} {weekdayInsight} />
     </section>
 
     <!-- Zone 3: primary CTA when today is not logged -->
