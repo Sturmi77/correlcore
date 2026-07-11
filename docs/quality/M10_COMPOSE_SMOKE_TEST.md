@@ -18,21 +18,21 @@ Exit criteria from [`M10_SPRINT_PLAN.md`](../M10_SPRINT_PLAN.md):
 
 ## Scope
 
-| In scope                              | Out of scope                          |
-| ------------------------------------- | ------------------------------------- |
-| `docker compose config` (both files)  | Full production VPS Traefik/Let's Encrypt |
-| Bootstrap `--quickstart` idempotency  | GlitchTip UI setup                    |
-| Quickstart health endpoints           | Multi-arch image publish (Sprint 2)   |
-| Migrate service ordering              | Photo upload / MinIO (M13)            |
+| In scope                             | Out of scope                              |
+| ------------------------------------ | ----------------------------------------- |
+| `docker compose config` (both files) | Full production VPS Traefik/Let's Encrypt |
+| Bootstrap `--quickstart` idempotency | GlitchTip UI setup                        |
+| Quickstart health endpoints          | Multi-arch image publish (Sprint 2)       |
+| Migrate service ordering             | Photo upload / MinIO (M13)                |
 
 ## Environment
 
-| Field          | Value                           |
-| -------------- | ------------------------------- |
-| Date           | 2026-07-11                      |
-| Host           | Cursor Cloud agent VM           |
-| Compose files  | `docker-compose.yml`, `docker-compose.quickstart.yml` |
-| Operator       | Automated Sprint 1 verification |
+| Field         | Value                                                 |
+| ------------- | ----------------------------------------------------- |
+| Date          | 2026-07-11                                            |
+| Host          | Cursor Cloud agent VM                                 |
+| Compose files | `docker-compose.yml`, `docker-compose.quickstart.yml` |
+| Operator      | Automated Sprint 1 verification                       |
 
 ## Procedure
 
@@ -100,15 +100,15 @@ docker inspect correlcore-quickstart-migrate --format '{{.State.ExitCode}}'
 
 Confirm production file changes against pre-M10 baseline:
 
-| Check                                      | Expected |
-| ------------------------------------------ | -------- |
-| `migrate` service present                  | Yes      |
-| `x-api-image` / `x-api-env` anchors        | Yes      |
-| `FRONTEND_BASE_URL` in shared API env    | Yes      |
-| `minio`, `minio-init` services             | Absent   |
-| `api.depends_on.minio`                     | Absent   |
-| `worker` without profile                   | Yes      |
-| Container count (base, no monitoring)      | ~10      |
+| Check                                 | Expected |
+| ------------------------------------- | -------- |
+| `migrate` service present             | Yes      |
+| `x-api-image` / `x-api-env` anchors   | Yes      |
+| `FRONTEND_BASE_URL` in shared API env | Yes      |
+| `minio`, `minio-init` services        | Absent   |
+| `api.depends_on.minio`                | Absent   |
+| `worker` without profile              | Yes      |
+| Container count (base, no monitoring) | ~10      |
 
 ## Operator checklist (post-upgrade VPS)
 
@@ -127,10 +127,10 @@ See [`selfhost/M10_COMPOSE_UPGRADE.md`](../selfhost/M10_COMPOSE_UPGRADE.md) for 
 
 ## Sign-off
 
-| Step                         | Status   | Notes                          |
-| ---------------------------- | -------- | ------------------------------ |
-| Compose config (production)  | PASS     | 2026-07-11                     |
-| Compose config (quickstart)  | PASS     | 2026-07-11                     |
-| Bootstrap script             | PASS     | `--quickstart --force`         |
-| Quickstart stack live        | Pending  | Run Step 3–5 when images pull  |
-| Production VPS live          | N/A      | Operator-run on upgrade        |
+| Step                        | Status  | Notes                         |
+| --------------------------- | ------- | ----------------------------- |
+| Compose config (production) | PASS    | 2026-07-11                    |
+| Compose config (quickstart) | PASS    | 2026-07-11                    |
+| Bootstrap script            | PASS    | `--quickstart --force`        |
+| Quickstart stack live       | Pending | Run Step 3–5 when images pull |
+| Production VPS live         | N/A     | Operator-run on upgrade       |

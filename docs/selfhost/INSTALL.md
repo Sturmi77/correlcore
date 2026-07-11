@@ -15,11 +15,11 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 
 ## Deployment paths
 
-| Path                      | Compose file                                                                                                                                                         | TLS / exposure                                  | Best for                                |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------- |
-| **B — Quickstart / Homelab** | [`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml)                                                                  | Bind to `TAILSCALE_IP`; Mailpit for email       | First eval, Tailscale, Dockhand        |
-| **A — Public VPS**        | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                                                                                           | Traefik + Let's Encrypt on 80/443               | Internet-facing production              |
-| **Legacy homelab**        | [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) or [`docker-compose.user-test.yml`](../../infra/docker/docker-compose.user-test.yml)              | Same as quickstart                              | Existing Dockhand adopters              |
+| Path                         | Compose file                                                                                                                                            | TLS / exposure                            | Best for                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------- |
+| **B — Quickstart / Homelab** | [`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml)                                                        | Bind to `TAILSCALE_IP`; Mailpit for email | First eval, Tailscale, Dockhand |
+| **A — Public VPS**           | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                                                                              | Traefik + Let's Encrypt on 80/443         | Internet-facing production      |
+| **Legacy homelab**           | [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) or [`docker-compose.user-test.yml`](../../infra/docker/docker-compose.user-test.yml) | Same as quickstart                        | Existing Dockhand adopters      |
 
 **Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
 
@@ -141,19 +141,19 @@ Or use `./scripts/bootstrap-selfhost-env.sh --production` to generate secrets in
 
 Edit `.env` and set at minimum:
 
-| Variable              | Notes                                            |
-| --------------------- | ------------------------------------------------ |
-| `DOMAIN`              | Apex host, e.g. `correlcore.example.com`         |
-| `LETSENCRYPT_EMAIL`   | ACME registration email                          |
-| `SECRET_KEY`          | ≥ 32 bytes, URL-safe                             |
-| `ENCRYPTION_KEY`      | Fernet key — **store outside the server backup** |
-| `POSTGRES_PASSWORD`   | ≥ 20 chars, no `@` or `/`                        |
-| `APP_DB_PASSWORD`     | Separate from `POSTGRES_PASSWORD`                |
-| `REDIS_PASSWORD`      | ≥ 20 chars recommended                           |
-| `CORS_ORIGINS`        | `https://${DOMAIN}` in production                |
-| `FRONTEND_BASE_URL`   | `https://${DOMAIN}`                              |
-| `APP_ENV`             | `production` or `staging`                        |
-| `SMTP_HOST`           | Real relay in production (not `mailpit`)         |
+| Variable            | Notes                                            |
+| ------------------- | ------------------------------------------------ |
+| `DOMAIN`            | Apex host, e.g. `correlcore.example.com`         |
+| `LETSENCRYPT_EMAIL` | ACME registration email                          |
+| `SECRET_KEY`        | ≥ 32 bytes, URL-safe                             |
+| `ENCRYPTION_KEY`    | Fernet key — **store outside the server backup** |
+| `POSTGRES_PASSWORD` | ≥ 20 chars, no `@` or `/`                        |
+| `APP_DB_PASSWORD`   | Separate from `POSTGRES_PASSWORD`                |
+| `REDIS_PASSWORD`    | ≥ 20 chars recommended                           |
+| `CORS_ORIGINS`      | `https://${DOMAIN}` in production                |
+| `FRONTEND_BASE_URL` | `https://${DOMAIN}`                              |
+| `APP_ENV`           | `production` or `staging`                        |
+| `SMTP_HOST`         | Real relay in production (not `mailpit`)         |
 
 > **ENCRYPTION_KEY warning (ADR-0005):** Encrypted mood notes and custom symptom names
 > cannot be decrypted without this key — even from a valid database backup. Store it in a
