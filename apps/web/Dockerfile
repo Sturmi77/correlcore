@@ -41,16 +41,13 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 WORKDIR /repo/apps/web
 RUN pnpm build
 
-# Prod-Deps separat installieren (weniger fragil als `pnpm prune --prod`,
-# das in CI-Containern ohne TTY mit "confirmModulesPurge"-Prompt hängt).
-#
-# --ignore-scripts: der `prepare`-Hook in apps/web/package.json ruft
-# `svelte-kit sync` auf — das würde @sveltejs/kit erfordern, das aber als
-# devDependency bei --prod nicht installiert wird (sh: svelte-kit: not found).
-# Für das Production-Image wird `prepare` ohnehin nicht gebraucht: der Build
-# ist im vorigen Step bereits durchgelaufen.
+# Prod-Deps als eigenständiges Deploy-Verzeichnis (pnpm deploy --legacy).
+# apps/web/node_modules enthält Workspace-Symlinks auf /repo/node_modules/.pnpm;
+# die brechen im Runtime-Image, weil nur apps/web/node_modules kopiert wurde
+# (ERR_MODULE_NOT_FOUND für @sentry/node). deploy legt .pnpm als Geschwister
+# unter node_modules/ ab — Symlinks bleiben im Container auflösbar.
 WORKDIR /repo
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts --filter @correlcore/web...
+RUN pnpm deploy --filter @correlcore/web --prod --legacy /repo/deploy
 
 # ---- Runtime stage ----
 FROM node:22-alpine AS runtime
@@ -64,7 +61,7 @@ RUN addgroup -S correlcore && adduser -S -G correlcore correlcore
 # SvelteKit adapter-node erzeugt /build mit eigenem package.json + Server
 COPY --from=builder --chown=correlcore:correlcore /repo/apps/web/build ./build
 COPY --from=builder --chown=correlcore:correlcore /repo/apps/web/package.json ./package.json
-COPY --from=builder --chown=correlcore:correlcore /repo/apps/web/node_modules ./node_modules
+COPY --from=builder --chown=correlcore:correlcore /repo/deploy/node_modules ./node_modules
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
