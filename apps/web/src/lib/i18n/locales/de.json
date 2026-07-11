@@ -1281,6 +1281,7 @@
     "page_subtitle": "Wie diese CorrelCore-Installation mit deinen Daten umgeht",
     "intro": "Diese Erklaerung gilt fuer deine Nutzung dieser CorrelCore-Instanz. Bei Selfhost-Betrieb ist der Betreiber der Verantwortliche. Der vollstaendige Rechtstext liegt auch in docs/PRIVACY.md im Repository.",
     "back_settings": "Zurueck zu Einstellungen",
+    "back_home": "Zur Startseite",
     "sections": {
       "controller": {
         "heading": "Wer ist verantwortlich?",
@@ -1317,6 +1318,76 @@
       "contact": {
         "heading": "Kontakt",
         "body": "Datenschutzanfragen: Instanz-Betreiber kontaktieren. Sicherheitsmeldungen: siehe SECURITY.md im Repository."
+      }
+    }
+  },
+  "landing": {
+    "badge": "Selfhost · Open Source",
+    "hero_title": "Verstehe, warum manche Tage gut sind und andere nicht",
+    "hero_subtitle": "Privacy-first Stimmungs- und Gewohnheitstracking mit Korrelations-Insights — selfhosted auf deiner Infrastruktur, etwa 60 Sekunden pro Tag.",
+    "cta_register": "Registrieren",
+    "cta_login": "Anmelden",
+    "cta_docs": "Selfhost-Installationsanleitung",
+    "features_heading": "Warum CorrelCore",
+    "features": {
+      "privacy": {
+        "title": "Deine Daten bleiben bei dir",
+        "body": "Selfhost auf deinem Server. Gesundheitsfelder verschluesselt at-rest. Keine Werbe-Tracker oder Third-Party-Analytics standardmaessig."
+      },
+      "insights": {
+        "title": "Korrelationen statt Rauschen",
+        "body": "Sieh, welche Gewohnheiten und Kontextfaktoren mit besseren oder schwereren Tagen zusammenhaengen — mit klaren Konfidenzstufen."
+      },
+      "selfhost": {
+        "title": "AGPL Selfhost Release",
+        "body": "Docker Compose Quickstart fuer Homelab-Eval und Production-VPS mit Traefik. Multi-Arch Images auf GHCR und Docker Hub."
+      },
+      "daily": {
+        "title": "60 Sekunden pro Tag",
+        "body": "Schneller Daily Check-in: Stimmung, Energie, Stress, Tags und Symptome. Keine Gamification oder Eintragungsdruck."
+      }
+    },
+    "footer": {
+      "nav_label": "Rechtliches und Ressourcen",
+      "privacy": "Datenschutz",
+      "impressum": "Impressum",
+      "docs": "Dokumentation",
+      "source": "Quellcode"
+    }
+  },
+  "impressum": {
+    "page_title": "Impressum",
+    "page_subtitle": "Angaben gemaess § 5 TMG (DE) und § 5 ECG (AT)",
+    "intro": "CorrelCore ist Selfhost-Software. Die Person oder Organisation, die diese Instanz betreibt, ist der medienrechtlich Verantwortliche fuer diese Website. Die folgenden Abschnitte gelten fuer Betreiber in Deutschland und Oesterreich.",
+    "back_home": "Zur Startseite",
+    "sections": {
+      "operator": {
+        "heading": "Diensteanbieter (Betreiber)",
+        "body": "Der Betreiber dieser CorrelCore-Instanz ist fuer diese Website verantwortlich.\n\nAls Nutzer:in: Kontaktdaten erhaeltst du vom Instanz-Betreiber (Impressum oder Support-Kanal der Deployment-Instanz).\n\nAls Betreiber:in: Ersetze diese Seite oder veroeffentliche Name, Anschrift und Kontakt deiner Instanz vor dem oeffentlichen Go-live."
+      },
+      "contact": {
+        "heading": "Kontakt",
+        "body": "E-Mail- und Postkontakt muessen ohne unangemessene Verzoegerung erreichbar sein (TMG § 5 Abs. 1 Nr. 2; ECG § 5 Abs. 1).\n\nSoftware-Projekt (kein Instanzbetrieb): github.com/Sturmi77/correlcore"
+      },
+      "register": {
+        "heading": "Handelsregister / USt-IdNr.",
+        "body": "Fuer gewerbliche Betreiber: Register, Registernummer und USt-IdNr. angeben. Private nicht-gewerbliche Selfhost-Betreiber koennen \"entfaellt\" angeben."
+      },
+      "content": {
+        "heading": "Verantwortlich fuer den Inhalt",
+        "body": "Verantwortlich fuer redaktionelle Inhalte gemaess § 55 Abs. 2 RStV (DE) / MedienG (AT): der oben genannte Instanz-Betreiber."
+      },
+      "dispute": {
+        "heading": "EU-Streitbeilegung",
+        "body": "Die EU-Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: https://ec.europa.eu/consumers/odr\n\nWir sind nicht verpflichtet oder bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, sofern gesetzlich nicht erforderlich."
+      },
+      "liability": {
+        "heading": "Haftung fuer Inhalte und Links",
+        "body": "Betreiber sind fuer die Inhalte ihrer Instanz verantwortlich. CorrelCore wird unter AGPL-3.0 ohne Gewaehr bereitgestellt. Externe Links liegen in der Verantwortung des jeweiligen Betreibers."
+      },
+      "software": {
+        "heading": "Ueber die Software",
+        "body": "CorrelCore ist Open-Source-Software fuer Stimmungs- und Gewohnheitstracking. Kein Medizinprodukt. Insights dienen der persoenlichen Reflexion.\n\nRepository: github.com/Sturmi77/correlcore"
       }
     }
   }

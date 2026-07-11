@@ -10,6 +10,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M10 Sprint 4 — Landing & legal.** Marketing landing page for anonymous users
+  (replaces pre-alpha badge), `/impressum` route with AT/DE template, public
+  `/privacy` access, and legal footer links on landing, auth, and privacy pages.
+  See [`docs/quality/M10_LANDING_LEGAL_TEST.md`](docs/quality/M10_LANDING_LEGAL_TEST.md).
+
 - **M10 Sprint 3 — Docs site.** MkDocs Material site under `docs-site/` with install
   guide, user guide, API overview, and privacy notice. CI: `mkdocs build --strict`;
   GitHub Pages deploy workflow. See [`docs/quality/M10_DOCS_SITE_TEST.md`](docs/quality/M10_DOCS_SITE_TEST.md).

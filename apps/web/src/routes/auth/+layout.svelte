@@ -50,6 +50,10 @@
     </div>
 
     <footer class="auth-footer">
+      <nav class="auth-legal" aria-label={$_('landing.footer.nav_label')}>
+        <a href="/privacy" data-testid="auth-footer-privacy">{$_('landing.footer.privacy')}</a>
+        <a href="/impressum" data-testid="auth-footer-impressum">{$_('landing.footer.impressum')}</a>
+      </nav>
       <p class="auth-disclaimer">{$_('disclaimer.medical')}</p>
     </footer>
   </main>
@@ -105,6 +109,24 @@
   .auth-footer {
     max-width: 420px;
     text-align: center;
+  }
+
+  .auth-legal {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  .auth-legal a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .auth-legal a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
   }
 
   .auth-disclaimer {

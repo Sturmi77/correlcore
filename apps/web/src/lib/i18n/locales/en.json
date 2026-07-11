@@ -1281,6 +1281,7 @@
     "page_subtitle": "How this CorrelCore installation handles your data",
     "intro": "This policy applies to your use of this CorrelCore instance. For selfhosted deployments, the instance operator is the data controller. Full legal text is also in docs/PRIVACY.md in the repository.",
     "back_settings": "Back to Settings",
+    "back_home": "Back to home",
     "sections": {
       "controller": {
         "heading": "Who is responsible?",
@@ -1317,6 +1318,76 @@
       "contact": {
         "heading": "Contact",
         "body": "Privacy requests: contact your instance operator. Security issues: see SECURITY.md in the repository."
+      }
+    }
+  },
+  "landing": {
+    "badge": "Selfhost · Open Source",
+    "hero_title": "Understand why some days are good and others are not",
+    "hero_subtitle": "Privacy-first mood and habit tracking with correlation insights — selfhosted on your infrastructure, about 60 seconds per day.",
+    "cta_register": "Get started",
+    "cta_login": "Log in",
+    "cta_docs": "Selfhost install guide",
+    "features_heading": "Why CorrelCore",
+    "features": {
+      "privacy": {
+        "title": "Your data stays yours",
+        "body": "Selfhost on your server. Health fields encrypted at rest. No ad trackers or third-party analytics by default."
+      },
+      "insights": {
+        "title": "Correlations, not noise",
+        "body": "See which habits and context factors associate with better or harder days — with clear confidence tiers."
+      },
+      "selfhost": {
+        "title": "AGPL selfhost release",
+        "body": "Docker Compose quickstart for homelab eval and production VPS with Traefik. Multi-arch images on GHCR and Docker Hub."
+      },
+      "daily": {
+        "title": "60 seconds per day",
+        "body": "Quick daily check-in: mood, energy, stress, tags, and symptoms. No gamification or logging pressure."
+      }
+    },
+    "footer": {
+      "nav_label": "Legal and resources",
+      "privacy": "Privacy",
+      "impressum": "Impressum",
+      "docs": "Documentation",
+      "source": "Source code"
+    }
+  },
+  "impressum": {
+    "page_title": "Impressum / Legal notice",
+    "page_subtitle": "Information according to § 5 TMG (DE) and § 5 ECG (AT)",
+    "intro": "CorrelCore is selfhosted software. The person or organisation operating this instance is the legal publisher for this website. The sections below apply to operators in Germany and Austria.",
+    "back_home": "Back to home",
+    "sections": {
+      "operator": {
+        "heading": "Service provider (Betreiber)",
+        "body": "The operator of this CorrelCore instance is responsible for this website.\n\nIf you are a visitor: contact details are provided by your instance operator (see Impressum link on their deployment or support channel).\n\nIf you operate an instance: replace this page content or publish operator name, address, and contact on your deployment before going public."
+      },
+      "contact": {
+        "heading": "Contact",
+        "body": "Email and postal contact must be reachable without undue delay (TMG § 5 Abs. 1 Nr. 2; ECG § 5 Abs. 1).\n\nSoftware project (no instance operation): github.com/Sturmi77/correlcore"
+      },
+      "register": {
+        "heading": "Commercial register / VAT",
+        "body": "If the operator is a registered business, list register, registration number, and VAT ID here. Private non-commercial selfhost operators may state \"not applicable\"."
+      },
+      "content": {
+        "heading": "Responsible for content",
+        "body": "Responsible for editorial content under § 55 Abs. 2 RStV (DE) / MedienG (AT): the instance operator named above."
+      },
+      "dispute": {
+        "heading": "EU dispute resolution",
+        "body": "The European Commission provides a platform for online dispute resolution (ODR): https://ec.europa.eu/consumers/odr\n\nWe are not obliged or willing to participate in dispute resolution before a consumer arbitration board unless required by law."
+      },
+      "liability": {
+        "heading": "Liability for content and links",
+        "body": "Operators are responsible for their own instance content. CorrelCore software is provided under AGPL-3.0 without warranty. External links are the responsibility of the operator maintaining them."
+      },
+      "software": {
+        "heading": "About the software",
+        "body": "CorrelCore is open-source mood and habit tracking software. It is not a medical device. Insights are for personal reflection only.\n\nRepository: github.com/Sturmi77/correlcore"
       }
     }
   }
