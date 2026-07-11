@@ -29,3 +29,4 @@ allowBuilds:
 # (siehe Release-Notes 0.25.0) und ist API-stabil.
 overrides:
   esbuild: '^0.25.0'
+  devalue: '>=5.8.1'

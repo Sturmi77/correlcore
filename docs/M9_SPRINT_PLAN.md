@@ -183,7 +183,10 @@ flowchart TD
 
 ```bash
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm check:style-contract
 cd backend && uv run --python 3.12 ruff check . && uv run --python 3.12 pytest
+cd backend && uv run --python 3.12 pip-audit --skip-editable --ignore-vuln PYSEC-2026-1325
+pnpm audit --prod --audit-level=high
 pnpm --filter @correlcore/web test:e2e:smoke
 pnpm --filter @correlcore/web test:e2e:gdpr --workers=1
 ```

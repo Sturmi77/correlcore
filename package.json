@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:contrast": "node scripts/check-contrast.mjs",
+    "check:style-contract": "node scripts/check-style-contract.mjs",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "quality:m1": "./scripts/quality-gate-m1.sh",

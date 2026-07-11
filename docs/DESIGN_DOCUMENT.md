@@ -1231,7 +1231,7 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 #### DSGVO-Checkpoint M9
 
 - [ ] 🔒 DSGVO: Datenschutz-Folgeabschätzung (DSFA) für Cloud-Deployment dokumentiert (falls SaaS geplant)
-- [ ] 🔒 DSGVO: AV-Vertrag-Template für Cloud-Hoster (Hetzner) vorhanden
+- [x] 🔒 DSGVO: AV-Vertrag-Template für Cloud-Hoster (Hetzner) vorhanden — [`legal/AV_VERTRAG_HETZNER_TEMPLATE.md`](legal/AV_VERTRAG_HETZNER_TEMPLATE.md)
 - [ ] 🔒 DSGVO: Vollständiger JSON+ZIP-Datenexport (Art. 20 DSGVO) als Self-Service implementiert und getestet
 - [ ] 🔒 DSGVO: GlitchTip-Instanz selfhosted oder DSGVO-konformer Anbieter
 

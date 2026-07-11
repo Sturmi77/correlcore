@@ -101,7 +101,7 @@ vollständige Self-Service-UI kann in M10+ evaluiert werden.
 
 | Auftragsverarbeiter             | Zweck                        | AV-Vertrag                  |
 | ------------------------------- | ---------------------------- | --------------------------- |
-| Hetzner Online GmbH (Frankfurt) | Hosting / Infrastruktur      | https://www.hetzner.com/AV/ |
+| Hetzner Online GmbH (Frankfurt) | Hosting / Infrastruktur      | https://www.hetzner.com/AV/ · [`legal/AV_VERTRAG_HETZNER_TEMPLATE.md`](legal/AV_VERTRAG_HETZNER_TEMPLATE.md) |
 | Resend Inc.                     | Transaktions-E-Mail          | vorhanden                   |
 | Stripe Payments Europe Ltd.     | Billing / Zahlungsabwicklung | vorhanden                   |
 

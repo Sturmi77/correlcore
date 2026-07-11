@@ -40,7 +40,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [x] **M5.1 (UX Polish)** — Flow consolidation for onboarding, Home, Insights, Habits, PWA, and desktop Trends (`ux(O-xx)` #251–#273); tag co-occurrence quick win — **Complete** (2026-07-10). See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md), [`docs/quality/M5_1_UX_VISUAL_QA.md`](docs/quality/M5_1_UX_VISUAL_QA.md), and [`docs/quality/M5_1_VISUAL_QA.md`](docs/quality/M5_1_VISUAL_QA.md).
 - [x] **M7** — Insights v2: Lasso, lag, symptom analytics, tag clustering, Sprint 9 interaction UX — **Complete** (2026-06-30). See [`docs/M7_SPRINT_STATUS.md`](docs/M7_SPRINT_STATUS.md), [`docs/quality/M7_QUALITY_GATE.md`](docs/quality/M7_QUALITY_GATE.md). Optional LLM/digest → M7-S8.
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
-- [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation (Sprints 1–3 complete). See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).
+- [ ] **M9** — Beta hardening: monitoring, GlitchTip, external testers, documentation (Sprints 1–4 complete). See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).
 - [ ] **M10** — Public selfhost release v1.0
 - [ ] **M11** — Android Play Store (Capacitor)
 - [ ] **M12** — SaaS mode (managed hosting)
@@ -62,7 +62,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **M5**    | **Complete** (2026-06-30) | Habits Core + M5-C1/C2 closeout. Visual QA signed off. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md) and [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md).                                                                    |
 | **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                        |
 | **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                           |
-| **M9**    | **In progress** (Sprint 3) | Beta hardening: GDPR, observability, backup/install guide done. Sprints 4–6 pending. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).                                                              |
+| **M9**    | **In progress** (Sprint 4) | Beta hardening: GDPR, observability, install guide, security CI gates done. Sprints 5–6 pending. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md) and [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md).                                                              |
 
 ---
 

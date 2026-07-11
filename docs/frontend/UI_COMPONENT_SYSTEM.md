@@ -227,7 +227,7 @@ Settings owns:
 6. Done in Sprint B: normalize Home to the owned daily touch-point elements and remove duplicate secondary navigation.
 7. Done in Sprint B for Home: keep maturity journey and phase context off Home; Insights remains the owner.
 8. Next: add mobile screenshot checks for Home, Entry Sheet, Insights, Trends, and Settings at 375 px; target [M4 mobile-hardening](../DESIGN_DOCUMENT.md#m4--mobile-polish--pwa-hardening-woche-1112).
-9. Next: add a style contract test or lint rule that flags unknown design-token and variant names; target [M9 beta hardening](../DESIGN_DOCUMENT.md#m9--beta-h%C3%A4rtung-woche-2224).
+9. Done (M9-S4): style contract lint in [`scripts/check-style-contract.mjs`](../../scripts/check-style-contract.mjs) flags unknown design tokens and shared component variants; CI job `style-contract` in [`ci-web.yml`](../../.github/workflows/ci-web.yml).
 
 ## Acceptance Criteria
 

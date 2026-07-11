@@ -4,8 +4,8 @@ Last updated: 2026-07-11
 
 Tracking document for [`docs/M9_SPRINT_PLAN.md`](M9_SPRINT_PLAN.md).
 
-**Milestone completeness:** Sprint 3 backup & install complete on `cursor/m9-sprint-3-backup-install-2529`.
-Sprints 4–6 pending.
+**Milestone completeness:** Sprint 4 security & CI complete on `cursor/m9-sprint-4-security-ci-2529`.
+Sprints 5–6 pending.
 
 **Prerequisite:** M5.1 UX polish complete (2026-07-10) —
 [`docs/M5_1_SPRINT_STATUS.md`](M5_1_SPRINT_STATUS.md).
@@ -18,7 +18,7 @@ Sprints 4–6 pending.
 | 1      | GDPR self-service         | Done    |
 | 2      | Observability             | Done    |
 | 3      | Backup & install          | Done    |
-| 4      | Security & CI             | Pending |
+| 4      | Security & CI             | Done    |
 | 5      | Beta program              | Pending |
 | 6      | Milestone closeout (M9-C) | Pending |
 
@@ -41,10 +41,10 @@ acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 | Art. 18 restriction self-service | 1 | — | [`DSGVO.md`](DSGVO.md) support workflow | Documented; no API (by design) |
 | `analytics_enabled` opt-out (DSGVO M3) | 1 | Settings toggle + `PATCH /user/preferences` | [`test_user_preferences.py`](../backend/tests/test_user_preferences.py), E2E gdpr spec | DSGVO.md M3 checkbox closed |
 | DSFA for cloud deployment | — | — | Deferred to M12 in [`DSGVO.md`](DSGVO.md) | M9: selfhost-only scope note only |
-| AV-Vertrag template (Hetzner) | 4 | — | — | Static template pending |
-| External pentest | 4 | — | [`M4_RELEASE_READINESS.md`](quality/M4_RELEASE_READINESS.md) P1 | Not yet commissioned |
-| `pip-audit` / `pnpm audit` CI gate | 4 | — | — | Not in [`.github/workflows/`](../.github/workflows/) |
-| Style-contract lint | 4 | — | [`UI_COMPONENT_SYSTEM.md`](frontend/UI_COMPONENT_SYSTEM.md) §9 | Lint rule not implemented |
+| AV-Vertrag template (Hetzner) | 4 | [`legal/AV_VERTRAG_HETZNER_TEMPLATE.md`](legal/AV_VERTRAG_HETZNER_TEMPLATE.md) | Operator signs Hetzner AV at M12 | Template + checklist done |
+| External pentest | 4 | — | [`quality/M9_PENTEST.md`](quality/M9_PENTEST.md) | Internal PASS; external vendor pending |
+| `pip-audit` / `pnpm audit` CI gate | 4 | [`.github/workflows/ci-security.yml`](../.github/workflows/ci-security.yml) | `dependency-audit` job | ecdsa ignore documented |
+| Style-contract lint | 4 | [`scripts/check-style-contract.mjs`](../scripts/check-style-contract.mjs) | CI `style-contract` job in `ci-web.yml` | — |
 | LUKS + restic in Install-Guide | 3 | [`selfhost/INSTALL.md`](selfhost/INSTALL.md) §LUKS, §restic | ADR-0005 aligned | — |
 | 5–10 beta testers + feedback | 5 | — | — | Program not started |
 | Symptom analytics beta review | 5 | — | [`features/symptom-analytics.md`](features/symptom-analytics.md) §M9 | Review pending |
@@ -105,15 +105,22 @@ testers, monitoring, GDPR self-service. Close #29 in Sprint 6 when all slices ex
 - [x] `docs/selfhost/BETA_CHECKLIST.md` + link to `USER_WORKFLOWS.md`.
 - [x] README Quickstart points to install guide.
 
-## Next sprint (4 — Security & CI)
+## Sprint 4 — Completed checklist
+
+- [x] CI `dependency-audit` job: `pip-audit` + `pnpm audit --prod --audit-level=high`.
+- [x] Backend dependency bumps (starlette, cryptography, multipart, aiosmtplib, idna).
+- [x] `scripts/check-style-contract.mjs` + CI `style-contract` job.
+- [x] `docs/quality/M9_PENTEST.md` — internal assessment PASS; external scope documented.
+- [x] `docs/legal/AV_VERTRAG_HETZNER_TEMPLATE.md` — Hetzner AVV operator checklist.
+
+## Next sprint (5 — Beta program)
 
 Priority gaps from audit:
 
-1. CI job: `pip-audit` + `pnpm audit --audit-level=high`.
-2. Style-contract lint for design tokens.
-3. External pentest → `docs/quality/M9_PENTEST.md`.
-4. AV-Vertrag template (Hetzner).
+1. Beta onboarding doc (instance URL, test accounts, feedback template).
+2. Symptom analytics usability review.
+3. Notes-in-analysis worker threshold review.
 
 ## API usage note (unchanged)
 
-No new external APIs in Sprint 3 — documentation and local restore test only.
+No new external APIs in Sprint 4 — CI gates, dependency bumps, and documentation only.
