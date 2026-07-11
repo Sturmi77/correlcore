@@ -314,7 +314,15 @@
         <h2>{$_('settings.privacy.heading')}</h2>
         <p>{$_('settings.privacy.body')}</p>
       </div>
+      <p class="settings__privacy-note">{$_('settings.privacy.policy_body')}</p>
       <div class="settings__actions">
+        <Button
+          href="/privacy"
+          variant="secondary"
+          data-testid="settings-privacy-policy"
+        >
+          {$_('settings.privacy.policy_link')}
+        </Button>
         <Button
           variant="danger"
           type="button"
@@ -585,6 +593,12 @@
   .settings__panel-head p {
     margin: var(--space-1) 0 0;
     opacity: 0.72;
+  }
+
+  .settings__privacy-note {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.5;
   }
 
   .settings__panel {

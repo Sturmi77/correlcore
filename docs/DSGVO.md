@@ -60,7 +60,28 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 | Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/me` → Cascade alle Daten + Cryptographic Erasure (DEK) | sofort                 | ✅ M1  |
 | Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON/CSV; Foto-Sektion bis M13 leer)       | automatisiert          | ✅ M2  |
 | Widerspruch Analyse (Art. 21)         | `PATCH /api/v1/user/preferences {analytics_enabled: false}`                 | sofort                 | ✅ M3  |
-| Einschränkung (Art. 18)               | via Support (manuell in v1)                                                 | 72h                    | 🔄 M9  |
+| Einschränkung (Art. 18)               | Support-Anfrage an Instanz-Betreiber (siehe unten)                          | 72h                    | ✅ M9  |
+
+### Einschränkung der Verarbeitung (Art. 18) — Support-Workflow
+
+Betroffene können die Einschränkung der Verarbeitung per E-Mail oder Ticket beim
+**Betreiber der jeweiligen Instanz** beantragen (Selfhost: der Server-Administrator).
+
+**Prozess (Ziel: Antwort innerhalb 72 Stunden):**
+
+1. Anfrage enthält: registrierte E-Mail-Adresse, gewünschte Einschränkung (z. B.
+   „keine weitere Analyse“, „Konto einfrieren bis Klärung“).
+2. Betreiber verifiziert Identität (Antwort von der registrierten E-Mail oder
+   erneute Authentifizierung).
+3. Technische Umsetzung je nach Anfrage:
+   - Analyse stoppen: `analytics_enabled = false` (Nutzer kann selbst in Settings
+     oder Betreiber per DB/Support).
+   - Vollständige Einfrierung: Konto temporär sperren / keine weiteren Schreibzugriffe
+     bis zur Klärung (manuell, kein Self-Service-API in M9).
+4. Antwort an Nutzer mit Bestätigung und voraussichtlicher Dauer.
+
+Kein separater REST-Endpoint in M9 — bewusst zur Minimierung der API-Oberfläche;
+vollständige Self-Service-UI kann in M10+ evaluiert werden.
 
 ## 5. Einwilligungsmanagement
 
@@ -151,7 +172,7 @@ Für jeden Meilenstein der DSGVO-relevante Features enthält:
 
 ### M3 – Insights
 
-- [ ] 🔒 DSGVO: Analytics-Opt-Out implementiert (analytics_enabled Flag)
+- [x] 🔒 DSGVO: Analytics-Opt-Out implementiert (`analytics_enabled` Flag) — Settings-Toggle + `PATCH /api/v1/user/preferences`; E2E [`gdpr-self-service.spec.ts`](../apps/web/tests/e2e/gdpr-self-service.spec.ts)
 
 ### M7 – Insights v2 (LLM)
 
@@ -164,8 +185,8 @@ Für jeden Meilenstein der DSGVO-relevante Features enthält:
 
 ### M9 – Beta
 
-- [ ] 🔒 DSGVO: Datenschutzerklärung (PRIVACY.md + in-app Link) vorhanden
-- [ ] 🔒 DSGVO: Account-Löschung (Right to Erasure) End-to-End getestet
+- [x] 🔒 DSGVO: Datenschutzerklärung (`docs/PRIVACY.md` + in-app Link `/privacy`) vorhanden
+- [x] 🔒 DSGVO: Account-Löschung (Right to Erasure) End-to-End getestet — Playwright [`gdpr-self-service.spec.ts`](../apps/web/tests/e2e/gdpr-self-service.spec.ts) + Backend [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py)
 - [ ] 🔒 DSGVO: Incident-Response-Runbook vorhanden
 - [ ] 🔒 DSGVO: Backup-Verschlüsselung verifiziert
 

@@ -219,3 +219,35 @@ async def test_delete_me_short_password_returns_422(async_client: AsyncClient) -
         app.dependency_overrides.clear()
 
     assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_export_my_data_returns_zip_attachment(async_client: AsyncClient) -> None:
+    user = make_user()
+    _override_user(user)
+
+    fake_zip = b"PK\x03\x04fake-export"
+
+    try:
+        with (
+            patch(
+                "app.api.v1.endpoints.user.build_export_envelope",
+                new_callable=AsyncMock,
+                return_value=MagicMock(),
+            ),
+            patch(
+                "app.api.v1.endpoints.user.render_export_zip",
+                return_value=fake_zip,
+            ),
+        ):
+            r = await async_client.get(
+                "/api/v1/user/export",
+                cookies={"access_token": VALID_ACCESS_TOKEN},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert r.status_code == 200
+    assert r.content == fake_zip
+    assert "application/zip" in r.headers["content-type"]
+    assert "correlcore-export" in r.headers["content-disposition"]

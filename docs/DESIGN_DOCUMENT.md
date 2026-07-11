@@ -1221,8 +1221,8 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 #### Akzeptanzkriterien M9
 
-- [ ] Vollständige Datenschutzerklärung vorhanden (`docs/PRIVACY.md` + in-app verlinkbar)
-- [ ] Account-Löschung (Right to Erasure, Art. 17 DSGVO) als Self-Service implementiert
+- [x] Vollständige Datenschutzerklärung vorhanden (`docs/PRIVACY.md` + in-app verlinkbar)
+- [x] Account-Löschung (Right to Erasure, Art. 17 DSGVO) als Self-Service implementiert
 - [ ] Backup-Prozess dokumentiert und Restore-Test erfolgreich durchgeführt
 - [ ] GlitchTip Error-Tracking aktiv, kein PII in Error-Reports
 - [ ] Install-Guide für Selfhost vollständig (Docker Compose, Traefik, DNS)

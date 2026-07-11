@@ -614,7 +614,9 @@
       "delete_cancel": "Cancel",
       "delete_busy": "Deleting account\u2026",
       "delete_error": "Could not delete account. Try again later.",
-      "delete_invalid_password": "Password is incorrect."
+      "delete_invalid_password": "Password is incorrect.",
+      "policy_link": "Privacy policy",
+      "policy_body": "Read how this installation processes your health data and which rights you have."
     },
     "appearance": {
       "heading": "Appearance",
@@ -1272,6 +1274,50 @@
     },
     "logout": {
       "label": "Sign out"
+    }
+  },
+  "privacy": {
+    "page_title": "Privacy policy",
+    "page_subtitle": "How this CorrelCore installation handles your data",
+    "intro": "This policy applies to your use of this CorrelCore instance. For selfhosted deployments, the instance operator is the data controller. Full legal text is also in docs/PRIVACY.md in the repository.",
+    "back_settings": "Back to Settings",
+    "sections": {
+      "controller": {
+        "heading": "Who is responsible?",
+        "body": "On a selfhosted instance, the person or organisation running the server is the controller under GDPR. CorrelCore is the software; it does not process your data on a central cloud by default."
+      },
+      "data": {
+        "heading": "What data is processed?",
+        "body": "Mood, energy, stress, symptoms, optional notes, tags, habits, and account data (email, display name). Health-related fields are encrypted at rest. No third-party ad or analytics trackers are used."
+      },
+      "legal": {
+        "heading": "Legal basis",
+        "body": "Health diary data is processed on the basis of your consent (Art. 6(1)(a) and Art. 9(2)(a) GDPR). Account functions rely on contract performance. You can withdraw consent by disabling analysis or deleting your account."
+      },
+      "security": {
+        "heading": "Security",
+        "body": "TLS in transit, app-level encryption for sensitive fields, row-level security, rate limiting, and structured logs without plaintext health data. Backups are the operator's responsibility; encrypted restic backups are recommended."
+      },
+      "rights": {
+        "heading": "Your rights",
+        "body": "Access and portability: export ZIP/JSON/CSV in Settings. Erasure: delete account in Settings (password required). Object to analysis: turn off \"Analysis enabled\". Restriction (Art. 18): contact your instance operator — see DSGVO.md."
+      },
+      "sharing": {
+        "heading": "Third parties",
+        "body": "Health data is not sent to cloud LLMs, ad networks, or external analytics. Optional selfhosted error tracking (GlitchTip) must not include plaintext health fields."
+      },
+      "retention": {
+        "heading": "Retention",
+        "body": "Entries remain until you delete them or your account. Generated insights use a rolling window. Unverified accounts may be removed after seven days."
+      },
+      "changes": {
+        "heading": "Changes",
+        "body": "This policy is updated when processing changes materially. The in-app page and docs/PRIVACY.md in the repository are the authoritative sources for selfhost users."
+      },
+      "contact": {
+        "heading": "Contact",
+        "body": "Privacy requests: contact your instance operator. Security issues: see SECURITY.md in the repository."
+      }
     }
   }
 }

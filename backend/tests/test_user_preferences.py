@@ -109,6 +109,39 @@ async def test_preferences_endpoint_returns_and_updates_state(
 
 
 @pytest.mark.asyncio
+async def test_preferences_endpoint_updates_analytics_enabled(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    preferences = _make_preferences(user)
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.user.update_user_preferences",
+            new_callable=AsyncMock,
+        ) as update_mock:
+            updated = _make_preferences(user)
+            updated.analytics_enabled = False
+            update_mock.return_value = updated
+
+            response = await async_client.patch(
+                "/api/v1/user/preferences",
+                json={"analytics_enabled": False},
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["analytics_enabled"] is False
+    update_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_upsert_user_profile_updates_optional_answers() -> None:
     user = make_user()
     profile = _make_profile(user)
