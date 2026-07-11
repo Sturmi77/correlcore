@@ -10,6 +10,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **M10 Sprint 3 — Docs site.** MkDocs Material site under `docs-site/` with install
+  guide, user guide, API overview, and privacy notice. CI: `mkdocs build --strict`;
+  GitHub Pages deploy workflow. See [`docs/quality/M10_DOCS_SITE_TEST.md`](docs/quality/M10_DOCS_SITE_TEST.md).
+
 - **M10 Sprint 2 — Container publish & release.** Multi-arch (`linux/amd64`,
   `linux/arm64`) image builds in `release-images.yml`; optional Docker Hub mirror
   when `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` CI secrets are set; GitHub Release

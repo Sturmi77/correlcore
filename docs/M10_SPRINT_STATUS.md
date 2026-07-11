@@ -4,7 +4,7 @@ Last updated: 2026-07-11
 
 Tracking document for [`docs/M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md).
 
-**Milestone completeness:** Sprints 0–2 implemented; Sprint 3 (docs site) next.
+**Milestone completeness:** Sprints 0–3 implemented; Sprint 4 (landing & legal) next.
 
 **Prerequisite:** M9 complete (2026-07-11) — [`docs/M9_SPRINT_STATUS.md`](M9_SPRINT_STATUS.md).
 
@@ -15,7 +15,7 @@ Tracking document for [`docs/M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md).
 | 0      | Scope & audit               | Complete |
 | 1      | Compose & install parity    | Complete |
 | 2      | Container publish & release | Complete |
-| 3      | Docs site                   | Pending  |
+| 3      | Docs site                   | Complete |
 | 4      | Landing & legal             | Pending  |
 | 5      | Version, AGPL & go-public   | Pending  |
 | 6      | Milestone closeout (M10-C)  | Pending  |
@@ -25,18 +25,18 @@ Tracking document for [`docs/M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md).
 Audit date: 2026-07-11. Method: codebase review, DESIGN_DOCUMENT § M10, gap
 analysis vs M9 exit state.
 
-| Criterion                         | Sprint | Code anchor                                                                       | Test / doc evidence                                                   | Gap                                    |
-| --------------------------------- | ------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- |
-| Docker Hub amd64 + arm64          | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | Multi-arch CI + [`CONTAINER_IMAGES.md`](selfhost/CONTAINER_IMAGES.md) | Live Hub push after secrets configured |
-| `docker compose up` minimal setup | 1      | [`infra/docker/`](../infra/docker/)                                               | Quickstart + bootstrap shipped                                        | Live stack smoke (operator)            |
-| SECURITY.md                       | —      | [`SECURITY.md`](../SECURITY.md)                                                   | Present                                                               | —                                      |
-| CHANGELOG v1.0.0                  | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                                                 | `[Unreleased]` only; last tag `[0.6.0]`                               | Cut `[1.0.0]` at release               |
-| Docs site live                    | 3      | —                                                                                 | Repo markdown only                                                    | MkDocs site                            |
-| Landing + install/user docs       | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte)         | Pre-alpha badge; `/privacy` in-app only                               | Landing, Impressum                     |
-| Quality gate §9                   | 6      | —                                                                                 | M9 gate as template                                                   | `M10_QUALITY_GATE.md`                  |
-| Privacy link on landing (DSGVO)   | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte)             | In-app only                                                           | Landing footer                         |
-| Impressum (AT/DE)                 | 4      | —                                                                                 | Missing                                                               | `/impressum` route                     |
-| GitHub release v1.0.0             | 2, 6   | [`.github/workflows/github-release.yml`](../.github/workflows/github-release.yml) | Workflow on `v*` tags; needs first tag post-merge                     | Tag `v1.0.0` at Sprint 6               |
+| Criterion                         | Sprint | Code anchor                                                                       | Test / doc evidence                                                         | Gap                                    |
+| --------------------------------- | ------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------- |
+| Docker Hub amd64 + arm64          | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | Multi-arch CI + [`CONTAINER_IMAGES.md`](selfhost/CONTAINER_IMAGES.md)       | Live Hub push after secrets configured |
+| `docker compose up` minimal setup | 1      | [`infra/docker/`](../infra/docker/)                                               | Quickstart + bootstrap shipped                                              | Live stack smoke (operator)            |
+| SECURITY.md                       | —      | [`SECURITY.md`](../SECURITY.md)                                                   | Present                                                                     | —                                      |
+| CHANGELOG v1.0.0                  | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                                                 | `[Unreleased]` only; last tag `[0.6.0]`                                     | Cut `[1.0.0]` at release               |
+| Docs site live                    | 3      | [`docs-site/`](../docs-site/)                                                     | MkDocs + GitHub Pages workflow                                              | Live deploy post-merge                 |
+| Landing + install/user docs       | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte)         | Pre-alpha badge; `/privacy` in-app only                                     | Landing, Impressum                     |
+| Quality gate §9                   | 6      | —                                                                                 | M9 gate as template                                                         | `M10_QUALITY_GATE.md`                  |
+| Privacy link on landing (DSGVO)   | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte)             | In-app only; docs site privacy page                                         | Landing footer                         |
+| Impressum (AT/DE)                 | 4      | —                                                                                 | Missing                                                                     | `/impressum` route                     |
+| GitHub release v1.0.0             | 2, 6   | [`.github/workflows/github-release.yml`](../.github/workflows/github-release.yml) | Workflow on `v*` tags; needs first tag post-merge                           | Tag `v1.0.0` at Sprint 6               |
 
 ## Compose decisions (Sprint 0)
 
@@ -101,9 +101,17 @@ See [`M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md) § COMPOSE_PROFILES matrix and
 - [x] [`selfhost/CONTAINER_IMAGES.md`](selfhost/CONTAINER_IMAGES.md) operator/maintainer guide.
 - [x] [`quality/M10_RELEASE_PUBLISH_TEST.md`](quality/M10_RELEASE_PUBLISH_TEST.md).
 
+## Sprint 3 — Completed checklist
+
+- [x] MkDocs Material site under [`docs-site/`](../docs-site/).
+- [x] Pages: install, container images, upgrade, user guide, API overview, privacy.
+- [x] CI: [`ci-docs-site.yml`](../.github/workflows/ci-docs-site.yml) (`mkdocs build --strict`).
+- [x] Deploy: [`deploy-docs-site.yml`](../.github/workflows/deploy-docs-site.yml) (GitHub Pages).
+- [x] [`quality/M10_DOCS_SITE_TEST.md`](quality/M10_DOCS_SITE_TEST.md).
+
 ## Next milestone
 
-**M10 Sprint 3** — MkDocs docs site (install + user guide + API overview).
+**M10 Sprint 4** — Marketing landing, Impressum, privacy footer links.
 
 ## API usage note
 

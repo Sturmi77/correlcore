@@ -1,0 +1,37 @@
+name: CI — Docs Site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs-site/**'
+      - 'docs/selfhost/CONTAINER_IMAGES.md'
+      - 'docs/selfhost/M10_COMPOSE_UPGRADE.md'
+      - '.github/workflows/ci-docs-site.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs-site/**'
+      - 'docs/selfhost/CONTAINER_IMAGES.md'
+      - 'docs/selfhost/M10_COMPOSE_UPGRADE.md'
+      - '.github/workflows/ci-docs-site.yml'
+
+jobs:
+  build:
+    name: mkdocs build --strict
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: docs-site/requirements.txt
+
+      - name: Install MkDocs
+        run: pip install -r docs-site/requirements.txt
+
+      - name: Build docs site
+        run: mkdocs build --strict
+        working-directory: docs-site

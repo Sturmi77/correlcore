@@ -1,3 +1,6 @@
+# MkDocs build output
+docs-site/site/
+
 # Environment
 .env
 .dev.env
