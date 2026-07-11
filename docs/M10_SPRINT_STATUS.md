@@ -10,33 +10,33 @@ Tracking document for [`docs/M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md).
 
 ## Overview
 
-| Sprint | Title                       | Status      |
-| ------ | --------------------------- | ----------- |
-| 0      | Scope & audit               | Complete    |
-| 1      | Compose & install parity    | Complete    |
-| 2      | Container publish & release | Pending     |
-| 3      | Docs site                   | Pending     |
-| 4      | Landing & legal             | Pending     |
-| 5      | Version, AGPL & go-public   | Pending     |
-| 6      | Milestone closeout (M10-C)  | Pending     |
+| Sprint | Title                       | Status   |
+| ------ | --------------------------- | -------- |
+| 0      | Scope & audit               | Complete |
+| 1      | Compose & install parity    | Complete |
+| 2      | Container publish & release | Pending  |
+| 3      | Docs site                   | Pending  |
+| 4      | Landing & legal             | Pending  |
+| 5      | Version, AGPL & go-public   | Pending  |
+| 6      | Milestone closeout (M10-C)  | Pending  |
 
 ## Acceptance-criteria audit matrix
 
 Audit date: 2026-07-11. Method: codebase review, DESIGN_DOCUMENT § M10, gap
 analysis vs M9 exit state.
 
-| Criterion                              | Sprint | Code anchor                                      | Test / doc evidence                         | Gap                                      |
-| -------------------------------------- | ------ | ------------------------------------------------ | ------------------------------------------- | ---------------------------------------- |
-| Docker Hub amd64 + arm64               | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | amd64 only today                            | Multi-arch + Docker Hub                  |
-| `docker compose up` minimal setup      | 1      | [`infra/docker/`](../infra/docker/)              | Quickstart + bootstrap shipped              | Live stack smoke (operator)              |
-| SECURITY.md                            | —      | [`SECURITY.md`](../SECURITY.md)                  | Present                                     | —                                        |
-| CHANGELOG v1.0.0                       | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                | `[Unreleased]` only; last tag `[0.6.0]`     | Cut `[1.0.0]` at release                 |
-| Docs site live                         | 3      | —                                                | Repo markdown only                          | MkDocs site                              |
-| Landing + install/user docs            | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte) | Pre-alpha badge; `/privacy` in-app only | Landing, Impressum                       |
-| Quality gate §9                        | 6      | —                                                | M9 gate as template                         | `M10_QUALITY_GATE.md`                    |
-| Privacy link on landing (DSGVO)        | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte) | In-app only                                 | Landing footer                           |
-| Impressum (AT/DE)                      | 4      | —                                                | Missing                                     | `/impressum` route                       |
-| GitHub release v1.0.0                  | 2, 6   | —                                                | GHCR images only                            | Release workflow + tag                   |
+| Criterion                         | Sprint | Code anchor                                                                       | Test / doc evidence                         | Gap                     |
+| --------------------------------- | ------ | --------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------- |
+| Docker Hub amd64 + arm64          | 2      | [`.github/workflows/release-images.yml`](../.github/workflows/release-images.yml) | amd64 only today                            | Multi-arch + Docker Hub |
+| `docker compose up` minimal setup | 1      | [`infra/docker/`](../infra/docker/)                                               | Quickstart + bootstrap shipped              | Live stack smoke (operator) |
+| SECURITY.md                       | —      | [`SECURITY.md`](../SECURITY.md)                                                   | Present                                     | —                       |
+| CHANGELOG v1.0.0                  | 5      | [`CHANGELOG.md`](../CHANGELOG.md)                                                 | `[Unreleased]` only; last tag `[0.6.0]`     | Cut `[1.0.0]` at release |
+| Docs site live                    | 3      | —                                                                                 | Repo markdown only                          | MkDocs site             |
+| Landing + install/user docs       | 3–4    | [`apps/web/src/routes/+page.svelte`](../apps/web/src/routes/+page.svelte)         | Pre-alpha badge; `/privacy` in-app only     | Landing, Impressum      |
+| Quality gate §9                   | 6      | —                                                                                 | M9 gate as template                         | `M10_QUALITY_GATE.md`   |
+| Privacy link on landing (DSGVO)   | 4      | [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte)             | In-app only                                 | Landing footer          |
+| Impressum (AT/DE)                 | 4      | —                                                                                 | Missing                                     | `/impressum` route      |
+| GitHub release v1.0.0             | 2, 6   | —                                                                                 | GHCR images only                            | Release workflow + tag  |
 
 ## Compose decisions (Sprint 0)
 
@@ -44,27 +44,27 @@ Planning outcome: **D + E + F + B** for M10 Sprint 1; **A, C, G-compose → M10.
 
 ### Nutzen vs. Risiko
 
-| ID | Proposal              | Breaks running deploys? | M10 fit    |
-| -- | --------------------- | ----------------------- | ---------- |
-| A  | Profile single stack  | Yes (worker/tls implicit) | M10.1    |
-| B  | Remove MinIO          | No (functional)         | **M10**    |
-| C  | Traefik → Caddy       | Yes                     | M10.1      |
-| D  | Two compose paths     | No                      | **M10**    |
-| E  | Bootstrap + quick env | No                      | **M10**    |
-| F  | YAML-DRY + migrate    | No                      | **M10**    |
-| G  | External proxy        | No (docs only)          | Partial    |
+| ID  | Proposal              | Breaks running deploys?   | M10 fit |
+| --- | --------------------- | ------------------------- | ------- |
+| A   | Profile single stack  | Yes (worker/tls implicit) | M10.1   |
+| B   | Remove MinIO          | No (functional)           | **M10** |
+| C   | Traefik → Caddy       | Yes                       | M10.1   |
+| D   | Two compose paths     | No                        | **M10** |
+| E   | Bootstrap + quick env | No                        | **M10** |
+| F   | YAML-DRY + migrate    | No                        | **M10** |
+| G   | External proxy        | No (docs only)            | Partial |
 
 ### MinIO removal analysis (approved for M10)
 
-| Check                         | Result                                                                 |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| Photo upload                  | Not implemented — **M13** ([`M13_NOTES.md`](M13_NOTES.md))             |
-| `/health/ready`               | Postgres, Redis, encryption only — **no MinIO**                          |
-| Quickstart without MinIO      | Running since M9 (user-test / dockhand compose)                        |
-| App code                      | Dev-View probe only (`DEV_VIEW_ENABLED`)                               |
-| Production blocker            | `api.depends_on.minio` removed in Sprint 1                             |
-| User-visible impact           | None (Dev-View shows `minio_connected: false` if enabled)              |
-| M13 re-add                    | `--profile storage` or compose overlay                                 |
+| Check                    | Result                                                     |
+| ------------------------ | ---------------------------------------------------------- |
+| Photo upload             | Not implemented — **M13** ([`M13_NOTES.md`](M13_NOTES.md)) |
+| `/health/ready`          | Postgres, Redis, encryption only — **no MinIO**            |
+| Quickstart without MinIO | Running since M9 (user-test / dockhand compose)            |
+| App code                 | Dev-View probe only (`DEV_VIEW_ENABLED`)                   |
+| Production blocker       | `api.depends_on.minio` removed in Sprint 1                 |
+| User-visible impact      | None (Dev-View shows `minio_connected: false` if enabled)  |
+| M13 re-add               | `--profile storage` or compose overlay                     |
 
 ### COMPOSE_PROFILES matrix
 

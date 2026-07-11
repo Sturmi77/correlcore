@@ -12,11 +12,11 @@ this before `git pull` if you run the production stack at
 
 ## Summary
 
-| Who                         | Action required                                      |
-| --------------------------- | ---------------------------------------------------- |
-| Existing production VPS     | `git pull` → `docker compose pull` → `docker compose up -d` |
-| Secrets / `.env`            | **Keep unchanged**; optionally remove MinIO vars     |
-| New evaluators / homelab    | Use quickstart compose (after Sprint 1 ships)        |
+| Who                      | Action required                                             |
+| ------------------------ | ----------------------------------------------------------- |
+| Existing production VPS  | `git pull` → `docker compose pull` → `docker compose up -d` |
+| Secrets / `.env`         | **Keep unchanged**; optionally remove MinIO vars            |
+| New evaluators / homelab | Use quickstart compose (after Sprint 1 ships)               |
 
 M10 Sprint 1 is designed **non-breaking**: mood tracking, auth, insights
 (worker), and HTTPS (Traefik) continue without new flags or profile knowledge.
@@ -27,12 +27,12 @@ M10 Sprint 1 is designed **non-breaking**: mood tracking, auth, insights
 
 ### Production `docker-compose.yml`
 
-| Change type | Detail |
-| ----------- | ------ |
-| **Added**   | `migrate` service (Alembic before api/worker)        |
-| **Added**   | YAML anchors, explicit `FRONTEND_BASE_URL` in API env |
-| **Removed** | `minio`, `minio-init`, `minio_data` volume           |
-| **Removed** | `api.depends_on.minio`, `MINIO_*` in API environment |
+| Change type   | Detail                                                    |
+| ------------- | --------------------------------------------------------- |
+| **Added**     | `migrate` service (Alembic before api/worker)             |
+| **Added**     | YAML anchors, explicit `FRONTEND_BASE_URL` in API env     |
+| **Removed**   | `minio`, `minio-init`, `minio_data` volume                |
+| **Removed**   | `api.depends_on.minio`, `MINIO_*` in API environment      |
 | **Unchanged** | worker, traefik, socket-proxy, mailpit, glitchtip profile |
 
 Container count drops from **12 → 10** (two unused MinIO containers removed).
@@ -63,11 +63,11 @@ Keep all existing secrets:
 grep -E '^(FRONTEND_BASE_URL|DOMAIN|SMTP_HOST|CORS_ORIGINS)=' .env
 ```
 
-| Variable              | Production expectation        |
-| --------------------- | ----------------------------- |
-| `FRONTEND_BASE_URL`   | `https://your-domain.tld`     |
-| `CORS_ORIGINS`        | `https://your-domain.tld`     |
-| `SMTP_HOST`           | Real relay (not `mailpit`)    |
+| Variable            | Production expectation     |
+| ------------------- | -------------------------- |
+| `FRONTEND_BASE_URL` | `https://your-domain.tld`  |
+| `CORS_ORIGINS`      | `https://your-domain.tld`  |
+| `SMTP_HOST`         | Real relay (not `mailpit`) |
 
 Verify/reset email links depend on `FRONTEND_BASE_URL`.
 
@@ -125,11 +125,11 @@ postgres, redis, mailpit, migrate (exited 0).
 
 ## Optional cleanup
 
-| Action | When |
-| ------ | ---- |
+| Action                                  | When                                   |
+| --------------------------------------- | -------------------------------------- |
 | `docker volume rm <project>_minio_data` | MinIO data not needed until M13 photos |
-| Remove MinIO from restic/backup scripts | Update per INSTALL §Backup |
-| Delete MinIO block from `.env` | Cosmetic |
+| Remove MinIO from restic/backup scripts | Update per INSTALL §Backup             |
+| Delete MinIO block from `.env`          | Cosmetic                               |
 
 **Do not delete:** postgres, redis, or traefik certificate volumes.
 
@@ -137,10 +137,10 @@ postgres, redis, mailpit, migrate (exited 0).
 
 ## Two deployment paths after M10
 
-| Path | Compose file | Audience |
-| ---- | ------------ | -------- |
-| **Quickstart** | `docker-compose.quickstart.yml` | Homelab, Tailscale, first 10 minutes |
-| **Production VPS** | `docker-compose.yml` | Internet-facing with Traefik + TLS |
+| Path               | Compose file                    | Audience                             |
+| ------------------ | ------------------------------- | ------------------------------------ |
+| **Quickstart**     | `docker-compose.quickstart.yml` | Homelab, Tailscale, first 10 minutes |
+| **Production VPS** | `docker-compose.yml`            | Internet-facing with Traefik + TLS   |
 
 Existing VPS installations stay on **production compose**. See
 [`M10_SPRINT_PLAN.md`](../M10_SPRINT_PLAN.md) § COMPOSE_PROFILES for profile
@@ -150,12 +150,12 @@ rules on the quickstart path.
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| ------- | ------------ | --- |
-| API stuck waiting / not starting | Old compose still has `depends_on: minio` but MinIO removed | Ensure Sprint 1 compose is fully pulled |
-| Verify email links wrong host | `FRONTEND_BASE_URL` unset or HTTP in prod | Set `https://${DOMAIN}` in `.env`, restart api |
-| `migrate` exits 1 | DB credentials | Check `POSTGRES_PASSWORD`, `APP_DB_PASSWORD` (no `@` or `/`) |
-| Insights empty | Worker not running | `docker compose ps` — `correlcore-worker` should be **running** |
+| Symptom                          | Likely cause                                                | Fix                                                             |
+| -------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------- |
+| API stuck waiting / not starting | Old compose still has `depends_on: minio` but MinIO removed | Ensure Sprint 1 compose is fully pulled                         |
+| Verify email links wrong host    | `FRONTEND_BASE_URL` unset or HTTP in prod                   | Set `https://${DOMAIN}` in `.env`, restart api                  |
+| `migrate` exits 1                | DB credentials                                              | Check `POSTGRES_PASSWORD`, `APP_DB_PASSWORD` (no `@` or `/`)    |
+| Insights empty                   | Worker not running                                          | `docker compose ps` — `correlcore-worker` should be **running** |
 
 ---
 
