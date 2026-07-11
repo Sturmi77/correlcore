@@ -182,8 +182,6 @@ describe('InsightEvidence — input clamping', () => {
       props: { confidenceScore: -0.5, currentTier: 'none', entryCount: 0, detailed: true },
     });
     expect(screen.getByTestId('insight-confidence-score-percent').textContent).toContain('0%');
-    expect(screen.getByTestId('insight-confidence-label').textContent?.trim()).toBe(
-      'Early signal'
-    );
+    expect(screen.getByTestId('insight-confidence-label').textContent?.trim()).toBe('Early signal');
   });
 });

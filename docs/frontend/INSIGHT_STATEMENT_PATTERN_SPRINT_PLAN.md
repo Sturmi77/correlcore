@@ -12,14 +12,14 @@ solo pass.
 
 ## Already landed
 
-| PR                                                      | Title                                                                    | Status     |
-| ------------------------------------------------------- | ------------------------------------------------------------------------- | ---------- |
-| [#341](https://github.com/Sturmi77/correlcore/pull/341) | Remove duplicate insight display in `HomeDailyBrief`                      | **Merged** |
-| [#342](https://github.com/Sturmi77/correlcore/pull/342) | Remove synthetic sparkline from expanded `InsightCard`                    | **Merged** |
-| [#343](https://github.com/Sturmi77/correlcore/pull/343) | Document all remaining proposals in `INSIGHT_STATEMENT_PATTERN.md`        | **Merged** |
-| [#344](https://github.com/Sturmi77/correlcore/pull/344) | This sprint plan                                                          | **Merged** |
-| [#345](https://github.com/Sturmi77/correlcore/pull/345) | Sprint 1 (ISP-1, ISP-2, ISP-3) — statement-first hierarchy                | **Merged** |
-| Sprint 2 (ISP-4) PR                                     | Consolidate evidence components into `InsightEvidence`                    | See below  |
+| PR                                                      | Title                                                              | Status     |
+| ------------------------------------------------------- | ------------------------------------------------------------------ | ---------- |
+| [#341](https://github.com/Sturmi77/correlcore/pull/341) | Remove duplicate insight display in `HomeDailyBrief`               | **Merged** |
+| [#342](https://github.com/Sturmi77/correlcore/pull/342) | Remove synthetic sparkline from expanded `InsightCard`             | **Merged** |
+| [#343](https://github.com/Sturmi77/correlcore/pull/343) | Document all remaining proposals in `INSIGHT_STATEMENT_PATTERN.md` | **Merged** |
+| [#344](https://github.com/Sturmi77/correlcore/pull/344) | This sprint plan                                                   | **Merged** |
+| [#345](https://github.com/Sturmi77/correlcore/pull/345) | Sprint 1 (ISP-1, ISP-2, ISP-3) — statement-first hierarchy         | **Merged** |
+| Sprint 2 (ISP-4) PR                                     | Consolidate evidence components into `InsightEvidence`             | See below  |
 
 These removed two sources of misleading content (duplicated statement,
 fabricated trend line) before the hierarchy work, then made the statement
