@@ -171,12 +171,17 @@ test('mobile compare filters and analysis canvas are reachable by scroll at 430p
   await page.goto('/trends');
 
   await expect(page.getByTestId('mobile-trends-summary')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('trends-compare-quick-filters')).toBeVisible();
+  await page.getByTestId('trends-compare-customize').click();
+  await expect(page.getByTestId('trends-compare-settings-sheet')).toBeVisible();
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
+  await page.getByTestId('trends-compare-settings-close').click();
   await page.getByTestId('trends-compare-panel').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible();
+  await page.getByTestId('trends-compare-customize').click();
   await expect(page.getByLabel('Work context')).toBeChecked();
-  await expect(page.getByText('Office').first()).toBeVisible();
   await page.getByLabel('Work context').uncheck();
+  await page.getByTestId('trends-compare-settings-close').click();
   await expect(page.getByText('Office').first()).toHaveCount(0);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)

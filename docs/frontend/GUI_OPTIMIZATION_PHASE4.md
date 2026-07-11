@@ -71,3 +71,28 @@ flowchart LR
 Track as: `[UX] Mobile: Home-CTA, Wochentags-Übersicht, Heatmap-Dichte, Trends-Sticky, Insights-Overflow`
 
 See Phase 4 issue body in repository issues (labels: `bug`, `ux`, `mobile`).
+
+---
+
+## Phase 4 follow-up (O-63 – O-64)
+
+Follow-up to mobile UX review after P4 merge candidate [#339](https://github.com/Sturmi77/correlcore/pull/339).
+
+| ID   | Sprint | Impact   | Effort | Status | Title                                                         |
+| ---- | ------ | -------- | ------ | ------ | ------------------------------------------------------------- |
+| O-63 | P4-D   | High     | Low    | Open   | Home: encode work-context bars by mood, not entry frequency   |
+| O-64 | P4-C   | High     | Medium | Open   | Trends mobile: compact quick filters + compare settings sheet |
+
+### O-63 — Home work-context pattern
+
+- `homeWorkContextSummary.ts`: weighted mood average, sort by deviation, bar width from mood (1–5)
+- `HomeDailyBrief.svelte`: high/low bar highlights; copy `{mood} · {count} Tage`
+
+### O-64 — Trends mobile control density
+
+- Sticky toolbar: range + tabs only (revises O-61 filter row on mobile; restores O-29 spirit)
+- `TrendsCompareQuickFilters.svelte`: metric chips + category + **Anpassen**
+- `TrendsCompareSettingsSheet.svelte`: smoothing, metrics, category, layers, mode, sort
+- `TrendsComparePanel.svelte`: `compactChrome` hides header/controls on mobile
+
+**Branch:** `cursor/home-trends-followup-e965`

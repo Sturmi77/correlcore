@@ -63,8 +63,8 @@
       "top_insight_confidence": "{value}% confidence",
       "top_insight_fallback": "Log a few more days to surface your strongest pattern here.",
       "work_context_heading": "Work context pattern",
-      "work_context_hint": "All tracked days",
-      "work_context_value": "{count}d, mood avg {mood}",
+      "work_context_hint": "Mood average per situation",
+      "work_context_value": "{mood} · {count} days",
       "none": "None"
     },
     "recent": {
@@ -413,7 +413,12 @@
       "empty_body": "Keep logging daily entries to make movement and context visible here.",
       "show_details": "Show detailed charts",
       "hide_details": "Hide detailed charts",
-      "detail_filters": "Detailed trend filters"
+      "detail_filters": "Detailed trend filters",
+      "customize": "Customize"
+    },
+    "settings": {
+      "title": "Customize compare view",
+      "close_aria": "Close settings"
     },
     "tabs": {
       "label": "Trend sections",

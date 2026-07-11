@@ -63,8 +63,8 @@
       "top_insight_confidence": "{value}% Konfidenz",
       "top_insight_fallback": "Noch ein paar Tage loggen, dann erscheint hier dein staerkstes Muster.",
       "work_context_heading": "Arbeitssituation-Muster",
-      "work_context_hint": "Alle erfassten Tage",
-      "work_context_value": "{count}T, Stimmung Schnitt {mood}",
+      "work_context_hint": "Stimmungsschnitt pro Situation",
+      "work_context_value": "{mood} · {count} Tage",
       "none": "Keine"
     },
     "recent": {
@@ -413,7 +413,12 @@
       "empty_body": "Erfasse weiter t\u00e4gliche Eintr\u00e4ge, damit Bewegungen und Kontext hier sichtbar werden.",
       "show_details": "Detaillierte Diagramme anzeigen",
       "hide_details": "Detaillierte Diagramme ausblenden",
-      "detail_filters": "Detaillierte Trend-Filter"
+      "detail_filters": "Detaillierte Trend-Filter",
+      "customize": "Anpassen"
+    },
+    "settings": {
+      "title": "Vergleich anpassen",
+      "close_aria": "Einstellungen schliessen"
     },
     "tabs": {
       "label": "Trend-Bereiche",
