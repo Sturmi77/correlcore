@@ -19,6 +19,11 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('$lib/observability/errorTracking.server', () => ({
+  initServerErrorTracking: vi.fn(),
+  captureServerException: vi.fn(),
+}));
+
 import { handle } from './hooks.server';
 
 type FetchMock = ReturnType<typeof vi.fn>;

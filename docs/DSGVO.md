@@ -133,7 +133,7 @@ Eine DSFA ist durchzuführen wenn Gesundheitsdaten im Cloud-Betrieb verarbeitet 
 4. DSB-Meldung via https://www.dsb.gv.at/meldung-datenverletzung
 5. Betroffene informieren wenn hohes Risiko (Art. 34)
 
-**Incident-Response-Plan:** `docs/runbooks/incident-response.md` (zu erstellen in M9)
+**Incident-Response-Plan:** [`docs/runbooks/incident-response.md`](runbooks/incident-response.md) (M9)
 
 ## 9. Aufbewahrungsfristen
 
@@ -187,7 +187,7 @@ Für jeden Meilenstein der DSGVO-relevante Features enthält:
 
 - [x] 🔒 DSGVO: Datenschutzerklärung (`docs/PRIVACY.md` + in-app Link `/privacy`) vorhanden
 - [x] 🔒 DSGVO: Account-Löschung (Right to Erasure) End-to-End getestet — Playwright [`gdpr-self-service.spec.ts`](../apps/web/tests/e2e/gdpr-self-service.spec.ts) + Backend [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py)
-- [ ] 🔒 DSGVO: Incident-Response-Runbook vorhanden
+- [x] 🔒 DSGVO: Incident-Response-Runbook vorhanden — [`docs/runbooks/incident-response.md`](runbooks/incident-response.md)
 - [ ] 🔒 DSGVO: Backup-Verschlüsselung verifiziert
 
 ### M11 – Play Store

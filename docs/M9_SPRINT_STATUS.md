@@ -4,8 +4,8 @@ Last updated: 2026-07-11
 
 Tracking document for [`docs/M9_SPRINT_PLAN.md`](M9_SPRINT_PLAN.md).
 
-**Milestone completeness:** Sprint 1 GDPR self-service complete on `cursor/m9-sprint-1-gdpr-2529`.
-Sprints 2–6 pending.
+**Milestone completeness:** Sprint 2 observability complete on `cursor/m9-sprint-2-observability-2529`.
+Sprints 3–6 pending.
 
 **Prerequisite:** M5.1 UX polish complete (2026-07-10) —
 [`docs/M5_1_SPRINT_STATUS.md`](M5_1_SPRINT_STATUS.md).
@@ -16,7 +16,7 @@ Sprints 2–6 pending.
 | ------ | ------------------------- | ------- |
 | 0      | Scope & audit             | Done    |
 | 1      | GDPR self-service         | Done    |
-| 2      | Observability             | Pending |
+| 2      | Observability             | Done    |
 | 3      | Backup & install          | Pending |
 | 4      | Security & CI             | Pending |
 | 5      | Beta program              | Pending |
@@ -32,12 +32,12 @@ acceptance criteria from [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M9.
 | `docs/PRIVACY.md` + in-app link | 1 | [`docs/PRIVACY.md`](PRIVACY.md), [`privacy/+page.svelte`](../apps/web/src/routes/privacy/+page.svelte) | E2E [`gdpr-self-service.spec.ts`](../apps/web/tests/e2e/gdpr-self-service.spec.ts) | — |
 | Account deletion self-service (Art. 17) | 1 | `DELETE /api/v1/user/me`; Settings dialog | [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py), E2E gdpr spec | — |
 | Backup documented + restore test | 3 | restic mentioned in [`DSGVO.md`](DSGVO.md), [`adr/0005`](adr/0005-verschluesselung-at-rest.md) | [`RUNBOOK_KEY_ROTATION.md`](RUNBOOK_KEY_ROTATION.md) mentions `pg_dump` | No consolidated backup runbook; no restore test protocol |
-| GlitchTip active, no PII in reports | 2 | Compose profile `monitoring` in [`infra/docker/docker-compose.yml`](../infra/docker/docker-compose.yml) | [`test_log_scrubbing.py`](../backend/tests/test_log_scrubbing.py) (logs only) | No `sentry-sdk` in backend/web; no GlitchTip healthcheck; DSN integration missing |
+| GlitchTip active, no PII in reports | 2 | [`error_tracking.py`](../backend/app/core/error_tracking.py), [`scrubEvent.ts`](../apps/web/src/lib/observability/scrubEvent.ts) | [`test_error_tracking.py`](../backend/tests/test_error_tracking.py), [`scrubEvent.test.ts`](../apps/web/src/lib/observability/scrubEvent.test.ts) | DSN optional — no traffic when unset |
 | Install-Guide (Compose, Traefik, DNS) | 3 | [`infra/dockhand/README.md`](../infra/dockhand/README.md), [`RUNBOOK_DEPLOYMENT.md`](RUNBOOK_DEPLOYMENT.md) | Partial homelab/Tailscale notes | No single `docs/selfhost/INSTALL.md`; Traefik+DNS path fragmented |
 | Quality gate §9 | 6 | CI workflows green on `main` | Per-milestone gates (M7 pattern) | `M9_QUALITY_GATE.md` not yet created |
 | ZIP export self-service (Art. 20) | 1 | `GET /api/v1/user/export` | [`test_export_service.py`](../backend/tests/test_export_service.py), [`test_user_endpoints.py`](../backend/tests/test_user_endpoints.py), E2E gdpr spec | — |
-| GlitchTip selfhosted (DSGVO) | 2 | Same as GlitchTip row | [`infra/dockhand/README.md`](../infra/dockhand/README.md) profile docs | Activation + SDK wiring pending |
-| Incident-response runbook | 2 | — | Referenced in [`DSGVO.md`](DSGVO.md) §8 | `docs/runbooks/incident-response.md` missing |
+| GlitchTip selfhosted (DSGVO) | 2 | Compose profile + healthcheck | [`infra/docker/docker-compose.yml`](../infra/docker/docker-compose.yml), [`infra/docker/.env.example`](../infra/docker/.env.example) | Operator sets `GLITCHTIP_DSN` after bootstrap |
+| Incident-response runbook | 2 | — | [`docs/runbooks/incident-response.md`](runbooks/incident-response.md) | — |
 | Art. 18 restriction self-service | 1 | — | [`DSGVO.md`](DSGVO.md) support workflow | Documented; no API (by design) |
 | `analytics_enabled` opt-out (DSGVO M3) | 1 | Settings toggle + `PATCH /user/preferences` | [`test_user_preferences.py`](../backend/tests/test_user_preferences.py), E2E gdpr spec | DSGVO.md M3 checkbox closed |
 | DSFA for cloud deployment | — | — | Deferred to M12 in [`DSGVO.md`](DSGVO.md) | M9: selfhost-only scope note only |
@@ -73,7 +73,7 @@ testers, monitoring, GDPR self-service. Close #29 in Sprint 6 when all slices ex
 | Area | Current state | M9 constraint |
 | ---- | ------------- | ------------- |
 | Cloud / local LLM | Not integrated; #147/#148 → M7-S8 | No new LLM calls |
-| Error tracking | Compose-only GlitchTip; no SDK | Selfhosted + optional DSN |
+| Error tracking | Optional `GLITCHTIP_DSN`; PII scrub in API + Web | Selfhosted + optional DSN |
 | Analytics compute | Nightly worker + `analytics_enabled` gate | No on-demand external APIs |
 | Beta feedback | — | No Hotjar/Mixpanel; GitHub/email only |
 | GDPR APIs | Delete, export, preferences exist | Verify + document; no new endpoints |
@@ -88,4 +88,22 @@ testers, monitoring, GDPR self-service. Close #29 in Sprint 6 when all slices ex
 - [x] Art. 18 support workflow documented in `DSGVO.md`.
 - [x] DSGVO M3 `analytics_enabled` checkpoint closed.
 
-## Next sprint (2 — Observability)
+## Sprint 2 — Completed checklist
+
+- [x] `sentry-sdk` integration in API with optional `GLITCHTIP_DSN` and `before_send` PII scrub.
+- [x] Web client/server error tracking (`hooks.client.ts`, `hooks.server.ts`) with shared scrub.
+- [x] GlitchTip Compose healthcheck (profile `monitoring`).
+- [x] `docs/runbooks/incident-response.md` created; linked from `DSGVO.md`.
+- [x] `GLITCHTIP_DSN` documented in `infra/docker/.env.example`; wired to `api` + `web` services.
+
+## Next sprint (3 — Backup & install)
+
+Priority gaps from audit:
+
+1. Create `docs/selfhost/INSTALL.md` (Compose, Traefik, DNS, secrets).
+2. Document restic + LUKS backup strategy; run restore test protocol.
+3. Link install guide from README / operator docs.
+
+## API usage note (unchanged)
+
+No new external APIs in Sprint 3 — documentation and local restore test only.

@@ -158,4 +158,4 @@ Stacktraces dürfen Pfade und System-Variablen enthalten, aber keine Tagebuchein
 | Docker-Healthchecks (6 Services) | `infra/docker/docker-compose.yml`        | ✅ PR #35     |
 | DSGVO-Log-Scrubbing-Test         | `backend/tests/test_log_scrubbing.py`    | ✅ Diese ADR  |
 | Worker-Healthcheck               | `infra/docker/docker-compose.yml`        | ⏳ Geplant M3 |
-| Glitchtip-Healthcheck            | `infra/docker/docker-compose.yml`        | ⏳ Geplant M9 |
+| Glitchtip-Healthcheck            | `infra/docker/docker-compose.yml`        | ✅ M9 Sprint 2 |
