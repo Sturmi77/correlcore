@@ -12,11 +12,11 @@ Read this before `git pull` if you run
 
 ## Summary
 
-| Who                         | Action required                                      |
-| --------------------------- | ---------------------------------------------------- |
-| Existing production VPS     | `git pull` → `docker compose pull` → `docker compose up -d` |
-| Secrets / `.env`            | **Keep unchanged**; optionally remove MinIO vars     |
-| New evaluators / homelab    | Use [quickstart path](index.md) |
+| Who                      | Action required                                             |
+| ------------------------ | ----------------------------------------------------------- |
+| Existing production VPS  | `git pull` → `docker compose pull` → `docker compose up -d` |
+| Secrets / `.env`         | **Keep unchanged**; optionally remove MinIO vars            |
+| New evaluators / homelab | Use [quickstart path](index.md)                             |
 
 M10 Sprint 1 is designed **non-breaking**: mood tracking, auth, insights
 (worker), and HTTPS (Traefik) continue without new flags or profile knowledge.
@@ -27,12 +27,12 @@ M10 Sprint 1 is designed **non-breaking**: mood tracking, auth, insights
 
 ### Production `docker-compose.yml`
 
-| Change type | Detail |
-| ----------- | ------ |
-| **Added**   | `migrate` service (Alembic before api/worker)        |
-| **Added**   | YAML anchors, explicit `FRONTEND_BASE_URL` in API env |
-| **Removed** | `minio`, `minio-init`, `minio_data` volume           |
-| **Removed** | `api.depends_on.minio`, `MINIO_*` in API environment |
+| Change type   | Detail                                                    |
+| ------------- | --------------------------------------------------------- |
+| **Added**     | `migrate` service (Alembic before api/worker)             |
+| **Added**     | YAML anchors, explicit `FRONTEND_BASE_URL` in API env     |
+| **Removed**   | `minio`, `minio-init`, `minio_data` volume                |
+| **Removed**   | `api.depends_on.minio`, `MINIO_*` in API environment      |
 | **Unchanged** | worker, traefik, socket-proxy, mailpit, glitchtip profile |
 
 Container count drops from **12 → 10** (two unused MinIO containers removed).
@@ -63,11 +63,11 @@ Keep all existing secrets:
 grep -E '^(FRONTEND_BASE_URL|DOMAIN|SMTP_HOST|CORS_ORIGINS)=' .env
 ```
 
-| Variable              | Production expectation        |
-| --------------------- | ----------------------------- |
-| `FRONTEND_BASE_URL`   | `https://your-domain.tld`     |
-| `CORS_ORIGINS`        | `https://your-domain.tld`     |
-| `SMTP_HOST`           | Real relay (not `mailpit`)    |
+| Variable            | Production expectation     |
+| ------------------- | -------------------------- |
+| `FRONTEND_BASE_URL` | `https://your-domain.tld`  |
+| `CORS_ORIGINS`      | `https://your-domain.tld`  |
+| `SMTP_HOST`         | Real relay (not `mailpit`) |
 
 Verify/reset email links depend on `FRONTEND_BASE_URL`.
 
@@ -112,11 +112,11 @@ postgres, redis, mailpit, migrate (exited 0).
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| ------- | ------------ | --- |
-| API stuck waiting | Old compose has `depends_on: minio` | Ensure Sprint 1 compose is fully pulled |
-| Verify email wrong host | `FRONTEND_BASE_URL` unset | Set `https://${DOMAIN}` in `.env`, restart api |
-| `migrate` exits 1 | DB credentials | Check passwords (no `@` or `/`) |
-| Insights empty | Worker not running | `correlcore-worker` should be **running** |
+| Symptom                 | Likely cause                        | Fix                                            |
+| ----------------------- | ----------------------------------- | ---------------------------------------------- |
+| API stuck waiting       | Old compose has `depends_on: minio` | Ensure Sprint 1 compose is fully pulled        |
+| Verify email wrong host | `FRONTEND_BASE_URL` unset           | Set `https://${DOMAIN}` in `.env`, restart api |
+| `migrate` exits 1       | DB credentials                      | Check passwords (no `@` or `/`)                |
+| Insights empty          | Worker not running                  | `correlcore-worker` should be **running**      |
 
 MinIO returns with **M13** photo upload via `--profile storage` (planned).

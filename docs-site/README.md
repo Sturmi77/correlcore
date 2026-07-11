@@ -30,13 +30,13 @@ Optional custom domain: `docs.correlcore.app` (configure in GitHub Pages setting
 
 ## Source layout
 
-| Path | Purpose |
-| ---- | ------- |
-| `mkdocs.yml` | Site config, nav, theme |
-| `docs/index.md` | Home |
-| `docs/install/` | Selfhost install, images, upgrade |
-| `docs/user-guide/` | End-user workflows |
-| `docs/api/` | API overview |
-| `docs/privacy/` | Privacy notice (GDPR) |
+| Path               | Purpose                           |
+| ------------------ | --------------------------------- |
+| `mkdocs.yml`       | Site config, nav, theme           |
+| `docs/index.md`    | Home                              |
+| `docs/install/`    | Selfhost install, images, upgrade |
+| `docs/user-guide/` | End-user workflows                |
+| `docs/api/`        | API overview                      |
+| `docs/privacy/`    | Privacy notice (GDPR)             |
 
 Canonical operator docs remain in [`docs/selfhost/`](../docs/selfhost/) in the repository.

@@ -47,19 +47,19 @@ maturity-aware empty states until enough data exists for insights.
 
 **Goal:** Understand correlations between habits, tags, and wellbeing.
 
-| Maturity phase | What you see |
-| -------------- | ------------ |
-| Collecting | Encouragement to keep logging; minimal insight cards |
-| Early patterns | First correlation statements with confidence tiers |
-| Established | Fuller insight feed, weekday patterns, habit correlations |
+| Maturity phase | What you see                                              |
+| -------------- | --------------------------------------------------------- |
+| Collecting     | Encouragement to keep logging; minimal insight cards      |
+| Early patterns | First correlation statements with confidence tiers        |
+| Established    | Fuller insight feed, weekday patterns, habit correlations |
 
 Insights generate in the background when the **worker** profile/service is enabled on your instance.
 
 Open **Insights** tab for the full feed; Home shows a preview of top insights.
 
 !!! note "Disclaimer"
-    Insights show statistical correlations, not medical causation. See the in-app
-    correlation disclaimer.
+Insights show statistical correlations, not medical causation. See the in-app
+correlation disclaimer.
 
 ---
 

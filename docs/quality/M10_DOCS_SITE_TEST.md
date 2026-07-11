@@ -11,11 +11,11 @@ install guide, user guide, API overview, privacy.
 
 ## Scope
 
-| In scope              | Out of scope              |
-| --------------------- | ------------------------- |
+| In scope                | Out of scope             |
+| ----------------------- | ------------------------ |
 | `mkdocs build --strict` | Live GitHub Pages deploy |
-| Nav + search          | Custom domain CNAME       |
-| Content pages listed  | Full API.md mirror        |
+| Nav + search            | Custom domain CNAME      |
+| Content pages listed    | Full API.md mirror       |
 
 ## Required pages
 

@@ -11,10 +11,10 @@ multi-arch manifests (`linux/amd64`, `linux/arm64`).
 
 ## Registries
 
-| Registry   | Image names                                      | Default in compose |
-| ---------- | ------------------------------------------------ | ------------------ |
-| **GHCR**   | `ghcr.io/sturmi77/correlcore-api`, `correlcore-web` | Yes (`IMAGE_REGISTRY`) |
-| **Docker Hub** | `docker.io/<username>/correlcore-api`, `correlcore-web` | Opt-in via `.env` |
+| Registry       | Image names                                             | Default in compose     |
+| -------------- | ------------------------------------------------------- | ---------------------- |
+| **GHCR**       | `ghcr.io/sturmi77/correlcore-api`, `correlcore-web`     | Yes (`IMAGE_REGISTRY`) |
+| **Docker Hub** | `docker.io/<username>/correlcore-api`, `correlcore-web` | Opt-in via `.env`      |
 
 Replace `<username>` with the maintainer Docker Hub account configured in CI
 (`DOCKERHUB_USERNAME` secret).
@@ -26,11 +26,11 @@ Replace `<username>` with the maintainer Docker Hub account configured in CI
 Built by
 [`release-images.yml`](https://github.com/Sturmi77/correlcore/blob/main/.github/workflows/release-images.yml):
 
-| Trigger        | Tags applied (both images)                    |
-| -------------- | --------------------------------------------- |
-| Push to `main` | `:latest`, `:main`, `:sha-<short>`            |
-| Tag `v1.0.0`   | `:v1.0.0`, `:v1.0`, `:latest`                 |
-| `workflow_dispatch` | Same rules for current ref context       |
+| Trigger             | Tags applied (both images)         |
+| ------------------- | ---------------------------------- |
+| Push to `main`      | `:latest`, `:main`, `:sha-<short>` |
+| Tag `v1.0.0`        | `:v1.0.0`, `:v1.0`, `:latest`      |
+| `workflow_dispatch` | Same rules for current ref context |
 
 Pin production deploys to an immutable tag:
 

@@ -9,14 +9,14 @@ Interactive OpenAPI docs are available on a running instance at `/api/docs` (Swa
 
 ## General conventions
 
-| Topic | Convention |
-| ----- | ---------- |
-| Base path | `/api/v1/...` |
-| Auth | HttpOnly cookies (`access_token`, `refresh_token`) or `Authorization: Bearer` |
-| Dates | ISO 8601 UTC |
-| IDs | UUID v4 |
-| Errors | FastAPI `{"detail": ...}` (422 for validation) |
-| Rate limits | Per-endpoint via SlowAPI (Redis in production) |
+| Topic       | Convention                                                                    |
+| ----------- | ----------------------------------------------------------------------------- |
+| Base path   | `/api/v1/...`                                                                 |
+| Auth        | HttpOnly cookies (`access_token`, `refresh_token`) or `Authorization: Bearer` |
+| Dates       | ISO 8601 UTC                                                                  |
+| IDs         | UUID v4                                                                       |
+| Errors      | FastAPI `{"detail": ...}` (422 for validation)                                |
+| Rate limits | Per-endpoint via SlowAPI (Redis in production)                                |
 
 ---
 
@@ -24,15 +24,15 @@ Interactive OpenAPI docs are available on a running instance at `/api/docs` (Swa
 
 Native JWT auth (Phase 1 selfhost). OIDC via Authentik planned for SaaS (M12+).
 
-| Method | Path | Notes |
-| ------ | ---- | ----- |
-| `POST` | `/api/v1/auth/register` | Always `202`; verify email required |
-| `POST` | `/api/v1/auth/login` | Sets cookies; `5/min/IP` |
-| `POST` | `/api/v1/auth/refresh` | Rotates refresh token |
-| `POST` | `/api/v1/auth/logout` | Clears cookies |
-| `POST` | `/api/v1/auth/verify-email` | Single-use token, 24h TTL |
-| `POST` | `/api/v1/auth/resend-verification` | Always `202`; `3/min/IP` |
-| `GET` | `/api/v1/auth/me` | Current user profile |
+| Method | Path                               | Notes                               |
+| ------ | ---------------------------------- | ----------------------------------- |
+| `POST` | `/api/v1/auth/register`            | Always `202`; verify email required |
+| `POST` | `/api/v1/auth/login`               | Sets cookies; `5/min/IP`            |
+| `POST` | `/api/v1/auth/refresh`             | Rotates refresh token               |
+| `POST` | `/api/v1/auth/logout`              | Clears cookies                      |
+| `POST` | `/api/v1/auth/verify-email`        | Single-use token, 24h TTL           |
+| `POST` | `/api/v1/auth/resend-verification` | Always `202`; `3/min/IP`            |
+| `GET`  | `/api/v1/auth/me`                  | Current user profile                |
 
 Registration and resend endpoints use generic responses to prevent email enumeration.
 
@@ -40,24 +40,24 @@ Registration and resend endpoints use generic responses to prevent email enumera
 
 ## Health
 
-| Method | Path | Auth |
-| ------ | ---- | ---- |
-| `GET` | `/api/v1/health` | No |
-| `GET` | `/health/live` | No (container probe) |
-| `GET` | `/health/ready` | No (Postgres + Redis + encryption) |
+| Method | Path             | Auth                               |
+| ------ | ---------------- | ---------------------------------- |
+| `GET`  | `/api/v1/health` | No                                 |
+| `GET`  | `/health/live`   | No (container probe)               |
+| `GET`  | `/health/ready`  | No (Postgres + Redis + encryption) |
 
 ---
 
 ## Entries & symptoms
 
-| Method | Path | Notes |
-| ------ | ---- | ----- |
-| `GET` | `/api/v1/entries` | List with date filters |
-| `POST` | `/api/v1/entries` | Create daily entry |
-| `GET` | `/api/v1/entries/{id}` | Single entry |
-| `PATCH` | `/api/v1/entries/{id}` | Update entry |
-| `DELETE` | `/api/v1/entries/{id}` | Delete entry |
-| `GET` | `/api/v1/symptoms` | Curated + custom symptoms |
+| Method   | Path                   | Notes                     |
+| -------- | ---------------------- | ------------------------- |
+| `GET`    | `/api/v1/entries`      | List with date filters    |
+| `POST`   | `/api/v1/entries`      | Create daily entry        |
+| `GET`    | `/api/v1/entries/{id}` | Single entry              |
+| `PATCH`  | `/api/v1/entries/{id}` | Update entry              |
+| `DELETE` | `/api/v1/entries/{id}` | Delete entry              |
+| `GET`    | `/api/v1/symptoms`     | Curated + custom symptoms |
 
 Mood, energy, stress, tags, symptoms, and notes are stored per calendar day.
 
@@ -65,11 +65,11 @@ Mood, energy, stress, tags, symptoms, and notes are stored per calendar day.
 
 ## Insights & analytics
 
-| Method | Path | Notes |
-| ------ | ---- | ----- |
-| `GET` | `/api/v1/insights` | Generated insight cards |
-| `GET` | `/api/v1/insights/maturity` | User insight maturity phase |
-| `GET` | `/api/v1/analytics/...` | Trends, correlations (authenticated) |
+| Method | Path                        | Notes                                |
+| ------ | --------------------------- | ------------------------------------ |
+| `GET`  | `/api/v1/insights`          | Generated insight cards              |
+| `GET`  | `/api/v1/insights/maturity` | User insight maturity phase          |
+| `GET`  | `/api/v1/analytics/...`     | Trends, correlations (authenticated) |
 
 Insight generation runs in the background **worker** service.
 
@@ -77,32 +77,32 @@ Insight generation runs in the background **worker** service.
 
 ## Habits
 
-| Method | Path | Notes |
-| ------ | ---- | ----- |
-| `GET` | `/api/v1/habits` | User habit definitions |
-| `POST` | `/api/v1/habits` | Create build/reduce habit |
-| `PATCH` | `/api/v1/habits/{id}` | Update habit |
-| `DELETE` | `/api/v1/habits/{id}` | Remove habit |
+| Method   | Path                  | Notes                     |
+| -------- | --------------------- | ------------------------- |
+| `GET`    | `/api/v1/habits`      | User habit definitions    |
+| `POST`   | `/api/v1/habits`      | Create build/reduce habit |
+| `PATCH`  | `/api/v1/habits/{id}` | Update habit              |
+| `DELETE` | `/api/v1/habits/{id}` | Remove habit              |
 
 ---
 
 ## User & GDPR
 
-| Method | Path | Notes |
-| ------ | ---- | ----- |
-| `GET` | `/api/v1/user/export` | GDPR Art. 20 data export |
-| `DELETE` | `/api/v1/user/account` | Account erasure |
-| `PATCH` | `/api/v1/user/settings` | Analytics opt-out, preferences |
+| Method   | Path                    | Notes                          |
+| -------- | ----------------------- | ------------------------------ |
+| `GET`    | `/api/v1/user/export`   | GDPR Art. 20 data export       |
+| `DELETE` | `/api/v1/user/account`  | Account erasure                |
+| `PATCH`  | `/api/v1/user/settings` | Analytics opt-out, preferences |
 
 ---
 
 ## Offline sync (M4.1)
 
-| Method | Path | Notes |
-| ------ | ---- | ----- |
-| `POST` | `/api/v1/sync/push` | Client change batches |
-| `GET` | `/api/v1/sync/pull` | Server changes since cursor |
-| `GET` | `/api/v1/user/sync-conflicts` | Conflict log |
+| Method | Path                          | Notes                       |
+| ------ | ----------------------------- | --------------------------- |
+| `POST` | `/api/v1/sync/push`           | Client change batches       |
+| `GET`  | `/api/v1/sync/pull`           | Server changes since cursor |
+| `GET`  | `/api/v1/user/sync-conflicts` | Conflict log                |
 
 Feature-flagged; requires verified user and server-side enablement.
 
@@ -120,11 +120,11 @@ See [ADR-0011](https://github.com/Sturmi77/correlcore/blob/main/docs/adr/0011-we
 
 ## Rate limits (summary)
 
-| Endpoint group | Limit |
-| -------------- | ----- |
-| Login / Register | 5 / min / IP |
-| Resend verification | 3 / min / IP |
-| Entries (write) | 60–120 / min / user |
-| General API | 100 / min / IP (Traefik middleware in production) |
+| Endpoint group      | Limit                                             |
+| ------------------- | ------------------------------------------------- |
+| Login / Register    | 5 / min / IP                                      |
+| Resend verification | 3 / min / IP                                      |
+| Entries (write)     | 60–120 / min / user                               |
+| General API         | 100 / min / IP (Traefik middleware in production) |
 
 Production uses Redis-backed rate limit storage.

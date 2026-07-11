@@ -72,13 +72,13 @@ Die Einwilligung bei Registrierung kann in den Einstellungen widerrufen werden
 
 ## 5. Deine Rechte (DSGVO Art. 15–22)
 
-| Recht                              | In der App                                                             |
-| ---------------------------------- | ---------------------------------------------------------------------- |
-| **Auskunft** (Art. 15)             | Datenexport (ZIP/JSON/CSV) unter Einstellungen                         |
-| **Berichtigung** (Art. 16)         | Einträge und Profil bearbeiten                                         |
-| **Löschung** (Art. 17)             | „Account löschen“ unter Einstellungen → Datenschutz                    |
-| **Datenübertragbarkeit** (Art. 20) | GDPR-ZIP-Export                                                        |
-| **Widerspruch Analyse** (Art. 21)  | Toggle „Analyse aktiviert“ in Einstellungen                            |
+| Recht                              | In der App                                                                                                                 |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Auskunft** (Art. 15)             | Datenexport (ZIP/JSON/CSV) unter Einstellungen                                                                             |
+| **Berichtigung** (Art. 16)         | Einträge und Profil bearbeiten                                                                                             |
+| **Löschung** (Art. 17)             | „Account löschen“ unter Einstellungen → Datenschutz                                                                        |
+| **Datenübertragbarkeit** (Art. 20) | GDPR-ZIP-Export                                                                                                            |
+| **Widerspruch Analyse** (Art. 21)  | Toggle „Analyse aktiviert“ in Einstellungen                                                                                |
 | **Einschränkung** (Art. 18)        | Support-Anfrage an Instanz-Betreiber (siehe [DSGVO.md §4](https://github.com/Sturmi77/correlcore/blob/main/docs/DSGVO.md)) |
 
 Antwortfrist für manuelle Anfragen (Art. 18): innerhalb von 72 Stunden.

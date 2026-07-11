@@ -7,10 +7,10 @@ Deploy CorrelCore on your own infrastructure. Full operator reference also lives
 
 ## Deployment paths
 
-| Path | Compose file | TLS | Best for |
-| ---- | ------------ | --- | -------- |
-| **B — Quickstart** | `docker-compose.quickstart.yml` | Bind to Tailscale IP; Mailpit for email | First eval, homelab |
-| **A — Public VPS** | `docker-compose.yml` | Traefik + Let's Encrypt | Internet-facing production |
+| Path               | Compose file                    | TLS                                     | Best for                   |
+| ------------------ | ------------------------------- | --------------------------------------- | -------------------------- |
+| **B — Quickstart** | `docker-compose.quickstart.yml` | Bind to Tailscale IP; Mailpit for email | First eval, homelab        |
+| **A — Public VPS** | `docker-compose.yml`            | Traefik + Let's Encrypt                 | Internet-facing production |
 
 **Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
 
@@ -87,9 +87,9 @@ Verify-email links appear in **Mailpit**: `http://${TAILSCALE_IP}:8025`.
 
 ### 1. DNS records
 
-| Record | Type | Purpose |
-| ------ | ---- | ------- |
-| `correlcore.example.com` | A / AAAA | Web + API (`/api` via Traefik) |
+| Record                          | Type     | Purpose                               |
+| ------------------------------- | -------- | ------------------------------------- |
+| `correlcore.example.com`        | A / AAAA | Web + API (`/api` via Traefik)        |
 | `errors.correlcore.example.com` | A / AAAA | GlitchTip (profile `monitoring` only) |
 
 ### 2. Configure secrets
@@ -102,19 +102,19 @@ cp .env.example .env
 
 Generate and set at minimum:
 
-| Variable | Notes |
-| -------- | ----- |
-| `DOMAIN` | Apex host, e.g. `correlcore.example.com` |
-| `SECRET_KEY` | ≥ 32 bytes, URL-safe |
-| `ENCRYPTION_KEY` | Fernet key — **store outside the server backup** |
-| `POSTGRES_PASSWORD` / `APP_DB_PASSWORD` | Separate passwords, no `@` or `/` |
-| `REDIS_PASSWORD` | ≥ 20 chars recommended |
-| `CORS_ORIGINS` / `FRONTEND_BASE_URL` | `https://${DOMAIN}` |
-| `SMTP_HOST` | Real relay in production |
+| Variable                                | Notes                                            |
+| --------------------------------------- | ------------------------------------------------ |
+| `DOMAIN`                                | Apex host, e.g. `correlcore.example.com`         |
+| `SECRET_KEY`                            | ≥ 32 bytes, URL-safe                             |
+| `ENCRYPTION_KEY`                        | Fernet key — **store outside the server backup** |
+| `POSTGRES_PASSWORD` / `APP_DB_PASSWORD` | Separate passwords, no `@` or `/`                |
+| `REDIS_PASSWORD`                        | ≥ 20 chars recommended                           |
+| `CORS_ORIGINS` / `FRONTEND_BASE_URL`    | `https://${DOMAIN}`                              |
+| `SMTP_HOST`                             | Real relay in production                         |
 
 !!! warning "ENCRYPTION_KEY"
-    Encrypted mood notes cannot be decrypted without this key — even from a valid
-    database backup. Store it in a password manager, not only on the VPS.
+Encrypted mood notes cannot be decrypted without this key — even from a valid
+database backup. Store it in a password manager, not only on the VPS.
 
 ### 3. Traefik static config
 
@@ -166,9 +166,9 @@ The `migrate` service runs `alembic upgrade head` before API start.
 
 ## Backup essentials
 
-| Asset | Method |
-| ----- | ------ |
-| PostgreSQL | `pg_dump` daily |
+| Asset       | Method                                       |
+| ----------- | -------------------------------------------- |
+| PostgreSQL  | `pg_dump` daily                              |
 | **Secrets** | `ENCRYPTION_KEY`, `SECRET_KEY` — **offline** |
 
 ```bash
@@ -183,9 +183,9 @@ Full backup/restore procedure:
 
 ## Troubleshooting
 
-| Symptom | Fix |
-| ------- | --- |
-| Certificate pending | Fix DNS / port 80; wait for propagation |
-| `migrate` exits 1 | Check `POSTGRES_PASSWORD`, `APP_DB_PASSWORD` |
-| Notes garbled after restore | Wrong `ENCRYPTION_KEY` |
-| Verify email wrong host | Set `FRONTEND_BASE_URL=https://${DOMAIN}` |
+| Symptom                     | Fix                                          |
+| --------------------------- | -------------------------------------------- |
+| Certificate pending         | Fix DNS / port 80; wait for propagation      |
+| `migrate` exits 1           | Check `POSTGRES_PASSWORD`, `APP_DB_PASSWORD` |
+| Notes garbled after restore | Wrong `ENCRYPTION_KEY`                       |
+| Verify email wrong host     | Set `FRONTEND_BASE_URL=https://${DOMAIN}`    |
