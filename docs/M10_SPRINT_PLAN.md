@@ -14,16 +14,16 @@ and a tagged GitHub release.
 
 ## Overview
 
-| Sprint | Title                       | Exit criterion                                              |
-| ------ | --------------------------- | ----------------------------------------------------------- |
-| 0      | Scope & audit               | Gap matrix, GitHub milestone #7 issues, tracking docs       |
-| 1      | Compose & install parity    | migrate, MinIO removal, quickstart, bootstrap, smoke tests  |
-| 2      | Container publish & release | amd64+arm64, Docker Hub, GitHub release workflow            |
-| 3      | Docs site                   | MkDocs live (install + user guide + API overview)           |
-| 4      | Landing & legal (DSGVO)     | Marketing landing, Impressum, privacy links                 |
-| 5      | Version, AGPL & go-public   | CHANGELOG 1.0.0, rc tag, branch protection                  |
-| 6      | Milestone closeout (M10-C)  | Quality gate, visual QA, tag `v1.0.0`, milestone #7 closed  |
-| *(opt.)* | Beta backlog slice      | #272 close, Dependabot, triaged P2 fixes                    |
+| Sprint   | Title                       | Exit criterion                                             |
+| -------- | --------------------------- | ---------------------------------------------------------- |
+| 0        | Scope & audit               | Gap matrix, GitHub milestone #7 issues, tracking docs      |
+| 1        | Compose & install parity    | migrate, MinIO removal, quickstart, bootstrap, smoke tests |
+| 2        | Container publish & release | amd64+arm64, Docker Hub, GitHub release workflow           |
+| 3        | Docs site                   | MkDocs live (install + user guide + API overview)          |
+| 4        | Landing & legal (DSGVO)     | Marketing landing, Impressum, privacy links                |
+| 5        | Version, AGPL & go-public   | CHANGELOG 1.0.0, rc tag, branch protection                 |
+| 6        | Milestone closeout (M10-C)  | Quality gate, visual QA, tag `v1.0.0`, milestone #7 closed |
+| _(opt.)_ | Beta backlog slice          | #272 close, Dependabot, triaged P2 fixes                   |
 
 ## Prerequisite
 
@@ -49,15 +49,15 @@ Changes that disable **worker or Traefik** without explicit operator action →
 Evaluated options A–G during Sprint 0 planning. Full analysis in
 [`M10_SPRINT_STATUS.md`](M10_SPRINT_STATUS.md) § Compose decisions.
 
-| ID | Proposal                         | M10        | Notes                                      |
-| -- | -------------------------------- | ---------- | ------------------------------------------ |
-| A  | Profile-based single stack       | **M10.1**  | Breaks legacy default without `COMPOSE_PROFILES` |
-| B  | Remove MinIO from production     | **M10**    | No functional impact until M13               |
-| C  | Traefik → Caddy                  | **M10.1**  | Invasive TLS change                          |
-| D  | Two official paths (quickstart + production) | **M10** | Non-breaking                               |
-| E  | Bootstrap script + `.env.quickstart` | **M10** | Additive                                   |
-| F  | YAML-DRY + migrate parity        | **M10**    | Additive fixes                               |
-| G  | External reverse proxy mode      | **Partial**| INSTALL doc in M10; compose mode M10.1       |
+| ID  | Proposal                                     | M10         | Notes                                            |
+| --- | -------------------------------------------- | ----------- | ------------------------------------------------ |
+| A   | Profile-based single stack                   | **M10.1**   | Breaks legacy default without `COMPOSE_PROFILES` |
+| B   | Remove MinIO from production                 | **M10**     | No functional impact until M13                   |
+| C   | Traefik → Caddy                              | **M10.1**   | Invasive TLS change                              |
+| D   | Two official paths (quickstart + production) | **M10**     | Non-breaking                                     |
+| E   | Bootstrap script + `.env.quickstart`         | **M10**     | Additive                                         |
+| F   | YAML-DRY + migrate parity                    | **M10**     | Additive fixes                                   |
+| G   | External reverse proxy mode                  | **Partial** | INSTALL doc in M10; compose mode M10.1           |
 
 **M10 Sprint 1 package:** **D + E + F + B** (+ G partial INSTALL section).
 
@@ -65,15 +65,15 @@ Evaluated options A–G during Sprint 0 planning. Full analysis in
 
 Applies to **quickstart compose** (M10) and **M10.1+** unified stack (proposal A).
 
-| Path                    | `COMPOSE_PROFILES` | Compose file                         | Containers (approx.) |
-| ----------------------- | ------------------ | ------------------------------------ | -------------------- |
-| Eval / first test       | *(empty)*          | `docker-compose.quickstart.yml`      | 6                    |
-| Homelab durable         | `worker`           | quickstart                           | 7                    |
-| Homelab + GlitchTip     | `worker,monitoring`| quickstart + `--profile monitoring`  | 8                    |
-| **Production VPS (M10)**| *(not required)*   | `docker-compose.yml`                 | 10 (no MinIO)        |
-| Production + monitoring | `monitoring`       | `docker-compose.yml`                 | 11                   |
-| Production unified (M10.1+) | `worker,tls`   | single stack (future)                | 8                    |
-| Storage (M13+)          | `storage`          | TBD                                  | +2                   |
+| Path                        | `COMPOSE_PROFILES`  | Compose file                        | Containers (approx.) |
+| --------------------------- | ------------------- | ----------------------------------- | -------------------- |
+| Eval / first test           | _(empty)_           | `docker-compose.quickstart.yml`     | 6                    |
+| Homelab durable             | `worker`            | quickstart                          | 7                    |
+| Homelab + GlitchTip         | `worker,monitoring` | quickstart + `--profile monitoring` | 8                    |
+| **Production VPS (M10)**    | _(not required)_    | `docker-compose.yml`                | 10 (no MinIO)        |
+| Production + monitoring     | `monitoring`        | `docker-compose.yml`                | 11                   |
+| Production unified (M10.1+) | `worker,tls`        | single stack (future)               | 8                    |
+| Storage (M13+)              | `storage`           | TBD                                 | +2                   |
 
 Operator upgrade guide: [`selfhost/M10_COMPOSE_UPGRADE.md`](selfhost/M10_COMPOSE_UPGRADE.md).
 
@@ -156,15 +156,15 @@ milestone #7.
 
 ## Success metrics
 
-| Metric              | Target                                           |
-| ------------------- | ------------------------------------------------ |
-| Docker Hub images   | amd64 + arm64 for api + web                      |
-| Compose smoke test  | PASS quickstart + production regression          |
-| Docs site           | Install + user guide publicly reachable          |
-| Legal               | Impressum + privacy linked from landing          |
-| CHANGELOG           | Full `[1.0.0]` section                           |
-| Quality gate M10    | PASS (CQR + SA)                                  |
-| GitHub release      | `v1.0.0` with release notes                      |
+| Metric             | Target                                  |
+| ------------------ | --------------------------------------- |
+| Docker Hub images  | amd64 + arm64 for api + web             |
+| Compose smoke test | PASS quickstart + production regression |
+| Docs site          | Install + user guide publicly reachable |
+| Legal              | Impressum + privacy linked from landing |
+| CHANGELOG          | Full `[1.0.0]` section                  |
+| Quality gate M10   | PASS (CQR + SA)                         |
+| GitHub release     | `v1.0.0` with release notes             |
 
 ## References
 
