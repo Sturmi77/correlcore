@@ -8,6 +8,7 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml).
 
 **Related:** [`BETA_CHECKLIST.md`](BETA_CHECKLIST.md) · [`../frontend/USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) ·
+[`M10_COMPOSE_UPGRADE.md`](M10_COMPOSE_UPGRADE.md) ·
 [`../adr/0005-verschluesselung-at-rest.md`](../adr/0005-verschluesselung-at-rest.md)
 
 ---

@@ -132,7 +132,8 @@ testers, monitoring, GDPR self-service. #29 closed when all sprint slices exited
 
 ## Next milestone
 
-**M10 — Public Selfhost Release v1.0.** See [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) § M10.
+**M10 — Public Selfhost Release v1.0.** See [`M10_SPRINT_PLAN.md`](M10_SPRINT_PLAN.md),
+[`M10_SPRINT_STATUS.md`](M10_SPRINT_STATUS.md), and [`selfhost/M10_COMPOSE_UPGRADE.md`](selfhost/M10_COMPOSE_UPGRADE.md).
 
 ## API usage note (unchanged)
 
