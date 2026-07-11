@@ -67,6 +67,27 @@ describe('HomeDailyBrief', () => {
     expect(screen.getByTestId('home-bridge-trends').textContent).toContain('Energy');
   });
 
+  it('shows the insight statement as primary text, subject label as caption', () => {
+    render(HomeDailyBrief, {
+      props: {
+        maturity: collectingMaturity,
+        entries: [],
+        latestInsight: {
+          id: 'i1',
+          subject_label: 'Energy',
+          metric: 'energy',
+          statement: 'Energy tracks with your walks.',
+          confidence: 0.72,
+        } as never,
+      },
+    });
+
+    expect(screen.getByTestId('daily-brief-lead-statement').textContent).toContain(
+      'Energy tracks with your walks.'
+    );
+    expect(screen.getByTestId('daily-brief-lead-caption').textContent).toContain('Energy');
+  });
+
   it('renders work context summary rows when dashboard data is present', () => {
     render(HomeDailyBrief, {
       props: {

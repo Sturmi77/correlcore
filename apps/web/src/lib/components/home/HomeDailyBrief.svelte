@@ -50,9 +50,11 @@
 
   <div class="daily-brief__lead">
     {#if latestInsight}
-      <h2 class="daily-brief__title">{latestInsight.subject_label ?? latestInsight.metric}</h2>
-      <p class="daily-brief__statement">
+      <p class="daily-brief__lead-statement" data-testid="daily-brief-lead-statement">
         {latestInsight.statement ?? $_('home.brief.insight_fallback')}
+      </p>
+      <p class="daily-brief__caption" data-testid="daily-brief-lead-caption">
+        {latestInsight.subject_label ?? latestInsight.metric}
       </p>
     {:else if phaseLabel}
       <h2 class="daily-brief__title">{phaseLabel}</h2>
@@ -174,6 +176,22 @@
     font-size: clamp(1.125rem, 2.5vw, 1.35rem);
     font-weight: 650;
     line-height: 1.25;
+  }
+
+  .daily-brief__lead-statement {
+    margin: 0;
+    font-size: clamp(1.125rem, 2.5vw, 1.35rem);
+    font-weight: 650;
+    line-height: 1.3;
+    color: var(--color-fg);
+    max-width: 42rem;
+  }
+
+  .daily-brief__caption {
+    margin: 0;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--color-text-faint);
   }
 
   .daily-brief__statement,

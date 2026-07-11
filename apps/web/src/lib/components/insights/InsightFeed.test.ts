@@ -118,6 +118,18 @@ describe('InsightFeed', () => {
     expect(items.length).toBe(3);
   });
 
+  it('marks only the top-ranked insight as featured', () => {
+    const low = makeInsight({ id: 'low', confidence: 0.3, effect_size: 0.2 });
+    const high = makeInsight({ id: 'high', confidence: 0.9, effect_size: 0.8 });
+    const mid = makeInsight({ id: 'mid', confidence: 0.5, effect_size: 0.5 });
+    render(InsightFeed, { props: { insights: [low, high, mid], maturity } });
+    const cards = screen.getByTestId('insight-feed-list').querySelectorAll('[data-testid="insight-card"]');
+    expect(cards.length).toBe(3);
+    expect(cards[0]?.getAttribute('data-featured')).toBe('true');
+    expect(cards[1]?.getAttribute('data-featured')).toBe('false');
+    expect(cards[2]?.getAttribute('data-featured')).toBe('false');
+  });
+
   // ── Filter tabs ───────────────────────────────────────────────────
   it('renders all 5 filter tabs', () => {
     render(InsightFeed, { props: { insights: [] } });
