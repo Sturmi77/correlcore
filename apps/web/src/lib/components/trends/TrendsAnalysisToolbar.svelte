@@ -12,6 +12,7 @@
   export let activeTab: string;
   export let tabOptions: TabBarOption[] = [];
   export let showCompareFilters = false;
+  export let embedCompareFilters = true;
 
   const dispatch = createEventDispatcher<{
     rangeChange: { value: TimeseriesRange };
@@ -41,7 +42,7 @@
     />
   </div>
 
-  {#if showCompareFilters}
+  {#if showCompareFilters && embedCompareFilters}
     <div
       class="trends-toolbar__row trends-toolbar__row--filters"
       data-testid="trends-filters-toolbar"

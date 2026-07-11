@@ -45,6 +45,19 @@
 
 **Phase 4 (O-57–O-62):** **Open** — see [`GUI_OPTIMIZATION_PHASE4.md`](GUI_OPTIMIZATION_PHASE4.md). Mobile UX findings: Home CTA, weekday overview, heatmap density, Trends sticky chrome, Insights overflow.
 
+**Phase 4 follow-up (O-63–O-64):** **Open** — see [`GUI_OPTIMIZATION_PHASE4.md`](GUI_OPTIMIZATION_PHASE4.md#phase-4-follow-up-o-63o-64). Home work-context encoding + Trends mobile control density.
+
+---
+
+## Issue index (O-63 – O-64) — Phase 4 follow-up
+
+| ID   | Sprint | Impact   | Effort | Status | Title                                                         |
+| ---- | ------ | -------- | ------ | ------ | ------------------------------------------------------------- |
+| O-63 | P4-D   | High     | Low    | Open   | Home: encode work-context bars by mood, not entry frequency   |
+| O-64 | P4-C   | High     | Medium | Open   | Trends mobile: compact quick filters + compare settings sheet |
+
+GitHub follow-up PR: branch `cursor/home-trends-followup-e965`
+
 ---
 
 ## Issue index (O-57 – O-62) — Phase 4

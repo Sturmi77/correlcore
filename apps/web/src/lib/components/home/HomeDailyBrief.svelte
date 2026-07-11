@@ -9,6 +9,10 @@
     maturityProgressPercent,
   } from '$lib/utils/insightMaturityProgress';
   import { rankInsights } from '$lib/utils/insightRanking';
+  import {
+    buildWorkContextDisplayItems,
+    workContextMoodBarWidth,
+  } from '$lib/utils/homeWorkContextSummary';
 
   export let entries: EntryResponse[] = [];
   export let latestInsight: InsightResponse | null = null;
@@ -33,12 +37,12 @@
   $: trendsBridgePreview = insightBridgePreview;
   $: topInsightConfidence =
     topInsight?.confidence != null ? Math.round(topInsight.confidence * 100) : null;
-  $: visibleWorkContexts = workContextSummary
-    .filter((item) => item.entry_count > 0)
-    .slice()
-    .sort((a, b) => b.entry_count - a.entry_count || a.work_context.localeCompare(b.work_context))
-    .slice(0, 4);
-  $: maxWorkContextCount = Math.max(1, ...visibleWorkContexts.map((item) => item.entry_count));
+  $: visibleWorkContexts = buildWorkContextDisplayItems(workContextSummary);
+  $: workContextMoodValues = visibleWorkContexts
+    .map((item) => item.mood_avg)
+    .filter((value): value is number => value !== null);
+  $: maxWorkContextMood = Math.max(5, ...(workContextMoodValues.length ? workContextMoodValues : [5]));
+  $: minWorkContextMood = workContextMoodValues.length ? Math.min(...workContextMoodValues) : null;
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
@@ -103,12 +107,19 @@
       </div>
       <div class="daily-brief__work-context-list">
         {#each visibleWorkContexts as item}
-          <div class="daily-brief__work-context-row">
+          <div
+            class="daily-brief__work-context-row"
+            data-highlight={item.mood_avg !== null && item.mood_avg === maxWorkContextMood
+              ? 'high'
+              : item.mood_avg !== null && minWorkContextMood !== null && item.mood_avg === minWorkContextMood
+                ? 'low'
+                : 'none'}
+          >
             <span>{$_(`entry.work_context.${item.work_context}`)}</span>
             <div
               class="daily-brief__work-context-bar"
               aria-hidden="true"
-              style={`--bar-width: ${(item.entry_count / maxWorkContextCount) * 100}%`}
+              style={`--bar-width: ${workContextMoodBarWidth(item.mood_avg)}`}
             ></div>
             <strong>
               {$_('home.brief.work_context_value', {
@@ -291,9 +302,17 @@
     height: 0.55rem;
     border-radius: var(--radius-full);
     background:
-      linear-gradient(var(--color-primary), var(--color-primary)) left center / var(--bar-width)
-        100% no-repeat,
+      linear-gradient(var(--bar-color, var(--color-primary)), var(--bar-color, var(--color-primary)))
+        left center / var(--bar-width) 100% no-repeat,
       var(--color-surface);
+  }
+
+  .daily-brief__work-context-row[data-highlight='high'] .daily-brief__work-context-bar {
+    --bar-color: var(--color-success, var(--color-primary));
+  }
+
+  .daily-brief__work-context-row[data-highlight='low'] .daily-brief__work-context-bar {
+    --bar-color: var(--color-warning, var(--color-primary));
   }
 
   .daily-brief__bridge {
