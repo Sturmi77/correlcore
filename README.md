@@ -4,7 +4,7 @@
 > Understand why some days are good and others are not — selfhosted today, offline-capable by design, 60 seconds per day.
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Status](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/Sturmi77/correlcore/milestones)
+[![Status](https://img.shields.io/badge/status-selfhost%20v1.0-blue)](https://sturmi77.github.io/correlcore/)
 [![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20SvelteKit%20%2B%20PostgreSQL-green)](#tech-stack)
 
 ---
@@ -63,7 +63,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                                                          |
 | **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                                                             |
 | **M9**    | **Complete** (2026-07-11) | Beta hardening closed out: GDPR paths, GlitchTip/PII scrub, install/backup docs, security CI, beta program. Closes #29. **Next main milestone: M10.** See [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md) and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md). |
-| **M10**   | **In progress**           | Public selfhost v1.0 — sprints 0–3 implemented. Docs: [GitHub Pages](https://sturmi77.github.io/correlcore/) (after deploy). See [`docs/M10_SPRINT_PLAN.md`](docs/M10_SPRINT_PLAN.md) and [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md).                                        |
+| **M10**   | **In progress**           | Public selfhost v1.0 — sprints 0–4 implemented (landing + legal). Docs: [GitHub Pages](https://sturmi77.github.io/correlcore/). See [`docs/M10_SPRINT_PLAN.md`](docs/M10_SPRINT_PLAN.md) and [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md). |
 
 ---
 

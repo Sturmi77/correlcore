@@ -31,7 +31,6 @@
   import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
   import { shiftIsoDate } from '$lib/utils/streak';
   import Button from '$lib/components/common/Button.svelte';
-  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
@@ -39,6 +38,7 @@
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import LandingPage from '$lib/components/landing/LandingPage.svelte';
 
   const EARLY_CONTEXT_PATTERN_KEY = 'early_context_pattern';
   const LEGACY_FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
@@ -262,60 +262,7 @@
     {/if}
   </div>
 {:else}
-  <div class="flex flex-col items-center justify-center gap-8 min-h-[80dvh]">
-    <div class="flex flex-col items-center gap-4">
-      <svg
-        aria-label="CorrelCore"
-        viewBox="0 0 48 48"
-        width="64"
-        height="64"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3" opacity="0.2" />
-        <path
-          d="M24 4 A20 20 0 0 1 44 24"
-          stroke="var(--color-primary)"
-          stroke-width="3"
-          stroke-linecap="round"
-        />
-        <path
-          d="M16 26 Q24 34 32 26"
-          stroke="var(--color-primary)"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          fill="none"
-        />
-        <circle cx="19" cy="20" r="1.5" fill="var(--color-primary)" />
-        <circle cx="29" cy="20" r="1.5" fill="var(--color-primary)" />
-      </svg>
-
-      <h1 class="h1 text-center" style="font-size: var(--text-xl)">
-        {$_('app.name')}
-      </h1>
-      <p class="text-center" style="font-size: var(--text-base); color: var(--color-text-muted)">
-        {$_('app.tagline')}
-      </p>
-    </div>
-
-    <div class="flex items-center gap-3">
-      <span style="font-size: var(--text-sm); color: var(--color-text-muted)"
-        >{$_('theme.label')}</span
-      >
-      <ThemeToggle testId="landing-theme-toggle" />
-    </div>
-
-    <div
-      class="badge"
-      style="
-        background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-        color: var(--color-warning);
-        font-size: var(--text-xs);
-      "
-    >
-      Pre-Alpha — M0 Setup
-    </div>
-  </div>
+  <LandingPage />
 {/if}
 
 <style>
