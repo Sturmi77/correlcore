@@ -12,13 +12,13 @@ announcing **v1.0.0** (final tag in M10 Sprint 6).
 
 ## Pre-flight (before `git push --tags` for rc/final)
 
-| Step | Action | Owner |
-| ---- | ------ | ----- |
-| 1 | CHANGELOG `[1.0.0]` section complete | Maintainer |
-| 2 | Package manifests show `1.0.0-rc.1` (rc) / `1.0.0` (final) + `AGPL-3.0-or-later` | Maintainer |
-| 3 | `security@correlcore.app` mailbox monitored (72h SLA per SECURITY.md) | Maintainer |
-| 4 | GitHub Pages docs site live | CI |
-| 5 | Container images published (GHCR public; Docker Hub optional) | CI |
+| Step | Action                                                                           | Owner      |
+| ---- | -------------------------------------------------------------------------------- | ---------- |
+| 1    | CHANGELOG `[1.0.0]` section complete                                             | Maintainer |
+| 2    | Package manifests show `1.0.0-rc.1` (rc) / `1.0.0` (final) + `AGPL-3.0-or-later` | Maintainer |
+| 3    | `security@correlcore.app` mailbox monitored (72h SLA per SECURITY.md)            | Maintainer |
+| 4    | GitHub Pages docs site live                                                      | CI         |
+| 5    | Container images published (GHCR public; Docker Hub optional)                    | CI         |
 
 ---
 
@@ -35,15 +35,15 @@ When switching from private → **public**:
 
 Recommended rules (Settings → Branches → Add rule for `main`):
 
-| Rule | Setting |
-| ---- | ------- |
-| Require pull request before merging | ✅ |
-| Required approvals | ≥ 1 |
-| Require status checks | ✅ `CI — Web`, `CI — API`, `CI — Docs Site` (as applicable) |
-| Require branches up to date | ✅ |
-| Include administrators | optional (team preference) |
-| Restrict force pushes | ✅ |
-| Restrict deletions | ✅ |
+| Rule                                | Setting                                                     |
+| ----------------------------------- | ----------------------------------------------------------- |
+| Require pull request before merging | ✅                                                          |
+| Required approvals                  | ≥ 1                                                         |
+| Require status checks               | ✅ `CI — Web`, `CI — API`, `CI — Docs Site` (as applicable) |
+| Require branches up to date         | ✅                                                          |
+| Include administrators              | optional (team preference)                                  |
+| Restrict force pushes               | ✅                                                          |
+| Restrict deletions                  | ✅                                                          |
 
 Document any repo-specific exceptions in your team runbook.
 

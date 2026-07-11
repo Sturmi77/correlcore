@@ -610,6 +610,7 @@ Since `0.6.0`, this release includes milestones **M1–M9** (daily entry through
 - Tote ADR-Pfade in `docs/DESIGN_DOCUMENT.md` korrigiert: D-008 → [ADR-0002](docs/adr/0002-capacitor-statt-twa.md) (war `0002-mobile-strategie-capacitor-vs-twa.md`), D-009 → [ADR-0003](docs/adr/0003-sync-conflict-log.md) (war `0003-sync-conflict-handling.md`); Status von D-008/D-009 auf `✅ Entschieden` aktualisiert (passend zu den existierenden Accepted-ADRs).
 - Risiko-Tabelle aktualisiert: SEC-02 (`SECRET_KEY`-Mismatch, PR #43), SW-01 (Sync-Conflict-Log, ADR-0003 + Issue #24), ZS-01 (TWA → Capacitor, ADR-0002) jeweils auf `✅ behoben`.
 - ADR-Verzeichnis-Listing in der Repo-Tree-Skizze (Abschnitt 3.6) auf den tatsächlichen Stand (0001–0007) gebracht.
+
 ---
 
 ## [0.6.0] — M0 Fundament — 2026-04-28

@@ -10,16 +10,16 @@ and release candidate tag readiness.
 
 ## Static checks
 
-| Check | Expected | Status |
-| ----- | -------- | ------ |
-| CHANGELOG has `## [1.0.0]` | Yes | PASS |
-| `[Unreleased]` empty or minimal | Yes | PASS |
-| Root `package.json` `license` | `AGPL-3.0-or-later` | PASS |
-| Root `package.json` `version` | `1.0.0-rc.1` | PASS |
-| `@correlcore/web` version | `1.0.0-rc.1` | PASS |
-| Backend `pyproject.toml` version | `1.0.0-rc.1` | PASS |
-| `SECURITY.md` contact | `security@correlcore.app` | PASS |
-| Go-public checklist doc | `docs/selfhost/GO_PUBLIC_CHECKLIST.md` | PASS |
+| Check                            | Expected                               | Status |
+| -------------------------------- | -------------------------------------- | ------ |
+| CHANGELOG has `## [1.0.0]`       | Yes                                    | PASS   |
+| `[Unreleased]` empty or minimal  | Yes                                    | PASS   |
+| Root `package.json` `license`    | `AGPL-3.0-or-later`                    | PASS   |
+| Root `package.json` `version`    | `1.0.0-rc.1`                           | PASS   |
+| `@correlcore/web` version        | `1.0.0-rc.1`                           | PASS   |
+| Backend `pyproject.toml` version | `1.0.0-rc.1`                           | PASS   |
+| `SECURITY.md` contact            | `security@correlcore.app`              | PASS   |
+| Go-public checklist doc          | `docs/selfhost/GO_PUBLIC_CHECKLIST.md` | PASS   |
 
 ## Tag procedure (maintainer)
 
@@ -35,8 +35,8 @@ Verify GitHub Release created (pre-release) and `release-images` workflow succee
 
 ## Sign-off
 
-| Step | Status | Date |
-| ---- | ------ | ---- |
-| Manifest / CHANGELOG review | PASS | 2026-07-11 |
-| Tag `v1.0.0-rc.1` pushed | Pending | post-merge |
-| security@ mailbox test | Pending | maintainer |
+| Step                        | Status  | Date       |
+| --------------------------- | ------- | ---------- |
+| Manifest / CHANGELOG review | PASS    | 2026-07-11 |
+| Tag `v1.0.0-rc.1` pushed    | Pending | post-merge |
+| security@ mailbox test      | Pending | maintainer |
