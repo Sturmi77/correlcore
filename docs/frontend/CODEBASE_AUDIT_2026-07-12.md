@@ -47,15 +47,15 @@ Null Nicht-Test-Import-Sites (verifiziert per Call-Site-Grep, nicht nur
 Namen; `HomeSparkline`/`InsightPhaseMilestoneCard` werden von
 `routes/page.test.ts` sogar explizit als „darf nicht auf Home" asserted):
 
-| Komponente | Anmerkung |
-| --- | --- |
-| `home/HomeInsight.svelte` | Vor-Daily-Brief-Ära; nur `home.insight.empty_statement` lebt noch (via `InsightCard`) |
-| `home/HomeRecentEntries.svelte` | + i18n-Gruppe `home.recent.*` verwaist |
-| `home/HomeSparkline.svelte` | O-55 entfernte die Nutzung, Datei blieb; `home.sparkline.*` verwaist |
-| `home/HomeSummary.svelte` | + totes Figma-Template `HomeSummary.figma.ts` (gleiche Klasse wie das in #346 entfernte `InsightQualityMeter.figma.ts`) + Contract-Test-Case |
-| `home/WeekdayPatternChart.svelte` | Durch `HomeWeekdayOverview` ersetzt (PR #340); `home.weekday_pattern.early_signal` bleibt (von `HomeWeekdayOverview` genutzt), Rest der Gruppe prüfen |
-| `insights/InsightPhaseMilestoneCard.svelte` | — |
-| `trends/EventAlignedSmallMultiplesSheet.svelte` | Siehe A-03 — Teil einer toten Kette |
+| Komponente                                      | Anmerkung                                                                                                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `home/HomeInsight.svelte`                       | Vor-Daily-Brief-Ära; nur `home.insight.empty_statement` lebt noch (via `InsightCard`)                                                                 |
+| `home/HomeRecentEntries.svelte`                 | + i18n-Gruppe `home.recent.*` verwaist                                                                                                                |
+| `home/HomeSparkline.svelte`                     | O-55 entfernte die Nutzung, Datei blieb; `home.sparkline.*` verwaist                                                                                  |
+| `home/HomeSummary.svelte`                       | + totes Figma-Template `HomeSummary.figma.ts` (gleiche Klasse wie das in #346 entfernte `InsightQualityMeter.figma.ts`) + Contract-Test-Case          |
+| `home/WeekdayPatternChart.svelte`               | Durch `HomeWeekdayOverview` ersetzt (PR #340); `home.weekday_pattern.early_signal` bleibt (von `HomeWeekdayOverview` genutzt), Rest der Gruppe prüfen |
+| `insights/InsightPhaseMilestoneCard.svelte`     | —                                                                                                                                                     |
+| `trends/EventAlignedSmallMultiplesSheet.svelte` | Siehe A-03 — Teil einer toten Kette                                                                                                                   |
 
 **Maßnahme:** Komponenten + zugehörige `.test.ts` löschen; verwaiste
 i18n-Gruppen (en+de) und das Figma-Template mit entfernen; Contract-Test
@@ -111,14 +111,15 @@ Felder bewusst als „nur für Export/Trends" dokumentieren.
 ### A-06: `symptom_cluster` ohne Frontend-Sonderbehandlung
 
 Das Backend emittiert 8 Insight-Typen; `buildTitle()` behandelt 4 explizit
-+ generischen Fallback. Für `symptom_cluster` (Lasso) gilt
-`metric == subject_label` → Caption wird redundant („mood_score →
-mood_score"). Zudem decken die Dev-Fixtures nur 5 von 8 Typen ab —
-`symptom_cluster` (lasso+lag), `work_context_pattern` und
-`weekday_context_pattern` sind in keinem Preset visuell prüfbar, und
-`weekday_pattern` fehlt in `provisional`/`robust` (deshalb zeigt das
-robust-Preset den Weekday-Empty-State — gewollt als Empty-State-Demo oder
-Fixture-Lücke? Klären und ggf. ergänzen).
+
+- generischen Fallback. Für `symptom_cluster` (Lasso) gilt
+  `metric == subject_label` → Caption wird redundant („mood_score →
+  mood_score"). Zudem decken die Dev-Fixtures nur 5 von 8 Typen ab —
+  `symptom_cluster` (lasso+lag), `work_context_pattern` und
+  `weekday_context_pattern` sind in keinem Preset visuell prüfbar, und
+  `weekday_pattern` fehlt in `provisional`/`robust` (deshalb zeigt das
+  robust-Preset den Weekday-Empty-State — gewollt als Empty-State-Demo oder
+  Fixture-Lücke? Klären und ggf. ergänzen).
 
 ### A-07: Service Worker cached im Dev-Modus aggressiv
 
@@ -133,20 +134,20 @@ schnell Nutzer Fixes erhalten).
 
 ## Browser-Verifikationsmatrix (Mock-Daten, 375×812)
 
-| Fall | Preset | Erwartet | Ergebnis |
-| --- | --- | --- | --- |
-| Weekday-Empty-State statt Stille | collecting | Empty-State-Copy | ✅ |
-| Weekday-Chart mit Fr-Peak | early_patterns | 7 Balken, Fr 3.8 | ✅ |
-| Weekday bei Phase 4 ohne Insight | robust | Empty-State (Fixture-Lücke sichtbar) | ✅ (→ A-06) |
-| Statement-first (Daily Brief + Cards) | early_patterns/robust | Statement groß, Label als Caption | ✅ |
-| Featured-Karte | robust | `data-featured=true`, 24px-Statement, Metrik-Akzent | ✅ |
-| Evidence-Row | robust | Tier-Chip 1× pro Karte, Dots + Label + Sample | ✅ (X-01 gefunden) |
-| „Schlaf"-Tab | robust | 0 Karten, irreführender Empty-State | ✅ (→ A-04) |
-| Explore-Events-Button | alle | nirgends vorhanden | ✅ (→ A-03) |
-| Work-Context nur Mood | alle | „{mood} · {n} Tage" | ✅ (→ A-05) |
-| Entry-Sheet-Metriken | — | 3 Slider, kein Schlaf-Feld | ✅ (→ A-04) |
-| Kein horizontaler Scroll | Home + Insights | `scrollWidth ≤ 375` | ✅ |
-| High/Low-Highlight | early_patterns | Fr=high, Di/So=low | ✅ nach Fix (X-02) |
+| Fall                                  | Preset                | Erwartet                                            | Ergebnis           |
+| ------------------------------------- | --------------------- | --------------------------------------------------- | ------------------ |
+| Weekday-Empty-State statt Stille      | collecting            | Empty-State-Copy                                    | ✅                 |
+| Weekday-Chart mit Fr-Peak             | early_patterns        | 7 Balken, Fr 3.8                                    | ✅                 |
+| Weekday bei Phase 4 ohne Insight      | robust                | Empty-State (Fixture-Lücke sichtbar)                | ✅ (→ A-06)        |
+| Statement-first (Daily Brief + Cards) | early_patterns/robust | Statement groß, Label als Caption                   | ✅                 |
+| Featured-Karte                        | robust                | `data-featured=true`, 24px-Statement, Metrik-Akzent | ✅                 |
+| Evidence-Row                          | robust                | Tier-Chip 1× pro Karte, Dots + Label + Sample       | ✅ (X-01 gefunden) |
+| „Schlaf"-Tab                          | robust                | 0 Karten, irreführender Empty-State                 | ✅ (→ A-04)        |
+| Explore-Events-Button                 | alle                  | nirgends vorhanden                                  | ✅ (→ A-03)        |
+| Work-Context nur Mood                 | alle                  | „{mood} · {n} Tage"                                 | ✅ (→ A-05)        |
+| Entry-Sheet-Metriken                  | —                     | 3 Slider, kein Schlaf-Feld                          | ✅ (→ A-04)        |
+| Kein horizontaler Scroll              | Home + Insights       | `scrollWidth ≤ 375`                                 | ✅                 |
+| High/Low-Highlight                    | early_patterns        | Fr=high, Di/So=low                                  | ✅ nach Fix (X-02) |
 
 ## Empfohlene Reihenfolge
 
