@@ -135,7 +135,9 @@
       "heading": "Your week at a glance",
       "aria": "Weekday overview with mood and early findings",
       "no_finding": "—",
-      "hint": "Mood bars and early findings per weekday. More entries make patterns more stable."
+      "hint": "Mood bars and early findings per weekday. More entries make patterns more stable.",
+      "empty": "No weekday pattern yet",
+      "empty_hint": "Keep logging across different weekdays to see how your mood varies."
     },
     "sparkline": {
       "heading": "Mood trend",

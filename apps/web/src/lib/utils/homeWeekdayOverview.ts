@@ -110,3 +110,28 @@ export function buildWeekdayOverviewCells(
 export function hasWeekdayOverviewContent(cells: readonly WeekdayOverviewCell[]): boolean {
   return cells.some((cell) => cell.moodAvg !== null || cell.findingLabel !== null);
 }
+
+/**
+ * Pick the most recently generated `weekday_pattern` insight.
+ *
+ * `/insights/latest`'s per-subject dedup keys weekday_pattern rows by their
+ * weekday *label* (e.g. "Friday" vs "Wednesday" — subject_id is always null
+ * for this type), not as a single subject. If a user's strongest weekday
+ * changes between generation runs, an older row for the previous label can
+ * coexist with a newer row for the current one instead of being superseded.
+ * Insight-ranking order (confidence × |effect_size|) doesn't reflect this —
+ * an older high-scoring weekday pattern can rank above a newer, lower-scoring
+ * one. Select by `generated_for_date` explicitly instead of trusting rank
+ * order, so Home always shows the current pattern, not a stale one.
+ */
+export function selectNewestWeekdayPattern(
+  insights: readonly InsightResponse[]
+): InsightResponse | null {
+  const candidates = insights.filter((insight) => insight.insight_type === 'weekday_pattern');
+  if (candidates.length === 0) return null;
+  return candidates.reduce((newest, candidate) =>
+    candidate.generated_for_date.localeCompare(newest.generated_for_date) > 0
+      ? candidate
+      : newest
+  );
+}

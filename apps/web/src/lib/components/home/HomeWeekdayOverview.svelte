@@ -7,6 +7,9 @@
   } from '$lib/utils/homeWeekdayOverview';
   export let insights: InsightResponse[] = [];
   export let weekdayInsight: InsightResponse | null = null;
+  /** While true, suppress the empty state — insights haven't finished loading
+   * (or failed to load) yet, so "no weekday pattern yet" would be premature. */
+  export let loading = false;
 
   $: cells = buildWeekdayOverviewCells(weekdayInsight ? [weekdayInsight, ...insights] : insights);
   $: knownMood = cells
@@ -65,6 +68,16 @@
       <p class="weekday-overview__statement">{weekdayInsight.statement}</p>
     {/if}
     <p class="weekday-overview__hint">{$_('home.weekday_overview.hint')}</p>
+  </section>
+{:else if !loading}
+  <section
+    class="weekday-overview weekday-overview--empty"
+    data-testid="home-weekday-overview-empty"
+    aria-label={$_('home.weekday_overview.heading')}
+  >
+    <h2 class="weekday-overview__heading">{$_('home.weekday_overview.heading')}</h2>
+    <p class="weekday-overview__empty">{$_('home.weekday_overview.empty')}</p>
+    <p class="weekday-overview__hint">{$_('home.weekday_overview.empty_hint')}</p>
   </section>
 {/if}
 
@@ -169,10 +182,18 @@
   }
 
   .weekday-overview__statement,
-  .weekday-overview__hint {
+  .weekday-overview__hint,
+  .weekday-overview__empty {
     margin: 0;
     font-size: var(--text-sm, 0.88rem);
     line-height: 1.45;
+  }
+
+  .weekday-overview--empty {
+    padding: 0.75rem 0.5rem;
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface-chart-bg);
+    border-radius: 0.45rem;
   }
 
   .weekday-overview__hint {
