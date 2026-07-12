@@ -114,6 +114,19 @@
     return metric;
   }
 
+  /**
+   * Sprint 3 (ISP-5): accent the card by which metric the insight is about,
+   * reusing tokens that previously only fed chart lines (lib/utils/charts.ts).
+   * Falls back to the generic primary for non-core-metric insights (tags,
+   * symptoms, context patterns) rather than guessing a color for them.
+   */
+  function metricAccentVar(metric: string | null | undefined): string {
+    if (metric === 'mood' || metric === 'mood_score') return 'var(--color-metric-mood)';
+    if (metric === 'energy' || metric === 'energy_avg') return 'var(--color-metric-energy)';
+    if (metric === 'stress' || metric === 'stress_avg') return 'var(--color-metric-stress)';
+    return 'var(--color-primary)';
+  }
+
   function buildTitle(ins: InsightResponse): string {
     if (ins.insight_type === 'symptom_mood_association') {
       const symptom = payloadString(ins, 'symptom_name') ?? ins.subject_label ?? 'Symptoms';
@@ -144,6 +157,7 @@
     return 'insights.weekday_confounded_note';
   }
 
+  $: accentColor = insight ? metricAccentVar(insight.metric) : 'var(--color-primary)';
   $: isConfounded = insight ? isCalendarContextConfounded(insight) : false;
   $: primaryConfounder = insight ? primaryInsightConfounder(insight) : null;
   $: isContextInsight = insight ? isCalendarContextInsight(insight) : false;
@@ -189,6 +203,7 @@
     data-expanded={expanded ? 'true' : 'false'}
     data-direction={dirClass}
     data-featured={featured ? 'true' : 'false'}
+    style="--insight-accent: {accentColor}"
   >
     <header class="insight-card__header">
       <span
@@ -350,12 +365,22 @@
     padding: var(--space-4, 1rem);
     background: var(--color-surface);
     border: 1px solid oklch(from var(--color-text) l c h / 0.08);
+    border-left: 3px solid var(--insight-accent, var(--color-primary));
     border-radius: var(--radius-lg, 0.75rem);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 200ms ease;
+    transition: box-shadow var(--transition-interactive, 200ms ease);
+  }
+  .insight-card:hover,
+  .insight-card:focus-within {
+    box-shadow: var(--shadow-md);
   }
   .insight-card--featured {
-    border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+    /* Longhand, not the border-color shorthand: keeps border-left's metric
+       accent color from being clobbered on the featured card, where it's
+       most visible. */
+    border-top-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+    border-right-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+    border-bottom-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
     background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
   }
   .insight-card--confounded {
@@ -442,7 +467,20 @@
     margin: 0;
   }
   .insight-card--featured .insight-card__statement {
-    font-size: var(--text-lg, 1.125rem);
+    font-size: var(--text-xl, 1.5rem);
+    /* Reveal once on mount; easing matches --transition-interactive's curve
+       (that token is a duration+easing shorthand, not usable standalone here). */
+    animation: insightStatementReveal 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes insightStatementReveal {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .insight-card__meta {
     font-size: var(--text-xs, 0.75rem);
@@ -629,7 +667,8 @@
       animation: none;
       opacity: 0.6;
     }
-    .insight-card__level2 {
+    .insight-card__level2,
+    .insight-card--featured .insight-card__statement {
       animation: none;
     }
   }

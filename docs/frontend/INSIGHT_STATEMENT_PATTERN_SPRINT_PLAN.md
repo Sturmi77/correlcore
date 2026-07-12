@@ -19,7 +19,8 @@ solo pass.
 | [#343](https://github.com/Sturmi77/correlcore/pull/343) | Document all remaining proposals in `INSIGHT_STATEMENT_PATTERN.md` | **Merged** |
 | [#344](https://github.com/Sturmi77/correlcore/pull/344) | This sprint plan                                                   | **Merged** |
 | [#345](https://github.com/Sturmi77/correlcore/pull/345) | Sprint 1 (ISP-1, ISP-2, ISP-3) — statement-first hierarchy         | **Merged** |
-| Sprint 2 (ISP-4) PR                                     | Consolidate evidence components into `InsightEvidence`             | See below  |
+| [#346](https://github.com/Sturmi77/correlcore/pull/346) | Sprint 2 (ISP-4) — consolidate evidence components                 | **Merged** |
+| Sprint 3 (ISP-5–ISP-9) PR                               | Visual refresh — accent, type, motion, elevation, icon scale       | See below  |
 
 These removed two sources of misleading content (duplicated statement,
 fabricated trend line) before the hierarchy work, then made the statement
@@ -44,11 +45,11 @@ pure dead-code removal, rather than merging 6 into 1 as originally scoped.
 | ISP-2 | 1      | High     | Low    | Done   | `HomeDailyBrief`: swap title/statement visual weight                       |
 | ISP-3 | 1      | Medium   | Low    | Done   | `InsightFeed`: pass `featured` to the top-ranked insight                   |
 | ISP-4 | 2      | Medium   | Medium | Done   | Consolidate live evidence components into one `InsightEvidence` row        |
-| ISP-5 | 3      | Low      | Low    | Open   | Metric-color identity (accent by `insight.metric`)                         |
-| ISP-6 | 3      | Low      | Low    | Open   | Use `--text-xl` for the featured statement                                 |
-| ISP-7 | 3      | Low      | Medium | Open   | Purposeful motion (reveal animation, `prefers-reduced-motion`-aware)       |
-| ISP-8 | 3      | Low      | Low    | Open   | Card-elevation rule (interactive vs. static surfaces)                      |
-| ISP-9 | 3      | Low      | Medium | Open   | Icon-size scale tokens (`--icon-sm/-md/-lg`)                               |
+| ISP-5 | 3      | Low      | Low    | Done   | Metric-color identity (accent by `insight.metric`)                         |
+| ISP-6 | 3      | Low      | Low    | Done   | Use `--text-xl` for the featured statement                                 |
+| ISP-7 | 3      | Low      | Medium | Done   | Purposeful motion (reveal animation, `prefers-reduced-motion`-aware)       |
+| ISP-8 | 3      | Low      | Low    | Done   | Card-elevation rule (interactive vs. static surfaces)                      |
+| ISP-9 | 3      | Low      | Medium | Done   | Icon-size scale tokens (`--icon-sm/-md`, two tiers not three — see below)  |
 
 **Out of scope for this plan:** replacing the removed sparkline with a
 real historical-data chart (needs a backend endpoint decision, separate
@@ -156,46 +157,66 @@ preserved on the new component. `MobileInsightLead.test.ts` and
 `code-connect-contract.test.ts` verified against, one contract test case
 removed with its dead template.
 
-## Sprint 3 — Visual refresh
+## Sprint 3 — Visual refresh ✅ Done
 
-Five independent, low-risk items — each is a legitimate standalone PR and
-none blocks the others. All reuse the existing `app.css` token system;
-ISP-9 is the only one introducing new tokens (icon sizes), and those are
-additive.
+Landed as one PR (all five items are small and thematically unified, unlike
+Sprint 2's investigation-heavy scope) rather than five separate PRs — the
+"independent, no cross-dependencies" property still held, it just didn't
+need five review cycles to prove it.
 
-**Verify (per item):**
+**What shipped, and two corrections against the original wording:**
 
-- **ISP-5 Metric-color identity:** insight card accent (direction glyph,
-  left border) is colored via `--color-metric-mood/-energy/-stress` by
-  `insight.metric`, not a generic primary/success/error. Confirm the
-  tokens are now referenced somewhere other than `charts.ts`.
-- **ISP-6 `text-xl`:** the featured card's statement uses `--text-xl`;
-  non-featured cards keep their current size. Confirm the jump reads as
-  intentional, not just "slightly bigger," at both the `text-xl` min and
-  max clamp values.
-- **ISP-7 Motion:** a ~300ms reveal (opacity + translateY, existing
-  `--transition-interactive` easing) plays when the featured statement
-  first renders; confirm it's suppressed under
-  `prefers-reduced-motion: reduce`.
-- **ISP-8 Elevation rule:** interactive/tappable cards (`InsightCard`,
-  `EntryLaunchButton`, `TagPicker`, …) get `box-shadow` plus a real hover/
-  press state; static info panels (`HomeDailyBrief` lead, `InlineAlert`,
-  disclaimer boxes) stay border-only. Confirm `InsightCard`'s previously
-  dead `transition: box-shadow 200ms` now actually fires on hover.
-- **ISP-9 Icon scale:** before introducing `--icon-sm/-md/-lg`, audit the
-  actual size distribution (`size={14/16/18/20/22/40/72}` found during the
-  original grep) and pick values that cover the real usage, not three
-  arbitrary round numbers — then migrate call sites incrementally.
+- **ISP-5 Metric-color identity:** implemented as a **3px `border-left`**
+  accent (`--insight-accent`, set inline per-card from `insight.metric`),
+  *not* a recolor of the direction glyph. The glyph's color already carries
+  a different, existing signal — positive/negative/neutral effect — and
+  overloading it with metric identity would have collapsed two meanings
+  into one channel. Falls back to `--color-primary` for non-core-metric
+  insights (tags, symptoms, context patterns) rather than guessing.
+  Caught in review: `.insight-card--featured`'s `border-color` shorthand
+  would have silently clobbered the left accent on the card where it's
+  most visible — fixed by switching that rule to longhand
+  `border-{top,right,bottom}-color`.
+- **ISP-6 `text-xl`:** featured statement bumped from `--text-lg` to
+  `--text-xl`; non-featured cards unchanged.
+- **ISP-7 Motion:** a 320ms opacity+translateY reveal on the featured
+  statement, `@media (prefers-reduced-motion: reduce)` disables it. Uses
+  `cubic-bezier(0.16, 1, 0.3, 1)` directly rather than
+  `var(--transition-interactive)` — that token is a duration+easing
+  shorthand meant for the `transition` property, not a standalone
+  `animation-timing-function` value; the curve itself matches.
+- **ISP-8 Elevation rule:** `.insight-card:hover, .insight-card:focus-within`
+  now sets `box-shadow: var(--shadow-md)`, finally using the
+  `transition: box-shadow …` hook that was declared but dead before this
+  sprint. Scoped to `InsightCard` only — auditing/updating elevation across
+  `EntryLaunchButton`, `TagPicker`, and other unrelated interactive
+  components was judged out of proportion for a "Low effort" item and
+  would have broken this sprint's independence from unrelated surfaces.
+- **ISP-9 Icon scale:** audited real `size={}` usage app-wide (23 lucide
+  instances): a 14/16px cluster (9 instances, dominant value 14) and an
+  18/20/22px cluster (12 instances, dominant value 18). The two outliers
+  at 40/72px are `CorrelCoreLogo` brand-mark sizing on the landing page,
+  not generic UI icons, and are deliberately excluded. **Correction:** only
+  two tokens shipped (`--icon-sm: 0.875rem`, `--icon-md: 1.125rem`), not
+  three — real usage doesn't support a third tier, and forcing one would
+  have violated this item's own instruction to avoid arbitrary round
+  numbers. lucide-svelte's `size` prop takes a plain number, not a CSS
+  value, so a companion `lib/constants/iconSizes.ts` mirrors the tokens as
+  `ICON_SIZE_SM`/`ICON_SIZE_MD` for that call pattern; `--icon-md` is used
+  directly where an icon is CSS-sized (e.g. a raw inline `<svg>`). Migrated
+  two demonstrative call sites (`InsightStageHeader`'s help icon,
+  `InsightFeed`'s disclaimer icon) — the remaining ~21 instances are
+  incremental follow-up, not bundled here.
 
-**Key files:** `app.css` (ISP-9 tokens only), `InsightCard.svelte` (ISP-5,
-ISP-6, ISP-7, ISP-8), `Panel.svelte` / other card-like `common/`
-components (ISP-8 rule applied consistently), icon call sites across
-`components/` (ISP-9, can be migrated file-by-file)
+**Key files:** `app.css` (icon tokens), `InsightCard.svelte` (ISP-5/6/7/8),
+`lib/constants/iconSizes.ts` (new), `InsightStageHeader.svelte` +
+`InsightFeed.svelte` (ISP-9 migration sample).
 
-**Tests:** mostly visual/manual — these are presentation-only changes.
-Where a component has snapshot or DOM-structure tests, confirm class names
-referenced by tests (e.g. `insight-card__direction--{dirClass}`) still
-match after the color-by-metric change.
+**Tests:** `InsightCard.test.ts` — two new cases asserting `--insight-accent`
+resolves to the right token per metric (mood → `--color-metric-mood`,
+non-core metric → `--color-primary`). The rest is presentation-only;
+existing testids/class names (`insight-card__direction--{dirClass}`, etc.)
+were left untouched and still pass.
 
 ## Governance
 
