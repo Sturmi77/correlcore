@@ -130,29 +130,29 @@ though they're bundled here as one audit-recommended work package.
 
 **Verify:**
 
-- F-04: canonical breakpoint set documented as a comment contract in `app.css`. **The audit's proposed 360/480/768/1024 set conflicts with `FRONTEND.md:81`, which already documents `375px (base) → 768px → 1024px+` as the contract** (also referenced at `FRONTEND.md:84/88/753`). Reconcile before landing either: either add `375` to the canonical set (and accept two "small" breakpoints, 360 and 375, if both have real call sites), or replace 375 with 360 everywhere in `FRONTEND.md` and confirm nothing actually depends on exactly 375. Don't let the two docs disagree — F-21's guardrail will enforce whichever set actually ships. Once decided: `760px` → `767px` and `48rem` → `768px` fixed in the four components that drift from the shell breakpoint (`InsightPhaseMilestoneCard`, `HabitsPanel`, `InsightJourneyExplainer`, `HabitDetailBody`); remaining odd breakpoints (520/420/430/640/680/720/860) mapped down to ≤5 distinct values app-wide, or converted to container queries where the break is genuinely component-internal rather than viewport-driven.
-- F-08: resolve the documented Variante A vs. B fork **before** writing code — this is a product decision (does a light-OS first-time visitor see light or dark?), not purely technical. If A (honor system preference): extend the inline bootstrap script with a `matchMedia('(prefers-color-scheme: light)')` check. If B (keep dark-default deliberately): write the ADR, correct `FRONTEND.md` §4.1 to match reality. **Either way**, deleting the `@media (prefers-color-scheme: dark)` fallback block in `app.css` (~50 duplicated token lines) requires updating `scripts/check-contrast.mjs` in the same change — it explicitly extracts that block (`extractBlock('system dark fallback', /:root:not\(\[data-theme\]\)\s*\{/)`) and fails with "Missing X in system dark fallback" for every required token if the block disappears without the checker being told to stop expecting it.
+- F-04: **Decided — implement the audit's proposal as-is: canonical set is 360/480/768/1024.** `FRONTEND.md:81` (plus `:84/88/753`) documents 375 instead — since the audit's set wins, update those references to 360, don't add 375 as a second small breakpoint. Document the canonical set as a comment contract in `app.css`. `760px` → `767px` and `48rem` → `768px` fixed in the four components that drift from the shell breakpoint (`InsightPhaseMilestoneCard`, `HabitsPanel`, `InsightJourneyExplainer`, `HabitDetailBody`); remaining odd breakpoints (520/420/430/640/680/720/860) mapped down to ≤5 distinct values app-wide, or converted to container queries where the break is genuinely component-internal rather than viewport-driven.
+- F-08: **Decided — Variante A, honor system preference.** Extend the inline bootstrap script in `app.html` with a `matchMedia('(prefers-color-scheme: light)')` check so a first-time visitor with light OS gets light, not the current hardcoded dark default. Delete the now-genuinely-dead `@media (prefers-color-scheme: dark)` fallback block in `app.css` (~50 duplicated token lines) in the **same change** as `scripts/check-contrast.mjs`'s fallback-block extraction (`extractBlock('system dark fallback', /:root:not\(\[data-theme\]\)\s*\{/)`) — it fails with "Missing X in system dark fallback" for every required token if the block disappears first.
 - F-09: Trends-Compare controls and `SymptomCalendarHeatmap` interactive cells reach ≥44px touch targets on mobile (heatmap cells via hit-area padding/`::after`, not a visual size change to the 12×12px cells themselves — density is intentional there).
 
-**Key files:** `app.css` (breakpoint contract comment, dead fallback block removal), `scripts/check-contrast.mjs` (fallback-block extraction removed alongside it), `FRONTEND.md` §1.6 (breakpoint canon reconciliation) and §4.1 (if Variante B), `InsightPhaseMilestoneCard.svelte`, `HabitsPanel.svelte`, `InsightJourneyExplainer.svelte`, `HabitDetailBody.svelte`, `app.html` (bootstrap script, if Variante A), `TrendsComparePanel.svelte`, `TrendsCompareQuickFilters.svelte`, `TrendsCompareSettingsSheet.svelte` (after its Sprint 3 `BottomSheet` migration, see dependency note above), `SymptomCalendarHeatmap.svelte`, possibly a new ADR (if Variante B).
+**Key files:** `app.css` (breakpoint contract comment, dead fallback block removal), `scripts/check-contrast.mjs` (fallback-block extraction removed alongside it), `FRONTEND.md` §1.6 (375 → 360, matching the decided canon), `app.html` (bootstrap script — Variante A), `InsightPhaseMilestoneCard.svelte`, `HabitsPanel.svelte`, `InsightJourneyExplainer.svelte`, `HabitDetailBody.svelte`, `TrendsComparePanel.svelte`, `TrendsCompareQuickFilters.svelte`, `TrendsCompareSettingsSheet.svelte` (after its Sprint 3 `BottomSheet` migration, see dependency note above), `SymptomCalendarHeatmap.svelte`.
 
 **Tests:** `pnpm test:e2e:mobile`, existing Sprint-1-era Playwright touch-target coverage extended to Trends-Compare; `mobile-theme-parity.spec.ts` must stay green through the F-08 change either way.
 
-**Acceptance:** no `760px`/`48rem` remain; ≤5 distinct breakpoints app-wide; first-visit theme behavior matches whichever variant `FRONTEND.md` documents; all named interactive elements meet the 44px/24px targets.
+**Acceptance:** no `760px`/`48rem` remain; ≤5 distinct breakpoints app-wide, matching 360/480/768/1024; a first-time visitor with light OS preference and no stored choice gets light theme, not dark; all named interactive elements meet the 44px/24px targets.
 
 ## Sprint 6 — Principles, docs & guardrails (F-14, F-17, F-18, F-19, F-21)
 
 **Verify:**
 
-- F-14: `SymptomCalendarHeatmap`'s "symptom present" cells move off `--color-warning` onto `--color-heatmap-3/4` (intensity, not verdict-color) — or, if Amber is a deliberate product choice (symptom ≠ frequency), document that exception explicitly in `FRONTEND.md` §1.5 and `SYMPTOM_VISUALIZATION.md` instead of silently leaving the principle violated.
+- F-14: **Decided — don't violate the heatmap-color principle.** `SymptomCalendarHeatmap`'s "symptom present" cells move off `--color-warning` onto `--color-heatmap-3/4` (intensity, not verdict-color); no exception documented in `FRONTEND.md` §1.5 — the principle stands as written.
 - F-17: doc-only — rewrite `FRONTEND.md` §4.2 to describe the real 1–5 scale and `--color-metric-*` tokens (source of truth: `lib/config/metrics.ts`/`ENTRY_CONTRACT`), removing the fictional −2…+2 red-green traffic-light scale that doesn't exist in code and would contradict §1.5 anyway.
 - F-18: audit pass (not a fixed code change) — build the Screen × State matrix (Loading/Error/Empty/Offline) in `UI_COMPONENT_SYSTEM.md`; migrate manually-built states onto `DataState`/`EmptyState`/`InlineAlert` where there's no documented reason for a bespoke one.
 - F-19: remove `@skeletonlabs/skeleton` and `@skeletonlabs/tw-plugin` from `package.json` — only after Sprint 1 (F-01) and Sprint 4 (F-15) have removed every reference to what these packages justified.
 - F-21: `apps/web/scripts/check-style-tokens.mjs`, wired into `ci-web.yml` beside `check:contrast`. Land last on purpose — running it before Sprints 4/5 land would fail CI against known, already-scoped legacy rather than catching new regressions.
 
-**Key files:** `SymptomCalendarHeatmap.svelte`, `FRONTEND.md` (§1.5 exception or §4.2 rewrite), `SYMPTOM_VISUALIZATION.md`, `UI_COMPONENT_SYSTEM.md`, `package.json`/`pnpm-lock.yaml`, new `apps/web/scripts/check-style-tokens.mjs`, `.github/workflows/ci-web.yml`.
+**Key files:** `SymptomCalendarHeatmap.svelte`, `FRONTEND.md` (§4.2 rewrite), `UI_COMPONENT_SYSTEM.md`, `package.json`/`pnpm-lock.yaml`, new `apps/web/scripts/check-style-tokens.mjs`, `.github/workflows/ci-web.yml`.
 
-**Acceptance:** heatmap principle either honored or its exception documented (not both silently true); `FRONTEND.md` matches shipped code; state-coverage matrix exists; Skeleton packages gone with green build; guardrail CI job exists and is green against the post-Sprint-5 codebase.
+**Acceptance:** `SymptomCalendarHeatmap` uses `--color-heatmap-3/4`, not `--color-warning`; `FRONTEND.md` matches shipped code; state-coverage matrix exists; Skeleton packages gone with green build; guardrail CI job exists and is green against the post-Sprint-5 codebase.
 
 ## Regression commands
 
@@ -176,17 +176,9 @@ Manual check after every sprint: baseline viewports from `surfaceContract.ts`
   create-time-primary is a product call the audit itself only
   recommends, doesn't mandate. Flag it for a one-line decision before
   Sprint 1 ships, don't let an agent pick silently.
-- **F-08's Variante A vs. B** — same shape: "match the docs" vs. "match
-  current behavior and update the docs" are both legitimate, and the
-  choice affects what first-time light-OS visitors see. Needs a decision
-  before Sprint 5, not during it.
-- **F-14's Amber-for-symptom-presence** — may be intentional product
-  signal-design (symptom presence reads differently from a frequency
-  heatmap), may just be an oversight. The audit flags it as ambiguous;
-  this plan doesn't resolve it either.
-- **F-04's canonical breakpoint set vs. `FRONTEND.md`'s existing 375px
-  contract** — the audit proposes 360/480/768/1024, but `FRONTEND.md:81`
-  already documents 375 as the base breakpoint, referenced in three more
-  places in that doc. Whether 375 gets folded into the canon or replaced
-  by 360 is a real product/design call (which one matches actual device
-  targets?), not something to silently pick during Sprint 5 implementation.
+
+**Resolved (2026-07-12):** F-08 → Variante A (system preference honored),
+F-14 → no exception, principle enforced as written, F-04 → audit's
+360/480/768/1024 set implemented as proposed, `FRONTEND.md`'s 375
+references updated to match rather than the reverse. See the Sprint 5/6
+verify sections above for the concrete implications of each.
