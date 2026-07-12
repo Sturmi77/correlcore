@@ -130,8 +130,6 @@ export function selectNewestWeekdayPattern(
   const candidates = insights.filter((insight) => insight.insight_type === 'weekday_pattern');
   if (candidates.length === 0) return null;
   return candidates.reduce((newest, candidate) =>
-    candidate.generated_for_date.localeCompare(newest.generated_for_date) > 0
-      ? candidate
-      : newest
+    candidate.generated_for_date.localeCompare(newest.generated_for_date) > 0 ? candidate : newest
   );
 }
