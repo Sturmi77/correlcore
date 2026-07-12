@@ -66,4 +66,34 @@ describe('HomeWeekdayOverview', () => {
     expect(screen.getByText('5.0')).toBeTruthy();
     expect(screen.getByText('Running')).toBeTruthy();
   });
+
+  it('shows an empty state instead of nothing when no cell has content', () => {
+    render(HomeWeekdayOverview, { props: { insights: [], weekdayInsight: null } });
+
+    expect(screen.queryByTestId('home-weekday-overview')).toBeNull();
+    expect(screen.getByTestId('home-weekday-overview-empty')).toBeTruthy();
+    expect(screen.getByText('home.weekday_overview.empty')).toBeTruthy();
+  });
+
+  it('does not show the empty state when a weekday_pattern insight has no mood payload but a confounded insight has a finding', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: null,
+        insights: [
+          {
+            ...weekdayInsight,
+            id: 'insight-tag-only',
+            insight_type: 'pointbiserial',
+            subject_type: 'tag',
+            subject_label: 'Running',
+            flags: { weekday_confounded: true },
+            payload: { weekday: 1 },
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByTestId('home-weekday-overview')).toBeTruthy();
+    expect(screen.queryByTestId('home-weekday-overview-empty')).toBeNull();
+  });
 });

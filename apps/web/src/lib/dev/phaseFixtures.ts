@@ -402,6 +402,24 @@ function makeInsights(presetId: DevPhasePresetId, entryCount: number): InsightRe
         sample_n: entryCount,
         statement:
           'Mock data shows a first hint that mood is often higher near the end of the week.',
+        // weekday_mood_avgs drives HomeWeekdayOverview's per-day bars — without
+        // it hasWeekdayOverviewContent() is false and the section renders
+        // nothing, even though this insight's statement is explicitly about a
+        // weekday pattern. Index 4 = Friday, matching subject_label above.
+        payload: {
+          weekday: 4,
+          weekday_mood_avg: 3.8,
+          weekday_mood_avgs: {
+            '0': 3.1,
+            '1': 3.0,
+            '2': 3.2,
+            '3': 3.1,
+            '4': 3.8,
+            '5': 3.3,
+            '6': 3.0,
+          },
+          overall_mood_avg: 3.2,
+        },
       }),
     ];
   }

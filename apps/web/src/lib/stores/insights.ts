@@ -8,7 +8,14 @@
  *
  * State contract (FRONTEND.md §8):
  *   - `loading`      — true while the API call is in-flight
- *   - `insights`     — all insights from GET /api/v1/insights
+ *   - `insights`     — newest-per-subject insights from GET /api/v1/insights/latest
+ *     (not the raw /api/v1/insights list — that endpoint returns unfiltered
+ *     history rows, newest-generated-first, with no deduplication by subject;
+ *     for an account with many active days, older-but-still-current insight
+ *     types like weekday_pattern can silently age out of its default top-50
+ *     window even though they're still valid. /latest dedupes by semantic
+ *     subject over a wider raw window before applying the limit, same as
+ *     routes/insights/+page.svelte already does independently of this store.)
  *   - `latest`       — highest confidence × effect_size non-dismissed insight
  *   - `error`        — human-readable error string; null on success; never re-thrown
  *   - `insightMaturity` — backend-owned maturity phase for insight UI
@@ -16,7 +23,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import { listInsights, type InsightMaturity, type InsightResponse } from '$lib/api/insights';
+import { listLatestInsights, type InsightMaturity, type InsightResponse } from '$lib/api/insights';
 import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
 import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
 import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
@@ -105,7 +112,7 @@ export async function loadInsights(): Promise<void> {
       return;
     }
 
-    const response = await listInsights();
+    const response = await listLatestInsights({ limit: 50 });
     const insights = response.insights;
     const latest = pickLatest(insights, dismissedIds);
     _state.set({

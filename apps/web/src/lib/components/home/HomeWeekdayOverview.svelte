@@ -66,6 +66,16 @@
     {/if}
     <p class="weekday-overview__hint">{$_('home.weekday_overview.hint')}</p>
   </section>
+{:else}
+  <section
+    class="weekday-overview weekday-overview--empty"
+    data-testid="home-weekday-overview-empty"
+    aria-label={$_('home.weekday_overview.heading')}
+  >
+    <h2 class="weekday-overview__heading">{$_('home.weekday_overview.heading')}</h2>
+    <p class="weekday-overview__empty">{$_('home.weekday_overview.empty')}</p>
+    <p class="weekday-overview__hint">{$_('home.weekday_overview.empty_hint')}</p>
+  </section>
 {/if}
 
 <style>
@@ -169,10 +179,18 @@
   }
 
   .weekday-overview__statement,
-  .weekday-overview__hint {
+  .weekday-overview__hint,
+  .weekday-overview__empty {
     margin: 0;
     font-size: var(--text-sm, 0.88rem);
     line-height: 1.45;
+  }
+
+  .weekday-overview--empty {
+    padding: 0.75rem 0.5rem;
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface-chart-bg);
+    border-radius: 0.45rem;
   }
 
   .weekday-overview__hint {
