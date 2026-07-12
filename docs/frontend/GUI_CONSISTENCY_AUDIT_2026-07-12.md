@@ -22,12 +22,12 @@
 
 ## Prioritäten-Übersicht
 
-| Prio | Findings | Charakter |
-| ---- | -------- | --------- |
-| P0 | F-01, F-02, F-03 | Sichtbare Bugs / kaputte Styles |
-| P1 | F-04 … F-10 | Systematische Inkonsistenzen (Dark/Light, Mobile/Web, Screens) |
-| P2 | F-11 … F-18 | Token-Hygiene, Prinzipien-Verstöße, Doku-Drift |
-| P3 | F-19 … F-21 | Aufräumen, Guardrails, Nice-to-have |
+| Prio | Findings         | Charakter                                                      |
+| ---- | ---------------- | -------------------------------------------------------------- |
+| P0   | F-01, F-02, F-03 | Sichtbare Bugs / kaputte Styles                                |
+| P1   | F-04 … F-10      | Systematische Inkonsistenzen (Dark/Light, Mobile/Web, Screens) |
+| P2   | F-11 … F-18      | Token-Hygiene, Prinzipien-Verstöße, Doku-Drift                 |
+| P3   | F-19 … F-21      | Aufräumen, Guardrails, Nice-to-have                            |
 
 ---
 
@@ -252,14 +252,14 @@ Problematisch: `max-width: 760px` (statt 767) in `InsightPhaseMilestoneCard.svel
 
 ## Empfohlene Umsetzungsreihenfolge (Work Packages)
 
-| WP | Inhalt | Findings | Aufwand |
-| -- | ------ | -------- | ------- |
-| WP-1 „Broken Styles" | Primary-Buttons, Success-Token, Warning-Shim-Bug, Tag-Default | F-01, F-02, F-03 | S |
-| WP-2 „Token-Vervollständigung" | Scrim, text-2xs/2xl, transition-fast/sheet, tap-target, tote/undefinierte Tokens | F-06, F-13, F-20 + Token-Teile aus F-10/F-12 | S |
-| WP-3 „Primitives" | BottomSheet extrahieren + Sheet-Migration, ScreenHeader-Lücken | F-05, F-07 | M |
-| WP-4 „Sweep-Migrationen" | font-size-, radius-, transition-, icon-, Legacy-Klassen-Sweeps | F-10, F-11, F-12, F-15, F-16 | M |
-| WP-5 „Mobile/Web-Härtung" | Breakpoint-Konsolidierung, Touch-Targets, Theme-Bootstrap | F-04, F-08, F-09 | M |
-| WP-6 „Prinzipien & Doku" | Heatmap-Farbe, §4.2-Drift, DataState-Audit, Dep-Cleanup, CI-Guardrail | F-14, F-17, F-18, F-19, F-21 | S–M |
+| WP                             | Inhalt                                                                           | Findings                                     | Aufwand |
+| ------------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------- | ------- |
+| WP-1 „Broken Styles"           | Primary-Buttons, Success-Token, Warning-Shim-Bug, Tag-Default                    | F-01, F-02, F-03                             | S       |
+| WP-2 „Token-Vervollständigung" | Scrim, text-2xs/2xl, transition-fast/sheet, tap-target, tote/undefinierte Tokens | F-06, F-13, F-20 + Token-Teile aus F-10/F-12 | S       |
+| WP-3 „Primitives"              | BottomSheet extrahieren + Sheet-Migration, ScreenHeader-Lücken                   | F-05, F-07                                   | M       |
+| WP-4 „Sweep-Migrationen"       | font-size-, radius-, transition-, icon-, Legacy-Klassen-Sweeps                   | F-10, F-11, F-12, F-15, F-16                 | M       |
+| WP-5 „Mobile/Web-Härtung"      | Breakpoint-Konsolidierung, Touch-Targets, Theme-Bootstrap                        | F-04, F-08, F-09                             | M       |
+| WP-6 „Prinzipien & Doku"       | Heatmap-Farbe, §4.2-Drift, DataState-Audit, Dep-Cleanup, CI-Guardrail            | F-14, F-17, F-18, F-19, F-21                 | S–M     |
 
 Abhängigkeiten: WP-2 vor WP-3/WP-4 (Tokens müssen existieren, bevor migriert wird); F-19 nach F-01+F-15; F-21 als letztes (sonst rot auf Altbestand).
 

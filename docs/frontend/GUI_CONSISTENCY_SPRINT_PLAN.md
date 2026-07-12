@@ -27,14 +27,14 @@ duplicate work.
 
 ## Overview
 
-| Sprint | WP (audit) | Findings                          | Priority | Effort | Title                        |
-| ------ | ---------- | ---------------------------------- | -------- | ------ | ----------------------------- |
-| 1      | WP-1       | F-01, F-02, F-03                   | P0       | S      | Broken styles                 |
-| 2      | WP-2       | F-06, F-13, F-20 (+ token parts of F-10/F-12) | P1/P2 | S | Token completion              |
-| 3      | WP-3       | F-05, F-07                         | P1       | M      | Shared primitives             |
-| 4      | WP-4       | F-10, F-11, F-12, F-15, F-16       | P1/P2    | M      | Sweep migrations              |
-| 5      | WP-5       | F-04, F-08, F-09                   | P1       | M      | Mobile/Web hardening          |
-| 6      | WP-6       | F-14, F-17, F-18, F-19, F-21       | P2/P3    | S–M    | Principles, docs & guardrails |
+| Sprint | WP (audit) | Findings                                      | Priority | Effort | Title                         |
+| ------ | ---------- | --------------------------------------------- | -------- | ------ | ----------------------------- |
+| 1      | WP-1       | F-01, F-02, F-03                              | P0       | S      | Broken styles                 |
+| 2      | WP-2       | F-06, F-13, F-20 (+ token parts of F-10/F-12) | P1/P2    | S      | Token completion              |
+| 3      | WP-3       | F-05, F-07                                    | P1       | M      | Shared primitives             |
+| 4      | WP-4       | F-10, F-11, F-12, F-15, F-16                  | P1/P2    | M      | Sweep migrations              |
+| 5      | WP-5       | F-04, F-08, F-09                              | P1       | M      | Mobile/Web hardening          |
+| 6      | WP-6       | F-14, F-17, F-18, F-19, F-21                  | P2/P3    | S–M    | Principles, docs & guardrails |
 
 **Out of scope for this plan:** the F-05 `BottomSheet` primitive only
 needs ≥4 of 9 sheets migrated to satisfy its acceptance criterion — full
@@ -55,12 +55,12 @@ flowchart TD
   S5[Sprint 5 — Mobile/Web hardening] --> S6b
 ```
 
-| Dependency         | Reason                                                                                                          |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| S2 → S3, S2 → S4    | Tokens (scrim, `text-2xs/2xl`, `transition-fast/sheet`, `--tap-target`) must exist in `app.css` before component migrations reference them — same "don't build on a shape that's about to change" logic as ISP-1 → ISP-4 in the Insight-Statement-Pattern plan. |
-| S1, S4 → F-19 (S6)  | Can't remove `@skeletonlabs/*` from `package.json` until nothing references the shim classes it justified (F-01 replaces the primary-button variants; F-15, bundled into Sprint 4, replaces the `-500`/`-token` legacy status classes). |
-| S4, S5 → F-21 (S6)  | The CI guardrail script fails on hex literals, undefined `var()` refs, off-canon breakpoints, and un-exempted size literals — landing it before the sweeps (S4) and breakpoint consolidation (S5) means it's red from day one against code nobody's touched yet. |
-| S3 ⊥ S5, except one file | Mostly independent — `BottomSheet`/`ScreenHeader` work and breakpoint/touch-target/theme-bootstrap work touch different files. The exception: `TrendsCompareSettingsSheet.svelte` is in both (S3 migrates it to `BottomSheet`, S5/F-09 fixes its `min-height: 32px` touch target). Do the F-09 touch-target fix on that one file *after* its `BottomSheet` migration, or the two changes will conflict in the same region — everything else in S3/S5 can run in parallel. |
+| Dependency               | Reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S2 → S3, S2 → S4         | Tokens (scrim, `text-2xs/2xl`, `transition-fast/sheet`, `--tap-target`) must exist in `app.css` before component migrations reference them — same "don't build on a shape that's about to change" logic as ISP-1 → ISP-4 in the Insight-Statement-Pattern plan.                                                                                                                                                                                                           |
+| S1, S4 → F-19 (S6)       | Can't remove `@skeletonlabs/*` from `package.json` until nothing references the shim classes it justified (F-01 replaces the primary-button variants; F-15, bundled into Sprint 4, replaces the `-500`/`-token` legacy status classes).                                                                                                                                                                                                                                   |
+| S4, S5 → F-21 (S6)       | The CI guardrail script fails on hex literals, undefined `var()` refs, off-canon breakpoints, and un-exempted size literals — landing it before the sweeps (S4) and breakpoint consolidation (S5) means it's red from day one against code nobody's touched yet.                                                                                                                                                                                                          |
+| S3 ⊥ S5, except one file | Mostly independent — `BottomSheet`/`ScreenHeader` work and breakpoint/touch-target/theme-bootstrap work touch different files. The exception: `TrendsCompareSettingsSheet.svelte` is in both (S3 migrates it to `BottomSheet`, S5/F-09 fixes its `min-height: 32px` touch target). Do the F-09 touch-target fix on that one file _after_ its `BottomSheet` migration, or the two changes will conflict in the same region — everything else in S3/S5 can run in parallel. |
 
 ## Sprint 1 — Broken styles (F-01, F-02, F-03)
 
@@ -84,7 +84,7 @@ flowchart TD
 - Dead/undefined tokens resolved: `--color-mood-primary` → `--color-metric-mood`, `--color-surface-muted` → `--color-strip-track-bg`, `--app-header-height` either defined or its `calc()` uses simplified; `--color-muted` deleted (0 real usages); `--color-primary-soft`/`--color-primary-highlight` alias resolved to one name.
 - **`--color-gold` needs a decision, not a plain deletion:** it has 0 real component usages, but `scripts/check-contrast.mjs` hard-requires it (`requiredTokens`, line 10) and checks 4 dark/light contrast pairs against it (`informationalPairs`). Deleting the token without touching the checker breaks `pnpm check:contrast` for everyone, including Sprint 1-4 work that has nothing to do with this token. Either (a) update `check-contrast.mjs` to drop `--color-gold` from both lists in the same change, or (b) keep the token defined (it's a semantic duplicate of `--color-warning`, cheap to keep) and only remove it from the checker once something else needs the slot. Don't do this as an isolated one-line CSS deletion.
 - `--tap-target: 44px` defined; `min-height: 2.75rem` occurrences (7×) migrated to it alongside the existing `44px` literals (34×) for a single canonical form.
-- From F-10/F-12: land just the **new tokens** here (`--text-2xs`, `--text-2xl`, `--transition-fast`, `--transition-sheet`) — the *migration* of existing literals onto them is Sprint 4's job, not this one's. Landing an unused token isn't a regression; migrating call sites before Sprint 3/4 are scoped would be.
+- From F-10/F-12: land just the **new tokens** here (`--text-2xs`, `--text-2xl`, `--transition-fast`, `--transition-sheet`) — the _migration_ of existing literals onto them is Sprint 4's job, not this one's. Landing an unused token isn't a regression; migrating call sites before Sprint 3/4 are scoped would be.
 
 **Key files:** `app.css`, `scripts/check-contrast.mjs` (only if `--color-gold` is actually removed, not kept per option (b) above), plus the handful of components F-06/F-13 name directly (4 sheets for scrim, `SymptomTrendOverlay.svelte`, `InsightsAnalysisToolbar.svelte`/`TrendsAnalysisToolbar.svelte`).
 
