@@ -1,0 +1,185 @@
+# GUI-Konsistenz-Audit — Sprint Plan
+
+Last updated: 2026-07-12
+
+Companion to [`GUI_CONSISTENCY_AUDIT_2026-07-12.md`](GUI_CONSISTENCY_AUDIT_2026-07-12.md)
+(the source audit — read that first for full evidence/measure/acceptance
+text per finding; this plan only sequences it into shippable batches). The
+audit already proposed six work packages with a sound dependency order;
+this plan adopts that structure, renames WP → Sprint for consistency with
+the rest of `docs/frontend/`, and adds per-sprint verify/test detail.
+
+**Spot-checked before writing this plan** (not taken on faith): F-01
+(`variant-filled-primary` used in 17 files, genuinely undefined in
+`app.css` — only `variant-ghost-surface/-error` and `variant-soft-warning`
+exist as shims), F-08 (`app.html` hardcodes `data-theme="dark"`, the
+inline bootstrap script only reads `localStorage`, no `matchMedia` call
+anywhere), and F-16 (icon size distribution — 9× `18`, 7× `14`, 2× `16`,
+plus the two `CorrelCoreLogo` outliers — matches exactly what Sprint 3 of
+`INSIGHT_STATEMENT_PATTERN_SPRINT_PLAN.md` found when it introduced
+`--icon-sm`/`--icon-md`). All three confirmed accurate.
+
+**Note on F-16 specifically:** this isn't a new problem — it's the
+"~21 remaining instances are incremental follow-up" gap that
+[Sprint 3 / ISP-9](INSIGHT_STATEMENT_PATTERN_SPRINT_PLAN.md#sprint-3--visual-refresh--done)
+deliberately left open. Sprint 4 here (F-16) is that follow-up, not
+duplicate work.
+
+## Overview
+
+| Sprint | WP (audit) | Findings                          | Priority | Effort | Title                        |
+| ------ | ---------- | ---------------------------------- | -------- | ------ | ----------------------------- |
+| 1      | WP-1       | F-01, F-02, F-03                   | P0       | S      | Broken styles                 |
+| 2      | WP-2       | F-06, F-13, F-20 (+ token parts of F-10/F-12) | P1/P2 | S | Token completion              |
+| 3      | WP-3       | F-05, F-07                         | P1       | M      | Shared primitives             |
+| 4      | WP-4       | F-10, F-11, F-12, F-15, F-16       | P1/P2    | M      | Sweep migrations              |
+| 5      | WP-5       | F-04, F-08, F-09                   | P1       | M      | Mobile/Web hardening          |
+| 6      | WP-6       | F-14, F-17, F-18, F-19, F-21       | P2/P3    | S–M    | Principles, docs & guardrails |
+
+**Out of scope for this plan** (per the audit's own framing): F-17 is a
+doc-only correction (no code change); the F-05 `BottomSheet` primitive
+only needs ≥4 of 9 sheets migrated to satisfy its acceptance criterion —
+full migration of all 9 is explicitly follow-up beyond this plan; F-21's
+guardrail script only makes sense once Sprints 4/5 land clean code for it
+to check (see dependency below) — writing it earlier just produces a
+red CI job against known-acceptable legacy.
+
+## Dependency graph
+
+```mermaid
+flowchart TD
+  S1[Sprint 1 — Broken styles] --> S2[Sprint 2 — Token completion]
+  S2 --> S3[Sprint 3 — Shared primitives]
+  S2 --> S4[Sprint 4 — Sweep migrations]
+  S1 --> S6a[F-19 dep in Sprint 6]
+  S4 --> S6a
+  S4 --> S6b[F-21 guardrail in Sprint 6]
+  S5[Sprint 5 — Mobile/Web hardening] --> S6b
+```
+
+| Dependency         | Reason                                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| S2 → S3, S2 → S4    | Tokens (scrim, `text-2xs/2xl`, `transition-fast/sheet`, `--tap-target`) must exist in `app.css` before component migrations reference them — same "don't build on a shape that's about to change" logic as ISP-1 → ISP-4 in the Insight-Statement-Pattern plan. |
+| S1, S4 → F-19 (S6)  | Can't remove `@skeletonlabs/*` from `package.json` until nothing references the shim classes it justified (F-01 replaces the primary-button variants; F-15, bundled into Sprint 4, replaces the `-500`/`-token` legacy status classes). |
+| S4, S5 → F-21 (S6)  | The CI guardrail script fails on hex literals, undefined `var()` refs, off-canon breakpoints, and un-exempted size literals — landing it before the sweeps (S4) and breakpoint consolidation (S5) means it's red from day one against code nobody's touched yet. |
+| S3 ⊥ S5             | No real dependency — `BottomSheet`/`ScreenHeader` work and breakpoint/touch-target/theme-bootstrap work touch different files. Can run in parallel if more than one person/session is available; sequenced here only for reviewability. |
+
+## Sprint 1 — Broken styles (F-01, F-02, F-03)
+
+**Verify:**
+
+- `grep -rn 'variant-filled-primary\|variant-soft-primary\|variant-ghost-primary' apps/web/src` → 0 hits after migrating all 17 files to the shared `Button` component (`variant` prop) or, where a native `<button>` must stay, a newly-defined `.btn--primary` class in `app.css`.
+- `--color-success-highlight` defined in both theme blocks (dark + light), no more `rgba(34, 197, 94, ...)` fallback literal in `forgot-password/+page.svelte`. `.variant-soft-warning`'s color source fixed from `--color-error` to `--color-warning` (the "mini-bug" the audit flags inside F-02 — don't miss it, it's not called out as its own finding number).
+- `DEFAULT_TAG_COLOR` extracted to `lib/constants/`, no hex literal left in `settings/tags/+page.svelte`. Confirm which of the audit's two options (theme-independent neutral vs. current-theme-primary-on-create) actually shipped, with a comment explaining the choice — the audit recommends (a) but leaves it a judgment call.
+
+**Key files:** `app.css` (new tokens/classes), `Button.svelte`, the 17 files listed in the audit's F-01 evidence (auth routes, onboarding, `entries/day`, `settings/tags`, `TagPicker`, `SymptomChecker`, `InsightJourneyExplainer`), `settings/tags/+page.svelte`, new `lib/constants/tagDefaults.ts` (or similar).
+
+**Tests:** existing component tests for anything touched by the `Button` migration; visual check in both themes (login/register submit, forgot-password success banner, new-tag color swatch).
+
+**Acceptance:** primary CTAs render filled in both themes; no undefined Skeleton variant classes remain; tag defaults documented, not silently hardcoded.
+
+## Sprint 2 — Token completion (F-06, F-13, F-20 + token parts of F-10/F-12)
+
+**Verify:**
+
+- `--color-scrim` defined per-theme (dark: `oklch(0 0 0 / 0.48)`, light: weaker), all sheet backdrops migrated onto it; `--color-surface-inverse` reference gone.
+- Dead/undefined tokens resolved: `--color-mood-primary` → `--color-metric-mood`, `--color-surface-muted` → `--color-strip-track-bg`, `--app-header-height` either defined or its `calc()` uses simplified; `--color-muted` and `--color-gold` (both 0 real usages) deleted; `--color-primary-soft`/`--color-primary-highlight` alias resolved to one name.
+- `--tap-target: 44px` defined; `min-height: 2.75rem` occurrences (7×) migrated to it alongside the existing `44px` literals (34×) for a single canonical form.
+- From F-10/F-12: land just the **new tokens** here (`--text-2xs`, `--text-2xl`, `--transition-fast`, `--transition-sheet`) — the *migration* of existing literals onto them is Sprint 4's job, not this one's. Landing an unused token isn't a regression; migrating call sites before Sprint 3/4 are scoped would be.
+
+**Key files:** `app.css` only, plus the handful of components F-06/F-13 name directly (4 sheets for scrim, `SymptomTrendOverlay.svelte`, `InsightsAnalysisToolbar.svelte`/`TrendsAnalysisToolbar.svelte`).
+
+**Tests:** `pnpm check:contrast` (ADR-0027 pairs) must stay green — this sprint touches color tokens directly. Visual check: any sheet's backdrop in light mode should read visibly softer than dark.
+
+**Acceptance:** every token named in F-06/F-13/F-20 exists exactly once, in the right place, with no dead or duplicate entries; nothing in this sprint yet requires touching component call sites beyond the sheets/files named above.
+
+## Sprint 3 — Shared primitives (F-05, F-07)
+
+**Verify:**
+
+- `BottomSheet.svelte` extracted into `common/`, `<dialog>`-based per `ESLINT_SVELTE_GUARDRAILS.md` §1, uses `--color-scrim` from Sprint 2, `env(safe-area-inset-bottom)` padding. At least the 4 Trends/Insights sheets sharing the identical old backdrop value migrated onto it (`TrendsCompareSettingsSheet`, `CooccurrenceEntrySheet`, `HabitDetailSheet`, `EntryHistorySheet`); the 5 remaining sheets (`EntrySheet`, `CorrelationDisclaimer`, `InsightJourneyExplainer`, `SymptomCooccurrenceDetailSheet`, `EventAlignedSmallMultiplesSheet`) and the 2 settings-route modal backdrops stay follow-up.
+- `ScreenHeader` added to Home (decide: visible or a new `visuallyHidden` prop, since Home's Daily-Brief design may not want a second on-screen title competing with the statement-first hierarchy from the Insight-Statement-Pattern work), `entries/day/[date]`, and both onboarding routes. Auth routes' distinct `auth-page-title` pattern documented as an intentional exception in `UI_COMPONENT_SYSTEM.md`, not silently left inconsistent.
+
+**Key files:** new `common/BottomSheet.svelte` (+ test), the 4 sheet components named above, `routes/+page.svelte` (Home), `ScreenHeader.svelte` (new prop), `routes/entries/day/[date]/+page.svelte`, both onboarding route files, `UI_COMPONENT_SYSTEM.md`.
+
+**Tests:** new `BottomSheet.test.ts`; extend `ScreenHeader.test.ts` for the new prop (if added); an axe/a11y pass confirming no "page has no level-one heading" on Home, entries/day, or onboarding.
+
+**Acceptance:** every navigable primary route renders exactly one `<h1>`; ≥4 sheets on the shared primitive; no new sheet may be added without it (guardrail note added to `UI_COMPONENT_SYSTEM.md`, enforced in Sprint 6's F-21 script only insofar as that script can detect it — likely a doc-level rule more than a lint rule here).
+
+## Sprint 4 — Sweep migrations (F-10, F-11, F-12, F-15, F-16)
+
+The largest sprint by file count, but each item is a mechanical mapping
+from a literal to a token — low risk per change, high review tedium.
+Consider splitting into per-finding PRs rather than one giant diff, even
+though they're bundled here as one audit-recommended work package.
+
+**Verify:**
+
+- F-10: `grep -rnE 'font-size:\s*[0-9.]+rem' apps/web/src --include='*.svelte'` under 10 remaining hits, each with a `/* token-exempt: <reason> */` comment (SVG axis labels in `MetricTimeseries.svelte` are the documented exception). `--text-2xl` reference in `routes/dev/+page.svelte` now resolves to a real token (added in Sprint 2).
+- F-11: `grep -rnE 'border-radius:\s*[0-9]' apps/web/src --include='*.svelte'` ≤ 5 justified remaining hits.
+- F-12: no bare `ms` literals in Svelte `transition:` declarations outside commented keyframe animations.
+- F-15: `grep -rn '\-500\b|600-300-token' apps/web/src --include='*.svelte'` → 0; Skeleton legacy shims removed from `app.css:654–680`.
+- F-16: icon `size={}` literals replaced by `IconRender`/`IconButton` channeling a typed `'sm' | 'md'` prop mapped to the `--icon-sm`/`--icon-md` pixel values (`14`/`18`) — the same values `lib/constants/iconSizes.ts` already exports as `ICON_SIZE_SM`/`ICON_SIZE_MD` from Sprint 3 of the Insight-Statement-Pattern work; reuse that module rather than re-deriving the numbers. `16 → 14 or 18`, `20/22 → 18` per the audit's mapping; `40/72` (landing-page logo) stay exempt.
+
+**Key files:** `app.css` (`--text-2xs`/`--text-2xl` already added in Sprint 2), dozens of `.svelte` files across `components/insights`, `components/home`, `components/trends`, `IconRender.svelte`/`IconButton.svelte`, `lib/constants/iconSizes.ts` (reused, not recreated).
+
+**Tests:** existing component tests should be unaffected (pure style-value swaps); re-run full suite since this sprint touches the most files of any in this plan; visual spot-check Home/Insights/Trends in both themes per the audit's own acceptance note.
+
+**Acceptance:** grep counts above hold; no visual regression at 390/430/768/1280px in either theme.
+
+## Sprint 5 — Mobile/Web hardening (F-04, F-08, F-09)
+
+**Verify:**
+
+- F-04: canonical breakpoint set (360/480/768/1024) documented as a comment contract in `app.css`; `760px` → `767px` and `48rem` → `768px` fixed in the four components that drift from the shell breakpoint (`InsightPhaseMilestoneCard`, `HabitsPanel`, `InsightJourneyExplainer`, `HabitDetailBody`); remaining odd breakpoints (520/420/430/640/680/720/860) mapped down to ≤5 distinct values app-wide, or converted to container queries where the break is genuinely component-internal rather than viewport-driven.
+- F-08: resolve the documented Variante A vs. B fork **before** writing code — this is a product decision (does a light-OS first-time visitor see light or dark?), not purely technical. If A (honor system preference): extend the inline bootstrap script with a `matchMedia('(prefers-color-scheme: light)')` check, delete the now-genuinely-dead `@media (prefers-color-scheme: dark)` fallback block in `app.css` (~50 duplicated token lines). If B (keep dark-default deliberately): write the ADR, correct `FRONTEND.md` §4.1 to match reality, still delete the dead CSS block either way — it's unreachable under both variants once `data-theme` is confirmed always-set.
+- F-09: Trends-Compare controls and `SymptomCalendarHeatmap` interactive cells reach ≥44px touch targets on mobile (heatmap cells via hit-area padding/`::after`, not a visual size change to the 12×12px cells themselves — density is intentional there).
+
+**Key files:** `app.css` (breakpoint contract comment, dead fallback block removal), `InsightPhaseMilestoneCard.svelte`, `HabitsPanel.svelte`, `InsightJourneyExplainer.svelte`, `HabitDetailBody.svelte`, `app.html` (bootstrap script, if Variante A), `TrendsComparePanel.svelte`, `TrendsCompareQuickFilters.svelte`, `TrendsCompareSettingsSheet.svelte`, `SymptomCalendarHeatmap.svelte`, possibly a new ADR + `FRONTEND.md` §4.1 (if Variante B).
+
+**Tests:** `pnpm test:e2e:mobile`, existing Sprint-1-era Playwright touch-target coverage extended to Trends-Compare; `mobile-theme-parity.spec.ts` must stay green through the F-08 change either way.
+
+**Acceptance:** no `760px`/`48rem` remain; ≤5 distinct breakpoints app-wide; first-visit theme behavior matches whichever variant `FRONTEND.md` documents; all named interactive elements meet the 44px/24px targets.
+
+## Sprint 6 — Principles, docs & guardrails (F-14, F-17, F-18, F-19, F-21)
+
+**Verify:**
+
+- F-14: `SymptomCalendarHeatmap`'s "symptom present" cells move off `--color-warning` onto `--color-heatmap-3/4` (intensity, not verdict-color) — or, if Amber is a deliberate product choice (symptom ≠ frequency), document that exception explicitly in `FRONTEND.md` §1.5 and `SYMPTOM_VISUALIZATION.md` instead of silently leaving the principle violated.
+- F-17: doc-only — rewrite `FRONTEND.md` §4.2 to describe the real 1–5 scale and `--color-metric-*` tokens (source of truth: `lib/config/metrics.ts`/`ENTRY_CONTRACT`), removing the fictional −2…+2 red-green traffic-light scale that doesn't exist in code and would contradict §1.5 anyway.
+- F-18: audit pass (not a fixed code change) — build the Screen × State matrix (Loading/Error/Empty/Offline) in `UI_COMPONENT_SYSTEM.md`; migrate manually-built states onto `DataState`/`EmptyState`/`InlineAlert` where there's no documented reason for a bespoke one.
+- F-19: remove `@skeletonlabs/skeleton` and `@skeletonlabs/tw-plugin` from `package.json` — only after Sprint 1 (F-01) and Sprint 4 (F-15) have removed every reference to what these packages justified.
+- F-21: `apps/web/scripts/check-style-tokens.mjs`, wired into `ci-web.yml` beside `check:contrast`. Land last on purpose — running it before Sprints 4/5 land would fail CI against known, already-scoped legacy rather than catching new regressions.
+
+**Key files:** `SymptomCalendarHeatmap.svelte`, `FRONTEND.md` (§1.5 exception or §4.2 rewrite), `SYMPTOM_VISUALIZATION.md`, `UI_COMPONENT_SYSTEM.md`, `package.json`/`pnpm-lock.yaml`, new `apps/web/scripts/check-style-tokens.mjs`, `.github/workflows/ci-web.yml`.
+
+**Acceptance:** heatmap principle either honored or its exception documented (not both silently true); `FRONTEND.md` matches shipped code; state-coverage matrix exists; Skeleton packages gone with green build; guardrail CI job exists and is green against the post-Sprint-5 codebase.
+
+## Regression commands
+
+```bash
+cd apps/web
+pnpm lint && pnpm format:check && pnpm typecheck
+pnpm test                 # 97 files / 473 tests baseline per the audit
+pnpm check:contrast       # ADR-0027 pairs — critical for Sprints 1 and 2
+pnpm build
+pnpm test:e2e:smoke       # plus test:e2e:mobile for Sprints 3 and 5
+```
+
+Manual check after every sprint: baseline viewports from `surfaceContract.ts`
+(390/430/768/1280/1440), dark **and** light.
+
+## What this plan deliberately doesn't decide
+
+- **F-03's default tag color** — theme-independent neutral vs.
+  create-time-primary is a product call the audit itself only
+  recommends, doesn't mandate. Flag it for a one-line decision before
+  Sprint 1 ships, don't let an agent pick silently.
+- **F-08's Variante A vs. B** — same shape: "match the docs" vs. "match
+  current behavior and update the docs" are both legitimate, and the
+  choice affects what first-time light-OS visitors see. Needs a decision
+  before Sprint 5, not during it.
+- **F-14's Amber-for-symptom-presence** — may be intentional product
+  signal-design (symptom presence reads differently from a frequency
+  heatmap), may just be an oversight. The audit flags it as ambiguous;
+  this plan doesn't resolve it either.
