@@ -260,6 +260,7 @@
         {showMaturityBadge}
         confidenceScore={insight.confidence ?? 0}
         currentTier={insight.tier}
+        entryCount={insight.sample_n ?? 0}
         showConfidence={false}
       />
     </p>

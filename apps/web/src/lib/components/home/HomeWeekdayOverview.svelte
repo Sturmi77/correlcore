@@ -15,7 +15,12 @@
   $: knownMood = cells
     .map((cell) => cell.moodAvg)
     .filter((value): value is number => value !== null);
+  /** Bar-height scale: clamped to the 1–5 mood range so bars stay proportional. */
   $: maxMood = Math.max(5, ...(knownMood.length ? knownMood : [5]));
+  /** Highlight bounds: actual best/worst day. Comparing against the clamped
+   * scale max instead would mean the best day is never marked unless its
+   * average is exactly 5.0 (found via mock-data browser audit). */
+  $: highMood = knownMood.length ? Math.max(...knownMood) : null;
   $: minMood = knownMood.length ? Math.min(...knownMood) : null;
   $: showOverview = hasWeekdayOverviewContent(cells);
 </script>
@@ -37,11 +42,13 @@
       {#each cells as cell (cell.weekday)}
         <div
           class="weekday-overview__cell"
-          data-highlight={cell.moodAvg !== null && cell.moodAvg === maxMood
-            ? 'high'
-            : cell.moodAvg !== null && minMood !== null && cell.moodAvg === minMood
-              ? 'low'
-              : 'none'}
+          data-highlight={highMood === minMood || cell.moodAvg === null
+            ? 'none'
+            : cell.moodAvg === highMood
+              ? 'high'
+              : cell.moodAvg === minMood
+                ? 'low'
+                : 'none'}
         >
           <span class="weekday-overview__value">
             {cell.moodAvg === null ? '-' : cell.moodAvg.toFixed(1)}

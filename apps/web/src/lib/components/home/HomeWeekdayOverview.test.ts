@@ -67,6 +67,27 @@ describe('HomeWeekdayOverview', () => {
     expect(screen.getByText('Running')).toBeTruthy();
   });
 
+  it('marks the best and worst weekday even when no average reaches 5.0', () => {
+    // Regression (found via mock-data browser audit): the high highlight
+    // compared against the bar-scale max, which is clamped to >= 5 — so the
+    // best day was never marked unless its average was exactly 5.0.
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: {
+          ...weekdayInsight,
+          payload: { weekday_mood_avgs: { '0': 3.1, '4': 3.8, '6': 3.0 } },
+        },
+        insights: [],
+      },
+    });
+
+    const highlights = [...document.querySelectorAll('[data-highlight]')].map((el) =>
+      el.getAttribute('data-highlight')
+    );
+    expect(highlights.filter((h) => h === 'high')).toHaveLength(1);
+    expect(highlights.filter((h) => h === 'low')).toHaveLength(1);
+  });
+
   it('shows an empty state instead of nothing when no cell has content', () => {
     render(HomeWeekdayOverview, {
       props: { insights: [], weekdayInsight: null, loading: false },
