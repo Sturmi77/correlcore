@@ -118,6 +118,51 @@ Do **not** configure `VITE_API_BASE_URL=http://localhost:8000/api/v1` for browse
 - Cookies set on `:8000`, not sent from `:5174` (`SameSite=strict`)
 - Broken login/session refresh
 
+### Proxy approach — trade-offs
+
+The proxy pattern is the **recommended default** for CorrelCore (see [ADR-0011](../adr/0011-web-internal-reverse-proxy.md)), but it has real costs. Understand these before choosing an alternative.
+
+#### Technical trade-offs
+
+| Drawback | Description |
+| -------- | ----------- |
+| **Extra hop** | Every API request passes through the frontend server (SvelteKit `handle` hook or Vite dev proxy) before reaching FastAPI. Adds latency and a failure point — if the proxy is down, the SPA gets 502 even when the API is healthy. |
+| **Two proxy implementations** | SvelteKit uses [`hooks.server.ts`](../../apps/web/src/hooks.server.ts) (production-ready). React uses Vite `server.proxy` (dev-only). React production requires a separate reverse proxy (Express/nginx) at cutover — extra work that direct API calls would skip. |
+| **Dev ≠ production** | Vite dev proxy and SvelteKit `handle` do not behave identically (headers, timeouts, error bodies, streaming). Bugs may appear in one environment only. |
+| **WebSockets / SSE / streaming** | The current SvelteKit proxy targets REST. WebSockets, Server-Sent Events, or large uploads need explicit proxy configuration and may behave differently in Vite vs production. |
+| **Indirect debugging** | Browser DevTools show requests to `:5173` / `:5174`, not `:8000`. Troubleshooting requires checking both frontend proxy logs and backend logs. |
+
+#### Architecture trade-offs
+
+| Drawback | Description |
+| -------- | ----------- |
+| **Separate origins in parallel dev** | `:5173` and `:5174` are different origins with **separate cookie jars** — no shared login session when comparing GUIs side-by-side. Same DB data, but you log in twice. |
+| **Single `FRONTEND_BASE_URL`** | Email verify/reset links point to one canonical URL (default `:5173`). The React GUI on `:5174` does not receive those links unless auth routes are implemented there and the env var is switched. |
+| **No benefit for non-browser clients** | Mobile apps, external tools, or Capacitor with bearer tokens talk to the API directly anyway ([ADR-0006](../adr/0006-cookie-auth-mit-capacitor-migration.md)). The web proxy does not help those clients. |
+| **ADR-0011 assumes one entry point** | Production design is one public web origin with internal API. Running two production frontends requires infra changes (second compose service, Traefik route) — parallel ports are for **dev/evaluation only**. |
+
+#### Operations trade-offs
+
+| Drawback | Description |
+| -------- | ----------- |
+| **Heavier frontend container** | Production web container carries proxy logic. An edge reverse proxy (Traefik/nginx) could do the same — risk of duplicate proxies or unclear ownership if both are configured. |
+| **Client IP / rate limiting** | Backend rate limiting may trust `X-Forwarded-For` when `RATE_LIMIT_TRUST_PROXY_HEADERS=true`. The SvelteKit proxy strips browser-supplied forwarding headers (correct for security) — edge proxies must set trusted headers explicitly. |
+| **Two production frontends not supported** | Compose/Traefik templates define one `web` service. Parallel public GUIs need custom infra. |
+
+#### Alternative: direct API calls (and why CorrelCore avoids them)
+
+Calling `http://localhost:8000/api/v1` directly from the browser avoids the proxy hop but introduces different problems:
+
+| Problem | Without proxy |
+| ------- | ------------- |
+| Cookies (`SameSite=strict`) | Login from `:5174` → API on `:8000` **breaks** — cookies are not sent cross-origin |
+| CORS | Every frontend origin must be listed in `CORS_ORIGINS` |
+| Build-time coupling | Absolute API URL baked into the bundle ([ADR-0011 background](../adr/0011-web-internal-reverse-proxy.md)) |
+| Exposed API port | `:8000` must be reachable from the browser |
+| Security | Larger attack surface in dev/homelab setups |
+
+**Verdict for this experiment:** Proxy trade-offs (extra hop, separate sessions, React production proxy TBD) are **acceptable** for parallel SvelteKit + React evaluation. The cookie/CORS/build-time problems of direct API calls are worse for CorrelCore's auth model.
+
 ---
 
 ## Authentication and Cookies

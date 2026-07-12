@@ -40,6 +40,9 @@ Both share one FastAPI backend on port **8000**.
 5. **Browser URL:** Use `http://localhost:5174/` — not `127.0.0.1:5174` (Vite bind quirk).
 6. **`localhost` vs `127.0.0.1`:** Different origins for cookies and CORS — stay on `localhost`.
 
+Proxy trade-offs (extra hop, separate sessions, production proxy TBD):
+[`docs/frontend/PARALLEL_REACT_GUI.md` § Proxy approach — trade-offs](../../docs/frontend/PARALLEL_REACT_GUI.md#proxy-approach--trade-offs).
+
 ---
 
 ## Commands
