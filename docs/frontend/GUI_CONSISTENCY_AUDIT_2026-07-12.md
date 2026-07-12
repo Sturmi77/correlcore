@@ -116,7 +116,7 @@ Problematisch: `max-width: 760px` (statt 767) in `InsightPhaseMilestoneCard.svel
 
 **Maßnahme:** Token `--color-scrim` in beiden Themes definieren (Dark: `oklch(0 0 0 / 0.48)`, Light: schwächer, z. B. `oklch(0.2 0.01 80 / 0.35)`); alle Backdrops darauf umstellen; `--color-surface-inverse`-Verweis entfernen.
 
-**Akzeptanz:** `grep -rn 'oklch(0 0 0 / 0.48)\|surface-inverse' apps/web/src` = 0 Treffer außerhalb `app.css`; Sheets in Light sichtbar weniger hart abgedunkelt.
+**Akzeptanz:** `grep -rn 'oklch(0 0 0 / 0.48)\|surface-inverse' apps/web/src --include='*.svelte'` = 0 Treffer (bewusst nur `*.svelte`, da `app.css` nach korrekter Umsetzung selbst den Wert `oklch(0 0 0 / 0.48)` für `--color-scrim` (Dark) enthält — ein Grep über den ganzen `apps/web/src`-Baum ohne diese Einschränkung würde dort fälschlich anschlagen); Sheets in Light sichtbar weniger hart abgedunkelt.
 
 ### F-07: `ScreenHeader` fehlt auf Primär-Screens — Home hat gar kein `<h1>`
 
@@ -242,7 +242,7 @@ Problematisch: `max-width: 760px` (statt 767) in `InsightPhaseMilestoneCard.svel
 **Maßnahme:** Kleines Check-Skript `apps/web/scripts/check-style-tokens.mjs` (Aufruf in `ci-web.yml` neben `check:contrast`), das in `*.svelte` failt bei:
 
 1. Hex-Farbliteralen (`#[0-9a-f]{3,8}`) außerhalb einer Allowlist,
-2. `var(--…)`-Verweisen ohne Definition in `app.css` (komponentenlokal via `style=`-Attribut gesetzte Custom Properties per Allowlist: `--bar-*`, `--tag-*`, `--metric-*`, `--day-count`, `--habit-progress`, `--axis-*`, `--*-chart-width`),
+2. `var(--…)`-Verweisen ohne Definition in `app.css` (komponentenlokal via `style=`-Attribut gesetzte Custom Properties per Allowlist: `--bar-*`, `--tag-*`, `--metric-*`, `--day-count`, `--habit-progress`, `--axis-*`, `--*-chart-width`, `--insight-accent` [von `InsightCard.svelte` gesetzt, siehe `INSIGHT_STATEMENT_PATTERN_SPRINT_PLAN.md` Sprint 3/ISP-5]),
 3. neuen `@media`-Breakpoints außerhalb des kanonischen Sets (F-04),
 4. `font-size`/`border-radius`-Zahlenliteralen ohne `/* token-exempt: <Grund> */`-Kommentar.
 

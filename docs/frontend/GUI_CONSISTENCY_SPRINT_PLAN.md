@@ -36,13 +36,11 @@ duplicate work.
 | 5      | WP-5       | F-04, F-08, F-09                   | P1       | M      | Mobile/Web hardening          |
 | 6      | WP-6       | F-14, F-17, F-18, F-19, F-21       | P2/P3    | S–M    | Principles, docs & guardrails |
 
-**Out of scope for this plan** (per the audit's own framing): F-17 is a
-doc-only correction (no code change); the F-05 `BottomSheet` primitive
-only needs ≥4 of 9 sheets migrated to satisfy its acceptance criterion —
-full migration of all 9 is explicitly follow-up beyond this plan; F-21's
-guardrail script only makes sense once Sprints 4/5 land clean code for it
-to check (see dependency below) — writing it earlier just produces a
-red CI job against known-acceptable legacy.
+**Out of scope for this plan:** the F-05 `BottomSheet` primitive only
+needs ≥4 of 9 sheets migrated to satisfy its acceptance criterion — full
+migration of all 9 is explicitly follow-up beyond this plan. (F-17 is
+**in** scope, assigned to Sprint 6 below — it's doc-only, not excluded;
+see that sprint's verify list.)
 
 ## Dependency graph
 
@@ -62,7 +60,7 @@ flowchart TD
 | S2 → S3, S2 → S4    | Tokens (scrim, `text-2xs/2xl`, `transition-fast/sheet`, `--tap-target`) must exist in `app.css` before component migrations reference them — same "don't build on a shape that's about to change" logic as ISP-1 → ISP-4 in the Insight-Statement-Pattern plan. |
 | S1, S4 → F-19 (S6)  | Can't remove `@skeletonlabs/*` from `package.json` until nothing references the shim classes it justified (F-01 replaces the primary-button variants; F-15, bundled into Sprint 4, replaces the `-500`/`-token` legacy status classes). |
 | S4, S5 → F-21 (S6)  | The CI guardrail script fails on hex literals, undefined `var()` refs, off-canon breakpoints, and un-exempted size literals — landing it before the sweeps (S4) and breakpoint consolidation (S5) means it's red from day one against code nobody's touched yet. |
-| S3 ⊥ S5             | No real dependency — `BottomSheet`/`ScreenHeader` work and breakpoint/touch-target/theme-bootstrap work touch different files. Can run in parallel if more than one person/session is available; sequenced here only for reviewability. |
+| S3 ⊥ S5, except one file | Mostly independent — `BottomSheet`/`ScreenHeader` work and breakpoint/touch-target/theme-bootstrap work touch different files. The exception: `TrendsCompareSettingsSheet.svelte` is in both (S3 migrates it to `BottomSheet`, S5/F-09 fixes its `min-height: 32px` touch target). Do the F-09 touch-target fix on that one file *after* its `BottomSheet` migration, or the two changes will conflict in the same region — everything else in S3/S5 can run in parallel. |
 
 ## Sprint 1 — Broken styles (F-01, F-02, F-03)
 
@@ -83,11 +81,12 @@ flowchart TD
 **Verify:**
 
 - `--color-scrim` defined per-theme (dark: `oklch(0 0 0 / 0.48)`, light: weaker), all sheet backdrops migrated onto it; `--color-surface-inverse` reference gone.
-- Dead/undefined tokens resolved: `--color-mood-primary` → `--color-metric-mood`, `--color-surface-muted` → `--color-strip-track-bg`, `--app-header-height` either defined or its `calc()` uses simplified; `--color-muted` and `--color-gold` (both 0 real usages) deleted; `--color-primary-soft`/`--color-primary-highlight` alias resolved to one name.
+- Dead/undefined tokens resolved: `--color-mood-primary` → `--color-metric-mood`, `--color-surface-muted` → `--color-strip-track-bg`, `--app-header-height` either defined or its `calc()` uses simplified; `--color-muted` deleted (0 real usages); `--color-primary-soft`/`--color-primary-highlight` alias resolved to one name.
+- **`--color-gold` needs a decision, not a plain deletion:** it has 0 real component usages, but `scripts/check-contrast.mjs` hard-requires it (`requiredTokens`, line 10) and checks 4 dark/light contrast pairs against it (`informationalPairs`). Deleting the token without touching the checker breaks `pnpm check:contrast` for everyone, including Sprint 1-4 work that has nothing to do with this token. Either (a) update `check-contrast.mjs` to drop `--color-gold` from both lists in the same change, or (b) keep the token defined (it's a semantic duplicate of `--color-warning`, cheap to keep) and only remove it from the checker once something else needs the slot. Don't do this as an isolated one-line CSS deletion.
 - `--tap-target: 44px` defined; `min-height: 2.75rem` occurrences (7×) migrated to it alongside the existing `44px` literals (34×) for a single canonical form.
 - From F-10/F-12: land just the **new tokens** here (`--text-2xs`, `--text-2xl`, `--transition-fast`, `--transition-sheet`) — the *migration* of existing literals onto them is Sprint 4's job, not this one's. Landing an unused token isn't a regression; migrating call sites before Sprint 3/4 are scoped would be.
 
-**Key files:** `app.css` only, plus the handful of components F-06/F-13 name directly (4 sheets for scrim, `SymptomTrendOverlay.svelte`, `InsightsAnalysisToolbar.svelte`/`TrendsAnalysisToolbar.svelte`).
+**Key files:** `app.css`, `scripts/check-contrast.mjs` (only if `--color-gold` is actually removed, not kept per option (b) above), plus the handful of components F-06/F-13 name directly (4 sheets for scrim, `SymptomTrendOverlay.svelte`, `InsightsAnalysisToolbar.svelte`/`TrendsAnalysisToolbar.svelte`).
 
 **Tests:** `pnpm check:contrast` (ADR-0027 pairs) must stay green — this sprint touches color tokens directly. Visual check: any sheet's backdrop in light mode should read visibly softer than dark.
 
@@ -98,9 +97,9 @@ flowchart TD
 **Verify:**
 
 - `BottomSheet.svelte` extracted into `common/`, `<dialog>`-based per `ESLINT_SVELTE_GUARDRAILS.md` §1, uses `--color-scrim` from Sprint 2, `env(safe-area-inset-bottom)` padding. At least the 4 Trends/Insights sheets sharing the identical old backdrop value migrated onto it (`TrendsCompareSettingsSheet`, `CooccurrenceEntrySheet`, `HabitDetailSheet`, `EntryHistorySheet`); the 5 remaining sheets (`EntrySheet`, `CorrelationDisclaimer`, `InsightJourneyExplainer`, `SymptomCooccurrenceDetailSheet`, `EventAlignedSmallMultiplesSheet`) and the 2 settings-route modal backdrops stay follow-up.
-- `ScreenHeader` added to Home (decide: visible or a new `visuallyHidden` prop, since Home's Daily-Brief design may not want a second on-screen title competing with the statement-first hierarchy from the Insight-Statement-Pattern work), `entries/day/[date]`, and both onboarding routes. Auth routes' distinct `auth-page-title` pattern documented as an intentional exception in `UI_COMPONENT_SYSTEM.md`, not silently left inconsistent.
+- `ScreenHeader` added to Home (decide: visible or a new `visuallyHidden` prop, since Home's Daily-Brief design may not want a second on-screen title competing with the statement-first hierarchy from the Insight-Statement-Pattern work), `entries/day/[date]`, and **all three** onboarding routes — the audit's F-07 evidence (lines 108/161) points at `routes/onboarding/+page.svelte` (the main guided flow, two raw `<h1>`s for its tags/summary steps), not just `profile`/`retro`; don't scope this to two routes when a third has the same violation. Auth routes' distinct `auth-page-title` pattern documented as an intentional exception in `UI_COMPONENT_SYSTEM.md`, not silently left inconsistent.
 
-**Key files:** new `common/BottomSheet.svelte` (+ test), the 4 sheet components named above, `routes/+page.svelte` (Home), `ScreenHeader.svelte` (new prop), `routes/entries/day/[date]/+page.svelte`, both onboarding route files, `UI_COMPONENT_SYSTEM.md`.
+**Key files:** new `common/BottomSheet.svelte` (+ test), the 4 sheet components named above, `routes/+page.svelte` (Home), `ScreenHeader.svelte` (new prop), `routes/entries/day/[date]/+page.svelte`, `routes/onboarding/+page.svelte`, `routes/onboarding/profile/+page.svelte`, `routes/onboarding/retro/+page.svelte`, `UI_COMPONENT_SYSTEM.md`.
 
 **Tests:** new `BottomSheet.test.ts`; extend `ScreenHeader.test.ts` for the new prop (if added); an axe/a11y pass confirming no "page has no level-one heading" on Home, entries/day, or onboarding.
 
@@ -118,7 +117,7 @@ though they're bundled here as one audit-recommended work package.
 - F-10: `grep -rnE 'font-size:\s*[0-9.]+rem' apps/web/src --include='*.svelte'` under 10 remaining hits, each with a `/* token-exempt: <reason> */` comment (SVG axis labels in `MetricTimeseries.svelte` are the documented exception). `--text-2xl` reference in `routes/dev/+page.svelte` now resolves to a real token (added in Sprint 2).
 - F-11: `grep -rnE 'border-radius:\s*[0-9]' apps/web/src --include='*.svelte'` ≤ 5 justified remaining hits.
 - F-12: no bare `ms` literals in Svelte `transition:` declarations outside commented keyframe animations.
-- F-15: `grep -rn '\-500\b|600-300-token' apps/web/src --include='*.svelte'` → 0; Skeleton legacy shims removed from `app.css:654–680`.
+- F-15: `grep -rnE '\-500\b|600-300-token' apps/web/src --include='*.svelte'` → 0 (note `-E`: plain `grep`'s basic regex treats `|` as a literal character, not alternation, and would silently report 0 hits even with legacy classes still present — false-pass risk). Skeleton legacy shims removed from `app.css:654–680`.
 - F-16: icon `size={}` literals replaced by `IconRender`/`IconButton` channeling a typed `'sm' | 'md'` prop mapped to the `--icon-sm`/`--icon-md` pixel values (`14`/`18`) — the same values `lib/constants/iconSizes.ts` already exports as `ICON_SIZE_SM`/`ICON_SIZE_MD` from Sprint 3 of the Insight-Statement-Pattern work; reuse that module rather than re-deriving the numbers. `16 → 14 or 18`, `20/22 → 18` per the audit's mapping; `40/72` (landing-page logo) stay exempt.
 
 **Key files:** `app.css` (`--text-2xs`/`--text-2xl` already added in Sprint 2), dozens of `.svelte` files across `components/insights`, `components/home`, `components/trends`, `IconRender.svelte`/`IconButton.svelte`, `lib/constants/iconSizes.ts` (reused, not recreated).
@@ -131,11 +130,11 @@ though they're bundled here as one audit-recommended work package.
 
 **Verify:**
 
-- F-04: canonical breakpoint set (360/480/768/1024) documented as a comment contract in `app.css`; `760px` → `767px` and `48rem` → `768px` fixed in the four components that drift from the shell breakpoint (`InsightPhaseMilestoneCard`, `HabitsPanel`, `InsightJourneyExplainer`, `HabitDetailBody`); remaining odd breakpoints (520/420/430/640/680/720/860) mapped down to ≤5 distinct values app-wide, or converted to container queries where the break is genuinely component-internal rather than viewport-driven.
-- F-08: resolve the documented Variante A vs. B fork **before** writing code — this is a product decision (does a light-OS first-time visitor see light or dark?), not purely technical. If A (honor system preference): extend the inline bootstrap script with a `matchMedia('(prefers-color-scheme: light)')` check, delete the now-genuinely-dead `@media (prefers-color-scheme: dark)` fallback block in `app.css` (~50 duplicated token lines). If B (keep dark-default deliberately): write the ADR, correct `FRONTEND.md` §4.1 to match reality, still delete the dead CSS block either way — it's unreachable under both variants once `data-theme` is confirmed always-set.
+- F-04: canonical breakpoint set documented as a comment contract in `app.css`. **The audit's proposed 360/480/768/1024 set conflicts with `FRONTEND.md:81`, which already documents `375px (base) → 768px → 1024px+` as the contract** (also referenced at `FRONTEND.md:84/88/753`). Reconcile before landing either: either add `375` to the canonical set (and accept two "small" breakpoints, 360 and 375, if both have real call sites), or replace 375 with 360 everywhere in `FRONTEND.md` and confirm nothing actually depends on exactly 375. Don't let the two docs disagree — F-21's guardrail will enforce whichever set actually ships. Once decided: `760px` → `767px` and `48rem` → `768px` fixed in the four components that drift from the shell breakpoint (`InsightPhaseMilestoneCard`, `HabitsPanel`, `InsightJourneyExplainer`, `HabitDetailBody`); remaining odd breakpoints (520/420/430/640/680/720/860) mapped down to ≤5 distinct values app-wide, or converted to container queries where the break is genuinely component-internal rather than viewport-driven.
+- F-08: resolve the documented Variante A vs. B fork **before** writing code — this is a product decision (does a light-OS first-time visitor see light or dark?), not purely technical. If A (honor system preference): extend the inline bootstrap script with a `matchMedia('(prefers-color-scheme: light)')` check. If B (keep dark-default deliberately): write the ADR, correct `FRONTEND.md` §4.1 to match reality. **Either way**, deleting the `@media (prefers-color-scheme: dark)` fallback block in `app.css` (~50 duplicated token lines) requires updating `scripts/check-contrast.mjs` in the same change — it explicitly extracts that block (`extractBlock('system dark fallback', /:root:not\(\[data-theme\]\)\s*\{/)`) and fails with "Missing X in system dark fallback" for every required token if the block disappears without the checker being told to stop expecting it.
 - F-09: Trends-Compare controls and `SymptomCalendarHeatmap` interactive cells reach ≥44px touch targets on mobile (heatmap cells via hit-area padding/`::after`, not a visual size change to the 12×12px cells themselves — density is intentional there).
 
-**Key files:** `app.css` (breakpoint contract comment, dead fallback block removal), `InsightPhaseMilestoneCard.svelte`, `HabitsPanel.svelte`, `InsightJourneyExplainer.svelte`, `HabitDetailBody.svelte`, `app.html` (bootstrap script, if Variante A), `TrendsComparePanel.svelte`, `TrendsCompareQuickFilters.svelte`, `TrendsCompareSettingsSheet.svelte`, `SymptomCalendarHeatmap.svelte`, possibly a new ADR + `FRONTEND.md` §4.1 (if Variante B).
+**Key files:** `app.css` (breakpoint contract comment, dead fallback block removal), `scripts/check-contrast.mjs` (fallback-block extraction removed alongside it), `FRONTEND.md` §1.6 (breakpoint canon reconciliation) and §4.1 (if Variante B), `InsightPhaseMilestoneCard.svelte`, `HabitsPanel.svelte`, `InsightJourneyExplainer.svelte`, `HabitDetailBody.svelte`, `app.html` (bootstrap script, if Variante A), `TrendsComparePanel.svelte`, `TrendsCompareQuickFilters.svelte`, `TrendsCompareSettingsSheet.svelte` (after its Sprint 3 `BottomSheet` migration, see dependency note above), `SymptomCalendarHeatmap.svelte`, possibly a new ADR (if Variante B).
 
 **Tests:** `pnpm test:e2e:mobile`, existing Sprint-1-era Playwright touch-target coverage extended to Trends-Compare; `mobile-theme-parity.spec.ts` must stay green through the F-08 change either way.
 
@@ -158,13 +157,15 @@ though they're bundled here as one audit-recommended work package.
 ## Regression commands
 
 ```bash
+pnpm check:contrast       # from the repo root — ADR-0027 pairs, critical for Sprints 1, 2, 5
 cd apps/web
 pnpm lint && pnpm format:check && pnpm typecheck
 pnpm test                 # 97 files / 473 tests baseline per the audit
-pnpm check:contrast       # ADR-0027 pairs — critical for Sprints 1 and 2
 pnpm build
 pnpm test:e2e:smoke       # plus test:e2e:mobile for Sprints 3 and 5
 ```
+
+`check:contrast` only exists in the root `package.json` (`docs/DEVELOPMENT.md:109` confirms: run it from the repo root, not from `apps/web`) — it isn't defined in `apps/web/package.json`, so running it after `cd apps/web` fails before any UI verification happens.
 
 Manual check after every sprint: baseline viewports from `surfaceContract.ts`
 (390/430/768/1280/1440), dark **and** light.
@@ -183,3 +184,9 @@ Manual check after every sprint: baseline viewports from `surfaceContract.ts`
   signal-design (symptom presence reads differently from a frequency
   heatmap), may just be an oversight. The audit flags it as ambiguous;
   this plan doesn't resolve it either.
+- **F-04's canonical breakpoint set vs. `FRONTEND.md`'s existing 375px
+  contract** — the audit proposes 360/480/768/1024, but `FRONTEND.md:81`
+  already documents 375 as the base breakpoint, referenced in three more
+  places in that doc. Whether 375 gets folded into the canon or replaced
+  by 360 is a real product/design call (which one matches actual device
+  targets?), not something to silently pick during Sprint 5 implementation.
