@@ -168,7 +168,7 @@ need five review cycles to prove it.
 
 - **ISP-5 Metric-color identity:** implemented as a **3px `border-left`**
   accent (`--insight-accent`, set inline per-card from `insight.metric`),
-  *not* a recolor of the direction glyph. The glyph's color already carries
+  _not_ a recolor of the direction glyph. The glyph's color already carries
   a different, existing signal — positive/negative/neutral effect — and
   overloading it with metric identity would have collapsed two meanings
   into one channel. Falls back to `--color-primary` for non-core-metric
