@@ -29,6 +29,7 @@
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
   import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
+  import { selectNewestWeekdayPattern } from '$lib/utils/homeWeekdayOverview';
   import { shiftIsoDate } from '$lib/utils/streak';
   import Button from '$lib/components/common/Button.svelte';
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
@@ -60,7 +61,10 @@
   $: insightMaturity = $insightStore.insightMaturity;
   $: insightLoading = $insightStore.loading;
   $: contextInsight = $rankedInsights.find((i) => isCalendarContextInsight(i)) ?? null;
-  $: weekdayInsight = $rankedInsights.find((i) => i.insight_type === 'weekday_pattern') ?? null;
+  // See selectNewestWeekdayPattern's doc comment: rankInsights sorts by
+  // confidence × |effect_size|, not recency, so picking the top-ranked
+  // weekday_pattern match here could surface a stale weekday.
+  $: weekdayInsight = selectNewestWeekdayPattern($rankedInsights);
   $: firstWeekDismissed =
     userPreferences?.dismissed_insight_keys.some((key) =>
       [EARLY_CONTEXT_PATTERN_KEY, LEGACY_FIRST_WEEK_PATTERN_KEY].includes(key)
@@ -237,7 +241,7 @@
         loading={insightLoading && !latestInsight}
         workContextSummary={dashboardSummary?.work_context_summary ?? []}
       />
-      <HomeWeekdayOverview insights={$rankedInsights} {weekdayInsight} />
+      <HomeWeekdayOverview insights={$rankedInsights} {weekdayInsight} loading={insightLoading} />
     </section>
 
     <!-- Zone 3: primary CTA when today is not logged -->

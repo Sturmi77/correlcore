@@ -68,11 +68,39 @@ describe('HomeWeekdayOverview', () => {
   });
 
   it('shows an empty state instead of nothing when no cell has content', () => {
-    render(HomeWeekdayOverview, { props: { insights: [], weekdayInsight: null } });
+    render(HomeWeekdayOverview, {
+      props: { insights: [], weekdayInsight: null, loading: false },
+    });
 
     expect(screen.queryByTestId('home-weekday-overview')).toBeNull();
     expect(screen.getByTestId('home-weekday-overview-empty')).toBeTruthy();
     expect(screen.getByText('home.weekday_overview.empty')).toBeTruthy();
+  });
+
+  it('suppresses the empty state while insights are still loading', () => {
+    // Regression: on a hard Home reload, $rankedInsights/weekdayInsight start
+    // empty before loadInsights() resolves — without gating on `loading`,
+    // "No weekday pattern yet" would flash (or stick, on a load failure)
+    // before the app actually knows whether there's a pattern or not.
+    render(HomeWeekdayOverview, {
+      props: { insights: [], weekdayInsight: null, loading: true },
+    });
+
+    expect(screen.queryByTestId('home-weekday-overview')).toBeNull();
+    expect(screen.queryByTestId('home-weekday-overview-empty')).toBeNull();
+  });
+
+  it('shows real content even while loading is true (e.g. a background refresh)', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight,
+        insights: [weekdayInsight],
+        loading: true,
+      },
+    });
+
+    expect(screen.getByTestId('home-weekday-overview')).toBeTruthy();
+    expect(screen.queryByTestId('home-weekday-overview-empty')).toBeNull();
   });
 
   it('does not show the empty state when a weekday_pattern insight has no mood payload but a confounded insight has a finding', () => {

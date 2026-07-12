@@ -7,6 +7,9 @@
   } from '$lib/utils/homeWeekdayOverview';
   export let insights: InsightResponse[] = [];
   export let weekdayInsight: InsightResponse | null = null;
+  /** While true, suppress the empty state — insights haven't finished loading
+   * (or failed to load) yet, so "no weekday pattern yet" would be premature. */
+  export let loading = false;
 
   $: cells = buildWeekdayOverviewCells(weekdayInsight ? [weekdayInsight, ...insights] : insights);
   $: knownMood = cells
@@ -66,7 +69,7 @@
     {/if}
     <p class="weekday-overview__hint">{$_('home.weekday_overview.hint')}</p>
   </section>
-{:else}
+{:else if !loading}
   <section
     class="weekday-overview weekday-overview--empty"
     data-testid="home-weekday-overview-empty"

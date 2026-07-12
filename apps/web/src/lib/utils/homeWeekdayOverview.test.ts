@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildWeekdayOverviewCells, hasWeekdayOverviewContent } from './homeWeekdayOverview';
+import {
+  buildWeekdayOverviewCells,
+  hasWeekdayOverviewContent,
+  selectNewestWeekdayPattern,
+} from './homeWeekdayOverview';
 import type { InsightResponse } from '$lib/api/insights';
 
 function makeInsight(partial: Partial<InsightResponse>): InsightResponse {
@@ -51,5 +55,54 @@ describe('homeWeekdayOverview', () => {
     expect(cells[1].findingLabel).toBe('Tuesday running');
     expect(cells[2].findingLabel).toBe('Headache');
     expect(hasWeekdayOverviewContent(cells)).toBe(true);
+  });
+});
+
+describe('selectNewestWeekdayPattern', () => {
+  it('returns null when there is no weekday_pattern insight', () => {
+    const insights = [makeInsight({ subject_label: 'Running' })];
+    expect(selectNewestWeekdayPattern(insights)).toBeNull();
+  });
+
+  it('picks the most recently generated weekday_pattern, not the highest-ranked one', () => {
+    // Regression: /insights/latest keys weekday_pattern rows by weekday label
+    // (subject_id is always null), so an older "Wednesday" row and a newer
+    // "Friday" row can both survive backend dedup. rankInsights sorts by
+    // confidence × |effect_size|, so a caller that just takes the top-ranked
+    // match can surface the stale one.
+    const staleHighScore = makeInsight({
+      id: 'stale-wednesday',
+      insight_type: 'weekday_pattern',
+      subject_type: 'weekday',
+      subject_label: 'Wednesday',
+      confidence: 0.9,
+      effect_size: 0.8,
+      generated_for_date: '2026-06-01',
+    });
+    const freshLowScore = makeInsight({
+      id: 'fresh-friday',
+      insight_type: 'weekday_pattern',
+      subject_type: 'weekday',
+      subject_label: 'Friday',
+      confidence: 0.3,
+      effect_size: 0.24,
+      generated_for_date: '2026-07-10',
+    });
+
+    // Order mimics rankInsights output: highest score first.
+    const result = selectNewestWeekdayPattern([staleHighScore, freshLowScore]);
+    expect(result?.id).toBe('fresh-friday');
+  });
+
+  it('ignores non-weekday_pattern insights mixed into the list', () => {
+    const weekday = makeInsight({
+      id: 'weekday-only',
+      insight_type: 'weekday_pattern',
+      subject_type: 'weekday',
+      generated_for_date: '2026-07-05',
+    });
+    const other = makeInsight({ id: 'unrelated-tag', generated_for_date: '2026-07-12' });
+
+    expect(selectNewestWeekdayPattern([other, weekday])?.id).toBe('weekday-only');
   });
 });
