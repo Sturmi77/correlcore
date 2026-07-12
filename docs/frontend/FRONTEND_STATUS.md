@@ -13,14 +13,14 @@ older milestone docs where they conflict.
 
 ## Executive summary
 
-| Dimension                           | Verdict      | Notes                                                                                               |
-| ----------------------------------- | ------------ | --------------------------------------------------------------------------------------------------- |
-| **Production deploy (app)**         | **Go**       | Mobile daily-use paths complete; CI gates cover lint, types, unit tests, contrast, build, smoke E2E |
-| **Mobile closeout (Phases 0–4)**    | **Complete** | Signed off [`MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md)                      |
-| **Design system (Figma E–G, I)**    | **Complete** | Signed off [`FIGMA_PRODUCTION_GRADE_QA.md`](../quality/FIGMA_PRODUCTION_GRADE_QA.md)                |
-| **Code Connect live (Sprint H)**    | **Deferred** | 20 local templates; publish needs Dev/Full seat + token — **not a deploy blocker**                  |
-| **Desktop consolidation (Phase 5)** | **Open**     | Entry workspace density, auth web polish — intentional follow-up                                    |
-| **React GUI experiment (`apps/web-react`)** | **Planned** | Parallel evaluation on port 5174 — see [`PARALLEL_REACT_GUI.md`](PARALLEL_REACT_GUI.md). Production GUI remains SvelteKit until cutover. |
+| Dimension                                   | Verdict      | Notes                                                                                                                                    |
+| ------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Production deploy (app)**                 | **Go**       | Mobile daily-use paths complete; CI gates cover lint, types, unit tests, contrast, build, smoke E2E                                      |
+| **Mobile closeout (Phases 0–4)**            | **Complete** | Signed off [`MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md)                                                           |
+| **Design system (Figma E–G, I)**            | **Complete** | Signed off [`FIGMA_PRODUCTION_GRADE_QA.md`](../quality/FIGMA_PRODUCTION_GRADE_QA.md)                                                     |
+| **Code Connect live (Sprint H)**            | **Deferred** | 20 local templates; publish needs Dev/Full seat + token — **not a deploy blocker**                                                       |
+| **Desktop consolidation (Phase 5)**         | **Open**     | Entry workspace density, auth web polish — intentional follow-up                                                                         |
+| **React GUI experiment (`apps/web-react`)** | **Planned**  | Parallel evaluation on port 5174 — see [`PARALLEL_REACT_GUI.md`](PARALLEL_REACT_GUI.md). Production GUI remains SvelteKit until cutover. |
 
 **Operating model:** One SvelteKit codebase. Mobile = capture, check-in, lightweight
 review @390/430 px. Web = analysis, comparison, management @1280+ px. Shell switches

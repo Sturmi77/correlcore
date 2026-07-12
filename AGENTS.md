@@ -36,11 +36,11 @@ uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 
 See [`docs/frontend/PARALLEL_REACT_GUI.md`](docs/frontend/PARALLEL_REACT_GUI.md).
 
-| GUI | Command | Port |
-| --- | ------- | ---- |
-| SvelteKit (production) | `pnpm dev` | 5173 |
-| React (experiment) | `pnpm dev:react` | 5174 |
-| Both | `pnpm dev:all` | 5173 + 5174 |
+| GUI                    | Command          | Port        |
+| ---------------------- | ---------------- | ----------- |
+| SvelteKit (production) | `pnpm dev`       | 5173        |
+| React (experiment)     | `pnpm dev:react` | 5174        |
+| Both                   | `pnpm dev:all`   | 5173 + 5174 |
 
 Agent context for React work: [`apps/web-react/CLAUDE.md`](apps/web-react/CLAUDE.md). Set `INTERNAL_API_URL=http://127.0.0.1:8000` for both frontends. No backend changes required in proxy mode.
 

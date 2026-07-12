@@ -12,9 +12,9 @@ Build an **experimental React frontend** for CorrelCore in parallel to the
 **production SvelteKit app** (`apps/web`). Do **not** modify `apps/web` unless
 explicitly asked.
 
-| App | Port | Status |
-| --- | ---- | ------ |
-| SvelteKit (`@correlcore/web`) | 5173 | Production GUI — canonical |
+| App                             | Port | Status                       |
+| ------------------------------- | ---- | ---------------------------- |
+| SvelteKit (`@correlcore/web`)   | 5173 | Production GUI — canonical   |
 | React (`@correlcore/web-react`) | 5174 | Experiment — evaluation only |
 
 Both share one FastAPI backend on port **8000**.
@@ -47,14 +47,14 @@ Proxy trade-offs (extra hop, separate sessions, production proxy TBD):
 
 ## Commands
 
-| Action | Command |
-| ------ | ------- |
-| Dev (React only) | `pnpm dev:react` (repo root) |
-| Dev (both GUIs) | `pnpm dev:all` |
-| Dev (SvelteKit reference) | `pnpm dev` |
-| Lint | `pnpm --filter @correlcore/web-react lint` |
-| Typecheck | `pnpm --filter @correlcore/web-react typecheck` |
-| Test | `pnpm --filter @correlcore/web-react test` |
+| Action                    | Command                                         |
+| ------------------------- | ----------------------------------------------- |
+| Dev (React only)          | `pnpm dev:react` (repo root)                    |
+| Dev (both GUIs)           | `pnpm dev:all`                                  |
+| Dev (SvelteKit reference) | `pnpm dev`                                      |
+| Lint                      | `pnpm --filter @correlcore/web-react lint`      |
+| Typecheck                 | `pnpm --filter @correlcore/web-react typecheck` |
+| Test                      | `pnpm --filter @correlcore/web-react test`      |
 
 ---
 
@@ -82,17 +82,17 @@ Postgres and Redis via Docker — see `AGENTS.md`.
 
 ## Key Reference Files (read-only)
 
-| Purpose | Path |
-| ------- | ---- |
-| API client pattern | `apps/web/src/lib/api/client.ts` |
-| API contract constants | `apps/web/src/lib/contracts/apiContract.ts` |
-| SvelteKit proxy (ADR-0011) | `apps/web/src/hooks.server.ts` |
-| Auth ADR | `docs/adr/0004-auth-strategie.md` |
-| Proxy ADR | `docs/adr/0011-web-internal-reverse-proxy.md` |
-| Screen architecture | `docs/adr/0017-frontend-screen-architecture.md` |
-| Design tokens | `docs/frontend/COLOR_SCHEME_CONCEPT.md` |
-| Full parallel-GUI guide | `docs/frontend/PARALLEL_REACT_GUI.md` |
-| OpenAPI (runtime) | `http://127.0.0.1:8000/openapi.json` |
+| Purpose                    | Path                                            |
+| -------------------------- | ----------------------------------------------- |
+| API client pattern         | `apps/web/src/lib/api/client.ts`                |
+| API contract constants     | `apps/web/src/lib/contracts/apiContract.ts`     |
+| SvelteKit proxy (ADR-0011) | `apps/web/src/hooks.server.ts`                  |
+| Auth ADR                   | `docs/adr/0004-auth-strategie.md`               |
+| Proxy ADR                  | `docs/adr/0011-web-internal-reverse-proxy.md`   |
+| Screen architecture        | `docs/adr/0017-frontend-screen-architecture.md` |
+| Design tokens              | `docs/frontend/COLOR_SCHEME_CONCEPT.md`         |
+| Full parallel-GUI guide    | `docs/frontend/PARALLEL_REACT_GUI.md`           |
+| OpenAPI (runtime)          | `http://127.0.0.1:8000/openapi.json`            |
 
 ---
 
@@ -146,12 +146,12 @@ await fetch(`${API_BASE}/entries`, { credentials: 'include' });
 
 ## Auth Routes to Implement (for parity testing)
 
-| Route | Notes |
-| ----- | ----- |
-| `/auth/login` | Cookie session via POST `/api/v1/auth/login` |
-| `/auth/register` | Email verification flow |
-| `/auth/verify-email` | Query: `?token=` |
-| `/auth/reset-password` | Query: `?token=` |
+| Route                  | Notes                                        |
+| ---------------------- | -------------------------------------------- |
+| `/auth/login`          | Cookie session via POST `/api/v1/auth/login` |
+| `/auth/register`       | Email verification flow                      |
+| `/auth/verify-email`   | Query: `?token=`                             |
+| `/auth/reset-password` | Query: `?token=`                             |
 
 Email links use backend `FRONTEND_BASE_URL` (default `http://localhost:5173`) until cutover.
 Implement these routes in React before switching that env var.
@@ -191,10 +191,10 @@ Implement these routes in React before switching that env var.
 
 ## Environment Variables (React dev)
 
-| Variable | Required | Purpose |
-| -------- | -------- | ------- |
-| `INTERNAL_API_URL` | Yes | Vite proxy target (`http://127.0.0.1:8000`) |
-| `VITE_API_BASE_URL` | No | Default `/api/v1` — do not set to absolute URL |
+| Variable            | Required | Purpose                                        |
+| ------------------- | -------- | ---------------------------------------------- |
+| `INTERNAL_API_URL`  | Yes      | Vite proxy target (`http://127.0.0.1:8000`)    |
+| `VITE_API_BASE_URL` | No       | Default `/api/v1` — do not set to absolute URL |
 
 Backend vars (`CORS_ORIGINS`, `FRONTEND_BASE_URL`) — no change needed in proxy mode.
 
