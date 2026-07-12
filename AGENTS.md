@@ -32,6 +32,18 @@ uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 
 **Vite bind quirk:** the dev server may listen on `localhost` only. Use `http://localhost:5173/` in the browser; `127.0.0.1:5173` can refuse connections even when the process is up.
 
+### Parallel React GUI (experimental)
+
+See [`docs/frontend/PARALLEL_REACT_GUI.md`](docs/frontend/PARALLEL_REACT_GUI.md).
+
+| GUI | Command | Port |
+| --- | ------- | ---- |
+| SvelteKit (production) | `pnpm dev` | 5173 |
+| React (experiment) | `pnpm dev:react` | 5174 |
+| Both | `pnpm dev:all` | 5173 + 5174 |
+
+Agent context for React work: [`apps/web-react/CLAUDE.md`](apps/web-react/CLAUDE.md). Set `INTERNAL_API_URL=http://127.0.0.1:8000` for both frontends. No backend changes required in proxy mode.
+
 ### Lint / test / build
 
 | Layer                  | Commands                                                                         |
