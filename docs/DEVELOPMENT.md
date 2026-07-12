@@ -109,6 +109,28 @@ On Unix-like systems, `backend/scripts/check.sh` remains the canonical backend
 gate. Run `pnpm check:contrast` from the repo root before opening a web PR,
 then use `pnpm` directly for lint/typecheck/test.
 
+## Parallel React GUI experiment
+
+An experimental React frontend (`apps/web-react/`) can run alongside the
+production SvelteKit app on a separate dev port. Both share the same API.
+
+Full guide: [`docs/frontend/PARALLEL_REACT_GUI.md`](frontend/PARALLEL_REACT_GUI.md)  
+Agent context (Claude / Cursor): [`apps/web-react/CLAUDE.md`](../apps/web-react/CLAUDE.md)
+
+```bash
+# API must be running on :8000 (see AGENTS.md)
+export INTERNAL_API_URL=http://127.0.0.1:8000
+
+pnpm dev          # SvelteKit → http://localhost:5173
+pnpm dev:react    # React experiment → http://localhost:5174 (after scaffold)
+pnpm dev:all      # both frontends in parallel
+```
+
+Use `http://localhost:5174/` in the browser (not `127.0.0.1`). The React app
+proxies `/api/*` to `INTERNAL_API_URL` — same cookie-auth pattern as SvelteKit
+([ADR-0011](adr/0011-web-internal-reverse-proxy.md)). Production deploy and CI
+are unchanged until an explicit cutover decision.
+
 ## Backend test database
 
 The API unit tests mostly mock external services, but migration smoke tests need
