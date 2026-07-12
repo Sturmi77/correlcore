@@ -21,6 +21,8 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'trends.metric.mood') return 'Mood';
       if (key === 'trends.metric.energy') return 'Energy';
       if (key === 'trends.metric.stress') return 'Stress';
+      if (key.startsWith('maturity.badge.') && !key.endsWith('_tooltip'))
+        return `${key} · ${options?.values?.n} entries`;
       return key;
     }),
   };
@@ -173,6 +175,18 @@ describe('InsightCard', () => {
 
     expect(badge.getAttribute('data-phase')).toBe('provisional');
     expect(badge.textContent).toContain('maturity.badge.provisional');
+  });
+
+  it('interpolates the insight sample size into the maturity badge, not 0', () => {
+    // Regression (found via mock-data browser audit): the meta-row
+    // InsightEvidence call site dropped entryCount during the Sprint 2
+    // consolidation, so the badge template "… · {n} Eintraege" rendered
+    // "· 0 Eintraege" next to a meta line correctly showing 42 entries.
+    render(InsightCard, { props: { insight: INSIGHT, maturity: MATURITY } });
+    const badge = screen.getByTestId('insight-maturity-badge');
+
+    expect(badge.textContent).toContain('42 entries');
+    expect(badge.textContent).not.toContain('0 entries');
   });
 
   it('does not show explore-events action unless the parent opts in', () => {
