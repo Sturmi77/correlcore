@@ -5,6 +5,9 @@ import { CLIENT_ID_STORAGE_KEY, getOrCreateClientId } from './clientId';
 import { getOfflineDb, resetOfflineDbForTests } from './db';
 import { isOfflineSyncEnabled } from './featureFlag';
 import {
+  applyPulledEntry,
+} from '$lib/stores/entriesOffline';
+import {
   clearOfflineDataForAnonymousSession,
   prepareOfflineDataForAuthenticatedUser,
 } from './session';
@@ -175,5 +178,41 @@ describe('offline Dexie foundation', () => {
     expect(await freshDb.entries.count()).toBe(0);
     expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBeNull();
     expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBeNull();
+  });
+
+  it('removes stale duplicate entries and their pending outbox rows on pull hydrate', async () => {
+    const db = getOfflineDb();
+    await db.entries.put(sampleEntry('canonical'));
+    await db.entries.put({ ...sampleEntry('stale-client'), id: 'stale-client' });
+    await appendChange({
+      batch_id: 'batch-stale',
+      entity_type: 'entry',
+      entity_id: 'stale-client',
+      operation: 'upsert',
+      payload: { id: 'stale-client' },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    await applyPulledEntry(
+      'canonical',
+      {
+        entry_date: '2026-06-30',
+        slot: 'day',
+        mood_score: 4,
+        energy: 3,
+        stress: 2,
+        cycle_day: null,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-06-30T13:00:00.000Z',
+      'synced'
+    );
+
+    expect(await db.entries.get('stale-client')).toBeUndefined();
+    expect(await db.entries.get('canonical')).toBeDefined();
+    expect(await listPendingChanges()).toHaveLength(0);
   });
 });

@@ -297,17 +297,31 @@
         listSymptomsForEntry(matchingEntry.id),
       ]);
       if (myToken !== loadToken) return;
+      let hydratedTagIds = [...selectedTagIds];
+      let hydratedSymptoms = [...selectedSymptoms];
       if (tagsRes.status === 'fulfilled') {
-        selectedTagIds = tagsRes.value.map((t) => t.id);
+        hydratedTagIds = tagsRes.value.map((t) => t.id);
+        selectedTagIds = hydratedTagIds;
+      } else {
+        selectedTagIds = [];
+        hydratedTagIds = [];
       }
       if (symRes.status === 'fulfilled') {
-        selectedSymptoms = symRes.value.map((s) => ({
+        hydratedSymptoms = symRes.value.map((s) => ({
           symptom_id: s.symptom_id,
           intensity: s.intensity,
         }));
+        selectedSymptoms = hydratedSymptoms;
+      } else {
+        selectedSymptoms = [];
+        hydratedSymptoms = [];
       }
-      if (canUseOfflineSync()) {
-        await hydrateServerEntryFromApi(matchingEntry, selectedTagIds, selectedSymptoms);
+      if (
+        canUseOfflineSync() &&
+        tagsRes.status === 'fulfilled' &&
+        symRes.status === 'fulfilled'
+      ) {
+        await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
       }
       loadedEntryDate = date;
       void refreshDayDelta(date, selectedSlot);
@@ -633,7 +647,7 @@
 
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
-    if (canUseOfflineSync()) {
+    if (canUseOfflineSync() && offline) {
       return snap;
     }
     const tags = [...selectedSuggestions.values()].map((tag) => ({
