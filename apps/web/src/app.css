@@ -687,31 +687,3 @@ button {
   background: transparent;
   color: var(--color-primary);
 }
-
-.text-success-500 {
-  color: var(--color-success);
-}
-
-.text-warning-500 {
-  color: var(--color-warning);
-}
-
-.text-error-500 {
-  color: var(--color-error);
-}
-
-.bg-success-500 {
-  background-color: var(--color-success);
-}
-
-.bg-warning-500 {
-  background-color: var(--color-warning);
-}
-
-.bg-error-500 {
-  background-color: var(--color-error);
-}
-
-.text-surface-600-300-token {
-  color: color-mix(in srgb, currentColor 65%, transparent);
-}
