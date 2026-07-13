@@ -453,6 +453,7 @@ async def test_push_client_uuid_merges_existing_slot_instead_of_colliding() -> N
     assert entry.id == server_entry_id
     assert entry.mood_score == 5
 
+
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_push_batch_replay_is_idempotent() -> None:
