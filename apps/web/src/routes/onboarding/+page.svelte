@@ -5,6 +5,7 @@
   import Button from '$lib/components/common/Button.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import {
     completeOnboarding,
     fetchTagSuggestions,
@@ -92,6 +93,8 @@
 </svelte:head>
 
 <main class="onboarding-flow">
+  <ScreenHeader title={$_('onboarding.guided.title')} visuallyHidden />
+
   <div class="onboarding-flow__progress" aria-label={$_('onboarding.guided.progress')}>
     {#each Array(progressTotal) as _, item}
       <span class:active={item === step}></span>
@@ -105,7 +108,7 @@
 
   {#if step === 0}
     <Panel variant="bordered">
-      <h1>{$_('onboarding.guided.tags_title')}</h1>
+      <h2>{$_('onboarding.guided.tags_title')}</h2>
       <p data-testid="onboarding-intro">{$_('onboarding.guided.intro')}</p>
       <p>{$_('onboarding.guided.tags_body')}</p>
       <p class="onboarding-flow__habit-hint" data-testid="onboarding-habit-hint">
@@ -158,7 +161,7 @@
     </Panel>
   {:else}
     <Panel variant="bordered">
-      <h1>{$_('onboarding.guided.summary_title')}</h1>
+      <h2>{$_('onboarding.guided.summary_title')}</h2>
       <p>{$_('onboarding.guided.summary_body', { values: { count: selectedTags.length } })}</p>
       <div class="onboarding-flow__chips onboarding-flow__chips--summary">
         {#each selectedTags as tag}
@@ -187,7 +190,6 @@
     gap: var(--space-4);
   }
 
-  .onboarding-flow h1,
   .onboarding-flow h2,
   .onboarding-flow p {
     margin: 0;
