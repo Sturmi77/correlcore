@@ -602,7 +602,7 @@
     flex-direction: column;
     gap: var(--screen-gap);
     padding: var(--space-4);
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
   }
@@ -650,8 +650,8 @@
     color: inherit;
     text-decoration: none;
     transition:
-      border-color 140ms ease,
-      background-color 140ms ease;
+      border-color var(--transition-fast),
+      background-color var(--transition-fast);
   }
 
   .settings__vocabulary-card:hover {

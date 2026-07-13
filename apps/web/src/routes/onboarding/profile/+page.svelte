@@ -153,7 +153,7 @@
     gap: 0.35rem;
     padding: 0.75rem;
     border: 1px solid var(--color-border-chart);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
   }
 
   .profile-onboarding select {
