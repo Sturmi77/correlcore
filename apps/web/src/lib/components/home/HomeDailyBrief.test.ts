@@ -116,4 +116,31 @@ describe('HomeDailyBrief', () => {
     expect(screen.getByText(/"mood":"4\.1"/)).toBeTruthy();
     expect(screen.getByText(/"count":5/)).toBeTruthy();
   });
+
+  it('switches work context rows to energy averages', async () => {
+    const { fireEvent } = await import('@testing-library/svelte');
+    render(HomeDailyBrief, {
+      props: {
+        workContextSummary: [
+          {
+            work_context: 'office',
+            entry_count: 8,
+            mood_avg: 3.75,
+            energy_avg: 3.4,
+            stress_avg: 2.8,
+          },
+          {
+            work_context: 'homeoffice',
+            entry_count: 5,
+            mood_avg: 4.1,
+            energy_avg: 3.8,
+            stress_avg: 2.1,
+          },
+        ],
+      },
+    });
+
+    await fireEvent.click(screen.getByTestId('home-work-context-metric-energy'));
+    expect(screen.getByText(/"mood":"3\.8"/)).toBeTruthy();
+  });
 });

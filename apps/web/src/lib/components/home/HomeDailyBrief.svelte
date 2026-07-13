@@ -10,14 +10,36 @@
   } from '$lib/utils/insightMaturityProgress';
   import {
     buildWorkContextDisplayItems,
-    workContextMoodBarWidth,
+    workContextMetricBarWidth,
+    workContextMetricCssVar,
+    workContextMetricHighLow,
+    type WorkContextMetricKey,
   } from '$lib/utils/homeWorkContextSummary';
+  import SegmentedControl, {
+    type SegmentedControlOption,
+  } from '$lib/components/common/SegmentedControl.svelte';
 
   export let entries: EntryResponse[] = [];
   export let latestInsight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
   export let workContextSummary: WorkContextSummaryItem[] = [];
   export let loading = false;
+
+  let workContextMetric: WorkContextMetricKey = 'mood';
+
+  $: workContextMetricOptions = [
+    { id: 'mood', label: $_('home.brief.metric_mood'), testId: 'home-work-context-metric-mood' },
+    {
+      id: 'energy',
+      label: $_('home.brief.metric_energy'),
+      testId: 'home-work-context-metric-energy',
+    },
+    {
+      id: 'stress',
+      label: $_('home.brief.metric_stress'),
+      testId: 'home-work-context-metric-stress',
+    },
+  ] satisfies SegmentedControlOption[];
 
   function formatAverage(value: number | null): string {
     return value === null ? $_('home.brief.none') : value.toFixed(1);
@@ -32,15 +54,15 @@
   );
   $: insightBridgePreview = latestInsight ? topInsightLabel(latestInsight) : null;
   $: trendsBridgePreview = insightBridgePreview;
-  $: visibleWorkContexts = buildWorkContextDisplayItems(workContextSummary);
-  $: workContextMoodValues = visibleWorkContexts
-    .map((item) => item.mood_avg)
+  $: visibleWorkContexts = buildWorkContextDisplayItems(workContextSummary, workContextMetric);
+  $: workContextMetricValues = visibleWorkContexts
+    .map((item) => item.metricAvg)
     .filter((value): value is number => value !== null);
-  $: maxWorkContextMood = Math.max(
-    5,
-    ...(workContextMoodValues.length ? workContextMoodValues : [5])
-  );
-  $: minWorkContextMood = workContextMoodValues.length ? Math.min(...workContextMoodValues) : null;
+  $: ({ high: maxWorkContextMetric, low: minWorkContextMetric } = workContextMetricHighLow(
+    workContextMetricValues,
+    workContextMetric
+  ));
+  $: workContextBarColor = workContextMetricCssVar(workContextMetric);
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
@@ -89,15 +111,27 @@
         <h3>{$_('home.brief.work_context_heading')}</h3>
         <span>{$_('home.brief.work_context_hint')}</span>
       </div>
+      <SegmentedControl
+        value={workContextMetric}
+        options={workContextMetricOptions}
+        ariaLabel={$_('home.brief.work_context_metric_aria')}
+        testId="home-work-context-metric-switcher"
+        equalWidth={false}
+        on:change={({ detail }) => {
+          workContextMetric = detail.value as WorkContextMetricKey;
+        }}
+      />
       <div class="daily-brief__work-context-list">
         {#each visibleWorkContexts as item}
           <div
             class="daily-brief__work-context-row"
-            data-highlight={item.mood_avg !== null && item.mood_avg === maxWorkContextMood
+            data-highlight={item.metricAvg !== null &&
+            maxWorkContextMetric !== null &&
+            item.metricAvg === maxWorkContextMetric
               ? 'high'
-              : item.mood_avg !== null &&
-                  minWorkContextMood !== null &&
-                  item.mood_avg === minWorkContextMood
+              : item.metricAvg !== null &&
+                  minWorkContextMetric !== null &&
+                  item.metricAvg === minWorkContextMetric
                 ? 'low'
                 : 'none'}
           >
@@ -105,13 +139,13 @@
             <div
               class="daily-brief__work-context-bar"
               aria-hidden="true"
-              style={`--bar-width: ${workContextMoodBarWidth(item.mood_avg)}`}
+              style={`--bar-width: ${workContextMetricBarWidth(workContextMetric, item.metricAvg)}; --bar-color: ${workContextBarColor}`}
             ></div>
             <strong>
               {$_('home.brief.work_context_value', {
                 values: {
                   count: item.entry_count,
-                  mood: formatAverage(item.mood_avg),
+                  mood: formatAverage(item.metricAvg),
                 },
               })}
             </strong>
