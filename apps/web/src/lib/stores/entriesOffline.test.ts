@@ -1,13 +1,20 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntryResponse } from '$lib/api/entries';
+import { listEntries } from '$lib/api/entries';
 import { resetOfflineDbForTests } from '$lib/offline/db';
 import {
   applyPulledEntry,
   findLocalEntryByDateSlot,
   hydrateServerEntryFromApi,
+  localEntryToEntryResponse,
+  resolveServerEntryIdForDateSlot,
   saveEntryOffline,
 } from './entriesOffline';
+
+vi.mock('$lib/api/entries', () => ({
+  listEntries: vi.fn(),
+}));
 
 function apiEntry(id: string): EntryResponse {
   return {
@@ -29,6 +36,8 @@ function apiEntry(id: string): EntryResponse {
 
 describe('entriesOffline', () => {
   beforeEach(async () => {
+    vi.mocked(listEntries).mockReset();
+    vi.stubGlobal('navigator', { onLine: true });
     await resetOfflineDbForTests();
   });
 
@@ -129,5 +138,57 @@ describe('entriesOffline', () => {
 
     const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
     expect(local?.id).toBe('server-b');
+  });
+
+  it('resolves the server id for an existing date+slot when online', async () => {
+    vi.mocked(listEntries).mockResolvedValue([apiEntry('server-entry-id')]);
+
+    await expect(resolveServerEntryIdForDateSlot('2026-07-13', 'day')).resolves.toBe(
+      'server-entry-id'
+    );
+  });
+
+  it('reuses the server id on save when online and the API already has the slot', async () => {
+    vi.mocked(listEntries).mockResolvedValue([apiEntry('server-entry-id')]);
+
+    const result = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 5,
+      energy: 4,
+      stress: 1,
+      slot: 'day',
+      cycle_day: null,
+      work_context: 'office',
+      note: 'updated',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    expect(result.entryId).toBe('server-entry-id');
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.id).toBe('server-entry-id');
+    expect(local?.mood_score).toBe(5);
+  });
+
+  it('maps local entries to the API response shape for Home', () => {
+    const mapped = localEntryToEntryResponse({
+      id: 'local-1',
+      entry_date: '2026-07-13',
+      slot: 'day',
+      mood_score: 4,
+      energy: 3,
+      stress: 2,
+      cycle_day: null,
+      work_context: 'office',
+      note: 'hello',
+      tag_ids: [],
+      symptoms: {},
+      updated_at: '2026-07-13T08:00:00.000Z',
+      sync_state: 'pending',
+    });
+
+    expect(mapped.id).toBe('local-1');
+    expect(mapped.entry_date).toBe('2026-07-13');
+    expect(mapped.mood_score).toBe(4);
   });
 });

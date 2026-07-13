@@ -38,3 +38,13 @@ export async function getLastAppliedSeq(): Promise<number> {
 export async function markChangeStatus(seq: number, status: ChangeLogStatus): Promise<void> {
   await getOfflineDb().change_log.update(seq, { status });
 }
+
+/** Drop stale outbox rows for an entity before appending a newer upsert. */
+export async function ackPendingChangesForEntity(entityId: string): Promise<void> {
+  const pending = await listPendingChanges();
+  await Promise.all(
+    pending
+      .filter((row) => row.entity_id === entityId)
+      .map((row) => markChangeStatus(row.seq!, 'acked'))
+  );
+}

@@ -3,9 +3,10 @@
  */
 
 import type { EntryResponse } from '$lib/api/entries';
+import { listEntries } from '$lib/api/entries';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 import type { SymptomEntry } from '$lib/api/symptoms';
-import { appendChange } from '$lib/offline/changeLog';
+import { ackPendingChangesForEntity, appendChange } from '$lib/offline/changeLog';
 import { getOfflineDb } from '$lib/offline/db';
 import type { LocalEntry, SyncState } from '$lib/offline/types';
 
@@ -84,6 +85,71 @@ export async function findLocalEntryByDateSlot(
     .first();
 }
 
+/** Map a Dexie row to the API shape used by Home and hydration helpers. */
+export function localEntryToEntryResponse(entry: LocalEntry, userId = ''): EntryResponse {
+  return {
+    id: entry.id,
+    user_id: userId,
+    entry_date: entry.entry_date,
+    slot: entry.slot,
+    mood_score: entry.mood_score,
+    energy: entry.energy,
+    stress: entry.stress,
+    cycle_day: entry.cycle_day,
+    source: 'direct',
+    work_context: entry.work_context,
+    note: entry.note,
+    created_at: entry.updated_at,
+    updated_at: entry.updated_at,
+  };
+}
+
+/**
+ * When online, resolve the server-owned id for a date+slot so client creates
+ * do not fork a second UUID for an existing server row.
+ */
+export async function resolveServerEntryIdForDateSlot(
+  entryDate: string,
+  slot: EntrySlot
+): Promise<string | null> {
+  if (typeof navigator === 'undefined' || !navigator.onLine) {
+    return null;
+  }
+  try {
+    const matches = await listEntries({
+      start_date: entryDate,
+      end_date: entryDate,
+      limit: 5,
+    });
+    return (
+      matches.find((entry) => entry.entry_date === entryDate && entry.slot === slot)?.id ?? null
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function resolveEntryIdForSave(
+  existingEntryId: string | null,
+  snapshot: EntryFormSnapshot
+): Promise<string> {
+  if (existingEntryId) {
+    return existingEntryId;
+  }
+
+  const local = await findLocalEntryByDateSlot(snapshot.entry_date, snapshot.slot);
+  if (local) {
+    return local.id;
+  }
+
+  const serverId = await resolveServerEntryIdForDateSlot(snapshot.entry_date, snapshot.slot);
+  if (serverId) {
+    return serverId;
+  }
+
+  return createEntryId();
+}
+
 export async function getLocalEntry(id: string): Promise<LocalEntry | undefined> {
   return getOfflineDb().entries.get(id);
 }
@@ -138,10 +204,11 @@ export async function saveEntryOffline(
   }
 
   const now = new Date().toISOString();
-  let entryId = existingEntryId;
-  if (!entryId) {
-    const existing = await findLocalEntryByDateSlot(snapshot.entry_date, snapshot.slot);
-    entryId = existing?.id ?? createEntryId();
+  const previousEntryId = existingEntryId;
+  const entryId = await resolveEntryIdForSave(existingEntryId, snapshot);
+  if (previousEntryId && previousEntryId !== entryId) {
+    await ackPendingChangesForEntity(previousEntryId);
+    await deleteLocalEntry(previousEntryId);
   }
   const payload = buildSyncEntryPayload(snapshot);
   const syncState: SyncState = 'pending';
@@ -164,6 +231,7 @@ export async function saveEntryOffline(
 
   await getOfflineDb().entries.put(localEntry);
 
+  await ackPendingChangesForEntity(entryId);
   const batchId = crypto.randomUUID();
   await appendChange({
     batch_id: batchId,
