@@ -39,6 +39,22 @@ verifiziert: `Fr=3.8:high`.
 
 ---
 
+## Entscheidungen getroffen (2026-07-13)
+
+Die vier offenen Produktentscheidungen sind entschieden; die
+umsetzungsreife Ausarbeitung (mit Datei-Ankern, Tests, PR-Aufteilung)
+steht in [`INSIGHT_METRICS_IMPLEMENTATION_PLAN.md`](INSIGHT_METRICS_IMPLEMENTATION_PLAN.md):
+
+- **F-03** → Tag-Default = aktuelle Theme-Primary beim Anlegen.
+- **A-03** → Explore-Events-Kette **verdrahten** (nicht entfernen). Vorab
+  verifiziert: Event-Fenster sind client-seitig aus Eintrags-Präsenzdaten
+  ableitbar, **kein Backend** nötig. Daher wird
+  `EventAlignedSmallMultiplesSheet` + `smallMultiplesGate` bei A-01
+  **nicht** gelöscht.
+- **A-04** → `sleep_quality` + „Schlaf"-Tab **entfernen**.
+- **A-05** → Energy/Stress im Work-Context via **Metrik-Umschalter** anzeigen.
+- **A-06** → als Fixture-Lücke behandeln und ergänzen.
+
 ## Offene Befunde (zur Umsetzung)
 
 ### A-01: Sieben Komponenten ohne einzige Verwendung
