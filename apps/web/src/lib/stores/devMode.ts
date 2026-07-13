@@ -134,6 +134,12 @@ export const devForceVisualizationsControl = forceVisualizations;
 /** Re-read persisted dev flags after init scripts or external storage writes. */
 export function syncDevModeFromStorage(): void {
   if (typeof window === 'undefined') return;
-  devMode.set(readStoredBoolean(DEV_MODE_STORAGE_KEY));
-  devForceVisualizationsControl.set(readStoredBoolean(DEV_FORCE_VIZ_STORAGE_KEY));
+  const devEnabled = readStoredBoolean(DEV_MODE_STORAGE_KEY);
+  devMode.set(devEnabled);
+  const forceVizStored = readStoredBoolean(DEV_FORCE_VIZ_STORAGE_KEY);
+  const forceViz = devEnabled && forceVizStored;
+  devForceVisualizationsControl.set(forceViz);
+  if (!devEnabled && forceVizStored) {
+    writeStoredBoolean(DEV_FORCE_VIZ_STORAGE_KEY, false);
+  }
 }

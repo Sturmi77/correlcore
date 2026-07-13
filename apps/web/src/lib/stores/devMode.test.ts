@@ -144,4 +144,16 @@ describe('devMode force visualizations', () => {
       entryCount: 42,
     });
   });
+
+  it('ignores stale force-viz flag when dev mode is disabled in storage', async () => {
+    localStorageMock.setItem('dev_mode_enabled', 'false');
+    localStorageMock.setItem('dev_force_viz', 'true');
+    vi.resetModules();
+    const { syncDevModeFromStorage, devForceVisualizations } = await import('./devMode');
+
+    syncDevModeFromStorage();
+
+    expect(get(devForceVisualizations)).toBe(false);
+    expect(localStorage.getItem('dev_force_viz')).toBe('false');
+  });
 });
