@@ -158,11 +158,6 @@ function buildQuery(query: InsightListQuery): string {
   return qs ? `?${qs}` : '';
 }
 
-/** GET /insights - list generated insights newest-first. */
-export async function listInsights(query: InsightListQuery = {}): Promise<InsightListResponse> {
-  return api.get<InsightListResponse>(`/insights${buildQuery(query)}`);
-}
-
 /** GET /insights/latest - list latest generated insights by analytical subject. */
 export async function listLatestInsights(
   query: InsightListQuery = {}
@@ -199,10 +194,4 @@ export async function fetchSymptomTagCooccurrence(
   return api.get<SymptomTagCooccurrenceResponse>(
     qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence'
   );
-}
-
-/** Convenience helper for the Home preview card. */
-export async function fetchLatestInsight(): Promise<InsightResponse | null> {
-  const response = await listLatestInsights({ limit: 1 });
-  return response.insights[0] ?? null;
 }

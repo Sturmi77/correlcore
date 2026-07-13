@@ -386,6 +386,39 @@ function makeInsight(
   };
 }
 
+function makeWeekdayPatternInsight(
+  presetId: DevPhasePresetId,
+  entryCount: number,
+  id: string
+): InsightResponse {
+  return makeInsight(presetId, id, {
+    insight_type: 'weekday_pattern',
+    tier: presetId === 'robust' ? 'developing' : 'preliminary',
+    metric: 'mood_score',
+    subject_type: 'weekday',
+    subject_id: null,
+    subject_label: 'Friday',
+    effect_size: 0.24,
+    confidence: presetId === 'robust' ? 0.52 : 0.38,
+    sample_n: entryCount,
+    statement: 'Mock data shows mood is often higher near the end of the week.',
+    payload: {
+      weekday: 4,
+      weekday_mood_avg: 3.8,
+      weekday_mood_avgs: {
+        '0': 3.1,
+        '1': 3.0,
+        '2': 3.2,
+        '3': 3.1,
+        '4': 3.8,
+        '5': 3.3,
+        '6': 3.0,
+      },
+      overall_mood_avg: 3.2,
+    },
+  });
+}
+
 function makeInsights(presetId: DevPhasePresetId, entryCount: number): InsightResponse[] {
   if (presetId === 'collecting') return [];
   if (presetId === 'early_patterns') {
@@ -451,6 +484,7 @@ function makeInsights(presetId: DevPhasePresetId, entryCount: number): InsightRe
       sample_n: entryCount,
       statement: 'Mock focus-work tags line up with slightly higher mood scores in this dataset.',
     }),
+    makeWeekdayPatternInsight(presetId, entryCount, `mock-insight-weekday-${presetId}`),
   ];
   if (presetId === 'provisional') return common;
   return [
@@ -498,6 +532,72 @@ function makeInsights(presetId: DevPhasePresetId, entryCount: number): InsightRe
         co_count: 7,
         p_value_corrected: 0.03,
       },
+    }),
+    makeInsight(presetId, 'mock-insight-symptom-cluster-lasso', {
+      insight_type: 'symptom_cluster',
+      tier: 'developing',
+      metric: 'mood_score',
+      subject_type: 'metric',
+      subject_id: null,
+      subject_label: 'mood_score',
+      effect_size: 0.44,
+      confidence: 0.61,
+      sample_n: entryCount,
+      statement: 'Mock lasso cluster: several tracked signals line up with mood.',
+      flags: { causal_claim: false, mock: true, method: 'lasso', phase: presetId },
+      payload: {
+        method: 'lasso',
+        target: 'mood_score',
+        features: [
+          { kind: 'tag', key: 'tag:sport', name: 'Sport', coefficient: 0.31 },
+          { kind: 'tag', key: 'tag:stress', name: 'Stress', coefficient: -0.22 },
+        ],
+      },
+    }),
+    makeInsight(presetId, 'mock-insight-symptom-cluster-lag', {
+      insight_type: 'symptom_cluster',
+      tier: 'developing',
+      metric: 'mood_score',
+      subject_type: 'metric',
+      subject_id: null,
+      subject_label: 'mood_score',
+      effect_size: 0.29,
+      confidence: 0.55,
+      sample_n: entryCount,
+      statement: 'Mock lag cluster: Sport one day earlier lines up with mood.',
+      flags: { causal_claim: false, mock: true, method: 'lag', phase: presetId },
+      payload: {
+        method: 'lag',
+        target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+        feature: { kind: 'tag', key: 'tag:sport', name: 'Sport' },
+        lag_days: 1,
+      },
+    }),
+    makeInsight(presetId, 'mock-insight-work-context', {
+      insight_type: 'work_context_pattern',
+      tier: 'developing',
+      metric: 'mood_score',
+      subject_type: 'work_context',
+      subject_id: null,
+      subject_label: 'Office',
+      effect_size: 0.18,
+      confidence: 0.48,
+      sample_n: entryCount,
+      statement: 'Mock office days show a slightly different mood average.',
+      payload: { work_context: 'office' },
+    }),
+    makeInsight(presetId, 'mock-insight-weekday-context', {
+      insight_type: 'weekday_context_pattern',
+      tier: 'developing',
+      metric: 'mood_score',
+      subject_type: 'weekday',
+      subject_id: null,
+      subject_label: 'Monday',
+      effect_size: 0.15,
+      confidence: 0.42,
+      sample_n: entryCount,
+      statement: 'Mock Monday office pattern in the dev dataset.',
+      payload: { weekday: 0, work_context: 'office' },
     }),
   ];
 }

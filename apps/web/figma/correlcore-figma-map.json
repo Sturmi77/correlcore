@@ -139,13 +139,6 @@
       "status": "created-design-subcomponent"
     },
     {
-      "name": "HomeSummary",
-      "nodeId": "19:113",
-      "source": "apps/web/src/lib/components/home/HomeSummary.svelte",
-      "url": "https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-113",
-      "status": "created"
-    },
-    {
       "name": "MetricTimeseries",
       "nodeId": "20:102",
       "source": "apps/web/src/lib/components/trends/MetricTimeseries.svelte",

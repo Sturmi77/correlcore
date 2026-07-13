@@ -64,52 +64,8 @@
       "work_context_value": "{mood} · {count} Tage",
       "none": "Keine"
     },
-    "recent": {
-      "heading": "Letzte 7 Tage",
-      "today": "Heute",
-      "yesterday": "Gestern",
-      "empty_card": "Kein Eintrag",
-      "tags_count": "{n} Tag(s)",
-      "symptoms_count": "{n} Symptom(e)",
-      "aria_filled": "Eintrag vom {date}, Stimmung {mood} von 5",
-      "aria_empty": "Kein Eintrag am {date}, hier eintragen"
-    },
-    "summary": {
-      "heading": "Letzte 7 Tage",
-      "mood_avg": "Stimmung \u00d8",
-      "energy_avg": "Energie \u00d8",
-      "stress_avg": "Stress \u00d8",
-      "streak": "Tracking-Konsistenz",
-      "tracking_consistency": "Tracking-Konsistenz",
-      "streak_unit": "erfasste Tage",
-      "count": "Erfasst",
-      "consistency_hint": "Konsistentere Daten verbessern die Qualit\u00e4t deiner Erkenntnisse."
-    },
     "insight": {
-      "heading": "Neueste Erkenntnis",
-      "empty": "Noch keine Erkenntnis",
-      "empty_hint": "Weitere erfasste Tage schaffen genug Daten fuer ein verlaessliches Muster.",
-      "empty_statement": "Diese Erkenntnis hat noch keinen Text.",
-      "meta_label": "Details zur Erkenntnis",
-      "confidence": "Konfidenz",
-      "confidence_unknown": "Noch nicht genug Daten",
-      "sample_size": "Eintraege",
-      "updated": "Datum",
-      "more": "Mehr Erkenntnisse",
-      "tier": {
-        "none": "Noch nicht bereit",
-        "early": "Fruehes Muster",
-        "preliminary": "Vorlaeufig",
-        "developing": "Entwickelnd",
-        "robust": "Robust"
-      },
-      "tier_help": {
-        "none": "Noch nicht genug Eintraege fuer ein Muster.",
-        "early": "Beschreibendes Signal aus wenigen Daten; keine Korrelationsaussage.",
-        "preliminary": "Ein Muster entsteht, kann sich mit weiteren Eintraegen aber aendern.",
-        "developing": "Datenbasierter Zusammenhang mit sichtbarer Konfidenz.",
-        "robust": "Genug Eintraege fuer die vollstaendige Analyse-Pipeline."
-      }
+      "empty_statement": "Diese Erkenntnis hat noch keinen Text."
     },
     "confidence_scale": {
       "entry_count": "Basierend auf {n} Eintraegen"
@@ -138,11 +94,6 @@
       "hint": "Stimmungsbalken und erste Muster pro Wochentag. Mehr Eintraege machen die Muster stabiler.",
       "empty": "Noch kein Wochentagsmuster erkennbar",
       "empty_hint": "Trage weiter an unterschiedlichen Wochentagen ein, um zu sehen, wie sich deine Stimmung veraendert."
-    },
-    "sparkline": {
-      "heading": "Stimmungs-Verlauf",
-      "caption": "Letzte {n} Tage",
-      "aria_label": "Liniendiagramm der Stimmung \u00fcber {n} Tage"
     },
     "weekday": {
       "mon": "Mo",
@@ -1047,7 +998,9 @@
       "error_body": "Erkenntnis konnte nicht geladen werden.",
       "retry": "Erneut versuchen",
       "inactive_tag_badge": "Tag inaktiv",
-      "inactive_tag_hint": "Dieser Tag wird fuer neue Berechnungen nicht mehr verwendet."
+      "inactive_tag_hint": "Dieser Tag wird fuer neue Berechnungen nicht mehr verwendet.",
+      "cluster_features": "Mehrere Faktoren",
+      "lag_days_unit": "Tage"
     },
     "disclaimer": {
       "modal_title": "Was bedeutet diese Erkenntnis?",
