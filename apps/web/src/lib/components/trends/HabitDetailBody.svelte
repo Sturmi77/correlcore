@@ -163,7 +163,7 @@
   }
 
   .habit-detail__head > strong {
-    font-size: 2rem;
+    font-size: var(--text-2xl);
     line-height: 1;
     font-variant-numeric: tabular-nums;
   }

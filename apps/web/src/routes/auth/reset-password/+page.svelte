@@ -167,7 +167,7 @@
     background: var(--color-error-highlight);
     border-left: 3px solid var(--color-error);
     padding: var(--space-2) var(--space-3);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
   }
 
   .auth-submit {

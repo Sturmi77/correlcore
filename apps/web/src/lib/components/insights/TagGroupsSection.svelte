@@ -161,7 +161,7 @@
 
   .tag-groups__chips li {
     padding: var(--space-1) var(--space-2);
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--color-primary-highlight);
     color: var(--color-primary);
     font-size: var(--text-xs);

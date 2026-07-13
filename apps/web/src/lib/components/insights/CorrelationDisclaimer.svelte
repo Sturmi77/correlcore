@@ -4,241 +4,124 @@
    *
    * Bottom sheet (mobile) / modal (desktop) explaining correlation ≠ causation.
    * Triggered by the ⓘ link on InsightCard and the InsightFeed page header.
-   *
-   * Props
-   * -----
-   * open   boolean  Controls visibility; bind:open to toggle from parent
-   *
-   * Events
-   * ------
-   * close  Dispatched when the user closes the modal (Escape, backdrop, close button)
    */
-  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import BottomSheet from '$lib/components/common/BottomSheet.svelte';
 
   export let open = false;
 
   const dispatch = createEventDispatcher<{ close: void }>();
 
-  let dialogEl: HTMLDivElement | null = null;
-  let firstFocusable: HTMLElement | null = null;
-  let lastFocusable: HTMLElement | null = null;
-
-  const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-  function updateFocusBounds() {
-    if (!dialogEl) return;
-    const nodes = Array.from(dialogEl.querySelectorAll<HTMLElement>(FOCUSABLE));
-    firstFocusable = nodes[0] ?? null;
-    lastFocusable = nodes[nodes.length - 1] ?? null;
-  }
-
-  function trapFocus(e: KeyboardEvent) {
-    if (e.key !== 'Tab') return;
-    if (!firstFocusable || !lastFocusable) return;
-    if (e.shiftKey) {
-      if (document.activeElement === firstFocusable) {
-        e.preventDefault();
-        lastFocusable.focus();
-      }
-    } else {
-      if (document.activeElement === lastFocusable) {
-        e.preventDefault();
-        firstFocusable.focus();
-      }
-    }
-  }
-
-  function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') close();
-    else trapFocus(e);
-  }
-
   function close() {
     dispatch('close');
   }
-
-  function onBackdrop(e: MouseEvent) {
-    if (e.currentTarget === e.target) close();
-  }
-
-  let previouslyFocused: HTMLElement | null = null;
-
-  $: if (open) {
-    previouslyFocused = document.activeElement as HTMLElement;
-    // defer so the DOM is painted before we focus
-    setTimeout(() => {
-      updateFocusBounds();
-      firstFocusable?.focus();
-    }, 0);
-  } else {
-    previouslyFocused?.focus();
-    previouslyFocused = null;
-  }
-
-  onMount(() => {
-    document.addEventListener('keydown', onKeydown);
-  });
-
-  onDestroy(() => {
-    document.removeEventListener('keydown', onKeydown);
-  });
 </script>
 
-{#if open}
-  <div class="cd-backdrop" role="presentation" on:click={onBackdrop} data-testid="cd-backdrop">
-    <div
-      bind:this={dialogEl}
-      class="cd-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cd-title"
-      data-testid="cd-modal"
-    >
-      <div class="cd-header">
-        <h2 id="cd-title" class="cd-title" data-testid="cd-title">
-          {$_('insights.disclaimer.modal_title')}
-        </h2>
-        <button
-          class="cd-close"
-          aria-label={$_('insights.disclaimer.close_aria')}
-          data-testid="cd-close"
-          on:click={close}
+<BottomSheet
+  {open}
+  labelledBy="cd-title"
+  testId="cd-backdrop"
+  closeAriaLabel={$_('insights.disclaimer.close_aria')}
+  on:close={close}
+>
+  <div class="cd-modal" data-testid="cd-modal">
+    <div class="cd-header">
+      <h2 id="cd-title" class="cd-title" data-testid="cd-title">
+        {$_('insights.disclaimer.modal_title')}
+      </h2>
+      <button
+        class="cd-close"
+        aria-label={$_('insights.disclaimer.close_aria')}
+        data-testid="cd-close"
+        on:click={close}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </div>
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
 
-      <div class="cd-body" data-testid="cd-body">
-        <!-- Section 1: What is a correlation? -->
-        <section class="cd-section" data-testid="cd-section-1">
-          <h3 class="cd-section-title">
-            {$_('insights.disclaimer.section1_title')}
-          </h3>
-          <p class="cd-section-body">
-            {$_('insights.disclaimer.section1_body')}
-          </p>
-        </section>
+    <div class="cd-body" data-testid="cd-body">
+      <section class="cd-section" data-testid="cd-section-1">
+        <h3 class="cd-section-title">
+          {$_('insights.disclaimer.section1_title')}
+        </h3>
+        <p class="cd-section-body">
+          {$_('insights.disclaimer.section1_body')}
+        </p>
+      </section>
 
-        <!-- Section 2: Confidence bar -->
-        <section class="cd-section" data-testid="cd-section-2">
-          <h3 class="cd-section-title">
-            {$_('insights.disclaimer.section2_title')}
-          </h3>
-          <p class="cd-section-body">
-            {$_('insights.disclaimer.section2_body')}
-          </p>
-        </section>
+      <section class="cd-section" data-testid="cd-section-2">
+        <h3 class="cd-section-title">
+          {$_('insights.disclaimer.section2_title')}
+        </h3>
+        <p class="cd-section-body">
+          {$_('insights.disclaimer.section2_body')}
+        </p>
+      </section>
 
-        <!-- Section 3: Minimum data requirement -->
-        <section class="cd-section" data-testid="cd-section-3">
-          <h3 class="cd-section-title">
-            {$_('insights.disclaimer.section3_title')}
-          </h3>
-          <p class="cd-section-body">
-            {$_('insights.disclaimer.section3_body')}
-          </p>
-        </section>
+      <section class="cd-section" data-testid="cd-section-3">
+        <h3 class="cd-section-title">
+          {$_('insights.disclaimer.section3_title')}
+        </h3>
+        <p class="cd-section-body">
+          {$_('insights.disclaimer.section3_body')}
+        </p>
+      </section>
 
-        <!-- Section 4: Statistical methods -->
-        <section class="cd-section" data-testid="cd-section-4">
-          <h3 class="cd-section-title">
-            {$_('insights.disclaimer.section4_title')}
-          </h3>
-          <p class="cd-section-body">
-            {$_('insights.disclaimer.section4_body')}
-          </p>
-        </section>
+      <section class="cd-section" data-testid="cd-section-4">
+        <h3 class="cd-section-title">
+          {$_('insights.disclaimer.section4_title')}
+        </h3>
+        <p class="cd-section-body">
+          {$_('insights.disclaimer.section4_body')}
+        </p>
+      </section>
 
-        <!-- Section 5: Symptom co-occurrence / Lift -->
-        <section class="cd-section" data-testid="cd-section-5">
-          <h3 class="cd-section-title">
-            {$_('insights.disclaimer.section5_title')}
-          </h3>
-          <p class="cd-section-body">
-            {$_('insights.disclaimer.section5_body')}
-          </p>
-        </section>
-      </div>
+      <section class="cd-section" data-testid="cd-section-5">
+        <h3 class="cd-section-title">
+          {$_('insights.disclaimer.section5_title')}
+        </h3>
+        <p class="cd-section-body">
+          {$_('insights.disclaimer.section5_body')}
+        </p>
+      </section>
+    </div>
 
-      <div class="cd-footer">
-        <button class="cd-got-it" data-testid="cd-got-it" on:click={close}>
-          {$_('insights.disclaimer.got_it')}
-        </button>
-      </div>
+    <div class="cd-footer">
+      <button class="cd-got-it" data-testid="cd-got-it" on:click={close}>
+        {$_('insights.disclaimer.got_it')}
+      </button>
     </div>
   </div>
-{/if}
+</BottomSheet>
 
 <style>
-  .cd-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    background: oklch(from var(--color-text) l c h / 0.45);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0;
-    animation: cdFadeIn 160ms ease both;
-  }
-
-  @keyframes cdFadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
   .cd-modal {
-    background: var(--color-surface);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    box-shadow: var(--shadow-lg);
-    width: 100%;
-    max-width: 560px;
-    max-height: 88dvh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
-    animation: cdSlideUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    gap: 0;
+    margin: calc(-1 * var(--space-4));
+    margin-bottom: calc(-1 * (var(--space-4) + env(safe-area-inset-bottom)));
+    max-height: min(82dvh, 42rem);
+    overflow: hidden;
   }
 
-  @keyframes cdSlideUp {
-    from {
-      transform: translateY(20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  /* Desktop: centred dialog instead of bottom-sheet */
   @media (min-width: 768px) {
-    .cd-backdrop {
-      align-items: center;
-      padding: var(--space-4);
-    }
     .cd-modal {
-      border-radius: var(--radius-xl);
-      max-height: 80dvh;
+      margin-bottom: calc(-1 * var(--space-4));
     }
   }
 
@@ -334,12 +217,5 @@
   .cd-got-it:hover,
   .cd-got-it:focus-visible {
     background: var(--color-primary-hover);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .cd-backdrop,
-    .cd-modal {
-      animation: none;
-    }
   }
 </style>

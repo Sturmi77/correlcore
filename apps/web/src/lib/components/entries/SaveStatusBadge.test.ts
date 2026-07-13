@@ -20,4 +20,18 @@ describe('SaveStatusBadge', () => {
     await fireEvent.click(screen.getByTestId('save-status-retry'));
     expect(retry).toHaveBeenCalledOnce();
   });
+
+  it('shows autosave errors even when an offline-sync badge is active', () => {
+    render(SaveStatusBadge, {
+      props: {
+        status: 'error',
+        offlineSyncBadge: 'local',
+        lastError: 'completeOnboarding failed',
+      },
+    });
+
+    expect(screen.getByText('entry.autosave.error')).toBeTruthy();
+    expect(screen.queryByText('entry.autosave.local')).toBeNull();
+    expect(screen.getByTestId('save-status').getAttribute('data-status')).toBe('error');
+  });
 });
