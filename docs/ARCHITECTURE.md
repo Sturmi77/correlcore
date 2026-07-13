@@ -160,14 +160,24 @@ Client                          Server
 ## 6. Analytics Worker & Insight Engine
 
 ```
-Nightly Cron (02:00 UTC)
+Nightly Cron (03:00 UTC) — siehe backend/app/workers/analytics.py
   └── Für jeden aktiven User mit analytics_enabled=true:
         ├── Lade Entry-History aus PostgreSQL (RLS-kontextgebunden)
         ├── Berechne Punkt-Biseriale Korrelationen (Tags ↔ Mood/Energy/Stress)
         ├── Filtere nach Tier-Schwellen (effect_size, confidence, sample_n)
         ├── Generiere Statement via Template (kein LLM in M3)
-        └── Speichere verschlüsseltes Insight in PostgreSQL
+        ├── Speichere verschlüsseltes Insight in PostgreSQL
+        └── Recompute Tag-Vektoren / Tag-Gruppen (tag_cluster_service)
 ```
+
+> **Vorgeschlagen (ADR-0037, zur Freigabe):** Zusätzliche Trigger (Post-Import,
+> User `POST /insights/regenerate`, Admin-Trigger), deskriptive
+> `weekday_summary` im Dashboard und dreistufige Tag-Gruppen-Reife (30 / 45 / 90
+> Tage). Details: [`docs/proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md`](proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md).
+
+**Schwellen-Trennung (Ist):** `MIN_ML_ENTRIES = 90` (Lasso/Lag, ADR-0016) gilt
+für CV-ML. Tag-Clustering nutzt derzeit dieselbe 90-Tage-Hürde — ADR-0037 schlägt
+eine Entkopplung vor (deskriptiv ab 30/45, robust ab 90).
 
 **Teilweise umgesetzt / geplant:** Der Web-Client zeigt Symptome bereits als
 deskriptiven Kontext in `/trends` Compare und `/insights` an. Die inferenzielle
