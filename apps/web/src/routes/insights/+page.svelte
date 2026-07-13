@@ -18,7 +18,11 @@
   import { auth } from '$lib/stores/auth';
   import { insightStore } from '$lib/stores/insights';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
-  import { fetchSymptomHeatmap, fetchTimeseries, type SymptomHeatmapResponse } from '$lib/api/stats';
+  import {
+    fetchSymptomHeatmap,
+    fetchTimeseries,
+    type SymptomHeatmapResponse,
+  } from '$lib/api/stats';
   import {
     fetchSymptomTagCooccurrence,
     fetchTagClusters,
@@ -870,7 +874,7 @@
       events={exploreEventsWindows}
       points={exploreEventsPoints}
       metric={exploreEventsMetric}
-      phase={exploreEventsInsight ? insightMaturity?.phase ?? null : null}
+      phase={exploreEventsInsight ? (insightMaturity?.phase ?? null) : null}
       on:close={() => {
         exploreEventsOpen = false;
         exploreEventsInsight = null;
