@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import type { HabitStatsResponse, HabitWindow } from '$lib/api/habits';
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import type { TagResponse } from '$lib/api/tags';
@@ -18,79 +19,42 @@
   }>();
 </script>
 
-{#if open && selected}
-  <div
-    class="habit-sheet"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="habit-sheet-title"
-    data-testid="habit-detail-sheet"
+{#if selected}
+  <BottomSheet
+    {open}
+    labelledBy="habit-sheet-title"
+    testId="habit-detail-sheet"
+    closeAriaLabel={$_('habits.sheet_close')}
+    on:close={() => dispatch('close')}
   >
-    <button
-      type="button"
-      class="habit-sheet__backdrop"
-      aria-label={$_('habits.sheet_close')}
-      on:click={() => dispatch('close')}
-    ></button>
+    <header class="habit-sheet__header">
+      <div>
+        <p class="habit-sheet__eyebrow">
+          {$_('habits.window_last', { values: { n: window } })}
+        </p>
+        <h2 id="habit-sheet-title">{selected.tag.name}</h2>
+      </div>
+      <button
+        type="button"
+        class="habit-sheet__close"
+        aria-label={$_('habits.sheet_close')}
+        data-testid="habit-detail-sheet-close"
+        on:click={() => dispatch('close')}
+      >
+        ×
+      </button>
+    </header>
 
-    <section class="habit-sheet__panel">
-      <header class="habit-sheet__header">
-        <div>
-          <p class="habit-sheet__eyebrow">
-            {$_('habits.window_last', { values: { n: window } })}
-          </p>
-          <h2 id="habit-sheet-title">{selected.tag.name}</h2>
-        </div>
-        <button
-          type="button"
-          class="habit-sheet__close"
-          aria-label={$_('habits.sheet_close')}
-          data-testid="habit-detail-sheet-close"
-          on:click={() => dispatch('close')}
-        >
-          ×
-        </button>
-      </header>
-
-      <HabitDetailBody
-        {selected}
-        {detailHeatmap}
-        {loading}
-        on:selectDate={(event) => dispatch('selectDate', event.detail)}
-      />
-    </section>
-  </div>
+    <HabitDetailBody
+      {selected}
+      {detailHeatmap}
+      {loading}
+      on:selectDate={(event) => dispatch('selectDate', event.detail)}
+    />
+  </BottomSheet>
 {/if}
 
 <style>
-  .habit-sheet {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  .habit-sheet__backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--color-scrim);
-  }
-
-  .habit-sheet__panel {
-    position: relative;
-    z-index: 1;
-    width: min(100%, 42rem);
-    max-height: min(88vh, 44rem);
-    overflow: auto;
-    padding: var(--space-4);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-lg);
-  }
-
   .habit-sheet__header {
     display: flex;
     align-items: flex-start;
@@ -109,7 +73,7 @@
 
   .habit-sheet__header h2 {
     margin: 0;
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
 
   .habit-sheet__close {

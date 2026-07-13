@@ -3,9 +3,15 @@
   export let subtitle = '';
   export let eyebrow = '';
   export let compact = false;
+  /** Visually hide the header while keeping a single page-level h1 for a11y. */
+  export let visuallyHidden = false;
 </script>
 
-<header class="screen-header" class:screen-header--compact={compact}>
+<header
+  class="screen-header"
+  class:screen-header--compact={compact}
+  class:screen-header--visually-hidden={visuallyHidden}
+>
   <div class="screen-header__copy">
     {#if eyebrow}
       <p class="screen-header__eyebrow">{eyebrow}</p>
@@ -74,6 +80,18 @@
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: var(--space-2);
+  }
+
+  .screen-header--visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   @media (max-width: 520px) {

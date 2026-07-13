@@ -5,6 +5,7 @@
   import type { MetricKey } from '$lib/utils/charts';
   import type { CompareMode, CompareSortMode } from '$lib/utils/comparePanelSettings';
   import TrendsCompareFilters from './TrendsCompareFilters.svelte';
+  import BottomSheet from '$lib/components/common/BottomSheet.svelte';
 
   export let open = false;
   export let smoothing = false;
@@ -28,23 +29,14 @@
   }>();
 </script>
 
-{#if open}
-  <div
-    class="compare-settings"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="compare-settings-title"
-    data-testid="trends-compare-settings-sheet"
-  >
-    <button
-      type="button"
-      class="compare-settings__backdrop"
-      aria-label={$_('trends.settings.close_aria')}
-      on:click={() => dispatch('close')}
-    ></button>
-
-    <section class="compare-settings__panel">
-      <header class="compare-settings__header">
+<BottomSheet
+  {open}
+  labelledBy="compare-settings-title"
+  testId="trends-compare-settings-sheet"
+  closeAriaLabel={$_('trends.settings.close_aria')}
+  on:close={() => dispatch('close')}
+>
+  <header class="compare-settings__header">
         <div>
           <p class="compare-settings__eyebrow">{$_('trends.tabs.compare')}</p>
           <h2 id="compare-settings-title">{$_('trends.settings.title')}</h2>
@@ -154,39 +146,9 @@
           </select>
         </label>
       </div>
-    </section>
-  </div>
-{/if}
+</BottomSheet>
 
 <style>
-  .compare-settings {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  .compare-settings__backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--color-scrim);
-  }
-
-  .compare-settings__panel {
-    position: relative;
-    z-index: 1;
-    width: min(100%, 42rem);
-    max-height: min(82vh, 42rem);
-    overflow: auto;
-    padding: var(--space-4);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-lg);
-  }
-
   .compare-settings__header {
     display: flex;
     align-items: flex-start;

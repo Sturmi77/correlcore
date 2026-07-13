@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import type { EntryHistoryDetail } from '$lib/components/trends/EntryHistorySheet.svelte';
 
   export let open = false;
@@ -12,107 +13,64 @@
   const dispatch = createEventDispatcher<{ close: void }>();
 </script>
 
-{#if open}
-  <div
-    class="cooccurrence-history"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="cooccurrence-history-title"
-    data-testid="cooccurrence-entry-sheet"
-  >
+<BottomSheet
+  {open}
+  labelledBy="cooccurrence-history-title"
+  testId="cooccurrence-entry-sheet"
+  closeAriaLabel={$_('trends.history.close_aria')}
+  on:close={() => dispatch('close')}
+>
+  <header class="cooccurrence-history__header">
+    <div>
+      <p class="cooccurrence-history__eyebrow">{$_('insights.cooccurrence.history_eyebrow')}</p>
+      <h2 id="cooccurrence-history-title">{title}</h2>
+    </div>
     <button
       type="button"
-      class="cooccurrence-history__backdrop"
+      class="cooccurrence-history__close"
       aria-label={$_('trends.history.close_aria')}
+      data-testid="cooccurrence-entry-close"
       on:click={() => dispatch('close')}
-    ></button>
+    >
+      x
+    </button>
+  </header>
 
-    <section class="cooccurrence-history__panel">
-      <header class="cooccurrence-history__header">
-        <div>
-          <p class="cooccurrence-history__eyebrow">{$_('insights.cooccurrence.history_eyebrow')}</p>
-          <h2 id="cooccurrence-history-title">{title}</h2>
-        </div>
-        <button
-          type="button"
-          class="cooccurrence-history__close"
-          aria-label={$_('trends.history.close_aria')}
-          data-testid="cooccurrence-entry-close"
-          on:click={() => dispatch('close')}
-        >
-          x
-        </button>
-      </header>
-
-      {#if loading}
-        <p class="cooccurrence-history__muted" role="status">{$_('trends.history.loading')}</p>
-      {:else if error}
-        <p class="cooccurrence-history__error" role="alert">{error}</p>
-      {:else if details.length === 0}
-        <p class="cooccurrence-history__muted">{$_('insights.cooccurrence.history_empty')}</p>
-      {:else}
-        <div class="cooccurrence-history__list">
-          {#each details as detail (detail.entry.id)}
-            <article class="cooccurrence-history__card">
-              <p class="cooccurrence-history__date">{detail.entry.entry_date}</p>
-              <dl class="cooccurrence-history__metrics">
-                <div>
-                  <dt>{$_('trends.metric.mood')}</dt>
-                  <dd>{detail.entry.mood_score}</dd>
-                </div>
-                <div>
-                  <dt>{$_('trends.metric.energy')}</dt>
-                  <dd>{detail.entry.energy}</dd>
-                </div>
-                <div>
-                  <dt>{$_('trends.metric.stress')}</dt>
-                  <dd>{detail.entry.stress}</dd>
-                </div>
-              </dl>
-              <p class="cooccurrence-history__tags">
-                {detail.tags.length > 0 ? detail.tags.join(', ') : $_('trends.history.none')}
-              </p>
-            </article>
-          {/each}
-        </div>
-      {/if}
-    </section>
-  </div>
-{/if}
+  {#if loading}
+    <p class="cooccurrence-history__muted" role="status">{$_('trends.history.loading')}</p>
+  {:else if error}
+    <p class="cooccurrence-history__error" role="alert">{error}</p>
+  {:else if details.length === 0}
+    <p class="cooccurrence-history__muted">{$_('insights.cooccurrence.history_empty')}</p>
+  {:else}
+    <div class="cooccurrence-history__list">
+      {#each details as detail (detail.entry.id)}
+        <article class="cooccurrence-history__card">
+          <p class="cooccurrence-history__date">{detail.entry.entry_date}</p>
+          <dl class="cooccurrence-history__metrics">
+            <div>
+              <dt>{$_('trends.metric.mood')}</dt>
+              <dd>{detail.entry.mood_score}</dd>
+            </div>
+            <div>
+              <dt>{$_('trends.metric.energy')}</dt>
+              <dd>{detail.entry.energy}</dd>
+            </div>
+            <div>
+              <dt>{$_('trends.metric.stress')}</dt>
+              <dd>{detail.entry.stress}</dd>
+            </div>
+          </dl>
+          <p class="cooccurrence-history__tags">
+            {detail.tags.length > 0 ? detail.tags.join(', ') : $_('trends.history.none')}
+          </p>
+        </article>
+      {/each}
+    </div>
+  {/if}
+</BottomSheet>
 
 <style>
-  .cooccurrence-history {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: var(--space-3) var(--space-3) 0;
-  }
-
-  .cooccurrence-history__backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--color-scrim);
-  }
-
-  .cooccurrence-history__panel {
-    position: relative;
-    z-index: 1;
-    width: min(100%, 42rem);
-    max-height: min(82dvh, 42rem);
-    overflow: auto;
-    padding: var(--space-4);
-    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-bottom: 0;
-    box-shadow: var(--shadow-lg);
-    overscroll-behavior: contain;
-  }
-
   .cooccurrence-history__header {
     display: flex;
     align-items: flex-start;
@@ -198,18 +156,5 @@
 
   .cooccurrence-history__error {
     color: var(--color-error);
-  }
-
-  @media (min-width: 768px) {
-    .cooccurrence-history {
-      align-items: center;
-      padding: var(--space-6);
-    }
-
-    .cooccurrence-history__panel {
-      border-radius: var(--radius-xl);
-      border-bottom: 1px solid var(--color-border);
-      padding-bottom: var(--space-4);
-    }
   }
 </style>
