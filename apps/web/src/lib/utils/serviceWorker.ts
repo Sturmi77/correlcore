@@ -20,7 +20,11 @@ export async function cleanupDevServiceWorker(): Promise<void> {
 
 /** Register the app shell service worker in production builds only. */
 export async function registerProdServiceWorker(): Promise<void> {
-  if (!import.meta.env.PROD || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+  if (
+    !import.meta.env.PROD ||
+    typeof navigator === 'undefined' ||
+    !('serviceWorker' in navigator)
+  ) {
     return;
   }
   await navigator.serviceWorker.register('/service-worker.js', { type: 'module' });
