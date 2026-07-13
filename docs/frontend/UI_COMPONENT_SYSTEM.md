@@ -111,6 +111,8 @@ Required contract:
 ### `BottomSheet`
 
 Use for the entry form and secondary flows that should not become primary screens.
+**All new modal sheets must use `common/BottomSheet.svelte`** — do not add bespoke
+backdrop/dialog markup (legacy sheets are being migrated incrementally).
 
 Required contract:
 

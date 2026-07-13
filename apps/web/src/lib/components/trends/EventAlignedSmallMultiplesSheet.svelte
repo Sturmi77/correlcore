@@ -35,6 +35,7 @@
   import { displayTimeseriesValue } from '$lib/utils/metrics';
   import { StripCellMapper } from '$lib/charts/adapter';
   import { isSmallMultiplesUnlocked, SMALL_MULTIPLES_RADIUS } from './smallMultiplesGate';
+  import BottomSheet from '$lib/components/common/BottomSheet.svelte';
 
   export let open = false;
   /** Event windows to align — onset becomes t = 0. */
@@ -106,148 +107,109 @@
   $: rows = events.map(buildWindow);
   $: gridWidth = labelWidth + dayCount * (cellSize + cellGap);
   $: gridHeight = rows.length * (cellSize + cellGap) + 32; // + axis labels
+  $: sheetOpen = open && gateOpen;
 </script>
 
-{#if open && gateOpen}
-  <div
-    class="esm"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="esm-title"
-    data-testid="event-aligned-small-multiples-sheet"
-  >
+<BottomSheet
+  open={sheetOpen}
+  labelledBy="esm-title"
+  testId="event-aligned-small-multiples-sheet"
+  closeAriaLabel={$_('trends.esm.close_aria')}
+  on:close={() => dispatch('close')}
+>
+  <header class="esm__header">
+    <div>
+      <p class="esm__eyebrow">{$_('trends.esm.eyebrow')}</p>
+      <h2 id="esm-title">{$_('trends.esm.title')}</h2>
+      <p class="esm__body">{$_('trends.esm.body')}</p>
+    </div>
     <button
       type="button"
-      class="esm__backdrop"
+      class="esm__close"
       aria-label={$_('trends.esm.close_aria')}
       on:click={() => dispatch('close')}
-    ></button>
+    >
+      ×
+    </button>
+  </header>
 
-    <section class="esm__panel">
-      <header class="esm__header">
-        <div>
-          <p class="esm__eyebrow">{$_('trends.esm.eyebrow')}</p>
-          <h2 id="esm-title">{$_('trends.esm.title')}</h2>
-          <p class="esm__body">{$_('trends.esm.body')}</p>
-        </div>
-        <button
-          type="button"
-          class="esm__close"
-          aria-label={$_('trends.esm.close_aria')}
-          on:click={() => dispatch('close')}
-        >
-          ×
-        </button>
-      </header>
+  {#if rows.length === 0}
+    <p class="esm__empty">{$_('trends.esm.empty')}</p>
+  {:else}
+    <div class="esm__scroll">
+      <svg
+        class="esm__svg"
+        viewBox={`0 0 ${gridWidth} ${gridHeight}`}
+        role="img"
+        aria-label={$_('trends.esm.aria')}
+      >
+        <!-- Offset axis labels (-7 .. +7) -->
+        <g class="esm__axis">
+          {#each Array.from({ length: dayCount }) as _v, i}
+            {@const offset = i - radius}
+            <text
+              x={labelWidth + i * (cellSize + cellGap) + cellSize / 2}
+              y={14}
+              text-anchor="middle"
+              class="esm__axis-tick"
+            >
+              {offset === 0 ? 'T0' : offset > 0 ? `+${offset}` : `${offset}`}
+            </text>
+          {/each}
+        </g>
 
-      {#if rows.length === 0}
-        <p class="esm__empty">{$_('trends.esm.empty')}</p>
-      {:else}
-        <div class="esm__scroll">
-          <svg
-            class="esm__svg"
-            viewBox={`0 0 ${gridWidth} ${gridHeight}`}
-            role="img"
-            aria-label={$_('trends.esm.aria')}
-          >
-            <!-- Offset axis labels (-7 .. +7) -->
-            <g class="esm__axis">
-              {#each Array.from({ length: dayCount }) as _v, i}
-                {@const offset = i - radius}
-                <text
-                  x={labelWidth + i * (cellSize + cellGap) + cellSize / 2}
-                  y={14}
-                  text-anchor="middle"
-                  class="esm__axis-tick"
-                >
-                  {offset === 0 ? 'T0' : offset > 0 ? `+${offset}` : `${offset}`}
-                </text>
-              {/each}
-            </g>
+        {#each rows as row, rowIndex (row.onset)}
+          {@const top = 24 + rowIndex * (cellSize + cellGap)}
+          <g class="esm__row" data-onset={row.onset}>
+            <text
+              x={labelWidth - 8}
+              y={top + cellSize / 2}
+              text-anchor="end"
+              dominant-baseline="middle"
+              class="esm__row-label"
+            >
+              {row.label}
+            </text>
 
-            {#each rows as row, rowIndex (row.onset)}
-              {@const top = 24 + rowIndex * (cellSize + cellGap)}
-              <g class="esm__row" data-onset={row.onset}>
-                <text
-                  x={labelWidth - 8}
-                  y={top + cellSize / 2}
-                  text-anchor="end"
-                  dominant-baseline="middle"
-                  class="esm__row-label"
-                >
-                  {row.label}
-                </text>
-
-                {#each row.cells as cell (cell.offset)}
-                  <rect
-                    class="esm__cell"
-                    class:esm__cell--t0={cell.offset === 0}
-                    x={labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
-                    y={top}
-                    width={cellSize}
-                    height={cellSize}
-                    fill={cell.fill}
-                    opacity={cell.opacity}
-                    rx="3"
-                    data-sign={cell.sign}
-                    aria-label={cell.displayValue === null
-                      ? `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: —`
-                      : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.displayValue.toFixed(1)}`}
-                  >
-                    <title>
-                      {cell.date}{cell.displayValue !== null
-                        ? ` — ${cell.displayValue.toFixed(1)}`
-                        : ''}
-                    </title>
-                  </rect>
-                {/each}
-              </g>
+            {#each row.cells as cell (cell.offset)}
+              <rect
+                class="esm__cell"
+                class:esm__cell--t0={cell.offset === 0}
+                x={labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
+                y={top}
+                width={cellSize}
+                height={cellSize}
+                fill={cell.fill}
+                opacity={cell.opacity}
+                rx="3"
+                data-sign={cell.sign}
+                aria-label={cell.displayValue === null
+                  ? `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: —`
+                  : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.displayValue.toFixed(1)}`}
+              >
+                <title>
+                  {cell.date}{cell.displayValue !== null
+                    ? ` — ${cell.displayValue.toFixed(1)}`
+                    : ''}
+                </title>
+              </rect>
             {/each}
-          </svg>
-        </div>
-      {/if}
-    </section>
-  </div>
-{/if}
+          </g>
+        {/each}
+      </svg>
+    </div>
+  {/if}
+</BottomSheet>
 
 <style>
   /* All colour tokens — no hardcoded hue. ADR-0035 §10. */
-
-  .esm {
-    position: fixed;
-    inset: 0;
-    z-index: 90;
-    display: grid;
-    grid-template-rows: 1fr auto;
-  }
-
-  .esm__backdrop {
-    grid-row: 1 / -1;
-    grid-column: 1 / -1;
-    background: color-mix(in oklch, var(--color-fg) 35%, transparent);
-    border: 0;
-    cursor: pointer;
-  }
-
-  .esm__panel {
-    grid-row: 2;
-    background: var(--color-surface);
-    color: var(--color-text);
-    border-top: 1px solid var(--color-border, var(--color-border-chart));
-    border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
-    padding: var(--space-4);
-    max-height: 80vh;
-    overflow: auto;
-    display: grid;
-    gap: var(--space-3);
-    position: relative;
-  }
 
   .esm__header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-3);
+    margin-bottom: var(--space-3);
   }
 
   .esm__eyebrow {
@@ -272,7 +234,7 @@
   .esm__close {
     background: transparent;
     border: 0;
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
     cursor: pointer;
     color: var(--color-text);
     min-width: 44px;

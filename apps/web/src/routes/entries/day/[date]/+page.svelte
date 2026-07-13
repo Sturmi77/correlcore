@@ -13,6 +13,7 @@
     type EntrySymptomResponse,
     type SymptomResponse,
   } from '$lib/api/symptoms';
+  import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import { isEntryDateEditable } from '$lib/utils/entryForm';
 
   type EntryDecorations = {
@@ -183,7 +184,7 @@
             <div class="day-entries__chips" aria-label={$_('tag.picker_label')}>
               {#each deco.tags as tag (tag.id)}
                 <span class:active={tag.id === selectedTagId}>
-                  {#if tag.icon}<IconRender icon={tag.icon} size={14} />{/if}
+                  {#if tag.icon}<IconRender icon={tag.icon} size={ICON_SIZE_SM} />{/if}
                   {tag.name}
                 </span>
               {/each}
@@ -195,7 +196,10 @@
               {#each deco.symptoms as symptom (symptom.symptom_id)}
                 {@const visibleSymptom = symptomLookup[symptom.symptom_id]}
                 <span>
-                  {#if visibleSymptom?.icon}<IconRender icon={visibleSymptom.icon} size={14} />{/if}
+                  {#if visibleSymptom?.icon}<IconRender
+                      icon={visibleSymptom.icon}
+                      size={ICON_SIZE_SM}
+                    />{/if}
                   {visibleSymptom?.name ?? $_('symptom.picker_label')}
                   <strong>{symptom.intensity}</strong>
                 </span>
@@ -243,7 +247,7 @@
   .day-entries__panel,
   .day-entries__card {
     padding: 1rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
   }
@@ -276,9 +280,9 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.22rem 0.5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--color-surface-offset);
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
   }
 
   .day-entries__chips span.active {

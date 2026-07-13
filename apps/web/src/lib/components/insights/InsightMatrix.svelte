@@ -257,7 +257,7 @@
     justify-content: flex-end;
     gap: 0.35rem;
     padding: 0.2rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: var(--color-surface-2);
   }
@@ -265,10 +265,10 @@
   .insight-matrix__layer {
     min-height: 44px;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: transparent;
     color: var(--color-text-muted);
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     padding: 0.35rem 0.75rem;
     cursor: pointer;
@@ -292,13 +292,13 @@
   .insight-matrix__header p,
   .insight-matrix__empty {
     color: var(--color-text-muted);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
   }
 
   .insight-matrix__table {
     overflow-x: auto;
     border: 1px solid var(--color-border-chart);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
   }
 
   .insight-matrix__row {
@@ -309,12 +309,12 @@
     align-items: center;
     padding: 0.6rem 0.75rem;
     border-top: 1px solid var(--color-border-chart);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
   }
 
   .insight-matrix__row--head {
     border-top: 0;
-    font-size: 0.72rem;
+    font-size: var(--text-2xs);
     font-weight: 700;
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -329,7 +329,7 @@
   .insight-matrix__effect span {
     display: inline-block;
     height: 0.55rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--color-text-muted);
   }
 
