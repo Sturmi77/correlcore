@@ -28,7 +28,7 @@
     }
   }
 
-  $: syncDialog(open);
+  $: if (browser && dialog) syncDialog(open);
 
   function onDialogClick(event: MouseEvent): void {
     if (event.target === dialog) requestClose();
