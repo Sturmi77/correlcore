@@ -387,7 +387,7 @@
   }
 
   .symptom-cooccurrence__sub {
-    font-size: 0.65rem;
+    font-size: var(--text-2xs);
     font-weight: 600;
     color: var(--color-text-muted);
     margin-top: 0.1rem;
