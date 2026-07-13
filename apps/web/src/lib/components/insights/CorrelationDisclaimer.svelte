@@ -193,7 +193,7 @@
     align-items: flex-end;
     justify-content: center;
     padding: 0;
-    animation: cdFadeIn 160ms ease both;
+    animation: cdFadeIn var(--transition-fast) both;
   }
 
   @keyframes cdFadeIn {
