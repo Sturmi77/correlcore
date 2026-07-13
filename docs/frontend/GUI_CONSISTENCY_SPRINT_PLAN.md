@@ -2,6 +2,10 @@
 
 Last updated: 2026-07-12
 
+> **Phase 2 (2026-07-13):** Sprints 1–7 und Codebase-PRs #354–#360 sind merged.
+> Verbleibender Scope und pragmatische Reihenfolge:
+> [`GUI_CONSISTENCY_SPRINT_PLAN_PHASE2.md`](GUI_CONSISTENCY_SPRINT_PLAN_PHASE2.md).
+
 Companion to [`GUI_CONSISTENCY_AUDIT_2026-07-12.md`](GUI_CONSISTENCY_AUDIT_2026-07-12.md)
 (the source audit — read that first for full evidence/measure/acceptance
 text per finding; this plan only sequences it into shippable batches). The
