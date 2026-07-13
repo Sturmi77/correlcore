@@ -22,8 +22,8 @@ from app.services.stats_service import (
     _cooccurrence_window,
     cooccurrence_range_to_timeseries,
     get_timeseries,
+    list_historical_tag_presence_dates_by_slug,
     list_symptom_presence_dates,
-    list_tag_presence_dates_by_slug,
 )
 
 DEFAULT_INSIGHT_LIST_LIMIT = 50
@@ -328,7 +328,7 @@ async def get_insight_event_windows(
         if not tag_slug:
             dates = []
         else:
-            dates = await list_tag_presence_dates_by_slug(
+            dates = await list_historical_tag_presence_dates_by_slug(
                 db,
                 user_id=user_id,
                 tag_slug=tag_slug,

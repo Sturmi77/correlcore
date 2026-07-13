@@ -11,9 +11,10 @@ from pydantic import BaseModel, Field
 from app.models.tag import TagCategory
 
 TimeseriesRange = Literal["week", "month", "quarter", "year"]
-TagCooccurrenceRange = Literal["30d", "90d", "1y"]
+TagCooccurrenceRange = Literal["7d", "30d", "90d", "1y"]
 
 COOCCURRENCE_RANGE_DAYS: dict[TagCooccurrenceRange, int] = {
+    "7d": 7,
     "30d": 30,
     "90d": 90,
     "1y": 365,

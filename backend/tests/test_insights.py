@@ -420,3 +420,41 @@ async def test_insight_event_windows_endpoint_returns_payload(
     assert body["events"][0]["onset"] == "2026-05-10"
     assert body["points"][0]["mood_avg"] == 3.5
     get_windows.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_insight_event_windows_accepts_7d_range(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    from app.schemas.insight import InsightEventWindowsResponse
+
+    insight_id = uuid.uuid4()
+    payload = InsightEventWindowsResponse(
+        range="7d",
+        start_date=date(2026, 6, 24),
+        end_date=date(2026, 6, 30),
+        events=[],
+        points=[],
+    )
+    get_windows = AsyncMock(return_value=payload)
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.insights.get_insight_event_windows",
+            new=get_windows,
+        ):
+            response = await async_client.get(
+                f"/api/v1/insights/{insight_id}/event-windows?range=7d",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["range"] == "7d"
+    get_windows.assert_awaited_once()

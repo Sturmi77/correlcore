@@ -11,7 +11,7 @@ type Deferred<T> = {
   resolve: (value: T) => void;
 };
 
-type TagCooccurrenceRange = '30d' | '90d' | '1y';
+type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
 
 const testHelpers = vi.hoisted(() => {
   function deferred<T>(): Deferred<T> {
@@ -298,7 +298,7 @@ describe('/insights page analysis range', () => {
     render(Page);
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '30d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
     });
 
     await fireEvent.click(screen.getByTestId('insights-range-year'));
@@ -312,13 +312,13 @@ describe('/insights page analysis range', () => {
     await waitFor(() => {
       expect(screen.getAllByText('1y tag a').length).toBeGreaterThan(0);
     });
-    expect(screen.queryByText('30d tag a')).toBeNull();
+    expect(screen.queryByText('7d tag a')).toBeNull();
 
-    testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('30d'));
+    testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('7d'));
     await flushPromises();
 
     expect(screen.getAllByText('1y tag a').length).toBeGreaterThan(0);
-    expect(screen.queryByText('30d tag a')).toBeNull();
+    expect(screen.queryByText('7d tag a')).toBeNull();
   });
 
   it('reloads symptom analytics for the selected analysis range', async () => {
@@ -425,17 +425,19 @@ describe('/insights page analysis range', () => {
     expect(screen.queryByText('insight-feed:entries:1')).toBeNull();
   });
 
-  it('does not refetch co-occurrence when switching between equivalent API windows', async () => {
+  it('refetches co-occurrence when switching from week to month API windows', async () => {
     render(Page);
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledTimes(1);
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
     });
 
     await fireEvent.click(screen.getByTestId('insights-range-month'));
 
-    await flushPromises();
+    await waitFor(() => {
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '30d', min_count: 2 });
+    });
 
-    expect(fetchTagCooccurrence).toHaveBeenCalledTimes(1);
+    expect(fetchTagCooccurrence).toHaveBeenCalledTimes(2);
   });
 });

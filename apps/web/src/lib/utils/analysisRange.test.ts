@@ -7,13 +7,14 @@ import {
 
 describe('analysisRange utils', () => {
   it('maps timeseries ranges to co-occurrence API windows', () => {
-    expect(timeseriesRangeToCooccurrence('week')).toBe('30d');
+    expect(timeseriesRangeToCooccurrence('week')).toBe('7d');
     expect(timeseriesRangeToCooccurrence('month')).toBe('30d');
     expect(timeseriesRangeToCooccurrence('quarter')).toBe('90d');
     expect(timeseriesRangeToCooccurrence('year')).toBe('1y');
   });
 
   it('maps co-occurrence windows back to timeseries ranges', () => {
+    expect(cooccurrenceRangeToTimeseries('7d')).toBe('week');
     expect(cooccurrenceRangeToTimeseries('30d')).toBe('month');
     expect(cooccurrenceRangeToTimeseries('90d')).toBe('quarter');
     expect(cooccurrenceRangeToTimeseries('1y')).toBe('year');

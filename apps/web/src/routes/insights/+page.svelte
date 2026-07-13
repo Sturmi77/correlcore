@@ -136,6 +136,7 @@
   let exploreEventsPoints: TimeseriesPoint[] = [];
   let exploreEventsMetric: MetricKey = 'mood_avg';
   let exploreEventsLoading = false;
+  let exploreEventsRequestId = 0;
 
   function readCompactInsights(): boolean {
     if (!browser) return false;
@@ -626,6 +627,8 @@
       (primaryMobileInsight?.id === insightId ? primaryMobileInsight : null);
     if (!insight) return;
 
+    const requestId = ++exploreEventsRequestId;
+
     exploreEventsInsight = insight;
     exploreEventsMetric = insightMetricToChartKey(insight.metric);
     exploreEventsOpen = true;
@@ -637,6 +640,9 @@
       const range = insightsEffectiveRange;
       if (get(devForceVisualizations)) {
         const fixture = getDevPhaseFixture(get(devPhase));
+        if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+          return;
+        }
         exploreEventsWindows = devEventWindowsFromHeatmaps(
           insight,
           fixture.tagHeatmap,
@@ -650,16 +656,24 @@
         insight.id,
         timeseriesRangeToCooccurrence(range)
       );
+      if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+        return;
+      }
       exploreEventsWindows = response.events.map((event) => ({
         onset: event.onset,
         label: event.label ?? undefined,
       }));
       exploreEventsPoints = response.points;
     } catch {
+      if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+        return;
+      }
       exploreEventsWindows = [];
       exploreEventsPoints = [];
     } finally {
-      exploreEventsLoading = false;
+      if (requestId === exploreEventsRequestId && exploreEventsInsight?.id === insightId) {
+        exploreEventsLoading = false;
+      }
     }
   }
 

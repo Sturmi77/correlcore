@@ -58,7 +58,7 @@ export interface InsightListQuery {
   limit?: number;
 }
 
-export type TagCooccurrenceRange = '30d' | '90d' | '1y';
+export type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
 
 export interface TagCooccurrenceTagRef {
   tag_id: string;
