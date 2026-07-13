@@ -2,6 +2,7 @@
  * Local-first entry persistence for offline sync (M4.1 Sprint 4).
  */
 
+import type { EntryResponse } from '$lib/api/entries';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 import type { SymptomEntry } from '$lib/api/symptoms';
 import { appendChange } from '$lib/offline/changeLog';
@@ -87,6 +88,43 @@ export async function getLocalEntry(id: string): Promise<LocalEntry | undefined>
   return getOfflineDb().entries.get(id);
 }
 
+async function deleteStaleEntriesForDateSlot(
+  entryId: string,
+  entryDate: string,
+  slot: EntrySlot
+): Promise<void> {
+  const stale = await getOfflineDb()
+    .entries.filter(
+      (entry) => entry.entry_date === entryDate && entry.slot === slot && entry.id !== entryId
+    )
+    .toArray();
+  await Promise.all(stale.map((row) => getOfflineDb().entries.delete(row.id)));
+}
+
+export async function hydrateServerEntryFromApi(
+  entry: EntryResponse,
+  tagIds: string[],
+  symptoms: SymptomEntry[]
+): Promise<void> {
+  await applyPulledEntry(
+    entry.id,
+    {
+      entry_date: entry.entry_date,
+      slot: entry.slot,
+      mood_score: entry.mood_score,
+      energy: entry.energy,
+      stress: entry.stress,
+      cycle_day: entry.cycle_day,
+      work_context: entry.work_context,
+      note: entry.note,
+      tag_ids: tagIds,
+      symptoms: symptomsToMap(symptoms),
+    },
+    entry.updated_at,
+    'synced'
+  );
+}
+
 export async function saveEntryOffline(
   existingEntryId: string | null,
   snapshot: EntryFormSnapshot
@@ -96,7 +134,11 @@ export async function saveEntryOffline(
   }
 
   const now = new Date().toISOString();
-  const entryId = existingEntryId ?? createEntryId();
+  let entryId = existingEntryId;
+  if (!entryId) {
+    const existing = await findLocalEntryByDateSlot(snapshot.entry_date, snapshot.slot);
+    entryId = existing?.id ?? createEntryId();
+  }
   const payload = buildSyncEntryPayload(snapshot);
   const syncState: SyncState = 'pending';
 
@@ -137,6 +179,10 @@ export async function applyPulledEntry(
   updatedAt: string,
   syncState: SyncState = 'synced'
 ): Promise<void> {
+  const entryDate = String(data.entry_date);
+  const slot = (data.slot as EntrySlot) ?? 'day';
+  await deleteStaleEntriesForDateSlot(entryId, entryDate, slot);
+
   const localEntry: LocalEntry = {
     id: entryId,
     entry_date: String(data.entry_date),
