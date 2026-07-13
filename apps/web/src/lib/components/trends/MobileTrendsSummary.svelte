@@ -109,7 +109,9 @@
 
       <article class="mobile-summary__card">
         <div class="mobile-summary__label">
-          <Activity size={ICON_SIZE_MD} aria-hidden="true" /><span>{$_('trends.mobile.symptom')}</span>
+          <Activity size={ICON_SIZE_MD} aria-hidden="true" /><span
+            >{$_('trends.mobile.symptom')}</span
+          >
         </div>
         {#if summary.symptom}
           <strong>{summary.symptom.name}</strong>
