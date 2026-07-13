@@ -243,7 +243,7 @@
   .day-entries__panel,
   .day-entries__card {
     padding: 1rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
   }
@@ -276,9 +276,9 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.22rem 0.5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--color-surface-offset);
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
   }
 
   .day-entries__chips span.active {

@@ -300,7 +300,7 @@
   }
 
   .dev__eyebrow {
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     letter-spacing: 0;
     text-transform: uppercase;
     font-weight: 700;
@@ -309,7 +309,7 @@
 
   .dev__hero,
   .dev__panel {
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
   }
@@ -333,7 +333,7 @@
   .dev__subtle,
   .dev__facts dt,
   .dev__footer {
-    font-size: 0.82rem;
+    font-size: var(--text-sm);
   }
 
   .dev__label,
@@ -397,7 +397,7 @@
   .dev__facts dd {
     margin-top: 0.18rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.92rem;
+    font-size: var(--text-sm);
     overflow-wrap: anywhere;
   }
 
@@ -416,7 +416,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
     background: var(--color-surface);
     color: inherit;
@@ -443,8 +443,8 @@
 
   .dev__status-list span {
     padding: 0.35rem 0.55rem;
-    border-radius: 0.5rem;
-    font-size: 0.84rem;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
     font-weight: 700;
   }
 
@@ -459,7 +459,7 @@
   }
 
   .dev__footer code {
-    font-size: 0.82rem;
+    font-size: var(--text-sm);
   }
 
   @media (max-width: 720px) {
