@@ -237,7 +237,7 @@
     outline-offset: 2px;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-analytics {
       padding: var(--space-3);
       gap: var(--space-3);

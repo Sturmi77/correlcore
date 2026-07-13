@@ -146,7 +146,7 @@
     color: var(--color-error);
   }
 
-  @media (max-width: 430px) {
+  @media (max-width: 360px) {
     .onboarding__day {
       align-items: stretch;
       flex-direction: column;

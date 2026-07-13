@@ -161,7 +161,7 @@
     color: var(--color-primary);
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 360px) {
     .day-delta__header {
       flex-direction: column;
     }

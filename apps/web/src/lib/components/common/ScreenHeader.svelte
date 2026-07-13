@@ -94,7 +94,7 @@
     border: 0;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .screen-header {
       flex-direction: column;
       align-items: stretch;

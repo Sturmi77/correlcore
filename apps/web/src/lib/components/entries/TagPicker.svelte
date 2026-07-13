@@ -519,7 +519,7 @@
     justify-content: flex-end;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .tag-custom-grid {
       grid-template-columns: 1fr;
     }

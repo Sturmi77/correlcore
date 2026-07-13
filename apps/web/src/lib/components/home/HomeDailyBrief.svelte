@@ -361,7 +361,7 @@
     background: var(--color-primary-highlight);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .daily-brief__bridge {
       grid-template-columns: 1fr;
     }

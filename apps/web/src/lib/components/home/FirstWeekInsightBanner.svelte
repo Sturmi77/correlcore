@@ -87,7 +87,7 @@
     line-height: 1;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .first-week-banner {
       align-items: flex-start;
       flex-direction: column;

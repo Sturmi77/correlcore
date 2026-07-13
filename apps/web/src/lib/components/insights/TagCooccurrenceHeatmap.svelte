@@ -456,7 +456,7 @@
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .cooccurrence__head,
     .cooccurrence__empty {
       flex-direction: column;

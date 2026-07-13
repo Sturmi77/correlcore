@@ -315,7 +315,7 @@
     gap: 1rem;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 480px) {
     .day-entries {
       padding: 1rem;
     }

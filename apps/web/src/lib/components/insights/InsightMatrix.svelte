@@ -341,7 +341,7 @@
     background: var(--color-error);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .insight-matrix__header,
     .insight-matrix__actions {
       flex-direction: column;

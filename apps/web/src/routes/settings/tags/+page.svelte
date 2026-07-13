@@ -678,7 +678,7 @@
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .tag-settings__fields {
       grid-template-columns: 1fr;
     }

@@ -173,7 +173,7 @@
   .symptom-calendar__swatch {
     width: 12px;
     height: 12px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm); /* token-exempt: 2px micro-cell; sm is closest token */
     flex-shrink: 0;
   }
 
@@ -186,13 +186,21 @@
   }
 
   .symptom-calendar__cell {
+    position: relative;
     width: 12px;
     height: 12px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm); /* token-exempt: heatmap micro-cell */
     border: none;
     padding: 0;
     background: var(--color-surface-offset);
     cursor: pointer;
+  }
+
+  /* §1.6 dense-matrix exception: expand hit area to ≥24px without visual resize */
+  .symptom-calendar__cell:not(.symptom-calendar__cell--pad)::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
   }
 
   .symptom-calendar__cell--present {
@@ -209,7 +217,7 @@
     outline-offset: 1px;
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 360px) {
     .symptom-calendar__grid {
       grid-template-rows: repeat(7, 10px);
       grid-auto-columns: 10px;
@@ -218,6 +226,10 @@
     .symptom-calendar__cell {
       width: 10px;
       height: 10px;
+    }
+
+    .symptom-calendar__cell:not(.symptom-calendar__cell--pad)::after {
+      inset: -7px;
     }
   }
 
