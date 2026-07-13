@@ -78,14 +78,14 @@ This is active user trust-building, not legal boilerplate.
 
 ### 1.6 Mobile First
 
-- Breakpoints: 375 px (base) → 768 px → 1024 px+
-- Touch targets: ≥ 44 × 44 px (WCAG 2.5.5)
+- Breakpoints: 360 px (mini) → 480 px (narrow) → 768 px (shell) → 1024 px+ (wide)
+- Touch targets: ≥ 44 × 44 px (WCAG 2.5.5); dense heatmap matrix cells ≥ 24 px hit-area via padding/`::after` without enlarging the visible cell
 - Bottom sheet instead of full-page navigation for entry creation
-- Every screen must render without horizontal scroll at 375 px
+- Every screen must render without horizontal scroll at 360 px
 - Within-screen filter tabs use horizontal scrolling on narrow screens instead of wrapping into
   disjoint rows. Page-level horizontal scroll remains forbidden; overflow must stay inside the
   control or chart/table scroller.
-- Dense analytical matrices may use internal horizontal scrolling at 375 px, but row labels, column
+- Dense analytical matrices may use internal horizontal scrolling at 360 px, but row labels, column
   labels, and legends must remain visually attached to the data they describe.
 - Mobile bottom sheets must account for `env(safe-area-inset-bottom)` in their panel padding and
   must not leave a dead grey block below the actionable sheet content.

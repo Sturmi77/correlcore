@@ -697,7 +697,7 @@
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .timeseries__head,
     .timeseries__empty {
       flex-direction: column;

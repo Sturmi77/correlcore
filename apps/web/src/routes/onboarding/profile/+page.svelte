@@ -171,7 +171,7 @@
     color: var(--color-text-muted);
   }
 
-  @media (max-width: 430px) {
+  @media (max-width: 360px) {
     .profile-onboarding__actions {
       align-items: stretch;
       flex-direction: column-reverse;

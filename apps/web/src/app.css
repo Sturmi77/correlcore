@@ -50,6 +50,10 @@
   --heatmap-matrix-gap-mobile: 0.3rem;
   --heatmap-calendar-gap: 2px;
 
+  /* Breakpoint contract (F-04): 360 mini, 480 narrow, 768 shell
+   * (= DESKTOP_SHELL_BREAKPOINT_PX), 1024 wide. Use only these
+   * viewport breakpoints unless a container query is documented. */
+
   /* GAP-10: Radius-Token-System */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;

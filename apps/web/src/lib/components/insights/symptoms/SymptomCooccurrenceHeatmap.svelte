@@ -426,7 +426,7 @@
     border-style: dashed;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-cooccurrence__grid {
       grid-template-columns: minmax(7rem, 8rem) repeat(var(--tag-count), minmax(3.25rem, 3.75rem));
       gap: var(--heatmap-matrix-gap-mobile);

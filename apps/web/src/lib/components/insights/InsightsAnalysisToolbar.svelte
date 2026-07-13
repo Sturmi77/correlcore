@@ -118,7 +118,7 @@
     outline: none;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .insights-toolbar {
       padding: var(--space-2);
       gap: var(--space-1);

@@ -139,7 +139,7 @@
     font-size: var(--text-lg);
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 480px) {
     .trends-health__consistency {
       grid-template-columns: 1fr;
     }

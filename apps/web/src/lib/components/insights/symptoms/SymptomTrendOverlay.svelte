@@ -264,7 +264,7 @@
     background: var(--color-metric-mood);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-trend {
       padding: var(--space-2);
       gap: var(--space-1);

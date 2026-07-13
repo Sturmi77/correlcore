@@ -231,7 +231,7 @@
   }
 
   /* Desktop: centred dialog instead of bottom-sheet */
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
     .cd-backdrop {
       align-items: center;
       padding: var(--space-4);

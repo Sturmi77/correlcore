@@ -271,7 +271,7 @@
     height: 0.65rem;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .heatmap__head,
     .heatmap__empty {
       align-items: stretch;

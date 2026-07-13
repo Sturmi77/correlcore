@@ -74,7 +74,7 @@
     }
   }
 
-  @media (max-width: 430px) {
+  @media (max-width: 360px) {
     .pwa-status {
       align-items: stretch;
       flex-direction: column;

@@ -597,7 +597,7 @@
     justify-content: flex-end;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-fieldset {
       grid-template-columns: 1fr;
     }
