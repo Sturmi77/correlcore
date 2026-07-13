@@ -127,6 +127,17 @@
     return 'var(--color-primary)';
   }
 
+  function payloadFeatureLabel(value: unknown): string | null {
+    if (typeof value === 'string' && value.length > 0) return value;
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      if (typeof record.name === 'string' && record.name.length > 0) return record.name;
+      if (typeof record.label === 'string' && record.label.length > 0) return record.label;
+      if (typeof record.key === 'string' && record.key.length > 0) return record.key;
+    }
+    return null;
+  }
+
   function buildTitle(ins: InsightResponse): string {
     if (ins.insight_type === 'symptom_mood_association') {
       const symptom = payloadString(ins, 'symptom_name') ?? ins.subject_label ?? 'Symptoms';
@@ -145,6 +156,29 @@
       const weekday = weekdayLabel(ins) ?? ins.subject_label ?? $_('insights.context.weekday');
       const context = workContextLabel(ins) ?? $_('insights.context.work_context');
       return `${metricLabel(ins.metric)} -> ${weekday} + ${context}`;
+    }
+    if (ins.insight_type === 'symptom_cluster') {
+      const method = payloadString(ins, 'method');
+      const target =
+        payloadFeatureLabel(ins.payload?.target) ?? metricLabel(ins.metric) ?? ins.metric;
+      if (method === 'lasso') {
+        const features = ins.payload?.features;
+        const labels = Array.isArray(features)
+          ? features
+              .map((feature) => payloadFeatureLabel(feature))
+              .filter((label): label is string => Boolean(label))
+          : [];
+        const featureText =
+          labels.length > 0 ? labels.slice(0, 3).join(', ') : $_('insights.card.cluster_features');
+        return `${featureText} → ${target}`;
+      }
+      if (method === 'lag') {
+        const feature = payloadFeatureLabel(ins.payload?.feature) ?? ins.subject_label ?? 'Feature';
+        const lagDays = payloadNumber(ins, 'lag_days');
+        const lagSuffix =
+          lagDays !== null ? ` (+${lagDays} ${$_('insights.card.lag_days_unit')})` : '';
+        return `${feature} → ${target}${lagSuffix}`;
+      }
     }
     const a = ins.metric ?? '?';
     const b = ins.subject_label ?? null;

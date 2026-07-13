@@ -64,52 +64,8 @@
       "work_context_value": "{mood} · {count} days",
       "none": "None"
     },
-    "recent": {
-      "heading": "Last 7 days",
-      "today": "Today",
-      "yesterday": "Yesterday",
-      "empty_card": "No entry",
-      "tags_count": "{n} tag(s)",
-      "symptoms_count": "{n} symptom(s)",
-      "aria_filled": "Entry for {date}, mood {mood} of 5",
-      "aria_empty": "No entry on {date}, log here"
-    },
-    "summary": {
-      "heading": "Last 7 days",
-      "mood_avg": "Mood avg",
-      "energy_avg": "Energy avg",
-      "stress_avg": "Stress avg",
-      "streak": "Tracking consistency",
-      "tracking_consistency": "Tracking consistency",
-      "streak_unit": "tracked days",
-      "count": "Logged",
-      "consistency_hint": "More consistent data improves insight quality."
-    },
     "insight": {
-      "heading": "Latest insight",
-      "empty": "No insight yet",
-      "empty_hint": "Keep logging days to build enough data for a reliable pattern.",
-      "empty_statement": "This insight has no statement yet.",
-      "meta_label": "Insight details",
-      "confidence": "Confidence",
-      "confidence_unknown": "Not enough data",
-      "sample_size": "Entries",
-      "updated": "Date",
-      "more": "More insights",
-      "tier": {
-        "none": "Not ready",
-        "early": "Early pattern",
-        "preliminary": "Preliminary",
-        "developing": "Developing",
-        "robust": "Robust"
-      },
-      "tier_help": {
-        "none": "Not enough entries for a pattern yet.",
-        "early": "Descriptive signal from limited data; no correlation claim.",
-        "preliminary": "A pattern is emerging, but more entries can change it.",
-        "developing": "Data-based relationship with a visible confidence level.",
-        "robust": "Enough entries for the full analysis pipeline."
-      }
+      "empty_statement": "This insight has no statement yet."
     },
     "confidence_scale": {
       "entry_count": "Based on {n} entries"
@@ -138,11 +94,6 @@
       "hint": "Mood bars and early findings per weekday. More entries make patterns more stable.",
       "empty": "No weekday pattern yet",
       "empty_hint": "Keep logging across different weekdays to see how your mood varies."
-    },
-    "sparkline": {
-      "heading": "Mood trend",
-      "caption": "Last {n} days",
-      "aria_label": "Line chart of mood over {n} days"
     },
     "weekday": {
       "mon": "Mon",
@@ -1048,7 +999,9 @@
       "error_body": "This insight could not be loaded.",
       "retry": "Retry",
       "inactive_tag_badge": "Tag inactive",
-      "inactive_tag_hint": "This tag is no longer used for new calculations."
+      "inactive_tag_hint": "This tag is no longer used for new calculations.",
+      "cluster_features": "Multiple factors",
+      "lag_days_unit": "days"
     },
     "disclaimer": {
       "modal_title": "What does this insight mean?",

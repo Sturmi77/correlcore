@@ -14,6 +14,7 @@
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
   import { initializeSyncOrchestrator, scheduleSync } from '$lib/offline/syncOrchestrator';
+  import { cleanupDevServiceWorker, registerProdServiceWorker } from '$lib/utils/serviceWorker';
   import { get } from 'svelte/store';
 
   // svelte-i18n's `init()` registers the locale dictionary asynchronously
@@ -33,6 +34,8 @@
   // paint to avoid a flash of wrong theme; here we mirror it into the store
   // so reactive consumers (toggle button, etc.) start in the correct state.
   onMount(() => {
+    void cleanupDevServiceWorker();
+    void registerProdServiceWorker();
     syncDevModeFromStorage();
     pwaLifecycle.initialize();
     const cleanupSync = initializeSyncOrchestrator((listener) => {
