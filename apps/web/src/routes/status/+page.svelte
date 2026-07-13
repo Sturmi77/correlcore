@@ -34,16 +34,10 @@
     controller?.abort();
   });
 
-  function statusColor(status: string): string {
-    if (status === 'ok' || status === 'ready') return 'text-success-500';
-    if (status === 'degraded') return 'text-warning-500';
-    return 'text-error-500';
-  }
-
-  function statusDot(status: string): string {
-    if (status === 'ok' || status === 'ready') return 'bg-success-500';
-    if (status === 'degraded') return 'bg-warning-500';
-    return 'bg-error-500';
+  function statusTone(status: string): 'ok' | 'warning' | 'error' {
+    if (status === 'ok' || status === 'ready') return 'ok';
+    if (status === 'degraded') return 'warning';
+    return 'error';
   }
 </script>
 
@@ -66,9 +60,9 @@
   {:else if summary}
     <!-- Overall status -->
     <div class="card p-5 variant-ghost-surface w-full flex items-center gap-4">
-      <span class="w-3 h-3 rounded-full {statusDot(summary.status)} flex-shrink-0"></span>
+      <span class="status-dot status-dot--{statusTone(summary.status)}" aria-hidden="true"></span>
       <div>
-        <p class="font-semibold {statusColor(summary.status)} capitalize">{summary.status}</p>
+        <p class="status-text status-text--{statusTone(summary.status)} capitalize">{summary.status}</p>
         <p class="text-xs opacity-60">API v{summary.version}</p>
       </div>
     </div>
@@ -81,10 +75,10 @@
       {#each summary.readiness.components as component}
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full {statusDot(component.status)} flex-shrink-0"></span>
+            <span class="status-dot status-dot--{statusTone(component.status)} status-dot--sm" aria-hidden="true"></span>
             <span class="text-sm capitalize">{component.name}</span>
           </div>
-          <span class="text-xs {statusColor(component.status)} capitalize font-medium">
+          <span class="text-xs status-text status-text--{statusTone(component.status)} capitalize font-medium">
             {component.status}
             {#if component.detail}
               <span class="opacity-60">({component.detail})</span>
@@ -97,3 +91,45 @@
     <p class="text-xs opacity-40 self-end">{$_('status.auto_refresh')}</p>
   {/if}
 </main>
+
+<style>
+  .status-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+  }
+
+  .status-dot--sm {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  .status-dot--ok {
+    background: var(--color-success);
+  }
+
+  .status-dot--warning {
+    background: var(--color-warning);
+  }
+
+  .status-dot--error {
+    background: var(--color-error);
+  }
+
+  .status-text {
+    font-weight: 600;
+  }
+
+  .status-text--ok {
+    color: var(--color-success);
+  }
+
+  .status-text--warning {
+    color: var(--color-warning);
+  }
+
+  .status-text--error {
+    color: var(--color-error);
+  }
+</style>
