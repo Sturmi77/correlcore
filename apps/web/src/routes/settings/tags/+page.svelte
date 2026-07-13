@@ -8,19 +8,19 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-import {
-  TAG_CATEGORIES,
-  createTag,
-  deleteTag,
-  listDefaultTags,
-  listVisibleTags,
-  updateTag,
-  type TagCategory,
-  type HabitType,
-  type TagResponse,
-} from '$lib/api/tags';
-import { defaultTagColorForCurrentTheme } from '$lib/constants/tagDefaults';
-import { refreshTags } from '$lib/stores/tags';
+  import {
+    TAG_CATEGORIES,
+    createTag,
+    deleteTag,
+    listDefaultTags,
+    listVisibleTags,
+    updateTag,
+    type TagCategory,
+    type HabitType,
+    type TagResponse,
+  } from '$lib/api/tags';
+  import { defaultTagColorForCurrentTheme } from '$lib/constants/tagDefaults';
+  import { refreshTags } from '$lib/stores/tags';
 
   type Draft = {
     name: string;

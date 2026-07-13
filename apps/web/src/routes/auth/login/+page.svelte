@@ -81,11 +81,7 @@
     <p class="auth-error" role="alert">{$_(errorKey)}</p>
   {/if}
 
-  <button
-    type="submit"
-    class="btn btn--primary auth-submit"
-    disabled={busy || !email || !password}
-  >
+  <button type="submit" class="btn btn--primary auth-submit" disabled={busy || !email || !password}>
     {busy ? $_('auth.common.submit_busy') : $_('auth.login.submit')}
   </button>
 </form>

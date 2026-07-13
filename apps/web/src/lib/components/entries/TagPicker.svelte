@@ -308,11 +308,7 @@
           <button type="button" class="btn" on:click={closeCustomForm} disabled={customBusy}>
             {$_('tag.custom.cancel')}
           </button>
-          <button
-            type="submit"
-            class="btn btn--primary"
-            disabled={customBusy || disabled}
-          >
+          <button type="submit" class="btn btn--primary" disabled={customBusy || disabled}>
             {customBusy ? $_('tag.custom.save_busy') : $_('tag.custom.save')}
           </button>
         </div>

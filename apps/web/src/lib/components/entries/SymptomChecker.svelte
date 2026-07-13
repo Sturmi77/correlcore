@@ -345,11 +345,7 @@
           <button type="button" class="btn" on:click={closeCustomForm} disabled={customBusy}>
             {$_('symptom.custom.cancel')}
           </button>
-          <button
-            type="submit"
-            class="btn btn--primary"
-            disabled={customBusy || disabled}
-          >
+          <button type="submit" class="btn btn--primary" disabled={customBusy || disabled}>
             {customBusy ? $_('symptom.custom.save_busy') : $_('symptom.custom.save')}
           </button>
         </div>
