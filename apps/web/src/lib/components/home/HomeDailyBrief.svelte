@@ -139,7 +139,7 @@
             <div
               class="daily-brief__work-context-bar"
               aria-hidden="true"
-              style={`--bar-width: ${workContextMetricBarWidth(workContextMetric, item.metricAvg)}; --bar-color: ${workContextBarColor}`}
+              style={`--bar-width: ${workContextMetricBarWidth(workContextMetric, item.metricAvg)}; --bar-metric-color: ${workContextBarColor}`}
             ></div>
             <strong>
               {$_('home.brief.work_context_value', {
@@ -308,8 +308,8 @@
     border-radius: var(--radius-full);
     background:
       linear-gradient(
-          var(--bar-color, var(--color-primary)),
-          var(--bar-color, var(--color-primary))
+          var(--bar-color, var(--bar-metric-color, var(--color-primary))),
+          var(--bar-color, var(--bar-metric-color, var(--color-primary)))
         )
         left center / var(--bar-width) 100% no-repeat,
       var(--color-surface);
@@ -361,7 +361,7 @@
     background: var(--color-primary-highlight);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .daily-brief__bridge {
       grid-template-columns: 1fr;
     }

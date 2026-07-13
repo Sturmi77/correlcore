@@ -5,6 +5,7 @@
   import { updateUserPreferences } from '$lib/api/preferences';
   import { localIsoDate } from '$lib/utils/home';
   import { shiftIsoDate } from '$lib/utils/streak';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
 
   const today = localIsoDate(new Date());
   const days = Array.from({ length: 7 }, (_, index) => shiftIsoDate(today, -(index + 1)));
@@ -42,7 +43,9 @@
 </svelte:head>
 
 <main class="onboarding">
-  <h1>{$_('onboarding.retro.title')}</h1>
+  <ScreenHeader title={$_('onboarding.retro.title')} visuallyHidden />
+
+  <h2 class="onboarding__heading">{$_('onboarding.retro.title')}</h2>
   <p>{$_('onboarding.retro.body')}</p>
 
   {#if error}<p class="onboarding__error">{error}</p>{/if}
@@ -94,10 +97,15 @@
     padding: 1rem 0 2rem;
   }
 
-  .onboarding h1,
+  .onboarding h2,
   .onboarding p,
   .onboarding__day h2 {
     margin: 0;
+  }
+
+  .onboarding__heading {
+    font-size: var(--text-xl);
+    font-weight: 700;
   }
 
   .onboarding__days {
@@ -112,11 +120,11 @@
     gap: 1rem;
     padding: 0.75rem;
     border: 1px solid var(--color-border-chart);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
   }
 
   .onboarding__day h2 {
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
   }
 
   .onboarding__moods,
@@ -128,7 +136,7 @@
   .onboarding__moods button {
     width: 2.75rem;
     height: 2.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
   }
@@ -146,7 +154,7 @@
     color: var(--color-error);
   }
 
-  @media (max-width: 430px) {
+  @media (max-width: 360px) {
     .onboarding__day {
       align-items: stretch;
       flex-direction: column;

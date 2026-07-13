@@ -39,6 +39,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import IconRender from '$lib/components/common/IconRender.svelte';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { refreshSymptoms, submitSymptom, symptoms, symptomsList } from '$lib/stores/symptoms';
   import {
     INTENSITY_MAX,
@@ -334,7 +335,7 @@
           <small class="symptom-custom-hint">{$_('symptom.custom.icon_hint')}</small>
           {#if customIcon.trim()}
             <span class="symptom-custom-preview" aria-live="polite">
-              <IconRender icon={customIcon} size={20} />
+              <IconRender icon={customIcon} size={ICON_SIZE_MD} />
             </span>
           {/if}
         </label>
@@ -453,7 +454,7 @@
   }
 
   .symptom-icon {
-    font-size: 1rem;
+    font-size: var(--text-base);
     line-height: 1;
     display: inline-flex;
     align-items: center;
@@ -472,7 +473,7 @@
     align-items: center;
     margin-top: 0.35rem;
     padding: 0.2rem 0.45rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: var(--color-surface-2);
   }
 
@@ -484,7 +485,7 @@
   .symptom-dot {
     width: 2.75rem;
     height: 2.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
     color: inherit;
@@ -496,10 +497,10 @@
     justify-content: center;
     line-height: 1;
     transition:
-      background 120ms ease,
-      border-color 120ms ease,
-      color 120ms ease,
-      transform 80ms ease;
+      background var(--transition-fast),
+      border-color var(--transition-fast),
+      color var(--transition-fast),
+      transform var(--transition-fast);
   }
 
   .symptom-dot:hover:not(:disabled) {
@@ -538,14 +539,14 @@
   .symptom-custom-toggle {
     background: transparent;
     border: 1px dashed var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-sm);
     cursor: pointer;
     color: inherit;
     width: 100%;
     text-align: left;
-    transition: border-color 120ms ease;
+    transition: border-color var(--transition-fast);
     min-height: 44px;
   }
 
@@ -563,7 +564,7 @@
     flex-direction: column;
     gap: var(--space-3);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: var(--space-3);
   }
 
@@ -597,7 +598,7 @@
     justify-content: flex-end;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-fieldset {
       grid-template-columns: 1fr;
     }

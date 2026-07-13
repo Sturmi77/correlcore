@@ -177,7 +177,7 @@
   .evidence__dot {
     width: 0.4rem;
     height: 0.4rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: color-mix(in srgb, var(--color-border) 70%, transparent);
   }
 

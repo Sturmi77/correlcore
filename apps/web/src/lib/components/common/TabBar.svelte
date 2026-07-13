@@ -82,7 +82,7 @@
     }
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 360px) {
     .tab-bar {
       flex-wrap: nowrap;
       margin-inline: calc(var(--space-2) * -1);

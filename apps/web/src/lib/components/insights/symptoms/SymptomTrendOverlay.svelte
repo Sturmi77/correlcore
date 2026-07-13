@@ -166,6 +166,7 @@
 </article>
 
 <style>
+  /* token-exempt-block: SVG axis micro-labels use px for chart precision (F-10). */
   .symptom-trend {
     display: grid;
     gap: var(--space-2);
@@ -224,6 +225,7 @@
     stroke: none;
   }
 
+  /* token-exempt: SVG axis micro-labels use px for chart precision (F-10). */
   .symptom-trend__ylabel {
     fill: var(--color-text-muted);
     font-size: 10px;
@@ -253,7 +255,7 @@
   .symptom-trend__swatch {
     width: 0.75rem;
     height: 0.2rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
   }
 
   .symptom-trend__swatch--symptom {
@@ -264,7 +266,7 @@
     background: var(--color-metric-mood);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-trend {
       padding: var(--space-2);
       gap: var(--space-1);

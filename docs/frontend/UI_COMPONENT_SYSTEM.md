@@ -111,6 +111,8 @@ Required contract:
 ### `BottomSheet`
 
 Use for the entry form and secondary flows that should not become primary screens.
+**All new modal sheets must use `common/BottomSheet.svelte`** — do not add bespoke
+backdrop/dialog markup (legacy sheets are being migrated incrementally).
 
 Required contract:
 
@@ -207,13 +209,13 @@ Settings owns:
 
 ## Mobile Hardening Rules
 
-- Design at 375 px first, then confirm 768 px and 1024 px.
-- No horizontal page scroll at 375 px.
+- Design at 360 px first, then confirm 768 px and 1024 px.
+- No horizontal page scroll at 360 px.
 - Horizontal overflow is allowed only for charts or data tables with an explicit affordance and a non-table fallback when practical.
 - Labels in buttons, tabs, sliders, and chips must wrap or shorten before they overflow.
 - Within-screen tab sets may use horizontal scrolling when labels would otherwise wrap poorly.
 - Header actions collapse before content does.
-- Dense data matrices must keep axis labels visually attached to their cells. At 375 px, prefer a
+- Dense data matrices must keep axis labels visually attached to their cells. At 360 px, prefer a
   local chart/table scroller with compact horizontal labels over rotated labels that overlap cells.
 - Repeated controls must use the shared component API before route-specific styling is added.
 
@@ -234,6 +236,29 @@ Settings owns:
 - Every new interactive control uses a shared primitive or documents why it cannot.
 - No primary screen has more than one visual primary CTA.
 - Home contains no advanced analysis controls.
-- Every screen renders without horizontal page scroll at 375 px.
+- Every screen renders without horizontal page scroll at 360 px.
 - Common states are represented by `DataState`, `EmptyState`, or `InlineAlert`.
 - `FRONTEND.md` and this document describe the same component ownership model.
+
+## Screen × State Matrix (F-18)
+
+Contract from `FRONTEND.md` §1.7: every data-driven primary screen should define
+**Loading**, **Error**, **Empty**, and **Offline** (where network applies). Use
+`DataState`, `EmptyState`, or `InlineAlert` unless a documented bespoke skeleton
+is required (e.g. `InsightCard` skeleton rows).
+
+| Screen / route        | Loading                 | Error                      | Empty                       | Offline                  | Notes                                                         |
+| --------------------- | ----------------------- | -------------------------- | --------------------------- | ------------------------ | ------------------------------------------------------------- |
+| `/` (Home)            | partial                 | partial                    | `HomeWeekdayOverview` empty | —                        | Recent entries uses inline skeleton; no global offline banner |
+| `/insights`           | `InsightFeed` skeleton  | `InlineAlert` + card retry | `EmptyState` in feed        | —                        | Explore sheet errors inline                                   |
+| `/trends`             | chart/heatmap skeletons | `InlineAlert`              | section empties             | —                        | Compare panel has own loading                                 |
+| `/entries/new`        | form `SaveStatusBadge`  | `InlineAlert`              | n/a (create flow)           | Dexie queue via badge    | Entry form is always “create”                                 |
+| `/entries/day/[date]` | raw `<p>`               | raw `<p>`                  | inline copy                 | —                        | **Gap:** migrate to `DataState` (P2 follow-up)                |
+| `/settings`           | —                       | `InlineAlert` per section  | —                           | PWA note in app settings | Mostly static panels                                          |
+| `/settings/tags`      | `DataState`             | `InlineAlert`              | inline empty copy           | —                        | Reference implementation                                      |
+| `/onboarding/*`       | raw `<p>`               | `InlineAlert`              | —                           | —                        | **Gap:** `DataState` for tag step                             |
+| Auth (`/auth/*`)      | button `loading`        | `InlineAlert`              | —                           | —                        | Documented `auth-page-title` exception for `<h1>`             |
+| `/status`             | —                       | —                          | —                           | —                        | Static health page                                            |
+
+**Follow-up tickets (not blocking Phase 2):** `entries/day`, onboarding tag step,
+and Home offline — migrate manual markup to shared primitives when touched next.

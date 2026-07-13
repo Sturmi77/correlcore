@@ -106,7 +106,7 @@
     border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
-    font-size: 1.25rem;
+    font-size: var(--text-lg);
     line-height: 1;
     cursor: pointer;
     transition:

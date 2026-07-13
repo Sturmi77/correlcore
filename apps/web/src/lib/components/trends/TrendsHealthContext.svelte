@@ -92,12 +92,12 @@
   }
 
   .trends-health__consistency span {
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     opacity: 0.7;
   }
 
   .trends-health__consistency strong {
-    font-size: 1.55rem;
+    font-size: var(--text-2xl);
   }
 
   .trends-health__cycle {
@@ -139,7 +139,7 @@
     font-size: var(--text-lg);
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 480px) {
     .trends-health__consistency {
       grid-template-columns: 1fr;
     }

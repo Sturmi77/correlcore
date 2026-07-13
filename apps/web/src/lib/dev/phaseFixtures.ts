@@ -660,6 +660,7 @@ function makeTagCooccurrenceByRange(
   enabled: boolean
 ): Record<TagCooccurrenceRange, TagCooccurrenceResponse> {
   return {
+    '7d': makePairResponse('7d', -6, entryCount, enabled),
     '30d': makePairResponse('30d', -29, entryCount, enabled),
     '90d': makePairResponse('90d', -89, entryCount, enabled),
     '1y': makePairResponse('1y', -364, entryCount + 18, enabled),
@@ -707,6 +708,7 @@ function makeSymptomTagCooccurrenceByRange(
       : [],
   });
   return {
+    '7d': makeCells('7d', -6, Math.max(entryCount, 8)),
     '30d': makeCells('30d', -29, Math.max(entryCount, 18)),
     '90d': makeCells('90d', -89, Math.max(entryCount, 42)),
     '1y': makeCells('1y', -364, Math.max(entryCount + 48, 96)),

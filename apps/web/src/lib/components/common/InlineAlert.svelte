@@ -67,7 +67,7 @@
     color: var(--color-error);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .inline-alert {
       align-items: stretch;
       flex-direction: column;

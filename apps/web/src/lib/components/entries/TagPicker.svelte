@@ -25,6 +25,7 @@
   import { tags, tagsByCategory, refreshTags, submitTag } from '$lib/stores/tags';
   import { TAG_CATEGORIES, MAX_TAGS_PER_ENTRY, type TagCategory } from '$lib/api/tags';
   import IconRender from '$lib/components/common/IconRender.svelte';
+  import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
 
   /** Two-way bound: list of selected tag IDs. */
   export let selected: string[] = [];
@@ -195,7 +196,7 @@
             >
               {#if tag.icon}
                 <span class="tag-icon" aria-hidden="true">
-                  <IconRender icon={tag.icon} size={16} />
+                  <IconRender icon={tag.icon} size={ICON_SIZE_SM} />
                 </span>
               {/if}
               <span class="tag-name">{tag.name}</span>
@@ -296,7 +297,7 @@
             aria-live="polite"
           >
             {#if customIcon.trim()}
-              <IconRender icon={customIcon} size={16} />
+              <IconRender icon={customIcon} size={ICON_SIZE_SM} />
             {/if}
             {customName || $_('tag.custom.preview')}
           </span>
@@ -400,7 +401,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.35rem 0.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
     color: inherit;
@@ -409,9 +410,9 @@
     cursor: pointer;
     min-height: 44px;
     transition:
-      background 120ms ease,
-      border-color 120ms ease,
-      color 120ms ease;
+      background var(--transition-fast),
+      border-color var(--transition-fast),
+      color var(--transition-fast);
   }
 
   .tag-chip:hover:not(:disabled) {
@@ -430,7 +431,7 @@
   }
 
   .tag-icon {
-    font-size: 1rem;
+    font-size: var(--text-base);
     line-height: 1;
   }
 
@@ -441,14 +442,14 @@
   .tag-custom-toggle {
     background: transparent;
     border: 1px dashed var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-sm);
     cursor: pointer;
     color: inherit;
     width: 100%;
     text-align: left;
-    transition: border-color 120ms ease;
+    transition: border-color var(--transition-fast);
     min-height: 44px;
   }
 
@@ -466,7 +467,7 @@
     flex-direction: column;
     gap: var(--space-3);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: var(--space-3);
   }
 
@@ -500,7 +501,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.35rem 0.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--tag-color, var(--color-primary-highlight));
     color: var(--color-text);
     font-size: var(--text-sm);
@@ -518,7 +519,7 @@
     justify-content: flex-end;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .tag-custom-grid {
       grid-template-columns: 1fr;
     }

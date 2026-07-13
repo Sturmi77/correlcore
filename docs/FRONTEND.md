@@ -78,14 +78,14 @@ This is active user trust-building, not legal boilerplate.
 
 ### 1.6 Mobile First
 
-- Breakpoints: 375 px (base) → 768 px → 1024 px+
-- Touch targets: ≥ 44 × 44 px (WCAG 2.5.5)
+- Breakpoints: 360 px (mini) → 480 px (narrow) → 768 px (shell) → 1024 px+ (wide)
+- Touch targets: ≥ 44 × 44 px (WCAG 2.5.5); dense heatmap matrix cells ≥ 24 px hit-area via padding/`::after` without enlarging the visible cell
 - Bottom sheet instead of full-page navigation for entry creation
-- Every screen must render without horizontal scroll at 375 px
+- Every screen must render without horizontal scroll at 360 px
 - Within-screen filter tabs use horizontal scrolling on narrow screens instead of wrapping into
   disjoint rows. Page-level horizontal scroll remains forbidden; overflow must stay inside the
   control or chart/table scroller.
-- Dense analytical matrices may use internal horizontal scrolling at 375 px, but row labels, column
+- Dense analytical matrices may use internal horizontal scrolling at 360 px, but row labels, column
   labels, and legends must remain visually attached to the data they describe.
 - Mobile bottom sheets must account for `env(safe-area-inset-bottom)` in their panel padding and
   must not leave a dead grey block below the actionable sheet content.
@@ -168,13 +168,15 @@ framework and contrast tables are documented in
 
 ### 4.2 Mood Score Colours
 
-```
--2 (very bad)  → #ef4444 (red)
--1 (bad)       → #f97316 (orange)
- 0 (neutral)   → #94a3b8 (slate)
-+1 (good)      → #84cc16 (lime)
-+2 (very good) → #22c55e (green)
-```
+Mood, energy, and stress are stored on a **1–5 Likert scale** (see `ENTRY_CONTRACT` / `lib/config/metrics.ts`). Charts and strips encode values with **metric tokens**, not a red/green traffic-light pair:
+
+| Metric | Token                   | Role                                                                |
+| ------ | ----------------------- | ------------------------------------------------------------------- |
+| Mood   | `--color-metric-mood`   | Primary mood line / strip encoding                                  |
+| Energy | `--color-metric-energy` | Energy line / strip encoding                                        |
+| Stress | `--color-metric-stress` | Stress line / strip encoding (view-layer invert via `invert: true`) |
+
+Divergent encodings (e.g. event-aligned small multiples, ADR-0035) use the chart adapter’s midpoint/range mapping — never hardcoded hue literals in components.
 
 Colour must **never** be the only information carrier — always pair with label or icon (WCAG 1.4.1).
 
@@ -182,12 +184,11 @@ Colour must **never** be the only information carrier — always pair with label
 
 Not all metrics share the same direction — a higher raw value does not always mean "better". The following table is the canonical definition for chart rendering, analytics worker correlation sign, and axis labelling:
 
-| Metric        | DB field        | Scale | Direction       | `invert` | Notes                                |
-| ------------- | --------------- | ----- | --------------- | -------- | ------------------------------------ |
-| Mood          | `mood_score`    | 1–5   | Higher = better | `false`  |                                      |
-| Energy        | `energy`        | 1–5   | Higher = better | `false`  |                                      |
-| Stress        | `stress`        | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw`     |
-| Sleep Quality | `sleep_quality` | 1–5   | Higher = better | `false`  | Issue #172 — M8 Sleep/Health Connect |
+| Metric | DB field     | Scale | Direction       | `invert` | Notes                            |
+| ------ | ------------ | ----- | --------------- | -------- | -------------------------------- |
+| Mood   | `mood_score` | 1–5   | Higher = better | `false`  |                                  |
+| Energy | `energy`     | 1–5   | Higher = better | `false`  |                                  |
+| Stress | `stress`     | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw` |
 
 > **Implementation:** The `invert` flag is defined centrally in `src/lib/config/metrics.ts` and consumed by `MetricTimeseries.svelte`, `HomeSparkline.svelte`, `DualAxisChart.svelte`, and `analytics_worker.py`. Raw DB values are **never** modified — inversion is view-layer only.
 

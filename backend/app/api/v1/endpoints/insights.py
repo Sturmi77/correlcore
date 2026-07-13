@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +11,11 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.core.rate_limit import limiter
 from app.db.session import get_session
 from app.models.user import User
-from app.schemas.insight import InsightListResponse, InsightResponse
+from app.schemas.insight import (
+    InsightEventWindowsResponse,
+    InsightListResponse,
+    InsightResponse,
+)
 from app.schemas.stats import (
     SymptomTagCooccurrenceResponse,
     TagClustersResponse,
@@ -21,6 +27,9 @@ from app.services.insight_service import (
     DEFAULT_LATEST_INSIGHT_LIMIT,
     MAX_INSIGHT_LIST_LIMIT,
     MAX_LATEST_INSIGHT_LIMIT,
+    InsightEventWindowsUnsupportedError,
+    InsightNotFoundError,
+    get_insight_event_windows,
     get_insight_maturity,
     list_insights,
     list_latest_insights,
@@ -34,10 +43,10 @@ router = APIRouter()
 def _cooccurrence_range_query(
     range: str = Query(default="90d", alias="range"),
 ) -> TagCooccurrenceRange:
-    if range not in {"30d", "90d", "1y"}:
+    if range not in {"7d", "30d", "90d", "1y"}:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="range must be one of 30d, 90d, 1y",
+            detail="range must be one of 7d, 30d, 90d, 1y",
         )
     return range  # type: ignore[return-value]
 
@@ -136,3 +145,35 @@ async def get_tag_clusters_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> TagClustersResponse:
     return await get_tag_clusters(db, user_id=user.id)
+
+
+@router.get(
+    "/{insight_id}/event-windows",
+    response_model=InsightEventWindowsResponse,
+    summary="Event-aligned onset dates and timeseries for an insight",
+)
+@limiter.limit("120/minute")
+async def get_insight_event_windows_endpoint(
+    request: Request,
+    insight_id: uuid.UUID,
+    range: TagCooccurrenceRange = Depends(_cooccurrence_range_query),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightEventWindowsResponse:
+    try:
+        return await get_insight_event_windows(
+            db,
+            user_id=user.id,
+            insight_id=insight_id,
+            range_=range,
+        )
+    except InsightNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Insight not found",
+        ) from exc
+    except InsightEventWindowsUnsupportedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Event windows are only available for tag and symptom insights",
+        ) from exc

@@ -136,7 +136,7 @@ The proxy pattern is the **recommended default** for CorrelCore (see [ADR-0011](
 
 | Drawback                               | Description                                                                                                                                                                                                     |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Separate origins in parallel dev**   | `:5173` and `:5174` are different origins with **separate cookie jars** — no shared login session when comparing GUIs side-by-side. Same DB data, but you log in twice.                                         |
+| **Separate origins in parallel dev**   | `:5173` and `:5174` are different **origins** for CORS/JS, but HttpOnly cookies are **host-scoped** (no `Domain`, path `/api`) — a login on one `localhost` port is visible to the other when paths match. Use `127.0.0.1` vs `localhost` consistently; those are separate cookie jars. |
 | **Single `FRONTEND_BASE_URL`**         | Email verify/reset links point to one canonical URL (default `:5173`). The React GUI on `:5174` does not receive those links unless auth routes are implemented there and the env var is switched.              |
 | **No benefit for non-browser clients** | Mobile apps, external tools, or Capacitor with bearer tokens talk to the API directly anyway ([ADR-0006](../adr/0006-cookie-auth-mit-capacitor-migration.md)). The web proxy does not help those clients.       |
 | **ADR-0011 assumes one entry point**   | Production design is one public web origin with internal API. Running two production frontends requires infra changes (second compose service, Traefik route) — parallel ports are for **dev/evaluation only**. |
@@ -173,8 +173,8 @@ Calling `http://localhost:8000/api/v1` directly from the browser avoids the prox
 | SameSite          | `strict` — requires same-origin proxy                                         |
 | Cookie path       | `/api` (access), `/api/v1/auth/refresh` (refresh)                             |
 | Secure flag       | Off in `APP_ENV=development`, on in production                                |
-| Sessions per port | Independent — `localhost:5173` and `localhost:5174` have separate cookie jars |
-| Shared data       | Same backend/DB — both GUIs see the same entries when authenticated           |
+| Cookie scope        | Host + path (`/api`) — **not port-scoped**; `localhost:5173` and `localhost:5174` share cookies when the proxy path matches |
+| Origins (CORS/JS)   | `:5173` and `:5174` are different origins — separate `localStorage`, service workers, and JS context                        |
 
 Reference implementation: [`apps/web/src/lib/api/client.ts`](../../apps/web/src/lib/api/client.ts)
 
@@ -252,18 +252,22 @@ export CORS_ORIGINS='http://127.0.0.1:5173,http://localhost:5173'
 export SMTP_HOST=localhost SMTP_PORT=1025
 uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 uv run --python 3.12 uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
 
+**Terminal 2** (repo root — API keeps running in terminal 1):
+
+```bash
 # 3. SvelteKit (production GUI — unchanged)
 export INTERNAL_API_URL=http://127.0.0.1:8000
 pnpm dev
 # → http://localhost:5173
 
-# 4. React experiment (after scaffold exists)
+# 4. React experiment (after apps/web-react scaffold exists — scripts not in root package.json yet)
 export INTERNAL_API_URL=http://127.0.0.1:8000
-pnpm dev:react
+pnpm dev:react   # planned — see Package Scripts below
 # → http://localhost:5174
 
-# Or both frontends in one terminal:
+# Or both frontends in one terminal (planned):
 pnpm dev:all
 ```
 
@@ -275,7 +279,7 @@ Playwright already runs a second SvelteKit instance on port 4173 ([`apps/web/pla
 
 ## Package Scripts
 
-Root [`package.json`](../../package.json) (after scaffold):
+Root [`package.json`](../../package.json) — **planned** after `apps/web-react` scaffold (not yet present on `main`):
 
 ```json
 {
@@ -284,6 +288,8 @@ Root [`package.json`](../../package.json) (after scaffold):
   "dev:all": "pnpm --parallel --filter @correlcore/web --filter @correlcore/web-react dev"
 }
 ```
+
+Until then, use `pnpm --filter @correlcore/web dev` only; see [`docs/DEVELOPMENT.md`](../DEVELOPMENT.md).
 
 ---
 
@@ -328,7 +334,7 @@ When using Claude or Cursor to design and implement a new UI in React:
 - [ ] `apps/web-react/Dockerfile`
 - [ ] CI: [`.github/workflows/ci-web.yml`](../../.github/workflows/ci-web.yml) → React build target
 - [ ] `FRONTEND_BASE_URL`, `CORS_ORIGINS`, Traefik/Compose routes
-- [ ] Auth routes: `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/reset-password`
+- [ ] Auth routes: `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/forgot-password`, `/auth/reset-password`
 - [ ] PWA/offline scope (Dexie sync — [ADR-0009](../adr/0009-offline-sync-nach-m4.md))
 - [ ] Archive or remove `apps/web`
 
@@ -359,7 +365,7 @@ flowchart TD
 ## FAQ
 
 **Can I be logged in to both GUIs at the same time?**  
-Yes. Each port has its own cookie jar. Data is shared via the same backend.
+On `localhost`, yes for **cookies** (host-scoped, shared across ports). Each port still has its own origin for JS storage and service workers. Use the same host (`localhost` or `127.0.0.1`) consistently.
 
 **Do I need a second backend?**  
 No. One API instance serves both frontends.

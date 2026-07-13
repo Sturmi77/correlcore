@@ -344,21 +344,31 @@
         listSymptomsForEntry(matchingEntry.id),
       ]);
       if (myToken !== loadToken) return;
+      let hydratedTagIds = [...selectedTagIds];
+      let hydratedSymptoms = [...selectedSymptoms];
       if (tagsRes.status === 'fulfilled') {
-        selectedTagIds = tagsRes.value.map((t) => t.id);
+        hydratedTagIds = tagsRes.value.map((t) => t.id);
+        selectedTagIds = hydratedTagIds;
+      } else {
+        selectedTagIds = [];
+        hydratedTagIds = [];
       }
       if (symRes.status === 'fulfilled') {
-        selectedSymptoms = symRes.value.map((s) => ({
+        hydratedSymptoms = symRes.value.map((s) => ({
           symptom_id: s.symptom_id,
           intensity: s.intensity,
         }));
+        selectedSymptoms = hydratedSymptoms;
+      } else {
+        selectedSymptoms = [];
+        hydratedSymptoms = [];
       }
-      if (canUseOfflineSync()) {
-        await hydrateServerEntryFromApi(
-          matchingEntry,
-          selectedTagIds,
-          selectedSymptoms
-        );
+      if (
+        canUseOfflineSync() &&
+        tagsRes.status === 'fulfilled' &&
+        symRes.status === 'fulfilled'
+      ) {
+        await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
       }
       loadedEntryDate = date;
       void refreshDayDelta(date, selectedSlot);
@@ -1273,7 +1283,7 @@
     background: var(--color-error-highlight);
     border-left: 3px solid var(--color-error);
     padding: var(--space-2) var(--space-3);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
   }
 
   .entry-actions {

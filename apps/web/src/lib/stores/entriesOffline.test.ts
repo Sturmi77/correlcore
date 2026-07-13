@@ -88,9 +88,11 @@ describe('entriesOffline', () => {
       selectedSymptoms: [],
     });
 
-    await hydrateServerEntryFromApi(apiEntry('server-entry-id'), ['tag-1'], [
-      { symptom_id: 'sym-1', intensity: 3 },
-    ]);
+    await hydrateServerEntryFromApi(
+      apiEntry('server-entry-id'),
+      ['tag-1'],
+      [{ symptom_id: 'sym-1', intensity: 3 }]
+    );
 
     const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
     expect(local?.id).toBe('server-entry-id');

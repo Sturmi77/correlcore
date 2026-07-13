@@ -73,7 +73,7 @@
     gap: var(--space-3);
     padding: var(--space-3);
     border: 1px solid var(--color-border-chart);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
   }
 
@@ -110,7 +110,7 @@
   .day-delta__metrics div {
     min-width: 0;
     padding: var(--space-2);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: var(--color-surface);
   }
 
@@ -154,14 +154,14 @@
   }
 
   .day-delta__tags li {
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     padding: 0.15rem 0.5rem;
     font-size: var(--text-xs, 0.78rem);
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
     color: var(--color-primary);
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 360px) {
     .day-delta__header {
       flex-direction: column;
     }

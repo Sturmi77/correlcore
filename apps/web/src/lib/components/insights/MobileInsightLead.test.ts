@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/svelte';
+import { render, screen, within, fireEvent } from '@testing-library/svelte';
 import MobileInsightLead from './MobileInsightLead.svelte';
 import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
@@ -75,5 +75,24 @@ describe('MobileInsightLead', () => {
   it('links the featured insight back to trends', () => {
     render(MobileInsightLead, { props: { insight } });
     expect(screen.getByTestId('analysis-cross-link-trends').getAttribute('href')).toBe('/trends');
+  });
+
+  it('forwards exploreEvents from the lead card when enabled', async () => {
+    const handler = vi.fn();
+    const tagInsight = { ...insight, id: 'tag-lead', subject_type: 'tag', subject_id: 'focus' };
+    render(MobileInsightLead, {
+      props: {
+        insight: tagInsight,
+        maturity,
+        entryCount: 42,
+        enableExploreEvents: true,
+      },
+      events: { exploreEvents: handler },
+    });
+
+    await fireEvent.click(screen.getByTestId('insight-card-explore-events'));
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(handler.mock.calls[0]?.[0].detail).toEqual({ id: 'tag-lead' });
   });
 });

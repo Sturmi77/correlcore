@@ -12,8 +12,13 @@
   export let entryCount = 0;
   export let inactiveTagIds: readonly string[] = [];
   export let showMilestone = false;
+  /** Enables Explore aligned events on the lead insight card. */
+  export let enableExploreEvents = false;
 
-  const dispatch = createEventDispatcher<{ dismissMilestone: { key: string } }>();
+  const dispatch = createEventDispatcher<{
+    dismissMilestone: { key: string };
+    exploreEvents: { id: string };
+  }>();
 </script>
 
 <section class="mobile-lead" data-testid="mobile-insight-lead">
@@ -23,7 +28,15 @@
     <p>{$_('insights.mobile.context', { values: { days: 90, n: entryCount } })}</p>
   </header>
 
-  <InsightCard {insight} {maturity} {inactiveTagIds} featured showConfidenceSummary />
+  <InsightCard
+    {insight}
+    {maturity}
+    {inactiveTagIds}
+    featured
+    showConfidenceSummary
+    {enableExploreEvents}
+    on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
+  />
 
   <p class="mobile-lead__note" data-testid="mobile-insight-correlation-note">
     {$_('insights.mobile.correlation_note')}

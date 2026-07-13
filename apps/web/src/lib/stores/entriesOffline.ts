@@ -164,7 +164,11 @@ async function deleteStaleEntriesForDateSlot(
       (entry) => entry.entry_date === entryDate && entry.slot === slot && entry.id !== entryId
     )
     .toArray();
-  await Promise.all(stale.map((row) => getOfflineDb().entries.delete(row.id)));
+  const db = getOfflineDb();
+  for (const row of stale) {
+    await db.change_log.where('entity_id').equals(row.id).delete();
+    await db.entries.delete(row.id);
+  }
 }
 
 export async function hydrateServerEntryFromApi(

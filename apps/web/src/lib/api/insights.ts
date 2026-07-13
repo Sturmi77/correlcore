@@ -58,7 +58,7 @@ export interface InsightListQuery {
   limit?: number;
 }
 
-export type TagCooccurrenceRange = '30d' | '90d' | '1y';
+export type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
 
 export interface TagCooccurrenceTagRef {
   tag_id: string;
@@ -193,5 +193,29 @@ export async function fetchSymptomTagCooccurrence(
   const qs = params.toString();
   return api.get<SymptomTagCooccurrenceResponse>(
     qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence'
+  );
+}
+
+export interface InsightEventWindowResponse {
+  onset: string;
+  label: string | null;
+}
+
+export interface InsightEventWindowsResponse {
+  range: TagCooccurrenceRange;
+  start_date: string;
+  end_date: string;
+  events: InsightEventWindowResponse[];
+  points: import('./stats').TimeseriesPoint[];
+}
+
+/** GET /insights/{id}/event-windows — ADR-0035 §6 explore-events data. */
+export async function fetchInsightEventWindows(
+  insightId: string,
+  range: TagCooccurrenceRange
+): Promise<InsightEventWindowsResponse> {
+  const params = new URLSearchParams({ range });
+  return api.get<InsightEventWindowsResponse>(
+    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`
   );
 }

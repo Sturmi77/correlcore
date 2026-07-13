@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { WorkContextTypical } from '$lib/api/profile';
+  import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import EntryForm from '$lib/components/entries/EntryForm.svelte';
   import { getEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
 
@@ -12,9 +13,7 @@
 
   const dispatch = createEventDispatcher<{ close: void; saved: void }>();
 
-  let panelEl: HTMLDivElement | null = null;
   let entryForm: EntryForm;
-  let returnFocusEl: HTMLElement | null = null;
   let openMode: EntryOpenMode = 'full';
 
   $: if (open) {
@@ -26,20 +25,6 @@
     if (ok) handleFormClose();
   }
 
-  function onBackdropClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) {
-      void close();
-    }
-  }
-
-  function onKeydown(e: KeyboardEvent) {
-    if (!open) return;
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      void close();
-    }
-  }
-
   function handleFormClose() {
     open = false;
     dispatch('close');
@@ -48,103 +33,60 @@
   function handleFormSaved() {
     dispatch('saved');
   }
-
-  $: if (open && typeof document !== 'undefined') {
-    returnFocusEl = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = 'hidden';
-    queueMicrotask(() => {
-      const focusTarget =
-        panelEl?.querySelector<HTMLElement>('#entry-mood') ??
-        panelEl?.querySelector<HTMLElement>('button, [href], input, select, textarea');
-      focusTarget?.focus();
-    });
-  } else if (typeof document !== 'undefined') {
-    document.body.style.overflow = '';
-    if (returnFocusEl) {
-      returnFocusEl.focus();
-      returnFocusEl = null;
-    }
-  }
-
-  onDestroy(() => {
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = '';
-    }
-  });
 </script>
 
-<svelte:window on:keydown={onKeydown} />
-
-{#if open}
-  <div
-    class="entry-sheet-backdrop"
-    role="presentation"
-    data-testid="entry-sheet-backdrop"
-    on:click={onBackdropClick}
-    on:keydown={() => {}}
-  >
-    <div
-      class="entry-sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="entry-sheet-title"
-      data-testid="entry-sheet"
-      bind:this={panelEl}
+<BottomSheet
+  {open}
+  labelledBy="entry-sheet-title"
+  testId="entry-sheet"
+  closeAriaLabel={$_('entry.sheet.close')}
+  on:close={() => void close()}
+>
+  <div class="entry-sheet">
+    <div class="entry-sheet__handle" aria-hidden="true"></div>
+    <button
+      type="button"
+      class="entry-sheet__close"
+      aria-label={$_('entry.sheet.close')}
+      data-testid="entry-sheet-close"
+      on:click={() => void close()}
     >
-      <div class="entry-sheet__handle" aria-hidden="true"></div>
-      <button
-        type="button"
-        class="entry-sheet__close"
-        aria-label={$_('entry.sheet.close')}
-        data-testid="entry-sheet-close"
-        on:click={() => void close()}
-      >
-        ×
-      </button>
-      {#key initialDate}
-        <div class="entry-sheet__body">
-          <EntryForm
-            bind:this={entryForm}
-            mode="sheet"
-            {initialDate}
-            {openMode}
-            {onboardingTagsEnabled}
-            {workContextTypical}
-            on:close={handleFormClose}
-            on:saved={handleFormSaved}
-          />
-        </div>
-      {/key}
-    </div>
+      ×
+    </button>
+    {#key initialDate}
+      <div class="entry-sheet__body">
+        <EntryForm
+          bind:this={entryForm}
+          mode="sheet"
+          {initialDate}
+          {openMode}
+          {onboardingTagsEnabled}
+          {workContextTypical}
+          on:close={handleFormClose}
+          on:saved={handleFormSaved}
+        />
+      </div>
+    {/key}
   </div>
-{/if}
+</BottomSheet>
 
 <style>
-  .entry-sheet-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    background: color-mix(in oklch, var(--color-bg) 55%, transparent);
-    padding: 0;
-  }
-
   .entry-sheet {
     position: relative;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: var(--content-max-width);
-    max-height: min(92dvh, 720px);
-    margin: 0 auto;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-bottom: none;
-    box-shadow: 0 -8px 32px color-mix(in oklch, var(--color-bg) 30%, transparent);
+    margin: calc(-1 * var(--space-4));
+    margin-bottom: calc(-1 * (var(--space-4) + env(safe-area-inset-bottom)));
+    max-height: min(82dvh, 42rem);
     overflow: hidden;
+    background: var(--color-bg);
+  }
+
+  @media (min-width: 768px) {
+    .entry-sheet {
+      margin-bottom: calc(-1 * var(--space-4));
+      max-height: min(88dvh, 800px);
+    }
   }
 
   .entry-sheet__handle {
@@ -164,13 +106,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: var(--tap-target);
+    height: var(--tap-target);
     border: none;
     border-radius: var(--radius-full);
     background: var(--color-surface-2);
     color: var(--color-fg);
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
     line-height: 1;
     cursor: pointer;
   }
@@ -191,17 +133,6 @@
   }
 
   @media (min-width: 768px) {
-    .entry-sheet-backdrop {
-      align-items: center;
-      padding: var(--space-6);
-    }
-
-    .entry-sheet {
-      max-height: min(88dvh, 800px);
-      border-radius: var(--radius-lg);
-      border-bottom: 1px solid var(--color-border);
-    }
-
     .entry-sheet__handle {
       display: none;
     }

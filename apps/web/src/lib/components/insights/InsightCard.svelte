@@ -27,6 +27,7 @@
   } from '$lib/utils/insightConfounder';
   import InsightEvidence from './InsightEvidence.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
+  import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
   export let insight: InsightResponse | null = null;
@@ -49,7 +50,10 @@
 
   // Sprint 3 (ADR-0035 §6): only surface the action when a parent has wired
   // the sheet and the insight has reached the provisional phase.
-  $: canExploreEvents = enableExploreEvents && isSmallMultiplesUnlocked(maturity?.phase ?? null);
+  $: canExploreEvents =
+    enableExploreEvents &&
+    isSmallMultiplesUnlocked(maturity?.phase ?? null) &&
+    Boolean(insight && isExploreEventsSubject(insight));
 
   let expanded = false;
 
@@ -403,7 +407,7 @@
     border-left: 3px solid var(--insight-accent, var(--color-primary));
     border-radius: var(--radius-lg, 0.75rem);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow var(--transition-interactive, 200ms ease);
+    transition: box-shadow var(--transition-interactive);
   }
   .insight-card:hover,
   .insight-card:focus-within {
@@ -433,7 +437,7 @@
     gap: var(--space-2, 0.5rem);
   }
   .insight-card__direction {
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     font-weight: 700;
     width: 1.5rem;
     text-align: center;
@@ -461,7 +465,7 @@
     display: inline-flex;
     margin-left: var(--space-2, 0.5rem);
     padding: 0.1rem 0.4rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     color: var(--color-text-muted);
     font-size: var(--text-xs, 0.75rem);
@@ -482,11 +486,11 @@
     padding: 0;
     color: var(--color-text-muted);
     border-radius: var(--radius-sm, 0.375rem);
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     line-height: 1;
     transition:
-      color var(--transition-interactive, 180ms ease),
-      background var(--transition-interactive, 180ms ease);
+      color var(--transition-interactive),
+      background var(--transition-interactive);
   }
   .insight-card__dismiss:hover,
   .insight-card__dismiss:focus-visible {
@@ -505,7 +509,7 @@
     font-size: var(--text-xl, 1.5rem);
     /* Reveal once on mount; easing matches --transition-interactive's curve
        (that token is a duration+easing shorthand, not usable standalone here). */
-    animation: insightStatementReveal 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: insightStatementReveal var(--transition-sheet) both;
   }
   @keyframes insightStatementReveal {
     from {
@@ -551,13 +555,13 @@
     padding: var(--space-1, 0.25rem) 0;
     min-height: 2.75rem;
     border-radius: var(--radius-sm, 0.375rem);
-    transition: color var(--transition-interactive, 180ms ease);
+    transition: color var(--transition-interactive);
   }
   .insight-card__toggle:hover {
     color: var(--color-primary-hover);
   }
   .insight-card__toggle-icon {
-    font-size: 0.6rem;
+    font-size: var(--text-2xs);
   }
   .insight-card__confidence-summary {
     padding: var(--space-3);
@@ -571,7 +575,7 @@
     gap: var(--space-4, 1rem);
     padding-top: var(--space-3, 0.75rem);
     border-top: 1px solid oklch(from var(--color-text) l c h / 0.08);
-    animation: fadeSlideIn 180ms ease both;
+    animation: fadeSlideIn var(--transition-interactive) both;
   }
   @keyframes fadeSlideIn {
     from {
@@ -612,8 +616,8 @@
     border-radius: var(--radius-sm, 0.375rem);
     padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
     transition:
-      color var(--transition-interactive, 180ms ease),
-      border-color var(--transition-interactive, 180ms ease);
+      color var(--transition-interactive),
+      border-color var(--transition-interactive);
   }
   .insight-card__export-btn:hover {
     color: var(--color-text);
@@ -630,7 +634,7 @@
     border-radius: var(--radius-sm, 0.375rem);
     padding: var(--space-1) var(--space-3);
     cursor: pointer;
-    transition: background var(--transition-interactive, 180ms ease);
+    transition: background var(--transition-interactive);
   }
   .insight-card__explore:hover,
   .insight-card__explore:focus-visible {
@@ -673,7 +677,7 @@
   .skeleton-track {
     height: 0.55rem;
     width: 100%;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
   }
   .insight-card--error {
     border-color: oklch(from var(--color-error) l c h / 0.25);
@@ -692,7 +696,7 @@
     padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
     border: 1px solid var(--color-primary);
     border-radius: var(--radius-sm, 0.375rem);
-    transition: background var(--transition-interactive, 180ms ease);
+    transition: background var(--transition-interactive);
   }
   .insight-card__retry-btn:hover {
     background: oklch(from var(--color-primary) l c h / 0.08);

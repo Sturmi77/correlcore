@@ -212,6 +212,18 @@ describe('InsightCard', () => {
     expect(handler.mock.calls[0]?.[0].detail).toEqual({ id: INSIGHT.id });
   });
 
+  it('hides explore-events for non tag/symptom subjects even when enabled', () => {
+    render(InsightCard, {
+      props: {
+        insight: { ...INSIGHT, subject_type: 'metric', subject_id: 'energy' },
+        maturity: { ...MATURITY, phase: 'robust' },
+        enableExploreEvents: true,
+      },
+    });
+
+    expect(screen.queryByTestId('insight-card-explore-events')).toBeNull();
+  });
+
   it('renders disclaimer link', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     const link = screen.getByTestId('insight-card-disclaimer');

@@ -22,10 +22,11 @@ describe('CorrelationDisclaimer', () => {
     expect(screen.getByTestId('cd-modal')).toBeTruthy();
   });
 
-  it('has aria-modal=true', () => {
+  it('exposes dialog semantics when open', () => {
     render(CorrelationDisclaimer, { props: { open: true } });
-    const modal = screen.getByTestId('cd-modal');
-    expect(modal.getAttribute('aria-modal')).toBe('true');
+    const dialog = screen.getByTestId('cd-backdrop');
+    expect(dialog.tagName.toLowerCase()).toBe('dialog');
+    expect(dialog.getAttribute('aria-labelledby')).toBe('cd-title');
   });
 
   it('renders all 5 content sections', () => {
@@ -61,7 +62,8 @@ describe('CorrelationDisclaimer', () => {
   it('dispatches close on Escape key', async () => {
     const handler = vi.fn();
     render(CorrelationDisclaimer, { props: { open: true }, events: { close: handler } });
-    await fireEvent.keyDown(document, { key: 'Escape' });
+    const dialog = screen.getByTestId('cd-backdrop');
+    dialog.dispatchEvent(new Event('cancel', { bubbles: true, cancelable: true }));
     expect(handler).toHaveBeenCalledOnce();
   });
 });

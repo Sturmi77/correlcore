@@ -9,6 +9,10 @@ const routeSources = {
   tagSettings: readFileSync(resolve('src/routes/settings/tags/+page.svelte'), 'utf8'),
   appSettings: readFileSync(resolve('src/routes/settings/app/+page.svelte'), 'utf8'),
   symptomSettings: readFileSync(resolve('src/routes/settings/symptoms/+page.svelte'), 'utf8'),
+  dayEntries: readFileSync(resolve('src/routes/entries/day/[date]/+page.svelte'), 'utf8'),
+  onboarding: readFileSync(resolve('src/routes/onboarding/+page.svelte'), 'utf8'),
+  onboardingProfile: readFileSync(resolve('src/routes/onboarding/profile/+page.svelte'), 'utf8'),
+  onboardingRetro: readFileSync(resolve('src/routes/onboarding/retro/+page.svelte'), 'utf8'),
 };
 
 describe('screen chrome contract', () => {
@@ -23,6 +27,17 @@ describe('screen chrome contract', () => {
     expect(routeSources.tagSettings).toContain('screen-stack');
     expect(routeSources.appSettings).toContain('screen-stack');
     expect(routeSources.symptomSettings).toContain('screen-stack');
+  });
+
+  it('uses visuallyHidden ScreenHeader on drill-down and onboarding routes', () => {
+    for (const source of [
+      routeSources.dayEntries,
+      routeSources.onboarding,
+      routeSources.onboardingProfile,
+      routeSources.onboardingRetro,
+    ]) {
+      expect(source).toContain('visuallyHidden');
+    }
   });
 
   it('does not duplicate Home navigation in primary route headers', () => {
