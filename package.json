@@ -22,6 +22,7 @@
     "format:check": "prettier --check .",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:style-contract": "node scripts/check-style-contract.mjs",
+    "check:style-tokens": "node scripts/check-style-tokens.mjs",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "quality:m1": "./scripts/quality-gate-m1.sh",

@@ -463,7 +463,7 @@
     font-size: var(--text-sm);
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 768px) {
     .dev {
       padding: 1rem;
     }

@@ -166,6 +166,7 @@
 </article>
 
 <style>
+  /* token-exempt-block: SVG axis micro-labels use px for chart precision (F-10). */
   .symptom-trend {
     display: grid;
     gap: var(--space-2);
@@ -224,6 +225,7 @@
     stroke: none;
   }
 
+  /* token-exempt: SVG axis micro-labels use px for chart precision (F-10). */
   .symptom-trend__ylabel {
     fill: var(--color-text-muted);
     font-size: 10px;
