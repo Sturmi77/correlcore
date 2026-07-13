@@ -18,12 +18,9 @@
   import { auth } from '$lib/stores/auth';
   import { insightStore } from '$lib/stores/insights';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
+  import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
   import {
-    fetchSymptomHeatmap,
-    fetchTimeseries,
-    type SymptomHeatmapResponse,
-  } from '$lib/api/stats';
-  import {
+    fetchInsightEventWindows,
     fetchSymptomTagCooccurrence,
     fetchTagClusters,
     fetchTagCooccurrence,
@@ -86,7 +83,6 @@
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import type { MetricKey } from '$lib/utils/charts';
   import {
-    buildExploreEventWindows,
     devEventWindowsFromHeatmaps,
     insightMetricToChartKey,
   } from '$lib/utils/exploreEventWindows';
@@ -650,18 +646,15 @@
         return;
       }
 
-      const { start_date, end_date } = analysisDateWindow(range);
-      const [entries, timeseries] = await Promise.all([
-        listEntries({ start_date, end_date, limit: 365 }),
-        fetchTimeseries(range),
-      ]);
-      exploreEventsWindows = await buildExploreEventWindows(
-        insight,
-        entries,
-        listTagsForEntry,
-        listSymptomsForEntry
+      const response = await fetchInsightEventWindows(
+        insight.id,
+        timeseriesRangeToCooccurrence(range)
       );
-      exploreEventsPoints = timeseries.points;
+      exploreEventsWindows = response.events.map((event) => ({
+        onset: event.onset,
+        label: event.label ?? undefined,
+      }));
+      exploreEventsPoints = response.points;
     } catch {
       exploreEventsWindows = [];
       exploreEventsPoints = [];

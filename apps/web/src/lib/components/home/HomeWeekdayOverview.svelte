@@ -113,9 +113,9 @@
   }
 
   .weekday-overview__tier {
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     padding: 0.18rem 0.55rem;
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     font-weight: 600;
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
     color: var(--color-primary);
@@ -130,7 +130,7 @@
     padding: 0.75rem 0.5rem 0.55rem;
     border: 1px solid var(--color-border-chart);
     background: var(--color-surface-chart-bg);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
   }
 
   .weekday-overview__cell {
@@ -144,12 +144,12 @@
 
   .weekday-overview__value,
   .weekday-overview__label {
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     color: var(--color-text-muted);
   }
 
   .weekday-overview__finding {
-    font-size: 0.62rem;
+    font-size: var(--text-2xs);
     line-height: 1.2;
     text-align: center;
     color: var(--color-text);
@@ -176,7 +176,7 @@
     width: 100%;
     max-width: 1.2rem;
     min-height: 0.25rem;
-    border-radius: 999px 999px 0.25rem 0.25rem;
+    border-radius: var(--radius-full) var(--radius-full) var(--radius-sm) var(--radius-sm);
     background: color-mix(in srgb, var(--color-primary) 45%, transparent);
   }
 
@@ -200,11 +200,11 @@
     padding: 0.75rem 0.5rem;
     border: 1px solid var(--color-border-chart);
     background: var(--color-surface-chart-bg);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
   }
 
   .weekday-overview__hint {
     color: var(--color-text-muted);
-    font-size: 0.72rem;
+    font-size: var(--text-2xs);
   }
 </style>

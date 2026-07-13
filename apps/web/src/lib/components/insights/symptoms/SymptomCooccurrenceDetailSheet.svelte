@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import type {
     SymptomTagCooccurrenceCell,
     SymptomTagCooccurrenceConfounder,
@@ -19,134 +20,98 @@
   }
 
   $: confounderNote = cell ? confounderNoteKey(cell.confounder) : null;
+  $: sheetOpen = open && cell !== null;
 </script>
 
-{#if open && cell}
-  <div
-    class="symptom-detail"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="symptom-detail-title"
-    data-testid="symptom-cooccurrence-detail-sheet"
+{#if cell}
+  <BottomSheet
+    open={sheetOpen}
+    labelledBy="symptom-detail-title"
+    testId="symptom-cooccurrence-detail-sheet"
+    closeAriaLabel={$_('trends.history.close_aria')}
+    on:close={() => dispatch('close')}
   >
-    <button
-      type="button"
-      class="symptom-detail__backdrop"
-      aria-label={$_('trends.history.close_aria')}
-      on:click={() => dispatch('close')}
-    ></button>
-
-    <section class="symptom-detail__panel">
-      <header class="symptom-detail__header">
-        <div>
-          <p class="symptom-detail__eyebrow">{$_('insights.symptoms.detail_eyebrow')}</p>
-          <h2 id="symptom-detail-title">
-            {cell.symptom.name} + {cell.tag.name}
-          </h2>
-        </div>
-        <button
-          type="button"
-          class="symptom-detail__close"
-          aria-label={$_('trends.history.close_aria')}
-          data-testid="symptom-cooccurrence-detail-close"
-          on:click={() => dispatch('close')}
-        >
-          ×
-        </button>
-      </header>
-
-      {#if confounderNote}
-        <p class="symptom-detail__confounder">{$_(confounderNote)}</p>
-      {/if}
-
-      <dl class="symptom-detail__metrics">
-        <div>
-          <dt>{$_('insights.symptoms.detail_lift')}</dt>
-          <dd>{cell.lift.toFixed(2)}</dd>
-        </div>
-        <div>
-          <dt>{$_('insights.symptoms.detail_phi')}</dt>
-          <dd>{cell.phi.toFixed(3)}</dd>
-        </div>
-        <div>
-          <dt>{$_('insights.symptoms.detail_jaccard')}</dt>
-          <dd>{cell.jaccard.toFixed(3)}</dd>
-        </div>
-        <div>
-          <dt>{$_('insights.symptoms.detail_co_count')}</dt>
-          <dd>{cell.co_count}</dd>
-        </div>
-        <div>
-          <dt>{$_('insights.symptoms.detail_symptom_days')}</dt>
-          <dd>{cell.symptom_count}</dd>
-        </div>
-        <div>
-          <dt>{$_('insights.symptoms.detail_tag_days')}</dt>
-          <dd>{cell.tag_count}</dd>
-        </div>
-        <div>
-          <dt>{$_('insights.symptoms.detail_total_days')}</dt>
-          <dd>{cell.total_count}</dd>
-        </div>
-      </dl>
-
-      <p class="symptom-detail__base-rate">
-        {$_('insights.symptoms.detail_base_rate', {
-          values: {
-            co: cell.co_count,
-            symptom: cell.symptom_count,
-            tag: cell.tag_count,
-          },
-        })}
-      </p>
-
+    <header class="symptom-detail__header">
+      <div>
+        <p class="symptom-detail__eyebrow">{$_('insights.symptoms.detail_eyebrow')}</p>
+        <h2 id="symptom-detail-title">
+          {cell.symptom.name} + {cell.tag.name}
+        </h2>
+      </div>
       <button
         type="button"
-        class="symptom-detail__methodology"
-        data-testid="symptom-cooccurrence-detail-methodology"
-        on:click={() => dispatch('openDisclaimer')}
+        class="symptom-detail__close"
+        aria-label={$_('trends.history.close_aria')}
+        data-testid="symptom-cooccurrence-detail-close"
+        on:click={() => dispatch('close')}
       >
-        {$_('insights.symptoms.detail_methodology')}
+        ×
       </button>
-    </section>
-  </div>
+    </header>
+
+    {#if confounderNote}
+      <p class="symptom-detail__confounder">{$_(confounderNote)}</p>
+    {/if}
+
+    <dl class="symptom-detail__metrics">
+      <div>
+        <dt>{$_('insights.symptoms.detail_lift')}</dt>
+        <dd>{cell.lift.toFixed(2)}</dd>
+      </div>
+      <div>
+        <dt>{$_('insights.symptoms.detail_phi')}</dt>
+        <dd>{cell.phi.toFixed(3)}</dd>
+      </div>
+      <div>
+        <dt>{$_('insights.symptoms.detail_jaccard')}</dt>
+        <dd>{cell.jaccard.toFixed(3)}</dd>
+      </div>
+      <div>
+        <dt>{$_('insights.symptoms.detail_co_count')}</dt>
+        <dd>{cell.co_count}</dd>
+      </div>
+      <div>
+        <dt>{$_('insights.symptoms.detail_symptom_days')}</dt>
+        <dd>{cell.symptom_count}</dd>
+      </div>
+      <div>
+        <dt>{$_('insights.symptoms.detail_tag_days')}</dt>
+        <dd>{cell.tag_count}</dd>
+      </div>
+      <div>
+        <dt>{$_('insights.symptoms.detail_total_days')}</dt>
+        <dd>{cell.total_count}</dd>
+      </div>
+    </dl>
+
+    <p class="symptom-detail__base-rate">
+      {$_('insights.symptoms.detail_base_rate', {
+        values: {
+          co: cell.co_count,
+          symptom: cell.symptom_count,
+          tag: cell.tag_count,
+        },
+      })}
+    </p>
+
+    <button
+      type="button"
+      class="symptom-detail__methodology"
+      data-testid="symptom-cooccurrence-detail-methodology"
+      on:click={() => dispatch('openDisclaimer')}
+    >
+      {$_('insights.symptoms.detail_methodology')}
+    </button>
+  </BottomSheet>
 {/if}
 
 <style>
-  .symptom-detail {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    display: grid;
-    place-items: end center;
-    padding: var(--space-4);
-  }
-
-  .symptom-detail__backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    background: color-mix(in srgb, var(--color-scrim) 45%, transparent);
-    cursor: pointer;
-  }
-
-  .symptom-detail__panel {
-    position: relative;
-    width: min(100%, 28rem);
-    max-height: min(85vh, 32rem);
-    overflow: auto;
-    padding: var(--space-4);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-lg, 0 12px 40px rgb(0 0 0 / 0.18));
-  }
-
   .symptom-detail__header {
     display: flex;
     justify-content: space-between;
     gap: var(--space-3);
     align-items: flex-start;
+    margin-bottom: var(--space-3);
   }
 
   .symptom-detail__eyebrow {
@@ -169,10 +134,12 @@
     line-height: 1;
     cursor: pointer;
     color: var(--color-text-muted);
+    min-width: var(--tap-target);
+    min-height: var(--tap-target);
   }
 
   .symptom-detail__confounder {
-    margin: var(--space-3) 0 0;
+    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
   }

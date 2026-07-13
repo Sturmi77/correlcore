@@ -15,6 +15,7 @@
     habitProgressValue,
     habitStatusI18nKey,
   } from '$lib/utils/habitMetrics';
+  import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import Minus from 'lucide-svelte/icons/minus';
   import TrendingDown from 'lucide-svelte/icons/trending-down';
   import TrendingUp from 'lucide-svelte/icons/trending-up';
@@ -255,11 +256,11 @@
                     class="habits__trend"
                   >
                     {#if row.habit.trend_direction === 'up'}
-                      <TrendingUp size={14} aria-hidden="true" />
+                      <TrendingUp size={ICON_SIZE_SM} aria-hidden="true" />
                     {:else if row.habit.trend_direction === 'down'}
-                      <TrendingDown size={14} aria-hidden="true" />
+                      <TrendingDown size={ICON_SIZE_SM} aria-hidden="true" />
                     {:else}
-                      <Minus size={14} aria-hidden="true" />
+                      <Minus size={ICON_SIZE_SM} aria-hidden="true" />
                     {/if}
                     {trendLabel(row.habit)}
                   </small>

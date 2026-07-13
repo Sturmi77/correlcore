@@ -64,6 +64,7 @@
   import { onLocalEntrySaved, scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
   import {
     findLocalEntryByDateSlot,
+    hydrateServerEntryFromApi,
     localEntryToFormFields,
     saveEntryOffline,
     type EntryFormSnapshot,
@@ -305,10 +306,34 @@
           intensity: s.intensity,
         }));
       }
+      if (canUseOfflineSync()) {
+        await hydrateServerEntryFromApi(matchingEntry, selectedTagIds, selectedSymptoms);
+      }
       loadedEntryDate = date;
       void refreshDayDelta(date, selectedSlot);
     } catch (err) {
       if (myToken !== loadToken) return;
+      if (canUseOfflineSync()) {
+        const local = await findLocalEntryByDateSlot(date, slot);
+        if (myToken !== loadToken) return;
+        if (local) {
+          existingEntryId = local.id;
+          const fields = localEntryToFormFields(local);
+          selectedSlot = fields.selectedSlot;
+          moodScore = fields.moodScore;
+          energy = fields.energy;
+          stress = fields.stress;
+          cycleDay = fields.cycleDay;
+          cycleDayInvalid = false;
+          workContext = fields.workContext;
+          workContextTouched = true;
+          note = fields.note;
+          selectedTagIds = fields.selectedTagIds;
+          selectedSymptoms = fields.selectedSymptoms;
+          loadedEntryDate = date;
+          return;
+        }
+      }
       errorKey = mapApiError(err, ERROR_MAP) ?? 'entry.error_load';
       resetForm(date, slot);
       loadedEntryDate = date;
@@ -608,7 +633,7 @@
 
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
-    if (canUseOfflineSync() && typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (canUseOfflineSync()) {
       return snap;
     }
     const tags = [...selectedSuggestions.values()].map((tag) => ({
@@ -784,7 +809,11 @@
         offlineSyncBadge={canUseOfflineSync() ? offlineSyncBadge : null}
         onRetry={() => {
           if (canUseOfflineSync()) {
-            scheduleSync();
+            if (autoSaveSnap.status === 'error') {
+              void autoSave.retry();
+            } else {
+              scheduleSync();
+            }
             return;
           }
           void autoSave.retry();

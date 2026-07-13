@@ -17,18 +17,34 @@
     dispatch('close');
   }
 
-  function syncDialog(shouldOpen: boolean): void {
-    if (!browser || !dialog) return;
-    if (shouldOpen && !dialog.open) {
+  function openDialog(): void {
+    if (typeof dialog.showModal === 'function') {
       dialog.showModal();
       return;
     }
-    if (!shouldOpen && dialog.open) {
+    dialog.setAttribute('open', '');
+  }
+
+  function closeDialog(): void {
+    if (typeof dialog.close === 'function') {
       dialog.close();
+      return;
+    }
+    dialog.removeAttribute('open');
+  }
+
+  function syncDialog(shouldOpen: boolean): void {
+    if (!browser || !dialog) return;
+    if (shouldOpen && !dialog.open) {
+      openDialog();
+      return;
+    }
+    if (!shouldOpen && dialog.open) {
+      closeDialog();
     }
   }
 
-  $: syncDialog(open);
+  $: if (browser && dialog) syncDialog(open);
 
   function onDialogClick(event: MouseEvent): void {
     if (event.target === dialog) requestClose();
