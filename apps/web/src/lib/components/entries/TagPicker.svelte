@@ -401,7 +401,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.35rem 0.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
     color: inherit;
@@ -410,9 +410,9 @@
     cursor: pointer;
     min-height: 44px;
     transition:
-      background 120ms ease,
-      border-color 120ms ease,
-      color 120ms ease;
+      background var(--transition-fast),
+      border-color var(--transition-fast),
+      color var(--transition-fast);
   }
 
   .tag-chip:hover:not(:disabled) {
@@ -431,7 +431,7 @@
   }
 
   .tag-icon {
-    font-size: 1rem;
+    font-size: var(--text-base);
     line-height: 1;
   }
 
@@ -442,14 +442,14 @@
   .tag-custom-toggle {
     background: transparent;
     border: 1px dashed var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-sm);
     cursor: pointer;
     color: inherit;
     width: 100%;
     text-align: left;
-    transition: border-color 120ms ease;
+    transition: border-color var(--transition-fast);
     min-height: 44px;
   }
 
@@ -467,7 +467,7 @@
     flex-direction: column;
     gap: var(--space-3);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: var(--space-3);
   }
 
@@ -501,7 +501,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.35rem 0.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--tag-color, var(--color-primary-highlight));
     color: var(--color-text);
     font-size: var(--text-sm);

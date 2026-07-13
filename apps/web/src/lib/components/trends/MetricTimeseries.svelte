@@ -448,6 +448,7 @@
 </section>
 
 <style>
+  /* token-exempt-block: SVG axis micro-labels use px for chart precision (F-10). */
   .timeseries {
     display: flex;
     flex-direction: column;
@@ -515,6 +516,7 @@
     isolation: isolate;
   }
 
+  /* token-exempt: SVG axis micro-labels use px for chart precision (F-10). */
   .timeseries__gutter-label {
     position: absolute;
     top: var(--space-2);

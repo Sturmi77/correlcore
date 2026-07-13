@@ -170,7 +170,7 @@
     border-radius: var(--radius-full);
     background: var(--color-surface-2);
     color: var(--color-fg);
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
     line-height: 1;
     cursor: pointer;
   }

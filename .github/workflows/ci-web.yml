@@ -11,6 +11,7 @@ on:
       - 'pnpm-workspace.yaml'
       - 'scripts/check-contrast.mjs'
       - 'scripts/check-style-contract.mjs'
+      - 'scripts/check-style-tokens.mjs'
       - 'eslint.config.js'
       - '.prettierrc'
       - '.prettierignore'
@@ -25,6 +26,7 @@ on:
       - 'pnpm-workspace.yaml'
       - 'scripts/check-contrast.mjs'
       - 'scripts/check-style-contract.mjs'
+      - 'scripts/check-style-tokens.mjs'
       - 'eslint.config.js'
       - '.prettierrc'
       - '.prettierignore'
@@ -171,6 +173,30 @@ jobs:
 
       - name: Style contract check
         run: pnpm check:style-contract
+        working-directory: .
+
+  style-tokens:
+    name: Style token guardrail (F-21)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Style token check
+        run: pnpm check:style-tokens
         working-directory: .
 
   test:

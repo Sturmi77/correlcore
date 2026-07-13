@@ -659,7 +659,7 @@
     opacity: 0.72;
   }
 
-  @media (max-width: 860px) {
+  @media (max-width: 1024px) {
     .tag-settings__row {
       grid-template-columns: 1fr;
       align-items: stretch;

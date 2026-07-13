@@ -273,7 +273,7 @@
     background: var(--color-surface-2);
   }
 
-  @media (max-width: 680px) {
+  @media (max-width: 480px) {
     .symptom-settings__row {
       grid-template-columns: 1fr;
       align-items: stretch;

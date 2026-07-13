@@ -39,7 +39,7 @@
   .bar {
     flex: 1;
     height: 4px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm); /* token-exempt: strength-meter micro bar */
     background: var(--color-surface-offset);
     transition: background var(--transition-interactive);
   }

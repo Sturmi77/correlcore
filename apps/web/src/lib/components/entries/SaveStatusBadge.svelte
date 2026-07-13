@@ -112,7 +112,7 @@
     font-size: var(--text-xs, 0.78rem);
     line-height: 1.2;
     padding: 0.2rem 0.55rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid transparent;
     background: var(--color-surface-offset);
     color: var(--color-text);
@@ -168,7 +168,7 @@
   .save-status__dot {
     width: 0.5rem;
     height: 0.5rem;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: currentColor;
     opacity: 0.7;
   }
@@ -181,7 +181,7 @@
   .save-status__spinner {
     width: 0.7rem;
     height: 0.7rem;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     border: 2px solid currentColor;
     border-right-color: transparent;
     animation: save-status-spin 0.7s linear infinite;
@@ -194,7 +194,7 @@
   }
 
   .save-status__detail {
-    font-size: 0.7rem;
+    font-size: var(--text-2xs);
     opacity: 0.75;
     max-width: 16ch;
     overflow: hidden;
@@ -206,7 +206,7 @@
     color: inherit;
     background: transparent;
     border: 1px solid currentColor;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     padding: 0.05rem 0.5rem;
     cursor: pointer;
     min-height: 2.75rem;
