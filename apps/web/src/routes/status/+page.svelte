@@ -62,7 +62,9 @@
     <div class="card p-5 variant-ghost-surface w-full flex items-center gap-4">
       <span class="status-dot status-dot--{statusTone(summary.status)}" aria-hidden="true"></span>
       <div>
-        <p class="status-text status-text--{statusTone(summary.status)} capitalize">{summary.status}</p>
+        <p class="status-text status-text--{statusTone(summary.status)} capitalize">
+          {summary.status}
+        </p>
         <p class="text-xs opacity-60">API v{summary.version}</p>
       </div>
     </div>
@@ -75,10 +77,17 @@
       {#each summary.readiness.components as component}
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="status-dot status-dot--{statusTone(component.status)} status-dot--sm" aria-hidden="true"></span>
+            <span
+              class="status-dot status-dot--{statusTone(component.status)} status-dot--sm"
+              aria-hidden="true"
+            ></span>
             <span class="text-sm capitalize">{component.name}</span>
           </div>
-          <span class="text-xs status-text status-text--{statusTone(component.status)} capitalize font-medium">
+          <span
+            class="text-xs status-text status-text--{statusTone(
+              component.status
+            )} capitalize font-medium"
+          >
             {component.status}
             {#if component.detail}
               <span class="opacity-60">({component.detail})</span>

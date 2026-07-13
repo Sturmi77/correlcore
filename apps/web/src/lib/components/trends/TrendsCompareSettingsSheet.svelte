@@ -37,115 +37,111 @@
   on:close={() => dispatch('close')}
 >
   <header class="compare-settings__header">
-        <div>
-          <p class="compare-settings__eyebrow">{$_('trends.tabs.compare')}</p>
-          <h2 id="compare-settings-title">{$_('trends.settings.title')}</h2>
-        </div>
-        <button
-          type="button"
-          class="compare-settings__close"
-          aria-label={$_('trends.settings.close_aria')}
-          data-testid="trends-compare-settings-close"
-          on:click={() => dispatch('close')}
-        >
-          ×
-        </button>
-      </header>
+    <div>
+      <p class="compare-settings__eyebrow">{$_('trends.tabs.compare')}</p>
+      <h2 id="compare-settings-title">{$_('trends.settings.title')}</h2>
+    </div>
+    <button
+      type="button"
+      class="compare-settings__close"
+      aria-label={$_('trends.settings.close_aria')}
+      data-testid="trends-compare-settings-close"
+      on:click={() => dispatch('close')}
+    >
+      ×
+    </button>
+  </header>
 
-      <div class="compare-settings__body">
-        <TrendsCompareFilters
-          {smoothing}
-          {smoothingAvailable}
-          {metrics}
-          {selectedCategory}
-          on:smoothingChange={(event) => dispatch('smoothingChange', event.detail)}
-          on:metricToggle={(event) => dispatch('metricToggle', event.detail)}
-          on:categoryChange={(event) => dispatch('categoryChange', event.detail)}
+  <div class="compare-settings__body">
+    <TrendsCompareFilters
+      {smoothing}
+      {smoothingAvailable}
+      {metrics}
+      {selectedCategory}
+      on:smoothingChange={(event) => dispatch('smoothingChange', event.detail)}
+      on:metricToggle={(event) => dispatch('metricToggle', event.detail)}
+      on:categoryChange={(event) => dispatch('categoryChange', event.detail)}
+    />
+
+    <fieldset class="compare-settings__layers">
+      <legend>{$_('trends.compare.layers')}</legend>
+      <label>
+        <input
+          type="checkbox"
+          checked={showTags}
+          on:change={(event) =>
+            dispatch('layerChange', {
+              showTags: event.currentTarget.checked,
+              showSymptoms,
+              showWorkContexts,
+            })}
         />
+        {$_('trends.compare.tags')}
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={showSymptoms}
+          on:change={(event) =>
+            dispatch('layerChange', {
+              showTags,
+              showSymptoms: event.currentTarget.checked,
+              showWorkContexts,
+            })}
+        />
+        {$_('trends.compare.symptoms')}
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={showWorkContexts}
+          on:change={(event) =>
+            dispatch('layerChange', {
+              showTags,
+              showSymptoms,
+              showWorkContexts: event.currentTarget.checked,
+            })}
+        />
+        {$_('trends.compare.work_contexts')}
+      </label>
+    </fieldset>
 
-        <fieldset class="compare-settings__layers">
-          <legend>{$_('trends.compare.layers')}</legend>
-          <label>
-            <input
-              type="checkbox"
-              checked={showTags}
-              on:change={(event) =>
-                dispatch('layerChange', {
-                  showTags: event.currentTarget.checked,
-                  showSymptoms,
-                  showWorkContexts,
-                })}
-            />
-            {$_('trends.compare.tags')}
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={showSymptoms}
-              on:change={(event) =>
-                dispatch('layerChange', {
-                  showTags,
-                  showSymptoms: event.currentTarget.checked,
-                  showWorkContexts,
-                })}
-            />
-            {$_('trends.compare.symptoms')}
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={showWorkContexts}
-              on:change={(event) =>
-                dispatch('layerChange', {
-                  showTags,
-                  showSymptoms,
-                  showWorkContexts: event.currentTarget.checked,
-                })}
-            />
-            {$_('trends.compare.work_contexts')}
-          </label>
-        </fieldset>
+    <div class="compare-settings__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
+      <span class="compare-settings__label">{$_('trends.compare.mode_label')}</span>
+      <button
+        type="button"
+        class="compare-settings__chip"
+        class:compare-settings__chip--active={mode === 'lines'}
+        aria-pressed={mode === 'lines'}
+        on:click={() => dispatch('modeChange', { value: 'lines' })}
+      >
+        {$_('trends.compare.mode_lines')}
+      </button>
+      <button
+        type="button"
+        class="compare-settings__chip"
+        class:compare-settings__chip--active={mode === 'strips'}
+        aria-pressed={mode === 'strips'}
+        on:click={() => dispatch('modeChange', { value: 'strips' })}
+      >
+        {$_('trends.compare.mode_strips')}
+      </button>
+    </div>
 
-        <div
-          class="compare-settings__mode"
-          role="group"
-          aria-label={$_('trends.compare.mode_label')}
-        >
-          <span class="compare-settings__label">{$_('trends.compare.mode_label')}</span>
-          <button
-            type="button"
-            class="compare-settings__chip"
-            class:compare-settings__chip--active={mode === 'lines'}
-            aria-pressed={mode === 'lines'}
-            on:click={() => dispatch('modeChange', { value: 'lines' })}
-          >
-            {$_('trends.compare.mode_lines')}
-          </button>
-          <button
-            type="button"
-            class="compare-settings__chip"
-            class:compare-settings__chip--active={mode === 'strips'}
-            aria-pressed={mode === 'strips'}
-            on:click={() => dispatch('modeChange', { value: 'strips' })}
-          >
-            {$_('trends.compare.mode_strips')}
-          </button>
-        </div>
-
-        <label class="compare-settings__sort">
-          <span class="compare-settings__label">{$_('trends.compare.sort_label')}</span>
-          <select
-            value={sortMode}
-            on:change={(event) =>
-              dispatch('sortChange', { value: event.currentTarget.value as CompareSortMode })}
-          >
-            <option value="frequency">{$_('trends.compare.sort_frequency')}</option>
-            <option value="recent">{$_('trends.compare.sort_recent')}</option>
-            <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
-            <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
-          </select>
-        </label>
-      </div>
+    <label class="compare-settings__sort">
+      <span class="compare-settings__label">{$_('trends.compare.sort_label')}</span>
+      <select
+        value={sortMode}
+        on:change={(event) =>
+          dispatch('sortChange', { value: event.currentTarget.value as CompareSortMode })}
+      >
+        <option value="frequency">{$_('trends.compare.sort_frequency')}</option>
+        <option value="recent">{$_('trends.compare.sort_recent')}</option>
+        <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
+        <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
+      </select>
+    </label>
+  </div>
 </BottomSheet>
 
 <style>
