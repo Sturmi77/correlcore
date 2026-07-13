@@ -2,9 +2,11 @@
 
 Last updated: 2026-07-12
 
-> **Phase 2 (2026-07-13):** Sprints 1–7 und Codebase-PRs #354–#360 sind merged.
-> Verbleibender Scope und pragmatische Reihenfolge:
+> **Phase 2 (2026-07-13):** abgeschlossen (#354–#374).
 > [`GUI_CONSISTENCY_SPRINT_PLAN_PHASE2.md`](GUI_CONSISTENCY_SPRINT_PLAN_PHASE2.md).
+>
+> **Phase 3 (2026-07-13):** offene PR-Review-Punkte (Codex #351, #355–#357, #364, #366) →
+> [`GUI_CONSISTENCY_SPRINT_PLAN_PHASE3.md`](GUI_CONSISTENCY_SPRINT_PLAN_PHASE3.md).
 
 Companion to [`GUI_CONSISTENCY_AUDIT_2026-07-12.md`](GUI_CONSISTENCY_AUDIT_2026-07-12.md)
 (the source audit — read that first for full evidence/measure/acceptance

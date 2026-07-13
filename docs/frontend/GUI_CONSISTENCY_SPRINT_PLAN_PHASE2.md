@@ -2,19 +2,23 @@
 
 Last updated: 2026-07-13
 
+> **Phase 2 abgeschlossen (2026-07-13).** Alle P2-Sprints merged (#361–#374).
+> Offene Codex-Review-Punkte →
+> [`GUI_CONSISTENCY_SPRINT_PLAN_PHASE3.md`](GUI_CONSISTENCY_SPRINT_PLAN_PHASE3.md).
+
 Companion to:
 
 - [`GUI_CONSISTENCY_SPRINT_PLAN.md`](GUI_CONSISTENCY_SPRINT_PLAN.md) (Phase 1, Sprints 1–6)
+- [`GUI_CONSISTENCY_SPRINT_PLAN_PHASE3.md`](GUI_CONSISTENCY_SPRINT_PLAN_PHASE3.md) (PR-Review-Follow-up)
 - [`GUI_CONSISTENCY_AUDIT_2026-07-12.md`](GUI_CONSISTENCY_AUDIT_2026-07-12.md)
 - [`CODEBASE_AUDIT_2026-07-12.md`](CODEBASE_AUDIT_2026-07-12.md)
 - [`INSIGHT_METRICS_IMPLEMENTATION_PLAN.md`](INSIGHT_METRICS_IMPLEMENTATION_PLAN.md)
 
-Phase 1 (Sprints 1–7) und die entscheidungsfreien Codebase-PRs sind **gemerged**
-(#354–#360, plus #355/#356). Dieser Plan deckt den **verbleibenden** Scope ab und
-folgt der pragmatischen Reihenfolge: zuerst in-flight PRs schließen, dann
-strukturelle UI-Nachzüge, dann Performance/API, dann Sweeps, zuletzt Guardrails.
+Phase 1 (Sprints 1–7) und Phase 2 (P2-S0–P2-S8) sind **gemerged**
+(#354–#374). Dieses Dokument bleibt als **historische Referenz** für die
+umgesetzte Reihenfolge (BottomSheet, ScreenHeader, Explore-API, Sweeps, Guardrail).
 
-## Stand (2026-07-13)
+## Stand (2026-07-13) — abgeschlossen
 
 | PR        | Status    | Inhalt                                                           |
 | --------- | --------- | ---------------------------------------------------------------- |
@@ -23,19 +27,11 @@ strukturelle UI-Nachzüge, dann Performance/API, dann Sweeps, zuletzt Guardrails
 | #358      | ✅ merged | GUI Sprint 5 — `BottomSheet` + 4 Sheet-Migrationen, Home `<h1>`  |
 | #359      | ✅ merged | GUI Sprint 6 — `/status` Token-Migration (F-15)                  |
 | #360      | ✅ merged | GUI Sprint 7 — `matchMedia`, Breakpoints, Trends-Compare Touch   |
-| **#361**  | 🔄 offen  | **A-03** Explore-Events (client-seitige Presence-Lookups)        |
-| **#362**  | 🔄 offen  | GUI Sprint 9 — Heatmap-Farben, `FRONTEND.md` §4.2, Skeleton-Deps |
+| #361      | ✅ merged | A-03 Explore-Events (client-seitige Presence-Lookups)            |
+| #362      | ✅ merged | GUI Sprint 9 — Heatmap-Farben, `FRONTEND.md` §4.2, Skeleton-Deps |
+| #365–#374 | ✅ merged | P2-S1–S8 (BottomSheet rest, ScreenHeader, API, Sweeps, Guardrail) |
 
-**Noch offen aus Phase 1** (bewusst zurückgestellt oder nur teilweise erfüllt):
-
-- F-05: 5 weitere Sheets + 2 Settings-Modal-Backdrops auf `BottomSheet`
-- F-07: `ScreenHeader` auf `entries/day` + 3 Onboarding-Routen
-- F-10, F-11, F-12, F-16: Token-Sweeps (mechanisch, viele Dateien)
-- F-09: `SymptomCalendarHeatmap` Touch-Targets (nur Trends Compare in Sprint 7)
-- F-04: verbleibende Odd-Breakpoints (520/420/430/640 …) und `FRONTEND.md` §1.6
-- F-18: Screen × State Matrix
-- F-21: CI-Guardrail `check-style-tokens.mjs`
-- A-03 Nachfolger: Backend-Endpoint für Event-Windows (Performance)
+**Phase-2-Scope erledigt:** F-05, F-07, F-09, F-04, F-10/F-11/F-12/F-16, F-18, F-21, A-03 API.
 
 ## Pragmatische Reihenfolge (Überblick)
 
