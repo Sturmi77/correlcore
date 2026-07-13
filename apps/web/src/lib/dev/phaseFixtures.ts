@@ -1,5 +1,4 @@
 import type { DashboardSummaryResponse } from '$lib/api/dashboard';
-import type { EntryResponse } from '$lib/api/entries';
 import type { HabitStatsResponse } from '$lib/api/habits';
 import type {
   InsightMaturity,
@@ -792,6 +791,35 @@ function makeTagClusters(entryCount: number, enabled: boolean): TagClustersRespo
   };
 }
 
+function pythonWeekday(isoDate: string): number {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const jsDay = new Date(year, month - 1, day).getDay();
+  return (jsDay + 6) % 7;
+}
+
+function makeWeekdaySummary(entries: EntryResponse[]): DashboardSummaryResponse['weekday_summary'] {
+  if (entries.length < 7) return [];
+
+  const byWeekday = new Map<number, { count: number; moods: number[] }>();
+  for (const entry of entries) {
+    const weekday = pythonWeekday(entry.entry_date);
+    const bucket = byWeekday.get(weekday) ?? { count: 0, moods: [] };
+    bucket.count += 1;
+    bucket.moods.push(entry.mood_score);
+    byWeekday.set(weekday, bucket);
+  }
+
+  if (byWeekday.size < 7) return [];
+
+  return [...byWeekday.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([weekday, bucket]) => ({
+      weekday,
+      entry_count: bucket.count,
+      mood_avg: Number((bucket.moods.reduce((sum, mood) => sum + mood, 0) / bucket.moods.length).toFixed(2)),
+    }));
+}
+
 function makePreferences(
   onboardingCompleted: boolean,
   presetId: DevPhasePresetId
@@ -863,6 +891,7 @@ export function getDevPhaseFixture(state: DevPhaseStateLike): DevPhaseFixture {
           stress_avg: 2.2,
         },
       ].filter((item) => item.entry_count > 0),
+      weekday_summary: makeWeekdaySummary(entries),
     },
     preferences: makePreferences(state.onboardingCompleted, state.presetId),
     timeseries: makeTimeseries(entries),

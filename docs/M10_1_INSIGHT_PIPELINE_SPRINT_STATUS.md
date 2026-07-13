@@ -13,7 +13,7 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 | 0 | Freigabe & Doc-Baseline | Complete (PR #382, ADR-0037 Accepted) |
 | A | Insight-Trigger (Backend) | Complete (PR A+B) |
 | B | Tag-Gruppen-Stufen | Complete (PR A+B) |
-| C | Wochentags-Dashboard & Home | Not started |
+| C | Wochentags-Dashboard & Home | Complete (PR A+B+C) |
 | D | Frontend Tag-Gruppen-Reifegrad | Not started |
 | E | Docs, i18n, E2E, Quality Gate | Not started |
 
@@ -26,8 +26,8 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 | Admin `POST /insights/trigger` | A | `endpoints/insights.py` | — | Manual / admin env |
 | Tag-Gruppen ab 30 Tagen (pair) | B | `tag_cluster_service.py` | `test_tag_clusters.py` | — |
 | Tag-Gruppen provisional ab 45 | B | `tag_cluster_service.py` | `test_tag_clusters.py` | — |
-| `weekday_summary` Dashboard | C | `dashboard_service.py` | — | Not implemented |
-| Home Weekday ohne `weekday_pattern` | C | `HomeWeekdayOverview` | — | Insight-only today |
+| `weekday_summary` Dashboard | C | `dashboard_service.py` | `test_dashboard.py` | — |
+| Home Weekday ohne `weekday_pattern` | C | `HomeWeekdayOverview` | `homeWeekdayOverview.test.ts` | — |
 | `cluster_maturity` UI | D | `TagGroupsSection` | — | Not implemented |
 | ADR-0037 Accepted | 0 | `docs/adr/0037-*.md` | — | Done |
 | API.md / PHASE_MATRIX updated | E | docs | — | Pending |
@@ -56,8 +56,8 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 
 ## Paket C — Checklist
 
-- [ ] C1–C6 implementiert
-- [ ] HomeWeekdayOverview Tests grün
+- [x] C1–C6 implementiert
+- [x] HomeWeekdayOverview Tests grün
 
 ## Paket D — Checklist
 
@@ -71,8 +71,9 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 - [ ] CHANGELOG M10.1
 - [ ] E2E user-journeys
 
-## Verification (Paket A+B)
+## Verification (Paket A+B+C)
 
 ```bash
-cd backend && uv run --python 3.12 pytest tests/test_tag_clusters.py tests/test_insight_worker.py tests/test_insights.py -q
+cd backend && uv run --python 3.12 pytest tests/test_tag_clusters.py tests/test_insight_worker.py tests/test_insights.py tests/test_dashboard.py -q
+pnpm --filter @correlcore/web exec vitest run src/lib/utils/homeWeekdayOverview.test.ts src/lib/components/home/HomeWeekdayOverview.test.ts
 ```

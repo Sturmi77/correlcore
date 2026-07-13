@@ -1,4 +1,5 @@
 import type { InsightResponse } from '$lib/api/insights';
+import type { WeekdaySummaryItem } from '$lib/api/dashboard';
 
 export const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 export type WeekdayKey = (typeof WEEKDAY_KEYS)[number];
@@ -77,10 +78,17 @@ function findingTypeFor(insight: InsightResponse): WeekdayOverviewCell['findingT
 }
 
 export function buildWeekdayOverviewCells(
-  insights: readonly InsightResponse[]
+  insights: readonly InsightResponse[],
+  weekdaySummary: readonly WeekdaySummaryItem[] = []
 ): WeekdayOverviewCell[] {
+  const summaryMoods = new Map(
+    weekdaySummary
+      .filter((item) => item.mood_avg !== null)
+      .map((item) => [item.weekday, item.mood_avg as number])
+  );
+
   const weekdayInsight = insights.find((insight) => insight.insight_type === 'weekday_pattern');
-  const moodAvgs = numericPayload(weekdayInsight?.payload?.weekday_mood_avgs);
+  const insightMoods = numericPayload(weekdayInsight?.payload?.weekday_mood_avgs);
 
   const findingByDay = new Map<
     number,
@@ -101,7 +109,7 @@ export function buildWeekdayOverviewCells(
   return WEEKDAY_KEYS.map((weekday, weekdayIndex) => ({
     weekday,
     weekdayIndex,
-    moodAvg: moodAvgs[String(weekdayIndex)] ?? null,
+    moodAvg: summaryMoods.get(weekdayIndex) ?? insightMoods[String(weekdayIndex)] ?? null,
     findingLabel: findingByDay.get(weekdayIndex)?.label ?? null,
     findingType: findingByDay.get(weekdayIndex)?.type ?? null,
   }));

@@ -63,6 +63,17 @@ async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
         side_effect=[
             _scalar_one_result(15),
             _all_result([(WorkContext.OFFICE, 8, 3.75, 3.5, 2.25)]),
+            _all_result(
+                [
+                    (0, 2, 3.5),
+                    (1, 2, 3.6),
+                    (2, 2, 3.4),
+                    (3, 2, 3.7),
+                    (4, 2, 3.8),
+                    (5, 2, 3.3),
+                    (6, 3, 3.2),
+                ]
+            ),
         ]
     )
 
@@ -74,9 +85,30 @@ async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
     assert out.work_context_summary[0].work_context == WorkContext.OFFICE
     assert out.work_context_summary[0].entry_count == 8
     assert out.work_context_summary[0].mood_avg == 3.75
+    assert len(out.weekday_summary) == 7
+    assert out.weekday_summary[4].weekday == 4
+    assert out.weekday_summary[4].mood_avg == 3.8
     count_stmt = db.execute.await_args_list[0].args[0]
     assert "count(distinct(entries.entry_date))" in str(count_stmt)
     assert "entries.entry_date <= :entry_date_1" in str(count_stmt.whereclause)
+
+
+@pytest.mark.asyncio
+async def test_dashboard_summary_omits_weekday_summary_without_full_week_coverage() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_result(9),
+            _all_result([]),
+            _all_result([(0, 3, 3.5), (1, 3, 3.6), (2, 3, 3.4)]),
+        ]
+    )
+
+    out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
+
+    assert out.entry_count == 9
+    assert out.weekday_summary == []
 
 
 @pytest.mark.asyncio
@@ -105,6 +137,10 @@ async def test_dashboard_summary_endpoint_returns_confidence_fields(
                         "stress_avg": 2.6,
                     }
                 ],
+                weekday_summary=[
+                    {"weekday": 0, "entry_count": 4, "mood_avg": 3.2},
+                    {"weekday": 4, "entry_count": 5, "mood_avg": 3.9},
+                ],
             ),
         ) as summary:
             response = await async_client.get(
@@ -128,5 +164,9 @@ async def test_dashboard_summary_endpoint_returns_confidence_fields(
                 "energy_avg": 3.4,
                 "stress_avg": 2.6,
             }
+        ],
+        "weekday_summary": [
+            {"weekday": 0, "entry_count": 4, "mood_avg": 3.2},
+            {"weekday": 4, "entry_count": 5, "mood_avg": 3.9},
         ],
     }
