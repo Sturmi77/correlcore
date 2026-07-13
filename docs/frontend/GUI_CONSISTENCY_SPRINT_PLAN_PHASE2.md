@@ -20,15 +20,15 @@ umgesetzte Reihenfolge (BottomSheet, ScreenHeader, Explore-API, Sweeps, Guardrai
 
 ## Stand (2026-07-13) — abgeschlossen
 
-| PR        | Status    | Inhalt                                                           |
-| --------- | --------- | ---------------------------------------------------------------- |
-| #354–#357 | ✅ merged | GUI Sprints 1–4 (broken styles, tokens, partial sweeps)          |
-| #355–#356 | ✅ merged | Codebase A-01/A-02/A-04/A-06/A-07, A-05 work-context metrics     |
-| #358      | ✅ merged | GUI Sprint 5 — `BottomSheet` + 4 Sheet-Migrationen, Home `<h1>`  |
-| #359      | ✅ merged | GUI Sprint 6 — `/status` Token-Migration (F-15)                  |
-| #360      | ✅ merged | GUI Sprint 7 — `matchMedia`, Breakpoints, Trends-Compare Touch   |
-| #361      | ✅ merged | A-03 Explore-Events (client-seitige Presence-Lookups)            |
-| #362      | ✅ merged | GUI Sprint 9 — Heatmap-Farben, `FRONTEND.md` §4.2, Skeleton-Deps |
+| PR        | Status    | Inhalt                                                            |
+| --------- | --------- | ----------------------------------------------------------------- |
+| #354–#357 | ✅ merged | GUI Sprints 1–4 (broken styles, tokens, partial sweeps)           |
+| #355–#356 | ✅ merged | Codebase A-01/A-02/A-04/A-06/A-07, A-05 work-context metrics      |
+| #358      | ✅ merged | GUI Sprint 5 — `BottomSheet` + 4 Sheet-Migrationen, Home `<h1>`   |
+| #359      | ✅ merged | GUI Sprint 6 — `/status` Token-Migration (F-15)                   |
+| #360      | ✅ merged | GUI Sprint 7 — `matchMedia`, Breakpoints, Trends-Compare Touch    |
+| #361      | ✅ merged | A-03 Explore-Events (client-seitige Presence-Lookups)             |
+| #362      | ✅ merged | GUI Sprint 9 — Heatmap-Farben, `FRONTEND.md` §4.2, Skeleton-Deps  |
 | #365–#374 | ✅ merged | P2-S1–S8 (BottomSheet rest, ScreenHeader, API, Sweeps, Guardrail) |
 
 **Phase-2-Scope erledigt:** F-05, F-07, F-09, F-04, F-10/F-11/F-12/F-16, F-18, F-21, A-03 API.

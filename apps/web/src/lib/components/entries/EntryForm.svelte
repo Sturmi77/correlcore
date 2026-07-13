@@ -238,8 +238,50 @@
     autoSave.reset();
     try {
       if (canUseOfflineSync()) {
-        const local = await findLocalEntryByDateSlot(date, slot);
+        const [local, matches] = await Promise.all([
+          findLocalEntryByDateSlot(date, slot),
+          typeof navigator !== 'undefined' && navigator.onLine
+            ? listEntries({ start_date: date, end_date: date, limit: 5 }).catch(
+                () => [] as EntryResponse[]
+              )
+            : Promise.resolve([] as EntryResponse[]),
+        ]);
         if (myToken !== loadToken) return;
+
+        const matchingEntry = matches.find(
+          (entry) => entry.entry_date === date && entry.slot === slot
+        );
+        if (matchingEntry) {
+          existingEntryId = matchingEntry.id;
+          selectedSlot = matchingEntry.slot;
+          moodScore = matchingEntry.mood_score;
+          energy = matchingEntry.energy;
+          stress = matchingEntry.stress;
+          cycleDay = matchingEntry.cycle_day;
+          cycleDayInvalid = false;
+          workContext = matchingEntry.work_context;
+          workContextTouched = true;
+          note = matchingEntry.note ?? '';
+          const [tagsRes, symRes] = await Promise.allSettled([
+            listTagsForEntry(matchingEntry.id),
+            listSymptomsForEntry(matchingEntry.id),
+          ]);
+          if (myToken !== loadToken) return;
+          if (tagsRes.status === 'fulfilled') {
+            selectedTagIds = tagsRes.value.map((t) => t.id);
+          }
+          if (symRes.status === 'fulfilled') {
+            selectedSymptoms = symRes.value.map((s) => ({
+              symptom_id: s.symptom_id,
+              intensity: s.intensity,
+            }));
+          }
+          await hydrateServerEntryFromApi(matchingEntry, selectedTagIds, selectedSymptoms);
+          loadedEntryDate = date;
+          void refreshDayDelta(date, selectedSlot);
+          return;
+        }
+
         if (local) {
           existingEntryId = local.id;
           const fields = localEntryToFormFields(local);
@@ -260,6 +302,11 @@
           loadedEntryDate = date;
           return;
         }
+
+        resetForm(date, slot);
+        loadedEntryDate = date;
+        void applySmartDefaults(date, slot, myToken);
+        return;
       }
 
       const matches = await listEntries({
@@ -316,11 +363,7 @@
         selectedSymptoms = [];
         hydratedSymptoms = [];
       }
-      if (
-        canUseOfflineSync() &&
-        tagsRes.status === 'fulfilled' &&
-        symRes.status === 'fulfilled'
-      ) {
+      if (canUseOfflineSync() && tagsRes.status === 'fulfilled' && symRes.status === 'fulfilled') {
         await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
       }
       loadedEntryDate = date;
@@ -510,8 +553,23 @@
 
   async function entryExistsForSlot(date: string, slot: EntrySlot): Promise<boolean> {
     if (canUseOfflineSync()) {
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        try {
+          const matches = await listEntries({
+            start_date: date,
+            end_date: date,
+            limit: 5,
+          });
+          if (matches.some((entry) => entry.entry_date === date && entry.slot === slot)) {
+            return true;
+          }
+        } catch {
+          // Fall back to Dexie when the API is temporarily unavailable.
+        }
+      }
       const local = await findLocalEntryByDateSlot(date, slot);
       if (local) return true;
+      return false;
     }
     const matches = await listEntries({
       start_date: date,
@@ -647,7 +705,7 @@
 
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
-    if (canUseOfflineSync() && offline) {
+    if (canUseOfflineSync()) {
       return snap;
     }
     const tags = [...selectedSuggestions.values()].map((tag) => ({

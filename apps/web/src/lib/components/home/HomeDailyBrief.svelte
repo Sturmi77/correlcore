@@ -11,8 +11,8 @@
   import {
     buildWorkContextDisplayItems,
     workContextMetricBarWidth,
-    workContextMetricCssVar,
     workContextMetricHighLow,
+    workContextMetricNeutralBarColor,
     type WorkContextMetricKey,
   } from '$lib/utils/homeWorkContextSummary';
   import SegmentedControl, {
@@ -62,7 +62,7 @@
     workContextMetricValues,
     workContextMetric
   ));
-  $: workContextBarColor = workContextMetricCssVar(workContextMetric);
+  $: workContextBarColor = workContextMetricNeutralBarColor(workContextMetric);
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
@@ -106,7 +106,11 @@
   </div>
 
   {#if visibleWorkContexts.length}
-    <section class="daily-brief__work-context" aria-label={$_('home.brief.work_context_heading')}>
+    <section
+      class="daily-brief__work-context"
+      data-metric={workContextMetric}
+      aria-label={$_('home.brief.work_context_heading')}
+    >
       <div class="daily-brief__work-context-header">
         <h3>{$_('home.brief.work_context_heading')}</h3>
         <span>{$_('home.brief.work_context_hint')}</span>
@@ -321,6 +325,13 @@
 
   .daily-brief__work-context-row[data-highlight='low'] .daily-brief__work-context-bar {
     --bar-color: var(--color-warning, var(--color-primary));
+  }
+
+  /* Stress: highest raw value = worst → red; neutral rows stay primary, not alarm-red. */
+  .daily-brief__work-context[data-metric='stress']
+    .daily-brief__work-context-row[data-highlight='low']
+    .daily-brief__work-context-bar {
+    --bar-color: var(--color-metric-stress, var(--color-primary));
   }
 
   .daily-brief__bridge {

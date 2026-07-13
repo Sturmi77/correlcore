@@ -17,12 +17,12 @@ Quelle: PR-Review-Auswertung 2026-07-13 (Codex-Threads #351, #355, #356, #357,
 
 ## Stand (2026-07-13)
 
-| PR-Bereich | Offene Punkte | P3-Sprint |
-| ---------- | ------------- | --------- |
-| #366 Explore Events API | 3 funktionale Bugs | **P3-S1** |
-| #364 Offline-Sync | 4 Edge Cases | **P3-S2** |
-| #356 / #357 UI-Polish | 2 visuelle Regressionen | **P3-S3** |
-| #355 / #351 PWA & React-Docs | 5 Infra/Doku-Lücken | **P3-S4** |
+| PR-Bereich                   | Offene Punkte           | P3-Sprint |
+| ---------------------------- | ----------------------- | --------- |
+| #366 Explore Events API      | 3 funktionale Bugs      | **P3-S1** |
+| #364 Offline-Sync            | 4 Edge Cases            | **P3-S2** |
+| #356 / #357 UI-Polish        | 2 visuelle Regressionen | **P3-S3** |
+| #355 / #351 PWA & React-Docs | 5 Infra/Doku-Lücken     | **P3-S4** |
 
 **Bereits erledigt (nicht in Phase 3):**
 
@@ -33,20 +33,20 @@ Quelle: PR-Review-Auswertung 2026-07-13 (Codex-Threads #351, #355, #356, #357,
 
 ## Findings-Register (R-01 … R-13)
 
-| ID   | Quelle | Priorität | Kurzbeschreibung |
-| ---- | ------ | --------- | ---------------- |
-| R-01 | #366   | P1        | Explore Events ignoriert Toolbar-Range `week` (sendet `30d`) |
-| R-02 | #366   | P1        | Hidden/inactive Tags: Endpoint liefert keine historischen Events |
-| R-03 | #366   | P1        | Kein Request-ID-Guard → stale Explore-Responses bei schnellem Klickwechsel |
-| R-04 | #364   | P0        | Onboarding-Tag-Erstellung übersprungen wenn Offline-Sync aktiv (auch online) |
-| R-05 | #364   | P1        | IndexedDB-Hydration mit stale Tag/Symptom-Arrays nach API-Fehler |
-| R-06 | #364   | P1        | Slot-Merge: Sync-Konflikt-`entity_id` ≠ IndexedDB-Client-UUID |
-| R-07 | #364   | P1        | Dedupe löscht Einträge ohne zugehörige `change_log`-Outbox |
-| R-08 | #356   | P2        | `HomeDailyBrief` Inline-`--bar-color` überschreibt high/low-Highlights |
-| R-09 | #357   | P2        | `--app-header-height` erzeugt ~64px Lücke ohne festen Header |
-| R-10 | #355   | P2        | Prod-SW als `type: 'module'` statt SvelteKit-empfohlenem `classic` |
-| R-11 | #351   | P3        | `pnpm dev:react` / `dev:all` dokumentiert, aber nicht in Root-`package.json` |
-| R-12 | #351   | P3        | Cookie-Guidance in `PARALLEL_REACT_GUI.md` widersprüchlich (Port vs. Host) |
+| ID   | Quelle | Priorität | Kurzbeschreibung                                                                 |
+| ---- | ------ | --------- | -------------------------------------------------------------------------------- |
+| R-01 | #366   | P1        | Explore Events ignoriert Toolbar-Range `week` (sendet `30d`)                     |
+| R-02 | #366   | P1        | Hidden/inactive Tags: Endpoint liefert keine historischen Events                 |
+| R-03 | #366   | P1        | Kein Request-ID-Guard → stale Explore-Responses bei schnellem Klickwechsel       |
+| R-04 | #364   | P0        | Onboarding-Tag-Erstellung übersprungen wenn Offline-Sync aktiv (auch online)     |
+| R-05 | #364   | P1        | IndexedDB-Hydration mit stale Tag/Symptom-Arrays nach API-Fehler                 |
+| R-06 | #364   | P1        | Slot-Merge: Sync-Konflikt-`entity_id` ≠ IndexedDB-Client-UUID                    |
+| R-07 | #364   | P1        | Dedupe löscht Einträge ohne zugehörige `change_log`-Outbox                       |
+| R-08 | #356   | P2        | `HomeDailyBrief` Inline-`--bar-color` überschreibt high/low-Highlights           |
+| R-09 | #357   | P2        | `--app-header-height` erzeugt ~64px Lücke ohne festen Header                     |
+| R-10 | #355   | P2        | Prod-SW als `type: 'module'` statt SvelteKit-empfohlenem `classic`               |
+| R-11 | #351   | P3        | `pnpm dev:react` / `dev:all` dokumentiert, aber nicht in Root-`package.json`     |
+| R-12 | #351   | P3        | Cookie-Guidance in `PARALLEL_REACT_GUI.md` widersprüchlich (Port vs. Host)       |
 | R-13 | #351   | P3        | Setup-Rezept + Cutover-Checklist unvollständig (Shell-Schritte, forgot-password) |
 
 ## Reihenfolge (Überblick)
@@ -58,12 +58,12 @@ flowchart TD
   S3 --> S4[P3-S4 PWA + React Docs]
 ```
 
-| P3-Sprint | Findings | Risiko | Abhängigkeit |
-| --------- | -------- | ------ | ------------ |
-| **P3-S1** | R-01, R-02, R-03 | mittel (FE+BE) | — |
+| P3-Sprint | Findings               | Risiko                 | Abhängigkeit                                         |
+| --------- | ---------------------- | ---------------------- | ---------------------------------------------------- |
+| **P3-S1** | R-01, R-02, R-03       | mittel (FE+BE)         | —                                                    |
 | **P3-S2** | R-04, R-05, R-06, R-07 | hoch (Datenintegrität) | — (parallel zu S1 möglich, aber S2 zuerst empfohlen) |
-| **P3-S3** | R-08, R-09 | niedrig (visuell) | — |
-| **P3-S4** | R-10, R-11, R-12, R-13 | niedrig (Docs/Infra) | React-Scaffold optional |
+| **P3-S3** | R-08, R-09             | niedrig (visuell)      | —                                                    |
+| **P3-S4** | R-10, R-11, R-12, R-13 | niedrig (Docs/Infra)   | React-Scaffold optional                              |
 
 **Empfehlung:** P3-S2 vor P3-S1, wenn nur eine Kapazität — Offline-Sync betrifft
 Persistenz; Explore Events ist Analyse-UX. Wenn zwei parallele PRs möglich: S1 + S2
@@ -85,11 +85,11 @@ Timeseries liefern 30 Tage statt 7.
 
 **Optionen (eine wählen, in PR beschreiben):**
 
-| Option | Aufwand | Beschreibung |
-| ------ | ------- | ------------ |
-| **A (empfohlen)** | mittel | `TagCooccurrenceRange` um `"7d"` erweitern; `week` → `7d` mappen; `_cooccurrence_window` + Timeseries-Range `"week"` für Punkte |
-| B | klein | Client sendet `start_date`/`end_date` aus `analysisDateWindow(range)` als Query-Params |
-| C | klein | Nur Frontend: nach API-Response auf Week-Fenster filtern (Events + Points) — Backend bleibt 30d |
+| Option            | Aufwand | Beschreibung                                                                                                                    |
+| ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **A (empfohlen)** | mittel  | `TagCooccurrenceRange` um `"7d"` erweitern; `week` → `7d` mappen; `_cooccurrence_window` + Timeseries-Range `"week"` für Punkte |
+| B                 | klein   | Client sendet `start_date`/`end_date` aus `analysisDateWindow(range)` als Query-Params                                          |
+| C                 | klein   | Nur Frontend: nach API-Response auf Week-Fenster filtern (Events + Points) — Backend bleibt 30d                                 |
 
 **Key files:**
 
@@ -110,10 +110,10 @@ Explore-Button weiterhin auf inactive-Tag-Insights → leeres Sheet.
 
 **Optionen:**
 
-| Option | Beschreibung |
-| ------ | ------------ |
+| Option            | Beschreibung                                                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **A (empfohlen)** | Endpoint „event windows“ ohne `active_tag_predicate` (nur Lesezugriff auf historische `EntryTag`-Zeilen für `subject_slug`) |
-| B | Explore-Button in `InsightCard` ausblenden wenn `isInactiveTag` |
+| B                 | Explore-Button in `InsightCard` ausblenden wenn `isInactiveTag`                                                             |
 
 Option A hält UX konsistent (Nutzer sieht Karte + kann historische Events erkunden).
 Option B ist schneller, aber schlechtere UX.
@@ -322,10 +322,10 @@ await navigator.serviceWorker.register('/service-worker.js', {
 
 **Optionen:**
 
-| Option | Beschreibung |
-| ------ | ------------ |
-| A | Scripts in Root-`package.json` hinzufügen **mit** `echo`/Guard wenn kein Package |
-| B | Docs auf „geplant / nach Scaffold“ umstellen bis `apps/web-react/package.json` existiert |
+| Option | Beschreibung                                                                             |
+| ------ | ---------------------------------------------------------------------------------------- |
+| A      | Scripts in Root-`package.json` hinzufügen **mit** `echo`/Guard wenn kein Package         |
+| B      | Docs auf „geplant / nach Scaffold“ umstellen bis `apps/web-react/package.json` existiert |
 
 **Empfehlung:** B jetzt (ehrliche Doku); A wenn React-Scaffold als separates Ticket.
 
@@ -368,12 +368,12 @@ grep -n 'dev:react' package.json docs/frontend/PARALLEL_REACT_GUI.md AGENTS.md
 
 ## PR-Schnitt (empfohlen)
 
-| PR | Sprint | Titel (Vorschlag) |
-| -- | ------ | ----------------- |
-| 1 | P3-S2 | `fix(web): offline-sync onboarding, hydration, dedupe outbox` |
-| 2 | P3-S1 | `fix(api+web): explore event-windows week range, hidden tags, stale guard` |
-| 3 | P3-S3 | `fix(web): HomeDailyBrief highlights + toolbar sticky offset` |
-| 4 | P3-S4 | `fix(web): SW classic registration + parallel React doc corrections` |
+| PR  | Sprint | Titel (Vorschlag)                                                          |
+| --- | ------ | -------------------------------------------------------------------------- |
+| 1   | P3-S2  | `fix(web): offline-sync onboarding, hydration, dedupe outbox`              |
+| 2   | P3-S1  | `fix(api+web): explore event-windows week range, hidden tags, stale guard` |
+| 3   | P3-S3  | `fix(web): HomeDailyBrief highlights + toolbar sticky offset`              |
+| 4   | P3-S4  | `fix(web): SW classic registration + parallel React doc corrections`       |
 
 P3-S2 und P3-S1 können parallel; P3-S3 und P3-S4 unabhängig danach.
 
@@ -397,12 +397,12 @@ Backend-lastige Sprints (P3-S1, P3-S2): API-Tests vor Merge obligatorisch.
 
 ## Entscheidungen vor Implementierung
 
-| Sprint | Entscheidung | Default wenn keine Antwort |
-| ------ | ------------ | --------------------------- |
-| P3-S1 R-01 | `7d`-Range vs. Client-Filter vs. Query-Dates | Option A (`7d` im Schema) |
-| P3-S1 R-02 | Historische Events vs. Button ausblenden | Option A (Endpoint ohne active filter) |
-| P3-S2 R-06 | Konflikt-ID Client vs. Server vs. beide | Backend emit `client_entity_id` im Report |
-| P3-S4 R-11 | Scripts jetzt vs. Doku „geplant“ | Doku ehrlich (Option B) |
+| Sprint     | Entscheidung                                 | Default wenn keine Antwort                |
+| ---------- | -------------------------------------------- | ----------------------------------------- |
+| P3-S1 R-01 | `7d`-Range vs. Client-Filter vs. Query-Dates | Option A (`7d` im Schema)                 |
+| P3-S1 R-02 | Historische Events vs. Button ausblenden     | Option A (Endpoint ohne active filter)    |
+| P3-S2 R-06 | Konflikt-ID Client vs. Server vs. beide      | Backend emit `client_entity_id` im Report |
+| P3-S4 R-11 | Scripts jetzt vs. Doku „geplant“             | Doku ehrlich (Option B)                   |
 
 ---
 

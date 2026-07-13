@@ -43,6 +43,42 @@ describe('syncOrchestrator', () => {
     vi.stubGlobal('navigator', { onLine: true });
   });
 
+  it('pushes only the latest pending change per entity', async () => {
+    const first = await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: { mood_score: 2 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+    await appendChange({
+      batch_id: 'batch-2',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: { mood_score: 4 },
+      client_ts: '2026-06-30T12:01:00.000Z',
+    });
+
+    pushSyncChanges.mockResolvedValue({
+      cursor: 'cursor-dedupe',
+      applied: 1,
+      skipped: 0,
+      conflicts: [],
+      idempotent_replay: false,
+    });
+
+    await pushPending();
+
+    expect(pushSyncChanges).toHaveBeenCalledOnce();
+    const body = pushSyncChanges.mock.calls[0]?.[0];
+    expect(body.changes).toHaveLength(1);
+    expect(body.changes[0].seq).toBeGreaterThan(first);
+    expect(body.changes[0].data).toEqual({ mood_score: 4 });
+    expect(peekSyncOrchestrator().pendingCount).toBe(0);
+  });
+
   it('pushes pending changes and marks them acked', async () => {
     const seq = await appendChange({
       batch_id: 'batch-1',

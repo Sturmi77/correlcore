@@ -36,9 +36,9 @@ uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 
 See [`docs/frontend/PARALLEL_REACT_GUI.md`](docs/frontend/PARALLEL_REACT_GUI.md).
 
-| GUI                    | Command          | Port        |
-| ---------------------- | ---------------- | ----------- |
-| SvelteKit (production) | `pnpm dev`       | 5173        |
+| GUI                    | Command                           | Port        |
+| ---------------------- | --------------------------------- | ----------- |
+| SvelteKit (production) | `pnpm dev`                        | 5173        |
 | React (experiment)     | `pnpm dev:react` (after scaffold) | 5174        |
 | Both                   | `pnpm dev:all` (after scaffold)   | 5173 + 5174 |
 
