@@ -17,6 +17,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # Required for the Pages availability pre-check (repos/.../pages).
+  actions: read
 
 concurrency:
   group: pages
@@ -55,6 +57,21 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Check GitHub Pages availability
+        id: pages_check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" --silent >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::GitHub Pages is not enabled for this repository. Skipping deploy. Enable at https://github.com/${GITHUB_REPOSITORY}/settings/pages (Source: GitHub Actions)."
+          fi
+
       - name: Deploy to GitHub Pages
+        if: steps.pages_check.outputs.enabled == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
