@@ -1143,7 +1143,38 @@
     "db_checked_out": "DB ausgecheckt",
     "na": "n/a",
     "auto_refresh": "Aktualisiert automatisch alle 30 Sekunden. Zuletzt geladen von",
-    "commit_copied": "Commit kopiert."
+    "commit_copied": "Commit kopiert.",
+    "action_failed": "Aktion fehlgeschlagen.",
+    "workers": {
+      "title": "Worker / Insights",
+      "subtitle": "GUI-Insights gegen die letzten Pipeline-Laeufe dieser Umgebung abgleichen.",
+      "card_daily_bundle": "Letztes Daily-Bundle",
+      "card_fleet_insights": "Letzte Fleet-Insights",
+      "card_user_insights": "Letzter Lauf fuer dich",
+      "status": "Status",
+      "trigger": "Trigger",
+      "finished": "Wann",
+      "result": "Ergebnis",
+      "none": "Noch keine Laeufe gespeichert.",
+      "history": "Letzte Laeufe",
+      "when": "Wann",
+      "kind": "Art",
+      "regenerate_me": "Meine Insights neu berechnen",
+      "run_fleet": "Fleet-Insights starten",
+      "busy": "Laeuft…",
+      "regenerate_done": "{count} Insights fuer dein Konto neu berechnet.",
+      "fleet_done": "Fleet-Lauf hat {count} Insights erzeugt."
+    },
+    "db": {
+      "title": "Datenbank-Backup",
+      "subtitle": "Lokale Entwicklungs-Dumps in {dir}. Nicht fuer Produktionsbetrieb (ops_ready=false).",
+      "unavailable": "Dump/Restore ist nur bei APP_ENV=development verfuegbar.",
+      "encryption_note": "Nutzbare Restores brauchen denselben ENCRYPTION_KEY wie der Dump.",
+      "empty": "Noch keine Dumps.",
+      "create": "Dump erstellen",
+      "restore": "Wiederherstellen",
+      "restore_confirm": "{name} wiederherstellen? Das ueberschreibt die lokale Entwicklungsdatenbank."
+    }
   },
   "auth": {
     "common": {

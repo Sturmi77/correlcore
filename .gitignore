@@ -51,6 +51,11 @@ SYNOINDEX_MEDIA_INFO
 *.log
 docker-compose.override.yml
 
+# Local development database dumps (scripts/dev-db-dump.sh)
+*.dump
+*.dump.meta.json
+/tmp/correlcore-backups/
+
 # Secrets
 *.pem
 *.key

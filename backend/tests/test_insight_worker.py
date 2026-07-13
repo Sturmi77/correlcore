@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -204,6 +203,8 @@ async def test_run_insights_once_isolates_per_user_failures() -> None:
             "app.workers.analytics.list_insight_generation_jobs", new=AsyncMock(return_value=jobs)
         ),
         patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
     ):
         summary = await run_insights_once(
             as_of=datetime(2026, 5, 12, tzinfo=UTC),
@@ -248,6 +249,11 @@ async def test_regenerate_insights_for_user_returns_pipeline_result() -> None:
                 return_value=MagicMock(status="ok"),
             ),
         ),
+        patch(
+            "app.services.worker_run_service.start_run",
+            new=AsyncMock(return_value=uuid.uuid4()),
+        ),
+        patch("app.services.worker_run_service.finish_run", new=AsyncMock()),
     ):
         result = await regenerate_insights_for_user(
             db,
@@ -264,17 +270,26 @@ async def test_regenerate_insights_for_user_returns_pipeline_result() -> None:
 async def test_run_daily_jobs_once_runs_cleanup_then_insights() -> None:
     calls: list[str] = []
 
-    async def fake_cleanup(*, session_factory: Callable[[], object]) -> tuple[int, int]:
+    async def fake_cleanup(**_kwargs: object) -> tuple[int, int]:
         calls.append("cleanup")
         return 1, 2
 
-    async def fake_insights(*, as_of: datetime, session_factory: Callable[[], object]) -> object:
+    async def fake_insights(**kwargs: object) -> object:
+        as_of = kwargs["as_of"]
+        assert isinstance(as_of, datetime)
         calls.append(f"insights:{as_of.date().isoformat()}")
-        return MagicMock(generated_insights=4)
+        return MagicMock(
+            eligible_users=1,
+            processed_users=1,
+            failed_users=0,
+            generated_insights=4,
+        )
 
     with (
         patch("app.workers.analytics.run_cleanup_once", side_effect=fake_cleanup),
         patch("app.workers.analytics.run_insights_once", side_effect=fake_insights),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
     ):
         summary = await run_daily_jobs_once(now=datetime(2026, 5, 12, tzinfo=UTC))
 

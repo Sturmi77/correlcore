@@ -28,6 +28,12 @@ from app.models.user import User  # noqa: F401
 from app.models.user_encryption_key import UserEncryptionKey  # noqa: F401
 from app.models.user_preference import UserPreference  # noqa: F401
 from app.models.user_profile import UserProfile  # noqa: F401
+from app.models.worker_run import (  # noqa: F401
+    WorkerJobKind,
+    WorkerRun,
+    WorkerRunStatus,
+    WorkerTriggerSource,
+)
 
 __all__ = [
     "INTENSITY_MAX",
@@ -54,5 +60,9 @@ __all__ = [
     "UserEncryptionKey",
     "UserPreference",
     "WorkContext",
+    "WorkerJobKind",
+    "WorkerRun",
+    "WorkerRunStatus",
+    "WorkerTriggerSource",
     "default_symptom_uuid",
 ]

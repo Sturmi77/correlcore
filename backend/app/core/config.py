@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.0.1"
     DEBUG: bool = False
     DEV_VIEW_ENABLED: bool = False
+    DEV_DB_BACKUP_DIR: str = "/tmp/correlcore-backups"
     IMAGE_TAG: str = "latest"
     IMAGE_DIGEST: str = ""
     GIT_COMMIT: str = "unknown"

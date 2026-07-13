@@ -45,6 +45,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0035](0035-temporal-correspondence-pattern.md)              | Temporal Correspondence Pattern for Trend+Heatmap Alignment  | Accepted      | 2026-05-30 |
 | [ADR-0036](0036-offline-sync-v1-scope.md)                        | Offline-Sync v1 Scope & Implementation Contract (M4.1)       | Accepted      | 2026-06-30 |
 | [ADR-0037](0037-insight-triggers-tag-cluster-maturity.md)        | Insight-Trigger, deskriptive Wochentage & Tag-Cluster-Reife  | Accepted      | 2026-07-13 |
+| [ADR-0038](0038-dev-worker-status-and-db-backup.md)              | Developer Worker-Status und Dev-DB Backup/Restore            | Akzeptiert    | 2026-07-13 |
 
 ## Kurzübersicht der Entscheidungen
 

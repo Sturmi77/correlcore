@@ -157,38 +157,66 @@ async def regenerate_insights_for_user(
     *,
     user_id: uuid.UUID,
     as_of: date_type | None = None,
-    trigger_source: str = "unknown",
+    trigger_source: str = "user_regenerate",
 ) -> InsightPipelineResult:
     """Regenerate insights and tag clusters for one user on demand."""
 
-    if not await _analytics_enabled(db, user_id=user_id):
-        raise AnalyticsDisabledError(user_id)
+    from app.models.worker_run import WorkerJobKind, WorkerRunStatus
+    from app.services.worker_run_service import finish_run, start_run
 
-    job = await load_insight_generation_job(db, user_id=user_id)
-    if job is None:
-        raise InsightJobNotFoundError(user_id)
-
-    generated_for_date = as_of or datetime.now(UTC).date()
-    insight_count, tag_clusters_status = await _run_insight_pipeline_for_job(
-        db,
-        job=job,
-        as_of=generated_for_date,
-    )
-    logger.info(
-        "insights.regenerated",
-        extra={
-            "user_id": str(user_id),
-            "insight_count": insight_count,
-            "tag_clusters_status": tag_clusters_status,
-            "trigger_source": trigger_source,
-        },
-    )
-    return InsightPipelineResult(
-        generated_for_date=generated_for_date,
-        insight_count=insight_count,
-        tag_clusters_status=tag_clusters_status,
+    run_id = await start_run(
+        job_kind=WorkerJobKind.USER_INSIGHTS,
         trigger_source=trigger_source,
+        scope_user_id=user_id,
     )
+    try:
+        if not await _analytics_enabled(db, user_id=user_id):
+            raise AnalyticsDisabledError(user_id)
+
+        job = await load_insight_generation_job(db, user_id=user_id)
+        if job is None:
+            raise InsightJobNotFoundError(user_id)
+
+        generated_for_date = as_of or datetime.now(UTC).date()
+        insight_count, tag_clusters_status = await _run_insight_pipeline_for_job(
+            db,
+            job=job,
+            as_of=generated_for_date,
+        )
+        logger.info(
+            "insights.regenerated",
+            extra={
+                "user_id": str(user_id),
+                "insight_count": insight_count,
+                "tag_clusters_status": tag_clusters_status,
+                "trigger_source": trigger_source,
+            },
+        )
+        result = InsightPipelineResult(
+            generated_for_date=generated_for_date,
+            insight_count=insight_count,
+            tag_clusters_status=tag_clusters_status,
+            trigger_source=trigger_source,
+        )
+        await finish_run(
+            run_id,
+            status=WorkerRunStatus.SUCCEEDED,
+            result={
+                "generated_for_date": generated_for_date.isoformat(),
+                "insight_count": insight_count,
+                "tag_clusters_status": tag_clusters_status,
+                "trigger_source": trigger_source,
+            },
+        )
+        return result
+    except Exception as exc:
+        await finish_run(
+            run_id,
+            status=WorkerRunStatus.FAILED,
+            error_message=str(exc),
+            result={"trigger_source": trigger_source},
+        )
+        raise
 
 
 async def try_acquire_regenerate_slot(*, user_id: uuid.UUID) -> bool:

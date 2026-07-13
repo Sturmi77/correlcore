@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from unittest.mock import AsyncMock, patch
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
@@ -12,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.deps.auth import get_current_user
 from app.core.config import settings
 from app.main import app
+from app.models.worker_run import WorkerJobKind, WorkerRun, WorkerRunStatus, WorkerTriggerSource
 from app.schemas.dev import DevInfoResponse
 from app.services.dev_service import build_dev_info
 from app.services.health_service import ComponentHealth, ComponentStatus, ReadinessReport
@@ -42,6 +45,8 @@ def _dev_payload() -> DevInfoResponse:
 def _reset_dev_state() -> Generator[None, None, None]:
     original = {
         "DEV_VIEW_ENABLED": settings.DEV_VIEW_ENABLED,
+        "APP_ENV": settings.APP_ENV,
+        "DEV_DB_BACKUP_DIR": settings.DEV_DB_BACKUP_DIR,
         "IMAGE_DIGEST": settings.IMAGE_DIGEST,
         "IMAGE_TAG": settings.IMAGE_TAG,
         "GIT_COMMIT": settings.GIT_COMMIT,
@@ -182,3 +187,152 @@ async def test_build_dev_info_reads_version_settings() -> None:
     assert info.db_migration_head == "009"
     assert info.db_pool_size == 10
     assert info.db_checked_out == 2
+
+
+def _fake_run(**overrides: object) -> WorkerRun:
+    run = WorkerRun(
+        id=uuid4(),
+        worker_name="analytics",
+        job_kind=WorkerJobKind.USER_INSIGHTS,
+        trigger_source=WorkerTriggerSource.USER_REGENERATE,
+        status=WorkerRunStatus.SUCCEEDED,
+        started_at=datetime(2026, 7, 13, 12, 0, tzinfo=UTC),
+        finished_at=datetime(2026, 7, 13, 12, 1, tzinfo=UTC),
+        scope_user_id=uuid4(),
+        result={"insight_count": 3},
+        error_message=None,
+    )
+    for key, value in overrides.items():
+        setattr(run, key, value)
+    return run
+
+
+@pytest.mark.asyncio
+async def test_dev_workers_404_when_feature_flag_off(async_client: AsyncClient) -> None:
+    settings.DEV_VIEW_ENABLED = False
+    response = await async_client.get("/api/v1/dev/workers")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_dev_workers_latest_returns_cards(async_client: AsyncClient) -> None:
+    settings.DEV_VIEW_ENABLED = True
+    user = make_user(verified=True)
+
+    async def fake_current_user():
+        yield user
+
+    app.dependency_overrides[get_current_user] = fake_current_user
+    user_run = _fake_run(scope_user_id=user.id)
+
+    with patch(
+        "app.api.v1.endpoints.dev.worker_run_service.latest_worker_runs",
+        new=AsyncMock(
+            return_value={
+                "daily_bundle": None,
+                "fleet_insights": None,
+                "user_insights": user_run,
+            }
+        ),
+    ):
+        response = await async_client.get("/api/v1/dev/workers/latest")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ops_ready"] is False
+    assert data["user_insights"]["result"]["insight_count"] == 3
+    assert data["daily_bundle"] is None
+
+
+@pytest.mark.asyncio
+async def test_dev_db_backups_404_outside_development(async_client: AsyncClient) -> None:
+    settings.DEV_VIEW_ENABLED = True
+    settings.APP_ENV = "production"
+    user = make_user(verified=True)
+
+    async def fake_current_user():
+        yield user
+
+    app.dependency_overrides[get_current_user] = fake_current_user
+
+    response = await async_client.get("/api/v1/dev/db/backups")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_dev_db_backups_lists_when_development(async_client: AsyncClient) -> None:
+    settings.DEV_VIEW_ENABLED = True
+    settings.APP_ENV = "development"
+    user = make_user(verified=True)
+
+    async def fake_current_user():
+        yield user
+
+    app.dependency_overrides[get_current_user] = fake_current_user
+
+    with patch(
+        "app.api.v1.endpoints.dev.list_backups",
+        return_value=(
+            [
+                {
+                    "name": "correlcore-dev-20260713T120000Z.dump",
+                    "size_bytes": 128,
+                    "created_at": datetime(2026, 7, 13, 12, 0, tzinfo=UTC),
+                    "meta": {"ops_ready": False},
+                }
+            ],
+            "/tmp/correlcore-backups",
+        ),
+    ):
+        response = await async_client.get("/api/v1/dev/db/backups")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ops_ready"] is False
+    assert data["encryption_key_required"] is True
+    assert data["items"][0]["name"].endswith(".dump")
+
+
+@pytest.mark.asyncio
+async def test_dev_db_restore_requires_confirm(async_client: AsyncClient) -> None:
+    settings.DEV_VIEW_ENABLED = True
+    settings.APP_ENV = "development"
+    user = make_user(verified=True)
+
+    async def fake_current_user():
+        yield user
+
+    app.dependency_overrides[get_current_user] = fake_current_user
+
+    response = await async_client.post(
+        "/api/v1/dev/db/restore",
+        json={"name": "correlcore-dev-20260713T120000Z.dump", "confirm": False},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_dev_insights_run_once(async_client: AsyncClient) -> None:
+    settings.DEV_VIEW_ENABLED = True
+    settings.APP_ENV = "development"
+    user = make_user(verified=True)
+
+    async def fake_current_user():
+        yield user
+
+    app.dependency_overrides[get_current_user] = fake_current_user
+
+    summary = MagicMock(
+        eligible_users=2,
+        processed_users=2,
+        failed_users=0,
+        generated_insights=5,
+    )
+    with patch(
+        "app.api.v1.endpoints.dev.run_insights_once",
+        new=AsyncMock(return_value=summary),
+    ):
+        response = await async_client.post("/api/v1/dev/workers/insights/run-once")
+
+    assert response.status_code == 200
+    assert response.json()["generated_insights"] == 5

@@ -218,7 +218,7 @@ async def trigger_insights_endpoint(
     request: Request,
     _admin: User = Depends(get_current_insight_trigger_admin),
 ) -> InsightTriggerResponse:
-    summary = await run_insights_once()
+    summary = await run_insights_once(trigger_source="admin_trigger")
     return InsightTriggerResponse(
         eligible_users=summary.eligible_users,
         processed_users=summary.processed_users,

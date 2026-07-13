@@ -1143,7 +1143,38 @@
     "db_checked_out": "DB Checked Out",
     "na": "n/a",
     "auto_refresh": "Auto-refreshes every 30 seconds. Last loaded from",
-    "commit_copied": "Commit copied."
+    "commit_copied": "Commit copied.",
+    "action_failed": "Action failed.",
+    "workers": {
+      "title": "Workers / Insights",
+      "subtitle": "Validate GUI insight surfaces against the last pipeline runs for this environment.",
+      "card_daily_bundle": "Last daily bundle",
+      "card_fleet_insights": "Last fleet insights",
+      "card_user_insights": "Last run for you",
+      "status": "Status",
+      "trigger": "Trigger",
+      "finished": "When",
+      "result": "Result",
+      "none": "No runs recorded yet.",
+      "history": "Recent runs",
+      "when": "When",
+      "kind": "Kind",
+      "regenerate_me": "Regenerate my insights",
+      "run_fleet": "Run fleet insights",
+      "busy": "Working…",
+      "regenerate_done": "Regenerated {count} insights for your account.",
+      "fleet_done": "Fleet run generated {count} insights."
+    },
+    "db": {
+      "title": "Database backup",
+      "subtitle": "Local development dumps in {dir}. Not for production ops (ops_ready=false).",
+      "unavailable": "Database dump/restore is only available when APP_ENV=development.",
+      "encryption_note": "Usable restores require the same ENCRYPTION_KEY that produced the dump.",
+      "empty": "No dumps yet.",
+      "create": "Create dump",
+      "restore": "Restore",
+      "restore_confirm": "Restore {name}? This overwrites the local development database."
+    }
   },
   "auth": {
     "common": {

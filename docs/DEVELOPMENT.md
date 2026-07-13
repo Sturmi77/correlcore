@@ -203,6 +203,24 @@ switching API/worker containers to the restricted role, then run Alembic
 `upgrade head`. Keep the default `APP_DB_USER=correlcore_app` unless you also
 adapt the migration grants for a custom role name.
 
+## Developer database dump / restore
+
+For local backup/restore during development (not production ops):
+
+```bash
+export APP_ENV=development
+./scripts/dev-db-dump.sh                # writes /tmp/correlcore-backups/*.dump (+ meta)
+./scripts/dev-db-restore.sh /tmp/correlcore-backups/correlcore-dev-….dump --yes
+```
+
+Keep the same `ENCRYPTION_KEY` as the dump environment. With
+`DEV_VIEW_ENABLED=true` and `APP_ENV=development`, `/dev` can also create and
+restore dumps via `GET/POST /api/v1/dev/db/backups` and `POST /api/v1/dev/db/restore`.
+`ops_ready` stays `false` until a separate production ops design exists.
+
+Worker run history for GUI validation lives under `GET /api/v1/dev/workers`
+(and `/workers/latest`) when `DEV_VIEW_ENABLED=true`.
+
 ## Rate limiting
 
 SlowAPI uses Redis by default via `REDIS_URL`; deployments can override the
