@@ -307,11 +307,7 @@
         }));
       }
       if (canUseOfflineSync()) {
-        await hydrateServerEntryFromApi(
-          matchingEntry,
-          selectedTagIds,
-          selectedSymptoms
-        );
+        await hydrateServerEntryFromApi(matchingEntry, selectedTagIds, selectedSymptoms);
       }
       loadedEntryDate = date;
       void refreshDayDelta(date, selectedSlot);
