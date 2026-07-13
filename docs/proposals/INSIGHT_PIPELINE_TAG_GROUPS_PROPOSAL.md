@@ -248,7 +248,10 @@ POST /api/v1/insights/trigger        # bestehend geplant — Admin only
 
 ## 6. Implementierungsphasen
 
-### Phase 1 — P0 (Beta-Blocker)
+**Detaillierter Sprintplan:** [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](../M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md)  
+**Tracking:** [`M10_1_INSIGHT_PIPELINE_SPRINT_STATUS.md`](../M10_1_INSIGHT_PIPELINE_SPRINT_STATUS.md)
+
+### Phase 1 — P0 (Beta-Blocker) → Paket A + B + D
 
 | Task | Dateien |
 | ---- | ------- |
@@ -259,7 +262,7 @@ POST /api/v1/insights/trigger        # bestehend geplant — Admin only
 | Worker in Dev-Doku | `AGENTS.md`, `docs/DEVELOPMENT.md` |
 | Tests | `test_tag_clusters.py`, `test_insights.py`, API contract |
 
-### Phase 2 — P1 (Home-Vollständigkeit)
+### Phase 2 — P1 (Home-Vollständigkeit) → Paket C + A5/A7
 
 | Task | Dateien |
 | ---- | ------- |
@@ -268,7 +271,7 @@ POST /api/v1/insights/trigger        # bestehend geplant — Admin only
 | `POST /insights/trigger` Admin | `insights.py`, Admin-Guard |
 | CLI `--once` für Worker | `workers/analytics.py` |
 
-### Phase 3 — P2 (Feinschliff)
+### Phase 3 — P2 (Feinschliff) → Paket E + optional Hub-Tags
 
 | Task | Dateien |
 | ---- | ------- |
@@ -400,5 +403,7 @@ Bei Freigabe und Umsetzung sind folgende Dateien **anzupassen** (Pflicht vs. opt
 - Analyse-Thread: Cloud Agent Run 2026-07-13 (`correlcore-export-2026-07-13.csv`)
 - Engine-Simulation: 13 Kandidaten bei 67 Tagen; K-Means Silhouette 0,115
 - [ADR-0037 Entwurf](../adr/0037-insight-triggers-tag-cluster-maturity.md)
+- [M10.1 Umsetzungs-Sprintplan](../M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md)
+- [M10.1 Sprint Status](../M10_1_INSIGHT_PIPELINE_SPRINT_STATUS.md)
 - [M9 Analytics Threshold Review](../quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md)
 - [PHASE_INSIGHT_MATRIX](../PHASE_INSIGHT_MATRIX.md)

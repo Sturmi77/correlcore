@@ -153,6 +153,7 @@ milestone #7.
 - Proposal C: Caddy TLS path
 - Proposal G: external-proxy compose profile
 - ADR: `compose-tiering.md` + CHANGELOG migration note for `COMPOSE_PROFILES`
+- **Insight pipeline & tag-cluster maturity** — [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md) (ADR-0037, Proposal [`proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md`](proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md))
 
 ## Success metrics
 

@@ -141,6 +141,7 @@ Provisional clusters are **descriptive**, not inferential insight cards. UI show
 ## References
 
 - [INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md)
+- [M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md](../M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md)
 - ADR-0016 — Time-Series Split (ML n≥90)
 - ADR-0017 — Frontend screen architecture (server-authoritative insights)
 - ADR-0021 — Insight maturity phases
