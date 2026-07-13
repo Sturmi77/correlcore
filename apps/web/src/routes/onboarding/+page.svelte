@@ -215,7 +215,7 @@
   .onboarding-flow__progress span {
     width: 0.75rem;
     height: 0.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--color-border);
   }
 

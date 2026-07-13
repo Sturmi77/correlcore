@@ -119,7 +119,7 @@
     background: var(--color-error-highlight);
     border-left: 3px solid var(--color-error);
     padding: var(--space-2) var(--space-3);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
   }
 
   .auth-success {
@@ -128,7 +128,7 @@
     background: color-mix(in srgb, var(--color-success) 12%, transparent);
     border-left: 3px solid var(--color-success);
     padding: var(--space-3);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     text-align: center;
     margin-bottom: var(--space-6);
   }

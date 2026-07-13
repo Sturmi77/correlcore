@@ -272,7 +272,7 @@
   .esm__close {
     background: transparent;
     border: 0;
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
     cursor: pointer;
     color: var(--color-text);
     min-width: 44px;
