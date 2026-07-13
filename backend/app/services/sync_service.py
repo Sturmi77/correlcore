@@ -415,6 +415,10 @@ async def _merge_entry_upsert(
     )
     incoming_symptoms = _normalize_symptoms_payload(payload.symptoms)
 
+    # Slot-merge: client UUID differs from canonical server row — report conflicts
+    # against the pending outbox id so the web client can mark the local row.
+    conflict_entity_id = change.id if entry.id != change.id else entry.id
+
     scalar_fields: list[tuple[str, Any, Any, Any]] = [
         ("mood_score", payload.mood_score, entry.mood_score, {"value": entry.mood_score}),
         ("energy", payload.energy, entry.energy, {"value": entry.energy}),
@@ -474,7 +478,7 @@ async def _merge_entry_upsert(
         report = await _maybe_conflict(
             db,
             user_id=user_id,
-            entity_id=entry.id,
+            entity_id=conflict_entity_id,
             entity_type="entry",
             field_name=field_name,
             client_ts=client_ts,
@@ -489,7 +493,7 @@ async def _merge_entry_upsert(
         report = await _maybe_conflict(
             db,
             user_id=user_id,
-            entity_id=entry.id,
+            entity_id=conflict_entity_id,
             entity_type="entry",
             field_name=SyncConflictField.SYMPTOMS.value,
             client_ts=client_ts,
