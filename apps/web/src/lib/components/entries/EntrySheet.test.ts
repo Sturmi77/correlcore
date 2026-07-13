@@ -31,8 +31,9 @@ describe('EntrySheet', () => {
     render(EntrySheet, {
       props: { open: true, initialDate: '2026-05-15' },
     });
-    expect(screen.getByTestId('entry-sheet')).toBeTruthy();
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    const dialog = screen.getByTestId('entry-sheet');
+    expect(dialog.tagName.toLowerCase()).toBe('dialog');
+    expect(screen.getByTestId('entry-form-mock')).toBeTruthy();
   });
 
   it('is hidden when closed', () => {
@@ -46,7 +47,7 @@ describe('EntrySheet', () => {
     render(EntrySheet, {
       props: { open: true, initialDate: '2026-05-15' },
     });
-    await fireEvent.click(screen.getByTestId('entry-sheet-backdrop'));
+    await fireEvent.click(screen.getByTestId('entry-sheet'));
     await waitFor(() => {
       expect(screen.queryByTestId('entry-sheet')).toBeNull();
     });

@@ -196,7 +196,10 @@
               {#each deco.symptoms as symptom (symptom.symptom_id)}
                 {@const visibleSymptom = symptomLookup[symptom.symptom_id]}
                 <span>
-                  {#if visibleSymptom?.icon}<IconRender icon={visibleSymptom.icon} size={ICON_SIZE_SM} />{/if}
+                  {#if visibleSymptom?.icon}<IconRender
+                      icon={visibleSymptom.icon}
+                      size={ICON_SIZE_SM}
+                    />{/if}
                   {visibleSymptom?.name ?? $_('symptom.picker_label')}
                   <strong>{symptom.intensity}</strong>
                 </span>

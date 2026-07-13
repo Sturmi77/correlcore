@@ -34,7 +34,8 @@
     return `${hh}:${mm}`;
   }
 
-  $: showOfflineSync = offlineSyncBadge !== null && status !== 'dirty' && status !== 'saving';
+  $: showOfflineSync =
+    offlineSyncBadge !== null && status !== 'dirty' && status !== 'saving' && status !== 'error';
   $: tone = showOfflineSync ? offlineSyncBadge : offline ? 'offline' : status;
 </script>
 

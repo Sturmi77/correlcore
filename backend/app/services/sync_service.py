@@ -356,6 +356,16 @@ async def _merge_entry_upsert(
     conflicts: list[SyncConflictReport] = []
 
     if entry is None:
+        slot_result = await db.execute(
+            select(Entry).where(
+                Entry.user_id == user_id,
+                Entry.entry_date == payload.entry_date,
+                Entry.slot == payload.slot,
+            )
+        )
+        entry = slot_result.scalar_one_or_none()
+
+    if entry is None:
         entry = Entry(
             id=change.id,
             user_id=user_id,
