@@ -18,7 +18,7 @@
   import { auth } from '$lib/stores/auth';
   import { insightStore } from '$lib/stores/insights';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
-  import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
+  import { fetchSymptomHeatmap, fetchTimeseries, type SymptomHeatmapResponse } from '$lib/api/stats';
   import {
     fetchSymptomTagCooccurrence,
     fetchTagClusters,
@@ -56,6 +56,8 @@
   import EntryHistorySheet, {
     type EntryHistoryDetail,
   } from '$lib/components/trends/EntryHistorySheet.svelte';
+  import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
+  import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
@@ -77,7 +79,14 @@
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { timeseriesRangeToCooccurrence, analysisDateWindow } from '$lib/utils/analysisRange';
   import { rangeToDays } from '$lib/utils/trendsRange';
-  import type { TimeseriesRange } from '$lib/api/stats';
+  import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
+  import type { MetricKey } from '$lib/utils/charts';
+  import {
+    buildExploreEventWindows,
+    devEventWindowsFromHeatmaps,
+    insightMetricToChartKey,
+  } from '$lib/utils/exploreEventWindows';
+  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
 
   type DetailView = 'findings' | 'matrix';
 
@@ -121,6 +130,12 @@
   let symptomWindowRequestId = 0;
   let symptomWindowLoading = false;
   let filterTab: InsightFeedFilterTab = 'all';
+  let exploreEventsOpen = false;
+  let exploreEventsInsight: InsightResponse | null = null;
+  let exploreEventsWindows: EventWindow[] = [];
+  let exploreEventsPoints: TimeseriesPoint[] = [];
+  let exploreEventsMetric: MetricKey = 'mood_avg';
+  let exploreEventsLoading = false;
 
   function readCompactInsights(): boolean {
     if (!browser) return false;
@@ -587,6 +602,7 @@
       Boolean(error) ||
       !compactInsights ||
       !primaryMobileInsight);
+  $: enableExploreEvents = isSmallMultiplesUnlocked(insightMaturity?.phase ?? null);
 
   function ensureAnalyticsLoaded(): void {
     if (!cooccurrenceRequested && !cooccurrenceLoading) {
@@ -602,6 +618,52 @@
 
   $: if (showAdvancedAnalytics && $auth.status === 'authenticated' && insightsLoaded) {
     ensureAnalyticsLoaded();
+  }
+
+  async function openExploreEvents(insightId: string): Promise<void> {
+    const insight =
+      insights.find((row) => row.id === insightId) ??
+      (primaryMobileInsight?.id === insightId ? primaryMobileInsight : null);
+    if (!insight) return;
+
+    exploreEventsInsight = insight;
+    exploreEventsMetric = insightMetricToChartKey(insight.metric);
+    exploreEventsOpen = true;
+    exploreEventsLoading = true;
+    exploreEventsWindows = [];
+    exploreEventsPoints = [];
+
+    try {
+      const range = insightsEffectiveRange;
+      if (get(devForceVisualizations)) {
+        const fixture = getDevPhaseFixture(get(devPhase));
+        exploreEventsWindows = devEventWindowsFromHeatmaps(
+          insight,
+          fixture.tagHeatmap,
+          fixture.symptomHeatmap
+        );
+        exploreEventsPoints = fixture.timeseries.points;
+        return;
+      }
+
+      const { start_date, end_date } = analysisDateWindow(range);
+      const [entries, timeseries] = await Promise.all([
+        listEntries({ start_date, end_date, limit: 365 }),
+        fetchTimeseries(range),
+      ]);
+      exploreEventsWindows = await buildExploreEventWindows(
+        insight,
+        entries,
+        listTagsForEntry,
+        listSymptomsForEntry
+      );
+      exploreEventsPoints = timeseries.points;
+    } catch {
+      exploreEventsWindows = [];
+      exploreEventsPoints = [];
+    } finally {
+      exploreEventsLoading = false;
+    }
   }
 
   async function dismissMaturityMilestone(key: string): Promise<void> {
@@ -674,6 +736,8 @@
         entryCount={visibleEntryCount}
         {inactiveTagIds}
         showMilestone={showMaturityMilestone}
+        {enableExploreEvents}
+        on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
         on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
       />
     {:else if compactInsights && detailView === 'findings' && !feedLoading && !error && insightMaturity}
@@ -702,10 +766,12 @@
               {analysisRangeDays}
               {inactiveTagIds}
               {filterTab}
+              {enableExploreEvents}
               showContext={false}
               showFilters={false}
               showMaturityBadge={false}
               on:retry={loadInsights}
+              on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
             />
           </section>
         {:else}
@@ -718,9 +784,11 @@
             {analysisRangeDays}
             {inactiveTagIds}
             {filterTab}
+            {enableExploreEvents}
             showFilters={false}
             showMaturityBadge={!pageMaturityChrome}
             on:retry={loadInsights}
+            on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
           />
         {/if}
       {/if}
@@ -796,6 +864,18 @@
     />
 
     <CorrelationDisclaimer open={disclaimerOpen} on:close={() => (disclaimerOpen = false)} />
+
+    <EventAlignedSmallMultiplesSheet
+      open={exploreEventsOpen && !exploreEventsLoading}
+      events={exploreEventsWindows}
+      points={exploreEventsPoints}
+      metric={exploreEventsMetric}
+      phase={exploreEventsInsight ? insightMaturity?.phase ?? null : null}
+      on:close={() => {
+        exploreEventsOpen = false;
+        exploreEventsInsight = null;
+      }}
+    />
   {/if}
 </main>
 
