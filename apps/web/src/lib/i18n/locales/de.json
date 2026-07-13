@@ -60,7 +60,11 @@
       "top_tag": "Auffaelliger Tag",
       "top_symptom": "Auffaelliges Symptom",
       "work_context_heading": "Arbeitssituation-Muster",
-      "work_context_hint": "Stimmungsschnitt pro Situation",
+      "work_context_hint": "Durchschnitt pro Situation",
+      "work_context_metric_aria": "Metrik fuer Arbeitssituation",
+      "metric_mood": "Stimmung",
+      "metric_energy": "Energie",
+      "metric_stress": "Stress",
       "work_context_value": "{mood} · {count} Tage",
       "none": "Keine"
     },

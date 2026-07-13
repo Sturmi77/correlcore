@@ -60,7 +60,11 @@
       "top_tag": "Notable tag",
       "top_symptom": "Notable symptom",
       "work_context_heading": "Work context pattern",
-      "work_context_hint": "Mood average per situation",
+      "work_context_hint": "Average per situation",
+      "work_context_metric_aria": "Work context metric",
+      "metric_mood": "Mood",
+      "metric_energy": "Energy",
+      "metric_stress": "Stress",
       "work_context_value": "{mood} · {count} days",
       "none": "None"
     },

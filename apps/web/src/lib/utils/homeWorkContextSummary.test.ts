@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWorkContextDisplayItems,
   weightedMoodAverage,
+  weightedMetricAverage,
+  workContextMetricBarWidth,
+  workContextMetricHighLow,
   workContextMoodBarWidth,
 } from './homeWorkContextSummary';
 
@@ -32,13 +35,25 @@ describe('homeWorkContextSummary', () => {
 
   it('computes weighted mood average across contexts', () => {
     expect(weightedMoodAverage(items)).toBeCloseTo(3.7, 1);
+    expect(weightedMetricAverage(items, 'energy')).toBeCloseTo(3.5, 1);
   });
 
   it('sorts by mood deviation and encodes mood in bar width', () => {
-    const display = buildWorkContextDisplayItems(items);
+    const display = buildWorkContextDisplayItems(items, 'mood');
     expect(display[0].work_context).toBe('weekend');
     expect(display[1].work_context).toBe('homeoffice');
-    expect(workContextMoodBarWidth(display[0].mood_avg)).toBe('50%');
-    expect(workContextMoodBarWidth(display[1].mood_avg)).toBe('82%');
+    expect(workContextMoodBarWidth(display[0].metricAvg)).toBe('50%');
+    expect(workContextMetricBarWidth('mood', display[1].metricAvg)).toBe('82%');
+  });
+
+  it('uses energy averages when energy metric is selected', () => {
+    const display = buildWorkContextDisplayItems(items, 'energy');
+    expect(display.every((item) => item.metricAvg !== null)).toBe(true);
+    expect(workContextMetricBarWidth('energy', display[0].metricAvg)).toBe('60%');
+  });
+
+  it('marks the lowest stress value as high (best) when inverted', () => {
+    const stressValues = items.map((item) => item.stress_avg!);
+    expect(workContextMetricHighLow(stressValues, 'stress')).toEqual({ high: 2.1, low: 3 });
   });
 });
