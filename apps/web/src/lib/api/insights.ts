@@ -117,7 +117,19 @@ export interface TagClustersResponse {
   k: number | null;
   reason: string | null;
   cluster_kind: 'tags_only' | 'mixed';
+  cluster_maturity?: 'early' | 'provisional' | 'robust' | null;
+  cluster_mode?: 'pair' | 'kmeans' | null;
+  entries_until_robust?: number | null;
+  silhouette_score?: number | null;
   clusters: TagClusterGroup[];
+}
+
+export interface InsightRegenerateResponse {
+  status: 'ok';
+  generated_for_date: string;
+  insight_count: number;
+  tag_clusters_status: 'ok' | 'insufficient_data';
+  trigger_source: string;
 }
 
 export interface SymptomTagCooccurrenceSymptomRef {

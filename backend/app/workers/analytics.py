@@ -153,7 +153,20 @@ async def run_worker(*, sleep: CleanupSleep = asyncio.sleep) -> None:
 
 def main() -> None:
     """CLI entrypoint used by Docker Compose."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="CorrelCore analytics worker")
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Run the daily worker bundle once and exit (cleanup + insights)",
+    )
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.INFO)
+    if args.once:
+        asyncio.run(run_daily_jobs_once())
+        return
     asyncio.run(run_worker())
 
 

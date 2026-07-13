@@ -30,11 +30,18 @@ from app.schemas.stats import (
 from app.services.tag_service import active_tag_predicate
 
 TAG_CLUSTER_WINDOW_DAYS = 90
-MIN_TAG_CLUSTER_ENTRIES = 90
+MIN_TAG_CLUSTER_PAIR_ENTRIES = 30
+MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES = 45
+MIN_TAG_CLUSTER_ROBUST_ENTRIES = 90
 MIN_TAG_CLUSTER_ACTIVE_TAGS = 5
 MIN_SIGNAL_CLUSTER_NODES = 5
 MIN_TAG_CLUSTER_K = 3
 MAX_TAG_CLUSTER_K = 6
+MAX_PROVISIONAL_K = 3
+MIN_PROVISIONAL_SILHOUETTE = 0.08
+MIN_PAIR_CO_COUNT = 5
+MAX_PAIR_CLUSTERS = 6
+MAX_PROVISIONAL_CLUSTER_SIZE = 5
 
 
 @dataclass(frozen=True)
@@ -134,12 +141,16 @@ def _insufficient(
     reason: str,
     window_days: int,
 ) -> TagClustersResponse:
+    entries_until_robust: int | None = None
+    if entry_count < MIN_TAG_CLUSTER_ROBUST_ENTRIES:
+        entries_until_robust = MIN_TAG_CLUSTER_ROBUST_ENTRIES - entry_count
     return TagClustersResponse(
         status="insufficient_data",
         entry_count=entry_count,
         active_tag_count=active_tag_count,
         active_signal_count=active_signal_count,
         window_days=window_days,
+        entries_until_robust=entries_until_robust,
         reason=reason,
         clusters=[],
     )
@@ -228,19 +239,35 @@ def build_tag_vectors(
     )
 
 
-def _choose_cluster_count(matrix: np.ndarray, *, tag_count: int) -> int | None:
-    max_k = min(MAX_TAG_CLUSTER_K, tag_count - 1)
-    if max_k < MIN_TAG_CLUSTER_K:
+def _effective_window_days(vector_set: TagVectorSet, *, max_window_days: int) -> int:
+    return min(vector_set.entry_count, max_window_days)
+
+
+def _entries_until_robust(entry_count: int) -> int | None:
+    if entry_count >= MIN_TAG_CLUSTER_ROBUST_ENTRIES:
+        return None
+    return MIN_TAG_CLUSTER_ROBUST_ENTRIES - entry_count
+
+
+def _choose_cluster_count(
+    matrix: np.ndarray,
+    *,
+    tag_count: int,
+    min_k: int = MIN_TAG_CLUSTER_K,
+    max_k: int = MAX_TAG_CLUSTER_K,
+) -> tuple[int, float] | None:
+    upper_k = min(max_k, tag_count - 1)
+    if upper_k < min_k:
         return None
 
     unique_rows = np.unique(matrix, axis=0).shape[0]
-    max_k = min(max_k, unique_rows)
-    if max_k < MIN_TAG_CLUSTER_K:
+    upper_k = min(upper_k, unique_rows)
+    if upper_k < min_k:
         return None
 
-    best_k = MIN_TAG_CLUSTER_K
+    best_k = min_k
     best_score = float("-inf")
-    for k in range(MIN_TAG_CLUSTER_K, max_k + 1):
+    for k in range(min_k, upper_k + 1):
         labels = KMeans(n_clusters=k, random_state=0, n_init=10).fit_predict(matrix)
         if len(set(labels)) < 2:
             continue
@@ -248,48 +275,132 @@ def _choose_cluster_count(matrix: np.ndarray, *, tag_count: int) -> int | None:
         if score > best_score:
             best_k = k
             best_score = score
-    return best_k
+    return best_k, best_score
 
 
-def _cluster_strength(
-    cluster_tag_ids: Sequence[uuid.UUID],
-    vectors: dict[uuid.UUID, tuple[float, ...]],
-    tag_index: dict[uuid.UUID, int],
-) -> float:
-    if len(cluster_tag_ids) < 2:
-        return 0.0
-    values: list[float] = []
-    for index, left_id in enumerate(cluster_tag_ids):
-        for right_id in cluster_tag_ids[index + 1 :]:
-            values.append(vectors[left_id][tag_index[right_id]])
-    return round(sum(values) / len(values), 4) if values else 0.0
+def _pair_candidates(
+    daily_entries: Sequence[DailyTagSet],
+    tag_ids: Sequence[uuid.UUID],
+    *,
+    min_co_count: int = MIN_PAIR_CO_COUNT,
+) -> list[tuple[uuid.UUID, uuid.UUID, int, float]]:
+    signal_counts = {
+        tag_id: sum(1 for entry in daily_entries if tag_id in entry.tag_ids) for tag_id in tag_ids
+    }
+    pair_counts: dict[tuple[uuid.UUID, uuid.UUID], int] = defaultdict(int)
+    for entry in daily_entries:
+        present = sorted(
+            (tag_id for tag_id in tag_ids if tag_id in entry.tag_ids),
+            key=str,
+        )
+        for index, left in enumerate(present):
+            for right in present[index + 1 :]:
+                pair_counts[(left, right)] += 1
+                pair_counts[(right, left)] += 1
+
+    candidates: list[tuple[uuid.UUID, uuid.UUID, int, float]] = []
+    seen_pairs: set[tuple[uuid.UUID, uuid.UUID]] = set()
+    for left_id in tag_ids:
+        for right_id in tag_ids:
+            if left_id >= right_id:
+                continue
+            pair_key = (left_id, right_id)
+            if pair_key in seen_pairs:
+                continue
+            seen_pairs.add(pair_key)
+            co_count = pair_counts.get((left_id, right_id), 0)
+            if co_count < min_co_count:
+                continue
+            union_count = signal_counts[left_id] + signal_counts[right_id] - co_count
+            jaccard = round(co_count / union_count, 6) if union_count else 0.0
+            candidates.append((left_id, right_id, co_count, jaccard))
+
+    return sorted(candidates, key=lambda item: (-item[3], -item[2], str(item[0]), str(item[1])))
 
 
-def build_tag_cluster_response(
+def _build_pair_clusters(
     vector_set: TagVectorSet,
     *,
-    window_days: int = TAG_CLUSTER_WINDOW_DAYS,
-) -> TagClustersResponse:
-    """Cluster signal vectors with k-means or return an insufficient-data response."""
+    window_days: int,
+    cluster_maturity: Literal["early", "provisional"],
+) -> TagClustersResponse | None:
+    tags = vector_set.tags
+    if len(tags) < 2:
+        return None
 
-    active_signal_count = vector_set.active_signal_count
-    if vector_set.entry_count < MIN_TAG_CLUSTER_ENTRIES:
-        return _insufficient(
-            entry_count=vector_set.entry_count,
-            active_tag_count=vector_set.active_tag_count,
-            active_signal_count=active_signal_count,
-            reason="entry_count_below_90",
-            window_days=window_days,
+    tag_ids = [tag.id for tag in tags]
+    candidates = _pair_candidates(vector_set.daily_entries, tag_ids)
+    if not candidates:
+        return None
+
+    tags_by_id = {tag.id: tag for tag in tags}
+    node_index = {tag_id: index for index, tag_id in enumerate(tag_ids)}
+    used_tags: set[uuid.UUID] = set()
+    clusters: list[TagClusterGroup] = []
+    for left_id, right_id, _co_count, _jaccard in candidates:
+        if len(clusters) >= MAX_PAIR_CLUSTERS:
+            break
+        if left_id in used_tags or right_id in used_tags:
+            continue
+        used_tags.update({left_id, right_id})
+        ordered_cluster_ids = sorted(
+            [left_id, right_id], key=lambda tag_id: tags_by_id[tag_id].slug
         )
-    if active_signal_count < MIN_SIGNAL_CLUSTER_NODES:
-        return _insufficient(
-            entry_count=vector_set.entry_count,
-            active_tag_count=vector_set.active_tag_count,
-            active_signal_count=active_signal_count,
-            reason="active_signal_count_below_5",
-            window_days=window_days,
+        members = [
+            _member_from_node(
+                SignalNode(
+                    kind="tag",
+                    node_id=tag.id,
+                    slug=tag.slug,
+                    name=tag.name,
+                    category=tag.category.value
+                    if hasattr(tag.category, "value")
+                    else str(tag.category),
+                    color=tag.color,
+                )
+            )
+            for tag in (tags_by_id[node_id] for node_id in ordered_cluster_ids)
+        ]
+        clusters.append(
+            TagClusterGroup(
+                cluster_id=len(clusters) + 1,
+                label=f"Tag group {len(clusters) + 1}",
+                tags=[_tag_ref(tags_by_id[node_id]) for node_id in ordered_cluster_ids],
+                members=members,
+                cluster_kind="tags_only",
+                strength=_cluster_strength(ordered_cluster_ids, vector_set.vectors, node_index),
+            )
         )
 
+    if not clusters:
+        return None
+
+    return TagClustersResponse(
+        status="ok",
+        entry_count=vector_set.entry_count,
+        active_tag_count=vector_set.active_tag_count,
+        active_signal_count=vector_set.active_tag_count,
+        window_days=window_days,
+        cluster_kind="tags_only",
+        cluster_maturity=cluster_maturity,
+        cluster_mode="pair",
+        entries_until_robust=_entries_until_robust(vector_set.entry_count),
+        silhouette_score=None,
+        clusters=clusters,
+    )
+
+
+def _build_kmeans_clusters(
+    vector_set: TagVectorSet,
+    *,
+    window_days: int,
+    cluster_maturity: Literal["provisional", "robust"],
+    min_k: int,
+    max_k: int,
+    min_silhouette: float | None,
+    max_cluster_size: int | None,
+    allow_mixed: bool,
+) -> TagClustersResponse | None:
     nodes = vector_set.nodes or tuple(
         SignalNode(
             kind="tag",
@@ -301,17 +412,19 @@ def build_tag_cluster_response(
         )
         for tag in vector_set.tags
     )
+    if not allow_mixed:
+        nodes = tuple(node for node in nodes if node.kind == "tag")
+    if len(nodes) < 2:
+        return None
+
     node_ids = [node.node_id for node in nodes]
     matrix = np.array([vector_set.vectors[node_id] for node_id in node_ids], dtype=float)
-    k = _choose_cluster_count(matrix, tag_count=len(node_ids))
-    if k is None:
-        return _insufficient(
-            entry_count=vector_set.entry_count,
-            active_tag_count=vector_set.active_tag_count,
-            active_signal_count=active_signal_count,
-            reason="not_enough_vector_variance",
-            window_days=window_days,
-        )
+    chosen = _choose_cluster_count(matrix, tag_count=len(node_ids), min_k=min_k, max_k=max_k)
+    if chosen is None:
+        return None
+    k, silhouette = chosen
+    if min_silhouette is not None and silhouette < min_silhouette:
+        return None
 
     labels = KMeans(n_clusters=k, random_state=0, n_init=10).fit_predict(matrix)
     nodes_by_id = {node.node_id: node for node in nodes}
@@ -320,6 +433,11 @@ def build_tag_cluster_response(
     grouped: dict[int, list[uuid.UUID]] = defaultdict(list)
     for node_id, label in zip(node_ids, labels, strict=True):
         grouped[int(label)].append(node_id)
+
+    if max_cluster_size is not None and any(
+        len(cluster_node_ids) > max_cluster_size for cluster_node_ids in grouped.values()
+    ):
+        return None
 
     has_symptoms = any(node.kind == "symptom" for node in nodes)
     cluster_kind: Literal["tags_only", "mixed"] = "mixed" if has_symptoms else "tags_only"
@@ -355,6 +473,7 @@ def build_tag_cluster_response(
             )
         )
 
+    active_signal_count = len(nodes)
     return TagClustersResponse(
         status="ok",
         entry_count=vector_set.entry_count,
@@ -363,7 +482,118 @@ def build_tag_cluster_response(
         window_days=window_days,
         k=k,
         cluster_kind=cluster_kind,
+        cluster_maturity=cluster_maturity,
+        cluster_mode="kmeans",
+        entries_until_robust=_entries_until_robust(vector_set.entry_count),
+        silhouette_score=round(silhouette, 4),
         clusters=clusters,
+    )
+
+
+def _cluster_strength(
+    cluster_tag_ids: Sequence[uuid.UUID],
+    vectors: dict[uuid.UUID, tuple[float, ...]],
+    tag_index: dict[uuid.UUID, int],
+) -> float:
+    if len(cluster_tag_ids) < 2:
+        return 0.0
+    values: list[float] = []
+    for index, left_id in enumerate(cluster_tag_ids):
+        for right_id in cluster_tag_ids[index + 1 :]:
+            values.append(vectors[left_id][tag_index[right_id]])
+    return round(sum(values) / len(values), 4) if values else 0.0
+
+
+def build_tag_cluster_response(
+    vector_set: TagVectorSet,
+    *,
+    window_days: int = TAG_CLUSTER_WINDOW_DAYS,
+) -> TagClustersResponse:
+    """Cluster signal vectors with tiered maturity or return insufficient data."""
+
+    effective_window = _effective_window_days(vector_set, max_window_days=window_days)
+    active_signal_count = vector_set.active_signal_count
+    entry_count = vector_set.entry_count
+
+    if entry_count < MIN_TAG_CLUSTER_PAIR_ENTRIES:
+        return _insufficient(
+            entry_count=entry_count,
+            active_tag_count=vector_set.active_tag_count,
+            active_signal_count=active_signal_count,
+            reason="entry_count_below_30",
+            window_days=effective_window,
+        )
+    if active_signal_count < MIN_SIGNAL_CLUSTER_NODES:
+        return _insufficient(
+            entry_count=entry_count,
+            active_tag_count=vector_set.active_tag_count,
+            active_signal_count=active_signal_count,
+            reason="active_signal_count_below_5",
+            window_days=effective_window,
+        )
+
+    if entry_count >= MIN_TAG_CLUSTER_ROBUST_ENTRIES:
+        robust = _build_kmeans_clusters(
+            vector_set,
+            window_days=effective_window,
+            cluster_maturity="robust",
+            min_k=MIN_TAG_CLUSTER_K,
+            max_k=MAX_TAG_CLUSTER_K,
+            min_silhouette=None,
+            max_cluster_size=None,
+            allow_mixed=True,
+        )
+        if robust is not None:
+            return robust
+        return _insufficient(
+            entry_count=entry_count,
+            active_tag_count=vector_set.active_tag_count,
+            active_signal_count=active_signal_count,
+            reason="not_enough_vector_variance",
+            window_days=effective_window,
+        )
+
+    if entry_count >= MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES:
+        provisional = _build_kmeans_clusters(
+            vector_set,
+            window_days=effective_window,
+            cluster_maturity="provisional",
+            min_k=2,
+            max_k=MAX_PROVISIONAL_K,
+            min_silhouette=MIN_PROVISIONAL_SILHOUETTE,
+            max_cluster_size=MAX_PROVISIONAL_CLUSTER_SIZE,
+            allow_mixed=True,
+        )
+        if provisional is not None:
+            return provisional
+        pair_fallback = _build_pair_clusters(
+            vector_set,
+            window_days=effective_window,
+            cluster_maturity="early",
+        )
+        if pair_fallback is not None:
+            return pair_fallback
+        return _insufficient(
+            entry_count=entry_count,
+            active_tag_count=vector_set.active_tag_count,
+            active_signal_count=active_signal_count,
+            reason="not_enough_pair_signal",
+            window_days=effective_window,
+        )
+
+    pair = _build_pair_clusters(
+        vector_set,
+        window_days=effective_window,
+        cluster_maturity="early",
+    )
+    if pair is not None:
+        return pair
+    return _insufficient(
+        entry_count=entry_count,
+        active_tag_count=vector_set.active_tag_count,
+        active_signal_count=active_signal_count,
+        reason="not_enough_pair_signal",
+        window_days=effective_window,
     )
 
 

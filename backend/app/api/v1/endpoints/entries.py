@@ -21,7 +21,7 @@ import logging
 import uuid
 from datetime import date as date_type
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps.auth import get_current_verified_user
@@ -57,6 +57,7 @@ from app.services.entry_service import (
     list_entries,
     update_entry,
 )
+from app.services.insight_worker_service import schedule_post_batch_insight_regeneration
 from app.services.stats_service import (
     get_entry_streak,
     get_symptom_heatmap,
@@ -112,6 +113,7 @@ async def create_entry_endpoint(
 async def create_entry_batch_endpoint(
     request: Request,
     payload: EntryBatchCreate,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> list[EntryResponse]:
@@ -127,6 +129,10 @@ async def create_entry_batch_endpoint(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),
         ) from exc
+    background_tasks.add_task(
+        schedule_post_batch_insight_regeneration,
+        user_id=user.id,
+    )
     return [EntryResponse.model_validate(entry) for entry in entries]
 
 

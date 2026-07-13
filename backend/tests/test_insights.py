@@ -365,6 +365,122 @@ async def test_latest_insights_endpoint_uses_latest_service(
 
 
 @pytest.mark.asyncio
+async def test_regenerate_insights_endpoint_returns_payload(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    from datetime import date
+
+    from app.services.insight_worker_service import InsightPipelineResult
+
+    payload = InsightPipelineResult(
+        generated_for_date=date(2026, 7, 13),
+        insight_count=5,
+        tag_clusters_status="ok",
+        trigger_source="user_regenerate",
+    )
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with (
+            patch(
+                "app.api.v1.endpoints.insights.try_acquire_regenerate_slot",
+                new_callable=AsyncMock,
+                return_value=True,
+            ),
+            patch(
+                "app.api.v1.endpoints.insights.regenerate_insights_for_user",
+                new_callable=AsyncMock,
+                return_value=payload,
+            ) as regenerate,
+        ):
+            response = await async_client.post(
+                "/api/v1/insights/regenerate",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    regenerate.assert_awaited_once()
+    body = response.json()
+    assert body["insight_count"] == 5
+    assert body["tag_clusters_status"] == "ok"
+    assert body["trigger_source"] == "user_regenerate"
+
+
+@pytest.mark.asyncio
+async def test_regenerate_insights_endpoint_rate_limited(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.insights.try_acquire_regenerate_slot",
+            new_callable=AsyncMock,
+            return_value=False,
+        ):
+            response = await async_client.post(
+                "/api/v1/insights/regenerate",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 429
+
+
+@pytest.mark.asyncio
+async def test_regenerate_insights_endpoint_rejects_disabled_analytics(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    from app.db.redis_client import get_redis
+    from app.services.insight_worker_service import AnalyticsDisabledError
+
+    async def override() -> User:
+        return user
+
+    redis = AsyncMock()
+    redis.delete = AsyncMock()
+
+    async def redis_override():
+        yield redis
+
+    app.dependency_overrides[get_current_verified_user] = override
+    app.dependency_overrides[get_redis] = redis_override
+    try:
+        with (
+            patch(
+                "app.api.v1.endpoints.insights.try_acquire_regenerate_slot",
+                new_callable=AsyncMock,
+                return_value=True,
+            ),
+            patch(
+                "app.api.v1.endpoints.insights.regenerate_insights_for_user",
+                new_callable=AsyncMock,
+                side_effect=AnalyticsDisabledError(user.id),
+            ),
+        ):
+            response = await async_client.post(
+                "/api/v1/insights/regenerate",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    redis.delete.assert_awaited_once_with(f"insight:regenerate:{user.id}")
+
+
+@pytest.mark.asyncio
 async def test_insights_endpoint_requires_auth(async_client: AsyncClient) -> None:
     response = await async_client.get("/api/v1/insights")
 

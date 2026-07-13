@@ -11,6 +11,7 @@ from app.services.insight_worker_service import (
     InsightGenerationJob,
     generate_insights_for_job,
     list_insight_generation_jobs,
+    regenerate_insights_for_user,
 )
 from app.workers.analytics import run_daily_jobs_once, run_insights_once
 
@@ -215,6 +216,48 @@ async def test_run_insights_once_isolates_per_user_failures() -> None:
     assert summary.generated_insights == 3
     assert session_factory.sessions[1].commit.await_count == 1
     assert session_factory.sessions[2].rollback.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_regenerate_insights_for_user_returns_pipeline_result() -> None:
+    user_id = uuid.uuid4()
+    db = MagicMock()
+    db.begin_nested.return_value = _AsyncContext()
+    job = InsightGenerationJob(user_id=user_id, wrapped_dek=b"wrapped-dek")
+
+    with (
+        patch(
+            "app.services.insight_worker_service._analytics_enabled",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "app.services.insight_worker_service.load_insight_generation_job",
+            new=AsyncMock(return_value=job),
+        ),
+        patch("app.services.insight_worker_service.unwrap_dek", return_value=b"dek"),
+        patch("app.services.insight_worker_service.set_current_user_dek", return_value="token"),
+        patch("app.services.insight_worker_service.reset_current_user_dek"),
+        patch("app.services.insight_worker_service.bind_rls_current_user", new=AsyncMock()),
+        patch(
+            "app.services.insight_worker_service.generate_and_store_insights",
+            new=AsyncMock(return_value=[object(), object(), object()]),
+        ),
+        patch(
+            "app.services.insight_worker_service.recompute_tag_vectors_and_clusters",
+            new=AsyncMock(
+                return_value=MagicMock(status="ok"),
+            ),
+        ),
+    ):
+        result = await regenerate_insights_for_user(
+            db,
+            user_id=user_id,
+            trigger_source="user_regenerate",
+        )
+
+    assert result.insight_count == 3
+    assert result.tag_clusters_status == "ok"
+    assert result.trigger_source == "user_regenerate"
 
 
 @pytest.mark.asyncio

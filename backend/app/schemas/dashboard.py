@@ -16,8 +16,17 @@ class WorkContextSummaryItem(BaseModel):
     stress_avg: float | None = None
 
 
+class WeekdaySummaryItem(BaseModel):
+    """Per-weekday descriptive mood stats (Monday=0 … Sunday=6, Python convention)."""
+
+    weekday: int = Field(ge=0, le=6)
+    entry_count: int = Field(ge=0)
+    mood_avg: float | None = None
+
+
 class DashboardSummaryResponse(BaseModel):
     entry_count: int = Field(ge=0)
     insight_tier: InsightTier
     confidence_score: float = Field(ge=0.0, le=1.0)
     work_context_summary: list[WorkContextSummaryItem] = Field(default_factory=list)
+    weekday_summary: list[WeekdaySummaryItem] = Field(default_factory=list)

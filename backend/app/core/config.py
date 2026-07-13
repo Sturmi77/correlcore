@@ -132,6 +132,20 @@ class Settings(BaseSettings):
     # rare tags have too little statistical power even inside a large history.
     ANALYTICS_MIN_TAG_USAGES: int = Field(default=10, ge=2)
 
+    # Comma-separated admin emails allowed to call POST /insights/trigger.
+    INSIGHT_TRIGGER_ADMIN_EMAILS: Annotated[list[str], NoDecode] = Field(default_factory=list)
+
+    @field_validator("INSIGHT_TRIGGER_ADMIN_EMAILS", mode="before")
+    @classmethod
+    def parse_insight_trigger_admin_emails(cls, v: object) -> list[str]:
+        if v is None or v == "":
+            return []
+        if isinstance(v, str):
+            return [email.strip().casefold() for email in v.split(",") if email.strip()]
+        if isinstance(v, list):
+            return [str(email).strip().casefold() for email in v if str(email).strip()]
+        raise TypeError("INSIGHT_TRIGGER_ADMIN_EMAILS must be a comma-separated string or list")
+
     # Error tracking (M9) — optional selfhosted GlitchTip via Sentry protocol.
     # Leave empty for zero outbound error-reporting traffic.
     GLITCHTIP_DSN: str = ""

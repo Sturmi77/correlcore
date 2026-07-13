@@ -10,11 +10,19 @@ export interface WorkContextSummaryItem {
   stress_avg: number | null;
 }
 
+/** Monday=0 … Sunday=6 (Python / backend convention). */
+export interface WeekdaySummaryItem {
+  weekday: number;
+  entry_count: number;
+  mood_avg: number | null;
+}
+
 export interface DashboardSummaryResponse {
   entry_count: number;
   insight_tier: InsightTier;
   confidence_score: number;
   work_context_summary: WorkContextSummaryItem[];
+  weekday_summary: WeekdaySummaryItem[];
 }
 
 export async function fetchDashboardSummary(asOf?: string): Promise<DashboardSummaryResponse> {

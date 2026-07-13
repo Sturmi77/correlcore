@@ -251,7 +251,14 @@
         loading={insightLoading && !latestInsight}
         workContextSummary={dashboardSummary?.work_context_summary ?? []}
       />
-      <HomeWeekdayOverview insights={$rankedInsights} {weekdayInsight} loading={insightLoading} />
+      <HomeWeekdayOverview
+        insights={$rankedInsights}
+        {weekdayInsight}
+        weekdaySummary={dashboardSummary?.weekday_summary ?? []}
+        loading={(insightLoading || (dashboardLoading && !dashboardLoaded)) &&
+          !(dashboardSummary?.weekday_summary?.length ?? 0) &&
+          !weekdayInsight}
+      />
     </section>
 
     <!-- Zone 3: primary CTA when today is not logged -->

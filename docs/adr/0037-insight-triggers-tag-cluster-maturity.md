@@ -1,13 +1,13 @@
 # ADR-0037 — Insight-Trigger, deskriptive Wochentage & Tag-Cluster-Reifegrad
 
-| Field        | Value                                                                                                    |
-| ------------ | -------------------------------------------------------------------------------------------------------- |
-| **ID**       | 0037                                                                                                     |
-| **Date**     | 2026-07-13                                                                                               |
-| **Status**   | Vorgeschlagen                                                                                            |
-| **Deciders** | @Sturmi77                                                                                                |
-| **Area**     | Backend / Analytics / API / Frontend                                                                     |
-| **Related**  | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
+| Field | Value |
+| ----- | ----- |
+| **ID** | 0037 |
+| **Date** | 2026-07-13 |
+| **Status** | Accepted |
+| **Deciders** | @Sturmi77 |
+| **Area** | Backend / Analytics / API / Frontend |
+| **Related** | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
 
 ---
 
@@ -126,10 +126,10 @@ Provisional clusters are **descriptive**, not inferential insight cards. UI show
 
 ## Implementation Checklist
 
-- [ ] `POST /api/v1/insights/regenerate` (owner, rate-limited)
-- [ ] `POST /api/v1/insights/trigger` (admin)
-- [ ] Hook after `POST /entries/batch`
-- [ ] `weekday_summary` in dashboard schema + service
+- [x] `POST /api/v1/insights/regenerate` (owner, rate-limited)
+- [x] `POST /api/v1/insights/trigger` (admin)
+- [x] Hook after `POST /entries/batch`
+- [x] `weekday_summary` in dashboard schema + service
 - [ ] Tag-cluster tiers in `tag_cluster_service.py`
 - [ ] `TagGroupsSection` + `HomeWeekdayOverview` UI
 - [ ] i18n DE/EN

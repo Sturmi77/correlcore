@@ -147,3 +147,18 @@ async def get_current_verified_user(
             detail="Email address not verified",
         )
     return current_user
+
+
+async def get_current_insight_trigger_admin(
+    current_user: User = Depends(get_current_verified_user),
+) -> User:
+    """Require a verified user whose email is listed in INSIGHT_TRIGGER_ADMIN_EMAILS."""
+    from app.core.config import settings
+
+    allowed = settings.INSIGHT_TRIGGER_ADMIN_EMAILS
+    if not allowed or current_user.email.casefold() not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insight trigger requires admin privileges",
+        )
+    return current_user

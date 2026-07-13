@@ -382,17 +382,17 @@ Bei Freigabe und Umsetzung sind folgende Dateien **anzupassen** (Pflicht vs. opt
 
 ## 10. Freigabe-Checkliste
 
-| #   | Frage                                                     | Entscheidung             | Freigabe |
-| --- | --------------------------------------------------------- | ------------------------ | -------- |
-| 1   | Trigger T2+T3 (Import + User regenerate) umsetzen?        | ☐ Ja ☐ Nein ☐ Phase 2    |
-| 2   | Dashboard `weekday_summary` (deskriptiv)?                 | ☐ Ja ☐ Nein              |
-| 3   | Tag-Gruppen Stufen: 30 pair / 45 provisional / 90 robust? | ☐ Ja ☐ Anpassung: \_\_\_ |
-| 4   | ADR-0037 auf Accepted setzen?                             | ☐ Ja ☐ Nein              |
-| 5   | `MIN_WEEKDAY_DELTA` unverändert lassen?                   | ☐ Ja (empfohlen) ☐ Nein  |
-| 6   | ML `MIN_ML_ENTRIES=90` unverändert?                       | ☐ Ja (empfohlen) ☐ Nein  |
-| 7   | Phase-1-Priorität für Beta?                               | ☐ Ja ☐ Nein              |
+| # | Frage | Entscheidung | Freigabe |
+| - | ----- | ------------ | -------- |
+| 1 | Trigger T2+T3 (Import + User regenerate) umsetzen? | ☑ Ja |
+| 2 | Dashboard `weekday_summary` (deskriptiv)? | ☑ Ja (Paket C) |
+| 3 | Tag-Gruppen Stufen: 30 pair / 45 provisional / 90 robust? | ☑ Ja |
+| 4 | ADR-0037 auf Accepted setzen? | ☑ Ja |
+| 5 | `MIN_WEEKDAY_DELTA` unverändert lassen? | ☑ Ja (empfohlen) |
+| 6 | ML `MIN_ML_ENTRIES=90` unverändert? | ☑ Ja (empfohlen) |
+| 7 | Phase-1-Priorität für Beta? | ☑ Ja |
 
-**Freigegeben von:** ********\_******** **Datum:** ****\_****
+**Freigegeben von:** @Sturmi77 **Datum:** 2026-07-13
 
 **Anmerkungen:**
 

@@ -6,7 +6,7 @@ import uuid
 from datetime import date as date_type
 from datetime import datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -84,3 +84,23 @@ class InsightEventWindowsResponse(BaseModel):
     end_date: date_type
     events: list[InsightEventWindow] = Field(default_factory=list)
     points: list[TimeseriesPoint] = Field(default_factory=list)
+
+
+class InsightRegenerateResponse(BaseModel):
+    """Outcome of an on-demand insight + tag-cluster regeneration run."""
+
+    status: Literal["ok"] = "ok"
+    generated_for_date: date_type
+    insight_count: int = Field(ge=0)
+    tag_clusters_status: Literal["ok", "insufficient_data"]
+    trigger_source: str
+
+
+class InsightTriggerResponse(BaseModel):
+    """Aggregated outcome when an admin manually runs the insight worker."""
+
+    status: Literal["ok"] = "ok"
+    eligible_users: int = Field(ge=0)
+    processed_users: int = Field(ge=0)
+    failed_users: int = Field(ge=0)
+    generated_insights: int = Field(ge=0)
