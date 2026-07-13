@@ -7,7 +7,8 @@
   import { setupI18n } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
   import { auth, hydrate } from '$lib/stores/auth';
-  import { syncDevModeFromStorage } from '$lib/stores/devMode';
+  import { syncDevModeFromStorage, devPhase } from '$lib/stores/devMode';
+  import { ensureStandaloneLaunchRoute } from '$lib/utils/pwaLaunch';
   import AppNav from '$lib/components/common/AppNav.svelte';
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import GlobalEntrySheet from '$lib/components/entries/GlobalEntrySheet.svelte';
@@ -37,6 +38,10 @@
     void cleanupDevServiceWorker();
     void registerProdServiceWorker();
     syncDevModeFromStorage();
+    devPhase.setOnboardingPreviewOpen(false);
+    ensureStandaloneLaunchRoute((path) => {
+      void goto(path, { replaceState: true });
+    });
     pwaLifecycle.initialize();
     const cleanupSync = initializeSyncOrchestrator((listener) => {
       let previousOnline = get(pwaLifecycle).online;
