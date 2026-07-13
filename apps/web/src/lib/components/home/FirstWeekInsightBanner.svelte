@@ -41,7 +41,7 @@
     gap: 1rem;
     padding: 0.85rem;
     border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   }
 
@@ -60,7 +60,7 @@
   }
 
   .first-week-banner__body {
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
   }
 
   .first-week-banner__body {
@@ -79,11 +79,11 @@
     width: 2rem;
     height: 2rem;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--color-surface-offset);
     color: inherit;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     line-height: 1;
   }
 
