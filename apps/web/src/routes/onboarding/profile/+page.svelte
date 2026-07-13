@@ -161,7 +161,7 @@
     gap: 0.35rem;
     padding: 0.75rem;
     border: 1px solid var(--color-border-chart);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
   }
 
   .profile-onboarding select {
@@ -179,7 +179,7 @@
     color: var(--color-text-muted);
   }
 
-  @media (max-width: 430px) {
+  @media (max-width: 360px) {
     .profile-onboarding__actions {
       align-items: stretch;
       flex-direction: column-reverse;

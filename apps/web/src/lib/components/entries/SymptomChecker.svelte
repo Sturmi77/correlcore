@@ -39,6 +39,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import IconRender from '$lib/components/common/IconRender.svelte';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { refreshSymptoms, submitSymptom, symptoms, symptomsList } from '$lib/stores/symptoms';
   import {
     INTENSITY_MAX,
@@ -334,7 +335,7 @@
           <small class="symptom-custom-hint">{$_('symptom.custom.icon_hint')}</small>
           {#if customIcon.trim()}
             <span class="symptom-custom-preview" aria-live="polite">
-              <IconRender icon={customIcon} size={20} />
+              <IconRender icon={customIcon} size={ICON_SIZE_MD} />
             </span>
           {/if}
         </label>
@@ -597,7 +598,7 @@
     justify-content: flex-end;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-fieldset {
       grid-template-columns: 1fr;
     }

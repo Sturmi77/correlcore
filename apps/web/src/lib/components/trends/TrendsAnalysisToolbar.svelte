@@ -79,7 +79,7 @@
     border-top: 1px solid var(--color-border);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .trends-toolbar {
       padding: var(--space-2);
       gap: var(--space-1);

@@ -253,7 +253,7 @@
   .symptom-trend__swatch {
     width: 0.75rem;
     height: 0.2rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
   }
 
   .symptom-trend__swatch--symptom {
@@ -264,7 +264,7 @@
     background: var(--color-metric-mood);
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-trend {
       padding: var(--space-2);
       gap: var(--space-1);

@@ -231,7 +231,7 @@
     font-weight: 600;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .app-settings__section {
       align-items: stretch;
       flex-direction: column;

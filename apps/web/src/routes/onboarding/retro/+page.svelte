@@ -120,11 +120,11 @@
     gap: 1rem;
     padding: 0.75rem;
     border: 1px solid var(--color-border-chart);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
   }
 
   .onboarding__day h2 {
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
   }
 
   .onboarding__moods,
@@ -136,7 +136,7 @@
   .onboarding__moods button {
     width: 2.75rem;
     height: 2.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
   }
@@ -154,7 +154,7 @@
     color: var(--color-error);
   }
 
-  @media (max-width: 430px) {
+  @media (max-width: 360px) {
     .onboarding__day {
       align-items: stretch;
       flex-direction: column;

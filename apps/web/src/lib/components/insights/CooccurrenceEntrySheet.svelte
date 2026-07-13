@@ -97,7 +97,7 @@
     min-height: 44px;
     border-radius: var(--radius-full);
     color: var(--color-text-muted);
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
   }
 
   .cooccurrence-history__list {

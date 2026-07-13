@@ -103,7 +103,7 @@
     }
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 360px) {
     .segmented-control__item {
       flex-basis: calc(50% - var(--space-1));
     }

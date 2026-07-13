@@ -83,7 +83,7 @@
   Outer shell: h-dvh + flex-col so auth-splash can fill the viewport.
   Inner <main> uses .page-shell (defined in app.css) which handles:
     - Safe-Area padding via env(safe-area-inset-*)
-    - max-width centering (--content-max-width: 640px)
+    - max-width centering (--content-max-width: 480px)
     - scroll container for page content
   Auth/loading states bypass page-shell intentionally (full-viewport splash).
 -->

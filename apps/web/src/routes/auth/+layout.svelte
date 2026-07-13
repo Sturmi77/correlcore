@@ -99,16 +99,16 @@
 
   .auth-card {
     width: 100%;
-    max-width: 420px;
+    max-width: 360px;
     padding: var(--space-8) var(--space-6);
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     background: color-mix(in oklch, var(--color-surface) 82%, transparent);
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(8px);
   }
 
   .auth-footer {
-    max-width: 420px;
+    max-width: 360px;
     text-align: center;
   }
 

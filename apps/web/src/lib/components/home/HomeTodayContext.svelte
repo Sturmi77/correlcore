@@ -118,7 +118,7 @@
     white-space: nowrap;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .home-today {
       flex-direction: column;
       align-items: stretch;

@@ -408,7 +408,7 @@
     font: inherit;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 480px) {
     .compare__header {
       flex-direction: column;
     }

@@ -387,7 +387,7 @@
   }
 
   .symptom-cooccurrence__sub {
-    font-size: 0.65rem;
+    font-size: var(--text-2xs);
     font-weight: 600;
     color: var(--color-text-muted);
     margin-top: 0.1rem;
@@ -426,7 +426,7 @@
     border-style: dashed;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .symptom-cooccurrence__grid {
       grid-template-columns: minmax(7rem, 8rem) repeat(var(--tag-count), minmax(3.25rem, 3.75rem));
       gap: var(--heatmap-matrix-gap-mobile);

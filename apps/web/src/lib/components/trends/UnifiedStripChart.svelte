@@ -398,7 +398,7 @@
 
   .strip__cell {
     cursor: pointer;
-    transition: opacity 120ms ease;
+    transition: opacity var(--transition-fast);
   }
 
   .strip__cell:hover {

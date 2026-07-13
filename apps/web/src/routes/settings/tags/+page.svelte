@@ -19,6 +19,7 @@
     type HabitType,
     type TagResponse,
   } from '$lib/api/tags';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { defaultTagColorForCurrentTheme } from '$lib/constants/tagDefaults';
   import { refreshTags } from '$lib/stores/tags';
 
@@ -367,7 +368,7 @@
                     style={tag.color ? `--tag-color: ${tag.color}` : ''}
                   >
                     {#if draft?.icon}
-                      <IconRender icon={draft.icon} size={18} />
+                      <IconRender icon={draft.icon} size={ICON_SIZE_MD} />
                     {:else}
                       <span aria-hidden="true">#</span>
                     {/if}
@@ -525,7 +526,7 @@
 
   .tag-settings__section {
     padding: 1rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
   }
@@ -585,14 +586,14 @@
   }
 
   .tag-settings__identity span {
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     opacity: 0.7;
   }
 
   .tag-settings__icon {
     width: 2rem;
     height: 2rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -617,7 +618,7 @@
   }
 
   .tag-settings__fields label span {
-    font-size: 0.72rem;
+    font-size: var(--text-2xs);
     opacity: 0.72;
   }
 
@@ -625,7 +626,7 @@
     width: 2.6rem;
     min-height: 2.35rem;
     border: 1px solid var(--color-border);
-    border-radius: 0.45rem;
+    border-radius: var(--radius-md);
     background: var(--color-surface);
     color: var(--color-text);
     padding: 0.15rem;
@@ -654,7 +655,7 @@
   }
 
   .tag-settings__create-form label span {
-    font-size: 0.72rem;
+    font-size: var(--text-2xs);
     opacity: 0.72;
   }
 
@@ -677,7 +678,7 @@
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .tag-settings__fields {
       grid-template-columns: 1fr;
     }
