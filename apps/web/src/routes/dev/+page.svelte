@@ -6,17 +6,38 @@
   import IconRender from '$lib/components/common/IconRender.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
-  import { fetchDevInfo, type DevInfoResponse } from '$lib/api/dev';
+  import {
+    createDevDbBackup,
+    fetchDevDbBackups,
+    fetchDevInfo,
+    fetchWorkerRuns,
+    fetchWorkerRunsLatest,
+    restoreDevDbBackup,
+    runDevInsightsOnce,
+    type DevDbBackupItem,
+    type DevInfoResponse,
+    type WorkerRunResponse,
+    type WorkerRunsLatestResponse,
+  } from '$lib/api/dev';
   import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
-  import { developerMode } from '$lib/stores/developerMode';
+  import { regenerateInsights } from '$lib/api/insights';
+  import { devMode } from '$lib/stores/devMode';
 
   const COMMIT_BASE_URL = 'https://github.com/sturmi77/correlcore/commit/';
   const REFRESH_MS = 30_000;
 
   let info: DevInfoResponse | null = null;
+  let latest: WorkerRunsLatestResponse | null = null;
+  let runs: WorkerRunResponse[] = [];
+  let backups: DevDbBackupItem[] = [];
+  let backupDir = '';
+  let backupsAvailable = false;
   let loading = true;
   let error = '';
   let backendUnavailable = false;
+  let actionBusy = '';
+  let actionMessage = '';
+  let actionError = '';
   let copied: 'commit' | 'digest' | null = null;
   let controller: AbortController | null = null;
   let interval: ReturnType<typeof setInterval> | null = null;
@@ -44,6 +65,39 @@
     return `${minutes}m`;
   }
 
+  function formatWhen(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString();
+    } catch {
+      return iso;
+    }
+  }
+
+  function formatBytes(size: number): string {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function resultPreview(run: WorkerRunResponse | null | undefined): string {
+    if (!run) return '—';
+    const r = run.result ?? {};
+    const parts: string[] = [];
+    if (typeof r.insight_count === 'number') parts.push(`insights=${r.insight_count}`);
+    if (typeof r.generated_insights === 'number') parts.push(`generated=${r.generated_insights}`);
+    if (typeof r.processed_users === 'number') parts.push(`users=${r.processed_users}`);
+    if (typeof r.failed_users === 'number' && r.failed_users > 0) {
+      parts.push(`failed=${r.failed_users}`);
+    }
+    if (typeof r.tag_clusters_status === 'string') parts.push(`clusters=${r.tag_clusters_status}`);
+    if (typeof r.deleted_unverified_accounts === 'number') {
+      parts.push(`cleanup_accounts=${r.deleted_unverified_accounts}`);
+    }
+    if (parts.length === 0) return JSON.stringify(r);
+    return parts.join(' · ');
+  }
+
   async function load(): Promise<void> {
     controller?.abort();
     controller = new AbortController();
@@ -52,13 +106,29 @@
     backendUnavailable = false;
     try {
       info = await fetchDevInfo(controller.signal);
+      const [latestResp, runsResp] = await Promise.all([
+        fetchWorkerRunsLatest(controller.signal),
+        fetchWorkerRuns({ limit: 20, signal: controller.signal }),
+      ]);
+      latest = latestResp;
+      runs = runsResp.items;
+      try {
+        const backupResp = await fetchDevDbBackups(controller.signal);
+        backups = backupResp.items;
+        backupDir = backupResp.backup_dir;
+        backupsAvailable = true;
+      } catch (backupErr) {
+        if (backupErr instanceof ApiError && backupErr.status === 404) {
+          backupsAvailable = false;
+        } else if (!(backupErr instanceof Error && backupErr.name === 'AbortError')) {
+          backupsAvailable = false;
+        }
+      }
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
       if (err instanceof ApiError && err.status === 404) {
-        // Only redirect when the developer mode store is NOT manually active.
-        // When the user enabled the toggle in Settings, stay on the page and
-        // show an informational notice instead of bouncing them back.
-        if (!get(developerMode)) {
+        // Soft-fail when Settings Developer Mode is unlocked.
+        if (!get(devMode)) {
           await goto('/');
           return;
         }
@@ -83,6 +153,20 @@
     copyTimer = setTimeout(() => {
       copied = null;
     }, 1800);
+  }
+
+  async function withAction(key: string, fn: () => Promise<void>): Promise<void> {
+    actionBusy = key;
+    actionMessage = '';
+    actionError = '';
+    try {
+      await fn();
+      await load();
+    } catch (err) {
+      actionError = err instanceof Error ? err.message : $_('dev.action_failed');
+    } finally {
+      actionBusy = '';
+    }
   }
 
   onMount(() => {
@@ -252,8 +336,174 @@
       </article>
     </section>
 
+    <section class="dev__panel" aria-label={$_('dev.workers.title')}>
+      <div class="dev__panel-head">
+        <h2>{$_('dev.workers.title')}</h2>
+        <div class="dev__actions">
+          <button
+            class="btn btn-sm variant-ghost-surface"
+            type="button"
+            disabled={!!actionBusy}
+            on:click={() =>
+              void withAction('regenerate', async () => {
+                const result = await regenerateInsights();
+                actionMessage = $_('dev.workers.regenerate_done', {
+                  values: { count: result.insight_count },
+                });
+              })}
+          >
+            {actionBusy === 'regenerate' ? $_('dev.workers.busy') : $_('dev.workers.regenerate_me')}
+          </button>
+          <button
+            class="btn btn-sm variant-filled-primary"
+            type="button"
+            disabled={!!actionBusy}
+            on:click={() =>
+              void withAction('fleet', async () => {
+                const result = await runDevInsightsOnce();
+                actionMessage = $_('dev.workers.fleet_done', {
+                  values: { count: result.generated_insights },
+                });
+              })}
+          >
+            {actionBusy === 'fleet' ? $_('dev.workers.busy') : $_('dev.workers.run_fleet')}
+          </button>
+        </div>
+      </div>
+      <p class="dev__muted">{$_('dev.workers.subtitle')}</p>
+      <div class="dev__grid dev__grid--cards">
+        {#each [{ key: 'daily_bundle', run: latest?.daily_bundle }, { key: 'fleet_insights', run: latest?.fleet_insights }, { key: 'user_insights', run: latest?.user_insights }] as card}
+          <article class="dev__card">
+            <h3>{$_(`dev.workers.card_${card.key}`)}</h3>
+            {#if card.run}
+              <dl class="dev__facts">
+                <div>
+                  <dt>{$_('dev.workers.status')}</dt>
+                  <dd>{card.run.status}</dd>
+                </div>
+                <div>
+                  <dt>{$_('dev.workers.trigger')}</dt>
+                  <dd>{card.run.trigger_source}</dd>
+                </div>
+                <div>
+                  <dt>{$_('dev.workers.finished')}</dt>
+                  <dd>{formatWhen(card.run.finished_at ?? card.run.started_at)}</dd>
+                </div>
+                <div>
+                  <dt>{$_('dev.workers.result')}</dt>
+                  <dd>{resultPreview(card.run)}</dd>
+                </div>
+              </dl>
+            {:else}
+              <p class="dev__muted">{$_('dev.workers.none')}</p>
+            {/if}
+          </article>
+        {/each}
+      </div>
+
+      <h3 class="dev__subheading">{$_('dev.workers.history')}</h3>
+      {#if runs.length === 0}
+        <p class="dev__muted">{$_('dev.workers.none')}</p>
+      {:else}
+        <div class="dev__table-wrap">
+          <table class="dev__table">
+            <thead>
+              <tr>
+                <th>{$_('dev.workers.when')}</th>
+                <th>{$_('dev.workers.kind')}</th>
+                <th>{$_('dev.workers.trigger')}</th>
+                <th>{$_('dev.workers.status')}</th>
+                <th>{$_('dev.workers.result')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each runs as run}
+                <tr>
+                  <td>{formatWhen(run.finished_at ?? run.started_at)}</td>
+                  <td>{run.job_kind}</td>
+                  <td>{run.trigger_source}</td>
+                  <td>{run.status}</td>
+                  <td>
+                    {resultPreview(run)}
+                    {#if run.error_message}
+                      <span class="dev__error-inline">{run.error_message}</span>
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {/if}
+    </section>
+
+    <section class="dev__panel" aria-label={$_('dev.db.title')}>
+      <div class="dev__panel-head">
+        <h2>{$_('dev.db.title')}</h2>
+        {#if backupsAvailable}
+          <button
+            class="btn btn-sm variant-filled-primary"
+            type="button"
+            disabled={!!actionBusy}
+            on:click={() =>
+              void withAction('dump', async () => {
+                const result = await createDevDbBackup();
+                actionMessage = result.message;
+              })}
+          >
+            {actionBusy === 'dump' ? $_('dev.workers.busy') : $_('dev.db.create')}
+          </button>
+        {/if}
+      </div>
+      {#if !backupsAvailable}
+        <p class="dev__muted">{$_('dev.db.unavailable')}</p>
+      {:else}
+        <p class="dev__muted">{$_('dev.db.subtitle', { values: { dir: backupDir } })}</p>
+        <p class="dev__muted">{$_('dev.db.encryption_note')}</p>
+        {#if backups.length === 0}
+          <p class="dev__muted">{$_('dev.db.empty')}</p>
+        {:else}
+          <ul class="dev__backup-list">
+            {#each backups as backup}
+              <li>
+                <div>
+                  <strong>{backup.name}</strong>
+                  <span class="dev__subtle">
+                    {formatBytes(backup.size_bytes)} · {formatWhen(backup.created_at)}
+                  </span>
+                </div>
+                <button
+                  class="btn btn-sm variant-ghost-surface"
+                  type="button"
+                  disabled={!!actionBusy}
+                  on:click={() => {
+                    if (!confirm($_('dev.db.restore_confirm', { values: { name: backup.name } }))) {
+                      return;
+                    }
+                    void withAction(`restore:${backup.name}`, async () => {
+                      const result = await restoreDevDbBackup(backup.name);
+                      actionMessage = result.message;
+                    });
+                  }}
+                >
+                  {$_('dev.db.restore')}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      {/if}
+    </section>
+
+    {#if actionMessage}
+      <p class="dev__ok-msg" role="status">{actionMessage}</p>
+    {/if}
+    {#if actionError}
+      <p class="dev__panel--error" role="alert">{actionError}</p>
+    {/if}
+
     <p class="dev__footer">
-      {$_('dev.auto_refresh')} <code>/api/v1/dev/info</code>.
+      {$_('dev.auto_refresh')} <code>/api/v1/dev/*</code>.
       {#if copied === 'commit'}
         {$_('dev.commit_copied')}{/if}
     </p>
@@ -278,6 +528,12 @@
     gap: 1rem;
   }
 
+  .dev__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
   .dev__intro {
     display: flex;
     flex-direction: column;
@@ -285,7 +541,9 @@
   }
 
   .dev__intro h1,
-  .dev__panel h2 {
+  .dev__panel h2,
+  .dev__card h3,
+  .dev__subheading {
     margin: 0;
   }
 
@@ -309,7 +567,8 @@
   }
 
   .dev__hero,
-  .dev__panel {
+  .dev__panel,
+  .dev__card {
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     border: 1px solid var(--color-border-chart);
@@ -362,11 +621,22 @@
     gap: 1rem;
   }
 
+  .dev__grid--cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .dev__panel {
     padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .dev__card {
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
   }
 
   .dev__panel--error {
@@ -463,16 +733,71 @@
     font-size: var(--text-sm);
   }
 
+  .dev__table-wrap {
+    overflow-x: auto;
+  }
+
+  .dev__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+
+  .dev__table th,
+  .dev__table td {
+    text-align: left;
+    padding: 0.45rem 0.35rem;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+
+  .dev__error-inline {
+    display: block;
+    color: var(--color-error);
+    margin-top: 0.25rem;
+  }
+
+  .dev__backup-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .dev__backup-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .dev__backup-list strong {
+    display: block;
+  }
+
+  .dev__ok-msg {
+    margin: 0;
+    color: var(--color-success);
+  }
+
   @media (max-width: 768px) {
     .dev {
       padding: 1rem;
     }
 
-    .dev__grid {
+    .dev__grid,
+    .dev__grid--cards {
       grid-template-columns: 1fr;
     }
 
     .dev__hero {
+      align-items: flex-start;
+    }
+
+    .dev__panel-head {
+      flex-direction: column;
       align-items: flex-start;
     }
   }
