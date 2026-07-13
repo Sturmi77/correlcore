@@ -74,12 +74,12 @@ insights for rare tags; raising it delays first insights for sparse taggers.
 
 ### Tag clusters — `tag_cluster_service.py`
 
-| Constant                      | Value | Role                              |
-| ----------------------------- | ----- | --------------------------------- |
-| `MIN_TAG_CLUSTER_PAIR_ENTRIES`     | 30    | Pair-based tag groups (Jaccard pairs) |
-| `MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES` | 45 | Provisional k-means (`k ≤ 3`)      |
-| `MIN_TAG_CLUSTER_ROBUST_ENTRIES`   | 90    | Full k-means (mixed nodes)            |
-| `MIN_TAG_CLUSTER_ACTIVE_TAGS`      | 5     | Active tag/symptom diversity        |
+| Constant                              | Value | Role                                  |
+| ------------------------------------- | ----- | ------------------------------------- |
+| `MIN_TAG_CLUSTER_PAIR_ENTRIES`        | 30    | Pair-based tag groups (Jaccard pairs) |
+| `MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES` | 45    | Provisional k-means (`k ≤ 3`)         |
+| `MIN_TAG_CLUSTER_ROBUST_ENTRIES`      | 90    | Full k-means (mixed nodes)            |
+| `MIN_TAG_CLUSTER_ACTIVE_TAGS`         | 5     | Active tag/symptom diversity          |
 
 > **M10.1 addendum (ADR-0037):** The former single gate `MIN_TAG_CLUSTER_ENTRIES = 90`
 > applied ML validity thresholds to descriptive Jaccard/k-means clustering. Tag groups

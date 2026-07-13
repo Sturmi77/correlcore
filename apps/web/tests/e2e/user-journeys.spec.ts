@@ -438,7 +438,15 @@ async function installJourneyApi(
                   label: 'Tag group 1',
                   cluster_kind: 'tags_only',
                   strength: 0.72,
-                  tags: [{ tag_id: 'tag-1', slug: 'sport', name: 'Sport', category: 'sport', color: null }],
+                  tags: [
+                    {
+                      tag_id: 'tag-1',
+                      slug: 'sport',
+                      name: 'Sport',
+                      category: 'sport',
+                      color: null,
+                    },
+                  ],
                   members: [],
                 },
               ]

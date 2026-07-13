@@ -685,27 +685,27 @@ Bei Code-Änderung: hier **und** an der Detailstelle (§4) nachführen.
 
 ### Engine / Bivariate / Weekday
 
-| Konstante                  | Wert | Datei               |
-| -------------------------- | ---- | ------------------- |
-| `MIN_WEEKDAY_ENTRIES`      | 7    | `insight_engine.py` |
-| `MIN_WEEKDAY_DELTA`        | 0.5  | `insight_engine.py` |
-| `MIN_BIVARIATE_ENTRIES`    | 15   | `insight_engine.py` |
-| `MIN_TAG_GROUP_SIZE`       | 2    | `insight_engine.py` |
-| `MIN_ABS_EFFECT_SIZE`      | 0.25 | `insight_engine.py` |
+| Konstante               | Wert | Datei               |
+| ----------------------- | ---- | ------------------- |
+| `MIN_WEEKDAY_ENTRIES`   | 7    | `insight_engine.py` |
+| `MIN_WEEKDAY_DELTA`     | 0.5  | `insight_engine.py` |
+| `MIN_BIVARIATE_ENTRIES` | 15   | `insight_engine.py` |
+| `MIN_TAG_GROUP_SIZE`    | 2    | `insight_engine.py` |
+| `MIN_ABS_EFFECT_SIZE`   | 0.25 | `insight_engine.py` |
 
 ### Tag-Gruppen-Reifegrad (deskriptiv) — `tag_cluster_service.py` (ADR-0037)
 
-| Konstante | Wert | `cluster_maturity` | `cluster_mode` |
-| --------- | ---- | ------------------ | -------------- |
-| `MIN_TAG_CLUSTER_PAIR_ENTRIES` | 30 | `early` | `pair` |
-| `MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES` | 45 | `provisional` | `kmeans` |
-| `MIN_TAG_CLUSTER_ROBUST_ENTRIES` | 90 | `robust` | `kmeans` |
+| Konstante                             | Wert | `cluster_maturity` | `cluster_mode` |
+| ------------------------------------- | ---- | ------------------ | -------------- |
+| `MIN_TAG_CLUSTER_PAIR_ENTRIES`        | 30   | `early`            | `pair`         |
+| `MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES` | 45   | `provisional`      | `kmeans`       |
+| `MIN_TAG_CLUSTER_ROBUST_ENTRIES`      | 90   | `robust`           | `kmeans`       |
 
 Unabhängig von `insight_maturity.phase`: Tag-Gruppen sind **deskriptiv** (keine
 Insight-Cards). Inferenzieller `weekday_pattern` bleibt bei `MIN_WEEKDAY_DELTA = 0.5`.
 Deskriptive Home-Wochentags-Balken (`weekday_summary`, Paket C) sind ebenfalls getrennt.
-| `FDR_ALPHA`                | 0.05 | `insight_engine.py` |
-| `ANALYTICS_MIN_TAG_USAGES` | 10   | `config.py`         |
+| `FDR_ALPHA` | 0.05 | `insight_engine.py` |
+| `ANALYTICS_MIN_TAG_USAGES` | 10 | `config.py` |
 
 ### Symptom-Analytics — `symptom_analytics.py`
 

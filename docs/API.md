@@ -1382,12 +1382,12 @@ Milestones.
 mit Entry-/Signal-Zaehlern oder `status: "ok"` mit Clustern unter der neutralen
 Semantik "Tags that often appear together". Reifegrad-Stufen (ADR-0037):
 
-| Tage | `cluster_maturity` | `cluster_mode` |
-| ---- | ------------------ | -------------- |
-| &lt; 30 | — (`insufficient_data`) | — |
-| 30–44 | `early` | `pair` |
-| 45–89 | `provisional` | `kmeans` (Fallback `pair`) |
-| ≥ 90 | `robust` | `kmeans` (mixed tag/symptom) |
+| Tage    | `cluster_maturity`      | `cluster_mode`               |
+| ------- | ----------------------- | ---------------------------- |
+| &lt; 30 | — (`insufficient_data`) | —                            |
+| 30–44   | `early`                 | `pair`                       |
+| 45–89   | `provisional`           | `kmeans` (Fallback `pair`)   |
+| ≥ 90    | `robust`                | `kmeans` (mixed tag/symptom) |
 
 Zusaetzliche Felder: `cluster_maturity`, `cluster_mode`, `entries_until_robust`,
 `silhouette_score`, `window_days` (effektive Tage im Fenster).
