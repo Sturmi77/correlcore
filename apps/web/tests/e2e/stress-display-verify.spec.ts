@@ -132,9 +132,9 @@ test('home stress bars use inverted widths (lower stress = wider bar)', async ({
   const rowData = await page.locator('.daily-brief__work-context-row').evaluateAll((rows) =>
     rows.map((row) => ({
       highlight: row.getAttribute('data-highlight'),
-      metricColor: (row.querySelector('.daily-brief__work-context-bar') as HTMLElement)?.style.getPropertyValue(
-        '--bar-metric-color'
-      ),
+      metricColor: (
+        row.querySelector('.daily-brief__work-context-bar') as HTMLElement
+      )?.style.getPropertyValue('--bar-metric-color'),
       barColor: getComputedStyle(
         row.querySelector('.daily-brief__work-context-bar') as Element
       ).getPropertyValue('--bar-color'),
