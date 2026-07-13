@@ -634,7 +634,7 @@
   }
   .insight-card__explore:hover,
   .insight-card__explore:focus-visible {
-    background: var(--color-surface-muted, var(--color-strip-track-bg));
+    background: var(--color-strip-track-bg);
     outline: none;
   }
   .insight-card__explore:focus-visible {

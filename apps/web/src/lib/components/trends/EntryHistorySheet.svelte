@@ -125,7 +125,7 @@
   .entry-history__backdrop {
     position: absolute;
     inset: 0;
-    background: oklch(0 0 0 / 0.48);
+    background: var(--color-scrim);
   }
 
   .entry-history__panel {

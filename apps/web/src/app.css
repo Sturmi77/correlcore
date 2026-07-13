@@ -13,6 +13,8 @@
   --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
   --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+  --text-2xs: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+  --text-2xl: clamp(1.35rem, 1.1rem + 1vw, 1.75rem);
 
   /* Icon scale (ISP-9) — values are the dominant size in each real cluster
      found across lucide-svelte size={} usage (14/16 -> sm, 18/20/22 -> md),
@@ -57,6 +59,9 @@
 
   /* Transitions */
   --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-sheet: 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  --tap-target: 44px;
 
   /* -------------------------------------------------------------------------
    * Layout-Tokens (Fix 1: Safe-Area + page-shell)
@@ -65,6 +70,7 @@
   --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
   --page-padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
   --content-max-width: 640px;
+  --app-header-height: 3.5rem;
   --app-nav-height: 4.25rem;
   --app-nav-width: 5.75rem;
 }
@@ -86,6 +92,7 @@
   --color-surface-2: #2c2925;
   --color-muted: #a8a39c;
   --color-border: #3a352f;
+  --color-scrim: oklch(0 0 0 / 0.48);
 
   /* Erweiterte Surface-Ebenen */
   --color-surface-offset: #1d1c1a;
@@ -158,6 +165,7 @@
   --color-surface-2: #f1efe9;
   --color-muted: #6b6660;
   --color-border: #d8d3cb;
+  --color-scrim: oklch(0.2 0.01 80 / 0.35);
 
   /* Erweiterte Surface-Ebenen */
   --color-surface-offset: #f3f0ec;
@@ -230,6 +238,7 @@
     --color-surface-2: #2c2925;
     --color-muted: #a8a39c;
     --color-border: #3a352f;
+    --color-scrim: oklch(0 0 0 / 0.48);
     --color-surface-offset: #1d1c1a;
     --color-surface-dynamic: #2d2c2a;
     --color-text: #cdccca;

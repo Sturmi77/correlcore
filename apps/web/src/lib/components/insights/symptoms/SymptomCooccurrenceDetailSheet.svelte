@@ -126,7 +126,7 @@
     position: absolute;
     inset: 0;
     border: none;
-    background: color-mix(in srgb, var(--color-surface-inverse, #000) 45%, transparent);
+    background: color-mix(in srgb, var(--color-scrim) 45%, transparent);
     cursor: pointer;
   }
 

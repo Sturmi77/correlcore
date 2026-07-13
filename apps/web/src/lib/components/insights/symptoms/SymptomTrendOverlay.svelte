@@ -216,11 +216,11 @@
   }
 
   .symptom-trend__line--mood {
-    stroke: var(--color-mood-primary, var(--color-primary));
+    stroke: var(--color-metric-mood);
   }
 
   .symptom-trend__ribbon {
-    fill: oklch(from var(--color-mood-primary, var(--color-primary)) l c h / 0.18);
+    fill: oklch(from var(--color-metric-mood) l c h / 0.18);
     stroke: none;
   }
 
@@ -261,7 +261,7 @@
   }
 
   .symptom-trend__swatch--mood {
-    background: var(--color-mood-primary, var(--color-primary));
+    background: var(--color-metric-mood);
   }
 
   @media (max-width: 520px) {

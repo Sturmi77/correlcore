@@ -357,7 +357,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
-    background: var(--color-surface-muted, var(--color-strip-track-bg));
+    background: var(--color-strip-track-bg);
     border-radius: var(--radius-md, 8px);
     padding: 2px;
   }
