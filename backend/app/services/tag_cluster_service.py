@@ -343,7 +343,9 @@ def _build_pair_clusters(
         if left_id in used_tags or right_id in used_tags:
             continue
         used_tags.update({left_id, right_id})
-        ordered_cluster_ids = sorted([left_id, right_id], key=lambda tag_id: tags_by_id[tag_id].slug)
+        ordered_cluster_ids = sorted(
+            [left_id, right_id], key=lambda tag_id: tags_by_id[tag_id].slug
+        )
         members = [
             _member_from_node(
                 SignalNode(

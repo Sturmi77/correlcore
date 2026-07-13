@@ -1,4 +1,5 @@
 import type { DashboardSummaryResponse } from '$lib/api/dashboard';
+import type { EntryResponse } from '$lib/api/entries';
 import type { HabitStatsResponse } from '$lib/api/habits';
 import type {
   InsightMaturity,
