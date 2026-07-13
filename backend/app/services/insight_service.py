@@ -22,9 +22,8 @@ from app.services.stats_service import (
     _cooccurrence_window,
     cooccurrence_range_to_timeseries,
     get_timeseries,
-    list_symptom_presence_dates,
     list_historical_tag_presence_dates_by_slug,
-    list_tag_presence_dates_by_slug,
+    list_symptom_presence_dates,
 )
 
 DEFAULT_INSIGHT_LIST_LIMIT = 50
