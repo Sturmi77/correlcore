@@ -178,4 +178,33 @@ describe('TagCooccurrenceHeatmap', () => {
     expect(handler).toHaveBeenCalledOnce();
     expect(handler.mock.calls[0][0].detail).toEqual({ range: '1y' });
   });
+
+  it('collapses and expands axes with density controls', async () => {
+    render(TagCooccurrenceHeatmap, {
+      props: { data, loading: false, range: '90d' },
+    });
+
+    const status = screen.getByTestId('tag-cooccurrence-density-status');
+    expect(status.textContent).toContain('"visible":6');
+    expect(status.textContent).toContain('"total":6');
+
+    const decrease = screen.getByTestId('tag-cooccurrence-density-decrease');
+    await fireEvent.click(decrease);
+    expect(screen.getByTestId('tag-cooccurrence-density-status').textContent).toContain(
+      '"visible":5'
+    );
+
+    // Shrink to minimum (4)
+    await fireEvent.click(decrease);
+    expect(screen.getByTestId('tag-cooccurrence-density-status').textContent).toContain(
+      '"visible":4'
+    );
+    expect(decrease.hasAttribute('disabled')).toBe(true);
+
+    const increase = screen.getByTestId('tag-cooccurrence-density-increase');
+    await fireEvent.click(increase);
+    expect(screen.getByTestId('tag-cooccurrence-density-status').textContent).toContain(
+      '"visible":5'
+    );
+  });
 });

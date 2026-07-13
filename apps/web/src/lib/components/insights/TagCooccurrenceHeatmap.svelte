@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TagCooccurrenceRange, TagCooccurrenceResponse } from '$lib/api/insights';
   import type { CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
@@ -8,7 +8,13 @@
     cooccurrenceIntensityLevel,
     orderTagCooccurrenceMatrix,
   } from '$lib/utils/tagCooccurrenceMatrix';
-  import { pruneTagCooccurrenceMatrix } from '$lib/utils/heatmapPruning';
+  import {
+    clampCooccurrenceVisibleCount,
+    COOCCURRENCE_MIN_VISIBLE,
+    defaultCooccurrenceVisibleCount,
+    pruneTagCooccurrenceMatrix,
+    sliceSquareMatrixByTopStrength,
+  } from '$lib/utils/heatmapPruning';
   import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
 
   export let data: TagCooccurrenceResponse | null = null;
@@ -34,14 +40,50 @@
   }>();
 
   const rangeOptions: TagCooccurrenceRange[] = ['30d', '90d', '1y'];
+  const COMPACT_QUERY = '(max-width: 480px)';
 
   let focusedKey: string | null = null;
+  let compactViewport = false;
+  let visibleCount = 0;
+  let densitySignature = '';
+  let media: MediaQueryList | null = null;
+
+  function syncCompact(): void {
+    compactViewport = media?.matches ?? false;
+  }
+
+  onMount(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    media = window.matchMedia(COMPACT_QUERY);
+    syncCompact();
+    media.addEventListener('change', syncCompact);
+  });
+
+  onDestroy(() => {
+    media?.removeEventListener('change', syncCompact);
+  });
 
   $: rawMatrix = data ? buildTagCooccurrenceMatrix(data.pairs) : { tags: [], counts: [] };
   $: orderedMatrix = orderTagCooccurrenceMatrix(rawMatrix, sortMode);
-  $: matrix = pruneSparseAxes
+  $: prunedMatrix = pruneSparseAxes
     ? pruneTagCooccurrenceMatrix(orderedMatrix.tags, orderedMatrix.counts)
     : orderedMatrix;
+  $: totalAxes = prunedMatrix.tags.length;
+  $: nextDensitySignature = `${data?.start_date ?? ''}:${data?.end_date ?? ''}:${data?.pairs.length ?? 0}:${sortMode}:${pruneSparseAxes}:${compactViewport}:${totalAxes}`;
+  $: if (nextDensitySignature !== densitySignature) {
+    densitySignature = nextDensitySignature;
+    visibleCount = defaultCooccurrenceVisibleCount(totalAxes, compactViewport);
+  }
+  $: effectiveVisible = clampCooccurrenceVisibleCount(visibleCount, totalAxes);
+  $: sliced = sliceSquareMatrixByTopStrength(
+    prunedMatrix.tags,
+    prunedMatrix.counts,
+    effectiveVisible
+  );
+  $: matrix = { tags: sliced.tags, counts: sliced.counts };
+  $: showDensityControls = totalAxes > COOCCURRENCE_MIN_VISIBLE;
+  $: canDecreaseDensity = effectiveVisible > Math.min(COOCCURRENCE_MIN_VISIBLE, totalAxes);
+  $: canIncreaseDensity = effectiveVisible < totalAxes;
   $: maxCount = matrix.counts.flat().reduce((peak, count) => Math.max(peak, count), 0);
   $: hasEnoughPairs = (data?.pairs.length ?? 0) >= minPairsForDisplay;
   $: showSkeleton = loading && !data;
@@ -67,6 +109,14 @@
   function toggleSortMode(): void {
     const next = sortMode === 'alphabetical' ? 'clustered' : 'alphabetical';
     dispatch('sortModeChange', { sortMode: next });
+  }
+
+  function decreaseDensity(): void {
+    visibleCount = clampCooccurrenceVisibleCount(effectiveVisible - 1, totalAxes);
+  }
+
+  function increaseDensity(): void {
+    visibleCount = clampCooccurrenceVisibleCount(effectiveVisible + 1, totalAxes);
   }
 
   function focusCell(key: string): void {
@@ -164,6 +214,41 @@
       {/if}
     </div>
   </div>
+
+  {#if showDensityControls && data && hasEnoughPairs && totalAxes > 0}
+    <div
+      class="cooccurrence__density"
+      role="group"
+      aria-label={$_('insights.cooccurrence.density_label')}
+      data-testid="tag-cooccurrence-density"
+    >
+      <button
+        type="button"
+        class="cooccurrence__density-btn"
+        data-testid="tag-cooccurrence-density-decrease"
+        aria-label={$_('insights.cooccurrence.density_decrease')}
+        disabled={!canDecreaseDensity}
+        on:click={decreaseDensity}
+      >
+        −
+      </button>
+      <span class="cooccurrence__density-status" data-testid="tag-cooccurrence-density-status">
+        {$_('insights.cooccurrence.density_showing', {
+          values: { visible: effectiveVisible, total: totalAxes },
+        })}
+      </span>
+      <button
+        type="button"
+        class="cooccurrence__density-btn"
+        data-testid="tag-cooccurrence-density-increase"
+        aria-label={$_('insights.cooccurrence.density_increase')}
+        disabled={!canIncreaseDensity}
+        on:click={increaseDensity}
+      >
+        +
+      </button>
+    </div>
+  {/if}
 
   {#if showSkeleton}
     <div
@@ -301,6 +386,43 @@
   .cooccurrence__range--active {
     background: var(--color-primary-highlight);
     color: var(--color-primary) !important;
+  }
+
+  .cooccurrence__density {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    align-self: flex-start;
+  }
+
+  .cooccurrence__density-btn {
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-primary);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .cooccurrence__density-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .cooccurrence__density-status {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-text-muted);
+    min-width: 4.5rem;
+    text-align: center;
   }
 
   .cooccurrence__scroller {
@@ -461,6 +583,11 @@
     .cooccurrence__empty {
       flex-direction: column;
       align-items: stretch;
+    }
+
+    .cooccurrence__density {
+      align-self: stretch;
+      justify-content: space-between;
     }
 
     .cooccurrence__grid {

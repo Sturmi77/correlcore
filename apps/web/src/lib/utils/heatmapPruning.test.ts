@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clampCooccurrenceVisibleCount,
+  defaultCooccurrenceVisibleCount,
   pruneHeatmapAxes,
   pruneHeatmapDates,
   pruneHeatmapRows,
   pruneTagCooccurrenceMatrix,
+  sliceAxisIdsByTopStrength,
+  sliceSquareMatrixByTopStrength,
 } from './heatmapPruning';
 
 describe('heatmapPruning', () => {
@@ -59,5 +63,46 @@ describe('heatmapPruning', () => {
       [0, 2],
       [2, 0],
     ]);
+  });
+
+  it('slices square matrix to strongest axes while preserving order', () => {
+    const tags = [
+      { tag_id: 'weak', name: 'Weak' },
+      { tag_id: 'strong', name: 'Strong' },
+      { tag_id: 'mid', name: 'Mid' },
+    ];
+    const counts = [
+      [0, 1, 0],
+      [1, 0, 5],
+      [0, 5, 0],
+    ];
+    const sliced = sliceSquareMatrixByTopStrength(tags, counts, 2);
+    expect(sliced.totalAxes).toBe(3);
+    expect(sliced.visibleAxes).toBe(2);
+    // Strongest: strong (6), mid (5); preserve original order → strong, mid
+    expect(sliced.tags.map((tag) => tag.tag_id)).toEqual(['strong', 'mid']);
+    expect(sliced.counts).toEqual([
+      [0, 5],
+      [5, 0],
+    ]);
+  });
+
+  it('clamps density defaults for compact viewports', () => {
+    expect(defaultCooccurrenceVisibleCount(20, false)).toBe(20);
+    expect(defaultCooccurrenceVisibleCount(20, true)).toBe(8);
+    expect(defaultCooccurrenceVisibleCount(3, true)).toBe(3);
+    expect(clampCooccurrenceVisibleCount(1, 10)).toBe(4);
+    expect(clampCooccurrenceVisibleCount(99, 6)).toBe(6);
+  });
+
+  it('slices rectangular axis ids by profile strength', () => {
+    const profiles = new Map<string, number[]>([
+      ['a', [0.1, 0]],
+      ['b', [0.9, 0.8]],
+      ['c', [0.2, 0.1]],
+    ]);
+    const sliced = sliceAxisIdsByTopStrength(['a', 'b', 'c'], profiles, 2);
+    expect(sliced.ids).toEqual(['b', 'c']);
+    expect(sliced.visibleAxes).toBe(2);
   });
 });
