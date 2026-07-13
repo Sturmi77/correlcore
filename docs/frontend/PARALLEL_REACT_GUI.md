@@ -134,12 +134,12 @@ The proxy pattern is the **recommended default** for CorrelCore (see [ADR-0011](
 
 #### Architecture trade-offs
 
-| Drawback                               | Description                                                                                                                                                                                                     |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Drawback                               | Description                                                                                                                                                                                                                                                                             |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Separate origins in parallel dev**   | `:5173` and `:5174` are different **origins** for CORS/JS, but HttpOnly cookies are **host-scoped** (no `Domain`, path `/api`) — a login on one `localhost` port is visible to the other when paths match. Use `127.0.0.1` vs `localhost` consistently; those are separate cookie jars. |
-| **Single `FRONTEND_BASE_URL`**         | Email verify/reset links point to one canonical URL (default `:5173`). The React GUI on `:5174` does not receive those links unless auth routes are implemented there and the env var is switched.              |
-| **No benefit for non-browser clients** | Mobile apps, external tools, or Capacitor with bearer tokens talk to the API directly anyway ([ADR-0006](../adr/0006-cookie-auth-mit-capacitor-migration.md)). The web proxy does not help those clients.       |
-| **ADR-0011 assumes one entry point**   | Production design is one public web origin with internal API. Running two production frontends requires infra changes (second compose service, Traefik route) — parallel ports are for **dev/evaluation only**. |
+| **Single `FRONTEND_BASE_URL`**         | Email verify/reset links point to one canonical URL (default `:5173`). The React GUI on `:5174` does not receive those links unless auth routes are implemented there and the env var is switched.                                                                                      |
+| **No benefit for non-browser clients** | Mobile apps, external tools, or Capacitor with bearer tokens talk to the API directly anyway ([ADR-0006](../adr/0006-cookie-auth-mit-capacitor-migration.md)). The web proxy does not help those clients.                                                                               |
+| **ADR-0011 assumes one entry point**   | Production design is one public web origin with internal API. Running two production frontends requires infra changes (second compose service, Traefik route) — parallel ports are for **dev/evaluation only**.                                                                         |
 
 #### Operations trade-offs
 
@@ -167,14 +167,14 @@ Calling `http://localhost:8000/api/v1` directly from the browser avoids the prox
 
 ## Authentication and Cookies
 
-| Aspect            | Behavior                                                                      |
-| ----------------- | ----------------------------------------------------------------------------- |
-| Mechanism         | HttpOnly cookies (`access_token`, `refresh_token`)                            |
-| SameSite          | `strict` — requires same-origin proxy                                         |
-| Cookie path       | `/api` (access), `/api/v1/auth/refresh` (refresh)                             |
-| Secure flag       | Off in `APP_ENV=development`, on in production                                |
-| Cookie scope        | Host + path (`/api`) — **not port-scoped**; `localhost:5173` and `localhost:5174` share cookies when the proxy path matches |
-| Origins (CORS/JS)   | `:5173` and `:5174` are different origins — separate `localStorage`, service workers, and JS context                        |
+| Aspect            | Behavior                                                                                                                    |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Mechanism         | HttpOnly cookies (`access_token`, `refresh_token`)                                                                          |
+| SameSite          | `strict` — requires same-origin proxy                                                                                       |
+| Cookie path       | `/api` (access), `/api/v1/auth/refresh` (refresh)                                                                           |
+| Secure flag       | Off in `APP_ENV=development`, on in production                                                                              |
+| Cookie scope      | Host + path (`/api`) — **not port-scoped**; `localhost:5173` and `localhost:5174` share cookies when the proxy path matches |
+| Origins (CORS/JS) | `:5173` and `:5174` are different origins — separate `localStorage`, service workers, and JS context                        |
 
 Reference implementation: [`apps/web/src/lib/api/client.ts`](../../apps/web/src/lib/api/client.ts)
 

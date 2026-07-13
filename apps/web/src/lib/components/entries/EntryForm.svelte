@@ -363,11 +363,7 @@
         selectedSymptoms = [];
         hydratedSymptoms = [];
       }
-      if (
-        canUseOfflineSync() &&
-        tagsRes.status === 'fulfilled' &&
-        symRes.status === 'fulfilled'
-      ) {
+      if (canUseOfflineSync() && tagsRes.status === 'fulfilled' && symRes.status === 'fulfilled') {
         await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
       }
       loadedEntryDate = date;

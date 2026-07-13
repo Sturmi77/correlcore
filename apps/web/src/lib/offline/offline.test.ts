@@ -4,9 +4,7 @@ import { appendChange, getLastAppliedSeq, listPendingChanges } from './changeLog
 import { CLIENT_ID_STORAGE_KEY, getOrCreateClientId } from './clientId';
 import { getOfflineDb, resetOfflineDbForTests } from './db';
 import { isOfflineSyncEnabled } from './featureFlag';
-import {
-  applyPulledEntry,
-} from '$lib/stores/entriesOffline';
+import { applyPulledEntry } from '$lib/stores/entriesOffline';
 import {
   clearOfflineDataForAnonymousSession,
   prepareOfflineDataForAuthenticatedUser,

@@ -29,10 +29,7 @@
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
-  import {
-    findLocalEntryByDateSlot,
-    localEntryToEntryResponse,
-  } from '$lib/stores/entriesOffline';
+  import { findLocalEntryByDateSlot, localEntryToEntryResponse } from '$lib/stores/entriesOffline';
   import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
   import { selectNewestWeekdayPattern } from '$lib/utils/homeWeekdayOverview';
   import { shiftIsoDate } from '$lib/utils/streak';
