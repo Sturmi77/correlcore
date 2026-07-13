@@ -25,6 +25,7 @@
   import { tags, tagsByCategory, refreshTags, submitTag } from '$lib/stores/tags';
   import { TAG_CATEGORIES, MAX_TAGS_PER_ENTRY, type TagCategory } from '$lib/api/tags';
   import IconRender from '$lib/components/common/IconRender.svelte';
+  import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
 
   /** Two-way bound: list of selected tag IDs. */
   export let selected: string[] = [];
@@ -195,7 +196,7 @@
             >
               {#if tag.icon}
                 <span class="tag-icon" aria-hidden="true">
-                  <IconRender icon={tag.icon} size={16} />
+                  <IconRender icon={tag.icon} size={ICON_SIZE_SM} />
                 </span>
               {/if}
               <span class="tag-name">{tag.name}</span>
@@ -296,7 +297,7 @@
             aria-live="polite"
           >
             {#if customIcon.trim()}
-              <IconRender icon={customIcon} size={16} />
+              <IconRender icon={customIcon} size={ICON_SIZE_SM} />
             {/if}
             {customName || $_('tag.custom.preview')}
           </span>

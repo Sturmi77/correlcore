@@ -11,6 +11,7 @@
     TimeseriesPoint,
     TimeseriesRange,
   } from '$lib/api/stats';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { buildMobileTrendsSummary } from '$lib/utils/mobileTrendsSummary';
 
   export let points: TimeseriesPoint[] = [];
@@ -66,11 +67,11 @@
       <article class="mobile-summary__card mobile-summary__card--movement">
         <div class="mobile-summary__label">
           {#if summary.movement?.delta && summary.movement.delta > 0}
-            <TrendingUp size={18} aria-hidden="true" />
+            <TrendingUp size={ICON_SIZE_MD} aria-hidden="true" />
           {:else if summary.movement?.delta && summary.movement.delta < 0}
-            <TrendingDown size={18} aria-hidden="true" />
+            <TrendingDown size={ICON_SIZE_MD} aria-hidden="true" />
           {:else}
-            <Minus size={18} aria-hidden="true" />
+            <Minus size={ICON_SIZE_MD} aria-hidden="true" />
           {/if}
           <span>{$_('trends.mobile.movement')}</span>
         </div>
@@ -92,7 +93,7 @@
 
       <article class="mobile-summary__card">
         <div class="mobile-summary__label">
-          <Tag size={18} aria-hidden="true" /><span>{$_('trends.mobile.tag')}</span>
+          <Tag size={ICON_SIZE_MD} aria-hidden="true" /><span>{$_('trends.mobile.tag')}</span>
         </div>
         {#if summary.tag}
           <strong>{summary.tag.name}</strong>
@@ -108,7 +109,7 @@
 
       <article class="mobile-summary__card">
         <div class="mobile-summary__label">
-          <Activity size={18} aria-hidden="true" /><span>{$_('trends.mobile.symptom')}</span>
+          <Activity size={ICON_SIZE_MD} aria-hidden="true" /><span>{$_('trends.mobile.symptom')}</span>
         </div>
         {#if summary.symptom}
           <strong>{summary.symptom.name}</strong>

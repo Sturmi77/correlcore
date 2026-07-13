@@ -5,6 +5,7 @@
   import House from 'lucide-svelte/icons/house';
   import Lightbulb from 'lucide-svelte/icons/lightbulb';
   import Settings from 'lucide-svelte/icons/settings';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { isNavItemActive, NAV_ITEMS, type NavItemConfig } from '$lib/navigation/appNav';
 
   const ICONS: Record<NavItemConfig['icon'], typeof House> = {
@@ -30,7 +31,7 @@
           aria-current={active ? 'page' : undefined}
           aria-label={$_(item.labelKey)}
         >
-          <Icon size={22} strokeWidth={active ? 2.25 : 2} aria-hidden="true" />
+          <Icon size={ICON_SIZE_MD} strokeWidth={active ? 2.25 : 2} aria-hidden="true" />
           <span class="app-nav__label">{$_(item.labelKey)}</span>
         </a>
       </li>
