@@ -41,12 +41,6 @@ export const ENTRY_METRICS: Record<EntryMetricField, MetricDefinition> = {
     scaleMax: ENTRY_CONTRACT.metrics.stress.max,
     invert: ENTRY_CONTRACT.metrics.stress.invert,
   },
-  sleep_quality: {
-    field: 'sleep_quality',
-    scaleMin: ENTRY_CONTRACT.metrics.sleep_quality.min,
-    scaleMax: ENTRY_CONTRACT.metrics.sleep_quality.max,
-    invert: ENTRY_CONTRACT.metrics.sleep_quality.invert,
-  },
   cycle_day: {
     field: 'cycle_day',
     scaleMin: ENTRY_CONTRACT.metrics.cycle_day.min,

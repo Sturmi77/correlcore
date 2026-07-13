@@ -76,7 +76,7 @@
       {$_('onboarding.skip')}
     </button>
     <button
-      class="btn btn-sm variant-filled-primary"
+      class="btn btn-sm btn--primary"
       type="button"
       disabled={saving}
       on:click={() => complete(false)}

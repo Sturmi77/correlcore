@@ -113,7 +113,7 @@
       <p>{date}</p>
     </div>
     {#if editableDate}
-      <a class="btn btn-sm variant-soft-primary" href={`/entries/new?date=${date}`}>
+      <a class="btn btn-sm btn--secondary" href={`/entries/new?date=${date}`}>
         {$_('day_entries.add_or_edit')}
       </a>
     {/if}
@@ -128,7 +128,7 @@
   {#if $auth.status !== 'authenticated'}
     <section class="day-entries__panel">
       <p>{$_('trends.auth_required')}</p>
-      <a class="btn btn-sm variant-filled-primary" href="/auth/login">{$_('auth.login.submit')}</a>
+      <a class="btn btn-sm btn--primary" href="/auth/login">{$_('auth.login.submit')}</a>
     </section>
   {:else if loading}
     <section class="day-entries__panel" aria-busy="true">
@@ -142,7 +142,7 @@
         {selectedTagId ? $_('day_entries.empty_for_tag') : $_('day_entries.empty')}
       </p>
       {#if editableDate}
-        <a class="btn btn-sm variant-filled-primary" href={`/entries/new?date=${date}`}>
+        <a class="btn btn-sm btn--primary" href={`/entries/new?date=${date}`}>
           {$_('day_entries.create')}
         </a>
       {/if}

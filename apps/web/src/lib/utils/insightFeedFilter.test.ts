@@ -29,8 +29,8 @@ function makeInsight(overrides: Partial<InsightResponse> = {}): InsightResponse 
 describe('insightFeedFilter', () => {
   it('filters mood insights only', () => {
     const mood = makeInsight({ id: 'm', metric: 'mood' });
-    const sleep = makeInsight({ id: 's', metric: 'sleep' });
-    expect(filterInsightsByTab([mood, sleep], 'mood')).toEqual([mood]);
+    const energy = makeInsight({ id: 'e', metric: 'energy' });
+    expect(filterInsightsByTab([mood, energy], 'mood')).toEqual([mood]);
   });
 
   it('includes symptom association insights in symptoms tab', () => {

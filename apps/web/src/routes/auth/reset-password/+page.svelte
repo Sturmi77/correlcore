@@ -69,7 +69,7 @@
   </header>
   <p class="auth-body" role="alert">{$_('auth.reset.missing_token')}</p>
   <nav class="auth-links">
-    <a href="/auth/forgot-password" class="btn variant-filled-primary auth-submit">
+    <a href="/auth/forgot-password" class="btn btn--primary auth-submit">
       {$_('auth.reset.go_to_forgot')}
     </a>
   </nav>
@@ -114,7 +114,7 @@
       <p class="auth-error" role="alert">{$_(errorKey)}</p>
     {/if}
 
-    <button type="submit" class="btn variant-filled-primary auth-submit" disabled={!canSubmit}>
+    <button type="submit" class="btn btn--primary auth-submit" disabled={!canSubmit}>
       {phase === 'busy' ? $_('auth.common.submit_busy') : $_('auth.reset.submit')}
     </button>
   </form>

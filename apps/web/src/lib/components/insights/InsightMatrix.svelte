@@ -189,7 +189,7 @@
         {/each}
       </div>
       <button
-        class="btn btn-sm variant-soft-primary"
+        class="btn btn-sm btn--secondary"
         type="button"
         on:click={exportPng}
         disabled={!rows.length}

@@ -109,6 +109,8 @@
   --color-warning: #fbbf24;
   --color-error: #f87171;
   --color-error-highlight: #3a2424;
+  --color-success-highlight: #1f3327;
+  --color-warning-highlight: #2b2414;
   --color-gold: #fbbf24;
   --color-insight-early: #fbbf24;
   --color-insight-provisional: #60a5fa;
@@ -179,6 +181,8 @@
   --color-warning: #b45309;
   --color-error: #b91c1c;
   --color-error-highlight: #fef2f2;
+  --color-success-highlight: #f0fdf4;
+  --color-warning-highlight: #fffbeb;
   --color-gold: #b45309;
   --color-insight-early: #b45309;
   --color-insight-provisional: #2563eb;
@@ -241,6 +245,8 @@
     --color-warning: #fbbf24;
     --color-error: #f87171;
     --color-error-highlight: #3a2424;
+    --color-success-highlight: #1f3327;
+    --color-warning-highlight: #2b2414;
     --color-gold: #fbbf24;
     --color-insight-early: #fbbf24;
     --color-insight-provisional: #60a5fa;
@@ -645,10 +651,32 @@ button {
   background: color-mix(in srgb, currentColor 6%, transparent);
 }
 
-.variant-ghost-error,
-.variant-soft-warning {
+.variant-ghost-error {
   background: color-mix(in srgb, var(--color-error) 12%, transparent);
   color: var(--color-error);
+}
+
+.variant-soft-warning {
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+}
+
+.btn--primary {
+  border-color: color-mix(in oklch, var(--color-primary) 22%, transparent);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.btn--secondary {
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+.btn--ghost-primary {
+  border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  background: transparent;
+  color: var(--color-primary);
 }
 
 .text-success-500 {

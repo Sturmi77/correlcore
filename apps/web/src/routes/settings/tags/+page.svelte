@@ -8,18 +8,19 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import {
-    TAG_CATEGORIES,
-    createTag,
-    deleteTag,
-    listDefaultTags,
-    listVisibleTags,
-    updateTag,
-    type TagCategory,
-    type HabitType,
-    type TagResponse,
-  } from '$lib/api/tags';
-  import { refreshTags } from '$lib/stores/tags';
+import {
+  TAG_CATEGORIES,
+  createTag,
+  deleteTag,
+  listDefaultTags,
+  listVisibleTags,
+  updateTag,
+  type TagCategory,
+  type HabitType,
+  type TagResponse,
+} from '$lib/api/tags';
+import { defaultTagColorForCurrentTheme } from '$lib/constants/tagDefaults';
+import { refreshTags } from '$lib/stores/tags';
 
   type Draft = {
     name: string;
@@ -41,7 +42,7 @@
     name: '',
     category: 'other',
     icon: '',
-    color: '#6356d9',
+    color: defaultTagColorForCurrentTheme(),
     habit_type: 'none',
     target_frequency: 3,
   };
@@ -59,7 +60,7 @@
       name: '',
       category: 'other',
       icon: '',
-      color: '#6356d9',
+      color: defaultTagColorForCurrentTheme(),
       habit_type: 'none',
       target_frequency: 3,
     };
@@ -70,7 +71,7 @@
       name: tag.name,
       category: tag.category,
       icon: tag.icon ?? '',
-      color: tag.color ?? '#6356d9',
+      color: tag.color ?? defaultTagColorForCurrentTheme(),
       habit_type: tag.habit_type,
       target_frequency: tag.target_frequency ?? 3,
     };
@@ -329,7 +330,7 @@
           />
         </label>
         <button
-          class="btn btn-sm variant-filled-primary"
+          class="btn btn-sm btn--primary"
           type="button"
           disabled={creating ||
             !newDraft.name.trim() ||
@@ -477,7 +478,7 @@
 
                 <div class="tag-settings__actions">
                   <button
-                    class="btn btn-sm variant-filled-primary"
+                    class="btn btn-sm btn--primary"
                     type="button"
                     disabled={savingId !== null ||
                       (draft?.habit_type !== 'none' &&
@@ -487,7 +488,7 @@
                     {savingId === tag.id ? $_('settings.tags.saving') : $_('settings.tags.save')}
                   </button>
                   <button
-                    class="btn btn-sm variant-soft-primary"
+                    class="btn btn-sm btn--secondary"
                     type="button"
                     disabled={savingId !== null}
                     on:click={() => toggleHidden(tag)}

@@ -83,7 +83,7 @@
   </header>
   <p class="auth-body">{$_('auth.verify.error_body')}</p>
   <nav class="auth-links">
-    <a href="/auth/resend-verification" class="btn variant-filled-primary auth-submit">
+    <a href="/auth/resend-verification" class="btn btn--primary auth-submit">
       {$_('auth.verify.go_to_resend')}
     </a>
     <p>
@@ -96,7 +96,7 @@
   </header>
   <p class="auth-body" role="alert">{$_('auth.verify.missing_token')}</p>
   <nav class="auth-links">
-    <a href="/auth/resend-verification" class="btn variant-filled-primary auth-submit">
+    <a href="/auth/resend-verification" class="btn btn--primary auth-submit">
       {$_('auth.verify.go_to_resend')}
     </a>
   </nav>
@@ -107,7 +107,7 @@
   <p class="auth-body">{$_('auth.verify.body')}</p>
   <button
     type="button"
-    class="btn variant-filled-primary auth-submit"
+    class="btn btn--primary auth-submit"
     on:click={onConfirm}
     disabled={phase === 'busy'}
   >

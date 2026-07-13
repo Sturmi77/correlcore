@@ -347,7 +347,7 @@
           </button>
           <button
             type="submit"
-            class="btn variant-filled-primary"
+            class="btn btn--primary"
             disabled={customBusy || disabled}
           >
             {customBusy ? $_('symptom.custom.save_busy') : $_('symptom.custom.save')}

@@ -83,7 +83,7 @@
 
   <button
     type="submit"
-    class="btn variant-filled-primary auth-submit"
+    class="btn btn--primary auth-submit"
     disabled={busy || !email || !password}
   >
     {busy ? $_('auth.common.submit_busy') : $_('auth.login.submit')}

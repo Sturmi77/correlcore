@@ -15,7 +15,6 @@ export const ENTRY_CONTRACT = {
     mood_score: { min: 1, max: 5, invert: false },
     energy: { min: 1, max: 5, invert: false },
     stress: { min: 1, max: 5, invert: true },
-    sleep_quality: { min: 1, max: 5, invert: false },
     cycle_day: { min: 1, max: 35, invert: false },
   },
   noteMaxLength: 4000,

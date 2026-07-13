@@ -133,12 +133,11 @@ describe('InsightFeed', () => {
   });
 
   // ── Filter tabs ───────────────────────────────────────────────────
-  it('renders all 5 filter tabs', () => {
+  it('renders all 4 filter tabs', () => {
     render(InsightFeed, { props: { insights: [] } });
     expect(screen.getByTestId('insight-feed-tab-all')).toBeTruthy();
     expect(screen.getByTestId('insight-feed-tab-mood')).toBeTruthy();
     expect(screen.getByTestId('insight-feed-tab-symptoms')).toBeTruthy();
-    expect(screen.getByTestId('insight-feed-tab-sleep')).toBeTruthy();
     expect(screen.getByTestId('insight-feed-tab-context')).toBeTruthy();
   });
 
@@ -156,18 +155,11 @@ describe('InsightFeed', () => {
 
   it('mood tab filters out non-mood insights', async () => {
     const moodInsight = makeInsight({ id: 'm', metric: 'mood' });
-    const sleepInsight = makeInsight({ id: 's', metric: 'sleep' });
-    render(InsightFeed, { props: { insights: [moodInsight, sleepInsight] } });
+    const energyInsight = makeInsight({ id: 'e', metric: 'energy' });
+    render(InsightFeed, { props: { insights: [moodInsight, energyInsight] } });
     await fireEvent.click(screen.getByTestId('insight-feed-tab-mood'));
     const list = screen.getByTestId('insight-feed-list');
     expect(list.querySelectorAll('li').length).toBe(1);
-  });
-
-  it('sleep tab shows empty state when no sleep insights exist', async () => {
-    const moodInsight = makeInsight({ metric: 'mood' });
-    render(InsightFeed, { props: { insights: [moodInsight] } });
-    await fireEvent.click(screen.getByTestId('insight-feed-tab-sleep'));
-    expect(screen.getByTestId('insight-feed-empty')).toBeTruthy();
   });
 
   it('symptoms tab includes future symptom insight payloads', async () => {
