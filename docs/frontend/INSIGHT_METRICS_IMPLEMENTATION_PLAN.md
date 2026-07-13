@@ -14,10 +14,15 @@ nicht blind an Zeilennummern editieren), Tests und Akzeptanzkriterien.
 ## Arbeitsregeln (wie in den bestehenden Sprint-Plänen)
 
 1. Vor jeder Änderung Fundstelle per `grep` re-verifizieren.
-2. Nach jeder Änderung lokal: `pnpm --filter @correlcore/web lint typecheck test`
-   (und `pnpm check:contrast` **aus dem Repo-Root**, siehe
-   `GUI_CONSISTENCY_SPRINT_PLAN.md`), bei UI-Verhalten zusätzlich
-   `pnpm --filter @correlcore/web test:e2e:smoke`.
+2. Nach jeder Änderung lokal (jeweils **eigene** Befehle — `pnpm --filter X a b c`
+   führt nur Script `a` aus und übergibt `b c` als Argumente):
+   ```bash
+   pnpm check:contrast                       # aus dem Repo-Root
+   pnpm --filter @correlcore/web lint
+   pnpm --filter @correlcore/web typecheck
+   pnpm --filter @correlcore/web test
+   pnpm --filter @correlcore/web test:e2e:smoke   # bei UI-Verhalten
+   ```
 3. Keine neuen Hardcodings: Farben/Radius/Font-Size/Transition aus `app.css`-Tokens.
 4. Dark **und** Light manuell prüfen, 375 px (Mobile-First) und 1280 px.
 5. Insight-/Metrik-Copy bleibt neutral (No-Gamification, DESIGN_DOCUMENT §1.4).
@@ -91,58 +96,83 @@ ist **nirgends importiert** und erwartet zwei Props:
 `events: EventWindow[]` (Onset-Daten, `t=0`) und
 `points: TimeseriesPoint[]`. Es gibt **keinen** Backend-Endpoint für
 Event-Fenster und **kein** `onset`/`event_date` im Insight-Payload. Laut
-ADR-0035 §6 ist ein „Event" jedoch **jede Occurrence des Tags/Symptoms**
-des Insights (Tag 0 = Tag, an dem der Tag/das Symptom präsent war). Die
-`events` sind daher **client-seitig aus den Einträgen ableitbar** — kein
-Backend nötig:
+ADR-0035 §6 ist ein „Event" jede Occurrence des Tags/Symptoms des Insights
+(Tag 0 = Tag, an dem der Tag/das Symptom präsent war).
 
-- `points` = vorhandene Timeseries (`fetchTimeseries`, `lib/api/stats.ts:68`).
-- `events` = Liste der Einträgs-Daten, an denen `insight.subject_id`/
-  `subject_label` (Tag oder Symptom, `subject_type`) präsent war. Diese
-  Präsenz steht in den Entry-Daten (Tags/Symptome pro Eintrag).
+> ⚠️ **Datenquelle ist NICHT trivial vorhanden — ZUERST klären, dann bauen.**
+> `EntryResponse` (`lib/api/entries.ts:19`) trägt **nur** `mood_score`,
+> `energy`, `stress`, `work_context` — **keine** Tag-/Symptom-Zuordnung.
+> `listEntries()` liefert die Präsenz eines Tags/Symptoms pro Tag also
+> **nicht**. Und der Insights-Screen ruft `fetchTimeseries` gar nicht auf
+> (`points` fehlen dort ebenfalls). Die frühere Annahme „client-seitig ohne
+> Backend ableitbar" ist damit **falsch** — sie stünde vor genau der N+1-
+> Falle (`listEntries` pro Tag), die vermieden werden soll.
+>
+> **Erste Aufgabe dieses PRs, VOR dem Verdrahten:** die Datenquelle
+> festlegen und dokumentieren. Zwei tragfähige Optionen:
+>
+> - **(a) Schlanker Backend-Endpoint** `GET /insights/{id}/event-windows`
+>   (oder `…/presence-dates`), der die Onset-Daten des Subjekts + die
+>   relevanten Timeseries-Punkte in **einem** Response liefert. Sauberste
+>   Lösung, macht A-03 zu **Frontend + Backend**.
+> - **(b) Vorhandene aggregierte Quellen wiederverwenden:**
+>   `fetchSymptomTagCooccurrence`/`fetchTagCooccurrence` (der Screen lädt
+>   diese bereits) plus ein einmaliger `fetchTimeseries`-Call — **falls**
+>   diese die tagesgenauen Präsenz-Daten hergeben. Prüfen, ob ihre
+>   Response-Struktur Onset-Daten enthält; wenn nicht → Option (a).
+>
+> Nicht mit dem UI-Verdrahten beginnen, bevor (a) oder (b) entschieden und
+> die Datenverfügbarkeit verifiziert ist.
 
 **Anker (Frontend-seitig bereits vorhanden, nur ungenutzt):**
 
 - `InsightCard.svelte`: Prop `enableExploreEvents` (Z. 37), Gate
   `canExploreEvents` (Z. 52, nutzt `isSmallMultiplesUnlocked` aus
   `smallMultiplesGate.ts`), Button + Dispatch `exploreEvents` (Z. 288–293).
+- **Wrapper leiten `exploreEvents` NICHT durch:** `/insights` rendert
+  `InsightCard` nicht direkt, sondern über `InsightFeed` (dispatcht nur
+  `retry`) und `MobileInsightLead` (dispatcht nur `dismissMilestone`).
+  Beide müssen erweitert werden — sonst fehlt der Button gerade auf der
+  primären Mobile-Karte.
 - `EventAlignedSmallMultiplesSheet.svelte`: fertige Rendering-Logik, nur
   ohne Aufrufer. i18n-Gruppe `trends.esm.*` vorhanden.
 - Phasen-Gate: Sheet erst ab `phase >= 'provisional'` (ADR-0021).
 
-**Maßnahme (im Insights-Screen, `routes/insights/+page.svelte`):**
+**Maßnahme (nachdem die Datenquelle geklärt ist):**
 
-1. `EventAlignedSmallMultiplesSheet` importieren; Sheet-State (`open`,
-   aktueller Insight) im Screen halten.
-2. `InsightCard`/`MobileInsightLead` mit `enableExploreEvents` rendern
-   (nur wo die Phase es zulässt — das Gate in der Card greift ohnehin).
-3. `on:exploreEvents={({detail}) => openSheet(detail.id)}` verdrahten.
-4. `openSheet`: den Insight per ID auflösen; `EventWindow[]` aus den
-   Präsenz-Daten des Subjekts ableiten (neue Util, z. B.
-   `lib/utils/eventWindowsFromInsight.ts` — Input: Insight + geladene
-   Einträge/Timeseries, Output: `EventWindow[]`); `metric` aus
-   `insight.metric` mappen; `points` aus der bereits geladenen Timeseries;
-   `phase` durchreichen.
+1. **Gate schärfen** (`InsightCard.svelte`, `canExploreEvents`): zusätzlich
+   auf `subject_type === 'tag' || subject_type === 'symptom'` **mit
+   nutzbaren Präsenzdaten** beschränken. Aktuell prüft das Gate nur
+   `enableExploreEvents` + Phase — breit aktiviert erschiene der Button
+   sonst auch auf Metrik-/Kontext-/Co-Occurrence-Karten, für die sich keine
+   Event-Occurrences ableiten lassen → leeres/irreführendes Sheet.
+2. **Wrapper-Weiterleitung ergänzen:** `InsightFeed` und
+   `MobileInsightLead` bekommen einen `enableExploreEvents`-Pass-Through auf
+   ihre inneren `InsightCard`s und leiten `on:exploreEvents` per
+   `createEventDispatcher` an den Screen weiter (Union-Typen der Dispatcher
+   erweitern).
+3. **Screen** (`routes/insights/+page.svelte`):
+   `EventAlignedSmallMultiplesSheet` importieren; Sheet-State (`open`,
+   aktueller Insight) halten; `enableExploreEvents` an Feed/Lead geben;
+   `on:exploreEvents={({detail}) => openSheet(detail.id)}` verdrahten.
+4. `openSheet`: Insight per ID auflösen; `EventWindow[]` + `points` aus der
+   in Schritt 0 gewählten Quelle beziehen; `metric` aus `insight.metric`
+   mappen; `phase` durchreichen.
 5. Dev-Mode: passende Mock-Präsenzdaten ergänzen, damit das Sheet unter
    `provisional`/`robust` sichtbar prüfbar ist (siehe A-06).
 
-**Tests:** neue Util `eventWindowsFromInsight` unit-getestet (Tag/Symptom
-mit mehreren Präsenztagen → korrekte Onsets; ohne Präsenz → leer);
-Insights-Page-Test: Explore-Button erscheint nur ab Phase `provisional`
-und öffnet das Sheet; Sheet-Komponente hat bereits Tests — Gate-Verhalten
-mitprüfen.
+**Tests:** Onset-Ableitung unit-getestet (Tag/Symptom mit mehreren
+Präsenztagen → korrekte Onsets; ohne Präsenz → leer); Gate-Test: Button nur
+für tag/symptom-Insights ab Phase `provisional`, nicht für metric/context;
+Wrapper-Tests: `InsightFeed`/`MobileInsightLead` reichen `exploreEvents`
+durch; Insights-Page-Test: Klick öffnet das Sheet.
 
-**Akzeptanz:** Auf `/insights` (Mock-Preset `provisional`+) erscheint an
-qualifizierten Karten der „Explore"-Button; Klick öffnet das Sheet mit
-echten, aus Präsenzdaten abgeleiteten Fenstern; unter `early_patterns`
-kein Button; Token-only-Farben (kein hardcodierter Hue); kein
-horizontaler Scroll bei 375 px.
-
-**Wichtig:** Wenn sich bei der Umsetzung zeigt, dass die Präsenz-Daten
-client-seitig **nicht** ohne zusätzlichen Entry-Fetch verfügbar sind,
-STOPP und Rückfrage — dann ist zu entscheiden, ob ein schlanker
-Backend-Endpoint (`GET /insights/{id}/event-windows`) die sauberere Lösung
-ist, statt clientseitig viele Einträge nachzuladen.
+**Akzeptanz:** Datenquelle dokumentiert (Option a oder b, mit Begründung);
+auf `/insights` (Mock-Preset `provisional`+) erscheint der „Explore"-Button
+**nur** an tag-/symptom-Karten (inkl. Mobile-Lead), Klick öffnet das Sheet
+mit echten Fenstern; unter `early_patterns` kein Button; metric-/kontext-
+Karten zeigen ihn nie; Token-only-Farben; kein horizontaler Scroll bei
+375 px.
 
 ---
 
@@ -193,15 +223,25 @@ Work-Context-Ansicht ergänzen; nutzt die bereits gelieferten Felder.
    (`'mood' | 'energy' | 'stress'`), Bar-Width/Highlight auf das jeweilige
    `*_avg`-Feld beziehen. `workContextMoodBarWidth` → metrik-agnostisch
    umbenennen/erweitern (Rückwärtskompatibilität der Tests beachten).
-2. Kleiner Umschalter (SegmentedControl-Primitive existiert:
+2. **Stress-Invertierung beachten** (Vertragslage: `stress.invert = true`
+   in `apiContract.ts:17`, gespiegelt in `metrics.ts`): Bei Stress ist ein
+   **niedriger** Rohwert „gut". Die aktuelle Mood-Logik markiert das
+   Maximum als „high" (bester Balken) — mechanisch generalisiert würde das
+   den **schlimmsten** Stress-Kontext als besten markieren. High/Low-Highlight
+   (und ggf. die Balkenrichtung) müssen die `invert`-Semantik aus
+   `metrics.ts` respektieren, nicht den Rohwert. Für Mood/Energy
+   (`invert: false`) bleibt „hoch = high".
+3. Kleiner Umschalter (SegmentedControl-Primitive existiert:
    `lib/components/common/SegmentedControl.svelte`) über den
    Work-Context-Zeilen; Default `mood`.
-3. Balkenfarbe je aktiver Metrik aus dem passenden `--color-metric-*`-Token.
-4. i18n: Umschalter-Labels (en+de) unter `home.brief.*`.
+4. Balkenfarbe je aktiver Metrik aus dem passenden `--color-metric-*`-Token.
+5. i18n: Umschalter-Labels (en+de) unter `home.brief.*`.
 
 **Tests:** `homeWorkContextSummary.test.ts` um Energy/Stress-Fälle
-erweitern; `HomeDailyBrief.test.ts` um den Umschalter (Default mood,
-Wechsel auf energy zeigt `energy_avg`-Werte).
+erweitern — **inkl. eines Stress-Falls, der prüft, dass der niedrigste
+Stress-Wert als „high"/best markiert wird**, nicht der höchste;
+`HomeDailyBrief.test.ts` um den Umschalter (Default mood, Wechsel auf
+energy zeigt `energy_avg`-Werte).
 
 **Akzeptanz:** Auf Home mit Work-Context-Daten sind alle drei Metriken
 umschaltbar; Balkenfarbe folgt der Metrik (Token-basiert); Default
@@ -234,17 +274,26 @@ robust-Preset zeigt eine befüllte Weekday-Übersicht.
 ## A-06 (Teil 2) — `symptom_cluster` Rendering-Fallback
 
 **Beobachtung:** `buildTitle()` in `InsightCard.svelte` behandelt 4 Typen
-explizit + generischen Fallback. Für `symptom_cluster` (Lasso) gilt
+explizit + generischen Fallback. Für `symptom_cluster` gilt
 `metric == subject_label` → Caption redundant (`mood_score → mood_score`).
 
 **Maßnahme:** In `buildTitle()` einen `symptom_cluster`-Zweig ergänzen, der
-die Feature-Liste aus dem Payload (`payload.features` / `payload.target`)
-in eine lesbare Caption übersetzt (z. B. „Mehrere Faktoren → mood"), statt
-`metric → metric`. Payload-Struktur: siehe
-`insight_engine.py` `_lasso_statement`/`_lag_statement` (Backend, nur
-lesen).
+**beide** Payload-Varianten abdeckt (verifiziert in `insight_engine.py`,
+nur lesen):
 
-**Akzeptanz:** `symptom_cluster`-Karte zeigt keine `x → x`-Caption mehr;
+- **Lasso** (`payload.method === 'lasso'`): Liste `payload.features` (Array)
+  + `payload.target` → z. B. „Mehrere Faktoren → mood".
+- **Lag** (`payload.method === 'lag'`): **Singular** `payload.feature`
+  (ein strukturiertes Objekt, nicht Array) + `payload.target` +
+  `payload.lag_days` → z. B. „{feature} → {target} (+{lag_days} Tage)".
+
+Ohne den Lag-Zweig blieben Lag-Karten auf der generischen
+`metric → subject`-Caption. `payload.target`/`.feature` sind über
+`_payload_feature()` strukturiert (`key`/`label`) — Label für die Anzeige
+nutzen.
+
+**Akzeptanz:** weder Lasso- noch Lag-`symptom_cluster`-Karten zeigen eine
+`x → x`- oder generische Caption;
 Dev-Fixture aus A-06 Teil 1 macht es prüfbar.
 
 ---
@@ -279,12 +328,30 @@ behaltenen); `code-connect-contract.test.ts` grün; Build/Tests grün.
 
 ## A-07 — Service-Worker-Caching im Dev (PR C)
 
-SW-Registrierung hinter `import.meta.env.DEV`-Guard (in Dev nicht
-registrieren), damit HMR-Änderungen nicht von einem alten Cache verdeckt
-werden. Prod-Update-Strategie unverändert lassen und im Code kommentieren.
+**Kein hand-geschriebener Registrierungs-Aufruf** — die App nutzt SvelteKits
+generierte Registrierung (`kit.serviceWorker.register`, Default `true`) für
+`src/service-worker.ts`. Ein „`import.meta.env.DEV`-Guard an der Call-Site"
+greift daher ins Leere. Zwei Teile nötig:
 
-**Akzeptanz:** In `pnpm dev` registriert sich kein SW; Prod-Build
-registriert ihn weiterhin.
+1. **Registrierung in Dev abschalten:** `kit.serviceWorker.register` in
+   `svelte.config.js` auf `false` setzen und den SW in Prod bewusst selbst
+   registrieren (`if (import.meta.env.PROD && 'serviceWorker' in navigator)`
+   in einem Client-Hook/`+layout`), **oder** — falls einfacher — die
+   Registrierung belassen, aber den Body von `src/service-worker.ts` unter
+   `import.meta.env.DEV` no-op schalten (kein `install`/`fetch`-Caching).
+   Variante mit `register: false` + expliziter Prod-Registrierung ist die
+   sauberere.
+2. **Bereits installierte Dev-SWs neutralisieren:** ein einmal in Dev
+   installierter SW kontrolliert den Origin weiter, auch nachdem die
+   Registrierung deaktiviert wurde (genau das ist im Browser-Audit
+   passiert). Einen dev-only Cleanup ergänzen (Client-seitig, `import.meta.env.DEV`):
+   `getRegistrations()` → `unregister()` und `caches.keys()` →
+   `caches.delete()`.
+
+Prod-Update-Strategie unverändert lassen und im Code kommentieren.
+
+**Akzeptanz:** In `pnpm dev` kontrolliert **kein** SW den Origin (auch nach
+vorheriger Installation); Prod-Build registriert und cached weiterhin.
 
 ---
 
