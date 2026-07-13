@@ -30,13 +30,13 @@
     gap: 0.1rem;
     padding: 0.6rem 0.7rem;
     border: 1px solid var(--color-border-chart);
-    border-radius: 0.55rem;
+    border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
   }
 
   .metric-card__label {
     margin: 0;
-    font-size: 0.7rem;
+    font-size: var(--text-2xs);
     opacity: 0.7;
   }
 
@@ -45,12 +45,12 @@
     align-items: baseline;
     gap: 0.25rem;
     margin: 0;
-    font-size: 1.25rem;
+    font-size: var(--text-lg);
     font-weight: 600;
   }
 
   .metric-card__unit {
-    font-size: 0.7rem;
+    font-size: var(--text-2xs);
     font-weight: 400;
     opacity: 0.55;
   }
