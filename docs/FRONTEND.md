@@ -168,13 +168,15 @@ framework and contrast tables are documented in
 
 ### 4.2 Mood Score Colours
 
-```
--2 (very bad)  → #ef4444 (red)
--1 (bad)       → #f97316 (orange)
- 0 (neutral)   → #94a3b8 (slate)
-+1 (good)      → #84cc16 (lime)
-+2 (very good) → #22c55e (green)
-```
+Mood, energy, and stress are stored on a **1–5 Likert scale** (see `ENTRY_CONTRACT` / `lib/config/metrics.ts`). Charts and strips encode values with **metric tokens**, not a red/green traffic-light pair:
+
+| Metric | Token | Role |
+| ------ | ----- | ---- |
+| Mood | `--color-metric-mood` | Primary mood line / strip encoding |
+| Energy | `--color-metric-energy` | Energy line / strip encoding |
+| Stress | `--color-metric-stress` | Stress line / strip encoding (view-layer invert via `invert: true`) |
+
+Divergent encodings (e.g. event-aligned small multiples, ADR-0035) use the chart adapter’s midpoint/range mapping — never hardcoded hue literals in components.
 
 Colour must **never** be the only information carrier — always pair with label or icon (WCAG 1.4.1).
 
@@ -182,12 +184,11 @@ Colour must **never** be the only information carrier — always pair with label
 
 Not all metrics share the same direction — a higher raw value does not always mean "better". The following table is the canonical definition for chart rendering, analytics worker correlation sign, and axis labelling:
 
-| Metric        | DB field        | Scale | Direction       | `invert` | Notes                                |
-| ------------- | --------------- | ----- | --------------- | -------- | ------------------------------------ |
-| Mood          | `mood_score`    | 1–5   | Higher = better | `false`  |                                      |
-| Energy        | `energy`        | 1–5   | Higher = better | `false`  |                                      |
-| Stress        | `stress`        | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw`     |
-| Sleep Quality | `sleep_quality` | 1–5   | Higher = better | `false`  | Issue #172 — M8 Sleep/Health Connect |
+| Metric | DB field     | Scale | Direction       | `invert` | Notes                            |
+| ------ | ------------ | ----- | --------------- | -------- | -------------------------------- |
+| Mood   | `mood_score` | 1–5   | Higher = better | `false`  |                                  |
+| Energy | `energy`     | 1–5   | Higher = better | `false`  |                                  |
+| Stress | `stress`     | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw` |
 
 > **Implementation:** The `invert` flag is defined centrally in `src/lib/config/metrics.ts` and consumed by `MetricTimeseries.svelte`, `HomeSparkline.svelte`, `DualAxisChart.svelte`, and `analytics_worker.py`. Raw DB values are **never** modified — inversion is view-layer only.
 
