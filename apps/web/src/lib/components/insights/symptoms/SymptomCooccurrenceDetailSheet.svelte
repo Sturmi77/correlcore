@@ -130,7 +130,7 @@
   .symptom-detail__close {
     border: none;
     background: none;
-    font-size: 1.5rem;
+    font-size: var(--text-lg);
     line-height: 1;
     cursor: pointer;
     color: var(--color-text-muted);

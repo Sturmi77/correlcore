@@ -253,7 +253,7 @@
   .symptom-trend__swatch {
     width: 0.75rem;
     height: 0.2rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
   }
 
   .symptom-trend__swatch--symptom {
