@@ -382,6 +382,79 @@ async def test_stale_client_edit_logs_conflict_and_keeps_server_value() -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
+async def test_push_client_uuid_merges_existing_slot_instead_of_colliding() -> None:
+    if not _integration_enabled():
+        pytest.skip("requires PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
+
+    server_entry_id = uuid.uuid4()
+    client_entry_id = uuid.uuid4()
+    client_id = uuid.uuid4()
+    email = f"sync-slot-collision-{uuid.uuid4().hex[:8]}@localhost.dev"
+    now = datetime.now(UTC)
+
+    async with AsyncSessionLocal() as session:
+        user = await register_user(
+            session,
+            RegisterRequest(email=email, password="test-password-12", display_name="Sync"),
+        )
+        user.is_verified = True
+        await session.commit()
+
+    async with AsyncSessionLocal() as session:
+        await bind_rls_current_user(session, user.id)
+        dek_token = await _dek_token_for_user(session, user.id)
+        try:
+            await push_changes(
+                session,
+                user_id=user.id,
+                request=SyncPushRequest(
+                    client_id=client_id,
+                    batch_id=uuid.uuid4(),
+                    changes=[
+                        _entry_change(
+                            entry_id=server_entry_id,
+                            seq=1,
+                            mood_score=3,
+                            updated_at=now,
+                        )
+                    ],
+                ),
+            )
+            response = await push_changes(
+                session,
+                user_id=user.id,
+                request=SyncPushRequest(
+                    client_id=uuid.uuid4(),
+                    batch_id=uuid.uuid4(),
+                    changes=[
+                        _entry_change(
+                            entry_id=client_entry_id,
+                            seq=1,
+                            mood_score=5,
+                            updated_at=now + timedelta(seconds=1),
+                        )
+                    ],
+                ),
+            )
+            entry = (
+                await session.execute(
+                    select(Entry).where(
+                        Entry.user_id == user.id,
+                        Entry.entry_date == date.today(),
+                        Entry.slot == EntrySlot.DAY,
+                    )
+                )
+            ).scalar_one()
+            await session.commit()
+        finally:
+            reset_current_user_dek(dek_token)
+
+    assert response.applied == 1
+    assert entry.id == server_entry_id
+    assert entry.mood_score == 5
+
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_push_batch_replay_is_idempotent() -> None:
     if not _integration_enabled():
         pytest.skip("requires PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
