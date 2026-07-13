@@ -74,7 +74,7 @@
   --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
   --page-padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
   --content-max-width: 640px;
-  --app-header-height: 3.5rem;
+  --app-header-height: 0px;
   --app-nav-height: 4.25rem;
   --app-nav-width: 5.75rem;
 }
