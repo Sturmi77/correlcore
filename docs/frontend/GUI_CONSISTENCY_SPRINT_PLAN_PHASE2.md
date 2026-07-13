@@ -16,15 +16,15 @@ strukturelle UI-Nachzüge, dann Performance/API, dann Sweeps, zuletzt Guardrails
 
 ## Stand (2026-07-13)
 
-| PR | Status | Inhalt |
-| -- | ------ | ------ |
-| #354–#357 | ✅ merged | GUI Sprints 1–4 (broken styles, tokens, partial sweeps) |
-| #355–#356 | ✅ merged | Codebase A-01/A-02/A-04/A-06/A-07, A-05 work-context metrics |
-| #358 | ✅ merged | GUI Sprint 5 — `BottomSheet` + 4 Sheet-Migrationen, Home `<h1>` |
-| #359 | ✅ merged | GUI Sprint 6 — `/status` Token-Migration (F-15) |
-| #360 | ✅ merged | GUI Sprint 7 — `matchMedia`, Breakpoints, Trends-Compare Touch |
-| **#361** | 🔄 offen | **A-03** Explore-Events (client-seitige Presence-Lookups) |
-| **#362** | 🔄 offen | GUI Sprint 9 — Heatmap-Farben, `FRONTEND.md` §4.2, Skeleton-Deps |
+| PR        | Status    | Inhalt                                                           |
+| --------- | --------- | ---------------------------------------------------------------- |
+| #354–#357 | ✅ merged | GUI Sprints 1–4 (broken styles, tokens, partial sweeps)          |
+| #355–#356 | ✅ merged | Codebase A-01/A-02/A-04/A-06/A-07, A-05 work-context metrics     |
+| #358      | ✅ merged | GUI Sprint 5 — `BottomSheet` + 4 Sheet-Migrationen, Home `<h1>`  |
+| #359      | ✅ merged | GUI Sprint 6 — `/status` Token-Migration (F-15)                  |
+| #360      | ✅ merged | GUI Sprint 7 — `matchMedia`, Breakpoints, Trends-Compare Touch   |
+| **#361**  | 🔄 offen  | **A-03** Explore-Events (client-seitige Presence-Lookups)        |
+| **#362**  | 🔄 offen  | GUI Sprint 9 — Heatmap-Farben, `FRONTEND.md` §4.2, Skeleton-Deps |
 
 **Noch offen aus Phase 1** (bewusst zurückgestellt oder nur teilweise erfüllt):
 
@@ -52,17 +52,17 @@ flowchart TD
   P8 --> P9[P2-S8 Guardrail F-21]
 ```
 
-| P2-Sprint | Findings / Thema | Risiko | Abhängigkeit |
-| --------- | ---------------- | ------ | ------------ |
-| **0** | #361 + #362 mergen | niedrig | — |
-| **1** | F-05 Rest-Sheets | mittel (Verhalten) | #358 |
-| **2** | F-07 ScreenHeader | niedrig (UX) | — |
-| **3** | A-03 API `/event-windows` | mittel (FE+BE) | #361 |
-| **4** | F-16 Icons | niedrig | — |
-| **5** | F-10, F-11, F-12 Sweeps | mittel (visuell) | kleine PRs |
-| **6** | F-09 Heatmap touch, F-04 Breakpoints | niedrig | — |
-| **7** | F-18 State matrix | niedrig (Audit) | — |
-| **8** | F-21 Guardrail | hoch (CI) | P2-S4–S6 fertig |
+| P2-Sprint | Findings / Thema                     | Risiko             | Abhängigkeit    |
+| --------- | ------------------------------------ | ------------------ | --------------- |
+| **0**     | #361 + #362 mergen                   | niedrig            | —               |
+| **1**     | F-05 Rest-Sheets                     | mittel (Verhalten) | #358            |
+| **2**     | F-07 ScreenHeader                    | niedrig (UX)       | —               |
+| **3**     | A-03 API `/event-windows`            | mittel (FE+BE)     | #361            |
+| **4**     | F-16 Icons                           | niedrig            | —               |
+| **5**     | F-10, F-11, F-12 Sweeps              | mittel (visuell)   | kleine PRs      |
+| **6**     | F-09 Heatmap touch, F-04 Breakpoints | niedrig            | —               |
+| **7**     | F-18 State matrix                    | niedrig (Audit)    | —               |
+| **8**     | F-21 Guardrail                       | hoch (CI)          | P2-S4–S6 fertig |
 
 ---
 
@@ -106,13 +106,13 @@ bewusst dokumentierte Ausnahme).
 
 **Noch nicht migriert** (grep `backdrop` / kein `BottomSheet`-Import):
 
-| Komponente | Pfad |
-| -------- | ---- |
-| Entry sheet | `components/entries/EntrySheet.svelte` |
-| Correlation disclaimer | `components/insights/CorrelationDisclaimer.svelte` |
-| Journey explainer | `components/insights/InsightJourneyExplainer.svelte` |
-| Symptom co-occurrence detail | `components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte` |
-| Event-aligned small multiples | `components/trends/EventAlignedSmallMultiplesSheet.svelte` |
+| Komponente                    | Pfad                                                                 |
+| ----------------------------- | -------------------------------------------------------------------- |
+| Entry sheet                   | `components/entries/EntrySheet.svelte`                               |
+| Correlation disclaimer        | `components/insights/CorrelationDisclaimer.svelte`                   |
+| Journey explainer             | `components/insights/InsightJourneyExplainer.svelte`                 |
+| Symptom co-occurrence detail  | `components/insights/symptoms/SymptomCooccurrenceDetailSheet.svelte` |
+| Event-aligned small multiples | `components/trends/EventAlignedSmallMultiplesSheet.svelte`           |
 
 **Maßnahme:** Je 1–2 Sheets pro PR; bestehende Tests (`CorrelationDisclaimer.test.ts`,
 `EntrySheet`-Tests) grün halten. `UI_COMPONENT_SYSTEM.md`: „neue Sheets nur via
@@ -127,12 +127,12 @@ Escape-Verhalten konsistent.
 
 **Ziel:** Jede navigierbare Primär-Route hat genau ein `<h1>`.
 
-| Route | Aktuell | Maßnahme |
-| ----- | ------- | -------- |
-| `routes/entries/day/[date]/+page.svelte` | raw `<h1>` | `ScreenHeader` (sichtbar oder `visuallyHidden` nach UX-Review) |
-| `routes/onboarding/+page.svelte` | 2× raw `<h1>` | `ScreenHeader` pro Step oder ein hidden + step `<h2>` |
-| `routes/onboarding/profile/+page.svelte` | raw `<h1>` | `ScreenHeader` |
-| `routes/onboarding/retro/+page.svelte` | raw `<h1>` | `ScreenHeader` |
+| Route                                    | Aktuell       | Maßnahme                                                       |
+| ---------------------------------------- | ------------- | -------------------------------------------------------------- |
+| `routes/entries/day/[date]/+page.svelte` | raw `<h1>`    | `ScreenHeader` (sichtbar oder `visuallyHidden` nach UX-Review) |
+| `routes/onboarding/+page.svelte`         | 2× raw `<h1>` | `ScreenHeader` pro Step oder ein hidden + step `<h2>`          |
+| `routes/onboarding/profile/+page.svelte` | raw `<h1>`    | `ScreenHeader`                                                 |
+| `routes/onboarding/retro/+page.svelte`   | raw `<h1>`    | `ScreenHeader`                                                 |
 
 Auth-Routen (`auth-page-title`) bleiben dokumentierte Ausnahme.
 

@@ -170,10 +170,10 @@ framework and contrast tables are documented in
 
 Mood, energy, and stress are stored on a **1–5 Likert scale** (see `ENTRY_CONTRACT` / `lib/config/metrics.ts`). Charts and strips encode values with **metric tokens**, not a red/green traffic-light pair:
 
-| Metric | Token | Role |
-| ------ | ----- | ---- |
-| Mood | `--color-metric-mood` | Primary mood line / strip encoding |
-| Energy | `--color-metric-energy` | Energy line / strip encoding |
+| Metric | Token                   | Role                                                                |
+| ------ | ----------------------- | ------------------------------------------------------------------- |
+| Mood   | `--color-metric-mood`   | Primary mood line / strip encoding                                  |
+| Energy | `--color-metric-energy` | Energy line / strip encoding                                        |
 | Stress | `--color-metric-stress` | Stress line / strip encoding (view-layer invert via `invert: true`) |
 
 Divergent encodings (e.g. event-aligned small multiples, ADR-0035) use the chart adapter’s midpoint/range mapping — never hardcoded hue literals in components.
