@@ -369,3 +369,54 @@ async def test_insights_endpoint_requires_auth(async_client: AsyncClient) -> Non
     response = await async_client.get("/api/v1/insights")
 
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_insight_event_windows_endpoint_returns_payload(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    from app.schemas.insight import InsightEventWindow, InsightEventWindowsResponse
+    from app.schemas.stats import TimeseriesPoint
+
+    insight_id = uuid.uuid4()
+    payload = InsightEventWindowsResponse(
+        range="90d",
+        start_date=date(2026, 4, 1),
+        end_date=date(2026, 6, 30),
+        events=[InsightEventWindow(onset=date(2026, 5, 10), label="Sport")],
+        points=[
+            TimeseriesPoint(
+                period_start=date(2026, 5, 10),
+                period_end=date(2026, 5, 10),
+                entry_count=1,
+                mood_avg=3.5,
+                energy_avg=3.0,
+                stress_avg=2.0,
+            )
+        ],
+    )
+    get_windows = AsyncMock(return_value=payload)
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.insights.get_insight_event_windows",
+            new=get_windows,
+        ):
+            response = await async_client.get(
+                f"/api/v1/insights/{insight_id}/event-windows?range=90d",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["range"] == "90d"
+    assert body["events"][0]["onset"] == "2026-05-10"
+    assert body["points"][0]["mood_avg"] == 3.5
+    get_windows.assert_awaited_once()
