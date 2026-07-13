@@ -307,11 +307,48 @@ async def _analytics_enabled(db: AsyncSession, *, user_id: uuid.UUID) -> bool:
 
 
 def cooccurrence_range_to_timeseries(range_: TagCooccurrenceRange) -> TimeseriesRange:
+    if range_ == "7d":
+        return "week"
     if range_ == "90d":
         return "quarter"
     if range_ == "1y":
         return "year"
     return "month"
+
+
+async def list_historical_tag_presence_dates_by_slug(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    tag_slug: str,
+    start_date: date_type,
+    end_date: date_type,
+) -> list[date_type]:
+    """Distinct entry dates for a tag slug, including hidden/inactive tags.
+
+    Used by Explore Events so inactive insight cards can still show historical
+    presence windows. Co-occurrence analytics keep using ``active_tag_predicate``.
+    """
+
+    from sqlalchemy import func
+
+    slug_key = tag_slug.casefold()
+    stmt = (
+        select(Entry.entry_date)
+        .join(EntryTag, EntryTag.entry_id == Entry.id)
+        .join(Tag, Tag.id == EntryTag.tag_id)
+        .where(
+            EntryTag.user_id == user_id,
+            Entry.user_id == user_id,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= end_date,
+            func.lower(Tag.slug) == slug_key,
+        )
+        .distinct()
+        .order_by(Entry.entry_date.asc())
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
 
 
 async def list_tag_presence_dates_by_slug(

@@ -14,11 +14,12 @@ export function isTimeseriesRange(value: string): value is TimeseriesRange {
 /** Map the global Trends range to the closest Insights co-occurrence API window. */
 export function timeseriesRangeToCooccurrence(range: TimeseriesRange): TagCooccurrenceRange {
   switch (range) {
+    case 'week':
+      return '7d';
     case 'quarter':
       return '90d';
     case 'year':
       return '1y';
-    case 'week':
     case 'month':
     default:
       return '30d';
@@ -38,6 +39,8 @@ export function analysisDateWindow(
 
 export function cooccurrenceRangeToTimeseries(range: TagCooccurrenceRange): TimeseriesRange {
   switch (range) {
+    case '7d':
+      return 'week';
     case '90d':
       return 'quarter';
     case '1y':

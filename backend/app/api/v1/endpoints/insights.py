@@ -43,10 +43,10 @@ router = APIRouter()
 def _cooccurrence_range_query(
     range: str = Query(default="90d", alias="range"),
 ) -> TagCooccurrenceRange:
-    if range not in {"30d", "90d", "1y"}:
+    if range not in {"7d", "30d", "90d", "1y"}:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="range must be one of 30d, 90d, 1y",
+            detail="range must be one of 7d, 30d, 90d, 1y",
         )
     return range  # type: ignore[return-value]
 
