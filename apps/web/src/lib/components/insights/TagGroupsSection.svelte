@@ -1,13 +1,26 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import type { TagClusterMember, TagClustersResponse } from '$lib/api/insights';
+  import {
+    getTagGroupsInsufficientKey,
+    getTagGroupsInsufficientValues,
+    getTagGroupsSubtitleKey,
+    showTagClusterMaturityBadge,
+  } from '$lib/utils/tagGroupsPresentation';
 
   export let data: TagClustersResponse | null = null;
   export let loading = false;
 
   $: showSkeleton = loading && !data;
   $: clusters = data?.status === 'ok' ? data.clusters : [];
-  $: mixedClusters = data?.cluster_kind === 'mixed';
+  $: subtitleKey = getTagGroupsSubtitleKey(data);
+  $: maturityBadgeData = showTagClusterMaturityBadge(data) ? data : null;
+  $: maturityBadgeKey = maturityBadgeData
+    ? `insights.tag_groups.badge.${maturityBadgeData.cluster_maturity}`
+    : null;
+  $: maturityTooltipKey = maturityBadgeData
+    ? `insights.tag_groups.badge.${maturityBadgeData.cluster_maturity}_tooltip`
+    : null;
 
   function memberLabel(member: TagClusterMember): string {
     if (member.kind === 'symptom' && member.icon) {
@@ -31,13 +44,23 @@
 
 <section class="tag-groups" data-loading={loading ? 'true' : 'false'}>
   <header class="tag-groups__header">
-    <div>
-      <h2>{$_('insights.tag_groups.heading')}</h2>
-      <p>
-        {mixedClusters
-          ? $_('insights.tag_groups.subtitle_mixed')
-          : $_('insights.tag_groups.subtitle')}
-      </p>
+    <div class="tag-groups__title-row">
+      <div>
+        <h2>{$_('insights.tag_groups.heading')}</h2>
+        <p>{$_(subtitleKey)}</p>
+      </div>
+      {#if maturityBadgeData && maturityBadgeKey}
+        <span
+          class="tag-groups__badge tag-groups__badge--uncertain"
+          data-testid="tag-groups-maturity-badge"
+          data-maturity={maturityBadgeData.cluster_maturity}
+          title={maturityTooltipKey ? $_(maturityTooltipKey) : undefined}
+          aria-label={maturityTooltipKey ? $_(maturityTooltipKey) : undefined}
+        >
+          <span aria-hidden="true">!</span>
+          {$_(maturityBadgeKey, { values: { entries: maturityBadgeData.entry_count } })}
+        </span>
+      {/if}
     </div>
   </header>
 
@@ -50,11 +73,8 @@
   {:else if data?.status === 'insufficient_data'}
     <div class="tag-groups__empty">
       <p>
-        {$_('insights.tag_groups.insufficient', {
-          values: {
-            entries: data.entry_count,
-            tags: data.active_signal_count || data.active_tag_count,
-          },
+        {$_(getTagGroupsInsufficientKey(data), {
+          values: getTagGroupsInsufficientValues(data),
         })}
       </p>
     </div>
@@ -108,6 +128,13 @@
     margin: 0;
   }
 
+  .tag-groups__title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
   .tag-groups__header h2 {
     font-size: var(--text-lg);
   }
@@ -116,6 +143,26 @@
   .tag-groups__empty {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .tag-groups__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex-shrink: 0;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-full);
+    background: var(--color-primary-highlight);
+    color: var(--color-primary);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .tag-groups__badge--uncertain {
+    background: color-mix(in srgb, var(--color-warning) 18%, var(--color-surface));
+    color: var(--color-text);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent);
   }
 
   .tag-groups__grid {

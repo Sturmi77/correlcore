@@ -117,6 +117,7 @@ Reserve the last 20% of entries as a holdout test set, train on the first 80%.
 ### Negative
 
 - `TimeSeriesSplit` requires a minimum number of entries to produce `n_splits=5` folds with meaningful size. **Minimum n=90 entries** enforced in the M7 worker before any cross-validated model is run.
+- **Tag-cluster tiers** (descriptive Jaccard/k-means, ADR-0037) use separate thresholds at 30 / 45 / 90 days and do **not** relax this ML minimum.
 - Slightly more verbose setup than `LassoCV()` with default `cv=5`.
 
 ### Neutral

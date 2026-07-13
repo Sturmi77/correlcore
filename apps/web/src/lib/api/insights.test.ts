@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('./client', () => ({
   api: {
     get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
@@ -11,6 +12,7 @@ import {
   fetchTagClusters,
   fetchTagCooccurrence,
   listLatestInsights,
+  regenerateInsights,
   type InsightMaturity,
 } from './insights';
 
@@ -44,13 +46,28 @@ describe('insights API client', () => {
       active_tag_count: 3,
       window_days: 90,
       k: null,
-      reason: 'entry_count_below_90',
+      reason: 'entry_count_below_30',
       clusters: [],
     });
 
     await fetchTagClusters();
 
     expect(api.get).toHaveBeenCalledWith('/insights/tag-clusters');
+  });
+
+  it('regenerates insights on demand', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({
+      status: 'ok',
+      generated_for_date: '2026-07-13',
+      insight_count: 8,
+      tag_clusters_status: 'ok',
+      trigger_source: 'user_regenerate',
+    });
+
+    const result = await regenerateInsights();
+
+    expect(api.post).toHaveBeenCalledWith('/insights/regenerate');
+    expect(result.insight_count).toBe(8);
   });
 
   it('fetches tag cooccurrence with query params', async () => {

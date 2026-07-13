@@ -8,29 +8,29 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 
 ## Overview
 
-| Paket | Titel                          | Status                                |
-| ----- | ------------------------------ | ------------------------------------- |
-| 0     | Freigabe & Doc-Baseline        | Complete (PR #382, ADR-0037 Accepted) |
-| A     | Insight-Trigger (Backend)      | Complete (PR A+B)                     |
-| B     | Tag-Gruppen-Stufen             | Complete (PR A+B)                     |
-| C     | Wochentags-Dashboard & Home    | Complete (PR A+B+C)                   |
-| D     | Frontend Tag-Gruppen-Reifegrad | Not started                           |
-| E     | Docs, i18n, E2E, Quality Gate  | Not started                           |
+| Paket | Titel | Status |
+| ----- | ----- | ------ |
+| 0 | Freigabe & Doc-Baseline | Complete |
+| A | Insight-Trigger (Backend) | Complete (#383) |
+| B | Tag-Gruppen-Stufen | Complete (#383) |
+| C | Wochentags-Dashboard & Home | Complete (#383) |
+| D | Frontend Tag-Gruppen-Reifegrad | Complete (#384) |
+| E | Docs, i18n, E2E, Quality Gate | Complete (#384) |
 
 ## Acceptance-criteria audit matrix
 
-| Criterion                           | Paket | Code anchor              | Test evidence                 | Gap                       |
-| ----------------------------------- | ----- | ------------------------ | ----------------------------- | ------------------------- |
-| `POST /insights/regenerate`         | A     | `endpoints/insights.py`  | `test_insights.py`            | —                         |
-| Post-batch insight trigger          | A     | `endpoints/entries.py`   | —                             | Integration test optional |
-| Admin `POST /insights/trigger`      | A     | `endpoints/insights.py`  | —                             | Manual / admin env        |
-| Tag-Gruppen ab 30 Tagen (pair)      | B     | `tag_cluster_service.py` | `test_tag_clusters.py`        | —                         |
-| Tag-Gruppen provisional ab 45       | B     | `tag_cluster_service.py` | `test_tag_clusters.py`        | —                         |
-| `weekday_summary` Dashboard         | C     | `dashboard_service.py`   | `test_dashboard.py`           | —                         |
-| Home Weekday ohne `weekday_pattern` | C     | `HomeWeekdayOverview`    | `homeWeekdayOverview.test.ts` | —                         |
-| `cluster_maturity` UI               | D     | `TagGroupsSection`       | —                             | Not implemented           |
-| ADR-0037 Accepted                   | 0     | `docs/adr/0037-*.md`     | —                             | Done                      |
-| API.md / PHASE_MATRIX updated       | E     | docs                     | —                             | Pending                   |
+| Criterion | Paket | Code anchor | Test evidence | Gap |
+| --------- | ----- | ----------- | ------------- | --- |
+| `POST /insights/regenerate` | A | `endpoints/insights.py` | `test_insights.py` | — |
+| Post-batch insight trigger | A | `endpoints/entries.py` | — | Integration test optional |
+| Admin `POST /insights/trigger` | A | `endpoints/insights.py` | — | Manual / admin env |
+| Tag-Gruppen ab 30 Tagen (pair) | B | `tag_cluster_service.py` | `test_tag_clusters.py` | — |
+| Tag-Gruppen provisional ab 45 | B | `tag_cluster_service.py` | `test_tag_clusters.py` | — |
+| `weekday_summary` Dashboard | C | `dashboard_service.py` | `test_dashboard.py` | — |
+| Home Weekday ohne `weekday_pattern` | C | `HomeWeekdayOverview` | `homeWeekdayOverview.test.ts` | — |
+| `cluster_maturity` UI | D | `TagGroupsSection` | `TagGroupsSection.test.ts` | — |
+| ADR-0037 Accepted | 0 | `docs/adr/0037-*.md` | — | Done |
+| API.md / PHASE_MATRIX updated | E | docs | E2E user-journeys | — |
 
 ## Sprint 0 — Checklist
 
@@ -61,19 +61,30 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 
 ## Paket D — Checklist
 
-- [ ] D1–D5 implementiert
-- [ ] i18n DE/EN
+- [x] D1–D5 implementiert
+- [x] i18n DE/EN
+- [x] D6 Settings regenerate
 
 ## Paket E — Checklist
 
-- [ ] Proposal §7 Impact-Matrix abgearbeitet
-- [ ] `M10_1_INSIGHT_PIPELINE_QA.md`
-- [ ] CHANGELOG M10.1
-- [ ] E2E user-journeys
+- [x] E1 API.md
+- [x] E2 PHASE_INSIGHT_MATRIX.md
+- [x] E3 M9 thresholds addendum
+- [x] E4 ADR-0016 + ADR-0021 cross-refs
+- [x] E5 docs-site
+- [x] E6 CHANGELOG
+- [x] E7 E2E user-journeys (regenerate + tag groups badge)
+- [x] E8 QA checklist sync
 
-## Verification (Paket A+B+C)
+## Verification (Paket A–E)
 
 ```bash
-cd backend && uv run --python 3.12 pytest tests/test_tag_clusters.py tests/test_insight_worker.py tests/test_insights.py tests/test_dashboard.py -q
-pnpm --filter @correlcore/web exec vitest run src/lib/utils/homeWeekdayOverview.test.ts src/lib/components/home/HomeWeekdayOverview.test.ts
+cd backend && uv run --python 3.12 pytest \
+  tests/test_tag_clusters.py tests/test_insight_worker.py tests/test_insights.py tests/test_dashboard.py -q
+pnpm --filter @correlcore/web exec vitest run \
+  src/lib/utils/homeWeekdayOverview.test.ts \
+  src/lib/components/home/HomeWeekdayOverview.test.ts \
+  src/lib/components/insights/TagGroupsSection.test.ts \
+  src/routes/settings/page.test.ts \
+  src/lib/api/insights.test.ts
 ```

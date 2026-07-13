@@ -221,6 +221,11 @@ export interface InsightEventWindowsResponse {
   points: import('./stats').TimeseriesPoint[];
 }
 
+/** POST /insights/regenerate — on-demand insight + tag-cluster regeneration (M10.1). */
+export async function regenerateInsights(): Promise<InsightRegenerateResponse> {
+  return api.post<InsightRegenerateResponse>('/insights/regenerate');
+}
+
 /** GET /insights/{id}/event-windows — ADR-0035 §6 explore-events data. */
 export async function fetchInsightEventWindows(
   insightId: string,

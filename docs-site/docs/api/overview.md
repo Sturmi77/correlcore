@@ -65,13 +65,16 @@ Mood, energy, stress, tags, symptoms, and notes are stored per calendar day.
 
 ## Insights & analytics
 
-| Method | Path                        | Notes                                |
-| ------ | --------------------------- | ------------------------------------ |
-| `GET`  | `/api/v1/insights`          | Generated insight cards              |
-| `GET`  | `/api/v1/insights/maturity` | User insight maturity phase          |
-| `GET`  | `/api/v1/analytics/...`     | Trends, correlations (authenticated) |
+| Method | Path                            | Notes                                |
+| ------ | ------------------------------- | ------------------------------------ |
+| `GET`  | `/api/v1/insights`              | Generated insight cards              |
+| `GET`  | `/api/v1/insights/tag-clusters` | Tag groups (tiered maturity, M10.1)  |
+| `POST` | `/api/v1/insights/regenerate`   | On-demand insight run (1×/hour)      |
+| `POST` | `/api/v1/insights/trigger`      | Admin manual worker run              |
+| `GET`  | `/api/v1/analytics/...`         | Trends, correlations (authenticated) |
 
-Insight generation runs in the background **worker** service.
+Insight generation runs in the background **worker** (nightly 03:00 UTC) or on demand via
+**Settings → Analysis → Refresh insights** (`POST /insights/regenerate`).
 
 ---
 

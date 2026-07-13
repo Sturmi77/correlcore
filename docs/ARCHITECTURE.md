@@ -170,14 +170,14 @@ Nightly Cron (03:00 UTC) — siehe backend/app/workers/analytics.py
         └── Recompute Tag-Vektoren / Tag-Gruppen (tag_cluster_service)
 ```
 
-> **Vorgeschlagen (ADR-0037, zur Freigabe):** Zusätzliche Trigger (Post-Import,
-> User `POST /insights/regenerate`, Admin-Trigger), deskriptive
-> `weekday_summary` im Dashboard und dreistufige Tag-Gruppen-Reife (30 / 45 / 90
-> Tage). Details: [`docs/proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md`](proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md).
+> **Umgesetzt (ADR-0037, M10.1):** Zusaetzliche Trigger (Post-Import,
+> User `POST /insights/regenerate`, Admin-Trigger), dreistufige Tag-Gruppen-Reife
+> (30 / 45 / 90 Tage). Deskriptive `weekday_summary` im Dashboard ist Paket C.
+> Details: [`docs/adr/0037-insight-triggers-tag-cluster-maturity.md`](adr/0037-insight-triggers-tag-cluster-maturity.md).
 
-**Schwellen-Trennung (Ist):** `MIN_ML_ENTRIES = 90` (Lasso/Lag, ADR-0016) gilt
-für CV-ML. Tag-Clustering nutzt derzeit dieselbe 90-Tage-Hürde — ADR-0037 schlägt
-eine Entkopplung vor (deskriptiv ab 30/45, robust ab 90).
+**Schwellen-Trennung:** `MIN_ML_ENTRIES = 90` (Lasso/Lag, ADR-0016) gilt
+für CV-ML. Tag-Clustering nutzt deskriptive Stufen ab 30/45 Tagen (pair /
+provisional k-means) und robust ab 90 (ADR-0037).
 
 **Teilweise umgesetzt / geplant:** Der Web-Client zeigt Symptome bereits als
 deskriptiven Kontext in `/trends` Compare und `/insights` an. Die inferenzielle

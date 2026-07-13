@@ -76,6 +76,7 @@ Configure habits in **Settings → Tags & habits**: build or reduce goals tied t
 **Settings → Privacy & data:**
 
 - Toggle analytics / insight generation (`analytics_enabled`)
+- **Refresh insights** — on-demand regeneration (once per hour)
 - Export your data (JSON/ZIP — GDPR Art. 20)
 - Delete your account (irreversible)
 

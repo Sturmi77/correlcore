@@ -7,7 +7,7 @@ Run after Pakete A–E are merged.
 
 ## Prerequisites
 
-- Worker running **or** `POST /insights/regenerate` available
+- Worker running **or** `POST /insights/regenerate` / Settings → **Refresh insights**
 - Test user with ≥ 45 tracking days and diverse tags (M7 QA seed or import)
 - `analytics_enabled = true`
 

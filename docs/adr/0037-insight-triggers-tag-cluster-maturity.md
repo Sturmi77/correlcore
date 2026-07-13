@@ -1,13 +1,13 @@
 # ADR-0037 — Insight-Trigger, deskriptive Wochentage & Tag-Cluster-Reifegrad
 
-| Field        | Value                                                                                                    |
-| ------------ | -------------------------------------------------------------------------------------------------------- |
-| **ID**       | 0037                                                                                                     |
-| **Date**     | 2026-07-13                                                                                               |
-| **Status**   | Accepted                                                                                                 |
-| **Deciders** | @Sturmi77                                                                                                |
-| **Area**     | Backend / Analytics / API / Frontend                                                                     |
-| **Related**  | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
+| Field | Value |
+| ----- | ----- |
+| **ID** | 0037 |
+| **Date** | 2026-07-13 |
+| **Status** | Accepted |
+| **Deciders** | @Sturmi77 |
+| **Area** | Backend / Analytics / API / Frontend |
+| **Related** | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
 
 ---
 
@@ -130,11 +130,11 @@ Provisional clusters are **descriptive**, not inferential insight cards. UI show
 - [x] `POST /api/v1/insights/trigger` (admin)
 - [x] Hook after `POST /entries/batch`
 - [x] `weekday_summary` in dashboard schema + service
-- [ ] Tag-cluster tiers in `tag_cluster_service.py`
-- [ ] `TagGroupsSection` + `HomeWeekdayOverview` UI
-- [ ] i18n DE/EN
-- [ ] Tests + API contract
-- [ ] Documentation per [impact matrix](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md#7-dokumentations-impact-matrix)
+- [x] Tag-cluster tiers in `tag_cluster_service.py`
+- [x] `TagGroupsSection` + `HomeWeekdayOverview` UI
+- [x] i18n DE/EN
+- [x] Tests + API contract
+- [x] Documentation per [impact matrix](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md#7-dokumentations-impact-matrix)
 
 ---
 

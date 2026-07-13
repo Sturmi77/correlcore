@@ -74,6 +74,16 @@ vi.mock('$lib/api/user', () => ({
   deleteAccount: vi.fn(async () => undefined),
 }));
 
+vi.mock('$lib/api/insights', () => ({
+  regenerateInsights: vi.fn(async () => ({
+    status: 'ok',
+    generated_for_date: '2026-07-13',
+    insight_count: 5,
+    tag_clusters_status: 'ok',
+    trigger_source: 'user_regenerate',
+  })),
+}));
+
 describe('/settings Sprint 7', () => {
   beforeEach(() => {
     devMode.set(false);
@@ -137,5 +147,11 @@ describe('/settings Sprint 7', () => {
     await waitFor(() => {
       expect(screen.getByTestId('language-en').getAttribute('aria-pressed')).toBe('true');
     });
+  });
+
+  it('shows regenerate insights control in analysis section', async () => {
+    render(Page);
+
+    expect(await screen.findByTestId('regenerate-insights')).toBeTruthy();
   });
 });

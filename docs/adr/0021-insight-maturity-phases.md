@@ -114,5 +114,6 @@ The `user_message_key` references a translation/copy key — the backend never g
 - ADR-0018: Insight Confidence Visualisation (superseded in part)
 - ADR-0016: Timeseries Split for ML Models
 - ADR-0017: Frontend Screen Architecture
+- ADR-0037: Tag-cluster `cluster_maturity` (`early` / `provisional` / `robust`) complements insight phases for descriptive tag groups
 - `docs/frontend/INSIGHT_MATURITY.md` — detailed component spec
 - GitHub Issues: #insight-maturity (see issue tracker)

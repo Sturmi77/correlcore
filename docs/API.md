@@ -873,6 +873,7 @@ GET    /api/v1/insights/latest       Neuester Insight je Metrik
 GET    /api/v1/insights/tag-cooccurrence   Tag-Paar-Co-Occurrence (M5.1)
 GET    /api/v1/insights/symptom-tag-cooccurrence   Symptom×Tag-Lift-Matrix (M7)
 GET    /api/v1/insights/tag-clusters   Tag-Gruppen aus M7-Clustering
+POST   /api/v1/insights/regenerate    Insights + Tag-Gruppen on-demand (Owner, 1×/h)
 POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 ```
 
@@ -1378,6 +1379,33 @@ RFC 7807 Problem Details bleiben ein mögliches API-Hardening für spätere
 Milestones.
 
 `GET /api/v1/insights/tag-clusters` (M7) liefert entweder `status: "insufficient_data"`
-mit Entry-/Tag-Zaehlern oder `status: "ok"` mit Clustern unter der neutralen
-Semantik "Tags that often appear together". Der Guard ist <90 Tracking-Tage
-oder <5 aktive Tags im 90-Tage-Fenster.
+mit Entry-/Signal-Zaehlern oder `status: "ok"` mit Clustern unter der neutralen
+Semantik "Tags that often appear together". Reifegrad-Stufen (ADR-0037):
+
+| Tage | `cluster_maturity` | `cluster_mode` |
+| ---- | ------------------ | -------------- |
+| &lt; 30 | — (`insufficient_data`) | — |
+| 30–44 | `early` | `pair` |
+| 45–89 | `provisional` | `kmeans` (Fallback `pair`) |
+| ≥ 90 | `robust` | `kmeans` (mixed tag/symptom) |
+
+Zusaetzliche Felder: `cluster_maturity`, `cluster_mode`, `entries_until_robust`,
+`silhouette_score`, `window_days` (effektive Tage im Fenster).
+
+`POST /api/v1/insights/regenerate` (M10.1) fuehrt dieselbe Pipeline wie der
+Nightly Worker fuer den eingeloggten Owner aus. Rate-Limit: 1× pro Stunde (Redis).
+Bei `analytics_enabled=false` → `403`. Response:
+
+```json
+{
+  "status": "ok",
+  "generated_for_date": "2026-07-13",
+  "insight_count": 13,
+  "tag_clusters_status": "ok",
+  "trigger_source": "user_regenerate"
+}
+```
+
+Nach erfolgreichem `POST /entries/batch` wird eine debounced Hintergrund-Regeneration
+(5 min) ausgeloest. Admin-Trigger: `POST /api/v1/insights/trigger` mit
+`INSIGHT_TRIGGER_ADMIN_EMAILS`.

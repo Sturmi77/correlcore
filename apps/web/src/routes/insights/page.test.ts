@@ -211,7 +211,7 @@ vi.mock('$lib/api/insights', () => ({
     active_signal_count: 0,
     window_days: 90,
     k: null,
-    reason: 'entry_count_below_90',
+    reason: 'entry_count_below_30',
     cluster_kind: 'mixed',
     clusters: [],
   })),
