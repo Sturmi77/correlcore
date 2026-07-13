@@ -964,10 +964,22 @@
       "heading": "Tag-Gruppen",
       "subtitle": "Tags, die haeufig gemeinsam auftreten",
       "subtitle_mixed": "Signale, die haeufig gemeinsam auftreten",
+      "subtitle_pair": "Tags, die haeufig gemeinsam auftreten — erste gemeinsame Paare aus deinen Entries",
+      "subtitle_kmeans_provisional": "Vorlaeufige Tag-Gruppen — Muster koennen sich mit mehr Entries noch aendern",
       "loading": "Tag-Gruppen werden geladen",
       "empty": "Noch keine Tag-Gruppen verfuegbar. Tracke weiter Entries mit Tags.",
-      "insufficient": "{entries}/90 Entries und {tags}/5 aktive Tags sind fuer Tag-Gruppen verfuegbar.",
-      "strength": "{value}% gemeinsames Muster"
+      "insufficient_below_pair": "{entries} Entries · noch {remaining} bis zu ersten gemeinsamen Mustern ({target} Tage)",
+      "insufficient_below_provisional": "{entries} Entries · noch {remaining} bis zu vorlaeufigen Gruppen ({target} Tage)",
+      "insufficient_below_robust": "{entries} Entries · noch {remaining} bis zu vollen Tag-Gruppen ({target} Tage)",
+      "insufficient_tags": "{entries} Entries · mindestens {target} aktive Tags oder Symptome noetig (aktuell {tags})",
+      "insufficient_generic": "{entries} Entries und {tags} aktive Signale reichen fuer Tag-Gruppen noch nicht aus.",
+      "strength": "{value}% gemeinsames Muster",
+      "badge": {
+        "early": "Erste Muster · {entries} Entries",
+        "early_tooltip": "Basiert auf gemeinsam auftretenden Tag-Paaren. Muster koennen sich mit mehr Daten aendern.",
+        "provisional": "Vorlaeufig · {entries} Entries",
+        "provisional_tooltip": "Vorlaeufige Gruppierung aus begrenzter Historie. Muster koennen sich noch verschieben."
+      }
     },
     "confidence_label": {
       "early_signal": "Erstes Signal",

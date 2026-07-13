@@ -964,10 +964,22 @@
       "heading": "Tag groups",
       "subtitle": "Tags that often appear together",
       "subtitle_mixed": "Signals that often appear together",
+      "subtitle_pair": "Tags that often appear together — first co-occurrence pairs from your entries",
+      "subtitle_kmeans_provisional": "Preliminary tag groups — patterns may still change with more entries",
       "loading": "Loading tag groups",
       "empty": "No tag groups available yet. Keep logging entries with tags.",
-      "insufficient": "{entries}/90 entries and {tags}/5 active tags are available for tag groups.",
-      "strength": "{value}% shared pattern"
+      "insufficient_below_pair": "{entries} entries tracked · {remaining} more until first co-occurrence patterns ({target} days)",
+      "insufficient_below_provisional": "{entries} entries tracked · {remaining} more until preliminary groups ({target} days)",
+      "insufficient_below_robust": "{entries} entries tracked · {remaining} more until full tag groups ({target} days)",
+      "insufficient_tags": "{entries} entries tracked · need at least {target} active tags or symptoms (currently {tags})",
+      "insufficient_generic": "{entries} entries and {tags} active signals are not enough for tag groups yet.",
+      "strength": "{value}% shared pattern",
+      "badge": {
+        "early": "First patterns · {entries} entries",
+        "early_tooltip": "Based on co-occurring tag pairs. Patterns may change as more entries are added.",
+        "provisional": "Provisional · {entries} entries",
+        "provisional_tooltip": "Preliminary grouping from limited history. Patterns may shift with more data."
+      }
     },
     "confidence_label": {
       "early_signal": "Early signal",

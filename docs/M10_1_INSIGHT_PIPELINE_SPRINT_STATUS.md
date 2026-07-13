@@ -14,7 +14,7 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 | A | Insight-Trigger (Backend) | Complete (PR A+B) |
 | B | Tag-Gruppen-Stufen | Complete (PR A+B) |
 | C | Wochentags-Dashboard & Home | Not started |
-| D | Frontend Tag-Gruppen-Reifegrad | Not started |
+| D | Frontend Tag-Gruppen-Reifegrad | Complete (PR D) |
 | E | Docs, i18n, E2E, Quality Gate | Not started |
 
 ## Acceptance-criteria audit matrix
@@ -28,7 +28,7 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 | Tag-Gruppen provisional ab 45 | B | `tag_cluster_service.py` | `test_tag_clusters.py` | — |
 | `weekday_summary` Dashboard | C | `dashboard_service.py` | — | Not implemented |
 | Home Weekday ohne `weekday_pattern` | C | `HomeWeekdayOverview` | — | Insight-only today |
-| `cluster_maturity` UI | D | `TagGroupsSection` | — | Not implemented |
+| `cluster_maturity` UI | D | `TagGroupsSection` | `TagGroupsSection.test.ts` | — |
 | ADR-0037 Accepted | 0 | `docs/adr/0037-*.md` | — | Done |
 | API.md / PHASE_MATRIX updated | E | docs | — | Pending |
 
@@ -61,8 +61,9 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 
 ## Paket D — Checklist
 
-- [ ] D1–D5 implementiert
-- [ ] i18n DE/EN
+- [x] D1–D5 implementiert
+- [ ] i18n DE/EN (done in D2/D3)
+- [ ] D6 Settings regenerate link (optional P1)
 
 ## Paket E — Checklist
 

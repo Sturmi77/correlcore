@@ -44,7 +44,7 @@ describe('insights API client', () => {
       active_tag_count: 3,
       window_days: 90,
       k: null,
-      reason: 'entry_count_below_90',
+      reason: 'entry_count_below_30',
       clusters: [],
     });
 

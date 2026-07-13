@@ -716,28 +716,37 @@ function makeSymptomTagCooccurrenceByRange(
 }
 
 function makeTagClusters(entryCount: number, enabled: boolean): TagClustersResponse {
-  if (!enabled) {
+  if (!enabled || entryCount < 30) {
     return {
       status: 'insufficient_data',
       entry_count: entryCount,
-      active_tag_count: 0,
-      active_signal_count: 0,
-      window_days: 90,
+      active_tag_count: enabled ? 4 : 0,
+      active_signal_count: enabled ? 4 : 0,
+      window_days: Math.min(entryCount, 90),
       k: null,
-      reason: 'dev_phase_gate',
+      reason: enabled ? 'entry_count_below_30' : 'dev_phase_gate',
       cluster_kind: 'mixed',
+      entries_until_robust: Math.max(0, 90 - entryCount),
       clusters: [],
     };
   }
+
+  const clusterMaturity = entryCount >= 90 ? 'robust' : entryCount >= 45 ? 'provisional' : 'early';
+  const clusterMode = entryCount >= 45 ? 'kmeans' : 'pair';
+
   return {
     status: 'ok',
     entry_count: entryCount,
     active_tag_count: 6,
     active_signal_count: 7,
-    window_days: 90,
-    k: 3,
+    window_days: Math.min(entryCount, 90),
+    k: clusterMode === 'kmeans' ? 3 : null,
     reason: null,
-    cluster_kind: 'mixed',
+    cluster_kind: entryCount >= 90 ? 'mixed' : 'tags_only',
+    cluster_maturity: clusterMaturity,
+    cluster_mode: clusterMode,
+    entries_until_robust: entryCount >= 90 ? null : 90 - entryCount,
+    silhouette_score: clusterMode === 'kmeans' ? 0.115 : null,
     clusters: [
       {
         cluster_id: 1,
