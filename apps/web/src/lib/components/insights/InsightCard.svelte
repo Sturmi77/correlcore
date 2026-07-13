@@ -27,6 +27,7 @@
   } from '$lib/utils/insightConfounder';
   import InsightEvidence from './InsightEvidence.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
+  import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
   export let insight: InsightResponse | null = null;
@@ -49,7 +50,10 @@
 
   // Sprint 3 (ADR-0035 §6): only surface the action when a parent has wired
   // the sheet and the insight has reached the provisional phase.
-  $: canExploreEvents = enableExploreEvents && isSmallMultiplesUnlocked(maturity?.phase ?? null);
+  $: canExploreEvents =
+    enableExploreEvents &&
+    isSmallMultiplesUnlocked(maturity?.phase ?? null) &&
+    Boolean(insight && isExploreEventsSubject(insight));
 
   let expanded = false;
 

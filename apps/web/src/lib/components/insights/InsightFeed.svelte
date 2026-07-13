@@ -47,8 +47,10 @@
   export let filterTab: InsightFeedFilterTab | undefined = undefined;
   /** Analysis window in days for the context subtitle (O-46). */
   export let analysisRangeDays = 90;
+  /** Enables the Explore aligned events affordance on insight cards (ADR-0035 §6). */
+  export let enableExploreEvents = false;
 
-  const dispatch = createEventDispatcher<{ retry: void }>();
+  const dispatch = createEventDispatcher<{ retry: void; exploreEvents: { id: string } }>();
 
   let internalFilterTab: InsightFeedFilterTab = 'all';
   let disclaimerOpen = false;
@@ -166,7 +168,9 @@
             {maturity}
             {inactiveTagIds}
             {showMaturityBadge}
+            {enableExploreEvents}
             featured={index === 0}
+            on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
           />
         </li>
       {/each}

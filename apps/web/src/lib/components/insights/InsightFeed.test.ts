@@ -106,6 +106,24 @@ describe('InsightFeed', () => {
     expect(handler).toHaveBeenCalledOnce();
   });
 
+  it('forwards exploreEvents from insight cards when enabled', async () => {
+    const handler = vi.fn();
+    const insight = makeInsight({ id: 'tag-insight', subject_type: 'tag' });
+    render(InsightFeed, {
+      props: {
+        insights: [insight],
+        maturity: { ...maturity, phase: 'provisional' },
+        enableExploreEvents: true,
+      },
+      events: { exploreEvents: handler },
+    });
+
+    await fireEvent.click(screen.getByTestId('insight-card-explore-events'));
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(handler.mock.calls[0]?.[0].detail).toEqual({ id: 'tag-insight' });
+  });
+
   // ── Sort order ────────────────────────────────────────────────────
   it('sorts insights by confidence × |effect_size| descending', () => {
     const low = makeInsight({ id: 'low', confidence: 0.3, effect_size: 0.2 }); // score 0.06
