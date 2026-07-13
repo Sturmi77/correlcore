@@ -19,7 +19,7 @@ function apiEntry(id: string): EntryResponse {
     energy: 3,
     stress: 2,
     cycle_day: null,
-    source: 'manual',
+    source: 'direct',
     work_context: 'office',
     note: 'server note',
     created_at: '2026-07-13T08:00:00.000Z',
