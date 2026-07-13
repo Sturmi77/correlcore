@@ -155,6 +155,10 @@ class TagClusterGroup(BaseModel):
     strength: float = Field(ge=0, le=1)
 
 
+TagClusterMaturity = Literal["early", "provisional", "robust"]
+TagClusterMode = Literal["pair", "kmeans"]
+
+
 class TagClustersResponse(BaseModel):
     status: Literal["ok", "insufficient_data"]
     entry_count: int = Field(ge=0)
@@ -164,4 +168,8 @@ class TagClustersResponse(BaseModel):
     k: int | None = Field(default=None, ge=1)
     reason: str | None = None
     cluster_kind: Literal["tags_only", "mixed"] = "tags_only"
+    cluster_maturity: TagClusterMaturity | None = None
+    cluster_mode: TagClusterMode | None = None
+    entries_until_robust: int | None = Field(default=None, ge=0)
+    silhouette_score: float | None = None
     clusters: list[TagClusterGroup] = Field(default_factory=list)

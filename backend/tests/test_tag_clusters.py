@@ -68,11 +68,36 @@ def _cluster_fixture() -> tuple[list[DailyTagSet], list[object]]:
 
 def test_tag_clusters_return_insufficient_data_below_entry_threshold() -> None:
     daily, tags = _cluster_fixture()
-    response = build_tag_cluster_response(build_tag_vectors(daily[:89], tags))
+    response = build_tag_cluster_response(build_tag_vectors(daily[:29], tags))
 
     assert response.status == "insufficient_data"
-    assert response.reason == "entry_count_below_90"
-    assert response.entry_count == 89
+    assert response.reason == "entry_count_below_30"
+    assert response.entry_count == 29
+    assert response.entries_until_robust == 61
+
+
+def test_tag_clusters_use_pair_mode_between_30_and_44_days() -> None:
+    daily, tags = _cluster_fixture()
+    response = build_tag_cluster_response(build_tag_vectors(daily[:35], tags))
+
+    assert response.status == "ok"
+    assert response.cluster_mode == "pair"
+    assert response.cluster_maturity == "early"
+    assert response.k is None
+    assert response.clusters
+
+
+def test_tag_clusters_use_provisional_kmeans_at_67_days() -> None:
+    daily, tags = _cluster_fixture()
+    response = build_tag_cluster_response(build_tag_vectors(daily[:67], tags))
+
+    assert response.status == "ok"
+    assert response.cluster_maturity == "provisional"
+    assert response.cluster_mode == "kmeans"
+    assert response.k is not None
+    assert response.k <= 3
+    assert response.silhouette_score is not None
+    assert response.silhouette_score >= 0.08
 
 
 def test_tag_clusters_group_tags_from_jaccard_vectors() -> None:
@@ -80,6 +105,8 @@ def test_tag_clusters_group_tags_from_jaccard_vectors() -> None:
     response = build_tag_cluster_response(build_tag_vectors(daily, tags))
 
     assert response.status == "ok"
+    assert response.cluster_maturity == "robust"
+    assert response.cluster_mode == "kmeans"
     assert response.k is not None
     assert response.active_tag_count == 6
     assert response.active_signal_count == 6
@@ -188,7 +215,7 @@ async def test_tag_clusters_endpoint_returns_response(
         active_tag_count=3,
         active_signal_count=3,
         window_days=90,
-        reason="entry_count_below_90",
+        reason="entry_count_below_30",
         clusters=[],
     )
 

@@ -4,7 +4,7 @@
 | ----- | ----- |
 | **ID** | 0037 |
 | **Date** | 2026-07-13 |
-| **Status** | Vorgeschlagen |
+| **Status** | Accepted |
 | **Deciders** | @Sturmi77 |
 | **Area** | Backend / Analytics / API / Frontend |
 | **Related** | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |

@@ -1,20 +1,27 @@
-"""Insight read endpoints (M3)."""
+"""Insight read and regeneration endpoints (M3, M10.1)."""
 
 from __future__ import annotations
 
 import uuid
 
+import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.deps.auth import get_current_verified_user
+from app.api.v1.deps.auth import (
+    get_current_insight_trigger_admin,
+    get_current_verified_user,
+)
 from app.core.rate_limit import limiter
+from app.db.redis_client import get_redis
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.insight import (
     InsightEventWindowsResponse,
     InsightListResponse,
+    InsightRegenerateResponse,
     InsightResponse,
+    InsightTriggerResponse,
 )
 from app.schemas.stats import (
     SymptomTagCooccurrenceResponse,
@@ -34,8 +41,15 @@ from app.services.insight_service import (
     list_insights,
     list_latest_insights,
 )
+from app.services.insight_worker_service import (
+    AnalyticsDisabledError,
+    InsightJobNotFoundError,
+    regenerate_insights_for_user,
+    try_acquire_regenerate_slot,
+)
 from app.services.stats_service import get_symptom_tag_cooccurrence, get_tag_cooccurrence
 from app.services.tag_cluster_service import get_tag_clusters
+from app.workers.analytics import run_insights_once
 
 router = APIRouter()
 
@@ -145,6 +159,72 @@ async def get_tag_clusters_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> TagClustersResponse:
     return await get_tag_clusters(db, user_id=user.id)
+
+
+@router.post(
+    "/regenerate",
+    response_model=InsightRegenerateResponse,
+    summary="Regenerate insights and tag clusters for the current user",
+)
+@limiter.limit("10/minute")
+async def regenerate_insights_endpoint(
+    request: Request,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+    redis: aioredis.Redis = Depends(get_redis),
+) -> InsightRegenerateResponse:
+    if not await try_acquire_regenerate_slot(user_id=user.id):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Insight regeneration is limited to once per hour",
+        )
+    try:
+        result = await regenerate_insights_for_user(
+            db,
+            user_id=user.id,
+            trigger_source="user_regenerate",
+        )
+        await db.commit()
+    except AnalyticsDisabledError as exc:
+        await db.rollback()
+        await redis.delete(f"insight:regenerate:{user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Analytics processing is disabled for this account",
+        ) from exc
+    except InsightJobNotFoundError as exc:
+        await db.rollback()
+        await redis.delete(f"insight:regenerate:{user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No encryption key found for insight generation",
+        ) from exc
+
+    return InsightRegenerateResponse(
+        generated_for_date=result.generated_for_date,
+        insight_count=result.insight_count,
+        tag_clusters_status=result.tag_clusters_status,
+        trigger_source=result.trigger_source,
+    )
+
+
+@router.post(
+    "/trigger",
+    response_model=InsightTriggerResponse,
+    summary="Run scheduled insight generation for all eligible users (admin)",
+)
+@limiter.limit("10/minute")
+async def trigger_insights_endpoint(
+    request: Request,
+    _admin: User = Depends(get_current_insight_trigger_admin),
+) -> InsightTriggerResponse:
+    summary = await run_insights_once()
+    return InsightTriggerResponse(
+        eligible_users=summary.eligible_users,
+        processed_users=summary.processed_users,
+        failed_users=summary.failed_users,
+        generated_insights=summary.generated_insights,
+    )
 
 
 @router.get(

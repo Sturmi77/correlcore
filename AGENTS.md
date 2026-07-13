@@ -32,6 +32,19 @@ uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 
 **Vite bind quirk:** the dev server may listen on `localhost` only. Use `http://localhost:5173/` in the browser; `127.0.0.1:5173` can refuse connections even when the process is up.
 
+### Analytics worker & on-demand insights (M10.1)
+
+After API + Redis are up, run insight generation locally without waiting for 03:00 UTC:
+
+```bash
+cd backend
+uv run --python 3.12 python -m app.workers.analytics --once
+```
+
+Or trigger regeneration for the logged-in user via API: `POST /api/v1/insights/regenerate` (rate-limited 1×/hour). Bulk import via `POST /entries/batch` schedules a debounced background regeneration.
+
+Admin manual worker run: set `INSIGHT_TRIGGER_ADMIN_EMAILS` and call `POST /api/v1/insights/trigger`.
+
 ### Parallel React GUI (experimental)
 
 See [`docs/frontend/PARALLEL_REACT_GUI.md`](docs/frontend/PARALLEL_REACT_GUI.md).
