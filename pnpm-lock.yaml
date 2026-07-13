@@ -48,12 +48,6 @@ importers:
       '@sentry/node':
         specifier: ^10.64.0
         version: 10.64.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))
-      '@skeletonlabs/skeleton':
-        specifier: ^2.10.0
-        version: 2.11.0(svelte@5.55.5(@typescript-eslint/types@8.59.2))
-      '@skeletonlabs/tw-plugin':
-        specifier: ^0.4.0
-        version: 0.4.1(tailwindcss@4.2.4)
       dexie:
         specifier: ^4.4.4
         version: 4.4.4
@@ -706,16 +700,6 @@ packages:
     resolution: {integrity: sha512-d568Jhn3WBfm07dsdPsLh0q+qRj71xZEDZFsA33kizD0UuSCR8axtc2YW6aKdPhtuqgm9tHjSX35Q9vK/XmujA==}
     engines: {node: '>=18'}
 
-  '@skeletonlabs/skeleton@2.11.0':
-    resolution: {integrity: sha512-ORMZYACsIlfKyBx2ZIHBy7zE877t99fxU7LzcY1dveVmn2//+OeqnbQb5RryNILsMR62Tuu1VLnCu01/ByHlbQ==}
-    peerDependencies:
-      svelte: ^3.56.0 || ^4.0.0 || ^5.0.0
-
-  '@skeletonlabs/tw-plugin@0.4.1':
-    resolution: {integrity: sha512-crrC8BGKis0GNTp7V2HF6mk1ECLUvAxgTTV26LMgt/rV3U6Xd7N7dL5qIL8fE4MTHvpKa1SBsdqsnMbEvATeEg==}
-    peerDependencies:
-      tailwindcss: '>=3.0.0'
-
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
@@ -1314,9 +1298,6 @@ packages:
     peerDependenciesMeta:
       jiti:
         optional: true
-
-  esm-env@1.0.0:
-    resolution: {integrity: sha512-Cf6VksWPsTuW01vU9Mk/3vRue91Zevka5SjyNf3nEpokFRuqt/KjUQoGAwq9qMmhpLTHmXzSIrFRw8zxWzmFBA==}
 
   esm-env@1.2.2:
     resolution: {integrity: sha512-Epxrv+Nr/CaL4ZcFGPJIYLWFom+YeV1DqMLHJoEd9SYRxNbaFruBwfEX/kkHUJf55j2+TUbmDcmuilbP1TmXHA==}
@@ -2713,15 +2694,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@skeletonlabs/skeleton@2.11.0(svelte@5.55.5(@typescript-eslint/types@8.59.2))':
-    dependencies:
-      esm-env: 1.0.0
-      svelte: 5.55.5(@typescript-eslint/types@8.59.2)
-
-  '@skeletonlabs/tw-plugin@0.4.1(tailwindcss@4.2.4)':
-    dependencies:
-      tailwindcss: 4.2.4
-
   '@standard-schema/spec@1.1.0': {}
 
   '@sveltejs/acorn-typescript@1.0.9(acorn@8.16.0)':
@@ -3370,8 +3342,6 @@ snapshots:
       jiti: 2.7.0
     transitivePeerDependencies:
       - supports-color
-
-  esm-env@1.0.0: {}
 
   esm-env@1.2.2: {}
 

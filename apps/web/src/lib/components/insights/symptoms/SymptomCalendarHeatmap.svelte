@@ -182,7 +182,7 @@
   }
 
   .symptom-calendar__swatch--present {
-    background: var(--color-warning);
+    background: var(--color-heatmap-4);
   }
 
   .symptom-calendar__cell {
@@ -196,7 +196,7 @@
   }
 
   .symptom-calendar__cell--present {
-    background: var(--color-warning);
+    background: var(--color-heatmap-4);
   }
 
   .symptom-calendar__cell--pad {

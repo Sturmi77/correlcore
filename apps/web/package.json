@@ -25,8 +25,6 @@
   "dependencies": {
     "@sentry/browser": "^10.64.0",
     "@sentry/node": "^10.64.0",
-    "@skeletonlabs/skeleton": "^2.10.0",
-    "@skeletonlabs/tw-plugin": "^0.4.0",
     "dexie": "^4.4.4",
     "lucide-svelte": "^0.469.0",
     "svelte-i18n": "^4.0.0"
