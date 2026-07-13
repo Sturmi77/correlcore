@@ -103,7 +103,7 @@
       {$_('onboarding.skip')}
     </button>
     <button
-      class="btn btn-sm variant-filled-primary"
+      class="btn btn-sm btn--primary"
       type="button"
       disabled={saving}
       on:click={() => save(false)}
@@ -122,7 +122,7 @@
           <small>{preview.source_label}</small>
         </article>
       {/each}
-      <a class="btn btn-sm variant-soft-primary" href="/">{$_('onboarding.finish')}</a>
+      <a class="btn btn-sm btn--secondary" href="/">{$_('onboarding.finish')}</a>
     </section>
   {/if}
 </main>

@@ -54,7 +54,7 @@
         {/each}
       </ol>
 
-      <button class="btn btn-sm variant-filled-primary" type="button" on:click={close}>
+      <button class="btn btn-sm btn--primary" type="button" on:click={close}>
         {$_('maturity.explainer.close')}
       </button>
     </div>

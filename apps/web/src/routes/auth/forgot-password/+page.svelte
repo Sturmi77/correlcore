@@ -41,7 +41,7 @@
 {#if success}
   <p class="auth-success" role="status">{$_('auth.forgot.success')}</p>
   <nav class="auth-links">
-    <a href="/auth/login" class="btn variant-filled-primary auth-submit">
+    <a href="/auth/login" class="btn btn--primary auth-submit">
       {$_('auth.common.back_to_login')}
     </a>
   </nav>
@@ -65,7 +65,7 @@
       <p class="auth-error" role="alert">{$_(errorKey)}</p>
     {/if}
 
-    <button type="submit" class="btn variant-filled-primary auth-submit" disabled={busy || !email}>
+    <button type="submit" class="btn btn--primary auth-submit" disabled={busy || !email}>
       {busy ? $_('auth.common.submit_busy') : $_('auth.forgot.submit')}
     </button>
   </form>
@@ -124,7 +124,7 @@
   .auth-success {
     font-size: var(--text-sm);
     color: var(--color-success);
-    background: var(--color-success-highlight, rgba(34, 197, 94, 0.1));
+    background: var(--color-success-highlight);
     border-left: 3px solid var(--color-success);
     padding: var(--space-2) var(--space-3);
     border-radius: 6px;

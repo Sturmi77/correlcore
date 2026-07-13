@@ -3,7 +3,7 @@
   import type { EntryNavigationDate } from '$lib/navigation/openEntry';
 
   export let date: EntryNavigationDate | undefined = undefined;
-  export let className = 'btn btn-sm variant-soft-primary';
+  export let className = 'btn btn-sm btn--secondary';
 
   function openEntry(): void {
     openEntrySheet(date);

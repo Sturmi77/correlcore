@@ -310,7 +310,7 @@
           </button>
           <button
             type="submit"
-            class="btn variant-filled-primary"
+            class="btn btn--primary"
             disabled={customBusy || disabled}
           >
             {customBusy ? $_('tag.custom.save_busy') : $_('tag.custom.save')}

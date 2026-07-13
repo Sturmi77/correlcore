@@ -106,7 +106,7 @@ describe('InsightCard', () => {
   });
 
   it('falls back to the generic primary accent for non-core-metric insights', () => {
-    render(InsightCard, { props: { insight: { ...INSIGHT, metric: 'sleep_quality' } } });
+    render(InsightCard, { props: { insight: { ...INSIGHT, metric: 'unknown_metric' } } });
     expect(screen.getByTestId('insight-card').getAttribute('style')).toContain(
       '--insight-accent: var(--color-primary)'
     );
