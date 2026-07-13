@@ -168,7 +168,7 @@
     font-size: var(--text-xs);
   }
 
-  @media (min-width: 48rem) {
+  @media (min-width: 768px) {
     .journey-explainer {
       align-items: center;
       padding: var(--space-6);

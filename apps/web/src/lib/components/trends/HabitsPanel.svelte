@@ -140,7 +140,7 @@
     if (!browserWindow || typeof browserWindow.matchMedia !== 'function') {
       return;
     }
-    const media = browserWindow.matchMedia('(max-width: 760px)');
+    const media = browserWindow.matchMedia('(max-width: 767px)');
     mobileMedia = media;
     handleMobileChange(media);
     media.addEventListener('change', handleMobileChange);
@@ -490,7 +490,7 @@
     color: var(--color-text-muted);
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 767px) {
     .habits__header,
     .habits__empty {
       align-items: stretch;

@@ -377,7 +377,7 @@
     cursor: pointer;
     font-size: var(--text-sm);
     font-weight: 600;
-    min-height: 32px;
+    min-height: var(--tap-target);
   }
 
   .compare__chip--active {
@@ -399,7 +399,7 @@
   }
 
   .compare__sort select {
-    min-height: 36px;
+    min-height: var(--tap-target);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-md, 8px);
     border: 1px solid var(--color-border, var(--color-border-chart));

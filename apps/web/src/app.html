@@ -27,6 +27,10 @@
             document.documentElement.setAttribute('data-theme', saved);
             localStorage.setItem('correlcore-theme', saved);
             localStorage.removeItem('moodsync-theme');
+            return;
+          }
+          if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.documentElement.setAttribute('data-theme', 'light');
           }
         } catch (_) {
           /* ignore */

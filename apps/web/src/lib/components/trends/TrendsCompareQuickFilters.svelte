@@ -79,7 +79,7 @@
   }
 
   .quick-filters__chip {
-    min-height: 36px;
+    min-height: var(--tap-target);
     padding: 0 var(--space-2);
     border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
@@ -104,7 +104,7 @@
 
   .quick-filters__category select {
     width: 100%;
-    min-height: 36px;
+    min-height: var(--tap-target);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: 0 var(--space-2);
@@ -114,7 +114,7 @@
   }
 
   .quick-filters__customize {
-    min-height: 36px;
+    min-height: var(--tap-target);
     padding: 0 var(--space-3);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border);
