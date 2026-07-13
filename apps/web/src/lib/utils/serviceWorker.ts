@@ -27,5 +27,7 @@ export async function registerProdServiceWorker(): Promise<void> {
   ) {
     return;
   }
-  await navigator.serviceWorker.register('/service-worker.js', { type: 'module' });
+  await navigator.serviceWorker.register('/service-worker.js', {
+    type: import.meta.env.DEV ? 'module' : 'classic',
+  });
 }

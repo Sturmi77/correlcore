@@ -35,6 +35,6 @@ describe('serviceWorker helpers', () => {
 
     await registerProdServiceWorker();
 
-    expect(register).toHaveBeenCalledWith('/service-worker.js', { type: 'module' });
+    expect(register).toHaveBeenCalledWith('/service-worker.js', { type: 'classic' });
   });
 });
