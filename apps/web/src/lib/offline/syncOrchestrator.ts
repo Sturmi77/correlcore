@@ -127,9 +127,18 @@ export async function pushPending(): Promise<boolean> {
   const pending = await listPendingChanges();
   if (pending.length === 0) return true;
 
+  const latestByEntity = new Map<string, (typeof pending)[number]>();
+  for (const row of pending) {
+    const prev = latestByEntity.get(row.entity_id);
+    if (!prev || (row.seq ?? 0) > (prev.seq ?? 0)) {
+      latestByEntity.set(row.entity_id, row);
+    }
+  }
+  const toPush = [...latestByEntity.values()].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0));
+
   const clientId = await getOrCreateClientId();
   const batchId = crypto.randomUUID();
-  const changes = pending.map((row) => ({
+  const changes = toPush.map((row) => ({
     seq: row.seq!,
     id: row.entity_id,
     table: tableForEntityType(row.entity_type),
@@ -150,7 +159,7 @@ export async function pushPending(): Promise<boolean> {
 
   await setSyncMeta(SYNC_META_KEYS.lastPushAt, new Date().toISOString());
 
-  for (const row of pending) {
+  for (const row of toPush) {
     if (row.entity_type === 'entry') {
       const conflicted = response.conflicts.some((c) => c.entity_id === row.entity_id);
       if (conflicted) {

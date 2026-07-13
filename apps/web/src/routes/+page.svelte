@@ -28,6 +28,11 @@
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
+  import { canUseOfflineSync } from '$lib/offline/featureFlag';
+  import {
+    findLocalEntryByDateSlot,
+    localEntryToEntryResponse,
+  } from '$lib/stores/entriesOffline';
   import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
   import { selectNewestWeekdayPattern } from '$lib/utils/homeWeekdayOverview';
   import { shiftIsoDate } from '$lib/utils/streak';
@@ -111,6 +116,12 @@
 
       recentEntries = entriesResult.value;
       todayEntry = findEntryForDate(recentEntries, todayIso);
+      if (!todayEntry && canUseOfflineSync()) {
+        const localToday = await findLocalEntryByDateSlot(todayIso, 'day');
+        if (localToday) {
+          todayEntry = localEntryToEntryResponse(localToday, get(currentUser)?.id ?? '');
+        }
+      }
       dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
       userPreferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : null;
     } catch {

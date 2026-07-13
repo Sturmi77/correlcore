@@ -100,7 +100,8 @@ vi.mock('$lib/offline/syncOrchestrator', () => ({
 }));
 
 vi.mock('$lib/stores/entriesOffline', () => ({
-  findLocalEntryByDateSlot: vi.fn(),
+  findLocalEntryByDateSlot: vi.fn(async () => undefined),
+  hydrateServerEntryFromApi: vi.fn(async () => undefined),
   localEntryToFormFields: vi.fn(),
   saveEntryOffline: vi.fn(),
 }));
