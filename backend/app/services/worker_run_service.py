@@ -99,9 +99,7 @@ async def finish_run(
             if run is None:
                 logger.warning("worker_runs.finish_missing", extra={"run_id": str(run_id)})
                 return
-            run.status = (
-                status if isinstance(status, WorkerRunStatus) else WorkerRunStatus(status)
-            )
+            run.status = status if isinstance(status, WorkerRunStatus) else WorkerRunStatus(status)
             run.finished_at = datetime.now(UTC)
             run.result = dict(result or {})
             run.error_message = _truncate_error(error_message)

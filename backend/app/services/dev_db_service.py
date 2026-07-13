@@ -88,9 +88,12 @@ def _read_meta(dump_path: Path) -> dict[str, Any] | None:
     if not path.is_file():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        loaded = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return None
+    if not isinstance(loaded, dict):
+        return None
+    return {str(key): value for key, value in loaded.items()}
 
 
 def list_backups() -> tuple[list[dict[str, Any]], str]:
@@ -156,7 +159,8 @@ def create_backup(*, alembic_head: str | None = None) -> dict[str, Any]:
                 )
             if completed.returncode != 0:
                 raise DevDbOpsError(
-                    completed.stderr.decode("utf-8", errors="replace") or "pg_dump via docker failed"
+                    completed.stderr.decode("utf-8", errors="replace")
+                    or "pg_dump via docker failed"
                 )
         else:
             pg_dump = shutil.which("pg_dump")
