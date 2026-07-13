@@ -29,14 +29,14 @@ nicht blind an Zeilennummern editieren), Tests und Akzeptanzkriterien.
 
 ## Getroffene Entscheidungen (Kurzfassung)
 
-| ID | Finding | Entscheidung (2026-07-13) | Charakter |
-| --- | --- | --- | --- |
-| F-03 | Hardcodierte Tag-Default-Farbe | **Aktuelle Theme-Primary beim Anlegen übernehmen** | Kleiner FE-Fix |
-| A-03 | Tote Explore-Events-Kette | **Fertig verdrahten** (ADR-0035 §6) | FE-Feature (Daten client-abgeleitet) |
-| A-04 | Phantom-Metrik `sleep_quality` | **Tab + Contract-Eintrag entfernen** | FE-Removal |
-| A-05 | `energy_avg`/`stress_avg` ungenutzt | **Anzeigen (Metrik-Umschalter)** | FE-Feature |
-| A-06 | Fixture-Lücke Weekday | Klärung: siehe unten (ergänzen) | FE-Fixture |
-| A-01/A-02/A-07 | Toter Code / Exports / SW-Cache | Unverändert entscheidungsfrei | Cleanup |
+| ID             | Finding                             | Entscheidung (2026-07-13)                          | Charakter                            |
+| -------------- | ----------------------------------- | -------------------------------------------------- | ------------------------------------ |
+| F-03           | Hardcodierte Tag-Default-Farbe      | **Aktuelle Theme-Primary beim Anlegen übernehmen** | Kleiner FE-Fix                       |
+| A-03           | Tote Explore-Events-Kette           | **Fertig verdrahten** (ADR-0035 §6)                | FE-Feature (Daten client-abgeleitet) |
+| A-04           | Phantom-Metrik `sleep_quality`      | **Tab + Contract-Eintrag entfernen**               | FE-Removal                           |
+| A-05           | `energy_avg`/`stress_avg` ungenutzt | **Anzeigen (Metrik-Umschalter)**                   | FE-Feature                           |
+| A-06           | Fixture-Lücke Weekday               | Klärung: siehe unten (ergänzen)                    | FE-Fixture                           |
+| A-01/A-02/A-07 | Toter Code / Exports / SW-Cache     | Unverändert entscheidungsfrei                      | Cleanup                              |
 
 ## Empfohlene PR-Aufteilung
 
@@ -282,7 +282,7 @@ explizit + generischen Fallback. Für `symptom_cluster` gilt
 nur lesen):
 
 - **Lasso** (`payload.method === 'lasso'`): Liste `payload.features` (Array)
-  + `payload.target` → z. B. „Mehrere Faktoren → mood".
+  - `payload.target` → z. B. „Mehrere Faktoren → mood".
 - **Lag** (`payload.method === 'lag'`): **Singular** `payload.feature`
   (ein strukturiertes Objekt, nicht Array) + `payload.target` +
   `payload.lag_days` → z. B. „{feature} → {target} (+{lag_days} Tage)".
