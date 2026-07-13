@@ -1,13 +1,13 @@
 # ADR-0037 — Insight-Trigger, deskriptive Wochentage & Tag-Cluster-Reifegrad
 
-| Field | Value |
-| ----- | ----- |
-| **ID** | 0037 |
-| **Date** | 2026-07-13 |
-| **Status** | Accepted |
-| **Deciders** | @Sturmi77 |
-| **Area** | Backend / Analytics / API / Frontend |
-| **Related** | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
+| Field        | Value                                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| **ID**       | 0037                                                                                                     |
+| **Date**     | 2026-07-13                                                                                               |
+| **Status**   | Accepted                                                                                                 |
+| **Deciders** | @Sturmi77                                                                                                |
+| **Area**     | Backend / Analytics / API / Frontend                                                                     |
+| **Related**  | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
 
 ---
 

@@ -34,22 +34,22 @@ describe('homeWeekdayOverview', () => {
   it('maps mood averages and weekday-confounded findings', () => {
     const cells = buildWeekdayOverviewCells(
       [
-      makeInsight({
-        insight_type: 'weekday_pattern',
-        subject_type: 'weekday',
-        payload: {
-          weekday_mood_avgs: { '0': 4.2, '2': 2.1 },
-        },
-      }),
-      makeInsight({
-        subject_label: 'Tuesday running',
-        payload: { weekday: 1 },
-      }),
-      makeInsight({
-        subject_label: 'Headache',
-        subject_type: 'symptom',
-        payload: { weekday: 2 },
-      }),
+        makeInsight({
+          insight_type: 'weekday_pattern',
+          subject_type: 'weekday',
+          payload: {
+            weekday_mood_avgs: { '0': 4.2, '2': 2.1 },
+          },
+        }),
+        makeInsight({
+          subject_label: 'Tuesday running',
+          payload: { weekday: 1 },
+        }),
+        makeInsight({
+          subject_label: 'Headache',
+          subject_type: 'symptom',
+          payload: { weekday: 2 },
+        }),
       ],
       []
     );

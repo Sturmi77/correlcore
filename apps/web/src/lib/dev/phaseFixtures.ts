@@ -817,7 +817,9 @@ function makeWeekdaySummary(entries: EntryResponse[]): DashboardSummaryResponse[
     .map(([weekday, bucket]) => ({
       weekday,
       entry_count: bucket.count,
-      mood_avg: Number((bucket.moods.reduce((sum, mood) => sum + mood, 0) / bucket.moods.length).toFixed(2)),
+      mood_avg: Number(
+        (bucket.moods.reduce((sum, mood) => sum + mood, 0) / bucket.moods.length).toFixed(2)
+      ),
     }));
 }
 
