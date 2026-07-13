@@ -27,4 +27,18 @@ describe('ScreenHeader', () => {
 
     expect(screen.getByRole('banner').classList.contains('screen-header--compact')).toBe(true);
   });
+
+  it('can hide the header visually while keeping the h1 in the DOM', () => {
+    render(ScreenHeader, {
+      props: {
+        title: 'Today',
+        visuallyHidden: true,
+      },
+    });
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Today' })).toBeTruthy();
+    expect(screen.getByRole('banner').classList.contains('screen-header--visually-hidden')).toBe(
+      true
+    );
+  });
 });

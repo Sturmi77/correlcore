@@ -40,6 +40,7 @@
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
   import LandingPage from '$lib/components/landing/LandingPage.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
 
   const EARLY_CONTEXT_PATTERN_KEY = 'early_context_pattern';
   const LEGACY_FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
@@ -198,6 +199,7 @@
 
 {#if $auth.status === 'authenticated'}
   <div class="home-screen screen-stack screen-stack--loose">
+    <ScreenHeader title={$_('nav.home')} visuallyHidden />
     {#if showPwaInstallBanner}
       <section class="home-install" data-testid="pwa-install-banner">
         <div>
