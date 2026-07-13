@@ -5,6 +5,7 @@ import {
   weightedMetricAverage,
   workContextMetricBarWidth,
   workContextMetricHighLow,
+  workContextMetricNeutralBarColor,
   workContextMoodBarWidth,
 } from './homeWorkContextSummary';
 
@@ -55,5 +56,10 @@ describe('homeWorkContextSummary', () => {
   it('marks the lowest stress value as high (best) when inverted', () => {
     const stressValues = items.map((item) => item.stress_avg!);
     expect(workContextMetricHighLow(stressValues, 'stress')).toEqual({ high: 2.1, low: 3 });
+  });
+
+  it('uses primary for neutral stress bars so red can mean worst context only', () => {
+    expect(workContextMetricNeutralBarColor('stress')).toBe('var(--color-primary)');
+    expect(workContextMetricNeutralBarColor('mood')).toBe('var(--color-metric-mood)');
   });
 });

@@ -120,3 +120,10 @@ export function workContextMetricCssVar(metric: WorkContextMetricKey): string {
   if (metric === 'stress') return 'var(--color-metric-stress)';
   return 'var(--color-metric-mood)';
 }
+
+/** Neutral bar fill when a row has no high/low highlight. */
+export function workContextMetricNeutralBarColor(metric: WorkContextMetricKey): string {
+  // Reserve metric-stress red for the worst context only (see HomeDailyBrief stress CSS).
+  if (metric === 'stress') return 'var(--color-primary)';
+  return workContextMetricCssVar(metric);
+}
