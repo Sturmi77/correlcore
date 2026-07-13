@@ -11,6 +11,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.insight import InsightTier, InsightType
+from app.schemas.stats import TagCooccurrenceRange, TimeseriesPoint
 
 
 class InsightMaturityPhase(StrEnum):
@@ -66,3 +67,20 @@ class InsightListResponse(BaseModel):
 
     insight_maturity: InsightMaturity
     insights: list[InsightResponse] = Field(default_factory=list)
+
+
+class InsightEventWindow(BaseModel):
+    """Single tag/symptom occurrence aligned at t = 0 (ADR-0035 §6)."""
+
+    onset: date_type
+    label: str | None = None
+
+
+class InsightEventWindowsResponse(BaseModel):
+    """Event onsets plus timeseries points for Explore-Events small multiples."""
+
+    range: TagCooccurrenceRange
+    start_date: date_type
+    end_date: date_type
+    events: list[InsightEventWindow] = Field(default_factory=list)
+    points: list[TimeseriesPoint] = Field(default_factory=list)

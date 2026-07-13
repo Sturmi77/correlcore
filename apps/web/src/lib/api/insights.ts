@@ -195,3 +195,27 @@ export async function fetchSymptomTagCooccurrence(
     qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence'
   );
 }
+
+export interface InsightEventWindowResponse {
+  onset: string;
+  label: string | null;
+}
+
+export interface InsightEventWindowsResponse {
+  range: TagCooccurrenceRange;
+  start_date: string;
+  end_date: string;
+  events: InsightEventWindowResponse[];
+  points: import('./stats').TimeseriesPoint[];
+}
+
+/** GET /insights/{id}/event-windows — ADR-0035 §6 explore-events data. */
+export async function fetchInsightEventWindows(
+  insightId: string,
+  range: TagCooccurrenceRange
+): Promise<InsightEventWindowsResponse> {
+  const params = new URLSearchParams({ range });
+  return api.get<InsightEventWindowsResponse>(
+    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`
+  );
+}
