@@ -153,6 +153,18 @@ values in deployed environments.
 Current migration head is documented in `backend/migrations/versions/` (run
 `alembic heads` after sync).
 
+## Analytics worker (local)
+
+Regenerate insights without waiting for the nightly 03:00 UTC cron:
+
+```bash
+cd backend
+uv run --python 3.12 python -m app.workers.analytics --once
+```
+
+Or use **Settings → Analysis → Refresh insights** in the web UI (`POST /api/v1/insights/regenerate`).
+See [ADR-0037](adr/0037-insight-triggers-tag-cluster-maturity.md).
+
 ## M7 full-stack QA seed
 
 After Postgres is running and migrations are applied, seed a verified QA user

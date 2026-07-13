@@ -83,7 +83,7 @@ function maturityForProfile(profile: JourneyProfile) {
   return {
     phase: 'robust',
     phase_index: 4,
-    current_entries: 32,
+    current_entries: 67,
     next_phase_at: null,
     next_phase_label: null,
     entries_until_next: null,
@@ -105,7 +105,7 @@ function sampleInsight(userId: string, profile: JourneyProfile) {
       subject_label: 'Friday',
       effect_size: 0.55,
       confidence: profile === 'week_user' ? 0.42 : 0.78,
-      sample_n: profile === 'week_user' ? 9 : 32,
+      sample_n: profile === 'week_user' ? 9 : 67,
       statement: 'Fridays currently line up with higher mood than your overall average.',
       flags: { causal_claim: false },
       payload: {},
@@ -129,7 +129,7 @@ async function installJourneyApi(
   let onboardingCompleted = profile !== 'new_user';
   let user =
     profile === 'new_user' ? users.new : profile === 'week_user' ? users.week : users.month;
-  const entryCount = profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 32;
+  const entryCount = profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 67;
   const entries = makeEntries(entryCount, user.id);
   const writes: string[] = [];
 
@@ -418,7 +418,43 @@ async function installJourneyApi(
     }
 
     if (path.startsWith('/insights/tag-clusters')) {
-      return json(200, { clusters: [] });
+      return json(200, {
+        status: entryCount >= 30 ? 'ok' : 'insufficient_data',
+        entry_count: entryCount,
+        active_tag_count: entryCount >= 30 ? 6 : 2,
+        active_signal_count: entryCount >= 30 ? 6 : 2,
+        window_days: Math.min(entryCount, 90),
+        k: entryCount >= 45 ? 3 : null,
+        reason: entryCount >= 30 ? null : 'entry_count_below_30',
+        cluster_kind: 'tags_only',
+        cluster_maturity: entryCount >= 45 ? 'provisional' : entryCount >= 30 ? 'early' : null,
+        cluster_mode: entryCount >= 45 ? 'kmeans' : entryCount >= 30 ? 'pair' : null,
+        entries_until_robust: entryCount >= 90 ? null : 90 - entryCount,
+        clusters:
+          entryCount >= 30
+            ? [
+                {
+                  cluster_id: 1,
+                  label: 'Tag group 1',
+                  cluster_kind: 'tags_only',
+                  strength: 0.72,
+                  tags: [{ tag_id: 'tag-1', slug: 'sport', name: 'Sport', category: 'sport', color: null }],
+                  members: [],
+                },
+              ]
+            : [],
+      });
+    }
+
+    if (path === '/insights/regenerate' && method === 'POST') {
+      writes.push('POST /insights/regenerate');
+      return json(200, {
+        status: 'ok',
+        generated_for_date: '2026-06-30',
+        insight_count: 3,
+        tag_clusters_status: 'ok',
+        trigger_source: 'user_regenerate',
+      });
     }
 
     if (path.startsWith('/insights/symptom-tag-cooccurrence')) {
@@ -704,5 +740,20 @@ test.describe('W6–W7 Analyse & Habits', () => {
       'robust',
       { timeout: APP_READY_TIMEOUT_MS }
     );
+    await expect(page.getByTestId('tag-groups-maturity-badge')).toHaveAttribute(
+      'data-maturity',
+      'provisional'
+    );
+  });
+
+  test('month user can refresh insights from settings', async ({ page }) => {
+    const api = await installJourneyApi(page, { profile: 'month_user' });
+    await page.goto('/settings');
+
+    await page.getByTestId('regenerate-insights').click();
+    await expect(page.getByText(/insights refreshed|Erkenntnisse aktualisiert/i)).toBeVisible({
+      timeout: APP_READY_TIMEOUT_MS,
+    });
+    expect(api.writes).toContain('POST /insights/regenerate');
   });
 });

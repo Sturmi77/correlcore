@@ -30,6 +30,7 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
+  import { regenerateInsights } from '$lib/api/insights';
 
   // ---------------------------------------------------------------------------
   // Export
@@ -39,6 +40,9 @@
   let preferences: UserPreferencesResponse | null = null;
   let preferencesBusy = false;
   let preferencesError = '';
+  let regenerateBusy = false;
+  let regenerateMessage = '';
+  let regenerateError = '';
   let deleteDialogOpen = false;
   let deletePassword = '';
   let deleteBusy = false;
@@ -75,6 +79,30 @@
       preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
     } finally {
       preferencesBusy = false;
+    }
+  }
+
+  async function handleRegenerateInsights(): Promise<void> {
+    if (preferences?.analytics_enabled === false) return;
+    regenerateBusy = true;
+    regenerateMessage = '';
+    regenerateError = '';
+    try {
+      const result = await regenerateInsights();
+      regenerateMessage = $_('settings.analysis.regenerate_success', {
+        values: { count: result.insight_count },
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        regenerateError = $_('settings.analysis.regenerate_rate_limited');
+      } else if (err instanceof ApiError && err.status === 403) {
+        regenerateError = $_('settings.analysis.regenerate_disabled');
+      } else {
+        regenerateError =
+          err instanceof Error ? err.message : $_('settings.analysis.regenerate_error');
+      }
+    } finally {
+      regenerateBusy = false;
     }
   }
 
@@ -305,6 +333,25 @@
       </label>
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
+      {/if}
+      <div class="settings__actions">
+        <Button
+          variant="secondary"
+          type="button"
+          data-testid="regenerate-insights"
+          loading={regenerateBusy}
+          disabled={preferencesBusy || preferences?.analytics_enabled === false}
+          on:click={() => void handleRegenerateInsights()}
+        >
+          {$_('settings.analysis.regenerate_insights')}
+        </Button>
+      </div>
+      <p class="settings__analysis-note">{$_('settings.analysis.regenerate_hint')}</p>
+      {#if regenerateMessage}
+        <InlineAlert variant="success" message={regenerateMessage} />
+      {/if}
+      {#if regenerateError}
+        <InlineAlert variant="error" message={regenerateError} />
       {/if}
     </section>
 
@@ -630,6 +677,13 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem;
+  }
+
+  .settings__analysis-note {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
   }
 
   .settings__vocabulary-grid {

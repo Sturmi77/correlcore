@@ -8,6 +8,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (M10.1 — Insight pipeline & tag groups)
+
+- **Insight triggers (ADR-0037):** `POST /api/v1/insights/regenerate` (owner, 1×/hour),
+  admin `POST /api/v1/insights/trigger`, post-batch debounced regeneration, worker `--once` CLI.
+- **Tiered tag clusters:** pair (30+ days), provisional k-means (45+), robust (90+);
+  API fields `cluster_maturity`, `cluster_mode`, `entries_until_robust`, `silhouette_score`.
+- **Frontend:** `TagGroupsSection` maturity badges; Settings → **Refresh insights** /
+  **Erkenntnisse aktualisieren**.
+
+### Documentation
+
+- Updated `docs/API.md`, `ARCHITECTURE.md` §6, `PHASE_INSIGHT_MATRIX.md`, M9 thresholds
+  addendum, ADR-0016/0021 cross-refs, docs-site API overview.
+
 ---
 
 ## [1.0.0] — Public Selfhost Release — 2026-07-11

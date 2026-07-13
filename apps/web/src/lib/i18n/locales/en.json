@@ -555,7 +555,13 @@
       "body": "Control whether your entries are used for local patterns and insights.",
       "analytics_enabled": "Analysis enabled",
       "insights": "Explore insights",
-      "error": "Could not save analysis settings."
+      "error": "Could not save analysis settings.",
+      "regenerate_insights": "Refresh insights",
+      "regenerate_hint": "Recalculates insights and tag groups from your current entries. Limited to once per hour.",
+      "regenerate_success": "Insights refreshed ({count} insights generated).",
+      "regenerate_rate_limited": "You can refresh insights once per hour. Please try again later.",
+      "regenerate_disabled": "Enable analysis above to refresh insights.",
+      "regenerate_error": "Could not refresh insights."
     },
     "privacy": {
       "heading": "Privacy & account data",

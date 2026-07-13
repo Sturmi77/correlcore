@@ -555,7 +555,13 @@
       "body": "Steuere, ob deine Eintraege fuer lokale Muster und Erkenntnisse ausgewertet werden.",
       "analytics_enabled": "Analyse aktiviert",
       "insights": "Erkenntnisse ansehen",
-      "error": "Analyse-Einstellungen konnten nicht gespeichert werden."
+      "error": "Analyse-Einstellungen konnten nicht gespeichert werden.",
+      "regenerate_insights": "Erkenntnisse aktualisieren",
+      "regenerate_hint": "Berechnet Erkenntnisse und Tag-Gruppen aus deinen aktuellen Entries neu. Maximal einmal pro Stunde.",
+      "regenerate_success": "Erkenntnisse aktualisiert ({count} Erkenntnisse erzeugt).",
+      "regenerate_rate_limited": "Erkenntnisse koennen nur einmal pro Stunde aktualisiert werden.",
+      "regenerate_disabled": "Aktiviere die Analyse oben, um Erkenntnisse zu aktualisieren.",
+      "regenerate_error": "Erkenntnisse konnten nicht aktualisiert werden."
     },
     "privacy": {
       "heading": "Datenschutz & Kontodaten",
