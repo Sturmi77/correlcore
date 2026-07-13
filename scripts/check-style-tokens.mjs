@@ -96,7 +96,9 @@ function checkStyleBlock(block, relative) {
     }
 
     if (/font-size:\s*[0-9.]+rem/.test(line) && !exempt) {
-      failures.push(`Hardcoded font-size rem literal in ${relative} style block line ${lineNumber}`);
+      failures.push(
+        `Hardcoded font-size rem literal in ${relative} style block line ${lineNumber}`
+      );
     }
 
     if (/font-size:\s*[0-9.]+px/.test(line) && !exempt) {
@@ -105,7 +107,9 @@ function checkStyleBlock(block, relative) {
 
     if (/border-radius:\s*[0-9]/.test(line) && !exempt) {
       if (!/border-radius:\s*0(?:\s|;|$)/.test(line)) {
-        failures.push(`Hardcoded border-radius literal in ${relative} style block line ${lineNumber}`);
+        failures.push(
+          `Hardcoded border-radius literal in ${relative} style block line ${lineNumber}`
+        );
       }
     }
 
@@ -121,7 +125,7 @@ for (const file of findSvelteFiles(sourceRoot)) {
 
   if (ICON_SIZE_EXEMPT.test(content) && /size=\{[0-9]+\}/.test(content)) {
     const badIconSizes = [...content.matchAll(/size=\{([0-9]+)\}/g)].filter(
-      (match) => !['40', '72'].includes(match[1]),
+      (match) => !['40', '72'].includes(match[1])
     );
     for (const match of badIconSizes) {
       failures.push(`Icon size literal size={${match[1]}} in ${relative} — use ICON_SIZE_SM/MD`);

@@ -247,18 +247,18 @@ Contract from `FRONTEND.md` §1.7: every data-driven primary screen should defin
 `DataState`, `EmptyState`, or `InlineAlert` unless a documented bespoke skeleton
 is required (e.g. `InsightCard` skeleton rows).
 
-| Screen / route | Loading | Error | Empty | Offline | Notes |
-| -------------- | ------- | ----- | ----- | ------- | ----- |
-| `/` (Home) | partial | partial | `HomeWeekdayOverview` empty | — | Recent entries uses inline skeleton; no global offline banner |
-| `/insights` | `InsightFeed` skeleton | `InlineAlert` + card retry | `EmptyState` in feed | — | Explore sheet errors inline |
-| `/trends` | chart/heatmap skeletons | `InlineAlert` | section empties | — | Compare panel has own loading |
-| `/entries/new` | form `SaveStatusBadge` | `InlineAlert` | n/a (create flow) | Dexie queue via badge | Entry form is always “create” |
-| `/entries/day/[date]` | raw `<p>` | raw `<p>` | inline copy | — | **Gap:** migrate to `DataState` (P2 follow-up) |
-| `/settings` | — | `InlineAlert` per section | — | PWA note in app settings | Mostly static panels |
-| `/settings/tags` | `DataState` | `InlineAlert` | inline empty copy | — | Reference implementation |
-| `/onboarding/*` | raw `<p>` | `InlineAlert` | — | — | **Gap:** `DataState` for tag step |
-| Auth (`/auth/*`) | button `loading` | `InlineAlert` | — | — | Documented `auth-page-title` exception for `<h1>` |
-| `/status` | — | — | — | — | Static health page |
+| Screen / route        | Loading                 | Error                      | Empty                       | Offline                  | Notes                                                         |
+| --------------------- | ----------------------- | -------------------------- | --------------------------- | ------------------------ | ------------------------------------------------------------- |
+| `/` (Home)            | partial                 | partial                    | `HomeWeekdayOverview` empty | —                        | Recent entries uses inline skeleton; no global offline banner |
+| `/insights`           | `InsightFeed` skeleton  | `InlineAlert` + card retry | `EmptyState` in feed        | —                        | Explore sheet errors inline                                   |
+| `/trends`             | chart/heatmap skeletons | `InlineAlert`              | section empties             | —                        | Compare panel has own loading                                 |
+| `/entries/new`        | form `SaveStatusBadge`  | `InlineAlert`              | n/a (create flow)           | Dexie queue via badge    | Entry form is always “create”                                 |
+| `/entries/day/[date]` | raw `<p>`               | raw `<p>`                  | inline copy                 | —                        | **Gap:** migrate to `DataState` (P2 follow-up)                |
+| `/settings`           | —                       | `InlineAlert` per section  | —                           | PWA note in app settings | Mostly static panels                                          |
+| `/settings/tags`      | `DataState`             | `InlineAlert`              | inline empty copy           | —                        | Reference implementation                                      |
+| `/onboarding/*`       | raw `<p>`               | `InlineAlert`              | —                           | —                        | **Gap:** `DataState` for tag step                             |
+| Auth (`/auth/*`)      | button `loading`        | `InlineAlert`              | —                           | —                        | Documented `auth-page-title` exception for `<h1>`             |
+| `/status`             | —                       | —                          | —                           | —                        | Static health page                                            |
 
 **Follow-up tickets (not blocking Phase 2):** `entries/day`, onboarding tag step,
 and Home offline — migrate manual markup to shared primitives when touched next.
