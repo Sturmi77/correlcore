@@ -228,7 +228,7 @@
     font-size: var(--text-sm);
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 767px) {
     .habit-detail__summary,
     .habit-detail__stats {
       grid-template-columns: 1fr;
