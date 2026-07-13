@@ -4,6 +4,7 @@
   import { page } from '$app/stores';
   import { auth } from '$lib/stores/auth';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import IconRender from '$lib/components/common/IconRender.svelte';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { listTagsForEntry, type TagResponse } from '$lib/api/tags';
@@ -103,6 +104,8 @@
 </svelte:head>
 
 <main class="day-entries">
+  <ScreenHeader title={$_('day_entries.title')} subtitle={date} visuallyHidden />
+
   <header class="day-entries__top">
     <a class="btn btn-sm variant-ghost-surface" href="/trends">{$_('nav.trends')}</a>
     <ThemeToggle testId="day-entries-theme-toggle" />
@@ -110,7 +113,7 @@
 
   <section class="day-entries__intro">
     <div>
-      <h1>{$_('day_entries.title')}</h1>
+      <h2 class="day-entries__heading">{$_('day_entries.title')}</h2>
       <p>{date}</p>
     </div>
     {#if editableDate}
@@ -231,7 +234,7 @@
     gap: 1rem;
   }
 
-  .day-entries__intro h1,
+  .day-entries__intro h2,
   .day-entries__card h2 {
     margin: 0;
     font-size: var(--text-xl, 1.25rem);

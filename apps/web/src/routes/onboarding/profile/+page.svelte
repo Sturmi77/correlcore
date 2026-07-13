@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { upsertUserProfile, type UserProfilePayload } from '$lib/api/profile';
   import { updateUserPreferences } from '$lib/api/preferences';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import previews from '$lib/data/insight_previews.json';
 
   let profile: UserProfilePayload = {};
@@ -44,7 +45,9 @@
 </svelte:head>
 
 <main class="profile-onboarding">
-  <h1>{$_('onboarding.profile.title')}</h1>
+  <ScreenHeader title={$_('onboarding.profile.title')} visuallyHidden />
+
+  <h2 class="profile-onboarding__heading">{$_('onboarding.profile.title')}</h2>
   <p>{$_('onboarding.profile.body')}</p>
 
   {#if error}<p class="profile-onboarding__error">{error}</p>{/if}
@@ -135,10 +138,15 @@
     padding: 1rem 0 2rem;
   }
 
-  .profile-onboarding h1,
-  .profile-onboarding p,
-  .profile-onboarding h2 {
+  .profile-onboarding h2,
+  .profile-onboarding p {
     margin: 0;
+  }
+
+  .profile-onboarding__heading {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: 700;
   }
 
   .profile-onboarding__questions,

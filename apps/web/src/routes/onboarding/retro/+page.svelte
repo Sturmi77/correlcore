@@ -5,6 +5,7 @@
   import { updateUserPreferences } from '$lib/api/preferences';
   import { localIsoDate } from '$lib/utils/home';
   import { shiftIsoDate } from '$lib/utils/streak';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
 
   const today = localIsoDate(new Date());
   const days = Array.from({ length: 7 }, (_, index) => shiftIsoDate(today, -(index + 1)));
@@ -42,7 +43,9 @@
 </svelte:head>
 
 <main class="onboarding">
-  <h1>{$_('onboarding.retro.title')}</h1>
+  <ScreenHeader title={$_('onboarding.retro.title')} visuallyHidden />
+
+  <h2 class="onboarding__heading">{$_('onboarding.retro.title')}</h2>
   <p>{$_('onboarding.retro.body')}</p>
 
   {#if error}<p class="onboarding__error">{error}</p>{/if}
@@ -94,10 +97,15 @@
     padding: 1rem 0 2rem;
   }
 
-  .onboarding h1,
+  .onboarding h2,
   .onboarding p,
   .onboarding__day h2 {
     margin: 0;
+  }
+
+  .onboarding__heading {
+    font-size: var(--text-xl);
+    font-weight: 700;
   }
 
   .onboarding__days {
