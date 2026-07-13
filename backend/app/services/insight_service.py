@@ -307,11 +307,12 @@ async def get_insight_event_windows(
     if insight.subject_type not in {"tag", "symptom"}:
         raise InsightEventWindowsUnsupportedError(insight.subject_type)
 
-    from datetime import UTC, datetime
+    from datetime import UTC, date, datetime
 
     as_of = datetime.now(UTC).date()
     start_date, end_date = _cooccurrence_window(range_, as_of)
     label = insight.subject_label
+    dates: list[date]
 
     if not await _analytics_enabled(db, user_id=user_id):
         return InsightEventWindowsResponse(
@@ -325,7 +326,7 @@ async def get_insight_event_windows(
     if insight.subject_type == "tag":
         tag_slug = await _resolve_tag_slug(db, insight)
         if not tag_slug:
-            dates: list = []
+            dates = []
         else:
             dates = await list_tag_presence_dates_by_slug(
                 db,
