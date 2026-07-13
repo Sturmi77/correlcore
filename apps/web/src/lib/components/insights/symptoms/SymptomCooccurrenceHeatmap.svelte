@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type {
     InsightMaturityPhase,
@@ -8,7 +8,13 @@
     SymptomTagCooccurrenceResponse,
   } from '$lib/api/insights';
   import { orderAxisIds, type CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
-  import { pruneCooccurrenceAxisIds } from '$lib/utils/heatmapPruning';
+  import {
+    clampCooccurrenceVisibleCount,
+    COOCCURRENCE_MIN_VISIBLE,
+    defaultCooccurrenceVisibleCount,
+    pruneCooccurrenceAxisIds,
+    sliceAxisIdsByTopStrength,
+  } from '$lib/utils/heatmapPruning';
 
   export let data: SymptomTagCooccurrenceResponse | null = null;
   export let loading = false;
@@ -18,12 +24,32 @@
   export let pruneSparseAxes = false;
 
   const dispatch = createEventDispatcher<{ selectCell: { cell: SymptomTagCooccurrenceCell } }>();
+  const COMPACT_QUERY = '(max-width: 480px)';
 
   let focusedKey: string | null = null;
+  let compactViewport = false;
+  let visibleCount = 0;
+  let densitySignature = '';
+  let media: MediaQueryList | null = null;
+
+  function syncCompact(): void {
+    compactViewport = media?.matches ?? false;
+  }
+
+  onMount(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    media = window.matchMedia(COMPACT_QUERY);
+    syncCompact();
+    media.addEventListener('change', syncCompact);
+  });
+
+  onDestroy(() => {
+    media?.removeEventListener('change', syncCompact);
+  });
 
   $: symptomProfiles = buildProfiles(data, 'symptom');
   $: tagProfiles = buildProfiles(data, 'tag');
-  $: symptomIds = data
+  $: orderedSymptomIds = data
     ? orderAxisIds(
         pruneSparseAxes
           ? pruneCooccurrenceAxisIds(
@@ -40,7 +66,7 @@
         (id) => data!.cells.find((cell) => cell.symptom.symptom_id === id)?.symptom.slug ?? id
       )
     : [];
-  $: tagIds = data
+  $: orderedTagIds = data
     ? orderAxisIds(
         pruneSparseAxes
           ? pruneCooccurrenceAxisIds(
@@ -53,6 +79,29 @@
         (id) => data!.cells.find((cell) => cell.tag.tag_id === id)?.tag.slug ?? id
       )
     : [];
+  $: totalRows = orderedSymptomIds.length;
+  $: totalCols = orderedTagIds.length;
+  $: densityCeil = Math.max(totalRows, totalCols);
+  $: nextDensitySignature = `${data?.start_date ?? ''}:${data?.end_date ?? ''}:${data?.cells.length ?? 0}:${sortMode}:${pruneSparseAxes}:${compactViewport}:${densityCeil}`;
+  $: if (nextDensitySignature !== densitySignature) {
+    densitySignature = nextDensitySignature;
+    visibleCount = defaultCooccurrenceVisibleCount(densityCeil, compactViewport);
+  }
+  $: effectiveVisible = clampCooccurrenceVisibleCount(visibleCount, densityCeil || 0);
+  $: slicedSymptoms = sliceAxisIdsByTopStrength(
+    orderedSymptomIds,
+    symptomProfiles,
+    effectiveVisible
+  );
+  $: slicedTags = sliceAxisIdsByTopStrength(orderedTagIds, tagProfiles, effectiveVisible);
+  $: symptomIds = slicedSymptoms.ids;
+  $: tagIds = slicedTags.ids;
+  $: showDensityControls = densityCeil > COOCCURRENCE_MIN_VISIBLE;
+  $: canDecreaseDensity =
+    Math.max(slicedSymptoms.visibleAxes, slicedTags.visibleAxes) >
+    Math.min(COOCCURRENCE_MIN_VISIBLE, densityCeil);
+  $: canIncreaseDensity =
+    slicedSymptoms.visibleAxes < totalRows || slicedTags.visibleAxes < totalCols;
   $: symptoms = symptomIds
     .map((id) => data?.cells.find((cell) => cell.symptom.symptom_id === id)?.symptom)
     .filter((symptom): symptom is SymptomTagCooccurrenceCell['symptom'] => Boolean(symptom));
@@ -74,6 +123,14 @@
   );
   $: if (interactiveCells.length > 0 && !focusedKey) {
     focusedKey = interactiveCells[0]?.key ?? null;
+  }
+
+  function decreaseDensity(): void {
+    visibleCount = clampCooccurrenceVisibleCount(effectiveVisible - 1, densityCeil);
+  }
+
+  function increaseDensity(): void {
+    visibleCount = clampCooccurrenceVisibleCount(effectiveVisible + 1, densityCeil);
   }
 
   function buildProfiles(
@@ -223,6 +280,49 @@
     {/if}
   </header>
 
+  {#if showDensityControls && !showSkeleton && densityCeil > 0}
+    <div
+      class="symptom-cooccurrence__density"
+      role="group"
+      aria-label={$_('insights.symptoms.cooccurrence_density_label')}
+      data-testid="symptom-cooccurrence-density"
+    >
+      <button
+        type="button"
+        class="symptom-cooccurrence__density-btn"
+        data-testid="symptom-cooccurrence-density-decrease"
+        aria-label={$_('insights.symptoms.cooccurrence_density_decrease')}
+        disabled={!canDecreaseDensity}
+        on:click={decreaseDensity}
+      >
+        −
+      </button>
+      <span
+        class="symptom-cooccurrence__density-status"
+        data-testid="symptom-cooccurrence-density-status"
+      >
+        {$_('insights.symptoms.cooccurrence_density_showing', {
+          values: {
+            visibleRows: slicedSymptoms.visibleAxes,
+            totalRows,
+            visibleCols: slicedTags.visibleAxes,
+            totalCols,
+          },
+        })}
+      </span>
+      <button
+        type="button"
+        class="symptom-cooccurrence__density-btn"
+        data-testid="symptom-cooccurrence-density-increase"
+        aria-label={$_('insights.symptoms.cooccurrence_density_increase')}
+        disabled={!canIncreaseDensity}
+        on:click={increaseDensity}
+      >
+        +
+      </button>
+    </div>
+  {/if}
+
   {#if showSkeleton}
     <div class="symptom-cooccurrence__skeleton" role="status">
       <span></span>
@@ -314,6 +414,42 @@
   .symptom-cooccurrence__empty {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .symptom-cooccurrence__density {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    justify-self: start;
+  }
+
+  .symptom-cooccurrence__density-btn {
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-primary);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .symptom-cooccurrence__density-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .symptom-cooccurrence__density-status {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-align: center;
   }
 
   .symptom-cooccurrence__scroller {
@@ -427,6 +563,11 @@
   }
 
   @media (max-width: 480px) {
+    .symptom-cooccurrence__density {
+      justify-self: stretch;
+      justify-content: space-between;
+    }
+
     .symptom-cooccurrence__grid {
       grid-template-columns: minmax(7rem, 8rem) repeat(var(--tag-count), minmax(3.25rem, 3.75rem));
       gap: var(--heatmap-matrix-gap-mobile);

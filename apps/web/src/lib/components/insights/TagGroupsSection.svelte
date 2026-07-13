@@ -42,7 +42,7 @@
   }
 </script>
 
-<section class="tag-groups" data-loading={loading ? 'true' : 'false'}>
+<section class="tag-groups" data-loading={loading ? 'true' : 'false'} data-layout="responsive">
   <header class="tag-groups__header">
     <div class="tag-groups__title-row">
       <div>
@@ -230,5 +230,33 @@
     min-height: 2rem;
     border-radius: var(--radius-sm);
     background: var(--color-surface-dynamic);
+  }
+
+  @media (max-width: 480px) {
+    .tag-groups__title-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .tag-groups__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tag-groups__card-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .tag-groups__chips {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+    }
+
+    .tag-groups__chips li {
+      width: 100%;
+      box-sizing: border-box;
+      text-align: left;
+    }
   }
 </style>
