@@ -1,13 +1,13 @@
 # ADR-0037 — Insight-Trigger, deskriptive Wochentage & Tag-Cluster-Reifegrad
 
-| Field | Value |
-| ----- | ----- |
-| **ID** | 0037 |
-| **Date** | 2026-07-13 |
-| **Status** | Vorgeschlagen |
-| **Deciders** | @Sturmi77 |
-| **Area** | Backend / Analytics / API / Frontend |
-| **Related** | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
+| Field        | Value                                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| **ID**       | 0037                                                                                                     |
+| **Date**     | 2026-07-13                                                                                               |
+| **Status**   | Vorgeschlagen                                                                                            |
+| **Deciders** | @Sturmi77                                                                                                |
+| **Area**     | Backend / Analytics / API / Frontend                                                                     |
+| **Related**  | ADR-0016, ADR-0017, ADR-0021, [Freigabe-Vorschlag](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md) |
 
 ---
 
@@ -31,12 +31,12 @@ M9 explicitly kept inferential thresholds strict (`MIN_WEEKDAY_DELTA`, `ANALYTIC
 
 Insight generation and tag-vector recomputation share one code path (`insight_worker_service.generate_insights_for_job`). In addition to the existing nightly worker (03:00 UTC), the following triggers are added:
 
-| Trigger | Event | Scope |
-| ------- | ----- | ----- |
-| Nightly worker | Scheduled | All eligible users |
-| Post-import | Successful `POST /entries/batch` | Importing user only |
+| Trigger        | Event                              | Scope               |
+| -------------- | ---------------------------------- | ------------------- |
+| Nightly worker | Scheduled                          | All eligible users  |
+| Post-import    | Successful `POST /entries/batch`   | Importing user only |
 | User on-demand | `POST /api/v1/insights/regenerate` | Owner, rate-limited |
-| Admin | `POST /api/v1/insights/trigger` | Admin role |
+| Admin          | `POST /api/v1/insights/trigger`    | Admin role          |
 
 **Rules (all triggers):**
 
@@ -62,11 +62,11 @@ Frontend `HomeWeekdayOverview` uses `weekday_summary` for bars; insight-derived 
 
 Replace the single `MIN_TAG_CLUSTER_ENTRIES = 90` gate with:
 
-| Constant | Value | Mode |
-| -------- | ----- | ---- |
-| `MIN_TAG_CLUSTER_PAIR_ENTRIES` | 30 | Top Jaccard pairs → micro-groups (2–3 tags) |
-| `MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES` | 45 | k-means, `k ≤ 3`, silhouette ≥ 0.08 |
-| `MIN_TAG_CLUSTER_ROBUST_ENTRIES` | 90 | Full k-means (`k` 3–6), mixed tag/symptom nodes |
+| Constant                              | Value | Mode                                            |
+| ------------------------------------- | ----- | ----------------------------------------------- |
+| `MIN_TAG_CLUSTER_PAIR_ENTRIES`        | 30    | Top Jaccard pairs → micro-groups (2–3 tags)     |
+| `MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES` | 45    | k-means, `k ≤ 3`, silhouette ≥ 0.08             |
+| `MIN_TAG_CLUSTER_ROBUST_ENTRIES`      | 90    | Full k-means (`k` 3–6), mixed tag/symptom nodes |
 
 `TagClustersResponse` gains additive fields:
 
@@ -114,13 +114,13 @@ Provisional clusters are **descriptive**, not inferential insight cards. UI show
 
 ## Alternatives Considered
 
-| Alternative | Reason Rejected |
-| ----------- | --------------- |
-| Lower `MIN_TAG_CLUSTER_ENTRIES` to 60 only | Still arbitrary; no pair fallback; higher instability |
-| Lower `MIN_WEEKDAY_DELTA` to 0.25 | Contradicts M9 threshold review; conflates descriptive + inferential |
-| Frontend-computed weekday averages | Contradicts server-authoritative analytics (ADR-0017, M4.1) |
-| Trigger insight gen on every entry save | M9: heavy analytics off hot path; DEK + FDR cost |
-| Keep 90-day gate until ADR-0016 amended | ADR-0016 targets CV-ML only; misapplied to clustering |
+| Alternative                                | Reason Rejected                                                      |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| Lower `MIN_TAG_CLUSTER_ENTRIES` to 60 only | Still arbitrary; no pair fallback; higher instability                |
+| Lower `MIN_WEEKDAY_DELTA` to 0.25          | Contradicts M9 threshold review; conflates descriptive + inferential |
+| Frontend-computed weekday averages         | Contradicts server-authoritative analytics (ADR-0017, M4.1)          |
+| Trigger insight gen on every entry save    | M9: heavy analytics off hot path; DEK + FDR cost                     |
+| Keep 90-day gate until ADR-0016 amended    | ADR-0016 targets CV-ML only; misapplied to clustering                |
 
 ---
 

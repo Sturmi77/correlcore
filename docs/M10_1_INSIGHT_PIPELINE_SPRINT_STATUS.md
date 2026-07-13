@@ -8,28 +8,28 @@ Tracking document for [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PI
 
 ## Overview
 
-| Paket | Titel | Status |
-| ----- | ----- | ------ |
-| 0 | Freigabe & Doc-Baseline | In progress (Proposal PR #382) |
-| A | Insight-Trigger (Backend) | Not started |
-| B | Tag-Gruppen-Stufen | Not started |
-| C | Wochentags-Dashboard & Home | Not started |
-| D | Frontend Tag-Gruppen-Reifegrad | Not started |
-| E | Docs, i18n, E2E, Quality Gate | Not started |
+| Paket | Titel                          | Status                         |
+| ----- | ------------------------------ | ------------------------------ |
+| 0     | Freigabe & Doc-Baseline        | In progress (Proposal PR #382) |
+| A     | Insight-Trigger (Backend)      | Not started                    |
+| B     | Tag-Gruppen-Stufen             | Not started                    |
+| C     | Wochentags-Dashboard & Home    | Not started                    |
+| D     | Frontend Tag-Gruppen-Reifegrad | Not started                    |
+| E     | Docs, i18n, E2E, Quality Gate  | Not started                    |
 
 ## Acceptance-criteria audit matrix
 
-| Criterion | Paket | Code anchor | Test evidence | Gap |
-| --------- | ----- | ----------- | ------------- | --- |
-| `POST /insights/regenerate` | A | — | — | Not implemented |
-| Post-batch insight trigger | A | — | — | Not implemented |
-| Tag-Gruppen ab 30 Tagen (pair) | B | `tag_cluster_service.py` | `test_tag_clusters.py` | 90-day hard gate |
-| Tag-Gruppen provisional ab 45 | B | — | — | Not implemented |
-| `weekday_summary` Dashboard | C | `dashboard_service.py` | — | Not implemented |
-| Home Weekday ohne `weekday_pattern` | C | `HomeWeekdayOverview` | — | Insight-only today |
-| `cluster_maturity` UI | D | `TagGroupsSection` | — | Not implemented |
-| ADR-0037 Accepted | 0 | `docs/adr/0037-*.md` | — | Vorgeschlagen |
-| API.md / PHASE_MATRIX updated | E | docs | — | Pending |
+| Criterion                           | Paket | Code anchor              | Test evidence          | Gap                |
+| ----------------------------------- | ----- | ------------------------ | ---------------------- | ------------------ |
+| `POST /insights/regenerate`         | A     | —                        | —                      | Not implemented    |
+| Post-batch insight trigger          | A     | —                        | —                      | Not implemented    |
+| Tag-Gruppen ab 30 Tagen (pair)      | B     | `tag_cluster_service.py` | `test_tag_clusters.py` | 90-day hard gate   |
+| Tag-Gruppen provisional ab 45       | B     | —                        | —                      | Not implemented    |
+| `weekday_summary` Dashboard         | C     | `dashboard_service.py`   | —                      | Not implemented    |
+| Home Weekday ohne `weekday_pattern` | C     | `HomeWeekdayOverview`    | —                      | Insight-only today |
+| `cluster_maturity` UI               | D     | `TagGroupsSection`       | —                      | Not implemented    |
+| ADR-0037 Accepted                   | 0     | `docs/adr/0037-*.md`     | —                      | Vorgeschlagen      |
+| API.md / PHASE_MATRIX updated       | E     | docs                     | —                      | Pending            |
 
 ## Sprint 0 — Checklist
 
