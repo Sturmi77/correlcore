@@ -32,29 +32,65 @@ function makeInsight(partial: Partial<InsightResponse>): InsightResponse {
 
 describe('homeWeekdayOverview', () => {
   it('maps mood averages and weekday-confounded findings', () => {
-    const cells = buildWeekdayOverviewCells([
-      makeInsight({
-        insight_type: 'weekday_pattern',
-        subject_type: 'weekday',
-        payload: {
-          weekday_mood_avgs: { '0': 4.2, '2': 2.1 },
-        },
-      }),
-      makeInsight({
-        subject_label: 'Tuesday running',
-        payload: { weekday: 1 },
-      }),
-      makeInsight({
-        subject_label: 'Headache',
-        subject_type: 'symptom',
-        payload: { weekday: 2 },
-      }),
-    ]);
+    const cells = buildWeekdayOverviewCells(
+      [
+        makeInsight({
+          insight_type: 'weekday_pattern',
+          subject_type: 'weekday',
+          payload: {
+            weekday_mood_avgs: { '0': 4.2, '2': 2.1 },
+          },
+        }),
+        makeInsight({
+          subject_label: 'Tuesday running',
+          payload: { weekday: 1 },
+        }),
+        makeInsight({
+          subject_label: 'Headache',
+          subject_type: 'symptom',
+          payload: { weekday: 2 },
+        }),
+      ],
+      []
+    );
 
     expect(cells[0].moodAvg).toBe(4.2);
     expect(cells[1].findingLabel).toBe('Tuesday running');
     expect(cells[2].findingLabel).toBe('Headache');
     expect(hasWeekdayOverviewContent(cells)).toBe(true);
+  });
+
+  it('renders bars from dashboard weekday_summary without weekday_pattern insight', () => {
+    const cells = buildWeekdayOverviewCells(
+      [],
+      [
+        { weekday: 0, entry_count: 10, mood_avg: 3.1 },
+        { weekday: 1, entry_count: 9, mood_avg: 3.0 },
+        { weekday: 2, entry_count: 10, mood_avg: 3.2 },
+        { weekday: 3, entry_count: 9, mood_avg: 3.1 },
+        { weekday: 4, entry_count: 10, mood_avg: 3.8 },
+        { weekday: 5, entry_count: 9, mood_avg: 3.3 },
+        { weekday: 6, entry_count: 10, mood_avg: 3.0 },
+      ]
+    );
+
+    expect(cells.every((cell) => cell.moodAvg !== null)).toBe(true);
+    expect(cells[4].moodAvg).toBe(3.8);
+    expect(hasWeekdayOverviewContent(cells)).toBe(true);
+  });
+
+  it('prefers dashboard weekday_summary over insight weekday_mood_avgs', () => {
+    const cells = buildWeekdayOverviewCells(
+      [
+        makeInsight({
+          insight_type: 'weekday_pattern',
+          payload: { weekday_mood_avgs: { '4': 2.0 } },
+        }),
+      ],
+      [{ weekday: 4, entry_count: 10, mood_avg: 3.8 }]
+    );
+
+    expect(cells[4].moodAvg).toBe(3.8);
   });
 });
 

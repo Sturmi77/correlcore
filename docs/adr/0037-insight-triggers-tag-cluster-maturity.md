@@ -129,12 +129,12 @@ Provisional clusters are **descriptive**, not inferential insight cards. UI show
 - [x] `POST /api/v1/insights/regenerate` (owner, rate-limited)
 - [x] `POST /api/v1/insights/trigger` (admin)
 - [x] Hook after `POST /entries/batch`
-- [ ] `weekday_summary` in dashboard schema + service (Paket C)
+- [x] `weekday_summary` in dashboard schema + service
 - [x] Tag-cluster tiers in `tag_cluster_service.py`
-- [x] `TagGroupsSection` UI (Paket D); `HomeWeekdayOverview` weekday_summary (Paket C)
-- [x] i18n DE/EN (tag groups + regenerate)
-- [x] Tests
-- [x] Documentation per [impact matrix](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md#7-dokumentations-impact-matrix) (core items; Paket C pending)
+- [x] `TagGroupsSection` + `HomeWeekdayOverview` UI
+- [x] i18n DE/EN
+- [x] Tests + API contract
+- [x] Documentation per [impact matrix](../proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md#7-dokumentations-impact-matrix)
 
 ---
 

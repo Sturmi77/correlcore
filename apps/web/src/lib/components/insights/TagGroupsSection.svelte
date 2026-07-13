@@ -14,12 +14,12 @@
   $: showSkeleton = loading && !data;
   $: clusters = data?.status === 'ok' ? data.clusters : [];
   $: subtitleKey = getTagGroupsSubtitleKey(data);
-  $: showMaturityBadge = showTagClusterMaturityBadge(data);
-  $: maturityBadgeKey = showMaturityBadge
-    ? `insights.tag_groups.badge.${data.cluster_maturity}`
+  $: maturityBadgeData = showTagClusterMaturityBadge(data) ? data : null;
+  $: maturityBadgeKey = maturityBadgeData
+    ? `insights.tag_groups.badge.${maturityBadgeData.cluster_maturity}`
     : null;
-  $: maturityTooltipKey = showMaturityBadge
-    ? `insights.tag_groups.badge.${data.cluster_maturity}_tooltip`
+  $: maturityTooltipKey = maturityBadgeData
+    ? `insights.tag_groups.badge.${maturityBadgeData.cluster_maturity}_tooltip`
     : null;
 
   function memberLabel(member: TagClusterMember): string {
@@ -49,19 +49,16 @@
         <h2>{$_('insights.tag_groups.heading')}</h2>
         <p>{$_(subtitleKey)}</p>
       </div>
-      {#if showMaturityBadge && maturityBadgeKey}
+      {#if maturityBadgeData && maturityBadgeKey}
         <span
-          class="tag-groups__badge"
-          class:tag-groups__badge--uncertain={data.cluster_maturity !== 'robust'}
+          class="tag-groups__badge tag-groups__badge--uncertain"
           data-testid="tag-groups-maturity-badge"
-          data-maturity={data.cluster_maturity}
+          data-maturity={maturityBadgeData.cluster_maturity}
           title={maturityTooltipKey ? $_(maturityTooltipKey) : undefined}
           aria-label={maturityTooltipKey ? $_(maturityTooltipKey) : undefined}
         >
-          {#if data.cluster_maturity !== 'robust'}
-            <span aria-hidden="true">!</span>
-          {/if}
-          {$_(maturityBadgeKey, { values: { entries: data.entry_count } })}
+          <span aria-hidden="true">!</span>
+          {$_(maturityBadgeKey, { values: { entries: maturityBadgeData.entry_count } })}
         </span>
       {/if}
     </div>

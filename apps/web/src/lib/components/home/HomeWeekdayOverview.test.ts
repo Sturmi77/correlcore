@@ -42,6 +42,28 @@ const weekdayInsight = {
 };
 
 describe('HomeWeekdayOverview', () => {
+  it('renders seven weekday columns from dashboard summary without weekday_pattern', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: null,
+        insights: [],
+        weekdaySummary: [
+          { weekday: 0, entry_count: 10, mood_avg: 3.1 },
+          { weekday: 1, entry_count: 9, mood_avg: 3.0 },
+          { weekday: 2, entry_count: 10, mood_avg: 3.2 },
+          { weekday: 3, entry_count: 9, mood_avg: 3.1 },
+          { weekday: 4, entry_count: 10, mood_avg: 3.8 },
+          { weekday: 5, entry_count: 9, mood_avg: 3.3 },
+          { weekday: 6, entry_count: 10, mood_avg: 3.0 },
+        ],
+      },
+    });
+
+    expect(screen.getByTestId('home-weekday-overview')).toBeTruthy();
+    expect(screen.getByText('3.8')).toBeTruthy();
+    expect(screen.queryByText('home.weekday_pattern.early_signal')).toBeNull();
+  });
+
   it('renders seven weekday columns with mood and findings', () => {
     render(HomeWeekdayOverview, {
       props: {

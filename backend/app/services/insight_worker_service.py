@@ -201,9 +201,7 @@ async def try_acquire_regenerate_slot(*, user_id: uuid.UUID) -> bool:
     client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
     try:
         key = f"insight:regenerate:{user_id}"
-        return bool(
-            await client.set(key, "1", nx=True, ex=INSIGHT_REGENERATE_COOLDOWN_SECONDS)
-        )
+        return bool(await client.set(key, "1", nx=True, ex=INSIGHT_REGENERATE_COOLDOWN_SECONDS))
     finally:
         await client.aclose()
 

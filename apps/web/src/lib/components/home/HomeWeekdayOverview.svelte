@@ -1,17 +1,22 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
+  import type { WeekdaySummaryItem } from '$lib/api/dashboard';
   import {
     buildWeekdayOverviewCells,
     hasWeekdayOverviewContent,
   } from '$lib/utils/homeWeekdayOverview';
   export let insights: InsightResponse[] = [];
   export let weekdayInsight: InsightResponse | null = null;
+  export let weekdaySummary: WeekdaySummaryItem[] = [];
   /** While true, suppress the empty state — insights haven't finished loading
    * (or failed to load) yet, so "no weekday pattern yet" would be premature. */
   export let loading = false;
 
-  $: cells = buildWeekdayOverviewCells(weekdayInsight ? [weekdayInsight, ...insights] : insights);
+  $: cells = buildWeekdayOverviewCells(
+    weekdayInsight ? [weekdayInsight, ...insights] : insights,
+    weekdaySummary
+  );
   $: knownMood = cells
     .map((cell) => cell.moodAvg)
     .filter((value): value is number => value !== null);
