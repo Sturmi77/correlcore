@@ -409,7 +409,7 @@
   .strip__skeleton {
     height: 120px;
     border-radius: var(--radius-md, 8px);
-    background: var(--color-surface-muted, var(--color-strip-track-bg));
+    background: var(--color-strip-track-bg);
     animation: strip-pulse 1.4s ease-in-out infinite;
   }
 
