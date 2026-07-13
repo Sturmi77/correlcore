@@ -19,6 +19,7 @@
     type HabitType,
     type TagResponse,
   } from '$lib/api/tags';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { defaultTagColorForCurrentTheme } from '$lib/constants/tagDefaults';
   import { refreshTags } from '$lib/stores/tags';
 
@@ -367,7 +368,7 @@
                     style={tag.color ? `--tag-color: ${tag.color}` : ''}
                   >
                     {#if draft?.icon}
-                      <IconRender icon={draft.icon} size={18} />
+                      <IconRender icon={draft.icon} size={ICON_SIZE_MD} />
                     {:else}
                       <span aria-hidden="true">#</span>
                     {/if}

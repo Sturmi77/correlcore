@@ -7,6 +7,7 @@
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo, type DevInfoResponse } from '$lib/api/dev';
+  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { developerMode } from '$lib/stores/developerMode';
 
   const COMMIT_BASE_URL = 'https://github.com/sturmi77/correlcore/commit/';
@@ -138,7 +139,7 @@
         {#if activeCommitUrl}
           <a class="dev__commit" href={activeCommitUrl} target="_blank" rel="noreferrer">
             {shortCommit(info.git_commit)}
-            <IconRender icon="external-link" size={18} />
+            <IconRender icon="external-link" size={ICON_SIZE_MD} />
           </a>
         {:else}
           <span class="dev__commit">{shortCommit(info.git_commit)}</span>
@@ -153,7 +154,7 @@
         disabled={info.git_commit === 'unknown'}
         on:click={() => copyValue('commit', info?.git_commit ?? null)}
       >
-        <IconRender icon="copy" size={18} />
+        <IconRender icon="copy" size={ICON_SIZE_MD} />
       </button>
     </section>
 
@@ -168,7 +169,7 @@
             title={$_('dev.refresh')}
             on:click={() => void load()}
           >
-            <IconRender icon="refresh-cw" size={18} />
+            <IconRender icon="refresh-cw" size={ICON_SIZE_MD} />
           </button>
         </div>
         <dl class="dev__facts">
