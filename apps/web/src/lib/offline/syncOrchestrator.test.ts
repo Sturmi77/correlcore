@@ -282,4 +282,70 @@ describe('syncOrchestrator', () => {
       syncing: false,
     });
   });
+
+  it('re-drains the outbox when a save lands during an in-flight sync', async () => {
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: { mood_score: 2 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    let releaseFirstPush!: () => void;
+    pushSyncChanges.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseFirstPush = () =>
+            resolve({
+              cursor: 'cursor-1',
+              applied: 1,
+              skipped: 0,
+              conflicts: [],
+              idempotent_replay: false,
+            });
+        })
+    );
+    pushSyncChanges.mockResolvedValue({
+      cursor: 'cursor-2',
+      applied: 1,
+      skipped: 0,
+      conflicts: [],
+      idempotent_replay: false,
+    });
+    pullSyncChanges.mockResolvedValue({
+      cursor: 'cursor-1',
+      changes: [],
+      has_more: false,
+      server_time: '2026-06-30T12:01:00.000Z',
+    });
+
+    const first = syncAll();
+    await vi.waitFor(() => {
+      expect(pushSyncChanges).toHaveBeenCalledOnce();
+    });
+
+    await appendChange({
+      batch_id: 'batch-2',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: { mood_score: 5 },
+      client_ts: '2026-06-30T12:02:00.000Z',
+    });
+    const second = syncAll();
+
+    releaseFirstPush();
+    await first;
+    await second;
+    await vi.waitFor(() => {
+      expect(pushSyncChanges.mock.calls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    const lastBody = pushSyncChanges.mock.calls.at(-1)?.[0];
+    expect(lastBody.changes).toHaveLength(1);
+    expect(lastBody.changes[0].data).toEqual({ mood_score: 5 });
+    expect(peekSyncOrchestrator().pendingCount).toBe(0);
+  });
 });

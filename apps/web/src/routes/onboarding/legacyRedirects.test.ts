@@ -13,10 +13,10 @@ async function expectRedirect(load: () => unknown, location: string): Promise<vo
 }
 
 describe('onboarding redirects', () => {
-  it('redirects /onboarding to home with openEntry', async () => {
+  it('redirects /onboarding to home without forcing openEntry', async () => {
     await expectRedirect(
       () => loadOnboarding({ url: new URL('http://localhost/onboarding') } as never),
-      '/?openEntry=1'
+      '/'
     );
   });
 

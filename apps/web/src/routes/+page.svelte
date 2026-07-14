@@ -113,10 +113,28 @@
 
       recentEntries = entriesResult.value;
       todayEntry = findEntryForDate(recentEntries, todayIso);
-      if (!todayEntry && canUseOfflineSync()) {
+      if (canUseOfflineSync()) {
         const localToday = await findLocalEntryByDateSlot(todayIso, 'day');
-        if (localToday) {
+        if (
+          localToday &&
+          (!todayEntry ||
+            localToday.sync_state === 'pending' ||
+            localToday.sync_state === 'conflict' ||
+            localToday.updated_at > todayEntry.updated_at)
+        ) {
           todayEntry = localEntryToEntryResponse(localToday, get(currentUser)?.id ?? '');
+          const idx = recentEntries.findIndex(
+            (entry) => entry.entry_date === todayIso && entry.slot === 'day'
+          );
+          if (idx >= 0) {
+            recentEntries = [
+              ...recentEntries.slice(0, idx),
+              todayEntry,
+              ...recentEntries.slice(idx + 1),
+            ];
+          } else {
+            recentEntries = [todayEntry, ...recentEntries];
+          }
         }
       }
       dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;

@@ -48,6 +48,8 @@ const store = writable<SyncOrchestratorState>(initialState);
 export const syncOrchestrator = { subscribe: store.subscribe };
 
 let syncInFlight: Promise<void> | null = null;
+/** Set when scheduleSync runs while a push/pull is already in flight. */
+let syncDirty = false;
 let initialized = false;
 let onlineUnsubscribe: (() => void) | null = null;
 
@@ -56,6 +58,7 @@ function resetSyncOrchestratorState(): void {
   onlineUnsubscribe = null;
   initialized = false;
   syncInFlight = null;
+  syncDirty = false;
   store.set(initialState);
 }
 
@@ -189,6 +192,8 @@ export async function syncAll(): Promise<void> {
   }
 
   if (syncInFlight) {
+    // A newer local save may have landed; request another drain after this one.
+    syncDirty = true;
     await syncInFlight;
     return;
   }
@@ -197,8 +202,12 @@ export async function syncAll(): Promise<void> {
     setSyncing(true);
     setBadge('syncing');
     try {
-      await pushPending();
-      await pullSince();
+      do {
+        syncDirty = false;
+        await pushPending();
+        await pullSince();
+      } while (syncDirty);
+
       const pending = await listPendingChanges();
       setBadge(pending.length > 0 ? 'local' : 'synced');
     } catch (err) {
@@ -212,6 +221,12 @@ export async function syncAll(): Promise<void> {
       setSyncing(false);
       await refreshMeta();
       syncInFlight = null;
+      // A wake-up arrived after the last loop check but before we cleared
+      // syncInFlight — schedule a follow-up so the outbox cannot stall.
+      if (syncDirty) {
+        syncDirty = false;
+        scheduleSync();
+      }
     }
   })();
 
