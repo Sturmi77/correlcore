@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
+import type { TagHeatmapResponse } from '$lib/api/stats';
 import TrendsComparePanel from './TrendsComparePanel.svelte';
 
 vi.mock('svelte-i18n', async () => {
@@ -38,7 +39,7 @@ const pointsWithoutEntries = [
   },
 ];
 
-const tagHeatmap = {
+const tagHeatmap: TagHeatmapResponse = {
   start_date: '2026-05-01',
   end_date: '2026-05-01',
   tags: [
@@ -46,7 +47,7 @@ const tagHeatmap = {
       tag_id: 't1',
       name: 'Sport',
       slug: 'sport',
-      category: 'activity',
+      category: 'sport',
       color: null,
       days: [{ date: '2026-05-01', count: 1 }],
     },
