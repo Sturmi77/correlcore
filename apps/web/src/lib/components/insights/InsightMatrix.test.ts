@@ -27,6 +27,7 @@ vi.mock('$lib/stores/tags', async () => {
           color: null,
           is_default: false,
           is_hidden: false,
+          include_in_analytics: true,
           habit_type: 'build',
           target_frequency: 4,
           created_at: '2026-05-12T03:00:00Z',

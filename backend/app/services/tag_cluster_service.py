@@ -27,7 +27,7 @@ from app.schemas.stats import (
     TagClustersResponse,
     TagCooccurrenceTagRef,
 )
-from app.services.tag_service import active_tag_predicate
+from app.services.tag_service import analytics_tag_predicate
 
 TAG_CLUSTER_WINDOW_DAYS = 90
 MIN_TAG_CLUSTER_PAIR_ENTRIES = 30
@@ -625,7 +625,7 @@ async def _load_tag_vector_inputs(
             EntryTag.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= as_of,
-            active_tag_predicate(user_id),
+            analytics_tag_predicate(user_id),
         )
         .order_by(Entry.entry_date.asc(), Tag.slug.asc())
     )

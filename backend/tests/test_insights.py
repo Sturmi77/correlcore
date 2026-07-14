@@ -125,15 +125,56 @@ async def test_list_insights_filters_by_user_and_orders_newest() -> None:
     user = make_user()
     rows = [_make_insight(user)]
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_scalars_result(rows))
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result(rows),
+            _rows_result([]),
+        ]
+    )
 
     out = await list_insights(db, user_id=user.id, limit=500)
 
     assert out == rows
-    stmt = db.execute.await_args.args[0]
+    stmt = db.execute.await_args_list[0].args[0]
     assert "insights.user_id = :user_id_1" in str(stmt.whereclause)
     assert "ORDER BY insights.generated_at DESC" in str(stmt)
     assert stmt._limit_clause.value == 200
+
+
+@pytest.mark.asyncio
+async def test_list_insights_omits_analytics_excluded_tag_subjects() -> None:
+    user = make_user()
+    kept_tag_id = uuid.uuid4()
+    excluded_tag_id = uuid.uuid4()
+    kept = _make_insight(
+        user,
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=kept_tag_id,
+        subject_label="Sport",
+        payload={"tag_slug": "sport"},
+    )
+    excluded = _make_insight(
+        user,
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=excluded_tag_id,
+        subject_label="Medication",
+        payload={"tag_slug": "medication"},
+    )
+    metric = _make_insight(user, subject_type="metric", subject_label="energy")
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([excluded, kept, metric]),
+            _rows_result([(excluded_tag_id, "medication")]),
+            _rows_result([(excluded_tag_id, "medication")]),
+        ]
+    )
+
+    out = await list_insights(db, user_id=user.id, limit=50)
+
+    assert out == [kept, metric]
 
 
 @pytest.mark.asyncio
@@ -167,6 +208,7 @@ async def test_list_latest_insights_deduplicates_by_subject() -> None:
     db.execute = AsyncMock(
         side_effect=[
             _scalars_result([newest_tag, older_same_tag, metric]),
+            _rows_result([]),
             _rows_result([(tag_id, "sport")]),
         ]
     )
@@ -203,6 +245,7 @@ async def test_list_latest_insights_deduplicates_legacy_tag_overrides_by_loaded_
     db.execute = AsyncMock(
         side_effect=[
             _scalars_result([newest_override, older_default]),
+            _rows_result([]),
             _rows_result([(default_id, "alcohol"), (override_id, "alcohol")]),
         ]
     )
@@ -234,7 +277,12 @@ async def test_list_latest_insights_deduplicates_tag_overrides_by_slug() -> None
         payload={"tag_slug": "alcohol"},
     )
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_scalars_result([newest_override, older_default]))
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([newest_override, older_default]),
+            _rows_result([]),
+        ]
+    )
 
     out = await list_latest_insights(db, user_id=user.id, limit=10)
 
@@ -313,7 +361,12 @@ async def test_list_latest_insights_keeps_lasso_and_lag_symptom_cluster_findings
         },
     )
     db = MagicMock()
-    db.execute = AsyncMock(return_value=_scalars_result([lasso, lag]))
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([lasso, lag]),
+            _rows_result([]),
+        ]
+    )
 
     out = await list_latest_insights(db, user_id=user.id, limit=10)
 

@@ -41,7 +41,7 @@ from app.services.symptom_analytics import (
     TagRef,
     heatmap_symptom_tag_associations,
 )
-from app.services.tag_service import active_tag_predicate
+from app.services.tag_service import analytics_tag_predicate
 
 
 def _today() -> date_type:
@@ -152,7 +152,7 @@ async def get_tag_heatmap(
             Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
-            active_tag_predicate(user_id),
+            analytics_tag_predicate(user_id),
         )
         .order_by(Tag.category.asc(), Tag.slug.asc(), Entry.entry_date.asc())
     )
@@ -327,7 +327,7 @@ async def list_historical_tag_presence_dates_by_slug(
     """Distinct entry dates for a tag slug, including hidden/inactive tags.
 
     Used by Explore Events so inactive insight cards can still show historical
-    presence windows. Co-occurrence analytics keep using ``active_tag_predicate``.
+    presence windows. Active co-occurrence analytics use ``analytics_tag_predicate``.
     """
 
     from sqlalchemy import func
@@ -374,7 +374,7 @@ async def list_tag_presence_dates_by_slug(
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
             func.lower(Tag.slug) == slug_key,
-            active_tag_predicate(user_id),
+            analytics_tag_predicate(user_id),
         )
         .distinct()
         .order_by(Entry.entry_date.asc())
@@ -467,7 +467,7 @@ async def get_tag_cooccurrence(
             EntryTag.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
-            active_tag_predicate(user_id),
+            analytics_tag_predicate(user_id),
         )
         .order_by(Entry.id.asc(), Tag.id.asc())
     )
@@ -572,7 +572,7 @@ async def get_symptom_tag_cooccurrence(
             Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
-            active_tag_predicate(user_id),
+            analytics_tag_predicate(user_id),
         )
         .order_by(Entry.entry_date.asc(), Tag.slug.asc())
     )

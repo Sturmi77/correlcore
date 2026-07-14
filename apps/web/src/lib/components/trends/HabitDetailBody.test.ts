@@ -53,6 +53,7 @@ const tag = {
   color: null,
   is_default: false,
   is_hidden: false,
+  include_in_analytics: true,
   habit_type: 'build' as const,
   target_frequency: 4,
   created_at: '2026-05-01T00:00:00Z',

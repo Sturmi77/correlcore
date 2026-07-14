@@ -57,6 +57,7 @@ class TagCreate(BaseModel):
     category: TagCategory
     icon: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=7)
+    include_in_analytics: bool = True
     habit_type: HabitType = "none"
     target_frequency: int | None = Field(default=None, ge=1, le=7)
 
@@ -111,6 +112,7 @@ class TagUpdate(BaseModel):
     icon: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=7)
     is_hidden: bool | None = None
+    include_in_analytics: bool | None = None
     habit_type: HabitType | None = None
     target_frequency: int | None = Field(default=None, ge=1, le=7)
 
@@ -189,6 +191,7 @@ class TagResponse(BaseModel):
     color: str | None
     is_default: bool
     is_hidden: bool
+    include_in_analytics: bool
     habit_type: HabitType
     target_frequency: int | None
     created_at: datetime

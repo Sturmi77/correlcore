@@ -56,6 +56,7 @@ from app.services.tag_service import (
     TagsNotFoundError,
     TagValidationError,
     active_tag_predicate,
+    analytics_tag_predicate,
     assign_tags_to_entry,
     create_custom_tag,
     delete_custom_tag,
@@ -230,6 +231,64 @@ def test_active_tag_predicate_respects_hidden_default_overrides() -> None:
     assert "tags.is_hidden IS false" in text
     assert "EXISTS" in text
     assert "is_hidden IS true" in text
+
+
+def test_analytics_tag_predicate_requires_include_in_analytics() -> None:
+    user = make_user()
+
+    predicate = analytics_tag_predicate(user.id)
+
+    text = str(predicate)
+    assert "tags.is_hidden IS false" in text
+    assert "include_in_analytics IS true" in text
+    assert "include_in_analytics IS false" in text
+    assert "EXISTS" in text
+
+
+@pytest.mark.asyncio
+async def test_update_custom_tag_can_exclude_from_analytics() -> None:
+    user = make_user()
+    tag = make_tag(user, slug="medication", name="Medication", include_in_analytics=True)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(tag))
+    db.flush = AsyncMock()
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=tag.id,
+        payload=TagUpdate(include_in_analytics=False),
+    )
+
+    assert out.include_in_analytics is False
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_default_tag_copies_include_in_analytics_into_override() -> None:
+    user = make_user()
+    default = make_tag(slug="sport", name="Sport", is_default=True, include_in_analytics=True)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(default),
+            _scalar_result(None),
+        ]
+    )
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=default.id,
+        payload=TagUpdate(include_in_analytics=False),
+    )
+
+    assert out.include_in_analytics is False
+    assert out.is_default is False
+    assert out.user_id == user.id
+    db.add.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

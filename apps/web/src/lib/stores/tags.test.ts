@@ -43,6 +43,7 @@ function makeTag(overrides: Partial<tagsApi.TagResponse> = {}): tagsApi.TagRespo
     color: null,
     is_default: true,
     is_hidden: false,
+    include_in_analytics: true,
     habit_type: 'none',
     target_frequency: null,
     created_at: '2026-05-04T10:00:00Z',

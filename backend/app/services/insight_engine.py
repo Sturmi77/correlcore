@@ -45,7 +45,7 @@ from app.services.symptom_analytics import (
     compute_symptom_metric_associations,
     compute_symptom_tag_associations,
 )
-from app.services.tag_service import active_tag_predicate
+from app.services.tag_service import analytics_tag_predicate
 from app.services.weekday_confounder import (
     is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
@@ -1343,7 +1343,7 @@ async def _load_analytics_inputs(
             EntryTag.user_id == user_id,
             Entry.user_id == user_id,
             Entry.entry_date < as_of,
-            active_tag_predicate(user_id),
+            analytics_tag_predicate(user_id),
         )
     )
     tag_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
