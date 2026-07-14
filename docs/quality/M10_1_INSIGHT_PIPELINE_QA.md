@@ -37,6 +37,16 @@ Run after Pakete A–E are merged.
 | W2  | User with strong weekday pattern          | Bars + optional pattern statement |
 | W3  | &lt; 7 days                               | Empty state with hint             |
 
+## Insights feed empty states
+
+| #   | Step | Expected |
+| --- | ---- | -------- |
+| F1  | 67 days, flat metrics, regenerate → `insight_count: 0`, phase `robust` | Feed shows robust empty copy (maturity ≠ cards) + **Refresh insights** CTA; subtitle may still show ~67 entries |
+| F2  | Insights exist but filter tab Mood/Symptoms/Context matches none | Generic filter-empty copy — **not** `empty_phase.robust` |
+| F3  | Distinguish `GET /insights/latest` vs `GET /insights` | Both empty ⇒ no persisted rows; latest empty but list non-empty ⇒ investigate subject dedupe |
+
+**Note:** Entry count / ADR-0021 maturity advances independently of whether statistical gates (`MIN_WEEKDAY_DELTA`, tag usages, FDR, etc.) produced cards. A populated analysis window does not guarantee insight cards.
+
 ## Regression
 
 | #   | Check                                              |

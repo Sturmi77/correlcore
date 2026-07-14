@@ -1,12 +1,22 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import Button from './Button.svelte';
 
   export let title: string;
   export let body = '';
   export let actionLabel = '';
   export let actionHref = '';
+  export let secondaryActionLabel = '';
+  export let secondaryActionLoading = false;
+  export let secondaryActionDisabled = false;
   export let compact = false;
   export let testId: string | undefined = undefined;
+
+  const dispatch = createEventDispatcher<{ secondaryAction: void }>();
+
+  $: hasPrimaryAction = Boolean(actionLabel && actionHref);
+  $: hasSecondaryAction = Boolean(secondaryActionLabel);
+  $: hasActions = hasPrimaryAction || hasSecondaryAction;
 </script>
 
 <div class="empty-state" class:empty-state--compact={compact} data-testid={testId}>
@@ -19,15 +29,31 @@
   {#if body}
     <p class="empty-state__body">{body}</p>
   {/if}
-  {#if actionLabel && actionHref}
-    <Button
-      href={actionHref}
-      variant="secondary"
-      size="sm"
-      data-testid={testId ? `${testId}-cta` : undefined}
-    >
-      {actionLabel}
-    </Button>
+  {#if hasActions}
+    <div class="empty-state__actions">
+      {#if hasPrimaryAction}
+        <Button
+          href={actionHref}
+          variant="secondary"
+          size="sm"
+          data-testid={testId ? `${testId}-cta` : undefined}
+        >
+          {actionLabel}
+        </Button>
+      {/if}
+      {#if hasSecondaryAction}
+        <Button
+          variant="primary"
+          size="sm"
+          loading={secondaryActionLoading}
+          disabled={secondaryActionDisabled}
+          data-testid={testId ? `${testId}-secondary-cta` : undefined}
+          on:click={() => dispatch('secondaryAction')}
+        >
+          {secondaryActionLabel}
+        </Button>
+      {/if}
+    </div>
   {/if}
 </div>
 
@@ -63,6 +89,14 @@
     line-height: 1.45;
   }
 
+  .empty-state__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+
   .empty-state--compact {
     align-items: flex-start;
     padding: var(--space-5) var(--space-4);
@@ -74,5 +108,9 @@
 
   .empty-state--compact .empty-state__body {
     max-width: 48ch;
+  }
+
+  .empty-state--compact .empty-state__actions {
+    justify-content: flex-start;
   }
 </style>

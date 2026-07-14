@@ -4,18 +4,20 @@
    *
    * Renders a sorted, filterable list of InsightCards.
    * Sort: confidence × |effect_size| descending.
-   * Filter tabs: All | Mood | Symptoms | Sleep
+   * Filter tabs: All | Mood | Symptoms | Context
    *
    * Props
    * -----
-   * insights    InsightResponse[]  All loaded insights
-   * loading     boolean            Show skeleton cards
-   * error       string | null      Inline error banner
-   * entryCount  number             Total entries in last 90 days (for header)
+   * insights           InsightResponse[]  Insights for the current view (may be pre-filtered)
+   * totalInsightCount  number             Unfiltered API insight count for empty-state semantics
+   * loading            boolean            Show skeleton cards
+   * error              string | null      Inline error banner
+   * entryCount         number             Total entries in analysis window (for header)
    *
    * Events
    * ------
-   * retry  Dispatched when user clicks the retry button in error state
+   * retry       Dispatched when user clicks the retry button in error state
+   * regenerate  Dispatched when user clicks refresh-insights in the true-empty state
    */
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -34,6 +36,8 @@
   import { rankInsights } from '$lib/utils/insightRanking';
 
   export let insights: InsightResponse[] = [];
+  /** Unfiltered count from the parent; defaults to `insights.length` for standalone use. */
+  export let totalInsightCount: number | undefined = undefined;
   export let maturity: InsightMaturity | null = null;
   export let loading = false;
   export let error: string | null = null;
@@ -49,8 +53,15 @@
   export let analysisRangeDays = 90;
   /** Enables the Explore aligned events affordance on insight cards (ADR-0035 §6). */
   export let enableExploreEvents = false;
+  export let regenerateBusy = false;
+  export let regenerateMessage = '';
+  export let regenerateError = '';
 
-  const dispatch = createEventDispatcher<{ retry: void; exploreEvents: { id: string } }>();
+  const dispatch = createEventDispatcher<{
+    retry: void;
+    regenerate: void;
+    exploreEvents: { id: string };
+  }>();
 
   let internalFilterTab: InsightFeedFilterTab = 'all';
   let disclaimerOpen = false;
@@ -59,13 +70,15 @@
   $: filterTabOptions = getInsightFeedFilterTabs($_, 'insight-feed-tab');
 
   $: filtered = rankInsights(filterInsightsByTab(insights, activeTab));
-  $: isPhaseEmpty = Boolean(maturity && insights.length === 0);
+  $: resolvedTotalCount = totalInsightCount ?? insights.length;
+  $: isPhaseEmpty = Boolean(maturity && resolvedTotalCount === 0);
   $: emptyTitleKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.title`
     : 'insights.feed.empty_title';
   $: emptyBodyKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.body`
     : 'insights.feed.empty_body';
+  $: showRegenerateAction = isPhaseEmpty;
 
   const SKELETON_COUNT = 3;
   const skeletonItems: number[] = Array.from({ length: SKELETON_COUNT }, (_, idx) => idx);
@@ -123,6 +136,16 @@
     />
   {/if}
 
+  {#if regenerateError}
+    <InlineAlert variant="error" message={regenerateError} testId="insight-feed-regenerate-error" />
+  {:else if regenerateMessage}
+    <InlineAlert
+      variant="success"
+      message={regenerateMessage}
+      testId="insight-feed-regenerate-success"
+    />
+  {/if}
+
   <!-- Loading skeleton -->
   {#if loading}
     <ul class="if-list" aria-busy="true" data-testid="insight-feed-skeleton">
@@ -140,8 +163,12 @@
       body={$_(emptyBodyKey)}
       actionLabel={$_('insights.feed.empty_cta')}
       actionHref={OPEN_ENTRY_HOME_PATH}
+      secondaryActionLabel={showRegenerateAction ? $_('insights.feed.empty_regenerate_cta') : ''}
+      secondaryActionLoading={regenerateBusy}
+      secondaryActionDisabled={regenerateBusy}
       compact
       testId="insight-feed-empty"
+      on:secondaryAction={() => dispatch('regenerate')}
     >
       <svg
         slot="icon"
