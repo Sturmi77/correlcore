@@ -88,6 +88,84 @@ describe('InsightFeed', () => {
     expect(screen.getByText('insights.feed.empty_phase.early_patterns.body')).toBeTruthy();
   });
 
+  it('uses filter empty copy when insights exist but the active tab matches none', () => {
+    const robustMaturity: InsightMaturity = {
+      ...maturity,
+      phase: 'robust',
+      phase_index: 4,
+      current_entries: 67,
+      next_phase_at: null,
+      next_phase_label: null,
+      entries_until_next: null,
+    };
+
+    render(InsightFeed, {
+      props: {
+        // Parent already filtered out energy/sleep/stress cards for the mood tab.
+        insights: [],
+        totalInsightCount: 1,
+        maturity: robustMaturity,
+        filterTab: 'mood',
+        showFilters: false,
+      },
+    });
+
+    expect(screen.getByText('insights.feed.empty_title')).toBeTruthy();
+    expect(screen.getByText('insights.feed.empty_body')).toBeTruthy();
+    expect(screen.queryByText('insights.feed.empty_phase.robust.title')).toBeNull();
+    expect(screen.queryByTestId('insight-feed-empty-secondary-cta')).toBeNull();
+  });
+
+  it('uses robust phase empty copy and regenerate CTA when API returned no insights', () => {
+    const robustMaturity: InsightMaturity = {
+      ...maturity,
+      phase: 'robust',
+      phase_index: 4,
+      current_entries: 67,
+      next_phase_at: null,
+      next_phase_label: null,
+      entries_until_next: null,
+    };
+
+    render(InsightFeed, {
+      props: {
+        insights: [],
+        totalInsightCount: 0,
+        maturity: robustMaturity,
+        entryCount: 67,
+      },
+    });
+
+    expect(screen.getByText('insights.feed.empty_phase.robust.title')).toBeTruthy();
+    expect(screen.getByText('insights.feed.empty_phase.robust.body')).toBeTruthy();
+    expect(screen.getByTestId('insight-feed-empty-secondary-cta')).toBeTruthy();
+  });
+
+  it('dispatches regenerate from the empty-state secondary CTA', async () => {
+    const handler = vi.fn();
+    const robustMaturity: InsightMaturity = {
+      ...maturity,
+      phase: 'robust',
+      phase_index: 4,
+      current_entries: 67,
+      next_phase_at: null,
+      next_phase_label: null,
+      entries_until_next: null,
+    };
+
+    render(InsightFeed, {
+      props: {
+        insights: [],
+        totalInsightCount: 0,
+        maturity: robustMaturity,
+      },
+      events: { regenerate: handler },
+    });
+
+    await fireEvent.click(screen.getByTestId('insight-feed-empty-secondary-cta'));
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
   // ── Error banner ──────────────────────────────────────────────────
   it('renders inline error banner when error is set', () => {
     render(InsightFeed, { props: { error: 'Network failure' } });

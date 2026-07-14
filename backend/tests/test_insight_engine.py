@@ -103,6 +103,19 @@ def test_weekday_pattern_is_available_before_bivariate_correlation() -> None:
     }
 
 
+def test_flat_mood_over_sixty_seven_days_yields_no_weekday_pattern() -> None:
+    """ADR-0037: maturity can be robust while flat mood fails MIN_WEEKDAY_DELTA."""
+    start = date(2026, 1, 5)  # Monday
+    entries = [
+        _entry(start + timedelta(days=offset), mood=3, energy=3, stress=3) for offset in range(67)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=start + timedelta(days=67))
+
+    assert all(candidate.insight_type != InsightType.WEEKDAY_PATTERN for candidate in candidates)
+    assert candidates == []
+
+
 def test_work_context_pattern_is_available_after_seven_entries() -> None:
     start = date(2026, 5, 4)
     entries = [

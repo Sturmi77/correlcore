@@ -861,9 +861,10 @@
       "tab_mood": "Stimmung",
       "tab_symptoms": "Symptome",
       "tab_context": "Kontext",
-      "empty_title": "Keine Erkenntnisse in dieser Ansicht",
-      "empty_body": "Sobald genuegend passende Daten vorhanden sind, erscheinen hier beschreibende Muster.",
+      "empty_title": "Keine Erkenntnisse fuer diesen Filter",
+      "empty_body": "Fuer diese Kategorie gibt es aktuell keine Karten. Wechsle zu Alle oder einer anderen Kategorie.",
       "empty_cta": "Zur Startseite",
+      "empty_regenerate_cta": "Erkenntnisse aktualisieren",
       "empty_phase": {
         "collecting": {
           "title": "Wir sammeln noch deine Grundlage.",
@@ -878,8 +879,8 @@
           "body": "Wenn genügend gemeinsame Datenpunkte für ein Thema vorliegen, erscheinen hier vorsichtig formulierte Zusammenhänge."
         },
         "robust": {
-          "title": "Keine passenden Erkenntnisse in dieser Ansicht.",
-          "body": "Die Insight-Engine ist aktiv. Aendere den Filter oder erfasse weiter, damit neue Muster sichtbar werden."
+          "title": "Noch keine Erkenntniskarten trotz ausreichender Datenbasis.",
+          "body": "Datenreife bedeutet nicht automatisch starke Muster. Aktualisiere die Erkenntnisse, aendere den Filter oder tracke weiter, bis aussagekraeftige Zusammenhaenge entstehen."
         }
       }
     },

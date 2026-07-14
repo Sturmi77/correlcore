@@ -861,9 +861,10 @@
       "tab_mood": "Mood",
       "tab_symptoms": "Symptoms",
       "tab_context": "Context",
-      "empty_title": "No insights in this view",
-      "empty_body": "When enough matching data is available, descriptive patterns appear here.",
+      "empty_title": "No insights for this filter",
+      "empty_body": "There are no cards in this category right now. Switch to All or another category.",
       "empty_cta": "Go to home",
+      "empty_regenerate_cta": "Refresh insights",
       "empty_phase": {
         "collecting": {
           "title": "We are still building your foundation.",
@@ -878,8 +879,8 @@
           "body": "When enough shared data points exist for a topic, cautiously worded relationships appear here."
         },
         "robust": {
-          "title": "No matching insights in this view.",
-          "body": "The insight engine is active. Change the filter or keep tracking so new patterns can appear."
+          "title": "No insight cards yet despite a sufficient data basis.",
+          "body": "Data maturity does not automatically mean strong patterns. Refresh insights, change the filter, or keep tracking until meaningful relationships appear."
         }
       }
     },

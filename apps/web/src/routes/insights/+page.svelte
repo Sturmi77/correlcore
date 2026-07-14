@@ -19,12 +19,14 @@
   import { insightStore } from '$lib/stores/insights';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
+  import { ApiError } from '$lib/api/client';
   import {
     fetchInsightEventWindows,
     fetchSymptomTagCooccurrence,
     fetchTagClusters,
     fetchTagCooccurrence,
     listLatestInsights,
+    regenerateInsights,
     type InsightMaturity,
     type InsightResponse,
     type SymptomTagCooccurrenceCell,
@@ -96,6 +98,9 @@
   let error: string | null = null;
   let insightMaturity: InsightMaturity | null = null;
   let userPreferences: UserPreferencesResponse | null = null;
+  let regenerateBusy = false;
+  let regenerateMessage = '';
+  let regenerateError = '';
   let entryCount = 0;
   let dayEntryDates: string[] = [];
   let moodEntries: EntryResponse[] = [];
@@ -464,6 +469,35 @@
     insightMaturity = cached.insightMaturity;
   }
 
+  async function handleRegenerateInsights(): Promise<void> {
+    if (userPreferences?.analytics_enabled === false) {
+      regenerateError = $_('settings.analysis.regenerate_disabled');
+      regenerateMessage = '';
+      return;
+    }
+    regenerateBusy = true;
+    regenerateMessage = '';
+    regenerateError = '';
+    try {
+      const result = await regenerateInsights();
+      regenerateMessage = $_('settings.analysis.regenerate_success', {
+        values: { count: result.insight_count },
+      });
+      await loadInsights();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        regenerateError = $_('settings.analysis.regenerate_rate_limited');
+      } else if (err instanceof ApiError && err.status === 403) {
+        regenerateError = $_('settings.analysis.regenerate_disabled');
+      } else {
+        regenerateError =
+          err instanceof Error ? err.message : $_('settings.analysis.regenerate_error');
+      }
+    } finally {
+      regenerateBusy = false;
+    }
+  }
+
   async function loadInsights(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
     loading = true;
@@ -772,22 +806,28 @@
             <h2>{$_('insights.mobile.more_heading')}</h2>
             <InsightFeed
               insights={feedInsights}
+              totalInsightCount={insights.length}
               maturity={insightMaturity}
               entryCount={visibleEntryCount}
               {analysisRangeDays}
               {inactiveTagIds}
               {filterTab}
               {enableExploreEvents}
+              {regenerateBusy}
+              {regenerateMessage}
+              {regenerateError}
               showContext={false}
               showFilters={false}
               showMaturityBadge={false}
               on:retry={loadInsights}
+              on:regenerate={() => void handleRegenerateInsights()}
               on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
             />
           </section>
         {:else}
           <InsightFeed
             insights={feedInsights}
+            totalInsightCount={insights.length}
             maturity={insightMaturity}
             loading={feedLoading}
             {error}
@@ -796,9 +836,13 @@
             {inactiveTagIds}
             {filterTab}
             {enableExploreEvents}
+            {regenerateBusy}
+            {regenerateMessage}
+            {regenerateError}
             showFilters={false}
             showMaturityBadge={!pageMaturityChrome}
             on:retry={loadInsights}
+            on:regenerate={() => void handleRegenerateInsights()}
             on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
           />
         {/if}

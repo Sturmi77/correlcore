@@ -239,6 +239,18 @@ vi.mock('$lib/api/insights', () => ({
     },
     insights: [],
   })),
+  regenerateInsights: vi.fn(async () => ({
+    insight_count: 0,
+    generated_for_date: '2026-05-10',
+    tag_clusters_status: 'insufficient_data',
+  })),
+  fetchInsightEventWindows: vi.fn(async () => ({
+    range: '30d',
+    start_date: '2026-05-01',
+    end_date: '2026-05-31',
+    events: [],
+    points: [],
+  })),
 }));
 
 vi.mock('$lib/components/insights/InsightFeed.svelte', () => ({
