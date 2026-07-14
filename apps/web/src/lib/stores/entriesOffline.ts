@@ -129,24 +129,34 @@ export async function resolveServerEntryIdForDateSlot(
   }
 }
 
+/** Keep pending/conflict (or newer) local rows instead of clobbering with stale API data. */
+export function shouldPreferLocalEntry(
+  local: LocalEntry | undefined,
+  serverUpdatedAt: string | undefined
+): boolean {
+  if (!local) return false;
+  if (local.sync_state === 'pending' || local.sync_state === 'conflict') return true;
+  if (!serverUpdatedAt) return true;
+  return local.updated_at > serverUpdatedAt;
+}
+
 async function resolveEntryIdForSave(
   existingEntryId: string | null,
   snapshot: EntryFormSnapshot
 ): Promise<string> {
-  if (existingEntryId) {
-    return existingEntryId;
-  }
-
   const local = await findLocalEntryByDateSlot(snapshot.entry_date, snapshot.slot);
-  if (local) {
-    return local.id;
-  }
-
   const serverId = await resolveServerEntryIdForDateSlot(snapshot.entry_date, snapshot.slot);
+
+  // Prefer the canonical server id when online so slot-merge forks collapse.
   if (serverId) {
     return serverId;
   }
-
+  if (existingEntryId) {
+    return existingEntryId;
+  }
+  if (local) {
+    return local.id;
+  }
   return createEntryId();
 }
 

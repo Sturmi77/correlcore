@@ -170,6 +170,72 @@ describe('entriesOffline', () => {
     expect(local?.mood_score).toBe(5);
   });
 
+  it('remaps a client UUID to the server id when the slot already exists online', async () => {
+    vi.mocked(listEntries).mockResolvedValue([apiEntry('server-entry-id')]);
+
+    const result = await saveEntryOffline('client-fork-id', {
+      entry_date: '2026-07-13',
+      mood_score: 5,
+      energy: 4,
+      stress: 1,
+      slot: 'day',
+      cycle_day: null,
+      work_context: 'office',
+      note: 'remapped',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    expect(result.entryId).toBe('server-entry-id');
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.id).toBe('server-entry-id');
+    expect(local?.note).toBe('remapped');
+  });
+
+  it('prefers pending local rows over older server timestamps', async () => {
+    const { shouldPreferLocalEntry } = await import('./entriesOffline');
+    expect(
+      shouldPreferLocalEntry(
+        {
+          id: 'local-1',
+          entry_date: '2026-07-13',
+          slot: 'day',
+          mood_score: 5,
+          energy: 4,
+          stress: 1,
+          cycle_day: null,
+          work_context: 'office',
+          note: 'pending',
+          tag_ids: [],
+          symptoms: {},
+          updated_at: '2026-07-13T09:00:00.000Z',
+          sync_state: 'pending',
+        },
+        '2026-07-13T08:00:00.000Z'
+      )
+    ).toBe(true);
+    expect(
+      shouldPreferLocalEntry(
+        {
+          id: 'local-1',
+          entry_date: '2026-07-13',
+          slot: 'day',
+          mood_score: 3,
+          energy: 3,
+          stress: 3,
+          cycle_day: null,
+          work_context: 'office',
+          note: null,
+          tag_ids: [],
+          symptoms: {},
+          updated_at: '2026-07-13T07:00:00.000Z',
+          sync_state: 'synced',
+        },
+        '2026-07-13T08:00:00.000Z'
+      )
+    ).toBe(false);
+  });
+
   it('maps local entries to the API response shape for Home', () => {
     const mapped = localEntryToEntryResponse({
       id: 'local-1',

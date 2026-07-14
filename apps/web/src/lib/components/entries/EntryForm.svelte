@@ -67,6 +67,7 @@
     hydrateServerEntryFromApi,
     localEntryToFormFields,
     saveEntryOffline,
+    shouldPreferLocalEntry,
     type EntryFormSnapshot,
   } from '$lib/stores/entriesOffline';
 
@@ -251,6 +252,26 @@
         const matchingEntry = matches.find(
           (entry) => entry.entry_date === date && entry.slot === slot
         );
+        if (matchingEntry && shouldPreferLocalEntry(local, matchingEntry.updated_at)) {
+          existingEntryId = local!.id;
+          const fields = localEntryToFormFields(local!);
+          selectedSlot = fields.selectedSlot;
+          moodScore = fields.moodScore;
+          energy = fields.energy;
+          stress = fields.stress;
+          cycleDay = fields.cycleDay;
+          cycleDayInvalid = false;
+          workContext = fields.workContext;
+          workContextTouched = true;
+          note = fields.note;
+          selectedTagIds = fields.selectedTagIds;
+          selectedSymptoms = fields.selectedSymptoms;
+          if (typeof navigator !== 'undefined' && navigator.onLine) {
+            void refreshDayDelta(date, selectedSlot);
+          }
+          loadedEntryDate = date;
+          return;
+        }
         if (matchingEntry) {
           existingEntryId = matchingEntry.id;
           selectedSlot = matchingEntry.slot;

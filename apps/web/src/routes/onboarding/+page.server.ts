@@ -1,11 +1,13 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
 
-/** Guided wizard is preview-only; new users tag-select inline in the first entry sheet. */
+/** Guided wizard is preview-only; new users tag-select inline in the first entry sheet.
+ *  Redirect to `/` without `?openEntry=1` so PWA/homescreen restores of `/onboarding`
+ *  do not race the standalone launch normalizer and re-open the entry sheet. Home still
+ *  auto-opens the first-entry sheet for incomplete onboarding. */
 export const load: PageServerLoad = ({ url }) => {
   if (url.searchParams.get('preview') === '1') {
     return {};
   }
-  throw redirect(307, OPEN_ENTRY_HOME_PATH);
+  throw redirect(307, '/');
 };

@@ -38,9 +38,26 @@ describe('pwaLaunch', () => {
     expect(standaloneLaunchRedirectPath('/settings')).toBeNull();
   });
 
-  it('does not redirect in-browser navigations', () => {
+  it('redirects Firefox session restores that report reload', () => {
     vi.stubGlobal('performance', {
       getEntriesByType: vi.fn(() => [{ type: 'reload' }]),
+    });
+    expect(isColdNavigationLaunch()).toBe(true);
+    expect(standaloneLaunchRedirectPath('/dev')).toBe('/');
+    expect(shouldStripStandaloneOpenEntryQuery('/', '?openEntry=1')).toBe(true);
+  });
+
+  it('treats a missing PerformanceNavigationTiming entry as a document launch', () => {
+    vi.stubGlobal('performance', {
+      getEntriesByType: vi.fn(() => []),
+    });
+    expect(isColdNavigationLaunch()).toBe(true);
+    expect(standaloneLaunchRedirectPath('/onboarding')).toBe('/');
+  });
+
+  it('does not redirect back_forward history restores', () => {
+    vi.stubGlobal('performance', {
+      getEntriesByType: vi.fn(() => [{ type: 'back_forward' }]),
     });
     expect(standaloneLaunchRedirectPath('/dev')).toBeNull();
     expect(isColdNavigationLaunch()).toBe(false);

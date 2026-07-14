@@ -482,15 +482,19 @@ button {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-@supports (color: color-mix(in oklch, white, black)) {
-  .app-nav {
-    background: color-mix(in oklch, var(--color-surface) 92%, transparent);
+/* Desktop-only translucency. Mobile Firefox paints color-mix + backdrop-filter
+   so faintly that the bottom nav can disappear; keep a solid surface there. */
+@media (min-width: 768px) {
+  @supports (color: color-mix(in oklch, white, black)) {
+    .app-nav {
+      background: color-mix(in oklch, var(--color-surface) 92%, transparent);
+    }
   }
-}
 
-@supports (backdrop-filter: blur(8px)) {
-  .app-nav {
-    backdrop-filter: blur(8px);
+  @supports (backdrop-filter: blur(8px)) {
+    .app-nav {
+      backdrop-filter: blur(8px);
+    }
   }
 }
 
@@ -556,6 +560,9 @@ button {
     inset-inline: 0;
     bottom: 0;
     width: 100%;
+    background-color: var(--color-surface);
+    background-image: none;
+    backdrop-filter: none;
   }
 }
 
