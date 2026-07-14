@@ -571,9 +571,7 @@
       );
       const analyticsExcludedIds = new Set([
         ...tagResponse.filter((tag) => !tag.include_in_analytics).map((tag) => tag.id),
-        ...defaultTags
-          .filter((tag) => analyticsExcludedSlugs.has(tag.slug))
-          .map((tag) => tag.id),
+        ...defaultTags.filter((tag) => analyticsExcludedSlugs.has(tag.slug)).map((tag) => tag.id),
       ]);
       if (analyticsExcludedIds.size > 0 || analyticsExcludedSlugs.size > 0) {
         insights = insights.filter((insight) => {

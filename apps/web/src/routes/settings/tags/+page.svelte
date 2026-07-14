@@ -504,8 +504,7 @@
                         data-testid={`tag-analytics-${tag.id}`}
                         on:change={(event) =>
                           setDraft(tag.id, {
-                            include_in_analytics: (event.currentTarget as HTMLInputElement)
-                              .checked,
+                            include_in_analytics: (event.currentTarget as HTMLInputElement).checked,
                           })}
                       />
                       <span>

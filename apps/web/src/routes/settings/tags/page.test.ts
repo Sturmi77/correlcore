@@ -133,9 +133,7 @@ describe('/settings/tags Sprint 8', () => {
 
     render(Page);
 
-    const checkbox = (await screen.findByTestId(
-      'tag-analytics-analytics-tag'
-    )) as HTMLInputElement;
+    const checkbox = (await screen.findByTestId('tag-analytics-analytics-tag')) as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
     await fireEvent.click(checkbox);
     await fireEvent.click(screen.getByText('settings.tags.save'));
