@@ -119,6 +119,9 @@
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border-chart);
     background: var(--color-surface-chart-bg);
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .tag-groups__header h2,

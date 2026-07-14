@@ -969,10 +969,18 @@
 
   .insights-page__analytics-body {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-4);
     padding: var(--space-4);
     min-width: 0;
-    overflow-x: auto;
+    max-width: 100%;
+    /* Keep horizontal scroll inside each chart/heatmap — not the shared panel. */
+    overflow-x: hidden;
+  }
+
+  .insights-page__analytics-body > :global(*) {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .insights-page__more {

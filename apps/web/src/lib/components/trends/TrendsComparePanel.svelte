@@ -146,6 +146,8 @@
     lastAxisKey = axisKey;
     void scrollToLatest();
   }
+  /** Kontextzeilen only make sense when the selected range has at least one entry. */
+  $: hasEntriesInRange = points.some((point) => point.entry_count > 0);
 </script>
 
 <section class="compare" class:compare--compact={compactChrome} data-testid="trends-compare-panel">
@@ -266,27 +268,29 @@
       />
     {/if}
 
-    <ComparisonHeatmap
-      {tagHeatmap}
-      {symptomHeatmap}
-      {workContextHeatmap}
-      {showTags}
-      {showSymptoms}
-      {showWorkContexts}
-      {loading}
-      dates={axisDates}
-      {axisLayout}
-      {markers}
-      enableCursor
-      {sortMode}
-      {pinned}
-      {correlationScores}
-      scrollable={false}
-      autoScroll={false}
-      {pruneSparseAxes}
-      on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
-      on:pinToggle={handlePinToggle}
-    />
+    {#if hasEntriesInRange}
+      <ComparisonHeatmap
+        {tagHeatmap}
+        {symptomHeatmap}
+        {workContextHeatmap}
+        {showTags}
+        {showSymptoms}
+        {showWorkContexts}
+        {loading}
+        dates={axisDates}
+        {axisLayout}
+        {markers}
+        enableCursor
+        {sortMode}
+        {pinned}
+        {correlationScores}
+        scrollable={false}
+        autoScroll={false}
+        {pruneSparseAxes}
+        on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+        on:pinToggle={handlePinToggle}
+      />
+    {/if}
   </div>
 </section>
 
