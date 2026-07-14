@@ -130,6 +130,14 @@
     const habitWindow = rangeToHabitWindow(activeRange);
     loading = true;
     error = '';
+    // Drop previous context rows and entry markers immediately so an empty
+    // target range cannot keep showing Kontextzeilen from the prior window.
+    heatmap = null;
+    symptomHeatmap = null;
+    workContextHeatmap = null;
+    if (timeseries) {
+      timeseries = { ...timeseries, points: [] };
+    }
     try {
       if ($devForceVisualizations) {
         const fixture = getDevPhaseFixture($devPhase);

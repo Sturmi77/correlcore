@@ -396,6 +396,9 @@
   .symptom-cooccurrence {
     display: grid;
     gap: var(--space-3);
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .symptom-cooccurrence__header h3,

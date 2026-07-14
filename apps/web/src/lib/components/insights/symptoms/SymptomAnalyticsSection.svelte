@@ -180,12 +180,22 @@
     border-radius: var(--radius-md);
     background: var(--color-surface-chart-bg);
     min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .symptom-analytics__heatmap-shell {
     min-width: 0;
+    max-width: 100%;
     overflow-x: auto;
     padding-bottom: var(--space-1);
+  }
+
+  .symptom-analytics__subsection {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+    max-width: 100%;
   }
 
   .symptom-analytics__header,
@@ -210,11 +220,6 @@
     margin-top: var(--space-1);
     color: var(--color-text-muted);
     font-size: var(--text-sm);
-  }
-
-  .symptom-analytics__subsection {
-    display: grid;
-    gap: var(--space-3);
   }
 
   .symptom-analytics__stack {
