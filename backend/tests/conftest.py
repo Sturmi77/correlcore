@@ -150,6 +150,7 @@ def make_tag(
     color: str | None = "#10b981",
     is_default: bool = False,
     is_hidden: bool = False,
+    include_in_analytics: bool = True,
     habit_type: str = "none",
     target_frequency: int | None = None,
 ) -> Tag:
@@ -168,6 +169,7 @@ def make_tag(
     t.color = color
     t.is_default = is_default
     t.is_hidden = is_hidden
+    t.include_in_analytics = include_in_analytics
     t.habit_type = habit_type
     t.target_frequency = target_frequency
     t.created_at = datetime.now(UTC)

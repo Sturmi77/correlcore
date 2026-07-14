@@ -142,6 +142,14 @@ class Tag(Base):
         server_default="false",
         default=False,
     )
+    # When False, the tag stays available for entry tagging and habit
+    # adherence but is excluded from insight/stats/cluster calculations.
+    include_in_analytics: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default="true",
+        default=True,
+    )
     habit_type: Mapped[str] = mapped_column(
         String(8),
         nullable=False,

@@ -57,6 +57,7 @@ export interface TagResponse {
   color: string | null;
   is_default: boolean;
   is_hidden: boolean;
+  include_in_analytics: boolean;
   habit_type: HabitType;
   target_frequency: number | null;
   created_at: string;
@@ -69,6 +70,7 @@ export interface TagCreatePayload {
   category: TagCategory;
   icon?: string | null;
   color?: string | null;
+  include_in_analytics?: boolean;
   habit_type?: HabitType;
   target_frequency?: number | null;
 }
@@ -79,6 +81,7 @@ export interface TagUpdatePayload {
   icon?: string | null;
   color?: string | null;
   is_hidden?: boolean;
+  include_in_analytics?: boolean;
   habit_type?: HabitType;
   target_frequency?: number | null;
 }

@@ -30,6 +30,7 @@
     color: string;
     habit_type: HabitType;
     target_frequency: number;
+    include_in_analytics: boolean;
   };
 
   let loading = true;
@@ -46,6 +47,7 @@
     color: defaultTagColorForCurrentTheme(),
     habit_type: 'none',
     target_frequency: 3,
+    include_in_analytics: true,
   };
 
   function slugifyName(name: string): string {
@@ -64,6 +66,7 @@
       color: defaultTagColorForCurrentTheme(),
       habit_type: 'none',
       target_frequency: 3,
+      include_in_analytics: true,
     };
   }
 
@@ -75,6 +78,7 @@
       color: tag.color ?? defaultTagColorForCurrentTheme(),
       habit_type: tag.habit_type,
       target_frequency: tag.target_frequency ?? 3,
+      include_in_analytics: tag.include_in_analytics,
     };
   }
 
@@ -126,6 +130,7 @@
         category: newDraft.category,
         icon: newDraft.icon.trim() ? newDraft.icon.trim() : null,
         color: newDraft.color,
+        include_in_analytics: newDraft.include_in_analytics,
         habit_type: newDraft.habit_type,
         target_frequency: newDraft.habit_type === 'none' ? null : newDraft.target_frequency,
       });
@@ -154,6 +159,7 @@
         category: draft.category,
         icon: draft.icon.trim() ? draft.icon.trim() : null,
         color: draft.color,
+        include_in_analytics: draft.include_in_analytics,
         habit_type: draft.habit_type,
         target_frequency: draft.habit_type === 'none' ? null : draft.target_frequency,
       });
@@ -330,6 +336,20 @@
               })}
           />
         </label>
+        <label class="tag-settings__analytics">
+          <input
+            type="checkbox"
+            checked={newDraft.include_in_analytics}
+            on:change={(event) =>
+              setNewDraft({
+                include_in_analytics: (event.currentTarget as HTMLInputElement).checked,
+              })}
+          />
+          <span>
+            <strong>{$_('settings.tags.include_in_analytics')}</strong>
+            <em>{$_('settings.tags.include_in_analytics_hint')}</em>
+          </span>
+        </label>
         <button
           class="btn btn-sm btn--primary"
           type="button"
@@ -383,6 +403,9 @@
                           ? $_('settings.tags.override')
                           : $_('settings.tags.custom')}
                       {tag.is_hidden ? ` · ${$_('settings.tags.hidden')}` : ''}
+                      {!tag.include_in_analytics
+                        ? ` · ${$_('settings.tags.analytics_excluded')}`
+                        : ''}
                     </span>
                   </div>
                 </div>
@@ -473,6 +496,22 @@
                             ),
                           })}
                       />
+                    </label>
+                    <label class="tag-settings__analytics">
+                      <input
+                        type="checkbox"
+                        checked={draft.include_in_analytics}
+                        data-testid={`tag-analytics-${tag.id}`}
+                        on:change={(event) =>
+                          setDraft(tag.id, {
+                            include_in_analytics: (event.currentTarget as HTMLInputElement)
+                              .checked,
+                          })}
+                      />
+                      <span>
+                        <strong>{$_('settings.tags.include_in_analytics')}</strong>
+                        <em>{$_('settings.tags.include_in_analytics_hint')}</em>
+                      </span>
                     </label>
                   </div>
                 {/if}
@@ -622,6 +661,37 @@
     opacity: 0.72;
   }
 
+  .tag-settings__analytics {
+    grid-column: 1 / -1;
+    flex-direction: row !important;
+    align-items: flex-start;
+    gap: 0.55rem;
+  }
+
+  .tag-settings__analytics input[type='checkbox'] {
+    margin-top: 0.2rem;
+    flex: 0 0 auto;
+  }
+
+  .tag-settings__analytics span {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    white-space: normal;
+    opacity: 1;
+  }
+
+  .tag-settings__analytics strong {
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+  }
+
+  .tag-settings__analytics em {
+    font-style: normal;
+    font-size: var(--text-xs);
+    opacity: 0.72;
+  }
+
   .tag-settings__color {
     width: 2.6rem;
     min-height: 2.35rem;
@@ -646,6 +716,10 @@
       minmax(8rem, 1fr) minmax(5rem, 0.6fr) auto;
     gap: 0.55rem;
     align-items: end;
+  }
+
+  .tag-settings__create-form .tag-settings__analytics {
+    grid-column: 1 / -1;
   }
 
   .tag-settings__create-form label {

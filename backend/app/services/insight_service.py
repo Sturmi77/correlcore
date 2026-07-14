@@ -25,6 +25,7 @@ from app.services.stats_service import (
     list_historical_tag_presence_dates_by_slug,
     list_symptom_presence_dates,
 )
+from app.services.tag_service import visible_tag_predicate
 
 DEFAULT_INSIGHT_LIST_LIMIT = 50
 MAX_INSIGHT_LIST_LIMIT = 200
@@ -50,6 +51,86 @@ def _clamp_limit(limit: int, *, default: int, maximum: int) -> int:
     if limit <= 0:
         return default
     return min(limit, maximum)
+
+
+async def _analytics_excluded_tag_keys(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> tuple[set[uuid.UUID], set[str]]:
+    """Return tag IDs and slugs excluded from analytics display.
+
+    Includes curated default IDs that share a slug with a user override where
+    ``include_in_analytics`` is False, so legacy insights linked to the default
+    row are filtered too.
+    """
+
+    result = await db.execute(
+        select(Tag.id, Tag.slug).where(
+            visible_tag_predicate(user_id),
+            Tag.include_in_analytics.is_(False),
+        )
+    )
+    excluded_ids: set[uuid.UUID] = set()
+    excluded_slugs: set[str] = set()
+    for tag_id, slug in result.all():
+        excluded_ids.add(tag_id)
+        excluded_slugs.add(slug.casefold())
+
+    if not excluded_slugs:
+        return excluded_ids, excluded_slugs
+
+    defaults = await db.execute(
+        select(Tag.id, Tag.slug).where(
+            Tag.is_default.is_(True),
+            Tag.slug.in_(excluded_slugs),
+        )
+    )
+    for tag_id, slug in defaults.all():
+        excluded_ids.add(tag_id)
+        excluded_slugs.add(slug.casefold())
+    return excluded_ids, excluded_slugs
+
+
+def _insight_excluded_by_analytics_flag(
+    insight: Insight,
+    *,
+    excluded_ids: set[uuid.UUID],
+    excluded_slugs: set[str],
+) -> bool:
+    """True when a tag-subject insight should be hidden from analytics feeds."""
+
+    if insight.subject_type != "tag":
+        return False
+    if insight.subject_id is not None and insight.subject_id in excluded_ids:
+        return True
+    payload = insight.payload if isinstance(insight.payload, dict) else {}
+    tag_slug = payload.get("tag_slug")
+    if isinstance(tag_slug, str) and tag_slug.casefold() in excluded_slugs:
+        return True
+    return False
+
+
+async def _filter_analytics_excluded_insights(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    insights: list[Insight],
+) -> list[Insight]:
+    if not insights:
+        return insights
+    excluded_ids, excluded_slugs = await _analytics_excluded_tag_keys(db, user_id=user_id)
+    if not excluded_ids and not excluded_slugs:
+        return insights
+    return [
+        insight
+        for insight in insights
+        if not _insight_excluded_by_analytics_flag(
+            insight,
+            excluded_ids=excluded_ids,
+            excluded_slugs=excluded_slugs,
+        )
+    ]
 
 
 def calculate_insight_maturity(entry_count: int) -> InsightMaturity:
@@ -113,16 +194,27 @@ async def list_insights(
     user_id: uuid.UUID,
     limit: int = DEFAULT_INSIGHT_LIST_LIMIT,
 ) -> list[Insight]:
-    """Return newest insight rows for a user."""
+    """Return newest insight rows for a user.
+
+    Tag subjects with ``include_in_analytics=False`` are omitted so excluded
+    habits (e.g. medication) stay out of the feed without deleting rows.
+    """
 
     limit = _clamp_limit(limit, default=DEFAULT_INSIGHT_LIST_LIMIT, maximum=MAX_INSIGHT_LIST_LIMIT)
+    # Over-fetch so filtering excluded tag subjects still fills ``limit``.
+    fetch_limit = min(MAX_INSIGHT_LIST_LIMIT, max(limit * 3, limit))
     result = await db.execute(
         select(Insight)
         .where(Insight.user_id == user_id)
         .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
-        .limit(limit)
+        .limit(fetch_limit)
     )
-    return list(result.scalars().all())
+    insights = await _filter_analytics_excluded_insights(
+        db,
+        user_id=user_id,
+        insights=list(result.scalars().all()),
+    )
+    return insights[:limit]
 
 
 def _latest_metric_key(insight: Insight) -> str:
@@ -236,6 +328,11 @@ async def list_latest_insights(
     )
 
     insights = list(result.scalars().all())
+    insights = await _filter_analytics_excluded_insights(
+        db,
+        user_id=user_id,
+        insights=insights,
+    )
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
 
     latest: list[Insight] = []

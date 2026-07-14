@@ -180,6 +180,7 @@ async function installEntryApi(
           color: null,
           is_default: false,
           is_hidden: false,
+          include_in_analytics: true,
           habit_type: 'none',
           target_frequency: null,
           created_at: '2026-06-01T00:00:00Z',

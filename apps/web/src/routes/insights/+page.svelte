@@ -566,6 +566,24 @@
         ...tagResponse.filter((tag) => tag.is_hidden).map((tag) => tag.id),
         ...defaultTags.filter((tag) => inactiveSlugs.has(tag.slug)).map((tag) => tag.id),
       ];
+      const analyticsExcludedSlugs = new Set(
+        tagResponse.filter((tag) => !tag.include_in_analytics).map((tag) => tag.slug)
+      );
+      const analyticsExcludedIds = new Set([
+        ...tagResponse.filter((tag) => !tag.include_in_analytics).map((tag) => tag.id),
+        ...defaultTags
+          .filter((tag) => analyticsExcludedSlugs.has(tag.slug))
+          .map((tag) => tag.id),
+      ]);
+      if (analyticsExcludedIds.size > 0 || analyticsExcludedSlugs.size > 0) {
+        insights = insights.filter((insight) => {
+          if (insight.subject_type !== 'tag') return true;
+          if (insight.subject_id && analyticsExcludedIds.has(insight.subject_id)) return false;
+          const slug = insight.payload?.tag_slug;
+          if (typeof slug === 'string' && analyticsExcludedSlugs.has(slug)) return false;
+          return true;
+        });
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
       if (insights.length === 0) {

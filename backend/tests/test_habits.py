@@ -228,6 +228,8 @@ async def test_list_habit_tags_only_queries_visible_tags() -> None:
     assert "tags.user_id = :" in where_text
     assert "tags.is_default IS true" in where_text
     assert "tags.is_hidden IS false" in where_text
+    # Habit adherence must keep tracking tags excluded from analytics.
+    assert "include_in_analytics" not in where_text
 
 
 @pytest.mark.asyncio

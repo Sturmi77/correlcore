@@ -49,6 +49,7 @@ function makeTag(overrides: Partial<TagResponse> = {}): TagResponse {
     color: '#01696f',
     is_default: false,
     is_hidden: false,
+    include_in_analytics: true,
     habit_type: 'none',
     target_frequency: null,
     created_at: '2026-05-16T10:00:00Z',
@@ -113,7 +114,36 @@ describe('/settings/tags Sprint 8', () => {
     await waitFor(() => {
       expect(tagsApi.updateTag).toHaveBeenCalledWith(
         'habit-tag',
-        expect.objectContaining({ habit_type: 'build', target_frequency: 4 })
+        expect.objectContaining({
+          habit_type: 'build',
+          target_frequency: 4,
+          include_in_analytics: true,
+        })
+      );
+    });
+  });
+
+  it('saves include_in_analytics with the tag update', async () => {
+    const tag = makeTag({ id: 'analytics-tag', name: 'Medication' });
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValue([tag]);
+    vi.mocked(tagsApi.updateTag).mockResolvedValue({
+      ...tag,
+      include_in_analytics: false,
+    });
+
+    render(Page);
+
+    const checkbox = (await screen.findByTestId(
+      'tag-analytics-analytics-tag'
+    )) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+    await fireEvent.click(checkbox);
+    await fireEvent.click(screen.getByText('settings.tags.save'));
+
+    await waitFor(() => {
+      expect(tagsApi.updateTag).toHaveBeenCalledWith(
+        'analytics-tag',
+        expect.objectContaining({ include_in_analytics: false })
       );
     });
   });
@@ -139,6 +169,7 @@ describe('/settings/tags Sprint 8', () => {
           name: 'Meditation',
           slug: 'meditation',
           category: 'other',
+          include_in_analytics: true,
         })
       );
     });

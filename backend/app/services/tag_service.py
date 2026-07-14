@@ -153,6 +153,9 @@ def active_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
     Default tags can be hidden through a user-owned override with the same slug.
     Historical entry links may still point at the original default row, so
     calculation queries need to treat that hidden override as shadowing too.
+
+    Prefer :func:`analytics_tag_predicate` for insight/stats/cluster paths —
+    it also respects ``include_in_analytics``.
     """
     override = aliased(Tag)
     hidden_override = exists(
@@ -164,6 +167,30 @@ def active_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
         )
     )
     return Tag.is_hidden.is_(False) & ~hidden_override
+
+
+def analytics_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
+    """Return true for tags that should appear in analytics calculations.
+
+    Combines :func:`active_tag_predicate` with ``include_in_analytics``. A
+    user-owned override with ``include_in_analytics=False`` also shadows the
+    curated default slug (historical links may still point at the default).
+    Habit adherence deliberately uses :func:`visible_tag_predicate` instead.
+    """
+    override = aliased(Tag)
+    analytics_excluded_override = exists(
+        select(override.id).where(
+            override.user_id == user_id,
+            override.slug == Tag.slug,
+            override.is_default.is_(False),
+            override.include_in_analytics.is_(False),
+        )
+    )
+    return (
+        active_tag_predicate(user_id)
+        & Tag.include_in_analytics.is_(True)
+        & ~analytics_excluded_override
+    )
 
 
 async def _get_owned_entry(db: AsyncSession, *, entry_id: uuid.UUID, user_id: uuid.UUID) -> Entry:
@@ -236,6 +263,7 @@ async def create_custom_tag(
         category=payload.category,
         icon=payload.icon,
         color=payload.color,
+        include_in_analytics=payload.include_in_analytics,
         habit_type=payload.habit_type,
         target_frequency=payload.target_frequency,
         is_default=False,
@@ -279,6 +307,7 @@ async def update_custom_tag(
                 color=source.color,
                 is_default=False,
                 is_hidden=False,
+                include_in_analytics=source.include_in_analytics,
                 habit_type=source.habit_type,
                 target_frequency=source.target_frequency,
             )
@@ -442,6 +471,8 @@ __all__ = [
     "TagOperationDeniedError",
     "TagValidationError",
     "TagsNotFoundError",
+    "active_tag_predicate",
+    "analytics_tag_predicate",
     "assign_tags_to_entry",
     "create_custom_tag",
     "delete_custom_tag",
@@ -449,4 +480,5 @@ __all__ = [
     "list_tags_for_entry",
     "list_visible_tags",
     "update_custom_tag",
+    "visible_tag_predicate",
 ]
