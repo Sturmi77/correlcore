@@ -174,6 +174,9 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface);
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .symptom-trend__header h3,
