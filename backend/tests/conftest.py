@@ -56,7 +56,7 @@ from app.core.crypto import (
 )
 from app.main import app
 from app.models.email_verification_token import EmailVerificationToken
-from app.models.entry import Entry, EntrySlot, EntrySource, WorkContext
+from app.models.entry import Entry, EntrySlot, EntrySource, NoteVisibility, WorkContext
 from app.models.password_reset_token import PasswordResetToken
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
@@ -139,6 +139,9 @@ def make_entry(
     # MagicMock sessions that never trigger the ``EncryptedString``
     # TypeDecorator. The endpoint tests rely on the auto-bound DEK below.
     e.note_enc = note  # type: ignore[assignment]
+    e.note_visibility = NoteVisibility.FULL
+    e.note_summary_short = None
+    e.note_updated_at = None
     e.created_at = datetime.now(UTC)
     e.updated_at = datetime.now(UTC)
     return e

@@ -8,8 +8,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date as date_type
 from statistics import mean
+from typing import TYPE_CHECKING
 
 from app.models.insight import InsightTier, InsightType
+
+if TYPE_CHECKING:
+    from app.services.insight_engine import InsightCandidate
 
 MIN_MARKER_INSIGHT_SAMPLE = 20
 MIN_MARKER_MOOD_DELTA = 0.2
@@ -41,7 +45,7 @@ def build_marker_mood_insights(
     *,
     generated_for_date: date_type,
     time_window_days: int = 90,
-) -> list:
+) -> list[InsightCandidate]:
     """Build note-marker mood association insights when sample gates pass."""
     from app.services.insight_engine import InsightCandidate
 

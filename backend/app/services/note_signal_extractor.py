@@ -252,4 +252,4 @@ async def run_note_signal_extraction_background(
             )
         finally:
             if dek_token is not None:
-                reset_current_user_dek(dek_token)  # type: ignore[arg-type]
+                reset_current_user_dek(dek_token)

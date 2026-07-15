@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, time, timedelta
 
@@ -55,7 +57,7 @@ def seconds_until_next_digest(now: datetime | None = None) -> float:
     return (run_at - current).total_seconds()
 
 
-async def _list_digest_user_ids(db: AsyncSession) -> list:
+async def _list_digest_user_ids(db: AsyncSession) -> list[uuid.UUID]:
     result = await db.execute(
         select(User.id)
         .outerjoin(UserPreference, UserPreference.user_id == User.id)
@@ -131,7 +133,10 @@ async def run_digest_once(
         raise
 
 
-async def run_digest_worker(*, sleep: asyncio.sleep = asyncio.sleep) -> None:
+async def run_digest_worker(
+    *,
+    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+) -> None:
     """Run weekly digest generation forever on Sunday 17:00 UTC."""
 
     logger.info("correlcore digest worker started")

@@ -69,12 +69,9 @@ def upgrade() -> None:
         ["user_id", "generated_at"],
     )
 
-    op.execute(
-        """
-        ALTER TABLE insight_digests ENABLE ROW LEVEL SECURITY;
-        ALTER TABLE insight_digests FORCE ROW LEVEL SECURITY;
-        """
-    )
+    # Separate executes — asyncpg rejects multi-statement prepared SQL.
+    op.execute("ALTER TABLE insight_digests ENABLE ROW LEVEL SECURITY")
+    op.execute("ALTER TABLE insight_digests FORCE ROW LEVEL SECURITY")
     for policy in ("select", "insert", "update", "delete"):
         using = "user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid"
         if policy in {"select", "update", "delete"}:

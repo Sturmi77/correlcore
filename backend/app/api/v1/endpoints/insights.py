@@ -15,8 +15,10 @@ from app.api.v1.deps.auth import (
 from app.core.rate_limit import limiter
 from app.db.redis_client import get_redis
 from app.db.session import get_session
+from app.models.insight import InsightType
 from app.models.user import User
 from app.schemas.insight import (
+    InsightDigestItemResponse,
     InsightDigestResponse,
     InsightEventWindowsResponse,
     InsightListResponse,
@@ -102,14 +104,18 @@ async def get_latest_digest_endpoint(
         week_end=digest.week_end,
         insight_count=digest.insight_count,
         insights=[
-            {
-                "id": item.id,
-                "insight_type": item.insight_type,
-                "metric": item.metric,
-                "effect_size": item.effect_size,
-                "confidence": item.confidence,
-                "statement": item.statement,
-            }
+            InsightDigestItemResponse(
+                id=item.id,
+                insight_type=(
+                    item.insight_type
+                    if isinstance(item.insight_type, InsightType)
+                    else InsightType(item.insight_type)
+                ),
+                metric=item.metric,
+                effect_size=item.effect_size,
+                confidence=item.confidence,
+                statement=item.statement,
+            )
             for item in digest.insights
         ],
         push_title=push["title"],

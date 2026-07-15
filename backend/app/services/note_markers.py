@@ -6,10 +6,9 @@ import logging
 import re
 import unicodedata
 import uuid
-from collections import Counter, defaultdict
+from collections import defaultdict
 from collections.abc import Sequence
 from datetime import date as date_type
-from datetime import datetime
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError

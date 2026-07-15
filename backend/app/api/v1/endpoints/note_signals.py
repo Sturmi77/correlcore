@@ -81,6 +81,6 @@ async def reprocess_entry_note_signals_endpoint(
         )
     finally:
         if dek_token is not None:
-            reset_current_user_dek(dek_token)  # type: ignore[arg-type]
+            reset_current_user_dek(dek_token)
 
     return [EntryNoteSignalResponse.model_validate(signal) for signal in signals]

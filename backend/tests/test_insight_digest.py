@@ -3,8 +3,6 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-import pytest
-
 from app.models.insight import Insight, InsightTier, InsightType
 from app.services.insight_digest import (
     DIGEST_TOP_N,
