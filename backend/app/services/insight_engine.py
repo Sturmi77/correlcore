@@ -45,7 +45,9 @@ from app.services.symptom_analytics import (
     compute_symptom_metric_associations,
     compute_symptom_tag_associations,
 )
-from app.services.tag_service import analytics_tag_predicate
+from app.models.entry_note import EntryNoteMarker
+from app.services.note_marker_insights import EntryWithMarkers
+from app.services.note_markers import entry_has_note
 from app.services.weekday_confounder import (
     is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
@@ -1404,6 +1406,41 @@ async def _load_analytics_inputs(
     )
 
 
+async def _load_entries_with_markers(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    as_of: date_type,
+) -> list[EntryWithMarkers]:
+    entry_rows = await db.execute(
+        select(Entry).where(Entry.user_id == user_id, Entry.entry_date < as_of)
+    )
+    entries = list(entry_rows.scalars().all())
+    if not entries:
+        return []
+
+    marker_rows = await db.execute(
+        select(EntryNoteMarker).where(
+            EntryNoteMarker.user_id == user_id,
+            EntryNoteMarker.entry_id.in_([entry.id for entry in entries]),
+        )
+    )
+    markers_by_entry: dict[uuid.UUID, set[str]] = defaultdict(set)
+    for marker in marker_rows.scalars().all():
+        markers_by_entry[marker.entry_id].add(marker.marker)
+
+    return [
+        EntryWithMarkers(
+            entry_id=entry.id,
+            entry_date=entry.entry_date,
+            mood_score=entry.mood_score,
+            markers=frozenset(markers_by_entry.get(entry.id, set())),
+            has_note=entry_has_note(entry),
+        )
+        for entry in entries
+    ]
+
+
 async def load_analytics_data(
     db: AsyncSession,
     *,
@@ -1440,6 +1477,12 @@ async def generate_and_store_insights(
         as_of=generated_for_date,
     )
     candidates = generate_insight_candidates(entries, tags, symptoms, as_of=generated_for_date)
+    from app.services.note_marker_insights import build_marker_mood_insights
+
+    marker_rows = await _load_entries_with_markers(db, user_id=user_id, as_of=generated_for_date)
+    candidates.extend(
+        build_marker_mood_insights(marker_rows, generated_for_date=generated_for_date)
+    )
 
     await db.execute(
         delete(Insight).where(

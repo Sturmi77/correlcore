@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    analysis,
     auth,
     dashboard,
     dev,
@@ -11,6 +12,7 @@ from app.api.v1.endpoints import (
     habits,
     health,
     insights,
+    note_markers,
     onboarding,
     symptoms,
     sync,
@@ -39,6 +41,14 @@ api_router.include_router(export.router, prefix="/export", tags=["export"])
 
 # Daily entries (M1, Issue #7)
 api_router.include_router(entries.router, prefix="/entries", tags=["entries"])
+api_router.include_router(
+    note_markers.entry_note_markers_router,
+    prefix="/entries",
+    tags=["entries"],
+)
+
+# Notes in analysis (M3 retroactive)
+api_router.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 
 # Dashboard summary (M3 insight confidence scale)
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])

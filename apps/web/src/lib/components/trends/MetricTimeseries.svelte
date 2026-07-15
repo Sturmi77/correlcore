@@ -34,6 +34,8 @@
    * Only honoured when the chart is aligned to a daily axis.
    */
   export let markers: readonly EventMarker[] = [];
+  /** ISO dates with a note — renders a small presence dot on the axis. */
+  export let noteDates: readonly string[] = [];
   /**
    * Enables the shared timeline cursor + hover -> store wiring.
    * Sparkline use cases (Home) keep this off.
@@ -56,6 +58,7 @@
     { key: 'stress_avg', label: 'trends.metric.stress' },
   ];
 
+  $: noteDateSet = new Set(noteDates);
   $: hasData = points.some((point) => point.entry_count > 0);
   $: showSkeleton = loading && points.length === 0;
   $: aligned = axisDates.length > 0;
@@ -94,6 +97,7 @@
         ? dailyAxisXForIndex(index, plotLayout)
         : paddingLeft + (index / Math.max(1, labels.length - 1)) * innerW,
       label: formatTimeseriesTick(range, labels[index]),
+      date: labels[index],
     }));
   })();
 
@@ -285,6 +289,17 @@
               <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
                 {tick.label}
               </text>
+              {#if noteDateSet.has(tick.date)}
+                <circle
+                  cx={tick.x}
+                  cy={height - paddingBottom + 14}
+                  r="3"
+                  class="timeseries__note-dot"
+                  data-testid={`timeseries-note-dot-${tick.date}`}
+                >
+                  <title>{tick.date}</title>
+                </circle>
+              {/if}
             {/each}
             {#if enableCursor}
               <TimelineCursorOverlay
@@ -607,6 +622,10 @@
     font-size: 10px;
     opacity: 0.65;
     text-anchor: middle;
+  }
+
+  .timeseries__note-dot {
+    fill: var(--color-primary);
   }
 
   .timeseries__line {

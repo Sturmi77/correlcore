@@ -50,6 +50,8 @@ from app.services.entry_service import (
     EntryDateOutOfRangeError,
     EntryNotFoundError,
     EntryReadOnlyError,
+    build_entry_response,
+    build_entry_responses,
     create_entry,
     create_entry_batch,
     get_entry,
@@ -100,7 +102,7 @@ async def create_entry_endpoint(
             detail=str(exc),
         ) from exc
 
-    return EntryResponse.model_validate(entry)
+    return await build_entry_response(db, user_id=user.id, entry=entry)
 
 
 @router.post(
@@ -133,7 +135,7 @@ async def create_entry_batch_endpoint(
         schedule_post_batch_insight_regeneration,
         user_id=user.id,
     )
-    return [EntryResponse.model_validate(entry) for entry in entries]
+    return await build_entry_responses(db, user_id=user.id, entries=entries)
 
 
 # ---------------------------------------------------------------------------
@@ -266,7 +268,7 @@ async def get_entry_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="entry not found",
         ) from exc
-    return EntryResponse.model_validate(entry)
+    return await build_entry_response(db, user_id=user.id, entry=entry)
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +287,7 @@ async def list_entries_endpoint(
     start_date: date_type | None = Query(default=None, alias="start_date"),
     end_date: date_type | None = Query(default=None, alias="end_date"),
     limit: int = Query(default=DEFAULT_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
+    has_note: bool | None = Query(default=None, alias="has_note"),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> list[EntryResponse]:
@@ -294,8 +297,9 @@ async def list_entries_endpoint(
         start_date=start_date,
         end_date=end_date,
         limit=limit,
+        has_note=has_note,
     )
-    return [EntryResponse.model_validate(e) for e in entries]
+    return await build_entry_responses(db, user_id=user.id, entries=entries)
 
 
 # ---------------------------------------------------------------------------
@@ -334,4 +338,4 @@ async def update_entry_endpoint(
             detail=str(exc),
         ) from exc
 
-    return EntryResponse.model_validate(entry)
+    return await build_entry_response(db, user_id=user.id, entry=entry)

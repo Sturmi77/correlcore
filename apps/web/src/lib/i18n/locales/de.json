@@ -119,6 +119,29 @@
     "energy_label": "Energie",
     "stress_label": "Stress",
     "note_placeholder": "Notiz (optional)...",
+    "note_visibility": {
+      "label": "Notiz-Sichtbarkeit",
+      "full": "Ueberall anzeigen",
+      "analysis_only": "Nur Analyse",
+      "hidden": "Verborgen"
+    },
+    "note_markers": {
+      "aria": "Notiz-Marker",
+      "heading": "Marker",
+      "custom_placeholder": "Eigener Marker",
+      "add_custom": "Hinzufuegen",
+      "work": "Arbeit",
+      "homeoffice": "Homeoffice",
+      "social": "Sozial",
+      "movement": "Bewegung",
+      "sleep_bad": "Schlechter Schlaf",
+      "sleep_good": "Guter Schlaf",
+      "stress": "Stress",
+      "conflict": "Konflikt",
+      "symptom": "Symptom",
+      "travel": "Reise",
+      "achievement": "Erfolg"
+    },
     "save": "Speichern",
     "cancel": "Abbrechen",
     "title": "Tag erfassen",
@@ -236,7 +259,8 @@
     "edit": "Bearbeiten",
     "list_aria": "Eintr\u00e4ge f\u00fcr den ausgew\u00e4hlten Tag",
     "score_line": "Stimmung {mood}/5 \u00b7 Energie {energy}/5 \u00b7 Stress {stress}/5",
-    "read_only": "Dieser Eintrag liegt au\u00dferhalb des 7-Tage-Fensters und ist schreibgesch\u00fctzt."
+    "read_only": "Dieser Eintrag liegt au\u00dferhalb des 7-Tage-Fensters und ist schreibgesch\u00fctzt.",
+    "filter_notes_only": "Nur Eintr\u00e4ge mit Notizen"
   },
   "tag": {
     "picker_label": "Tags",
@@ -419,7 +443,9 @@
       "less": "Weniger",
       "more": "Mehr",
       "loading": "Lade Tag-Heatmap",
-      "empty": "Noch keine Tag-Aktivit\u00e4t in diesem Zeitraum."
+      "empty": "Noch keine Tag-Aktivit\u00e4t in diesem Zeitraum.",
+      "notes_row": "Notizen",
+      "note_present": "Notiz an diesem Tag"
     },
     "compare": {
       "heading": "Vergleichen",
@@ -1056,7 +1082,13 @@
     "stress_mood": "Stress und Stimmung zeigen einen klaren Zusammenhang (r={r}, basierend auf {n} Tagen). Das ist ein Datenmuster, keine medizinische Aussage.",
     "weekday_confounded_note": "Hinweis: Dieses Muster tritt vorwiegend an bestimmten Wochentagen auf.",
     "work_context_confounded_note": "Hinweis: Dieses Muster kann vor allem mit deiner Arbeitssituation zusammenhaengen.",
-    "calendar_context_confounded_note": "Hinweis: Dieses Muster kann vor allem Kalender- oder Arbeitskontext-Ueberlappungen zeigen."
+    "calendar_context_confounded_note": "Hinweis: Dieses Muster kann vor allem Kalender- oder Arbeitskontext-Ueberlappungen zeigen.",
+    "note_evidence": {
+      "soft_prompt": "Fuege Notizen hinzu, um Zusammenhaenge besser zu verstehen.",
+      "lead": "An Tagen mit Marker \"{marker}\" lag dein Mood im Schnitt {delta} Punkte von deinem Notiz-Tagesmittel entfernt.",
+      "meta": "Basis: {days} Tage · Konfidenz: {confidence}",
+      "examples": "Beispiele: {dates}"
+    }
   },
   "onboarding": {
     "skip": "Ueberspringen",

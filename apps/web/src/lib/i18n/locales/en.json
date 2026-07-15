@@ -119,6 +119,29 @@
     "energy_label": "Energy",
     "stress_label": "Stress",
     "note_placeholder": "Note (optional)...",
+    "note_visibility": {
+      "label": "Note visibility",
+      "full": "Show everywhere",
+      "analysis_only": "Analysis only",
+      "hidden": "Hidden"
+    },
+    "note_markers": {
+      "aria": "Note markers",
+      "heading": "Markers",
+      "custom_placeholder": "Custom marker",
+      "add_custom": "Add",
+      "work": "Work",
+      "homeoffice": "Remote",
+      "social": "Social",
+      "movement": "Exercise",
+      "sleep_bad": "Poor sleep",
+      "sleep_good": "Good sleep",
+      "stress": "Stress",
+      "conflict": "Conflict",
+      "symptom": "Symptom",
+      "travel": "Travel",
+      "achievement": "Achievement"
+    },
     "save": "Save",
     "cancel": "Cancel",
     "title": "Log your day",
@@ -236,7 +259,8 @@
     "edit": "Edit",
     "list_aria": "Entries for the selected day",
     "score_line": "Mood {mood}/5 \u00b7 Energy {energy}/5 \u00b7 Stress {stress}/5",
-    "read_only": "This entry is outside the 7-day editing window and is read-only."
+    "read_only": "This entry is outside the 7-day editing window and is read-only.",
+    "filter_notes_only": "Only entries with notes"
   },
   "tag": {
     "picker_label": "Tags",
@@ -419,7 +443,9 @@
       "less": "Less",
       "more": "More",
       "loading": "Loading tag heatmap",
-      "empty": "No tag activity in this range yet."
+      "empty": "No tag activity in this range yet.",
+      "notes_row": "Notes",
+      "note_present": "Note on this day"
     },
     "compare": {
       "heading": "Compare",
@@ -1056,7 +1082,13 @@
     "stress_mood": "Stress and mood show a clear association (r={r}, based on {n} days). This is a data pattern, not a medical statement.",
     "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays.",
     "work_context_confounded_note": "Note: this pattern may mainly reflect your work situation.",
-    "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap."
+    "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap.",
+    "note_evidence": {
+      "soft_prompt": "Add notes to better understand patterns in your data.",
+      "lead": "On days marked \"{marker}\", your mood averaged {delta} points different from your note-day average.",
+      "meta": "Basis: {days} days · Confidence: {confidence}",
+      "examples": "Examples: {dates}"
+    }
   },
   "onboarding": {
     "skip": "Skip",

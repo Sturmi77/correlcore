@@ -47,6 +47,7 @@ class InsightType(StrEnum):
     SYMPTOM_CLUSTER = "symptom_cluster"
     SYMPTOM_MOOD_ASSOCIATION = "symptom_mood_association"
     SYMPTOM_TAG_COOCCURRENCE = "symptom_tag_cooccurrence"
+    NOTE_MARKER_MOOD = "note_marker_mood"
 
 
 class InsightTier(StrEnum):

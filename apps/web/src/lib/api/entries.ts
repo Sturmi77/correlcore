@@ -7,10 +7,13 @@
  */
 
 import { api } from './client';
+import type { EntryNoteMarkerResponse, NoteVisibility } from './noteMarkers';
 import type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
 import type { TagResponse } from './tags';
 
 export type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
+export type { NoteVisibility } from './noteMarkers';
+
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -28,6 +31,11 @@ export interface EntryResponse {
   source: EntrySource;
   work_context: WorkContext;
   note: string | null;
+  note_raw?: string | null;
+  note_summary_short?: string | null;
+  note_visibility?: NoteVisibility;
+  note_updated_at?: string | null;
+  note_markers?: EntryNoteMarkerResponse[];
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +50,9 @@ export interface EntryCreatePayload {
   source?: EntrySource;
   work_context: WorkContext;
   note?: string;
+  note_raw?: string;
+  note_summary_short?: string;
+  note_visibility?: NoteVisibility;
 }
 
 export interface EntryBatchCreatePayload {
@@ -56,12 +67,16 @@ export interface EntryUpdatePayload {
   cycle_day?: number | null;
   work_context?: WorkContext;
   note?: string;
+  note_raw?: string;
+  note_summary_short?: string;
+  note_visibility?: NoteVisibility;
 }
 
 export interface EntryListQuery {
   start_date?: string;
   end_date?: string;
   limit?: number;
+  has_note?: boolean;
 }
 
 export interface EntryDeltaQuery {
@@ -115,6 +130,7 @@ export async function listEntries(query: EntryListQuery = {}): Promise<EntryResp
   if (query.start_date) params.set('start_date', query.start_date);
   if (query.end_date) params.set('end_date', query.end_date);
   if (query.limit !== undefined) params.set('limit', String(query.limit));
+  if (query.has_note !== undefined) params.set('has_note', String(query.has_note));
   const qs = params.toString();
   const path = qs ? `/entries?${qs}` : '/entries';
   return api.get<EntryResponse[]>(path);

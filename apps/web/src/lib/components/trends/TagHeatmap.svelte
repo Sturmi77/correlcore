@@ -11,6 +11,8 @@
   export let loading = false;
   /** Keep cells compact on touch devices (e.g. habits detail with many days). */
   export let compact = false;
+  /** ISO dates with notes — shows a dot above the date column. */
+  export let noteDates: readonly string[] = [];
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string; tagId: string } }>();
 
@@ -19,6 +21,7 @@
   let scroller: HTMLDivElement;
   let lastScrolledHeatmap: TagHeatmapResponse | null = null;
 
+  $: noteDateSet = new Set(noteDates);
   $: dates = heatmap ? buildDates(heatmap.start_date, heatmap.end_date) : [];
   $: maxCount = heatmap
     ? Math.max(0, ...heatmap.tags.flatMap((tag) => tag.days.map((day) => day.count)))
@@ -70,6 +73,15 @@
   {:else if heatmap && heatmap.tags.length > 0}
     <div class="heatmap__scroller" aria-label={$_('trends.heatmap.aria')} bind:this={scroller}>
       <div class="heatmap__grid" style={`--day-count: ${dates.length}`}>
+        <div class="heatmap__tag heatmap__tag--notes">{$_('trends.heatmap.notes_row')}</div>
+        {#each dates as date}
+          <span
+            class="heatmap__note-dot"
+            class:heatmap__note-dot--active={noteDateSet.has(date)}
+            aria-hidden={!noteDateSet.has(date)}
+            title={noteDateSet.has(date) ? $_('trends.heatmap.note_present') : undefined}
+          ></span>
+        {/each}
         {#each heatmap.tags as tag, tagIndex}
           <div class="heatmap__tag" title={tag.name}>{tag.name}</div>
           {#each dates as date}
@@ -149,6 +161,23 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .heatmap__tag--notes {
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .heatmap__note-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    margin: 0 auto;
+    border-radius: var(--radius-full);
+    background: transparent;
+  }
+
+  .heatmap__note-dot--active {
+    background: var(--color-primary);
   }
 
   .heatmap__cell,

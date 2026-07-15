@@ -27,6 +27,7 @@
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
   import SaveStatusBadge from '$lib/components/entries/SaveStatusBadge.svelte';
   import DayDeltaCard from '$lib/components/entries/DayDeltaCard.svelte';
+  import NoteMarkerChips from '$lib/components/entries/NoteMarkerChips.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import SegmentedControl from '$lib/components/common/SegmentedControl.svelte';
@@ -54,6 +55,14 @@
     type SymptomEntry,
   } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
+  import { computeNoteSummaryShort } from '$lib/utils/noteSummary';
+  import {
+    addNoteMarker,
+    deleteNoteMarker,
+    listNoteMarkerSuggestions,
+    type EntryNoteMarkerResponse,
+    type NoteVisibility,
+  } from '$lib/api/noteMarkers';
   import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
   import { refreshTags } from '$lib/stores/tags';
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
@@ -101,6 +110,9 @@
     workContextTypical
   );
   let note = '';
+  let noteVisibility: NoteVisibility = 'full';
+  let noteMarkers: EntryNoteMarkerResponse[] = [];
+  let markerSuggestions: string[] = [];
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
   let errorKey: string | null = null;
@@ -170,6 +182,8 @@
     cycleDay = null;
     cycleDayInvalid = false;
     note = '';
+    noteVisibility = 'full';
+    noteMarkers = [];
     selectedTagIds = [];
     selectedSymptoms = [];
     workContextTouched = false;
@@ -283,6 +297,8 @@
           workContext = matchingEntry.work_context;
           workContextTouched = true;
           note = matchingEntry.note ?? '';
+          noteVisibility = matchingEntry.note_visibility ?? 'full';
+          noteMarkers = matchingEntry.note_markers ?? [];
           const [tagsRes, symRes] = await Promise.allSettled([
             listTagsForEntry(matchingEntry.id),
             listSymptomsForEntry(matchingEntry.id),
@@ -357,6 +373,8 @@
       // back to the weekday default.
       workContextTouched = true;
       note = matchingEntry.note ?? '';
+      noteVisibility = matchingEntry.note_visibility ?? 'full';
+      noteMarkers = matchingEntry.note_markers ?? [];
 
       // Tags + symptoms load in parallel; both wrapped so one slow
       // network blip doesn't keep the other from rendering.
@@ -660,6 +678,38 @@
     };
   }
 
+  async function syncMarkerToggle(marker: string, selected: boolean): Promise<void> {
+    if (!existingEntryId || canUseOfflineSync()) return;
+    if (selected) {
+      const created = await addNoteMarker(existingEntryId, { marker, source: 'user' });
+      noteMarkers = [...noteMarkers.filter((item) => item.marker !== created.marker), created];
+      return;
+    }
+    const existing = noteMarkers.find((item) => item.marker === marker);
+    if (!existing) return;
+    await deleteNoteMarker(existingEntryId, existing.id);
+    noteMarkers = noteMarkers.filter((item) => item.id !== existing.id);
+  }
+
+  async function handleMarkerToggle(
+    event: CustomEvent<{ marker: string; selected: boolean }>
+  ): Promise<void> {
+    const { marker, selected } = event.detail;
+    try {
+      await syncMarkerToggle(marker, selected);
+    } catch (err) {
+      errorKey = mapApiError(err, ERROR_MAP);
+    }
+  }
+
+  async function handleCustomMarker(
+    event: CustomEvent<{ marker: string }>
+  ): Promise<void> {
+    await handleMarkerToggle(
+      new CustomEvent('toggle', { detail: { marker: event.detail.marker, selected: true } })
+    );
+  }
+
   /**
    * The actual persistence path. Mirrors the previous manual
    * ``onSubmit``: POST on first save (no ``existingEntryId``), PATCH
@@ -696,8 +746,11 @@
           cycle_day: resolvedSnap.cycle_day,
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note,
+          note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
+          note_visibility: noteVisibility,
         });
         entryId = updated.id;
+        noteMarkers = updated.note_markers ?? noteMarkers;
       } else {
         const created = await submitEntry({
           entry_date: resolvedSnap.entry_date,
@@ -708,6 +761,8 @@
           cycle_day: resolvedSnap.cycle_day,
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note ? resolvedSnap.note : undefined,
+          note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
+          note_visibility: noteVisibility,
         });
         entryId = created.id;
         // POST → PATCH-Flip: store the id so subsequent saves go via
@@ -840,6 +895,13 @@
     const el = document.getElementById('entry-mood');
     el?.focus();
     void loadOnboardingSuggestions();
+    void listNoteMarkerSuggestions()
+      .then((items) => {
+        markerSuggestions = items;
+      })
+      .catch(() => {
+        markerSuggestions = [];
+      });
     mobileMedia = window.matchMedia('(max-width: 767px)');
     syncCompactEntry();
     mobileMedia.addEventListener('change', syncCompactEntry);
@@ -1074,6 +1136,20 @@
               bind:value={note}
               placeholder={$_('entry.note_placeholder')}
             ></textarea>
+          </label>
+          <NoteMarkerChips
+            markers={noteMarkers}
+            suggestions={markerSuggestions}
+            on:toggle={handleMarkerToggle}
+            on:addCustom={handleCustomMarker}
+          />
+          <label class="entry-field entry-field--inline">
+            <span class="entry-label">{$_('entry.note_visibility.label')}</span>
+            <select bind:value={noteVisibility} data-testid="entry-note-visibility">
+              <option value="full">{$_('entry.note_visibility.full')}</option>
+              <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
+              <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
+            </select>
           </label>
         </section>
 

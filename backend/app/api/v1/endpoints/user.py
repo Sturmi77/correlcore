@@ -47,9 +47,22 @@ from app.services.user_preferences_service import (
 )
 from app.services.user_profile_service import get_or_create_user_profile, upsert_user_profile
 from app.services.user_service import UserDeletionError, delete_user_account
+from app.services.note_markers import list_user_marker_suggestions
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get(
+    "/me/note-markers/suggestions",
+    response_model=list[str],
+    summary="Return recent custom note markers for chip suggestions",
+)
+async def list_my_note_marker_suggestions(
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> list[str]:
+    return await list_user_marker_suggestions(db, user_id=current_user.id)
 
 
 @router.get(

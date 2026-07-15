@@ -147,6 +147,9 @@ class Settings(BaseSettings):
             return [str(email).strip().casefold() for email in v if str(email).strip()]
         raise TypeError("INSIGHT_TRIGGER_ADMIN_EMAILS must be a comma-separated string or list")
 
+    # Notes in analysis — minimum signal confidence for insight evidence (ADR-N-02).
+    NOTE_SIGNAL_MIN_CONFIDENCE: float = Field(default=0.70, ge=0.0, le=1.0)
+
     # Error tracking (M9) — optional selfhosted GlitchTip via Sentry protocol.
     # Leave empty for zero outbound error-reporting traffic.
     GLITCHTIP_DSN: str = ""

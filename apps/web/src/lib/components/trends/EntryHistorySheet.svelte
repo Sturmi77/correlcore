@@ -1,10 +1,12 @@
 <script lang="ts" context="module">
   import type { EntryResponse } from '$lib/api/entries';
+  import type { EntryNoteMarkerResponse } from '$lib/api/noteMarkers';
 
   export interface EntryHistoryDetail {
     entry: EntryResponse;
     tags: string[];
     symptoms: { name: string; intensity: number }[];
+    markers?: EntryNoteMarkerResponse[];
   }
 </script>
 
@@ -12,6 +14,7 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
+  import NoteMarkerChips from '$lib/components/entries/NoteMarkerChips.svelte';
 
   export let open = false;
   export let date = '';
@@ -95,6 +98,14 @@
               <dt>{$_('entry.section.note')}</dt>
               <dd>{detail.entry.note || $_('trends.history.none')}</dd>
             </div>
+            {#if detail.markers && detail.markers.length > 0}
+              <div class="entry-history__markers">
+                <dt>{$_('entry.note_markers.heading')}</dt>
+                <dd>
+                  <NoteMarkerChips markers={detail.markers} readonly />
+                </dd>
+              </div>
+            {/if}
           </dl>
         </article>
       {/each}
