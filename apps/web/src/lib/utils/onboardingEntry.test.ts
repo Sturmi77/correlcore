@@ -12,6 +12,7 @@ describe('onboardingEntry', () => {
         {
           user_id: 'u1',
           analytics_enabled: true,
+          digest_enabled: true,
           onboarding_retro_completed: false,
           onboarding_profile_completed: false,
           dismissed_insight_keys: [],
@@ -29,6 +30,7 @@ describe('onboardingEntry', () => {
     const prefs = {
       user_id: 'u1',
       analytics_enabled: true,
+      digest_enabled: true,
       onboarding_retro_completed: false,
       onboarding_profile_completed: false,
       dismissed_insight_keys: [],

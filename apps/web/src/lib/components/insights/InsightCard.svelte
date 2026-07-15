@@ -64,7 +64,7 @@
   $: noteEvidence = payloadRecord(insight?.payload?.evidence);
   $: hasNoteEvidence = Boolean(
     noteEvidence &&
-      (typeof noteEvidence.marker === 'string' || typeof noteEvidence.signal === 'string')
+    (typeof noteEvidence.marker === 'string' || typeof noteEvidence.signal === 'string')
   );
 
   let expanded = false;
@@ -330,16 +330,12 @@
       <NoteInsightEvidence
         marker={typeof noteEvidence.marker === 'string' ? noteEvidence.marker : null}
         signal={typeof noteEvidence.signal === 'string' ? noteEvidence.signal : null}
-        sampleSize={
-          typeof noteEvidence.sample_size === 'number'
-            ? noteEvidence.sample_size
-            : (insight?.sample_n ?? 0)
-        }
-        confidence={
-          typeof noteEvidence.confidence === 'number'
-            ? noteEvidence.confidence
-            : (insight?.confidence ?? null)
-        }
+        sampleSize={typeof noteEvidence.sample_size === 'number'
+          ? noteEvidence.sample_size
+          : (insight?.sample_n ?? 0)}
+        confidence={typeof noteEvidence.confidence === 'number'
+          ? noteEvidence.confidence
+          : (insight?.confidence ?? null)}
         avgDelta={typeof noteEvidence.avg_delta === 'number' ? noteEvidence.avg_delta : null}
         exampleDates={Array.isArray(insight?.payload?.example_dates)
           ? insight.payload.example_dates.filter((item): item is string => typeof item === 'string')

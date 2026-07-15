@@ -204,7 +204,6 @@ jobs:
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
-          SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
 
       # Bonus paranoia: round-trip the schema. ``downgrade base`` exercises
       # every ``downgrade()`` step — they tend to rot silently because no

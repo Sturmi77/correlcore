@@ -702,9 +702,7 @@
     }
   }
 
-  async function handleCustomMarker(
-    event: CustomEvent<{ marker: string }>
-  ): Promise<void> {
+  async function handleCustomMarker(event: CustomEvent<{ marker: string }>): Promise<void> {
     await handleMarkerToggle(
       new CustomEvent('toggle', { detail: { marker: event.detail.marker, selected: true } })
     );

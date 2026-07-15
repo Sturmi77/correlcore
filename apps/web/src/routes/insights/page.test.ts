@@ -193,10 +193,12 @@ vi.mock('$lib/api/preferences', () => ({
   fetchUserPreferences: vi.fn(async () => ({
     user_id: 'user-1',
     analytics_enabled: true,
+    digest_enabled: true,
     onboarding_retro_completed: true,
     onboarding_profile_completed: true,
     dismissed_insight_keys: [],
     reached_milestone_keys: [],
+    last_seen_insight_at: null,
     created_at: '2026-05-01T00:00:00Z',
     updated_at: '2026-05-01T00:00:00Z',
   })),

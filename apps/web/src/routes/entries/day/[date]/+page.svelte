@@ -35,10 +35,15 @@
   $: selectedTagId = $page.url.searchParams.get('tag_id');
   $: validDate = /^\d{4}-\d{2}-\d{2}$/.test(date);
   $: editableDate = validDate && isEntryDateEditable(new Date(), date);
-  $: visibleEntries = (selectedTagId
-    ? entries.filter((entry) => decorations[entry.id]?.tags.some((tag) => tag.id === selectedTagId))
-    : entries
-  ).filter((entry) => !notesOnly || Boolean(entry.note?.trim() || entry.note_summary_short?.trim()));
+  $: visibleEntries = (
+    selectedTagId
+      ? entries.filter((entry) =>
+          decorations[entry.id]?.tags.some((tag) => tag.id === selectedTagId)
+        )
+      : entries
+  ).filter(
+    (entry) => !notesOnly || Boolean(entry.note?.trim() || entry.note_summary_short?.trim())
+  );
 
   const MOOD_LABELS: Record<number, string> = {
     1: 'entry.mood_terrible',

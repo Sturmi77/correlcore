@@ -112,7 +112,9 @@
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
 
   $: range = $analysisRange;
-  $: noteEntryDates = trendEntries.filter((entry) => hasNote(entry)).map((entry) => entry.entry_date);
+  $: noteEntryDates = trendEntries
+    .filter((entry) => hasNote(entry))
+    .map((entry) => entry.entry_date);
 
   function dateWindow(
     activeRange: TimeseriesRange,

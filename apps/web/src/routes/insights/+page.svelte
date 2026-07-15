@@ -734,6 +734,7 @@
       ...(userPreferences ?? {
         user_id: '',
         analytics_enabled: true,
+        digest_enabled: true,
         onboarding_retro_completed: false,
         onboarding_profile_completed: false,
         dismissed_insight_keys: [],

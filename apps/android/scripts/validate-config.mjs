@@ -8,11 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-const required = [
-  'capacitor.config.ts',
-  'package.json',
-  'README.md',
-];
+const required = ['capacitor.config.ts', 'package.json', 'README.md'];
 
 for (const rel of required) {
   await access(resolve(root, rel));

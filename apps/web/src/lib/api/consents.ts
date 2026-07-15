@@ -33,7 +33,9 @@ export async function fetchUserConsents(): Promise<ConsentListResponse> {
   return api.get<ConsentListResponse>('/user/me/consents');
 }
 
-export async function recordUserConsent(payload: ConsentRecordRequest): Promise<ConsentRecordResponse> {
+export async function recordUserConsent(
+  payload: ConsentRecordRequest
+): Promise<ConsentRecordResponse> {
   return api.post<ConsentRecordResponse>('/user/me/consents', payload);
 }
 

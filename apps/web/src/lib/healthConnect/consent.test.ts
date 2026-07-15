@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  HEALTH_CONNECT_CONSENT_TYPE,
-  type ConsentListResponse,
-} from '$lib/api/consents';
+import { HEALTH_CONNECT_CONSENT_TYPE, type ConsentListResponse } from '$lib/api/consents';
 import {
   canUseHealthConnectImport,
   getHealthConnectConsentStatus,

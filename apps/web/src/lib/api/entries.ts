@@ -15,7 +15,6 @@ import type { TagResponse } from './tags';
 export type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
 export type { NoteVisibility } from './noteMarkers';
 
-
 // ---------------------------------------------------------------------------
 // DTOs
 // ---------------------------------------------------------------------------

@@ -77,7 +77,8 @@
     try {
       consents = await fetchUserConsents();
     } catch (err) {
-      consentsError = err instanceof Error ? err.message : $_('settings.privacy.health_connect.error');
+      consentsError =
+        err instanceof Error ? err.message : $_('settings.privacy.health_connect.error');
     }
   }
 
@@ -800,7 +801,7 @@
 
   .settings__consent-heading {
     margin: 0;
-    font-size: 1rem;
+    font-size: var(--text-base);
   }
 
   .settings__consent-body,
@@ -812,7 +813,7 @@
   }
 
   .settings__consent-timestamp {
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
   }
 
   .settings__panel {

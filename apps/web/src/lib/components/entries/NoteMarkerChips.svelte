@@ -16,7 +16,9 @@
   let customMarker = '';
 
   $: selected = new Set(markers.map((marker) => marker.marker));
-  $: customSuggestions = suggestions.filter((marker) => !PREDEFINED_NOTE_MARKERS.includes(marker as never));
+  $: customSuggestions = suggestions.filter(
+    (marker) => !PREDEFINED_NOTE_MARKERS.includes(marker as never)
+  );
 
   function toggle(marker: string): void {
     if (readonly) return;

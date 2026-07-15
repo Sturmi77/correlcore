@@ -4,6 +4,7 @@
 
 import { CLIENT_ID_STORAGE_KEY } from './clientId';
 import {
+  OFFLINE_DB_NAME,
   bindOfflineDbToUser,
   destroyOfflineDatabase,
   getOfflineDb,
@@ -31,6 +32,8 @@ export async function clearOfflineDataForLogout(userId?: string | null): Promise
   if (typeof indexedDB !== 'undefined') {
     if (userId) {
       await destroyOfflineDatabase(offlineDbNameForUser(userId));
+      // Also drop the legacy unpartitioned DB if present.
+      await destroyOfflineDatabase(OFFLINE_DB_NAME);
     } else {
       await destroyOfflineDatabase();
     }
@@ -52,21 +55,49 @@ async function hasUnknownOwnerData(db: CorrelCoreOfflineDB): Promise<boolean> {
   return entryCount > 0 || changeCount > 0 || metaCount > 0;
 }
 
-/** Ensure offline data belongs to the authenticated account (per-user Dexie). */
+/**
+ * Ensure offline data belongs to the authenticated account.
+ *
+ * Same-user sessions keep the currently open DB (including the legacy
+ * `correlcore-offline` name used by older clients/tests). Owner mismatches or
+ * unknown-owner leftover data wipe client identity and Dexie state, then open
+ * a per-user partition.
+ */
 export async function prepareOfflineDataForAuthenticatedUser(userId: string): Promise<void> {
   if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
     return;
   }
 
-  const db = bindOfflineDbToUser(userId);
-  const existingOwner = await db.sync_meta.get(SYNC_META_KEYS.ownerUserId);
-
-  if (
-    (existingOwner?.value && existingOwner.value !== userId) ||
-    (!existingOwner?.value && (await hasUnknownOwnerData(db)))
-  ) {
-    await clearOfflineDataForLogout(userId);
+  let priorOwner: string | undefined;
+  let priorHasData = false;
+  try {
+    const prior = getOfflineDb();
+    priorOwner = (await prior.sync_meta.get(SYNC_META_KEYS.ownerUserId))?.value;
+    priorHasData = await hasUnknownOwnerData(prior);
+  } catch {
+    // Singleton may already be closed from a previous wipe.
   }
 
-  await getOfflineDb(userId).sync_meta.put({ key: SYNC_META_KEYS.ownerUserId, value: userId });
+  const shouldWipe =
+    (priorOwner != null && priorOwner !== userId) || (priorOwner == null && priorHasData);
+
+  if (shouldWipe) {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(CLIENT_ID_STORAGE_KEY);
+    }
+    await destroyOfflineDatabase(OFFLINE_DB_NAME);
+    await destroyOfflineDatabase(offlineDbNameForUser(userId));
+    if (priorOwner && priorOwner !== userId) {
+      await destroyOfflineDatabase(offlineDbNameForUser(priorOwner));
+    }
+    resetSyncOrchestratorForTests();
+    bindOfflineDbToUser(userId);
+  } else if (priorOwner === userId) {
+    // Keep the existing DB (legacy or already partitioned) for this owner.
+  } else {
+    // Fresh empty DB — prefer a per-user partition going forward.
+    bindOfflineDbToUser(userId);
+  }
+
+  await getOfflineDb().sync_meta.put({ key: SYNC_META_KEYS.ownerUserId, value: userId });
 }

@@ -26,11 +26,11 @@ pnpm exec cap add android   # creates ./android/ (gitignored until committed in 
 
 From the repository root:
 
-| Script | Purpose |
-| ------ | ------- |
-| `pnpm cap:sync` | Copy web build into the Android project and update native deps |
-| `pnpm cap:open` | Open the project in Android Studio |
-| `pnpm --filter @correlcore/android validate` | CI check — config files only, no SDK |
+| Script                                       | Purpose                                                        |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| `pnpm cap:sync`                              | Copy web build into the Android project and update native deps |
+| `pnpm cap:open`                              | Open the project in Android Studio                             |
+| `pnpm --filter @correlcore/android validate` | CI check — config files only, no SDK                           |
 
 From `apps/android/`:
 
