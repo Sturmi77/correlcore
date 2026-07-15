@@ -24,6 +24,26 @@ export interface LocalEntry {
   sync_state: SyncState;
 }
 
+export interface LocalTag {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  icon: string | null;
+  color: string | null;
+  habit_type: string | null;
+  target_frequency: number | null;
+  updated_at: string;
+}
+
+export interface LocalSymptom {
+  id: string;
+  slug: string;
+  name: string;
+  icon: string | null;
+  updated_at: string;
+}
+
 export interface ChangeLogRow {
   seq?: number;
   batch_id: string;

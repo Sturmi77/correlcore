@@ -99,10 +99,18 @@ async def cleanup_stale_sync_conflicts(
     now: datetime | None = None,
     retention_days: int | None = None,
 ) -> int:
-    """Delete conflict rows older than the retention window."""
+    """Delete conflict rows older than the retention window.
+
+    Sets ``app.sync_retention`` so the retention RLS policy (#258 / migration 023)
+    permits worker deletes without a per-user RLS bind.
+    """
+    from sqlalchemy import text
+
     effective_now = now or datetime.now(UTC)
     days = retention_days if retention_days is not None else settings.SYNC_CONFLICT_RETENTION_DAYS
     threshold = effective_now - timedelta(days=days)
+
+    await db.execute(text("SELECT set_config('app.sync_retention', 'true', true)"))
 
     result = await db.execute(
         delete(SyncConflict).where(SyncConflict.created_at < threshold).returning(SyncConflict.id)

@@ -3,7 +3,13 @@
  */
 
 import { CLIENT_ID_STORAGE_KEY } from './clientId';
-import { destroyOfflineDatabase, getOfflineDb, type CorrelCoreOfflineDB } from './db';
+import {
+  bindOfflineDbToUser,
+  destroyOfflineDatabase,
+  getOfflineDb,
+  offlineDbNameForUser,
+  type CorrelCoreOfflineDB,
+} from './db';
 import {
   drainOfflineSyncForSessionChange as drainSyncOrchestratorForSessionChange,
   resetSyncOrchestratorForTests,
@@ -15,7 +21,7 @@ export async function drainOfflineSyncForSessionChange(): Promise<void> {
 }
 
 /** Wipe Dexie data and client identity so the next account starts clean. */
-export async function clearOfflineDataForLogout(): Promise<void> {
+export async function clearOfflineDataForLogout(userId?: string | null): Promise<void> {
   if (typeof window === 'undefined') {
     return;
   }
@@ -23,7 +29,11 @@ export async function clearOfflineDataForLogout(): Promise<void> {
     localStorage.removeItem(CLIENT_ID_STORAGE_KEY);
   }
   if (typeof indexedDB !== 'undefined') {
-    await destroyOfflineDatabase();
+    if (userId) {
+      await destroyOfflineDatabase(offlineDbNameForUser(userId));
+    } else {
+      await destroyOfflineDatabase();
+    }
   }
   resetSyncOrchestratorForTests();
 }
@@ -42,21 +52,21 @@ async function hasUnknownOwnerData(db: CorrelCoreOfflineDB): Promise<boolean> {
   return entryCount > 0 || changeCount > 0 || metaCount > 0;
 }
 
-/** Ensure origin-scoped offline data belongs to the authenticated account. */
+/** Ensure offline data belongs to the authenticated account (per-user Dexie). */
 export async function prepareOfflineDataForAuthenticatedUser(userId: string): Promise<void> {
   if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
     return;
   }
 
-  const db = getOfflineDb();
+  const db = bindOfflineDbToUser(userId);
   const existingOwner = await db.sync_meta.get(SYNC_META_KEYS.ownerUserId);
 
   if (
     (existingOwner?.value && existingOwner.value !== userId) ||
     (!existingOwner?.value && (await hasUnknownOwnerData(db)))
   ) {
-    await clearOfflineDataForLogout();
+    await clearOfflineDataForLogout(userId);
   }
 
-  await getOfflineDb().sync_meta.put({ key: SYNC_META_KEYS.ownerUserId, value: userId });
+  await getOfflineDb(userId).sync_meta.put({ key: SYNC_META_KEYS.ownerUserId, value: userId });
 }

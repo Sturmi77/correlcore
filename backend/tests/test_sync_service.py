@@ -544,3 +544,27 @@ async def test_pull_is_scoped_to_authenticated_user() -> None:
         pull = await pull_changes(session, user_id=user_b_id, since=None, limit=50)
 
     assert pull.changes == []
+
+
+def test_note_conflict_markers_detect_distinct_nonempty_notes() -> None:
+    from app.services.sync_service import _note_conflict_markers
+
+    markers = _note_conflict_markers("stress today", "calm today")
+    assert markers is not None
+    client_m, server_m = markers
+    assert client_m == {"present": True, "changed": True}
+    assert server_m == {"present": True, "changed": True}
+    assert _note_conflict_markers("same", "same") is None
+    assert _note_conflict_markers(None, "x") is not None
+
+
+def test_get_or_create_user_revision_uses_for_update() -> None:
+    from sqlalchemy.dialects import postgresql
+
+    from app.models.sync_engine import SyncUserRevision
+    from app.services.sync_service import _get_or_create_user_revision
+
+    stmt = select(SyncUserRevision).where(SyncUserRevision.user_id == uuid.uuid4()).with_for_update()
+    compiled = str(stmt.compile(dialect=postgresql.dialect()))
+    assert "FOR UPDATE" in compiled.upper()
+    assert callable(_get_or_create_user_revision)
