@@ -5,8 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import httpx
-
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -31,6 +29,10 @@ async def generate_llm_statement(ctx: dict[str, Any], locale: str = "en") -> str
 
     if not settings.INSIGHTS_LLM_ENABLED:
         return None
+
+    # Lazy import: production images install ``.[analytics]`` (includes httpx);
+    # keep the module importable when the optional LLM path is disabled.
+    import httpx
 
     url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/generate"
     payload = {

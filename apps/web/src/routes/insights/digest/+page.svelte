@@ -63,7 +63,7 @@
 
   onMount(() => {
     if ($auth.status !== 'authenticated') {
-      void goto('/login');
+      void goto('/auth/login');
       return;
     }
     void loadDigest();

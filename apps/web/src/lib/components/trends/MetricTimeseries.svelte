@@ -289,18 +289,22 @@
               <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
                 {tick.label}
               </text>
-              {#if noteDateSet.has(tick.date)}
-                <circle
-                  cx={tick.x}
-                  cy={height - paddingBottom + 14}
-                  r="3"
-                  class="timeseries__note-dot"
-                  data-testid={`timeseries-note-dot-${tick.date}`}
-                >
-                  <title>{tick.date}</title>
-                </circle>
-              {/if}
             {/each}
+            {#if aligned}
+              {#each axisDates as date, index (date)}
+                {#if noteDateSet.has(date)}
+                  <circle
+                    cx={dailyAxisXForIndex(index, plotLayout)}
+                    cy={height - paddingBottom + 14}
+                    r="3"
+                    class="timeseries__note-dot"
+                    data-testid={`timeseries-note-dot-${date}`}
+                  >
+                    <title>{date}</title>
+                  </circle>
+                {/if}
+              {/each}
+            {/if}
             {#if enableCursor}
               <TimelineCursorOverlay
                 {axisDates}

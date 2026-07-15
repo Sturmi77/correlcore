@@ -145,6 +145,13 @@ async def create_entry_batch_endpoint(
         schedule_post_batch_insight_regeneration,
         user_id=user.id,
     )
+    for entry, item in zip(entries, payload.entries, strict=False):
+        if item.note or item.note_visibility != NoteVisibilitySchema.FULL:
+            background_tasks.add_task(
+                run_note_signal_extraction_background,
+                entry_id=entry.id,
+                user_id=user.id,
+            )
     return await build_entry_responses(db, user_id=user.id, entries=entries)
 
 

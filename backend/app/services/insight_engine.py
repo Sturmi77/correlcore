@@ -1472,8 +1472,14 @@ async def _load_entries_with_markers(
     user_id: uuid.UUID,
     as_of: date_type,
 ) -> list[EntryWithMarkers]:
+    from app.models.entry import NoteVisibility
+
     entry_rows = await db.execute(
-        select(Entry).where(Entry.user_id == user_id, Entry.entry_date < as_of)
+        select(Entry).where(
+            Entry.user_id == user_id,
+            Entry.entry_date < as_of,
+            Entry.note_visibility != NoteVisibility.HIDDEN.value,
+        )
     )
     entries = list(entry_rows.scalars().all())
     if not entries:
@@ -1537,7 +1543,6 @@ async def generate_and_store_insights(
         as_of=generated_for_date,
     )
     candidates = generate_insight_candidates(entries, tags, symptoms, as_of=generated_for_date)
-    from app.services.llm_statements import generate_llm_statement
     from app.services.note_marker_insights import build_marker_mood_insights
 
     marker_rows = await _load_entries_with_markers(db, user_id=user_id, as_of=generated_for_date)
@@ -1546,6 +1551,8 @@ async def generate_and_store_insights(
     )
 
     if settings.INSIGHTS_LLM_ENABLED:
+        from app.services.llm_statements import generate_llm_statement
+
         enhanced: list[InsightCandidate] = []
         for candidate in candidates:
             llm_statement = await generate_llm_statement(

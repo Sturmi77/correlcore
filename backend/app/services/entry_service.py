@@ -165,7 +165,11 @@ def _apply_note_payload(entry: Entry, data: dict[str, object]) -> None:
 
     if "note_visibility" in data:
         visibility = data.pop("note_visibility")
-        entry.note_visibility = NoteVisibility(str(visibility))
+        if visibility is None:
+            # EntryUpdate allows null; treat as no-op rather than 500.
+            pass
+        else:
+            entry.note_visibility = NoteVisibility(str(visibility))
 
     if "note_summary_short" in data:
         entry.note_summary_short = data.pop("note_summary_short")  # type: ignore[assignment]
@@ -318,7 +322,11 @@ async def list_entries(
     """Return entries for ``user_id`` ordered by date desc.
 
     Bounds are inclusive. ``limit`` is clamped to ``MAX_LIST_LIMIT``.
+    When ``has_note`` is set, the SQL predicate filters on stored note/summary
+    presence *before* ``LIMIT`` so pages are not emptied by post-filtering.
     """
+    from sqlalchemy import or_
+
     limit = max(1, min(limit, MAX_LIST_LIMIT))
 
     stmt = select(Entry).where(Entry.user_id == user_id)
@@ -326,12 +334,17 @@ async def list_entries(
         stmt = stmt.where(Entry.entry_date >= start_date)
     if end_date is not None:
         stmt = stmt.where(Entry.entry_date <= end_date)
+    if has_note is True:
+        stmt = stmt.where(or_(Entry.note_enc.isnot(None), Entry.note_summary_short.isnot(None)))
+    elif has_note is False:
+        stmt = stmt.where(Entry.note_enc.is_(None), Entry.note_summary_short.is_(None))
     stmt = stmt.order_by(Entry.entry_date.desc(), Entry.slot.asc()).limit(limit)
 
     result = await db.execute(stmt)
     entries = list(result.scalars().all())
     if has_note is None:
         return entries
+    # Decryptable emptiness edge cases (whitespace-only summaries).
     return [entry for entry in entries if entry_has_note(entry) == has_note]
 
 

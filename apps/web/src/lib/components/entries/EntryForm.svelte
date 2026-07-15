@@ -678,17 +678,46 @@
     };
   }
 
+  function applyLocalMarkerToggle(marker: string, selected: boolean): void {
+    if (selected) {
+      if (noteMarkers.some((item) => item.marker === marker)) return;
+      noteMarkers = [
+        ...noteMarkers,
+        {
+          id: `pending:${marker}`,
+          entry_id: existingEntryId ?? '',
+          marker,
+          source: 'user',
+          created_at: new Date().toISOString(),
+        },
+      ];
+      return;
+    }
+    noteMarkers = noteMarkers.filter((item) => item.marker !== marker);
+  }
+
   async function syncMarkerToggle(marker: string, selected: boolean): Promise<void> {
+    // Keep optimistic local state even before first save / while offline sync owns persistence.
+    const existingBefore = noteMarkers.find((item) => item.marker === marker);
+    applyLocalMarkerToggle(marker, selected);
+    markDirty();
     if (!existingEntryId || canUseOfflineSync()) return;
     if (selected) {
       const created = await addNoteMarker(existingEntryId, { marker, source: 'user' });
       noteMarkers = [...noteMarkers.filter((item) => item.marker !== created.marker), created];
       return;
     }
-    const existing = noteMarkers.find((item) => item.marker === marker);
-    if (!existing) return;
-    await deleteNoteMarker(existingEntryId, existing.id);
-    noteMarkers = noteMarkers.filter((item) => item.id !== existing.id);
+    if (!existingBefore || existingBefore.id.startsWith('pending:')) return;
+    await deleteNoteMarker(existingEntryId, existingBefore.id);
+  }
+
+  async function flushPendingMarkers(entryId: string): Promise<void> {
+    if (canUseOfflineSync()) return;
+    const pending = noteMarkers.filter((item) => item.id.startsWith('pending:'));
+    for (const item of pending) {
+      const created = await addNoteMarker(entryId, { marker: item.marker, source: 'user' });
+      noteMarkers = [...noteMarkers.filter((m) => m.marker !== created.marker), created];
+    }
   }
 
   async function handleMarkerToggle(
@@ -767,6 +796,7 @@
         // updateEntry. This is the same flow that defused the 409 race
         // we hit in PR #117.
         existingEntryId = entryId;
+        await flushPendingMarkers(entryId);
       }
 
       await assignTagsToEntry(entryId, resolvedSnap.selectedTagIds);
@@ -846,6 +876,7 @@
     cycleDay;
     workContext;
     note;
+    noteVisibility;
     selectedTagIds;
     selectedSymptoms;
     markDirty();
