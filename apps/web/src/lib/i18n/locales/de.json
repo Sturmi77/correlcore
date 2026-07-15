@@ -603,7 +603,17 @@
       "delete_error": "Account konnte nicht geloescht werden. Bitte spaeter erneut versuchen.",
       "delete_invalid_password": "Passwort ist falsch.",
       "policy_link": "Datenschutzerklaerung",
-      "policy_body": "Lies, wie diese Installation deine Gesundheitsdaten verarbeitet und welche Rechte du hast."
+      "policy_body": "Lies, wie diese Installation deine Gesundheitsdaten verarbeitet und welche Rechte du hast.",
+      "health_connect": {
+        "heading": "Health Connect (Android)",
+        "body": "Optionaler Import von Schlafdauer und Ruhepuls aus Health Connect. Das sind besondere Gesundheitsdaten nach DSGVO Art. 9 — erteile die Einwilligung nur, wenn du Wearable-Import auf Android moechtest.",
+        "scope": "Es werden nur Schlaf- und Herzfrequenz-Zusammenfassungen importiert. Bewegungsprofile, GPS-Strecken und andere Aktivitaetsdaten werden nicht gelesen.",
+        "grant_label": "Ich willige in den Health-Connect-Import von Schlaf- und Herzfrequenzdaten fuer mein persoenliches Tracking ein.",
+        "grant_action": "Einwilligung erteilen",
+        "revoke_action": "Einwilligung widerrufen",
+        "granted_at": "Einwilligung erteilt am {timestamp}.",
+        "error": "Health-Connect-Einwilligung konnte nicht aktualisiert werden."
+      }
     },
     "appearance": {
       "heading": "Darstellung",

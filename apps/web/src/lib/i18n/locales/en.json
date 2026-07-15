@@ -603,7 +603,17 @@
       "delete_error": "Could not delete account. Try again later.",
       "delete_invalid_password": "Password is incorrect.",
       "policy_link": "Privacy policy",
-      "policy_body": "Read how this installation processes your health data and which rights you have."
+      "policy_body": "Read how this installation processes your health data and which rights you have.",
+      "health_connect": {
+        "heading": "Health Connect (Android)",
+        "body": "Optional import of sleep duration and resting heart rate from Health Connect. This is special-category health data under GDPR Art. 9 — grant consent only if you want wearable import on Android.",
+        "scope": "Only sleep and heart-rate summaries are imported. Movement profiles, GPS tracks, and other activity data are not read.",
+        "grant_label": "I consent to Health Connect import of sleep and heart-rate data for my personal tracking.",
+        "grant_action": "Grant consent",
+        "revoke_action": "Revoke consent",
+        "granted_at": "Consent granted on {timestamp}.",
+        "error": "Could not update Health Connect consent."
+      }
     },
     "appearance": {
       "heading": "Appearance",
@@ -1085,9 +1095,13 @@
     "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap.",
     "note_evidence": {
       "soft_prompt": "Add notes to better understand patterns in your data.",
-      "lead": "On days marked \"{marker}\", your mood averaged {delta} points different from your note-day average.",
+      "lead_marker": "On days marked \"{marker}\", your mood averaged {delta} points different from your note-day average.",
+      "lead_signal": "On days with note signal \"{signal}\", your mood averaged {delta} points different from your note-day average.",
       "meta": "Basis: {days} days · Confidence: {confidence}",
-      "examples": "Examples: {dates}"
+      "examples_prefix": "Examples:",
+      "confidence_low": "Low",
+      "confidence_medium": "Medium",
+      "confidence_high": "High"
     }
   },
   "onboarding": {

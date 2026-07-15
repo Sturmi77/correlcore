@@ -84,6 +84,17 @@ vi.mock('$lib/api/insights', () => ({
   })),
 }));
 
+vi.mock('$lib/api/consents', () => ({
+  HEALTH_CONNECT_CONSENT_TYPE: 'health_connect',
+  HEALTH_CONNECT_CONSENT_VERSION: '1',
+  fetchUserConsents: vi.fn(async () => ({
+    current: [],
+    history: [],
+  })),
+  recordUserConsent: vi.fn(),
+  revokeUserConsent: vi.fn(),
+}));
+
 describe('/settings Sprint 7', () => {
   beforeEach(() => {
     devMode.set(false);
@@ -102,6 +113,7 @@ describe('/settings Sprint 7', () => {
     expect(screen.getByTestId('settings-section-export')).toBeTruthy();
     expect(screen.getByTestId('settings-section-analysis')).toBeTruthy();
     expect(screen.getByTestId('settings-section-privacy')).toBeTruthy();
+    expect(screen.getByTestId('settings-health-connect-consent')).toBeTruthy();
     expect(screen.getByTestId('settings-section-appearance')).toBeTruthy();
     expect(screen.getByTestId('settings-section-account')).toBeTruthy();
   });
