@@ -30,12 +30,12 @@ Implementierung: `app/services/slug_hmac.py`, Aufruf in `symptom_service.create_
 
 ## Alternativen erwogen
 
-| Option | Vorteile | Nachteile |
-| ------ | -------- | --------- |
-| Slug plaintext lassen (Status quo) | Einfach, debuggbar | Semantischer Leak in DB/Backups |
-| Zufälliger Slug (UUID/Random) | Kein Leak | Nicht idempotent; Duplikat-Erkennung bei Retry schwieriger |
-| **HMAC deterministisch** ✅ | Kein Leak, idempotent, Unique pro User+Semantik | Key-Rotation erfordert Re-Migration; Downgrade nicht reversibel |
-| Slug aus `name_enc` ableiten | Ein Feld weniger | Braucht DEK zum Lesen; bricht Default-Reads |
+| Option                             | Vorteile                                        | Nachteile                                                       |
+| ---------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| Slug plaintext lassen (Status quo) | Einfach, debuggbar                              | Semantischer Leak in DB/Backups                                 |
+| Zufälliger Slug (UUID/Random)      | Kein Leak                                       | Nicht idempotent; Duplikat-Erkennung bei Retry schwieriger      |
+| **HMAC deterministisch** ✅        | Kein Leak, idempotent, Unique pro User+Semantik | Key-Rotation erfordert Re-Migration; Downgrade nicht reversibel |
+| Slug aus `name_enc` ableiten       | Ein Feld weniger                                | Braucht DEK zum Lesen; bricht Default-Reads                     |
 
 ---
 
@@ -51,10 +51,10 @@ Implementierung: `app/services/slug_hmac.py`, Aufruf in `symptom_service.create_
 
 ## Umsetzung
 
-| Artefakt | Beschreibung |
-| -------- | ------------ |
-| `SLUG_HMAC_KEY` | Settings + `.env.example` |
-| `slug_hmac.py` | `hmac_custom_symptom_slug()`, `is_hmac_symptom_slug()` |
-| `symptom_service.py` | HMAC bei `create_custom_symptom` |
-| Migration `026` | Remap bestehender Custom-Slugs |
-| Tests | Determinismus, Defaults unverändert |
+| Artefakt             | Beschreibung                                           |
+| -------------------- | ------------------------------------------------------ |
+| `SLUG_HMAC_KEY`      | Settings + `.env.example`                              |
+| `slug_hmac.py`       | `hmac_custom_symptom_slug()`, `is_hmac_symptom_slug()` |
+| `symptom_service.py` | HMAC bei `create_custom_symptom`                       |
+| Migration `026`      | Remap bestehender Custom-Slugs                         |
+| Tests                | Determinismus, Defaults unverändert                    |

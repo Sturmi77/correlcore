@@ -322,11 +322,11 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Open Questions / ADR Triggers
 
-| ID       | Question                                                                                                        | Decision Needed By |
-| -------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
+| ID       | Question                                                                                                        | Decision Needed By                                                                                      |
+| -------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | ADR-N-01 | Should `note_summary_short` be computed client-side (first sentence) or server-side (extractive summarisation)? | **Decided** — [ADR-N-01](../adr/ADR-N-01-note-summary-computation.md) (client truncate + server mirror) |
-| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7?                                     | **Decided** — [ADR-N-02](../adr/ADR-N-02-signal-confidence-threshold.md) (0.70) |
-| ADR-N-03 | Should custom markers be normalised (lowercased, deduplicated) server-side, or stored verbatim?                 | **Decided** — [ADR-N-03](../adr/ADR-N-03-custom-marker-normalisation.md) (normalise on write) |
+| ADR-N-02 | Threshold for signal confidence to include in insight evidence: 0.6 or 0.7?                                     | **Decided** — [ADR-N-02](../adr/ADR-N-02-signal-confidence-threshold.md) (0.70)                         |
+| ADR-N-03 | Should custom markers be normalised (lowercased, deduplicated) server-side, or stored verbatim?                 | **Decided** — [ADR-N-03](../adr/ADR-N-03-custom-marker-normalisation.md) (normalise on write)           |
 
 ---
 

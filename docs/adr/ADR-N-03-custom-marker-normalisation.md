@@ -7,7 +7,7 @@
 ## Kontext
 
 Users may define free-text custom markers (max 32 chars) alongside the v1 taxonomy.
-Without normalisation, `Stress` / `stress` / ` stress ` duplicate the same concept and
+Without normalisation, `Stress` / `stress` / `stress` duplicate the same concept and
 break marker-summary aggregations.
 
 ## Optionen

@@ -6,11 +6,11 @@ maintainers should close these with the comments below.
 
 ## Close now (18)
 
-| Issue | Reason | Evidence |
-| ----- | ------ | -------- |
-| #251–#254, #260–#271, #273 | M5.1 UX polish O-02–O-19 | PR #281, CHANGELOG, `OPTIMIZATION_BACKLOG.md` |
-| #272 | O-20 password reset | PR #284, `auth/forgot-password`, migration `019_*` |
-| #29 | DSGVO Art. 17 account deletion | `DELETE /api/v1/user/me`, M9 quality gate |
+| Issue                      | Reason                         | Evidence                                           |
+| -------------------------- | ------------------------------ | -------------------------------------------------- |
+| #251–#254, #260–#271, #273 | M5.1 UX polish O-02–O-19       | PR #281, CHANGELOG, `OPTIMIZATION_BACKLOG.md`      |
+| #272                       | O-20 password reset            | PR #284, `auth/forgot-password`, migration `019_*` |
+| #29                        | DSGVO Art. 17 account deletion | `DELETE /api/v1/user/me`, M9 quality gate          |
 
 Suggested close comment (UX cluster):
 
@@ -27,12 +27,12 @@ Suggested close comment (#29):
 
 ## Remains open (implement in this PR series)
 
-| Wave | Issues |
-| ---- | ------ |
-| M4.1.1 | #258 |
-| Notes A–C | #194–#199, #198 |
-| M8 signals | #201, #202 |
-| M11 / HC | #27, #31 |
-| Optional | #147, #148, #149, #62, #28 |
+| Wave       | Issues                     |
+| ---------- | -------------------------- |
+| M4.1.1     | #258                       |
+| Notes A–C  | #194–#199, #198            |
+| M8 signals | #201, #202                 |
+| M11 / HC   | #27, #31                   |
+| Optional   | #147, #148, #149, #62, #28 |
 
 Doc drift fixed in-repo: O-20 status → **Done** in `OPTIMIZATION_BACKLOG.md`.
