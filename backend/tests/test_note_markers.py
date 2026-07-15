@@ -46,9 +46,7 @@ async def test_add_marker_to_entry_normalises_key() -> None:
     db = MagicMock()
     db.add = MagicMock()
     db.flush = AsyncMock()
-    db.execute = AsyncMock(
-        return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=entry))
-    )
+    db.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=entry)))
 
     marker = await add_marker_to_entry(
         db,
@@ -171,9 +169,7 @@ async def test_add_marker_conflict_on_duplicate() -> None:
     db.add = MagicMock()
     db.rollback = AsyncMock()
     db.flush = AsyncMock(side_effect=IntegrityError("dup", {}, Exception()))
-    db.execute = AsyncMock(
-        return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=entry))
-    )
+    db.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=entry)))
 
     with pytest.raises(NoteMarkerConflictError):
         await add_marker_to_entry(

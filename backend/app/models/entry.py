@@ -42,6 +42,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    Text,
     UniqueConstraint,
     func,
 )
@@ -151,7 +152,9 @@ class Entry(Base):
         nullable=True,
     )
     note_summary_short: Mapped[str | None] = mapped_column(nullable=True)
+    # Text + CHECK in migration 024 (not a Postgres ENUM — avoid inferred native enum).
     note_visibility: Mapped[NoteVisibility] = mapped_column(
+        Text,
         nullable=False,
         default=NoteVisibility.FULL,
         server_default=NoteVisibility.FULL.value,

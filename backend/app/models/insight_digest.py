@@ -17,9 +17,7 @@ class InsightDigest(Base):
     """One stored weekly digest per user run."""
 
     __tablename__ = "insight_digests"
-    __table_args__ = (
-        Index("ix_insight_digests_user_generated_at", "user_id", "generated_at"),
-    )
+    __table_args__ = (Index("ix_insight_digests_user_generated_at", "user_id", "generated_at"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

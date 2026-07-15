@@ -44,7 +44,9 @@ async def list_entry_note_signals_endpoint(
     try:
         await get_entry(db, user_id=user.id, entry_id=entry_id)
     except EntryNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="entry not found") from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="entry not found"
+        ) from exc
 
     signals = await list_signals_for_entry(db, user_id=user.id, entry_id=entry_id)
     return [EntryNoteSignalResponse.model_validate(signal) for signal in signals]

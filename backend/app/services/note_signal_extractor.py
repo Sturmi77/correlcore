@@ -144,9 +144,7 @@ async def extract_and_store_signals_for_entry(
 ) -> list[EntryNoteSignal]:
     """Replace stored signals for one entry from its current note content."""
 
-    result = await db.execute(
-        select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)
-    )
+    result = await db.execute(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id))
     entry = result.scalar_one_or_none()
     if entry is None:
         return []

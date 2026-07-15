@@ -9,7 +9,9 @@ NOTE_SUMMARY_MAX_LENGTH = 120
 _SENTENCE_END = re.compile(r"[.!?]\s")
 
 
-def compute_note_summary_short(note: str | None, *, max_length: int = NOTE_SUMMARY_MAX_LENGTH) -> str | None:
+def compute_note_summary_short(
+    note: str | None, *, max_length: int = NOTE_SUMMARY_MAX_LENGTH
+) -> str | None:
     """Return a truncated preview of ``note`` (first sentence or max_length chars)."""
 
     if note is None:

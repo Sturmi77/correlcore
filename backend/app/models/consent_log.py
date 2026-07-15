@@ -45,6 +45,5 @@ class ConsentLog(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - debug helper
         return (
-            f"<ConsentLog user_id={self.user_id} type={self.consent_type!r} "
-            f"granted={self.granted}>"
+            f"<ConsentLog user_id={self.user_id} type={self.consent_type!r} granted={self.granted}>"
         )

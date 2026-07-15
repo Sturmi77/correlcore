@@ -76,8 +76,13 @@ def build_marker_mood_insights(
             f"On days marked “{marker}”, your mood averaged {abs(delta):.1f} points "
             f"{direction} than your note-day average."
         )
-        example_ids = [row.entry_id for row in sorted(rows, key=lambda r: r.entry_date, reverse=True)[:5]]
-        example_dates = [row.entry_date.isoformat() for row in sorted(rows, key=lambda r: r.entry_date, reverse=True)[:5]]
+        example_ids = [
+            row.entry_id for row in sorted(rows, key=lambda r: r.entry_date, reverse=True)[:5]
+        ]
+        example_dates = [
+            row.entry_date.isoformat()
+            for row in sorted(rows, key=lambda r: r.entry_date, reverse=True)[:5]
+        ]
 
         candidates.append(
             InsightCandidate(

@@ -523,7 +523,9 @@ async def _merge_entry_upsert(
     for field_name, client_val, _server_val, server_report in scalar_fields:
         if field_name == "note":
             markers = _note_conflict_markers(
-                client_val if isinstance(client_val, str) or client_val is None else str(client_val),
+                client_val
+                if isinstance(client_val, str) or client_val is None
+                else str(client_val),
                 entry.note_enc,
             )
             if markers is None:

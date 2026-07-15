@@ -53,13 +53,20 @@ def test_build_weekly_digest_requires_three_confident_insights() -> None:
         _make_insight(effect_size=0.3, confidence=0.65),
     ]
 
-    assert build_weekly_digest(insights, week_start=datetime.now(UTC).date(), week_end=datetime.now(UTC).date()) is None
+    assert (
+        build_weekly_digest(
+            insights, week_start=datetime.now(UTC).date(), week_end=datetime.now(UTC).date()
+        )
+        is None
+    )
 
 
 def test_push_payload_scrubs_health_specific_statement_text() -> None:
     digest = build_weekly_digest(
         [
-            _make_insight(effect_size=0.8, confidence=0.9, statement="Mood dips after headache days."),
+            _make_insight(
+                effect_size=0.8, confidence=0.9, statement="Mood dips after headache days."
+            ),
             _make_insight(effect_size=0.6, confidence=0.8, statement="Stress tracks with fatigue."),
             _make_insight(effect_size=0.4, confidence=0.7, statement="Energy rises on sport days."),
         ],

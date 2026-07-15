@@ -564,7 +564,9 @@ def test_get_or_create_user_revision_uses_for_update() -> None:
     from app.models.sync_engine import SyncUserRevision
     from app.services.sync_service import _get_or_create_user_revision
 
-    stmt = select(SyncUserRevision).where(SyncUserRevision.user_id == uuid.uuid4()).with_for_update()
+    stmt = (
+        select(SyncUserRevision).where(SyncUserRevision.user_id == uuid.uuid4()).with_for_update()
+    )
     compiled = str(stmt.compile(dialect=postgresql.dialect()))
     assert "FOR UPDATE" in compiled.upper()
     assert callable(_get_or_create_user_revision)

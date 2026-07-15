@@ -47,7 +47,9 @@ async def create_note_marker_endpoint(
             payload=payload,
         )
     except NoteMarkerNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="entry not found") from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="entry not found"
+        ) from exc
     except NoteMarkerValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -79,4 +81,6 @@ async def delete_note_marker_endpoint(
             marker_id=marker_id,
         )
     except NoteMarkerNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="marker not found") from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="marker not found"
+        ) from exc

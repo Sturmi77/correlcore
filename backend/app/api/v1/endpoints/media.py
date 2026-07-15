@@ -62,7 +62,9 @@ async def upload_photo(
     if not raw:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="empty upload")
     if len(raw) > _MAX_PHOTO_BYTES:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="file too large")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="file too large"
+        )
 
     try:
         stripped = strip_exif(raw)

@@ -61,7 +61,9 @@ class EntryCreate(BaseModel):
     cycle_day: int | None = Field(default=None, ge=1, le=35)
     source: EntrySource = EntrySource.DIRECT
     work_context: WorkContext
-    note: str | None = Field(default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH)
+    note: str | None = Field(
+        default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH
+    )
     note_summary_short: str | None = Field(default=None, max_length=120)
     note_visibility: NoteVisibilitySchema = NoteVisibilitySchema.FULL
 
@@ -94,7 +96,9 @@ class EntryUpdate(BaseModel):
     slot: EntrySlot | None = None
     cycle_day: int | None = Field(default=None, ge=1, le=35)
     work_context: WorkContext | None = None
-    note: str | None = Field(default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH)
+    note: str | None = Field(
+        default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH
+    )
     note_summary_short: str | None = Field(default=None, max_length=120)
     note_visibility: NoteVisibilitySchema | None = None
 

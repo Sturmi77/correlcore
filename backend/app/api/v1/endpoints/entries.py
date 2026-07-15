@@ -331,7 +331,9 @@ async def update_entry_endpoint(
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
-    note_fields_changed = "note" in payload.model_fields_set or "note_visibility" in payload.model_fields_set
+    note_fields_changed = (
+        "note" in payload.model_fields_set or "note_visibility" in payload.model_fields_set
+    )
     try:
         entry = await update_entry(db, user_id=user.id, entry_id=entry_id, payload=payload)
     except EntryNotFoundError as exc:
