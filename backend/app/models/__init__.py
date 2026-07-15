@@ -9,6 +9,7 @@ from app.models.email_verification_token import EmailVerificationToken  # noqa: 
 from app.models.entry import Entry, EntrySlot, NoteVisibility, WorkContext  # noqa: F401
 from app.models.entry_note import EntryNoteMarker, EntryNoteSignal, NoteMarkerSource  # noqa: F401
 from app.models.insight import Insight, InsightTier, InsightType  # noqa: F401
+from app.models.insight_digest import InsightDigest  # noqa: F401
 from app.models.password_reset_token import PasswordResetToken  # noqa: F401
 from app.models.symptom import (  # noqa: F401
     INTENSITY_MAX,
@@ -52,6 +53,7 @@ __all__ = [
     "EntrySymptom",
     "EntryTag",
     "Insight",
+    "InsightDigest",
     "InsightTier",
     "InsightType",
     "PasswordResetToken",

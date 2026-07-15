@@ -606,7 +606,9 @@
       "regenerate_success": "Erkenntnisse aktualisiert ({count} Erkenntnisse erzeugt).",
       "regenerate_rate_limited": "Erkenntnisse koennen nur einmal pro Stunde aktualisiert werden.",
       "regenerate_disabled": "Aktiviere die Analyse oben, um Erkenntnisse zu aktualisieren.",
-      "regenerate_error": "Erkenntnisse konnten nicht aktualisiert werden."
+      "regenerate_error": "Erkenntnisse konnten nicht aktualisiert werden.",
+      "digest_enabled": "Woechentliche Erkenntnis-Zusammenfassung",
+      "digest_hint": "Fasst sonntags deine drei staerksten Erkenntnisse der Woche zusammen."
     },
     "privacy": {
       "heading": "Datenschutz & Kontodaten",
@@ -895,6 +897,16 @@
       "analytics_summary": "Analyse vertiefen",
       "analytics_hint": "Symptome und gemeinsame Tags",
       "analysis_range_label": "Analysezeitraum"
+    },
+    "digest": {
+      "title": "Wochenzusammenfassung",
+      "subtitle": "Die drei staerksten Erkenntnisse der letzten sieben Tage.",
+      "loading": "Lade Wochenzusammenfassung...",
+      "empty": "Noch nicht genug aktuelle Erkenntnisse fuer eine Wochenzusammenfassung.",
+      "disabled": "Die Wochenzusammenfassung ist in den Einstellungen deaktiviert.",
+      "error": "Wochenzusammenfassung konnte nicht geladen werden.",
+      "open_settings": "Einstellungen oeffnen",
+      "range": "Woche vom {start} bis {end}"
     },
     "mobile": {
       "eyebrow": "Mobile Zusammenfassung",

@@ -54,6 +54,24 @@ export interface InsightListResponse {
   insights: InsightResponse[];
 }
 
+export interface InsightDigestItem {
+  id: string;
+  insight_type: InsightType;
+  metric: string;
+  effect_size: number | null;
+  confidence: number | null;
+  statement: string | null;
+}
+
+export interface InsightDigestResponse {
+  week_start: string;
+  week_end: string;
+  insight_count: number;
+  insights: InsightDigestItem[];
+  push_title: string;
+  push_body: string;
+}
+
 export interface InsightListQuery {
   limit?: number;
 }
@@ -235,4 +253,8 @@ export async function fetchInsightEventWindows(
   return api.get<InsightEventWindowsResponse>(
     `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`
   );
+}
+
+export async function fetchLatestInsightDigest(): Promise<InsightDigestResponse> {
+  return api.get<InsightDigestResponse>('/insights/digest/latest');
 }

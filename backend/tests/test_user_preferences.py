@@ -34,6 +34,7 @@ def _make_preferences(user: User) -> UserPreference:
     preferences = UserPreference()
     preferences.user_id = user.id
     preferences.analytics_enabled = True
+    preferences.digest_enabled = True
     preferences.onboarding_retro_completed = False
     preferences.onboarding_profile_completed = False
     preferences.dismissed_insight_keys = []

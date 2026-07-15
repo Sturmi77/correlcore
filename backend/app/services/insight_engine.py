@@ -24,9 +24,11 @@ from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
 from app.models.entry import Entry, WorkContext
+from app.models.entry_note import EntryNoteMarker
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
+from app.services.changepoint import detect_changepoints, strongest_changepoint_index
 from app.services.multivariate_analytics import (
     FeatureMetadata,
     LagFinding,
@@ -36,6 +38,8 @@ from app.services.multivariate_analytics import (
     run_lag_analysis,
     run_lasso_models,
 )
+from app.services.note_marker_insights import EntryWithMarkers
+from app.services.note_markers import entry_has_note
 from app.services.symptom_analytics import (
     DailySymptomEntry,
     SymptomMetricAssociation,
@@ -45,9 +49,7 @@ from app.services.symptom_analytics import (
     compute_symptom_metric_associations,
     compute_symptom_tag_associations,
 )
-from app.models.entry_note import EntryNoteMarker
-from app.services.note_marker_insights import EntryWithMarkers
-from app.services.note_markers import entry_has_note
+from app.services.tag_service import analytics_tag_predicate
 from app.services.weekday_confounder import (
     is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
@@ -1244,6 +1246,59 @@ def _symptom_tag_candidates(
     return candidates
 
 
+def _changepoint_candidates(
+    entries: Sequence[AnalyticsEntry],
+    *,
+    tier: InsightTier,
+    generated_for_date: date_type,
+) -> list[InsightCandidate]:
+    moods = [entry.mood_score for entry in entries]
+    changepoints = detect_changepoints(moods)
+    if not changepoints:
+        return []
+
+    index = strongest_changepoint_index(moods, changepoints)
+    if index is None:
+        return []
+
+    before = moods[: index + 1]
+    after = moods[index + 1 :]
+    before_avg = sum(before) / len(before)
+    after_avg = sum(after) / len(after)
+    delta = after_avg - before_avg
+    direction = _direction(delta, "higher", "lower")
+    statement = (
+        f"Your mood average shifted to {direction} levels around entry {index + 1} "
+        "in your history. This is a descriptive pattern, not a diagnosis."
+    )
+    effect_size = round(delta, 4)
+    return [
+        InsightCandidate(
+            insight_type=InsightType.CHANGEPOINT,
+            tier=tier,
+            metric="mood_changepoint",
+            subject_type="changepoint",
+            subject_id=None,
+            subject_label=f"entry_{index + 1}",
+            effect_size=effect_size,
+            confidence=_confidence(effect_size, None, tier),
+            sample_n=len(moods),
+            statement=statement,
+            flags={
+                **_base_flags(p_value=None, method="pelt_rbf"),
+                "changepoint_index": index,
+            },
+            payload={
+                "changepoint_index": index,
+                "before_avg": round(before_avg, 2),
+                "after_avg": round(after_avg, 2),
+                "changepoints": changepoints,
+            },
+            generated_for_date=generated_for_date,
+        )
+    ]
+
+
 def generate_insight_candidates(
     entries: Sequence[AnalyticsEntry],
     tags: Iterable[TagSnapshot] = (),
@@ -1304,6 +1359,11 @@ def generate_insight_candidates(
             daily_entries,
             canonical_tags,
             symptom_list,
+            tier=tier,
+            generated_for_date=generated_for_date,
+        ),
+        *_changepoint_candidates(
+            daily_entries,
             tier=tier,
             generated_for_date=generated_for_date,
         ),
@@ -1477,12 +1537,47 @@ async def generate_and_store_insights(
         as_of=generated_for_date,
     )
     candidates = generate_insight_candidates(entries, tags, symptoms, as_of=generated_for_date)
+    from app.services.llm_statements import generate_llm_statement
     from app.services.note_marker_insights import build_marker_mood_insights
 
     marker_rows = await _load_entries_with_markers(db, user_id=user_id, as_of=generated_for_date)
     candidates.extend(
         build_marker_mood_insights(marker_rows, generated_for_date=generated_for_date)
     )
+
+    if settings.INSIGHTS_LLM_ENABLED:
+        enhanced: list[InsightCandidate] = []
+        for candidate in candidates:
+            llm_statement = await generate_llm_statement(
+                {
+                    "insight_type": candidate.insight_type.value,
+                    "metric": candidate.metric,
+                    "effect_size": candidate.effect_size,
+                    "statement": candidate.statement,
+                },
+                locale="en",
+            )
+            if llm_statement:
+                enhanced.append(
+                    InsightCandidate(
+                        insight_type=candidate.insight_type,
+                        tier=candidate.tier,
+                        metric=candidate.metric,
+                        subject_type=candidate.subject_type,
+                        subject_id=candidate.subject_id,
+                        subject_label=candidate.subject_label,
+                        effect_size=candidate.effect_size,
+                        confidence=candidate.confidence,
+                        sample_n=candidate.sample_n,
+                        statement=llm_statement,
+                        flags=candidate.flags,
+                        payload=candidate.payload,
+                        generated_for_date=candidate.generated_for_date,
+                    )
+                )
+            else:
+                enhanced.append(candidate)
+        candidates = enhanced
 
     await db.execute(
         delete(Insight).where(

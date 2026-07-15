@@ -481,18 +481,25 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     tag_rows = [(entry.id, sport) for offset, entry in enumerate(entries) if offset % 2 == 0]
     db = MagicMock()
     db.execute = AsyncMock(
-        side_effect=[_scalar_result(entries), _row_result(tag_rows), _row_result([]), MagicMock()]
+        side_effect=[
+            _scalar_result(entries),
+            _row_result(tag_rows),
+            _row_result([]),
+            _scalar_result(entries),
+            _row_result([]),
+            MagicMock(),
+        ]
     )
     db.flush = AsyncMock()
 
     stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
     assert stored
-    assert db.execute.await_count == 4
+    assert db.execute.await_count == 6
     load_stmt = db.execute.await_args_list[0].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)
-    delete_stmt = db.execute.await_args_list[3].args[0]
+    delete_stmt = db.execute.await_args_list[5].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert db.add.call_count == len(stored)
     assert db.flush.await_count == 1

@@ -149,6 +149,18 @@
     }
   }
 
+  async function toggleDigest(enabled: boolean): Promise<void> {
+    preferencesBusy = true;
+    preferencesError = '';
+    try {
+      preferences = await updateUserPreferences({ digest_enabled: enabled });
+    } catch (err) {
+      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    } finally {
+      preferencesBusy = false;
+    }
+  }
+
   async function handleRegenerateInsights(): Promise<void> {
     if (preferences?.analytics_enabled === false) return;
     regenerateBusy = true;
@@ -399,6 +411,18 @@
         />
         <span>{$_('settings.analysis.analytics_enabled')}</span>
       </label>
+      <label class="settings__toggle-label">
+        <input
+          type="checkbox"
+          class="settings__toggle"
+          checked={preferences?.digest_enabled ?? true}
+          disabled={preferencesBusy || preferences?.analytics_enabled === false}
+          data-testid="digest-toggle"
+          on:change={(e) => void toggleDigest(e.currentTarget.checked)}
+        />
+        <span>{$_('settings.analysis.digest_enabled')}</span>
+      </label>
+      <p class="settings__analysis-note">{$_('settings.analysis.digest_hint')}</p>
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
       {/if}

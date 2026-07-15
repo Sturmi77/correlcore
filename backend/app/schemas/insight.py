@@ -104,3 +104,25 @@ class InsightTriggerResponse(BaseModel):
     processed_users: int = Field(ge=0)
     failed_users: int = Field(ge=0)
     generated_insights: int = Field(ge=0)
+
+
+class InsightDigestItemResponse(BaseModel):
+    """One insight row included in a weekly digest."""
+
+    id: uuid.UUID
+    insight_type: InsightType
+    metric: str
+    effect_size: float | None = None
+    confidence: float | None = None
+    statement: str | None = None
+
+
+class InsightDigestResponse(BaseModel):
+    """Weekly digest envelope for the authenticated user."""
+
+    week_start: date_type
+    week_end: date_type
+    insight_count: int = Field(ge=0)
+    insights: list[InsightDigestItemResponse] = Field(default_factory=list)
+    push_title: str
+    push_body: str

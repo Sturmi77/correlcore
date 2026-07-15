@@ -17,6 +17,7 @@ from app.db.redis_client import get_redis
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.insight import (
+    InsightDigestResponse,
     InsightEventWindowsResponse,
     InsightListResponse,
     InsightRegenerateResponse,
@@ -28,6 +29,12 @@ from app.schemas.stats import (
     TagClustersResponse,
     TagCooccurrenceRange,
     TagCooccurrenceResponse,
+)
+from app.services.insight_digest import (
+    DigestDisabledError,
+    DigestNotAvailableError,
+    build_push_payload,
+    get_latest_weekly_digest,
 )
 from app.services.insight_service import (
     DEFAULT_INSIGHT_LIST_LIMIT,
@@ -63,6 +70,51 @@ def _cooccurrence_range_query(
             detail="range must be one of 7d, 30d, 90d, 1y",
         )
     return range  # type: ignore[return-value]
+
+
+@router.get(
+    "/digest/latest",
+    response_model=InsightDigestResponse,
+    summary="Latest weekly insight digest",
+)
+@limiter.limit("60/minute")
+async def get_latest_digest_endpoint(
+    request: Request,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightDigestResponse:
+    try:
+        digest = await get_latest_weekly_digest(db, user_id=user.id)
+    except DigestDisabledError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Weekly insight digest is disabled for this account",
+        ) from exc
+    except DigestNotAvailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not enough recent insights for a weekly digest",
+        ) from exc
+
+    push = build_push_payload(digest)
+    return InsightDigestResponse(
+        week_start=digest.week_start,
+        week_end=digest.week_end,
+        insight_count=digest.insight_count,
+        insights=[
+            {
+                "id": item.id,
+                "insight_type": item.insight_type,
+                "metric": item.metric,
+                "effect_size": item.effect_size,
+                "confidence": item.confidence,
+                "statement": item.statement,
+            }
+            for item in digest.insights
+        ],
+        push_title=push["title"],
+        push_body=push["body"],
+    )
 
 
 @router.get(

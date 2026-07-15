@@ -606,7 +606,9 @@
       "regenerate_success": "Insights refreshed ({count} insights generated).",
       "regenerate_rate_limited": "You can refresh insights once per hour. Please try again later.",
       "regenerate_disabled": "Enable analysis above to refresh insights.",
-      "regenerate_error": "Could not refresh insights."
+      "regenerate_error": "Could not refresh insights.",
+      "digest_enabled": "Weekly insight digest",
+      "digest_hint": "Summarizes your top three insights each week (Sunday)."
     },
     "privacy": {
       "heading": "Privacy & account data",
@@ -895,6 +897,16 @@
       "analytics_summary": "Deepen analysis",
       "analytics_hint": "Symptoms and shared tags",
       "analysis_range_label": "Analysis time window"
+    },
+    "digest": {
+      "title": "Weekly digest",
+      "subtitle": "Top three insights from the last seven days.",
+      "loading": "Loading weekly digest...",
+      "empty": "Not enough recent insights for a weekly digest yet.",
+      "disabled": "Weekly digest is turned off in Settings.",
+      "error": "Could not load weekly digest.",
+      "open_settings": "Open settings",
+      "range": "Week of {start} to {end}"
     },
     "mobile": {
       "eyebrow": "Mobile summary",
