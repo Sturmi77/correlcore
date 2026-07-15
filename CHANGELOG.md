@@ -8,6 +8,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Open-issues implementation — M4.1.1 / Notes / M8–M13 foundations)
+
+- **M4.1.1 offline sync hardening (#258):** revision locking, initial pull backfill,
+  note conflict markers, ValidationError→400, tag/symptom `updated_at` on create,
+  conflict retention RLS, tag/symptom pull apply, per-user Dexie, multi-tab sync locks.
+- **Notes in Analysis (#194–#202, #199):** ADR-N-01/02/03; entry note visibility/summary;
+  markers + marker insights; `NoteSignalExtractor` + insight evidence UI.
+- **M11 Capacitor scaffold + HC consent (#27, #31):** `apps/android` package, CI validate;
+  `consent_log` + Settings Privacy gate for Health Connect.
+- **M7-S8 / analytics (#147–#149):** weekly digest endpoint + worker CLI; optional Ollama
+  statement layer; changepoint detection (`ruptures`).
+- **Security / media (#62, #28):** custom symptom slug HMAC (ADR-0039); server-side EXIF
+  strip foundation + `/media/photos` stub.
+- **Tracker hygiene:** O-20 marked Done; operator close list for shipped UX/#29 issues
+  (token cannot close GitHub issues — see `docs/quality/ISSUE_TRACKER_HYGIENE_2026-07-15.md`).
+
 ### Added (M10.1 — Insight pipeline & tag groups)
 
 - **Insight triggers (ADR-0037):** `POST /api/v1/insights/regenerate` (owner, 1×/hour),
