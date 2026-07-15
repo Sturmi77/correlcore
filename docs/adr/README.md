@@ -32,7 +32,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0019](0019-dev-mode-settings-toggle.md)                     | Developer Mode Toggle in Settings                            | Accepted      | 2026-05-13 |
 | [ADR-0020](0020-primary-color-system.md)                         | Primary Color System for M3.5 Frontend                       | Accepted      | 2026-05-15 |
 | [ADR-0021](0021-insight-maturity-phases.md)                      | Insight Maturity Phases as a First-Class Frontend Concept    | Accepted      | 2026-05-16 |
-| [ADR-0025](0025-symptom-analytics.md)                            | Symptom Analytics — Univariate, Co-Occurrence, Multivariate  | Vorgeschlagen | 2026-05-19 |
+| [ADR-0025](0025-symptom-analytics.md)                            | Symptom Analytics — Univariate, Co-Occurrence, Multivariate  | Accepted      | 2026-06-28 |
 | [ADR-0026](0026-color-scheme-evaluation-orange-vs-violet.md)     | Color Scheme Evaluation: Orange/Dark vs. Violet/Dark         | Accepted      | 2026-05-26 |
 | [ADR-0027](0027-light-mode-color-requirements.md)                | Light Mode Color Requirements (WCAG contrast)                | Accepted      | 2026-05-26 |
 | [ADR-0028](0028-entry-slot-model.md)                             | Entry Slot Model (`day` / `morning` / `noon` / `evening`)    | Accepted      | 2026-05-28 |

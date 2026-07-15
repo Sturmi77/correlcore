@@ -1,9 +1,9 @@
 # Issue Tracker Hygiene — 2026-07-15
 
-Operator close list for issues that are **already shipped on `main`** or
-implemented in PR [#393](https://github.com/Sturmi77/correlcore/pull/393).
-The cloud-agent token (`cursor[bot]`) cannot call `closeIssue` (HTTP 403 /
-no triage permission).
+Operator close list for issues that are **already shipped on `main`**
+(merged via PR [#393](https://github.com/Sturmi77/correlcore/pull/393) and earlier
+milestone work). The cloud-agent token (`cursor[bot]`) cannot call `closeIssue`
+(HTTP 403 / no triage permission).
 
 ### Close immediately (repo owner)
 
@@ -15,9 +15,9 @@ for n in 29 251 252 254 260 261 262 263 264 265 266 267 268 269 270 271 272 273 
 done
 ```
 
-Alternatively merge PR #393 — its body contains matching `Closes #…` keywords.
+PR #393 is merged; close the issue numbers above if GitHub auto-close did not fire.
 
-## Close now (18)
+## Close now (18 — UX / account, already on main before #393)
 
 | Issue                      | Reason                         | Evidence                                           |
 | -------------------------- | ------------------------------ | -------------------------------------------------- |
@@ -38,14 +38,19 @@ Suggested close comment (#29):
 
 > Shipped as `DELETE /api/v1/user/me` (M9). See CHANGELOG / M9 quality gate.
 
-## Remains open (implement in this PR series)
+## Close after merge of PR #393 (implemented foundations)
 
-| Wave       | Issues                     |
-| ---------- | -------------------------- |
-| M4.1.1     | #258                       |
-| Notes A–C  | #194–#199, #198            |
-| M8 signals | #201, #202                 |
-| M11 / HC   | #27, #31                   |
-| Optional   | #147, #148, #149, #62, #28 |
+These items were implemented in the open-issues series and should be closed on
+GitHub if still open:
 
-Doc drift fixed in-repo: O-20 status → **Done** in `OPTIMIZATION_BACKLOG.md`.
+| Wave                | Issues                         | Evidence |
+| ------------------- | ------------------------------ | -------- |
+| M4.1.1              | #258                           | Migration 023, sync hardening |
+| Notes A–C + ADRs    | #194–#199                      | Migration 024, ADR-N-01–03 |
+| Notes signals       | #201, #202                     | `note_signal_extractor`, evidence |
+| M11 / HC            | #27, #31                       | `apps/android`, `consent_log` |
+| Digest / analytics  | #147, #148, #149               | Digest worker, Ollama optional, changepoint |
+| Security / media    | #62, #28                       | ADR-0039 / migration 027, `/media/photos` |
+
+Doc drift fixed in-repo: O-20 status → **Done** in `OPTIMIZATION_BACKLOG.md`;
+status sync for foundations → docs PR `docs-status-sync`.

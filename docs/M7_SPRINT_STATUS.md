@@ -179,12 +179,12 @@ Full plan: [`M7_SPRINT9_PLAN.md`](M7_SPRINT9_PLAN.md).
 - [x] #149, #147, #148 documented as deferred (post-M7 / M7-S8).
 - [x] `README.md` and `CHANGELOG.md` updated for M7 Complete.
 
-## Deferred (not M7 closeout blockers)
+## Deferred at M7 closeout (status update 2026-07-15)
 
-| Topic                     | Target milestone | Issues                                                     |
-| ------------------------- | ---------------- | ---------------------------------------------------------- |
-| Ollama + weekly digest    | M7-S8 (optional) | #148, #147                                                 |
-| Changepoint detection     | post-M7          | #149                                                       |
-| Cycle×lifestyle analytics | M7.1             | [`features/cycle-tracking.md`](features/cycle-tracking.md) |
-| Sleep×symptom             | M8               | [`M8_NOTES.md`](M8_NOTES.md)                               |
-| M4/M5 formal closeout     | M4-C / M5-C      | [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md)       |
+| Topic                     | Target / status                                              | Issues                                                     |
+| ------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
+| Ollama + weekly digest    | **Foundation landed** (API + worker); Push-Delivery → M4.2   | #148, #147                                                 |
+| Changepoint detection     | **Foundation landed** in analytics pipeline                  | #149                                                       |
+| Cycle×lifestyle analytics | M7.1                                                         | [`features/cycle-tracking.md`](features/cycle-tracking.md) |
+| Sleep×symptom             | M8                                                           | [`M8_NOTES.md`](M8_NOTES.md)                               |
+| M4/M5 formal closeout     | Done — see [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md) | —                                                       |

@@ -1,6 +1,6 @@
 # Design-Dokument: CorrelCore — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.13 (Mobile closeout Phases 0–4 delivered; M4.1 Offline-First Sync delivered; M5 Habits core delivered; new intermediate milestone M5.1 — UX Polish & Flow Consolidation added; M9 positioned as next main milestone — Issues #251–#273)
+**Version:** 0.14 (M9 Beta + M10 public selfhost v1.0 Complete; M10.1 insight triggers/tag maturity shipped; post-M10 foundations: Notes-in-Analysis, M7-S8 digest/Ollama/changepoint, slug HMAC, EXIF strip, Capacitor scaffold, HC consent — next main milestone M11 Play Store)
 **Datum:** 2026-07-10
 
 > **Vorherige Version:** 0.12 (2026-05-11) — No-gamification promise added; M5 habits
@@ -1162,21 +1162,24 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 - [x] Lag-Analyse berücksichtigt Symptome als Eingangs- und Zielvariablen
 - [x] Symptom×Tag-Ko-Okkurrenz-Insights erscheinen ab Phase `provisional` mit FDR-Korrektur (BH)
 - [x] Symptom-Ko-Okkurrenz-Heatmap und Symptom-Kalender-Heatmap im `/insights`-Feed integriert
-- [ ] Insight Digest als optionale wöchentliche Push-Notification — **deferred M7-S8** (#147)
-- [ ] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust — **deferred M7-S8** (#148)
+- [x] Insight Digest Foundation — Snapshot-API + Worker (`GET /insights/digest/latest`,
+      `python -m app.workers.digest --once`) (#147). **Rest offen:** Push-Delivery (M4.2).
+- [x] LLM-Integration (Ollama) optional und deaktivierbar ohne Funktionsverlust (#148);
+      Changepoint-Detection foundation (#149).
 - [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
       ([`quality/M7_QUALITY_GATE.md`](quality/M7_QUALITY_GATE.md), 2026-06-30)
 
 #### DSGVO-Checkpoint M7
 
 - [x] 🔒 DSGVO: LLM verarbeitet keine Daten außerhalb der lokalen Instanz (kein Cloud-LLM ohne
-      explizite User-Zustimmung) — erfüllt durch Verzicht auf LLM im M7-Kern; Ollama optional M7-S8
+      explizite User-Zustimmung) — Ollama nur lokal, optional und abschaltbar (#148)
 
 ---
 
 ### M8 — Schlaf & Health Connect (Woche 20–21)
 
 > Implementierungsnotizen: [`M8_NOTES.md`](M8_NOTES.md) (Schlaf, Wearables, Cycle-Health-Connect).
+> Consent-Foundation (#31) und Notes-Signals (#201/#202) sind gelandet; Sleep-/HC-Import bleibt M8 Exit.
 
 - Manuelle Schlafdaten erweiterte Felder (Einschlafzeit, Tiefschlaf)
 - Android-seitig: Health Connect Import (Schlaf, HR, Schritte)
@@ -1186,6 +1189,7 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 #### Akzeptanzkriterien M8
 
+- [x] Art.-9-Consent-Architektur (`consent_log`, `/user/me/consents`, Settings Privacy) — Foundation #31
 - [ ] Health Connect Permission-Request erklärt klar welche Daten gelesen werden (In-App-Erklärungsscreen)
 - [ ] Keine Weitergabe von Health-Connect-Daten an Third-Party-Services
 - [ ] Import importiert nur Schlaf + HR (keine Bewegungsprofile, keine Standortdaten)
@@ -1195,7 +1199,7 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 #### DSGVO-Checkpoint M8
 
-- [ ] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Onboarding-Screen vor erstem Import
+- [x] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Consent-API/UI (#31); Onboarding-Import-Screen folgt mit HC-Import
 - [ ] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR importiert, keine Bewegungsprofile (technisch durchgesetzt)
 - [ ] 🔒 DSGVO: Löschung von importierten Health-Connect-Daten bei Account-Delete vollständig implementiert und getestet
 
@@ -1260,7 +1264,10 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ### M11 — Android-App für Play Store (Woche 26–28)
 
-- PWA → Capacitor (Android)
+> Implementierungsnotizen: [`M11_NOTES.md`](M11_NOTES.md). Capacitor-Scaffold (#27) liegt unter
+> `apps/android/`; Play-Store-/Widget-Scope bleibt M11 Exit.
+
+- PWA → Capacitor (Android) — **Scaffold landed** (`apps/android`, CI validate)
 - Play Console Setup, Internal Testing Track
 - FCM für Non-Selfhost-User
 - Store-Assets (Screenshots, Beschreibung, Datenschutzerklärung)
@@ -1268,6 +1275,7 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 #### Akzeptanzkriterien M11
 
+- [x] Capacitor-Project-Scaffold vorhanden (`apps/android`, Config-Validate in CI) — #27
 - [ ] Capacitor-Build produktionsreif (`pnpm cap sync && cap build` erfolgreich)
 - [ ] Health Connect API Declaration im Play Store korrekt ausgefüllt (`health_permissions` deklariert)
 - [ ] App besteht Google Play Pre-Launch-Report ohne kritische Fehler
@@ -1312,24 +1320,26 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 Deferred past M10 (public selfhost v1.0) and M12 (SaaS launch) so core tracking,
 insights, and deployment paths ship without photo storage complexity.
+**Foundation (#28):** `POST /api/v1/media/photos` strips EXIF server-side; MinIO
+persist (`stored: false` stub) + gallery remain M13 exit work. See [`M13_NOTES.md`](M13_NOTES.md).
 
-- Lokaler Foto-Upload → MinIO, EXIF-Strip
+- Lokaler Foto-Upload → MinIO, EXIF-Strip — EXIF-Strip foundation shipped; MinIO pending
 - Thumbnail-Galerie pro Tag
 - **Exit:** Fotos als zusätzlicher Gedächtnisanker
 
 #### Akzeptanzkriterien M13
 
-- [ ] EXIF-Strip serverseitig via Pillow implementiert (nicht nur clientseitig)
-- [ ] GPS-Koordinaten aus EXIF nachweislich entfernt (automatischer Test mit Foto mit bekannten GPS-Daten)
-- [ ] MinIO SSE-S3 für Photo-Bucket aktiviert
-- [ ] Foto-Upload nur für authentifizierte User, kein direkter MinIO-Zugriff ohne Pre-Signed URL
-- [ ] Maximale Dateigröße und erlaubte MIME-Types serverseitig validiert
+- [x] EXIF-Strip serverseitig via Pillow implementiert (nicht nur clientseitig) — Foundation #28
+- [x] GPS-Koordinaten aus EXIF nachweislich entfernt (automatisierte Tests) — Foundation #28
+- [ ] MinIO SSE-S3 für Photo-Bucket aktiviert + echte Persistenz hinter `/media/photos`
+- [x] Foto-Upload nur für authentifizierte User (Endpoint gated); kein direkter MinIO-Zugriff ohne Pre-Signed URL (MinIO noch nicht angebunden)
+- [x] Maximale Dateigröße und erlaubte MIME-Types serverseitig validiert
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M13
 
 - [ ] 🔒 DSGVO: Fotos zählen als besondere Datenkategorie — Löschung bei Account-Delete verifiziert (inkl. MinIO-Bucket-Bereinigung)
-- [ ] 🔒 DSGVO: Foto-EXIF kann biometrische Merkmale enthalten → EXIF-Strip ist Pflicht und durch automatisierten Test abgedeckt
+- [x] 🔒 DSGVO: Foto-EXIF kann biometrische Merkmale enthalten → EXIF-Strip Pflicht + automatisierte Tests (Foundation)
 - [ ] 🔒 DSGVO: Foto-Zugriff ist user-isoliert (kein Cross-User-Zugriff auf Pre-Signed URLs möglich)
 
 ---
@@ -1358,7 +1368,7 @@ insights, and deployment paths ship without photo storage complexity.
 | D-004 | Lizenzmodell: AGPL oder Source-Available?                                               | 🔄 Offen                                                                                                                                                                                                                                                                                                                                                                                                    | —                                                       |
 | D-005 | Monetarisierung: Hybrid (Selfhost Free + Cloud Abo + Lifetime)?                         | 🔄 Offen                                                                                                                                                                                                                                                                                                                                                                                                    | —                                                       |
 | D-006 | Push: UnifiedPush-first oder FCM-first?                                                 | ✅ Entschieden: UnifiedPush primary                                                                                                                                                                                                                                                                                                                                                                         | —                                                       |
-| D-007 | LLM für Insights: Ollama local oder API?                                                | 🔄 Offen                                                                                                                                                                                                                                                                                                                                                                                                    | —                                                       |
+| D-007 | LLM für Insights: Ollama local oder API?                                                | ✅ Entschieden: lokales Ollama optional (#148); kein Cloud-LLM-Fallback                                                                                                                                                                                                                                                                                                                                     | —                                                       |
 | D-008 | Mobile-Strategie: Capacitor vs. TWA (Bubblewrap)?                                       | ✅ Entschieden: Capacitor                                                                                                                                                                                                                                                                                                                                                                                   | [ADR-0002](adr/0002-capacitor-statt-twa.md)             |
 | D-009 | Sync-Protokoll Conflict-Handling: LWW vs. CRDT?                                         | ✅ Entschieden: LWW + Conflict-Log-Tabelle                                                                                                                                                                                                                                                                                                                                                                  | [ADR-0003](adr/0003-sync-conflict-log.md)               |
 | D-010 | Auth Phase 1: Native JWT (FastAPI-intern) — implementiert. Authentik ab Phase 2 (M12+). | ✅ Entschieden: Native JWT Phase 1, Authentik M12+                                                                                                                                                                                                                                                                                                                                                          | [ADR-0004](adr/0004-auth-strategie.md)                  |
@@ -1448,11 +1458,11 @@ Referenztabelle aller in der Architektur-Analyse identifizierten Schwachstellen 
 | ZS-01    | TWA-Strategie gefährdet durch Google-Policy-Änderungen                                   | Zielstrategie | ✅ behoben     | D-008, [ADR-0002](adr/0002-capacitor-statt-twa.md)                                                         |
 | ZS-05    | Solo-Dev-Burnout-Risiko durch Scope-Creep                                                | Zielstrategie | 🔄 in Arbeit   | Maßnahme in Risikotabelle (Sek. 8), Milestone-Exit-Kriterien                                               |
 | DSGVO-01 | Verschlüsselung at-rest Strategie nicht festgelegt                                       | DSGVO         | ✅ entschieden | D-011, [ADR-0005](adr/0005-verschluesselung-at-rest.md)                                                    |
-| DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur              | DSGVO         | ❌ offen       | M8-DSGVO                                                                                                   |
-| DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden                                   | DSGVO         | ❌ offen       | M9-DSGVO                                                                                                   |
-| DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test            | DSGVO         | ❌ offen       | M13-AC, DoD                                                                                                |
+| DSGVO-02 | Health Connect Daten (Art. 9 DSGVO) ohne explizite Einwilligungsarchitektur              | DSGVO         | 🔄 teilweise   | Consent-Log + API/UI landed (#31, migration 025); HC-Import selbst weiter M8                               |
+| DSGVO-03 | Kein DSFA-Dokument für Cloud/SaaS-Deployment vorhanden                                   | DSGVO         | ❌ offen       | M12-DSGVO (SaaS)                                                                                           |
+| DSGVO-04 | EXIF-Strip nur als Designentscheidung dokumentiert, kein automatisierter Test            | DSGVO         | 🔄 teilweise   | Foundation #28: Strip + Tests; MinIO-Cascade / Pre-Signed Isolation weiter M13                             |
 | ARCH-01  | Mermaid-Diagramm zeigte TWA als Android-Client — inkonsistent mit D-008                  | Architektur   | ✅ behoben     | Diagramm auf Capacitor aktualisiert                                                                        |
-| ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt                                                  | Architektur   | 🔄 in Arbeit   | D-002 entschieden (Custom-SVG, §7); D-003, D-006, D-008–D-013 dokumentiert; D-004, D-005, D-007 noch offen |
+| ARCH-02  | Keine ADRs für D-002 bis D-007 angelegt                                                  | Architektur   | 🔄 in Arbeit   | D-002/D-003/D-006–D-013 dokumentiert; D-007 decided (local Ollama); D-004, D-005 noch offen                |
 | OBS-01   | Observability-Anforderungen für M0 nicht explizit definiert                              | Architektur   | ✅ behoben     | D-012, [ADR-0007](adr/0007-healthchecks-and-logging.md), Abschnitt 3.6                                     |
 | ARCH-03  | Kein Postgres-Schema v1 und keine Alembic-Basismigrationen vorhanden                     | Architektur   | ✅ behoben     | Issue #5, PR feat/m0-postgres-schema                                                                       |
 | ARCH-04  | Kein CI/CD-Setup — keine automatisierten Lint/Test/Build-Checks bei PRs                  | Architektur   | ✅ behoben     | Issue #6, PR feat/m0-ci                                                                                    |
