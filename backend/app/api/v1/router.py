@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     habits,
     health,
     insights,
+    media,
     note_markers,
     note_signals,
     onboarding,
@@ -84,6 +85,9 @@ api_router.include_router(tags.entry_tags_router, prefix="/entries", tags=["tags
 # two-router pattern as tags so the URL hierarchy stays REST-idiomatic.
 api_router.include_router(symptoms.symptoms_router, prefix="/symptoms", tags=["symptoms"])
 api_router.include_router(symptoms.entry_symptoms_router, prefix="/entries", tags=["symptoms"])
+
+# M13 foundation — photo upload with mandatory EXIF strip (Issue #28).
+api_router.include_router(media.router, prefix="/media", tags=["media"])
 
 api_router.include_router(sync.router, prefix="/sync", tags=["sync"])
 
