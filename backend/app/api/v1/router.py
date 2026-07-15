@@ -13,6 +13,7 @@ from app.api.v1.endpoints import (
     health,
     insights,
     note_markers,
+    note_signals,
     onboarding,
     symptoms,
     sync,
@@ -45,6 +46,16 @@ api_router.include_router(
     note_markers.entry_note_markers_router,
     prefix="/entries",
     tags=["entries"],
+)
+api_router.include_router(
+    note_signals.entry_note_signals_router,
+    prefix="/entries",
+    tags=["entries"],
+)
+api_router.include_router(
+    note_signals.admin_note_signals_router,
+    prefix="/admin",
+    tags=["admin"],
 )
 
 # Notes in analysis (M3 retroactive)

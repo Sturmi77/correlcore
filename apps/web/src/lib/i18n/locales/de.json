@@ -142,6 +142,25 @@
       "travel": "Reise",
       "achievement": "Erfolg"
     },
+    "note_signals": {
+      "heading": "Abgeleitete Signale",
+      "konflikt": "Konflikt",
+      "isolation": "Isolation",
+      "spaziergang": "Spaziergang",
+      "kopfschmerz": "Kopfschmerz",
+      "stress": "Stress",
+      "muedigkeit": "Muedigkeit",
+      "schlaf": "Schlaf",
+      "arbeit": "Arbeit",
+      "sozial": "Sozial",
+      "schlechter_schlaf": "Schlechter Schlaf",
+      "guter_schlaf": "Guter Schlaf",
+      "arbeit_ueberlast": "Arbeitsueberlastung",
+      "zeitdruck": "Zeitdruck",
+      "angst": "Angst",
+      "niedergeschlagen": "Niedergeschlagen",
+      "schlafdauer": "Schlafdauer"
+    },
     "save": "Speichern",
     "cancel": "Abbrechen",
     "title": "Tag erfassen",
@@ -1095,9 +1114,13 @@
     "calendar_context_confounded_note": "Hinweis: Dieses Muster kann vor allem Kalender- oder Arbeitskontext-Ueberlappungen zeigen.",
     "note_evidence": {
       "soft_prompt": "Fuege Notizen hinzu, um Zusammenhaenge besser zu verstehen.",
-      "lead": "An Tagen mit Marker \"{marker}\" lag dein Mood im Schnitt {delta} Punkte von deinem Notiz-Tagesmittel entfernt.",
+      "lead_marker": "An Tagen mit Marker \"{marker}\" lag dein Mood im Schnitt {delta} Punkte von deinem Notiz-Tagesmittel entfernt.",
+      "lead_signal": "An Tagen mit Signal \"{signal}\" lag dein Mood im Schnitt {delta} Punkte von deinem Notiz-Tagesmittel entfernt.",
       "meta": "Basis: {days} Tage · Konfidenz: {confidence}",
-      "examples": "Beispiele: {dates}"
+      "examples_prefix": "Beispiele:",
+      "confidence_low": "Niedrig",
+      "confidence_medium": "Mittel",
+      "confidence_high": "Hoch"
     }
   },
   "onboarding": {

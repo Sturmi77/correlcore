@@ -838,6 +838,7 @@
               on:retry={loadInsights}
               on:regenerate={() => void handleRegenerateInsights()}
               on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+              on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
             />
           </section>
         {:else}
@@ -860,6 +861,7 @@
             on:retry={loadInsights}
             on:regenerate={() => void handleRegenerateInsights()}
             on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+            on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
           />
         {/if}
       {/if}

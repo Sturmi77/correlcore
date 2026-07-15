@@ -29,7 +29,7 @@ from datetime import datetime
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.entry import EntrySlot, EntrySource, NoteVisibility, WorkContext
-from app.schemas.note import EntryNoteMarkerResponse, NoteVisibility as NoteVisibilitySchema
+from app.schemas.note import EntryNoteMarkerResponse, EntryNoteSignalResponse, NoteVisibility as NoteVisibilitySchema
 from app.schemas.tag import TagResponse
 
 # Maximum note length on the wire. Generous, but bounded so a malicious
@@ -131,6 +131,7 @@ class EntryResponse(BaseModel):
     note_visibility: NoteVisibilitySchema = NoteVisibilitySchema.FULL
     note_updated_at: datetime | None = None
     note_markers: list[EntryNoteMarkerResponse] = Field(default_factory=list)
+    note_signals: list[EntryNoteSignalResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 

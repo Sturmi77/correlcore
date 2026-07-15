@@ -36,6 +36,7 @@ from app.schemas.entry import (
     EntryResponse,
     EntryUpdate,
 )
+from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.stats import (
     EntryStreakResponse,
     SymptomHeatmapResponse,
@@ -60,6 +61,7 @@ from app.services.entry_service import (
     update_entry,
 )
 from app.services.insight_worker_service import schedule_post_batch_insight_regeneration
+from app.services.note_signal_extractor import run_note_signal_extraction_background
 from app.services.stats_service import (
     get_entry_streak,
     get_symptom_heatmap,
@@ -86,6 +88,7 @@ router = APIRouter()
 async def create_entry_endpoint(
     request: Request,
     payload: EntryCreate,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
@@ -101,6 +104,13 @@ async def create_entry_endpoint(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),
         ) from exc
+
+    if payload.note or payload.note_visibility != NoteVisibilitySchema.FULL:
+        background_tasks.add_task(
+            run_note_signal_extraction_background,
+            entry_id=entry.id,
+            user_id=user.id,
+        )
 
     return await build_entry_response(db, user_id=user.id, entry=entry)
 
@@ -317,9 +327,11 @@ async def update_entry_endpoint(
     request: Request,
     entry_id: uuid.UUID,
     payload: EntryUpdate,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
+    note_fields_changed = "note" in payload.model_fields_set or "note_visibility" in payload.model_fields_set
     try:
         entry = await update_entry(db, user_id=user.id, entry_id=entry_id, payload=payload)
     except EntryNotFoundError as exc:
@@ -337,5 +349,12 @@ async def update_entry_endpoint(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),
         ) from exc
+
+    if note_fields_changed:
+        background_tasks.add_task(
+            run_note_signal_extraction_background,
+            entry_id=entry.id,
+            user_id=user.id,
+        )
 
     return await build_entry_response(db, user_id=user.id, entry=entry)

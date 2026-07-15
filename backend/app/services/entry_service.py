@@ -23,8 +23,8 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import date as date_type
 from datetime import UTC, datetime, timedelta
+from datetime import date as date_type
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -42,9 +42,10 @@ from app.schemas.entry import (
     EntryResponse,
     EntryUpdate,
 )
-from app.schemas.note import EntryNoteMarkerResponse
+from app.schemas.note import EntryNoteMarkerResponse, EntryNoteSignalResponse
 from app.schemas.tag import TagResponse
 from app.services.note_markers import entry_has_note, list_markers_for_entries
+from app.services.note_signal_extractor import list_signals_for_entries
 from app.services.note_summary import compute_note_summary_short
 
 logger = logging.getLogger(__name__)
@@ -188,13 +189,22 @@ async def build_entry_responses(
         user_id=user_id,
         entry_ids=[entry.id for entry in entries],
     )
+    signals_by_entry = await list_signals_for_entries(
+        db,
+        user_id=user_id,
+        entry_ids=[entry.id for entry in entries],
+    )
     return [
         EntryResponse.model_validate(entry).model_copy(
             update={
                 "note_markers": [
                     EntryNoteMarkerResponse.model_validate(marker)
                     for marker in markers_by_entry.get(entry.id, [])
-                ]
+                ],
+                "note_signals": [
+                    EntryNoteSignalResponse.model_validate(signal)
+                    for signal in signals_by_entry.get(entry.id, [])
+                ],
             }
         )
         for entry in entries

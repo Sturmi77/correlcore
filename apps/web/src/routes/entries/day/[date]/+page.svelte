@@ -8,6 +8,7 @@
   import IconRender from '$lib/components/common/IconRender.svelte';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import NoteMarkerChips from '$lib/components/entries/NoteMarkerChips.svelte';
+  import NoteSignalsList from '$lib/components/entries/NoteSignalsList.svelte';
   import { listTagsForEntry, type TagResponse } from '$lib/api/tags';
   import {
     listSymptomsForEntry,
@@ -192,6 +193,9 @@
           {/if}
           {#if entry.note_markers && entry.note_markers.length > 0}
             <NoteMarkerChips markers={entry.note_markers} readonly />
+          {/if}
+          {#if entry.note_signals && entry.note_signals.length > 0}
+            <NoteSignalsList signals={entry.note_signals} />
           {/if}
 
           {#if deco?.tags.length}

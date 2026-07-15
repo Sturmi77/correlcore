@@ -63,6 +63,7 @@
     retry: void;
     regenerate: void;
     exploreEvents: { id: string };
+    selectDate: { date: string };
   }>();
 
   let internalFilterTab: InsightFeedFilterTab = 'all';
@@ -206,6 +207,7 @@
             {enableExploreEvents}
             featured={index === 0}
             on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
+            on:selectDate={(event) => dispatch('selectDate', event.detail)}
           />
         </li>
       {/each}

@@ -8,6 +8,7 @@
 
 import { api } from './client';
 import type { EntryNoteMarkerResponse, NoteVisibility } from './noteMarkers';
+import type { EntryNoteSignalResponse } from './noteSignals';
 import type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
 import type { TagResponse } from './tags';
 
@@ -36,6 +37,7 @@ export interface EntryResponse {
   note_visibility?: NoteVisibility;
   note_updated_at?: string | null;
   note_markers?: EntryNoteMarkerResponse[];
+  note_signals?: EntryNoteSignalResponse[];
   created_at: string;
   updated_at: string;
 }
