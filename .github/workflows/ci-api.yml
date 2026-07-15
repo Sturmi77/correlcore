@@ -95,6 +95,7 @@ jobs:
           # Valid Fernet test key (32 random bytes, URL-safe base64). NOT a secret —
           # only used by unit tests to exercise wrap/unwrap and EncryptedString round-trips.
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
+          SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -202,6 +203,8 @@ jobs:
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
+          SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+          SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
 
       # Bonus paranoia: round-trip the schema. ``downgrade base`` exercises
       # every ``downgrade()`` step — they tend to rot silently because no
@@ -219,3 +222,4 @@ jobs:
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
+          SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'

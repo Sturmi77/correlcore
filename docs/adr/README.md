@@ -46,6 +46,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0036](0036-offline-sync-v1-scope.md)                        | Offline-Sync v1 Scope & Implementation Contract (M4.1)       | Accepted      | 2026-06-30 |
 | [ADR-0037](0037-insight-triggers-tag-cluster-maturity.md)        | Insight-Trigger, deskriptive Wochentage & Tag-Cluster-Reife  | Accepted      | 2026-07-13 |
 | [ADR-0038](0038-dev-worker-status-and-db-backup.md)              | Developer Worker-Status und Dev-DB Backup/Restore            | Akzeptiert    | 2026-07-13 |
+| [ADR-0039](0039-slug-hmac-custom-symptoms.md)                    | Slug-HMAC für Custom-Symptome                                | Accepted      | 2026-07-15 |
 | [ADR-N-01](ADR-N-01-note-summary-computation.md)                 | `note_summary_short` client-side truncation (v1)             | Accepted      | 2026-07-15 |
 | [ADR-N-02](ADR-N-02-signal-confidence-threshold.md)              | Note signal confidence threshold 0.70                        | Accepted      | 2026-07-15 |
 | [ADR-N-03](ADR-N-03-custom-marker-normalisation.md)              | Custom marker normalisation on write                         | Accepted      | 2026-07-15 |

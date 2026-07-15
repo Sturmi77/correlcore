@@ -43,6 +43,10 @@ os.environ.setdefault(
     "ENCRYPTION_KEY",
     base64.urlsafe_b64encode(b"0" * 32).decode(),
 )
+os.environ.setdefault(
+    "SLUG_HMAC_KEY",
+    "test-slug-hmac-key-for-correlcore-unit-tests",
+)
 
 from app.core.crypto import (
     encrypt_with_dek,

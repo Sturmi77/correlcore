@@ -73,6 +73,10 @@ class Settings(BaseSettings):
         "all entries can decrypt existing data.",
     )
 
+    # Custom symptom slug HMAC (ADR-0039, Issue #62) — separate from ENCRYPTION_KEY.
+    # Generate: python -c "import secrets; print(secrets.token_hex(32))"
+    SLUG_HMAC_KEY: str = "CHANGE_ME_slug_hmac_key_min_32_bytes"
+
     # MinIO / S3
     MINIO_ENDPOINT: str = "minio:9000"
     MINIO_ACCESS_KEY: str = "correlcore"
@@ -150,6 +154,14 @@ class Settings(BaseSettings):
     # Notes in analysis — minimum signal confidence for insight evidence (ADR-N-02).
     NOTE_SIGNAL_MIN_CONFIDENCE: float = Field(default=0.70, ge=0.0, le=1.0)
 
+    # Optional Ollama-backed insight statements (#148).
+    INSIGHTS_LLM_ENABLED: bool = False
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.2"
+
+    # Changepoint detection minimum mood samples (#149).
+    ANALYTICS_MIN_ENTRIES_CHANGEPOINT: int = Field(default=60, ge=2)
+
     # Error tracking (M9) — optional selfhosted GlitchTip via Sentry protocol.
     # Leave empty for zero outbound error-reporting traffic.
     GLITCHTIP_DSN: str = ""
@@ -223,6 +235,12 @@ class Settings(BaseSettings):
                     "Fernet key in production. Generate with: "
                     "python -c 'from cryptography.fernet import Fernet; "
                     "print(Fernet.generate_key().decode())'"
+                )
+            if self.SLUG_HMAC_KEY.startswith("CHANGE_ME") or len(self.SLUG_HMAC_KEY) < 32:
+                raise ValueError(
+                    "SLUG_HMAC_KEY must be set to at least 32 random characters in "
+                    "production. Generate with: "
+                    "python -c 'import secrets; print(secrets.token_hex(32))'"
                 )
         # ADR-0006: Secure ist in Produktion nicht abschaltbar. Staging darf
         # COOKIE_SECURE=false setzen (Homelab-HTTP-Setups), Production nicht.
