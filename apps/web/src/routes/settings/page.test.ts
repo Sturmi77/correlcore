@@ -49,6 +49,7 @@ vi.mock('$lib/api/preferences', () => ({
   fetchUserPreferences: vi.fn(async () => ({
     user_id: 'user-1',
     analytics_enabled: true,
+    digest_enabled: true,
     onboarding_retro_completed: true,
     onboarding_profile_completed: true,
     dismissed_insight_keys: [],
@@ -60,6 +61,7 @@ vi.mock('$lib/api/preferences', () => ({
   updateUserPreferences: vi.fn(async (payload) => ({
     user_id: 'user-1',
     analytics_enabled: payload.analytics_enabled ?? true,
+    digest_enabled: payload.digest_enabled ?? true,
     onboarding_retro_completed: true,
     onboarding_profile_completed: true,
     dismissed_insight_keys: [],
@@ -84,6 +86,17 @@ vi.mock('$lib/api/insights', () => ({
   })),
 }));
 
+vi.mock('$lib/api/consents', () => ({
+  HEALTH_CONNECT_CONSENT_TYPE: 'health_connect',
+  HEALTH_CONNECT_CONSENT_VERSION: '1',
+  fetchUserConsents: vi.fn(async () => ({
+    current: [],
+    history: [],
+  })),
+  recordUserConsent: vi.fn(),
+  revokeUserConsent: vi.fn(),
+}));
+
 describe('/settings Sprint 7', () => {
   beforeEach(() => {
     devMode.set(false);
@@ -102,6 +115,7 @@ describe('/settings Sprint 7', () => {
     expect(screen.getByTestId('settings-section-export')).toBeTruthy();
     expect(screen.getByTestId('settings-section-analysis')).toBeTruthy();
     expect(screen.getByTestId('settings-section-privacy')).toBeTruthy();
+    expect(screen.getByTestId('settings-health-connect-consent')).toBeTruthy();
     expect(screen.getByTestId('settings-section-appearance')).toBeTruthy();
     expect(screen.getByTestId('settings-section-account')).toBeTruthy();
   });

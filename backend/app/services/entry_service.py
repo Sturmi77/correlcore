@@ -23,14 +23,14 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
-from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.entry import Entry, EntrySlot, EntrySource
+from app.models.entry import Entry, EntrySlot, EntrySource, NoteVisibility
 from app.models.tag import EntryTag, Tag
 from app.schemas.entry import (
     BACKDATE_DAYS_LIMIT,
@@ -39,9 +39,14 @@ from app.schemas.entry import (
     EntryDeltaResponse,
     EntryMetricDelta,
     EntryMetrics,
+    EntryResponse,
     EntryUpdate,
 )
+from app.schemas.note import EntryNoteMarkerResponse, EntryNoteSignalResponse
 from app.schemas.tag import TagResponse
+from app.services.note_markers import entry_has_note, list_markers_for_entries
+from app.services.note_signal_extractor import list_signals_for_entries
+from app.services.note_summary import compute_note_summary_short
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +152,75 @@ async def _shared_tags_for_entries(
     return list(result.scalars().all())
 
 
+def _apply_note_payload(entry: Entry, data: dict[str, object]) -> None:
+    """Apply note-related fields and maintain summary / updated_at (ADR-N-01)."""
+
+    note_changed = False
+    if "note" in data:
+        new_note = data.pop("note")
+        note_text = new_note if new_note is None else str(new_note)
+        if note_text != entry.note_enc:
+            entry.note_enc = note_text
+            note_changed = True
+
+    if "note_visibility" in data:
+        visibility = data.pop("note_visibility")
+        entry.note_visibility = NoteVisibility(str(visibility))
+
+    if "note_summary_short" in data:
+        entry.note_summary_short = data.pop("note_summary_short")  # type: ignore[assignment]
+    elif note_changed:
+        entry.note_summary_short = compute_note_summary_short(entry.note_enc)
+
+    if note_changed:
+        entry.note_updated_at = datetime.now(UTC)
+
+
+async def build_entry_responses(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entries: list[Entry],
+) -> list[EntryResponse]:
+    if not entries:
+        return []
+    markers_by_entry = await list_markers_for_entries(
+        db,
+        user_id=user_id,
+        entry_ids=[entry.id for entry in entries],
+    )
+    signals_by_entry = await list_signals_for_entries(
+        db,
+        user_id=user_id,
+        entry_ids=[entry.id for entry in entries],
+    )
+    return [
+        EntryResponse.model_validate(entry).model_copy(
+            update={
+                "note_markers": [
+                    EntryNoteMarkerResponse.model_validate(marker)
+                    for marker in markers_by_entry.get(entry.id, [])
+                ],
+                "note_signals": [
+                    EntryNoteSignalResponse.model_validate(signal)
+                    for signal in signals_by_entry.get(entry.id, [])
+                ],
+            }
+        )
+        for entry in entries
+    ]
+
+
+async def build_entry_response(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entry: Entry,
+) -> EntryResponse:
+    responses = await build_entry_responses(db, user_id=user_id, entries=[entry])
+    return responses[0]
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -182,7 +256,15 @@ async def create_entry(
         source=payload.source,
         work_context=payload.work_context,
         note_enc=payload.note,
+        note_visibility=NoteVisibility(payload.note_visibility.value),
     )
+    if payload.note:
+        entry.note_summary_short = payload.note_summary_short or compute_note_summary_short(
+            payload.note
+        )
+        entry.note_updated_at = datetime.now(UTC)
+    elif payload.note_summary_short:
+        entry.note_summary_short = payload.note_summary_short
     db.add(entry)
     try:
         await db.flush()
@@ -231,6 +313,7 @@ async def list_entries(
     start_date: date_type | None = None,
     end_date: date_type | None = None,
     limit: int = DEFAULT_LIST_LIMIT,
+    has_note: bool | None = None,
 ) -> list[Entry]:
     """Return entries for ``user_id`` ordered by date desc.
 
@@ -246,7 +329,10 @@ async def list_entries(
     stmt = stmt.order_by(Entry.entry_date.desc(), Entry.slot.asc()).limit(limit)
 
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    entries = list(result.scalars().all())
+    if has_note is None:
+        return entries
+    return [entry for entry in entries if entry_has_note(entry) == has_note]
 
 
 async def get_entry_delta(
@@ -310,9 +396,8 @@ async def update_entry(
     if not _within_backdate_window(entry.entry_date):
         raise EntryReadOnlyError(f"entries older than {BACKDATE_DAYS_LIMIT} days are read-only")
 
-    data = payload.model_dump(exclude_unset=True)
-    if "note" in data:
-        entry.note_enc = data.pop("note")
+    data = payload.model_dump(exclude_unset=True, by_alias=False)
+    _apply_note_payload(entry, data)
     for field, value in data.items():
         setattr(entry, field, value)
 
@@ -339,6 +424,8 @@ __all__ = [
     "EntryReadOnlyError",
     "EntrySlot",
     "MAX_LIST_LIMIT",
+    "build_entry_response",
+    "build_entry_responses",
     "create_entry",
     "create_entry_batch",
     "get_entry_delta",

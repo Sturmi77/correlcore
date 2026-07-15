@@ -29,6 +29,8 @@ dependencies = [
   "bcrypt<5.0.0",
   # Encryption at-rest (ADR-0005)
   "cryptography>=48.0.1",
+  # Photo metadata strip (Issue #28, M13 foundation)
+  "pillow>=10.4.0",
   # Email (async SMTP — Issue #39)
   "aiosmtplib>=5.1.1",
   "jinja2>=3.1.0",
@@ -47,6 +49,7 @@ analytics = [
   "scipy>=1.13.0",
   "statsmodels>=0.14.0",
   "apscheduler>=3.10.0",
+  "ruptures>=1.1.9",
 ]
 dev = [
   "pytest>=8.0.0",
@@ -76,12 +79,16 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 "app/api/v1/deps/auth.py" = ["B008"]
 "app/api/v1/endpoints/auth.py" = ["B008"]
+"app/api/v1/endpoints/analysis.py" = ["B008"]
 "app/api/v1/endpoints/dashboard.py" = ["B008"]
 "app/api/v1/endpoints/dev.py" = ["B008"]
 "app/api/v1/endpoints/entries.py" = ["B008"]
 "app/api/v1/endpoints/export.py" = ["B008"]
 "app/api/v1/endpoints/habits.py" = ["B008"]
 "app/api/v1/endpoints/insights.py" = ["B008"]
+"app/api/v1/endpoints/media.py" = ["B008"]
+"app/api/v1/endpoints/note_markers.py" = ["B008"]
+"app/api/v1/endpoints/note_signals.py" = ["B008"]
 "app/api/v1/endpoints/onboarding.py" = ["B008"]
 "app/api/v1/endpoints/sync.py" = ["B008"]
 "app/api/v1/endpoints/tags.py" = ["B008"]

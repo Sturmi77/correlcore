@@ -841,6 +841,7 @@ function makePreferences(
   return {
     user_id: userId,
     analytics_enabled: true,
+    digest_enabled: true,
     onboarding_retro_completed: onboardingCompleted,
     onboarding_profile_completed: onboardingCompleted,
     dismissed_insight_keys: [],

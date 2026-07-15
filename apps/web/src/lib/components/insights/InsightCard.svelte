@@ -26,6 +26,7 @@
     type InsightConfounder,
   } from '$lib/utils/insightConfounder';
   import InsightEvidence from './InsightEvidence.svelte';
+  import NoteInsightEvidence from './NoteInsightEvidence.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
@@ -46,6 +47,7 @@
     dismiss: { id: string };
     exportCsv: { id: string };
     exploreEvents: { id: string };
+    selectDate: { date: string };
   }>();
 
   // Sprint 3 (ADR-0035 §6): only surface the action when a parent has wired
@@ -54,6 +56,16 @@
     enableExploreEvents &&
     isSmallMultiplesUnlocked(maturity?.phase ?? null) &&
     Boolean(insight && isExploreEventsSubject(insight));
+
+  function payloadRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  }
+
+  $: noteEvidence = payloadRecord(insight?.payload?.evidence);
+  $: hasNoteEvidence = Boolean(
+    noteEvidence &&
+    (typeof noteEvidence.marker === 'string' || typeof noteEvidence.signal === 'string')
+  );
 
   let expanded = false;
 
@@ -312,6 +324,24 @@
           showSample
         />
       </div>
+    {/if}
+
+    {#if hasNoteEvidence && noteEvidence}
+      <NoteInsightEvidence
+        marker={typeof noteEvidence.marker === 'string' ? noteEvidence.marker : null}
+        signal={typeof noteEvidence.signal === 'string' ? noteEvidence.signal : null}
+        sampleSize={typeof noteEvidence.sample_size === 'number'
+          ? noteEvidence.sample_size
+          : (insight?.sample_n ?? 0)}
+        confidence={typeof noteEvidence.confidence === 'number'
+          ? noteEvidence.confidence
+          : (insight?.confidence ?? null)}
+        avgDelta={typeof noteEvidence.avg_delta === 'number' ? noteEvidence.avg_delta : null}
+        exampleDates={Array.isArray(insight?.payload?.example_dates)
+          ? insight.payload.example_dates.filter((item): item is string => typeof item === 'string')
+          : []}
+        on:selectDate={(event) => dispatch('selectDate', event.detail)}
+      />
     {/if}
 
     <a

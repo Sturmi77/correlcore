@@ -42,6 +42,8 @@
   export let loading = false;
   export let error: string | null = null;
   export let entryCount = 0;
+  /** Entries with notes in the analysis window — drives the note soft prompt. */
+  export let notedEntryCount: number | null = null;
   export let inactiveTagIds: readonly string[] = [];
   export let showContext = true;
   export let showFilters = true;
@@ -61,6 +63,7 @@
     retry: void;
     regenerate: void;
     exploreEvents: { id: string };
+    selectDate: { date: string };
   }>();
 
   let internalFilterTab: InsightFeedFilterTab = 'all';
@@ -146,6 +149,12 @@
     />
   {/if}
 
+  {#if notedEntryCount !== null && notedEntryCount < 20}
+    <p class="if-note-prompt" data-testid="insight-note-soft-prompt">
+      {$_('insights.note_evidence.soft_prompt')}
+    </p>
+  {/if}
+
   <!-- Loading skeleton -->
   {#if loading}
     <ul class="if-list" aria-busy="true" data-testid="insight-feed-skeleton">
@@ -198,6 +207,7 @@
             {enableExploreEvents}
             featured={index === 0}
             on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
+            on:selectDate={(event) => dispatch('selectDate', event.detail)}
           />
         </li>
       {/each}
@@ -212,6 +222,15 @@
     display: flex;
     flex-direction: column;
     gap: var(--screen-gap);
+  }
+
+  .if-note-prompt {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
   }
 
   .if-context-row {

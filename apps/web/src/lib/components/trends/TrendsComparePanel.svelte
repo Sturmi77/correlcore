@@ -46,6 +46,7 @@
    * symptom onsets, and habit goal changes; passed unfiltered.
    */
   export let markers: readonly EventMarker[] = [];
+  export let noteDates: readonly string[] = [];
   /**
    * Sprint 2 (ADR-0035): optional correlation map handed down to the
    * heatmap when sortMode === 'correlation'. Values are |r| in [0, 1].
@@ -263,6 +264,7 @@
         {axisDates}
         {axisLayout}
         {markers}
+        {noteDates}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
       />

@@ -31,7 +31,13 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
 from app.models.entry import EntrySlot, EntrySource, WorkContext
 from app.models.user import User
-from app.schemas.entry import EntryBatchCreate, EntryCreate, EntryDeltaResponse, EntryUpdate
+from app.schemas.entry import (
+    EntryBatchCreate,
+    EntryCreate,
+    EntryDeltaResponse,
+    EntryResponse,
+    EntryUpdate,
+)
 from app.services import entry_service
 from app.services.entry_service import (
     EntryConflictError,
@@ -414,6 +420,14 @@ async def test_get_entry_other_user_returns_not_found() -> None:
 # ---------------------------------------------------------------------------
 
 
+async def _entry_response_from_model(_db, *, user_id, entry) -> EntryResponse:  # noqa: ANN001
+    return EntryResponse.model_validate(entry)
+
+
+async def _entry_responses_from_models(_db, *, user_id, entries) -> list[EntryResponse]:  # noqa: ANN001
+    return [EntryResponse.model_validate(entry) for entry in entries]
+
+
 @pytest.mark.asyncio
 async def test_post_entry_201(async_client: AsyncClient, user: User) -> None:
     new_entry = make_entry(user, mood_score=4, energy=3, stress=2, note="hi")
@@ -423,10 +437,20 @@ async def test_post_entry_201(async_client: AsyncClient, user: User) -> None:
 
     app.dependency_overrides[get_current_verified_user] = override
     try:
-        with patch(
-            "app.api.v1.endpoints.entries.create_entry",
-            new_callable=AsyncMock,
-            return_value=new_entry,
+        with (
+            patch(
+                "app.api.v1.endpoints.entries.create_entry",
+                new_callable=AsyncMock,
+                return_value=new_entry,
+            ),
+            patch(
+                "app.api.v1.endpoints.entries.build_entry_response",
+                new=_entry_response_from_model,
+            ),
+            patch(
+                "app.api.v1.endpoints.entries.run_note_signal_extraction_background",
+                new_callable=AsyncMock,
+            ),
         ):
             r = await async_client.post(
                 "/api/v1/entries",
@@ -583,10 +607,16 @@ async def test_list_entries_200(async_client: AsyncClient, user: User) -> None:
 
     app.dependency_overrides[get_current_verified_user] = override
     try:
-        with patch(
-            "app.api.v1.endpoints.entries.list_entries",
-            new_callable=AsyncMock,
-            return_value=rows,
+        with (
+            patch(
+                "app.api.v1.endpoints.entries.list_entries",
+                new_callable=AsyncMock,
+                return_value=rows,
+            ),
+            patch(
+                "app.api.v1.endpoints.entries.build_entry_responses",
+                new=_entry_responses_from_models,
+            ),
         ):
             r = await async_client.get(
                 "/api/v1/entries?limit=10",
@@ -654,10 +684,20 @@ async def test_patch_entry_200(async_client: AsyncClient, user: User) -> None:
 
     app.dependency_overrides[get_current_verified_user] = override
     try:
-        with patch(
-            "app.api.v1.endpoints.entries.update_entry",
-            new_callable=AsyncMock,
-            return_value=updated,
+        with (
+            patch(
+                "app.api.v1.endpoints.entries.update_entry",
+                new_callable=AsyncMock,
+                return_value=updated,
+            ),
+            patch(
+                "app.api.v1.endpoints.entries.build_entry_response",
+                new=_entry_response_from_model,
+            ),
+            patch(
+                "app.api.v1.endpoints.entries.run_note_signal_extraction_background",
+                new_callable=AsyncMock,
+            ),
         ):
             r = await async_client.patch(
                 f"/api/v1/entries/{updated.id}",

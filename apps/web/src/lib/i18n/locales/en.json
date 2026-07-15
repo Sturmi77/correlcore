@@ -119,6 +119,48 @@
     "energy_label": "Energy",
     "stress_label": "Stress",
     "note_placeholder": "Note (optional)...",
+    "note_visibility": {
+      "label": "Note visibility",
+      "full": "Show everywhere",
+      "analysis_only": "Analysis only",
+      "hidden": "Hidden"
+    },
+    "note_markers": {
+      "aria": "Note markers",
+      "heading": "Markers",
+      "custom_placeholder": "Custom marker",
+      "add_custom": "Add",
+      "work": "Work",
+      "homeoffice": "Remote",
+      "social": "Social",
+      "movement": "Exercise",
+      "sleep_bad": "Poor sleep",
+      "sleep_good": "Good sleep",
+      "stress": "Stress",
+      "conflict": "Conflict",
+      "symptom": "Symptom",
+      "travel": "Travel",
+      "achievement": "Achievement"
+    },
+    "note_signals": {
+      "heading": "Derived signals",
+      "konflikt": "Conflict",
+      "isolation": "Isolation",
+      "spaziergang": "Walk",
+      "kopfschmerz": "Headache",
+      "stress": "Stress",
+      "muedigkeit": "Fatigue",
+      "schlaf": "Sleep",
+      "arbeit": "Work",
+      "sozial": "Social",
+      "schlechter_schlaf": "Poor sleep",
+      "guter_schlaf": "Good sleep",
+      "arbeit_ueberlast": "Work overload",
+      "zeitdruck": "Time pressure",
+      "angst": "Anxiety",
+      "niedergeschlagen": "Low mood",
+      "schlafdauer": "Sleep duration"
+    },
     "save": "Save",
     "cancel": "Cancel",
     "title": "Log your day",
@@ -236,7 +278,8 @@
     "edit": "Edit",
     "list_aria": "Entries for the selected day",
     "score_line": "Mood {mood}/5 \u00b7 Energy {energy}/5 \u00b7 Stress {stress}/5",
-    "read_only": "This entry is outside the 7-day editing window and is read-only."
+    "read_only": "This entry is outside the 7-day editing window and is read-only.",
+    "filter_notes_only": "Only entries with notes"
   },
   "tag": {
     "picker_label": "Tags",
@@ -419,7 +462,9 @@
       "less": "Less",
       "more": "More",
       "loading": "Loading tag heatmap",
-      "empty": "No tag activity in this range yet."
+      "empty": "No tag activity in this range yet.",
+      "notes_row": "Notes",
+      "note_present": "Note on this day"
     },
     "compare": {
       "heading": "Compare",
@@ -561,7 +606,9 @@
       "regenerate_success": "Insights refreshed ({count} insights generated).",
       "regenerate_rate_limited": "You can refresh insights once per hour. Please try again later.",
       "regenerate_disabled": "Enable analysis above to refresh insights.",
-      "regenerate_error": "Could not refresh insights."
+      "regenerate_error": "Could not refresh insights.",
+      "digest_enabled": "Weekly insight digest",
+      "digest_hint": "Summarizes your top three insights each week (Sunday)."
     },
     "privacy": {
       "heading": "Privacy & account data",
@@ -577,7 +624,17 @@
       "delete_error": "Could not delete account. Try again later.",
       "delete_invalid_password": "Password is incorrect.",
       "policy_link": "Privacy policy",
-      "policy_body": "Read how this installation processes your health data and which rights you have."
+      "policy_body": "Read how this installation processes your health data and which rights you have.",
+      "health_connect": {
+        "heading": "Health Connect (Android)",
+        "body": "Optional import of sleep duration and resting heart rate from Health Connect. This is special-category health data under GDPR Art. 9 — grant consent only if you want wearable import on Android.",
+        "scope": "Only sleep and heart-rate summaries are imported. Movement profiles, GPS tracks, and other activity data are not read.",
+        "grant_label": "I consent to Health Connect import of sleep and heart-rate data for my personal tracking.",
+        "grant_action": "Grant consent",
+        "revoke_action": "Revoke consent",
+        "granted_at": "Consent granted on {timestamp}.",
+        "error": "Could not update Health Connect consent."
+      }
     },
     "appearance": {
       "heading": "Appearance",
@@ -841,6 +898,16 @@
       "analytics_hint": "Symptoms and shared tags",
       "analysis_range_label": "Analysis time window"
     },
+    "digest": {
+      "title": "Weekly digest",
+      "subtitle": "Top three insights from the last seven days.",
+      "loading": "Loading weekly digest...",
+      "empty": "Not enough recent insights for a weekly digest yet.",
+      "disabled": "Weekly digest is turned off in Settings.",
+      "error": "Could not load weekly digest.",
+      "open_settings": "Open settings",
+      "range": "Week of {start} to {end}"
+    },
     "mobile": {
       "eyebrow": "Mobile summary",
       "strongest_heading": "Strongest current signal",
@@ -1056,7 +1123,17 @@
     "stress_mood": "Stress and mood show a clear association (r={r}, based on {n} days). This is a data pattern, not a medical statement.",
     "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays.",
     "work_context_confounded_note": "Note: this pattern may mainly reflect your work situation.",
-    "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap."
+    "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap.",
+    "note_evidence": {
+      "soft_prompt": "Add notes to better understand patterns in your data.",
+      "lead_marker": "On days marked \"{marker}\", your mood averaged {delta} points different from your note-day average.",
+      "lead_signal": "On days with note signal \"{signal}\", your mood averaged {delta} points different from your note-day average.",
+      "meta": "Basis: {days} days · Confidence: {confidence}",
+      "examples_prefix": "Examples:",
+      "confidence_low": "Low",
+      "confidence_medium": "Medium",
+      "confidence_high": "High"
+    }
   },
   "onboarding": {
     "skip": "Skip",

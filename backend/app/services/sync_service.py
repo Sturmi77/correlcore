@@ -9,7 +9,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from pydantic import ValidationError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -100,8 +102,26 @@ def _client_wins(client_ts: datetime, server_ts: datetime) -> bool:
     return _ensure_utc(client_ts) > _ensure_utc(server_ts)
 
 
-def _note_presence_marker(note: str | None) -> dict[str, bool]:
-    return {"present": bool(note and note.strip())}
+def _note_presence_marker(note: str | None) -> dict[str, Any]:
+    return {"present": bool(note and str(note).strip())}
+
+
+def _note_conflict_markers(
+    client_note: str | None, server_note: str | None
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Return redacted conflict markers when notes differ (including two non-empty texts).
+
+    Presence-only markers collapse distinct notes to ``{"present": true}`` and skip
+    conflict logging — use this helper so divergent non-empty notes are recorded.
+    """
+    client_text = (client_note or "").strip() if client_note else ""
+    server_text = (server_note or "").strip() if server_note else ""
+    if client_text == server_text:
+        return None
+    return (
+        {"present": bool(client_text), "changed": True},
+        {"present": bool(server_text), "changed": True},
+    )
 
 
 def _symptoms_map(rows: list[Any]) -> dict[str, int]:
@@ -113,14 +133,27 @@ def _normalize_symptoms_payload(raw: dict[str, int]) -> dict[str, int]:
 
 
 async def _get_or_create_user_revision(db: AsyncSession, *, user_id: uuid.UUID) -> SyncUserRevision:
-    result = await db.execute(select(SyncUserRevision).where(SyncUserRevision.user_id == user_id))
+    """Return the per-user revision counter, locking the row for concurrent push/pull."""
+    result = await db.execute(
+        select(SyncUserRevision).where(SyncUserRevision.user_id == user_id).with_for_update()
+    )
     row = result.scalar_one_or_none()
     if row is not None:
         return row
-    row = SyncUserRevision(user_id=user_id, current_rev=0)
-    db.add(row)
-    await db.flush()
-    return row
+
+    # No row yet — insert under a nested transaction so a concurrent create
+    # does not poison the outer sync session.
+    async with db.begin_nested():
+        db.add(SyncUserRevision(user_id=user_id, current_rev=0))
+        try:
+            await db.flush()
+        except IntegrityError:
+            pass
+
+    result = await db.execute(
+        select(SyncUserRevision).where(SyncUserRevision.user_id == user_id).with_for_update()
+    )
+    return result.scalar_one()
 
 
 async def _next_user_rev(db: AsyncSession, *, user_id: uuid.UUID) -> int:
@@ -366,48 +399,70 @@ async def _merge_entry_upsert(
         entry = slot_result.scalar_one_or_none()
 
     if entry is None:
-        entry = Entry(
-            id=change.id,
-            user_id=user_id,
-            entry_date=payload.entry_date,
-            slot=payload.slot,
-            mood_score=payload.mood_score,
-            energy=payload.energy,
-            stress=payload.stress,
-            cycle_day=payload.cycle_day,
-            source=EntrySource.DIRECT,
-            work_context=payload.work_context,
-            note_enc=payload.note,
-            updated_at=client_ts,
-        )
-        db.add(entry)
-        await db.flush()
-        await assign_tags_to_entry(db, user_id=user_id, entry_id=entry.id, tag_ids=payload.tag_ids)
-        symptom_entries = [
-            SymptomEntry(symptom_id=uuid.UUID(key), intensity=value)
-            for key, value in _normalize_symptoms_payload(payload.symptoms).items()
-        ]
-        await assign_symptoms_to_entry(
-            db,
-            user_id=user_id,
-            entry_id=entry.id,
-            symptoms=symptom_entries,
-        )
-        await _append_revision_log(
-            db,
-            user_id=user_id,
-            entity_type="entry",
-            entity_id=entry.id,
-            operation="upsert",
-            payload=_entry_payload_from_model(
-                entry,
-                tag_ids=payload.tag_ids,
-                symptoms=_normalize_symptoms_payload(payload.symptoms),
-                for_revision_log=True,
-            ),
-            entity_updated_at=entry.updated_at,
-        )
-        return conflicts
+        created = False
+        async with db.begin_nested():
+            entry = Entry(
+                id=change.id,
+                user_id=user_id,
+                entry_date=payload.entry_date,
+                slot=payload.slot,
+                mood_score=payload.mood_score,
+                energy=payload.energy,
+                stress=payload.stress,
+                cycle_day=payload.cycle_day,
+                source=EntrySource.DIRECT,
+                work_context=payload.work_context,
+                note_enc=payload.note,
+                updated_at=client_ts,
+            )
+            db.add(entry)
+            try:
+                await db.flush()
+                created = True
+            except IntegrityError:
+                created = False
+
+        if not created:
+            # Concurrent create for the same (date, slot) — merge into the winner.
+            slot_result = await db.execute(
+                select(Entry).where(
+                    Entry.user_id == user_id,
+                    Entry.entry_date == payload.entry_date,
+                    Entry.slot == payload.slot,
+                )
+            )
+            entry = slot_result.scalar_one_or_none()
+            if entry is None:
+                raise SyncBadRequestError("entry slot collision could not be resolved")
+        else:
+            await assign_tags_to_entry(
+                db, user_id=user_id, entry_id=entry.id, tag_ids=payload.tag_ids
+            )
+            symptom_entries = [
+                SymptomEntry(symptom_id=uuid.UUID(key), intensity=value)
+                for key, value in _normalize_symptoms_payload(payload.symptoms).items()
+            ]
+            await assign_symptoms_to_entry(
+                db,
+                user_id=user_id,
+                entry_id=entry.id,
+                symptoms=symptom_entries,
+            )
+            await _append_revision_log(
+                db,
+                user_id=user_id,
+                entity_type="entry",
+                entity_id=entry.id,
+                operation="upsert",
+                payload=_entry_payload_from_model(
+                    entry,
+                    tag_ids=payload.tag_ids,
+                    symptoms=_normalize_symptoms_payload(payload.symptoms),
+                    for_revision_log=True,
+                ),
+                entity_updated_at=entry.updated_at,
+            )
+            return conflicts
 
     server_ts = _ensure_utc(entry.updated_at)
     current_symptoms = _symptoms_map(
@@ -466,14 +521,18 @@ async def _merge_entry_upsert(
         return conflicts
 
     for field_name, client_val, _server_val, server_report in scalar_fields:
-        client_report = (
-            _note_presence_marker(client_val) if field_name == "note" else {"value": client_val}
-        )
         if field_name == "note":
-            client_cmp = _note_presence_marker(client_val)
-            server_cmp = _note_presence_marker(entry.note_enc)
+            markers = _note_conflict_markers(
+                client_val
+                if isinstance(client_val, str) or client_val is None
+                else str(client_val),
+                entry.note_enc,
+            )
+            if markers is None:
+                continue
+            client_cmp, server_cmp = markers
         else:
-            client_cmp = client_report
+            client_cmp = {"value": client_val}
             server_cmp = server_report
         report = await _maybe_conflict(
             db,
@@ -558,6 +617,7 @@ async def _merge_tag_upsert(
             habit_type=payload.habit_type,
             target_frequency=payload.target_frequency,
             is_default=False,
+            updated_at=client_ts,
         )
         db.add(tag)
         await db.flush()
@@ -644,6 +704,7 @@ async def _merge_symptom_upsert(
             slug=payload.slug,
             icon=payload.icon,
             is_default=False,
+            updated_at=client_ts,
         )
         symptom.set_custom_name(payload.name)
         db.add(symptom)
@@ -768,6 +829,8 @@ async def push_changes(
             conflicts.extend(await _apply_change(db, user_id=user_id, change=change))
         except SyncBadRequestError:
             raise
+        except ValidationError as exc:
+            raise SyncBadRequestError(str(exc)) from exc
         applied += 1
         client_state.last_applied_seq = max(client_state.last_applied_seq, change.seq)
         client_state.updated_at = datetime.now(UTC)
@@ -810,6 +873,109 @@ async def push_changes(
     return response
 
 
+async def ensure_revision_log_backfill(db: AsyncSession, *, user_id: uuid.UUID) -> int:
+    """Hydrate ``sync_revision_log`` from online-created entities missing from the log.
+
+    Called on the first pull (``since is None``) so preexisting entries/tags/symptoms
+    created via the REST API become visible to offline clients.
+    """
+    now = datetime.now(UTC)
+    threshold = now - timedelta(days=settings.SYNC_INITIAL_PULL_DAYS)
+
+    logged_result = await db.execute(
+        select(SyncRevisionLog.entity_id).where(
+            SyncRevisionLog.user_id == user_id,
+            SyncRevisionLog.operation == "upsert",
+        )
+    )
+    logged_ids = {row[0] for row in logged_result.all()}
+
+    written = 0
+
+    entries_result = await db.execute(
+        select(Entry)
+        .where(
+            Entry.user_id == user_id,
+            Entry.updated_at >= threshold,
+        )
+        .order_by(Entry.updated_at.asc())
+    )
+    for entry in entries_result.scalars().all():
+        if entry.id in logged_ids:
+            continue
+        tag_ids = [
+            tag.id for tag in await list_tags_for_entry(db, user_id=user_id, entry_id=entry.id)
+        ]
+        symptoms = _symptoms_map(
+            await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id)
+        )
+        await _append_revision_log(
+            db,
+            user_id=user_id,
+            entity_type="entry",
+            entity_id=entry.id,
+            operation="upsert",
+            payload=_entry_payload_from_model(
+                entry, tag_ids=tag_ids, symptoms=symptoms, for_revision_log=True
+            ),
+            entity_updated_at=_ensure_utc(entry.updated_at),
+        )
+        written += 1
+
+    tags_result = await db.execute(
+        select(Tag)
+        .where(
+            Tag.user_id == user_id,
+            Tag.is_default.is_(False),
+            Tag.updated_at >= threshold,
+        )
+        .order_by(Tag.updated_at.asc())
+    )
+    for tag in tags_result.scalars().all():
+        if tag.id in logged_ids:
+            continue
+        await _append_revision_log(
+            db,
+            user_id=user_id,
+            entity_type="tag",
+            entity_id=tag.id,
+            operation="upsert",
+            payload=_tag_payload_from_model(tag),
+            entity_updated_at=_ensure_utc(tag.updated_at),
+        )
+        written += 1
+
+    symptoms_result = await db.execute(
+        select(Symptom)
+        .where(
+            Symptom.user_id == user_id,
+            Symptom.is_default.is_(False),
+            Symptom.updated_at >= threshold,
+        )
+        .order_by(Symptom.updated_at.asc())
+    )
+    for symptom in symptoms_result.scalars().all():
+        if symptom.id in logged_ids:
+            continue
+        await _append_revision_log(
+            db,
+            user_id=user_id,
+            entity_type="symptom",
+            entity_id=symptom.id,
+            operation="upsert",
+            payload=_symptom_payload_from_model(symptom),
+            entity_updated_at=_ensure_utc(symptom.updated_at),
+        )
+        written += 1
+
+    if written:
+        logger.info(
+            "sync.pull.backfill",
+            extra={"user_id": str(user_id), "written": written},
+        )
+    return written
+
+
 async def pull_changes(
     db: AsyncSession,
     *,
@@ -819,6 +985,9 @@ async def pull_changes(
 ) -> SyncPullResponse:
     limit = max(1, min(limit, MAX_PULL_LIMIT))
     now = datetime.now(UTC)
+
+    if not since:
+        await ensure_revision_log_backfill(db, user_id=user_id)
 
     stmt = select(SyncRevisionLog).where(SyncRevisionLog.user_id == user_id)
     if since:

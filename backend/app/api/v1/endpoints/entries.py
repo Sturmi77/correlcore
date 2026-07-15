@@ -36,6 +36,7 @@ from app.schemas.entry import (
     EntryResponse,
     EntryUpdate,
 )
+from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.stats import (
     EntryStreakResponse,
     SymptomHeatmapResponse,
@@ -50,6 +51,8 @@ from app.services.entry_service import (
     EntryDateOutOfRangeError,
     EntryNotFoundError,
     EntryReadOnlyError,
+    build_entry_response,
+    build_entry_responses,
     create_entry,
     create_entry_batch,
     get_entry,
@@ -58,6 +61,7 @@ from app.services.entry_service import (
     update_entry,
 )
 from app.services.insight_worker_service import schedule_post_batch_insight_regeneration
+from app.services.note_signal_extractor import run_note_signal_extraction_background
 from app.services.stats_service import (
     get_entry_streak,
     get_symptom_heatmap,
@@ -84,6 +88,7 @@ router = APIRouter()
 async def create_entry_endpoint(
     request: Request,
     payload: EntryCreate,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
@@ -100,7 +105,14 @@ async def create_entry_endpoint(
             detail=str(exc),
         ) from exc
 
-    return EntryResponse.model_validate(entry)
+    if payload.note or payload.note_visibility != NoteVisibilitySchema.FULL:
+        background_tasks.add_task(
+            run_note_signal_extraction_background,
+            entry_id=entry.id,
+            user_id=user.id,
+        )
+
+    return await build_entry_response(db, user_id=user.id, entry=entry)
 
 
 @router.post(
@@ -133,7 +145,7 @@ async def create_entry_batch_endpoint(
         schedule_post_batch_insight_regeneration,
         user_id=user.id,
     )
-    return [EntryResponse.model_validate(entry) for entry in entries]
+    return await build_entry_responses(db, user_id=user.id, entries=entries)
 
 
 # ---------------------------------------------------------------------------
@@ -266,7 +278,7 @@ async def get_entry_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="entry not found",
         ) from exc
-    return EntryResponse.model_validate(entry)
+    return await build_entry_response(db, user_id=user.id, entry=entry)
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +297,7 @@ async def list_entries_endpoint(
     start_date: date_type | None = Query(default=None, alias="start_date"),
     end_date: date_type | None = Query(default=None, alias="end_date"),
     limit: int = Query(default=DEFAULT_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
+    has_note: bool | None = Query(default=None, alias="has_note"),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> list[EntryResponse]:
@@ -294,8 +307,9 @@ async def list_entries_endpoint(
         start_date=start_date,
         end_date=end_date,
         limit=limit,
+        has_note=has_note,
     )
-    return [EntryResponse.model_validate(e) for e in entries]
+    return await build_entry_responses(db, user_id=user.id, entries=entries)
 
 
 # ---------------------------------------------------------------------------
@@ -313,9 +327,13 @@ async def update_entry_endpoint(
     request: Request,
     entry_id: uuid.UUID,
     payload: EntryUpdate,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
+    note_fields_changed = (
+        "note" in payload.model_fields_set or "note_visibility" in payload.model_fields_set
+    )
     try:
         entry = await update_entry(db, user_id=user.id, entry_id=entry_id, payload=payload)
     except EntryNotFoundError as exc:
@@ -334,4 +352,11 @@ async def update_entry_endpoint(
             detail=str(exc),
         ) from exc
 
-    return EntryResponse.model_validate(entry)
+    if note_fields_changed:
+        background_tasks.add_task(
+            run_note_signal_extraction_background,
+            entry_id=entry.id,
+            user_id=user.id,
+        )
+
+    return await build_entry_response(db, user_id=user.id, entry=entry)

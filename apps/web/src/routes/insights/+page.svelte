@@ -734,6 +734,7 @@
       ...(userPreferences ?? {
         user_id: '',
         analytics_enabled: true,
+        digest_enabled: true,
         onboarding_retro_completed: false,
         onboarding_profile_completed: false,
         dismissed_insight_keys: [],
@@ -838,6 +839,7 @@
               on:retry={loadInsights}
               on:regenerate={() => void handleRegenerateInsights()}
               on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+              on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
             />
           </section>
         {:else}
@@ -860,6 +862,7 @@
             on:retry={loadInsights}
             on:regenerate={() => void handleRegenerateInsights()}
             on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+            on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
           />
         {/if}
       {/if}

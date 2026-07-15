@@ -187,6 +187,7 @@
       ...(userPreferences ?? {
         user_id: $currentUser?.id ?? '',
         analytics_enabled: true,
+        digest_enabled: true,
         onboarding_retro_completed: false,
         onboarding_profile_completed: false,
         reached_milestone_keys: [],

@@ -12,6 +12,7 @@ class UserPreferencesUpdate(BaseModel):
     """Patch payload for future user preference endpoints."""
 
     analytics_enabled: bool | None = None
+    digest_enabled: bool | None = None
     onboarding_retro_completed: bool | None = None
     onboarding_profile_completed: bool | None = None
     dismissed_insight_keys: list[str] | None = Field(default=None, max_length=128)
@@ -26,6 +27,7 @@ class UserPreferencesResponse(BaseModel):
 
     user_id: uuid.UUID
     analytics_enabled: bool
+    digest_enabled: bool = True
     onboarding_retro_completed: bool
     onboarding_profile_completed: bool
     dismissed_insight_keys: list[str] = Field(default_factory=list)

@@ -19,6 +19,7 @@ class WorkerJobKind(StrEnum):
     DAILY_BUNDLE = "daily_bundle"
     INSIGHTS = "insights"
     CLEANUP = "cleanup"
+    DIGEST = "digest"
     USER_INSIGHTS = "user_insights"
 
 

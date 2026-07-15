@@ -1,0 +1,44 @@
+name: Release — Android (Capacitor scaffold)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/android/**'
+      - 'apps/web/svelte.config.js'
+      - '.github/workflows/release-android.yml'
+  pull_request:
+    paths:
+      - 'apps/android/**'
+      - 'apps/web/svelte.config.js'
+      - '.github/workflows/release-android.yml'
+
+jobs:
+  validate-capacitor-scaffold:
+    name: Validate Capacitor config (no SDK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Capacitor scaffold
+        run: pnpm --filter @correlcore/android validate
+
+      - name: Assert config files exist
+        run: |
+          test -f apps/android/capacitor.config.ts
+          test -f apps/android/package.json
+          test -f apps/android/README.md

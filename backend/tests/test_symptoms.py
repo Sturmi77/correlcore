@@ -60,6 +60,7 @@ from app.schemas.symptom import (
     SymptomUpdate,
 )
 from app.services import symptom_service
+from app.services.slug_hmac import hmac_custom_symptom_slug
 from app.services.symptom_service import (
     EntryNotFoundForSymptomError,
     SymptomConflictError,
@@ -225,7 +226,11 @@ async def test_create_custom_symptom_happy_path() -> None:
     payload = SymptomCreate(slug="tinnitus", name="Tinnitus")
     symptom = await create_custom_symptom(db, user_id=user.id, payload=payload)
     assert symptom.user_id == user.id
-    assert symptom.slug == "tinnitus"
+    assert symptom.slug == hmac_custom_symptom_slug(
+        user_id=user.id,
+        semantic_slug="tinnitus",
+    )
+    assert symptom.slug != "tinnitus"
     assert symptom.is_default is False
     db.add.assert_called_once()
 

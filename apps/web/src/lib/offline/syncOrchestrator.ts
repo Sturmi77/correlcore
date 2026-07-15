@@ -18,10 +18,13 @@ import {
 } from '$lib/stores/entriesOffline';
 import { listPendingChanges, markChangeStatus } from './changeLog';
 import { getOrCreateClientId } from './clientId';
+import { getOfflineDb } from './db';
 import { canUseOfflineSync } from './featureFlag';
 import { getSyncMeta, setSyncMeta } from './syncMeta';
 import { SYNC_META_KEYS } from './types';
-import type { OfflineEntityType } from './types';
+import type { LocalSymptom, LocalTag, OfflineEntityType } from './types';
+import { refreshTags } from '$lib/stores/tags';
+import { refreshSymptoms } from '$lib/stores/symptoms';
 
 export type OfflineSyncBadgeState = 'local' | 'syncing' | 'synced' | 'offline';
 
@@ -92,15 +95,65 @@ function setConflictNote(note: string | null): void {
   store.update((s) => ({ ...s, conflictNote: note }));
 }
 
-async function applyPullChange(change: SyncChange): Promise<void> {
-  if (change.table !== 'entries') return;
-
+async function applyPulledTag(change: SyncChange): Promise<void> {
+  const db = getOfflineDb();
   if (change.operation === 'delete') {
-    await deleteLocalEntry(change.id);
+    await db.tags.delete(change.id);
+    return;
+  }
+  const data = change.data;
+  const row: LocalTag = {
+    id: change.id,
+    slug: String(data.slug ?? ''),
+    name: String(data.name ?? ''),
+    category: String(data.category ?? 'custom'),
+    icon: data.icon == null ? null : String(data.icon),
+    color: data.color == null ? null : String(data.color),
+    habit_type: data.habit_type == null ? null : String(data.habit_type),
+    target_frequency:
+      data.target_frequency == null || data.target_frequency === ''
+        ? null
+        : Number(data.target_frequency),
+    updated_at: change.updated_at,
+  };
+  await db.tags.put(row);
+}
+
+async function applyPulledSymptom(change: SyncChange): Promise<void> {
+  const db = getOfflineDb();
+  if (change.operation === 'delete') {
+    await db.symptoms.delete(change.id);
+    return;
+  }
+  const data = change.data;
+  const row: LocalSymptom = {
+    id: change.id,
+    slug: String(data.slug ?? ''),
+    name: String(data.name ?? ''),
+    icon: data.icon == null ? null : String(data.icon),
+    updated_at: change.updated_at,
+  };
+  await db.symptoms.put(row);
+}
+
+async function applyPullChange(change: SyncChange): Promise<void> {
+  if (change.table === 'entries') {
+    if (change.operation === 'delete') {
+      await deleteLocalEntry(change.id);
+      return;
+    }
+    await applyPulledEntry(change.id, change.data, change.updated_at, 'synced');
     return;
   }
 
-  await applyPulledEntry(change.id, change.data, change.updated_at, 'synced');
+  if (change.table === 'tags') {
+    await applyPulledTag(change);
+    return;
+  }
+
+  if (change.table === 'symptoms') {
+    await applyPulledSymptom(change);
+  }
 }
 
 export async function pullSince(cursor?: string): Promise<void> {
@@ -109,10 +162,15 @@ export async function pullSince(cursor?: string): Promise<void> {
   let since = cursor ?? (await getSyncMeta(SYNC_META_KEYS.lastPullCursor)) ?? undefined;
   let hasMore = true;
 
+  let tagsTouched = false;
+  let symptomsTouched = false;
+
   while (hasMore) {
     const response = await pullSyncChanges({ since, limit: 200 });
     for (const change of response.changes) {
       await applyPullChange(change);
+      if (change.table === 'tags') tagsTouched = true;
+      if (change.table === 'symptoms') symptomsTouched = true;
     }
     since = response.cursor;
     await setSyncMeta(SYNC_META_KEYS.lastPullCursor, response.cursor);
@@ -120,7 +178,23 @@ export async function pullSince(cursor?: string): Promise<void> {
   }
 
   await setSyncMeta(SYNC_META_KEYS.lastPullAt, new Date().toISOString());
+  if (tagsTouched) {
+    void refreshTags().catch(() => undefined);
+  }
+  if (symptomsTouched) {
+    void refreshSymptoms().catch(() => undefined);
+  }
   await refreshMeta();
+}
+
+const SYNC_LOCK_NAME = 'correlcore-sync-push';
+
+async function withSyncLock<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  if (!locks?.request) {
+    return fn();
+  }
+  return locks.request(SYNC_LOCK_NAME, { mode: 'exclusive' }, () => fn());
 }
 
 export async function pushPending(): Promise<boolean> {
@@ -198,7 +272,7 @@ export async function syncAll(): Promise<void> {
     return;
   }
 
-  syncInFlight = (async () => {
+  syncInFlight = withSyncLock(async () => {
     setSyncing(true);
     setBadge('syncing');
     try {
@@ -228,7 +302,7 @@ export async function syncAll(): Promise<void> {
         scheduleSync();
       }
     }
-  })();
+  });
 
   await syncInFlight;
 }

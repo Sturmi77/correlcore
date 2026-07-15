@@ -26,9 +26,11 @@ import uuid
 from datetime import date as date_type
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.entry import EntrySlot, EntrySource, WorkContext
+from app.schemas.note import EntryNoteMarkerResponse, EntryNoteSignalResponse
+from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.tag import TagResponse
 
 # Maximum note length on the wire. Generous, but bounded so a malicious
@@ -49,6 +51,8 @@ BACKDATE_DAYS_LIMIT = 7
 class EntryCreate(BaseModel):
     """Payload for ``POST /api/v1/entries``."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     entry_date: date_type
     slot: EntrySlot = EntrySlot.DAY
     mood_score: int = Field(ge=1, le=5)
@@ -57,7 +61,11 @@ class EntryCreate(BaseModel):
     cycle_day: int | None = Field(default=None, ge=1, le=35)
     source: EntrySource = EntrySource.DIRECT
     work_context: WorkContext
-    note: str | None = Field(default=None, max_length=MAX_NOTE_LENGTH)
+    note: str | None = Field(
+        default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH
+    )
+    note_summary_short: str | None = Field(default=None, max_length=120)
+    note_visibility: NoteVisibilitySchema = NoteVisibilitySchema.FULL
 
     @field_validator("entry_date")
     @classmethod
@@ -80,13 +88,19 @@ class EntryUpdate(BaseModel):
     All fields optional — only sent fields are updated.
     """
 
+    model_config = ConfigDict(populate_by_name=True)
+
     mood_score: int | None = Field(default=None, ge=1, le=5)
     energy: int | None = Field(default=None, ge=1, le=5)
     stress: int | None = Field(default=None, ge=1, le=5)
     slot: EntrySlot | None = None
     cycle_day: int | None = Field(default=None, ge=1, le=35)
     work_context: WorkContext | None = None
-    note: str | None = Field(default=None, max_length=MAX_NOTE_LENGTH)
+    note: str | None = Field(
+        default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH
+    )
+    note_summary_short: str | None = Field(default=None, max_length=120)
+    note_visibility: NoteVisibilitySchema | None = None
 
     @field_validator("note")
     @classmethod
@@ -104,7 +118,7 @@ class EntryUpdate(BaseModel):
 class EntryResponse(BaseModel):
     """Single entry — returned by create / get / update / list."""
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: uuid.UUID
     user_id: uuid.UUID
@@ -117,8 +131,20 @@ class EntryResponse(BaseModel):
     source: EntrySource
     work_context: WorkContext
     note: str | None = Field(default=None, validation_alias="note_enc")
+    note_raw: str | None = Field(default=None, validation_alias="note_enc")
+    note_summary_short: str | None = None
+    note_visibility: NoteVisibilitySchema = NoteVisibilitySchema.FULL
+    note_updated_at: datetime | None = None
+    note_markers: list[EntryNoteMarkerResponse] = Field(default_factory=list)
+    note_signals: list[EntryNoteSignalResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+    @model_validator(mode="after")
+    def mirror_note_raw(self) -> EntryResponse:
+        if self.note_raw is None:
+            self.note_raw = self.note
+        return self
 
 
 class EntryBatchCreate(BaseModel):

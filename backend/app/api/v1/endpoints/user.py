@@ -35,11 +35,24 @@ from app.core.auth_cookies import clear_auth_cookies
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
 from app.models.user import User
+from app.schemas.consent import (
+    ConsentListResponse,
+    ConsentRecordRequest,
+    ConsentRecordResponse,
+    ConsentRevokeRequest,
+)
 from app.schemas.sync import SyncConflictListItem, SyncConflictListResponse, SyncEntityType
 from app.schemas.user import DeleteAccountRequest
 from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
 from app.schemas.user_profile import UserProfileResponse, UserProfileUpsert
+from app.services.consent_service import (
+    list_consent_history,
+    record_consent,
+    revoke_consent,
+    summarize_current_consents,
+)
 from app.services.export_service import build_export_envelope, export_filename, render_export_zip
+from app.services.note_markers import list_user_marker_suggestions
 from app.services.sync_conflict_service import list_sync_conflicts, sanitize_conflict_value
 from app.services.user_preferences_service import (
     get_or_create_user_preferences,
@@ -50,6 +63,73 @@ from app.services.user_service import UserDeletionError, delete_user_account
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get(
+    "/me/consents",
+    response_model=ConsentListResponse,
+    summary="List consent history and current states for the current user",
+)
+async def list_my_consents(
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> ConsentListResponse:
+    history = await list_consent_history(db, user_id=current_user.id)
+    return ConsentListResponse(
+        current=summarize_current_consents(history),
+        history=[ConsentRecordResponse.model_validate(row) for row in history],
+    )
+
+
+@router.post(
+    "/me/consents",
+    response_model=ConsentRecordResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Record a consent grant or revocation",
+)
+async def record_my_consent(
+    payload: ConsentRecordRequest,
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> ConsentRecordResponse:
+    entry = await record_consent(db, user_id=current_user.id, payload=payload)
+    return ConsentRecordResponse.model_validate(entry)
+
+
+@router.post(
+    "/me/consents/revoke",
+    response_model=ConsentRecordResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Revoke a previously granted consent",
+)
+async def revoke_my_consent(
+    payload: ConsentRevokeRequest,
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> ConsentRecordResponse:
+    history = await list_consent_history(db, user_id=current_user.id)
+    current = summarize_current_consents(history)
+    match = next((item for item in current if item.consent_type == payload.type.strip()), None)
+    version = match.consent_version if match and match.consent_version else "1"
+    entry = await revoke_consent(
+        db,
+        user_id=current_user.id,
+        consent_type=payload.type.strip(),
+        consent_version=version,
+    )
+    return ConsentRecordResponse.model_validate(entry)
+
+
+@router.get(
+    "/me/note-markers/suggestions",
+    response_model=list[str],
+    summary="Return recent custom note markers for chip suggestions",
+)
+async def list_my_note_marker_suggestions(
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> list[str]:
+    return await list_user_marker_suggestions(db, user_id=current_user.id)
 
 
 @router.get(

@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    analysis,
     auth,
     dashboard,
     dev,
@@ -11,6 +12,9 @@ from app.api.v1.endpoints import (
     habits,
     health,
     insights,
+    media,
+    note_markers,
+    note_signals,
     onboarding,
     symptoms,
     sync,
@@ -39,6 +43,24 @@ api_router.include_router(export.router, prefix="/export", tags=["export"])
 
 # Daily entries (M1, Issue #7)
 api_router.include_router(entries.router, prefix="/entries", tags=["entries"])
+api_router.include_router(
+    note_markers.entry_note_markers_router,
+    prefix="/entries",
+    tags=["entries"],
+)
+api_router.include_router(
+    note_signals.entry_note_signals_router,
+    prefix="/entries",
+    tags=["entries"],
+)
+api_router.include_router(
+    note_signals.admin_note_signals_router,
+    prefix="/admin",
+    tags=["admin"],
+)
+
+# Notes in analysis (M3 retroactive)
+api_router.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 
 # Dashboard summary (M3 insight confidence scale)
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
@@ -63,6 +85,9 @@ api_router.include_router(tags.entry_tags_router, prefix="/entries", tags=["tags
 # two-router pattern as tags so the URL hierarchy stays REST-idiomatic.
 api_router.include_router(symptoms.symptoms_router, prefix="/symptoms", tags=["symptoms"])
 api_router.include_router(symptoms.entry_symptoms_router, prefix="/entries", tags=["symptoms"])
+
+# M13 foundation — photo upload with mandatory EXIF strip (Issue #28).
+api_router.include_router(media.router, prefix="/media", tags=["media"])
 
 api_router.include_router(sync.router, prefix="/sync", tags=["sync"])
 

@@ -42,6 +42,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    Text,
     UniqueConstraint,
     func,
 )
@@ -70,6 +71,14 @@ class EntrySource(StrEnum):
     WEARABLE = "wearable"
 
 
+class NoteVisibility(StrEnum):
+    """Per-entry note display/analysis opt-out (notes-in-analysis spec)."""
+
+    FULL = "full"
+    ANALYSIS_ONLY = "analysis_only"
+    HIDDEN = "hidden"
+
+
 class WorkContext(StrEnum):
     """User's working/life context for the day (DESIGN_DOCUMENT.md §2.7)."""
 
@@ -91,6 +100,10 @@ class Entry(Base):
         CheckConstraint(
             "cycle_day IS NULL OR cycle_day BETWEEN 1 AND 35",
             name="ck_entries_cycle_day_range",
+        ),
+        CheckConstraint(
+            "note_visibility IN ('full', 'analysis_only', 'hidden')",
+            name="ck_entries_note_visibility_allowed",
         ),
     )
 
@@ -136,6 +149,18 @@ class Entry(Base):
     # Issue #26 / ADR-0005.
     note_enc: Mapped[str | None] = mapped_column(
         EncryptedString,
+        nullable=True,
+    )
+    note_summary_short: Mapped[str | None] = mapped_column(nullable=True)
+    # Text + CHECK in migration 024 (not a Postgres ENUM — avoid inferred native enum).
+    note_visibility: Mapped[NoteVisibility] = mapped_column(
+        Text,
+        nullable=False,
+        default=NoteVisibility.FULL,
+        server_default=NoteVisibility.FULL.value,
+    )
+    note_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(

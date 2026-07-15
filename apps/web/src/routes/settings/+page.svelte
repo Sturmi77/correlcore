@@ -31,6 +31,15 @@
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
   import { regenerateInsights } from '$lib/api/insights';
+  import {
+    fetchUserConsents,
+    HEALTH_CONNECT_CONSENT_TYPE,
+    HEALTH_CONNECT_CONSENT_VERSION,
+    recordUserConsent,
+    revokeUserConsent,
+    type ConsentListResponse,
+  } from '$lib/api/consents';
+  import { getHealthConnectConsentStatus } from '$lib/healthConnect/consent';
 
   // ---------------------------------------------------------------------------
   // Export
@@ -47,6 +56,65 @@
   let deletePassword = '';
   let deleteBusy = false;
   let deleteError = '';
+  let consents: ConsentListResponse | null = null;
+  let consentsBusy = false;
+  let consentsError = '';
+  let healthConnectGrantChecked = false;
+
+  $: healthConnectConsent = getHealthConnectConsentStatus(consents);
+  $: healthConnectGranted = healthConnectConsent?.granted === true;
+  $: if (!consentsBusy && !healthConnectGranted) {
+    healthConnectGrantChecked = false;
+  }
+
+  function formatConsentTimestamp(iso: string | null | undefined): string {
+    if (!iso) return '';
+    return new Date(iso).toLocaleString($locale ?? undefined);
+  }
+
+  async function loadConsents(): Promise<void> {
+    if ($auth.status !== 'authenticated') return;
+    try {
+      consents = await fetchUserConsents();
+    } catch (err) {
+      consentsError =
+        err instanceof Error ? err.message : $_('settings.privacy.health_connect.error');
+    }
+  }
+
+  async function grantHealthConnectConsent(): Promise<void> {
+    if (!healthConnectGrantChecked) return;
+    consentsBusy = true;
+    consentsError = '';
+    try {
+      await recordUserConsent({
+        type: HEALTH_CONNECT_CONSENT_TYPE,
+        version: HEALTH_CONNECT_CONSENT_VERSION,
+        granted: true,
+      });
+      consents = await fetchUserConsents();
+    } catch (err) {
+      consentsError =
+        err instanceof Error ? err.message : $_('settings.privacy.health_connect.error');
+    } finally {
+      consentsBusy = false;
+    }
+  }
+
+  async function revokeHealthConnectConsent(): Promise<void> {
+    consentsBusy = true;
+    consentsError = '';
+    try {
+      await revokeUserConsent(HEALTH_CONNECT_CONSENT_TYPE);
+      healthConnectGrantChecked = false;
+      consents = await fetchUserConsents();
+    } catch (err) {
+      consentsError =
+        err instanceof Error ? err.message : $_('settings.privacy.health_connect.error');
+    } finally {
+      consentsBusy = false;
+    }
+  }
 
   async function handleDownload(kind: ExportKind): Promise<void> {
     busy = kind;
@@ -75,6 +143,18 @@
     preferencesError = '';
     try {
       preferences = await updateUserPreferences({ analytics_enabled: enabled });
+    } catch (err) {
+      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    } finally {
+      preferencesBusy = false;
+    }
+  }
+
+  async function toggleDigest(enabled: boolean): Promise<void> {
+    preferencesBusy = true;
+    preferencesError = '';
+    try {
+      preferences = await updateUserPreferences({ digest_enabled: enabled });
     } catch (err) {
       preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
     } finally {
@@ -224,6 +304,7 @@
   onMount(() => {
     void checkDevView();
     void loadPreferences();
+    void loadConsents();
   });
 </script>
 
@@ -331,6 +412,18 @@
         />
         <span>{$_('settings.analysis.analytics_enabled')}</span>
       </label>
+      <label class="settings__toggle-label">
+        <input
+          type="checkbox"
+          class="settings__toggle"
+          checked={preferences?.digest_enabled ?? true}
+          disabled={preferencesBusy || preferences?.analytics_enabled === false}
+          data-testid="digest-toggle"
+          on:change={(e) => void toggleDigest(e.currentTarget.checked)}
+        />
+        <span>{$_('settings.analysis.digest_enabled')}</span>
+      </label>
+      <p class="settings__analysis-note">{$_('settings.analysis.digest_hint')}</p>
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
       {/if}
@@ -362,6 +455,58 @@
         <p>{$_('settings.privacy.body')}</p>
       </div>
       <p class="settings__privacy-note">{$_('settings.privacy.policy_body')}</p>
+
+      <div class="settings__consent-block" data-testid="settings-health-connect-consent">
+        <h3 class="settings__consent-heading">{$_('settings.privacy.health_connect.heading')}</h3>
+        <p class="settings__consent-body">{$_('settings.privacy.health_connect.body')}</p>
+        <p class="settings__consent-scope">{$_('settings.privacy.health_connect.scope')}</p>
+        {#if healthConnectGranted && healthConnectConsent?.updated_at}
+          <p class="settings__consent-timestamp" data-testid="health-connect-consent-timestamp">
+            {$_('settings.privacy.health_connect.granted_at', {
+              values: { timestamp: formatConsentTimestamp(healthConnectConsent.updated_at) },
+            })}
+          </p>
+        {/if}
+        {#if !healthConnectGranted}
+          <label class="settings__toggle-label">
+            <input
+              type="checkbox"
+              class="settings__toggle"
+              bind:checked={healthConnectGrantChecked}
+              disabled={consentsBusy}
+              data-testid="health-connect-consent-checkbox"
+            />
+            <span>{$_('settings.privacy.health_connect.grant_label')}</span>
+          </label>
+          <div class="settings__actions">
+            <Button
+              variant="secondary"
+              type="button"
+              data-testid="health-connect-consent-grant"
+              disabled={consentsBusy || !healthConnectGrantChecked}
+              on:click={() => void grantHealthConnectConsent()}
+            >
+              {$_('settings.privacy.health_connect.grant_action')}
+            </Button>
+          </div>
+        {:else}
+          <div class="settings__actions">
+            <Button
+              variant="danger"
+              type="button"
+              data-testid="health-connect-consent-revoke"
+              disabled={consentsBusy}
+              on:click={() => void revokeHealthConnectConsent()}
+            >
+              {$_('settings.privacy.health_connect.revoke_action')}
+            </Button>
+          </div>
+        {/if}
+        {#if consentsError}
+          <InlineAlert variant="error" message={consentsError} />
+        {/if}
+      </div>
+
       <div class="settings__actions">
         <Button href="/privacy" variant="secondary" data-testid="settings-privacy-policy">
           {$_('settings.privacy.policy_link')}
@@ -642,6 +787,33 @@
     margin: 0;
     color: var(--color-text-muted);
     line-height: 1.5;
+  }
+
+  .settings__consent-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-chart);
+    background: var(--color-surface);
+  }
+
+  .settings__consent-heading {
+    margin: 0;
+    font-size: var(--text-base);
+  }
+
+  .settings__consent-body,
+  .settings__consent-scope,
+  .settings__consent-timestamp {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  .settings__consent-timestamp {
+    font-size: var(--text-sm);
   }
 
   .settings__panel {

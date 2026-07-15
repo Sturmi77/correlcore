@@ -7,7 +7,8 @@
 **Milestone closeout:** [`../M5_1_UX_POLISH_PLAN.md`](../M5_1_UX_POLISH_PLAN.md) · [`../M5_1_SPRINT_STATUS.md`](../M5_1_SPRINT_STATUS.md)
 
 > **O-01–O-20:** Implementation complete (PRs #281, #284). Formal M5.1 milestone
-> closeout 2026-07-10. #272 (O-20 password reset) deferred out of M5.1 scope.
+> closeout 2026-07-10. #272 (O-20 password reset) shipped in PR #284; tracker
+> hygiene closed 2026-07-15.
 
 ---
 
@@ -33,7 +34,7 @@
 | O-17 | [#267](https://github.com/Sturmi77/correlcore/issues/267) | E      | Done   | Heatmap drill-down via EntryHistorySheet                                      |
 | O-18 | [#269](https://github.com/Sturmi77/correlcore/issues/269) | F      | Done   | Defer PWA install banner until after first entry                              |
 | O-19 | [#270](https://github.com/Sturmi77/correlcore/issues/270) | F      | Done   | Improve export discoverability in Settings                                    |
-| O-20 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | G      | Open   | Password reset — [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md) |
+| O-20 | [#272](https://github.com/Sturmi77/correlcore/issues/272) | G      | Done   | Password reset — [`O-20_PASSWORD_RESET_PLAN.md`](O-20_PASSWORD_RESET_PLAN.md) |
 
 † O-05 satisfied via Phase-3 O-55 (sparkline removed from Home).
 

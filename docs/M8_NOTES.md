@@ -1,6 +1,6 @@
 # M8 Notes — Sleep & Health Connect
 
-Last updated: 2026-05-29
+Last updated: 2026-07-15
 
 Implementation notes for **M8 — Schlaf & Health Connect** (manual sleep
 fields, wearable import, sleep↔mood insights, cycle HC deep integration).
@@ -26,7 +26,7 @@ phase bands) ships here together with the Android path (M11).
 - Permission request with rationale screen (Schlaf + HR only; no movement profiles)
 - Background sync from Health Connect sleep records
 - `docs/features/HEALTH_CONNECT.md` documents all permissions
-- DSGVO: Art. 9 explicit consent before first import
+- DSGVO: Art. 9 explicit consent before first import — **landed** (`consent_log` migration 025, `POST/GET /api/v1/user/me/consents`, Settings privacy UI, `canUseHealthConnectImport()` gate)
 
 ### Sprint 3 — Sleep×Symptom & Cycle HC
 

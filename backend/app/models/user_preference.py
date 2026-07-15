@@ -32,6 +32,12 @@ class UserPreference(Base):
         default=True,
         server_default="true",
     )
+    digest_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+    )
     onboarding_retro_completed: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

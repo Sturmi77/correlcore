@@ -4,9 +4,12 @@ Every new model module must be imported in this file.
 Alembic's env.py does ``import app.models`` which triggers this file.
 """
 
+from app.models.consent_log import ConsentLog  # noqa: F401
 from app.models.email_verification_token import EmailVerificationToken  # noqa: F401
-from app.models.entry import Entry, EntrySlot, WorkContext  # noqa: F401
+from app.models.entry import Entry, EntrySlot, NoteVisibility, WorkContext  # noqa: F401
+from app.models.entry_note import EntryNoteMarker, EntryNoteSignal, NoteMarkerSource  # noqa: F401
 from app.models.insight import Insight, InsightTier, InsightType  # noqa: F401
+from app.models.insight_digest import InsightDigest  # noqa: F401
 from app.models.password_reset_token import PasswordResetToken  # noqa: F401
 from app.models.symptom import (  # noqa: F401
     INTENSITY_MAX,
@@ -39,12 +42,18 @@ __all__ = [
     "INTENSITY_MAX",
     "INTENSITY_MIN",
     "STANDARD_SYMPTOM_KEYS",
+    "ConsentLog",
     "EmailVerificationToken",
     "Entry",
+    "EntryNoteMarker",
+    "EntryNoteSignal",
     "EntrySlot",
+    "NoteMarkerSource",
+    "NoteVisibility",
     "EntrySymptom",
     "EntryTag",
     "Insight",
+    "InsightDigest",
     "InsightTier",
     "InsightType",
     "PasswordResetToken",

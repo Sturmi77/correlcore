@@ -37,6 +37,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.entry import Entry
 from app.models.symptom import EntrySymptom, Symptom
 from app.schemas.symptom import SymptomCreate, SymptomEntry, SymptomUpdate
+from app.services.slug_hmac import hmac_custom_symptom_slug
 
 logger = logging.getLogger(__name__)
 
@@ -156,20 +157,26 @@ async def create_custom_symptom(
         SymptomConflictError: the user already owns a symptom with this
             slug, *or* the slug clashes with a curated default.
     """
+    semantic_slug = payload.slug
+
     # Pre-check against defaults: a custom symptom must not shadow a
     # curated slug (frontend disambiguates by slug).
     default_clash = await db.execute(
-        select(Symptom).where(Symptom.is_default.is_(True), Symptom.slug == payload.slug)
+        select(Symptom).where(Symptom.is_default.is_(True), Symptom.slug == semantic_slug)
     )
     if default_clash.scalar_one_or_none() is not None:
         raise SymptomConflictError("slug clashes with a default symptom")
+
+    # ADR-0039 / Issue #62: persist an HMAC slug so semantic hints do not
+    # leak in DB/backups; clients keep sending the semantic slug on create.
+    storage_slug = hmac_custom_symptom_slug(user_id=user_id, semantic_slug=semantic_slug)
 
     # Issue #26: custom symptom names are Art.-9-relevant. Store the
     # ciphertext under the user's DEK in ``name_enc`` and leave ``name``
     # NULL (the CHECK constraint enforces the polymorphism).
     symptom = Symptom(
         user_id=user_id,
-        slug=payload.slug,
+        slug=storage_slug,
         icon=payload.icon,
         is_default=False,
     )

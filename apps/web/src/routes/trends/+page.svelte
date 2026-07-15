@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
+  import { hasNote } from '$lib/utils/noteSummary';
   import {
     fetchEntryStreak,
     fetchSymptomHeatmap,
@@ -82,6 +83,7 @@
   let habitTags: TagResponse[] = [];
   let allTags: TagResponse[] = [];
   let cycleEntries: EntryResponse[] = [];
+  let trendEntries: EntryResponse[] = [];
   let workContextHeatmap: WorkContextHeatmapResponse | null = null;
   let metrics: Record<MetricKey, boolean> = {
     mood_avg: true,
@@ -110,6 +112,9 @@
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
 
   $: range = $analysisRange;
+  $: noteEntryDates = trendEntries
+    .filter((entry) => hasNote(entry))
+    .map((entry) => entry.entry_date);
 
   function dateWindow(
     activeRange: TimeseriesRange,
@@ -150,6 +155,7 @@
         habitTags = fixture.habitTags;
         allTags = fixture.habitTags;
         cycleEntries = fixture.entries.filter((entry) => entry.cycle_day !== null);
+        trendEntries = fixture.entries;
         workContextHeatmap = buildWorkContextHeatmap(fixture.entries, dateWindow(activeRange));
         return;
       }
@@ -191,6 +197,7 @@
       allTags = nextTags;
       habitTags = nextTags.filter((tag) => tag.habit_type !== 'none');
       cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
+      trendEntries = nextEntries;
       workContextHeatmap = buildWorkContextHeatmap(nextEntries, { start_date, end_date });
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
@@ -261,6 +268,7 @@
               name: symptom.name,
               intensity: symptom.days.find((day) => day.date === date)?.max_intensity ?? 1,
             })),
+            markers: entry.note_markers ?? [],
           }));
         return;
       }
@@ -281,6 +289,7 @@
               name: symptomNames.get(symptom.symptom_id) ?? symptom.symptom_id,
               intensity: symptom.intensity,
             })),
+            markers: entry.note_markers ?? [],
           };
         })
       );
@@ -446,6 +455,7 @@
             compactChrome={compactTrends}
             bind:mode={compareMode}
             bind:sortMode={compareSortMode}
+            noteDates={noteEntryDates}
             on:selectDate={(event) => void openHistory(event.detail.date)}
             on:layerChange={(event) => setCompareLayers(event.detail)}
           />

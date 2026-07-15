@@ -7,6 +7,8 @@
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import IconRender from '$lib/components/common/IconRender.svelte';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
+  import NoteMarkerChips from '$lib/components/entries/NoteMarkerChips.svelte';
+  import NoteSignalsList from '$lib/components/entries/NoteSignalsList.svelte';
   import { listTagsForEntry, type TagResponse } from '$lib/api/tags';
   import {
     listSymptomsForEntry,
@@ -27,14 +29,21 @@
   let entries: EntryResponse[] = [];
   let decorations: Record<string, EntryDecorations> = {};
   let symptomLookup: Record<string, SymptomResponse> = {};
+  let notesOnly = false;
 
   $: date = $page.params.date ?? '';
   $: selectedTagId = $page.url.searchParams.get('tag_id');
   $: validDate = /^\d{4}-\d{2}-\d{2}$/.test(date);
   $: editableDate = validDate && isEntryDateEditable(new Date(), date);
-  $: visibleEntries = selectedTagId
-    ? entries.filter((entry) => decorations[entry.id]?.tags.some((tag) => tag.id === selectedTagId))
-    : entries;
+  $: visibleEntries = (
+    selectedTagId
+      ? entries.filter((entry) =>
+          decorations[entry.id]?.tags.some((tag) => tag.id === selectedTagId)
+        )
+      : entries
+  ).filter(
+    (entry) => !notesOnly || Boolean(entry.note?.trim() || entry.note_summary_short?.trim())
+  );
 
   const MOOD_LABELS: Record<number, string> = {
     1: 'entry.mood_terrible',
@@ -123,6 +132,11 @@
     {/if}
   </section>
 
+  <label class="day-entries__filter">
+    <input type="checkbox" bind:checked={notesOnly} data-testid="day-entries-notes-only" />
+    <span>{$_('day_entries.filter_notes_only')}</span>
+  </label>
+
   {#if validDate && !editableDate}
     <p class="day-entries__read-only" role="status" data-testid="day-entry-read-only">
       {$_('day_entries.read_only')}
@@ -181,6 +195,12 @@
 
           {#if entry.note}
             <p class="day-entries__note">{entry.note}</p>
+          {/if}
+          {#if entry.note_markers && entry.note_markers.length > 0}
+            <NoteMarkerChips markers={entry.note_markers} readonly />
+          {/if}
+          {#if entry.note_signals && entry.note_signals.length > 0}
+            <NoteSignalsList signals={entry.note_signals} />
           {/if}
 
           {#if deco?.tags.length}

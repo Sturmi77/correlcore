@@ -36,6 +36,7 @@ describe('EntryHistorySheet', () => {
             entry,
             tags: ['Focus'],
             symptoms: [{ name: 'Headache', intensity: 2 }],
+            markers: [],
           },
         ],
       },

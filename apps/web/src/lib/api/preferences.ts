@@ -3,6 +3,7 @@ import { api } from './client';
 export interface UserPreferencesResponse {
   user_id: string;
   analytics_enabled: boolean;
+  digest_enabled: boolean;
   onboarding_retro_completed: boolean;
   onboarding_profile_completed: boolean;
   dismissed_insight_keys: string[];
@@ -14,6 +15,7 @@ export interface UserPreferencesResponse {
 
 export interface UserPreferencesUpdate {
   analytics_enabled?: boolean;
+  digest_enabled?: boolean;
   onboarding_retro_completed?: boolean;
   onboarding_profile_completed?: boolean;
   dismissed_insight_keys?: string[];
