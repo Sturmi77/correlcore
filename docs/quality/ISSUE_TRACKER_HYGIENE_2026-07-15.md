@@ -1,8 +1,21 @@
 # Issue Tracker Hygiene — 2026-07-15
 
-Operator close list for issues that are **already shipped on `main`** but still
-open on GitHub. The cloud-agent token cannot call `closeIssue` (HTTP 403);
-maintainers should close these with the comments below.
+Operator close list for issues that are **already shipped on `main`** or
+implemented in PR [#393](https://github.com/Sturmi77/correlcore/pull/393).
+The cloud-agent token (`cursor[bot]`) cannot call `closeIssue` (HTTP 403 /
+no triage permission).
+
+### Close immediately (repo owner)
+
+```bash
+for n in 29 251 252 254 260 261 262 263 264 265 266 267 268 269 270 271 272 273 \
+         258 194 195 196 197 198 199 201 202 27 31 147 148 149 62 28; do
+  gh issue close "$n" --repo Sturmi77/correlcore \
+    --comment "Closed as part of open-issues implementation (PR #393)."
+done
+```
+
+Alternatively merge PR #393 — its body contains matching `Closes #…` keywords.
 
 ## Close now (18)
 
