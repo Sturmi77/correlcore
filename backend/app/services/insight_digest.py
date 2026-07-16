@@ -95,17 +95,7 @@ def build_weekly_digest(
     if len(ranked) < DIGEST_TOP_N:
         return None
 
-    items = tuple(
-        DigestInsightItem(
-            id=insight.id,
-            insight_type=insight.insight_type.value,
-            metric=insight.metric,
-            effect_size=insight.effect_size,
-            confidence=insight.confidence,
-            statement=insight.statement_enc,
-        )
-        for insight in ranked
-    )
+    items = tuple(_insight_to_digest_item(insight) for insight in ranked)
     return WeeklyDigest(week_start=week_start, week_end=week_end, insights=items)
 
 
@@ -171,15 +161,82 @@ async def load_recent_insights(
     return list(result.scalars().all())
 
 
-async def get_latest_weekly_digest(
+def _insight_to_digest_item(insight: Insight) -> DigestInsightItem:
+    return DigestInsightItem(
+        id=insight.id,
+        insight_type=insight.insight_type.value,
+        metric=insight.metric,
+        effect_size=insight.effect_size,
+        confidence=insight.confidence,
+        statement=insight.statement_enc,
+    )
+
+
+async def load_latest_stored_digest(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> InsightDigest | None:
+    """Return the newest persisted digest row for ``user_id``, if any."""
+
+    result = await db.execute(
+        select(InsightDigest)
+        .where(InsightDigest.user_id == user_id)
+        .order_by(InsightDigest.generated_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def hydrate_stored_digest(
+    db: AsyncSession,
+    *,
+    row: InsightDigest,
+) -> WeeklyDigest | None:
+    """Rebuild a :class:`WeeklyDigest` from a stored row + live insight rows.
+
+    Returns ``None`` when insight IDs are missing/deleted so callers can fall
+    back to a fresh compute.
+    """
+
+    try:
+        ordered_ids = [uuid.UUID(str(raw)) for raw in row.insight_ids]
+    except (TypeError, ValueError):
+        return None
+    if len(ordered_ids) < DIGEST_TOP_N:
+        return None
+
+    result = await db.execute(
+        select(Insight).where(
+            Insight.user_id == row.user_id,
+            Insight.id.in_(ordered_ids),
+        )
+    )
+    by_id = {insight.id: insight for insight in result.scalars().all()}
+    items: list[DigestInsightItem] = []
+    for insight_id in ordered_ids:
+        insight = by_id.get(insight_id)
+        if insight is None:
+            return None
+        items.append(_insight_to_digest_item(insight))
+
+    return WeeklyDigest(
+        week_start=row.week_start,
+        week_end=row.week_end,
+        insights=tuple(items),
+    )
+
+
+async def compute_weekly_digest_for_user(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
     as_of: datetime | None = None,
+    require_enabled: bool = True,
 ) -> WeeklyDigest:
-    """Compute the latest weekly digest for one user."""
+    """Always recompute a digest from recent insights (worker / fallback path)."""
 
-    if not await _digest_enabled(db, user_id=user_id):
+    if require_enabled and not await _digest_enabled(db, user_id=user_id):
         raise DigestDisabledError(user_id)
 
     week_start, week_end = digest_window(as_of)
@@ -195,13 +252,42 @@ async def get_latest_weekly_digest(
     return digest
 
 
+async def get_latest_weekly_digest(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    as_of: datetime | None = None,
+) -> WeeklyDigest:
+    """Return the latest weekly digest for one user.
+
+    Prefers a persisted ``insight_digests`` snapshot (hydrated from insight
+    rows). Falls back to recomputing when nothing is stored or hydration fails.
+    """
+
+    if not await _digest_enabled(db, user_id=user_id):
+        raise DigestDisabledError(user_id)
+
+    stored = await load_latest_stored_digest(db, user_id=user_id)
+    if stored is not None:
+        hydrated = await hydrate_stored_digest(db, row=stored)
+        if hydrated is not None:
+            return hydrated
+
+    return await compute_weekly_digest_for_user(
+        db,
+        user_id=user_id,
+        as_of=as_of,
+        require_enabled=False,
+    )
+
+
 async def store_weekly_digest(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
     digest: WeeklyDigest,
 ) -> InsightDigest:
-    """Persist a digest snapshot for push delivery."""
+    """Persist a digest snapshot for later GET (and future push delivery)."""
 
     push = build_push_payload(digest)
     row = InsightDigest(

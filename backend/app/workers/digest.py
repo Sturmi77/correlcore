@@ -29,7 +29,7 @@ from app.models.user_preference import UserPreference
 from app.models.worker_run import WorkerJobKind, WorkerRunStatus, WorkerTriggerSource
 from app.services.insight_digest import (
     DigestNotAvailableError,
-    get_latest_weekly_digest,
+    compute_weekly_digest_for_user,
     store_weekly_digest,
 )
 from app.services.worker_run_service import finish_run, start_run
@@ -109,7 +109,13 @@ async def run_digest_once(
                         skipped += 1
                         continue
                     dek_token = set_current_user_dek(user_id, unwrap_dek(wrapped_dek))
-                    digest = await get_latest_weekly_digest(session, user_id=user_id, as_of=current)
+                    # Always recompute on worker runs (do not prefer a prior store).
+                    digest = await compute_weekly_digest_for_user(
+                        session,
+                        user_id=user_id,
+                        as_of=current,
+                        require_enabled=False,
+                    )
                     await store_weekly_digest(session, user_id=user_id, digest=digest)
                     await session.commit()
                     processed += 1
