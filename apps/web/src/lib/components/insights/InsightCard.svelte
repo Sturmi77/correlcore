@@ -12,9 +12,8 @@
    *
    * Events
    * ------
-   * retry        Dispatched when the user clicks the error-state retry button
-   * dismiss      Dispatched when the user clicks the dismiss button
-   * exportCsv    Dispatched when the user clicks "Export CSV" (stub, #169)
+   * retry         Dispatched when the user clicks the error-state retry button
+   * dismiss       Dispatched when the user clicks the dismiss button (parent must wire)
    * exploreEvents Dispatched from an explicitly enabled, parent-wired affordance
    */
   import { createEventDispatcher } from 'svelte';
@@ -41,11 +40,12 @@
   export let showConfidenceSummary = false;
   /** Hide per-card phase badge when page-level maturity chrome is shown (O-01). */
   export let showMaturityBadge = true;
+  /** When false, hide the dismiss control (e.g. digest preview cards). */
+  export let dismissable = true;
 
   const dispatch = createEventDispatcher<{
     retry: void;
     dismiss: { id: string };
-    exportCsv: { id: string };
     exploreEvents: { id: string };
     selectDate: { date: string };
   }>();
@@ -264,14 +264,16 @@
       <p class="insight-card__statement" data-testid="insight-card-statement">
         {insight.statement ?? $_('home.insight.empty_statement')}
       </p>
-      <button
-        class="insight-card__dismiss"
-        aria-label={$_('insights.card.dismiss_aria', { values: { title } })}
-        data-testid="insight-card-dismiss"
-        on:click={() => dispatch('dismiss', { id: insight.id })}
-      >
-        ✕
-      </button>
+      {#if dismissable}
+        <button
+          class="insight-card__dismiss"
+          aria-label={$_('insights.card.dismiss_aria', { values: { title } })}
+          data-testid="insight-card-dismiss"
+          on:click={() => dispatch('dismiss', { id: insight.id })}
+        >
+          ✕
+        </button>
+      {/if}
     </header>
 
     <p class="insight-card__caption" data-testid="insight-card-title">
@@ -413,14 +415,6 @@
             <dd>{insight.sample_n}</dd>
           </div>
         </dl>
-
-        <button
-          class="insight-card__export-btn"
-          data-testid="insight-card-export-csv"
-          on:click={() => dispatch('exportCsv', { id: insight.id })}
-        >
-          {$_('insights.card.export_csv')}
-        </button>
       </section>
     {/if}
   </article>
@@ -637,21 +631,6 @@
     color: var(--color-text);
     font-variant-numeric: tabular-nums;
     margin: 0;
-  }
-  .insight-card__export-btn {
-    align-self: flex-start;
-    font-size: var(--text-xs, 0.75rem);
-    color: var(--color-text-muted);
-    border: 1px solid oklch(from var(--color-text) l c h / 0.15);
-    border-radius: var(--radius-sm, 0.375rem);
-    padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
-    transition:
-      color var(--transition-interactive),
-      border-color var(--transition-interactive);
-  }
-  .insight-card__export-btn:hover {
-    color: var(--color-text);
-    border-color: oklch(from var(--color-text) l c h / 0.3);
   }
   /* Sprint 3 (ADR-0035 §6) — phase-gated explore-events affordance. */
   .insight-card__explore {

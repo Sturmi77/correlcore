@@ -16,7 +16,7 @@
   import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
-  import { insightStore } from '$lib/stores/insights';
+  import { dismissInsight, insightStore } from '$lib/stores/insights';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
   import { ApiError } from '$lib/api/client';
@@ -498,6 +498,11 @@
     }
   }
 
+  async function handleDismissInsight(id: string): Promise<void> {
+    insights = insights.filter((insight) => insight.id !== id);
+    await dismissInsight(id);
+  }
+
   async function loadInsights(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
     loading = true;
@@ -581,6 +586,10 @@
           if (typeof slug === 'string' && analyticsExcludedSlugs.has(slug)) return false;
           return true;
         });
+      }
+      const dismissedKeys = new Set(userPreferences?.dismissed_insight_keys ?? []);
+      if (dismissedKeys.size > 0) {
+        insights = insights.filter((insight) => !dismissedKeys.has(insight.id));
       }
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
@@ -799,6 +808,7 @@
         {inactiveTagIds}
         showMilestone={showMaturityMilestone}
         {enableExploreEvents}
+        on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
         on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
         on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
       />
@@ -838,6 +848,7 @@
               showMaturityBadge={false}
               on:retry={loadInsights}
               on:regenerate={() => void handleRegenerateInsights()}
+              on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
               on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
               on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
             />
@@ -861,6 +872,7 @@
             showMaturityBadge={!pageMaturityChrome}
             on:retry={loadInsights}
             on:regenerate={() => void handleRegenerateInsights()}
+            on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
             on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
             on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
           />

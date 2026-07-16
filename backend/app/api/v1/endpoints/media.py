@@ -1,7 +1,9 @@
-"""Photo media endpoints — M13 foundation (Issue #28).
+"""Photo media endpoints — M13 foundation stub (Issue #28).
 
 Accepts authenticated uploads, strips EXIF server-side, and returns metadata.
 Object storage (MinIO) is intentionally a no-op until M13 wires a real client.
+Product status: deferred — see ``docs/M13_NOTES.md``. Do not treat
+``stored=false`` responses as a shipped gallery feature.
 """
 
 from __future__ import annotations

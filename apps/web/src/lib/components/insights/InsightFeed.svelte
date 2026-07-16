@@ -62,6 +62,7 @@
   const dispatch = createEventDispatcher<{
     retry: void;
     regenerate: void;
+    dismiss: { id: string };
     exploreEvents: { id: string };
     selectDate: { date: string };
   }>();
@@ -206,6 +207,7 @@
             {showMaturityBadge}
             {enableExploreEvents}
             featured={index === 0}
+            on:dismiss={(event) => dispatch('dismiss', event.detail)}
             on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
             on:selectDate={(event) => dispatch('selectDate', event.detail)}
           />

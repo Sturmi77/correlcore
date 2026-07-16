@@ -16,9 +16,9 @@
  *                        a divergent token + opacity, theme-agnostic.
  * - resolveDivergentToken Token resolver used by the custom-SVG
  *                        Unified-Strip chart in Sprint 2.
- * - lazyLoadLayerChart    Async loader stub; will return the actual
- *                        LayerChart module once the dependency is
- *                        added (Sprint 2 follow-up commit).
+ * - lazyLoadLayerChart    Async loader stub (returns null until LayerChart
+ *                        is adopted). Completion plan:
+ *                        docs/frontend/LAYER_CHART_COMPLETION_PLAN.md
  *
  * Hard rule: no chart-library symbol may be re-exported from anywhere
  * outside this folder. See docs/adr/0035-temporal-correspondence-pattern.md.

@@ -10,7 +10,8 @@
     "history": "History",
     "trends": "Trends",
     "insights": "Insights",
-    "settings": "Settings"
+    "settings": "Settings",
+    "back": "← Back"
   },
   "a11y": {
     "skip_to_content": "Skip to content",
@@ -608,7 +609,8 @@
       "regenerate_disabled": "Enable analysis above to refresh insights.",
       "regenerate_error": "Could not refresh insights.",
       "digest_enabled": "Weekly insight digest",
-      "digest_hint": "Summarizes your top three insights each week (Sunday)."
+      "digest_hint": "Opt-in for a Sunday summary of your top insights. Preview: Insights → Digest. Scheduled delivery ships when the Digest completion plan lands.",
+      "digest_preview_link": "Open digest preview"
     },
     "privacy": {
       "heading": "Privacy & account data",
@@ -626,14 +628,15 @@
       "policy_link": "Privacy policy",
       "policy_body": "Read how this installation processes your health data and which rights you have.",
       "health_connect": {
-        "heading": "Health Connect (Android)",
-        "body": "Optional import of sleep duration and resting heart rate from Health Connect. This is special-category health data under GDPR Art. 9 — grant consent only if you want wearable import on Android.",
-        "scope": "Only sleep and heart-rate summaries are imported. Movement profiles, GPS tracks, and other activity data are not read.",
-        "grant_label": "I consent to Health Connect import of sleep and heart-rate data for my personal tracking.",
+        "heading": "Health Connect (Android) — planned M8/M11",
+        "body": "Consent is stored now so Android import can start later. No Health Connect sync runs in the current web release — wearable import ships with M8 (manual sleep + HC) and M11 (Capacitor Android).",
+        "scope": "When import lands: only sleep and heart-rate summaries. Movement profiles, GPS tracks, and other activity data will not be read.",
+        "grant_label": "I consent to future Health Connect import of sleep and heart-rate data for my personal tracking.",
         "grant_action": "Grant consent",
         "revoke_action": "Revoke consent",
         "granted_at": "Consent granted on {timestamp}.",
-        "error": "Could not update Health Connect consent."
+        "error": "Could not update Health Connect consent.",
+        "deferred_note": "Import is not available yet. Granting consent only records your preference for the upcoming Android path."
       }
     },
     "appearance": {

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # App
     APP_ENV: str = "development"  # development | staging | production
-    APP_VERSION: str = "0.0.1"
+    APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     DEV_VIEW_ENABLED: bool = False
     DEV_DB_BACKUP_DIR: str = "/tmp/correlcore-backups"

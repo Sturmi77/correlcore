@@ -424,6 +424,11 @@
         <span>{$_('settings.analysis.digest_enabled')}</span>
       </label>
       <p class="settings__analysis-note">{$_('settings.analysis.digest_hint')}</p>
+      <p class="settings__analysis-note">
+        <a href="/insights/digest" data-testid="digest-preview-link">
+          {$_('settings.analysis.digest_preview_link')}
+        </a>
+      </p>
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
       {/if}
@@ -460,6 +465,9 @@
         <h3 class="settings__consent-heading">{$_('settings.privacy.health_connect.heading')}</h3>
         <p class="settings__consent-body">{$_('settings.privacy.health_connect.body')}</p>
         <p class="settings__consent-scope">{$_('settings.privacy.health_connect.scope')}</p>
+        <p class="settings__consent-scope" data-testid="health-connect-deferred-note">
+          {$_('settings.privacy.health_connect.deferred_note')}
+        </p>
         {#if healthConnectGranted && healthConnectConsent?.updated_at}
           <p class="settings__consent-timestamp" data-testid="health-connect-consent-timestamp">
             {$_('settings.privacy.health_connect.granted_at', {

@@ -10,7 +10,8 @@
     "history": "Verlauf",
     "trends": "Trends",
     "insights": "Erkenntnisse",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "back": "← Zurueck"
   },
   "a11y": {
     "skip_to_content": "Zum Inhalt springen",
@@ -608,7 +609,8 @@
       "regenerate_disabled": "Aktiviere die Analyse oben, um Erkenntnisse zu aktualisieren.",
       "regenerate_error": "Erkenntnisse konnten nicht aktualisiert werden.",
       "digest_enabled": "Woechentliche Erkenntnis-Zusammenfassung",
-      "digest_hint": "Fasst sonntags deine drei staerksten Erkenntnisse der Woche zusammen."
+      "digest_hint": "Opt-in fuer eine Sonntags-Zusammenfassung. Vorschau: Erkenntnisse → Digest. Der geplante Versand kommt mit dem Digest-Fertigstellungsplan.",
+      "digest_preview_link": "Digest-Vorschau oeffnen"
     },
     "privacy": {
       "heading": "Datenschutz & Kontodaten",
@@ -626,14 +628,15 @@
       "policy_link": "Datenschutzerklaerung",
       "policy_body": "Lies, wie diese Installation deine Gesundheitsdaten verarbeitet und welche Rechte du hast.",
       "health_connect": {
-        "heading": "Health Connect (Android)",
-        "body": "Optionaler Import von Schlafdauer und Ruhepuls aus Health Connect. Das sind besondere Gesundheitsdaten nach DSGVO Art. 9 — erteile die Einwilligung nur, wenn du Wearable-Import auf Android moechtest.",
-        "scope": "Es werden nur Schlaf- und Herzfrequenz-Zusammenfassungen importiert. Bewegungsprofile, GPS-Strecken und andere Aktivitaetsdaten werden nicht gelesen.",
-        "grant_label": "Ich willige in den Health-Connect-Import von Schlaf- und Herzfrequenzdaten fuer mein persoenliches Tracking ein.",
+        "heading": "Health Connect (Android) — geplant M8/M11",
+        "body": "Die Einwilligung wird jetzt gespeichert, damit der Android-Import spaeter starten kann. In der aktuellen Web-Version laeuft kein Health-Connect-Sync — Wearable-Import kommt mit M8 (Schlaf + HC) und M11 (Capacitor Android).",
+        "scope": "Wenn der Import kommt: nur Schlaf- und Herzfrequenz-Zusammenfassungen. Bewegungsprofile, GPS-Strecken und andere Aktivitaetsdaten werden nicht gelesen.",
+        "grant_label": "Ich willige in den kuenftigen Health-Connect-Import von Schlaf- und Herzfrequenzdaten fuer mein persoenliches Tracking ein.",
         "grant_action": "Einwilligung erteilen",
         "revoke_action": "Einwilligung widerrufen",
         "granted_at": "Einwilligung erteilt am {timestamp}.",
-        "error": "Health-Connect-Einwilligung konnte nicht aktualisiert werden."
+        "error": "Health-Connect-Einwilligung konnte nicht aktualisiert werden.",
+        "deferred_note": "Import ist noch nicht verfuegbar. Die Einwilligung speichert nur deine Praeferenz fuer den kommenden Android-Pfad."
       }
     },
     "appearance": {

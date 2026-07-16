@@ -77,7 +77,7 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **Charts**         | Custom SVG components                                                                    | No external framework, JS budget maintained, token-compliant                                          |
 | **Database**       | PostgreSQL 16 + pgvector                                                                 | Row-level security for multi-user, vector for insights                                                |
 | **Cache / Queue**  | Redis 7                                                                                  | Sessions, rate limiting, sync queue                                                                   |
-| **Object Storage** | MinIO                                                                                    | Selfhost-compatible S3 foundation; photo upload and EXIF strip are M13 scope                          |
+| **Object Storage** | MinIO (**M13**)                                                                          | Not in current compose; EXIF-strip API stub only — see [`docs/M13_NOTES.md`](docs/M13_NOTES.md)       |
 | **Reverse Proxy**  | Traefik v3                                                                               | Automatic TLS, Docker label routing                                                                   |
 | **Auth**           | Native JWT phase 1, Authentik from M12                                                   | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                 |
 | **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                    | Push/pull LWW merge, conflict log, local-first entry path; default off until user enables in Settings |
@@ -186,7 +186,10 @@ install guide, user guide, API overview, privacy. Source: [`docs-site/`](docs-si
 | [M5.1 Visual QA](docs/quality/M5_1_VISUAL_QA.md)                      | Tag co-occurrence heatmap closeout (2026-05-29)                                         |
 | [M5.1 Sprint Status](docs/M5_1_SPRINT_STATUS.md)                      | UX polish & flow consolidation closeout (2026-07-10)                                    |
 | [M5.1 UX Visual QA](docs/quality/M5_1_UX_VISUAL_QA.md)                | Onboarding, Home, Insights, Habits, PWA flow sign-off                                   |
-| [M13 Notes](docs/M13_NOTES.md)                                        | Photo & media milestone scope (deferred post-M12)                                       |
+| [M13 Notes](docs/M13_NOTES.md)                                        | Photo & media milestone (stub API only until M13)                                       |
+| [Weekly Digest plan](docs/features/WEEKLY_DIGEST_COMPLETION_PLAN.md)  | Finish scheduled Sunday digest                                                          |
+| [LayerChart plan](docs/frontend/LAYER_CHART_COMPLETION_PLAN.md)       | Optional chart-library adoption behind adapter                                          |
+| [Open decisions](docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md)| What still needs a product/ops decision                                               |
 | [PWA](docs/features/PWA.md)                                           | Install banner, service worker, offline fallback                                        |
 | [Cycle tracking](docs/features/cycle-tracking.md)                     | Neutral `cycle_day` domain scope                                                        |
 | [COLOR_SCHEME_CONCEPT](docs/frontend/COLOR_SCHEME_CONCEPT.md)         | Token framework and contrast rationale (M3.7)                                           |

@@ -1,10 +1,25 @@
 # M8 Notes — Sleep & Health Connect
 
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
 Implementation notes for **M8 — Schlaf & Health Connect** (manual sleep
 fields, wearable import, sleep↔mood insights, cycle HC deep integration).
 Milestone resequencing: [`M7_M8_MILESTONE_SWAP.md`](M7_M8_MILESTONE_SWAP.md).
+
+## Deferral status (post-v1.0)
+
+**Health Connect import is not available in the current web release.** What
+already shipped is the **consent foundation** only:
+
+- `consent_log` + `POST/GET /api/v1/user/me/consents`
+- Settings privacy UI (copy states M8/M11; no sync runs)
+- `canUseHealthConnectImport()` gate helper (unused by an import path yet)
+
+Do **not** treat the Settings Health Connect section as a finished wearable
+feature. Manual sleep fields, HC permission UX, background sync, and cycle HC
+remain **M8**; Capacitor/Play declaration remains **M11**.
+
+Open decisions tracker: [`docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md`](quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md).
 
 ## Context
 
@@ -26,7 +41,9 @@ phase bands) ships here together with the Android path (M11).
 - Permission request with rationale screen (Schlaf + HR only; no movement profiles)
 - Background sync from Health Connect sleep records
 - `docs/features/HEALTH_CONNECT.md` documents all permissions
-- DSGVO: Art. 9 explicit consent before first import — **landed** (`consent_log` migration 025, `POST/GET /api/v1/user/me/consents`, Settings privacy UI, `canUseHealthConnectImport()` gate)
+- DSGVO: Art. 9 explicit consent before first import — **consent foundation landed**
+  (`consent_log` migration 025, consents API, Settings UI). **Import/sync not
+  landed** — blocked on M8 Sprint 2 + M11 Android shell.
 
 ### Sprint 3 — Sleep×Symptom & Cycle HC
 
