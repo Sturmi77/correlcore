@@ -609,7 +609,7 @@
       "regenerate_disabled": "Enable analysis above to refresh insights.",
       "regenerate_error": "Could not refresh insights.",
       "digest_enabled": "Weekly insight digest",
-      "digest_hint": "Opt-in for a Sunday summary of your top insights. Preview: Insights → Digest. Scheduled delivery ships when the Digest completion plan lands.",
+      "digest_hint": "Opt-in for an in-app Sunday summary of your top insights. Enable the digest worker profile (COMPOSE_PROFILES=…,digest) on your instance to schedule generation.",
       "digest_preview_link": "Open digest preview"
     },
     "privacy": {
@@ -1273,7 +1273,7 @@
       "email_label": "Email address",
       "email_placeholder": "you@example.com",
       "password_label": "Password",
-      "password_placeholder": "At least 8 characters",
+      "password_placeholder": "At least 12 characters",
       "display_name_label": "Display name (optional)",
       "display_name_placeholder": "What should we call you?",
       "submit_busy": "Please wait\u2026",
@@ -1296,7 +1296,7 @@
       "submit": "Sign up",
       "have_account": "Already have an account?",
       "login_link": "Sign in here",
-      "password_hint": "At least 8 characters, one letter and one digit.",
+      "password_hint": "At least 12 characters, one letter and one digit.",
       "strength_empty": "",
       "strength_very_weak": "Very weak",
       "strength_weak": "Weak",

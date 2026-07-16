@@ -142,11 +142,12 @@ def digest_window(as_of: datetime | None = None) -> tuple[date_type, date_type]:
 
 
 async def _digest_enabled(db: AsyncSession, *, user_id: uuid.UUID) -> bool:
+    """Opt-in only: missing preference row or explicit false → disabled."""
     result = await db.execute(
         select(UserPreference.digest_enabled).where(UserPreference.user_id == user_id)
     )
     enabled = result.scalar_one_or_none()
-    return enabled is not False
+    return enabled is True
 
 
 async def load_recent_insights(

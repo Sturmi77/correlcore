@@ -1,5 +1,14 @@
 # CorrelCore — API-Richtlinien & Endpunkte
 
+> **Status: Historical / superseded (2026-07-16)**  
+> Canonical sources for operators and integrators:
+>
+> 1. Runtime **OpenAPI** from a running API (`/openapi.json`; Swagger UI when `DEBUG=true`)
+> 2. English docs-site overview: [`docs-site/docs/api/overview.md`](../docs-site/docs/api/overview.md)
+>
+> This German file is kept for historical design notes. Prefer OpenAPI + the
+> docs-site when they disagree with the tables below.
+
 Dieses Dokument leitet sich aus [`DESIGN_DOCUMENT.md`](DESIGN_DOCUMENT.md) ab.
 
 ---

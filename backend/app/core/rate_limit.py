@@ -46,4 +46,12 @@ def _rate_limit_storage_uri() -> str:
 
 
 #: Process-wide Limiter instance. Do **not** create a second one.
-limiter = Limiter(key_func=rate_limit_key, storage_uri=_rate_limit_storage_uri())
+#:
+#: ``in_memory_fallback_enabled`` keeps per-process limits if Redis blips
+#: (availability). ``swallow_errors`` stays False so unexpected storage
+#: failures still surface rather than silently fail-open without limits.
+limiter = Limiter(
+    key_func=rate_limit_key,
+    storage_uri=_rate_limit_storage_uri(),
+    in_memory_fallback_enabled=True,
+)

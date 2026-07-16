@@ -24,6 +24,7 @@ from app.services.auth_service import (
     reset_password,
 )
 from tests.conftest import (
+    NEW_TEST_PASSWORD,
     VALID_ACCESS_TOKEN,
     VALID_REFRESH_TOKEN,
     make_db_session_with_results,
@@ -59,7 +60,7 @@ async def test_request_password_reset_inactive_user_skipped() -> None:
 async def test_reset_password_unknown_token_raises_generic() -> None:
     db = make_db_session_with_results(None)
     with pytest.raises(PasswordResetError, match="Invalid or expired"):
-        await reset_password(db, "unknown-token", "NewPass1")
+        await reset_password(db, "unknown-token", NEW_TEST_PASSWORD)
 
 
 @pytest.mark.asyncio
@@ -68,7 +69,7 @@ async def test_reset_password_expired_token_raises_generic() -> None:
     record, plaintext = make_password_reset_token(user, expires_in=timedelta(hours=-1))
     db = make_db_session_with_results(record)
     with pytest.raises(PasswordResetError, match="Invalid or expired"):
-        await reset_password(db, plaintext, "NewPass1")
+        await reset_password(db, plaintext, NEW_TEST_PASSWORD)
 
 
 @pytest.mark.asyncio
@@ -77,7 +78,7 @@ async def test_reset_password_used_token_raises_generic() -> None:
     record, plaintext = make_password_reset_token(user, used=True)
     db = make_db_session_with_results(record)
     with pytest.raises(PasswordResetError, match="Invalid or expired"):
-        await reset_password(db, plaintext, "NewPass1")
+        await reset_password(db, plaintext, NEW_TEST_PASSWORD)
 
 
 @pytest.mark.asyncio
@@ -85,9 +86,9 @@ async def test_reset_password_success_updates_hash() -> None:
     user = make_user()
     record, plaintext = make_password_reset_token(user)
     db = make_db_session_with_results(record, user, None)
-    returned = await reset_password(db, plaintext, "NewPass1")
+    returned = await reset_password(db, plaintext, NEW_TEST_PASSWORD)
     assert returned is user
-    assert verify_password("NewPass1", user.hashed_password)
+    assert verify_password(NEW_TEST_PASSWORD, user.hashed_password)
     assert record.used_at is not None
     select_statement = db.execute.await_args_list[0].args[0]
     compiled_select = str(select_statement.compile(dialect=postgresql.dialect()))
@@ -248,11 +249,11 @@ async def test_endpoint_reset_password_success(async_client: AsyncClient) -> Non
     ):
         r = await async_client.post(
             "/api/v1/auth/reset-password",
-            json={"token": "x" * 32, "password": "NewPass1"},
+            json={"token": "x" * 32, "password": NEW_TEST_PASSWORD},
         )
     assert r.status_code == 200
     mock_revoke.assert_awaited_once_with(str(user.id))
-    assert r.json()["access_token"] == VALID_ACCESS_TOKEN
+    assert "access_token" not in r.json()
     assert "access_token" in r.cookies
     assert "refresh_token" in r.cookies
 
@@ -266,7 +267,7 @@ async def test_endpoint_reset_password_invalid_no_cookies(async_client: AsyncCli
     ):
         r = await async_client.post(
             "/api/v1/auth/reset-password",
-            json={"token": "x" * 32, "password": "NewPass1"},
+            json={"token": "x" * 32, "password": NEW_TEST_PASSWORD},
         )
     assert r.status_code == 400
     assert "access_token" not in r.cookies

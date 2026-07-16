@@ -8,7 +8,13 @@ from __future__ import annotations
 
 import uuid
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_serializer
+
+from app.core.password_policy import (
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    validate_password_strength,
+)
 
 # ---------------------------------------------------------------------------
 # Request schemas
@@ -17,23 +23,19 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
     display_name: str | None = Field(default=None, max_length=100)
 
     @field_validator("password")
     @classmethod
     def password_strength(cls, v: str) -> str:
-        """Basic strength check — at least one digit and one letter."""
-        has_letter = any(c.isalpha() for c in v)
-        has_digit = any(c.isdigit() for c in v)
-        if not (has_letter and has_digit):
-            raise ValueError("Password must contain at least one letter and one digit")
-        return v
+        return validate_password_strength(v)
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    # Cap length to bound bcrypt CPU cost; strength rules apply on register/reset only.
+    password: str = Field(max_length=MAX_PASSWORD_LENGTH)
 
 
 class RefreshRequest(BaseModel):
@@ -69,16 +71,12 @@ class ResetPasswordRequest(BaseModel):
     """O-20: payload for POST /auth/reset-password."""
 
     token: str = Field(min_length=16, max_length=128)
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
 
     @field_validator("password")
     @classmethod
     def password_strength(cls, v: str) -> str:
-        has_letter = any(c.isalpha() for c in v)
-        has_digit = any(c.isdigit() for c in v)
-        if not (has_letter and has_digit):
-            raise ValueError("Password must contain at least one letter and one digit")
-        return v
+        return validate_password_strength(v)
 
 
 # ---------------------------------------------------------------------------
@@ -96,12 +94,26 @@ class UserResponse(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """Access token returned in body; refresh token set as HttpOnly cookie."""
+    """Session response after login / refresh / verify / reset.
 
-    access_token: str
+    Browser clients rely on HttpOnly cookies. ``access_token`` is omitted by
+    default (XSS surface) and only included when the client opts in via
+    ``?include_access_token=true`` (API scripts / future Capacitor).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    access_token: str | None = None
     token_type: str = "bearer"
     expires_in: int  # seconds
     user: UserResponse
+
+    @model_serializer(mode="wrap")
+    def _omit_null_access_token(self, handler):  # type: ignore[no-untyped-def]
+        data = handler(self)
+        if data.get("access_token") is None:
+            data.pop("access_token", None)
+        return data
 
 
 class MessageResponse(BaseModel):
