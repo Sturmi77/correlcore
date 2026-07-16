@@ -43,14 +43,14 @@ Suggested close comment (#29):
 These items were implemented in the open-issues series and should be closed on
 GitHub if still open:
 
-| Wave                | Issues                         | Evidence |
-| ------------------- | ------------------------------ | -------- |
-| M4.1.1              | #258                           | Migration 023, sync hardening |
-| Notes A–C + ADRs    | #194–#199                      | Migration 024, ADR-N-01–03 |
-| Notes signals       | #201, #202                     | `note_signal_extractor`, evidence |
-| M11 / HC            | #27, #31                       | `apps/android`, `consent_log` |
-| Digest / analytics  | #147, #148, #149               | Digest worker, Ollama optional, changepoint |
-| Security / media    | #62, #28                       | ADR-0039 / migration 027, `/media/photos` |
+| Wave               | Issues           | Evidence                                    |
+| ------------------ | ---------------- | ------------------------------------------- |
+| M4.1.1             | #258             | Migration 023, sync hardening               |
+| Notes A–C + ADRs   | #194–#199        | Migration 024, ADR-N-01–03                  |
+| Notes signals      | #201, #202       | `note_signal_extractor`, evidence           |
+| M11 / HC           | #27, #31         | `apps/android`, `consent_log`               |
+| Digest / analytics | #147, #148, #149 | Digest worker, Ollama optional, changepoint |
+| Security / media   | #62, #28         | ADR-0039 / migration 027, `/media/photos`   |
 
 Doc drift fixed in-repo: O-20 status → **Done** in `OPTIMIZATION_BACKLOG.md`;
 status sync for foundations → docs PR `docs-status-sync`.

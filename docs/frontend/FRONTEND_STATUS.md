@@ -188,12 +188,12 @@ Mobile E2E is **not** in default CI; run before release or add to scheduled work
 
 ### Product / backend (out of frontend scope)
 
-| Item                          | Notes                                                       |
-| ----------------------------- | ----------------------------------------------------------- |
-| Password recovery             | **Shipped** — `forgot-password` / `reset-password` (O-20)   |
-| Account deletion              | **Shipped** — `DELETE /api/v1/user/me` (M9 / #29)           |
-| Reminders / push              | Backlog (M4.2)                                              |
-| Dexie background sync queue   | ADR-0009 — Entry-owned retry only                           |
+| Item                          | Notes                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| Password recovery             | **Shipped** — `forgot-password` / `reset-password` (O-20)                             |
+| Account deletion              | **Shipped** — `DELETE /api/v1/user/me` (M9 / #29)                                     |
+| Reminders / push              | Backlog (M4.2)                                                                        |
+| Dexie background sync queue   | ADR-0009 — Entry-owned retry only                                                     |
 | Health Connect import consent | **Foundation shipped** (#31) — Settings Privacy + consents API; HC import itself → M8 |
 
 ### Phase 5 — desktop consolidation (next frontend track)

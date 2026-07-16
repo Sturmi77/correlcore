@@ -20,11 +20,11 @@ Android or Health Connect.
 
 ## Milestone levels
 
-| Level                                      | Sprints | Status                                      |
-| ------------------------------------------ | ------- | ------------------------------------------- |
-| Core analytics + primary UI                | 1–7     | **Done**                                    |
-| Spec complete (ADR-0025 + visualization)   | 9       | **Done**                                    |
-| Optional LLM / digest / changepoint        | 8 / post | **Foundation landed** (#147–#149); push → M4.2 |
+| Level                                    | Sprints  | Status                                         |
+| ---------------------------------------- | -------- | ---------------------------------------------- |
+| Core analytics + primary UI              | 1–7      | **Done**                                       |
+| Spec complete (ADR-0025 + visualization) | 9        | **Done**                                       |
+| Optional LLM / digest / changepoint      | 8 / post | **Foundation landed** (#147–#149); push → M4.2 |
 
 ## Scope (by sprint)
 
@@ -39,13 +39,13 @@ Android or Health Connect.
 
 ### Sprint 9 — Spec complete (without sleep / cycle / LLM)
 
-| Paket | Inhalt                                                              |
-| ----- | ------------------------------------------------------------------- |
-| A     | Entry drawer + symptom×tag detail sheet on `/insights`              |
-| B     | Confounder UX in `InsightCard` + feed ranking                       |
-| C     | Tag-heatmap cluster sort, a11y, E2E hooks                           |
-| D     | Combined symptom+tag Jaccard in tag-clusters API                    |
-| E     | Spec checkbox sign-off + docs                                       |
+| Paket | Inhalt                                                 |
+| ----- | ------------------------------------------------------ |
+| A     | Entry drawer + symptom×tag detail sheet on `/insights` |
+| B     | Confounder UX in `InsightCard` + feed ranking          |
+| C     | Tag-heatmap cluster sort, a11y, E2E hooks              |
+| D     | Combined symptom+tag Jaccard in tag-clusters API       |
+| E     | Spec checkbox sign-off + docs                          |
 
 ### Sprint 8 / post-M7 — Optional (foundations landed 2026-07-15)
 
@@ -90,9 +90,9 @@ Android or Health Connect.
 
 ## Deferred outside M7
 
-| Topic              | Target                         |
-| ------------------ | ------------------------------ |
-| Sleep×Symptom      | M8                             |
-| Cycle × lifestyle  | M7.1                           |
-| Notes signals      | **Foundation shipped** (#201/#202); further polish under notes epic |
-| Digest push        | M4.2                           |
+| Topic             | Target                                                              |
+| ----------------- | ------------------------------------------------------------------- |
+| Sleep×Symptom     | M8                                                                  |
+| Cycle × lifestyle | M7.1                                                                |
+| Notes signals     | **Foundation shipped** (#201/#202); further polish under notes epic |
+| Digest push       | M4.2                                                                |

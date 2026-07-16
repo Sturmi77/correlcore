@@ -10,12 +10,12 @@ deployment paths ship without photo storage complexity first.
 
 Server-side EXIF strip is available now — before full MinIO/gallery scope:
 
-| Piece | Status |
-| ----- | ------ |
-| `POST /api/v1/media/photos` | Landed — auth required, MIME/size guards |
-| Pillow EXIF strip (GPS / biometric metadata) | Landed — `app/services/exif_strip.py` + tests |
-| Object storage persist | **Stub** — response `stored: false` until MinIO client wiring |
-| Thumbnail gallery / pre-signed URLs / export photos | Remaining M13 exit |
+| Piece                                               | Status                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------- |
+| `POST /api/v1/media/photos`                         | Landed — auth required, MIME/size guards                      |
+| Pillow EXIF strip (GPS / biometric metadata)        | Landed — `app/services/exif_strip.py` + tests                 |
+| Object storage persist                              | **Stub** — response `stored: false` until MinIO client wiring |
+| Thumbnail gallery / pre-signed URLs / export photos | Remaining M13 exit                                            |
 
 ## Scope (M13 exit)
 

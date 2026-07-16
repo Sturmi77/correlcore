@@ -267,16 +267,16 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Milestone Mapping
 
-| Milestone               | Status                         | Work Package                                                                                                                                                                    |
-| ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **M1** Core Entry       | ✅ Done → **RETROACTIVE**      | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea                                                                                                              |
-| **M2** Visualisation    | ✅ Done → **RETROACTIVE**      | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips                                                                                                     |
-| **M3** Insights v1      | ✅ Done → **RETROACTIVE**      | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                                                                                                       |
-| **M4** Mobile Polish    | ✅ Foundation shipped (#195+)  | Composer note fields, `note_summary_short` preview (ADR-N-01), visibility; further mobile chrome polish may iterate                                                             |
-| **M7** Insights v2      | ✅ Foundation shipped (#201/#202) | Signal extraction, `entry_note_signals`, evidence on insight cards (ADR-N-02); remaining polish tracked separately                                                            |
-| **M9** Beta             | ✅ Complete (2026-07-11)       | Threshold review docs under [`quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md`](../quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md). Per-entry `note_visibility` API landed.                 |
-| **M10** Public Selfhost | ✅ Complete (2026-07-11) / rest open | Operator reprocess: `POST /admin/entries/{id}/note-signals/reprocess`. Export of notes/signals when `note_visibility != hidden` may still deepen.                           |
-| **M11** Play Store      | 🔲 Planned                     | Mobile UX hardening, no health-claim copy in signal descriptions                                                                                                                |
+| Milestone               | Status                               | Work Package                                                                                                                                                     |
+| ----------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M1** Core Entry       | ✅ Done → **RETROACTIVE**            | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea                                                                                               |
+| **M2** Visualisation    | ✅ Done → **RETROACTIVE**            | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips                                                                                      |
+| **M3** Insights v1      | ✅ Done → **RETROACTIVE**            | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                                                                                        |
+| **M4** Mobile Polish    | ✅ Foundation shipped (#195+)        | Composer note fields, `note_summary_short` preview (ADR-N-01), visibility; further mobile chrome polish may iterate                                              |
+| **M7** Insights v2      | ✅ Foundation shipped (#201/#202)    | Signal extraction, `entry_note_signals`, evidence on insight cards (ADR-N-02); remaining polish tracked separately                                               |
+| **M9** Beta             | ✅ Complete (2026-07-11)             | Threshold review docs under [`quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md`](../quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md). Per-entry `note_visibility` API landed. |
+| **M10** Public Selfhost | ✅ Complete (2026-07-11) / rest open | Operator reprocess: `POST /admin/entries/{id}/note-signals/reprocess`. Export of notes/signals when `note_visibility != hidden` may still deepen.                |
+| **M11** Play Store      | 🔲 Planned                           | Mobile UX hardening, no health-claim copy in signal descriptions                                                                                                 |
 
 ---
 

@@ -181,10 +181,10 @@ Full plan: [`M7_SPRINT9_PLAN.md`](M7_SPRINT9_PLAN.md).
 
 ## Deferred at M7 closeout (status update 2026-07-15)
 
-| Topic                     | Target / status                                              | Issues                                                     |
-| ------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
-| Ollama + weekly digest    | **Foundation landed** (API + worker); Push-Delivery → M4.2   | #148, #147                                                 |
-| Changepoint detection     | **Foundation landed** in analytics pipeline                  | #149                                                       |
-| Cycle×lifestyle analytics | M7.1                                                         | [`features/cycle-tracking.md`](features/cycle-tracking.md) |
-| Sleep×symptom             | M8                                                           | [`M8_NOTES.md`](M8_NOTES.md)                               |
-| M4/M5 formal closeout     | Done — see [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md) | —                                                       |
+| Topic                     | Target / status                                                 | Issues                                                     |
+| ------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| Ollama + weekly digest    | **Foundation landed** (API + worker); Push-Delivery → M4.2      | #148, #147                                                 |
+| Changepoint detection     | **Foundation landed** in analytics pipeline                     | #149                                                       |
+| Cycle×lifestyle analytics | M7.1                                                            | [`features/cycle-tracking.md`](features/cycle-tracking.md) |
+| Sleep×symptom             | M8                                                              | [`M8_NOTES.md`](M8_NOTES.md)                               |
+| M4/M5 formal closeout     | Done — see [`CLOSEOUT_SPRINT_PLAN.md`](CLOSEOUT_SPRINT_PLAN.md) | —                                                          |
