@@ -175,7 +175,7 @@ cd backend
 uv run --python 3.12 --extra dev --extra analytics python scripts/seed_m7_qa.py --reset
 ```
 
-Login: `m7-qa@localhost.dev` / `M7qaSeed1` — use `/insights` without developer
+Login: `m7-qa@localhost.dev` / `CorrectHorse123!` — use `/insights` without developer
 mock visualizations. Verify API responses:
 
 ```powershell

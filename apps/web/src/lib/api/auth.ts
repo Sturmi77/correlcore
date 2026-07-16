@@ -19,7 +19,8 @@ export interface UserResponse {
 }
 
 export interface TokenResponse {
-  access_token: string;
+  /** Present only when the API was called with `?include_access_token=true`. */
+  access_token?: string;
   token_type: string;
   expires_in: number;
   user: UserResponse;

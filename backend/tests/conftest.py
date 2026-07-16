@@ -328,6 +328,10 @@ VALID_REFRESH_TOKEN = "valid.refresh.token"
 NEW_ACCESS_TOKEN = "new.access.token"
 NEW_REFRESH_TOKEN = "new.refresh.token"
 
+#: Meets password policy (min 12, letter+digit). Same fixture string as web e2e.
+TEST_PASSWORD = "CorrectHorse123!"
+NEW_TEST_PASSWORD = "CorrectHorse124!"
+
 
 # ---------------------------------------------------------------------------
 # Pytest fixtures

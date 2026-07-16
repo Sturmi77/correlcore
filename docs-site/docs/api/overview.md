@@ -1,13 +1,13 @@
 # API Overview
 
-Summary of the CorrelCore REST API. Full reference:
-[`docs/API.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/API.md) in the repository.
+Summary of the CorrelCore REST API. **Canonical contract:** OpenAPI from a
+running API (`/openapi.json`; Swagger UI at `/api/docs` when `DEBUG=true`).
 
 Interactive OpenAPI docs (`/api/docs` Swagger UI) are available when the API
 runs with `DEBUG=true`. Production instances expose the OpenAPI JSON at
-`/openapi.json` when enabled by deployment; prefer this overview + the repo
+`/openapi.json` when enabled by deployment. The German repo file
 [`docs/API.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/API.md)
-for operators.
+is historical — prefer this page + OpenAPI when they disagree.
 
 ---
 
@@ -20,7 +20,11 @@ for operators.
 | Dates       | ISO 8601 UTC                                                                  |
 | IDs         | UUID v4                                                                       |
 | Errors      | FastAPI `{"detail": ...}` (422 for validation)                                |
-| Rate limits | Per-endpoint via SlowAPI (Redis in production)                                |
+| Rate limits | Per-endpoint via SlowAPI (Redis; in-memory fallback if Redis blips)           |
+| Passwords   | Min 12 chars, letter + digit; common passwords rejected                       |
+
+Canonical contract: **OpenAPI** from the running API. This page is a summary;
+the German repo file `docs/API.md` is historical.
 
 ---
 
@@ -31,8 +35,8 @@ Native JWT auth (Phase 1 selfhost). OIDC via Authentik planned for SaaS (M12+).
 | Method | Path                               | Notes                               |
 | ------ | ---------------------------------- | ----------------------------------- |
 | `POST` | `/api/v1/auth/register`            | Always `202`; verify email required |
-| `POST` | `/api/v1/auth/login`               | Sets cookies; `5/min/IP`            |
-| `POST` | `/api/v1/auth/refresh`             | Rotates refresh token               |
+| `POST` | `/api/v1/auth/login`               | Sets cookies; JSON omits JWT unless `?include_access_token=true` |
+| `POST` | `/api/v1/auth/refresh`             | Rotates refresh; same JWT body rule |
 | `POST` | `/api/v1/auth/logout`              | Clears cookies                      |
 | `POST` | `/api/v1/auth/verify-email`        | Single-use token, 24h TTL           |
 | `POST` | `/api/v1/auth/resend-verification` | Always `202`; `3/min/IP`            |

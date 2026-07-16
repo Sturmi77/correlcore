@@ -82,6 +82,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _wants_access_token_in_body(request: Request) -> bool:
+    """Opt-in for API scripts / future Capacitor; browsers use cookies only."""
+    raw = request.query_params.get("include_access_token", "").strip().lower()
+    return raw in {"1", "true", "yes"}
+
+
+def _token_response(request: Request, *, access: str, user: User) -> TokenResponse:
+    return TokenResponse(
+        access_token=access if _wants_access_token_in_body(request) else None,
+        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
+        user=UserResponse.model_validate(user),
+    )
+
+
 # ---------------------------------------------------------------------------
 # POST /register
 # ---------------------------------------------------------------------------
@@ -146,6 +160,7 @@ async def register(
 @router.post(
     "/verify-email",
     response_model=TokenResponse,
+    response_model_exclude_none=True,
     summary="Verify email and establish an authenticated session",
 )
 @limiter.limit("10/minute")
@@ -167,11 +182,7 @@ async def verify_email_endpoint(
     token_store = TokenStore(redis)
     access, refresh = await issue_session_tokens(token_store, user)
     set_auth_cookies(response, access, refresh)
-    return TokenResponse(
-        access_token=access,
-        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
-        user=UserResponse.model_validate(user),
-    )
+    return _token_response(request, access=access, user=user)
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +260,7 @@ async def forgot_password(
 @router.post(
     "/reset-password",
     response_model=TokenResponse,
+    response_model_exclude_none=True,
     summary="Reset password and establish an authenticated session",
 )
 @limiter.limit("10/minute")
@@ -270,11 +282,7 @@ async def reset_password_endpoint(
     await token_store.revoke_all(str(user.id))
     access, refresh = await issue_session_tokens(token_store, user)
     set_auth_cookies(response, access, refresh)
-    return TokenResponse(
-        access_token=access,
-        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
-        user=UserResponse.model_validate(user),
-    )
+    return _token_response(request, access=access, user=user)
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +293,7 @@ async def reset_password_endpoint(
 @router.post(
     "/login",
     response_model=TokenResponse,
+    response_model_exclude_none=True,
     summary="Login and receive access + refresh tokens",
 )
 @limiter.limit("5/minute")
@@ -311,11 +320,7 @@ async def login(
             detail="Invalid email or password",
         ) from exc
     set_auth_cookies(response, access, refresh)
-    return TokenResponse(
-        access_token=access,
-        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
-        user=UserResponse.model_validate(user),
-    )
+    return _token_response(request, access=access, user=user)
 
 
 # ---------------------------------------------------------------------------
@@ -326,6 +331,7 @@ async def login(
 @router.post(
     "/refresh",
     response_model=TokenResponse,
+    response_model_exclude_none=True,
     summary="Rotate refresh token and get a new access token",
 )
 @limiter.limit("30/minute")
@@ -350,11 +356,7 @@ async def refresh(
         clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     set_auth_cookies(response, access, new_refresh)
-    return TokenResponse(
-        access_token=access,
-        expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
-        user=UserResponse.model_validate(user),
-    )
+    return _token_response(request, access=access, user=user)
 
 
 # ---------------------------------------------------------------------------

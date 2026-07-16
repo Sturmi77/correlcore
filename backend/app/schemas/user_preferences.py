@@ -27,7 +27,7 @@ class UserPreferencesResponse(BaseModel):
 
     user_id: uuid.UUID
     analytics_enabled: bool
-    digest_enabled: bool = True
+    digest_enabled: bool = False
     onboarding_retro_completed: bool
     onboarding_profile_completed: bool
     dismissed_insight_keys: list[str] = Field(default_factory=list)

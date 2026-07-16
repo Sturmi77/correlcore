@@ -112,6 +112,9 @@ After startup, CorrelCore is available at `https://your-domain.tld`
 
 Homelab / Tailnet without public DNS: see [`infra/dockhand/README.md`](infra/dockhand/README.md).
 
+Compose stack matrix (canonical vs secondary, profiles `worker` / `digest`):
+[`docs/selfhost/COMPOSE_STACKS.md`](docs/selfhost/COMPOSE_STACKS.md).
+
 > **Note:** Public selfhost **v1.0.0** is released (`main` / `1.0.x`). Treat subsequent milestone work (M8/M11/M13 full scope) as active development on top of that baseline. See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
 
 ---

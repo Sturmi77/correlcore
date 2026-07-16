@@ -30,7 +30,8 @@ from app.services.multivariate_analytics import MIN_ML_ENTRIES
 logger = logging.getLogger(__name__)
 
 M7_QA_DEFAULT_EMAIL = "m7-qa@localhost.dev"
-M7_QA_DEFAULT_PASSWORD = "M7qaSeed1"
+# Must satisfy RegisterRequest password policy (min 12 + letter + digit).
+M7_QA_DEFAULT_PASSWORD = "CorrectHorse123!"
 M7_QA_DEFAULT_DISPLAY_NAME = "M7 QA Seed"
 M7_QA_DEFAULT_DAYS = 100
 

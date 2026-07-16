@@ -46,7 +46,7 @@ uv run --python 3.12 --extra dev --extra analytics python scripts/seed_m7_qa.py 
 # 4. API verify (API must be running on :8000)
 uv run --python 3.12 python scripts/verify_m7_qa_api.py
 
-# 5. Optional GUI: login m7-qa@localhost.dev / M7qaSeed1, /insights without mock mode
+# 5. Optional GUI: login m7-qa@localhost.dev / CorrectHorse123!, /insights without mock mode
 ```
 
 ## Expected API outcomes (seeded user)

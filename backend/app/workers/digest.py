@@ -67,7 +67,8 @@ async def _list_digest_user_ids(db: AsyncSession) -> list[uuid.UUID]:
             User.is_active.is_(True),
             User.is_verified.is_(True),
             or_(UserPreference.analytics_enabled.is_(True), UserPreference.user_id.is_(None)),
-            or_(UserPreference.digest_enabled.is_(True), UserPreference.user_id.is_(None)),
+            # Opt-in: require an explicit preferences row with digest_enabled=true.
+            UserPreference.digest_enabled.is_(True),
         )
         .order_by(User.id.asc())
     )

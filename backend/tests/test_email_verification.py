@@ -39,6 +39,7 @@ from app.services.auth_service import (
     verify_email,
 )
 from tests.conftest import (
+    TEST_PASSWORD,
     VALID_ACCESS_TOKEN,
     VALID_REFRESH_TOKEN,
     make_db_session_with_results,
@@ -185,7 +186,7 @@ async def test_endpoint_verify_email_success(async_client: AsyncClient) -> None:
         )
     assert r.status_code == 200
     data = r.json()
-    assert data["access_token"] == VALID_ACCESS_TOKEN
+    assert "access_token" not in data
     assert data["user"]["email"] == user.email
     assert "access_token" in r.cookies
     assert "refresh_token" in r.cookies
@@ -296,7 +297,7 @@ async def test_register_schedules_verification_email(async_client: AsyncClient) 
             "/api/v1/auth/register",
             json={
                 "email": "fresh@example.com",
-                "password": "Passw0rd",
+                "password": TEST_PASSWORD,
             },
         )
 

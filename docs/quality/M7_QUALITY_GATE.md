@@ -86,7 +86,7 @@ Keine SA-Blocker für M7-Exit.
 cd backend
 uv run --python 3.12 --extra dev --extra analytics python scripts/seed_m7_qa.py --reset
 uv run --python 3.12 python scripts/verify_m7_qa_api.py
-# Login: m7-qa@localhost.dev / M7qaSeed1
+# Login: m7-qa@localhost.dev / CorrectHorse123!
 ```
 
 Sign-off: [`M7_SPRINT5_FULLSTACK_QA.md`](M7_SPRINT5_FULLSTACK_QA.md).

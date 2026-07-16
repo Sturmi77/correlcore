@@ -16,8 +16,8 @@
  *   - In Capacitor (`capacitor://` scheme) third-party cookies to the
  *     backend domain are blocked. When that ground is reached, swap the
  *     `credentials: 'include'` path for an in-memory bearer-token path
- *     behind the same `apiFetch` signature. Backend already returns the
- *     access_token in the JSON body (see TokenResponse).
+ *     behind the same `apiFetch` signature. Backend returns `access_token`
+ *     in JSON only when called with `?include_access_token=true`.
  */
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
