@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed (Codex review follow-up for #393)
+
+- Honor `note_visibility=hidden` in marker analytics and GDPR export.
+- Bind per-user DEK in digest worker; HMAC custom symptom slugs on sync upsert.
+- `has_note` list filter applied before SQL `LIMIT`; null visibility patches no longer 500.
+- Batch create schedules note-signal extraction; digest login redirect → `/auth/login`.
+- Note marker chips keep pending selections; visibility changes mark autosave dirty.
+- Marker insights respect 90-day window; timeseries note dots use full axis dates.
+- Move/lazy-load `httpx` for optional Ollama path; pass `SLUG_HMAC_KEY` in compose stacks.
+
 ### Added (Open-issues implementation — M4.1.1 / Notes / M8–M13 foundations)
 
 - **M4.1.1 offline sync hardening (#258):** revision locking, initial pull backfill,
@@ -35,6 +45,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 
+- **Status sync (2026-07-15):** Aligned milestone/status docs with post-#393 foundations —
+  digest/Ollama/changepoint, notes-in-analysis, slug HMAC, EXIF strip, Capacitor scaffold,
+  HC consent. Updated `API.md`, docs-site API overview, `DESIGN_DOCUMENT.md` v0.14,
+  `CLOSEOUT_SPRINT_PLAN`, `M7_*`, `M11_NOTES`, `M13_NOTES`, `FRONTEND_STATUS`, ADR-0025 index,
+  `symptom-analytics.md`, issue-tracker hygiene, `AGENTS.md`.
 - Updated `docs/API.md`, `ARCHITECTURE.md` §6, `PHASE_INSIGHT_MATRIX.md`, M9 thresholds
   addendum, ADR-0016/0021 cross-refs, docs-site API overview.
 

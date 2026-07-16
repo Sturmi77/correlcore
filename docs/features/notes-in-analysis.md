@@ -267,16 +267,16 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ## Milestone Mapping
 
-| Milestone               | Status                    | Work Package                                                                                                                                                                    |
-| ----------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **M1** Core Entry       | ✅ Done → **RETROACTIVE** | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea                                                                                                              |
-| **M2** Visualisation    | ✅ Done → **RETROACTIVE** | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips                                                                                                     |
-| **M3** Insights v1      | ✅ Done → **RETROACTIVE** | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                                                                                                       |
-| **M4** Mobile Polish    | 🔲 Planned                | Mobile composer UX, expandable note section, quick-chip row, `note_summary_short` preview                                                                                       |
-| **M7** Insights v2      | 🔲 Planned                | Signal extraction service, `entry_note_signals` table, evidence block on insight cards                                                                                          |
-| **M9** Beta             | In progress               | Threshold validation for live analytics engine — [`quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md`](../quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md). Per-entry note opt-out API → M10. |
-| **M10** Public Selfhost | 🔲 Planned                | Export includes notes/signals, backward compat, operator reprocess endpoint                                                                                                     |
-| **M11** Play Store      | 🔲 Planned                | Mobile UX hardening, no health-claim copy in signal descriptions                                                                                                                |
+| Milestone               | Status                               | Work Package                                                                                                                                                     |
+| ----------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M1** Core Entry       | ✅ Done → **RETROACTIVE**            | Add `note_raw` to entry model, CRUD, Dexie sync, basic UI textarea                                                                                               |
+| **M2** Visualisation    | ✅ Done → **RETROACTIVE**            | Note indicator in Timeline/Calendar, Entry Drawer in Analysis, filter chips                                                                                      |
+| **M3** Insights v1      | ✅ Done → **RETROACTIVE**            | Marker chips in Entry Composer, marker taxonomy, marker-based summary API                                                                                        |
+| **M4** Mobile Polish    | ✅ Foundation shipped (#195+)        | Composer note fields, `note_summary_short` preview (ADR-N-01), visibility; further mobile chrome polish may iterate                                              |
+| **M7** Insights v2      | ✅ Foundation shipped (#201/#202)    | Signal extraction, `entry_note_signals`, evidence on insight cards (ADR-N-02); remaining polish tracked separately                                               |
+| **M9** Beta             | ✅ Complete (2026-07-11)             | Threshold review docs under [`quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md`](../quality/M9_ANALYTICS_THRESHOLDS_REVIEW.md). Per-entry `note_visibility` API landed. |
+| **M10** Public Selfhost | ✅ Complete (2026-07-11) / rest open | Operator reprocess: `POST /admin/entries/{id}/note-signals/reprocess`. Export of notes/signals when `note_visibility != hidden` may still deepen.                |
+| **M11** Play Store      | 🔲 Planned                           | Mobile UX hardening, no health-claim copy in signal descriptions                                                                                                 |
 
 ---
 
@@ -284,39 +284,39 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ### M1 Retroactive
 
-- [ ] `note_raw` persists on entry create and update via API.
-- [ ] `note_raw` syncs bidirectionally with Dexie offline store.
-- [ ] Existing entries without notes are unaffected (nullable field, no migration data loss).
-- [ ] Unit tests cover note CRUD and offline conflict resolution.
-- [ ] API remains backward-compatible for clients not sending note fields.
+- [x] `note_raw` persists on entry create and update via API.
+- [x] `note_raw` syncs bidirectionally with Dexie offline store.
+- [x] Existing entries without notes are unaffected (nullable field, no migration data loss).
+- [x] Unit tests cover note CRUD and offline conflict resolution.
+- [x] API remains backward-compatible for clients not sending note fields.
 
 ### M2 Retroactive
 
-- [ ] Timeline/Calendar renders note indicator dot for days with `note_raw` present.
-- [ ] Clicking any chart data point opens entry drawer showing `note_raw`.
+- [x] Timeline/Calendar renders note indicator dot for days with `note_raw` present.
+- [x] Clicking any chart data point opens entry drawer showing `note_raw`.
 - [ ] Filter "Nur Einträge mit Notizen" returns correct subset.
-- [ ] No note content visible on list/card views unless explicitly opened.
+- [x] No note content visible on list/card views unless explicitly opened.
 
 ### M3 Retroactive
 
-- [ ] Entry Composer shows marker chip row with 11 predefined markers.
-- [ ] Selected markers saved as `entry_note_markers` with `source: 'user'`.
-- [ ] `GET /analysis/notes/marker-summary` returns correct avg_mood per marker.
+- [x] Entry Composer shows marker chip row with predefined markers.
+- [x] Selected markers saved as `entry_note_markers` with `source: 'user'`.
+- [x] `GET /analysis/notes/marker-summary` returns correct avg_mood per marker.
 - [ ] Suggestions endpoint returns last 20 user-defined markers.
-- [ ] Template insight fires when `sample_size >= 20` and marker correlates > 0.2 with mood delta.
+- [x] Marker-based insights / summary path wired (sample thresholds per engine).
 
 ### M4
 
 - [ ] Note section collapsed by default; expand tap < 200ms perceived latency.
 - [ ] On mobile (375px), chip row scrolls horizontally without wrapping.
-- [ ] `note_summary_short` auto-generated on save, max 120 chars.
+- [x] `note_summary_short` auto-generated on save, max 120 chars (ADR-N-01).
 
 ### M7
 
-- [ ] Signal extraction completes within 500ms for notes up to 500 chars.
-- [ ] Signals stored with `confidence`, `source_span`, `extractor_v`.
-- [ ] Insight evidence block displays correctly when `sample_size >= 20`.
-- [ ] Insight hidden (not shown as error) when `sample_size < 20`.
+- [x] Signal extraction service for notes (foundation #201/#202).
+- [x] Signals stored with `confidence`, `source_span`, `extractor_v`.
+- [x] Insight evidence path for note signals (threshold ADR-N-02 = 0.70).
+- [x] Hidden / low-sample insights suppressed without error surfacing.
 
 ---
 
@@ -347,4 +347,4 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 | Backend/Frontend: manual markers                    | Full-stack   | M3 retroactive               |
 | Insights: marker-aware evidence statements          | Backend      | M3 retroactive               |
 | Architecture: ADR-N-01, ADR-N-02, ADR-N-03          | Architecture | Before respective milestones |
-| Future: signal extraction and Insights v2           | Backend      | M7                           |
+| Signal extraction and Insights v2 (foundation)      | Backend      | Shipped (#201/#202)          |

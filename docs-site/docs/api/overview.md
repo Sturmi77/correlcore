@@ -32,6 +32,8 @@ Native JWT auth (Phase 1 selfhost). OIDC via Authentik planned for SaaS (M12+).
 | `POST` | `/api/v1/auth/logout`              | Clears cookies                      |
 | `POST` | `/api/v1/auth/verify-email`        | Single-use token, 24h TTL           |
 | `POST` | `/api/v1/auth/resend-verification` | Always `202`; `3/min/IP`            |
+| `POST` | `/api/v1/auth/forgot-password`     | Always `202`; password reset mail   |
+| `POST` | `/api/v1/auth/reset-password`      | Token + new password                |
 | `GET`  | `/api/v1/auth/me`                  | Current user profile                |
 
 Registration and resend endpoints use generic responses to prevent email enumeration.
@@ -50,31 +52,38 @@ Registration and resend endpoints use generic responses to prevent email enumera
 
 ## Entries & symptoms
 
-| Method   | Path                   | Notes                     |
-| -------- | ---------------------- | ------------------------- |
-| `GET`    | `/api/v1/entries`      | List with date filters    |
-| `POST`   | `/api/v1/entries`      | Create daily entry        |
-| `GET`    | `/api/v1/entries/{id}` | Single entry              |
-| `PATCH`  | `/api/v1/entries/{id}` | Update entry              |
-| `DELETE` | `/api/v1/entries/{id}` | Delete entry              |
-| `GET`    | `/api/v1/symptoms`     | Curated + custom symptoms |
+| Method   | Path                                      | Notes                     |
+| -------- | ----------------------------------------- | ------------------------- |
+| `GET`    | `/api/v1/entries`                         | List with date filters    |
+| `POST`   | `/api/v1/entries`                         | Create daily entry        |
+| `GET`    | `/api/v1/entries/{id}`                    | Single entry              |
+| `PATCH`  | `/api/v1/entries/{id}`                    | Update entry              |
+| `DELETE` | `/api/v1/entries/{id}`                    | Delete entry              |
+| `POST`   | `/api/v1/entries/{id}/note-markers`       | Add note marker           |
+| `DELETE` | `/api/v1/entries/{id}/note-markers/{mid}` | Remove note marker        |
+| `GET`    | `/api/v1/entries/{id}/note-signals`       | Extracted note signals    |
+| `GET`    | `/api/v1/symptoms`                        | Curated + custom symptoms |
 
 Mood, energy, stress, tags, symptoms, and notes are stored per calendar day.
+Custom symptom slugs are HMAC-stabilized ([ADR-0039](https://github.com/Sturmi77/correlcore/blob/main/docs/adr/0039-slug-hmac-custom-symptoms.md)).
 
 ---
 
 ## Insights & analytics
 
-| Method | Path                            | Notes                                |
-| ------ | ------------------------------- | ------------------------------------ |
-| `GET`  | `/api/v1/insights`              | Generated insight cards              |
-| `GET`  | `/api/v1/insights/tag-clusters` | Tag groups (tiered maturity, M10.1)  |
-| `POST` | `/api/v1/insights/regenerate`   | On-demand insight run (1×/hour)      |
-| `POST` | `/api/v1/insights/trigger`      | Admin manual worker run              |
-| `GET`  | `/api/v1/analytics/...`         | Trends, correlations (authenticated) |
+| Method | Path                                    | Notes                                |
+| ------ | --------------------------------------- | ------------------------------------ |
+| `GET`  | `/api/v1/insights`                      | Generated insight cards              |
+| `GET`  | `/api/v1/insights/digest/latest`        | Weekly digest snapshot (foundation)  |
+| `GET`  | `/api/v1/insights/tag-clusters`         | Tag groups (tiered maturity, M10.1)  |
+| `POST` | `/api/v1/insights/regenerate`           | On-demand insight run (1×/hour)      |
+| `POST` | `/api/v1/insights/trigger`              | Admin manual worker run              |
+| `GET`  | `/api/v1/analysis/notes/marker-summary` | Note-marker mood aggregates          |
+| `GET`  | `/api/v1/analytics/...`                 | Trends, correlations (authenticated) |
 
 Insight generation runs in the background **worker** (nightly 03:00 UTC) or on demand via
 **Settings → Analysis → Refresh insights** (`POST /insights/regenerate`).
+Weekly digests: `python -m app.workers.digest --once` (push delivery still depends on M4.2).
 
 ---
 
@@ -91,11 +100,23 @@ Insight generation runs in the background **worker** (nightly 03:00 UTC) or on d
 
 ## User & GDPR
 
-| Method   | Path                    | Notes                          |
-| -------- | ----------------------- | ------------------------------ |
-| `GET`    | `/api/v1/user/export`   | GDPR Art. 20 data export       |
-| `DELETE` | `/api/v1/user/account`  | Account erasure                |
-| `PATCH`  | `/api/v1/user/settings` | Analytics opt-out, preferences |
+| Method   | Path                              | Notes                              |
+| -------- | --------------------------------- | ---------------------------------- |
+| `GET`    | `/api/v1/user/export`             | GDPR Art. 20 data export           |
+| `DELETE` | `/api/v1/user/me`                 | Account erasure (password confirm) |
+| `GET`    | `/api/v1/user/me/consents`        | Consent history + current state    |
+| `POST`   | `/api/v1/user/me/consents`        | Record grant/revoke                |
+| `POST`   | `/api/v1/user/me/consents/revoke` | Revoke consent                     |
+| `GET`    | `/api/v1/user/preferences`        | Insight / onboarding preferences   |
+| `PATCH`  | `/api/v1/user/preferences`        | Update preferences                 |
+
+---
+
+## Media (M13 foundation)
+
+| Method | Path                   | Notes                                           |
+| ------ | ---------------------- | ----------------------------------------------- |
+| `POST` | `/api/v1/media/photos` | Upload with server-side EXIF strip; MinIO later |
 
 ---
 

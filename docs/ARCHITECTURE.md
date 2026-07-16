@@ -208,7 +208,7 @@ und wird durch den Analytics Worker/API geliefert, nicht im Frontend berechnet.
 | Auth                  | Native JWT + Refresh-Rotation (Phase 1) / OIDC via Authentik (Phase 2)                         | Phase 1 ✅ / Phase 2 M12 |
 | Docker Security       | Traefik nutzt Docker Socket Proxy (Tecnativa) statt direktem Socket-Mount                      | ✅                       |
 | Daten at-rest (DB)    | App-Level Fernet pro User-DEK für `entries.note_enc` und Custom-`symptoms.name_enc` (ADR-0005) | ✅                       |
-| Daten at-rest (MinIO) | SSE-S3 ist im Compose vorbereitet; Foto-/Attachment-API folgt in M13                           | Vorbereitet              |
+| Daten at-rest (MinIO) | SSE-S3 ist im Compose vorbereitet; Foto-Persistenz folgt in M13; EXIF-Strip-API landed (#28)   | Foundation + vorbereitet |
 | MinIO Isolation       | MinIO-Console NICHT über öffentliches Traefik-Routing erreichbar                               | ✅                       |
 | Multi-Tenancy         | PostgreSQL Row-Level-Security (`user_id`-basiert)                                              | ✅                       |
 | Sync-Konflikte        | Conflict-Log-Tabelle für alle LWW-Konflikte                                                    | Follow-up                |
@@ -217,7 +217,7 @@ und wird durch den Analytics Worker/API geliefert, nicht im Frontend berechnet.
 | Export/Löschung       | JSON+ZIP-Export (Art. 20 DSGVO), Self-Service Account-Löschung                                 | ✅                       |
 | Backups               | Verschlüsselt via restic auf externen Storage                                                  | ✅                       |
 | Audit-Log             | Admin-Audit-Log                                                                                | Geplant                  |
-| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (GPS + biometrische Metadaten)                            | M13                      |
+| EXIF-Strip            | Serverseitiger EXIF-Strip via Pillow (`POST /media/photos`, tests) — MinIO persist → M13       | Foundation landed (#28)  |
 | Logs                  | Keine Klartextloggung von Mood-/Symptom-Werten                                                 | ✅                       |
 | Rate-Limiting         | Login-Endpunkte max. 5/min (SlowAPI)                                                           | ✅                       |
 | Push Payload          | Notification-Payload enthält keine Gesundheitsdaten                                            | Follow-up                |

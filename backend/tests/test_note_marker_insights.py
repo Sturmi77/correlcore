@@ -30,13 +30,32 @@ def test_build_marker_mood_insights_requires_minimum_sample() -> None:
 
 
 def test_build_marker_mood_insights_emits_candidate_when_delta_large_enough() -> None:
+    # All rows must fall inside [generated_for_date - 90d, generated_for_date).
+    as_of = date(2026, 4, 1)
     rows = [_row(day=i, mood=3, markers=set()) for i in range(1, 25)]
     rows.extend(_row(day=25 + i, mood=1, markers={"stress"}) for i in range(25))
 
-    insights = build_marker_mood_insights(rows, generated_for_date=date(2026, 2, 1))
+    insights = build_marker_mood_insights(rows, generated_for_date=as_of)
     assert len(insights) == 1
     insight = insights[0]
     assert insight.metric == "mood_score"
     assert insight.sample_n >= 20
     assert insight.payload["marker"] == "stress"
     assert insight.payload["evidence"]["sample_size"] >= 20
+    assert insight.payload["time_window"] == 90
+
+
+def test_build_marker_mood_insights_respects_time_window() -> None:
+    as_of = date(2026, 4, 1)
+    # Old history outside the advertised 90-day window must not count.
+    old = [
+        EntryWithMarkers(
+            entry_id=uuid.uuid4(),
+            entry_date=date(2025, 1, 1) + timedelta(days=i),
+            mood_score=1,
+            markers=frozenset({"stress"}),
+            has_note=True,
+        )
+        for i in range(40)
+    ]
+    assert build_marker_mood_insights(old, generated_for_date=as_of) == []

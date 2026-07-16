@@ -1,26 +1,38 @@
-# M11 Notes — Native Android Homescreen Widget
+# M11 Notes — Android Play Store & Homescreen Widget
 
-Last updated: 2026-05-28
+Last updated: 2026-07-15
 
 This document captures the scope and acceptance criteria for the
-native Android homescreen widget deferred from M4.
+**Android Play Store** path and the native homescreen widget deferred from M4.
 
-## Context
+## Scaffold status (landed #27)
 
-M4 Sprint 4 delivers a **PWA install prompt** and homescreen shortcut
-(web-based, works on Android Chrome and iOS Safari). A true homescreen
-widget — rendered by the Android launcher without opening the app —
-requires the native Android app path (TWA or dedicated APK) and the
-Android Glance API.
+Capacitor Android package exists under [`apps/android/`](../apps/android/):
 
-Deferred to M11 because:
+- `capacitor.config.ts`, package scripts, CI job **Validate Capacitor config**
+- README pointing at ADR-0002 (Capacitor vs TWA)
+- Not yet a production Play Store build (`cap sync` / store listing remaining)
 
-1. Native Android app shell must exist (Play Store path)
+Health Connect **consent** foundation shipped with #31 (`consent_log`, Settings Privacy).
+Native HC import and Play Data Safety declaration remain M8/M11 exit work.
+
+## Context — Homescreen widget
+
+M4 delivered a **PWA install prompt** and homescreen shortcut (web-based).
+A true launcher widget requires the native Android app path and Jetpack Glance.
+
+Deferred rest of M11 because:
+
+1. Play Store closed-testing path must exist on top of the Capacitor scaffold
 2. Glance API is Kotlin/Compose-only — not available in a PWA
-3. Widget data must be fetched from the CorrelCore API with a
-   background sync mechanism (WorkManager)
+3. Widget data must be fetched from the CorrelCore API with WorkManager sync
 
 ## Scope
+
+### Sprint 0 — Scaffold (done)
+
+- [x] `apps/android` Capacitor project + CI config validate (#27)
+- [x] ADR-0002 strategy retained (no TWA)
 
 ### Sprint 1 — Widget Data Endpoint
 
@@ -38,30 +50,31 @@ Deferred to M11 because:
 - `AppWidget.kt` using Jetpack Glance
 - Widget layout:
   - Today's mood average (large number) or "No entry yet"
-  - "+ Add entry" button — deep-links to `/entries/new` in the TWA
+  - "+ Add entry" button — deep-links to `/entries/new` in the Capacitor WebView
   - Last updated timestamp (small, muted)
 - WorkManager periodic sync (15-minute interval, battery-aware)
 - Widget respects system dark/light mode
-- `glance-appwidget` dependency added to Android `build.gradle`
-- Widget declared in `AndroidManifest.xml` with
-  `android:updatePeriodMillis`
+- `glance-appwidget` dependency + `AndroidManifest` registration
 
-### Sprint 3 — QA & Play Store Update
+### Sprint 3 — QA & Play Store
 
-- Widget QA on:
-  - Android 12 (API 31) — Glance minimum
-  - Android 14 (API 34) — latest stable
-  - 4×1 and 4×2 widget sizes
-  - Light and dark system themes
-- Play Store listing updated with widget screenshot
-- `docs/features/WIDGET.md` documents setup, permissions, and
-  update interval
+- Widget QA on Android 12/14, 4×1 and 4×2, light/dark
+- Play Store listing + closed testing
+- `docs/features/WIDGET.md` documents setup and permissions
 
 ## Acceptance Criteria
 
+### Scaffold / shell
+
+- [x] Capacitor package present under `apps/android` with CI validate
+- [ ] Production `cap sync && cap build` path green
+- [ ] Play Store Internal Testing Track live
+
+### Widget
+
 - [ ] `GET /api/v1/widget/summary` returns correct data within 200 ms
 - [ ] Widget renders today's mood average or "No entry yet"
-- [ ] "+ Add entry" deep-link opens entry form in TWA
+- [ ] "+ Add entry" deep-link opens entry form in the Capacitor app
 - [ ] WorkManager sync runs every 15 minutes (battery-aware)
 - [ ] Widget renders correctly in light and dark system themes
 - [ ] Widget QA passed on Android 12 and Android 14
@@ -71,13 +84,12 @@ Deferred to M11 because:
 
 ## Prerequisites
 
-- Native Android app (TWA or APK) published on Play Store
-- `GET /api/v1/widget/summary` endpoint live
+- Capacitor scaffold (#27) — **done**
+- `GET /api/v1/widget/summary` endpoint
 - Glance API minimum SDK: Android 12 (API 31)
-- M4 PWA install prompt shipped (establishes web homescreen baseline)
+- M4 PWA install prompt shipped
 
 ## iOS Note
 
-iOS home screen widgets require a native Swift/SwiftUI app and the
-WidgetKit framework. This is out of scope for M11 and will be
-assessed separately when an iOS app path is planned.
+iOS home-screen widgets are out of scope for M11 (Android-first Play Store).
+See also [ADR-0002](adr/0002-capacitor-statt-twa.md) and [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md).

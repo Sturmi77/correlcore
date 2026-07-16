@@ -70,14 +70,14 @@ write_quickstart_env() {
 
   local ts_ip="${TAILSCALE_IP:-127.0.0.1}"
   local web_port="${WEB_HOST_PORT:-3010}"
-  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac
+  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac_key
 
   pg_pass="$(gen_urlsafe 24)"
   app_pass="$(gen_urlsafe 24)"
   redis_pass="$(gen_urlsafe 24)"
   secret_key="$(gen_urlsafe 48)"
   enc_key="$(gen_fernet)"
-  slug_hmac="$(gen_hex 32)"
+  slug_hmac_key="$(gen_hex 32)"
 
   cp "$example" "$env_file"
 
@@ -86,7 +86,7 @@ write_quickstart_env() {
   _set_or_append_env "$env_file" REDIS_PASSWORD "$redis_pass"
   _set_or_append_env "$env_file" SECRET_KEY "$secret_key"
   _set_or_append_env "$env_file" ENCRYPTION_KEY "$enc_key"
-  _set_or_append_env "$env_file" SLUG_HMAC_KEY "$slug_hmac"
+  _set_or_append_env "$env_file" SLUG_HMAC_KEY "$slug_hmac_key"
   _set_or_append_env "$env_file" TAILSCALE_IP "$ts_ip"
   _set_or_append_env "$env_file" WEB_HOST_PORT "$web_port"
   _set_or_append_env "$env_file" CORS_ORIGINS "http://${ts_ip}:${web_port}"
@@ -118,13 +118,13 @@ write_production_hint() {
 
   cp "$example" "$env_file"
 
-  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac minio_secret
+  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac_key minio_secret
   pg_pass="$(gen_urlsafe 24)"
   app_pass="$(gen_urlsafe 24)"
   redis_pass="$(gen_urlsafe 24)"
   secret_key="$(gen_urlsafe 48)"
   enc_key="$(gen_fernet)"
-  slug_hmac="$(gen_hex 32)"
+  slug_hmac_key="$(gen_hex 32)"
   minio_secret="$(gen_urlsafe 24)"
 
   _set_or_append_env "$env_file" POSTGRES_PASSWORD "$pg_pass"
@@ -132,7 +132,7 @@ write_production_hint() {
   _set_or_append_env "$env_file" REDIS_PASSWORD "$redis_pass"
   _set_or_append_env "$env_file" SECRET_KEY "$secret_key"
   _set_or_append_env "$env_file" ENCRYPTION_KEY "$enc_key"
-  _set_or_append_env "$env_file" SLUG_HMAC_KEY "$slug_hmac"
+  _set_or_append_env "$env_file" SLUG_HMAC_KEY "$slug_hmac_key"
   _set_or_append_env "$env_file" MINIO_SECRET_KEY "$minio_secret"
 
   echo "Wrote ${env_file} from .env.example with generated secrets."

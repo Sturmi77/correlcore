@@ -21,8 +21,10 @@ from datetime import UTC, datetime, time, timedelta
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.crypto import reset_current_user_dek, set_current_user_dek, unwrap_dek
 from app.db.session import AsyncSessionLocal, bind_rls_current_user
 from app.models.user import User
+from app.models.user_encryption_key import UserEncryptionKey
 from app.models.user_preference import UserPreference
 from app.models.worker_run import WorkerJobKind, WorkerRunStatus, WorkerTriggerSource
 from app.services.insight_digest import (
@@ -93,8 +95,19 @@ async def run_digest_once(
 
         for user_id in user_ids:
             async with AsyncSessionLocal() as session:
+                dek_token = None
                 try:
                     await bind_rls_current_user(session, user_id)
+                    key_result = await session.execute(
+                        select(UserEncryptionKey.wrapped_dek).where(
+                            UserEncryptionKey.user_id == user_id
+                        )
+                    )
+                    wrapped_dek = key_result.scalar_one_or_none()
+                    if wrapped_dek is None:
+                        skipped += 1
+                        continue
+                    dek_token = set_current_user_dek(user_id, unwrap_dek(wrapped_dek))
                     digest = await get_latest_weekly_digest(session, user_id=user_id, as_of=current)
                     await store_weekly_digest(session, user_id=user_id, digest=digest)
                     await session.commit()
@@ -106,6 +119,9 @@ async def run_digest_once(
                     await session.rollback()
                     failed += 1
                     logger.exception("digest generation failed", extra={"user_id": str(user_id)})
+                finally:
+                    if dek_token is not None:
+                        reset_current_user_dek(dek_token)
 
         summary = DigestRunSummary(
             eligible_users=len(user_ids),

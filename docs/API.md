@@ -31,6 +31,8 @@ POST   /api/v1/auth/refresh               Refresh-Token rotieren
 POST   /api/v1/auth/logout                Refresh-Token invalidieren, Cookies löschen
 POST   /api/v1/auth/verify-email          E-Mail bestätigen (Issue #39, Token im Body)
 POST   /api/v1/auth/resend-verification   Verify-Mail erneut senden (3/min/IP, immer 202)
+POST   /api/v1/auth/forgot-password       Password-Reset anfordern (3/min/IP, immer 202; O-20)
+POST   /api/v1/auth/reset-password        Password mit Token setzen (10/min/IP; O-20)
 GET    /api/v1/auth/me                    Aktueller User
 ```
 
@@ -285,6 +287,9 @@ GET    /api/v1/entries                  List (filtered, newest first)        (12
 GET    /api/v1/entries/delta            Day-over-day comparison              (120/min)
 GET    /api/v1/entries/{id}             Single entry                         (120/min)
 PATCH  /api/v1/entries/{id}             Update entry                         (60/min)
+POST   /api/v1/entries/{id}/note-markers      Add note marker                (60/min)
+DELETE /api/v1/entries/{id}/note-markers/{mid} Remove note marker            (60/min)
+GET    /api/v1/entries/{id}/note-signals      List extracted note signals    (120/min)
 ```
 
 **Geplant:**
@@ -303,6 +308,8 @@ GET    /api/v1/entries/date/{date}      Lookup by date (backlog)
 - `mood_score`, `energy`, `stress` — Integer 1..5 (DB-CHECK + Pydantic-Validierung).
 - `cycle_day` — Optionaler Integer 1..35; neutraler Kontext, keine medizinische Interpretation.
 - `note` — Optional, max. 4000 Zeichen. Wird in der Spalte `note_enc` (BYTEA) als Fernet-Ciphertext unter dem User-DEK gespeichert (Issue #26, ADR-0005). API-Surface bleibt Klartext: Requests senden `note: "..."`, Responses geben den entschlüsselten String zurück. Ohne gültigen Auth-Kontext (DEK fehlt) liefert das Backend 401.
+- `note_visibility` — Enum: `full` (Default), `analysis_only`, `hidden` (Notes-in-Analysis; Text + CHECK, Migration 024).
+- `note_summary_short` — Optional, max. 120 Zeichen Preview (ADR-N-01); serverseitig gespiegelt.
 
 ### Backdate-Fenster
 
@@ -611,7 +618,7 @@ Gesundheits-Symptome werden parallel zu Tags pro Entry erfasst (Issue #9 + Issue
 - **Default-Symptome** — kuratierte Liste (5 Symptome aus Migration-Seed `006_add_symptom_master_table.py`). `user_id IS NULL`, `is_default = true`. Read-only für alle User; lesbar auch ohne Auth über `/symptoms/default`.
 - **Custom-Symptome** — pro User mit `user_id = <user>`. Vollständige CRUD-Hoheit, Slugs müssen sich nicht mit Defaults überschneiden. Hard Cap: **50 pro User** (`MAX_SYMPTOMS_PER_USER`).
 
-Die Intensität bewegt sich in einem 0–3-Bereich, der im UI als 4-Punkt-Skala gerendert wird. Symptome sind Gesundheitsdaten nach DSGVO Art. 9 — Server-Logs enthalten weder `slug`/`name`/`symptom_id` noch `intensity` (statisch via `test_log_scrubbing` und `test_symptom_service_logs_no_sensitive_fields` geprüft). Custom-Symptom-Namen werden in `symptoms.name_enc` als Fernet-Ciphertext unter dem User-DEK gespeichert (Issue #26, ADR-0005); Default-Symptom-Namen bleiben plaintext, weil sie kuratierte, nicht-personenbezogene Labels sind und ohne aktiven User-Kontext gelesen werden müssen (`GET /symptoms/default`). Der `slug` bleibt auch für Custom-Symptome plaintext — ein Slug-HMAC-Hardening ist als Backlog für M9+ vorgesehen.
+Die Intensität bewegt sich in einem 0–3-Bereich, der im UI als 4-Punkt-Skala gerendert wird. Symptome sind Gesundheitsdaten nach DSGVO Art. 9 — Server-Logs enthalten weder `slug`/`name`/`symptom_id` noch `intensity` (statisch via `test_log_scrubbing` und `test_symptom_service_logs_no_sensitive_fields` geprüft). Custom-Symptom-Namen werden in `symptoms.name_enc` als Fernet-Ciphertext unter dem User-DEK gespeichert (Issue #26, ADR-0005); Default-Symptom-Namen bleiben plaintext, weil sie kuratierte, nicht-personenbezogene Labels sind und ohne aktiven User-Kontext gelesen werden müssen (`GET /symptoms/default`). Custom-Symptom-`slug`-Werte sind **HMAC-stabilisiert** (ADR-0039, Migration 027, Env `SLUG_HMAC_KEY`); Default-Slugs bleiben kuratierte Klartext-Keys.
 
 ```
 GET    /api/v1/symptoms/default                 Kuratierte Standard-Symptome   (no auth)
@@ -755,9 +762,18 @@ nicht möglich.
 GET    /api/v1/user/preferences      Eigene Insight-/Onboarding-Präferenzen laden
 PATCH  /api/v1/user/preferences      Eigene Präferenzen aktualisieren
 PUT    /api/v1/user/profile          Optionales Onboarding-Profil upserten
+GET    /api/v1/user/me/consents      Consent-Historie + aktueller Status (Art. 9 / HC)
+POST   /api/v1/user/me/consents      Consent grant/revoke protokollieren
+POST   /api/v1/user/me/consents/revoke  Consent widerrufen (convenience)
 GET    /api/v1/user/export           DSGVO Art. 20 ZIP mit export.json + README.txt
 DELETE /api/v1/user/me               Account und alle abhängigen Daten löschen (DSGVO Art. 17)
 ```
+
+### Consents (Health Connect / Art. 9)
+
+`consent_log` speichert explizite Einwilligungen (Migration 025, Issue #31).
+Settings → Privacy steuert den Health-Connect-Import-Gate (`canUseHealthConnectImport()`).
+Schlaf-/Wearable-Import selbst folgt in M8; die Consent-API ist die Foundation.
 
 ### `GET/PATCH /api/v1/user/preferences`
 
@@ -870,12 +886,18 @@ jeweiligen Owner ausgegeben.
 ```
 GET    /api/v1/insights              Alle Insights des Users
 GET    /api/v1/insights/latest       Neuester Insight je Metrik
+GET    /api/v1/insights/digest/latest  Wöchentlicher Insight-Digest (Foundation #147)
 GET    /api/v1/insights/tag-cooccurrence   Tag-Paar-Co-Occurrence (M5.1)
 GET    /api/v1/insights/symptom-tag-cooccurrence   Symptom×Tag-Lift-Matrix (M7)
 GET    /api/v1/insights/tag-clusters   Tag-Gruppen aus M7-Clustering
 POST   /api/v1/insights/regenerate    Insights + Tag-Gruppen on-demand (Owner, 1×/h)
 POST   /api/v1/insights/trigger      Worker manuell anstossen (Admin only)
 ```
+
+`GET /api/v1/insights/digest/latest` liefert den letzten wöchentlichen Digest-Snapshot
+(Worker: `python -m app.workers.digest --once`). Push-Delivery hängt noch an M4.2.
+Optionale Ollama-Formulierungen (#148) und Changepoint-Insights (#149) sind in der
+Analytics-Pipeline angebunden und ohne Cloud-Fallback deaktivierbar.
 
 `GET /api/v1/insights?limit=50` liefert die neuesten gespeicherten Insights:
 
@@ -1291,6 +1313,28 @@ Lokale Tabellen (Sprint 3): `entries_local`, `change_log`, `sync_meta`.
 ERD und Felddefinitionen: [ADR-0036 §5](adr/0036-offline-sync-v1-scope.md).
 
 ---
+
+## 10a. Notes analysis & signals
+
+```
+GET    /api/v1/analysis/notes/marker-summary   Aggregierte Mood-Mittelwerte je Marker
+POST   /api/v1/admin/entries/{id}/note-signals/reprocess   Signal-Reprocess (Admin)
+```
+
+Marker-CRUD liegt unter `/entries/{id}/note-markers` (§3). Signal-Reads unter
+`/entries/{id}/note-signals`. Admin-Reprocess nutzt dieselbe Allowlist wie
+`POST /insights/trigger` (`INSIGHT_TRIGGER_ADMIN_EMAILS`). Spez:
+[`features/notes-in-analysis.md`](features/notes-in-analysis.md), ADR-N-01–03.
+
+## 10b. Media (M13 foundation)
+
+```
+POST   /api/v1/media/photos   Foto-Upload mit serverseitigem EXIF-Strip (30/min)
+```
+
+Akzeptiert JPEG/PNG/WebP/GIF bis 10 MiB, stripped GPS/biometrische Metadaten via
+Pillow (`app/services/exif_strip.py`), Response enthält Metadata inkl.
+`stored: false` — MinIO-Persistenz und Galerie folgen als volles M13 (#28).
 
 ## 11. Export
 

@@ -16,9 +16,15 @@
   let customMarker = '';
 
   $: selected = new Set(markers.map((marker) => marker.marker));
-  $: customSuggestions = suggestions.filter(
-    (marker) => !PREDEFINED_NOTE_MARKERS.includes(marker as never)
-  );
+  $: customSuggestions = (() => {
+    const fromSuggestions = suggestions.filter(
+      (marker) => !PREDEFINED_NOTE_MARKERS.includes(marker as never)
+    );
+    const fromSelected = markers
+      .map((marker) => marker.marker)
+      .filter((marker) => !PREDEFINED_NOTE_MARKERS.includes(marker as never));
+    return [...new Set([...fromSuggestions, ...fromSelected])];
+  })();
 
   function toggle(marker: string): void {
     if (readonly) return;

@@ -697,11 +697,19 @@ async def _merge_symptom_upsert(
     )
     symptom = result.scalar_one_or_none()
 
+    from app.services.slug_hmac import hmac_custom_symptom_slug, is_hmac_symptom_slug
+
+    storage_slug = (
+        payload.slug
+        if is_hmac_symptom_slug(payload.slug)
+        else hmac_custom_symptom_slug(user_id=user_id, semantic_slug=payload.slug)
+    )
+
     if symptom is None:
         symptom = Symptom(
             id=change.id,
             user_id=user_id,
-            slug=payload.slug,
+            slug=storage_slug,
             icon=payload.icon,
             is_default=False,
             updated_at=client_ts,
@@ -714,7 +722,7 @@ async def _merge_symptom_upsert(
             raise SyncBadRequestError("default symptoms cannot be mutated via sync")
         server_ts = _ensure_utc(symptom.updated_at)
         if _client_wins(client_ts, server_ts):
-            symptom.slug = payload.slug
+            symptom.slug = storage_slug
             symptom.icon = payload.icon
             symptom.set_custom_name(payload.name)
             symptom.updated_at = client_ts
