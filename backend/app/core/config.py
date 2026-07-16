@@ -265,9 +265,7 @@ class Settings(BaseSettings):
             if self.DEBUG:
                 raise ValueError("DEBUG=true is not allowed when APP_ENV=production")
             if self.DEV_VIEW_ENABLED:
-                raise ValueError(
-                    "DEV_VIEW_ENABLED=true is not allowed when APP_ENV=production"
-                )
+                raise ValueError("DEV_VIEW_ENABLED=true is not allowed when APP_ENV=production")
             if self.MINIO_SECRET_KEY.startswith("CHANGE_ME") or len(self.MINIO_SECRET_KEY) < 16:
                 raise ValueError(
                     "MINIO_SECRET_KEY must be set to a non-default secret "

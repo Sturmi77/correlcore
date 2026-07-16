@@ -17,7 +17,8 @@ token can only mint one successor session under concurrent refresh.
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable
+from typing import cast
 
 import redis.asyncio as aioredis
 
@@ -89,12 +90,16 @@ class TokenStore:
         Returns ``True`` when the old JTI was present and rotation succeeded.
         Returns ``False`` when the old JTI was already missing (reuse/revoked).
         """
-        result = await self._r.eval(
-            _ROTATE_LUA,
-            2,
-            self._key(user_id, old_jti),
-            self._key(user_id, new_jti),
-            self._TTL_SECONDS,
+        # redis-py stubs type ``eval`` as sync|async union; cast to Awaitable.
+        result = await cast(
+            Awaitable[object],
+            self._r.eval(
+                _ROTATE_LUA,
+                2,
+                self._key(user_id, old_jti),
+                self._key(user_id, new_jti),
+                self._TTL_SECONDS,
+            ),
         )
         return bool(result)
 
@@ -105,10 +110,10 @@ class TokenStore:
     async def revoke_all(self, user_id: str) -> None:
         """Revoke all refresh tokens for a user (force-logout all devices)."""
         pattern = f"rt:{user_id}:*"
-        cursor: int | bytes = 0
+        cursor = 0
         while True:
             cursor, keys = await self._r.scan(cursor=cursor, match=pattern, count=100)
             if keys:
                 await self._r.delete(*keys)
-            if cursor == 0 or cursor == b"0":
+            if cursor == 0:
                 break
