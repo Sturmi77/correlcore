@@ -27,11 +27,12 @@ from __future__ import annotations
 import logging
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps.auth import get_current_user, get_current_verified_user
 from app.core.auth_cookies import clear_auth_cookies
+from app.core.rate_limit import limiter
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
 from app.models.user import User
@@ -227,7 +228,9 @@ async def list_my_sync_conflicts(
     "/export",
     summary="Download the current user's portable data export (DSGVO Art. 20)",
 )
+@limiter.limit("10/hour")
 async def export_my_data(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ) -> Response:
@@ -249,7 +252,9 @@ async def export_my_data(
         401: {"description": "Missing/invalid auth token, or password did not match."},
     },
 )
+@limiter.limit("5/minute")
 async def delete_my_account(
+    request: Request,
     body: DeleteAccountRequest,
     response: Response,
     current_user: User = Depends(get_current_user),

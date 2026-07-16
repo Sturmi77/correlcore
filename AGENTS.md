@@ -45,17 +45,13 @@ Or trigger regeneration for the logged-in user via API: `POST /api/v1/insights/r
 
 Admin manual worker run: set `INSIGHT_TRIGGER_ADMIN_EMAILS` and call `POST /api/v1/insights/trigger`.
 
-### Parallel React GUI (experimental)
+### Parallel React GUI (planned, not scaffolded)
 
 See [`docs/frontend/PARALLEL_REACT_GUI.md`](docs/frontend/PARALLEL_REACT_GUI.md).
-
-| GUI                    | Command                           | Port        |
-| ---------------------- | --------------------------------- | ----------- |
-| SvelteKit (production) | `pnpm dev`                        | 5173        |
-| React (experiment)     | `pnpm dev:react` (after scaffold) | 5174        |
-| Both                   | `pnpm dev:all` (after scaffold)   | 5173 + 5174 |
-
-Agent context for React work: [`apps/web-react/CLAUDE.md`](apps/web-react/CLAUDE.md). Set `INTERNAL_API_URL=http://127.0.0.1:8000` for both frontends. No backend changes required in proxy mode.
+`apps/web-react/` currently holds agent notes only — there is **no** package and
+**no** `pnpm dev:react` / `dev:all` scripts in the root `package.json` yet.
+Do not invent a React scaffold unless a task explicitly requests it.
+Production GUI remains SvelteKit (`pnpm dev` on port **5173**).
 
 ### Lint / test / build
 

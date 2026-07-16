@@ -60,10 +60,10 @@ Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)
 | **M4**    | **Complete** (2026-06-30) | Quick wins + PWA hardening closed out. Dexie sync/conflict log → M4.1 (#10/#24). See [`docs/M4_SPRINT_STATUS.md`](docs/M4_SPRINT_STATUS.md) and [`docs/quality/M4_VISUAL_QA.md`](docs/quality/M4_VISUAL_QA.md).                                                                            |
 | **M4.1**  | **Complete** (2026-06-30) | Offline-first Dexie sync, push/pull API, conflict log, local-first entries. Visual QA signed off. Closes #10/#24. See [`docs/M4.1_SPRINT_STATUS.md`](docs/M4.1_SPRINT_STATUS.md) and [`docs/quality/M4.1_VISUAL_QA.md`](docs/quality/M4.1_VISUAL_QA.md).                                   |
 | **M5**    | **Complete** (2026-06-30) | Habits Core + M5-C1/C2 closeout. Visual QA signed off. See [`docs/M5_SPRINT_STATUS.md`](docs/M5_SPRINT_STATUS.md) and [`docs/quality/M5_VISUAL_QA.md`](docs/quality/M5_VISUAL_QA.md).                                                                                                      |
-| **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. **Next main milestone: M9.** See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                                                          |
+| **M5.1**  | **Complete** (2026-07-10) | UX polish & flow consolidation (#251–#273); co-occurrence quick win. See [`docs/M5_1_SPRINT_STATUS.md`](docs/M5_1_SPRINT_STATUS.md).                                                                                                                                                     |
 | **M7**    | **Complete** (2026-06-30) | Sprints 1–9 + M7-C closeout. Quality gate and visual QA signed off. Optional LLM/digest deferred to M7-S8. See [`docs/CLOSEOUT_SPRINT_PLAN.md`](docs/CLOSEOUT_SPRINT_PLAN.md).                                                                                                             |
-| **M9**    | **Complete** (2026-07-11) | Beta hardening closed out: GDPR paths, GlitchTip/PII scrub, install/backup docs, security CI, beta program. Closes #29. **Next main milestone: M10.** See [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md) and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md). |
-| **M10**   | **Complete** (2026-07-11) | Public selfhost v1.0 — quality gate and visual QA signed off. Tag **`v1.0.0`** post-merge. **Next main milestone: M11.** See [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md) and [`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md).                          |
+| **M9**    | **Complete** (2026-07-11) | Beta hardening closed out: GDPR paths, GlitchTip/PII scrub, install/backup docs, security CI, beta program. Closes #29. See [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md) and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md).                              |
+| **M10**   | **Complete** (2026-07-11) | Public selfhost v1.0 — quality gate and visual QA signed off. Tag **`v1.0.0`**. **Next main milestone: M11** (Android). See [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md) and [`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md).                        |
 
 ---
 
@@ -112,7 +112,7 @@ After startup, CorrelCore is available at `https://your-domain.tld`
 
 Homelab / Tailnet without public DNS: see [`infra/dockhand/README.md`](infra/dockhand/README.md).
 
-> **Note:** CorrelCore is under active development (pre-alpha). Production use is recommended from v1.0 onwards.
+> **Note:** Selfhost **v1.0** is the supported release line (`main` / `1.0.x`). See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -199,7 +199,7 @@ install guide, user guide, API overview, privacy. Source: [`docs-site/`](docs-si
 
 ## Contributing
 
-CorrelCore is currently a solo project. Contribution guidelines will be published once v1.0 is released. Issues and discussions are welcome.
+CorrelCore is currently a solo project. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for language policy, PR rules, and Definition of Done. Issues and discussions are welcome.
 
 **Interested in beta testing?** Open an [issue](https://github.com/Sturmi77/correlcore/issues/new?template=beta_tester.md) or sign up on the [landing page](https://correlcore.app) (coming soon).
 

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps.auth import get_current_verified_user
+from app.core.rate_limit import limiter
 from app.db.session import get_session
 from app.models.user import User
 from app.services.export_service import (
@@ -19,7 +20,9 @@ router = APIRouter()
 
 
 @router.get("/json", summary="Download the current user's data as JSON")
+@limiter.limit("10/hour")
 async def export_json_endpoint(
+    request: Request,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> Response:
@@ -32,7 +35,9 @@ async def export_json_endpoint(
 
 
 @router.get("/csv", summary="Download the current user's entries as CSV")
+@limiter.limit("10/hour")
 async def export_csv_endpoint(
+    request: Request,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> Response:

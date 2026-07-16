@@ -47,11 +47,15 @@ Proxy trade-offs (extra hop, separate sessions, production proxy TBD):
 
 ## Commands
 
+**Status:** package not scaffolded yet. Root `package.json` has no
+`dev:react` / `dev:all` scripts. Use SvelteKit (`pnpm dev`) until scaffold lands
+(see [`PARALLEL_REACT_GUI.md`](../../docs/frontend/PARALLEL_REACT_GUI.md)).
+
 | Action                    | Command                                         |
 | ------------------------- | ----------------------------------------------- |
-| Dev (React only)          | `pnpm dev:react` (repo root)                    |
-| Dev (both GUIs)           | `pnpm dev:all`                                  |
 | Dev (SvelteKit reference) | `pnpm dev`                                      |
+| Dev (React only)          | `pnpm dev:react` — **planned**, not available   |
+| Dev (both GUIs)           | `pnpm dev:all` — **planned**, not available     |
 | Lint                      | `pnpm --filter @correlcore/web-react lint`      |
 | Typecheck                 | `pnpm --filter @correlcore/web-react typecheck` |
 | Test                      | `pnpm --filter @correlcore/web-react test`      |
@@ -71,10 +75,11 @@ export SECRET_KEY='local-dev-secret-key-min-32-bytes-long-padding'
 export ENCRYPTION_KEY='<valid-fernet-key>'
 uv run --python 3.12 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-# React dev (repo root)
-export INTERNAL_API_URL=http://127.0.0.1:8000
-pnpm dev:react
+# After scaffold (not available yet):
+# export INTERNAL_API_URL=http://127.0.0.1:8000
+# pnpm dev:react
 ```
+
 
 Postgres and Redis via Docker — see `AGENTS.md`.
 

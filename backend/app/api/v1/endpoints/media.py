@@ -32,6 +32,25 @@ _ALLOWED_CONTENT_TYPES = frozenset(
     }
 )
 _MAX_PHOTO_BYTES = 10 * 1024 * 1024  # 10 MiB guard rail for foundation stub
+_READ_CHUNK_BYTES = 64 * 1024
+
+
+async def _read_upload_capped(file: UploadFile, max_bytes: int) -> bytes:
+    """Read an upload in chunks and reject early once ``max_bytes`` is exceeded."""
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await file.read(_READ_CHUNK_BYTES)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="file too large",
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 @router.post(
@@ -58,13 +77,9 @@ async def upload_photo(
             detail="unsupported image content type",
         )
 
-    raw = await file.read()
+    raw = await _read_upload_capped(file, _MAX_PHOTO_BYTES)
     if not raw:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="empty upload")
-    if len(raw) > _MAX_PHOTO_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="file too large"
-        )
 
     try:
         stripped = strip_exif(raw)

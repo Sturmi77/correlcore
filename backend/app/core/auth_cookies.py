@@ -53,6 +53,24 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
 
 
 def clear_auth_cookies(response: Response) -> None:
-    """Clear both auth cookies using the exact paths used when setting them."""
-    response.delete_cookie(ACCESS_COOKIE_NAME, path=ACCESS_COOKIE_PATH)
-    response.delete_cookie(REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
+    """Clear both auth cookies using the same path/secure/samesite as set.
+
+    Chromium only clears a ``Secure`` cookie when the clearing ``Set-Cookie``
+    also carries ``Secure`` (and matching path). Starlette's defaults would
+    leave sessions in the jar after logout on HTTPS deployments.
+    """
+    secure = settings.cookie_secure_effective
+    response.delete_cookie(
+        ACCESS_COOKIE_NAME,
+        path=ACCESS_COOKIE_PATH,
+        secure=secure,
+        httponly=True,
+        samesite="strict",
+    )
+    response.delete_cookie(
+        REFRESH_COOKIE_NAME,
+        path=REFRESH_COOKIE_PATH,
+        secure=secure,
+        httponly=True,
+        samesite="strict",
+    )

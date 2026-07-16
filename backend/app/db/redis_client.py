@@ -10,9 +10,8 @@ Key:   ``rt:<user_id>:<jti>``
 Value: ``"1"``  (presence == valid)
 TTL:   ``JWT_REFRESH_TOKEN_EXPIRE_DAYS`` days
 
-On rotation the old key is deleted and a new one is written atomically
-via a pipeline. This prevents replay attacks: a stolen refresh token can
-only be used once before it is invalidated.
+Rotation uses a Lua script so consume+store is atomic: a stolen refresh
+token can only mint one successor session under concurrent refresh.
 """
 
 from __future__ import annotations
@@ -28,6 +27,17 @@ logger = logging.getLogger(__name__)
 
 # Module-level pool — created once at startup, reused across requests.
 _redis_pool: aioredis.Redis | None = None
+
+# Atomic rotate: delete old JTI only if present, then SET new JTI with TTL.
+# Returns 1 on success, 0 if the old key was already missing (reuse / revoke).
+_ROTATE_LUA = """
+if redis.call('EXISTS', KEYS[1]) == 1 then
+  redis.call('DEL', KEYS[1])
+  redis.call('SET', KEYS[2], '1', 'EX', ARGV[1])
+  return 1
+end
+return 0
+"""
 
 
 def _get_pool() -> aioredis.Redis:
@@ -73,12 +83,20 @@ class TokenStore:
         """Return True if the token JTI exists in Redis."""
         return bool(await self._r.exists(self._key(user_id, jti)))
 
-    async def rotate(self, user_id: str, old_jti: str, new_jti: str) -> None:
-        """Atomically invalidate old JTI and store new one."""
-        async with self._r.pipeline(transaction=True) as pipe:
-            pipe.delete(self._key(user_id, old_jti))
-            pipe.set(self._key(user_id, new_jti), "1", ex=self._TTL_SECONDS)
-            await pipe.execute()
+    async def rotate(self, user_id: str, old_jti: str, new_jti: str) -> bool:
+        """Atomically invalidate old JTI and store new one.
+
+        Returns ``True`` when the old JTI was present and rotation succeeded.
+        Returns ``False`` when the old JTI was already missing (reuse/revoked).
+        """
+        result = await self._r.eval(
+            _ROTATE_LUA,
+            2,
+            self._key(user_id, old_jti),
+            self._key(user_id, new_jti),
+            self._TTL_SECONDS,
+        )
+        return bool(result)
 
     async def revoke(self, user_id: str, jti: str) -> None:
         """Invalidate a refresh token (logout)."""
@@ -87,6 +105,10 @@ class TokenStore:
     async def revoke_all(self, user_id: str) -> None:
         """Revoke all refresh tokens for a user (force-logout all devices)."""
         pattern = f"rt:{user_id}:*"
-        keys = await self._r.keys(pattern)
-        if keys:
-            await self._r.delete(*keys)
+        cursor: int | bytes = 0
+        while True:
+            cursor, keys = await self._r.scan(cursor=cursor, match=pattern, count=100)
+            if keys:
+                await self._r.delete(*keys)
+            if cursor == 0 or cursor == b"0":
+                break

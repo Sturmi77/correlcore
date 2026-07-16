@@ -64,12 +64,16 @@ def test_set_auth_cookies_emits_secure_when_enabled(
         assert "SameSite=strict" in line
 
 
-def test_clear_auth_cookies_uses_matching_paths(fresh_response: Response) -> None:
+def test_clear_auth_cookies_uses_matching_paths(
+    fresh_response: Response, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Logout/account-delete must clear both cookies on the original paths.
 
     A path mismatch would leave the cookie in the jar — RFC 6265 requires
-    the delete-cookie to match path + name.
+    the delete-cookie to match path + name. Secure/SameSite/HttpOnly must
+    also match the set attributes so HTTPS browsers actually drop them.
     """
+    monkeypatch.setattr(auth_cookies.settings, "COOKIE_SECURE", True, raising=False)
     auth_cookies.clear_auth_cookies(fresh_response)
 
     lines = _set_cookie_lines(fresh_response)
@@ -79,3 +83,7 @@ def test_clear_auth_cookies_uses_matching_paths(fresh_response: Response) -> Non
     assert "refresh_token=" in joined
     assert "/api/v1/auth/refresh" in joined
     assert "Path=/api" in joined
+    for line in lines:
+        assert "Secure" in line
+        assert "HttpOnly" in line
+        assert "SameSite=strict" in line

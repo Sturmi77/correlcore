@@ -1,6 +1,6 @@
 # Contributing to CorrelCore
 
-CorrelCore is currently maintained as a solo project. Contributions are welcome once the project reaches v1.0. Until then, issues, discussions and pull requests should follow the rules below.
+CorrelCore is currently maintained as a solo project. Selfhost v1.0 is released; issues, discussions and pull requests should follow the rules below.
 
 ## Language Policy
 
