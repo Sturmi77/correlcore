@@ -35,6 +35,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 
+- **Status sync (2026-07-15):** Aligned milestone/status docs with post-#393 foundations —
+  digest/Ollama/changepoint, notes-in-analysis, slug HMAC, EXIF strip, Capacitor scaffold,
+  HC consent. Updated `API.md`, docs-site API overview, `DESIGN_DOCUMENT.md` v0.14,
+  `CLOSEOUT_SPRINT_PLAN`, `M7_*`, `M11_NOTES`, `M13_NOTES`, `FRONTEND_STATUS`, ADR-0025 index,
+  `symptom-analytics.md`, issue-tracker hygiene, `AGENTS.md`.
 - Updated `docs/API.md`, `ARCHITECTURE.md` §6, `PHASE_INSIGHT_MATRIX.md`, M9 thresholds
   addendum, ADR-0016/0021 cross-refs, docs-site API overview.
 

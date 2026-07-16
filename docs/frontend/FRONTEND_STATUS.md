@@ -49,7 +49,7 @@ at **768 px** (bottom nav → side rail). See [ADR-0017](../adr/0017-frontend-sc
 - Figma Code Connect publish (Sprint H)
 - Full auth/onboarding Playwright state matrix
 - Phase 5 wide-screen desktop layouts
-- Password recovery UI (backend contract pending)
+- Full auth/onboarding Playwright state matrix (password recovery UI shipped with O-20)
 
 ---
 
@@ -188,12 +188,13 @@ Mobile E2E is **not** in default CI; run before release or add to scheduled work
 
 ### Product / backend (out of frontend scope)
 
-| Item                          | Notes                             |
-| ----------------------------- | --------------------------------- |
-| Password recovery             | No backend contract → no UI       |
-| Reminders, account deletion   | Placeholder / backlog             |
-| Dexie background sync queue   | ADR-0009 — Entry-owned retry only |
-| Health Connect import consent | M7 backlog                        |
+| Item                          | Notes                                                       |
+| ----------------------------- | ----------------------------------------------------------- |
+| Password recovery             | **Shipped** — `forgot-password` / `reset-password` (O-20)   |
+| Account deletion              | **Shipped** — `DELETE /api/v1/user/me` (M9 / #29)           |
+| Reminders / push              | Backlog (M4.2)                                              |
+| Dexie background sync queue   | ADR-0009 — Entry-owned retry only                           |
+| Health Connect import consent | **Foundation shipped** (#31) — Settings Privacy + consents API; HC import itself → M8 |
 
 ### Phase 5 — desktop consolidation (next frontend track)
 

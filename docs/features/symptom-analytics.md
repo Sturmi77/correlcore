@@ -1,11 +1,11 @@
 # Feature Spec: Symptom Analytics
 
-**Status:** Partially implemented (frontend descriptive context; inferential engine pending)
-**Version:** 1.1.0
+**Status:** Implemented (M7 core per ADR-0025); Sleep×Symptom remaining for M8
+**Version:** 1.2.0
 **Created:** 2026-05-19
-**Updated:** 2026-05-30
+**Updated:** 2026-07-15
 **Owner:** @Sturmi77
-**Milestone Coverage:** Sprint-free (foundational bugfix) → M7 (main implementation) → M8 (sleep×symptom) → M9 (beta hardening)
+**Milestone Coverage:** Sprint-free (foundational bugfix) → M7 (main implementation, Done) → M8 (sleep×symptom) → M9 (beta hardening, Complete)
 
 ---
 

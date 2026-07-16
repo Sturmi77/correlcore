@@ -41,7 +41,14 @@ cd backend
 uv run --python 3.12 python -m app.workers.analytics --once
 ```
 
-Or trigger regeneration for the logged-in user via API: `POST /api/v1/insights/regenerate` (rate-limited 1×/hour). Bulk import via `POST /entries/batch` schedules a debounced background regeneration.
+Weekly insight digest (foundation #147), same env:
+
+```bash
+cd backend
+uv run --python 3.12 python -m app.workers.digest --once
+```
+
+Or trigger regeneration for the logged-in user via API: `POST /api/v1/insights/regenerate` (rate-limited 1×/hour). Latest digest snapshot: `GET /api/v1/insights/digest/latest`. Bulk import via `POST /entries/batch` schedules a debounced background regeneration.
 
 Admin manual worker run: set `INSIGHT_TRIGGER_ADMIN_EMAILS` and call `POST /api/v1/insights/trigger`.
 
