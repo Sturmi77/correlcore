@@ -55,13 +55,14 @@ write_quickstart_env() {
 
   local ts_ip="${TAILSCALE_IP:-127.0.0.1}"
   local web_port="${WEB_HOST_PORT:-3010}"
-  local pg_pass app_pass redis_pass secret_key enc_key
+  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac_key
 
   pg_pass="$(gen_urlsafe 24)"
   app_pass="$(gen_urlsafe 24)"
   redis_pass="$(gen_urlsafe 24)"
   secret_key="$(gen_urlsafe 48)"
   enc_key="$(gen_fernet)"
+  slug_hmac_key="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
 
   cp "$example" "$env_file"
 
@@ -70,6 +71,7 @@ write_quickstart_env() {
   sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${redis_pass}|" "$env_file"
   sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${secret_key}|" "$env_file"
   sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=${enc_key}|" "$env_file"
+  sed -i "s|^SLUG_HMAC_KEY=.*|SLUG_HMAC_KEY=${slug_hmac_key}|" "$env_file"
   sed -i "s|^TAILSCALE_IP=.*|TAILSCALE_IP=${ts_ip}|" "$env_file"
   sed -i "s|^WEB_HOST_PORT=.*|WEB_HOST_PORT=${web_port}|" "$env_file"
   sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=http://${ts_ip}:${web_port}|" "$env_file"
@@ -101,18 +103,20 @@ write_production_hint() {
 
   cp "$example" "$env_file"
 
-  local pg_pass app_pass redis_pass secret_key enc_key
+  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac_key
   pg_pass="$(gen_urlsafe 24)"
   app_pass="$(gen_urlsafe 24)"
   redis_pass="$(gen_urlsafe 24)"
   secret_key="$(gen_urlsafe 48)"
   enc_key="$(gen_fernet)"
+  slug_hmac_key="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
 
   sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${pg_pass}|" "$env_file"
   sed -i "s|^APP_DB_PASSWORD=.*|APP_DB_PASSWORD=${app_pass}|" "$env_file"
   sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${redis_pass}|" "$env_file"
   sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${secret_key}|" "$env_file"
   sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=${enc_key}|" "$env_file"
+  sed -i "s|^SLUG_HMAC_KEY=.*|SLUG_HMAC_KEY=${slug_hmac_key}|" "$env_file"
 
   echo "Wrote ${env_file} from .env.example with generated secrets."
   echo ""

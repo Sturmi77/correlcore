@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date as date_type
+from datetime import timedelta
 from statistics import mean
 from typing import TYPE_CHECKING
 
@@ -49,7 +50,12 @@ def build_marker_mood_insights(
     """Build note-marker mood association insights when sample gates pass."""
     from app.services.insight_engine import InsightCandidate
 
-    noted = [row for row in entries_with_markers if row.has_note]
+    window_start = generated_for_date - timedelta(days=time_window_days)
+    noted = [
+        row
+        for row in entries_with_markers
+        if row.has_note and window_start <= row.entry_date < generated_for_date
+    ]
     if len(noted) < MIN_MARKER_INSIGHT_SAMPLE:
         return []
 

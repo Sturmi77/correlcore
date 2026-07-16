@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed (Codex review follow-up for #393)
+
+- Honor `note_visibility=hidden` in marker analytics and GDPR export.
+- Bind per-user DEK in digest worker; HMAC custom symptom slugs on sync upsert.
+- `has_note` list filter applied before SQL `LIMIT`; null visibility patches no longer 500.
+- Batch create schedules note-signal extraction; digest login redirect → `/auth/login`.
+- Note marker chips keep pending selections; visibility changes mark autosave dirty.
+- Marker insights respect 90-day window; timeseries note dots use full axis dates.
+- Move/lazy-load `httpx` for optional Ollama path; pass `SLUG_HMAC_KEY` in compose stacks.
+
 ### Added (Open-issues implementation — M4.1.1 / Notes / M8–M13 foundations)
 
 - **M4.1.1 offline sync hardening (#258):** revision locking, initial pull backfill,

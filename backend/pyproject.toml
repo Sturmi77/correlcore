@@ -50,6 +50,8 @@ analytics = [
   "statsmodels>=0.14.0",
   "apscheduler>=3.10.0",
   "ruptures>=1.1.9",
+  # Optional Ollama statement refinement (#148) — also used by FastAPI TestClient in tests
+  "httpx>=0.27.0",
 ]
 dev = [
   "pytest>=8.0.0",

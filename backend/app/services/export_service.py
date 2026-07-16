@@ -111,8 +111,15 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
             symptoms_by_entry[entry_id].append({**payload, "intensity": intensity})
             visible_symptoms[(symptom.slug, name)] = payload
 
+    from app.models.entry import NoteVisibility
+
     exported_entries: list[dict[str, Any]] = []
     for entry in entries:
+        visibility = getattr(entry, "note_visibility", NoteVisibility.FULL)
+        visibility_value = (
+            visibility.value if isinstance(visibility, NoteVisibility) else str(visibility)
+        )
+        note_hidden = visibility_value == NoteVisibility.HIDDEN.value
         exported_entries.append(
             {
                 "date": entry.entry_date.isoformat(),
@@ -123,7 +130,8 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
                 "cycle_day": entry.cycle_day,
                 "work_context": entry.work_context.value,
                 "source": entry.source.value,
-                "note": entry.note_enc,
+                "note": None if note_hidden else entry.note_enc,
+                "note_visibility": visibility_value,
                 "created_at": entry.created_at.isoformat(),
                 "updated_at": entry.updated_at.isoformat(),
                 "tags": tags_by_entry.get(entry.id, []),
