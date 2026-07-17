@@ -2,6 +2,10 @@
 
 ADR-0004: Phase 1 — Native JWT with refresh-token rotation.
 All refresh tokens stored in Redis (single-use via JTI).
+
+Password hashing uses the ``bcrypt`` library directly. ``passlib``'s bcrypt
+backend runs a wraparound self-test with a >72-byte secret that raises on
+bcrypt ≥ 4.1 (and blocks API startup after Dependabot allowed bcrypt 5.x).
 """
 
 from __future__ import annotations
@@ -10,20 +14,30 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
+import bcrypt
 from jose import jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
+# bcrypt truncates at 72 bytes; keep explicit for hash/verify parity.
+_BCRYPT_MAX_SECRET_BYTES = 72
+_BCRYPT_ROUNDS = 12
+
+
+def _secret_bytes(password: str) -> bytes:
+    return password.encode("utf-8")[:_BCRYPT_MAX_SECRET_BYTES]
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return cast(bool, pwd_context.verify(plain_password, hashed_password))
+    try:
+        return bcrypt.checkpw(_secret_bytes(plain_password), hashed_password.encode("utf-8"))
+    except (TypeError, ValueError):
+        return False
 
 
 def hash_password(password: str) -> str:
-    return cast(str, pwd_context.hash(password))
+    digest = bcrypt.hashpw(_secret_bytes(password), bcrypt.gensalt(rounds=_BCRYPT_ROUNDS))
+    return digest.decode("utf-8")
 
 
 def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> str:

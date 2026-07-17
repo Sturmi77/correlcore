@@ -2,7 +2,7 @@
 
 Design notes:
 - uuid primary key: no sequential IDs exposed in API (privacy + security)
-- hashed_password: bcrypt via passlib (see core/security.py)
+- hashed_password: bcrypt (see core/security.py)
 - is_active / is_verified: soft-disable without hard-delete
 - All health/mood data is linked via user_id FK — Row-Level-Security
   in Postgres enforces data isolation at DB level (M1).

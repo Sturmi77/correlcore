@@ -1,7 +1,7 @@
 """Auth service — business logic for register, login, refresh, logout.
 
 ADR-0004 compliance:
-- bcrypt work factor ≥ 12 (set in core/security.py pwd_context)
+- bcrypt work factor ≥ 12 (set in core/security.py)
 - Refresh tokens are single-use (rotated on every /refresh call)
 - Access tokens: 15 min TTL
 - Refresh tokens: 30 day TTL, stored in Redis by JTI
