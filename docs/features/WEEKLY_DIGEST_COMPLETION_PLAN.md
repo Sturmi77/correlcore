@@ -19,15 +19,15 @@ Related: Issue #147, `backend/app/services/insight_digest.py`, `backend/app/work
 
 ## Current state
 
-| Piece                          | Status                                       |
-| ------------------------------ | -------------------------------------------- |
-| Preference default             | **false** (opt-in)                           |
-| Settings toggle + preview link | Shipped                                      |
-| `GET /insights/digest/latest`  | Shipped (prefers stored row)                 |
-| FE preview `/insights/digest`  | Shipped (auth redirect fixed)                |
-| Compose `digest-worker`        | Profile `digest` on all stacks               |
-| Persist vs recompute on GET    | Stored preferred; fall back to recompute     |
-| Push / email                   | Not shipped                                  |
+| Piece                          | Status                                   |
+| ------------------------------ | ---------------------------------------- |
+| Preference default             | **false** (opt-in)                       |
+| Settings toggle + preview link | Shipped                                  |
+| `GET /insights/digest/latest`  | Shipped (prefers stored row)             |
+| FE preview `/insights/digest`  | Shipped (auth redirect fixed)            |
+| Compose `digest-worker`        | Profile `digest` on all stacks           |
+| Persist vs recompute on GET    | Stored preferred; fall back to recompute |
+| Push / email                   | Not shipped                              |
 
 Enable:
 
