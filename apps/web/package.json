@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@sentry/browser": "^10.64.0",
-    "@sentry/node": "^10.64.0",
+    "@sentry/node": "^10.66.0",
     "dexie": "^4.4.4",
     "lucide-svelte": "^0.469.0",
     "svelte-i18n": "^4.0.0"
