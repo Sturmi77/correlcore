@@ -16,7 +16,7 @@
  *     upstream fetch.
  */
 
-import type { RequestEvent } from '@sveltejs/kit';
+import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/observability/errorTracking.server', () => ({
@@ -27,6 +27,7 @@ vi.mock('$lib/observability/errorTracking.server', () => ({
 import { handle } from './hooks.server';
 
 type FetchMock = ReturnType<typeof vi.fn>;
+type ResolveFn = Parameters<Handle>[0]['resolve'];
 
 function makeEvent(url: string, init: RequestInit = {}): RequestEvent {
   const request = new Request(url, init);
@@ -41,12 +42,13 @@ function makeEvent(url: string, init: RequestInit = {}): RequestEvent {
 }
 
 let fetchMock: FetchMock;
-let resolveMock: ReturnType<typeof vi.fn>;
+/** Vitest 4 mock + Handle.resolve — cast once so svelte-check accepts call sites. */
+let resolveMock: ReturnType<typeof vi.fn> & ResolveFn;
 
 beforeEach(() => {
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
-  resolveMock = vi.fn().mockResolvedValue(new Response('app shell'));
+  resolveMock = vi.fn().mockResolvedValue(new Response('app shell')) as typeof resolveMock;
   delete process.env.INTERNAL_API_URL;
 });
 
