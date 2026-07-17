@@ -1,8 +1,8 @@
 # Weekly Digest — Completion Plan
 
-Status: **In progress** (opt-in + compose profile landed 2026-07-16)  
+Status: **WP1 done** (opt-in + compose profile + stored GET)  
 Last updated: 2026-07-16  
-Related: Issue #147, `backend/app/workers/digest.py`, `/insights/digest`, Settings `digest_enabled`
+Related: Issue #147, `backend/app/services/insight_digest.py`, `backend/app/workers/digest.py`, `/insights/digest`, Settings `digest_enabled`
 
 ---
 
@@ -23,10 +23,10 @@ Related: Issue #147, `backend/app/workers/digest.py`, `/insights/digest`, Settin
 | ------------------------------ | -------------------------------------------- |
 | Preference default             | **false** (opt-in)                           |
 | Settings toggle + preview link | Shipped                                      |
-| `GET /insights/digest/latest`  | Shipped                                      |
+| `GET /insights/digest/latest`  | Shipped (prefers stored row)                 |
 | FE preview `/insights/digest`  | Shipped (auth redirect fixed)                |
 | Compose `digest-worker`        | Profile `digest` on all stacks               |
-| Persist vs recompute on GET    | Still recomputes; store writes on worker run |
+| Persist vs recompute on GET    | Stored preferred; fall back to recompute     |
 | Push / email                   | Not shipped                                  |
 
 Enable:
@@ -41,12 +41,16 @@ See [`docs/selfhost/COMPOSE_STACKS.md`](../selfhost/COMPOSE_STACKS.md).
 
 ---
 
+## WP1 — Persistence contract (done)
+
+1. `GET /insights/digest/latest` prefers the newest `insight_digests` row and hydrates insight payloads by ID.
+2. Falls back to recompute when no row exists or hydration fails (deleted insights).
+3. Worker always **computes** then **stores** (`compute_weekly_digest_for_user`) — never short-circuits via GET.
+4. Tests: prefer-stored, missing-store fallback, disabled → error, hydrate order, store→hydrate roundtrip.
+
+---
+
 ## Remaining work packages
-
-### WP1 — Persistence contract
-
-1. Prefer stored `insight_digests` row on GET; fall back to recompute.
-2. Tests for store → get, missing store, `digest_enabled=false` → 403.
 
 ### WP2 — Ops polish
 
@@ -64,6 +68,6 @@ See [`docs/selfhost/COMPOSE_STACKS.md`](../selfhost/COMPOSE_STACKS.md).
 ## Acceptance for “done”
 
 - [x] Opt-in default + compose profile
-- [ ] Stored digest preferred on GET
+- [x] Stored digest preferred on GET
 - [ ] INSTALL / docs-site document the profile
 - [ ] No UI claims push delivery
