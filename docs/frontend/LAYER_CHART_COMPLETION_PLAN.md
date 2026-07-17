@@ -17,8 +17,8 @@ scheduled and the gzip chunk is measured ≤ 80 KB.
 
 ## When to reopen
 
-1. Product accepts a Trends Compare multi-row / lasagna milestone item.  
-2. Spike installs `layerchart@^2`, implements `lazyLoadLayerChart()`, measures CI chunk size.  
+1. Product accepts a Trends Compare multi-row / lasagna milestone item.
+2. Spike installs `layerchart@^2`, implements `lazyLoadLayerChart()`, measures CI chunk size.
 3. Gate behind maturity/dev flag with SVG fallback.
 
 Until then: keep the adapter stub; do not invent parallel React chart stacks.

@@ -8,26 +8,26 @@ Related: Issue #147, `backend/app/workers/digest.py`, `/insights/digest`, Settin
 
 ## Decisions (locked)
 
-| ID | Decision | Choice |
-| -- | -------- | ------ |
-| D-D1 | Delivery channel v1 | **In-app only** (no push/email yet) |
-| D-D2 | Compose wiring | Profile **`digest`** → `digest-worker` (`python -m app.workers.digest`) |
-| D-D3 | Default `digest_enabled` | **`false`** (opt-in); migration 028 |
-| D-D4 | Discoverability | Settings toggle + preview link to `/insights/digest` |
+| ID   | Decision                 | Choice                                                                  |
+| ---- | ------------------------ | ----------------------------------------------------------------------- |
+| D-D1 | Delivery channel v1      | **In-app only** (no push/email yet)                                     |
+| D-D2 | Compose wiring           | Profile **`digest`** → `digest-worker` (`python -m app.workers.digest`) |
+| D-D3 | Default `digest_enabled` | **`false`** (opt-in); migration 028                                     |
+| D-D4 | Discoverability          | Settings toggle + preview link to `/insights/digest`                    |
 
 ---
 
 ## Current state
 
-| Piece | Status |
-| ----- | ------ |
-| Preference default | **false** (opt-in) |
-| Settings toggle + preview link | Shipped |
-| `GET /insights/digest/latest` | Shipped |
-| FE preview `/insights/digest` | Shipped (auth redirect fixed) |
-| Compose `digest-worker` | Profile `digest` on all stacks |
-| Persist vs recompute on GET | Still recomputes; store writes on worker run |
-| Push / email | Not shipped |
+| Piece                          | Status                                       |
+| ------------------------------ | -------------------------------------------- |
+| Preference default             | **false** (opt-in)                           |
+| Settings toggle + preview link | Shipped                                      |
+| `GET /insights/digest/latest`  | Shipped                                      |
+| FE preview `/insights/digest`  | Shipped (auth redirect fixed)                |
+| Compose `digest-worker`        | Profile `digest` on all stacks               |
+| Persist vs recompute on GET    | Still recomputes; store writes on worker run |
+| Push / email                   | Not shipped                                  |
 
 Enable:
 
@@ -55,15 +55,15 @@ See [`docs/selfhost/COMPOSE_STACKS.md`](../selfhost/COMPOSE_STACKS.md).
 
 ### WP3 — Explicitly out of scope
 
-- UnifiedPush / FCM  
-- SMTP digest mails  
-- LLM digest prose  
+- UnifiedPush / FCM
+- SMTP digest mails
+- LLM digest prose
 
 ---
 
 ## Acceptance for “done”
 
-- [x] Opt-in default + compose profile  
-- [ ] Stored digest preferred on GET  
-- [ ] INSTALL / docs-site document the profile  
-- [ ] No UI claims push delivery  
+- [x] Opt-in default + compose profile
+- [ ] Stored digest preferred on GET
+- [ ] INSTALL / docs-site document the profile
+- [ ] No UI claims push delivery

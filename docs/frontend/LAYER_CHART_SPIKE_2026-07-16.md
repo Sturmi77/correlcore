@@ -5,13 +5,13 @@ Decision record for whether to adopt LayerChart behind
 
 ## Inputs
 
-| Fact | Finding |
-| ---- | ------- |
-| App stack | Svelte 5 (`^5.0.0`), SvelteKit 2, Tailwind 4 |
-| Current charts | Custom SVG only; production Trends/Insights use this path |
-| Adapter | `lazyLoadLayerChart()` returns `null`; **no** consumers call it |
-| Library | **LayerChart 2.0.0** (2026-07) — Svelte 5 runes/snippets, Tailwind optional |
-| ADR-0035 budget | ≤ 80 KB gz marginal |
+| Fact            | Finding                                                                     |
+| --------------- | --------------------------------------------------------------------------- |
+| App stack       | Svelte 5 (`^5.0.0`), SvelteKit 2, Tailwind 4                                |
+| Current charts  | Custom SVG only; production Trends/Insights use this path                   |
+| Adapter         | `lazyLoadLayerChart()` returns `null`; **no** consumers call it             |
+| Library         | **LayerChart 2.0.0** (2026-07) — Svelte 5 runes/snippets, Tailwind optional |
+| ADR-0035 budget | ≤ 80 KB gz marginal                                                         |
 
 ## Compatibility
 
@@ -40,7 +40,7 @@ this change set.
 
 Revisit when:
 
-1. Trends Compare lasagna (or equivalent) is an accepted milestone item, and  
+1. Trends Compare lasagna (or equivalent) is an accepted milestone item, and
 2. A measured `lazyLoadLayerChart()` chunk is ≤ 80 KB gz in CI.
 
 If LayerChart is rejected later for budget or API churn, close the adapter and

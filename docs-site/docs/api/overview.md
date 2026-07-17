@@ -32,17 +32,17 @@ the German repo file `docs/API.md` is historical.
 
 Native JWT auth (Phase 1 selfhost). OIDC via Authentik planned for SaaS (M12+).
 
-| Method | Path                               | Notes                               |
-| ------ | ---------------------------------- | ----------------------------------- |
-| `POST` | `/api/v1/auth/register`            | Always `202`; verify email required |
+| Method | Path                               | Notes                                                            |
+| ------ | ---------------------------------- | ---------------------------------------------------------------- |
+| `POST` | `/api/v1/auth/register`            | Always `202`; verify email required                              |
 | `POST` | `/api/v1/auth/login`               | Sets cookies; JSON omits JWT unless `?include_access_token=true` |
-| `POST` | `/api/v1/auth/refresh`             | Rotates refresh; same JWT body rule |
-| `POST` | `/api/v1/auth/logout`              | Clears cookies                      |
-| `POST` | `/api/v1/auth/verify-email`        | Single-use token, 24h TTL           |
-| `POST` | `/api/v1/auth/resend-verification` | Always `202`; `3/min/IP`            |
-| `POST` | `/api/v1/auth/forgot-password`     | Always `202`; `3/min/IP`            |
-| `POST` | `/api/v1/auth/reset-password`      | Single-use token; `10/min/IP`       |
-| `GET`  | `/api/v1/auth/me`                  | Current user profile                |
+| `POST` | `/api/v1/auth/refresh`             | Rotates refresh; same JWT body rule                              |
+| `POST` | `/api/v1/auth/logout`              | Clears cookies                                                   |
+| `POST` | `/api/v1/auth/verify-email`        | Single-use token, 24h TTL                                        |
+| `POST` | `/api/v1/auth/resend-verification` | Always `202`; `3/min/IP`                                         |
+| `POST` | `/api/v1/auth/forgot-password`     | Always `202`; `3/min/IP`                                         |
+| `POST` | `/api/v1/auth/reset-password`      | Single-use token; `10/min/IP`                                    |
+| `GET`  | `/api/v1/auth/me`                  | Current user profile                                             |
 
 Registration, resend, and forgot-password endpoints use generic responses to
 prevent email enumeration.
