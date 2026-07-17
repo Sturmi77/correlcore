@@ -17,15 +17,15 @@ audit (see § Remediated).
 
 ## Scorecard
 
-| Area              | Grade | Notes                                                                 |
-| ----------------- | ----- | --------------------------------------------------------------------- |
-| Auth & sessions   | B+    | Solid cookie/JWT model; atomic refresh rotate now fixed               |
-| Crypto at rest    | A-    | Per-user DEK + MultiFernet; Fernet validity checked in staging/prod   |
-| Secrets hygiene   | B+    | No real secrets in git; gitleaks allowlist tightened                  |
-| Rate limits       | B     | Auth/entries covered; export/refresh/logout/delete now limited        |
-| Authorization     | A-    | App filters + Postgres RLS; admin decrypt path is intentional         |
-| Docs accuracy     | B-    | v1.0 messaging + React GUI docs corrected; sprint archives still noisy|
-| Maintainability   | B-    | Five compose/env stacks; no Dependabot; React GUI still uns scaffolded|
+| Area            | Grade | Notes                                                                  |
+| --------------- | ----- | ---------------------------------------------------------------------- |
+| Auth & sessions | B+    | Solid cookie/JWT model; atomic refresh rotate now fixed                |
+| Crypto at rest  | A-    | Per-user DEK + MultiFernet; Fernet validity checked in staging/prod    |
+| Secrets hygiene | B+    | No real secrets in git; gitleaks allowlist tightened                   |
+| Rate limits     | B     | Auth/entries covered; export/refresh/logout/delete now limited         |
+| Authorization   | A-    | App filters + Postgres RLS; admin decrypt path is intentional          |
+| Docs accuracy   | B-    | v1.0 messaging + React GUI docs corrected; sprint archives still noisy |
+| Maintainability | B-    | Five compose/env stacks; no Dependabot; React GUI still uns scaffolded |
 
 ---
 
@@ -36,43 +36,43 @@ Status: **Fixed** (this PR) / **Open** / **Accepted**.
 
 ### High
 
-| ID  | Status | Finding                                                                                         | Location |
-| --- | ------ | ----------------------------------------------------------------------------------------------- | -------- |
-| H1  | Fixed | Refresh rotation was TOCTOU (`is_valid` then `rotate`); concurrent refresh could mint 2 sessions | `redis_client.py`, `auth_service.py` |
-| H2  | Fixed | `DEV_VIEW_ENABLED` / `DEBUG` not rejected in production                                         | `config.py` |
-| H3  | Fixed | Gitleaks path-allowlisted entire `ci-api.yml` (stale regex)                                     | `.gitleaks.toml` |
-| H4  | Fixed | `SLUG_HMAC_KEY` missing from most env examples + bootstrap                                      | `infra/**/.env*.example`, `bootstrap-selfhost-env.sh` |
+| ID  | Status | Finding                                                                                          | Location                                              |
+| --- | ------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| H1  | Fixed  | Refresh rotation was TOCTOU (`is_valid` then `rotate`); concurrent refresh could mint 2 sessions | `redis_client.py`, `auth_service.py`                  |
+| H2  | Fixed  | `DEV_VIEW_ENABLED` / `DEBUG` not rejected in production                                          | `config.py`                                           |
+| H3  | Fixed  | Gitleaks path-allowlisted entire `ci-api.yml` (stale regex)                                      | `.gitleaks.toml`                                      |
+| H4  | Fixed  | `SLUG_HMAC_KEY` missing from most env examples + bootstrap                                       | `infra/**/.env*.example`, `bootstrap-selfhost-env.sh` |
 
 ### Medium
 
-| ID  | Status | Finding                                                                 | Location |
-| --- | ------ | ----------------------------------------------------------------------- | -------- |
-| M1  | Fixed | `clear_auth_cookies` omitted Secure/SameSite/HttpOnly                   | `auth_cookies.py` |
-| M2  | Fixed | Production secret checks skipped Fernet validity, MinIO default, CORS `*` | `config.py` |
-| M3  | Fixed | `/auth/refresh`, `/auth/logout` unrate-limited                          | `auth.py` |
-| M4  | Fixed | Export + account-delete unrate-limited                                  | `export.py`, `user.py` |
-| M5  | Fixed | Photo upload buffered entire body before size check                     | `media.py` |
-| M6  | Fixed | `TokenStore.revoke_all` used Redis `KEYS`                               | `redis_client.py` |
-| M7  | Open   | Access JWT still returned in JSON body (XSS can steal despite HttpOnly) | `auth.py` TokenResponse |
-| M8  | Open   | Password policy min 8 + letter/digit — thin for Art. 9 data             | `schemas/auth.py` |
-| M9  | Open   | SlowAPI fails hard when Redis is down (no in-memory fallback)           | `rate_limit.py` |
-| M10 | Open   | Five near-duplicate compose/env stacks drift                            | `infra/docker`, `dockhand`, `dockge` |
-| M11 | Open   | No Dependabot/Renovate despite M9 note                                  | `.github/` |
-| M12 | Open   | ADR-0006 claims JSON Content-Type CSRF check; not enforced in API       | `main.py` / auth |
+| ID  | Status | Finding                                                                   | Location                             |
+| --- | ------ | ------------------------------------------------------------------------- | ------------------------------------ |
+| M1  | Fixed  | `clear_auth_cookies` omitted Secure/SameSite/HttpOnly                     | `auth_cookies.py`                    |
+| M2  | Fixed  | Production secret checks skipped Fernet validity, MinIO default, CORS `*` | `config.py`                          |
+| M3  | Fixed  | `/auth/refresh`, `/auth/logout` unrate-limited                            | `auth.py`                            |
+| M4  | Fixed  | Export + account-delete unrate-limited                                    | `export.py`, `user.py`               |
+| M5  | Fixed  | Photo upload buffered entire body before size check                       | `media.py`                           |
+| M6  | Fixed  | `TokenStore.revoke_all` used Redis `KEYS`                                 | `redis_client.py`                    |
+| M7  | Open   | Access JWT still returned in JSON body (XSS can steal despite HttpOnly)   | `auth.py` TokenResponse              |
+| M8  | Open   | Password policy min 8 + letter/digit — thin for Art. 9 data               | `schemas/auth.py`                    |
+| M9  | Open   | SlowAPI fails hard when Redis is down (no in-memory fallback)             | `rate_limit.py`                      |
+| M10 | Open   | Five near-duplicate compose/env stacks drift                              | `infra/docker`, `dockhand`, `dockge` |
+| M11 | Open   | No Dependabot/Renovate despite M9 note                                    | `.github/`                           |
+| M12 | Open   | ADR-0006 claims JSON Content-Type CSRF check; not enforced in API         | `main.py` / auth                     |
 
 ### Low / Info
 
-| ID  | Status   | Finding                                                              |
-| --- | -------- | -------------------------------------------------------------------- |
-| L1  | Open     | Access tokens not denylisted on logout (15 min TTL residual)         |
-| L2  | Open     | bcrypt 72-byte silent truncation                                     |
-| L3  | Accepted | `python-jose` + `ecdsa` advisory (HS256-only; tracked in M9_PENTEST) |
-| L4  | Open     | Tag `color` not regex-validated (`#RRGGBB`) — CSS injection surface  |
-| L5  | Open     | Login password field unbounded length (CPU cost on bcrypt)           |
-| L6  | Fixed | README “pre-alpha” / CONTRIBUTING “until v1.0” contradicted v1.0 badge |
-| L7  | Fixed | AGENTS.md / CLAUDE.md advertised missing `pnpm dev:react`            |
-| I1  | Info     | External pentest still pending (`M9_PENTEST.md`)                     |
-| I2  | Info     | Frontend Vitest has no coverage floor; backend floor is 70%          |
+| ID  | Status   | Finding                                                                |
+| --- | -------- | ---------------------------------------------------------------------- |
+| L1  | Open     | Access tokens not denylisted on logout (15 min TTL residual)           |
+| L2  | Open     | bcrypt 72-byte silent truncation                                       |
+| L3  | Accepted | `python-jose` + `ecdsa` advisory (HS256-only; tracked in M9_PENTEST)   |
+| L4  | Open     | Tag `color` not regex-validated (`#RRGGBB`) — CSS injection surface    |
+| L5  | Open     | Login password field unbounded length (CPU cost on bcrypt)             |
+| L6  | Fixed    | README “pre-alpha” / CONTRIBUTING “until v1.0” contradicted v1.0 badge |
+| L7  | Fixed    | AGENTS.md / CLAUDE.md advertised missing `pnpm dev:react`              |
+| I1  | Info     | External pentest still pending (`M9_PENTEST.md`)                       |
+| I2  | Info     | Frontend Vitest has no coverage floor; backend floor is 70%            |
 
 ---
 
