@@ -162,41 +162,41 @@ Task: <your specific task here>
 **Public docs site (M10):** [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/) —
 install guide, user guide, API overview, privacy. Source: [`docs-site/`](docs-site/).
 
-| Document                                                              | Content                                                                                 |
-| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                         | Vision, features, architecture, roadmap — single source of truth                        |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                               | Component diagram, deployment topologies, sync protocol                                 |
-| [API.md](docs/API.md)                                                 | OpenAPI guidelines, endpoints, auth flow                                                |
-| [API_CONTRACTS.md](docs/API_CONTRACTS.md)                             | API contract strategy, frontend constants, OpenAPI client plan                          |
-| [FRONTEND.md](docs/FRONTEND.md)                                       | Mobile/Web roles, responsive shell, component ownership                                 |
-| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                 | Local setup, quality gates, NAS/pnpm notes, test database                               |
-| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                         | Competitive and market analysis, monetisation, marketing                                |
-| [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md) | English-first collaboration and documentation migration plan                            |
-| [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)           | Rename and deployment migration notes from MoodSync to CorrelCore                       |
-| [Closeout Sprint Plan](docs/CLOSEOUT_SPRINT_PLAN.md)                  | M4/M5/M7 closeout sequence, audit findings, deferred-work index                         |
-| [M4 Sprint Status](docs/M4_SPRINT_STATUS.md)                          | M4 quick wins + PWA hardening tracking                                                  |
-| [M4.1 Sprint Plan](docs/M4.1_SPRINT_PLAN.md)                          | Offline-first Dexie sync implementation plan                                            |
-| [M4.1 Visual QA](docs/quality/M4.1_VISUAL_QA.md)                      | M4.1 offline sync closeout sign-off                                                     |
-| [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                          | M5 Habits Core tracking                                                                 |
-| [M7 Notes](docs/M7_NOTES.md)                                          | Insights v2: Lasso, lag, symptom analytics, clustering                                  |
-| [M7 Sprint 9](docs/M7_SPRINT9_PLAN.md)                                | Spec-complete closeout: interaction, feed UX, cluster API, a11y                         |
-| [Phase & Insight Matrix](docs/PHASE_INSIGHT_MATRIX.md)                | Developer reference: maturity phases, unlock gates, per-insight computation, thresholds |
-| [M8 Notes](docs/M8_NOTES.md)                                          | Sleep, Health Connect, cycle deep integration                                           |
-| [M7/M8 swap](docs/M7_M8_MILESTONE_SWAP.md)                            | Milestone reorder rationale and consequence index (2026-05-29)                          |
-| [M5.1 Visual QA](docs/quality/M5_1_VISUAL_QA.md)                      | Tag co-occurrence heatmap closeout (2026-05-29)                                         |
-| [M5.1 Sprint Status](docs/M5_1_SPRINT_STATUS.md)                      | UX polish & flow consolidation closeout (2026-07-10)                                    |
-| [M5.1 UX Visual QA](docs/quality/M5_1_UX_VISUAL_QA.md)                | Onboarding, Home, Insights, Habits, PWA flow sign-off                                   |
-| [M13 Notes](docs/M13_NOTES.md)                                        | Photo & media milestone (stub API only until M13)                                       |
-| [Weekly Digest plan](docs/features/WEEKLY_DIGEST_COMPLETION_PLAN.md)  | Finish scheduled Sunday digest                                                          |
-| [LayerChart plan](docs/frontend/LAYER_CHART_COMPLETION_PLAN.md)       | Optional chart-library adoption behind adapter                                          |
-| [Open decisions](docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md)| What still needs a product/ops decision                                               |
-| [PWA](docs/features/PWA.md)                                           | Install banner, service worker, offline fallback                                        |
-| [Cycle tracking](docs/features/cycle-tracking.md)                     | Neutral `cycle_day` domain scope                                                        |
-| [COLOR_SCHEME_CONCEPT](docs/frontend/COLOR_SCHEME_CONCEPT.md)         | Token framework and contrast rationale (M3.7)                                           |
-| [Mobile/Web Audit](docs/frontend/MOBILE_WEB_AUDIT.md)                 | Critical frontend findings, status matrix, conflicts                                    |
-| [Mobile/Web Plan](docs/frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md)    | Mobile-first delivery sequence and verification gates                                   |
-| [ADR Index](docs/adr/)                                                | Architecture decision records (0001–0034)                                               |
-| [Quality Gates](docs/quality/)                                        | M1–M4 visual QA and quality gate reports                                                |
+| Document                                                                | Content                                                                                 |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                           | Vision, features, architecture, roadmap — single source of truth                        |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                                 | Component diagram, deployment topologies, sync protocol                                 |
+| [API.md](docs/API.md)                                                   | OpenAPI guidelines, endpoints, auth flow                                                |
+| [API_CONTRACTS.md](docs/API_CONTRACTS.md)                               | API contract strategy, frontend constants, OpenAPI client plan                          |
+| [FRONTEND.md](docs/FRONTEND.md)                                         | Mobile/Web roles, responsive shell, component ownership                                 |
+| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                   | Local setup, quality gates, NAS/pnpm notes, test database                               |
+| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md)                           | Competitive and market analysis, monetisation, marketing                                |
+| [DOCUMENTATION_LANGUAGE_PLAN.md](docs/DOCUMENTATION_LANGUAGE_PLAN.md)   | English-first collaboration and documentation migration plan                            |
+| [RENAMING_TO_CORRELCORE.md](docs/RENAMING_TO_CORRELCORE.md)             | Rename and deployment migration notes from MoodSync to CorrelCore                       |
+| [Closeout Sprint Plan](docs/CLOSEOUT_SPRINT_PLAN.md)                    | M4/M5/M7 closeout sequence, audit findings, deferred-work index                         |
+| [M4 Sprint Status](docs/M4_SPRINT_STATUS.md)                            | M4 quick wins + PWA hardening tracking                                                  |
+| [M4.1 Sprint Plan](docs/M4.1_SPRINT_PLAN.md)                            | Offline-first Dexie sync implementation plan                                            |
+| [M4.1 Visual QA](docs/quality/M4.1_VISUAL_QA.md)                        | M4.1 offline sync closeout sign-off                                                     |
+| [M5 Sprint Status](docs/M5_SPRINT_STATUS.md)                            | M5 Habits Core tracking                                                                 |
+| [M7 Notes](docs/M7_NOTES.md)                                            | Insights v2: Lasso, lag, symptom analytics, clustering                                  |
+| [M7 Sprint 9](docs/M7_SPRINT9_PLAN.md)                                  | Spec-complete closeout: interaction, feed UX, cluster API, a11y                         |
+| [Phase & Insight Matrix](docs/PHASE_INSIGHT_MATRIX.md)                  | Developer reference: maturity phases, unlock gates, per-insight computation, thresholds |
+| [M8 Notes](docs/M8_NOTES.md)                                            | Sleep, Health Connect, cycle deep integration                                           |
+| [M7/M8 swap](docs/M7_M8_MILESTONE_SWAP.md)                              | Milestone reorder rationale and consequence index (2026-05-29)                          |
+| [M5.1 Visual QA](docs/quality/M5_1_VISUAL_QA.md)                        | Tag co-occurrence heatmap closeout (2026-05-29)                                         |
+| [M5.1 Sprint Status](docs/M5_1_SPRINT_STATUS.md)                        | UX polish & flow consolidation closeout (2026-07-10)                                    |
+| [M5.1 UX Visual QA](docs/quality/M5_1_UX_VISUAL_QA.md)                  | Onboarding, Home, Insights, Habits, PWA flow sign-off                                   |
+| [M13 Notes](docs/M13_NOTES.md)                                          | Photo & media milestone (stub API only until M13)                                       |
+| [Weekly Digest plan](docs/features/WEEKLY_DIGEST_COMPLETION_PLAN.md)    | Finish scheduled Sunday digest                                                          |
+| [LayerChart plan](docs/frontend/LAYER_CHART_COMPLETION_PLAN.md)         | Optional chart-library adoption behind adapter                                          |
+| [Open decisions](docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md) | What still needs a product/ops decision                                                 |
+| [PWA](docs/features/PWA.md)                                             | Install banner, service worker, offline fallback                                        |
+| [Cycle tracking](docs/features/cycle-tracking.md)                       | Neutral `cycle_day` domain scope                                                        |
+| [COLOR_SCHEME_CONCEPT](docs/frontend/COLOR_SCHEME_CONCEPT.md)           | Token framework and contrast rationale (M3.7)                                           |
+| [Mobile/Web Audit](docs/frontend/MOBILE_WEB_AUDIT.md)                   | Critical frontend findings, status matrix, conflicts                                    |
+| [Mobile/Web Plan](docs/frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md)      | Mobile-first delivery sequence and verification gates                                   |
+| [ADR Index](docs/adr/)                                                  | Architecture decision records (0001–0034)                                               |
+| [Quality Gates](docs/quality/)                                          | M1–M4 visual QA and quality gate reports                                                |
 
 ---
 

@@ -8,13 +8,13 @@ Related: [ADR-0035](../adr/0035-temporal-correspondence-pattern.md), `apps/web/s
 
 ## Current state
 
-| Piece | Status |
-| ----- | ------ |
-| Custom SVG charts (mood series, heatmaps, strips) | Production |
-| `StripCellMapper` / divergent tokens | Shipped |
-| `lazyLoadLayerChart()` | Always returns `null` |
-| `layerchart` dependency | **Not** in `apps/web/package.json` |
-| Bundle budget (ADR-0035 §11) | 80 KB gz marginal hard cap |
+| Piece                                             | Status                             |
+| ------------------------------------------------- | ---------------------------------- |
+| Custom SVG charts (mood series, heatmaps, strips) | Production                         |
+| `StripCellMapper` / divergent tokens              | Shipped                            |
+| `lazyLoadLayerChart()`                            | Always returns `null`              |
+| `layerchart` dependency                           | **Not** in `apps/web/package.json` |
+| Bundle budget (ADR-0035 §11)                      | 80 KB gz marginal hard cap         |
 
 Temporal correspondence UX (explore aligned events, small multiples gate) already uses the custom path. LayerChart was reserved for denser multi-series / lasagna layouts that custom SVG does not scale to well.
 
@@ -28,12 +28,12 @@ Introduce LayerChart **only** behind the adapter, with a measured bundle impact 
 
 ## Decisions required before implementation
 
-| ID | Decision | Options | Recommendation |
-| -- | -------- | ------- | -------------- |
-| D-L1 | Is LayerChart still the library? | LayerChart vs keep custom-only vs alternate | Confirm LayerChart against current Svelte major; if abandoned/incompatible, **close adapter as permanent custom-SVG** and update ADR-0035 |
-| D-L2 | First consumer screen | Trends Compare lasagna vs Insights matrix polish | **Trends Compare** (highest ADR-0035 value) |
-| D-L3 | Feature flag | Always when loaded vs Settings/dev flag | Dev flag or maturity-gate until bundle proven |
-| D-L4 | Failure mode | Invisible fallback vs “enhanced charts unavailable” note | Silent fallback to custom SVG |
+| ID   | Decision                         | Options                                                  | Recommendation                                                                                                                            |
+| ---- | -------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| D-L1 | Is LayerChart still the library? | LayerChart vs keep custom-only vs alternate              | Confirm LayerChart against current Svelte major; if abandoned/incompatible, **close adapter as permanent custom-SVG** and update ADR-0035 |
+| D-L2 | First consumer screen            | Trends Compare lasagna vs Insights matrix polish         | **Trends Compare** (highest ADR-0035 value)                                                                                               |
+| D-L3 | Feature flag                     | Always when loaded vs Settings/dev flag                  | Dev flag or maturity-gate until bundle proven                                                                                             |
+| D-L4 | Failure mode                     | Invisible fallback vs “enhanced charts unavailable” note | Silent fallback to custom SVG                                                                                                             |
 
 ---
 

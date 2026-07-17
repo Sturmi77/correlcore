@@ -8,16 +8,16 @@ Related: Issue #147, `backend/app/workers/digest.py`, `/insights/digest`, Settin
 
 ## Current state (honest inventory)
 
-| Piece | Status |
-| ----- | ------ |
-| Preference `digest_enabled` | Shipped (default on) |
-| Settings toggle + preview link | Shipped (copy marks schedule as upcoming) |
-| `GET /api/v1/insights/digest/latest` | Shipped (recomputes from insights) |
-| FE preview route `/insights/digest` | Shipped (no main-nav entry) |
-| Worker `python -m app.workers.digest --once` | Code exists; **not** in any compose service |
-| Cron / in-process scheduler | Documented only; not wired |
-| Persist + read stored digest rows | `store_weekly_digest` writes; GET path does not prefer stored rows |
-| Push / email delivery | Fields exist; **no sender** |
+| Piece                                        | Status                                                             |
+| -------------------------------------------- | ------------------------------------------------------------------ |
+| Preference `digest_enabled`                  | Shipped (default on)                                               |
+| Settings toggle + preview link               | Shipped (copy marks schedule as upcoming)                          |
+| `GET /api/v1/insights/digest/latest`         | Shipped (recomputes from insights)                                 |
+| FE preview route `/insights/digest`          | Shipped (no main-nav entry)                                        |
+| Worker `python -m app.workers.digest --once` | Code exists; **not** in any compose service                        |
+| Cron / in-process scheduler                  | Documented only; not wired                                         |
+| Persist + read stored digest rows            | `store_weekly_digest` writes; GET path does not prefer stored rows |
+| Push / email delivery                        | Fields exist; **no sender**                                        |
 
 ---
 
@@ -29,12 +29,12 @@ Ship a trustworthy Sunday weekly digest: eligible users get a stable summary of 
 
 ## Decisions required before implementation
 
-| ID | Decision | Options | Recommendation |
-| -- | -------- | ------- | -------------- |
-| D-D1 | Delivery channel for v1 | In-app only vs email vs UnifiedPush | **In-app only** first; keep push fields dormant |
-| D-D2 | Compose wiring | Always-on digest service vs cron sidecar vs analytics-worker flag | **Profile `digest`** or weekly cron on analytics worker |
-| D-D3 | Default `digest_enabled` | Keep `true` vs default `false` until delivery ships | Flip to **`false`** until schedule is live, or keep true with honest copy (current) |
-| D-D4 | Nav discoverability | Settings link only vs Insights sub-nav | Settings + Insights header link once schedule ships |
+| ID   | Decision                 | Options                                                           | Recommendation                                                                      |
+| ---- | ------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| D-D1 | Delivery channel for v1  | In-app only vs email vs UnifiedPush                               | **In-app only** first; keep push fields dormant                                     |
+| D-D2 | Compose wiring           | Always-on digest service vs cron sidecar vs analytics-worker flag | **Profile `digest`** or weekly cron on analytics worker                             |
+| D-D3 | Default `digest_enabled` | Keep `true` vs default `false` until delivery ships               | Flip to **`false`** until schedule is live, or keep true with honest copy (current) |
+| D-D4 | Nav discoverability      | Settings link only vs Insights sub-nav                            | Settings + Insights header link once schedule ships                                 |
 
 ---
 
@@ -80,8 +80,8 @@ Ship a trustworthy Sunday weekly digest: eligible users get a stable summary of 
 
 ## Suggested sequence
 
-1. Decide D-D1–D-D3  
-2. WP1 persistence  
-3. WP2 scheduler  
-4. WP3 surface + copy cleanup  
+1. Decide D-D1–D-D3
+2. WP1 persistence
+3. WP2 scheduler
+4. WP3 surface + copy cleanup
 5. QA + docs-site API row for digest
