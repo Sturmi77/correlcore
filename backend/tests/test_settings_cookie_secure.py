@@ -49,10 +49,13 @@ def _stable_env(monkeypatch: pytest.MonkeyPatch) -> None:
     # ENCRYPTION_KEY must look real (not start with CHANGE_ME) once we
     # leave APP_ENV=development. Use a fixed valid Fernet key for
     # determinism.
+    # Valid Fernet key (32 zero bytes, url-safe base64) — not CHANGE_ME*.
     monkeypatch.setenv(
         "ENCRYPTION_KEY",
-        "ZmFrZS1mZXJuZXQta2V5LWZvci10ZXN0cy0zMi1ieXRlcz0=",
+        "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
     )
+    monkeypatch.setenv("SLUG_HMAC_KEY", "test-slug-hmac-key-for-settings-cookie-secure")
+    monkeypatch.setenv("MINIO_SECRET_KEY", "test-minio-secret-not-default")
 
 
 # ---------------------------------------------------------------------------

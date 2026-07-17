@@ -122,14 +122,14 @@ Agent context (Claude / Cursor): [`apps/web-react/CLAUDE.md`](../apps/web-react/
 export INTERNAL_API_URL=http://127.0.0.1:8000
 
 pnpm dev          # SvelteKit → http://localhost:5173
-pnpm dev:react    # React experiment → http://localhost:5174 (after scaffold)
-pnpm dev:all      # both frontends in parallel
+# pnpm dev:react / pnpm dev:all — planned after apps/web-react is scaffolded
+# (see PARALLEL_REACT_GUI.md); scripts are not in package.json yet.
 ```
 
-Use `http://localhost:5174/` in the browser (not `127.0.0.1`). The React app
-proxies `/api/*` to `INTERNAL_API_URL` — same cookie-auth pattern as SvelteKit
-([ADR-0011](adr/0011-web-internal-reverse-proxy.md)). Production deploy and CI
-are unchanged until an explicit cutover decision.
+Until the React package exists, use SvelteKit only. After scaffold, the React
+app will proxy `/api/*` to `INTERNAL_API_URL` — same cookie-auth pattern as
+SvelteKit ([ADR-0011](adr/0011-web-internal-reverse-proxy.md)). Production
+deploy and CI stay unchanged until an explicit cutover decision.
 
 ## Backend test database
 

@@ -393,9 +393,9 @@ async def test_refresh_tokens_wrong_type_raises() -> None:
 async def test_refresh_tokens_replay_revokes_all_for_user() -> None:
     """A replayed JTI revokes every refresh token for that user."""
     user = make_user()
-    db = MagicMock()
+    db = _make_db(scalar_one_or_none=user)
     store = MagicMock()
-    store.is_valid = AsyncMock(return_value=False)
+    store.rotate = AsyncMock(return_value=False)
     store.revoke_all = AsyncMock()
     refresh = create_refresh_token(subject=str(user.id), jti=str(uuid.uuid4()))
 
@@ -409,7 +409,6 @@ async def test_refresh_tokens_malformed_subject_raises() -> None:
     """A non-UUID subject in an otherwise valid token is rejected."""
     db = MagicMock()
     store = MagicMock()
-    store.is_valid = AsyncMock(return_value=True)
     payload = {
         "sub": "not-a-uuid",
         "exp": datetime.now(UTC) + timedelta(days=30),
@@ -420,6 +419,7 @@ async def test_refresh_tokens_malformed_subject_raises() -> None:
     bad = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     with pytest.raises(AuthError, match="Malformed token"):
         await refresh_tokens(db, store, bad)
+    store.rotate.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -427,7 +427,6 @@ async def test_refresh_tokens_user_disabled_raises() -> None:
     user = make_user(active=False)
     db = _make_db(scalar_one_or_none=user)
     store = MagicMock()
-    store.is_valid = AsyncMock(return_value=True)
     store.rotate = AsyncMock()
     refresh = create_refresh_token(subject=str(user.id), jti=str(uuid.uuid4()))
 
@@ -441,8 +440,7 @@ async def test_refresh_tokens_success_rotates_jti_in_redis() -> None:
     user = make_user()
     db = _make_db(scalar_one_or_none=user)
     store = MagicMock()
-    store.is_valid = AsyncMock(return_value=True)
-    store.rotate = AsyncMock()
+    store.rotate = AsyncMock(return_value=True)
     old_jti = str(uuid.uuid4())
     refresh = create_refresh_token(subject=str(user.id), jti=old_jti)
 

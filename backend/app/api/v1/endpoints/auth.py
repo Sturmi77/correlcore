@@ -14,6 +14,8 @@ Rate-limiting (SlowAPI):
 - POST /forgot-password: 3 requests / minute per IP → 429 on breach
 - POST /reset-password: 10 requests / minute per IP → 429 on breach
 - POST /resend-verification: 3 requests / minute per IP
+- POST /refresh: 30 requests / minute per IP
+- POST /logout: 20 requests / minute per IP
 """
 
 from __future__ import annotations
@@ -326,6 +328,7 @@ async def login(
     response_model=TokenResponse,
     summary="Rotate refresh token and get a new access token",
 )
+@limiter.limit("30/minute")
 async def refresh(
     request: Request,
     response: Response,
@@ -364,6 +367,7 @@ async def refresh(
     response_model=MessageResponse,
     summary="Invalidate refresh token and clear cookies",
 )
+@limiter.limit("20/minute")
 async def logout(
     request: Request,
     response: Response,

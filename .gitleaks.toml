@@ -2,6 +2,9 @@
 useDefault = true
 
 [allowlist]
-description = "Public identifiers and CI test fixture env vars (non-production)"
-regexes = ['''XjijHnzMJubA1iuPQxHOwS''']
-paths = ['''\.github/workflows/ci-api\.yml$''']
+description = "CI unit-test Fernet fixture only (not a production secret)"
+# Exact ENCRYPTION_KEY used in .github/workflows/ci-api.yml pytest env.
+# Do NOT path-allowlist the whole workflow file — that would hide future leaks.
+regexes = [
+  '''SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4=''',
+]

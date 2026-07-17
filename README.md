@@ -112,7 +112,7 @@ After startup, CorrelCore is available at `https://your-domain.tld`
 
 Homelab / Tailnet without public DNS: see [`infra/dockhand/README.md`](infra/dockhand/README.md).
 
-> **Note:** Public selfhost **v1.0.0** is released. Treat subsequent milestone work (M8/M11/M13 full scope) as active development on top of that baseline.
+> **Note:** Public selfhost **v1.0.0** is released (`main` / `1.0.x`). Treat subsequent milestone work (M8/M11/M13 full scope) as active development on top of that baseline. See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -199,7 +199,7 @@ install guide, user guide, API overview, privacy. Source: [`docs-site/`](docs-si
 
 ## Contributing
 
-CorrelCore is currently a solo project. Contribution guidelines will be published once v1.0 is released. Issues and discussions are welcome.
+CorrelCore is currently a solo project. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for language policy, PR rules, and Definition of Done. Issues and discussions are welcome.
 
 **Interested in beta testing?** Open an [issue](https://github.com/Sturmi77/correlcore/issues/new?template=beta_tester.md) or sign up on the [landing page](https://correlcore.app) (coming soon).
 

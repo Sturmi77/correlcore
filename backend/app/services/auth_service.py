@@ -501,13 +501,6 @@ async def refresh_tokens(
     if not user_id_str or not jti:
         raise AuthError("Malformed token")
 
-    if not await token_store.is_valid(user_id_str, jti):
-        # Token already used or revoked — possible replay attack
-        logger.warning("refresh token replay attempt", extra={"user_id": user_id_str})
-        # Revoke ALL tokens for this user as precaution
-        await token_store.revoke_all(user_id_str)
-        raise AuthError("Refresh token already used or revoked")
-
     try:
         user_id = uuid.UUID(user_id_str)
     except ValueError as exc:
@@ -518,7 +511,12 @@ async def refresh_tokens(
         raise AuthError("User not found or disabled")
 
     new_access, new_refresh, new_jti = _build_token_pair(user)
-    await token_store.rotate(user_id_str, jti, new_jti)
+    rotated = await token_store.rotate(user_id_str, jti, new_jti)
+    if not rotated:
+        # Token already used or revoked — possible replay / concurrent refresh
+        logger.warning("refresh token replay attempt", extra={"user_id": user_id_str})
+        await token_store.revoke_all(user_id_str)
+        raise AuthError("Refresh token already used or revoked")
 
     logger.info("tokens refreshed", extra={"user_id": str(user.id)})
     return new_access, new_refresh, user

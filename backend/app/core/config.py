@@ -223,7 +223,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
-        if self.APP_ENV.lower() in {"production", "staging"}:
+        env = self.APP_ENV.lower()
+        if env in {"production", "staging"}:
             if self.SECRET_KEY.startswith("CHANGE_ME") or len(self.SECRET_KEY) < 32:
                 raise ValueError(
                     "SECRET_KEY must be set to at least 32 random characters in production"
@@ -236,15 +237,43 @@ class Settings(BaseSettings):
                     "python -c 'from cryptography.fernet import Fernet; "
                     "print(Fernet.generate_key().decode())'"
                 )
+            # Fail closed on invalid Fernet material (not only CHANGE_ME prefix).
+            try:
+                from cryptography.fernet import Fernet, MultiFernet
+
+                MultiFernet([Fernet(k.encode("utf-8")) for k in keys])
+            except Exception as exc:
+                raise ValueError(
+                    "ENCRYPTION_KEY (or ENCRYPTION_KEYS) must be a valid Fernet key. "
+                    "Generate with: python -c 'from cryptography.fernet import Fernet; "
+                    "print(Fernet.generate_key().decode())'"
+                ) from exc
             if self.SLUG_HMAC_KEY.startswith("CHANGE_ME") or len(self.SLUG_HMAC_KEY) < 32:
                 raise ValueError(
                     "SLUG_HMAC_KEY must be set to at least 32 random characters in "
                     "production. Generate with: "
                     "python -c 'import secrets; print(secrets.token_hex(32))'"
                 )
+            if not self.CORS_ORIGINS or any(o.strip() == "*" for o in self.CORS_ORIGINS):
+                raise ValueError(
+                    "CORS_ORIGINS must be an explicit non-empty allowlist "
+                    "(wildcard '*' is not allowed) in staging/production"
+                )
+        # Production hard-blocks debug/ops surfaces and leftover MinIO defaults.
+        # Staging may keep the MinIO placeholder until M13 photo storage ships.
+        if env == "production":
+            if self.DEBUG:
+                raise ValueError("DEBUG=true is not allowed when APP_ENV=production")
+            if self.DEV_VIEW_ENABLED:
+                raise ValueError("DEV_VIEW_ENABLED=true is not allowed when APP_ENV=production")
+            if self.MINIO_SECRET_KEY.startswith("CHANGE_ME") or len(self.MINIO_SECRET_KEY) < 16:
+                raise ValueError(
+                    "MINIO_SECRET_KEY must be set to a non-default secret "
+                    "(≥16 characters) when APP_ENV=production"
+                )
         # ADR-0006: Secure ist in Produktion nicht abschaltbar. Staging darf
         # COOKIE_SECURE=false setzen (Homelab-HTTP-Setups), Production nicht.
-        if self.APP_ENV.lower() == "production" and self.COOKIE_SECURE is False:
+        if env == "production" and self.COOKIE_SECURE is False:
             raise ValueError(
                 "COOKIE_SECURE=false ist in APP_ENV=production nicht erlaubt "
                 "(ADR-0006: Secure-Flag verbindlich). Bitte HTTPS terminieren "

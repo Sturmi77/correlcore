@@ -39,6 +39,21 @@ gen_fernet() {
   python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 }
 
+gen_hex() {
+  python3 -c 'import secrets; print(secrets.token_hex('"$1"'))'
+}
+
+_set_or_append_env() {
+  # Usage: _set_or_append_env FILE KEY VALUE
+  # Replaces KEY=... when present; otherwise appends KEY=VALUE.
+  local env_file="$1" key="$2" value="$3"
+  if grep -q "^${key}=" "$env_file"; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "$env_file"
+  else
+    printf '%s=%s\n' "$key" "$value" >>"$env_file"
+  fi
+}
+
 write_quickstart_env() {
   local env_file="${DOCKER_DIR}/.env"
   local example="${DOCKER_DIR}/.env.quickstart.example"
@@ -62,20 +77,20 @@ write_quickstart_env() {
   redis_pass="$(gen_urlsafe 24)"
   secret_key="$(gen_urlsafe 48)"
   enc_key="$(gen_fernet)"
-  slug_hmac_key="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+  slug_hmac_key="$(gen_hex 32)"
 
   cp "$example" "$env_file"
 
-  sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${pg_pass}|" "$env_file"
-  sed -i "s|^APP_DB_PASSWORD=.*|APP_DB_PASSWORD=${app_pass}|" "$env_file"
-  sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${redis_pass}|" "$env_file"
-  sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${secret_key}|" "$env_file"
-  sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=${enc_key}|" "$env_file"
-  sed -i "s|^SLUG_HMAC_KEY=.*|SLUG_HMAC_KEY=${slug_hmac_key}|" "$env_file"
-  sed -i "s|^TAILSCALE_IP=.*|TAILSCALE_IP=${ts_ip}|" "$env_file"
-  sed -i "s|^WEB_HOST_PORT=.*|WEB_HOST_PORT=${web_port}|" "$env_file"
-  sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=http://${ts_ip}:${web_port}|" "$env_file"
-  sed -i "s|^FRONTEND_BASE_URL=.*|FRONTEND_BASE_URL=http://${ts_ip}:${web_port}|" "$env_file"
+  _set_or_append_env "$env_file" POSTGRES_PASSWORD "$pg_pass"
+  _set_or_append_env "$env_file" APP_DB_PASSWORD "$app_pass"
+  _set_or_append_env "$env_file" REDIS_PASSWORD "$redis_pass"
+  _set_or_append_env "$env_file" SECRET_KEY "$secret_key"
+  _set_or_append_env "$env_file" ENCRYPTION_KEY "$enc_key"
+  _set_or_append_env "$env_file" SLUG_HMAC_KEY "$slug_hmac_key"
+  _set_or_append_env "$env_file" TAILSCALE_IP "$ts_ip"
+  _set_or_append_env "$env_file" WEB_HOST_PORT "$web_port"
+  _set_or_append_env "$env_file" CORS_ORIGINS "http://${ts_ip}:${web_port}"
+  _set_or_append_env "$env_file" FRONTEND_BASE_URL "http://${ts_ip}:${web_port}"
 
   echo "Wrote ${env_file} (quickstart secrets generated)."
   echo ""
@@ -103,25 +118,28 @@ write_production_hint() {
 
   cp "$example" "$env_file"
 
-  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac_key
+  local pg_pass app_pass redis_pass secret_key enc_key slug_hmac_key minio_secret
   pg_pass="$(gen_urlsafe 24)"
   app_pass="$(gen_urlsafe 24)"
   redis_pass="$(gen_urlsafe 24)"
   secret_key="$(gen_urlsafe 48)"
   enc_key="$(gen_fernet)"
-  slug_hmac_key="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+  slug_hmac_key="$(gen_hex 32)"
+  minio_secret="$(gen_urlsafe 24)"
 
-  sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${pg_pass}|" "$env_file"
-  sed -i "s|^APP_DB_PASSWORD=.*|APP_DB_PASSWORD=${app_pass}|" "$env_file"
-  sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${redis_pass}|" "$env_file"
-  sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${secret_key}|" "$env_file"
-  sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=${enc_key}|" "$env_file"
-  sed -i "s|^SLUG_HMAC_KEY=.*|SLUG_HMAC_KEY=${slug_hmac_key}|" "$env_file"
+  _set_or_append_env "$env_file" POSTGRES_PASSWORD "$pg_pass"
+  _set_or_append_env "$env_file" APP_DB_PASSWORD "$app_pass"
+  _set_or_append_env "$env_file" REDIS_PASSWORD "$redis_pass"
+  _set_or_append_env "$env_file" SECRET_KEY "$secret_key"
+  _set_or_append_env "$env_file" ENCRYPTION_KEY "$enc_key"
+  _set_or_append_env "$env_file" SLUG_HMAC_KEY "$slug_hmac_key"
+  _set_or_append_env "$env_file" MINIO_SECRET_KEY "$minio_secret"
 
   echo "Wrote ${env_file} from .env.example with generated secrets."
   echo ""
   echo "You MUST still set manually before production deploy:"
   echo "  DOMAIN, LETSENCRYPT_EMAIL (traefik/traefik.yml), FRONTEND_BASE_URL, CORS_ORIGINS, SMTP_*"
+  echo "  (SECRET_KEY, ENCRYPTION_KEY, SLUG_HMAC_KEY, MINIO_SECRET_KEY were generated)"
   echo ""
   echo "Store ENCRYPTION_KEY offline:"
   echo "  ENCRYPTION_KEY=${enc_key}"
