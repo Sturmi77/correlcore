@@ -25,8 +25,8 @@ dependencies = [
   "email-validator>=2.2.0",
   # Auth (Phase 1: native JWT — ADR-0004)
   "python-jose[cryptography]>=3.3.0",
-  "passlib[bcrypt]>=1.7.4",
-  "bcrypt<6.0.0",
+  # Hash/verify via bcrypt directly (passlib's wrap self-test breaks on bcrypt≥4.1).
+  "bcrypt>=4.0.1,<6.0.0",
   # Encryption at-rest (ADR-0005)
   "cryptography>=48.0.1",
   # Photo metadata strip (Issue #28, M13 foundation)
