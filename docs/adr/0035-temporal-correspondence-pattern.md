@@ -191,7 +191,7 @@ Alternatives evaluated:
 | Plotly.js (basic-dist) | ≈ 280 KB                             | ⚠️ Heavy                             | ✅                        | ✅                                | MIT        | Rejected (budget violation) |
 | Vega-Lite              | ≈ 200 KB                             | ⚠️ Heavy, declarative paradigm clash | ✅                        | ⚠️ Cross-spec wiring              | BSD        | Rejected (budget violation) |
 
-**Chosen: LayerChart.** Reasons:
+**Chosen: LayerChart** (library selection). Reasons at decision time:
 
 1. **Svelte 5-native** — no wrapper layer, no React/Vue compatibility tax.
 2. **SSR-friendly** — works with SvelteKit's adapter-node setup unchanged.
@@ -202,6 +202,14 @@ Alternatives evaluated:
 5. **Within the 80 KB marginal budget** with room to spare.
 6. **Heatmap component** native, so Layer 2 (unified strip mode) does not need
    a custom implementation.
+
+### Implementation status amendment (2026-07-16)
+
+Spike [`LAYER_CHART_SPIKE_2026-07-16.md`](../frontend/LAYER_CHART_SPIKE_2026-07-16.md):
+LayerChart **2.0** is Svelte 5–compatible, but **no dependency is installed**
+and production charts remain **custom SVG**. Adoption is deferred until a
+Trends Compare consumer is scheduled and the gzip chunk is measured under the
+80 KB budget. The adapter stub stays as the sole future import site.
 
 ### Compare view layout: default and alternative
 

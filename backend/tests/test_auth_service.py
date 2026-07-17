@@ -34,7 +34,7 @@ from app.services.auth_service import (
     request_verification_resend,
     verify_email,
 )
-from tests.conftest import make_user
+from tests.conftest import TEST_PASSWORD, make_user
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -87,7 +87,7 @@ async def test_register_user_raises_on_duplicate_email() -> None:
     with pytest.raises(RegistrationError, match="already registered"):
         await register_user(
             db,
-            RegisterRequest(email=existing.email, password="Passw0rd"),
+            RegisterRequest(email=existing.email, password=TEST_PASSWORD),
         )
     db.add.assert_not_called()
 
@@ -108,7 +108,7 @@ async def test_register_user_creates_user_and_dek() -> None:
     ):
         user = await register_user(
             db,
-            RegisterRequest(email="fresh@example.com", password="Passw0rd"),
+            RegisterRequest(email="fresh@example.com", password=TEST_PASSWORD),
         )
 
     assert user.email == "fresh@example.com"
@@ -283,7 +283,7 @@ async def test_login_user_unknown_email_raises_generic_auth_error() -> None:
 
     with patch("app.services.auth_service.verify_password", return_value=False):
         with pytest.raises(AuthError, match="Invalid credentials"):
-            await login_user(db, store, "ghost@example.com", "Passw0rd")
+            await login_user(db, store, "ghost@example.com", TEST_PASSWORD)
     # Even with no user, the password verification must run (constant-time path)
     store.store.assert_not_called()
 
@@ -310,7 +310,7 @@ async def test_login_user_inactive_account_raises_distinct_auth_error() -> None:
 
     with patch("app.services.auth_service.verify_password", return_value=True):
         with pytest.raises(AuthError, match="disabled"):
-            await login_user(db, store, user.email, "Passw0rd")
+            await login_user(db, store, user.email, TEST_PASSWORD)
     store.store.assert_not_called()
 
 
@@ -329,7 +329,7 @@ async def test_login_user_unverified_email_raises_email_not_verified_error() -> 
 
     with patch("app.services.auth_service.verify_password", return_value=True):
         with pytest.raises(EmailNotVerifiedError, match="not verified"):
-            await login_user(db, store, user.email, "Passw0rd")
+            await login_user(db, store, user.email, TEST_PASSWORD)
     # Subclass relationship matters for endpoint mapping
     assert issubclass(EmailNotVerifiedError, AuthError)
     store.store.assert_not_called()
@@ -343,7 +343,7 @@ async def test_login_user_success_stores_jti_and_returns_token_pair() -> None:
     store.store = AsyncMock()
 
     with patch("app.services.auth_service.verify_password", return_value=True):
-        access, refresh, returned = await login_user(db, store, user.email, "Passw0rd")
+        access, refresh, returned = await login_user(db, store, user.email, TEST_PASSWORD)
 
     assert returned is user
     assert isinstance(access, str) and access.count(".") == 2

@@ -1,0 +1,32 @@
+# Dependency updates for the pnpm workspace + backend uv/pip lock.
+# Security CI still runs pip-audit / pnpm audit; Dependabot opens PRs for bumps.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+
+  - package-ecosystem: pip
+    directory: '/backend'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python
+    # python-jose pulls ecdsa; HS256-only usage is documented in M9_PENTEST.
+    # Leave ignore empty so advisories stay visible; CI may still accept known ones.
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci

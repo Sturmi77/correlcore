@@ -61,7 +61,7 @@ vi.mock('$lib/api/preferences', () => ({
   updateUserPreferences: vi.fn(async (payload) => ({
     user_id: 'user-1',
     analytics_enabled: payload.analytics_enabled ?? true,
-    digest_enabled: payload.digest_enabled ?? true,
+    digest_enabled: payload.digest_enabled ?? false,
     onboarding_retro_completed: true,
     onboarding_profile_completed: true,
     dismissed_insight_keys: [],

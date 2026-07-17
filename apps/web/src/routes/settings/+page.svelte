@@ -416,7 +416,7 @@
         <input
           type="checkbox"
           class="settings__toggle"
-          checked={preferences?.digest_enabled ?? true}
+          checked={preferences?.digest_enabled ?? false}
           disabled={preferencesBusy || preferences?.analytics_enabled === false}
           data-testid="digest-toggle"
           on:change={(e) => void toggleDigest(e.currentTarget.checked)}

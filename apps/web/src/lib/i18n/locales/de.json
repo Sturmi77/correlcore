@@ -609,7 +609,7 @@
       "regenerate_disabled": "Aktiviere die Analyse oben, um Erkenntnisse zu aktualisieren.",
       "regenerate_error": "Erkenntnisse konnten nicht aktualisiert werden.",
       "digest_enabled": "Woechentliche Erkenntnis-Zusammenfassung",
-      "digest_hint": "Opt-in fuer eine Sonntags-Zusammenfassung. Vorschau: Erkenntnisse → Digest. Der geplante Versand kommt mit dem Digest-Fertigstellungsplan.",
+      "digest_hint": "Opt-in fuer eine In-App-Sonntags-Zusammenfassung. Aktiviere das Digest-Worker-Profil (COMPOSE_PROFILES=…,digest), damit die Generierung geplant laeuft.",
       "digest_preview_link": "Digest-Vorschau oeffnen"
     },
     "privacy": {
@@ -1273,7 +1273,7 @@
       "email_label": "E-Mail-Adresse",
       "email_placeholder": "du@beispiel.de",
       "password_label": "Passwort",
-      "password_placeholder": "Mindestens 8 Zeichen",
+      "password_placeholder": "Mindestens 12 Zeichen",
       "display_name_label": "Anzeigename (optional)",
       "display_name_placeholder": "Wie sollen wir dich nennen?",
       "submit_busy": "Bitte warten\u2026",
@@ -1296,7 +1296,7 @@
       "submit": "Registrieren",
       "have_account": "Schon registriert?",
       "login_link": "Hier anmelden",
-      "password_hint": "Mindestens 8 Zeichen, ein Buchstabe und eine Ziffer.",
+      "password_hint": "Mindestens 12 Zeichen, ein Buchstabe und eine Ziffer.",
       "strength_empty": "",
       "strength_very_weak": "Sehr schwach",
       "strength_weak": "Schwach",

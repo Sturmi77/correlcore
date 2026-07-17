@@ -1,7 +1,7 @@
 /**
- * Tests for the password-strength evaluator (Issue #40).
+ * Tests for the password-strength evaluator.
  *
- * Mirrors backend rules: min 8 chars, at least one letter, at least one digit.
+ * Mirrors backend rules: min 12 chars, at least one letter, at least one digit.
  * Score is purely advisory UX.
  */
 
@@ -17,27 +17,28 @@ describe('evaluatePassword', () => {
 
   it('flags short passwords as not meeting requirements', () => {
     expect(evaluatePassword('abc1').meetsRequirements).toBe(false);
+    expect(evaluatePassword('abcd1234').meetsRequirements).toBe(false);
   });
 
   it('flags letters-only as not meeting requirements', () => {
-    expect(evaluatePassword('abcdefgh').meetsRequirements).toBe(false);
+    expect(evaluatePassword('abcdefghijkl').meetsRequirements).toBe(false);
   });
 
   it('flags digits-only as not meeting requirements', () => {
-    expect(evaluatePassword('12345678').meetsRequirements).toBe(false);
+    expect(evaluatePassword('123456789012').meetsRequirements).toBe(false);
   });
 
   it('accepts the minimal compliant password', () => {
-    const s = evaluatePassword('abcd1234');
+    const s = evaluatePassword('abcd1234wxyz');
     expect(s.meetsRequirements).toBe(true);
     expect(s.score).toBeGreaterThanOrEqual(2);
   });
 
   it('rewards length and symbols', () => {
-    const weak = evaluatePassword('abcd1234'); // 8 chars, ok
-    const longer = evaluatePassword('abcdefgh1234'); // 12 chars
-    const strong = evaluatePassword('abcdefgh1234!'); // 13 chars + symbol
-    expect(longer.score).toBeGreaterThanOrEqual(weak.score);
+    const ok = evaluatePassword('abcd1234wxyz'); // 12 chars
+    const longer = evaluatePassword('abcdefghijklmn12'); // 16 chars
+    const strong = evaluatePassword('abcdefghijklmn12!'); // 17 chars + symbol
+    expect(longer.score).toBeGreaterThanOrEqual(ok.score);
     expect(strong.score).toBeGreaterThanOrEqual(longer.score);
     expect(strong.score).toBe(4);
   });

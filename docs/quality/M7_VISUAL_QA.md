@@ -178,7 +178,7 @@ uv run --python 3.12 --extra dev --extra analytics python scripts/seed_m7_qa.py 
 
 | Step         | Detail                                                             |
 | ------------ | ------------------------------------------------------------------ |
-| Login        | `m7-qa@localhost.dev` / `M7qaSeed1`                                |
+| Login        | `m7-qa@localhost.dev` / `CorrectHorse123!`                                |
 | Verify email | User is created verified; no Mailpit step required                 |
 | `/insights`  | Disable „Force visualizations with mock data“ in Dev Mode          |
 | Expect       | `symptom_cluster`, symptom co-occurrence, tag groups from live API |

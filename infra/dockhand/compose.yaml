@@ -331,6 +331,30 @@ services:
         max-size: 10m
         max-file: '3'
 
+  # Weekly digest (opt-in): Profile digest in Dockhand / COMPOSE_PROFILES=digest
+  digest-worker:
+    <<: *api-image
+    container_name: correlcore-digest-worker
+    restart: unless-stopped
+    command: ['python', '-m', 'app.workers.digest']
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - correlcore
+    profiles:
+      - digest
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
 volumes:
   postgres_data:
     name: correlcore_postgres_data

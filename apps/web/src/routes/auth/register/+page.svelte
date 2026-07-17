@@ -86,7 +86,7 @@
       class="input"
       autocomplete="new-password"
       required
-      minlength="8"
+      minlength="12"
       bind:value={password}
       placeholder={$_('auth.common.password_placeholder')}
       disabled={busy}

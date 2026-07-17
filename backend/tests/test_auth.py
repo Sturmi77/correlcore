@@ -33,6 +33,7 @@ from app.services.auth_service import (
 from tests.conftest import (
     NEW_ACCESS_TOKEN,
     NEW_REFRESH_TOKEN,
+    TEST_PASSWORD,
     VALID_ACCESS_TOKEN,
     VALID_REFRESH_TOKEN,
     make_user,
@@ -65,7 +66,7 @@ async def test_register_new_email_returns_202(async_client: AsyncClient) -> None
     ):
         r = await async_client.post(
             "/api/v1/auth/register",
-            json={"email": "new@example.com", "password": "Passw0rd"},
+            json={"email": "new@example.com", "password": TEST_PASSWORD},
         )
     assert r.status_code == 202
     assert r.json()["message"].startswith("If the email is not yet registered")
@@ -99,7 +100,7 @@ async def test_register_existing_email_also_returns_202(async_client: AsyncClien
     ):
         r = await async_client.post(
             "/api/v1/auth/register",
-            json={"email": "dupe@example.com", "password": "Passw0rd"},
+            json={"email": "dupe@example.com", "password": TEST_PASSWORD},
         )
     assert r.status_code == 202
     assert r.json()["message"].startswith("If the email is not yet registered")
@@ -135,12 +136,12 @@ async def test_register_responses_are_indistinguishable(async_client: AsyncClien
         mock_req.return_value = new_outcome
         r_new = await async_client.post(
             "/api/v1/auth/register",
-            json={"email": "fresh@example.com", "password": "Passw0rd"},
+            json={"email": "fresh@example.com", "password": TEST_PASSWORD},
         )
         mock_req.return_value = existing_outcome
         r_exist = await async_client.post(
             "/api/v1/auth/register",
-            json={"email": "dupe@example.com", "password": "Passw0rd"},
+            json={"email": "dupe@example.com", "password": TEST_PASSWORD},
         )
 
     assert r_new.status_code == r_exist.status_code == 202
@@ -189,7 +190,7 @@ async def test_register_rate_limit_kicks_in_after_five_per_minute(
         for _ in range(6):
             r = await async_client.post(
                 "/api/v1/auth/register",
-                json={"email": "rl@example.com", "password": "Passw0rd"},
+                json={"email": "rl@example.com", "password": TEST_PASSWORD},
             )
             statuses.append(r.status_code)
 
@@ -219,7 +220,7 @@ async def test_request_registration_existing_email_returns_already_registered() 
 
     outcome = await request_registration(
         db,
-        RegisterRequest(email=existing.email, password="Passw0rd"),
+        RegisterRequest(email=existing.email, password=TEST_PASSWORD),
     )
 
     assert outcome.action == "already_registered"
@@ -255,7 +256,7 @@ async def test_request_registration_new_email_returns_created() -> None:
     ):
         outcome = await request_registration(
             db,
-            RegisterRequest(email=fresh.email, password="Passw0rd"),
+            RegisterRequest(email=fresh.email, password=TEST_PASSWORD),
         )
 
     assert outcome.action == "created"
@@ -277,16 +278,32 @@ async def test_login_success(async_client: AsyncClient, user: User) -> None:
     ):
         r = await async_client.post(
             "/api/v1/auth/login",
-            json={"email": "test@example.com", "password": "Passw0rd"},
+            json={"email": "test@example.com", "password": TEST_PASSWORD},
         )
     assert r.status_code == 200
     data = r.json()
-    assert data["access_token"] == VALID_ACCESS_TOKEN
+    # Browser cookie flow: access JWT omitted from JSON by default (XSS surface).
+    assert "access_token" not in data
     assert data["token_type"] == "bearer"
     assert data["user"]["email"] == user.email
     # HttpOnly cookies must be set
     assert "access_token" in r.cookies
     assert "refresh_token" in r.cookies
+
+
+@pytest.mark.asyncio
+async def test_login_include_access_token_opt_in(async_client: AsyncClient, user: User) -> None:
+    with patch(
+        "app.api.v1.endpoints.auth.login_user",
+        new_callable=AsyncMock,
+        return_value=(VALID_ACCESS_TOKEN, VALID_REFRESH_TOKEN, user),
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/login?include_access_token=true",
+            json={"email": "test@example.com", "password": TEST_PASSWORD},
+        )
+    assert r.status_code == 200
+    assert r.json()["access_token"] == VALID_ACCESS_TOKEN
 
 
 @pytest.mark.asyncio
@@ -322,7 +339,8 @@ async def test_refresh_success(async_client: AsyncClient, user: User) -> None:
             json={"refresh_token": VALID_REFRESH_TOKEN},
         )
     assert r.status_code == 200
-    assert r.json()["access_token"] == NEW_ACCESS_TOKEN
+    assert "access_token" not in r.json()
+    assert "access_token" in r.cookies
 
 
 @pytest.mark.asyncio

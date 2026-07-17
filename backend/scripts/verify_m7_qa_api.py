@@ -39,6 +39,7 @@ async def _main() -> int:
     async with httpx.AsyncClient(base_url=base, timeout=30.0) as client:
         login = await client.post(
             "/api/v1/auth/login",
+            params={"include_access_token": "true"},
             json={"email": args.email, "password": args.password},
         )
         if login.status_code != 200:
@@ -47,7 +48,7 @@ async def _main() -> int:
 
         token = login.json().get("access_token")
         if not token:
-            print("login response missing access_token")
+            print("login response missing access_token (pass include_access_token=true)")
             return 1
 
         headers = {"Authorization": f"Bearer {token}"}
