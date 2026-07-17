@@ -63,7 +63,7 @@
 
   onMount(() => {
     if ($auth.status !== 'authenticated') {
-      void goto('/auth/login');
+      void goto('/auth/login?next=/insights/digest');
       return;
     }
     void loadDigest();
@@ -76,7 +76,7 @@
 
 <div class="digest-page">
   <p class="digest-page__back">
-    <a href="/insights">{$_('nav.back', { default: '← Back' })}</a>
+    <a href="/insights">{$_('nav.back')}</a>
   </p>
   <ScreenHeader title={$_('insights.digest.title')} subtitle={$_('insights.digest.subtitle')} />
 
@@ -99,7 +99,11 @@
       <ul class="digest-page__list">
         {#each digest.insights as item (item.id)}
           <li>
-            <InsightCard insight={toInsightResponse(item)} showMaturityBadge={false} />
+            <InsightCard
+              insight={toInsightResponse(item)}
+              showMaturityBadge={false}
+              dismissable={false}
+            />
           </li>
         {/each}
       </ul>

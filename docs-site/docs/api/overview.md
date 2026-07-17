@@ -3,7 +3,11 @@
 Summary of the CorrelCore REST API. Full reference:
 [`docs/API.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/API.md) in the repository.
 
-Interactive OpenAPI docs are available on a running instance at `/api/docs` (Swagger UI).
+Interactive OpenAPI docs (`/api/docs` Swagger UI) are available when the API
+runs with `DEBUG=true`. Production instances expose the OpenAPI JSON at
+`/openapi.json` when enabled by deployment; prefer this overview + the repo
+[`docs/API.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/API.md)
+for operators.
 
 ---
 
@@ -32,11 +36,12 @@ Native JWT auth (Phase 1 selfhost). OIDC via Authentik planned for SaaS (M12+).
 | `POST` | `/api/v1/auth/logout`              | Clears cookies                      |
 | `POST` | `/api/v1/auth/verify-email`        | Single-use token, 24h TTL           |
 | `POST` | `/api/v1/auth/resend-verification` | Always `202`; `3/min/IP`            |
-| `POST` | `/api/v1/auth/forgot-password`     | Always `202`; password reset mail   |
-| `POST` | `/api/v1/auth/reset-password`      | Token + new password                |
+| `POST` | `/api/v1/auth/forgot-password`     | Always `202`; `3/min/IP`            |
+| `POST` | `/api/v1/auth/reset-password`      | Single-use token; `10/min/IP`       |
 | `GET`  | `/api/v1/auth/me`                  | Current user profile                |
 
-Registration and resend endpoints use generic responses to prevent email enumeration.
+Registration, resend, and forgot-password endpoints use generic responses to
+prevent email enumeration.
 
 ---
 
@@ -71,19 +76,23 @@ Custom symptom slugs are HMAC-stabilized ([ADR-0039](https://github.com/Sturmi77
 
 ## Insights & analytics
 
-| Method | Path                                    | Notes                                |
-| ------ | --------------------------------------- | ------------------------------------ |
-| `GET`  | `/api/v1/insights`                      | Generated insight cards              |
-| `GET`  | `/api/v1/insights/digest/latest`        | Weekly digest snapshot (foundation)  |
-| `GET`  | `/api/v1/insights/tag-clusters`         | Tag groups (tiered maturity, M10.1)  |
-| `POST` | `/api/v1/insights/regenerate`           | On-demand insight run (1×/hour)      |
-| `POST` | `/api/v1/insights/trigger`              | Admin manual worker run              |
-| `GET`  | `/api/v1/analysis/notes/marker-summary` | Note-marker mood aggregates          |
-| `GET`  | `/api/v1/analytics/...`                 | Trends, correlations (authenticated) |
+| Method | Path                                    | Notes                                           |
+| ------ | --------------------------------------- | ----------------------------------------------- |
+| `GET`  | `/api/v1/insights`                      | Generated insight cards                         |
+| `GET`  | `/api/v1/insights/digest/latest`        | Weekly digest preview (schedule completion TBD) |
+| `GET`  | `/api/v1/insights/tag-clusters`         | Tag groups (tiered maturity, M10.1)             |
+| `POST` | `/api/v1/insights/regenerate`           | On-demand insight run (1×/hour)                 |
+| `POST` | `/api/v1/insights/trigger`              | Admin manual worker run                         |
+| `GET`  | `/api/v1/dashboard/summary`             | Home summary widgets                            |
+| `GET`  | `/api/v1/analysis/notes/marker-summary` | Note-marker mood aggregates                     |
+| `GET`  | `/api/v1/analysis/...`                  | Trends / analysis surfaces                      |
 
 Insight generation runs in the background **worker** (nightly 03:00 UTC) or on demand via
 **Settings → Analysis → Refresh insights** (`POST /insights/regenerate`).
 Weekly digests: `python -m app.workers.digest --once` (push delivery still depends on M4.2).
+
+Weekly digest: preference + preview exist; scheduled delivery is tracked in
+[`WEEKLY_DIGEST_COMPLETION_PLAN.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/features/WEEKLY_DIGEST_COMPLETION_PLAN.md).
 
 ---
 
@@ -100,23 +109,28 @@ Weekly digests: `python -m app.workers.digest --once` (push delivery still depen
 
 ## User & GDPR
 
-| Method   | Path                              | Notes                              |
-| -------- | --------------------------------- | ---------------------------------- |
-| `GET`    | `/api/v1/user/export`             | GDPR Art. 20 data export           |
-| `DELETE` | `/api/v1/user/me`                 | Account erasure (password confirm) |
-| `GET`    | `/api/v1/user/me/consents`        | Consent history + current state    |
-| `POST`   | `/api/v1/user/me/consents`        | Record grant/revoke                |
-| `POST`   | `/api/v1/user/me/consents/revoke` | Revoke consent                     |
-| `GET`    | `/api/v1/user/preferences`        | Insight / onboarding preferences   |
-| `PATCH`  | `/api/v1/user/preferences`        | Update preferences                 |
+| Method   | Path                              | Notes                                  |
+| -------- | --------------------------------- | -------------------------------------- |
+| `GET`    | `/api/v1/user/export`             | GDPR Art. 20 data export (ZIP)         |
+| `DELETE` | `/api/v1/user/me`                 | Account erasure (password re-auth)     |
+| `GET`    | `/api/v1/user/preferences`        | Analysis / digest / dismissed insights |
+| `PATCH`  | `/api/v1/user/preferences`        | Update preferences                     |
+| `GET`    | `/api/v1/user/me/consents`        | Consent history + current state        |
+| `POST`   | `/api/v1/user/me/consents`        | Record grant/revoke                    |
+| `POST`   | `/api/v1/user/me/consents/revoke` | Revoke consent                         |
+
+Health Connect **import** is deferred to M8/M11; consents only store preference today.
+See [`M8_NOTES.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/M8_NOTES.md).
 
 ---
 
-## Media (M13 foundation)
+## Media (M13 stub)
 
-| Method | Path                   | Notes                                           |
-| ------ | ---------------------- | ----------------------------------------------- |
-| `POST` | `/api/v1/media/photos` | Upload with server-side EXIF strip; MinIO later |
+| Method | Path                   | Notes                                                        |
+| ------ | ---------------------- | ------------------------------------------------------------ |
+| `POST` | `/api/v1/media/photos` | EXIF strip + metadata; `stored=false` until MinIO in **M13** |
+
+See [`M13_NOTES.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/M13_NOTES.md).
 
 ---
 

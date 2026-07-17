@@ -63,7 +63,7 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
     payload = envelope.model_dump(mode="json")
 
     assert payload["user"]["email"] == "me@example.test"
-    assert payload["app_version"] == "0.0.1"
+    assert payload["app_version"] == "1.0.0"
     assert payload["format_version"] == "1.2"
     assert payload["score_legend"]["stress"] == {
         "min": 1,

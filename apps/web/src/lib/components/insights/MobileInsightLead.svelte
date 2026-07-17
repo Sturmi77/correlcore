@@ -16,6 +16,7 @@
   export let enableExploreEvents = false;
 
   const dispatch = createEventDispatcher<{
+    dismiss: { id: string };
     dismissMilestone: { key: string };
     exploreEvents: { id: string };
   }>();
@@ -35,6 +36,7 @@
     featured
     showConfidenceSummary
     {enableExploreEvents}
+    on:dismiss={(event) => dispatch('dismiss', event.detail)}
     on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
   />
 
