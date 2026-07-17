@@ -26,7 +26,7 @@ dependencies = [
   # Auth (Phase 1: native JWT — ADR-0004)
   "python-jose[cryptography]>=3.3.0",
   "passlib[bcrypt]>=1.7.4",
-  "bcrypt<5.0.0",
+  "bcrypt<6.0.0",
   # Encryption at-rest (ADR-0005)
   "cryptography>=48.0.1",
   # Photo metadata strip (Issue #28, M13 foundation)
