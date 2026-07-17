@@ -1163,8 +1163,7 @@
               rows="4"
               maxlength="4000"
               bind:value={note}
-              placeholder={$_('entry.note_placeholder')}
-            ></textarea>
+              placeholder={$_('entry.note_placeholder')}></textarea>
           </label>
           <NoteMarkerChips
             markers={noteMarkers}
