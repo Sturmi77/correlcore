@@ -11,6 +11,16 @@ import { isCapacitorBuild } from './platform';
 
 const RUNTIME_STORAGE_KEY = 'correlcore.apiBase';
 
+/** Keep Glance widget API base in sync (dynamic import avoids cycles). */
+function syncWidgetApiBase(): void {
+  if (!isCapacitorBuild()) return;
+  void import('./sessionTokens').then(({ getAccessToken }) =>
+    import('./widgetCredentials').then(({ remirrorWidgetApiBase }) =>
+      remirrorWidgetApiBase(getAccessToken())
+    )
+  );
+}
+
 let runtimeOverride: string | null = null;
 
 function normalizeBase(url: string): string {
@@ -56,6 +66,7 @@ export function setRuntimeApiBase(url: string | null): void {
         /* ignore */
       }
     }
+    syncWidgetApiBase();
     return;
   }
   const normalized = normalizeBase(url.trim());
@@ -67,6 +78,7 @@ export function setRuntimeApiBase(url: string | null): void {
       /* private mode — keep in-memory only */
     }
   }
+  syncWidgetApiBase();
 }
 
 /** Value shown in Settings (Capacitor): stored override or build default. */

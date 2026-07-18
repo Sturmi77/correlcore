@@ -1038,6 +1038,36 @@ Response `200 OK`:
 
 ---
 
+## 7b. Widget (M11)
+
+Kompaktes Payload fuer das Android-Homescreen-Widget (Jetpack Glance /
+WorkManager). Authentifizierung wie ueblich (Cookie oder
+`Authorization: Bearer`). Response zielt auf ≤1 KB.
+
+```
+GET /api/v1/widget/summary
+```
+
+Response `200 OK`:
+
+```json
+{
+  "has_entry": false,
+  "mood_avg_7d": 3.25,
+  "suggested_next_entry_at": "2026-07-18T19:00:00Z"
+}
+```
+
+| Feld                       | Bedeutung                                                                 |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `has_entry`                | Mindestens ein Eintrag fuer das heutige UTC-Datum                         |
+| `mood_avg_7d`              | Mittelwert `mood_score` der letzten 7 Tage (inkl. heute), oder `null`     |
+| `suggested_next_entry_at`  | Naechster Vorschlag (UTC) aus der Modal-Stunde der Entry-`created_at`-Historie; `null` wenn kein sinnvoller Vorschlag |
+
+Rate-Limit: `120/minute` (wie Dashboard).
+
+---
+
 ## 8. Visualisierungs-Stats (M2)
 
 Alle Endpunkte erfordern einen verifizierten User und liefern ausschliesslich
