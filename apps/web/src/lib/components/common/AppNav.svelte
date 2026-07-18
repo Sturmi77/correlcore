@@ -2,15 +2,16 @@
   import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
   import ChartLine from 'lucide-svelte/icons/chart-line';
-  import House from 'lucide-svelte/icons/house';
   import Lightbulb from 'lucide-svelte/icons/lightbulb';
   import Settings from 'lucide-svelte/icons/settings';
+  import type { ComponentType } from 'svelte';
   import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
-  import { BRAND_MARK_MD, ICON_SIZE_MD } from '$lib/constants/iconSizes';
+  import { BRAND_MARK_MD, BRAND_MARK_SM, ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { isNavItemActive, NAV_ITEMS, type NavItemConfig } from '$lib/navigation/appNav';
 
-  const ICONS: Record<NavItemConfig['icon'], typeof House> = {
-    home: House,
+  type LucideNavIcon = Exclude<NavItemConfig['icon'], 'home'>;
+
+  const LUCIDE_ICONS: Record<LucideNavIcon, ComponentType> = {
     lightbulb: Lightbulb,
     'chart-line': ChartLine,
     settings: Settings,
@@ -27,7 +28,6 @@
   <ul class="app-nav__list">
     {#each NAV_ITEMS as item (item.href)}
       {@const active = isNavItemActive(pathname, item.href, item.match)}
-      {@const Icon = ICONS[item.icon]}
       <li class="app-nav__item-wrap">
         <a
           href={item.href}
@@ -36,7 +36,18 @@
           aria-current={active ? 'page' : undefined}
           aria-label={$_(item.labelKey)}
         >
-          <Icon size={ICON_SIZE_MD} strokeWidth={active ? 2.25 : 2} aria-hidden="true" />
+          {#if item.icon === 'home'}
+            <span
+              class="app-nav__home-mark"
+              class:app-nav__home-mark--active={active}
+              data-testid="app-nav-home-mark"
+            >
+              <CorrelCoreLogo size={BRAND_MARK_SM} title="" />
+            </span>
+          {:else}
+            {@const Icon = LUCIDE_ICONS[item.icon]}
+            <Icon size={ICON_SIZE_MD} strokeWidth={active ? 2.25 : 2} aria-hidden="true" />
+          {/if}
           <span class="app-nav__label">{$_(item.labelKey)}</span>
         </a>
       </li>

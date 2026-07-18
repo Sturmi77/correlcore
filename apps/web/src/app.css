@@ -563,6 +563,25 @@ button {
   white-space: nowrap;
 }
 
+/* Home destination uses the theme-aware brand mark (heatmap tokens). */
+.app-nav__home-mark {
+  display: flex;
+  flex-shrink: 0;
+  opacity: 0.72;
+  transition: opacity 120ms ease;
+}
+
+.app-nav__home-mark--active,
+.app-nav__item:hover .app-nav__home-mark {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-nav__home-mark {
+    transition: none;
+  }
+}
+
 @media (max-width: 767px) {
   .app-nav {
     position: fixed;

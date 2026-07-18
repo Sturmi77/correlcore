@@ -474,11 +474,26 @@
     gap: var(--space-3);
   }
 
+  /*
+   * Stick heading + mood/energy/stress legend to the left of the shared
+   * horizontal scroller (same idea as .timeseries__gutter). width:max-content
+   * keeps the chrome compact so the legend stays in the visible viewport
+   * instead of sitting on the far right of a full-width head row.
+   */
   .timeseries__head {
+    position: sticky;
+    left: 0;
+    z-index: 3;
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
+    gap: var(--space-2);
+    width: max-content;
+    max-width: min(22rem, 92vw);
+    padding-block: var(--space-1);
+    padding-inline-end: var(--space-4);
+    background: var(--color-bg);
+    box-shadow: 0.75rem 0 0.75rem -0.35rem var(--color-bg);
   }
 
   .timeseries__head h2 {
@@ -490,7 +505,7 @@
   .timeseries__legend {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: var(--space-2);
     font-size: var(--text-xs);
     opacity: 0.85;
@@ -723,14 +738,13 @@
   }
 
   @media (max-width: 480px) {
-    .timeseries__head,
     .timeseries__empty {
       flex-direction: column;
       align-items: stretch;
     }
 
-    .timeseries__legend {
-      justify-content: flex-start;
+    .timeseries__head {
+      max-width: min(18rem, 88vw);
     }
   }
 </style>

@@ -49,6 +49,25 @@ describe('MetricTimeseries', () => {
     expect(container.querySelectorAll('circle.timeseries__hit')).toHaveLength(6);
   });
 
+  it('keeps the mood/energy/stress legend in sticky chrome with the Y-axis pattern', () => {
+    const { container } = render(MetricTimeseries, {
+      props: {
+        points,
+        range: 'week',
+        loading: false,
+        enabled: { mood_avg: true, energy_avg: true, stress_avg: true },
+        axisDates: ['2026-05-01', '2026-05-02'],
+      },
+    });
+
+    const legend = screen.getByLabelText('trends.timeseries.legend');
+    expect(legend.textContent).toContain('trends.metric.mood');
+    expect(legend.textContent).toContain('trends.metric.energy');
+    expect(legend.textContent).toContain('trends.metric.stress');
+    expect(legend.closest('.timeseries__head')).toBeTruthy();
+    expect(container.querySelector('.timeseries__gutter')).toBeTruthy();
+  });
+
   it('renders skeleton and empty states', () => {
     const loading = render(MetricTimeseries, {
       props: {

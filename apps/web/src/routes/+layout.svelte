@@ -17,10 +17,8 @@
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
   import { initializeSyncOrchestrator, scheduleSync } from '$lib/offline/syncOrchestrator';
   import { cleanupDevServiceWorker, registerProdServiceWorker } from '$lib/utils/serviceWorker';
+  import { SPLASH_MIN_MS } from '$lib/constants/splashTiming';
   import { get } from 'svelte/store';
-
-  /** Covers CorrelCoreSplash tile+word animation (~780ms). */
-  const SPLASH_MIN_MS = 850;
 
   // svelte-i18n's `init()` registers the locale dictionary asynchronously
   // (locale files are dynamic imports). We must NOT render any child that

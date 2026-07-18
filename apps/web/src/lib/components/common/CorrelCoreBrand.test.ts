@@ -33,7 +33,9 @@ describe('Claude Design brand mark wiring', () => {
     expect(layoutSource).toContain('CorrelCoreSplash');
     expect(layoutSource).toContain('showBrandSplash');
     expect(layoutSource).toContain('SPLASH_MIN_MS');
+    expect(layoutSource).toContain('$lib/constants/splashTiming');
     expect(layoutSource).not.toContain('class="auth-splash"');
+    expect(layoutSource).not.toMatch(/SPLASH_MIN_MS\s*=\s*850/);
   });
 
   it('uses CorrelCoreLogo in the auth chrome', () => {
@@ -52,6 +54,13 @@ describe('Claude Design brand mark wiring', () => {
     expect(appNavSource).toContain('app-nav__brand');
     expect(appCssSource).toContain('.app-nav__brand');
     expect(appCssSource).toMatch(/\.app-nav__brand\s*\{\s*display:\s*none;/);
+  });
+
+  it('uses the theme-aware brand mark for the Home nav destination', () => {
+    expect(appNavSource).toContain('app-nav-home-mark');
+    expect(appNavSource).toContain('BRAND_MARK_SM');
+    expect(appNavSource).not.toContain("import House from 'lucide-svelte/icons/house'");
+    expect(appCssSource).toContain('.app-nav__home-mark');
   });
 
   it('points the web manifest at the new PNG/SVG icons', () => {
