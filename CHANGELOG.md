@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (M11 Sprint 1 — Capacitor production shell)
+
+- Committed Capacitor Android platform under `apps/android/android/` (`de.correlcore.app`).
+- Static SPA build for the shell: `pnpm --filter @correlcore/web build:capacitor`
+  (`adapter-static` → `build-capacitor`); Docker/selfhost still uses `adapter-node`.
+- Aligned `@capacitor/{core,cli,android}` to **7.6.7**; brand launcher/splash assets;
+  deep link `correlcore://entries/new`.
+- Root scripts `pnpm cap:sync` / `pnpm cap:assemble:debug`; CI job **Assemble debug APK**
+  uploads `correlcore-debug-apk`. See [`docs/M11_SPRINT_PLAN.md`](docs/M11_SPRINT_PLAN.md).
+
 ### Fixed (Codex review follow-up for #393)
 
 - Honor `note_visibility=hidden` in marker analytics and GDPR export.
