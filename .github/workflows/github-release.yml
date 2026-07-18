@@ -46,6 +46,24 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
             echo "No CHANGELOG section for version ${VERSION}. Using auto-generated notes." > "$OUT"
           fi
+
+          # GitHub release bodies max out at 125_000 chars. Keep room for the
+          # Android download block prepended below; link to CHANGELOG if truncated.
+          MAX=110000
+          SIZE=$(wc -c <"$OUT")
+          if (( SIZE > MAX )); then
+            HEAD_BYTES=$((MAX - 400))
+            TMP="${OUT}.trunc"
+            head -c "${HEAD_BYTES}" "$OUT" >"$TMP"
+            {
+              cat "$TMP"
+              printf '\n\n…\n\n### Full changelog\n\nSee [`CHANGELOG.md`](https://github.com/%s/blob/%s/CHANGELOG.md) (release body truncated for mobile readability).\n' \
+                "${GITHUB_REPOSITORY}" "${TAG}"
+            } >"$OUT"
+            rm -f "$TMP"
+            echo "Truncated changelog section from ${SIZE} to $(wc -c <"$OUT") bytes."
+          fi
+
           echo "path=${OUT}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
