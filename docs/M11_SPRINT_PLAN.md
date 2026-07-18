@@ -16,33 +16,33 @@ Testing**. Exit criterion remains Play Closed Testing live (per design doc).
 
 ## Current baseline
 
-| Item                                         | Status |
-| -------------------------------------------- | ------ |
-| Capacitor package `apps/android` (#27)       | Done   |
-| CI job validates config (no SDK / no APK)    | Done   |
-| HC consent foundation (`consent_log`, #31)   | Done   |
-| Native `android/` project committed          | Done   |
-| Capacitor majors aligned (7.6.7)             | Done   |
-| Static SPA webDir (`build-capacitor`)        | Done   |
-| Brand icons / splash / `correlcore://` link  | Done   |
-| CI `assembleDebug` + APK artifact            | Done   |
-| Bearer auth path for Capacitor (ADR-0006)    | Open   |
-| Signed release APK/AAB in CI                 | Open   |
-| Glance homescreen widget                     | Open   |
-| FCM / push in native shell                   | Open   |
-| Play Console listing + Data Safety           | Open   |
+| Item                                        | Status |
+| ------------------------------------------- | ------ |
+| Capacitor package `apps/android` (#27)      | Done   |
+| CI job validates config (no SDK / no APK)   | Done   |
+| HC consent foundation (`consent_log`, #31)  | Done   |
+| Native `android/` project committed         | Done   |
+| Capacitor majors aligned (7.6.7)            | Done   |
+| Static SPA webDir (`build-capacitor`)       | Done   |
+| Brand icons / splash / `correlcore://` link | Done   |
+| CI `assembleDebug` + APK artifact           | Done   |
+| Bearer auth path for Capacitor (ADR-0006)   | Open   |
+| Signed release APK/AAB in CI                | Open   |
+| Glance homescreen widget                    | Open   |
+| FCM / push in native shell                  | Open   |
+| Play Console listing + Data Safety          | Open   |
 
 ## Distribution decision (Step 0 — before Play)
 
 ### Recommendation: signed APK/AAB on GitHub Releases + Obtainium
 
-| Channel                         | Fit for CorrelCore first wave                                                                                         | Verdict                                      |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| **GitHub Releases (APK/AAB)**   | Matches existing `v*` release culture; AGPL-friendly; CI can attach artifacts; testers install via “Unknown sources” | **Primary — do this first**                  |
-| **Obtainium** (client)          | Users subscribe to the GitHub repo/release URL; auto-update without Play                                              | **Recommended install UX for beta cohort**   |
-| **Direct APK send** (chat/mail) | Fine for ≤5 device smoke tests; no update channel, easy to lose track of versions                                     | Ad-hoc only                                  |
-| **F-Droid**                     | Strong privacy audience; slow inclusion; needs reproducible builds; FCM/proprietary bits complicate policy            | **Phase 2** after GitHub APK is stable       |
-| **Play Internal Testing**       | Best path to Closed Testing / Pre-Launch Report; requires Play Console ($25) + AAB                                    | **M11 exit track** (after sideload works)    |
+| Channel                         | Fit for CorrelCore first wave                                                                                        | Verdict                                    |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **GitHub Releases (APK/AAB)**   | Matches existing `v*` release culture; AGPL-friendly; CI can attach artifacts; testers install via “Unknown sources” | **Primary — do this first**                |
+| **Obtainium** (client)          | Users subscribe to the GitHub repo/release URL; auto-update without Play                                             | **Recommended install UX for beta cohort** |
+| **Direct APK send** (chat/mail) | Fine for ≤5 device smoke tests; no update channel, easy to lose track of versions                                    | Ad-hoc only                                |
+| **F-Droid**                     | Strong privacy audience; slow inclusion; needs reproducible builds; FCM/proprietary bits complicate policy           | **Phase 2** after GitHub APK is stable     |
+| **Play Internal Testing**       | Best path to Closed Testing / Pre-Launch Report; requires Play Console ($25) + AAB                                   | **M11 exit track** (after sideload works)  |
 
 **Do not block M11 engineering on F-Droid.** F-Droid is a follow-on distribution
 channel once the signed build, privacy copy, and update story are proven via
@@ -62,16 +62,16 @@ Play reaches everyone else.
 
 ## Sprint overview
 
-| Sprint | Title                              | Exit criterion                                              |
-| ------ | ---------------------------------- | ----------------------------------------------------------- |
-| 0      | Scaffold (done)                    | `apps/android` + CI validate (#27)                          |
-| 1      | Production Capacitor shell         | Committed `android/`, `cap sync` + debug install on device  |
-| 2      | Signed CI build + sideload channel | Release workflow attaches signed APK; testers install       |
-| 3      | Mobile auth & API wiring           | Login/session works in WebView (Bearer per ADR-0006)        |
-| 4      | Widget data + Glance widget        | Homescreen widget + `GET /widget/summary`                   |
-| 5      | Push (FCM) for non-selfhost        | Push received on test device (UnifiedPush remains M4.2)     |
-| 6      | Play Console Internal → Closed     | Internal track live; Data Safety + assets; Pre-Launch OK    |
-| 7      | M11 quality gate / closeout        | Design-doc acceptance + DSGVO checkpoint checked            |
+| Sprint | Title                              | Exit criterion                                             |
+| ------ | ---------------------------------- | ---------------------------------------------------------- |
+| 0      | Scaffold (done)                    | `apps/android` + CI validate (#27)                         |
+| 1      | Production Capacitor shell         | Committed `android/`, `cap sync` + debug install on device |
+| 2      | Signed CI build + sideload channel | Release workflow attaches signed APK; testers install      |
+| 3      | Mobile auth & API wiring           | Login/session works in WebView (Bearer per ADR-0006)       |
+| 4      | Widget data + Glance widget        | Homescreen widget + `GET /widget/summary`                  |
+| 5      | Push (FCM) for non-selfhost        | Push received on test device (UnifiedPush remains M4.2)    |
+| 6      | Play Console Internal → Closed     | Internal track live; Data Safety + assets; Pre-Launch OK   |
+| 7      | M11 quality gate / closeout        | Design-doc acceptance + DSGVO checkpoint checked           |
 
 Sprints 4–5 may overlap Sprint 2–3 once the shell installs; Play work (6)
 starts only after a sideload build is green.
@@ -253,14 +253,14 @@ flowchart LR
 
 ## Risk register (short)
 
-| Risk                                      | Mitigation                                                              |
-| ----------------------------------------- | ----------------------------------------------------------------------- |
-| Cookie auth broken in WebView             | Sprint 3 Bearer path; keep web cookies untouched                        |
-| Play rejects “thin” WebView shell         | Native widget + push + HC roadmap already justify Capacitor (ADR-0002)  |
-| Keystore loss                             | Backup encrypted offline; document recovery / Play App Signing          |
-| HC / health-claim copy                    | No medical claims; sync Data Safety with real permissions only          |
-| F-Droid delay                             | Keep GitHub+Obtainium as supported channel; F-Droid non-blocking        |
-| Capacitor major version skew (7 vs 8)     | Align in Sprint 1 before committing `android/`                          |
+| Risk                                  | Mitigation                                                             |
+| ------------------------------------- | ---------------------------------------------------------------------- |
+| Cookie auth broken in WebView         | Sprint 3 Bearer path; keep web cookies untouched                       |
+| Play rejects “thin” WebView shell     | Native widget + push + HC roadmap already justify Capacitor (ADR-0002) |
+| Keystore loss                         | Backup encrypted offline; document recovery / Play App Signing         |
+| HC / health-claim copy                | No medical claims; sync Data Safety with real permissions only         |
+| F-Droid delay                         | Keep GitHub+Obtainium as supported channel; F-Droid non-blocking       |
+| Capacitor major version skew (7 vs 8) | Align in Sprint 1 before committing `android/`                         |
 
 ## Explicit non-goals for M11
 
