@@ -236,3 +236,16 @@ jobs:
             ${{ steps.pkg.outputs.aab }}
             ${{ steps.pkg.outputs.dir }}/SHA256SUMS.txt
           fail_on_unmatched_files: true
+
+      # Put tappable APK/AAB links at the very top of the release notes (mobile UX).
+      # Idempotent — also repairs the body if github-release.yml raced this job.
+      - name: Prepend Android download links at top of release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x scripts/github-release-android-downloads.sh
+          scripts/github-release-android-downloads.sh \
+            "${GITHUB_REF_NAME}" \
+            "${{ steps.ver.outputs.version_name }}"
