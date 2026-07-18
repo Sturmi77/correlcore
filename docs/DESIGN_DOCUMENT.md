@@ -1279,6 +1279,7 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 - [x] Capacitor-Project-Scaffold vorhanden (`apps/android`, Config-Validate in CI) — #27
 - [x] Capacitor-Debug-Build produktiv (`pnpm cap:sync` + `assembleDebug` / CI artifact)
 - [x] Capacitor-Release-Build signiert (Gradle/CI; GitHub Release attach on `v*` — secrets required)
+- [x] Capacitor Bearer-Auth + API-Base-URL (ADR-0006 / Sprint 3)
 - [ ] Health Connect API Declaration im Play Store korrekt ausgefüllt (`health_permissions` deklariert)
 - [ ] App besteht Google Play Pre-Launch-Report ohne kritische Fehler
 - [ ] FCM-Integration getestet (Push-Notification kommt an)

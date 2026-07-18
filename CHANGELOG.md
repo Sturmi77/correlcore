@@ -8,6 +8,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (M11 Sprint 3 — Capacitor Bearer auth)
+
+- Capacitor builds (`VITE_CAPACITOR=1`) use in-memory Bearer tokens via `apiFetch`
+  (ADR-0006); browser/PWA cookie path unchanged.
+- Login/refresh/verify/reset opt-in returns `access_token` + `refresh_token` when
+  `?include_access_token=true`.
+- Runtime API base URL for selfhost (Settings → App) + build-time `VITE_API_BASE_URL`.
+- Ops checklist + tracking issue for signing/Play: [`docs/selfhost/M11_OPS_CHECKLIST.md`](docs/selfhost/M11_OPS_CHECKLIST.md), #429.
+
 ### Added (M11 Sprint 1–2 — Capacitor shell + signed sideload)
 
 - Committed Capacitor Android platform under `apps/android/android/` (`de.correlcore.app`).

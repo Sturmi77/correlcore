@@ -7,6 +7,8 @@ from [GitHub Releases](https://github.com/Sturmi77/correlcore/releases).
 No GitHub account and no GitHub Mobile app are required for public releases.
 
 M11 context: [`docs/M11_SPRINT_PLAN.md`](../M11_SPRINT_PLAN.md) Sprint 2.
+Ops checklist (signing secrets / Play): [`M11_OPS_CHECKLIST.md`](M11_OPS_CHECKLIST.md)
+([GitHub #429](https://github.com/Sturmi77/correlcore/issues/429)).
 Native shell: [`apps/android/README.md`](../../apps/android/README.md).
 
 ## For testers (non-technical)
@@ -100,11 +102,15 @@ Tag example: `git tag v1.1.0 && git push origin v1.1.0`.
 
 ## API / selfhost note
 
-Sprint 1–2 shells embed the static SPA. Login against a custom selfhost API
-needs the Capacitor Bearer + API base URL work in **Sprint 3**
-([ADR-0006](../adr/0006-cookie-auth-mit-capacitor-migration.md)). Until then,
-expect limited or broken auth when the WebView cannot use HttpOnly cookies
-against a remote API.
+Capacitor builds use Bearer auth (ADR-0006) when built with `VITE_CAPACITOR=1`.
+Set an absolute API URL at build time:
+
+```bash
+VITE_API_BASE_URL=https://your-host.example/api/v1 pnpm cap:sync
+```
+
+Selfhost testers can also change the API base under **Settings → App & offline**
+(runtime override, localStorage — not a secret). Sign in again after changing servers.
 
 ## Smoke checklist (sideload APK)
 

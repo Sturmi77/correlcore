@@ -749,7 +749,15 @@
       "sync_pending": "Pending changes",
       "sync_now": "Sync now",
       "sync_never": "Not yet",
-      "sync_note": "With offline sync enabled, daily entries are stored on this device first. Use Sync now or open an entry after reconnecting."
+      "sync_note": "With offline sync enabled, daily entries are stored on this device first. Use Sync now or open an entry after reconnecting.",
+      "api_base_heading": "API server",
+      "api_base_body": "Point the Android app at your CorrelCore API (include /api/v1). Leave empty to use the build default.",
+      "api_base_label": "API base URL",
+      "api_base_placeholder": "https://your-host.example/api/v1",
+      "api_base_save": "Save API URL",
+      "api_base_saved": "API URL saved. Sign in again if you changed servers.",
+      "api_base_cleared": "API URL reset to the build default.",
+      "api_base_invalid": "Enter a valid http(s) URL ending with /api/v1."
     },
     "dev": {
       "heading": "Developer View",

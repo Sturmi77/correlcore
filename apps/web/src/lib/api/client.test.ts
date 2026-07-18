@@ -140,3 +140,58 @@ describe('apiFetch — single-flight refresh', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('apiFetch — Capacitor Bearer path', () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.doMock('./platform', () => ({
+      isCapacitorBuild: () => true,
+      usesBearerAuth: () => true,
+    }));
+    const tokens = await import('./sessionTokens');
+    tokens._resetSessionTokensForTests();
+    tokens.setSessionTokens({
+      access_token: 'access-1',
+      refresh_token: 'refresh-1',
+    });
+  });
+
+  afterEach(async () => {
+    vi.doUnmock('./platform');
+    vi.resetModules();
+  });
+
+  it('sends Authorization Bearer and omits cookies', async () => {
+    const { apiFetch: bearerFetch } = await import('./client');
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
+    await bearerFetch('/me');
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.credentials).toBe('omit');
+    expect((init.headers as Headers).get('Authorization')).toBe('Bearer access-1');
+  });
+
+  it('refreshes with body refresh_token and rotates in-memory access', async () => {
+    const { apiFetch: bearerFetch } = await import('./client');
+    const { getAccessToken } = await import('./sessionTokens');
+    fetchMock
+      .mockResolvedValueOnce(emptyResponse(401))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          access_token: 'access-2',
+          refresh_token: 'refresh-2',
+          token_type: 'bearer',
+          expires_in: 900,
+          user: { id: 'u1', email: 'a@b.de', display_name: null, is_verified: true },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: 'ok' }));
+
+    const result = await bearerFetch<{ data: string }>('/protected');
+    expect(result).toEqual({ data: 'ok' });
+    expect(String(fetchMock.mock.calls[1][0])).toContain('include_access_token=true');
+    expect(fetchMock.mock.calls[1][1].body).toBe(JSON.stringify({ refresh_token: 'refresh-1' }));
+    expect(getAccessToken()).toBe('access-2');
+    const replayHeaders = fetchMock.mock.calls[2][1].headers as Headers;
+    expect(replayHeaders.get('Authorization')).toBe('Bearer access-2');
+  });
+});

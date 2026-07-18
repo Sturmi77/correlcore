@@ -749,7 +749,15 @@
       "sync_pending": "Ausstehende Aenderungen",
       "sync_now": "Jetzt synchronisieren",
       "sync_never": "Noch nicht",
-      "sync_note": "Mit aktiviertem Offline-Sync werden Tageseintraege zuerst auf diesem Geraet gespeichert. Nutze Jetzt synchronisieren oder oeffne einen Eintrag nach dem Wiederverbinden."
+      "sync_note": "Mit aktiviertem Offline-Sync werden Tageseintraege zuerst auf diesem Geraet gespeichert. Nutze Jetzt synchronisieren oder oeffne einen Eintrag nach dem Wiederverbinden.",
+      "api_base_heading": "API-Server",
+      "api_base_body": "Zeige die Android-App auf deine CorrelCore-API (inkl. /api/v1). Leer lassen fuer den Build-Default.",
+      "api_base_label": "API-Basis-URL",
+      "api_base_placeholder": "https://dein-host.example/api/v1",
+      "api_base_save": "API-URL speichern",
+      "api_base_saved": "API-URL gespeichert. Melde dich erneut an, wenn du den Server gewechselt hast.",
+      "api_base_cleared": "API-URL auf den Build-Default zurueckgesetzt.",
+      "api_base_invalid": "Bitte eine gueltige http(s)-URL mit /api/v1 am Ende eingeben."
     },
     "dev": {
       "heading": "Entwickleransicht",

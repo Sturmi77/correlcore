@@ -20,7 +20,9 @@ Capacitor Android package under [`apps/android/`](../apps/android/):
 - [x] CI **Assemble debug APK** (artifact `correlcore-debug-apk`)
 - [x] Signed release APK/AAB path + sideload docs (Sprint 2) —
       [`ANDROID_SIDELOAD.md`](selfhost/ANDROID_SIDELOAD.md); live Release asset
-      needs repo signing secrets + `v*` tag
+      needs repo signing secrets + `v*` tag — ops: [#429](https://github.com/Sturmi77/correlcore/issues/429),
+      [`M11_OPS_CHECKLIST.md`](selfhost/M11_OPS_CHECKLIST.md)
+- [x] Bearer auth + API base URL (Sprint 3, ADR-0006)
 - [ ] Play Store Internal / Closed Testing
 
 Health Connect **consent** foundation shipped with #31 (`consent_log`, Settings Privacy).

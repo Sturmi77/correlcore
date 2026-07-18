@@ -303,7 +303,9 @@ async def test_login_include_access_token_opt_in(async_client: AsyncClient, user
             json={"email": "test@example.com", "password": TEST_PASSWORD},
         )
     assert r.status_code == 200
-    assert r.json()["access_token"] == VALID_ACCESS_TOKEN
+    body = r.json()
+    assert body["access_token"] == VALID_ACCESS_TOKEN
+    assert body["refresh_token"] == VALID_REFRESH_TOKEN
 
 
 @pytest.mark.asyncio

@@ -83,14 +83,19 @@ router = APIRouter()
 
 
 def _wants_access_token_in_body(request: Request) -> bool:
-    """Opt-in for API scripts / future Capacitor; browsers use cookies only."""
+    """Opt-in for API scripts / Capacitor Bearer path; browsers use cookies only."""
     raw = request.query_params.get("include_access_token", "").strip().lower()
     return raw in {"1", "true", "yes"}
 
 
-def _token_response(request: Request, *, access: str, user: User) -> TokenResponse:
+def _token_response(
+    request: Request, *, access: str, refresh: str, user: User
+) -> TokenResponse:
+    """Build TokenResponse; include JWT pair only when client opts in."""
+    include = _wants_access_token_in_body(request)
     return TokenResponse(
-        access_token=access if _wants_access_token_in_body(request) else None,
+        access_token=access if include else None,
+        refresh_token=refresh if include else None,
         expires_in=ACCESS_COOKIE_MAX_AGE_SECONDS,
         user=UserResponse.model_validate(user),
     )
@@ -182,7 +187,7 @@ async def verify_email_endpoint(
     token_store = TokenStore(redis)
     access, refresh = await issue_session_tokens(token_store, user)
     set_auth_cookies(response, access, refresh)
-    return _token_response(request, access=access, user=user)
+    return _token_response(request, access=access, refresh=refresh, user=user)
 
 
 # ---------------------------------------------------------------------------
@@ -282,7 +287,7 @@ async def reset_password_endpoint(
     await token_store.revoke_all(str(user.id))
     access, refresh = await issue_session_tokens(token_store, user)
     set_auth_cookies(response, access, refresh)
-    return _token_response(request, access=access, user=user)
+    return _token_response(request, access=access, refresh=refresh, user=user)
 
 
 # ---------------------------------------------------------------------------
@@ -320,7 +325,7 @@ async def login(
             detail="Invalid email or password",
         ) from exc
     set_auth_cookies(response, access, refresh)
-    return _token_response(request, access=access, user=user)
+    return _token_response(request, access=access, refresh=refresh, user=user)
 
 
 # ---------------------------------------------------------------------------
@@ -356,7 +361,9 @@ async def refresh(
         clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     set_auth_cookies(response, access, new_refresh)
-    return _token_response(request, access=access, user=user)
+    return _token_response(
+        request, access=access, refresh=new_refresh, user=user
+    )
 
 
 # ---------------------------------------------------------------------------

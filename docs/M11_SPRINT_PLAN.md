@@ -10,10 +10,9 @@ and [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md).
 testers **without Play Store first**, then enter Play **Internal / Closed
 Testing**. Exit criterion remains Play Closed Testing live (per design doc).
 
-**Status:** Sprint 1 **complete**; Sprint 2 (signed sideload channel) **complete**
-in code — signed `assembleRelease`/`bundleRelease`, CI attach on `v*` tags,
-[`docs/selfhost/ANDROID_SIDELOAD.md`](selfhost/ANDROID_SIDELOAD.md). Publishing
-a live GitHub Release asset still requires repository signing secrets.
+**Status:** Sprints 1–3 **complete** in code (shell, signed sideload path, Bearer
+auth + API base). Ops for live GitHub Release / Play: [#429](https://github.com/Sturmi77/correlcore/issues/429),
+[`docs/selfhost/M11_OPS_CHECKLIST.md`](selfhost/M11_OPS_CHECKLIST.md).
 
 ## Current baseline
 
@@ -28,7 +27,7 @@ a live GitHub Release asset still requires repository signing secrets.
 | Brand icons / splash / `correlcore://` link  | Done   |
 | CI `assembleDebug` + APK artifact            | Done   |
 | Signed release APK/AAB in CI + sideload docs | Done   |
-| Bearer auth path for Capacitor (ADR-0006)    | Open   |
+| Bearer auth path for Capacitor (ADR-0006)    | Done   |
 | Glance homescreen widget                     | Open   |
 | FCM / push in native shell                   | Open   |
 | Play Console listing + Data Safety           | Open   |
@@ -142,20 +141,20 @@ Per [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md):
 
 ### Work
 
-- [ ] Capacitor-aware `apiFetch`: In-memory Bearer from
-      `TokenResponse.access_token`; refresh via `/auth/refresh` with
-      `Authorization` header (no `localStorage` / `sessionStorage`).
-- [ ] Configurable API base URL for selfhost (build-time default for SaaS;
-      runtime setting or deep-link for selfhost testers).
-- [ ] Cookie path remains default for browser/PWA builds.
-- [ ] Tests: dual-path auth (cookie web + bearer capacitor) in unit/e2e where
-      feasible.
-- [ ] Clear session on app lock / logout; document threat notes for Art. 9.
+- [x] Capacitor-aware `apiFetch`: In-memory Bearer from
+      `TokenResponse.access_token` (+ `refresh_token` opt-in); refresh via
+      `/auth/refresh` JSON body (existing `RefreshRequest`); no token persistence
+      in `localStorage` / `sessionStorage`.
+- [x] Configurable API base URL (`VITE_API_BASE_URL` build-time; Settings
+      runtime override for Capacitor selfhost).
+- [x] Cookie path remains default for browser/PWA builds (`VITE_CAPACITOR` unset).
+- [x] Unit tests: cookie path + Bearer refresh rotation.
+- [x] Clear in-memory session on logout; Art. 9 notes in ADR-0006 / ops checklist.
 
 ### Exit
 
-- Tester can register/login against a staging or selfhost API from the APK
-  and create an entry.
+- [x] Code path: login/refresh/logout with Bearer against absolute API base.
+- [ ] Device smoke: register/login + create entry from APK (manual / after secrets).
 
 ---
 

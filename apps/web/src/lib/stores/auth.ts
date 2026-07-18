@@ -1,14 +1,15 @@
 /**
- * Auth store — Issue #40.
+ * Auth store — Issue #40 + M11 Sprint 3.
  *
  * Holds the current user (or null when unauthenticated).
- * The store does NOT hold a token — auth state is owned by the HttpOnly
- * cookie. This store is just a UI mirror of "is the user logged in?".
+ * Tokens are not stored here: browser → HttpOnly cookies; Capacitor →
+ * in-memory sessionTokens (ADR-0006). This store is a UI mirror of
+ * "is the user logged in?".
  *
  * Lifecycle:
  *   - On app boot: hydrate() probes /auth/me. 200 → user, 401 → null.
  *   - On login:    login() sets the user and returns it.
- *   - On logout:   logout() clears the user and the cookie.
+ *   - On logout:   logout() clears the user and session (cookies / memory).
  */
 
 import { writable, derived, get } from 'svelte/store';
@@ -19,6 +20,7 @@ import {
   type LoginPayload,
   type UserResponse,
 } from '$lib/api/auth';
+import { clearSessionTokens } from '$lib/api/sessionTokens';
 import { resetInsightStore } from '$lib/stores/insights';
 import { resetEntrySheetStore } from '$lib/stores/entrySheet';
 import {
@@ -77,6 +79,7 @@ export async function logout(): Promise<void> {
     await apiLogout();
   } catch {
     // Best-effort — even if the call fails, clear local state.
+    clearSessionTokens();
   }
   await clearOfflineDataForLogout();
   resetInsightStore();
