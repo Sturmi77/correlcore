@@ -16,7 +16,11 @@
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
   import { initializeSyncOrchestrator, scheduleSync } from '$lib/offline/syncOrchestrator';
-  import { cleanupDevServiceWorker, registerProdServiceWorker } from '$lib/utils/serviceWorker';
+  import {
+    cleanupCapacitorServiceWorker,
+    cleanupDevServiceWorker,
+    registerProdServiceWorker,
+  } from '$lib/utils/serviceWorker';
   import { SPLASH_MIN_MS } from '$lib/constants/splashTiming';
   import { get } from 'svelte/store';
 
@@ -56,6 +60,7 @@
     );
 
     void cleanupDevServiceWorker();
+    void cleanupCapacitorServiceWorker();
     void registerProdServiceWorker();
     syncDevModeFromStorage();
     devPhase.setOnboardingPreviewOpen(false);

@@ -6,13 +6,13 @@
  *
  * Capacitor APKs must not register a service worker: clients.claim() + navigate
  * handling can blank the WebView around the first post-login route change.
+ * Older APKs may still have a registration; clear it on boot.
  */
 
 import { isCapacitorBuild } from '$lib/api/platform';
 
-/** Unregister any SW and clear caches left from a previous dev session. */
-export async function cleanupDevServiceWorker(): Promise<void> {
-  if (!import.meta.env.DEV || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+async function unregisterAllServiceWorkers(): Promise<void> {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
     return;
   }
   const registrations = await navigator.serviceWorker.getRegistrations();
@@ -21,6 +21,25 @@ export async function cleanupDevServiceWorker(): Promise<void> {
     const keys = await caches.keys();
     await Promise.all(keys.map((key) => caches.delete(key)));
   }
+}
+
+/** Unregister any SW and clear caches left from a previous dev session. */
+export async function cleanupDevServiceWorker(): Promise<void> {
+  if (!import.meta.env.DEV) {
+    return;
+  }
+  await unregisterAllServiceWorkers();
+}
+
+/**
+ * One-time cleanup for Capacitor production WebViews that still have a SW
+ * registered from an older APK (pre-#440). Safe to call every boot.
+ */
+export async function cleanupCapacitorServiceWorker(): Promise<void> {
+  if (!isCapacitorBuild() || import.meta.env.DEV) {
+    return;
+  }
+  await unregisterAllServiceWorkers();
 }
 
 /** Register the app shell service worker in production browser builds only. */

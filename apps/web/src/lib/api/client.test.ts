@@ -11,7 +11,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, NetworkError, apiFetch } from './client';
+import { ApiError, NetworkError, apiFetch, redactUrlCredentials } from './client';
 
 type FetchMock = ReturnType<typeof vi.fn>;
 
@@ -95,6 +95,30 @@ describe('apiFetch — error handling', () => {
       expect(networkErr.message).toContain('Mixed Content blocked');
       expect(networkErr.message).toContain(String(networkErr.apiBase));
     }
+  });
+
+  it('redacts URL credentials from NetworkError messages', () => {
+    const err = new NetworkError(
+      '/auth/login',
+      new Error('failed'),
+      'https://user:s3cret@api.example/api/v1'
+    );
+    expect(err.apiBase).toBe('https://api.example/api/v1');
+    expect(err.message).toContain('https://api.example/api/v1');
+    expect(err.message).not.toContain('s3cret');
+    expect(err.message).not.toContain('user:');
+  });
+});
+
+describe('redactUrlCredentials', () => {
+  it('strips userinfo from absolute URLs', () => {
+    expect(redactUrlCredentials('https://alice:pw@host.example/api/v1')).toBe(
+      'https://host.example/api/v1'
+    );
+  });
+
+  it('leaves relative bases unchanged', () => {
+    expect(redactUrlCredentials('/api/v1')).toBe('/api/v1');
   });
 });
 

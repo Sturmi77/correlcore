@@ -5,7 +5,11 @@ vi.mock('$lib/api/platform', () => ({
 }));
 
 import { isCapacitorBuild } from '$lib/api/platform';
-import { cleanupDevServiceWorker, registerProdServiceWorker } from './serviceWorker';
+import {
+  cleanupCapacitorServiceWorker,
+  cleanupDevServiceWorker,
+  registerProdServiceWorker,
+} from './serviceWorker';
 
 describe('serviceWorker helpers', () => {
   afterEach(() => {
@@ -56,5 +60,38 @@ describe('serviceWorker helpers', () => {
     await registerProdServiceWorker();
 
     expect(register).not.toHaveBeenCalled();
+  });
+
+  it('unregisters legacy Capacitor service workers in production', async () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('PROD', true);
+    vi.mocked(isCapacitorBuild).mockReturnValue(true);
+
+    const unregister = vi.fn().mockResolvedValue(true);
+    const getRegistrations = vi.fn().mockResolvedValue([{ unregister }]);
+    const deleteCache = vi.fn().mockResolvedValue(true);
+    const keys = vi.fn().mockResolvedValue(['correlcore-app-v1']);
+
+    vi.stubGlobal('navigator', { serviceWorker: { getRegistrations } });
+    vi.stubGlobal('caches', { keys, delete: deleteCache });
+
+    await cleanupCapacitorServiceWorker();
+
+    expect(getRegistrations).toHaveBeenCalled();
+    expect(unregister).toHaveBeenCalled();
+    expect(deleteCache).toHaveBeenCalledWith('correlcore-app-v1');
+  });
+
+  it('does not unregister Capacitor workers in browser builds', async () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('PROD', true);
+    vi.mocked(isCapacitorBuild).mockReturnValue(false);
+
+    const getRegistrations = vi.fn();
+    vi.stubGlobal('navigator', { serviceWorker: { getRegistrations } });
+
+    await cleanupCapacitorServiceWorker();
+
+    expect(getRegistrations).not.toHaveBeenCalled();
   });
 });
