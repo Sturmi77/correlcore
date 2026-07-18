@@ -13,11 +13,7 @@
    * no business logic, no API calls.
    */
   export type EventMarkerKind =
-    | 'phase_transition'
-    | 'symptom_onset'
-    | 'habit_change'
-    | 'cycle_phase'
-    | 'generic';
+    'phase_transition' | 'symptom_onset' | 'habit_change' | 'cycle_phase' | 'generic';
 
   export interface EventMarker {
     /** Inclusive start (ISO date YYYY-MM-DD). */

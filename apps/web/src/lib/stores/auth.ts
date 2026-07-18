@@ -28,9 +28,7 @@ import {
 } from '$lib/offline/session';
 
 export type AuthState =
-  | { status: 'loading' }
-  | { status: 'authenticated'; user: UserResponse }
-  | { status: 'anonymous' };
+  { status: 'loading' } | { status: 'authenticated'; user: UserResponse } | { status: 'anonymous' };
 
 const _auth = writable<AuthState>({ status: 'loading' });
 

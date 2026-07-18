@@ -13,9 +13,7 @@
 import { localIsoDate, shiftIsoDate } from './streak';
 
 export type DateLabelKind =
-  | { kind: 'today' }
-  | { kind: 'yesterday' }
-  | { kind: 'weekday'; weekday: WeekdayKey };
+  { kind: 'today' } | { kind: 'yesterday' } | { kind: 'weekday'; weekday: WeekdayKey };
 
 /** ISO weekday short keys — match `home.weekday.<key>` i18n entries. */
 export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';

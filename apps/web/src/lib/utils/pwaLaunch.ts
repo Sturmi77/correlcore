@@ -23,8 +23,7 @@ export function isStandaloneDisplayMode(): boolean {
 export function isColdNavigationLaunch(): boolean {
   if (!browser) return false;
   const entry = performance.getEntriesByType('navigation')[0] as
-    | PerformanceNavigationTiming
-    | undefined;
+    PerformanceNavigationTiming | undefined;
   if (!entry) return true;
   return entry.type === 'navigate' || entry.type === 'reload';
 }

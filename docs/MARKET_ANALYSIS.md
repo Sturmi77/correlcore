@@ -245,30 +245,33 @@ Der Mood- und Habit-Tracker-Markt ist fragmentiert, wird von wenigen Indie-Playe
 ### Laufende Kosten nach Skalierungsstufe
 
 **Stufe 1 — Pre-Launch / Beta (bis 500 MAU)**
-| Position | Kosten/Monat |
-|---|---|
-| Hetzner CX23 (2 vCPU, 4 GB RAM) | 3,99 € |
-| Backup-Space 20 GB | ~1 € |
-| Domain anteilig | ~1,50 € |
-| E-Mail (Resend Free-Tier) | 0 € |
-| **Gesamt** | **~6–8 €/Monat** |
+
+| Position                        | Kosten/Monat     |
+| ------------------------------- | ---------------- |
+| Hetzner CX23 (2 vCPU, 4 GB RAM) | 3,99 €           |
+| Backup-Space 20 GB              | ~1 €             |
+| Domain anteilig                 | ~1,50 €          |
+| E-Mail (Resend Free-Tier)       | 0 €              |
+| **Gesamt**                      | **~6–8 €/Monat** |
 
 **Stufe 2 — Öffentlicher Release (500–5.000 MAU)**
-| Position | Kosten/Monat |
-|---|---|
-| Hetzner CCX13 / CPX21 | ~15–25 € |
-| Backup-Space 100 GB | ~6 € |
-| Transactional Mail (Resend Pro) | ~18 € |
-| Cloudflare Pro (optional) | 20 € |
-| **Gesamt** | **~40–70 €/Monat** |
+
+| Position                        | Kosten/Monat       |
+| ------------------------------- | ------------------ |
+| Hetzner CCX13 / CPX21           | ~15–25 €           |
+| Backup-Space 100 GB             | ~6 €               |
+| Transactional Mail (Resend Pro) | ~18 €              |
+| Cloudflare Pro (optional)       | 20 €               |
+| **Gesamt**                      | **~40–70 €/Monat** |
 
 **Stufe 3 — SaaS (10.000+ MAU)**
-| Position | Kosten/Monat |
-|---|---|
-| 2× CCX23 + Managed DB + Object Storage | ~150–250 € |
-| Status-Page, Monitoring | +20–40 € |
-| Support-Tool | 0–30 € |
-| **Gesamt** | **~200–350 €/Monat** |
+
+| Position                               | Kosten/Monat         |
+| -------------------------------------- | -------------------- |
+| 2× CCX23 + Managed DB + Object Storage | ~150–250 €           |
+| Status-Page, Monitoring                | +20–40 €             |
+| Support-Tool                           | 0–30 €               |
+| **Gesamt**                             | **~200–350 €/Monat** |
 
 ### Google Play Provisionen
 

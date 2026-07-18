@@ -18,14 +18,7 @@ import { api } from './client';
 // ---------------------------------------------------------------------------
 
 export type TagCategory =
-  | 'sport'
-  | 'social'
-  | 'work'
-  | 'leisure'
-  | 'consumption'
-  | 'health'
-  | 'cycle'
-  | 'other';
+  'sport' | 'social' | 'work' | 'leisure' | 'consumption' | 'health' | 'cycle' | 'other';
 
 export type HabitType = 'none' | 'build' | 'reduce';
 

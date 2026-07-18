@@ -318,20 +318,16 @@
   ) {
     void loadTrends();
   }
-  $: rangeControlOptions = rangeOptions.map(
-    (option): SegmentedControlOption => ({
-      id: option.id,
-      label: $_(option.label),
-      testId: `trends-range-${option.id}`,
-    })
-  );
-  $: trendTabOptions = tabs.map(
-    (tab): TabBarOption => ({
-      id: tab.id,
-      label: $_(tab.label),
-      testId: `trends-tab-${tab.id}`,
-    })
-  );
+  $: rangeControlOptions = rangeOptions.map((option): SegmentedControlOption => ({
+    id: option.id,
+    label: $_(option.label),
+    testId: `trends-range-${option.id}`,
+  }));
+  $: trendTabOptions = tabs.map((tab): TabBarOption => ({
+    id: tab.id,
+    label: $_(tab.label),
+    testId: `trends-tab-${tab.id}`,
+  }));
   $: smoothingAvailable = range !== 'week';
   $: displayTimeseries =
     timeseries && smoothing && smoothingAvailable

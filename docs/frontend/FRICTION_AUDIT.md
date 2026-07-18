@@ -150,16 +150,16 @@
 
 ### Mobile (390×844)
 
-| #   | Route       | Tab/view          | User action                 | Total                                | Class        | Proposal       |
+| # | Route | Tab/view | User action | Total | Class | Proposal |
 | --- | ----------- | ----------------- | --------------------------- | ------------------------------------ | ------------ | -------------- | ------------------------------------------------------ |
-| 1   | `/trends`   | Compare (default) | MobileTrendsSummary loads   | 0                                    | Nicht ändern | —              |
-| 2   | `/trends`   | Summary card      | Tap detail                  | Opens detail canvas                  | 1            | Nicht ändern   | Expected drill-down                                    |
-| 3   | `/trends`   | Health tab        | Switch tab                  | Tag + symptom heatmaps               | 1            | Nicht ändern   | —                                                      |
-| 4   | `/trends`   | Heatmap cell      | Tap date                    | EntryHistorySheet or `/entries/day/` | 2            | Umleiten       | Prefer sheet to avoid route break                      |
-| 5   | `/insights` | Findings tab      | Switch nav tab              | New page load                        | 2            | Zusammenführen | Cross-link Trends ↔ Insights top finding               |
-| 6   | `/insights` | Matrix tab        | Toggle view                 | Second maturity context              | 3            | Eliminieren    | Matrix behind single "Details" per FRONTEND_STREAMLINE |
-| 7   | `/insights` | Category filter   | Tap All/Mood/Symptoms/Sleep | Feed filters                         | 0            | Nicht ändern   | —                                                      |
-| 8   | `/insights` | Symptom analytics | Scroll + expand             | Co-occurrence sheets                 | 1            | Nicht ändern   | Progressive disclosure                                 |
+| 1 | `/trends` | Compare (default) | MobileTrendsSummary loads | 0 | Nicht ändern | — |
+| 2 | `/trends` | Summary card | Tap detail | Opens detail canvas | 1 | Nicht ändern | Expected drill-down |
+| 3 | `/trends` | Health tab | Switch tab | Tag + symptom heatmaps | 1 | Nicht ändern | — |
+| 4 | `/trends` | Heatmap cell | Tap date | EntryHistorySheet or `/entries/day/` | 2 | Umleiten | Prefer sheet to avoid route break |
+| 5 | `/insights` | Findings tab | Switch nav tab | New page load | 2 | Zusammenführen | Cross-link Trends ↔ Insights top finding |
+| 6 | `/insights` | Matrix tab | Toggle view | Second maturity context | 3 | Eliminieren | Matrix behind single "Details" per FRONTEND_STREAMLINE |
+| 7 | `/insights` | Category filter | Tap All/Mood/Symptoms/Sleep | Feed filters | 0 | Nicht ändern | — |
+| 8 | `/insights` | Symptom analytics | Scroll + expand | Co-occurrence sheets | 1 | Nicht ändern | Progressive disclosure |
 
 ### Desktop (1280×900)
 
@@ -177,13 +177,13 @@
 
 **Prerequisite:** Tag with `habit_type: build|reduce` in `/settings/tags`
 
-| #   | Route            | UI element                    | User action             | Total                | Class        | Proposal                                       |
+| # | Route | UI element | User action | Total | Class | Proposal |
 | --- | ---------------- | ----------------------------- | ----------------------- | -------------------- | ------------ | ---------------------------------------------- | --- |
-| 1   | `/settings/tags` | Habit type + target frequency | Configure (first time)  | 2                    | Vorverlagern | Suggest habit setup during onboarding tag step |
-| 2   | `/trends`        | Habits tab                    | Switch from Compare     | 1                    | Nicht ändern | —                                              |
-| 3   | `/trends`        | HabitsPanel empty             | Read CTA → settings     | 3                    | Umleiten     | Inline "add habit" mini-flow                   |
-| 4   | `/trends`        | Habit adherence %             | Review calendar heatmap | 0                    | Nicht ändern | No streak — ADR compliant                      |
-| 5   | `/trends`        | Habit detail expand           | Tap habit row           | Stats for 28d window | 0            | Nicht ändern                                   | —   |
+| 1 | `/settings/tags` | Habit type + target frequency | Configure (first time) | 2 | Vorverlagern | Suggest habit setup during onboarding tag step |
+| 2 | `/trends` | Habits tab | Switch from Compare | 1 | Nicht ändern | — |
+| 3 | `/trends` | HabitsPanel empty | Read CTA → settings | 3 | Umleiten | Inline "add habit" mini-flow |
+| 4 | `/trends` | Habit adherence % | Review calendar heatmap | 0 | Nicht ändern | No streak — ADR compliant |
+| 5 | `/trends` | Habit detail expand | Tap habit row | Stats for 28d window | 0 | Nicht ändern | — |
 
 **W7 summary:** Setup friction (step 1) dominates; review path is clean once habits exist.
 

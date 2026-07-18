@@ -34,15 +34,15 @@ flowchart LR
   Save --> Home2["Home normal"]
 ```
 
-| Rule | Detail |
-| ---- | ------ |
-| Trigger | `shouldShowOnboardingTags` is true **and** `!onboarding_maturity_intro_seen` |
-| Surface | Bottom Sheet on Home (`/`) before the first `EntrySheet` opens |
-| Ordering | Maturity card → dismiss → EntrySheet with tag suggestions |
-| Dismiss | CTA / backdrop / Escape all persist `onboarding_maturity_intro_seen` |
-| Persist | Preference `onboarding_maturity_intro_seen` (migration `029`) |
-| Deep link | `?openEntry=1` defers while the intro is pending (`GlobalEntrySheet`) |
-| Re-open | Content remains available via `InsightJourneyExplainer` (without thumbs) |
+| Rule      | Detail                                                                       |
+| --------- | ---------------------------------------------------------------------------- |
+| Trigger   | `shouldShowOnboardingTags` is true **and** `!onboarding_maturity_intro_seen` |
+| Surface   | Bottom Sheet on Home (`/`) before the first `EntrySheet` opens               |
+| Ordering  | Maturity card → dismiss → EntrySheet with tag suggestions                    |
+| Dismiss   | CTA / backdrop / Escape all persist `onboarding_maturity_intro_seen`         |
+| Persist   | Preference `onboarding_maturity_intro_seen` (migration `029`)                |
+| Deep link | `?openEntry=1` defers while the intro is pending (`GlobalEntrySheet`)        |
+| Re-open   | Content remains available via `InsightJourneyExplainer` (without thumbs)     |
 
 ---
 
@@ -97,22 +97,22 @@ Composite mock (placement reference):
 
 ### Shell
 
-| Key role | DE |
-| -------- | -- |
-| Title | Wie deine Erkenntnisse wachsen |
-| Intro | CorrelCore findet Muster in deinen Daten über Zeit. Die ersten Tage dienen dem Aufbau — Erkenntnisse wachsen mit. |
-| Tag hint | Wähle als Nächstes Tags, die du oft wiederholst — nur so können spätere Muster entstehen. |
-| CTA | Weiter zu den Tags |
-| Footer | Aussagen bleiben beschreibend, keine Diagnose. |
+| Key role | DE                                                                                                                |
+| -------- | ----------------------------------------------------------------------------------------------------------------- |
+| Title    | Wie deine Erkenntnisse wachsen                                                                                    |
+| Intro    | CorrelCore findet Muster in deinen Daten über Zeit. Die ersten Tage dienen dem Aufbau — Erkenntnisse wachsen mit. |
+| Tag hint | Wähle als Nächstes Tags, die du oft wiederholst — nur so können spätere Muster entstehen.                         |
+| CTA      | Weiter zu den Tags                                                                                                |
+| Footer   | Aussagen bleiben beschreibend, keine Diagnose.                                                                    |
 
 ### Per phase
 
-| Phase | Key | Label | Range | Expectation | Example | Not yet |
-| ----- | --- | ----- | ----- | ----------- | ------- | ------- |
-| 1 | `collecting` | Daten sammeln | Tag 1–6 | Wir bauen deine Datengrundlage auf. Noch keine Muster. | Eintragsverlauf und Zähler — keine Erkenntniskarten. | Keine Insight-Karten, keine Korrelationen |
-| 2 | `early_patterns` | Erste Muster | Tag 7–13 | Erste Hinweise werden sichtbar. Beobachte, schließe nicht. | „Montags liegt die Stimmung oft unter deinem Durchschnitt.“ | Keine Tag↔Stimmung-Korrelationen |
-| 3 | `provisional` | Vorläufige Erkenntnisse | Tag 14–29 | Zusammenhänge entstehen — mit ausdrücklicher Unsicherheit. | „Tage mit Spaziergang liegen bei dir oft bei höherer Stimmung.“ | Noch nicht „bestätigt“ / „stabil“ |
-| 4 | `robust` | Robuste Erkenntnisse | Tag 30+ | Stabilere Muster zum Einordnen und Handeln. | Insight-Karte mit Kennzeichnung „Stabil · n Einträge“. | ML/Lag erst ab ~90 Tagen (nicht prominent nennen) |
+| Phase | Key              | Label                   | Range     | Expectation                                                | Example                                                         | Not yet                                           |
+| ----- | ---------------- | ----------------------- | --------- | ---------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------- |
+| 1     | `collecting`     | Daten sammeln           | Tag 1–6   | Wir bauen deine Datengrundlage auf. Noch keine Muster.     | Eintragsverlauf und Zähler — keine Erkenntniskarten.            | Keine Insight-Karten, keine Korrelationen         |
+| 2     | `early_patterns` | Erste Muster            | Tag 7–13  | Erste Hinweise werden sichtbar. Beobachte, schließe nicht. | „Montags liegt die Stimmung oft unter deinem Durchschnitt.“     | Keine Tag↔Stimmung-Korrelationen                  |
+| 3     | `provisional`    | Vorläufige Erkenntnisse | Tag 14–29 | Zusammenhänge entstehen — mit ausdrücklicher Unsicherheit. | „Tage mit Spaziergang liegen bei dir oft bei höherer Stimmung.“ | Noch nicht „bestätigt“ / „stabil“                 |
+| 4     | `robust`         | Robuste Erkenntnisse    | Tag 30+   | Stabilere Muster zum Einordnen und Handeln.                | Insight-Karte mit Kennzeichnung „Stabil · n Einträge“.          | ML/Lag erst ab ~90 Tagen (nicht prominent nennen) |
 
 **Insight families referenced:** Phase 2 → `weekday_pattern`; Phase 3 → `pointbiserial` (or `spearman`); Phase 4 → same card UI with maturity badge `robust` / „Stabil“.
 
@@ -122,22 +122,22 @@ Composite mock (placement reference):
 
 ### Shell
 
-| Key role | EN |
-| -------- | -- |
-| Title | How your insights grow |
-| Intro | CorrelCore finds patterns in your data over time. The first days build your foundation — insights grow with you. |
-| Tag hint | Next, pick tags you will reuse often — later patterns need that repetition. |
-| CTA | Continue to tags |
-| Footer | Statements stay descriptive, not a diagnosis. |
+| Key role | EN                                                                                                               |
+| -------- | ---------------------------------------------------------------------------------------------------------------- |
+| Title    | How your insights grow                                                                                           |
+| Intro    | CorrelCore finds patterns in your data over time. The first days build your foundation — insights grow with you. |
+| Tag hint | Next, pick tags you will reuse often — later patterns need that repetition.                                      |
+| CTA      | Continue to tags                                                                                                 |
+| Footer   | Statements stay descriptive, not a diagnosis.                                                                    |
 
 ### Per phase
 
-| Phase | Label | Range | Expectation | Example | Not yet |
-| ----- | ----- | ----- | ----------- | ------- | ------- |
-| 1 | Collecting Data | Days 1–6 | We are building your foundation. No patterns yet. | Entry history and counts — no insight cards. | No insight cards, no correlations |
-| 2 | First Patterns | Days 7–13 | Early hints appear. Observe; do not conclude. | “Mondays currently line up with lower mood than your overall average.” | No tag↔mood correlations |
-| 3 | Provisional Insights | Days 14–29 | Relationships emerge — with explicit uncertainty. | “Days tagged Walk currently line up with higher mood scores in your data.” | Not yet “confirmed” / “stable” |
-| 4 | Robust Insights | Day 30+ | More stable patterns you can act on. | Insight card labeled “Stable · n entries”. | ML/Lag only from ~90 days (do not highlight in onboarding) |
+| Phase | Label                | Range      | Expectation                                       | Example                                                                    | Not yet                                                    |
+| ----- | -------------------- | ---------- | ------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 1     | Collecting Data      | Days 1–6   | We are building your foundation. No patterns yet. | Entry history and counts — no insight cards.                               | No insight cards, no correlations                          |
+| 2     | First Patterns       | Days 7–13  | Early hints appear. Observe; do not conclude.     | “Mondays currently line up with lower mood than your overall average.”     | No tag↔mood correlations                                   |
+| 3     | Provisional Insights | Days 14–29 | Relationships emerge — with explicit uncertainty. | “Days tagged Walk currently line up with higher mood scores in your data.” | Not yet “confirmed” / “stable”                             |
+| 4     | Robust Insights      | Day 30+    | More stable patterns you can act on.              | Insight card labeled “Stable · n entries”.                                 | ML/Lag only from ~90 days (do not highlight in onboarding) |
 
 ---
 
@@ -145,12 +145,12 @@ Composite mock (placement reference):
 
 Assets live under [`../assets/phase_matrix/screenshots/onboarding_expectation/`](../assets/phase_matrix/screenshots/onboarding_expectation/).
 
-| Phase | Thumb file | Crop source | What the thumb must show |
-| ----- | ---------- | ----------- | ------------------------ |
-| 1 | `thumb_phase1_collecting.png` | `mobile__InsightsPage__collecting.png` | Empty foundation state / “noch keine Erkenntniskarten” |
-| 2 | `thumb_phase2_early_patterns.png` | `mobile__InsightsPage__early_patterns.png` | Early hint card + badge „Erster Hinweis“ |
-| 3 | `thumb_phase3_provisional.png` | `mobile__InsightsPage__provisional.png` | Provisional badge + uncertainty framing |
-| 4 | `thumb_phase4_robust.png` | `mobile__MobileInsightLead__robust.png` | Badge „Stabil“ + stronger quality meter |
+| Phase | Thumb file                        | Crop source                                | What the thumb must show                               |
+| ----- | --------------------------------- | ------------------------------------------ | ------------------------------------------------------ |
+| 1     | `thumb_phase1_collecting.png`     | `mobile__InsightsPage__collecting.png`     | Empty foundation state / “noch keine Erkenntniskarten” |
+| 2     | `thumb_phase2_early_patterns.png` | `mobile__InsightsPage__early_patterns.png` | Early hint card + badge „Erster Hinweis“               |
+| 3     | `thumb_phase3_provisional.png`    | `mobile__InsightsPage__provisional.png`    | Provisional badge + uncertainty framing                |
+| 4     | `thumb_phase4_robust.png`         | `mobile__MobileInsightLead__robust.png`    | Badge „Stabil“ + stronger quality meter                |
 
 **Thumb processing rules**
 
@@ -163,20 +163,20 @@ Regen recipe (same as phase matrix screenshots): Dev Mode + `dev_force_viz` + ph
 
 ### Thumb gallery
 
-| P1 | P2 | P3 | P4 |
-| -- | -- | -- | -- |
+| P1                                                                                           | P2                                                                                               | P3                                                                                            | P4                                                                                       |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | ![P1](../assets/phase_matrix/screenshots/onboarding_expectation/thumb_phase1_collecting.png) | ![P2](../assets/phase_matrix/screenshots/onboarding_expectation/thumb_phase2_early_patterns.png) | ![P3](../assets/phase_matrix/screenshots/onboarding_expectation/thumb_phase3_provisional.png) | ![P4](../assets/phase_matrix/screenshots/onboarding_expectation/thumb_phase4_robust.png) |
 
 ---
 
 ## 8. Relationship to existing surfaces
 
-| Surface | Role after this concept ships |
-| ------- | ----------------------------- |
-| **This expectation card** | One-time expectation setting right after first entry |
+| Surface                                                                                                       | Role after this concept ships                                              |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **This expectation card**                                                                                     | One-time expectation setting right after first entry                       |
 | [`InsightJourneyExplainer.svelte`](../../apps/web/src/lib/components/insights/InsightJourneyExplainer.svelte) | Anytime reference (“?” on Insights); keep aligned copy; no thumbs required |
-| Phase milestone cards | Celebrate **on** phase transition — do not replace this intro |
-| [`insight_previews.json`](../../apps/web/src/lib/data/insight_previews.json) | Legacy topic teasers (sleep/sport) — **do not** reuse for phase education |
+| Phase milestone cards                                                                                         | Celebrate **on** phase transition — do not replace this intro              |
+| [`insight_previews.json`](../../apps/web/src/lib/data/insight_previews.json)                                  | Legacy topic teasers (sleep/sport) — **do not** reuse for phase education  |
 
 Suggested future i18n namespace (implementation PR): `onboarding.maturity_intro.*` for shell + per-phase strings, reusing `maturity.{phase}.label` where identical.
 

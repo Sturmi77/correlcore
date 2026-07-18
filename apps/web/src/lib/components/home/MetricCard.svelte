@@ -1,10 +1,6 @@
 <script context="module" lang="ts">
   export type MetricCardMetric =
-    | 'mood_score'
-    | 'energy'
-    | 'stress'
-    | 'tracking_consistency'
-    | 'count';
+    'mood_score' | 'energy' | 'stress' | 'tracking_consistency' | 'count';
 </script>
 
 <script lang="ts">

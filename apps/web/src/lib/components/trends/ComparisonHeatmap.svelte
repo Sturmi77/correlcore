@@ -95,34 +95,28 @@
     dates.length > 0 ? dates : startDate && endDate ? buildIsoDateRange(startDate, endDate) : [];
   $: rawRows = [
     ...(showTags
-      ? (tagHeatmap?.tags ?? []).map(
-          (tag): Row => ({
-            id: tag.tag_id,
-            label: tag.name,
-            kind: 'tag',
-            days: tag.days,
-          })
-        )
+      ? (tagHeatmap?.tags ?? []).map((tag): Row => ({
+          id: tag.tag_id,
+          label: tag.name,
+          kind: 'tag',
+          days: tag.days,
+        }))
       : []),
     ...(showSymptoms
-      ? (symptomHeatmap?.symptoms ?? []).map(
-          (symptom): Row => ({
-            id: symptom.symptom_id,
-            label: symptom.name,
-            kind: 'symptom',
-            days: symptom.days,
-          })
-        )
+      ? (symptomHeatmap?.symptoms ?? []).map((symptom): Row => ({
+          id: symptom.symptom_id,
+          label: symptom.name,
+          kind: 'symptom',
+          days: symptom.days,
+        }))
       : []),
     ...(showWorkContexts
-      ? (workContextHeatmap?.contexts ?? []).map(
-          (context): Row => ({
-            id: `work_context:${context.context}`,
-            label: $_(`entry.work_context.${context.context}`),
-            kind: 'work_context',
-            days: context.days,
-          })
-        )
+      ? (workContextHeatmap?.contexts ?? []).map((context): Row => ({
+          id: `work_context:${context.context}`,
+          label: $_(`entry.work_context.${context.context}`),
+          kind: 'work_context',
+          days: context.days,
+        }))
       : []),
   ];
 
