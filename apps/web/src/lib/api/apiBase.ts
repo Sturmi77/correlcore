@@ -14,9 +14,9 @@ const RUNTIME_STORAGE_KEY = 'correlcore.apiBase';
 /** Keep Glance widget API base in sync (dynamic import avoids cycles). */
 function syncWidgetApiBase(): void {
   if (!isCapacitorBuild()) return;
-  void import('./sessionTokens').then(({ getAccessToken }) =>
+  void import('./sessionTokens').then(({ getAccessToken, getRefreshToken }) =>
     import('./widgetCredentials').then(({ remirrorWidgetApiBase }) =>
-      remirrorWidgetApiBase(getAccessToken())
+      remirrorWidgetApiBase(getAccessToken(), getRefreshToken())
     )
   );
 }

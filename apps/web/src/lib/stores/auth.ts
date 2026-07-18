@@ -78,13 +78,15 @@ export async function login(payload: LoginPayload): Promise<UserResponse> {
 
 export async function logout(): Promise<void> {
   await drainOfflineSyncForSessionChange();
+  // Unregister FCM while the session is still authenticated — apiLogout()
+  // clears Bearer tokens in finally, which would 401 DELETE /devices/push-token.
+  await disablePushNotifications();
   try {
     await apiLogout();
   } catch {
     // Best-effort — even if the call fails, clear local state.
     clearSessionTokens();
   }
-  await disablePushNotifications();
   await clearOfflineDataForLogout();
   resetInsightStore();
   resetEntrySheetStore();

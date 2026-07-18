@@ -7,10 +7,14 @@ import android.content.Context
  *
  * Written by [WidgetCredentialsPlugin] when the Capacitor WebView logs in;
  * cleared on logout. Not used by the browser cookie auth path.
+ *
+ * Stores access + refresh so [WidgetRefreshWorker] can rotate after the
+ * ~15 minute access JWT TTL (ADR-0006 M11 widget exception).
  */
 object WidgetCredentialsStore {
     private const val PREFS = "correlcore_widget"
     private const val KEY_ACCESS_TOKEN = "access_token"
+    private const val KEY_REFRESH_TOKEN = "refresh_token"
     private const val KEY_API_BASE = "api_base"
     private const val KEY_HAS_ENTRY = "cache_has_entry"
     private const val KEY_MOOD_AVG = "cache_mood_avg_7d"
@@ -25,6 +29,7 @@ object WidgetCredentialsStore {
 
     data class Credentials(
         val accessToken: String,
+        val refreshToken: String,
         val apiBase: String,
     )
 
@@ -39,10 +44,16 @@ object WidgetCredentialsStore {
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun setCredentials(context: Context, accessToken: String, apiBase: String) {
+    fun setCredentials(
+        context: Context,
+        accessToken: String,
+        refreshToken: String,
+        apiBase: String,
+    ) {
         prefs(context)
             .edit()
             .putString(KEY_ACCESS_TOKEN, accessToken)
+            .putString(KEY_REFRESH_TOKEN, refreshToken)
             .putString(KEY_API_BASE, apiBase.trimEnd('/'))
             .apply()
     }
@@ -51,6 +62,7 @@ object WidgetCredentialsStore {
         prefs(context)
             .edit()
             .remove(KEY_ACCESS_TOKEN)
+            .remove(KEY_REFRESH_TOKEN)
             .remove(KEY_API_BASE)
             .putString(KEY_STATUS, STATUS_SIGNED_OUT)
             .apply()
@@ -58,9 +70,10 @@ object WidgetCredentialsStore {
 
     fun getCredentials(context: Context): Credentials? {
         val p = prefs(context)
-        val token = p.getString(KEY_ACCESS_TOKEN, null)?.takeIf { it.isNotBlank() } ?: return null
+        val access = p.getString(KEY_ACCESS_TOKEN, null)?.takeIf { it.isNotBlank() } ?: return null
+        val refresh = p.getString(KEY_REFRESH_TOKEN, null)?.takeIf { it.isNotBlank() } ?: return null
         val base = p.getString(KEY_API_BASE, null)?.takeIf { it.isNotBlank() } ?: return null
-        return Credentials(accessToken = token, apiBase = base)
+        return Credentials(accessToken = access, refreshToken = refresh, apiBase = base)
     }
 
     fun saveSummary(

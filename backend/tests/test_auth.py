@@ -346,6 +346,66 @@ async def test_refresh_success(async_client: AsyncClient, user: User) -> None:
 
 
 @pytest.mark.asyncio
+async def test_refresh_body_opt_in_returns_tokens(async_client: AsyncClient, user: User) -> None:
+    """Capacitor / body refresh + include_access_token may emit JWTs in JSON."""
+    with patch(
+        "app.api.v1.endpoints.auth.refresh_tokens",
+        new_callable=AsyncMock,
+        return_value=(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN, user),
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/refresh?include_access_token=true",
+            json={"refresh_token": VALID_REFRESH_TOKEN},
+        )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["access_token"] == NEW_ACCESS_TOKEN
+    assert body["refresh_token"] == NEW_REFRESH_TOKEN
+
+
+@pytest.mark.asyncio
+async def test_refresh_cookie_opt_in_omits_body_tokens(
+    async_client: AsyncClient, user: User
+) -> None:
+    """Cookie-sourced refresh must never put JWTs in the body (HttpOnly isolation)."""
+    with patch(
+        "app.api.v1.endpoints.auth.refresh_tokens",
+        new_callable=AsyncMock,
+        return_value=(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN, user),
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/refresh?include_access_token=true",
+            cookies={"refresh_token": VALID_REFRESH_TOKEN},
+        )
+    assert r.status_code == 200
+    body = r.json()
+    assert body.get("access_token") in (None, "")
+    assert body.get("refresh_token") in (None, "")
+    assert "access_token" in r.cookies
+
+
+@pytest.mark.asyncio
+async def test_refresh_cookie_wins_over_body_omits_tokens(
+    async_client: AsyncClient, user: User
+) -> None:
+    """When both cookie and body are present, cookie wins → no body tokens."""
+    with patch(
+        "app.api.v1.endpoints.auth.refresh_tokens",
+        new_callable=AsyncMock,
+        return_value=(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN, user),
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/refresh?include_access_token=true",
+            json={"refresh_token": "body-should-be-ignored"},
+            cookies={"refresh_token": VALID_REFRESH_TOKEN},
+        )
+    assert r.status_code == 200
+    body = r.json()
+    assert body.get("access_token") in (None, "")
+    assert body.get("refresh_token") in (None, "")
+
+
+@pytest.mark.asyncio
 async def test_refresh_replay_returns_401(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.endpoints.auth.refresh_tokens",

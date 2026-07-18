@@ -88,9 +88,23 @@ def _wants_access_token_in_body(request: Request) -> bool:
     return raw in {"1", "true", "yes"}
 
 
-def _token_response(request: Request, *, access: str, refresh: str, user: User) -> TokenResponse:
-    """Build TokenResponse; include JWT pair only when client opts in."""
-    include = _wants_access_token_in_body(request)
+def _token_response(
+    request: Request,
+    *,
+    access: str,
+    refresh: str,
+    user: User,
+    allow_body_tokens: bool | None = None,
+) -> TokenResponse:
+    """Build TokenResponse; include JWT pair only when client opts in.
+
+    ``allow_body_tokens`` defaults to the ``include_access_token`` query flag.
+    Cookie-sourced refresh must pass ``False`` so HttpOnly refresh cannot be
+    exfiltrated into a JS-readable body (Capacitor uses body refresh instead).
+    """
+    include = (
+        _wants_access_token_in_body(request) if allow_body_tokens is None else allow_body_tokens
+    )
     return TokenResponse(
         access_token=access if include else None,
         refresh_token=refresh if include else None,
@@ -345,13 +359,16 @@ async def refresh(
     db: AsyncSession = Depends(get_session),
     redis: aioredis.Redis = Depends(get_redis),
 ) -> TokenResponse:
-    # Prefer HttpOnly cookie, fall back to body (API clients)
-    token = request.cookies.get(REFRESH_COOKIE_NAME) or body.refresh_token
+    # Prefer HttpOnly cookie, fall back to body (API clients / Capacitor).
+    cookie_token = request.cookies.get(REFRESH_COOKIE_NAME)
+    body_token = body.refresh_token
+    token = cookie_token or body_token
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token missing",
         )
+    used_cookie = cookie_token is not None
     token_store = TokenStore(redis)
     try:
         access, new_refresh, user = await refresh_tokens(db, token_store, token)
@@ -359,7 +376,16 @@ async def refresh(
         clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     set_auth_cookies(response, access, new_refresh)
-    return _token_response(request, access=access, refresh=new_refresh, user=user)
+    # Never emit JWTs in the JSON body when refresh came from the HttpOnly
+    # cookie — even if ?include_access_token=true (XSS / same-origin script).
+    allow_body = _wants_access_token_in_body(request) and not used_cookie
+    return _token_response(
+        request,
+        access=access,
+        refresh=new_refresh,
+        user=user,
+        allow_body_tokens=allow_body,
+    )
 
 
 # ---------------------------------------------------------------------------
