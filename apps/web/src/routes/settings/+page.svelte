@@ -15,6 +15,7 @@
   import Button from '$lib/components/common/Button.svelte';
   import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
   import IconButton from '$lib/components/common/IconButton.svelte';
+  import { BRAND_MARK_SM } from '$lib/constants/iconSizes';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import SegmentedControl, {
@@ -672,7 +673,7 @@
       data-testid="version-string"
       on:click={handleVersionTap}
     >
-      <CorrelCoreLogo size={18} title="" />
+      <CorrelCoreLogo size={BRAND_MARK_SM} title="" />
       <span>{$_('app.name')} v{$_('app.version')}</span>
     </p>
   </footer>

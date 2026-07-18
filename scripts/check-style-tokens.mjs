@@ -19,7 +19,8 @@ const LOCAL_VAR_EXACT = new Set([
   '--tag-count',
 ]);
 
-const ICON_SIZE_EXEMPT = /CorrelCoreLogo[^>]*size=\{(40|72)\}/;
+// Brand-mark sizes must use BRAND_MARK_* constants from iconSizes.ts — no
+// numeric size={} literals on CorrelCoreLogo (legacy 40/72 exempt removed).
 const TOKEN_EXEMPT = /token-exempt:/;
 
 const failures = [];
@@ -123,17 +124,10 @@ for (const file of findSvelteFiles(sourceRoot)) {
   const content = fs.readFileSync(file, 'utf8');
   const relative = path.relative(repoRoot, file);
 
-  if (ICON_SIZE_EXEMPT.test(content) && /size=\{[0-9]+\}/.test(content)) {
-    const badIconSizes = [...content.matchAll(/size=\{([0-9]+)\}/g)].filter(
-      (match) => !['40', '72'].includes(match[1])
+  for (const match of content.matchAll(/size=\{([0-9]+)\}/g)) {
+    failures.push(
+      `Icon size literal size={${match[1]}} in ${relative} — use ICON_SIZE_SM/MD or BRAND_MARK_*`
     );
-    for (const match of badIconSizes) {
-      failures.push(`Icon size literal size={${match[1]}} in ${relative} — use ICON_SIZE_SM/MD`);
-    }
-  } else {
-    for (const match of content.matchAll(/size=\{([0-9]+)\}/g)) {
-      failures.push(`Icon size literal size={${match[1]}} in ${relative} — use ICON_SIZE_SM/MD`);
-    }
   }
 
   for (const match of content.matchAll(/var\((--[a-z0-9-]+)\)/g)) {

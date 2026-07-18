@@ -2,6 +2,7 @@
   import { _ } from 'svelte-i18n';
   import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import { BRAND_MARK_LG } from '$lib/constants/iconSizes';
 </script>
 
 <!--
@@ -14,7 +15,7 @@
 <div class="auth-shell">
   <header class="auth-header">
     <a href="/" class="auth-brand" aria-label={$_('app.name')}>
-      <CorrelCoreLogo size={36} title="" />
+      <CorrelCoreLogo size={BRAND_MARK_LG} title="" />
       <span class="auth-brand-text">{$_('app.name')}</span>
     </a>
 
