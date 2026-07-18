@@ -87,23 +87,24 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 - `onboarding_retro_completed` preference is set
 - User is not redirected back to onboarding on subsequent Home visits
 - User can log first entry from Home
+- After the first successful entry, user sees the maturity expectation card (phases 1–4) once — see [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md) (concept; implementation follow-up)
 
-**Entry routes:** `/` → redirect → `/onboarding` → `/`
+**Entry routes:** `/` with auto-open first `EntrySheet` when `entry_count === 0` AND `!onboarding_retro_completed`. `/onboarding` redirects to `/` (wizard remains at `/onboarding?preview=1`).
 
-**Primary flow (ADR-0030):** 3-step guided wizard at `/onboarding`:
+**Primary flow (ADR-0030 amendment):** Tags live in the first `EntrySheet` on Home:
 
-1. Intro (skip or continue)
-2. Tag suggestions + custom tags
-3. Summary → `POST /onboarding/complete` → Home
+1. Home opens `EntrySheet` with `OnboardingTagSuggestions`
+2. First autosave → `POST /onboarding/complete`
+3. One-time **maturity expectation card** (phases 1–4) → dismiss → normal Home
 
-**Legacy routes (still reachable, bypassed by primary flow):**
+**Legacy routes (still in repo; server redirects to `/onboarding` → `/`):**
 
 - `/onboarding/retro` — 7-day mood backfill
 - `/onboarding/profile` — optional profile questionnaire
 
-**Trigger:** Home redirects when `entry_count === 0` AND `!onboarding_retro_completed` (`+page.svelte`).
+**Trigger:** Home auto-opens entry sheet when `entry_count === 0` AND `!onboarding_retro_completed` (`+page.svelte`).
 
-**Surface:** Mobile-first (no AppNav during onboarding).
+**Surface:** Mobile-first.
 
 **Dev preview:** `/onboarding?preview=1` (Settings → Developer iframe).
 
@@ -163,13 +164,14 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 
 **Success criteria:**
 
-- User sees maturity phase explanation
+- User has already seen the one-time onboarding maturity expectation card (W2), or can open `InsightJourneyExplainer`
+- User sees maturity phase explanation on Insights / Home journey UI
 - Phase-appropriate empty state or first insight card is visible
 - User understands next milestone (entries until next phase)
 
 **Entry routes:** `/` (Daily Brief), `/insights` (full feed)
 
-**Maturity phases** ([ADR-0021](../adr/0021-insight-maturity-phases.md)):
+**Maturity phases** ([ADR-0021](../adr/0021-insight-maturity-phases.md); onboarding card concept: [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md)):
 
 | Phase            | Entries | User-visible change                 |
 | ---------------- | ------- | ----------------------------------- |
