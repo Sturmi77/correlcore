@@ -359,16 +359,27 @@ async def refresh(
     db: AsyncSession = Depends(get_session),
     redis: aioredis.Redis = Depends(get_redis),
 ) -> TokenResponse:
-    # Prefer HttpOnly cookie, fall back to body (API clients / Capacitor).
+    # Cookie vs body selection:
+    # - Browser: cookie only, no include_access_token → cookie path, no body JWTs.
+    # - Capacitor: body refresh_token + ?include_access_token=true → body path,
+    #   return JWTs in JSON even if a leftover HttpOnly cookie is also present
+    #   (credentials:omit should omit cookies, but Android WebViews have been
+    #   observed sending them anyway; cookie-wins previously cleared Bearer
+    #   tokens client-side after a 200 with an empty body).
     cookie_token = request.cookies.get(REFRESH_COOKIE_NAME)
     body_token = body.refresh_token
-    token = cookie_token or body_token
+    wants_body = _wants_access_token_in_body(request)
+    if wants_body and body_token:
+        token = body_token
+        used_cookie = False
+    else:
+        token = cookie_token or body_token
+        used_cookie = cookie_token is not None
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token missing",
         )
-    used_cookie = cookie_token is not None
     token_store = TokenStore(redis)
     try:
         access, new_refresh, user = await refresh_tokens(db, token_store, token)
@@ -378,7 +389,7 @@ async def refresh(
     set_auth_cookies(response, access, new_refresh)
     # Never emit JWTs in the JSON body when refresh came from the HttpOnly
     # cookie — even if ?include_access_token=true (XSS / same-origin script).
-    allow_body = _wants_access_token_in_body(request) and not used_cookie
+    allow_body = wants_body and not used_cookie
     return _token_response(
         request,
         access=access,

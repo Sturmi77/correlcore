@@ -91,6 +91,7 @@
     stress_avg: true,
   };
   let loading = false;
+  let trendsLoaded = false;
   let error = '';
   let historyOpen = false;
   let historyDate = '';
@@ -164,15 +165,21 @@
         activeRange,
         activeTab === 'habits' ? habitWindow : undefined
       );
+      // Soft-fail the symptom heatmap: a single 401/5xx must not blank the
+      // whole Compare tab (Promise.all would reject on the first failure).
+      const symptomPromise =
+        activeTab === 'compare'
+          ? fetchSymptomHeatmap({ start_date, end_date })
+          : Promise.resolve(symptomHeatmap);
       const [
-        nextTimeseries,
-        nextHeatmap,
-        nextSymptomHeatmap,
-        nextStreak,
-        nextEntries,
-        nextHabitStats,
-        nextTags,
-      ] = await Promise.all([
+        timeseriesResult,
+        heatmapResult,
+        symptomResult,
+        streakResult,
+        entriesResult,
+        habitResult,
+        tagsResult,
+      ] = await Promise.allSettled([
         fetchTimeseries(activeRange),
         fetchTagHeatmap({
           start_date,
@@ -181,28 +188,46 @@
             ? { category: selectedCategory }
             : {}),
         }),
-        activeTab === 'compare'
-          ? fetchSymptomHeatmap({ start_date, end_date })
-          : Promise.resolve(symptomHeatmap),
+        symptomPromise,
         fetchEntryStreak(),
         listEntries({ start_date, end_date, limit: 365 }),
         activeTab === 'habits' ? listHabits(habitWindow) : Promise.resolve({ habits: habitStats }),
         activeTab === 'habits' ? listVisibleTags() : Promise.resolve(habitTags),
       ]);
-      timeseries = nextTimeseries;
-      heatmap = nextHeatmap;
-      symptomHeatmap = nextSymptomHeatmap;
-      streak = nextStreak;
-      habitStats = nextHabitStats.habits;
-      allTags = nextTags;
-      habitTags = nextTags.filter((tag) => tag.habit_type !== 'none');
-      cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
-      trendEntries = nextEntries;
-      workContextHeatmap = buildWorkContextHeatmap(nextEntries, { start_date, end_date });
+
+      const coreFailed = [timeseriesResult, heatmapResult, streakResult, entriesResult].find(
+        (result) => result.status === 'rejected'
+      );
+      if (coreFailed && coreFailed.status === 'rejected') {
+        const reason = coreFailed.reason;
+        throw reason instanceof Error ? reason : new Error($_('error.generic'));
+      }
+
+      if (timeseriesResult.status === 'fulfilled') timeseries = timeseriesResult.value;
+      if (heatmapResult.status === 'fulfilled') heatmap = heatmapResult.value;
+      // Symptom rows are optional context — keep Compare usable if this call fails.
+      symptomHeatmap = symptomResult.status === 'fulfilled' ? symptomResult.value : null;
+      if (streakResult.status === 'fulfilled') streak = streakResult.value;
+      if (entriesResult.status === 'fulfilled') {
+        const nextEntries = entriesResult.value;
+        cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
+        trendEntries = nextEntries;
+        workContextHeatmap = buildWorkContextHeatmap(nextEntries, { start_date, end_date });
+      }
+      if (habitResult.status === 'fulfilled') habitStats = habitResult.value.habits;
+      else if (activeTab === 'habits') {
+        const habitErr = habitResult.reason;
+        error = habitErr instanceof Error ? habitErr.message : $_('error.generic');
+      }
+      if (tagsResult.status === 'fulfilled') {
+        allTags = tagsResult.value;
+        habitTags = tagsResult.value.filter((tag) => tag.habit_type !== 'none');
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
     } finally {
       loading = false;
+      trendsLoaded = true;
     }
   }
 
@@ -300,6 +325,10 @@
     }
   }
 
+  // Hydrate may finish after onMount — mirror Insights and load once auth is ready.
+  $: if ($auth.status === 'authenticated' && !trendsLoaded && !loading) {
+    void loadTrends();
+  }
   $: if (
     $auth.status === 'authenticated' &&
     timeseries &&
@@ -346,7 +375,7 @@
     };
     updateCompactTrends();
     mobileMedia?.addEventListener('change', updateCompactTrends);
-    void loadTrends();
+    // loadTrends runs via the auth-reactive block above (avoids racing hydrate).
     void loadInsights();
     return () => mobileMedia?.removeEventListener('change', updateCompactTrends);
   });

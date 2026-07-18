@@ -791,6 +791,65 @@ def test_entry_static_clock_indirection_can_be_patched(monkeypatch: pytest.Monke
     assert entry_service._today() == date(2026, 1, 15)
 
 
+# ---------------------------------------------------------------------------
+# Stats — symptom heatmap (Trends Compare)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_symptom_heatmap_200(async_client: AsyncClient, user: User) -> None:
+    from app.schemas.stats import SymptomHeatmapResponse
+
+    async def override() -> User:
+        return user
+
+    payload = SymptomHeatmapResponse(
+        start_date=date(2026, 1, 1),
+        end_date=date(2026, 1, 31),
+        symptoms=[],
+    )
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.entries.get_symptom_heatmap",
+            new_callable=AsyncMock,
+            return_value=payload,
+        ) as mocked:
+            r = await async_client.get(
+                "/api/v1/entries/stats/symptoms?start_date=2026-01-01&end_date=2026-01-31",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert r.status_code == 200
+    assert r.json() == {
+        "start_date": "2026-01-01",
+        "end_date": "2026-01-31",
+        "symptoms": [],
+    }
+    mocked.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_symptom_heatmap_unauthenticated(async_client: AsyncClient) -> None:
+    """Unauthenticated stats/symptoms must hit the stats handler (401), not
+    ``/{entry_id}/symptoms`` (which used to Match.FULL for path ``stats``)."""
+    with patch(
+        "app.api.v1.endpoints.entries.get_symptom_heatmap",
+        new_callable=AsyncMock,
+    ) as mocked_heatmap:
+        with patch(
+            "app.api.v1.endpoints.symptoms.list_symptoms_for_entry",
+            new_callable=AsyncMock,
+        ) as mocked_entry:
+            r = await async_client.get("/api/v1/entries/stats/symptoms")
+    assert r.status_code == 401
+    assert r.json()["detail"] == "Could not validate credentials"
+    mocked_heatmap.assert_not_awaited()
+    mocked_entry.assert_not_awaited()
+
+
 # Reference imports kept for static analysis: these are used implicitly
 # via mocks in the tests above and we want unused-import linting to stay
 # silent on them when the module is imported by the runner.

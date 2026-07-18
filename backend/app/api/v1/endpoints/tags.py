@@ -179,7 +179,9 @@ async def delete_tag_endpoint(
 
 
 @entry_tags_router.get(
-    "/{entry_id}/tags",
+    # `:uuid` keeps `/entries/stats/tags` from matching this route (same
+    # FastAPI auth-before-UUID footgun as entry symptoms — see symptoms.py).
+    "/{entry_id:uuid}/tags",
     response_model=list[TagResponse],
     summary="List tags assigned to an entry",
 )
@@ -201,7 +203,7 @@ async def list_entry_tags_endpoint(
 
 
 @entry_tags_router.put(
-    "/{entry_id}/tags",
+    "/{entry_id:uuid}/tags",
     response_model=list[TagResponse],
     summary="Replace the tag set for an entry",
 )

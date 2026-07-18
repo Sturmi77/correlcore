@@ -30,7 +30,7 @@ admin_note_signals_router = APIRouter()
 
 
 @entry_note_signals_router.get(
-    "/{entry_id}/note-signals",
+    "/{entry_id:uuid}/note-signals",
     response_model=list[EntryNoteSignalResponse],
     summary="List extracted note signals for an entry",
 )
@@ -53,7 +53,7 @@ async def list_entry_note_signals_endpoint(
 
 
 @admin_note_signals_router.post(
-    "/entries/{entry_id}/note-signals/reprocess",
+    "/entries/{entry_id:uuid}/note-signals/reprocess",
     response_model=list[EntryNoteSignalResponse],
     summary="Re-run note signal extraction for one entry (admin)",
 )

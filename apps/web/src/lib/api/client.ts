@@ -84,9 +84,11 @@ function buildAuthInit(headers: Headers, rest: RequestInit = {}): RequestInit {
     const access = getAccessToken();
     if (access) headers.set('Authorization', `Bearer ${access}`);
   }
+  // credentials/headers must win over `rest` — callers must not accidentally
+  // re-enable cookie credentials on the Capacitor Bearer path.
   return {
-    credentials: bearer ? 'omit' : 'include',
     ...rest,
+    credentials: bearer ? 'omit' : 'include',
     headers,
   };
 }

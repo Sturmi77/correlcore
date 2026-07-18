@@ -177,7 +177,11 @@ async def delete_symptom_endpoint(
 
 
 @entry_symptoms_router.get(
-    "/{entry_id}/symptoms",
+    # `:uuid` keeps `/entries/stats/symptoms` from matching this route.
+    # Without the converter Starlette treats both as Match.FULL and FastAPI
+    # runs auth *before* UUID validation — unauthenticated stats calls then
+    # surface as 401 "Could not validate credentials" from the wrong handler.
+    "/{entry_id:uuid}/symptoms",
     response_model=list[EntrySymptomResponse],
     summary="List symptoms logged on an entry",
 )
@@ -199,7 +203,7 @@ async def list_entry_symptoms_endpoint(
 
 
 @entry_symptoms_router.put(
-    "/{entry_id}/symptoms",
+    "/{entry_id:uuid}/symptoms",
     response_model=list[EntrySymptomResponse],
     summary="Replace the symptom set for an entry",
 )

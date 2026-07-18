@@ -26,7 +26,7 @@ entry_note_markers_router = APIRouter()
 
 
 @entry_note_markers_router.post(
-    "/{entry_id}/note-markers",
+    "/{entry_id:uuid}/note-markers",
     response_model=EntryNoteMarkerResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Add a note marker to an entry",
@@ -61,7 +61,7 @@ async def create_note_marker_endpoint(
 
 
 @entry_note_markers_router.delete(
-    "/{entry_id}/note-markers/{marker_id}",
+    "/{entry_id:uuid}/note-markers/{marker_id:uuid}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove a note marker from an entry",
 )
