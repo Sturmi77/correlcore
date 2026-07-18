@@ -1,12 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
-  <rect width="512" height="512" rx="112" fill="#7c6af5"></rect>
-  <rect x="96" y="96" width="96" height="96" rx="20" fill="#fff" opacity=".9"></rect>
-  <rect x="208" y="96" width="96" height="96" rx="20" fill="#fff" opacity=".7"></rect>
-  <rect x="320" y="96" width="96" height="96" rx="20" fill="#fff" opacity=".5"></rect>
-  <rect x="96" y="208" width="96" height="96" rx="20" fill="#fff" opacity=".7"></rect>
-  <rect x="208" y="208" width="96" height="96" rx="20" fill="#fff" opacity=".5"></rect>
-  <rect x="320" y="208" width="96" height="96" rx="20" fill="#fff" opacity=".3"></rect>
-  <rect x="96" y="320" width="96" height="96" rx="20" fill="#fff" opacity=".5"></rect>
-  <rect x="208" y="320" width="96" height="96" rx="20" fill="#fff" opacity=".3"></rect>
-  <rect x="320" y="320" width="96" height="96" rx="20" fill="#fff"></rect>
+  <!-- Maskable / PWA icon: dark plate + brand mark (matches correlcore-app-icon). -->
+  <rect width="512" height="512" rx="112" fill="#171614" />
+  <g transform="translate(80 80) scale(9.7778)">
+    <rect x="0" y="0" width="10" height="10" rx="2" fill="#1f2a44" />
+    <rect x="13" y="0" width="10" height="10" rx="2" fill="#2e3f6f" />
+    <rect x="26" y="0" width="10" height="10" rx="2" fill="#415aa3" />
+    <rect x="0" y="13" width="10" height="10" rx="2" fill="#2e3f6f" />
+    <rect x="13" y="13" width="10" height="10" rx="2" fill="#415aa3" />
+    <rect x="26" y="13" width="10" height="10" rx="2" fill="#6279d6" />
+    <rect x="0" y="26" width="10" height="10" rx="2" fill="#415aa3" />
+    <rect x="13" y="26" width="10" height="10" rx="2" fill="#6279d6" />
+    <rect x="26" y="26" width="10" height="10" rx="2" fill="#9587ff" />
+  </g>
 </svg>

@@ -10,6 +10,7 @@
   import { syncDevModeFromStorage, devPhase } from '$lib/stores/devMode';
   import { ensureStandaloneLaunchRoute } from '$lib/utils/pwaLaunch';
   import AppNav from '$lib/components/common/AppNav.svelte';
+  import CorrelCoreSplash from '$lib/components/common/CorrelCoreSplash.svelte';
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import GlobalEntrySheet from '$lib/components/entries/GlobalEntrySheet.svelte';
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
@@ -95,21 +96,16 @@
 <div class="h-dvh flex flex-col">
   {#if $isLoading}
     <!--
-      svelte-i18n locale dictionary is still loading. Render a silent
-      splash so children that use `$_(...)` do not mount before init.
+      svelte-i18n locale dictionary is still loading. Keep the brand splash
+      so children that use `$_(...)` do not mount before init.
     -->
-    <div class="auth-splash" aria-busy="true" aria-live="polite">
-      <span class="sr-only">...</span>
-    </div>
+    <CorrelCoreSplash />
   {:else if $auth.status === 'loading' && !isPublicRoute(pathname)}
     <!--
       Auth is still hydrating and the route is protected.
-      Render an unobtrusive splash so we don't briefly show protected
-      content before the redirect kicks in.
+      Brand splash avoids a flash of protected content before redirect.
     -->
-    <div class="auth-splash" aria-busy="true" aria-live="polite">
-      <span class="sr-only">{$_('a11y.loading')}</span>
-    </div>
+    <CorrelCoreSplash label={$_('a11y.loading')} />
   {:else if showAppNav}
     <div class="app-frame app-frame--with-nav">
       <a class="skip-link" href="#main-content">{$_('a11y.skip_to_content')}</a>
@@ -134,12 +130,3 @@
     </main>
   {/if}
 </div>
-
-<style>
-  .auth-splash {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-</style>

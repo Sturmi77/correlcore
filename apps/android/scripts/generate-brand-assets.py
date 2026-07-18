@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Generate launcher icons + splash PNGs from the CorrelCore brand palette.
+"""Generate launcher icons + splash PNGs from Claude Design brand assets.
 
-Uses the same 3×3 grid motif as apps/web/static/icons/icon.svg.
-Run from repo: python3 apps/android/scripts/generate-brand-assets.py
+Sources (web static, after Logo PR):
+  - apps/web/static/icons/correlcore-app-icon.png        (rounded 144²)
+  - apps/web/static/icons/correlcore-icon-dark-bg.png    (512² plate)
+  - apps/web/static/icons/correlcore-logo-mark-dark.svg  (mark colors)
+
+Run: pnpm --filter @correlcore/android assets:brand
+  or: python3 apps/android/scripts/generate-brand-assets.py
 """
 
 from __future__ import annotations
@@ -11,15 +16,17 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-BRAND = (0x7C, 0x6A, 0xF5, 255)
-WHITE = (255, 255, 255, 255)
+REPO = Path(__file__).resolve().parents[3]
+WEB_ICONS = REPO / "apps" / "web" / "static" / "icons"
 RES = Path(__file__).resolve().parents[1] / "android" / "app" / "src" / "main" / "res"
 
-# Opacity steps matching icon.svg (0.9 … 1.0 on the last cell)
-CELL_OPACITY = [
-    [0.9, 0.7, 0.5],
-    [0.7, 0.5, 0.3],
-    [0.5, 0.3, 1.0],
+# Dark app chrome — matches default theme --color-bg and Capacitor SplashScreen.
+SPLASH_BG = (0x17, 0x16, 0x14, 255)
+# Dark-theme logo-mark fills (correlcore-logo-mark-dark.svg + primary accent).
+MARK_FILLS = [
+    [(0x1F, 0x2A, 0x44, 255), (0x2E, 0x3F, 0x6F, 255), (0x41, 0x5A, 0xA3, 255)],
+    [(0x2E, 0x3F, 0x6F, 255), (0x41, 0x5A, 0xA3, 255), (0x62, 0x79, 0xD6, 255)],
+    [(0x41, 0x5A, 0xA3, 255), (0x62, 0x79, 0xD6, 255), (0x95, 0x87, 0xFF, 255)],
 ]
 
 MIPMAP_SIZES = {
@@ -53,65 +60,78 @@ SPLASH_SIZES = {
 }
 
 
-def draw_grid_icon(size: int, *, rounded: bool) -> Image.Image:
+def load_rgba(path: Path) -> Image.Image:
+    if not path.is_file():
+        raise FileNotFoundError(f"Brand source missing: {path}")
+    return Image.open(path).convert("RGBA")
+
+
+def resize_cover(img: Image.Image, size: int) -> Image.Image:
+    return img.resize((size, size), Image.Resampling.LANCZOS)
+
+
+def circular_mask(img: Image.Image) -> Image.Image:
+    size = img.size[0]
+    mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.paste(img, mask=mask)
+    return out
+
+
+def draw_mark(size: int) -> Image.Image:
+    """Transparent 3×3 brand mark at the given pixel size (viewBox 36)."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    # Background rounded square
-    radius = int(size * 112 / 512)
-    draw.rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=BRAND)
-
-    cell = size * 96 / 512
-    gap_origin = size * 96 / 512
-    step = size * 112 / 512
-    corner = max(1, int(size * 20 / 512))
-
+    scale = size / 36
+    cell = 10 * scale
+    step = 13 * scale
+    radius = max(1, int(2 * scale))
     for row in range(3):
         for col in range(3):
-            x0 = gap_origin + col * step
-            y0 = gap_origin + row * step
-            alpha = int(255 * CELL_OPACITY[row][col])
-            fill = (255, 255, 255, alpha)
+            x0 = col * step
+            y0 = row * step
             draw.rounded_rectangle(
-                (x0, y0, x0 + cell, y0 + cell),
-                radius=corner,
-                fill=fill,
+                (x0, y0, x0 + cell - 1, y0 + cell - 1),
+                radius=radius,
+                fill=MARK_FILLS[row][col],
             )
-
-    if rounded:
-        # Soft circular mask for round launcher
-        mask = Image.new("L", (size, size), 0)
-        ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
-        out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-        out.paste(img, mask=mask)
-        return out
     return img
 
 
 def draw_adaptive_foreground(size: int) -> Image.Image:
     """Foreground layer for adaptive icons (safe zone ~66% center)."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    # Place grid in the safe zone
     inset = int(size * 0.18)
     inner = size - 2 * inset
-    grid = draw_grid_icon(inner, rounded=False)
-    # Strip background — keep only white cells on transparent
-    pixels = grid.load()
-    for y in range(inner):
-        for x in range(inner):
-            r, g, b, a = pixels[x, y]
-            if (r, g, b) == BRAND[:3]:
-                pixels[x, y] = (0, 0, 0, 0)
-    img.paste(grid, (inset, inset), grid)
+    mark = draw_mark(inner)
+    img.paste(mark, (inset, inset), mark)
+    return img
+
+
+def draw_splash(width: int, height: int, mark_source: Image.Image) -> Image.Image:
+    img = Image.new("RGBA", (width, height), SPLASH_BG)
+    mark_size = max(64, int(min(width, height) * 0.22))
+    mark = resize_cover(mark_source, mark_size)
+    x = (width - mark_size) // 2
+    y = (height - mark_size) // 2
+    img.paste(mark, (x, y), mark)
     return img
 
 
 def main() -> None:
+    app_icon = load_rgba(WEB_ICONS / "correlcore-app-icon.png")
+    plate = load_rgba(WEB_ICONS / "correlcore-icon-dark-bg.png")
+    # Prefer the transparent mark for splash center; fall back to plate crop.
+    splash_mark = draw_mark(256)
+
     for folder, size in MIPMAP_SIZES.items():
         out_dir = RES / folder
         out_dir.mkdir(parents=True, exist_ok=True)
-        draw_grid_icon(size, rounded=False).save(out_dir / "ic_launcher.png")
-        draw_grid_icon(size, rounded=True).save(out_dir / "ic_launcher_round.png")
+        # Legacy launcher: rounded app icon from Claude Design export.
+        launcher = resize_cover(app_icon, size)
+        launcher.save(out_dir / "ic_launcher.png")
+        circular_mask(resize_cover(plate, size)).save(out_dir / "ic_launcher_round.png")
 
     for folder, size in FOREGROUND_SIZES.items():
         out_dir = RES / folder
@@ -121,9 +141,10 @@ def main() -> None:
     for folder, (w, h) in SPLASH_SIZES.items():
         out_dir = RES / folder
         out_dir.mkdir(parents=True, exist_ok=True)
-        Image.new("RGBA", (w, h), BRAND).save(out_dir / "splash.png")
+        draw_splash(w, h, splash_mark).save(out_dir / "splash.png")
 
     print(f"Wrote brand assets under {RES}")
+    print(f"Sources: {WEB_ICONS}")
 
 
 if __name__ == "__main__":
