@@ -88,9 +88,7 @@ def _wants_access_token_in_body(request: Request) -> bool:
     return raw in {"1", "true", "yes"}
 
 
-def _token_response(
-    request: Request, *, access: str, refresh: str, user: User
-) -> TokenResponse:
+def _token_response(request: Request, *, access: str, refresh: str, user: User) -> TokenResponse:
     """Build TokenResponse; include JWT pair only when client opts in."""
     include = _wants_access_token_in_body(request)
     return TokenResponse(
@@ -361,9 +359,7 @@ async def refresh(
         clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     set_auth_cookies(response, access, new_refresh)
-    return _token_response(
-        request, access=access, refresh=new_refresh, user=user
-    )
+    return _token_response(request, access=access, refresh=new_refresh, user=user)
 
 
 # ---------------------------------------------------------------------------
