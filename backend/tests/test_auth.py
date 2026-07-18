@@ -385,9 +385,7 @@ async def test_refresh_cookie_opt_in_omits_body_tokens(
 
 
 @pytest.mark.asyncio
-async def test_refresh_body_opt_in_wins_over_cookie(
-    async_client: AsyncClient, user: User
-) -> None:
+async def test_refresh_body_opt_in_wins_over_cookie(async_client: AsyncClient, user: User) -> None:
     """Capacitor: body + include_access_token beats a leftover cookie."""
     with patch(
         "app.api.v1.endpoints.auth.refresh_tokens",
