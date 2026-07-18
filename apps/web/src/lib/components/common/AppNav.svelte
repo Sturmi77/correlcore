@@ -5,6 +5,7 @@
   import House from 'lucide-svelte/icons/house';
   import Lightbulb from 'lucide-svelte/icons/lightbulb';
   import Settings from 'lucide-svelte/icons/settings';
+  import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
   import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { isNavItemActive, NAV_ITEMS, type NavItemConfig } from '$lib/navigation/appNav';
 
@@ -19,6 +20,10 @@
 </script>
 
 <nav class="app-nav" aria-label={$_('nav.aria_label')}>
+  <!-- Desktop rail brand only (hidden on mobile bottom bar via CSS). -->
+  <a href="/" class="app-nav__brand" aria-label={$_('app.name')} data-testid="app-nav-brand">
+    <CorrelCoreLogo size={24} title="" />
+  </a>
   <ul class="app-nav__list">
     {#each NAV_ITEMS as item (item.href)}
       {@const active = isNavItemActive(pathname, item.href, item.match)}

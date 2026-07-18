@@ -11,6 +11,8 @@ const layoutSource = readFileSync(resolve('src/routes/+layout.svelte'), 'utf8');
 const authLayoutSource = readFileSync(resolve('src/routes/auth/+layout.svelte'), 'utf8');
 const settingsSource = readFileSync(resolve('src/routes/settings/+page.svelte'), 'utf8');
 const homeSource = readFileSync(resolve('src/routes/+page.svelte'), 'utf8');
+const appNavSource = readFileSync(resolve('src/lib/components/common/AppNav.svelte'), 'utf8');
+const appCssSource = readFileSync(resolve('src/app.css'), 'utf8');
 const manifestSource = readFileSync(resolve('static/manifest.webmanifest'), 'utf8');
 
 describe('Claude Design brand mark wiring', () => {
@@ -42,6 +44,13 @@ describe('Claude Design brand mark wiring', () => {
     expect(settingsSource).toContain('CorrelCoreLogo');
     expect(settingsSource).toContain('settings__version');
     expect(homeSource).not.toContain('CorrelCoreLogo');
+  });
+
+  it('anchors a desktop-only brand mark in the AppNav rail', () => {
+    expect(appNavSource).toContain('CorrelCoreLogo');
+    expect(appNavSource).toContain('app-nav__brand');
+    expect(appCssSource).toContain('.app-nav__brand');
+    expect(appCssSource).toMatch(/\.app-nav__brand\s*\{\s*display:\s*none;/);
   });
 
   it('points the web manifest at the new PNG/SVG icons', () => {

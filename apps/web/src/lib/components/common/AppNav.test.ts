@@ -16,6 +16,8 @@ describe('AppNav', () => {
     render(AppNav);
 
     expect(screen.getByRole('navigation', { name: 'nav.aria_label' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'app.name' }).getAttribute('href')).toBe('/');
+    expect(screen.getByTestId('app-nav-brand')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'nav.home' }).getAttribute('href')).toBe('/');
     expect(screen.getByRole('link', { name: 'nav.insights' }).getAttribute('href')).toBe(
       '/insights'
