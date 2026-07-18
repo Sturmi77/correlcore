@@ -1,16 +1,24 @@
-name: Release — Android (Capacitor)
+name: Release - Android (Capacitor)
+
+# Debug APK: PRs / main (path-filtered).
+# Signed APK/AAB: every v* tag (no path filter) + manual workflow_dispatch.
+# IMPORTANT: path filters must NOT apply to tags — otherwise a release tag that
+# only bumps docs never builds/attaches the APK (404 on Download links).
 
 on:
   workflow_dispatch:
+    inputs:
+      attach_to_tag:
+        description: 'Optional existing release tag to attach APK to (e.g. v1.0.1). Leave empty to only upload Actions artifacts.'
+        required: false
+        type: string
+        default: ''
+  # No path filters on push: YAML cannot combine "tags always" with
+  # "branches + paths" in one mapping. Path filters previously skipped tag
+  # builds when the tagged commit did not touch apps/android → 404 APK links.
   push:
-    branches: [main]
     tags: ['v*']
-    paths:
-      - 'apps/android/**'
-      - 'apps/web/**'
-      - 'pnpm-lock.yaml'
-      - 'package.json'
-      - '.github/workflows/release-android.yml'
+    branches: [main]
   pull_request:
     paths:
       - 'apps/android/**'
@@ -56,8 +64,10 @@ jobs:
     name: Assemble debug APK
     runs-on: ubuntu-latest
     needs: validate-capacitor-scaffold
-    # Skip duplicate debug build on version tags (signed release job covers tags).
-    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+    # Skip on version tags and on manual "attach to tag" dispatches (signed job covers those).
+    if: >
+      github.event_name != 'workflow_dispatch'
+      && !startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v7
 
@@ -109,14 +119,34 @@ jobs:
     name: Assemble signed release APK/AAB
     runs-on: ubuntu-latest
     needs: validate-capacitor-scaffold
-    # Signed builds: version tags, or manual dispatch when keystore secrets exist.
+    # Tags + manual dispatch. Secrets are checked inside the job (not in `if`) —
+    # using secrets in job-level `if` has caused this workflow to fail to start.
     if: >
-      (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
-      && secrets.ANDROID_KEYSTORE_BASE64 != ''
+      startsWith(github.ref, 'refs/tags/v')
+      || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
+
+      - name: Require signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!v}" ]]; then
+              echo "::error::Missing repository secret: ${v}"
+              missing=1
+            fi
+          done
+          if [[ "${missing}" -ne 0 ]]; then
+            echo "Add ANDROID_* secrets under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -152,10 +182,17 @@ jobs:
         id: ver
         shell: bash
         run: |
+          ATTACH_TAG="${{ github.event.inputs.attach_to_tag }}"
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             TAG="${GITHUB_REF_NAME}"
+          elif [[ -n "${ATTACH_TAG}" ]]; then
+            TAG="${ATTACH_TAG}"
+          else
+            TAG=""
+          fi
+
+          if [[ -n "${TAG}" ]]; then
             VERSION="${TAG#v}"
-            # versionCode: major*1_000_000 + minor*1_000 + patch (semver x.y.z only)
             if [[ "${VERSION}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([-.].*)?$ ]]; then
               MAJOR="${BASH_REMATCH[1]}"
               MINOR="${BASH_REMATCH[2]}"
@@ -164,9 +201,11 @@ jobs:
             else
               CODE="${GITHUB_RUN_NUMBER}"
             fi
+            echo "tag=${TAG}" >>"$GITHUB_OUTPUT"
             echo "version_name=${VERSION}" >>"$GITHUB_OUTPUT"
             echo "version_code=${CODE}" >>"$GITHUB_OUTPUT"
           else
+            echo "tag=" >>"$GITHUB_OUTPUT"
             echo "version_name=1.0.0-android.${GITHUB_RUN_NUMBER}" >>"$GITHUB_OUTPUT"
             echo "version_code=${GITHUB_RUN_NUMBER}" >>"$GITHUB_OUTPUT"
           fi
@@ -227,25 +266,24 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Attach to GitHub Release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach to GitHub Release
+        if: steps.ver.outputs.tag != ''
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ steps.ver.outputs.tag }}
           files: |
             ${{ steps.pkg.outputs.apk }}
             ${{ steps.pkg.outputs.aab }}
             ${{ steps.pkg.outputs.dir }}/SHA256SUMS.txt
           fail_on_unmatched_files: true
 
-      # Put tappable APK/AAB links at the very top of the release notes (mobile UX).
-      # Idempotent — also repairs the body if github-release.yml raced this job.
       - name: Prepend Android download links at top of release notes
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: steps.ver.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           chmod +x scripts/github-release-android-downloads.sh
           scripts/github-release-android-downloads.sh \
-            "${GITHUB_REF_NAME}" \
+            "${{ steps.ver.outputs.tag }}" \
             "${{ steps.ver.outputs.version_name }}"
