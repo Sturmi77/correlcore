@@ -75,12 +75,15 @@ async function performRefresh(): Promise<boolean> {
     });
     const bearer = usesBearerAuth();
     const body = bearer ? JSON.stringify({ refresh_token: getRefreshToken() }) : '{}';
-    const res = await fetch(`${getApiBase()}/auth/refresh${bearer ? '?include_access_token=true' : ''}`, {
-      method: 'POST',
-      credentials: bearer ? 'omit' : 'include',
-      headers,
-      body,
-    });
+    const res = await fetch(
+      `${getApiBase()}/auth/refresh${bearer ? '?include_access_token=true' : ''}`,
+      {
+        method: 'POST',
+        credentials: bearer ? 'omit' : 'include',
+        headers,
+        body,
+      }
+    );
     if (!res.ok) {
       if (bearer) clearSessionTokens();
       return false;

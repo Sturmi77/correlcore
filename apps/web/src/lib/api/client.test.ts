@@ -182,7 +182,7 @@ describe('apiFetch — Capacitor Bearer path', () => {
           token_type: 'bearer',
           expires_in: 900,
           user: { id: 'u1', email: 'a@b.de', display_name: null, is_verified: true },
-        }),
+        })
       )
       .mockResolvedValueOnce(jsonResponse({ data: 'ok' }));
 

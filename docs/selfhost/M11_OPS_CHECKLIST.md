@@ -4,7 +4,7 @@ Last updated: 2026-07-18
 
 Operator / maintainer work that is **outside the app code sprints**, but required
 before or after M11 exit (Play Closed Testing). Engineering sprints 1–2 land
-the signed-build *path*; this checklist is the remaining **ops** work.
+the signed-build _path_; this checklist is the remaining **ops** work.
 
 Related:
 
@@ -14,11 +14,11 @@ Related:
 
 ## Why signing secrets stay required
 
-| Phase                         | Need upload/release keystore? | Why                                                                 |
-| ----------------------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Local / CI **debug** APK      | No                            | Debug key is ephemeral; fine for developers only                    |
-| Sideload / GitHub Releases    | **Yes**                       | Same key for every update; otherwise install fails / new app id     |
-| Play Internal / Closed / Prod | **Yes**                       | CI uploads AAB with your **upload key** (Play App Signing)          |
+| Phase                         | Need upload/release keystore? | Why                                                                  |
+| ----------------------------- | ----------------------------- | -------------------------------------------------------------------- |
+| Local / CI **debug** APK      | No                            | Debug key is ephemeral; fine for developers only                     |
+| Sideload / GitHub Releases    | **Yes**                       | Same key for every update; otherwise install fails / new app id      |
+| Play Internal / Closed / Prod | **Yes**                       | CI uploads AAB with your **upload key** (Play App Signing)           |
 | After Play is live            | **Yes**                       | Secrets still drive CI; also keep GitHub APK channel for selfhosters |
 
 You can postpone creating secrets until the first public tester APK — but use

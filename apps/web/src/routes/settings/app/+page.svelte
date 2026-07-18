@@ -6,10 +6,7 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import {
-    getConfiguredApiBaseForDisplay,
-    setRuntimeApiBase,
-  } from '$lib/api/apiBase';
+  import { getConfiguredApiBaseForDisplay, setRuntimeApiBase } from '$lib/api/apiBase';
   import { isCapacitorBuild } from '$lib/api/platform';
   import { currentUser } from '$lib/stores/auth';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
