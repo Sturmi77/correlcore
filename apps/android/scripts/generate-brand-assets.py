@@ -99,13 +99,37 @@ def draw_mark(size: int) -> Image.Image:
     return img
 
 
+# Adaptive-icon safe zone is the center ~66%. OEM masks (Samsung One UI,
+# circles) crop harder than the material minimum — keep the mark smaller so
+# it does not look oversized / clipped on devices like Galaxy S25.
+ADAPTIVE_MARK_INSET = 0.32  # mark ≈ 36% of the 108dp canvas (Samsung-safe)
+LEGACY_MARK_RATIO = 0.48  # mark size vs plate for legacy mipmap icons
+
+
 def draw_adaptive_foreground(size: int) -> Image.Image:
-    """Foreground layer for adaptive icons (safe zone ~66% center)."""
+    """Foreground layer for adaptive icons (mark inside OEM-safe center)."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    inset = int(size * 0.18)
-    inner = size - 2 * inset
+    inset = int(size * ADAPTIVE_MARK_INSET)
+    inner = max(1, size - 2 * inset)
     mark = draw_mark(inner)
     img.paste(mark, (inset, inset), mark)
+    return img
+
+
+def draw_legacy_launcher(size: int, *, rounded: bool) -> Image.Image:
+    """Legacy mipmap icon: dark plate + padded mark (not full-bleed export)."""
+    img = Image.new("RGBA", (size, size), SPLASH_BG)
+    draw = ImageDraw.Draw(img)
+    radius = int(size * 112 / 512)
+    draw.rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=SPLASH_BG)
+
+    mark_size = max(8, int(size * LEGACY_MARK_RATIO))
+    mark = draw_mark(mark_size)
+    origin = (size - mark_size) // 2
+    img.paste(mark, (origin, origin), mark)
+
+    if rounded:
+        return circular_mask(img)
     return img
 
 
@@ -120,18 +144,16 @@ def draw_splash(width: int, height: int, mark_source: Image.Image) -> Image.Imag
 
 
 def main() -> None:
-    app_icon = load_rgba(WEB_ICONS / "correlcore-app-icon.png")
-    plate = load_rgba(WEB_ICONS / "correlcore-icon-dark-bg.png")
-    # Prefer the transparent mark for splash center; fall back to plate crop.
+    # Keep source check so CI/docs still point at the Claude Design exports.
+    _ = load_rgba(WEB_ICONS / "correlcore-app-icon.png")
+    _ = load_rgba(WEB_ICONS / "correlcore-icon-dark-bg.png")
     splash_mark = draw_mark(256)
 
     for folder, size in MIPMAP_SIZES.items():
         out_dir = RES / folder
         out_dir.mkdir(parents=True, exist_ok=True)
-        # Legacy launcher: rounded app icon from Claude Design export.
-        launcher = resize_cover(app_icon, size)
-        launcher.save(out_dir / "ic_launcher.png")
-        circular_mask(resize_cover(plate, size)).save(out_dir / "ic_launcher_round.png")
+        draw_legacy_launcher(size, rounded=False).save(out_dir / "ic_launcher.png")
+        draw_legacy_launcher(size, rounded=True).save(out_dir / "ic_launcher_round.png")
 
     for folder, size in FOREGROUND_SIZES.items():
         out_dir = RES / folder
@@ -144,6 +166,10 @@ def main() -> None:
         draw_splash(w, h, splash_mark).save(out_dir / "splash.png")
 
     print(f"Wrote brand assets under {RES}")
+    print(
+        f"Adaptive mark inset={ADAPTIVE_MARK_INSET:.0%}, "
+        f"legacy mark ratio={LEGACY_MARK_RATIO:.0%}"
+    )
     print(f"Sources: {WEB_ICONS}")
 
 

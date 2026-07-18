@@ -133,11 +133,10 @@ Selfhost testers can also set the API base **before sign-in** on Login/Register
 („API server“), or later under **Settings → App & offline** (runtime override,
 localStorage — not a secret). Sign in again after changing servers.
 
-Also add the Capacitor WebView origin to API CORS:
-
-```bash
-CORS_ORIGINS=https://your-web-origin,https://localhost
-```
+The API always allows the Capacitor WebView origin `https://localhost`
+(see `settings.cors_allow_origins`). Still list your browser/PWA web origin
+in `CORS_ORIGINS`. Selfhost HTTP API bases (`http://…/api/v1`) are permitted
+by the sideload APK (`usesCleartextTraffic` / Capacitor `cleartext`).
 
 **Push / FCM:** GitHub Release APKs typically ship **without** `google-services.json`,
 so Firebase push stays off. That is intentional for Obtainium / future F-Droid.

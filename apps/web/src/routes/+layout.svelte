@@ -19,6 +19,9 @@
   import { cleanupDevServiceWorker, registerProdServiceWorker } from '$lib/utils/serviceWorker';
   import { get } from 'svelte/store';
 
+  /** Covers CorrelCoreSplash tile+word animation (~780ms). */
+  const SPLASH_MIN_MS = 850;
+
   // svelte-i18n's `init()` registers the locale dictionary asynchronously
   // (locale files are dynamic imports). We must NOT render any child that
   // calls `$_(...)` before the dictionary is loaded — otherwise the very
@@ -31,11 +34,29 @@
   $: pathname = $page.url.pathname;
   $: showAppNav = shouldShowAppNav($auth.status, pathname);
 
+  // Brand splash: stay up until max(real boot done, min animation duration).
+  // Starts false so the first paint always shows the mark; flips true after
+  // SPLASH_MIN_MS (or immediately when prefers-reduced-motion).
+  let splashMinElapsed = false;
+
+  $: realBootBlocking = $isLoading || ($auth.status === 'loading' && !isPublicRoute(pathname));
+  $: showBrandSplash = realBootBlocking || !splashMinElapsed;
+
   // Re-sync theme store with persisted value + hydrate auth on mount.
   // The inline bootstrap in app.html already sets data-theme before first
   // paint to avoid a flash of wrong theme; here we mirror it into the store
   // so reactive consumers (toggle button, etc.) start in the correct state.
   onMount(() => {
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const splashTimer = setTimeout(
+      () => {
+        splashMinElapsed = true;
+      },
+      reduceMotion ? 0 : SPLASH_MIN_MS
+    );
+
     void cleanupDevServiceWorker();
     void registerProdServiceWorker();
     syncDevModeFromStorage();
@@ -64,7 +85,10 @@
       theme.set(saved);
     }
     void hydrate().then(() => scheduleSync());
-    return cleanupSync;
+    return () => {
+      clearTimeout(splashTimer);
+      cleanupSync();
+    };
   });
 
   // Reactive guard: any time auth or route changes, redirect if needed.
@@ -86,7 +110,7 @@
 </svelte:head>
 
 <!--
-  Outer shell: h-dvh + flex-col so auth-splash can fill the viewport.
+  Outer shell: h-dvh + flex-col so brand splash can fill the viewport.
   Inner <main> uses .page-shell (defined in app.css) which handles:
     - Safe-Area padding via env(safe-area-inset-*)
     - max-width centering (--content-max-width: 480px)
@@ -94,18 +118,12 @@
   Auth/loading states bypass page-shell intentionally (full-viewport splash).
 -->
 <div class="h-dvh flex flex-col">
-  {#if $isLoading}
+  {#if showBrandSplash}
     <!--
-      svelte-i18n locale dictionary is still loading. Keep the brand splash
-      so children that use `$_(...)` do not mount before init.
+      Brand splash while i18n/auth boot OR until the minimum animation window
+      elapses (so the mark is not a one-frame flash on fast loads).
     -->
-    <CorrelCoreSplash />
-  {:else if $auth.status === 'loading' && !isPublicRoute(pathname)}
-    <!--
-      Auth is still hydrating and the route is protected.
-      Brand splash avoids a flash of protected content before redirect.
-    -->
-    <CorrelCoreSplash label={$_('a11y.loading')} />
+    <CorrelCoreSplash label={$isLoading ? '' : $_('a11y.loading')} />
   {:else if showAppNav}
     <div class="app-frame app-frame--with-nav">
       <a class="skip-link" href="#main-content">{$_('a11y.skip_to_content')}</a>

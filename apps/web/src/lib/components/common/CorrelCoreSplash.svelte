@@ -1,7 +1,7 @@
 <script lang="ts">
   // One-shot brand-load animation shown while the app boots (i18n dict load /
-  // auth hydrate). Purely CSS-driven — no timers, no artificial delay: it is
-  // on screen only as long as the real loading state it replaces.
+  // auth hydrate). CSS-driven tiles/wordmark; +layout keeps this mounted for
+  // at least SPLASH_MIN_MS so the animation is visible on fast boots.
   export let label = '';
 
   const TILES = [

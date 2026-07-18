@@ -92,6 +92,21 @@ class Settings(BaseSettings):
         "http://localhost:3000",
     ]
 
+    # Capacitor Android WebView origin (`androidScheme: 'https'` → https://localhost).
+    # Always merged into the effective allowlist so sideload/selfhost APKs can
+    # call the API without every .env remembering this origin (M11).
+    CAPACITOR_CORS_ORIGINS: tuple[str, ...] = ("https://localhost",)
+
+    @property
+    def cors_allow_origins(self) -> list[str]:
+        """CORS_ORIGINS plus required Capacitor WebView origins (deduped)."""
+        seen: list[str] = []
+        for origin in [*self.CORS_ORIGINS, *self.CAPACITOR_CORS_ORIGINS]:
+            cleaned = origin.strip()
+            if cleaned and cleaned not in seen:
+                seen.append(cleaned)
+        return seen
+
     # SMTP (for email verification — Issue #39)
     # In dev: MailPit catches all mail at smtp://mailpit:1025 (UI on :8025)
     # In prod: configure a real SMTP relay

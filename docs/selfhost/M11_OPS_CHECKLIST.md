@@ -43,8 +43,9 @@ beta channel.
 - [ ] Capacitor build sets absolute API URL for testers
       (`VITE_API_BASE_URL` at `build:capacitor` time; Login/Register „API server“
       field or Settings → App runtime override as fallback)
-- [ ] API `CORS_ORIGINS` includes the Capacitor WebView origin
-      (`https://localhost` with `androidScheme: https` in capacitor.config.ts)
+- [ ] API reachable from the phone (Tailscale/LAN); Capacitor WebView origin
+      `https://localhost` is auto-allowed by the API (`cors_allow_origins`)
+- [ ] Sideload APK allows cleartext for `http://…/api/v1` selfhost bases
 
 ## Checklist B — During M11 engineering (no secrets required)
 

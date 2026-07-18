@@ -35,6 +35,14 @@ if (!configText.includes('../web/build-capacitor')) {
 if (!configText.includes("appId: 'de.correlcore.app'")) {
   throw new Error("appId must be 'de.correlcore.app'");
 }
+if (!configText.includes('cleartext: true')) {
+  throw new Error('capacitor.config.ts must allow cleartext for selfhost http:// API URLs');
+}
+if (!configText.includes("adjustMarginsForEdgeToEdge: 'disable'")) {
+  throw new Error(
+    'capacitor.config.ts must disable edge-to-edge margins (CSS safe-area owns status-bar inset)'
+  );
+}
 
 const manifest = await readFile(resolve(root, 'android/app/src/main/AndroidManifest.xml'), 'utf8');
 if (!manifest.includes('android:scheme="correlcore"')) {
@@ -42,6 +50,9 @@ if (!manifest.includes('android:scheme="correlcore"')) {
 }
 if (!manifest.includes('android:pathPrefix="/new"')) {
   throw new Error('AndroidManifest must deep-link correlcore://entries/new');
+}
+if (!manifest.includes('android:usesCleartextTraffic="true"')) {
+  throw new Error('AndroidManifest must set usesCleartextTraffic for selfhost HTTP APIs');
 }
 
 const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));

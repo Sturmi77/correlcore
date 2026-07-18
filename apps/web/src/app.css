@@ -69,7 +69,9 @@
 
   /* -------------------------------------------------------------------------
    * Layout-Tokens (Fix 1: Safe-Area + page-shell)
+   * Top inset matters on Android Capacitor (status bar / edge-to-edge).
    * ------------------------------------------------------------------------- */
+  --page-padding-top: max(var(--space-3), env(safe-area-inset-top, 0px));
   --page-padding-x: max(var(--space-4), env(safe-area-inset-left));
   --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
   --page-padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
@@ -388,6 +390,7 @@ button {
   width: 100%;
   max-width: var(--content-max-width);
   margin-inline: auto;
+  padding-top: var(--page-padding-top);
   padding-inline: var(--page-padding-x);
   padding-inline-end: var(--page-padding-x-right);
   padding-bottom: var(--page-padding-bottom);

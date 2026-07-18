@@ -15,10 +15,16 @@ const config: CapacitorConfig = {
   android: {
     path: 'android',
     allowMixedContent: false,
+    // Status-bar inset is handled in web CSS (`--page-padding-top` /
+    // `safe-area-inset-top`). Keep Capacitor margins disabled to avoid
+    // double padding on Android 15 edge-to-edge.
+    adjustMarginsForEdgeToEdge: 'disable',
   },
   server: {
     // url: 'http://localhost:5173',
-    // cleartext: true,
+    // Selfhost often uses http://tailnet-ip:port/api/v1 — allow cleartext
+    // from the https://localhost WebView (sideload / Obtainium path).
+    cleartext: true,
     androidScheme: 'https',
   },
   plugins: {

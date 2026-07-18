@@ -18,6 +18,7 @@
  */
 
 import { ApiError, NetworkError } from '$lib/api/client';
+import { isCapacitorBuild } from '$lib/api/platform';
 
 /** Map of HTTP status code → i18n key. */
 export type ApiErrorMap = Record<number, string>;
@@ -27,6 +28,8 @@ export const GENERIC_ERROR_KEY = 'error.generic';
 
 /** Built-in keys for transport / infrastructure failures. */
 export const NETWORK_ERROR_KEY = 'error.network';
+/** Capacitor-specific: absolute API URL + reachability (CORS is auto-allowed). */
+export const NETWORK_ERROR_CAPACITOR_KEY = 'error.network_capacitor';
 export const UPSTREAM_ERROR_KEY = 'error.upstream';
 export const SERVER_ERROR_KEY = 'error.server';
 export const VALIDATION_ERROR_KEY = 'error.validation';
@@ -58,7 +61,7 @@ export function mapApiError(
     return builtInApiErrorKey(err.status) ?? fallback;
   }
   if (err instanceof NetworkError) {
-    return NETWORK_ERROR_KEY;
+    return isCapacitorBuild() ? NETWORK_ERROR_CAPACITOR_KEY : NETWORK_ERROR_KEY;
   }
   return fallback;
 }
