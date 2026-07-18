@@ -8,6 +8,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (M11 Sprint 5 — FCM registration)
+
+- Device push-token API: `PUT/DELETE /devices/push-token`, `GET /devices/push-tokens`,
+  `POST /devices/push-test` (neutral check-in copy); migration `030_device_tokens`.
+- Optional `firebase-admin` extra (`correlcore-backend[fcm]`) + `FCM_ENABLED` /
+  `FCM_CREDENTIALS_JSON` settings (off by default for selfhost).
+- Capacitor `@capacitor/push-notifications` wiring after login; sideload builds
+  without `google-services.json` omit FCM. Docs: [`docs/features/PUSH.md`](docs/features/PUSH.md).
+
 ### Added (M11 Sprint 4 — Widget API + Glance)
 
 - `GET /api/v1/widget/summary` — compact JWT summary (`has_entry`, `mood_avg_7d`,

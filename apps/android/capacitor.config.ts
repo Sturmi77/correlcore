@@ -27,6 +27,11 @@ const config: CapacitorConfig = {
       backgroundColor: '#7c6af5',
       showSpinner: false,
     },
+    // Present only when google-services.json is present (Play/SaaS builds).
+    // Sideload / F-Droid-bound APKs omit the file; registration no-ops.
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
   },
 };
 

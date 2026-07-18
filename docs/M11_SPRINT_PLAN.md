@@ -10,8 +10,9 @@ and [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md).
 testers **without Play Store first**, then enter Play **Internal / Closed
 Testing**. Exit criterion remains Play Closed Testing live (per design doc).
 
-**Status:** Sprints 1–3 **complete** in code (shell, signed sideload path, Bearer
-auth + API base). Ops for live GitHub Release / Play: [#429](https://github.com/Sturmi77/correlcore/issues/429),
+**Status:** Sprints 1–5 **complete** in code (shell, signed sideload, Bearer auth,
+widget, FCM registration). Ops for live GitHub Release / Firebase / Play:
+[#429](https://github.com/Sturmi77/correlcore/issues/429),
 [`docs/selfhost/M11_OPS_CHECKLIST.md`](selfhost/M11_OPS_CHECKLIST.md).
 
 ## Current baseline
@@ -29,7 +30,7 @@ auth + API base). Ops for live GitHub Release / Play: [#429](https://github.com/
 | Signed release APK/AAB in CI + sideload docs | Done            |
 | Bearer auth path for Capacitor (ADR-0006)    | Done            |
 | Glance homescreen widget                     | Done (Sprint 4) |
-| FCM / push in native shell                   | Open            |
+| FCM / push in native shell                   | Done (Sprint 5 code; Firebase ops open) |
 | Play Console listing + Data Safety           | Open            |
 
 ## Distribution decision (Step 0 — before Play)
@@ -184,19 +185,20 @@ Design doc: FCM for Play/SaaS users; UnifiedPush primary for selfhost (M4.2).
 
 ### Work
 
-- [ ] `@capacitor/push-notifications` + Firebase project (non-selfhost only).
-- [ ] Backend device-token registration endpoint (or extend existing push
-      stubs from M4.2 if present).
-- [ ] Neutral notification copy (“Time for your daily check-in.”) — no streak
-      pressure / no health claims.
-- [ ] Document that sideload GitHub builds may ship **without** FCM, or with
+- [x] `@capacitor/push-notifications` + optional Firebase (`google-services.json`
+      gitignored; example checked in).
+- [x] Backend device-token registration (`PUT/DELETE/GET /devices/push-token(s)`,
+      `POST /devices/push-test`) — greenfield (no M4.2 stubs existed).
+- [x] Neutral notification copy (“Time for your daily check-in.”) — no streak
+      pressure / no health claims (`push_copy.py` / `docs/features/PUSH.md`).
+- [x] Document that sideload GitHub builds may ship **without** FCM, or with
       FCM optional, so F-Droid-bound builds stay free of proprietary blobs
       later.
 
 ### Exit
 
-- Push received on a Google-Play-services test device for the SaaS/staging
-  backend.
+- [ ] Push received on a Google-Play-services test device for the SaaS/staging
+      backend (**ops:** Firebase project + `FCM_*` API secrets — see ops checklist).
 
 ---
 

@@ -50,10 +50,25 @@ These proceed without Play / without signing secrets:
 
 - [x] Sprint 1 — Capacitor shell + debug APK CI
 - [x] Sprint 2 — signed build path + sideload docs
-- [ ] Sprint 3 — Bearer auth + API base URL in WebView
+- [x] Sprint 3 — Bearer auth + API base URL in WebView (code); device smoke open
 - [x] Sprint 4 — Widget API + Glance (code); device QA still open — see `docs/features/WIDGET.md`
-- [ ] Sprint 5 — FCM (needs Firebase project — separate ops)
+- [x] Sprint 5 — FCM registration + test endpoint (code); Firebase project / live push open — see `docs/features/PUSH.md`
 - [ ] Sprint 6–7 — Play listing / Closed Testing / quality gate
+
+## Checklist B2 — Firebase / FCM (Sprint 5 exit)
+
+- [ ] Create Firebase project; add Android app `de.correlcore.app`
+- [ ] Download `google-services.json` → `apps/android/android/app/` (local/CI secret; not git)
+- [ ] Create service account with Firebase Cloud Messaging Admin; store JSON as
+      API secret `FCM_CREDENTIALS_JSON` (or mount + `GOOGLE_APPLICATION_CREDENTIALS`)
+- [ ] Deploy API with `FCM_ENABLED=true` and `uv sync --extra fcm` (or image that
+      includes `firebase-admin`)
+- [ ] Build Capacitor APK **with** `google-services.json` present, install on a
+      Play-services device, log in, accept notification permission
+- [ ] `POST /api/v1/devices/push-test` → notification with
+      “Time for your daily check-in.”
+- [ ] Confirm sideload/GitHub release workflow can still build **without** the
+      file (push disabled)
 
 ## Checklist C — Play Store (M11 exit / shortly after)
 

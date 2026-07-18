@@ -32,3 +32,6 @@ android/*/release/
 *.keystore
 keystore.properties
 android/keystore.properties
+
+# Firebase (Play/SaaS only — never commit real project files)
+android/app/google-services.json
