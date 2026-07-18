@@ -56,4 +56,16 @@ if (new Set(versions).size !== 1) {
   );
 }
 
+const pushVersion = pkg.dependencies?.['@capacitor/push-notifications'];
+if (!pushVersion) {
+  throw new Error('@capacitor/push-notifications must be listed in dependencies');
+}
+if (!String(pushVersion).startsWith('7.')) {
+  throw new Error(`@capacitor/push-notifications must be Capacitor 7.x (got ${pushVersion})`);
+}
+if (!manifest.includes('POST_NOTIFICATIONS')) {
+  throw new Error('AndroidManifest must declare POST_NOTIFICATIONS for FCM');
+}
+await access(resolve(root, 'android/app/google-services.json.example'));
+
 console.log('Capacitor Android shell config OK');

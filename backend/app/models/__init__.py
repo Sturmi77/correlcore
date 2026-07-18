@@ -5,6 +5,7 @@ Alembic's env.py does ``import app.models`` which triggers this file.
 """
 
 from app.models.consent_log import ConsentLog  # noqa: F401
+from app.models.device_token import DeviceToken, PushPlatform, PushProvider  # noqa: F401
 from app.models.email_verification_token import EmailVerificationToken  # noqa: F401
 from app.models.entry import Entry, EntrySlot, NoteVisibility, WorkContext  # noqa: F401
 from app.models.entry_note import EntryNoteMarker, EntryNoteSignal, NoteMarkerSource  # noqa: F401
@@ -43,7 +44,10 @@ __all__ = [
     "INTENSITY_MIN",
     "STANDARD_SYMPTOM_KEYS",
     "ConsentLog",
+    "DeviceToken",
     "EmailVerificationToken",
+    "PushPlatform",
+    "PushProvider",
     "Entry",
     "EntryNoteMarker",
     "EntryNoteSignal",

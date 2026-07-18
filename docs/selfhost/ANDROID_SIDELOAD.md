@@ -112,6 +112,10 @@ VITE_API_BASE_URL=https://your-host.example/api/v1 pnpm cap:sync
 Selfhost testers can also change the API base under **Settings → App & offline**
 (runtime override, localStorage — not a secret). Sign in again after changing servers.
 
+**Push / FCM:** GitHub Release APKs typically ship **without** `google-services.json`,
+so Firebase push stays off. That is intentional for Obtainium / future F-Droid.
+Play/SaaS builds can include FCM — see [`docs/features/PUSH.md`](../features/PUSH.md).
+
 ## Smoke checklist (sideload APK)
 
 | #   | Check                                             | Pass? |

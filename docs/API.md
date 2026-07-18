@@ -1068,6 +1068,48 @@ Rate-Limit: `120/minute` (wie Dashboard).
 
 ---
 
+## 7c. Devices / Push (M11 Sprint 5)
+
+Registrierung von Push-Tokens fuer FCM (Play/SaaS) und spaeter UnifiedPush
+(M4.2 / Selfhost). Authentifizierung wie ueblich. Der Roh-Token wird in
+Listen-Responses **nicht** zurueckgegeben.
+
+```
+PUT    /api/v1/devices/push-token
+DELETE /api/v1/devices/push-token
+GET    /api/v1/devices/push-tokens
+POST   /api/v1/devices/push-test
+```
+
+### `PUT /api/v1/devices/push-token`
+
+```json
+{
+  "token": "<fcm-or-unifiedpush-token>",
+  "provider": "fcm",
+  "platform": "android",
+  "device_label": "Pixel 8"
+}
+```
+
+`provider`: `fcm` | `unifiedpush`. `platform`: `android` | `ios` | `web`.
+Upsert anhand des Token-Strings (Token kann den Owner wechseln).
+
+### `POST /api/v1/devices/push-test`
+
+Sendet die neutrale Check-in-Reminder-Copy (`Time for your daily check-in.`)
+an alle FCM-Tokens des Users. Erfordert API-Config `FCM_ENABLED=true` plus
+Credentials (`FCM_CREDENTIALS_JSON` oder `GOOGLE_APPLICATION_CREDENTIALS`) und
+das Python-Extra `fcm` (`firebase-admin`).
+
+- `200` — `{ "sent": 1, "skipped": 0, "message": "Time for your daily check-in." }`
+- `404` — keine FCM-Tokens registriert
+- `503` — FCM auf dieser Instanz nicht konfiguriert (Selfhost-Default)
+
+Details: [`docs/features/PUSH.md`](features/PUSH.md).
+
+---
+
 ## 8. Visualisierungs-Stats (M2)
 
 Alle Endpunkte erfordern einen verifizierten User und liefern ausschliesslich

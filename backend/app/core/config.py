@@ -168,6 +168,14 @@ class Settings(BaseSettings):
     GLITCHTIP_ENVIRONMENT: str = ""
     GLITCHTIP_TRACES_SAMPLE_RATE: float = Field(default=0.0, ge=0.0, le=1.0)
 
+    # FCM (M11 Sprint 5) — SaaS / Play builds only. Selfhost leaves this off;
+    # UnifiedPush remains the M4.2 primary for privacy installs.
+    FCM_ENABLED: bool = False
+    # Inline service-account JSON (preferred in container secrets) OR path via
+    # GOOGLE_APPLICATION_CREDENTIALS. Requires optional extra: correlcore-backend[fcm].
+    FCM_CREDENTIALS_JSON: str = ""
+    GOOGLE_APPLICATION_CREDENTIALS: str = ""
+
     # Public base URL used to build the verify link in outgoing mails.
     # Frontend route handles the GET and calls the API.
     FRONTEND_BASE_URL: str = "http://localhost:5173"

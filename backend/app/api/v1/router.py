@@ -7,6 +7,7 @@ from app.api.v1.endpoints import (
     auth,
     dashboard,
     dev,
+    devices,
     entries,
     export,
     habits,
@@ -38,6 +39,9 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 # (DSGVO Art. 17 erasure). Future M2+: GET /user/me, PATCH /user/me,
 # data-export endpoints (Issue #25).
 api_router.include_router(user.router, prefix="/user", tags=["user"])
+
+# Device push tokens (M11 Sprint 5 — FCM; UnifiedPush provider reserved for M4.2)
+api_router.include_router(devices.router, prefix="/devices", tags=["devices"])
 
 # M2 convenience data exports (canonical DSGVO ZIP lives under /user/export)
 api_router.include_router(export.router, prefix="/export", tags=["export"])

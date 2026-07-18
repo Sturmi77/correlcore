@@ -21,6 +21,10 @@ import {
   type UserResponse,
 } from '$lib/api/auth';
 import { clearSessionTokens } from '$lib/api/sessionTokens';
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+} from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
 import { resetEntrySheetStore } from '$lib/stores/entrySheet';
 import {
@@ -53,6 +57,7 @@ export async function hydrate(): Promise<AuthState> {
     if (user) {
       await prepareOfflineDataForAuthenticatedUser(user.id);
       _auth.set({ status: 'authenticated', user });
+      void enablePushNotifications();
     } else {
       _auth.set({ status: 'anonymous' });
     }
@@ -70,6 +75,7 @@ export async function login(payload: LoginPayload): Promise<UserResponse> {
   resetInsightStore();
   resetEntrySheetStore();
   _auth.set({ status: 'authenticated', user: res.user });
+  void enablePushNotifications();
   return res.user;
 }
 
@@ -81,6 +87,7 @@ export async function logout(): Promise<void> {
     // Best-effort — even if the call fails, clear local state.
     clearSessionTokens();
   }
+  await disablePushNotifications();
   await clearOfflineDataForLogout();
   resetInsightStore();
   resetEntrySheetStore();
@@ -96,6 +103,7 @@ export async function setUser(user: UserResponse): Promise<void> {
   resetInsightStore();
   resetEntrySheetStore();
   _auth.set({ status: 'authenticated', user });
+  void enablePushNotifications();
 }
 
 /** Test-only: reset hydration state. */
