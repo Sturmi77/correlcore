@@ -29,9 +29,10 @@ describe('Claude Design brand mark wiring', () => {
     expect(splashSource).toContain('var(--color-heatmap-1)');
   });
 
-  it('gates i18n/auth loading behind CorrelCoreSplash', () => {
+  it('gates boot behind CorrelCoreSplash with a minimum display window', () => {
     expect(layoutSource).toContain('CorrelCoreSplash');
-    expect(layoutSource).toContain("label={$_('a11y.loading')}");
+    expect(layoutSource).toContain('showBrandSplash');
+    expect(layoutSource).toContain('SPLASH_MIN_MS');
     expect(layoutSource).not.toContain('class="auth-splash"');
   });
 

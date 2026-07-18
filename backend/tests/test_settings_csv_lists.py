@@ -71,6 +71,29 @@ class TestCorsOrigins:
             "http://localhost:3000",
         ]
 
+    def test_cors_allow_origins_always_includes_capacitor_webview(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com")
+        settings = _make_settings()
+        assert settings.CORS_ORIGINS == ["https://app.example.com"]
+        assert settings.cors_allow_origins == [
+            "https://app.example.com",
+            "https://localhost",
+        ]
+
+    def test_cors_allow_origins_dedupes_explicit_capacitor_origin(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv(
+            "CORS_ORIGINS", "https://app.example.com,https://localhost"
+        )
+        settings = _make_settings()
+        assert settings.cors_allow_origins == [
+            "https://app.example.com",
+            "https://localhost",
+        ]
+
 
 class TestEncryptionKeys:
     def test_csv_string_is_split_into_list(self, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -49,7 +49,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-4) var(--space-6);
+    padding: max(var(--space-4), env(safe-area-inset-top, 0px)) var(--space-6) var(--space-4);
   }
 
   .auth-brand {

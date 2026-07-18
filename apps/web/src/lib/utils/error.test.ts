@@ -4,23 +4,29 @@
  * The helper consolidates four near-identical mapError functions that
  * previously lived in the auth pages. Coverage targets:
  *   - status code in the map → returns the mapped i18n key
- *   - NetworkError → error.network
+ *   - NetworkError → error.network (browser) / error.network_capacitor
  *   - unmapped 502 / 5xx / 422 → built-in infrastructure keys
  *   - other unmapped statuses / plain errors → GENERIC_ERROR_KEY
  *   - custom fallback key is honoured
  */
 
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, NetworkError } from '$lib/api/client';
+import { isCapacitorBuild } from '$lib/api/platform';
 import {
   mapApiError,
   GENERIC_ERROR_KEY,
   NETWORK_ERROR_KEY,
+  NETWORK_ERROR_CAPACITOR_KEY,
   UPSTREAM_ERROR_KEY,
   SERVER_ERROR_KEY,
   VALIDATION_ERROR_KEY,
   type ApiErrorMap,
 } from './error';
+
+vi.mock('$lib/api/platform', () => ({
+  isCapacitorBuild: vi.fn(() => false),
+}));
 
 const MAP: ApiErrorMap = {
   401: 'auth.login.error_invalid',
@@ -29,6 +35,10 @@ const MAP: ApiErrorMap = {
 };
 
 describe('mapApiError', () => {
+  beforeEach(() => {
+    vi.mocked(isCapacitorBuild).mockReturnValue(false);
+  });
+
   it('returns the mapped key for a known ApiError status', () => {
     const err = new ApiError(401, 'Invalid credentials', '/auth/login');
     expect(mapApiError(err, MAP)).toBe('auth.login.error_invalid');
@@ -39,9 +49,15 @@ describe('mapApiError', () => {
     expect(mapApiError(err, MAP)).toBe('auth.login.error_rate_limit');
   });
 
-  it('maps NetworkError to NETWORK_ERROR_KEY', () => {
+  it('maps NetworkError to NETWORK_ERROR_KEY in browser builds', () => {
     const err = new NetworkError('/auth/login');
     expect(mapApiError(err, MAP)).toBe(NETWORK_ERROR_KEY);
+  });
+
+  it('maps NetworkError to NETWORK_ERROR_CAPACITOR_KEY in Capacitor builds', () => {
+    vi.mocked(isCapacitorBuild).mockReturnValue(true);
+    const err = new NetworkError('/auth/login');
+    expect(mapApiError(err, MAP)).toBe(NETWORK_ERROR_CAPACITOR_KEY);
   });
 
   it('maps unmapped 502 to UPSTREAM_ERROR_KEY', () => {
