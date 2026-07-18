@@ -19,9 +19,9 @@ Eine Entscheidung "ein Mechanismus für alle Phasen" ist nicht möglich, ohne en
 
 **Phase 1 (Web, M1–M10):** HttpOnly-Cookies (`SameSite=Strict`, `Secure` in Prod). Refresh-Token in `/auth/refresh` rotiert; Access-Cookie kurzlebig (15 min).
 
-**Phase 2 (Mobile, M11+):** Bearer-Token in einer In-Memory-Variable, ausgeliefert über das bereits existierende `TokenResponse.access_token`-Feld der Login-Endpoints. Kein `localStorage`, kein `sessionStorage`. Refresh läuft analog über `/auth/refresh`, aber mit explizitem `Authorization: Bearer …`.
+**Phase 2 (Mobile, M11+):** Bearer-Token in einer In-Memory-Variable, ausgeliefert über `TokenResponse.access_token` + `refresh_token` bei Opt-in `?include_access_token=true`. Kein `localStorage` / `sessionStorage` für Tokens. API-Requests senden `Authorization: Bearer <access>`. Refresh nutzt den bestehenden Body-Fallback `RefreshRequest.refresh_token` (nicht den Access-Header — Refresh-JWT ≠ Access-JWT) und rotiert das In-Memory-Paar.
 
-Der Wechsel ist isoliert in **`apiFetch` (`apps/web/src/lib/api/client.ts`)**: alle Auth-API-Module und alle Stores nutzen ausschließlich `apiFetch`. Der Capacitor-Build wird `apiFetch` durch eine zweite Implementierung mit identischer Signatur ersetzen (Build-Zeit-Switch via Vite-Env oder Sub-Path-Import). Keine UI-Komponente wird angefasst.
+Der Wechsel ist isoliert in **`apiFetch` / `sessionTokens` / `platform` (`apps/web/src/lib/api/`)**: Build-Flag `VITE_CAPACITOR=1`. Browser bleibt Cookie-Pfad. Keine Domain-Stores werden dupliziert.
 
 ## Begründung
 

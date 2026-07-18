@@ -6,6 +6,11 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import {
+    getConfiguredApiBaseForDisplay,
+    setRuntimeApiBase,
+  } from '$lib/api/apiBase';
+  import { isCapacitorBuild } from '$lib/api/platform';
   import { currentUser } from '$lib/stores/auth';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
@@ -13,11 +18,47 @@
   import { scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
 
   let offlineSyncToggle = false;
+  const showApiBase = isCapacitorBuild();
+  let apiBaseInput = '';
+  let apiBaseMessage: string | null = null;
+  let apiBaseError: string | null = null;
 
   onMount(() => {
     pwaLifecycle.initialize();
     offlineSyncToggle = isOfflineSyncEnabled();
+    if (showApiBase) {
+      apiBaseInput = getConfiguredApiBaseForDisplay();
+    }
   });
+
+  function onSaveApiBase() {
+    apiBaseMessage = null;
+    apiBaseError = null;
+    const translate = get(_);
+    const trimmed = apiBaseInput.trim();
+    if (!trimmed) {
+      setRuntimeApiBase(null);
+      apiBaseInput = getConfiguredApiBaseForDisplay();
+      apiBaseMessage = translate('settings.app.api_base_cleared');
+      return;
+    }
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new Error('protocol');
+      }
+    } catch {
+      apiBaseError = translate('settings.app.api_base_invalid');
+      return;
+    }
+    if (!trimmed.replace(/\/+$/, '').endsWith('/api/v1')) {
+      apiBaseError = translate('settings.app.api_base_invalid');
+      return;
+    }
+    setRuntimeApiBase(trimmed);
+    apiBaseInput = getConfiguredApiBaseForDisplay();
+    apiBaseMessage = translate('settings.app.api_base_saved');
+  }
 
   function formatSyncTime(value: string | null): string {
     const translate = get(_);
@@ -67,6 +108,36 @@
       </span>
     </div>
   </Panel>
+
+  {#if showApiBase}
+    <Panel variant="bordered">
+      <div class="app-settings__section app-settings__section--stacked">
+        <div>
+          <h2>{$_('settings.app.api_base_heading')}</h2>
+          <p>{$_('settings.app.api_base_body')}</p>
+        </div>
+        <label class="app-settings__api-base">
+          <span>{$_('settings.app.api_base_label')}</span>
+          <input
+            type="url"
+            bind:value={apiBaseInput}
+            placeholder={$_('settings.app.api_base_placeholder')}
+            data-testid="api-base-input"
+            autocomplete="off"
+          />
+        </label>
+        <Button type="button" size="sm" on:click={onSaveApiBase} data-testid="api-base-save">
+          {$_('settings.app.api_base_save')}
+        </Button>
+        {#if apiBaseError}
+          <InlineAlert variant="error" message={apiBaseError} />
+        {/if}
+        {#if apiBaseMessage}
+          <InlineAlert variant="success" message={apiBaseMessage} />
+        {/if}
+      </div>
+    </Panel>
+  {/if}
 
   {#if $currentUser?.is_verified}
     <Panel variant="bordered">
@@ -206,6 +277,22 @@
     justify-content: space-between;
     gap: var(--space-3);
     font-size: var(--text-sm);
+  }
+
+  .app-settings__api-base {
+    display: grid;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+  }
+
+  .app-settings__api-base input {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
   }
 
   .app-settings__sync-meta {

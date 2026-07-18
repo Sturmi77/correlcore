@@ -96,23 +96,27 @@ class UserResponse(BaseModel):
 class TokenResponse(BaseModel):
     """Session response after login / refresh / verify / reset.
 
-    Browser clients rely on HttpOnly cookies. ``access_token`` is omitted by
-    default (XSS surface) and only included when the client opts in via
-    ``?include_access_token=true`` (API scripts / future Capacitor).
+    Browser clients rely on HttpOnly cookies. ``access_token`` /
+    ``refresh_token`` are omitted by default (XSS surface) and only included
+    when the client opts in via ``?include_access_token=true`` (API scripts /
+    Capacitor Bearer path, ADR-0006).
     """
 
     model_config = ConfigDict(extra="forbid")
 
     access_token: str | None = None
+    refresh_token: str | None = None
     token_type: str = "bearer"
     expires_in: int  # seconds
     user: UserResponse
 
     @model_serializer(mode="wrap")
-    def _omit_null_access_token(self, handler):  # type: ignore[no-untyped-def]
+    def _omit_null_tokens(self, handler):  # type: ignore[no-untyped-def]
         data = handler(self)
         if data.get("access_token") is None:
             data.pop("access_token", None)
+        if data.get("refresh_token") is None:
+            data.pop("refresh_token", None)
         return data
 
 

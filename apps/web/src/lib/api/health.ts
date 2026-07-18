@@ -6,6 +6,8 @@
  * only infrastructure-level information.
  */
 
+import { getApiBase } from './apiBase';
+
 export interface ComponentHealth {
   name: string;
   status: 'ok' | 'degraded' | 'down';
@@ -28,10 +30,8 @@ export interface LivenessResult {
   version: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
-
 async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${getApiBase()}${path}`, {
     signal,
     headers: { Accept: 'application/json' },
   });

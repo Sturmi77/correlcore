@@ -1,11 +1,13 @@
 /**
- * Auth API client — Issue #40.
+ * Auth API client — Issue #40 + M11 Sprint 3 (ADR-0006).
  *
- * Mirrors the FastAPI shapes in backend/app/schemas/auth.py.
- * All calls use HttpOnly cookies via apiFetch (credentials: 'include').
+ * Browser: HttpOnly cookies via apiFetch.
+ * Capacitor: opt-in `?include_access_token=true` + in-memory JWT pair.
  */
 
 import { api, apiFetch, ApiError } from './client';
+import { usesBearerAuth } from './platform';
+import { clearSessionTokens, getRefreshToken, setSessionTokens } from './sessionTokens';
 
 // ---------------------------------------------------------------------------
 // Types — mirror backend schemas
@@ -21,6 +23,8 @@ export interface UserResponse {
 export interface TokenResponse {
   /** Present only when the API was called with `?include_access_token=true`. */
   access_token?: string;
+  /** Present with the same opt-in (Capacitor refresh body). */
+  refresh_token?: string;
   token_type: string;
   expires_in: number;
   user: UserResponse;
@@ -41,6 +45,17 @@ export interface LoginPayload {
   password: string;
 }
 
+function tokenQuery(): string {
+  return usesBearerAuth() ? '?include_access_token=true' : '';
+}
+
+function stashTokensFromResponse(res: TokenResponse): TokenResponse {
+  if (usesBearerAuth()) {
+    setSessionTokens(res);
+  }
+  return res;
+}
+
 // ---------------------------------------------------------------------------
 // API calls
 // ---------------------------------------------------------------------------
@@ -50,14 +65,21 @@ export async function register(payload: RegisterPayload): Promise<MessageRespons
   return api.post<MessageResponse>('/auth/register', payload);
 }
 
-/** POST /auth/login — sets HttpOnly cookies on success. */
+/** POST /auth/login — cookies (browser) or JWT body (Capacitor). */
 export async function login(payload: LoginPayload): Promise<TokenResponse> {
-  return api.post<TokenResponse>('/auth/login', payload);
+  const res = await api.post<TokenResponse>(`/auth/login${tokenQuery()}`, payload);
+  return stashTokensFromResponse(res);
 }
 
-/** POST /auth/logout — clears HttpOnly cookies and revokes refresh in Redis. */
+/** POST /auth/logout — clears cookies / revokes refresh; clears in-memory tokens. */
 export async function logout(): Promise<MessageResponse> {
-  return api.post<MessageResponse>('/auth/logout', {});
+  const bearer = usesBearerAuth();
+  const body = bearer ? { refresh_token: getRefreshToken() } : {};
+  try {
+    return await api.post<MessageResponse>('/auth/logout', body);
+  } finally {
+    clearSessionTokens();
+  }
 }
 
 /** GET /auth/me — returns the currently authenticated user.
@@ -71,13 +93,14 @@ export async function fetchCurrentUser(): Promise<UserResponse | null> {
   }
 }
 
-/** POST /auth/verify-email — confirms email and establishes a session via cookies. */
+/** POST /auth/verify-email — confirms email and establishes a session. */
 export async function verifyEmail(token: string): Promise<TokenResponse> {
-  return apiFetch<TokenResponse>('/auth/verify-email', {
+  const res = await apiFetch<TokenResponse>(`/auth/verify-email${tokenQuery()}`, {
     method: 'POST',
     json: { token },
-    skipAuthRefresh: true, // verify is a public endpoint
+    skipAuthRefresh: true,
   });
+  return stashTokensFromResponse(res);
 }
 
 /** POST /auth/resend-verification — always returns 202 (anti-enumeration). */
@@ -85,7 +108,7 @@ export async function resendVerification(email: string): Promise<MessageResponse
   return apiFetch<MessageResponse>('/auth/resend-verification', {
     method: 'POST',
     json: { email },
-    skipAuthRefresh: true, // public endpoint
+    skipAuthRefresh: true,
   });
 }
 
@@ -103,9 +126,10 @@ export async function resetPassword(payload: {
   token: string;
   password: string;
 }): Promise<TokenResponse> {
-  return apiFetch<TokenResponse>('/auth/reset-password', {
+  const res = await apiFetch<TokenResponse>(`/auth/reset-password${tokenQuery()}`, {
     method: 'POST',
     json: payload,
     skipAuthRefresh: true,
   });
+  return stashTokensFromResponse(res);
 }
