@@ -1,10 +1,10 @@
 # Onboarding Maturity Expectation Card
 
-> **Status:** Concept (spec only) · **Related:** [ADR-0021](../adr/0021-insight-maturity-phases.md), [INSIGHT_MATURITY.md](INSIGHT_MATURITY.md), [PHASE_INSIGHT_MATRIX.md](../PHASE_INSIGHT_MATRIX.md), [ADR-0030](../adr/0030-onboarding-tag-suggestions.md) · **Audience:** Product / Frontend
+> **Status:** Implemented · **Related:** [ADR-0021](../adr/0021-insight-maturity-phases.md), [INSIGHT_MATURITY.md](INSIGHT_MATURITY.md), [PHASE_INSIGHT_MATRIX.md](../PHASE_INSIGHT_MATRIX.md), [ADR-0030](../adr/0030-onboarding-tag-suggestions.md) · **Audience:** Product / Frontend
 
 This document is the product concept for a **one-time onboarding expectation card** that explains CorrelCore’s four insight maturity phases **before** the user interprets an empty Insights feed as a product failure.
 
-**Out of scope for this doc:** Svelte implementation, preference API wiring, and i18n key registration (follow-up PR).
+**Implementation:** [`MaturityExpectationSheet.svelte`](../../apps/web/src/lib/components/onboarding/MaturityExpectationSheet.svelte) on Home; preference `onboarding_maturity_intro_seen` (migration `029`); i18n `onboarding.maturity_intro.*`.
 
 ---
 
@@ -181,28 +181,29 @@ Suggested future i18n namespace (implementation PR): `onboarding.maturity_intro.
 
 ## 9. Acceptance criteria (concept + later UI)
 
-**Concept (this PR)**
+**Concept**
 
 - [x] Placement does not block the first entry.
 - [x] Each phase has one mini visual + one example from a real insight family.
 - [x] Copy is non-causal / non-medical and aligned with ADR-0021.
 - [x] Assets and mock exist under `docs/assets/phase_matrix/screenshots/onboarding_expectation/`.
 
-**Implementation (follow-up)**
+**Implementation**
 
-- [ ] Bottom sheet appears once after first entry when `!onboarding_maturity_intro_seen`.
-- [ ] Dismiss persists preference; sheet does not reappear.
-- [ ] DE + EN strings registered; thumbs load from static assets (or inline SVG if product chooses).
-- [ ] Accessibility: labelled dialog, focus trap, Escape closes only via CTA or explicit close that also persists (product decision: prefer CTA-only dismiss to force read).
+- [x] Bottom sheet appears once after first entry when `!onboarding_maturity_intro_seen`.
+- [x] Dismiss persists preference; sheet does not reappear.
+- [x] DE + EN strings registered; thumbs under `apps/web/static/onboarding/maturity/`.
+- [x] Backdrop / Escape / CTA all persist dismiss (avoids reopening loop).
 
 ---
 
-## 10. Implementation sketch (non-binding)
+## 10. Implementation map
 
 ```
 apps/web/src/lib/components/onboarding/MaturityExpectationSheet.svelte
+apps/web/src/lib/utils/maturityExpectationIntro.ts
 apps/web/src/lib/i18n/locales/{de,en}.json  → onboarding.maturity_intro.*
-Home (+page.svelte) → open sheet when first-entry signal && !pref
+apps/web/static/onboarding/maturity/phase{1-4}_*.png
+apps/web/src/routes/+page.svelte → open sheet when shouldShowMaturityExpectationIntro
+backend/migrations/versions/029_onboarding_maturity_intro_seen.py
 ```
-
-No product code in this concept PR.

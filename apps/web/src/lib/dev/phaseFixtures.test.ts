@@ -55,5 +55,6 @@ describe('dev phase fixtures', () => {
     expect(fixture.maturity).toMatchObject(devMaturityFromPreset('provisional', 18));
     expect(fixture.preferences.onboarding_retro_completed).toBe(false);
     expect(fixture.preferences.onboarding_profile_completed).toBe(false);
+    expect(fixture.preferences.onboarding_maturity_intro_seen).toBe(true);
   });
 });

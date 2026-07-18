@@ -22,6 +22,7 @@ async function installSupportingFlowApi(page: Page) {
         analytics_enabled: true,
         onboarding_retro_completed: true,
         onboarding_profile_completed: true,
+        onboarding_maturity_intro_seen: true,
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         last_seen_insight_at: null,

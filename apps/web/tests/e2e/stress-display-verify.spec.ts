@@ -94,6 +94,7 @@ test('home stress bars use inverted widths (lower stress = wider bar)', async ({
         analytics_enabled: true,
         onboarding_retro_completed: true,
         onboarding_profile_completed: true,
+        onboarding_maturity_intro_seen: true,
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         created_at: '2026-01-01T00:00:00Z',

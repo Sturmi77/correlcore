@@ -1181,6 +1181,34 @@
       "show_previews": "Show examples",
       "preview_heading": "What CorrelCore can later check in your data",
       "preview_label": "General research finding"
+    },
+    "maturity_intro": {
+      "title": "How your insights grow",
+      "intro": "CorrelCore finds patterns in your data over time. The first days build your foundation — insights grow with you.",
+      "cta": "Got it — keep tracking",
+      "close": "Close",
+      "footer": "Statements stay descriptive, not a diagnosis.",
+      "thumb_alt": "Preview of insights in phase {n}",
+      "collecting": {
+        "expectation": "We are building your foundation. No patterns yet.",
+        "example": "Streak and entry counts — no insight cards.",
+        "not_yet": "No insight cards, no correlations"
+      },
+      "early_patterns": {
+        "expectation": "Early hints appear. Observe; do not conclude.",
+        "example": "“Mondays currently line up with lower mood than your overall average.”",
+        "not_yet": "No tag↔mood correlations"
+      },
+      "provisional": {
+        "expectation": "Relationships emerge — with explicit uncertainty.",
+        "example": "“Days tagged Walk currently line up with higher mood scores in your data.”",
+        "not_yet": "Not yet “confirmed” or “stable”"
+      },
+      "robust": {
+        "expectation": "More stable patterns you can act on.",
+        "example": "Insight card with badge “Stable · n entries”.",
+        "not_yet": "Richer patterns need more days"
+      }
     }
   },
   "error": {

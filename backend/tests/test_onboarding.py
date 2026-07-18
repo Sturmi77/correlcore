@@ -19,6 +19,7 @@ def _make_preferences(user: User) -> UserPreference:
     preferences.analytics_enabled = True
     preferences.onboarding_retro_completed = True
     preferences.onboarding_profile_completed = True
+    preferences.onboarding_maturity_intro_seen = False
     preferences.dismissed_insight_keys = []
     preferences.reached_milestone_keys = []
     preferences.last_seen_insight_at = None

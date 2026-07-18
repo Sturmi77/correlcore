@@ -87,7 +87,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 - `onboarding_retro_completed` preference is set
 - User is not redirected back to onboarding on subsequent Home visits
 - User can log first entry from Home
-- After the first successful entry, user sees the maturity expectation card (phases 1–4) once — see [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md) (concept; implementation follow-up)
+- After the first successful entry, user sees the maturity expectation card (phases 1–4) once — see [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md)
 
 **Entry routes:** `/` with auto-open first `EntrySheet` when `entry_count === 0` AND `!onboarding_retro_completed`. `/onboarding` redirects to `/` (wizard remains at `/onboarding?preview=1`).
 

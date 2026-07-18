@@ -844,6 +844,8 @@ function makePreferences(
     digest_enabled: true,
     onboarding_retro_completed: onboardingCompleted,
     onboarding_profile_completed: onboardingCompleted,
+    // Dev fixtures skip the one-time intro so phase QA stays unblocked.
+    onboarding_maturity_intro_seen: true,
     dismissed_insight_keys: [],
     reached_milestone_keys: presetId === 'collecting' ? [] : [`maturity_phase_${presetId}`],
     last_seen_insight_at: null,

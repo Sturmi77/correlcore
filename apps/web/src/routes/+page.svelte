@@ -41,8 +41,10 @@
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
   import LandingPage from '$lib/components/landing/LandingPage.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import MaturityExpectationSheet from '$lib/components/onboarding/MaturityExpectationSheet.svelte';
 
   const EARLY_CONTEXT_PATTERN_KEY = 'early_context_pattern';
   const LEGACY_FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
@@ -57,6 +59,8 @@
   let dashboardLoaded = false;
   let activeDevFixtureKey = '';
   let firstEntrySheetOpened = false;
+  let maturityIntroOpen = false;
+  let maturityIntroPersisting = false;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -180,6 +184,51 @@
     openEntry(todayIso);
   }
 
+  $: if (
+    dashboardLoaded &&
+    $auth.status === 'authenticated' &&
+    !maturityIntroOpen &&
+    !maturityIntroPersisting &&
+    shouldShowMaturityExpectationIntro({
+      preferences: userPreferences,
+      entryCount: dashboardSummary?.entry_count,
+      entrySheetOpen,
+    })
+  ) {
+    maturityIntroOpen = true;
+  }
+
+  async function dismissMaturityIntro(): Promise<void> {
+    if (maturityIntroPersisting) return;
+    maturityIntroPersisting = true;
+    maturityIntroOpen = false;
+    const optimistic: UserPreferencesResponse = {
+      ...(userPreferences ?? {
+        user_id: $currentUser?.id ?? '',
+        analytics_enabled: true,
+        digest_enabled: true,
+        onboarding_retro_completed: true,
+        onboarding_profile_completed: true,
+        dismissed_insight_keys: [],
+        reached_milestone_keys: [],
+        last_seen_insight_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+      onboarding_maturity_intro_seen: true,
+    };
+    userPreferences = optimistic;
+    try {
+      userPreferences = await updateUserPreferences({
+        onboarding_maturity_intro_seen: true,
+      });
+    } catch {
+      // Keep optimistic dismiss for this session.
+    } finally {
+      maturityIntroPersisting = false;
+    }
+  }
+
   async function dismissFirstWeekBanner(): Promise<void> {
     const dismissed = new Set(userPreferences?.dismissed_insight_keys ?? []);
     dismissed.add(EARLY_CONTEXT_PATTERN_KEY);
@@ -190,6 +239,7 @@
         digest_enabled: true,
         onboarding_retro_completed: false,
         onboarding_profile_completed: false,
+        onboarding_maturity_intro_seen: false,
         reached_milestone_keys: [],
         last_seen_insight_at: null,
         created_at: new Date().toISOString(),
@@ -298,6 +348,11 @@
         </Button>
       </section>
     {/if}
+
+    <MaturityExpectationSheet
+      open={maturityIntroOpen}
+      on:dismiss={() => void dismissMaturityIntro()}
+    />
   </div>
 {:else}
   <LandingPage />

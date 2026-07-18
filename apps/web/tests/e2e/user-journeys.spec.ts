@@ -127,9 +127,10 @@ async function installJourneyApi(
   const { profile } = options;
   let authenticated = options.authenticated ?? true;
   let onboardingCompleted = profile !== 'new_user';
+  let maturityIntroSeen = profile !== 'new_user';
   let user =
     profile === 'new_user' ? users.new : profile === 'week_user' ? users.week : users.month;
-  const entryCount = profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 67;
+  let entryCount = profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 67;
   const entries = makeEntries(entryCount, user.id);
   const writes: string[] = [];
 
@@ -203,8 +204,10 @@ async function installJourneyApi(
       return json(200, {
         user_id: user.id,
         analytics_enabled: true,
+        digest_enabled: true,
         onboarding_retro_completed: onboardingCompleted,
         onboarding_profile_completed: onboardingCompleted,
+        onboarding_maturity_intro_seen: maturityIntroSeen,
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         last_seen_insight_at: null,
@@ -214,15 +217,24 @@ async function installJourneyApi(
     }
 
     if (path === '/user/preferences' && method === 'PATCH') {
-      const body = request.postDataJSON() as { onboarding_retro_completed?: boolean };
+      const body = request.postDataJSON() as {
+        onboarding_retro_completed?: boolean;
+        onboarding_maturity_intro_seen?: boolean;
+      };
       if (body.onboarding_retro_completed !== undefined) {
         onboardingCompleted = body.onboarding_retro_completed;
+      }
+      if (body.onboarding_maturity_intro_seen !== undefined) {
+        maturityIntroSeen = body.onboarding_maturity_intro_seen;
+        writes.push('PATCH /user/preferences maturity_intro');
       }
       return json(200, {
         user_id: user.id,
         analytics_enabled: true,
+        digest_enabled: true,
         onboarding_retro_completed: onboardingCompleted,
         onboarding_profile_completed: onboardingCompleted,
+        onboarding_maturity_intro_seen: maturityIntroSeen,
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         last_seen_insight_at: null,
@@ -301,7 +313,8 @@ async function installJourneyApi(
     if (path === '/entries' && method === 'POST') {
       writes.push('POST /entries');
       const body = request.postDataJSON();
-      return json(201, {
+      entryCount += 1;
+      const created = {
         id: entryId,
         user_id: user.id,
         entry_date: body.entry_date,
@@ -315,7 +328,9 @@ async function installJourneyApi(
         note: body.note ?? null,
         created_at: now,
         updated_at: now,
-      });
+      };
+      entries.push(created);
+      return json(201, created);
     }
 
     if (path === `/entries/${entryId}` && method === 'PATCH') {
@@ -645,6 +660,31 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
 
     await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
+  });
+
+  test('first entry opens maturity expectation sheet once', async ({ page }) => {
+    test.setTimeout(90_000);
+    const api = await installJourneyApi(page, { profile: 'new_user' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await page.getByRole('button', { name: 'Increase mood' }).click();
+    await expect.poll(() => api.writes.some((write) => write === 'POST /entries')).toBe(true);
+    await expect(page.locator('form.entry-form')).toHaveAttribute('data-autosave-status', 'saved');
+
+    await page.getByTestId('entry-sheet-close').click();
+    await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
+
+    await expect(page.getByTestId('maturity-expectation-sheet')).toBeVisible({
+      timeout: APP_READY_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('maturity-intro-phase-collecting')).toBeVisible();
+    await expect(page.getByTestId('maturity-intro-phase-robust')).toBeVisible();
+
+    await page.getByTestId('maturity-expectation-cta').click();
+    await expect(page.getByTestId('maturity-expectation-sheet')).toHaveCount(0);
+    expect(api.writes).toContain('PATCH /user/preferences maturity_intro');
   });
 });
 

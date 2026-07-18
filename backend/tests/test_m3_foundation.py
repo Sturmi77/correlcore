@@ -47,6 +47,7 @@ def test_user_preferences_schema_defaults_keep_future_endpoints_sparse() -> None
         analytics_enabled=True,
         onboarding_retro_completed=False,
         onboarding_profile_completed=False,
+        onboarding_maturity_intro_seen=False,
         dismissed_insight_keys=[],
         reached_milestone_keys=["first_week_numbers"],
         last_seen_insight_at=None,
