@@ -59,12 +59,12 @@ base64 -w0 correlcore-upload.keystore > correlcore-upload.keystore.b64
 
 Add repository secrets (Settings → Secrets and variables → Actions):
 
-| Secret                       | Value                                      |
-| ---------------------------- | ------------------------------------------ |
-| `ANDROID_KEYSTORE_BASE64`    | contents of `.b64` file (single line)      |
-| `ANDROID_KEYSTORE_PASSWORD`  | keystore password                          |
-| `ANDROID_KEY_ALIAS`          | e.g. `correlcore`                          |
-| `ANDROID_KEY_PASSWORD`       | key password                               |
+| Secret                      | Value                                 |
+| --------------------------- | ------------------------------------- |
+| `ANDROID_KEYSTORE_BASE64`   | contents of `.b64` file (single line) |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password                     |
+| `ANDROID_KEY_ALIAS`         | e.g. `correlcore`                     |
+| `ANDROID_KEY_PASSWORD`      | key password                          |
 
 Store the `.keystore` offline encrypted; losing it blocks updates for
 sideload users (and complicates Play App Signing later).
@@ -108,13 +108,13 @@ against a remote API.
 
 ## Smoke checklist (sideload APK)
 
-| # | Check                         | Pass? |
-| - | ----------------------------- | ----- |
-| 1 | Cold start shows CorrelCore UI |       |
-| 2 | Navigate to login / register   |       |
-| 3 | Offline / network error banner (airplane mode) | |
-| 4 | App survives process death (recent apps → reopen) | |
-| 5 | Deep link `correlcore://entries/new` opens app   | |
-| 6 | Uninstall / reinstall keeps data cleared         | |
+| #   | Check                                             | Pass? |
+| --- | ------------------------------------------------- | ----- |
+| 1   | Cold start shows CorrelCore UI                    |       |
+| 2   | Navigate to login / register                      |       |
+| 3   | Offline / network error banner (airplane mode)    |       |
+| 4   | App survives process death (recent apps → reopen) |       |
+| 5   | Deep link `correlcore://entries/new` opens app    |       |
+| 6   | Uninstall / reinstall keeps data cleared          |       |
 
 Auth success + create entry = Sprint 3 exit criterion.
