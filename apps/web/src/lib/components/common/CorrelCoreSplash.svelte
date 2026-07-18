@@ -2,6 +2,13 @@
   // One-shot brand-load animation shown while the app boots (i18n dict load /
   // auth hydrate). CSS-driven tiles/wordmark; +layout keeps this mounted for
   // at least SPLASH_MIN_MS so the animation is visible on fast boots.
+  import {
+    SPLASH_TILE_DURATION_MS,
+    SPLASH_TILE_STEP_MS,
+    SPLASH_WORD_DELAY_MS,
+    SPLASH_WORD_DURATION_MS,
+  } from '$lib/constants/splashTiming';
+
   export let label = '';
 
   const TILES = [
@@ -15,18 +22,22 @@
     'var(--color-heatmap-4)',
     'var(--color-primary)',
   ] as const;
-
-  const TILE_STEP_MS = 55;
 </script>
 
 <div class="cc-splash" role="status" aria-live="polite" aria-busy="true">
   <div class="cc-splash-mark" aria-hidden="true">
     {#each TILES as background, i}
-      <span class="cc-tile" style="background: {background}; animation-delay: {i * TILE_STEP_MS}ms"
+      <span
+        class="cc-tile"
+        style="background: {background}; animation-delay: {i *
+          SPLASH_TILE_STEP_MS}ms; --cc-tile-ms: {SPLASH_TILE_DURATION_MS}ms"
       ></span>
     {/each}
   </div>
-  <div class="cc-splash-word">
+  <div
+    class="cc-splash-word"
+    style="--cc-word-delay: {SPLASH_WORD_DELAY_MS}ms; --cc-word-ms: {SPLASH_WORD_DURATION_MS}ms"
+  >
     <span class="cc-word-a">correl</span><span class="cc-word-b">core</span>
   </div>
   {#if label}<span class="sr-only">{label}</span>{/if}
@@ -57,7 +68,7 @@
     border-radius: var(--radius-sm, 4px);
     transform: scale(0.2);
     opacity: 0;
-    animation: cc-tile-in 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: cc-tile-in var(--cc-tile-ms, 320ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes cc-tile-in {
@@ -73,8 +84,8 @@
     letter-spacing: -0.01em;
     opacity: 0;
     transform: translateY(8px);
-    animation: cc-word-in 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    animation-delay: 520ms;
+    animation: cc-word-in var(--cc-word-ms, 260ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: var(--cc-word-delay, 520ms);
   }
 
   @keyframes cc-word-in {

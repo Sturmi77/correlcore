@@ -33,7 +33,9 @@ describe('Claude Design brand mark wiring', () => {
     expect(layoutSource).toContain('CorrelCoreSplash');
     expect(layoutSource).toContain('showBrandSplash');
     expect(layoutSource).toContain('SPLASH_MIN_MS');
+    expect(layoutSource).toContain('$lib/constants/splashTiming');
     expect(layoutSource).not.toContain('class="auth-splash"');
+    expect(layoutSource).not.toMatch(/SPLASH_MIN_MS\s*=\s*850/);
   });
 
   it('uses CorrelCoreLogo in the auth chrome', () => {
