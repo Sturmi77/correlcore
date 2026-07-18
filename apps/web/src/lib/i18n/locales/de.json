@@ -1223,6 +1223,10 @@
   "error": {
     "title": "Fehler",
     "generic": "Etwas ist schiefgelaufen.",
+    "network": "Server nicht erreichbar. Pruefe Verbindung und API-URL.",
+    "upstream": "Die API ist voruebergehend nicht erreichbar. Bitte gleich erneut versuchen.",
+    "server": "Der Server hat einen Fehler gemeldet. Bitte spaeter erneut versuchen.",
+    "validation": "Die Anfrage war ungueltig. Bitte Eingaben pruefen.",
     "not_found": "Seite nicht gefunden.",
     "back_home": "Zurueck zur Startseite"
   },
@@ -1325,7 +1329,10 @@
       "forgot_password": "Passwort vergessen?",
       "error_invalid": "E-Mail oder Passwort ist falsch.",
       "error_unverified": "Bitte best\u00e4tige zuerst deine E-Mail-Adresse.",
-      "error_rate_limit": "Zu viele Versuche. Bitte in einer Minute erneut probieren."
+      "error_rate_limit": "Zu viele Versuche. Bitte in einer Minute erneut probieren.",
+      "api_base_toggle": "API-Server",
+      "api_base_hint": "Selfhost-Android-Builds brauchen vor der Anmeldung die volle API-URL (endet mit /api/v1).",
+      "error_api_base_required": "Bitte unten die API-Server-URL eintragen (muss mit /api/v1 enden), bevor du dich anmeldest."
     },
     "register": {
       "title": "Konto erstellen",

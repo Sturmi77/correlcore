@@ -38,9 +38,11 @@ beta channel.
       (or push a prerelease tag `vX.Y.Z-android.N`)
 - [ ] Confirm Release assets: `correlcore-*.apk`, `*.aab`, `SHA256SUMS.txt`
 - [ ] Smoke-install APK on a physical device (Android 12+)
+- [ ] Repository secret or variable `VITE_API_BASE_URL=https://…/api/v1`
+      (required by signed `release-android.yml`; relative `/api/v1` is rejected)
 - [ ] Capacitor build sets absolute API URL for testers
-      (`VITE_API_BASE_URL=https://…/api/v1` at `build:capacitor` time, or
-      Settings → App runtime override)
+      (`VITE_API_BASE_URL` at `build:capacitor` time; Login/Register „API server“
+      field or Settings → App runtime override as fallback)
 - [ ] API `CORS_ORIGINS` includes the Capacitor WebView origin
       (`https://localhost` with `androidScheme: https` in capacitor.config.ts)
 

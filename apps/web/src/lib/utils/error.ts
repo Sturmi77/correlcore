@@ -13,18 +13,30 @@
  *   };
  *   errorKey = mapApiError(err, ERRORS);
  *
- * Anything that isn't an `ApiError` (NetworkError, programmer errors,
- * unknown shapes) falls back to `'error.generic'`. This keeps user-facing
- * copy safe even when an unexpected exception bubbles up.
+ * Call-site status maps win. Unmapped ApiErrors and NetworkErrors get
+ * built-in transport/server keys before the generic fallback.
  */
 
-import { ApiError } from '$lib/api/client';
+import { ApiError, NetworkError } from '$lib/api/client';
 
 /** Map of HTTP status code → i18n key. */
 export type ApiErrorMap = Record<number, string>;
 
 /** Default fallback i18n key when no specific status mapping matches. */
 export const GENERIC_ERROR_KEY = 'error.generic';
+
+/** Built-in keys for transport / infrastructure failures. */
+export const NETWORK_ERROR_KEY = 'error.network';
+export const UPSTREAM_ERROR_KEY = 'error.upstream';
+export const SERVER_ERROR_KEY = 'error.server';
+export const VALIDATION_ERROR_KEY = 'error.validation';
+
+function builtInApiErrorKey(status: number): string | null {
+  if (status === 502) return UPSTREAM_ERROR_KEY;
+  if (status === 422) return VALIDATION_ERROR_KEY;
+  if (status >= 500) return SERVER_ERROR_KEY;
+  return null;
+}
 
 /**
  * Translate an unknown error into an i18n message key.
@@ -39,8 +51,14 @@ export function mapApiError(
   statusMap: ApiErrorMap,
   fallback: string = GENERIC_ERROR_KEY
 ): string {
-  if (err instanceof ApiError && statusMap[err.status]) {
-    return statusMap[err.status];
+  if (err instanceof ApiError) {
+    if (statusMap[err.status]) {
+      return statusMap[err.status];
+    }
+    return builtInApiErrorKey(err.status) ?? fallback;
+  }
+  if (err instanceof NetworkError) {
+    return NETWORK_ERROR_KEY;
   }
   return fallback;
 }
