@@ -54,6 +54,13 @@ describe('Claude Design brand mark wiring', () => {
     expect(appCssSource).toMatch(/\.app-nav__brand\s*\{\s*display:\s*none;/);
   });
 
+  it('uses the theme-aware brand mark for the Home nav destination', () => {
+    expect(appNavSource).toContain('app-nav-home-mark');
+    expect(appNavSource).toContain('BRAND_MARK_SM');
+    expect(appNavSource).not.toContain("import House from 'lucide-svelte/icons/house'");
+    expect(appCssSource).toContain('.app-nav__home-mark');
+  });
+
   it('points the web manifest at the new PNG/SVG icons', () => {
     expect(manifestSource).toContain('/icons/correlcore-app-icon.png');
     expect(manifestSource).toContain('/icons/correlcore-icon-dark-bg.png');
