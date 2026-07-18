@@ -1,6 +1,6 @@
 # Persistent Session („Angemeldet bleiben“) — Implementation Plan
 
-Status: **Planned**  
+Status: **Implemented** (PS-0…PS-3 in code; device QA still recommended)  
 Last updated: 2026-07-18  
 Related: ADR-0006, ADR-0004, Issue [#453](https://github.com/Sturmi77/correlcore/issues/453)  
 Surfaces: **Web (browser)**, **PWA (standalone)**, **Capacitor Android**  
@@ -38,7 +38,7 @@ Widget prefs already mirror access+refresh for Glance (`WidgetCredentialsStore`)
 
 ---
 
-## Product decisions (proposed — lock in issue / ADR amend)
+## Product decisions (locked — Issue #453 / ADR-0006 amendment)
 
 | ID | Topic | Proposal |
 | -- | ----- | -------- |
@@ -205,10 +205,15 @@ Security checklist:
 
 ## Suggested implementation order
 
-1. **WP0** contract + UI flag (unblocks all platforms)  
-2. **WP1** Web/PWA cookie modes + QA (fixes Homelab/PWA perception issues)  
-3. **WP2** Capacitor restore (fixes “every launch login” on APK)  
-4. **WP3** tests + ADR + release notes  
+Mapped 1:1 to sprints in
+[`PERSISTENT_SESSION_SPRINT_PLAN.md`](../PERSISTENT_SESSION_SPRINT_PLAN.md):
+
+| WP | Sprint | Focus |
+| -- | ------ | ----- |
+| WP0 | **PS-0** | Contract + UI flag |
+| WP1 | **PS-1** | Web/PWA cookie modes |
+| WP2 | **PS-2** | Capacitor secure restore |
+| WP3 | **PS-3** | Hardening + closeout |
 
 Capacitor-only would leave Web/PWA remember-me undefined and miss cookie-mode /
 Secure diagnostics; this order keeps one checkbox and one mental model.
@@ -240,6 +245,7 @@ Secure diagnostics; this order keeps one checkbox and one mental model.
 
 ## References
 
+- [`docs/PERSISTENT_SESSION_SPRINT_PLAN.md`](../PERSISTENT_SESSION_SPRINT_PLAN.md)
 - [`docs/adr/0006-cookie-auth-mit-capacitor-migration.md`](../adr/0006-cookie-auth-mit-capacitor-migration.md)
 - [`docs/features/PWA.md`](PWA.md)
 - [`docs/features/WIDGET.md`](WIDGET.md)

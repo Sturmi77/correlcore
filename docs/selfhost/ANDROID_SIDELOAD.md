@@ -119,6 +119,17 @@ Signed GitHub Release APKs **must** bake an absolute API URL — relative `/api/
 resolves to `https://localhost/api/v1` in the WebView and login fails with a
 network error.
 
+### Persistent session QA (Issue #453)
+
+With **„Angemeldet bleiben“** checked (default):
+
+1. Sign in → force-stop the app → reopen → still authenticated (no login form).
+2. Sign out → reopen → login form; no stale session.
+3. Uncheck **„Angemeldet bleiben“** → sign in → force-stop → reopen → login required.
+
+Refresh tokens are stored in Android EncryptedSharedPreferences (Keystore), not
+in WebView `localStorage`. See [`docs/features/PERSISTENT_SESSION_PLAN.md`](../features/PERSISTENT_SESSION_PLAN.md).
+
 Set the URL at build time:
 
 ```bash

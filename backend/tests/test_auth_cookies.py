@@ -64,6 +64,32 @@ def test_set_auth_cookies_emits_secure_when_enabled(
         assert "SameSite=strict" in line
 
 
+def test_set_auth_cookies_remember_me_true_sets_max_age(
+    fresh_response: Response, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Persistent session (default) must emit Max-Age on both cookies."""
+    monkeypatch.setattr(auth_cookies.settings, "COOKIE_SECURE", False, raising=False)
+    auth_cookies.set_auth_cookies(fresh_response, "access-jwt", "refresh-jwt", remember_me=True)
+
+    lines = _set_cookie_lines(fresh_response)
+    assert len(lines) == 2
+    for line in lines:
+        assert "Max-Age=" in line
+
+
+def test_set_auth_cookies_remember_me_false_omits_max_age(
+    fresh_response: Response, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Session cookies for remember_me=false must not carry Max-Age."""
+    monkeypatch.setattr(auth_cookies.settings, "COOKIE_SECURE", False, raising=False)
+    auth_cookies.set_auth_cookies(fresh_response, "access-jwt", "refresh-jwt", remember_me=False)
+
+    lines = _set_cookie_lines(fresh_response)
+    assert len(lines) == 2
+    for line in lines:
+        assert "Max-Age=" not in line
+
+
 def test_clear_auth_cookies_uses_matching_paths(
     fresh_response: Response, monkeypatch: pytest.MonkeyPatch
 ) -> None:

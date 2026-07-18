@@ -13,7 +13,7 @@ passwords or putting JWTs in web `localStorage` / `sessionStorage`.
 **Exit criterion (feature):** All acceptance checks in #453 green; ADR-0006
 amended; QA matrix signed off for the three surfaces.
 
-**Status:** Planned (design doc landed; implementation not started).
+**Status:** Implemented in code (PS-0…PS-3); close #453 after cross-surface QA sign-off.
 
 ---
 

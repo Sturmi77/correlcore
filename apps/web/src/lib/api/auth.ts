@@ -43,15 +43,23 @@ export interface RegisterPayload {
 export interface LoginPayload {
   email: string;
   password: string;
+  /** Issue #453 — default true („Angemeldet bleiben“). */
+  remember_me?: boolean;
 }
 
 function tokenQuery(): string {
   return usesBearerAuth() ? '?include_access_token=true' : '';
 }
 
-function stashTokensFromResponse(res: TokenResponse): TokenResponse {
+function stashTokensFromResponse(
+  res: TokenResponse,
+  options: { remember_me?: boolean } = {}
+): TokenResponse {
   if (usesBearerAuth()) {
-    setSessionTokens(res);
+    setSessionTokens({
+      ...res,
+      remember_me: options.remember_me,
+    });
   }
   return res;
 }
@@ -67,8 +75,13 @@ export async function register(payload: RegisterPayload): Promise<MessageRespons
 
 /** POST /auth/login — cookies (browser) or JWT body (Capacitor). */
 export async function login(payload: LoginPayload): Promise<TokenResponse> {
-  const res = await api.post<TokenResponse>(`/auth/login${tokenQuery()}`, payload);
-  return stashTokensFromResponse(res);
+  const remember_me = payload.remember_me !== false;
+  const res = await api.post<TokenResponse>(`/auth/login${tokenQuery()}`, {
+    email: payload.email,
+    password: payload.password,
+    remember_me,
+  });
+  return stashTokensFromResponse(res, { remember_me });
 }
 
 /** POST /auth/logout — clears cookies / revokes refresh; clears in-memory tokens. */
@@ -100,7 +113,7 @@ export async function verifyEmail(token: string): Promise<TokenResponse> {
     json: { token },
     skipAuthRefresh: true,
   });
-  return stashTokensFromResponse(res);
+  return stashTokensFromResponse(res, { remember_me: true });
 }
 
 /** POST /auth/resend-verification — always returns 202 (anti-enumeration). */
@@ -131,5 +144,5 @@ export async function resetPassword(payload: {
     json: payload,
     skipAuthRefresh: true,
   });
-  return stashTokensFromResponse(res);
+  return stashTokensFromResponse(res, { remember_me: true });
 }
