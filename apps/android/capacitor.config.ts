@@ -39,7 +39,8 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     // Present only when google-services.json is present (Play/SaaS builds).
-    // Sideload / F-Droid-bound APKs omit the file; registration no-ops.
+    // Sideload / F-Droid-bound APKs omit the file; JS gates on PushAvailability
+    // (BuildConfig.FCM_ENABLED) and must not call register() without it.
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },

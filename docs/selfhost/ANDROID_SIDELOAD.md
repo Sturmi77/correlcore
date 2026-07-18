@@ -145,18 +145,26 @@ unless `android.allowMixedContent: true` (in addition to
 unaffected because they are not an HTTPS WebView page.
 
 **Push / FCM:** GitHub Release APKs typically ship **without** `google-services.json`,
-so Firebase push stays off. That is intentional for Obtainium / future F-Droid.
-Play/SaaS builds can include FCM — see [`docs/features/PUSH.md`](../features/PUSH.md).
+so Firebase push stays off (`BuildConfig.FCM_ENABLED=false`; no
+`PushNotifications.register()`). That is intentional for Obtainium / future
+F-Droid. Play/SaaS builds can include FCM — see
+[`docs/features/PUSH.md`](../features/PUSH.md).
+
+**Error tracking (optional):** set repository secret `PUBLIC_GLITCHTIP_DSN`
+(or reuse `GLITCHTIP_DSN`) so the Capacitor SPA build bakes GlitchTip into the
+APK. Without it, client error tracking stays off (zero outbound).
 
 ## Smoke checklist (sideload APK)
 
-| #   | Check                                             | Pass? |
-| --- | ------------------------------------------------- | ----- |
-| 1   | Cold start shows CorrelCore UI                    |       |
-| 2   | Navigate to login / register                      |       |
-| 3   | Offline / network error banner (airplane mode)    |       |
-| 4   | App survives process death (recent apps → reopen) |       |
-| 5   | Deep link `correlcore://entries/new` opens app    |       |
-| 6   | Uninstall / reinstall keeps data cleared          |       |
+| #   | Check                                                | Pass? |
+| --- | ---------------------------------------------------- | ----- |
+| 1   | Cold start shows CorrelCore UI                       |       |
+| 2   | Navigate to login / register                         |       |
+| 3   | Offline / network error banner (airplane mode)       |       |
+| 4   | App survives process death (recent apps → reopen)    |       |
+| 5   | Login succeeds and app stays up (no post-login kill) |       |
+| 6   | Deep link `correlcore://entries/new` opens app       |       |
+| 7   | Uninstall / reinstall keeps data cleared             |       |
 
-Auth success + create entry = Sprint 3 exit criterion.
+Auth success + create entry = Sprint 3 exit criterion. Post-login must not
+crash on sideload APKs without FCM (gated by `PushAvailability`).

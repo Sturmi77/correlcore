@@ -20,6 +20,18 @@ def hasReleaseSigning = hasEnvSigning || hasFileSigning
 def releaseVersionCode = (System.getenv('ANDROID_VERSION_CODE') ?: '1') as int
 def releaseVersionName = System.getenv('ANDROID_VERSION_NAME') ?: '1.0.0'
 
+// Sideload / Obtainium builds omit google-services.json. Detect before
+// android {} so BuildConfig.FCM_ENABLED matches whether Firebase is wired.
+def fcmEnabled = false
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        fcmEnabled = true
+    }
+} catch (Exception ignored) {
+    fcmEnabled = false
+}
+
 android {
     namespace "de.correlcore.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -29,6 +41,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode releaseVersionCode
         versionName releaseVersionName
+        buildConfigField "boolean", "FCM_ENABLED", fcmEnabled ? "true" : "false"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -69,6 +82,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
 }
 
@@ -97,11 +111,8 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
+if (fcmEnabled) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }

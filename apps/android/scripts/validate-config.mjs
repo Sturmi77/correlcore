@@ -83,5 +83,23 @@ if (!manifest.includes('POST_NOTIFICATIONS')) {
   throw new Error('AndroidManifest must declare POST_NOTIFICATIONS for FCM');
 }
 await access(resolve(root, 'android/app/google-services.json.example'));
+await access(
+  resolve(root, 'android/app/src/main/java/de/correlcore/app/push/PushAvailabilityPlugin.kt')
+);
+
+const appGradle = await readFile(resolve(root, 'android/app/build.gradle'), 'utf8');
+if (!appGradle.includes('buildConfigField "boolean", "FCM_ENABLED"')) {
+  throw new Error(
+    'app/build.gradle must expose BuildConfig.FCM_ENABLED for PushAvailability gating'
+  );
+}
+
+const mainActivity = await readFile(
+  resolve(root, 'android/app/src/main/java/de/correlcore/app/MainActivity.java'),
+  'utf8'
+);
+if (!mainActivity.includes('PushAvailabilityPlugin')) {
+  throw new Error('MainActivity must register PushAvailabilityPlugin');
+}
 
 console.log('Capacitor Android shell config OK');

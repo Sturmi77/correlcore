@@ -104,6 +104,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Capacitor SPA build + sync
+        env:
+          # Optional — bake GlitchTip into the static Capacitor bundle when set.
+          PUBLIC_GLITCHTIP_DSN: ${{ secrets.PUBLIC_GLITCHTIP_DSN || secrets.GLITCHTIP_DSN }}
+          PUBLIC_GLITCHTIP_ENVIRONMENT: ${{ vars.PUBLIC_GLITCHTIP_ENVIRONMENT || 'android-debug' }}
         run: pnpm cap:sync
 
       - name: Assemble debug APK
@@ -206,6 +210,9 @@ jobs:
       - name: Capacitor SPA build + sync
         env:
           VITE_API_BASE_URL: ${{ steps.api_base.outputs.value }}
+          # Optional — Capacitor is adapter-static; PUBLIC_* must be present at build time.
+          PUBLIC_GLITCHTIP_DSN: ${{ secrets.PUBLIC_GLITCHTIP_DSN || secrets.GLITCHTIP_DSN }}
+          PUBLIC_GLITCHTIP_ENVIRONMENT: ${{ vars.PUBLIC_GLITCHTIP_ENVIRONMENT || 'android' }}
         run: pnpm cap:sync
 
       - name: Derive Android version from tag
