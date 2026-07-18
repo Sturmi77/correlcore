@@ -1,9 +1,13 @@
 # M11 Notes — Android Play Store & Homescreen Widget
 
-Last updated: 2026-07-15
+Last updated: 2026-07-18
 
 This document captures the scope and acceptance criteria for the
 **Android Play Store** path and the native homescreen widget deferred from M4.
+
+**Execution plan:** [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md) — phased sprints,
+including **pre-Play sideload** via signed GitHub Release APK + Obtainium
+(F-Droid deferred).
 
 ## Scaffold status (landed #27)
 

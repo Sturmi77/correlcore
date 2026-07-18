@@ -42,7 +42,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). HC **consent** foundation shipped (#31). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
 - [x] **M9** — Beta hardening: monitoring, GlitchTip, GDPR self-service, backup/install docs, security CI, beta program — **Complete** (2026-07-11). Closes #29. See [`docs/M9_SPRINT_PLAN.md`](docs/M9_SPRINT_PLAN.md), [`docs/M9_SPRINT_STATUS.md`](docs/M9_SPRINT_STATUS.md), and [`docs/quality/M9_QUALITY_GATE.md`](docs/quality/M9_QUALITY_GATE.md).
 - [x] **M10** — Public selfhost release v1.0 — **Complete** (2026-07-11). See [`docs/M10_SPRINT_PLAN.md`](docs/M10_SPRINT_PLAN.md), [`docs/M10_SPRINT_STATUS.md`](docs/M10_SPRINT_STATUS.md), [`docs/quality/M10_QUALITY_GATE.md`](docs/quality/M10_QUALITY_GATE.md), [`CHANGELOG.md`](CHANGELOG.md#100--public-selfhost-release--2026-07-11).
-- [ ] **M11** — Android Play Store (Capacitor) — scaffold in `apps/android` (#27); Play listing / widget remaining
+- [ ] **M11** — Android Play Store (Capacitor) — scaffold in `apps/android` (#27); Play listing / widget remaining — plan: [`docs/M11_SPRINT_PLAN.md`](docs/M11_SPRINT_PLAN.md)
 - [ ] **M12** — SaaS mode (managed hosting)
 - [ ] **M13** — Photo & media: MinIO persist + gallery; **EXIF strip foundation** shipped (`POST /media/photos`, #28); optional Immich follow-up
 
