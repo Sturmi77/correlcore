@@ -1,10 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('$lib/api/platform', () => ({
+  isCapacitorBuild: vi.fn(() => false),
+}));
+
+import { isCapacitorBuild } from '$lib/api/platform';
 import { cleanupDevServiceWorker, registerProdServiceWorker } from './serviceWorker';
 
 describe('serviceWorker helpers', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
+    vi.mocked(isCapacitorBuild).mockReturnValue(false);
   });
 
   it('cleans up registrations and caches in dev', async () => {
@@ -26,7 +33,7 @@ describe('serviceWorker helpers', () => {
     expect(deleteCache).toHaveBeenCalledWith('correlcore-app-v1');
   });
 
-  it('registers the service worker in production', async () => {
+  it('registers the service worker in production browser builds', async () => {
     vi.stubEnv('DEV', false);
     vi.stubEnv('PROD', true);
 
@@ -36,5 +43,18 @@ describe('serviceWorker helpers', () => {
     await registerProdServiceWorker();
 
     expect(register).toHaveBeenCalledWith('/service-worker.js', { type: 'classic' });
+  });
+
+  it('skips service worker registration in Capacitor production builds', async () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('PROD', true);
+    vi.mocked(isCapacitorBuild).mockReturnValue(true);
+
+    const register = vi.fn().mockResolvedValue({});
+    vi.stubGlobal('navigator', { serviceWorker: { register } });
+
+    await registerProdServiceWorker();
+
+    expect(register).not.toHaveBeenCalled();
   });
 });

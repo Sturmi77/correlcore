@@ -63,7 +63,16 @@ Uncomment `server.url` in `capacitor.config.ts` to point at `http://localhost:51
 
 FCM is **optional**. Place a real `google-services.json` under `android/app/` for
 Play/SaaS builds; omit it for GitHub sideload / future F-Droid flavors.
+Gradle sets `BuildConfig.FCM_ENABLED` from that file; the WebView asks
+`PushAvailability` before calling `PushNotifications.register()` so sideload
+APKs do not crash after login.
 See [`docs/features/PUSH.md`](../../docs/features/PUSH.md).
+
+## Error tracking (optional)
+
+Bake GlitchTip into Capacitor builds by setting `PUBLIC_GLITCHTIP_DSN` (and
+optionally `PUBLIC_GLITCHTIP_ENVIRONMENT`) at `pnpm cap:sync` / CI time. The
+release workflow reads `secrets.PUBLIC_GLITCHTIP_DSN` or `secrets.GLITCHTIP_DSN`.
 
 ## Homescreen widget (Sprint 4)
 

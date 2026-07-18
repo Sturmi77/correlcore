@@ -10,8 +10,11 @@ Last updated: 2026-07-18
 | **UnifiedPush** | Selfhost (NTFY / Gotify / …) | M4.2 — provider enum reserved, no client yet |
 
 Sideload GitHub / Obtainium builds **may omit FCM** (no `google-services.json`)
-so a later F-Droid flavor can stay free of proprietary blobs. Registration then
-fails quietly; the app remains usable.
+so a later F-Droid flavor can stay free of proprietary blobs. Those APKs set
+`BuildConfig.FCM_ENABLED=false`; the WebView queries the `PushAvailability`
+plugin after login and **skips** `PushNotifications.register()`. Calling
+`register()` without Firebase init would crash the process (Capacitor Bridge
+rethrows on the main thread).
 
 ## Neutral copy (DESIGN §2.15)
 
@@ -60,14 +63,16 @@ uv sync --extra fcm
 4. Log in → OS notification permission → token `PUT`s to the API.
 5. Call `POST /api/v1/devices/push-test` (Bearer or cookie) to verify delivery.
 
-Without `google-services.json`, Gradle skips the Google Services plugin (existing
-hook) and push stays disabled.
+Without `google-services.json`, Gradle skips the Google Services plugin, sets
+`BuildConfig.FCM_ENABLED=false`, and the client never calls `register()`.
 
 Example shape: `apps/android/android/app/google-services.json.example`.
 
 ## Client wiring
 
-- `apps/web/src/lib/native/pushNotifications.ts` — Capacitor-only
+- `apps/web/src/lib/native/pushNotifications.ts` — Capacitor-only; gates on
+  native `PushAvailability.isAvailable()` before permission / register
+- `apps/android/.../push/PushAvailabilityPlugin.kt` — exposes `BuildConfig.FCM_ENABLED`
 - Triggered from `auth` store after login / hydrate; cleared on logout
 - Dependency: `@capacitor/push-notifications@7.0.3`
 

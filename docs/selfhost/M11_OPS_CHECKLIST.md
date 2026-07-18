@@ -40,6 +40,8 @@ beta channel.
 - [ ] Smoke-install APK on a physical device (Android 12+)
 - [ ] Repository secret or variable `VITE_API_BASE_URL=https://…/api/v1`
       (required by signed `release-android.yml`; relative `/api/v1` is rejected)
+- [ ] Optional: repository secret `PUBLIC_GLITCHTIP_DSN` (or `GLITCHTIP_DSN`) so
+      signed/debug Capacitor APKs report JS errors to selfhosted GlitchTip
 - [ ] Capacitor build sets absolute API URL for testers
       (`VITE_API_BASE_URL` at `build:capacitor` time; Login/Register „API server“
       field or Settings → App runtime override as fallback)
