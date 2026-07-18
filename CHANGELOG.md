@@ -8,6 +8,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- GitHub Releases put **Android APK download links at the top** of the release
+  notes (tappable on mobile); sideload docs updated. `v1.0.0` itself has no APK
+  (selfhost-only tag).
+
 ### Added (M11 Sprint 5 — FCM registration)
 
 - Device push-token API: `PUT/DELETE /devices/push-token`, `GET /devices/push-tokens`,
