@@ -80,19 +80,19 @@ Custom symptom slugs are HMAC-stabilized ([ADR-0039](https://github.com/Sturmi77
 
 ## Insights & analytics
 
-| Method | Path                                    | Notes                                           |
-| ------ | --------------------------------------- | ----------------------------------------------- |
-| `GET`  | `/api/v1/insights`                      | Generated insight cards                         |
-| `GET`  | `/api/v1/insights/digest/latest`        | Weekly digest preview (schedule completion TBD) |
-| `GET`  | `/api/v1/insights/tag-clusters`         | Tag groups (tiered maturity, M10.1)             |
-| `POST` | `/api/v1/insights/regenerate`           | On-demand insight run (1×/hour)                 |
-| `POST` | `/api/v1/insights/trigger`              | Admin manual worker run                         |
-| `GET`  | `/api/v1/dashboard/summary`             | Home summary widgets                            |
-| `GET`  | `/api/v1/widget/summary`                | Android Glance homescreen widget (≤1 KB)        |
-| `PUT`  | `/api/v1/devices/push-token`            | Register FCM / UnifiedPush device token         |
+| Method | Path                                    | Notes                                               |
+| ------ | --------------------------------------- | --------------------------------------------------- |
+| `GET`  | `/api/v1/insights`                      | Generated insight cards                             |
+| `GET`  | `/api/v1/insights/digest/latest`        | Weekly digest preview (schedule completion TBD)     |
+| `GET`  | `/api/v1/insights/tag-clusters`         | Tag groups (tiered maturity, M10.1)                 |
+| `POST` | `/api/v1/insights/regenerate`           | On-demand insight run (1×/hour)                     |
+| `POST` | `/api/v1/insights/trigger`              | Admin manual worker run                             |
+| `GET`  | `/api/v1/dashboard/summary`             | Home summary widgets                                |
+| `GET`  | `/api/v1/widget/summary`                | Android Glance homescreen widget (≤1 KB)            |
+| `PUT`  | `/api/v1/devices/push-token`            | Register FCM / UnifiedPush device token             |
 | `POST` | `/api/v1/devices/push-test`             | Send neutral check-in reminder (FCM, if configured) |
-| `GET`  | `/api/v1/analysis/notes/marker-summary` | Note-marker mood aggregates                     |
-| `GET`  | `/api/v1/analysis/...`                  | Trends / analysis surfaces                      |
+| `GET`  | `/api/v1/analysis/notes/marker-summary` | Note-marker mood aggregates                         |
+| `GET`  | `/api/v1/analysis/...`                  | Trends / analysis surfaces                          |
 
 Insight generation runs in the background **worker** (nightly 03:00 UTC) or on demand via
 **Settings → Analysis → Refresh insights** (`POST /insights/regenerate`).

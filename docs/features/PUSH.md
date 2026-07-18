@@ -4,10 +4,10 @@ Last updated: 2026-07-18
 
 ## Channels
 
-| Channel        | Audience                         | Status                                      |
-| -------------- | -------------------------------- | ------------------------------------------- |
-| **FCM**        | Play Store / SaaS Android        | M11 Sprint 5 — registration + test send     |
-| **UnifiedPush**| Selfhost (NTFY / Gotify / …)     | M4.2 — provider enum reserved, no client yet |
+| Channel         | Audience                     | Status                                       |
+| --------------- | ---------------------------- | -------------------------------------------- |
+| **FCM**         | Play Store / SaaS Android    | M11 Sprint 5 — registration + test send      |
+| **UnifiedPush** | Selfhost (NTFY / Gotify / …) | M4.2 — provider enum reserved, no client yet |
 
 Sideload GitHub / Obtainium builds **may omit FCM** (no `google-services.json`)
 so a later F-Droid flavor can stay free of proprietary blobs. Registration then
@@ -22,12 +22,12 @@ No streak pressure, no mood/health values in the payload (DSGVO Art. 9).
 
 ## API
 
-| Method | Path | Purpose |
-| ------ | ---- | ------- |
-| `PUT` | `/api/v1/devices/push-token` | Upsert FCM / UnifiedPush token |
-| `DELETE` | `/api/v1/devices/push-token` | Unregister token |
-| `GET` | `/api/v1/devices/push-tokens` | List own registrations (no raw token echo) |
-| `POST` | `/api/v1/devices/push-test` | Send check-in reminder to caller’s FCM tokens |
+| Method   | Path                          | Purpose                                       |
+| -------- | ----------------------------- | --------------------------------------------- |
+| `PUT`    | `/api/v1/devices/push-token`  | Upsert FCM / UnifiedPush token                |
+| `DELETE` | `/api/v1/devices/push-token`  | Unregister token                              |
+| `GET`    | `/api/v1/devices/push-tokens` | List own registrations (no raw token echo)    |
+| `POST`   | `/api/v1/devices/push-test`   | Send check-in reminder to caller’s FCM tokens |
 
 `POST /devices/push-test` returns `503` when `FCM_ENABLED` is false or credentials
 are missing (default for selfhost).

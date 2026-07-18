@@ -21,10 +21,7 @@ import {
   type UserResponse,
 } from '$lib/api/auth';
 import { clearSessionTokens } from '$lib/api/sessionTokens';
-import {
-  disablePushNotifications,
-  enablePushNotifications,
-} from '$lib/native/pushNotifications';
+import { disablePushNotifications, enablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
 import { resetEntrySheetStore } from '$lib/stores/entrySheet';
 import {
