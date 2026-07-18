@@ -34,7 +34,9 @@ def fcm_is_configured() -> bool:
 
     if not settings.FCM_ENABLED:
         return False
-    return bool(settings.FCM_CREDENTIALS_JSON.strip() or settings.GOOGLE_APPLICATION_CREDENTIALS.strip())
+    return bool(
+        settings.FCM_CREDENTIALS_JSON.strip() or settings.GOOGLE_APPLICATION_CREDENTIALS.strip()
+    )
 
 
 def to_response(row: DeviceToken) -> DeviceTokenResponse:
@@ -139,7 +141,7 @@ def _init_firebase_app() -> None:
             "firebase-admin is not installed (pip install correlcore-backend[fcm])"
         ) from exc
 
-    if firebase_admin._apps:  # type: ignore[attr-defined]
+    if firebase_admin._apps:
         return
 
     creds_json = settings.FCM_CREDENTIALS_JSON.strip()
