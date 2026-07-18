@@ -103,9 +103,14 @@ Or use `apps/android/android/keystore.properties` from
 - **`v*` tags** (and secrets set): signed `assembleRelease` + `bundleRelease`,
   upload artifact + attach `correlcore-<ver>.apk`, `.aab`, and `SHA256SUMS.txt`
   to the GitHub Release
-- **workflow_dispatch:** same signed path when secrets exist
+- **workflow_dispatch:** signed build; optional input `attach_to_tag` (e.g. `v1.0.1`)
+  re-attaches APK/AAB to an existing GitHub Release if a tag push missed them
 
 Tag example: `git tag v1.1.0 && git push origin v1.1.0`.
+
+If the release notes show **Download APK** but the link is **404**, no asset was
+attached — re-run **Actions → Release - Android (Capacitor) → Run workflow** with
+`attach_to_tag=vX.Y.Z` (after signing secrets are set).
 
 ## API / selfhost note
 

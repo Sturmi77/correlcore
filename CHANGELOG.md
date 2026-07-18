@@ -13,6 +13,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - GitHub Releases put **Android APK download links at the top** of the release
   notes (tappable on mobile); sideload docs updated. `v1.0.0` itself has no APK
   (selfhost-only tag).
+- Android release workflow: always run on `v*` tags (no path filter), do not gate
+  the signed job on `secrets.*` in `if` (that prevented the workflow from
+  starting); `workflow_dispatch` can attach to an existing tag via `attach_to_tag`.
 
 ### Added (M11 Sprint 5 — FCM registration)
 
