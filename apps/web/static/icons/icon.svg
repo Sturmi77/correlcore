@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
-  <!-- Maskable / PWA icon: dark plate + brand mark (matches correlcore-app-icon). -->
+  <!-- Maskable / PWA icon: dark plate + padded brand mark (OEM-safe). -->
   <rect width="512" height="512" rx="112" fill="#171614" />
-  <g transform="translate(80 80) scale(9.7778)">
+  <g transform="translate(128 128) scale(7.1111)">
     <rect x="0" y="0" width="10" height="10" rx="2" fill="#1f2a44" />
     <rect x="13" y="0" width="10" height="10" rx="2" fill="#2e3f6f" />
     <rect x="26" y="0" width="10" height="10" rx="2" fill="#415aa3" />
