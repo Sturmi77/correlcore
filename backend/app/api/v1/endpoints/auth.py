@@ -369,6 +369,8 @@ async def refresh(
     cookie_token = request.cookies.get(REFRESH_COOKIE_NAME)
     body_token = body.refresh_token
     wants_body = _wants_access_token_in_body(request)
+    token: str | None
+    used_cookie: bool
     if wants_body and body_token:
         token = body_token
         used_cookie = False
