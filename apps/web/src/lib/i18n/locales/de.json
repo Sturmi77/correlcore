@@ -1224,7 +1224,7 @@
     "title": "Fehler",
     "generic": "Etwas ist schiefgelaufen.",
     "network": "Server nicht erreichbar. Pruefe Verbindung und API-URL.",
-    "network_capacitor": "Server nicht erreichbar. Pruefe Verbindung und API-URL (https://…/api/v1 oder http://…/api/v1). Die API muss aus dem Handy-Netz erreichbar sein (z. B. Tailscale).",
+    "network_capacitor": "API-Aufruf fehlgeschlagen. Pruefe die API-URL (muss auf …/api/v1 enden). Bei http://-Selfhost muss die App Mixed Content erlauben (WebView ist https://localhost) — Tailscale allein reicht nicht.",
     "upstream": "Die API ist voruebergehend nicht erreichbar. Bitte gleich erneut versuchen.",
     "server": "Der Server hat einen Fehler gemeldet. Bitte spaeter erneut versuchen.",
     "validation": "Die Anfrage war ungueltig. Bitte Eingaben pruefen.",

@@ -38,6 +38,11 @@ if (!configText.includes("appId: 'de.correlcore.app'")) {
 if (!configText.includes('cleartext: true')) {
   throw new Error('capacitor.config.ts must allow cleartext for selfhost http:// API URLs');
 }
+if (!/allowMixedContent:\s*true/.test(configText)) {
+  throw new Error(
+    'capacitor.config.ts must set allowMixedContent: true — https://localhost WebView otherwise blocks http:// API fetches (mixed content)'
+  );
+}
 if (!configText.includes("adjustMarginsForEdgeToEdge: 'disable'")) {
   throw new Error(
     'capacitor.config.ts must disable edge-to-edge margins (CSS safe-area owns status-bar inset)'

@@ -14,7 +14,11 @@ const config: CapacitorConfig = {
   webDir: '../web/build-capacitor',
   android: {
     path: 'android',
-    allowMixedContent: false,
+    // REQUIRED for selfhost: WebView origin is https://localhost while the
+    // baked API base is often http://<tailnet-ip>:port/api/v1. Chromium
+    // blocks that as mixed content unless this is true — cleartext alone
+    // is not enough (Tailscale "works in other apps" is expected).
+    allowMixedContent: true,
     // Status-bar inset is handled in web CSS (`--page-padding-top` /
     // `safe-area-inset-top`). Keep Capacitor margins disabled to avoid
     // double padding on Android 15 edge-to-edge.
