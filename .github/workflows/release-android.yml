@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: ''
+      vite_api_base_url:
+        description: 'Absolute Capacitor API base (https://host/api/v1). Overrides secret/variable VITE_API_BASE_URL for this run.'
+        required: false
+        type: string
+        default: ''
   # No path filters on push: YAML cannot combine "tags always" with
   # "branches + paths" in one mapping. Path filters previously skipped tag
   # builds when the tagged commit did not touch apps/android → 404 APK links.
@@ -175,7 +180,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve Capacitor API base URL
+        id: api_base
+        env:
+          INPUT_API_BASE: ${{ github.event.inputs.vite_api_base_url }}
+          SECRET_API_BASE: ${{ secrets.VITE_API_BASE_URL }}
+          VAR_API_BASE: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          # Prefer workflow_dispatch input, then secret, then repository variable.
+          CANDIDATE="${INPUT_API_BASE:-}"
+          if [[ -z "${CANDIDATE}" ]]; then CANDIDATE="${SECRET_API_BASE:-}"; fi
+          if [[ -z "${CANDIDATE}" ]]; then CANDIDATE="${VAR_API_BASE:-}"; fi
+          if [[ -z "${CANDIDATE}" ]]; then
+            echo "::error::Missing VITE_API_BASE_URL. Set repository secret/variable VITE_API_BASE_URL or pass workflow_dispatch input vite_api_base_url (absolute https://host/api/v1)."
+            exit 1
+          fi
+          echo "::add-mask::${CANDIDATE}"
+          echo "value=${CANDIDATE}" >>"$GITHUB_OUTPUT"
+
+      - name: Assert absolute Capacitor API base
+        env:
+          VITE_API_BASE_URL: ${{ steps.api_base.outputs.value }}
+        run: node scripts/assert-capacitor-api-base.mjs
+
       - name: Capacitor SPA build + sync
+        env:
+          VITE_API_BASE_URL: ${{ steps.api_base.outputs.value }}
         run: pnpm cap:sync
 
       - name: Derive Android version from tag

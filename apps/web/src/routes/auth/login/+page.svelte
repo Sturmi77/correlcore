@@ -2,11 +2,14 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import CapacitorApiBaseField from '$lib/components/auth/CapacitorApiBaseField.svelte';
+  import { ensureCapacitorApiBaseConfigured } from '$lib/api/apiBase';
   import { login } from '$lib/stores/auth';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   let email = '';
   let password = '';
+  let apiBaseInput = '';
   let busy = false;
   let errorKey: string | null = null;
 
@@ -29,6 +32,11 @@
     errorKey = null;
     busy = true;
     try {
+      const apiBase = ensureCapacitorApiBaseConfigured(apiBaseInput);
+      if (!apiBase.ok) {
+        errorKey = apiBase.errorKey;
+        return;
+      }
       await login({ email: email.trim().toLowerCase(), password });
       const target = safeNext($page.url.searchParams.get('next'));
       await goto(target, { replaceState: true });
@@ -76,6 +84,8 @@
       disabled={busy}
     />
   </label>
+
+  <CapacitorApiBaseField bind:value={apiBaseInput} disabled={busy} />
 
   {#if errorKey}
     <p class="auth-error" role="alert">{$_(errorKey)}</p>

@@ -115,14 +115,29 @@ attached — re-run **Actions → Release - Android (Capacitor) → Run workflow
 ## API / selfhost note
 
 Capacitor builds use Bearer auth (ADR-0006) when built with `VITE_CAPACITOR=1`.
-Set an absolute API URL at build time:
+Signed GitHub Release APKs **must** bake an absolute API URL — relative `/api/v1`
+resolves to `https://localhost/api/v1` in the WebView and login fails with a
+network error.
+
+Set the URL at build time:
 
 ```bash
 VITE_API_BASE_URL=https://your-host.example/api/v1 pnpm cap:sync
 ```
 
-Selfhost testers can also change the API base under **Settings → App & offline**
-(runtime override, localStorage — not a secret). Sign in again after changing servers.
+CI (`release-android.yml` signed job) requires repository secret/variable
+`VITE_API_BASE_URL` (or `workflow_dispatch` input `vite_api_base_url`) and fails
+the build if the value is missing or relative.
+
+Selfhost testers can also set the API base **before sign-in** on Login/Register
+(„API server“), or later under **Settings → App & offline** (runtime override,
+localStorage — not a secret). Sign in again after changing servers.
+
+Also add the Capacitor WebView origin to API CORS:
+
+```bash
+CORS_ORIGINS=https://your-web-origin,https://localhost
+```
 
 **Push / FCM:** GitHub Release APKs typically ship **without** `google-services.json`,
 so Firebase push stays off. That is intentional for Obtainium / future F-Droid.

@@ -2,13 +2,16 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { register } from '$lib/api/auth';
+  import CapacitorApiBaseField from '$lib/components/auth/CapacitorApiBaseField.svelte';
   import PasswordStrength from '$lib/components/auth/PasswordStrength.svelte';
+  import { ensureCapacitorApiBaseConfigured } from '$lib/api/apiBase';
   import { evaluatePassword } from '$lib/utils/passwordStrength';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   let email = '';
   let password = '';
   let displayName = '';
+  let apiBaseInput = '';
   let busy = false;
   let errorKey: string | null = null;
 
@@ -27,6 +30,11 @@
     errorKey = null;
     busy = true;
     try {
+      const apiBase = ensureCapacitorApiBaseConfigured(apiBaseInput);
+      if (!apiBase.ok) {
+        errorKey = apiBase.errorKey;
+        return;
+      }
       await register({
         email: email.trim().toLowerCase(),
         password,
@@ -94,6 +102,8 @@
     <PasswordStrength {password} />
     <span class="auth-hint">{$_('auth.register.password_hint')}</span>
   </label>
+
+  <CapacitorApiBaseField bind:value={apiBaseInput} disabled={busy} />
 
   {#if errorKey}
     <p class="auth-error" role="alert">{$_(errorKey)}</p>

@@ -37,6 +37,33 @@ function readStoredBase(): string | null {
   }
 }
 
+/** True when the URL is not an absolute http(s) origin (e.g. `/api/v1`). */
+export function isRelativeApiBase(url: string): boolean {
+  return !/^https?:\/\//i.test(url.trim());
+}
+
+export type ApiBaseValidation =
+  { ok: true; normalized: string } | { ok: false; reason: 'empty' | 'invalid' };
+
+/** Validate a user-entered absolute API base (`https://host/api/v1`). */
+export function validateAbsoluteApiBase(url: string): ApiBaseValidation {
+  const trimmed = url.trim();
+  if (!trimmed) return { ok: false, reason: 'empty' };
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { ok: false, reason: 'invalid' };
+    }
+  } catch {
+    return { ok: false, reason: 'invalid' };
+  }
+  const normalized = normalizeBase(trimmed);
+  if (!normalized.endsWith('/api/v1')) {
+    return { ok: false, reason: 'invalid' };
+  }
+  return { ok: true, normalized };
+}
+
 /** Current API prefix used by apiFetch (e.g. `/api/v1` or `https://host/api/v1`). */
 export function getApiBase(): string {
   if (isCapacitorBuild()) {
@@ -49,6 +76,41 @@ export function getApiBase(): string {
     return normalizeBase(builtIn.trim());
   }
   return '/api/v1';
+}
+
+/**
+ * Capacitor builds with a relative default need an absolute URL before auth
+ * calls can succeed (WebView origin is `https://localhost`).
+ */
+export function capacitorNeedsApiBaseConfig(): boolean {
+  return isCapacitorBuild() && isRelativeApiBase(getApiBase());
+}
+
+/**
+ * Persist an optional login/register API base override, then ensure the
+ * resolved Capacitor API base is absolute.
+ *
+ * Empty input keeps the current value (build default or prior override).
+ */
+export function ensureCapacitorApiBaseConfigured(
+  input: string
+): { ok: true } | { ok: false; errorKey: string } {
+  if (!isCapacitorBuild()) return { ok: true };
+
+  const trimmed = input.trim();
+  if (trimmed) {
+    const validated = validateAbsoluteApiBase(trimmed);
+    if (!validated.ok) {
+      return { ok: false, errorKey: 'settings.app.api_base_invalid' };
+    }
+    setRuntimeApiBase(validated.normalized);
+    return { ok: true };
+  }
+
+  if (isRelativeApiBase(getApiBase())) {
+    return { ok: false, errorKey: 'auth.login.error_api_base_required' };
+  }
+  return { ok: true };
 }
 
 /**
@@ -84,6 +146,12 @@ export function setRuntimeApiBase(url: string | null): void {
 /** Value shown in Settings (Capacitor): stored override or build default. */
 export function getConfiguredApiBaseForDisplay(): string {
   return getApiBase();
+}
+
+/** Display value for auth forms — blank when only a relative default exists. */
+export function getApiBaseInputForDisplay(): string {
+  const current = getApiBase();
+  return isRelativeApiBase(current) ? '' : current;
 }
 
 /** Test-only. */

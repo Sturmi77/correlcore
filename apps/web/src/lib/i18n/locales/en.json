@@ -1223,6 +1223,10 @@
   "error": {
     "title": "Error",
     "generic": "Something went wrong.",
+    "network": "Could not reach the server. Check your connection and API URL.",
+    "upstream": "The API is temporarily unreachable. Try again shortly.",
+    "server": "The server reported an error. Please try again later.",
+    "validation": "The request was invalid. Please check your input.",
     "not_found": "Page not found.",
     "back_home": "Back to home"
   },
@@ -1325,7 +1329,10 @@
       "forgot_password": "Forgot password?",
       "error_invalid": "Email or password is incorrect.",
       "error_unverified": "Please verify your email address first.",
-      "error_rate_limit": "Too many attempts. Please try again in a minute."
+      "error_rate_limit": "Too many attempts. Please try again in a minute.",
+      "api_base_toggle": "API server",
+      "api_base_hint": "Self-hosted Android builds need the full API URL (ending with /api/v1) before sign-in.",
+      "error_api_base_required": "Enter your API server URL below (must end with /api/v1) before signing in."
     },
     "register": {
       "title": "Create account",

@@ -6,7 +6,11 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import { getConfiguredApiBaseForDisplay, setRuntimeApiBase } from '$lib/api/apiBase';
+  import {
+    getConfiguredApiBaseForDisplay,
+    setRuntimeApiBase,
+    validateAbsoluteApiBase,
+  } from '$lib/api/apiBase';
   import { isCapacitorBuild } from '$lib/api/platform';
   import { currentUser } from '$lib/stores/auth';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
@@ -39,20 +43,12 @@
       apiBaseMessage = translate('settings.app.api_base_cleared');
       return;
     }
-    try {
-      const parsed = new URL(trimmed);
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        throw new Error('protocol');
-      }
-    } catch {
+    const validated = validateAbsoluteApiBase(trimmed);
+    if (!validated.ok) {
       apiBaseError = translate('settings.app.api_base_invalid');
       return;
     }
-    if (!trimmed.replace(/\/+$/, '').endsWith('/api/v1')) {
-      apiBaseError = translate('settings.app.api_base_invalid');
-      return;
-    }
-    setRuntimeApiBase(trimmed);
+    setRuntimeApiBase(validated.normalized);
     apiBaseInput = getConfiguredApiBaseForDisplay();
     apiBaseMessage = translate('settings.app.api_base_saved');
   }
