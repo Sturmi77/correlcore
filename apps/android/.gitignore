@@ -31,3 +31,4 @@ android/*/release/
 *.jks
 *.keystore
 keystore.properties
+android/keystore.properties

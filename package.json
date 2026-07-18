@@ -29,6 +29,7 @@
     "cap:sync": "pnpm --filter @correlcore/web build:capacitor && pnpm --filter @correlcore/android cap:sync",
     "cap:open": "pnpm --filter @correlcore/android cap:open",
     "cap:assemble:debug": "pnpm cap:sync && pnpm --filter @correlcore/android assemble:debug",
+    "cap:assemble:release": "pnpm cap:sync && pnpm --filter @correlcore/android assemble:release",
     "prepare": "git config core.hooksPath .husky || true"
   },
   "devDependencies": {

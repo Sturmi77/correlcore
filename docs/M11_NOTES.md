@@ -18,7 +18,9 @@ Capacitor Android package under [`apps/android/`](../apps/android/):
 - [x] Static SPA build (`build:capacitor` → `webDir` `build-capacitor`)
 - [x] Capacitor 7.6.7 aligned; brand icons/splash; `correlcore://entries/new`
 - [x] CI **Assemble debug APK** (artifact `correlcore-debug-apk`)
-- [ ] Signed release APK / GitHub Releases (Sprint 2)
+- [x] Signed release APK/AAB path + sideload docs (Sprint 2) —
+      [`ANDROID_SIDELOAD.md`](selfhost/ANDROID_SIDELOAD.md); live Release asset
+      needs repo signing secrets + `v*` tag
 - [ ] Play Store Internal / Closed Testing
 
 Health Connect **consent** foundation shipped with #31 (`consent_log`, Settings Privacy).
@@ -74,6 +76,7 @@ See also [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md) Sprints 4+.
 
 - [x] Capacitor package present under `apps/android` with CI validate
 - [x] Production `cap sync` + debug `assembleDebug` path green
+- [x] Signed `assembleRelease` / GitHub Release attach path (Sprint 2)
 - [ ] Play Store Internal Testing Track live
 
 ### Widget
