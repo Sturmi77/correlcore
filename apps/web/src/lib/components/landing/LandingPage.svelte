@@ -4,6 +4,7 @@
   import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
   import LegalFooter from '$lib/components/common/LegalFooter.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import { BRAND_MARK_HERO, BRAND_MARK_XL } from '$lib/constants/iconSizes';
   import { DOCS_SITE_URL } from '$lib/constants/publicUrls';
 
   const featureKeys = ['privacy', 'insights', 'selfhost', 'daily'] as const;
@@ -12,14 +13,14 @@
 <div class="landing" data-testid="marketing-landing">
   <header class="landing__header">
     <div class="landing__brand">
-      <CorrelCoreLogo size={40} title={$_('app.name')} />
+      <CorrelCoreLogo size={BRAND_MARK_XL} title={$_('app.name')} />
       <span class="landing__brand-name">{$_('app.name')}</span>
     </div>
     <ThemeToggle testId="landing-theme-toggle" />
   </header>
 
   <section class="landing__hero">
-    <CorrelCoreLogo size={72} title={$_('app.name')} />
+    <CorrelCoreLogo size={BRAND_MARK_HERO} title={$_('app.name')} />
     <span class="landing__badge" data-testid="landing-badge">{$_('landing.badge')}</span>
     <h1 class="landing__title">{$_('landing.hero_title')}</h1>
     <p class="landing__subtitle">{$_('landing.hero_subtitle')}</p>

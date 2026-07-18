@@ -482,6 +482,12 @@ button {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Brand mark lives in the desktop left rail only — keep the mobile bottom
+   bar at four equal destinations. */
+.app-nav__brand {
+  display: none;
+}
+
 /* Desktop-only translucency. Mobile Firefox paints color-mix + backdrop-filter
    so faintly that the bottom nav can disappear; keep a solid surface there. */
 @media (min-width: 768px) {
@@ -576,16 +582,39 @@ button {
     grid-row: 1;
     grid-column: 1;
     align-self: stretch;
+    display: flex;
+    flex-direction: column;
     border-top: none;
     border-right: 1px solid var(--color-border);
     padding-bottom: 0;
   }
 
+  .app-nav__brand {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    margin: var(--space-4) var(--space-2) var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: background-color var(--transition-interactive);
+  }
+
+  .app-nav__brand:hover {
+    background: var(--color-surface-2);
+  }
+
   .app-nav__list {
+    flex: 1 1 auto;
     flex-direction: column;
     justify-content: flex-start;
-    height: 100%;
-    padding: var(--space-6) var(--space-2);
+    height: auto;
+    min-height: 0;
+    padding: var(--space-2) var(--space-2) var(--space-6);
     gap: var(--space-2);
   }
 

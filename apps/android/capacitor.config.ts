@@ -24,7 +24,8 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchAutoHide: true,
-      backgroundColor: '#7c6af5',
+      // Matches default --color-bg / Claude Design app-icon plate.
+      backgroundColor: '#171614',
       showSpinner: false,
     },
     // Present only when google-services.json is present (Play/SaaS builds).

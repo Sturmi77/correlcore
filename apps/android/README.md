@@ -10,7 +10,7 @@ TWA/Bubblewrap is not used.
 - Node.js 22+ and pnpm 11+ (monorepo root)
 - JDK 21
 - Android Studio **or** Android SDK 35 + build-tools (only for device/APK builds)
-- Python 3 + Pillow (optional — only to regenerate brand icons/splash)
+- Python 3 + Pillow (optional — regenerate launcher/splash from `apps/web/static/icons/`)
 
 The Capacitor `webDir` is `../web/build-capacitor` — a static SPA produced with
 `CAPACITOR_BUILD=1` / `pnpm --filter @correlcore/web build:capacitor`
@@ -46,13 +46,13 @@ pnpm cap:assemble:debug
 
 ## Day-to-day commands
 
-| Script                                           | Purpose                                            |
-| ------------------------------------------------ | -------------------------------------------------- |
-| `pnpm cap:sync`                                  | Capacitor SPA build + copy into Android project    |
-| `pnpm cap:open`                                  | Open the project in Android Studio                 |
-| `pnpm cap:assemble:debug`                        | Sync + `./gradlew assembleDebug`                   |
-| `pnpm --filter @correlcore/android validate`     | CI check — config files only, no SDK               |
-| `pnpm --filter @correlcore/android assets:brand` | Regenerate launcher/splash PNGs from brand palette |
+| Script                                           | Purpose                                              |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| `pnpm cap:sync`                                  | Capacitor SPA build + copy into Android project      |
+| `pnpm cap:open`                                  | Open the project in Android Studio                   |
+| `pnpm cap:assemble:debug`                        | Sync + `./gradlew assembleDebug`                     |
+| `pnpm --filter @correlcore/android validate`     | CI check — config files only, no SDK                 |
+| `pnpm --filter @correlcore/android assets:brand` | Regenerate launcher/splash PNGs from web brand icons |
 
 ## Live reload (optional)
 
