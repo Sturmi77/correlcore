@@ -85,9 +85,7 @@ class TestCorsOrigins:
     def test_cors_allow_origins_dedupes_explicit_capacitor_origin(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv(
-            "CORS_ORIGINS", "https://app.example.com,https://localhost"
-        )
+        monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com,https://localhost")
         settings = _make_settings()
         assert settings.cors_allow_origins == [
             "https://app.example.com",
