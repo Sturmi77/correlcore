@@ -50,6 +50,12 @@ class UserPreference(Base):
         default=False,
         server_default="false",
     )
+    onboarding_maturity_intro_seen: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
     dismissed_insight_keys: Mapped[list[str]] = mapped_column(
         JSONB,
         nullable=False,

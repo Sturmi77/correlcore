@@ -12,6 +12,7 @@ const preferences = {
   analytics_enabled: true,
   onboarding_retro_completed: true,
   onboarding_profile_completed: true,
+  onboarding_maturity_intro_seen: true,
   dismissed_insight_keys: [] as string[],
   reached_milestone_keys: [] as string[],
   last_seen_insight_at: null as string | null,

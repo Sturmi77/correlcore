@@ -6,6 +6,7 @@ export interface UserPreferencesResponse {
   digest_enabled: boolean;
   onboarding_retro_completed: boolean;
   onboarding_profile_completed: boolean;
+  onboarding_maturity_intro_seen: boolean;
   dismissed_insight_keys: string[];
   reached_milestone_keys: string[];
   last_seen_insight_at: string | null;
@@ -18,6 +19,7 @@ export interface UserPreferencesUpdate {
   digest_enabled?: boolean;
   onboarding_retro_completed?: boolean;
   onboarding_profile_completed?: boolean;
+  onboarding_maturity_intro_seen?: boolean;
   dismissed_insight_keys?: string[];
   reached_milestone_keys?: string[];
   last_seen_insight_at?: string | null;

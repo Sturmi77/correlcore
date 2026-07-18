@@ -5,6 +5,11 @@
 This document is the single source of truth for how insight maturity phases are displayed, communicated,
 and enforced across all frontend surfaces in CorrelCore.
 
+**Onboarding expectation card:** A one-time card **before first-entry tag selection** explains
+phases 1–4 with mini visuals — see
+[ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md).
+It complements `InsightJourneyExplainer` (anytime reference) and does not replace milestone cards.
+
 ---
 
 ## 1. Phase Definitions
@@ -80,6 +85,9 @@ Replaces the raw confidence score in all insight cards. Combines phase + statist
 ### 2.3 `InsightJourneyExplainer`
 
 A Bottom Sheet / Modal explaining the maturity model in plain language.
+Keep copy aligned with the one-time onboarding expectation card
+([ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md));
+the explainer stays text-only (no phase thumbs).
 
 **Content structure:**
 

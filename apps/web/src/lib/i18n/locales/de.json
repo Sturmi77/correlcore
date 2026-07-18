@@ -1181,6 +1181,35 @@
       "show_previews": "Beispiele anzeigen",
       "preview_heading": "Was CorrelCore spaeter in deinen Daten pruefen kann",
       "preview_label": "Allgemeiner Forschungshinweis"
+    },
+    "maturity_intro": {
+      "title": "Wie deine Erkenntnisse wachsen",
+      "intro": "CorrelCore findet Muster in deinen Daten über Zeit. Die ersten Tage dienen dem Aufbau — Erkenntnisse wachsen mit.",
+      "tag_hint": "Wähle als Nächstes Tags, die du oft wiederholst — nur so können spätere Muster entstehen.",
+      "cta": "Weiter zu den Tags",
+      "close": "Schliessen",
+      "footer": "Aussagen bleiben beschreibend, keine Diagnose.",
+      "thumb_alt": "Vorschau der Erkenntnisse in Phase {n}",
+      "collecting": {
+        "expectation": "Wir bauen deine Datengrundlage auf. Noch keine Muster.",
+        "example": "Eintragsverlauf und Zähler — keine Erkenntniskarten.",
+        "not_yet": "Keine Insight-Karten, keine Korrelationen"
+      },
+      "early_patterns": {
+        "expectation": "Erste Hinweise werden sichtbar. Beobachte, schließe nicht.",
+        "example": "„Montags liegt die Stimmung oft unter deinem Durchschnitt.“",
+        "not_yet": "Keine Tag↔Stimmung-Korrelationen"
+      },
+      "provisional": {
+        "expectation": "Zusammenhänge entstehen — mit ausdrücklicher Unsicherheit.",
+        "example": "„Tage mit Spaziergang liegen bei dir oft bei höherer Stimmung.“",
+        "not_yet": "Noch nicht „bestätigt“ oder „stabil“"
+      },
+      "robust": {
+        "expectation": "Stabilere Muster zum Einordnen und Handeln.",
+        "example": "Insight-Karte mit Kennzeichnung „Stabil · n Einträge“.",
+        "not_yet": "Erweiterte Muster brauchen noch mehr Tage"
+      }
     }
   },
   "error": {

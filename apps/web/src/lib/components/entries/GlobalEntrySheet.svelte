@@ -15,6 +15,7 @@
   import { entryDateFromSearchParams, isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { isoDate } from '$lib/utils/entryForm';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
   import EntrySheet from './EntrySheet.svelte';
 
   let sheetOpen = false;
@@ -49,6 +50,17 @@
         fetchUserPreferences(),
         fetchDashboardSummary(date),
       ]);
+      // Defer to Home: maturity expectation runs before first-entry tags.
+      if (
+        shouldShowMaturityExpectationIntro({
+          preferences,
+          entryCount: summary.entry_count,
+          entrySheetOpen: false,
+        })
+      ) {
+        stripOpenEntryQuery();
+        return;
+      }
       onboardingTags = shouldShowOnboardingTags(preferences, summary.entry_count);
     } catch {
       onboardingTags = false;

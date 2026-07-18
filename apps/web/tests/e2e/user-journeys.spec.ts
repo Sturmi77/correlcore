@@ -91,6 +91,19 @@ function maturityForProfile(profile: JourneyProfile) {
   };
 }
 
+/** Cold start: maturity expectation sheet, then first-entry sheet with tags. */
+async function reachFirstEntrySheet(page: Page): Promise<void> {
+  const maturity = page.getByTestId('maturity-expectation-sheet');
+  const entry = page.getByTestId('entry-sheet');
+  await expect(maturity.or(entry)).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+  if (await maturity.isVisible()) {
+    await expect(page.getByTestId('maturity-intro-tag-hint')).toBeVisible();
+    await page.getByTestId('maturity-expectation-cta').click();
+    await expect(maturity).toHaveCount(0);
+  }
+  await expect(entry).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+}
+
 function sampleInsight(userId: string, profile: JourneyProfile) {
   if (profile === 'new_user') return [];
   return [
@@ -127,9 +140,10 @@ async function installJourneyApi(
   const { profile } = options;
   let authenticated = options.authenticated ?? true;
   let onboardingCompleted = profile !== 'new_user';
+  let maturityIntroSeen = profile !== 'new_user';
   let user =
     profile === 'new_user' ? users.new : profile === 'week_user' ? users.week : users.month;
-  const entryCount = profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 67;
+  let entryCount = profile === 'new_user' ? 0 : profile === 'week_user' ? 9 : 67;
   const entries = makeEntries(entryCount, user.id);
   const writes: string[] = [];
 
@@ -203,8 +217,10 @@ async function installJourneyApi(
       return json(200, {
         user_id: user.id,
         analytics_enabled: true,
+        digest_enabled: true,
         onboarding_retro_completed: onboardingCompleted,
         onboarding_profile_completed: onboardingCompleted,
+        onboarding_maturity_intro_seen: maturityIntroSeen,
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         last_seen_insight_at: null,
@@ -214,15 +230,24 @@ async function installJourneyApi(
     }
 
     if (path === '/user/preferences' && method === 'PATCH') {
-      const body = request.postDataJSON() as { onboarding_retro_completed?: boolean };
+      const body = request.postDataJSON() as {
+        onboarding_retro_completed?: boolean;
+        onboarding_maturity_intro_seen?: boolean;
+      };
       if (body.onboarding_retro_completed !== undefined) {
         onboardingCompleted = body.onboarding_retro_completed;
+      }
+      if (body.onboarding_maturity_intro_seen !== undefined) {
+        maturityIntroSeen = body.onboarding_maturity_intro_seen;
+        writes.push('PATCH /user/preferences maturity_intro');
       }
       return json(200, {
         user_id: user.id,
         analytics_enabled: true,
+        digest_enabled: true,
         onboarding_retro_completed: onboardingCompleted,
         onboarding_profile_completed: onboardingCompleted,
+        onboarding_maturity_intro_seen: maturityIntroSeen,
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         last_seen_insight_at: null,
@@ -301,7 +326,8 @@ async function installJourneyApi(
     if (path === '/entries' && method === 'POST') {
       writes.push('POST /entries');
       const body = request.postDataJSON();
-      return json(201, {
+      entryCount += 1;
+      const created = {
         id: entryId,
         user_id: user.id,
         entry_date: body.entry_date,
@@ -315,7 +341,9 @@ async function installJourneyApi(
         note: body.note ?? null,
         created_at: now,
         updated_at: now,
-      });
+      };
+      entries.push(created);
+      return json(201, created);
     }
 
     if (path === `/entries/${entryId}` && method === 'PATCH') {
@@ -546,8 +574,8 @@ test.describe('W1 Account & Vertrauen', () => {
       timeout: APP_READY_TIMEOUT_MS,
     });
     await page.getByRole('button', { name: 'Verify email' }).click();
-    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/);
+    await reachFirstEntrySheet(page);
   });
 
   test('password reset requires explicit confirm', async ({ page }) => {
@@ -583,7 +611,7 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await page.goto('/');
 
     await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await reachFirstEntrySheet(page);
     await expect(page.getByTestId('onboarding-intro')).toBeVisible();
     await expect(page.getByTestId('onboarding-habit-hint')).toBeVisible();
     await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
@@ -594,7 +622,7 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await page.goto('/onboarding');
 
     await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await reachFirstEntrySheet(page);
     await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
   });
 
@@ -646,6 +674,26 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
   });
+
+  test('maturity expectation sheet appears before tag selection', async ({ page }) => {
+    const api = await installJourneyApi(page, { profile: 'new_user' });
+    await page.goto('/');
+
+    await expect(page.getByTestId('maturity-expectation-sheet')).toBeVisible({
+      timeout: APP_READY_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('maturity-intro-phase-collecting')).toBeVisible();
+    await expect(page.getByTestId('maturity-intro-phase-robust')).toBeVisible();
+    await expect(page.getByTestId('maturity-intro-tag-hint')).toBeVisible();
+    await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
+
+    await page.getByTestId('maturity-expectation-cta').click();
+    await expect(page.getByTestId('maturity-expectation-sheet')).toHaveCount(0);
+    expect(api.writes).toContain('PATCH /user/preferences maturity_intro');
+
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
+  });
 });
 
 test.describe('W3 Tägliche Eingabe', () => {
@@ -691,9 +739,9 @@ test.describe('W5 Erste Erkenntnis', () => {
     await installJourneyApi(page, { profile: 'new_user' });
     await page.setViewportSize({ width: 390, height: 844 });
 
-    // New users land on home with the entry sheet open — close it to inspect collecting state.
+    // New users: maturity intro → entry sheet; close it to inspect collecting state.
     await page.goto('/');
-    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await reachFirstEntrySheet(page);
     await page.getByTestId('entry-sheet-close').click();
     await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
 

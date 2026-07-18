@@ -3,6 +3,10 @@
 Frontend-Screenshots, die in [`../../../PHASE_INSIGHT_MATRIX.md`](../../../PHASE_INSIGHT_MATRIX.md)
 (§4.4 Backend ↔ Frontend-Landkarte, Abschnitt 4.4.3) eingebettet werden.
 
+**Onboarding expectation card (concept mocks + phase thumbs):**
+[`onboarding_expectation/`](onboarding_expectation/) — see
+[`ONBOARDING_MATURITY_EXPECTATION_CARD.md`](../../../frontend/ONBOARDING_MATURITY_EXPECTATION_CARD.md).
+
 ## Dateinamens-Konvention
 
 `<Komponente>__<preset>.png` — z.B. `InsightCard__robust.png`, `InsightStageHeader__collecting.png`.
