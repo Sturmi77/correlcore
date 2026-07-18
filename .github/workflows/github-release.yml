@@ -3,6 +3,8 @@ name: Release — GitHub Release
 # Creates a GitHub Release when a v* tag is pushed.
 # Release notes are extracted from CHANGELOG.md when a matching ## [x.y.z] section exists.
 # Container images are built separately by release-images.yml (same tag trigger).
+# Android APK links are prepended at the top (mobile-friendly); the signed APK is
+# attached by release-android.yml on the same tag when signing secrets exist.
 
 on:
   push:
@@ -44,6 +46,24 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
             echo "No CHANGELOG section for version ${VERSION}. Using auto-generated notes." > "$OUT"
           fi
+
+          # GitHub release bodies max out at 125_000 chars. Keep room for the
+          # Android download block prepended below; link to CHANGELOG if truncated.
+          MAX=110000
+          SIZE=$(wc -c <"$OUT")
+          if (( SIZE > MAX )); then
+            HEAD_BYTES=$((MAX - 400))
+            TMP="${OUT}.trunc"
+            head -c "${HEAD_BYTES}" "$OUT" >"$TMP"
+            {
+              cat "$TMP"
+              printf '\n\n…\n\n### Full changelog\n\nSee [`CHANGELOG.md`](https://github.com/%s/blob/%s/CHANGELOG.md) (release body truncated for mobile readability).\n' \
+                "${GITHUB_REPOSITORY}" "${TAG}"
+            } >"$OUT"
+            rm -f "$TMP"
+            echo "Truncated changelog section from ${SIZE} to $(wc -c <"$OUT") bytes."
+          fi
+
           echo "path=${OUT}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
@@ -54,3 +74,11 @@ jobs:
           generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
           prerelease: ${{ contains(github.ref_name, '-') }}
           draft: false
+
+      - name: Prepend Android APK download links (top of release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x scripts/github-release-android-downloads.sh
+          scripts/github-release-android-downloads.sh "${GITHUB_REF_NAME}"

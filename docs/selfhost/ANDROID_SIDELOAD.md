@@ -17,12 +17,19 @@ Native shell: [`apps/android/README.md`](../../apps/android/README.md).
 
 1. On the phone, open Chrome (or Firefox) and go to:  
    **https://github.com/Sturmi77/correlcore/releases/latest**
-2. Under **Assets**, tap `correlcore-<version>.apk`.
+2. At the **top of the release notes**, tap **Download APK**  
+   (`correlcore-<version>.apk`).  
+   (GitHub’s **Assets** list is easy to miss on mobile — the note link is the
+   intended path.)
 3. If Android asks to allow installs from the browser → **Allow**.
 4. Open the downloaded file → **Install** → **Open**.
 
 Updates: open the same Releases page again and install the newer APK
 (same app id / signing key replaces the old version).
+
+> **v1.0.0 note:** The first public tag was a selfhost/Docker release and does
+> **not** include an Android APK. Use a later `v*` release once signing secrets
+> are configured and `Release — Android` has attached `correlcore-*.apk`.
 
 ### Option B — Obtainium (auto-updates)
 
