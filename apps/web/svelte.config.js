@@ -1,11 +1,27 @@
-import adapter from '@sveltejs/adapter-node';
+import nodeAdapter from '@sveltejs/adapter-node';
+import staticAdapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+/**
+ * Production web (Docker / selfhost) uses adapter-node.
+ * Capacitor Android shell needs a static SPA fallback (index.html) — set
+ * CAPACITOR_BUILD=1 when building for `pnpm cap:sync`.
+ */
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === '1';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter(),
+    adapter: isCapacitorBuild
+      ? staticAdapter({
+          pages: 'build-capacitor',
+          assets: 'build-capacitor',
+          fallback: 'index.html',
+          precompress: false,
+          strict: false,
+        })
+      : nodeAdapter(),
     alias: {
       $lib: './src/lib',
       $i18n: './src/lib/i18n',

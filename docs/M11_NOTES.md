@@ -1,17 +1,25 @@
 # M11 Notes — Android Play Store & Homescreen Widget
 
-Last updated: 2026-07-15
+Last updated: 2026-07-18
 
 This document captures the scope and acceptance criteria for the
 **Android Play Store** path and the native homescreen widget deferred from M4.
 
-## Scaffold status (landed #27)
+**Execution plan:** [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md) — phased sprints,
+including **pre-Play sideload** via signed GitHub Release APK + Obtainium
+(F-Droid deferred).
 
-Capacitor Android package exists under [`apps/android/`](../apps/android/):
+## Scaffold / shell status
 
-- `capacitor.config.ts`, package scripts, CI job **Validate Capacitor config**
-- README pointing at ADR-0002 (Capacitor vs TWA)
-- Not yet a production Play Store build (`cap sync` / store listing remaining)
+Capacitor Android package under [`apps/android/`](../apps/android/):
+
+- [x] Package + CI config validate (#27)
+- [x] Committed native project `apps/android/android/` (Sprint 1)
+- [x] Static SPA build (`build:capacitor` → `webDir` `build-capacitor`)
+- [x] Capacitor 7.6.7 aligned; brand icons/splash; `correlcore://entries/new`
+- [x] CI **Assemble debug APK** (artifact `correlcore-debug-apk`)
+- [ ] Signed release APK / GitHub Releases (Sprint 2)
+- [ ] Play Store Internal / Closed Testing
 
 Health Connect **consent** foundation shipped with #31 (`consent_log`, Settings Privacy).
 Native HC import and Play Data Safety declaration remain M8/M11 exit work.
@@ -23,18 +31,15 @@ A true launcher widget requires the native Android app path and Jetpack Glance.
 
 Deferred rest of M11 because:
 
-1. Play Store closed-testing path must exist on top of the Capacitor scaffold
+1. Play Store closed-testing path must exist on top of the Capacitor shell
 2. Glance API is Kotlin/Compose-only — not available in a PWA
 3. Widget data must be fetched from the CorrelCore API with WorkManager sync
 
-## Scope
+## Scope (widget track — after shell)
 
-### Sprint 0 — Scaffold (done)
+See also [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md) Sprints 4+.
 
-- [x] `apps/android` Capacitor project + CI config validate (#27)
-- [x] ADR-0002 strategy retained (no TWA)
-
-### Sprint 1 — Widget Data Endpoint
+### Widget Data Endpoint
 
 - `GET /api/v1/widget/summary` — lightweight endpoint for widget use
   - Returns: today's entry status (`has_entry: bool`),
@@ -45,18 +50,19 @@ Deferred rest of M11 because:
 - Unit tests: response shape, auth
 - `docs/API.md` updated
 
-### Sprint 2 — Android Glance Widget
+### Android Glance Widget
 
 - `AppWidget.kt` using Jetpack Glance
 - Widget layout:
   - Today's mood average (large number) or "No entry yet"
   - "+ Add entry" button — deep-links to `/entries/new` in the Capacitor WebView
+    (`correlcore://entries/new` intent filter landed in Sprint 1)
   - Last updated timestamp (small, muted)
 - WorkManager periodic sync (15-minute interval, battery-aware)
 - Widget respects system dark/light mode
 - `glance-appwidget` dependency + `AndroidManifest` registration
 
-### Sprint 3 — QA & Play Store
+### QA & Play Store
 
 - Widget QA on Android 12/14, 4×1 and 4×2, light/dark
 - Play Store listing + closed testing
@@ -67,7 +73,7 @@ Deferred rest of M11 because:
 ### Scaffold / shell
 
 - [x] Capacitor package present under `apps/android` with CI validate
-- [ ] Production `cap sync && cap build` path green
+- [x] Production `cap sync` + debug `assembleDebug` path green
 - [ ] Play Store Internal Testing Track live
 
 ### Widget
@@ -80,11 +86,12 @@ Deferred rest of M11 because:
 - [ ] Widget QA passed on Android 12 and Android 14
 - [ ] 4×1 and 4×2 size variants display without truncation
 - [ ] Play Store listing updated
-- [ ] CI green (Android build)
+- [ ] CI green (Android release build)
 
 ## Prerequisites
 
 - Capacitor scaffold (#27) — **done**
+- Production shell (Sprint 1) — **done**
 - `GET /api/v1/widget/summary` endpoint
 - Glance API minimum SDK: Android 12 (API 31)
 - M4 PWA install prompt shipped

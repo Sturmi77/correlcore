@@ -1264,10 +1264,11 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ### M11 — Android-App für Play Store (Woche 26–28)
 
-> Implementierungsnotizen: [`M11_NOTES.md`](M11_NOTES.md). Capacitor-Scaffold (#27) liegt unter
-> `apps/android/`; Play-Store-/Widget-Scope bleibt M11 Exit.
+> Implementierungsnotizen: [`M11_NOTES.md`](M11_NOTES.md). Sprint-Plan inkl. Pre-Store-APK:
+> [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md). Capacitor-Shell (Sprint 1) unter
+> `apps/android/android/`; Play-Store-/Widget-Scope bleibt M11 Exit.
 
-- PWA → Capacitor (Android) — **Scaffold landed** (`apps/android`, CI validate)
+- PWA → Capacitor (Android) — **Shell Sprint 1 landed** (`android/` committed, debug APK CI)
 - Play Console Setup, Internal Testing Track
 - FCM für Non-Selfhost-User
 - Store-Assets (Screenshots, Beschreibung, Datenschutzerklärung)
@@ -1276,7 +1277,8 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 #### Akzeptanzkriterien M11
 
 - [x] Capacitor-Project-Scaffold vorhanden (`apps/android`, Config-Validate in CI) — #27
-- [ ] Capacitor-Build produktionsreif (`pnpm cap sync && cap build` erfolgreich)
+- [x] Capacitor-Debug-Build produktiv (`pnpm cap:sync` + `assembleDebug` / CI artifact)
+- [ ] Capacitor-Release-Build signiert (Sprint 2 sideload / Play AAB)
 - [ ] Health Connect API Declaration im Play Store korrekt ausgefüllt (`health_permissions` deklariert)
 - [ ] App besteht Google Play Pre-Launch-Report ohne kritische Fehler
 - [ ] FCM-Integration getestet (Push-Notification kommt an)

@@ -10,13 +10,23 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'de.correlcore.app',
   appName: 'CorrelCore',
-  webDir: '../web/build/client',
+  // Static SPA output from `pnpm --filter @correlcore/web build:capacitor`
+  webDir: '../web/build-capacitor',
   android: {
     path: 'android',
+    allowMixedContent: false,
   },
   server: {
     // url: 'http://localhost:5173',
     // cleartext: true,
+    androidScheme: 'https',
+  },
+  plugins: {
+    SplashScreen: {
+      launchAutoHide: true,
+      backgroundColor: '#7c6af5',
+      showSpinner: false,
+    },
   },
 };
 

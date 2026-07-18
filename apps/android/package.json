@@ -5,14 +5,16 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
-    "cap:sync": "cap sync",
-    "cap:copy": "cap copy",
+    "cap:sync": "cap sync android",
+    "cap:copy": "cap copy android",
     "cap:open": "cap open android",
-    "validate": "node scripts/validate-config.mjs"
+    "assets:brand": "python3 scripts/generate-brand-assets.py",
+    "validate": "node scripts/validate-config.mjs",
+    "assemble:debug": "cd android && ./gradlew assembleDebug"
   },
   "devDependencies": {
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/cli": "^8.4.2",
-    "@capacitor/core": "^7.0.0"
+    "@capacitor/android": "7.6.7",
+    "@capacitor/cli": "7.6.7",
+    "@capacitor/core": "7.6.7"
   }
 }

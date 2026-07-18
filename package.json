@@ -26,8 +26,9 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "quality:m1": "./scripts/quality-gate-m1.sh",
-    "cap:sync": "pnpm --filter @correlcore/android cap:sync",
+    "cap:sync": "pnpm --filter @correlcore/web build:capacitor && pnpm --filter @correlcore/android cap:sync",
     "cap:open": "pnpm --filter @correlcore/android cap:open",
+    "cap:assemble:debug": "pnpm cap:sync && pnpm --filter @correlcore/android assemble:debug",
     "prepare": "git config core.hooksPath .husky || true"
   },
   "devDependencies": {
