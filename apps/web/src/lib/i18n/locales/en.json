@@ -1192,7 +1192,7 @@
       "thumb_alt": "Preview of insights in phase {n}",
       "collecting": {
         "expectation": "We are building your foundation. No patterns yet.",
-        "example": "Streak and entry counts — no insight cards.",
+        "example": "Entry history and counts — no insight cards.",
         "not_yet": "No insight cards, no correlations"
       },
       "early_patterns": {
@@ -1207,7 +1207,7 @@
       },
       "robust": {
         "expectation": "More stable patterns you can act on.",
-        "example": "Insight card with badge “Stable · n entries”.",
+        "example": "Insight card labeled “Stable · n entries”.",
         "not_yet": "Richer patterns need more days"
       }
     }

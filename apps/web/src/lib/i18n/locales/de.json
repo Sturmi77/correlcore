@@ -1192,7 +1192,7 @@
       "thumb_alt": "Vorschau der Erkenntnisse in Phase {n}",
       "collecting": {
         "expectation": "Wir bauen deine Datengrundlage auf. Noch keine Muster.",
-        "example": "Streak und Eintragszähler — keine Erkenntniskarten.",
+        "example": "Eintragsverlauf und Zähler — keine Erkenntniskarten.",
         "not_yet": "Keine Insight-Karten, keine Korrelationen"
       },
       "early_patterns": {
@@ -1207,7 +1207,7 @@
       },
       "robust": {
         "expectation": "Stabilere Muster zum Einordnen und Handeln.",
-        "example": "Insight-Karte mit Badge „Stabil · n Einträge“.",
+        "example": "Insight-Karte mit Kennzeichnung „Stabil · n Einträge“.",
         "not_yet": "Erweiterte Muster brauchen noch mehr Tage"
       }
     }

@@ -58,7 +58,7 @@ One composition: title + one intro sentence + four phase rows + one CTA + one fo
 │                                             │
 │  ┌─────┐ 1  Daten sammeln · Tag 1–6         │
 │  │thumb│  Noch keine Muster.                │
-│  └─────┘  Bsp: Streak / Eintragszähler      │
+│  └─────┘  Bsp: Eintragsverlauf / Zähler     │
 │                                             │
 │  ┌─────┐ 2  Erste Muster · Tag 7–13         │
 │  │thumb│  Vorsichtige Hinweise.             │
