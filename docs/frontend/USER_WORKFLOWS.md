@@ -87,15 +87,15 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 - `onboarding_retro_completed` preference is set
 - User is not redirected back to onboarding on subsequent Home visits
 - User can log first entry from Home
-- After the first successful entry, user sees the maturity expectation card (phases 1–4) once — see [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md)
+- Before tag selection, user sees the maturity expectation card (phases 1–4) once — see [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md)
 
-**Entry routes:** `/` with auto-open first `EntrySheet` when `entry_count === 0` AND `!onboarding_retro_completed`. `/onboarding` redirects to `/` (wizard remains at `/onboarding?preview=1`).
+**Entry routes:** `/` cold start when `entry_count === 0` AND `!onboarding_retro_completed`. `/onboarding` redirects to `/` (wizard remains at `/onboarding?preview=1`).
 
-**Primary flow (ADR-0030 amendment):** Tags live in the first `EntrySheet` on Home:
+**Primary flow (ADR-0030 amendment + maturity intro):**
 
-1. Home opens `EntrySheet` with `OnboardingTagSuggestions`
-2. First autosave → `POST /onboarding/complete`
-3. One-time **maturity expectation card** (phases 1–4) → dismiss → normal Home
+1. Home opens one-time **maturity expectation card** (phases 1–4)
+2. Dismiss → `EntrySheet` with `OnboardingTagSuggestions`
+3. First autosave → `POST /onboarding/complete` → normal Home
 
 **Legacy routes (still in repo; server redirects to `/onboarding` → `/`):**
 
@@ -164,7 +164,7 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 
 **Success criteria:**
 
-- User has already seen the one-time onboarding maturity expectation card (W2), or can open `InsightJourneyExplainer`
+- User saw the maturity expectation card during W2 (before tags), or can open `InsightJourneyExplainer`
 - User sees maturity phase explanation on Insights / Home journey UI
 - Phase-appropriate empty state or first insight card is visible
 - User understands next milestone (entries until next phase)

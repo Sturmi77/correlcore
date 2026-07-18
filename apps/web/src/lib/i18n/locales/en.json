@@ -1185,7 +1185,8 @@
     "maturity_intro": {
       "title": "How your insights grow",
       "intro": "CorrelCore finds patterns in your data over time. The first days build your foundation — insights grow with you.",
-      "cta": "Got it — keep tracking",
+      "tag_hint": "Next, pick tags you will reuse often — later patterns need that repetition.",
+      "cta": "Continue to tags",
       "close": "Close",
       "footer": "Statements stay descriptive, not a diagnosis.",
       "thumb_alt": "Preview of insights in phase {n}",

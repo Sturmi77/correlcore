@@ -1185,7 +1185,8 @@
     "maturity_intro": {
       "title": "Wie deine Erkenntnisse wachsen",
       "intro": "CorrelCore findet Muster in deinen Daten über Zeit. Die ersten Tage dienen dem Aufbau — Erkenntnisse wachsen mit.",
-      "cta": "Verstanden — weiter tracken",
+      "tag_hint": "Wähle als Nächstes Tags, die du oft wiederholst — nur so können spätere Muster entstehen.",
+      "cta": "Weiter zu den Tags",
       "close": "Schliessen",
       "footer": "Aussagen bleiben beschreibend, keine Diagnose.",
       "thumb_alt": "Vorschau der Erkenntnisse in Phase {n}",

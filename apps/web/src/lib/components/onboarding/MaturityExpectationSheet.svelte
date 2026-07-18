@@ -34,6 +34,9 @@
   </header>
 
   <p class="maturity-intro__intro">{$_('onboarding.maturity_intro.intro')}</p>
+  <p class="maturity-intro__tag-hint" data-testid="maturity-intro-tag-hint">
+    {$_('onboarding.maturity_intro.tag_hint')}
+  </p>
 
   <ol class="maturity-intro__phases">
     {#each MATURITY_INTRO_PHASES as phase, index}
@@ -95,7 +98,17 @@
   }
 
   .maturity-intro__intro {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-2);
+  }
+
+  .maturity-intro__tag-hint {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-offset);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    line-height: 1.5;
   }
 
   .maturity-intro__phases {

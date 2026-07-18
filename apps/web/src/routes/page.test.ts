@@ -28,10 +28,12 @@ describe('/ home screen ownership contract', () => {
     expect(source).not.toContain('shouldShowMaturityMilestone');
   });
 
-  it('shows the one-time maturity expectation sheet after the first entry', () => {
+  it('shows the maturity expectation sheet before first-entry tag onboarding', () => {
     expect(source).toContain('MaturityExpectationSheet');
     expect(source).toContain('shouldShowMaturityExpectationIntro');
     expect(source).toContain('onboarding_maturity_intro_seen');
+    // Entry sheet opens only after the intro was seen.
+    expect(source).toContain('userPreferences.onboarding_maturity_intro_seen');
   });
 
   it('does not duplicate app navigation or session controls on Home', () => {

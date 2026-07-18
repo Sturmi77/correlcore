@@ -1,4 +1,5 @@
 import type { UserPreferencesResponse } from '$lib/api/preferences';
+import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
 
 /** Phases shown on the one-time onboarding maturity expectation card. */
 export const MATURITY_INTRO_PHASES = [
@@ -18,8 +19,8 @@ export const MATURITY_INTRO_THUMBS: Record<MaturityIntroPhase, string> = {
 };
 
 /**
- * Show the expectation sheet once the user has at least one entry and has not
- * dismissed the intro. Never while the entry sheet is open.
+ * Show the expectation sheet once, before first-entry tag onboarding.
+ * Never while the entry sheet is already open.
  */
 export function shouldShowMaturityExpectationIntro(options: {
   preferences: UserPreferencesResponse | null | undefined;
@@ -29,5 +30,5 @@ export function shouldShowMaturityExpectationIntro(options: {
   const { preferences, entryCount, entrySheetOpen } = options;
   if (!preferences || entrySheetOpen) return false;
   if (preferences.onboarding_maturity_intro_seen) return false;
-  return (entryCount ?? 0) >= 1;
+  return shouldShowOnboardingTags(preferences, entryCount);
 }

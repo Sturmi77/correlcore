@@ -8,8 +8,8 @@ const prefs = {
   user_id: 'u1',
   analytics_enabled: true,
   digest_enabled: true,
-  onboarding_retro_completed: true,
-  onboarding_profile_completed: true,
+  onboarding_retro_completed: false,
+  onboarding_profile_completed: false,
   onboarding_maturity_intro_seen: false,
   dismissed_insight_keys: [],
   reached_milestone_keys: [],
@@ -19,11 +19,11 @@ const prefs = {
 };
 
 describe('shouldShowMaturityExpectationIntro', () => {
-  it('shows after the first entry when not yet seen', () => {
+  it('shows before first-entry tag onboarding', () => {
     expect(
       shouldShowMaturityExpectationIntro({
         preferences: prefs,
-        entryCount: 1,
+        entryCount: 0,
         entrySheetOpen: false,
       })
     ).toBe(true);
@@ -33,24 +33,31 @@ describe('shouldShowMaturityExpectationIntro', () => {
     expect(
       shouldShowMaturityExpectationIntro({
         preferences: prefs,
-        entryCount: 1,
+        entryCount: 0,
         entrySheetOpen: true,
       })
     ).toBe(false);
   });
 
-  it('hides with zero entries or after dismiss', () => {
+  it('hides after dismiss, after onboarding, or once entries exist', () => {
     expect(
       shouldShowMaturityExpectationIntro({
-        preferences: prefs,
+        preferences: { ...prefs, onboarding_maturity_intro_seen: true },
         entryCount: 0,
         entrySheetOpen: false,
       })
     ).toBe(false);
     expect(
       shouldShowMaturityExpectationIntro({
-        preferences: { ...prefs, onboarding_maturity_intro_seen: true },
-        entryCount: 3,
+        preferences: { ...prefs, onboarding_retro_completed: true },
+        entryCount: 0,
+        entrySheetOpen: false,
+      })
+    ).toBe(false);
+    expect(
+      shouldShowMaturityExpectationIntro({
+        preferences: prefs,
+        entryCount: 1,
         entrySheetOpen: false,
       })
     ).toBe(false);

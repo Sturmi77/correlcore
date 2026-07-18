@@ -170,25 +170,13 @@
     void loadInsights();
   }
 
-  $: if (
-    dashboardLoaded &&
-    $auth.status === 'authenticated' &&
-    dashboardSummary?.entry_count === 0 &&
-    userPreferences &&
-    !userPreferences.onboarding_retro_completed &&
-    !firstEntrySheetOpened &&
-    !entrySheetOpen &&
-    !isOpenEntryRequested($page.url.searchParams)
-  ) {
-    firstEntrySheetOpened = true;
-    openEntry(todayIso);
-  }
-
+  // Cold start: maturity expectation (pre-tags) → then first EntrySheet with tags.
   $: if (
     dashboardLoaded &&
     $auth.status === 'authenticated' &&
     !maturityIntroOpen &&
     !maturityIntroPersisting &&
+    !entrySheetOpen &&
     shouldShowMaturityExpectationIntro({
       preferences: userPreferences,
       entryCount: dashboardSummary?.entry_count,
@@ -196,6 +184,23 @@
     })
   ) {
     maturityIntroOpen = true;
+  }
+
+  $: if (
+    dashboardLoaded &&
+    $auth.status === 'authenticated' &&
+    dashboardSummary?.entry_count === 0 &&
+    userPreferences &&
+    !userPreferences.onboarding_retro_completed &&
+    userPreferences.onboarding_maturity_intro_seen &&
+    !maturityIntroOpen &&
+    !maturityIntroPersisting &&
+    !firstEntrySheetOpened &&
+    !entrySheetOpen &&
+    !isOpenEntryRequested($page.url.searchParams)
+  ) {
+    firstEntrySheetOpened = true;
+    openEntry(todayIso);
   }
 
   async function dismissMaturityIntro(): Promise<void> {
@@ -207,8 +212,8 @@
         user_id: $currentUser?.id ?? '',
         analytics_enabled: true,
         digest_enabled: true,
-        onboarding_retro_completed: true,
-        onboarding_profile_completed: true,
+        onboarding_retro_completed: false,
+        onboarding_profile_completed: false,
         dismissed_insight_keys: [],
         reached_milestone_keys: [],
         last_seen_insight_at: null,

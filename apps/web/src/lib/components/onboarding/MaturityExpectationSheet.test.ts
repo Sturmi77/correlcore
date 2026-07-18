@@ -13,6 +13,7 @@ describe('MaturityExpectationSheet contract', () => {
     expect(source).toContain('data-testid="maturity-expectation-cta"');
     expect(source).toContain('MATURITY_INTRO_THUMBS');
     expect(source).toContain('onboarding.maturity_intro');
+    expect(source).toContain('maturity-intro-tag-hint');
     expect(source).toContain("dispatch('dismiss')");
   });
 });

@@ -10,7 +10,7 @@ This document is the product concept for a **one-time onboarding expectation car
 
 ## 1. Problem
 
-Current cold start (ADR-0030 amendment) opens the first `EntrySheet` with tag suggestions and then lands the user on Home. Phase education exists only later via `InsightJourneyExplainer` and milestone cards. New users in Phase 1 (`collecting`, days 1–6) see **no insight cards** and may assume the product is broken.
+Cold start (ADR-0030) opens the first `EntrySheet` with tag suggestions. Without phase context, users may pick one-off tags and later interpret an empty Insights feed (Phase 1) as a product failure.
 
 ## 2. Goal
 
@@ -19,29 +19,30 @@ A single, scannable card — **„Wie deine Erkenntnisse wachsen“ / „How you
 1. Separates the four phases by entry-day ranges.
 2. Shows **one concrete example insight** and **one mini visual** per phase.
 3. States what is **not** available yet (especially: no correlations in phases 1–2).
-4. Keeps CorrelCore tone: descriptive, non-causal, non-medical.
+4. Frames tag choice: pick tags you will **reuse often**.
+5. Keeps CorrelCore tone: descriptive, non-causal, non-medical.
 
 ## 3. Placement
 
-Show **after the first successful entry**, not before.
+Show **before first-entry tag selection** (start of cold-start onboarding).
 
 ```mermaid
 flowchart LR
-  Home["Home entry_count=0"] --> Sheet["EntrySheet + Tags"]
-  Sheet --> Save["First autosave / onboarding complete"]
-  Save --> Card["Expectation card phases 1-4"]
-  Card --> Dismiss["Understood / keep tracking"]
-  Dismiss --> Home2["Home normal"]
+  Home["Home entry_count=0"] --> Card["Expectation card phases 1-4"]
+  Card --> Tags["EntrySheet + Tags"]
+  Tags --> Save["First autosave / onboarding complete"]
+  Save --> Home2["Home normal"]
 ```
 
 | Rule | Detail |
 | ---- | ------ |
-| Trigger | First time `entry_count` transitions `0 → ≥1` (or immediately after successful `POST /onboarding/complete` when tags were shown) |
-| Surface | Full-height Bottom Sheet / modal on Home (`/`) |
-| Blocking | Must **not** interrupt the first EntrySheet before save |
-| Dismiss | Explicit CTA only — no auto-dismiss |
-| Persist | Preference flag, e.g. `onboarding_maturity_intro_seen` (name TBD in implementation) |
-| Re-open | Content remains available via existing `InsightJourneyExplainer` (without thumbs) |
+| Trigger | `shouldShowOnboardingTags` is true **and** `!onboarding_maturity_intro_seen` |
+| Surface | Bottom Sheet on Home (`/`) before the first `EntrySheet` opens |
+| Ordering | Maturity card → dismiss → EntrySheet with tag suggestions |
+| Dismiss | CTA / backdrop / Escape all persist `onboarding_maturity_intro_seen` |
+| Persist | Preference `onboarding_maturity_intro_seen` (migration `029`) |
+| Deep link | `?openEntry=1` defers while the intro is pending (`GlobalEntrySheet`) |
+| Re-open | Content remains available via `InsightJourneyExplainer` (without thumbs) |
 
 ---
 
@@ -71,7 +72,7 @@ One composition: title + one intro sentence + four phase rows + one CTA + one fo
 │  │thumb│  Stabilere Muster.                 │
 │  └─────┘  Bsp: Insight-Karte Badge „Stabil“ │
 │                                             │
-│  [Verstanden — weiter tracken]              │
+│  [Weiter zu den Tags]                       │
 │  Aussagen bleiben beschreibend, keine       │
 │  Diagnose.                                  │
 └─────────────────────────────────────────────┘
@@ -100,7 +101,8 @@ Composite mock (placement reference):
 | -------- | -- |
 | Title | Wie deine Erkenntnisse wachsen |
 | Intro | CorrelCore findet Muster in deinen Daten über Zeit. Die ersten Tage dienen dem Aufbau — Erkenntnisse wachsen mit. |
-| CTA | Verstanden — weiter tracken |
+| Tag hint | Wähle als Nächstes Tags, die du oft wiederholst — nur so können spätere Muster entstehen. |
+| CTA | Weiter zu den Tags |
 | Footer | Aussagen bleiben beschreibend, keine Diagnose. |
 
 ### Per phase
@@ -124,7 +126,8 @@ Composite mock (placement reference):
 | -------- | -- |
 | Title | How your insights grow |
 | Intro | CorrelCore finds patterns in your data over time. The first days build your foundation — insights grow with you. |
-| CTA | Got it — keep tracking |
+| Tag hint | Next, pick tags you will reuse often — later patterns need that repetition. |
+| CTA | Continue to tags |
 | Footer | Statements stay descriptive, not a diagnosis. |
 
 ### Per phase
@@ -183,15 +186,15 @@ Suggested future i18n namespace (implementation PR): `onboarding.maturity_intro.
 
 **Concept**
 
-- [x] Placement does not block the first entry.
+- [x] Placement is before tag selection (informs vocabulary choice).
 - [x] Each phase has one mini visual + one example from a real insight family.
 - [x] Copy is non-causal / non-medical and aligned with ADR-0021.
 - [x] Assets and mock exist under `docs/assets/phase_matrix/screenshots/onboarding_expectation/`.
 
 **Implementation**
 
-- [x] Bottom sheet appears once after first entry when `!onboarding_maturity_intro_seen`.
-- [x] Dismiss persists preference; sheet does not reappear.
+- [x] Bottom sheet appears once before first-entry tags when `!onboarding_maturity_intro_seen`.
+- [x] Dismiss persists preference; then EntrySheet with tags opens.
 - [x] DE + EN strings registered; thumbs under `apps/web/static/onboarding/maturity/`.
 - [x] Backdrop / Escape / CTA all persist dismiss (avoids reopening loop).
 
@@ -204,6 +207,7 @@ apps/web/src/lib/components/onboarding/MaturityExpectationSheet.svelte
 apps/web/src/lib/utils/maturityExpectationIntro.ts
 apps/web/src/lib/i18n/locales/{de,en}.json  → onboarding.maturity_intro.*
 apps/web/static/onboarding/maturity/phase{1-4}_*.png
-apps/web/src/routes/+page.svelte → open sheet when shouldShowMaturityExpectationIntro
+apps/web/src/routes/+page.svelte → maturity sheet → then EntrySheet with tags
+apps/web/src/lib/components/entries/GlobalEntrySheet.svelte → defer ?openEntry=1 while intro pending
 backend/migrations/versions/029_onboarding_maturity_intro_seen.py
 ```
