@@ -64,11 +64,27 @@ Uncomment `server.url` in `capacitor.config.ts` to point at `http://localhost:51
 DSGVO Art. 9 consent is recorded server-side before import (`POST /api/v1/user/me/consents`).
 The `@capacitor-community/health-connect` plugin lands in a follow-up M11 sprint.
 
+## Release signing (Sprint 2)
+
+Sideload / GitHub Releases path: [`docs/selfhost/ANDROID_SIDELOAD.md`](../../docs/selfhost/ANDROID_SIDELOAD.md).
+
+```bash
+export ANDROID_KEYSTORE_PATH=/path/to/correlcore-upload.keystore
+export ANDROID_KEYSTORE_PASSWORD=...
+export ANDROID_KEY_ALIAS=correlcore
+export ANDROID_KEY_PASSWORD=...
+pnpm cap:assemble:release
+```
+
+CI secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. On `v*` tags the workflow attaches
+signed APK + AAB + `SHA256SUMS.txt` to the GitHub Release.
+
 ## CI
 
 [`.github/workflows/release-android.yml`](../../.github/workflows/release-android.yml):
 
 1. Validates Capacitor config (no SDK)
-2. Builds debug APK via JDK 21 + Android SDK (`assembleDebug`) and uploads the artifact
-
-Release signing and Play Store upload are Sprint 2+.
+2. Builds debug APK (`assembleDebug`) on PRs / main
+3. Builds **signed** release APK/AAB on `v*` tags / `workflow_dispatch` when
+   signing secrets are configured

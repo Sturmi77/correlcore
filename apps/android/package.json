@@ -10,7 +10,8 @@
     "cap:open": "cap open android",
     "assets:brand": "python3 scripts/generate-brand-assets.py",
     "validate": "node scripts/validate-config.mjs",
-    "assemble:debug": "cd android && ./gradlew assembleDebug"
+    "assemble:debug": "cd android && ./gradlew assembleDebug",
+    "assemble:release": "cd android && ./gradlew assembleRelease bundleRelease"
   },
   "devDependencies": {
     "@capacitor/android": "7.6.7",

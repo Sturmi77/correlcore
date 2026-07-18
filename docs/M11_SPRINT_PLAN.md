@@ -10,9 +10,10 @@ and [ADR-0006](adr/0006-cookie-auth-mit-capacitor-migration.md).
 testers **without Play Store first**, then enter Play **Internal / Closed
 Testing**. Exit criterion remains Play Closed Testing live (per design doc).
 
-**Status:** Sprint 1 (production Capacitor shell) **complete** — committed
-`apps/android/android/`, static SPA `build:capacitor`, debug APK via
-`pnpm cap:assemble:debug` / CI `assemble-debug`.
+**Status:** Sprint 1 **complete**; Sprint 2 (signed sideload channel) **complete**
+in code — signed `assembleRelease`/`bundleRelease`, CI attach on `v*` tags,
+[`docs/selfhost/ANDROID_SIDELOAD.md`](selfhost/ANDROID_SIDELOAD.md). Publishing
+a live GitHub Release asset still requires repository signing secrets.
 
 ## Current baseline
 
@@ -26,8 +27,8 @@ Testing**. Exit criterion remains Play Closed Testing live (per design doc).
 | Static SPA webDir (`build-capacitor`)        | Done   |
 | Brand icons / splash / `correlcore://` link  | Done   |
 | CI `assembleDebug` + APK artifact            | Done   |
+| Signed release APK/AAB in CI + sideload docs | Done   |
 | Bearer auth path for Capacitor (ADR-0006)    | Open   |
-| Signed release APK/AAB in CI                 | Open   |
 | Glance homescreen widget                     | Open   |
 | FCM / push in native shell                   | Open   |
 | Play Console listing + Data Safety           | Open   |
@@ -111,22 +112,22 @@ starts only after a sideload build is green.
 
 ### Work
 
-- [ ] Gradle release signing via env / GitHub Secrets
+- [x] Gradle release signing via env / GitHub Secrets
       (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
-      `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`).
-- [ ] Extend [`.github/workflows/release-android.yml`](../.github/workflows/release-android.yml):
-  - build web → `cap sync` → `assembleRelease` (APK) and/or `bundleRelease` (AAB)
-  - upload artifacts on `workflow_dispatch` and on `v*` tags
-- [ ] Attach APK (+ SHA-256) to GitHub Release notes (same tag flow as
-      container images, or a dedicated `android-v*` tag — pick one and document).
-- [ ] Short tester doc: `docs/selfhost/ANDROID_SIDELOAD.md` (or section under
-      install docs) covering Obtainium URL, permissions, API base URL.
-- [ ] Smoke checklist: cold start, login attempt, offline banner, logout.
+      `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`) or local `keystore.properties`.
+- [x] Extend [`.github/workflows/release-android.yml`](../.github/workflows/release-android.yml):
+  - build web → `cap sync` → `assembleRelease` + `bundleRelease`
+  - upload artifacts on `workflow_dispatch` and on `v*` tags (when secrets set)
+- [x] Attach APK + AAB + `SHA256SUMS.txt` to GitHub Release on `v*` tags
+      (same tag stream as container images — no separate `android-v*` tag).
+- [x] Tester doc: [`docs/selfhost/ANDROID_SIDELOAD.md`](selfhost/ANDROID_SIDELOAD.md)
+      (browser download, Obtainium, maintainer secrets, smoke checklist).
+- [x] Smoke checklist documented (auth success deferred to Sprint 3).
 
 ### Exit
 
-- At least one signed release APK is downloadable from GitHub Releases and
-  installs on Android 12+ without Play.
+- [x] Signed release APK/AAB build path green locally (`pnpm cap:assemble:release`).
+- [ ] First public GitHub Release asset published (ops: add signing secrets, push `v*` tag).
 
 ### Out of scope here
 

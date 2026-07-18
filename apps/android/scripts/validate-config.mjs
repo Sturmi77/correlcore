@@ -15,6 +15,8 @@ const required = [
   'android/app/build.gradle',
   'android/app/src/main/AndroidManifest.xml',
   'android/gradlew',
+  'scripts/prepare-release-signing.sh',
+  'keystore.properties.example',
 ];
 
 for (const rel of required) {
