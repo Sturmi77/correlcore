@@ -26,8 +26,14 @@ vi.mock('$lib/offline/session', () => ({
   prepareOfflineDataForAuthenticatedUser: vi.fn(),
 }));
 
+vi.mock('$lib/native/pushNotifications', () => ({
+  enablePushNotifications: vi.fn(),
+  disablePushNotifications: vi.fn(),
+}));
+
 import * as authApi from '$lib/api/auth';
 import * as offlineSession from '$lib/offline/session';
+import { disablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
 import {
   _resetForTests,
@@ -152,6 +158,21 @@ describe('login / logout / setUser', () => {
     expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(1);
     expect(offlineSession.clearOfflineDataForLogout).toHaveBeenCalledTimes(1);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
+  });
+
+  it('logout unregisters push before clearing the session', async () => {
+    await setUser(fakeUser);
+    vi.mocked(disablePushNotifications).mockClear();
+    vi.mocked(authApi.logout).mockClear();
+    vi.mocked(authApi.logout).mockResolvedValueOnce({ message: 'ok' });
+
+    await logout();
+
+    expect(disablePushNotifications).toHaveBeenCalledTimes(1);
+    expect(authApi.logout).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(disablePushNotifications).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(authApi.logout).mock.invocationCallOrder[0]
+    );
   });
 
   it('setUser sets authenticated state without an API call', async () => {

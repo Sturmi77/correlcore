@@ -4,8 +4,9 @@
  * Never persisted to localStorage / sessionStorage. Cleared on logout and
  * failed refresh. Browser cookie path does not use this module.
  *
- * Android Glance widget: access token is additionally mirrored to a native
- * SharedPreferences store via {@link mirrorWidgetCredentials} (M11 exception).
+ * Android Glance widget: access + refresh are mirrored to a native
+ * SharedPreferences store via {@link mirrorWidgetCredentials} (M11 exception)
+ * so WorkManager can rotate after the access JWT TTL.
  */
 
 import { clearWidgetCredentials, mirrorWidgetCredentials } from './widgetCredentials';
@@ -28,7 +29,7 @@ export function setSessionTokens(tokens: {
 }): void {
   if (tokens.access_token) accessToken = tokens.access_token;
   if (tokens.refresh_token) refreshToken = tokens.refresh_token;
-  void mirrorWidgetCredentials(accessToken);
+  void mirrorWidgetCredentials(accessToken, refreshToken);
 }
 
 export function clearSessionTokens(): void {

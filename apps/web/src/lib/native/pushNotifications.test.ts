@@ -22,8 +22,10 @@ vi.mock('@capacitor/push-notifications', () => ({
 }));
 
 import { isCapacitorBuild } from '$lib/api/platform';
+import { unregisterPushToken } from '$lib/api/devices';
 import {
   _resetPushNotificationsForTests,
+  disablePushNotifications,
   enablePushNotifications,
   isPushAvailable,
 } from './pushNotifications';
@@ -34,7 +36,7 @@ describe('pushNotifications', () => {
     vi.mocked(isCapacitorBuild).mockReturnValue(true);
     requestPermissions.mockReset().mockResolvedValue({ receive: 'granted' });
     register.mockReset().mockResolvedValue(undefined);
-    addListener.mockClear();
+    addListener.mockReset().mockResolvedValue({ remove: vi.fn() });
   });
 
   afterEach(() => {
@@ -102,5 +104,26 @@ describe('pushNotifications', () => {
 
     expect(requestPermissions).not.toHaveBeenCalled();
     expect(register).not.toHaveBeenCalled();
+  });
+
+  it('disablePushNotifications unregisters the current FCM token', async () => {
+    stubCapacitor({
+      PushAvailability: {
+        isAvailable: vi.fn().mockResolvedValue({ available: true }),
+      },
+    });
+    addListener.mockImplementation(async (event: string, cb: (e: { value: string }) => void) => {
+      if (event === 'registration') {
+        cb({ value: 'fcm-token-1' });
+      }
+      return { remove: vi.fn() };
+    });
+
+    await enablePushNotifications();
+    vi.mocked(unregisterPushToken).mockClear();
+
+    await disablePushNotifications();
+
+    expect(unregisterPushToken).toHaveBeenCalledWith('fcm-token-1');
   });
 });

@@ -38,12 +38,16 @@ See [`docs/API.md`](../API.md) §7b.
 
 Capacitor keeps JWTs **in memory** for the WebView (ADR-0006). The Glance
 process cannot read that heap, so login/refresh/logout also mirrors the
-**access token** + **API base** into an app-private SharedPreferences file
-(`correlcore_widget`) via the Capacitor plugin `WidgetCredentials`.
+**access token**, **refresh token**, and **API base** into an app-private
+SharedPreferences file (`correlcore_widget`) via the Capacitor plugin
+`WidgetCredentials`.
 
-- Cleared on logout and on HTTP 401/403 from the widget poll.
-- Refresh tokens are **not** written to the widget store.
+- Cleared on logout and when refresh + summary both fail (401/403).
+- On 401 from `GET /widget/summary`, WorkManager calls
+  `POST /auth/refresh?include_access_token=true` with the mirrored refresh
+  token (body path, no cookies), updates both tokens, and retries once.
 - Browser / cookie builds never call the plugin.
+- Never write these tokens to web `localStorage` (ADR-0006).
 
 Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 `sessionTokens` / `apiBase`).
@@ -64,8 +68,10 @@ Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 - [ ] Android 14 device/emulator — light + dark, 4×1 and 4×2
 - [ ] Signed-out state shows “Sign in to see mood”
 - [ ] After login, widget updates within one WorkManager run
+- [ ] Leave app backgrounded >15 minutes → widget still refreshes (refresh rotate)
 - [ ] “+ Add entry” opens the Capacitor app on the new-entry sheet
 - [ ] Airplane mode → status degrades gracefully; reconnect recovers
+- [ ] Logout → widget shows signed-out and stops polling with credentials
 
 ## Permissions
 

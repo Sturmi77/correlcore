@@ -6,19 +6,20 @@ import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 
 /**
- * Capacitor bridge: WebView mirrors the in-memory Bearer token for Glance.
+ * Capacitor bridge: WebView mirrors in-memory Bearer tokens for Glance.
  */
 @CapacitorPlugin(name = "WidgetCredentials")
 class WidgetCredentialsPlugin : Plugin() {
     @PluginMethod
     fun set(call: PluginCall) {
         val accessToken = call.getString("accessToken")
+        val refreshToken = call.getString("refreshToken")
         val apiBase = call.getString("apiBase")
-        if (accessToken.isNullOrBlank() || apiBase.isNullOrBlank()) {
-            call.reject("accessToken and apiBase are required")
+        if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank() || apiBase.isNullOrBlank()) {
+            call.reject("accessToken, refreshToken and apiBase are required")
             return
         }
-        WidgetCredentialsStore.setCredentials(context, accessToken, apiBase)
+        WidgetCredentialsStore.setCredentials(context, accessToken, refreshToken, apiBase)
         WidgetRefreshWorker.enqueueImmediate(context)
         call.resolve()
     }
