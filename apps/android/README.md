@@ -59,6 +59,13 @@ pnpm cap:assemble:debug
 Uncomment `server.url` in `capacitor.config.ts` to point at `http://localhost:5173`
 (use `10.0.2.2` for the Android emulator), then `pnpm cap:sync` while `pnpm dev` runs.
 
+## Homescreen widget (Sprint 4)
+
+Jetpack Glance widget + WorkManager (15 min). Docs: [`docs/features/WIDGET.md`](../../docs/features/WIDGET.md).
+
+After login in the Capacitor app, add the **CorrelCore check-in** widget from the
+launcher widget picker. “+ Add entry” uses `correlcore://entries/new`.
+
 ## Health Connect (M8/M11)
 
 DSGVO Art. 9 consent is recorded server-side before import (`POST /api/v1/user/me/consents`).

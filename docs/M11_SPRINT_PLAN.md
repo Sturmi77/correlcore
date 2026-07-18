@@ -28,7 +28,7 @@ auth + API base). Ops for live GitHub Release / Play: [#429](https://github.com/
 | CI `assembleDebug` + APK artifact            | Done   |
 | Signed release APK/AAB in CI + sideload docs | Done   |
 | Bearer auth path for Capacitor (ADR-0006)    | Done   |
-| Glance homescreen widget                     | Open   |
+| Glance homescreen widget                     | Done (Sprint 4) |
 | FCM / push in native shell                   | Open   |
 | Play Console listing + Data Safety           | Open   |
 
@@ -164,16 +164,17 @@ Scope detail: [`M11_NOTES.md`](M11_NOTES.md).
 
 ### Work
 
-- [ ] `GET /api/v1/widget/summary` (≤1 KB, JWT, mood avg / entry status).
-- [ ] Jetpack Glance `AppWidget` + WorkManager (15 min, battery-aware).
-- [ ] Deep-link “+ Add entry” → `/entries/new` in WebView.
-- [ ] QA: Android 12/14, 4×1 and 4×2, light/dark.
-- [ ] `docs/features/WIDGET.md`.
+- [x] `GET /api/v1/widget/summary` (≤1 KB, JWT, mood avg / entry status).
+- [x] Jetpack Glance `AppWidget` + WorkManager (15 min, battery-aware).
+- [x] Deep-link “+ Add entry” → `/entries/new` in WebView.
+- [ ] QA: Android 12/14, 4×1 and 4×2, light/dark (device checklist in `WIDGET.md`).
+- [x] `docs/features/WIDGET.md`.
 
 ### Exit
 
 - Widget acceptance criteria in `M11_NOTES.md` checked (except Play listing
-  line, which moves with Sprint 6).
+  line, which moves with Sprint 6). Device QA remains a manual gate before
+  Sprint 6 listing polish.
 
 ---
 

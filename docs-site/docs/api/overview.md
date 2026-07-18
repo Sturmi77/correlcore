@@ -88,6 +88,7 @@ Custom symptom slugs are HMAC-stabilized ([ADR-0039](https://github.com/Sturmi77
 | `POST` | `/api/v1/insights/regenerate`           | On-demand insight run (1×/hour)                 |
 | `POST` | `/api/v1/insights/trigger`              | Admin manual worker run                         |
 | `GET`  | `/api/v1/dashboard/summary`             | Home summary widgets                            |
+| `GET`  | `/api/v1/widget/summary`                | Android Glance homescreen widget (≤1 KB)        |
 | `GET`  | `/api/v1/analysis/notes/marker-summary` | Note-marker mood aggregates                     |
 | `GET`  | `/api/v1/analysis/...`                  | Trends / analysis surfaces                      |
 

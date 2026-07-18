@@ -51,7 +51,7 @@ These proceed without Play / without signing secrets:
 - [x] Sprint 1 — Capacitor shell + debug APK CI
 - [x] Sprint 2 — signed build path + sideload docs
 - [ ] Sprint 3 — Bearer auth + API base URL in WebView
-- [ ] Sprint 4 — Widget API + Glance
+- [x] Sprint 4 — Widget API + Glance (code); device QA still open — see `docs/features/WIDGET.md`
 - [ ] Sprint 5 — FCM (needs Firebase project — separate ops)
 - [ ] Sprint 6–7 — Play listing / Closed Testing / quality gate
 

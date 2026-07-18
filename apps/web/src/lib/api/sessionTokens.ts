@@ -3,7 +3,12 @@
  *
  * Never persisted to localStorage / sessionStorage. Cleared on logout and
  * failed refresh. Browser cookie path does not use this module.
+ *
+ * Android Glance widget: access token is additionally mirrored to a native
+ * SharedPreferences store via {@link mirrorWidgetCredentials} (M11 exception).
  */
+
+import { clearWidgetCredentials, mirrorWidgetCredentials } from './widgetCredentials';
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -23,14 +28,17 @@ export function setSessionTokens(tokens: {
 }): void {
   if (tokens.access_token) accessToken = tokens.access_token;
   if (tokens.refresh_token) refreshToken = tokens.refresh_token;
+  void mirrorWidgetCredentials(accessToken);
 }
 
 export function clearSessionTokens(): void {
   accessToken = null;
   refreshToken = null;
+  void clearWidgetCredentials();
 }
 
 /** Test-only. */
 export function _resetSessionTokensForTests(): void {
-  clearSessionTokens();
+  accessToken = null;
+  refreshToken = null;
 }

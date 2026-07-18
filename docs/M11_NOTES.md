@@ -83,13 +83,13 @@ See also [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md) Sprints 4+.
 
 ### Widget
 
-- [ ] `GET /api/v1/widget/summary` returns correct data within 200 ms
-- [ ] Widget renders today's mood average or "No entry yet"
-- [ ] "+ Add entry" deep-link opens entry form in the Capacitor app
-- [ ] WorkManager sync runs every 15 minutes (battery-aware)
-- [ ] Widget renders correctly in light and dark system themes
-- [ ] Widget QA passed on Android 12 and Android 14
-- [ ] 4×1 and 4×2 size variants display without truncation
+- [x] `GET /api/v1/widget/summary` returns correct data within 200 ms
+- [x] Widget renders today's mood average or "No entry yet"
+- [x] "+ Add entry" deep-link opens entry form in the Capacitor app
+- [x] WorkManager sync runs every 15 minutes (battery-aware)
+- [ ] Widget renders correctly in light and dark system themes (manual QA)
+- [ ] Widget QA passed on Android 12 and Android 14 (manual QA)
+- [ ] 4×1 and 4×2 size variants display without truncation (manual QA)
 - [ ] Play Store listing updated
 - [ ] CI green (Android release build)
 

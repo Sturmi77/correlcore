@@ -4,4 +4,7 @@
     <string name="title_activity_main">CorrelCore</string>
     <string name="package_name">de.correlcore.app</string>
     <string name="custom_url_scheme">correlcore</string>
+    <string name="widget_name">CorrelCore check-in</string>
+    <string name="widget_description">Today\'s entry status, 7-day mood average, and a shortcut to add an entry.</string>
+    <string name="widget_loading">CorrelCore</string>
 </resources>

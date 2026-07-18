@@ -96,6 +96,7 @@ ignore = ["E501"]
 "app/api/v1/endpoints/tags.py" = ["B008"]
 "app/api/v1/endpoints/symptoms.py" = ["B008"]
 "app/api/v1/endpoints/user.py" = ["B008"]
+"app/api/v1/endpoints/widget.py" = ["B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

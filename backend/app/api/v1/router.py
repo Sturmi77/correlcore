@@ -20,6 +20,7 @@ from app.api.v1.endpoints import (
     sync,
     tags,
     user,
+    widget,
 )
 
 api_router = APIRouter()
@@ -64,6 +65,9 @@ api_router.include_router(analysis.router, prefix="/analysis", tags=["analysis"]
 
 # Dashboard summary (M3 insight confidence scale)
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+
+# Android Glance widget summary (M11 Sprint 4)
+api_router.include_router(widget.router, prefix="/widget", tags=["widget"])
 
 # M3 generated insights (read-only API surface; worker generation is scheduled)
 api_router.include_router(insights.router, prefix="/insights", tags=["insights"])

@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (M11 Sprint 4 — Widget API + Glance)
+
+- `GET /api/v1/widget/summary` — compact JWT summary (`has_entry`, `mood_avg_7d`,
+  `suggested_next_entry_at`) for homescreen polling; see `docs/API.md` §7b.
+- Jetpack Glance `CorrelCoreWidget` + WorkManager (15 min, battery-aware) under
+  `apps/android/…/widget/`; “+ Add entry” deep-links to `correlcore://entries/new`.
+- Capacitor plugin `WidgetCredentials` mirrors in-memory access token + API base
+  into app-private SharedPreferences (ADR-0006 exception for Glance only).
+- Feature doc: [`docs/features/WIDGET.md`](docs/features/WIDGET.md).
+
 ### Added (M11 Sprint 3 — Capacitor Bearer auth)
 
 - Capacitor builds (`VITE_CAPACITOR=1`) use in-memory Bearer tokens via `apiFetch`
