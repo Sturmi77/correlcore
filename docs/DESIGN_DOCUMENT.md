@@ -1264,7 +1264,8 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ### M11 — Android-App für Play Store (Woche 26–28)
 
-> Implementierungsnotizen: [`M11_NOTES.md`](M11_NOTES.md). Capacitor-Scaffold (#27) liegt unter
+> Implementierungsnotizen: [`M11_NOTES.md`](M11_NOTES.md). Sprint-Plan inkl. Pre-Store-APK:
+> [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md). Capacitor-Scaffold (#27) liegt unter
 > `apps/android/`; Play-Store-/Widget-Scope bleibt M11 Exit.
 
 - PWA → Capacitor (Android) — **Scaffold landed** (`apps/android`, CI validate)
