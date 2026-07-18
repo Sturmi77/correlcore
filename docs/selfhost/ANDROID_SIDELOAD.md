@@ -135,8 +135,14 @@ localStorage — not a secret). Sign in again after changing servers.
 
 The API always allows the Capacitor WebView origin `https://localhost`
 (see `settings.cors_allow_origins`). Still list your browser/PWA web origin
-in `CORS_ORIGINS`. Selfhost HTTP API bases (`http://…/api/v1`) are permitted
-by the sideload APK (`usesCleartextTraffic` / Capacitor `cleartext`).
+in `CORS_ORIGINS`.
+
+**Root cause for “Tailscale works but APK login fails” (fixed ≥ v1.0.4):** the
+WebView document is `https://localhost` while sideload builds often bake an
+`http://<tailnet-ip>:…/api/v1` base. Chromium blocks that as **mixed content**
+unless `android.allowMixedContent: true` (in addition to
+`usesCleartextTraffic` / `server.cleartext`). Native Tailscale apps are
+unaffected because they are not an HTTPS WebView page.
 
 **Push / FCM:** GitHub Release APKs typically ship **without** `google-services.json`,
 so Firebase push stays off. That is intentional for Obtainium / future F-Droid.

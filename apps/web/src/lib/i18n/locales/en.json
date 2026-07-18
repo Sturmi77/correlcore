@@ -1224,7 +1224,7 @@
     "title": "Error",
     "generic": "Something went wrong.",
     "network": "Could not reach the server. Check your connection and API URL.",
-    "network_capacitor": "Could not reach the server. Check your connection and API URL (https://…/api/v1 or http://…/api/v1). The API must be reachable from the phone network (e.g. Tailscale).",
+    "network_capacitor": "API request failed. Check the API URL (must end with …/api/v1). For http:// selfhost the app must allow mixed content (WebView is https://localhost) — Tailscale alone is not enough.",
     "upstream": "The API is temporarily unreachable. Try again shortly.",
     "server": "The server reported an error. Please try again later.",
     "validation": "The request was invalid. Please check your input.",

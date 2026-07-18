@@ -36,9 +36,17 @@ export class ApiError extends Error {
 export class NetworkError extends Error {
   constructor(
     public readonly path: string,
-    cause?: unknown
+    cause?: unknown,
+    /** Resolved absolute/relative API base at failure time (diagnostics). */
+    public readonly apiBase?: string
   ) {
-    super(`Network error on ${path}`);
+    const causeMsg = cause instanceof Error ? cause.message : '';
+    const baseHint = apiBase ? ` base=${apiBase}` : '';
+    super(
+      causeMsg
+        ? `Network error on ${path}${baseHint}: ${causeMsg}`
+        : `Network error on ${path}${baseHint}`
+    );
     this.name = 'NetworkError';
     if (cause) (this as { cause?: unknown }).cause = cause;
   }
@@ -126,12 +134,13 @@ async function parseError(res: Response, path: string): Promise<ApiError> {
 }
 
 async function requestWithRefresh(path: string, init: RequestInit, skipAuthRefresh = false) {
-  const url = `${getApiBase()}${path}`;
+  const apiBase = getApiBase();
+  const url = `${apiBase}${path}`;
   let res: Response;
   try {
     res = await fetch(url, init);
   } catch (err) {
-    throw new NetworkError(path, err);
+    throw new NetworkError(path, err, apiBase);
   }
 
   if (res.status === 401 && !skipAuthRefresh) {
@@ -143,7 +152,7 @@ async function requestWithRefresh(path: string, init: RequestInit, skipAuthRefre
       try {
         res = await fetch(url, replay);
       } catch (err) {
-        throw new NetworkError(path, err);
+        throw new NetworkError(path, err, apiBase);
       }
     }
   }

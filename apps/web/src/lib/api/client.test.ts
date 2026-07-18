@@ -82,6 +82,20 @@ describe('apiFetch — error handling', () => {
     fetchMock.mockRejectedValueOnce(new Error('offline'));
     await expect(apiFetch('/foo')).rejects.toBeInstanceOf(NetworkError);
   });
+
+  it('includes API base and cause message on NetworkError', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('Mixed Content blocked'));
+    try {
+      await apiFetch('/auth/login');
+      expect.unreachable('expected NetworkError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(NetworkError);
+      const networkErr = err as NetworkError;
+      expect(networkErr.apiBase).toBeTruthy();
+      expect(networkErr.message).toContain('Mixed Content blocked');
+      expect(networkErr.message).toContain(String(networkErr.apiBase));
+    }
+  });
 });
 
 describe('apiFetch — single-flight refresh', () => {
