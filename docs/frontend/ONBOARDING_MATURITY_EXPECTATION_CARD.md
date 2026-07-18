@@ -70,7 +70,7 @@ One composition: title + one intro sentence + four phase rows + one CTA + one fo
 │                                             │
 │  ┌─────┐ 4  Robust · Tag 30+                │
 │  │thumb│  Stabilere Muster.                 │
-│  └─────┘  Bsp: Insight-Karte Badge „Stabil“ │
+│  └─────┘  Bsp: Insight-Karte „Stabil“       │
 │                                             │
 │  [Weiter zu den Tags]                       │
 │  Aussagen bleiben beschreibend, keine       │
@@ -109,10 +109,10 @@ Composite mock (placement reference):
 
 | Phase | Key | Label | Range | Expectation | Example | Not yet |
 | ----- | --- | ----- | ----- | ----------- | ------- | ------- |
-| 1 | `collecting` | Daten sammeln | Tag 1–6 | Wir bauen deine Datengrundlage auf. Noch keine Muster. | Streak und Eintragszähler — keine Erkenntniskarten. | Keine Insight-Karten, keine Korrelationen |
+| 1 | `collecting` | Daten sammeln | Tag 1–6 | Wir bauen deine Datengrundlage auf. Noch keine Muster. | Eintragsverlauf und Zähler — keine Erkenntniskarten. | Keine Insight-Karten, keine Korrelationen |
 | 2 | `early_patterns` | Erste Muster | Tag 7–13 | Erste Hinweise werden sichtbar. Beobachte, schließe nicht. | „Montags liegt die Stimmung oft unter deinem Durchschnitt.“ | Keine Tag↔Stimmung-Korrelationen |
 | 3 | `provisional` | Vorläufige Erkenntnisse | Tag 14–29 | Zusammenhänge entstehen — mit ausdrücklicher Unsicherheit. | „Tage mit Spaziergang liegen bei dir oft bei höherer Stimmung.“ | Noch nicht „bestätigt“ / „stabil“ |
-| 4 | `robust` | Robuste Erkenntnisse | Tag 30+ | Stabilere Muster zum Einordnen und Handeln. | Insight-Karte mit Badge „Stabil · n Einträge“. | ML/Lag erst ab ~90 Tagen (nicht prominent nennen) |
+| 4 | `robust` | Robuste Erkenntnisse | Tag 30+ | Stabilere Muster zum Einordnen und Handeln. | Insight-Karte mit Kennzeichnung „Stabil · n Einträge“. | ML/Lag erst ab ~90 Tagen (nicht prominent nennen) |
 
 **Insight families referenced:** Phase 2 → `weekday_pattern`; Phase 3 → `pointbiserial` (or `spearman`); Phase 4 → same card UI with maturity badge `robust` / „Stabil“.
 
@@ -134,10 +134,10 @@ Composite mock (placement reference):
 
 | Phase | Label | Range | Expectation | Example | Not yet |
 | ----- | ----- | ----- | ----------- | ------- | ------- |
-| 1 | Collecting Data | Days 1–6 | We are building your foundation. No patterns yet. | Streak and entry counts — no insight cards. | No insight cards, no correlations |
+| 1 | Collecting Data | Days 1–6 | We are building your foundation. No patterns yet. | Entry history and counts — no insight cards. | No insight cards, no correlations |
 | 2 | First Patterns | Days 7–13 | Early hints appear. Observe; do not conclude. | “Mondays currently line up with lower mood than your overall average.” | No tag↔mood correlations |
 | 3 | Provisional Insights | Days 14–29 | Relationships emerge — with explicit uncertainty. | “Days tagged Walk currently line up with higher mood scores in your data.” | Not yet “confirmed” / “stable” |
-| 4 | Robust Insights | Day 30+ | More stable patterns you can act on. | Insight card with badge “Stable · n entries”. | ML/Lag only from ~90 days (do not highlight in onboarding) |
+| 4 | Robust Insights | Day 30+ | More stable patterns you can act on. | Insight card labeled “Stable · n entries”. | ML/Lag only from ~90 days (do not highlight in onboarding) |
 
 ---
 
