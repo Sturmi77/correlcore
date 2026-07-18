@@ -3,7 +3,8 @@
 Status: **Planned**  
 Last updated: 2026-07-18  
 Related: ADR-0006, ADR-0004, Issue [#453](https://github.com/Sturmi77/correlcore/issues/453)  
-Surfaces: **Web (browser)**, **PWA (standalone)**, **Capacitor Android**
+Surfaces: **Web (browser)**, **PWA (standalone)**, **Capacitor Android**  
+**Sprint plan:** [`docs/PERSISTENT_SESSION_SPRINT_PLAN.md`](../PERSISTENT_SESSION_SPRINT_PLAN.md) (PS-0 … PS-3)
 
 ---
 
