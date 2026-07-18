@@ -1,8 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
-import { fetchTimeseries } from '$lib/api/stats';
+import { fetchSymptomHeatmap, fetchTimeseries } from '$lib/api/stats';
 import { listEntries } from '$lib/api/entries';
+import { ApiError } from '$lib/api/client';
 import Page from './+page.svelte';
 
 vi.mock('svelte-i18n', async () => {
@@ -213,5 +214,17 @@ describe('/trends page', () => {
 
     const callsAfterRangeChange = vi.mocked(fetchTimeseries).mock.calls.slice(1);
     expect(callsAfterRangeChange.every((call) => call[0] === 'year')).toBe(true);
+  });
+
+  it('keeps Compare usable when symptom heatmap returns 401', async () => {
+    vi.mocked(fetchSymptomHeatmap).mockRejectedValueOnce(
+      new ApiError(401, 'Could not validate credentials', '/entries/stats/symptoms')
+    );
+
+    render(Page);
+
+    expect(await screen.findByTestId('trends-sticky-toolbar')).toBeTruthy();
+    expect(await screen.findByText('entry.work_context.office')).toBeTruthy();
+    expect(screen.queryByText(/API 401 on \/entries\/stats\/symptoms/)).toBeNull();
   });
 });

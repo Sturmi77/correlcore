@@ -202,7 +202,7 @@ describe('apiFetch — Capacitor Bearer path', () => {
   it('sends Authorization Bearer and omits cookies', async () => {
     const { apiFetch: bearerFetch } = await import('./client');
     fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
-    await bearerFetch('/me');
+    await bearerFetch('/me', { credentials: 'include' });
     const [, init] = fetchMock.mock.calls[0];
     expect(init.credentials).toBe('omit');
     expect((init.headers as Headers).get('Authorization')).toBe('Bearer access-1');

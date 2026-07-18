@@ -385,17 +385,38 @@ async def test_refresh_cookie_opt_in_omits_body_tokens(
 
 
 @pytest.mark.asyncio
-async def test_refresh_cookie_wins_over_body_omits_tokens(
-    async_client: AsyncClient, user: User
-) -> None:
-    """When both cookie and body are present, cookie wins → no body tokens."""
+async def test_refresh_body_opt_in_wins_over_cookie(async_client: AsyncClient, user: User) -> None:
+    """Capacitor: body + include_access_token beats a leftover cookie."""
     with patch(
         "app.api.v1.endpoints.auth.refresh_tokens",
         new_callable=AsyncMock,
         return_value=(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN, user),
-    ):
+    ) as mock_refresh:
         r = await async_client.post(
             "/api/v1/auth/refresh?include_access_token=true",
+            json={"refresh_token": VALID_REFRESH_TOKEN},
+            cookies={"refresh_token": "stale-cookie-should-be-ignored"},
+        )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["access_token"] == NEW_ACCESS_TOKEN
+    assert body["refresh_token"] == NEW_REFRESH_TOKEN
+    mock_refresh.assert_awaited_once()
+    assert mock_refresh.await_args.args[2] == VALID_REFRESH_TOKEN
+
+
+@pytest.mark.asyncio
+async def test_refresh_cookie_wins_over_body_without_opt_in(
+    async_client: AsyncClient, user: User
+) -> None:
+    """Without include_access_token, cookie still wins and body JWTs stay omitted."""
+    with patch(
+        "app.api.v1.endpoints.auth.refresh_tokens",
+        new_callable=AsyncMock,
+        return_value=(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN, user),
+    ) as mock_refresh:
+        r = await async_client.post(
+            "/api/v1/auth/refresh",
             json={"refresh_token": "body-should-be-ignored"},
             cookies={"refresh_token": VALID_REFRESH_TOKEN},
         )
@@ -403,6 +424,8 @@ async def test_refresh_cookie_wins_over_body_omits_tokens(
     body = r.json()
     assert body.get("access_token") in (None, "")
     assert body.get("refresh_token") in (None, "")
+    mock_refresh.assert_awaited_once()
+    assert mock_refresh.await_args.args[2] == VALID_REFRESH_TOKEN
 
 
 @pytest.mark.asyncio

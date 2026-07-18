@@ -267,7 +267,7 @@ async def get_entry_delta_endpoint(
 
 
 @router.get(
-    "/{entry_id}",
+    "/{entry_id:uuid}",
     response_model=EntryResponse,
     summary="Fetch a single entry",
 )
@@ -325,7 +325,7 @@ async def list_entries_endpoint(
 
 
 @router.patch(
-    "/{entry_id}",
+    "/{entry_id:uuid}",
     response_model=EntryResponse,
     summary="Update an entry within the 7-day window",
 )
