@@ -7,12 +7,12 @@ the M4 PWA install prompt with a true launcher widget.
 
 ## What it shows
 
-| Element            | Source                                              |
-| ------------------ | --------------------------------------------------- |
-| Brand              | Static “CorrelCore” label                           |
-| Headline           | “No entry yet” when `has_entry` is false; otherwise 7-day mood average |
-| “+ Add entry”      | Deep link `correlcore://entries/new` → entry sheet  |
-| Updated timestamp  | Last successful WorkManager sync                    |
+| Element           | Source                                                                 |
+| ----------------- | ---------------------------------------------------------------------- |
+| Brand             | Static “CorrelCore” label                                              |
+| Headline          | “No entry yet” when `has_entry` is false; otherwise 7-day mood average |
+| “+ Add entry”     | Deep link `correlcore://entries/new` → entry sheet                     |
+| Updated timestamp | Last successful WorkManager sync                                       |
 
 Sizes: resizable from ~4×1; verify 4×1 and 4×2 on Android 12/14 (light/dark).
 
@@ -50,13 +50,13 @@ Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 
 ## Native layout
 
-| File | Role |
-| ---- | ---- |
-| `…/widget/CorrelCoreWidget.kt` | Glance UI + receiver |
-| `…/widget/WidgetRefreshWorker.kt` | HTTP poll + WorkManager |
-| `…/widget/WidgetCredentialsPlugin.kt` | Capacitor bridge |
-| `…/widget/WidgetCredentialsStore.kt` | SharedPreferences |
-| `res/xml/correlcore_widget_info.xml` | AppWidget metadata |
+| File                                  | Role                    |
+| ------------------------------------- | ----------------------- |
+| `…/widget/CorrelCoreWidget.kt`        | Glance UI + receiver    |
+| `…/widget/WidgetRefreshWorker.kt`     | HTTP poll + WorkManager |
+| `…/widget/WidgetCredentialsPlugin.kt` | Capacitor bridge        |
+| `…/widget/WidgetCredentialsStore.kt`  | SharedPreferences       |
+| `res/xml/correlcore_widget_info.xml`  | AppWidget metadata      |
 
 ## Manual QA checklist
 

@@ -16,21 +16,21 @@ auth + API base). Ops for live GitHub Release / Play: [#429](https://github.com/
 
 ## Current baseline
 
-| Item                                         | Status |
-| -------------------------------------------- | ------ |
-| Capacitor package `apps/android` (#27)       | Done   |
-| CI job validates config (no SDK / no APK)    | Done   |
-| HC consent foundation (`consent_log`, #31)   | Done   |
-| Native `android/` project committed          | Done   |
-| Capacitor majors aligned (7.6.7)             | Done   |
-| Static SPA webDir (`build-capacitor`)        | Done   |
-| Brand icons / splash / `correlcore://` link  | Done   |
-| CI `assembleDebug` + APK artifact            | Done   |
-| Signed release APK/AAB in CI + sideload docs | Done   |
-| Bearer auth path for Capacitor (ADR-0006)    | Done   |
+| Item                                         | Status          |
+| -------------------------------------------- | --------------- |
+| Capacitor package `apps/android` (#27)       | Done            |
+| CI job validates config (no SDK / no APK)    | Done            |
+| HC consent foundation (`consent_log`, #31)   | Done            |
+| Native `android/` project committed          | Done            |
+| Capacitor majors aligned (7.6.7)             | Done            |
+| Static SPA webDir (`build-capacitor`)        | Done            |
+| Brand icons / splash / `correlcore://` link  | Done            |
+| CI `assembleDebug` + APK artifact            | Done            |
+| Signed release APK/AAB in CI + sideload docs | Done            |
+| Bearer auth path for Capacitor (ADR-0006)    | Done            |
 | Glance homescreen widget                     | Done (Sprint 4) |
-| FCM / push in native shell                   | Open   |
-| Play Console listing + Data Safety           | Open   |
+| FCM / push in native shell                   | Open            |
+| Play Console listing + Data Safety           | Open            |
 
 ## Distribution decision (Step 0 — before Play)
 

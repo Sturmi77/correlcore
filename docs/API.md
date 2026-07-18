@@ -1058,11 +1058,11 @@ Response `200 OK`:
 }
 ```
 
-| Feld                       | Bedeutung                                                                 |
-| -------------------------- | ------------------------------------------------------------------------- |
-| `has_entry`                | Mindestens ein Eintrag fuer das heutige UTC-Datum                         |
-| `mood_avg_7d`              | Mittelwert `mood_score` der letzten 7 Tage (inkl. heute), oder `null`     |
-| `suggested_next_entry_at`  | Naechster Vorschlag (UTC) aus der Modal-Stunde der Entry-`created_at`-Historie; `null` wenn kein sinnvoller Vorschlag |
+| Feld                      | Bedeutung                                                                                                             |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `has_entry`               | Mindestens ein Eintrag fuer das heutige UTC-Datum                                                                     |
+| `mood_avg_7d`             | Mittelwert `mood_score` der letzten 7 Tage (inkl. heute), oder `null`                                                 |
+| `suggested_next_entry_at` | Naechster Vorschlag (UTC) aus der Modal-Stunde der Entry-`created_at`-Historie; `null` wenn kein sinnvoller Vorschlag |
 
 Rate-Limit: `120/minute` (wie Dashboard).
 
