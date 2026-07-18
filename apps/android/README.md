@@ -74,6 +74,12 @@ Bake GlitchTip into Capacitor builds by setting `PUBLIC_GLITCHTIP_DSN` (and
 optionally `PUBLIC_GLITCHTIP_ENVIRONMENT`) at `pnpm cap:sync` / CI time. The
 release workflow reads `secrets.PUBLIC_GLITCHTIP_DSN` or `secrets.GLITCHTIP_DSN`.
 
+## Backup / data extraction
+
+`AndroidManifest` sets `android:allowBackup="false"` so system backup / device
+transfer does not copy WebView IndexedDB offline entries (mood, notes,
+symptoms). Revisit only with an explicit `dataExtractionRules` policy.
+
 ## Homescreen widget (Sprint 4)
 
 Jetpack Glance widget + WorkManager (15 min). Docs: [`docs/features/WIDGET.md`](../../docs/features/WIDGET.md).

@@ -59,6 +59,11 @@ if (!manifest.includes('android:pathPrefix="/new"')) {
 if (!manifest.includes('android:usesCleartextTraffic="true"')) {
   throw new Error('AndroidManifest must set usesCleartextTraffic for selfhost HTTP APIs');
 }
+if (!manifest.includes('android:allowBackup="false"')) {
+  throw new Error(
+    'AndroidManifest must set allowBackup=false — WebView/IndexedDB holds health-adjacent offline data'
+  );
+}
 
 const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
 const versions = [

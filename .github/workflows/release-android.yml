@@ -199,8 +199,10 @@ jobs:
             echo "::error::Missing VITE_API_BASE_URL. Set repository secret/variable VITE_API_BASE_URL or pass workflow_dispatch input vite_api_base_url (absolute https://host/api/v1)."
             exit 1
           fi
-          echo "::add-mask::${CANDIDATE}"
+          # Write the output BEFORE masking — GitHub drops masked values from
+          # GITHUB_OUTPUT if ::add-mask runs first (see context/output docs).
           echo "value=${CANDIDATE}" >>"$GITHUB_OUTPUT"
+          echo "::add-mask::${CANDIDATE}"
 
       - name: Assert absolute Capacitor API base
         env:

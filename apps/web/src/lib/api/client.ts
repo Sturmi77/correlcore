@@ -33,21 +33,37 @@ export class ApiError extends Error {
   }
 }
 
+/** Strip userinfo from absolute URLs so passwords never land in Error.message / UI. */
+export function redactUrlCredentials(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.username && !parsed.password) return url;
+    parsed.username = '';
+    parsed.password = '';
+    return parsed.toString();
+  } catch {
+    // Relative bases (/api/v1) or malformed — scrub embedded userinfo heuristically.
+    return url.replace(/\/\/[^/@\s]+@/g, '//***@');
+  }
+}
+
 export class NetworkError extends Error {
-  constructor(
-    public readonly path: string,
-    cause?: unknown,
-    /** Resolved absolute/relative API base at failure time (diagnostics). */
-    public readonly apiBase?: string
-  ) {
+  public readonly path: string;
+  /** Resolved API base at failure time (credentials redacted for display). */
+  public readonly apiBase?: string;
+
+  constructor(path: string, cause?: unknown, apiBase?: string) {
+    const safeBase = apiBase ? redactUrlCredentials(apiBase) : undefined;
     const causeMsg = cause instanceof Error ? cause.message : '';
-    const baseHint = apiBase ? ` base=${apiBase}` : '';
+    const baseHint = safeBase ? ` base=${safeBase}` : '';
     super(
       causeMsg
         ? `Network error on ${path}${baseHint}: ${causeMsg}`
         : `Network error on ${path}${baseHint}`
     );
     this.name = 'NetworkError';
+    this.path = path;
+    this.apiBase = safeBase;
     if (cause) (this as { cause?: unknown }).cause = cause;
   }
 }
