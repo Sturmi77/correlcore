@@ -9,6 +9,8 @@ const splashSource = readFileSync(
 );
 const layoutSource = readFileSync(resolve('src/routes/+layout.svelte'), 'utf8');
 const authLayoutSource = readFileSync(resolve('src/routes/auth/+layout.svelte'), 'utf8');
+const settingsSource = readFileSync(resolve('src/routes/settings/+page.svelte'), 'utf8');
+const homeSource = readFileSync(resolve('src/routes/+page.svelte'), 'utf8');
 const manifestSource = readFileSync(resolve('static/manifest.webmanifest'), 'utf8');
 
 describe('Claude Design brand mark wiring', () => {
@@ -34,6 +36,12 @@ describe('Claude Design brand mark wiring', () => {
   it('uses CorrelCoreLogo in the auth chrome', () => {
     expect(authLayoutSource).toContain('CorrelCoreLogo');
     expect(authLayoutSource).not.toContain('A20 20 0 0 1 44 24');
+  });
+
+  it('places the brand mark in Settings footer, not on authenticated Home', () => {
+    expect(settingsSource).toContain('CorrelCoreLogo');
+    expect(settingsSource).toContain('settings__version');
+    expect(homeSource).not.toContain('CorrelCoreLogo');
   });
 
   it('points the web manifest at the new PNG/SVG icons', () => {

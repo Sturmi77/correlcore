@@ -13,6 +13,7 @@
   import { DEV_PHASE_PRESETS, type DevPhasePresetId } from '$lib/dev/phaseFixtures';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
   import Button from '$lib/components/common/Button.svelte';
+  import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
   import IconButton from '$lib/components/common/IconButton.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
@@ -661,7 +662,7 @@
     {/if}
   {/if}
 
-  <!-- Version string: hidden tap target for 7× dev mode activation (ADR-0019) -->
+  <!-- Version string + brand mark: 7× tap activates dev mode (ADR-0019) -->
   <footer class="settings__footer">
     <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -671,7 +672,8 @@
       data-testid="version-string"
       on:click={handleVersionTap}
     >
-      {$_('app.name')} v{$_('app.version')}
+      <CorrelCoreLogo size={18} title="" />
+      <span>{$_('app.name')} v{$_('app.version')}</span>
     </p>
   </footer>
 </main>
@@ -1044,6 +1046,10 @@
   }
 
   .settings__version {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2, 0.5rem);
     font-size: var(--text-xs, 0.75rem);
     color: var(--color-text-muted);
     cursor: default;
