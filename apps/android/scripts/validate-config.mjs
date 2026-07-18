@@ -29,17 +29,14 @@ if (!configText.includes('webDir')) {
 }
 if (!configText.includes('../web/build-capacitor')) {
   throw new Error(
-    'webDir should point at SvelteKit adapter-static Capacitor output (build-capacitor)',
+    'webDir should point at SvelteKit adapter-static Capacitor output (build-capacitor)'
   );
 }
 if (!configText.includes("appId: 'de.correlcore.app'")) {
   throw new Error("appId must be 'de.correlcore.app'");
 }
 
-const manifest = await readFile(
-  resolve(root, 'android/app/src/main/AndroidManifest.xml'),
-  'utf8',
-);
+const manifest = await readFile(resolve(root, 'android/app/src/main/AndroidManifest.xml'), 'utf8');
 if (!manifest.includes('android:scheme="correlcore"')) {
   throw new Error('AndroidManifest must declare correlcore:// deep link scheme');
 }
@@ -55,7 +52,7 @@ const versions = [
 ];
 if (new Set(versions).size !== 1) {
   throw new Error(
-    `Capacitor package versions must match (got android=${versions[0]}, cli=${versions[1]}, core=${versions[2]})`,
+    `Capacitor package versions must match (got android=${versions[0]}, cli=${versions[1]}, core=${versions[2]})`
   );
 }
 

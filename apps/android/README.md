@@ -19,10 +19,10 @@ The Capacitor `webDir` is `../web/build-capacitor` — a static SPA produced wit
 
 ## App identity
 
-| Field           | Value                |
-| --------------- | -------------------- |
-| `applicationId` | `de.correlcore.app`  |
-| `appName`       | CorrelCore           |
+| Field           | Value                      |
+| --------------- | -------------------------- |
+| `applicationId` | `de.correlcore.app`        |
+| `appName`       | CorrelCore                 |
 | Deep link       | `correlcore://entries/new` |
 
 ## First-time setup
@@ -46,13 +46,13 @@ pnpm cap:assemble:debug
 
 ## Day-to-day commands
 
-| Script                                       | Purpose                                                        |
-| -------------------------------------------- | -------------------------------------------------------------- |
-| `pnpm cap:sync`                              | Capacitor SPA build + copy into Android project                |
-| `pnpm cap:open`                              | Open the project in Android Studio                             |
-| `pnpm cap:assemble:debug`                    | Sync + `./gradlew assembleDebug`                               |
-| `pnpm --filter @correlcore/android validate` | CI check — config files only, no SDK                           |
-| `pnpm --filter @correlcore/android assets:brand` | Regenerate launcher/splash PNGs from brand palette         |
+| Script                                           | Purpose                                            |
+| ------------------------------------------------ | -------------------------------------------------- |
+| `pnpm cap:sync`                                  | Capacitor SPA build + copy into Android project    |
+| `pnpm cap:open`                                  | Open the project in Android Studio                 |
+| `pnpm cap:assemble:debug`                        | Sync + `./gradlew assembleDebug`                   |
+| `pnpm --filter @correlcore/android validate`     | CI check — config files only, no SDK               |
+| `pnpm --filter @correlcore/android assets:brand` | Regenerate launcher/splash PNGs from brand palette |
 
 ## Live reload (optional)
 
