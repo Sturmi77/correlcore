@@ -69,6 +69,27 @@ Fix:
 
 Keine Auswirkung auf den Capacitor-Pfad (Phase 2): Bearer-Tokens sind vom `Secure`-Flag nicht betroffen.
 
+## Amendment — Persistent Session / „Angemeldet bleiben“ (Issue #453, 2026-07-18)
+
+**Status:** Accepted with the implementation of PS-0…PS-3.
+
+Phase-1 and Phase-2 clients share one product flag `remember_me` (default `true`)
+on login. Storage backends differ; web `localStorage` / `sessionStorage` must
+**never** hold JWTs.
+
+| Surface | `remember_me=true` | `remember_me=false` |
+| ------- | ------------------ | ------------------- |
+| Web / PWA | HttpOnly cookies with `Max-Age` (access + refresh TTLs) | Session cookies (no `Max-Age`) |
+| Capacitor | Refresh (+ access) in Android **EncryptedSharedPreferences** (Keystore), restored into in-memory `sessionTokens` before `hydrate()` | Memory only (cleared on process death); secure store cleared |
+
+Logout clears cookies (Web/PWA) and secure store + widget credentials (Capacitor).
+The Glance widget mirror remains an M11 exception and is only written when
+remember is on.
+
+Homelab note: if `COOKIE_SECURE` does not match the deployment scheme, browsers
+silently drop cookies — symptoms look like “always login”. See Secure-Flag
+section above and `docs/features/PERSISTENT_SESSION_PLAN.md`.
+
 ## Referenzen
 
 - ADR-0002: Capacitor statt TWA

@@ -8,6 +8,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Persistent session („Angemeldet bleiben“)** — Issue #453 / ADR-0006 amendment:
+  login checkbox (default on); Web/PWA session vs persistent HttpOnly cookies via
+  `remember_me`; Capacitor restores refresh from EncryptedSharedPreferences before
+  `hydrate()`. Plan: `docs/features/PERSISTENT_SESSION_PLAN.md`,
+  `docs/PERSISTENT_SESSION_SPRINT_PLAN.md`.
+
 ### Changed
 
 - GitHub Releases put **Android APK download links at the top** of the release

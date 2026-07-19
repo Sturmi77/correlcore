@@ -308,6 +308,68 @@ async def test_login_include_access_token_opt_in(async_client: AsyncClient, user
     assert body["refresh_token"] == VALID_REFRESH_TOKEN
 
 
+def _set_cookie_header_values(response: object) -> list[str]:
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return []
+    get_list = getattr(headers, "get_list", None)
+    if callable(get_list):
+        return list(get_list("set-cookie"))
+    # Fallback: multi_items / raw
+    multi = getattr(headers, "multi_items", None)
+    if callable(multi):
+        return [v for k, v in multi() if k.lower() == "set-cookie"]
+    raw = headers.get("set-cookie")
+    return [raw] if raw else []
+
+
+@pytest.mark.asyncio
+async def test_login_remember_me_false_uses_session_cookies(
+    async_client: AsyncClient, user: User
+) -> None:
+    """Issue #453 — remember_me=false omits Max-Age (browser session cookies)."""
+    with patch(
+        "app.api.v1.endpoints.auth.login_user",
+        new_callable=AsyncMock,
+        return_value=(VALID_ACCESS_TOKEN, VALID_REFRESH_TOKEN, user),
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "test@example.com",
+                "password": TEST_PASSWORD,
+                "remember_me": False,
+            },
+        )
+    assert r.status_code == 200
+    set_cookie_headers = _set_cookie_header_values(r)
+    assert set_cookie_headers
+    joined = "\n".join(set_cookie_headers)
+    assert "Max-Age=" not in joined
+    assert "access_token=" in joined
+    assert "refresh_token=" in joined
+
+
+@pytest.mark.asyncio
+async def test_login_remember_me_true_sets_max_age(async_client: AsyncClient, user: User) -> None:
+    with patch(
+        "app.api.v1.endpoints.auth.login_user",
+        new_callable=AsyncMock,
+        return_value=(VALID_ACCESS_TOKEN, VALID_REFRESH_TOKEN, user),
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "test@example.com",
+                "password": TEST_PASSWORD,
+                "remember_me": True,
+            },
+        )
+    assert r.status_code == 200
+    set_cookie_headers = _set_cookie_header_values(r)
+    assert any("Max-Age=" in line for line in set_cookie_headers)
+
+
 @pytest.mark.asyncio
 async def test_login_wrong_password(async_client: AsyncClient) -> None:
     with patch(

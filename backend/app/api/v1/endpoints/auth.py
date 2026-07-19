@@ -198,7 +198,8 @@ async def verify_email_endpoint(
         ) from exc
     token_store = TokenStore(redis)
     access, refresh = await issue_session_tokens(token_store, user)
-    set_auth_cookies(response, access, refresh)
+    # Email verify establishes a session — default persistent (remember on).
+    set_auth_cookies(response, access, refresh, remember_me=True)
     return _token_response(request, access=access, refresh=refresh, user=user)
 
 
@@ -298,7 +299,8 @@ async def reset_password_endpoint(
     token_store = TokenStore(redis)
     await token_store.revoke_all(str(user.id))
     access, refresh = await issue_session_tokens(token_store, user)
-    set_auth_cookies(response, access, refresh)
+    # Password reset establishes a session — default persistent (remember on).
+    set_auth_cookies(response, access, refresh, remember_me=True)
     return _token_response(request, access=access, refresh=refresh, user=user)
 
 
@@ -336,7 +338,7 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         ) from exc
-    set_auth_cookies(response, access, refresh)
+    set_auth_cookies(response, access, refresh, remember_me=data.remember_me)
     return _token_response(request, access=access, refresh=refresh, user=user)
 
 
@@ -388,7 +390,9 @@ async def refresh(
     except AuthError as exc:
         clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
-    set_auth_cookies(response, access, new_refresh)
+    # v1: refresh re-issues persistent cookies. Session cookies (remember off)
+    # already die with the browser process; see PERSISTENT_SESSION_PLAN.md.
+    set_auth_cookies(response, access, new_refresh, remember_me=True)
     # Never emit JWTs in the JSON body when refresh came from the HttpOnly
     # cookie — even if ?include_access_token=true (XSS / same-origin script).
     allow_body = wants_body and not used_cookie

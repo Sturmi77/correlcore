@@ -2,16 +2,26 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { onMount } from 'svelte';
   import CapacitorApiBaseField from '$lib/components/auth/CapacitorApiBaseField.svelte';
   import { ensureCapacitorApiBaseConfigured } from '$lib/api/apiBase';
+  import {
+    readRememberMePreference,
+    writeRememberMePreference,
+  } from '$lib/api/rememberMePreference';
   import { login } from '$lib/stores/auth';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
 
   let email = '';
   let password = '';
   let apiBaseInput = '';
+  let rememberMe = true;
   let busy = false;
   let errorKey: string | null = null;
+
+  onMount(() => {
+    rememberMe = readRememberMePreference(true);
+  });
 
   const ERROR_MAP: ApiErrorMap = {
     401: 'auth.login.error_invalid',
@@ -37,7 +47,12 @@
         errorKey = apiBase.errorKey;
         return;
       }
-      await login({ email: email.trim().toLowerCase(), password });
+      writeRememberMePreference(rememberMe);
+      await login({
+        email: email.trim().toLowerCase(),
+        password,
+        remember_me: rememberMe,
+      });
       const target = safeNext($page.url.searchParams.get('next'));
       await goto(target, { replaceState: true });
     } catch (err) {
@@ -86,6 +101,14 @@
   </label>
 
   <CapacitorApiBaseField bind:value={apiBaseInput} disabled={busy} />
+
+  <label class="auth-remember">
+    <input type="checkbox" bind:checked={rememberMe} disabled={busy} />
+    <span>
+      <span class="auth-remember__label">{$_('auth.login.remember_me')}</span>
+      <span class="auth-remember__hint">{$_('auth.login.remember_me_hint')}</span>
+    </span>
+  </label>
 
   {#if errorKey}
     <p class="auth-error" role="alert">{$_(errorKey)}</p>
@@ -150,6 +173,29 @@
     border-left: 3px solid var(--color-error);
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
+  }
+
+  .auth-remember {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+  }
+
+  .auth-remember input {
+    margin-top: 0.2rem;
+  }
+
+  .auth-remember__label {
+    display: block;
+    font-weight: 500;
+  }
+
+  .auth-remember__hint {
+    display: block;
+    margin-top: var(--space-1);
+    opacity: 0.75;
+    font-size: var(--text-xs);
   }
 
   .auth-submit {

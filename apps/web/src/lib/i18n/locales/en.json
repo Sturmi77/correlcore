@@ -1328,6 +1328,8 @@
       "no_account": "No account yet?",
       "register_link": "Create one now",
       "forgot_password": "Forgot password?",
+      "remember_me": "Stay signed in",
+      "remember_me_hint": "Keep me signed in on this device until I log out.",
       "error_invalid": "Email or password is incorrect.",
       "error_unverified": "Please verify your email address first.",
       "error_rate_limit": "Too many attempts. Please try again in a minute.",

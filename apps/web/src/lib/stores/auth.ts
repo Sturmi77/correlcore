@@ -1,15 +1,16 @@
 /**
- * Auth store — Issue #40 + M11 Sprint 3.
+ * Auth store — Issue #40 + M11 Sprint 3 + #453 persistent session.
  *
  * Holds the current user (or null when unauthenticated).
  * Tokens are not stored here: browser → HttpOnly cookies; Capacitor →
- * in-memory sessionTokens (ADR-0006). This store is a UI mirror of
- * "is the user logged in?".
+ * in-memory sessionTokens (ADR-0006), optionally restored from
+ * EncryptedSharedPreferences when „Angemeldet bleiben“ is on.
  *
  * Lifecycle:
- *   - On app boot: hydrate() probes /auth/me. 200 → user, 401 → null.
+ *   - On app boot: restore Capacitor secure session (if any), then
+ *     hydrate() probes /auth/me. 200 → user, 401 → null.
  *   - On login:    login() sets the user and returns it.
- *   - On logout:   logout() clears the user and session (cookies / memory).
+ *   - On logout:   logout() clears the user and session (cookies / memory / secure store).
  */
 
 import { writable, derived, get } from 'svelte/store';
@@ -20,7 +21,10 @@ import {
   type LoginPayload,
   type UserResponse,
 } from '$lib/api/auth';
-import { clearSessionTokens } from '$lib/api/sessionTokens';
+import { setRuntimeApiBase } from '$lib/api/apiBase';
+import { usesBearerAuth } from '$lib/api/platform';
+import { restoreSecureSession } from '$lib/api/secureSession';
+import { clearSessionTokens, setSessionTokens } from '$lib/api/sessionTokens';
 import { disablePushNotifications, enablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
 import { resetEntrySheetStore } from '$lib/stores/entrySheet';
@@ -45,11 +49,30 @@ export const isAuthLoading = derived(_auth, ($a) => $a.status === 'loading');
 
 let hydrated = false;
 
+/**
+ * Capacitor cold start: load refresh/access from EncryptedSharedPreferences
+ * into memory before /auth/me (Issue #453).
+ */
+async function restoreCapacitorSessionIfNeeded(): Promise<void> {
+  if (!usesBearerAuth()) return;
+  const saved = await restoreSecureSession();
+  if (!saved?.refreshToken) return;
+  if (saved.apiBase) {
+    setRuntimeApiBase(saved.apiBase);
+  }
+  setSessionTokens({
+    access_token: saved.accessToken,
+    refresh_token: saved.refreshToken,
+    remember_me: true,
+  });
+}
+
 /** Probe /auth/me and set store. Idempotent — runs at most once per page load. */
 export async function hydrate(): Promise<AuthState> {
   if (hydrated) return get(_auth);
   hydrated = true;
   try {
+    await restoreCapacitorSessionIfNeeded();
     const user = await fetchCurrentUser();
     if (user) {
       await prepareOfflineDataForAuthenticatedUser(user.id);

@@ -36,6 +36,9 @@ class LoginRequest(BaseModel):
     email: EmailStr
     # Cap length to bound bcrypt CPU cost; strength rules apply on register/reset only.
     password: str = Field(max_length=MAX_PASSWORD_LENGTH)
+    # Issue #453 — persistent session („Angemeldet bleiben“). Default on.
+    # Web/PWA: persistent vs session cookies; Capacitor: secure-store vs memory.
+    remember_me: bool = True
 
 
 class RefreshRequest(BaseModel):
