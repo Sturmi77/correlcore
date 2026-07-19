@@ -17,15 +17,15 @@ older milestone docs where they conflict.
 
 ## Executive summary
 
-| Dimension                                   | Verdict      | Notes                                                                                                                                    |
-| ------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Production deploy (app)**                 | **Go**       | Mobile daily-use paths complete; CI gates cover lint, types, unit tests, contrast, build, smoke E2E                                      |
-| **Mobile closeout (Phases 0–4)**            | **Complete** | Signed off [`MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md)                                                           |
-| **Design system (Figma E–G, I)**            | **Complete** | Signed off [`FIGMA_PRODUCTION_GRADE_QA.md`](../quality/FIGMA_PRODUCTION_GRADE_QA.md)                                                     |
-| **Code Connect live (Sprint H)**            | **Deferred** | 20 local templates; publish needs Dev/Full seat + token — **not a deploy blocker**                                                       |
-| **Desktop consolidation (Phase 5)**         | **Open**     | Entry workspace density, auth web polish — intentional follow-up                                                                         |
-| **React GUI experiment (`apps/web-react`)** | **Planned**  | Parallel evaluation on port 5174 — see [`PARALLEL_REACT_GUI.md`](PARALLEL_REACT_GUI.md). Production GUI remains SvelteKit until cutover. |
-| **Android / Capacitor (M11)**                 | **Engineering complete; Play exit open** | Sprints 1–5 shipped (shell, sideload, Bearer, Glance widget, FCM registration code); Play Console / Firebase ops [#429](https://github.com/Sturmi77/correlcore/issues/429). Plan: [`M11_SPRINT_PLAN.md`](../M11_SPRINT_PLAN.md) · [`apps/android/README.md`](../../apps/android/README.md) |
+| Dimension                                   | Verdict                                  | Notes                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Production deploy (app)**                 | **Go**                                   | Mobile daily-use paths complete; CI gates cover lint, types, unit tests, contrast, build, smoke E2E                                                                                                                                                                                        |
+| **Mobile closeout (Phases 0–4)**            | **Complete**                             | Signed off [`MOBILE_WEB_CLOSEOUT_QA.md`](../quality/MOBILE_WEB_CLOSEOUT_QA.md)                                                                                                                                                                                                             |
+| **Design system (Figma E–G, I)**            | **Complete**                             | Signed off [`FIGMA_PRODUCTION_GRADE_QA.md`](../quality/FIGMA_PRODUCTION_GRADE_QA.md)                                                                                                                                                                                                       |
+| **Code Connect live (Sprint H)**            | **Deferred**                             | 20 local templates; publish needs Dev/Full seat + token — **not a deploy blocker**                                                                                                                                                                                                         |
+| **Desktop consolidation (Phase 5)**         | **Open**                                 | Entry workspace density, auth web polish — intentional follow-up                                                                                                                                                                                                                           |
+| **React GUI experiment (`apps/web-react`)** | **Planned**                              | Parallel evaluation on port 5174 — see [`PARALLEL_REACT_GUI.md`](PARALLEL_REACT_GUI.md). Production GUI remains SvelteKit until cutover.                                                                                                                                                   |
+| **Android / Capacitor (M11)**               | **Engineering complete; Play exit open** | Sprints 1–5 shipped (shell, sideload, Bearer, Glance widget, FCM registration code); Play Console / Firebase ops [#429](https://github.com/Sturmi77/correlcore/issues/429). Plan: [`M11_SPRINT_PLAN.md`](../M11_SPRINT_PLAN.md) · [`apps/android/README.md`](../../apps/android/README.md) |
 
 **Operating model:** One SvelteKit codebase. Mobile = capture, check-in, lightweight
 review @390/430 px. Web = analysis, comparison, management @1280+ px. Shell switches
@@ -193,13 +193,13 @@ Mobile E2E is **not** in default CI; run before release or add to scheduled work
 
 ### Product / backend (out of frontend scope)
 
-| Item                          | Notes                                                                                 |
-| ----------------------------- | ------------------------------------------------------------------------------------- |
-| Password recovery             | **Shipped** — `forgot-password` / `reset-password` (O-20)                             |
-| Account deletion              | **Shipped** — `DELETE /api/v1/user/me` (M9 / #29)                                     |
+| Item                          | Notes                                                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Password recovery             | **Shipped** — `forgot-password` / `reset-password` (O-20)                                                                                                            |
+| Account deletion              | **Shipped** — `DELETE /api/v1/user/me` (M9 / #29)                                                                                                                    |
 | Reminders / push              | UnifiedPush / app lock → **M4.2**; Capacitor FCM registration shipped **M11 Sprint 5** (Firebase ops open [#429](https://github.com/Sturmi77/correlcore/issues/429)) |
-| Dexie background sync queue   | ADR-0009 — Entry-owned retry only                                                     |
-| Health Connect import consent | **Foundation shipped** (#31) — Settings Privacy + consents API; HC import itself → M8 |
+| Dexie background sync queue   | ADR-0009 — Entry-owned retry only                                                                                                                                    |
+| Health Connect import consent | **Foundation shipped** (#31) — Settings Privacy + consents API; HC import itself → M8                                                                                |
 
 ### Phase 5 — desktop consolidation (next frontend track)
 

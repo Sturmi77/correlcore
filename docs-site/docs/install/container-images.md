@@ -26,12 +26,12 @@ Replace `<username>` with the maintainer Docker Hub account configured in CI
 Built by
 [`release-images.yml`](https://github.com/Sturmi77/correlcore/blob/main/.github/workflows/release-images.yml):
 
-| Trigger             | Tags applied (both images)         |
-| ------------------- | ---------------------------------- |
-| Push to `main`      | `:latest`, `:main`, `:sha-<short>` |
-| Tag `v1.0.0`        | `:v1.0.0`, `:v1.0`, `:latest`      |
+| Trigger                     | Tags applied (both images)              |
+| --------------------------- | --------------------------------------- |
+| Push to `main`              | `:latest`, `:main`, `:sha-<short>`      |
+| Tag `v1.0.0`                | `:v1.0.0`, `:v1.0`, `:latest`           |
 | Tag `v1.0.5` (any `v1.0.x`) | `:v1.0.5`, `:v1.0` (semver minor alias) |
-| `workflow_dispatch` | Same rules for current ref context |
+| `workflow_dispatch`         | Same rules for current ref context      |
 
 Pin production deploys to an immutable tag (any **`v1.0.x`** pin works on the 1.0 line):
 
