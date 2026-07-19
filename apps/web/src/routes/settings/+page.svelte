@@ -42,6 +42,7 @@
     type ConsentListResponse,
   } from '$lib/api/consents';
   import { getHealthConnectConsentStatus } from '$lib/healthConnect/consent';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
   // ---------------------------------------------------------------------------
   // Export
@@ -307,6 +308,9 @@
     void checkDevView();
     void loadPreferences();
     void loadConsents();
+    return registerPageRefresh(async () => {
+      await Promise.all([loadPreferences(), loadConsents()]);
+    });
   });
 </script>
 
