@@ -29,11 +29,11 @@ flowchart LR
 
 Pick one topology before the window ([`hosted-topology-options.md`](hosted-topology-options.md)):
 
-| Topology | Apex `correlcore.com` | App login | This runbook |
-| -------- | --------------------- | --------- | ------------ |
-| **A** Full NAS | → NAS | apex `/auth/login` | Steps below |
-| **B** IONOS reverse proxy | DNS stays IONOS; proxy to NAS | apex | Adapt “Flip” to proxy enable |
-| **H** Hybrid ★ | stays IONOS marketing | `app.correlcore.com` | Use topology H section instead |
+| Topology                  | Apex `correlcore.com`         | App login            | This runbook                   |
+| ------------------------- | ----------------------------- | -------------------- | ------------------------------ |
+| **A** Full NAS            | → NAS                         | apex `/auth/login`   | Steps below                    |
+| **B** IONOS reverse proxy | DNS stays IONOS; proxy to NAS | apex                 | Adapt “Flip” to proxy enable   |
+| **H** Hybrid ★            | stays IONOS marketing         | `app.correlcore.com` | Use topology H section instead |
 
 ### Topology A phases (default below)
 

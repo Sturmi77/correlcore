@@ -7,11 +7,11 @@ Last updated: 2026-07-19
 
 ## Short answers
 
-| Question | Answer |
-| -------- | ------ |
-| Wenn ich den Apex (A-Record) auf die NAS zeige, muss der Website-Content dort laufen? | **Ja.** Der Browser holt HTML/JS von dem Host, auf den DNS zeigt. Bei Apex→NAS liefert die NAS die CorrelCore-Web-App. |
-| Kann ich „nur die Website“ auf IONOS lassen und „nur das Backend“ auf der NAS? | **Nicht so**, wie CorrelCore gebaut ist. Landing, Login und App-UI **sind** der `correlcore-web`-Container — nicht eine separate IONOS-Website. Cookie-Login braucht **dieselbe Origin** wie `/api`. |
-| Was ist die einfachste Variante nah an „Website+SMTP bei IONOS, App-Daten auf NAS“? | **Hybrid (empfohlen unten):** Marketing optional auf IONOS Apex; **volle App** (Web+API) unter `app.correlcore.com` auf der NAS; **SMTP bei IONOS**. |
+| Question                                                                              | Answer                                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wenn ich den Apex (A-Record) auf die NAS zeige, muss der Website-Content dort laufen? | **Ja.** Der Browser holt HTML/JS von dem Host, auf den DNS zeigt. Bei Apex→NAS liefert die NAS die CorrelCore-Web-App.                                                                               |
+| Kann ich „nur die Website“ auf IONOS lassen und „nur das Backend“ auf der NAS?        | **Nicht so**, wie CorrelCore gebaut ist. Landing, Login und App-UI **sind** der `correlcore-web`-Container — nicht eine separate IONOS-Website. Cookie-Login braucht **dieselbe Origin** wie `/api`. |
+| Was ist die einfachste Variante nah an „Website+SMTP bei IONOS, App-Daten auf NAS“?   | **Hybrid (empfohlen unten):** Marketing optional auf IONOS Apex; **volle App** (Web+API) unter `app.correlcore.com` auf der NAS; **SMTP bei IONOS**.                                                 |
 
 ---
 
@@ -41,9 +41,9 @@ Edge: Nginx/Synology on NAS → correlcore-web → correlcore-api
 Mail: IONOS SMTP (MX stays IONOS)
 ```
 
-| Pros | Cons |
-| ---- | ---- |
-| One origin; matches current product | Home IP / port-forward / CGNAT |
+| Pros                                            | Cons                                       |
+| ----------------------------------------------- | ------------------------------------------ |
+| One origin; matches current product             | Home IP / port-forward / CGNAT             |
 | Login URL = `https://correlcore.com/auth/login` | IONOS website builder on apex must go away |
 
 **Cutover:** [`hosted-cutover.md`](hosted-cutover.md) (A-Record flip).
@@ -59,11 +59,11 @@ NAS:   correlcore-web → api  (content still generated on NAS)
 Mail:  IONOS SMTP
 ```
 
-| Pros | Cons |
-| ---- | ---- |
-| Apex DNS can stay at IONOS | IONOS must support reverse proxy to your NAS (public IP or tunnel) |
-| Same-origin preserved if proxy forwards **all** `/` and `/api` | Misconfigured headers break cookies (`X-Forwarded-Proto`) |
-| SMTP stays IONOS | You are **not** hosting CorrelCore HTML on IONOS Apache — only proxying |
+| Pros                                                           | Cons                                                                    |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Apex DNS can stay at IONOS                                     | IONOS must support reverse proxy to your NAS (public IP or tunnel)      |
+| Same-origin preserved if proxy forwards **all** `/` and `/api` | Misconfigured headers break cookies (`X-Forwarded-Proto`)               |
+| SMTP stays IONOS                                               | You are **not** hosting CorrelCore HTML on IONOS Apache — only proxying |
 
 **Detail:**
 
@@ -133,11 +133,11 @@ flowchart TB
 
 ### DNS
 
-| Name | Type | Value |
-| ---- | ---- | ----- |
-| `correlcore.com` | A/AAAA | keep IONOS (marketing) |
+| Name                 | Type                      | Value                                   |
+| -------------------- | ------------------------- | --------------------------------------- |
+| `correlcore.com`     | A/AAAA                    | keep IONOS (marketing)                  |
 | `app.correlcore.com` | A (and AAAA only if real) | NAS public IP **or** IONOS proxy target |
-| MX / SPF | — | keep IONOS; add DKIM/DMARC for sending |
+| MX / SPF             | —                         | keep IONOS; add DKIM/DMARC for sending  |
 
 ### NAS / Nginx
 
@@ -197,15 +197,15 @@ Rollback: delete/change only `app` DNS; apex marketing untouched.
 
 ## Topology comparison
 
-| | A Full NAS | B IONOS proxy | H Hybrid ★ |
-| --- | --- | --- | --- |
-| Marketing on IONOS builder | No (replaced) | No (proxied app) | **Yes** |
-| Login URL | `correlcore.com/auth/login` | same | `app.correlcore.com/auth/login` |
-| Cookie same-origin | Yes | Yes (if full proxy) | Yes on `app` |
-| SMTP on IONOS | Yes | Yes | Yes |
-| Postgres on NAS | Yes | Yes | Yes |
-| DNS flip risk | Apex cutover | Proxy config | Only `app` record |
-| Fits “website @ IONOS, backend @ NAS” intent | Partial | Partial | **Best fit** |
+|                                              | A Full NAS                  | B IONOS proxy       | H Hybrid ★                      |
+| -------------------------------------------- | --------------------------- | ------------------- | ------------------------------- |
+| Marketing on IONOS builder                   | No (replaced)               | No (proxied app)    | **Yes**                         |
+| Login URL                                    | `correlcore.com/auth/login` | same                | `app.correlcore.com/auth/login` |
+| Cookie same-origin                           | Yes                         | Yes (if full proxy) | Yes on `app`                    |
+| SMTP on IONOS                                | Yes                         | Yes                 | Yes                             |
+| Postgres on NAS                              | Yes                         | Yes                 | Yes                             |
+| DNS flip risk                                | Apex cutover                | Proxy config        | Only `app` record               |
+| Fits “website @ IONOS, backend @ NAS” intent | Partial                     | Partial             | **Best fit**                    |
 
 ---
 

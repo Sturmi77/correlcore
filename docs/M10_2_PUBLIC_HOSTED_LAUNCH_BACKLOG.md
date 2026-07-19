@@ -27,18 +27,18 @@ NAS runs `app.correlcore.com`. Avoid public web without working SMTP if possible
 
 **Issue:** #460 · **Runbook:** [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md)
 
-| ID    | Item                                                          | Tag    | Notes                                      |
-| ----- | ------------------------------------------------------------- | ------ | ------------------------------------------ |
-| S1-R1 | Hosted Nginx edge runbook + ENV/smoke                         | `repo` | **Done** (this PR)                         |
-| S1-R2 | Roadmap/STATUS/backlog wiring for Sprint 1                    | `repo` | **Done** (this PR)                         |
-| S1-O1 | Confirm NAS compose variant; web on `127.0.0.1`               | `ops`  | Baseline inventory                         |
-| S1-O2 | Apply Hosted ENV (`FRONTEND_BASE_URL`, CORS, `COOKIE_SECURE`) | `ops`  |                                            |
-| S1-O3 | Configure Nginx or Synology RP + TLS renew                    | `ops`  | Follow runbook §B                          |
-| S1-O4 | Ensure Traefik not bound to 80/443                            | `ops`  |                                            |
-| S1-O0 | **Decide topology A / B / H** and record in STATUS            | `ops`  | Blocker before flip                        |
-| S1-O5 | Router port-forward or tunnel (CGNAT path)                    | `ops`  |                                            |
-| S1-O6 | DNS cutover per topology (A apex / B proxy / H `app` only)    | `ops`  | See topology runbook                       |
-| S1-O7 | Public smoke `/` + `/api/v1/health` without VPN               | `ops`  | On chosen app origin                       |
+| ID    | Item                                                          | Tag    | Notes                |
+| ----- | ------------------------------------------------------------- | ------ | -------------------- |
+| S1-R1 | Hosted Nginx edge runbook + ENV/smoke                         | `repo` | **Done** (this PR)   |
+| S1-R2 | Roadmap/STATUS/backlog wiring for Sprint 1                    | `repo` | **Done** (this PR)   |
+| S1-O1 | Confirm NAS compose variant; web on `127.0.0.1`               | `ops`  | Baseline inventory   |
+| S1-O2 | Apply Hosted ENV (`FRONTEND_BASE_URL`, CORS, `COOKIE_SECURE`) | `ops`  |                      |
+| S1-O3 | Configure Nginx or Synology RP + TLS renew                    | `ops`  | Follow runbook §B    |
+| S1-O4 | Ensure Traefik not bound to 80/443                            | `ops`  |                      |
+| S1-O0 | **Decide topology A / B / H** and record in STATUS            | `ops`  | Blocker before flip  |
+| S1-O5 | Router port-forward or tunnel (CGNAT path)                    | `ops`  |                      |
+| S1-O6 | DNS cutover per topology (A apex / B proxy / H `app` only)    | `ops`  | See topology runbook |
+| S1-O7 | Public smoke `/` + `/api/v1/health` without VPN               | `ops`  | On chosen app origin |
 
 ---
 

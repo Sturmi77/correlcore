@@ -13,7 +13,7 @@ Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topolo
 | Sprint 0 — Baseline        | **Done** (repo + issues #459–#464; milestones/NAS inventory → maintainer) |
 | Sprint 1 — DNS + Nginx     | **Repo done**; live ops via combined cutover                              |
 | Sprint 2 — SMTP            | **Repo done** (SMTP + cutover runbooks); live ops same window as S1       |
-| Topology decision (A/B/H)  | **Pending maintainer**                                                   |
+| Topology decision (A/B/H)  | **Pending maintainer**                                                    |
 | Sprint 3 — Landing / Legal | Pending — see backlog                                                     |
 | Sprint 4 — APK             | Pending (blocked on #429)                                                 |
 | Sprint 5 — Closeout        | Pending                                                                   |
@@ -29,18 +29,18 @@ Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topolo
 
 ## Binding decisions (Sprint 0 + topology)
 
-| Decision                    | Binding answer                                                                 |
-| --------------------------- | ------------------------------------------------------------------------------ |
-| Public domain               | **`correlcore.com`** (doc sync `.app`→`.com` in Sprint 3)                      |
-| Hosted topology             | **Pending:** A / B / **H** (IONOS marketing + `app.` on NAS)                   |
-| Launch edge on NAS          | **Host-Nginx** for app origin; no Traefik parallel                             |
-| Traefik on Hosted NAS       | **Do not enable** while Nginx terminates TLS                                   |
-| Mailpit on Hosted           | Until SMTP E2E → then **remove**. Quickstart keeps Mailpit                     |
-| SMTP                        | Prefer **IONOS SMTP** (MX/SPF already there)                                   |
-| Landing origin              | Same origin as auth on the **app host** (apex for A/B, `app.` for H)           |
-| Website@IONOS + API-only NAS | **Not supported** (cookies/same-origin); use **H** or full proxy **B**        |
-| APK                         | GitHub Releases canonical                                                      |
-| Scope vs M12 / M10.1 naming | Hosted ≠ SaaS; insight M10.1 done; compose A/C/G not M10.2                     |
+| Decision                     | Binding answer                                                         |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| Public domain                | **`correlcore.com`** (doc sync `.app`→`.com` in Sprint 3)              |
+| Hosted topology              | **Pending:** A / B / **H** (IONOS marketing + `app.` on NAS)           |
+| Launch edge on NAS           | **Host-Nginx** for app origin; no Traefik parallel                     |
+| Traefik on Hosted NAS        | **Do not enable** while Nginx terminates TLS                           |
+| Mailpit on Hosted            | Until SMTP E2E → then **remove**. Quickstart keeps Mailpit             |
+| SMTP                         | Prefer **IONOS SMTP** (MX/SPF already there)                           |
+| Landing origin               | Same origin as auth on the **app host** (apex for A/B, `app.` for H)   |
+| Website@IONOS + API-only NAS | **Not supported** (cookies/same-origin); use **H** or full proxy **B** |
+| APK                          | GitHub Releases canonical                                              |
+| Scope vs M12 / M10.1 naming  | Hosted ≠ SaaS; insight M10.1 done; compose A/C/G not M10.2             |
 
 ---
 
