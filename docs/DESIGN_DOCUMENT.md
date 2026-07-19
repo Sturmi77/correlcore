@@ -1,6 +1,6 @@
 # Design-Dokument: CorrelCore — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.15 (M10 public selfhost v1.0 Complete; patch line v1.0.1–v1.0.5 Android sideload; M10.1 shipped; M11 engineering sprints 1–5 shipped — shell, signed sideload, Bearer auth, Glance widget, FCM registration code; Play Console / Firebase ops exit still open #429; next exit M11 Play Closed Testing)
+**Version:** 0.15 (M10 public selfhost v1.0 Complete; patch line v1.0.1–v1.0.6 Android sideload; M10.1 shipped; M11 engineering sprints 1–5 shipped — shell, signed sideload, Bearer auth, Glance widget, FCM registration code; Play Console / Firebase ops exit still open #429; next exit M11 Play Closed Testing)
 **Datum:** 2026-07-19
 
 > **Vorherige Version:** 0.14 (2026-07-10) — M9 Beta + M10 public selfhost v1.0 Complete; M10.1 insight triggers/tag maturity shipped; post-M10 foundations through Capacitor scaffold.

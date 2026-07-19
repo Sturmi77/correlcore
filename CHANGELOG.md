@@ -8,6 +8,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.0.6] — 2026-07-19
+
+Tester-focused patch on the public selfhost / Android sideload line. Prefer this
+tag for GHCR pins and sideload APK installs.
+
 ### Added
 
 - **Persistent session („Angemeldet bleiben“)** — Issue #453 / ADR-0006 amendment:
@@ -19,8 +26,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - README / docs aligned to selfhost **`1.0.x`**: brand logo, archived M0–M10.1,
-  install pins to `v1.0.5`, design doc v0.15, CHANGELOG sections for patch tags.
-  See [`docs/releases/RELEASE_1_0_X_DOC_SYNC.md`](docs/releases/RELEASE_1_0_X_DOC_SYNC.md).
+  design doc v0.15, CHANGELOG sections for patch tags; install pins recommend
+  **`v1.0.6`**. See [`docs/releases/RELEASE_1_0_X_DOC_SYNC.md`](docs/releases/RELEASE_1_0_X_DOC_SYNC.md).
 
 ### Fixed
 
