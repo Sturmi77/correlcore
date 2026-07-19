@@ -21,5 +21,8 @@ habit tracker with correlation analysis, designed for selfhosting.
 
 ## Status
 
-CorrelCore is approaching **v1.0 public selfhost release** (M10). The app UI may
-still show a pre-alpha badge until the landing milestone (M10 Sprint 4) ships.
+CorrelCore **selfhost `1.0.x` is released** (first public tag `v1.0.0`, 2026-07-11).
+Prefer the latest `v1.0.x` image/tag for installs. Active development continues on
+M11 (Android Play exit), M8 (Sleep / Health Connect), and M13 (media). See the
+[repository releases](https://github.com/Sturmi77/correlcore/releases) and
+[`RELEASE_1_0_X_DOC_SYNC.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/releases/RELEASE_1_0_X_DOC_SYNC.md).
