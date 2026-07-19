@@ -40,7 +40,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 ### Active
 
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). HC **consent** foundation shipped (#31). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
-- [ ] **M10.2** — Public Hosted Launch (`correlcore.com`): Nginx edge on NAS, real SMTP, login without VPN, APK on landing — [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md). Selfhost path stays independent.
+- [ ] **M10.2** — Public Hosted Launch (`correlcore.com`): Nginx edge on NAS, real SMTP, login without VPN, APK on landing — [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md), backlog [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md). Selfhost path stays independent.
 - [ ] **M11** — Android Play Store (Capacitor) — Sprints 1–5 **complete** (shell, signed sideload, Bearer auth, Glance widget, FCM registration). Play Console / Firebase / ops remaining — [`docs/M11_SPRINT_PLAN.md`](docs/M11_SPRINT_PLAN.md), [#429](https://github.com/Sturmi77/correlcore/issues/429). Sideload APKs attach to `v*` GitHub Releases.
 - [ ] **M12** — SaaS mode (managed hosting)
 - [ ] **M13** — Photo & media: MinIO persist + gallery; **EXIF strip foundation** shipped (`POST /media/photos`, #28); optional Immich follow-up
