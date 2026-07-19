@@ -4,6 +4,8 @@ Last updated: 2026-07-19
 
 **Art:** Ops-/Release-Track (kein Feature-Meilenstein)  
 **Tracking:** [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md)  
+**Backlog:** [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)  
+**Sprint-1-Runbook:** [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md)  
 **Domain:** `correlcore.com`  
 **Edge (Launch):** Host-Nginx auf dem NAS  
 **Edge (später VPS):** Production-Compose Traefik — Path A in [`selfhost/INSTALL.md`](selfhost/INSTALL.md)  
@@ -168,24 +170,26 @@ Deliverables:
 
 **Ziel:** Öffentliche HTTPS-Origin; Landing/Login-Routen; API same-origin. Mail darf noch fehlen.
 
-### 6.1 DNS
+**Kanonische Ops-Anleitung (nicht hier duplizieren):**
+[`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md)  
+**Restarbeiten:** [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md) § Sprint 1
 
-| # | Aktion                                              | Fertig wenn                                      |
-| - | --------------------------------------------------- | ------------------------------------------------ |
-| 1 | A/AAAA `correlcore.com` → Edge-IP                   | `dig +short correlcore.com A` korrekt            |
-| 2 | Optional `www` → Apex                               | Redirect HTTPS                                   |
-| 3 | TTL während Cutover kurz                            | dokumentiert                                     |
-| 4 | Resolve von externem Netz                           | ohne VPN                                         |
+### 6.1 Repo-Deliverables (Sprint 1)
 
-### 6.2 App-Stack
+- [x] Nginx/ENV/Smoke-Runbook inkl. Synology-Fallen und DNS-Cutover-Optionen A/B/C
+- [x] Beobachtung: Apex zeigt derzeit auf IONOS Apache (`217.160.0.166`) — Cutover nötig
+- [x] Backlog-Datei für S1-live + S2–S5
 
-| # | Aktion                                                         | Fertig wenn                |
-| - | -------------------------------------------------------------- | -------------------------- |
-| 1 | Web auf `127.0.0.1:${WEB_HOST_PORT}`                           | localhost-Bind             |
-| 2 | **Kein** Traefik auf Host 80/443                               | kein Port-Konflikt         |
-| 3 | Pflicht-ENV (unten); Secrets offline backupen                    | Container healthy          |
-| 4 | Analytics-Worker an                                            | running                    |
-| 5 | Mailpit bis Sprint 2 toleriert; danach entfernen (§2.1)        | in STATUS vermerkt         |
+### 6.2 Live-Cutover (Maintainer)
+
+Kurzfassung — Details nur im Runbook:
+
+| Bereich | Pflicht |
+| ------- | ------- |
+| App     | Web localhost; Hosted ENV; kein Traefik auf 80/443; Worker an |
+| Edge    | Nginx/RP + TLS; `X-Forwarded-Proto https`; Security-Headers |
+| DNS     | Apex → NAS **oder** IONOS-Proxy/Tunnel; MX/SPF für Mail behalten |
+| Smoke   | `https://correlcore.com/` + `/api/v1/health` ohne VPN |
 
 ```env
 APP_ENV=production
@@ -194,30 +198,6 @@ FRONTEND_BASE_URL=https://correlcore.com
 CORS_ORIGINS=https://correlcore.com
 COOKIE_SECURE=true
 # SMTP_* → Sprint 2
-```
-
-### 6.3 Nginx (Minimum)
-
-| #  | Aktion                                                                 | Fertig wenn              |
-| -- | ---------------------------------------------------------------------- | ------------------------ |
-| 1  | `server_name correlcore.com`                                           | aktiv                    |
-| 2  | TLS + Auto-Renew                                                       | gültiges Zertifikat      |
-| 3  | HTTP→HTTPS 301                                                         | Redirect                 |
-| 4  | `proxy_pass` → Web localhost                                           | HTML                     |
-| 5  | `Host`, `X-Real-IP`, `X-Forwarded-For`, **`X-Forwarded-Proto https`**, `X-Forwarded-Host` | Secure-Cookies |
-| 6  | Security-Headers (HSTS, frame deny, nosniff, Referrer, Permissions)    | in Response              |
-| 7  | Timeouts/Body für Auth                                                 | kein 413/504             |
-| 8  | Optional `limit_req` auf `/api/v1/auth/`                               | dokumentiert             |
-| 9  | Ein Upstream (alles → Web); kein Split `/api` nötig                    | einfache Config          |
-| 10 | Router WAN 80/443 → Nginx                                              | Mobilfunk-Zugriff        |
-
-Synology-Fallen: fehlendes `X-Forwarded-Proto`, Web Station Header-Rewrite, doppeltes SSL.
-
-Smoke:
-
-```bash
-curl -sfI "https://correlcore.com/" | head -20
-curl -sf "https://correlcore.com/api/v1/health"
 ```
 
 ---

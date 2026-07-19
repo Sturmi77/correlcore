@@ -1267,7 +1267,9 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 > Ops-Track (kein Feature-Meilenstein). Plan:
 > [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md),
-> Status: [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md).
+> Status: [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md),
+> Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md),
+> Nginx-Runbook: [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md).
 > Parallel zu M11; vor M12 SaaS. M10.1 Insight-Pipeline bleibt separat (done).
 
 - Öffentliche Referenzinstanz unter **`https://correlcore.com`** ohne VPN/Tailscale
