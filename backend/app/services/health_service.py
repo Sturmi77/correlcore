@@ -16,7 +16,7 @@ import logging
 from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from redis.asyncio import Redis
 from sqlalchemy import text
@@ -26,6 +26,17 @@ from app.core.crypto import generate_dek, unwrap_dek, wrap_dek
 from app.db.session import engine
 
 logger = logging.getLogger(__name__)
+
+
+class LivenessPayload(TypedDict):
+    """Process-only liveness fields (also used by /health/live response)."""
+
+    status: str
+    version: str
+    cookie_secure: bool
+    app_env: str
+    image_tag: str
+    git_commit: str
 
 
 class ComponentStatus(StrEnum):
@@ -56,7 +67,7 @@ class ReadinessReport:
 # ---------------------------------------------------------------------------
 
 
-def check_liveness() -> dict[str, str | bool]:
+def check_liveness() -> LivenessPayload:
     """Returns immediately — only confirms the process is alive.
 
     Ops fields (no secrets):

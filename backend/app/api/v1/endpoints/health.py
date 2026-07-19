@@ -133,10 +133,10 @@ async def health_summary() -> HealthSummary:
     overall = "ok" if report.ready else "degraded"
     return HealthSummary(
         status=overall,
-        version=str(liveness_data["version"]),
-        cookie_secure=bool(liveness_data["cookie_secure"]),
-        app_env=str(liveness_data["app_env"]),
-        image_tag=str(liveness_data["image_tag"]),
-        git_commit=str(liveness_data["git_commit"]),
+        version=liveness_data["version"],
+        cookie_secure=liveness_data["cookie_secure"],
+        app_env=liveness_data["app_env"],
+        image_tag=liveness_data["image_tag"],
+        git_commit=liveness_data["git_commit"],
         readiness=readiness_body,
     )
