@@ -24,12 +24,12 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 
 **CorrelCore** fills this gap:
 
-| Promise                        | Description                                                                                                      |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| **Correlations, not raw data** | The app explains why days were good or bad                                                                       |
-| **Selfhosted & offline-ready** | Your health data stays on your instance; PWA shell caching and feature-flagged Dexie sync (M4.1) are shipped     |
-| **60 seconds per day**         | No more, or it simply won't get done                                                                             |
-| **No gamification, ever**      | You track your habits — not how often you open the app                                                           |
+| Promise                        | Description                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Correlations, not raw data** | The app explains why days were good or bad                                                                   |
+| **Selfhosted & offline-ready** | Your health data stays on your instance; PWA shell caching and feature-flagged Dexie sync (M4.1) are shipped |
+| **60 seconds per day**         | No more, or it simply won't get done                                                                         |
+| **No gamification, ever**      | You track your habits — not how often you open the app                                                       |
 
 **Public selfhost line:** tag **`v1.0.0`** (2026-07-11, M10) through **`v1.0.5`** (Android sideload hardening). Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/). Release notes: [`CHANGELOG.md`](CHANGELOG.md).
 
@@ -55,14 +55,14 @@ Doc/version gaps for the `1.0.x` line: [`docs/releases/RELEASE_1_0_X_DOC_SYNC.md
 Shipped with public selfhost **v1.0** / patch line **v1.0.x**. Full table and links:
 [`docs/releases/COMPLETED_MILESTONES.md`](docs/releases/COMPLETED_MILESTONES.md).
 
-| Milestone | Summary |
-| --------- | ------- |
-| **M0–M2** | Monorepo, daily entry, Fernet, auth, charts, export |
-| **M3–M3.7** | Insights v1, polish, maturity phases, color system |
-| **M4 / M4.1** | PWA hardening + Dexie offline sync (feature-flagged) |
-| **M5 / M5.1** | Habits Core + UX polish |
-| **M7** | Insights v2 (Lasso, lag, clustering; digest foundations) |
-| **M9 / M10 / M10.1** | Beta hardening, public selfhost v1.0, insight triggers |
+| Milestone            | Summary                                                  |
+| -------------------- | -------------------------------------------------------- |
+| **M0–M2**            | Monorepo, daily entry, Fernet, auth, charts, export      |
+| **M3–M3.7**          | Insights v1, polish, maturity phases, color system       |
+| **M4 / M4.1**        | PWA hardening + Dexie offline sync (feature-flagged)     |
+| **M5 / M5.1**        | Habits Core + UX polish                                  |
+| **M7**               | Insights v2 (Lasso, lag, clustering; digest foundations) |
+| **M9 / M10 / M10.1** | Beta hardening, public selfhost v1.0, insight triggers   |
 
 </details>
 
@@ -70,22 +70,22 @@ Shipped with public selfhost **v1.0** / patch line **v1.0.x**. Full table and li
 
 ## Tech Stack
 
-| Layer              | Technology                                                                                          | Rationale                                                                                            |
-| ------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Backend API**    | FastAPI (Python 3.12)                                                                               | Async, OpenAPI-native, fast iteration                                                                |
-| **Web Frontend**   | SvelteKit + Skeleton UI                                                                             | Performance, bundle < 150 KB gz                                                                      |
-| **Mobile**         | Responsive web + PWA; Capacitor Android (`apps/android`) — sideload via GitHub Releases; Play = M11 | Maximum code sharing, Health Connect later ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md))        |
-| **Charts**         | Custom SVG components                                                                               | No external framework, JS budget maintained, token-compliant                                         |
-| **Database**       | PostgreSQL 16 + pgvector                                                                            | Row-level security for multi-user, vector for insights                                               |
-| **Cache / Queue**  | Redis 7                                                                                             | Sessions, rate limiting, sync queue                                                                  |
-| **Object Storage** | MinIO (**M13**)                                                                                     | Not in current compose; EXIF-strip API stub only — see [`docs/M13_NOTES.md`](docs/M13_NOTES.md)      |
-| **Reverse Proxy**  | Traefik v3                                                                                          | Automatic TLS, Docker label routing                                                                  |
-| **Auth**           | Native JWT phase 1, Authentik from M12                                                              | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                |
-| **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                               | Push/pull LWW merge, conflict log, local-first entry path; enable in Settings                        |
-| **Analytics**      | pandas + scikit-learn                                                                               | M7: Lasso, lag, symptom analytics; correlation engine live since M3                                  |
-| **Migrations**     | Alembic                                                                                             | Schema versioning                                                                                    |
-| **Monitoring**     | GlitchTip + Uptime Kuma                                                                             | Selfhosted error tracking                                                                            |
-| **Notifications**  | FCM (Capacitor, optional) · UnifiedPush planned (M4.2)                                              | Privacy-first push; Firebase off by default for selfhost                                             |
+| Layer              | Technology                                                                                          | Rationale                                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Backend API**    | FastAPI (Python 3.12)                                                                               | Async, OpenAPI-native, fast iteration                                                           |
+| **Web Frontend**   | SvelteKit + Skeleton UI                                                                             | Performance, bundle < 150 KB gz                                                                 |
+| **Mobile**         | Responsive web + PWA; Capacitor Android (`apps/android`) — sideload via GitHub Releases; Play = M11 | Maximum code sharing, Health Connect later ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md))   |
+| **Charts**         | Custom SVG components                                                                               | No external framework, JS budget maintained, token-compliant                                    |
+| **Database**       | PostgreSQL 16 + pgvector                                                                            | Row-level security for multi-user, vector for insights                                          |
+| **Cache / Queue**  | Redis 7                                                                                             | Sessions, rate limiting, sync queue                                                             |
+| **Object Storage** | MinIO (**M13**)                                                                                     | Not in current compose; EXIF-strip API stub only — see [`docs/M13_NOTES.md`](docs/M13_NOTES.md) |
+| **Reverse Proxy**  | Traefik v3                                                                                          | Automatic TLS, Docker label routing                                                             |
+| **Auth**           | Native JWT phase 1, Authentik from M12                                                              | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                           |
+| **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                               | Push/pull LWW merge, conflict log, local-first entry path; enable in Settings                   |
+| **Analytics**      | pandas + scikit-learn                                                                               | M7: Lasso, lag, symptom analytics; correlation engine live since M3                             |
+| **Migrations**     | Alembic                                                                                             | Schema versioning                                                                               |
+| **Monitoring**     | GlitchTip + Uptime Kuma                                                                             | Selfhosted error tracking                                                                       |
+| **Notifications**  | FCM (Capacitor, optional) · UnifiedPush planned (M4.2)                                              | Privacy-first push; Firebase off by default for selfhost                                        |
 
 ---
 
@@ -169,21 +169,21 @@ Task: <your specific task here>
 **Public docs site:** [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/) —
 install guide, user guide, API overview, privacy. Source: [`docs-site/`](docs-site/).
 
-| Document                                                                | Content                                                                                 |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                           | Vision, features, architecture, roadmap — single source of truth                        |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                                 | Component diagram, deployment topologies, sync protocol                                 |
-| [API.md](docs/API.md)                                                   | OpenAPI guidelines, endpoints, auth flow                                                |
-| [FRONTEND.md](docs/FRONTEND.md)                                         | Mobile/Web roles, responsive shell, component ownership                                 |
-| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                   | Local setup, quality gates, NAS/pnpm notes, test database                               |
-| [Completed milestones](docs/releases/COMPLETED_MILESTONES.md)           | Archived M0–M10.1 checklist                                                             |
-| [1.0.x doc sync](docs/releases/RELEASE_1_0_X_DOC_SYNC.md)               | Remaining updates to fully reflect the release line                                     |
-| [M11 Sprint Plan](docs/M11_SPRINT_PLAN.md)                              | Android Capacitor → Play Closed Testing                                                 |
-| [Android sideload](docs/selfhost/ANDROID_SIDELOAD.md)                   | Install signed APK from GitHub Releases                                                 |
-| [Phase & Insight Matrix](docs/PHASE_INSIGHT_MATRIX.md)                  | Maturity phases, unlock gates, thresholds                                               |
-| [Open decisions](docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md) | What still needs a product/ops decision                                                 |
-| [ADR Index](docs/adr/)                                                  | Architecture decision records                                                           |
-| [Quality Gates](docs/quality/)                                          | Visual QA and quality gate reports                                                      |
+| Document                                                                | Content                                                          |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                           | Vision, features, architecture, roadmap — single source of truth |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                                 | Component diagram, deployment topologies, sync protocol          |
+| [API.md](docs/API.md)                                                   | OpenAPI guidelines, endpoints, auth flow                         |
+| [FRONTEND.md](docs/FRONTEND.md)                                         | Mobile/Web roles, responsive shell, component ownership          |
+| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                   | Local setup, quality gates, NAS/pnpm notes, test database        |
+| [Completed milestones](docs/releases/COMPLETED_MILESTONES.md)           | Archived M0–M10.1 checklist                                      |
+| [1.0.x doc sync](docs/releases/RELEASE_1_0_X_DOC_SYNC.md)               | Remaining updates to fully reflect the release line              |
+| [M11 Sprint Plan](docs/M11_SPRINT_PLAN.md)                              | Android Capacitor → Play Closed Testing                          |
+| [Android sideload](docs/selfhost/ANDROID_SIDELOAD.md)                   | Install signed APK from GitHub Releases                          |
+| [Phase & Insight Matrix](docs/PHASE_INSIGHT_MATRIX.md)                  | Maturity phases, unlock gates, thresholds                        |
+| [Open decisions](docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md) | What still needs a product/ops decision                          |
+| [ADR Index](docs/adr/)                                                  | Architecture decision records                                    |
+| [Quality Gates](docs/quality/)                                          | Visual QA and quality gate reports                               |
 
 Additional milestone plans, market analysis, and feature notes live under [`docs/`](docs/).
 
