@@ -3,13 +3,15 @@
 Last updated: 2026-07-19  
 **Plan:** [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 **Status:** [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md)  
-**Combined cutover:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
+**Combined cutover:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
+**Topology choice:** [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)
 
 Single backlog for remaining Hosted-launch work. Do not duplicate these items into
 ad-hoc checklists elsewhere — update this file + STATUS when items move.
 
-**Cutover policy:** Prep Sprint 1 + Sprint 2 offline, then flip DNS/ENV **once**
-(see combined runbook). Avoid public web without working SMTP if possible.
+**Cutover policy:** Choose topology (A / B / H) first. Prep Sprint 1 + Sprint 2
+offline, then flip **once**. Prefer **H** if IONOS keeps the marketing site and
+NAS runs `app.correlcore.com`. Avoid public web without working SMTP if possible.
 
 ## Legend
 
@@ -33,9 +35,10 @@ ad-hoc checklists elsewhere — update this file + STATUS when items move.
 | S1-O2 | Apply Hosted ENV (`FRONTEND_BASE_URL`, CORS, `COOKIE_SECURE`) | `ops`  |                                            |
 | S1-O3 | Configure Nginx or Synology RP + TLS renew                    | `ops`  | Follow runbook §B                          |
 | S1-O4 | Ensure Traefik not bound to 80/443                            | `ops`  |                                            |
+| S1-O0 | **Decide topology A / B / H** and record in STATUS            | `ops`  | Blocker before flip                        |
 | S1-O5 | Router port-forward or tunnel (CGNAT path)                    | `ops`  |                                            |
-| S1-O6 | DNS cutover: apex → NAS **or** IONOS proxy/tunnel             | `ops`  | Today apex is IONOS Apache `217.160.0.166` |
-| S1-O7 | Public smoke `/` + `/api/v1/health` without VPN               | `ops`  | Exit for Sprint 1                          |
+| S1-O6 | DNS cutover per topology (A apex / B proxy / H `app` only)    | `ops`  | See topology runbook                       |
+| S1-O7 | Public smoke `/` + `/api/v1/health` without VPN               | `ops`  | On chosen app origin                       |
 
 ---
 

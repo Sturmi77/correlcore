@@ -291,6 +291,8 @@ later VPS migration are tracked in
 [`runbooks/hosted-nginx-edge.md`](../runbooks/hosted-nginx-edge.md).
 SMTP + one-shot cutover:
 [`runbooks/hosted-cutover.md`](../runbooks/hosted-cutover.md).
+Topology (IONOS marketing vs full NAS):
+[`runbooks/hosted-topology-options.md`](../runbooks/hosted-topology-options.md).
 Remaining work:
 [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md).
 A dedicated compose profile for external-proxy mode remains deferred (historical

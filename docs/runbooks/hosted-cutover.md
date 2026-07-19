@@ -3,10 +3,16 @@
 Last updated: 2026-07-19  
 **Milestone:** M10.2 Sprints 1–2 live  
 **Issues:** #460 (edge), #461 (SMTP)  
-**Details:** [`hosted-nginx-edge.md`](hosted-nginx-edge.md) · [`hosted-smtp.md`](hosted-smtp.md)
+**Details:** [`hosted-nginx-edge.md`](hosted-nginx-edge.md) · [`hosted-smtp.md`](hosted-smtp.md)  
+**Choose topology first:** [`hosted-topology-options.md`](hosted-topology-options.md)
 
 Yes: prepare everything offline, then **flip DNS + ENV in one window**.
 Do not run a half-cutover (public web without working verify mail) if you can avoid it.
+
+> **IONOS marketing + NAS app:** If you keep the website builder on
+> `correlcore.com` and run CorrelCore on `app.correlcore.com`, follow
+> **Topology H** in the topology runbook — do **not** point the apex A-Record
+> at the NAS. This file’s default steps assume **Topology A** (full apex on NAS).
 
 ```mermaid
 flowchart LR
@@ -21,6 +27,16 @@ flowchart LR
 
 ## Strategy
 
+Pick one topology before the window ([`hosted-topology-options.md`](hosted-topology-options.md)):
+
+| Topology | Apex `correlcore.com` | App login | This runbook |
+| -------- | --------------------- | --------- | ------------ |
+| **A** Full NAS | → NAS | apex `/auth/login` | Steps below |
+| **B** IONOS reverse proxy | DNS stays IONOS; proxy to NAS | apex | Adapt “Flip” to proxy enable |
+| **H** Hybrid ★ | stays IONOS marketing | `app.correlcore.com` | Use topology H section instead |
+
+### Topology A phases (default below)
+
 | Phase     | Where                     | Public traffic             |
 | --------- | ------------------------- | -------------------------- |
 | **Prep**  | NAS only (Tailscale/LAN)  | Still IONOS Apache on apex |
@@ -29,6 +45,13 @@ flowchart LR
 | **Clean** | Hosted compose            | Mailpit gone               |
 
 AAAA: only point at NAS if IPv6 edge is real; otherwise **remove** IONOS AAAA so clients do not stick on the old host. MX/SPF for receive stay on IONOS unless you change mail hosting.
+
+### Topology H reminder (if chosen)
+
+- Do **not** move apex A to the NAS.
+- Add `app.correlcore.com` → NAS; ENV/`DOMAIN` = `app.correlcore.com`.
+- IONOS page CTAs → `https://app.correlcore.com/auth/login` (etc.).
+- SMTP still IONOS. Full steps: topology runbook § Topology H.
 
 ---
 
