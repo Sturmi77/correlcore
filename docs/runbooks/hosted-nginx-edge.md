@@ -22,12 +22,12 @@ Prefer the combined cutover when going public so verify-mail works in the same w
 
 Observed 2026-07-19 from CI/agent network (re-check before cutover):
 
-| Record | Value | Notes |
-| ------ | ----- | ----- |
-| `correlcore.com` A | `217.160.0.166` | IONOS; HTTP answers **Apache** (website builder / placeholder), not CorrelCore |
-| AAAA | present | IONOS |
-| MX | `mx00/mx01.ionos.de` | Useful for Sprint 2 / `security@` |
-| SPF TXT | `v=spf1 include:_spf-eu.ionos.com ~all` | Extend in Sprint 2 if SMTP relay ≠ IONOS |
+| Record             | Value                                   | Notes                                                                          |
+| ------------------ | --------------------------------------- | ------------------------------------------------------------------------------ |
+| `correlcore.com` A | `217.160.0.166`                         | IONOS; HTTP answers **Apache** (website builder / placeholder), not CorrelCore |
+| AAAA               | present                                 | IONOS                                                                          |
+| MX                 | `mx00/mx01.ionos.de`                    | Useful for Sprint 2 / `security@`                                              |
+| SPF TXT            | `v=spf1 include:_spf-eu.ionos.com ~all` | Extend in Sprint 2 if SMTP relay ≠ IONOS                                       |
 
 **Implication:** Sprint 1 cutover is not “enable Nginx only” — DNS (or an IONOS
 reverse proxy) must eventually send public traffic to the NAS edge. Until then,
@@ -152,13 +152,13 @@ server {
 
 If Synology **Application Portal → Reverse Proxy** is used instead of raw Nginx:
 
-| Setting | Value |
-| ------- | ----- |
-| Source | `https://correlcore.com:443` |
-| Destination | `http://127.0.0.1:3010` |
-| WebSocket | on if offered |
+| Setting           | Value                                                           |
+| ----------------- | --------------------------------------------------------------- |
+| Source            | `https://correlcore.com:443`                                    |
+| Destination       | `http://127.0.0.1:3010`                                         |
+| WebSocket         | on if offered                                                   |
 | **Custom header** | `X-Forwarded-Proto` = `https` (**required** for Secure cookies) |
-| Custom header | `X-Forwarded-For` / `X-Real-IP` as supported |
+| Custom header     | `X-Forwarded-For` / `X-Real-IP` as supported                    |
 
 ### B.2 Synology pitfalls
 
@@ -173,11 +173,11 @@ Forward WAN **80** and **443** to the NAS Nginx/RP host. Verify from mobile data
 
 ### B.4 DNS cutover options
 
-| Option | When | Action |
-| ------ | ---- | ------ |
-| **A — Point apex at NAS** | Public IPv4/IPv6 on home, no CGNAT | Change A/AAAA from IONOS web IP to NAS public IP; keep MX/SPF for mail |
-| **B — IONOS (or other) reverse proxy / tunnel** | CGNAT or want to hide home IP | Keep DNS on IONOS; proxy/tunnel to NAS; still one logical edge |
-| **C — Defer public cutover** | Landing still on IONOS builder | Finish Nginx+ENV on NAS; cut DNS when ready (Sprint 1 remaining) |
+| Option                                          | When                               | Action                                                                 |
+| ----------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| **A — Point apex at NAS**                       | Public IPv4/IPv6 on home, no CGNAT | Change A/AAAA from IONOS web IP to NAS public IP; keep MX/SPF for mail |
+| **B — IONOS (or other) reverse proxy / tunnel** | CGNAT or want to hide home IP      | Keep DNS on IONOS; proxy/tunnel to NAS; still one logical edge         |
+| **C — Defer public cutover**                    | Landing still on IONOS builder     | Finish Nginx+ENV on NAS; cut DNS when ready (Sprint 1 remaining)       |
 
 Do **not** run IONOS Apache and NAS Nginx both as public apex without a clear redirect story.
 

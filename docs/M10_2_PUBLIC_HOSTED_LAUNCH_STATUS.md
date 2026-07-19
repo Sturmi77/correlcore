@@ -7,15 +7,15 @@ Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 
 ## Overall
 
-| Item                         | Status |
-| ---------------------------- | ------ |
-| Sprint 0 — Baseline          | **Done** (repo + issues #459–#464; milestones/NAS inventory → maintainer) |
-| Sprint 1 — DNS + Nginx       | **Repo done**; live ops via combined cutover |
-| Sprint 2 — SMTP              | **Repo done** (SMTP + cutover runbooks); live ops same window as S1 |
-| Sprint 3 — Landing / Legal   | Pending — see backlog |
-| Sprint 4 — APK               | Pending (blocked on #429) |
-| Sprint 5 — Closeout          | Pending |
-| Exit criteria                | Not met |
+| Item                       | Status                                                                    |
+| -------------------------- | ------------------------------------------------------------------------- |
+| Sprint 0 — Baseline        | **Done** (repo + issues #459–#464; milestones/NAS inventory → maintainer) |
+| Sprint 1 — DNS + Nginx     | **Repo done**; live ops via combined cutover                              |
+| Sprint 2 — SMTP            | **Repo done** (SMTP + cutover runbooks); live ops same window as S1       |
+| Sprint 3 — Landing / Legal | Pending — see backlog                                                     |
+| Sprint 4 — APK             | Pending (blocked on #429)                                                 |
+| Sprint 5 — Closeout        | Pending                                                                   |
+| Exit criteria              | Not met                                                                   |
 
 **Maintainer next step:** execute [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 (prep NAS → flip A → smoke web+mail → remove Hosted Mailpit).
@@ -24,44 +24,44 @@ Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 
 ## Binding decisions (Sprint 0)
 
-| Decision | Binding answer |
-| -------- | -------------- |
-| Public domain | **`correlcore.com`** (doc sync `.app`→`.com` in Sprint 3) |
-| Launch edge | **Host-Nginx** only |
-| Traefik on Hosted NAS | **Do not enable** while Nginx terminates TLS |
-| Mailpit on Hosted | Until Sprint 2 SMTP E2E → then **remove**. Quickstart keeps Mailpit |
-| Landing origin | App `/` same origin as auth |
-| APK | GitHub Releases canonical |
-| Scope vs M12 / M10.1 naming | Hosted ≠ SaaS; insight M10.1 done; compose A/C/G not M10.2 |
+| Decision                    | Binding answer                                                      |
+| --------------------------- | ------------------------------------------------------------------- |
+| Public domain               | **`correlcore.com`** (doc sync `.app`→`.com` in Sprint 3)           |
+| Launch edge                 | **Host-Nginx** only                                                 |
+| Traefik on Hosted NAS       | **Do not enable** while Nginx terminates TLS                        |
+| Mailpit on Hosted           | Until Sprint 2 SMTP E2E → then **remove**. Quickstart keeps Mailpit |
+| Landing origin              | App `/` same origin as auth                                         |
+| APK                         | GitHub Releases canonical                                           |
+| Scope vs M12 / M10.1 naming | Hosted ≠ SaaS; insight M10.1 done; compose A/C/G not M10.2          |
 
 ---
 
 ## Gap matrix (Exit criteria)
 
-| Exit criterion | Repo / product today | Hosted ops gap |
-| -------------- | -------------------- | -------------- |
+| Exit criterion     | Repo / product today                      | Hosted ops gap                            |
+| ------------------ | ----------------------------------------- | ----------------------------------------- |
 | Landing öffentlich | Landing code shipped; Nginx runbook ready | DNS still IONOS Apache — cutover S1-O6/O7 |
-| Login ohne VPN | Auth + ADR-0011 shipped | Public edge + Hosted ENV on NAS |
-| Echte Mail | SMTP code shipped | Sprint 2 ops |
-| Legal | Routes shipped | Public URL + Hosted content (Sprint 3) |
-| APK auffindbar | Workflow + sideload docs | #429 + landing CTA |
-| Selfhost unberührt | INSTALL Path A/B | Keep generic |
-| VPS-ready | Images/volumes portable | `nas-to-vps.md` (Sprint 5) |
+| Login ohne VPN     | Auth + ADR-0011 shipped                   | Public edge + Hosted ENV on NAS           |
+| Echte Mail         | SMTP code shipped                         | Sprint 2 ops                              |
+| Legal              | Routes shipped                            | Public URL + Hosted content (Sprint 3)    |
+| APK auffindbar     | Workflow + sideload docs                  | #429 + landing CTA                        |
+| Selfhost unberührt | INSTALL Path A/B                          | Keep generic                              |
+| VPS-ready          | Images/volumes portable                   | `nas-to-vps.md` (Sprint 5)                |
 
 ---
 
 ## Baseline inventory (Sprint 0 → maintainer)
 
-| Area | Repo-known / observed | Maintainer confirm |
-| ---- | --------------------- | ------------------ |
-| Compose path | Dockhand / quickstart / production | [ ] Which stack on NAS? |
-| Traefik | Must stay off 80/443 for Hosted-Nginx | [ ] Confirmed |
-| Mailpit | OK until Sprint 2 | [ ] Present on Hosted? |
-| Nginx | Runbook [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md) | [ ] Synology RP / host Nginx? |
-| DNS | Apex A `217.160.0.166` (IONOS Apache, 2026-07-19) | [ ] Cutover plan A/B/C in runbook? |
-| Tailscale | Admin-only after cutover | [ ] |
-| SMTP | IONOS MX + SPF already | [ ] Relay choice Sprint 2 |
-| Android signing | #429 open | [ ] |
+| Area            | Repo-known / observed                                                    | Maintainer confirm                 |
+| --------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| Compose path    | Dockhand / quickstart / production                                       | [ ] Which stack on NAS?            |
+| Traefik         | Must stay off 80/443 for Hosted-Nginx                                    | [ ] Confirmed                      |
+| Mailpit         | OK until Sprint 2                                                        | [ ] Present on Hosted?             |
+| Nginx           | Runbook [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md) | [ ] Synology RP / host Nginx?      |
+| DNS             | Apex A `217.160.0.166` (IONOS Apache, 2026-07-19)                        | [ ] Cutover plan A/B/C in runbook? |
+| Tailscale       | Admin-only after cutover                                                 | [ ]                                |
+| SMTP            | IONOS MX + SPF already                                                   | [ ] Relay choice Sprint 2          |
+| Android signing | #429 open                                                                | [ ]                                |
 
 ---
 
@@ -116,13 +116,13 @@ See [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG
 
 ## Tracking issues
 
-| Sprint | Issue |
-| ------ | ----- |
-| 0 | #459 |
-| 1 | #460 |
-| 2 | #461 |
-| 3 | #462 |
-| 4 | #463 (blocked by #429) |
-| 5 | #464 |
+| Sprint | Issue                  |
+| ------ | ---------------------- |
+| 0      | #459                   |
+| 1      | #460                   |
+| 2      | #461                   |
+| 3      | #462                   |
+| 4      | #463 (blocked by #429) |
+| 5      | #464                   |
 
 Reuse #429 / #450 / #453 — do not file duplicates.

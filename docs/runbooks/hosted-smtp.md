@@ -18,9 +18,9 @@ relay. After E2E green: **Mailpit is removed from the Hosted stack**.
 
 DNS already has (observed 2026-07-19):
 
-| Record | Value |
-| ------ | ----- |
-| MX | `mx00.ionos.de` / `mx01.ionos.de` |
+| Record  | Value                                   |
+| ------- | --------------------------------------- |
+| MX      | `mx00.ionos.de` / `mx01.ionos.de`       |
 | SPF TXT | `v=spf1 include:_spf-eu.ionos.com ~all` |
 
 **Preferred Hosted path:** send via **IONOS SMTP** for `@correlcore.com`.
@@ -107,13 +107,13 @@ After verify/reset E2E passes:
 
 ## D. E2E checks
 
-| Test | Expect |
-| ---- | ------ |
-| Register new address | Mail arrives (not only Mailpit UI) |
-| Click verify link | Host is `https://correlcore.com/...` |
-| Resend verification | Second mail arrives |
-| Password reset | Reset link works; login with new password |
-| Spam score | SPF/DKIM pass (mail-tester or provider dashboard) |
+| Test                 | Expect                                            |
+| -------------------- | ------------------------------------------------- |
+| Register new address | Mail arrives (not only Mailpit UI)                |
+| Click verify link    | Host is `https://correlcore.com/...`              |
+| Resend verification  | Second mail arrives                               |
+| Password reset       | Reset link works; login with new password         |
+| Spam score           | SPF/DKIM pass (mail-tester or provider dashboard) |
 
 From API logs: successful send, no connection errors to `mailpit`.
 

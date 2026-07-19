@@ -21,12 +21,12 @@ flowchart LR
 
 ## Strategy
 
-| Phase | Where | Public traffic |
-| ----- | ----- | -------------- |
-| **Prep** | NAS only (Tailscale/LAN) | Still IONOS Apache on apex |
-| **Flip** | DNS A (+ fix/remove AAAA) | Moves to NAS Nginx |
-| **Prove** | Mobile data / external | Web + register/verify |
-| **Clean** | Hosted compose | Mailpit gone |
+| Phase     | Where                     | Public traffic             |
+| --------- | ------------------------- | -------------------------- |
+| **Prep**  | NAS only (Tailscale/LAN)  | Still IONOS Apache on apex |
+| **Flip**  | DNS A (+ fix/remove AAAA) | Moves to NAS Nginx         |
+| **Prove** | Mobile data / external    | Web + register/verify      |
+| **Clean** | Hosted compose            | Mailpit gone               |
 
 AAAA: only point at NAS if IPv6 edge is real; otherwise **remove** IONOS AAAA so clients do not stick on the old host. MX/SPF for receive stay on IONOS unless you change mail hosting.
 
@@ -63,7 +63,7 @@ SMTP_USE_TLS=true
 - [ ] Secrets offline-backed up (`ENCRYPTION_KEY`, `SECRET_KEY`, …)
 - [ ] API/web/worker restarted with new ENV
 - [ ] Optional: send a test mail while `FRONTEND_BASE_URL` already points at correlcore.com
-  (links will only work after DNS flip — OK)
+      (links will only work after DNS flip — OK)
 
 ### Mail DNS prep ([`hosted-smtp.md`](hosted-smtp.md))
 
@@ -125,20 +125,20 @@ Mail DNS (DKIM/DMARC) can stay.
 
 ## Out of this cutover
 
-| Item | When |
-| ---- | ---- |
-| Landing/legal content polish, `.app`→`.com` in SECURITY.md | Sprint 3 (#462) |
-| APK CTA on landing | Sprint 4 (#463 / #429) |
-| Traefik / VPS move | Sprint 5 — **not** during this flip |
+| Item                                                       | When                                |
+| ---------------------------------------------------------- | ----------------------------------- |
+| Landing/legal content polish, `.app`→`.com` in SECURITY.md | Sprint 3 (#462)                     |
+| APK CTA on landing                                         | Sprint 4 (#463 / #429)              |
+| Traefik / VPS move                                         | Sprint 5 — **not** during this flip |
 
 ---
 
 ## Rollback cheat sheet
 
-| Symptom | First action |
-| ------- | ------------ |
-| Apex still IONOS HTML | Dig A/AAAA; wait TTL; check CDN/proxy cache |
+| Symptom                | First action                                          |
+| ---------------------- | ----------------------------------------------------- |
+| Apex still IONOS HTML  | Dig A/AAAA; wait TTL; check CDN/proxy cache           |
 | 502/timeout after flip | Router forward; Nginx upstream port; web container up |
-| Login no cookie | `X-Forwarded-Proto https`; `COOKIE_SECURE=true` |
-| No verify mail | SMTP ENV; relay auth; SPF/DKIM; API logs |
-| Need old site back | Restore previous A/AAAA to IONOS |
+| Login no cookie        | `X-Forwarded-Proto https`; `COOKIE_SECURE=true`       |
+| No verify mail         | SMTP ENV; relay auth; SPF/DKIM; API logs              |
+| Need old site back     | Restore previous A/AAAA to IONOS                      |
