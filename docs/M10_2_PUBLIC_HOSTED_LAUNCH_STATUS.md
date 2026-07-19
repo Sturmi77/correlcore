@@ -2,19 +2,23 @@
 
 Last updated: 2026-07-19  
 Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
-Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)
+Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)  
+Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 
 ## Overall
 
 | Item                         | Status |
 | ---------------------------- | ------ |
 | Sprint 0 — Baseline          | **Done** (repo + issues #459–#464; milestones/NAS inventory → maintainer) |
-| Sprint 1 — DNS + Nginx       | **Repo done** — runbook shipped; **live cutover pending** (apex still IONOS Apache) |
-| Sprint 2 — SMTP              | Pending — see backlog |
+| Sprint 1 — DNS + Nginx       | **Repo done**; live ops via combined cutover |
+| Sprint 2 — SMTP              | **Repo done** (SMTP + cutover runbooks); live ops same window as S1 |
 | Sprint 3 — Landing / Legal   | Pending — see backlog |
 | Sprint 4 — APK               | Pending (blocked on #429) |
 | Sprint 5 — Closeout          | Pending |
 | Exit criteria                | Not met |
+
+**Maintainer next step:** execute [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
+(prep NAS → flip A → smoke web+mail → remove Hosted Mailpit).
 
 ---
 
@@ -89,9 +93,24 @@ Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BA
 
 ---
 
-## Sprint 2–5
+## Sprint 2 checklist
 
-See [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md) — single source for remaining IDs.
+### Repo (done)
+
+- [x] [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md)
+- [x] [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md) (S1+S2 one flip)
+- [x] Backlog S2-R1 + cutover policy
+
+### Live (maintainer — with Sprint 1 cutover)
+
+- [ ] IONOS (or other) SMTP + DKIM/DMARC
+- [ ] Hosted `SMTP_*` in same ENV apply as S1-O2
+- [ ] Public verify/reset E2E
+- [ ] Mailpit removed from Hosted
+
+## Sprint 3–5
+
+See [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md).
 
 ---
 

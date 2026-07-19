@@ -6,6 +6,8 @@ Last updated: 2026-07-19
 **Tracking:** [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md)  
 **Backlog:** [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)  
 **Sprint-1-Runbook:** [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md)  
+**Sprint-2-Runbook:** [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md)  
+**Combined cutover (S1+S2 live):** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
 **Domain:** `correlcore.com`  
 **Edge (Launch):** Host-Nginx auf dem NAS  
 **Edge (später VPS):** Production-Compose Traefik — Path A in [`selfhost/INSTALL.md`](selfhost/INSTALL.md)  
@@ -206,14 +208,23 @@ COOKIE_SECURE=true
 
 **Ziel:** Verify/Reset über `@correlcore.com`. Danach **Mailpit am Hosted-Stack entfernen**.
 
-| Phase        | Aktion                                                                 |
-| ------------ | ---------------------------------------------------------------------- |
-| Provider     | Relay wählen (EU/DSGVO bevorzugen); Domain verifizieren; SMTP-Creds    |
-| DNS          | SPF, DKIM, DMARC (`p=none` zuerst); MX falls `security@` Inbox         |
-| ENV          | `SMTP_HOST/PORT/USER/PASSWORD`, `SMTP_FROM=noreply@correlcore.com`, TLS |
-| Cutover      | API neu starten; `SMTP_HOST` ≠ `mailpit`; Mailpit-Container stoppen    |
-| E2E          | Register/Verify, Resend, Reset, Spam-Check, Link-Host = correlcore.com |
-| Artefakt     | Kurzer Abschnitt in Runbook (keine Secrets) — kein Duplikat von INSTALL |
+**Kanonisch:** [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md)  
+**Live mit Sprint 1 in einem Fenster:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
+
+### 7.1 Repo-Deliverables (Sprint 2)
+
+- [x] SMTP-Runbook (IONOS SMTP bevorzugt wegen bestehendem MX/SPF)
+- [x] Combined-Cutover-Runbook (Prep → A-Flip → Smoke → Mailpit weg)
+
+### 7.2 Live (Maintainer)
+
+| Phase    | Aktion |
+| -------- | ------ |
+| Provider | Bevorzugt IONOS SMTP; sonst Relay + SPF/DKIM |
+| DNS Mail | DKIM + DMARC vor oder parallel; **MX nicht** beim Web-Flip ändern |
+| ENV      | `SMTP_*` + `FRONTEND_BASE_URL` zusammen mit Nginx-ENV setzen |
+| Flip     | Erst A (und AAAA-Fix), dann öffentlicher Verify/Reset-Test |
+| Clean    | Hosted-Mailpit entfernen; Quickstart behält Mailpit |
 
 Selfhost-Quickstart-Compose behält Mailpit unverändert.
 

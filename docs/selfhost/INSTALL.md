@@ -287,8 +287,11 @@ This avoids running a second Traefik inside Docker. **Do not run Compose Traefik
 **Hosted reference (`correlcore.com`):** maintainer ops for Nginx-on-NAS, SMTP cutover, and
 later VPS migration are tracked in
 [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)
-(not a second install guide). Sprint-1 edge cutover:
-[`runbooks/hosted-nginx-edge.md`](../runbooks/hosted-nginx-edge.md). Remaining work:
+(not a second install guide). Sprint-1 edge:
+[`runbooks/hosted-nginx-edge.md`](../runbooks/hosted-nginx-edge.md).
+SMTP + one-shot cutover:
+[`runbooks/hosted-cutover.md`](../runbooks/hosted-cutover.md).
+Remaining work:
 [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md).
 A dedicated compose profile for external-proxy mode remains deferred (historical
 “M10.1 deferred” compose item — not the M10.1 insight pipeline).

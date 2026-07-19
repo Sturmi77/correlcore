@@ -2,10 +2,14 @@
 
 Last updated: 2026-07-19  
 **Plan:** [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
-**Status:** [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md)
+**Status:** [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md)  
+**Combined cutover:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 
 Single backlog for remaining Hosted-launch work. Do not duplicate these items into
 ad-hoc checklists elsewhere — update this file + STATUS when items move.
+
+**Cutover policy:** Prep Sprint 1 + Sprint 2 offline, then flip DNS/ENV **once**
+(see combined runbook). Avoid public web without working SMTP if possible.
 
 ## Legend
 
@@ -37,16 +41,17 @@ ad-hoc checklists elsewhere — update this file + STATUS when items move.
 
 ## Sprint 2 — SMTP
 
-**Issue:** #461
+**Issue:** #461 · **Runbook:** [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md)  
+**Execute with Sprint 1 live steps via:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 
 | ID | Item | Tag | Notes |
 | -- | ---- | --- | ----- |
-| S2-O1 | Choose SMTP relay (prefer EU/DSGVO) | `ops` | IONOS MX/SPF already present — extend if relay ≠ IONOS |
-| S2-O2 | SPF / DKIM / DMARC for sending domain | `ops` | |
-| S2-O3 | Hosted `SMTP_*` + `SMTP_FROM=noreply@correlcore.com` | `ops` | |
-| S2-O4 | Verify / resend / reset E2E | `ops` | |
-| S2-O5 | **Remove Mailpit from Hosted stack** | `ops` | Quickstart keeps Mailpit |
-| S2-R1 | Short Hosted SMTP notes in runbook (no secrets) | `repo` | After cutover or alongside |
+| S2-R1 | Hosted SMTP runbook + combined cutover runbook | `repo` | **Done** |
+| S2-O1 | Choose SMTP relay (prefer **IONOS SMTP**) | `ops` | MX/SPF already IONOS — simplest |
+| S2-O2 | SPF / DKIM / DMARC for sending domain | `ops` | Prefetch before DNS flip OK |
+| S2-O3 | Hosted `SMTP_*` + `SMTP_FROM=noreply@correlcore.com` | `ops` | Same window as S1-O2 ENV |
+| S2-O4 | Verify / resend / reset E2E on public origin | `ops` | After A flip |
+| S2-O5 | **Remove Mailpit from Hosted stack** | `ops` | After E2E; quickstart keeps Mailpit |
 
 ---
 

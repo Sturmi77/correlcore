@@ -3,10 +3,12 @@
 Last updated: 2026-07-19  
 **Milestone:** M10.2 Sprint 1  
 **Plan:** [`../M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
-**Issue:** #460
+**Issue:** #460  
+**Combined cutover (with SMTP):** [`hosted-cutover.md`](hosted-cutover.md)
 
 Operator runbook for the **Hosted reference** instance. This is not a second
 selfhost install guide — generic install stays in [`../selfhost/INSTALL.md`](../selfhost/INSTALL.md).
+Prefer the combined cutover when going public so verify-mail works in the same window.
 
 ## Goals
 
