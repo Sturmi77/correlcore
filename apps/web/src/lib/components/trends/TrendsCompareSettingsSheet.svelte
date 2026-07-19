@@ -8,7 +8,7 @@
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
 
   export let open = false;
-  export let smoothing = false;
+  export let smoothing = true;
   export let smoothingAvailable = false;
   export let metrics: Record<MetricKey, boolean>;
   export let selectedCategory: TagCategory | 'all' = 'all';

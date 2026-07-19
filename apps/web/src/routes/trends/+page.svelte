@@ -26,7 +26,13 @@
   import { insightStore, loadInsights } from '$lib/stores/insights';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
-  import { rangeToDays, rangeToHabitWindow } from '$lib/utils/trendsRange';
+  import {
+    rangeToDays,
+    rangeToHabitWindow,
+    readSmoothingPreference,
+    smoothingWindowDays,
+    TREND_SMOOTHING_STORAGE_KEY,
+  } from '$lib/utils/trendsRange';
   import {
     buildWorkContextHeatmap,
     type WorkContextHeatmapResponse,
@@ -98,7 +104,9 @@
   let historyLoading = false;
   let historyError = '';
   let historyDetails: EntryHistoryDetail[] = [];
-  let smoothing = false;
+  // Default on: softer trend is the primary read for 30D+ (and week with a
+  // shorter window). Explicit localStorage Raw choice still wins on mount.
+  let smoothing = true;
   let showTagRows = true;
   let showSymptomRows = false;
   let showWorkContextRows = true;
@@ -109,7 +117,6 @@
   let mobileMedia: MediaQueryList | null = null;
   let activeDevFixtureKey = '';
 
-  const SMOOTHING_STORAGE_KEY = 'cc_trend_smooth';
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
 
   $: range = $analysisRange;
@@ -238,7 +245,7 @@
   function setSmoothing(value: boolean): void {
     smoothing = value;
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(SMOOTHING_STORAGE_KEY, value ? 'true' : 'false');
+      localStorage.setItem(TREND_SMOOTHING_STORAGE_KEY, value ? 'true' : 'false');
     }
   }
 
@@ -357,15 +364,20 @@
     label: $_(tab.label),
     testId: `trends-tab-${tab.id}`,
   }));
-  $: smoothingAvailable = range !== 'week';
+  // Smoothing is available for every range; week uses a 3-day window so the
+  // daily shape stays readable (see smoothingWindowDays).
+  $: smoothingAvailable = true;
   $: displayTimeseries =
     timeseries && smoothing && smoothingAvailable
-      ? { ...timeseries, points: smoothTimeseriesPoints(timeseries.points) }
+      ? {
+          ...timeseries,
+          points: smoothTimeseriesPoints(timeseries.points, smoothingWindowDays(range)),
+        }
       : timeseries;
   $: topInsight = $insightStore.latest;
 
   onMount(() => {
-    smoothing = localStorage.getItem(SMOOTHING_STORAGE_KEY) === 'true';
+    smoothing = readSmoothingPreference(typeof localStorage !== 'undefined' ? localStorage : null);
     compareMode = readCompareMode();
     compareSortMode = readCompareSortMode();
     restoreCompareLayers();
