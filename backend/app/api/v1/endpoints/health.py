@@ -35,6 +35,11 @@ router = APIRouter()
 class LivenessResponse(BaseModel):
     status: str
     version: str
+    # Effective Secure-Flag actually loaded by this process (ADR-0006).
+    # Ops: on plain-HTTP Homelab this must be false — otherwise browsers
+    # discard auth cookies and APIs return 401 Could not validate credentials.
+    cookie_secure: bool
+    app_env: str
 
 
 class ComponentModel(BaseModel):
@@ -51,6 +56,8 @@ class ReadinessResponse(BaseModel):
 class HealthSummary(BaseModel):
     status: str
     version: str
+    cookie_secure: bool
+    app_env: str
     readiness: ReadinessResponse
 
 
@@ -119,6 +126,8 @@ async def health_summary() -> HealthSummary:
     overall = "ok" if report.ready else "degraded"
     return HealthSummary(
         status=overall,
-        version=liveness_data["version"],
+        version=str(liveness_data["version"]),
+        cookie_secure=bool(liveness_data["cookie_secure"]),
+        app_env=str(liveness_data["app_env"]),
         readiness=readiness_body,
     )

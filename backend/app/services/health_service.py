@@ -56,9 +56,20 @@ class ReadinessReport:
 # ---------------------------------------------------------------------------
 
 
-def check_liveness() -> dict[str, str]:
-    """Returns immediately — only confirms the process is alive."""
-    return {"status": "ok", "version": settings.APP_VERSION}
+def check_liveness() -> dict[str, str | bool]:
+    """Returns immediately — only confirms the process is alive.
+
+    Includes ``cookie_secure`` so operators can verify the API container
+    actually received ``COOKIE_SECURE`` (a value only in the host ``.env``
+    is ignored unless Compose wires it into ``environment:`` — the classic
+    Homelab pitfall behind login-200 → API-401).
+    """
+    return {
+        "status": "ok",
+        "version": settings.APP_VERSION,
+        "cookie_secure": settings.cookie_secure_effective,
+        "app_env": settings.APP_ENV,
+    }
 
 
 # ---------------------------------------------------------------------------

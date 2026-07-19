@@ -67,10 +67,25 @@ erreichbar sein wird, z. B.:
 CORS_ORIGINS=http://correlcore-test.tail-scale.ts.net:3000,http://100.101.102.103:3000
 ```
 
-**Auth / Cookies:** Der Stack ist für plain HTTP gedacht. Compose setzt
-`COOKIE_SECURE=false` (Default). Ohne das (oder mit `COOKIE_SECURE=true`
-auf `http://…`) verwirft der Browser die Auth-Cookies — Symptom: Login
-OK, danach `API 401 … Could not validate credentials`. Siehe ADR-0006.
+**Auth / Cookies:** Der Stack ist für plain HTTP gedacht. Compose muss
+`COOKIE_SECURE` **explizit** an den API-Container durchreichen
+(`COOKIE_SECURE: ${COOKIE_SECURE:-false}` in `x-api-env`). Ein Eintrag
+nur in der Host-`.env` reicht **nicht** — Compose nutzt `.env` für
+Interpolation, injiziert die Variable aber nicht in den Container,
+solange sie nicht unter `environment:` steht.
+
+Verifizieren (muss `false` zeigen auf HTTP-Homelab):
+
+```bash
+docker exec correlcore-test-api env | grep COOKIE_SECURE
+# oder:
+curl -s http://127.0.0.1:8210/api/v1/health/live | jq .cookie_secure
+# → false
+```
+
+Wenn `cookie_secure`/`COOKIE_SECURE` fehlt oder `true` ist: Browser
+verwirft Auth-Cookies auf `http://…` — Symptom: Login OK, danach
+`API 401 … Could not validate credentials`. Siehe ADR-0006.
 
 ---
 

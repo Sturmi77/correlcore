@@ -85,8 +85,15 @@ def _make_async_engine_failing_to_connect(exc: BaseException) -> MagicMock:
 def test_check_liveness_returns_static_payload() -> None:
     with patch("app.services.health_service.settings") as s:
         s.APP_VERSION = "9.9.9"
+        s.APP_ENV = "staging"
+        s.cookie_secure_effective = False
         result = check_liveness()
-    assert result == {"status": "ok", "version": "9.9.9"}
+    assert result == {
+        "status": "ok",
+        "version": "9.9.9",
+        "cookie_secure": False,
+        "app_env": "staging",
+    }
 
 
 # ---------------------------------------------------------------------------
