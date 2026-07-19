@@ -1,6 +1,6 @@
 # Container Images
 
-Last updated: 2026-07-11 (M10 Sprint 2)
+Last updated: 2026-07-19 (M10 Sprint 2; 1.0.x patch line)
 
 Published images for selfhost deployments. Both **api** and **web** ship as
 multi-arch manifests (`linux/amd64`, `linux/arm64`).
@@ -30,12 +30,14 @@ Built by
 | ------------------- | ---------------------------------- |
 | Push to `main`      | `:latest`, `:main`, `:sha-<short>` |
 | Tag `v1.0.0`        | `:v1.0.0`, `:v1.0`, `:latest`      |
+| Tag `v1.0.5` (any `v1.0.x`) | `:v1.0.5`, `:v1.0` (semver minor alias) |
 | `workflow_dispatch` | Same rules for current ref context |
 
-Pin production deploys to an immutable tag:
+Pin production deploys to an immutable tag (any **`v1.0.x`** pin works on the 1.0 line):
 
 ```env
-IMAGE_TAG=v1.0.0
+IMAGE_TAG=v1.0.5
+# or another patch, e.g. IMAGE_TAG=v1.0.3
 # or
 IMAGE_TAG=sha-abc1234
 ```

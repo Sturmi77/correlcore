@@ -1,6 +1,6 @@
 # CorrelCore — Frontend Status Audit
 
-**Date:** 2026-06-27  
+**Date:** 2026-07-19  
 **Run id:** `frontend-status-audit-2026-06-27-v1`  
 **Stack:** SvelteKit 2 · Vite · TypeScript · Tailwind 4 · Playwright · Vitest  
 **Canonical machine-readable matrix:** [`apps/web/figma/mobile-web-audit.json`](../../apps/web/figma/mobile-web-audit.json)
@@ -8,6 +8,10 @@
 This document is the **single snapshot** of frontend readiness for production deploy,
 design-system parity, and remaining work. It supersedes scattered status lines in
 older milestone docs where they conflict.
+
+> **Note:** The June 2026 audit evidence below (test counts, Playwright runs, Figma
+> MCP checks) remains **historical**; the executive summary and deferral rows reflect
+> the **2026-07-19** release-line status.
 
 ---
 
@@ -21,6 +25,7 @@ older milestone docs where they conflict.
 | **Code Connect live (Sprint H)**            | **Deferred** | 20 local templates; publish needs Dev/Full seat + token — **not a deploy blocker**                                                       |
 | **Desktop consolidation (Phase 5)**         | **Open**     | Entry workspace density, auth web polish — intentional follow-up                                                                         |
 | **React GUI experiment (`apps/web-react`)** | **Planned**  | Parallel evaluation on port 5174 — see [`PARALLEL_REACT_GUI.md`](PARALLEL_REACT_GUI.md). Production GUI remains SvelteKit until cutover. |
+| **Android / Capacitor (M11)**                 | **Engineering complete; Play exit open** | Sprints 1–5 shipped (shell, sideload, Bearer, Glance widget, FCM registration code); Play Console / Firebase ops [#429](https://github.com/Sturmi77/correlcore/issues/429). Plan: [`M11_SPRINT_PLAN.md`](../M11_SPRINT_PLAN.md) · [`apps/android/README.md`](../../apps/android/README.md) |
 
 **Operating model:** One SvelteKit codebase. Mobile = capture, check-in, lightweight
 review @390/430 px. Web = analysis, comparison, management @1280+ px. Shell switches
@@ -192,7 +197,7 @@ Mobile E2E is **not** in default CI; run before release or add to scheduled work
 | ----------------------------- | ------------------------------------------------------------------------------------- |
 | Password recovery             | **Shipped** — `forgot-password` / `reset-password` (O-20)                             |
 | Account deletion              | **Shipped** — `DELETE /api/v1/user/me` (M9 / #29)                                     |
-| Reminders / push              | Backlog (M4.2)                                                                        |
+| Reminders / push              | UnifiedPush / app lock → **M4.2**; Capacitor FCM registration shipped **M11 Sprint 5** (Firebase ops open [#429](https://github.com/Sturmi77/correlcore/issues/429)) |
 | Dexie background sync queue   | ADR-0009 — Entry-owned retry only                                                     |
 | Health Connect import consent | **Foundation shipped** (#31) — Settings Privacy + consents API; HC import itself → M8 |
 
@@ -235,6 +240,7 @@ From [`FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md`](../FIGMA_PRODUCTION_GRADE_SPRINT_
 | [`FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md`](../FIGMA_PRODUCTION_GRADE_SPRINT_PLAN.md) | Sprints E–I plan                 |
 | [`apps/web/figma/README.md`](../../apps/web/figma/README.md)                        | Figma nodes, templates, publish  |
 | [`UI_COMPONENT_SYSTEM.md`](UI_COMPONENT_SYSTEM.md)                                  | Component conventions            |
+| [`M11_SPRINT_PLAN.md`](../M11_SPRINT_PLAN.md)                                       | Android Capacitor / Play Store   |
 
 ---
 

@@ -61,7 +61,6 @@ The manifest uses:
 
 ## Roadmap Note
 
-Native Android widgets are not part of M4/M4.1. The current roadmap keeps them in a
-later Android path via TWA/Glance once the PWA baseline and Play Store strategy
-are settled. Push notifications and app lock are **M4.2** (blocked on reliable
-offline sync — now unblocked).
+Glance homescreen widget shipped in **M11 Sprint 4** — see [`WIDGET.md`](WIDGET.md).
+UnifiedPush and app lock remain **M4.2**. FCM is optional for Capacitor builds
+(**M11 Sprint 5** registration code; live Firebase/Play verification open #429).

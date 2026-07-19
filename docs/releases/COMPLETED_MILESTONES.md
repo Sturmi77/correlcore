@@ -1,7 +1,7 @@
 # Completed milestones (archive)
 
 **Archived:** 2026-07-19  
-**Baseline:** Public selfhost release line **`1.0.x`** (first tag `v1.0.0` on 2026-07-11; latest patch at archive time `v1.0.5`).
+**Baseline:** Public selfhost release line **`1.0.x`** (first tag `v1.0.0` on 2026-07-11; latest patch at archive time `v1.0.5`; manifests aligned to `1.0.5`).
 
 This file preserves the closed roadmap items that used to live in the root
 [`README.md`](../../README.md). Active work stays in the README; details live in

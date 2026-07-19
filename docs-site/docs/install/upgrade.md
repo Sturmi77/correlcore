@@ -1,16 +1,37 @@
-# M10 Compose Upgrade Guide
+# Upgrade guide — post-1.0.x images & M10 compose
 
-Last updated: 2026-07-11
+Last updated: 2026-07-19
 
-For existing production VPS operators upgrading to M10 Sprint 1+ compose.
-Read this before `git pull` if you run
-[`docker-compose.yml`](https://github.com/Sturmi77/correlcore/blob/main/infra/docker/docker-compose.yml).
+## Post-1.0.x image upgrades (current)
+
+Selfhost operators on the **1.0.x** line should pin `IMAGE_TAG` to the latest
+patch they trust (e.g. **`v1.0.5`**; any **`v1.0.x`** pin works), then pull and
+restart:
+
+```bash
+cd correlcore/infra/docker
+
+# Set in .env, e.g. IMAGE_TAG=v1.0.5
+grep IMAGE_TAG .env
+
+docker compose pull
+docker compose up -d
+```
+
+The `migrate` service runs `alembic upgrade head` before the API starts.
+See [Container images](container-images.md) for registry and tag details.
 
 **Related:** [Install overview](index.md)
 
 ---
 
-## Summary
+## M10 compose upgrade (historical — MinIO removal)
+
+For existing production VPS operators who upgraded to M10 Sprint 1+ compose.
+Read this before `git pull` if you run
+[`docker-compose.yml`](https://github.com/Sturmi77/correlcore/blob/main/infra/docker/docker-compose.yml).
+
+### Summary
 
 | Who                      | Action required                                             |
 | ------------------------ | ----------------------------------------------------------- |
