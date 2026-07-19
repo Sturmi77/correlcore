@@ -263,11 +263,21 @@ ein neues Image wird zu einem temporären Tag gepullt und nur deployed
 wenn der CVE-Count nicht steigt.
 
 ```bash
-# .env
-IMAGE_TAG=v0.3.0       # statt 'latest' — saubere Versionierung
+# .env — pin a release, not an old sha-* forever
+IMAGE_TAG=v1.0.6
 ```
 
 Im Dockhand-UI: Stack-Detail → **Re-pull images** → **Redeploy**.
+
+Nach dem Redeploy prüfen, welches Build wirklich läuft:
+
+```bash
+curl -sS http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health/live
+docker ps --format '{{.Names}} {{.Image}}' | grep correlcore
+```
+
+`image_tag` / `git_commit` müssen zum gewünschten Pin passen. Ein alter
+`IMAGE_TAG=sha-…` erklärt „Bug ist auf main schon gefixt, bei mir noch da“.
 
 > **Bei `IMAGE_TAG=latest`** sorgt `pull_policy: always` (gesetzt auf
 > `api`, `migrate`, `worker` via Anchor und auf `web`) dafür, dass

@@ -91,6 +91,9 @@ async def test_api_v1_health_live_200() -> None:
     assert "cookie_secure" in data
     assert isinstance(data["cookie_secure"], bool)
     assert "app_env" in data
+    # Build identity — stale IMAGE_TAG pins show up here immediately.
+    assert "image_tag" in data
+    assert "git_commit" in data
 
 
 @pytest.mark.asyncio

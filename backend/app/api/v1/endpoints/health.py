@@ -40,6 +40,11 @@ class LivenessResponse(BaseModel):
     # discard auth cookies and APIs return 401 Could not validate credentials.
     cookie_secure: bool
     app_env: str
+    # Build identity — diagnose "fixed on main, still broken on NAS" without
+    # guessing IMAGE_TAG pins (e.g. Trends 401 fixed in #444, still served
+    # from sha-636a687).
+    image_tag: str
+    git_commit: str
 
 
 class ComponentModel(BaseModel):
@@ -58,6 +63,8 @@ class HealthSummary(BaseModel):
     version: str
     cookie_secure: bool
     app_env: str
+    image_tag: str
+    git_commit: str
     readiness: ReadinessResponse
 
 
@@ -129,5 +136,7 @@ async def health_summary() -> HealthSummary:
         version=str(liveness_data["version"]),
         cookie_secure=bool(liveness_data["cookie_secure"]),
         app_env=str(liveness_data["app_env"]),
+        image_tag=str(liveness_data["image_tag"]),
+        git_commit=str(liveness_data["git_commit"]),
         readiness=readiness_body,
     )

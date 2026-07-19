@@ -50,6 +50,34 @@ docker inspect "${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG}"
 
 Set `IMAGE_DIGEST` in `.env` for the API container.
 
+### Verify what is actually running
+
+`APP_VERSION` in JSON alone is not enough (often stays `1.0.0` across
+patches). After deploy, check build identity via the web proxy:
+
+```bash
+curl -sS http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health/live | jq .
+# expect: image_tag, git_commit, cookie_secure, app_env
+docker ps --format '{{.Names}} {{.Image}}' | grep correlcore
+```
+
+If testers report a bug that is already fixed on `main`, compare
+`image_tag` / `git_commit` to the fixing commit before re-debugging code.
+
+### Auth 401 checklist (`Could not validate credentials`)
+
+1. **Running image** — `health/live.image_tag` / `git_commit` ≥ fix (e.g. Trends
+   `/entries/stats/symptoms` needs ≥ `#444` / `v1.0.6`).
+2. **`COOKIE_SECURE` in the API container** (not only host `.env`):
+   `docker exec <api-container> env | grep COOKIE_SECURE` and
+   `health/live.cookie_secure` — must be `false` on plain HTTP Homelab.
+3. **Container name** — discover with `docker ps | grep correl`; stacks differ
+   (`correlcore-api` vs `correlcore-test-api` vs `correlcore-quickstart-api`).
+4. **API logs** — look for `auth_fail_reason`
+   (`missing_access_token` | `jwt_invalid_or_expired` | `dek_unwrap_failed` | …).
+5. **Capacitor** — absolute `VITE_API_BASE_URL`, mixed content on `http://` API,
+   Bearer refresh with `?include_access_token=true`.
+
 ---
 
 ## Compose registry override
