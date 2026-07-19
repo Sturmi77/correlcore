@@ -14,11 +14,11 @@ session (`remember_me`, #453), and bumps install pins / manifests to `1.0.6`.
 
 ## Still optional (P3)
 
-| Item | Notes |
-| ---- | ----- |
+| Item                                       | Notes                                                            |
+| ------------------------------------------ | ---------------------------------------------------------------- |
 | `BETA_ONBOARDING.md` / `BETA_CHECKLIST.md` | Still “pre-release” framing — reframe or archive when convenient |
-| `M4_VISUAL_QA.md` Dexie deferral banner | Low priority historical QA doc |
-| OCI image labels on Dockerfiles | Optional hardening |
+| `M4_VISUAL_QA.md` Dexie deferral banner    | Low priority historical QA doc                                   |
+| OCI image labels on Dockerfiles            | Optional hardening                                               |
 
 ## Patch release policy
 
