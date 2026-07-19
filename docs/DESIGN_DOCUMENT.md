@@ -1263,6 +1263,36 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ---
 
+### M10.2 — Public Hosted Launch (correlcore.com)
+
+> Ops-Track (kein Feature-Meilenstein). Plan:
+> [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md),
+> Status: [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md).
+> Parallel zu M11; vor M12 SaaS. M10.1 Insight-Pipeline bleibt separat (done).
+
+- Öffentliche Referenzinstanz unter **`https://correlcore.com`** ohne VPN/Tailscale
+- Host-Nginx als Launch-Edge auf dem NAS; **kein** Traefik parallel — Traefik Path A erst beim optionalen VPS-Umzug
+- Echter SMTP @correlcore.com; Hosted-Mailpit entfernen sobald SMTP E2E grün (Selfhost-Quickstart behält Mailpit)
+- Landing/Login/Legal same-origin; APK-Download via GitHub Releases (nach M11 #429)
+- Selfhost-Pfad bleibt domain-agnostisch (INSTALL / GHCR)
+- **Exit:** Launch-Smoke öffentlich grün; NAS→VPS-Runbook vorhanden
+
+#### Akzeptanzkriterien M10.2
+
+- [ ] `https://correlcore.com/` Landing + `/auth/login` ohne VPN
+- [ ] Verify-/Reset-Mail über echten SMTP (SPF/DKIM); Hosted ohne Mailpit
+- [ ] `/impressum` und `/privacy` öffentlich erreichbar (Hosted-Inhalt)
+- [ ] Android-APK von Landing auffindbar (GitHub Release Asset) oder bewusst deferred bis #429
+- [ ] Selfhost INSTALL Path A/B unverändert nutzbar
+- [ ] Runbook NAS→VPS dokumentiert
+
+#### DSGVO-Checkpoint M10.2
+
+- [ ] 🔒 DSGVO: Hosted-Datenschutzerklärung trifft den Betreiber von correlcore.com
+- [ ] 🔒 DSGVO: Impressum Hosted korrekt; Selfhost-Privacy in Docs bleibt Operator-Perspektive
+
+---
+
 ### M11 — Android-App für Play Store (Woche 26–28)
 
 > **Statusupdate (2026-07-19):** Engineering Sprints **1–5 complete** (Capacitor shell,

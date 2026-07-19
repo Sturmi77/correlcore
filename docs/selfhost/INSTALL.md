@@ -281,8 +281,14 @@ localhost only and terminate TLS on the host proxy:
 3. Set `FRONTEND_BASE_URL` and `CORS_ORIGINS` to your public HTTPS origin.
 4. Set `COOKIE_SECURE=true` when serving over HTTPS.
 
-This avoids running a second Traefik inside Docker. Full compose profile support for this
-mode is planned for M10.1.
+This avoids running a second Traefik inside Docker. **Do not run Compose Traefik on ports
+80/443 at the same time as a host Nginx** — one TLS edge only.
+
+**Hosted reference (`correlcore.com`):** maintainer ops for Nginx-on-NAS, SMTP cutover, and
+later VPS migration are tracked in
+[`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)
+(not a second install guide). A dedicated compose profile for external-proxy mode remains
+deferred (historical “M10.1 deferred” compose item — not the M10.1 insight pipeline).
 
 ---
 

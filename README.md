@@ -40,6 +40,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 ### Active
 
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). HC **consent** foundation shipped (#31). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
+- [ ] **M10.2** — Public Hosted Launch (`correlcore.com`): Nginx edge on NAS, real SMTP, login without VPN, APK on landing — [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md). Selfhost path stays independent.
 - [ ] **M11** — Android Play Store (Capacitor) — Sprints 1–5 **complete** (shell, signed sideload, Bearer auth, Glance widget, FCM registration). Play Console / Firebase / ops remaining — [`docs/M11_SPRINT_PLAN.md`](docs/M11_SPRINT_PLAN.md), [#429](https://github.com/Sturmi77/correlcore/issues/429). Sideload APKs attach to `v*` GitHub Releases.
 - [ ] **M12** — SaaS mode (managed hosting)
 - [ ] **M13** — Photo & media: MinIO persist + gallery; **EXIF strip foundation** shipped (`POST /media/photos`, #28); optional Immich follow-up
@@ -79,7 +80,7 @@ Shipped with public selfhost **v1.0** / patch line **v1.0.x**. Full table and li
 | **Database**       | PostgreSQL 16 + pgvector                                                                            | Row-level security for multi-user, vector for insights                                          |
 | **Cache / Queue**  | Redis 7                                                                                             | Sessions, rate limiting, sync queue                                                             |
 | **Object Storage** | MinIO (**M13**)                                                                                     | Not in current compose; EXIF-strip API stub only — see [`docs/M13_NOTES.md`](docs/M13_NOTES.md) |
-| **Reverse Proxy**  | Traefik v3                                                                                          | Automatic TLS, Docker label routing                                                             |
+| **Reverse Proxy**  | Traefik v3 (selfhost Path A); host Nginx for correlcore.com (M10.2)                                 | One TLS edge only — see [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md) |
 | **Auth**           | Native JWT phase 1, Authentik from M12                                                              | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                           |
 | **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                               | Push/pull LWW merge, conflict log, local-first entry path; enable in Settings                   |
 | **Analytics**      | pandas + scikit-learn                                                                               | M7: Lasso, lag, symptom analytics; correlation engine live since M3                             |

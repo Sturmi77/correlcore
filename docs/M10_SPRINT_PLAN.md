@@ -147,13 +147,24 @@ protection when repo goes public, `security@correlcore.app` reachable.
 [`quality/M10_VISUAL_QA.md`](quality/M10_VISUAL_QA.md), tag **`v1.0.0`**, close
 milestone #7.
 
-## M10.1 deferred (post-v1.0)
+## M10.1 deferred (post-v1.0) — naming note
+
+**Shipped as M10.1 (done):** insight pipeline & tag-cluster maturity —
+[`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md)
+(ADR-0037).
+
+**Still deferred (compose backlog — not M10.2):**
 
 - Proposal A: unified profile stack (`worker`, `tls`, `monitoring`, `storage`)
 - Proposal C: Caddy TLS path
-- Proposal G: external-proxy compose profile
+- Proposal G: external-proxy **compose profile**
 - ADR: `compose-tiering.md` + CHANGELOG migration note for `COMPOSE_PROFILES`
-- **Insight pipeline & tag-cluster maturity** — [`M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md`](M10_1_INSIGHT_PIPELINE_SPRINT_PLAN.md) (ADR-0037, Proposal [`proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md`](proposals/INSIGHT_PIPELINE_TAG_GROUPS_PROPOSAL.md))
+
+**M10.2 (separate track):** Public Hosted Launch on `correlcore.com` with **host Nginx**
+(no Traefik parallel). Ops plan:
+[`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md).
+That uses INSTALL’s external reverse-proxy guidance operationally; it does **not**
+implement proposal G’s compose profile.
 
 ## Success metrics
 
