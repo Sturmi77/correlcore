@@ -7,7 +7,7 @@ Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)
 
 | Item                         | Status                                      |
 | ---------------------------- | ------------------------------------------- |
-| Sprint 0 — Baseline          | **Done** (repo docs + decisions; NAS live-audit remains maintainer) |
+| Sprint 0 — Baseline          | **Done** (repo docs, decisions, GitHub issues #459–#464; NAS live-audit + milestones remain maintainer) |
 | Sprint 1 — DNS + Nginx       | Pending                                     |
 | Sprint 2 — SMTP              | Pending                                     |
 | Sprint 3 — Landing / Legal   | Pending                                     |
@@ -72,8 +72,9 @@ Live NAS/router values are **maintainer-filled** (no secrets in git). Repo-known
 - [x] INSTALL external-proxy note points to M10.2 (no Traefik parallel; compose profile G stays deferred)
 - [x] M10 sprint deferred section clarifies ≠ M10.2 Hosted launch
 - [ ] Maintainer: fill Baseline inventory checkboxes above (live NAS)
+- [x] Tracking issues filed: #459 (docs/Sprint 0), #460 (DNS/Nginx), #461 (SMTP), #462 (landing/legal), #463 (APK CTA), #464 (NAS→VPS)
 - [ ] Maintainer: close GitHub milestone **M10 — Public Selfhost v1.0** (#7) if still open _(CI token cannot mutate milestones — 403)_
-- [ ] Maintainer: create GitHub milestone **M10.2 — Public Hosted Launch** + issues from Plan §11 _(same)_
+- [ ] Maintainer: create GitHub milestone **M10.2 — Public Hosted Launch** and attach #459–#464 _(same)_
 
 ---
 
@@ -114,6 +115,6 @@ Live NAS/router values are **maintainer-filled** (no secrets in git). Repo-known
 
 ---
 
-## Suggested issue titles
+## Tracking issues
 
-See Plan §11. Reuse #429 / #450 / #453 — do not file duplicates.
+See Plan §11: #459–#464. Reuse #429 / #450 / #453 — do not file duplicates.

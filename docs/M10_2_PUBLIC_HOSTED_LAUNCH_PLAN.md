@@ -280,18 +280,18 @@ Beim VPS-Cutover: Traefik **statt** Nginx (oder bewusst Nginx beibehalten) — n
 
 ---
 
-## 11. Vorgeschlagene GitHub Issues
+## 11. GitHub Issues
 
-| Titel                                                              | Sprint |
-| ------------------------------------------------------------------ | ------ |
-| `docs(M10.2): sprint plan + status + roadmap`                      | 0      |
-| `ops(M10.2): DNS + Nginx edge for correlcore.com`                  | 1      |
-| `ops(M10.2): SMTP + SPF/DKIM/DMARC; remove hosted Mailpit`         | 2      |
-| `ops(M10.2): hosted landing/legal + domain .app→.com docs`         | 3      |
-| `feat(landing): Android APK download CTA` (blocked by #429)        | 4      |
-| `docs(M10.2): NAS→VPS runbook + selfhost vs hosted`                | 5      |
+| Issue | Titel                                                              | Sprint |
+| ----- | ------------------------------------------------------------------ | ------ |
+| #459  | `docs(M10.2): sprint plan + status + roadmap`                      | 0      |
+| #460  | `ops(M10.2): DNS + Nginx edge for correlcore.com`                  | 1      |
+| #461  | `ops(M10.2): SMTP + SPF/DKIM/DMARC; remove hosted Mailpit`         | 2      |
+| #462  | `ops(M10.2): hosted landing/legal + domain .app→.com docs`         | 3      |
+| #463  | `feat(landing): Android APK download CTA` (blocked by #429)        | 4      |
+| #464  | `docs(M10.2): NAS→VPS runbook + selfhost vs hosted`                | 5      |
 
-Bestehend nutzen (nicht neu erfinden): #429, #450, #453.
+Bestehend nutzen (nicht neu erfinden): #429, #450, #453. Milestone M10.2 + Attach: Maintainer (API 403 für Agents).
 
 ---
 
