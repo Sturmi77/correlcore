@@ -5,7 +5,7 @@
   import LegalFooter from '$lib/components/common/LegalFooter.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { BRAND_MARK_HERO, BRAND_MARK_XL } from '$lib/constants/iconSizes';
-  import { DOCS_SITE_URL } from '$lib/constants/publicUrls';
+  import { ANDROID_RELEASES_URL, DOCS_SITE_URL } from '$lib/constants/publicUrls';
 
   const featureKeys = ['privacy', 'insights', 'selfhost', 'daily'] as const;
 </script>
@@ -25,11 +25,21 @@
     <h1 class="landing__title">{$_('landing.hero_title')}</h1>
     <p class="landing__subtitle">{$_('landing.hero_subtitle')}</p>
     <div class="landing__cta">
-      <Button href="/auth/register" variant="primary" size="lg" data-testid="landing-cta-register">
-        {$_('landing.cta_register')}
-      </Button>
-      <Button href="/auth/login" variant="secondary" size="lg" data-testid="landing-cta-login">
+      <Button href="/auth/login" variant="primary" size="lg" data-testid="landing-cta-login">
         {$_('landing.cta_login')}
+      </Button>
+      <Button
+        href={ANDROID_RELEASES_URL}
+        variant="secondary"
+        size="lg"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-testid="landing-cta-apk"
+      >
+        {$_('landing.cta_apk')}
+      </Button>
+      <Button href="/auth/register" variant="ghost" size="lg" data-testid="landing-cta-register">
+        {$_('landing.cta_register')}
       </Button>
     </div>
     <a

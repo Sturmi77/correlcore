@@ -21,11 +21,13 @@ describe('M10 marketing landing and legal pages', () => {
     expect(homeSource).not.toContain('Pre-Alpha');
   });
 
-  it('exposes register and login CTAs on the landing page', () => {
-    expect(landingSource).toContain('data-testid="landing-cta-register"');
-    expect(landingSource).toContain('href="/auth/register"');
+  it('exposes login, APK download, and register CTAs on the landing page', () => {
     expect(landingSource).toContain('data-testid="landing-cta-login"');
     expect(landingSource).toContain('href="/auth/login"');
+    expect(landingSource).toContain('data-testid="landing-cta-apk"');
+    expect(landingSource).toContain('ANDROID_RELEASES_URL');
+    expect(landingSource).toContain('data-testid="landing-cta-register"');
+    expect(landingSource).toContain('href="/auth/register"');
   });
 
   it('links privacy and impressum from the legal footer', () => {

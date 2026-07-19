@@ -3,13 +3,15 @@ import { isNavItemActive, isPublicRoute, isRouteWithoutAppNav, shouldShowAppNav 
 
 describe('appNav routing helpers', () => {
   describe('isPublicRoute', () => {
-    it('treats auth, status, offline, privacy, and impressum as public', () => {
+    it('treats home, auth, status, offline, privacy, and impressum as public', () => {
+      expect(isPublicRoute('/')).toBe(true);
       expect(isPublicRoute('/auth/login')).toBe(true);
       expect(isPublicRoute('/status')).toBe(true);
       expect(isPublicRoute('/offline')).toBe(true);
       expect(isPublicRoute('/privacy')).toBe(true);
       expect(isPublicRoute('/impressum')).toBe(true);
-      expect(isPublicRoute('/')).toBe(false);
+      expect(isPublicRoute('/insights')).toBe(false);
+      expect(isPublicRoute('/settings')).toBe(false);
     });
   });
 
