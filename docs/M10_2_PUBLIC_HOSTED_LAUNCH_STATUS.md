@@ -3,7 +3,8 @@
 Last updated: 2026-07-19  
 Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)  
-Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
+Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
+Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)
 
 ## Overall
 
@@ -12,27 +13,34 @@ Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 | Sprint 0 — Baseline        | **Done** (repo + issues #459–#464; milestones/NAS inventory → maintainer) |
 | Sprint 1 — DNS + Nginx     | **Repo done**; live ops via combined cutover                              |
 | Sprint 2 — SMTP            | **Repo done** (SMTP + cutover runbooks); live ops same window as S1       |
+| Topology decision (A/B/H)  | **Pending maintainer**                                                   |
 | Sprint 3 — Landing / Legal | Pending — see backlog                                                     |
 | Sprint 4 — APK             | Pending (blocked on #429)                                                 |
 | Sprint 5 — Closeout        | Pending                                                                   |
 | Exit criteria              | Not met                                                                   |
 
-**Maintainer next step:** execute [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
-(prep NAS → flip A → smoke web+mail → remove Hosted Mailpit).
+**Maintainer next step:**
+
+1. Choose topology in [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)
+   (IONOS marketing stays → **H** / `app.correlcore.com`).
+2. Execute matching cutover ([`hosted-cutover.md`](runbooks/hosted-cutover.md) or Topology H section).
 
 ---
 
-## Binding decisions (Sprint 0)
+## Binding decisions (Sprint 0 + topology)
 
-| Decision                    | Binding answer                                                      |
-| --------------------------- | ------------------------------------------------------------------- |
-| Public domain               | **`correlcore.com`** (doc sync `.app`→`.com` in Sprint 3)           |
-| Launch edge                 | **Host-Nginx** only                                                 |
-| Traefik on Hosted NAS       | **Do not enable** while Nginx terminates TLS                        |
-| Mailpit on Hosted           | Until Sprint 2 SMTP E2E → then **remove**. Quickstart keeps Mailpit |
-| Landing origin              | App `/` same origin as auth                                         |
-| APK                         | GitHub Releases canonical                                           |
-| Scope vs M12 / M10.1 naming | Hosted ≠ SaaS; insight M10.1 done; compose A/C/G not M10.2          |
+| Decision                    | Binding answer                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| Public domain               | **`correlcore.com`** (doc sync `.app`→`.com` in Sprint 3)                      |
+| Hosted topology             | **Pending:** A / B / **H** (IONOS marketing + `app.` on NAS)                   |
+| Launch edge on NAS          | **Host-Nginx** for app origin; no Traefik parallel                             |
+| Traefik on Hosted NAS       | **Do not enable** while Nginx terminates TLS                                   |
+| Mailpit on Hosted           | Until SMTP E2E → then **remove**. Quickstart keeps Mailpit                     |
+| SMTP                        | Prefer **IONOS SMTP** (MX/SPF already there)                                   |
+| Landing origin              | Same origin as auth on the **app host** (apex for A/B, `app.` for H)           |
+| Website@IONOS + API-only NAS | **Not supported** (cookies/same-origin); use **H** or full proxy **B**        |
+| APK                         | GitHub Releases canonical                                                      |
+| Scope vs M12 / M10.1 naming | Hosted ≠ SaaS; insight M10.1 done; compose A/C/G not M10.2                     |
 
 ---
 

@@ -1271,7 +1271,8 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 > Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md),
 > Nginx: [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md),
 > SMTP: [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md),
-> Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md).
+> Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md),
+> Topology A/B/H: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md).
 > Parallel zu M11; vor M12 SaaS. M10.1 Insight-Pipeline bleibt separat (done).
 
 - Öffentliche Referenzinstanz unter **`https://correlcore.com`** ohne VPN/Tailscale

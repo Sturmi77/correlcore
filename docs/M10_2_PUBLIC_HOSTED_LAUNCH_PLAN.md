@@ -8,6 +8,7 @@ Last updated: 2026-07-19
 **Sprint-1-Runbook:** [`runbooks/hosted-nginx-edge.md`](runbooks/hosted-nginx-edge.md)  
 **Sprint-2-Runbook:** [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md)  
 **Combined cutover (S1+S2 live):** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
+**Topology (A/B/H):** [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)  
 **Domain:** `correlcore.com`  
 **Edge (Launch):** Host-Nginx auf dem NAS  
 **Edge (später VPS):** Production-Compose Traefik — Path A in [`selfhost/INSTALL.md`](selfhost/INSTALL.md)  
