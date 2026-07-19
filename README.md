@@ -71,22 +71,22 @@ Shipped with public selfhost **v1.0** / patch line **v1.0.x**. Full table and li
 
 ## Tech Stack
 
-| Layer              | Technology                                                                                          | Rationale                                                                                       |
-| ------------------ | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Backend API**    | FastAPI (Python 3.12)                                                                               | Async, OpenAPI-native, fast iteration                                                           |
-| **Web Frontend**   | SvelteKit + Skeleton UI                                                                             | Performance, bundle < 150 KB gz                                                                 |
-| **Mobile**         | Responsive web + PWA; Capacitor Android (`apps/android`) — sideload via GitHub Releases; Play = M11 | Maximum code sharing, Health Connect later ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md))   |
-| **Charts**         | Custom SVG components                                                                               | No external framework, JS budget maintained, token-compliant                                    |
-| **Database**       | PostgreSQL 16 + pgvector                                                                            | Row-level security for multi-user, vector for insights                                          |
-| **Cache / Queue**  | Redis 7                                                                                             | Sessions, rate limiting, sync queue                                                             |
-| **Object Storage** | MinIO (**M13**)                                                                                     | Not in current compose; EXIF-strip API stub only — see [`docs/M13_NOTES.md`](docs/M13_NOTES.md) |
+| Layer              | Technology                                                                                          | Rationale                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Backend API**    | FastAPI (Python 3.12)                                                                               | Async, OpenAPI-native, fast iteration                                                                        |
+| **Web Frontend**   | SvelteKit + Skeleton UI                                                                             | Performance, bundle < 150 KB gz                                                                              |
+| **Mobile**         | Responsive web + PWA; Capacitor Android (`apps/android`) — sideload via GitHub Releases; Play = M11 | Maximum code sharing, Health Connect later ([ADR-0002](docs/adr/0002-capacitor-statt-twa.md))                |
+| **Charts**         | Custom SVG components                                                                               | No external framework, JS budget maintained, token-compliant                                                 |
+| **Database**       | PostgreSQL 16 + pgvector                                                                            | Row-level security for multi-user, vector for insights                                                       |
+| **Cache / Queue**  | Redis 7                                                                                             | Sessions, rate limiting, sync queue                                                                          |
+| **Object Storage** | MinIO (**M13**)                                                                                     | Not in current compose; EXIF-strip API stub only — see [`docs/M13_NOTES.md`](docs/M13_NOTES.md)              |
 | **Reverse Proxy**  | Traefik v3 (selfhost Path A); host Nginx for correlcore.com (M10.2)                                 | One TLS edge only — see [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md) |
-| **Auth**           | Native JWT phase 1, Authentik from M12                                                              | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                           |
-| **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                               | Push/pull LWW merge, conflict log, local-first entry path; enable in Settings                   |
-| **Analytics**      | pandas + scikit-learn                                                                               | M7: Lasso, lag, symptom analytics; correlation engine live since M3                             |
-| **Migrations**     | Alembic                                                                                             | Schema versioning                                                                               |
-| **Monitoring**     | GlitchTip + Uptime Kuma                                                                             | Selfhosted error tracking                                                                       |
-| **Notifications**  | FCM (Capacitor, optional) · UnifiedPush planned (M4.2)                                              | Privacy-first push; Firebase off by default for selfhost                                        |
+| **Auth**           | Native JWT phase 1, Authentik from M12                                                              | OIDC, SSO, selfhostable ([ADR-0004](docs/adr/0004-auth-strategie.md))                                        |
+| **Offline Sync**   | Dexie.js (IndexedDB) — M4.1 complete, feature-flagged                                               | Push/pull LWW merge, conflict log, local-first entry path; enable in Settings                                |
+| **Analytics**      | pandas + scikit-learn                                                                               | M7: Lasso, lag, symptom analytics; correlation engine live since M3                                          |
+| **Migrations**     | Alembic                                                                                             | Schema versioning                                                                                            |
+| **Monitoring**     | GlitchTip + Uptime Kuma                                                                             | Selfhosted error tracking                                                                                    |
+| **Notifications**  | FCM (Capacitor, optional) · UnifiedPush planned (M4.2)                                              | Privacy-first push; Firebase off by default for selfhost                                                     |
 
 ---
 

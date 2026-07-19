@@ -5,44 +5,44 @@ Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)
 
 ## Overall
 
-| Item                         | Status                                      |
-| ---------------------------- | ------------------------------------------- |
-| Sprint 0 — Baseline          | **Done** (repo docs, decisions, GitHub issues #459–#464; NAS live-audit + milestones remain maintainer) |
-| Sprint 1 — DNS + Nginx       | Pending                                     |
-| Sprint 2 — SMTP              | Pending                                     |
-| Sprint 3 — Landing / Legal   | Pending                                     |
-| Sprint 4 — APK               | Pending (blocked on #429)                   |
-| Sprint 5 — Closeout          | Pending                                     |
-| Exit criteria                | Not met                                     |
+| Item                       | Status                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Sprint 0 — Baseline        | **Done** (repo docs, decisions, GitHub issues #459–#464; NAS live-audit + milestones remain maintainer) |
+| Sprint 1 — DNS + Nginx     | Pending                                                                                                 |
+| Sprint 2 — SMTP            | Pending                                                                                                 |
+| Sprint 3 — Landing / Legal | Pending                                                                                                 |
+| Sprint 4 — APK             | Pending (blocked on #429)                                                                               |
+| Sprint 5 — Closeout        | Pending                                                                                                 |
+| Exit criteria              | Not met                                                                                                 |
 
 ---
 
 ## Binding decisions (Sprint 0)
 
-| Decision | Binding answer |
-| -------- | -------------- |
-| Public domain | **`correlcore.com`** (not `.app` for Hosted/project contact going forward; doc sync in Sprint 3) |
-| Launch edge | **Host-Nginx** only |
-| Traefik on Hosted NAS | **Do not enable** while Nginx terminates TLS. Implement Traefik at **NAS→VPS** cutover (Path A), not in parallel |
-| Mailpit on Hosted | Allowed only until Sprint 2 SMTP E2E is green → then **remove** Mailpit from Hosted stack. Selfhost quickstart **keeps** Mailpit |
-| Landing origin | App route `/` on same origin as auth — no second static apex site |
-| APK distribution | GitHub Releases canonical; landing links only; no second update channel unless explicitly mirrored |
-| Scope vs M12 | Hosted reference ≠ SaaS (no Stripe/multi-tenant in M10.2) |
-| Scope vs M10.1 naming | Insight pipeline M10.1 = done. Old „M10.1 deferred“ compose A/C/G stays backlog — **not** reopened as M10.2 |
+| Decision              | Binding answer                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Public domain         | **`correlcore.com`** (not `.app` for Hosted/project contact going forward; doc sync in Sprint 3)                                 |
+| Launch edge           | **Host-Nginx** only                                                                                                              |
+| Traefik on Hosted NAS | **Do not enable** while Nginx terminates TLS. Implement Traefik at **NAS→VPS** cutover (Path A), not in parallel                 |
+| Mailpit on Hosted     | Allowed only until Sprint 2 SMTP E2E is green → then **remove** Mailpit from Hosted stack. Selfhost quickstart **keeps** Mailpit |
+| Landing origin        | App route `/` on same origin as auth — no second static apex site                                                                |
+| APK distribution      | GitHub Releases canonical; landing links only; no second update channel unless explicitly mirrored                               |
+| Scope vs M12          | Hosted reference ≠ SaaS (no Stripe/multi-tenant in M10.2)                                                                        |
+| Scope vs M10.1 naming | Insight pipeline M10.1 = done. Old „M10.1 deferred“ compose A/C/G stays backlog — **not** reopened as M10.2                      |
 
 ---
 
 ## Gap matrix (Exit criteria)
 
-| Exit criterion | Repo / product today | Hosted ops gap |
-| -------------- | -------------------- | -------------- |
-| Landing öffentlich | `LandingPage.svelte` + CTAs shipped (M10) | DNS + Nginx + deploy not cut over |
-| Login ohne VPN | JWT/cookies + ADR-0011 proxy shipped | Public HTTPS origin + `COOKIE_SECURE` / Forwarded-Proto |
-| Echte Mail | SMTP env + `email_service` shipped; Mailpit default in quickstart/dockhand | Real relay + SPF/DKIM/DMARC; remove Hosted Mailpit |
-| Legal | `/impressum`, `/privacy` routes shipped | Hosted operator content + public URL |
-| APK auffindbar | Release workflow + sideload docs (M11) | #429 secrets/first asset; landing CTA |
-| Selfhost unberührt | INSTALL Path A/B + GHCR | Keep docs generic; no product hardcode |
-| VPS-ready | Volumes/images portable in principle | `runbooks/nas-to-vps.md` missing |
+| Exit criterion     | Repo / product today                                                       | Hosted ops gap                                          |
+| ------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Landing öffentlich | `LandingPage.svelte` + CTAs shipped (M10)                                  | DNS + Nginx + deploy not cut over                       |
+| Login ohne VPN     | JWT/cookies + ADR-0011 proxy shipped                                       | Public HTTPS origin + `COOKIE_SECURE` / Forwarded-Proto |
+| Echte Mail         | SMTP env + `email_service` shipped; Mailpit default in quickstart/dockhand | Real relay + SPF/DKIM/DMARC; remove Hosted Mailpit      |
+| Legal              | `/impressum`, `/privacy` routes shipped                                    | Hosted operator content + public URL                    |
+| APK auffindbar     | Release workflow + sideload docs (M11)                                     | #429 secrets/first asset; landing CTA                   |
+| Selfhost unberührt | INSTALL Path A/B + GHCR                                                    | Keep docs generic; no product hardcode                  |
+| VPS-ready          | Volumes/images portable in principle                                       | `runbooks/nas-to-vps.md` missing                        |
 
 ---
 
@@ -50,16 +50,16 @@ Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)
 
 Live NAS/router values are **maintainer-filled** (no secrets in git). Repo-known defaults:
 
-| Area | Repo-known / assumed | Maintainer confirm |
-| ---- | -------------------- | ------------------ |
-| Compose path | Dockhand / quickstart / production variants exist; Hosted should expose web localhost only | [ ] Which stack runs on NAS today? |
-| Traefik | Production compose includes Traefik — **must stay off** for Hosted-Nginx | [ ] Confirmed not bound to 80/443 |
-| Mailpit | Dockhand/quickstart default `SMTP_HOST=mailpit` | [ ] Present on Hosted? (ok until Sprint 2) |
-| Nginx | INSTALL external-proxy path documented | [ ] Synology / host / other? Server block for correlcore.com? |
-| DNS | Domain owned (`correlcore.com`) | [ ] A/AAAA / CGNAT / port-forward 80/443? |
-| Tailscale | Homelab docs; end users must not need it after Sprint 1 | [ ] Admin-only after cutover? |
-| SMTP provider | None in repo | [ ] Provider chosen? |
-| Android signing | #429 open | [ ] Secrets ready? |
+| Area            | Repo-known / assumed                                                                       | Maintainer confirm                                            |
+| --------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Compose path    | Dockhand / quickstart / production variants exist; Hosted should expose web localhost only | [ ] Which stack runs on NAS today?                            |
+| Traefik         | Production compose includes Traefik — **must stay off** for Hosted-Nginx                   | [ ] Confirmed not bound to 80/443                             |
+| Mailpit         | Dockhand/quickstart default `SMTP_HOST=mailpit`                                            | [ ] Present on Hosted? (ok until Sprint 2)                    |
+| Nginx           | INSTALL external-proxy path documented                                                     | [ ] Synology / host / other? Server block for correlcore.com? |
+| DNS             | Domain owned (`correlcore.com`)                                                            | [ ] A/AAAA / CGNAT / port-forward 80/443?                     |
+| Tailscale       | Homelab docs; end users must not need it after Sprint 1                                    | [ ] Admin-only after cutover?                                 |
+| SMTP provider   | None in repo                                                                               | [ ] Provider chosen?                                          |
+| Android signing | #429 open                                                                                  | [ ] Secrets ready?                                            |
 
 ---
 
