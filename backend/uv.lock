@@ -352,7 +352,7 @@ wheels = [
 
 [[package]]
 name = "correlcore-backend"
-version = "1.0.0"
+version = "1.0.5"
 source = { editable = "." }
 dependencies = [
     { name = "aiosmtplib" },

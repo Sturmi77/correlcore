@@ -18,12 +18,67 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- GitHub Releases put **Android APK download links at the top** of the release
-  notes (tappable on mobile); sideload docs updated. `v1.0.0` itself has no APK
-  (selfhost-only tag).
-- Android release workflow: always run on `v*` tags (no path filter), do not gate
-  the signed job on `secrets.*` in `if` (that prevented the workflow from
-  starting); `workflow_dispatch` can attach to an existing tag via `attach_to_tag`.
+- README / docs aligned to selfhost **`1.0.x`**: brand logo, archived M0–M10.1,
+  install pins to `v1.0.5`, design doc v0.15, CHANGELOG sections for patch tags.
+  See [`docs/releases/RELEASE_1_0_X_DOC_SYNC.md`](docs/releases/RELEASE_1_0_X_DOC_SYNC.md).
+
+### Fixed
+
+- Trends: 401 on `/entries/stats/symptoms` (credential validation) (#444).
+- Android Sprint A hardening: backup off, redact URLs, SW cleanup (#443).
+- Auth P1: push unregister order, widget refresh, cookie JWT gate (#442).
+- UI: CorrelCore logo as Home nav; sticky timeseries legend (#441).
+
+---
+
+## [1.0.5] — 2026-07-18
+
+### Fixed
+
+- Android: gate FCM `PushNotifications.register()` when sideload builds omit
+  `google-services.json` (post-login crash); bake optional `PUBLIC_GLITCHTIP_DSN`
+  into Capacitor APKs; skip service workers in native shell (#440).
+
+---
+
+## [1.0.4] — 2026-07-18
+
+### Fixed
+
+- Android: allow mixed content so `https://localhost` WebView can call
+  `http://` Tailscale / selfhost API bases (#439).
+
+---
+
+## [1.0.3] — 2026-07-18
+
+### Fixed
+
+- Android: Capacitor API reachability (CORS for WebView origin, cleartext for
+  selfhost HTTP), status-bar safe area, brand splash hold ≥850ms; shrink launcher
+  mark for OEM adaptive-icon masks (#438).
+
+---
+
+## [1.0.2] — 2026-07-18
+
+### Added
+
+- Brand: Claude Design logo mark, boot splash, PWA/Android launcher assets,
+  Settings footer + desktop AppNav mark (#437, #436).
+
+### Fixed
+
+- Android: require absolute API URL with clearer login errors (#435).
+- CI: Android signed release always runs on `v*` tags; `workflow_dispatch` can
+  attach to an existing tag via `attach_to_tag` (#434).
+
+---
+
+## [1.0.1] — 2026-07-18
+
+First Android sideload-capable patch on the public selfhost line. Tag `v1.0.0`
+remains Docker/selfhost-only (no APK). Prefer `v1.0.1+` for APK installs.
 
 ### Added (M11 Sprint 5 — FCM registration)
 
@@ -66,17 +121,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - Sideload tester guide: [`docs/selfhost/ANDROID_SIDELOAD.md`](docs/selfhost/ANDROID_SIDELOAD.md).
   See [`docs/M11_SPRINT_PLAN.md`](docs/M11_SPRINT_PLAN.md).
 
-### Fixed (Codex review follow-up for #393)
+### Added (M10.1 — Insight pipeline & tag groups)
 
-- Honor `note_visibility=hidden` in marker analytics and GDPR export.
-- Bind per-user DEK in digest worker; HMAC custom symptom slugs on sync upsert.
-- `has_note` list filter applied before SQL `LIMIT`; null visibility patches no longer 500.
-- Batch create schedules note-signal extraction; digest login redirect → `/auth/login`.
-- Note marker chips keep pending selections; visibility changes mark autosave dirty.
-- Marker insights respect 90-day window; timeseries note dots use full axis dates.
-- Move/lazy-load `httpx` for optional Ollama path; pass `SLUG_HMAC_KEY` in compose stacks.
+- **Insight triggers (ADR-0037):** `POST /api/v1/insights/regenerate` (owner, 1×/hour),
+  admin `POST /api/v1/insights/trigger`, post-batch debounced regeneration, worker `--once` CLI.
+- **Tiered tag clusters:** pair (30+ days), provisional k-means (45+), robust (90+);
+  API fields `cluster_maturity`, `cluster_mode`, `entries_until_robust`, `silhouette_score`.
+- **Frontend:** `TagGroupsSection` maturity badges; Settings → **Refresh insights** /
+  **Erkenntnisse aktualisieren**.
 
-### Added (Open-issues implementation — M4.1.1 / Notes / M8–M13 foundations)
+### Added (Open-issues / foundations — post-v1.0.0)
 
 - **M4.1.1 offline sync hardening (#258):** revision locking, initial pull backfill,
   note conflict markers, ValidationError→400, tag/symptom `updated_at` on create,
@@ -89,17 +143,26 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   statement layer; changepoint detection (`ruptures`).
 - **Security / media (#62, #28):** custom symptom slug HMAC (ADR-0039); server-side EXIF
   strip foundation + `/media/photos` stub.
-- **Tracker hygiene:** O-20 marked Done; operator close list for shipped UX/#29 issues
-  (token cannot close GitHub issues — see `docs/quality/ISSUE_TRACKER_HYGIENE_2026-07-15.md`).
+- Digest opt-in, prefer stored weekly digest on GET (WP1), auth hardening, LayerChart
+  defer, security audit remediations (#396–#399).
+- Onboarding card for insight maturity phases (#425).
 
-### Added (M10.1 — Insight pipeline & tag groups)
+### Changed
 
-- **Insight triggers (ADR-0037):** `POST /api/v1/insights/regenerate` (owner, 1×/hour),
-  admin `POST /api/v1/insights/trigger`, post-batch debounced regeneration, worker `--once` CLI.
-- **Tiered tag clusters:** pair (30+ days), provisional k-means (45+), robust (90+);
-  API fields `cluster_maturity`, `cluster_mode`, `entries_until_robust`, `silhouette_score`.
-- **Frontend:** `TagGroupsSection` maturity badges; Settings → **Refresh insights** /
-  **Erkenntnisse aktualisieren**.
+- GitHub Releases put **Android APK download links at the top** of the release
+  notes (tappable on mobile); sideload docs updated (#433). `v1.0.0` itself has no APK
+  (selfhost-only tag).
+
+### Fixed (Codex review follow-up for #393)
+
+- Honor `note_visibility=hidden` in marker analytics and GDPR export.
+- Bind per-user DEK in digest worker; HMAC custom symptom slugs on sync upsert.
+- `has_note` list filter applied before SQL `LIMIT`; null visibility patches no longer 500.
+- Batch create schedules note-signal extraction; digest login redirect → `/auth/login`.
+- Note marker chips keep pending selections; visibility changes mark autosave dirty.
+- Marker insights respect 90-day window; timeseries note dots use full axis dates.
+- Move/lazy-load `httpx` for optional Ollama path; pass `SLUG_HMAC_KEY` in compose stacks.
+- Password hashing via bcrypt directly (passlib wrap bug) (#414).
 
 ### Documentation
 
@@ -108,8 +171,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   HC consent. Updated `API.md`, docs-site API overview, `DESIGN_DOCUMENT.md` v0.14,
   `CLOSEOUT_SPRINT_PLAN`, `M7_*`, `M11_NOTES`, `M13_NOTES`, `FRONTEND_STATUS`, ADR-0025 index,
   `symptom-analytics.md`, issue-tracker hygiene, `AGENTS.md`.
-- Updated `docs/API.md`, `ARCHITECTURE.md` §6, `PHASE_INSIGHT_MATRIX.md`, M9 thresholds
-  addendum, ADR-0016/0021 cross-refs, docs-site API overview.
+- M11 sprint plan with pre-Play APK distribution (#426).
 
 ---
 

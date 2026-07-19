@@ -1,6 +1,6 @@
 # Android sideload (pre–Play Store)
 
-Last updated: 2026-07-18
+Last updated: 2026-07-19
 
 Install CorrelCore on Android **without the Play Store**, using a signed APK
 from [GitHub Releases](https://github.com/Sturmi77/correlcore/releases).
@@ -28,8 +28,8 @@ Updates: open the same Releases page again and install the newer APK
 (same app id / signing key replaces the old version).
 
 > **v1.0.0 note:** The first public tag was a selfhost/Docker release and does
-> **not** include an Android APK. Use a later `v*` release once signing secrets
-> are configured and `Release — Android` has attached `correlcore-*.apk`.
+> **not** include an Android APK. Signed sideload APKs are available from **`v1.0.1`**
+> onward; prefer the latest **`v1.0.x`** release (e.g. **`v1.0.5`**).
 
 ### Option B — Obtainium (auto-updates)
 
@@ -85,8 +85,8 @@ export ANDROID_KEYSTORE_PATH=/absolute/path/to/correlcore-upload.keystore
 export ANDROID_KEYSTORE_PASSWORD=...
 export ANDROID_KEY_ALIAS=correlcore
 export ANDROID_KEY_PASSWORD=...
-export ANDROID_VERSION_NAME=1.0.0-android.1
-export ANDROID_VERSION_CODE=2
+export ANDROID_VERSION_NAME=1.0.5
+export ANDROID_VERSION_CODE=1000005
 pnpm cap:assemble:release
 # → apps/android/android/app/build/outputs/apk/release/app-release.apk
 # → apps/android/android/app/build/outputs/bundle/release/app-release.aab
@@ -94,6 +94,11 @@ pnpm cap:assemble:release
 
 Or use `apps/android/android/keystore.properties` from
 [`apps/android/keystore.properties.example`](../../apps/android/keystore.properties.example).
+
+**CI version encoding:** on `v*` tags, [`release-android.yml`](../../.github/workflows/release-android.yml)
+strips the leading `v` for `versionName` (e.g. `v1.0.5` → `1.0.5`) and sets
+`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.0.5` → `1000005`).
+Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / run number.
 
 ### CI
 

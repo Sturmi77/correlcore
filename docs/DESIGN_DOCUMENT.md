@@ -1,8 +1,9 @@
 # Design-Dokument: CorrelCore — Mood & Habit Tracker mit Korrelationsanalyse
 
-**Version:** 0.14 (M9 Beta + M10 public selfhost v1.0 Complete; M10.1 insight triggers/tag maturity shipped; post-M10 foundations: Notes-in-Analysis, M7-S8 digest/Ollama/changepoint, slug HMAC, EXIF strip, Capacitor scaffold, HC consent — next main milestone M11 Play Store)
-**Datum:** 2026-07-10
+**Version:** 0.15 (M10 public selfhost v1.0 Complete; patch line v1.0.1–v1.0.5 Android sideload; M10.1 shipped; M11 engineering sprints 1–5 shipped — shell, signed sideload, Bearer auth, Glance widget, FCM registration code; Play Console / Firebase ops exit still open #429; next exit M11 Play Closed Testing)
+**Datum:** 2026-07-19
 
+> **Vorherige Version:** 0.14 (2026-07-10) — M9 Beta + M10 public selfhost v1.0 Complete; M10.1 insight triggers/tag maturity shipped; post-M10 foundations through Capacitor scaffold.
 > **Vorherige Version:** 0.12 (2026-05-11) — No-gamification promise added; M5 habits
 > redesigned: streak logic replaced by Adherence Rate + Calendar Heatmap +
 > Correlation Contribution; M2 entry-streak relabeled to Tracking Consistency —
@@ -51,7 +52,7 @@ CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwis
 ### 1.4 Value Proposition
 
 - **Zusammenhänge statt Rohdaten** — die App erklärt, warum Tage gut/schlecht waren
-- **Selfhosted heute, PWA-Hardening in M4** — deine Gesundheitsdaten bleiben auf deiner Instanz; vollständige Offline-Sync-Fähigkeit ist nach M4 bewusst ein Follow-up-Scope
+- **Selfhosted + PWA-Shell + feature-flagged Dexie Offline-Sync (M4.1)** — deine Gesundheitsdaten bleiben auf deiner Instanz; Offline-Sync ist geliefert (feature-flagged)
 - **60 Sekunden pro Tag** — nicht mehr, sonst wird es nicht gemacht
 - **No gamification, ever** — du trackst deine Gewohnheiten, nicht wie oft du die App öffnest. Kein Streak-Druck, keine Badges, keine Belohnungsschleifen.
 
@@ -359,7 +360,7 @@ keine inferenziellen Korrelationen.
 
 ### 3.1 Leitprinzipien
 
-1. **API-First & offline-ready** — Backend ist REST/OpenAPI-first; echte Offline-Sync-Fähigkeit kommt mit M4
+1. **API-First & offline-ready** — Backend ist REST/OpenAPI-first; M4.1 Dexie-Sync geliefert (feature-flagged)
 2. **Selfhosted-First, Cloud-Ready** — `docker compose up` → lauffähig. Kein Code-Rewrite für SaaS
 3. **Privacy by Design** — Datenminimierung, Feld-Verschlüsselung für Sensibles, keine Third-Party-Analytics
 4. **Stateless Backend, 12-Factor**
@@ -972,19 +973,19 @@ Planung bereits als eigenständiger Milestone **M4.1** vorgezogen und geliefert
 
 #### Akzeptanzkriterien M4
 
-- [ ] `slot` ist in Entry Create/Update/Read und UI-Chips verfügbar; Slot-Konflikte liefern `409`
-- [ ] `cycle_day` ist als nullable `1..35` in Schema, Migration und Entry-UI verfügbar
-- [ ] `/onboarding` führt durch Auswahl, Custom Tags und Summary; alte Deep Links bleiben erhalten
-- [ ] Trends Mood bietet `Raw | Smoothed` ab 30 Tagen und persistiert die Auswahl lokal
-- [ ] Dev Mode setzt alle Phase-Overrides zurück, sobald Dev Mode deaktiviert wird
-- [ ] Service Worker cached keine `/api/*`-Responses
-- [ ] PWA installierbar auf Android Chrome und iOS Safari; `/offline` funktioniert als Fallback
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+- [x] `slot` ist in Entry Create/Update/Read und UI-Chips verfügbar; Slot-Konflikte liefern `409`
+- [x] `cycle_day` ist als nullable `1..35` in Schema, Migration und Entry-UI verfügbar
+- [x] `/onboarding` führt durch Auswahl, Custom Tags und Summary; alte Deep Links bleiben erhalten
+- [x] Trends Mood bietet `Raw | Smoothed` ab 30 Tagen und persistiert die Auswahl lokal
+- [x] Dev Mode setzt alle Phase-Overrides zurück, sobald Dev Mode deaktiviert wird
+- [x] Service Worker cached keine `/api/*`-Responses
+- [x] PWA installierbar auf Android Chrome und iOS Safari; `/offline` funktioniert als Fallback
+- [x] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 
 #### DSGVO-Checkpoint M4
 
 - [ ] 🔒 DSGVO: Push-Notification-Payload enthält nur anonyme Reminder-Texte, keine Inhaltsdaten oder Mood-Werte
-- [ ] 🔒 DSGVO: Service-Worker-Cache-Strategie dokumentiert (welche Ressourcen werden gecacht)
+- [x] 🔒 DSGVO: Service-Worker-Cache-Strategie dokumentiert (welche Ressourcen werden gecacht) — [`features/PWA.md`](features/PWA.md)
 
 ---
 
@@ -1264,14 +1265,16 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ### M11 — Android-App für Play Store (Woche 26–28)
 
-> Implementierungsnotizen: [`M11_NOTES.md`](M11_NOTES.md). Sprint-Plan inkl. Pre-Store-APK:
-> [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md). Capacitor-Shell (Sprint 1) unter
-> `apps/android/android/`; Play-Store-/Widget-Scope bleibt M11 Exit.
+> **Statusupdate (2026-07-19):** Engineering Sprints **1–5 complete** (Capacitor shell,
+> signed sideload APK, Bearer auth, Glance homescreen widget, FCM registration code).
+> **Exit bleibt:** Play Closed Testing. Implementierungsnotizen: [`M11_NOTES.md`](M11_NOTES.md).
+> Sprint-Plan: [`M11_SPRINT_PLAN.md`](M11_SPRINT_PLAN.md). Ops offen: [#429](https://github.com/Sturmi77/correlcore/issues/429).
 
-- PWA → Capacitor (Android) — **Shell Sprint 1 landed** (`android/` committed, debug APK CI)
-- Play Console Setup, Internal Testing Track
-- FCM für Non-Selfhost-User
-- Store-Assets (Screenshots, Beschreibung, Datenschutzerklärung)
+- PWA → Capacitor (Android) — **Sprints 1–3 landed** (shell, signed sideload, Bearer auth)
+- Glance homescreen widget — **Sprint 4 landed** ([`features/WIDGET.md`](features/WIDGET.md))
+- FCM registration path in Capacitor + device-token API — **Sprint 5 landed** (live Firebase/Play push verification open #429)
+- Play Console Setup, Internal Testing Track — **ops open** (#429)
+- Store-Assets (Screenshots, Beschreibung, Datenschutzerklärung) — **ops open**
 - **Exit:** Closed Testing im Play Store
 
 #### Akzeptanzkriterien M11
@@ -1282,7 +1285,7 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 - [x] Capacitor Bearer-Auth + API-Base-URL (ADR-0006 / Sprint 3)
 - [ ] Health Connect API Declaration im Play Store korrekt ausgefüllt (`health_permissions` deklariert)
 - [ ] App besteht Google Play Pre-Launch-Report ohne kritische Fehler
-- [ ] FCM-Integration getestet (Push-Notification kommt an)
+- [x] FCM registration path in Capacitor + device-token API (Sprint 5); live Firebase/Play push verification open ([#429](https://github.com/Sturmi77/correlcore/issues/429))
 - [ ] Store-Assets vollständig (Screenshots alle Formfaktoren, Feature-Graphic, kurze/lange Beschreibung)
 - [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
 

@@ -3,7 +3,7 @@
 Native Android shell for the SvelteKit web app ([ADR-0002](../../docs/adr/0002-capacitor-statt-twa.md)).
 TWA/Bubblewrap is not used.
 
-**Milestone:** M11 Sprint 1 (production shell). Plan: [`docs/M11_SPRINT_PLAN.md`](../../docs/M11_SPRINT_PLAN.md).
+**Milestone:** M11 Sprints 1–5 complete (Play Console exit open — [#429](https://github.com/Sturmi77/correlcore/issues/429)). Plan: [`docs/M11_SPRINT_PLAN.md`](../../docs/M11_SPRINT_PLAN.md).
 
 ## Prerequisites
 

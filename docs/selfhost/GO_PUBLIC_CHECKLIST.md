@@ -1,6 +1,10 @@
 # CorrelCore — Go-Public Checklist (M10 Sprint 5)
 
-Last updated: 2026-07-11
+Last updated: 2026-07-19
+
+**Historical M10 go-public checklist.** CorrelCore **v1.0.0** shipped 2026-07-11; the
+current release line is **1.0.x** (patch tags through `v1.0.5` with Android sideload APKs).
+Use the [Post-1.0.x patch releases](#post-10x-patch-releases) section below for new patch tags.
 
 Operator and maintainer checklist before making the repository **public** and
 announcing **v1.0.0** (final tag in M10 Sprint 6).
@@ -117,10 +121,10 @@ docker buildx imagetools inspect ghcr.io/sturmi77/correlcore-api:v1.0.0
 
 ## Final release checklist (Sprint 6)
 
-- Quality gate [`M10_QUALITY_GATE.md`](../quality/M10_QUALITY_GATE.md) — PASS
-- Visual QA [`M10_VISUAL_QA.md`](../quality/M10_VISUAL_QA.md) — PASS
-- Tag **`v1.0.0`** (non-prerelease)
-- Close GitHub milestone #7 (M10 Public Selfhost)
+- ✅ Quality gate [`M10_QUALITY_GATE.md`](../quality/M10_QUALITY_GATE.md) — PASS (2026-07-11)
+- ✅ Visual QA [`M10_VISUAL_QA.md`](../quality/M10_VISUAL_QA.md) — PASS (2026-07-11)
+- ✅ Tag **`v1.0.0`** (non-prerelease) — published
+- ✅ Close GitHub milestone #7 (M10 Public Selfhost) — closed with `v1.0.0` release
 
 ---
 
@@ -135,3 +139,21 @@ Before announcing v1.0.0:
 3. Update Impressum/operator contact if forwarding differs per instance
 
 Selfhost operators use their own security contact for instance-specific issues; the project address is for **software vulnerabilities** in CorrelCore itself.
+
+---
+
+## Post-1.0.x patch releases
+
+Checklist for tagging **`v1.0.N`** (e.g. `v1.0.5`) after the initial M10 go-public:
+
+| Step | Action |
+| ---- | ------ |
+| 1 | Add `[1.0.N]` section to [`CHANGELOG.md`](../../CHANGELOG.md) |
+| 2 | Bump manifests if project policy requires (root/web/backend `package.json`, i18n `app.version`) |
+| 3 | Set operator pin: `IMAGE_TAG=v1.0.N` in `.env` (any `v1.0.x` pin works) |
+| 4 | Tag and push: `git tag -a v1.0.N -m "CorrelCore v1.0.N"` → `git push origin v1.0.N` |
+| 5 | Verify CI: [`release-images.yml`](../../.github/workflows/release-images.yml) publishes `:v1.0.N`, `:v1.0` |
+| 6 | Android sideload (if applicable): [`release-android.yml`](../../.github/workflows/release-android.yml) attaches `correlcore-1.0.N.apk` to the GitHub Release |
+| 7 | Verify GHCR: `docker buildx imagetools inspect ghcr.io/sturmi77/correlcore-api:v1.0.N` |
+
+See [`CONTAINER_IMAGES.md`](CONTAINER_IMAGES.md) and [`ANDROID_SIDELOAD.md`](ANDROID_SIDELOAD.md) for operator and tester notes.
