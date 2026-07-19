@@ -152,7 +152,7 @@ Pin images for reproducible deploys — see [Container images](container-images.
 
 ```env
 IMAGE_REGISTRY=ghcr.io/sturmi77
-IMAGE_TAG=v1.0.5   # any v1.0.x pin works
+IMAGE_TAG=v1.0.6   # any v1.0.x pin works
 ```
 
 ```bash
