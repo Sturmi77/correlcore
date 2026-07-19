@@ -77,9 +77,9 @@ Phase-1 and Phase-2 clients share one product flag `remember_me` (default `true`
 on login. Storage backends differ; web `localStorage` / `sessionStorage` must
 **never** hold JWTs.
 
-| Surface | `remember_me=true` | `remember_me=false` |
-| ------- | ------------------ | ------------------- |
-| Web / PWA | HttpOnly cookies with `Max-Age` (access + refresh TTLs) | Session cookies (no `Max-Age`) |
+| Surface   | `remember_me=true`                                                                                                                  | `remember_me=false`                                          |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Web / PWA | HttpOnly cookies with `Max-Age` (access + refresh TTLs)                                                                             | Session cookies (no `Max-Age`)                               |
 | Capacitor | Refresh (+ access) in Android **EncryptedSharedPreferences** (Keystore), restored into in-memory `sessionTokens` before `hydrate()` | Memory only (cleared on process death); secure store cleared |
 
 Logout clears cookies (Web/PWA) and secure store + widget credentials (Capacitor).

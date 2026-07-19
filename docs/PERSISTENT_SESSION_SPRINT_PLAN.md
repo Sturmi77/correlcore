@@ -19,13 +19,13 @@ amended; QA matrix signed off for the three surfaces.
 
 ## Scope vs non-scope
 
-| In scope | Out of scope (v1) |
-| -------- | ----------------- |
-| `remember_me` API + login UI | Biometric / Credential Manager |
-| Web/PWA session vs persistent cookies | Refresh TTL > 30 days |
-| Capacitor EncryptedSharedPreferences restore | iOS Capacitor shell |
-| Boot restore before `hydrate()` | Password or DEK in session store |
-| Logout clears all session material | Changing ADR-0006 cookie path for browser |
+| In scope                                     | Out of scope (v1)                         |
+| -------------------------------------------- | ----------------------------------------- |
+| `remember_me` API + login UI                 | Biometric / Credential Manager            |
+| Web/PWA session vs persistent cookies        | Refresh TTL > 30 days                     |
+| Capacitor EncryptedSharedPreferences restore | iOS Capacitor shell                       |
+| Boot restore before `hydrate()`              | Password or DEK in session store          |
+| Logout clears all session material           | Changing ADR-0006 cookie path for browser |
 
 Related but separate: Sprint B widget items (#445–#447) — widget deep-link /
 timezone must not block this sprint; widget creds remain a Glance exception,
@@ -35,12 +35,12 @@ not a substitute for WebView restore.
 
 ## Sprint overview
 
-| Sprint | Title | Surfaces | Exit criterion |
-| ------ | ----- | -------- | -------------- |
-| **PS-0** | Contract lock + UI flag | All | Decisions D1–D7 locked; `remember_me` on login API + checkbox; ADR amend draft |
-| **PS-1** | Web + PWA cookie modes | Web, PWA | Remember on/off behaves correctly across browser session and PWA relaunch |
-| **PS-2** | Capacitor secure restore | Android APK | Force-stop → reopen stays signed in when remember on; off → login |
-| **PS-3** | Hardening, tests, closeout | All | Coverage + security checklist + release notes; #453 closable |
+| Sprint   | Title                      | Surfaces    | Exit criterion                                                                 |
+| -------- | -------------------------- | ----------- | ------------------------------------------------------------------------------ |
+| **PS-0** | Contract lock + UI flag    | All         | Decisions D1–D7 locked; `remember_me` on login API + checkbox; ADR amend draft |
+| **PS-1** | Web + PWA cookie modes     | Web, PWA    | Remember on/off behaves correctly across browser session and PWA relaunch      |
+| **PS-2** | Capacitor secure restore   | Android APK | Force-stop → reopen stays signed in when remember on; off → login              |
+| **PS-3** | Hardening, tests, closeout | All         | Coverage + security checklist + release notes; #453 closable                   |
 
 Dependency: **PS-0 → PS-1 ∥ PS-2 prep → PS-2 → PS-3**.  
 PS-1 (Web/PWA) can finish before PS-2 native work; PS-2 must not ship without PS-0 flag wiring.  
@@ -61,16 +61,16 @@ PS-0 (contract + UI)
 
 ## Baseline (before PS-0)
 
-| Item | Status |
-| ---- | ------ |
-| Web/PWA HttpOnly cookies (`access` 15m, `refresh` 30d) | Done |
-| Capacitor Bearer in-memory (`sessionTokens`) | Done |
-| Single-flight `/auth/refresh` | Done |
-| Cookie JWT body gate on cookie-sourced refresh | Done (#442) |
-| Widget SharedPreferences mirror (Glance only) | Done — **not** WebView restore |
-| Login „Angemeldet bleiben“ checkbox | Missing |
-| Capacitor cold-start session restore | Missing |
-| Explicit session-cookie mode (`remember_me=false`) | Missing |
+| Item                                                   | Status                         |
+| ------------------------------------------------------ | ------------------------------ |
+| Web/PWA HttpOnly cookies (`access` 15m, `refresh` 30d) | Done                           |
+| Capacitor Bearer in-memory (`sessionTokens`)           | Done                           |
+| Single-flight `/auth/refresh`                          | Done                           |
+| Cookie JWT body gate on cookie-sourced refresh         | Done (#442)                    |
+| Widget SharedPreferences mirror (Glance only)          | Done — **not** WebView restore |
+| Login „Angemeldet bleiben“ checkbox                    | Missing                        |
+| Capacitor cold-start session restore                   | Missing                        |
+| Explicit session-cookie mode (`remember_me=false`)     | Missing                        |
 
 ---
 
@@ -196,13 +196,13 @@ PS-0 (contract + UI)
 - [ ] CHANGELOG / release-notes blurb for next `v*` tag.
 - [ ] Cross-surface QA matrix (sign-off):
 
-| Check | Web | PWA | Capacitor |
-| ----- | --- | --- | --------- |
-| Remember on survives relaunch | ☐ | ☐ | ☐ |
-| Remember off does not | ☐ | ☐ | ☐ |
-| Logout clears session | ☐ | ☐ | ☐ |
-| No JWT in web storage | ☐ | ☐ | ☐ |
-| Offline/network during hydrate (document behavior) | ☐ | ☐ | ☐ |
+| Check                                              | Web | PWA | Capacitor |
+| -------------------------------------------------- | --- | --- | --------- |
+| Remember on survives relaunch                      | ☐   | ☐   | ☐         |
+| Remember off does not                              | ☐   | ☐   | ☐         |
+| Logout clears session                              | ☐   | ☐   | ☐         |
+| No JWT in web storage                              | ☐   | ☐   | ☐         |
+| Offline/network during hydrate (document behavior) | ☐   | ☐   | ☐         |
 
 ### Exit
 
@@ -214,12 +214,12 @@ PS-0 (contract + UI)
 
 ## Risks & mitigations
 
-| Risk | Impact | Mitigation |
-| ---- | ------ | ---------- |
-| HTTP Homelab drops `Secure` cookies | Web/PWA look “broken” (always login) | PS-0/PS-1 docs + `COOKIE_SECURE` guidance; QA on HTTPS and known HTTP setups |
-| Secure store / widget double-write races | Stale refresh, revoke_all | Single write path; prefer body refresh when Capacitor opt-in (existing hardening) |
-| `hydrate()` treats network error as anonymous | False logout offline | Document in PS-3; optional follow-up issue if PWA offline UX suffers |
-| Scope creep into biometrics / longer TTL | Delays APK fix | Keep out of scope; track as follow-ups on #453 |
+| Risk                                          | Impact                               | Mitigation                                                                        |
+| --------------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------- |
+| HTTP Homelab drops `Secure` cookies           | Web/PWA look “broken” (always login) | PS-0/PS-1 docs + `COOKIE_SECURE` guidance; QA on HTTPS and known HTTP setups      |
+| Secure store / widget double-write races      | Stale refresh, revoke_all            | Single write path; prefer body refresh when Capacitor opt-in (existing hardening) |
+| `hydrate()` treats network error as anonymous | False logout offline                 | Document in PS-3; optional follow-up issue if PWA offline UX suffers              |
+| Scope creep into biometrics / longer TTL      | Delays APK fix                       | Keep out of scope; track as follow-ups on #453                                    |
 
 ---
 
@@ -235,21 +235,21 @@ PS-0 (contract + UI)
 
 ## Issue & doc index
 
-| Artifact | Role |
-| -------- | ---- |
-| [#453](https://github.com/Sturmi77/correlcore/issues/453) | Feature tracking + acceptance |
+| Artifact                                                                          | Role                                     |
+| --------------------------------------------------------------------------------- | ---------------------------------------- |
+| [#453](https://github.com/Sturmi77/correlcore/issues/453)                         | Feature tracking + acceptance            |
 | [`docs/features/PERSISTENT_SESSION_PLAN.md`](features/PERSISTENT_SESSION_PLAN.md) | Technical design (WP0–WP3, architecture) |
-| This file | Sprint sequencing + exit criteria |
-| ADR-0006 | Auth storage policy (amend in PS-0/PS-3) |
-| [#452](https://github.com/Sturmi77/correlcore/issues/452) | M11 polish B/C — parallel, not blocking |
+| This file                                                                         | Sprint sequencing + exit criteria        |
+| ADR-0006                                                                          | Auth storage policy (amend in PS-0/PS-3) |
+| [#452](https://github.com/Sturmi77/correlcore/issues/452)                         | M11 polish B/C — parallel, not blocking  |
 
 ---
 
 ## Suggested PR slicing
 
-| Sprint | Suggested PR title |
-| ------ | ------------------ |
-| PS-0 | `feat(auth): remember_me flag + login checkbox (#453)` |
-| PS-1 | `feat(auth): session vs persistent cookies for Web/PWA (#453)` |
-| PS-2 | `feat(android): EncryptedSharedPreferences session restore (#453)` |
-| PS-3 | `docs+test(auth): persistent session closeout (#453)` |
+| Sprint | Suggested PR title                                                 |
+| ------ | ------------------------------------------------------------------ |
+| PS-0   | `feat(auth): remember_me flag + login checkbox (#453)`             |
+| PS-1   | `feat(auth): session vs persistent cookies for Web/PWA (#453)`     |
+| PS-2   | `feat(android): EncryptedSharedPreferences session restore (#453)` |
+| PS-3   | `docs+test(auth): persistent session closeout (#453)`              |

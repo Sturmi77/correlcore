@@ -24,11 +24,11 @@ One product contract; three storage backends.
 
 ## Current state
 
-| Surface | Auth mechanism (ADR-0006) | Survives restart today? | Main gap |
-| ------- | ------------------------- | ----------------------- | -------- |
-| **Web** (same-origin `/api/v1`) | HttpOnly cookies (`access` 15m, `refresh` 30d, `SameSite=Strict`) | **Yes**, if cookies stick | No explicit remember-me; silent failures when `Secure` cookies are dropped on HTTP; no session-only mode |
-| **PWA** (installed, same origin) | Same cookie jar as the installing origin | **Yes**, same as Web | Must verify standalone relaunch; SW must keep skipping `/api/*` (already true) |
-| **Capacitor** (`VITE_CAPACITOR=1`) | Bearer JWTs in JS memory only | **No** — cold start → anonymous | No secure restore of refresh token into WebView before `hydrate()` |
+| Surface                            | Auth mechanism (ADR-0006)                                         | Survives restart today?         | Main gap                                                                                                 |
+| ---------------------------------- | ----------------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Web** (same-origin `/api/v1`)    | HttpOnly cookies (`access` 15m, `refresh` 30d, `SameSite=Strict`) | **Yes**, if cookies stick       | No explicit remember-me; silent failures when `Secure` cookies are dropped on HTTP; no session-only mode |
+| **PWA** (installed, same origin)   | Same cookie jar as the installing origin                          | **Yes**, same as Web            | Must verify standalone relaunch; SW must keep skipping `/api/*` (already true)                           |
+| **Capacitor** (`VITE_CAPACITOR=1`) | Bearer JWTs in JS memory only                                     | **No** — cold start → anonymous | No secure restore of refresh token into WebView before `hydrate()`                                       |
 
 Shared boot path today: `hydrate()` → `GET /auth/me` (with single-flight refresh on 401).  
 Capacitor has no refresh material after process death → login every launch.
@@ -40,15 +40,15 @@ Widget prefs already mirror access+refresh for Glance (`WidgetCredentialsStore`)
 
 ## Product decisions (locked — Issue #453 / ADR-0006 amendment)
 
-| ID | Topic | Proposal |
-| -- | ----- | -------- |
-| D1 | Default | **„Angemeldet bleiben“ = on** for all surfaces |
-| D2 | Off meaning | Web/PWA: **session cookies** (no `Max-Age` / browser-session). Capacitor: memory-only (current behavior) |
-| D3 | On meaning | Web/PWA: persistent cookies (`Max-Age` = refresh TTL). Capacitor: refresh in **EncryptedSharedPreferences** (Keystore-backed) |
-| D4 | Password storage | **Never** store password; only refresh (and short-lived access as needed) |
-| D5 | Web storage | **Never** `localStorage` / `sessionStorage` for JWTs (ADR-0006 stands) |
-| D6 | Refresh TTL | Keep `JWT_REFRESH_TOKEN_EXPIRE_DAYS=30` for v1; optional longer TTL later |
-| D7 | UX copy | Login checkbox + short help; Settings can show “signed in until …” later (optional) |
+| ID  | Topic            | Proposal                                                                                                                      |
+| --- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Default          | **„Angemeldet bleiben“ = on** for all surfaces                                                                                |
+| D2  | Off meaning      | Web/PWA: **session cookies** (no `Max-Age` / browser-session). Capacitor: memory-only (current behavior)                      |
+| D3  | On meaning       | Web/PWA: persistent cookies (`Max-Age` = refresh TTL). Capacitor: refresh in **EncryptedSharedPreferences** (Keystore-backed) |
+| D4  | Password storage | **Never** store password; only refresh (and short-lived access as needed)                                                     |
+| D5  | Web storage      | **Never** `localStorage` / `sessionStorage` for JWTs (ADR-0006 stands)                                                        |
+| D6  | Refresh TTL      | Keep `JWT_REFRESH_TOKEN_EXPIRE_DAYS=30` for v1; optional longer TTL later                                                     |
+| D7  | UX copy          | Login checkbox + short help; Settings can show “signed in until …” later (optional)                                           |
 
 ---
 
@@ -84,14 +84,14 @@ Widget prefs already mirror access+refresh for Glance (`WidgetCredentialsStore`)
 
 ### Platform matrix
 
-| Concern | Web | PWA | Capacitor |
-| ------- | --- | --- | --------- |
-| Persist refresh | HttpOnly cookie | Same | Native secure store |
-| Persist access | HttpOnly cookie (15m) | Same | Memory (+ optional native cache for widget only) |
-| `credentials` | `include` | `include` | `omit` + `Authorization` |
-| Boot restore | Cookie jar | Cookie jar | Read SecureStore → `setSessionTokens` → refresh if needed → `hydrate` |
-| Logout | `clear_auth_cookies` | Same | Clear memory + SecureStore + widget creds |
-| Remember off | Session cookies | Same | Skip SecureStore write |
+| Concern         | Web                   | PWA        | Capacitor                                                             |
+| --------------- | --------------------- | ---------- | --------------------------------------------------------------------- |
+| Persist refresh | HttpOnly cookie       | Same       | Native secure store                                                   |
+| Persist access  | HttpOnly cookie (15m) | Same       | Memory (+ optional native cache for widget only)                      |
+| `credentials`   | `include`             | `include`  | `omit` + `Authorization`                                              |
+| Boot restore    | Cookie jar            | Cookie jar | Read SecureStore → `setSessionTokens` → refresh if needed → `hydrate` |
+| Logout          | `clear_auth_cookies`  | Same       | Clear memory + SecureStore + widget creds                             |
+| Remember off    | Session cookies       | Same       | Skip SecureStore write                                                |
 
 ---
 
@@ -186,13 +186,13 @@ logout clears store; failed refresh clears store and shows login.
 
 ### WP3 — Hardening & tests
 
-| Layer | Tests |
-| ----- | ----- |
-| Backend | Login `remember_me=false` → `Set-Cookie` without Max-Age; `true` → Max-Age present |
-| Web unit | Checkbox preference; login payload includes flag |
-| Web E2E | Login → reload → `/auth/me` still 200 (cookie path) |
-| Capacitor | Unit/mock restore/persist/clear; manual QA script on device |
-| Regression | Refresh single-flight; cookie JWT body gate; logout clears push + tokens |
+| Layer      | Tests                                                                              |
+| ---------- | ---------------------------------------------------------------------------------- |
+| Backend    | Login `remember_me=false` → `Set-Cookie` without Max-Age; `true` → Max-Age present |
+| Web unit   | Checkbox preference; login payload includes flag                                   |
+| Web E2E    | Login → reload → `/auth/me` still 200 (cookie path)                                |
+| Capacitor  | Unit/mock restore/persist/clear; manual QA script on device                        |
+| Regression | Refresh single-flight; cookie JWT body gate; logout clears push + tokens           |
 
 Security checklist:
 
@@ -208,12 +208,12 @@ Security checklist:
 Mapped 1:1 to sprints in
 [`PERSISTENT_SESSION_SPRINT_PLAN.md`](../PERSISTENT_SESSION_SPRINT_PLAN.md):
 
-| WP | Sprint | Focus |
-| -- | ------ | ----- |
-| WP0 | **PS-0** | Contract + UI flag |
-| WP1 | **PS-1** | Web/PWA cookie modes |
+| WP  | Sprint   | Focus                    |
+| --- | -------- | ------------------------ |
+| WP0 | **PS-0** | Contract + UI flag       |
+| WP1 | **PS-1** | Web/PWA cookie modes     |
 | WP2 | **PS-2** | Capacitor secure restore |
-| WP3 | **PS-3** | Hardening + closeout |
+| WP3 | **PS-3** | Hardening + closeout     |
 
 Capacitor-only would leave Web/PWA remember-me undefined and miss cookie-mode /
 Secure diagnostics; this order keeps one checkbox and one mental model.
