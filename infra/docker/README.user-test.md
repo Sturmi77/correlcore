@@ -67,6 +67,11 @@ erreichbar sein wird, z. B.:
 CORS_ORIGINS=http://correlcore-test.tail-scale.ts.net:3000,http://100.101.102.103:3000
 ```
 
+**Auth / Cookies:** Der Stack ist für plain HTTP gedacht. Compose setzt
+`COOKIE_SECURE=false` (Default). Ohne das (oder mit `COOKIE_SECURE=true`
+auf `http://…`) verwirft der Browser die Auth-Cookies — Symptom: Login
+OK, danach `API 401 … Could not validate credentials`. Siehe ADR-0006.
+
 ---
 
 ## 3. Start

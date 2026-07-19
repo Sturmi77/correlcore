@@ -294,10 +294,22 @@ async def test_get_current_user_resets_dek_after_response(
 @pytest.mark.asyncio
 async def test_get_current_user_returns_401_without_token(
     async_client: AsyncClient,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """No cookie, no Bearer header → 401 before any DB call."""
-    r = await async_client.get("/api/v1/auth/me")
+    """No cookie, no Bearer header → 401 before any DB call.
+
+    Client detail stays opaque; ops logs must carry ``auth_fail_reason`` so
+    Secure-cookie-discard vs bad JWT can be distinguished without guessing.
+    """
+    with caplog.at_level("INFO", logger="app.api.v1.deps.auth"):
+        r = await async_client.get("/api/v1/auth/me")
     assert r.status_code == 401
+    assert r.json()["detail"] == "Could not validate credentials"
+    assert any(
+        getattr(rec, "auth_fail_reason", None) == "missing_access_token"
+        or "missing_access_token" in rec.getMessage()
+        for rec in caplog.records
+    )
 
 
 @pytest.mark.asyncio

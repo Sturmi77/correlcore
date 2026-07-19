@@ -24,6 +24,9 @@ x-api-image: &api-image
 
 x-api-env: &api-env
   APP_ENV: ${APP_ENV:-staging}
+  # HTTP Homelab without TLS: must be false (ADR-0006). Secure cookies on
+  # http:// origins are dropped → subsequent API calls 401.
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
   # Custom-Symptom-Slug HMAC (ADR-0039) — required when APP_ENV=staging|production.

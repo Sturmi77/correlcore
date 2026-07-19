@@ -66,6 +66,8 @@ Fix:
 - `set_auth_cookies` setzt `secure=settings.cookie_secure_effective` statt hartkodiert `True`.
 - Model-Validator verbietet `COOKIE_SECURE=false` in `APP_ENV=production` — die Garantie aus dem Entscheidungs-Statement ("`Secure` in Prod") bleibt zwingend.
 - `infra/dockhand/.env.example` setzt `COOKIE_SECURE=false` mit Begründung, weil dieser Stack über Tailscale ohne TLS-Terminierung ausgeliefert wird; `infra/docker/.env.example` dokumentiert die Variable als optional.
+- Homelab-Compose-Defaults (`docker-compose.user-test.yml`, `infra/dockge/compose.yaml`, `docker-compose.quickstart.yml`, `infra/dockhand/compose.yaml`) setzen `COOKIE_SECURE=${COOKIE_SECURE:-false}` — Staging ohne diesen Default emittierte Secure-Cookies und erzeugte Folge-401 `Could not validate credentials`.
+- Zusätzlich: `cookie_secure_for_request()` honoriert in Non-Production bei unset `COOKIE_SECURE` das von `hooks.server.ts` gesetzte `X-Forwarded-Proto` (`http` → Secure aus). Production bleibt zwingend Secure.
 
 Keine Auswirkung auf den Capacitor-Pfad (Phase 2): Bearer-Tokens sind vom `Secure`-Flag nicht betroffen.
 

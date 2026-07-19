@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.api.v1.router import api_router
+from app.core.auth_cookies import warn_if_http_staging_may_drop_cookies
 from app.core.config import settings
 from app.core.error_tracking import init_error_tracking
 from app.core.logging import setup_logging
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan — startup and shutdown hooks."""
     setup_logging()
     init_error_tracking(settings)
+    warn_if_http_staging_may_drop_cookies()
     # Connection pools are opened lazily by their dependencies. Keep the
     # lifespan hook focused on process-wide setup until a measured startup
     # warmup or explicit shutdown hook is required.

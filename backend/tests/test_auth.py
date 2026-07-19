@@ -371,6 +371,35 @@ async def test_login_remember_me_true_sets_max_age(async_client: AsyncClient, us
 
 
 @pytest.mark.asyncio
+async def test_login_http_forwarded_proto_omits_secure(
+    async_client: AsyncClient, user: User, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Homelab HTTP via web proxy: X-Forwarded-Proto=http → no Secure cookies.
+
+    Regression for silent login→401: Secure cookies discarded on http://
+    Tailscale origins leave no access_token → ``Could not validate credentials``.
+    """
+    from app.core import auth_cookies
+
+    monkeypatch.setattr(auth_cookies.settings, "COOKIE_SECURE", None, raising=False)
+    monkeypatch.setattr(auth_cookies.settings, "APP_ENV", "staging", raising=False)
+    with patch(
+        "app.api.v1.endpoints.auth.login_user",
+        new_callable=AsyncMock,
+        return_value=(VALID_ACCESS_TOKEN, VALID_REFRESH_TOKEN, user),
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/login",
+            json={"email": "test@example.com", "password": TEST_PASSWORD},
+            headers={"X-Forwarded-Proto": "http"},
+        )
+    assert r.status_code == 200
+    joined = "\n".join(_set_cookie_header_values(r))
+    assert "access_token=" in joined
+    assert "Secure" not in joined
+
+
+@pytest.mark.asyncio
 async def test_login_wrong_password(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.endpoints.auth.login_user",
