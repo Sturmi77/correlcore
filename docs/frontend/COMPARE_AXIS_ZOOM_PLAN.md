@@ -24,13 +24,13 @@ Capacitor.
 
 ## 2. Goals
 
-| Goal | Meaning |
-| --- | --- |
-| Intuitiveness | One control (`+/-`), visible zoom status, predictable tap |
-| Expressiveness | Week/fortnight/month columns make multi-day episodes readable |
-| Interpretability | Clear dual encoding (heatmap sum vs metric mean) + coverage honesty |
-| Platform parity | Same Web UI works in Capacitor WebView (no Pinch required in v1) |
-| Sync integrity | Chart + heatmap always share identical bucket columns, scroll, cursor |
+| Goal             | Meaning                                                               |
+| ---------------- | --------------------------------------------------------------------- |
+| Intuitiveness    | One control (`+/-`), visible zoom status, predictable tap             |
+| Expressiveness   | Week/fortnight/month columns make multi-day episodes readable         |
+| Interpretability | Clear dual encoding (heatmap sum vs metric mean) + coverage honesty   |
+| Platform parity  | Same Web UI works in Capacitor WebView (no Pinch required in v1)      |
+| Sync integrity   | Chart + heatmap always share identical bucket columns, scroll, cursor |
 
 Non-goals for v1 are listed in §11.
 
@@ -38,16 +38,16 @@ Non-goals for v1 are listed in §11.
 
 ## 3. Locked product decisions
 
-| # | Decision |
-| --- | --- |
-| D1 | Scope = Trends **Compare unit** only (timeline + `ComparisonHeatmap`). |
-| D2 | Zoom changes **display granularity only**; loaded horizon stays **365 days**. |
-| D3 | Heatmap bucket value = **sum of daily occurrence counts** (tags, work context; symptoms: sum of daily counts — intensity separate in tooltip if useful). |
-| D4 | Mood / Energy / Stress bucket value = **mean of days that have an entry** (do not average in empty days). |
-| D5 | Tap on a **multi-day bucket** = **zoom in** (drill toward finer granularity), not open entry history. |
-| D6 | Tap on a **day** column (zoom stage 0) = existing behaviour (`EntryHistorySheet` / `selectDate`). |
-| D7 | v1 interaction = **`+/-` buttons** (same metaphor as Co-Occurrence density), not Pinch. |
-| D8 | Capacitor must be a first-class target (touch targets, no scroll/gesture conflict). |
+| #   | Decision                                                                                                                                                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Scope = Trends **Compare unit** only (timeline + `ComparisonHeatmap`).                                                                                   |
+| D2  | Zoom changes **display granularity only**; loaded horizon stays **365 days**.                                                                            |
+| D3  | Heatmap bucket value = **sum of daily occurrence counts** (tags, work context; symptoms: sum of daily counts — intensity separate in tooltip if useful). |
+| D4  | Mood / Energy / Stress bucket value = **mean of days that have an entry** (do not average in empty days).                                                |
+| D5  | Tap on a **multi-day bucket** = **zoom in** (drill toward finer granularity), not open entry history.                                                    |
+| D6  | Tap on a **day** column (zoom stage 0) = existing behaviour (`EntryHistorySheet` / `selectDate`).                                                        |
+| D7  | v1 interaction = **`+/-` buttons** (same metaphor as Co-Occurrence density), not Pinch.                                                                  |
+| D8  | Capacitor must be a first-class target (touch targets, no scroll/gesture conflict).                                                                      |
 
 ---
 
@@ -55,16 +55,16 @@ Non-goals for v1 are listed in §11.
 
 These close the remaining open points; change only with explicit product override.
 
-| Topic | Recommendation | Rationale |
-| --- | --- | --- |
-| Zoom stages | `1 → 3 → 7 → 14 → 28` days/column | Enough bird’s-eye steps without continuous zoom complexity |
-| Default stage | **7** when Compare loads the 365d window | Year-at-a-glance is the primary new value |
-| Range chips in Compare | **Fix data window to year (365d)** for the shared axis; hide or disable range as axis control in Compare | Avoid two competing controls; other Trends panels may keep range later |
-| Persist | `localStorage` key `cc_trend_compare_zoom` (stage index 0–4) | Consistent with `cc_trend_compare_mode` / sort |
-| Bucket alignment | Build buckets **from newest day backward** | Matches newest-right scroll; “today” bucket is the natural partial edge |
-| Partial edge buckets | **Show**, mark visually + tooltip `"k of N days"`; aggregate only over days present — **never upscale** | Honesty > fake completeness |
-| Zoom-in depth | One stage finer per tap, then scroll/focus that interval into view | Predictable; avoids jumping past useful mid levels |
-| Status chrome | Always show e.g. “7 Tage / Zelle” next to `+/-` | Prevents persisted-zoom surprise |
+| Topic                  | Recommendation                                                                                           | Rationale                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Zoom stages            | `1 → 3 → 7 → 14 → 28` days/column                                                                        | Enough bird’s-eye steps without continuous zoom complexity              |
+| Default stage          | **7** when Compare loads the 365d window                                                                 | Year-at-a-glance is the primary new value                               |
+| Range chips in Compare | **Fix data window to year (365d)** for the shared axis; hide or disable range as axis control in Compare | Avoid two competing controls; other Trends panels may keep range later  |
+| Persist                | `localStorage` key `cc_trend_compare_zoom` (stage index 0–4)                                             | Consistent with `cc_trend_compare_mode` / sort                          |
+| Bucket alignment       | Build buckets **from newest day backward**                                                               | Matches newest-right scroll; “today” bucket is the natural partial edge |
+| Partial edge buckets   | **Show**, mark visually + tooltip `"k of N days"`; aggregate only over days present — **never upscale**  | Honesty > fake completeness                                             |
+| Zoom-in depth          | One stage finer per tap, then scroll/focus that interval into view                                       | Predictable; avoids jumping past useful mid levels                      |
+| Status chrome          | Always show e.g. “7 Tage / Zelle” next to `+/-`                                                          | Prevents persisted-zoom surprise                                        |
 
 ---
 
@@ -72,10 +72,10 @@ These close the remaining open points; change only with explicit product overrid
 
 On one shared time axis, two different aggregations are intentional:
 
-| Layer | Encoding | User-facing label (i18n) |
-| --- | --- | --- |
-| Comparison Heatmap cells | Sum of occurrences in bucket | e.g. `trends.compare.zoom.encoding_sum` |
-| Mood / Energy / Stress line (and later strip mean) | Mean of days **with** entry | e.g. `trends.compare.zoom.encoding_mean` |
+| Layer                                              | Encoding                     | User-facing label (i18n)                 |
+| -------------------------------------------------- | ---------------------------- | ---------------------------------------- |
+| Comparison Heatmap cells                           | Sum of occurrences in bucket | e.g. `trends.compare.zoom.encoding_sum`  |
+| Mood / Energy / Stress line (and later strip mean) | Mean of days **with** entry  | e.g. `trends.compare.zoom.encoding_mean` |
 
 **Required UI copy (v1):**
 
@@ -89,18 +89,18 @@ Without this, users will read a dark heatmap week as “bad/high mood week”.
 
 ## 6. Risks and mitigations (integrated)
 
-| ID | Risk | Negative consequence | Mitigation (in scope) | WP |
-| --- | --- | --- | --- | --- |
-| R1 | Sum scales with bucket length | Weeks look “louder”; short peaks vanish | Colour levels relative to **max visible bucket sum**; legend “Summe”; tooltip raw sum + active days | WP2, WP5 |
-| R2 | Sum (heatmap) vs mean (metrics) confused | False correspondence | Dual-encoding legend + tooltip fields | WP5 |
-| R3 | Mean ignores empty days | Sparse week with one good day looks “fine” | Always show coverage in tooltip; optional faint coverage cue later (v1.1) | WP5 |
-| R4 | 365 × rows DOM at stage 0 | Jank on Capacitor when zooming back to days | Measure on device; if needed virtualise columns or cap mounted day-columns (follow-up WP8) | WP7, WP8 |
-| R5 | Removing range focus window | Power users lose “only this week” mental mode | Zoom-in + scroll-into-view approximates focus; document; revisit dedicated focus window only if feedback demands | WP1, WP6 |
-| R6 | Tap no longer opens sheet on buckets | Interaction regression vs O-17 habit | Stage 0 keeps sheet; affordance text on multi-day (“Tippen zum Vergrößern”); optional long-press → sheet later | WP4, WP5 |
-| R7 | Persisted zoom surprise | “UI looks broken” after reload | Persistent visible status; first-run may default 7 without punishing experts who chose 1 | WP3, WP5 |
-| R8 | Backward buckets ≠ calendar ISO weeks | Users compare to KW labels and mismatch | Label intervals as date ranges, not “KW”; avoid calendar-week claims in v1 | WP2, WP5 |
-| R9 | Cursor/`timelineCursor` still date-keyed | Desync, a11y says wrong day | Extend cursor model to `{ bucketStart, bucketEnd, stage, source }` (date retained for stage 0) | WP3 |
-| R10 | Strip mode / markers lag lines | Two truths in one panel | **v1 ships Lines + heatmap zoom first**; Strips and marker alignment gated in WP6; disable strip toggle or force stage 0 until ready | WP6 |
+| ID  | Risk                                     | Negative consequence                          | Mitigation (in scope)                                                                                                                | WP       |
+| --- | ---------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| R1  | Sum scales with bucket length            | Weeks look “louder”; short peaks vanish       | Colour levels relative to **max visible bucket sum**; legend “Summe”; tooltip raw sum + active days                                  | WP2, WP5 |
+| R2  | Sum (heatmap) vs mean (metrics) confused | False correspondence                          | Dual-encoding legend + tooltip fields                                                                                                | WP5      |
+| R3  | Mean ignores empty days                  | Sparse week with one good day looks “fine”    | Always show coverage in tooltip; optional faint coverage cue later (v1.1)                                                            | WP5      |
+| R4  | 365 × rows DOM at stage 0                | Jank on Capacitor when zooming back to days   | Measure on device; if needed virtualise columns or cap mounted day-columns (follow-up WP8)                                           | WP7, WP8 |
+| R5  | Removing range focus window              | Power users lose “only this week” mental mode | Zoom-in + scroll-into-view approximates focus; document; revisit dedicated focus window only if feedback demands                     | WP1, WP6 |
+| R6  | Tap no longer opens sheet on buckets     | Interaction regression vs O-17 habit          | Stage 0 keeps sheet; affordance text on multi-day (“Tippen zum Vergrößern”); optional long-press → sheet later                       | WP4, WP5 |
+| R7  | Persisted zoom surprise                  | “UI looks broken” after reload                | Persistent visible status; first-run may default 7 without punishing experts who chose 1                                             | WP3, WP5 |
+| R8  | Backward buckets ≠ calendar ISO weeks    | Users compare to KW labels and mismatch       | Label intervals as date ranges, not “KW”; avoid calendar-week claims in v1                                                           | WP2, WP5 |
+| R9  | Cursor/`timelineCursor` still date-keyed | Desync, a11y says wrong day                   | Extend cursor model to `{ bucketStart, bucketEnd, stage, source }` (date retained for stage 0)                                       | WP3      |
+| R10 | Strip mode / markers lag lines           | Two truths in one panel                       | **v1 ships Lines + heatmap zoom first**; Strips and marker alignment gated in WP6; disable strip toggle or force stage 0 until ready | WP6      |
 
 ---
 
@@ -109,19 +109,19 @@ Without this, users will read a dark heatmap week as “bad/high mood week”.
 ### 7.1 Shared axis contract
 
 Replace the Compare panel’s exclusive reliance on flat `axisDates: string[]` for
-*rendering* with:
+_rendering_ with:
 
 ```ts
 type CompareZoomStage = 0 | 1 | 2 | 3 | 4; // → 1 | 3 | 7 | 14 | 28 days
 
 type AxisBucket = {
-  id: string;              // e.g. `${start}_${end}`
-  start: string;           // ISO date inclusive
-  end: string;             // ISO date inclusive
-  dayCount: number;        // stage size (e.g. 7)
-  presentDays: number;     // days inside loaded window
-  partial: boolean;        // presentDays < dayCount OR clipped by window
-  dates: string[];         // ISO days actually in this bucket
+  id: string; // e.g. `${start}_${end}`
+  start: string; // ISO date inclusive
+  end: string; // ISO date inclusive
+  dayCount: number; // stage size (e.g. 7)
+  presentDays: number; // days inside loaded window
+  partial: boolean; // presentDays < dayCount OR clipped by window
+  dates: string[]; // ISO days actually in this bucket
 };
 ```
 
@@ -135,24 +135,24 @@ type AxisBucket = {
 
 ### 7.2 Aggregation helpers
 
-| Input | Output |
-| --- | --- |
-| Tag/work-context daily counts | `sum(count)` over `bucket.dates` |
-| Symptom daily | `sum(count)`; expose `max(max_intensity)` in tooltip |
+| Input                               | Output                                                        |
+| ----------------------------------- | ------------------------------------------------------------- |
+| Tag/work-context daily counts       | `sum(count)` over `bucket.dates`                              |
+| Symptom daily                       | `sum(count)`; expose `max(max_intensity)` in tooltip          |
 | Timeseries daily mood/energy/stress | mean of non-null daily avgs among days with `entry_count > 0` |
-| Empty metric bucket | gap (no point), same as missing days today |
+| Empty metric bucket                 | gap (no point), same as missing days today                    |
 
 Colour: `heatmapLevel(bucketSum, maxVisibleBucketSum)` — existing 0–4 levels.
 
 ### 7.3 Interaction
 
-| Control | Behaviour |
-| --- | --- |
-| `−` | `stage = min(4, stage + 1)` (coarser) |
-| `+` | `stage = max(0, stage - 1)` (finer) |
+| Control                | Behaviour                                                                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `−`                    | `stage = min(4, stage + 1)` (coarser)                                                                                   |
+| `+`                    | `stage = max(0, stage - 1)` (finer)                                                                                     |
 | Tap bucket `stage > 0` | `stage -= 1` (or map to finest that still contains interval); scroll so bucket span is visible; set cursor to that span |
-| Tap day `stage === 0` | `dispatch('selectDate')` → Entry history (unchanged) |
-| Hover/focus | Update shared cursor store with bucket span |
+| Tap day `stage === 0`  | `dispatch('selectDate')` → Entry history (unchanged)                                                                    |
+| Hover/focus            | Update shared cursor store with bucket span                                                                             |
 
 Persist stage on change. No Pinch in v1 (avoids conflict with horizontal scroll
 in Capacitor).
@@ -282,12 +282,12 @@ payloads).
 
 ## 10. Test plan (minimum)
 
-| Layer | Cases |
-| --- | --- |
-| Unit | Bucket boundaries from fixed `axisDates`; partial last/first; sum/mean; colour max |
-| Component | `+/-` clamps; persist mock; tap zoom-in; stage 0 `selectDate` |
-| Panel | Cursor store bucket span; scroll sync after zoom |
-| Manual / device | Capacitor scroll + zoom; tooltip readability; legend |
+| Layer           | Cases                                                                              |
+| --------------- | ---------------------------------------------------------------------------------- |
+| Unit            | Bucket boundaries from fixed `axisDates`; partial last/first; sum/mean; colour max |
+| Component       | `+/-` clamps; persist mock; tap zoom-in; stage 0 `selectDate`                      |
+| Panel           | Cursor store bucket span; scroll sync after zoom                                   |
+| Manual / device | Capacitor scroll + zoom; tooltip readability; legend                               |
 
 ---
 
@@ -319,23 +319,23 @@ existing entry stats.
 
 ## 13. Decision log
 
-| Date | Item | Resolution |
-| --- | --- | --- |
-| 2026-07-20 | Scope | Compare shared axis only |
-| 2026-07-20 | Zoom semantics | Display-only buckets; 365d load |
-| 2026-07-20 | Heatmap agg | Sum of occurrence |
-| 2026-07-20 | Metric agg | Mean of days with entry |
-| 2026-07-20 | Tap | Zoom-in; sheet only at day stage |
-| 2026-07-20 | Input | `+/-` first; Capacitor required |
-| 2026-07-20 | Risks | R1–R10 folded into WPs + interpretability contract |
+| Date       | Item           | Resolution                                         |
+| ---------- | -------------- | -------------------------------------------------- |
+| 2026-07-20 | Scope          | Compare shared axis only                           |
+| 2026-07-20 | Zoom semantics | Display-only buckets; 365d load                    |
+| 2026-07-20 | Heatmap agg    | Sum of occurrence                                  |
+| 2026-07-20 | Metric agg     | Mean of days with entry                            |
+| 2026-07-20 | Tap            | Zoom-in; sheet only at day stage                   |
+| 2026-07-20 | Input          | `+/-` first; Capacitor required                    |
+| 2026-07-20 | Risks          | R1–R10 folded into WPs + interpretability contract |
 
 ---
 
 ## 14. Open only if product overrides §4
 
-1. Default stage 7 vs 1  
-2. Hide range vs keep parallel  
-3. Stage set 1/3/7/14/28 vs shorter 1/7/28  
-4. Zoom-in one stage vs jump to day  
+1. Default stage 7 vs 1
+2. Hide range vs keep parallel
+3. Stage set 1/3/7/14/28 vs shorter 1/7/28
+4. Zoom-in one stage vs jump to day
 
 If no override is recorded before WP1, implement §4 as written.

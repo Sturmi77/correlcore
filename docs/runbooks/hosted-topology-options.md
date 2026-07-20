@@ -147,12 +147,12 @@ flowchart TB
   Marketing -.->|"CTA absolute URLs<br/>app.correlcore.com/auth/login"| Browser
 ```
 
-| # | Request | Path |
-| - | ------- | ---- |
-| 1 | `https://correlcore.com/` | DNS → **IONOS** marketing site only |
-| 2 | `https://app.correlcore.com/` (Landing, Login, App, `/api/*`) | DNS → NAS → **Synology RP** → `127.0.0.1:3010` web → API |
-| 3 | Verify / password-reset mail | API → **IONOS SMTP**; receive stays MX on IONOS |
-| 4 | Link in mail | Opens `https://app.correlcore.com/auth/...` (same origin as #2) |
+| #   | Request                                                       | Path                                                            |
+| --- | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| 1   | `https://correlcore.com/`                                     | DNS → **IONOS** marketing site only                             |
+| 2   | `https://app.correlcore.com/` (Landing, Login, App, `/api/*`) | DNS → NAS → **Synology RP** → `127.0.0.1:3010` web → API        |
+| 3   | Verify / password-reset mail                                  | API → **IONOS SMTP**; receive stays MX on IONOS                 |
+| 4   | Link in mail                                                  | Opens `https://app.correlcore.com/auth/...` (same origin as #2) |
 
 Cookies and `/api` stay on **`app.correlcore.com`** only — never cross from the IONOS apex.
 
