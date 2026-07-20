@@ -107,10 +107,7 @@ export function countBucketActiveDays(
 }
 
 /** Find the display bucket that contains an ISO date (or matches start). */
-export function findBucketForDate(
-  buckets: readonly AxisBucket[],
-  date: string
-): AxisBucket | null {
+export function findBucketForDate(buckets: readonly AxisBucket[], date: string): AxisBucket | null {
   return (
     buckets.find((bucket) => bucket.dates.includes(date)) ??
     buckets.find((bucket) => bucket.start === date) ??

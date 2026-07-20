@@ -235,14 +235,11 @@
       }, 0)
     : 0;
   $: cursorCoverageLabel = cursorBucket
-    ? $_(
-        cursorBucket.partial ? 'trends.compare.zoom.partial' : 'trends.compare.zoom.coverage',
-        {
-          values: cursorBucket.partial
-            ? { present: cursorBucket.presentDays, size: cursorBucket.dayCount }
-            : { active: cursorEntryDays, present: cursorBucket.presentDays },
-        }
-      )
+    ? $_(cursorBucket.partial ? 'trends.compare.zoom.partial' : 'trends.compare.zoom.coverage', {
+        values: cursorBucket.partial
+          ? { present: cursorBucket.presentDays, size: cursorBucket.dayCount }
+          : { active: cursorEntryDays, present: cursorBucket.presentDays },
+      })
     : '';
   $: cursorDetailLabel =
     cursorBucket && cursorCoverageLabel
