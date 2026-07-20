@@ -21,7 +21,10 @@
     type AxisBucket,
   } from '$lib/utils/compareAxisZoom';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
-  import EventMarkerLayer, { dedupeEventMarkers, type EventMarker } from './EventMarkerLayer.svelte';
+  import EventMarkerLayer, {
+    dedupeEventMarkers,
+    type EventMarker,
+  } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
   import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
 

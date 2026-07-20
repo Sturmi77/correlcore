@@ -234,21 +234,21 @@ describe('TrendsComparePanel', () => {
     });
 
     expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('7');
-    expect(container.querySelectorAll('.compare-heatmap__cell[data-zoomable="true"]').length).toBeGreaterThan(
-      0
-    );
+    expect(
+      container.querySelectorAll('.compare-heatmap__cell[data-zoomable="true"]').length
+    ).toBeGreaterThan(0);
 
     await fireEvent.click(screen.getByRole('button', { name: 'trends.compare.mode_strips' }));
 
     expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('1');
     expect(screen.getByTestId('trends-compare-zoom-strip-gate')).toBeTruthy();
     expect(screen.getByTestId('trends-compare-zoom-strips-disabled')).toBeTruthy();
-    expect(
-      (screen.getByTestId('trends-compare-zoom-decrease') as HTMLButtonElement).disabled
-    ).toBe(true);
-    expect(
-      (screen.getByTestId('trends-compare-zoom-increase') as HTMLButtonElement).disabled
-    ).toBe(true);
+    expect((screen.getByTestId('trends-compare-zoom-decrease') as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    expect((screen.getByTestId('trends-compare-zoom-increase') as HTMLButtonElement).disabled).toBe(
+      true
+    );
     expect(container.querySelector('.compare-heatmap__cell[data-zoomable="true"]')).toBeNull();
   });
 });
