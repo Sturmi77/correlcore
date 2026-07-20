@@ -9,7 +9,12 @@
     heatmapLevel,
     type DailyAxisLayout,
   } from '$lib/utils/charts';
-  import { sumBucketCounts, type AxisBucket } from '$lib/utils/compareAxisZoom';
+  import {
+    countBucketActiveDays,
+    formatBucketRangeLabel,
+    sumBucketCounts,
+    type AxisBucket,
+  } from '$lib/utils/compareAxisZoom';
   import { pruneHeatmapRows } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
@@ -67,6 +72,7 @@
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string; rowId: string };
+    zoomInBucket: { bucket: AxisBucket };
     pinToggle: { rowId: string; pinned: boolean };
   }>();
 
@@ -96,6 +102,25 @@
       return valueFor(row, bucket.dates[0]!);
     }
     return sumBucketCounts((date) => countFor(row, date), bucket);
+  }
+
+  function cellTooltip(row: Row, bucket: AxisBucket, value: number): string {
+    const range = formatBucketRangeLabel(bucket);
+    const active = countBucketActiveDays((date) => countFor(row, date), bucket);
+    const coverage = bucket.partial
+      ? $_('trends.compare.zoom.partial', {
+          values: { present: bucket.presentDays, size: bucket.dayCount },
+        })
+      : $_('trends.compare.zoom.coverage', {
+          values: { active, present: bucket.presentDays },
+        });
+    const key =
+      bucket.dates.length > 1
+        ? 'trends.compare.zoom.cell_tooltip_zoom'
+        : 'trends.compare.zoom.cell_tooltip';
+    return $_(key, {
+      values: { label: row.label, range, value, coverage },
+    });
   }
 
   async function scrollToLatest(): Promise<void> {
@@ -278,8 +303,7 @@
           {#each visibleBuckets as bucket (bucket.id)}
             {@const value = valueForBucket(row, bucket)}
             {@const columnKey = bucket.start}
-            {@const rangeLabel =
-              bucket.start === bucket.end ? bucket.start : `${bucket.start} – ${bucket.end}`}
+            {@const tooltip = cellTooltip(row, bucket, value)}
             <button
               type="button"
               class={`compare-heatmap__cell compare-heatmap__cell--${heatmapLevel(value, maxValue)}`}
@@ -291,12 +315,14 @@
               data-date={columnKey}
               data-bucket-end={bucket.end}
               data-partial={bucket.partial ? 'true' : 'false'}
-              aria-label={`${row.label}, ${rangeLabel}: ${value}`}
-              title={`${row.label}, ${rangeLabel}: ${value}`}
+              data-zoomable={bucket.dates.length > 1 ? 'true' : 'false'}
+              aria-label={tooltip}
+              title={tooltip}
               on:click={() => {
-                // Multi-day drill-in lands in CAZ-2; only open day history for single-day columns.
                 if (bucket.dates.length === 1) {
                   dispatch('selectDate', { date: columnKey, rowId: row.id });
+                } else {
+                  dispatch('zoomInBucket', { bucket });
                 }
               }}
               on:pointerenter={() => handleCellEnter(columnKey)}

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAxisBuckets,
   clampZoomStage,
+  countBucketActiveDays,
+  findBucketForDate,
+  formatBucketRangeLabel,
   meanBucketMetric,
   stageDays,
   sumBucketCounts,
@@ -98,5 +101,20 @@ describe('compareAxisZoom', () => {
       }, bucket)
     ).toBe(3);
     expect(meanBucketMetric(() => null, bucket)).toBeNull();
+  });
+
+  it('counts active days and formats ranges', () => {
+    const bucket: AxisBucket = {
+      id: 'a_b',
+      start: '2026-05-01',
+      end: '2026-05-03',
+      dayCount: 3,
+      presentDays: 3,
+      partial: false,
+      dates: ['2026-05-01', '2026-05-02', '2026-05-03'],
+    };
+    expect(countBucketActiveDays((date) => (date === '2026-05-02' ? 0 : 1), bucket)).toBe(2);
+    expect(formatBucketRangeLabel(bucket)).toBe('2026-05-01 – 2026-05-03');
+    expect(findBucketForDate([bucket], '2026-05-02')?.id).toBe('a_b');
   });
 });

@@ -5,7 +5,18 @@ import ComparisonHeatmapHarness from './ComparisonHeatmap.harness.svelte';
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
   return {
-    _: readable((key: string) => key),
+    _: readable((key: string, opts?: { values?: Record<string, unknown> }) => {
+      if (key === 'trends.compare.zoom.coverage' && opts?.values) {
+        return `Logged days ${opts.values.active} of ${opts.values.present}`;
+      }
+      if (key === 'trends.compare.zoom.cell_tooltip_zoom' && opts?.values) {
+        return `${opts.values.label}, ${opts.values.range}: ${opts.values.value} · ${opts.values.coverage} · Tap to zoom in`;
+      }
+      if (key === 'trends.compare.zoom.cell_tooltip' && opts?.values) {
+        return `${opts.values.label}, ${opts.values.range}: ${opts.values.value} · ${opts.values.coverage}`;
+      }
+      return key;
+    }),
     locale: readable('en'),
     isLoading: readable(false),
   };
@@ -45,7 +56,10 @@ describe('ComparisonHeatmap shared axis', () => {
     const cells = screen.getAllByRole('button').filter((el) => el.hasAttribute('data-date'));
     const runCell = cells.find((cell) => cell.getAttribute('aria-label')?.startsWith('Run,'));
     expect(runCell?.getAttribute('data-date')).toBe('2026-07-01');
-    // Run has count 2 on day 1 only → bucket sum 2.
+    expect(runCell?.getAttribute('data-zoomable')).toBe('true');
+    // Run has count 2 on day 1 only → bucket sum 2; tooltip includes coverage + zoom affordance.
     expect(runCell?.getAttribute('aria-label')).toContain(': 2');
+    expect(runCell?.getAttribute('aria-label')).toContain('Tap to zoom in');
+    expect(runCell?.getAttribute('aria-label')).toContain('Logged days');
   });
 });

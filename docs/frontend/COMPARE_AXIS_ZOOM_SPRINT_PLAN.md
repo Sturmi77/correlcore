@@ -29,12 +29,12 @@ buckets).
 
 ## Sprint overview
 
-| Sprint | ID    | Title                       | Impl. slices              | Effort     | PR                                                      | Status                             |
-| ------ | ----- | --------------------------- | ------------------------- | ---------- | ------------------------------------------------------- | ---------------------------------- |
-| 0      | CAZ-0 | Spec freeze                 | WP0                       | Low        | docs (#473, #477, #479)                                 | **Done** — §4 confirmed 2026-07-20 |
-| 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**             | High       | [#480](https://github.com/Sturmi77/correlcore/pull/480) | Implemented — CI babysit           |
-| 2      | CAZ-2 | Drill-in + interpretability | **D**                     | Medium     | [#481](https://github.com/Sturmi77/correlcore/pull/481) | Pending after CAZ-1                |
-| 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (+ **F** if needed) | Low–Medium | [#483](https://github.com/Sturmi77/correlcore/pull/483) | Pending after CAZ-2                |
+| Sprint | ID    | Title                       | Impl. slices              | Effort     | PR                                                      | Status              |
+| ------ | ----- | --------------------------- | ------------------------- | ---------- | ------------------------------------------------------- | ------------------- |
+| 0      | CAZ-0 | Spec freeze                 | WP0                       | Low        | docs (#473, #477, #479)                                 | **Done**            |
+| 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**             | High       | [#480](https://github.com/Sturmi77/correlcore/pull/480) | **Merged**          |
+| 2      | CAZ-2 | Drill-in + interpretability | **D**                     | Medium     | [#481](https://github.com/Sturmi77/correlcore/pull/481) | Implemented         |
+| 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (+ **F** if needed) | Low–Medium | [#483](https://github.com/Sturmi77/correlcore/pull/483) | Pending after CAZ-2 |
 
 ---
 

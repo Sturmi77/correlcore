@@ -97,3 +97,27 @@ export function meanBucketMetric(
   if (values.length === 0) return null;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
+
+/** Count days in the bucket where the daily value is > 0. */
+export function countBucketActiveDays(
+  valueForDate: (date: string) => number,
+  bucket: AxisBucket
+): number {
+  return bucket.dates.reduce((count, date) => count + (valueForDate(date) > 0 ? 1 : 0), 0);
+}
+
+/** Find the display bucket that contains an ISO date (or matches start). */
+export function findBucketForDate(
+  buckets: readonly AxisBucket[],
+  date: string
+): AxisBucket | null {
+  return (
+    buckets.find((bucket) => bucket.dates.includes(date)) ??
+    buckets.find((bucket) => bucket.start === date) ??
+    null
+  );
+}
+
+export function formatBucketRangeLabel(bucket: AxisBucket): string {
+  return bucket.start === bucket.end ? bucket.start : `${bucket.start} – ${bucket.end}`;
+}

@@ -15,7 +15,11 @@
     type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
-  import type { AxisBucket } from '$lib/utils/compareAxisZoom';
+  import {
+    findBucketForDate,
+    formatBucketRangeLabel,
+    type AxisBucket,
+  } from '$lib/utils/compareAxisZoom';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
@@ -46,7 +50,10 @@
    */
   export let enableCursor = false;
 
-  const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
+  const dispatch = createEventDispatcher<{
+    selectDate: { date: string };
+    zoomInBucket: { bucket: AxisBucket };
+  }>();
 
   const height = 248;
   const paddingLeft = 48;
@@ -178,6 +185,16 @@
     if (buckets.length === 0) return noteDateSet.has(axisKey);
     const bucket = buckets.find((item) => item.start === axisKey);
     return bucket ? bucket.dates.some((date) => noteDateSet.has(date)) : noteDateSet.has(axisKey);
+  }
+
+  function pointTitle(metricLabelKey: string, value: number, axisKey: string): string {
+    const bucket = findBucketForDate(buckets, axisKey);
+    const range = bucket ? formatBucketRangeLabel(bucket) : axisKey;
+    const base = `${$_(metricLabelKey)}: ${value.toFixed(1)} (${range})`;
+    if (bucket && bucket.dates.length > 1) {
+      return `${base} · ${$_('trends.compare.zoom.tap_to_enlarge')}`;
+    }
+    return base;
   }
 
   function bucketStartForDate(date: string): string | null {
@@ -359,16 +376,18 @@
                   <button
                     type="button"
                     class="timeseries__point-button"
-                    aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
+                    aria-label={pointTitle(metric.label, point.value, point.label)}
                     on:click={() => {
-                      // Multi-day bucket drill-in is CAZ-2; only open history for day columns.
-                      const bucket = buckets.find((item) => item.start === point.label);
-                      if (bucket && bucket.dates.length > 1) return;
+                      const bucket = findBucketForDate(buckets, point.label);
+                      if (bucket && bucket.dates.length > 1) {
+                        dispatch('zoomInBucket', { bucket });
+                        return;
+                      }
                       dispatch('selectDate', { date: point.label });
                     }}
                   >
                     <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
-                      <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>
+                      <title>{pointTitle(metric.label, point.value, point.label)}</title>
                     </circle>
                     {#if metric.style.shape === 'circle'}
                       <circle
