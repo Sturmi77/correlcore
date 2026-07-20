@@ -21,7 +21,7 @@
     type AxisBucket,
   } from '$lib/utils/compareAxisZoom';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
-  import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
+  import EventMarkerLayer, { dedupeEventMarkers, type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
   import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
 
@@ -202,8 +202,8 @@
     return buckets.find((bucket) => bucket.dates.includes(date))?.start ?? null;
   }
 
-  /** Remap marker dates onto display-axis keys when zoomed. */
-  $: displayMarkers =
+  /** Remap marker dates onto display-axis keys when zoomed; dedupe per column. */
+  $: displayMarkers = dedupeEventMarkers(
     buckets.length === 0
       ? markers
       : markers
@@ -217,7 +217,8 @@
               ...(end && end !== start ? { endDate: end } : { endDate: undefined }),
             };
           })
-          .filter((marker): marker is EventMarker => marker !== null);
+          .filter((marker): marker is EventMarker => marker !== null)
+  );
 
   onDestroy(() => {
     // Do not reset the cursor here — other components on the page may still
