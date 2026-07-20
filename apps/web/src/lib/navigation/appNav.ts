@@ -23,7 +23,14 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
 ] as const;
 
 /** Exact `/` plus prefixes — anonymous visitors must reach the marketing landing. */
-const PUBLIC_ROUTE_PREFIXES = ['/', '/auth', '/status', '/offline', '/privacy', '/impressum'] as const;
+const PUBLIC_ROUTE_PREFIXES = [
+  '/',
+  '/auth',
+  '/status',
+  '/offline',
+  '/privacy',
+  '/impressum',
+] as const;
 
 /** Routes that hide the app chrome (no bottom / side nav). */
 const NO_APP_NAV_PREFIXES = [
