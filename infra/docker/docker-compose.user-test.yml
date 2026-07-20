@@ -31,6 +31,10 @@ x-api-image: &api-image
 
 x-api-env: &api-env
   APP_ENV: ${APP_ENV:-staging}
+  # HTTP Tailscale / Homelab without TLS: Secure cookies are discarded by the
+  # browser (RFC 6265bis) → login 200 then API 401 "Could not validate credentials".
+  # Mirror dockhand/quickstart defaults. Override to true only behind HTTPS.
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
   SLUG_HMAC_KEY: ${SLUG_HMAC_KEY:?SLUG_HMAC_KEY must be set}

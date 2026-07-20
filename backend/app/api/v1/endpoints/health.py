@@ -35,6 +35,16 @@ router = APIRouter()
 class LivenessResponse(BaseModel):
     status: str
     version: str
+    # Effective Secure-Flag actually loaded by this process (ADR-0006).
+    # Ops: on plain-HTTP Homelab this must be false — otherwise browsers
+    # discard auth cookies and APIs return 401 Could not validate credentials.
+    cookie_secure: bool
+    app_env: str
+    # Build identity — diagnose "fixed on main, still broken on NAS" without
+    # guessing IMAGE_TAG pins (e.g. Trends 401 fixed in #444, still served
+    # from sha-636a687).
+    image_tag: str
+    git_commit: str
 
 
 class ComponentModel(BaseModel):
@@ -51,6 +61,10 @@ class ReadinessResponse(BaseModel):
 class HealthSummary(BaseModel):
     status: str
     version: str
+    cookie_secure: bool
+    app_env: str
+    image_tag: str
+    git_commit: str
     readiness: ReadinessResponse
 
 
@@ -120,5 +134,9 @@ async def health_summary() -> HealthSummary:
     return HealthSummary(
         status=overall,
         version=liveness_data["version"],
+        cookie_secure=liveness_data["cookie_secure"],
+        app_env=liveness_data["app_env"],
+        image_tag=liveness_data["image_tag"],
+        git_commit=liveness_data["git_commit"],
         readiness=readiness_body,
     )

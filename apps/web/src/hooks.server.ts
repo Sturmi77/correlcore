@@ -34,8 +34,9 @@
  * - Method, headers, body and the trailing pathname (incl. query string)
  *   are forwarded verbatim. Hop-by-hop headers (`connection`, …) are
  *   stripped per RFC 7230 §6.1.
- * - The upstream `Set-Cookie` header is preserved untouched so the
- *   HttpOnly auth cookies set by the API reach the browser unchanged.
+ * - Upstream ``Set-Cookie`` is applied via ``event.cookies`` (not raw
+ *   response headers) so adapter-node reliably delivers HttpOnly auth
+ *   cookies to the browser.
  * - On upstream connection failure a 502 is returned with a short JSON
  *   body so the SPA's `apiFetch` surface still parses an error.
  *
@@ -57,6 +58,7 @@ import {
   captureServerException,
   initServerErrorTracking,
 } from '$lib/observability/errorTracking.server';
+import { applyUpstreamCookies } from '$lib/server/upstreamCookies';
 
 initServerErrorTracking();
 
@@ -80,32 +82,28 @@ function getInternalApiUrl(): string {
   return raw.replace(/\/+$/, '');
 }
 
-function stripHopByHop(headers: Headers): Headers {
+function stripHopByHop(headers: Headers, options: { dropSetCookie?: boolean } = {}): Headers {
   const out = new Headers();
-  // `Set-Cookie` is the only header where multiple values must NOT be
-  // collapsed into one comma-joined string — cookies legitimately contain
-  // commas (e.g. `Expires=Wed, 21 Oct 2026 07:28:00 GMT`). Iterating with
-  // `headers.entries()` yields the joined form, which would corrupt
-  // multi-value `Set-Cookie`. So we lift `set-cookie` out via
-  // `getSetCookie()` (Node 18+, undici, latest jsdom) and copy it as
-  // separate appends, then iterate everything else normally.
-  const setCookieGetter = (headers as Headers & { getSetCookie?: () => string[] }).getSetCookie;
-  if (typeof setCookieGetter === 'function') {
-    for (const cookie of setCookieGetter.call(headers)) {
-      out.append('set-cookie', cookie);
+  const dropSetCookie = options.dropSetCookie === true;
+
+  if (!dropSetCookie) {
+    // Preserve multi-value Set-Cookie when still forwarding raw headers
+    // (used for request → upstream). Response path uses event.cookies.
+    const setCookieGetter = (headers as Headers & { getSetCookie?: () => string[] }).getSetCookie;
+    if (typeof setCookieGetter === 'function') {
+      for (const cookie of setCookieGetter.call(headers)) {
+        out.append('set-cookie', cookie);
+      }
+    } else {
+      const combined = headers.get('set-cookie');
+      if (combined) out.append('set-cookie', combined);
     }
-  } else {
-    // Fallback for environments without getSetCookie. The browser's
-    // Headers.entries() collapses multiple Set-Cookie values, so this
-    // path is best-effort: a single combined value is forwarded as-is.
-    const combined = headers.get('set-cookie');
-    if (combined) out.append('set-cookie', combined);
   }
 
   for (const [key, value] of headers.entries()) {
     const lower = key.toLowerCase();
     if (HOP_BY_HOP_HEADERS.has(lower)) continue;
-    if (lower === 'set-cookie') continue; // already handled above
+    if (lower === 'set-cookie') continue;
     out.append(key, value);
   }
   return out;
@@ -164,8 +162,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     });
   }
 
-  // Mirror the upstream response 1:1, except for hop-by-hop headers.
-  const responseHeaders = stripHopByHop(upstreamResponse.headers);
+  // Prefer SvelteKit cookie jar over raw Set-Cookie on the Response —
+  // adapter-node reliably serializes event.cookies onto the client response.
+  applyUpstreamCookies(event.cookies, upstreamResponse.headers);
+  const responseHeaders = stripHopByHop(upstreamResponse.headers, { dropSetCookie: true });
   return new Response(upstreamResponse.body, {
     status: upstreamResponse.status,
     statusText: upstreamResponse.statusText,

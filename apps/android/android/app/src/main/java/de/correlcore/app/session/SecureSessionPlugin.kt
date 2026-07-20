@@ -54,4 +54,27 @@ class SecureSessionPlugin : Plugin() {
         SecureSessionStore.clear(context)
         call.resolve()
     }
+
+    /**
+     * Rotate JWTs via [SessionRefreshCoordinator] so WebView and Glance share
+     * one in-process refresh (avoids refresh-token replay → revoke_all).
+     */
+    @PluginMethod
+    fun refresh(call: PluginCall) {
+        val rotated =
+            SessionRefreshCoordinator.refresh(
+                context,
+                apiBaseHint = call.getString("apiBase"),
+                refreshTokenHint = call.getString("refreshToken"),
+            )
+        if (rotated == null) {
+            call.reject("refresh failed")
+            return
+        }
+        val result = JSObject()
+        result.put("accessToken", rotated.accessToken)
+        result.put("refreshToken", rotated.refreshToken)
+        result.put("apiBase", rotated.apiBase)
+        call.resolve(result)
+    }
 }

@@ -229,16 +229,19 @@ class Settings(BaseSettings):
 
     @property
     def cookie_secure_effective(self) -> bool:
-        """Effective Secure-Flag for auth cookies (ADR-0006).
+        """Effective Secure-Flag for auth cookies without a request (ADR-0006).
 
         - Wenn ``COOKIE_SECURE`` explizit ``True``/``False`` gesetzt ist, gilt
           das (mit Production-Sicherheits-Override im Validator).
         - Wenn ``None`` (Default), schalten wir ``Secure`` nur in
           ``APP_ENV=development`` aus; alle anderen Umgebungen (staging,
-          production) starten mit ``Secure=True``. Operatoren von HTTP-only
-          Staging-/Homelab-Setups (z. B. Tailscale-IP ohne TLS) müssen
-          dann explizit ``COOKIE_SECURE=false`` setzen — andernfalls
-          verwirft der Browser ``Set-Cookie`` und Login schlägt fehl.
+          production) starten mit ``Secure=True``.
+
+        Beim Setzen von Cookies bevorzugt ``cookie_secure_for_request``
+        (``app.core.auth_cookies``) zusätzlich ``X-Forwarded-Proto`` in
+        Non-Production, damit HTTP-Tailscale-Proxies ohne manuelles
+        ``COOKIE_SECURE=false`` funktionieren. Homelab-Compose-Defaults
+        setzen trotzdem ``COOKIE_SECURE=false``.
         """
         if self.COOKIE_SECURE is not None:
             return self.COOKIE_SECURE

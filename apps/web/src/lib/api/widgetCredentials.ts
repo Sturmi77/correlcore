@@ -12,6 +12,11 @@ import { isCapacitorBuild } from './platform';
 
 type WidgetCredentialsPlugin = {
   set(options: { accessToken: string; refreshToken: string; apiBase: string }): Promise<void>;
+  get?(): Promise<{
+    accessToken?: string;
+    refreshToken?: string;
+    apiBase?: string;
+  }>;
   clear(): Promise<void>;
 };
 
@@ -55,6 +60,31 @@ export async function mirrorWidgetCredentials(
 /** Clear native widget credentials (logout / failed refresh). */
 export async function clearWidgetCredentials(): Promise<void> {
   await mirrorWidgetCredentials(null, null);
+}
+
+/**
+ * Read mirrored widget credentials (may be newer than WebView memory after a
+ * WorkManager rotate). Null on browser builds or older APKs without get().
+ */
+export async function readWidgetCredentials(): Promise<{
+  accessToken: string;
+  refreshToken: string;
+  apiBase?: string;
+} | null> {
+  if (!isCapacitorBuild()) return null;
+  const plugin = getNativePlugin();
+  if (!plugin?.get) return null;
+  try {
+    const data = await plugin.get();
+    if (!data?.accessToken || !data?.refreshToken) return null;
+    return {
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      apiBase: data.apiBase,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /** Re-mirror current tokens when Settings changes the runtime API base. */

@@ -9,20 +9,26 @@ vi.mock('./apiBase', () => ({
 }));
 
 import { isCapacitorBuild } from './platform';
-import { mirrorWidgetCredentials, remirrorWidgetApiBase } from './widgetCredentials';
+import {
+  mirrorWidgetCredentials,
+  readWidgetCredentials,
+  remirrorWidgetApiBase,
+} from './widgetCredentials';
 
 describe('widgetCredentials', () => {
   const set = vi.fn();
   const clear = vi.fn();
+  const get = vi.fn();
 
   beforeEach(() => {
     set.mockReset().mockResolvedValue(undefined);
     clear.mockReset().mockResolvedValue(undefined);
+    get.mockReset().mockResolvedValue({});
     vi.mocked(isCapacitorBuild).mockReturnValue(true);
     vi.stubGlobal('window', {
       Capacitor: {
         Plugins: {
-          WidgetCredentials: { set, clear },
+          WidgetCredentials: { set, clear, get },
         },
       },
     });
@@ -61,5 +67,18 @@ describe('widgetCredentials', () => {
     await mirrorWidgetCredentials('a', 'r');
     expect(set).not.toHaveBeenCalled();
     expect(clear).not.toHaveBeenCalled();
+  });
+
+  it('readWidgetCredentials returns mirrored tokens', async () => {
+    get.mockResolvedValueOnce({
+      accessToken: 'aw',
+      refreshToken: 'rw',
+      apiBase: 'https://api.example/api/v1',
+    });
+    await expect(readWidgetCredentials()).resolves.toEqual({
+      accessToken: 'aw',
+      refreshToken: 'rw',
+      apiBase: 'https://api.example/api/v1',
+    });
   });
 });

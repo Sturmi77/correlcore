@@ -86,6 +86,14 @@ async def test_api_v1_health_live_200() -> None:
     data = response.json()
     assert data["status"] == "ok"
     assert "version" in data
+    # Effective Secure-Flag as loaded by this process — ops use this to
+    # detect "COOKIE_SECURE only in host .env" (never reached the container).
+    assert "cookie_secure" in data
+    assert isinstance(data["cookie_secure"], bool)
+    assert "app_env" in data
+    # Build identity — stale IMAGE_TAG pins show up here immediately.
+    assert "image_tag" in data
+    assert "git_commit" in data
 
 
 @pytest.mark.asyncio

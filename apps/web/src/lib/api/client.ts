@@ -15,11 +15,13 @@
 
 import { getApiBase } from './apiBase';
 import { usesBearerAuth } from './platform';
+import { nativeRefreshSession } from './secureSession';
 import {
   clearSessionTokens,
   getAccessToken,
   getRefreshToken,
   setSessionTokens,
+  syncSessionTokensFromNative,
 } from './sessionTokens';
 
 export class ApiError extends Error {
@@ -93,39 +95,60 @@ function buildAuthInit(headers: Headers, rest: RequestInit = {}): RequestInit {
   };
 }
 
+async function fetchRefreshOnce(): Promise<boolean> {
+  const headers = new Headers({
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  });
+  const bearer = usesBearerAuth();
+  const body = bearer ? JSON.stringify({ refresh_token: getRefreshToken() }) : '{}';
+  const res = await fetch(
+    `${getApiBase()}/auth/refresh${bearer ? '?include_access_token=true' : ''}`,
+    {
+      method: 'POST',
+      credentials: bearer ? 'omit' : 'include',
+      headers,
+      body,
+    }
+  );
+  if (!res.ok) return false;
+  if (bearer) {
+    const data = (await res.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+    };
+    if (!data.access_token) return false;
+    setSessionTokens(data);
+  }
+  return true;
+}
+
 async function performRefresh(): Promise<boolean> {
   try {
-    const headers = new Headers({
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    });
     const bearer = usesBearerAuth();
-    const body = bearer ? JSON.stringify({ refresh_token: getRefreshToken() }) : '{}';
-    const res = await fetch(
-      `${getApiBase()}/auth/refresh${bearer ? '?include_access_token=true' : ''}`,
-      {
-        method: 'POST',
-        credentials: bearer ? 'omit' : 'include',
-        headers,
-        body,
-      }
-    );
-    if (!res.ok) {
-      if (bearer) clearSessionTokens();
-      return false;
-    }
     if (bearer) {
-      const data = (await res.json()) as {
-        access_token?: string;
-        refresh_token?: string;
-      };
-      if (!data.access_token) {
-        clearSessionTokens();
-        return false;
+      // Prefer native coordinator (same lock as Glance WorkManager).
+      const native = await nativeRefreshSession({
+        refreshToken: getRefreshToken(),
+        apiBase: getApiBase(),
+      });
+      if (native) {
+        setSessionTokens(native);
+        return true;
       }
-      setSessionTokens(data);
+      // Older APK / plugin missing: adopt tokens the widget may already have.
+      await syncSessionTokensFromNative();
     }
-    return true;
+
+    if (await fetchRefreshOnce()) return true;
+
+    if (bearer) {
+      // Widget may have won a race and dual-written newer tokens — retry once.
+      const synced = await syncSessionTokensFromNative();
+      if (synced && (await fetchRefreshOnce())) return true;
+      clearSessionTokens();
+    }
+    return false;
   } catch {
     return false;
   }

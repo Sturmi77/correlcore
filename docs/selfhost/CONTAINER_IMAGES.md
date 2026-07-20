@@ -50,6 +50,42 @@ docker inspect "${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG}"
 
 Set `IMAGE_DIGEST` in `.env` for the API container.
 
+### Verify what is actually running
+
+`APP_VERSION` in JSON alone is not enough (often stays `1.0.0` across
+patches). After deploy, check build identity via the web proxy:
+
+```bash
+curl -sS http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health/live | jq .
+# expect: image_tag, git_commit, cookie_secure, app_env
+docker ps --format '{{.Names}} {{.Image}}' | grep correlcore
+```
+
+If testers report a bug that is already fixed on `main`, compare
+`image_tag` / `git_commit` to the fixing commit before re-debugging code.
+
+### Auth 401 checklist (`Could not validate credentials`)
+
+Applies to **any** protected route (Trends, Settings → Consent /
+`/api/v1/user/me/consents`, Entries, …) — not only the old Trends path bug.
+
+1. **Running image** — `docker ps | grep correlcore` and
+   `curl -sS http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health/live`.
+2. **Browser cookies after login** (DevTools → Application → Cookies for the
+   web origin): `access_token` (`Path=/api`) and `refresh_token`
+   (`Path=/api/v1/auth/refresh`). If missing → session never stuck (proxy /
+   Secure). Login JSON alone is not enough.
+3. **Network tab on the failing call** — Request must send `Cookie:
+   access_token=…`. Response header `X-Auth-Fail-Reason` (staging/homelab):
+   `missing_access_token` | `jwt_invalid_or_expired` | `dek_unwrap_failed` | …
+4. **`COOKIE_SECURE` in the API container** — must be `false` on plain HTTP:
+   `docker exec correlcore-api env | grep COOKIE_SECURE`.
+5. **`dek_unwrap_failed`** — `ENCRYPTION_KEY` no longer matches keys that
+   wrapped user DEKs (key rotated without `ENCRYPTION_KEYS`). Restore the
+   previous key or list both: `ENCRYPTION_KEYS=<new>,<old>`.
+6. **Capacitor** — absolute `VITE_API_BASE_URL`, mixed content on `http://` API,
+   Bearer refresh with `?include_access_token=true`.
+
 ---
 
 ## Compose registry override

@@ -296,7 +296,7 @@ async def delete_my_account(
             detail="Invalid credentials",
         ) from exc
 
-    clear_auth_cookies(response)
+    clear_auth_cookies(response, request=request)
     # 204 No Content — the response body must be empty per RFC 7231.
     response.status_code = status.HTTP_204_NO_CONTENT
     return response

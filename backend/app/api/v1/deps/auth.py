@@ -14,6 +14,10 @@ it into a request-scoped ``ContextVar`` via
 :func:`app.core.crypto.set_current_user_dek`. The DEK is reset on
 request completion through the ``yield``/``finally`` pattern so that no
 plaintext key material leaks into worker reuse or concurrent requests.
+
+401 detail is intentionally opaque (``Could not validate credentials``).
+Operators diagnose via structured logs field ``auth_fail_reason`` — do not
+guess from the client-facing string alone.
 """
 
 from __future__ import annotations
@@ -40,36 +44,58 @@ from app.models.user_encryption_key import UserEncryptionKey
 
 logger = logging.getLogger(__name__)
 
-_CREDENTIALS_EXCEPTION = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate credentials",
-    headers={"WWW-Authenticate": "Bearer"},
-)
+_CREDENTIALS_DETAIL = "Could not validate credentials"
+
+
+def _credentials_exception(reason: str) -> HTTPException:
+    """Build the shared 401 and emit a structured reason for ops logs.
+
+    Client ``detail`` stays opaque. In non-production we also attach
+    ``X-Auth-Fail-Reason`` so Homelab operators can see
+    ``missing_access_token`` vs ``dek_unwrap_failed`` in the browser
+    Network tab (e.g. Settings → Consent → ``/user/me/consents``).
+    """
+    logger.info(
+        "auth credentials rejected",
+        extra={"auth_fail_reason": reason},
+    )
+    headers: dict[str, str] = {"WWW-Authenticate": "Bearer"}
+    from app.core.config import settings
+
+    if settings.APP_ENV.lower() != "production":
+        headers["X-Auth-Fail-Reason"] = reason
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=_CREDENTIALS_DETAIL,
+        headers=headers,
+    )
 
 
 async def _resolve_user(token: str, db: AsyncSession) -> User:
     try:
         payload = decode_token(token)
     except JWTError as exc:
-        raise _CREDENTIALS_EXCEPTION from exc
+        raise _credentials_exception("jwt_invalid_or_expired") from exc
 
     if payload.get("type") != "access":
-        raise _CREDENTIALS_EXCEPTION
+        raise _credentials_exception("token_type_not_access")
 
     user_id_str: str | None = payload.get("sub")
     if not user_id_str:
-        raise _CREDENTIALS_EXCEPTION
+        raise _credentials_exception("missing_subject")
 
     try:
         user_id = uuid.UUID(user_id_str)
     except ValueError as exc:
-        raise _CREDENTIALS_EXCEPTION from exc
+        raise _credentials_exception("subject_not_uuid") from exc
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
 
-    if not user or not user.is_active:
-        raise _CREDENTIALS_EXCEPTION
+    if not user:
+        raise _credentials_exception("user_not_found")
+    if not user.is_active:
+        raise _credentials_exception("user_inactive")
 
     return user
 
@@ -88,7 +114,7 @@ async def _load_and_bind_dek(db: AsyncSession, user: User) -> object | None:
     if record is None:
         logger.error(
             "missing user_encryption_keys row — encrypted fields will fail",
-            extra={"user_id": str(user.id)},
+            extra={"user_id": str(user.id), "auth_fail_reason": "dek_row_missing"},
         )
         return None
 
@@ -99,9 +125,9 @@ async def _load_and_bind_dek(db: AsyncSession, user: User) -> object | None:
         # rather than 500 to avoid leaking crypto details.
         logger.error(
             "failed to unwrap DEK — master key mismatch?",
-            extra={"user_id": str(user.id)},
+            extra={"user_id": str(user.id), "auth_fail_reason": "dek_unwrap_failed"},
         )
-        raise _CREDENTIALS_EXCEPTION from None
+        raise _credentials_exception("dek_unwrap_failed") from None
 
     return set_current_user_dek(user.id, dek)
 
@@ -125,7 +151,8 @@ async def get_current_user(
         token = authorization.removeprefix("Bearer ").strip()
 
     if not token:
-        raise _CREDENTIALS_EXCEPTION
+        # Typical after Secure cookies were discarded on HTTP, or before login.
+        raise _credentials_exception("missing_access_token")
 
     user = await _resolve_user(token, db)
     await bind_rls_current_user(db, user.id)

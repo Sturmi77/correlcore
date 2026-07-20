@@ -21,6 +21,7 @@ import {
   type LoginPayload,
   type UserResponse,
 } from '$lib/api/auth';
+import { ApiError } from '$lib/api/client';
 import { setRuntimeApiBase } from '$lib/api/apiBase';
 import { usesBearerAuth } from '$lib/api/platform';
 import { restoreSecureSession } from '$lib/api/secureSession';
@@ -90,13 +91,25 @@ export async function hydrate(): Promise<AuthState> {
 
 export async function login(payload: LoginPayload): Promise<UserResponse> {
   await drainOfflineSyncForSessionChange();
-  const res = await apiLogin(payload);
-  await prepareOfflineDataForAuthenticatedUser(res.user.id);
+  await apiLogin(payload);
+  // Login JSON can succeed while HttpOnly cookies never stick (proxy /
+  // Secure mismatch). Probe /auth/me before marking the UI authenticated
+  // so Settings → Consent does not fail with a confusing 401 later.
+  const sessionUser = await fetchCurrentUser();
+  if (!sessionUser) {
+    clearSessionTokens();
+    throw new ApiError(
+      401,
+      'Could not validate credentials',
+      '/auth/me'
+    );
+  }
+  await prepareOfflineDataForAuthenticatedUser(sessionUser.id);
   resetInsightStore();
   resetEntrySheetStore();
-  _auth.set({ status: 'authenticated', user: res.user });
+  _auth.set({ status: 'authenticated', user: sessionUser });
   void enablePushNotifications();
-  return res.user;
+  return sessionUser;
 }
 
 export async function logout(): Promise<void> {
