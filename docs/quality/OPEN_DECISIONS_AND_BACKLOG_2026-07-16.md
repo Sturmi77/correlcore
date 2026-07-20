@@ -37,3 +37,4 @@ Living tracker. Update when a decision lands.
 - [`WEEKLY_DIGEST_COMPLETION_PLAN.md`](../features/WEEKLY_DIGEST_COMPLETION_PLAN.md)
 - [`LAYER_CHART_COMPLETION_PLAN.md`](../frontend/LAYER_CHART_COMPLETION_PLAN.md)
 - [`LAYER_CHART_SPIKE_2026-07-16.md`](../frontend/LAYER_CHART_SPIKE_2026-07-16.md)
+- [`COMPARE_AXIS_ZOOM_PLAN.md`](../frontend/COMPARE_AXIS_ZOOM_PLAN.md) — Trends Compare shared-axis bird’s-eye zoom (proposed 2026-07-20)
