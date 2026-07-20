@@ -48,6 +48,14 @@
     drafts = { ...drafts, [id]: { ...drafts[id], ...patch } };
   }
 
+  function hasDirtyDrafts(): boolean {
+    return symptoms.some((symptom) => {
+      const draft = drafts[symptom.id];
+      if (!draft) return false;
+      return draft.name !== symptom.name || draft.icon !== (symptom.icon ?? '');
+    });
+  }
+
   async function save(symptom: SymptomResponse): Promise<void> {
     const draft = drafts[symptom.id];
     if (!draft?.name.trim()) return;
@@ -87,7 +95,11 @@
 
   onMount(() => {
     void load();
-    return registerPageRefresh(() => load());
+    return registerPageRefresh(() => {
+      // Accidental pull must not wipe unsaved edits.
+      if (hasDirtyDrafts()) return;
+      return load();
+    });
   });
 </script>
 

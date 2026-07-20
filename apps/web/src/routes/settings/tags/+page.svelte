@@ -83,6 +83,28 @@
     };
   }
 
+  function draftEquals(a: Draft, b: Draft): boolean {
+    return (
+      a.name === b.name &&
+      a.category === b.category &&
+      a.icon === b.icon &&
+      a.color === b.color &&
+      a.habit_type === b.habit_type &&
+      a.target_frequency === b.target_frequency &&
+      a.include_in_analytics === b.include_in_analytics
+    );
+  }
+
+  /** True when any row draft differs from the last loaded tag, or create form is dirty. */
+  function hasDirtyDrafts(): boolean {
+    if (newDraft.name.trim() || newDraft.icon.trim()) return true;
+    return tags.some((tag) => {
+      const draft = drafts[tag.id];
+      if (!draft) return false;
+      return !draftEquals(draft, draftFrom(tag));
+    });
+  }
+
   async function load(): Promise<void> {
     if ($auth.status !== 'authenticated') {
       loading = false;
@@ -226,7 +248,11 @@
 
   onMount(() => {
     void load();
-    return registerPageRefresh(() => load());
+    return registerPageRefresh(() => {
+      // Accidental pull must not wipe unsaved edits.
+      if (hasDirtyDrafts()) return;
+      return load();
+    });
   });
 </script>
 

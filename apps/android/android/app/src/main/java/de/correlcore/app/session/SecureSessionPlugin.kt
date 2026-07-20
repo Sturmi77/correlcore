@@ -58,23 +58,37 @@ class SecureSessionPlugin : Plugin() {
     /**
      * Rotate JWTs via [SessionRefreshCoordinator] so WebView and Glance share
      * one in-process refresh (avoids refresh-token replay → revoke_all).
+     *
+     * Reject codes (JS must not fall back to fetch with a stale refresh JWT
+     * on TRANSIENT — that can trigger revoke_all):
+     * - AUTH_REJECTED: server rejected token — clear session
+     * - TRANSIENT: network/5xx — keep credentials, retry later
+     * - MISSING: no refresh token available
      */
     @PluginMethod
     fun refresh(call: PluginCall) {
-        val rotated =
-            SessionRefreshCoordinator.refresh(
-                context,
-                apiBaseHint = call.getString("apiBase"),
-                refreshTokenHint = call.getString("refreshToken"),
-            )
-        if (rotated == null) {
-            call.reject("refresh failed")
-            return
+        when (
+            val outcome =
+                SessionRefreshCoordinator.refresh(
+                    context,
+                    apiBaseHint = call.getString("apiBase"),
+                    refreshTokenHint = call.getString("refreshToken"),
+                )
+        ) {
+            is SessionRefreshCoordinator.Outcome.Success -> {
+                val rotated = outcome.tokens
+                val result = JSObject()
+                result.put("accessToken", rotated.accessToken)
+                result.put("refreshToken", rotated.refreshToken)
+                result.put("apiBase", rotated.apiBase)
+                call.resolve(result)
+            }
+            SessionRefreshCoordinator.Outcome.AuthRejected ->
+                call.reject("refresh rejected by server", "AUTH_REJECTED")
+            SessionRefreshCoordinator.Outcome.TransientFailure ->
+                call.reject("refresh temporarily unavailable", "TRANSIENT")
+            SessionRefreshCoordinator.Outcome.MissingCredentials ->
+                call.reject("no refresh credentials", "MISSING")
         }
-        val result = JSObject()
-        result.put("accessToken", rotated.accessToken)
-        result.put("refreshToken", rotated.refreshToken)
-        result.put("apiBase", rotated.apiBase)
-        call.resolve(result)
     }
 }

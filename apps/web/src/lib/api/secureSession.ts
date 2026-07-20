@@ -15,6 +15,19 @@ export type SecureSessionPayload = {
   rememberMe: boolean;
 };
 
+/** Native SecureSession.refresh reject codes (Android). */
+export type NativeRefreshFailureCode = 'AUTH_REJECTED' | 'TRANSIENT' | 'MISSING' | 'UNKNOWN';
+
+export class NativeRefreshError extends Error {
+  readonly code: NativeRefreshFailureCode;
+
+  constructor(code: NativeRefreshFailureCode, message?: string) {
+    super(message ?? `native refresh failed: ${code}`);
+    this.name = 'NativeRefreshError';
+    this.code = code;
+  }
+}
+
 type SecureSessionPlugin = {
   set(options: {
     accessToken?: string | null;
@@ -49,6 +62,15 @@ function getNativePlugin(): SecureSessionPlugin | null {
     }
   ).Capacitor;
   return cap?.Plugins?.SecureSession ?? null;
+}
+
+function nativeRejectCode(err: unknown): NativeRefreshFailureCode | null {
+  if (!err || typeof err !== 'object') return null;
+  const code = (err as { code?: unknown }).code;
+  if (code === 'AUTH_REJECTED' || code === 'TRANSIENT' || code === 'MISSING') {
+    return code;
+  }
+  return null;
 }
 
 /** Persist session when remember_me is on (Capacitor only). */
@@ -105,8 +127,12 @@ export async function clearSecureSession(): Promise<void> {
 
 /**
  * Rotate tokens via the native coordinator when available (Android APK with
- * SecureSession.refresh). Returns null on older shells / failure so the JS
- * client can fall back to fetch-based refresh.
+ * SecureSession.refresh).
+ *
+ * - Success → rotated tokens
+ * - Known reject codes → throws [NativeRefreshError] (caller must not fall
+ *   back to fetch with a stale JWT on TRANSIENT)
+ * - Older shells / unknown failure → null so JS can fall back to fetch
  */
 export async function nativeRefreshSession(options: {
   refreshToken?: string | null;
@@ -125,7 +151,11 @@ export async function nativeRefreshSession(options: {
       access_token: data.accessToken,
       refresh_token: data.refreshToken,
     };
-  } catch {
+  } catch (err) {
+    const code = nativeRejectCode(err);
+    if (code) {
+      throw new NativeRefreshError(code, err instanceof Error ? err.message : undefined);
+    }
     return null;
   }
 }

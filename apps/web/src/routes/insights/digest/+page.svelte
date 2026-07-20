@@ -14,6 +14,7 @@
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
   let digest: InsightDigestResponse | null = null;
   let loading = true;
@@ -67,6 +68,7 @@
       return;
     }
     void loadDigest();
+    return registerPageRefresh(() => loadDigest());
   });
 </script>
 

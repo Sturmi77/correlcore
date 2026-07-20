@@ -93,9 +93,34 @@ describe('secureSession', () => {
     });
   });
 
-  it('nativeRefreshSession returns null when plugin rejects', async () => {
+  it('nativeRefreshSession returns null when plugin rejects without code', async () => {
     plugin.refresh.mockRejectedValueOnce(new Error('refresh failed'));
     const { nativeRefreshSession } = await import('./secureSession');
     await expect(nativeRefreshSession({ refreshToken: 'r0' })).resolves.toBeNull();
+  });
+
+  it('nativeRefreshSession throws NativeRefreshError on TRANSIENT', async () => {
+    const err = Object.assign(new Error('refresh temporarily unavailable'), {
+      code: 'TRANSIENT',
+    });
+    plugin.refresh.mockRejectedValueOnce(err);
+    const { nativeRefreshSession, NativeRefreshError } = await import('./secureSession');
+    await expect(nativeRefreshSession({ refreshToken: 'r0' })).rejects.toMatchObject({
+      name: 'NativeRefreshError',
+      code: 'TRANSIENT',
+    });
+    expect(NativeRefreshError).toBeTruthy();
+  });
+
+  it('nativeRefreshSession throws NativeRefreshError on AUTH_REJECTED', async () => {
+    plugin.refresh.mockRejectedValueOnce(
+      Object.assign(new Error('refresh rejected by server'), { code: 'AUTH_REJECTED' })
+    );
+    const { nativeRefreshSession, NativeRefreshError } = await import('./secureSession');
+    await expect(nativeRefreshSession({ refreshToken: 'r0' })).rejects.toMatchObject({
+      name: 'NativeRefreshError',
+      code: 'AUTH_REJECTED',
+    });
+    expect(NativeRefreshError).toBeTruthy();
   });
 });

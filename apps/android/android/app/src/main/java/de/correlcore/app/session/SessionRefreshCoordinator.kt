@@ -14,8 +14,11 @@ import java.net.URL
  * ``revoke_all`` — the user appears to "lose contact" after ~15 minutes
  * (access TTL). This coordinator:
  * 1. serializes refresh in-process,
- * 2. always reads the latest token from native stores before calling the API,
- * 3. dual-writes rotated tokens to WidgetCredentials + SecureSession.
+ * 2. always reads the latest token from native stores before calling the API
+ *    (SecureSession preferred — canonical after WebView login),
+ * 3. dual-writes rotated tokens to WidgetCredentials + SecureSession,
+ * 4. distinguishes auth rejection from transient network/5xx failures so
+ *    callers do not wipe credentials (and provoke stale-JWT revoke_all).
  */
 object SessionRefreshCoordinator {
     private val lock = Any()
@@ -26,56 +29,77 @@ object SessionRefreshCoordinator {
         val apiBase: String,
     )
 
+    sealed class Outcome {
+        data class Success(val tokens: RotatedTokens) : Outcome()
+
+        /** Server rejected the refresh token (401/403) — clear local credentials. */
+        data object AuthRejected : Outcome()
+
+        /** Network / 5xx / parse failure — keep credentials and retry later. */
+        data object TransientFailure : Outcome()
+
+        /** No usable refresh token in either store. */
+        data object MissingCredentials : Outcome()
+    }
+
     /**
      * Rotate access/refresh using the newest native (or hint) refresh token.
-     * Returns null when no token/base is available or the HTTP refresh fails.
      */
     fun refresh(
         context: Context,
         apiBaseHint: String?,
         refreshTokenHint: String?,
-    ): RotatedTokens? {
+    ): Outcome {
         synchronized(lock) {
             val appContext = context.applicationContext
             val widget = WidgetCredentialsStore.getCredentials(appContext)
             val secure = SecureSessionStore.get(appContext)
+            // Prefer SecureSession (WebView login mirror) over widget — the
+            // widget copy can lag after an in-app rotation.
             val refreshToken =
-                widget?.refreshToken
-                    ?: secure?.refreshToken
+                secure?.refreshToken?.takeIf { it.isNotBlank() }
+                    ?: widget?.refreshToken?.takeIf { it.isNotBlank() }
                     ?: refreshTokenHint?.takeIf { it.isNotBlank() }
-                    ?: return null
+                    ?: return Outcome.MissingCredentials
             val apiBase =
-                widget?.apiBase
-                    ?: secure?.apiBase
+                secure?.apiBase?.takeIf { it.isNotBlank() }
+                    ?: widget?.apiBase?.takeIf { it.isNotBlank() }
                     ?: apiBaseHint?.trim()?.trimEnd('/')?.takeIf { it.isNotBlank() }
-                    ?: return null
+                    ?: return Outcome.MissingCredentials
 
-            val rotated = httpRefresh(apiBase, refreshToken) ?: return null
-
-            // Widget mirror exists only when „Angemeldet bleiben“ mirrored tokens.
-            WidgetCredentialsStore.setCredentials(
-                appContext,
-                rotated.accessToken,
-                rotated.refreshToken,
-                apiBase,
-            )
-            // Keep EncryptedSharedPreferences in lockstep so WebView cold-start
-            // and in-memory re-sync never see a stale refresh after widget rotate.
-            if (secure != null || refreshTokenHint != null) {
-                SecureSessionStore.set(
-                    appContext,
-                    accessToken = rotated.accessToken,
-                    refreshToken = rotated.refreshToken,
-                    apiBase = apiBase,
-                    rememberMe = true,
-                )
+            val http = httpRefresh(apiBase, refreshToken)
+            when (http) {
+                is HttpResult.AuthRejected -> return Outcome.AuthRejected
+                is HttpResult.TransientFailure -> return Outcome.TransientFailure
+                is HttpResult.Success -> {
+                    val rotated = http.tokens
+                    // Widget mirror exists only when „Angemeldet bleiben“ mirrored tokens.
+                    WidgetCredentialsStore.setCredentials(
+                        appContext,
+                        rotated.accessToken,
+                        rotated.refreshToken,
+                        apiBase,
+                    )
+                    // Keep EncryptedSharedPreferences in lockstep so WebView cold-start
+                    // and in-memory re-sync never see a stale refresh after widget rotate.
+                    if (secure != null || refreshTokenHint != null) {
+                        SecureSessionStore.set(
+                            appContext,
+                            accessToken = rotated.accessToken,
+                            refreshToken = rotated.refreshToken,
+                            apiBase = apiBase,
+                            rememberMe = true,
+                        )
+                    }
+                    return Outcome.Success(
+                        RotatedTokens(
+                            accessToken = rotated.accessToken,
+                            refreshToken = rotated.refreshToken,
+                            apiBase = apiBase,
+                        ),
+                    )
+                }
             }
-
-            return RotatedTokens(
-                accessToken = rotated.accessToken,
-                refreshToken = rotated.refreshToken,
-                apiBase = apiBase,
-            )
         }
     }
 
@@ -84,30 +108,49 @@ object SessionRefreshCoordinator {
         val refreshToken: String,
     )
 
-    private fun httpRefresh(apiBase: String, refreshToken: String): HttpTokens? {
+    private sealed class HttpResult {
+        data class Success(val tokens: HttpTokens) : HttpResult()
+
+        data object AuthRejected : HttpResult()
+
+        data object TransientFailure : HttpResult()
+    }
+
+    private fun httpRefresh(apiBase: String, refreshToken: String): HttpResult {
         val connection =
-            (URL(buildRefreshUrl(apiBase)).openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-                setRequestProperty("Accept", "application/json")
-                connectTimeout = 12_000
-                readTimeout = 12_000
+            try {
+                (URL(buildRefreshUrl(apiBase)).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("Accept", "application/json")
+                    connectTimeout = 12_000
+                    readTimeout = 12_000
+                }
+            } catch (_: Exception) {
+                return HttpResult.TransientFailure
             }
         try {
             val payload = JSONObject().put("refresh_token", refreshToken).toString()
             connection.outputStream.bufferedWriter().use { it.write(payload) }
             val code = connection.responseCode
+            if (code == HttpURLConnection.HTTP_UNAUTHORIZED ||
+                code == HttpURLConnection.HTTP_FORBIDDEN
+            ) {
+                return HttpResult.AuthRejected
+            }
             if (code !in 200..299) {
-                return null
+                return HttpResult.TransientFailure
             }
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             val json = JSONObject(body)
-            val access = json.optString("access_token").takeIf { it.isNotBlank() } ?: return null
-            val refresh = json.optString("refresh_token").takeIf { it.isNotBlank() } ?: return null
-            return HttpTokens(accessToken = access, refreshToken = refresh)
+            val access = json.optString("access_token").takeIf { it.isNotBlank() }
+                ?: return HttpResult.TransientFailure
+            val refresh = json.optString("refresh_token").takeIf { it.isNotBlank() }
+                ?: return HttpResult.TransientFailure
+            return HttpResult.Success(HttpTokens(accessToken = access, refreshToken = refresh))
         } catch (_: Exception) {
-            return null
+            return HttpResult.TransientFailure
         } finally {
             connection.disconnect()
         }

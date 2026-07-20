@@ -95,4 +95,23 @@ describe('PullToRefresh', () => {
     await tick();
     expect(handler).not.toHaveBeenCalled();
   });
+
+  it('ignores gestures that start inside data-ptr-ignore', async () => {
+    const handler = vi.fn(async () => undefined);
+    unregister = registerPageRefresh(handler);
+
+    render(PullToRefreshHarness, { props: { withIgnoreTarget: true } });
+    await tick();
+
+    const scroll = screen.getByTestId('ptr-scroll');
+    Object.defineProperty(scroll, 'scrollTop', { configurable: true, get: () => 0 });
+    const ignore = screen.getByTestId('ptr-ignore-target');
+
+    ignore.dispatchEvent(touch(ignore, 'touchstart', 40));
+    ignore.dispatchEvent(touch(ignore, 'touchmove', 220));
+    ignore.dispatchEvent(touch(ignore, 'touchend', 220));
+
+    await tick();
+    expect(handler).not.toHaveBeenCalled();
+  });
 });

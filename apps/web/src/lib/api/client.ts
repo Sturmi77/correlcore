@@ -15,7 +15,7 @@
 
 import { getApiBase } from './apiBase';
 import { usesBearerAuth } from './platform';
-import { nativeRefreshSession } from './secureSession';
+import { NativeRefreshError, nativeRefreshSession } from './secureSession';
 import {
   clearSessionTokens,
   getAccessToken,
@@ -128,13 +128,27 @@ async function performRefresh(): Promise<boolean> {
     const bearer = usesBearerAuth();
     if (bearer) {
       // Prefer native coordinator (same lock as Glance WorkManager).
-      const native = await nativeRefreshSession({
-        refreshToken: getRefreshToken(),
-        apiBase: getApiBase(),
-      });
-      if (native) {
-        setSessionTokens(native);
-        return true;
+      try {
+        const native = await nativeRefreshSession({
+          refreshToken: getRefreshToken(),
+          apiBase: getApiBase(),
+        });
+        if (native) {
+          setSessionTokens(native);
+          return true;
+        }
+      } catch (err) {
+        if (err instanceof NativeRefreshError) {
+          if (err.code === 'TRANSIENT') {
+            // Keep JWTs; do not POST a possibly-stale refresh token via fetch
+            // (replay → revoke_all). Caller will surface the original 401.
+            return false;
+          }
+          // AUTH_REJECTED / MISSING / UNKNOWN with a coded reject — clear.
+          clearSessionTokens();
+          return false;
+        }
+        throw err;
       }
       // Older APK / plugin missing: adopt tokens the widget may already have.
       await syncSessionTokensFromNative();
