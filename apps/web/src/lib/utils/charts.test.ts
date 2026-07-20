@@ -175,6 +175,40 @@ describe('chart utilities', () => {
 
     expect(smoothed.map((point) => point.mood_avg)).toEqual([1, 2, 4]);
     expect(smoothed.map((point) => point.energy_avg)).toEqual([null, 4, 3]);
-    expect(smoothed.map((point) => point.stress_avg)).toEqual([5, 5, 1]);
+    // Null on the current day stays null — no carry-forward into calendar gaps.
+    expect(smoothed.map((point) => point.stress_avg)).toEqual([5, null, 1]);
+  });
+
+  it('does not invent smoothed values on days without metric data', () => {
+    const points = [
+      {
+        period_start: '2026-05-01',
+        period_end: '2026-05-01',
+        entry_count: 1,
+        mood_avg: 4,
+        energy_avg: 3,
+        stress_avg: 2,
+      },
+      {
+        period_start: '2026-05-02',
+        period_end: '2026-05-02',
+        entry_count: 0,
+        mood_avg: null,
+        energy_avg: null,
+        stress_avg: null,
+      },
+      {
+        period_start: '2026-05-03',
+        period_end: '2026-05-03',
+        entry_count: 0,
+        mood_avg: null,
+        energy_avg: null,
+        stress_avg: null,
+      },
+    ];
+
+    const smoothed = smoothTimeseriesPoints(points, 3);
+    expect(smoothed.map((point) => point.mood_avg)).toEqual([4, null, null]);
+    expect(smoothed.map((point) => point.entry_count)).toEqual([1, 0, 0]);
   });
 });

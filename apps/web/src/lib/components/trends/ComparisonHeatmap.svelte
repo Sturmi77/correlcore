@@ -9,7 +9,7 @@
     heatmapLevel,
     type DailyAxisLayout,
   } from '$lib/utils/charts';
-  import { pruneHeatmapAxes } from '$lib/utils/heatmapPruning';
+  import { pruneHeatmapRows } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import type { EventMarker } from './EventMarkerLayer.svelte';
@@ -55,8 +55,10 @@
    */
   export let correlationScores: Record<string, number> = {};
   /**
-   * When true, rows and date columns with zero values in the selected range are hidden.
-   * Defaults to false for desktop context preservation.
+   * When true, hide rows with zero values in the selected range.
+   * Date columns are never pruned here: Compare stacks this heatmap under
+   * MetricTimeseries / UnifiedStripChart on a shared `dates` axis, and
+   * dropping empty days would shift cells out of alignment with the chart.
    */
   export let pruneSparseAxes = false;
 
@@ -164,11 +166,12 @@
     if (delta !== 0) return delta;
     return a.label.localeCompare(b.label);
   });
-  $: prunedAxes = pruneSparseAxes
-    ? pruneHeatmapAxes(sortedRows, axisDates, (row, date) => valueFor(row, date))
-    : { rows: sortedRows, dates: axisDates };
-  $: rows = prunedAxes.rows;
-  $: visibleAxisDates = prunedAxes.dates;
+  $: rows = pruneSparseAxes
+    ? pruneHeatmapRows(sortedRows, axisDates, (row, date) => valueFor(row, date))
+    : sortedRows;
+  // Always keep the caller-provided calendar axis so day columns stay aligned
+  // with the timeseries above (even when empty heatmap days remain blank).
+  $: visibleAxisDates = axisDates;
   $: maxValue = Math.max(
     0,
     ...rows.flatMap((row) => visibleAxisDates.map((date) => valueFor(row, date)))

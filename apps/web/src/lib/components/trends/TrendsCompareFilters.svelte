@@ -5,7 +5,7 @@
   import type { MetricKey } from '$lib/utils/charts';
   import SegmentedControl from '$lib/components/common/SegmentedControl.svelte';
 
-  export let smoothing = false;
+  export let smoothing = true;
   export let smoothingAvailable = false;
   export let metrics: Record<MetricKey, boolean>;
   export let selectedCategory: TagCategory | 'all' = 'all';

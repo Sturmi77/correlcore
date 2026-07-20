@@ -172,6 +172,9 @@ export function smoothTimeseriesPoints(
   return points.map((point, index) => {
     const window = points.slice(Math.max(0, index - windowSize + 1), index + 1);
     const average = (metric: MetricKey): number | null => {
+      // Keep calendar gaps empty so smoothed points stay date-aligned with
+      // heatmap activity (no carry-forward onto days without a value).
+      if (point[metric] === null) return null;
       const values = window
         .map((item) => item[metric])
         .filter((value): value is number => value !== null);
