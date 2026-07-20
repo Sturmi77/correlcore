@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import {
+    buildBucketAxisLinePoints,
     buildDailyAxisLinePoints,
     buildLinePoints,
     compareDailyAxisLayout,
@@ -14,6 +15,7 @@
     type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
+  import type { AxisBucket } from '$lib/utils/compareAxisZoom';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
@@ -28,6 +30,8 @@
   };
   export let loading = false;
   export let axisDates: string[] = [];
+  /** When set (Compare zoom), columns and cursor keys follow bucket starts. */
+  export let buckets: readonly AxisBucket[] = [];
   export let axisLayout: DailyAxisLayout = compareDailyAxisLayout;
   /**
    * Event markers to render on the shared axis (ADR-0035, M3.8 Sprint 1).
@@ -61,7 +65,9 @@
   $: noteDateSet = new Set(noteDates);
   $: hasData = points.some((point) => point.entry_count > 0);
   $: showSkeleton = loading && points.length === 0;
-  $: aligned = axisDates.length > 0;
+  $: displayAxisKeys =
+    buckets.length > 0 ? buckets.map((bucket) => bucket.start) : axisDates;
+  $: aligned = displayAxisKeys.length > 0;
   $: plotLayout = aligned
     ? {
         labelWidth: 0,
@@ -70,15 +76,17 @@
         rightPadding: axisLayout.rightPadding,
       }
     : axisLayout;
-  $: width = aligned ? dailyPlotContentWidth(axisDates, plotLayout) : 720;
+  $: width = aligned ? dailyPlotContentWidth(displayAxisKeys, plotLayout) : 720;
   $: plotStart = aligned ? plotLayout.dayGap : paddingLeft;
   $: plotEnd = aligned
-    ? dailyAxisXForIndex(Math.max(0, axisDates.length - 1), plotLayout)
+    ? dailyAxisXForIndex(Math.max(0, displayAxisKeys.length - 1), plotLayout)
     : width - paddingRight;
   $: innerW = plotEnd - plotStart;
   $: series = metrics.map((metric) => {
     const raw = aligned
-      ? buildDailyAxisLinePoints(points, metric.key, axisDates, innerH, plotLayout)
+      ? buckets.length > 0
+        ? buildBucketAxisLinePoints(points, metric.key, buckets, innerH, plotLayout)
+        : buildDailyAxisLinePoints(points, metric.key, axisDates, innerH, plotLayout)
       : buildLinePoints(points, metric.key, innerW, innerH);
     const shifted = raw.map((point) => ({
       ...point,
@@ -89,7 +97,7 @@
   });
 
   $: xLabels = (() => {
-    const labels = aligned ? axisDates : points.map((point) => point.period_start);
+    const labels = aligned ? displayAxisKeys : points.map((point) => point.period_start);
     if (labels.length === 0) return [];
     const indexes = [0, Math.floor((labels.length - 1) / 2), labels.length - 1];
     return [...new Set(indexes)].map((index) => ({
@@ -109,14 +117,13 @@
     return `${x},${y - size} ${x + size},${y + size} ${x - size},${y + size}`;
   }
 
-  // Sprint 1 (ADR-0035): publish the canonical axis so other components and
-  // keyboard handlers can navigate by date.
+  // Sprint 1 (ADR-0035): publish the display axis (bucket starts when zoomed).
   $: if (enableCursor && aligned) {
-    timelineCursor.setAxis(axisDates);
+    timelineCursor.setAxis(displayAxisKeys);
   }
 
   function nearestDateForX(clientX: number, hostEl: Element): string | null {
-    if (!aligned || axisDates.length === 0) return null;
+    if (!aligned || displayAxisKeys.length === 0) return null;
     const rect = hostEl.getBoundingClientRect();
     const gutterWidth = aligned ? axisLayout.labelWidth : 0;
     const plotRect = hostEl.querySelector('.timeseries__plot')?.getBoundingClientRect();
@@ -125,7 +132,7 @@
     const local = ((clientX - plotLeft) / plotWidth) * width;
     let bestIndex = 0;
     let bestDelta = Infinity;
-    for (let i = 0; i < axisDates.length; i += 1) {
+    for (let i = 0; i < displayAxisKeys.length; i += 1) {
       const x = dailyAxisXForIndex(i, plotLayout);
       const delta = Math.abs(x - local);
       if (delta < bestDelta) {
@@ -133,7 +140,7 @@
         bestIndex = i;
       }
     }
-    return axisDates[bestIndex] ?? null;
+    return displayAxisKeys[bestIndex] ?? null;
   }
 
   function handlePointerMove(event: PointerEvent) {
@@ -159,14 +166,42 @@
       timelineCursor.move(step);
     } else if (event.key === 'Home') {
       event.preventDefault();
-      timelineCursor.setDate(axisDates[0] ?? null, 'keyboard');
+      timelineCursor.setDate(displayAxisKeys[0] ?? null, 'keyboard');
     } else if (event.key === 'End') {
       event.preventDefault();
-      timelineCursor.setDate(axisDates[axisDates.length - 1] ?? null, 'keyboard');
+      timelineCursor.setDate(displayAxisKeys[displayAxisKeys.length - 1] ?? null, 'keyboard');
     } else if (event.key === 'Escape') {
       timelineCursor.clear();
     }
   }
+
+  function noteOnAxisKey(axisKey: string): boolean {
+    if (buckets.length === 0) return noteDateSet.has(axisKey);
+    const bucket = buckets.find((item) => item.start === axisKey);
+    return bucket ? bucket.dates.some((date) => noteDateSet.has(date)) : noteDateSet.has(axisKey);
+  }
+
+  function bucketStartForDate(date: string): string | null {
+    if (buckets.length === 0) return displayAxisKeys.includes(date) ? date : null;
+    return buckets.find((bucket) => bucket.dates.includes(date))?.start ?? null;
+  }
+
+  /** Remap marker dates onto display-axis keys when zoomed. */
+  $: displayMarkers =
+    buckets.length === 0
+      ? markers
+      : markers
+          .map((marker) => {
+            const start = bucketStartForDate(marker.date);
+            if (!start) return null;
+            const end = marker.endDate ? bucketStartForDate(marker.endDate) : undefined;
+            return {
+              ...marker,
+              date: start,
+              ...(end && end !== start ? { endDate: end } : { endDate: undefined }),
+            };
+          })
+          .filter((marker): marker is EventMarker => marker !== null);
 
   onDestroy(() => {
     // Do not reset the cursor here — other components on the page may still
@@ -226,12 +261,13 @@
       aria-label={$_('trends.timeseries.aria')}
       aria-orientation="horizontal"
       aria-valuemin={0}
-      aria-valuemax={Math.max(0, axisDates.length - 1)}
-      aria-valuenow={Math.max(0, axisDates.indexOf($timelineCursorDate ?? ''))}
+      aria-valuemax={Math.max(0, displayAxisKeys.length - 1)}
+      aria-valuenow={Math.max(0, displayAxisKeys.indexOf($timelineCursorDate ?? ''))}
       aria-valuetext={$timelineCursorDate ?? undefined}
       on:pointermove={handlePointerMove}
       on:pointerleave={handlePointerLeave}
-      on:focus={() => enableCursor && timelineCursor.focus(axisDates[axisDates.length - 1] ?? null)}
+      on:focus={() =>
+        enableCursor && timelineCursor.focus(displayAxisKeys[displayAxisKeys.length - 1] ?? null)}
       on:blur={() => enableCursor && timelineCursor.hover(null)}
       on:keydown={handleKeyDown}
     >
@@ -258,10 +294,10 @@
             role="img"
             aria-label={$_('trends.timeseries.aria')}
           >
-            {#if enableCursor && markers.length > 0}
+            {#if enableCursor && displayMarkers.length > 0}
               <EventMarkerLayer
-                {markers}
-                {axisDates}
+                markers={displayMarkers}
+                axisDates={displayAxisKeys}
                 axisLayout={plotLayout}
                 top={paddingTop}
                 height={innerH}
@@ -291,8 +327,8 @@
               </text>
             {/each}
             {#if aligned}
-              {#each axisDates as date, index (date)}
-                {#if noteDateSet.has(date)}
+              {#each displayAxisKeys as date, index (date)}
+                {#if noteOnAxisKey(date)}
                   <circle
                     cx={dailyAxisXForIndex(index, plotLayout)}
                     cy={height - paddingBottom + 14}
@@ -307,7 +343,7 @@
             {/if}
             {#if enableCursor}
               <TimelineCursorOverlay
-                {axisDates}
+                axisDates={displayAxisKeys}
                 axisLayout={plotLayout}
                 top={paddingTop}
                 height={innerH}
@@ -325,7 +361,12 @@
                     type="button"
                     class="timeseries__point-button"
                     aria-label={`${$_(metric.label)}: ${point.value.toFixed(1)} (${point.label})`}
-                    on:click={() => dispatch('selectDate', { date: point.label })}
+                    on:click={() => {
+                      // Multi-day bucket drill-in is CAZ-2; only open history for day columns.
+                      const bucket = buckets.find((item) => item.start === point.label);
+                      if (bucket && bucket.dates.length > 1) return;
+                      dispatch('selectDate', { date: point.label });
+                    }}
                   >
                     <circle class="timeseries__hit" cx={point.x} cy={point.y} r="16">
                       <title>{$_(metric.label)}: {point.value.toFixed(1)} ({point.label})</title>

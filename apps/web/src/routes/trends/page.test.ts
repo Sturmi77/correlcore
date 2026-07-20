@@ -141,7 +141,8 @@ describe('/trends page', () => {
     render(Page);
 
     expect(await screen.findByTestId('trends-sticky-toolbar')).toBeTruthy();
-    expect(await screen.findByTestId('trends-range-control')).toBeTruthy();
+    // Compare hides range chips (fixed 365d zoom axis).
+    expect(screen.queryByTestId('trends-range-control')).toBeNull();
     expect(await screen.findByTestId('trends-tab-compare')).toBeTruthy();
     expect(screen.queryByTestId('trends-tab-health')).toBeNull();
     expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();
@@ -197,13 +198,28 @@ describe('/trends page', () => {
     expect(screen.queryByTestId('mobile-trends-detail-toggle')).toBeNull();
   });
 
-  it('loads the newly selected range immediately when the control changes', async () => {
+  it('loads Compare with a fixed year window and hides range chips', async () => {
+    localStorage.clear();
+    setAnalysisRange('week');
+    vi.mocked(fetchTimeseries).mockClear();
+
+    render(Page);
+    expect(await screen.findByTestId('trends-compare-panel')).toBeTruthy();
+    expect(screen.queryByTestId('trends-range-control')).toBeNull();
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('year');
+    });
+  });
+
+  it('loads the newly selected range on Habits when the control changes', async () => {
     localStorage.clear();
     setAnalysisRange('week');
     vi.mocked(fetchTimeseries).mockClear();
     vi.mocked(listEntries).mockClear();
 
     render(Page);
+    await fireEvent.click(await screen.findByTestId('trends-tab-habits'));
     await screen.findByTestId('trends-range-control');
 
     await fireEvent.click(screen.getByTestId('trends-range-year'));
@@ -212,8 +228,10 @@ describe('/trends page', () => {
       expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('year');
     });
 
-    const callsAfterRangeChange = vi.mocked(fetchTimeseries).mock.calls.slice(1);
-    expect(callsAfterRangeChange.every((call) => call[0] === 'year')).toBe(true);
+    const callsAfterRangeChange = vi.mocked(fetchTimeseries).mock.calls.filter(
+      (call) => call[0] === 'year'
+    );
+    expect(callsAfterRangeChange.length).toBeGreaterThan(0);
   });
 
   it('keeps Compare usable when symptom heatmap returns 401', async () => {

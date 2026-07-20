@@ -141,8 +141,11 @@
 
   async function loadTrends(rangeOverride?: TimeseriesRange): Promise<void> {
     if ($auth.status !== 'authenticated') return;
-    const activeRange = rangeOverride ?? range;
-    const habitWindow = rangeToHabitWindow(activeRange);
+    // Compare axis zoom (CAZ-0): always load a 365d / year window; range chips are hidden.
+    const uiRange = rangeOverride ?? range;
+    const activeRange: TimeseriesRange = activeTab === 'compare' ? 'year' : uiRange;
+    const habitWindow = rangeToHabitWindow(uiRange);
+    const compareWindowDays = activeTab === 'compare' ? 365 : undefined;
     loading = true;
     error = '';
     // Drop previous context rows and entry markers immediately so an empty
@@ -166,13 +169,16 @@
         allTags = fixture.habitTags;
         cycleEntries = fixture.entries.filter((entry) => entry.cycle_day !== null);
         trendEntries = fixture.entries;
-        workContextHeatmap = buildWorkContextHeatmap(fixture.entries, dateWindow(activeRange));
+        workContextHeatmap = buildWorkContextHeatmap(
+          fixture.entries,
+          dateWindow(activeRange, compareWindowDays)
+        );
         return;
       }
 
       const { start_date, end_date } = dateWindow(
         activeRange,
-        activeTab === 'habits' ? habitWindow : undefined
+        activeTab === 'habits' ? habitWindow : compareWindowDays
       );
       // Soft-fail the symptom heatmap: a single 401/5xx must not blank the
       // whole Compare tab (Promise.all would reject on the first failure).
@@ -338,9 +344,11 @@
   $: if ($auth.status === 'authenticated' && !trendsLoaded && !loading) {
     void loadTrends();
   }
+  // Compare ignores analysisRange chips (fixed year window). Habits still sync to the control.
   $: if (
     $auth.status === 'authenticated' &&
     timeseries &&
+    activeTab !== 'compare' &&
     timeseries.range !== $analysisRange &&
     !loading
   ) {
@@ -369,11 +377,12 @@
   // Smoothing is available for every range; week uses a 3-day window so the
   // daily shape stays readable (see smoothingWindowDays).
   $: smoothingAvailable = true;
+  $: displayRange = (activeTab === 'compare' ? 'year' : range) as TimeseriesRange;
   $: displayTimeseries =
     timeseries && smoothing && smoothingAvailable
       ? {
           ...timeseries,
-          points: smoothTimeseriesPoints(timeseries.points, smoothingWindowDays(range)),
+          points: smoothTimeseriesPoints(timeseries.points, smoothingWindowDays(displayRange)),
         }
       : timeseries;
   $: topInsight = $insightStore.latest;
@@ -422,6 +431,7 @@
       tabOptions={trendTabOptions}
       showCompareFilters={activeTab === 'compare'}
       embedCompareFilters={!compactTrends}
+      showRangeControl={activeTab !== 'compare'}
       on:rangeChange={(event) => {
         const nextRange = event.detail.value as TimeseriesRange;
         setAnalysisRange(nextRange);
@@ -488,7 +498,7 @@
         >
           <TrendsComparePanel
             points={displayTimeseries?.points ?? []}
-            {range}
+            range="year"
             enabled={metrics}
             tagHeatmap={heatmap}
             {symptomHeatmap}

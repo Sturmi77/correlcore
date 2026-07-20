@@ -492,7 +492,13 @@
       "sort_correlation": "By correlation",
       "sort_pinned": "Pinned first",
       "pin_aria": "Pin row to top",
-      "unpin_aria": "Unpin row"
+      "unpin_aria": "Unpin row",
+      "zoom": {
+        "label": "Timeline zoom",
+        "decrease_aria": "Zoom out to coarser columns",
+        "increase_aria": "Zoom in to finer columns",
+        "status": "{days} days / cell"
+      }
     },
     "strip": {
       "caption": "Divergent strip view of mood, energy and stress on the shared timeline",

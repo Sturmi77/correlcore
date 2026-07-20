@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildBucketAxisLinePoints,
   buildDailyAxisLinePoints,
   buildIsoDateRange,
   buildLinePoints,
@@ -52,6 +53,54 @@ describe('chart utilities', () => {
     expect(dates).toEqual(['2026-05-01', '2026-05-02', '2026-05-03']);
     expect(dailyAxisXForDate('2026-05-02', dates, layout)).toBe(139);
     expect(dailyAxisChartWidth(dates, layout)).toBe(164);
+  });
+
+  it('maps timeseries points onto zoom buckets by mean of days with values', () => {
+    const layout = { labelWidth: 120, dayWidth: 10, dayGap: 2, rightPadding: 8 };
+    const points = buildBucketAxisLinePoints(
+      [
+        {
+          period_start: '2026-05-01',
+          period_end: '2026-05-01',
+          entry_count: 1,
+          mood_avg: 2,
+          energy_avg: null,
+          stress_avg: null,
+        },
+        {
+          period_start: '2026-05-02',
+          period_end: '2026-05-02',
+          entry_count: 0,
+          mood_avg: null,
+          energy_avg: null,
+          stress_avg: null,
+        },
+        {
+          period_start: '2026-05-03',
+          period_end: '2026-05-03',
+          entry_count: 1,
+          mood_avg: 4,
+          energy_avg: null,
+          stress_avg: null,
+        },
+      ],
+      'mood_avg',
+      [
+        {
+          id: '2026-05-01_2026-05-03',
+          start: '2026-05-01',
+          end: '2026-05-03',
+          dayCount: 3,
+          presentDays: 3,
+          partial: false,
+          dates: ['2026-05-01', '2026-05-02', '2026-05-03'],
+        },
+      ],
+      40,
+      layout
+    );
+
+    expect(points).toEqual([{ x: 127, y: 20, value: 3, label: '2026-05-01' }]);
   });
 
   it('maps timeseries points onto the shared daily axis by date', () => {
