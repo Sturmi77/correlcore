@@ -3,6 +3,7 @@
 **Status:** Proposed (product decisions locked below; implementation not started)  
 **Date:** 2026-07-20  
 **GitHub:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473)  
+**Implementation:** [`COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md`](COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md)  
 **Area:** Frontend / Trends Compare (`MetricTimeseries` | `UnifiedStripChart` + `ComparisonHeatmap`)  
 **Related:** [ADR-0035](../adr/0035-temporal-correspondence-pattern.md), [`SYMPTOM_VISUALIZATION.md`](SYMPTOM_VISUALIZATION.md), O-17 (heatmap → `EntryHistorySheet`), O-59 (`heatmapPruning.ts`), Co-Occurrence density `+/-`
 
@@ -184,6 +185,11 @@ payloads).
 ---
 
 ## 8. Work packages
+
+Engineering execution (PR slices A–F, file checklist, tests, DoD) lives in
+[`COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md`](COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md).
+The WPs below remain the product-facing checklist; the implementation plan maps
+each WP to a concrete slice.
 
 ### WP0 — Spec freeze & issue tracking
 
