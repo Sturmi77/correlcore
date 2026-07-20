@@ -50,17 +50,18 @@ cursor axis publication. Children remain presentational over the display axis.
 
 ## 2. Suggested PR slices
 
-Ship as sequential PRs (each mergeable, tested). Do not combine Strip completion
-with the first Lines path.
+Slices are the engineering breakdown. **Shipping cadence** groups them into
+sprints (see sprint plan): **Sprint 1 = A+B+C**, **Sprint 2 = D**,
+**Sprint 3 = E (+F if needed)** — one primary PR per sprint.
 
-| Slice | Name | Depends | Delivers |
-| --- | --- | --- | --- |
-| **A** | Pure zoom math + persistence | WP0 | Utils + settings + unit tests |
-| **B** | Panel chrome + 365d Compare load | A | `+/-`, status, year window wiring |
-| **C** | Heatmap + Lines on buckets | A, B | Shared render, cursor, scroll sync |
-| **D** | Tap zoom-in + tooltips/legend i18n | C | Interaction + interpretability |
-| **E** | Strip/marker gate + Capacitor QA | D | No dual-truth; device checklist |
-| **F** | Perf follow-up | E only if needed | Virtualisation / stage soft-cap |
+| Slice | Name | Depends | Delivers | Sprint |
+| --- | --- | --- | --- | --- |
+| **A** | Pure zoom math + persistence | WP0 | Utils + settings + unit tests | 1 |
+| **B** | Panel chrome + 365d Compare load | A | `+/-`, status, year window wiring | 1 |
+| **C** | Heatmap + Lines on buckets | A, B | Shared render, cursor, scroll sync | 1 |
+| **D** | Tap zoom-in + tooltips/legend i18n | C | Interaction + interpretability | 2 |
+| **E** | Strip/marker gate + Capacitor QA | D | No dual-truth; device checklist | 3 |
+| **F** | Perf follow-up | E only if needed | Virtualisation / stage soft-cap | 3 (optional) |
 
 ---
 
