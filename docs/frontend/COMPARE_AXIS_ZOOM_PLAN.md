@@ -58,16 +58,16 @@ Non-goals for v1 are listed in §11.
 Confirmed 2026-07-20 (product). Implement as written; further changes need an
 explicit #472 override.
 
-| Topic | Confirmed choice | Rationale |
-| --- | --- | --- |
-| Zoom stages | `1 → 3 → 7 → 14 → 28` days/column | Enough bird’s-eye steps without continuous zoom complexity |
-| Default stage | **7** when Compare loads the 365d window | Year-at-a-glance is the primary new value |
-| Range chips in Compare | **Hide** range chips; shared axis data window fixed to **year (365d)** | Avoid two competing controls |
-| Persist | `localStorage` key `cc_trend_compare_zoom` (stage index 0–4) | Consistent with `cc_trend_compare_mode` / sort |
-| Bucket alignment | Build buckets **from newest day backward** | Matches newest-right scroll; “today” bucket is the natural partial edge |
-| Partial edge buckets | **Show**, mark visually + tooltip `"k of N days"`; aggregate only over days present — **never upscale** | Honesty > fake completeness |
-| Zoom-in depth | **One stage finer per tap**, then scroll/focus that interval into view | Predictable; avoids jumping past useful mid levels |
-| Status chrome | Always show e.g. “7 Tage / Zelle” next to `+/-` | Prevents persisted-zoom surprise |
+| Topic                  | Confirmed choice                                                                                        | Rationale                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Zoom stages            | `1 → 3 → 7 → 14 → 28` days/column                                                                       | Enough bird’s-eye steps without continuous zoom complexity              |
+| Default stage          | **7** when Compare loads the 365d window                                                                | Year-at-a-glance is the primary new value                               |
+| Range chips in Compare | **Hide** range chips; shared axis data window fixed to **year (365d)**                                  | Avoid two competing controls                                            |
+| Persist                | `localStorage` key `cc_trend_compare_zoom` (stage index 0–4)                                            | Consistent with `cc_trend_compare_mode` / sort                          |
+| Bucket alignment       | Build buckets **from newest day backward**                                                              | Matches newest-right scroll; “today” bucket is the natural partial edge |
+| Partial edge buckets   | **Show**, mark visually + tooltip `"k of N days"`; aggregate only over days present — **never upscale** | Honesty > fake completeness                                             |
+| Zoom-in depth          | **One stage finer per tap**, then scroll/focus that interval into view                                  | Predictable; avoids jumping past useful mid levels                      |
+| Status chrome          | Always show e.g. “7 Tage / Zelle” next to `+/-`                                                         | Prevents persisted-zoom surprise                                        |
 
 ---
 
@@ -327,19 +327,19 @@ existing entry stats.
 
 ## 13. Decision log
 
-| Date       | Item           | Resolution                                         |
-| ---------- | -------------- | -------------------------------------------------- |
-| 2026-07-20 | Scope          | Compare shared axis only                           |
-| 2026-07-20 | Zoom semantics | Display-only buckets; 365d load                    |
-| 2026-07-20 | Heatmap agg    | Sum of occurrence                                  |
-| 2026-07-20 | Metric agg     | Mean of days with entry                            |
-| 2026-07-20 | Tap            | Zoom-in; sheet only at day stage                   |
-| 2026-07-20 | Input          | `+/-` first; Capacitor required                    |
-| 2026-07-20 | Risks | R1–R10 folded into WPs + interpretability contract |
-| 2026-07-20 | CAZ-0 default stage | **7** days/cell |
-| 2026-07-20 | CAZ-0 range chips | **Hide** in Compare; axis window = 365d |
-| 2026-07-20 | CAZ-0 stage set | **`1/3/7/14/28`** |
-| 2026-07-20 | CAZ-0 tap zoom-in | **One stage finer** (not jump-to-day) |
+| Date       | Item                | Resolution                                         |
+| ---------- | ------------------- | -------------------------------------------------- |
+| 2026-07-20 | Scope               | Compare shared axis only                           |
+| 2026-07-20 | Zoom semantics      | Display-only buckets; 365d load                    |
+| 2026-07-20 | Heatmap agg         | Sum of occurrence                                  |
+| 2026-07-20 | Metric agg          | Mean of days with entry                            |
+| 2026-07-20 | Tap                 | Zoom-in; sheet only at day stage                   |
+| 2026-07-20 | Input               | `+/-` first; Capacitor required                    |
+| 2026-07-20 | Risks               | R1–R10 folded into WPs + interpretability contract |
+| 2026-07-20 | CAZ-0 default stage | **7** days/cell                                    |
+| 2026-07-20 | CAZ-0 range chips   | **Hide** in Compare; axis window = 365d            |
+| 2026-07-20 | CAZ-0 stage set     | **`1/3/7/14/28`**                                  |
+| 2026-07-20 | CAZ-0 tap zoom-in   | **One stage finer** (not jump-to-day)              |
 
 ---
 

@@ -29,12 +29,12 @@ buckets).
 
 ## Sprint overview
 
-| Sprint | ID    | Title                       | Impl. slices              | Effort     | PR                                  | Status                        |
-| ------ | ----- | --------------------------- | ------------------------- | ---------- | ----------------------------------- | ----------------------------- |
+| Sprint | ID    | Title                       | Impl. slices              | Effort     | PR                                  | Status                             |
+| ------ | ----- | --------------------------- | ------------------------- | ---------- | ----------------------------------- | ---------------------------------- |
 | 0      | CAZ-0 | Spec freeze                 | WP0                       | Low        | docs already (#473, #477)           | **Done** — §4 confirmed 2026-07-20 |
 | 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**             | High       | one feature PR                      | **Ready to start**                 |
-| 2      | CAZ-2 | Drill-in + interpretability | **D**                     | Medium     | one feature PR                      | Not started                   |
-| 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (+ **F** if needed) | Low–Medium | one feature PR (+ optional perf PR) | Not started                   |
+| 2      | CAZ-2 | Drill-in + interpretability | **D**                     | Medium     | one feature PR                      | Not started                        |
+| 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (+ **F** if needed) | Low–Medium | one feature PR (+ optional perf PR) | Not started                        |
 
 ---
 
@@ -256,8 +256,8 @@ R2, R3, R6, R7 (status already from S1; reinforce affordances).
 
 ## Status log
 
-| Date | Event |
-| --- | --- |
-| 2026-07-20 | Sprint plan created from impl-plan slice regrouping (A+B+C / D / E+F) |
-| 2026-07-20 | Concept #473 merged; impl-plan docs PR #477 |
+| Date       | Event                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------ |
+| 2026-07-20 | Sprint plan created from impl-plan slice regrouping (A+B+C / D / E+F)                                        |
+| 2026-07-20 | Concept #473 merged; impl-plan docs PR #477                                                                  |
 | 2026-07-20 | **CAZ-0 confirmed:** default 7d, hide range chips, stages 1/3/7/14/28, tap = one-stage zoom-in → CAZ-1 ready |
