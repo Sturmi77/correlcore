@@ -99,25 +99,62 @@ DNS:
   app.correlcore.com → NAS    (A/AAAA to NAS, or IONOS proxy to NAS)
 
 NAS:
-  full stack web+api behind Nginx for Host app.correlcore.com
+  full stack web+api behind Synology Reverse Proxy (host Nginx)
+  for Host app.correlcore.com → 127.0.0.1:3010
 
 Mail:
   IONOS SMTP + existing MX/SPF
 ```
 
+### End state — which request takes which path
+
 ```mermaid
 flowchart TB
-  User[Browser]
-  Apex[correlcore.com_IONOS_marketing]
-  App[app.correlcore.com_NAS]
-  Web[correlcore_web]
-  Api[correlcore_api]
-  Smtp[IONOS_SMTP]
-  User --> Apex
-  User -->|"Login_Register_App"| App
-  App --> Web --> Api
-  Api -->|"verify_mail"| Smtp
+  subgraph clients [Clients]
+    Browser[Browser]
+    MailClient[Inbox]
+  end
+
+  subgraph dns [DNS]
+    ApexDNS["A correlcore.com → IONOS"]
+    AppDNS["A app.correlcore.com → NAS public IP"]
+    MxDNS["MX / SPF → IONOS mail"]
+  end
+
+  subgraph ionos [IONOS]
+    Marketing["Website builder<br/>Marketing HTML"]
+    Smtp["smtp.ionos.de:587"]
+    Mx["MX inbox"]
+  end
+
+  subgraph nas [Synology NAS]
+    RP["Synology Reverse Proxy<br/>TLS for app.correlcore.com<br/>X-Forwarded-Proto: https"]
+    Web["correlcore-web<br/>127.0.0.1:3010"]
+    Api["correlcore-api"]
+    Db[(Postgres)]
+    Redis[(Redis)]
+  end
+
+  Browser -->|"1 Marketing"| ApexDNS --> Marketing
+  Browser -->|"2 App / Login / Landing /api"| AppDNS --> RP
+  RP -->|"proxy all paths"| Web
+  Web -->|"INTERNAL_API_URL"| Api
+  Api --> Db
+  Api --> Redis
+  Api -->|"3 Verify / reset mail"| Smtp
+  Smtp --> Mx
+  MailClient -->|"4 Click link in mail"| AppDNS
+  Marketing -.->|"CTA absolute URLs<br/>app.correlcore.com/auth/login"| Browser
 ```
+
+| # | Request | Path |
+| - | ------- | ---- |
+| 1 | `https://correlcore.com/` | DNS → **IONOS** marketing site only |
+| 2 | `https://app.correlcore.com/` (Landing, Login, App, `/api/*`) | DNS → NAS → **Synology RP** → `127.0.0.1:3010` web → API |
+| 3 | Verify / password-reset mail | API → **IONOS SMTP**; receive stays MX on IONOS |
+| 4 | Link in mail | Opens `https://app.correlcore.com/auth/...` (same origin as #2) |
+
+Cookies and `/api` stay on **`app.correlcore.com`** only — never cross from the IONOS apex.
 
 ### Why this works
 
@@ -139,10 +176,13 @@ flowchart TB
 | `app.correlcore.com` | A (and AAAA only if real) | NAS public IP **or** IONOS proxy target |
 | MX / SPF             | —                         | keep IONOS; add DKIM/DMARC for sending  |
 
-### NAS / Nginx
+### NAS / Synology Reverse Proxy
 
-Server name **`app.correlcore.com`** (not apex), proxy all paths to web localhost —
-same snippet as [`hosted-nginx-edge.md`](hosted-nginx-edge.md) with `server_name` changed.
+`server_name` / source hostname **`app.correlcore.com`** (not apex). Proxy **all**
+paths to `http://127.0.0.1:${WEB_HOST_PORT}` (Dockhand default `3010`).
+Set **`X-Forwarded-Proto: https`**. Synology Application Portal Reverse Proxy is
+host Nginx under the hood — do **not** also run Compose Traefik/Nginx on 80/443.
+Same intent as [`hosted-nginx-edge.md`](hosted-nginx-edge.md) with hostname `app`.
 
 ### Hosted ENV
 
