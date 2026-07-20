@@ -54,14 +54,14 @@ Slices are the engineering breakdown. **Shipping cadence** groups them into
 sprints (see sprint plan): **Sprint 1 = A+B+C**, **Sprint 2 = D**,
 **Sprint 3 = E (+F if needed)** — one primary PR per sprint.
 
-| Slice | Name | Depends | Delivers | Sprint |
-| --- | --- | --- | --- | --- |
-| **A** | Pure zoom math + persistence | WP0 | Utils + settings + unit tests | 1 |
-| **B** | Panel chrome + 365d Compare load | A | `+/-`, status, year window wiring | 1 |
-| **C** | Heatmap + Lines on buckets | A, B | Shared render, cursor, scroll sync | 1 |
-| **D** | Tap zoom-in + tooltips/legend i18n | C | Interaction + interpretability | 2 |
-| **E** | Strip/marker gate + Capacitor QA | D | No dual-truth; device checklist | 3 |
-| **F** | Perf follow-up | E only if needed | Virtualisation / stage soft-cap | 3 (optional) |
+| Slice | Name                               | Depends          | Delivers                           | Sprint       |
+| ----- | ---------------------------------- | ---------------- | ---------------------------------- | ------------ |
+| **A** | Pure zoom math + persistence       | WP0              | Utils + settings + unit tests      | 1            |
+| **B** | Panel chrome + 365d Compare load   | A                | `+/-`, status, year window wiring  | 1            |
+| **C** | Heatmap + Lines on buckets         | A, B             | Shared render, cursor, scroll sync | 1            |
+| **D** | Tap zoom-in + tooltips/legend i18n | C                | Interaction + interpretability     | 2            |
+| **E** | Strip/marker gate + Capacitor QA   | D                | No dual-truth; device checklist    | 3            |
+| **F** | Perf follow-up                     | E only if needed | Virtualisation / stage soft-cap    | 3 (optional) |
 
 ---
 
@@ -76,13 +76,13 @@ export const COMPARE_ZOOM_STAGES = [1, 3, 7, 14, 28] as const;
 export type CompareZoomStageIndex = 0 | 1 | 2 | 3 | 4;
 
 export type AxisBucket = {
-  id: string;           // `${start}_${end}`
-  start: string;        // ISO inclusive
-  end: string;          // ISO inclusive
-  dayCount: number;     // stage size (e.g. 7)
-  presentDays: number;  // dates.length
+  id: string; // `${start}_${end}`
+  start: string; // ISO inclusive
+  end: string; // ISO inclusive
+  dayCount: number; // stage size (e.g. 7)
+  presentDays: number; // dates.length
   partial: boolean;
-  dates: string[];      // ISO days in bucket (chronological)
+  dates: string[]; // ISO days in bucket (chronological)
 };
 
 export function stageDays(stage: CompareZoomStageIndex): number;
@@ -92,10 +92,7 @@ export function buildAxisBuckets(
   stage: CompareZoomStageIndex
 ): AxisBucket[];
 /** Heatmap: sum of daily counts over bucket.dates */
-export function sumBucketCounts(
-  valueForDate: (date: string) => number,
-  bucket: AxisBucket
-): number;
+export function sumBucketCounts(valueForDate: (date: string) => number, bucket: AxisBucket): number;
 /** Metrics: mean of non-null daily values for days with data */
 export function meanBucketMetric(
   valueForDate: (date: string) => number | null | undefined,
@@ -125,15 +122,15 @@ Extend `apps/web/src/lib/utils/comparePanelSettings.ts`:
 
 `apps/web/src/lib/utils/compareAxisZoom.test.ts`:
 
-| Case | Expect |
-| --- | --- |
-| 28 consecutive days, stage 7 | 4 full buckets |
-| 30 days, stage 7 | leftmost partial (2d) + 4×7 |
-| stage 0 | N buckets of 1 day each |
-| newest-right | last bucket `end` === last axis date |
-| sum over sparse zeros | correct sum |
-| mean skips null/empty days | mean of present only; all-empty → null |
-| clamp | `-1→0`, `9→4` |
+| Case                         | Expect                                 |
+| ---------------------------- | -------------------------------------- |
+| 28 consecutive days, stage 7 | 4 full buckets                         |
+| 30 days, stage 7             | leftmost partial (2d) + 4×7            |
+| stage 0                      | N buckets of 1 day each                |
+| newest-right                 | last bucket `end` === last axis date   |
+| sum over sparse zeros        | correct sum                            |
+| mean skips null/empty days   | mean of present only; all-empty → null |
+| clamp                        | `-1→0`, `9→4`                          |
 
 `comparePanelSettings` tests for zoom read/write/default.
 
@@ -218,12 +215,12 @@ bird’s-eye done until C merges.
 
 Prefer additive props to avoid a big bang:
 
-| Component | Today | After |
-| --- | --- | --- |
-| Panel → children | `dates={axisDates}` | `dates={axisDates}` kept for prune/raw + **`buckets={axisBuckets}`** |
-| Heatmap | one cell per date | if `buckets.length`, one cell per bucket; value = sum |
+| Component        | Today                                      | After                                                                                                            |
+| ---------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Panel → children | `dates={axisDates}`                        | `dates={axisDates}` kept for prune/raw + **`buckets={axisBuckets}`**                                             |
+| Heatmap          | one cell per date                          | if `buckets.length`, one cell per bucket; value = sum                                                            |
 | MetricTimeseries | `buildDailyAxisLinePoints(..., axisDates)` | if buckets: build points with `label = bucket.start` (or `id`), `x` by bucket index, `y` from `meanBucketMetric` |
-| Cursor | `setAxis(axisDates)` | `setAxis(buckets.map(b => b.start))` at stage>0; daily at stage 0 |
+| Cursor           | `setAxis(axisDates)`                       | `setAxis(buckets.map(b => b.start))` at stage>0; daily at stage 0                                                |
 
 **Minimal cursor extension (v1):** keep `timelineCursor.date` as the **display
 axis key** = `bucket.start` (stage 0 ⇒ that day). Keyboard `move(±1)` advances
@@ -339,16 +336,16 @@ Document follow-up issue for: mean of daily Z vs Z of bucket mean.
 
 Run against WebView build or `pnpm dev` in device browser:
 
-| Check | Pass? |
-| --- | --- |
-| `+/-` reachable, ≥44px targets | |
-| Horizontal scroll does not trigger accidental zoom | |
-| Tap zoom-in works with touch | |
-| Stage 0 tap opens history sheet | |
-| Partial bucket readable | |
-| Year data + stage 7 default after clear storage | |
-| Persist stage after app background/resume | |
-| Stage 0 scroll performance acceptable with typical rows | |
+| Check                                                   | Pass? |
+| ------------------------------------------------------- | ----- |
+| `+/-` reachable, ≥44px targets                          |       |
+| Horizontal scroll does not trigger accidental zoom      |       |
+| Tap zoom-in works with touch                            |       |
+| Stage 0 tap opens history sheet                         |       |
+| Partial bucket readable                                 |       |
+| Year data + stage 7 default after clear storage         |       |
+| Persist stage after app background/resume               |       |
+| Stage 0 scroll performance acceptable with typical rows |       |
 
 Attach notes on #472. If stage 0 janks → open Slice F.
 
@@ -376,25 +373,25 @@ Exit: stage 0 usable on target Android profile.
 
 ## 9. File checklist (v1)
 
-| File | Slice | Action |
-| --- | --- | --- |
-| `apps/web/src/lib/utils/compareAxisZoom.ts` | A | **Create** |
-| `apps/web/src/lib/utils/compareAxisZoom.test.ts` | A | **Create** |
-| `apps/web/src/lib/utils/comparePanelSettings.ts` | A | Extend zoom persist |
-| `apps/web/src/lib/utils/comparePanelSettings.test.ts` | A | Extend (create if missing) |
-| `apps/web/src/lib/components/trends/TrendsComparePanel.svelte` | B–D | Zoom state, chrome, buckets, handlers |
-| `apps/web/src/lib/components/trends/TrendsComparePanel.test.ts` | B–D | Zoom + sync tests |
-| `apps/web/src/lib/components/trends/ComparisonHeatmap.svelte` | C–D | Bucket cells, sum, partial, tap |
-| `apps/web/src/lib/components/trends/ComparisonHeatmap.test.ts` | C–D | Aggregated columns |
-| `apps/web/src/lib/components/trends/MetricTimeseries.svelte` | C–D | Bucket series + cursor |
-| `apps/web/src/lib/components/trends/UnifiedStripChart.svelte` | E | Gate or bucket later |
-| `apps/web/src/lib/stores/timelineCursor.ts` | C | Axis keys = bucket starts (doc update) |
-| `apps/web/src/lib/utils/charts.ts` | C | Optional helpers if needed |
-| `apps/web/src/routes/trends/+page.svelte` | B | 365d Compare load / range decoupling |
-| `apps/web/src/routes/trends/page.test.ts` | B | Year fetch assertions |
-| `apps/web/src/lib/i18n/locales/en.json` | B/D | Zoom strings |
-| `apps/web/src/lib/i18n/locales/de.json` | B/D | Zoom strings |
-| `apps/web/src/lib/components/trends/TrendsCompareSettingsSheet.svelte` | B? | Only if zoom control duplicated for mobile sheet (O-64) — prefer single chrome in panel |
+| File                                                                   | Slice | Action                                                                                  |
+| ---------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------- |
+| `apps/web/src/lib/utils/compareAxisZoom.ts`                            | A     | **Create**                                                                              |
+| `apps/web/src/lib/utils/compareAxisZoom.test.ts`                       | A     | **Create**                                                                              |
+| `apps/web/src/lib/utils/comparePanelSettings.ts`                       | A     | Extend zoom persist                                                                     |
+| `apps/web/src/lib/utils/comparePanelSettings.test.ts`                  | A     | Extend (create if missing)                                                              |
+| `apps/web/src/lib/components/trends/TrendsComparePanel.svelte`         | B–D   | Zoom state, chrome, buckets, handlers                                                   |
+| `apps/web/src/lib/components/trends/TrendsComparePanel.test.ts`        | B–D   | Zoom + sync tests                                                                       |
+| `apps/web/src/lib/components/trends/ComparisonHeatmap.svelte`          | C–D   | Bucket cells, sum, partial, tap                                                         |
+| `apps/web/src/lib/components/trends/ComparisonHeatmap.test.ts`         | C–D   | Aggregated columns                                                                      |
+| `apps/web/src/lib/components/trends/MetricTimeseries.svelte`           | C–D   | Bucket series + cursor                                                                  |
+| `apps/web/src/lib/components/trends/UnifiedStripChart.svelte`          | E     | Gate or bucket later                                                                    |
+| `apps/web/src/lib/stores/timelineCursor.ts`                            | C     | Axis keys = bucket starts (doc update)                                                  |
+| `apps/web/src/lib/utils/charts.ts`                                     | C     | Optional helpers if needed                                                              |
+| `apps/web/src/routes/trends/+page.svelte`                              | B     | 365d Compare load / range decoupling                                                    |
+| `apps/web/src/routes/trends/page.test.ts`                              | B     | Year fetch assertions                                                                   |
+| `apps/web/src/lib/i18n/locales/en.json`                                | B/D   | Zoom strings                                                                            |
+| `apps/web/src/lib/i18n/locales/de.json`                                | B/D   | Zoom strings                                                                            |
+| `apps/web/src/lib/components/trends/TrendsCompareSettingsSheet.svelte` | B?    | Only if zoom control duplicated for mobile sheet (O-64) — prefer single chrome in panel |
 
 **Out of touch:** Habit `TagHeatmap`, symptom calendar, backend stats endpoints,
 LayerChart adapter.
@@ -414,7 +411,7 @@ Matches concept plan acceptance + engineering:
 7. [ ] Compare data window 365d; range does not fight zoom.
 8. [ ] Strip/zoom dual-truth impossible.
 9. [ ] Unit + component tests green; `pnpm --filter @correlcore/web test` /
-     targeted files; `pnpm lint` / typecheck on touched packages.
+       targeted files; `pnpm lint` / typecheck on touched packages.
 10. [ ] Capacitor/mobile checklist completed on #472.
 11. [ ] Concept + this implementation plan marked **Implemented** with PR links.
 
@@ -424,12 +421,12 @@ Matches concept plan acceptance + engineering:
 
 Recommended one-branch sequence if not splitting reviews:
 
-1. Slice A utils + tests  
-2. Slice B persistence + chrome + year load  
-3. Slice C heatmap + lines bucket wiring + cursor  
-4. Slice D tap + tooltips/legend  
-5. Slice E strip gate + device QA  
-6. Slice F only if needed  
+1. Slice A utils + tests
+2. Slice B persistence + chrome + year load
+3. Slice C heatmap + lines bucket wiring + cursor
+4. Slice D tap + tooltips/legend
+5. Slice E strip gate + device QA
+6. Slice F only if needed
 
 Commit before each testable milestone; open draft PR early against #472.
 
@@ -437,25 +434,25 @@ Commit before each testable milestone; open draft PR early against #472.
 
 ## 12. Explicit non-goals (do not implement in these slices)
 
-- Pinch gestures  
-- Backend `granularity=` APIs  
-- ISO calendar-week alignment  
-- Habit / symptom-calendar heatmaps  
-- React parallel GUI  
+- Pinch gestures
+- Backend `granularity=` APIs
+- ISO calendar-week alignment
+- Habit / symptom-calendar heatmaps
+- React parallel GUI
 - Coverage heat overlay (v1.1 candidate)
 
 ---
 
 ## 13. Traceability
 
-| Concept WP | Implementation slice |
-| --- | --- |
-| WP0 | §0 Preconditions |
-| WP1 | Slice B |
-| WP2 | Slice A (+ colour max in C) |
-| WP3 | Slice C |
-| WP4 | Slice D |
-| WP5 | Slice D |
-| WP6 | Slice E |
-| WP7 | Slice E |
-| WP8 | Slice F |
+| Concept WP | Implementation slice        |
+| ---------- | --------------------------- |
+| WP0        | §0 Preconditions            |
+| WP1        | Slice B                     |
+| WP2        | Slice A (+ colour max in C) |
+| WP3        | Slice C                     |
+| WP4        | Slice D                     |
+| WP5        | Slice D                     |
+| WP6        | Slice E                     |
+| WP7        | Slice E                     |
+| WP8        | Slice F                     |

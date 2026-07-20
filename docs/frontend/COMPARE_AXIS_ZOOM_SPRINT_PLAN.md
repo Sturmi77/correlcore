@@ -29,12 +29,12 @@ buckets).
 
 ## Sprint overview
 
-| Sprint | ID | Title | Impl. slices | Effort | PR | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| 0 | CAZ-0 | Spec freeze | WP0 | Low | docs already (#473, #477) | **Open** — confirm §4 on #472 |
-| 1 | CAZ-1 | Usable bird’s-eye zoom | **A + B + C** | High | one feature PR | Not started |
-| 2 | CAZ-2 | Drill-in + interpretability | **D** | Medium | one feature PR | Not started |
-| 3 | CAZ-3 | Strip gate + Capacitor QA | **E** (+ **F** if needed) | Low–Medium | one feature PR (+ optional perf PR) | Not started |
+| Sprint | ID    | Title                       | Impl. slices              | Effort     | PR                                  | Status                        |
+| ------ | ----- | --------------------------- | ------------------------- | ---------- | ----------------------------------- | ----------------------------- |
+| 0      | CAZ-0 | Spec freeze                 | WP0                       | Low        | docs already (#473, #477)           | **Open** — confirm §4 on #472 |
+| 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**             | High       | one feature PR                      | Not started                   |
+| 2      | CAZ-2 | Drill-in + interpretability | **D**                     | Medium     | one feature PR                      | Not started                   |
+| 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (+ **F** if needed) | Low–Medium | one feature PR (+ optional perf PR) | Not started                   |
 
 ---
 
@@ -48,11 +48,11 @@ flowchart TD
   S3 -.->|only if stage-0 jank| S3F[Optional F — perf]
 ```
 
-| Rule | Reason |
-| --- | --- |
-| Sequential sprints | Shared axis components conflict if edited in parallel (same lesson as M3.8) |
-| No “A-only” or “B-only” sprint | Chrome without bucket render is a no-op for users |
-| F only after E | Perf work needs a measured failure on device |
+| Rule                           | Reason                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| Sequential sprints             | Shared axis components conflict if edited in parallel (same lesson as M3.8) |
+| No “A-only” or “B-only” sprint | Chrome without bucket render is a no-op for users                           |
+| F only after E                 | Perf work needs a measured failure on device                                |
 
 ---
 
@@ -90,11 +90,11 @@ checklist on the issue)
 
 ### Scope in
 
-| Slice | Deliverable |
-| --- | --- |
-| A | `compareAxisZoom.ts`, persist `cc_trend_compare_zoom`, unit tests |
-| B | `+/-` + status in `TrendsComparePanel`; Compare load = year/365d |
-| C | Bucket cells/series on Heatmap + `MetricTimeseries`; shared cursor keys; relative colour; partial styling |
+| Slice | Deliverable                                                                                               |
+| ----- | --------------------------------------------------------------------------------------------------------- |
+| A     | `compareAxisZoom.ts`, persist `cc_trend_compare_zoom`, unit tests                                         |
+| B     | `+/-` + status in `TrendsComparePanel`; Compare load = year/365d                                          |
+| C     | Bucket cells/series on Heatmap + `MetricTimeseries`; shared cursor keys; relative colour; partial styling |
 
 ### Scope out (→ later sprints)
 
@@ -105,10 +105,10 @@ checklist on the issue)
 
 ### Day-to-day order inside the sprint
 
-1. Land A (utils + tests) — commit early  
-2. Wire B chrome + 365d page load  
-3. Wire C heatmap + lines + cursor  
-4. Strip gate (minimum): no dual-truth with `zoomStage > 0`  
+1. Land A (utils + tests) — commit early
+2. Wire B chrome + 365d page load
+3. Wire C heatmap + lines + cursor
+4. Strip gate (minimum): no dual-truth with `zoomStage > 0`
 5. Tests green; draft → ready PR
 
 ### Key files
@@ -222,11 +222,11 @@ R2, R3, R6, R7 (status already from S1; reinforce affordances).
 
 ## PR discipline (every sprint)
 
-1. Branch from latest `main` after previous sprint merge.  
-2. Open **draft PR** early linking `#472`.  
-3. Commit at each testable milestone (A → B → C inside Sprint 1).  
-4. Before review: targeted tests + lint/typecheck on touched packages.  
-5. One sprint → **one primary PR** (plus optional F PR in Sprint 3).  
+1. Branch from latest `main` after previous sprint merge.
+2. Open **draft PR** early linking `#472`.
+3. Commit at each testable milestone (A → B → C inside Sprint 1).
+4. Before review: targeted tests + lint/typecheck on touched packages.
+5. One sprint → **one primary PR** (plus optional F PR in Sprint 3).
 6. Do not start the next sprint’s code until the previous PR is merged (or
    explicitly stacked with agreement).
 
@@ -234,30 +234,30 @@ R2, R3, R6, R7 (status already from S1; reinforce affordances).
 
 ## Mapping: Sprint ↔ slice ↔ concept WP
 
-| Sprint | Slices | Concept WPs |
-| --- | --- | --- |
-| 0 | — | WP0 |
-| 1 | A, B, C | WP1, WP2, WP3 (+ WP6 minimum gate) |
-| 2 | D | WP4, WP5 |
-| 3 | E, (F) | WP6 finish, WP7, (WP8) |
+| Sprint | Slices  | Concept WPs                        |
+| ------ | ------- | ---------------------------------- |
+| 0      | —       | WP0                                |
+| 1      | A, B, C | WP1, WP2, WP3 (+ WP6 minimum gate) |
+| 2      | D       | WP4, WP5                           |
+| 3      | E, (F)  | WP6 finish, WP7, (WP8)             |
 
 ---
 
 ## Out of scope for this sprint series
 
-- Pinch-to-zoom  
-- Backend granularity APIs  
-- Habit `TagHeatmap` / symptom calendar zoom  
-- ISO calendar-week buckets  
-- LayerChart adoption  
-- Parallel React GUI  
+- Pinch-to-zoom
+- Backend granularity APIs
+- Habit `TagHeatmap` / symptom calendar zoom
+- ISO calendar-week buckets
+- LayerChart adoption
+- Parallel React GUI
 - Full strip Z-score aggregation design (tracked as follow-up after CAZ-3)
 
 ---
 
 ## Status log
 
-| Date | Event |
-| --- | --- |
+| Date       | Event                                                                 |
+| ---------- | --------------------------------------------------------------------- |
 | 2026-07-20 | Sprint plan created from impl-plan slice regrouping (A+B+C / D / E+F) |
-| 2026-07-20 | Concept #473 merged; impl-plan docs PR #477 |
+| 2026-07-20 | Concept #473 merged; impl-plan docs PR #477                           |
