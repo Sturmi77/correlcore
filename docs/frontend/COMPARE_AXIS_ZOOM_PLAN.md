@@ -2,7 +2,7 @@
 
 **Status:** Proposed (product decisions locked below; implementation not started)  
 **Date:** 2026-07-20  
-**GitHub:** [#472](https://github.com/Sturmi77/correlcore/issues/472)  
+**GitHub:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473)  
 **Area:** Frontend / Trends Compare (`MetricTimeseries` | `UnifiedStripChart` + `ComparisonHeatmap`)  
 **Related:** [ADR-0035](../adr/0035-temporal-correspondence-pattern.md), [`SYMPTOM_VISUALIZATION.md`](SYMPTOM_VISUALIZATION.md), O-17 (heatmap → `EntryHistorySheet`), O-59 (`heatmapPruning.ts`), Co-Occurrence density `+/-`
 
@@ -188,7 +188,7 @@ payloads).
 ### WP0 — Spec freeze & issue tracking
 
 - [x] Decisions D1–D8 documented
-- [ ] GitHub issue opened from this plan
+- [x] GitHub issue opened: [#472](https://github.com/Sturmi77/correlcore/issues/472)
 - [ ] Product confirms §4 defaults (or records overrides in the issue)
 
 **Exit:** Issue linked; defaults accepted or amended in writing.
