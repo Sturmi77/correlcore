@@ -166,19 +166,14 @@
 
 <style>
   .landing {
-    /* Break out of page-shell max-width for the marketing layout only. */
-    width: 100vw;
-    max-width: 70rem;
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
-    box-sizing: border-box;
-    padding-inline: var(--space-4);
     display: flex;
     flex-direction: column;
     min-height: 100%;
     gap: var(--space-8);
     padding-bottom: var(--space-4);
+    width: 100%;
+    max-width: 70rem;
+    margin-inline: auto;
   }
 
   .landing__header {
