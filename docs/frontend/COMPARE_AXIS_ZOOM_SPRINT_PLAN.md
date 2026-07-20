@@ -1,6 +1,6 @@
 # Trends Compare Axis Zoom — Sprint Plan
 
-Last updated: 2026-07-20
+Last updated: 2026-07-20 (CAZ-0 confirmed)
 
 Companion to:
 
@@ -31,8 +31,8 @@ buckets).
 
 | Sprint | ID    | Title                       | Impl. slices              | Effort     | PR                                  | Status                        |
 | ------ | ----- | --------------------------- | ------------------------- | ---------- | ----------------------------------- | ----------------------------- |
-| 0      | CAZ-0 | Spec freeze                 | WP0                       | Low        | docs already (#473, #477)           | **Open** — confirm §4 on #472 |
-| 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**             | High       | one feature PR                      | Not started                   |
+| 0      | CAZ-0 | Spec freeze                 | WP0                       | Low        | docs already (#473, #477)           | **Done** — §4 confirmed 2026-07-20 |
+| 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**             | High       | one feature PR                      | **Ready to start**                 |
 | 2      | CAZ-2 | Drill-in + interpretability | **D**                     | Medium     | one feature PR                      | Not started                   |
 | 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (+ **F** if needed) | Low–Medium | one feature PR (+ optional perf PR) | Not started                   |
 
@@ -62,18 +62,17 @@ flowchart TD
 
 ### Checklist
 
-- [ ] On [#472](https://github.com/Sturmi77/correlcore/issues/472): accept concept plan §4 **or** record overrides for:
-  1. Default stage 7 vs 1
-  2. Hide/fix Compare range to year vs keep parallel
-  3. Stages `1/3/7/14/28` vs shorter set
-  4. Tap zoom-in one stage vs jump to day
-- [ ] No override ⇒ implement §4 as written
-- [ ] Implementation + this sprint plan merged (docs PRs)
+- [x] On [#472](https://github.com/Sturmi77/correlcore/issues/472) / product chat: accept concept plan §4
+  1. Default stage **7**
+  2. **Hide** range chips in Compare (year/365d axis window)
+  3. Stages **`1/3/7/14/28`**
+  4. Tap zoom-in **one stage finer**
+- [x] No further §4 overrides — implement §4 as written
+- [x] Implementation + sprint plan merged (docs PRs #473, #477)
 
 ### Exit
 
-Written confirmation on #472 (comment or checkbox). Coding for Sprint 1 may
-start only after this.
+**Met (2026-07-20).** Sprint 1 (CAZ-1) may start.
 
 ---
 
@@ -257,7 +256,8 @@ R2, R3, R6, R7 (status already from S1; reinforce affordances).
 
 ## Status log
 
-| Date       | Event                                                                 |
-| ---------- | --------------------------------------------------------------------- |
+| Date | Event |
+| --- | --- |
 | 2026-07-20 | Sprint plan created from impl-plan slice regrouping (A+B+C / D / E+F) |
-| 2026-07-20 | Concept #473 merged; impl-plan docs PR #477                           |
+| 2026-07-20 | Concept #473 merged; impl-plan docs PR #477 |
+| 2026-07-20 | **CAZ-0 confirmed:** default 7d, hide range chips, stages 1/3/7/14/28, tap = one-stage zoom-in → CAZ-1 ready |

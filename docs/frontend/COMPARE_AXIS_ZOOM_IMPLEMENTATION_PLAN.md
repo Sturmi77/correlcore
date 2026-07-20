@@ -1,28 +1,29 @@
 # Trends Compare Axis Zoom — Implementation Plan
 
-**Status:** Ready for implementation  
-**Date:** 2026-07-20  
+**Status:** Spec frozen — Sprint 1 (CAZ-1) ready to implement  
+**Date:** 2026-07-20 (CAZ-0 confirmed 2026-07-20)  
 **Product/concept:** [`COMPARE_AXIS_ZOOM_PLAN.md`](COMPARE_AXIS_ZOOM_PLAN.md)  
 **Sprint plan:** [`COMPARE_AXIS_ZOOM_SPRINT_PLAN.md`](COMPARE_AXIS_ZOOM_SPRINT_PLAN.md)  
-**Issue:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473)  
+**Issue:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473) · docs [#477](https://github.com/Sturmi77/correlcore/pull/477)  
 **Stack:** SvelteKit web only (same UI in PWA / Capacitor WebView) — no backend change in v1
 
 This document is the **engineering execution plan**: ordered PR slices, concrete
 files, APIs, tests, and exit criteria. **Sprint packaging** (A+B+C → D → E/F,
-one PR per sprint) lives in the sprint plan. Product decisions stay in the
-concept plan; if they conflict, the concept plan wins until #472 records an
-override.
+one PR per sprint) lives in the sprint plan. Product §4 defaults are frozen
+(CAZ-0); implement as written unless #472 records a later override.
 
 ---
 
-## 0. Preconditions (WP0)
+## 0. Preconditions (WP0) — done
 
-Before coding:
-
-1. Confirm or override concept plan §4 defaults on #472 (default stage **7**,
-   stages `1/3/7/14/28`, hide/fix Compare range to year, one-stage tap zoom-in).
-2. No override recorded ⇒ implement §4 as written.
-3. Branch naming: `cursor/compare-axis-zoom-<slice>-d121` (or successor suffix).
+- [x] Concept plan §4 confirmed 2026-07-20:
+  - Default stage **7**
+  - Range chips in Compare **hidden**; axis window **365d**
+  - Stages **`1/3/7/14/28`**
+  - Tap zoom-in **one stage finer**
+- [x] Docs plans merged (#473, #477)
+- Branch naming for implementation: `cursor/compare-axis-zoom-s1-d121` (then
+  `s2` / `s3`), or `cursor/compare-axis-zoom-<slice>-d121`.
 
 ---
 

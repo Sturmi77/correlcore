@@ -1,8 +1,8 @@
 # Trends Compare — Shared Axis Zoom (Bird’s-Eye) Plan
 
-**Status:** Proposed (product decisions locked below; implementation not started)  
-**Date:** 2026-07-20  
-**GitHub:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473)  
+**Status:** Spec frozen (CAZ-0) — ready for Sprint 1 implementation  
+**Date:** 2026-07-20 (CAZ-0 confirmed 2026-07-20)  
+**GitHub:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473) · docs [#477](https://github.com/Sturmi77/correlcore/pull/477)  
 **Implementation:** [`COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md`](COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md)  
 **Sprint plan:** [`COMPARE_AXIS_ZOOM_SPRINT_PLAN.md`](COMPARE_AXIS_ZOOM_SPRINT_PLAN.md)  
 **Area:** Frontend / Trends Compare (`MetricTimeseries` | `UnifiedStripChart` + `ComparisonHeatmap`)  
@@ -53,20 +53,21 @@ Non-goals for v1 are listed in §11.
 
 ---
 
-## 4. Recommended defaults (product)
+## 4. Confirmed defaults (product) — CAZ-0
 
-These close the remaining open points; change only with explicit product override.
+Confirmed 2026-07-20 (product). Implement as written; further changes need an
+explicit #472 override.
 
-| Topic                  | Recommendation                                                                                           | Rationale                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Zoom stages            | `1 → 3 → 7 → 14 → 28` days/column                                                                        | Enough bird’s-eye steps without continuous zoom complexity              |
-| Default stage          | **7** when Compare loads the 365d window                                                                 | Year-at-a-glance is the primary new value                               |
-| Range chips in Compare | **Fix data window to year (365d)** for the shared axis; hide or disable range as axis control in Compare | Avoid two competing controls; other Trends panels may keep range later  |
-| Persist                | `localStorage` key `cc_trend_compare_zoom` (stage index 0–4)                                             | Consistent with `cc_trend_compare_mode` / sort                          |
-| Bucket alignment       | Build buckets **from newest day backward**                                                               | Matches newest-right scroll; “today” bucket is the natural partial edge |
-| Partial edge buckets   | **Show**, mark visually + tooltip `"k of N days"`; aggregate only over days present — **never upscale**  | Honesty > fake completeness                                             |
-| Zoom-in depth          | One stage finer per tap, then scroll/focus that interval into view                                       | Predictable; avoids jumping past useful mid levels                      |
-| Status chrome          | Always show e.g. “7 Tage / Zelle” next to `+/-`                                                          | Prevents persisted-zoom surprise                                        |
+| Topic | Confirmed choice | Rationale |
+| --- | --- | --- |
+| Zoom stages | `1 → 3 → 7 → 14 → 28` days/column | Enough bird’s-eye steps without continuous zoom complexity |
+| Default stage | **7** when Compare loads the 365d window | Year-at-a-glance is the primary new value |
+| Range chips in Compare | **Hide** range chips; shared axis data window fixed to **year (365d)** | Avoid two competing controls |
+| Persist | `localStorage` key `cc_trend_compare_zoom` (stage index 0–4) | Consistent with `cc_trend_compare_mode` / sort |
+| Bucket alignment | Build buckets **from newest day backward** | Matches newest-right scroll; “today” bucket is the natural partial edge |
+| Partial edge buckets | **Show**, mark visually + tooltip `"k of N days"`; aggregate only over days present — **never upscale** | Honesty > fake completeness |
+| Zoom-in depth | **One stage finer per tap**, then scroll/focus that interval into view | Predictable; avoids jumping past useful mid levels |
+| Status chrome | Always show e.g. “7 Tage / Zelle” next to `+/-` | Prevents persisted-zoom surprise |
 
 ---
 
@@ -334,15 +335,14 @@ existing entry stats.
 | 2026-07-20 | Metric agg     | Mean of days with entry                            |
 | 2026-07-20 | Tap            | Zoom-in; sheet only at day stage                   |
 | 2026-07-20 | Input          | `+/-` first; Capacitor required                    |
-| 2026-07-20 | Risks          | R1–R10 folded into WPs + interpretability contract |
+| 2026-07-20 | Risks | R1–R10 folded into WPs + interpretability contract |
+| 2026-07-20 | CAZ-0 default stage | **7** days/cell |
+| 2026-07-20 | CAZ-0 range chips | **Hide** in Compare; axis window = 365d |
+| 2026-07-20 | CAZ-0 stage set | **`1/3/7/14/28`** |
+| 2026-07-20 | CAZ-0 tap zoom-in | **One stage finer** (not jump-to-day) |
 
 ---
 
-## 14. Open only if product overrides §4
+## 14. §4 product freeze
 
-1. Default stage 7 vs 1
-2. Hide range vs keep parallel
-3. Stage set 1/3/7/14/28 vs shorter 1/7/28
-4. Zoom-in one stage vs jump to day
-
-If no override is recorded before WP1, implement §4 as written.
+CAZ-0 closed 2026-07-20. No open §4 overrides. Sprint 1 (CAZ-1) may start.
