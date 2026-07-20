@@ -29,6 +29,16 @@ type SecureSessionPlugin = {
     rememberMe?: boolean;
   }>;
   clear(): Promise<void>;
+  /** Native single-flight refresh (shared with Glance WorkManager). */
+  refresh?(options: {
+    accessToken?: string | null;
+    refreshToken?: string | null;
+    apiBase?: string | null;
+  }): Promise<{
+    accessToken?: string;
+    refreshToken?: string;
+    apiBase?: string;
+  }>;
 };
 
 function getNativePlugin(): SecureSessionPlugin | null {
@@ -90,5 +100,32 @@ export async function clearSecureSession(): Promise<void> {
     await plugin.clear();
   } catch {
     /* ignore */
+  }
+}
+
+/**
+ * Rotate tokens via the native coordinator when available (Android APK with
+ * SecureSession.refresh). Returns null on older shells / failure so the JS
+ * client can fall back to fetch-based refresh.
+ */
+export async function nativeRefreshSession(options: {
+  refreshToken?: string | null;
+  apiBase?: string | null;
+}): Promise<{ access_token: string; refresh_token: string } | null> {
+  if (!isCapacitorBuild()) return null;
+  const plugin = getNativePlugin();
+  if (!plugin?.refresh) return null;
+  try {
+    const data = await plugin.refresh({
+      refreshToken: options.refreshToken ?? null,
+      apiBase: options.apiBase ?? getApiBase(),
+    });
+    if (!data?.accessToken || !data?.refreshToken) return null;
+    return {
+      access_token: data.accessToken,
+      refresh_token: data.refreshToken,
+    };
+  } catch {
+    return null;
   }
 }

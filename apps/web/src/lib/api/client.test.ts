@@ -232,4 +232,107 @@ describe('apiFetch — Capacitor Bearer path', () => {
     const replayHeaders = fetchMock.mock.calls[2][1].headers as Headers;
     expect(replayHeaders.get('Authorization')).toBe('Bearer access-2');
   });
+
+  it('prefers native SecureSession.refresh over fetch refresh', async () => {
+    const refresh = vi.fn(async () => ({
+      accessToken: 'access-native',
+      refreshToken: 'refresh-native',
+      apiBase: 'https://api.example/api/v1',
+    }));
+    vi.stubGlobal('window', {
+      Capacitor: {
+        Plugins: {
+          SecureSession: {
+            refresh,
+            set: vi.fn(async () => undefined),
+            get: vi.fn(async () => ({})),
+            clear: vi.fn(async () => undefined),
+          },
+          WidgetCredentials: {
+            set: vi.fn(async () => undefined),
+            get: vi.fn(async () => ({})),
+            clear: vi.fn(async () => undefined),
+          },
+        },
+      },
+    });
+    const tokens = await import('./sessionTokens');
+    tokens._resetSessionTokensForTests();
+    tokens.setSessionTokens({
+      access_token: 'access-1',
+      refresh_token: 'refresh-1',
+    });
+    const { apiFetch: bearerFetch } = await import('./client');
+    const { getAccessToken, getRefreshToken } = await import('./sessionTokens');
+    fetchMock
+      .mockResolvedValueOnce(emptyResponse(401))
+      .mockResolvedValueOnce(jsonResponse({ data: 'ok' }));
+
+    const result = await bearerFetch<{ data: string }>('/protected');
+    expect(result).toEqual({ data: 'ok' });
+    expect(refresh).toHaveBeenCalled();
+    expect(getAccessToken()).toBe('access-native');
+    expect(getRefreshToken()).toBe('refresh-native');
+    // No /auth/refresh fetch — native coordinator handled rotation.
+    expect(fetchMock.mock.calls.every((c) => !String(c[0]).includes('/auth/refresh'))).toBe(true);
+  });
+
+  it('retries fetch refresh after syncing tokens rotated by the widget', async () => {
+    const widgetGet = vi
+      .fn()
+      // First sync (before stale fetch): still empty / same — return stale path unused.
+      .mockResolvedValueOnce({})
+      // After failed fetch: widget already holds the rotated refresh.
+      .mockResolvedValueOnce({
+        accessToken: 'access-widget',
+        refreshToken: 'refresh-widget',
+        apiBase: 'https://api.example/api/v1',
+      });
+    vi.stubGlobal('window', {
+      Capacitor: {
+        Plugins: {
+          SecureSession: {
+            set: vi.fn(async () => undefined),
+            get: vi.fn(async () => ({})),
+            clear: vi.fn(async () => undefined),
+            // No refresh() → JS fetch path (older coordinator absence).
+          },
+          WidgetCredentials: {
+            set: vi.fn(async () => undefined),
+            get: widgetGet,
+            clear: vi.fn(async () => undefined),
+          },
+        },
+      },
+    });
+    const tokens = await import('./sessionTokens');
+    tokens._resetSessionTokensForTests();
+    tokens.setSessionTokens({
+      access_token: 'access-1',
+      refresh_token: 'refresh-stale',
+    });
+    const { apiFetch: bearerFetch } = await import('./client');
+    fetchMock
+      .mockResolvedValueOnce(emptyResponse(401))
+      // First JS refresh (stale) fails — widget already rotated.
+      .mockResolvedValueOnce(emptyResponse(401))
+      // After syncSessionTokensFromNative, retry with widget token.
+      .mockResolvedValueOnce(
+        jsonResponse({
+          access_token: 'access-3',
+          refresh_token: 'refresh-3',
+          token_type: 'bearer',
+          expires_in: 900,
+          user: { id: 'u1', email: 'a@b.de', display_name: null, is_verified: true },
+        })
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: 'recovered' }));
+
+    const result = await bearerFetch<{ data: string }>('/protected');
+    expect(result).toEqual({ data: 'recovered' });
+    const refreshBodies = fetchMock.mock.calls
+      .filter((c) => String(c[0]).includes('/auth/refresh'))
+      .map((c) => c[1].body);
+    expect(refreshBodies).toContain(JSON.stringify({ refresh_token: 'refresh-widget' }));
+  });
 });

@@ -13,8 +13,12 @@
  * so WorkManager can rotate after the access JWT TTL — only when remember is on.
  */
 
-import { clearSecureSession, persistSecureSession } from './secureSession';
-import { clearWidgetCredentials, mirrorWidgetCredentials } from './widgetCredentials';
+import { clearSecureSession, persistSecureSession, restoreSecureSession } from './secureSession';
+import {
+  clearWidgetCredentials,
+  mirrorWidgetCredentials,
+  readWidgetCredentials,
+} from './widgetCredentials';
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -68,6 +72,31 @@ export function clearSessionTokens(): void {
   rememberMe = true;
   void clearSecureSession();
   void clearWidgetCredentials();
+}
+
+/**
+ * Pull the newest refresh/access from native stores into memory.
+ *
+ * Needed when Glance WorkManager rotated while the WebView still held a
+ * stale refresh JWT (replay → API revoke_all). Prefers widget mirror when
+ * present (updated on every coordinated rotate).
+ */
+export async function syncSessionTokensFromNative(): Promise<boolean> {
+  const widget = await readWidgetCredentials();
+  if (widget?.refreshToken) {
+    accessToken = widget.accessToken ?? accessToken;
+    refreshToken = widget.refreshToken;
+    rememberMe = true;
+    return true;
+  }
+  const secure = await restoreSecureSession();
+  if (secure?.refreshToken) {
+    if (secure.accessToken) accessToken = secure.accessToken;
+    refreshToken = secure.refreshToken;
+    rememberMe = true;
+    return true;
+  }
+  return false;
 }
 
 /** Test-only. */

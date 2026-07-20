@@ -13,6 +13,7 @@ describe('secureSession', () => {
     set: vi.fn(async () => undefined),
     get: vi.fn(async () => ({})),
     clear: vi.fn(async () => undefined),
+    refresh: vi.fn(async () => ({})),
   };
 
   beforeEach(() => {
@@ -20,6 +21,7 @@ describe('secureSession', () => {
     plugin.set.mockClear();
     plugin.get.mockClear();
     plugin.clear.mockClear();
+    plugin.refresh.mockClear();
     vi.stubGlobal('window', {
       Capacitor: { Plugins: { SecureSession: plugin } },
     });
@@ -74,5 +76,26 @@ describe('secureSession', () => {
       apiBase: 'https://host/api/v1',
       rememberMe: true,
     });
+  });
+
+  it('nativeRefreshSession maps rotated tokens', async () => {
+    plugin.refresh.mockResolvedValueOnce({
+      accessToken: 'a3',
+      refreshToken: 'r3',
+      apiBase: 'https://api.example/api/v1',
+    });
+    const { nativeRefreshSession } = await import('./secureSession');
+    await expect(
+      nativeRefreshSession({ refreshToken: 'r0', apiBase: 'https://api.example/api/v1' })
+    ).resolves.toEqual({
+      access_token: 'a3',
+      refresh_token: 'r3',
+    });
+  });
+
+  it('nativeRefreshSession returns null when plugin rejects', async () => {
+    plugin.refresh.mockRejectedValueOnce(new Error('refresh failed'));
+    const { nativeRefreshSession } = await import('./secureSession');
+    await expect(nativeRefreshSession({ refreshToken: 'r0' })).resolves.toBeNull();
   });
 });

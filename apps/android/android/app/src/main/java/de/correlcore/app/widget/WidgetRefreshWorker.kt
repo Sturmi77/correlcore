@@ -11,6 +11,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import de.correlcore.app.session.SessionRefreshCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -21,8 +22,8 @@ import java.util.concurrent.TimeUnit
 /**
  * Battery-aware poll of GET /api/v1/widget/summary (15-minute periodic).
  *
- * On 401/403, attempts POST /auth/refresh?include_access_token=true with the
- * mirrored refresh token before signing the widget out.
+ * On 401/403, rotates via [SessionRefreshCoordinator] (shared lock + dual-write
+ * with SecureSession) before signing the widget out.
  */
 class WidgetRefreshWorker(
     appContext: Context,
@@ -47,25 +48,24 @@ class WidgetRefreshWorker(
 
             try {
                 var accessToken = creds.accessToken
-                var refreshToken = creds.refreshToken
-                var summary = fetchSummary(creds.apiBase, accessToken)
+                var apiBase = creds.apiBase
+                var summary = fetchSummary(apiBase, accessToken)
 
                 if (summary is SummaryResult.Unauthorized) {
-                    val rotated = refreshAccessToken(creds.apiBase, refreshToken)
+                    val rotated =
+                        SessionRefreshCoordinator.refresh(
+                            applicationContext,
+                            apiBaseHint = apiBase,
+                            refreshTokenHint = creds.refreshToken,
+                        )
                     if (rotated == null) {
                         WidgetCredentialsStore.clearCredentials(applicationContext)
                         CorrelCoreWidget().updateAll(applicationContext)
                         return@withContext Result.success()
                     }
                     accessToken = rotated.accessToken
-                    refreshToken = rotated.refreshToken
-                    WidgetCredentialsStore.setCredentials(
-                        applicationContext,
-                        accessToken,
-                        refreshToken,
-                        creds.apiBase,
-                    )
-                    summary = fetchSummary(creds.apiBase, accessToken)
+                    apiBase = rotated.apiBase
+                    summary = fetchSummary(apiBase, accessToken)
                 }
 
                 when (summary) {
@@ -116,11 +116,6 @@ class WidgetRefreshWorker(
         data object HttpError : SummaryResult()
     }
 
-    private data class RotatedTokens(
-        val accessToken: String,
-        val refreshToken: String,
-    )
-
     private fun fetchSummary(apiBase: String, accessToken: String): SummaryResult {
         val connection =
             (URL(buildSummaryUrl(apiBase)).openConnection() as HttpURLConnection).apply {
@@ -160,39 +155,6 @@ class WidgetRefreshWorker(
                 moodAvg7d = mood,
                 suggestedNextEntryAt = suggested,
             )
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    /**
-     * Body-token refresh (Capacitor path). Cookie refresh is never used from
-     * the widget process — credentials: omit equivalent (no Cookie header).
-     */
-    private fun refreshAccessToken(apiBase: String, refreshToken: String): RotatedTokens? {
-        val connection =
-            (URL(buildRefreshUrl(apiBase)).openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-                setRequestProperty("Accept", "application/json")
-                connectTimeout = 12_000
-                readTimeout = 12_000
-            }
-        try {
-            val payload = JSONObject().put("refresh_token", refreshToken).toString()
-            connection.outputStream.bufferedWriter().use { it.write(payload) }
-            val code = connection.responseCode
-            if (code !in 200..299) {
-                return null
-            }
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            val json = JSONObject(body)
-            val access = json.optString("access_token").takeIf { it.isNotBlank() } ?: return null
-            val refresh = json.optString("refresh_token").takeIf { it.isNotBlank() } ?: return null
-            return RotatedTokens(accessToken = access, refreshToken = refresh)
-        } catch (_: Exception) {
-            return null
         } finally {
             connection.disconnect()
         }
@@ -253,17 +215,5 @@ class WidgetRefreshWorker(
             }
         }
 
-        private fun buildRefreshUrl(apiBase: String): String {
-            val base = apiBase.trimEnd('/')
-            val root =
-                if (base.endsWith("/api/v1")) {
-                    base
-                } else if (base.endsWith("/api")) {
-                    "$base/v1"
-                } else {
-                    "$base/api/v1"
-                }
-            return "$root/auth/refresh?include_access_token=true"
-        }
     }
 }

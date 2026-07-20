@@ -43,9 +43,13 @@ SharedPreferences file (`correlcore_widget`) via the Capacitor plugin
 `WidgetCredentials`.
 
 - Cleared on logout and when refresh + summary both fail (401/403).
-- On 401 from `GET /widget/summary`, WorkManager calls
-  `POST /auth/refresh?include_access_token=true` with the mirrored refresh
-  token (body path, no cookies), updates both tokens, and retries once.
+- On 401 from `GET /widget/summary`, WorkManager rotates via
+  `SessionRefreshCoordinator` (in-process lock shared with the WebView’s
+  `SecureSession.refresh`). Refresh tokens are single-use; without this
+  lock a widget rotate followed by a stale WebView refresh triggers API
+  `revoke_all` and the app “loses contact” after the ~15 minute access TTL.
+- The coordinator dual-writes rotated access + refresh to
+  `WidgetCredentialsStore` **and** `SecureSessionStore`.
 - Browser / cookie builds never call the plugin.
 - Never write these tokens to web `localStorage` (ADR-0006).
 
@@ -57,10 +61,11 @@ Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 | File                                  | Role                    |
 | ------------------------------------- | ----------------------- |
 | `…/widget/CorrelCoreWidget.kt`        | Glance UI + receiver    |
-| `…/widget/WidgetRefreshWorker.kt`     | HTTP poll + WorkManager |
-| `…/widget/WidgetCredentialsPlugin.kt` | Capacitor bridge        |
-| `…/widget/WidgetCredentialsStore.kt`  | SharedPreferences       |
-| `res/xml/correlcore_widget_info.xml`  | AppWidget metadata      |
+| `…/widget/WidgetRefreshWorker.kt`        | HTTP poll + WorkManager        |
+| `…/widget/WidgetCredentialsPlugin.kt`    | Capacitor bridge               |
+| `…/widget/WidgetCredentialsStore.kt`     | SharedPreferences              |
+| `…/session/SessionRefreshCoordinator.kt` | Shared refresh lock + dual-write |
+| `res/xml/correlcore_widget_info.xml`     | AppWidget metadata             |
 
 ## Manual QA checklist
 
