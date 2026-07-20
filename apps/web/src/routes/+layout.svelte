@@ -153,8 +153,12 @@
       page-shell: Safe-Area-Padding + max-width + centering (see app.css).
       overflow-y-auto here so only the content scrolls, not the whole viewport.
       Use .bleed-full on child elements (charts, heatmaps) that need full width.
+      Anonymous marketing `/` uses a wider shell so the split-hero landing fits.
     -->
-    <main class="page-shell flex-1 overflow-y-auto min-h-0">
+    <main
+      class="page-shell flex-1 overflow-y-auto min-h-0"
+      class:page-shell--marketing={pathname === '/' && $auth.status !== 'authenticated'}
+    >
       <slot />
     </main>
   {/if}

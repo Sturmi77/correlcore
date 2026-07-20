@@ -1456,30 +1456,57 @@
     }
   },
   "landing": {
-    "badge": "Selfhost · Open Source",
-    "hero_title": "Verstehe, warum manche Tage gut sind und andere nicht",
-    "hero_subtitle": "Privacy-first Stimmungs- und Gewohnheitstracking mit Korrelations-Insights — selfhosted auf deiner Infrastruktur, etwa 60 Sekunden pro Tag.",
+    "badge": "Selbst gehostet · v1.0",
+    "hero_title": "Verstehe, warum manche Tage gut sind – und andere nicht.",
+    "hero_subtitle": "CorrelCore ist ein datenschutzfreundlicher Stimmungs- und Gewohnheits-Tracker mit Korrelationsanalyse. 60 Sekunden am Tag eintragen – die Auswertung übernimmt den Rest. Keine Gamification, niemals.",
     "cta_register": "Registrieren",
     "cta_login": "Anmelden",
     "cta_apk": "APK herunterladen",
-    "cta_docs": "Selfhost-Installationsanleitung",
-    "features_heading": "Warum CorrelCore",
+    "cta_docs": "Dokumentation",
+    "lang_toggle": "Sprache auf {locale} umschalten",
+    "features_heading": "Was CorrelCore wirklich macht",
     "features": {
-      "privacy": {
-        "title": "Deine Daten bleiben bei dir",
-        "body": "Selfhost auf deinem Server. Gesundheitsfelder verschluesselt at-rest. Keine Werbe-Tracker oder Third-Party-Analytics standardmaessig."
+      "1": {
+        "title": "Korrelationen statt Rohdaten",
+        "body": "Statistische Auswertung zeigt, welche Faktoren – Schlaf, Sport, Homeoffice-Tage – tatsächlich mit Stimmung und Energie zusammenhängen."
       },
-      "insights": {
-        "title": "Korrelationen statt Rauschen",
-        "body": "Sieh, welche Gewohnheiten und Kontextfaktoren mit besseren oder schwereren Tagen zusammenhaengen — mit klaren Konfidenzstufen."
+      "2": {
+        "title": "60 Sekunden am Tag",
+        "body": "Stimmung, Energie, Stress, Tags und Symptome – schnell genug, um dranzubleiben, statt zur Pflicht zu werden."
       },
-      "selfhost": {
-        "title": "AGPL Selfhost Release",
-        "body": "Docker Compose Quickstart fuer Homelab-Eval und Production-VPS mit Traefik. Multi-Arch Images auf GHCR und Docker Hub."
+      "3": {
+        "title": "Keine Gamification, niemals",
+        "body": "Kein Leistungsdruck, keine künstliche Dringlichkeit. Nur Tracking-Kontinuität, zur eigenen Reflexion."
+      }
+    },
+    "metric_mood": "Stimmung",
+    "metric_energy": "Energie",
+    "metric_stress": "Stress",
+    "metric_consistency": "Tracking-Kontinuität",
+    "viz_correlations": "Insight-Matrix, Insight-Karte und Tag-Heatmap (Produktvorschau)",
+    "selfhost_title": "Deine Daten bleiben deine",
+    "selfhost_body": "CorrelCore läuft auf deinem eigenen Server – NAS, VPS oder Ersatzrechner. Kein Konto bei uns, keine Telemetrie, kein Tracking durch Dritte. Ein Befehl genügt für eine laufende Instanz.",
+    "docker_label": "docker compose up -d",
+    "tech_title": "Open Source, nachvollziehbar",
+    "tech_body": "FastAPI + PostgreSQL im Backend, SvelteKit im Web-Frontend. Keine versteckte Logik – Quellcode lesen, selbst hosten oder beitragen.",
+    "tech_github": "Quellcode auf GitHub ansehen",
+    "faq_heading": "Fragen",
+    "faq": {
+      "1": {
+        "q": "Ist das ein medizinisches Tool?",
+        "a": "Nein. CorrelCore ist kein medizinisches Diagnosewerkzeug. Alle Erkenntnisse dienen nur der persönlichen Reflexion – sie zeigen Zusammenhänge, keine Ursachen."
       },
-      "daily": {
-        "title": "60 Sekunden pro Tag",
-        "body": "Schneller Daily Check-in: Stimmung, Energie, Stress, Tags und Symptome. Keine Gamification oder Eintragungsdruck."
+      "2": {
+        "q": "Muss ich es selbst hosten?",
+        "a": "Aktuell ja – CorrelCore ist als Self-Hosted-Release verfügbar. Docker Compose startet den kompletten Stack in wenigen Minuten; offlinefähige mobile Unterstützung ist geplant."
+      },
+      "3": {
+        "q": "Was, wenn ich erst wenige Tage Daten habe?",
+        "a": "Erkenntnisse sind nach Konfidenz markiert – „Frühes Muster“ bis „Robust“ – damit du immer weißt, wie viel Vertrauen ein Zusammenhang schon verdient."
+      },
+      "4": {
+        "q": "Kann ich meine Daten exportieren?",
+        "a": "Ja. Deine Einträge gehören dir; der Datenexport ist jederzeit in den Einstellungen verfügbar."
       }
     },
     "footer": {

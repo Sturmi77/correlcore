@@ -1456,30 +1456,57 @@
     }
   },
   "landing": {
-    "badge": "Selfhost · Open Source",
-    "hero_title": "Understand why some days are good and others are not",
-    "hero_subtitle": "Privacy-first mood and habit tracking with correlation insights — selfhosted on your infrastructure, about 60 seconds per day.",
-    "cta_register": "Get started",
+    "badge": "Self-hosted · v1.0",
+    "hero_title": "Understand why some days are good — and others aren't.",
+    "hero_subtitle": "CorrelCore is a privacy-first mood & habit tracker with correlation analysis. Log 60 seconds a day; let the data explain the rest. No gamification, ever.",
+    "cta_register": "Create account",
     "cta_login": "Log in",
     "cta_apk": "Download APK",
-    "cta_docs": "Selfhost install guide",
-    "features_heading": "Why CorrelCore",
+    "cta_docs": "Documentation",
+    "lang_toggle": "Switch language to {locale}",
+    "features_heading": "What CorrelCore actually does",
     "features": {
-      "privacy": {
-        "title": "Your data stays yours",
-        "body": "Selfhost on your server. Health fields encrypted at rest. No ad trackers or third-party analytics by default."
+      "1": {
+        "title": "Correlations, not raw data",
+        "body": "Statistical analysis surfaces which factors — sleep, exercise, remote-work days — actually relate to your mood and energy."
       },
-      "insights": {
-        "title": "Correlations, not noise",
-        "body": "See which habits and context factors associate with better or harder days — with clear confidence tiers."
+      "2": {
+        "title": "60 seconds a day",
+        "body": "Mood, energy, stress, tags and symptoms — quick enough to keep doing, not another chore."
       },
-      "selfhost": {
-        "title": "AGPL selfhost release",
-        "body": "Docker Compose quickstart for homelab eval and production VPS with Traefik. Multi-arch images on GHCR and Docker Hub."
+      "3": {
+        "title": "No gamification, ever",
+        "body": "No performance pressure, no artificial urgency. Just tracking consistency, for your own reflection."
+      }
+    },
+    "metric_mood": "Mood",
+    "metric_energy": "Energy",
+    "metric_stress": "Stress",
+    "metric_consistency": "Tracking consistency",
+    "viz_correlations": "Insight matrix, insight card, and tag heatmap (product preview)",
+    "selfhost_title": "Your data stays yours",
+    "selfhost_body": "CorrelCore runs on your own server — a NAS, a VPS, a spare machine. No account with us, no telemetry, no third-party analytics. One command gets you a running instance.",
+    "docker_label": "docker compose up -d",
+    "tech_title": "Open source, inspectable",
+    "tech_body": "FastAPI + PostgreSQL backend, SvelteKit web frontend. No hidden logic — read the source, self-host it, or contribute.",
+    "tech_github": "View source on GitHub",
+    "faq_heading": "Questions",
+    "faq": {
+      "1": {
+        "q": "Is this a medical tool?",
+        "a": "No. CorrelCore is not a medical diagnostic tool. All insights are for personal reflection only — they show associations, not causes."
       },
-      "daily": {
-        "title": "60 seconds per day",
-        "body": "Quick daily check-in: mood, energy, stress, tags, and symptoms. No gamification or logging pressure."
+      "2": {
+        "q": "Do I need to self-host it?",
+        "a": "Yes, for now — CorrelCore is a self-hosted release. Docker Compose brings up the full stack in minutes; offline-capable mobile support is planned."
+      },
+      "3": {
+        "q": "What if I only have a few days of data?",
+        "a": "Insights are labeled by confidence — \"Early pattern\" through \"Robust\" — so you always know how much to trust a correlation yet."
+      },
+      "4": {
+        "q": "Can I export my data?",
+        "a": "Yes. Your entries are yours; data export is available at any time from Settings."
       }
     },
     "footer": {

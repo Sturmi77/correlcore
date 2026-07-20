@@ -396,6 +396,11 @@ button {
   padding-bottom: var(--page-padding-bottom);
 }
 
+/* Anonymous marketing landing needs room for the split-hero / bento layout. */
+.page-shell--marketing {
+  max-width: 70rem;
+}
+
 .page-shell--with-nav {
   grid-row: 1;
   grid-column: 1;
