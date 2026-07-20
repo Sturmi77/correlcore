@@ -228,9 +228,9 @@ describe('/trends page', () => {
       expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('year');
     });
 
-    const callsAfterRangeChange = vi.mocked(fetchTimeseries).mock.calls.filter(
-      (call) => call[0] === 'year'
-    );
+    const callsAfterRangeChange = vi
+      .mocked(fetchTimeseries)
+      .mock.calls.filter((call) => call[0] === 'year');
     expect(callsAfterRangeChange.length).toBeGreaterThan(0);
   });
 

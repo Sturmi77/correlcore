@@ -65,8 +65,7 @@
   $: noteDateSet = new Set(noteDates);
   $: hasData = points.some((point) => point.entry_count > 0);
   $: showSkeleton = loading && points.length === 0;
-  $: displayAxisKeys =
-    buckets.length > 0 ? buckets.map((bucket) => bucket.start) : axisDates;
+  $: displayAxisKeys = buckets.length > 0 ? buckets.map((bucket) => bucket.start) : axisDates;
   $: aligned = displayAxisKeys.length > 0;
   $: plotLayout = aligned
     ? {

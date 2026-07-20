@@ -9,10 +9,7 @@
     heatmapLevel,
     type DailyAxisLayout,
   } from '$lib/utils/charts';
-  import {
-    sumBucketCounts,
-    type AxisBucket,
-  } from '$lib/utils/compareAxisZoom';
+  import { sumBucketCounts, type AxisBucket } from '$lib/utils/compareAxisZoom';
   import { pruneHeatmapRows } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
@@ -190,17 +187,15 @@
   $: visibleBuckets =
     buckets.length > 0
       ? buckets
-      : axisDates.map(
-          (date): AxisBucket => ({
-            id: `${date}_${date}`,
-            start: date,
-            end: date,
-            dayCount: 1,
-            presentDays: 1,
-            partial: false,
-            dates: [date],
-          })
-        );
+      : axisDates.map((date): AxisBucket => ({
+          id: `${date}_${date}`,
+          start: date,
+          end: date,
+          dayCount: 1,
+          presentDays: 1,
+          partial: false,
+          dates: [date],
+        }));
   $: visibleAxisDates = visibleBuckets.map((bucket) => bucket.start);
   $: maxValue = Math.max(
     0,

@@ -1,8 +1,5 @@
 import { browser } from '$app/environment';
-import {
-  isCompareZoomStage,
-  type CompareZoomStageIndex,
-} from '$lib/utils/compareAxisZoom';
+import { isCompareZoomStage, type CompareZoomStageIndex } from '$lib/utils/compareAxisZoom';
 
 export type CompareMode = 'lines' | 'strips';
 export type CompareSortMode = 'frequency' | 'recent' | 'correlation' | 'pinned';
