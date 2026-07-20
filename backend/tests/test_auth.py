@@ -16,6 +16,7 @@ in :mod:`tests.conftest`.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -38,6 +39,17 @@ from tests.conftest import (
     VALID_REFRESH_TOKEN,
     make_user,
 )
+
+
+@pytest.fixture
+def clear_login_rate_limit() -> None:
+    """Reset the shared SlowAPI store so login tests (5/min) stay isolated."""
+    from app.core.rate_limit import limiter
+
+    limiter.reset()
+    yield
+    limiter.reset()
+
 
 # ---------------------------------------------------------------------------
 # Register
@@ -270,7 +282,9 @@ async def test_request_registration_new_email_returns_created() -> None:
 
 
 @pytest.mark.asyncio
-async def test_login_success(async_client: AsyncClient, user: User) -> None:
+async def test_login_success(
+    async_client: AsyncClient, user: User, clear_login_rate_limit: None
+) -> None:
     with patch(
         "app.api.v1.endpoints.auth.login_user",
         new_callable=AsyncMock,
@@ -292,7 +306,9 @@ async def test_login_success(async_client: AsyncClient, user: User) -> None:
 
 
 @pytest.mark.asyncio
-async def test_login_include_access_token_opt_in(async_client: AsyncClient, user: User) -> None:
+async def test_login_include_access_token_opt_in(
+    async_client: AsyncClient, user: User, clear_login_rate_limit: None
+) -> None:
     with patch(
         "app.api.v1.endpoints.auth.login_user",
         new_callable=AsyncMock,
@@ -325,7 +341,7 @@ def _set_cookie_header_values(response: object) -> list[str]:
 
 @pytest.mark.asyncio
 async def test_login_remember_me_false_uses_session_cookies(
-    async_client: AsyncClient, user: User
+    async_client: AsyncClient, user: User, clear_login_rate_limit: None
 ) -> None:
     """Issue #453 — remember_me=false omits Max-Age (browser session cookies)."""
     with patch(
@@ -351,7 +367,9 @@ async def test_login_remember_me_false_uses_session_cookies(
 
 
 @pytest.mark.asyncio
-async def test_login_remember_me_true_sets_max_age(async_client: AsyncClient, user: User) -> None:
+async def test_login_remember_me_true_sets_max_age(
+    async_client: AsyncClient, user: User, clear_login_rate_limit: None
+) -> None:
     with patch(
         "app.api.v1.endpoints.auth.login_user",
         new_callable=AsyncMock,
@@ -372,7 +390,10 @@ async def test_login_remember_me_true_sets_max_age(async_client: AsyncClient, us
 
 @pytest.mark.asyncio
 async def test_login_http_forwarded_proto_omits_secure(
-    async_client: AsyncClient, user: User, monkeypatch: pytest.MonkeyPatch
+    async_client: AsyncClient,
+    user: User,
+    monkeypatch: pytest.MonkeyPatch,
+    clear_login_rate_limit: None,
 ) -> None:
     """Homelab HTTP via web proxy: X-Forwarded-Proto=http → no Secure cookies.
 
@@ -400,7 +421,9 @@ async def test_login_http_forwarded_proto_omits_secure(
 
 
 @pytest.mark.asyncio
-async def test_login_wrong_password(async_client: AsyncClient) -> None:
+async def test_login_wrong_password(
+    async_client: AsyncClient, clear_login_rate_limit: None
+) -> None:
     with patch(
         "app.api.v1.endpoints.auth.login_user",
         new_callable=AsyncMock,

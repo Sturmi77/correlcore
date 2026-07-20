@@ -91,7 +91,7 @@ export async function hydrate(): Promise<AuthState> {
 
 export async function login(payload: LoginPayload): Promise<UserResponse> {
   await drainOfflineSyncForSessionChange();
-  const res = await apiLogin(payload);
+  await apiLogin(payload);
   // Login JSON can succeed while HttpOnly cookies never stick (proxy /
   // Secure mismatch). Probe /auth/me before marking the UI authenticated
   // so Settings → Consent does not fail with a confusing 401 later.
