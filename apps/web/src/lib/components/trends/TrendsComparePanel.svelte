@@ -10,13 +10,21 @@
     TimeseriesRange,
   } from '$lib/api/stats';
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
+  import {
+    buildAxisBuckets,
+    clampZoomStage,
+    stageDays,
+    type CompareZoomStageIndex,
+  } from '$lib/utils/compareAxisZoom';
   import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import {
     readCompareMode,
     readCompareSortMode,
+    readCompareZoomStage,
     writeCompareMode,
     writeCompareSortMode,
+    writeCompareZoomStage,
     type CompareMode,
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
@@ -102,6 +110,8 @@
     (value) => Array.isArray(value) && value.every((item) => typeof item === 'string')
   );
 
+  let zoomStage: CompareZoomStageIndex = readCompareZoomStage();
+
   function setMode(next: CompareMode): void {
     mode = next;
     writeCompareMode(next);
@@ -112,6 +122,20 @@
     sortMode = next;
     writeCompareSortMode(next);
     dispatch('sortChange', { value: next });
+  }
+
+  function setZoomStage(next: CompareZoomStageIndex): void {
+    zoomStage = next;
+    writeCompareZoomStage(next);
+    timelineCursor.clear();
+  }
+
+  function zoomOut(): void {
+    setZoomStage(clampZoomStage(zoomStage + 1));
+  }
+
+  function zoomIn(): void {
+    setZoomStage(clampZoomStage(zoomStage - 1));
   }
 
   function handlePinToggle(event: CustomEvent<{ rowId: string; pinned: boolean }>): void {
@@ -142,7 +166,23 @@
     points[points.length - 1]?.period_start ??
     '';
   $: axisDates = axisStart && axisEnd ? buildIsoDateRange(axisStart, axisEnd) : [];
-  $: axisKey = `${axisStart}:${axisEnd}:${axisDates.length}`;
+  /**
+   * Strip mode has no bucket aggregation yet (CAZ-3 follow-up) — force day
+   * columns so Lines/Strips never disagree on the shared axis.
+   */
+  $: effectiveZoomStage = mode === 'strips' ? 0 : zoomStage;
+  $: axisBuckets = buildAxisBuckets(axisDates, effectiveZoomStage);
+  $: bucketAxisLayout =
+    effectiveZoomStage === 0
+      ? axisLayout
+      : {
+          ...axisLayout,
+          dayWidth: Math.max(axisLayout.dayWidth, 28),
+        };
+  $: zoomDays = stageDays(effectiveZoomStage);
+  $: canZoomOut = mode === 'lines' && zoomStage < 4;
+  $: canZoomIn = mode === 'lines' && zoomStage > 0;
+  $: axisKey = `${axisStart}:${axisEnd}:${axisDates.length}:${effectiveZoomStage}:${mode}`;
   $: if (axisKey && axisKey !== lastAxisKey) {
     lastAxisKey = axisKey;
     void scrollToLatest();
@@ -239,6 +279,39 @@
     </div>
   {/if}
 
+  {#if axisDates.length > 0}
+    <div
+      class="compare__zoom"
+      role="group"
+      aria-label={$_('trends.compare.zoom.label')}
+      data-testid="trends-compare-zoom"
+    >
+      <button
+        type="button"
+        class="compare__zoom-btn"
+        data-testid="trends-compare-zoom-decrease"
+        aria-label={$_('trends.compare.zoom.decrease_aria')}
+        disabled={!canZoomOut}
+        on:click={zoomOut}
+      >
+        −
+      </button>
+      <span class="compare__zoom-status" data-testid="trends-compare-zoom-status">
+        {$_('trends.compare.zoom.status', { values: { days: zoomDays } })}
+      </span>
+      <button
+        type="button"
+        class="compare__zoom-btn"
+        data-testid="trends-compare-zoom-increase"
+        aria-label={$_('trends.compare.zoom.increase_aria')}
+        disabled={!canZoomIn}
+        on:click={zoomIn}
+      >
+        +
+      </button>
+    </div>
+  {/if}
+
   <div
     class="compare__axis-scroller"
     bind:this={axisScroller}
@@ -250,7 +323,7 @@
         {enabled}
         {loading}
         {axisDates}
-        {axisLayout}
+        axisLayout={bucketAxisLayout}
         {markers}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
@@ -262,7 +335,8 @@
         {enabled}
         {loading}
         {axisDates}
-        {axisLayout}
+        buckets={axisBuckets}
+        axisLayout={bucketAxisLayout}
         {markers}
         {noteDates}
         enableCursor
@@ -280,7 +354,8 @@
         {showWorkContexts}
         {loading}
         dates={axisDates}
-        {axisLayout}
+        buckets={axisBuckets}
+        axisLayout={bucketAxisLayout}
         {markers}
         enableCursor
         {sortMode}
@@ -412,6 +487,45 @@
     background: var(--color-surface);
     color: var(--color-text);
     font: inherit;
+  }
+
+  .compare__zoom {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .compare__zoom-btn {
+    min-width: var(--tap-target);
+    min-height: var(--tap-target);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-border, var(--color-border-chart));
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .compare__zoom-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .compare__zoom-btn:focus-visible {
+    outline: 2px solid var(--color-cursor-halo);
+    outline-offset: 1px;
+  }
+
+  .compare__zoom-status {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    min-width: 7rem;
+    text-align: center;
   }
 
   @media (max-width: 480px) {

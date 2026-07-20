@@ -13,6 +13,8 @@
   export let tabOptions: TabBarOption[] = [];
   export let showCompareFilters = false;
   export let embedCompareFilters = true;
+  /** Compare uses a fixed 365d zoom axis — hide range chips there (CAZ-0). */
+  export let showRangeControl = true;
 
   const dispatch = createEventDispatcher<{
     rangeChange: { value: TimeseriesRange };
@@ -21,16 +23,22 @@
 </script>
 
 <div class="trends-toolbar" data-testid="trends-analysis-toolbar">
-  <div class="trends-toolbar__row trends-toolbar__row--range" data-testid="trends-sticky-toolbar">
-    <SegmentedControl
-      value={analysisRange}
-      options={analysisRangeOptions}
-      ariaLabel={$_('trends.controls')}
-      testId="trends-range-control"
-      on:change={(event) =>
-        dispatch('rangeChange', { value: event.detail.value as TimeseriesRange })}
-    />
-  </div>
+  {#if showRangeControl}
+    <div class="trends-toolbar__row trends-toolbar__row--range" data-testid="trends-sticky-toolbar">
+      <SegmentedControl
+        value={analysisRange}
+        options={analysisRangeOptions}
+        ariaLabel={$_('trends.controls')}
+        testId="trends-range-control"
+        on:change={(event) =>
+          dispatch('rangeChange', { value: event.detail.value as TimeseriesRange })}
+      />
+    </div>
+  {:else}
+    <div class="trends-toolbar__row trends-toolbar__row--range" data-testid="trends-sticky-toolbar">
+      <!-- Keep sticky toolbar testid for layout/QA; range control intentionally omitted. -->
+    </div>
+  {/if}
 
   <div class="trends-toolbar__row" data-testid="trends-tabs-toolbar">
     <TabBar

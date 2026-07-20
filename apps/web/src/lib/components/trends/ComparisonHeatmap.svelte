@@ -9,6 +9,10 @@
     heatmapLevel,
     type DailyAxisLayout,
   } from '$lib/utils/charts';
+  import {
+    sumBucketCounts,
+    type AxisBucket,
+  } from '$lib/utils/compareAxisZoom';
   import { pruneHeatmapRows } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
@@ -22,6 +26,8 @@
   export let showWorkContexts = true;
   export let loading = false;
   export let dates: string[] = [];
+  /** When set, render one column per bucket (shared Compare zoom axis). */
+  export let buckets: readonly AxisBucket[] = [];
   export let axisLayout: DailyAxisLayout = compareDailyAxisLayout;
   export let scrollable = true;
   export let autoScroll = true;
@@ -82,6 +88,17 @@
     if (!day) return 0;
     if (row.kind === 'symptom') return day.max_intensity ?? day.count;
     return day.count;
+  }
+
+  function countFor(row: Row, date: string): number {
+    return row.days.find((item) => item.date === date)?.count ?? 0;
+  }
+
+  function valueForBucket(row: Row, bucket: AxisBucket): number {
+    if (bucket.dates.length === 1) {
+      return valueFor(row, bucket.dates[0]!);
+    }
+    return sumBucketCounts((date) => countFor(row, date), bucket);
   }
 
   async function scrollToLatest(): Promise<void> {
@@ -169,16 +186,29 @@
   $: rows = pruneSparseAxes
     ? pruneHeatmapRows(sortedRows, axisDates, (row, date) => valueFor(row, date))
     : sortedRows;
-  // Always keep the caller-provided calendar axis so day columns stay aligned
-  // with the timeseries above (even when empty heatmap days remain blank).
-  $: visibleAxisDates = axisDates;
+  // Prefer explicit zoom buckets from the Compare panel; otherwise one column per day.
+  $: visibleBuckets =
+    buckets.length > 0
+      ? buckets
+      : axisDates.map(
+          (date): AxisBucket => ({
+            id: `${date}_${date}`,
+            start: date,
+            end: date,
+            dayCount: 1,
+            presentDays: 1,
+            partial: false,
+            dates: [date],
+          })
+        );
+  $: visibleAxisDates = visibleBuckets.map((bucket) => bucket.start);
   $: maxValue = Math.max(
     0,
-    ...rows.flatMap((row) => visibleAxisDates.map((date) => valueFor(row, date)))
+    ...rows.flatMap((row) => visibleBuckets.map((bucket) => valueForBucket(row, bucket)))
   );
-  $: scrollKey = `${startDate}:${endDate}:${rows.length}:${visibleAxisDates.length}`;
+  $: scrollKey = `${startDate}:${endDate}:${rows.length}:${visibleBuckets.length}`;
   $: gridStyle = [
-    `--day-count: ${visibleAxisDates.length}`,
+    `--day-count: ${visibleBuckets.length}`,
     `--axis-label-width: ${axisLayout.labelWidth}px`,
     `--axis-day-width: ${axisLayout.dayWidth}px`,
     `--axis-gap: ${axisLayout.dayGap}px`,
@@ -189,13 +219,21 @@
   }
 
   // Sprint 1 (ADR-0035): mirror the cursor store to a local class for CSS
-  // column highlighting via [data-date] selectors.
+  // column highlighting via [data-date] selectors (bucket start = display key).
   $: cursorDate = $timelineCursor.date;
   $: markerDateSet = new Set(markers.map((m) => m.date));
   $: markerBandDates = markers
     .filter((m) => m.endDate)
     .flatMap((m) => buildIsoDateRange(m.date, m.endDate ?? m.date));
   $: markerBandSet = new Set(markerBandDates);
+
+  function bucketHasMarker(bucket: AxisBucket): boolean {
+    return bucket.dates.some((date) => markerDateSet.has(date));
+  }
+
+  function bucketHasMarkerBand(bucket: AxisBucket): boolean {
+    return bucket.dates.some((date) => markerBandSet.has(date));
+  }
 
   function handleCellEnter(date: string) {
     if (!enableCursor) return;
@@ -242,22 +280,33 @@
             </button>
             <span class="compare-heatmap__label-text">{row.label}</span>
           </div>
-          {#each visibleAxisDates as date}
-            {@const value = valueFor(row, date)}
+          {#each visibleBuckets as bucket (bucket.id)}
+            {@const value = valueForBucket(row, bucket)}
+            {@const columnKey = bucket.start}
+            {@const rangeLabel =
+              bucket.start === bucket.end ? bucket.start : `${bucket.start} – ${bucket.end}`}
             <button
               type="button"
               class={`compare-heatmap__cell compare-heatmap__cell--${heatmapLevel(value, maxValue)}`}
-              class:compare-heatmap__cell--cursor={enableCursor && cursorDate === date}
-              class:compare-heatmap__cell--marker={markerDateSet.has(date)}
-              class:compare-heatmap__cell--marker-band={markerBandSet.has(date)}
+              class:compare-heatmap__cell--cursor={enableCursor && cursorDate === columnKey}
+              class:compare-heatmap__cell--marker={bucketHasMarker(bucket)}
+              class:compare-heatmap__cell--marker-band={bucketHasMarkerBand(bucket)}
+              class:compare-heatmap__cell--partial={bucket.partial}
               data-kind={row.kind}
-              data-date={date}
-              aria-label={`${row.label}, ${date}: ${value}`}
-              title={`${row.label}, ${date}: ${value}`}
-              on:click={() => dispatch('selectDate', { date, rowId: row.id })}
-              on:pointerenter={() => handleCellEnter(date)}
+              data-date={columnKey}
+              data-bucket-end={bucket.end}
+              data-partial={bucket.partial ? 'true' : 'false'}
+              aria-label={`${row.label}, ${rangeLabel}: ${value}`}
+              title={`${row.label}, ${rangeLabel}: ${value}`}
+              on:click={() => {
+                // Multi-day drill-in lands in CAZ-2; only open day history for single-day columns.
+                if (bucket.dates.length === 1) {
+                  dispatch('selectDate', { date: columnKey, rowId: row.id });
+                }
+              }}
+              on:pointerenter={() => handleCellEnter(columnKey)}
               on:pointerleave={handleCellLeave}
-              on:focus={() => enableCursor && timelineCursor.focus(date)}
+              on:focus={() => enableCursor && timelineCursor.focus(columnKey)}
               on:blur={() => enableCursor && timelineCursor.hover(null)}
             ></button>
           {/each}
@@ -415,6 +464,10 @@
       0 0 0 5px var(--color-cursor-halo);
     position: relative;
     z-index: 1;
+  }
+
+  .compare-heatmap__cell--partial {
+    opacity: 0.72;
   }
 
   .compare-heatmap__cell--marker-band {

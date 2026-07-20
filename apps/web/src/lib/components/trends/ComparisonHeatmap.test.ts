@@ -22,4 +22,30 @@ describe('ComparisonHeatmap shared axis', () => {
     expect(screen.getByText('Run')).toBeTruthy();
     expect(screen.queryByText('Empty')).toBeNull();
   });
+
+  it('aggregates multi-day buckets as summed occurrence counts', () => {
+    render(ComparisonHeatmapHarness, {
+      props: {
+        pruneSparseAxes: false,
+        dates: ['2026-07-01', '2026-07-02', '2026-07-03'],
+        buckets: [
+          {
+            id: '2026-07-01_2026-07-03',
+            start: '2026-07-01',
+            end: '2026-07-03',
+            dayCount: 3,
+            presentDays: 3,
+            partial: false,
+            dates: ['2026-07-01', '2026-07-02', '2026-07-03'],
+          },
+        ],
+      },
+    });
+
+    const cells = screen.getAllByRole('button').filter((el) => el.hasAttribute('data-date'));
+    const runCell = cells.find((cell) => cell.getAttribute('aria-label')?.startsWith('Run,'));
+    expect(runCell?.getAttribute('data-date')).toBe('2026-07-01');
+    // Run has count 2 on day 1 only → bucket sum 2.
+    expect(runCell?.getAttribute('aria-label')).toContain(': 2');
+  });
 });

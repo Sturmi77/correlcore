@@ -1,4 +1,5 @@
 import type { TimeseriesPoint } from '$lib/api/stats';
+import { meanBucketMetric, type AxisBucket } from '$lib/utils/compareAxisZoom';
 import { displayTimeseriesValue } from '$lib/utils/metrics';
 
 export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
@@ -162,6 +163,29 @@ export function buildDailyAxisLinePoints(
     const x = dailyAxisXForIndex(index, layout);
     const y = height - ((value - 1) / 4) * height;
     return [{ x, y, value, label: point.period_start }];
+  });
+}
+
+/** Align metric line points to Compare zoom buckets (mean of days with values). */
+export function buildBucketAxisLinePoints(
+  points: readonly TimeseriesPoint[],
+  metric: MetricKey,
+  buckets: readonly AxisBucket[],
+  height: number,
+  layout: Pick<DailyAxisLayout, 'labelWidth' | 'dayWidth' | 'dayGap'> = compareDailyAxisLayout
+): ChartPoint[] {
+  const byDate = new Map(points.map((point) => [point.period_start, point]));
+  return buckets.flatMap((bucket, index) => {
+    const raw = meanBucketMetric((date) => {
+      const point = byDate.get(date);
+      if (!point || point.entry_count <= 0) return null;
+      return point[metric];
+    }, bucket);
+    if (raw === null) return [];
+    const value = displayTimeseriesValue(metric, raw);
+    const x = dailyAxisXForIndex(index, layout);
+    const y = height - ((value - 1) / 4) * height;
+    return [{ x, y, value, label: bucket.start }];
   });
 }
 

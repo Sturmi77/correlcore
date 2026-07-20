@@ -1,9 +1,11 @@
 <script lang="ts">
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
   import type { TagHeatmapResponse } from '$lib/api/stats';
+  import type { AxisBucket } from '$lib/utils/compareAxisZoom';
 
   export let pruneSparseAxes = true;
   export let dates = ['2026-07-01', '2026-07-02', '2026-07-03'];
+  export let buckets: AxisBucket[] = [];
 
   const tagHeatmap: TagHeatmapResponse = {
     start_date: '2026-07-01',
@@ -43,6 +45,7 @@
   showSymptoms={false}
   showWorkContexts={false}
   {dates}
+  {buckets}
   {pruneSparseAxes}
   scrollable={false}
   autoScroll={false}
