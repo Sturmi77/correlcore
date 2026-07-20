@@ -33,7 +33,7 @@
   // once the active locale is ready; we gate the slot on that.
   setupI18n();
 
-  $: pathname = $page.url.pathname;
+  $: pathname = $page.url?.pathname ?? '/';
   $: showAppNav = shouldShowAppNav($auth.status, pathname);
 
   // Brand splash: stay up until max(real boot done, min animation duration).
@@ -100,7 +100,7 @@
     $auth.status === 'anonymous' &&
     !isPublicRoute(pathname)
   ) {
-    const next = encodeURIComponent(pathname + $page.url.search);
+    const next = encodeURIComponent(pathname + ($page.url?.search ?? ''));
     void goto(`/auth/login?next=${next}`, { replaceState: true });
   }
 </script>
