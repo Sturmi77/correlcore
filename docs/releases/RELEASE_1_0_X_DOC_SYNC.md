@@ -1,16 +1,19 @@
 # Release 1.0.x — documentation & version sync
 
-**Date:** 2026-07-19  
-**Current line:** **`v1.0.6`** / manifests **`1.0.6`**  
-**Git tags:** `v1.0.0` … `v1.0.6`
+**Date:** 2026-07-20  
+**Current line:** **`v1.0.7`** / manifests **`1.0.7`**  
+**Git tags:** `v1.0.0` … `v1.0.7`
 
 Completed-milestone archive: [`COMPLETED_MILESTONES.md`](COMPLETED_MILESTONES.md).
 
 ## Status
 
 P0–P2 sync from the post-`v1.0.5` doc audit is **done** (merged via #455 / #456).
-Patch **`v1.0.6`** packages the remaining tester fixes (#441–#444), persistent
-session (`remember_me`, #453), and bumps install pins / manifests to `1.0.6`.
+Patch **`v1.0.6`** shipped persistent session and tester fixes (#441–#444 / #453).
+Patch **`v1.0.7`** packages pull-to-refresh (#469), Trends smoothing default +
+heatmap alignment (#470), public landing (#471), Homelab Secure-cookie auth
+fix (#468), and M10.2 hosted-launch docs (#458 / #465–#467); install pins /
+manifests bump to `1.0.7`.
 
 ## Still optional (P3)
 

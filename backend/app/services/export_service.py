@@ -27,7 +27,7 @@ from app.models.user_profile import UserProfile
 from app.schemas.export import ExportEnvelope, ExportScoreLegendItem, ExportUser
 
 EXPORT_FORMAT_VERSION = "1.2"
-APP_EXPORT_VERSION = "1.0.6"
+APP_EXPORT_VERSION = "1.0.7"
 SCORE_LEGEND: dict[str, ExportScoreLegendItem] = {
     "mood_score": ExportScoreLegendItem(
         min=1,

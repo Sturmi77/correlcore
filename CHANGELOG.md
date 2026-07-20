@@ -10,6 +10,35 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.7] — 2026-07-20
+
+Tester / selfhost patch on the public `1.0.x` line. Prefer this tag for GHCR
+pins and Android sideload APK installs.
+
+### Added
+
+- **Pull-to-refresh** on authenticated screens (Home, Insights, Trends, Settings
+  and related subpages) (#469).
+- Rudimentary **public landing** with login CTA and APK download link (#471).
+
+### Changed
+
+- Trends compare timeline defaults to **smoothed** (week uses a 3-day window;
+  longer ranges keep the 7-day SMA). Explicit Raw preference is still
+  respected (#470).
+- Heatmap under the Trends timeline keeps the shared date axis when pruning
+  sparse rows (mobile alignment) (#470).
+- M10.2 hosted-launch docs: plan/backlog, Nginx/SMTP runbooks, topology
+  options (#458, #465, #466, #467).
+
+### Fixed
+
+- HTTP Homelab auth: Secure-cookie defaults and session refresh so selfhost
+  over plain HTTP no longer fails with „Could not validate credentials“
+  (#468).
+
+---
+
 ## [1.0.6] — 2026-07-19
 
 Tester-focused patch on the public selfhost / Android sideload line. Prefer this

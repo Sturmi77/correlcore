@@ -5,13 +5,13 @@ Last updated: 2026-07-19
 ## Post-1.0.x image upgrades (current)
 
 Selfhost operators on the **1.0.x** line should pin `IMAGE_TAG` to the latest
-patch they trust (e.g. **`v1.0.6`**; any **`v1.0.x`** pin works), then pull and
+patch they trust (e.g. **`v1.0.7`**; any **`v1.0.x`** pin works), then pull and
 restart:
 
 ```bash
 cd correlcore/infra/docker
 
-# Set in .env, e.g. IMAGE_TAG=v1.0.6
+# Set in .env, e.g. IMAGE_TAG=v1.0.7
 grep IMAGE_TAG .env
 
 docker compose pull
