@@ -506,7 +506,9 @@
         "partial": "{present} von {size} Tagen",
         "detail": "{range} · {coverage}",
         "cell_tooltip": "{label}, {range}: {value} · {coverage}",
-        "cell_tooltip_zoom": "{label}, {range}: {value} · {coverage} · Tippen zum Vergrößern"
+        "cell_tooltip_zoom": "{label}, {range}: {value} · {coverage} · Tippen zum Vergrößern",
+        "strips_disabled": "Zeitachsen-Zoom ist im Linien-Modus verfuegbar (Streifen bleiben auf Tageszellen).",
+        "strip_gate_reset": "Zoom fuer den Streifen-Modus auf 1 Tag / Zelle zurueckgesetzt."
       }
     },
     "strip": {

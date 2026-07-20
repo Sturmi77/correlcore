@@ -27,6 +27,19 @@
     /** Optional secondary description (e.g. phase name, severity). */
     description?: string;
   }
+
+  /** Collapse markers that share the same display axis key (e.g. after bucket remap). */
+  export function dedupeEventMarkers(markers: readonly EventMarker[]): EventMarker[] {
+    const seen = new Set<string>();
+    const out: EventMarker[] = [];
+    for (const marker of markers) {
+      const key = `${marker.date}|${marker.endDate ?? ''}|${marker.kind ?? 'generic'}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(marker);
+    }
+    return out;
+  }
 </script>
 
 <script lang="ts">
@@ -40,7 +53,8 @@
   /** Optional Y offset where the marker line starts (default 0). */
   export let top = 0;
 
-  $: resolved = markers
+  $: uniqueMarkers = dedupeEventMarkers(markers);
+  $: resolved = uniqueMarkers
     .map((marker) => {
       const xStart = dailyAxisXForDate(marker.date, axisDates, axisLayout);
       const xEnd = marker.endDate ? dailyAxisXForDate(marker.endDate, axisDates, axisLayout) : null;

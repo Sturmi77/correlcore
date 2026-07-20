@@ -1,16 +1,16 @@
 # Trends Compare Axis Zoom — Implementation Plan
 
-**Status:** Spec frozen — Sprint 1 (CAZ-1) ready to implement  
-**Date:** 2026-07-20 (CAZ-0 confirmed 2026-07-20)  
+**Status:** Implemented (CAZ-1…3; Slice F not required pending device row 8)  
+**Date:** 2026-07-20  
 **Product/concept:** [`COMPARE_AXIS_ZOOM_PLAN.md`](COMPARE_AXIS_ZOOM_PLAN.md)  
 **Sprint plan:** [`COMPARE_AXIS_ZOOM_SPRINT_PLAN.md`](COMPARE_AXIS_ZOOM_SPRINT_PLAN.md)  
-**Issue:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473) · docs [#477](https://github.com/Sturmi77/correlcore/pull/477)  
+**QA:** [`../quality/COMPARE_AXIS_ZOOM_CAZ3_QA.md`](../quality/COMPARE_AXIS_ZOOM_CAZ3_QA.md)  
+**Issue:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Strip Z follow-up [#482](https://github.com/Sturmi77/correlcore/issues/482)  
 **Stack:** SvelteKit web only (same UI in PWA / Capacitor WebView) — no backend change in v1
 
-This document is the **engineering execution plan**: ordered PR slices, concrete
-files, APIs, tests, and exit criteria. **Sprint packaging** (A+B+C → D → E/F,
-one PR per sprint) lives in the sprint plan. Product §4 defaults are frozen
-(CAZ-0); implement as written unless #472 records a later override.
+Engineering execution for slices A–E is in the CAZ PRs. **Sprint packaging**
+(A+B+C → D → E/F) lives in the sprint plan. Strip Z-score bucket policy is
+deferred to #482.
 
 ---
 

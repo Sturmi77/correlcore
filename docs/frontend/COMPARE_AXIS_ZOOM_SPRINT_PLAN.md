@@ -29,12 +29,12 @@ buckets).
 
 ## Sprint overview
 
-| Sprint | ID    | Title                       | Impl. slices              | Effort     | PR                                                      | Status              |
-| ------ | ----- | --------------------------- | ------------------------- | ---------- | ------------------------------------------------------- | ------------------- |
-| 0      | CAZ-0 | Spec freeze                 | WP0                       | Low        | docs (#473, #477, #479)                                 | **Done**            |
-| 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**             | High       | [#480](https://github.com/Sturmi77/correlcore/pull/480) | **Merged**          |
-| 2      | CAZ-2 | Drill-in + interpretability | **D**                     | Medium     | [#481](https://github.com/Sturmi77/correlcore/pull/481) | Implemented         |
-| 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (+ **F** if needed) | Low–Medium | [#483](https://github.com/Sturmi77/correlcore/pull/483) | Pending after CAZ-2 |
+| Sprint | ID    | Title                       | Impl. slices             | Effort     | PR                                                      | Status                          |
+| ------ | ----- | --------------------------- | ------------------------ | ---------- | ------------------------------------------------------- | ------------------------------- |
+| 0      | CAZ-0 | Spec freeze                 | WP0                      | Low        | docs (#473, #477, #479)                                 | **Done**                        |
+| 1      | CAZ-1 | Usable bird’s-eye zoom      | **A + B + C**            | High       | [#480](https://github.com/Sturmi77/correlcore/pull/480) | **Merged**                      |
+| 2      | CAZ-2 | Drill-in + interpretability | **D**                    | Medium     | [#481](https://github.com/Sturmi77/correlcore/pull/481) | Implemented                     |
+| 3      | CAZ-3 | Strip gate + Capacitor QA   | **E** (F not needed yet) | Low–Medium | [#483](https://github.com/Sturmi77/correlcore/pull/483) | Implemented — device QA pending |
 
 ---
 
@@ -211,11 +211,12 @@ R2, R3, R6, R7 (status already from S1; reinforce affordances).
 
 ### Verify / exit criteria
 
-- [ ] Checklist on #472 completed (pass/fail per row)
-- [ ] No Pinch required; `+/-` and taps work under touch + horizontal scroll
-- [ ] No dual-truth strip/zoom combination
-- [ ] Concept + implementation plan status → **Implemented** with PR links
-- [ ] Close or reduce #472 to residual follow-ups only
+- [x] Checklist doc filed: [`COMPARE_AXIS_ZOOM_CAZ3_QA.md`](../quality/COMPARE_AXIS_ZOOM_CAZ3_QA.md)
+- [x] No Pinch required (by design); zoom via `+/-` / cell tap only
+- [x] No dual-truth strip/zoom combination (Strips reset + day columns)
+- [x] Concept + implementation plan status → **Implemented** with PR links
+- [x] Strip Z-score follow-up filed: [#482](https://github.com/Sturmi77/correlcore/issues/482)
+- [ ] Device/WebView manual rows on QA doc signed off (blocks closing #472)
 
 ---
 
@@ -261,3 +262,5 @@ R2, R3, R6, R7 (status already from S1; reinforce affordances).
 | 2026-07-20 | Sprint plan created from impl-plan slice regrouping (A+B+C / D / E+F)                                        |
 | 2026-07-20 | Concept #473 merged; impl-plan docs PR #477                                                                  |
 | 2026-07-20 | **CAZ-0 confirmed:** default 7d, hide range chips, stages 1/3/7/14/28, tap = one-stage zoom-in → CAZ-1 ready |
+| 2026-07-20 | CAZ-0 frozen (#479); CAZ-1 #480; CAZ-2 #481                                                                  |
+| 2026-07-20 | CAZ-3: strip gate Option 1, marker dedupe, QA checklist; strip Z → #482                                      |

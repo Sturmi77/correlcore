@@ -219,4 +219,36 @@ describe('TrendsComparePanel', () => {
     expect(selectSpy.mock.calls[0]?.[0]?.detail?.date).toBe('2026-05-08');
     expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('1');
   });
+
+  it('resets coarse zoom when switching to Strips and disables zoom controls', async () => {
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: weekHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: false,
+      },
+    });
+
+    expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('7');
+    expect(container.querySelectorAll('.compare-heatmap__cell[data-zoomable="true"]').length).toBeGreaterThan(
+      0
+    );
+
+    await fireEvent.click(screen.getByRole('button', { name: 'trends.compare.mode_strips' }));
+
+    expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('1');
+    expect(screen.getByTestId('trends-compare-zoom-strip-gate')).toBeTruthy();
+    expect(screen.getByTestId('trends-compare-zoom-strips-disabled')).toBeTruthy();
+    expect(
+      (screen.getByTestId('trends-compare-zoom-decrease') as HTMLButtonElement).disabled
+    ).toBe(true);
+    expect(
+      (screen.getByTestId('trends-compare-zoom-increase') as HTMLButtonElement).disabled
+    ).toBe(true);
+    expect(container.querySelector('.compare-heatmap__cell[data-zoomable="true"]')).toBeNull();
+  });
 });

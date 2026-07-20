@@ -506,7 +506,9 @@
         "partial": "{present} of {size} days",
         "detail": "{range} · {coverage}",
         "cell_tooltip": "{label}, {range}: {value} · {coverage}",
-        "cell_tooltip_zoom": "{label}, {range}: {value} · {coverage} · Tap to zoom in"
+        "cell_tooltip_zoom": "{label}, {range}: {value} · {coverage} · Tap to zoom in",
+        "strips_disabled": "Timeline zoom is available in Lines mode (Strips stay on day columns).",
+        "strip_gate_reset": "Zoom reset to 1 day / cell for Strips mode."
       }
     },
     "strip": {

@@ -1,10 +1,11 @@
 # Trends Compare — Shared Axis Zoom (Bird’s-Eye) Plan
 
-**Status:** Spec frozen (CAZ-0) — ready for Sprint 1 implementation  
-**Date:** 2026-07-20 (CAZ-0 confirmed 2026-07-20)  
-**GitHub:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473) · docs [#477](https://github.com/Sturmi77/correlcore/pull/477)  
+**Status:** Implemented (CAZ-1…3 code; device QA checklist pending on #472)  
+**Date:** 2026-07-20  
+**GitHub:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan [#473](https://github.com/Sturmi77/correlcore/pull/473)/[#477](https://github.com/Sturmi77/correlcore/pull/477) · CAZ PRs [#480](https://github.com/Sturmi77/correlcore/pull/480)/[#481](https://github.com/Sturmi77/correlcore/pull/481)/[#483](https://github.com/Sturmi77/correlcore/pull/483) · strip Z [#482](https://github.com/Sturmi77/correlcore/issues/482)  
 **Implementation:** [`COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md`](COMPARE_AXIS_ZOOM_IMPLEMENTATION_PLAN.md)  
 **Sprint plan:** [`COMPARE_AXIS_ZOOM_SPRINT_PLAN.md`](COMPARE_AXIS_ZOOM_SPRINT_PLAN.md)  
+**QA:** [`../quality/COMPARE_AXIS_ZOOM_CAZ3_QA.md`](../quality/COMPARE_AXIS_ZOOM_CAZ3_QA.md)  
 **Area:** Frontend / Trends Compare (`MetricTimeseries` | `UnifiedStripChart` + `ComparisonHeatmap`)  
 **Related:** [ADR-0035](../adr/0035-temporal-correspondence-pattern.md), [`SYMPTOM_VISUALIZATION.md`](SYMPTOM_VISUALIZATION.md), O-17 (heatmap → `EntryHistorySheet`), O-59 (`heatmapPruning.ts`), Co-Occurrence density `+/-`
 
