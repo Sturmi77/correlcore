@@ -13,7 +13,7 @@
         tag_id: 't1',
         slug: 'run',
         name: 'Run',
-        category: 'activity',
+        category: 'sport',
         color: null,
         days: [
           { date: '2026-07-01', count: 2 },
@@ -25,7 +25,7 @@
         tag_id: 't2',
         slug: 'empty',
         name: 'Empty',
-        category: 'activity',
+        category: 'sport',
         color: null,
         days: [
           { date: '2026-07-01', count: 0 },
