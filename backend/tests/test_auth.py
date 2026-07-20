@@ -42,7 +42,7 @@ from tests.conftest import (
 
 
 @pytest.fixture
-def clear_login_rate_limit() -> None:
+def clear_login_rate_limit() -> Iterator[None]:
     """Reset the shared SlowAPI store so login tests (5/min) stay isolated."""
     from app.core.rate_limit import limiter
 
