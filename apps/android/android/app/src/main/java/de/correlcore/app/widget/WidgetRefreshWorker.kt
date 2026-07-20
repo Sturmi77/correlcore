@@ -52,20 +52,37 @@ class WidgetRefreshWorker(
                 var summary = fetchSummary(apiBase, accessToken)
 
                 if (summary is SummaryResult.Unauthorized) {
-                    val rotated =
-                        SessionRefreshCoordinator.refresh(
-                            applicationContext,
-                            apiBaseHint = apiBase,
-                            refreshTokenHint = creds.refreshToken,
-                        )
-                    if (rotated == null) {
-                        WidgetCredentialsStore.clearCredentials(applicationContext)
-                        CorrelCoreWidget().updateAll(applicationContext)
-                        return@withContext Result.success()
+                    when (
+                        val outcome =
+                            SessionRefreshCoordinator.refresh(
+                                applicationContext,
+                                apiBaseHint = apiBase,
+                                refreshTokenHint = creds.refreshToken,
+                            )
+                    ) {
+                        is SessionRefreshCoordinator.Outcome.Success -> {
+                            accessToken = outcome.tokens.accessToken
+                            apiBase = outcome.tokens.apiBase
+                            summary = fetchSummary(apiBase, accessToken)
+                        }
+                        SessionRefreshCoordinator.Outcome.AuthRejected,
+                        SessionRefreshCoordinator.Outcome.MissingCredentials,
+                        -> {
+                            WidgetCredentialsStore.clearCredentials(applicationContext)
+                            CorrelCoreWidget().updateAll(applicationContext)
+                            return@withContext Result.success()
+                        }
+                        SessionRefreshCoordinator.Outcome.TransientFailure -> {
+                            // Keep credentials; retry without wiping auth (avoids
+                            // WebView stale-JWT refresh → revoke_all).
+                            WidgetCredentialsStore.setStatus(
+                                applicationContext,
+                                WidgetCredentialsStore.STATUS_ERROR,
+                            )
+                            CorrelCoreWidget().updateAll(applicationContext)
+                            return@withContext Result.retry()
+                        }
                     }
-                    accessToken = rotated.accessToken
-                    apiBase = rotated.apiBase
-                    summary = fetchSummary(apiBase, accessToken)
                 }
 
                 when (summary) {

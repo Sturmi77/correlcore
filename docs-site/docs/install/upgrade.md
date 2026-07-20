@@ -18,6 +18,10 @@ docker compose pull
 docker compose up -d
 ```
 
+Optional: also set `APP_VERSION=1.0.7` so `/api/v1/health` and error-tracking
+release labels match the image. Leaving an older `APP_VERSION` in a retained
+`.env` does not block the upgrade.
+
 The `migrate` service runs `alembic upgrade head` before the API starts.
 See [Container images](container-images.md) for registry and tag details.
 

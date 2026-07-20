@@ -86,7 +86,7 @@ export ANDROID_KEYSTORE_PASSWORD=...
 export ANDROID_KEY_ALIAS=correlcore
 export ANDROID_KEY_PASSWORD=...
 export ANDROID_VERSION_NAME=1.0.7
-export ANDROID_VERSION_CODE=1000006
+export ANDROID_VERSION_CODE=1000007
 pnpm cap:assemble:release
 # → apps/android/android/app/build/outputs/apk/release/app-release.apk
 # → apps/android/android/app/build/outputs/bundle/release/app-release.aab
@@ -97,7 +97,7 @@ Or use `apps/android/android/keystore.properties` from
 
 **CI version encoding:** on `v*` tags, [`release-android.yml`](../../.github/workflows/release-android.yml)
 strips the leading `v` for `versionName` (e.g. `v1.0.7` → `1.0.7`) and sets
-`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.0.7` → `1000006`).
+`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.0.7` → `1000007`).
 Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / run number.
 
 ### CI

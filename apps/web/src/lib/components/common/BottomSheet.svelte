@@ -57,6 +57,7 @@
     class="bottom-sheet"
     aria-labelledby={labelledBy}
     data-testid={testId}
+    data-ptr-ignore
     on:click={onDialogClick}
     on:close={requestClose}
     on:cancel|preventDefault={requestClose}

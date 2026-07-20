@@ -76,10 +76,37 @@
     if (!refreshing) pullPx = 0;
   }
 
+  /**
+   * Ignore pulls that start in modals / nested overflow scrollers so a
+   * BottomSheet (or similar) downward scroll at its top does not arm PTR.
+   */
+  function shouldIgnoreGestureTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof Element)) return false;
+    if (target.closest('dialog[open], [aria-modal="true"], [data-ptr-ignore]')) {
+      return true;
+    }
+    if (!scrollElement) return false;
+    let el: Element | null = target;
+    while (el && el !== scrollElement) {
+      if (el instanceof HTMLElement) {
+        const { overflowY } = getComputedStyle(el);
+        if (
+          (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+          el.scrollHeight > el.clientHeight + 1
+        ) {
+          return true;
+        }
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }
+
   function onTouchStart(event: TouchEvent): void {
     if (!canRefresh || refreshing) return;
     if (event.touches.length !== 1) return;
     if (!scrollElement || scrollElement.scrollTop > 0) return;
+    if (shouldIgnoreGestureTarget(event.target)) return;
     tracking = true;
     armed = false;
     startY = event.touches[0].clientY;
