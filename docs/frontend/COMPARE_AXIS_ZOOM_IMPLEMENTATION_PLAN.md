@@ -3,12 +3,15 @@
 **Status:** Ready for implementation  
 **Date:** 2026-07-20  
 **Product/concept:** [`COMPARE_AXIS_ZOOM_PLAN.md`](COMPARE_AXIS_ZOOM_PLAN.md)  
+**Sprint plan:** [`COMPARE_AXIS_ZOOM_SPRINT_PLAN.md`](COMPARE_AXIS_ZOOM_SPRINT_PLAN.md)  
 **Issue:** [#472](https://github.com/Sturmi77/correlcore/issues/472) · Plan PR [#473](https://github.com/Sturmi77/correlcore/pull/473)  
 **Stack:** SvelteKit web only (same UI in PWA / Capacitor WebView) — no backend change in v1
 
 This document is the **engineering execution plan**: ordered PR slices, concrete
-files, APIs, tests, and exit criteria. Product decisions stay in the concept
-plan; if they conflict, the concept plan wins until #472 records an override.
+files, APIs, tests, and exit criteria. **Sprint packaging** (A+B+C → D → E/F,
+one PR per sprint) lives in the sprint plan. Product decisions stay in the
+concept plan; if they conflict, the concept plan wins until #472 records an
+override.
 
 ---
 
