@@ -24,6 +24,8 @@
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { insightStore, loadInsights } from '$lib/stores/insights';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import { rangeToDays, rangeToHabitWindow } from '$lib/utils/trendsRange';
@@ -377,7 +379,14 @@
     mobileMedia?.addEventListener('change', updateCompactTrends);
     // loadTrends runs via the auth-reactive block above (avoids racing hydrate).
     void loadInsights();
-    return () => mobileMedia?.removeEventListener('change', updateCompactTrends);
+    const unregisterRefresh = registerPageRefresh(async () => {
+      await Promise.all([loadTrends(), loadInsights()]);
+      scheduleSync();
+    });
+    return () => {
+      unregisterRefresh();
+      mobileMedia?.removeEventListener('change', updateCompactTrends);
+    };
   });
 </script>
 

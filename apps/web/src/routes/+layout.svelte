@@ -11,9 +11,11 @@
   import { ensureStandaloneLaunchRoute } from '$lib/utils/pwaLaunch';
   import AppNav from '$lib/components/common/AppNav.svelte';
   import CorrelCoreSplash from '$lib/components/common/CorrelCoreSplash.svelte';
+  import PullToRefresh from '$lib/components/common/PullToRefresh.svelte';
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import GlobalEntrySheet from '$lib/components/entries/GlobalEntrySheet.svelte';
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
+  import { entrySheetStore } from '$lib/stores/entrySheet';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
   import { initializeSyncOrchestrator, scheduleSync } from '$lib/offline/syncOrchestrator';
   import {
@@ -23,6 +25,8 @@
   } from '$lib/utils/serviceWorker';
   import { SPLASH_MIN_MS } from '$lib/constants/splashTiming';
   import { get } from 'svelte/store';
+
+  let mainContentEl: HTMLElement | null = null;
 
   // svelte-i18n's `init()` registers the locale dictionary asynchronously
   // (locale files are dynamic imports). We must NOT render any child that
@@ -35,6 +39,7 @@
 
   $: pathname = $page.url?.pathname ?? '/';
   $: showAppNav = shouldShowAppNav($auth.status, pathname);
+  $: pullToRefreshDisabled = $entrySheetStore.open;
 
   // Brand splash: stay up until max(real boot done, min animation duration).
   // Starts false so the first paint always shows the mark; flips true after
@@ -133,8 +138,11 @@
       <main
         id="main-content"
         class="page-shell page-shell--with-nav flex-1 overflow-y-auto min-h-0"
+        bind:this={mainContentEl}
       >
-        <slot />
+        <PullToRefresh scrollElement={mainContentEl} disabled={pullToRefreshDisabled}>
+          <slot />
+        </PullToRefresh>
       </main>
       <AppNav />
       <PwaStatusBanner />

@@ -17,6 +17,7 @@
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
   import { isOfflineSyncEnabled, setOfflineSyncEnabled } from '$lib/offline/featureFlag';
   import { scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
   let offlineSyncToggle = false;
   const showApiBase = isCapacitorBuild();
@@ -30,6 +31,10 @@
     if (showApiBase) {
       apiBaseInput = getConfiguredApiBaseForDisplay();
     }
+    return registerPageRefresh(async () => {
+      scheduleSync();
+      await pwaLifecycle.checkForUpdate();
+    });
   });
 
   function onSaveApiBase() {

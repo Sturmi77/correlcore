@@ -39,6 +39,8 @@
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
   import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
@@ -263,15 +265,23 @@
   }
 
   onMount(() => {
+    const unregisterRefresh = registerPageRefresh(async () => {
+      await Promise.all([loadDashboard(), loadInsights()]);
+      scheduleSync();
+    });
     if (get(auth).status === 'authenticated' && !dashboardLoaded) {
       void loadDashboard();
       void loadInsights();
     }
-    return entrySheetSaveSignal.subscribe((count) => {
+    const unsubscribeSave = entrySheetSaveSignal.subscribe((count) => {
       if (count === 0) return;
       void loadDashboard();
       void loadInsights();
     });
+    return () => {
+      unregisterRefresh();
+      unsubscribeSave();
+    };
   });
 </script>
 

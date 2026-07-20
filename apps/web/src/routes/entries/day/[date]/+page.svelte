@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import { page } from '$app/stores';
   import { auth } from '$lib/stores/auth';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import IconRender from '$lib/components/common/IconRender.svelte';
@@ -105,6 +106,7 @@
 
   onMount(() => {
     void load();
+    return registerPageRefresh(() => load());
   });
 </script>
 

@@ -17,6 +17,8 @@
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
   import { dismissInsight, insightStore } from '$lib/stores/insights';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
   import { ApiError } from '$lib/api/client';
@@ -633,7 +635,22 @@
     syncCompactInsights();
     mobileMedia?.addEventListener('change', syncCompactInsights);
 
-    return () => mobileMedia?.removeEventListener('change', syncCompactInsights);
+    const unregisterRefresh = registerPageRefresh(async () => {
+      await loadInsights();
+      const reloads: Promise<void>[] = [];
+      if (cooccurrenceRequested || cooccurrenceLoading) reloads.push(loadCooccurrence());
+      if (symptomCooccurrenceRequested || symptomCooccurrenceLoading) {
+        reloads.push(loadSymptomCooccurrence());
+      }
+      if (tagClusters || tagClustersLoading) reloads.push(loadTagClusters());
+      if (reloads.length > 0) await Promise.all(reloads);
+      scheduleSync();
+    });
+
+    return () => {
+      unregisterRefresh();
+      mobileMedia?.removeEventListener('change', syncCompactInsights);
+    };
   });
 
   $: showMaturityMilestone = shouldShowMaturityMilestone(

@@ -17,6 +17,7 @@ const LOCAL_VAR_EXACT = new Set([
   '--week-count',
   '--strip-chart-width',
   '--tag-count',
+  '--ptr-pull',
 ]);
 
 // Brand-mark sizes must use BRAND_MARK_* constants from iconSizes.ts — no

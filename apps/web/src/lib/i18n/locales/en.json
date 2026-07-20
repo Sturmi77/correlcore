@@ -15,7 +15,12 @@
   },
   "a11y": {
     "skip_to_content": "Skip to content",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "pull_to_refresh": {
+      "pull": "Pull to refresh",
+      "release": "Release to refresh",
+      "refreshing": "Refreshing\u2026"
+    }
   },
   "theme": {
     "label": "Theme:",
