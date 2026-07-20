@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  applyUpstreamCookies,
-  collectSetCookieLines,
-  parseSetCookieLine,
-} from './upstreamCookies';
+import { applyUpstreamCookies, collectSetCookieLines, parseSetCookieLine } from './upstreamCookies';
 
 describe('parseSetCookieLine', () => {
   it('parses access cookie with Max-Age and SameSite=strict', () => {

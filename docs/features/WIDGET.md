@@ -58,14 +58,14 @@ Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 
 ## Native layout
 
-| File                                  | Role                    |
-| ------------------------------------- | ----------------------- |
-| `…/widget/CorrelCoreWidget.kt`        | Glance UI + receiver    |
-| `…/widget/WidgetRefreshWorker.kt`        | HTTP poll + WorkManager        |
-| `…/widget/WidgetCredentialsPlugin.kt`    | Capacitor bridge               |
-| `…/widget/WidgetCredentialsStore.kt`     | SharedPreferences              |
+| File                                     | Role                             |
+| ---------------------------------------- | -------------------------------- |
+| `…/widget/CorrelCoreWidget.kt`           | Glance UI + receiver             |
+| `…/widget/WidgetRefreshWorker.kt`        | HTTP poll + WorkManager          |
+| `…/widget/WidgetCredentialsPlugin.kt`    | Capacitor bridge                 |
+| `…/widget/WidgetCredentialsStore.kt`     | SharedPreferences                |
 | `…/session/SessionRefreshCoordinator.kt` | Shared refresh lock + dual-write |
-| `res/xml/correlcore_widget_info.xml`     | AppWidget metadata             |
+| `res/xml/correlcore_widget_info.xml`     | AppWidget metadata               |
 
 ## Manual QA checklist
 

@@ -214,12 +214,12 @@ PS-0 (contract + UI)
 
 ## Risks & mitigations
 
-| Risk                                          | Impact                               | Mitigation                                                                        |
-| --------------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------- |
-| HTTP Homelab drops `Secure` cookies           | Web/PWA look “broken” (always login) | PS-0/PS-1 docs + `COOKIE_SECURE` guidance; QA on HTTPS and known HTTP setups      |
+| Risk                                          | Impact                               | Mitigation                                                                                                                                                         |
+| --------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| HTTP Homelab drops `Secure` cookies           | Web/PWA look “broken” (always login) | PS-0/PS-1 docs + `COOKIE_SECURE` guidance; QA on HTTPS and known HTTP setups                                                                                       |
 | Secure store / widget double-write races      | Stale refresh, revoke_all            | `SessionRefreshCoordinator` in-process lock + dual-write SecureSession/Widget; WebView prefers `SecureSession.refresh` then re-syncs native stores before clearing |
-| `hydrate()` treats network error as anonymous | False logout offline                 | Document in PS-3; optional follow-up issue if PWA offline UX suffers              |
-| Scope creep into biometrics / longer TTL      | Delays APK fix                       | Keep out of scope; track as follow-ups on #453                                    |
+| `hydrate()` treats network error as anonymous | False logout offline                 | Document in PS-3; optional follow-up issue if PWA offline UX suffers                                                                                               |
+| Scope creep into biometrics / longer TTL      | Delays APK fix                       | Keep out of scope; track as follow-ups on #453                                                                                                                     |
 
 ---
 

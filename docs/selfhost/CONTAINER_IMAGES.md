@@ -76,7 +76,7 @@ Applies to **any** protected route (Trends, Settings → Consent /
    (`Path=/api/v1/auth/refresh`). If missing → session never stuck (proxy /
    Secure). Login JSON alone is not enough.
 3. **Network tab on the failing call** — Request must send `Cookie:
-   access_token=…`. Response header `X-Auth-Fail-Reason` (staging/homelab):
+access_token=…`. Response header `X-Auth-Fail-Reason` (staging/homelab):
    `missing_access_token` | `jwt_invalid_or_expired` | `dek_unwrap_failed` | …
 4. **`COOKIE_SECURE` in the API container** — must be `false` on plain HTTP:
    `docker exec correlcore-api env | grep COOKIE_SECURE`.

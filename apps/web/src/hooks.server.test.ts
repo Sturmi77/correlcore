@@ -29,7 +29,10 @@ import { handle } from './hooks.server';
 type FetchMock = ReturnType<typeof vi.fn>;
 type ResolveFn = Parameters<Handle>[0]['resolve'];
 
-function makeEvent(url: string, init: RequestInit = {}): RequestEvent & {
+function makeEvent(
+  url: string,
+  init: RequestInit = {}
+): RequestEvent & {
   cookies: { set: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
 } {
   const request = new Request(url, init);

@@ -98,11 +98,7 @@ export async function login(payload: LoginPayload): Promise<UserResponse> {
   const sessionUser = await fetchCurrentUser();
   if (!sessionUser) {
     clearSessionTokens();
-    throw new ApiError(
-      401,
-      'Could not validate credentials',
-      '/auth/me'
-    );
+    throw new ApiError(401, 'Could not validate credentials', '/auth/me');
   }
   await prepareOfflineDataForAuthenticatedUser(sessionUser.id);
   resetInsightStore();
