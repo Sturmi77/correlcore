@@ -119,6 +119,7 @@ describe('login / logout / setUser', () => {
       expires_in: 900,
       user: fakeUser,
     });
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
 
     const loginPromise = login({ email: 'a@b.de', password: 'pw12345678' });
     await Promise.resolve();
@@ -133,19 +134,36 @@ describe('login / logout / setUser', () => {
     ).toBeLessThan(vi.mocked(authApi.login).mock.invocationCallOrder[0]);
   });
 
-  it('login updates the store with the returned user', async () => {
+  it('login updates the store only after /auth/me confirms the session', async () => {
     vi.mocked(authApi.login).mockResolvedValueOnce({
       access_token: 't',
       token_type: 'bearer',
       expires_in: 900,
       user: fakeUser,
     });
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
     const user = await login({ email: 'a@b.de', password: 'pw12345678' });
     expect(user).toEqual(fakeUser);
+    expect(authApi.fetchCurrentUser).toHaveBeenCalled();
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
     expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(1);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
+  });
+
+  it('login fails when cookies did not stick (/auth/me → null)', async () => {
+    vi.mocked(authApi.login).mockResolvedValueOnce({
+      token_type: 'bearer',
+      expires_in: 900,
+      user: fakeUser,
+    });
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(null);
+    await expect(login({ email: 'a@b.de', password: 'pw12345678' })).rejects.toMatchObject({
+      status: 401,
+      path: '/auth/me',
+    });
+    expect(get(auth)).toEqual({ status: 'loading' });
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).not.toHaveBeenCalled();
   });
 
   it('logout clears state even when API call fails', async () => {

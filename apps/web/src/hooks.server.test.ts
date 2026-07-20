@@ -9,8 +9,8 @@
  *     preserved verbatim.
  *   - Hop-by-hop headers (`connection`, `transfer-encoding`, …) are
  *     stripped on both directions.
- *   - The upstream `Set-Cookie` header (HttpOnly auth cookies) is
- *     forwarded to the browser unchanged.
+ *   - Upstream `Set-Cookie` (HttpOnly auth cookies) is applied via
+ *     `event.cookies` so adapter-node delivers them reliably.
  *   - Upstream connection failures are translated into a JSON 502.
  *   - GET requests do not carry a body or a `duplex` option to the
  *     upstream fetch.
@@ -29,8 +29,14 @@ import { handle } from './hooks.server';
 type FetchMock = ReturnType<typeof vi.fn>;
 type ResolveFn = Parameters<Handle>[0]['resolve'];
 
-function makeEvent(url: string, init: RequestInit = {}): RequestEvent {
+function makeEvent(url: string, init: RequestInit = {}): RequestEvent & {
+  cookies: { set: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
+} {
   const request = new Request(url, init);
+  const cookies = {
+    set: vi.fn(),
+    delete: vi.fn(),
+  };
   // Only the fields the hook actually reads. Everything else can stay
   // undefined — the Handle type is structurally a function, the runtime
   // signature is `({ event, resolve })`.
@@ -38,7 +44,10 @@ function makeEvent(url: string, init: RequestInit = {}): RequestEvent {
     url: new URL(url),
     request,
     getClientAddress: () => '203.0.113.42',
-  } as unknown as RequestEvent;
+    cookies,
+  } as unknown as RequestEvent & {
+    cookies: { set: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
+  };
 }
 
 let fetchMock: FetchMock;
@@ -172,19 +181,19 @@ describe('handle — proxy /api/*', () => {
     expect(headers.get('x-real-ip')).toBe('203.0.113.42');
   });
 
-  it('forwards upstream Set-Cookie (HttpOnly auth cookie) verbatim', async () => {
+  it('applies upstream Set-Cookie via event.cookies (not raw response headers)', async () => {
     const upstreamHeaders = new Headers();
     upstreamHeaders.append(
       'set-cookie',
-      'access_token=eyJ; HttpOnly; Secure; SameSite=Strict; Path=/api'
+      'access_token=eyJ; HttpOnly; Max-Age=900; Path=/api; SameSite=strict'
     );
     upstreamHeaders.append(
       'set-cookie',
-      'refresh_token=eyR; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh'
+      'refresh_token=eyR; HttpOnly; Max-Age=2592000; Path=/api/v1/auth/refresh; SameSite=strict'
     );
     upstreamHeaders.set('content-type', 'application/json');
     fetchMock.mockResolvedValue(
-      new Response('{"access_token":"eyJ","expires_in":1800}', {
+      new Response('{"expires_in":900}', {
         status: 200,
         headers: upstreamHeaders,
       })
@@ -197,17 +206,19 @@ describe('handle — proxy /api/*', () => {
     const res = await handle({ event, resolve: resolveMock });
 
     expect(res.status).toBe(200);
-    // jsdom and Node's undici expose multiple Set-Cookie headers slightly
-    // differently — some give one comma-joined string from `.get()`, others
-    // expose a `getSetCookie()` method that returns an array. Accept both.
-    const setCookieRaw =
-      (res.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() ??
-      (res.headers.get('set-cookie') ? [res.headers.get('set-cookie') as string] : []);
-    const joined = setCookieRaw.join(' || ');
-    expect(joined).toContain('access_token=eyJ');
-    expect(joined).toContain('refresh_token=eyR');
-    expect(joined).toContain('HttpOnly');
-    expect(joined).toContain('SameSite=Strict');
+    // Raw Set-Cookie must not be on the Response — SvelteKit serializes
+    // event.cookies after handle returns.
+    expect(res.headers.get('set-cookie')).toBeNull();
+    expect(event.cookies.set).toHaveBeenCalledWith(
+      'access_token',
+      'eyJ',
+      expect.objectContaining({ path: '/api', httpOnly: true, maxAge: 900 })
+    );
+    expect(event.cookies.set).toHaveBeenCalledWith(
+      'refresh_token',
+      'eyR',
+      expect.objectContaining({ path: '/api/v1/auth/refresh', httpOnly: true })
+    );
   });
 
   it('returns a JSON 502 when the upstream fetch throws', async () => {

@@ -48,15 +48,26 @@ _CREDENTIALS_DETAIL = "Could not validate credentials"
 
 
 def _credentials_exception(reason: str) -> HTTPException:
-    """Build the shared 401 and emit a structured reason for ops logs."""
+    """Build the shared 401 and emit a structured reason for ops logs.
+
+    Client ``detail`` stays opaque. In non-production we also attach
+    ``X-Auth-Fail-Reason`` so Homelab operators can see
+    ``missing_access_token`` vs ``dek_unwrap_failed`` in the browser
+    Network tab (e.g. Settings → Consent → ``/user/me/consents``).
+    """
     logger.info(
         "auth credentials rejected",
         extra={"auth_fail_reason": reason},
     )
+    headers: dict[str, str] = {"WWW-Authenticate": "Bearer"}
+    from app.core.config import settings
+
+    if settings.APP_ENV.lower() != "production":
+        headers["X-Auth-Fail-Reason"] = reason
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=_CREDENTIALS_DETAIL,
-        headers={"WWW-Authenticate": "Bearer"},
+        headers=headers,
     )
 
 

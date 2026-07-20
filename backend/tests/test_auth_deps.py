@@ -305,6 +305,8 @@ async def test_get_current_user_returns_401_without_token(
         r = await async_client.get("/api/v1/auth/me")
     assert r.status_code == 401
     assert r.json()["detail"] == "Could not validate credentials"
+    # Homelab/staging: reason visible in Network tab (not in production).
+    assert r.headers.get("x-auth-fail-reason") == "missing_access_token"
     assert any(
         getattr(rec, "auth_fail_reason", None) == "missing_access_token"
         or "missing_access_token" in rec.getMessage()

@@ -62,7 +62,7 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID"],
-        expose_headers=["X-Request-ID"],
+        expose_headers=["X-Request-ID", "X-Auth-Fail-Reason"],
     )
 
     # ── Routers ────────────────────────────────────────────────────────────

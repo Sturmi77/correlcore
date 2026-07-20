@@ -66,16 +66,24 @@ If testers report a bug that is already fixed on `main`, compare
 
 ### Auth 401 checklist (`Could not validate credentials`)
 
-1. **Running image** — `health/live.image_tag` / `git_commit` ≥ fix (e.g. Trends
-   `/entries/stats/symptoms` needs ≥ `#444` / `v1.0.6`).
-2. **`COOKIE_SECURE` in the API container** (not only host `.env`):
-   `docker exec <api-container> env | grep COOKIE_SECURE` and
-   `health/live.cookie_secure` — must be `false` on plain HTTP Homelab.
-3. **Container name** — discover with `docker ps | grep correl`; stacks differ
-   (`correlcore-api` vs `correlcore-test-api` vs `correlcore-quickstart-api`).
-4. **API logs** — look for `auth_fail_reason`
-   (`missing_access_token` | `jwt_invalid_or_expired` | `dek_unwrap_failed` | …).
-5. **Capacitor** — absolute `VITE_API_BASE_URL`, mixed content on `http://` API,
+Applies to **any** protected route (Trends, Settings → Consent /
+`/api/v1/user/me/consents`, Entries, …) — not only the old Trends path bug.
+
+1. **Running image** — `docker ps | grep correlcore` and
+   `curl -sS http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health/live`.
+2. **Browser cookies after login** (DevTools → Application → Cookies for the
+   web origin): `access_token` (`Path=/api`) and `refresh_token`
+   (`Path=/api/v1/auth/refresh`). If missing → session never stuck (proxy /
+   Secure). Login JSON alone is not enough.
+3. **Network tab on the failing call** — Request must send `Cookie:
+   access_token=…`. Response header `X-Auth-Fail-Reason` (staging/homelab):
+   `missing_access_token` | `jwt_invalid_or_expired` | `dek_unwrap_failed` | …
+4. **`COOKIE_SECURE` in the API container** — must be `false` on plain HTTP:
+   `docker exec correlcore-api env | grep COOKIE_SECURE`.
+5. **`dek_unwrap_failed`** — `ENCRYPTION_KEY` no longer matches keys that
+   wrapped user DEKs (key rotated without `ENCRYPTION_KEYS`). Restore the
+   previous key or list both: `ENCRYPTION_KEYS=<new>,<old>`.
+6. **Capacitor** — absolute `VITE_API_BASE_URL`, mixed content on `http://` API,
    Bearer refresh with `?include_access_token=true`.
 
 ---
