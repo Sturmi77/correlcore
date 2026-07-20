@@ -497,7 +497,16 @@
         "label": "Timeline zoom",
         "decrease_aria": "Zoom out to coarser columns",
         "increase_aria": "Zoom in to finer columns",
-        "status": "{days} days / cell"
+        "status": "{days} days / cell",
+        "encoding_hint": "Heatmap: occurrence sum · Lines: average of logged days",
+        "tap_hint": "Tap a multi-day cell to zoom in",
+        "tap_to_enlarge": "Tap to zoom in",
+        "open_day": "Open day",
+        "coverage": "Logged days {active} of {present}",
+        "partial": "{present} of {size} days",
+        "detail": "{range} · {coverage}",
+        "cell_tooltip": "{label}, {range}: {value} · {coverage}",
+        "cell_tooltip_zoom": "{label}, {range}: {value} · {coverage} · Tap to zoom in"
       }
     },
     "strip": {

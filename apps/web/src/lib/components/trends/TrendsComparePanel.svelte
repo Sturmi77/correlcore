@@ -13,7 +13,10 @@
   import {
     buildAxisBuckets,
     clampZoomStage,
+    findBucketForDate,
+    formatBucketRangeLabel,
     stageDays,
+    type AxisBucket,
     type CompareZoomStageIndex,
   } from '$lib/utils/compareAxisZoom';
   import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
@@ -28,7 +31,7 @@
     type CompareMode,
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
-  import { timelineCursor } from '$lib/stores/timelineCursor';
+  import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
   import UnifiedStripChart from './UnifiedStripChart.svelte';
@@ -125,6 +128,7 @@
   }
 
   function setZoomStage(next: CompareZoomStageIndex): void {
+    pendingFocusDate = null;
     zoomStage = next;
     writeCompareZoomStage(next);
     timelineCursor.clear();
@@ -138,6 +142,18 @@
     setZoomStage(clampZoomStage(zoomStage - 1));
   }
 
+  /** CAZ-2: multi-day tap zooms one stage finer and keeps the interval in view. */
+  function zoomInBucket(bucket: AxisBucket): void {
+    if (mode !== 'lines' || zoomStage === 0 || bucket.dates.length <= 1) return;
+    pendingFocusDate = bucket.start;
+    zoomStage = clampZoomStage(zoomStage - 1);
+    writeCompareZoomStage(zoomStage);
+  }
+
+  function handleZoomInBucket(event: CustomEvent<{ bucket: AxisBucket }>): void {
+    zoomInBucket(event.detail.bucket);
+  }
+
   function handlePinToggle(event: CustomEvent<{ rowId: string; pinned: boolean }>): void {
     const { rowId, pinned: shouldPin } = event.detail;
     pinned = shouldPin ? [...pinned, rowId] : pinned.filter((id) => id !== rowId);
@@ -146,10 +162,23 @@
 
   let axisScroller: HTMLDivElement;
   let lastAxisKey = '';
+  let pendingFocusDate: string | null = null;
 
   async function scrollToLatest(): Promise<void> {
     await tick();
     if (axisScroller) axisScroller.scrollLeft = axisScroller.scrollWidth;
+  }
+
+  async function scrollDateIntoView(date: string): Promise<void> {
+    await tick();
+    if (!axisScroller) return;
+    const targetBucket = findBucketForDate(axisBuckets, date);
+    const focusKey = targetBucket?.start ?? date;
+    const cell = axisScroller.querySelector(`[data-date="${focusKey}"]`);
+    if (cell instanceof HTMLElement && typeof cell.scrollIntoView === 'function') {
+      cell.scrollIntoView({ inline: 'center', block: 'nearest' });
+    }
+    timelineCursor.setDate(focusKey, 'tap');
   }
 
   $: axisStart =
@@ -185,10 +214,45 @@
   $: axisKey = `${axisStart}:${axisEnd}:${axisDates.length}:${effectiveZoomStage}:${mode}`;
   $: if (axisKey && axisKey !== lastAxisKey) {
     lastAxisKey = axisKey;
-    void scrollToLatest();
+    if (pendingFocusDate) {
+      const focus = pendingFocusDate;
+      pendingFocusDate = null;
+      void scrollDateIntoView(focus);
+    } else {
+      void scrollToLatest();
+    }
   }
   /** Kontextzeilen only make sense when the selected range has at least one entry. */
   $: hasEntriesInRange = points.some((point) => point.entry_count > 0);
+
+  $: cursorBucket = $timelineCursorDate
+    ? findBucketForDate(axisBuckets, $timelineCursorDate)
+    : null;
+  $: cursorEntryDays = cursorBucket
+    ? cursorBucket.dates.reduce((count, date) => {
+        const point = points.find((item) => item.period_start === date);
+        return count + (point && point.entry_count > 0 ? 1 : 0);
+      }, 0)
+    : 0;
+  $: cursorCoverageLabel = cursorBucket
+    ? $_(
+        cursorBucket.partial ? 'trends.compare.zoom.partial' : 'trends.compare.zoom.coverage',
+        {
+          values: cursorBucket.partial
+            ? { present: cursorBucket.presentDays, size: cursorBucket.dayCount }
+            : { active: cursorEntryDays, present: cursorBucket.presentDays },
+        }
+      )
+    : '';
+  $: cursorDetailLabel =
+    cursorBucket && cursorCoverageLabel
+      ? $_('trends.compare.zoom.detail', {
+          values: {
+            range: formatBucketRangeLabel(cursorBucket),
+            coverage: cursorCoverageLabel,
+          },
+        })
+      : '';
 </script>
 
 <section class="compare" class:compare--compact={compactChrome} data-testid="trends-compare-panel">
@@ -280,35 +344,50 @@
   {/if}
 
   {#if axisDates.length > 0}
-    <div
-      class="compare__zoom"
-      role="group"
-      aria-label={$_('trends.compare.zoom.label')}
-      data-testid="trends-compare-zoom"
-    >
-      <button
-        type="button"
-        class="compare__zoom-btn"
-        data-testid="trends-compare-zoom-decrease"
-        aria-label={$_('trends.compare.zoom.decrease_aria')}
-        disabled={!canZoomOut}
-        on:click={zoomOut}
+    <div class="compare__zoom-block" data-testid="trends-compare-zoom-block">
+      <div
+        class="compare__zoom"
+        role="group"
+        aria-label={$_('trends.compare.zoom.label')}
+        data-testid="trends-compare-zoom"
       >
-        −
-      </button>
-      <span class="compare__zoom-status" data-testid="trends-compare-zoom-status">
-        {$_('trends.compare.zoom.status', { values: { days: zoomDays } })}
-      </span>
-      <button
-        type="button"
-        class="compare__zoom-btn"
-        data-testid="trends-compare-zoom-increase"
-        aria-label={$_('trends.compare.zoom.increase_aria')}
-        disabled={!canZoomIn}
-        on:click={zoomIn}
-      >
-        +
-      </button>
+        <button
+          type="button"
+          class="compare__zoom-btn"
+          data-testid="trends-compare-zoom-decrease"
+          aria-label={$_('trends.compare.zoom.decrease_aria')}
+          disabled={!canZoomOut}
+          on:click={zoomOut}
+        >
+          −
+        </button>
+        <span class="compare__zoom-status" data-testid="trends-compare-zoom-status">
+          {$_('trends.compare.zoom.status', { values: { days: zoomDays } })}
+        </span>
+        <button
+          type="button"
+          class="compare__zoom-btn"
+          data-testid="trends-compare-zoom-increase"
+          aria-label={$_('trends.compare.zoom.increase_aria')}
+          disabled={!canZoomIn}
+          on:click={zoomIn}
+        >
+          +
+        </button>
+      </div>
+      <p class="compare__zoom-hint" data-testid="trends-compare-zoom-encoding">
+        {$_('trends.compare.zoom.encoding_hint')}
+      </p>
+      {#if mode === 'lines' && zoomStage > 0}
+        <p class="compare__zoom-hint" data-testid="trends-compare-zoom-tap-hint">
+          {$_('trends.compare.zoom.tap_hint')}
+        </p>
+      {/if}
+      {#if cursorDetailLabel}
+        <p class="compare__zoom-detail" data-testid="trends-compare-zoom-detail">
+          {cursorDetailLabel}
+        </p>
+      {/if}
     </div>
   {/if}
 
@@ -341,6 +420,7 @@
         {noteDates}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+        on:zoomInBucket={handleZoomInBucket}
       />
     {/if}
 
@@ -365,6 +445,7 @@
         autoScroll={false}
         {pruneSparseAxes}
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+        on:zoomInBucket={handleZoomInBucket}
         on:pinToggle={handlePinToggle}
       />
     {/if}
@@ -489,11 +570,27 @@
     font: inherit;
   }
 
+  .compare__zoom-block {
+    display: grid;
+    gap: var(--space-1);
+  }
+
   .compare__zoom {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     flex-wrap: wrap;
+  }
+
+  .compare__zoom-hint,
+  .compare__zoom-detail {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .compare__zoom-detail {
+    font-weight: 600;
   }
 
   .compare__zoom-btn {

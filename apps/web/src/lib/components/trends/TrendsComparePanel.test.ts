@@ -11,6 +11,21 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'trends.compare.zoom.status' && opts?.values?.days != null) {
         return `${opts.values.days} days / cell`;
       }
+      if (key === 'trends.compare.zoom.coverage' && opts?.values) {
+        return `Logged days ${opts.values.active} of ${opts.values.present}`;
+      }
+      if (key === 'trends.compare.zoom.partial' && opts?.values) {
+        return `${opts.values.present} of ${opts.values.size} days`;
+      }
+      if (key === 'trends.compare.zoom.detail' && opts?.values) {
+        return `${opts.values.range} · ${opts.values.coverage}`;
+      }
+      if (key === 'trends.compare.zoom.cell_tooltip' && opts?.values) {
+        return `${opts.values.label}, ${opts.values.range}: ${opts.values.value} · ${opts.values.coverage}`;
+      }
+      if (key === 'trends.compare.zoom.cell_tooltip_zoom' && opts?.values) {
+        return `${opts.values.label}, ${opts.values.range}: ${opts.values.value} · ${opts.values.coverage} · Tap to zoom in`;
+      }
       return key;
     }),
   };
@@ -138,5 +153,70 @@ describe('TrendsComparePanel', () => {
     expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('1');
     cells = [...container.querySelectorAll('.compare-heatmap__cell[data-date]')];
     expect(new Set(cells.map((cell) => cell.getAttribute('data-date'))).size).toBe(14);
+  });
+
+  it('zooms in one stage when tapping a multi-day heatmap cell', async () => {
+    const selectSpy = vi.fn();
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: weekHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+      events: { selectDate: selectSpy },
+    });
+
+    expect(screen.getByTestId('trends-compare-zoom-encoding')).toBeTruthy();
+    expect(screen.getByTestId('trends-compare-zoom-tap-hint')).toBeTruthy();
+
+    const zoomable = container.querySelector(
+      '.compare-heatmap__cell[data-zoomable="true"]'
+    ) as HTMLButtonElement;
+    expect(zoomable).toBeTruthy();
+    await fireEvent.click(zoomable);
+
+    expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('3');
+    expect(selectSpy).not.toHaveBeenCalled();
+    const columns = new Set(
+      [...container.querySelectorAll('.compare-heatmap__cell[data-date]')].map((cell) =>
+        cell.getAttribute('data-date')
+      )
+    );
+    expect(columns.size).toBe(5);
+  });
+
+  it('opens the day sheet when tapping a single-day heatmap cell', async () => {
+    const selectSpy = vi.fn();
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: weekHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+      events: { selectDate: selectSpy },
+    });
+
+    // Zoom to day columns first.
+    await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
+    await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
+    expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('1');
+
+    const dayCell = container.querySelector(
+      '.compare-heatmap__cell[data-date="2026-05-08"]'
+    ) as HTMLButtonElement;
+    expect(dayCell?.getAttribute('data-zoomable')).toBe('false');
+    await fireEvent.click(dayCell);
+
+    expect(selectSpy).toHaveBeenCalledTimes(1);
+    expect(selectSpy.mock.calls[0]?.[0]?.detail?.date).toBe('2026-05-08');
+    expect(screen.getByTestId('trends-compare-zoom-status').textContent).toContain('1');
   });
 });
