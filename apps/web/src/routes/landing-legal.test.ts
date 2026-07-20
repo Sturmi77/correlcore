@@ -30,6 +30,14 @@ describe('M10 marketing landing and legal pages', () => {
     expect(landingSource).toContain('href="/auth/register"');
   });
 
+  it('uses split-hero bento structure from the marketing handoff', () => {
+    expect(landingSource).toContain('BrowserFrameMock');
+    expect(landingSource).toContain('landing__bento');
+    expect(landingSource).toContain('landing-feature-1');
+    expect(landingSource).toContain('landing-feature-2');
+    expect(landingSource).toContain('landing-faq-');
+  });
+
   it('links privacy and impressum from the legal footer', () => {
     expect(landingSource).toContain('LegalFooter');
     expect(legalFooterSource).toContain('data-testid="legal-footer-privacy"');
