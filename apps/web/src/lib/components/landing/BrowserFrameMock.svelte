@@ -36,7 +36,7 @@
   .cc-frame__dot {
     width: 0.5rem;
     height: 0.5rem;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: var(--color-border);
     display: inline-block;
   }

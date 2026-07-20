@@ -18,8 +18,8 @@
 
   const faqKeys = ['1', '2', '3', '4'] as const;
 
-  $: activeLocale = ($locale ?? 'de').split('-')[0] as AppLocale;
-  $: nextLocale = activeLocale === 'de' ? 'en' : 'de';
+  $: activeLocale = (($locale ?? 'de').split('-')[0] === 'en' ? 'en' : 'de') as AppLocale;
+  $: nextLocale = (activeLocale === 'de' ? 'en' : 'de') as AppLocale;
 
   function toggleLocale(): void {
     setAppLocale(nextLocale);
@@ -196,7 +196,7 @@
   .landing__brand-glow {
     position: absolute;
     inset: -0.75rem;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: radial-gradient(
       circle,
       color-mix(in srgb, var(--color-primary) 40%, transparent) 0%,
@@ -250,7 +250,7 @@
   .landing__badge {
     display: inline-block;
     padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full, 999px);
+    border-radius: var(--radius-full);
     background: color-mix(in srgb, var(--color-primary) 12%, transparent);
     color: var(--color-primary);
     font-size: var(--text-xs);
