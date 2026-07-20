@@ -30,13 +30,13 @@ Built by
 | --------------------------- | --------------------------------------- |
 | Push to `main`              | `:latest`, `:main`, `:sha-<short>`      |
 | Tag `v1.0.0`                | `:v1.0.0`, `:v1.0`, `:latest`           |
-| Tag `v1.0.6` (any `v1.0.x`) | `:v1.0.6`, `:v1.0` (semver minor alias) |
+| Tag `v1.0.7` (any `v1.0.x`) | `:v1.0.7`, `:v1.0` (semver minor alias) |
 | `workflow_dispatch`         | Same rules for current ref context      |
 
 Pin production deploys to an immutable tag (any **`v1.0.x`** pin works on the 1.0 line):
 
 ```env
-IMAGE_TAG=v1.0.6
+IMAGE_TAG=v1.0.7
 # or another patch, e.g. IMAGE_TAG=v1.0.3
 # or
 IMAGE_TAG=sha-abc1234

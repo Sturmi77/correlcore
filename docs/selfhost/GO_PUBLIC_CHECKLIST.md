@@ -1,9 +1,9 @@
 # CorrelCore — Go-Public Checklist (M10 Sprint 5)
 
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 **Historical M10 go-public checklist.** CorrelCore **v1.0.0** shipped 2026-07-11; the
-current release line is **1.0.x** (patch tags through `v1.0.6` with Android sideload APKs).
+current release line is **1.0.x** (patch tags through `v1.0.7` with Android sideload APKs).
 Use the [Post-1.0.x patch releases](#post-10x-patch-releases) section below for new patch tags.
 
 Operator and maintainer checklist before making the repository **public** and
@@ -144,7 +144,7 @@ Selfhost operators use their own security contact for instance-specific issues; 
 
 ## Post-1.0.x patch releases
 
-Checklist for tagging **`v1.0.N`** (e.g. `v1.0.6`) after the initial M10 go-public:
+Checklist for tagging **`v1.0.N`** (e.g. `v1.0.7`) after the initial M10 go-public:
 
 | Step | Action                                                                                                                                                       |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |

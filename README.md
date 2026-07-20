@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" /></a>
   <a href="https://sturmi77.github.io/correlcore/"><img src="https://img.shields.io/badge/release-selfhost%20v1.0.x-blue" alt="Release" /></a>
   <a href="#tech-stack"><img src="https://img.shields.io/badge/stack-FastAPI%20%2B%20SvelteKit%20%2B%20PostgreSQL-green" alt="Stack" /></a>
-  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.0.6-informational" alt="Latest tag" /></a>
+  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.0.7-informational" alt="Latest tag" /></a>
 </p>
 
 ---
@@ -31,7 +31,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 | **60 seconds per day**         | No more, or it simply won't get done                                                                         |
 | **No gamification, ever**      | You track your habits — not how often you open the app                                                       |
 
-**Public selfhost line:** tag **`v1.0.0`** (2026-07-11, M10) through **`v1.0.6`** (sideload/auth/trends hardening + docs sync). Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/). Release notes: [`CHANGELOG.md`](CHANGELOG.md).
+**Public selfhost line:** tag **`v1.0.0`** (2026-07-11, M10) through **`v1.0.7`** (pull-to-refresh, Trends smoothing default, Homelab auth fix, landing). Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/). Release notes: [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -106,7 +106,7 @@ git clone https://github.com/Sturmi77/correlcore.git
 cd correlcore/infra/docker
 cp .env.example .env
 # Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
-# Prefer IMAGE_TAG=v1.0.6 (or latest v1.0.x) for published GHCR images
+# Prefer IMAGE_TAG=v1.0.7 (or latest v1.0.x) for published GHCR images
 # Set acme email in traefik/traefik.yml to match LETSENCRYPT_EMAIL
 docker compose up -d
 ```
