@@ -2,7 +2,7 @@
 
 **Feature:** Trends Compare shared-axis bird’s-eye zoom  
 **Tracker:** [#472](https://github.com/Sturmi77/correlcore/issues/472)  
-**Sprints:** CAZ-1 [#480](https://github.com/Sturmi77/correlcore/pull/480) · CAZ-2 [#481](https://github.com/Sturmi77/correlcore/pull/481) · CAZ-3 (this)  
+**Sprints:** CAZ-1 [#480](https://github.com/Sturmi77/correlcore/pull/480) · CAZ-2 [#481](https://github.com/Sturmi77/correlcore/pull/481) · CAZ-3 [#483](https://github.com/Sturmi77/correlcore/pull/483)  
 **Date:** 2026-07-20
 
 Manual checks for Web / PWA / Capacitor WebView. Automated coverage notes are
