@@ -10,6 +10,32 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.8] — 2026-07-21
+
+Tester / selfhost patch on the public `1.0.x` line. Prefer this tag for GHCR
+pins and Android sideload APK installs.
+
+### Added
+
+- **Trends Compare shared-axis zoom (bird’s-eye)** — stages `1/3/7/14/28` days
+  per cell (default 7), synced timeline + Comparison Heatmap, `+/-` controls,
+  multi-day tap zoom-in, coverage/partial tooltips, strip-mode gate, marker
+  dedupe (#472, CAZ-0…3 via #473 / #477 / #479 / #480 / #481 / #483).
+- **Split-Hero-Bento public landing** redesign from design handoff (#478).
+
+### Changed
+
+- M10.2 hosted topology: Topology H end-state traffic diagram (#474).
+- Compare / landing docs and QA checklist for axis zoom
+  (`docs/frontend/COMPARE_AXIS_ZOOM_*.md`,
+  `docs/quality/COMPARE_AXIS_ZOOM_CAZ3_QA.md`).
+
+### Fixed
+
+- P1/P2 review findings across auth, pull-to-refresh, and Android (#476).
+
+---
+
 ## [1.0.7] — 2026-07-20
 
 Tester / selfhost patch on the public `1.0.x` line. Prefer this tag for GHCR

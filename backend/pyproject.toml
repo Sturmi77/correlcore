@@ -1,6 +1,6 @@
 [project]
 name = "correlcore-backend"
-version = "1.0.7"
+version = "1.0.8"
 description = "CorrelCore FastAPI backend"
 requires-python = ">=3.12"
 readme = "README.md"
