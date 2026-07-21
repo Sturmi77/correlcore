@@ -1,8 +1,8 @@
 # Release 1.0.x — documentation & version sync
 
-**Date:** 2026-07-20  
-**Current line:** **`v1.0.7`** / manifests **`1.0.7`**  
-**Git tags:** `v1.0.0` … `v1.0.7`
+**Date:** 2026-07-21  
+**Current line:** **`v1.0.8`** / manifests **`1.0.8`**  
+**Git tags:** `v1.0.0` … `v1.0.8`
 
 Completed-milestone archive: [`COMPLETED_MILESTONES.md`](COMPLETED_MILESTONES.md).
 
@@ -10,10 +10,13 @@ Completed-milestone archive: [`COMPLETED_MILESTONES.md`](COMPLETED_MILESTONES.md
 
 P0–P2 sync from the post-`v1.0.5` doc audit is **done** (merged via #455 / #456).
 Patch **`v1.0.6`** shipped persistent session and tester fixes (#441–#444 / #453).
-Patch **`v1.0.7`** packages pull-to-refresh (#469), Trends smoothing default +
+Patch **`v1.0.7`** packaged pull-to-refresh (#469), Trends smoothing default +
 heatmap alignment (#470), public landing (#471), Homelab Secure-cookie auth
-fix (#468), and M10.2 hosted-launch docs (#458 / #465–#467); install pins /
-manifests bump to `1.0.7`.
+fix (#468), and M10.2 hosted-launch docs (#458 / #465–#467).
+Patch **`v1.0.8`** packages Trends Compare shared-axis zoom (CAZ-0…3, #472 /
+#473 / #477 / #479–#483), Split-Hero-Bento landing (#478), auth/PTR/Android
+review fixes (#476), and Topology H docs (#474); install pins / manifests bump
+to `1.0.8`.
 
 ## Still optional (P3)
 

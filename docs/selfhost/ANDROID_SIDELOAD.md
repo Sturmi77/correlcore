@@ -29,7 +29,7 @@ Updates: open the same Releases page again and install the newer APK
 
 > **v1.0.0 note:** The first public tag was a selfhost/Docker release and does
 > **not** include an Android APK. Signed sideload APKs are available from **`v1.0.1`**
-> onward; prefer the latest **`v1.0.x`** release (e.g. **`v1.0.7`**).
+> onward; prefer the latest **`v1.0.x`** release (e.g. **`v1.0.8`**).
 
 ### Option B — Obtainium (auto-updates)
 
@@ -85,8 +85,8 @@ export ANDROID_KEYSTORE_PATH=/absolute/path/to/correlcore-upload.keystore
 export ANDROID_KEYSTORE_PASSWORD=...
 export ANDROID_KEY_ALIAS=correlcore
 export ANDROID_KEY_PASSWORD=...
-export ANDROID_VERSION_NAME=1.0.7
-export ANDROID_VERSION_CODE=1000007
+export ANDROID_VERSION_NAME=1.0.8
+export ANDROID_VERSION_CODE=1000008
 pnpm cap:assemble:release
 # → apps/android/android/app/build/outputs/apk/release/app-release.apk
 # → apps/android/android/app/build/outputs/bundle/release/app-release.aab
@@ -96,8 +96,8 @@ Or use `apps/android/android/keystore.properties` from
 [`apps/android/keystore.properties.example`](../../apps/android/keystore.properties.example).
 
 **CI version encoding:** on `v*` tags, [`release-android.yml`](../../.github/workflows/release-android.yml)
-strips the leading `v` for `versionName` (e.g. `v1.0.7` → `1.0.7`) and sets
-`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.0.7` → `1000007`).
+strips the leading `v` for `versionName` (e.g. `v1.0.8` → `1.0.8`) and sets
+`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.0.8` → `1000008`).
 Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / run number.
 
 ### CI
