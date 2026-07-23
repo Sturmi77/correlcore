@@ -16,6 +16,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PushAvailabilityPlugin.class);
         registerPlugin(SecureSessionPlugin.class);
         super.onCreate(savedInstanceState);
-        WidgetRefreshWorker.enqueuePeriodic(getApplicationContext());
+        // Only poll when a widget is actually on a homescreen (#446). Also
+        // cancels leftover work from a build that scheduled unconditionally.
+        WidgetRefreshWorker.syncPeriodicWork(getApplicationContext());
     }
 }

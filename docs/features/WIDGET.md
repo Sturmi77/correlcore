@@ -71,6 +71,13 @@ does not know.
   - battery not low
 - Immediate refresh when the user logs in/out (Capacitor plugin) or first
   places the widget on the home screen.
+- **Polling only runs while at least one widget is installed** (#446):
+  - `onEnabled` (first instance placed) starts it
+  - `onDisabled` (last instance removed) cancels it
+  - app start calls `syncPeriodicWork`, which enqueues or cancels to match
+    reality — this also clears leftover work scheduled by older builds
+  - login/logout refreshes are skipped when no widget is installed;
+    credentials are still written/cleared either way
 
 ## Auth bridge (ADR-0006 exception)
 
@@ -116,6 +123,8 @@ Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 - [ ] “+ Add entry” opens the new-entry sheet from a **warm** start (app backgrounded)
 - [ ] “+ Add entry” while signed out → sheet opens after login completes
 - [ ] Airplane mode → status degrades gracefully; reconnect recovers
+- [ ] Sign in with **no** widget installed → no periodic widget requests
+- [ ] Place a widget → polling starts; remove the last one → polling stops
 - [ ] Logout → widget shows signed-out and stops polling with credentials
 
 ## Permissions
