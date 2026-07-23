@@ -8,6 +8,49 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.1.0] — 2026-07-23
+
+First minor bump on the public line. Carries two new features and a database
+migration, which is why this is not a `1.0.x` patch: pinning by semver, a patch
+should not add API fields or require a migration.
+
+### Added
+
+- **Weekday top signal on Home** (#487) — the weekday strip now names the tag,
+  symptom or work context that occurs most often on each day.
+  `GET /dashboard/summary` gained an optional
+  `weekday_summary[].top_signal { kind, id, label, count, share }`. Suppressed
+  below 2 occurrences or a 30% share so a single entry cannot look typical.
+  Copy-on-write tag overrides are collapsed onto their canonical slug first, so
+  a renamed tag and its default twin no longer split the count.
+- **Build vs reduce habits are visually distinct** (#490) — `build` keeps the
+  solid meter, `reduce` gets a hatched, outlined one at the same value, plus
+  `+`/`−` glyphs and separate "Building" / "Reducing" sections. The value is
+  deliberately _not_ inverted: adherence is already normalised so that fuller
+  always means better.
+
+### Fixed
+
+- **Widget "today" follows the device timezone** (#445) — entries are stored
+  against a local date, so a UTC-derived day made the widget disagree with the
+  app for anyone whose local day differs from UTC.
+- **Widget polls only while a widget is installed** (#446) — app start used to
+  schedule the 15-minute worker unconditionally, and nothing cancelled it when
+  the last widget was removed.
+- **Widget "+ Add entry" opens the entry sheet** (#447, #496) — the custom
+  scheme was declared but never bridged into the WebView. Cold start, warm
+  resume and the signed-out path are handled.
+- **Brand mark left the nav landmark** (#448) — it was a second link to `/`,
+  putting five links in a landmark contracted to four.
+- **APK links only when the asset exists** (#450) — every `v*` tag published a
+  download link, including tags built without signing secrets, where it 404s.
+- **Release backfill builds from the target tag** (#451) — `attach_to_tag` used
+  the input only for naming, so newer source could be attached to an older tag.
+- **No duplicate tags in heatmaps** (#485) and **login redirect plus offline
+  boot on server outage** (#486).
+
 ### Changed
 
 - **Weekly digest is now opt-in for existing installs too** (#449) — migration
@@ -17,6 +60,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   **Upgrading operators:** anyone who wants the weekly digest re-enables it
   under **Settings → Analysis**. No digest was ever delivered from those rows —
   the worker only runs behind `COMPOSE_PROFILES=digest`.
+- Web storage guardrail in CI (#453) — `pnpm check:no-token-storage` fails the
+  build if auth material ever reaches `localStorage` / `sessionStorage`.
+
+### Upgrade notes
+
+- Run `alembic upgrade head`: migration `031` must run as a superuser or
+  `BYPASSRLS` role, since `user_preferences` enforces `FORCE ROW LEVEL
+SECURITY`. It fails loudly rather than silently resetting nothing.
+- Android `versionCode` moves to `1001000`.
 
 ---
 
