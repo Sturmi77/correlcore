@@ -41,12 +41,28 @@ the landing page.
 ## API
 
 ```
-GET /api/v1/widget/summary
+GET /api/v1/widget/summary?tz=America/Los_Angeles
 Authorization: Bearer <access_token>
 ```
 
 Response (≤1 KB): `has_entry`, `mood_avg_7d`, `suggested_next_entry_at`.
 See [`docs/API.md`](../API.md) §7b.
+
+### `tz` — device timezone
+
+Entries are stored against a device-local `entry_date` (`localIsoDate`), so
+resolving “today” from UTC made the widget disagree with the app for anyone
+whose local day differs from UTC: `has_entry` false and a shifted 7-day window
+despite today’s entry existing (#445).
+
+The worker sends `ZoneId.systemDefault().id` on every poll, and the server
+resolves the local day, the 7-day mood window and the suggested-entry hour in
+that zone. `suggested_next_entry_at` stays UTC on the wire but now keeps its
+intended local wall-clock hour across DST transitions.
+
+Omitted or unknown zone names fall back to UTC rather than failing the request —
+a widget must not break because a device reports a zone this server’s tzdata
+does not know.
 
 ## Sync
 

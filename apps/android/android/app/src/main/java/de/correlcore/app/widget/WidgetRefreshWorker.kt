@@ -17,6 +17,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 /**
@@ -221,15 +223,21 @@ class WidgetRefreshWorker(
             enqueuePeriodic(context)
         }
 
-        private fun buildSummaryUrl(apiBase: String): String {
+        fun buildSummaryUrl(apiBase: String): String {
             val base = apiBase.trimEnd('/')
-            return if (base.endsWith("/api/v1")) {
-                "$base/widget/summary"
-            } else if (base.endsWith("/api")) {
-                "$base/v1/widget/summary"
-            } else {
-                "$base/api/v1/widget/summary"
-            }
+            val path =
+                if (base.endsWith("/api/v1")) {
+                    "$base/widget/summary"
+                } else if (base.endsWith("/api")) {
+                    "$base/v1/widget/summary"
+                } else {
+                    "$base/api/v1/widget/summary"
+                }
+            // Entries are stored against a device-local date, so the server must
+            // resolve "today" in this zone or the widget disagrees with the app
+            // for anyone whose local day differs from UTC (#445).
+            val tz = URLEncoder.encode(ZoneId.systemDefault().id, "UTF-8")
+            return "$path?tz=$tz"
         }
 
     }
