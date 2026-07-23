@@ -1045,8 +1045,12 @@ WorkManager). Authentifizierung wie ueblich (Cookie oder
 `Authorization: Bearer`). Response zielt auf ≤1 KB.
 
 ```
-GET /api/v1/widget/summary
+GET /api/v1/widget/summary?tz=America/Los_Angeles
 ```
+
+| Query | Bedeutung                                                                                                                             |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `tz`  | Optional. IANA-Zeitzone des Geraets (max. 64 Zeichen). Bestimmt den lokalen Tag; fehlend oder unbekannt faellt auf UTC zurueck (#445) |
 
 Response `200 OK`:
 
@@ -1058,11 +1062,11 @@ Response `200 OK`:
 }
 ```
 
-| Feld                      | Bedeutung                                                                                                             |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `has_entry`               | Mindestens ein Eintrag fuer das heutige UTC-Datum                                                                     |
-| `mood_avg_7d`             | Mittelwert `mood_score` der letzten 7 Tage (inkl. heute), oder `null`                                                 |
-| `suggested_next_entry_at` | Naechster Vorschlag (UTC) aus der Modal-Stunde der Entry-`created_at`-Historie; `null` wenn kein sinnvoller Vorschlag |
+| Feld                      | Bedeutung                                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `has_entry`               | Mindestens ein Eintrag fuer den heutigen Tag in `tz` (ohne `tz`: UTC)                                                    |
+| `mood_avg_7d`             | Mittelwert `mood_score` der letzten 7 Tage (inkl. heute), Fenster ebenfalls in `tz`, oder `null`                         |
+| `suggested_next_entry_at` | Naechster Vorschlag (UTC auf dem Draht) aus der Modal-Stunde der Entry-`created_at`-Historie in `tz`; `null` wenn keiner |
 
 Rate-Limit: `120/minute` (wie Dashboard).
 

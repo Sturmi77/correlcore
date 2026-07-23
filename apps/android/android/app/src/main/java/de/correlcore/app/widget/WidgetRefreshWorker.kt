@@ -1,5 +1,7 @@
 package de.correlcore.app.widget
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import androidx.glance.appwidget.updateAll
 import androidx.work.Constraints
@@ -17,6 +19,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 /**
@@ -181,6 +185,41 @@ class WidgetRefreshWorker(
         private const val UNIQUE_PERIODIC = "correlcore_widget_refresh"
         private const val UNIQUE_ONCE = "correlcore_widget_refresh_once"
 
+        /** True when at least one CorrelCore widget is on a homescreen. */
+        @JvmStatic
+        fun hasInstalledWidgets(context: Context): Boolean {
+            return try {
+                val component = ComponentName(context, CorrelCoreWidgetReceiver::class.java)
+                AppWidgetManager.getInstance(context)
+                    ?.getAppWidgetIds(component)
+                    ?.isNotEmpty() == true
+            } catch (_: Exception) {
+                // Never let a widget-manager hiccup break app start.
+                false
+            }
+        }
+
+        /**
+         * Align periodic polling with reality (#446).
+         *
+         * App start used to enqueue the 15-minute poll unconditionally, so users
+         * who never placed a widget still ran background summary requests after
+         * signing in — and with no onDisabled, polling continued until logout.
+         */
+        @JvmStatic
+        fun syncPeriodicWork(context: Context) {
+            if (hasInstalledWidgets(context)) {
+                enqueuePeriodic(context)
+            } else {
+                cancelPeriodic(context)
+            }
+        }
+
+        @JvmStatic
+        fun cancelPeriodic(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_PERIODIC)
+        }
+
         @JvmStatic
         fun enqueuePeriodic(context: Context) {
             val constraints =
@@ -201,8 +240,19 @@ class WidgetRefreshWorker(
             )
         }
 
+        /**
+         * @param force skip the installed-widget check. Used from [onEnabled],
+         *   where the first instance may not be visible to AppWidgetManager yet.
+         */
         @JvmStatic
-        fun enqueueImmediate(context: Context) {
+        @JvmOverloads
+        fun enqueueImmediate(context: Context, force: Boolean = false) {
+            if (!force && !hasInstalledWidgets(context)) {
+                // Nothing to paint — make sure no stale periodic work survives.
+                cancelPeriodic(context)
+                return
+            }
+
             val constraints =
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -221,15 +271,21 @@ class WidgetRefreshWorker(
             enqueuePeriodic(context)
         }
 
-        private fun buildSummaryUrl(apiBase: String): String {
+        fun buildSummaryUrl(apiBase: String): String {
             val base = apiBase.trimEnd('/')
-            return if (base.endsWith("/api/v1")) {
-                "$base/widget/summary"
-            } else if (base.endsWith("/api")) {
-                "$base/v1/widget/summary"
-            } else {
-                "$base/api/v1/widget/summary"
-            }
+            val path =
+                if (base.endsWith("/api/v1")) {
+                    "$base/widget/summary"
+                } else if (base.endsWith("/api")) {
+                    "$base/v1/widget/summary"
+                } else {
+                    "$base/api/v1/widget/summary"
+                }
+            // Entries are stored against a device-local date, so the server must
+            // resolve "today" in this zone or the widget disagrees with the app
+            // for anyone whose local day differs from UTC (#445).
+            val tz = URLEncoder.encode(ZoneId.systemDefault().id, "UTF-8")
+            return "$path?tz=$tz"
         }
 
     }

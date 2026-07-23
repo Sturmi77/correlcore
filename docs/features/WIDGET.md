@@ -41,12 +41,28 @@ the landing page.
 ## API
 
 ```
-GET /api/v1/widget/summary
+GET /api/v1/widget/summary?tz=America/Los_Angeles
 Authorization: Bearer <access_token>
 ```
 
 Response (≤1 KB): `has_entry`, `mood_avg_7d`, `suggested_next_entry_at`.
 See [`docs/API.md`](../API.md) §7b.
+
+### `tz` — device timezone
+
+Entries are stored against a device-local `entry_date` (`localIsoDate`), so
+resolving “today” from UTC made the widget disagree with the app for anyone
+whose local day differs from UTC: `has_entry` false and a shifted 7-day window
+despite today’s entry existing (#445).
+
+The worker sends `ZoneId.systemDefault().id` on every poll, and the server
+resolves the local day, the 7-day mood window and the suggested-entry hour in
+that zone. `suggested_next_entry_at` stays UTC on the wire but now keeps its
+intended local wall-clock hour across DST transitions.
+
+Omitted or unknown zone names fall back to UTC rather than failing the request —
+a widget must not break because a device reports a zone this server’s tzdata
+does not know.
 
 ## Sync
 
@@ -55,6 +71,13 @@ See [`docs/API.md`](../API.md) §7b.
   - battery not low
 - Immediate refresh when the user logs in/out (Capacitor plugin) or first
   places the widget on the home screen.
+- **Polling only runs while at least one widget is installed** (#446):
+  - `onEnabled` (first instance placed) starts it
+  - `onDisabled` (last instance removed) cancels it
+  - app start calls `syncPeriodicWork`, which enqueues or cancels to match
+    reality — this also clears leftover work scheduled by older builds
+  - login/logout refreshes are skipped when no widget is installed;
+    credentials are still written/cleared either way
 
 ## Auth bridge (ADR-0006 exception)
 
@@ -100,6 +123,8 @@ Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 - [ ] “+ Add entry” opens the new-entry sheet from a **warm** start (app backgrounded)
 - [ ] “+ Add entry” while signed out → sheet opens after login completes
 - [ ] Airplane mode → status degrades gracefully; reconnect recovers
+- [ ] Sign in with **no** widget installed → no periodic widget requests
+- [ ] Place a widget → polling starts; remove the last one → polling stops
 - [ ] Logout → widget shows signed-out and stops polling with credentials
 
 ## Permissions

@@ -186,6 +186,14 @@ class CorrelCoreWidgetReceiver : GlanceAppWidgetReceiver() {
 
     override fun onEnabled(context: Context) {
         super.onEnabled(context)
-        WidgetRefreshWorker.enqueueImmediate(context)
+        // First instance placed — force, since it may not be visible to
+        // AppWidgetManager at this point yet.
+        WidgetRefreshWorker.enqueueImmediate(context, force = true)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        // Last instance removed — stop the 15-minute poll (#446).
+        WidgetRefreshWorker.cancelPeriodic(context)
     }
 }
