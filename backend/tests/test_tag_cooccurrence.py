@@ -74,6 +74,47 @@ async def test_tag_cooccurrence_counts_pairs_and_percentages() -> None:
 
 
 @pytest.mark.asyncio
+async def test_tag_cooccurrence_merges_default_and_override_aliases() -> None:
+    user = make_user()
+    entry_a = make_entry(user, entry_date=date(2026, 5, 8))
+    entry_b = make_entry(user, entry_date=date(2026, 5, 9))
+    default = make_tag(user=None, is_default=True, slug="alcohol", name="Alcohol")
+    override = make_tag(user, slug="alcohol", name="Alkohol", category=TagCategory.CONSUMPTION)
+    focus = make_tag(user, slug="focus", name="Focus", category=TagCategory.WORK)
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_or_none_result(True),
+            _row_result(
+                [
+                    (entry_a.id, default),
+                    (entry_a.id, focus),
+                    (entry_b.id, override),
+                    (entry_b.id, focus),
+                ]
+            ),
+        ]
+    )
+
+    out = await get_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="30d",
+        min_count=2,
+        as_of=date(2026, 5, 9),
+    )
+
+    assert len(out.pairs) == 1
+    pair = out.pairs[0]
+    assert pair.count == 2
+    assert {pair.tag_a.slug, pair.tag_b.slug} == {"alcohol", "focus"}
+    alcohol = pair.tag_a if pair.tag_a.slug == "alcohol" else pair.tag_b
+    assert alcohol.tag_id == override.id
+    assert alcohol.name == "Alkohol"
+
+
+@pytest.mark.asyncio
 async def test_tag_cooccurrence_applies_min_count_filter() -> None:
     user = make_user()
     entry = make_entry(user, entry_date=date(2026, 5, 8))

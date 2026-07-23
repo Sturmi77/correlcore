@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
@@ -128,13 +129,16 @@ async def test_tag_heatmap_groups_counts_by_tag_and_day() -> None:
     user = make_user()
     sport = make_tag(user=None, is_default=True, slug="sport", name="Sport")
     focus = make_tag(user, slug="focus", name="Focus", category=TagCategory.WORK)
+    entry_a = uuid.uuid4()
+    entry_b = uuid.uuid4()
+    entry_c = uuid.uuid4()
     db = MagicMock()
     db.execute = AsyncMock(
         return_value=_row_result(
             [
-                (sport, date(2026, 5, 8)),
-                (sport, date(2026, 5, 8)),
-                (focus, date(2026, 5, 9)),
+                (sport, entry_a, date(2026, 5, 8)),
+                (sport, entry_b, date(2026, 5, 8)),
+                (focus, entry_c, date(2026, 5, 9)),
             ]
         )
     )
@@ -149,6 +153,43 @@ async def test_tag_heatmap_groups_counts_by_tag_and_day() -> None:
     sport_payload = next(tag for tag in out.tags if tag.slug == "sport")
     assert sport_payload.days[0].date == date(2026, 5, 8)
     assert sport_payload.days[0].count == 2
+
+
+@pytest.mark.asyncio
+async def test_tag_heatmap_merges_default_and_override_aliases() -> None:
+    user = make_user()
+    default = make_tag(user=None, is_default=True, slug="alcohol", name="Alcohol")
+    override = make_tag(user, slug="alcohol", name="Alkohol", category=TagCategory.CONSUMPTION)
+    entry_a = uuid.uuid4()
+    entry_b = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(
+        return_value=_row_result(
+            [
+                (default, entry_a, date(2026, 5, 8)),
+                (override, entry_b, date(2026, 5, 9)),
+                # Same entry linked to both IDs must count once after canonicalize.
+                (default, entry_b, date(2026, 5, 9)),
+            ]
+        )
+    )
+
+    out = await get_tag_heatmap(
+        db,
+        user_id=user.id,
+        start_date=date(2026, 5, 1),
+        end_date=date(2026, 5, 9),
+    )
+
+    assert len(out.tags) == 1
+    row = out.tags[0]
+    assert row.slug == "alcohol"
+    assert row.tag_id == override.id
+    assert row.name == "Alkohol"
+    assert [(day.date, day.count) for day in row.days] == [
+        (date(2026, 5, 8), 1),
+        (date(2026, 5, 9), 1),
+    ]
 
 
 @pytest.mark.asyncio
