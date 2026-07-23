@@ -10,6 +10,24 @@ export type WeekdayOverviewCell = {
   moodAvg: number | null;
   findingLabel: string | null;
   findingType: 'mood' | 'tag' | 'symptom' | 'context' | null;
+  /**
+   * Where the finding came from (#487).
+   *
+   * `confounder` is the rarer and stronger statement — an association that
+   * looked real but dissolves once weekday effects are adjusted for. It always
+   * wins over `top_signal`, which is purely descriptive ("this happens most
+   * often on this day") and only fills days that have no confounder.
+   */
+  findingSource: 'confounder' | 'top_signal' | null;
+};
+
+const TOP_SIGNAL_KIND_TO_FINDING_TYPE: Record<
+  NonNullable<WeekdaySummaryItem['top_signal']>['kind'],
+  WeekdayOverviewCell['findingType']
+> = {
+  tag: 'tag',
+  symptom: 'symptom',
+  work_context: 'context',
 };
 
 function numericPayload(value: unknown): Record<string, number> {
@@ -106,13 +124,24 @@ export function buildWeekdayOverviewCells(
     });
   }
 
-  return WEEKDAY_KEYS.map((weekday, weekdayIndex) => ({
-    weekday,
-    weekdayIndex,
-    moodAvg: summaryMoods.get(weekdayIndex) ?? insightMoods[String(weekdayIndex)] ?? null,
-    findingLabel: findingByDay.get(weekdayIndex)?.label ?? null,
-    findingType: findingByDay.get(weekdayIndex)?.type ?? null,
-  }));
+  // Top signals only fill days a confounder did not claim (#487).
+  const topSignalByDay = new Map(
+    weekdaySummary.filter((item) => item.top_signal).map((item) => [item.weekday, item.top_signal!])
+  );
+
+  return WEEKDAY_KEYS.map((weekday, weekdayIndex) => {
+    const confounder = findingByDay.get(weekdayIndex);
+    const topSignal = confounder ? undefined : topSignalByDay.get(weekdayIndex);
+    return {
+      weekday,
+      weekdayIndex,
+      moodAvg: summaryMoods.get(weekdayIndex) ?? insightMoods[String(weekdayIndex)] ?? null,
+      findingLabel: confounder?.label ?? topSignal?.label ?? null,
+      findingType:
+        confounder?.type ?? (topSignal ? TOP_SIGNAL_KIND_TO_FINDING_TYPE[topSignal.kind] : null),
+      findingSource: confounder ? 'confounder' : topSignal ? 'top_signal' : null,
+    };
+  });
 }
 
 export function hasWeekdayOverviewContent(cells: readonly WeekdayOverviewCell[]): boolean {

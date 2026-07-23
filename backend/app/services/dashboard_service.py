@@ -11,12 +11,23 @@ from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry, EntrySlot
+from app.models.symptom import EntrySymptom, Symptom
+from app.models.tag import EntryTag, Tag
 from app.schemas.dashboard import (
     DashboardSummaryResponse,
     WeekdaySummaryItem,
+    WeekdayTopSignal,
     WorkContextSummaryItem,
 )
 from app.services.insight_engine import MIN_WEEKDAY_ENTRIES, confidence_tier_for_sample
+from app.services.tag_service import canonicalize_tags_by_slug
+
+#: A weekday only gets a top signal once it is more than a one-off.
+MIN_TOP_SIGNAL_COUNT = 2
+MIN_TOP_SIGNAL_SHARE = 0.3
+
+#: Ties resolve tag > symptom > work_context, then by label (#487).
+_KIND_RANK: dict[str, int] = {"tag": 0, "symptom": 1, "work_context": 2}
 
 _CONFIDENCE_ANCHORS: tuple[tuple[int, float], ...] = (
     (0, 0.05),
@@ -48,6 +59,133 @@ def insight_confidence_score(entry_count: int) -> float:
             return round(left_score + (right_score - left_score) * position, 4)
 
     return _CONFIDENCE_ANCHORS[-1][1]
+
+
+def pick_top_signal(
+    candidates: list[tuple[str, uuid.UUID | None, str, int]],
+    weekday_entry_count: int,
+) -> WeekdayTopSignal | None:
+    """Choose the dominant signal for one weekday from ``(kind, id, label, count)``.
+
+    Pure and separately testable. Ties resolve by kind (tag > symptom >
+    work_context) then label, so the result is stable across runs.
+    """
+
+    if weekday_entry_count <= 0:
+        return None
+
+    best: tuple[str, uuid.UUID | None, str, int] | None = None
+    for candidate in candidates:
+        kind, _id, label, count = candidate
+        if count < MIN_TOP_SIGNAL_COUNT:
+            continue
+        if count / weekday_entry_count < MIN_TOP_SIGNAL_SHARE:
+            continue
+        if best is None or (-count, _KIND_RANK[kind], label) < (
+            -best[3],
+            _KIND_RANK[best[0]],
+            best[2],
+        ):
+            best = candidate
+
+    if best is None:
+        return None
+    kind, signal_id, label, count = best
+    return WeekdayTopSignal(
+        kind=kind,  # type: ignore[arg-type]
+        id=signal_id,
+        label=label,
+        count=count,
+        share=round(count / weekday_entry_count, 3),
+    )
+
+
+async def _weekday_top_signals(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    as_of: date_type,
+    entries_per_weekday: dict[int, int],
+) -> dict[int, WeekdayTopSignal]:
+    """Most frequent tag / symptom / work context per weekday.
+
+    Same window and slot filter as ``weekday_summary`` so the new field appears
+    exactly when the mood bars do.
+    """
+
+    weekday_expr = cast(func.extract("isodow", Entry.entry_date), Integer) - 1
+    base_filters = (
+        Entry.user_id == user_id,
+        Entry.entry_date <= as_of,
+        Entry.slot == EntrySlot.DAY,
+    )
+
+    # Tags: count per (weekday, tag) but collapse copy-on-write overrides onto
+    # the canonical row first — otherwise a renamed tag and its default twin
+    # split the count and neither wins (#485).
+    tag_rows = (
+        await db.execute(
+            select(weekday_expr.label("weekday"), Tag)
+            .select_from(Entry)
+            .join(EntryTag, EntryTag.entry_id == Entry.id)
+            .join(Tag, Tag.id == EntryTag.tag_id)
+            .where(*base_filters)
+        )
+    ).all()
+    aliases, tags_by_id = canonicalize_tags_by_slug(row[1] for row in tag_rows)
+    tag_counts: dict[tuple[int, uuid.UUID], int] = {}
+    for weekday, tag in tag_rows:
+        canonical_id = aliases.get(tag.id, tag.id)
+        tag_counts[(int(weekday), canonical_id)] = (
+            tag_counts.get((int(weekday), canonical_id), 0) + 1
+        )
+
+    symptom_rows = (
+        await db.execute(
+            select(
+                weekday_expr.label("weekday"),
+                Symptom.id,
+                Symptom.name,
+                func.count(),
+            )
+            .select_from(Entry)
+            .join(EntrySymptom, EntrySymptom.entry_id == Entry.id)
+            .join(Symptom, Symptom.id == EntrySymptom.symptom_id)
+            .where(*base_filters)
+            .group_by(weekday_expr, Symptom.id, Symptom.name)
+        )
+    ).all()
+
+    context_rows = (
+        await db.execute(
+            select(weekday_expr.label("weekday"), Entry.work_context, func.count())
+            .where(*base_filters, Entry.work_context.is_not(None))
+            .group_by(weekday_expr, Entry.work_context)
+        )
+    ).all()
+
+    per_weekday: dict[int, list[tuple[str, uuid.UUID | None, str, int]]] = {}
+    for (weekday, canonical_id), count in tag_counts.items():
+        tag = tags_by_id.get(canonical_id)
+        if tag is None:
+            continue
+        per_weekday.setdefault(weekday, []).append(("tag", canonical_id, tag.name, count))
+    for weekday, symptom_id, name, count in symptom_rows:
+        per_weekday.setdefault(int(weekday), []).append(
+            ("symptom", symptom_id, name, int(count or 0))
+        )
+    for weekday, work_context, count in context_rows:
+        label = work_context.value if hasattr(work_context, "value") else str(work_context)
+        per_weekday.setdefault(int(weekday), []).append(
+            ("work_context", None, label, int(count or 0))
+        )
+
+    signals: dict[int, WeekdayTopSignal] = {}
+    for weekday, candidates in per_weekday.items():
+        signal = pick_top_signal(candidates, entries_per_weekday.get(weekday, 0))
+        if signal is not None:
+            signals[weekday] = signal
+    return signals
 
 
 async def get_dashboard_summary(
@@ -92,6 +230,7 @@ async def get_dashboard_summary(
         for row in work_context_result.all()
     ]
 
+    top_signals: dict[int, WeekdayTopSignal] = {}
     weekday_summary: list[WeekdaySummaryItem] = []
     if entry_count >= MIN_WEEKDAY_ENTRIES:
         daily_subq = (
@@ -120,11 +259,16 @@ async def get_dashboard_summary(
         )
         weekday_rows = weekday_result.all()
         if len(weekday_rows) >= 7:
+            entries_per_weekday = {int(row[0]): int(row[1] or 0) for row in weekday_rows}
+            top_signals = await _weekday_top_signals(
+                db, user_id=user_id, as_of=as_of, entries_per_weekday=entries_per_weekday
+            )
             weekday_summary = [
                 WeekdaySummaryItem(
                     weekday=int(row[0]),
                     entry_count=int(row[1] or 0),
                     mood_avg=round(float(row[2]), 2) if row[2] is not None else None,
+                    top_signal=top_signals.get(int(row[0])),
                 )
                 for row in weekday_rows
             ]

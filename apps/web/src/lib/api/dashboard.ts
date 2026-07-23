@@ -11,10 +11,20 @@ export interface WorkContextSummaryItem {
 }
 
 /** Monday=0 … Sunday=6 (Python / backend convention). */
+/** Most frequent signal on a weekday (#487). Descriptive, not causal. */
+export interface WeekdayTopSignal {
+  kind: 'tag' | 'symptom' | 'work_context';
+  id: string | null;
+  label: string;
+  count: number;
+  share: number;
+}
+
 export interface WeekdaySummaryItem {
   weekday: number;
   entry_count: number;
   mood_avg: number | null;
+  top_signal?: WeekdayTopSignal | null;
 }
 
 export interface DashboardSummaryResponse {
