@@ -17,6 +17,7 @@
   import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
   import { entrySheetStore } from '$lib/stores/entrySheet';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
+  import { initDeepLinks } from '$lib/native/deepLinks';
   import { initializeSyncOrchestrator, scheduleSync } from '$lib/offline/syncOrchestrator';
   import {
     cleanupCapacitorServiceWorker,
@@ -100,9 +101,15 @@
       });
     };
     window.addEventListener('online', onBrowserOnline);
+    // Widget "+ Add entry" → correlcore://entries/new (#447). No-op off Capacitor.
+    let cleanupDeepLinks: (() => void) | null = null;
+    void initDeepLinks({ navigate: (path) => goto(path) }).then((cleanup) => {
+      cleanupDeepLinks = cleanup;
+    });
     return () => {
       clearTimeout(splashTimer);
       cleanupSync();
+      cleanupDeepLinks?.();
       window.removeEventListener('online', onBrowserOnline);
     };
   });

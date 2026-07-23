@@ -11,10 +11,29 @@ the M4 PWA install prompt with a true launcher widget.
 | ----------------- | ---------------------------------------------------------------------- |
 | Brand             | Static “CorrelCore” label                                              |
 | Headline          | “No entry yet” when `has_entry` is false; otherwise 7-day mood average |
-| “+ Add entry”     | Deep link `correlcore://entries/new` → entry sheet                     |
+| “+ Add entry”     | Deep link `correlcore://entries/new` → entry sheet (see below)         |
 | Updated timestamp | Last successful WorkManager sync                                       |
 
 Sizes: resizable from ~4×1; verify 4×1 and 4×2 on Android 12/14 (light/dark).
+
+## Deep link
+
+`correlcore://entries/new` is declared in `AndroidManifest.xml` and routed into
+the WebView by [`deepLinks.ts`](../../apps/web/src/lib/native/deepLinks.ts) via
+`@capacitor/app`:
+
+- **Cold start** — the launch intent is consumed before the WebView boots, so it
+  is read with `App.getLaunchUrl()`.
+- **Warm start** — `MainActivity` is `singleTask`, so Android delivers
+  `onNewIntent`, surfaced as the `appUrlOpen` event.
+
+Both map to `/?openEntry=1`, the same path the in-app “+” button uses, so the
+widget and the app open an identical sheet. An optional `?date=YYYY-MM-DD`
+pre-selects the entry date; malformed values are dropped. Unknown
+`correlcore://` targets are ignored rather than navigated to.
+
+If the user is signed out on cold start, the sheet opens once authentication
+completes — `GlobalEntrySheet` re-checks the query on every auth transition.
 
 ## API
 
@@ -74,7 +93,9 @@ Web helpers: `apps/web/src/lib/api/widgetCredentials.ts` (invoked from
 - [ ] Signed-out state shows “Sign in to see mood”
 - [ ] After login, widget updates within one WorkManager run
 - [ ] Leave app backgrounded >15 minutes → widget still refreshes (refresh rotate)
-- [ ] “+ Add entry” opens the Capacitor app on the new-entry sheet
+- [ ] “+ Add entry” opens the new-entry sheet from a **cold** start (app killed)
+- [ ] “+ Add entry” opens the new-entry sheet from a **warm** start (app backgrounded)
+- [ ] “+ Add entry” while signed out → sheet opens after login completes
 - [ ] Airplane mode → status degrades gracefully; reconnect recovers
 - [ ] Logout → widget shows signed-out and stops polling with credentials
 
