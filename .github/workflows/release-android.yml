@@ -244,10 +244,13 @@ jobs:
         shell: bash
         run: |
           ATTACH_TAG="${{ github.event.inputs.attach_to_tag }}"
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            TAG="${GITHUB_REF_NAME}"
-          elif [[ -n "${ATTACH_TAG}" ]]; then
+          # attach_to_tag wins over the dispatch ref: the checkout above already
+          # builds that tag's commit, so deriving the name from GITHUB_REF would
+          # upload binaries built from one tag onto a different release (#451).
+          if [[ -n "${ATTACH_TAG}" ]]; then
             TAG="${ATTACH_TAG}"
+          elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
           else
             TAG=""
           fi

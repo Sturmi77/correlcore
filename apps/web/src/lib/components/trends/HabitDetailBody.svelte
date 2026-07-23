@@ -187,7 +187,7 @@
   }
 
   /* Mirrors HabitsPanel (#490): same value, different encoding — solid reads as
-     progress toward a target, hatched as headroom under a limit. */
+     progress toward a target, hatched as staying within a limit. */
   .habit-detail__bar[data-habit-type='reduce'] {
     box-shadow: inset 0 0 0 1px oklch(from var(--color-primary) l c h / 0.35);
     background: transparent;

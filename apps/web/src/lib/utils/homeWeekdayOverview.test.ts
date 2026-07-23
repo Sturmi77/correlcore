@@ -197,4 +197,24 @@ describe('top signal vs confounder precedence (#487)', () => {
     expect(cells[3].findingLabel).toBeNull();
     expect(cells[3].findingSource).toBeNull();
   });
+
+  it('exposes a translation key only for work_context, not user data', () => {
+    // work_context is a backend enum; tag/symptom labels are user-supplied and
+    // must stay verbatim (#487 review).
+    const context = buildWeekdayOverviewCells(
+      [],
+      [
+        {
+          weekday: 0,
+          entry_count: 10,
+          mood_avg: null,
+          top_signal: { kind: 'work_context', id: null, label: 'homeoffice', count: 4, share: 0.4 },
+        },
+      ]
+    );
+    expect(context[0].findingLabelKey).toBe('entry.work_context.homeoffice');
+
+    const tag = buildWeekdayOverviewCells([], [summary(0, 'Meeting')]);
+    expect(tag[0].findingLabelKey).toBeNull();
+  });
 });

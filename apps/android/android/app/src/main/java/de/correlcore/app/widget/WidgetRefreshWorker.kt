@@ -20,7 +20,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
-import java.time.ZoneId
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 /**
@@ -217,7 +217,14 @@ class WidgetRefreshWorker(
 
         @JvmStatic
         fun cancelPeriodic(context: Context) {
-            WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_PERIODIC)
+            // Also drop a queued one-time refresh: onEnabled enqueues it behind a
+            // network constraint, so placing a widget offline and removing it
+            // again before connectivity returns would otherwise still fire one
+            // request with no widget left to paint.
+            WorkManager.getInstance(context).apply {
+                cancelUniqueWork(UNIQUE_PERIODIC)
+                cancelUniqueWork(UNIQUE_ONCE)
+            }
         }
 
         @JvmStatic
@@ -284,7 +291,12 @@ class WidgetRefreshWorker(
             // Entries are stored against a device-local date, so the server must
             // resolve "today" in this zone or the widget disagrees with the app
             // for anyone whose local day differs from UTC (#445).
-            val tz = URLEncoder.encode(ZoneId.systemDefault().id, "UTF-8")
+            //
+            // java.util.TimeZone, not java.time.ZoneId: minSdkVersion is 23 and
+            // core-library desugaring is not enabled, so ZoneId would throw
+            // NoClassDefFoundError on API 23-25 — an Error, which the worker's
+            // `catch (Exception)` does not catch, killing every refresh.
+            val tz = URLEncoder.encode(TimeZone.getDefault().id, "UTF-8")
             return "$path?tz=$tz"
         }
 

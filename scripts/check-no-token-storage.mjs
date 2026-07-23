@@ -40,6 +40,10 @@ const ALLOWED_KEYS = new Set([
   'correlcore.apiBase',
   'dev_force_viz',
   'dev_mode_enabled',
+  'cc_trend_compare_pins',
+  'cc_trend_compare_mode',
+  'cc_trend_compare_sort',
+  'cc_trend_compare_zoom',
 ]);
 
 /**
@@ -62,10 +66,21 @@ function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(directory, entry.name);
     if (entry.isDirectory()) return walk(full);
-    if (/\.(ts|svelte)$/.test(entry.name) && !/\.test\.ts$/.test(entry.name)) return [full];
+    // app.html is the production bootstrap and already writes to localStorage;
+    // a token added to that inline script would otherwise be invisible here.
+    if (/\.(ts|svelte|html)$/.test(entry.name) && !/\.test\.ts$/.test(entry.name)) return [full];
     return [];
   });
 }
+
+/**
+ * Call sites of generic write helpers, e.g. `writeLocal('cc_x', value)`.
+ *
+ * Exempting the helper's own `setItem` would otherwise open a complete bypass:
+ * `writeLocal('access_token', accessToken)` never reaches a `setItem` this
+ * script can see. Checking the calls restores the invariant.
+ */
+const HELPER_CALL = /\b(writeLocal|writeStoredBoolean)\(([^;]*?)\)/gs;
 
 /**
  * Map every `CONST = 'literal'` in the web source, so a storage key imported
@@ -73,14 +88,22 @@ function walk(directory) {
  */
 function collectStringConstants(files) {
   const constants = new Map();
+  const ambiguous = new Set();
   for (const file of files) {
     const source = fs.readFileSync(file, 'utf8');
     for (const match of source.matchAll(
       /\b([A-Za-z_$][\w$]*)\s*(?::\s*string)?\s*=\s*['"`]([^'"`\n]+)['"`]/g
     )) {
-      constants.set(match[1], match[2]);
+      const [, name, value] = match;
+      // The same identifier is declared in several modules (STORAGE_KEY lives
+      // in i18n, analysisRange and entryOpenMode). Letting the last one win
+      // would validate an unapproved key against another module's allowed
+      // value, so treat any collision as unresolvable instead.
+      if (constants.has(name) && constants.get(name) !== value) ambiguous.add(name);
+      constants.set(name, value);
     }
   }
+  for (const name of ambiguous) constants.delete(name);
   return constants;
 }
 
@@ -126,6 +149,27 @@ for (const file of sourceFiles) {
     } else if (!ALLOWED_KEYS.has(key)) {
       failures.push(
         `${relative}:${line} — ${api}.setItem uses undeclared key "${key}". ` +
+          `Add it to ALLOWED_KEYS in scripts/check-no-token-storage.mjs if it holds no auth material.`
+      );
+    }
+  }
+
+  // Exempt helpers are only safe if their callers are checked.
+  for (const match of source.matchAll(HELPER_CALL)) {
+    const [, helper, args] = match;
+    const line = source.slice(0, match.index).split('\n').length;
+
+    if (TOKEN_PATTERN.test(args)) {
+      failures.push(`${relative}:${line} — ${helper}() writes auth material: ${args.trim()}`);
+      continue;
+    }
+    // Skip the declaration itself; only calls carry a key argument.
+    if (/^\s*(function|const|let|var)\b/.test(source.split('\n')[line - 1] ?? '')) continue;
+
+    const key = resolveKey(args, constants);
+    if (key !== null && !ALLOWED_KEYS.has(key)) {
+      failures.push(
+        `${relative}:${line} — ${helper}() uses undeclared storage key "${key}". ` +
           `Add it to ALLOWED_KEYS in scripts/check-no-token-storage.mjs if it holds no auth material.`
       );
     }
