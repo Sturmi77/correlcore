@@ -109,6 +109,47 @@ On Unix-like systems, `backend/scripts/check.sh` remains the canonical backend
 gate. Run `pnpm check:contrast` from the repo root before opening a web PR,
 then use `pnpm` directly for lint/typecheck/test.
 
+## UI work without a backend (mock API + dev-mode fixtures)
+
+For pure frontend work there is a backend-free path: a minimal mock API plus the
+dev-mode fixtures in [`apps/web/src/lib/dev/phaseFixtures.ts`](../apps/web/src/lib/dev/phaseFixtures.ts).
+The fixtures only render for an authenticated session, so `GET /api/v1/auth/me`
+has to answer — that is what the mock server is for.
+
+| Script                                                              | Port | Purpose                                                       |
+| ------------------------------------------------------------------- | ---- | ------------------------------------------------------------- |
+| [`scripts/dev-mock-api.cmd`](../scripts/dev-mock-api.cmd)           | 8001 | Mock API (auth, preferences, profile; rest 404 + log line)    |
+| [`scripts/dev-web.cmd`](../scripts/dev-web.cmd)                     | 5173 | SvelteKit dev server, browser build                           |
+| [`scripts/dev-web-capacitor.cmd`](../scripts/dev-web-capacitor.cmd) | 5174 | Same app with `VITE_CAPACITOR=1` (bearer auth, absolute base) |
+
+Start the mock API first, then a web server. Both web wrappers default
+`INTERNAL_API_URL` to the mock; set it yourself to use the real API:
+
+```powershell
+$env:INTERNAL_API_URL = 'http://127.0.0.1:8000'
+```
+
+The wrappers exist because Node is managed via fnm here and is not on the global
+PATH; [`scripts/_node-path.cmd`](../scripts/_node-path.cmd) resolves the highest
+installed fnm version (override with `NODE_DIR`). `.claude/launch.json` starts
+the same three scripts for browser-driven sessions.
+
+Enable dev mode in the running app: Settings → tap the version string 7× (ADR-0019),
+then toggle "Mock-Daten fuer Visualisierungen" and pick a phase preset.
+
+Caveats:
+
+- `devPhase` lives in memory only. A full page reload resets the preset to
+  `collecting` — navigate in-app to keep it.
+- The mock API has no persistence and no authorization. It is for rendering
+  work, never for testing API behaviour.
+- `VITE_CAPACITOR=1` only flips the build flag. `deepLinks.ts` and
+  `pushNotifications.ts` additionally check `Capacitor.isNativePlatform()`, which
+  stays false in a browser, so push, widget deep links and the secure-session
+  path remain no-ops. Those still need a real APK build.
+- Stopping a wrapper can leave the Node child running (cmd does not forward the
+  kill). If a port stays busy, stop the `node` process holding it.
+
 ## Parallel React GUI experiment
 
 An experimental React frontend (`apps/web-react/`) can run alongside the
