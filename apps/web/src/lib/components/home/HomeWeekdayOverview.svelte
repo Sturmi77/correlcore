@@ -28,6 +28,34 @@
   $: highMood = knownMood.length ? Math.max(...knownMood) : null;
   $: minMood = knownMood.length ? Math.min(...knownMood) : null;
   $: showOverview = hasWeekdayOverviewContent(cells);
+
+  /** Resolve the label, translating the work_context enum but not user data. */
+  function labelFor(cell: (typeof cells)[number]): string {
+    if (cell.findingLabelKey) {
+      const translated = $_(cell.findingLabelKey);
+      return translated === cell.findingLabelKey ? (cell.findingLabel ?? '') : translated;
+    }
+    return cell.findingLabel ?? '';
+  }
+
+  /**
+   * The chart is `role="img"`, whose descendants are presented as one atomic
+   * image — per-cell text inside it is never announced. The findings therefore
+   * have to live in the chart's own accessible name (#487 review).
+   */
+  $: chartLabel = [
+    $_('home.weekday_overview.aria'),
+    ...cells
+      .filter((cell) => cell.findingLabel)
+      .map(
+        (cell) =>
+          `${$_(`home.weekday.${cell.weekday}`)} — ${$_(
+            cell.findingSource === 'confounder'
+              ? 'home.weekday_overview.finding_confounder'
+              : 'home.weekday_overview.finding_top_signal'
+          )}${labelFor(cell)}`
+      ),
+  ].join('. ');
 </script>
 
 {#if showOverview}
@@ -43,7 +71,7 @@
       {/if}
     </header>
 
-    <div class="weekday-overview__chart" role="img" aria-label={$_('home.weekday_overview.aria')}>
+    <div class="weekday-overview__chart" role="img" aria-label={chartLabel}>
       {#each cells as cell (cell.weekday)}
         <div
           class="weekday-overview__cell"
@@ -68,16 +96,7 @@
               data-type={cell.findingType ?? 'context'}
               data-source={cell.findingSource ?? 'top_signal'}
             >
-              <!-- A confounder is a caveat, a top signal is just frequency —
-                   name which one for screen readers so the dotted underline is
-                   never the only cue (#487). -->
-              <span class="sr-only"
-                >{$_(
-                  cell.findingSource === 'confounder'
-                    ? 'home.weekday_overview.finding_confounder'
-                    : 'home.weekday_overview.finding_top_signal'
-                )}</span
-              >{cell.findingLabel}
+              {labelFor(cell)}
             </span>
           {:else}
             <span class="weekday-overview__finding weekday-overview__finding--empty">

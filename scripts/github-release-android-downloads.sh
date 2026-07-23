@@ -63,7 +63,23 @@ fi
 # Never advertise a download that is not attached to the release (#450). The APK
 # is uploaded by the signed Android job, which only runs when ANDROID_* secrets
 # are configured; without this gate every `v*` tag published a 404 link.
-gh release view "${TAG}" --repo "${REPO}" --json assets -q '.assets[].name' >"${ASSETS_FILE}" 2>/dev/null || true
+#
+# A failed query must not look like "no APK": that would drop the block from a
+# release whose asset is present and fine. Retry, then fail loudly.
+assets_queried=0
+for _ in 1 2 3 4 5; do
+  if gh release view "${TAG}" --repo "${REPO}" --json assets -q '.assets[].name' \
+    >"${ASSETS_FILE}" 2>/dev/null; then
+    assets_queried=1
+    break
+  fi
+  sleep 3
+done
+
+if [[ "${assets_queried}" -ne 1 ]]; then
+  echo "::error::Could not read release assets for ${TAG}; refusing to guess." >&2
+  exit 1
+fi
 
 has_asset() {
   grep -Fxq "$1" "${ASSETS_FILE}"

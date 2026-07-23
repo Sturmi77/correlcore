@@ -20,7 +20,7 @@ from app.schemas.dashboard import (
     WorkContextSummaryItem,
 )
 from app.services.insight_engine import MIN_WEEKDAY_ENTRIES, confidence_tier_for_sample
-from app.services.tag_service import canonicalize_tags_by_slug
+from app.services.tag_service import analytics_tag_predicate, canonicalize_tags_by_slug
 
 #: A weekday only gets a top signal once it is more than a one-off.
 MIN_TOP_SIGNAL_COUNT = 2
@@ -129,7 +129,9 @@ async def _weekday_top_signals(
             .select_from(Entry)
             .join(EntryTag, EntryTag.entry_id == Entry.id)
             .join(Tag, Tag.id == EntryTag.tag_id)
-            .where(*base_filters)
+            # Tags the user excluded from analytics must not surface on Home
+            # either; the predicate also covers hidden copy-on-write overrides.
+            .where(*base_filters, analytics_tag_predicate(user_id))
         )
     ).all()
     aliases, tags_by_id = canonicalize_tags_by_slug(row[1] for row in tag_rows)
@@ -140,21 +142,27 @@ async def _weekday_top_signals(
             tag_counts.get((int(weekday), canonical_id), 0) + 1
         )
 
+    # Select the ORM object, not Symptom.name: custom symptoms keep their label
+    # encrypted in name_enc with name NULL (model CHECK constraint), so reading
+    # the column yields None and the response fails validation. display_name
+    # decrypts with the request-bound DEK.
     symptom_rows = (
         await db.execute(
-            select(
-                weekday_expr.label("weekday"),
-                Symptom.id,
-                Symptom.name,
-                func.count(),
-            )
+            select(weekday_expr.label("weekday"), Symptom)
             .select_from(Entry)
             .join(EntrySymptom, EntrySymptom.entry_id == Entry.id)
             .join(Symptom, Symptom.id == EntrySymptom.symptom_id)
-            .where(*base_filters)
-            .group_by(weekday_expr, Symptom.id, Symptom.name)
+            # intensity 0 records "not present" — counting it would let an
+            # explicitly absent symptom become the day's dominant signal.
+            .where(*base_filters, EntrySymptom.intensity > 0)
         )
     ).all()
+    symptom_counts: dict[tuple[int, uuid.UUID], int] = {}
+    symptoms_by_id: dict[uuid.UUID, Symptom] = {}
+    for weekday, symptom in symptom_rows:
+        symptoms_by_id[symptom.id] = symptom
+        key = (int(weekday), symptom.id)
+        symptom_counts[key] = symptom_counts.get(key, 0) + 1
 
     context_rows = (
         await db.execute(
@@ -170,9 +178,12 @@ async def _weekday_top_signals(
         if tag is None:
             continue
         per_weekday.setdefault(weekday, []).append(("tag", canonical_id, tag.name, count))
-    for weekday, symptom_id, name, count in symptom_rows:
-        per_weekday.setdefault(int(weekday), []).append(
-            ("symptom", symptom_id, name, int(count or 0))
+    for (weekday, symptom_id), count in symptom_counts.items():
+        symptom = symptoms_by_id.get(symptom_id)
+        if symptom is None:
+            continue
+        per_weekday.setdefault(weekday, []).append(
+            ("symptom", symptom_id, symptom.display_name, count)
         )
     for weekday, work_context, count in context_rows:
         label = work_context.value if hasattr(work_context, "value") else str(work_context)

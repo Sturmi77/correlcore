@@ -460,7 +460,7 @@
   /* #490: build and reduce both read "fuller = better" — adherence_rate is
      already normalised server-side, a reduce habit inside its limit returns
      100. Only the encoding differs, so a solid bar reads as progress toward a
-     target and a hatched one as headroom under a limit. Never colour alone:
+     target and a hatched one as staying within a limit. Never colour alone:
      the row title always carries the translated type label. */
   .habits__row-bar[data-habit-type='reduce'] {
     box-shadow: inset 0 0 0 1px oklch(from var(--color-primary) l c h / 0.35);

@@ -19,6 +19,14 @@ export type WeekdayOverviewCell = {
    * often on this day") and only fills days that have no confounder.
    */
   findingSource: 'confounder' | 'top_signal' | null;
+  /**
+   * i18n key when the label is an application enum rather than user data.
+   *
+   * Tag and symptom labels are user-supplied and shown verbatim; `work_context`
+   * is a backend enum, so rendering it raw would surface `homeoffice` instead
+   * of "Homeoffice" (#487 review).
+   */
+  findingLabelKey: string | null;
 };
 
 const TOP_SIGNAL_KIND_TO_FINDING_TYPE: Record<
@@ -140,6 +148,10 @@ export function buildWeekdayOverviewCells(
       findingType:
         confounder?.type ?? (topSignal ? TOP_SIGNAL_KIND_TO_FINDING_TYPE[topSignal.kind] : null),
       findingSource: confounder ? 'confounder' : topSignal ? 'top_signal' : null,
+      findingLabelKey:
+        !confounder && topSignal?.kind === 'work_context'
+          ? `entry.work_context.${topSignal.label}`
+          : null,
     };
   });
 }
