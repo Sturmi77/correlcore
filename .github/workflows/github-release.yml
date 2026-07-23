@@ -3,8 +3,9 @@ name: Release — GitHub Release
 # Creates a GitHub Release when a v* tag is pushed.
 # Release notes are extracted from CHANGELOG.md when a matching ## [x.y.z] section exists.
 # Container images are built separately by release-images.yml (same tag trigger).
-# Android APK links are prepended at the top (mobile-friendly); the signed APK is
-# attached by release-android.yml on the same tag when signing secrets exist.
+# Android APK links are NOT written here: release-android.yml prepends them after
+# it has actually attached a signed APK to this tag. Inserting them here published
+# a 404 download link on every tag built without signing secrets (#450).
 
 on:
   push:
@@ -74,11 +75,3 @@ jobs:
           generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
           prerelease: ${{ contains(github.ref_name, '-') }}
           draft: false
-
-      - name: Prepend Android APK download links (top of release)
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          chmod +x scripts/github-release-android-downloads.sh
-          scripts/github-release-android-downloads.sh "${GITHUB_REF_NAME}"

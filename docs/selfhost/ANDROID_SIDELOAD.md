@@ -109,13 +109,18 @@ Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / r
   upload artifact + attach `correlcore-<ver>.apk`, `.aab`, and `SHA256SUMS.txt`
   to the GitHub Release
 - **workflow_dispatch:** signed build; optional input `attach_to_tag` (e.g. `v1.0.1`)
-  re-attaches APK/AAB to an existing GitHub Release if a tag push missed them
+  re-attaches APK/AAB to an existing GitHub Release if a tag push missed them.
+  The build is checked out **from that tag**, so backfilled binaries always match
+  the release they are attached to.
 
 Tag example: `git tag v1.1.0 && git push origin v1.1.0`.
 
-If the release notes show **Download APK** but the link is **404**, no asset was
-attached — re-run **Actions → Release - Android (Capacitor) → Run workflow** with
-`attach_to_tag=vX.Y.Z` (after signing secrets are set).
+The **Download APK** block is written only by the Android workflow, and only
+after it has verified the APK is attached to the release. A tag built without
+signing secrets therefore has **no** download block at all rather than a 404
+link. If a release is missing the block, re-run **Actions → Release - Android
+(Capacitor) → Run workflow** with `attach_to_tag=vX.Y.Z` (after signing secrets
+are set).
 
 ## API / selfhost note
 
