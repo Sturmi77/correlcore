@@ -21,8 +21,17 @@
   let sheetOpen = false;
   let workContextTypical: WorkContextTypical | null = null;
   let profileLoaded = false;
+  let openFromQueryPending = false;
 
   $: sheetOpen = $entrySheetStore.open;
+
+  // A widget deep link on a already-running, already-authenticated app only
+  // changes the URL — the auth subscription in onMount never re-fires, so the
+  // sheet would stay closed without this (#447). Navigation changes $page, and
+  // the param is stripped once handled, so this runs at most once per link.
+  $: if ($page.url && isOpenEntryRequested($page.url.searchParams)) {
+    void maybeOpenFromQuery();
+  }
   $: if (!sheetOpen && $entrySheetStore.open) {
     sheetOpen = true;
   }
@@ -38,6 +47,18 @@
 
   async function maybeOpenFromQuery(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
+    // Cold start fires this from the auth subscription while a warm deep link
+    // fires it from the navigation below; both can race on the same param.
+    if (openFromQueryPending) return;
+    openFromQueryPending = true;
+    try {
+      await openFromQuery();
+    } finally {
+      openFromQueryPending = false;
+    }
+  }
+
+  async function openFromQuery(): Promise<void> {
     const params =
       typeof window !== 'undefined'
         ? new URL(window.location.href).searchParams
