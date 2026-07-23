@@ -1,21 +1,75 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import Button from './Button.svelte';
+  import { reconnectSession } from '$lib/stores/auth';
+  import { connectivity, isEffectivelyOffline } from '$lib/stores/connectivity';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
+  import { scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
 
-  function retry(): void {
-    if (typeof window === 'undefined') return;
-    if (window.navigator.onLine) window.location.reload();
+  let retrying = false;
+
+  $: offline = isEffectivelyOffline($connectivity);
+  $: browserOffline = !$connectivity.browserOnline;
+  $: serverDown = $connectivity.browserOnline && $connectivity.serverReachable === false;
+  $: pendingCount = $syncOrchestrator.pendingCount;
+  $: showPending = pendingCount > 0;
+
+  async function retry(): Promise<void> {
+    if (typeof window === 'undefined' || retrying) return;
+    if (!window.navigator.onLine) return;
+    retrying = true;
+    try {
+      const result = await reconnectSession();
+      if (result === 'online') {
+        scheduleSync();
+      } else if (result === 'anonymous') {
+        // Layout guard sends the user to login.
+        return;
+      }
+    } finally {
+      retrying = false;
+    }
   }
 </script>
 
-{#if !$pwaLifecycle.online}
-  <aside class="pwa-status pwa-status--offline" role="status" data-testid="pwa-offline-banner">
+{#if offline}
+  <aside
+    class="pwa-status pwa-status--offline"
+    role="status"
+    data-testid={serverDown ? 'pwa-server-unavailable-banner' : 'pwa-offline-banner'}
+  >
     <div>
-      <strong>{$_('pwa.connection.offline_title')}</strong>
-      <span>{$_('pwa.connection.offline_body')}</span>
+      <strong>
+        {browserOffline
+          ? $_('pwa.connection.offline_title')
+          : $_('pwa.connection.server_unavailable_title')}
+      </strong>
+      <span>
+        {browserOffline
+          ? $_('pwa.connection.offline_body')
+          : $_('pwa.connection.server_unavailable_body')}
+      </span>
+      {#if showPending}
+        <span data-testid="pwa-pending-sync">
+          {$_('pwa.connection.pending_sync', { values: { count: pendingCount } })}
+        </span>
+      {/if}
     </div>
-    <Button variant="secondary" size="sm" on:click={retry}>{$_('pwa.connection.retry')}</Button>
+    <Button variant="secondary" size="sm" disabled={retrying} on:click={() => void retry()}>
+      {$_('pwa.connection.retry')}
+    </Button>
+  </aside>
+{:else if showPending}
+  <aside class="pwa-status pwa-status--pending" role="status" data-testid="pwa-pending-sync-banner">
+    <div>
+      <strong>{$_('pwa.connection.pending_title')}</strong>
+      <span data-testid="pwa-pending-sync">
+        {$_('pwa.connection.pending_sync', { values: { count: pendingCount } })}
+      </span>
+    </div>
+    <Button variant="secondary" size="sm" on:click={() => scheduleSync()}>
+      {$_('pwa.connection.sync_now')}
+    </Button>
   </aside>
 {:else if $pwaLifecycle.updateAvailable}
   <aside class="pwa-status" role="status" data-testid="pwa-update-banner">
@@ -50,6 +104,10 @@
 
   .pwa-status--offline {
     border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+  }
+
+  .pwa-status--pending {
+    border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
   }
 
   .pwa-status div {
