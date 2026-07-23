@@ -1,10 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import {
-  LAST_USER_STORAGE_KEY,
-  cacheLastUser,
-  clearLastUser,
-  readLastUser,
-} from './lastUserCache';
+import { LAST_USER_STORAGE_KEY, cacheLastUser, clearLastUser, readLastUser } from './lastUserCache';
 
 const user = {
   id: 'usr_1',
