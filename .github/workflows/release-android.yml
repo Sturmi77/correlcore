@@ -110,11 +110,15 @@ jobs:
           PUBLIC_GLITCHTIP_ENVIRONMENT: ${{ vars.PUBLIC_GLITCHTIP_ENVIRONMENT || 'android-debug' }}
         run: pnpm cap:sync
 
-      - name: Assemble debug APK
+      - name: Lint (NewApi — catch java.time on minSdk 23)
         working-directory: apps/android/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew lintDebug --stacktrace
+
+      - name: Assemble debug APK
+        working-directory: apps/android/android
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
