@@ -20,6 +20,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.time.LocalDate
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
@@ -182,6 +183,10 @@ class WidgetRefreshWorker(
     }
 
     companion object {
+        // NEWAPI-PROBE: java.time on minSdk 23 must fail lintDebug. Reverted.
+        @JvmStatic
+        fun __newApiProbe(): String = LocalDate.now().toString()
+
         private const val UNIQUE_PERIODIC = "correlcore_widget_refresh"
         private const val UNIQUE_ONCE = "correlcore_widget_refresh_once"
 
