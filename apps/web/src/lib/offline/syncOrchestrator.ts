@@ -16,6 +16,7 @@ import {
   markEntryConflict,
   markEntrySynced,
 } from '$lib/stores/entriesOffline';
+import { connectivity } from '$lib/stores/connectivity';
 import { listPendingChanges, markChangeStatus } from './changeLog';
 import { getOrCreateClientId } from './clientId';
 import { getOfflineDb } from './db';
@@ -284,9 +285,11 @@ export async function syncAll(): Promise<void> {
 
       const pending = await listPendingChanges();
       setBadge(pending.length > 0 ? 'local' : 'synced');
+      connectivity.markServerReachable(true);
     } catch (err) {
       if (err instanceof NetworkError) {
         setBadge('offline');
+        connectivity.markServerReachable(false);
       } else {
         setBadge('local');
       }

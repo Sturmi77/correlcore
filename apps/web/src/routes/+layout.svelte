@@ -6,7 +6,7 @@
   import { _, isLoading } from 'svelte-i18n';
   import { setupI18n } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
-  import { auth, hydrate } from '$lib/stores/auth';
+  import { auth, hydrate, reconnectSession } from '$lib/stores/auth';
   import { syncDevModeFromStorage, devPhase } from '$lib/stores/devMode';
   import { ensureStandaloneLaunchRoute } from '$lib/utils/pwaLaunch';
   import AppNav from '$lib/components/common/AppNav.svelte';
@@ -93,9 +93,17 @@
       theme.set(saved);
     }
     void hydrate().then(() => scheduleSync());
+    const onBrowserOnline = () => {
+      // After a network restore, re-probe the API then drain the outbox.
+      void reconnectSession().then((result) => {
+        if (result === 'online') scheduleSync();
+      });
+    };
+    window.addEventListener('online', onBrowserOnline);
     return () => {
       clearTimeout(splashTimer);
       cleanupSync();
+      window.removeEventListener('online', onBrowserOnline);
     };
   });
 

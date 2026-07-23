@@ -32,13 +32,18 @@ vi.mock('$lib/native/pushNotifications', () => ({
 }));
 
 import * as authApi from '$lib/api/auth';
+import { NetworkError } from '$lib/api/client';
+import { notifySessionExpired } from '$lib/api/sessionExpired';
 import * as offlineSession from '$lib/offline/session';
 import { disablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
+import { connectivity } from '$lib/stores/connectivity';
+import { LAST_USER_STORAGE_KEY } from '$lib/stores/lastUserCache';
 import {
   _resetForTests,
   auth,
   currentUser,
+  forceSessionExpired,
   hydrate,
   isAuthenticated,
   isAuthLoading,
@@ -57,6 +62,7 @@ const fakeUser = {
 beforeEach(() => {
   _resetForTests();
   vi.clearAllMocks();
+  localStorage.clear();
 });
 
 afterEach(() => {
@@ -80,6 +86,8 @@ describe('hydrate', () => {
     expect(get(currentUser)).toEqual(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
+    expect(JSON.parse(localStorage.getItem(LAST_USER_STORAGE_KEY) ?? 'null')).toEqual(fakeUser);
+    expect(get(connectivity).serverReachable).toBe(true);
   });
 
   it('transitions to anonymous without wiping offline data when /me returns null', async () => {
@@ -90,7 +98,18 @@ describe('hydrate', () => {
     expect(offlineSession.clearOfflineDataForAnonymousSession).not.toHaveBeenCalled();
   });
 
-  it('falls back to anonymous on network error', async () => {
+  it('restores the cached user in offline mode on network error', async () => {
+    localStorage.setItem(LAST_USER_STORAGE_KEY, JSON.stringify(fakeUser));
+    vi.mocked(authApi.fetchCurrentUser).mockRejectedValueOnce(
+      new NetworkError('/auth/me', new Error('offline'))
+    );
+    await hydrate();
+    expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
+    expect(get(connectivity).serverReachable).toBe(false);
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
+  });
+
+  it('falls back to anonymous on network error without a cached user', async () => {
     vi.mocked(authApi.fetchCurrentUser).mockRejectedValueOnce(new Error('network'));
     await hydrate();
     expect(get(auth)).toEqual({ status: 'anonymous' });
@@ -102,6 +121,25 @@ describe('hydrate', () => {
     await hydrate();
     await hydrate();
     expect(authApi.fetchCurrentUser).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('forceSessionExpired', () => {
+  it('clears auth state and cached user so the layout can redirect to login', async () => {
+    await setUser(fakeUser);
+    expect(get(isAuthenticated)).toBe(true);
+
+    forceSessionExpired();
+
+    expect(get(auth)).toEqual({ status: 'anonymous' });
+    expect(localStorage.getItem(LAST_USER_STORAGE_KEY)).toBeNull();
+    expect(resetInsightStore).toHaveBeenCalled();
+  });
+
+  it('is wired to the API session-expired notifier', async () => {
+    await setUser(fakeUser);
+    notifySessionExpired();
+    expect(get(auth)).toEqual({ status: 'anonymous' });
   });
 });
 

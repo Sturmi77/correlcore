@@ -16,6 +16,7 @@
 import { getApiBase } from './apiBase';
 import { usesBearerAuth } from './platform';
 import { NativeRefreshError, nativeRefreshSession } from './secureSession';
+import { notifySessionExpired } from './sessionExpired';
 import {
   clearSessionTokens,
   getAccessToken,
@@ -78,7 +79,10 @@ interface FetchOptions extends Omit<RequestInit, 'body'> {
 }
 
 // Single-flight refresh: at most one /refresh in flight at any time.
-let refreshInFlight: Promise<boolean> | null = null;
+let refreshInFlight: Promise<RefreshOutcome> | null = null;
+
+/** Outcome of an access-token refresh attempt. */
+export type RefreshOutcome = 'success' | 'rejected' | 'transient' | 'unavailable';
 
 function buildAuthInit(headers: Headers, rest: RequestInit = {}): RequestInit {
   const bearer = usesBearerAuth();
@@ -123,7 +127,7 @@ async function fetchRefreshOnce(): Promise<boolean> {
   return true;
 }
 
-async function performRefresh(): Promise<boolean> {
+async function performRefresh(): Promise<RefreshOutcome> {
   try {
     const bearer = usesBearerAuth();
     if (bearer) {
@@ -135,18 +139,18 @@ async function performRefresh(): Promise<boolean> {
         });
         if (native) {
           setSessionTokens(native);
-          return true;
+          return 'success';
         }
       } catch (err) {
         if (err instanceof NativeRefreshError) {
           if (err.code === 'TRANSIENT') {
             // Keep JWTs; do not POST a possibly-stale refresh token via fetch
             // (replay → revoke_all). Caller will surface the original 401.
-            return false;
+            return 'transient';
           }
           // AUTH_REJECTED / MISSING / UNKNOWN with a coded reject — clear.
           clearSessionTokens();
-          return false;
+          return 'rejected';
         }
         throw err;
       }
@@ -154,21 +158,23 @@ async function performRefresh(): Promise<boolean> {
       await syncSessionTokensFromNative();
     }
 
-    if (await fetchRefreshOnce()) return true;
+    if (await fetchRefreshOnce()) return 'success';
 
     if (bearer) {
       // Widget may have won a race and dual-written newer tokens — retry once.
       const synced = await syncSessionTokensFromNative();
-      if (synced && (await fetchRefreshOnce())) return true;
+      if (synced && (await fetchRefreshOnce())) return 'success';
       clearSessionTokens();
     }
-    return false;
+    return 'rejected';
   } catch {
-    return false;
+    // Transport failure during refresh — keep the local session so offline
+    // mode can continue; do not treat this as credential rejection.
+    return 'unavailable';
   }
 }
 
-function refreshAccessToken(): Promise<boolean> {
+function refreshAccessToken(): Promise<RefreshOutcome> {
   if (!refreshInFlight) {
     refreshInFlight = performRefresh().finally(() => {
       refreshInFlight = null;
@@ -199,8 +205,8 @@ async function requestWithRefresh(path: string, init: RequestInit, skipAuthRefre
   }
 
   if (res.status === 401 && !skipAuthRefresh) {
-    const refreshed = await refreshAccessToken();
-    if (refreshed) {
+    const outcome = await refreshAccessToken();
+    if (outcome === 'success') {
       // Rebuild Authorization header with rotated access token.
       const headers = new Headers(init.headers);
       const replay = buildAuthInit(headers, { ...init, headers });
@@ -209,6 +215,9 @@ async function requestWithRefresh(path: string, init: RequestInit, skipAuthRefre
       } catch (err) {
         throw new NetworkError(path, err, apiBase);
       }
+    } else if (outcome === 'rejected') {
+      // Definitive credential failure — force login via the auth store.
+      notifySessionExpired();
     }
   }
   return res;

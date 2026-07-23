@@ -835,6 +835,11 @@
     "connection": {
       "offline_title": "No connection",
       "offline_body": "Saving and fresh data pause until you reconnect.",
+      "server_unavailable_title": "Server unavailable",
+      "server_unavailable_body": "Working offline with local data. Changes will sync when the server is back.",
+      "pending_title": "Sync pending",
+      "pending_sync": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
+      "sync_now": "Sync now",
       "retry": "Retry"
     },
     "update": {

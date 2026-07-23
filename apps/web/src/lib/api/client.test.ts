@@ -140,6 +140,10 @@ describe('apiFetch — single-flight refresh', () => {
   });
 
   it('does not retry when refresh itself fails', async () => {
+    const { onSessionExpired, _resetSessionExpiredHandlerForTests } =
+      await import('./sessionExpired');
+    const expired = vi.fn();
+    onSessionExpired(expired);
     fetchMock.mockResolvedValueOnce(emptyResponse(401)).mockResolvedValueOnce(emptyResponse(401)); // refresh also unauth
 
     await expect(apiFetch('/protected')).rejects.toMatchObject({
@@ -147,6 +151,25 @@ describe('apiFetch — single-flight refresh', () => {
       status: 401,
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(expired).toHaveBeenCalledTimes(1);
+    _resetSessionExpiredHandlerForTests();
+  });
+
+  it('does not expire the session when refresh hits a network error', async () => {
+    const { onSessionExpired, _resetSessionExpiredHandlerForTests } =
+      await import('./sessionExpired');
+    const expired = vi.fn();
+    onSessionExpired(expired);
+    fetchMock
+      .mockResolvedValueOnce(emptyResponse(401))
+      .mockRejectedValueOnce(new Error('Failed to fetch'));
+
+    await expect(apiFetch('/protected')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 401,
+    });
+    expect(expired).not.toHaveBeenCalled();
+    _resetSessionExpiredHandlerForTests();
   });
 
   it('shares a single refresh between concurrent 401s', async () => {

@@ -1,9 +1,14 @@
 /**
  * Offline sync feature gate — default off until enabled for verified users.
+ *
+ * Exception: when the API is known unreachable after an offline boot, allow
+ * the Dexie write/sync path so deferred uploads remain possible without
+ * permanently flipping the user preference.
  */
 
 import { get } from 'svelte/store';
 import { currentUser } from '$lib/stores/auth';
+import { connectivity } from '$lib/stores/connectivity';
 
 export const OFFLINE_SYNC_STORAGE_KEY = 'cc_offline_sync_enabled';
 
@@ -36,7 +41,9 @@ export function isOfflineSyncEnabled(): boolean {
 export function canUseOfflineSync(): boolean {
   const user = get(currentUser);
   if (!user?.is_verified) return false;
-  return isOfflineSyncEnabled();
+  if (isOfflineSyncEnabled()) return true;
+  // Offline boot / API down: keep deferred sync usable for verified users.
+  return get(connectivity).serverReachable === false;
 }
 
 /** Dev/test override stored in localStorage. */

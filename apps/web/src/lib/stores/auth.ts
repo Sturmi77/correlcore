@@ -8,9 +8,12 @@
  *
  * Lifecycle:
  *   - On app boot: restore Capacitor secure session (if any), then
- *     hydrate() probes /auth/me. 200 → user, 401 → null.
+ *     hydrate() probes /auth/me. 200 → user, 401 → null, network error →
+ *     restore last cached user in offline mode when available.
  *   - On login:    login() sets the user and returns it.
  *   - On logout:   logout() clears the user and session (cookies / memory / secure store).
+ *   - On definitive credential failure after refresh: forceSessionExpired()
+ *     flips the store to anonymous so the layout guard routes to login.
  */
 
 import { writable, derived, get } from 'svelte/store';
@@ -21,14 +24,17 @@ import {
   type LoginPayload,
   type UserResponse,
 } from '$lib/api/auth';
-import { ApiError } from '$lib/api/client';
+import { ApiError, NetworkError } from '$lib/api/client';
 import { setRuntimeApiBase } from '$lib/api/apiBase';
 import { usesBearerAuth } from '$lib/api/platform';
 import { restoreSecureSession } from '$lib/api/secureSession';
+import { onSessionExpired } from '$lib/api/sessionExpired';
 import { clearSessionTokens, setSessionTokens } from '$lib/api/sessionTokens';
 import { disablePushNotifications, enablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
 import { resetEntrySheetStore } from '$lib/stores/entrySheet';
+import { connectivity } from '$lib/stores/connectivity';
+import { cacheLastUser, clearLastUser, readLastUser } from '$lib/stores/lastUserCache';
 import {
   clearOfflineDataForLogout,
   drainOfflineSyncForSessionChange,
@@ -68,6 +74,33 @@ async function restoreCapacitorSessionIfNeeded(): Promise<void> {
   });
 }
 
+async function becomeAuthenticated(
+  user: UserResponse,
+  options: { enablePush: boolean }
+): Promise<void> {
+  cacheLastUser(user);
+  await prepareOfflineDataForAuthenticatedUser(user.id);
+  _auth.set({ status: 'authenticated', user });
+  if (options.enablePush) {
+    void enablePushNotifications();
+  }
+}
+
+/**
+ * Drop local session UI state after a definitive credential failure.
+ * Keeps Dexie offline data so the same user can resume after re-login.
+ */
+export function forceSessionExpired(): void {
+  clearSessionTokens();
+  clearLastUser();
+  connectivity.markServerReachable(true);
+  resetInsightStore();
+  resetEntrySheetStore();
+  _auth.set({ status: 'anonymous' });
+}
+
+onSessionExpired(forceSessionExpired);
+
 /** Probe /auth/me and set store. Idempotent — runs at most once per page load. */
 export async function hydrate(): Promise<AuthState> {
   if (hydrated) return get(_auth);
@@ -76,17 +109,54 @@ export async function hydrate(): Promise<AuthState> {
     await restoreCapacitorSessionIfNeeded();
     const user = await fetchCurrentUser();
     if (user) {
-      await prepareOfflineDataForAuthenticatedUser(user.id);
-      _auth.set({ status: 'authenticated', user });
-      void enablePushNotifications();
+      connectivity.markServerReachable(true);
+      await becomeAuthenticated(user, { enablePush: true });
     } else {
+      connectivity.markServerReachable(true);
+      clearLastUser();
       _auth.set({ status: 'anonymous' });
     }
-  } catch {
-    // Network failure — treat as anonymous so login UI shows.
+  } catch (err) {
+    if (
+      err instanceof NetworkError ||
+      (err instanceof TypeError && err.message.includes('fetch'))
+    ) {
+      const cached = readLastUser();
+      if (cached) {
+        connectivity.markServerReachable(false);
+        // Offline boot: keep the shell authenticated against the last known user.
+        await becomeAuthenticated(cached, { enablePush: false });
+        return get(_auth);
+      }
+    }
+    // Unknown failure or no cached user — show login.
     _auth.set({ status: 'anonymous' });
   }
   return get(_auth);
+}
+
+/**
+ * Re-probe the API after the user retries from the offline banner.
+ * Restores a live session or forces login when credentials died while offline.
+ */
+export async function reconnectSession(): Promise<'online' | 'offline' | 'anonymous'> {
+  try {
+    const user = await fetchCurrentUser();
+    if (user) {
+      connectivity.markServerReachable(true);
+      await becomeAuthenticated(user, { enablePush: true });
+      return 'online';
+    }
+    forceSessionExpired();
+    return 'anonymous';
+  } catch (err) {
+    if (err instanceof NetworkError) {
+      connectivity.markServerReachable(false);
+      return 'offline';
+    }
+    connectivity.markServerReachable(false);
+    return 'offline';
+  }
 }
 
 export async function login(payload: LoginPayload): Promise<UserResponse> {
@@ -100,11 +170,10 @@ export async function login(payload: LoginPayload): Promise<UserResponse> {
     clearSessionTokens();
     throw new ApiError(401, 'Could not validate credentials', '/auth/me');
   }
-  await prepareOfflineDataForAuthenticatedUser(sessionUser.id);
+  connectivity.markServerReachable(true);
   resetInsightStore();
   resetEntrySheetStore();
-  _auth.set({ status: 'authenticated', user: sessionUser });
-  void enablePushNotifications();
+  await becomeAuthenticated(sessionUser, { enablePush: true });
   return sessionUser;
 }
 
@@ -120,6 +189,7 @@ export async function logout(): Promise<void> {
     clearSessionTokens();
   }
   await clearOfflineDataForLogout();
+  clearLastUser();
   resetInsightStore();
   resetEntrySheetStore();
   _auth.set({ status: 'anonymous' });
@@ -130,15 +200,16 @@ export async function logout(): Promise<void> {
  * (e.g. after verify-email + login in the same request chain).
  */
 export async function setUser(user: UserResponse): Promise<void> {
-  await prepareOfflineDataForAuthenticatedUser(user.id);
+  connectivity.markServerReachable(true);
   resetInsightStore();
   resetEntrySheetStore();
-  _auth.set({ status: 'authenticated', user });
-  void enablePushNotifications();
+  await becomeAuthenticated(user, { enablePush: true });
 }
 
 /** Test-only: reset hydration state. */
 export function _resetForTests(): void {
   hydrated = false;
   _auth.set({ status: 'loading' });
+  clearLastUser();
+  connectivity._resetForTests();
 }

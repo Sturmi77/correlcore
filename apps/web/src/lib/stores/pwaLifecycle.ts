@@ -1,4 +1,5 @@
 import { get, writable, type Readable } from 'svelte/store';
+import { connectivity } from '$lib/stores/connectivity';
 
 export interface PwaLifecycleState {
   online: boolean;
@@ -31,6 +32,11 @@ export function createPwaLifecycleStore(
   let registration: ServiceWorkerRegistration | null = null;
   let reloading = false;
 
+  function setOnline(online: boolean): void {
+    update((state) => ({ ...state, online }));
+    connectivity.setBrowserOnline(online);
+  }
+
   function inspectRegistration(nextRegistration: ServiceWorkerRegistration): void {
     registration = nextRegistration;
     if (nextRegistration.waiting) {
@@ -51,11 +57,13 @@ export function createPwaLifecycleStore(
     if (!env || initialized) return;
     initialized = true;
 
+    setOnline(env.navigator.onLine);
+
     env.window.addEventListener('online', () => {
-      update((state) => ({ ...state, online: true }));
+      setOnline(true);
     });
     env.window.addEventListener('offline', () => {
-      update((state) => ({ ...state, online: false }));
+      setOnline(false);
     });
 
     if ('serviceWorker' in env.navigator) {
