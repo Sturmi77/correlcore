@@ -101,6 +101,8 @@
       "heading": "Deine Woche auf einen Blick",
       "aria": "Uebersicht der Wochentage mit Stimmung und ersten Mustern",
       "no_finding": "—",
+      "finding_confounder": "Hinweis: ",
+      "finding_top_signal": "Am häufigsten: ",
       "hint": "Stimmungsbalken und erste Muster pro Wochentag. Mehr Eintraege machen die Muster stabiler.",
       "empty": "Noch kein Wochentagsmuster erkennbar",
       "empty_hint": "Trage weiter an unterschiedlichen Wochentagen ein, um zu sehen, wie sich deine Stimmung veraendert."

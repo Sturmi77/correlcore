@@ -142,3 +142,59 @@ describe('selectNewestWeekdayPattern', () => {
     expect(selectNewestWeekdayPattern([other, weekday])?.id).toBe('weekday-only');
   });
 });
+
+describe('top signal vs confounder precedence (#487)', () => {
+  const summary = (weekday: number, label: string | null) => ({
+    weekday,
+    entry_count: 10,
+    mood_avg: 3.2,
+    top_signal: label ? { kind: 'tag' as const, id: 't1', label, count: 5, share: 0.5 } : null,
+  });
+
+  it('fills a day that has no confounder with the top signal', () => {
+    const cells = buildWeekdayOverviewCells([], [summary(2, 'Meeting')]);
+    const wednesday = cells[2];
+    expect(wednesday.findingLabel).toBe('Meeting');
+    expect(wednesday.findingType).toBe('tag');
+    expect(wednesday.findingSource).toBe('top_signal');
+  });
+
+  it('lets the confounder win where both exist', () => {
+    // The confounder is the rarer, stronger statement — it must not be
+    // displaced by a purely descriptive frequency.
+    const cells = buildWeekdayOverviewCells(
+      [makeInsight({ payload: { weekday: 2 }, subject_label: 'Running' })],
+      [summary(2, 'Meeting')]
+    );
+    expect(cells[2].findingLabel).toBe('Running');
+    expect(cells[2].findingSource).toBe('confounder');
+  });
+
+  it('maps top-signal kinds onto the existing finding types', () => {
+    const kinds = [
+      ['tag', 'tag'],
+      ['symptom', 'symptom'],
+      ['work_context', 'context'],
+    ] as const;
+    for (const [kind, expected] of kinds) {
+      const cells = buildWeekdayOverviewCells(
+        [],
+        [
+          {
+            weekday: 0,
+            entry_count: 10,
+            mood_avg: null,
+            top_signal: { kind, id: null, label: 'X', count: 4, share: 0.4 },
+          },
+        ]
+      );
+      expect(cells[0].findingType).toBe(expected);
+    }
+  });
+
+  it('leaves the day empty when neither source has anything', () => {
+    const cells = buildWeekdayOverviewCells([], [summary(3, null)]);
+    expect(cells[3].findingLabel).toBeNull();
+    expect(cells[3].findingSource).toBeNull();
+  });
+});

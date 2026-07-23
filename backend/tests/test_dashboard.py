@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,7 +13,11 @@ from app.models.entry import WorkContext
 from app.models.insight import InsightTier
 from app.models.user import User
 from app.schemas.dashboard import DashboardSummaryResponse
-from app.services.dashboard_service import get_dashboard_summary, insight_confidence_score
+from app.services.dashboard_service import (
+    get_dashboard_summary,
+    insight_confidence_score,
+    pick_top_signal,
+)
 from app.services.insight_engine import confidence_tier_for_sample
 from tests.conftest import make_user
 
@@ -74,6 +79,10 @@ async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
                     (6, 3, 3.2),
                 ]
             ),
+            # #487 top-signal queries: tags, symptoms, work contexts.
+            _all_result([]),
+            _all_result([]),
+            _all_result([]),
         ]
     )
 
@@ -166,7 +175,66 @@ async def test_dashboard_summary_endpoint_returns_confidence_fields(
             }
         ],
         "weekday_summary": [
-            {"weekday": 0, "entry_count": 4, "mood_avg": 3.2},
-            {"weekday": 4, "entry_count": 5, "mood_avg": 3.9},
+            # top_signal is always serialised; null when no signal clears the
+            # count/share floor (#487).
+            {"weekday": 0, "entry_count": 4, "mood_avg": 3.2, "top_signal": None},
+            {"weekday": 4, "entry_count": 5, "mood_avg": 3.9, "top_signal": None},
         ],
     }
+
+
+class TestWeekdayTopSignal:
+    """#487 — the dominant tag / symptom / work context per weekday."""
+
+    def _tag(self, label: str) -> tuple[str, uuid.UUID | None, str, int]:
+        return ("tag", uuid.uuid4(), label, 3)
+
+    def test_picks_the_most_frequent_candidate(self) -> None:
+        winner = pick_top_signal(
+            [
+                ("tag", None, "Meeting", 5),
+                ("symptom", None, "Kopfschmerz", 3),
+                ("work_context", None, "office", 2),
+            ],
+            weekday_entry_count=8,
+        )
+        assert winner is not None
+        assert winner.label == "Meeting"
+        assert winner.count == 5
+        assert winner.share == 0.625
+
+    def test_tie_breaks_tag_over_symptom_over_context(self) -> None:
+        winner = pick_top_signal(
+            [
+                ("work_context", None, "office", 4),
+                ("symptom", None, "Kopfschmerz", 4),
+                ("tag", None, "Meeting", 4),
+            ],
+            weekday_entry_count=8,
+        )
+        assert winner is not None
+        assert winner.kind == "tag"
+
+    def test_tie_breaks_by_label_within_a_kind(self) -> None:
+        winner = pick_top_signal(
+            [("tag", None, "Sport", 4), ("tag", None, "Meeting", 4)],
+            weekday_entry_count=8,
+        )
+        assert winner is not None
+        assert winner.label == "Meeting"
+
+    def test_suppresses_single_occurrences(self) -> None:
+        # A stray entry must not become "what typically happens on Mondays".
+        assert pick_top_signal([("tag", None, "Meeting", 1)], weekday_entry_count=2) is None
+
+    def test_suppresses_low_share(self) -> None:
+        # 2 of 10 days is 20% — below the 30% floor.
+        assert pick_top_signal([("tag", None, "Meeting", 2)], weekday_entry_count=10) is None
+        # 3 of 10 clears it.
+        assert pick_top_signal([("tag", None, "Meeting", 3)], weekday_entry_count=10) is not None
+
+    def test_returns_none_without_entries(self) -> None:
+        assert pick_top_signal([("tag", None, "Meeting", 5)], weekday_entry_count=0) is None
+
+    def test_returns_none_without_candidates(self) -> None:
+        assert pick_top_signal([], weekday_entry_count=8) is None

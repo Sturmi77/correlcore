@@ -63,8 +63,21 @@
             style={`height: ${cell.moodAvg === null ? 4 : Math.max(8, (cell.moodAvg / maxMood) * 56)}px`}
           ></span>
           {#if cell.findingLabel}
-            <span class="weekday-overview__finding" data-type={cell.findingType ?? 'context'}>
-              {cell.findingLabel}
+            <span
+              class="weekday-overview__finding"
+              data-type={cell.findingType ?? 'context'}
+              data-source={cell.findingSource ?? 'top_signal'}
+            >
+              <!-- A confounder is a caveat, a top signal is just frequency —
+                   name which one for screen readers so the dotted underline is
+                   never the only cue (#487). -->
+              <span class="sr-only"
+                >{$_(
+                  cell.findingSource === 'confounder'
+                    ? 'home.weekday_overview.finding_confounder'
+                    : 'home.weekday_overview.finding_top_signal'
+                )}</span
+              >{cell.findingLabel}
             </span>
           {:else}
             <span class="weekday-overview__finding weekday-overview__finding--empty">
@@ -170,6 +183,25 @@
 
   .weekday-overview__finding[data-type='symptom'] {
     color: var(--color-primary);
+  }
+
+  /* #487: a confounder says "this looked real but dissolves once weekday
+     effects are adjusted for" — a caveat. A top signal only says "this happens
+     most often here". The caveat is rarer and stronger, so it gets weight and a
+     dotted underline; the descriptive one stays quiet.
+
+     The accent is a decoration colour, not a text colour: --color-warning is
+     not in the contrast-validated token set, and text at --text-2xs has no
+     headroom to spare. */
+  .weekday-overview__finding[data-source='confounder'] {
+    font-weight: 600;
+    text-decoration: underline dotted from-font;
+    text-decoration-color: var(--color-warning);
+    text-underline-offset: 0.2em;
+  }
+
+  .weekday-overview__finding[data-source='top_signal'] {
+    color: var(--color-text-muted);
   }
 
   .weekday-overview__finding--empty {
