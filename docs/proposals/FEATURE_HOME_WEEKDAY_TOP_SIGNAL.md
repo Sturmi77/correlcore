@@ -12,7 +12,7 @@ Pro Wochentag (Mo–So) im Homescreen-Wochentags-Strip genau **ein** dominantes 
 
 ## Problem / Motivation
 
-Die Home-Wochentags-Übersicht ([`HomeWeekdayOverview.svelte`](../../apps/web/src/lib/components/home/HomeWeekdayOverview.svelte)) zeigt aktuell Mood-Durchschnitte und gelegentlich Insight-Confounder-Labels ([`homeWeekdayOverview.ts`](../../apps/web/src/lib/utils/homeWeekdayOverview.ts)). Nutzer sehen nicht, *was* typischerweise an dem Tag passiert (z. B. „Meeting“ freitags, „Kopfschmerz“ montags).
+Die Home-Wochentags-Übersicht ([`HomeWeekdayOverview.svelte`](../../apps/web/src/lib/components/home/HomeWeekdayOverview.svelte)) zeigt aktuell Mood-Durchschnitte und gelegentlich Insight-Confounder-Labels ([`homeWeekdayOverview.ts`](../../apps/web/src/lib/utils/homeWeekdayOverview.ts)). Nutzer sehen nicht, _was_ typischerweise an dem Tag passiert (z. B. „Meeting“ freitags, „Kopfschmerz“ montags).
 
 `GET /dashboard/summary` liefert in `weekday_summary` nur `mood_avg` / `entry_count` — keine Frequenz-Mode über Tags, Symptoms oder Work-Context.
 
