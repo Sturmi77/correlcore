@@ -32,8 +32,11 @@ widget and the app open an identical sheet. An optional `?date=YYYY-MM-DD`
 pre-selects the entry date; malformed values are dropped. Unknown
 `correlcore://` targets are ignored rather than navigated to.
 
-If the user is signed out on cold start, the sheet opens once authentication
-completes — `GlobalEntrySheet` re-checks the query on every auth transition.
+If the user is signed out, the link is routed through
+`/auth/login?next=/?openEntry=1` and the sheet opens after login. This is
+explicit rather than automatic: `/` is a public route, so the layout's anonymous
+guard — which is what normally preserves the target in `next` — never fires for
+the landing page.
 
 ## API
 
