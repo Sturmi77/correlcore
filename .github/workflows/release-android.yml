@@ -299,6 +299,11 @@ jobs:
           test -n "${ANDROID_KEYSTORE_PASSWORD}"
           test -n "${ANDROID_KEY_ALIAS}"
           test -n "${ANDROID_KEY_PASSWORD}"
+          # NewApi gate on the release variant too: assemble-debug (which runs
+          # lintDebug) is skipped on tag / workflow_dispatch, i.e. exactly the
+          # paths that publish signed artifacts. Without this a java.time
+          # regression in a tagged source could still ship (#445 class).
+          ./gradlew lintRelease --stacktrace
           ./gradlew assembleRelease bundleRelease --stacktrace
 
       - name: Package artifacts + SHA-256
