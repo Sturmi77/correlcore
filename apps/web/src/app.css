@@ -626,13 +626,7 @@ button {
     margin: var(--space-4) var(--space-2) var(--space-2);
     padding: var(--space-2);
     border-radius: var(--radius-md);
-    text-decoration: none;
     color: inherit;
-    transition: background-color var(--transition-interactive);
-  }
-
-  .app-nav__brand:hover {
-    background: var(--color-surface-2);
   }
 
   .app-nav__list {

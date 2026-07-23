@@ -136,7 +136,29 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Backfill runs (`attach_to_tag`) must build from that tag's commit, not
+      # from the dispatch ref (default `main`) — otherwise newer source lands on
+      # an older release and silently replaces correct assets (#451).
       - uses: actions/checkout@v7
+        with:
+          ref: >-
+            ${{ github.event.inputs.attach_to_tag != ''
+            && format('refs/tags/{0}', github.event.inputs.attach_to_tag)
+            || github.ref }}
+
+      - name: Confirm backfill builds from the target tag
+        if: github.event.inputs.attach_to_tag != ''
+        env:
+          ATTACH_TAG: ${{ github.event.inputs.attach_to_tag }}
+        run: |
+          git fetch --depth=1 origin "refs/tags/${ATTACH_TAG}:refs/tags/${ATTACH_TAG}" 2>/dev/null || true
+          TAG_SHA="$(git rev-parse "refs/tags/${ATTACH_TAG}^{commit}")"
+          HEAD_SHA="$(git rev-parse HEAD)"
+          if [[ "${TAG_SHA}" != "${HEAD_SHA}" ]]; then
+            echo "::error::Checkout is ${HEAD_SHA}, but ${ATTACH_TAG} points at ${TAG_SHA}."
+            exit 1
+          fi
+          echo "Building ${ATTACH_TAG} from ${HEAD_SHA}."
 
       - name: Require signing secrets
         env:

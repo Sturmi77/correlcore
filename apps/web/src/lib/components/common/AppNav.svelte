@@ -21,10 +21,15 @@
 </script>
 
 <nav class="app-nav" aria-label={$_('nav.aria_label')}>
-  <!-- Desktop rail brand only (hidden on mobile bottom bar via CSS). -->
-  <a href="/" class="app-nav__brand" aria-label={$_('app.name')} data-testid="app-nav-brand">
+  <!--
+    Desktop rail brand only (hidden on mobile bottom bar via CSS).
+    Presentational on purpose: the Home nav item below already links to "/" with
+    the same mark, so a second link here would put five links in the navigation
+    landmark and duplicate the Home affordance for screen readers (#448).
+  -->
+  <span class="app-nav__brand" aria-hidden="true" data-testid="app-nav-brand">
     <CorrelCoreLogo size={BRAND_MARK_MD} title="" />
-  </a>
+  </span>
   <ul class="app-nav__list">
     {#each NAV_ITEMS as item (item.href)}
       {@const active = isNavItemActive(pathname, item.href, item.match)}
