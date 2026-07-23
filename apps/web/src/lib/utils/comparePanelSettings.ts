@@ -26,6 +26,7 @@ function readLocal<T>(key: string, fallback: T, isValid: (value: unknown) => boo
 function writeLocal(key: string, value: unknown): void {
   if (!browser) return;
   try {
+    // storage-exempt: generic helper, callers pass compare-panel UI keys only
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // Quota or private-mode — silently ignore.

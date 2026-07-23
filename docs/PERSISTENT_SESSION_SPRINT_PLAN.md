@@ -14,6 +14,7 @@ passwords or putting JWTs in web `localStorage` / `sessionStorage`.
 amended; QA matrix signed off for the three surfaces.
 
 **Status:** Implemented in code (PS-0…PS-3); close #453 after cross-surface QA sign-off.
+Executable checklist: [`docs/quality/PERSISTENT_SESSION_QA.md`](quality/PERSISTENT_SESSION_QA.md).
 
 ---
 

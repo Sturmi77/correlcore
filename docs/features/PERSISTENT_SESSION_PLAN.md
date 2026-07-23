@@ -1,6 +1,7 @@
 # Persistent Session („Angemeldet bleiben“) — Implementation Plan
 
-Status: **Implemented** (PS-0…PS-3 in code; device QA still recommended)  
+Status: **Implemented** (PS-0…PS-3 in code; cross-surface QA outstanding)  
+QA checklist: [`docs/quality/PERSISTENT_SESSION_QA.md`](../quality/PERSISTENT_SESSION_QA.md)  
 Last updated: 2026-07-18  
 Related: ADR-0006, ADR-0004, Issue [#453](https://github.com/Sturmi77/correlcore/issues/453)  
 Surfaces: **Web (browser)**, **PWA (standalone)**, **Capacitor Android**  
