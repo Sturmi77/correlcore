@@ -21,6 +21,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:contrast": "node scripts/check-contrast.mjs",
+    "check:no-token-storage": "node scripts/check-no-token-storage.mjs",
     "check:style-contract": "node scripts/check-style-contract.mjs",
     "check:style-tokens": "node scripts/check-style-tokens.mjs",
     "typecheck": "pnpm -r typecheck",

@@ -40,6 +40,7 @@ function readStoredBoolean(key: string): boolean {
 
 function writeStoredBoolean(key: string, value: boolean): void {
   if (typeof window !== 'undefined') {
+    // storage-exempt: generic helper, callers pass DEV_*_STORAGE_KEY only
     localStorage.setItem(key, String(value));
   }
 }

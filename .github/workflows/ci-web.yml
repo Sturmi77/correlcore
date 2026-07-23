@@ -199,6 +199,32 @@ jobs:
         run: pnpm check:style-tokens
         working-directory: .
 
+  no-token-storage:
+    name: Web storage guardrail (ADR-0006)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      # ADR-0006 / #453: refresh material belongs in HttpOnly cookies (Web/PWA)
+      # or EncryptedSharedPreferences (Capacitor) — never in web storage.
+      - name: Web storage check
+        run: pnpm check:no-token-storage
+        working-directory: .
+
   test:
     name: Unit tests (vitest)
     runs-on: ubuntu-latest

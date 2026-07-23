@@ -101,6 +101,7 @@
   function writeLocal(key: string, value: unknown): void {
     if (!browser) return;
     try {
+      // storage-exempt: generic helper, callers pass compare-panel UI keys only
       window.localStorage.setItem(key, JSON.stringify(value));
     } catch {
       // Quota or private-mode — silently ignore. Preference falls back to default next session.
