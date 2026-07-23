@@ -52,8 +52,11 @@
   }
 
   $: insufficient = isHabitAdherenceInsufficient(selected.habit);
+  // #490: the visual difference between build and reduce is shape/texture, so
+  // the meter has to name the type in text for screen readers.
   $: meterText = $_('habits.adherence_meter_text', {
     values: {
+      type: $_(`habits.type.${selected.habit.habit_type}`),
       percent: pct(selected.habit.adherence_rate),
       goal: goalLabel(selected.habit),
     },
@@ -77,6 +80,7 @@
     <div
       class="habit-detail__bar"
       role="meter"
+      data-habit-type={selected.habit.habit_type}
       aria-valuemin="0"
       aria-valuemax="100"
       aria-valuenow={selected.habit.adherence_rate}
@@ -180,6 +184,23 @@
     height: 100%;
     border-radius: inherit;
     background: var(--color-primary);
+  }
+
+  /* Mirrors HabitsPanel (#490): same value, different encoding — solid reads as
+     progress toward a target, hatched as headroom under a limit. */
+  .habit-detail__bar[data-habit-type='reduce'] {
+    box-shadow: inset 0 0 0 1px oklch(from var(--color-primary) l c h / 0.35);
+    background: transparent;
+  }
+
+  .habit-detail__bar[data-habit-type='reduce'] > span {
+    background: repeating-linear-gradient(
+      135deg,
+      var(--color-primary) 0,
+      var(--color-primary) 2px,
+      transparent 2px,
+      transparent 5px
+    );
   }
 
   .habit-detail__stats {
