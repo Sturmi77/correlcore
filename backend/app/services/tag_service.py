@@ -152,9 +152,7 @@ def canonicalize_tags_by_slug(
         for slug, items in tags_by_slug.items()
     }
     aliases = {
-        tag.id: canonical_by_slug[tag.slug].id
-        for items in tags_by_slug.values()
-        for tag in items
+        tag.id: canonical_by_slug[tag.slug].id for items in tags_by_slug.values() for tag in items
     }
     return aliases, {tag.id: tag for tag in canonical_by_slug.values()}
 
