@@ -197,8 +197,8 @@ async def remap_entry_tags_from_default_to_override(
         .values(tag_id=override_tag_id)
     )
     await db.flush()
-    deleted = int(delete_result.rowcount or 0)
-    updated = int(update_result.rowcount or 0)
+    deleted = int(getattr(delete_result, "rowcount", 0) or 0)
+    updated = int(getattr(update_result, "rowcount", 0) or 0)
     changed = deleted + updated
     if changed:
         logger.info(
