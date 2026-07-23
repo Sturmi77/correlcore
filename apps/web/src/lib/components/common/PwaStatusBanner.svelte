@@ -107,7 +107,7 @@
   }
 
   .pwa-status--pending {
-    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+    border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
   }
 
   .pwa-status div {
