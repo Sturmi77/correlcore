@@ -87,7 +87,7 @@ def test_check_liveness_returns_static_payload() -> None:
         s.APP_VERSION = "9.9.9"
         s.APP_ENV = "staging"
         s.cookie_secure_effective = False
-        s.IMAGE_TAG = "v1.0.8"
+        s.IMAGE_TAG = "v1.1.0"
         s.GIT_COMMIT = "5149e76deadbeef"
         result = check_liveness()
     assert result == {
@@ -95,7 +95,7 @@ def test_check_liveness_returns_static_payload() -> None:
         "version": "9.9.9",
         "cookie_secure": False,
         "app_env": "staging",
-        "image_tag": "v1.0.8",
+        "image_tag": "v1.1.0",
         "git_commit": "5149e76deadbeef",
     }
 

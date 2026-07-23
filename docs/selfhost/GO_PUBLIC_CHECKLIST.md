@@ -3,7 +3,7 @@
 Last updated: 2026-07-20
 
 **Historical M10 go-public checklist.** CorrelCore **v1.0.0** shipped 2026-07-11; the
-current release line is **1.0.x** (patch tags through `v1.0.8` with Android sideload APKs).
+current release line is **1.x** (through `v1.1.0`, with Android sideload APKs).
 Use the [Post-1.0.x patch releases](#post-10x-patch-releases) section below for new patch tags.
 
 Operator and maintainer checklist before making the repository **public** and
@@ -144,13 +144,13 @@ Selfhost operators use their own security contact for instance-specific issues; 
 
 ## Post-1.0.x patch releases
 
-Checklist for tagging **`v1.0.N`** (e.g. `v1.0.8`) after the initial M10 go-public:
+Checklist for tagging a new **`v1.x`** release (e.g. `v1.1.0`) after the initial M10 go-public:
 
 | Step | Action                                                                                                                                                       |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1    | Add `[1.0.N]` section to [`CHANGELOG.md`](../../CHANGELOG.md)                                                                                                |
 | 2    | Bump manifests if project policy requires (root/web/backend `package.json`, i18n `app.version`)                                                              |
-| 3    | Set operator pin: `IMAGE_TAG=v1.0.N` in `.env` (any `v1.0.x` pin works)                                                                                      |
+| 3    | Set operator pin: `IMAGE_TAG=v1.x.y` in `.env` (any `v1.x` pin works)                                                                                        |
 | 4    | Tag and push: `git tag -a v1.0.N -m "CorrelCore v1.0.N"` → `git push origin v1.0.N`                                                                          |
 | 5    | Verify CI: [`release-images.yml`](../../.github/workflows/release-images.yml) publishes `:v1.0.N`, `:v1.0`                                                   |
 | 6    | Android sideload (if applicable): [`release-android.yml`](../../.github/workflows/release-android.yml) attaches `correlcore-1.0.N.apk` to the GitHub Release |

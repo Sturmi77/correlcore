@@ -17,8 +17,8 @@ def hasFileSigning = keystorePropertiesFile.exists() &&
         keystoreProperties['keyPassword'] != null
 def hasReleaseSigning = hasEnvSigning || hasFileSigning
 
-def releaseVersionCode = (System.getenv('ANDROID_VERSION_CODE') ?: '1000008') as int
-def releaseVersionName = System.getenv('ANDROID_VERSION_NAME') ?: '1.0.8'
+def releaseVersionCode = (System.getenv('ANDROID_VERSION_CODE') ?: '1001000') as int
+def releaseVersionName = System.getenv('ANDROID_VERSION_NAME') ?: '1.1.0'
 
 // Sideload / Obtainium builds omit google-services.json. Detect before
 // android {} so BuildConfig.FCM_ENABLED matches whether Firebase is wired.
