@@ -41,7 +41,7 @@ from app.services.symptom_analytics import (
     TagRef,
     heatmap_symptom_tag_associations,
 )
-from app.services.tag_service import analytics_tag_predicate
+from app.services.tag_service import analytics_tag_predicate, canonicalize_tags_by_slug
 
 
 def _today() -> date_type:
@@ -144,7 +144,7 @@ async def get_tag_heatmap(
     start_date = start_date or (end_date - timedelta(days=364))
 
     stmt = (
-        select(Tag, Entry.entry_date)
+        select(Tag, Entry.id, Entry.entry_date)
         .join(EntryTag, EntryTag.tag_id == Tag.id)
         .join(Entry, Entry.id == EntryTag.entry_id)
         .where(
@@ -160,15 +160,22 @@ async def get_tag_heatmap(
         stmt = stmt.where(Tag.category == category)
 
     result = await db.execute(stmt)
+    raw_rows = list(result.all())
+    aliases, tags_by_id = canonicalize_tags_by_slug(tag for tag, _entry_id, _entry_date in raw_rows)
+
     counts: dict[uuid.UUID, dict[date_type, int]] = defaultdict(lambda: defaultdict(int))
-    tag_meta: dict[uuid.UUID, Tag] = {}
-    for tag, entry_date in result.all():
-        tag_meta[tag.id] = tag
-        counts[tag.id][entry_date] += 1
+    seen_entry_tags: set[tuple[uuid.UUID, uuid.UUID]] = set()
+    for tag, entry_id, entry_date in raw_rows:
+        canonical_id = aliases.get(tag.id, tag.id)
+        key = (canonical_id, entry_id)
+        if key in seen_entry_tags:
+            continue
+        seen_entry_tags.add(key)
+        counts[canonical_id][entry_date] += 1
 
     tags: list[TagHeatmapTag] = []
     for tag_id, tag in sorted(
-        tag_meta.items(), key=lambda item: (item[1].category.value, item[1].slug)
+        tags_by_id.items(), key=lambda item: (item[1].category.value, item[1].slug)
     ):
         days = [
             TagHeatmapDay(date=day, count=count)
@@ -472,22 +479,29 @@ async def get_tag_cooccurrence(
         .order_by(Entry.id.asc(), Tag.id.asc())
     )
 
-    entry_tags: dict[uuid.UUID, dict[uuid.UUID, Tag]] = defaultdict(dict)
+    raw_entry_tags: dict[uuid.UUID, list[Tag]] = defaultdict(list)
     for entry_id, tag in result.all():
-        entry_tags[entry_id][tag.id] = tag
+        raw_entry_tags[entry_id].append(tag)
+
+    aliases, tags_by_id = canonicalize_tags_by_slug(
+        tag for tags in raw_entry_tags.values() for tag in tags
+    )
+
+    entry_tags: dict[uuid.UUID, set[uuid.UUID]] = {
+        entry_id: {aliases.get(tag.id, tag.id) for tag in tags}
+        for entry_id, tags in raw_entry_tags.items()
+    }
 
     tag_entry_counts: dict[uuid.UUID, int] = defaultdict(int)
     pair_counts: dict[tuple[uuid.UUID, uuid.UUID], int] = defaultdict(int)
-    tag_meta: dict[uuid.UUID, Tag] = {}
 
-    for tags_by_id in entry_tags.values():
-        tags = sorted(tags_by_id.values(), key=lambda item: item.id)
-        for tag in tags:
-            tag_entry_counts[tag.id] += 1
-            tag_meta[tag.id] = tag
-        for index, tag_a in enumerate(tags):
-            for tag_b in tags[index + 1 :]:
-                pair_counts[(tag_a.id, tag_b.id)] += 1
+    for canonical_ids in entry_tags.values():
+        tags = sorted(canonical_ids)
+        for tag_id in tags:
+            tag_entry_counts[tag_id] += 1
+        for index, tag_a_id in enumerate(tags):
+            for tag_b_id in tags[index + 1 :]:
+                pair_counts[(tag_a_id, tag_b_id)] += 1
 
     pairs: list[TagCooccurrencePair] = []
     for (tag_a_id, tag_b_id), count in pair_counts.items():
@@ -497,8 +511,8 @@ async def get_tag_cooccurrence(
         entries_with_b = tag_entry_counts[tag_b_id]
         pairs.append(
             TagCooccurrencePair(
-                tag_a=_tag_ref(tag_meta[tag_a_id]),
-                tag_b=_tag_ref(tag_meta[tag_b_id]),
+                tag_a=_tag_ref(tags_by_id[tag_a_id]),
+                tag_b=_tag_ref(tags_by_id[tag_b_id]),
                 count=count,
                 pct_of_a=round((count / entries_with_a) * 100, 1),
                 pct_of_b=round((count / entries_with_b) * 100, 1),
@@ -597,18 +611,9 @@ async def get_symptom_tag_cooccurrence(
         raw_tag_ids_by_entry[entry_id].add(tag.id)
         tags_by_slug[tag.slug].append(tag)
 
-    canonical_tags_by_slug = {
-        slug: sorted(tags, key=lambda item: (item.is_default, item.name.casefold(), str(item.id)))[
-            0
-        ]
-        for slug, tags in tags_by_slug.items()
-    }
-    tag_aliases = {
-        tag.id: canonical_tags_by_slug[tag.slug].id
-        for tags in tags_by_slug.values()
-        for tag in tags
-    }
-    tags_by_id = {tag.id: tag for tag in canonical_tags_by_slug.values()}
+    tag_aliases, tags_by_id = canonicalize_tags_by_slug(
+        tag for tags in tags_by_slug.values() for tag in tags
+    )
     tag_ids_by_entry = {
         entry_id: {tag_aliases.get(tag_id, tag_id) for tag_id in tag_ids}
         for entry_id, tag_ids in raw_tag_ids_by_entry.items()

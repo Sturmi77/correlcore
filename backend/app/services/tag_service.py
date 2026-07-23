@@ -26,9 +26,10 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Sequence
+from collections import defaultdict
+from collections.abc import Iterable, Sequence
 
-from sqlalchemy import delete, exists, select
+from sqlalchemy import delete, exists, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -127,6 +128,123 @@ async def _find_user_override(db: AsyncSession, *, user_id: uuid.UUID, slug: str
         )
     )
     return result.scalar_one_or_none()
+
+
+def canonicalize_tags_by_slug(
+    tags: Iterable[Tag],
+) -> tuple[dict[uuid.UUID, uuid.UUID], dict[uuid.UUID, Tag]]:
+    """Collapse default/override rows that share a slug onto one canonical tag.
+
+    Copy-on-write overrides keep the curated slug but use a distinct database
+    ID. Analytics must treat both IDs as one semantic tag so heatmaps and
+    co-occurrence matrices do not show duplicate rows.
+    """
+
+    tags_by_slug: dict[str, list[Tag]] = defaultdict(list)
+    for tag in tags:
+        tags_by_slug[tag.slug].append(tag)
+
+    canonical_by_slug = {
+        slug: sorted(
+            items,
+            key=lambda item: (item.is_default, item.name.casefold(), str(item.id)),
+        )[0]
+        for slug, items in tags_by_slug.items()
+    }
+    aliases = {
+        tag.id: canonical_by_slug[tag.slug].id for items in tags_by_slug.values() for tag in items
+    }
+    return aliases, {tag.id: tag for tag in canonical_by_slug.values()}
+
+
+async def remap_entry_tags_from_default_to_override(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    default_tag_id: uuid.UUID,
+    override_tag_id: uuid.UUID,
+) -> int:
+    """Repoint historical ``entry_tags`` from a default tag to its user override.
+
+    Safe to run repeatedly. Entries that already link the override drop the
+    leftover default link; remaining default links are updated in place.
+    Returns the number of link rows deleted or updated.
+    """
+
+    if default_tag_id == override_tag_id:
+        return 0
+
+    delete_result = await db.execute(
+        delete(EntryTag).where(
+            EntryTag.user_id == user_id,
+            EntryTag.tag_id == default_tag_id,
+            EntryTag.entry_id.in_(
+                select(EntryTag.entry_id).where(
+                    EntryTag.user_id == user_id,
+                    EntryTag.tag_id == override_tag_id,
+                )
+            ),
+        )
+    )
+    update_result = await db.execute(
+        update(EntryTag)
+        .where(
+            EntryTag.user_id == user_id,
+            EntryTag.tag_id == default_tag_id,
+        )
+        .values(tag_id=override_tag_id)
+    )
+    await db.flush()
+    deleted = int(getattr(delete_result, "rowcount", 0) or 0)
+    updated = int(getattr(update_result, "rowcount", 0) or 0)
+    changed = deleted + updated
+    if changed:
+        logger.info(
+            "tag.entry_links.remapped",
+            extra={
+                "user_id": str(user_id),
+                "deleted_count": deleted,
+                "updated_count": updated,
+            },
+        )
+    return changed
+
+
+async def remap_all_tag_alias_entry_links(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID | None = None,
+) -> int:
+    """Remap default→override ``entry_tags`` for all (or one) users with COW rows."""
+
+    default_tag = aliased(Tag)
+    override_tag = aliased(Tag)
+    stmt = (
+        select(override_tag.user_id, default_tag.id, override_tag.id)
+        .join(
+            default_tag,
+            (default_tag.slug == override_tag.slug) & default_tag.is_default.is_(True),
+        )
+        .where(
+            override_tag.is_default.is_(False),
+            override_tag.user_id.is_not(None),
+        )
+    )
+    if user_id is not None:
+        stmt = stmt.where(override_tag.user_id == user_id)
+
+    result = await db.execute(stmt)
+    total = 0
+    for owner_id, default_id, override_id in result.all():
+        if owner_id is None:
+            continue
+        total += await remap_entry_tags_from_default_to_override(
+            db,
+            user_id=owner_id,
+            default_tag_id=default_id,
+            override_tag_id=override_id,
+        )
+    return total
 
 
 def _visible_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
@@ -295,6 +413,7 @@ async def update_custom_tag(
         TagNotFoundError: tag does not exist or belongs to someone else.
     """
     source = await _get_editable_tag(db, tag_id=tag_id, user_id=user_id)
+    default_source: Tag | None = source if source.is_default else None
     if source.is_default:
         tag = await _find_user_override(db, user_id=user_id, slug=source.slug)
         if tag is None:
@@ -327,6 +446,19 @@ async def update_custom_tag(
         setattr(tag, field, value)
 
     await db.flush()
+
+    if default_source is None:
+        default_result = await db.execute(
+            select(Tag).where(Tag.is_default.is_(True), Tag.slug == tag.slug)
+        )
+        default_source = default_result.scalar_one_or_none()
+    if default_source is not None:
+        await remap_entry_tags_from_default_to_override(
+            db,
+            user_id=user_id,
+            default_tag_id=default_source.id,
+            override_tag_id=tag.id,
+        )
 
     logger.info(
         "tag.updated",
@@ -474,11 +606,14 @@ __all__ = [
     "active_tag_predicate",
     "analytics_tag_predicate",
     "assign_tags_to_entry",
+    "canonicalize_tags_by_slug",
     "create_custom_tag",
     "delete_custom_tag",
     "list_default_tags",
     "list_tags_for_entry",
     "list_visible_tags",
+    "remap_all_tag_alias_entry_links",
+    "remap_entry_tags_from_default_to_override",
     "update_custom_tag",
     "visible_tag_predicate",
 ]

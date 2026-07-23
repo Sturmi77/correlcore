@@ -79,6 +79,13 @@ def _scalar_result(value: object) -> MagicMock:
     return rm
 
 
+def _rowcount_result(rowcount: int = 0) -> MagicMock:
+    """Mock that mimics ``execute(delete/update).rowcount``."""
+    rm = MagicMock()
+    rm.rowcount = rowcount
+    return rm
+
+
 def _scalars_result(values: list[object]) -> MagicMock:
     """Mock that mimics ``execute(...).scalars().all()``."""
     rm = MagicMock()
@@ -273,6 +280,8 @@ async def test_update_default_tag_copies_include_in_analytics_into_override() ->
         side_effect=[
             _scalar_result(default),
             _scalar_result(None),
+            _rowcount_result(0),
+            _rowcount_result(0),
         ]
     )
     db.add = MagicMock()
@@ -289,6 +298,7 @@ async def test_update_default_tag_copies_include_in_analytics_into_override() ->
     assert out.is_default is False
     assert out.user_id == user.id
     db.add.assert_called_once()
+    assert db.flush.await_count == 2
 
 
 # ---------------------------------------------------------------------------
@@ -414,6 +424,8 @@ async def test_update_default_tag_creates_user_override() -> None:
         side_effect=[
             _scalar_result(default),
             _scalar_result(None),
+            _rowcount_result(0),
+            _rowcount_result(2),
         ]
     )
 
@@ -434,7 +446,7 @@ async def test_update_default_tag_creates_user_override() -> None:
     assert out.target_frequency == 3
     assert default.name == "Sport"
     db.add.assert_called_once_with(out)
-    db.flush.assert_awaited_once()
+    assert db.flush.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -454,6 +466,8 @@ async def test_update_default_tag_partial_habit_patch_uses_existing_target() -> 
         side_effect=[
             _scalar_result(default),
             _scalar_result(None),
+            _rowcount_result(0),
+            _rowcount_result(0),
         ]
     )
 
@@ -467,7 +481,7 @@ async def test_update_default_tag_partial_habit_patch_uses_existing_target() -> 
     assert out.habit_type == "reduce"
     assert out.target_frequency == 3
     db.add.assert_called_once_with(out)
-    db.flush.assert_awaited_once()
+    assert db.flush.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -501,6 +515,8 @@ async def test_update_default_tag_reuses_existing_user_override() -> None:
         side_effect=[
             _scalar_result(default),
             _scalar_result(override),
+            _rowcount_result(1),
+            _rowcount_result(3),
         ]
     )
 
@@ -514,6 +530,29 @@ async def test_update_default_tag_reuses_existing_user_override() -> None:
     assert out is override
     assert out.is_hidden is True
     db.add.assert_not_called()
+    assert db.flush.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_remap_entry_tags_from_default_to_override() -> None:
+    from app.services.tag_service import remap_entry_tags_from_default_to_override
+
+    user = make_user()
+    default_id = uuid.uuid4()
+    override_id = uuid.uuid4()
+    db = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(side_effect=[_rowcount_result(1), _rowcount_result(4)])
+
+    changed = await remap_entry_tags_from_default_to_override(
+        db,
+        user_id=user.id,
+        default_tag_id=default_id,
+        override_tag_id=override_id,
+    )
+
+    assert changed == 5
+    assert db.execute.await_count == 2
     db.flush.assert_awaited_once()
 
 
