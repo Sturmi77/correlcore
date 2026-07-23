@@ -68,6 +68,8 @@ async def _list_digest_user_ids(db: AsyncSession) -> list[uuid.UUID]:
             User.is_verified.is_(True),
             or_(UserPreference.analytics_enabled.is_(True), UserPreference.user_id.is_(None)),
             # Opt-in: require an explicit preferences row with digest_enabled=true.
+            # Migration 031 reset the legacy rows that carried true from the
+            # pre-#398 default, so this now really does mean "user opted in".
             UserPreference.digest_enabled.is_(True),
         )
         .order_by(User.id.asc())

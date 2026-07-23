@@ -14,6 +14,30 @@ Related: Issue #147, `backend/app/services/insight_digest.py`, `backend/app/work
 | D-D2 | Compose wiring           | Profile **`digest`** → `digest-worker` (`python -m app.workers.digest`) |
 | D-D3 | Default `digest_enabled` | **`false`** (opt-in); migration 028                                     |
 | D-D4 | Discoverability          | Settings toggle + preview link to `/insights/digest`                    |
+| D-D5 | Legacy `true` rows       | **Backfill to `false`**; migration 031 (#449)                           |
+
+### D-D5 — why the legacy rows are reset
+
+Migration 026 added `digest_enabled` as `NOT NULL DEFAULT true`, and the ORM
+model carried `default=True` until #398. Every preference row created before
+that upgrade therefore holds `true` without anyone having opted in. Migration
+028 changed only the column default and left those rows alone, so the worker's
+`digest_enabled IS TRUE` gate did **not** mean "user opted in" for them.
+
+Migration 031 resets every `true` row once, unconditionally. No `created_at`
+cutoff: nothing records when 028 was applied to a given database, so any date
+boundary mis-classifies late upgraders in both directions. The two failure
+modes are not symmetric — resetting a genuine opt-in is visible and one click
+to undo, while leaving an artifact sends mail nobody consented to. The worker
+also only runs behind `COMPOSE_PROFILES=digest`, so no `true` has ever produced
+a delivery.
+
+`user_preferences` enforces `FORCE ROW LEVEL SECURITY`, so 031 asserts that it
+runs as a superuser or `BYPASSRLS` role — a restricted role would reset nothing
+and still report success.
+
+**Operators:** mention in release notes that digest recipients re-enable the
+toggle under Settings → Analysis.
 
 ---
 
