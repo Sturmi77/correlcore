@@ -14,6 +14,8 @@
     habitMetricI18nKey,
     habitProgressValue,
     habitStatusI18nKey,
+    habitTypeGlyph,
+    groupHabitsByType,
   } from '$lib/utils/habitMetrics';
   import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import Minus from 'lucide-svelte/icons/minus';
@@ -53,6 +55,12 @@
   $: habitRows = habits
     .map((habit) => ({ habit, tag: tagById.get(habit.tag_id) }))
     .filter((row): row is { habit: HabitStatsResponse; tag: TagResponse } => Boolean(row.tag));
+  // #490: build and reduce mean different things — a target to reach vs. a limit
+  // to stay under — so they get their own sections instead of one flat list.
+  $: habitGroups = groupHabitsByType(habitRows);
+  $: habitSections = (['build', 'reduce'] as const)
+    .map((key) => ({ key, rows: habitGroups[key] }))
+    .filter((section) => section.rows.length > 0);
   $: selected = habitRows.find((row) => row.habit.tag_id === selectedTagId) ?? habitRows[0] ?? null;
   $: detailHeatmap =
     selected && heatmap
@@ -219,56 +227,63 @@
   {:else}
     <div class="habits__layout" class:habits__layout--mobile={mobile}>
       <div class="habits__list" aria-label={$_('habits.list_label')}>
-        {#each habitRows as row (row.habit.tag_id)}
-          <button
-            type="button"
-            class:active={row.habit.tag_id === selected?.habit.tag_id}
-            on:click={() => selectRow(row.habit.tag_id)}
-            data-testid={`habit-row-${row.habit.tag_id}`}
-          >
-            <span class="habits__row-title">
-              <strong>{row.tag.name}</strong>
-              <small
-                >{$_(`tag.category.${row.tag.category}`)} · {$_(
-                  `habits.type.${row.habit.habit_type}`
-                )}</small
-              >
-            </span>
-            <span class="habits__row-body">
-              <span class="habits__goal">
-                <span>{goalLabel(row.habit)}</span>
-                <strong>{pct(row.habit.adherence_rate)}</strong>
+        {#each habitSections as section (section.key)}
+          <p class="habits__group-heading" data-testid={`habit-group-${section.key}`}>
+            {$_(`habits.group.${section.key}`)}
+          </p>
+          {#each section.rows as row (row.habit.tag_id)}
+            <button
+              type="button"
+              class:active={row.habit.tag_id === selected?.habit.tag_id}
+              on:click={() => selectRow(row.habit.tag_id)}
+              data-testid={`habit-row-${row.habit.tag_id}`}
+            >
+              <span class="habits__row-title">
+                <strong>{row.tag.name}</strong>
+                <small
+                  >{$_(`tag.category.${row.tag.category}`)} ·
+                  <span class="habits__type-glyph" aria-hidden="true"
+                    >{habitTypeGlyph(row.habit)}</span
+                  >{$_(`habits.type.${row.habit.habit_type}`)}</small
+                >
               </span>
-              <span
-                class="habits__row-bar"
-                aria-hidden="true"
-                style={`--habit-progress: ${habitProgressValue(row.habit)}%`}
-              >
-                <span></span>
+              <span class="habits__row-body">
+                <span class="habits__goal">
+                  <span>{goalLabel(row.habit)}</span>
+                  <strong>{pct(row.habit.adherence_rate)}</strong>
+                </span>
+                <span
+                  class="habits__row-bar"
+                  aria-hidden="true"
+                  data-habit-type={row.habit.habit_type}
+                  style={`--habit-progress: ${habitProgressValue(row.habit)}%`}
+                >
+                  <span></span>
+                </span>
+                <span class="habits__row-meta">
+                  <small>{$_(habitStatusI18nKey(row.habit))}</small>
+                  {#if trendLabel(row.habit)}
+                    <small
+                      class:habits__trend--up={row.habit.trend_direction === 'up'}
+                      class:habits__trend--down={row.habit.trend_direction === 'down'}
+                      class:habits__trend--flat={row.habit.trend_direction === 'flat'}
+                      class="habits__trend"
+                    >
+                      {#if row.habit.trend_direction === 'up'}
+                        <TrendingUp size={ICON_SIZE_SM} aria-hidden="true" />
+                      {:else if row.habit.trend_direction === 'down'}
+                        <TrendingDown size={ICON_SIZE_SM} aria-hidden="true" />
+                      {:else}
+                        <Minus size={ICON_SIZE_SM} aria-hidden="true" />
+                      {/if}
+                      {trendLabel(row.habit)}
+                    </small>
+                  {/if}
+                </span>
+                <small class="habits__correlation">{correlationListLabel(row.habit)}</small>
               </span>
-              <span class="habits__row-meta">
-                <small>{$_(habitStatusI18nKey(row.habit))}</small>
-                {#if trendLabel(row.habit)}
-                  <small
-                    class:habits__trend--up={row.habit.trend_direction === 'up'}
-                    class:habits__trend--down={row.habit.trend_direction === 'down'}
-                    class:habits__trend--flat={row.habit.trend_direction === 'flat'}
-                    class="habits__trend"
-                  >
-                    {#if row.habit.trend_direction === 'up'}
-                      <TrendingUp size={ICON_SIZE_SM} aria-hidden="true" />
-                    {:else if row.habit.trend_direction === 'down'}
-                      <TrendingDown size={ICON_SIZE_SM} aria-hidden="true" />
-                    {:else}
-                      <Minus size={ICON_SIZE_SM} aria-hidden="true" />
-                    {/if}
-                    {trendLabel(row.habit)}
-                  </small>
-                {/if}
-              </span>
-              <small class="habits__correlation">{correlationListLabel(row.habit)}</small>
-            </span>
-          </button>
+            </button>
+          {/each}
         {/each}
       </div>
 
@@ -440,6 +455,44 @@
     height: 100%;
     border-radius: inherit;
     background: var(--color-primary);
+  }
+
+  /* #490: build and reduce both read "fuller = better" — adherence_rate is
+     already normalised server-side, a reduce habit inside its limit returns
+     100. Only the encoding differs, so a solid bar reads as progress toward a
+     target and a hatched one as headroom under a limit. Never colour alone:
+     the row title always carries the translated type label. */
+  .habits__row-bar[data-habit-type='reduce'] {
+    box-shadow: inset 0 0 0 1px oklch(from var(--color-primary) l c h / 0.35);
+    background: transparent;
+  }
+
+  .habits__row-bar[data-habit-type='reduce'] span {
+    background: repeating-linear-gradient(
+      135deg,
+      var(--color-primary) 0,
+      var(--color-primary) 2px,
+      transparent 2px,
+      transparent 5px
+    );
+  }
+
+  .habits__type-glyph {
+    margin-inline-end: 0.15rem;
+    font-weight: 600;
+  }
+
+  .habits__group-heading {
+    margin: var(--space-2) 0 var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .habits__group-heading:first-child {
+    margin-top: 0;
   }
 
   .habits__trend {

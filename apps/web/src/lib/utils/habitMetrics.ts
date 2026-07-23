@@ -48,6 +48,34 @@ export function habitProgressValue(habit: HabitStatsResponse): number {
   return Math.max(0, Math.min(100, Math.round(habit.adherence_rate)));
 }
 
+export type HabitGroupKey = 'build' | 'reduce';
+
+/**
+ * Split habits into build / reduce sections (#490).
+ *
+ * Both keys are always present so the caller can render stable section order
+ * without null checks; empty sections are skipped at render time.
+ */
+export function groupHabitsByType<T extends { habit: HabitStatsResponse }>(
+  rows: readonly T[]
+): Record<HabitGroupKey, T[]> {
+  const groups: Record<HabitGroupKey, T[]> = { build: [], reduce: [] };
+  for (const row of rows) {
+    groups[row.habit.habit_type === 'reduce' ? 'reduce' : 'build'].push(row);
+  }
+  return groups;
+}
+
+/**
+ * Glyph distinguishing the two habit kinds at a glance.
+ *
+ * Decorative only — every call site also renders the translated type label, so
+ * the distinction is never carried by the glyph (or by colour) alone.
+ */
+export function habitTypeGlyph(habit: HabitStatsResponse): string {
+  return habit.habit_type === 'reduce' ? '−' : '+';
+}
+
 export function formatHabitDelta(delta: number): string {
   const rounded = Math.round(delta);
   if (rounded > 0) return `+${rounded}`;

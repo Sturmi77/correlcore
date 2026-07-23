@@ -6,6 +6,8 @@ import {
   habitMetricI18nKey,
   habitProgressValue,
   habitStatusI18nKey,
+  habitTypeGlyph,
+  groupHabitsByType,
   isHabitAdherenceInsufficient,
   MIN_HABIT_CALENDAR_DAYS,
 } from './habitMetrics';
@@ -94,5 +96,50 @@ describe('isHabitAdherenceInsufficient', () => {
 
   it('uses the shared calendar minimum constant', () => {
     expect(MIN_HABIT_CALENDAR_DAYS).toBe(7);
+  });
+});
+
+describe('build vs reduce encoding (#490)', () => {
+  it('keeps "fuller = better" for both types', () => {
+    // adherence_rate is already normalised server-side: a reduce habit inside
+    // its limit returns 100. Inverting the value here would show a
+    // well-managed reduce habit as an almost empty bar.
+    const buildOnTrack = habit({ habit_type: 'build', adherence_rate: 100 });
+    const reduceWithinLimit = habit({
+      habit_type: 'reduce',
+      adherence_rate: 100,
+      days_tracked: 2,
+      target_days: 4,
+    });
+    expect(habitProgressValue(buildOnTrack)).toBe(100);
+    expect(habitProgressValue(reduceWithinLimit)).toBe(100);
+  });
+
+  it('shows a reduce habit over its limit as a low bar', () => {
+    const overLimit = habit({ habit_type: 'reduce', adherence_rate: 12, days_tracked: 20 });
+    expect(habitProgressValue(overLimit)).toBe(12);
+  });
+
+  it('splits rows into stable build and reduce sections', () => {
+    const rows = [
+      { habit: habit({ tag_id: 'a', habit_type: 'reduce' }) },
+      { habit: habit({ tag_id: 'b', habit_type: 'build' }) },
+      { habit: habit({ tag_id: 'c', habit_type: 'reduce' }) },
+    ];
+    const groups = groupHabitsByType(rows);
+    expect(groups.build.map((r) => r.habit.tag_id)).toEqual(['b']);
+    expect(groups.reduce.map((r) => r.habit.tag_id)).toEqual(['a', 'c']);
+  });
+
+  it('always returns both group keys so section order stays stable', () => {
+    const groups = groupHabitsByType([]);
+    expect(Object.keys(groups).sort()).toEqual(['build', 'reduce']);
+    expect(groups.build).toEqual([]);
+    expect(groups.reduce).toEqual([]);
+  });
+
+  it('uses a distinct glyph per type', () => {
+    expect(habitTypeGlyph(habit({ habit_type: 'build' }))).toBe('+');
+    expect(habitTypeGlyph(habit({ habit_type: 'reduce' }))).toBe('−');
   });
 });

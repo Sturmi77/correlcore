@@ -563,7 +563,7 @@
     "correlation_pending": "No correlation data yet",
     "correlation_predictor": "{name} is a notable {metric} predictor (r={score})",
     "adherence_meter": "Adherence rate",
-    "adherence_meter_text": "{percent}; {goal}",
+    "adherence_meter_text": "{type}: {percent}; {goal}",
     "insufficient_data": "Not enough data yet. Keep tracking to see your adherence rate.",
     "window_last": "last {n} days",
     "period": "Period",
@@ -581,6 +581,10 @@
     "type": {
       "build": "Build",
       "reduce": "Reduce"
+    },
+    "group": {
+      "build": "Building",
+      "reduce": "Reducing"
     },
     "status": {
       "label": "Status",
