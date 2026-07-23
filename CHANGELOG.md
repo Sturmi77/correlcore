@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Weekly digest is now opt-in for existing installs too** (#449) — migration
+  `031` resets every `user_preferences.digest_enabled = true` row that carried
+  the pre-#398 default. Migration 026 created the column as
+  `NOT NULL DEFAULT true`, so those rows were never an explicit opt-in.
+  **Upgrading operators:** anyone who wants the weekly digest re-enables it
+  under **Settings → Analysis**. No digest was ever delivered from those rows —
+  the worker only runs behind `COMPOSE_PROFILES=digest`.
+
 ---
 
 ## [1.0.8] — 2026-07-21
