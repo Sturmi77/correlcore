@@ -174,4 +174,20 @@ describe('InsightMatrix', () => {
     expect(screen.getByText('Headache')).toBeTruthy();
     expect(screen.queryByText('Walk')).toBeNull();
   });
+
+  it('hides the habit layer and skips the tags fetch when enableHabitLayer is false', async () => {
+    const { refreshTags } = await import('$lib/stores/tags');
+    render(InsightMatrix, {
+      props: {
+        insights: [{ ...base, subject_label: 'Focus' }],
+        enableHabitLayer: false,
+      },
+    });
+
+    // Static product-shot mode (landing): no habit tab, no API call.
+    expect(screen.getByTestId('insight-matrix-layer-tags')).toBeTruthy();
+    expect(screen.getByTestId('insight-matrix-layer-symptoms')).toBeTruthy();
+    expect(screen.queryByTestId('insight-matrix-layer-habits')).toBeNull();
+    expect(refreshTags).not.toHaveBeenCalled();
+  });
 });

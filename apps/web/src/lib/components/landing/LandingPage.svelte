@@ -6,12 +6,22 @@
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import MetricCard from '$lib/components/home/MetricCard.svelte';
   import TagGroupsSection from '$lib/components/insights/TagGroupsSection.svelte';
+  import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
+  import InsightCard from '$lib/components/insights/InsightCard.svelte';
+  import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import BrowserFrameMock from '$lib/components/landing/BrowserFrameMock.svelte';
+  import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import {
     landingTagClusters,
     landingTimeseriesPoints,
+    landingInsights,
+    landingFeaturedInsight,
+    landingMaturity,
+    landingCooccurrence,
   } from '$lib/components/landing/landingDemoData';
+
+  const landingClusterMeta = buildTagClusterMeta(landingTagClusters);
   import { BRAND_MARK_MD } from '$lib/constants/iconSizes';
   import { ANDROID_RELEASES_URL, DOCS_SITE_URL, REPO_URL } from '$lib/constants/publicUrls';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
@@ -75,6 +85,48 @@
       <BrowserFrameMock>
         <TagGroupsSection data={landingTagClusters} />
       </BrowserFrameMock>
+    </div>
+  </section>
+
+  <section class="landing__previews" aria-labelledby="landing-previews-heading">
+    <h2 id="landing-previews-heading" class="landing__section-heading">
+      {$_('landing.previews_heading')}
+    </h2>
+    <div class="landing__preview-grid">
+      <figure class="landing__preview">
+        <BrowserFrameMock address="app.correlcore.example/insights">
+          <!-- Product shots only: inert removes the mock's controls from tab
+               order and pointer events, aria-hidden hides the duplicated app
+               UI from screen readers; the figcaption carries the description. -->
+          <div class="landing__shot" inert aria-hidden="true">
+            <InsightMatrix insights={landingInsights} enableHabitLayer={false} />
+          </div>
+        </BrowserFrameMock>
+        <figcaption>{$_('landing.preview_matrix')}</figcaption>
+      </figure>
+      <figure class="landing__preview">
+        <BrowserFrameMock address="app.correlcore.example/insights">
+          <div class="landing__shot" inert aria-hidden="true">
+            <InsightCard insight={landingFeaturedInsight} maturity={landingMaturity} featured />
+          </div>
+        </BrowserFrameMock>
+        <figcaption>{$_('landing.preview_card')}</figcaption>
+      </figure>
+      <figure class="landing__preview">
+        <BrowserFrameMock address="app.correlcore.example/insights">
+          <div class="landing__shot" inert aria-hidden="true">
+            <TagCooccurrenceHeatmap
+              data={landingCooccurrence}
+              sortMode="clustered"
+              enableClusterSort
+              clusterMeta={landingClusterMeta}
+              showRangeSelector={false}
+              minPairsForDisplay={1}
+            />
+          </div>
+        </BrowserFrameMock>
+        <figcaption>{$_('landing.preview_heatmap')}</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -281,6 +333,45 @@
     margin: 0 0 var(--space-6);
     text-align: center;
     font-size: var(--text-lg);
+  }
+
+  .landing__previews {
+    margin-top: var(--space-8);
+  }
+
+  .landing__preview-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .landing__preview {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .landing__preview figcaption {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  /* Pure product shot: never interactive on the anonymous landing. */
+  .landing__shot {
+    pointer-events: none;
+    user-select: none;
+    max-height: 20rem;
+    overflow: hidden;
+  }
+
+  @media (min-width: 768px) {
+    .landing__preview-grid {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: start;
+    }
   }
 
   .landing__bento-grid {

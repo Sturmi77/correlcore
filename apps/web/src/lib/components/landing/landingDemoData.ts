@@ -2,7 +2,12 @@
  * Static demo fixtures for the anonymous marketing landing.
  * No auth/API — representative product shots only.
  */
-import type { TagClustersResponse } from '$lib/api/insights';
+import type {
+  InsightMaturity,
+  InsightResponse,
+  TagClustersResponse,
+  TagCooccurrenceResponse,
+} from '$lib/api/insights';
 import type { TimeseriesPoint } from '$lib/api/stats';
 
 export const landingTagClusters: TagClustersResponse = {
@@ -169,3 +174,123 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     stress_avg: 2.3,
   },
 ];
+
+function demoInsight(overrides: Partial<InsightResponse>): InsightResponse {
+  return {
+    id: 'demo',
+    user_id: 'demo',
+    insight_type: 'pointbiserial',
+    tier: 'robust',
+    metric: 'mood_score',
+    subject_type: 'tag',
+    subject_id: 'demo',
+    subject_label: 'Tag',
+    effect_size: 0.3,
+    confidence: 0.7,
+    sample_n: 60,
+    statement: null,
+    flags: {},
+    payload: {},
+    generated_for_date: '2026-07-19',
+    generated_at: '2026-07-19T08:00:00Z',
+    created_at: '2026-07-19T08:00:00Z',
+    updated_at: '2026-07-19T08:00:00Z',
+    ...overrides,
+  };
+}
+
+/** Representative insight rows for the marketing Insight Matrix product shot. */
+export const landingInsights: InsightResponse[] = [
+  demoInsight({
+    id: 'demo-exercise-mood',
+    subject_id: 'demo-exercise',
+    subject_label: 'Exercise',
+    metric: 'mood_score',
+    effect_size: 0.42,
+    confidence: 0.81,
+    statement: 'Days with exercise tend to show higher mood.',
+    payload: { tag_slug: 'exercise', tag_name: 'Exercise' },
+  }),
+  demoInsight({
+    id: 'demo-sleep-mood',
+    subject_id: 'demo-poor-sleep',
+    subject_label: 'Poor sleep',
+    metric: 'mood_score',
+    effect_size: -0.31,
+    confidence: 0.68,
+    statement: 'Poor-sleep days tend to show lower mood.',
+    payload: { tag_slug: 'poor-sleep', tag_name: 'Poor sleep' },
+  }),
+  demoInsight({
+    id: 'demo-coffee-energy',
+    subject_id: 'demo-coffee',
+    subject_label: 'Coffee',
+    metric: 'energy',
+    effect_size: 0.24,
+    confidence: 0.55,
+    statement: 'Coffee days tend to show slightly higher energy.',
+    payload: { tag_slug: 'coffee', tag_name: 'Coffee' },
+  }),
+];
+
+/** Strongest insight, used for the standalone Insight Card product shot. */
+export const landingFeaturedInsight: InsightResponse = landingInsights[0];
+
+export const landingMaturity: InsightMaturity = {
+  phase: 'robust',
+  phase_index: 4,
+  current_entries: 92,
+  next_phase_at: null,
+  next_phase_label: null,
+  entries_until_next: null,
+  user_message_key: 'insights.maturity.robust',
+};
+
+function cooRef(tag_id: string, slug: string, name: string) {
+  return { tag_id, slug, name, category: 'demo', color: null };
+}
+
+/** Pairs for the Tag Co-occurrence heatmap product shot. */
+export const landingCooccurrence: TagCooccurrenceResponse = {
+  range: '90d',
+  start_date: '2026-04-20',
+  end_date: '2026-07-19',
+  min_count: 2,
+  pairs: [
+    {
+      tag_a: cooRef('demo-poor-sleep', 'poor-sleep', 'Poor sleep'),
+      tag_b: cooRef('demo-low-energy', 'low-energy', 'Low energy'),
+      count: 9,
+      pct_of_a: 75,
+      pct_of_b: 64,
+    },
+    {
+      tag_a: cooRef('demo-poor-sleep', 'poor-sleep', 'Poor sleep'),
+      tag_b: cooRef('demo-headache', 'headache', 'Headache'),
+      count: 6,
+      pct_of_a: 50,
+      pct_of_b: 60,
+    },
+    {
+      tag_a: cooRef('demo-low-energy', 'low-energy', 'Low energy'),
+      tag_b: cooRef('demo-headache', 'headache', 'Headache'),
+      count: 4,
+      pct_of_a: 33,
+      pct_of_b: 40,
+    },
+    {
+      tag_a: cooRef('demo-exercise', 'exercise', 'Exercise'),
+      tag_b: cooRef('demo-good-mood', 'good-mood', 'Good mood'),
+      count: 8,
+      pct_of_a: 70,
+      pct_of_b: 62,
+    },
+    {
+      tag_a: cooRef('demo-exercise', 'exercise', 'Exercise'),
+      tag_b: cooRef('demo-coffee', 'coffee', 'Coffee'),
+      count: 5,
+      pct_of_a: 40,
+      pct_of_b: 45,
+    },
+  ],
+};
