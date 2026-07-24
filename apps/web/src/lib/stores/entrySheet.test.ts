@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { describe, expect, it } from 'vitest';
+import { isoDate } from '$lib/utils/entryForm';
 import {
   closeEntrySheet,
   entrySheetSaveSignal,
@@ -18,6 +19,14 @@ describe('entrySheet store', () => {
       date: '2026-06-01',
       onboardingTagsEnabled: true,
     });
+  });
+
+  it('defaults to the local calendar day when no date is passed', () => {
+    // Widget deep link → /?openEntry=1 with no date; must match Home "+"
+    // (local day), not UTC, or an Americas evening write lands on tomorrow.
+    resetEntrySheetStore();
+    openEntrySheet();
+    expect(get(entrySheetStore).date).toBe(isoDate(new Date()));
   });
 
   it('closes and emits save signals', () => {
