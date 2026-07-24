@@ -179,6 +179,88 @@ describe('TagCooccurrenceHeatmap', () => {
     expect(handler.mock.calls[0][0].detail).toEqual({ range: '1y' });
   });
 
+  // #489: tag-a Focus, tag-c Coffee, tag-d Read in cluster 1; tag-b Walk in cluster 2.
+  const clusterMeta = {
+    byTagId: new Map([
+      ['tag-a', 1],
+      ['tag-c', 1],
+      ['tag-d', 1],
+      ['tag-b', 2],
+    ]),
+    labels: [
+      { cluster_id: 1, label: 'Morning' },
+      { cluster_id: 2, label: 'Movement' },
+    ],
+  };
+  const emptyMeta = { byTagId: new Map<string, number>(), labels: [] };
+
+  it('renders a focus chip per cluster plus an all-groups chip (#489)', () => {
+    render(TagCooccurrenceHeatmap, {
+      props: {
+        data,
+        loading: false,
+        range: '90d',
+        sortMode: 'clustered',
+        enableClusterSort: true,
+        clusterMeta,
+      },
+    });
+    const focus = screen.getByTestId('tag-cooccurrence-focus');
+    expect(focus.textContent).toContain('insights.cooccurrence.focus_all');
+    expect(focus.textContent).toContain('Morning');
+    expect(focus.textContent).toContain('Movement');
+    expect(screen.getAllByTestId('tag-cooccurrence-focus-chip')).toHaveLength(2);
+  });
+
+  it('draws cluster boundaries in the grid when clustered (#489)', () => {
+    const { container } = render(TagCooccurrenceHeatmap, {
+      props: {
+        data,
+        loading: false,
+        range: '90d',
+        sortMode: 'clustered',
+        enableClusterSort: true,
+        clusterMeta,
+      },
+    });
+    expect(container.querySelectorAll('.cooccurrence__boundary-left').length).toBeGreaterThan(0);
+  });
+
+  it('shows no chips or boundaries without clusters (#489 fallback)', () => {
+    const { container } = render(TagCooccurrenceHeatmap, {
+      props: {
+        data,
+        loading: false,
+        range: '90d',
+        sortMode: 'clustered',
+        enableClusterSort: true,
+        clusterMeta: emptyMeta,
+      },
+    });
+    expect(screen.queryByTestId('tag-cooccurrence-focus')).toBeNull();
+    expect(container.querySelectorAll('.cooccurrence__boundary-left').length).toBe(0);
+  });
+
+  it('dispatches focusClusterChange and toggles off on a second click (#489)', async () => {
+    const handler = vi.fn();
+    render(TagCooccurrenceHeatmap, {
+      props: {
+        data,
+        loading: false,
+        range: '90d',
+        sortMode: 'clustered',
+        enableClusterSort: true,
+        clusterMeta,
+      },
+      events: { focusClusterChange: handler },
+    });
+    const chips = screen.getAllByTestId('tag-cooccurrence-focus-chip');
+    await fireEvent.click(chips[0]);
+    expect(handler.mock.calls[0][0].detail).toEqual({ clusterId: 1 });
+    await fireEvent.click(chips[0]);
+    expect(handler.mock.calls[1][0].detail).toEqual({ clusterId: null });
+  });
+
   it('collapses and expands axes with density controls', async () => {
     render(TagCooccurrenceHeatmap, {
       props: { data, loading: false, range: '90d' },
