@@ -23,7 +23,12 @@
 
   const landingClusterMeta = buildTagClusterMeta(landingTagClusters);
   import { BRAND_MARK_MD } from '$lib/constants/iconSizes';
-  import { ANDROID_RELEASES_URL, DOCS_SITE_URL, REPO_URL } from '$lib/constants/publicUrls';
+  import {
+    ANDROID_RELEASES_URL,
+    OBTAINIUM_URL,
+    DOCS_SITE_URL,
+    REPO_URL,
+  } from '$lib/constants/publicUrls';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
 
   const faqKeys = ['1', '2', '3', '4'] as const;
@@ -163,6 +168,34 @@
         </div>
       </article>
     </div>
+  </section>
+
+  <section class="landing__android" aria-labelledby="landing-android-heading">
+    <h2 id="landing-android-heading" class="landing__section-heading">
+      {$_('landing.android_heading')}
+    </h2>
+    <p class="landing__android-body">{$_('landing.android_body')}</p>
+    <div class="landing__android-actions">
+      <Button
+        href={ANDROID_RELEASES_URL}
+        variant="primary"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-testid="landing-android-download"
+      >
+        {$_('landing.android_download')}
+      </Button>
+      <Button
+        href={OBTAINIUM_URL}
+        variant="secondary"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-testid="landing-android-obtainium"
+      >
+        {$_('landing.android_obtainium')}
+      </Button>
+    </div>
+    <p class="landing__android-note">{$_('landing.android_sha256')}</p>
   </section>
 
   <section class="landing__selfhost" aria-labelledby="landing-selfhost-heading">
@@ -372,6 +405,30 @@
       grid-template-columns: repeat(3, 1fr);
       align-items: start;
     }
+  }
+
+  .landing__android {
+    margin-top: var(--space-8);
+    text-align: center;
+  }
+
+  .landing__android-body {
+    margin: 0 auto var(--space-4);
+    max-width: 40rem;
+    color: var(--color-text-muted);
+  }
+
+  .landing__android-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+
+  .landing__android-note {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
   }
 
   .landing__bento-grid {

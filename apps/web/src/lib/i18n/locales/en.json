@@ -1499,6 +1499,11 @@
     "preview_matrix": "Insight matrix: associations ranked by effect size.",
     "preview_card": "Insight card: one observation, stated plainly.",
     "preview_heatmap": "Tag heatmap: what co-occurs, grouped by cluster.",
+    "android_heading": "Android app",
+    "android_body": "A signed APK straight from GitHub Releases. Subscribe to the repo with Obtainium to get updates automatically — no app store required.",
+    "android_download": "Download APK",
+    "android_obtainium": "Get it with Obtainium (auto-updates)",
+    "android_sha256": "Every release ships SHA256SUMS.txt so you can verify the download.",
     "features": {
       "1": {
         "title": "Correlations, not raw data",
