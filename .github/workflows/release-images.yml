@@ -118,7 +118,7 @@ jobs:
 
       - name: Build & push api
         if: matrix.image == 'correlcore-api'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
@@ -136,7 +136,7 @@ jobs:
 
       - name: Build & push web
         if: matrix.image == 'correlcore-web'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
