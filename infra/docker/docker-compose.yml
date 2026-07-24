@@ -33,6 +33,10 @@ x-api-env: &api-env
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-https://${DOMAIN}}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+  # Placeholder until M13 photo storage; production Settings require a
+  # non-default secret (≥16 chars, not CHANGE_ME*). Must be in compose
+  # environment — .env alone is not injected into the container.
+  MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET}
   IMAGE_TAG: ${IMAGE_TAG:-latest}
   IMAGE_DIGEST: ${IMAGE_DIGEST:-}
   GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
