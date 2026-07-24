@@ -1495,6 +1495,10 @@
     "cta_docs": "Dokumentation",
     "lang_toggle": "Sprache auf {locale} umschalten",
     "features_heading": "Was CorrelCore wirklich macht",
+    "previews_heading": "Ein Blick in die App",
+    "preview_matrix": "Insight-Matrix: Zusammenhänge nach Effektstärke.",
+    "preview_card": "Erkenntnis-Karte: eine Beobachtung, sachlich formuliert.",
+    "preview_heatmap": "Tag-Heatmap: was gemeinsam vorkommt, nach Gruppen.",
     "features": {
       "1": {
         "title": "Korrelationen statt Rohdaten",

@@ -1495,6 +1495,10 @@
     "cta_docs": "Documentation",
     "lang_toggle": "Switch language to {locale}",
     "features_heading": "What CorrelCore actually does",
+    "previews_heading": "A look inside the app",
+    "preview_matrix": "Insight matrix: associations ranked by effect size.",
+    "preview_card": "Insight card: one observation, stated plainly.",
+    "preview_heatmap": "Tag heatmap: what co-occurs, grouped by cluster.",
     "features": {
       "1": {
         "title": "Correlations, not raw data",

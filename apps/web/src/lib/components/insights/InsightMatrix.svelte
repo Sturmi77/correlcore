@@ -5,13 +5,23 @@
   import { refreshTags, tags } from '$lib/stores/tags';
 
   export let insights: InsightResponse[] = [];
+  /**
+   * The habit layer needs live tag metadata (habit_type), which triggers a
+   * `GET /tags` fetch. Disable it for static product shots (marketing landing)
+   * so the component never hits the API — see landingDemoData.
+   */
+  export let enableHabitLayer = true;
 
   type MatrixLayer = 'tags' | 'symptoms' | 'habits';
 
   let layer: MatrixLayer = 'tags';
 
+  $: layerOptions = (
+    enableHabitLayer ? ['tags', 'symptoms', 'habits'] : ['tags', 'symptoms']
+  ) as MatrixLayer[];
+
   onMount(async () => {
-    if ($tags.status === 'idle') {
+    if (enableHabitLayer && $tags.status === 'idle') {
       try {
         await refreshTags();
       } catch {
@@ -174,7 +184,7 @@
     </div>
     <div class="insight-matrix__actions">
       <div class="insight-matrix__layers" role="tablist" aria-label={$_('insights.matrix.layers')}>
-        {#each ['tags', 'symptoms', 'habits'] as option}
+        {#each layerOptions as option}
           <button
             type="button"
             role="tab"
