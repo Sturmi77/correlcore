@@ -325,20 +325,34 @@ prefer explicit supervision, Dockge or a systemd unit running
 Docker restarts a container that **exits**, but not one that is running yet
 reports `unhealthy` (a hung-but-alive service). And nothing in the base stack
 alerts you when a service goes down. The `docker-compose.ops.yml` overlay adds
-both — enable it on top of your existing stack:
+both — enable it on top of the **same** base compose you already run, so it
+joins the running stack instead of starting a second one:
 
 ```bash
+# Path A (production, Traefik):
 docker compose -f docker-compose.yml -f docker-compose.ops.yml up -d
+
+# Path B (quickstart / homelab):
+docker compose -f docker-compose.quickstart.yml -f docker-compose.ops.yml up -d
 ```
+
+> Match the base file to your install path. Running the production command
+> after a quickstart install would spin up a separate project (Traefik + a
+> second database/Redis) and may collide on ports 80/443.
 
 - **autoheal** watches every container that has a healthcheck and restarts any
   that Docker marks `unhealthy`. It needs the Docker socket (read-write) to
   issue restarts, so run the ops overlay only on hosts you trust; it opens no
   ports.
-- **Uptime Kuma** is a selfhosted availability monitor. It is bound to
-  `127.0.0.1:3001` by default — reach it over Tailscale or an SSH tunnel
-  (`ssh -L 3001:localhost:3001 <host>`), then open `http://localhost:3001` and
-  create the admin account on first run.
+- **Uptime Kuma** is a selfhosted availability monitor, bound to
+  `127.0.0.1:3001` by default. Reach it one of these ways:
+  - **SSH tunnel** (works as-is): `ssh -L 3001:localhost:3001 <host>`, then open
+    `http://localhost:3001`.
+  - **Tailscale:** loopback is _not_ reachable at the tailnet IP directly —
+    either publish it with `tailscale serve --bg 3001`, or change the overlay
+    port mapping to bind your tailnet IP (e.g. `${TAILSCALE_IP}:3001:3001`).
+
+  Create the admin account on first run.
 
 ### Uptime Kuma monitors & alerts
 

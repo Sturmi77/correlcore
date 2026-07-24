@@ -45,12 +45,16 @@ services:
     restart: unless-stopped
     volumes:
       - uptime_kuma_data:/app/data
-    # Bound to loopback by default — reach it over Tailscale or an SSH tunnel,
-    # or add a Traefik route (see INSTALL.md) to expose it on the edge network.
+    # Bound to loopback by default — reach it via an SSH tunnel, bind to your
+    # Tailscale IP, or add a Traefik route (see INSTALL.md).
     ports:
       - '127.0.0.1:3001:3001'
     networks:
+      # internal → reach the api/web monitor targets. In the production compose
+      # `internal` is `internal: true` (no egress), so a second network is
+      # needed or alerts to external SMTP/ntfy/webhook would silently fail.
       - internal
+      - ops_egress
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -59,6 +63,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+networks:
+  # Egress-capable bridge so Kuma can reach external SMTP / ntfy / webhook
+  # notification targets even when the base `internal` network forbids egress.
+  ops_egress:
+    driver: bridge
 
 volumes:
   uptime_kuma_data:
