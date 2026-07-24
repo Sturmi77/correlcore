@@ -24,7 +24,7 @@ from app.models.sync_engine import (
     SyncUserRevision,
 )
 from app.models.tag import Tag, TagCategory
-from app.schemas.entry import BACKDATE_DAYS_LIMIT
+from app.schemas.entry import BACKDATE_DAYS_LIMIT, CLIENT_TZ_AHEAD_SLACK_DAYS
 from app.schemas.symptom import SymptomEntry
 from app.schemas.sync import (
     SyncChange,
@@ -39,7 +39,7 @@ from app.schemas.sync import (
     SyncTableName,
     SyncTagPayload,
 )
-from app.services.entry_service import _within_backdate_window
+from app.services import entry_service
 from app.services.symptom_service import assign_symptoms_to_entry, list_symptoms_for_entry
 from app.services.sync_conflict_service import create_sync_conflict, sanitize_conflict_value
 from app.services.tag_service import assign_tags_to_entry, list_tags_for_entry
@@ -380,10 +380,20 @@ async def _merge_entry_upsert(
     change: SyncChange,
 ) -> list[SyncConflictReport]:
     payload = SyncEntryPayload.model_validate(change.data)
-    if not _within_backdate_window(payload.entry_date):
+    client_ts = _ensure_utc(change.updated_at)
+    # Validate against the client edit day, not wall-clock "today". Offline
+    # rows often sit in the outbox past the live 7-day create window; rejecting
+    # them here raises SyncBadRequestError for the whole push batch and the
+    # web client never acks — wedging newer pending changes behind the stale
+    # row. Cap future clock skew so a device clock ahead of UTC cannot open an
+    # unbounded backdate window.
+    as_of = min(
+        client_ts.date(),
+        entry_service._today() + timedelta(days=CLIENT_TZ_AHEAD_SLACK_DAYS),
+    )
+    if not entry_service._within_backdate_window(payload.entry_date, as_of=as_of):
         raise SyncBadRequestError(f"entry_date must be within the last {BACKDATE_DAYS_LIMIT} days")
 
-    client_ts = _ensure_utc(change.updated_at)
     result = await db.execute(select(Entry).where(Entry.id == change.id, Entry.user_id == user_id))
     entry = result.scalar_one_or_none()
     conflicts: list[SyncConflictReport] = []
