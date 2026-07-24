@@ -1,0 +1,85 @@
+# CorrelCore — Ops overlay (autostart hardening + availability monitoring)
+#
+# Slim monitoring path per ADR-0007 — no Prometheus/Alertmanager for selfhost.
+# Opt-in overlay, always used ON TOP of the base compose so the shared
+# `internal` network resolves:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.ops.yml up -d
+#
+# Adds two things the base stack lacks:
+#   - autoheal: restarts a container that Docker reports `unhealthy` (base
+#     `restart: unless-stopped` only covers process exit, not a hung-but-alive
+#     service).
+#   - uptime-kuma: selfhosted availability monitor + alerting (email/ntfy) on
+#     `/api/v1/health/ready`, which the base stack has no equivalent for
+#     (GlitchTip tracks app exceptions, not container lifecycle).
+#
+# See docs/selfhost/INSTALL.md → "Autostart & monitoring" for host boot
+# hardening, first-run setup, and alert channels.
+
+services:
+  # Restart containers Docker marks unhealthy.
+  #
+  # Socket trust model: autoheal's whole job is to issue container restarts,
+  # which needs write access to the Docker API — the base stack's read-only
+  # tecnativa/docker-socket-proxy (SEC-03, for Traefik discovery) cannot do
+  # that. This is why the ops overlay is opt-in and documented for trusted
+  # hosts only. autoheal opens no ports and only ever calls restart.
+  #
+  # Blast radius: AUTOHEAL_CONTAINER_LABEL=all monitors every container with a
+  # healthcheck on this daemon. Fine on a dedicated CorrelCore host. On a SHARED
+  # host, scope it: set AUTOHEAL_CONTAINER_LABEL=autoheal here and add the label
+  # `autoheal=true` to the CorrelCore services you want it to manage (see
+  # INSTALL.md → "Autostart & monitoring").
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    container_name: correlcore-autoheal
+    restart: unless-stopped
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+      AUTOHEAL_INTERVAL: '10' # seconds between health polls
+      AUTOHEAL_START_PERIOD: '30' # grace before first check
+      DOCKER_SOCK: /var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    security_opt:
+      - no-new-privileges:true
+
+  # Availability monitor + alerting UI. Reaches the API over the internal
+  # network; configure monitors and notification channels on first run.
+  uptime-kuma:
+    # Pinned to the 1.23 line rather than the floating `:1` major so a
+    # `docker compose up` recreate doesn't silently jump minor versions on an
+    # always-on monitor that reaches into the internal network.
+    image: louislam/uptime-kuma:1.23
+    container_name: correlcore-uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    # Bound to loopback by default — reach it via an SSH tunnel, bind to your
+    # Tailscale IP, or add a Traefik route (see INSTALL.md).
+    ports:
+      - '127.0.0.1:3001:3001'
+    networks:
+      # internal → reach the api/web monitor targets. In the production compose
+      # `internal` is `internal: true` (no egress), so a second network is
+      # needed or alerts to external SMTP/ntfy/webhook would silently fail.
+      - internal
+      - ops_egress
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'node extra/healthcheck.js || exit 1']
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  # Egress-capable bridge so Kuma can reach external SMTP / ntfy / webhook
+  # notification targets even when the base `internal` network forbids egress.
+  ops_egress:
+    driver: bridge
+
+volumes:
+  uptime_kuma_data:

@@ -8,6 +8,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Ops overlay for autostart hardening + availability monitoring** (#491) —
+  new opt-in `infra/docker/docker-compose.ops.yml` with **autoheal** (restarts
+  containers Docker marks `unhealthy`, which the base `restart: unless-stopped`
+  does not) and **Uptime Kuma** (selfhosted availability monitor + email/ntfy
+  alerts on `/api/v1/health/ready`). `docs/selfhost/INSTALL.md` gains an
+  "Autostart & monitoring" section: Docker enable-on-boot, the overlay, Kuma
+  monitors and alert channels. Compose audit confirmed every long-lived service
+  already carries `restart: unless-stopped`.
+
 ---
 
 ## [1.1.0] — 2026-07-23

@@ -300,6 +300,94 @@ A dedicated compose profile for external-proxy mode remains deferred (historical
 
 ---
 
+## Autostart & monitoring
+
+The base stack already sets `restart: unless-stopped` on every long-lived
+service (the one-shot `migrate` job is `restart: "no"` by design), so containers
+come back after a crash **once the Docker daemon is running**. Two gaps remain,
+both covered by the opt-in `docker-compose.ops.yml` overlay and the steps below.
+
+### Host boot
+
+`restart: unless-stopped` only helps if Docker itself starts on boot:
+
+```bash
+sudo systemctl enable docker    # start the daemon on every reboot
+```
+
+That's all that's needed — Compose does not need a separate systemd unit; the
+restart policy re-creates the containers when the daemon comes up. (If you
+prefer explicit supervision, Dockge or a systemd unit running
+`docker compose up -d` also works.)
+
+### Restart on _unhealthy_ + availability alerts
+
+Docker restarts a container that **exits**, but not one that is running yet
+reports `unhealthy` (a hung-but-alive service). And nothing in the base stack
+alerts you when a service goes down. The `docker-compose.ops.yml` overlay adds
+both — enable it on top of the **same** base compose you already run, so it
+joins the running stack instead of starting a second one:
+
+```bash
+# Path A (production, Traefik):
+docker compose -f docker-compose.yml -f docker-compose.ops.yml up -d
+
+# Path B (quickstart / homelab):
+docker compose -f docker-compose.quickstart.yml -f docker-compose.ops.yml up -d
+```
+
+> Match the base file to your install path. Running the production command
+> after a quickstart install would spin up a separate project (Traefik + a
+> second database/Redis) and may collide on ports 80/443.
+
+- **autoheal** watches every container that has a healthcheck and restarts any
+  that Docker marks `unhealthy`. It needs the Docker socket **read-write** to
+  issue restarts — the base stack's read-only socket-proxy (SEC-03) can't, so
+  run the ops overlay only on hosts you trust; it opens no ports. On a
+  **dedicated** CorrelCore host the default (`AUTOHEAL_CONTAINER_LABEL=all`) is
+  fine. On a **shared** host, scope it so it never touches a neighbour's
+  containers: set `AUTOHEAL_CONTAINER_LABEL=autoheal` in the overlay and add
+  `labels: ["autoheal=true"]` to the CorrelCore services you want it to manage.
+- **Uptime Kuma** is a selfhosted availability monitor, bound to
+  `127.0.0.1:3001` by default. Reach it one of these ways:
+  - **SSH tunnel** (works as-is): `ssh -L 3001:localhost:3001 <host>`, then open
+    `http://localhost:3001`.
+  - **Tailscale:** loopback is _not_ reachable at the tailnet IP directly —
+    either publish it with `tailscale serve --bg 3001`, or change the overlay
+    port mapping to bind your tailnet IP (e.g. `${TAILSCALE_IP}:3001:3001`).
+
+  Create the admin account on first run.
+
+### Uptime Kuma monitors & alerts
+
+Add these monitors (Settings → Add New Monitor):
+
+| Monitor       | Type    | Target                                                                    |
+| ------------- | ------- | ------------------------------------------------------------------------- |
+| API readiness | HTTP(s) | `http://api:8000/api/v1/health/ready` (Kuma is on the `internal` network) |
+| Web root      | HTTP(s) | `http://web:3000/`                                                        |
+
+`/health/ready` returns non-200 when Postgres or Redis is unreachable, so it
+catches degraded-but-running states that a plain liveness ping misses.
+
+For alerts, add a notification channel (Settings → Notifications) and attach it
+to the monitors:
+
+- **Email** via your existing SMTP (the same host/credentials from `.env`).
+- **ntfy** or a generic **webhook** for push, if you prefer not to wire SMTP.
+
+Alerts carry only service status — never user or health data.
+
+To expose the Kuma UI on your domain instead of loopback, drop the `ports:`
+mapping and add a Traefik router (mirror the `web` service labels with
+`Host(\`status.${DOMAIN}\`)`on the`edge` network).
+
+> **Known follow-up:** the analytics/digest **workers** have no healthcheck yet,
+> so autoheal and Kuma cannot see a wedged worker. A file-based heartbeat probe
+> (ADR-0007) is tracked as a follow-up to #491.
+
+---
+
 ## Backup strategy
 
 CorrelCore stores Art. 9 health data. Backups must be **encrypted in transit and at rest**
