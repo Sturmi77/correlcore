@@ -64,6 +64,7 @@
   import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
+  import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
@@ -127,6 +128,7 @@
   let symptomDetailCell: SymptomTagCooccurrenceCell | null = null;
   let disclaimerOpen = false;
   let tagCooccurrenceSortMode: CooccurrenceSortMode = 'alphabetical';
+  let focusedTagClusterId: number | null = null;
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let symptomCooccurrence: SymptomTagCooccurrenceResponse | null = null;
   let symptomCooccurrenceLoading = false;
@@ -164,6 +166,7 @@
   $: insightsEffectiveRange =
     compactInsights && $analysisRange === 'year' ? 'quarter' : $analysisRange;
   $: cooccurrenceRange = timeseriesRangeToCooccurrence(insightsEffectiveRange);
+  $: tagClusterMeta = buildTagClusterMeta(tagClusters);
   $: analysisRangeDays = rangeToDays(insightsEffectiveRange);
   $: toolbarAnalysisRange =
     compactInsights && $analysisRange === 'year' ? 'quarter' : $analysisRange;
@@ -930,6 +933,8 @@
               showRangeSelector={false}
               sortMode={tagCooccurrenceSortMode}
               enableClusterSort={insightMaturity?.phase === 'robust'}
+              clusterMeta={tagClusterMeta}
+              bind:focusedClusterId={focusedTagClusterId}
               pruneSparseAxes={compactInsights}
               on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
               on:selectPair={(event) => void openCooccurrenceHistory(event)}

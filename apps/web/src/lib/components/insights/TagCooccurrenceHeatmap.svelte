@@ -7,6 +7,8 @@
     buildTagCooccurrenceMatrix,
     cooccurrenceIntensityLevel,
     orderTagCooccurrenceMatrix,
+    focusTagCooccurrenceMatrixOnCluster,
+    type TagClusterMeta,
   } from '$lib/utils/tagCooccurrenceMatrix';
   import {
     clampCooccurrenceVisibleCount,
@@ -25,10 +27,15 @@
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let enableClusterSort = false;
   export let pruneSparseAxes = false;
+  /** Server co-occurrence clusters (#489); empty maps when insufficient_data. */
+  export let clusterMeta: TagClusterMeta = { byTagId: new Map(), labels: [] };
+  /** Focused cluster id, or null for "all". Two-way bound from the page. */
+  export let focusedClusterId: number | null = null;
 
   const dispatch = createEventDispatcher<{
     rangeChange: { range: TagCooccurrenceRange };
     sortModeChange: { sortMode: CooccurrenceSortMode };
+    focusClusterChange: { clusterId: number | null };
     selectPair: {
       tagAId: string;
       tagBId: string;
@@ -63,13 +70,25 @@
     media?.removeEventListener('change', syncCompact);
   });
 
+  $: clustersAvailable = clusterMeta.labels.length > 0;
+  // A stale focus (cluster no longer present after a range change) resets to all.
+  $: if (
+    focusedClusterId !== null &&
+    !clusterMeta.labels.some((c) => c.cluster_id === focusedClusterId)
+  ) {
+    focusedClusterId = null;
+  }
   $: rawMatrix = data ? buildTagCooccurrenceMatrix(data.pairs) : { tags: [], counts: [] };
-  $: orderedMatrix = orderTagCooccurrenceMatrix(rawMatrix, sortMode);
+  $: orderedMatrix = orderTagCooccurrenceMatrix(rawMatrix, sortMode, clusterMeta.byTagId);
+  $: focusedMatrix =
+    focusedClusterId !== null
+      ? focusTagCooccurrenceMatrixOnCluster(orderedMatrix, clusterMeta.byTagId, focusedClusterId)
+      : orderedMatrix;
   $: prunedMatrix = pruneSparseAxes
-    ? pruneTagCooccurrenceMatrix(orderedMatrix.tags, orderedMatrix.counts)
-    : orderedMatrix;
+    ? pruneTagCooccurrenceMatrix(focusedMatrix.tags, focusedMatrix.counts)
+    : focusedMatrix;
   $: totalAxes = prunedMatrix.tags.length;
-  $: nextDensitySignature = `${data?.start_date ?? ''}:${data?.end_date ?? ''}:${data?.pairs.length ?? 0}:${sortMode}:${pruneSparseAxes}:${compactViewport}:${totalAxes}`;
+  $: nextDensitySignature = `${data?.start_date ?? ''}:${data?.end_date ?? ''}:${data?.pairs.length ?? 0}:${sortMode}:${pruneSparseAxes}:${compactViewport}:${totalAxes}:${focusedClusterId ?? 'all'}`;
   $: if (nextDensitySignature !== densitySignature) {
     densitySignature = nextDensitySignature;
     visibleCount = defaultCooccurrenceVisibleCount(totalAxes, compactViewport);
@@ -81,6 +100,19 @@
     effectiveVisible
   );
   $: matrix = { tags: sliced.tags, counts: sliced.counts };
+  // Boundary flag per axis: true where a tag starts a different cluster than the
+  // previous one, so the grid can draw a gap between clusters (#489). Only in
+  // clustered mode with clusters present and no single-cluster focus active.
+  $: showClusterGaps = sortMode === 'clustered' && clustersAvailable && focusedClusterId === null;
+  $: clusterBoundaries = showClusterGaps
+    ? matrix.tags.map((tag, index) => {
+        if (index === 0) return false;
+        return (
+          clusterMeta.byTagId.get(tag.tag_id) !==
+          clusterMeta.byTagId.get(matrix.tags[index - 1].tag_id)
+        );
+      })
+    : matrix.tags.map(() => false);
   $: showDensityControls = totalAxes > COOCCURRENCE_MIN_VISIBLE;
   $: canDecreaseDensity = effectiveVisible > Math.min(COOCCURRENCE_MIN_VISIBLE, totalAxes);
   $: canIncreaseDensity = effectiveVisible < totalAxes;
@@ -109,6 +141,11 @@
   function toggleSortMode(): void {
     const next = sortMode === 'alphabetical' ? 'clustered' : 'alphabetical';
     dispatch('sortModeChange', { sortMode: next });
+  }
+
+  function focusCluster(clusterId: number | null): void {
+    focusedClusterId = clusterId;
+    dispatch('focusClusterChange', { clusterId });
   }
 
   function decreaseDensity(): void {
@@ -215,6 +252,38 @@
     </div>
   </div>
 
+  {#if clustersAvailable && data && hasEnoughPairs}
+    <div
+      class="cooccurrence__clusters"
+      role="group"
+      aria-label={$_('insights.cooccurrence.focus_label')}
+      data-testid="tag-cooccurrence-focus"
+    >
+      <button
+        type="button"
+        class="cooccurrence__chip"
+        class:cooccurrence__chip--active={focusedClusterId === null}
+        aria-pressed={focusedClusterId === null}
+        on:click={() => focusCluster(null)}
+      >
+        {$_('insights.cooccurrence.focus_all')}
+      </button>
+      {#each clusterMeta.labels as cluster (cluster.cluster_id)}
+        <button
+          type="button"
+          class="cooccurrence__chip"
+          class:cooccurrence__chip--active={focusedClusterId === cluster.cluster_id}
+          aria-pressed={focusedClusterId === cluster.cluster_id}
+          data-testid="tag-cooccurrence-focus-chip"
+          on:click={() =>
+            focusCluster(focusedClusterId === cluster.cluster_id ? null : cluster.cluster_id)}
+        >
+          {cluster.label}
+        </button>
+      {/each}
+    </div>
+  {/if}
+
   {#if showDensityControls && data && hasEnoughPairs && totalAxes > 0}
     <div
       class="cooccurrence__density"
@@ -264,18 +333,32 @@
     <div class="cooccurrence__scroller" aria-label={$_('insights.cooccurrence.aria')}>
       <div class="cooccurrence__grid" style={`--tag-count: ${matrix.tags.length}`} role="grid">
         <div class="cooccurrence__corner" role="presentation"></div>
-        {#each matrix.tags as colTag}
-          <div class="cooccurrence__col-label" title={colTag.name}>{colTag.name}</div>
+        {#each matrix.tags as colTag, colIndex}
+          <div
+            class="cooccurrence__col-label"
+            class:cooccurrence__boundary-left={clusterBoundaries[colIndex]}
+            title={colTag.name}
+          >
+            {colTag.name}
+          </div>
         {/each}
 
         {#each matrix.tags as rowTag, rowIndex}
-          <div class="cooccurrence__row-label" title={rowTag.name}>{rowTag.name}</div>
+          <div
+            class="cooccurrence__row-label"
+            class:cooccurrence__boundary-top={clusterBoundaries[rowIndex]}
+            title={rowTag.name}
+          >
+            {rowTag.name}
+          </div>
           {#each matrix.tags as colTag, colIndex}
             {@const count = matrix.counts[rowIndex]?.[colIndex] ?? 0}
             {@const level = cooccurrenceIntensityLevel(count, maxCount)}
             {#if rowIndex === colIndex}
               <div
                 class="cooccurrence__cell cooccurrence__cell--empty"
+                class:cooccurrence__boundary-left={clusterBoundaries[colIndex]}
+                class:cooccurrence__boundary-top={clusterBoundaries[rowIndex]}
                 role="gridcell"
                 aria-hidden="true"
               ></div>
@@ -284,6 +367,8 @@
               <button
                 type="button"
                 class={`cooccurrence__cell cooccurrence__cell--${level}`}
+                class:cooccurrence__boundary-left={clusterBoundaries[colIndex]}
+                class:cooccurrence__boundary-top={clusterBoundaries[rowIndex]}
                 role="gridcell"
                 tabindex={focusedKey === cellKey ? 0 : -1}
                 data-tag-co-cell={cellKey}
@@ -303,6 +388,8 @@
             {:else}
               <div
                 class="cooccurrence__cell cooccurrence__cell--zero"
+                class:cooccurrence__boundary-left={clusterBoundaries[colIndex]}
+                class:cooccurrence__boundary-top={clusterBoundaries[rowIndex]}
                 role="gridcell"
                 aria-hidden="true"
               ></div>
@@ -389,6 +476,54 @@
   .cooccurrence__range--active {
     background: var(--color-primary-highlight);
     color: var(--color-primary) !important;
+  }
+
+  .cooccurrence__clusters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    align-items: center;
+  }
+
+  .cooccurrence__chip {
+    min-height: 44px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .cooccurrence__chip--active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-highlight);
+    color: var(--color-primary);
+  }
+
+  .cooccurrence__chip:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+  }
+
+  /* Cluster group gap (#489): a leading margin plus a faint rule opens space
+     where a new cluster begins on each axis. */
+  .cooccurrence__boundary-left {
+    margin-left: var(--space-2);
+    box-shadow: inset 1px 0 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
+
+  .cooccurrence__boundary-top {
+    margin-top: var(--space-2);
+    box-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
+
+  .cooccurrence__boundary-left.cooccurrence__boundary-top {
+    box-shadow:
+      inset 1px 0 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent),
+      inset 0 1px 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent);
   }
 
   .cooccurrence__density {

@@ -1,5 +1,44 @@
-import type { TagCooccurrencePair, TagCooccurrenceTagRef } from '$lib/api/insights';
+import type {
+  TagClustersResponse,
+  TagCooccurrencePair,
+  TagCooccurrenceTagRef,
+} from '$lib/api/insights';
 import { orderAxisIds, type CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
+
+export interface TagClusterMeta {
+  /** tag signal id → cluster_id */
+  byTagId: Map<string, number>;
+  /** cluster_id → label, in cluster order, for the focus chips */
+  labels: { cluster_id: number; label: string }[];
+}
+
+/**
+ * Build the tag→cluster lookup for the co-occurrence heatmap (#489).
+ *
+ * Only `kind === 'tag'` members map to axes (the heatmap is tag×tag); symptom
+ * members are ignored here. Returns empty maps unless the clusters are `ok`, so
+ * `insufficient_data` transparently falls back to hierarchical ordering.
+ */
+export function buildTagClusterMeta(
+  clusters: TagClustersResponse | null | undefined
+): TagClusterMeta {
+  const byTagId = new Map<string, number>();
+  const labels: { cluster_id: number; label: string }[] = [];
+  if (!clusters || clusters.status !== 'ok') return { byTagId, labels };
+
+  for (const cluster of clusters.clusters) {
+    let hasTag = false;
+    const members = cluster.members.length
+      ? cluster.members.filter((member) => member.kind === 'tag')
+      : cluster.tags.map((tag) => ({ signal_id: tag.tag_id }));
+    for (const member of members) {
+      byTagId.set(member.signal_id, cluster.cluster_id);
+      hasTag = true;
+    }
+    if (hasTag) labels.push({ cluster_id: cluster.cluster_id, label: cluster.label });
+  }
+  return { byTagId, labels };
+}
 
 export interface TagCooccurrenceAxisTag {
   tag_id: string;
@@ -65,10 +104,58 @@ export function tagCooccurrenceProfiles(matrix: TagCooccurrenceMatrix): Map<stri
   );
 }
 
+/**
+ * Order axis ids by server cluster (#489): cluster_id ascending, then name.
+ *
+ * Tags with no cluster assignment sort last, alphabetically, so an ungrouped
+ * tail stays readable. Pure — the caller passes the `tagId → cluster_id` map
+ * derived from `GET /insights/tag-clusters`.
+ */
+export function orderTagIdsByCluster(
+  tags: readonly TagCooccurrenceAxisTag[],
+  clusterByTagId: ReadonlyMap<string, number>
+): string[] {
+  const UNGROUPED = Number.POSITIVE_INFINITY;
+  return [...tags]
+    .sort((left, right) => {
+      const leftCluster = clusterByTagId.get(left.tag_id) ?? UNGROUPED;
+      const rightCluster = clusterByTagId.get(right.tag_id) ?? UNGROUPED;
+      if (leftCluster !== rightCluster) return leftCluster - rightCluster;
+      return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+    })
+    .map((tag) => tag.tag_id);
+}
+
+function reorderMatrix(
+  matrix: TagCooccurrenceMatrix,
+  orderedIds: readonly string[]
+): TagCooccurrenceMatrix {
+  const indexById = new Map(matrix.tags.map((tag, index) => [tag.tag_id, index]));
+  const order = orderedIds
+    .map((id) => indexById.get(id))
+    .filter((index): index is number => index !== undefined);
+  return {
+    tags: order.map((index) => matrix.tags[index]),
+    counts: order.map((row) => order.map((col) => matrix.counts[row][col])),
+  };
+}
+
 export function orderTagCooccurrenceMatrix(
   matrix: TagCooccurrenceMatrix,
-  sortMode: CooccurrenceSortMode
+  sortMode: CooccurrenceSortMode,
+  clusterByTagId?: ReadonlyMap<string, number>
 ): TagCooccurrenceMatrix {
+  // #489: in "clustered" mode prefer the server co-occurrence clusters when at
+  // least one axis tag is assigned; fall back to client-side hierarchical order
+  // (the pre-#489 behaviour) when clusters are absent or insufficient.
+  if (
+    sortMode === 'clustered' &&
+    clusterByTagId &&
+    matrix.tags.some((tag) => clusterByTagId.has(tag.tag_id))
+  ) {
+    return reorderMatrix(matrix, orderTagIdsByCluster(matrix.tags, clusterByTagId));
+  }
+
   const profiles = tagCooccurrenceProfiles(matrix);
   const orderedIds = orderAxisIds(
     matrix.tags.map((tag) => tag.tag_id),
@@ -76,14 +163,28 @@ export function orderTagCooccurrenceMatrix(
     sortMode,
     (id) => matrix.tags.find((tag) => tag.tag_id === id)?.name ?? id
   );
-  const indexById = new Map(matrix.tags.map((tag, index) => [tag.tag_id, index]));
-  const order = orderedIds
-    .map((id) => indexById.get(id))
-    .filter((index): index is number => index !== undefined);
+  return reorderMatrix(matrix, orderedIds);
+}
 
+/**
+ * Restrict a matrix to one cluster's tags (Focus cluster, #489).
+ *
+ * Returns the matrix unchanged when the cluster has no axis tags present, so a
+ * focus on an off-screen cluster degrades to "show everything" rather than an
+ * empty grid.
+ */
+export function focusTagCooccurrenceMatrixOnCluster(
+  matrix: TagCooccurrenceMatrix,
+  clusterByTagId: ReadonlyMap<string, number>,
+  clusterId: number
+): TagCooccurrenceMatrix {
+  const keepIndexes = matrix.tags
+    .map((tag, index) => (clusterByTagId.get(tag.tag_id) === clusterId ? index : -1))
+    .filter((index) => index >= 0);
+  if (keepIndexes.length === 0) return matrix;
   return {
-    tags: order.map((index) => matrix.tags[index]),
-    counts: order.map((row) => order.map((col) => matrix.counts[row][col])),
+    tags: keepIndexes.map((index) => matrix.tags[index]),
+    counts: keepIndexes.map((row) => keepIndexes.map((col) => matrix.counts[row][col])),
   };
 }
 

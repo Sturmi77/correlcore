@@ -1033,6 +1033,8 @@
       "cell_title": "{tagA} + {tagB}: {count} gemeinsame Entries",
       "sort_clustered": "Nach Aehnlichkeit clustern",
       "sort_alphabetical": "Alphabetisch sortieren",
+      "focus_label": "Auf Tag-Gruppe fokussieren",
+      "focus_all": "Alle Gruppen",
       "density_label": "Heatmap-Dichte",
       "density_showing": "{visible} / {total}",
       "density_decrease": "Weniger ueberschneidende Tags zeigen",

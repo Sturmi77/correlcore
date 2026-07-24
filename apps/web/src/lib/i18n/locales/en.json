@@ -1033,6 +1033,8 @@
       "cell_title": "{tagA} + {tagB}: {count} shared entries",
       "sort_clustered": "Cluster by similarity",
       "sort_alphabetical": "Sort A–Z",
+      "focus_label": "Focus on a tag group",
+      "focus_all": "All groups",
       "density_label": "Heatmap density",
       "density_showing": "{visible} / {total}",
       "density_decrease": "Show fewer overlapping tags",
