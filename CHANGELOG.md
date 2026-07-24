@@ -8,16 +8,45 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.1.1] — 2026-07-24
+
+Patch on the public line: insight previews and install polish, an ops
+monitoring overlay, and two date fixes. No database migration; upgrade is a
+plain image pull.
+
 ### Added
 
+- **Tag-group clustering on the co-occurrence heatmap** (#489) — in clustered
+  mode the Insights tag heatmap now orders axes by server `cluster_id` with a
+  gap between clusters, and "focus cluster" chips filter to one group. Falls
+  back to the previous hierarchical order when clusters are unavailable.
+- **Insight previews on the landing** (#510) — the marketing page now shows the
+  Insight Matrix, an Insight Card, and the tag heatmap as static product shots.
+- **Android download section on the landing** (#463) — a prominent "Download
+  APK" CTA (latest signed GitHub Release) plus an Obtainium auto-update link and
+  a SHA256 verification note.
 - **Ops overlay for autostart hardening + availability monitoring** (#491) —
-  new opt-in `infra/docker/docker-compose.ops.yml` with **autoheal** (restarts
-  containers Docker marks `unhealthy`, which the base `restart: unless-stopped`
-  does not) and **Uptime Kuma** (selfhosted availability monitor + email/ntfy
-  alerts on `/api/v1/health/ready`). `docs/selfhost/INSTALL.md` gains an
-  "Autostart & monitoring" section: Docker enable-on-boot, the overlay, Kuma
-  monitors and alert channels. Compose audit confirmed every long-lived service
-  already carries `restart: unless-stopped`.
+  opt-in `infra/docker/docker-compose.ops.yml` with **autoheal** (restarts
+  containers Docker marks `unhealthy`, which base `restart: unless-stopped` does
+  not) and **Uptime Kuma** (selfhosted monitor + email/ntfy alerts on
+  `/api/v1/health/ready`). `docs/selfhost/INSTALL.md` gains an
+  "Autostart & monitoring" section. Compose audit confirmed every long-lived
+  service already carries `restart: unless-stopped`.
+
+### Fixed
+
+- **Entry sheet uses the local calendar day** (#507, #508) — the default entry
+  date and the "today" comparison now follow the device's local day instead of
+  the UTC server day, so an evening entry in a positive-UTC-offset zone no
+  longer lands on the wrong date.
+- **MinIO secret passed to migrate/api/worker** (#511).
+
+### Internal
+
+- CI now gates Android `NewApi` lint on debug and signed release builds (#506),
+  catching `java.time` usage that would crash on API 23–25.
 
 ---
 
