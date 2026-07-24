@@ -110,7 +110,7 @@ export interface EntryDeltaResponse {
 // Calls
 // ---------------------------------------------------------------------------
 
-/** POST /entries — create today's (or backdated up to 7 days) entry. */
+/** POST /entries — create today's (or backdated up to 7 local days) entry. */
 export async function createEntry(payload: EntryCreatePayload): Promise<EntryResponse> {
   return api.post<EntryResponse>('/entries', payload);
 }

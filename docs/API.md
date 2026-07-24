@@ -372,7 +372,7 @@ Fehler:
 - `403 Forbidden` — nicht verifizierter Account.
 - `409 Conflict` — für `(user, entry_date, slot)` existiert bereits ein Eintrag.
 - `422 Unprocessable Entity` — Range-Verletzung (mood/energy/stress ∉ 1..5),
-  `entry_date` mehr als einen Tag vor dem UTC-Serverdatum (jenseits des
+  `entry_date` mehr als einen Tag nach dem UTC-Serverdatum (jenseits des
   Zeitzonen-Slack), oder außerhalb des Backdate-Fensters.
 
 ### `GET /api/v1/entries`

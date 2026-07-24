@@ -136,6 +136,23 @@ async def test_create_entry_at_backdate_boundary_succeeds() -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_entry_allows_trailing_tz_slack_day(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Local '7 days ago' west of UTC can be UTC today−8 — still editable."""
+    user = make_user()
+    db = _make_db()
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+    local_seven_days_ago = date(2026, 7, 16)
+
+    entry = await create_entry(
+        db, user_id=user.id, payload=_payload(entry_date=local_seven_days_ago)
+    )
+
+    assert entry.entry_date == local_seven_days_ago
+
+
+@pytest.mark.asyncio
 async def test_create_entry_batch_marks_entries_retrospective() -> None:
     user = make_user()
     db = _make_db()
@@ -589,7 +606,8 @@ async def test_post_entry_too_old_422(async_client: AsyncClient, user: User) -> 
             r = await async_client.post(
                 "/api/v1/entries",
                 json={
-                    "entry_date": (date.today() - timedelta(days=8)).isoformat(),
+                    # Beyond 7 local days + one UTC/client-TZ slack day.
+                    "entry_date": (date.today() - timedelta(days=9)).isoformat(),
                     "mood_score": 3,
                     "energy": 3,
                     "stress": 3,
