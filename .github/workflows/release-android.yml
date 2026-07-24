@@ -110,11 +110,15 @@ jobs:
           PUBLIC_GLITCHTIP_ENVIRONMENT: ${{ vars.PUBLIC_GLITCHTIP_ENVIRONMENT || 'android-debug' }}
         run: pnpm cap:sync
 
-      - name: Assemble debug APK
+      - name: Lint (NewApi — catch java.time on minSdk 23)
         working-directory: apps/android/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew lintDebug --stacktrace
+
+      - name: Assemble debug APK
+        working-directory: apps/android/android
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -295,6 +299,11 @@ jobs:
           test -n "${ANDROID_KEYSTORE_PASSWORD}"
           test -n "${ANDROID_KEY_ALIAS}"
           test -n "${ANDROID_KEY_PASSWORD}"
+          # NewApi gate on the release variant too: assemble-debug (which runs
+          # lintDebug) is skipped on tag / workflow_dispatch, i.e. exactly the
+          # paths that publish signed artifacts. Without this a java.time
+          # regression in a tagged source could still ship (#445 class).
+          ./gradlew lintRelease --stacktrace
           ./gradlew assembleRelease bundleRelease --stacktrace
 
       - name: Package artifacts + SHA-256
