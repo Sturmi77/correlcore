@@ -18,8 +18,19 @@
 # hardening, first-run setup, and alert channels.
 
 services:
-  # Restart containers Docker marks unhealthy. Watches every container that has
-  # a healthcheck (AUTOHEAL_CONTAINER_LABEL=all); no per-service opt-in needed.
+  # Restart containers Docker marks unhealthy.
+  #
+  # Socket trust model: autoheal's whole job is to issue container restarts,
+  # which needs write access to the Docker API — the base stack's read-only
+  # tecnativa/docker-socket-proxy (SEC-03, for Traefik discovery) cannot do
+  # that. This is why the ops overlay is opt-in and documented for trusted
+  # hosts only. autoheal opens no ports and only ever calls restart.
+  #
+  # Blast radius: AUTOHEAL_CONTAINER_LABEL=all monitors every container with a
+  # healthcheck on this daemon. Fine on a dedicated CorrelCore host. On a SHARED
+  # host, scope it: set AUTOHEAL_CONTAINER_LABEL=autoheal here and add the label
+  # `autoheal=true` to the CorrelCore services you want it to manage (see
+  # INSTALL.md → "Autostart & monitoring").
   autoheal:
     image: willfarrell/autoheal:1.2.0
     container_name: correlcore-autoheal
@@ -30,9 +41,6 @@ services:
       AUTOHEAL_START_PERIOD: '30' # grace before first check
       DOCKER_SOCK: /var/run/docker.sock
     volumes:
-      # Read-write socket is required to issue container restarts. This grants
-      # Docker control — keep the ops overlay to hosts you trust. autoheal only
-      # ever calls restart; it opens no ports.
       - /var/run/docker.sock:/var/run/docker.sock
     security_opt:
       - no-new-privileges:true
@@ -40,7 +48,10 @@ services:
   # Availability monitor + alerting UI. Reaches the API over the internal
   # network; configure monitors and notification channels on first run.
   uptime-kuma:
-    image: louislam/uptime-kuma:1
+    # Pinned to the 1.23 line rather than the floating `:1` major so a
+    # `docker compose up` recreate doesn't silently jump minor versions on an
+    # always-on monitor that reaches into the internal network.
+    image: louislam/uptime-kuma:1.23
     container_name: correlcore-uptime-kuma
     restart: unless-stopped
     volumes:

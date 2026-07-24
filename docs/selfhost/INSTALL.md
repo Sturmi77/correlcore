@@ -341,9 +341,13 @@ docker compose -f docker-compose.quickstart.yml -f docker-compose.ops.yml up -d
 > second database/Redis) and may collide on ports 80/443.
 
 - **autoheal** watches every container that has a healthcheck and restarts any
-  that Docker marks `unhealthy`. It needs the Docker socket (read-write) to
-  issue restarts, so run the ops overlay only on hosts you trust; it opens no
-  ports.
+  that Docker marks `unhealthy`. It needs the Docker socket **read-write** to
+  issue restarts — the base stack's read-only socket-proxy (SEC-03) can't, so
+  run the ops overlay only on hosts you trust; it opens no ports. On a
+  **dedicated** CorrelCore host the default (`AUTOHEAL_CONTAINER_LABEL=all`) is
+  fine. On a **shared** host, scope it so it never touches a neighbour's
+  containers: set `AUTOHEAL_CONTAINER_LABEL=autoheal` in the overlay and add
+  `labels: ["autoheal=true"]` to the CorrelCore services you want it to manage.
 - **Uptime Kuma** is a selfhosted availability monitor, bound to
   `127.0.0.1:3001` by default. Reach it one of these ways:
   - **SSH tunnel** (works as-is): `ssh -L 3001:localhost:3001 <host>`, then open
