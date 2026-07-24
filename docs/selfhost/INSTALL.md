@@ -300,6 +300,76 @@ A dedicated compose profile for external-proxy mode remains deferred (historical
 
 ---
 
+## Autostart & monitoring
+
+The base stack already sets `restart: unless-stopped` on every long-lived
+service (the one-shot `migrate` job is `restart: "no"` by design), so containers
+come back after a crash **once the Docker daemon is running**. Two gaps remain,
+both covered by the opt-in `docker-compose.ops.yml` overlay and the steps below.
+
+### Host boot
+
+`restart: unless-stopped` only helps if Docker itself starts on boot:
+
+```bash
+sudo systemctl enable docker    # start the daemon on every reboot
+```
+
+That's all that's needed — Compose does not need a separate systemd unit; the
+restart policy re-creates the containers when the daemon comes up. (If you
+prefer explicit supervision, Dockge or a systemd unit running
+`docker compose up -d` also works.)
+
+### Restart on _unhealthy_ + availability alerts
+
+Docker restarts a container that **exits**, but not one that is running yet
+reports `unhealthy` (a hung-but-alive service). And nothing in the base stack
+alerts you when a service goes down. The `docker-compose.ops.yml` overlay adds
+both — enable it on top of your existing stack:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ops.yml up -d
+```
+
+- **autoheal** watches every container that has a healthcheck and restarts any
+  that Docker marks `unhealthy`. It needs the Docker socket (read-write) to
+  issue restarts, so run the ops overlay only on hosts you trust; it opens no
+  ports.
+- **Uptime Kuma** is a selfhosted availability monitor. It is bound to
+  `127.0.0.1:3001` by default — reach it over Tailscale or an SSH tunnel
+  (`ssh -L 3001:localhost:3001 <host>`), then open `http://localhost:3001` and
+  create the admin account on first run.
+
+### Uptime Kuma monitors & alerts
+
+Add these monitors (Settings → Add New Monitor):
+
+| Monitor       | Type    | Target                                                                    |
+| ------------- | ------- | ------------------------------------------------------------------------- |
+| API readiness | HTTP(s) | `http://api:8000/api/v1/health/ready` (Kuma is on the `internal` network) |
+| Web root      | HTTP(s) | `http://web:3000/`                                                        |
+
+`/health/ready` returns non-200 when Postgres or Redis is unreachable, so it
+catches degraded-but-running states that a plain liveness ping misses.
+
+For alerts, add a notification channel (Settings → Notifications) and attach it
+to the monitors:
+
+- **Email** via your existing SMTP (the same host/credentials from `.env`).
+- **ntfy** or a generic **webhook** for push, if you prefer not to wire SMTP.
+
+Alerts carry only service status — never user or health data.
+
+To expose the Kuma UI on your domain instead of loopback, drop the `ports:`
+mapping and add a Traefik router (mirror the `web` service labels with
+`Host(\`status.${DOMAIN}\`)`on the`edge` network).
+
+> **Known follow-up:** the analytics/digest **workers** have no healthcheck yet,
+> so autoheal and Kuma cannot see a wedged worker. A file-based heartbeat probe
+> (ADR-0007) is tracked as a follow-up to #491.
+
+---
+
 ## Backup strategy
 
 CorrelCore stores Art. 9 health data. Backups must be **encrypted in transit and at rest**

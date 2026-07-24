@@ -1,0 +1,64 @@
+# CorrelCore — Ops overlay (autostart hardening + availability monitoring)
+#
+# Slim monitoring path per ADR-0007 — no Prometheus/Alertmanager for selfhost.
+# Opt-in overlay, always used ON TOP of the base compose so the shared
+# `internal` network resolves:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.ops.yml up -d
+#
+# Adds two things the base stack lacks:
+#   - autoheal: restarts a container that Docker reports `unhealthy` (base
+#     `restart: unless-stopped` only covers process exit, not a hung-but-alive
+#     service).
+#   - uptime-kuma: selfhosted availability monitor + alerting (email/ntfy) on
+#     `/api/v1/health/ready`, which the base stack has no equivalent for
+#     (GlitchTip tracks app exceptions, not container lifecycle).
+#
+# See docs/selfhost/INSTALL.md → "Autostart & monitoring" for host boot
+# hardening, first-run setup, and alert channels.
+
+services:
+  # Restart containers Docker marks unhealthy. Watches every container that has
+  # a healthcheck (AUTOHEAL_CONTAINER_LABEL=all); no per-service opt-in needed.
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    container_name: correlcore-autoheal
+    restart: unless-stopped
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+      AUTOHEAL_INTERVAL: '10' # seconds between health polls
+      AUTOHEAL_START_PERIOD: '30' # grace before first check
+      DOCKER_SOCK: /var/run/docker.sock
+    volumes:
+      # Read-write socket is required to issue container restarts. This grants
+      # Docker control — keep the ops overlay to hosts you trust. autoheal only
+      # ever calls restart; it opens no ports.
+      - /var/run/docker.sock:/var/run/docker.sock
+    security_opt:
+      - no-new-privileges:true
+
+  # Availability monitor + alerting UI. Reaches the API over the internal
+  # network; configure monitors and notification channels on first run.
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: correlcore-uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    # Bound to loopback by default — reach it over Tailscale or an SSH tunnel,
+    # or add a Traefik route (see INSTALL.md) to expose it on the edge network.
+    ports:
+      - '127.0.0.1:3001:3001'
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'node extra/healthcheck.js || exit 1']
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  uptime_kuma_data:
