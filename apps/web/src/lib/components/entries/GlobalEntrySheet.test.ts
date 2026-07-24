@@ -3,6 +3,7 @@ import { tick } from 'svelte';
 import type { Writable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { closeEntrySheet, entrySheetSnapshot, resetEntrySheetStore } from '$lib/stores/entrySheet';
+import { isoDate } from '$lib/utils/entryForm';
 import GlobalEntrySheet from './GlobalEntrySheet.svelte';
 
 type AuthTestState = {
@@ -78,8 +79,9 @@ async function flushAsync(): Promise<void> {
   await tick();
 }
 
-function navigateWithOpenEntry(date: string): void {
-  window.history.pushState({}, '', `/?openEntry=1&date=${date}`);
+function navigateWithOpenEntry(date?: string): void {
+  const path = date ? `/?openEntry=1&date=${date}` : '/?openEntry=1';
+  window.history.pushState({}, '', path);
   testHelpers.pageStore?.set({ url: new URL(window.location.href) });
 }
 
@@ -116,6 +118,18 @@ describe('GlobalEntrySheet openEntry query handling', () => {
     await flushAsync();
 
     expect(entrySheetSnapshot()).toMatchObject({ open: true, date: '2026-06-02' });
+    expect(window.location.search).toBe('');
+  });
+
+  it('falls back to the local calendar day when openEntry has no date (#447 widget)', async () => {
+    // correlcore://entries/new resolves to /?openEntry=1 with no date. Using
+    // UTC here would open tomorrow after local evening in the Americas while
+    // the widget (device tz) still shows "no entry today".
+    navigateWithOpenEntry();
+    render(GlobalEntrySheet);
+    await flushAsync();
+
+    expect(entrySheetSnapshot()).toMatchObject({ open: true, date: isoDate(new Date()) });
     expect(window.location.search).toBe('');
   });
 });

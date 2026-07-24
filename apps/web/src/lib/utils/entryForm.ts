@@ -1,7 +1,18 @@
 /** Shared entry-form helpers (route + bottom sheet). */
 
+/**
+ * Calendar date in device-local time (`YYYY-MM-DD`).
+ *
+ * Entry rows are keyed by the client's local day (same convention as
+ * `localIsoDate` on Home and the widget `tz` query). Do not use
+ * `toISOString()` here — after local evening in the Americas that yields
+ * UTC tomorrow and the form silently writes the wrong `entry_date`.
+ */
 export function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -26,7 +37,8 @@ function parseCalendarDate(value: string): number | null {
 export function isEntryDateEditable(today: Date, entryDate: string): boolean {
   const parsed = parseCalendarDate(entryDate);
   if (!parsed) return false;
-  const upperBound = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  // Bound the editable window with the same local calendar day as isoDate.
+  const upperBound = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
   const lowerBound = upperBound - 7 * DAY_MS;
   return parsed >= lowerBound && parsed <= upperBound;
 }

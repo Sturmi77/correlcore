@@ -64,6 +64,7 @@
         ? new URL(window.location.href).searchParams
         : $page.url.searchParams;
     if (!isOpenEntryRequested(params)) return;
+    // isoDate is device-local (same as Home "+"); widget deep links omit date.
     const date = entryDateFromSearchParams(params) ?? isoDate(new Date());
     let onboardingTags = false;
     try {
