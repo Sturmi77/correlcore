@@ -154,13 +154,70 @@ async def test_create_entry_batch_marks_entries_retrospective() -> None:
 async def test_create_entry_older_than_window_rejected() -> None:
     user = make_user()
     db = _make_db()
-    too_old = date.today() - timedelta(days=8)
+    # Window is 7 local days plus one UTC/client-TZ slack day on the trailing edge.
+    too_old = date.today() - timedelta(days=9)
 
     with pytest.raises(EntryDateOutOfRangeError):
         await create_entry(db, user_id=user.id, payload=_payload(entry_date=too_old))
 
     db.add.assert_not_called()
     db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_create_entry_allows_local_today_ahead_of_utc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Device-local today east of UTC is UTC tomorrow — must still create.
+
+    Production API containers run with no TZ (UTC). Home / entry sheet /
+    widget all key ``entry_date`` by the device calendar day, so a Tokyo
+    morning after local midnight sends tomorrow relative to the server clock.
+    """
+    user = make_user()
+    db = _make_db()
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 23))
+    local_today = date(2026, 7, 24)
+
+    entry = await create_entry(db, user_id=user.id, payload=_payload(entry_date=local_today))
+
+    assert entry.entry_date == local_today
+
+
+def test_entry_create_schema_allows_one_day_ahead_of_utc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "app.schemas.entry.datetime",
+        type(
+            "FixedDateTime",
+            (),
+            {
+                "now": staticmethod(lambda tz=None: datetime(2026, 7, 23, 15, 0, tzinfo=UTC)),
+            },
+        ),
+    )
+    payload = _payload(entry_date=date(2026, 7, 24))
+    assert payload.entry_date == date(2026, 7, 24)
+
+
+def test_entry_create_schema_rejects_two_days_ahead_of_utc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from pydantic import ValidationError
+
+    monkeypatch.setattr(
+        "app.schemas.entry.datetime",
+        type(
+            "FixedDateTime",
+            (),
+            {
+                "now": staticmethod(lambda tz=None: datetime(2026, 7, 23, 15, 0, tzinfo=UTC)),
+            },
+        ),
+    )
+    with pytest.raises(ValidationError):
+        _payload(entry_date=date(2026, 7, 25))
 
 
 @pytest.mark.asyncio

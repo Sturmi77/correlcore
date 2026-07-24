@@ -23,8 +23,8 @@ Validation
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
-from datetime import datetime
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -41,6 +41,15 @@ MAX_NOTE_LENGTH = 4000
 # Read-only window for backdating an entry (DESIGN_DOCUMENT.md §2.1).
 # Enforced in the service layer; documented here for schema readers.
 BACKDATE_DAYS_LIMIT = 7
+
+# Clients key ``entry_date`` by the device-local calendar day (Home
+# ``localIsoDate``, entry sheet ``isoDate``, widget ``tz``). The API
+# container runs in UTC with no TZ env, so a user east of UTC reaches
+# their local "today" while ``datetime.now(UTC).date()`` is still
+# yesterday. Without this slack, POST /entries and offline sync reject
+# the primary "log today" action for hours each morning (UTC+1 … +14).
+# One calendar day covers the maximum civil offset (UTC+14).
+CLIENT_TZ_AHEAD_SLACK_DAYS = 1
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +79,8 @@ class EntryCreate(BaseModel):
     @field_validator("entry_date")
     @classmethod
     def date_not_in_future(cls, v: date_type) -> date_type:
-        if v > datetime.now().date():
+        latest_allowed = datetime.now(UTC).date() + timedelta(days=CLIENT_TZ_AHEAD_SLACK_DAYS)
+        if v > latest_allowed:
             raise ValueError("entry_date must not be in the future")
         return v
 

@@ -322,8 +322,12 @@ GET    /api/v1/entries/date/{date}      Lookup by date (backlog)
 
 ### Backdate-Fenster
 
-Neue Einträge sind für **heute** und die letzten **7 Tage** erlaubt.
-Aktualisierungen sind nur innerhalb desselben 7-Tage-Fensters möglich;
+Neue Einträge sind für den **gerätelokalen** heutigen Tag und die letzten
+**7 Tage** erlaubt. Clients senden `entry_date` als lokale Kalendertag
+(`YYYY-MM-DD`); der API-Container läuft in UTC und akzeptiert deshalb
+einen Tag Vorlauf bzw. Nachlauf als Zeitzonen-Slack, damit „heute“ in
+UTC+ Zonen und „vor 7 Tagen“ in UTC− Zonen nicht fälschlich abgelehnt
+werden. Aktualisierungen sind nur innerhalb desselben Fensters möglich;
 ältere Einträge sind read-only (`409 Conflict`).
 
 ### `POST /api/v1/entries`
@@ -368,7 +372,8 @@ Fehler:
 - `403 Forbidden` — nicht verifizierter Account.
 - `409 Conflict` — für `(user, entry_date, slot)` existiert bereits ein Eintrag.
 - `422 Unprocessable Entity` — Range-Verletzung (mood/energy/stress ∉ 1..5),
-  `entry_date` in der Zukunft, oder älter als 7 Tage.
+  `entry_date` mehr als einen Tag vor dem UTC-Serverdatum (jenseits des
+  Zeitzonen-Slack), oder außerhalb des Backdate-Fensters.
 
 ### `GET /api/v1/entries`
 
