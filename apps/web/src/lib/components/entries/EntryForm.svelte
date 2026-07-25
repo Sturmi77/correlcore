@@ -19,6 +19,7 @@
    */
 
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
@@ -70,6 +71,7 @@
   import { NEUTRAL_SCALE_DEFAULT, scaleDefaultsFromPrevious } from '$lib/utils/entrySmartDefaults';
   import { setEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
+  import { connectivity } from '$lib/stores/connectivity';
   import { onLocalEntrySaved, scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
   import {
     findLocalEntryByDateSlot,
@@ -115,6 +117,14 @@
   let markerSuggestions: string[] = [];
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
+  // When the per-entry tag/symptom fetch fails during load, the on-screen
+  // selection is cleared to avoid showing another entry's rows (R-05). These
+  // flags mark that the cleared set is *unknown*, not empty — persisting it
+  // as-is would delete the entry's real relations under the sync replace-set
+  // semantics (P1a). While set, the save path must re-resolve the affected
+  // relation before it may be written.
+  let tagsUnresolved = false;
+  let symptomsUnresolved = false;
   let errorKey: string | null = null;
   let cycleDayInvalid = false;
   let offline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
@@ -145,6 +155,10 @@
   let hydrating = false;
   let createSaveInFlight = false;
   let applyingSmartDefaults = false;
+  // Guards the reactive markDirty watcher while the save path writes the
+  // re-resolved relations back into the bound fields (P1a) so that internal
+  // sync does not schedule a redundant autosave.
+  let applyingResolvedRelations = false;
   let dayDelta: EntryDeltaResponse | null = null;
   let dayDeltaLoading = false;
   let dayDeltaToken = 0;
@@ -186,6 +200,8 @@
     noteMarkers = [];
     selectedTagIds = [];
     selectedSymptoms = [];
+    tagsUnresolved = false;
+    symptomsUnresolved = false;
     workContextTouched = false;
     const d = new Date(forDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
@@ -245,6 +261,9 @@
     dayDeltaLoading = false;
     loading = true;
     hydrating = true;
+    // Assume relations resolve; the fetch branches flip these on rejection.
+    tagsUnresolved = false;
+    symptomsUnresolved = false;
     errorKey = null;
     selectedSlot = slot;
     // Cancel any in-flight auto-save scheduling — switching dates is a
@@ -314,6 +333,7 @@
             selectedTagIds = hydratedTagIds;
           } else {
             selectedTagIds = [];
+            tagsUnresolved = true;
           }
           if (symRes.status === 'fulfilled') {
             hydratedSymptoms = symRes.value.map((s) => ({
@@ -323,6 +343,7 @@
             selectedSymptoms = hydratedSymptoms;
           } else {
             selectedSymptoms = [];
+            symptomsUnresolved = true;
           }
           if (tagsRes.status === 'fulfilled' && symRes.status === 'fulfilled') {
             await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
@@ -404,6 +425,7 @@
       } else {
         selectedTagIds = [];
         hydratedTagIds = [];
+        tagsUnresolved = true;
       }
       if (symRes.status === 'fulfilled') {
         hydratedSymptoms = symRes.value.map((s) => ({
@@ -414,6 +436,7 @@
       } else {
         selectedSymptoms = [];
         hydratedSymptoms = [];
+        symptomsUnresolved = true;
       }
       if (canUseOfflineSync() && tagsRes.status === 'fulfilled' && symRes.status === 'fulfilled') {
         await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
@@ -764,7 +787,7 @@
     if (startedAsCreate) createSaveInFlight = true;
 
     try {
-      const resolvedSnap = await resolveOnboardingTags(snap);
+      const resolvedSnap = await preserveUnresolvedRelations(await resolveOnboardingTags(snap));
 
       if (canUseOfflineSync()) {
         const result = await saveEntryOffline(existingEntryId, resolvedSnap);
@@ -820,12 +843,80 @@
     }
   }
 
+  /**
+   * P1a — guard against silently deleting an entry's relations after a failed
+   * relation fetch. When ``tagsUnresolved`` / ``symptomsUnresolved`` is set the
+   * on-screen selection was cleared to an *unknown* (not empty) state, and the
+   * sync payload / assign endpoints replace-set the whole relation. Re-resolve
+   * the affected relation before saving; merge any rows the user added in the
+   * meantime so nothing is lost. If the fetch still fails we rethrow — the
+   * autosave stays in ``error`` (retryable) rather than persisting a
+   * destructive empty replace-set.
+   */
+  async function preserveUnresolvedRelations(snap: FormSnapshot): Promise<FormSnapshot> {
+    if (!existingEntryId || (!tagsUnresolved && !symptomsUnresolved)) return snap;
+
+    let nextTagIds: string[] | null = null;
+    let nextSymptoms: SymptomEntry[] | null = null;
+
+    if (tagsUnresolved) {
+      const serverTags = await listTagsForEntry(existingEntryId);
+      nextTagIds = [...new Set([...serverTags.map((t) => t.id), ...snap.selectedTagIds])];
+    }
+    if (symptomsUnresolved) {
+      const serverSymptoms = await listSymptomsForEntry(existingEntryId);
+      const merged = new Map<string, SymptomEntry>(
+        serverSymptoms.map(
+          (s): [string, SymptomEntry] => [
+            s.symptom_id,
+            { symptom_id: s.symptom_id, intensity: s.intensity },
+          ]
+        )
+      );
+      // User edits after the failed load win over the server row.
+      for (const s of snap.selectedSymptoms) merged.set(s.symptom_id, s);
+      nextSymptoms = [...merged.values()];
+    }
+
+    // Reflect the resolved relations back into the bound fields so a later
+    // edit keeps them instead of falling back to the cleared empty set, then
+    // clear the flags. Suppress markDirty so this internal sync does not
+    // schedule a redundant autosave.
+    applyingResolvedRelations = true;
+    try {
+      if (nextTagIds) {
+        selectedTagIds = nextTagIds;
+        tagsUnresolved = false;
+      }
+      if (nextSymptoms) {
+        selectedSymptoms = nextSymptoms;
+        symptomsUnresolved = false;
+      }
+      await Promise.resolve();
+    } finally {
+      applyingResolvedRelations = false;
+    }
+
+    return {
+      ...snap,
+      selectedTagIds: nextTagIds ?? snap.selectedTagIds,
+      selectedSymptoms: nextSymptoms ?? snap.selectedSymptoms,
+    };
+  }
+
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
-    // Offline sync enabled must not skip onboarding while the device is
-    // online — otherwise suggestion chips never become entry tags (R-04).
-    // Only defer when we truly cannot reach the API.
-    if (canUseOfflineSync() && typeof navigator !== 'undefined' && !navigator.onLine) {
+    // Offline sync enabled must not skip onboarding while the API is
+    // reachable — otherwise suggestion chips never become entry tags (R-04).
+    // Only defer when we truly cannot reach the API. `navigator.onLine`
+    // alone misses the "browser online but API unreachable" case: without
+    // deferring there, `completeOnboarding` throws and aborts the save
+    // before `saveEntryOffline` runs, losing the first onboarding entry
+    // (P1b). Treat `serverReachable === false` as offline too.
+    const cannotReachApi =
+      (typeof navigator !== 'undefined' && !navigator.onLine) ||
+      get(connectivity).serverReachable === false;
+    if (canUseOfflineSync() && cannotReachApi) {
       return snap;
     }
     const tags = [...selectedSuggestions.values()].map((tag) => ({
@@ -875,7 +966,7 @@
   $: autoSaveSnap = $autoSaveState;
 
   function markDirty() {
-    if (hydrating || loading || applyingSmartDefaults) return;
+    if (hydrating || loading || applyingSmartDefaults || applyingResolvedRelations) return;
     // Per-route guard: don't try to auto-save when the user has dialed
     // into a load-error — they need to retry the load first.
     autoSave.markDirty();
