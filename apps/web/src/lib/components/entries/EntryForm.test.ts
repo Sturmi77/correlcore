@@ -641,7 +641,7 @@ describe('EntryForm offline sync edge cases (R-04 / R-05)', () => {
       delta: { mood: null, energy: null, stress: null },
       shared_tags: [],
     });
-    vi.mocked(saveEntryOffline).mockResolvedValue({ entryId: 'local-entry', created: true });
+    vi.mocked(saveEntryOffline).mockResolvedValue({ entryId: 'local-entry', syncState: 'pending' });
     vi.mocked(completeOnboarding).mockResolvedValue({
       created_tags: [],
       onboarding_retro_completed: true,
