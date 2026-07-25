@@ -167,6 +167,12 @@
   let selectedSuggestions = new Map<string, TagSuggestion>();
   let suggestionsLoading = false;
   let onboardingMarkedComplete = false;
+  // P1: retry a deferred onboarding finalize when API reachability recovers.
+  // `window.online` only covers navigator transitions; the stale-reachable
+  // case (navigator stayed online while the API blipped) never fires it, so
+  // without this the deferred finalize would only retry on a manual edit.
+  let lastServerReachable: boolean | null = null;
+  let unsubscribeConnectivity: (() => void) | null = null;
 
   $: offlineSyncBadge = $syncOrchestrator.badge;
   $: offlineSyncConflictKey = $syncOrchestrator.conflictNote;
@@ -942,22 +948,31 @@
     }));
     // P1b residual: `serverReachable` can be stale `true`/`null` while the
     // finalize call still fails (blip, 5xx). Swallow and defer so the Dexie
-    // write still runs; `handleOnline` / the next dirty pass retries.
+    // write still runs; the connectivity-recovery watcher (or the next dirty
+    // pass) retries the finalize (P1).
+    let result: Awaited<ReturnType<typeof completeOnboarding>>;
     try {
-      const result = await completeOnboarding(tags);
-      onboardingMarkedComplete = true;
-      await refreshTags();
-      const createdIds = result.created_tags.map((tag) => tag.id);
-      return {
-        ...snap,
-        selectedTagIds: [...new Set([...snap.selectedTagIds, ...createdIds])],
-      };
+      result = await completeOnboarding(tags);
     } catch (err) {
       if (canUseOfflineSync()) {
         return snap;
       }
       throw err;
     }
+    onboardingMarkedComplete = true;
+    const createdIds = result.created_tags.map((tag) => tag.id);
+    // The catalogue refresh is best-effort: a failure here must NOT discard
+    // the just-created onboarding tag associations (P2). The finalize already
+    // succeeded, so apply its result regardless of the refresh outcome.
+    try {
+      await refreshTags();
+    } catch {
+      /* non-fatal — the tags exist server-side; the catalogue re-syncs later */
+    }
+    return {
+      ...snap,
+      selectedTagIds: [...new Set([...snap.selectedTagIds, ...createdIds])],
+    };
   }
 
   function toggleOnboardingSuggestion(tag: TagSuggestion) {
@@ -1068,6 +1083,18 @@
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     window.addEventListener('beforeunload', onBeforeUnload);
+    // P1: when the API becomes reachable again, retry a still-pending
+    // onboarding finalize (schedule an autosave) instead of waiting for a
+    // manual edit. Mirrors handleOnline but keyed on effective reachability,
+    // which the `window.online` event does not cover in the stale-reachable case.
+    lastServerReachable = get(connectivity).serverReachable;
+    unsubscribeConnectivity = connectivity.subscribe(($c) => {
+      const recovered = $c.serverReachable === true && lastServerReachable !== true;
+      lastServerReachable = $c.serverReachable;
+      if (recovered && onboardingTagsEnabled && !onboardingMarkedComplete) {
+        markDirty();
+      }
+    });
   });
 
   onDestroy(() => {
@@ -1076,6 +1103,7 @@
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     }
+    unsubscribeConnectivity?.();
     mobileMedia?.removeEventListener('change', syncCompactEntry);
     autoSave.destroy();
   });
