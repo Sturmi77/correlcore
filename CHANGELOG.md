@@ -10,6 +10,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Re-saving an entry after hiding a linked tag no longer 422s** — hide keeps
+  historical `entry_tags` (M3.5), and `list_tags_for_entry` still returns those
+  IDs so the client can round-trip them, but `assign_tags_to_entry` rejected any
+  `is_hidden` ID. Every mood/energy edit then failed; with offline sync the
+  uncaught error aborted the whole push batch so newer pending rows never
+  acked. Already-linked hidden tags are now allowed; new hidden assignments
+  remain rejected.
+- **Offline EntryForm no longer writes stale tags/symptoms into IndexedDB
+  (R-05)** — when `listTagsForEntry` / `listSymptomsForEntry` failed after a
+  successful entry list, the offline load path hydrated Dexie with the previous
+  form's selections. Hydration now runs only when both relation fetches
+  succeed, and failed fetches clear the in-form selections first.
+- **Onboarding tag suggestions are applied while online even if offline sync
+  is enabled (R-04)** — `resolveOnboardingTags` previously returned early on
+  `canUseOfflineSync()` alone, so first-entry suggestion chips never became
+  tags. It now skips only when the device is actually offline.
+
 - **Landing-page login no longer mislabels a dropped session cookie as
   "wrong password"** (ADR-0040) — the web login is a two-step flow (`POST
 /auth/login` then `GET /auth/me`). When the HttpOnly session cookie did not

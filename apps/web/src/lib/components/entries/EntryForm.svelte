@@ -304,16 +304,29 @@
             listSymptomsForEntry(matchingEntry.id),
           ]);
           if (myToken !== loadToken) return;
+          // Clear on rejection so a failed tags/symptoms fetch cannot leave
+          // the previous entry's selections in the form — and never hydrate
+          // IndexedDB with those stale arrays (R-05 / GUI consistency P3-S2).
+          let hydratedTagIds: string[] = [];
+          let hydratedSymptoms: { symptom_id: string; intensity: number }[] = [];
           if (tagsRes.status === 'fulfilled') {
-            selectedTagIds = tagsRes.value.map((t) => t.id);
+            hydratedTagIds = tagsRes.value.map((t) => t.id);
+            selectedTagIds = hydratedTagIds;
+          } else {
+            selectedTagIds = [];
           }
           if (symRes.status === 'fulfilled') {
-            selectedSymptoms = symRes.value.map((s) => ({
+            hydratedSymptoms = symRes.value.map((s) => ({
               symptom_id: s.symptom_id,
               intensity: s.intensity,
             }));
+            selectedSymptoms = hydratedSymptoms;
+          } else {
+            selectedSymptoms = [];
           }
-          await hydrateServerEntryFromApi(matchingEntry, selectedTagIds, selectedSymptoms);
+          if (tagsRes.status === 'fulfilled' && symRes.status === 'fulfilled') {
+            await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
+          }
           loadedEntryDate = date;
           void refreshDayDelta(date, selectedSlot);
           return;
@@ -809,7 +822,10 @@
 
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
-    if (canUseOfflineSync()) {
+    // Offline sync enabled must not skip onboarding while the device is
+    // online — otherwise suggestion chips never become entry tags (R-04).
+    // Only defer when we truly cannot reach the API.
+    if (canUseOfflineSync() && typeof navigator !== 'undefined' && !navigator.onLine) {
       return snap;
     }
     const tags = [...selectedSuggestions.values()].map((tag) => ({

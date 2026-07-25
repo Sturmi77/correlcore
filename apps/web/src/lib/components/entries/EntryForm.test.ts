@@ -4,6 +4,11 @@ import { readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntryDeltaResponse, EntryResponse } from '$lib/api/entries';
 import { fetchEntryDelta, listEntries, updateEntry } from '$lib/api/entries';
+import { completeOnboarding } from '$lib/api/onboarding';
+import { listSymptomsForEntry } from '$lib/api/symptoms';
+import { listTagsForEntry } from '$lib/api/tags';
+import { canUseOfflineSync } from '$lib/offline/featureFlag';
+import { hydrateServerEntryFromApi, saveEntryOffline } from '$lib/stores/entriesOffline';
 import { submitEntry } from '$lib/stores/entries';
 import EntryForm from './EntryForm.svelte';
 
@@ -104,6 +109,7 @@ vi.mock('$lib/stores/entriesOffline', () => ({
   hydrateServerEntryFromApi: vi.fn(async () => undefined),
   localEntryToFormFields: vi.fn(),
   saveEntryOffline: vi.fn(),
+  shouldPreferLocalEntry: vi.fn(() => false),
 }));
 
 vi.mock('$lib/components/entries/TagPicker.svelte', () => ({
@@ -619,5 +625,116 @@ describe('EntryForm slot changes', () => {
     ).toBe('evening note');
     expect(eveningButton.getAttribute('aria-pressed')).toBe('true');
     expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('idle');
+  });
+});
+
+describe('EntryForm offline sync edge cases (R-04 / R-05)', () => {
+  const onlineDescriptor = Object.getOwnPropertyDescriptor(navigator, 'onLine');
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(canUseOfflineSync).mockReturnValue(true);
+    vi.mocked(listEntries).mockResolvedValue([]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+    vi.mocked(saveEntryOffline).mockResolvedValue({ entryId: 'local-entry', created: true });
+    vi.mocked(completeOnboarding).mockResolvedValue({
+      created_tags: [],
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+    });
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      get: () => true,
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    vi.mocked(canUseOfflineSync).mockReturnValue(false);
+    if (onlineDescriptor) {
+      Object.defineProperty(navigator, 'onLine', onlineDescriptor);
+    } else {
+      Object.defineProperty(navigator, 'onLine', {
+        configurable: true,
+        get: () => true,
+      });
+    }
+  });
+
+  it('does not hydrate IndexedDB with stale tags when the tags fetch fails (R-05)', async () => {
+    const serverEntry: EntryResponse = {
+      id: 'server-entry-b',
+      user_id: 'user-1',
+      entry_date: '2026-06-03',
+      slot: 'day',
+      mood_score: 2,
+      energy: 2,
+      stress: 2,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: 'entry B',
+      created_at: '2026-06-03T12:00:00Z',
+      updated_at: '2026-06-03T12:00:00Z',
+    };
+    vi.mocked(listEntries).mockResolvedValue([serverEntry]);
+    vi.mocked(listTagsForEntry).mockRejectedValue(new Error('tags unavailable'));
+    vi.mocked(listSymptomsForEntry).mockResolvedValue([]);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    expect(listEntries).toHaveBeenCalled();
+    expect(listTagsForEntry).toHaveBeenCalledWith('server-entry-b');
+    expect(hydrateServerEntryFromApi).not.toHaveBeenCalled();
+  });
+
+  it('finalizes onboarding while online even when offline sync is enabled (R-04)', async () => {
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledTimes(1);
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+  });
+
+  it('defers onboarding finalize when offline sync is on and the device is offline (R-04)', async () => {
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      get: () => false,
+    });
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'offline first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).not.toHaveBeenCalled();
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
   });
 });
