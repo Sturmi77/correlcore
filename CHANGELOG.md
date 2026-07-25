@@ -22,6 +22,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   successful entry list, the offline load path hydrated Dexie with the previous
   form's selections. Hydration now runs only when both relation fetches
   succeed, and failed fetches clear the in-form selections first.
+- **Partial tags/symptoms load no longer wipes associations on autosave** —
+  clearing chips after a failed relation fetch (R-05) left `selectedTagIds` /
+  `selectedSymptoms` as `[]` on an otherwise editable existing entry. The next
+  note/mood autosave then replace-set empty associations (live API or offline
+  push). Autosave is now blocked until associations load successfully; when
+  offline sync has a local row, that row is used instead of the half-loaded
+  server entry.
 - **Onboarding tag suggestions are applied while online even if offline sync
   is enabled (R-04)** — `resolveOnboardingTags` previously returned early on
   `canUseOfflineSync()` alone, so first-entry suggestion chips never became

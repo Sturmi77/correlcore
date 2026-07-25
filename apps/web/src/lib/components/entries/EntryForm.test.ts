@@ -5,10 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntryDeltaResponse, EntryResponse } from '$lib/api/entries';
 import { fetchEntryDelta, listEntries, updateEntry } from '$lib/api/entries';
 import { completeOnboarding } from '$lib/api/onboarding';
-import { listSymptomsForEntry } from '$lib/api/symptoms';
-import { listTagsForEntry } from '$lib/api/tags';
+import { assignSymptomsToEntry, listSymptomsForEntry } from '$lib/api/symptoms';
+import { assignTagsToEntry, listTagsForEntry } from '$lib/api/tags';
 import { canUseOfflineSync } from '$lib/offline/featureFlag';
-import { hydrateServerEntryFromApi, saveEntryOffline } from '$lib/stores/entriesOffline';
+import {
+  findLocalEntryByDateSlot,
+  hydrateServerEntryFromApi,
+  localEntryToFormFields,
+  saveEntryOffline,
+} from '$lib/stores/entriesOffline';
 import { submitEntry } from '$lib/stores/entries';
 import EntryForm from './EntryForm.svelte';
 
@@ -699,6 +704,119 @@ describe('EntryForm offline sync edge cases (R-04 / R-05)', () => {
     expect(hydrateServerEntryFromApi).not.toHaveBeenCalled();
   });
 
+  it('does not offline-save empty tags after a failed tags fetch (R-05 wipe)', async () => {
+    const serverEntry: EntryResponse = {
+      id: 'server-entry-b',
+      user_id: 'user-1',
+      entry_date: '2026-06-03',
+      slot: 'day',
+      mood_score: 2,
+      energy: 2,
+      stress: 2,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: 'entry B',
+      created_at: '2026-06-03T12:00:00Z',
+      updated_at: '2026-06-03T12:00:00Z',
+    };
+    vi.mocked(listEntries).mockResolvedValue([serverEntry]);
+    vi.mocked(listTagsForEntry).mockRejectedValue(new Error('tags unavailable'));
+    vi.mocked(listSymptomsForEntry).mockResolvedValue([]);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited after failed tag load' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).not.toHaveBeenCalled();
+    expect(screen.getByText('entry.error_load')).toBeTruthy();
+  });
+
+  it('falls back to local associations when server tags fetch fails', async () => {
+    const serverEntry: EntryResponse = {
+      id: 'server-entry-b',
+      user_id: 'user-1',
+      entry_date: '2026-06-03',
+      slot: 'day',
+      mood_score: 2,
+      energy: 2,
+      stress: 2,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: 'server note',
+      created_at: '2026-06-03T12:00:00Z',
+      updated_at: '2026-06-03T12:00:00Z',
+    };
+    const localEntry = {
+      id: 'local-entry-b',
+      entry_date: '2026-06-03',
+      slot: 'day' as const,
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      work_context: 'homeoffice' as const,
+      note: 'local note',
+      tag_ids: ['tag-keep'],
+      symptoms: { 'sym-1': 2 },
+      sync_state: 'synced' as const,
+      updated_at: '2026-06-03T11:00:00Z',
+    };
+    vi.mocked(listEntries).mockResolvedValue([serverEntry]);
+    vi.mocked(findLocalEntryByDateSlot).mockResolvedValue(localEntry as never);
+    vi.mocked(localEntryToFormFields).mockReturnValue({
+      moodScore: 3,
+      energy: 3,
+      stress: 3,
+      selectedSlot: 'day',
+      cycleDay: null,
+      workContext: 'homeoffice',
+      note: 'local note',
+      selectedTagIds: ['tag-keep'],
+      selectedSymptoms: [{ symptom_id: 'sym-1', intensity: 2 }],
+    });
+    vi.mocked(listTagsForEntry).mockRejectedValue(new Error('tags unavailable'));
+    vi.mocked(listSymptomsForEntry).mockResolvedValue([]);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    expect(hydrateServerEntryFromApi).not.toHaveBeenCalled();
+    expect(
+      (screen.getByPlaceholderText('entry.note_placeholder') as HTMLTextAreaElement).value
+    ).toBe('local note');
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'local note edited' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).toHaveBeenCalledWith(
+      'local-entry-b',
+      expect.objectContaining({
+        note: 'local note edited',
+        selectedTagIds: ['tag-keep'],
+      })
+    );
+  });
+
   it('finalizes onboarding while online even when offline sync is enabled (R-04)', async () => {
     render(EntryForm, {
       props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
@@ -714,6 +832,48 @@ describe('EntryForm offline sync edge cases (R-04 / R-05)', () => {
 
     expect(completeOnboarding).toHaveBeenCalledTimes(1);
     expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not assign empty tags online after a failed tags fetch', async () => {
+    vi.mocked(canUseOfflineSync).mockReturnValue(false);
+    const serverEntry: EntryResponse = {
+      id: 'server-entry-online',
+      user_id: 'user-1',
+      entry_date: '2026-06-03',
+      slot: 'day',
+      mood_score: 2,
+      energy: 2,
+      stress: 2,
+      cycle_day: null,
+      source: 'direct',
+      work_context: 'homeoffice',
+      note: 'online entry',
+      created_at: '2026-06-03T12:00:00Z',
+      updated_at: '2026-06-03T12:00:00Z',
+    };
+    vi.mocked(listEntries).mockResolvedValue([serverEntry]);
+    vi.mocked(listTagsForEntry).mockRejectedValue(new Error('tags unavailable'));
+    vi.mocked(listSymptomsForEntry).mockResolvedValue([]);
+    vi.mocked(updateEntry).mockResolvedValue(serverEntry);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited online after failed tag load' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).not.toHaveBeenCalled();
+    expect(assignTagsToEntry).not.toHaveBeenCalled();
+    expect(assignSymptomsToEntry).not.toHaveBeenCalled();
+    expect(screen.getByText('entry.error_load')).toBeTruthy();
   });
 
   it('defers onboarding finalize when offline sync is on and the device is offline (R-04)', async () => {

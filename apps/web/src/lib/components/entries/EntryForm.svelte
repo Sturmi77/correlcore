@@ -115,6 +115,9 @@
   let markerSuggestions: string[] = [];
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
+  // False when an existing entry loaded but tags/symptoms fetch failed.
+  // Empty arrays must not be treated as an authoritative replace-set (wipe).
+  let associationsReady = true;
   let errorKey: string | null = null;
   let cycleDayInvalid = false;
   let offline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
@@ -186,6 +189,7 @@
     noteMarkers = [];
     selectedTagIds = [];
     selectedSymptoms = [];
+    associationsReady = true;
     workContextTouched = false;
     const d = new Date(forDate + 'T00:00:00');
     if (!Number.isNaN(d.getTime())) {
@@ -234,9 +238,9 @@
 
   /**
    * Hydrate the form from an existing entry. Tags and symptoms are
-   * fetched in parallel; failures there are non-fatal (form still
-   * usable, just without the related rows pre-selected). Errors on the
-   * entry fetch itself are surfaced via ``errorKey``.
+   * fetched in parallel. If either fails, clear stale chips and block
+   * autosave (empty replace-sets would wipe server associations); prefer
+   * a local offline row when available. Entry-fetch errors use ``errorKey``.
    */
   async function loadForDate(date: string, slot: EntrySlot = 'day') {
     const myToken = ++loadToken;
@@ -280,6 +284,7 @@
           note = fields.note;
           selectedTagIds = fields.selectedTagIds;
           selectedSymptoms = fields.selectedSymptoms;
+          associationsReady = true;
           if (typeof navigator !== 'undefined' && navigator.onLine) {
             void refreshDayDelta(date, selectedSlot);
           }
@@ -307,26 +312,46 @@
           // Clear on rejection so a failed tags/symptoms fetch cannot leave
           // the previous entry's selections in the form — and never hydrate
           // IndexedDB with those stale arrays (R-05 / GUI consistency P3-S2).
-          let hydratedTagIds: string[] = [];
-          let hydratedSymptoms: { symptom_id: string; intensity: number }[] = [];
-          if (tagsRes.status === 'fulfilled') {
-            hydratedTagIds = tagsRes.value.map((t) => t.id);
-            selectedTagIds = hydratedTagIds;
-          } else {
+          // Incomplete association loads must not become savable empty sets:
+          // replace-set assign / offline push would wipe real tags/symptoms.
+          if (tagsRes.status !== 'fulfilled' || symRes.status !== 'fulfilled') {
             selectedTagIds = [];
-          }
-          if (symRes.status === 'fulfilled') {
-            hydratedSymptoms = symRes.value.map((s) => ({
-              symptom_id: s.symptom_id,
-              intensity: s.intensity,
-            }));
-            selectedSymptoms = hydratedSymptoms;
-          } else {
             selectedSymptoms = [];
+            if (local) {
+              existingEntryId = local.id;
+              const fields = localEntryToFormFields(local);
+              selectedSlot = fields.selectedSlot;
+              moodScore = fields.moodScore;
+              energy = fields.energy;
+              stress = fields.stress;
+              cycleDay = fields.cycleDay;
+              cycleDayInvalid = false;
+              workContext = fields.workContext;
+              workContextTouched = true;
+              note = fields.note;
+              selectedTagIds = fields.selectedTagIds;
+              selectedSymptoms = fields.selectedSymptoms;
+              associationsReady = true;
+              if (typeof navigator !== 'undefined' && navigator.onLine) {
+                void refreshDayDelta(date, selectedSlot);
+              }
+              loadedEntryDate = date;
+              return;
+            }
+            associationsReady = false;
+            errorKey = 'entry.error_load';
+            loadedEntryDate = date;
+            return;
           }
-          if (tagsRes.status === 'fulfilled' && symRes.status === 'fulfilled') {
-            await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
-          }
+          const hydratedTagIds = tagsRes.value.map((t) => t.id);
+          const hydratedSymptoms = symRes.value.map((s) => ({
+            symptom_id: s.symptom_id,
+            intensity: s.intensity,
+          }));
+          selectedTagIds = hydratedTagIds;
+          selectedSymptoms = hydratedSymptoms;
+          associationsReady = true;
+          await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
           loadedEntryDate = date;
           void refreshDayDelta(date, selectedSlot);
           return;
@@ -346,6 +371,7 @@
           note = fields.note;
           selectedTagIds = fields.selectedTagIds;
           selectedSymptoms = fields.selectedSymptoms;
+          associationsReady = true;
           if (typeof navigator !== 'undefined' && navigator.onLine) {
             void refreshDayDelta(date, selectedSlot);
           }
@@ -396,28 +422,24 @@
         listSymptomsForEntry(matchingEntry.id),
       ]);
       if (myToken !== loadToken) return;
-      let hydratedTagIds = [...selectedTagIds];
-      let hydratedSymptoms = [...selectedSymptoms];
-      if (tagsRes.status === 'fulfilled') {
-        hydratedTagIds = tagsRes.value.map((t) => t.id);
-        selectedTagIds = hydratedTagIds;
-      } else {
+      // Failed association fetches must not leave savable empty replace-sets
+      // (assignTagsToEntry([]) / assignSymptomsToEntry([]) would wipe data).
+      if (tagsRes.status !== 'fulfilled' || symRes.status !== 'fulfilled') {
         selectedTagIds = [];
-        hydratedTagIds = [];
-      }
-      if (symRes.status === 'fulfilled') {
-        hydratedSymptoms = symRes.value.map((s) => ({
-          symptom_id: s.symptom_id,
-          intensity: s.intensity,
-        }));
-        selectedSymptoms = hydratedSymptoms;
-      } else {
         selectedSymptoms = [];
-        hydratedSymptoms = [];
+        associationsReady = false;
+        errorKey = 'entry.error_load';
+        loadedEntryDate = date;
+        return;
       }
-      if (canUseOfflineSync() && tagsRes.status === 'fulfilled' && symRes.status === 'fulfilled') {
-        await hydrateServerEntryFromApi(matchingEntry, hydratedTagIds, hydratedSymptoms);
-      }
+      const hydratedTagIds = tagsRes.value.map((t) => t.id);
+      const hydratedSymptoms = symRes.value.map((s) => ({
+        symptom_id: s.symptom_id,
+        intensity: s.intensity,
+      }));
+      selectedTagIds = hydratedTagIds;
+      selectedSymptoms = hydratedSymptoms;
+      associationsReady = true;
       loadedEntryDate = date;
       void refreshDayDelta(date, selectedSlot);
     } catch (err) {
@@ -439,6 +461,7 @@
           note = fields.note;
           selectedTagIds = fields.selectedTagIds;
           selectedSymptoms = fields.selectedSymptoms;
+          associationsReady = true;
           loadedEntryDate = date;
           return;
         }
@@ -760,6 +783,10 @@
     if (snap.cycle_day !== null && (snap.cycle_day < 1 || snap.cycle_day > 35)) {
       throw new Error('invalid_cycle_day');
     }
+    // Defense in depth: never replace-set associations from a partial load.
+    if (!associationsReady) {
+      throw new Error('associations_not_loaded');
+    }
     const startedAsCreate = !existingEntryId;
     if (startedAsCreate) createSaveInFlight = true;
 
@@ -878,6 +905,9 @@
     if (hydrating || loading || applyingSmartDefaults) return;
     // Per-route guard: don't try to auto-save when the user has dialed
     // into a load-error — they need to retry the load first.
+    // Also block when tags/symptoms failed to load for an existing entry:
+    // saving would replace-set associations to [] and wipe server data.
+    if (!associationsReady) return;
     autoSave.markDirty();
   }
 
