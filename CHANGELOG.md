@@ -26,6 +26,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   is enabled (R-04)** — `resolveOnboardingTags` previously returned early on
   `canUseOfflineSync()` alone, so first-entry suggestion chips never became
   tags. It now skips only when the device is actually offline.
+- **Overlapping insight regeneration no longer leaves stale or duplicate
+  rows** — `generate_and_store_insights` delete-then-insert had no per-user
+  lock, so concurrent `POST /insights/regenerate`, post-batch import hooks,
+  and the analytics worker could interleave: a slower writer that loaded
+  earlier data could wipe fresher committed insights, or two empty-table
+  writers could both insert. Take `pg_advisory_xact_lock` for the user
+  before loading inputs so waiters re-read after the winner commits.
 - **Web login Set-Cookie no longer dropped by the SvelteKit `/api` proxy** —
   PR #468 moved upstream auth cookies onto `event.cookies` and stripped them
   from the proxied `Response`. That handle never calls `resolve()`, so
