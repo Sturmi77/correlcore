@@ -25,10 +25,10 @@ No per-path `/api` rule, no direct API routing, no `Set-Cookie` hiding/rewriting
 
 ## Files
 
-| File                                        | Install to                                            |
-| ------------------------------------------- | ----------------------------------------------------- |
-| `correlcore.com.conf`                       | `/etc/nginx/sites-available/` (symlink to `sites-enabled/`) |
-| `snippets/correlcore-proxy-params.conf`     | `/etc/nginx/snippets/`                                 |
+| File                                    | Install to                                                  |
+| --------------------------------------- | ----------------------------------------------------------- |
+| `correlcore.com.conf`                   | `/etc/nginx/sites-available/` (symlink to `sites-enabled/`) |
+| `snippets/correlcore-proxy-params.conf` | `/etc/nginx/snippets/`                                      |
 
 Both `location` blocks in `correlcore.com.conf` include the same snippet, so
 auth and non-auth requests cannot diverge.

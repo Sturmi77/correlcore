@@ -12,7 +12,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 - **Landing-page login no longer mislabels a dropped session cookie as
   "wrong password"** (ADR-0040) — the web login is a two-step flow (`POST
-  /auth/login` then `GET /auth/me`). When the HttpOnly session cookie did not
+/auth/login` then `GET /auth/me`). When the HttpOnly session cookie did not
   persist (edge/proxy misconfig), the store threw a bare `401` that the login
   page rendered as "E-Mail oder Passwort ist falsch", sending every recurrence
   down a dead-end credential hunt. It now throws a distinct
@@ -29,8 +29,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   divergence that silently drops the login `Set-Cookie`). Replaces the
   hand-written example in `docs/runbooks/hosted-nginx-edge.md`.
 - **`scripts/verify-auth-cookie.sh`** — deploy-time self-test that confirms the
-  login cookie survives the edge (login 200 + `Set-Cookie` present + `/auth/me`
-  200) and pinpoints the failing hop otherwise. Wired into the hosted-edge
+  login cookie survives the edge (login 200 + `Set-Cookie` present + `/auth/me` 200) and pinpoints the failing hop otherwise. Wired into the hosted-edge
   runbook "Done when" checklist.
 - **ADR-0040** — Self-Host-Auth-Edge decision: keep secure cookie auth by
   default, make the edge contract trivial and self-verifying, and document an

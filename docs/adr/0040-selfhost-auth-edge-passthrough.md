@@ -75,7 +75,7 @@ Schrumpfung der Konfigurations-Angriffsfläche auf ~null behoben:
 2. **Kanonische Referenz-Config im Repo.** `infra/nginx/correlcore.com.conf` +
    `infra/nginx/snippets/correlcore-proxy-params.conf`. Beide `location`-Blöcke
    binden **dasselbe** Snippet ein → sie **können** nicht mehr divergieren. Der
-   `/api/v1/auth/`-Block behält nur sein Rate-Limit *zusätzlich*.
+   `/api/v1/auth/`-Block behält nur sein Rate-Limit _zusätzlich_.
 
 3. **Auth-Selbsttest beim Deploy.** `scripts/verify-auth-cookie.sh` fährt einen
    echten Login-Roundtrip und meldet, ob (a) Login = 200, (b) `Set-Cookie`
@@ -111,23 +111,25 @@ Schrumpfung der Konfigurations-Angriffsfläche auf ~null behoben:
 
 ## Optionen (bewertet)
 
-### A — Cookies behalten + Edge härten *(gewählt)*
+### A — Cookies behalten + Edge härten _(gewählt)_
 
 Ein-Regel-Passthrough, gemeinsames Proxy-Snippet, Selbsttest, ehrlicher Fehler.
+
 - **Pro:** Behält die XSS-Resistenz der HttpOnly-Cookies; minimaler Change;
   richtet sich exakt nach ADR-0011; macht den Klasse-Bug strukturell unmöglich.
 - **Con:** Same-Origin bleibt Voraussetzung (durch Bearer-Fallback abgefedert).
 
-### B — Bearer-Token auch im Browser als Default *(verworfen)*
+### B — Bearer-Token auch im Browser als Default _(verworfen)_
 
 Access-Token im Speicher, `Authorization: Bearer`, keine Cookies → keine
 `Set-Cookie`/`SameSite`/Same-Origin-Fragilität, funktioniert über jede Topologie.
+
 - **Con:** **XSS-Regression.** Token wird JS-erreichbar; Refresh-Token-Ablage im
   Web-Storage widerspricht ADR-0006 („keine Tokens im Web-Storage") und ist bei
   Art.-9-Gesundheitsdaten nicht akzeptabel als Default. Bleibt daher nur
   **opt-in Fallback** (Punkt 5), nicht Default.
 
-### C — API in eigener Subdomain mit eigenem Cert *(verworfen als Default)*
+### C — API in eigener Subdomain mit eigenem Cert _(verworfen als Default)_
 
 Sauber für ein künftiges SaaS, aber für Single-Tenant-Self-Host überdimensioniert
 und löst den Same-Origin-Cookie-Vorteil nicht ein. Für die seltenen echten
