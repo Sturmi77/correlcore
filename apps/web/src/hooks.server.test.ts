@@ -9,8 +9,8 @@
  *     preserved verbatim.
  *   - Hop-by-hop headers (`connection`, `transfer-encoding`, …) are
  *     stripped on both directions.
- *   - Upstream `Set-Cookie` (HttpOnly auth cookies) is applied via
- *     `event.cookies` so adapter-node delivers them reliably.
+ *   - Upstream `Set-Cookie` (HttpOnly auth cookies) is forwarded on the
+ *     proxied Response (custom handle Responses ignore `event.cookies`).
  *   - Upstream connection failures are translated into a JSON 502.
  *   - GET requests do not carry a body or a `duplex` option to the
  *     upstream fetch.
@@ -184,7 +184,10 @@ describe('handle — proxy /api/*', () => {
     expect(headers.get('x-real-ip')).toBe('203.0.113.42');
   });
 
-  it('applies upstream Set-Cookie via event.cookies (not raw response headers)', async () => {
+  it('forwards upstream Set-Cookie on the proxied Response (not event.cookies)', async () => {
+    // Concrete trigger for the ADR-0040 / PR #468 regression: login returns
+    // 200 while the browser stores no cookie when Set-Cookie is moved onto
+    // event.cookies and dropped from a custom Response (sveltejs/kit#7611).
     const upstreamHeaders = new Headers();
     upstreamHeaders.append(
       'set-cookie',
@@ -209,19 +212,20 @@ describe('handle — proxy /api/*', () => {
     const res = await handle({ event, resolve: resolveMock });
 
     expect(res.status).toBe(200);
-    // Raw Set-Cookie must not be on the Response — SvelteKit serializes
-    // event.cookies after handle returns.
-    expect(res.headers.get('set-cookie')).toBeNull();
-    expect(event.cookies.set).toHaveBeenCalledWith(
-      'access_token',
-      'eyJ',
-      expect.objectContaining({ path: '/api', httpOnly: true, maxAge: 900 })
+    const setCookies =
+      typeof res.headers.getSetCookie === 'function'
+        ? res.headers.getSetCookie()
+        : [res.headers.get('set-cookie')].filter((v): v is string => Boolean(v));
+    expect(setCookies).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('access_token=eyJ'),
+        expect.stringContaining('refresh_token=eyR'),
+      ])
     );
-    expect(event.cookies.set).toHaveBeenCalledWith(
-      'refresh_token',
-      'eyR',
-      expect.objectContaining({ path: '/api/v1/auth/refresh', httpOnly: true })
-    );
+    expect(setCookies).toHaveLength(2);
+    // Custom Responses never serialize the cookie jar — relying on it
+    // silently strips login cookies in production.
+    expect(event.cookies.set).not.toHaveBeenCalled();
   });
 
   it('returns a JSON 502 when the upstream fetch throws', async () => {
