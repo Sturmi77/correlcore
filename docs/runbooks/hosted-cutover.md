@@ -158,11 +158,11 @@ Mail DNS (DKIM/DMARC) can stay.
 
 ## Rollback cheat sheet
 
-| Symptom                          | First action                                                              |
-| -------------------------------- | ------------------------------------------------------------------------- |
-| Apex still IONOS HTML            | Dig A/AAAA; wait TTL; check CDN/proxy cache                               |
-| 502/timeout after flip           | Router forward; Nginx upstream port; web container up                    |
+| Symptom                                | First action                                                                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Apex still IONOS HTML                  | Dig A/AAAA; wait TTL; check CDN/proxy cache                                                                                    |
+| 502/timeout after flip                 | Router forward; Nginx upstream port; web container up                                                                          |
 | **502 `upstream sent too big header`** | Raise `proxy_buffer_size 32k; proxy_buffers 8 32k;` on the edge (NPM: Advanced field) — app sends large `Link` preload headers |
-| Login no cookie                  | `X-Forwarded-Proto https`; `COOKIE_SECURE=true`                          |
-| No verify mail         | SMTP ENV; relay auth; SPF/DKIM; API logs              |
-| Need old site back     | Restore previous A/AAAA to IONOS                      |
+| Login no cookie                        | `X-Forwarded-Proto https`; `COOKIE_SECURE=true`                                                                                |
+| No verify mail                         | SMTP ENV; relay auth; SPF/DKIM; API logs                                                                                       |
+| Need old site back                     | Restore previous A/AAAA to IONOS                                                                                               |

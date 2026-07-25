@@ -60,11 +60,11 @@ NAS:   correlcore-web → api  (content still generated on NAS)
 Mail:  IONOS SMTP
 ```
 
-| Pros                                                           | Cons                                                                                                              |
-| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Apex DNS can stay at IONOS                                     | IONOS must support reverse proxy to your NAS (public IP or tunnel)                                                |
+| Pros                                                           | Cons                                                                                                                                                                                                                    |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Apex DNS can stay at IONOS                                     | IONOS must support reverse proxy to your NAS (public IP or tunnel)                                                                                                                                                      |
 | Same-origin preserved if proxy forwards **all** `/` and `/api` | Misconfigured headers break cookies (`X-Forwarded-Proto`); default proxy buffers too small → 502 `upstream sent too big header` (raise `proxy_buffer_size 32k`); verify with `scripts/verify-auth-cookie.sh` (ADR-0040) |
-| SMTP stays IONOS                                               | You are **not** hosting CorrelCore HTML on IONOS Apache — only proxying                                           |
+| SMTP stays IONOS                                               | You are **not** hosting CorrelCore HTML on IONOS Apache — only proxying                                                                                                                                                 |
 
 **Detail:**
 

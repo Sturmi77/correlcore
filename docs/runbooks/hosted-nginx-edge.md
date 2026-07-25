@@ -151,6 +151,7 @@ If Synology **Application Portal → Reverse Proxy** is used instead of raw Ngin
   Proxy Manager (NPM)** paste exactly these three lines into the Proxy Host →
   **Advanced** field (server-context directives — no `location`/`server` block).
   Diagnose via the host error log: `tail /data/logs/proxy-host-*_error.log`.
+
 - **Separate auth `location` that omits the shared proxy params** → login returns
   200 but no `Set-Cookie` reaches the browser → the UI shows
   "E-Mail oder Passwort ist falsch" although the password was correct. Fix

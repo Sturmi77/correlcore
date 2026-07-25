@@ -83,7 +83,7 @@ Schrumpfung der Konfigurations-Angriffsfläche auf ~null behoben:
    saubere `Set-Cookie` besitzt der Web-Container (ADR-0011). Ein „dummer
    Passthrough" ist praktisch nicht falsch zu konfigurieren.
 
-   *Warum (d):* Der SvelteKit-Container (adapter-node) sendet große
+   _Warum (d):_ Der SvelteKit-Container (adapter-node) sendet große
    Response-Header (`Link: rel=preload` für jeden JS/CSS-Chunk). Der
    Default-`proxy_buffer_size` (4k/8k) ist zu klein → der Edge liefert
    **502** mit `upstream sent too big header` im Error-Log — obwohl Ziel,
