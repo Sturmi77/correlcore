@@ -67,7 +67,7 @@
   import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
   import { refreshTags } from '$lib/stores/tags';
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
-  import { isoDate } from '$lib/utils/entryForm';
+  import { isoDate, mergeUnresolvedSymptoms, mergeUnresolvedTagIds } from '$lib/utils/entryForm';
   import { NEUTRAL_SCALE_DEFAULT, scaleDefaultsFromPrevious } from '$lib/utils/entrySmartDefaults';
   import { setEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
@@ -856,24 +856,40 @@
   async function preserveUnresolvedRelations(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!existingEntryId || (!tagsUnresolved && !symptomsUnresolved)) return snap;
 
+    // Capture before awaits — loadForDate can change the bound entry, and
+    // TagPicker/SymptomChecker stay enabled during save so live selections
+    // may advance past the dirty snapshot.
+    const entryId = existingEntryId;
+    const resolveTags = tagsUnresolved;
+    const resolveSymptoms = symptomsUnresolved;
+
     let nextTagIds: string[] | null = null;
     let nextSymptoms: SymptomEntry[] | null = null;
 
-    if (tagsUnresolved) {
-      const serverTags = await listTagsForEntry(existingEntryId);
-      nextTagIds = [...new Set([...serverTags.map((t) => t.id), ...snap.selectedTagIds])];
-    }
-    if (symptomsUnresolved) {
-      const serverSymptoms = await listSymptomsForEntry(existingEntryId);
-      const merged = new Map<string, SymptomEntry>(
-        serverSymptoms.map((s): [string, SymptomEntry] => [
-          s.symptom_id,
-          { symptom_id: s.symptom_id, intensity: s.intensity },
-        ])
+    if (resolveTags) {
+      const serverTags = await listTagsForEntry(entryId);
+      // server ∪ dirty snap ∪ live picks (live wins membership for new chips).
+      nextTagIds = mergeUnresolvedTagIds(
+        serverTags.map((t) => t.id),
+        snap.selectedTagIds,
+        selectedTagIds
       );
-      // User edits after the failed load win over the server row.
-      for (const s of snap.selectedSymptoms) merged.set(s.symptom_id, s);
-      nextSymptoms = [...merged.values()];
+    }
+    if (resolveSymptoms) {
+      const serverSymptoms = await listSymptomsForEntry(entryId);
+      // Later groups win intensity; live edits after the dirty snap must stick.
+      nextSymptoms = mergeUnresolvedSymptoms(
+        serverSymptoms.map((s) => ({ symptom_id: s.symptom_id, intensity: s.intensity })),
+        snap.selectedSymptoms,
+        selectedSymptoms
+      );
+    }
+
+    // If the user navigated to another entry while we re-fetched, abort —
+    // returning the old entry's relations into persist() would write them
+    // onto the newly bound existingEntryId.
+    if (existingEntryId !== entryId) {
+      throw new Error('entry_changed_during_relation_resolve');
     }
 
     // Reflect the resolved relations back into the bound fields so a later

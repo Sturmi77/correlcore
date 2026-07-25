@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import uuid
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -23,7 +24,7 @@ from app.models.sync_engine import (
     SyncRevisionLog,
     SyncUserRevision,
 )
-from app.models.tag import Tag, TagCategory
+from app.models.tag import EntryTag, Tag, TagCategory
 from app.schemas.entry import BACKDATE_DAYS_LIMIT, CLIENT_TZ_AHEAD_SLACK_DAYS
 from app.schemas.symptom import SymptomEntry
 from app.schemas.sync import (
@@ -40,9 +41,18 @@ from app.schemas.sync import (
     SyncTagPayload,
 )
 from app.services import entry_service
-from app.services.symptom_service import assign_symptoms_to_entry, list_symptoms_for_entry
+from app.services.symptom_service import (
+    SymptomsNotFoundError,
+    assign_symptoms_to_entry,
+    list_symptoms_for_entry,
+)
 from app.services.sync_conflict_service import create_sync_conflict, sanitize_conflict_value
-from app.services.tag_service import assign_tags_to_entry, list_tags_for_entry
+from app.services.tag_service import (
+    TagsNotFoundError,
+    assign_tags_to_entry,
+    list_tags_for_entry,
+    visible_tag_predicate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +140,115 @@ def _symptoms_map(rows: list[Any]) -> dict[str, int]:
 
 def _normalize_symptoms_payload(raw: dict[str, int]) -> dict[str, int]:
     return {str(key): int(value) for key, value in raw.items()}
+
+
+async def _resolve_sync_tag_ids(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entry_id: uuid.UUID,
+    tag_ids: Sequence[uuid.UUID],
+) -> list[uuid.UUID]:
+    """Drop unknown/deleted/hidden tags that sync cannot newly assign.
+
+    Offline outbox rows often retain tag IDs after a custom tag was deleted
+    (DB cascade clears ``entry_tags``; Dexie is not pruned). Raising
+    :class:`TagsNotFoundError` becomes an uncaught 500 and the web client
+    never acks the push batch, wedging newer pending changes. Keep IDs that
+    are still assignable (visible + not hidden) or already linked on this
+    entry (hidden historical retention — same allowlist as
+    ``assign_tags_to_entry``).
+    """
+    if not tag_ids:
+        return []
+
+    # Preserve first-seen order while deduping.
+    ordered = list(dict.fromkeys(tag_ids))
+    target_ids = set(ordered)
+
+    current = await db.execute(
+        select(EntryTag.tag_id).where(
+            EntryTag.entry_id == entry_id,
+            EntryTag.user_id == user_id,
+        )
+    )
+    current_ids = {row[0] for row in current.all()}
+
+    visible = await db.execute(
+        select(Tag.id).where(
+            Tag.id.in_(target_ids),
+            visible_tag_predicate(user_id),
+            Tag.is_hidden.is_(False),
+        )
+    )
+    visible_ids = {row[0] for row in visible.all()}
+    allowed = visible_ids | (target_ids & current_ids)
+    dropped = target_ids - allowed
+    if dropped:
+        logger.warning(
+            "sync.entry.drop_unknown_tags",
+            extra={
+                "user_id": str(user_id),
+                "entry_id": str(entry_id),
+                "dropped_count": len(dropped),
+            },
+        )
+    return [tag_id for tag_id in ordered if tag_id in allowed]
+
+
+async def _resolve_sync_symptoms(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entry_id: uuid.UUID,
+    symptoms: dict[str, int],
+) -> dict[str, int]:
+    """Drop unknown/deleted symptom IDs (and invalid UUID keys) from sync payloads.
+
+    Same outbox-wedge rationale as :func:`_resolve_sync_tag_ids`: assign
+    raises :class:`SymptomsNotFoundError` → uncaught 500 → client never acks.
+    """
+    if not symptoms:
+        return {}
+
+    parsed: dict[uuid.UUID, int] = {}
+    invalid_keys = 0
+    for key, intensity in symptoms.items():
+        try:
+            parsed[uuid.UUID(str(key))] = int(intensity)
+        except (TypeError, ValueError):
+            invalid_keys += 1
+
+    if not parsed:
+        if invalid_keys:
+            logger.warning(
+                "sync.entry.drop_unknown_symptoms",
+                extra={
+                    "user_id": str(user_id),
+                    "entry_id": str(entry_id),
+                    "dropped_count": invalid_keys,
+                },
+            )
+        return {}
+
+    visible = await db.execute(
+        select(Symptom.id).where(
+            Symptom.id.in_(parsed.keys()),
+            (Symptom.is_default.is_(True)) | (Symptom.user_id == user_id),
+        )
+    )
+    visible_ids = {row[0] for row in visible.all()}
+    dropped = set(parsed.keys()) - visible_ids
+    if dropped or invalid_keys:
+        logger.warning(
+            "sync.entry.drop_unknown_symptoms",
+            extra={
+                "user_id": str(user_id),
+                "entry_id": str(entry_id),
+                "dropped_count": len(dropped) + invalid_keys,
+            },
+        )
+    return {str(sid): parsed[sid] for sid in parsed if sid in visible_ids}
 
 
 async def _get_or_create_user_revision(db: AsyncSession, *, user_id: uuid.UUID) -> SyncUserRevision:
@@ -445,12 +564,21 @@ async def _merge_entry_upsert(
             if entry is None:
                 raise SyncBadRequestError("entry slot collision could not be resolved")
         else:
-            await assign_tags_to_entry(
+            # Filter before assign — stale deleted tag/symptom IDs must not 500
+            # the whole push batch (web outbox only acks after success).
+            tag_ids = await _resolve_sync_tag_ids(
                 db, user_id=user_id, entry_id=entry.id, tag_ids=payload.tag_ids
             )
+            incoming_symptoms = await _resolve_sync_symptoms(
+                db,
+                user_id=user_id,
+                entry_id=entry.id,
+                symptoms=_normalize_symptoms_payload(payload.symptoms),
+            )
+            await assign_tags_to_entry(db, user_id=user_id, entry_id=entry.id, tag_ids=tag_ids)
             symptom_entries = [
                 SymptomEntry(symptom_id=uuid.UUID(key), intensity=value)
-                for key, value in _normalize_symptoms_payload(payload.symptoms).items()
+                for key, value in incoming_symptoms.items()
             ]
             await assign_symptoms_to_entry(
                 db,
@@ -466,8 +594,8 @@ async def _merge_entry_upsert(
                 operation="upsert",
                 payload=_entry_payload_from_model(
                     entry,
-                    tag_ids=payload.tag_ids,
-                    symptoms=_normalize_symptoms_payload(payload.symptoms),
+                    tag_ids=tag_ids,
+                    symptoms=incoming_symptoms,
                     for_revision_log=True,
                 ),
                 entity_updated_at=entry.updated_at,
@@ -478,7 +606,17 @@ async def _merge_entry_upsert(
     current_symptoms = _symptoms_map(
         await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id)
     )
-    incoming_symptoms = _normalize_symptoms_payload(payload.symptoms)
+    # Drop deleted/unknown association IDs before LWW/conflict so assign cannot
+    # abort the batch; compare conflicts against the filtered client map.
+    incoming_symptoms = await _resolve_sync_symptoms(
+        db,
+        user_id=user_id,
+        entry_id=entry.id,
+        symptoms=_normalize_symptoms_payload(payload.symptoms),
+    )
+    tag_ids = await _resolve_sync_tag_ids(
+        db, user_id=user_id, entry_id=entry.id, tag_ids=payload.tag_ids
+    )
 
     # Slot-merge: client UUID differs from canonical server row — report conflicts
     # against the pending outbox id so the web client can mark the local row.
@@ -499,7 +637,7 @@ async def _merge_entry_upsert(
         entry.work_context = payload.work_context
         entry.note_enc = payload.note
         entry.updated_at = client_ts
-        await assign_tags_to_entry(db, user_id=user_id, entry_id=entry.id, tag_ids=payload.tag_ids)
+        await assign_tags_to_entry(db, user_id=user_id, entry_id=entry.id, tag_ids=tag_ids)
         symptom_entries = [
             SymptomEntry(symptom_id=uuid.UUID(key), intensity=value)
             for key, value in incoming_symptoms.items()
@@ -848,6 +986,11 @@ async def push_changes(
         except SyncBadRequestError:
             raise
         except ValidationError as exc:
+            raise SyncBadRequestError(str(exc)) from exc
+        except (TagsNotFoundError, SymptomsNotFoundError) as exc:
+            # Defense in depth: association assign errors must be 400, not 500.
+            # Prefer filtering in `_merge_entry_upsert` so the batch still applies;
+            # mapping alone does not unblock the web outbox (acks only on success).
             raise SyncBadRequestError(str(exc)) from exc
         applied += 1
         client_state.last_applied_seq = max(client_state.last_applied_seq, change.seq)
