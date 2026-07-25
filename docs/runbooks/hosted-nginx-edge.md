@@ -99,8 +99,11 @@ self-contained file, no `include` snippet**, so it also works on a standalone
 edge machine or a Synology custom config:
 
 ```bash
-# on the edge machine (adjust server_name / ssl_certificate* / upstream first)
-sudo cp correlcore.com.conf /etc/nginx/sites-available/
+# 1) Get the file onto the edge machine first (it lives at infra/nginx/ in the
+#    repo, which the edge box usually does not have). From a repo checkout:
+scp infra/nginx/correlcore.com.conf <edge-host>:/tmp/correlcore.com.conf
+# 2) On the edge machine — adjust server_name / ssl_certificate* / upstream first:
+sudo install -m 0644 /tmp/correlcore.com.conf /etc/nginx/sites-available/correlcore.com.conf
 sudo ln -sf /etc/nginx/sites-available/correlcore.com.conf /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
