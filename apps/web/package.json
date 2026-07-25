@@ -28,7 +28,7 @@
     "@capacitor/core": "7.6.7",
     "@capacitor/push-notifications": "7.0.3",
     "@sentry/browser": "^10.68.0",
-    "@sentry/node": "^10.66.0",
+    "@sentry/node": "^10.68.0",
     "dexie": "^4.4.4",
     "lucide-svelte": "^0.469.0",
     "svelte-i18n": "^4.0.0"
