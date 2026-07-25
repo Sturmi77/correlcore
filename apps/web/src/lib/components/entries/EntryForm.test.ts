@@ -5,10 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntryDeltaResponse, EntryResponse } from '$lib/api/entries';
 import { fetchEntryDelta, listEntries, updateEntry } from '$lib/api/entries';
 import { completeOnboarding } from '$lib/api/onboarding';
-import { listSymptomsForEntry } from '$lib/api/symptoms';
-import { listTagsForEntry } from '$lib/api/tags';
+import type { EntrySymptomResponse } from '$lib/api/symptoms';
+import { assignSymptomsToEntry, listSymptomsForEntry } from '$lib/api/symptoms';
+import type { TagResponse } from '$lib/api/tags';
+import { assignTagsToEntry, listTagsForEntry } from '$lib/api/tags';
 import { canUseOfflineSync } from '$lib/offline/featureFlag';
 import { hydrateServerEntryFromApi, saveEntryOffline } from '$lib/stores/entriesOffline';
+import { connectivity } from '$lib/stores/connectivity';
 import { submitEntry } from '$lib/stores/entries';
 import EntryForm from './EntryForm.svelte';
 
@@ -735,6 +738,325 @@ describe('EntryForm offline sync edge cases (R-04 / R-05)', () => {
     await flushAsync();
 
     expect(completeOnboarding).not.toHaveBeenCalled();
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+  });
+});
+
+function tagResponse(id: string): TagResponse {
+  return {
+    id,
+    user_id: 'user-1',
+    slug: id,
+    name: id,
+    category: 'other',
+    icon: null,
+    color: null,
+    is_default: false,
+    is_hidden: false,
+    include_in_analytics: true,
+    habit_type: 'none',
+    target_frequency: null,
+    created_at: '2026-06-01T00:00:00Z',
+    updated_at: '2026-06-01T00:00:00Z',
+  };
+}
+
+function symptomResponse(symptomId: string, intensity: number): EntrySymptomResponse {
+  return {
+    id: `es-${symptomId}`,
+    entry_id: 'server-entry-a',
+    user_id: 'user-1',
+    symptom_id: symptomId,
+    intensity,
+    created_at: '2026-06-01T00:00:00Z',
+    updated_at: '2026-06-01T00:00:00Z',
+  };
+}
+
+const relationServerEntry: EntryResponse = {
+  id: 'server-entry-a',
+  user_id: 'user-1',
+  entry_date: '2026-06-03',
+  slot: 'day',
+  mood_score: 3,
+  energy: 3,
+  stress: 3,
+  cycle_day: null,
+  source: 'direct',
+  work_context: 'homeoffice',
+  note: 'original note',
+  created_at: '2026-06-03T12:00:00Z',
+  updated_at: '2026-06-03T12:00:00Z',
+};
+
+// P1a — a failed per-entry tag/symptom fetch during load must never let the
+// autosave persist an *empty* replace-set and silently delete the entry's
+// existing relations. The save path re-resolves the affected relation first;
+// if it still cannot load, the save is blocked (retryable) rather than
+// destructive.
+describe('EntryForm relation preservation after failed load fetch (P1a, online)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(canUseOfflineSync).mockReturnValue(false);
+    vi.mocked(listEntries).mockResolvedValue([relationServerEntry]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+    vi.mocked(listSymptomsForEntry).mockResolvedValue([]);
+    vi.mocked(updateEntry).mockResolvedValue({
+      ...relationServerEntry,
+      note: 'edited note',
+      updated_at: '2026-06-03T12:05:00Z',
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('re-resolves and preserves the entry tags before the replace-set save', async () => {
+    vi.mocked(listTagsForEntry)
+      .mockRejectedValueOnce(new Error('tags unavailable'))
+      .mockResolvedValue([tagResponse('tag-x'), tagResponse('tag-y')]);
+
+    const { container } = render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+    expect(listTagsForEntry).toHaveBeenCalledWith('server-entry-a');
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited note' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(updateEntry).toHaveBeenCalledWith(
+      'server-entry-a',
+      expect.objectContaining({ note: 'edited note' })
+    );
+    // Preserved: the replace-set carries the re-resolved tags…
+    expect(assignTagsToEntry).toHaveBeenCalledWith('server-entry-a', ['tag-x', 'tag-y']);
+    // …and never the destructive empty set.
+    expect(assignTagsToEntry).not.toHaveBeenCalledWith('server-entry-a', []);
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).not.toBe('error');
+  });
+
+  it('re-resolves and preserves the entry symptoms before the replace-set save', async () => {
+    vi.mocked(listTagsForEntry).mockResolvedValue([]);
+    vi.mocked(listSymptomsForEntry)
+      .mockRejectedValueOnce(new Error('symptoms unavailable'))
+      .mockResolvedValue([symptomResponse('sym-a', 2)]);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited note' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(assignSymptomsToEntry).toHaveBeenCalledWith('server-entry-a', [
+      { symptom_id: 'sym-a', intensity: 2 },
+    ]);
+    expect(assignSymptomsToEntry).not.toHaveBeenCalledWith('server-entry-a', []);
+  });
+
+  it('blocks the save instead of writing an empty replace-set when the fetch keeps failing', async () => {
+    vi.mocked(listTagsForEntry).mockRejectedValue(new Error('tags unavailable'));
+
+    const { container } = render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited note' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    // No destructive relation write, and the entry save is held back too
+    // (a full snapshot cannot be persisted without the true relations).
+    expect(assignTagsToEntry).not.toHaveBeenCalled();
+    expect(updateEntry).not.toHaveBeenCalled();
+    expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('error');
+  });
+});
+
+describe('EntryForm relation preservation after failed load fetch (P1a, offline sync)', () => {
+  const onlineDescriptor = Object.getOwnPropertyDescriptor(navigator, 'onLine');
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(canUseOfflineSync).mockReturnValue(true);
+    vi.mocked(listEntries).mockResolvedValue([relationServerEntry]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+    vi.mocked(listSymptomsForEntry).mockResolvedValue([]);
+    vi.mocked(saveEntryOffline).mockResolvedValue({
+      entryId: 'server-entry-a',
+      syncState: 'pending',
+    });
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    vi.mocked(canUseOfflineSync).mockReturnValue(false);
+    if (onlineDescriptor) {
+      Object.defineProperty(navigator, 'onLine', onlineDescriptor);
+    } else {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+    }
+  });
+
+  it('writes the re-resolved tag set — not an empty one — into the offline snapshot', async () => {
+    vi.mocked(listTagsForEntry)
+      .mockRejectedValueOnce(new Error('tags unavailable'))
+      .mockResolvedValue([tagResponse('tag-x'), tagResponse('tag-y')]);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited note' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+    const [, snap] = vi.mocked(saveEntryOffline).mock.calls[0];
+    expect(snap.selectedTagIds).toEqual(['tag-x', 'tag-y']);
+    expect(saveEntryOffline).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ selectedTagIds: [] })
+    );
+  });
+
+  it('blocks the offline save when the relation cannot be re-resolved', async () => {
+    vi.mocked(listTagsForEntry).mockRejectedValue(new Error('tags unavailable'));
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-03' },
+    });
+
+    await flushAsync();
+    await flushAsync();
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'edited note' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).not.toHaveBeenCalled();
+  });
+});
+
+// P1b — onboarding must not finalize (a network call) when the API is
+// unreachable, even if the browser reports itself online. Otherwise
+// `completeOnboarding` throws and aborts the save before the entry is
+// persisted locally, losing the first onboarding entry.
+describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
+  const onlineDescriptor = Object.getOwnPropertyDescriptor(navigator, 'onLine');
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(canUseOfflineSync).mockReturnValue(true);
+    vi.mocked(listEntries).mockResolvedValue([]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+    vi.mocked(saveEntryOffline).mockResolvedValue({ entryId: 'local-entry', syncState: 'pending' });
+    vi.mocked(completeOnboarding).mockResolvedValue({
+      created_tags: [],
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+    });
+    connectivity._resetForTests();
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    vi.mocked(canUseOfflineSync).mockReturnValue(false);
+    connectivity._resetForTests();
+    if (onlineDescriptor) {
+      Object.defineProperty(navigator, 'onLine', onlineDescriptor);
+    } else {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+    }
+  });
+
+  it('defers onboarding when the browser is online but the API is unreachable', async () => {
+    connectivity.markServerReachable(false);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    // The entry is persisted locally and the network finalize is deferred,
+    // so the first onboarding entry is never lost.
+    expect(completeOnboarding).not.toHaveBeenCalled();
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+  });
+
+  it('finalizes onboarding when the browser is online and the API is reachable (R-04)', async () => {
+    connectivity.markServerReachable(true);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledTimes(1);
     expect(saveEntryOffline).toHaveBeenCalledTimes(1);
   });
 });
