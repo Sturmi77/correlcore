@@ -18,6 +18,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   acked the batch, blocking newer pending changes. Sync now drops
   unknown/deleted (and newly-hidden) association IDs before assign; residual
   assign errors map to 400.
+- **EntryForm unresolved-relation writeback no longer drops chips picked
+  during re-resolve** — after #536, `preserveUnresolvedRelations` wrote back
+  `server ∪ dirty-snap` only. TagPicker/SymptomChecker stay enabled while
+  autosave re-fetches, so a tag/symptom chosen in that window was clobbered
+  and never reached the replace-set save. Merge now includes live selections;
+  a mid-resolve entry switch aborts the save instead of writing onto the wrong
+  row.
 - **Re-saving an entry after hiding a linked tag no longer 422s** — hide keeps
   historical `entry_tags` (M3.5), and `list_tags_for_entry` still returns those
   IDs so the client can round-trip them, but `assign_tags_to_entry` rejected any
