@@ -28,12 +28,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Canonical hosted Nginx edge config** at `infra/nginx/` (ADR-0040) — a
-  one-rule passthrough server block plus a shared `correlcore-proxy-params.conf`
-  that **both** `location /` and `location /api/v1/auth/` include, so auth
-  requests can never be proxied differently from the rest of the app (the
-  divergence that silently drops the login `Set-Cookie`). Replaces the
-  hand-written example in `docs/runbooks/hosted-nginx-edge.md`.
+- **Canonical hosted Nginx edge config** at `infra/nginx/correlcore.com.conf`
+  (ADR-0040) — a single self-contained one-rule passthrough server block (no
+  `include` snippet, so it also deploys on a standalone edge machine or a
+  Synology custom config). Proxy params are defined once at `server{}` level and
+  inherited by both `location /` and `location /api/v1/auth/`, so auth requests
+  can never be proxied differently from the rest of the app (the divergence that
+  silently drops the login `Set-Cookie`). Replaces the hand-written example in
+  `docs/runbooks/hosted-nginx-edge.md`.
 - **`scripts/verify-auth-cookie.sh`** — deploy-time self-test that confirms the
   login cookie survives the edge (login 200 + `Set-Cookie` present + `/auth/me` 200) and pinpoints the failing hop otherwise. Wired into the hosted-edge
   runbook "Done when" checklist.

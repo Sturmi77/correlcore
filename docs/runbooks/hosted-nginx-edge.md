@@ -94,23 +94,25 @@ curl -sf "http://127.0.0.1:${WEB_HOST_PORT}/api/v1/health"
 ### B.1 Canonical Nginx server block
 
 **Do not hand-write this** — copy the shipped, tested config
-([ADR-0040](../adr/0040-selfhost-auth-edge-passthrough.md)):
+([ADR-0040](../adr/0040-selfhost-auth-edge-passthrough.md)). It is a **single
+self-contained file, no `include` snippet**, so it also works on a standalone
+edge machine or a Synology custom config:
 
 ```bash
-sudo cp infra/nginx/snippets/correlcore-proxy-params.conf /etc/nginx/snippets/
-sudo cp infra/nginx/correlcore.com.conf /etc/nginx/sites-available/
+# on the edge machine (adjust server_name / ssl_certificate* / upstream first)
+sudo cp correlcore.com.conf /etc/nginx/sites-available/
 sudo ln -sf /etc/nginx/sites-available/correlcore.com.conf /etc/nginx/sites-enabled/
-# adjust server_name / ssl_certificate* / upstream port first
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
 See [`infra/nginx/README.md`](../../infra/nginx/README.md) for the full file and
-deploy notes. The key property (ADR-0040): **both** `location /` and
-`location /api/v1/auth/` include the **same** `correlcore-proxy-params.conf`, so
-auth requests can never be proxied differently from the rest of the app. A
-separate auth `location` with its own (or missing) proxy params is precisely what
-drops the login `Set-Cookie` and makes a correct login read as
-"E-Mail oder Passwort ist falsch".
+deploy notes (incl. the remote-edge upstream). The key property (ADR-0040): the
+proxy params are defined **once at `server{}` level** and both `location /` and
+`location /api/v1/auth/` inherit them (neither declares its own
+`proxy_set_header`), so auth requests can never be proxied differently from the
+rest of the app. A separate auth `location` with its own (or missing) proxy
+params is precisely what drops the login `Set-Cookie` and makes a correct login
+read as "E-Mail oder Passwort ist falsch".
 
 After reload, **verify the cookie actually survives the edge**:
 
@@ -132,9 +134,10 @@ If Synology **Application Portal → Reverse Proxy** is used instead of raw Ngin
 
 - **Separate auth `location` that omits the shared proxy params** → login returns
   200 but no `Set-Cookie` reaches the browser → the UI shows
-  "E-Mail oder Passwort ist falsch" although the password was correct. Fix:
-  both locations `include` the same `correlcore-proxy-params.conf` (ADR-0040).
-  Confirm with `scripts/verify-auth-cookie.sh`.
+  "E-Mail oder Passwort ist falsch" although the password was correct. Fix
+  (ADR-0040): define the proxy params once at `server{}` level and let both
+  locations inherit them — do **not** put a `proxy_set_header` inside a location
+  (that stops inheritance for it). Confirm with `scripts/verify-auth-cookie.sh`.
 - **Never** add `proxy_hide_header Set-Cookie;` or `proxy_cookie_path ...;` on
   the auth/`/` locations — both strip or rewrite the session cookie.
 - Missing `X-Forwarded-Proto https` → browser drops `Secure` cookies → login “does nothing”.
