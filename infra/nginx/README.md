@@ -43,18 +43,29 @@ where you cannot drop extra files into `/etc/nginx/snippets/`.
 
 ## Remote edge (Nginx on a different machine than the app)
 
-Point the upstream at the **app host** as reachable from the edge machine
-(LAN IP / Tailscale name / hostname) — not `127.0.0.1`:
+Point the upstream at the **app host** as reachable from the edge machine — not
+`127.0.0.1`:
 
 ```nginx
 upstream correlcore_web {
-    server 10.0.0.42:3010;   # APP_HOST:WEB_PORT
+    server apphost.tailnet-abcd.ts.net:3010;   # APP_HOST:WEB_PORT — trusted link only
     keepalive 16;
 }
 ```
 
 The web container must listen on an interface reachable from the edge machine
 (not bound to loopback on the app host).
+
+> ⚠️ **Encrypt the edge→app hop.** TLS terminates at the edge, so
+> `proxy_pass http://…` sends login credentials, **session cookies**, and
+> private API data to the app host in **plaintext**. Only run a remote edge when
+> that hop is itself encrypted/trusted — a **Tailscale/WireGuard tailnet**, a
+> VPN, or a private point-to-point segment. **Do not** cross an untrusted or
+> shared LAN/WAN with a plain `http://` upstream. If the link cannot be trusted,
+> terminate TLS on the app host as well and use an HTTPS upstream:
+> `proxy_pass https://correlcore_web;` with `proxy_ssl_verify on;` and the
+> matching `proxy_ssl_*` / `proxy_ssl_name` directives. A same-host edge
+> (`127.0.0.1`) is unaffected — the hop never leaves the box.
 
 ## Deploy
 
