@@ -866,12 +866,10 @@
     if (symptomsUnresolved) {
       const serverSymptoms = await listSymptomsForEntry(existingEntryId);
       const merged = new Map<string, SymptomEntry>(
-        serverSymptoms.map(
-          (s): [string, SymptomEntry] => [
-            s.symptom_id,
-            { symptom_id: s.symptom_id, intensity: s.intensity },
-          ]
-        )
+        serverSymptoms.map((s): [string, SymptomEntry] => [
+          s.symptom_id,
+          { symptom_id: s.symptom_id, intensity: s.intensity },
+        ])
       );
       // User edits after the failed load win over the server row.
       for (const s of snap.selectedSymptoms) merged.set(s.symptom_id, s);
