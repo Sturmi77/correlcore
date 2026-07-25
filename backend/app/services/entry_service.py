@@ -97,15 +97,24 @@ def _today() -> date_type:
     return datetime.now(UTC).date()
 
 
-def _within_backdate_window(entry_date: date_type) -> bool:
+def _within_backdate_window(
+    entry_date: date_type,
+    *,
+    as_of: date_type | None = None,
+) -> bool:
     """Return True if ``entry_date`` is within the editable local-day window.
 
-    The nominal window is today and the previous :data:`BACKDATE_DAYS_LIMIT`
-    days. Clients use the device-local calendar day while this clock is UTC,
-    so allow one day of slack on each edge: local "today" east of UTC can be
-    UTC tomorrow, and local "7 days ago" west of UTC can be UTC today−8.
+    The nominal window is ``as_of`` (default: server UTC today) and the previous
+    :data:`BACKDATE_DAYS_LIMIT` days. Clients use the device-local calendar day
+    while this clock is UTC, so allow one day of slack on each edge: local
+    "today" east of UTC can be UTC tomorrow, and local "7 days ago" west of UTC
+    can be UTC today−8.
+
+    Offline sync passes the client edit day as ``as_of`` so a once-valid write
+    is not rejected after the wall-clock window rolls forward (which would
+    otherwise 400 the entire push batch and leave the outbox wedged).
     """
-    today = _today()
+    today = as_of if as_of is not None else _today()
     earliest = today - timedelta(days=BACKDATE_DAYS_LIMIT + CLIENT_TZ_AHEAD_SLACK_DAYS)
     latest = today + timedelta(days=CLIENT_TZ_AHEAD_SLACK_DAYS)
     return earliest <= entry_date <= latest

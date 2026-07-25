@@ -49,6 +49,7 @@ def _entry_change(
     seq: int,
     mood_score: int = 3,
     updated_at: datetime,
+    entry_date: date | None = None,
 ) -> SyncChange:
     return SyncChange(
         seq=seq,
@@ -56,7 +57,7 @@ def _entry_change(
         table="entries",
         operation="upsert",
         data={
-            "entry_date": date.today().isoformat(),
+            "entry_date": (entry_date or date.today()).isoformat(),
             "slot": EntrySlot.DAY.value,
             "mood_score": mood_score,
             "energy": 3,
@@ -89,6 +90,80 @@ def test_encode_decode_cursor_round_trip() -> None:
 def test_decode_cursor_rejects_garbage() -> None:
     with pytest.raises(SyncBadRequestError):
         decode_cursor("not-a-valid-cursor")
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_accepts_date_valid_at_client_edit_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Delayed offline push must not reject a once-valid backdated entry.
+
+    Concrete trigger: user creates the oldest editable day (today−7) offline;
+    reconnects after the wall-clock window rolls forward. Validating against
+    server "today" 400s the whole push batch and the web outbox never acks.
+    """
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    change = _entry_change(
+        entry_id=entry_id,
+        seq=1,
+        # Valid on the edit day (7 days before 2026-07-15); outside today's window.
+        entry_date=date(2026, 7, 8),
+        updated_at=datetime(2026, 7, 15, 18, 0, tzinfo=UTC),
+    )
+
+    empty = MagicMock()
+    empty.scalar_one_or_none.return_value = None
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=empty)
+    nested = MagicMock()
+    nested.__aenter__ = AsyncMock(return_value=None)
+    nested.__aexit__ = AsyncMock(return_value=False)
+    db.begin_nested.return_value = nested
+    db.flush = AsyncMock()
+
+    with (
+        patch("app.services.sync_service.assign_tags_to_entry", new_callable=AsyncMock),
+        patch("app.services.sync_service.assign_symptoms_to_entry", new_callable=AsyncMock),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    db.add.assert_called_once()
+    created = db.add.call_args.args[0]
+    assert isinstance(created, Entry)
+    assert created.entry_date == date(2026, 7, 8)
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_rejects_date_invalid_at_client_edit_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Sync still enforces the backdate window as of the client edit day."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    change = _entry_change(
+        entry_id=uuid.uuid4(),
+        seq=1,
+        # 14 days before the edit day — never valid, even offline.
+        entry_date=date(2026, 7, 1),
+        updated_at=datetime(2026, 7, 15, 18, 0, tzinfo=UTC),
+    )
+    db = MagicMock()
+
+    with pytest.raises(SyncBadRequestError, match="entry_date must be within"):
+        await _merge_entry_upsert(db, user_id=uuid.uuid4(), change=change)
+
+    db.execute.assert_not_called()
 
 
 def test_revision_to_change_uses_user_rev() -> None:
