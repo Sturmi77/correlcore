@@ -82,10 +82,17 @@ Schrumpfung der Konfigurations-Angriffsfläche auf ~null behoben:
    (ADR-0011). Ein „dummer Passthrough" ist praktisch nicht falsch zu
    konfigurieren.
 
-2. **Kanonische Referenz-Config im Repo.** `infra/nginx/correlcore.com.conf` +
-   `infra/nginx/snippets/correlcore-proxy-params.conf`. Beide `location`-Blöcke
-   binden **dasselbe** Snippet ein → sie **können** nicht mehr divergieren. Der
-   `/api/v1/auth/`-Block behält nur sein Rate-Limit _zusätzlich_.
+2. **Kanonische Referenz-Config im Repo.** `infra/nginx/correlcore.com.conf` —
+   **eine einzige, in sich geschlossene Datei ohne `include`-Snippet** (auch auf
+   einer separaten Edge-Maschine bzw. in einer Synology-Custom-Config
+   deploybar). Die Proxy-Parameter werden **einmal auf `server{}`-Ebene**
+   definiert; beide `location`-Blöcke **erben** sie, weil keiner ein eigenes
+   `proxy_set_header` deklariert (nginx erbt `proxy_set_header` nur, wenn die
+   Location selbst keins setzt). Damit gibt es nur **eine** Quelle der
+   Wahrheit → Auth- und Rest-Location **können** nicht divergieren. Der
+   `/api/v1/auth/`-Block behält nur sein Rate-Limit _zusätzlich_. (Ein
+   `proxy_set_header` in einer Location würde dort **alle** geerbten Header
+   verwerfen — genau das ist verboten.)
 
 3. **Auth-Selbsttest beim Deploy.** `scripts/verify-auth-cookie.sh` fährt einen
    echten Login-Roundtrip und meldet, ob (a) Login = 200, (b) `Set-Cookie`
@@ -109,8 +116,10 @@ Schrumpfung der Konfigurations-Angriffsfläche auf ~null behoben:
 ## Konsequenzen
 
 - **Der akute correlcore.com-Fix** ist das Ausrollen von
-  `infra/nginx/correlcore.com.conf` (Auth-Location bindet das gemeinsame Snippet
-  ein) und ein grüner `verify-auth-cookie.sh`-Lauf.
+  `infra/nginx/correlcore.com.conf` (Proxy-Params auf `server{}`-Ebene, von
+  beiden Locations geerbt) und ein grüner `verify-auth-cookie.sh`-Lauf. (Für den
+  Juli-2026-Vorfall lag der eigentliche Strip im Web-Proxy — Fix in #527, siehe
+  Kontext-Nachtrag; die Edge-Config ist Defense-in-Depth und deploybare Referenz.)
 - **Der Klasse-Bug ist per Design ausgeschlossen:** Auth- und Rest-Requests
   teilen zwingend dieselben Proxy-Parameter.
 - **Cookie-Sicherheitsposture bleibt unverändert** (HttpOnly/Secure/SameSite).
@@ -123,7 +132,8 @@ Schrumpfung der Konfigurations-Angriffsfläche auf ~null behoben:
 
 ### A — Cookies behalten + Edge härten _(gewählt)_
 
-Ein-Regel-Passthrough, gemeinsames Proxy-Snippet, Selbsttest, ehrlicher Fehler.
+Ein-Regel-Passthrough, Proxy-Params auf `server{}`-Ebene (von allen Locations
+geerbt), Selbsttest, ehrlicher Fehler.
 
 - **Pro:** Behält die XSS-Resistenz der HttpOnly-Cookies; minimaler Change;
   richtet sich exakt nach ADR-0011; macht den Klasse-Bug strukturell unmöglich.
@@ -151,7 +161,7 @@ Cross-Origin-Fälle deckt der Bearer-Fallback (Punkt 5) das Bedürfnis ab.
 - [ADR-0011 — Interner Reverse-Proxy im Web-Container](0011-web-internal-reverse-proxy.md)
 - [Runbook — Hosted Nginx edge](../runbooks/hosted-nginx-edge.md)
 - [Runbook — Hosted topology options](../runbooks/hosted-topology-options.md)
-- `infra/nginx/correlcore.com.conf`, `infra/nginx/snippets/correlcore-proxy-params.conf`
+- `infra/nginx/correlcore.com.conf` (self-contained; server-level proxy params), `infra/nginx/README.md`
 - `scripts/verify-auth-cookie.sh`
 - Client: `SessionPersistenceError` in `apps/web/src/lib/api/client.ts`,
   Fehler-Mapping in `apps/web/src/lib/utils/error.ts`

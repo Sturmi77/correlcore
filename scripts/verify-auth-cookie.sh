@@ -71,9 +71,9 @@ if [ "$login_status" != "200" ]; then
   echo "    NOT the cookie path. Check the account exists in THIS deployment's DB."
 elif [ "${set_cookie:-0}" -lt 1 ]; then
   echo "  • login was 200 but NO Set-Cookie reached the client → the edge/proxy"
-  echo "    strips it. Ensure every proxy location includes"
-  echo "    correlcore-proxy-params.conf and does NOT set 'proxy_hide_header"
-  echo "    Set-Cookie'. See ADR-0040 and infra/nginx/."
+  echo "    strips it. Define proxy params once at server{} level (inherited by"
+  echo "    every location) and do NOT set 'proxy_hide_header Set-Cookie' or a"
+  echo "    per-location proxy_set_header. See ADR-0040 and infra/nginx/."
 else
   echo "  • Set-Cookie was sent but /auth/me is $me_status → the browser/jar did"
   echo "    not resend it. Check COOKIE_SECURE vs scheme, X-Forwarded-Proto=https,"
