@@ -970,6 +970,18 @@
     onboardingMarkedComplete = true;
     onboardingFinalizeDeferred = false;
     const createdIds = result.created_tags.map((tag) => tag.id);
+    const nextTagIds = [...new Set([...snap.selectedTagIds, ...createdIds])];
+    // Write created IDs into the live form — resolve only mutates the save
+    // snapshot otherwise, so the next autosave (replace-set) would persist
+    // empty selectedTagIds and wipe the onboarding associations just applied.
+    // Mirror preserveUnresolvedRelations: suppress markDirty for this sync.
+    applyingResolvedRelations = true;
+    try {
+      selectedTagIds = nextTagIds;
+      await Promise.resolve();
+    } finally {
+      applyingResolvedRelations = false;
+    }
     // The catalogue refresh is best-effort: a failure here must NOT discard
     // the just-created onboarding tag associations (P2). The finalize already
     // succeeded, so apply its result regardless of the refresh outcome.
@@ -980,7 +992,7 @@
     }
     return {
       ...snap,
-      selectedTagIds: [...new Set([...snap.selectedTagIds, ...createdIds])],
+      selectedTagIds: nextTagIds,
     };
   }
 

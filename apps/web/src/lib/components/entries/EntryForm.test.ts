@@ -1166,4 +1166,41 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
     const [, snap] = vi.mocked(saveEntryOffline).mock.calls[0];
     expect(snap.selectedTagIds).toContain('onb-created-1');
   });
+
+  it('keeps onboarding tag IDs on the next autosave after finalize (writeback)', async () => {
+    // resolveOnboardingTags used to merge created IDs into the save snapshot
+    // only. The live selectedTagIds stayed [], so the next dirty pass
+    // replace-set wiped the associations just applied.
+    connectivity.markServerReachable(true);
+    vi.mocked(completeOnboarding).mockResolvedValue({
+      created_tags: [tagResponse('onb-created-1')],
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+    });
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(saveEntryOffline).mock.calls[0][1].selectedTagIds).toContain('onb-created-1');
+
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry — edited again' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(saveEntryOffline).mock.calls[1][1].selectedTagIds).toContain('onb-created-1');
+  });
 });

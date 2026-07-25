@@ -30,6 +30,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   `markDirty()` with no prior deferral, autosaved a default first entry, and
   ran `completeOnboarding([])`, so later suggestion-chip picks were ignored.
   Retries now require an explicit finalize deferral from a prior save.
+- **Onboarding tag IDs survive the next EntryForm autosave** — after a
+  successful `completeOnboarding`, created tag IDs were merged into the
+  in-flight save snapshot only and never written back to `selectedTagIds`.
+  The following edit re-snapshotted an empty selection and the replace-set
+  save wiped the associations just applied (online `assignTagsToEntry` and
+  offline Dexie alike). Finalize now mirrors the unresolved-relation
+  writeback into the live form before returning the snapshot.
 - **Onboarding first-entry save no longer aborts when finalize fails under a
   stale reachable flag (P1b residual)** — `#536` deferred `completeOnboarding`
   when `serverReachable === false`, but a stale `true`/`null` plus a failed
