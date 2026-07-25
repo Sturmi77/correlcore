@@ -303,9 +303,7 @@ async def test_merge_entry_upsert_filters_deleted_tag_before_assign(
 
     assert conflicts == []
     resolve_tags.assert_awaited_once()
-    assign_tags.assert_awaited_once_with(
-        db, user_id=user_id, entry_id=entry_id, tag_ids=[kept_tag]
-    )
+    assign_tags.assert_awaited_once_with(db, user_id=user_id, entry_id=entry_id, tag_ids=[kept_tag])
     assert deleted_tag not in assign_tags.await_args.kwargs["tag_ids"]
 
 

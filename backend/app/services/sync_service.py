@@ -575,9 +575,7 @@ async def _merge_entry_upsert(
                 entry_id=entry.id,
                 symptoms=_normalize_symptoms_payload(payload.symptoms),
             )
-            await assign_tags_to_entry(
-                db, user_id=user_id, entry_id=entry.id, tag_ids=tag_ids
-            )
+            await assign_tags_to_entry(db, user_id=user_id, entry_id=entry.id, tag_ids=tag_ids)
             symptom_entries = [
                 SymptomEntry(symptom_id=uuid.UUID(key), intensity=value)
                 for key, value in incoming_symptoms.items()
