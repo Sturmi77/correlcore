@@ -7,6 +7,7 @@ or UI assumptions are introduced in this sprint.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import math
 import uuid
@@ -18,7 +19,7 @@ from datetime import date as date_type
 from typing import Any, Literal
 
 from scipy.stats import chisquare, pointbiserialr, spearmanr
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from statsmodels.stats.multitest import multipletests
 
@@ -56,6 +57,36 @@ from app.services.weekday_confounder import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Stable namespace for pg_advisory_xact_lock(int4, int4). Keeps insight-gen
+# locks out of the way of unrelated advisory locks in the same database.
+_INSIGHT_GENERATION_LOCK_NS = 0x43495247  # 'CIRG' — CorrelCore Insight ReGen
+
+
+def _insight_generation_lock_keys(user_id: uuid.UUID) -> tuple[int, int]:
+    """Return a stable (namespace, key) pair for per-user insight regeneration.
+
+    Two concurrent ``generate_and_store_insights`` transactions for the same
+    user must not interleave delete-then-insert: without serialization the
+    slower writer can wipe fresher rows (post-batch / worker / regenerate
+    overlap) or both can insert duplicate sets when no prior rows exist.
+    """
+
+    digest = hashlib.blake2b(user_id.bytes, digest_size=4).digest()
+    # signed int4 as required by PostgreSQL's two-argument advisory lock
+    key = int.from_bytes(digest, "big", signed=True)
+    return _INSIGHT_GENERATION_LOCK_NS, key
+
+
+async def _acquire_insight_generation_lock(db: AsyncSession, *, user_id: uuid.UUID) -> None:
+    """Serialize insight regenerate/delete/insert for ``user_id`` until commit."""
+
+    ns, key = _insight_generation_lock_keys(user_id)
+    await db.execute(
+        text("SELECT pg_advisory_xact_lock(:ns, :key)"),
+        {"ns": ns, "key": key},
+    )
+
 
 EARLY_ENTRY_COUNT = 3
 PRELIMINARY_ENTRY_COUNT = 8
@@ -1534,7 +1565,16 @@ async def generate_and_store_insights(
     existing rows for that date before inserting the new candidates. The caller
     must bind the user's DEK before flushing because ``Insight.statement_enc``
     uses :class:`app.core.crypto.EncryptedString`.
+
+    A per-user transaction advisory lock is taken **before** loading inputs so
+    overlapping regenerate / post-batch / analytics-worker runs cannot
+    interleave: a slower transaction that loaded stale data must not delete
+    fresher committed rows, and two empty-table writers must not both insert.
+    The lock is released automatically on commit/rollback.
     """
+
+    # Lock before load+compute so waiters re-read after the winner commits.
+    await _acquire_insight_generation_lock(db, user_id=user_id)
 
     generated_for_date = as_of or datetime.now(UTC).date()
     entries, tags, symptoms = await _load_analytics_inputs(

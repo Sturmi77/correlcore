@@ -10,6 +10,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Overlapping insight regeneration no longer leaves stale or duplicate
+  rows** — `generate_and_store_insights` delete-then-insert had no per-user
+  lock, so concurrent `POST /insights/regenerate`, post-batch import hooks,
+  and the analytics worker could interleave: a slower writer that loaded
+  earlier data could wipe fresher committed insights, or two empty-table
+  writers could both insert. Take `pg_advisory_xact_lock` for the user
+  before loading inputs so waiters re-read after the winner commits.
 - **Re-saving an entry after hiding a linked tag no longer 422s** — hide keeps
   historical `entry_tags` (M3.5), and `list_tags_for_entry` still returns those
   IDs so the client can round-trip them, but `assign_tags_to_entry` rejected any
