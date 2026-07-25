@@ -7,9 +7,11 @@ import {
   pullSyncChanges,
   pushSyncChanges,
   type SyncChange,
+  type SyncPushResponse,
   type SyncTableName,
 } from '$lib/api/sync';
-import { NetworkError } from '$lib/api/client';
+import { ApiError, NetworkError } from '$lib/api/client';
+import { fetchEntry } from '$lib/api/entries';
 import {
   applyPulledEntry,
   deleteLocalEntry,
@@ -18,14 +20,44 @@ import {
 } from '$lib/stores/entriesOffline';
 import { connectivity } from '$lib/stores/connectivity';
 import { listPendingChanges, markChangeStatus } from './changeLog';
-import { getOrCreateClientId } from './clientId';
+import { clearClientId, getOrCreateClientId } from './clientId';
 import { getOfflineDb } from './db';
 import { canUseOfflineSync } from './featureFlag';
 import { getSyncMeta, setSyncMeta } from './syncMeta';
 import { SYNC_META_KEYS } from './types';
-import type { LocalSymptom, LocalTag, OfflineEntityType } from './types';
+import type { ChangeLogRow, LocalSymptom, LocalTag, OfflineEntityType } from './types';
 import { refreshTags } from '$lib/stores/tags';
 import { refreshSymptoms } from '$lib/stores/symptoms';
+
+/**
+ * Detect retained-client-id + restarted change_log seq collision.
+ *
+ * When IndexedDB is wiped but `cc_offline_client_id` survives, new outbox
+ * rows restart at seq 1 under the old client identity. The server skips
+ * them (`seq <= last_applied_seq`) while this client used to ack anyway —
+ * silent data loss. Distinguish that from a legitimate crash-before-ack
+ * replay (same seqs, entities already on the server) by probing one entry.
+ */
+async function isStaleClientSeqCollision(toPush: ChangeLogRow[]): Promise<boolean> {
+  const probe = toPush.find((row) => row.entity_type === 'entry' && row.operation === 'upsert');
+  if (!probe) return false;
+  try {
+    await fetchEntry(probe.entity_id);
+    return false;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return true;
+    throw err;
+  }
+}
+
+function isFullySkippedPush(response: SyncPushResponse, changeCount: number): boolean {
+  return (
+    !response.idempotent_replay &&
+    response.applied === 0 &&
+    changeCount > 0 &&
+    response.skipped >= changeCount
+  );
+}
 
 export type OfflineSyncBadgeState = 'local' | 'syncing' | 'synced' | 'offline';
 
@@ -214,8 +246,7 @@ export async function pushPending(): Promise<boolean> {
   }
   const toPush = [...latestByEntity.values()].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0));
 
-  const clientId = await getOrCreateClientId();
-  const batchId = crypto.randomUUID();
+  let clientId = await getOrCreateClientId();
   const changes = toPush.map((row) => ({
     seq: row.seq!,
     id: row.entity_id,
@@ -225,11 +256,23 @@ export async function pushPending(): Promise<boolean> {
     updated_at: row.client_ts,
   }));
 
-  const response = await pushSyncChanges({
+  let response = await pushSyncChanges({
     client_id: clientId,
-    batch_id: batchId,
+    batch_id: crypto.randomUUID(),
     changes,
   });
+
+  // All-skipped under a retained client_id after IDB reset must not ack —
+  // rotate identity and retry once so the server accepts the restarted seqs.
+  if (isFullySkippedPush(response, toPush.length) && (await isStaleClientSeqCollision(toPush))) {
+    await clearClientId();
+    clientId = await getOrCreateClientId();
+    response = await pushSyncChanges({
+      client_id: clientId,
+      batch_id: crypto.randomUUID(),
+      changes,
+    });
+  }
 
   for (const row of pending) {
     await markChangeStatus(row.seq!, 'acked');

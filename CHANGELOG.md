@@ -30,6 +30,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   `markDirty()` with no prior deferral, autosaved a default first entry, and
   ran `completeOnboarding([])`, so later suggestion-chip picks were ignored.
   Retries now require an explicit finalize deferral from a prior save.
+- **Offline push no longer silently drops rows after IndexedDB reset** — when
+  IndexedDB was cleared/evicted but `cc_offline_client_id` survived in
+  localStorage, new outbox seqs restarted at 1 under the old client identity.
+  The server skipped them (`seq <= last_applied_seq`) while `pushPending`
+  still acked the batch and marked entries synced — permanent loss on the
+  next logout wipe. Binding a fresh empty offline DB now drops the retained
+  client id, and an all-skipped push probes the entry: on 404 the client
+  rotates identity and retries once (crash-before-ack replays where the
+  entry already exists still ack without rotating).
 - **Onboarding tag IDs survive the next EntryForm autosave** — after a
   successful `completeOnboarding`, created tag IDs were merged into the
   in-flight save snapshot only and never written back to `selectedTagIds`.

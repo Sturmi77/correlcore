@@ -96,6 +96,14 @@ export async function prepareOfflineDataForAuthenticatedUser(userId: string): Pr
     // Keep the existing DB (legacy or already partitioned) for this owner.
   } else {
     // Fresh empty DB — prefer a per-user partition going forward.
+    // Drop any retained origin client_id: IndexedDB can be evicted (or
+    // cleared in DevTools) while localStorage survives. Reusing that id
+    // with change_log seq restarting at 1 makes the server skip every push
+    // (`seq <= last_applied_seq`) while the web client still acks — silent
+    // data loss. A new empty DB must mint a new client identity.
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(CLIENT_ID_STORAGE_KEY);
+    }
     bindOfflineDbToUser(userId);
   }
 
