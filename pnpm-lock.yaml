@@ -44,32 +44,32 @@ importers:
     dependencies:
       '@capacitor/app':
         specifier: 7.1.2
-        version: 7.1.2(@capacitor/core@7.6.7)
+        version: 7.1.2(@capacitor/core@8.4.2)
       '@capacitor/push-notifications':
         specifier: 7.0.3
-        version: 7.0.3(@capacitor/core@7.6.7)
+        version: 7.0.3(@capacitor/core@8.4.2)
     devDependencies:
       '@capacitor/android':
         specifier: 7.6.7
-        version: 7.6.7(@capacitor/core@7.6.7)
+        version: 7.6.7(@capacitor/core@8.4.2)
       '@capacitor/cli':
         specifier: 7.6.7
         version: 7.6.7
       '@capacitor/core':
-        specifier: 7.6.7
-        version: 7.6.7
+        specifier: 8.4.2
+        version: 8.4.2
 
   apps/web:
     dependencies:
       '@capacitor/app':
         specifier: 7.1.2
-        version: 7.1.2(@capacitor/core@7.6.7)
+        version: 7.1.2(@capacitor/core@8.4.2)
       '@capacitor/core':
-        specifier: 7.6.7
-        version: 7.6.7
+        specifier: 8.4.2
+        version: 8.4.2
       '@capacitor/push-notifications':
         specifier: 7.0.3
-        version: 7.0.3(@capacitor/core@7.6.7)
+        version: 7.0.3(@capacitor/core@8.4.2)
       '@sentry/browser':
         specifier: ^10.68.0
         version: 10.68.0
@@ -200,8 +200,8 @@ packages:
     engines: {node: '>=20.0.0'}
     hasBin: true
 
-  '@capacitor/core@7.6.7':
-    resolution: {integrity: sha512-DR0kqfcsDzWhvskz+sJWy41cdv+P1ITjmOYYG5WSV88EO6tx5Tf82M61vp4NjV7rfQDUAQjBAypgaTiB2/2oEg==}
+  '@capacitor/core@8.4.2':
+    resolution: {integrity: sha512-fQPRb3JXRaU2pnufDUvqOjhsrYxDQeFRZyaj/sHydIUxD2NxOGHKMpmKUdI+U4OOmKuGZyvRpi7TSJU+7Bjbmg==}
 
   '@capacitor/push-notifications@7.0.3':
     resolution: {integrity: sha512-4qt5dRVBkHzq202NEoj3JC+S+zQCrZ1FJh7sjkICy/i1iEos+VaoB3bie8eWDQ2LTARktB4+k2xkdpu8pcVo/g==}
@@ -2548,13 +2548,13 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@capacitor/android@7.6.7(@capacitor/core@7.6.7)':
+  '@capacitor/android@7.6.7(@capacitor/core@8.4.2)':
     dependencies:
-      '@capacitor/core': 7.6.7
+      '@capacitor/core': 8.4.2
 
-  '@capacitor/app@7.1.2(@capacitor/core@7.6.7)':
+  '@capacitor/app@7.1.2(@capacitor/core@8.4.2)':
     dependencies:
-      '@capacitor/core': 7.6.7
+      '@capacitor/core': 8.4.2
 
   '@capacitor/cli@7.6.7':
     dependencies:
@@ -2578,13 +2578,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/core@7.6.7':
+  '@capacitor/core@8.4.2':
     dependencies:
       tslib: 2.8.1
 
-  '@capacitor/push-notifications@7.0.3(@capacitor/core@7.6.7)':
+  '@capacitor/push-notifications@7.0.3(@capacitor/core@8.4.2)':
     dependencies:
-      '@capacitor/core': 7.6.7
+      '@capacitor/core': 8.4.2
 
   '@csstools/color-helpers@6.1.0': {}
 
