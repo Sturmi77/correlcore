@@ -13,8 +13,10 @@ from app.services.insight_engine import (
     AnalyticsEntry,
     SymptomSnapshot,
     TagSnapshot,
+    _acquire_insight_generation_lock,
     _canonicalize_tag_aliases,
     _dedupe_daily_entries,
+    _insight_generation_lock_keys,
     confidence_tier_for_sample,
     display_metric_value,
     generate_and_store_insights,
@@ -463,6 +465,28 @@ def test_weekday_biased_detects_tag_concentrated_on_one_weekday() -> None:
     assert is_weekday_biased(entries, tag_id) is True
 
 
+def test_insight_generation_lock_keys_are_stable_per_user() -> None:
+    user_a = uuid.uuid4()
+    user_b = uuid.uuid4()
+    assert _insight_generation_lock_keys(user_a) == _insight_generation_lock_keys(user_a)
+    assert _insight_generation_lock_keys(user_a) != _insight_generation_lock_keys(user_b)
+
+
+@pytest.mark.asyncio
+async def test_acquire_insight_generation_lock_uses_transaction_advisory_lock() -> None:
+    user_id = uuid.uuid4()
+    ns, key = _insight_generation_lock_keys(user_id)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=MagicMock())
+
+    await _acquire_insight_generation_lock(db, user_id=user_id)
+
+    stmt = db.execute.await_args.args[0]
+    params = db.execute.await_args.args[1]
+    assert "pg_advisory_xact_lock" in str(stmt)
+    assert params == {"ns": ns, "key": key}
+
+
 @pytest.mark.asyncio
 async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     user = make_user()
@@ -482,12 +506,13 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
+            MagicMock(),  # advisory lock (must precede load)
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result([]),
             _scalar_result(entries),
             _row_result([]),
-            MagicMock(),
+            MagicMock(),  # delete prior insights for the day
         ]
     )
     db.flush = AsyncMock()
@@ -495,11 +520,13 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
     assert stored
-    assert db.execute.await_count == 6
-    load_stmt = db.execute.await_args_list[0].args[0]
+    assert db.execute.await_count == 7
+    lock_stmt = db.execute.await_args_list[0].args[0]
+    assert "pg_advisory_xact_lock" in str(lock_stmt)
+    load_stmt = db.execute.await_args_list[1].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)
-    delete_stmt = db.execute.await_args_list[5].args[0]
+    delete_stmt = db.execute.await_args_list[6].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert db.add.call_count == len(stored)
     assert db.flush.await_count == 1
