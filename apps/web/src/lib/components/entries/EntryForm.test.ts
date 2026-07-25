@@ -11,6 +11,7 @@ import type { TagResponse } from '$lib/api/tags';
 import { assignTagsToEntry, listTagsForEntry } from '$lib/api/tags';
 import { canUseOfflineSync } from '$lib/offline/featureFlag';
 import { hydrateServerEntryFromApi, saveEntryOffline } from '$lib/stores/entriesOffline';
+import { refreshTags } from '$lib/stores/tags';
 import { connectivity } from '$lib/stores/connectivity';
 import { submitEntry } from '$lib/stores/entries';
 import EntryForm from './EntryForm.svelte';
@@ -1058,5 +1059,90 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
 
     expect(completeOnboarding).toHaveBeenCalledTimes(1);
     expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+  });
+
+  it('still saves the entry when finalize fails under a stale reachable flag (P1b)', async () => {
+    // Connectivity still says reachable (last probe succeeded) but the
+    // onboarding finalize call itself fails — without catch-and-defer the
+    // throw aborts persist() before saveEntryOffline.
+    connectivity.markServerReachable(true);
+    vi.mocked(completeOnboarding).mockRejectedValue(new Error('API blip'));
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry despite finalize failure' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledTimes(1);
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries the deferred onboarding finalize when API reachability recovers (P1)', async () => {
+    // Stale reachable → the finalize fails once and is deferred (entry saved),
+    // but nothing is queued: without a reachability-driven retry the onboarding
+    // tags would only re-attempt on a manual edit.
+    connectivity.markServerReachable(true);
+    vi.mocked(completeOnboarding).mockRejectedValueOnce(new Error('API blip'));
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledTimes(1);
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+
+    // API recovers (reachability drops then returns) → a retry is scheduled
+    // with no further user edit; the second finalize succeeds.
+    connectivity.markServerReachable(false);
+    connectivity.markServerReachable(true);
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the created onboarding tags when the catalogue refresh fails (P2)', async () => {
+    // completeOnboarding succeeds and creates the tag, but the follow-up
+    // refreshTags fails. The created associations must still land on the entry.
+    connectivity.markServerReachable(true);
+    vi.mocked(completeOnboarding).mockResolvedValue({
+      created_tags: [tagResponse('onb-created-1')],
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+    });
+    vi.mocked(refreshTags).mockRejectedValueOnce(new Error('catalogue refresh failed'));
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledTimes(1);
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+    const [, snap] = vi.mocked(saveEntryOffline).mock.calls[0];
+    expect(snap.selectedTagIds).toContain('onb-created-1');
   });
 });

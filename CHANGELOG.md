@@ -10,6 +10,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Onboarding first-entry save no longer aborts when finalize fails under a
+  stale reachable flag (P1b residual)** — `#536` deferred `completeOnboarding`
+  when `serverReachable === false`, but a stale `true`/`null` plus a failed
+  finalize (network blip / 5xx) still threw out of `resolveOnboardingTags` and
+  aborted `persist()` before `saveEntryOffline`, losing the first onboarding
+  entry. With offline sync enabled, finalize errors are now caught and
+  deferred; the Dexie write proceeds and the finalize is retried when API
+  reachability recovers (a `connectivity` watcher, not only `window.online`),
+  so the deferred onboarding tags are no longer lost when the user makes no
+  further edit. A successful finalize whose follow-up catalogue `refreshTags`
+  fails now still applies the created tag associations (the `try` no longer
+  swallows that result).
 - **Offline sync no longer wedges the outbox on deleted tag/symptom IDs** —
   entry push still called `assign_tags_to_entry` /
   `assign_symptoms_to_entry` with every client association ID. After a custom
