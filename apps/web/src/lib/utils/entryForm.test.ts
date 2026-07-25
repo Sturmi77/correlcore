@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { isEntryDateEditable, isoDate, resolveInitialDate } from './entryForm';
+import {
+  isEntryDateEditable,
+  isoDate,
+  mergeUnresolvedSymptoms,
+  mergeUnresolvedTagIds,
+  resolveInitialDate,
+} from './entryForm';
 
 const today = new Date(2026, 5, 23, 12);
 
@@ -45,5 +51,38 @@ describe('resolveInitialDate', () => {
   it('falls back to the local calendar day when no query date is given', () => {
     const localEvening = new Date(2026, 5, 23, 20, 30, 0);
     expect(resolveInitialDate(localEvening, null)).toBe('2026-06-23');
+  });
+});
+
+describe('mergeUnresolvedTagIds', () => {
+  it('unions server, dirty-snap, and live picks without dropping concurrent adds', () => {
+    // Autosave snap may be empty after a failed load clear; the user can still
+    // pick tags while preserveUnresolvedRelations awaits the re-fetch.
+    expect(mergeUnresolvedTagIds(['tag-server'], [], ['tag-live'])).toEqual([
+      'tag-server',
+      'tag-live',
+    ]);
+  });
+
+  it('dedupes while preserving first-seen order', () => {
+    expect(mergeUnresolvedTagIds(['a', 'b'], ['b', 'c'], ['c', 'd'])).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('mergeUnresolvedSymptoms', () => {
+  it('keeps live intensity over server and dirty-snap for the same symptom', () => {
+    expect(
+      mergeUnresolvedSymptoms(
+        [{ symptom_id: 's1', intensity: 1 }],
+        [{ symptom_id: 's1', intensity: 2 }],
+        [
+          { symptom_id: 's1', intensity: 4 },
+          { symptom_id: 's2', intensity: 3 },
+        ]
+      )
+    ).toEqual([
+      { symptom_id: 's1', intensity: 4 },
+      { symptom_id: 's2', intensity: 3 },
+    ]);
   });
 });

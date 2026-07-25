@@ -1,5 +1,33 @@
 /** Shared entry-form helpers (route + bottom sheet). */
 
+export type SymptomSelection = { symptom_id: string; intensity: number };
+
+/**
+ * Union tag ID groups for unresolved-relation re-resolve (P1a).
+ *
+ * The autosave dirty snapshot can lag picks made while
+ * `preserveUnresolvedRelations` awaits a re-fetch — TagPicker stays enabled
+ * during save — so the writeback must merge server + snap + live selections.
+ */
+export function mergeUnresolvedTagIds(...groups: readonly (readonly string[])[]): string[] {
+  return [...new Set(groups.flat())];
+}
+
+/**
+ * Merge symptom selection groups; later groups win intensity for the same id.
+ */
+export function mergeUnresolvedSymptoms(
+  ...groups: readonly (readonly SymptomSelection[])[]
+): SymptomSelection[] {
+  const merged = new Map<string, SymptomSelection>();
+  for (const group of groups) {
+    for (const s of group) {
+      merged.set(s.symptom_id, { symptom_id: s.symptom_id, intensity: s.intensity });
+    }
+  }
+  return [...merged.values()];
+}
+
 /**
  * Calendar date in device-local time (`YYYY-MM-DD`).
  *
