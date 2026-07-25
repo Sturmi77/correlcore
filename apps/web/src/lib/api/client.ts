@@ -50,6 +50,25 @@ export function redactUrlCredentials(url: string): string {
   }
 }
 
+/**
+ * Login credentials were accepted (POST /auth/login → 200) but the session
+ * did not persist: the follow-up /auth/me probe came back anonymous because
+ * the HttpOnly auth cookie was never stored or sent back.
+ *
+ * This is emphatically NOT a wrong-password case — surfacing it as a 401
+ * `ApiError` made the login page render "email or password is incorrect",
+ * which sent every recurrence of the cookie-delivery problem (Secure flag on
+ * plain HTTP, SameSite, cross-origin, proxy Set-Cookie loss) down a
+ * dead-end credentials investigation. Capacitor never hits this path because
+ * it authenticates with an in-memory Bearer token instead of cookies.
+ */
+export class SessionPersistenceError extends Error {
+  constructor(public readonly path: string = '/auth/me') {
+    super(`Login succeeded but the session cookie did not persist (${path})`);
+    this.name = 'SessionPersistenceError';
+  }
+}
+
 export class NetworkError extends Error {
   public readonly path: string;
   /** Resolved API base at failure time (credentials redacted for display). */

@@ -1263,6 +1263,7 @@
     "upstream": "Die API ist voruebergehend nicht erreichbar. Bitte gleich erneut versuchen.",
     "server": "Der Server hat einen Fehler gemeldet. Bitte spaeter erneut versuchen.",
     "validation": "Die Anfrage war ungueltig. Bitte Eingaben pruefen.",
+    "session_not_persisted": "E-Mail und Passwort waren korrekt, aber der Browser konnte die Sitzung nicht speichern. Stelle sicher, dass die Seite ueber HTTPS geoeffnet ist und Cookies fuer diese Seite erlaubt sind, und versuche es erneut.",
     "not_found": "Seite nicht gefunden.",
     "back_home": "Zurueck zur Startseite"
   },

@@ -50,6 +50,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-N-01](ADR-N-01-note-summary-computation.md)                 | `note_summary_short` client-side truncation (v1)             | Accepted   | 2026-07-15 |
 | [ADR-N-02](ADR-N-02-signal-confidence-threshold.md)              | Note signal confidence threshold 0.70                        | Accepted   | 2026-07-15 |
 | [ADR-N-03](ADR-N-03-custom-marker-normalisation.md)              | Custom marker normalisation on write                         | Accepted   | 2026-07-15 |
+| [ADR-0040](0040-selfhost-auth-edge-passthrough.md)               | Self-Host-Auth-Edge: Ein-Regel-Passthrough + Bearer-Fallback | Accepted   | 2026-07-25 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -152,6 +153,10 @@ Symptome werden in drei analytischen Ebenen behandelt: **univariat** (Pointbiser
 ### ADR-0036 – Offline-Sync v1 Scope (M4.1)
 
 M4.1 implementiert Dexie.js, `/sync/push`, `/sync/pull` und `sync_conflicts` nach dem in Sprint 0 eingefrorenen Contract. LWW pro Feld bleibt Merge-Prinzip (ADR-0003); LWW-Konflikte werden nicht als HTTP 409, sondern als `conflicts[]` im Push-Response und in `sync_conflicts` geloggt. `note_enc`-Konflikte speichern nur redacted Metadata (kein Plaintext). Cursor ist opaque Base64url-JSON mit monotonic `user_rev` pro User. Idempotenz über `(client_id, batch_id)`.
+
+### ADR-0040 – Self-Host-Auth-Edge: Ein-Regel-Passthrough + Bearer-Fallback
+
+Behebt einen wiederkehrenden Bug, bei dem der Landing-Login „E-Mail oder Passwort ist falsch" meldet, obwohl der `POST /auth/login` 200 liefert — das HttpOnly-Session-Cookie überlebt die Edge-Kette (Nginx → SvelteKit-Proxy → API) nicht, und der zweistufige Login-Flow tarnte den Cookie-Verlust als Credential-Fehler. Cookie-Auth (ADR-0006) bleibt der sichere Default; nicht das Cookie ist fragil, sondern der Reverse-Proxy-Vertrag. Entscheidung: (1) **Ein-Regel-Edge-Kontrakt** — der externe Proxy terminiert nur TLS, reicht **alle** Pfade an `correlcore-web` weiter (ADR-0011 besitzt `/api` + `Set-Cookie`), setzt `X-Forwarded-Proto: https`, schneidet nie `Set-Cookie` weg; (2) **kanonische Referenz-Config** `infra/nginx/` mit gemeinsamem Proxy-Snippet, das Auth- und Rest-Location zwingend gleich behandelt; (3) **Deploy-Selbsttest** `scripts/verify-auth-cookie.sh`; (4) **ehrlicher Client-Fehler** `SessionPersistenceError` statt „Passwort falsch"; (5) **Bearer-Fallback** für echte Cross-Origin-Self-Host-Topologien als dokumentierte opt-in-Richtung (bestehender Capacitor-Pfad, XSS-Trade-off explizit), Umsetzung ausgelagert.
 
 ---
 

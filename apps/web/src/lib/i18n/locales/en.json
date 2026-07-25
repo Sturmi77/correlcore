@@ -1263,6 +1263,7 @@
     "upstream": "The API is temporarily unreachable. Try again shortly.",
     "server": "The server reported an error. Please try again later.",
     "validation": "The request was invalid. Please check your input.",
+    "session_not_persisted": "Your email and password were correct, but the browser could not save the session. Make sure the site is opened over HTTPS and that cookies are allowed for this site, then try again.",
     "not_found": "Page not found.",
     "back_home": "Back to home"
   },

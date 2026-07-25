@@ -24,7 +24,7 @@ import {
   type LoginPayload,
   type UserResponse,
 } from '$lib/api/auth';
-import { ApiError, NetworkError } from '$lib/api/client';
+import { NetworkError, SessionPersistenceError } from '$lib/api/client';
 import { setRuntimeApiBase } from '$lib/api/apiBase';
 import { usesBearerAuth } from '$lib/api/platform';
 import { restoreSecureSession } from '$lib/api/secureSession';
@@ -165,10 +165,15 @@ export async function login(payload: LoginPayload): Promise<UserResponse> {
   // Login JSON can succeed while HttpOnly cookies never stick (proxy /
   // Secure mismatch). Probe /auth/me before marking the UI authenticated
   // so Settings → Consent does not fail with a confusing 401 later.
+  //
+  // The credentials were already accepted (apiLogin returned 200); a null
+  // probe here means the session cookie did not persist, NOT a bad password.
+  // Throwing a distinct error keeps the login page from mislabelling this
+  // recurring cookie-delivery failure as "email or password is incorrect".
   const sessionUser = await fetchCurrentUser();
   if (!sessionUser) {
     clearSessionTokens();
-    throw new ApiError(401, 'Could not validate credentials', '/auth/me');
+    throw new SessionPersistenceError('/auth/me');
   }
   connectivity.markServerReachable(true);
   resetInsightStore();

@@ -4,6 +4,7 @@ Last updated: 2026-07-19
 **Milestone:** M10.2 Sprint 1  
 **Plan:** [`../M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 **Issue:** #460  
+**Auth-edge contract:** [ADR-0040](../adr/0040-selfhost-auth-edge-passthrough.md) — one-rule passthrough; the canonical config is shipped at [`infra/nginx/`](../../infra/nginx/), not hand-written.  
 **Combined cutover (with SMTP):** [`hosted-cutover.md`](hosted-cutover.md)
 
 Operator runbook for the **Hosted reference** instance. This is not a second
@@ -92,62 +93,29 @@ curl -sf "http://127.0.0.1:${WEB_HOST_PORT}/api/v1/health"
 
 ### B.1 Canonical Nginx server block
 
-Adapt certificate paths to your ACME setup (certbot / Synology cert).
+**Do not hand-write this** — copy the shipped, tested config
+([ADR-0040](../adr/0040-selfhost-auth-edge-passthrough.md)):
 
-```nginx
-# correlcore.com — Hosted edge (M10.2)
-# Upstream = correlcore-web only (ADR-0011 proxies /api)
+```bash
+sudo cp infra/nginx/snippets/correlcore-proxy-params.conf /etc/nginx/snippets/
+sudo cp infra/nginx/correlcore.com.conf /etc/nginx/sites-available/
+sudo ln -sf /etc/nginx/sites-available/correlcore.com.conf /etc/nginx/sites-enabled/
+# adjust server_name / ssl_certificate* / upstream port first
+sudo nginx -t && sudo systemctl reload nginx
+```
 
-limit_req_zone $binary_remote_addr zone=correlcore_auth:10m rate=5r/s;
+See [`infra/nginx/README.md`](../../infra/nginx/README.md) for the full file and
+deploy notes. The key property (ADR-0040): **both** `location /` and
+`location /api/v1/auth/` include the **same** `correlcore-proxy-params.conf`, so
+auth requests can never be proxied differently from the rest of the app. A
+separate auth `location` with its own (or missing) proxy params is precisely what
+drops the login `Set-Cookie` and makes a correct login read as
+"E-Mail oder Passwort ist falsch".
 
-upstream correlcore_web {
-    server 127.0.0.1:3010;  # WEB_HOST_PORT
-    keepalive 16;
-}
+After reload, **verify the cookie actually survives the edge**:
 
-server {
-    listen 80;
-    listen [::]:80;
-    server_name correlcore.com www.correlcore.com;
-    return 301 https://correlcore.com$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name correlcore.com www.correlcore.com;
-
-    # ssl_certificate     /path/to/fullchain.pem;
-    # ssl_certificate_key /path/to/privkey.pem;
-
-    # Security headers (parity with Traefik labels in production compose)
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    add_header X-Frame-Options "DENY" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-
-    client_max_body_size 2m;
-
-    location /api/v1/auth/ {
-        limit_req zone=correlcore_auth burst=20 nodelay;
-        proxy_pass http://correlcore_web;
-        include /etc/nginx/snippets/correlcore-proxy-params.conf;  # or inline below
-    }
-
-    location / {
-        proxy_pass http://correlcore_web;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header Connection "";
-        proxy_read_timeout 60s;
-        proxy_send_timeout 60s;
-    }
-}
+```bash
+BASE_URL=https://correlcore.com scripts/verify-auth-cookie.sh
 ```
 
 If Synology **Application Portal → Reverse Proxy** is used instead of raw Nginx:
@@ -160,8 +128,15 @@ If Synology **Application Portal → Reverse Proxy** is used instead of raw Ngin
 | **Custom header** | `X-Forwarded-Proto` = `https` (**required** for Secure cookies) |
 | Custom header     | `X-Forwarded-For` / `X-Real-IP` as supported                    |
 
-### B.2 Synology pitfalls
+### B.2 Pitfalls (Nginx / Synology)
 
+- **Separate auth `location` that omits the shared proxy params** → login returns
+  200 but no `Set-Cookie` reaches the browser → the UI shows
+  "E-Mail oder Passwort ist falsch" although the password was correct. Fix:
+  both locations `include` the same `correlcore-proxy-params.conf` (ADR-0040).
+  Confirm with `scripts/verify-auth-cookie.sh`.
+- **Never** add `proxy_hide_header Set-Cookie;` or `proxy_cookie_path ...;` on
+  the auth/`/` locations — both strip or rewrite the session cookie.
 - Missing `X-Forwarded-Proto https` → browser drops `Secure` cookies → login “does nothing”.
 - Web Station + Reverse Proxy double-proxy can rewrite headers — prefer one hop to web.
 - Do not enable Compose Traefik on the same 80/443.
@@ -196,7 +171,16 @@ curl -sf "https://correlcore.com/api/v1/health"
 # open https://correlcore.com/ and /auth/login — no VPN
 ```
 
-Cookie check: DevTools → after login attempt, `Set-Cookie` with `Secure` and `Https` site.
+Cookie check (authoritative — do not skip):
+
+```bash
+BASE_URL=https://correlcore.com scripts/verify-auth-cookie.sh
+# PASS = login 200 + Set-Cookie present + /auth/me 200
+```
+
+Manual equivalent: DevTools → after login, the `POST /api/v1/auth/login` response
+carries `Set-Cookie` and the cookie appears under Storage/Application for the
+site. A 200 login with **no** stored cookie is the ADR-0040 edge-strip bug.
 
 ---
 
@@ -208,5 +192,6 @@ Cookie check: DevTools → after login attempt, `Set-Cookie` with `Secure` and `
 - [ ] Hosted ENV set (`FRONTEND_BASE_URL` / `CORS_ORIGINS` / `COOKIE_SECURE`)
 - [ ] Public DNS (or tunnel) reaches NAS edge
 - [ ] Public smoke `/` + `/api/v1/health` green without VPN
+- [ ] `scripts/verify-auth-cookie.sh` returns **PASS** (login cookie survives the edge, ADR-0040)
 
 SMTP / Mailpit removal → Sprint 2 (#461). Landing content polish → Sprint 3 (#462).

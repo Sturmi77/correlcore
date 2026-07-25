@@ -17,7 +17,7 @@
  * built-in transport/server keys before the generic fallback.
  */
 
-import { ApiError, NetworkError } from '$lib/api/client';
+import { ApiError, NetworkError, SessionPersistenceError } from '$lib/api/client';
 import { isCapacitorBuild } from '$lib/api/platform';
 
 /** Map of HTTP status code → i18n key. */
@@ -33,6 +33,8 @@ export const NETWORK_ERROR_CAPACITOR_KEY = 'error.network_capacitor';
 export const UPSTREAM_ERROR_KEY = 'error.upstream';
 export const SERVER_ERROR_KEY = 'error.server';
 export const VALIDATION_ERROR_KEY = 'error.validation';
+/** Credentials accepted but the session cookie never persisted (not a bad password). */
+export const SESSION_ERROR_KEY = 'error.session_not_persisted';
 
 function builtInApiErrorKey(status: number): string | null {
   if (status === 502) return UPSTREAM_ERROR_KEY;
@@ -54,6 +56,11 @@ export function mapApiError(
   statusMap: ApiErrorMap,
   fallback: string = GENERIC_ERROR_KEY
 ): string {
+  if (err instanceof SessionPersistenceError) {
+    // Never let this fall through to a call-site 401 mapping (→ "wrong
+    // password"). The credentials were valid; the cookie did not persist.
+    return SESSION_ERROR_KEY;
+  }
   if (err instanceof ApiError) {
     if (statusMap[err.status]) {
       return statusMap[err.status];

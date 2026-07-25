@@ -32,7 +32,7 @@ vi.mock('$lib/native/pushNotifications', () => ({
 }));
 
 import * as authApi from '$lib/api/auth';
-import { NetworkError } from '$lib/api/client';
+import { NetworkError, SessionPersistenceError } from '$lib/api/client';
 import { notifySessionExpired } from '$lib/api/sessionExpired';
 import * as offlineSession from '$lib/offline/session';
 import { disablePushNotifications } from '$lib/native/pushNotifications';
@@ -196,10 +196,13 @@ describe('login / logout / setUser', () => {
       user: fakeUser,
     });
     vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(null);
-    await expect(login({ email: 'a@b.de', password: 'pw12345678' })).rejects.toMatchObject({
-      status: 401,
-      path: '/auth/me',
-    });
+    // The credentials were accepted (login resolved 200); a null /auth/me
+    // probe is a cookie-persistence failure, not a wrong password. It must
+    // surface as SessionPersistenceError so the login page does not render
+    // "email or password is incorrect".
+    await expect(login({ email: 'a@b.de', password: 'pw12345678' })).rejects.toBeInstanceOf(
+      SessionPersistenceError
+    );
     expect(get(auth)).toEqual({ status: 'loading' });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).not.toHaveBeenCalled();
   });
