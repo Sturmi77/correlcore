@@ -26,7 +26,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   is enabled (R-04)** — `resolveOnboardingTags` previously returned early on
   `canUseOfflineSync()` alone, so first-entry suggestion chips never became
   tags. It now skips only when the device is actually offline.
-
+- **Web login Set-Cookie no longer dropped by the SvelteKit `/api` proxy** —
+  PR #468 moved upstream auth cookies onto `event.cookies` and stripped them
+  from the proxied `Response`. That handle never calls `resolve()`, so
+  SvelteKit ignores the cookie jar (sveltejs/kit#7611): `POST /auth/login`
+  returned 200 with no browser cookie, then `GET /auth/me` failed. Restore
+  multi-value `Set-Cookie` forwarding on the Response (ADR-0011).
 - **Landing-page login no longer mislabels a dropped session cookie as
   "wrong password"** (ADR-0040) — the web login is a two-step flow (`POST
 /auth/login` then `GET /auth/me`). When the HttpOnly session cookie did not

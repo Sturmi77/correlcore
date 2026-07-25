@@ -29,6 +29,16 @@ wurde mehrfach „gefixt" und kam immer zurück.
   → Das `Set-Cookie` wird in der Kette Nginx → SvelteKit-Proxy → API
   **weggeschnitten** (nicht vom Browser abgelehnt).
 
+  **Nachtrag (Root Cause im Web-Proxy):** PR #468 hatte Upstream-`Set-Cookie`
+  auf `event.cookies` umgebogen und vom proxied `Response` entfernt. Der
+  ADR-0011-Handle gibt aber eine custom `Response` zurück und ruft nie
+  `resolve()` auf — SvelteKit ignoriert die Cookie-Jar dann bewusst
+  ([sveltejs/kit#7611](https://github.com/sveltejs/kit/issues/7611)). Damit
+  kam `Set-Cookie` bereits **im Web-Container** nicht beim Browser an; der
+  Edge-Vertrag bleibt trotzdem erforderlich, war aber nicht die alleinige
+  Ursache des Live-Symptoms. Fix: `Set-Cookie` wieder 1:1 auf der Response
+  forwarden.
+
 ### Warum daraus „Passwort falsch" wurde
 
 Der Web-Login ist zweistufig (`apps/web/src/lib/stores/auth.ts`):
