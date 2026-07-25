@@ -587,8 +587,8 @@ async def test_assign_tags_replaces_set() -> None:
 
     # Sequence of execute() returns (in service-call order):
     #  1. _get_owned_entry → entry
-    #  2. visibility check  → list of (id,) rows for {keep, add}
-    #  3. current set       → list of (id,) rows for {keep, drop}
+    #  2. current set       → list of (id,) rows for {keep, drop}
+    #  3. visibility check  → list of (id,) rows for {keep, add}
     #  4. delete            → MagicMock (rowcount unused)
     #  5. final select      → scalars().all() with the new tags
     new_tags = [
@@ -601,8 +601,8 @@ async def test_assign_tags_replaces_set() -> None:
     db.execute = AsyncMock(
         side_effect=[
             _scalar_result(entry),
-            _all_result([(keep,), (add,)]),
             _all_result([(keep,), (drop,)]),
+            _all_result([(keep,), (add,)]),
             MagicMock(),  # delete
             _scalars_result(new_tags),
         ]
@@ -632,6 +632,7 @@ async def test_assign_tags_unknown_tag_raises() -> None:
     db.execute = AsyncMock(
         side_effect=[
             _scalar_result(entry),
+            _all_result([]),  # nothing currently linked
             _all_result([]),  # nothing visible
         ]
     )
@@ -642,6 +643,69 @@ async def test_assign_tags_unknown_tag_raises() -> None:
             user_id=user.id,
             entry_id=entry.id,
             tag_ids=[requested],
+        )
+
+
+@pytest.mark.asyncio
+async def test_assign_tags_keeps_already_linked_hidden_tag() -> None:
+    """Hide keeps historical entry_tags; re-save must not 422 on those IDs."""
+    user = make_user()
+    entry = make_entry(user)
+    hidden = uuid.uuid4()
+    active = uuid.uuid4()
+    kept = [
+        make_tag(user, slug="hidden", is_hidden=True),
+        make_tag(user, slug="active"),
+    ]
+    # Force ids to match the requested UUIDs for the final select stub.
+    kept[0].id = hidden
+    kept[1].id = active
+
+    db = MagicMock()
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(entry),
+            _all_result([(hidden,), (active,)]),  # current links
+            _all_result([(active,)]),  # only active is visible+not-hidden
+            _scalars_result(kept),
+        ]
+    )
+
+    out = await assign_tags_to_entry(
+        db,
+        user_id=user.id,
+        entry_id=entry.id,
+        tag_ids=[hidden, active],
+    )
+
+    assert out == kept
+    db.add.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_assign_tags_rejects_new_hidden_tag() -> None:
+    """Hidden tags must not be newly assigned — only retained if already linked."""
+    user = make_user()
+    entry = make_entry(user)
+    hidden = uuid.uuid4()
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(entry),
+            _all_result([]),  # entry has no links yet
+            _all_result([]),  # hidden tag filtered from visible set
+        ]
+    )
+
+    with pytest.raises(TagsNotFoundError):
+        await assign_tags_to_entry(
+            db,
+            user_id=user.id,
+            entry_id=entry.id,
+            tag_ids=[hidden],
         )
 
 

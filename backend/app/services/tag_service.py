@@ -525,16 +525,35 @@ async def assign_tags_to_entry(
     the new list are removed; tags new in the list are inserted. Tags
     already present are left untouched.
 
+    Hiding a tag keeps historical ``entry_tags`` links (see FRONTEND.md /
+    M3.5 tag lifecycle). Re-saving an entry that still carries those IDs
+    must succeed: pickers omit hidden tags for *new* assignments, but
+    ``list_tags_for_entry`` returns them so the client can round-trip the
+    existing set. Rejecting already-linked hidden IDs 422'd every edit and,
+    via offline sync, raised an uncaught error that aborted the whole push
+    batch so newer pending changes never acked.
+
     Raises:
         EntryNotFoundForTagError: entry not visible to the user.
         TagsNotFoundError: at least one of ``tag_ids`` is not visible to
-            the user (neither a default nor one of their custom tags).
+            the user (neither a default nor one of their custom tags) and
+            is not already linked on this entry.
     """
     await _get_owned_entry(db, entry_id=entry_id, user_id=user_id)
 
     target_ids = set(tag_ids)
 
-    # Validate all tag IDs are visible to the user. Defaults + own customs.
+    # Current links first — needed to allow already-linked hidden tags.
+    current = await db.execute(
+        select(EntryTag.tag_id).where(
+            EntryTag.entry_id == entry_id,
+            EntryTag.user_id == user_id,
+        )
+    )
+    current_ids = {row[0] for row in current.all()}
+
+    # New IDs must be visible and not hidden. IDs already on this entry may
+    # remain even when the tag was later hidden (historical retention).
     if target_ids:
         visible = await db.execute(
             select(Tag.id).where(
@@ -544,18 +563,10 @@ async def assign_tags_to_entry(
             )
         )
         visible_ids = {row[0] for row in visible.all()}
-        missing = target_ids - visible_ids
+        allowed_ids = visible_ids | (target_ids & current_ids)
+        missing = target_ids - allowed_ids
         if missing:
             raise TagsNotFoundError(f"unknown or inaccessible tag ids: {sorted(map(str, missing))}")
-
-    # Compute current set and the diff.
-    current = await db.execute(
-        select(EntryTag.tag_id).where(
-            EntryTag.entry_id == entry_id,
-            EntryTag.user_id == user_id,
-        )
-    )
-    current_ids = {row[0] for row in current.all()}
 
     to_add = target_ids - current_ids
     to_remove = current_ids - target_ids
