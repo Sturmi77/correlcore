@@ -940,14 +940,24 @@
       icon: tag.icon,
       color: tag.color,
     }));
-    const result = await completeOnboarding(tags);
-    onboardingMarkedComplete = true;
-    await refreshTags();
-    const createdIds = result.created_tags.map((tag) => tag.id);
-    return {
-      ...snap,
-      selectedTagIds: [...new Set([...snap.selectedTagIds, ...createdIds])],
-    };
+    // P1b residual: `serverReachable` can be stale `true`/`null` while the
+    // finalize call still fails (blip, 5xx). Swallow and defer so the Dexie
+    // write still runs; `handleOnline` / the next dirty pass retries.
+    try {
+      const result = await completeOnboarding(tags);
+      onboardingMarkedComplete = true;
+      await refreshTags();
+      const createdIds = result.created_tags.map((tag) => tag.id);
+      return {
+        ...snap,
+        selectedTagIds: [...new Set([...snap.selectedTagIds, ...createdIds])],
+      };
+    } catch (err) {
+      if (canUseOfflineSync()) {
+        return snap;
+      }
+      throw err;
+    }
   }
 
   function toggleOnboardingSuggestion(tag: TagSuggestion) {

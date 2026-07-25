@@ -1059,4 +1059,27 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
     expect(completeOnboarding).toHaveBeenCalledTimes(1);
     expect(saveEntryOffline).toHaveBeenCalledTimes(1);
   });
+
+  it('still saves the entry when finalize fails under a stale reachable flag (P1b)', async () => {
+    // Connectivity still says reachable (last probe succeeded) but the
+    // onboarding finalize call itself fails — without catch-and-defer the
+    // throw aborts persist() before saveEntryOffline.
+    connectivity.markServerReachable(true);
+    vi.mocked(completeOnboarding).mockRejectedValue(new Error('API blip'));
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'first entry despite finalize failure' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledTimes(1);
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+  });
 });
