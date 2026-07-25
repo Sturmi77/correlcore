@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from app.core.crypto import reset_current_user_dek, set_current_user_dek, unwrap_dek
 from app.db.session import AsyncSessionLocal, bind_rls_current_user
-from app.models.entry import Entry, EntrySlot, WorkContext
+from app.models.entry import Entry, EntrySlot, EntrySource, WorkContext
 from app.models.sync_conflict import SyncConflict
 from app.models.user_encryption_key import UserEncryptionKey
 from app.schemas.auth import RegisterRequest
@@ -164,6 +164,149 @@ async def test_merge_entry_upsert_rejects_date_invalid_at_client_edit_time(
         await _merge_entry_upsert(db, user_id=uuid.uuid4(), change=change)
 
     db.execute.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_resolve_sync_tag_ids_drops_deleted_keeps_visible_and_linked() -> None:
+    """Stale deleted tag IDs in the outbox must not reach assign_tags_to_entry.
+
+    Concrete trigger: offline entry still lists a custom tag that was deleted
+    online (cascade cleared entry_tags; Dexie was not pruned). Raising
+    TagsNotFoundError 500'd the push and the web client never acked.
+    """
+    from app.services.sync_service import _resolve_sync_tag_ids
+
+    user_id = uuid.uuid4()
+    entry_id = uuid.uuid4()
+    kept_visible = uuid.uuid4()
+    kept_linked_hidden = uuid.uuid4()
+    deleted = uuid.uuid4()
+
+    current_result = MagicMock()
+    current_result.all.return_value = [(kept_linked_hidden,)]
+    visible_result = MagicMock()
+    visible_result.all.return_value = [(kept_visible,)]
+
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[current_result, visible_result])
+
+    resolved = await _resolve_sync_tag_ids(
+        db,
+        user_id=user_id,
+        entry_id=entry_id,
+        tag_ids=[deleted, kept_visible, kept_linked_hidden, kept_visible],
+    )
+
+    assert resolved == [kept_visible, kept_linked_hidden]
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_resolve_sync_symptoms_drops_unknown_and_invalid_keys() -> None:
+    from app.services.sync_service import _resolve_sync_symptoms
+
+    user_id = uuid.uuid4()
+    entry_id = uuid.uuid4()
+    kept = uuid.uuid4()
+    deleted = uuid.uuid4()
+
+    visible_result = MagicMock()
+    visible_result.all.return_value = [(kept,)]
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=visible_result)
+
+    resolved = await _resolve_sync_symptoms(
+        db,
+        user_id=user_id,
+        entry_id=entry_id,
+        symptoms={str(kept): 2, str(deleted): 1, "not-a-uuid": 3},
+    )
+
+    assert resolved == {str(kept): 2}
+    db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_filters_deleted_tag_before_assign(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Client-wins update must assign only resolvable tag IDs."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    kept_tag = uuid.uuid4()
+    deleted_tag = uuid.uuid4()
+    older_server_ts = datetime(2026, 7, 20, 10, 0, tzinfo=UTC)
+    client_ts = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+
+    existing = Entry(
+        id=entry_id,
+        user_id=user_id,
+        entry_date=date(2026, 7, 24),
+        slot=EntrySlot.DAY,
+        mood_score=2,
+        energy=2,
+        stress=2,
+        cycle_day=None,
+        source=EntrySource.DIRECT,
+        work_context=WorkContext.HOMEOFFICE,
+        note_enc=None,
+        updated_at=older_server_ts,
+    )
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 4,
+            "energy": 3,
+            "stress": 2,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": "edited offline after tag delete",
+            "tag_ids": [str(kept_tag), str(deleted_tag)],
+            "symptoms": {},
+        },
+        updated_at=client_ts,
+    )
+
+    assign_tags = AsyncMock(return_value=[])
+    assign_symptoms = AsyncMock(return_value=[])
+    list_tags = AsyncMock(return_value=[])
+    list_symptoms = AsyncMock(return_value=[])
+    resolve_tags = AsyncMock(return_value=[kept_tag])
+    resolve_symptoms = AsyncMock(return_value={})
+
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", resolve_tags),
+        patch("app.services.sync_service._resolve_sync_symptoms", resolve_symptoms),
+        patch("app.services.sync_service.assign_tags_to_entry", assign_tags),
+        patch("app.services.sync_service.assign_symptoms_to_entry", assign_symptoms),
+        patch("app.services.sync_service.list_tags_for_entry", list_tags),
+        patch("app.services.sync_service.list_symptoms_for_entry", list_symptoms),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    resolve_tags.assert_awaited_once()
+    assign_tags.assert_awaited_once_with(
+        db, user_id=user_id, entry_id=entry_id, tag_ids=[kept_tag]
+    )
+    assert deleted_tag not in assign_tags.await_args.kwargs["tag_ids"]
 
 
 def test_revision_to_change_uses_user_rev() -> None:

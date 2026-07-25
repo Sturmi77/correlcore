@@ -10,6 +10,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Offline sync no longer wedges the outbox on deleted tag/symptom IDs** —
+  entry push still called `assign_tags_to_entry` /
+  `assign_symptoms_to_entry` with every client association ID. After a custom
+  tag or symptom was deleted (cascade clears server links; Dexie is not
+  pruned), those errors were uncaught → HTTP 500 and the web client never
+  acked the batch, blocking newer pending changes. Sync now drops
+  unknown/deleted (and newly-hidden) association IDs before assign; residual
+  assign errors map to 400.
 - **Re-saving an entry after hiding a linked tag no longer 422s** — hide keeps
   historical `entry_tags` (M3.5), and `list_tags_for_entry` still returns those
   IDs so the client can round-trip them, but `assign_tags_to_entry` rejected any
