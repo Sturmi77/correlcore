@@ -11,7 +11,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, NetworkError } from '$lib/api/client';
+import { ApiError, NetworkError, SessionPersistenceError } from '$lib/api/client';
 import { isCapacitorBuild } from '$lib/api/platform';
 import {
   mapApiError,
@@ -21,6 +21,7 @@ import {
   UPSTREAM_ERROR_KEY,
   SERVER_ERROR_KEY,
   VALIDATION_ERROR_KEY,
+  SESSION_ERROR_KEY,
   type ApiErrorMap,
 } from './error';
 
@@ -58,6 +59,14 @@ describe('mapApiError', () => {
     vi.mocked(isCapacitorBuild).mockReturnValue(true);
     const err = new NetworkError('/auth/login');
     expect(mapApiError(err, MAP)).toBe(NETWORK_ERROR_CAPACITOR_KEY);
+  });
+
+  it('maps SessionPersistenceError to SESSION_ERROR_KEY, not the 401 credential key', () => {
+    const err = new SessionPersistenceError('/auth/me');
+    // Even though the call-site map has a 401 → error_invalid entry, a
+    // cookie-persistence failure must never render as "wrong password".
+    expect(mapApiError(err, MAP)).toBe(SESSION_ERROR_KEY);
+    expect(SESSION_ERROR_KEY).toBe('error.session_not_persisted');
   });
 
   it('maps unmapped 502 to UPSTREAM_ERROR_KEY', () => {

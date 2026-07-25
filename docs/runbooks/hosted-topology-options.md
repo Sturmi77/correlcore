@@ -3,7 +3,8 @@
 Last updated: 2026-07-19  
 **Milestone:** M10.2  
 **Related:** [`hosted-cutover.md`](hosted-cutover.md) · [`hosted-nginx-edge.md`](hosted-nginx-edge.md) · [`hosted-smtp.md`](hosted-smtp.md)  
-**Auth constraint:** [ADR-0011](../adr/0011-web-internal-reverse-proxy.md) — browser talks **same-origin** `/api/v1`; web container proxies to API.
+**Auth constraint:** [ADR-0011](../adr/0011-web-internal-reverse-proxy.md) — browser talks **same-origin** `/api/v1`; web container proxies to API.  
+**Edge contract:** [ADR-0040](../adr/0040-selfhost-auth-edge-passthrough.md) — the edge does one-rule passthrough (all paths → web, `X-Forwarded-Proto: https`, `Set-Cookie` untouched). Whatever topology you pick, run `scripts/verify-auth-cookie.sh` after cutover.
 
 ## Short answers
 
@@ -62,7 +63,7 @@ Mail:  IONOS SMTP
 | Pros                                                           | Cons                                                                    |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Apex DNS can stay at IONOS                                     | IONOS must support reverse proxy to your NAS (public IP or tunnel)      |
-| Same-origin preserved if proxy forwards **all** `/` and `/api` | Misconfigured headers break cookies (`X-Forwarded-Proto`)               |
+| Same-origin preserved if proxy forwards **all** `/` and `/api` | Misconfigured headers break cookies (`X-Forwarded-Proto`); verify with `scripts/verify-auth-cookie.sh` (ADR-0040) |
 | SMTP stays IONOS                                               | You are **not** hosting CorrelCore HTML on IONOS Apache — only proxying |
 
 **Detail:**

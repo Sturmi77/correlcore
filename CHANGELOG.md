@@ -8,6 +8,34 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Landing-page login no longer mislabels a dropped session cookie as
+  "wrong password"** (ADR-0040) — the web login is a two-step flow (`POST
+  /auth/login` then `GET /auth/me`). When the HttpOnly session cookie did not
+  persist (edge/proxy misconfig), the store threw a bare `401` that the login
+  page rendered as "E-Mail oder Passwort ist falsch", sending every recurrence
+  down a dead-end credential hunt. It now throws a distinct
+  `SessionPersistenceError` mapped to a cookie/HTTPS-specific message
+  (`error.session_not_persisted`, de/en). The Capacitor/APK Bearer path is
+  unaffected.
+
+### Added
+
+- **Canonical hosted Nginx edge config** at `infra/nginx/` (ADR-0040) — a
+  one-rule passthrough server block plus a shared `correlcore-proxy-params.conf`
+  that **both** `location /` and `location /api/v1/auth/` include, so auth
+  requests can never be proxied differently from the rest of the app (the
+  divergence that silently drops the login `Set-Cookie`). Replaces the
+  hand-written example in `docs/runbooks/hosted-nginx-edge.md`.
+- **`scripts/verify-auth-cookie.sh`** — deploy-time self-test that confirms the
+  login cookie survives the edge (login 200 + `Set-Cookie` present + `/auth/me`
+  200) and pinpoints the failing hop otherwise. Wired into the hosted-edge
+  runbook "Done when" checklist.
+- **ADR-0040** — Self-Host-Auth-Edge decision: keep secure cookie auth by
+  default, make the edge contract trivial and self-verifying, and document an
+  opt-in Bearer fallback for genuinely cross-origin self-host topologies.
+
 ---
 
 ## [1.1.1] — 2026-07-24
