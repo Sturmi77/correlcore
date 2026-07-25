@@ -40,7 +40,7 @@
     "@sveltejs/kit": "^2.70.1",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
     "@tailwindcss/vite": "^4.3.3",
-    "@testing-library/svelte": "^5.0.0",
+    "@testing-library/svelte": "^5.4.2",
     "@types/node": "^22.0.0",
     "autoprefixer": "^10.4.0",
     "fake-indexeddb": "^6.2.5",
