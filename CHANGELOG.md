@@ -8,6 +8,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Docs
+
+- **Reverse-proxy edges now document the required large proxy buffers** — the
+  SvelteKit web container sends big response headers (adapter-node
+  `Link: rel=preload`), so an edge with the default `proxy_buffer_size` (4k/8k)
+  returns `502 Bad Gateway` (`upstream sent too big header`) even when the
+  forward, cert and headers are all correct. The shipped
+  `infra/nginx/correlcore.com.conf` now sets `proxy_buffer_size 32k` etc., and
+  `infra/nginx/README.md`, `docs/selfhost/INSTALL.md`, ADR-0040, the
+  hosted-nginx-edge / hosted-topology-options / hosted-cutover runbooks gained
+  the requirement plus a **Nginx Proxy Manager (NPM)** note (paste the buffer
+  lines into the Advanced field — never a full `server {}` block).
+
 ### Fixed
 
 - **Onboarding first-entry save no longer aborts when finalize fails under a

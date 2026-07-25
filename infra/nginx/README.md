@@ -25,8 +25,57 @@ The edge does only three things:
 2. Reverse-proxy **all** paths to `correlcore-web` (the web container owns `/api`
    routing and `Set-Cookie`, ADR-0011).
 3. Set `X-Forwarded-Proto: https`.
+4. **Raise the proxy header buffer** (see below) — the app sends large response
+   headers, and the default is too small.
 
 No per-path `/api` rule, no direct API routing, no `Set-Cookie` hiding/rewriting.
+
+## Required: large proxy buffers (else 502)
+
+The SvelteKit web container emits **large response headers** — adapter-node adds
+a `Link: …; rel=preload` header listing every JS/CSS chunk. nginx's default
+`proxy_buffer_size` (4k/8k) is too small, so the edge returns **502 Bad Gateway**
+and the error log shows:
+
+```
+upstream sent too big header while reading response header from upstream
+```
+
+`correlcore.com.conf` already sets adequate buffers. **Any** reverse proxy in
+front of the web container needs the equivalent:
+
+```nginx
+proxy_buffer_size       32k;
+proxy_buffers           8 32k;
+proxy_busy_buffers_size 64k;
+```
+
+This is topology-independent — it bites raw nginx, Nginx Proxy Manager (NPM),
+Caddy, Traefik, and Synology RP alike. See the **NPM** note below for where to
+put it there.
+
+## Nginx Proxy Manager (NPM)
+
+NPM is a very common self-host edge. You do **not** write a `server {}` block —
+NPM generates it. Configure the Proxy Host in the UI:
+
+- **Details:** Scheme `http`, Forward Hostname/IP = the web host, Forward Port =
+  the web port, **Websockets Support** on.
+- **SSL:** your certificate + **Force SSL**.
+- **Advanced → Custom Nginx Configuration:** paste **only** the buffer lines
+  (server-context directives — safe, no `location`/`server` block, no
+  "duplicate location"):
+
+  ```nginx
+  proxy_buffer_size       32k;
+  proxy_buffers           8 32k;
+  proxy_busy_buffers_size 64k;
+  ```
+
+Without those three lines NPM returns 502 (`upstream sent too big header`) even
+though the forward target is reachable. Do **not** paste a full `server {}`
+block into Advanced — NPM nests it inside its own server block and breaks nginx
+for every host.
 
 ## Self-contained — no snippet file
 

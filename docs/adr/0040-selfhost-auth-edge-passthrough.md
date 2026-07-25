@@ -76,11 +76,19 @@ Schrumpfung der Konfigurations-Angriffsfläche auf ~null behoben:
 
 1. **Ein-Regel-Edge-Kontrakt.** Der externe Proxy darf ausschließlich:
    (a) TLS terminieren, (b) **alle** Pfade an `correlcore-web` weiterreichen,
-   (c) `X-Forwarded-Proto: https` setzen. **Keine** Sonderregel für `/api`, kein
-   Direkt-Routing zur API, **kein** Umschreiben/Verstecken von `Set-Cookie`. Die
-   `/api`-Weiterleitung und das saubere `Set-Cookie` besitzt der Web-Container
-   (ADR-0011). Ein „dummer Passthrough" ist praktisch nicht falsch zu
-   konfigurieren.
+   (c) `X-Forwarded-Proto: https` setzen, (d) **die Proxy-Header-Puffer
+   vergrößern** (`proxy_buffer_size 32k; proxy_buffers 8 32k;`). **Keine**
+   Sonderregel für `/api`, kein Direkt-Routing zur API, **kein**
+   Umschreiben/Verstecken von `Set-Cookie`. Die `/api`-Weiterleitung und das
+   saubere `Set-Cookie` besitzt der Web-Container (ADR-0011). Ein „dummer
+   Passthrough" ist praktisch nicht falsch zu konfigurieren.
+
+   *Warum (d):* Der SvelteKit-Container (adapter-node) sendet große
+   Response-Header (`Link: rel=preload` für jeden JS/CSS-Chunk). Der
+   Default-`proxy_buffer_size` (4k/8k) ist zu klein → der Edge liefert
+   **502** mit `upstream sent too big header` im Error-Log — obwohl Ziel,
+   Cookie und Config sonst korrekt sind. Topologie-unabhängig (raw nginx, NPM,
+   Caddy, Traefik, Synology RP).
 
 2. **Kanonische Referenz-Config im Repo.** `infra/nginx/correlcore.com.conf` —
    **eine einzige, in sich geschlossene Datei ohne `include`-Snippet** (auch auf

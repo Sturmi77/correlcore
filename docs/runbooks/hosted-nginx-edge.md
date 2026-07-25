@@ -133,8 +133,24 @@ If Synology **Application Portal → Reverse Proxy** is used instead of raw Ngin
 | **Custom header** | `X-Forwarded-Proto` = `https` (**required** for Secure cookies) |
 | Custom header     | `X-Forwarded-For` / `X-Real-IP` as supported                    |
 
-### B.2 Pitfalls (Nginx / Synology)
+### B.2 Pitfalls (Nginx / Synology / NPM)
 
+- **`502 Bad Gateway` with `upstream sent too big header`** → the SvelteKit web
+  container sends large response headers (adapter-node `Link: rel=preload`), and
+  the reverse proxy's default `proxy_buffer_size` (4k/8k) is too small. The
+  forward target is reachable and the config otherwise correct — it is purely a
+  buffer size problem. **Raise the header buffer on every edge:**
+
+  ```nginx
+  proxy_buffer_size       32k;
+  proxy_buffers           8 32k;
+  proxy_busy_buffers_size 64k;
+  ```
+
+  The shipped `infra/nginx/correlcore.com.conf` already has this. On **Nginx
+  Proxy Manager (NPM)** paste exactly these three lines into the Proxy Host →
+  **Advanced** field (server-context directives — no `location`/`server` block).
+  Diagnose via the host error log: `tail /data/logs/proxy-host-*_error.log`.
 - **Separate auth `location` that omits the shared proxy params** → login returns
   200 but no `Set-Cookie` reaches the browser → the UI shows
   "E-Mail oder Passwort ist falsch" although the password was correct. Fix

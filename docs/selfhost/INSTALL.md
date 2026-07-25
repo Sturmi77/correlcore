@@ -280,6 +280,22 @@ localhost only and terminate TLS on the host proxy:
    `/api` is proxied to the same origin (SvelteKit proxies `/api/*` to the internal API — ADR-0011).
 3. Set `FRONTEND_BASE_URL` and `CORS_ORIGINS` to your public HTTPS origin.
 4. Set `COOKIE_SECURE=true` when serving over HTTPS.
+5. **Set `X-Forwarded-Proto: https`** on the proxied request (else `Secure`
+   cookies are dropped and login silently fails).
+6. **Raise the proxy header buffers** — the web container sends large response
+   headers (`Link: rel=preload`), and the default (4k/8k) is too small, causing
+   **`502 Bad Gateway` (`upstream sent too big header`)**:
+
+   ```nginx
+   proxy_buffer_size       32k;
+   proxy_buffers           8 32k;
+   proxy_busy_buffers_size 64k;
+   ```
+
+   With **Nginx Proxy Manager (NPM)**: put those three lines in the Proxy Host →
+   **Advanced** field (nothing else — no `server {}` block). Set the forward to
+   your web host + `${WEB_HOST_PORT}`, enable SSL + Force SSL + Websockets. See
+   [`../../infra/nginx/README.md`](../../infra/nginx/README.md).
 
 This avoids running a second Traefik inside Docker. **Do not run Compose Traefik on ports
 80/443 at the same time as a host Nginx** — one TLS edge only.
