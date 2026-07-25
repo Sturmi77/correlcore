@@ -1117,6 +1117,27 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
     expect(completeOnboarding).toHaveBeenCalledTimes(2);
   });
 
+  it('does not autosave/finalize on reachability recovery without a prior deferral', async () => {
+    // Offline boot leaves serverReachable=false; when the API returns, a bare
+    // false→true must not markDirty an untouched onboarding form — that would
+    // create a default first entry and completeOnboarding([]) before the user
+    // picks suggestion chips (later picks are then ignored).
+    connectivity.markServerReachable(false);
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    connectivity.markServerReachable(true);
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).not.toHaveBeenCalled();
+    expect(saveEntryOffline).not.toHaveBeenCalled();
+  });
+
   it('keeps the created onboarding tags when the catalogue refresh fails (P2)', async () => {
     // completeOnboarding succeeds and creates the tag, but the follow-up
     // refreshTags fails. The created associations must still land on the entry.

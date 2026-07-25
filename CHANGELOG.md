@@ -10,6 +10,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Onboarding reachability retry no longer finalizes an untouched first
+  entry** — `#538` retried deferred `completeOnboarding` whenever
+  `serverReachable` recovered while onboarding was still incomplete. A bare
+  false→true (offline boot then API returns, or a sync blip) called
+  `markDirty()` with no prior deferral, autosaved a default first entry, and
+  ran `completeOnboarding([])`, so later suggestion-chip picks were ignored.
+  Retries now require an explicit finalize deferral from a prior save.
 - **Onboarding first-entry save no longer aborts when finalize fails under a
   stale reachable flag (P1b residual)** — `#536` deferred `completeOnboarding`
   when `serverReachable === false`, but a stale `true`/`null` plus a failed
