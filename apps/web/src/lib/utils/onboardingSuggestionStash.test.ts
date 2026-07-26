@@ -37,11 +37,21 @@ describe('onboardingSuggestionStash', () => {
     expect(readOnboardingSuggestionStash('user-b')).toBeNull();
   });
 
-  it('clears one user without touching another', () => {
+  it('treats toggle-only stashes as non-deferred for the gate helper', () => {
     writeOnboardingSuggestionStash({
       userId: 'user-a',
       suggestions: [suggestion],
       finalizeDeferred: false,
+    });
+    expect(readOnboardingSuggestionStash('user-a')?.finalizeDeferred).toBe(false);
+    expect(hasOnboardingSuggestionStash('user-a')).toBe(false);
+  });
+
+  it('clears one user without touching another', () => {
+    writeOnboardingSuggestionStash({
+      userId: 'user-a',
+      suggestions: [suggestion],
+      finalizeDeferred: true,
     });
     writeOnboardingSuggestionStash({
       userId: 'user-b',
@@ -68,7 +78,7 @@ describe('onboardingSuggestionStash', () => {
 
     clearAllOnboardingSuggestionStashes();
     expect(hasOnboardingSuggestionStash('user-a')).toBe(false);
-    expect(hasOnboardingSuggestionStash('user-b')).toBe(false);
+    expect(readOnboardingSuggestionStash('user-b')).toBeNull();
   });
 
   it('ignores corrupt payloads', () => {

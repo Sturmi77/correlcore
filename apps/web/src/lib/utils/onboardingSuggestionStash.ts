@@ -27,13 +27,14 @@ function canUseSessionStorage(): boolean {
   return typeof sessionStorage !== 'undefined';
 }
 
+/**
+ * True when a deferred finalize stash exists (offline/failed completeOnboarding
+ * awaiting retry). Toggle-only stashes (`finalizeDeferred: false`) do not count —
+ * those must not re-open the onboarding chip gate after entry_count > 0.
+ */
 export function hasOnboardingSuggestionStash(userId: string): boolean {
-  if (!userId || !canUseSessionStorage()) return false;
-  try {
-    return sessionStorage.getItem(storageKey(userId)) != null;
-  } catch {
-    return false;
-  }
+  const stash = readOnboardingSuggestionStash(userId);
+  return stash?.finalizeDeferred === true;
 }
 
 export function readOnboardingSuggestionStash(userId: string): OnboardingSuggestionStash | null {

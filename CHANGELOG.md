@@ -23,6 +23,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Onboarding stash survives until the entry tag save succeeds** — `#553`
+  cleared the deferred suggestion stash inside `resolveOnboardingTags` as soon
+  as `completeOnboarding` returned. That API flips
+  `onboarding_retro_completed` before `saveEntryOffline` /
+  `assignTagsToEntry` runs; a post-finalize save failure plus sheet close then
+  hid chips forever (prefs looked finished, stash gone) while the first entry
+  never received the suggestion tags. Stash clear now waits for a successful
+  persist; a deferred stash re-opens the chip gate even when prefs already
+  show onboarding completed; toggle-only stashes no longer count as deferred.
 - **Deferred onboarding suggestion picks survive EntryForm unmount** — offline
   (or failed) `completeOnboarding` left picks only in an in-memory Map. Closing
   the bottom sheet destroyed the form; after the first entry synced,
