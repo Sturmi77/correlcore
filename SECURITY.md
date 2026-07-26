@@ -11,7 +11,7 @@
 
 **Please do not open public GitHub issues for security vulnerabilities.**
 
-Report to: **security@correlcore.app** (or contact the maintainer directly)
+Report to: **security@correlcore.com** (or contact the maintainer directly)
 
 Include:
 

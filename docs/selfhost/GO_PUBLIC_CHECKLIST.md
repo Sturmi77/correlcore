@@ -20,7 +20,7 @@ announcing **v1.0.0** (final tag in M10 Sprint 6).
 | ---- | -------------------------------------------------------------------------------- | ---------- |
 | 1    | CHANGELOG `[1.0.0]` section complete                                             | Maintainer |
 | 2    | Package manifests show `1.0.0-rc.1` (rc) / `1.0.0` (final) + `AGPL-3.0-or-later` | Maintainer |
-| 3    | `security@correlcore.app` mailbox monitored (72h SLA per SECURITY.md)            | Maintainer |
+| 3    | `security@correlcore.com` mailbox monitored (72h SLA per SECURITY.md)            | Maintainer |
 | 4    | GitHub Pages docs site live                                                      | CI         |
 | 5    | Container images published (GHCR public; Docker Hub optional)                    | CI         |
 
@@ -130,11 +130,11 @@ docker buildx imagetools inspect ghcr.io/sturmi77/correlcore-api:v1.0.0
 
 ## Security contact verification
 
-[`SECURITY.md`](../../SECURITY.md) lists **security@correlcore.app**.
+[`SECURITY.md`](../../SECURITY.md) lists **security@correlcore.com**.
 
 Before announcing v1.0.0:
 
-1. Send a test message to `security@correlcore.app` from an external mailbox
+1. Send a test message to `security@correlcore.com` from an external mailbox
 2. Confirm delivery and 72h response process
 3. Update Impressum/operator contact if forwarding differs per instance
 

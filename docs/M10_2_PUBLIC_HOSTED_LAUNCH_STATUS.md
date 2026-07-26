@@ -1,10 +1,18 @@
 # M10.2 Sprint Status — Public Hosted Launch
 
-Last updated: 2026-07-19  
+Last updated: 2026-07-26  
 Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)  
 Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
 Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)
+
+> **Update 2026-07-26 — Cutover erfolgt.** Der öffentliche Betrieb auf
+> `correlcore.com` ist live (Edge-/Auth-Cookie-/Nginx-Fixes #526/#527/#531/#540,
+> Landing #510/#512). Verbleibende Punkte, Entscheidungen und Reihenfolge stehen
+> gebündelt in [`proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md`](proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md).
+> Noch offen: #461 (SMTP/Mailpit verifizieren + aus Hosted entfernen), #462
+> (Hosted-Impressum/Legal + Domain-Doku-Sync), #464 (`nas-to-vps.md`). #463
+> (Landing APK-CTA) ist erledigt.
 
 ## Overall
 
@@ -14,10 +22,10 @@ Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topolo
 | Sprint 1 — DNS + Nginx     | **Repo done**; live ops via combined cutover                              |
 | Sprint 2 — SMTP            | **Repo done** (SMTP + cutover runbooks); live ops same window as S1       |
 | Topology decision (A/B/H)  | **Pending maintainer**                                                    |
-| Sprint 3 — Landing / Legal | Pending — see backlog                                                     |
-| Sprint 4 — APK             | Pending (blocked on #429)                                                 |
-| Sprint 5 — Closeout        | Pending                                                                   |
-| Exit criteria              | Not met                                                                   |
+| Sprint 3 — Landing / Legal | **Landing live**; Legal-Content + Domain-Doku offen (#462)                |
+| Sprint 4 — APK             | **APK-CTA done** (#463); Signing-Ops (#429) separat                       |
+| Sprint 5 — Closeout        | Pending — `nas-to-vps.md` (#464) + Milestone-Close                        |
+| Exit criteria              | **Teilweise erfüllt** — Cutover live; offen: #461/#462/#464               |
 
 **Maintainer next step:**
 
