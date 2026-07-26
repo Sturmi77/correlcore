@@ -1059,7 +1059,12 @@ async def record_entry_upsert_revision(
     Sync push already logs after merge; call this from REST create/update and
     association replace-set paths so incremental pull (``since`` set) sees
     online writes after the client's cursor has advanced past initial backfill.
+
+    The per-user revision counter is locked *before* association reads so a
+    concurrent REST mutation cannot commit a newer revision between the
+    snapshot and this append (stale higher ``user_rev`` would win on pull).
     """
+    await _get_or_create_user_revision(db, user_id=user_id)
     tag_ids = [tag.id for tag in await list_tags_for_entry(db, user_id=user_id, entry_id=entry.id)]
     symptoms = _symptoms_map(await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id))
     entity_updated_at = (

@@ -417,13 +417,33 @@ async def test_record_entry_upsert_revision_appends_log_without_note(
     entry = make_entry(user, mood_score=4, note="secret note")
     db = MagicMock()
     append = AsyncMock(return_value=7)
+    order: list[str] = []
+
+    async def lock_side(*_args: object, **_kwargs: object) -> MagicMock:
+        order.append("lock")
+        return MagicMock()
+
+    async def list_tags_side(*_args: object, **_kwargs: object) -> list:
+        order.append("tags")
+        return []
+
+    async def list_symptoms_side(*_args: object, **_kwargs: object) -> list:
+        order.append("symptoms")
+        return []
+
     monkeypatch.setattr(sync_service, "_append_revision_log", append)
-    monkeypatch.setattr(sync_service, "list_tags_for_entry", AsyncMock(return_value=[]))
-    monkeypatch.setattr(sync_service, "list_symptoms_for_entry", AsyncMock(return_value=[]))
+    monkeypatch.setattr(sync_service, "_get_or_create_user_revision", AsyncMock(side_effect=lock_side))
+    monkeypatch.setattr(sync_service, "list_tags_for_entry", AsyncMock(side_effect=list_tags_side))
+    monkeypatch.setattr(
+        sync_service, "list_symptoms_for_entry", AsyncMock(side_effect=list_symptoms_side)
+    )
 
     rev = await sync_service.record_entry_upsert_revision(db, user_id=user.id, entry=entry)
 
     assert rev == 7
+    # Lock before association reads so concurrent REST writes cannot insert a
+    # newer revision between snapshot and append.
+    assert order[:3] == ["lock", "tags", "symptoms"]
     append.assert_awaited_once()
     kwargs = append.await_args.kwargs
     assert kwargs["entity_type"] == "entry"

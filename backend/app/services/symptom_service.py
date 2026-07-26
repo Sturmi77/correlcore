@@ -29,6 +29,7 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
@@ -314,9 +315,13 @@ async def assign_symptoms_to_entry(
         if it changed.
       * Symptoms whose ID is missing from the new list are deleted.
 
-    When ``record_revision`` is true (REST default), emit an entry upsert
-    into ``sync_revision_log`` so offline pull sees association changes.
-    Sync push passes false because it appends its own revision after merge.
+    When ``record_revision`` is true (REST default), bump ``entry.updated_at``
+    and emit an entry upsert into ``sync_revision_log`` so offline pull and
+    LWW see association changes. Link-table writes alone do not fire the
+    entries ``updated_at`` trigger; without a bump, a later offline push
+    with a newer client timestamp can LWW-overwrite the fresher symptoms.
+    Sync push passes false because it already sets ``updated_at`` from the
+    client and appends its own revision after merge.
 
     Raises:
         EntryNotFoundForSymptomError: entry not visible to the user.
@@ -383,9 +388,14 @@ async def assign_symptoms_to_entry(
             )
         )
 
+    associations_changed = bool(to_add or to_remove or intensity_updates)
+    if record_revision and associations_changed:
+        # Advance LWW timestamp before the revision snapshot is taken.
+        entry.updated_at = datetime.now(UTC)
+
     await db.flush()
 
-    if record_revision and (to_add or to_remove or intensity_updates):
+    if record_revision and associations_changed:
         from app.services.sync_service import record_entry_upsert_revision
 
         await record_entry_upsert_revision(db, user_id=user_id, entry=entry)

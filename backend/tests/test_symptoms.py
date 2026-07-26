@@ -354,11 +354,15 @@ async def test_list_symptoms_unknown_entry_raises() -> None:
 
 
 @pytest.mark.asyncio
-async def test_assign_symptoms_replaces_set() -> None:
+async def test_assign_symptoms_replaces_set(rest_revision_recorders) -> None:
     """Replace semantics: ids not in payload are deleted, new ids
     inserted, common ids with changed intensity updated."""
+    from datetime import UTC, datetime, timedelta
+
     user = make_user()
     entry = make_entry(user)
+    prior_updated_at = datetime.now(UTC) - timedelta(hours=1)
+    entry.updated_at = prior_updated_at
     sid_headache = uuid.uuid4()
     sid_cold = uuid.uuid4()
     sid_fatigue = uuid.uuid4()
@@ -403,6 +407,8 @@ async def test_assign_symptoms_replaces_set() -> None:
     assert added_arg.intensity == 2
     # Existing headache row had intensity overwritten in place.
     assert existing[0].intensity == 3
+    rest_revision_recorders["entry"].assert_awaited_once()
+    assert entry.updated_at > prior_updated_at
 
 
 @pytest.mark.asyncio
