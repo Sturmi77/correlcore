@@ -33,6 +33,7 @@ All DB calls are mocked.
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -280,6 +281,7 @@ async def test_update_default_tag_copies_include_in_analytics_into_override() ->
         side_effect=[
             _scalar_result(default),
             _scalar_result(None),
+            _all_result([]),  # no entry_tags linked to the default
             _rowcount_result(0),
             _rowcount_result(0),
         ]
@@ -427,6 +429,7 @@ async def test_update_default_tag_creates_user_override() -> None:
         side_effect=[
             _scalar_result(default),
             _scalar_result(None),
+            _all_result([]),
             _rowcount_result(0),
             _rowcount_result(2),
         ]
@@ -469,6 +472,7 @@ async def test_update_default_tag_partial_habit_patch_uses_existing_target() -> 
         side_effect=[
             _scalar_result(default),
             _scalar_result(None),
+            _all_result([]),
             _rowcount_result(0),
             _rowcount_result(0),
         ]
@@ -518,6 +522,7 @@ async def test_update_default_tag_reuses_existing_user_override() -> None:
         side_effect=[
             _scalar_result(default),
             _scalar_result(override),
+            _all_result([]),
             _rowcount_result(1),
             _rowcount_result(3),
         ]
@@ -560,6 +565,45 @@ async def test_remap_entry_tags_from_default_to_override() -> None:
 
 
 @pytest.mark.asyncio
+async def test_update_default_tag_emits_entry_revisions_for_remapped_links(
+    rest_revision_recorders,
+) -> None:
+    """Default→override remap must publish entry upserts for offline pull."""
+    user = make_user()
+    default = make_tag(slug="sport", name="Sport", is_default=True)
+    override = make_tag(user, slug="sport", name="My Sport")
+    entry = make_entry(user)
+    prior_updated_at = datetime.now(UTC) - timedelta(hours=2)
+    entry.updated_at = prior_updated_at
+    db = MagicMock()
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(default),
+            _scalar_result(override),
+            _all_result([(entry.id,)]),
+            _rowcount_result(0),
+            _rowcount_result(1),
+            _scalars_result([entry]),
+        ]
+    )
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=default.id,
+        payload=TagUpdate(name="Training"),
+    )
+
+    assert out is override
+    rest_revision_recorders["entry"].assert_awaited_once()
+    assert rest_revision_recorders["entry"].await_args.kwargs["entry"] is entry
+    assert entry.updated_at > prior_updated_at
+    rest_revision_recorders["tag"].assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_delete_custom_tag_calls_db_delete() -> None:
     user = make_user()
     tag = make_tag(user, slug="x", name="X")
@@ -584,6 +628,8 @@ async def test_assign_tags_replaces_set(rest_revision_recorders) -> None:
     """Replace semantics: missing tags get removed, new tags inserted."""
     user = make_user()
     entry = make_entry(user)
+    prior_updated_at = datetime.now(UTC) - timedelta(hours=1)
+    entry.updated_at = prior_updated_at
     keep = uuid.uuid4()
     add = uuid.uuid4()
     drop = uuid.uuid4()
@@ -624,6 +670,8 @@ async def test_assign_tags_replaces_set(rest_revision_recorders) -> None:
     # Exactly one EntryTag added (for `add`); `keep` is unchanged.
     assert db.add.call_count == 1
     rest_revision_recorders["entry"].assert_awaited_once()
+    # Link-table writes must advance entry.updated_at for LWW.
+    assert entry.updated_at > prior_updated_at
 
 
 @pytest.mark.asyncio
@@ -631,6 +679,7 @@ async def test_assign_tags_sync_path_skips_revision(rest_revision_recorders) -> 
     """Sync push logs its own revision; assign must not double-append."""
     user = make_user()
     entry = make_entry(user)
+    prior_updated_at = entry.updated_at
     add = uuid.uuid4()
     db = MagicMock()
     db.add = MagicMock()
@@ -653,6 +702,8 @@ async def test_assign_tags_sync_path_skips_revision(rest_revision_recorders) -> 
     )
 
     rest_revision_recorders["entry"].assert_not_awaited()
+    # Sync path already set client_ts; do not overwrite with server now.
+    assert entry.updated_at == prior_updated_at
 
 
 @pytest.mark.asyncio

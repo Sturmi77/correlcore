@@ -28,6 +28,7 @@ import logging
 import uuid
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime
 
 from sqlalchemy import delete, exists, select, update
 from sqlalchemy.exc import IntegrityError
@@ -456,7 +457,15 @@ async def update_custom_tag(
             select(Tag).where(Tag.is_default.is_(True), Tag.slug == tag.slug)
         )
         default_source = default_result.scalar_one_or_none()
-    if default_source is not None:
+    remapped_entry_ids: set[uuid.UUID] = set()
+    if default_source is not None and default_source.is_default:
+        linked = await db.execute(
+            select(EntryTag.entry_id).where(
+                EntryTag.user_id == user_id,
+                EntryTag.tag_id == default_source.id,
+            )
+        )
+        remapped_entry_ids = {row[0] for row in linked.all()}
         await remap_entry_tags_from_default_to_override(
             db,
             user_id=user_id,
@@ -464,7 +473,22 @@ async def update_custom_tag(
             override_tag_id=tag.id,
         )
 
-    from app.services.sync_service import record_tag_revision
+    from app.services.sync_service import record_entry_upsert_revision, record_tag_revision
+
+    # Remapped entry_tags must appear in incremental pull; otherwise offline
+    # clients keep the default tag id and a later save can push it back.
+    if remapped_entry_ids:
+        now = datetime.now(UTC)
+        entries_result = await db.execute(
+            select(Entry).where(
+                Entry.user_id == user_id,
+                Entry.id.in_(remapped_entry_ids),
+            )
+        )
+        for entry in entries_result.scalars().all():
+            entry.updated_at = now
+            await db.flush()
+            await record_entry_upsert_revision(db, user_id=user_id, entry=entry)
 
     await record_tag_revision(db, user_id=user_id, tag_id=tag.id, operation="upsert", tag=tag)
 
@@ -546,9 +570,13 @@ async def assign_tags_to_entry(
     via offline sync, raised an uncaught error that aborted the whole push
     batch so newer pending changes never acked.
 
-    When ``record_revision`` is true (REST default), emit an entry upsert
-    into ``sync_revision_log`` so offline pull sees association changes.
-    Sync push passes false because it appends its own revision after merge.
+    When ``record_revision`` is true (REST default), bump ``entry.updated_at``
+    and emit an entry upsert into ``sync_revision_log`` so offline pull and
+    LWW see association changes. Link-table writes alone do not fire the
+    entries ``updated_at`` trigger; without a bump, a later offline push
+    with a newer client timestamp can LWW-overwrite the fresher tags.
+    Sync push passes false because it already sets ``updated_at`` from the
+    client and appends its own revision after merge.
 
     Raises:
         EntryNotFoundForTagError: entry not visible to the user.
@@ -587,6 +615,7 @@ async def assign_tags_to_entry(
 
     to_add = target_ids - current_ids
     to_remove = current_ids - target_ids
+    associations_changed = bool(to_add or to_remove)
 
     if to_remove:
         await db.execute(
@@ -600,9 +629,13 @@ async def assign_tags_to_entry(
     for tid in to_add:
         db.add(EntryTag(entry_id=entry_id, tag_id=tid, user_id=user_id))
 
+    if record_revision and associations_changed:
+        # Advance LWW timestamp before the revision snapshot is taken.
+        entry.updated_at = datetime.now(UTC)
+
     await db.flush()
 
-    if record_revision and (to_add or to_remove):
+    if record_revision and associations_changed:
         from app.services.sync_service import record_entry_upsert_revision
 
         await record_entry_upsert_revision(db, user_id=user_id, entry=entry)

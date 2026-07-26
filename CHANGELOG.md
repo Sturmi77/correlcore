@@ -42,6 +42,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   session (same `SessionPersistenceError` as login); the verify page
   surfaces a dedicated "email verified — session not saved → sign in"
   state.
+- **REST tag/symptom assignment now advances entry LWW timestamps** — `#549`
+  logged association replace-sets into `sync_revision_log`, but link-table
+  writes never bumped `entries.updated_at`. An offline edit stamped after the
+  old scalar timestamp could still LWW-win on push and wipe fresher
+  server-side tags/symptoms. REST assign paths now set `entry.updated_at`
+  before recording the revision; revision snapshots lock the per-user
+  counter before reading associations; default-tag remaps emit entry
+  revisions for remapped links.
 - **Onboarding reachability retry no longer finalizes an untouched first
   entry** — `#538` retried deferred `completeOnboarding` whenever
   `serverReachable` recovered while onboarding was still incomplete. A bare
