@@ -100,13 +100,32 @@
     return hit ? hit.intensity : null;
   }
 
+  /**
+   * Backend contract: intensity 0 = absent, ≥1 = present (analytics use
+   * ``intensity > 0``). A persisted intensity-0 row must not read as present.
+   */
+  function isPresentIntensity(intensity: number | null): boolean {
+    return intensity !== null && intensity > 0;
+  }
+
   function toggleSymptom(symptomId: string) {
     if (disabled) return;
     const current = getIntensity(symptomId, selected);
 
     // Present → remove it.
-    if (current !== null) {
+    if (isPresentIntensity(current)) {
       selected = selected.filter((s) => s.symptom_id !== symptomId);
+      return;
+    }
+
+    // Legacy intensity 0 means absent but still occupies a row. First click
+    // must mark present (upgrade in place) — not delete the row.
+    if (current === 0) {
+      selected = selected.map((s) =>
+        s.symptom_id === symptomId
+          ? { symptom_id: symptomId, intensity: SYMPTOM_PRESENT_INTENSITY }
+          : s
+      );
       return;
     }
 
@@ -226,7 +245,8 @@
   {#if list.length > 0}
     <ul class="symptom-list">
       {#each list as symptom (symptom.id)}
-        {@const present = getIntensity(symptom.id, selected) !== null}
+        {@const current = getIntensity(symptom.id, selected)}
+        {@const present = isPresentIntensity(current)}
         {@const name = displayName(symptom, $_)}
         <li class="symptom-row">
           <fieldset class="symptom-fieldset" {disabled}>
@@ -245,7 +265,7 @@
               aria-pressed={present}
               data-testid="symptom-toggle"
               aria-label={$_('symptom.present_toggle', { values: { name } })}
-              disabled={disabled || (!present && atLimit)}
+              disabled={disabled || (!present && atLimit && current !== 0)}
               on:click={() => toggleSymptom(symptom.id)}
             >
               {present ? $_('symptom.present_on') : $_('symptom.present_off')}
