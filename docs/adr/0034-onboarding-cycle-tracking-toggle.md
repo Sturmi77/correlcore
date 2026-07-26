@@ -32,6 +32,14 @@ the toggle live?
 
 ## Decision
 
+> **Implemented behavior (2026-07-26) overrides §1 below.** The shipped Stage 1
+> reverses the default: cycle tracking is **on by default (opt-out)**, not
+> opt-in. The onboarding step is the **last** screen of the sequence (not step 3)
+> and shows a single checkbox “Enable cycle function”, **checked by default**;
+> `cycle_tracking_enabled` server-defaults to `true`. Sections §1 and its
+> `= false` default are the original opt-in proposal, kept for history. §2–§3
+> (Settings availability, toggle UI scope: `cycle_day` field) are as-built.
+
 ### 1. Onboarding placement
 
 A dedicated step is added to the existing onboarding wizard **after** the

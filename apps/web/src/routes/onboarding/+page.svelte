@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
   import Button from '$lib/components/common/Button.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
@@ -37,9 +38,15 @@
   let loading = true;
   let busy = false;
   let error = '';
+  let customError = '';
   const customCategories = TAG_CATEGORIES;
 
   $: selectedTags = [...selected.values()];
+  // Custom picks are not part of any suggestion group, so render them as their
+  // own removable chip row — otherwise a wrong custom tag cannot be undone
+  // without reloading the wizard.
+  $: suggestionSlugs = new Set(groups.flatMap((g) => g.suggestions.map((s) => s.slug)));
+  $: customSelected = selectedTags.filter((tag) => !suggestionSlugs.has(tag.slug));
   $: showSummaryStep = !shouldSkipOnboardingSummary(selectedTags.length);
   // Cycle is always the last screen; the summary only appears with > 3 tags.
   $: steps = [
@@ -56,10 +63,14 @@
   $: isLastStep = stepIndex === steps.length - 1;
   $: progressLabel = `${stepIndex + 1}/${steps.length}`;
 
+  // Settings → Developer opens `/onboarding?preview=1` in an iframe to preview
+  // the wizard; keep that bypass working even for already-onboarded users.
+  const previewMode = get(page).url.searchParams.get('preview') === '1';
+
   onMount(async () => {
     try {
       const preferences = await fetchUserPreferences();
-      if (preferences.onboarding_retro_completed) {
+      if (!previewMode && preferences.onboarding_retro_completed) {
         await goto('/');
         return;
       }
@@ -91,6 +102,13 @@
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 64);
+    // The backend tag slug requires min_length 2; a single-character or
+    // all-non-ASCII name would otherwise 422 the whole completion. Reject early.
+    if (slug.length < 2) {
+      customError = $_('onboarding.guided.custom_invalid');
+      return;
+    }
+    customError = '';
     selected = new Map(selected).set(slug, {
       slug,
       name,
@@ -125,11 +143,15 @@
     busy = true;
     error = '';
     try {
-      await completeOnboarding(tags);
+      // Persist the onboarding choices BEFORE the completion flag: otherwise a
+      // failed preferences PATCH after a successful completeOnboarding() would
+      // leave onboarding marked complete with the cycle/maturity choice lost and
+      // no way back to this step. completeOnboarding is the atomic commit point.
       await updateUserPreferences({
         cycle_tracking_enabled: cycleEnabled,
         onboarding_maturity_intro_seen: true,
       });
+      await completeOnboarding(tags);
       await goto(OPEN_ENTRY_HOME_PATH);
     } catch (err) {
       // Offline-first fallback: stash the picks so the first entry sheet can
@@ -212,6 +234,21 @@
           </div>
         {/if}
 
+        {#if customSelected.length}
+          <div class="onboarding-flow__chips" data-testid="onboarding-custom-tags">
+            {#each customSelected as tag}
+              <button
+                type="button"
+                class="active"
+                aria-pressed="true"
+                on:click={() => toggleSuggestion(tag)}
+              >
+                {tag.name} ✕
+              </button>
+            {/each}
+          </div>
+        {/if}
+
         <div class="onboarding-flow__custom">
           <input
             class="input"
@@ -227,6 +264,9 @@
             {$_('onboarding.guided.add_tag')}
           </Button>
         </div>
+        {#if customError}
+          <p class="onboarding-flow__custom-error" role="alert">{customError}</p>
+        {/if}
       {:else if currentStep === 'summary'}
         <h2>{$_('onboarding.guided.summary_title')}</h2>
         <p>{$_('onboarding.guided.summary_body', { values: { count: selectedTags.length } })}</p>
@@ -337,5 +377,10 @@
   .onboarding-flow__chips--summary {
     flex-wrap: wrap;
     overflow: visible;
+  }
+
+  .onboarding-flow__custom-error {
+    color: var(--color-error);
+    font-size: var(--text-sm);
   }
 </style>

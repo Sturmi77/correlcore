@@ -102,7 +102,13 @@
         hasDeferredSuggestionStash: hasStash,
       });
     } catch {
-      onboardingTags = false;
+      // Offline / API blip: preferences+summary rejected, but a deferred
+      // suggestion stash (offline wizard finish) must still enable the entry's
+      // deferred-finalize path — otherwise the first entry saves with onboarding
+      // left incomplete. Read the stash independently of the API.
+      const state = get(auth);
+      const userId = state.status === 'authenticated' ? state.user.id : null;
+      onboardingTags = userId ? hasOnboardingSuggestionStash(userId) : false;
     }
     openEntrySheet(date, { onboardingTags });
     stripOpenEntryQuery();
@@ -111,15 +117,17 @@
   async function loadProfileDefault(): Promise<void> {
     if (profileLoaded || get(auth).status !== 'authenticated') return;
     profileLoaded = true;
-    try {
-      const [profile, preferences] = await Promise.all([
-        fetchUserProfile(),
-        fetchUserPreferences(),
-      ]);
-      workContextTypical = profile.work_context_typical ?? null;
-      cycleTrackingEnabled = preferences.cycle_tracking_enabled;
-    } catch {
-      workContextTypical = null;
+    // allSettled: a transient /user/preferences failure must not discard a
+    // successfully loaded work-context profile default (and vice versa).
+    const [profileRes, prefRes] = await Promise.allSettled([
+      fetchUserProfile(),
+      fetchUserPreferences(),
+    ]);
+    if (profileRes.status === 'fulfilled') {
+      workContextTypical = profileRes.value.work_context_typical ?? null;
+    }
+    if (prefRes.status === 'fulfilled') {
+      cycleTrackingEnabled = prefRes.value.cycle_tracking_enabled;
     }
   }
 

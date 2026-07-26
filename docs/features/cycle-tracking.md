@@ -47,10 +47,13 @@ CycleSnapshot (derived, insight-engine-internal)
   └─ cycle_number, phase, day_in_cycle, next_period_window (±2 days)
 ```
 
-## Opt-in Toggle
+## Opt-out Toggle
 
-Cycle tracking is **off by default**. Users activate it during onboarding
-(Step 3) or at any time via **Settings → Tracking → Cycle tracking**.
+As shipped (Stage 1, 2026-07-26), cycle tracking is **on by default (opt-out)**:
+`cycle_tracking_enabled` server-defaults to `true`. Users can turn it **off** on
+the last onboarding screen, or at any time via **Settings → Cycle**. When off,
+the `cycle_day` entry field is hidden. (The original ADR-0034 §1 proposed opt-in
+/ default-off; the implemented reversal is recorded in that ADR's Decision note.)
 
 See ADR-0034 for the full toggle specification, including what is shown/hidden
 and the Settings-level deletion path.

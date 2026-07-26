@@ -1201,6 +1201,7 @@
       "tags_body": "Start with a small set. Free-text tags are always available.",
       "habit_hint": "Tags like Walk or Meditation can later be marked as build or reduce habits under Settings → Tags to track adherence in Trends.",
       "custom": "Custom tag",
+      "custom_invalid": "Please choose a slightly longer name (at least 2 letters or digits).",
       "add_tag": "Add tag",
       "summary_title": "Ready to start",
       "summary_body": "{count} tags selected.",

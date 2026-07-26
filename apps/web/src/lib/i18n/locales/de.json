@@ -1201,6 +1201,7 @@
       "tags_body": "Starte mit einer kleinen Auswahl. Freitext-Tags bleiben immer moeglich.",
       "habit_hint": "Tags wie Spazieren oder Meditation kannst du spaeter unter Einstellungen → Tags als Aufbau- oder Reduktionsgewohnheit markieren und in Trends verfolgen.",
       "custom": "Eigener Tag",
+      "custom_invalid": "Bitte einen etwas längeren Namen wählen (mindestens 2 Buchstaben oder Ziffern).",
       "add_tag": "Tag hinzufuegen",
       "summary_title": "Bereit zum Start",
       "summary_body": "{count} Tags ausgewaehlt.",
