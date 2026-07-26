@@ -153,6 +153,22 @@ describe('offline Dexie foundation', () => {
     expect(nextClientId).not.toBe(staleClientId);
   });
 
+  it('mints a new client id when IDB meta is gone but localStorage retains one', async () => {
+    // Mid-session IndexedDB eviction: no owner/client mirror, but the origin
+    // localStorage key survived. Re-binding the old id would restart seqs
+    // under a server identity that already has last_applied_seq ≫ 1.
+    const staleClientId = '22222222-2222-4222-8222-222222222222';
+    localStorage.setItem(CLIENT_ID_STORAGE_KEY, staleClientId);
+    expect(await getSyncMeta(SYNC_META_KEYS.clientId)).toBeNull();
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBeNull();
+
+    const nextClientId = await getOrCreateClientId();
+
+    expect(nextClientId).not.toBe(staleClientId);
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(nextClientId);
+    expect(await getSyncMeta(SYNC_META_KEYS.clientId)).toBe(nextClientId);
+  });
+
   it('wipes unknown-owner migrated offline data before assigning it to the current user', async () => {
     const db = getOfflineDb();
     await db.entries.put(sampleEntry('legacy-entry'));

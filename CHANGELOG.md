@@ -45,14 +45,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   still acked the batch and marked entries synced — permanent loss on the
   next logout wipe. A per-user partition that is genuinely empty drops the
   retained client id (reusing a partition that already holds data keeps its
-  identity so reloads no longer mint a new one), and a push with any
-  non-replay skips validates every pushed entry: a change is only acked when
-  the server row reflects it (present and its `updated_at` is at least the
-  pushed `client_ts`); a missing or stale entry rotates identity and retries
-  once. That covers both fully-skipped batches and partial seq overlap
-  (restarted 1..n where only 1..last_applied are skipped), so a skipped
-  update — or the skipped prefix of a mixed batch — is no longer silently
-  lost.
+  identity so reloads no longer mint a new one). Mid-session eviction is
+  handled in `getOrCreateClientId()`: when the IDB owner/client meta mirror
+  is gone, a retained localStorage id is discarded and a new identity is
+  minted before push (instead of re-binding the stale id into a restarted
+  seq space). Defense-in-depth: a push with any non-replay skips still
+  probes for present-but-stale entry rows (`updated_at` older than the
+  pushed `client_ts`) and rotates+retries once — covering residual
+  collisions and partial seq overlap. A probe 404 alone no longer rotates:
+  crash-before-ack replay after a delete must not resurrect the row.
+
 - **Onboarding tag IDs survive the next EntryForm autosave** — after a
   successful `completeOnboarding`, created tag IDs were merged into the
   in-flight save snapshot only and never written back to `selectedTagIds`.
