@@ -560,11 +560,7 @@
     if (canUseOfflineSync()) {
       scheduleSync();
     }
-    if (
-      onboardingFinalizeDeferred &&
-      onboardingTagsEnabled &&
-      !onboardingMarkedComplete
-    ) {
+    if (onboardingFinalizeDeferred && onboardingTagsEnabled && !onboardingMarkedComplete) {
       markDirty();
     }
   }
