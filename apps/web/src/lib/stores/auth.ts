@@ -160,22 +160,29 @@ export async function reconnectSession(): Promise<'online' | 'offline' | 'anonym
   }
 }
 
-export async function login(payload: LoginPayload): Promise<UserResponse> {
-  await drainOfflineSyncForSessionChange();
-  await apiLogin(payload);
-  // Login JSON can succeed while HttpOnly cookies never stick (proxy /
-  // Secure mismatch). Probe /auth/me before marking the UI authenticated
-  // so Settings → Consent does not fail with a confusing 401 later.
-  //
-  // The credentials were already accepted (apiLogin returned 200); a null
-  // probe here means the session cookie did not persist, NOT a bad password.
-  // Throwing a distinct error keeps the login page from mislabelling this
-  // recurring cookie-delivery failure as "email or password is incorrect".
+/**
+ * Confirm the browser actually holds a session after an auth response that
+ * may have set HttpOnly cookies (or Capacitor Bearer tokens).
+ *
+ * Auth JSON can return 200 while Set-Cookie never sticks (ADR-0040 proxy /
+ * Secure mismatch). A null /auth/me means persistence failed — not bad
+ * credentials — so callers surface SessionPersistenceError instead of a
+ * 401 "wrong password" / "invalid token" mapping.
+ */
+async function requirePersistedSession(): Promise<UserResponse> {
   const sessionUser = await fetchCurrentUser();
   if (!sessionUser) {
     clearSessionTokens();
     throw new SessionPersistenceError('/auth/me');
   }
+  return sessionUser;
+}
+
+export async function login(payload: LoginPayload): Promise<UserResponse> {
+  await drainOfflineSyncForSessionChange();
+  await apiLogin(payload);
+  // Credentials were accepted (apiLogin returned 200); probe before UI auth.
+  const sessionUser = await requirePersistedSession();
   connectivity.markServerReachable(true);
   resetInsightStore();
   resetEntrySheetStore();
@@ -203,14 +210,17 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Set the user manually after a flow that already established a session
- * (e.g. after verify-email + login in the same request chain).
+ * Finish an auth flow that already returned a TokenResponse (verify-email,
+ * reset-password). Probes /auth/me before marking the UI authenticated —
+ * same cookie-persistence class as login (ADR-0040). The response `user`
+ * is not trusted for cookie auth; the probe identity wins.
  */
-export async function setUser(user: UserResponse): Promise<void> {
+export async function setUser(_userFromAuthResponse: UserResponse): Promise<void> {
+  const sessionUser = await requirePersistedSession();
   connectivity.markServerReachable(true);
   resetInsightStore();
   resetEntrySheetStore();
-  await becomeAuthenticated(user, { enablePush: true });
+  await becomeAuthenticated(sessionUser, { enablePush: true });
 }
 
 /** Test-only: reset hydration state. */

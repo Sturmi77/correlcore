@@ -1278,7 +1278,7 @@
     "upstream": "The API is temporarily unreachable. Try again shortly.",
     "server": "The server reported an error. Please try again later.",
     "validation": "The request was invalid. Please check your input.",
-    "session_not_persisted": "Your email and password were correct, but the browser could not save the session. Make sure the site is opened over HTTPS and that cookies are allowed for this site, then try again.",
+    "session_not_persisted": "Your request succeeded, but the browser could not save the session. Make sure the site is opened over HTTPS and that cookies are allowed for this site, then sign in again.",
     "not_found": "Page not found.",
     "back_home": "Back to home"
   },
@@ -1421,6 +1421,8 @@
       "success_body": "Your account is active. Taking you to your first entry…",
       "error_title": "Verification failed",
       "error_body": "The link is invalid or has expired. Please request a new verification email.",
+      "session_error_title": "Email verified — session not saved",
+      "session_error_body": "Your email is confirmed, but the browser could not save the session cookie. Sign in with your email and password. Make sure the site is opened over HTTPS and that cookies are allowed.",
       "missing_token": "No verification token found in the URL.",
       "go_to_login": "Sign in",
       "go_to_resend": "Request new email"

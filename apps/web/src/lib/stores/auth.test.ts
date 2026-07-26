@@ -131,6 +131,7 @@ describe('hydrate', () => {
 
 describe('forceSessionExpired', () => {
   it('clears auth state and cached user so the layout can redirect to login', async () => {
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
     await setUser(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
 
@@ -142,6 +143,7 @@ describe('forceSessionExpired', () => {
   });
 
   it('is wired to the API session-expired notifier', async () => {
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
     await setUser(fakeUser);
     notifySessionExpired();
     expect(get(auth)).toEqual({ status: 'anonymous' });
@@ -213,6 +215,7 @@ describe('login / logout / setUser', () => {
   });
 
   it('logout clears state even when API call fails', async () => {
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
     await setUser(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
     vi.mocked(resetInsightStore).mockClear();
@@ -227,6 +230,7 @@ describe('login / logout / setUser', () => {
   });
 
   it('logout unregisters push before clearing the session', async () => {
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
     await setUser(fakeUser);
     vi.mocked(disablePushNotifications).mockClear();
     vi.mocked(authApi.logout).mockClear();
@@ -241,10 +245,22 @@ describe('login / logout / setUser', () => {
     );
   });
 
-  it('setUser sets authenticated state without an API call', async () => {
+  it('setUser updates the store only after /auth/me confirms the session', async () => {
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
     await setUser(fakeUser);
+    expect(authApi.fetchCurrentUser).toHaveBeenCalled();
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
+  });
+
+  it('setUser fails when cookies did not stick (/auth/me → null)', async () => {
+    // verify-email / reset-password JSON can succeed while Set-Cookie is
+    // stripped (ADR-0040). Must not mark the UI authenticated or bind offline
+    // data — especially after a single-use verify token was already consumed.
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(null);
+    await expect(setUser(fakeUser)).rejects.toBeInstanceOf(SessionPersistenceError);
+    expect(get(auth)).toEqual({ status: 'loading' });
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).not.toHaveBeenCalled();
   });
 });

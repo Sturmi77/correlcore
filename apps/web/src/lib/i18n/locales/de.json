@@ -1278,7 +1278,7 @@
     "upstream": "Die API ist voruebergehend nicht erreichbar. Bitte gleich erneut versuchen.",
     "server": "Der Server hat einen Fehler gemeldet. Bitte spaeter erneut versuchen.",
     "validation": "Die Anfrage war ungueltig. Bitte Eingaben pruefen.",
-    "session_not_persisted": "E-Mail und Passwort waren korrekt, aber der Browser konnte die Sitzung nicht speichern. Stelle sicher, dass die Seite ueber HTTPS geoeffnet ist und Cookies fuer diese Seite erlaubt sind, und versuche es erneut.",
+    "session_not_persisted": "Die Anfrage war erfolgreich, aber der Browser konnte die Sitzung nicht speichern. Stelle sicher, dass die Seite ueber HTTPS geoeffnet ist und Cookies fuer diese Seite erlaubt sind, und melde dich erneut an.",
     "not_found": "Seite nicht gefunden.",
     "back_home": "Zurueck zur Startseite"
   },
@@ -1421,6 +1421,8 @@
       "success_body": "Dein Konto ist aktiv. Wir \u00f6ffnen deinen ersten Eintrag\u2026",
       "error_title": "Best\u00e4tigung fehlgeschlagen",
       "error_body": "Der Link ist ung\u00fcltig oder abgelaufen. Fordere bitte eine neue Best\u00e4tigungs-Mail an.",
+      "session_error_title": "E-Mail best\u00e4tigt — Sitzung nicht gespeichert",
+      "session_error_body": "Deine E-Mail ist best\u00e4tigt, aber der Browser konnte das Sitzungs-Cookie nicht speichern. Melde dich mit E-Mail und Passwort an. Stelle sicher, dass die Seite ueber HTTPS geoeffnet ist und Cookies erlaubt sind.",
       "missing_token": "Es wurde kein Best\u00e4tigungs-Token in der URL gefunden.",
       "go_to_login": "Zur Anmeldung",
       "go_to_resend": "Neue Mail anfordern"
