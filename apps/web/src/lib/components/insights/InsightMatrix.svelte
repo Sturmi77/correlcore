@@ -11,6 +11,11 @@
    * so the component never hits the API — see landingDemoData.
    */
   export let enableHabitLayer = true;
+  /**
+   * Marketing preview mode (landing product shot): hide the header/toolbar and
+   * let the matrix rows fill the narrow frame, so the diagram is the hero (#546).
+   */
+  export let preview = false;
 
   type MatrixLayer = 'tags' | 'symptoms' | 'habits';
 
@@ -176,38 +181,48 @@
   }
 </script>
 
-<section class="insight-matrix" data-testid="insight-matrix">
-  <header class="insight-matrix__header">
-    <div>
-      <h2>{$_('insights.matrix.heading')}</h2>
-      <p>{$_('insights.matrix.subtitle')}</p>
-    </div>
-    <div class="insight-matrix__actions">
-      <div class="insight-matrix__layers" role="tablist" aria-label={$_('insights.matrix.layers')}>
-        {#each layerOptions as option}
-          <button
-            type="button"
-            role="tab"
-            class="insight-matrix__layer"
-            class:insight-matrix__layer--active={layer === option}
-            aria-selected={layer === option}
-            data-testid={`insight-matrix-layer-${option}`}
-            on:click={() => (layer = option as MatrixLayer)}
-          >
-            {$_(`insights.matrix.layer_${option}`)}
-          </button>
-        {/each}
+<section
+  class="insight-matrix"
+  class:insight-matrix--preview={preview}
+  data-testid="insight-matrix"
+>
+  {#if !preview}
+    <header class="insight-matrix__header">
+      <div>
+        <h2>{$_('insights.matrix.heading')}</h2>
+        <p>{$_('insights.matrix.subtitle')}</p>
       </div>
-      <button
-        class="btn btn-sm btn--secondary"
-        type="button"
-        on:click={exportPng}
-        disabled={!rows.length}
-      >
-        {$_('insights.matrix.export')}
-      </button>
-    </div>
-  </header>
+      <div class="insight-matrix__actions">
+        <div
+          class="insight-matrix__layers"
+          role="tablist"
+          aria-label={$_('insights.matrix.layers')}
+        >
+          {#each layerOptions as option}
+            <button
+              type="button"
+              role="tab"
+              class="insight-matrix__layer"
+              class:insight-matrix__layer--active={layer === option}
+              aria-selected={layer === option}
+              data-testid={`insight-matrix-layer-${option}`}
+              on:click={() => (layer = option as MatrixLayer)}
+            >
+              {$_(`insights.matrix.layer_${option}`)}
+            </button>
+          {/each}
+        </div>
+        <button
+          class="btn btn-sm btn--secondary"
+          type="button"
+          on:click={exportPng}
+          disabled={!rows.length}
+        >
+          {$_('insights.matrix.export')}
+        </button>
+      </div>
+    </header>
+  {/if}
 
   {#if rows.length}
     <div class="insight-matrix__table" role="table" aria-label={$_('insights.matrix.heading')}>
@@ -361,5 +376,19 @@
     .insight-matrix__layers {
       justify-content: flex-start;
     }
+  }
+
+  /* Marketing preview (#546): no header, so the rows fill the narrow frame and
+     the effect bars read as the hero. Drop the wide min-width so the four
+     columns fit the product-shot column instead of scrolling out of view. */
+  .insight-matrix--preview {
+    gap: 0;
+  }
+
+  .insight-matrix--preview .insight-matrix__row {
+    min-width: 0;
+    gap: 0.4rem;
+    padding: 0.5rem;
+    font-size: var(--text-xs);
   }
 </style>

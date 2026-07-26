@@ -104,7 +104,7 @@
                order and pointer events, aria-hidden hides the duplicated app
                UI from screen readers; the figcaption carries the description. -->
           <div class="landing__shot" inert aria-hidden="true">
-            <InsightMatrix insights={landingInsights} enableHabitLayer={false} />
+            <InsightMatrix insights={landingInsights} enableHabitLayer={false} preview />
           </div>
         </BrowserFrameMock>
         <figcaption>{$_('landing.preview_matrix')}</figcaption>
@@ -127,6 +127,7 @@
               clusterMeta={landingClusterMeta}
               showRangeSelector={false}
               minPairsForDisplay={1}
+              preview
             />
           </div>
         </BrowserFrameMock>
@@ -392,12 +393,12 @@
     text-align: center;
   }
 
-  /* Pure product shot: never interactive on the anonymous landing. */
+  /* Pure product shot: never interactive on the anonymous landing. The preview
+     variants of the components are already compact (no header/toolbar), so the
+     diagram itself is the hero — no hard crop that would clip the chart (#546). */
   .landing__shot {
     pointer-events: none;
     user-select: none;
-    max-height: 20rem;
-    overflow: hidden;
   }
 
   @media (min-width: 768px) {
@@ -573,10 +574,6 @@
   }
 
   @media (max-width: 480px) {
-    .landing__faq {
-      display: none;
-    }
-
     .landing__metric-row {
       grid-template-columns: 1fr;
     }

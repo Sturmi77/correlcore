@@ -31,6 +31,11 @@
   export let clusterMeta: TagClusterMeta = { byTagId: new Map(), labels: [] };
   /** Focused cluster id, or null for "all". Two-way bound from the page. */
   export let focusedClusterId: number | null = null;
+  /**
+   * Marketing preview mode (landing product shot): hide the header, cluster and
+   * density controls so the heatmap grid is the hero in the narrow frame (#546).
+   */
+  export let preview = false;
 
   const dispatch = createEventDispatcher<{
     rangeChange: { range: TagCooccurrenceRange };
@@ -214,45 +219,51 @@
   }
 </script>
 
-<section class="cooccurrence" data-loading={loading ? 'true' : 'false'}>
-  <div class="cooccurrence__head">
-    <div>
-      <h2>{$_('insights.cooccurrence.heading')}</h2>
-      <p>{$_('insights.cooccurrence.subtitle')}</p>
-    </div>
-    <div
-      class="cooccurrence__range"
-      role="group"
-      aria-label={$_('insights.cooccurrence.range_label')}
-    >
-      {#if enableClusterSort}
-        <button
-          type="button"
-          class="cooccurrence__sort"
-          data-testid="tag-cooccurrence-sort-toggle"
-          on:click={toggleSortMode}
-        >
-          {sortMode === 'clustered'
-            ? $_('insights.cooccurrence.sort_alphabetical')
-            : $_('insights.cooccurrence.sort_clustered')}
-        </button>
-      {/if}
-      {#if showRangeSelector}
-        {#each rangeOptions as option}
+<section
+  class="cooccurrence"
+  class:cooccurrence--preview={preview}
+  data-loading={loading ? 'true' : 'false'}
+>
+  {#if !preview}
+    <div class="cooccurrence__head">
+      <div>
+        <h2>{$_('insights.cooccurrence.heading')}</h2>
+        <p>{$_('insights.cooccurrence.subtitle')}</p>
+      </div>
+      <div
+        class="cooccurrence__range"
+        role="group"
+        aria-label={$_('insights.cooccurrence.range_label')}
+      >
+        {#if enableClusterSort}
           <button
             type="button"
-            class:cooccurrence__range--active={range === option}
-            aria-pressed={range === option}
-            on:click={() => dispatch('rangeChange', { range: option })}
+            class="cooccurrence__sort"
+            data-testid="tag-cooccurrence-sort-toggle"
+            on:click={toggleSortMode}
           >
-            {rangeLabel(option)}
+            {sortMode === 'clustered'
+              ? $_('insights.cooccurrence.sort_alphabetical')
+              : $_('insights.cooccurrence.sort_clustered')}
           </button>
-        {/each}
-      {/if}
+        {/if}
+        {#if showRangeSelector}
+          {#each rangeOptions as option}
+            <button
+              type="button"
+              class:cooccurrence__range--active={range === option}
+              aria-pressed={range === option}
+              on:click={() => dispatch('rangeChange', { range: option })}
+            >
+              {rangeLabel(option)}
+            </button>
+          {/each}
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 
-  {#if clustersAvailable && data && hasEnoughPairs}
+  {#if !preview && clustersAvailable && data && hasEnoughPairs}
     <div
       class="cooccurrence__clusters"
       role="group"
@@ -284,7 +295,7 @@
     </div>
   {/if}
 
-  {#if showDensityControls && data && hasEnoughPairs && totalAxes > 0}
+  {#if !preview && showDensityControls && data && hasEnoughPairs && totalAxes > 0}
     <div
       class="cooccurrence__density"
       role="group"
@@ -714,6 +725,31 @@
     .cooccurrence__skeleton span {
       animation: none;
     }
+  }
+
+  /* Marketing preview (#546): no header/controls, tighter padding and shorter
+     column labels so the grid of cells is the hero in the narrow product shot. */
+  .cooccurrence--preview {
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .cooccurrence--preview .cooccurrence__col-label {
+    min-height: 3.25rem;
+    max-height: 4rem;
+  }
+
+  /* Smaller cells + narrower label column, and drop the app's max-content min-width
+     so the whole grid shrinks to fit the product-shot column (incl. mobile) rather
+     than scrolling out of view (#546). */
+  .cooccurrence--preview .cooccurrence__grid {
+    grid-template-columns: minmax(3rem, 4.5rem) repeat(var(--tag-count), minmax(2rem, 1fr));
+    min-width: 0;
+  }
+
+  .cooccurrence--preview .cooccurrence__cell {
+    min-width: 2rem;
+    min-height: 2rem;
   }
 
   @media (max-width: 480px) {
