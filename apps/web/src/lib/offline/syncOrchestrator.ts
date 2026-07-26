@@ -36,7 +36,7 @@ import { refreshSymptoms } from '$lib/stores/symptoms';
  * rows restart at seq 1 under the old client identity. The server skips
  * them (`seq <= last_applied_seq`) while this client used to ack anyway —
  * silent data loss. Distinguish that from a legitimate crash-before-ack
- * replay (same seqs, entities already on the server) by probing one entry.
+ * replay (same seqs, entities already on the server) by probing entries.
  */
 async function isStaleClientSeqCollision(toPush: ChangeLogRow[]): Promise<boolean> {
   const entryUpserts = toPush.filter(
@@ -66,13 +66,14 @@ async function isStaleClientSeqCollision(toPush: ChangeLogRow[]): Promise<boolea
   return false;
 }
 
-function isFullySkippedPush(response: SyncPushResponse, changeCount: number): boolean {
-  return (
-    !response.idempotent_replay &&
-    response.applied === 0 &&
-    changeCount > 0 &&
-    response.skipped >= changeCount
-  );
+/**
+ * True when the server skipped at least one change for a reason other than
+ * idempotent batch replay. Includes the partial-overlap case after an IDB
+ * reset: restarted seqs 1..N where only 1..last_applied are skipped and
+ * N > last_applied still apply — those skipped rows must not be acked.
+ */
+function hasNonReplaySkips(response: SyncPushResponse, changeCount: number): boolean {
+  return !response.idempotent_replay && changeCount > 0 && response.skipped > 0;
 }
 
 export type OfflineSyncBadgeState = 'local' | 'syncing' | 'synced' | 'offline';
@@ -278,9 +279,13 @@ export async function pushPending(): Promise<boolean> {
     changes,
   });
 
-  // All-skipped under a retained client_id after IDB reset must not ack —
+  // Skipped rows under a retained client_id after IDB reset must not ack —
   // rotate identity and retry once so the server accepts the restarted seqs.
-  if (isFullySkippedPush(response, toPush.length) && (await isStaleClientSeqCollision(toPush))) {
+  // Probe on any non-replay skip (not only fully-skipped batches): when
+  // last_applied_seq is small, restarted seqs can partially overlap
+  // (1..k skipped, k+1..n applied) and the applied tail used to mask the
+  // lost prefix.
+  if (hasNonReplaySkips(response, toPush.length) && (await isStaleClientSeqCollision(toPush))) {
     await clearClientId();
     clientId = await getOrCreateClientId();
     response = await pushSyncChanges({
