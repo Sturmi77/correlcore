@@ -78,4 +78,23 @@ describe('SymptomChecker', () => {
     await Promise.resolve();
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('treats legacy intensity 0 as absent and upgrades on toggle', async () => {
+    // Backend contract: intensity 0 = absent (analytics use intensity > 0).
+    // The presence toggle must show "Not present" and the first click must
+    // mark present — not clear the row.
+    const selected: SymptomEntry[] = [{ symptom_id: symptom.id, intensity: 0 }];
+    render(SymptomChecker, { props: { selected } });
+
+    const toggle = screen.getByTestId('symptom-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    expect(toggle.textContent).toContain('symptom.present_off');
+    expect(toggle.disabled).toBe(false);
+
+    toggle.click();
+    await Promise.resolve();
+
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(toggle.textContent).toContain('symptom.present_on');
+  });
 });
