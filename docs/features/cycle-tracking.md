@@ -1,5 +1,11 @@
 # Cycle Tracking — Feature Overview
 
+> **2026-07-26 update:** The shipped form is the `cycle_day` metric (1–35) plus
+> CYCLE tag category, now gated by an **opt-out toggle** `cycle_tracking_enabled`
+> (user preference, migration `032`; ADR-0034 Stage 1). It is set on the last
+> onboarding screen and re-toggleable under Settings → Cycle. Bleeding strength,
+> cycle-specific symptoms, and phase inference remain deferred to [#547](https://github.com/Sturmi77/correlcore/issues/547).
+>
 > **Status**: Partially implemented (M4 in progress)
 > **Relevant ADRs**: [ADR-0031](../adr/0031-cycle-tracking-scope.md) · [ADR-0032](../adr/0032-cycle-tracking-as-domain-extension.md) · [ADR-0033](../adr/0033-sensitive-health-data-handling-cycle-signals.md) · [ADR-0034](../adr/0034-onboarding-cycle-tracking-toggle.md)
 > **Related ADRs**: [ADR-0008](../adr/0008-symptom-master-tabelle.md) · [ADR-0021](../adr/0021-insight-maturity-phases.md) · [ADR-0028](../adr/0028-entry-slot-model.md) · [ADR-0030](../adr/0030-onboarding-tag-suggestions.md)

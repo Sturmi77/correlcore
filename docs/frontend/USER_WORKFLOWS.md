@@ -83,30 +83,31 @@ Navigation: 4 tabs (Home, Insights, Trends, Settings). Entry is **not** a tab �
 
 **Success criteria:**
 
-- User completes or skips tag onboarding
-- `onboarding_retro_completed` preference is set
+- User runs the full onboarding **sequence** (all screens shown) before the first daily entry
+- `onboarding_retro_completed` preference is set (via `POST /onboarding/complete`)
 - User is not redirected back to onboarding on subsequent Home visits
-- User can log first entry from Home
-- Before tag selection, user sees the maturity expectation card (phases 1–4) once — see [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md)
+- The first daily entry opens **only after** the sequence completes — clean, without the onboarding tag embed
+- The sequence covers maturity phases, concepts, tag selection, and the cycle function — see [ONBOARDING_MATURITY_EXPECTATION_CARD.md](ONBOARDING_MATURITY_EXPECTATION_CARD.md)
 
-**Entry routes:** `/` cold start when `entry_count === 0` AND `!onboarding_retro_completed`. `/onboarding` redirects to `/` (wizard remains at `/onboarding?preview=1`).
+**Entry routes:** `/` cold start (`entry_count === 0` AND `!onboarding_retro_completed`) **redirects to `/onboarding`**, the full-screen sequence.
 
-**Primary flow (ADR-0030 amendment + maturity intro):**
+**Primary flow (onboarding sequence):**
 
-1. Home opens one-time **maturity expectation card** (phases 1–4)
-2. Dismiss → `EntrySheet` with `OnboardingTagSuggestions`
-3. First autosave → `POST /onboarding/complete` → normal Home
+1. Cold-start Home → `goto('/onboarding')`
+2. Screen 1 **Maturity** (phases 1–4) → Screen 2 **Concepts** (tag/habit/symptom/cycle) → Screen 3 **Tags** (suggestions + manual entry; optional summary for >3 tags) → Screen 4 **Cycle** (function + opt-out toggle, `cycle_tracking_enabled`)
+3. Finish → `POST /onboarding/complete` + `PATCH /user/preferences` (cycle + maturity_intro_seen) → `/?openEntry=1`
+4. Home opens the first **clean** `EntrySheet`
 
-**Legacy routes (still in repo; server redirects to `/onboarding` → `/`):**
+The tag-embed path inside `EntrySheet` (`OnboardingTagSuggestions`) is retained only as the **offline fallback** (deferred finalize via the suggestion stash).
+
+**Legacy routes (still in repo; server redirects to `/onboarding`):**
 
 - `/onboarding/retro` — 7-day mood backfill
 - `/onboarding/profile` — optional profile questionnaire
 
-**Trigger:** Home auto-opens entry sheet when `entry_count === 0` AND `!onboarding_retro_completed` (`+page.svelte`).
+**Trigger:** Home redirects to `/onboarding` when `entry_count === 0` AND `!onboarding_retro_completed` AND no deferred suggestion stash (`+page.svelte`, `shouldRedirectToOnboarding`).
 
 **Surface:** Mobile-first.
-
-**Dev preview:** `/onboarding?preview=1` (Settings → Developer iframe).
 
 ---
 

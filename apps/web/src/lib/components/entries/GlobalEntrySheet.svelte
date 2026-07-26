@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
   import {
     closeEntrySheet,
@@ -14,13 +15,13 @@
   import { fetchUserProfile, type WorkContextTypical } from '$lib/api/profile';
   import { entryDateFromSearchParams, isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { isoDate } from '$lib/utils/entryForm';
-  import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import { shouldShowOnboardingTags, shouldRedirectToOnboarding } from '$lib/utils/onboardingEntry';
   import { hasOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
-  import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
   import EntrySheet from './EntrySheet.svelte';
 
   let sheetOpen = false;
   let workContextTypical: WorkContextTypical | null = null;
+  let cycleTrackingEnabled = true;
   let profileLoaded = false;
   let openFromQueryPending = false;
 
@@ -73,19 +74,21 @@
         fetchUserPreferences(),
         fetchDashboardSummary(date),
       ]);
-      // Defer to Home: maturity expectation runs before first-entry tags.
+      const hasStash = hasOnboardingSuggestionStash(preferences.user_id);
+      // Onboarding not finished yet (and no offline-deferred stash to finalize
+      // inside the sheet) → run the full /onboarding sequence first instead of
+      // opening the tag-embed entry.
       if (
-        shouldShowMaturityExpectationIntro({
-          preferences,
-          entryCount: summary.entry_count,
-          entrySheetOpen: false,
+        shouldRedirectToOnboarding(preferences, summary.entry_count, {
+          hasDeferredSuggestionStash: hasStash,
         })
       ) {
         stripOpenEntryQuery();
+        await goto('/onboarding');
         return;
       }
       onboardingTags = shouldShowOnboardingTags(preferences, summary.entry_count, {
-        hasDeferredSuggestionStash: hasOnboardingSuggestionStash(preferences.user_id),
+        hasDeferredSuggestionStash: hasStash,
       });
     } catch {
       onboardingTags = false;
@@ -98,8 +101,12 @@
     if (profileLoaded || get(auth).status !== 'authenticated') return;
     profileLoaded = true;
     try {
-      const profile = await fetchUserProfile();
+      const [profile, preferences] = await Promise.all([
+        fetchUserProfile(),
+        fetchUserPreferences(),
+      ]);
       workContextTypical = profile.work_context_typical ?? null;
+      cycleTrackingEnabled = preferences.cycle_tracking_enabled;
     } catch {
       workContextTypical = null;
     }
@@ -116,6 +123,7 @@
         closeEntrySheet();
         sheetOpen = false;
         workContextTypical = null;
+        cycleTrackingEnabled = true;
         profileLoaded = false;
         return;
       }
@@ -142,6 +150,7 @@
     initialDate={$entrySheetStore.date}
     onboardingTagsEnabled={$entrySheetStore.onboardingTagsEnabled}
     {workContextTypical}
+    {cycleTrackingEnabled}
     on:close={handleSheetClose}
     on:saved={() => notifyEntrySheetSaved()}
   />

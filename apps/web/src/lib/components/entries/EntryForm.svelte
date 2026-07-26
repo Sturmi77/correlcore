@@ -96,6 +96,8 @@
   /** ISO date `YYYY-MM-DD` for the entry being edited. */
   export let initialDate: string;
   export let workContextTypical: WorkContextTypical | null = null;
+  /** Cycle-day tracking opt-out (ADR-0034). When false, hide the cycle field. */
+  export let cycleTrackingEnabled = true;
 
   const dispatch = createEventDispatcher<{ close: void; saved: void }>();
 
@@ -1431,29 +1433,33 @@
           </label>
         </section>
 
-        <section class="entry-section" aria-labelledby="entry-section-cycle">
-          <h2 id="entry-section-cycle" class="entry-section__title">{$_('entry.section.cycle')}</h2>
-          <label class="entry-field">
-            <span class="entry-label">{$_('entry.cycle_day.label')}</span>
-            <input
-              type="number"
-              class="input"
-              min="1"
-              max="35"
-              value={cycleDay ?? ''}
-              on:input={onCycleDayInput}
-              aria-invalid={cycleDayInvalid}
-              aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
-              placeholder={$_('entry.cycle_day.placeholder')}
-            />
-          </label>
-          <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
-          {#if cycleDayInvalid}
-            <p id="entry-cycle-error" class="entry-error" role="alert">
-              {$_('entry.cycle_day.error_range')}
-            </p>
-          {/if}
-        </section>
+        {#if cycleTrackingEnabled}
+          <section class="entry-section" aria-labelledby="entry-section-cycle">
+            <h2 id="entry-section-cycle" class="entry-section__title">
+              {$_('entry.section.cycle')}
+            </h2>
+            <label class="entry-field">
+              <span class="entry-label">{$_('entry.cycle_day.label')}</span>
+              <input
+                type="number"
+                class="input"
+                min="1"
+                max="35"
+                value={cycleDay ?? ''}
+                on:input={onCycleDayInput}
+                aria-invalid={cycleDayInvalid}
+                aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
+                placeholder={$_('entry.cycle_day.placeholder')}
+              />
+            </label>
+            <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
+            {#if cycleDayInvalid}
+              <p id="entry-cycle-error" class="entry-error" role="alert">
+                {$_('entry.cycle_day.error_range')}
+              </p>
+            {/if}
+          </section>
+        {/if}
       </div>
     {/if}
 

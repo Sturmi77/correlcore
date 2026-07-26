@@ -41,13 +41,12 @@
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
+  import { goto } from '$app/navigation';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
-  import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import { shouldShowOnboardingTags, shouldRedirectToOnboarding } from '$lib/utils/onboardingEntry';
   import { hasOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
-  import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
   import LandingPage from '$lib/components/landing/LandingPage.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import MaturityExpectationSheet from '$lib/components/onboarding/MaturityExpectationSheet.svelte';
 
   const EARLY_CONTEXT_PATTERN_KEY = 'early_context_pattern';
   const LEGACY_FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
@@ -61,9 +60,7 @@
   let dashboardLoading = false;
   let dashboardLoaded = false;
   let activeDevFixtureKey = '';
-  let firstEntrySheetOpened = false;
-  let maturityIntroOpen = false;
-  let maturityIntroPersisting = false;
+  let onboardingRedirecting = false;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -177,68 +174,23 @@
     void loadInsights();
   }
 
-  // Cold start: maturity expectation (pre-tags) → then first EntrySheet with tags.
+  // Cold start: route the whole onboarding sequence (/onboarding) before the
+  // first daily entry can open. The wizard completes onboarding, then returns
+  // to `/?openEntry=1` where a clean EntrySheet opens (no onboarding embed).
   $: if (
     dashboardLoaded &&
     $auth.status === 'authenticated' &&
-    !maturityIntroOpen &&
-    !maturityIntroPersisting &&
+    !onboardingRedirecting &&
     !entrySheetOpen &&
-    shouldShowMaturityExpectationIntro({
-      preferences: userPreferences,
-      entryCount: dashboardSummary?.entry_count,
-      entrySheetOpen,
+    !isOpenEntryRequested($page.url.searchParams) &&
+    shouldRedirectToOnboarding(userPreferences, dashboardSummary?.entry_count, {
+      hasDeferredSuggestionStash: userPreferences
+        ? hasOnboardingSuggestionStash(userPreferences.user_id)
+        : false,
     })
   ) {
-    maturityIntroOpen = true;
-  }
-
-  $: if (
-    dashboardLoaded &&
-    $auth.status === 'authenticated' &&
-    dashboardSummary?.entry_count === 0 &&
-    userPreferences &&
-    !userPreferences.onboarding_retro_completed &&
-    userPreferences.onboarding_maturity_intro_seen &&
-    !maturityIntroOpen &&
-    !maturityIntroPersisting &&
-    !firstEntrySheetOpened &&
-    !entrySheetOpen &&
-    !isOpenEntryRequested($page.url.searchParams)
-  ) {
-    firstEntrySheetOpened = true;
-    openEntry(todayIso);
-  }
-
-  async function dismissMaturityIntro(): Promise<void> {
-    if (maturityIntroPersisting) return;
-    maturityIntroPersisting = true;
-    maturityIntroOpen = false;
-    const optimistic: UserPreferencesResponse = {
-      ...(userPreferences ?? {
-        user_id: $currentUser?.id ?? '',
-        analytics_enabled: true,
-        digest_enabled: true,
-        onboarding_retro_completed: false,
-        onboarding_profile_completed: false,
-        dismissed_insight_keys: [],
-        reached_milestone_keys: [],
-        last_seen_insight_at: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }),
-      onboarding_maturity_intro_seen: true,
-    };
-    userPreferences = optimistic;
-    try {
-      userPreferences = await updateUserPreferences({
-        onboarding_maturity_intro_seen: true,
-      });
-    } catch {
-      // Keep optimistic dismiss for this session.
-    } finally {
-      maturityIntroPersisting = false;
-    }
+    onboardingRedirecting = true;
+    void goto('/onboarding');
   }
 
   async function dismissFirstWeekBanner(): Promise<void> {
@@ -252,6 +204,7 @@
         onboarding_retro_completed: false,
         onboarding_profile_completed: false,
         onboarding_maturity_intro_seen: false,
+        cycle_tracking_enabled: true,
         reached_milestone_keys: [],
         last_seen_insight_at: null,
         created_at: new Date().toISOString(),
@@ -368,11 +321,6 @@
         </Button>
       </section>
     {/if}
-
-    <MaturityExpectationSheet
-      open={maturityIntroOpen}
-      on:dismiss={() => void dismissMaturityIntro()}
-    />
   </div>
 {:else}
   <LandingPage />

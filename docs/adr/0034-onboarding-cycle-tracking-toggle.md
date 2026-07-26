@@ -4,7 +4,13 @@ Date: 2026-05-29
 
 ## Status
 
-Accepted
+Accepted · **Stage 1 implemented 2026-07-26** — the opt-out toggle
+(`cycle_tracking_enabled`) now exists as a user preference (migration `032`),
+set on the final onboarding screen (`CycleFunctionExplainer`) and re-toggleable
+under Settings → Cycle. It gates the `cycle_day` entry field. Default is **on**
+(opt-out), reversing the earlier E6 deferral in the M10.2 plan for the toggle
+piece only. Bleeding-strength enum, cycle-specific symptom taxonomy, phase
+inference and calendar overlays remain deferred to [#547](https://github.com/Sturmi77/correlcore/issues/547).
 
 ## Context
 

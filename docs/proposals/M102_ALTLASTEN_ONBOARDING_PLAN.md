@@ -108,10 +108,11 @@ gemacht werden, bevor wir Usern „Zyklus" erklären.
   Vorhersage, keine medizinische Aussage." · _EN:_ „Optional: log your cycle day
   (1–35). CorrelCore treats it like a metric and looks for links with mood, sleep
   and more. No prediction, no medical advice." Plus Hinweis auf die CYCLE-Tags. ✅
-- **E6 — Opt-in-Toggle:** **deferred.** Detailarbeit (Toggle, Schema, UX) auf
-  später verschoben (siehe #547). Bis dahin wird die aktuelle Form ehrlich als
-  „Metrik" beschrieben; cycle-tracking.md + ADR-0034 werden mit der Ausbaustufe
-  (Stage 1) auf den Ist-Stand korrigiert. ✅
+- **E6 — Opt-in-Toggle:** ursprünglich deferred; **Update 2026-07-26: der
+  Toggle wurde als Teil der Onboarding-Sequenz-Umsetzung gebaut** (Präferenz
+  `cycle_tracking_enabled`, Migration `030`, letzter Onboarding-Screen +
+  Settings-Reaktivierung, Default **an** = Opt-out). Nur der Toggle (ADR-0034
+  Stage 1); Schema-Ausbau (Blutungsstärke, Phasen) bleibt auf #547. ✅
 - **E7 — Ausbaustufe → eigenes Issue angelegt: [#547](https://github.com/Sturmi77/correlcore/issues/547)**
   („Cycle Tracking v1 — Definition + Umsetzung"). Enthält Ist-Stand +
   Altlast-Befund; Stages als Zielrichtung, Detail-Definition bewusst deferred:

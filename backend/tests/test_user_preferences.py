@@ -38,6 +38,7 @@ def _make_preferences(user: User) -> UserPreference:
     preferences.onboarding_retro_completed = False
     preferences.onboarding_profile_completed = False
     preferences.onboarding_maturity_intro_seen = False
+    preferences.cycle_tracking_enabled = True
     preferences.dismissed_insight_keys = []
     preferences.reached_milestone_keys = []
     preferences.last_seen_insight_at = None
@@ -138,6 +139,65 @@ async def test_preferences_endpoint_updates_analytics_enabled(
 
     assert response.status_code == 200
     assert response.json()["analytics_enabled"] is False
+    update_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_preferences_endpoint_returns_cycle_tracking_default(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    preferences = _make_preferences(user)
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.user.get_or_create_user_preferences",
+            new_callable=AsyncMock,
+            return_value=preferences,
+        ):
+            response = await async_client.get(
+                "/api/v1/user/preferences",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["cycle_tracking_enabled"] is True
+
+
+@pytest.mark.asyncio
+async def test_preferences_endpoint_disables_cycle_tracking(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.user.update_user_preferences",
+            new_callable=AsyncMock,
+        ) as update_mock:
+            updated = _make_preferences(user)
+            updated.cycle_tracking_enabled = False
+            update_mock.return_value = updated
+
+            response = await async_client.patch(
+                "/api/v1/user/preferences",
+                json={"cycle_tracking_enabled": False},
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["cycle_tracking_enabled"] is False
     update_mock.assert_awaited_once()
 
 

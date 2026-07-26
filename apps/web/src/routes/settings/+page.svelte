@@ -165,6 +165,18 @@
     }
   }
 
+  async function toggleCycleTracking(enabled: boolean): Promise<void> {
+    preferencesBusy = true;
+    preferencesError = '';
+    try {
+      preferences = await updateUserPreferences({ cycle_tracking_enabled: enabled });
+    } catch (err) {
+      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    } finally {
+      preferencesBusy = false;
+    }
+  }
+
   async function handleRegenerateInsights(): Promise<void> {
     if (preferences?.analytics_enabled === false) return;
     regenerateBusy = true;
@@ -456,6 +468,29 @@
       {/if}
       {#if regenerateError}
         <InlineAlert variant="error" message={regenerateError} />
+      {/if}
+    </section>
+
+    <section class="settings__panel" data-testid="settings-section-cycle">
+      <div class="settings__panel-head">
+        <span class="settings__section-kicker">{$_('settings.cycle.kicker')}</span>
+        <h2>{$_('settings.cycle.heading')}</h2>
+        <p>{$_('settings.cycle.body')}</p>
+      </div>
+      <label class="settings__toggle-label">
+        <input
+          type="checkbox"
+          class="settings__toggle"
+          checked={preferences?.cycle_tracking_enabled ?? true}
+          disabled={preferencesBusy}
+          data-testid="cycle-toggle"
+          on:change={(e) => void toggleCycleTracking(e.currentTarget.checked)}
+        />
+        <span>{$_('settings.cycle.enabled')}</span>
+      </label>
+      <p class="settings__analysis-note">{$_('settings.cycle.hint')}</p>
+      {#if preferencesError}
+        <InlineAlert variant="error" message={preferencesError} />
       {/if}
     </section>
 

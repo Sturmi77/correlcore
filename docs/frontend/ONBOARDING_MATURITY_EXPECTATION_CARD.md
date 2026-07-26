@@ -4,7 +4,16 @@
 
 This document is the product concept for a **one-time onboarding expectation card** that explains CorrelCore’s four insight maturity phases **before** the user interprets an empty Insights feed as a product failure.
 
-**Implementation:** [`MaturityExpectationSheet.svelte`](../../apps/web/src/lib/components/onboarding/MaturityExpectationSheet.svelte) on Home; preference `onboarding_maturity_intro_seen` (migration `029`); i18n `onboarding.maturity_intro.*`.
+> **Update 2026-07-26 — placement changed.** The maturity card is now the **first
+> screen of the full-screen onboarding sequence at `/onboarding`** (cold start
+> redirects there), not a bottom sheet on Home. The phase content lives in the
+> shared [`MaturityExpectationContent.svelte`](../../apps/web/src/lib/components/onboarding/MaturityExpectationContent.svelte),
+> reused by both the wizard step and the (now Home-decoupled) `MaturityExpectationSheet`.
+> The whole sequence completes **before** the first daily entry opens. Sections 3
+> (“Placement”) and 8 below describe the earlier Home-sheet design and are kept
+> for history.
+
+**Implementation:** [`MaturityExpectationContent.svelte`](../../apps/web/src/lib/components/onboarding/MaturityExpectationContent.svelte) as onboarding wizard step ([`routes/onboarding/+page.svelte`](../../apps/web/src/routes/onboarding/+page.svelte)); preference `onboarding_maturity_intro_seen` (migration `029`); i18n `onboarding.maturity_intro.*`.
 
 ---
 

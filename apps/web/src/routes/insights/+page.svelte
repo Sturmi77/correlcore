@@ -767,6 +767,7 @@
         onboarding_retro_completed: false,
         onboarding_profile_completed: false,
         onboarding_maturity_intro_seen: false,
+        cycle_tracking_enabled: true,
         dismissed_insight_keys: [],
         last_seen_insight_at: null,
         created_at: new Date().toISOString(),
