@@ -40,6 +40,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   flag) are now stashed in `sessionStorage` (scoped by user id), the Home /
   deep-link gate re-enables chips when a stash exists, remount restores and
   retries finalize, and logout clears the stash.
+- **Auth session probe rejects a mismatched prior account** — after #556,
+  `setUser` / `login` required `/auth/me` to succeed but accepted any
+  probed identity. If a browser already held cookies for user A and
+  verify-email / reset-password / login for user B returned 200 while B's
+  `Set-Cookie` was stripped (ADR-0040), the UI authenticated as A and
+  could write into A's account. The probe must now match the auth-response
+  user id (same `SessionPersistenceError` recovery as a null probe).
 - **Verify-email / reset-password no longer mark the UI authenticated when
   the session cookie did not stick** (ADR-0040 residual) — login already
   probed `/auth/me` before `becomeAuthenticated`, but `setUser` (used by
