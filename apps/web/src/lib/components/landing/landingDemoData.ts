@@ -250,7 +250,11 @@ function cooRef(tag_id: string, slug: string, name: string) {
   return { tag_id, slug, name, category: 'demo', color: null };
 }
 
-/** Pairs for the Tag Co-occurrence heatmap product shot. */
+/**
+ * Pairs for the Tag Co-occurrence heatmap product shot. Kept to four tags so the
+ * grid fills the narrow marketing frame without horizontal overflow (#546) while
+ * every off-diagonal cell carries a value — a dense, legible mini heatmap.
+ */
 export const landingCooccurrence: TagCooccurrenceResponse = {
   range: '90d',
   start_date: '2026-04-20',
@@ -272,25 +276,32 @@ export const landingCooccurrence: TagCooccurrenceResponse = {
       pct_of_b: 60,
     },
     {
+      tag_a: cooRef('demo-poor-sleep', 'poor-sleep', 'Poor sleep'),
+      tag_b: cooRef('demo-exercise', 'exercise', 'Exercise'),
+      count: 2,
+      pct_of_a: 17,
+      pct_of_b: 18,
+    },
+    {
       tag_a: cooRef('demo-low-energy', 'low-energy', 'Low energy'),
       tag_b: cooRef('demo-headache', 'headache', 'Headache'),
-      count: 4,
-      pct_of_a: 33,
-      pct_of_b: 40,
-    },
-    {
-      tag_a: cooRef('demo-exercise', 'exercise', 'Exercise'),
-      tag_b: cooRef('demo-good-mood', 'good-mood', 'Good mood'),
-      count: 8,
-      pct_of_a: 70,
-      pct_of_b: 62,
-    },
-    {
-      tag_a: cooRef('demo-exercise', 'exercise', 'Exercise'),
-      tag_b: cooRef('demo-coffee', 'coffee', 'Coffee'),
       count: 5,
-      pct_of_a: 40,
-      pct_of_b: 45,
+      pct_of_a: 42,
+      pct_of_b: 50,
+    },
+    {
+      tag_a: cooRef('demo-low-energy', 'low-energy', 'Low energy'),
+      tag_b: cooRef('demo-exercise', 'exercise', 'Exercise'),
+      count: 3,
+      pct_of_a: 25,
+      pct_of_b: 27,
+    },
+    {
+      tag_a: cooRef('demo-headache', 'headache', 'Headache'),
+      tag_b: cooRef('demo-exercise', 'exercise', 'Exercise'),
+      count: 2,
+      pct_of_a: 20,
+      pct_of_b: 18,
     },
   ],
 };

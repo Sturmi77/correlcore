@@ -132,15 +132,19 @@ Begriffe (Tag/Habit/Symptom/Cycle) haben bestätigte Ein-Zeilen-Definitionen.
 
 Hängt an **keiner** Entscheidung aus Phase 1 außer der Legal-Content-Frage.
 
-| ID  | Was                                                                                                                                                                                                               | Issue | Abhängigkeit                                                   |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------- |
-| L1  | Preview-Diagramme (Insight-Matrix + Tag-Heatmap) sind geclippt — `.landing__shot { max-height:20rem; overflow:hidden }` + Voll-Viewport-Header. `compact`/preview-Variante bauen, Demo-Daten füllen, mobil prüfen | #546  | —                                                              |
-| L2  | Kontakt-Domain `.app`→`.com`                                                                                                                                                                                      | #462  | = Phase 0.2 (gleicher Fix)                                     |
-| L3  | Hosted Impressum/Datenschutz: echte Betreiberangaben für `correlcore.com` (Selfhost-Template bleibt generisch)                                                                                                    | #462  | Betreiber-Entscheid (E8): welche Betreiberidentität/Anschrift? |
-| L4  | _(optional)_ FAQ unter 480px ausgeblendet ([LandingPage.svelte:575](../../apps/web/src/lib/components/landing/LandingPage.svelte)) — bewusst? Falls FAQ Verständnis-Hilfe ist, auf Mobil zeigen                   | —     | E-Entscheid                                                    |
+| ID  | Was                                                                                                                                                                   | Issue | Status                                                                                                                                  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| L1  | Preview-Diagramme (Insight-Matrix + Tag-Heatmap) nicht mehr geclippt — `preview`-Prop blendet Header/Controls aus, Chart ist der Held; `.landing__shot`-Crop entfernt | #546  | ✅ **erledigt** (dieser PR, E9 = `preview`-Prop)                                                                                        |
+| L4  | FAQ unter 480px war ausgeblendet (`display:none`) — jetzt auf Mobil sichtbar                                                                                          | —     | ✅ **erledigt** (dieser PR)                                                                                                             |
+| L2  | Kontakt-Domain `.app`→`.com`                                                                                                                                          | #462  | ✅ **erledigt** in Phase 0 (#548)                                                                                                       |
+| L3  | Hosted Impressum/Datenschutz: echte Betreiberangaben für `correlcore.com` (Selfhost-Template bleibt generisch)                                                        | #462  | ⏳ **bewusst offen** — braucht E8 (Betreiberidentität). **Blockiert Phase 2 nicht**; kommt als separater PR, sobald die Daten vorliegen |
 
-**Zu entscheiden:** (E8) Betreiberidentität fürs Hosted-Impressum. (E9) L1-Ansatz:
-dedizierte `preview`-Prop an den Komponenten **oder** Marketing-Crop-Wrapper.
+**Bewusst zurückgestellt (E8):** Das Hosted-Impressum verlangt echte Betreiber­angaben
+(Name/Anschrift/Kontakt, §5 TMG/ECG). Solange die Daten nicht vorliegen, bleibt der
+generische Selfhost-Platzhalter ([de.json](../../apps/web/src/lib/i18n/locales/de.json),
+`impressum.sections.operator`) stehen — er weist Betreiber ausdrücklich an, die Seite
+vor dem Go-live zu ersetzen. Der Landing-Preview-Fix (L1) wird davon nicht blockiert.
+**E9** ist mit `preview`-Prop umgesetzt.
 
 ---
 
@@ -207,4 +211,4 @@ Phase 1 ist der Flaschenhals für alles Inhaltliche — zuerst entscheiden.
 | E6  | Opt-in-Toggle bauen oder zurückstufen              | ✅ **deferred** — Detail auf #547 verschoben                                         |
 | E7  | Cycle-Ausbaustufe + neues Issue                    | ✅ **erledigt** — [#547](https://github.com/Sturmi77/correlcore/issues/547) angelegt |
 | E8  | Betreiberidentität fürs Hosted-Impressum           | ⏳ **offen** — braucht Maintainer-Angabe                                             |
-| E9  | Landing-Preview-Ansatz (preview-Prop vs. Crop)     | 🔵 **Empfehlung** preview-Prop — technisch, bei Umsetzung final                      |
+| E9  | Landing-Preview-Ansatz (preview-Prop vs. Crop)     | ✅ **umgesetzt** — `preview`-Prop (Phase 2, #546)                                    |
