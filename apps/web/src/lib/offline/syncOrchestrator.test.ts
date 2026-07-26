@@ -333,6 +333,74 @@ describe('syncOrchestrator', () => {
     expect(await listPendingChanges()).toHaveLength(0);
   });
 
+  it('rotates on partial seq overlap after IDB reset (skipped prefix + applied tail)', async () => {
+    // Retained client_id with last_applied_seq=1: restarted seqs 1..2 mean the
+    // server skips seq 1 and applies seq 2. A fully-skipped-only guard would
+    // miss this and ack the missing entry — permanent data loss for the prefix.
+    const staleClientId = await getOrCreateClientId();
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'skipped-prefix',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'morning', mood_score: 2 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+    await appendChange({
+      batch_id: 'batch-2',
+      entity_type: 'entry',
+      entity_id: 'applied-tail',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'day', mood_score: 4 },
+      client_ts: '2026-06-30T12:01:00.000Z',
+    });
+
+    pushSyncChanges
+      .mockResolvedValueOnce({
+        cursor: 'cursor-partial',
+        applied: 1,
+        skipped: 1,
+        conflicts: [],
+        idempotent_replay: false,
+      })
+      .mockResolvedValueOnce({
+        cursor: 'cursor-retry',
+        applied: 2,
+        skipped: 0,
+        conflicts: [],
+        idempotent_replay: false,
+      });
+    fetchEntry.mockImplementation(async (id: string) => {
+      if (id === 'skipped-prefix') {
+        throw new ApiError(404, 'Not Found', '/entries/skipped-prefix');
+      }
+      return {
+        id: 'applied-tail',
+        entry_date: '2026-06-30',
+        slot: 'day',
+        mood_score: 4,
+        energy: 3,
+        stress: 3,
+        cycle_day: null,
+        work_context: 'office',
+        note: null,
+        created_at: '2026-06-30T12:01:00.000Z',
+        updated_at: '2026-06-30T12:01:00.000Z',
+      };
+    });
+
+    await pushPending();
+
+    expect(pushSyncChanges).toHaveBeenCalledTimes(2);
+    expect(fetchEntry).toHaveBeenCalledWith('skipped-prefix');
+    const retryClientId = pushSyncChanges.mock.calls[1]?.[0]?.client_id as string;
+    expect(retryClientId).toBeTruthy();
+    expect(retryClientId).not.toBe(staleClientId);
+    expect(peekClientId()).toBe(retryClientId);
+    expect(pushSyncChanges.mock.calls[1]?.[0]?.changes).toHaveLength(2);
+    expect(await listPendingChanges()).toHaveLength(0);
+  });
+
   it('applies pull deltas to local entries', async () => {
     await setSyncMeta(SYNC_META_KEYS.lastPullCursor, 'cursor-old');
     pullSyncChanges.mockResolvedValue({
