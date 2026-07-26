@@ -1,14 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
+import { describe, expect, it, vi } from 'vitest';
 
 import de from '$lib/i18n/locales/de.json';
 import en from '$lib/i18n/locales/en.json';
+import ConceptExplainer from './ConceptExplainer.svelte';
 
-const explainerSource = readFileSync(
-  resolve('src/lib/components/onboarding/ConceptExplainer.svelte'),
-  'utf8'
-);
+vi.mock('svelte-i18n', async () => {
+  const { readable } = await import('svelte/store');
+  return { _: readable((key: string) => key) };
+});
+
+const concepts = ['tag', 'habit', 'symptom', 'cycle'] as const;
+
 const onboardingTagsSource = readFileSync(
   resolve('src/lib/components/entries/OnboardingTagSuggestions.svelte'),
   'utf8'
@@ -16,15 +21,13 @@ const onboardingTagsSource = readFileSync(
 const onboardingPageSource = readFileSync(resolve('src/routes/onboarding/+page.svelte'), 'utf8');
 const tagSettingsSource = readFileSync(resolve('src/routes/settings/tags/+page.svelte'), 'utf8');
 
-const concepts = ['tag', 'habit', 'symptom', 'cycle'] as const;
-
 describe('ConceptExplainer contract (#541)', () => {
   it('renders all four concept definitions', () => {
-    expect(explainerSource).toContain('data-testid="concept-explainer"');
+    render(ConceptExplainer);
+    expect(screen.getByTestId('concept-explainer')).toBeTruthy();
     for (const concept of concepts) {
-      expect(explainerSource).toContain(`concept-${concept}`);
+      expect(screen.getByTestId(`concept-${concept}`)).toBeTruthy();
     }
-    expect(explainerSource).toContain('onboarding.concepts.title');
   });
 
   it('is shown before the tag step in both onboarding surfaces (O1)', () => {
