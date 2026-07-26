@@ -91,17 +91,27 @@ function maturityForProfile(profile: JourneyProfile) {
   };
 }
 
-/** Cold start: maturity expectation sheet, then first-entry sheet with tags. */
-async function reachFirstEntrySheet(page: Page): Promise<void> {
-  const maturity = page.getByTestId('maturity-expectation-sheet');
-  const entry = page.getByTestId('entry-sheet');
-  await expect(maturity.or(entry)).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
-  if (await maturity.isVisible()) {
-    await expect(page.getByTestId('maturity-intro-tag-hint')).toBeVisible();
-    await page.getByTestId('maturity-expectation-cta').click();
-    await expect(maturity).toHaveCount(0);
+/** Walk the full /onboarding sequence to its end (primary is "Continue" until
+ *  the final "Start tracking"). Tags stay optional. */
+async function completeOnboardingSequence(page: Page): Promise<void> {
+  for (let i = 0; i < 6; i += 1) {
+    const start = page.getByRole('button', { name: 'Start tracking' });
+    if (await start.isVisible().catch(() => false)) {
+      await start.click();
+      return;
+    }
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
   }
-  await expect(entry).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+}
+
+/** Cold start: the onboarding sequence runs first, then the first-entry sheet
+ *  opens (clean, without the onboarding tag embed). */
+async function reachFirstEntrySheet(page: Page): Promise<void> {
+  await page.waitForURL(/\/onboarding$/, { timeout: APP_READY_TIMEOUT_MS }).catch(() => {});
+  if (page.url().includes('/onboarding')) {
+    await completeOnboardingSequence(page);
+  }
+  await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
 }
 
 function sampleInsight(userId: string, profile: JourneyProfile) {
@@ -606,93 +616,109 @@ test.describe('W1 Account & Vertrauen', () => {
 test.describe('W2 Cold Start / Onboarding @390', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('new user home opens first-entry sheet with tag suggestions', async ({ page }) => {
+  test('new user home routes into the onboarding sequence before the first entry', async ({
+    page,
+  }) => {
     await installJourneyApi(page, { profile: 'new_user' });
     await page.goto('/');
 
-    await expect(page).toHaveURL('/', { timeout: APP_READY_TIMEOUT_MS });
-    await reachFirstEntrySheet(page);
+    // Cold start redirects to the full-screen sequence; no entry sheet yet.
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('maturity-intro-phase-collecting')).toBeVisible({
+      timeout: APP_READY_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('maturity-intro-tag-hint')).toBeVisible();
+    await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
+  });
+
+  test('sequence order is maturity → concepts → tags → cycle, then first entry', async ({
+    page,
+  }) => {
+    const api = await installJourneyApi(page, { profile: 'new_user' });
+    await page.goto('/onboarding');
+
+    // 1 Maturity
+    await expect(page.getByTestId('maturity-intro-phase-collecting')).toBeVisible({
+      timeout: APP_READY_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('maturity-intro-phase-robust')).toBeVisible();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+
+    // 2 Concepts (tag/habit/symptom/cycle definitions)
+    await expect(page.getByTestId('concept-explainer')).toBeVisible();
+    await expect(page.getByTestId('concept-cycle')).toBeVisible();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+
+    // 3 Tags (selection + manual entry in one screen)
     await expect(page.getByTestId('onboarding-intro')).toBeVisible();
     await expect(page.getByTestId('onboarding-habit-hint')).toBeVisible();
     await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
-  });
-
-  test('onboarding route redirects to home entry sheet with tag suggestions', async ({ page }) => {
-    await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/onboarding');
-
-    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
-    await reachFirstEntrySheet(page);
-    await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
-  });
-
-  test('onboarding preview wizard remains available', async ({ page }) => {
-    await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/onboarding?preview=1');
-
-    await expect(page).toHaveURL(/\/onboarding\?preview=1$/, { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByTestId('onboarding-intro')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Pick useful tags' })).toBeVisible();
-  });
-
-  test('onboarding preview skip completes and returns to home CTA', async ({ page }) => {
-    const api = await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/onboarding?preview=1');
-
-    await page.getByRole('button', { name: 'Skip', exact: true }).click();
-    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
-    expect(api.writes).toContain('POST /onboarding/complete');
-  });
-
-  test('onboarding preview tag flow skips summary for three or fewer tags', async ({ page }) => {
-    const api = await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/onboarding?preview=1');
-
     await page.getByRole('button', { name: 'Running' }).click();
-    await page.getByRole('button', { name: 'Walk' }).click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+
+    // 4 Cycle (last screen) with the deactivation toggle
+    await expect(page.getByTestId('cycle-function-explainer')).toBeVisible();
+    await expect(page.getByTestId('cycle-onboarding-toggle')).toBeVisible();
     await page.getByRole('button', { name: 'Start tracking' }).click();
 
-    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
+    // First entry opens only now — clean, without the onboarding tag embed.
+    await page.waitForURL(/\?openEntry=1/, { timeout: APP_READY_TIMEOUT_MS });
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('onboarding-tag-suggestion')).toHaveCount(0);
     expect(api.writes).toContain('POST /onboarding/complete');
-    await expect(page.getByRole('heading', { name: 'Ready to start' })).toHaveCount(0);
+    expect(api.writes).toContain('PATCH /user/preferences maturity_intro');
   });
 
-  test('onboarding preview tag flow shows summary for more than three tags', async ({ page }) => {
+  test('sequence completes with no tags selected (tags optional)', async ({ page }) => {
     const api = await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/onboarding?preview=1');
+    await page.goto('/onboarding');
+
+    await completeOnboardingSequence(page);
+
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
+    expect(api.writes).toContain('POST /onboarding/complete');
+  });
+
+  test('summary screen appears for more than three tags, before the cycle screen', async ({
+    page,
+  }) => {
+    const api = await installJourneyApi(page, { profile: 'new_user' });
+    await page.goto('/onboarding');
+
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // maturity → concepts
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // concepts → tags
 
     await page.getByRole('button', { name: 'Running' }).click();
     await page.getByRole('button', { name: 'Walk' }).click();
     await page.getByRole('button', { name: 'Meditation' }).click();
     await page.getByRole('button', { name: 'Yoga' }).click();
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // tags → summary
+
     await expect(page.getByRole('heading', { name: 'Ready to start' })).toBeVisible();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // summary → cycle
+
+    await expect(page.getByTestId('cycle-function-explainer')).toBeVisible();
     await page.getByRole('button', { name: 'Start tracking' }).click();
 
-    await expect(page).toHaveURL(/\/?(\?openEntry=1)?$/, { timeout: APP_READY_TIMEOUT_MS });
+    await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     expect(api.writes).toContain('POST /onboarding/complete');
   });
 
-  test('maturity expectation sheet appears before tag selection', async ({ page }) => {
+  test('cycle function can be disabled on the last screen', async ({ page }) => {
     const api = await installJourneyApi(page, { profile: 'new_user' });
-    await page.goto('/');
+    await page.goto('/onboarding');
 
-    await expect(page.getByTestId('maturity-expectation-sheet')).toBeVisible({
-      timeout: APP_READY_TIMEOUT_MS,
-    });
-    await expect(page.getByTestId('maturity-intro-phase-collecting')).toBeVisible();
-    await expect(page.getByTestId('maturity-intro-phase-robust')).toBeVisible();
-    await expect(page.getByTestId('maturity-intro-tag-hint')).toBeVisible();
-    await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // maturity → concepts
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // concepts → tags
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // tags → cycle
 
-    await page.getByTestId('maturity-expectation-cta').click();
-    await expect(page.getByTestId('maturity-expectation-sheet')).toHaveCount(0);
-    expect(api.writes).toContain('PATCH /user/preferences maturity_intro');
+    const toggle = page.getByTestId('cycle-onboarding-toggle');
+    await expect(toggle).toBeChecked();
+    await toggle.uncheck();
+    await page.getByRole('button', { name: 'Start tracking' }).click();
 
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
-    await expect(page.getByTestId('onboarding-tag-suggestion').first()).toBeVisible();
+    expect(api.writes).toContain('POST /onboarding/complete');
   });
 });
 
@@ -739,7 +765,7 @@ test.describe('W5 Erste Erkenntnis', () => {
     await installJourneyApi(page, { profile: 'new_user' });
     await page.setViewportSize({ width: 390, height: 844 });
 
-    // New users: maturity intro → entry sheet; close it to inspect collecting state.
+    // New users: run the onboarding sequence → entry sheet; close it to inspect collecting state.
     await page.goto('/');
     await reachFirstEntrySheet(page);
     await page.getByTestId('entry-sheet-close').click();

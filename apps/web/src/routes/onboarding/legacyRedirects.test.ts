@@ -13,16 +13,9 @@ async function expectRedirect(load: () => unknown, location: string): Promise<vo
 }
 
 describe('onboarding redirects', () => {
-  it('redirects /onboarding to home without forcing openEntry', async () => {
-    await expectRedirect(
-      () => loadOnboarding({ url: new URL('http://localhost/onboarding') } as never),
-      '/'
-    );
-  });
-
-  it('keeps /onboarding?preview=1 for the legacy wizard', async () => {
+  it('renders the onboarding sequence instead of redirecting', async () => {
     const result = await loadOnboarding({
-      url: new URL('http://localhost/onboarding?preview=1'),
+      url: new URL('http://localhost/onboarding'),
     } as never);
     expect(result).toEqual({});
   });

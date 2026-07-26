@@ -10,6 +10,7 @@
   export let initialDate: string;
   export let onboardingTagsEnabled = false;
   export let workContextTypical: WorkContextTypical | null = null;
+  export let cycleTrackingEnabled = true;
 
   const dispatch = createEventDispatcher<{ close: void; saved: void }>();
 
@@ -62,6 +63,7 @@
           {openMode}
           {onboardingTagsEnabled}
           {workContextTypical}
+          {cycleTrackingEnabled}
           on:close={handleFormClose}
           on:saved={handleFormSaved}
         />

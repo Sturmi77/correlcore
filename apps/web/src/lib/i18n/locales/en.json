@@ -614,6 +614,13 @@
       "body": "Adjust the inputs available in the daily entry flow.",
       "reminders_placeholder": "Reminders (later)"
     },
+    "cycle": {
+      "kicker": "Cycle",
+      "heading": "Cycle tracking",
+      "body": "Control whether the cycle-day field appears in every daily entry.",
+      "enabled": "Cycle function enabled",
+      "hint": "When enabled, you can log your cycle day (1–35) per entry. CorrelCore treats it like a metric — no prediction, no medical advice."
+    },
     "vocabulary": {
       "heading": "Tracking vocabulary",
       "body": "Manage tags, symptoms, and habits used in entries and analysis.",
@@ -1194,6 +1201,7 @@
       "tags_body": "Start with a small set. Free-text tags are always available.",
       "habit_hint": "Tags like Walk or Meditation can later be marked as build or reduce habits under Settings → Tags to track adherence in Trends.",
       "custom": "Custom tag",
+      "custom_invalid": "Please choose a slightly longer name (at least 2 letters or digits).",
       "add_tag": "Add tag",
       "summary_title": "Ready to start",
       "summary_body": "{count} tags selected.",
@@ -1214,6 +1222,15 @@
       "footer": "Statements stay descriptive, not a diagnosis.",
       "info_label": "What do tag, habit and symptom mean?",
       "info_close": "Close"
+    },
+    "cycle_step": {
+      "title": "Cycle tracking",
+      "body": "Optional: log your cycle day (1–35). CorrelCore treats it like a metric and looks for links with mood, sleep and more. No prediction, no medical advice.",
+      "tag_hint": "The cycle also has its own tags like Cycle, Period or PMS that you can pick in the previous step.",
+      "toggle_label": "Enable cycle function",
+      "toggle_hint_on": "On: the cycle-day field appears in every daily entry.",
+      "toggle_hint_off": "Off: no cycle-day field. You can re-enable the function later under Settings.",
+      "disclaimer": "Statements stay descriptive, not a diagnosis."
     },
     "retro": {
       "title": "How were the last few days?",

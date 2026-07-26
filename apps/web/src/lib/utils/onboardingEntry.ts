@@ -31,3 +31,21 @@ export function shouldShowOnboardingTags(
 export function shouldSkipOnboardingSummary(tagCount: number): boolean {
   return tagCount <= ONBOARDING_SUMMARY_SKIP_MAX_TAGS;
 }
+
+/**
+ * Cold start routes new users through the full onboarding sequence at
+ * `/onboarding` before the first daily entry can open. Returns true only for a
+ * not-yet-onboarded user with no entries and no deferred suggestion stash — the
+ * stash exclusion prevents a redirect loop for the offline-finalize fallback,
+ * where onboarding is completed inside the entry sheet instead.
+ */
+export function shouldRedirectToOnboarding(
+  preferences: UserPreferencesResponse | null | undefined,
+  entryCount: number | null | undefined,
+  options?: ShouldShowOnboardingTagsOptions
+): boolean {
+  if (!preferences || preferences.onboarding_retro_completed) return false;
+  if ((entryCount ?? 0) !== 0) return false;
+  if (options?.hasDeferredSuggestionStash) return false;
+  return true;
+}

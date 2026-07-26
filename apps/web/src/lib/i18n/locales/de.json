@@ -614,6 +614,13 @@
       "body": "Passe die Eingaben an, die im taeglichen Erfassungsablauf verfuegbar sind.",
       "reminders_placeholder": "Erinnerungen (spaeter)"
     },
+    "cycle": {
+      "kicker": "Zyklus",
+      "heading": "Zyklus-Tracking",
+      "body": "Steuere, ob das Zyklustag-Feld in jedem Tageseintrag erscheint.",
+      "enabled": "Zyklus-Funktion aktiviert",
+      "hint": "Ist die Funktion aktiv, kannst du deinen Zyklustag (1–35) je Eintrag erfassen. CorrelCore behandelt ihn wie eine Metrik — keine Vorhersage, keine medizinische Aussage."
+    },
     "vocabulary": {
       "heading": "Tracking-Vokabular",
       "body": "Verwalte Tags, Symptome und Gewohnheiten fuer Eintraege und Analysen.",
@@ -1194,6 +1201,7 @@
       "tags_body": "Starte mit einer kleinen Auswahl. Freitext-Tags bleiben immer moeglich.",
       "habit_hint": "Tags wie Spazieren oder Meditation kannst du spaeter unter Einstellungen → Tags als Aufbau- oder Reduktionsgewohnheit markieren und in Trends verfolgen.",
       "custom": "Eigener Tag",
+      "custom_invalid": "Bitte einen etwas längeren Namen wählen (mindestens 2 Buchstaben oder Ziffern).",
       "add_tag": "Tag hinzufuegen",
       "summary_title": "Bereit zum Start",
       "summary_body": "{count} Tags ausgewaehlt.",
@@ -1214,6 +1222,15 @@
       "footer": "Aussagen bleiben beschreibend, keine Diagnose.",
       "info_label": "Was bedeuten Tag, Gewohnheit und Symptom?",
       "info_close": "Schließen"
+    },
+    "cycle_step": {
+      "title": "Zyklus-Tracking",
+      "body": "Optional: trage deinen Zyklustag (1–35) ein. CorrelCore behandelt ihn wie eine Metrik und sucht Zusammenhänge mit Stimmung, Schlaf und mehr. Keine Vorhersage, keine medizinische Aussage.",
+      "tag_hint": "Für den Zyklus gibt es außerdem eigene Tags wie Zyklus, Periode oder PMS, die du im vorherigen Schritt auswählen kannst.",
+      "toggle_label": "Zyklus-Funktion aktivieren",
+      "toggle_hint_on": "Aktiv: Das Zyklustag-Feld erscheint in jedem Tageseintrag.",
+      "toggle_hint_off": "Deaktiviert: kein Zyklustag-Feld. Du kannst die Funktion später unter Einstellungen wieder einschalten.",
+      "disclaimer": "Aussagen bleiben beschreibend, keine Diagnose."
     },
     "retro": {
       "title": "Wie waren die letzten Tage?",

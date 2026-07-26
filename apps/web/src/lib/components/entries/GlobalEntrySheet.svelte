@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
   import {
     closeEntrySheet,
@@ -14,17 +15,28 @@
   import { fetchUserProfile, type WorkContextTypical } from '$lib/api/profile';
   import { entryDateFromSearchParams, isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { isoDate } from '$lib/utils/entryForm';
-  import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import { shouldShowOnboardingTags, shouldRedirectToOnboarding } from '$lib/utils/onboardingEntry';
   import { hasOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
-  import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
   import EntrySheet from './EntrySheet.svelte';
 
   let sheetOpen = false;
   let workContextTypical: WorkContextTypical | null = null;
+  let cycleTrackingEnabled = true;
   let profileLoaded = false;
   let openFromQueryPending = false;
 
   $: sheetOpen = $entrySheetStore.open;
+
+  // Re-read the cycle preference each time the sheet opens so a Settings toggle
+  // made earlier in the same session is reflected without a reload (the initial
+  // load is guarded by `profileLoaded` and would otherwise stay stale).
+  let sheetWasOpen = false;
+  $: if (sheetOpen && !sheetWasOpen) {
+    sheetWasOpen = true;
+    void refreshCyclePreference();
+  } else if (!sheetOpen && sheetWasOpen) {
+    sheetWasOpen = false;
+  }
 
   // A widget deep link on a already-running, already-authenticated app only
   // changes the URL — the auth subscription in onMount never re-fires, so the
@@ -73,22 +85,30 @@
         fetchUserPreferences(),
         fetchDashboardSummary(date),
       ]);
-      // Defer to Home: maturity expectation runs before first-entry tags.
+      const hasStash = hasOnboardingSuggestionStash(preferences.user_id);
+      // Onboarding not finished yet (and no offline-deferred stash to finalize
+      // inside the sheet) → run the full /onboarding sequence first instead of
+      // opening the tag-embed entry.
       if (
-        shouldShowMaturityExpectationIntro({
-          preferences,
-          entryCount: summary.entry_count,
-          entrySheetOpen: false,
+        shouldRedirectToOnboarding(preferences, summary.entry_count, {
+          hasDeferredSuggestionStash: hasStash,
         })
       ) {
         stripOpenEntryQuery();
+        await goto('/onboarding');
         return;
       }
       onboardingTags = shouldShowOnboardingTags(preferences, summary.entry_count, {
-        hasDeferredSuggestionStash: hasOnboardingSuggestionStash(preferences.user_id),
+        hasDeferredSuggestionStash: hasStash,
       });
     } catch {
-      onboardingTags = false;
+      // Offline / API blip: preferences+summary rejected, but a deferred
+      // suggestion stash (offline wizard finish) must still enable the entry's
+      // deferred-finalize path — otherwise the first entry saves with onboarding
+      // left incomplete. Read the stash independently of the API.
+      const state = get(auth);
+      const userId = state.status === 'authenticated' ? state.user.id : null;
+      onboardingTags = userId ? hasOnboardingSuggestionStash(userId) : false;
     }
     openEntrySheet(date, { onboardingTags });
     stripOpenEntryQuery();
@@ -97,11 +117,27 @@
   async function loadProfileDefault(): Promise<void> {
     if (profileLoaded || get(auth).status !== 'authenticated') return;
     profileLoaded = true;
+    // allSettled: a transient /user/preferences failure must not discard a
+    // successfully loaded work-context profile default (and vice versa).
+    const [profileRes, prefRes] = await Promise.allSettled([
+      fetchUserProfile(),
+      fetchUserPreferences(),
+    ]);
+    if (profileRes.status === 'fulfilled') {
+      workContextTypical = profileRes.value.work_context_typical ?? null;
+    }
+    if (prefRes.status === 'fulfilled') {
+      cycleTrackingEnabled = prefRes.value.cycle_tracking_enabled;
+    }
+  }
+
+  async function refreshCyclePreference(): Promise<void> {
+    if (get(auth).status !== 'authenticated') return;
     try {
-      const profile = await fetchUserProfile();
-      workContextTypical = profile.work_context_typical ?? null;
+      const preferences = await fetchUserPreferences();
+      cycleTrackingEnabled = preferences.cycle_tracking_enabled;
     } catch {
-      workContextTypical = null;
+      // Keep the last known value when preferences are unreachable.
     }
   }
 
@@ -116,6 +152,7 @@
         closeEntrySheet();
         sheetOpen = false;
         workContextTypical = null;
+        cycleTrackingEnabled = true;
         profileLoaded = false;
         return;
       }
@@ -142,6 +179,7 @@
     initialDate={$entrySheetStore.date}
     onboardingTagsEnabled={$entrySheetStore.onboardingTagsEnabled}
     {workContextTypical}
+    {cycleTrackingEnabled}
     on:close={handleSheetClose}
     on:saved={() => notifyEntrySheetSaved()}
   />

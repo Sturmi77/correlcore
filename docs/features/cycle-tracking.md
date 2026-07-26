@@ -1,5 +1,11 @@
 # Cycle Tracking — Feature Overview
 
+> **2026-07-26 update:** The shipped form is the `cycle_day` metric (1–35) plus
+> CYCLE tag category, now gated by an **opt-out toggle** `cycle_tracking_enabled`
+> (user preference, migration `032`; ADR-0034 Stage 1). It is set on the last
+> onboarding screen and re-toggleable under Settings → Cycle. Bleeding strength,
+> cycle-specific symptoms, and phase inference remain deferred to [#547](https://github.com/Sturmi77/correlcore/issues/547).
+>
 > **Status**: Partially implemented (M4 in progress)
 > **Relevant ADRs**: [ADR-0031](../adr/0031-cycle-tracking-scope.md) · [ADR-0032](../adr/0032-cycle-tracking-as-domain-extension.md) · [ADR-0033](../adr/0033-sensitive-health-data-handling-cycle-signals.md) · [ADR-0034](../adr/0034-onboarding-cycle-tracking-toggle.md)
 > **Related ADRs**: [ADR-0008](../adr/0008-symptom-master-tabelle.md) · [ADR-0021](../adr/0021-insight-maturity-phases.md) · [ADR-0028](../adr/0028-entry-slot-model.md) · [ADR-0030](../adr/0030-onboarding-tag-suggestions.md)
@@ -41,10 +47,13 @@ CycleSnapshot (derived, insight-engine-internal)
   └─ cycle_number, phase, day_in_cycle, next_period_window (±2 days)
 ```
 
-## Opt-in Toggle
+## Opt-out Toggle
 
-Cycle tracking is **off by default**. Users activate it during onboarding
-(Step 3) or at any time via **Settings → Tracking → Cycle tracking**.
+As shipped (Stage 1, 2026-07-26), cycle tracking is **on by default (opt-out)**:
+`cycle_tracking_enabled` server-defaults to `true`. Users can turn it **off** on
+the last onboarding screen, or at any time via **Settings → Cycle**. When off,
+the `cycle_day` entry field is hidden. (The original ADR-0034 §1 proposed opt-in
+/ default-off; the implemented reversal is recorded in that ADR's Decision note.)
 
 See ADR-0034 for the full toggle specification, including what is shown/hidden
 and the Settings-level deletion path.
