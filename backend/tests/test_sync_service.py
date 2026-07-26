@@ -432,7 +432,9 @@ async def test_record_entry_upsert_revision_appends_log_without_note(
         return []
 
     monkeypatch.setattr(sync_service, "_append_revision_log", append)
-    monkeypatch.setattr(sync_service, "_get_or_create_user_revision", AsyncMock(side_effect=lock_side))
+    monkeypatch.setattr(
+        sync_service, "_get_or_create_user_revision", AsyncMock(side_effect=lock_side)
+    )
     monkeypatch.setattr(sync_service, "list_tags_for_entry", AsyncMock(side_effect=list_tags_side))
     monkeypatch.setattr(
         sync_service, "list_symptoms_for_entry", AsyncMock(side_effect=list_symptoms_side)
