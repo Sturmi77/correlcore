@@ -17,16 +17,15 @@
    *
    * UX
    * --
-   * Each symptom row renders 4 dots representing intensity 0..3. Clicking a
-   * dot sets that intensity; clicking the currently-selected dot toggles
-   * the symptom off (i.e. removes it from the bound list) — a
-   * "no-symptom" state shows no dot filled.
+   * Each symptom row is a single present/not-present toggle (#544): intensity
+   * levels are hidden until the intensity analytics land, since the stored
+   * value is currently ignored. A note explains this above the list.
    *
    * Accessibility
    * -------------
-   * Each dot is a `<button type="button" aria-pressed>` so screen readers
-   * announce the chosen intensity. Each row is a fieldset with a legend
-   * carrying the symptom name.
+   * Each toggle is a `<button type="button" aria-pressed>` so screen readers
+   * announce whether the symptom is marked present. Each row is a fieldset with
+   * a legend carrying the symptom name.
    *
    * Privacy
    * -------
@@ -42,12 +41,18 @@
   import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { refreshSymptoms, submitSymptom, symptoms, symptomsList } from '$lib/stores/symptoms';
   import {
-    INTENSITY_MAX,
-    INTENSITY_MIN,
     MAX_SYMPTOMS_PER_ENTRY,
     type SymptomEntry,
     type SymptomResponse,
   } from '$lib/api/symptoms';
+
+  /**
+   * Intensity (0–3) is stored but ignored by analytics (ADR-0025 future work),
+   * so the per-level control was a silent no-op (#544). Until intensity
+   * analytics ship, symptoms are recorded presence-only with this fixed value;
+   * existing entries keep whatever intensity they already had.
+   */
+  const SYMPTOM_PRESENT_INTENSITY = 1;
 
   /** Two-way bound: list of selected (symptom_id, intensity) pairs. */
   export let selected: SymptomEntry[] = [];
@@ -76,12 +81,6 @@
     await loadSymptoms();
   });
 
-  const INTENSITY_VALUES = (() => {
-    const out: number[] = [];
-    for (let i = INTENSITY_MIN; i <= INTENSITY_MAX; i += 1) out.push(i);
-    return out;
-  })();
-
   /**
    * Display name for a symptom: defaults are localised via i18n key,
    * custom symptoms render their user-provided name verbatim.
@@ -101,26 +100,21 @@
     return hit ? hit.intensity : null;
   }
 
-  function setIntensity(symptomId: string, value: number) {
+  function toggleSymptom(symptomId: string) {
     if (disabled) return;
     const current = getIntensity(symptomId, selected);
 
-    // Clicking the already-selected dot clears the symptom row.
-    if (current === value) {
+    // Present → remove it.
+    if (current !== null) {
       selected = selected.filter((s) => s.symptom_id !== symptomId);
       return;
     }
 
-    if (current === null) {
-      // Adding a new symptom — respect the cap.
-      if (selected.length >= MAX_SYMPTOMS_PER_ENTRY) return;
-      selected = [...selected, { symptom_id: symptomId, intensity: value }];
-      return;
-    }
-
-    selected = selected.map((s) =>
-      s.symptom_id === symptomId ? { symptom_id: symptomId, intensity: value } : s
-    );
+    // Absent → add it (presence-only), respecting the cap. Existing entries
+    // keep whatever intensity they were loaded with; only new picks use the
+    // fixed present value.
+    if (selected.length >= MAX_SYMPTOMS_PER_ENTRY) return;
+    selected = [...selected, { symptom_id: symptomId, intensity: SYMPTOM_PRESENT_INTENSITY }];
   }
 
   /**
@@ -212,6 +206,9 @@
   </div>
 
   <p class="symptom-disclaimer" role="note">{$_('disclaimer.medical')}</p>
+  <p class="symptom-intensity-note" role="note" data-testid="symptom-intensity-note">
+    {$_('symptom.intensity_disabled_hint')}
+  </p>
 
   {#if $symptoms.status === 'loading'}
     <p class="symptom-status">{$_('symptom.loading')}</p>
@@ -229,7 +226,7 @@
   {#if list.length > 0}
     <ul class="symptom-list">
       {#each list as symptom (symptom.id)}
-        {@const current = getIntensity(symptom.id, selected)}
+        {@const present = getIntensity(symptom.id, selected) !== null}
         {@const name = displayName(symptom, $_)}
         <li class="symptom-row">
           <fieldset class="symptom-fieldset" {disabled}>
@@ -241,28 +238,18 @@
               {/if}
               <span>{name}</span>
             </legend>
-            <div
-              class="symptom-scale"
-              role="group"
-              aria-label={$_('symptom.scale_label', { values: { name } })}
+            <button
+              type="button"
+              class="symptom-toggle"
+              class:symptom-toggle-active={present}
+              aria-pressed={present}
+              data-testid="symptom-toggle"
+              aria-label={$_('symptom.present_toggle', { values: { name } })}
+              disabled={disabled || (!present && atLimit)}
+              on:click={() => toggleSymptom(symptom.id)}
             >
-              {#each INTENSITY_VALUES as value (value)}
-                {@const active = current === value}
-                <button
-                  type="button"
-                  class="symptom-dot"
-                  class:symptom-dot-active={active}
-                  class:symptom-dot-zero={value === 0}
-                  aria-pressed={active}
-                  aria-label={$_(`symptom.intensity.${value}`)}
-                  title={$_(`symptom.intensity.${value}`)}
-                  disabled={disabled || (current === null && atLimit)}
-                  on:click={() => setIntensity(symptom.id, value)}
-                >
-                  <span class="symptom-dot-marker" aria-hidden="true">{value}</span>
-                </button>
-              {/each}
-            </div>
+              {present ? $_('symptom.present_on') : $_('symptom.present_off')}
+            </button>
           </fieldset>
         </li>
       {/each}
@@ -477,59 +464,44 @@
     background: var(--color-surface-2);
   }
 
-  .symptom-scale {
-    display: inline-flex;
-    gap: 0.4rem;
+  .symptom-intensity-note {
+    margin: 0;
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    opacity: 0.85;
   }
 
-  .symptom-dot {
-    width: 2.75rem;
-    height: 2.75rem;
+  .symptom-toggle {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
     color: inherit;
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     font-weight: 600;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
+    white-space: nowrap;
     transition:
       background var(--transition-fast),
       border-color var(--transition-fast),
-      color var(--transition-fast),
-      transform var(--transition-fast);
+      color var(--transition-fast);
   }
 
-  .symptom-dot:hover:not(:disabled) {
+  .symptom-toggle:hover:not(:disabled) {
     border-color: var(--color-primary);
   }
 
-  .symptom-dot:active:not(:disabled) {
-    transform: scale(0.94);
-  }
-
-  .symptom-dot:disabled {
+  .symptom-toggle:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
 
-  .symptom-dot-active {
+  .symptom-toggle-active {
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: var(--color-text-inverse);
-  }
-
-  /* Visual cue: 0 means "no symptom" — keep it neutral even when active. */
-  .symptom-dot-zero.symptom-dot-active {
-    background: var(--color-surface-2);
-    color: inherit;
-  }
-
-  .symptom-dot-marker {
-    pointer-events: none;
   }
 
   .symptom-custom {
@@ -603,13 +575,7 @@
       grid-template-columns: 1fr;
     }
 
-    .symptom-scale {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(2.75rem, 1fr));
-      width: 100%;
-    }
-
-    .symptom-dot {
+    .symptom-toggle {
       width: 100%;
     }
   }

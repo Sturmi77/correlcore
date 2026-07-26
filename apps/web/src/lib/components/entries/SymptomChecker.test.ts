@@ -61,10 +61,21 @@ describe('SymptomChecker', () => {
     expect(screen.getByTestId('symptom-limit-message').textContent).toContain(
       'symptom.limit_reached'
     );
-    expect(
-      screen
-        .getAllByRole('button', { name: /symptom\.intensity/ })
-        .every((button) => (button as HTMLButtonElement).disabled)
-    ).toBe(true);
+    // The unselected symptom's presence toggle is disabled at the cap.
+    expect((screen.getByTestId('symptom-toggle') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('records symptoms presence-only and hides the intensity levels (#544)', async () => {
+    render(SymptomChecker, { props: { selected: [] as SymptomEntry[] } });
+    // Intensity note is shown; no 0–3 intensity level buttons remain.
+    expect(screen.getByTestId('symptom-intensity-note')).toBeTruthy();
+    expect(screen.queryAllByRole('button', { name: /symptom\.intensity\.\d/ })).toHaveLength(0);
+
+    // A single presence toggle drives selection.
+    const toggle = screen.getByTestId('symptom-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    toggle.click();
+    await Promise.resolve();
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
   });
 });
