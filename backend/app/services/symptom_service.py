@@ -188,6 +188,16 @@ async def create_custom_symptom(
         await db.rollback()
         raise SymptomConflictError("symptom with this slug already exists") from exc
 
+    from app.services.sync_service import record_symptom_revision
+
+    await record_symptom_revision(
+        db,
+        user_id=user_id,
+        symptom_id=symptom.id,
+        operation="upsert",
+        symptom=symptom,
+    )
+
     logger.info(
         "symptom.created",
         extra={"user_id": str(user_id), "symptom_id": str(symptom.id)},
@@ -222,6 +232,16 @@ async def update_custom_symptom(
 
     await db.flush()
 
+    from app.services.sync_service import record_symptom_revision
+
+    await record_symptom_revision(
+        db,
+        user_id=user_id,
+        symptom_id=symptom.id,
+        operation="upsert",
+        symptom=symptom,
+    )
+
     logger.info(
         "symptom.updated",
         extra={"user_id": str(user_id), "symptom_id": str(symptom.id)},
@@ -243,6 +263,10 @@ async def delete_custom_symptom(
     symptom = await _get_owned_custom_symptom(db, symptom_id=symptom_id, user_id=user_id)
     await db.delete(symptom)
     await db.flush()
+
+    from app.services.sync_service import record_symptom_revision
+
+    await record_symptom_revision(db, user_id=user_id, symptom_id=symptom_id, operation="delete")
 
     logger.info(
         "symptom.deleted",
@@ -279,6 +303,7 @@ async def assign_symptoms_to_entry(
     user_id: uuid.UUID,
     entry_id: uuid.UUID,
     symptoms: Sequence[SymptomEntry],
+    record_revision: bool = True,
 ) -> list[EntrySymptom]:
     """Replace the entry's symptom set with ``symptoms``.
 
@@ -289,12 +314,16 @@ async def assign_symptoms_to_entry(
         if it changed.
       * Symptoms whose ID is missing from the new list are deleted.
 
+    When ``record_revision`` is true (REST default), emit an entry upsert
+    into ``sync_revision_log`` so offline pull sees association changes.
+    Sync push passes false because it appends its own revision after merge.
+
     Raises:
         EntryNotFoundForSymptomError: entry not visible to the user.
         SymptomsNotFoundError: at least one ``symptom_id`` is not visible
             (neither a default nor one of the user's custom symptoms).
     """
-    await _get_owned_entry(db, entry_id=entry_id, user_id=user_id)
+    entry = await _get_owned_entry(db, entry_id=entry_id, user_id=user_id)
 
     target = {s.symptom_id: s.intensity for s in symptoms}
 
@@ -355,6 +384,11 @@ async def assign_symptoms_to_entry(
         )
 
     await db.flush()
+
+    if record_revision and (to_add or to_remove or intensity_updates):
+        from app.services.sync_service import record_entry_upsert_revision
+
+        await record_entry_upsert_revision(db, user_id=user_id, entry=entry)
 
     logger.info(
         "entry.symptoms.assigned",

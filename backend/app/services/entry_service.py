@@ -300,6 +300,12 @@ async def create_entry(
         await db.rollback()
         raise EntryConflictError("entry already exists for this date and slot") from exc
 
+    # REST creates must appear in incremental pull after the client's cursor
+    # advances; initial backfill only runs when since is None.
+    from app.services.sync_service import record_entry_upsert_revision
+
+    await record_entry_upsert_revision(db, user_id=user_id, entry=entry)
+
     logger.info(
         "entry.created",
         extra={"user_id": str(user_id), "entry_id": str(entry.id)},
@@ -442,6 +448,10 @@ async def update_entry(
     except IntegrityError as exc:
         await db.rollback()
         raise EntryConflictError("entry already exists for this date and slot") from exc
+
+    from app.services.sync_service import record_entry_upsert_revision
+
+    await record_entry_upsert_revision(db, user_id=user_id, entry=entry)
 
     logger.info(
         "entry.updated",

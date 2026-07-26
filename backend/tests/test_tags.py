@@ -307,7 +307,7 @@ async def test_update_default_tag_copies_include_in_analytics_into_override() ->
 
 
 @pytest.mark.asyncio
-async def test_create_custom_tag_happy_path() -> None:
+async def test_create_custom_tag_happy_path(rest_revision_recorders) -> None:
     user = make_user()
     db = MagicMock()
     db.add = MagicMock()
@@ -329,6 +329,9 @@ async def test_create_custom_tag_happy_path() -> None:
     db.add.assert_called_once()
     db.flush.assert_awaited_once()
     db.rollback.assert_not_awaited()
+    rest_revision_recorders["tag"].assert_awaited_once()
+    assert rest_revision_recorders["tag"].await_args.kwargs["operation"] == "upsert"
+    assert rest_revision_recorders["tag"].await_args.kwargs["tag"] is tag
 
 
 @pytest.mark.asyncio
@@ -577,7 +580,7 @@ async def test_delete_custom_tag_calls_db_delete() -> None:
 
 
 @pytest.mark.asyncio
-async def test_assign_tags_replaces_set() -> None:
+async def test_assign_tags_replaces_set(rest_revision_recorders) -> None:
     """Replace semantics: missing tags get removed, new tags inserted."""
     user = make_user()
     entry = make_entry(user)
@@ -620,6 +623,36 @@ async def test_assign_tags_replaces_set() -> None:
     assert db.execute.await_count == 5
     # Exactly one EntryTag added (for `add`); `keep` is unchanged.
     assert db.add.call_count == 1
+    rest_revision_recorders["entry"].assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_assign_tags_sync_path_skips_revision(rest_revision_recorders) -> None:
+    """Sync push logs its own revision; assign must not double-append."""
+    user = make_user()
+    entry = make_entry(user)
+    add = uuid.uuid4()
+    db = MagicMock()
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(entry),
+            _all_result([]),
+            _all_result([(add,)]),
+            _scalars_result([make_tag(user, slug="add")]),
+        ]
+    )
+
+    await assign_tags_to_entry(
+        db,
+        user_id=user.id,
+        entry_id=entry.id,
+        tag_ids=[add],
+        record_revision=False,
+    )
+
+    rest_revision_recorders["entry"].assert_not_awaited()
 
 
 @pytest.mark.asyncio

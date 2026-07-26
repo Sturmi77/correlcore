@@ -104,7 +104,7 @@ def _payload(**overrides: object) -> EntryCreate:
 
 
 @pytest.mark.asyncio
-async def test_create_entry_happy_path() -> None:
+async def test_create_entry_happy_path(rest_revision_recorders) -> None:
     user = make_user()
     db = _make_db()
 
@@ -121,6 +121,8 @@ async def test_create_entry_happy_path() -> None:
     db.add.assert_called_once()
     db.flush.assert_awaited_once()
     db.rollback.assert_not_awaited()
+    rest_revision_recorders["entry"].assert_awaited_once()
+    assert rest_revision_recorders["entry"].await_args.kwargs["entry"] is entry
 
 
 @pytest.mark.asyncio
@@ -238,8 +240,8 @@ def test_entry_create_schema_rejects_two_days_ahead_of_utc(
 
 
 @pytest.mark.asyncio
-async def test_create_entry_duplicate_raises_conflict() -> None:
-    """IntegrityError → EntryConflictError + rollback."""
+async def test_create_entry_duplicate_raises_conflict(rest_revision_recorders) -> None:
+    """IntegrityError → EntryConflictError + rollback; no revision log."""
     user = make_user()
     integrity = IntegrityError("INSERT", params=None, orig=Exception("uq"))
     db = _make_db(flush_raises=integrity)
@@ -248,6 +250,7 @@ async def test_create_entry_duplicate_raises_conflict() -> None:
         await create_entry(db, user_id=user.id, payload=_payload())
 
     db.rollback.assert_awaited_once()
+    rest_revision_recorders["entry"].assert_not_awaited()
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +259,7 @@ async def test_create_entry_duplicate_raises_conflict() -> None:
 
 
 @pytest.mark.asyncio
-async def test_update_entry_within_window_changes_fields() -> None:
+async def test_update_entry_within_window_changes_fields(rest_revision_recorders) -> None:
     user = make_user()
     existing = make_entry(user, mood_score=3, note="old")
     db = MagicMock()
@@ -282,6 +285,8 @@ async def test_update_entry_within_window_changes_fields() -> None:
     assert updated.slot is EntrySlot.EVENING
     assert updated.cycle_day == 21
     db.flush.assert_awaited_once()
+    rest_revision_recorders["entry"].assert_awaited_once()
+    assert rest_revision_recorders["entry"].await_args.kwargs["entry"] is updated
 
 
 @pytest.mark.asyncio

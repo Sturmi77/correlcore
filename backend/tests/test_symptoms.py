@@ -217,7 +217,7 @@ async def test_list_visible_symptoms_returns_defaults_plus_user_customs() -> Non
 
 
 @pytest.mark.asyncio
-async def test_create_custom_symptom_happy_path() -> None:
+async def test_create_custom_symptom_happy_path(rest_revision_recorders) -> None:
     user = make_user()
     db = MagicMock()
     db.flush = AsyncMock()
@@ -233,6 +233,8 @@ async def test_create_custom_symptom_happy_path() -> None:
     assert symptom.slug != "tinnitus"
     assert symptom.is_default is False
     db.add.assert_called_once()
+    rest_revision_recorders["symptom"].assert_awaited_once()
+    assert rest_revision_recorders["symptom"].await_args.kwargs["operation"] == "upsert"
 
 
 @pytest.mark.asyncio
