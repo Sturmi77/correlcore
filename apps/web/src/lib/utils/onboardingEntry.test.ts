@@ -60,11 +60,12 @@ describe('onboardingEntry', () => {
       updated_at: '',
     };
     expect(shouldShowOnboardingTags(prefs, 2, { hasDeferredSuggestionStash: true })).toBe(true);
+    // Finalize can commit before the entry tag save; keep chips for remount retry.
     expect(
       shouldShowOnboardingTags({ ...prefs, onboarding_retro_completed: true }, 2, {
         hasDeferredSuggestionStash: true,
       })
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('skips summary for at most three tags', () => {

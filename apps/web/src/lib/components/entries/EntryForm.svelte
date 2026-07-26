@@ -821,6 +821,7 @@
         if (typeof navigator !== 'undefined' && navigator.onLine) {
           void refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
         }
+        clearOnboardingStashAfterSuccessfulPersist();
         return;
       }
 
@@ -863,6 +864,7 @@
       await assignTagsToEntry(entryId, resolvedSnap.selectedTagIds);
       await assignSymptomsToEntry(entryId, resolvedSnap.selectedSymptoms);
       await refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
+      clearOnboardingStashAfterSuccessfulPersist();
     } finally {
       if (startedAsCreate) createSaveInFlight = false;
     }
@@ -951,11 +953,23 @@
   function persistOnboardingSuggestionStash(finalizeDeferred: boolean) {
     const userId = currentUserId();
     if (!userId) return;
+    // After finalize succeeds we keep the deferred stash until persist()
+    // finishes so a failed tag/entry write can still remount-retry. Do not
+    // overwrite that recovery marker with a toggle-only (non-deferred) stash.
+    if (onboardingMarkedComplete && !finalizeDeferred) return;
     writeOnboardingSuggestionStash({
       userId,
       suggestions: [...selectedSuggestions.values()],
       finalizeDeferred,
     });
+  }
+
+  function clearOnboardingStashAfterSuccessfulPersist() {
+    // Entry-only saves while finalize is still deferred must keep the stash
+    // so a remount can retry completeOnboarding + tag writeback.
+    if (!onboardingMarkedComplete) return;
+    const userId = currentUserId();
+    if (userId) clearOnboardingSuggestionStash(userId);
   }
 
   function scheduleDeferredOnboardingRetry() {
@@ -1024,8 +1038,11 @@
     }
     onboardingMarkedComplete = true;
     onboardingFinalizeDeferred = false;
-    const userId = currentUserId();
-    if (userId) clearOnboardingSuggestionStash(userId);
+    // Keep a deferred stash until persist() succeeds — completeOnboarding has
+    // already flipped onboarding_retro_completed server-side; clearing here
+    // made a post-finalize save failure + remount permanently drop tag
+    // associations (gate hid chips because prefs looked finished).
+    persistOnboardingSuggestionStash(true);
     const createdIds = result.created_tags.map((tag) => tag.id);
     // Merge the live `selectedTagIds` as well, not just the snapshot: a tag the
     // user picks while completeOnboarding() is still awaiting lives only in the

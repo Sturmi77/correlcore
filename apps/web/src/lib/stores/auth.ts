@@ -168,10 +168,15 @@ export async function reconnectSession(): Promise<'online' | 'offline' | 'anonym
  * Secure mismatch). A null /auth/me means persistence failed — not bad
  * credentials — so callers surface SessionPersistenceError instead of a
  * 401 "wrong password" / "invalid token" mapping.
+ *
+ * When `expectedUser` is provided, the probed identity must match. Otherwise
+ * a stripped Set-Cookie can leave a prior account's cookies in place and
+ * `/auth/me` would silently authenticate the wrong user (cross-account
+ * writes after verify-email / reset-password / login).
  */
-async function requirePersistedSession(): Promise<UserResponse> {
+async function requirePersistedSession(expectedUser?: UserResponse): Promise<UserResponse> {
   const sessionUser = await fetchCurrentUser();
-  if (!sessionUser) {
+  if (!sessionUser || (expectedUser && sessionUser.id !== expectedUser.id)) {
     clearSessionTokens();
     throw new SessionPersistenceError('/auth/me');
   }
@@ -180,9 +185,9 @@ async function requirePersistedSession(): Promise<UserResponse> {
 
 export async function login(payload: LoginPayload): Promise<UserResponse> {
   await drainOfflineSyncForSessionChange();
-  await apiLogin(payload);
+  const loginResult = await apiLogin(payload);
   // Credentials were accepted (apiLogin returned 200); probe before UI auth.
-  const sessionUser = await requirePersistedSession();
+  const sessionUser = await requirePersistedSession(loginResult.user);
   connectivity.markServerReachable(true);
   resetInsightStore();
   resetEntrySheetStore();
@@ -212,11 +217,12 @@ export async function logout(): Promise<void> {
 /**
  * Finish an auth flow that already returned a TokenResponse (verify-email,
  * reset-password). Probes /auth/me before marking the UI authenticated —
- * same cookie-persistence class as login (ADR-0040). The response `user`
- * is not trusted for cookie auth; the probe identity wins.
+ * same cookie-persistence class as login (ADR-0040). The probe must match
+ * the auth-response user so a stripped Set-Cookie cannot leave a prior
+ * account's session in place.
  */
-export async function setUser(_userFromAuthResponse: UserResponse): Promise<void> {
-  const sessionUser = await requirePersistedSession();
+export async function setUser(userFromAuthResponse: UserResponse): Promise<void> {
+  const sessionUser = await requirePersistedSession(userFromAuthResponse);
   connectivity.markServerReachable(true);
   resetInsightStore();
   resetEntrySheetStore();

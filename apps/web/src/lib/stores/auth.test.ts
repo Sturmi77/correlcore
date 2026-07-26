@@ -263,4 +263,39 @@ describe('login / logout / setUser', () => {
     expect(get(auth)).toEqual({ status: 'loading' });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).not.toHaveBeenCalled();
   });
+
+  it('setUser fails when /auth/me is a different user than the auth response', async () => {
+    // Prior account A still has cookies; verify/reset for B returned 200 but
+    // B's Set-Cookie was stripped. Must not becomeAuthenticated as A.
+    const otherUser = {
+      id: 'usr_other',
+      email: 'other@b.de',
+      display_name: 'Other',
+      is_verified: true,
+    };
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(otherUser);
+    await expect(setUser(fakeUser)).rejects.toBeInstanceOf(SessionPersistenceError);
+    expect(get(auth)).toEqual({ status: 'loading' });
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).not.toHaveBeenCalled();
+  });
+
+  it('login fails when /auth/me is a different user than the login response', async () => {
+    const otherUser = {
+      id: 'usr_other',
+      email: 'other@b.de',
+      display_name: 'Other',
+      is_verified: true,
+    };
+    vi.mocked(authApi.login).mockResolvedValueOnce({
+      token_type: 'bearer',
+      expires_in: 900,
+      user: fakeUser,
+    });
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(otherUser);
+    await expect(login({ email: 'a@b.de', password: 'pw12345678' })).rejects.toBeInstanceOf(
+      SessionPersistenceError
+    );
+    expect(get(auth)).toEqual({ status: 'loading' });
+    expect(offlineSession.prepareOfflineDataForAuthenticatedUser).not.toHaveBeenCalled();
+  });
 });

@@ -17,9 +17,15 @@ export function shouldShowOnboardingTags(
   entryCount: number | null | undefined,
   options?: ShouldShowOnboardingTagsOptions
 ): boolean {
-  if (!preferences || preferences.onboarding_retro_completed) return false;
+  if (!preferences) return false;
+  // Deferred stash must win over `onboarding_retro_completed`: finalize can
+  // commit server-side before the entry tag save lands. Without this, a failed
+  // post-finalize persist + remount hides chips forever while the first entry
+  // never receives the suggestion tags.
+  if (options?.hasDeferredSuggestionStash) return true;
+  if (preferences.onboarding_retro_completed) return false;
   if ((entryCount ?? 0) === 0) return true;
-  return Boolean(options?.hasDeferredSuggestionStash);
+  return false;
 }
 
 export function shouldSkipOnboardingSummary(tagCount: number): boolean {

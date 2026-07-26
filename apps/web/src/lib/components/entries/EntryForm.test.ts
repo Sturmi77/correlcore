@@ -1284,4 +1284,68 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
     ]);
     expect(hasOnboardingSuggestionStash('user-1')).toBe(false);
   });
+
+  it('keeps deferred stash when finalize succeeds but entry save fails', async () => {
+    // completeOnboarding flips onboarding_retro_completed before the entry
+    // tag write. Clearing the stash at that moment left no remount recovery
+    // after a post-finalize save failure + sheet close.
+    clearAllOnboardingSuggestionStashes();
+    writeOnboardingSuggestionStash({
+      userId: 'user-1',
+      suggestions: [
+        {
+          slug: 'caffeine',
+          name: 'Caffeine',
+          category: 'consumption',
+          icon: null,
+          color: null,
+        },
+      ],
+      finalizeDeferred: true,
+    });
+    connectivity.markServerReachable(true);
+    vi.mocked(completeOnboarding).mockResolvedValue({
+      created_tags: [tagResponse('onb-caffeine')],
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+    });
+    vi.mocked(saveEntryOffline).mockRejectedValueOnce(new Error('idb write failed'));
+
+    const first = render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalled();
+    expect(hasOnboardingSuggestionStash('user-1')).toBe(true);
+    expect(readOnboardingSuggestionStash('user-1')?.finalizeDeferred).toBe(true);
+
+    first.unmount();
+    await flushAsync();
+    vi.mocked(saveEntryOffline).mockResolvedValue({
+      entryId: 'local-entry',
+      syncState: 'pending',
+    });
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).toHaveBeenCalled();
+    const lastSnap =
+      vi.mocked(saveEntryOffline).mock.calls[vi.mocked(saveEntryOffline).mock.calls.length - 1][1];
+    expect(lastSnap.selectedTagIds).toContain('onb-caffeine');
+    expect(hasOnboardingSuggestionStash('user-1')).toBe(false);
+  });
 });

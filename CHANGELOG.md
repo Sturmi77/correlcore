@@ -23,6 +23,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Onboarding stash survives until the entry tag save succeeds** — `#553`
+  cleared the deferred suggestion stash inside `resolveOnboardingTags` as soon
+  as `completeOnboarding` returned. That API flips
+  `onboarding_retro_completed` before `saveEntryOffline` /
+  `assignTagsToEntry` runs; a post-finalize save failure plus sheet close then
+  hid chips forever (prefs looked finished, stash gone) while the first entry
+  never received the suggestion tags. Stash clear now waits for a successful
+  persist; a deferred stash re-opens the chip gate even when prefs already
+  show onboarding completed; toggle-only stashes no longer count as deferred.
 - **Deferred onboarding suggestion picks survive EntryForm unmount** — offline
   (or failed) `completeOnboarding` left picks only in an in-memory Map. Closing
   the bottom sheet destroyed the form; after the first entry synced,
@@ -31,6 +40,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   flag) are now stashed in `sessionStorage` (scoped by user id), the Home /
   deep-link gate re-enables chips when a stash exists, remount restores and
   retries finalize, and logout clears the stash.
+- **Auth session probe rejects a mismatched prior account** — after #556,
+  `setUser` / `login` required `/auth/me` to succeed but accepted any
+  probed identity. If a browser already held cookies for user A and
+  verify-email / reset-password / login for user B returned 200 while B's
+  `Set-Cookie` was stripped (ADR-0040), the UI authenticated as A and
+  could write into A's account. The probe must now match the auth-response
+  user id (same `SessionPersistenceError` recovery as a null probe).
 - **Verify-email / reset-password no longer mark the UI authenticated when
   the session cookie did not stick** (ADR-0040 residual) — login already
   probed `/auth/me` before `becomeAuthenticated`, but `setUser` (used by
