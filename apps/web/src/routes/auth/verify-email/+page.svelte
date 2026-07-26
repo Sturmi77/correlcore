@@ -2,12 +2,13 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
+  import { SessionPersistenceError } from '$lib/api/client';
   import { verifyEmail } from '$lib/api/auth';
   import { drainOfflineSyncForSessionChange } from '$lib/offline/session';
   import { setUser } from '$lib/stores/auth';
   import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
 
-  type Phase = 'idle' | 'busy' | 'success' | 'error' | 'missing-token';
+  type Phase = 'idle' | 'busy' | 'success' | 'error' | 'session-error' | 'missing-token';
 
   let token: string | null = null;
   let phase: Phase = 'idle';
@@ -33,7 +34,14 @@
       const session = await verifyEmail(token);
       await setUser(session.user);
       await goto(OPEN_ENTRY_HOME_PATH);
-    } catch {
+    } catch (err) {
+      // Token is single-use: a cookie-persistence failure after 200 must not
+      // look like "invalid/expired link" (resend would not help — account is
+      // already verified). Route users to sign-in instead.
+      if (err instanceof SessionPersistenceError) {
+        phase = 'session-error';
+        return;
+      }
       // Backend returns a generic 400 for invalid/expired/used tokens
       // (anti-enumeration). ApiError and NetworkError both surface as
       // a single "error" phase — the UI never differentiates.
@@ -64,6 +72,29 @@
     <h1 class="auth-page-title">{$_('auth.verify.success_title')}</h1>
   </header>
   <p class="auth-body">{$_('auth.verify.success_body')}</p>
+{:else if phase === 'session-error'}
+  <header class="auth-page-header">
+    <div class="auth-icon auth-icon-error" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        width="48"
+        height="48"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 8v4M12 16h.01" stroke-linecap="round" />
+      </svg>
+    </div>
+    <h1 class="auth-page-title">{$_('auth.verify.session_error_title')}</h1>
+  </header>
+  <p class="auth-body" role="alert">{$_('auth.verify.session_error_body')}</p>
+  <nav class="auth-links">
+    <a href="/auth/login" class="btn btn--primary auth-submit">
+      {$_('auth.verify.go_to_login')}
+    </a>
+  </nav>
 {:else if phase === 'error'}
   <header class="auth-page-header">
     <div class="auth-icon auth-icon-error" aria-hidden="true">

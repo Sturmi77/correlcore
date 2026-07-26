@@ -31,6 +31,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   flag) are now stashed in `sessionStorage` (scoped by user id), the Home /
   deep-link gate re-enables chips when a stash exists, remount restores and
   retries finalize, and logout clears the stash.
+- **Verify-email / reset-password no longer mark the UI authenticated when
+  the session cookie did not stick** (ADR-0040 residual) — login already
+  probed `/auth/me` before `becomeAuthenticated`, but `setUser` (used by
+  verify-email and reset-password) trusted the JSON body alone. When an
+  edge/proxy strips `Set-Cookie`, the UI navigated home as authenticated,
+  bound offline storage, then every API call returned 401. Verify tokens
+  are single-use, so a follow-up mis-read as "invalid link" would send
+  users to resend instead of sign-in. `setUser` now requires a persisted
+  session (same `SessionPersistenceError` as login); the verify page
+  surfaces a dedicated "email verified — session not saved → sign in"
+  state.
 - **Onboarding reachability retry no longer finalizes an untouched first
   entry** — `#538` retried deferred `completeOnboarding` whenever
   `serverReachable` recovered while onboarding was still incomplete. A bare
