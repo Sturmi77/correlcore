@@ -303,7 +303,13 @@ async def test_merge_entry_upsert_filters_deleted_tag_before_assign(
 
     assert conflicts == []
     resolve_tags.assert_awaited_once()
-    assign_tags.assert_awaited_once_with(db, user_id=user_id, entry_id=entry_id, tag_ids=[kept_tag])
+    assign_tags.assert_awaited_once_with(
+        db,
+        user_id=user_id,
+        entry_id=entry_id,
+        tag_ids=[kept_tag],
+        record_revision=False,
+    )
     assert deleted_tag not in assign_tags.await_args.kwargs["tag_ids"]
 
 
@@ -397,6 +403,7 @@ def test_migration_018_declares_sync_engine_tables() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.no_rest_revision_stub
 async def test_record_entry_upsert_revision_appends_log_without_note(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

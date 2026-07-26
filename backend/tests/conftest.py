@@ -366,7 +366,10 @@ def rest_revision_recorders(
     live session. Integration tests keep the real helpers. Unit tests that
     assert the emit call can use the returned mocks.
     """
-    if request.node.get_closest_marker("integration") is not None:
+    if (
+        request.node.get_closest_marker("integration") is not None
+        or request.node.get_closest_marker("no_rest_revision_stub") is not None
+    ):
         return {"entry": None, "tag": None, "symptom": None}
     mocks: dict[str, AsyncMock | None] = {
         "entry": AsyncMock(return_value=1),
