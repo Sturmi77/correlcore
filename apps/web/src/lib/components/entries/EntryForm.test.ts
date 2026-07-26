@@ -1255,7 +1255,7 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
         {
           slug: 'caffeine',
           name: 'Caffeine',
-          category: 'habit',
+          category: 'consumption',
           icon: null,
           color: null,
         },

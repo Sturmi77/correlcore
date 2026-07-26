@@ -56,6 +56,8 @@ export function readOnboardingSuggestionStash(userId: string): OnboardingSuggest
 export function writeOnboardingSuggestionStash(stash: OnboardingSuggestionStash): void {
   if (!stash.userId || !canUseSessionStorage()) return;
   try {
+    // storage-exempt: per-user key is STORAGE_KEY_PREFIX + userId; holds only
+    // onboarding tag-suggestion picks (no auth material), scoped per account.
     sessionStorage.setItem(storageKey(stash.userId), JSON.stringify(stash));
   } catch {
     /* quota / private mode — best-effort */

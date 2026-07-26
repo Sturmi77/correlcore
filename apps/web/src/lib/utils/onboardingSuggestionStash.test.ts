@@ -10,7 +10,7 @@ import {
 const suggestion = {
   slug: 'caffeine',
   name: 'Caffeine',
-  category: 'habit' as const,
+  category: 'consumption' as const,
   icon: null,
   color: null,
 };
