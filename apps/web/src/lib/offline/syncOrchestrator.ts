@@ -35,21 +35,21 @@ import { refreshSymptoms } from '$lib/stores/symptoms';
  * When IndexedDB is wiped but `cc_offline_client_id` survives, new outbox
  * rows restart at seq 1 under the old client identity. The server skips
  * them (`seq <= last_applied_seq`) while this client used to ack anyway —
- * silent data loss. Distinguish that from a legitimate crash-before-ack
- * replay (same seqs, entities already on the server) by probing entries.
+ * silent data loss. Primary mitigation is `getOrCreateClientId()` minting a
+ * new identity when the IDB owner/client meta mirror is gone. This probe is
+ * defense-in-depth for residual collisions (e.g. unapplied updates to
+ * entries that still exist with an older `updated_at`).
+ *
+ * A 404 alone is NOT a collision signal: legitimate crash-before-ack replay
+ * can 404 when the entry was deleted after the original apply — rotating
+ * would resurrect it. Only a present-but-stale row proves the skip dropped
+ * our push.
  */
 async function isStaleClientSeqCollision(toPush: ChangeLogRow[]): Promise<boolean> {
   const entryUpserts = toPush.filter(
     (row) => row.entity_type === 'entry' && row.operation === 'upsert'
   );
   if (entryUpserts.length === 0) return false;
-  // Existence is NOT proof the skipped change was applied. An update to an entry
-  // that already existed (created under the retained id before the IDB reset)
-  // passes a 404 probe yet was never applied, and a mixed batch can have one
-  // applied entry alongside a brand-new skipped one. Confirm EVERY pushed entry
-  // actually reflects our push: present, and its server `updated_at` is at least
-  // the `client_ts` we pushed (the server stores client_ts on apply — LWW). Any
-  // missing or stale entry means the batch was skipped, not replayed → rotate.
   for (const row of entryUpserts) {
     try {
       const serverEntry = await fetchEntry(row.entity_id);
@@ -59,7 +59,11 @@ async function isStaleClientSeqCollision(toPush: ChangeLogRow[]): Promise<boolea
         return true;
       }
     } catch (err) {
-      if (err instanceof ApiError && err.status === 404) return true;
+      if (err instanceof ApiError && err.status === 404) {
+        // Deleted (or never this id) after a prior apply — keep probing for
+        // stale timestamps on other rows; do not rotate on 404 alone.
+        continue;
+      }
       throw err;
     }
   }

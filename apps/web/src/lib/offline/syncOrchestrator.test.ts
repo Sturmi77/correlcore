@@ -197,43 +197,36 @@ describe('syncOrchestrator', () => {
     expect(pushSyncChanges).not.toHaveBeenCalled();
   });
 
-  it('rotates client id and retries when all-skipped push hides a missing entry', async () => {
-    const staleClientId = await getOrCreateClientId();
+  it('acks all-skipped 404 without rotating (deleted after apply-before-ack)', async () => {
+    // Crash-before-ack replay: server already applied seq, then the entry was
+    // deleted on another device. Probe 404 must NOT rotate — that would
+    // resurrect the deleted row under a new client_id.
+    const clientId = await getOrCreateClientId();
+    await setSyncMeta(SYNC_META_KEYS.ownerUserId, '00000000-0000-4000-8000-000000000099');
     await appendChange({
       batch_id: 'batch-1',
       entity_type: 'entry',
-      entity_id: 'missing-on-server',
+      entity_id: 'deleted-after-apply',
       operation: 'upsert',
       payload: { entry_date: '2026-06-30', slot: 'day', mood_score: 4 },
       client_ts: '2026-06-30T12:00:00.000Z',
     });
 
-    pushSyncChanges
-      .mockResolvedValueOnce({
-        cursor: 'cursor-skip',
-        applied: 0,
-        skipped: 1,
-        conflicts: [],
-        idempotent_replay: false,
-      })
-      .mockResolvedValueOnce({
-        cursor: 'cursor-applied',
-        applied: 1,
-        skipped: 0,
-        conflicts: [],
-        idempotent_replay: false,
-      });
-    fetchEntry.mockRejectedValue(new ApiError(404, 'Not Found', '/entries/missing-on-server'));
+    pushSyncChanges.mockResolvedValue({
+      cursor: 'cursor-skip',
+      applied: 0,
+      skipped: 1,
+      conflicts: [],
+      idempotent_replay: false,
+    });
+    fetchEntry.mockRejectedValue(new ApiError(404, 'Not Found', '/entries/deleted-after-apply'));
 
     await pushPending();
 
-    expect(pushSyncChanges).toHaveBeenCalledTimes(2);
-    expect(fetchEntry).toHaveBeenCalledWith('missing-on-server');
-    const retryClientId = pushSyncChanges.mock.calls[1]?.[0]?.client_id as string;
-    expect(retryClientId).toBeTruthy();
-    expect(retryClientId).not.toBe(staleClientId);
-    expect(peekClientId()).toBe(retryClientId);
-    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(retryClientId);
+    expect(pushSyncChanges).toHaveBeenCalledOnce();
+    expect(fetchEntry).toHaveBeenCalledWith('deleted-after-apply');
+    expect(peekClientId()).toBe(clientId);
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(clientId);
     expect(await listPendingChanges()).toHaveLength(0);
   });
 
@@ -333,17 +326,19 @@ describe('syncOrchestrator', () => {
     expect(await listPendingChanges()).toHaveLength(0);
   });
 
-  it('rotates on partial seq overlap after IDB reset (skipped prefix + applied tail)', async () => {
+  it('rotates on partial seq overlap when skipped prefix is a stale update', async () => {
     // Retained client_id with last_applied_seq=1: restarted seqs 1..2 mean the
-    // server skips seq 1 and applies seq 2. A fully-skipped-only guard would
-    // miss this and ack the missing entry — permanent data loss for the prefix.
+    // server skips seq 1 and applies seq 2. A 404-only probe would miss this
+    // (prefix still exists from before the reset); stale updated_at proves the
+    // skipped update never applied.
     const staleClientId = await getOrCreateClientId();
+    await setSyncMeta(SYNC_META_KEYS.ownerUserId, '00000000-0000-4000-8000-000000000099');
     await appendChange({
       batch_id: 'batch-1',
       entity_type: 'entry',
       entity_id: 'skipped-prefix',
       operation: 'upsert',
-      payload: { entry_date: '2026-06-30', slot: 'morning', mood_score: 2 },
+      payload: { entry_date: '2026-06-30', slot: 'morning', mood_score: 5 },
       client_ts: '2026-06-30T12:00:00.000Z',
     });
     await appendChange({
@@ -372,7 +367,19 @@ describe('syncOrchestrator', () => {
       });
     fetchEntry.mockImplementation(async (id: string) => {
       if (id === 'skipped-prefix') {
-        throw new ApiError(404, 'Not Found', '/entries/skipped-prefix');
+        return {
+          id: 'skipped-prefix',
+          entry_date: '2026-06-30',
+          slot: 'morning',
+          mood_score: 2,
+          energy: 3,
+          stress: 3,
+          cycle_day: null,
+          work_context: 'office',
+          note: null,
+          created_at: '2026-06-30T11:00:00.000Z',
+          updated_at: '2026-06-30T11:00:00.000Z',
+        };
       }
       return {
         id: 'applied-tail',
@@ -398,6 +405,40 @@ describe('syncOrchestrator', () => {
     expect(retryClientId).not.toBe(staleClientId);
     expect(peekClientId()).toBe(retryClientId);
     expect(pushSyncChanges.mock.calls[1]?.[0]?.changes).toHaveLength(2);
+    expect(await listPendingChanges()).toHaveLength(0);
+  });
+
+  it('mints a fresh client id after IDB wipe before pushing restarted seqs', async () => {
+    // Eviction cleared IndexedDB (no owner/client meta) but localStorage kept
+    // the old client_id. Re-binding would skip restarted seqs; minting first
+    // lets the push apply without relying on the ambiguous 404 probe.
+    const staleClientId = '11111111-1111-4111-8111-111111111111';
+    localStorage.setItem(CLIENT_ID_STORAGE_KEY, staleClientId);
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'post-wipe-entry',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'day', mood_score: 4 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    pushSyncChanges.mockResolvedValue({
+      cursor: 'cursor-fresh',
+      applied: 1,
+      skipped: 0,
+      conflicts: [],
+      idempotent_replay: false,
+    });
+
+    await pushPending();
+
+    expect(pushSyncChanges).toHaveBeenCalledOnce();
+    const pushClientId = pushSyncChanges.mock.calls[0]?.[0]?.client_id as string;
+    expect(pushClientId).toBeTruthy();
+    expect(pushClientId).not.toBe(staleClientId);
+    expect(peekClientId()).toBe(pushClientId);
+    expect(fetchEntry).not.toHaveBeenCalled();
     expect(await listPendingChanges()).toHaveLength(0);
   });
 
