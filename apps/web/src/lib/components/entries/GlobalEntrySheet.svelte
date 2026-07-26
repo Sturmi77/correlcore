@@ -27,6 +27,17 @@
 
   $: sheetOpen = $entrySheetStore.open;
 
+  // Re-read the cycle preference each time the sheet opens so a Settings toggle
+  // made earlier in the same session is reflected without a reload (the initial
+  // load is guarded by `profileLoaded` and would otherwise stay stale).
+  let sheetWasOpen = false;
+  $: if (sheetOpen && !sheetWasOpen) {
+    sheetWasOpen = true;
+    void refreshCyclePreference();
+  } else if (!sheetOpen && sheetWasOpen) {
+    sheetWasOpen = false;
+  }
+
   // A widget deep link on a already-running, already-authenticated app only
   // changes the URL — the auth subscription in onMount never re-fires, so the
   // sheet would stay closed without this (#447). Navigation changes $page, and
@@ -109,6 +120,16 @@
       cycleTrackingEnabled = preferences.cycle_tracking_enabled;
     } catch {
       workContextTypical = null;
+    }
+  }
+
+  async function refreshCyclePreference(): Promise<void> {
+    if (get(auth).status !== 'authenticated') return;
+    try {
+      const preferences = await fetchUserPreferences();
+      cycleTrackingEnabled = preferences.cycle_tracking_enabled;
+    } catch {
+      // Keep the last known value when preferences are unreachable.
     }
   }
 
