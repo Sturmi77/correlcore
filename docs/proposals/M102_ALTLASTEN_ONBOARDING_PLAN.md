@@ -153,18 +153,41 @@ vor dem Go-live zu ersetzen. Der Landing-Preview-Fix (L1) wird davon nicht block
 Baut auf den bestätigten Definitionen auf. Bestehende Basis bleibt:
 `MaturityExpectationSheet` (Phasen-Erwartung) + `InsightJourneyExplainer`.
 
-| ID  | Was                                                                                                                                                 | Abhängig von |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| O1  | Kurz-Erklärung Tag/Habit/Symptom **vor** dem Tag-Schritt, festgezurrter Wortlaut 1.1 (#541)                                                         | E1, E2       |
-| O2  | Zyklus-Erklärung in aktueller Form (E5-Wortlaut) an passender Stelle (Info-Sheet)                                                                   | E5           |
-| O3  | In-App-Zugang zu den Definitionen (Info-„?" dort, wo Tags/Habits/Symptome/Zyklus verwaltet werden)                                                  | E1, E5       |
-| O4  | i18n DE/EN + UX-Copy-Review (no-gamification)                                                                                                       | O1–O3        |
-| O5  | **UX-Relabeling prüfen** (E3): Analyse der Begriffs-Überlappung Tag/Habit/Symptom in der UI, ggf. Benennungs-/Flow-Vorschlag als eigener Folge-Task | E1           |
+| ID  | Was                                                                                                                                                                                                                        | Status                                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| O1  | Kurz-Erklärung Tag/Habit/Symptom **vor** dem Tag-Schritt (festgezurrter Wortlaut 1.1, #541) — neue Komponente `ConceptExplainer` in `OnboardingTagSuggestions` (EntryForm-Cold-Start) **und** im `onboarding/+page`-Wizard | ✅ **erledigt**                           |
+| O2  | Zyklus-Erklärung in aktueller Form (E5-Wortlaut) — als eigene Sektion im `ConceptExplainer`                                                                                                                                | ✅ **erledigt**                           |
+| O3  | In-App-Zugang: „?"-Toggle in `settings/tags` blendet den `ConceptExplainer` ein                                                                                                                                            | ✅ **erledigt**                           |
+| O4  | i18n DE/EN (`onboarding.concepts.*`) + UX-Copy (no-gamification-Test grün, Locale-Parität grün)                                                                                                                            | ✅ **erledigt**                           |
+| O5  | **UX-Relabeling prüfen** (E3) — Analyse siehe unten. **Entscheidung offen** (nicht selbst zu treffen); **blockiert O1–O4 nicht**                                                                                           | ⏳ **Analyse fertig, Entscheidung offen** |
 
-**Reihenfolge innerhalb Phase 3:** O1 → O2 → O3 → O4; O5 als paralleler
-Analyse-Task (Ergebnis kann eigenes Umsetzungs-Issue erzeugen). Platzierungsregel aus der
+**Reihenfolge:** O1 → O2 → O3 → O4 umgesetzt (ein PR). O5 als paralleler
+Analyse-Task, Ergebnis unten — kann ein eigenes Umsetzungs-Issue erzeugen.
+
+### O5 — Relabeling-Analyse (Ergebnis)
+
+**Befund:** Die drei Begriffe sind **nicht gleichrangig** im Datenmodell:
+
+- **Tag** und **Habit/Gewohnheit** sind **kein getrenntes Objekt** — eine Gewohnheit
+  ist ein **Tag mit `habit_type` = build/reduce + Zielfrequenz** (`settings/tags`,
+  ADR-0012). Im Onboarding wählt der User **nur Tags**; Gewohnheiten entstehen
+  später durch Markieren eines Tags.
+- **Symptom** ist ein **eigenes Objekt** (Symptom-Stammtabelle, ADR-0008), separat
+  pro Eintrag erfasst (`SymptomChecker`).
+- Der `ConceptExplainer` stellt sie als drei parallele Begriffe dar — didaktisch
+  gut fürs Verständnis, verschleiert aber, dass Habit eine **Facette von Tag** ist.
+
+**Entscheidung offen (E3), Optionen:**
+
+1. **Keine Änderung** — Erklärung genügt, Overlap bewusst in Kauf nehmen.
+2. **Copy-Klarstellung** (klein) — im `ConceptExplainer` einen Satz ergänzen:
+   „Eine Gewohnheit ist ein Tag, dem du ein Ziel gibst." Kein Struktur-/Flow-Umbau.
+3. **Echtes Relabeling/Flow** (groß, eigenes Issue) — Habit im UI explizit als
+   Tag-Eigenschaft führen bzw. Benennung/Onboarding-Flow überarbeiten.
+
+Platzierungsregel aus der
 [Onboarding-Maturity-Karte](../frontend/ONBOARDING_MATURITY_EXPECTATION_CARD.md)
-beachten (Erklärung vor der Tag-Auswahl, damit sie die Vokabelwahl informiert).
+beachtet (Erklärung vor der Tag-Auswahl, damit sie die Vokabelwahl informiert).
 
 ---
 

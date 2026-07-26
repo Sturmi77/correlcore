@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TagSuggestion, TagSuggestionGroup } from '$lib/api/onboarding';
+  import ConceptExplainer from '$lib/components/onboarding/ConceptExplainer.svelte';
 
   export let groups: TagSuggestionGroup[] = [];
   export let loading = false;
@@ -18,6 +19,7 @@
   <h2 id="entry-onboarding-tags-title" class="onboarding-tags__title">
     {$_('entry.onboarding_tags.title')}
   </h2>
+  <ConceptExplainer />
   <p class="onboarding-tags__habit-hint" data-testid="onboarding-habit-hint">
     {$_('onboarding.guided.habit_hint')}
   </p>
