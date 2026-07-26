@@ -1,7 +1,9 @@
 import 'fake-indexeddb/auto';
 import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { appendChange } from './changeLog';
+import { ApiError } from '$lib/api/client';
+import { appendChange, listPendingChanges } from './changeLog';
+import { CLIENT_ID_STORAGE_KEY, getOrCreateClientId, peekClientId } from './clientId';
 import { resetOfflineDbForTests } from './db';
 import { setOfflineSyncEnabled } from './featureFlag';
 import {
@@ -17,10 +19,15 @@ import { SYNC_META_KEYS } from './types';
 
 const pullSyncChanges = vi.fn();
 const pushSyncChanges = vi.fn();
+const fetchEntry = vi.fn();
 
 vi.mock('$lib/api/sync', () => ({
   pullSyncChanges: (...args: unknown[]) => pullSyncChanges(...args),
   pushSyncChanges: (...args: unknown[]) => pushSyncChanges(...args),
+}));
+
+vi.mock('$lib/api/entries', () => ({
+  fetchEntry: (...args: unknown[]) => fetchEntry(...args),
 }));
 
 vi.mock('$lib/stores/auth', () => ({
@@ -40,6 +47,7 @@ describe('syncOrchestrator', () => {
     setOfflineSyncEnabled(true);
     pullSyncChanges.mockReset();
     pushSyncChanges.mockReset();
+    fetchEntry.mockReset();
     vi.stubGlobal('navigator', { onLine: true });
   });
 
@@ -187,6 +195,142 @@ describe('syncOrchestrator', () => {
     const pushed = await pushPending();
     expect(pushed).toBe(false);
     expect(pushSyncChanges).not.toHaveBeenCalled();
+  });
+
+  it('rotates client id and retries when all-skipped push hides a missing entry', async () => {
+    const staleClientId = await getOrCreateClientId();
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'missing-on-server',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'day', mood_score: 4 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    pushSyncChanges
+      .mockResolvedValueOnce({
+        cursor: 'cursor-skip',
+        applied: 0,
+        skipped: 1,
+        conflicts: [],
+        idempotent_replay: false,
+      })
+      .mockResolvedValueOnce({
+        cursor: 'cursor-applied',
+        applied: 1,
+        skipped: 0,
+        conflicts: [],
+        idempotent_replay: false,
+      });
+    fetchEntry.mockRejectedValue(new ApiError(404, 'Not Found', '/entries/missing-on-server'));
+
+    await pushPending();
+
+    expect(pushSyncChanges).toHaveBeenCalledTimes(2);
+    expect(fetchEntry).toHaveBeenCalledWith('missing-on-server');
+    const retryClientId = pushSyncChanges.mock.calls[1]?.[0]?.client_id as string;
+    expect(retryClientId).toBeTruthy();
+    expect(retryClientId).not.toBe(staleClientId);
+    expect(peekClientId()).toBe(retryClientId);
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(retryClientId);
+    expect(await listPendingChanges()).toHaveLength(0);
+  });
+
+  it('acks all-skipped push when the entry already exists (crash-before-ack)', async () => {
+    const clientId = await getOrCreateClientId();
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'already-on-server',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'day' },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    pushSyncChanges.mockResolvedValue({
+      cursor: 'cursor-skip',
+      applied: 0,
+      skipped: 1,
+      conflicts: [],
+      idempotent_replay: false,
+    });
+    fetchEntry.mockResolvedValue({
+      id: 'already-on-server',
+      entry_date: '2026-06-30',
+      slot: 'day',
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      work_context: 'office',
+      note: null,
+      created_at: '2026-06-30T12:00:00.000Z',
+      updated_at: '2026-06-30T12:00:00.000Z',
+    });
+
+    await pushPending();
+
+    expect(pushSyncChanges).toHaveBeenCalledOnce();
+    expect(pushSyncChanges.mock.calls[0]?.[0]?.client_id).toBe(clientId);
+    expect(fetchEntry).toHaveBeenCalledWith('already-on-server');
+    expect(peekClientId()).toBe(clientId);
+    expect(await listPendingChanges()).toHaveLength(0);
+  });
+
+  it('rotates when an all-skipped entry exists but is stale (unapplied update)', async () => {
+    // The entry was created under the retained id before the IDB reset, so it
+    // exists on the server — but our restarted-seq UPDATE was skipped and never
+    // applied, leaving the server `updated_at` older than what we pushed.
+    // Existence alone would wrongly ack this and lose the update (P1).
+    const staleClientId = await getOrCreateClientId();
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'stale-on-server',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'day', mood_score: 5 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    pushSyncChanges
+      .mockResolvedValueOnce({
+        cursor: 'cursor-skip',
+        applied: 0,
+        skipped: 1,
+        conflicts: [],
+        idempotent_replay: false,
+      })
+      .mockResolvedValueOnce({
+        cursor: 'cursor-applied',
+        applied: 1,
+        skipped: 0,
+        conflicts: [],
+        idempotent_replay: false,
+      });
+    fetchEntry.mockResolvedValue({
+      id: 'stale-on-server',
+      entry_date: '2026-06-30',
+      slot: 'day',
+      mood_score: 2,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      work_context: 'office',
+      note: null,
+      created_at: '2026-06-30T11:00:00.000Z',
+      updated_at: '2026-06-30T11:00:00.000Z',
+    });
+
+    await pushPending();
+
+    expect(pushSyncChanges).toHaveBeenCalledTimes(2);
+    expect(fetchEntry).toHaveBeenCalledWith('stale-on-server');
+    const retryClientId = pushSyncChanges.mock.calls[1]?.[0]?.client_id as string;
+    expect(retryClientId).toBeTruthy();
+    expect(retryClientId).not.toBe(staleClientId);
+    expect(peekClientId()).toBe(retryClientId);
+    expect(await listPendingChanges()).toHaveLength(0);
   });
 
   it('applies pull deltas to local entries', async () => {

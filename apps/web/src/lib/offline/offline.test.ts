@@ -138,6 +138,21 @@ describe('offline Dexie foundation', () => {
     expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_2');
   });
 
+  it('drops retained client id when binding a fresh empty offline DB', async () => {
+    // IndexedDB wiped / never opened, but origin localStorage still holds a
+    // prior sync client_id (eviction, DevTools clear of IDB only, etc.).
+    const staleClientId = '11111111-1111-4111-8111-111111111111';
+    localStorage.setItem(CLIENT_ID_STORAGE_KEY, staleClientId);
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBeNull();
+
+    await prepareOfflineDataForAuthenticatedUser('usr_fresh');
+
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBeNull();
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_fresh');
+    const nextClientId = await getOrCreateClientId();
+    expect(nextClientId).not.toBe(staleClientId);
+  });
+
   it('wipes unknown-owner migrated offline data before assigning it to the current user', async () => {
     const db = getOfflineDb();
     await db.entries.put(sampleEntry('legacy-entry'));

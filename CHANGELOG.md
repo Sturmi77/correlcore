@@ -30,6 +30,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   `markDirty()` with no prior deferral, autosaved a default first entry, and
   ran `completeOnboarding([])`, so later suggestion-chip picks were ignored.
   Retries now require an explicit finalize deferral from a prior save.
+- **Offline push no longer silently drops rows after IndexedDB reset** — when
+  IndexedDB was cleared/evicted but `cc_offline_client_id` survived in
+  localStorage, new outbox seqs restarted at 1 under the old client identity.
+  The server skipped them (`seq <= last_applied_seq`) while `pushPending`
+  still acked the batch and marked entries synced — permanent loss on the
+  next logout wipe. A per-user partition that is genuinely empty drops the
+  retained client id (reusing a partition that already holds data keeps its
+  identity so reloads no longer mint a new one), and an all-skipped push
+  validates every pushed entry: a change is only acked when the server row
+  reflects it (present and its `updated_at` is at least the pushed
+  `client_ts`); a missing or stale entry rotates identity and retries once, so
+  a skipped update to an already-existing entry is no longer silently lost.
+- **Onboarding tag IDs survive the next EntryForm autosave** — after a
+  successful `completeOnboarding`, created tag IDs were merged into the
+  in-flight save snapshot only and never written back to `selectedTagIds`.
+  The following edit re-snapshotted an empty selection and the replace-set
+  save wiped the associations just applied (online `assignTagsToEntry` and
+  offline Dexie alike). Finalize now mirrors the unresolved-relation
+  writeback into the live form before returning the snapshot.
 - **Onboarding first-entry save no longer aborts when finalize fails under a
   stale reachable flag (P1b residual)** — `#536` deferred `completeOnboarding`
   when `serverReachable === false`, but a stale `true`/`null` plus a failed

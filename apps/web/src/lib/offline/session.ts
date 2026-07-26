@@ -95,8 +95,22 @@ export async function prepareOfflineDataForAuthenticatedUser(userId: string): Pr
   } else if (priorOwner === userId) {
     // Keep the existing DB (legacy or already partitioned) for this owner.
   } else {
-    // Fresh empty DB — prefer a per-user partition going forward.
+    // Fresh empty DB — prefer a per-user partition going forward. The module
+    // singleton starts on the empty legacy `correlcore-offline` DB even on a
+    // normal reload, so bind the per-user partition first and inspect *it*.
     bindOfflineDbToUser(userId);
+    // Only drop the retained origin client_id when the per-user partition is
+    // itself fresh. IndexedDB can be evicted (or cleared in DevTools) while
+    // localStorage survives; reusing that id with change_log seq restarting at
+    // 1 makes the server skip every push (`seq <= last_applied_seq`) while the
+    // web client still acks — silent data loss, so a genuinely empty DB must
+    // mint a new identity. But if `correlcore-offline-<userId>` already holds
+    // the user's data + outbox, clearing here would mint a new identity on
+    // every reload and defeat crash-before-ack replay detection.
+    const targetHasData = await hasUnknownOwnerData(getOfflineDb());
+    if (!targetHasData && typeof localStorage !== 'undefined') {
+      localStorage.removeItem(CLIENT_ID_STORAGE_KEY);
+    }
   }
 
   await getOfflineDb().sync_meta.put({ key: SYNC_META_KEYS.ownerUserId, value: userId });
