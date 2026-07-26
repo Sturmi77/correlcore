@@ -23,6 +23,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Offline post-eviction writes survive reconnect without rebinding a stale
+  client id** — after #557, probe 404 no longer rotates client identity
+  (correct: avoid resurrecting deletes). But `prepareOfflineDataForAuthenticatedUser`
+  still treated ownerless rows in the already-bound per-user partition as
+  unknown-owner residue and wiped them on reconnect, and on reload into a
+  partition that held post-eviction writes it kept the retained
+  `cc_offline_client_id` while seqs restarted at 1 — skipped pushes were then
+  acked with no rotate. Same-user ownerless per-user data is now kept and the
+  retained client id is dropped so the next push mints a fresh identity;
+  legacy unpartitioned ownerless residue is still wiped.
 - **Onboarding stash survives until the entry tag save succeeds** — `#553`
   cleared the deferred suggestion stash inside `resolveOnboardingTags` as soon
   as `completeOnboarding` returned. That API flips

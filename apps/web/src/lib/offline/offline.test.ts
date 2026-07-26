@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { appendChange, getLastAppliedSeq, listPendingChanges } from './changeLog';
 import { CLIENT_ID_STORAGE_KEY, getOrCreateClientId } from './clientId';
-import { getOfflineDb, resetOfflineDbForTests } from './db';
+import { bindOfflineDbToUser, getOfflineDb, resetOfflineDbForTests } from './db';
 import { isOfflineSyncEnabled } from './featureFlag';
 import { applyPulledEntry } from '$lib/stores/entriesOffline';
 import {
@@ -167,6 +167,75 @@ describe('offline Dexie foundation', () => {
     expect(nextClientId).not.toBe(staleClientId);
     expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(nextClientId);
     expect(await getSyncMeta(SYNC_META_KEYS.clientId)).toBe(nextClientId);
+  });
+
+  it('keeps ownerless per-user partition writes after mid-session eviction + reconnect', async () => {
+    // Eviction cleared sync_meta (and tables) while the tab stayed on the
+    // per-user DB. Post-eviction offline saves have no owner marker; prepare
+    // used to wipe them as "unknown-owner" before push — permanent loss.
+    await prepareOfflineDataForAuthenticatedUser('usr_evict');
+    const staleClientId = await getOrCreateClientId();
+    const db = getOfflineDb();
+    await Promise.all([db.entries.clear(), db.change_log.clear(), db.sync_meta.clear()]);
+    expect(db.name).toBe('correlcore-offline-usr_evict');
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBe(staleClientId);
+
+    await db.entries.put(sampleEntry('post-evict'));
+    await appendChange({
+      batch_id: 'batch-evict',
+      entity_type: 'entry',
+      entity_id: 'post-evict',
+      operation: 'upsert',
+      payload: { id: 'post-evict' },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    await prepareOfflineDataForAuthenticatedUser('usr_evict');
+
+    const kept = getOfflineDb();
+    expect(await kept.entries.get('post-evict')).toEqual(sampleEntry('post-evict'));
+    expect(await listPendingChanges()).toHaveLength(1);
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_evict');
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBeNull();
+    expect(await getSyncMeta(SYNC_META_KEYS.clientId)).toBeNull();
+    const nextClientId = await getOrCreateClientId();
+    expect(nextClientId).not.toBe(staleClientId);
+  });
+
+  it('drops retained client id when reloading into ownerless per-user partition data', async () => {
+    // Page reload after eviction: JS singleton starts on empty legacy DB, then
+    // bind opens the per-user partition that already holds post-eviction writes.
+    // Keeping the retained client_id would skip restarted seqs; post-#557 a
+    // probe 404 no longer rotates — silent ack/loss.
+    const userDb = bindOfflineDbToUser('usr_reload');
+    const staleClientId = '33333333-3333-4333-8333-333333333333';
+    localStorage.setItem(CLIENT_ID_STORAGE_KEY, staleClientId);
+    await userDb.entries.put(sampleEntry('reload-evict'));
+    await appendChange({
+      batch_id: 'batch-reload',
+      entity_type: 'entry',
+      entity_id: 'reload-evict',
+      operation: 'upsert',
+      payload: { id: 'reload-evict' },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBeNull();
+
+    // Simulate reload: singleton returns to empty legacy without deleting the
+    // per-user partition that still holds the pending entry.
+    await resetOfflineDbForTests();
+    expect(getOfflineDb().name).toBe('correlcore-offline');
+
+    await prepareOfflineDataForAuthenticatedUser('usr_reload');
+
+    const recovered = getOfflineDb();
+    expect(recovered.name).toBe('correlcore-offline-usr_reload');
+    expect(await recovered.entries.get('reload-evict')).toEqual(sampleEntry('reload-evict'));
+    expect(await listPendingChanges()).toHaveLength(1);
+    expect(await getSyncMeta(SYNC_META_KEYS.ownerUserId)).toBe('usr_reload');
+    expect(localStorage.getItem(CLIENT_ID_STORAGE_KEY)).toBeNull();
+    const nextClientId = await getOrCreateClientId();
+    expect(nextClientId).not.toBe(staleClientId);
   });
 
   it('wipes unknown-owner migrated offline data before assigning it to the current user', async () => {
