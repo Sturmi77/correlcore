@@ -1,10 +1,14 @@
 # M10.2 Backlog — Public Hosted Launch
 
-Last updated: 2026-07-19  
+Last updated: 2026-07-26  
 **Plan:** [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 **Status:** [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md)  
 **Combined cutover:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
 **Topology choice:** [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)
+
+> **Update 2026-07-26 — Cutover erfolgt.** Betrieb auf `correlcore.com` ist live.
+> Verbleibende Arbeit + Reihenfolge: [`proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md`](proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md).
+> Offen: #461 (SMTP/Mailpit), #462 (Legal/Domain-Doku), #464 (`nas-to-vps.md`).
 
 Single backlog for remaining Hosted-launch work. Do not duplicate these items into
 ad-hoc checklists elsewhere — update this file + STATUS when items move.

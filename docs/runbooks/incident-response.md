@@ -122,7 +122,7 @@ Nach einem Verdacht auf PII in GlitchTip:
 | ---------------------------- | ---------------------------------------------------- |
 | Sicherheitslücken (Produkt)  | [`SECURITY.md`](../../SECURITY.md)                   |
 | Instanz-Betreiber (Selfhost) | vom Betreiber dokumentiert (Impressum/Support)       |
-| CorrelCore Maintainers       | GitHub Security Advisories / security@correlcore.app |
+| CorrelCore Maintainers       | GitHub Security Advisories / security@correlcore.com |
 
 ---
 
