@@ -167,6 +167,12 @@
   let selectedSuggestions = new Map<string, TagSuggestion>();
   let suggestionsLoading = false;
   let onboardingMarkedComplete = false;
+  // Set when persist deferred finalize (unreachable API or failed call).
+  // Reachability/`online` retries must key off this — otherwise a false→true
+  // transition (offline boot then API returns, sync blip) markDirty()'s an
+  // untouched form, autosaves a default first entry, and completeOnboarding([])
+  // locks out later suggestion picks.
+  let onboardingFinalizeDeferred = false;
   // P1: retry a deferred onboarding finalize when API reachability recovers.
   // `window.online` only covers navigator transitions; the stale-reachable
   // case (navigator stayed online while the API blipped) never fires it, so
@@ -554,7 +560,11 @@
     if (canUseOfflineSync()) {
       scheduleSync();
     }
-    if (onboardingTagsEnabled && !onboardingMarkedComplete) {
+    if (
+      onboardingFinalizeDeferred &&
+      onboardingTagsEnabled &&
+      !onboardingMarkedComplete
+    ) {
       markDirty();
     }
   }
@@ -937,6 +947,7 @@
       (typeof navigator !== 'undefined' && !navigator.onLine) ||
       get(connectivity).serverReachable === false;
     if (canUseOfflineSync() && cannotReachApi) {
+      onboardingFinalizeDeferred = true;
       return snap;
     }
     const tags = [...selectedSuggestions.values()].map((tag) => ({
@@ -955,11 +966,13 @@
       result = await completeOnboarding(tags);
     } catch (err) {
       if (canUseOfflineSync()) {
+        onboardingFinalizeDeferred = true;
         return snap;
       }
       throw err;
     }
     onboardingMarkedComplete = true;
+    onboardingFinalizeDeferred = false;
     const createdIds = result.created_tags.map((tag) => tag.id);
     // The catalogue refresh is best-effort: a failure here must NOT discard
     // the just-created onboarding tag associations (P2). The finalize already
@@ -1087,11 +1100,18 @@
     // onboarding finalize (schedule an autosave) instead of waiting for a
     // manual edit. Mirrors handleOnline but keyed on effective reachability,
     // which the `window.online` event does not cover in the stale-reachable case.
+    // Only retry after an actual deferral — a bare false→true must not
+    // autosave/finalize an untouched onboarding form.
     lastServerReachable = get(connectivity).serverReachable;
     unsubscribeConnectivity = connectivity.subscribe(($c) => {
       const recovered = $c.serverReachable === true && lastServerReachable !== true;
       lastServerReachable = $c.serverReachable;
-      if (recovered && onboardingTagsEnabled && !onboardingMarkedComplete) {
+      if (
+        recovered &&
+        onboardingFinalizeDeferred &&
+        onboardingTagsEnabled &&
+        !onboardingMarkedComplete
+      ) {
         markDirty();
       }
     });
