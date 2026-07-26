@@ -1200,6 +1200,21 @@
       "start": "Tracking starten",
       "back": "Zurueck"
     },
+    "concepts": {
+      "title": "Tag, Gewohnheit oder Symptom?",
+      "intro": "Alle drei hängst du an einen Tageseintrag — CorrelCore wertet sie unterschiedlich aus.",
+      "tag_term": "Tag",
+      "tag_body": "Ein Kontext-Etikett für einen Tag — z. B. Spaziergang, Alkohol, Meeting. Kein Ziel, kein Zeitplan. CorrelCore sucht, was gemeinsam auftritt und wie es mit deinen Werten zusammenhängt.",
+      "habit_term": "Gewohnheit",
+      "habit_body": "Ein Verhalten, das du aufbauen oder reduzieren willst — mit einer Zielhäufigkeit. CorrelCore zeigt deine Dranbleib-Quote über Zeit und wie sie mit deinen Werten zusammenhängt.",
+      "symptom_term": "Symptom",
+      "symptom_body": "Etwas, das du körperlich oder mental erlebst — z. B. Kopfschmerz, Grübeln. CorrelCore sucht Zusammenhänge mit Stimmung und Energie.",
+      "cycle_term": "Zyklustag",
+      "cycle_body": "Optional: trage deinen Zyklustag (1–35) ein. CorrelCore behandelt ihn wie eine Metrik und sucht Zusammenhänge mit Stimmung, Schlaf und mehr. Keine Vorhersage, keine medizinische Aussage.",
+      "footer": "Aussagen bleiben beschreibend, keine Diagnose.",
+      "info_label": "Was bedeuten Tag, Gewohnheit und Symptom?",
+      "info_close": "Schließen"
+    },
     "retro": {
       "title": "Wie waren die letzten Tage?",
       "body": "Optional: grobe Erinnerung reicht. Sie hilft CorrelCore, schneller erste Muster zu kalibrieren."

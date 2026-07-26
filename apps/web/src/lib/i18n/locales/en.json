@@ -1200,6 +1200,21 @@
       "start": "Start tracking",
       "back": "Back"
     },
+    "concepts": {
+      "title": "Tag, habit or symptom?",
+      "intro": "You attach all three to a daily entry — CorrelCore analyses them differently.",
+      "tag_term": "Tag",
+      "tag_body": "A context label for a day — e.g. Walk, Alcohol, Meeting. No target, no schedule. CorrelCore looks at what co-occurs and how it relates to your metrics.",
+      "habit_term": "Habit",
+      "habit_body": "A behavior you want to build or reduce — with a target frequency. CorrelCore shows your adherence over time and how it relates to your metrics.",
+      "symptom_term": "Symptom",
+      "symptom_body": "Something you experience physically or mentally — e.g. headache, rumination. CorrelCore looks for associations with mood and energy.",
+      "cycle_term": "Cycle day",
+      "cycle_body": "Optional: log your cycle day (1–35). CorrelCore treats it like a metric and looks for links with mood, sleep and more. No prediction, no medical advice.",
+      "footer": "Statements stay descriptive, not a diagnosis.",
+      "info_label": "What do tag, habit and symptom mean?",
+      "info_close": "Close"
+    },
     "retro": {
       "title": "How were the last few days?",
       "body": "Optional: rough memory is fine. It helps CorrelCore calibrate early patterns faster."

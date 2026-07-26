@@ -9,6 +9,7 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import ConceptExplainer from '$lib/components/onboarding/ConceptExplainer.svelte';
   import {
     TAG_CATEGORIES,
     createTag,
@@ -35,6 +36,7 @@
   };
 
   let loading = true;
+  let showConcepts = false;
   let savingId: string | null = null;
   let error = '';
   let tags: TagResponse[] = [];
@@ -262,10 +264,26 @@
 
 <main class="tag-settings screen-stack">
   <ScreenHeader title={$_('settings.tags.title')} subtitle={$_('settings.tags.subtitle')} compact>
-    <Button slot="actions" href="/settings" variant="ghost" size="sm">
-      {$_('settings.tags.back_settings')}
-    </Button>
+    <div slot="actions" class="tag-settings__header-actions">
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-expanded={showConcepts}
+        aria-label={$_('onboarding.concepts.info_label')}
+        data-testid="tag-settings-concepts-toggle"
+        on:click={() => (showConcepts = !showConcepts)}
+      >
+        {showConcepts ? $_('onboarding.concepts.info_close') : '?'}
+      </Button>
+      <Button href="/settings" variant="ghost" size="sm">
+        {$_('settings.tags.back_settings')}
+      </Button>
+    </div>
   </ScreenHeader>
+
+  {#if showConcepts}
+    <ConceptExplainer />
+  {/if}
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">
@@ -588,6 +606,12 @@
   .tag-settings {
     width: min(100%, 62rem);
     margin: 0 auto;
+  }
+
+  .tag-settings__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   .tag-settings__section {

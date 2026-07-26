@@ -6,6 +6,7 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import ConceptExplainer from '$lib/components/onboarding/ConceptExplainer.svelte';
   import {
     completeOnboarding,
     fetchTagSuggestions,
@@ -114,6 +115,7 @@
       <p class="onboarding-flow__habit-hint" data-testid="onboarding-habit-hint">
         {$_('onboarding.guided.habit_hint')}
       </p>
+      <ConceptExplainer />
       {#if loading}
         <p>{$_('tag.loading')}</p>
       {:else}
