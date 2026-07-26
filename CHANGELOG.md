@@ -35,10 +35,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   localStorage, new outbox seqs restarted at 1 under the old client identity.
   The server skipped them (`seq <= last_applied_seq`) while `pushPending`
   still acked the batch and marked entries synced — permanent loss on the
-  next logout wipe. Binding a fresh empty offline DB now drops the retained
-  client id, and an all-skipped push probes the entry: on 404 the client
-  rotates identity and retries once (crash-before-ack replays where the
-  entry already exists still ack without rotating).
+  next logout wipe. A per-user partition that is genuinely empty drops the
+  retained client id (reusing a partition that already holds data keeps its
+  identity so reloads no longer mint a new one), and an all-skipped push
+  validates every pushed entry: a change is only acked when the server row
+  reflects it (present and its `updated_at` is at least the pushed
+  `client_ts`); a missing or stale entry rotates identity and retries once, so
+  a skipped update to an already-existing entry is no longer silently lost.
 - **Onboarding tag IDs survive the next EntryForm autosave** — after a
   successful `completeOnboarding`, created tag IDs were merged into the
   in-flight save snapshot only and never written back to `selectedTagIds`.

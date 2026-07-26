@@ -278,6 +278,61 @@ describe('syncOrchestrator', () => {
     expect(await listPendingChanges()).toHaveLength(0);
   });
 
+  it('rotates when an all-skipped entry exists but is stale (unapplied update)', async () => {
+    // The entry was created under the retained id before the IDB reset, so it
+    // exists on the server — but our restarted-seq UPDATE was skipped and never
+    // applied, leaving the server `updated_at` older than what we pushed.
+    // Existence alone would wrongly ack this and lose the update (P1).
+    const staleClientId = await getOrCreateClientId();
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'stale-on-server',
+      operation: 'upsert',
+      payload: { entry_date: '2026-06-30', slot: 'day', mood_score: 5 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    pushSyncChanges
+      .mockResolvedValueOnce({
+        cursor: 'cursor-skip',
+        applied: 0,
+        skipped: 1,
+        conflicts: [],
+        idempotent_replay: false,
+      })
+      .mockResolvedValueOnce({
+        cursor: 'cursor-applied',
+        applied: 1,
+        skipped: 0,
+        conflicts: [],
+        idempotent_replay: false,
+      });
+    fetchEntry.mockResolvedValue({
+      id: 'stale-on-server',
+      entry_date: '2026-06-30',
+      slot: 'day',
+      mood_score: 2,
+      energy: 3,
+      stress: 3,
+      cycle_day: null,
+      work_context: 'office',
+      note: null,
+      created_at: '2026-06-30T11:00:00.000Z',
+      updated_at: '2026-06-30T11:00:00.000Z',
+    });
+
+    await pushPending();
+
+    expect(pushSyncChanges).toHaveBeenCalledTimes(2);
+    expect(fetchEntry).toHaveBeenCalledWith('stale-on-server');
+    const retryClientId = pushSyncChanges.mock.calls[1]?.[0]?.client_id as string;
+    expect(retryClientId).toBeTruthy();
+    expect(retryClientId).not.toBe(staleClientId);
+    expect(peekClientId()).toBe(retryClientId);
+    expect(await listPendingChanges()).toHaveLength(0);
+  });
+
   it('applies pull deltas to local entries', async () => {
     await setSyncMeta(SYNC_META_KEYS.lastPullCursor, 'cursor-old');
     pullSyncChanges.mockResolvedValue({

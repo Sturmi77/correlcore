@@ -39,15 +39,31 @@ import { refreshSymptoms } from '$lib/stores/symptoms';
  * replay (same seqs, entities already on the server) by probing one entry.
  */
 async function isStaleClientSeqCollision(toPush: ChangeLogRow[]): Promise<boolean> {
-  const probe = toPush.find((row) => row.entity_type === 'entry' && row.operation === 'upsert');
-  if (!probe) return false;
-  try {
-    await fetchEntry(probe.entity_id);
-    return false;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) return true;
-    throw err;
+  const entryUpserts = toPush.filter(
+    (row) => row.entity_type === 'entry' && row.operation === 'upsert'
+  );
+  if (entryUpserts.length === 0) return false;
+  // Existence is NOT proof the skipped change was applied. An update to an entry
+  // that already existed (created under the retained id before the IDB reset)
+  // passes a 404 probe yet was never applied, and a mixed batch can have one
+  // applied entry alongside a brand-new skipped one. Confirm EVERY pushed entry
+  // actually reflects our push: present, and its server `updated_at` is at least
+  // the `client_ts` we pushed (the server stores client_ts on apply — LWW). Any
+  // missing or stale entry means the batch was skipped, not replayed → rotate.
+  for (const row of entryUpserts) {
+    try {
+      const serverEntry = await fetchEntry(row.entity_id);
+      const serverAt = new Date(serverEntry.updated_at).getTime();
+      const pushedAt = new Date(row.client_ts).getTime();
+      if (Number.isFinite(serverAt) && Number.isFinite(pushedAt) && serverAt < pushedAt) {
+        return true;
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return true;
+      throw err;
+    }
   }
+  return false;
 }
 
 function isFullySkippedPush(response: SyncPushResponse, changeCount: number): boolean {
