@@ -393,6 +393,10 @@ async def create_custom_tag(
         await db.rollback()
         raise TagConflictError("tag with this slug already exists") from exc
 
+    from app.services.sync_service import record_tag_revision
+
+    await record_tag_revision(db, user_id=user_id, tag_id=tag.id, operation="upsert", tag=tag)
+
     logger.info(
         "tag.created",
         extra={"user_id": str(user_id), "tag_id": str(tag.id)},
@@ -460,6 +464,10 @@ async def update_custom_tag(
             override_tag_id=tag.id,
         )
 
+    from app.services.sync_service import record_tag_revision
+
+    await record_tag_revision(db, user_id=user_id, tag_id=tag.id, operation="upsert", tag=tag)
+
     logger.info(
         "tag.updated",
         extra={"user_id": str(user_id), "tag_id": str(tag.id)},
@@ -481,6 +489,10 @@ async def delete_custom_tag(
     tag = await _get_owned_custom_tag(db, tag_id=tag_id, user_id=user_id)
     await db.delete(tag)
     await db.flush()
+
+    from app.services.sync_service import record_tag_revision
+
+    await record_tag_revision(db, user_id=user_id, tag_id=tag_id, operation="delete")
 
     logger.info(
         "tag.deleted",
@@ -518,6 +530,7 @@ async def assign_tags_to_entry(
     user_id: uuid.UUID,
     entry_id: uuid.UUID,
     tag_ids: Sequence[uuid.UUID],
+    record_revision: bool = True,
 ) -> list[Tag]:
     """Replace the entry's tag set with ``tag_ids``.
 
@@ -533,13 +546,17 @@ async def assign_tags_to_entry(
     via offline sync, raised an uncaught error that aborted the whole push
     batch so newer pending changes never acked.
 
+    When ``record_revision`` is true (REST default), emit an entry upsert
+    into ``sync_revision_log`` so offline pull sees association changes.
+    Sync push passes false because it appends its own revision after merge.
+
     Raises:
         EntryNotFoundForTagError: entry not visible to the user.
         TagsNotFoundError: at least one of ``tag_ids`` is not visible to
             the user (neither a default nor one of their custom tags) and
             is not already linked on this entry.
     """
-    await _get_owned_entry(db, entry_id=entry_id, user_id=user_id)
+    entry = await _get_owned_entry(db, entry_id=entry_id, user_id=user_id)
 
     target_ids = set(tag_ids)
 
@@ -584,6 +601,11 @@ async def assign_tags_to_entry(
         db.add(EntryTag(entry_id=entry_id, tag_id=tid, user_id=user_id))
 
     await db.flush()
+
+    if record_revision and (to_add or to_remove):
+        from app.services.sync_service import record_entry_upsert_revision
+
+        await record_entry_upsert_revision(db, user_id=user_id, entry=entry)
 
     logger.info(
         "entry.tags.assigned",

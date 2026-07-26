@@ -356,6 +356,32 @@ def _bind_test_dek() -> Generator[None, None, None]:
         reset_current_user_dek(token)
 
 
+@pytest.fixture(autouse=True)
+def rest_revision_recorders(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> dict[str, AsyncMock | None]:
+    """Stub REST→``sync_revision_log`` side effects for MagicMock DB unit tests.
+
+    The real helpers load associations and append revision rows; that needs a
+    live session. Integration tests keep the real helpers. Unit tests that
+    assert the emit call can use the returned mocks.
+    """
+    if (
+        request.node.get_closest_marker("integration") is not None
+        or request.node.get_closest_marker("no_rest_revision_stub") is not None
+    ):
+        return {"entry": None, "tag": None, "symptom": None}
+    mocks: dict[str, AsyncMock | None] = {
+        "entry": AsyncMock(return_value=1),
+        "tag": AsyncMock(return_value=1),
+        "symptom": AsyncMock(return_value=1),
+    }
+    monkeypatch.setattr("app.services.sync_service.record_entry_upsert_revision", mocks["entry"])
+    monkeypatch.setattr("app.services.sync_service.record_tag_revision", mocks["tag"])
+    monkeypatch.setattr("app.services.sync_service.record_symptom_revision", mocks["symptom"])
+    return mocks
+
+
 @pytest.fixture
 def user() -> User:
     """A verified active user — the default for endpoint tests."""

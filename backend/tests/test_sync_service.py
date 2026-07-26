@@ -303,7 +303,13 @@ async def test_merge_entry_upsert_filters_deleted_tag_before_assign(
 
     assert conflicts == []
     resolve_tags.assert_awaited_once()
-    assign_tags.assert_awaited_once_with(db, user_id=user_id, entry_id=entry_id, tag_ids=[kept_tag])
+    assign_tags.assert_awaited_once_with(
+        db,
+        user_id=user_id,
+        entry_id=entry_id,
+        tag_ids=[kept_tag],
+        record_revision=False,
+    )
     assert deleted_tag not in assign_tags.await_args.kwargs["tag_ids"]
 
 
@@ -394,6 +400,39 @@ def test_migration_018_declares_sync_engine_tables() -> None:
     assert 'revision: str = "018"' in source
     assert "sync_revision_log" in source
     assert "sync_push_batches" in source
+
+
+@pytest.mark.asyncio
+@pytest.mark.no_rest_revision_stub
+async def test_record_entry_upsert_revision_appends_log_without_note(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """REST helpers must write revision rows (note redacted) for incremental pull."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from app.services import sync_service
+    from tests.conftest import make_entry
+
+    user = make_user()
+    entry = make_entry(user, mood_score=4, note="secret note")
+    db = MagicMock()
+    append = AsyncMock(return_value=7)
+    monkeypatch.setattr(sync_service, "_append_revision_log", append)
+    monkeypatch.setattr(sync_service, "list_tags_for_entry", AsyncMock(return_value=[]))
+    monkeypatch.setattr(sync_service, "list_symptoms_for_entry", AsyncMock(return_value=[]))
+
+    rev = await sync_service.record_entry_upsert_revision(db, user_id=user.id, entry=entry)
+
+    assert rev == 7
+    append.assert_awaited_once()
+    kwargs = append.await_args.kwargs
+    assert kwargs["entity_type"] == "entry"
+    assert kwargs["entity_id"] == entry.id
+    assert kwargs["operation"] == "upsert"
+    assert kwargs["payload"]["mood_score"] == 4
+    assert kwargs["payload"]["note"] is None
+    assert kwargs["payload"]["tag_ids"] == []
+    assert kwargs["payload"]["symptoms"] == {}
 
 
 @pytest.mark.integration

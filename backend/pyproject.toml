@@ -118,6 +118,7 @@ testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=70"
 markers = [
   "integration: tests that require external services such as PostgreSQL or Redis",
+  "no_rest_revision_stub: exercise real REST→revision-log helpers (skip MagicMock stub)",
 ]
 
 [tool.uv]

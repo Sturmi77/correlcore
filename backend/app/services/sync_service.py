@@ -575,7 +575,13 @@ async def _merge_entry_upsert(
                 entry_id=entry.id,
                 symptoms=_normalize_symptoms_payload(payload.symptoms),
             )
-            await assign_tags_to_entry(db, user_id=user_id, entry_id=entry.id, tag_ids=tag_ids)
+            await assign_tags_to_entry(
+                db,
+                user_id=user_id,
+                entry_id=entry.id,
+                tag_ids=tag_ids,
+                record_revision=False,
+            )
             symptom_entries = [
                 SymptomEntry(symptom_id=uuid.UUID(key), intensity=value)
                 for key, value in incoming_symptoms.items()
@@ -585,6 +591,7 @@ async def _merge_entry_upsert(
                 user_id=user_id,
                 entry_id=entry.id,
                 symptoms=symptom_entries,
+                record_revision=False,
             )
             await _append_revision_log(
                 db,
@@ -637,7 +644,13 @@ async def _merge_entry_upsert(
         entry.work_context = payload.work_context
         entry.note_enc = payload.note
         entry.updated_at = client_ts
-        await assign_tags_to_entry(db, user_id=user_id, entry_id=entry.id, tag_ids=tag_ids)
+        await assign_tags_to_entry(
+            db,
+            user_id=user_id,
+            entry_id=entry.id,
+            tag_ids=tag_ids,
+            record_revision=False,
+        )
         symptom_entries = [
             SymptomEntry(symptom_id=uuid.UUID(key), intensity=value)
             for key, value in incoming_symptoms.items()
@@ -647,6 +660,7 @@ async def _merge_entry_upsert(
             user_id=user_id,
             entry_id=entry.id,
             symptoms=symptom_entries,
+            record_revision=False,
         )
         await db.flush()
         tag_ids = [
@@ -1032,6 +1046,94 @@ async def push_changes(
         },
     )
     return response
+
+
+async def record_entry_upsert_revision(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entry: Entry,
+) -> int:
+    """Append a revision-log upsert for an entry mutated via the REST API.
+
+    Sync push already logs after merge; call this from REST create/update and
+    association replace-set paths so incremental pull (``since`` set) sees
+    online writes after the client's cursor has advanced past initial backfill.
+    """
+    tag_ids = [tag.id for tag in await list_tags_for_entry(db, user_id=user_id, entry_id=entry.id)]
+    symptoms = _symptoms_map(await list_symptoms_for_entry(db, user_id=user_id, entry_id=entry.id))
+    entity_updated_at = (
+        _ensure_utc(entry.updated_at) if getattr(entry, "updated_at", None) else datetime.now(UTC)
+    )
+    return await _append_revision_log(
+        db,
+        user_id=user_id,
+        entity_type="entry",
+        entity_id=entry.id,
+        operation="upsert",
+        payload=_entry_payload_from_model(
+            entry, tag_ids=tag_ids, symptoms=symptoms, for_revision_log=True
+        ),
+        entity_updated_at=entity_updated_at,
+    )
+
+
+async def record_tag_revision(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    tag_id: uuid.UUID,
+    operation: str,
+    tag: Tag | None = None,
+    entity_updated_at: datetime | None = None,
+) -> int:
+    """Append a revision-log row for a tag mutated via the REST API."""
+    if operation == "delete":
+        payload: dict[str, Any] = {}
+        ts = entity_updated_at or datetime.now(UTC)
+    else:
+        if tag is None:
+            raise ValueError("tag is required for upsert revisions")
+        payload = _tag_payload_from_model(tag)
+        ts = entity_updated_at or getattr(tag, "updated_at", None) or datetime.now(UTC)
+    return await _append_revision_log(
+        db,
+        user_id=user_id,
+        entity_type="tag",
+        entity_id=tag_id,
+        operation=operation,
+        payload=payload,
+        entity_updated_at=_ensure_utc(ts),
+    )
+
+
+async def record_symptom_revision(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    symptom_id: uuid.UUID,
+    operation: str,
+    symptom: Symptom | None = None,
+    entity_updated_at: datetime | None = None,
+) -> int:
+    """Append a revision-log row for a symptom mutated via the REST API."""
+    if operation == "delete":
+        payload: dict[str, Any] = {}
+        ts = entity_updated_at or datetime.now(UTC)
+    else:
+        if symptom is None:
+            raise ValueError("symptom is required for upsert revisions")
+        payload = _symptom_payload_from_model(symptom)
+        ts = entity_updated_at or getattr(symptom, "updated_at", None) or datetime.now(UTC)
+    return await _append_revision_log(
+        db,
+        user_id=user_id,
+        entity_type="symptom",
+        entity_id=symptom_id,
+        operation=operation,
+        payload=payload,
+        entity_updated_at=_ensure_utc(ts),
+    )
 
 
 async def ensure_revision_log_backfill(db: AsyncSession, *, user_id: uuid.UUID) -> int:
