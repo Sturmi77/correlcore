@@ -43,6 +43,7 @@
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import { hasOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
   import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
   import LandingPage from '$lib/components/landing/LandingPage.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -79,7 +80,11 @@
       [EARLY_CONTEXT_PATTERN_KEY, LEGACY_FIRST_WEEK_PATTERN_KEY].includes(key)
     ) ?? false;
   $: showFirstWeekBanner = Boolean(contextInsight && !firstWeekDismissed);
-  $: showOnboardingTags = shouldShowOnboardingTags(userPreferences, dashboardSummary?.entry_count);
+  $: showOnboardingTags = shouldShowOnboardingTags(userPreferences, dashboardSummary?.entry_count, {
+    hasDeferredSuggestionStash: userPreferences
+      ? hasOnboardingSuggestionStash(userPreferences.user_id)
+      : false,
+  });
   $: showPwaInstallBanner = Boolean(
     $pwaInstallStore.promptEvent &&
     !$pwaInstallStore.dismissed &&

@@ -26,6 +26,10 @@ vi.mock('$lib/offline/session', () => ({
   prepareOfflineDataForAuthenticatedUser: vi.fn(),
 }));
 
+vi.mock('$lib/utils/onboardingSuggestionStash', () => ({
+  clearAllOnboardingSuggestionStashes: vi.fn(),
+}));
+
 vi.mock('$lib/native/pushNotifications', () => ({
   enablePushNotifications: vi.fn(),
   disablePushNotifications: vi.fn(),
@@ -39,6 +43,7 @@ import { disablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
 import { connectivity } from '$lib/stores/connectivity';
 import { LAST_USER_STORAGE_KEY } from '$lib/stores/lastUserCache';
+import { clearAllOnboardingSuggestionStashes } from '$lib/utils/onboardingSuggestionStash';
 import {
   _resetForTests,
   auth,
@@ -211,11 +216,13 @@ describe('login / logout / setUser', () => {
     await setUser(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
     vi.mocked(resetInsightStore).mockClear();
+    vi.mocked(clearAllOnboardingSuggestionStashes).mockClear();
     vi.mocked(authApi.logout).mockRejectedValueOnce(new Error('boom'));
     await logout();
     expect(get(auth)).toEqual({ status: 'anonymous' });
     expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(1);
     expect(offlineSession.clearOfflineDataForLogout).toHaveBeenCalledTimes(1);
+    expect(clearAllOnboardingSuggestionStashes).toHaveBeenCalledTimes(1);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 

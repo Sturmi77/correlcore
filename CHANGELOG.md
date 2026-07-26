@@ -23,6 +23,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Deferred onboarding suggestion picks survive EntryForm unmount** — offline
+  (or failed) `completeOnboarding` left picks only in an in-memory Map. Closing
+  the bottom sheet destroyed the form; after the first entry synced,
+  `entry_count > 0` hid the chips while `onboarding_retro_completed` stayed
+  false, so suggestion tags were permanently lost. Picks (and the deferral
+  flag) are now stashed in `sessionStorage` (scoped by user id), the Home /
+  deep-link gate re-enables chips when a stash exists, remount restores and
+  retries finalize, and logout clears the stash.
 - **Onboarding reachability retry no longer finalizes an untouched first
   entry** — `#538` retried deferred `completeOnboarding` whenever
   `serverReachable` recovered while onboarding was still incomplete. A bare
