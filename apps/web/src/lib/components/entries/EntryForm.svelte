@@ -71,6 +71,7 @@
   import { NEUTRAL_SCALE_DEFAULT, scaleDefaultsFromPrevious } from '$lib/utils/entrySmartDefaults';
   import { setEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
+  import { auth } from '$lib/stores/auth';
   import { connectivity } from '$lib/stores/connectivity';
   import { onLocalEntrySaved, scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
   import {
@@ -81,6 +82,11 @@
     shouldPreferLocalEntry,
     type EntryFormSnapshot,
   } from '$lib/stores/entriesOffline';
+  import {
+    clearOnboardingSuggestionStash,
+    readOnboardingSuggestionStash,
+    writeOnboardingSuggestionStash,
+  } from '$lib/utils/onboardingSuggestionStash';
 
   export let mode: 'page' | 'sheet' = 'page';
   /** Quick capture hides tags, symptoms, and optional extras (O-25). */
@@ -173,6 +179,9 @@
   // untouched form, autosaves a default first entry, and completeOnboarding([])
   // locks out later suggestion picks.
   let onboardingFinalizeDeferred = false;
+  // Set when a remount restores a deferred stash while loadForDate is still
+  // hydrating — markDirty is a no-op during hydrate, so retry after it ends.
+  let pendingDeferredOnboardingRetry = false;
   // P1: retry a deferred onboarding finalize when API reachability recovers.
   // `window.online` only covers navigator transitions; the stale-reachable
   // case (navigator stayed online while the API blipped) never fires it, so
@@ -491,6 +500,10 @@
         await Promise.resolve();
         hydrating = false;
         syncOptionalExtrasVisibility();
+        if (pendingDeferredOnboardingRetry) {
+          pendingDeferredOnboardingRetry = false;
+          scheduleDeferredOnboardingRetry();
+        }
       }
     }
   }
@@ -930,6 +943,45 @@
     };
   }
 
+  function currentUserId(): string | null {
+    const state = get(auth);
+    return state.status === 'authenticated' ? state.user.id : null;
+  }
+
+  function persistOnboardingSuggestionStash(finalizeDeferred: boolean) {
+    const userId = currentUserId();
+    if (!userId) return;
+    writeOnboardingSuggestionStash({
+      userId,
+      suggestions: [...selectedSuggestions.values()],
+      finalizeDeferred,
+    });
+  }
+
+  function scheduleDeferredOnboardingRetry() {
+    if (hydrating || loading) {
+      pendingDeferredOnboardingRetry = true;
+      return;
+    }
+    void Promise.resolve().then(() => {
+      if (onboardingFinalizeDeferred && onboardingTagsEnabled && !onboardingMarkedComplete) {
+        markDirty();
+      }
+    });
+  }
+
+  function restoreOnboardingSuggestionStash() {
+    const userId = currentUserId();
+    if (!userId) return;
+    const stash = readOnboardingSuggestionStash(userId);
+    if (!stash) return;
+    selectedSuggestions = new Map(stash.suggestions.map((tag) => [tag.slug, tag]));
+    if (stash.finalizeDeferred) {
+      onboardingFinalizeDeferred = true;
+      scheduleDeferredOnboardingRetry();
+    }
+  }
+
   async function resolveOnboardingTags(snap: FormSnapshot): Promise<FormSnapshot> {
     if (!onboardingTagsEnabled || onboardingMarkedComplete) return snap;
     // Offline sync enabled must not skip onboarding while the API is
@@ -944,6 +996,8 @@
       get(connectivity).serverReachable === false;
     if (canUseOfflineSync() && cannotReachApi) {
       onboardingFinalizeDeferred = true;
+      // Survive BottomSheet unmount: picks are only in selectedSuggestions.
+      persistOnboardingSuggestionStash(true);
       return snap;
     }
     const tags = [...selectedSuggestions.values()].map((tag) => ({
@@ -963,12 +1017,15 @@
     } catch (err) {
       if (canUseOfflineSync()) {
         onboardingFinalizeDeferred = true;
+        persistOnboardingSuggestionStash(true);
         return snap;
       }
       throw err;
     }
     onboardingMarkedComplete = true;
     onboardingFinalizeDeferred = false;
+    const userId = currentUserId();
+    if (userId) clearOnboardingSuggestionStash(userId);
     const createdIds = result.created_tags.map((tag) => tag.id);
     // Merge the live `selectedTagIds` as well, not just the snapshot: a tag the
     // user picks while completeOnboarding() is still awaiting lives only in the
@@ -1003,6 +1060,8 @@
     selectedSuggestions = new Map(selectedSuggestions);
     if (selectedSuggestions.has(tag.slug)) selectedSuggestions.delete(tag.slug);
     else selectedSuggestions.set(tag.slug, tag);
+    // Persist on toggle too — close-before-autosave must not drop picks.
+    persistOnboardingSuggestionStash(onboardingFinalizeDeferred);
     markDirty();
   }
 
@@ -1017,6 +1076,7 @@
     } finally {
       suggestionsLoading = false;
     }
+    restoreOnboardingSuggestionStash();
   }
 
   const autoSave = createAutoSave<FormSnapshot>({

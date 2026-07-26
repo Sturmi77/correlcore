@@ -15,6 +15,7 @@
   import { entryDateFromSearchParams, isOpenEntryRequested } from '$lib/navigation/openEntry';
   import { isoDate } from '$lib/utils/entryForm';
   import { shouldShowOnboardingTags } from '$lib/utils/onboardingEntry';
+  import { hasOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
   import { shouldShowMaturityExpectationIntro } from '$lib/utils/maturityExpectationIntro';
   import EntrySheet from './EntrySheet.svelte';
 
@@ -83,7 +84,9 @@
         stripOpenEntryQuery();
         return;
       }
-      onboardingTags = shouldShowOnboardingTags(preferences, summary.entry_count);
+      onboardingTags = shouldShowOnboardingTags(preferences, summary.entry_count, {
+        hasDeferredSuggestionStash: hasOnboardingSuggestionStash(preferences.user_id),
+      });
     } catch {
       onboardingTags = false;
     }

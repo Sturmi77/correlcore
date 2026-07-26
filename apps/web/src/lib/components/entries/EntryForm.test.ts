@@ -14,6 +14,12 @@ import { hydrateServerEntryFromApi, saveEntryOffline } from '$lib/stores/entries
 import { refreshTags } from '$lib/stores/tags';
 import { connectivity } from '$lib/stores/connectivity';
 import { submitEntry } from '$lib/stores/entries';
+import {
+  clearAllOnboardingSuggestionStashes,
+  hasOnboardingSuggestionStash,
+  readOnboardingSuggestionStash,
+  writeOnboardingSuggestionStash,
+} from '$lib/utils/onboardingSuggestionStash';
 import EntryForm from './EntryForm.svelte';
 
 type Deferred<T> = {
@@ -101,6 +107,16 @@ vi.mock('$lib/stores/tags', () => ({
 vi.mock('$lib/offline/featureFlag', () => ({
   canUseOfflineSync: vi.fn(() => false),
 }));
+
+vi.mock('$lib/stores/auth', async () => {
+  const { writable } = await import('svelte/store');
+  return {
+    auth: writable({
+      status: 'authenticated',
+      user: { id: 'user-1', email: 'user@example.com', is_verified: true },
+    }),
+  };
+});
 
 vi.mock('$lib/offline/syncOrchestrator', () => ({
   onLocalEntrySaved: vi.fn(),
@@ -1202,5 +1218,70 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
 
     expect(saveEntryOffline).toHaveBeenCalledTimes(2);
     expect(vi.mocked(saveEntryOffline).mock.calls[1][1].selectedTagIds).toContain('onb-created-1');
+  });
+
+  it('stashes deferred onboarding so a remount can finalize picks after close', async () => {
+    // BottomSheet destroys EntryForm on close. Without a session stash the
+    // suggestion Map is gone and entry_count>0 hides chips forever while
+    // onboarding_retro_completed stays false.
+    connectivity.markServerReachable(false);
+    clearAllOnboardingSuggestionStashes();
+
+    const first = render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'offline first entry' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).not.toHaveBeenCalled();
+    expect(saveEntryOffline).toHaveBeenCalledTimes(1);
+    expect(hasOnboardingSuggestionStash('user-1')).toBe(true);
+    expect(readOnboardingSuggestionStash('user-1')?.finalizeDeferred).toBe(true);
+
+    first.unmount();
+    await flushAsync();
+
+    // Simulate parent re-enabling chips because the stash is present even
+    // though the first entry already exists (entry_count > 0).
+    writeOnboardingSuggestionStash({
+      userId: 'user-1',
+      suggestions: [
+        {
+          slug: 'caffeine',
+          name: 'Caffeine',
+          category: 'habit',
+          icon: null,
+          color: null,
+        },
+      ],
+      finalizeDeferred: true,
+    });
+    connectivity.markServerReachable(true);
+    vi.mocked(completeOnboarding).mockResolvedValue({
+      created_tags: [tagResponse('onb-caffeine')],
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+    });
+
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02', onboardingTagsEnabled: true },
+    });
+
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(completeOnboarding).toHaveBeenCalledWith([
+      expect.objectContaining({ slug: 'caffeine', name: 'Caffeine' }),
+    ]);
+    expect(hasOnboardingSuggestionStash('user-1')).toBe(false);
   });
 });

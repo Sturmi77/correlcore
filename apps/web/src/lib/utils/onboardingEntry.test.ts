@@ -45,6 +45,28 @@ describe('onboardingEntry', () => {
     expect(shouldShowOnboardingTags(prefs, 2)).toBe(false);
   });
 
+  it('re-enables onboarding tags when a deferred suggestion stash exists', () => {
+    const prefs = {
+      user_id: 'u1',
+      analytics_enabled: true,
+      digest_enabled: true,
+      onboarding_retro_completed: false,
+      onboarding_profile_completed: false,
+      onboarding_maturity_intro_seen: false,
+      dismissed_insight_keys: [],
+      reached_milestone_keys: [],
+      last_seen_insight_at: null,
+      created_at: '',
+      updated_at: '',
+    };
+    expect(shouldShowOnboardingTags(prefs, 2, { hasDeferredSuggestionStash: true })).toBe(true);
+    expect(
+      shouldShowOnboardingTags({ ...prefs, onboarding_retro_completed: true }, 2, {
+        hasDeferredSuggestionStash: true,
+      })
+    ).toBe(false);
+  });
+
   it('skips summary for at most three tags', () => {
     expect(ONBOARDING_SUMMARY_SKIP_MAX_TAGS).toBe(3);
     expect(shouldSkipOnboardingSummary(0)).toBe(true);

@@ -40,6 +40,7 @@ import {
   drainOfflineSyncForSessionChange,
   prepareOfflineDataForAuthenticatedUser,
 } from '$lib/offline/session';
+import { clearAllOnboardingSuggestionStashes } from '$lib/utils/onboardingSuggestionStash';
 
 export type AuthState =
   { status: 'loading' } | { status: 'authenticated'; user: UserResponse } | { status: 'anonymous' };
@@ -194,6 +195,7 @@ export async function logout(): Promise<void> {
     clearSessionTokens();
   }
   await clearOfflineDataForLogout();
+  clearAllOnboardingSuggestionStashes();
   clearLastUser();
   resetInsightStore();
   resetEntrySheetStore();
