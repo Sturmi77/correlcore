@@ -23,6 +23,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Offline sync LWW no longer loses mid-window writes to the updated_at
+  trigger** — `update_updated_at_column()` unconditionally overwrote
+  `NEW.updated_at = now()` on every UPDATE, so sync's explicit
+  `entry/tag/symptom.updated_at = client_ts` was replaced with server receive
+  time. A later device with a real client timestamp between the original
+  client_ts and receive time then lost LWW. Migration 033 preserves
+  caller-supplied timestamps and only auto-bumps when the column was not
+  changed by the UPDATE.
 - **Offline post-eviction writes survive reconnect without rebinding a stale
   client id** — after #557, probe 404 no longer rotates client identity
   (correct: avoid resurrecting deletes). But `prepareOfflineDataForAuthenticatedUser`
