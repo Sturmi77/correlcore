@@ -341,19 +341,26 @@
               </select>
               {#if habitTypeFor(tag.slug) !== 'none'}
                 <label class="onboarding-flow__goal-freq">
-                  <span>{$_('onboarding.goals.frequency_label')}</span>
+                  <span aria-hidden="true">{$_('onboarding.goals.frequency_label')}</span>
                   <input
                     type="number"
                     class="input"
                     min="1"
                     max="7"
+                    step="1"
+                    aria-label={$_('onboarding.goals.frequency_aria', {
+                      values: { name: tag.name },
+                    })}
                     value={habitFreqFor(tag.slug)}
                     on:input={(e) =>
                       setHabitFreq(
                         tag.slug,
                         Math.min(
                           7,
-                          Math.max(1, Number((e.currentTarget as HTMLInputElement).value) || 1)
+                          Math.max(
+                            1,
+                            Math.round(Number((e.currentTarget as HTMLInputElement).value) || 1)
+                          )
                         )
                       )}
                   />

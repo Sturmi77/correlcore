@@ -1203,7 +1203,7 @@
       "progress": "Onboarding-Fortschritt",
       "tags_title": "Nuetzliche Tags auswaehlen",
       "tags_body": "Starte mit einer kleinen Auswahl. Freitext-Tags bleiben immer moeglich.",
-      "habit_hint": "Tags wie Spazieren oder Meditation kannst du spaeter unter Einstellungen → Tags als Aufbau- oder Reduktionsgewohnheit markieren und in Trends verfolgen.",
+      "habit_hint": "Tags wie Spazieren oder Meditation kannst du gleich im nächsten Schritt oder später unter Einstellungen → Tags als Aufbau- oder Reduktionsgewohnheit markieren und in Trends verfolgen.",
       "custom": "Eigener Tag",
       "custom_invalid": "Bitte einen etwas längeren Namen wählen (mindestens 2 Buchstaben oder Ziffern).",
       "add_tag": "Tag hinzufuegen",
@@ -1215,9 +1215,10 @@
     "goals": {
       "title": "Ziele setzen",
       "intro": "Optional: mach aus einem gewählten Tag eine Gewohnheit, indem du ein Ziel setzt — aufbauen oder reduzieren, mit einer Häufigkeit pro Woche.",
-      "optional_hint": "Alles freiwillig. Ohne Ziel bleibt es ein normaler Tag; du kannst das jederzeit in den Einstellungen ändern. (Offline werden Ziele erst nach dem Verbinden gespeichert.)",
+      "optional_hint": "Alles freiwillig. Ohne Ziel bleibt es ein normaler Tag; Ziele kannst du jederzeit in den Einstellungen ändern. Offline werden nur die Tags gespeichert — Ziele setzt du dann in den Einstellungen.",
       "type_label": "Ziel für {name}",
-      "frequency_label": "pro Woche"
+      "frequency_label": "pro Woche",
+      "frequency_aria": "Häufigkeit pro Woche für {name}"
     },
     "concepts": {
       "title": "Tag, Gewohnheit oder Symptom?",
@@ -1225,7 +1226,7 @@
       "tag_term": "Tag",
       "tag_body": "Ein Kontext-Etikett für einen Tag — z. B. Spaziergang, Alkohol, Meeting. Kein Ziel, kein Zeitplan. CorrelCore sucht, was gemeinsam auftritt und wie es mit deinen Werten zusammenhängt.",
       "habit_term": "Gewohnheit",
-      "habit_body": "Ein Verhalten, das du aufbauen oder reduzieren willst — mit einer Zielhäufigkeit. CorrelCore zeigt deine Dranbleib-Quote über Zeit und wie sie mit deinen Werten zusammenhängt. Technisch ist eine Gewohnheit ein Tag mit Ziel: im Onboarding wählst du nur Tags; einen davon kannst du später in den Einstellungen zur Gewohnheit machen.",
+      "habit_body": "Ein Verhalten, das du aufbauen oder reduzieren willst — mit einer Zielhäufigkeit. CorrelCore zeigt deine Dranbleib-Quote über Zeit und wie sie mit deinen Werten zusammenhängt. Technisch ist eine Gewohnheit ein Tag mit Ziel — den kannst du im Onboarding oder später in den Einstellungen setzen.",
       "symptom_term": "Symptom",
       "symptom_body": "Etwas, das du körperlich oder mental erlebst — z. B. Kopfschmerz, Grübeln. CorrelCore sucht Zusammenhänge mit Stimmung und Energie.",
       "cycle_term": "Zyklustag",
