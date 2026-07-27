@@ -47,6 +47,9 @@ async def test_get_onboarding_tag_suggestions(async_client: AsyncClient) -> None
     }
     sport_group = next(group for group in body["groups"] if group["category"] == "sport")
     assert len(sport_group["suggestions"]) >= 2
+    # Social media is seeded as a plain leisure tag (#542).
+    leisure_group = next(group for group in body["groups"] if group["category"] == "leisure")
+    assert any(s["slug"] == "social-media" for s in leisure_group["suggestions"])
 
 
 @pytest.mark.asyncio

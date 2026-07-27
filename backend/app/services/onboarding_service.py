@@ -158,6 +158,12 @@ _SUGGESTIONS: tuple[TagSuggestionGroup, ...] = (
                 category=TagCategory.LEISURE,
                 icon="tv",
             ),
+            TagSuggestion(
+                slug="social-media",
+                name="Social media",
+                category=TagCategory.LEISURE,
+                icon="smartphone",
+            ),
         ],
     ),
     TagSuggestionGroup(

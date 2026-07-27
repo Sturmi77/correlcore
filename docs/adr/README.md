@@ -51,6 +51,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-N-02](ADR-N-02-signal-confidence-threshold.md)              | Note signal confidence threshold 0.70                        | Accepted   | 2026-07-15 |
 | [ADR-N-03](ADR-N-03-custom-marker-normalisation.md)              | Custom marker normalisation on write                         | Accepted   | 2026-07-15 |
 | [ADR-0040](0040-selfhost-auth-edge-passthrough.md)               | Self-Host-Auth-Edge: Ein-Regel-Passthrough + Bearer-Fallback | Accepted   | 2026-07-25 |
+| [ADR-0041](0041-tag-habit-relabeling-and-onboarding-habit-selection.md) | Tag/Habit-Relabeling + Habit-Auswahl im Onboarding    | Proposed   | 2026-07-27 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -157,6 +158,10 @@ M4.1 implementiert Dexie.js, `/sync/push`, `/sync/pull` und `sync_conflicts` nac
 ### ADR-0040 – Self-Host-Auth-Edge: Ein-Regel-Passthrough + Bearer-Fallback
 
 Behebt einen wiederkehrenden Bug, bei dem der Landing-Login „E-Mail oder Passwort ist falsch" meldet, obwohl der `POST /auth/login` 200 liefert — das HttpOnly-Session-Cookie überlebt die Edge-Kette (Nginx → SvelteKit-Proxy → API) nicht, und der zweistufige Login-Flow tarnte den Cookie-Verlust als Credential-Fehler. Cookie-Auth (ADR-0006) bleibt der sichere Default; nicht das Cookie ist fragil, sondern der Reverse-Proxy-Vertrag. Entscheidung: (1) **Ein-Regel-Edge-Kontrakt** — der externe Proxy terminiert nur TLS, reicht **alle** Pfade an `correlcore-web` weiter (ADR-0011 besitzt `/api` + `Set-Cookie`), setzt `X-Forwarded-Proto: https`, schneidet nie `Set-Cookie` weg; (2) **kanonische Referenz-Config** `infra/nginx/correlcore.com.conf` (in sich geschlossen, Proxy-Params auf `server{}`-Ebene von beiden Locations geerbt — deploybar auch auf separater Edge-Maschine), die Auth- und Rest-Location zwingend gleich behandelt; (3) **Deploy-Selbsttest** `scripts/verify-auth-cookie.sh`; (4) **ehrlicher Client-Fehler** `SessionPersistenceError` statt „Passwort falsch"; (5) **Bearer-Fallback** für echte Cross-Origin-Self-Host-Topologien als dokumentierte opt-in-Richtung (bestehender Capacitor-Pfad, XSS-Trade-off explizit), Umsetzung ausgelagert.
+
+### ADR-0041 – Tag/Habit-Relabeling + Habit-Auswahl im Onboarding
+
+Hält das Zielbild für die Reduktion der Tag/Habit/Symptom-Begriffsüberlappung fest (#552, Option 3), nachdem die reine Erklärung (#541) und die Copy-Klarstellung (#552, Option 2) bereits umgesetzt sind. Befund: Habit ist **kein eigener Typ**, sondern ein **Tag mit `habit_type`/`target_frequency`** (ADR-0012); Symptom ist ein eigenes Objekt (ADR-0008). Entscheidung (Proposed): (1) Habit im UI explizit als **Tag-Eigenschaft** führen (Hierarchie Tag ⊃ Habit sichtbar), Terminologie über Onboarding/Settings/Trends/Insights vereinheitlichen; (2) der Onboarding-Flow muss dann **auch Habits auswählbar** machen — optionale „als Gewohnheit verfolgen / Ziel setzen"-Aktion, die das bestehende `habit_type`/`target_frequency`-Modell nutzt; (3) **kein neues Datenmodell**. Constraints: non-gamification, non-medical, Sequenz bleibt lean (Habit-Affordance optional). Umsetzung in eigenem Follow-up-Issue.
 
 ---
 

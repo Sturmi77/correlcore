@@ -1218,7 +1218,7 @@
       "tag_term": "Tag",
       "tag_body": "A context label for a day — e.g. Walk, Alcohol, Meeting. No target, no schedule. CorrelCore looks at what co-occurs and how it relates to your metrics.",
       "habit_term": "Habit",
-      "habit_body": "A behavior you want to build or reduce — with a target frequency. CorrelCore shows your adherence over time and how it relates to your metrics.",
+      "habit_body": "A behavior you want to build or reduce — with a target frequency. CorrelCore shows your adherence over time and how it relates to your metrics. A habit is really just a tag with a goal: in onboarding you only pick tags; you turn a tag into a habit later in Settings.",
       "symptom_term": "Symptom",
       "symptom_body": "Something you experience physically or mentally — e.g. headache, rumination. CorrelCore looks for associations with mood and energy.",
       "cycle_term": "Cycle day",
