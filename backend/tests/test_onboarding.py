@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import AsyncClient
@@ -10,6 +11,8 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
 from app.models.user import User
 from app.models.user_preference import UserPreference
+from app.schemas.onboarding import OnboardingTagInput
+from app.services import onboarding_service
 
 
 def _make_preferences(user: User) -> UserPreference:
@@ -99,3 +102,108 @@ async def test_complete_onboarding_rejects_invalid_tag_input(
         app.dependency_overrides.clear()
 
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_complete_onboarding_rejects_habit_without_frequency(
+    async_client: AsyncClient, user: User
+) -> None:
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        response = await async_client.post(
+            "/api/v1/onboarding/complete",
+            json={
+                "tags": [
+                    {"slug": "walk", "name": "Walk", "category": "health", "habit_type": "build"}
+                ]
+            },
+            cookies={"access_token": "valid.access.token"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_complete_onboarding_creates_new_habit_tag(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A build/reduce pick is created as a habit tag with its target (#564)."""
+    created_payloads = []
+
+    async def fake_find(db, *, user_id, slug):  # noqa: ANN001, ANN202
+        return None
+
+    async def fake_create(db, *, user_id, payload):  # noqa: ANN001, ANN202
+        created_payloads.append(payload)
+        tag = MagicMock()
+        tag.id = uuid.uuid4()
+        return tag
+
+    async def fake_prefs(db, *, user_id, payload):  # noqa: ANN001, ANN202
+        return MagicMock()
+
+    monkeypatch.setattr(onboarding_service, "_find_visible_tag_by_slug", fake_find)
+    monkeypatch.setattr(onboarding_service, "create_custom_tag", fake_create)
+    monkeypatch.setattr(onboarding_service, "update_user_preferences", fake_prefs)
+
+    await onboarding_service.complete_onboarding(
+        MagicMock(),
+        user_id=uuid.uuid4(),
+        tags=[
+            OnboardingTagInput(
+                slug="meditation",
+                name="Meditation",
+                category="health",
+                habit_type="build",
+                target_frequency=3,
+            )
+        ],
+    )
+
+    assert created_payloads[0].habit_type == "build"
+    assert created_payloads[0].target_frequency == 3
+
+
+@pytest.mark.asyncio
+async def test_complete_onboarding_sets_habit_on_existing_tag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A habit on an already-existing/default tag goes through update_custom_tag (#564)."""
+    existing = MagicMock()
+    existing.id = uuid.uuid4()
+    updates = []
+
+    async def fake_find(db, *, user_id, slug):  # noqa: ANN001, ANN202
+        return existing
+
+    async def fake_update(db, *, user_id, tag_id, payload):  # noqa: ANN001, ANN202
+        updates.append((tag_id, payload))
+        return MagicMock()
+
+    async def fake_prefs(db, *, user_id, payload):  # noqa: ANN001, ANN202
+        return MagicMock()
+
+    monkeypatch.setattr(onboarding_service, "_find_visible_tag_by_slug", fake_find)
+    monkeypatch.setattr(onboarding_service, "update_custom_tag", fake_update)
+    monkeypatch.setattr(onboarding_service, "update_user_preferences", fake_prefs)
+
+    await onboarding_service.complete_onboarding(
+        MagicMock(),
+        user_id=uuid.uuid4(),
+        tags=[
+            OnboardingTagInput(
+                slug="walk",
+                name="Walk",
+                category="health",
+                habit_type="reduce",
+                target_frequency=2,
+            )
+        ],
+    )
+
+    assert updates[0][0] == existing.id
+    assert updates[0][1].habit_type == "reduce"
+    assert updates[0][1].target_frequency == 2

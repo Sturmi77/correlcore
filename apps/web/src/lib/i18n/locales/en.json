@@ -1203,7 +1203,7 @@
       "progress": "Onboarding progress",
       "tags_title": "Pick useful tags",
       "tags_body": "Start with a small set. Free-text tags are always available.",
-      "habit_hint": "Tags like Walk or Meditation can later be marked as build or reduce habits under Settings → Tags to track adherence in Trends.",
+      "habit_hint": "Tags like Walk or Meditation can be marked as build or reduce habits in the next step or later under Settings → Tags to track adherence in Trends.",
       "custom": "Custom tag",
       "custom_invalid": "Please choose a slightly longer name (at least 2 letters or digits).",
       "add_tag": "Add tag",
@@ -1212,13 +1212,21 @@
       "start": "Start tracking",
       "back": "Back"
     },
+    "goals": {
+      "title": "Set goals",
+      "intro": "Optional: turn a picked tag into a habit by setting a goal — build or reduce, with a weekly frequency.",
+      "optional_hint": "All optional. Without a goal it stays a plain tag; you can change goals anytime in Settings. Offline, only tags are saved — set goals afterwards in Settings.",
+      "type_label": "Goal for {name}",
+      "frequency_label": "per week",
+      "frequency_aria": "Weekly frequency for {name}"
+    },
     "concepts": {
       "title": "Tag, habit or symptom?",
       "intro": "You attach all three to a daily entry — CorrelCore analyses them differently.",
       "tag_term": "Tag",
       "tag_body": "A context label for a day — e.g. Walk, Alcohol, Meeting. No target, no schedule. CorrelCore looks at what co-occurs and how it relates to your metrics.",
       "habit_term": "Habit",
-      "habit_body": "A behavior you want to build or reduce — with a target frequency. CorrelCore shows your adherence over time and how it relates to your metrics. A habit is really just a tag with a goal: in onboarding you only pick tags; you turn a tag into a habit later in Settings.",
+      "habit_body": "A behavior you want to build or reduce — with a target frequency. CorrelCore shows your adherence over time and how it relates to your metrics. A habit is really just a tag with a goal — you can set that during onboarding or later in Settings.",
       "symptom_term": "Symptom",
       "symptom_body": "Something you experience physically or mentally — e.g. headache, rumination. CorrelCore looks for associations with mood and energy.",
       "cycle_term": "Cycle day",

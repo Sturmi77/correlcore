@@ -71,8 +71,34 @@ to set a goal.
 - More onboarding surface area and copy to maintain; mitigated by keeping the
   habit affordance optional and reusing existing habit endpoints.
 
+## Status update — onboarding habit selection shipped (2026-07-27)
+
+The onboarding side of this ADR is implemented (#564): an optional **Goals** step
+after tag selection lets users mark a picked tag as a build/reduce habit with a
+weekly target, sent atomically via the extended `/onboarding/complete` contract
+(reusing `TagCreate`/`update_custom_tag`). The remaining "terminology sweep" was
+audited but deliberately **not** bundled here (kept focused).
+
+### Terminology audit (for the future sweep)
+
+- **Settings → Tags** copy is already tag-property-aware: `settings.tags.habits_body`
+  = "Mark tags as build or reduce habits…", `habit_hint` = "Tags … can later be
+  marked as … habits". No change needed.
+- **Trends** exposes a first-class **"Habits" tab** (`trends.tabs.habits`,
+  `HabitsPanel`) — a legitimate analytics grouping of habit-tags, but the bare
+  label reads as a peer type. Candidate: a subtitle/tooltip clarifying "tags you
+  track as habits".
+- **ConceptExplainer** still lists Tag/Habit/Symptom as parallel terms
+  (teaching), mitigated by the #552 copy ("a habit is a tag with a goal").
+- **Nav / Insights**: no standalone "Habit" object framing found.
+
+**Verdict:** residual peer-type framing is light (Trends tab + concept ordering);
+a small consistency pass is worthwhile but low-priority → tracked as a separate
+follow-up issue rather than blocking #564.
+
 ## References
 
 ADR-0012 (tracking semantics + habit adherence), ADR-0008 (symptom master table),
-ADR-0025 (symptom analytics) · #541 (definitions, done), #552 (this relabeling),
-#547 (cycle feature) · M10.2 onboarding plan (Phase 3, O5 analysis).
+ADR-0025 (symptom analytics) · #541 (definitions, done), #552 (relabeling, done),
+#564 (onboarding habit selection) · #547 (cycle feature) · M10.2 onboarding plan
+(Phase 3, O5 analysis).
