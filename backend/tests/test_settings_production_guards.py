@@ -18,6 +18,7 @@ def _base_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "DEBUG",
         "DEV_VIEW_ENABLED",
         "MINIO_SECRET_KEY",
+        "PHOTOS_ENABLED",
         "CORS_ORIGINS",
         "SECRET_KEY",
         "ENCRYPTION_KEY",
@@ -46,8 +47,21 @@ def test_production_rejects_dev_view(monkeypatch: pytest.MonkeyPatch) -> None:
         Settings()
 
 
-def test_production_rejects_default_minio_secret(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_production_allows_default_minio_when_photos_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Photo storage ships in M13; until PHOTOS_ENABLED the placeholder is fine (#543)."""
     monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("MINIO_SECRET_KEY", "CHANGE_ME_MINIO_SECRET")
+    s = Settings()
+    assert s.PHOTOS_ENABLED is False
+
+
+def test_production_rejects_default_minio_when_photos_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("PHOTOS_ENABLED", "true")
     monkeypatch.setenv("MINIO_SECRET_KEY", "CHANGE_ME_MINIO_SECRET")
     with pytest.raises(ValidationError, match="MINIO_SECRET_KEY"):
         Settings()

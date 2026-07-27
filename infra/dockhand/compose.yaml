@@ -81,9 +81,11 @@ x-api-env: &api-env
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
-  # Placeholder until M13 photo storage; production Settings require a
-  # non-default secret (≥16 chars, not CHANGE_ME*). Must be in compose
-  # environment — .env alone is not injected into the container.
+  # Photo storage ships in M13 and is off by default. Only when PHOTOS_ENABLED
+  # is true do production Settings require a non-default MINIO_SECRET_KEY
+  # (≥16 chars, not CHANGE_ME*); until then the placeholder is fine (#543).
+  # Must be in compose environment — .env alone is not injected into the container.
+  PHOTOS_ENABLED: ${PHOTOS_ENABLED:-false}
   MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET}
   IMAGE_TAG: ${IMAGE_TAG:-latest}
   IMAGE_DIGEST: ${IMAGE_DIGEST:-}

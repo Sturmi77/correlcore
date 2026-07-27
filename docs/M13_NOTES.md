@@ -17,7 +17,7 @@ so M13 can land without redesigning the contract:
 | Pillow EXIF strip (GPS / biometric metadata)        | Landed — `app/services/exif_strip.py` + tests                                              |
 | Object storage persist (`stored`)                   | Always `false` — MinIO client not wired                                                    |
 | Frontend upload UI                                  | None                                                                                       |
-| MinIO in compose                                    | Removed until M13; production still validates `MINIO_SECRET_KEY` when `APP_ENV=production` |
+| MinIO in compose                                    | Removed until M13; production validates `MINIO_SECRET_KEY` only when `PHOTOS_ENABLED=true` (#543) |
 | Thumbnail gallery / pre-signed URLs / export photos | Remaining M13 exit                                                                         |
 
 Operators and agents: do not advertise photo gallery / MinIO as a live

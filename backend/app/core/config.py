@@ -77,7 +77,9 @@ class Settings(BaseSettings):
     # Generate: python -c "import secrets; print(secrets.token_hex(32))"
     SLUG_HMAC_KEY: str = "CHANGE_ME_slug_hmac_key_min_32_bytes"
 
-    # MinIO / S3
+    # MinIO / S3 (photo storage — ships in M13). Gated by PHOTOS_ENABLED so the
+    # secret is only required once photos are actually turned on (#543).
+    PHOTOS_ENABLED: bool = False
     MINIO_ENDPOINT: str = "minio:9000"
     MINIO_ACCESS_KEY: str = "correlcore"
     MINIO_SECRET_KEY: str = "CHANGE_ME_MINIO_SECRET"
@@ -285,17 +287,20 @@ class Settings(BaseSettings):
                     "CORS_ORIGINS must be an explicit non-empty allowlist "
                     "(wildcard '*' is not allowed) in staging/production"
                 )
-        # Production hard-blocks debug/ops surfaces and leftover MinIO defaults.
-        # Staging may keep the MinIO placeholder until M13 photo storage ships.
+        # Production hard-blocks debug/ops surfaces. The MinIO secret is only
+        # required once photo storage is enabled (PHOTOS_ENABLED, M13) — until
+        # then the placeholder is fine even in production (#543).
         if env == "production":
             if self.DEBUG:
                 raise ValueError("DEBUG=true is not allowed when APP_ENV=production")
             if self.DEV_VIEW_ENABLED:
                 raise ValueError("DEV_VIEW_ENABLED=true is not allowed when APP_ENV=production")
-            if self.MINIO_SECRET_KEY.startswith("CHANGE_ME") or len(self.MINIO_SECRET_KEY) < 16:
+            if self.PHOTOS_ENABLED and (
+                self.MINIO_SECRET_KEY.startswith("CHANGE_ME") or len(self.MINIO_SECRET_KEY) < 16
+            ):
                 raise ValueError(
                     "MINIO_SECRET_KEY must be set to a non-default secret "
-                    "(≥16 characters) when APP_ENV=production"
+                    "(≥16 characters) when PHOTOS_ENABLED=true in production"
                 )
         # ADR-0006: Secure ist in Produktion nicht abschaltbar. Staging darf
         # COOKIE_SECURE=false setzen (Homelab-HTTP-Setups), Production nicht.
