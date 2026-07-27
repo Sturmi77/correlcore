@@ -321,6 +321,14 @@ async function installJourneyApi(
 
     if (path === '/onboarding/complete' && method === 'POST') {
       writes.push('POST /onboarding/complete');
+      const body = request.postDataJSON() as {
+        tags?: Array<{ slug?: string; habit_type?: string; target_frequency?: number | null }>;
+      };
+      for (const t of body.tags ?? []) {
+        if (t.habit_type && t.habit_type !== 'none') {
+          writes.push(`onboarding habit ${t.slug}=${t.habit_type}:${t.target_frequency}`);
+        }
+      }
       onboardingCompleted = true;
       return json(200, {
         created_tags: [],
@@ -631,7 +639,7 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await expect(page.getByTestId('entry-sheet')).toHaveCount(0);
   });
 
-  test('sequence order is maturity → concepts → tags → cycle, then first entry', async ({
+  test('sequence order is maturity → concepts → tags → goals → cycle, then first entry', async ({
     page,
   }) => {
     const api = await installJourneyApi(page, { profile: 'new_user' });
@@ -656,7 +664,12 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await page.getByRole('button', { name: 'Running' }).click();
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
 
-    // 4 Cycle (last screen) with the deactivation toggle
+    // 4 Goals (optional) — appears because a tag is selected; mark it as a habit.
+    await expect(page.getByTestId('onboarding-goals')).toBeVisible();
+    await page.getByTestId('onboarding-goal-type').selectOption('build');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+
+    // 5 Cycle (last screen) with the deactivation toggle
     await expect(page.getByTestId('cycle-function-explainer')).toBeVisible();
     await expect(page.getByTestId('cycle-onboarding-toggle')).toBeVisible();
     await page.getByRole('button', { name: 'Start tracking' }).click();
@@ -667,6 +680,8 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await expect(page.getByTestId('onboarding-tag-suggestion')).toHaveCount(0);
     expect(api.writes).toContain('POST /onboarding/complete');
     expect(api.writes).toContain('PATCH /user/preferences maturity_intro');
+    // The habit choice from the goals step reached the completion payload (#564).
+    expect(api.writes).toContain('onboarding habit running=build:3');
   });
 
   test('sequence completes with no tags selected (tags optional)', async ({ page }) => {
@@ -692,7 +707,11 @@ test.describe('W2 Cold Start / Onboarding @390', () => {
     await page.getByRole('button', { name: 'Walk' }).click();
     await page.getByRole('button', { name: 'Meditation' }).click();
     await page.getByRole('button', { name: 'Yoga' }).click();
-    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // tags → summary
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // tags → goals
+
+    // Goals step is optional; leave everything at "none" and move on.
+    await expect(page.getByTestId('onboarding-goals')).toBeVisible();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click(); // goals → summary
 
     await expect(page.getByRole('heading', { name: 'Ready to start' })).toBeVisible();
     await page.getByRole('button', { name: 'Continue', exact: true }).click(); // summary → cycle

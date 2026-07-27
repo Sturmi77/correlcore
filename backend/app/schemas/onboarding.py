@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import re
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models.tag import TagCategory
-from app.schemas.tag import TagResponse
+from app.schemas.tag import HabitType, TagResponse
 
 _SLUG_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$")
 _HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -36,6 +36,10 @@ class OnboardingTagInput(BaseModel):
     category: TagCategory = TagCategory.OTHER
     icon: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=7)
+    # Optional habit facet (#564): mark a picked tag as a build/reduce habit
+    # with a weekly target. Defaults keep onboarding a plain tag pick.
+    habit_type: HabitType = "none"
+    target_frequency: int | None = Field(default=None, ge=1, le=7)
 
     @field_validator("slug")
     @classmethod
@@ -66,6 +70,15 @@ class OnboardingTagInput(BaseModel):
         if not _HEX_COLOR_PATTERN.match(value):
             raise ValueError("color must be a 7-char hex string like #aabbcc")
         return value.lower()
+
+    @model_validator(mode="after")
+    def habit_fields_consistent(self) -> OnboardingTagInput:
+        # Mirror TagCreate: a non-habit clears the frequency; a habit needs one.
+        if self.habit_type == "none":
+            self.target_frequency = None
+        elif self.target_frequency is None:
+            raise ValueError("target_frequency is required for habit tags")
+        return self
 
 
 class OnboardingCompleteRequest(BaseModel):

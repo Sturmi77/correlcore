@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { TagCategory, TagResponse } from './tags';
+import type { HabitType, TagCategory, TagResponse } from './tags';
 
 export interface TagSuggestion {
   slug: string;
@@ -24,6 +24,9 @@ export interface OnboardingTagInput {
   category: TagCategory;
   icon?: string | null;
   color?: string | null;
+  /** Optional habit facet (#564): build/reduce + weekly target (1–7). */
+  habit_type?: HabitType;
+  target_frequency?: number | null;
 }
 
 export interface OnboardingCompleteResponse {

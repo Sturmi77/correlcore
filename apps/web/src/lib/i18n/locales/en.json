@@ -1212,6 +1212,13 @@
       "start": "Start tracking",
       "back": "Back"
     },
+    "goals": {
+      "title": "Set goals",
+      "intro": "Optional: turn a picked tag into a habit by setting a goal — build or reduce, with a weekly frequency.",
+      "optional_hint": "All optional. Without a goal it stays a plain tag; you can change this anytime in Settings. (Offline, goals are saved once you reconnect.)",
+      "type_label": "Goal for {name}",
+      "frequency_label": "per week"
+    },
     "concepts": {
       "title": "Tag, habit or symptom?",
       "intro": "You attach all three to a daily entry — CorrelCore analyses them differently.",

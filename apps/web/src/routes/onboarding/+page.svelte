@@ -19,18 +19,22 @@
     type TagSuggestionGroup,
   } from '$lib/api/onboarding';
   import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
-  import { TAG_CATEGORIES, type TagCategory } from '$lib/api/tags';
+  import { TAG_CATEGORIES, type TagCategory, type HabitType } from '$lib/api/tags';
   import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
   import { shouldSkipOnboardingSummary } from '$lib/utils/onboardingEntry';
   import { writeOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
   import { currentUser } from '$lib/stores/auth';
   import { connectivity } from '$lib/stores/connectivity';
 
-  type StepId = 'maturity' | 'concepts' | 'tags' | 'summary' | 'cycle';
+  type StepId = 'maturity' | 'concepts' | 'tags' | 'goals' | 'summary' | 'cycle';
+
+  type HabitChoice = { habit_type: HabitType; target_frequency: number };
 
   let stepIndex = 0;
   let groups: TagSuggestionGroup[] = [];
   let selected = new Map<string, TagSuggestion>();
+  // Optional habit facet per selected tag (#564). Absent slug = plain tag.
+  let habitBySlug = new Map<string, HabitChoice>();
   let customName = '';
   let customCategory: TagCategory = 'other';
   let cycleEnabled = true;
@@ -48,11 +52,14 @@
   $: suggestionSlugs = new Set(groups.flatMap((g) => g.suggestions.map((s) => s.slug)));
   $: customSelected = selectedTags.filter((tag) => !suggestionSlugs.has(tag.slug));
   $: showSummaryStep = !shouldSkipOnboardingSummary(selectedTags.length);
+  // The optional goals step only appears once at least one tag is picked.
+  $: showGoalsStep = selectedTags.length > 0;
   // Cycle is always the last screen; the summary only appears with > 3 tags.
   $: steps = [
     'maturity',
     'concepts',
     'tags',
+    ...(showGoalsStep ? (['goals'] as StepId[]) : []),
     ...(showSummaryStep ? (['summary'] as StepId[]) : []),
     'cycle',
   ] as StepId[];
@@ -90,8 +97,44 @@
 
   function toggleSuggestion(tag: TagSuggestion) {
     selected = new Map(selected);
-    if (selected.has(tag.slug)) selected.delete(tag.slug);
-    else selected.set(tag.slug, tag);
+    if (selected.has(tag.slug)) {
+      selected.delete(tag.slug);
+      // Drop any habit choice for a tag that is no longer picked.
+      if (habitBySlug.has(tag.slug)) {
+        habitBySlug = new Map(habitBySlug);
+        habitBySlug.delete(tag.slug);
+      }
+    } else {
+      selected.set(tag.slug, tag);
+    }
+  }
+
+  const HABIT_TYPES: HabitType[] = ['none', 'build', 'reduce'];
+
+  function habitTypeFor(slug: string): HabitType {
+    return habitBySlug.get(slug)?.habit_type ?? 'none';
+  }
+
+  function habitFreqFor(slug: string): number {
+    return habitBySlug.get(slug)?.target_frequency ?? 3;
+  }
+
+  function setHabitType(slug: string, habit_type: HabitType) {
+    habitBySlug = new Map(habitBySlug);
+    if (habit_type === 'none') {
+      habitBySlug.delete(slug);
+    } else {
+      habitBySlug.set(slug, {
+        habit_type,
+        target_frequency: habitBySlug.get(slug)?.target_frequency ?? 3,
+      });
+    }
+  }
+
+  function setHabitFreq(slug: string, target_frequency: number) {
+    const current = habitBySlug.get(slug);
+    if (!current) return;
+    habitBySlug = new Map(habitBySlug).set(slug, { ...current, target_frequency });
   }
 
   function addCustomTag() {
@@ -139,7 +182,16 @@
     stepIndex += 1;
   }
 
-  async function finish(tags: OnboardingTagInput[] = selectedTags) {
+  function buildTagPayload(): OnboardingTagInput[] {
+    return selectedTags.map((tag) => {
+      const habit = habitBySlug.get(tag.slug);
+      return habit
+        ? { ...tag, habit_type: habit.habit_type, target_frequency: habit.target_frequency }
+        : tag;
+    });
+  }
+
+  async function finish() {
     busy = true;
     error = '';
     try {
@@ -151,7 +203,7 @@
         cycle_tracking_enabled: cycleEnabled,
         onboarding_maturity_intro_seen: true,
       });
-      await completeOnboarding(tags);
+      await completeOnboarding(buildTagPayload());
       await goto(OPEN_ENTRY_HOME_PATH);
     } catch (err) {
       // Offline-first fallback: stash the picks so the first entry sheet can
@@ -267,6 +319,49 @@
         {#if customError}
           <p class="onboarding-flow__custom-error" role="alert">{customError}</p>
         {/if}
+      {:else if currentStep === 'goals'}
+        <h2>{$_('onboarding.goals.title')}</h2>
+        <p>{$_('onboarding.goals.intro')}</p>
+        <p class="onboarding-flow__habit-hint">{$_('onboarding.goals.optional_hint')}</p>
+        <div class="onboarding-flow__goals" data-testid="onboarding-goals">
+          {#each selectedTags as tag (tag.slug)}
+            <div class="onboarding-flow__goal-row">
+              <span class="onboarding-flow__goal-name">{tag.name}</span>
+              <select
+                class="input"
+                aria-label={$_('onboarding.goals.type_label', { values: { name: tag.name } })}
+                data-testid="onboarding-goal-type"
+                value={habitTypeFor(tag.slug)}
+                on:change={(e) =>
+                  setHabitType(tag.slug, (e.currentTarget as HTMLSelectElement).value as HabitType)}
+              >
+                {#each HABIT_TYPES as ht}
+                  <option value={ht}>{$_(`settings.tags.habit_${ht}`)}</option>
+                {/each}
+              </select>
+              {#if habitTypeFor(tag.slug) !== 'none'}
+                <label class="onboarding-flow__goal-freq">
+                  <span>{$_('onboarding.goals.frequency_label')}</span>
+                  <input
+                    type="number"
+                    class="input"
+                    min="1"
+                    max="7"
+                    value={habitFreqFor(tag.slug)}
+                    on:input={(e) =>
+                      setHabitFreq(
+                        tag.slug,
+                        Math.min(
+                          7,
+                          Math.max(1, Number((e.currentTarget as HTMLInputElement).value) || 1)
+                        )
+                      )}
+                  />
+                </label>
+              {/if}
+            </div>
+          {/each}
+        </div>
       {:else if currentStep === 'summary'}
         <h2>{$_('onboarding.guided.summary_title')}</h2>
         <p>{$_('onboarding.guided.summary_body', { values: { count: selectedTags.length } })}</p>
@@ -382,5 +477,38 @@
   .onboarding-flow__custom-error {
     color: var(--color-error);
     font-size: var(--text-sm);
+  }
+
+  .onboarding-flow__goals {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .onboarding-flow__goal-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .onboarding-flow__goal-name {
+    flex: 1 1 8rem;
+    font-weight: 600;
+  }
+
+  .onboarding-flow__goal-freq {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .onboarding-flow__goal-freq input {
+    width: 4rem;
   }
 </style>

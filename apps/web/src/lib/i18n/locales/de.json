@@ -1212,6 +1212,13 @@
       "start": "Tracking starten",
       "back": "Zurueck"
     },
+    "goals": {
+      "title": "Ziele setzen",
+      "intro": "Optional: mach aus einem gewählten Tag eine Gewohnheit, indem du ein Ziel setzt — aufbauen oder reduzieren, mit einer Häufigkeit pro Woche.",
+      "optional_hint": "Alles freiwillig. Ohne Ziel bleibt es ein normaler Tag; du kannst das jederzeit in den Einstellungen ändern. (Offline werden Ziele erst nach dem Verbinden gespeichert.)",
+      "type_label": "Ziel für {name}",
+      "frequency_label": "pro Woche"
+    },
     "concepts": {
       "title": "Tag, Gewohnheit oder Symptom?",
       "intro": "Alle drei hängst du an einen Tageseintrag — CorrelCore wertet sie unterschiedlich aus.",
