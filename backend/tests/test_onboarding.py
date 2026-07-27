@@ -115,7 +115,11 @@ async def test_complete_onboarding_rejects_habit_without_frequency(
     try:
         response = await async_client.post(
             "/api/v1/onboarding/complete",
-            json={"tags": [{"slug": "walk", "name": "Walk", "category": "health", "habit_type": "build"}]},
+            json={
+                "tags": [
+                    {"slug": "walk", "name": "Walk", "category": "health", "habit_type": "build"}
+                ]
+            },
             cookies={"access_token": "valid.access.token"},
         )
     finally:
