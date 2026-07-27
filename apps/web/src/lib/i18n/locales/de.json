@@ -1218,7 +1218,7 @@
       "tag_term": "Tag",
       "tag_body": "Ein Kontext-Etikett für einen Tag — z. B. Spaziergang, Alkohol, Meeting. Kein Ziel, kein Zeitplan. CorrelCore sucht, was gemeinsam auftritt und wie es mit deinen Werten zusammenhängt.",
       "habit_term": "Gewohnheit",
-      "habit_body": "Ein Verhalten, das du aufbauen oder reduzieren willst — mit einer Zielhäufigkeit. CorrelCore zeigt deine Dranbleib-Quote über Zeit und wie sie mit deinen Werten zusammenhängt. Technisch ist eine Gewohnheit ein Tag mit Ziel: im Onboarding wählst du nur Tags; zur Gewohnheit machst du einen Tag später in den Einstellungen.",
+      "habit_body": "Ein Verhalten, das du aufbauen oder reduzieren willst — mit einer Zielhäufigkeit. CorrelCore zeigt deine Dranbleib-Quote über Zeit und wie sie mit deinen Werten zusammenhängt. Technisch ist eine Gewohnheit ein Tag mit Ziel: im Onboarding wählst du nur Tags; einen davon kannst du später in den Einstellungen zur Gewohnheit machen.",
       "symptom_term": "Symptom",
       "symptom_body": "Etwas, das du körperlich oder mental erlebst — z. B. Kopfschmerz, Grübeln. CorrelCore sucht Zusammenhänge mit Stimmung und Energie.",
       "cycle_term": "Zyklustag",
