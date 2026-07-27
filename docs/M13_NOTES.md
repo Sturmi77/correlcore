@@ -11,14 +11,14 @@ deployment paths ship without photo storage complexity first.
 **End-user photo storage is not shipped.** A security-oriented API stub exists
 so M13 can land without redesigning the contract:
 
-| Piece                                               | Status                                                                                     |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `POST /api/v1/media/photos`                         | Landed — auth required, MIME/size guards                                                   |
-| Pillow EXIF strip (GPS / biometric metadata)        | Landed — `app/services/exif_strip.py` + tests                                              |
-| Object storage persist (`stored`)                   | Always `false` — MinIO client not wired                                                    |
-| Frontend upload UI                                  | None                                                                                       |
+| Piece                                               | Status                                                                                            |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/media/photos`                         | Landed — auth required, MIME/size guards                                                          |
+| Pillow EXIF strip (GPS / biometric metadata)        | Landed — `app/services/exif_strip.py` + tests                                                     |
+| Object storage persist (`stored`)                   | Always `false` — MinIO client not wired                                                           |
+| Frontend upload UI                                  | None                                                                                              |
 | MinIO in compose                                    | Removed until M13; production validates `MINIO_SECRET_KEY` only when `PHOTOS_ENABLED=true` (#543) |
-| Thumbnail gallery / pre-signed URLs / export photos | Remaining M13 exit                                                                         |
+| Thumbnail gallery / pre-signed URLs / export photos | Remaining M13 exit                                                                                |
 
 Operators and agents: do not advertise photo gallery / MinIO as a live
 selfhost feature. Track completion under this milestone only.
