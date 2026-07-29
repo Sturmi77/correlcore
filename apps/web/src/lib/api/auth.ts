@@ -84,12 +84,20 @@ export async function login(payload: LoginPayload): Promise<TokenResponse> {
   return stashTokensFromResponse(res, { remember_me });
 }
 
-/** POST /auth/logout — clears cookies / revokes refresh; clears in-memory tokens. */
+/**
+ * Revoke refresh + clear cookies / in-memory tokens.
+ *
+ * Browser: POST /auth/refresh/logout — refresh cookie is Path-scoped to
+ * `/api/v1/auth/refresh`, so `/auth/logout` never receives it and would
+ * skip Redis revocation.
+ * Capacitor: POST /auth/logout with body refresh_token.
+ */
 export async function logout(): Promise<MessageResponse> {
   const bearer = usesBearerAuth();
   const body = bearer ? { refresh_token: getRefreshToken() } : {};
+  const path = bearer ? '/auth/logout' : '/auth/refresh/logout';
   try {
-    return await api.post<MessageResponse>('/auth/logout', body);
+    return await api.post<MessageResponse>(path, body);
   } finally {
     clearSessionTokens();
   }
