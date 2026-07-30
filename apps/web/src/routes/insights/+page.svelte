@@ -93,8 +93,6 @@
   } from '$lib/utils/exploreEventWindows';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
 
-  type DetailView = 'findings' | 'matrix';
-
   let insights: InsightResponse[] = [];
   let loading = false;
   let insightsLoaded = false;
@@ -108,7 +106,6 @@
   let dayEntryDates: string[] = [];
   let moodEntries: EntryResponse[] = [];
   let inactiveTagIds: string[] = [];
-  let detailView: DetailView = 'findings';
   let cooccurrenceRange: TagCooccurrenceRange = '30d';
   let cooccurrence: TagCooccurrenceResponse | null = null;
   let cooccurrenceLoading = false;
@@ -662,26 +659,23 @@
   );
   $: pageMaturityChrome = Boolean(insightMaturity);
   $: showSymptomAnalytics = canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
-  $: showMatrixTab = canShowMatrixTab(insightMaturity?.phase ?? null, insights);
+  // #571: the correlation matrix is shown inline & prominent (not behind a tab).
+  $: showMatrix = canShowMatrixTab(insightMaturity?.phase ?? null, insights);
   $: showAdvancedAnalytics = canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
   $: showTagCooccurrencePanel =
     canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
     (cooccurrenceLoading || hasTagCooccurrenceData(cooccurrence));
-  $: if (!showMatrixTab && detailView === 'matrix') {
-    detailView = 'findings';
-  }
   $: filteredRankedInsights = rankedInsightsForTab(insights, filterTab);
   $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
   $: remainingMobileInsights = filteredRankedInsights.slice(1);
   $: feedInsights =
     compactInsights && primaryMobileInsight ? remainingMobileInsights : filteredRankedInsights;
   $: showInsightFeed =
-    detailView === 'findings' &&
-    (feedInsights.length > 0 ||
-      feedLoading ||
-      Boolean(error) ||
-      !compactInsights ||
-      !primaryMobileInsight);
+    feedInsights.length > 0 ||
+    feedLoading ||
+    Boolean(error) ||
+    !compactInsights ||
+    !primaryMobileInsight;
   $: enableExploreEvents = isSmallMultiplesUnlocked(insightMaturity?.phase ?? null);
 
   function ensureAnalyticsLoaded(): void {
@@ -806,12 +800,8 @@
       analysisRangeOptions={analysisRangeControlOptions}
       {filterTab}
       {filterTabOptions}
-      {showMatrixTab}
-      {detailView}
       on:rangeChange={(event) => setAnalysisRange(event.detail.value)}
       on:filterChange={(event) => (filterTab = event.detail.value)}
-      on:matrixClick={() => (detailView = 'matrix')}
-      on:findingsClick={() => (detailView = 'findings')}
     />
 
     {#if !compactInsights && insightMaturity}
@@ -822,7 +812,7 @@
       />
     {/if}
 
-    {#if compactInsights && detailView === 'findings' && !feedLoading && !error && primaryMobileInsight}
+    {#if compactInsights && !feedLoading && !error && primaryMobileInsight}
       <MobileInsightLead
         insight={primaryMobileInsight}
         maturity={insightMaturity}
@@ -834,7 +824,7 @@
         on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
         on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
       />
-    {:else if compactInsights && detailView === 'findings' && !feedLoading && !error && insightMaturity}
+    {:else if compactInsights && !feedLoading && !error && insightMaturity}
       <InsightStageHeader
         maturity={insightMaturity}
         showMilestone={showMaturityMilestone}
@@ -842,46 +832,24 @@
       />
     {/if}
 
-    {#if detailView === 'matrix'}
-      <InsightMatrix {insights} />
-    {:else}
-      {#if !compactInsights && primaryMobileInsight}
-        <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
-      {/if}
+    {#if showMatrix}
+      <section class="insights-page__matrix" data-testid="insights-matrix-section">
+        <InsightMatrix {insights} />
+      </section>
+    {/if}
 
-      {#if showInsightFeed}
-        {#if compactInsights && feedInsights.length > 0 && primaryMobileInsight}
-          <section class="insights-page__more" data-testid="mobile-insights-more">
-            <h2>{$_('insights.mobile.more_heading')}</h2>
-            <InsightFeed
-              insights={feedInsights}
-              totalInsightCount={insights.length}
-              maturity={insightMaturity}
-              entryCount={visibleEntryCount}
-              {analysisRangeDays}
-              {inactiveTagIds}
-              {filterTab}
-              {enableExploreEvents}
-              {regenerateBusy}
-              {regenerateMessage}
-              {regenerateError}
-              showContext={false}
-              showFilters={false}
-              showMaturityBadge={false}
-              on:retry={loadInsights}
-              on:regenerate={() => void handleRegenerateInsights()}
-              on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
-              on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
-              on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
-            />
-          </section>
-        {:else}
+    {#if !compactInsights && primaryMobileInsight}
+      <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
+    {/if}
+
+    {#if showInsightFeed}
+      {#if compactInsights && feedInsights.length > 0 && primaryMobileInsight}
+        <section class="insights-page__more" data-testid="mobile-insights-more">
+          <h2>{$_('insights.mobile.more_heading')}</h2>
           <InsightFeed
             insights={feedInsights}
             totalInsightCount={insights.length}
             maturity={insightMaturity}
-            loading={feedLoading}
-            {error}
             entryCount={visibleEntryCount}
             {analysisRangeDays}
             {inactiveTagIds}
@@ -890,15 +858,39 @@
             {regenerateBusy}
             {regenerateMessage}
             {regenerateError}
+            showContext={false}
             showFilters={false}
-            showMaturityBadge={!pageMaturityChrome}
+            showMaturityBadge={false}
             on:retry={loadInsights}
             on:regenerate={() => void handleRegenerateInsights()}
             on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
             on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
             on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
           />
-        {/if}
+        </section>
+      {:else}
+        <InsightFeed
+          insights={feedInsights}
+          totalInsightCount={insights.length}
+          maturity={insightMaturity}
+          loading={feedLoading}
+          {error}
+          entryCount={visibleEntryCount}
+          {analysisRangeDays}
+          {inactiveTagIds}
+          {filterTab}
+          {enableExploreEvents}
+          {regenerateBusy}
+          {regenerateMessage}
+          {regenerateError}
+          showFilters={false}
+          showMaturityBadge={!pageMaturityChrome}
+          on:retry={loadInsights}
+          on:regenerate={() => void handleRegenerateInsights()}
+          on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
+          on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+          on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+        />
       {/if}
     {/if}
 
@@ -993,6 +985,13 @@
   .insights-page {
     display: flex;
     flex-direction: column;
+  }
+
+  /* #571: correlation matrix sits inline & prominent; keep wide content scrolling
+     inside the matrix, not the page. */
+  .insights-page__matrix {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .insights-page__analytics {

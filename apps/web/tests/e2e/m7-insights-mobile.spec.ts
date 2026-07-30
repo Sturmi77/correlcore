@@ -26,9 +26,8 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
       .first()
   ).toBeVisible();
 
-  await page.getByTestId('insights-matrix-link').tap();
+  // #571: correlation matrix is inline & always visible — no tab toggle.
   await expect(page.getByText(/Correlation Matrix/i)).toBeVisible();
-  await page.getByTestId('insights-findings-link').tap();
   await page.getByTestId('insights-filter-tab-symptoms').tap();
   await page.getByText('Deepen analysis', { exact: true }).tap();
 
