@@ -23,6 +23,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Photo upload rejects decompression-bomb dimensions before EXIF decode** —
+  `POST /api/v1/media/photos` capped compressed bytes (10 MiB) but not decoded
+  pixels. A ~160 KiB solid 7000×7000 PNG passed the byte guard, then
+  `strip_exif` fully decoded and duplicated pixel buffers (multi-GiB RSS).
+  Oversized frames are now rejected from the image header (max dimension
+  8192 / max 25 MP) before `load()`/`putdata()`, returning HTTP 413.
 - **Offline post-eviction writes survive reconnect without rebinding a stale
   client id** — after #557, probe 404 no longer rotates client identity
   (correct: avoid resurrecting deletes). But `prepareOfflineDataForAuthenticatedUser`
