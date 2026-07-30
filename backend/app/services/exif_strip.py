@@ -36,28 +36,39 @@ def _reject_oversized(size: tuple[int, int]) -> None:
 
 def strip_exif(image_bytes: bytes) -> bytes:
     """Return ``image_bytes`` re-encoded without EXIF/IPTC/XMP metadata."""
-    with Image.open(BytesIO(image_bytes)) as src:
-        # Header-only size check — must run before load()/putdata().
-        _reject_oversized(src.size)
-        src.load()
-        fmt = (src.format or "JPEG").upper()
-        if fmt not in _SUPPORTED_FORMATS:
-            fmt = "JPEG"
+    try:
+        with Image.open(BytesIO(image_bytes)) as src:
+            # Header-only size check — must run before load()/paste().
+            _reject_oversized(src.size)
+            src.load()
+            fmt = (src.format or "JPEG").upper()
+            if fmt not in _SUPPORTED_FORMATS:
+                fmt = "JPEG"
 
-        clean = Image.new(src.mode, src.size)
-        clean.putdata(src.get_flattened_data())
-        if src.mode == "P" and src.palette is not None:
-            clean.putpalette(src.palette)
+            # Copy pixels at the C level. ``putdata(getdata())`` would first
+            # materialize a Python sequence of per-pixel tuples (~1.8 GB for a
+            # 25 MP RGB frame), re-opening the decompression-bomb DoS this guard
+            # is meant to close; ``paste`` avoids that intermediate allocation.
+            clean = Image.new(src.mode, src.size)
+            clean.paste(src)
+            if src.mode == "P" and src.palette is not None:
+                clean.putpalette(src.palette)
 
-        if fmt == "JPEG" and clean.mode in ("RGBA", "P"):
-            clean = clean.convert("RGB")
+            if fmt == "JPEG" and clean.mode in ("RGBA", "P"):
+                clean = clean.convert("RGB")
 
-        out = BytesIO()
-        save_kwargs: dict[str, object] = {}
-        if fmt == "JPEG":
-            save_kwargs["quality"] = 95
-        clean.save(out, format=fmt, **save_kwargs)
-        return out.getvalue()
+            out = BytesIO()
+            save_kwargs: dict[str, object] = {}
+            if fmt == "JPEG":
+                save_kwargs["quality"] = 95
+            clean.save(out, format=fmt, **save_kwargs)
+            return out.getvalue()
+    except Image.DecompressionBombError as exc:
+        # Pillow's own decompression-bomb guard fires for frames far above our
+        # dimension cap (2x ``Image.MAX_IMAGE_PIXELS``) before ``_reject_oversized``
+        # runs. Treat it as the same oversized-image rejection so callers return
+        # the documented 413 rather than a generic 400.
+        raise ImageTooLargeError("image exceeds decoder decompression limit") from exc
 
 
 __all__ = ["ImageTooLargeError", "strip_exif"]

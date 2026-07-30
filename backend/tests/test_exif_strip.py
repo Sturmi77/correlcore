@@ -95,3 +95,26 @@ def test_strip_exif_accepts_high_end_phone_resolution() -> None:
     stripped = strip_exif(original)
     with Image.open(BytesIO(stripped)) as img:
         assert img.size == (4032, 3024)
+
+
+def test_strip_exif_preserves_pixels() -> None:
+    """The C-level paste() copy must reproduce pixel data exactly."""
+    payload = bytes((i * 3 % 256, i * 5 % 256, i * 7 % 256)[i % 3] for i in range(8 * 8 * 3))
+    src = Image.frombytes("RGB", (8, 8), payload)
+    buf = BytesIO()
+    src.save(buf, format="PNG")
+
+    stripped = strip_exif(buf.getvalue())
+    with Image.open(BytesIO(stripped)) as out:
+        assert out.convert("RGB").tobytes() == src.tobytes()
+
+
+def test_strip_exif_translates_decompression_bomb(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pillow's DecompressionBombError maps to ImageTooLargeError (→ 413), not a 400."""
+    # Lower Pillow's own limit so a small, within-our-caps image trips its guard
+    # (raised at 2x MAX_IMAGE_PIXELS) before _reject_oversized would run.
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 8)
+    original = _solid_png(100, 100)  # 10k px — under our dimension/pixel caps
+
+    with pytest.raises(ImageTooLargeError, match="decompression"):
+        strip_exif(original)
