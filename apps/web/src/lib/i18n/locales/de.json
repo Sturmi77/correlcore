@@ -549,7 +549,7 @@
   },
   "habits": {
     "heading": "Gewohnheiten",
-    "subtitle": "Zielbereiche ohne Belohnungen oder Druck verfolgen.",
+    "subtitle": "Tags, die du als Gewohnheit verfolgst — mit Zielhäufigkeit, ohne Belohnungen oder Druck.",
     "window_label": "Gewohnheiten-Zeitraum",
     "window_days": "{n}T",
     "loading": "Lade Gewohnheiten",
