@@ -9,6 +9,7 @@ vi.mock('svelte-i18n', async () => {
       if (options?.values) return `${key}:${JSON.stringify(options.values)}`;
       return key;
     }),
+    locale: readable('de'),
   };
 });
 
@@ -50,7 +51,7 @@ function moodEntry(date: string, moodScore: number): EntryResponse {
 
 describe('SymptomAnalyticsSection', () => {
   it('renders calendar and trend sections for eligible symptoms', () => {
-    render(SymptomAnalyticsSection, {
+    const { container } = render(SymptomAnalyticsSection, {
       props: {
         heatmap,
         entries: heatmap.symptoms[0].days.map((day) => moodEntry(day.date, 3)),
@@ -65,6 +66,21 @@ describe('SymptomAnalyticsSection', () => {
       screen.getAllByRole('heading', { name: 'Headache', level: 3 }).length
     ).toBeGreaterThanOrEqual(2);
     expect(screen.getByLabelText('insights.symptoms.calendar_legend')).toBeTruthy();
+
+    // #574: axis labels — weekday rows + month columns on the calendar,
+    // and dated x-axis ticks on the trend chart.
+    const weekdayLabels = [...container.querySelectorAll('.symptom-calendar__weekdays span')].map(
+      (node) => node.textContent?.trim() ?? ''
+    );
+    expect(weekdayLabels.length).toBe(7);
+    expect(weekdayLabels.some((label) => label.length > 0)).toBe(true);
+
+    const monthLabels = [...container.querySelectorAll('.symptom-calendar__month')].map(
+      (node) => node.textContent?.trim() ?? ''
+    );
+    expect(monthLabels.some((label) => label.length > 0)).toBe(true);
+
+    expect(container.querySelectorAll('.symptom-trend__xlabel').length).toBeGreaterThan(0);
   });
 
   it('shows symptom co-occurrence from provisional phase when data exists', () => {

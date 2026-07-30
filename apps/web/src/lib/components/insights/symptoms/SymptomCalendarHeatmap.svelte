@@ -1,12 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import type { InsightMaturityPhase } from '$lib/api/insights';
   import type { SymptomHeatmapSymptom } from '$lib/api/stats';
   import {
     buildSymptomCalendarGrid,
     symptomOccurrenceCount,
     symptomPresenceByDate,
+    type SymptomCalendarCell,
   } from '$lib/utils/symptomAnalyticsViews';
 
   export let symptom: SymptomHeatmapSymptom;
@@ -20,6 +21,45 @@
   $: cells = buildSymptomCalendarGrid(startDate, endDate, presenceByDate);
   $: total = symptomOccurrenceCount(symptom);
   $: showCorrelationNote = phase === 'provisional' || phase === 'robust';
+
+  // Axis labels so the grid is interpretable: weekday rows + month columns (#574).
+  $: weekColumns = chunkWeeks(cells);
+  $: weekdayLabels = buildWeekdayLabels($locale ?? 'de');
+  $: monthLabels = buildMonthLabels(weekColumns, $locale ?? 'de');
+
+  function chunkWeeks(gridCells: SymptomCalendarCell[]): SymptomCalendarCell[][] {
+    const columns: SymptomCalendarCell[][] = [];
+    for (let index = 0; index < gridCells.length; index += 7) {
+      columns.push(gridCells.slice(index, index + 7));
+    }
+    return columns;
+  }
+
+  /** Monday-based rows; label Mon/Wed/Fri/Sun only to stay compact. */
+  function buildWeekdayLabels(loc: string): string[] {
+    const formatter = new Intl.DateTimeFormat(loc, { weekday: 'short' });
+    const monday = new Date('2024-01-01T00:00:00'); // a Monday
+    return Array.from({ length: 7 }, (_unused, row) => {
+      if (row % 2 !== 0) return '';
+      const day = new Date(monday);
+      day.setDate(monday.getDate() + row);
+      return formatter.format(day);
+    });
+  }
+
+  /** One entry per week column: a short month name when the month changes, else ''. */
+  function buildMonthLabels(columns: SymptomCalendarCell[][], loc: string): string[] {
+    const formatter = new Intl.DateTimeFormat(loc, { month: 'short' });
+    let previous = '';
+    return columns.map((week) => {
+      const firstDated = week.find((cell) => cell.date);
+      if (!firstDated?.date) return '';
+      const label = formatter.format(new Date(`${firstDated.date}T00:00:00`));
+      if (label === previous) return '';
+      previous = label;
+      return label;
+    });
+  }
 </script>
 
 <article class="symptom-calendar" aria-labelledby={`symptom-calendar-${symptom.symptom_id}`}>
@@ -35,48 +75,60 @@
     {/if}
   </header>
 
-  <div
-    class="symptom-calendar__grid-wrap"
-    data-scrollable={cells.length / 7 > 8 ? 'true' : 'false'}
-  >
-    <div
-      class="symptom-calendar__grid"
-      role="grid"
-      aria-label={$_('insights.symptoms.calendar_aria', { values: { name: symptom.name } })}
-      style={`--week-count: ${cells.length / 7}`}
-    >
-      {#each cells as cell}
-        {#if cell.date}
-          <button
-            type="button"
-            class="symptom-calendar__cell"
-            class:symptom-calendar__cell--present={cell.present}
-            role="gridcell"
-            aria-label={$_('insights.symptoms.calendar_cell_aria', {
-              values: {
-                date: cell.date,
-                name: symptom.name,
-                state: cell.present
-                  ? $_('insights.symptoms.calendar_present')
-                  : $_('insights.symptoms.calendar_absent'),
-              },
-            })}
-            title={$_('insights.symptoms.calendar_cell_aria', {
-              values: {
-                date: cell.date,
-                name: symptom.name,
-                state: cell.present
-                  ? $_('insights.symptoms.calendar_present')
-                  : $_('insights.symptoms.calendar_absent'),
-              },
-            })}
-            on:click={() => dispatch('selectDate', { date: cell.date! })}
-          ></button>
-        {:else}
-          <span class="symptom-calendar__cell symptom-calendar__cell--pad" role="presentation"
-          ></span>
-        {/if}
+  <div class="symptom-calendar__chart">
+    <div class="symptom-calendar__weekdays" aria-hidden="true">
+      {#each weekdayLabels as weekday}
+        <span>{weekday}</span>
       {/each}
+    </div>
+    <div
+      class="symptom-calendar__grid-wrap"
+      data-scrollable={cells.length / 7 > 8 ? 'true' : 'false'}
+    >
+      <div class="symptom-calendar__months" aria-hidden="true">
+        {#each monthLabels as month}
+          <span class="symptom-calendar__month">{month}</span>
+        {/each}
+      </div>
+      <div
+        class="symptom-calendar__grid"
+        role="grid"
+        aria-label={$_('insights.symptoms.calendar_aria', { values: { name: symptom.name } })}
+        style={`--week-count: ${cells.length / 7}`}
+      >
+        {#each cells as cell}
+          {#if cell.date}
+            <button
+              type="button"
+              class="symptom-calendar__cell"
+              class:symptom-calendar__cell--present={cell.present}
+              role="gridcell"
+              aria-label={$_('insights.symptoms.calendar_cell_aria', {
+                values: {
+                  date: cell.date,
+                  name: symptom.name,
+                  state: cell.present
+                    ? $_('insights.symptoms.calendar_present')
+                    : $_('insights.symptoms.calendar_absent'),
+                },
+              })}
+              title={$_('insights.symptoms.calendar_cell_aria', {
+                values: {
+                  date: cell.date,
+                  name: symptom.name,
+                  state: cell.present
+                    ? $_('insights.symptoms.calendar_present')
+                    : $_('insights.symptoms.calendar_absent'),
+                },
+              })}
+              on:click={() => dispatch('selectDate', { date: cell.date! })}
+            ></button>
+          {:else}
+            <span class="symptom-calendar__cell symptom-calendar__cell--pad" role="presentation"
+            ></span>
+          {/if}
+        {/each}
+      </div>
     </div>
   </div>
 
@@ -97,6 +149,7 @@
 
 <style>
   .symptom-calendar {
+    --axis-month-row-h: 14px;
     display: grid;
     gap: var(--space-3);
     padding: var(--space-3);
@@ -104,6 +157,50 @@
     border-radius: var(--radius-md);
     background: var(--color-surface);
     min-width: 0;
+  }
+
+  .symptom-calendar__chart {
+    display: flex;
+    gap: var(--space-1);
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .symptom-calendar__weekdays {
+    flex-shrink: 0;
+    display: grid;
+    grid-template-rows: repeat(7, 12px);
+    gap: var(--heatmap-calendar-gap);
+    margin-top: var(--axis-month-row-h);
+  }
+
+  .symptom-calendar__weekdays span {
+    display: flex;
+    align-items: center;
+    height: 12px;
+    /* token-exempt: axis micro-label needs px precision at this size (F-10). */
+    font-size: 9px;
+    line-height: 1;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .symptom-calendar__months {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 12px;
+    gap: var(--heatmap-calendar-gap);
+    width: max-content;
+    height: var(--axis-month-row-h);
+  }
+
+  .symptom-calendar__month {
+    /* token-exempt: axis micro-label needs px precision at this size (F-10). */
+    font-size: 9px;
+    line-height: 1;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: visible;
   }
 
   .symptom-calendar__header h3,
@@ -129,6 +226,9 @@
 
   .symptom-calendar__grid-wrap {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     max-width: 100%;
     min-width: 0;
     overflow-x: auto;
@@ -220,6 +320,20 @@
   @media (max-width: 360px) {
     .symptom-calendar__grid {
       grid-template-rows: repeat(7, 10px);
+      grid-auto-columns: 10px;
+    }
+
+    .symptom-calendar__weekdays {
+      grid-template-rows: repeat(7, 10px);
+    }
+
+    .symptom-calendar__weekdays span {
+      height: 10px;
+      /* token-exempt: axis micro-label needs px precision at this size (F-10). */
+      font-size: 8px;
+    }
+
+    .symptom-calendar__months {
       grid-auto-columns: 10px;
     }
 
