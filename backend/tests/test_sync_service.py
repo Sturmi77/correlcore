@@ -402,6 +402,79 @@ def test_migration_018_declares_sync_engine_tables() -> None:
     assert "sync_push_batches" in source
 
 
+def test_migration_033_preserves_explicit_updated_at() -> None:
+    """Sync LWW sets client_ts; the shared trigger must not overwrite it."""
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations/versions/033_preserve_explicit_updated_at.py"
+    )
+    source = path.read_text(encoding="utf-8")
+    assert 'revision: str = "033"' in source
+    assert 'down_revision: str | None = "032"' in source
+    assert "IS NOT DISTINCT FROM OLD.updated_at" in source
+    # Downgrade must restore the historical unconditional overwrite.
+    assert "NEW.updated_at = now();" in source
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_updated_at_trigger_preserves_explicit_client_ts() -> None:
+    """Concrete LWW scenario: explicit client_ts survives UPDATE; untouched bumps."""
+    if not _integration_enabled():
+        pytest.skip("requires PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
+
+    from sqlalchemy import text
+
+    from app.db.session import engine
+
+    client_ts = datetime(2026, 7, 27, 10, 0, tzinfo=UTC)
+    async with engine.connect() as conn:
+        await conn.execute(
+            text(
+                """
+                CREATE TEMP TABLE lww_probe (
+                    id int PRIMARY KEY,
+                    val int NOT NULL,
+                    updated_at timestamptz NOT NULL
+                )
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                """
+                CREATE TRIGGER lww_probe_updated_at
+                BEFORE UPDATE ON lww_probe
+                FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                "INSERT INTO lww_probe (id, val, updated_at) "
+                "VALUES (1, 1, TIMESTAMPTZ '2026-07-27 09:00:00+00')"
+            )
+        )
+        # Sync path: caller supplies client_ts — must be preserved.
+        await conn.execute(
+            text("UPDATE lww_probe SET val = 2, updated_at = :client_ts WHERE id = 1"),
+            {"client_ts": client_ts},
+        )
+        preserved = (
+            await conn.execute(text("SELECT updated_at FROM lww_probe WHERE id = 1"))
+        ).scalar_one()
+        assert preserved == client_ts
+
+        # REST/ORM path: UPDATE omits updated_at — trigger must auto-bump.
+        await conn.execute(text("UPDATE lww_probe SET val = 3 WHERE id = 1"))
+        bumped = (
+            await conn.execute(text("SELECT updated_at, val FROM lww_probe WHERE id = 1"))
+        ).one()
+        assert bumped.val == 3
+        assert bumped.updated_at > client_ts
+        await conn.commit()
+
+
 @pytest.mark.asyncio
 @pytest.mark.no_rest_revision_stub
 async def test_record_entry_upsert_revision_appends_log_without_note(
