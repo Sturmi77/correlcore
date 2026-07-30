@@ -457,9 +457,7 @@ async def test_updated_at_trigger_preserves_explicit_client_ts() -> None:
         )
         # Sync path: caller supplies client_ts — must be preserved.
         await conn.execute(
-            text(
-                "UPDATE lww_probe SET val = 2, updated_at = :client_ts WHERE id = 1"
-            ),
+            text("UPDATE lww_probe SET val = 2, updated_at = :client_ts WHERE id = 1"),
             {"client_ts": client_ts},
         )
         preserved = (
