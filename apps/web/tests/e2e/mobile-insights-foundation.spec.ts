@@ -37,19 +37,18 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
 });
 
-test('430px keeps matrices behind explicit detail actions and shows analytics by default', async ({
+test('430px shows the correlation matrix inline alongside findings and analytics', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await installInsightsApiMock(page);
   await page.goto('/insights');
 
-  await page.getByTestId('insights-matrix-link').tap();
+  // #571: the matrix is prominent inline — not hidden behind a tab. The top
+  // insight (mobile lead) stays visible alongside it.
   await expect(page.getByTestId('insight-matrix')).toBeVisible();
-  await expect(page.getByTestId('mobile-insight-lead')).toHaveCount(0);
-
-  await page.getByTestId('insights-findings-link').tap();
   await expect(page.getByTestId('mobile-insight-lead')).toBeVisible();
+
   await page.getByTestId('insights-filter-tab-symptoms').tap();
   await expect(
     page
@@ -101,7 +100,7 @@ test('desktop preserves the existing analysis-first composition', async ({ page 
   await expect(page.getByTestId('insight-feed')).toBeVisible();
   await expect(page.getByTestId('insight-card')).toHaveCount(4);
 
-  await page.getByTestId('insights-matrix-link').click();
+  // #571: matrix shows inline on desktop too — no tab toggle.
   await expect(page.getByTestId('insight-matrix')).toBeVisible();
 
   const layout = await page.evaluate(() => ({
