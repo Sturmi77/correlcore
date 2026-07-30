@@ -8,7 +8,7 @@ import pytest
 from PIL import Image, UnidentifiedImageError
 from PIL.TiffImagePlugin import IFDRational
 
-from app.services.exif_strip import strip_exif
+from app.services.exif_strip import ImageTooLargeError, strip_exif
 
 _GPS_IFD_TAG = 0x8825
 
@@ -63,3 +63,37 @@ def test_strip_exif_clean_image_still_valid() -> None:
 def test_strip_exif_rejects_invalid_bytes() -> None:
     with pytest.raises(UnidentifiedImageError):
         strip_exif(b"not-an-image")
+
+
+def _solid_png(width: int, height: int) -> bytes:
+    buf = BytesIO()
+    Image.new("RGB", (width, height), color=(1, 2, 3)).save(
+        buf, format="PNG", compress_level=9
+    )
+    return buf.getvalue()
+
+
+def test_strip_exif_rejects_oversized_dimensions() -> None:
+    """Compressed huge frames must fail before full decode (decompression bomb)."""
+    original = _solid_png(9000, 100)
+    assert len(original) < 10 * 1024 * 1024
+
+    with pytest.raises(ImageTooLargeError, match="dimension"):
+        strip_exif(original)
+
+
+def test_strip_exif_rejects_oversized_pixel_count() -> None:
+    # 6000×6000 = 36 MP > 25 MP pixel cap; each side under the 8192 dim cap.
+    original = _solid_png(6000, 6000)
+    assert len(original) < 10 * 1024 * 1024
+
+    with pytest.raises(ImageTooLargeError, match="pixel count"):
+        strip_exif(original)
+
+
+def test_strip_exif_accepts_high_end_phone_resolution() -> None:
+    # ~12 MP still (4032×3024) must remain processable.
+    original = _solid_png(4032, 3024)
+    stripped = strip_exif(original)
+    with Image.open(BytesIO(stripped)) as img:
+        assert img.size == (4032, 3024)

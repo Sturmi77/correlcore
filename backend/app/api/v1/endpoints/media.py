@@ -19,7 +19,7 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.core.rate_limit import limiter
 from app.models.user import User
 from app.schemas.media import PhotoUploadResponse
-from app.services.exif_strip import strip_exif
+from app.services.exif_strip import ImageTooLargeError, strip_exif
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,15 @@ async def upload_photo(
         stripped = strip_exif(raw)
         with Image.open(BytesIO(stripped)) as img:
             width, height = img.size
+    except ImageTooLargeError as exc:
+        logger.warning(
+            "media.photo.dimensions_too_large",
+            extra={"user_id": str(user.id), "error": type(exc).__name__},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="image dimensions too large",
+        ) from exc
     except Exception as exc:
         logger.warning(
             "media.photo.invalid_image",

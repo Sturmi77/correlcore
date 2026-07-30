@@ -73,3 +73,37 @@ async def test_upload_photo_rejects_unsupported_type(
         app.dependency_overrides.clear()
 
     assert response.status_code == 415
+
+
+def _solid_png(width: int, height: int) -> bytes:
+    buf = BytesIO()
+    Image.new("RGB", (width, height), color=(1, 2, 3)).save(
+        buf, format="PNG", compress_level=9
+    )
+    return buf.getvalue()
+
+
+@pytest.mark.asyncio
+async def test_upload_photo_rejects_oversized_dimensions(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    """Byte-capped decompression bombs must not reach full EXIF decode."""
+    bomb = _solid_png(7000, 7000)
+    assert len(bomb) < 10 * 1024 * 1024
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        response = await async_client.post(
+            "/api/v1/media/photos",
+            files={"file": ("bomb.png", bomb, "image/png")},
+            cookies={"access_token": "valid.access.token"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 413
+    assert response.json()["detail"] == "image dimensions too large"
