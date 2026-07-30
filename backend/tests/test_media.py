@@ -77,9 +77,7 @@ async def test_upload_photo_rejects_unsupported_type(
 
 def _solid_png(width: int, height: int) -> bytes:
     buf = BytesIO()
-    Image.new("RGB", (width, height), color=(1, 2, 3)).save(
-        buf, format="PNG", compress_level=9
-    )
+    Image.new("RGB", (width, height), color=(1, 2, 3)).save(buf, format="PNG", compress_level=9)
     return buf.getvalue()
 
 

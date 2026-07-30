@@ -67,9 +67,7 @@ def test_strip_exif_rejects_invalid_bytes() -> None:
 
 def _solid_png(width: int, height: int) -> bytes:
     buf = BytesIO()
-    Image.new("RGB", (width, height), color=(1, 2, 3)).save(
-        buf, format="PNG", compress_level=9
-    )
+    Image.new("RGB", (width, height), color=(1, 2, 3)).save(buf, format="PNG", compress_level=9)
     return buf.getvalue()
 
 

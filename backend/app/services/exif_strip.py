@@ -29,13 +29,9 @@ def _reject_oversized(size: tuple[int, int]) -> None:
     if width <= 0 or height <= 0:
         raise ValueError("invalid image dimensions")
     if width > _MAX_IMAGE_DIMENSION or height > _MAX_IMAGE_DIMENSION:
-        raise ImageTooLargeError(
-            f"image dimension exceeds {_MAX_IMAGE_DIMENSION}px limit"
-        )
+        raise ImageTooLargeError(f"image dimension exceeds {_MAX_IMAGE_DIMENSION}px limit")
     if width * height > _MAX_IMAGE_PIXELS:
-        raise ImageTooLargeError(
-            f"image pixel count exceeds {_MAX_IMAGE_PIXELS} limit"
-        )
+        raise ImageTooLargeError(f"image pixel count exceeds {_MAX_IMAGE_PIXELS} limit")
 
 
 def strip_exif(image_bytes: bytes) -> bytes:
