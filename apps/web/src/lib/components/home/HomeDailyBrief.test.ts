@@ -164,7 +164,7 @@ describe('HomeDailyBrief', () => {
             stress_avg: 2.8,
           },
           {
-            work_context: 'weekend',
+            work_context: 'vacation',
             entry_count: 4,
             mood_avg: 4.2,
             energy_avg: 3.8,
@@ -184,7 +184,7 @@ describe('HomeDailyBrief', () => {
       ])
     );
 
-    expect(byContext['entry.work_context.weekend']).toBe('high');
+    expect(byContext['entry.work_context.vacation']).toBe('high');
     expect(byContext['entry.work_context.office']).toBe('low');
     expect(byContext['entry.work_context.homeoffice']).toBe('none');
   });

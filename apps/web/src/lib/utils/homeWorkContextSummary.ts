@@ -17,6 +17,14 @@ const METRIC_INVERT: Record<WorkContextMetricKey, boolean> = {
   stress: true,
 };
 
+/**
+ * Work contexts that are calendar-derived rather than user intent (#572).
+ * `weekend` is auto-assigned to every Sat/Sun (see defaultWorkContextForDate),
+ * so on the Home week view it dominates the list and crowds out the tags the
+ * user actually set. It is hidden here only — insights/analytics keep it.
+ */
+const HIDDEN_HOME_WORK_CONTEXTS: ReadonlySet<string> = new Set(['weekend']);
+
 export type WorkContextDisplayItem = WorkContextSummaryItem & {
   /** Deviation from the weighted average for the active metric. */
   metricDelta: number | null;
@@ -60,8 +68,9 @@ export function buildWorkContextDisplayItems(
   metric: WorkContextMetricKey = 'mood',
   limit = 4
 ): WorkContextDisplayItem[] {
-  const overall = weightedMetricAverage(items, metric);
-  return items
+  const visibleItems = items.filter((item) => !HIDDEN_HOME_WORK_CONTEXTS.has(item.work_context));
+  const overall = weightedMetricAverage(visibleItems, metric);
+  return visibleItems
     .filter((item) => item.entry_count > 0 && workContextMetricAvg(item, metric) !== null)
     .map((item) => {
       const metricAvg = workContextMetricAvg(item, metric);
