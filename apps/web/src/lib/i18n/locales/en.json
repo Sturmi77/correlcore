@@ -549,7 +549,7 @@
   },
   "habits": {
     "heading": "Habits",
-    "subtitle": "Track target ranges without pressure loops.",
+    "subtitle": "Tags you track as habits — with a target frequency, no pressure loops.",
     "window_label": "Habit window",
     "window_days": "{n}D",
     "loading": "Loading habit stats",
