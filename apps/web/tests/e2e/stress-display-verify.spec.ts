@@ -74,7 +74,7 @@ test('home stress bars use inverted widths (lower stress = wider bar)', async ({
             stress_avg: 2.8,
           },
           {
-            work_context: 'weekend',
+            work_context: 'vacation',
             entry_count: 4,
             mood_avg: 4.2,
             energy_avg: 3.8,
@@ -119,16 +119,16 @@ test('home stress bars use inverted widths (lower stress = wider bar)', async ({
 
   const labels = await page.locator('.daily-brief__work-context-row strong').allTextContents();
 
-  // weekend 2.2 -> display 3.8 -> 76%; office 3.6 -> 2.4 -> 48%; homeoffice 2.8 -> 3.2 -> 64%
+  // vacation 2.2 -> display 3.8 -> 76%; office 3.6 -> 2.4 -> 48%; homeoffice 2.8 -> 3.2 -> 64%
   expect(Math.max(...widths)).toBeCloseTo(76, 0);
   expect(Math.min(...widths)).toBeCloseTo(48, 0);
 
-  const weekendIndex = labels.findIndex((t) => t.includes('2.2'));
+  const vacationIndex = labels.findIndex((t) => t.includes('2.2'));
   const officeIndex = labels.findIndex((t) => t.includes('3.6'));
   const homeofficeIndex = labels.findIndex((t) => t.includes('2.8'));
-  expect(weekendIndex).toBeGreaterThanOrEqual(0);
+  expect(vacationIndex).toBeGreaterThanOrEqual(0);
   expect(officeIndex).toBeGreaterThanOrEqual(0);
-  expect(widths[weekendIndex]).toBeGreaterThan(widths[officeIndex]);
+  expect(widths[vacationIndex]).toBeGreaterThan(widths[officeIndex]);
 
   const rowData = await page.locator('.daily-brief__work-context-row').evaluateAll((rows) =>
     rows.map((row) => ({
@@ -142,12 +142,12 @@ test('home stress bars use inverted widths (lower stress = wider bar)', async ({
     }))
   );
 
-  expect(rowData[weekendIndex].highlight).toBe('high');
+  expect(rowData[vacationIndex].highlight).toBe('high');
   expect(rowData[officeIndex].highlight).toBe('low');
   expect(rowData[homeofficeIndex].highlight).toBe('none');
 
   // Worst stress uses metric red; neutral uses primary; best uses success green.
   expect(rowData[officeIndex].barColor).toMatch(/metric-stress|239,\s*68,\s*68|ef4444/i);
   expect(rowData[homeofficeIndex].metricColor).toContain('primary');
-  expect(rowData[weekendIndex].barColor).toMatch(/success|22,\s*163,\s*74|16a34a/i);
+  expect(rowData[vacationIndex].barColor).toMatch(/success|22,\s*163,\s*74|16a34a/i);
 });
