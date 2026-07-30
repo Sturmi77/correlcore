@@ -83,7 +83,7 @@
       {#each clusters as cluster}
         <article class="tag-groups__card">
           <div class="tag-groups__card-head">
-            <h3>{cluster.label}</h3>
+            <h3>{$_('insights.tag_groups.card_title', { values: { name: cluster.label } })}</h3>
             <span
               >{$_('insights.tag_groups.strength', {
                 values: { value: Math.round(cluster.strength * 100) },

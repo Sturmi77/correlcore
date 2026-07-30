@@ -752,7 +752,7 @@ function makeTagClusters(entryCount: number, enabled: boolean): TagClustersRespo
     clusters: [
       {
         cluster_id: 1,
-        label: 'Signal group 1',
+        label: tagRefs.focus.name,
         cluster_kind: 'mixed',
         strength: 0.72,
         tags: [tagRefs.focus, tagRefs.read],
@@ -784,7 +784,7 @@ function makeTagClusters(entryCount: number, enabled: boolean): TagClustersRespo
       },
       {
         cluster_id: 2,
-        label: 'Signal group 2',
+        label: tagRefs.walk.name,
         cluster_kind: 'mixed',
         strength: 0.64,
         tags: [tagRefs.walk],

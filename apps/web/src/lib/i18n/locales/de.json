@@ -1104,6 +1104,7 @@
     },
     "tag_groups": {
       "heading": "Tag-Gruppen",
+      "card_title": "Rund um {name}",
       "subtitle": "Tags, die haeufig gemeinsam auftreten",
       "subtitle_mixed": "Signale, die haeufig gemeinsam auftreten",
       "subtitle_pair": "Tags, die haeufig gemeinsam auftreten — erste gemeinsame Paare aus deinen Entries",

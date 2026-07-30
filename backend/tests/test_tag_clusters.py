@@ -13,6 +13,7 @@ from app.models.user import User
 from app.schemas.stats import TagClustersResponse
 from app.services.tag_cluster_service import (
     DailyTagSet,
+    _dominant_signal_name,
     build_tag_cluster_response,
     build_tag_vectors,
     get_tag_clusters,
@@ -76,6 +77,30 @@ def test_tag_clusters_return_insufficient_data_below_entry_threshold() -> None:
     assert response.entries_until_robust == 61
 
 
+def test_dominant_signal_name_prefers_frequency_then_slug() -> None:
+    import uuid
+
+    a, b = uuid.uuid4(), uuid.uuid4()
+    names = {a: "Alpha", b: "Beta"}
+    slugs = {a: "alpha", b: "beta"}
+    # Beta occurs on 3 days, Alpha on 1 -> Beta dominates despite the later slug.
+    entries = [
+        DailyTagSet(entry_date=date(2026, 1, 1), tag_ids=frozenset({a, b})),
+        DailyTagSet(entry_date=date(2026, 1, 2), tag_ids=frozenset({b})),
+        DailyTagSet(entry_date=date(2026, 1, 3), tag_ids=frozenset({b})),
+    ]
+    assert (
+        _dominant_signal_name([a, b], names_by_id=names, slugs_by_id=slugs, daily_entries=entries)
+        == "Beta"
+    )
+    # Equal frequency -> deterministic tie-break on slug (alpha < beta).
+    tie = [DailyTagSet(entry_date=date(2026, 1, 1), tag_ids=frozenset({a, b}))]
+    assert (
+        _dominant_signal_name([a, b], names_by_id=names, slugs_by_id=slugs, daily_entries=tie)
+        == "Alpha"
+    )
+
+
 def test_tag_clusters_use_pair_mode_between_30_and_44_days() -> None:
     daily, tags = _cluster_fixture()
     response = build_tag_cluster_response(build_tag_vectors(daily[:35], tags))
@@ -85,6 +110,8 @@ def test_tag_clusters_use_pair_mode_between_30_and_44_days() -> None:
     assert response.cluster_maturity == "early"
     assert response.k is None
     assert response.clusters
+    for cluster in response.clusters:
+        assert cluster.label in {member.name for member in cluster.members}
 
 
 def test_tag_clusters_use_provisional_kmeans_at_67_days() -> None:
@@ -112,9 +139,12 @@ def test_tag_clusters_group_tags_from_jaccard_vectors() -> None:
     assert response.active_signal_count == 6
     assert response.entry_count == 100
     assert sum(len(cluster.tags) for cluster in response.clusters) == 6
-    assert all(
-        "AI" not in cluster.label and "ML" not in cluster.label for cluster in response.clusters
-    )
+    # #573: each group is named after one of its member tags, not "Tag group N".
+    for cluster in response.clusters:
+        member_names = {member.name for member in cluster.members}
+        assert cluster.label in member_names
+        assert not cluster.label.startswith("Tag group")
+        assert not cluster.label.startswith("Signal group")
 
 
 @pytest.mark.asyncio
