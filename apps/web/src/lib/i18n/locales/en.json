@@ -1104,6 +1104,7 @@
     },
     "tag_groups": {
       "heading": "Tag groups",
+      "card_title": "Around {name}",
       "subtitle": "Tags that often appear together",
       "subtitle_mixed": "Signals that often appear together",
       "subtitle_pair": "Tags that often appear together — first co-occurrence pairs from your entries",

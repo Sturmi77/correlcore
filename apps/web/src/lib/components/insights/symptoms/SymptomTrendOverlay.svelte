@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import type { InsightMaturityPhase } from '$lib/api/insights';
   import type { SymptomTrendPoint } from '$lib/utils/symptomAnalyticsViews';
 
@@ -67,6 +67,29 @@
 
   $: symptomPath = linePath((p) => p.ySymptom);
   $: moodPath = linePath((p) => p.yMood);
+
+  type XTick = { x: number; label: string; anchor: 'start' | 'middle' | 'end' };
+
+  // Start / middle / end date ticks so the small trend chart is readable as a
+  // timeline instead of an unlabelled curve (#574).
+  $: xTicks = buildXTicks(geometry, $locale ?? 'de');
+
+  function formatShortDate(iso: string, loc: string): string {
+    const parsed = new Date(`${iso}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return iso;
+    return new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'short' }).format(parsed);
+  }
+
+  function buildXTicks(points: Point[], loc: string): XTick[] {
+    if (points.length === 0) return [];
+    const lastIndex = points.length - 1;
+    const indexes = [...new Set([0, Math.floor(lastIndex / 2), lastIndex])];
+    return indexes.map((index) => ({
+      x: points[index].x,
+      label: formatShortDate(points[index].point.date, loc),
+      anchor: index === 0 ? 'start' : index === lastIndex ? 'end' : 'middle',
+    }));
+  }
 
   $: ribbonPath = ribbonEnabled ? buildRibbonPath(geometry) : '';
 
@@ -147,6 +170,18 @@
         >
           {$_('insights.symptoms.trend_mood')}
         </text>
+
+        {#each xTicks as tick}
+          <text
+            x={tick.x}
+            y={height - 6}
+            class="symptom-trend__xlabel"
+            style={`font-size: ${labelSize}px`}
+            text-anchor={tick.anchor}
+          >
+            {tick.label}
+          </text>
+        {/each}
       </svg>
     </div>
 
@@ -236,6 +271,13 @@
 
   .symptom-trend__ylabel--right {
     text-anchor: end;
+  }
+
+  /* token-exempt: SVG axis micro-labels use px for chart precision (F-10). */
+  .symptom-trend__xlabel {
+    fill: var(--color-text-muted);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
   }
 
   .symptom-trend__legend {

@@ -52,7 +52,7 @@ describe('TagGroupsSection', () => {
     });
 
     expect(screen.getByText('insights.tag_groups.heading')).toBeTruthy();
-    expect(screen.getByText('Movement')).toBeTruthy();
+    expect(screen.getByText('insights.tag_groups.card_title:{"name":"Movement"}')).toBeTruthy();
     expect(screen.getByText('Sport')).toBeTruthy();
     expect(screen.queryByTestId('tag-groups-maturity-badge')).toBeNull();
   });

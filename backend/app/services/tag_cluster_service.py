@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
@@ -166,6 +166,30 @@ def _member_from_node(node: SignalNode) -> TagClusterMember:
         category=node.category,
         color=node.color,
     )
+
+
+def _dominant_signal_name(
+    node_ids: Sequence[uuid.UUID],
+    *,
+    names_by_id: Mapping[uuid.UUID, str],
+    slugs_by_id: Mapping[uuid.UUID, str],
+    daily_entries: Sequence[DailyTagSet],
+) -> str:
+    """Name a cluster after its most-used member tag/symptom (#573).
+
+    Dominance is the raw occurrence count across ``daily_entries``; ties break
+    on slug so the name is deterministic. The returned name is user data, so no
+    i18n is needed on the backend — the frontend wraps it in a localized title.
+    """
+
+    counts = {
+        node_id: sum(
+            1 for entry in daily_entries if node_id in entry.tag_ids or node_id in entry.symptom_ids
+        )
+        for node_id in node_ids
+    }
+    dominant = min(node_ids, key=lambda node_id: (-counts[node_id], slugs_by_id[node_id]))
+    return names_by_id[dominant]
 
 
 def build_tag_vectors(
@@ -364,7 +388,12 @@ def _build_pair_clusters(
         clusters.append(
             TagClusterGroup(
                 cluster_id=len(clusters) + 1,
-                label=f"Tag group {len(clusters) + 1}",
+                label=_dominant_signal_name(
+                    ordered_cluster_ids,
+                    names_by_id={tag_id: tags_by_id[tag_id].name for tag_id in ordered_cluster_ids},
+                    slugs_by_id={tag_id: tags_by_id[tag_id].slug for tag_id in ordered_cluster_ids},
+                    daily_entries=vector_set.daily_entries,
+                ),
                 tags=[_tag_ref(tags_by_id[node_id]) for node_id in ordered_cluster_ids],
                 members=members,
                 cluster_kind="tags_only",
@@ -461,11 +490,19 @@ def _build_kmeans_clusters(
             for node_id in ordered_cluster_ids
             if node_id in tags_by_id
         ]
-        label_prefix = "Signal group" if cluster_kind == "mixed" else "Tag group"
         clusters.append(
             TagClusterGroup(
                 cluster_id=ordinal,
-                label=f"{label_prefix} {ordinal}",
+                label=_dominant_signal_name(
+                    ordered_cluster_ids,
+                    names_by_id={
+                        node_id: nodes_by_id[node_id].name for node_id in ordered_cluster_ids
+                    },
+                    slugs_by_id={
+                        node_id: nodes_by_id[node_id].slug for node_id in ordered_cluster_ids
+                    },
+                    daily_entries=vector_set.daily_entries,
+                ),
                 tags=cluster_tags,
                 members=members,
                 cluster_kind=cluster_kind,
