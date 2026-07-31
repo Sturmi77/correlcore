@@ -14,6 +14,8 @@ Usage::
     uv run --python 3.12 python scripts/backfill_lag_profile.py --dry-run
     uv run --python 3.12 python scripts/backfill_lag_profile.py
     uv run --python 3.12 python scripts/backfill_lag_profile.py --user-id <uuid>
+
+In production containers ``scripts/`` is copied into the runtime image (#596).
 """
 
 from __future__ import annotations

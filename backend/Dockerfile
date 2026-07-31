@@ -47,6 +47,7 @@ ENV BUILD_TIME=${BUILD_TIME}
 # Copy source
 COPY app/ app/
 COPY migrations/ migrations/
+COPY scripts/ scripts/
 COPY migrations/alembic.ini alembic.ini
 
 USER correlcore
