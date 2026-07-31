@@ -73,3 +73,36 @@ Pre-commit (`.husky/pre-commit`) runs Prettier on staged `*.ts`, `*.svelte`, etc
 ### Full stack alternative
 
 `infra/docker/docker-compose.user-test.yml` runs published GHCR images (Postgres, Redis, API, web, Mailpit). Requires a filled `.env` from `.env.user-test.example`. Not required for day-to-day code changes if you run API/web locally as above.
+
+### PRs must auto-close finished issues
+
+When a PR **fully completes** an issue’s acceptance criteria, the PR description
+(or a commit message that lands on `main`) **must** include a GitHub closing
+keyword so the issue closes on merge:
+
+- Preferred: `Closes #123` / `Fixes #123` (also accepted: `Close`, `Closed`,
+  `Fix`, `Fixed`, `Resolve`, `Resolves`, `Resolved`)
+- Put the keyword in the **PR body** (reliable) or in a commit that merges to
+  the default branch — not only in review comments or vague phrases like
+  “Completes #123” / “Relates to #123” (those do **not** auto-close).
+
+**Close on merge when:**
+
+- Implementation + automated tests in CI cover the issue, **and**
+- No **external** follow-up is still required to call the work done
+  (manual device QA, production redeploy/verify, owner-only ops, human
+  sign-off trackers, open discussions).
+
+**Do not use `Closes` / `Fixes` when:**
+
+- The PR is partial (Phase 1 of N) — use `Relates to #123` or `Part of #123`
+  and leave the parent issue open until the completing PR.
+- External tests / sign-off remain open (e.g. device QA issues, “verify on
+  prod after redeploy”). Ship with `Relates to #123`; close only after that
+  gate passes (owner or a dedicated follow-up PR/comment).
+- The PR is docs/spec-only for a feature that is not implemented yet.
+
+Agents cannot call `closeIssue` (no triage permission). Relying on merge
+auto-close is the required path; see
+[`docs/quality/ISSUE_TRACKER_HYGIENE_2026-07-31.md`](docs/quality/ISSUE_TRACKER_HYGIENE_2026-07-31.md)
+when keywords were missed.
