@@ -26,9 +26,7 @@
 
   function toggleSection(key: HomeSectionKey, enabled: boolean): void {
     emitChange(
-      orderedSections.map((section) =>
-        section.key === key ? { ...section, enabled } : section
-      )
+      orderedSections.map((section) => (section.key === key ? { ...section, enabled } : section))
     );
   }
 
@@ -56,7 +54,7 @@
           <input
             type="checkbox"
             checked={section.enabled}
-            disabled={disabled}
+            {disabled}
             data-testid={`home-section-toggle-${section.key}`}
             on:change={(event) =>
               toggleSection(section.key, (event.currentTarget as HTMLInputElement).checked)}
@@ -94,7 +92,7 @@
   <button
     type="button"
     class="home-sections-editor__reset"
-    disabled={disabled}
+    {disabled}
     data-testid="home-sections-reset"
     on:click={resetDefaults}
   >

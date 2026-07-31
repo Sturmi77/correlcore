@@ -12,12 +12,12 @@ darstellbaren Info-Blöcke angezeigt werden und **in welcher Reihenfolge**.
 
 ## Konfigurierbare Sektionen
 
-| key | Komponente | Beschreibung |
-| --- | --- | --- |
-| `first_week_banner` | `FirstWeekInsightBanner.svelte` | Früh-Insight-Banner |
-| `daily_brief` | `HomeDailyBrief.svelte` | Top-Insight / Phase + Bridge-Links |
-| `work_context` | `HomeWorkContextSummary.svelte` | Arbeitssituationsmuster |
-| `weekday_overview` | `HomeWeekdayOverview.svelte` | Wochentags-Strip |
+| key                 | Komponente                      | Beschreibung                       |
+| ------------------- | ------------------------------- | ---------------------------------- |
+| `first_week_banner` | `FirstWeekInsightBanner.svelte` | Früh-Insight-Banner                |
+| `daily_brief`       | `HomeDailyBrief.svelte`         | Top-Insight / Phase + Bridge-Links |
+| `work_context`      | `HomeWorkContextSummary.svelte` | Arbeitssituationsmuster            |
+| `weekday_overview`  | `HomeWeekdayOverview.svelte`    | Wochentags-Strip                   |
 
 **Fix (nicht konfigurierbar):** `HomeTodayContext`, Primary CTA, PWA-Banner,
 Onboarding-Redirect.

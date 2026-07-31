@@ -12,21 +12,23 @@ vi.mock('svelte-i18n', async () => {
 });
 
 const { updateUserPreferencesMock } = vi.hoisted(() => ({
-  updateUserPreferencesMock: vi.fn(async (payload: { home_sections?: typeof DEFAULT_HOME_SECTIONS }) => ({
-    user_id: 'user-1',
-    analytics_enabled: true,
-    digest_enabled: false,
-    onboarding_retro_completed: true,
-    onboarding_profile_completed: true,
-    onboarding_maturity_intro_seen: true,
-    cycle_tracking_enabled: true,
-    dismissed_insight_keys: [],
-    reached_milestone_keys: [],
-    last_seen_insight_at: null,
-    home_sections: payload.home_sections ?? DEFAULT_HOME_SECTIONS,
-    created_at: '2026-05-16T10:00:00Z',
-    updated_at: '2026-05-16T10:00:00Z',
-  })),
+  updateUserPreferencesMock: vi.fn(
+    async (payload: { home_sections?: typeof DEFAULT_HOME_SECTIONS }) => ({
+      user_id: 'user-1',
+      analytics_enabled: true,
+      digest_enabled: false,
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+      onboarding_maturity_intro_seen: true,
+      cycle_tracking_enabled: true,
+      dismissed_insight_keys: [],
+      reached_milestone_keys: [],
+      last_seen_insight_at: null,
+      home_sections: payload.home_sections ?? DEFAULT_HOME_SECTIONS,
+      created_at: '2026-05-16T10:00:00Z',
+      updated_at: '2026-05-16T10:00:00Z',
+    })
+  ),
 }));
 
 vi.mock('$lib/api/preferences', () => ({

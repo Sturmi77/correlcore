@@ -57,9 +57,7 @@ export function mergeHomeSections(
   return merged;
 }
 
-export function resolveEnabledSections(
-  sections: HomeSectionPreference[]
-): HomeSectionPreference[] {
+export function resolveEnabledSections(sections: HomeSectionPreference[]): HomeSectionPreference[] {
   return sections.filter((section) => section.enabled);
 }
 
