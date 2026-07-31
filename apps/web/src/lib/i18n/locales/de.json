@@ -1046,21 +1046,14 @@
     },
     "matrix": {
       "heading": "Korrelations-Matrix",
-      "subtitle": "Tag- und Mood-Muster nach Effektstaerke sortiert.",
+      "subtitle": "Tags, Symptome und Habits nach Effektstaerke sortiert.",
       "tag": "Tag",
+      "subject": "Faktor",
       "metric": "Metrik",
       "effect": "Effekt",
       "confidence": "Konfidenz",
       "export": "PNG exportieren",
-      "empty": "Noch keine ausreichend stabilen Tag-Mood-Muster vorhanden.",
-      "empty_layer": "F\u00fcr diese Ansicht noch keine stabilen Muster.",
-      "layers": "Matrix-Ansicht",
-      "layer_tags": "Tags",
-      "layer_symptoms": "Symptome",
-      "layer_habits": "Habits",
-      "subject_tag": "Tag",
-      "subject_symptom": "Symptom",
-      "subject_habit": "Habit"
+      "empty": "Noch keine ausreichend stabilen Muster vorhanden."
     },
     "cooccurrence": {
       "heading": "Muster",

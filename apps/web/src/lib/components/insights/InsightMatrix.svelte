@@ -1,39 +1,13 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
-  import { refreshTags, tags } from '$lib/stores/tags';
 
   export let insights: InsightResponse[] = [];
-  /**
-   * The habit layer needs live tag metadata (habit_type), which triggers a
-   * `GET /tags` fetch. Disable it for static product shots (marketing landing)
-   * so the component never hits the API — see landingDemoData.
-   */
-  export let enableHabitLayer = true;
   /**
    * Marketing preview mode (landing product shot): hide the header/toolbar and
    * let the matrix rows fill the narrow frame, so the diagram is the hero (#546).
    */
   export let preview = false;
-
-  type MatrixLayer = 'tags' | 'symptoms' | 'habits';
-
-  let layer: MatrixLayer = 'tags';
-
-  $: layerOptions = (
-    enableHabitLayer ? ['tags', 'symptoms', 'habits'] : ['tags', 'symptoms']
-  ) as MatrixLayer[];
-
-  onMount(async () => {
-    if (enableHabitLayer && $tags.status === 'idle') {
-      try {
-        await refreshTags();
-      } catch {
-        /* matrix still works for tag insights without habit metadata */
-      }
-    }
-  });
 
   function canonicalMetric(insight: InsightResponse): string {
     if (
@@ -97,30 +71,9 @@
     );
   }
 
-  $: habitTagIds = new Set(
-    $tags.status === 'ready'
-      ? $tags.tags.filter((tag) => tag.habit_type !== 'none').map((tag) => tag.id)
-      : []
-  );
-
-  $: baseRows = dedupeRows(insights.filter(isMatrixInsight)).sort(
+  $: rows = dedupeRows(insights.filter(isMatrixInsight)).sort(
     (a, b) => Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0)
   );
-
-  $: rows = baseRows.filter((row) => {
-    if (layer === 'symptoms') return row.subject_type === 'symptom';
-    const isHabit =
-      row.subject_type === 'tag' && row.subject_id !== null && habitTagIds.has(row.subject_id);
-    if (layer === 'habits') return isHabit;
-    return row.subject_type === 'tag' && !isHabit;
-  });
-
-  $: subjectHeading =
-    layer === 'symptoms'
-      ? $_('insights.matrix.subject_symptom')
-      : layer === 'habits'
-        ? $_('insights.matrix.subject_habit')
-        : $_('insights.matrix.subject_tag');
 
   function tone(effect: number): 'positive' | 'negative' | 'neutral' {
     if (effect >= 0.15) return 'positive';
@@ -193,25 +146,6 @@
         <p>{$_('insights.matrix.subtitle')}</p>
       </div>
       <div class="insight-matrix__actions">
-        <div
-          class="insight-matrix__layers"
-          role="tablist"
-          aria-label={$_('insights.matrix.layers')}
-        >
-          {#each layerOptions as option}
-            <button
-              type="button"
-              role="tab"
-              class="insight-matrix__layer"
-              class:insight-matrix__layer--active={layer === option}
-              aria-selected={layer === option}
-              data-testid={`insight-matrix-layer-${option}`}
-              on:click={() => (layer = option as MatrixLayer)}
-            >
-              {$_(`insights.matrix.layer_${option}`)}
-            </button>
-          {/each}
-        </div>
         <button
           class="btn btn-sm btn--secondary"
           type="button"
@@ -227,7 +161,7 @@
   {#if rows.length}
     <div class="insight-matrix__table" role="table" aria-label={$_('insights.matrix.heading')}>
       <div class="insight-matrix__row insight-matrix__row--head" role="row">
-        <span role="columnheader">{subjectHeading}</span>
+        <span role="columnheader">{$_('insights.matrix.subject')}</span>
         <span role="columnheader">{$_('insights.matrix.metric')}</span>
         <span role="columnheader">{$_('insights.matrix.effect')}</span>
         <span role="columnheader">{$_('insights.matrix.confidence')}</span>
@@ -251,7 +185,7 @@
       {/each}
     </div>
   {:else}
-    <p class="insight-matrix__empty">{$_('insights.matrix.empty_layer')}</p>
+    <p class="insight-matrix__empty">{$_('insights.matrix.empty')}</p>
   {/if}
 </section>
 
@@ -274,34 +208,6 @@
     flex-direction: column;
     align-items: flex-end;
     gap: 0.5rem;
-  }
-
-  .insight-matrix__layers {
-    display: inline-flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 0.35rem;
-    padding: 0.2rem;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface-2);
-  }
-
-  .insight-matrix__layer {
-    min-height: 44px;
-    border: 0;
-    border-radius: var(--radius-full);
-    background: transparent;
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    padding: 0.35rem 0.75rem;
-    cursor: pointer;
-  }
-
-  .insight-matrix__layer--active {
-    background: var(--color-primary-soft);
-    color: var(--color-primary);
   }
 
   .insight-matrix__header h2,
@@ -371,10 +277,6 @@
     .insight-matrix__actions {
       flex-direction: column;
       align-items: stretch;
-    }
-
-    .insight-matrix__layers {
-      justify-content: flex-start;
     }
   }
 

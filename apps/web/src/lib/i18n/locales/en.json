@@ -1046,21 +1046,14 @@
     },
     "matrix": {
       "heading": "Correlation Matrix",
-      "subtitle": "Tag and mood patterns sorted by effect size.",
+      "subtitle": "Tags, symptoms and habits sorted by effect size.",
       "tag": "Tag",
+      "subject": "Subject",
       "metric": "Metric",
       "effect": "Effect",
       "confidence": "Confidence",
       "export": "Export PNG",
-      "empty": "No sufficiently stable tag-mood patterns yet.",
-      "empty_layer": "No stable patterns for this view yet.",
-      "layers": "Matrix view",
-      "layer_tags": "Tags",
-      "layer_symptoms": "Symptoms",
-      "layer_habits": "Habits",
-      "subject_tag": "Tag",
-      "subject_symptom": "Symptom",
-      "subject_habit": "Habit"
+      "empty": "No sufficiently stable patterns yet."
     },
     "cooccurrence": {
       "heading": "Patterns",

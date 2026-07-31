@@ -44,10 +44,12 @@ test('430px shows the correlation matrix inline alongside findings and analytics
   await installInsightsApiMock(page);
   await page.goto('/insights');
 
-  // #571: the matrix is prominent inline — not hidden behind a tab. The top
-  // insight (mobile lead) stays visible alongside it.
+  // #571: the matrix is prominent inline above the top insight (mobile lead).
   await expect(page.getByTestId('insight-matrix')).toBeVisible();
   await expect(page.getByTestId('mobile-insight-lead')).toBeVisible();
+  const matrixBox = await page.getByTestId('insight-matrix').boundingBox();
+  const leadBox = await page.getByTestId('mobile-insight-lead').boundingBox();
+  expect(matrixBox && leadBox && matrixBox.y < leadBox.y).toBe(true);
 
   await page.getByTestId('insights-filter-tab-symptoms').tap();
   await expect(
