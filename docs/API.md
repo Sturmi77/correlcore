@@ -791,11 +791,45 @@ Schlaf-/Wearable-Import selbst folgt in M8; die Consent-API ist die Foundation.
 
 ### `GET/PATCH /api/v1/user/preferences`
 
-Speichert nicht-sensitive UI-/Insight-Präferenzen des aktuellen Users:
-`analytics_enabled`, Onboarding-Completion-Flags,
-`dismissed_insight_keys`, `reached_milestone_keys` und
-`last_seen_insight_at`. Der Analytics-Worker berücksichtigt
-`analytics_enabled=false` beim Job-Listing.
+Speichert nicht-sensitive UI-/Insight-Präferenzen des aktuellen Users.
+Der Analytics-Worker berücksichtigt `analytics_enabled=false` beim Job-Listing.
+
+**Felder (Response / PATCH, alle optional außer `user_id` in GET):**
+
+| Feld | Typ | Default | Beschreibung |
+| --- | --- | --- | --- |
+| `analytics_enabled` | bool | `true` | Insights/Analytics für den User |
+| `digest_enabled` | bool | `false` | Wöchentlicher Insight-Digest |
+| `cycle_tracking_enabled` | bool | `true` | Zyklustag-Feld im Entry-Formular |
+| `onboarding_retro_completed` | bool | `false` | Retro-Onboarding abgeschlossen |
+| `onboarding_profile_completed` | bool | `false` | Profil-Onboarding abgeschlossen |
+| `onboarding_maturity_intro_seen` | bool | `false` | Maturity-Intro gesehen |
+| `dismissed_insight_keys` | string[] | `[]` | Dismissed Insight-/Banner-Keys |
+| `reached_milestone_keys` | string[] | `[]` | Erreichte Maturity-Meilensteine |
+| `last_seen_insight_at` | datetime \| null | `null` | Letzter Insight-Besuch |
+| `home_sections` | object[] \| null | merged default | Konfigurierbare Home-Blöcke (#584) |
+
+**`home_sections` (#584):** Array von `{ "key": string, "enabled": bool }`.
+Reihenfolge = Render-Reihenfolge auf Home. Erlaubte Keys:
+`first_week_banner`, `daily_brief`, `work_context`, `weekday_overview`.
+`NULL` oder leer in der DB → Server liefert das brief-first-Default-Layout;
+unbekannte Keys werden verworfen, fehlende Default-Keys eingefügt.
+
+Beispiel PATCH:
+
+```json
+{
+  "home_sections": [
+    { "key": "daily_brief", "enabled": true },
+    { "key": "weekday_overview", "enabled": true },
+    { "key": "work_context", "enabled": false },
+    { "key": "first_week_banner", "enabled": true }
+  ]
+}
+```
+
+Settings-UI: `/settings/home` (Web). Siehe
+[`docs/proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md`](proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md).
 
 ### `PUT /api/v1/user/profile`
 

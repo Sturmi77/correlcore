@@ -153,14 +153,15 @@ Sprint 4 board, 1680 px width, 390×844 frames).
 
 | #   | State               | Content (match code)                                                |
 | --- | ------------------- | ------------------------------------------------------------------- |
-| 1   | Default             | `ScreenHeader`, `HomeSummary`, Daily Brief teaser, `AppNav · Today` |
+| 1   | Default             | `ScreenHeader`, `HomeTodayContext`, configurable blocks (default: Daily Brief, work context, weekday overview), `AppNav · Today` |
 | 2   | Partial / loading   | Skeleton or `DataState` partial — match `HomeDailyBrief` loading    |
 | 3   | Empty / first visit | No entries yet CTA toward Entry                                     |
 
 Code references:
 
 - `apps/web/src/routes/+page.svelte`
-- `HomeSummary`, `HomeDailyBrief`, `HomeTodayContext`, `HomeInsight`
+- `HomeTodayContext`, `HomeDailyBrief`, `HomeWorkContextSummary`, `HomeWeekdayOverview`, `FirstWeekInsightBanner`
+- Layout order: `user_preferences.home_sections` via `/settings/home` (#584)
 
 **Exit:** 3 frames; nodes in `correlcore-figma-map.json` under
 `implementationFlows`; audit Home row → **green**.

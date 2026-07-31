@@ -8,6 +8,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Configurable Home screen layout (#584).** Users can show, hide, and reorder
+  compact Home blocks via `/settings/home`. Preferences persist in
+  `user_preferences.home_sections` (JSONB, migration 034). Default layout
+  matches the previous brief-first order: early pattern notice, daily brief,
+  work-context summary, weekday overview. Today context strip, primary CTA,
+  PWA install banner, and onboarding redirect remain fixed. See ADR-0017
+  (2026-07-31 amendment) and
+  [`docs/proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md`](docs/proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md).
+
 ### Docs
 
 - **Reverse-proxy edges now document the required large proxy buffers** — the

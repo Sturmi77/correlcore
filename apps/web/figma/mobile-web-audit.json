@@ -39,17 +39,18 @@
       "routes": ["/"],
       "figmaNodes": ["121:2292", "121:2296", "21:3", "28:331", "28:698"],
       "primaryComponents": [
-        "HomeSummary",
-        "HomeDailyBrief",
         "HomeTodayContext",
-        "HomeSparkline",
+        "HomeDailyBrief",
+        "HomeWorkContextSummary",
+        "HomeWeekdayOverview",
+        "FirstWeekInsightBanner",
         "AppNav",
         "ScreenHeader"
       ],
       "mobileStatus": "green",
       "webStatus": "green",
-      "problemType": "Sprint 5 mobile Home flow aligned with ADR-0017 three-zone contract",
-      "recommendation": "Use Sprint 5 flow `121:2292`; legacy `21:3` is reference-only."
+      "problemType": "Configurable Home blocks (#584); Figma frames pre-date sparkline removal",
+      "recommendation": "Use Sprint 5 flow `121:2292`; users reorder blocks at `/settings/home`."
     },
     {
       "screen": "Entry",
@@ -106,7 +107,7 @@
     },
     {
       "screen": "Settings",
-      "routes": ["/settings", "/settings/tags", "/settings/symptoms", "/settings/app"],
+      "routes": ["/settings", "/settings/home", "/settings/tags", "/settings/symptoms", "/settings/app"],
       "figmaNodes": ["105:1626", "105:1634", "121:2662", "121:2703", "121:2741"],
       "primaryComponents": [
         "ScreenHeader",
@@ -114,12 +115,13 @@
         "Button",
         "InlineAlert",
         "ThemeToggle",
+        "HomeSectionsEditor",
         "FormField"
       ],
       "mobileStatus": "green",
       "webStatus": "green",
-      "problemType": "Sprint 4 + F tag management frames",
-      "recommendation": "Use B1b tag frames; desktop keeps dense management rows."
+      "problemType": "Home layout editor shipped (#584); Figma frame for `/settings/home` still open",
+      "recommendation": "Use B1b tag frames; add Home layout settings frame; desktop keeps dense management rows."
     },
     {
       "screen": "Onboarding/Auth",
@@ -233,12 +235,12 @@
       "recommendation": "Split screen composition, not data model: mobile capture flow vs web workspace."
     },
     {
-      "component": "HomeSummary",
-      "source": "apps/web/src/lib/components/home/HomeSummary.svelte",
+      "component": "HomeWorkContextSummary",
+      "source": "apps/web/src/lib/components/home/HomeWorkContextSummary.svelte",
       "classification": "Shared",
       "mobileRisk": "low",
       "webRisk": "low",
-      "recommendation": "Use shared summary but vary surrounding context density."
+      "recommendation": "Work-context bars; toggled independently on Home since #584."
     },
     {
       "component": "MetricTimeseries",

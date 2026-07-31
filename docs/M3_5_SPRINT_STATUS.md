@@ -66,6 +66,10 @@ Tracking document for [`M3_5_SPRINT_PLAN.md`](M3_5_SPRINT_PLAN.md). Each sprint 
 - Secondary links to Insights and Trends
 - `homeView.test.ts` + `HomeTodayContext.test.ts`
 
+> **2026-07-31 (#584):** Home middle blocks are now **user-configurable**
+> (`home_sections`, `/settings/home`). Default order matches the post–Sprint 4
+> brief-first layout; sparkline/recent grids remain removed. See ADR-0017 amendment.
+
 ## Sprint 5 — Done
 
 - `InsightQualityMeter.svelte` added to the Insights feed

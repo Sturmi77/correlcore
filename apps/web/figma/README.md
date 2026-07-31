@@ -21,7 +21,7 @@ library and a Dev or Full seat on an Organization or Enterprise plan.
 - TagChip: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=17-18
 - FormField: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=17-58
 - MetricCard: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-53
-- HomeSummary: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-113
+- HomeDailyBrief (legacy Figma label **HomeSummary**): https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=19-113
 - MetricTimeseries: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=20-102
 - ComparisonHeatmap: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=20-268
 - InsightCard: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=79-55
@@ -62,7 +62,7 @@ Verify after publish: Dev Mode on Button `6:64` shows Svelte snippet; or MCP
 | Button              | 6-64       | Button.svelte                       |
 | ComparisonHeatmap   | 20-268     | ComparisonHeatmap.svelte            |
 | FormField           | 17-58      | TagPicker.svelte (field pattern)    |
-| HomeSummary         | 19-113     | HomeSummary.svelte                  |
+| HomeDailyBrief      | 19-113     | HomeDailyBrief.svelte (Figma node still named HomeSummary) |
 | InlineAlert         | 10-43      | InlineAlert.svelte                  |
 | InsightCard         | 79-55      | InsightCard.svelte                  |
 | InsightMatrix       | 131-62     | InsightMatrix.svelte                |
@@ -301,8 +301,10 @@ Production-grade closeout — **Sprint E–F complete**; remaining Sprints G–I
 - Loading: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2361
 - Empty: https://www.figma.com/design/XjijHnzMJubA1iuPQxHOwS?node-id=121-2425
 
-Three zones per ADR-0017: today context (`ScreenHeader`), daily brief (`HomeSummary` +
-panel), entry CTA + `AppNav · Today`.
+Home per ADR-0017 (#584): fixed today context (`HomeTodayContext`), configurable
+compact blocks (default: `HomeDailyBrief`, `HomeWorkContextSummary`,
+`HomeWeekdayOverview`, optional `FirstWeekInsightBanner` — order at
+`/settings/home`), entry CTA + `AppNav · Today`.
 
 ### Sprint 4 extensions (Sprint F)
 
