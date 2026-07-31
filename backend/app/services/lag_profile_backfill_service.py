@@ -21,7 +21,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.insight import Insight
 from app.services.insight_engine import generate_insight_candidates, load_analytics_data
-from app.services.insight_service import _analytics_enabled
+from app.services.stats_service import _analytics_enabled
 
 logger = logging.getLogger(__name__)
 
