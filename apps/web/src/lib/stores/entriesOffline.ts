@@ -6,7 +6,11 @@ import type { EntryResponse } from '$lib/api/entries';
 import { listEntries } from '$lib/api/entries';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 import type { SymptomEntry } from '$lib/api/symptoms';
-import { ackPendingChangesForEntity, appendChange, listPendingChanges } from '$lib/offline/changeLog';
+import {
+  ackPendingChangesForEntity,
+  appendChange,
+  listPendingChanges,
+} from '$lib/offline/changeLog';
 import { getOfflineDb } from '$lib/offline/db';
 import type { LocalEntry, SyncState } from '$lib/offline/types';
 
