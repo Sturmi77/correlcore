@@ -85,11 +85,7 @@ def _jsonable_without_ids(value: Any) -> Any:
             cleaned[key] = _jsonable_without_ids(item)
         return cleaned
     if isinstance(value, list):
-        return [
-            _jsonable_without_ids(item)
-            for item in value
-            if not isinstance(item, uuid.UUID)
-        ]
+        return [_jsonable_without_ids(item) for item in value if not isinstance(item, uuid.UUID)]
     if isinstance(value, datetime):
         return value.isoformat()
     if hasattr(value, "value") and not isinstance(value, (str, bytes, bool, int, float)):
@@ -223,9 +219,7 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
                 "statement": insight.statement_enc,
                 "flags": _jsonable_without_ids(insight.flags or {}),
                 "payload": _jsonable_without_ids(insight.payload or {}),
-                "visibility": (
-                    "dismissed" if subject_key in dismissed_subject_keys else "active"
-                ),
+                "visibility": ("dismissed" if subject_key in dismissed_subject_keys else "active"),
                 "generated_for_date": insight.generated_for_date.isoformat(),
                 "generated_at": insight.generated_at.isoformat(),
                 "created_at": insight.created_at.isoformat(),

@@ -309,9 +309,7 @@ async def list_insight_dismissals_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> InsightDismissalListResponse:
     views = await list_insight_dismissals(db, user_id=user.id)
-    return InsightDismissalListResponse(
-        dismissals=[_dismissal_response(view) for view in views]
-    )
+    return InsightDismissalListResponse(dismissals=[_dismissal_response(view) for view in views])
 
 
 @router.post(
@@ -328,9 +326,7 @@ async def create_insight_dismissal_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> InsightDismissalResponse:
     try:
-        row = await create_insight_dismissal(
-            db, user_id=user.id, insight_id=payload.insight_id
-        )
+        row = await create_insight_dismissal(db, user_id=user.id, insight_id=payload.insight_id)
     except InsightNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

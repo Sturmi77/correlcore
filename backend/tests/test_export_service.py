@@ -69,7 +69,9 @@ def _make_insight(user, *, subject_label: str = "energy") -> Insight:
     return insight
 
 
-def _make_dismissal(user, *, subject_key: str, insight_id: uuid.UUID | None = None) -> InsightDismissal:
+def _make_dismissal(
+    user, *, subject_key: str, insight_id: uuid.UUID | None = None
+) -> InsightDismissal:
     now = datetime(2026, 5, 15, tzinfo=UTC)
     row = InsightDismissal()
     row.id = uuid.uuid4()

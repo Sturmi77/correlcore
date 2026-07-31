@@ -108,7 +108,9 @@ async def test_compute_weekly_digest_excludes_dismissed_insight_ids() -> None:
         ),
     ):
         with pytest.raises(DigestNotAvailableError):
-            await compute_weekly_digest_for_user(MagicMock(), user_id=user_id, as_of=datetime.now(UTC))
+            await compute_weekly_digest_for_user(
+                MagicMock(), user_id=user_id, as_of=datetime.now(UTC)
+            )
 
     # With a fourth qualifying insight, dismissed top effect still excluded from ranking.
     extra = _make_insight(effect_size=0.35, confidence=0.7)
@@ -140,7 +142,9 @@ async def test_compute_weekly_digest_excludes_dismissed_insight_ids() -> None:
         ),
     ):
         digest = await compute_weekly_digest_for_user(
-            MagicMock(), user_id=user_id, as_of=datetime.combine(week, datetime.min.time(), tzinfo=UTC)
+            MagicMock(),
+            user_id=user_id,
+            as_of=datetime.combine(week, datetime.min.time(), tzinfo=UTC),
         )
 
     assert digest.insight_count == DIGEST_TOP_N

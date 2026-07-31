@@ -172,7 +172,7 @@
   }
 
   .insight-history__day-label {
-    font-size: var(--text-md);
+    font-size: var(--text-base);
     font-weight: 600;
   }
 

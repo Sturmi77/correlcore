@@ -104,9 +104,7 @@ async def test_add_and_remove_dismissed_insight_keys() -> None:
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    added = await add_dismissed_insight_keys(
-        db, user_id=user.id, keys=["keep_me", "new_key", ""]
-    )
+    added = await add_dismissed_insight_keys(db, user_id=user.id, keys=["keep_me", "new_key", ""])
     assert added.dismissed_insight_keys == ["keep_me", "new_key"]
 
     removed = await remove_dismissed_insight_keys(db, user_id=user.id, keys=["new_key"])

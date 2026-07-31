@@ -319,9 +319,7 @@ def insight_subject_key(
         "insight_type": insight_type,
         "metric": _latest_metric_key(insight),
         "subject_type": insight.subject_type,
-        "subject": _jsonable_subject_part(
-            _latest_subject_key(insight, tag_slugs_by_id=slugs)
-        ),
+        "subject": _jsonable_subject_part(_latest_subject_key(insight, tag_slugs_by_id=slugs)),
     }
     return json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=True)
 
