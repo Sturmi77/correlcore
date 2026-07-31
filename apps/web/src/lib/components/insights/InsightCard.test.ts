@@ -330,3 +330,44 @@ describe('InsightCard', () => {
     );
   });
 });
+
+describe('InsightCard lag profile mini-bars (#488 Phase 1b)', () => {
+  const LAG_INSIGHT: InsightResponse = {
+    ...INSIGHT,
+    id: 'test-lag',
+    insight_type: 'symptom_cluster',
+    payload: {
+      method: 'lag',
+      target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+      feature: { kind: 'tag', key: 'tag:sport', name: 'Sport' },
+      lag_days: 2,
+      lag_profile: [
+        { lag: 1, r: 0.1 },
+        { lag: 2, r: 0.4 },
+        { lag: 3, r: 0.15 },
+      ],
+    },
+  };
+
+  it('renders one bar per day 1..7 and marks the chosen lag active', () => {
+    const { container } = render(InsightCard, { props: { insight: LAG_INSIGHT } });
+
+    expect(screen.getByTestId('insight-card-lag-profile')).toBeTruthy();
+    expect(container.querySelectorAll('.insight-card__lag-col')).toHaveLength(7);
+
+    const active = container.querySelectorAll('.insight-card__lag-col--active');
+    expect(active).toHaveLength(1);
+    expect(active[0]?.querySelector('.insight-card__lag-tick')?.textContent?.trim()).toBe('2');
+  });
+
+  it('hides the profile when the payload lacks a usable lag_profile series', () => {
+    const noProfile: InsightResponse = {
+      ...LAG_INSIGHT,
+      id: 'test-lag-none',
+      payload: { ...LAG_INSIGHT.payload, lag_profile: [{ lag: 2, r: 0.4 }] },
+    };
+    render(InsightCard, { props: { insight: noProfile } });
+
+    expect(screen.queryByTestId('insight-card-lag-profile')).toBeNull();
+  });
+});

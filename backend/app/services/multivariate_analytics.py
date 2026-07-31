@@ -75,6 +75,14 @@ class LassoFinding:
 
 
 @dataclass(frozen=True)
+class LagProfilePoint:
+    """Correlation at a single lag offset for a target/feature pair."""
+
+    lag_days: int
+    correlation: float
+
+
+@dataclass(frozen=True)
 class LagFinding:
     """One lagged association that survived effect-size and FDR gates."""
 
@@ -85,6 +93,9 @@ class LagFinding:
     p_value: float
     p_corrected: float
     sample_n: int
+    # #488 Phase 1b: r at every observed lag 1..MAX_LAG_DAYS for this pair, so
+    # the UI can draw a small lag profile. Empty when no other lags were usable.
+    profile: tuple[LagProfilePoint, ...] = ()
 
 
 def m7_time_series_split() -> TimeSeriesSplit:
@@ -335,6 +346,12 @@ def run_lag_analysis(
     if not raw:
         return []
 
+    # The full r[lag] curve per pair, built from the same correlations we already
+    # computed — no extra passes and no new raw data leaves the analytics layer.
+    profiles: dict[tuple[str, str], dict[int, float]] = {}
+    for target, feature, lag_days, correlation, _p, _n in raw:
+        profiles.setdefault((target, feature), {})[lag_days] = round(correlation, 4)
+
     _, p_corrected, _, _ = multipletests(
         [item[4] for item in raw],
         alpha=fdr_alpha,
@@ -349,6 +366,10 @@ def run_lag_analysis(
         corrected_float = float(corrected)
         if corrected_float > fdr_alpha or abs(correlation) < min_abs_correlation:
             continue
+        profile = tuple(
+            LagProfilePoint(lag_days=lag, correlation=corr)
+            for lag, corr in sorted(profiles.get((target, feature), {}).items())
+        )
         findings.append(
             LagFinding(
                 target=feature_meta[target],
@@ -358,6 +379,7 @@ def run_lag_analysis(
                 p_value=round(p_value, 6),
                 p_corrected=round(corrected_float, 6),
                 sample_n=sample_n,
+                profile=profile,
             )
         )
 

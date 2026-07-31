@@ -1077,6 +1077,10 @@ def _lag_candidates(
                     "correlation": finding.correlation,
                     "p_value_corrected": finding.p_corrected,
                     "sample_n": finding.sample_n,
+                    # #488 Phase 1b: r at each observed lag 1..7 for the mini profile.
+                    "lag_profile": [
+                        {"lag": point.lag_days, "r": point.correlation} for point in finding.profile
+                    ],
                 },
                 generated_for_date=generated_for_date,
             )

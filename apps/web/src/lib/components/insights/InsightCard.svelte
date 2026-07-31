@@ -95,6 +95,49 @@
     return typeof value === 'number' && Number.isFinite(value) ? value : null;
   }
 
+  // #488 Phase 1b: a small lag profile (r at each day 1..7) for lag insights,
+  // rendered only when the payload carries the series. Non-causal — magnitude
+  // bars with the chosen lag highlighted; missing lags render as a baseline.
+  const LAG_PROFILE_MAX_DAYS = 7;
+
+  type LagProfileBar = { lag: number; r: number; active: boolean };
+
+  function lagProfileBars(ins: InsightResponse): LagProfileBar[] | null {
+    const payload = ins.payload as Record<string, unknown> | undefined;
+    if (!payload || payload.method !== 'lag') return null;
+    const raw = payload.lag_profile;
+    if (!Array.isArray(raw) || raw.length < 2) return null;
+    const chosen = payloadNumber(ins, 'lag_days');
+    const byLag = new Map<number, number>();
+    for (const point of raw) {
+      if (
+        point &&
+        typeof point === 'object' &&
+        typeof (point as { lag?: unknown }).lag === 'number' &&
+        typeof (point as { r?: unknown }).r === 'number'
+      ) {
+        byLag.set((point as { lag: number }).lag, (point as { r: number }).r);
+      }
+    }
+    if (byLag.size < 2) return null;
+    const bars: LagProfileBar[] = [];
+    for (let lag = 1; lag <= LAG_PROFILE_MAX_DAYS; lag += 1) {
+      bars.push({ lag, r: byLag.get(lag) ?? 0, active: lag === chosen });
+    }
+    return bars;
+  }
+
+  $: lagProfile = insight ? lagProfileBars(insight) : null;
+  $: lagProfileMaxAbs = lagProfile
+    ? Math.max(...lagProfile.map((bar) => Math.abs(bar.r)), 0.0001)
+    : 1;
+
+  function lagBarHeight(r: number): number {
+    // Floor non-zero bars so a real-but-small correlation stays visible.
+    const ratio = Math.abs(r) / lagProfileMaxAbs;
+    return r === 0 ? 0 : Math.max(8, Math.round(ratio * 100));
+  }
+
   function workContextLabel(ins: InsightResponse): string | null {
     const explicit = payloadString(ins, 'work_context_label');
     if (explicit) return explicit;
@@ -346,6 +389,34 @@
       />
     {/if}
 
+    {#if lagProfile}
+      <div class="insight-card__lag-profile" data-testid="insight-card-lag-profile">
+        <span class="insight-card__lag-profile-label">
+          {$_('insights.card.lag_profile_label')}
+        </span>
+        <div
+          class="insight-card__lag-bars"
+          role="img"
+          aria-label={$_('insights.card.lag_profile_aria', {
+            values: { days: payloadNumber(insight, 'lag_days') ?? 0 },
+          })}
+        >
+          {#each lagProfile as bar (bar.lag)}
+            <div class="insight-card__lag-col" class:insight-card__lag-col--active={bar.active}>
+              <div class="insight-card__lag-bar-track">
+                <div
+                  class="insight-card__lag-bar"
+                  style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
+                  title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                ></div>
+              </div>
+              <span class="insight-card__lag-tick">{bar.lag}</span>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
     <a
       href="/insights/disclaimer"
       class="insight-card__disclaimer"
@@ -557,6 +628,56 @@
   .insight-card__inactive-hint::before {
     content: ' · ';
   }
+  /* #488 Phase 1b: lag profile mini-bars (days 1..7). Token-only colours. */
+  .insight-card__lag-profile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1, 0.25rem);
+    margin-top: var(--space-1, 0.25rem);
+  }
+  .insight-card__lag-profile-label {
+    font-size: var(--text-xs, 0.75rem);
+    color: var(--color-text-muted);
+  }
+  .insight-card__lag-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-1, 0.25rem);
+    height: 40px;
+  }
+  .insight-card__lag-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 0;
+  }
+  .insight-card__lag-bar-track {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    height: 28px;
+  }
+  .insight-card__lag-bar {
+    width: 60%;
+    min-height: 1px;
+    border-radius: var(--radius-xs, 2px);
+    opacity: 0.45;
+  }
+  .insight-card__lag-col--active .insight-card__lag-bar {
+    opacity: 1;
+  }
+  .insight-card__lag-tick {
+    font-size: var(--text-xs, 0.75rem);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .insight-card__lag-col--active .insight-card__lag-tick {
+    color: var(--color-fg);
+    font-weight: 600;
+  }
+
   .insight-card__disclaimer {
     font-size: var(--text-xs, 0.75rem);
     color: var(--color-text-muted);

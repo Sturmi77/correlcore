@@ -174,3 +174,41 @@ def test_lag_analysis_treats_symptoms_as_targets() -> None:
         finding.target.kind == "symptom" and finding.feature.kind == "tag" and finding.lag_days == 1
         for finding in findings
     )
+
+
+def test_lag_analysis_attaches_lag_profile() -> None:
+    # #488 Phase 1b: each finding carries r at every observed lag for its pair.
+    tag_id = uuid.uuid4()
+    symptom_id = uuid.uuid4()
+    start = date(2026, 1, 1)
+    entries = []
+    for offset in range(100):
+        tag_present = offset % 4 == 0
+        symptom_present = offset > 0 and (offset - 1) % 4 == 0
+        entries.append(
+            _entry(
+                start + timedelta(days=offset),
+                tag_ids=frozenset({tag_id}) if tag_present else frozenset(),
+                symptom_ids=frozenset({symptom_id}) if symptom_present else frozenset(),
+            )
+        )
+    frame, feature_meta = build_design_matrix(
+        entries,
+        tags={tag_id: _feature("tag", tag_id, "stressful-day")},
+        symptoms={symptom_id: _feature("symptom", symptom_id, "headache")},
+    )
+
+    findings = run_lag_analysis(frame, feature_meta)
+    lag_finding = next(
+        finding
+        for finding in findings
+        if finding.target.kind == "symptom" and finding.feature.kind == "tag"
+    )
+
+    lags = {point.lag_days for point in lag_finding.profile}
+    # The profile spans multiple observed lags and includes the winning lag.
+    assert len(lag_finding.profile) >= 2
+    assert lag_finding.lag_days in lags
+    assert all(isinstance(point.correlation, float) for point in lag_finding.profile)
+    # Sorted by lag for stable rendering.
+    assert [point.lag_days for point in lag_finding.profile] == sorted(lags)
