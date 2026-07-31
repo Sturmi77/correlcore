@@ -50,6 +50,8 @@
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
   import InsightsAnalysisToolbar from '$lib/components/insights/InsightsAnalysisToolbar.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
+  import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';
+  import { buildLagHeatmapRows } from '$lib/utils/lagHeatmap';
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
   import MobileInsightLead from '$lib/components/insights/MobileInsightLead.svelte';
   import CooccurrenceEntrySheet from '$lib/components/insights/CooccurrenceEntrySheet.svelte';
@@ -664,6 +666,8 @@
   // #571: the correlation matrix is shown inline & prominent (not behind a tab).
   $: showMatrix = canShowMatrixTab(insightMaturity?.phase ?? null, insights);
   $: showAdvancedAnalytics = canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
+  // #488 Phase 2: only when advanced analytics are unlocked and ≥2 lag pairs carry a profile.
+  $: showLagHeatmap = showAdvancedAnalytics && buildLagHeatmapRows(insights).length >= 2;
   $: showTagCooccurrencePanel =
     canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
     (cooccurrenceLoading || hasTagCooccurrenceData(cooccurrence));
@@ -841,6 +845,12 @@
     {#if showMatrix}
       <section class="insights-page__matrix" data-testid="insights-matrix-section">
         <InsightMatrix {insights} />
+      </section>
+    {/if}
+
+    {#if showLagHeatmap}
+      <section class="insights-page__lag-heatmap" data-testid="insights-lag-heatmap-section">
+        <LagCorrelationHeatmap {insights} />
       </section>
     {/if}
 

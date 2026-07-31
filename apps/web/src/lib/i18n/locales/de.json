@@ -1159,6 +1159,14 @@
       "lag_profile_label": "Zusammenhang je Verzoegerung (Tage)",
       "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen"
     },
+    "lag_heatmap": {
+      "title": "Zeitversatz-Muster",
+      "subtitle": "Zusammenhangsstaerke je Paar und Verzoegerung (1–7 Tage). Kein Kausalnachweis.",
+      "aria": "Heatmap der Zeitversatz-Zusammenhaenge: Zeilen sind Paare, Spalten sind Tage Verzoegerung",
+      "row_summary": "{pair}: am staerksten bei +{lag} Tagen (r {r})",
+      "legend_neg": "gegenlaeufig",
+      "legend_pos": "gleichlaeufig"
+    },
     "disclaimer": {
       "modal_title": "Was bedeutet diese Erkenntnis?",
       "close_aria": "Erkl\u00e4rung schlie\u00dfen",
