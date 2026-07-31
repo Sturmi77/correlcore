@@ -56,4 +56,30 @@ describe('LagCorrelationHeatmap (#488 Phase 2)', () => {
     render(LagCorrelationHeatmap, { props: { insights: [lagInsight('a', 2)] } });
     expect(screen.queryByTestId('lag-correlation-heatmap')).toBeNull();
   });
+
+  it('translates core-metric identifiers in row labels (#586)', () => {
+    const withMetricTarget = (id: string): InsightResponse => ({
+      ...lagInsight(id, 2),
+      payload: {
+        method: 'lag',
+        lag_days: 2,
+        feature: { kind: 'tag', key: `tag:sport-${id}`, name: `Sport ${id}` },
+        // Backend fills target.name from the raw storage key for core metrics.
+        target: { kind: 'metric', key: 'mood_score', name: 'mood_score' },
+        lag_profile: [
+          { lag: 1, r: 0.1 },
+          { lag: 2, r: 0.42 },
+        ],
+      },
+    });
+
+    const { container } = render(LagCorrelationHeatmap, {
+      props: { insights: [withMetricTarget('a'), withMetricTarget('b')] },
+    });
+
+    const label = container.querySelector('.lag-heatmap__row-label')?.textContent ?? '';
+    // i18n mock returns the key; the point is it resolved to the token, not the raw name.
+    expect(label).toContain('trends.metric.mood');
+    expect(label).not.toContain('mood_score');
+  });
 });

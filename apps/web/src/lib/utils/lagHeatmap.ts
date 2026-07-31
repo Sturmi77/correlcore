@@ -12,15 +12,21 @@ export interface LagHeatmapCell {
 
 export interface LagHeatmapRow {
   id: string;
-  label: string;
+  /** Raw feature/target metadata — the component composes + translates the label. */
+  featureName: string;
+  targetName: string;
+  featureKind: string | null;
+  targetKind: string | null;
+  featureKey: string | null;
+  targetKey: string | null;
   chosenLag: number | null;
   cells: LagHeatmapCell[];
 }
 
-function featureName(value: unknown): string | null {
+function featureField(value: unknown, field: 'name' | 'key' | 'kind'): string | null {
   if (value && typeof value === 'object') {
-    const name = (value as { name?: unknown }).name;
-    if (typeof name === 'string' && name.length > 0) return name;
+    const candidate = (value as Record<string, unknown>)[field];
+    if (typeof candidate === 'string' && candidate.length > 0) return candidate;
   }
   return null;
 }
@@ -30,9 +36,17 @@ function featureName(value: unknown): string | null {
  * feature→target pair; columns are lags 1..7 with the correlation from the
  * insight's `lag_profile` (Phase 1b). Rows without a usable profile (< 2
  * observed lags) are skipped so the heatmap never shows a single-point "curve".
+ *
+ * run_lag_analysis emits one insight per surviving lag for a pair (and
+ * /insights/latest keeps them because lag_days is part of its dedup key), so we
+ * collapse to one row per feature→target pair here — those insights share the
+ * same profile, and the feed is ordered by |correlation|, so the first is the
+ * pair's strongest lag.
  */
 export function buildLagHeatmapRows(insights: readonly InsightResponse[]): LagHeatmapRow[] {
   const rows: LagHeatmapRow[] = [];
+  const seenPairs = new Set<string>();
+
   for (const insight of insights) {
     const payload = insight.payload as Record<string, unknown> | undefined;
     if (!payload || payload.method !== 'lag') continue;
@@ -52,9 +66,16 @@ export function buildLagHeatmapRows(insights: readonly InsightResponse[]): LagHe
     }
     if (byLag.size < 2) continue;
 
+    const featureName = featureField(payload.feature, 'name') ?? insight.subject_label ?? 'Feature';
+    const targetName = featureField(payload.target, 'name') ?? insight.metric ?? 'Target';
+    const featureKey = featureField(payload.feature, 'key');
+    const targetKey = featureField(payload.target, 'key');
+
+    const pairKey = `${featureKey ?? featureName}→${targetKey ?? targetName}`;
+    if (seenPairs.has(pairKey)) continue;
+    seenPairs.add(pairKey);
+
     const chosenLag = typeof payload.lag_days === 'number' ? payload.lag_days : null;
-    const feature = featureName(payload.feature) ?? insight.subject_label ?? 'Feature';
-    const target = featureName(payload.target) ?? insight.metric ?? 'Target';
     const cells: LagHeatmapCell[] = [];
     for (let lag = 1; lag <= LAG_HEATMAP_MAX_DAYS; lag += 1) {
       cells.push({
@@ -63,7 +84,18 @@ export function buildLagHeatmapRows(insights: readonly InsightResponse[]): LagHe
         active: lag === chosenLag,
       });
     }
-    rows.push({ id: insight.id, label: `${feature} → ${target}`, chosenLag, cells });
+
+    rows.push({
+      id: insight.id,
+      featureName,
+      targetName,
+      featureKind: featureField(payload.feature, 'kind'),
+      targetKind: featureField(payload.target, 'kind'),
+      featureKey,
+      targetKey,
+      chosenLag,
+      cells,
+    });
   }
   return rows;
 }

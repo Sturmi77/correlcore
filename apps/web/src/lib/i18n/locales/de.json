@@ -1163,6 +1163,7 @@
       "title": "Zeitversatz-Muster",
       "subtitle": "Zusammenhangsstaerke je Paar und Verzoegerung (1–7 Tage). Kein Kausalnachweis.",
       "aria": "Heatmap der Zeitversatz-Zusammenhaenge: Zeilen sind Paare, Spalten sind Tage Verzoegerung",
+      "row_summary": "{pair}: am staerksten bei +{lag} Tagen (r {r})",
       "legend_neg": "gegenlaeufig",
       "legend_pos": "gleichlaeufig"
     },

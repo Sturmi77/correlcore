@@ -1163,6 +1163,7 @@
       "title": "Time-offset patterns",
       "subtitle": "Association strength per pair and delay (1–7 days). Not a causal claim.",
       "aria": "Time-offset association heatmap: rows are pairs, columns are days of delay",
+      "row_summary": "{pair}: strongest at +{lag} days (r {r})",
       "legend_neg": "opposite",
       "legend_pos": "aligned"
     },
