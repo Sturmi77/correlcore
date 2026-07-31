@@ -129,3 +129,51 @@ class InsightDigestResponse(BaseModel):
     insights: list[InsightDigestItemResponse] = Field(default_factory=list)
     push_title: str
     push_body: str
+
+
+class InsightDismissalCreate(BaseModel):
+    """Hide an insight by resolving its subject-stable key."""
+
+    insight_id: uuid.UUID
+
+
+class InsightDismissalResponse(BaseModel):
+    """One subject-stable hide record, optionally hydrated with a live insight."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    subject_key: str
+    insight_id: uuid.UUID | None = None
+    dismissed_at: datetime
+    created_at: datetime
+    insight: InsightResponse | None = None
+
+
+class InsightDismissalListResponse(BaseModel):
+    dismissals: list[InsightDismissalResponse] = Field(default_factory=list)
+
+
+class InsightHistoryVisibility(StrEnum):
+    ACTIVE = "active"
+    DISMISSED = "dismissed"
+    ALL = "all"
+
+
+class InsightHistoryItem(InsightResponse):
+    """One historical insight row with hide visibility for the timeline."""
+
+    visibility: Literal["active", "dismissed"]
+    subject_key: str
+    first_seen_on: date_type | None = None
+    last_seen_on: date_type | None = None
+    observation_count: int | None = Field(default=None, ge=1)
+
+
+class InsightHistoryResponse(BaseModel):
+    """Paginated insight history for the timeline / archive surface."""
+
+    insights: list[InsightHistoryItem] = Field(default_factory=list)
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1)
+    offset: int = Field(ge=0)

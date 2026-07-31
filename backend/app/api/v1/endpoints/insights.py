@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -20,7 +21,12 @@ from app.models.user import User
 from app.schemas.insight import (
     InsightDigestItemResponse,
     InsightDigestResponse,
+    InsightDismissalCreate,
+    InsightDismissalListResponse,
+    InsightDismissalResponse,
     InsightEventWindowsResponse,
+    InsightHistoryItem,
+    InsightHistoryResponse,
     InsightListResponse,
     InsightRegenerateResponse,
     InsightResponse,
@@ -38,6 +44,13 @@ from app.services.insight_digest import (
     build_push_payload,
     get_latest_weekly_digest,
 )
+from app.services.insight_dismissal_service import (
+    InsightDismissalNotFoundError,
+    create_insight_dismissal,
+    delete_insight_dismissal,
+    delete_insight_dismissal_by_insight_id,
+    list_insight_dismissals,
+)
 from app.services.insight_service import (
     DEFAULT_INSIGHT_LIST_LIMIT,
     DEFAULT_LATEST_INSIGHT_LIMIT,
@@ -47,6 +60,7 @@ from app.services.insight_service import (
     InsightNotFoundError,
     get_insight_event_windows,
     get_insight_maturity,
+    list_insight_history,
     list_insights,
     list_latest_insights,
 )
@@ -164,6 +178,54 @@ async def list_latest_insights_endpoint(
 
 
 @router.get(
+    "/history",
+    response_model=InsightHistoryResponse,
+    summary="Chronological insight history for timeline / archive",
+)
+@limiter.limit("60/minute")
+async def list_insight_history_endpoint(
+    request: Request,
+    status_filter: str = Query(default="all", alias="status"),
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
+    limit: int = Query(default=DEFAULT_INSIGHT_LIST_LIMIT, ge=1, le=MAX_INSIGHT_LIST_LIMIT),
+    offset: int = Query(default=0, ge=0),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightHistoryResponse:
+    if status_filter not in {"active", "dismissed", "all"}:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="status must be one of active, dismissed, all",
+        )
+    entries, total = await list_insight_history(
+        db,
+        user_id=user.id,
+        status=status_filter,
+        from_date=from_date,
+        to_date=to_date,
+        limit=limit,
+        offset=offset,
+    )
+    return InsightHistoryResponse(
+        insights=[
+            InsightHistoryItem(
+                **InsightResponse.model_validate(entry.insight).model_dump(),
+                visibility=entry.visibility,  # type: ignore[arg-type]
+                subject_key=entry.subject_key,
+                first_seen_on=entry.first_seen_on,
+                last_seen_on=entry.last_seen_on,
+                observation_count=entry.observation_count,
+            )
+            for entry in entries
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get(
     "/tag-cooccurrence",
     response_model=TagCooccurrenceResponse,
     summary="Tag co-occurrence pairs for heatmap visualisation",
@@ -217,6 +279,101 @@ async def get_tag_clusters_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> TagClustersResponse:
     return await get_tag_clusters(db, user_id=user.id)
+
+
+def _dismissal_response(view_or_row, insight=None) -> InsightDismissalResponse:
+    if hasattr(view_or_row, "dismissal"):
+        row = view_or_row.dismissal
+        insight = view_or_row.insight
+    else:
+        row = view_or_row
+    return InsightDismissalResponse(
+        id=row.id,
+        subject_key=row.subject_key,
+        insight_id=row.insight_id,
+        dismissed_at=row.dismissed_at,
+        created_at=row.created_at,
+        insight=InsightResponse.model_validate(insight) if insight is not None else None,
+    )
+
+
+@router.get(
+    "/dismissals",
+    response_model=InsightDismissalListResponse,
+    summary="List subject-stable hidden insights",
+)
+@limiter.limit("60/minute")
+async def list_insight_dismissals_endpoint(
+    request: Request,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightDismissalListResponse:
+    views = await list_insight_dismissals(db, user_id=user.id)
+    return InsightDismissalListResponse(
+        dismissals=[_dismissal_response(view) for view in views]
+    )
+
+
+@router.post(
+    "/dismissals",
+    response_model=InsightDismissalResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Hide an insight by subject-stable key",
+)
+@limiter.limit("60/minute")
+async def create_insight_dismissal_endpoint(
+    request: Request,
+    payload: InsightDismissalCreate,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightDismissalResponse:
+    try:
+        row = await create_insight_dismissal(
+            db, user_id=user.id, insight_id=payload.insight_id
+        )
+    except InsightNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Insight not found",
+        ) from exc
+    await db.refresh(row)
+    return _dismissal_response(row)
+
+
+@router.delete(
+    "/dismissals/by-insight/{insight_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Undo hide for the subject of an insight id",
+)
+@limiter.limit("60/minute")
+async def delete_insight_dismissal_by_insight_endpoint(
+    request: Request,
+    insight_id: uuid.UUID,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> None:
+    await delete_insight_dismissal_by_insight_id(db, user_id=user.id, insight_id=insight_id)
+
+
+@router.delete(
+    "/dismissals/{dismissal_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Undo a subject-stable insight hide",
+)
+@limiter.limit("60/minute")
+async def delete_insight_dismissal_endpoint(
+    request: Request,
+    dismissal_id: uuid.UUID,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> None:
+    try:
+        await delete_insight_dismissal(db, user_id=user.id, dismissal_id=dismissal_id)
+    except InsightDismissalNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Insight dismissal not found",
+        ) from exc
 
 
 @router.post(

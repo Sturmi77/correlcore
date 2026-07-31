@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -18,7 +19,12 @@ from app.models.user_profile import (
 )
 from app.schemas.user_preferences import UserPreferencesUpdate
 from app.schemas.user_profile import UserProfileUpsert
-from app.services.user_preferences_service import update_user_preferences
+from app.services.user_preferences_service import (
+    add_dismissed_insight_keys,
+    prune_orphaned_dismissed_insight_keys,
+    remove_dismissed_insight_keys,
+    update_user_preferences,
+)
 from app.services.user_profile_service import get_or_create_user_profile, upsert_user_profile
 from tests.conftest import make_user
 
@@ -26,6 +32,12 @@ from tests.conftest import make_user
 def _scalar_optional_result(value: object | None) -> MagicMock:
     result = MagicMock()
     result.scalar_one_or_none.return_value = value
+    return result
+
+
+def _rows_result(values: list[tuple[object, ...]]) -> MagicMock:
+    result = MagicMock()
+    result.all.return_value = values
     return result
 
 
@@ -83,6 +95,52 @@ async def test_update_user_preferences_dedupes_dismissed_keys() -> None:
 
 
 @pytest.mark.asyncio
+async def test_add_and_remove_dismissed_insight_keys() -> None:
+    user = make_user()
+    preferences = _make_preferences(user)
+    preferences.dismissed_insight_keys = ["keep_me"]
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    added = await add_dismissed_insight_keys(
+        db, user_id=user.id, keys=["keep_me", "new_key", ""]
+    )
+    assert added.dismissed_insight_keys == ["keep_me", "new_key"]
+
+    removed = await remove_dismissed_insight_keys(db, user_id=user.id, keys=["new_key"])
+    assert removed.dismissed_insight_keys == ["keep_me"]
+
+
+@pytest.mark.asyncio
+async def test_prune_orphaned_dismissed_insight_keys_keeps_banner_and_live_uuids() -> None:
+    user = make_user()
+    preferences = _make_preferences(user)
+    live_id = uuid.uuid4()
+    orphan_id = uuid.uuid4()
+    preferences.dismissed_insight_keys = [
+        "early_context_pattern",
+        str(live_id),
+        str(orphan_id),
+    ]
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_optional_result(preferences),
+            _rows_result([(live_id,)]),
+        ]
+    )
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    out = await prune_orphaned_dismissed_insight_keys(db, user_id=user.id)
+
+    assert out.dismissed_insight_keys == ["early_context_pattern", str(live_id)]
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_preferences_endpoint_returns_and_updates_state(
     async_client: AsyncClient,
     user: User,
@@ -96,7 +154,7 @@ async def test_preferences_endpoint_returns_and_updates_state(
     app.dependency_overrides[get_current_verified_user] = override
     try:
         with patch(
-            "app.api.v1.endpoints.user.get_or_create_user_preferences",
+            "app.api.v1.endpoints.user.prune_orphaned_dismissed_insight_keys",
             new_callable=AsyncMock,
             return_value=preferences,
         ):
@@ -155,7 +213,7 @@ async def test_preferences_endpoint_returns_cycle_tracking_default(
     app.dependency_overrides[get_current_verified_user] = override
     try:
         with patch(
-            "app.api.v1.endpoints.user.get_or_create_user_preferences",
+            "app.api.v1.endpoints.user.prune_orphaned_dismissed_insight_keys",
             new_callable=AsyncMock,
             return_value=preferences,
         ):

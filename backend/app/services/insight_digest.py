@@ -246,6 +246,32 @@ async def compute_weekly_digest_for_user(
         week_start=week_start,
         week_end=week_end,
     )
+    from app.services.insight_dismissal_service import (
+        dismissed_uuid_keys_remaining,
+        list_dismissed_subject_keys,
+        migrate_uuid_prefs_to_subject_dismissals,
+    )
+    from app.services.insight_service import (
+        _tag_slugs_for_legacy_insights,
+        insight_subject_key,
+    )
+
+    await migrate_uuid_prefs_to_subject_dismissals(db, user_id=user_id)
+    dismissed_subject_keys = await list_dismissed_subject_keys(db, user_id=user_id)
+    dismissed_uuid_keys = await dismissed_uuid_keys_remaining(db, user_id=user_id)
+    if dismissed_subject_keys or dismissed_uuid_keys:
+        tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
+        filtered: list[Insight] = []
+        for insight in insights:
+            if str(insight.id) in dismissed_uuid_keys:
+                continue
+            if (
+                insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
+                in dismissed_subject_keys
+            ):
+                continue
+            filtered.append(insight)
+        insights = filtered
     digest = build_weekly_digest(insights, week_start=week_start, week_end=week_end)
     if digest is None:
         raise DigestNotAvailableError(user_id)

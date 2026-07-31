@@ -17,7 +17,7 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
 {
   "export_date": "2026-05-09T14:00:00Z",
   "app_version": "0.0.1",
-  "format_version": "1.2",
+  "format_version": "1.3",
   "score_legend": {
     "mood_score": {
       "min": 1,
@@ -69,7 +69,7 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
         {
           "slug": "headache",
           "name": "Kopfschmerzen",
-          "icon": "ðŸ¤•",
+          "icon": "🤕",
           "is_default": true,
           "intensity": 2
         }
@@ -79,7 +79,34 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
   "tags": [],
   "symptoms": [],
   "habits": [],
-  "insights": [],
+  "insights": [
+    {
+      "insight_type": "spearman",
+      "tier": "developing",
+      "metric": "mood_score",
+      "subject_type": "metric",
+      "subject_label": "energy",
+      "subject_key": "{\"insight_type\":\"spearman\",\"metric\":\"mood_score\",\"subject\":\"energy\",\"subject_type\":\"metric\"}",
+      "effect_size": 0.4,
+      "confidence": 0.7,
+      "sample_n": 20,
+      "statement": "Mood lines up with energy.",
+      "flags": {},
+      "payload": {},
+      "visibility": "active",
+      "generated_for_date": "2026-05-14",
+      "generated_at": "2026-05-14T00:00:00Z",
+      "created_at": "2026-05-14T00:00:00Z",
+      "updated_at": "2026-05-14T00:00:00Z"
+    }
+  ],
+  "insight_dismissals": [
+    {
+      "subject_key": "{\"insight_type\":\"spearman\",\"metric\":\"mood_score\",\"subject\":\"energy\",\"subject_type\":\"metric\"}",
+      "dismissed_at": "2026-05-15T12:00:00Z",
+      "created_at": "2026-05-15T12:00:00Z"
+    }
+  ],
   "photos": [],
   "sleep": []
 }
@@ -89,9 +116,13 @@ Internal database IDs and `user_id` values are intentionally omitted. Tags in
 the export may include `habit_type` (`none`, `build`, `reduce`) and
 `target_frequency` (1..7) when configured. The top-level `habits` array is
 reserved for a future dedicated habit export section and is currently empty.
-The `photos` array stays empty until M13 photo/media support ships. Other
-future domains that do not exist yet are represented as empty arrays so
-importers can depend on a stable top-level shape.
+
+`insights` contains the full insight history for the account (not feed-filtered),
+including decrypted statements and a `visibility` of `active` or `dismissed`.
+`insight_dismissals` lists subject-stable hide intents (#601). The `photos`
+array stays empty until M13 photo/media support ships. Other future domains
+that do not exist yet are represented as empty arrays so importers can depend
+on a stable top-level shape.
 
 ## CSV Shape
 

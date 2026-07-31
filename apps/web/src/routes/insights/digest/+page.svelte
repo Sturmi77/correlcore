@@ -109,6 +109,9 @@
           </li>
         {/each}
       </ul>
+      <p class="digest-page__history-link">
+        <a href="/insights/history">{$_('insights.digest.history_link')}</a>
+      </p>
     {/if}
   </Panel>
 </div>
@@ -140,5 +143,10 @@
 
   .digest-page__actions {
     margin-top: var(--space-4);
+  }
+
+  .digest-page__history-link {
+    margin: var(--space-4) 0 0;
+    font-size: var(--text-sm);
   }
 </style>

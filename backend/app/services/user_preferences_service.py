@@ -7,6 +7,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.insight import Insight
 from app.models.user_preference import UserPreference
 from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
 from app.services.home_sections import merge_home_sections, normalize_home_sections
@@ -24,6 +25,13 @@ def _dedupe_strings(values: list[str]) -> list[str]:
     return out
 
 
+def _parse_uuid_key(value: str) -> uuid.UUID | None:
+    try:
+        return uuid.UUID(value)
+    except ValueError:
+        return None
+
+
 async def get_or_create_user_preferences(
     db: AsyncSession,
     *,
@@ -38,6 +46,105 @@ async def get_or_create_user_preferences(
     db.add(preferences)
     await db.flush()
     await db.refresh(preferences)
+    return preferences
+
+
+async def get_dismissed_insight_keys(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> list[str]:
+    """Return normalized dismissed insight keys (UUIDs and banner keys)."""
+
+    result = await db.execute(
+        select(UserPreference.dismissed_insight_keys).where(UserPreference.user_id == user_id)
+    )
+    keys = result.scalar_one_or_none()
+    if not keys:
+        return []
+    return _dedupe_strings(list(keys))
+
+
+async def add_dismissed_insight_keys(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    keys: list[str],
+) -> UserPreference:
+    """Append keys to ``dismissed_insight_keys`` (deduped, order-preserving)."""
+
+    preferences = await get_or_create_user_preferences(db, user_id=user_id)
+    preferences.dismissed_insight_keys = _dedupe_strings(
+        [*(preferences.dismissed_insight_keys or []), *keys]
+    )
+    await db.flush()
+    await db.refresh(preferences)
+    return preferences
+
+
+async def remove_dismissed_insight_keys(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    keys: list[str],
+) -> UserPreference:
+    """Remove keys from ``dismissed_insight_keys`` (Undo / undismiss)."""
+
+    preferences = await get_or_create_user_preferences(db, user_id=user_id)
+    remove = set(_dedupe_strings(keys))
+    preferences.dismissed_insight_keys = [
+        key for key in (preferences.dismissed_insight_keys or []) if key not in remove
+    ]
+    await db.flush()
+    await db.refresh(preferences)
+    return preferences
+
+
+async def prune_orphaned_dismissed_insight_keys(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> UserPreference:
+    """Drop UUID dismiss keys that no longer match an insight row; keep banner keys."""
+
+    preferences = await get_or_create_user_preferences(db, user_id=user_id)
+    keys = list(preferences.dismissed_insight_keys or [])
+    if not keys:
+        return preferences
+
+    uuid_keys: list[tuple[str, uuid.UUID]] = []
+    banner_keys: list[str] = []
+    for raw in keys:
+        key = raw.strip()
+        if not key:
+            continue
+        parsed = _parse_uuid_key(key)
+        if parsed is None:
+            banner_keys.append(key)
+        else:
+            uuid_keys.append((key, parsed))
+
+    if not uuid_keys:
+        pruned = _dedupe_strings(banner_keys)
+        if pruned != keys:
+            preferences.dismissed_insight_keys = pruned
+            await db.flush()
+            await db.refresh(preferences)
+        return preferences
+
+    result = await db.execute(
+        select(Insight.id).where(
+            Insight.user_id == user_id,
+            Insight.id.in_([parsed for _, parsed in uuid_keys]),
+        )
+    )
+    existing = {row[0] for row in result.all()}
+    kept_uuids = [key for key, parsed in uuid_keys if parsed in existing]
+    pruned = _dedupe_strings([*banner_keys, *kept_uuids])
+    if pruned != _dedupe_strings(keys):
+        preferences.dismissed_insight_keys = pruned
+        await db.flush()
+        await db.refresh(preferences)
     return preferences
 
 

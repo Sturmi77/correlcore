@@ -4,6 +4,7 @@ vi.mock('./client', () => ({
   api: {
     get: vi.fn(),
     post: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -37,6 +38,47 @@ describe('insights API client', () => {
     await listLatestInsights({ limit: 3 });
 
     expect(api.get).toHaveBeenCalledWith('/insights/latest?limit=3');
+  });
+
+  it('lists insight history', async () => {
+    const { listInsights } = await import('./insights');
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
+
+    await listInsights({ limit: 25 });
+
+    expect(api.get).toHaveBeenCalledWith('/insights?limit=25');
+  });
+
+  it('creates and lists insight dismissals', async () => {
+    const { createInsightDismissal, listInsightDismissals, deleteInsightDismissal } =
+      await import('./insights');
+    vi.mocked(api.post).mockResolvedValueOnce({
+      id: 'd1',
+      subject_key: 'sk',
+      insight_id: 'i1',
+      dismissed_at: '2026-05-14T00:00:00Z',
+      created_at: '2026-05-14T00:00:00Z',
+      insight: null,
+    });
+    await createInsightDismissal('i1');
+    expect(api.post).toHaveBeenCalledWith('/insights/dismissals', { insight_id: 'i1' });
+
+    vi.mocked(api.get).mockResolvedValueOnce({ dismissals: [] });
+    await listInsightDismissals();
+    expect(api.get).toHaveBeenCalledWith('/insights/dismissals');
+
+    vi.mocked(api.delete).mockResolvedValueOnce(undefined);
+    await deleteInsightDismissal('d1');
+    expect(api.delete).toHaveBeenCalledWith('/insights/dismissals/d1');
+  });
+
+  it('lists insight history', async () => {
+    const { listInsightHistory } = await import('./insights');
+    vi.mocked(api.get).mockResolvedValueOnce({ insights: [], total: 0, limit: 20, offset: 0 });
+
+    await listInsightHistory({ status: 'all', limit: 20 });
+
+    expect(api.get).toHaveBeenCalledWith('/insights/history?status=all&limit=20');
   });
 
   it('fetches tag clusters', async () => {

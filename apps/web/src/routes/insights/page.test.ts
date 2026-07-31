@@ -242,6 +242,22 @@ vi.mock('$lib/api/insights', () => ({
     },
     insights: [],
   })),
+  listInsights: vi.fn(async () => ({
+    insight_maturity: {
+      phase: 'provisional',
+      phase_index: 3,
+      current_entries: 20,
+      next_phase_at: 30,
+      next_phase_label: 'Robust Insights',
+      entries_until_next: 10,
+      user_message_key: 'maturity.provisional.description',
+    },
+    insights: [],
+  })),
+  listInsightDismissals: vi.fn(async () => ({ dismissals: [] })),
+  createInsightDismissal: vi.fn(),
+  deleteInsightDismissal: vi.fn(),
+  deleteInsightDismissalByInsightId: vi.fn(),
   regenerateInsights: vi.fn(async () => ({
     insight_count: 0,
     generated_for_date: '2026-05-10',
@@ -261,6 +277,9 @@ vi.mock('$lib/components/insights/InsightFeed.svelte', () => ({
     'insight-feed',
     (props: Record<string, unknown>) => `insight-feed:entries:${props.entryCount ?? 0}`
   ),
+}));
+vi.mock('$lib/components/insights/DismissedInsightsSection.svelte', () => ({
+  default: testHelpers.mockComponent('dismissed-insights-section'),
 }));
 vi.mock('$lib/components/insights/InsightMatrix.svelte', () => ({
   default: testHelpers.mockComponent('insight-matrix'),

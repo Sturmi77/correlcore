@@ -23,6 +23,53 @@ from app.services.insight_service import (
 from tests.conftest import make_user
 
 
+def _scalar_optional_result(value: object | None) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = value
+    return result
+
+
+def _dismissal_filter_executes(
+    *,
+    pref_keys: list[str] | None = None,
+    subject_keys: list[str] | None = None,
+) -> list[MagicMock]:
+    """DB executes used by migrate + subject/uuid dismissal filters in list_latest."""
+    return [
+        _scalar_optional_result(pref_keys),
+        _rows_result([(key,) for key in (subject_keys or [])]),
+        _scalar_optional_result(pref_keys),
+    ]
+
+
+def _patch_dismissal_filters(
+    *,
+    subject_keys: set[str] | None = None,
+    uuid_keys: set[str] | None = None,
+):
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _ctx():
+        with (
+            patch(
+                "app.services.insight_dismissal_service.migrate_uuid_prefs_to_subject_dismissals",
+                new=AsyncMock(return_value=0),
+            ),
+            patch(
+                "app.services.insight_dismissal_service.list_dismissed_subject_keys",
+                new=AsyncMock(return_value=subject_keys or set()),
+            ),
+            patch(
+                "app.services.insight_dismissal_service.dismissed_uuid_keys_remaining",
+                new=AsyncMock(return_value=uuid_keys or set()),
+            ),
+        ):
+            yield
+
+    return _ctx()
+
+
 def _scalars_result(values: list[object]) -> MagicMock:
     scalars = MagicMock()
     scalars.all.return_value = values
@@ -216,7 +263,8 @@ async def test_list_latest_insights_deduplicates_by_subject() -> None:
         ]
     )
 
-    out = await list_latest_insights(db, user_id=user.id, limit=10)
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [newest_tag, metric]
 
@@ -253,7 +301,8 @@ async def test_list_latest_insights_deduplicates_legacy_tag_overrides_by_loaded_
         ]
     )
 
-    out = await list_latest_insights(db, user_id=user.id, limit=10)
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [newest_override]
 
@@ -287,7 +336,8 @@ async def test_list_latest_insights_deduplicates_tag_overrides_by_slug() -> None
         ]
     )
 
-    out = await list_latest_insights(db, user_id=user.id, limit=10)
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [newest_override]
 
@@ -371,9 +421,73 @@ async def test_list_latest_insights_keeps_lasso_and_lag_symptom_cluster_findings
         ]
     )
 
-    out = await list_latest_insights(db, user_id=user.id, limit=10)
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [lasso, lag]
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_excludes_dismissed_uuid_keys() -> None:
+    user = make_user()
+    kept = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        insight_type=InsightType.SPEARMAN,
+        subject_type="metric",
+        subject_label="energy",
+    )
+    dismissed = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.SPEARMAN,
+        subject_type="metric",
+        subject_label="stress",
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([kept, dismissed]),
+            _rows_result([]),
+        ]
+    )
+
+    with _patch_dismissal_filters(uuid_keys={str(dismissed.id)}):
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [kept]
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_excludes_subject_stable_dismissals() -> None:
+    user = make_user()
+    kept = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        subject_type="metric",
+        subject_label="energy",
+    )
+    hidden = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        subject_type="metric",
+        subject_label="stress",
+    )
+    from app.services.insight_service import insight_subject_key
+
+    subject_key = insight_subject_key(hidden, tag_slugs_by_id={})
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([kept, hidden]),
+            _rows_result([]),
+        ]
+    )
+
+    with _patch_dismissal_filters(subject_keys={subject_key}):
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [kept]
 
 
 @pytest.mark.asyncio

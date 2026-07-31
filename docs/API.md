@@ -793,6 +793,9 @@ Schlaf-/Wearable-Import selbst folgt in M8; die Consent-API ist die Foundation.
 
 Speichert nicht-sensitive UI-/Insight-Präferenzen des aktuellen Users.
 Der Analytics-Worker berücksichtigt `analytics_enabled=false` beim Job-Listing.
+`GET` bereinigt orphaned UUID-Keys in `dismissed_insight_keys` (kein
+Matching-Insight mehr); Banner-Keys bleiben. Subject-stabile Hides liegen in
+`insight_dismissals` (#601), nicht in Prefs.
 
 **Response-Felder (GET, immer gesetzt):** `user_id`, `created_at`, `updated_at` plus die
 PATCH-fähigen Felder unten. Bei PATCH sind alle Felder optional; **`null` für ein Feld
@@ -811,7 +814,7 @@ bedeutet No-Op** (Wert bleibt unverändert).
 | `onboarding_retro_completed`     | bool             | `false`        | Retro-Onboarding abgeschlossen     |
 | `onboarding_profile_completed`   | bool             | `false`        | Profil-Onboarding abgeschlossen    |
 | `onboarding_maturity_intro_seen` | bool             | `false`        | Maturity-Intro gesehen             |
-| `dismissed_insight_keys`         | string[]         | `[]`           | Dismissed Insight-/Banner-Keys     |
+| `dismissed_insight_keys`         | string[]         | `[]`           | Banner-/Legacy-UUID-Dismiss-Keys   |
 | `reached_milestone_keys`         | string[]         | `[]`           | Erreichte Maturity-Meilensteine    |
 | `last_seen_insight_at`           | datetime \| null | `null`         | Letzter Insight-Besuch             |
 | `home_sections`                  | object[] \| null | merged default | Konfigurierbare Home-Blöcke (#584) |
@@ -872,8 +875,9 @@ auf `true` gesetzt.
 ### `GET /api/v1/user/export`
 
 Kanonischer DSGVO-Art.-20-ZIP-Export mit `export.json` und `README.txt`.
-Fotos/Attachments sind bis M13 nicht enthalten; die
-Export-Struktur hält dafür leere, versionierte Sektionen vor.
+Enthält Entries, Tags, Symptoms, Insight-History und Insight-Dismissals
+(`format_version` 1.3). Fotos/Attachments sind bis M13 nicht enthalten;
+Habits/Sleep bleiben leere, versionierte Stub-Sektionen.
 
 ### `DELETE /api/v1/user/me`
 
@@ -999,12 +1003,41 @@ Analytics-Pipeline angebunden und ohne Cloud-Fallback deaktivierbar.
 
 `GET /api/v1/insights/latest?limit=10` liefert die neuesten Insights pro
 analytischem Subject (`insight_type`, `metric`, optionaler Tag/Metric/Weekday).
+Insights mit Subject-Key in `insight_dismissals` (oder Legacy-UUID in
+`dismissed_insight_keys`) werden serverseitig ausgefiltert (#601).
+Weekly-Digest-Live-Ranking filtert dieselben Keys.
 Beide Insight-Listen enthalten dasselbe serverseitig berechnete
 `insight_maturity`-Objekt. Die Phase wird aus den unterschiedlichen
 Tracking-Tagen des Users abgeleitet: `collecting` fuer 0-6 Eintraege,
 `early_patterns` fuer 7-13, `provisional` fuer 14-29 und `robust` ab 30.
 Frontend-Clients duerfen diese Phase nicht selbst aus der Entry-Anzahl
 rekonstruieren.
+
+### Insight-Dismissals (#601 Phase 1)
+
+```
+GET    /api/v1/insights/dismissals
+POST   /api/v1/insights/dismissals          { "insight_id": "..." }
+DELETE /api/v1/insights/dismissals/{id}
+DELETE /api/v1/insights/dismissals/by-insight/{insight_id}
+```
+
+Hide speichert einen **subject-stabilen** Key (gleiche Dedup-Identität wie
+`/latest`). Same-Day-Regenerate mit neuer UUID lässt den Hide-Intent bestehen.
+`GET` hydratisiert optional die aktuellste Insight-Row zum Subject.
+Banner-Keys (`early_context_pattern`, …) bleiben in `dismissed_insight_keys`.
+UUID-Prefs werden lazy nach `insight_dismissals` migriert.
+
+### Insight-History / Timeline (#601 Phase 2)
+
+```
+GET /api/v1/insights/history?status=all|active|dismissed&from=YYYY-MM-DD&to=YYYY-MM-DD&limit=50&offset=0
+```
+
+Liefert chronologische Insight-Rows (kein Subject-Dedup) inkl. `visibility`,
+`subject_key`, `first_seen_on` / `last_seen_on` / `observation_count`.
+Regenerate ersetzt nur Rows für denselben `generated_for_date`; ältere Tage
+bleiben bis Account-Löschung (CASCADE) erhalten. UI: `/insights/history`.
 M7 ergaenzt den bestehenden Envelope um `symptom_cluster`,
 `symptom_mood_association` und `symptom_tag_cooccurrence` Insights.
 Lasso- und Lag-Befunde werden ueber `payload.method = "lasso" | "lag"`

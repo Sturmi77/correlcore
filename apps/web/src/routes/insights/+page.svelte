@@ -16,7 +16,7 @@
   import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
-  import { dismissInsight, insightStore } from '$lib/stores/insights';
+  import { dismissInsight, undismissInsight, insightStore } from '$lib/stores/insights';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
@@ -27,6 +27,7 @@
     fetchSymptomTagCooccurrence,
     fetchTagClusters,
     fetchTagCooccurrence,
+    listInsightDismissals,
     listLatestInsights,
     regenerateInsights,
     type InsightMaturity,
@@ -48,6 +49,9 @@
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
+  import DismissedInsightsSection, {
+    type DismissedInsightItem,
+  } from '$lib/components/insights/DismissedInsightsSection.svelte';
   import InsightsAnalysisToolbar from '$lib/components/insights/InsightsAnalysisToolbar.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';
@@ -97,6 +101,7 @@
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
 
   let insights: InsightResponse[] = [];
+  let dismissedItems: DismissedInsightItem[] = [];
   let loading = false;
   let insightsLoaded = false;
   let error: string | null = null;
@@ -505,8 +510,39 @@
   }
 
   async function handleDismissInsight(id: string): Promise<void> {
+    const dismissed = insights.find((insight) => insight.id === id);
     insights = insights.filter((insight) => insight.id !== id);
-    await dismissInsight(id);
+    const dismissal = await dismissInsight(id);
+    if (dismissed) {
+      const dismissalId = dismissal?.id ?? id;
+      dismissedItems = [
+        { dismissalId, insight: dismissed },
+        ...dismissedItems.filter((item) => item.insight.id !== id),
+      ];
+    }
+  }
+
+  async function handleUndismissInsight(id: string, _dismissalId: string): Promise<void> {
+    const restored = dismissedItems.find((item) => item.insight.id === id)?.insight;
+    dismissedItems = dismissedItems.filter((item) => item.insight.id !== id);
+    if (restored && !insights.some((insight) => insight.id === id)) {
+      insights = [restored, ...insights];
+    }
+    await undismissInsight(id);
+  }
+
+  async function loadDismissedItems(): Promise<DismissedInsightItem[]> {
+    try {
+      const response = await listInsightDismissals();
+      const items: DismissedInsightItem[] = [];
+      for (const dismissal of response.dismissals) {
+        if (!dismissal.insight) continue;
+        items.push({ dismissalId: dismissal.id, insight: dismissal.insight });
+      }
+      return items;
+    } catch {
+      return [];
+    }
   }
 
   async function loadInsights(): Promise<void> {
@@ -519,6 +555,7 @@
         const fixture = getDevPhaseFixture(get(devPhase));
         activeDevFixtureKey = devFixtureKey();
         insights = fixture.insights;
+        dismissedItems = [];
         insightMaturity = fixture.maturity;
         userPreferences = fixture.preferences;
         symptomHeatmap = fixture.symptomHeatmap;
@@ -593,15 +630,23 @@
           return true;
         });
       }
-      const dismissedKeys = new Set(userPreferences?.dismissed_insight_keys ?? []);
-      if (dismissedKeys.size > 0) {
-        insights = insights.filter((insight) => !dismissedKeys.has(insight.id));
+      const dismissedKeys = userPreferences?.dismissed_insight_keys ?? [];
+      // Active feed is filtered server-side on /latest; keep a local guard for race safety.
+      if (dismissedKeys.length > 0) {
+        const dismissedSet = new Set(dismissedKeys);
+        insights = insights.filter((insight) => !dismissedSet.has(insight.id));
+      }
+      dismissedItems = await loadDismissedItems();
+      const dismissedInsightIds = new Set(dismissedItems.map((item) => item.insight.id));
+      if (dismissedInsightIds.size > 0) {
+        insights = insights.filter((insight) => !dismissedInsightIds.has(insight.id));
       }
     } catch (err) {
       error = err instanceof Error ? err.message : $_('error.generic');
       if (insights.length === 0) {
         insightMaturity = null;
         userPreferences = null;
+        dismissedItems = [];
         symptomCooccurrence = null;
         tagClusters = null;
         clearSymptomWindowData();
@@ -796,6 +841,9 @@
 
 <main class="insights-page screen-stack screen-stack--tight">
   <ScreenHeader title={$_('insights.page.title')} subtitle={$_('insights.page.subtitle')} />
+  <p class="insights-page__history-link">
+    <a href="/insights/history">{$_('insights.page.history_link')}</a>
+  </p>
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">
@@ -910,6 +958,14 @@
       {/if}
     {/if}
 
+    <DismissedInsightsSection
+      items={dismissedItems}
+      maturity={insightMaturity}
+      {inactiveTagIds}
+      on:undismiss={(event) =>
+        void handleUndismissInsight(event.detail.id, event.detail.dismissalId)}
+    />
+
     {#if showAdvancedAnalytics}
       <section class="insights-page__analytics" data-testid="insights-analytics-panel">
         <header class="insights-page__analytics-header">
@@ -1006,6 +1062,11 @@
 
   /* #571: correlation matrix sits inline & prominent; keep wide content scrolling
      inside the matrix, not the page. */
+  .insights-page__history-link {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
   .insights-page__matrix {
     min-width: 0;
     max-width: 100%;
