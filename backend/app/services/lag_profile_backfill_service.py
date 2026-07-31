@@ -263,9 +263,7 @@ async def _backfill_lag_profiles_for_user(
                     unmatched_for_user += 1
                     continue
                 await db.execute(
-                    update(Insight)
-                    .where(Insight.id == insight.id)
-                    .values(payload=updated_payload)
+                    update(Insight).where(Insight.id == insight.id).values(payload=updated_payload)
                 )
                 updated_for_user += 1
     finally:
