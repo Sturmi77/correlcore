@@ -200,6 +200,16 @@
       "hint": "Nur neutrale Erfassung. CorrelCore macht keine Vorhersage und keine Diagnose.",
       "error_range": "Der Zyklustag muss zwischen 1 und 35 liegen."
     },
+    "cycle_bleeding": {
+      "label": "Blutung (optional)",
+      "unset": "Nicht gesetzt",
+      "hint": "Optionale Staerke fuer deine eigenen Aufzeichnungen. Keine medizinische Vorhersage.",
+      "none": "Keine",
+      "spotting": "Schmierblutung",
+      "light": "Leicht",
+      "medium": "Mittel",
+      "heavy": "Stark"
+    },
     "work_context": {
       "homeoffice": "Homeoffice",
       "office": "B\u00fcro",

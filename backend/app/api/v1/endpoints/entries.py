@@ -53,6 +53,7 @@ from app.services.entry_service import (
     EntryReadOnlyError,
     build_entry_response,
     build_entry_responses,
+    clear_user_cycle_data,
     create_entry,
     create_entry_batch,
     get_entry,
@@ -113,6 +114,22 @@ async def create_entry_endpoint(
         )
 
     return await build_entry_response(db, user_id=user.id, entry=entry)
+
+
+@router.delete(
+    "/cycle-data",
+    summary="Clear all cycle tracking fields for the current user",
+)
+@limiter.limit("10/minute")
+async def clear_cycle_data_endpoint(
+    request: Request,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> dict[str, int]:
+    """Remove cycle_day and cycle_bleeding_level from all entries (ADR-0033 §6)."""
+    cleared = await clear_user_cycle_data(db, user_id=user.id)
+    await db.commit()
+    return {"cleared_entries": cleared}
 
 
 @router.post(
