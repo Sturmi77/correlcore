@@ -56,28 +56,28 @@ Generate at: Figma → Settings → Security → Personal access tokens.
 Verify after publish: Dev Mode on Button `6:64` shows Svelte snippet; or MCP
 `get_code_connect_map` for node `6:64`.
 
-| Template            | Figma node | Code source                         |
-| ------------------- | ---------- | ----------------------------------- |
-| AppNav              | 14-179     | AppNav.svelte                       |
-| Button              | 6-64       | Button.svelte                       |
-| ComparisonHeatmap   | 20-268     | ComparisonHeatmap.svelte            |
-| FormField           | 17-58      | TagPicker.svelte (field pattern)    |
+| Template            | Figma node | Code source                                                |
+| ------------------- | ---------- | ---------------------------------------------------------- |
+| AppNav              | 14-179     | AppNav.svelte                                              |
+| Button              | 6-64       | Button.svelte                                              |
+| ComparisonHeatmap   | 20-268     | ComparisonHeatmap.svelte                                   |
+| FormField           | 17-58      | TagPicker.svelte (field pattern)                           |
 | HomeDailyBrief      | 19-113     | HomeDailyBrief.svelte (Figma node still named HomeSummary) |
-| InlineAlert         | 10-43      | InlineAlert.svelte                  |
-| InsightCard         | 79-55      | InsightCard.svelte                  |
-| InsightMatrix       | 131-62     | InsightMatrix.svelte                |
-| InsightQualityMeter | 79-83      | InsightQualityMeter.svelte (legacy) |
-| InsightStageHeader  | 79-111     | InsightStageHeader.svelte           |
-| MetricCard          | 19-53      | MetricCard.svelte                   |
-| MetricTimeseries    | 20-102     | MetricTimeseries.svelte             |
-| MobileInsightLead   | 98-1541    | MobileInsightLead.svelte            |
-| MobileTrendsSummary | 131-31     | MobileTrendsSummary.svelte          |
-| Panel               | 9-27       | Panel.svelte                        |
-| ScaleSlider         | 16-107     | ScaleSlider.svelte                  |
-| ScreenHeader        | 11-33      | ScreenHeader.svelte                 |
-| SegmentedControl    | 12-45      | SegmentedControl.svelte             |
-| TabBar              | 13-45      | TabBar.svelte                       |
-| TagChip             | 17-18      | TagPicker.svelte (chip pattern)     |
+| InlineAlert         | 10-43      | InlineAlert.svelte                                         |
+| InsightCard         | 79-55      | InsightCard.svelte                                         |
+| InsightMatrix       | 131-62     | InsightMatrix.svelte                                       |
+| InsightQualityMeter | 79-83      | InsightQualityMeter.svelte (legacy)                        |
+| InsightStageHeader  | 79-111     | InsightStageHeader.svelte                                  |
+| MetricCard          | 19-53      | MetricCard.svelte                                          |
+| MetricTimeseries    | 20-102     | MetricTimeseries.svelte                                    |
+| MobileInsightLead   | 98-1541    | MobileInsightLead.svelte                                   |
+| MobileTrendsSummary | 131-31     | MobileTrendsSummary.svelte                                 |
+| Panel               | 9-27       | Panel.svelte                                               |
+| ScaleSlider         | 16-107     | ScaleSlider.svelte                                         |
+| ScreenHeader        | 11-33      | ScreenHeader.svelte                                        |
+| SegmentedControl    | 12-45      | SegmentedControl.svelte                                    |
+| TabBar              | 13-45      | TabBar.svelte                                              |
+| TagChip             | 17-18      | TagPicker.svelte (chip pattern)                            |
 
 ## Sprint G variant documentation
 

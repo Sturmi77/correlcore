@@ -151,11 +151,11 @@ code and E2E but lack canonical Figma sprint boards.
 **New flow board:** `Mobile Home / Sprint 5 Flow` (suggested placement: after
 Sprint 4 board, 1680 px width, 390×844 frames).
 
-| #   | State               | Content (match code)                                                |
-| --- | ------------------- | ------------------------------------------------------------------- |
+| #   | State               | Content (match code)                                                                                                             |
+| --- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Default             | `ScreenHeader`, `HomeTodayContext`, configurable blocks (default: Daily Brief, work context, weekday overview), `AppNav · Today` |
-| 2   | Partial / loading   | Skeleton or `DataState` partial — match `HomeDailyBrief` loading    |
-| 3   | Empty / first visit | No entries yet CTA toward Entry                                     |
+| 2   | Partial / loading   | Skeleton or `DataState` partial — match `HomeDailyBrief` loading                                                                 |
+| 3   | Empty / first visit | No entries yet CTA toward Entry                                                                                                  |
 
 Code references:
 

@@ -97,14 +97,14 @@ Theme: `data-theme` light/dark on `<html>`; persisted `correlcore-theme`. Dark s
 
 **~60 Svelte components** under `apps/web/src/lib/components/` grouped by domain:
 
-| Layer        | Examples                                                            | Status                                 |
-| ------------ | ------------------------------------------------------------------- | -------------------------------------- |
-| **Common**   | Button, Panel, ScreenHeader, AppNav, TabBar, ThemeToggle            | Shared; Figma + Code Connect templates |
-| **Entries**  | EntryForm, ScaleSlider, TagPicker, SymptomChecker, EntrySheet       | Mobile capture signed off              |
+| Layer        | Examples                                                                                              | Status                                               |
+| ------------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Common**   | Button, Panel, ScreenHeader, AppNav, TabBar, ThemeToggle                                              | Shared; Figma + Code Connect templates               |
+| **Entries**  | EntryForm, ScaleSlider, TagPicker, SymptomChecker, EntrySheet                                         | Mobile capture signed off                            |
 | **Home**     | HomeTodayContext, HomeDailyBrief, HomeWorkContextSummary, HomeWeekdayOverview, FirstWeekInsightBanner | Configurable block order via `/settings/home` (#584) |
-| **Trends**   | MobileTrendsSummary, TrendsComparePanel, MetricTimeseries, heatmaps | Mobile summary / web-primary charts    |
-| **Insights** | MobileInsightLead, InsightCard, InsightFeed, InsightMatrix          | Hierarchy aligned Sprint 3             |
-| **Auth**     | PasswordStrength                                                    | Login/register in code + Figma B4b     |
+| **Trends**   | MobileTrendsSummary, TrendsComparePanel, MetricTimeseries, heatmaps                                   | Mobile summary / web-primary charts                  |
+| **Insights** | MobileInsightLead, InsightCard, InsightFeed, InsightMatrix                                            | Hierarchy aligned Sprint 3                           |
+| **Auth**     | PasswordStrength                                                                                      | Login/register in code + Figma B4b                   |
 
 **Classification (design intent):**
 

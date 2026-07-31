@@ -796,18 +796,18 @@ Der Analytics-Worker berücksichtigt `analytics_enabled=false` beim Job-Listing.
 
 **Felder (Response / PATCH, alle optional außer `user_id` in GET):**
 
-| Feld | Typ | Default | Beschreibung |
-| --- | --- | --- | --- |
-| `analytics_enabled` | bool | `true` | Insights/Analytics für den User |
-| `digest_enabled` | bool | `false` | Wöchentlicher Insight-Digest |
-| `cycle_tracking_enabled` | bool | `true` | Zyklustag-Feld im Entry-Formular |
-| `onboarding_retro_completed` | bool | `false` | Retro-Onboarding abgeschlossen |
-| `onboarding_profile_completed` | bool | `false` | Profil-Onboarding abgeschlossen |
-| `onboarding_maturity_intro_seen` | bool | `false` | Maturity-Intro gesehen |
-| `dismissed_insight_keys` | string[] | `[]` | Dismissed Insight-/Banner-Keys |
-| `reached_milestone_keys` | string[] | `[]` | Erreichte Maturity-Meilensteine |
-| `last_seen_insight_at` | datetime \| null | `null` | Letzter Insight-Besuch |
-| `home_sections` | object[] \| null | merged default | Konfigurierbare Home-Blöcke (#584) |
+| Feld                             | Typ              | Default        | Beschreibung                       |
+| -------------------------------- | ---------------- | -------------- | ---------------------------------- |
+| `analytics_enabled`              | bool             | `true`         | Insights/Analytics für den User    |
+| `digest_enabled`                 | bool             | `false`        | Wöchentlicher Insight-Digest       |
+| `cycle_tracking_enabled`         | bool             | `true`         | Zyklustag-Feld im Entry-Formular   |
+| `onboarding_retro_completed`     | bool             | `false`        | Retro-Onboarding abgeschlossen     |
+| `onboarding_profile_completed`   | bool             | `false`        | Profil-Onboarding abgeschlossen    |
+| `onboarding_maturity_intro_seen` | bool             | `false`        | Maturity-Intro gesehen             |
+| `dismissed_insight_keys`         | string[]         | `[]`           | Dismissed Insight-/Banner-Keys     |
+| `reached_milestone_keys`         | string[]         | `[]`           | Erreichte Maturity-Meilensteine    |
+| `last_seen_insight_at`           | datetime \| null | `null`         | Letzter Insight-Besuch             |
+| `home_sections`                  | object[] \| null | merged default | Konfigurierbare Home-Blöcke (#584) |
 
 **`home_sections` (#584):** Array von `{ "key": string, "enabled": bool }`.
 Reihenfolge = Render-Reihenfolge auf Home. Erlaubte Keys:

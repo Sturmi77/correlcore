@@ -107,7 +107,13 @@
     },
     {
       "screen": "Settings",
-      "routes": ["/settings", "/settings/home", "/settings/tags", "/settings/symptoms", "/settings/app"],
+      "routes": [
+        "/settings",
+        "/settings/home",
+        "/settings/tags",
+        "/settings/symptoms",
+        "/settings/app"
+      ],
       "figmaNodes": ["105:1626", "105:1634", "121:2662", "121:2703", "121:2741"],
       "primaryComponents": [
         "ScreenHeader",
