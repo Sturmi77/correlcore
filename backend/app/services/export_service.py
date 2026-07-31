@@ -128,6 +128,11 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
                 "energy": entry.energy,
                 "stress": entry.stress,
                 "cycle_day": entry.cycle_day,
+                "cycle_bleeding_level": (
+                    entry.cycle_bleeding_level.value
+                    if entry.cycle_bleeding_level is not None
+                    else None
+                ),
                 "work_context": entry.work_context.value,
                 "source": entry.source.value,
                 "note": None if note_hidden else entry.note_enc,
@@ -201,6 +206,7 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
             "energy",
             "stress",
             "cycle_day",
+            "cycle_bleeding_level",
             "mood_scale",
             "energy_scale",
             "stress_scale",
@@ -222,6 +228,7 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
                 "energy": entry["energy"],
                 "stress": entry["stress"],
                 "cycle_day": entry.get("cycle_day") or "",
+                "cycle_bleeding_level": entry.get("cycle_bleeding_level") or "",
                 "mood_scale": CSV_SCORE_LEGENDS["mood_score"],
                 "energy_scale": CSV_SCORE_LEGENDS["energy"],
                 "stress_scale": CSV_SCORE_LEGENDS["stress"],

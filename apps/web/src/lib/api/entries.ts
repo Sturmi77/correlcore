@@ -19,6 +19,8 @@ export type { NoteVisibility } from './noteMarkers';
 // DTOs
 // ---------------------------------------------------------------------------
 
+export type BleedingLevel = 'none' | 'spotting' | 'light' | 'medium' | 'heavy';
+
 export interface EntryResponse {
   id: string;
   user_id: string;
@@ -28,6 +30,7 @@ export interface EntryResponse {
   energy: number;
   stress: number;
   cycle_day: number | null;
+  cycle_bleeding_level?: BleedingLevel | null;
   source: EntrySource;
   work_context: WorkContext;
   note: string | null;
@@ -48,6 +51,7 @@ export interface EntryCreatePayload {
   energy: number;
   stress: number;
   cycle_day?: number | null;
+  cycle_bleeding_level?: BleedingLevel | null;
   source?: EntrySource;
   work_context: WorkContext;
   note?: string;
@@ -66,6 +70,7 @@ export interface EntryUpdatePayload {
   stress?: number;
   slot?: EntrySlot;
   cycle_day?: number | null;
+  cycle_bleeding_level?: BleedingLevel | null;
   work_context?: WorkContext;
   note?: string;
   note_raw?: string;
@@ -148,4 +153,9 @@ export async function fetchEntryDelta(query: EntryDeltaQuery): Promise<EntryDelt
 
 export async function updateEntry(id: string, payload: EntryUpdatePayload): Promise<EntryResponse> {
   return api.patch<EntryResponse>(`/entries/${id}`, payload);
+}
+
+/** DELETE /entries/cycle-data — clear cycle SHD fields for all entries (ADR-0033). */
+export async function deleteCycleData(): Promise<{ cleared_entries: number }> {
+  return api.delete<{ cleared_entries: number }>('/entries/cycle-data');
 }

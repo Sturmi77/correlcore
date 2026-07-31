@@ -36,6 +36,7 @@
     fetchEntryDelta,
     listEntries,
     updateEntry,
+    type BleedingLevel,
     type EntryDeltaResponse,
     type EntryResponse,
     type EntrySlot,
@@ -115,6 +116,8 @@
   let energy = NEUTRAL_SCALE_DEFAULT;
   let stress = NEUTRAL_SCALE_DEFAULT;
   let cycleDay: number | null = null;
+  let cycleBleedingLevel: BleedingLevel | null = null;
+  const bleedingLevelOptions: BleedingLevel[] = ['none', 'spotting', 'light', 'medium', 'heavy'];
   let workContext: WorkContext = defaultWorkContextForDate(
     new Date(initialDate + 'T00:00:00'),
     workContextTypical
@@ -217,6 +220,7 @@
     stress = NEUTRAL_SCALE_DEFAULT;
     selectedSlot = slot;
     cycleDay = null;
+    cycleBleedingLevel = null;
     cycleDayInvalid = false;
     note = '';
     noteVisibility = 'full';
@@ -316,6 +320,7 @@
           energy = fields.energy;
           stress = fields.stress;
           cycleDay = fields.cycleDay;
+          cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
@@ -335,6 +340,7 @@
           energy = matchingEntry.energy;
           stress = matchingEntry.stress;
           cycleDay = matchingEntry.cycle_day;
+          cycleBleedingLevel = matchingEntry.cycle_bleeding_level ?? null;
           cycleDayInvalid = false;
           workContext = matchingEntry.work_context;
           workContextTouched = true;
@@ -384,6 +390,7 @@
           energy = fields.energy;
           stress = fields.stress;
           cycleDay = fields.cycleDay;
+          cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
@@ -424,6 +431,7 @@
       energy = matchingEntry.energy;
       stress = matchingEntry.stress;
       cycleDay = matchingEntry.cycle_day;
+      cycleBleedingLevel = matchingEntry.cycle_bleeding_level ?? null;
       cycleDayInvalid = false;
       workContext = matchingEntry.work_context;
       // Mark touched so the date-change reactive block doesn't reset it
@@ -479,6 +487,7 @@
           energy = fields.energy;
           stress = fields.stress;
           cycleDay = fields.cycleDay;
+          cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
@@ -539,6 +548,11 @@
     workContext = (e.target as HTMLSelectElement).value as WorkContext;
   }
 
+  function onCycleBleedingChange(e: Event) {
+    const value = (e.currentTarget as HTMLSelectElement).value;
+    cycleBleedingLevel = value === '' ? null : (value as BleedingLevel);
+  }
+
   function onCycleDayInput(e: Event) {
     const value = (e.currentTarget as HTMLInputElement).value;
     const parsed = Number(value);
@@ -547,7 +561,7 @@
   }
 
   function hasOptionalExtrasContent(): boolean {
-    return note.trim().length > 0 || cycleDay !== null;
+    return note.trim().length > 0 || cycleDay !== null || cycleBleedingLevel !== null;
   }
 
   function toggleOptionalExtras() {
@@ -734,6 +748,7 @@
       stress,
       slot: selectedSlot,
       cycle_day: cycleDay ?? null,
+      cycle_bleeding_level: cycleBleedingLevel,
       work_context: workContext,
       note: note.trim(),
       selectedTagIds: [...selectedTagIds],
@@ -835,6 +850,7 @@
           stress: resolvedSnap.stress,
           slot: resolvedSnap.slot,
           cycle_day: resolvedSnap.cycle_day,
+          cycle_bleeding_level: resolvedSnap.cycle_bleeding_level ?? null,
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note,
           note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
@@ -850,6 +866,7 @@
           energy: resolvedSnap.energy,
           stress: resolvedSnap.stress,
           cycle_day: resolvedSnap.cycle_day,
+          cycle_bleeding_level: resolvedSnap.cycle_bleeding_level ?? null,
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note ? resolvedSnap.note : undefined,
           note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
@@ -1115,14 +1132,15 @@
   }
 
   // Reactive watchers: any edit to a tracked field marks the form
-  // dirty. We deliberately keep `entryDate` out of this list — date
-  // changes trigger a full hydration via `loadForDate` instead.
+  // dirty (includes cycleBleedingLevel). We deliberately keep `entryDate`
+  // out of this list — date changes trigger a full hydration via `loadForDate` instead.
   $: {
     moodScore;
     energy;
     stress;
     selectedSlot;
     cycleDay;
+    cycleBleedingLevel;
     workContext;
     note;
     noteVisibility;
@@ -1475,6 +1493,21 @@
                 {$_('entry.cycle_day.error_range')}
               </p>
             {/if}
+            <label class="entry-field">
+              <span class="entry-label">{$_('entry.cycle_bleeding.label')}</span>
+              <select
+                class="input"
+                value={cycleBleedingLevel ?? ''}
+                on:change={onCycleBleedingChange}
+                data-testid="entry-cycle-bleeding"
+              >
+                <option value="">{$_('entry.cycle_bleeding.unset')}</option>
+                {#each bleedingLevelOptions as level}
+                  <option value={level}>{$_(`entry.cycle_bleeding.${level}`)}</option>
+                {/each}
+              </select>
+            </label>
+            <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
           </section>
         {/if}
       </div>

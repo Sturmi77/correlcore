@@ -280,6 +280,7 @@ async def create_entry(
         energy=payload.energy,
         stress=payload.stress,
         cycle_day=payload.cycle_day,
+        cycle_bleeding_level=payload.cycle_bleeding_level,
         source=payload.source,
         work_context=payload.work_context,
         note_enc=payload.note,
@@ -460,6 +461,43 @@ async def update_entry(
     return entry
 
 
+async def clear_user_cycle_data(db: AsyncSession, *, user_id: uuid.UUID) -> int:
+    """Null all cycle SHD columns for the user. Returns rows updated.
+
+    Emits a cleared upsert revision per affected entry so offline clients
+    that already advanced their pull cursor receive the erasure, and scrubs
+    historical ``sync_revision_log`` payloads that still hold cycle SHD.
+    """
+    from app.services.sync_service import (
+        record_entry_upsert_revision,
+        scrub_cycle_shd_from_revision_log,
+    )
+
+    result = await db.execute(
+        select(Entry).where(
+            Entry.user_id == user_id,
+            (Entry.cycle_day.is_not(None)) | (Entry.cycle_bleeding_level.is_not(None)),
+        )
+    )
+    entries = list(result.scalars().all())
+    now = datetime.now(UTC)
+    for entry in entries:
+        entry.cycle_day = None
+        entry.cycle_bleeding_level = None
+        entry.updated_at = now
+
+    await db.flush()
+
+    for entry in entries:
+        await record_entry_upsert_revision(db, user_id=user_id, entry=entry)
+
+    await scrub_cycle_shd_from_revision_log(db, user_id=user_id)
+
+    cleared = len(entries)
+    logger.info("entry.cycle_data_cleared", extra={"user_id": str(user_id), "count": cleared})
+    return cleared
+
+
 # Re-export the slot enum for endpoint-layer convenience.
 __all__ = [
     "DEFAULT_LIST_LIMIT",
@@ -472,6 +510,7 @@ __all__ = [
     "MAX_LIST_LIMIT",
     "build_entry_response",
     "build_entry_responses",
+    "clear_user_cycle_data",
     "create_entry",
     "create_entry_batch",
     "get_entry_delta",
