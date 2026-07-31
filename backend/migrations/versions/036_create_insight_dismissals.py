@@ -1,7 +1,7 @@
-"""034 create insight_dismissals for subject-stable hide (#601 Phase 1)
+"""036 create insight_dismissals for subject-stable hide (#601 Phase 1)
 
-Revision ID: 034
-Revises: 033
+Revision ID: 036
+Revises: 035
 Create Date: 2026-07-31
 """
 
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision: str = "034"
-down_revision: str | None = "033"
+revision: str = "036"
+down_revision: str | None = "035"
 branch_labels: str | tuple[str, ...] | None = None
 depends_on: str | tuple[str, ...] | None = None
 

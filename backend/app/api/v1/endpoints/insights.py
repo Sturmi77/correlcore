@@ -16,7 +16,8 @@ from app.api.v1.deps.auth import (
 from app.core.rate_limit import limiter
 from app.db.redis_client import get_redis
 from app.db.session import get_session
-from app.models.insight import InsightType
+from app.models.insight import Insight, InsightType
+from app.models.insight_dismissal import InsightDismissal
 from app.models.user import User
 from app.schemas.insight import (
     InsightDigestItemResponse,
@@ -46,6 +47,7 @@ from app.services.insight_digest import (
 )
 from app.services.insight_dismissal_service import (
     InsightDismissalNotFoundError,
+    InsightDismissalView,
     create_insight_dismissal,
     delete_insight_dismissal,
     delete_insight_dismissal_by_insight_id,
@@ -281,8 +283,11 @@ async def get_tag_clusters_endpoint(
     return await get_tag_clusters(db, user_id=user.id)
 
 
-def _dismissal_response(view_or_row, insight=None) -> InsightDismissalResponse:
-    if hasattr(view_or_row, "dismissal"):
+def _dismissal_response(
+    view_or_row: InsightDismissalView | InsightDismissal,
+    insight: Insight | None = None,
+) -> InsightDismissalResponse:
+    if isinstance(view_or_row, InsightDismissalView):
         row = view_or_row.dismissal
         insight = view_or_row.insight
     else:

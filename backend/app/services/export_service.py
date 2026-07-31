@@ -88,17 +88,12 @@ def _jsonable_without_ids(value: Any) -> Any:
         return [_jsonable_without_ids(item) for item in value if not isinstance(item, uuid.UUID)]
     if isinstance(value, datetime):
         return value.isoformat()
-    if hasattr(value, "value") and not isinstance(value, (str, bytes, bool, int, float)):
-        # StrEnum / enum-like
-        try:
-            return value.value  # type: ignore[no-any-return]
-        except Exception:  # pragma: no cover - defensive
-            return str(value)
     return value
 
 
 def _enum_value(value: object) -> str:
-    return value.value if hasattr(value, "value") else str(value)
+    enum_value = getattr(value, "value", None)
+    return str(enum_value) if enum_value is not None else str(value)
 
 
 async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelope:

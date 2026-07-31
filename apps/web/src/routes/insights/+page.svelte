@@ -49,9 +49,8 @@
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InsightFeed from '$lib/components/insights/InsightFeed.svelte';
-  import DismissedInsightsSection, {
-    type DismissedInsightItem,
-  } from '$lib/components/insights/DismissedInsightsSection.svelte';
+  import DismissedInsightsSection from '$lib/components/insights/DismissedInsightsSection.svelte';
+  import type { DismissedInsightItem } from '$lib/components/insights/dismissedInsights';
   import InsightsAnalysisToolbar from '$lib/components/insights/InsightsAnalysisToolbar.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';

@@ -241,12 +241,12 @@ async def list_insight_dismissals(
     by_id = {insight.id: insight for insight in insights}
     views: list[InsightDismissalView] = []
     for dismissal in dismissals:
-        insight = newest_by_subject.get(dismissal.subject_key)
-        if insight is None and dismissal.insight_id is not None:
-            insight = by_id.get(dismissal.insight_id)
-        if insight is not None and dismissal.insight_id != insight.id:
-            dismissal.insight_id = insight.id
-        views.append(InsightDismissalView(dismissal=dismissal, insight=insight))
+        matched: Insight | None = newest_by_subject.get(dismissal.subject_key)
+        if matched is None and dismissal.insight_id is not None:
+            matched = by_id.get(dismissal.insight_id)
+        if matched is not None and dismissal.insight_id != matched.id:
+            dismissal.insight_id = matched.id
+        views.append(InsightDismissalView(dismissal=dismissal, insight=matched))
 
     await db.flush()
     return views

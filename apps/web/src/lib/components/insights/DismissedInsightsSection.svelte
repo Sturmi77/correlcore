@@ -8,12 +8,8 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
+  import type { DismissedInsightItem } from './dismissedInsights';
   import InsightCard from './InsightCard.svelte';
-
-  export interface DismissedInsightItem {
-    dismissalId: string;
-    insight: InsightResponse;
-  }
 
   export let items: DismissedInsightItem[] = [];
   /** @deprecated Prefer `items`; kept for transitional call sites. */
@@ -77,8 +73,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    padding-top: var(--space-2);
-    border-top: 1px solid var(--color-border);
   }
 
   .dismissed-insights__header {
@@ -123,17 +117,7 @@
     color: var(--color-text);
     font: inherit;
     font-size: var(--text-sm);
-    padding: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-3);
     cursor: pointer;
-  }
-
-  .dismissed-insights__undo:hover,
-  .dismissed-insights__undo:focus-visible {
-    background: var(--color-surface);
-    outline: none;
-  }
-
-  .dismissed-insights__undo:focus-visible {
-    box-shadow: 0 0 0 2px var(--color-border);
   }
 </style>
