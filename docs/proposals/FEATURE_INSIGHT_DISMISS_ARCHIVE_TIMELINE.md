@@ -86,7 +86,7 @@ Nutzer:innen, die Insights bewusst wegklicken (zu früh, irrelevant, emotional b
 
 ### Option C — Subject-stabile Dismissals (Muster ausblenden)
 
-**Idee:** Statt UUID einen **semantischen Subject-Key** speichern (gleiche Logik wie `_subject_key` in [`insight_service.py`](../../backend/app/services/insight_service.py): Typ + Metric + Subject/Slug/Lag). Prefs oder eigene Tabelle `insight_dismissals(user_id, subject_key, dismissed_at, mode)`.
+**Idee:** Statt UUID einen **semantischen Subject-Key** speichern (gleiche Logik wie `_latest_subject_key` in [`insight_service.py`](../../backend/app/services/insight_service.py): Typ + Metric + Subject/Slug/Lag). Prefs oder eigene Tabelle `insight_dismissals(user_id, subject_key, dismissed_at, mode)`.
 
 | Pro                                | Contra                                                                                    |
 | ---------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -172,8 +172,10 @@ Datenbasis: bestehende `insights`-Rows + Digests (`insight_digests.insight_ids`)
 ### Phase 0 — Sofort-UX (ohne Schema-Bruch)
 
 - Undo + Sektion „Ausgeblendete Insights“ auf `/insights` (oder Settings).
-- Server: Digest und `GET /insights/latest` respektieren `dismissed_insight_keys` (Konsistenz).
+- Server: Digest und `GET /insights/latest` respektieren `dismissed_insight_keys` (Konsistenz) — **TBD:** exakte Digest-Filter-Semantik für dismissed Keys ist noch nicht final spezifiziert; Phase 0 dokumentiert nur die Intent-Richtung.
 - Prefs: append/remove Helpers statt blindem Full-Replace; orphaned UUID-Keys beim Load bereinigen.
+
+**Hinweis `generated_for_date` vs. Occurrence:** `generated_for_date` ist der Analytics-Cutoff-Tag (wann der Insight generiert wurde), nicht zwingend der Kalendertag des beobachteten Musters. Für Zeitleisten-Archiv (Phase 2) braucht es zusätzliche Occurrence-Metadaten.
 
 ### Phase 1 — Stabiler Dismiss-Intent
 

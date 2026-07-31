@@ -10,15 +10,20 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.crypto import reset_current_user_dek, set_current_user_dek, unwrap_dek
+from app.db.session import bind_rls_current_user
 from app.models.insight import Insight
+from app.models.user import User
+from app.models.user_encryption_key import UserEncryptionKey
 from app.services.insight_engine import generate_insight_candidates, load_analytics_data
 from app.services.stats_service import _analytics_enabled
 
@@ -37,6 +42,7 @@ class LagInsightRow:
     id: uuid.UUID
     user_id: uuid.UUID
     payload: dict[str, Any]
+    generated_for_date: date
 
 
 @dataclass
@@ -140,26 +146,143 @@ def apply_lag_profile_backfill(
     return True
 
 
-async def _lag_insights_needing_backfill(
+async def _list_backfill_user_ids(
     db: AsyncSession,
     *,
     user_id: uuid.UUID | None,
-) -> list[LagInsightRow]:
-    # Project id/user_id/payload only — ``statement_enc`` needs a bound DEK.
-    stmt = select(Insight.id, Insight.user_id, Insight.payload).where(
-        Insight.payload["method"].astext == "lag"
-    )
+) -> list[uuid.UUID]:
     if user_id is not None:
-        stmt = stmt.where(Insight.user_id == user_id)
-    stmt = stmt.order_by(Insight.user_id.asc(), Insight.generated_at.desc())
+        return [user_id]
+    result = await db.execute(
+        select(User.id).where(User.is_active.is_(True), User.is_verified.is_(True))
+    )
+    return list(result.scalars().all())
+
+
+async def _lag_insights_needing_backfill(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> list[LagInsightRow]:
+    """Load lag insights missing profiles for one user (requires RLS context)."""
+
+    stmt = (
+        select(Insight.id, Insight.user_id, Insight.payload, Insight.generated_for_date)
+        .where(
+            Insight.user_id == user_id,
+            Insight.payload["method"].astext == "lag",
+        )
+        .order_by(Insight.generated_for_date.desc())
+    )
     result = await db.execute(stmt)
     rows: list[LagInsightRow] = []
-    for insight_id, owner_id, payload in result.all():
+    for insight_id, owner_id, payload, generated_for_date in result.all():
         if not isinstance(payload, dict):
             continue
-        if payload_needs_lag_profile(payload):
-            rows.append(LagInsightRow(id=insight_id, user_id=owner_id, payload=payload))
+        if not payload_needs_lag_profile(payload):
+            continue
+        if generated_for_date is None:
+            generated_for_date = datetime.now(UTC).date()
+        rows.append(
+            LagInsightRow(
+                id=insight_id,
+                user_id=owner_id,
+                payload=payload,
+                generated_for_date=generated_for_date,
+            )
+        )
     return rows
+
+
+async def _backfill_lag_profiles_for_user(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    summary: LagProfileBackfillSummary,
+) -> None:
+    await bind_rls_current_user(db, user_id=user_id)
+    user_insights = await _lag_insights_needing_backfill(db, user_id=user_id)
+    if not user_insights:
+        return
+
+    summary.insights_scanned += len(user_insights)
+
+    if not await _analytics_enabled(db, user_id=user_id):
+        summary.insights_skipped += len(user_insights)
+        logger.info(
+            "Skipping user %s: analytics disabled (%s lag insight(s))",
+            user_id,
+            len(user_insights),
+        )
+        return
+
+    key_result = await db.execute(
+        select(UserEncryptionKey.wrapped_dek).where(UserEncryptionKey.user_id == user_id)
+    )
+    wrapped_dek = key_result.scalar_one_or_none()
+    if wrapped_dek is None:
+        summary.insights_skipped += len(user_insights)
+        logger.warning(
+            "Skipping user %s: no encryption key (%s lag insight(s))",
+            user_id,
+            len(user_insights),
+        )
+        return
+
+    dek_token = set_current_user_dek(user_id, unwrap_dek(wrapped_dek))
+    updated_for_user = 0
+    unmatched_for_user = 0
+
+    try:
+        by_cutoff: dict[date, list[LagInsightRow]] = defaultdict(list)
+        for insight in user_insights:
+            by_cutoff[insight.generated_for_date].append(insight)
+
+        for generated_for_date, batch in by_cutoff.items():
+            analysis_as_of = generated_for_date
+            entries, tags, symptoms = await load_analytics_data(
+                db,
+                user_id=user_id,
+                as_of=analysis_as_of,
+            )
+            if not entries:
+                unmatched_for_user += len(batch)
+                continue
+
+            candidates = generate_insight_candidates(
+                entries,
+                tags,
+                symptoms,
+                as_of=analysis_as_of,
+            )
+            profile_lookup = build_profile_lookup_from_candidates(candidates)
+
+            for insight in batch:
+                updated_payload = build_backfilled_payload(insight.payload, profile_lookup)
+                if updated_payload is None:
+                    unmatched_for_user += 1
+                    continue
+                await db.execute(
+                    update(Insight).where(Insight.id == insight.id).values(payload=updated_payload)
+                )
+                updated_for_user += 1
+    finally:
+        reset_current_user_dek(dek_token)
+
+    if updated_for_user or unmatched_for_user:
+        summary.users_processed += 1
+        summary.user_ids.append(user_id)
+    summary.insights_updated += updated_for_user
+    summary.insights_unmatched += unmatched_for_user
+
+    if updated_for_user or unmatched_for_user:
+        logger.info(
+            "User %s: updated %s/%s lag insight(s); %s unmatched",
+            user_id,
+            updated_for_user,
+            len(user_insights),
+            unmatched_for_user,
+        )
 
 
 async def backfill_lag_profiles(
@@ -168,74 +291,23 @@ async def backfill_lag_profiles(
     user_id: uuid.UUID | None = None,
     as_of: date | None = None,
 ) -> LagProfileBackfillSummary:
-    """Recompute and attach ``lag_profile`` for persisted lag insights."""
+    """Recompute and attach ``lag_profile`` for persisted lag insights.
+
+    When ``user_id`` is omitted, iterates active verified users and binds RLS +
+    DEK per user so production ``correlcore_app`` role sees rows under FORCE RLS.
+
+    ``as_of`` is deprecated: each insight uses its own ``generated_for_date`` cutoff.
+    """
+
+    if as_of is not None:
+        logger.warning(
+            "backfill_lag_profiles(as_of=...) is deprecated; using per-insight generated_for_date"
+        )
 
     summary = LagProfileBackfillSummary()
-    insights = await _lag_insights_needing_backfill(db, user_id=user_id)
-    summary.insights_scanned = len(insights)
-    if not insights:
-        return summary
+    user_ids = await _list_backfill_user_ids(db, user_id=user_id)
 
-    grouped: dict[uuid.UUID, list[LagInsightRow]] = {}
-    for insight in insights:
-        grouped.setdefault(insight.user_id, []).append(insight)
-
-    analysis_as_of = as_of or (datetime.now(UTC).date() + timedelta(days=1))
-
-    for current_user_id, user_insights in grouped.items():
-        if not await _analytics_enabled(db, user_id=current_user_id):
-            summary.insights_skipped += len(user_insights)
-            logger.info(
-                "Skipping user %s: analytics disabled (%s lag insight(s))",
-                current_user_id,
-                len(user_insights),
-            )
-            continue
-
-        entries, tags, symptoms = await load_analytics_data(
-            db,
-            user_id=current_user_id,
-            as_of=analysis_as_of,
-        )
-        if not entries:
-            summary.insights_unmatched += len(user_insights)
-            logger.info(
-                "No analytics entries for user %s; leaving %s lag insight(s) unchanged",
-                current_user_id,
-                len(user_insights),
-            )
-            continue
-
-        candidates = generate_insight_candidates(
-            entries,
-            tags,
-            symptoms,
-            as_of=analysis_as_of,
-        )
-        profile_lookup = build_profile_lookup_from_candidates(candidates)
-
-        updated_for_user = 0
-        unmatched_for_user = 0
-        for insight in user_insights:
-            updated_payload = build_backfilled_payload(insight.payload, profile_lookup)
-            if updated_payload is None:
-                unmatched_for_user += 1
-                continue
-            await db.execute(
-                update(Insight).where(Insight.id == insight.id).values(payload=updated_payload)
-            )
-            updated_for_user += 1
-
-        summary.users_processed += 1
-        summary.user_ids.append(current_user_id)
-        summary.insights_updated += updated_for_user
-        summary.insights_unmatched += unmatched_for_user
-        logger.info(
-            "User %s: updated %s/%s lag insight(s); %s unmatched",
-            current_user_id,
-            updated_for_user,
-            len(user_insights),
-            unmatched_for_user,
-        )
+    for current_user_id in user_ids:
+        await _backfill_lag_profiles_for_user(db, user_id=current_user_id, summary=summary)
 
     return summary

@@ -47,14 +47,14 @@
     });
   }
 
-  /** One entry per week column: a short month name when the month changes, else ''. */
+  /** One entry per week column: label when the ISO week starts a new month. */
   function buildMonthLabels(columns: SymptomCalendarCell[][], loc: string): string[] {
     const formatter = new Intl.DateTimeFormat(loc, { month: 'short' });
     let previous = '';
     return columns.map((week) => {
-      const firstDated = week.find((cell) => cell.date);
-      if (!firstDated?.date) return '';
-      const label = formatter.format(new Date(`${firstDated.date}T00:00:00`));
+      const mondayCell = week[0];
+      if (!mondayCell?.date) return '';
+      const label = formatter.format(new Date(`${mondayCell.date}T00:00:00`));
       if (label === previous) return '';
       previous = label;
       return label;

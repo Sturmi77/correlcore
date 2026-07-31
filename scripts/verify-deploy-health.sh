@@ -27,7 +27,17 @@ fi
 echo "Running: git_commit=$GIT_COMMIT image_tag=$IMAGE_TAG"
 
 if [[ -n "$MIN_COMMIT" ]]; then
-  if [[ "$GIT_COMMIT" == "$MIN_COMMIT"* ]]; then
+  if git rev-parse --git-dir >/dev/null 2>&1 \
+    && git rev-parse --verify "${MIN_COMMIT}^{commit}" >/dev/null 2>&1 \
+    && git rev-parse --verify "${GIT_COMMIT}^{commit}" >/dev/null 2>&1; then
+    if git merge-base --is-ancestor "$MIN_COMMIT" "$GIT_COMMIT"; then
+      echo "OK: deployed git_commit includes required ancestor $MIN_COMMIT"
+    else
+      echo "FAIL: git_commit $GIT_COMMIT does not include $MIN_COMMIT — redeploy needed." >&2
+      echo "See infra/dockhand/README.md § Redeploy and IMAGE_TAG pinning." >&2
+      exit 1
+    fi
+  elif [[ "$GIT_COMMIT" == "$MIN_COMMIT"* || "$MIN_COMMIT" == "$GIT_COMMIT"* ]]; then
     echo "OK: git_commit matches required prefix $MIN_COMMIT"
   else
     echo "FAIL: git_commit $GIT_COMMIT is older than required $MIN_COMMIT — redeploy needed." >&2

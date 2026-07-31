@@ -25,6 +25,8 @@
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
+  import { deleteCycleData } from '$lib/api/entries';
+  import { clearCycleDataOffline } from '$lib/stores/entriesOffline';
   import { deleteAccount } from '$lib/api/user';
   import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
   import {
@@ -59,6 +61,10 @@
   let deletePassword = '';
   let deleteBusy = false;
   let deleteError = '';
+  let cycleDeleteDialogOpen = false;
+  let cycleDeleteBusy = false;
+  let cycleDeleteError = '';
+  let cycleDeleteMessage = '';
   let consents: ConsentListResponse | null = null;
   let consentsBusy = false;
   let consentsError = '';
@@ -242,10 +248,42 @@
     }
   }
 
+  function openCycleDeleteDialog(): void {
+    cycleDeleteError = '';
+    cycleDeleteMessage = '';
+    cycleDeleteDialogOpen = true;
+  }
+
+  function closeCycleDeleteDialog(): void {
+    if (cycleDeleteBusy) return;
+    cycleDeleteDialogOpen = false;
+    cycleDeleteError = '';
+  }
+
+  async function confirmDeleteCycleData(): Promise<void> {
+    cycleDeleteBusy = true;
+    cycleDeleteError = '';
+    cycleDeleteMessage = '';
+    try {
+      const result = await deleteCycleData();
+      await clearCycleDataOffline();
+      cycleDeleteMessage = $_('settings.cycle.delete_success', {
+        values: { count: result.cleared_entries },
+      });
+      cycleDeleteDialogOpen = false;
+    } catch (err) {
+      cycleDeleteError = err instanceof Error ? err.message : $_('settings.cycle.delete_error');
+    } finally {
+      cycleDeleteBusy = false;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Dev view availability (backend flag)
   // ---------------------------------------------------------------------------
-  let devAvailable = false;
+  type DevBackendState = 'unknown' | 'available' | 'disabled' | 'error';
+  let devBackendState: DevBackendState = 'unknown';
+  $: devAvailable = devBackendState === 'available';
   const localeOptions: SegmentedControlOption[] = [
     { id: 'de', label: 'DE', testId: 'language-de' },
     { id: 'en', label: 'EN', testId: 'language-en' },
@@ -262,13 +300,19 @@
     if ($auth.status !== 'authenticated') return;
     try {
       await fetchDevInfo();
-      devAvailable = true;
+      devBackendState = 'available';
     } catch (err) {
-      if (err instanceof ApiError && err.status === 404) {
-        devAvailable = false;
+      const status =
+        err instanceof ApiError
+          ? err.status
+          : typeof err === 'object' && err !== null && 'status' in err
+            ? Number((err as { status?: unknown }).status)
+            : undefined;
+      if (status === 404) {
+        devBackendState = 'disabled';
         return;
       }
-      devAvailable = false;
+      devBackendState = 'error';
     }
   }
 
@@ -489,6 +533,20 @@
         <span>{$_('settings.cycle.enabled')}</span>
       </label>
       <p class="settings__analysis-note">{$_('settings.cycle.hint')}</p>
+      <div class="settings__actions">
+        <Button
+          variant="danger"
+          type="button"
+          data-testid="cycle-delete-data"
+          disabled={preferencesBusy || cycleDeleteBusy}
+          on:click={openCycleDeleteDialog}
+        >
+          {$_('settings.cycle.delete_action')}
+        </Button>
+      </div>
+      {#if cycleDeleteMessage}
+        <InlineAlert variant="success" message={cycleDeleteMessage} />
+      {/if}
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
       {/if}
@@ -710,9 +768,15 @@
               </Button>
             </div>
           {:else if $devMode}
-            <p class="settings__dev-hint" data-testid="developer-backend-unavailable-hint">
-              {$_('settings.developer.backend_unavailable_hint')}
-            </p>
+            {#if devBackendState === 'disabled'}
+              <p class="settings__dev-hint" data-testid="developer-backend-unavailable-hint">
+                {$_('settings.developer.backend_unavailable_hint')}
+              </p>
+            {:else if devBackendState === 'error'}
+              <p class="settings__dev-hint" data-testid="developer-backend-error-hint">
+                {$_('settings.developer.backend_error_hint')}
+              </p>
+            {/if}
             <div class="settings__actions">
               <Button href="/dev" variant="secondary" data-testid="dev-link">
                 {$_('settings.dev.open')}
@@ -744,6 +808,64 @@
 {#if toastVisible}
   <div class="settings__toast" role="status" aria-live="polite" data-testid="dev-toast">
     {toastMessage}
+  </div>
+{/if}
+
+{#if cycleDeleteDialogOpen}
+  <div
+    class="settings__modal-backdrop"
+    role="presentation"
+    data-testid="cycle-delete-backdrop"
+    on:click={closeCycleDeleteDialog}
+  >
+    <dialog
+      open
+      class="settings__modal settings__modal--compact"
+      aria-modal="true"
+      aria-labelledby="cycle-delete-title"
+      data-testid="cycle-delete-dialog"
+      on:click|stopPropagation
+    >
+      <div class="settings__modal-head">
+        <h2 id="cycle-delete-title">{$_('settings.cycle.delete_title')}</h2>
+        <IconButton
+          type="button"
+          ariaLabel={$_('settings.cycle.delete_cancel')}
+          title={$_('settings.cycle.delete_cancel')}
+          on:click={closeCycleDeleteDialog}
+        >
+          x
+        </IconButton>
+      </div>
+      <div class="settings__delete-body">
+        <p>{$_('settings.cycle.delete_body')}</p>
+        {#if cycleDeleteError}
+          <InlineAlert variant="error" message={cycleDeleteError} />
+        {/if}
+        <div class="settings__actions">
+          <Button
+            variant="ghost"
+            type="button"
+            on:click={closeCycleDeleteDialog}
+            disabled={cycleDeleteBusy}
+          >
+            {$_('settings.cycle.delete_cancel')}
+          </Button>
+          <Button
+            variant="danger"
+            type="button"
+            loading={cycleDeleteBusy}
+            disabled={cycleDeleteBusy}
+            data-testid="cycle-delete-confirm"
+            on:click={() => void confirmDeleteCycleData()}
+          >
+            {cycleDeleteBusy
+              ? $_('settings.cycle.delete_busy')
+              : $_('settings.cycle.delete_confirm')}
+          </Button>
+        </div>
+      </div>
+    </dialog>
   </div>
 {/if}
 

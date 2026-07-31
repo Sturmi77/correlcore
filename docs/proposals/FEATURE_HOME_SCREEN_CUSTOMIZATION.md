@@ -36,7 +36,7 @@ Onboarding-Redirect.
 ```
 
 - Spalte `user_preferences.home_sections` (JSONB, nullable)
-- `NULL`/leer → Server-Default (brief-first)
+- `NULL`/leer → Server-Default (`first_week_banner`, `daily_brief`, `work_context`, `weekday_overview` — Banner zuerst)
 - Merge-Logik: unbekannte Keys verwerfen, fehlende Default-Keys einfügen
 
 ## UI

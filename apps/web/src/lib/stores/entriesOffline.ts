@@ -6,7 +6,7 @@ import type { EntryResponse } from '$lib/api/entries';
 import { listEntries } from '$lib/api/entries';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 import type { SymptomEntry } from '$lib/api/symptoms';
-import { ackPendingChangesForEntity, appendChange } from '$lib/offline/changeLog';
+import { ackPendingChangesForEntity, appendChange, listPendingChanges } from '$lib/offline/changeLog';
 import { getOfflineDb } from '$lib/offline/db';
 import type { LocalEntry, SyncState } from '$lib/offline/types';
 
@@ -311,4 +311,78 @@ export async function markEntryConflict(entryId: string): Promise<void> {
 
 export async function deleteLocalEntry(entryId: string): Promise<void> {
   await getOfflineDb().entries.delete(entryId);
+}
+
+function entryHasCycleData(entry: LocalEntry): boolean {
+  return (
+    entry.cycle_day !== null ||
+    (entry.cycle_bleeding_level !== null && entry.cycle_bleeding_level !== undefined)
+  );
+}
+
+/** Clear cycle SHD fields from IndexedDB and pending outbox payloads (ADR-0033). */
+export async function clearCycleDataOffline(): Promise<number> {
+  const db = getOfflineDb();
+  const entries = await db.entries.toArray();
+  const now = new Date().toISOString();
+  let cleared = 0;
+
+  for (const entry of entries) {
+    if (!entryHasCycleData(entry)) continue;
+    cleared += 1;
+
+    await db.entries.update(entry.id, {
+      cycle_day: null,
+      cycle_bleeding_level: null,
+      updated_at: now,
+    });
+
+    const pending = await listPendingChanges();
+    for (const change of pending) {
+      if (change.entity_id !== entry.id || change.operation !== 'upsert') continue;
+      const payload = change.payload;
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) continue;
+      await db.change_log.update(change.seq!, {
+        payload: {
+          ...(payload as Record<string, unknown>),
+          cycle_day: null,
+          cycle_bleeding_level: null,
+        },
+      });
+    }
+  }
+
+  if (typeof navigator !== 'undefined' && navigator.onLine) {
+    try {
+      const serverEntries = await listEntries({ limit: 500 });
+      for (const serverEntry of serverEntries) {
+        const local = await db.entries.get(serverEntry.id);
+        if (!local) continue;
+        await applyPulledEntry(
+          serverEntry.id,
+          {
+            entry_date: serverEntry.entry_date,
+            slot: serverEntry.slot,
+            mood_score: serverEntry.mood_score,
+            energy: serverEntry.energy,
+            stress: serverEntry.stress,
+            cycle_day: null,
+            cycle_bleeding_level: null,
+            work_context: serverEntry.work_context,
+            note: serverEntry.note,
+            tag_ids: local.tag_ids,
+            symptoms: local.symptoms,
+          },
+          serverEntry.updated_at,
+          local.sync_state === 'pending' || local.sync_state === 'conflict'
+            ? local.sync_state
+            : 'synced'
+        );
+      }
+    } catch {
+      // Offline pull is best-effort; local scrub above still prevents stale SHD display.
+    }
+  }
+
+  return cleared;
 }

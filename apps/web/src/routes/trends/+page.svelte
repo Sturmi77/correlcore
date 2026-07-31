@@ -114,6 +114,8 @@
   let showWorkContextRows = true;
   let compactTrends = false;
   let compareSettingsOpen = false;
+  let compareClusterRefreshToken = 0;
+  let compareClustersAvailable = false;
   let compareMode: CompareMode = 'lines';
   let compareSortMode: CompareSortMode = 'frequency';
   let mobileMedia: MediaQueryList | null = null;
@@ -402,6 +404,7 @@
     void loadInsights();
     const unregisterRefresh = registerPageRefresh(async () => {
       await Promise.all([loadTrends(), loadInsights()]);
+      compareClusterRefreshToken += 1;
       scheduleSync();
     });
     return () => {
@@ -509,6 +512,8 @@
             {loading}
             pruneSparseAxes
             compactChrome={compactTrends}
+            clusterRefreshToken={compareClusterRefreshToken}
+            bind:clustersAvailableBinding={compareClustersAvailable}
             bind:mode={compareMode}
             bind:sortMode={compareSortMode}
             noteDates={noteEntryDates}
@@ -530,6 +535,7 @@
         showWorkContexts={showWorkContextRows}
         mode={compareMode}
         sortMode={compareSortMode}
+        clustersAvailable={compareClustersAvailable}
         on:close={() => (compareSettingsOpen = false)}
         on:smoothingChange={(event) => setSmoothing(event.detail.value)}
         on:metricToggle={(event) => toggleMetric(event.detail.metric)}

@@ -636,7 +636,15 @@
       "heading": "Zyklus-Tracking",
       "body": "Steuere, ob das Zyklustag-Feld in jedem Tageseintrag erscheint.",
       "enabled": "Zyklus-Funktion aktiviert",
-      "hint": "Ist die Funktion aktiv, kannst du deinen Zyklustag (1–35) je Eintrag erfassen. CorrelCore behandelt ihn wie eine Metrik — keine Vorhersage, keine medizinische Aussage."
+      "hint": "Ist die Funktion aktiv, kannst du deinen Zyklustag (1–35) je Eintrag erfassen. CorrelCore behandelt ihn wie eine Metrik — keine Vorhersage, keine medizinische Aussage.",
+      "delete_action": "Zyklusdaten loeschen",
+      "delete_title": "Zyklusdaten loeschen?",
+      "delete_body": "Dies entfernt Zyklustag und Blutungsstufe aus allen Eintraegen. Andere Eintragsdaten bleiben unveraendert.",
+      "delete_confirm": "Zyklusdaten loeschen",
+      "delete_cancel": "Abbrechen",
+      "delete_busy": "Loesche…",
+      "delete_success": "Zyklusdaten aus {count} Eintraegen entfernt.",
+      "delete_error": "Zyklusdaten konnten nicht geloescht werden."
     },
     "vocabulary": {
       "heading": "Tracking-Vokabular",
@@ -857,6 +865,7 @@
       "backend_heading": "Backend-Diagnose",
       "backend_body": "Laufzeit-Commit, Image-Digest, Worker-Laeufe und DB-Backups ueber /dev, wenn der Server DEV_VIEW_ENABLED setzt.",
       "backend_unavailable_hint": "Dieses Deployment hat den Backend-Developer-Endpoint nicht aktiviert (typisch in der Cloud). /dev zeigt den Hinweis; fuer UI-Tests reichen die Force-Visualisierungen oben.",
+      "backend_error_hint": "Der Backend-Developer-Endpoint ist nicht erreichbar (Netzwerk- oder Serverfehler). Client-only Developer-Tools oben funktionieren weiterhin auf diesem Geraet.",
       "force_viz_label": "Visualisierungen mit Mock-Daten erzwingen",
       "force_viz_aria": "Mock-Daten fuer Visualisierungen umschalten",
       "phase_label": "Erkenntnisreife",

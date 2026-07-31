@@ -165,10 +165,19 @@ async def test_backfill_lag_profiles_updates_matching_rows() -> None:
 
     with (
         patch(
+            "app.services.lag_profile_backfill_service.bind_rls_current_user",
+            new=AsyncMock(),
+        ),
+        patch(
             "app.services.lag_profile_backfill_service._lag_insights_needing_backfill",
             new=AsyncMock(
                 return_value=[
-                    LagInsightRow(id=insight.id, user_id=user.id, payload=dict(insight.payload))
+                    LagInsightRow(
+                        id=insight.id,
+                        user_id=user.id,
+                        payload=dict(insight.payload),
+                        generated_for_date=date(2026, 7, 20),
+                    )
                 ]
             ),
         ),
@@ -184,11 +193,24 @@ async def test_backfill_lag_profiles_updates_matching_rows() -> None:
             "app.services.lag_profile_backfill_service.generate_insight_candidates",
             return_value=[candidate],
         ) as generate,
+        patch(
+            "app.services.lag_profile_backfill_service.set_current_user_dek",
+            return_value="dek-token",
+        ),
+        patch(
+            "app.services.lag_profile_backfill_service.unwrap_dek",
+            return_value=b"dek-bytes",
+        ),
+        patch("app.services.lag_profile_backfill_service.reset_current_user_dek"),
     ):
+        key_result = MagicMock()
+        key_result.scalar_one_or_none.return_value = b"wrapped-dek"
+        db.execute = AsyncMock(return_value=key_result)
         summary = await backfill_lag_profiles(db, user_id=user.id)
 
     generate.assert_called_once()
-    assert db.execute.await_count == 1
+    assert generate.call_args.kwargs["as_of"] == date(2026, 7, 20)
+    assert db.execute.await_count >= 1
     assert summary == LagProfileBackfillSummary(
         users_processed=1,
         insights_scanned=1,
@@ -210,10 +232,19 @@ async def test_backfill_lag_profiles_skips_analytics_disabled_users() -> None:
 
     with (
         patch(
+            "app.services.lag_profile_backfill_service.bind_rls_current_user",
+            new=AsyncMock(),
+        ),
+        patch(
             "app.services.lag_profile_backfill_service._lag_insights_needing_backfill",
             new=AsyncMock(
                 return_value=[
-                    LagInsightRow(id=insight.id, user_id=user.id, payload=dict(insight.payload))
+                    LagInsightRow(
+                        id=insight.id,
+                        user_id=user.id,
+                        payload=dict(insight.payload),
+                        generated_for_date=date(2026, 7, 20),
+                    )
                 ]
             ),
         ),

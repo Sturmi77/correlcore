@@ -39,6 +39,14 @@ vi.mock('$lib/api/dev', () => ({
   }),
 }));
 
+vi.mock('$lib/api/entries', () => ({
+  deleteCycleData: vi.fn(async () => ({ cleared_entries: 3 })),
+}));
+
+vi.mock('$lib/stores/entriesOffline', () => ({
+  clearCycleDataOffline: vi.fn(async () => 0),
+}));
+
 vi.mock('$lib/api/export', () => ({
   downloadExport: vi.fn(),
   exportFilename: vi.fn((kind: string) => `export.${kind}`),
@@ -140,7 +148,9 @@ describe('/settings Sprint 7', () => {
       expect(screen.getByTestId('developer-section')).toBeTruthy();
     });
     expect(screen.getByTestId('force-viz-toggle')).toBeTruthy();
-    expect(screen.getByTestId('developer-backend-unavailable-hint')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByTestId('developer-backend-unavailable-hint')).toBeTruthy();
+    });
   });
 
   it('shows developer section on load when dev mode was persisted', async () => {
@@ -184,5 +194,11 @@ describe('/settings Sprint 7', () => {
     render(Page);
 
     expect(await screen.findByTestId('regenerate-insights')).toBeTruthy();
+  });
+
+  it('shows cycle data delete control in cycle section', async () => {
+    render(Page);
+
+    expect(await screen.findByTestId('cycle-delete-data')).toBeTruthy();
   });
 });

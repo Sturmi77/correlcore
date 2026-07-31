@@ -55,6 +55,10 @@
   export let loading = false;
   export let pruneSparseAxes = true;
   export let compactChrome = false;
+  /** Increment to reload tag clusters after a parent data refresh (#597 P2). */
+  export let clusterRefreshToken = 0;
+  /** Bound by parent for compact settings sheet cluster-sort availability (#597). */
+  export let clustersAvailableBinding = false;
   export let mode: CompareMode = readCompareMode();
   export let sortMode: CompareSortMode = readCompareSortMode();
   /**
@@ -87,6 +91,9 @@
     timelineCursor.reset();
     void loadTagClusters();
   });
+  $: if (clusterRefreshToken) {
+    void loadTagClusters();
+  }
   onDestroy(() => {
     timelineCursor.reset();
   });
@@ -129,7 +136,12 @@
   let focusedClusterId: number | null = null;
 
   $: tagClusterMeta = buildTagClusterMeta(tagClusters);
-  $: clustersAvailable = tagClusterMeta.labels.length > 0;
+  $: tagRowsWithClusters =
+    showTags && tagHeatmap
+      ? tagHeatmap.tags.filter((tag) => tagClusterMeta.byTagId.has(tag.tag_id))
+      : [];
+  $: clustersAvailable = tagClusterMeta.labels.length > 0 && tagRowsWithClusters.length > 0;
+  $: clustersAvailableBinding = clustersAvailable;
   $: if (
     focusedClusterId !== null &&
     !tagClusterMeta.labels.some((cluster) => cluster.cluster_id === focusedClusterId)
@@ -384,9 +396,10 @@
     </div>
   {/if}
 
-  {#if !compactChrome && clustersAvailable && showTags}
+  {#if clustersAvailable && showTags}
     <div
       class="compare__clusters"
+      class:compare__clusters--compact={compactChrome}
       role="group"
       aria-label={$_('trends.compare.focus_label')}
       data-testid="trends-compare-focus"
@@ -517,7 +530,7 @@
         {pinned}
         {correlationScores}
         clusterMeta={tagClusterMeta}
-        {focusedClusterId}
+        bind:focusedClusterId
         scrollable={false}
         autoScroll={false}
         {pruneSparseAxes}
@@ -651,6 +664,16 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+  }
+
+  .compare__clusters--compact {
+    gap: var(--space-1);
+    margin-top: var(--space-1);
+  }
+
+  .compare__clusters--compact .compare__chip {
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-2);
   }
 
   .compare__zoom-block {

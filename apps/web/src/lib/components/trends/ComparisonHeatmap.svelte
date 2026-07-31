@@ -75,6 +75,16 @@
   export let clusterMeta: TagClusterMeta = { byTagId: new Map(), labels: [] };
   /** Focused cluster id, or null for all tag rows. */
   export let focusedClusterId: number | null = null;
+  $: if (
+    !loading &&
+    focusedClusterId !== null &&
+    clustersAvailable &&
+    !rawRows.some(
+      (row) => row.kind === 'tag' && clusterMeta.byTagId.get(row.id) === focusedClusterId
+    )
+  ) {
+    focusedClusterId = null;
+  }
 
   const UNGROUPED_CLUSTER = Number.POSITIVE_INFINITY;
 
@@ -196,6 +206,24 @@
     return left.label.localeCompare(right.label, undefined, { sensitivity: 'base' });
   }
 
+  function kindRank(kind: Row['kind']): number {
+    if (kind === 'tag') return 0;
+    if (kind === 'symptom') return 1;
+    return 2;
+  }
+
+  function defaultRowSort(a: Row, b: Row): number {
+    if (sortMode === 'pinned') {
+      return (
+        b.days.reduce((s, d) => s + (d.count ?? 0), 0) -
+          a.days.reduce((s, d) => s + (d.count ?? 0), 0) || a.label.localeCompare(b.label)
+      );
+    }
+    const delta = rowScore(b) - rowScore(a);
+    if (delta !== 0) return delta;
+    return a.label.localeCompare(b.label);
+  }
+
   $: clustersAvailable = clusterMeta.labels.length > 0;
   $: clusterSortActive =
     sortMode === 'clustered' &&
@@ -221,18 +249,14 @@
     if (aPin !== undefined && bPin !== undefined) return aPin - bPin;
     if (aPin !== undefined) return -1;
     if (bPin !== undefined) return 1;
-    if (clusterSortActive && a.kind === 'tag' && b.kind === 'tag') {
-      return clusterOrder(a, b);
+    if (clusterSortActive) {
+      const kindDelta = kindRank(a.kind) - kindRank(b.kind);
+      if (kindDelta !== 0) return kindDelta;
+      if (a.kind === 'tag' && b.kind === 'tag') {
+        return clusterOrder(a, b);
+      }
     }
-    if (sortMode === 'pinned') {
-      return (
-        b.days.reduce((s, d) => s + (d.count ?? 0), 0) -
-          a.days.reduce((s, d) => s + (d.count ?? 0), 0) || a.label.localeCompare(b.label)
-      );
-    }
-    const delta = rowScore(b) - rowScore(a);
-    if (delta !== 0) return delta;
-    return a.label.localeCompare(b.label);
+    return defaultRowSort(a, b);
   });
   // Prefer explicit zoom buckets from the Compare panel; otherwise one column per day.
   $: visibleBuckets =

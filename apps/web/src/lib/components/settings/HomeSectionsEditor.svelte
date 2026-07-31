@@ -68,7 +68,7 @@
           <IconButton
             type="button"
             size="sm"
-            ariaLabel={$_('settings.home.move_up')}
+            ariaLabel={`${$_(`settings.home.sections.${section.key}.label`)} — ${$_('settings.home.move_up')}`}
             disabled={disabled || index === 0}
             data-testid={`home-section-up-${section.key}`}
             on:click={() => moveSection(section.key, -1)}
@@ -78,7 +78,7 @@
           <IconButton
             type="button"
             size="sm"
-            ariaLabel={$_('settings.home.move_down')}
+            ariaLabel={`${$_(`settings.home.sections.${section.key}.label`)} — ${$_('settings.home.move_down')}`}
             disabled={disabled || index === orderedSections.length - 1}
             data-testid={`home-section-down-${section.key}`}
             on:click={() => moveSection(section.key, 1)}
@@ -158,7 +158,9 @@
 
   .home-sections-editor__reset {
     justify-self: start;
-    padding: 0;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.35rem 0.75rem;
     border: 0;
     background: none;
     color: var(--color-primary);
