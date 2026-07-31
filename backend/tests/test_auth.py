@@ -5,6 +5,7 @@ Coverage:
 - POST /api/v1/auth/login      — success, wrong password, unknown email
 - POST /api/v1/auth/refresh    — success (rotation), replay attack → 401
 - POST /api/v1/auth/logout     — clears cookies, no error on missing token
+- POST /api/v1/auth/refresh/logout — browser cookie-path logout revokes Redis JTI
 - GET  /api/v1/auth/me         — authenticated, unauthenticated
 
 All Redis and DB interactions are mocked so tests run without
@@ -583,6 +584,49 @@ async def test_logout_no_token_still_200(async_client: AsyncClient) -> None:
     """Logout without token should still succeed — idempotent."""
     r = await async_client.post("/api/v1/auth/logout", json={})
     assert r.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_browser_logout_path_does_not_receive_refresh_cookie(
+    async_client: AsyncClient,
+) -> None:
+    """Path=/api/v1/auth/refresh cookies are not sent to POST /auth/logout.
+
+    A browser that only clears cookies would leave the Redis JTI live.
+    """
+    async_client.cookies.set(
+        "refresh_token",
+        VALID_REFRESH_TOKEN,
+        path="/api/v1/auth/refresh",
+    )
+    with patch(
+        "app.api.v1.endpoints.auth.logout_user",
+        new_callable=AsyncMock,
+    ) as mock_logout:
+        r = await async_client.post("/api/v1/auth/logout", json={})
+    assert r.status_code == 200
+    mock_logout.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_refresh_path_logout_revokes_cookie_token(
+    async_client: AsyncClient,
+) -> None:
+    """POST /auth/refresh/logout receives the path-scoped refresh cookie."""
+    async_client.cookies.set(
+        "refresh_token",
+        VALID_REFRESH_TOKEN,
+        path="/api/v1/auth/refresh",
+    )
+    with patch(
+        "app.api.v1.endpoints.auth.logout_user",
+        new_callable=AsyncMock,
+    ) as mock_logout:
+        r = await async_client.post("/api/v1/auth/refresh/logout", json={})
+    assert r.status_code == 200
+    assert r.json()["message"] == "Logged out successfully"
+    mock_logout.assert_awaited_once()
+    assert mock_logout.await_args.args[1] == VALID_REFRESH_TOKEN
 
 
 # ---------------------------------------------------------------------------

@@ -5,7 +5,9 @@ Cookie strategy (ADR-0004):
 - Refresh token: HttpOnly, Secure, SameSite=strict, Path=/api/v1/auth/refresh, max_age=30 days
 
 Scoping the refresh cookie to /api/v1/auth/refresh ensures it is only sent
-on the single endpoint that needs it, reducing the attack surface.
+to endpoints under that path, reducing the attack surface. Browser logout
+must therefore use POST /auth/refresh/logout (not /auth/logout) so the
+HttpOnly refresh cookie is attached and Redis can revoke the JTI.
 
 Rate-limiting (SlowAPI):
 - POST /register: 5 requests / minute per IP → 429 on breach (Issue #65, SA-2)
@@ -15,7 +17,7 @@ Rate-limiting (SlowAPI):
 - POST /reset-password: 10 requests / minute per IP → 429 on breach
 - POST /resend-verification: 3 requests / minute per IP
 - POST /refresh: 30 requests / minute per IP
-- POST /logout: 20 requests / minute per IP
+- POST /logout and /refresh/logout: 20 requests / minute per IP
 """
 
 from __future__ import annotations
@@ -406,14 +408,34 @@ async def refresh(
 
 
 # ---------------------------------------------------------------------------
-# POST /logout
+# POST /logout and POST /refresh/logout
 # ---------------------------------------------------------------------------
+
+
+async def _logout_and_clear(
+    request: Request,
+    response: Response,
+    body: RefreshRequest,
+    redis: aioredis.Redis,
+) -> MessageResponse:
+    """Revoke refresh JTI when present, then clear auth cookies.
+
+    Browser clients must call the ``/refresh/logout`` route so the
+    path-scoped ``refresh_token`` cookie is included. Native clients can
+    use ``/logout`` with a JSON body token.
+    """
+    token = request.cookies.get(REFRESH_COOKIE_NAME) or body.refresh_token
+    if token:
+        token_store = TokenStore(redis)
+        await logout_user(token_store, token)
+    clear_auth_cookies(response, request=request)
+    return MessageResponse(message="Logged out successfully")
 
 
 @router.post(
     "/logout",
     response_model=MessageResponse,
-    summary="Invalidate refresh token and clear cookies",
+    summary="Invalidate refresh token and clear cookies (body/native)",
 )
 @limiter.limit("20/minute")
 async def logout(
@@ -422,12 +444,28 @@ async def logout(
     body: RefreshRequest = RefreshRequest(),
     redis: aioredis.Redis = Depends(get_redis),
 ) -> MessageResponse:
-    token = request.cookies.get(REFRESH_COOKIE_NAME) or body.refresh_token
-    if token:
-        token_store = TokenStore(redis)
-        await logout_user(token_store, token)
-    clear_auth_cookies(response, request=request)
-    return MessageResponse(message="Logged out successfully")
+    return await _logout_and_clear(request, response, body, redis)
+
+
+@router.post(
+    "/refresh/logout",
+    response_model=MessageResponse,
+    summary="Invalidate refresh token and clear cookies (browser cookie path)",
+)
+@limiter.limit("20/minute")
+async def logout_via_refresh_cookie_path(
+    request: Request,
+    response: Response,
+    body: RefreshRequest = RefreshRequest(),
+    redis: aioredis.Redis = Depends(get_redis),
+) -> MessageResponse:
+    """Browser logout under the refresh cookie path.
+
+    ``refresh_token`` is Path=/api/v1/auth/refresh, so browsers never send
+    it to ``POST /auth/logout``. This route receives the cookie and
+    revokes the Redis JTI before clearing Set-Cookie.
+    """
+    return await _logout_and_clear(request, response, body, redis)
 
 
 # ---------------------------------------------------------------------------
