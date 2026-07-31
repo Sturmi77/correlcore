@@ -261,7 +261,7 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 
 **Purpose:** Daily touch point. Create or edit today's entry and receive a compact Daily Brief.
 
-**M5 Streamline:** Home is not a mini-dashboard. It has three zones: Today Strip, Daily Brief, and 7-day Preview. Full filters, matrices, and raw analytics live in Insights or Trends drilldowns.
+**M5 Streamline:** Home is not a mini-dashboard. It has a fixed Today Strip, configurable compact blocks (Daily Brief, work-context summary, weekday overview — see `/settings/home`), and a primary CTA. Full filters, matrices, and raw analytics live in Insights or Trends drilldowns.
 
 **Layout (max. 3 information zones):**
 

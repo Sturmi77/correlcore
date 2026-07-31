@@ -609,6 +609,7 @@
       "analysis": "Analysis",
       "privacy": "Privacy & Data",
       "appearance": "Appearance",
+      "home": "Home",
       "account": "Account",
       "developer": "Developer"
     },
@@ -796,6 +797,38 @@
       "api_base_saved": "API URL saved. Sign in again if you changed servers.",
       "api_base_cleared": "API URL reset to the build default.",
       "api_base_invalid": "Enter a valid http(s) URL ending with /api/v1."
+    },
+    "home": {
+      "open": "Home layout",
+      "back_settings": "Back to Settings",
+      "title": "Home layout",
+      "subtitle": "Choose which compact blocks appear on Home and in what order.",
+      "heading": "Home sections",
+      "body": "Today context and the log-today action stay fixed. Everything below can be shown, hidden, or reordered.",
+      "list_aria": "Configurable Home sections",
+      "move_up": "Move section up",
+      "move_down": "Move section down",
+      "reset_defaults": "Reset to default layout",
+      "error_load": "Could not load Home layout settings.",
+      "error_save": "Could not save Home layout settings.",
+      "sections": {
+        "first_week_banner": {
+          "label": "Early pattern notice",
+          "description": "Neutral first-week or context pattern banner when enough data exists."
+        },
+        "daily_brief": {
+          "label": "Daily brief",
+          "description": "Top insight or phase summary with links to Insights and Trends."
+        },
+        "work_context": {
+          "label": "Work context pattern",
+          "description": "Average mood, energy, or stress by work situation."
+        },
+        "weekday_overview": {
+          "label": "Weekday overview",
+          "description": "Seven-day mood strip with weekday top signals."
+        }
+      }
     },
     "dev": {
       "heading": "Developer View",

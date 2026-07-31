@@ -78,6 +78,10 @@ class UserPreference(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    home_sections: Mapped[list[dict[str, object]] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
