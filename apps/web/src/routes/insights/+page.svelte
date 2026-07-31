@@ -89,6 +89,7 @@
   import type { MetricKey } from '$lib/utils/charts';
   import {
     devEventWindowsFromHeatmaps,
+    devLagEventWindowsFromHeatmaps,
     insightMetricToChartKey,
   } from '$lib/utils/exploreEventWindows';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
@@ -141,6 +142,7 @@
   let exploreEventsWindows: EventWindow[] = [];
   let exploreEventsPoints: TimeseriesPoint[] = [];
   let exploreEventsMetric: MetricKey = 'mood_avg';
+  let exploreEventsLagOffset: number | null = null;
   let exploreEventsLoading = false;
   let exploreEventsRequestId = 0;
 
@@ -708,6 +710,7 @@
     exploreEventsLoading = true;
     exploreEventsWindows = [];
     exploreEventsPoints = [];
+    exploreEventsLagOffset = null;
 
     try {
       const range = insightsEffectiveRange;
@@ -716,12 +719,13 @@
         if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
           return;
         }
-        exploreEventsWindows = devEventWindowsFromHeatmaps(
-          insight,
-          fixture.tagHeatmap,
-          fixture.symptomHeatmap
-        );
+        exploreEventsWindows =
+          insight.payload?.method === 'lag'
+            ? devLagEventWindowsFromHeatmaps(insight, fixture.tagHeatmap, fixture.symptomHeatmap)
+            : devEventWindowsFromHeatmaps(insight, fixture.tagHeatmap, fixture.symptomHeatmap);
         exploreEventsPoints = fixture.timeseries.points;
+        const devLag = insight.payload?.lag_days;
+        exploreEventsLagOffset = typeof devLag === 'number' ? devLag : null;
         return;
       }
 
@@ -737,12 +741,14 @@
         label: event.label ?? undefined,
       }));
       exploreEventsPoints = response.points;
+      exploreEventsLagOffset = response.lag_days ?? null;
     } catch {
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
       }
       exploreEventsWindows = [];
       exploreEventsPoints = [];
+      exploreEventsLagOffset = null;
     } finally {
       if (requestId === exploreEventsRequestId && exploreEventsInsight?.id === insightId) {
         exploreEventsLoading = false;
@@ -972,6 +978,7 @@
       events={exploreEventsWindows}
       points={exploreEventsPoints}
       metric={exploreEventsMetric}
+      lagOffset={exploreEventsLagOffset}
       phase={exploreEventsInsight ? (insightMaturity?.phase ?? null) : null}
       on:close={() => {
         exploreEventsOpen = false;

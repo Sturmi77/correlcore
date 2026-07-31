@@ -4,8 +4,26 @@ import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats'
 import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
 import type { MetricKey } from '$lib/utils/charts';
 
-/** ADR-0035 §6: only tag/symptom subjects have per-day presence windows. */
+/** #488: lag insights align on the feature (antecedent), not the subject. */
+export function lagFeatureKind(insight: InsightResponse): 'tag' | 'symptom' | null {
+  const payload = insight.payload as Record<string, unknown> | undefined;
+  if (!payload || payload.method !== 'lag') return null;
+  const feature = payload.feature as Record<string, unknown> | undefined;
+  const kind = feature?.kind;
+  return kind === 'tag' || kind === 'symptom' ? kind : null;
+}
+
+/**
+ * ADR-0035 §6: tag/symptom subjects have per-day presence windows. #488 aligns
+ * lag insights on the feature instead, so their eligibility depends *only* on
+ * whether the feature is a tag/symptom — a metric feature has no presence dates
+ * and the backend returns 422, so the outcome subject must not re-enable it.
+ */
 export function isExploreEventsSubject(insight: InsightResponse): boolean {
+  const payload = insight.payload as Record<string, unknown> | undefined;
+  if (payload?.method === 'lag') {
+    return lagFeatureKind(insight) !== null;
+  }
   return insight.subject_type === 'tag' || insight.subject_type === 'symptom';
 }
 
@@ -96,4 +114,46 @@ export function devEventWindowsFromHeatmaps(
   if (!symptom) return [];
   const dates = symptom.days.filter((day) => day.count > 0).map((day) => day.date);
   return datesToEventWindows(dates, insight.subject_label ?? symptom.name);
+}
+
+/** #488: resolve a lag insight's feature (antecedent) to a matchable slug/name. */
+export function lagFeature(
+  insight: InsightResponse
+): { kind: 'tag' | 'symptom'; slug: string | null; name: string | null } | null {
+  const kind = lagFeatureKind(insight);
+  if (!kind) return null;
+  const feature = (insight.payload as Record<string, unknown>).feature as Record<string, unknown>;
+  const rawSlug = typeof feature.slug === 'string' ? feature.slug : null;
+  const rawKey = typeof feature.key === 'string' ? feature.key : null;
+  const slug = rawSlug ?? (rawKey ? rawKey.replace(/^(tag|symptom):/, '') : null);
+  const name = typeof feature.name === 'string' ? feature.name : null;
+  return { kind, slug, name };
+}
+
+/**
+ * Dev fixtures: derive a lag insight's onset windows from its *feature*
+ * (the antecedent), since the subject is the outcome and may be a metric.
+ */
+export function devLagEventWindowsFromHeatmaps(
+  insight: InsightResponse,
+  tagHeatmap: TagHeatmapResponse,
+  symptomHeatmap: SymptomHeatmapResponse
+): EventWindow[] {
+  const feature = lagFeature(insight);
+  if (!feature) return [];
+  const matches = (rowSlug: string, rowName: string): boolean =>
+    (feature.slug !== null && rowSlug.toLowerCase() === feature.slug.toLowerCase()) ||
+    (feature.name !== null && rowName.toLowerCase() === feature.name.toLowerCase());
+
+  if (feature.kind === 'tag') {
+    const tag = tagHeatmap.tags.find((row) => matches(row.slug, row.name));
+    if (!tag) return [];
+    const dates = tag.days.filter((day) => day.count > 0).map((day) => day.date);
+    return datesToEventWindows(dates, feature.name ?? tag.name);
+  }
+
+  const symptom = symptomHeatmap.symptoms.find((row) => matches(row.slug, row.name));
+  if (!symptom) return [];
+  const dates = symptom.days.filter((day) => day.count > 0).map((day) => day.date);
+  return datesToEventWindows(dates, feature.name ?? symptom.name);
 }

@@ -5,8 +5,10 @@ import {
   buildExploreEventWindows,
   datesToEventWindows,
   devEventWindowsFromHeatmaps,
+  devLagEventWindowsFromHeatmaps,
   insightMetricToChartKey,
   isExploreEventsSubject,
+  lagFeatureKind,
 } from './exploreEventWindows';
 
 const baseInsight = (overrides: Partial<InsightResponse>): InsightResponse => ({
@@ -53,6 +55,69 @@ describe('exploreEventWindows', () => {
     expect(isExploreEventsSubject(baseInsight({ subject_type: 'symptom' }))).toBe(true);
     expect(isExploreEventsSubject(baseInsight({ subject_type: 'metric' }))).toBe(false);
     expect(isExploreEventsSubject(baseInsight({ subject_type: 'weekday' }))).toBe(false);
+  });
+
+  it('enables explore-events for lag insights with a tag/symptom feature (#488)', () => {
+    // Outcome (subject) is a metric, so subject_type alone would hide the sheet.
+    const lagInsight = baseInsight({
+      subject_type: 'metric',
+      payload: { method: 'lag', lag_days: 2, feature: { kind: 'tag', slug: 'cycling' } },
+    });
+    expect(lagFeatureKind(lagInsight)).toBe('tag');
+    expect(isExploreEventsSubject(lagInsight)).toBe(true);
+
+    // A lag insight whose feature is a metric has no presence dates → not eligible.
+    const metricFeatureLag = baseInsight({
+      subject_type: 'metric',
+      payload: { method: 'lag', lag_days: 2, feature: { kind: 'metric', slug: 'mood' } },
+    });
+    expect(lagFeatureKind(metricFeatureLag)).toBeNull();
+    expect(isExploreEventsSubject(metricFeatureLag)).toBe(false);
+
+    // #581: a symptom-subject lag insight with a metric feature must NOT be
+    // re-enabled via the outcome subject (backend would 422 → empty sheet).
+    const symptomSubjectMetricFeature = baseInsight({
+      subject_type: 'symptom',
+      payload: { method: 'lag', lag_days: 2, feature: { kind: 'metric', slug: 'mood' } },
+    });
+    expect(isExploreEventsSubject(symptomSubjectMetricFeature)).toBe(false);
+  });
+
+  it('derives dev lag windows from the feature, not the subject (#581)', () => {
+    // Subject is a metric with no id; the tag feature is referenced by key.
+    const insight = baseInsight({
+      subject_type: 'metric',
+      subject_id: null,
+      payload: {
+        method: 'lag',
+        lag_days: 1,
+        target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+        feature: { kind: 'tag', key: 'tag:sport', name: 'Sport' },
+      },
+    });
+    const windows = devLagEventWindowsFromHeatmaps(
+      insight,
+      {
+        start_date: '2026-06-01',
+        end_date: '2026-07-01',
+        tags: [
+          {
+            tag_id: 't-sport',
+            slug: 'sport',
+            name: 'Sport',
+            category: 'sport',
+            color: null,
+            days: [
+              { date: '2026-06-10', count: 1 },
+              { date: '2026-06-12', count: 0 },
+            ],
+          },
+        ],
+      },
+      { start_date: '2026-06-01', end_date: '2026-07-01', symptoms: [] }
+    );
+
+    expect(windows).toEqual([{ onset: '2026-06-10', label: 'Sport' }]);
   });
 
   it('maps insight metrics to chart keys', () => {

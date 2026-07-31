@@ -84,6 +84,9 @@ class InsightEventWindowsResponse(BaseModel):
     end_date: date_type
     events: list[InsightEventWindow] = Field(default_factory=list)
     points: list[TimeseriesPoint] = Field(default_factory=list)
+    # #488: for lag insights the onsets are the *feature* occurrences and the
+    # outcome is expected at t = +lag_days; None for non-lag (co-occurrence) windows.
+    lag_days: int | None = None
 
 
 class InsightRegenerateResponse(BaseModel):

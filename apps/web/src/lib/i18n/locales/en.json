@@ -527,7 +527,8 @@
       "close_aria": "Close event-aligned view",
       "empty": "No events available for this insight yet.",
       "locked": "Available once the insight reaches the provisional phase.",
-      "open_action": "Explore aligned events"
+      "open_action": "Explore aligned events",
+      "lag_hint": "T0 = trigger · outcome marked at +{days} days"
     },
     "markers": {
       "aria": "Event markers on the shared timeline"

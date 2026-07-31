@@ -237,6 +237,8 @@ export interface InsightEventWindowsResponse {
   end_date: string;
   events: InsightEventWindowResponse[];
   points: import('./stats').TimeseriesPoint[];
+  /** #488: lag insights align on the feature; the outcome is expected at +lag_days. */
+  lag_days?: number | null;
 }
 
 /** POST /insights/regenerate — on-demand insight + tag-cluster regeneration (M10.1). */

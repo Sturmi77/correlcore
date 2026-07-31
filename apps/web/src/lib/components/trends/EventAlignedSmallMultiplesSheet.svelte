@@ -46,6 +46,11 @@
   export let metric: MetricKey = 'mood_avg';
   /** Insight maturity phase — used to enforce the gate at the boundary. */
   export let phase: InsightMaturityPhase | null = null;
+  /**
+   * #488: for lag insights, onset (t = 0) is the feature; the outcome is
+   * expected at t = +lagOffset. Highlights that column. Null for co-occurrence.
+   */
+  export let lagOffset: number | null = null;
 
   const dispatch = createEventDispatcher<{ close: void }>();
 
@@ -108,6 +113,10 @@
   $: gridWidth = labelWidth + dayCount * (cellSize + cellGap);
   $: gridHeight = rows.length * (cellSize + cellGap) + 32; // + axis labels
   $: sheetOpen = open && gateOpen;
+  // Only highlight a lag column that falls inside the rendered ±radius window.
+  $: lagColumn =
+    lagOffset != null && lagOffset >= -radius && lagOffset <= radius ? lagOffset : null;
+  $: lagBandX = lagColumn != null ? labelWidth + (lagColumn + radius) * (cellSize + cellGap) : 0;
 </script>
 
 <BottomSheet
@@ -122,6 +131,11 @@
       <p class="esm__eyebrow">{$_('trends.esm.eyebrow')}</p>
       <h2 id="esm-title">{$_('trends.esm.title')}</h2>
       <p class="esm__body">{$_('trends.esm.body')}</p>
+      {#if lagColumn != null}
+        <p class="esm__lag-note" data-testid="esm-lag-note">
+          {$_('trends.esm.lag_hint', { values: { days: lagColumn } })}
+        </p>
+      {/if}
     </div>
     <button
       type="button"
@@ -143,6 +157,18 @@
         role="img"
         aria-label={$_('trends.esm.aria')}
       >
+        {#if lagColumn != null}
+          <!-- #488: highlight the expected-outcome column at t = +lag_days. -->
+          <rect
+            class="esm__lag-band"
+            data-testid="esm-lag-band"
+            x={lagBandX - cellGap / 2}
+            y={0}
+            width={cellSize + cellGap}
+            height={gridHeight}
+            rx="4"
+          />
+        {/if}
         <!-- Offset axis labels (-7 .. +7) -->
         <g class="esm__axis">
           {#each Array.from({ length: dayCount }) as _v, i}
@@ -152,6 +178,7 @@
               y={14}
               text-anchor="middle"
               class="esm__axis-tick"
+              class:esm__axis-tick--lag={offset === lagColumn}
             >
               {offset === 0 ? 'T0' : offset > 0 ? `+${offset}` : `${offset}`}
             </text>
@@ -175,6 +202,7 @@
               <rect
                 class="esm__cell"
                 class:esm__cell--t0={cell.offset === 0}
+                class:esm__cell--lag={cell.offset === lagColumn}
                 x={labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
                 y={top}
                 width={cellSize}
@@ -276,5 +304,29 @@
     /* The t=0 column carries a thin halo so the anchor line is obvious. */
     stroke: var(--color-cursor);
     stroke-width: 1.5;
+  }
+
+  .esm__lag-note {
+    margin: var(--space-1) 0 0;
+    color: var(--color-cursor);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  /* #488: the expected-outcome column at t = +lag_days. Token-only (ADR-0035 §10). */
+  .esm__lag-band {
+    fill: var(--color-cursor-halo);
+    opacity: 0.18;
+  }
+
+  .esm__axis-tick--lag {
+    fill: var(--color-cursor);
+    font-weight: 700;
+  }
+
+  .esm__cell--lag {
+    stroke: var(--color-cursor);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 2;
   }
 </style>
