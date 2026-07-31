@@ -507,7 +507,7 @@
             showSymptoms={showSymptomRows}
             showWorkContexts={showWorkContextRows}
             {loading}
-            pruneSparseAxes={compactTrends}
+            pruneSparseAxes
             compactChrome={compactTrends}
             bind:mode={compareMode}
             bind:sortMode={compareSortMode}

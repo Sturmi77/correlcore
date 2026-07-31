@@ -107,4 +107,50 @@ describe('ComparisonHeatmap shared axis', () => {
     expect(screen.getByText('Run')).toBeTruthy();
     expect(screen.queryByText('Empty')).toBeNull();
   });
+
+  it('prunes rows with no values in visible buckets when pruneSparseAxes is on (#590)', () => {
+    render(ComparisonHeatmapHarness, {
+      props: {
+        pruneSparseAxes: true,
+        dates: ['2026-07-01', '2026-07-02', '2026-07-03'],
+        buckets: [
+          {
+            id: '2026-07-01_2026-07-03',
+            start: '2026-07-01',
+            end: '2026-07-03',
+            dayCount: 3,
+            presentDays: 3,
+            partial: false,
+            dates: ['2026-07-01', '2026-07-02', '2026-07-03'],
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByText('Run')).toBeTruthy();
+    expect(screen.queryByText('Empty')).toBeNull();
+  });
+
+  it('hides rows whose only activity falls outside visible buckets (#590)', () => {
+    render(ComparisonHeatmapHarness, {
+      props: {
+        pruneSparseAxes: true,
+        dates: ['2026-07-01', '2026-07-02', '2026-07-03'],
+        buckets: [
+          {
+            id: '2026-07-02_2026-07-03',
+            start: '2026-07-02',
+            end: '2026-07-03',
+            dayCount: 2,
+            presentDays: 2,
+            partial: false,
+            dates: ['2026-07-02', '2026-07-03'],
+          },
+        ],
+      },
+    });
+
+    expect(screen.queryByText('Run')).toBeNull();
+    expect(screen.queryByText('Empty')).toBeNull();
+  });
 });

@@ -15,7 +15,7 @@
     sumBucketCounts,
     type AxisBucket,
   } from '$lib/utils/compareAxisZoom';
-  import { pruneHeatmapRows } from '$lib/utils/heatmapPruning';
+  import { pruneHeatmapRows, pruneHeatmapRowsByBuckets } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { TagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
@@ -69,7 +69,7 @@
    * MetricTimeseries / UnifiedStripChart on a shared `dates` axis, and
    * dropping empty days would shift cells out of alignment with the chart.
    */
-  export let pruneSparseAxes = false;
+  export let pruneSparseAxes = true;
   /** Server tag groups (#592); empty maps when insufficient_data. */
   export let clusterMeta: TagClusterMeta = { byTagId: new Map(), labels: [] };
   /** Focused cluster id, or null for all tag rows. */
@@ -233,8 +233,25 @@
     if (delta !== 0) return delta;
     return a.label.localeCompare(b.label);
   });
+  // Prefer explicit zoom buckets from the Compare panel; otherwise one column per day.
+  $: visibleBuckets =
+    buckets.length > 0
+      ? buckets
+      : axisDates.map((date): AxisBucket => ({
+          id: `${date}_${date}`,
+          start: date,
+          end: date,
+          dayCount: 1,
+          presentDays: 1,
+          partial: false,
+          dates: [date],
+        }));
   $: rows = pruneSparseAxes
-    ? pruneHeatmapRows(sortedRows, axisDates, (row, date) => valueFor(row, date))
+    ? visibleBuckets.length > 0
+      ? pruneHeatmapRowsByBuckets(sortedRows, visibleBuckets, (row, bucket) =>
+          valueForBucket(row, bucket)
+        )
+      : pruneHeatmapRows(sortedRows, axisDates, (row, date) => valueFor(row, date))
     : sortedRows;
   $: showClusterGaps = clusterSortActive && focusedClusterId === null;
   $: clusterBoundaries = showClusterGaps
@@ -250,19 +267,6 @@
         return false;
       })
     : rows.map(() => false);
-  // Prefer explicit zoom buckets from the Compare panel; otherwise one column per day.
-  $: visibleBuckets =
-    buckets.length > 0
-      ? buckets
-      : axisDates.map((date): AxisBucket => ({
-          id: `${date}_${date}`,
-          start: date,
-          end: date,
-          dayCount: 1,
-          presentDays: 1,
-          partial: false,
-          dates: [date],
-        }));
   $: visibleAxisDates = visibleBuckets.map((bucket) => bucket.start);
   $: maxValue = Math.max(
     0,

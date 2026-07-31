@@ -14,7 +14,7 @@
   import PullToRefresh from '$lib/components/common/PullToRefresh.svelte';
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import GlobalEntrySheet from '$lib/components/entries/GlobalEntrySheet.svelte';
-  import { isPublicRoute, shouldShowAppNav } from '$lib/navigation/appNav';
+  import { isPublicRoute, isMarketingLandingView, shouldShowAppNav } from '$lib/navigation/appNav';
   import { entrySheetStore } from '$lib/stores/entrySheet';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
   import { initDeepLinks } from '$lib/native/deepLinks';
@@ -39,7 +39,9 @@
   setupI18n();
 
   $: pathname = $page.url?.pathname ?? '/';
-  $: showAppNav = shouldShowAppNav($auth.status, pathname);
+  $: searchParams = $page.url?.searchParams;
+  $: showAppNav = shouldShowAppNav($auth.status, pathname, searchParams);
+  $: marketingLandingView = isMarketingLandingView($auth.status, pathname, searchParams);
   $: pullToRefreshDisabled = $entrySheetStore.open;
 
   // Brand splash: stay up until max(real boot done, min animation duration).
@@ -172,7 +174,7 @@
     -->
     <main
       class="page-shell flex-1 overflow-y-auto min-h-0"
-      class:page-shell--marketing={pathname === '/' && $auth.status !== 'authenticated'}
+      class:page-shell--marketing={marketingLandingView}
     >
       <slot />
     </main>

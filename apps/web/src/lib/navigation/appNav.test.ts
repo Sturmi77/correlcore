@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { isNavItemActive, isPublicRoute, isRouteWithoutAppNav, shouldShowAppNav } from './appNav';
+import {
+  isMarketingLandingView,
+  isNavItemActive,
+  isPublicRoute,
+  isRouteWithoutAppNav,
+  shouldShowAppNav,
+} from './appNav';
 
 describe('appNav routing helpers', () => {
   describe('isPublicRoute', () => {
@@ -35,6 +41,22 @@ describe('appNav routing helpers', () => {
       expect(shouldShowAppNav('authenticated', '/offline')).toBe(false);
       expect(shouldShowAppNav('anonymous', '/')).toBe(false);
       expect(shouldShowAppNav('loading', '/insights')).toBe(false);
+    });
+
+    it('hides nav on authenticated landing preview (#588)', () => {
+      const params = new URLSearchParams('landing=1');
+      expect(shouldShowAppNav('authenticated', '/', params)).toBe(false);
+    });
+  });
+
+  describe('isMarketingLandingView', () => {
+    it('shows marketing landing for anonymous home and ?landing=1 preview', () => {
+      expect(isMarketingLandingView('anonymous', '/')).toBe(true);
+      expect(isMarketingLandingView('authenticated', '/')).toBe(false);
+      expect(isMarketingLandingView('authenticated', '/', new URLSearchParams('landing=1'))).toBe(
+        true
+      );
+      expect(isMarketingLandingView('authenticated', '/insights')).toBe(false);
     });
   });
 

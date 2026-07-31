@@ -86,11 +86,11 @@ vi.mock('$lib/api/habits', () => ({
 }));
 
 vi.mock('$lib/api/entries', () => ({
-  listEntries: vi.fn(async (query?: { end_date?: string }) => [
+  listEntries: vi.fn(async () => [
     {
       id: 'entry-office',
       user_id: 'user-1',
-      entry_date: query?.end_date ?? '2026-05-16',
+      entry_date: '2026-05-16',
       slot: 'day',
       mood_score: 4,
       energy: 3,

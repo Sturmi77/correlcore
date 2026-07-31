@@ -53,7 +53,7 @@
   export let showSymptoms = false;
   export let showWorkContexts = true;
   export let loading = false;
-  export let pruneSparseAxes = false;
+  export let pruneSparseAxes = true;
   export let compactChrome = false;
   export let mode: CompareMode = readCompareMode();
   export let sortMode: CompareSortMode = readCompareSortMode();

@@ -18,6 +18,7 @@ const authLayoutSource = readFileSync(resolve('src/routes/auth/+layout.svelte'),
 describe('M10 marketing landing and legal pages', () => {
   it('uses the marketing landing component for anonymous home', () => {
     expect(homeSource).toContain('LandingPage');
+    expect(homeSource).toContain('showLandingPreview');
     expect(homeSource).not.toContain('Pre-Alpha');
   });
 
