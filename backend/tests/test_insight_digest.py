@@ -205,8 +205,12 @@ async def test_hydrate_stored_digest_preserves_insight_order() -> None:
     result = MagicMock()
     # Return out of order — hydrate must follow insight_ids.
     result.scalars.return_value.all.return_value = [insights[0], insights[1], insights[2]]
+    prefs = MagicMock()
+    prefs.scalar_one_or_none.return_value = []
+    empty_keys = MagicMock()
+    empty_keys.all.return_value = []
     db = MagicMock()
-    db.execute = AsyncMock(return_value=result)
+    db.execute = AsyncMock(side_effect=[result, prefs, empty_keys, prefs])
 
     digest = await hydrate_stored_digest(db, row=row)
     assert digest is not None
@@ -322,7 +326,11 @@ async def test_store_then_get_roundtrip_via_hydrate() -> None:
 
     result = MagicMock()
     result.scalars.return_value.all.return_value = insights
-    db.execute = AsyncMock(return_value=result)
+    prefs = MagicMock()
+    prefs.scalar_one_or_none.return_value = []
+    empty_keys = MagicMock()
+    empty_keys.all.return_value = []
+    db.execute = AsyncMock(side_effect=[result, prefs, empty_keys, prefs])
 
     hydrated = await hydrate_stored_digest(db, row=row)
     assert hydrated is not None

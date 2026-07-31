@@ -7,12 +7,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.insight import Insight
 from app.models.insight_dismissal import InsightDismissal
 from app.services.insight_service import (
-    MAX_INSIGHT_LIST_LIMIT,
     InsightNotFoundError,
     _tag_slugs_for_legacy_insights,
     get_insight_by_id,
@@ -133,6 +133,19 @@ async def create_insight_dismissal(
             dismissed_at=now,
         )
         db.add(row)
+        try:
+            async with db.begin_nested():
+                await db.flush()
+        except IntegrityError:
+            result = await db.execute(
+                select(InsightDismissal).where(
+                    InsightDismissal.user_id == user_id,
+                    InsightDismissal.subject_key == subject_key,
+                )
+            )
+            row = result.scalar_one()
+            row.insight_id = insight.id
+            row.dismissed_at = now
     else:
         row.insight_id = insight.id
         row.dismissed_at = now
@@ -227,7 +240,6 @@ async def list_insight_dismissals(
         select(Insight)
         .where(Insight.user_id == user_id)
         .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
-        .limit(MAX_INSIGHT_LIST_LIMIT)
     )
     insights = list(insights_result.scalars().all())
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)

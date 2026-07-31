@@ -22,26 +22,33 @@
   let total = 0;
   let loading = true;
   let error: string | null = null;
+  let loadSeq = 0;
 
   async function loadHistory(append = false): Promise<void> {
+    const seq = ++loadSeq;
+    const requestedStatus = status;
     loading = true;
     error = null;
     try {
       const response = await listInsightHistory({
-        status,
+        status: requestedStatus,
         limit: PAGE_SIZE,
         offset: append ? items.length : 0,
       });
+      if (seq !== loadSeq || requestedStatus !== status) return;
       items = append ? [...items, ...response.insights] : response.insights;
       total = response.total;
     } catch (err) {
+      if (seq !== loadSeq || requestedStatus !== status) return;
       error = err instanceof Error ? err.message : $_('insights.history.error');
       if (!append) {
         items = [];
         total = 0;
       }
     } finally {
-      loading = false;
+      if (seq === loadSeq) {
+        loading = false;
+      }
     }
   }
 

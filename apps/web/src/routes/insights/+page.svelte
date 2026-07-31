@@ -521,13 +521,13 @@
     }
   }
 
-  async function handleUndismissInsight(id: string, _dismissalId: string): Promise<void> {
+  async function handleUndismissInsight(id: string, dismissalId: string): Promise<void> {
     const restored = dismissedItems.find((item) => item.insight.id === id)?.insight;
     dismissedItems = dismissedItems.filter((item) => item.insight.id !== id);
     if (restored && !insights.some((insight) => insight.id === id)) {
       insights = [restored, ...insights];
     }
-    await undismissInsight(id);
+    await undismissInsight(id, { dismissalId });
   }
 
   async function loadDismissedItems(): Promise<DismissedInsightItem[]> {

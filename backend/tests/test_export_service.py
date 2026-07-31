@@ -45,6 +45,12 @@ def _scalar_optional_result(value: object | None) -> MagicMock:
     return result
 
 
+def _prefs_keys_result(keys: list[str] | None = None) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = keys or []
+    return result
+
+
 def _make_insight(user, *, subject_label: str = "energy") -> Insight:
     now = datetime(2026, 5, 14, tzinfo=UTC)
     insight = Insight()
@@ -100,6 +106,7 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
             _row_result([(entry_tag.entry_id, tag)]),
             _row_result([(entry_symptom.entry_id, entry_symptom.intensity, symptom)]),
             _scalar_result([]),
+            _prefs_keys_result([]),
             _scalar_result([]),
         ]
     )
@@ -155,6 +162,7 @@ async def test_export_includes_insights_and_dismissals_without_ids() -> None:
             _row_result([]),
             _row_result([]),
             _scalar_result([insight]),
+            _prefs_keys_result([]),
             _scalar_result([dismissal]),
         ]
     )
@@ -194,6 +202,7 @@ async def test_export_csv_and_zip_render() -> None:
             _row_result([]),
             _row_result([]),
             _scalar_result([]),
+            _prefs_keys_result([]),
             _scalar_result([]),
         ]
     )

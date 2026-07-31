@@ -161,11 +161,23 @@ export async function dismissInsight(id: string): Promise<InsightDismissalRespon
  *
  * Prefers DELETE /dismissals/{id}; falls back to by-insight when unknown.
  */
-export async function undismissInsight(id: string): Promise<void> {
+export async function undismissInsight(
+  id: string,
+  options: { dismissalId?: string } = {}
+): Promise<void> {
   const current = get(_state);
-  if (!current.dismissedIds.includes(id)) return;
+  const dismissalId = options.dismissalId ?? current.dismissalIdByInsightId[id];
 
-  const dismissalId = current.dismissalIdByInsightId[id];
+  // Fresh page loads may hydrate Ausgeblendet without populating dismissedIds.
+  if (!current.dismissedIds.includes(id) && !dismissalId) {
+    try {
+      await deleteInsightDismissalByInsightId(id);
+    } catch {
+      // intentionally swallowed
+    }
+    return;
+  }
+
   const dismissedIds = current.dismissedIds.filter((dismissedId) => dismissedId !== id);
   const { [id]: _removed, ...dismissalIdByInsightId } = current.dismissalIdByInsightId;
   const latest = pickLatest(current.insights, dismissedIds);

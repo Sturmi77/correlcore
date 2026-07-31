@@ -254,6 +254,14 @@ describe('undismissInsight()', () => {
 
     expect(vi.mocked(deleteInsightDismissalByInsightId)).toHaveBeenCalledWith('solo');
   });
+
+  it('deletes by explicit dismissal id even when store has no mapping', async () => {
+    vi.mocked(deleteInsightDismissal).mockResolvedValueOnce(undefined);
+
+    await undismissInsight('fresh', { dismissalId: 'dismissal-fresh' });
+
+    expect(vi.mocked(deleteInsightDismissal)).toHaveBeenCalledWith('dismissal-fresh');
+  });
 });
 
 describe('rankedInsights derived store', () => {

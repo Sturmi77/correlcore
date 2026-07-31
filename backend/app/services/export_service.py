@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import uuid
 import zipfile
 from collections import defaultdict
@@ -27,6 +28,7 @@ from app.models.tag import EntryTag, Tag
 from app.models.user import User
 from app.models.user_profile import UserProfile
 from app.schemas.export import ExportEnvelope, ExportScoreLegendItem, ExportUser
+from app.services.insight_dismissal_service import migrate_uuid_prefs_to_subject_dismissals
 from app.services.insight_service import _tag_slugs_for_legacy_insights, insight_subject_key
 
 EXPORT_FORMAT_VERSION = "1.3"
@@ -40,6 +42,9 @@ _EXPORT_OMIT_KEYS = frozenset(
         "insight_id",
         "subject_id",
     }
+)
+_UUID_IN_TEXT = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
 APP_EXPORT_VERSION = "1.1.1"
 SCORE_LEGEND: dict[str, ExportScoreLegendItem] = {
@@ -94,6 +99,12 @@ def _jsonable_without_ids(value: Any) -> Any:
 def _enum_value(value: object) -> str:
     enum_value = getattr(value, "value", None)
     return str(enum_value) if enum_value is not None else str(value)
+
+
+def _export_subject_key(subject_key: str) -> str:
+    """Redact embedded UUIDs so exports omit internal database IDs."""
+
+    return _UUID_IN_TEXT.sub("<id>", subject_key)
 
 
 async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelope:
@@ -189,6 +200,8 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
     insights = list(insights_result.scalars().all())
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
 
+    await migrate_uuid_prefs_to_subject_dismissals(db, user_id=user.id)
+
     dismissals_result = await db.execute(
         select(InsightDismissal)
         .where(InsightDismissal.user_id == user.id)
@@ -207,7 +220,7 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
                 "metric": insight.metric,
                 "subject_type": insight.subject_type,
                 "subject_label": insight.subject_label,
-                "subject_key": subject_key,
+                "subject_key": _export_subject_key(subject_key),
                 "effect_size": insight.effect_size,
                 "confidence": insight.confidence,
                 "sample_n": insight.sample_n,
@@ -224,7 +237,7 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
 
     exported_dismissals = [
         {
-            "subject_key": row.subject_key,
+            "subject_key": _export_subject_key(row.subject_key),
             "dismissed_at": row.dismissed_at.isoformat(),
             "created_at": row.created_at.isoformat(),
         }

@@ -463,7 +463,6 @@ async def list_insight_history(
             Insight.generated_at.desc(),
             Insight.created_at.desc(),
         )
-        .limit(MAX_INSIGHT_LIST_LIMIT)
     )
     insights = await _filter_analytics_excluded_insights(
         db,
