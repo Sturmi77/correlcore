@@ -504,7 +504,7 @@
         "decrease_aria": "Herauszoomen (groebere Spalten)",
         "increase_aria": "Hereinzoomen (feinere Spalten)",
         "status": "{days} Tage / Zelle",
-        "encoding_hint": "Heatmap: Summe der Haeufigkeit · Linien: Mittel der Tage mit Eintrag",
+        "encoding_hint": "Heatmap: Summe der Haeufigkeit · Linien/Streifen: Mittel der Tage mit Eintrag",
         "tap_hint": "Tippe auf eine Mehr-Tage-Zelle zum Hereinzoomen",
         "tap_to_enlarge": "Tippen zum Vergrößern",
         "open_day": "Tag oeffnen",
@@ -512,9 +512,7 @@
         "partial": "{present} von {size} Tagen",
         "detail": "{range} · {coverage}",
         "cell_tooltip": "{label}, {range}: {value} · {coverage}",
-        "cell_tooltip_zoom": "{label}, {range}: {value} · {coverage} · Tippen zum Vergrößern",
-        "strips_disabled": "Zeitachsen-Zoom ist im Linien-Modus verfuegbar (Streifen bleiben auf Tageszellen).",
-        "strip_gate_reset": "Zoom fuer den Streifen-Modus auf 1 Tag / Zelle zurueckgesetzt."
+        "cell_tooltip_zoom": "{label}, {range}: {value} · {coverage} · Tippen zum Vergrößern"
       }
     },
     "strip": {
