@@ -52,7 +52,8 @@
    * component owns the persisted preference. 'correlation' falls back to
    * 'frequency' when no correlationScores map is supplied.
    */
-  export let sortMode: 'frequency' | 'recent' | 'correlation' | 'pinned' | 'clustered' = 'frequency';
+  export let sortMode: 'frequency' | 'recent' | 'correlation' | 'pinned' | 'clustered' =
+    'frequency';
   /**
    * Sprint 2 (ADR-0035): row ids that should float to the top regardless
    * of the sort mode. Persisted by the parent.
@@ -260,9 +261,7 @@
         for (let previous = index - 1; previous >= 0; previous -= 1) {
           const prior = rows[previous];
           if (prior.kind !== 'tag') continue;
-          return (
-            clusterMeta.byTagId.get(row.id) !== clusterMeta.byTagId.get(prior.id)
-          );
+          return clusterMeta.byTagId.get(row.id) !== clusterMeta.byTagId.get(prior.id);
         }
         return false;
       })

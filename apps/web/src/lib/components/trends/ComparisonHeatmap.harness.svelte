@@ -6,7 +6,8 @@
   export let pruneSparseAxes = true;
   export let dates = ['2026-07-01', '2026-07-02', '2026-07-03'];
   export let buckets: AxisBucket[] = [];
-  export let sortMode: 'frequency' | 'recent' | 'correlation' | 'pinned' | 'clustered' = 'frequency';
+  export let sortMode: 'frequency' | 'recent' | 'correlation' | 'pinned' | 'clustered' =
+    'frequency';
   export let clusterMeta: {
     byTagId: Map<string, number>;
     labels: { cluster_id: number; label: string }[];
