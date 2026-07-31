@@ -52,27 +52,27 @@ EOF
 
 ## Close candidates (detail)
 
-| Issue | Title | Evidence | Why still open |
-| --- | --- | --- | --- |
-| **#488** | Lag correlation visualization | PRs [#581](https://github.com/Sturmi77/correlcore/pull/581), [#583](https://github.com/Sturmi77/correlcore/pull/583), [#586](https://github.com/Sturmi77/correlcore/pull/586), [#596](https://github.com/Sturmi77/correlcore/pull/596) on main | PR #586 said “Completes #488”, not `Closes #488` |
-| **#459** | docs(M10.2): sprint plan + status + roadmap | [#458](https://github.com/Sturmi77/correlcore/pull/458); Altlasten-Plan Phase 0.2 + Phase 2 done (#548, #550) | Tracking issue never closed after Sprint 0 |
-| **#588** | correlcore.com → App statt Landing | [#593](https://github.com/Sturmi77/correlcore/pull/593) (`Relates to #588`); anonymous → Landing, auth → Home, `?landing=1` | No `Closes #588`; expected for logged-in users |
+| Issue    | Title                                       | Evidence                                                                                                                                                                                                                                       | Why still open                                   |
+| -------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **#488** | Lag correlation visualization               | PRs [#581](https://github.com/Sturmi77/correlcore/pull/581), [#583](https://github.com/Sturmi77/correlcore/pull/583), [#586](https://github.com/Sturmi77/correlcore/pull/586), [#596](https://github.com/Sturmi77/correlcore/pull/596) on main | PR #586 said “Completes #488”, not `Closes #488` |
+| **#459** | docs(M10.2): sprint plan + status + roadmap | [#458](https://github.com/Sturmi77/correlcore/pull/458); Altlasten-Plan Phase 0.2 + Phase 2 done (#548, #550)                                                                                                                                  | Tracking issue never closed after Sprint 0       |
+| **#588** | correlcore.com → App statt Landing          | [#593](https://github.com/Sturmi77/correlcore/pull/593) (`Relates to #588`); anonymous → Landing, auth → Home, `?landing=1`                                                                                                                    | No `Closes #588`; expected for logged-in users   |
 
 ---
 
 ## Keep open
 
-| Issue | Why |
-| --- | --- |
-| **#601** | Insight-Dismiss Archiv/Undo — Feature Request only (spec in #602); not implemented |
-| **#591** | Push ohne Play Store — open discussion |
+| Issue    | Why                                                                                                                     |
+| -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **#601** | Insight-Dismiss Archiv/Undo — Feature Request only (spec in #602); not implemented                                      |
+| **#591** | Push ohne Play Store — open discussion                                                                                  |
 | **#587** | Tag-Gruppen-Benennung — fix on main (`a7de9fb` / #593 area) but **prod** still older image; close after redeploy verify |
-| **#585** | Device QA Compare strip zoom — manual sign-off pending (`COMPARE_AXIS_ZOOM_CAZ3_QA.md`) |
-| **#547** | Cycle Tracking v1 — Stages 2–3 / bleeding enum still open |
-| **#528** | Capacitor 7→8 — not started (`@capacitor/core` still 7.x); correctly supersedes closed #522 |
-| **#464** | `docs/runbooks/nas-to-vps.md` still missing |
-| **#462** | Hosted Impressum still generic Selfhost placeholder |
-| **#461** | SMTP checkboxes mostly done; Hosted Mailpit removal still open |
+| **#585** | Device QA Compare strip zoom — manual sign-off pending (`COMPARE_AXIS_ZOOM_CAZ3_QA.md`)                                 |
+| **#547** | Cycle Tracking v1 — Stages 2–3 / bleeding enum still open                                                               |
+| **#528** | Capacitor 7→8 — not started (`@capacitor/core` still 7.x); correctly supersedes closed #522                             |
+| **#464** | `docs/runbooks/nas-to-vps.md` still missing                                                                             |
+| **#462** | Hosted Impressum still generic Selfhost placeholder                                                                     |
+| **#461** | SMTP checkboxes mostly done; Hosted Mailpit removal still open                                                          |
 
 ---
 
