@@ -15,9 +15,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.insight import Insight
 from app.services.insight_engine import generate_insight_candidates, load_analytics_data
@@ -29,6 +28,15 @@ MIN_USABLE_LAG_PROFILE_POINTS = 2
 
 LagProfileSeries = list[dict[str, float | int]]
 PairKey = tuple[tuple[str, str], tuple[str, str]]
+
+
+@dataclass(frozen=True)
+class LagInsightRow:
+    """Minimal insight projection for backfill — avoids loading ``statement_enc``."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    payload: dict[str, Any]
 
 
 @dataclass
@@ -100,28 +108,35 @@ def build_profile_lookup_from_candidates(
     return lookup
 
 
+def build_backfilled_payload(
+    payload: Mapping[str, Any],
+    profile_lookup: Mapping[PairKey, LagProfileSeries],
+) -> dict[str, Any] | None:
+    """Return an updated payload when a matching ``lag_profile`` exists."""
+
+    if not payload_needs_lag_profile(payload):
+        return None
+
+    profile = profile_lookup.get(pair_key_from_payload(payload))
+    if profile is None:
+        return None
+
+    updated = dict(payload)
+    updated["lag_profile"] = list(profile)
+    return updated
+
+
 def apply_lag_profile_backfill(
     insight: Insight,
     profile_lookup: Mapping[PairKey, LagProfileSeries],
 ) -> bool:
-    """Attach ``lag_profile`` to ``insight`` when a matching pair exists.
-
-    Returns True when the row was updated in memory.
-    """
+    """Attach ``lag_profile`` to an in-memory ``Insight`` (tests / legacy callers)."""
 
     payload = insight.payload if isinstance(insight.payload, dict) else None
-    if not payload_needs_lag_profile(payload):
+    updated = build_backfilled_payload(payload or {}, profile_lookup)
+    if updated is None:
         return False
-
-    assert payload is not None
-    profile = profile_lookup.get(pair_key_from_payload(payload))
-    if profile is None:
-        return False
-
-    updated = dict(payload)
-    updated["lag_profile"] = list(profile)
     insight.payload = updated
-    flag_modified(insight, "payload")
     return True
 
 
@@ -129,13 +144,22 @@ async def _lag_insights_needing_backfill(
     db: AsyncSession,
     *,
     user_id: uuid.UUID | None,
-) -> list[Insight]:
-    stmt = select(Insight).where(Insight.payload["method"].astext == "lag")
+) -> list[LagInsightRow]:
+    # Project id/user_id/payload only — ``statement_enc`` needs a bound DEK.
+    stmt = select(Insight.id, Insight.user_id, Insight.payload).where(
+        Insight.payload["method"].astext == "lag"
+    )
     if user_id is not None:
         stmt = stmt.where(Insight.user_id == user_id)
     stmt = stmt.order_by(Insight.user_id.asc(), Insight.generated_at.desc())
     result = await db.execute(stmt)
-    return [row for row in result.scalars().all() if payload_needs_lag_profile(row.payload)]
+    rows: list[LagInsightRow] = []
+    for insight_id, owner_id, payload in result.all():
+        if not isinstance(payload, dict):
+            continue
+        if payload_needs_lag_profile(payload):
+            rows.append(LagInsightRow(id=insight_id, user_id=owner_id, payload=payload))
+    return rows
 
 
 async def backfill_lag_profiles(
@@ -152,7 +176,7 @@ async def backfill_lag_profiles(
     if not insights:
         return summary
 
-    grouped: dict[uuid.UUID, list[Insight]] = {}
+    grouped: dict[uuid.UUID, list[LagInsightRow]] = {}
     for insight in insights:
         grouped.setdefault(insight.user_id, []).append(insight)
 
@@ -193,10 +217,16 @@ async def backfill_lag_profiles(
         updated_for_user = 0
         unmatched_for_user = 0
         for insight in user_insights:
-            if apply_lag_profile_backfill(insight, profile_lookup):
-                updated_for_user += 1
-            else:
+            updated_payload = build_backfilled_payload(insight.payload, profile_lookup)
+            if updated_payload is None:
                 unmatched_for_user += 1
+                continue
+            await db.execute(
+                update(Insight)
+                .where(Insight.id == insight.id)
+                .values(payload=updated_payload)
+            )
+            updated_for_user += 1
 
         summary.users_processed += 1
         summary.user_ids.append(current_user_id)

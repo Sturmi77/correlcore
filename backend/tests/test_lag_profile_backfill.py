@@ -12,9 +12,11 @@ from app.models.insight import Insight, InsightTier, InsightType
 from app.models.user import User
 from app.services.insight_engine import InsightCandidate
 from app.services.lag_profile_backfill_service import (
+    LagInsightRow,
     LagProfileBackfillSummary,
     apply_lag_profile_backfill,
     backfill_lag_profiles,
+    build_backfilled_payload,
     build_profile_lookup_from_candidates,
     pair_key_from_payload,
     payload_needs_lag_profile,
@@ -112,6 +114,18 @@ def test_build_profile_lookup_from_candidates_uses_pair_key() -> None:
     assert lookup[pair_key_from_payload(candidate.payload)] == profile
 
 
+def test_build_backfilled_payload_returns_updated_dict() -> None:
+    profile = [{"lag": 1, "r": 0.3}, {"lag": 2, "r": 0.5}]
+    payload = _lag_payload()
+    lookup = {pair_key_from_payload(payload): profile}
+
+    updated = build_backfilled_payload(payload, lookup)
+
+    assert updated is not None
+    assert updated["lag_profile"] == profile
+    assert build_backfilled_payload(_lag_payload(lag_profile=profile), lookup) is None
+
+
 def test_apply_lag_profile_backfill_updates_payload_and_skips_complete_rows() -> None:
     user = make_user()
     insight = _make_lag_insight(user)
@@ -130,7 +144,7 @@ async def test_backfill_lag_profiles_updates_matching_rows() -> None:
     user = make_user()
     insight = _make_lag_insight(user)
     db = MagicMock()
-    db.execute = AsyncMock(return_value=MagicMock(scalars=lambda: MagicMock(all=lambda: [insight])))
+    db.execute = AsyncMock()
 
     profile = [{"lag": 1, "r": 0.25}, {"lag": 2, "r": 0.45}]
     candidate = InsightCandidate(
@@ -151,22 +165,30 @@ async def test_backfill_lag_profiles_updates_matching_rows() -> None:
 
     with (
         patch(
+            "app.services.lag_profile_backfill_service._lag_insights_needing_backfill",
+            new=AsyncMock(
+                return_value=[
+                    LagInsightRow(id=insight.id, user_id=user.id, payload=dict(insight.payload))
+                ]
+            ),
+        ),
+        patch(
             "app.services.lag_profile_backfill_service._analytics_enabled",
             new=AsyncMock(return_value=True),
         ),
         patch(
             "app.services.lag_profile_backfill_service.load_analytics_data",
-            new=AsyncMock(return_value=([], [], [])),
-        ) as load_data,
+            new=AsyncMock(return_value=([MagicMock()], [], [])),
+        ),
         patch(
             "app.services.lag_profile_backfill_service.generate_insight_candidates",
             return_value=[candidate],
         ) as generate,
     ):
-        load_data.return_value = ([MagicMock()], [], [])
         summary = await backfill_lag_profiles(db, user_id=user.id)
 
     generate.assert_called_once()
+    assert db.execute.await_count == 1
     assert summary == LagProfileBackfillSummary(
         users_processed=1,
         insights_scanned=1,
@@ -175,7 +197,8 @@ async def test_backfill_lag_profiles_updates_matching_rows() -> None:
         insights_unmatched=0,
         user_ids=[user.id],
     )
-    assert insight.payload["lag_profile"] == profile
+    assert summary.insights_updated == 1
+    assert "lag_profile" not in insight.payload
 
 
 @pytest.mark.asyncio
@@ -183,15 +206,25 @@ async def test_backfill_lag_profiles_skips_analytics_disabled_users() -> None:
     user = make_user()
     insight = _make_lag_insight(user)
     db = MagicMock()
-    db.execute = AsyncMock(return_value=MagicMock(scalars=lambda: MagicMock(all=lambda: [insight])))
+    db.execute = AsyncMock()
 
-    with patch(
-        "app.services.lag_profile_backfill_service._analytics_enabled",
-        new=AsyncMock(return_value=False),
+    with (
+        patch(
+            "app.services.lag_profile_backfill_service._lag_insights_needing_backfill",
+            new=AsyncMock(
+                return_value=[
+                    LagInsightRow(id=insight.id, user_id=user.id, payload=dict(insight.payload))
+                ]
+            ),
+        ),
+        patch(
+            "app.services.lag_profile_backfill_service._analytics_enabled",
+            new=AsyncMock(return_value=False),
+        ),
     ):
         summary = await backfill_lag_profiles(db, user_id=user.id)
 
     assert summary.insights_scanned == 1
     assert summary.insights_skipped == 1
     assert summary.insights_updated == 0
-    assert "lag_profile" not in insight.payload
+    db.execute.assert_not_awaited()
