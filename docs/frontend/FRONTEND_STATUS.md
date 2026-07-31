@@ -101,7 +101,7 @@ Theme: `data-theme` light/dark on `<html>`; persisted `correlcore-theme`. Dark s
 | ------------ | ------------------------------------------------------------------- | -------------------------------------- |
 | **Common**   | Button, Panel, ScreenHeader, AppNav, TabBar, ThemeToggle            | Shared; Figma + Code Connect templates |
 | **Entries**  | EntryForm, ScaleSlider, TagPicker, SymptomChecker, EntrySheet       | Mobile capture signed off              |
-| **Home**     | HomeDailyBrief, HomeSparkline, HomeTodayContext, MetricCard         | S5 three-zone contract                 |
+| **Home**     | HomeTodayContext, HomeDailyBrief, HomeWorkContextSummary, HomeWeekdayOverview, FirstWeekInsightBanner | Configurable block order via `/settings/home` (#584) |
 | **Trends**   | MobileTrendsSummary, TrendsComparePanel, MetricTimeseries, heatmaps | Mobile summary / web-primary charts    |
 | **Insights** | MobileInsightLead, InsightCard, InsightFeed, InsightMatrix          | Hierarchy aligned Sprint 3             |
 | **Auth**     | PasswordStrength                                                    | Login/register in code + Figma B4b     |
@@ -205,7 +205,7 @@ Mobile E2E is **not** in default CI; run before release or add to scheduled work
 
 - Entry **web** workspace layout (currently yellow)
 - Auth/onboarding **web** density polish (yellow)
-- Wide Home dashboard (beyond S5 mobile three-zone)
+- Wide Home dashboard (beyond configurable brief-first blocks — see `/settings/home`, #584)
 - Split views, sticky analytics chrome @1280+
 
 Plan pointer: [`MOBILE_WEB_IMPLEMENTATION_PLAN.md`](MOBILE_WEB_IMPLEMENTATION_PLAN.md).

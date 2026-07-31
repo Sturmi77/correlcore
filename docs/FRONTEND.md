@@ -190,7 +190,7 @@ Not all metrics share the same direction — a higher raw value does not always 
 | Energy | `energy`     | 1–5   | Higher = better | `false`  |                                  |
 | Stress | `stress`     | 1–5   | Higher = worse  | `true`   | Issue #182 — display = `6 - raw` |
 
-> **Implementation:** The `invert` flag is defined centrally in `src/lib/config/metrics.ts` and consumed by `MetricTimeseries.svelte`, `HomeSparkline.svelte`, `DualAxisChart.svelte`, and `analytics_worker.py`. Raw DB values are **never** modified — inversion is view-layer only.
+> **Implementation:** The `invert` flag is defined centrally in `src/lib/config/metrics.ts` and consumed by `MetricTimeseries.svelte`, `DualAxisChart.svelte`, and `analytics_worker.py`. Raw DB values are **never** modified — inversion is view-layer only.
 
 ### 4.4 Confidence Bar (Insight-Specific)
 
@@ -263,24 +263,29 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 
 **M5 Streamline:** Home is not a mini-dashboard. It has a fixed Today Strip, configurable compact blocks (Daily Brief, work-context summary, weekday overview — see `/settings/home`), and a primary CTA. Full filters, matrices, and raw analytics live in Insights or Trends drilldowns.
 
-**Layout (max. 3 information zones):**
+**Layout:** Fixed Today Strip at the top, configurable compact blocks in the
+middle (user order via `/settings/home`), primary CTA at the bottom when today
+is not logged yet.
 
 ```
 ┌──────────────────────────────┐
-│  Wednesday, 13 May           │  ← Date + Work Context badge
-│  [🏠 Home office]            │
+│  Wednesday, 13 May           │  ← Fixed: HomeTodayContext
+│  [🏠 Home office]            │     (date, work context, edit action)
 │                              │
 │  ┌────────────────────────┐  │
-│  │ INSIGHT CARD           │  │  ← Latest worker insight
-│  │ "On exercise days your │  │    (best-effort, non-blocking)
-│  │  mood was ↑ +0.8 pts" │  │
-│  │  [████████░░ Strong]   │  │  ← Confidence bar
+│  │ DAILY BRIEF            │  │  ← Configurable blocks (default order):
+│  │ Top insight or phase   │  │     1. FirstWeekInsightBanner*
+│  │ [Explore insights →]   │  │     2. HomeDailyBrief
+│  └────────────────────────┘  │     3. HomeWorkContextSummary
+│  ┌────────────────────────┐  │     4. HomeWeekdayOverview
+│  │ WORK CONTEXT PATTERN   │  │     * banner only when data + pref enabled
+│  └────────────────────────┘  │
+│  ┌────────────────────────┐  │
+│  │ WEEKDAY OVERVIEW       │  │
 │  └────────────────────────┘  │
 │                              │
-│  Last 7 days ████▓░░░        │  ← Mood sparkline
-│                              │
 │  ┌─────────────────────────┐ │
-│  │  + Log today            │ │  ← Primary CTA, always visible
+│  │  + Log today            │ │  ← Fixed: primary CTA (if !todayEntry)
 │  └─────────────────────────┘ │
 └──────────────────────────────┘
 ```
@@ -289,11 +294,13 @@ M5 Streamline keeps that contract intact: matrix views, entry details, compariso
 
 - No streak counter — tracking consistency widget (neutral %) only when relevant
 - Home does not dismiss insights directly; insight-level actions live in `/insights`.
-- If no insight exists (< 7 days of data): show `FirstWeekInsightBanner` (Issue #155)
-- Insight fetch is best-effort and must not block `HomeRecentEntries` or the CTA button
+- `FirstWeekInsightBanner` is configurable (`first_week_banner`) and still data-gated
+- Insight fetch is best-effort and must not block the primary CTA
 - Home must not render insight maturity journey banners, phase milestone cards, insight matrices, deep filters, or secondary navigation that duplicates `AppNav`.
-- Home shows a short insight summary or phase fallback, not the full `InsightCard` anatomy. Insight drilldown links to `/insights`; the 7-day preview links to `/trends`.
+- Home shows a short insight summary or phase fallback in `HomeDailyBrief`, not the full `InsightCard` anatomy. Bridge links drill down to `/insights` and `/trends`.
+- No sparkline, recent-entries grid, or summary matrix on Home — those belong under Trends / Insights.
 - Desktop may place Today Strip and Brief side by side. Mobile remains one column with the CTA visible; after today's entry exists, "Edit today" is visually lighter than the initial log action.
+- Layout customization: Settings → Appearance → **Home layout** (`/settings/home`); persisted in `user_preferences.home_sections` (see ADR-0017 amendment #584).
 
 ---
 
@@ -603,9 +610,9 @@ apps/web/src/
 │   │   │                    # TabBar, BottomSheet, DataState,
 │   │   │                    # EmptyState, InlineAlert, Input, Badge
 │   │   ├── auth/            # Auth-specific components
-│   │   ├── home/            # HomeInsight, HomeSparkline, HomeSummary,
-│   │   │                    # HomeRecentEntries, FirstWeekInsightBanner,
-│   │   │                    # InsightConfidenceScale, WeekdayPatternChart
+│   │   ├── home/            # HomeTodayContext, HomeDailyBrief,
+│   │   │                    # HomeWorkContextSummary, HomeWeekdayOverview,
+│   │   │                    # FirstWeekInsightBanner, MetricCard (landing)
 │   │   ├── insights/        # InsightCard, InsightCardExpanded,
 │   │   │                    # InsightFeed, InsightMatrix, CorrelationBadge,
 │   │   │                    # DualAxisChart, InsightQualityMeter
@@ -768,11 +775,11 @@ Every new component or screen decision must be checked against:
 
 Sprint 9 records the QA handoff in [`quality/M3_5_VISUAL_QA.md`](quality/M3_5_VISUAL_QA.md). The implemented M3.5 screen model is:
 
-- Home: Daily Brief with Today Strip, compact insight/phase summary, and 7-day preview.
+- Home: fixed Today Strip, configurable compact blocks (`/settings/home`), primary CTA when today is open.
 - Entry: bottom sheet/page mode with sectioned form, neutral work-context hint, auto-save status, and Day Delta.
 - Insights: single Stage Header, filterable insight feed, disclaimer access, progressive detail expansion, matrix drilldown, and inactive-tag markers.
 - Trends: Compare / Health / Habits tabs, unified ranges, custom SVG charts, tag/symptom context rows, and Entry History sheet overlay.
-- Settings: Tracking / Analysis / Privacy & Data / Appearance / Developer sections, language control, theme toggle, Dev Mode, Force Visualizations, phase mocks, and Tag Settings active/inactive lifecycle.
+- Settings: Tracking / Analysis / Privacy & Data / Appearance (incl. **Home layout** at `/settings/home`) / Developer sections, language control, theme toggle, Dev Mode, Force Visualizations, phase mocks, and Tag Settings active/inactive lifecycle.
 - PWA: Home install banner is dismissible via `cc_pwa_dismissed`; `/offline` is the navigation fallback; service worker skips `/api/*`.
 
 Rendered browser QA is documented as pending outside this NAS/UNC agent environment because the local pnpm install/test path cannot create symlinks on the network share. Do not treat that tooling limitation as a frontend design exception; run the rendered viewport/theme matrix from a local clone or CI environment before release tagging.

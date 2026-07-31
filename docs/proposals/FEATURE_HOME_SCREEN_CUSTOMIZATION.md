@@ -1,7 +1,9 @@
 # [FEATURE] Konfigurierbarer Home Screen: Sektionen auswählen & Reihenfolge festlegen
 
-> GitHub issue: [#584](https://github.com/Sturmi77/correlcore/issues/584)
-> ADR: [`0017-frontend-screen-architecture.md`](../adr/0017-frontend-screen-architecture.md) (2026-07-31 amendment)
+> **Status:** Implementiert in PR [#594](https://github.com/Sturmi77/correlcore/pull/594) (2026-07-31)  
+> GitHub issue: [#584](https://github.com/Sturmi77/correlcore/issues/584) (closed)  
+> ADR: [`0017-frontend-screen-architecture.md`](../adr/0017-frontend-screen-architecture.md) (2026-07-31 amendment)  
+> Migration: `034_home_sections`
 
 ---
 

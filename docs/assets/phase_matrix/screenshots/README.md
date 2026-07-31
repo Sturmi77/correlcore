@@ -55,7 +55,7 @@ Mobile-Surface (`mobile-daily`, 390×844, Präfix `mobile__`):
    > per **SPA-Navigation** (In-App-Link) zur Zielroute wechseln — ein voller Reload (`page.goto`) würde den
    > Store auf `collecting` zurücksetzen.
 3. Zielkomponente per `data-testid` aufnehmen (z.B. `insight-feed`, `insight-card`, `insight-matrix`,
-   `insight-stage-header`, `home-zone-insight`, `trends-compare-panel`).
+   `insight-stage-header`, `home-zone-sections`, `trends-compare-panel`).
 4. Als `<Komponente>__<preset>.png` hier ablegen.
 
 ## Automatisierte Aufnahme (Playwright, empfohlen)
