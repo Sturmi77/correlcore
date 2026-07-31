@@ -38,7 +38,7 @@
 
     <div
       class="lag-heatmap__grid"
-      style={`--lag-cols: ${LAG_HEATMAP_MAX_DAYS}`}
+      style={`grid-template-columns: minmax(96px, 1.4fr) repeat(${LAG_HEATMAP_MAX_DAYS}, minmax(0, 1fr))`}
       role="img"
       aria-label={$_('insights.lag_heatmap.aria')}
     >
@@ -101,7 +101,7 @@
 
   .lag-heatmap__grid {
     display: grid;
-    grid-template-columns: minmax(96px, 1.4fr) repeat(var(--lag-cols), minmax(0, 1fr));
+    /* grid-template-columns is set inline from LAG_HEATMAP_MAX_DAYS. */
     gap: 3px;
     align-items: stretch;
     overflow-x: auto;
