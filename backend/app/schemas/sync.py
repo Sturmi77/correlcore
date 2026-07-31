@@ -23,7 +23,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.entry import EntrySlot, WorkContext
+from app.models.entry import BleedingLevel, EntrySlot, WorkContext
 
 # ---------------------------------------------------------------------------
 # Enums — wire-stable entity / table identifiers
@@ -62,6 +62,7 @@ class SyncEntryPayload(BaseModel):
     energy: int = Field(ge=1, le=5)
     stress: int = Field(ge=1, le=5)
     cycle_day: int | None = Field(default=None, ge=1, le=35)
+    cycle_bleeding_level: BleedingLevel | None = None
     work_context: WorkContext
     note: str | None = None
     tag_ids: list[uuid.UUID] = Field(default_factory=list)

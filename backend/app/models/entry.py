@@ -90,6 +90,16 @@ class WorkContext(StrEnum):
     TRAVEL = "travel"
 
 
+class BleedingLevel(StrEnum):
+    """Menstrual bleeding strength (ADR-0032). SHD — never log raw values."""
+
+    NONE = "none"
+    SPOTTING = "spotting"
+    LIGHT = "light"
+    MEDIUM = "medium"
+    HEAVY = "heavy"
+
+
 class Entry(Base):
     __tablename__ = "entries"
     __table_args__ = (
@@ -132,6 +142,10 @@ class Entry(Base):
     energy: Mapped[int] = mapped_column(Integer, nullable=False)
     stress: Mapped[int] = mapped_column(Integer, nullable=False)
     cycle_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cycle_bleeding_level: Mapped[BleedingLevel | None] = mapped_column(
+        Enum(BleedingLevel, name="bleeding_level", values_callable=lambda x: [e.value for e in x]),
+        nullable=True,
+    )
     source: Mapped[EntrySource] = mapped_column(
         Enum(EntrySource, name="entry_source", values_callable=lambda x: [e.value for e in x]),
         nullable=False,

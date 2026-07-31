@@ -29,7 +29,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
-from app.models.entry import EntrySlot, EntrySource, WorkContext
+from app.models.entry import BleedingLevel, EntrySlot, EntrySource, WorkContext
 from app.models.user import User
 from app.schemas.entry import (
     EntryBatchCreate,
@@ -123,6 +123,21 @@ async def test_create_entry_happy_path(rest_revision_recorders) -> None:
     db.rollback.assert_not_awaited()
     rest_revision_recorders["entry"].assert_awaited_once()
     assert rest_revision_recorders["entry"].await_args.kwargs["entry"] is entry
+
+
+@pytest.mark.asyncio
+async def test_create_entry_persists_cycle_bleeding_level(rest_revision_recorders) -> None:
+    user = make_user()
+    db = _make_db()
+
+    entry = await create_entry(
+        db,
+        user_id=user.id,
+        payload=_payload(cycle_day=5, cycle_bleeding_level=BleedingLevel.LIGHT),
+    )
+
+    assert entry.cycle_day == 5
+    assert entry.cycle_bleeding_level is BleedingLevel.LIGHT
 
 
 @pytest.mark.asyncio

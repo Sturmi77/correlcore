@@ -200,6 +200,16 @@
       "hint": "Neutral tracking only. CorrelCore does not predict or diagnose cycle phases.",
       "error_range": "Cycle day must be between 1 and 35."
     },
+    "cycle_bleeding": {
+      "label": "Bleeding (optional)",
+      "unset": "Not set",
+      "hint": "Optional strength for your own records. Not used for medical predictions.",
+      "none": "None",
+      "spotting": "Spotting",
+      "light": "Light",
+      "medium": "Medium",
+      "heavy": "Heavy"
+    },
     "work_context": {
       "homeoffice": "Home office",
       "office": "Office",

@@ -28,7 +28,7 @@ from datetime import date as date_type
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.models.entry import EntrySlot, EntrySource, WorkContext
+from app.models.entry import BleedingLevel, EntrySlot, EntrySource, WorkContext
 from app.schemas.note import EntryNoteMarkerResponse, EntryNoteSignalResponse
 from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.tag import TagResponse
@@ -68,6 +68,7 @@ class EntryCreate(BaseModel):
     energy: int = Field(ge=1, le=5)
     stress: int = Field(ge=1, le=5)
     cycle_day: int | None = Field(default=None, ge=1, le=35)
+    cycle_bleeding_level: BleedingLevel | None = None
     source: EntrySource = EntrySource.DIRECT
     work_context: WorkContext
     note: str | None = Field(
@@ -105,6 +106,7 @@ class EntryUpdate(BaseModel):
     stress: int | None = Field(default=None, ge=1, le=5)
     slot: EntrySlot | None = None
     cycle_day: int | None = Field(default=None, ge=1, le=35)
+    cycle_bleeding_level: BleedingLevel | None = None
     work_context: WorkContext | None = None
     note: str | None = Field(
         default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH
@@ -138,6 +140,7 @@ class EntryResponse(BaseModel):
     energy: int
     stress: int
     cycle_day: int | None = None
+    cycle_bleeding_level: BleedingLevel | None = None
     source: EntrySource
     work_context: WorkContext
     note: str | None = Field(default=None, validation_alias="note_enc")

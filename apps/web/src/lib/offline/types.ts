@@ -16,6 +16,7 @@ export interface LocalEntry {
   energy: number;
   stress: number;
   cycle_day: number | null;
+  cycle_bleeding_level?: import('$lib/api/entries').BleedingLevel | null;
   work_context: WorkContext;
   note: string | null;
   tag_ids: string[];

@@ -17,6 +17,7 @@ export interface EntryFormSnapshot {
   stress: number;
   slot: EntrySlot;
   cycle_day: number | null;
+  cycle_bleeding_level?: import('$lib/api/entries').BleedingLevel | null;
   work_context: WorkContext;
   note: string;
   selectedTagIds: string[];
@@ -42,6 +43,7 @@ export function buildSyncEntryPayload(snapshot: EntryFormSnapshot): Record<strin
     energy: snapshot.energy,
     stress: snapshot.stress,
     cycle_day: snapshot.cycle_day,
+    cycle_bleeding_level: snapshot.cycle_bleeding_level,
     work_context: snapshot.work_context,
     note: snapshot.note ? snapshot.note : null,
     tag_ids: [...snapshot.selectedTagIds],
@@ -55,6 +57,7 @@ export function localEntryToFormFields(entry: LocalEntry): {
   stress: number;
   selectedSlot: EntrySlot;
   cycleDay: number | null;
+  cycleBleedingLevel: import('$lib/api/entries').BleedingLevel | null;
   workContext: WorkContext;
   note: string;
   selectedTagIds: string[];
@@ -66,6 +69,7 @@ export function localEntryToFormFields(entry: LocalEntry): {
     stress: entry.stress,
     selectedSlot: entry.slot,
     cycleDay: entry.cycle_day,
+    cycleBleedingLevel: entry.cycle_bleeding_level ?? null,
     workContext: entry.work_context,
     note: entry.note ?? '',
     selectedTagIds: [...entry.tag_ids],
@@ -195,6 +199,7 @@ export async function hydrateServerEntryFromApi(
       energy: entry.energy,
       stress: entry.stress,
       cycle_day: entry.cycle_day,
+      cycle_bleeding_level: entry.cycle_bleeding_level ?? null,
       work_context: entry.work_context,
       note: entry.note,
       tag_ids: tagIds,
@@ -231,6 +236,7 @@ export async function saveEntryOffline(
     energy: snapshot.energy,
     stress: snapshot.stress,
     cycle_day: snapshot.cycle_day,
+    cycle_bleeding_level: snapshot.cycle_bleeding_level,
     work_context: snapshot.work_context,
     note: snapshot.note ? snapshot.note : null,
     tag_ids: [...snapshot.selectedTagIds],
@@ -273,6 +279,10 @@ export async function applyPulledEntry(
     energy: Number(data.energy),
     stress: Number(data.stress),
     cycle_day: data.cycle_day == null ? null : Number(data.cycle_day),
+    cycle_bleeding_level:
+      data.cycle_bleeding_level == null || data.cycle_bleeding_level === undefined
+        ? null
+        : (String(data.cycle_bleeding_level) as import('$lib/api/entries').BleedingLevel),
     work_context: data.work_context as WorkContext,
     note: data.note == null ? null : String(data.note),
     tag_ids: Array.isArray(data.tag_ids) ? data.tag_ids.map(String) : [],

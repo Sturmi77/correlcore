@@ -1,5 +1,10 @@
 # Cycle Tracking — Feature Overview
 
+> **2026-07-31 update:** `cycle_bleeding_level` (enum: none/spotting/light/medium/heavy)
+> is now available on entries when cycle tracking is enabled (#547 Stage 1).
+> `DELETE /api/v1/entries/cycle-data` clears cycle SHD fields; `sanitise_entry_for_log()`
+> redacts cycle columns in diagnostic snapshots.
+>
 > **2026-07-26 update:** The shipped form is the `cycle_day` metric (1–35) plus
 > CYCLE tag category, now gated by an **opt-out toggle** `cycle_tracking_enabled`
 > (user preference, migration `032`; ADR-0034 Stage 1). It is set on the last
