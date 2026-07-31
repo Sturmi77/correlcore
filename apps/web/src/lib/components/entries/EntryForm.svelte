@@ -1132,8 +1132,8 @@
   }
 
   // Reactive watchers: any edit to a tracked field marks the form
-  // dirty. We deliberately keep `entryDate` out of this list — date
-  // changes trigger a full hydration via `loadForDate` instead.
+  // dirty (includes cycleBleedingLevel). We deliberately keep `entryDate`
+  // out of this list — date changes trigger a full hydration via `loadForDate` instead.
   $: {
     moodScore;
     energy;

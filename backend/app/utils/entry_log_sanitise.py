@@ -1,4 +1,4 @@
-"""Redact Sensitive Health Data (SHD) before logging entries (ADR-0033)."""
+"""Redact Sensitive Health Data (SHD) before logging entries (ADR-0033 / #547)."""
 
 from __future__ import annotations
 
