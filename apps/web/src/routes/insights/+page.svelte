@@ -8,8 +8,8 @@
    * - Inline error banner — no full-page crash on API failure
    * - Empty state / skeleton delegated to InsightFeed
    *
-   * InsightMatrix (M3.1 Step 4 / TODO-5) is rendered above the feed
-   * to show the correlation matrix for pointbiserial insights.
+   * InsightMatrix (M3.1 Step 4 / TODO-5) is rendered above the top insight
+   * to show the unified correlation matrix for pointbiserial insights.
    */
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
@@ -814,6 +814,12 @@
       on:filterChange={(event) => (filterTab = event.detail.value)}
     />
 
+    {#if showMatrix}
+      <section class="insights-page__matrix" data-testid="insights-matrix-section">
+        <InsightMatrix {insights} />
+      </section>
+    {/if}
+
     {#if !compactInsights && insightMaturity}
       <InsightStageHeader
         maturity={insightMaturity}
@@ -840,12 +846,6 @@
         showMilestone={showMaturityMilestone}
         on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
       />
-    {/if}
-
-    {#if showMatrix}
-      <section class="insights-page__matrix" data-testid="insights-matrix-section">
-        <InsightMatrix {insights} />
-      </section>
     {/if}
 
     {#if showLagHeatmap}

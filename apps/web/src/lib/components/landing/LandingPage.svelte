@@ -104,7 +104,7 @@
                order and pointer events, aria-hidden hides the duplicated app
                UI from screen readers; the figcaption carries the description. -->
           <div class="landing__shot" inert aria-hidden="true">
-            <InsightMatrix insights={landingInsights} enableHabitLayer={false} preview />
+            <InsightMatrix insights={landingInsights} preview />
           </div>
         </BrowserFrameMock>
         <figcaption>{$_('landing.preview_matrix')}</figcaption>
