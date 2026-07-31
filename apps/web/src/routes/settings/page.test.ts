@@ -140,6 +140,17 @@ describe('/settings Sprint 7', () => {
       expect(screen.getByTestId('developer-section')).toBeTruthy();
     });
     expect(screen.getByTestId('force-viz-toggle')).toBeTruthy();
+    expect(screen.getByTestId('developer-backend-unavailable-hint')).toBeTruthy();
+  });
+
+  it('shows developer section on load when dev mode was persisted', async () => {
+    localStorage.setItem('dev_mode_enabled', 'true');
+    devMode.set(true);
+
+    render(Page);
+
+    expect(await screen.findByTestId('developer-section')).toBeTruthy();
+    expect(screen.getByTestId('force-viz-toggle')).toBeTruthy();
   });
 
   it('applies the selected developer phase preset entry count', async () => {

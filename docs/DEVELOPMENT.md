@@ -137,6 +137,22 @@ the same three scripts for browser-driven sessions.
 Enable dev mode in the running app: Settings → tap the version string 7× (ADR-0019),
 then toggle "Mock-Daten fuer Visualisierungen" and pick a phase preset.
 
+### Client developer mode in production (#589)
+
+The **client** developer mode (7× tap, Force Visualizations, phase mocks) is
+available in **production web builds** — it is not gated by `import.meta.env.DEV`
+or a backend flag. Settings persists `dev_mode_enabled` and `dev_force_viz` in
+`localStorage` on the device.
+
+| Layer | Unlock | Works in CorrelCore Cloud? |
+| ----- | ------ | -------------------------- |
+| Client dev mode | 7× tap on Settings version string | Yes — mock charts/insights locally |
+| Backend `/dev` view | `DEV_VIEW_ENABLED=true` on API (`APP_ENV` ≠ production) | No (by design); selfhost only |
+
+After unlocking, the DEVELOPER section shows Force Visualizations and insight
+phase presets. Tag-cluster and heatmap QA can use `dev_force_viz` without waiting
+for live analytics maturity.
+
 Caveats:
 
 - `devPhase` lives in memory only. A full page reload resets the preset to

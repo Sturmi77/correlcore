@@ -610,18 +610,13 @@
       </div>
     </section>
 
-    <!-- DEVELOPER section: only visible when devMode is active -->
+    <!-- DEVELOPER section: client dev mode (7× tap / persisted) or backend DEV_VIEW_ENABLED -->
     {#if $devMode || devAvailable}
       <section class="settings__panel settings__panel--developer" data-testid="developer-section">
         <div class="settings__panel-head">
           <span class="settings__section-kicker">{$_('settings.section.developer')}</span>
           <h2>{$_('settings.developer.heading')}</h2>
           <p>{$_('settings.developer.body')}</p>
-        </div>
-        <div class="settings__actions">
-          <Button href="/dev" variant="secondary" data-testid="dev-link">
-            {$_('settings.dev.open')}
-          </Button>
         </div>
         <label class="settings__toggle-label">
           <input
@@ -635,6 +630,9 @@
           <span>{$_('settings.developer.toggle_label')}</span>
         </label>
         {#if $devMode}
+          <p class="settings__dev-hint" data-testid="developer-client-active-hint">
+            {$_('settings.developer.client_active_hint')}
+          </p>
           <label class="settings__toggle-label">
             <input
               type="checkbox"
@@ -701,6 +699,27 @@
             </Button>
           </div>
         {/if}
+
+        <div class="settings__dev-backend" data-testid="developer-backend-block">
+          <h3 class="settings__dev-subheading">{$_('settings.developer.backend_heading')}</h3>
+          <p class="settings__dev-hint">{$_('settings.developer.backend_body')}</p>
+          {#if devAvailable}
+            <div class="settings__actions">
+              <Button href="/dev" variant="secondary" data-testid="dev-link">
+                {$_('settings.dev.open')}
+              </Button>
+            </div>
+          {:else if $devMode}
+            <p class="settings__dev-hint" data-testid="developer-backend-unavailable-hint">
+              {$_('settings.developer.backend_unavailable_hint')}
+            </p>
+            <div class="settings__actions">
+              <Button href="/dev" variant="secondary" data-testid="dev-link">
+                {$_('settings.dev.open')}
+              </Button>
+            </div>
+          {/if}
+        </div>
       </section>
     {/if}
   {/if}
@@ -984,6 +1003,26 @@
     min-width: 1.25rem;
     cursor: pointer;
     accent-color: var(--color-primary);
+  }
+
+  .settings__dev-backend {
+    display: grid;
+    gap: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .settings__dev-subheading {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .settings__dev-hint {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
   }
 
   .settings__dev-grid {
