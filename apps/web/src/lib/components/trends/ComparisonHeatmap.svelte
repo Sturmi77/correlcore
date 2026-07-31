@@ -76,6 +76,7 @@
   /** Focused cluster id, or null for all tag rows. */
   export let focusedClusterId: number | null = null;
   $: if (
+    !loading &&
     focusedClusterId !== null &&
     clustersAvailable &&
     !rawRows.some(

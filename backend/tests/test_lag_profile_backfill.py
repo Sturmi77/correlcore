@@ -209,7 +209,7 @@ async def test_backfill_lag_profiles_updates_matching_rows() -> None:
         summary = await backfill_lag_profiles(db, user_id=user.id)
 
     generate.assert_called_once()
-    assert generate.call_args.kwargs["as_of"] == date(2026, 7, 21)
+    assert generate.call_args.kwargs["as_of"] == date(2026, 7, 20)
     assert db.execute.await_count >= 1
     assert summary == LagProfileBackfillSummary(
         users_processed=1,

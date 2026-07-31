@@ -8,6 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# Documented allowed keys — validated in ``normalize_home_sections`` before persist.
 HomeSectionKey = Literal[
     "first_week_banner",
     "daily_brief",
@@ -19,7 +20,7 @@ HomeSectionKey = Literal[
 class HomeSectionPreference(BaseModel):
     """One configurable Home screen block."""
 
-    key: HomeSectionKey
+    key: str
     enabled: bool
 
 

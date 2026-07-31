@@ -43,6 +43,10 @@ vi.mock('$lib/api/entries', () => ({
   deleteCycleData: vi.fn(async () => ({ cleared_entries: 3 })),
 }));
 
+vi.mock('$lib/stores/entriesOffline', () => ({
+  clearCycleDataOffline: vi.fn(async () => 0),
+}));
+
 vi.mock('$lib/api/export', () => ({
   downloadExport: vi.fn(),
   exportFilename: vi.fn((kind: string) => `export.${kind}`),

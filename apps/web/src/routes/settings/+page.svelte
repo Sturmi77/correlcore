@@ -26,6 +26,7 @@
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
   import { deleteCycleData } from '$lib/api/entries';
+  import { clearCycleDataOffline } from '$lib/stores/entriesOffline';
   import { deleteAccount } from '$lib/api/user';
   import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
   import {
@@ -265,6 +266,7 @@
     cycleDeleteMessage = '';
     try {
       const result = await deleteCycleData();
+      await clearCycleDataOffline();
       cycleDeleteMessage = $_('settings.cycle.delete_success', {
         values: { count: result.cleared_entries },
       });

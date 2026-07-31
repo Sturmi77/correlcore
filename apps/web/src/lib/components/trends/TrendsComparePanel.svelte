@@ -136,7 +136,11 @@
   let focusedClusterId: number | null = null;
 
   $: tagClusterMeta = buildTagClusterMeta(tagClusters);
-  $: clustersAvailable = tagClusterMeta.labels.length > 0;
+  $: tagRowsWithClusters =
+    showTags && tagHeatmap
+      ? tagHeatmap.tags.filter((tag) => tagClusterMeta.byTagId.has(tag.tag_id))
+      : [];
+  $: clustersAvailable = tagClusterMeta.labels.length > 0 && tagRowsWithClusters.length > 0;
   $: clustersAvailableBinding = clustersAvailable;
   $: if (
     focusedClusterId !== null &&

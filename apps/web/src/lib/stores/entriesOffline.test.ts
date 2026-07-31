@@ -10,6 +10,7 @@ import {
   localEntryToEntryResponse,
   resolveServerEntryIdForDateSlot,
   saveEntryOffline,
+  clearCycleDataOffline,
 } from './entriesOffline';
 
 vi.mock('$lib/api/entries', () => ({
@@ -256,5 +257,36 @@ describe('entriesOffline', () => {
     expect(mapped.id).toBe('local-1');
     expect(mapped.entry_date).toBe('2026-07-13');
     expect(mapped.mood_score).toBe(4);
+  });
+
+  it('clears cycle fields from local entries and pending outbox payloads', async () => {
+    const saved = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      slot: 'day',
+      cycle_day: 12,
+      cycle_bleeding_level: 'medium',
+      work_context: 'office',
+      note: '',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        cycle_day: null,
+        cycle_bleeding_level: null,
+      },
+    ]);
+
+    const cleared = await clearCycleDataOffline();
+    expect(cleared).toBe(1);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.cycle_day).toBeNull();
+    expect(local?.cycle_bleeding_level ?? null).toBeNull();
   });
 });

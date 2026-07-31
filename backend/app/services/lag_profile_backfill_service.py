@@ -13,7 +13,7 @@ import uuid
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import select, update
@@ -239,7 +239,7 @@ async def _backfill_lag_profiles_for_user(
             by_cutoff[insight.generated_for_date].append(insight)
 
         for generated_for_date, batch in by_cutoff.items():
-            analysis_as_of = generated_for_date + timedelta(days=1)
+            analysis_as_of = generated_for_date
             entries, tags, symptoms = await load_analytics_data(
                 db,
                 user_id=user_id,
