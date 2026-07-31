@@ -23,6 +23,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Photo upload rejects decompression-bomb dimensions before EXIF decode** —
+  `POST /api/v1/media/photos` capped compressed bytes (10 MiB) but not decoded
+  pixels. A ~160 KiB solid 7000×7000 PNG passed the byte guard, then
+  `strip_exif` fully decoded and duplicated pixel buffers (multi-GiB RSS).
+  Oversized frames are now rejected from the image header (max dimension
+  8192 / max 25 MP) before `load()`, returning HTTP 413; the metadata-free
+  re-encode copies pixels at the C level (`paste`) instead of materializing a
+  multi-GiB Python sequence, and Pillow's own `DecompressionBombError` maps to
+  the same 413 response.
 - **Offline sync LWW no longer loses mid-window writes to the updated_at
   trigger** — `update_updated_at_column()` unconditionally overwrote
   `NEW.updated_at = now()` on every UPDATE, so sync's explicit
