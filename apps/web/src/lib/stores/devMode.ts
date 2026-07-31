@@ -2,10 +2,15 @@ import { derived, writable } from 'svelte/store';
 import { DEV_PHASE_PRESETS, type DevPhasePresetId } from '$lib/dev/phaseFixtures';
 
 /**
- * devMode store — Issue #165, ADR-0019
+ * devMode store — Issue #165, ADR-0019, #589
  *
  * Persists `dev_mode_enabled` and `dev_force_viz` to localStorage.
  * SSR-safe: localStorage is only accessed inside the browser check.
+ *
+ * **Production:** Client developer mode is intentionally available in production
+ * builds (Cloud + selfhost). Unlock via 7× tap on the Settings version string;
+ * Force Visualizations and phase mocks are not gated by `import.meta.env.DEV`.
+ * Backend `/dev` diagnostics remain separate (`DEV_VIEW_ENABLED` on the API).
  *
  * Usage:
  *   import { devMode } from '$lib/stores/devMode';

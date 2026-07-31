@@ -498,9 +498,10 @@ DEVELOPER  ← only visible after unlock (7× tap on version string)
 
 **Developer Mode rules** (extends [ADR-0015](adr/0015-developer-view-version-identifikation.md), see [ADR-0019](adr/0019-dev-mode-settings-toggle.md)):
 
-- Hidden behind 7× tap on version string in Settings footer
+- Hidden behind 7× tap on version string in Settings footer (**available in production builds**, Issue #589)
 - Toggle writes `dev_mode_enabled` to LocalStorage
-- When enabled: `DEV_VIEW_ENABLED` flag activates `/dev` route link in Settings
+- When enabled: `DEVELOPER` section in Settings with client tools (Force Viz, phase mocks)
+- **Backend** `/dev` link appears when `GET /api/v1/dev/info` succeeds (`DEV_VIEW_ENABLED` on selfhost); cloud deployments show an explanatory hint instead
 - **"Force visualizations" sub-toggle** is only visible when `dev_mode_enabled === true`
 - `devForceVisualizations` is a `derived` store from `devModeEnabled` — **not** gated by `import.meta.env.DEV` (available to selfhosters in production, see Issue #183)
 - Deactivating Developer mode resets `dev_force_viz` and all in-memory `devPhase` overrides
