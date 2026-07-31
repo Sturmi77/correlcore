@@ -9,5 +9,8 @@ Index der GitHub Issues aus Findings (Home, Insights, Habits, Ops). Drafts bleib
 | 3   | [#489](https://github.com/Sturmi77/correlcore/issues/489) | [FEATURE_HEATMAP_TAG_GROUP_CLUSTERS.md](FEATURE_HEATMAP_TAG_GROUP_CLUSTERS.md)       | Heatmap Tag Group clusters    |
 | 4   | [#490](https://github.com/Sturmi77/correlcore/issues/490) | [FEATURE_HABIT_BUILD_REDUCE_STRAHL.md](FEATURE_HABIT_BUILD_REDUCE_STRAHL.md)         | Habit build vs reduce Strahl  |
 | 5   | [#491](https://github.com/Sturmi77/correlcore/issues/491) | [OPS_CONTAINER_AUTOSTART_ALERTS.md](OPS_CONTAINER_AUTOSTART_ALERTS.md)               | Container autostart + alerts  |
+| 6   | [#601](https://github.com/Sturmi77/correlcore/issues/601) | [FEATURE_INSIGHT_DISMISS_ARCHIVE_TIMELINE.md](FEATURE_INSIGHT_DISMISS_ARCHIVE_TIMELINE.md) | Insight dismiss → Archiv/Zeitleiste |
 
 Jeder Draft folgt dem Feature-Request-Template (Beschreibung, Problem, Lösung, Alternativen, Milestone, Datenschutz) und enthält einen kurzen Umsetzungsplan mit Bezug auf bestehende Dateien/APIs.
+
+Weitere Drafts ohne Nummer im Index oben: siehe Dateien `FEATURE_*.md` / `OPS_*.md` in diesem Ordner.
