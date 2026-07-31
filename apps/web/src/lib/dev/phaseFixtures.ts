@@ -850,6 +850,7 @@ function makePreferences(
     dismissed_insight_keys: [],
     reached_milestone_keys: presetId === 'collecting' ? [] : [`maturity_phase_${presetId}`],
     last_seen_insight_at: null,
+    home_sections: null,
     created_at: generatedAt,
     updated_at: generatedAt,
   };

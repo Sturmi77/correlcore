@@ -76,8 +76,18 @@ describe('/ home screen ownership contract', () => {
 
   it('surfaces weekday and work-context patterns without adding a separate dashboard zone', () => {
     expect(source).toContain('HomeWeekdayOverview');
+    expect(source).toContain('HomeWorkContextSummary');
     expect(source).toContain('workContextSummary={dashboardSummary?.work_context_summary ?? []}');
     expect(globalEntrySheetSource).toContain('{workContextTypical}');
+  });
+
+  it('renders configurable home sections from user preferences', () => {
+    expect(source).toContain('mergeHomeSections');
+    expect(source).toContain('resolveEnabledSections');
+    expect(source).toContain('data-testid="home-zone-sections"');
+    expect(source).toContain('data-testid="home-section-daily_brief"');
+    expect(source).toContain('data-testid="home-section-work_context"');
+    expect(source).toContain('data-testid="home-section-weekday_overview"');
   });
 
   it('defers the PWA install banner until after the first entry or retro onboarding', () => {

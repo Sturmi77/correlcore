@@ -57,6 +57,7 @@ from app.services.note_markers import list_user_marker_suggestions
 from app.services.sync_conflict_service import list_sync_conflicts, sanitize_conflict_value
 from app.services.user_preferences_service import (
     get_or_create_user_preferences,
+    to_preferences_response,
     update_user_preferences,
 )
 from app.services.user_profile_service import get_or_create_user_profile, upsert_user_profile
@@ -143,7 +144,7 @@ async def get_my_preferences(
     db: AsyncSession = Depends(get_session),
 ) -> UserPreferencesResponse:
     preferences = await get_or_create_user_preferences(db, user_id=current_user.id)
-    return UserPreferencesResponse.model_validate(preferences)
+    return to_preferences_response(preferences)
 
 
 @router.patch(
@@ -157,7 +158,7 @@ async def update_my_preferences(
     db: AsyncSession = Depends(get_session),
 ) -> UserPreferencesResponse:
     preferences = await update_user_preferences(db, user_id=current_user.id, payload=payload)
-    return UserPreferencesResponse.model_validate(preferences)
+    return to_preferences_response(preferences)
 
 
 @router.put(

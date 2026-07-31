@@ -1,11 +1,9 @@
 <script lang="ts">
   /**
-   * Home route — ADR-0017 Screen 1 (M3.5 Sprint 4).
+   * Home route — ADR-0017 Screen 1 (M3.5 Sprint 4), configurable sections (#584).
    *
-   * Authenticated home uses exactly three information zones:
-   *   1. Today context (date, work context, compact log/edit action)
-   *   2. Daily Brief: latest insight summary OR phase fallback (brief-first)
-   *   3. Primary entry CTA when today is not logged yet
+   * Authenticated home uses a fixed Today context strip, configurable compact
+   * blocks from user preferences, and a primary CTA when today is not logged.
    *
    * Insight load never blocks the CTA. No matrix, summary grid, or
    * recent-entries list on Home — those live under Trends / Insights.
@@ -37,7 +35,9 @@
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
+  import HomeWorkContextSummary from '$lib/components/home/HomeWorkContextSummary.svelte';
   import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
+  import { mergeHomeSections, resolveEnabledSections } from '$lib/utils/homeSections';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
@@ -88,6 +88,8 @@
     !$pwaInstallStore.installed &&
     ((dashboardSummary?.entry_count ?? 0) >= 1 || userPreferences?.onboarding_retro_completed)
   );
+  $: homeSections = mergeHomeSections(userPreferences?.home_sections ?? null);
+  $: enabledHomeSections = resolveEnabledSections(homeSections);
 
   function openEntry(date: string = todayIso): void {
     openEntrySheet(date, { onboardingTags: showOnboardingTags });
@@ -205,6 +207,7 @@
         onboarding_profile_completed: false,
         onboarding_maturity_intro_seen: false,
         cycle_tracking_enabled: true,
+        home_sections: null,
         reached_milestone_keys: [],
         last_seen_insight_at: null,
         created_at: new Date().toISOString(),
@@ -281,26 +284,42 @@
       />
     </section>
 
-    <!-- Zone 2: daily brief (best-effort) -->
-    <section class="home-zone" data-testid="home-zone-insight">
-      {#if showFirstWeekBanner}
-        <FirstWeekInsightBanner insight={contextInsight} on:dismiss={dismissFirstWeekBanner} />
-      {/if}
-      <HomeDailyBrief
-        entries={recentEntries}
-        {latestInsight}
-        maturity={insightMaturity}
-        loading={insightLoading && !latestInsight}
-        workContextSummary={dashboardSummary?.work_context_summary ?? []}
-      />
-      <HomeWeekdayOverview
-        insights={$rankedInsights}
-        {weekdayInsight}
-        weekdaySummary={dashboardSummary?.weekday_summary ?? []}
-        loading={(insightLoading || (dashboardLoading && !dashboardLoaded)) &&
-          !(dashboardSummary?.weekday_summary?.length ?? 0) &&
-          !weekdayInsight}
-      />
+    <!-- Configurable compact blocks (best-effort, order from preferences) -->
+    <section class="home-zone home-zone--sections" data-testid="home-zone-sections">
+      {#each enabledHomeSections as section (section.key)}
+        {#if section.key === 'first_week_banner' && showFirstWeekBanner}
+          <div data-testid="home-section-first_week_banner">
+            <FirstWeekInsightBanner insight={contextInsight} on:dismiss={dismissFirstWeekBanner} />
+          </div>
+        {:else if section.key === 'daily_brief'}
+          <div data-testid="home-section-daily_brief">
+            <HomeDailyBrief
+              entries={recentEntries}
+              {latestInsight}
+              maturity={insightMaturity}
+              loading={insightLoading && !latestInsight}
+            />
+          </div>
+        {:else if section.key === 'work_context'}
+          <div data-testid="home-section-work_context">
+            <HomeWorkContextSummary
+              workContextSummary={dashboardSummary?.work_context_summary ?? []}
+              loading={dashboardLoading && !dashboardLoaded}
+            />
+          </div>
+        {:else if section.key === 'weekday_overview'}
+          <div data-testid="home-section-weekday_overview">
+            <HomeWeekdayOverview
+              insights={$rankedInsights}
+              {weekdayInsight}
+              weekdaySummary={dashboardSummary?.weekday_summary ?? []}
+              loading={(insightLoading || (dashboardLoading && !dashboardLoaded)) &&
+                !(dashboardSummary?.weekday_summary?.length ?? 0) &&
+                !weekdayInsight}
+            />
+          </div>
+        {/if}
+      {/each}
     </section>
 
     <!-- Zone 3: primary CTA when today is not logged -->
@@ -338,16 +357,11 @@
     gap: var(--space-4);
   }
 
-  .home-zone--context {
-    order: 1;
-  }
-
-  :global([data-testid='home-zone-insight']) {
-    order: 2;
+  .home-zone--sections {
+    gap: var(--space-4);
   }
 
   .home-zone--foot {
-    order: 3;
     gap: var(--screen-gap);
   }
 

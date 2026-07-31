@@ -1,6 +1,5 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import type { WorkContextSummaryItem } from '$lib/api/dashboard';
   import type { EntryResponse } from '$lib/api/entries';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { topInsightLabel } from '$lib/utils/analysisCrossLinks';
@@ -8,42 +7,11 @@
     maturityProgressMessage,
     maturityProgressPercent,
   } from '$lib/utils/insightMaturityProgress';
-  import {
-    buildWorkContextDisplayItems,
-    workContextMetricBarWidth,
-    workContextMetricHighLow,
-    workContextMetricNeutralBarColor,
-    type WorkContextMetricKey,
-  } from '$lib/utils/homeWorkContextSummary';
-  import SegmentedControl, {
-    type SegmentedControlOption,
-  } from '$lib/components/common/SegmentedControl.svelte';
 
   export let entries: EntryResponse[] = [];
   export let latestInsight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
-  export let workContextSummary: WorkContextSummaryItem[] = [];
   export let loading = false;
-
-  let workContextMetric: WorkContextMetricKey = 'mood';
-
-  $: workContextMetricOptions = [
-    { id: 'mood', label: $_('home.brief.metric_mood'), testId: 'home-work-context-metric-mood' },
-    {
-      id: 'energy',
-      label: $_('home.brief.metric_energy'),
-      testId: 'home-work-context-metric-energy',
-    },
-    {
-      id: 'stress',
-      label: $_('home.brief.metric_stress'),
-      testId: 'home-work-context-metric-stress',
-    },
-  ] satisfies SegmentedControlOption[];
-
-  function formatAverage(value: number | null): string {
-    return value === null ? $_('home.brief.none') : value.toFixed(1);
-  }
 
   $: phaseLabel = maturity ? $_(`maturity.${maturity.phase}.label`) : null;
   $: milestoneProgress = maturity ? maturityProgressMessage(maturity, $_) : null;
@@ -54,15 +22,6 @@
   );
   $: insightBridgePreview = latestInsight ? topInsightLabel(latestInsight) : null;
   $: trendsBridgePreview = insightBridgePreview;
-  $: visibleWorkContexts = buildWorkContextDisplayItems(workContextSummary, workContextMetric);
-  $: workContextMetricValues = visibleWorkContexts
-    .map((item) => item.metricAvg)
-    .filter((value): value is number => value !== null);
-  $: ({ high: maxWorkContextMetric, low: minWorkContextMetric } = workContextMetricHighLow(
-    workContextMetricValues,
-    workContextMetric
-  ));
-  $: workContextBarColor = workContextMetricNeutralBarColor(workContextMetric);
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
@@ -104,60 +63,6 @@
       {/if}
     {/if}
   </div>
-
-  {#if visibleWorkContexts.length}
-    <section
-      class="daily-brief__work-context"
-      data-metric={workContextMetric}
-      aria-label={$_('home.brief.work_context_heading')}
-    >
-      <div class="daily-brief__work-context-header">
-        <h3>{$_('home.brief.work_context_heading')}</h3>
-        <span>{$_('home.brief.work_context_hint')}</span>
-      </div>
-      <SegmentedControl
-        value={workContextMetric}
-        options={workContextMetricOptions}
-        ariaLabel={$_('home.brief.work_context_metric_aria')}
-        testId="home-work-context-metric-switcher"
-        equalWidth={false}
-        on:change={({ detail }) => {
-          workContextMetric = detail.value as WorkContextMetricKey;
-        }}
-      />
-      <div class="daily-brief__work-context-list">
-        {#each visibleWorkContexts as item}
-          <div
-            class="daily-brief__work-context-row"
-            data-highlight={item.metricAvg !== null &&
-            maxWorkContextMetric !== null &&
-            item.metricAvg === maxWorkContextMetric
-              ? 'high'
-              : item.metricAvg !== null &&
-                  minWorkContextMetric !== null &&
-                  item.metricAvg === minWorkContextMetric
-                ? 'low'
-                : 'none'}
-          >
-            <span>{$_(`entry.work_context.${item.work_context}`)}</span>
-            <div
-              class="daily-brief__work-context-bar"
-              aria-hidden="true"
-              style={`--bar-width: ${workContextMetricBarWidth(workContextMetric, item.metricAvg)}; --bar-metric-color: ${workContextBarColor}`}
-            ></div>
-            <strong>
-              {$_('home.brief.work_context_value', {
-                values: {
-                  count: item.entry_count,
-                  mood: formatAverage(item.metricAvg),
-                },
-              })}
-            </strong>
-          </div>
-        {/each}
-      </div>
-    </section>
-  {/if}
 
   {#if showWeeklyBridge}
     <nav
@@ -259,81 +164,6 @@
     background: var(--color-primary);
   }
 
-  .daily-brief__work-context {
-    display: grid;
-    gap: var(--space-3);
-    padding-top: var(--space-2);
-    border-top: 1px solid var(--color-border);
-  }
-
-  .daily-brief__work-context-header {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-    align-items: baseline;
-  }
-
-  .daily-brief__work-context-header h3 {
-    margin: 0;
-    font-size: var(--text-sm);
-  }
-
-  .daily-brief__work-context-header span {
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-  }
-
-  .daily-brief__work-context-list {
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .daily-brief__work-context-row {
-    display: grid;
-    grid-template-columns: minmax(6rem, 0.9fr) minmax(5rem, 1.4fr) minmax(5rem, auto);
-    gap: var(--space-2);
-    align-items: center;
-    font-size: var(--text-sm);
-  }
-
-  .daily-brief__work-context-row > span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .daily-brief__work-context-row strong {
-    justify-self: end;
-    white-space: nowrap;
-  }
-
-  .daily-brief__work-context-bar {
-    min-width: 0;
-    height: 0.55rem;
-    border-radius: var(--radius-full);
-    background:
-      linear-gradient(
-          var(--bar-color, var(--bar-metric-color, var(--color-primary))),
-          var(--bar-color, var(--bar-metric-color, var(--color-primary)))
-        )
-        left center / var(--bar-width) 100% no-repeat,
-      var(--color-surface);
-  }
-
-  .daily-brief__work-context-row[data-highlight='high'] .daily-brief__work-context-bar {
-    --bar-color: var(--color-success, var(--color-primary));
-  }
-
-  .daily-brief__work-context-row[data-highlight='low'] .daily-brief__work-context-bar {
-    --bar-color: var(--color-warning, var(--color-primary));
-  }
-
-  /* Stress: highest raw value = worst → red; neutral rows stay primary, not alarm-red. */
-  .daily-brief__work-context[data-metric='stress']
-    .daily-brief__work-context-row[data-highlight='low']
-    .daily-brief__work-context-bar {
-    --bar-color: var(--color-metric-stress, var(--color-primary));
-  }
-
   .daily-brief__bridge {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -375,19 +205,6 @@
   @media (max-width: 480px) {
     .daily-brief__bridge {
       grid-template-columns: 1fr;
-    }
-
-    .daily-brief__work-context-header {
-      flex-direction: column;
-      gap: var(--space-1);
-    }
-
-    .daily-brief__work-context-row {
-      grid-template-columns: 1fr;
-    }
-
-    .daily-brief__work-context-row strong {
-      justify-self: start;
     }
   }
 </style>

@@ -1,5 +1,16 @@
 import { api } from './client';
 
+export type HomeSectionKey =
+  | 'first_week_banner'
+  | 'daily_brief'
+  | 'work_context'
+  | 'weekday_overview';
+
+export interface HomeSectionPreference {
+  key: HomeSectionKey;
+  enabled: boolean;
+}
+
 export interface UserPreferencesResponse {
   user_id: string;
   analytics_enabled: boolean;
@@ -11,6 +22,7 @@ export interface UserPreferencesResponse {
   dismissed_insight_keys: string[];
   reached_milestone_keys: string[];
   last_seen_insight_at: string | null;
+  home_sections?: HomeSectionPreference[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +37,7 @@ export interface UserPreferencesUpdate {
   dismissed_insight_keys?: string[];
   reached_milestone_keys?: string[];
   last_seen_insight_at?: string | null;
+  home_sections?: HomeSectionPreference[];
 }
 
 export async function fetchUserPreferences(): Promise<UserPreferencesResponse> {

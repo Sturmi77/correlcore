@@ -8,7 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user_preference import UserPreference
-from app.schemas.user_preferences import UserPreferencesUpdate
+from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
+from app.services.home_sections import merge_home_sections, normalize_home_sections
 
 
 def _dedupe_strings(values: list[str]) -> list[str]:
@@ -54,8 +55,21 @@ async def update_user_preferences(
             continue
         if key in {"dismissed_insight_keys", "reached_milestone_keys"}:
             value = _dedupe_strings(value)
+        if key == "home_sections":
+            normalized = normalize_home_sections(value)
+            if normalized is not None:
+                setattr(preferences, key, normalized)
+            continue
         setattr(preferences, key, value)
 
     await db.flush()
     await db.refresh(preferences)
     return preferences
+
+
+def to_preferences_response(preferences: UserPreference) -> UserPreferencesResponse:
+    """Serialize preferences with merged home section defaults."""
+    response = UserPreferencesResponse.model_validate(preferences)
+    return response.model_copy(
+        update={"home_sections": merge_home_sections(preferences.home_sections)}
+    )

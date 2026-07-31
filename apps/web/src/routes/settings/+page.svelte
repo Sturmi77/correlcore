@@ -590,6 +590,9 @@
         on:change={(event) => selectLocale(event.detail.value as AppLocale)}
       />
       <div class="settings__actions">
+        <Button href="/settings/home" variant="secondary" data-testid="settings-home-layout">
+          {$_('settings.home.open')}
+        </Button>
         <Button href="/settings/app" variant="secondary">{$_('settings.app.open')}</Button>
       </div>
     </section>

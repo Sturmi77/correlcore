@@ -4,8 +4,23 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+HomeSectionKey = Literal[
+    "first_week_banner",
+    "daily_brief",
+    "work_context",
+    "weekday_overview",
+]
+
+
+class HomeSectionPreference(BaseModel):
+    """One configurable Home screen block."""
+
+    key: HomeSectionKey
+    enabled: bool
 
 
 class UserPreferencesUpdate(BaseModel):
@@ -20,6 +35,7 @@ class UserPreferencesUpdate(BaseModel):
     dismissed_insight_keys: list[str] | None = Field(default=None, max_length=128)
     reached_milestone_keys: list[str] | None = Field(default=None, max_length=128)
     last_seen_insight_at: datetime | None = None
+    home_sections: list[HomeSectionPreference] | None = Field(default=None, max_length=16)
 
 
 class UserPreferencesResponse(BaseModel):
@@ -37,5 +53,6 @@ class UserPreferencesResponse(BaseModel):
     dismissed_insight_keys: list[str] = Field(default_factory=list)
     reached_milestone_keys: list[str] = Field(default_factory=list)
     last_seen_insight_at: datetime | None = None
+    home_sections: list[HomeSectionPreference] | None = None
     created_at: datetime
     updated_at: datetime

@@ -609,6 +609,7 @@
       "analysis": "Analyse",
       "privacy": "Datenschutz & Daten",
       "appearance": "Darstellung",
+      "home": "Home",
       "account": "Konto",
       "developer": "Entwickler"
     },
@@ -796,6 +797,38 @@
       "api_base_saved": "API-URL gespeichert. Melde dich erneut an, wenn du den Server gewechselt hast.",
       "api_base_cleared": "API-URL auf den Build-Default zurueckgesetzt.",
       "api_base_invalid": "Bitte eine gueltige http(s)-URL mit /api/v1 am Ende eingeben."
+    },
+    "home": {
+      "open": "Home-Aufbau",
+      "back_settings": "Zurueck zu Einstellungen",
+      "title": "Home-Aufbau",
+      "subtitle": "Waehle, welche kompakten Bloecke auf dem Home-Screen erscheinen und in welcher Reihenfolge.",
+      "heading": "Home-Bloecke",
+      "body": "Heute-Kontext und die Log-heute-Aktion bleiben fix. Alles darunter kann ein-, ausgeblendet und sortiert werden.",
+      "list_aria": "Konfigurierbare Home-Bloecke",
+      "move_up": "Block nach oben",
+      "move_down": "Block nach unten",
+      "reset_defaults": "Standardlayout wiederherstellen",
+      "error_load": "Home-Aufbau konnte nicht geladen werden.",
+      "error_save": "Home-Aufbau konnte nicht gespeichert werden.",
+      "sections": {
+        "first_week_banner": {
+          "label": "Frueh-Hinweis",
+          "description": "Neutraler Erste-Woche- oder Kontext-Hinweis, sobald genug Daten vorliegen."
+        },
+        "daily_brief": {
+          "label": "Tagesbrief",
+          "description": "Top-Insight oder Phasen-Zusammenfassung mit Links zu Insights und Trends."
+        },
+        "work_context": {
+          "label": "Arbeitssituationsmuster",
+          "description": "Durchschnittliche Stimmung, Energie oder Stress je Arbeitssituation."
+        },
+        "weekday_overview": {
+          "label": "Wochenuebersicht",
+          "description": "Sieben-Tage-Stimmungsstrip mit Top-Signalen je Wochentag."
+        }
+      }
     },
     "dev": {
       "heading": "Entwickleransicht",

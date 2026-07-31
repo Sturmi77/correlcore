@@ -89,3 +89,31 @@ The current derived specification is [`../FRONTEND.md`](../FRONTEND.md).
 Findings and delivery order are documented in
 [`../frontend/MOBILE_WEB_AUDIT.md`](../frontend/MOBILE_WEB_AUDIT.md) and
 [`../frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md`](../frontend/MOBILE_WEB_IMPLEMENTATION_PLAN.md).
+
+## 2026-07-31 Configurable Home Sections Amendment (#584)
+
+The five-screen architecture remains unchanged. Home (`/`) stays a daily touch
+point — not a mini-dashboard. Users may optionally reorder or hide compact
+information blocks stored in `user_preferences.home_sections`.
+
+**Fixed elements (not configurable):**
+
+- Today context strip (`HomeTodayContext`) — always first
+- Primary entry CTA when today is not logged
+- PWA install banner and onboarding redirect gating
+
+**Configurable sections (default order matches M3.5 brief-first layout):**
+
+1. `first_week_banner` — early context insight banner
+2. `daily_brief` — insight/phase summary and bridge links to Insights/Trends
+3. `work_context` — work-context pattern bars
+4. `weekday_overview` — weekday mood strip and top signals
+
+`NULL` or empty stored preferences resolve to the default layout so existing
+users see no change until they customize. New section keys merge into defaults
+without breaking saved order. Deep filters, matrices, sparklines, and recent-entry
+grids remain off Home regardless of customization.
+
+Settings live at `/settings/home` (secondary surface within the Settings screen,
+not a new primary screen). See
+[`../proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md`](../proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md).
