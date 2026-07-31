@@ -7,8 +7,19 @@
  * and the calling Insight card; both call sites must stay aligned.
  */
 
-import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
+import { describe, expect, it, vi } from 'vitest';
 import { isSmallMultiplesUnlocked, SMALL_MULTIPLES_RADIUS } from './smallMultiplesGate';
+import EventAlignedSmallMultiplesSheet from './EventAlignedSmallMultiplesSheet.svelte';
+
+vi.mock('svelte-i18n', async () => {
+  const { readable } = await import('svelte/store');
+  return {
+    _: readable((key: string, opts?: { values?: Record<string, unknown> }) =>
+      opts?.values ? `${key}:${JSON.stringify(opts.values)}` : key
+    ),
+  };
+});
 
 describe('isSmallMultiplesUnlocked (ADR-0021 phase gate)', () => {
   it('blocks the collecting phase', () => {
@@ -36,5 +47,54 @@ describe('isSmallMultiplesUnlocked (ADR-0021 phase gate)', () => {
     // The compare panel and any other call site must keep this in sync
     // — it is part of the visual contract documented in ADR-0035 §6.
     expect(SMALL_MULTIPLES_RADIUS).toBe(7);
+  });
+});
+
+describe('EventAlignedSmallMultiplesSheet lag marker (#488)', () => {
+  const points = [
+    {
+      period_start: '2026-05-10',
+      period_end: '2026-05-10',
+      entry_count: 1,
+      mood_avg: 4,
+      energy_avg: 3,
+      stress_avg: 2,
+    },
+    {
+      period_start: '2026-05-12',
+      period_end: '2026-05-12',
+      entry_count: 1,
+      mood_avg: 2,
+      energy_avg: 3,
+      stress_avg: 4,
+    },
+  ];
+  const events = [{ onset: '2026-05-10', label: 'Cycling' }];
+
+  it('highlights the +lag_days column and shows the lag note', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: { open: true, phase: 'provisional', events, points, metric: 'mood_avg', lagOffset: 2 },
+    });
+
+    expect(screen.getByTestId('esm-lag-band')).toBeTruthy();
+    const note = screen.getByTestId('esm-lag-note');
+    expect(note.textContent).toContain('trends.esm.lag_hint');
+    expect(note.textContent).toContain('"days":2');
+  });
+
+  it('omits the lag marker for co-occurrence insights (lagOffset null)', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.queryByTestId('esm-lag-band')).toBeNull();
+    expect(screen.queryByTestId('esm-lag-note')).toBeNull();
   });
 });

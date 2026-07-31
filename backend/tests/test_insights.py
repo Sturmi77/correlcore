@@ -12,7 +12,10 @@ from app.main import app
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.user import User
 from app.services.insight_service import (
+    _lag_onset_feature,
+    _parse_uuid,
     calculate_insight_maturity,
+    get_insight_event_windows,
     get_insight_maturity,
     list_insights,
     list_latest_insights,
@@ -627,3 +630,104 @@ async def test_insight_event_windows_accepts_7d_range(
     assert response.status_code == 200
     assert response.json()["range"] == "7d"
     get_windows.assert_awaited_once()
+
+
+# --- #488: lag-aware event windows -----------------------------------------
+
+
+def test_lag_onset_feature_extracts_feature_and_lag_days() -> None:
+    user = make_user()
+    insight = _make_insight(
+        user,
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        subject_type="symptom",
+        subject_label="Fatigue",
+        payload={
+            "method": "lag",
+            "feature": {"kind": "tag", "slug": "cycling", "name": "Cycling"},
+            "target": {"kind": "symptom", "name": "Fatigue"},
+            "lag_days": 2,
+        },
+    )
+
+    result = _lag_onset_feature(insight)
+
+    assert result is not None
+    feature, lag_days = result
+    assert feature["slug"] == "cycling"
+    assert lag_days == 2
+
+
+def test_lag_onset_feature_none_for_non_lag_or_malformed() -> None:
+    user = make_user()
+    assert _lag_onset_feature(_make_insight(user, payload={"method": "spearman"})) is None
+    # method=lag but lag_days missing → not a usable lag window.
+    assert (
+        _lag_onset_feature(
+            _make_insight(user, payload={"method": "lag", "feature": {"kind": "tag"}})
+        )
+        is None
+    )
+
+
+def test_parse_uuid_roundtrips_and_rejects_junk() -> None:
+    value = uuid.uuid4()
+    assert _parse_uuid(value) == value
+    assert _parse_uuid(str(value)) == value
+    assert _parse_uuid("not-a-uuid") is None
+    assert _parse_uuid(None) is None
+
+
+@pytest.mark.asyncio
+async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
+    user = make_user()
+    insight = _make_insight(
+        user,
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        subject_type="symptom",  # subject = the outcome/target
+        subject_label="Fatigue",
+        payload={
+            "method": "lag",
+            "feature": {"kind": "tag", "slug": "cycling", "name": "Cycling"},
+            "target": {"kind": "symptom", "name": "Fatigue"},
+            "lag_days": 2,
+        },
+    )
+    onset_dates = [date(2026, 5, 1), date(2026, 5, 5)]
+    timeseries = MagicMock()
+    timeseries.points = []
+    db = AsyncMock()
+
+    with (
+        patch(
+            "app.services.insight_service.get_insight_by_id",
+            AsyncMock(return_value=insight),
+        ),
+        patch(
+            "app.services.insight_service._analytics_enabled",
+            AsyncMock(return_value=True),
+        ),
+        patch(
+            "app.services.insight_service.list_historical_tag_presence_dates_by_slug",
+            AsyncMock(return_value=onset_dates),
+        ) as presence,
+        patch(
+            "app.services.insight_service.get_timeseries",
+            AsyncMock(return_value=timeseries),
+        ),
+    ):
+        response = await get_insight_event_windows(
+            db,
+            user_id=user.id,
+            insight_id=insight.id,
+            range_="90d",
+        )
+
+    # Onsets are the feature's occurrences (labelled with the feature), and the
+    # response carries lag_days so the sheet can mark t = +lag_days.
+    assert [event.onset for event in response.events] == onset_dates
+    assert response.events[0].label == "Cycling"
+    assert response.lag_days == 2
+    # Resolved via the feature slug, not the subject (outcome).
+    presence.assert_awaited_once()
+    assert presence.await_args.kwargs["tag_slug"] == "cycling"

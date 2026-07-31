@@ -393,6 +393,42 @@ async def _resolve_symptom_slug(db: AsyncSession, insight: Insight) -> str | Non
     return result.scalar_one_or_none()
 
 
+def _lag_onset_feature(insight: Insight) -> tuple[dict[str, object], int] | None:
+    """For a lag insight, return (feature payload, lag_days); else None.
+
+    #488: lag windows align on the *feature* (antecedent) occurrences rather
+    than the insight subject (which is the outcome/target), and mark the
+    outcome at t = +lag_days.
+    """
+    payload = insight.payload if isinstance(insight.payload, dict) else {}
+    if payload.get("method") != "lag":
+        return None
+    feature = payload.get("feature")
+    lag_days = payload.get("lag_days")
+    if not isinstance(feature, dict) or not isinstance(lag_days, int):
+        return None
+    return feature, lag_days
+
+
+async def _tag_slug_by_id(db: AsyncSession, tag_id: object) -> str | None:
+    parsed = _parse_uuid(tag_id)
+    if parsed is None:
+        return None
+    result = await db.execute(select(Tag.slug).where(Tag.id == parsed))
+    return result.scalar_one_or_none()
+
+
+def _parse_uuid(value: object) -> uuid.UUID | None:
+    if isinstance(value, uuid.UUID):
+        return value
+    if isinstance(value, str):
+        try:
+            return uuid.UUID(value)
+        except ValueError:
+            return None
+    return None
+
+
 async def get_insight_event_windows(
     db: AsyncSession,
     *,
@@ -401,14 +437,34 @@ async def get_insight_event_windows(
     range_: TagCooccurrenceRange,
 ) -> InsightEventWindowsResponse:
     insight = await get_insight_by_id(db, user_id=user_id, insight_id=insight_id)
-    if insight.subject_type not in {"tag", "symptom"}:
-        raise InsightEventWindowsUnsupportedError(insight.subject_type)
+
+    # Lag insights align on the feature (antecedent); everything else on the subject.
+    lag = _lag_onset_feature(insight)
+    onset_slug: str | None
+    label: str | None
+    onset_id: object
+    if lag is not None:
+        feature, lag_days = lag
+        onset_kind = feature.get("kind")
+        raw_slug = feature.get("slug")
+        onset_slug = raw_slug if isinstance(raw_slug, str) else None
+        onset_id = feature.get("id")
+        raw_name = feature.get("name")
+        label = raw_name if isinstance(raw_name, str) else None
+    else:
+        onset_kind = insight.subject_type
+        onset_slug = None
+        onset_id = insight.subject_id
+        label = insight.subject_label
+        lag_days = None
+
+    if onset_kind not in {"tag", "symptom"}:
+        raise InsightEventWindowsUnsupportedError(str(onset_kind))
 
     from datetime import UTC, date, datetime
 
     as_of = datetime.now(UTC).date()
     start_date, end_date = _cooccurrence_window(range_, as_of)
-    label = insight.subject_label
     dates: list[date]
 
     if not await _analytics_enabled(db, user_id=user_id):
@@ -418,10 +474,13 @@ async def get_insight_event_windows(
             end_date=end_date,
             events=[],
             points=[],
+            lag_days=lag_days,
         )
 
-    if insight.subject_type == "tag":
-        tag_slug = await _resolve_tag_slug(db, insight)
+    if onset_kind == "tag":
+        tag_slug = onset_slug if lag is not None else await _resolve_tag_slug(db, insight)
+        if not tag_slug and lag is not None:
+            tag_slug = await _tag_slug_by_id(db, onset_id)
         if not tag_slug:
             dates = []
         else:
@@ -433,11 +492,12 @@ async def get_insight_event_windows(
                 end_date=end_date,
             )
     else:
-        symptom_slug = await _resolve_symptom_slug(db, insight)
+        symptom_id = _parse_uuid(onset_id) if lag is not None else insight.subject_id
+        symptom_slug = onset_slug if lag is not None else await _resolve_symptom_slug(db, insight)
         dates = await list_symptom_presence_dates(
             db,
             user_id=user_id,
-            symptom_id=insight.subject_id,
+            symptom_id=symptom_id,
             symptom_slug=symptom_slug,
             start_date=start_date,
             end_date=end_date,
@@ -455,4 +515,5 @@ async def get_insight_event_windows(
         end_date=end_date,
         events=events,
         points=timeseries.points,
+        lag_days=lag_days,
     )

@@ -4,9 +4,27 @@ import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats'
 import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
 import type { MetricKey } from '$lib/utils/charts';
 
-/** ADR-0035 §6: only tag/symptom subjects have per-day presence windows. */
+/** #488: lag insights align on the feature (antecedent), not the subject. */
+export function lagFeatureKind(insight: InsightResponse): 'tag' | 'symptom' | null {
+  const payload = insight.payload as Record<string, unknown> | undefined;
+  if (!payload || payload.method !== 'lag') return null;
+  const feature = payload.feature as Record<string, unknown> | undefined;
+  const kind = feature?.kind;
+  return kind === 'tag' || kind === 'symptom' ? kind : null;
+}
+
+/**
+ * ADR-0035 §6: tag/symptom subjects have per-day presence windows. #488 also
+ * enables the explore-events sheet for lag insights whose feature is a
+ * tag/symptom (their outcome target may be a metric, so subject_type alone
+ * would hide the entry point).
+ */
 export function isExploreEventsSubject(insight: InsightResponse): boolean {
-  return insight.subject_type === 'tag' || insight.subject_type === 'symptom';
+  return (
+    insight.subject_type === 'tag' ||
+    insight.subject_type === 'symptom' ||
+    lagFeatureKind(insight) !== null
+  );
 }
 
 export function insightMetricToChartKey(metric: string | null | undefined): MetricKey {

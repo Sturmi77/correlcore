@@ -7,6 +7,7 @@ import {
   devEventWindowsFromHeatmaps,
   insightMetricToChartKey,
   isExploreEventsSubject,
+  lagFeatureKind,
 } from './exploreEventWindows';
 
 const baseInsight = (overrides: Partial<InsightResponse>): InsightResponse => ({
@@ -53,6 +54,24 @@ describe('exploreEventWindows', () => {
     expect(isExploreEventsSubject(baseInsight({ subject_type: 'symptom' }))).toBe(true);
     expect(isExploreEventsSubject(baseInsight({ subject_type: 'metric' }))).toBe(false);
     expect(isExploreEventsSubject(baseInsight({ subject_type: 'weekday' }))).toBe(false);
+  });
+
+  it('enables explore-events for lag insights with a tag/symptom feature (#488)', () => {
+    // Outcome (subject) is a metric, so subject_type alone would hide the sheet.
+    const lagInsight = baseInsight({
+      subject_type: 'metric',
+      payload: { method: 'lag', lag_days: 2, feature: { kind: 'tag', slug: 'cycling' } },
+    });
+    expect(lagFeatureKind(lagInsight)).toBe('tag');
+    expect(isExploreEventsSubject(lagInsight)).toBe(true);
+
+    // A lag insight whose feature is a metric has no presence dates → not eligible.
+    const metricFeatureLag = baseInsight({
+      subject_type: 'metric',
+      payload: { method: 'lag', lag_days: 2, feature: { kind: 'metric', slug: 'mood' } },
+    });
+    expect(lagFeatureKind(metricFeatureLag)).toBeNull();
+    expect(isExploreEventsSubject(metricFeatureLag)).toBe(false);
   });
 
   it('maps insight metrics to chart keys', () => {

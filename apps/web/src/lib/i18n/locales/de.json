@@ -529,7 +529,8 @@
       "close_aria": "Ereignis-Ansicht schliessen",
       "empty": "Noch keine Ereignisse fuer diesen Insight verfuegbar.",
       "locked": "Verfuegbar sobald der Insight die provisorische Phase erreicht.",
-      "open_action": "Ausgerichtete Ereignisse erkunden"
+      "open_action": "Ausgerichtete Ereignisse erkunden",
+      "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen"
     },
     "markers": {
       "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"
