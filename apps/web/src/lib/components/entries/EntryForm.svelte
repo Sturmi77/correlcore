@@ -1140,6 +1140,7 @@
     stress;
     selectedSlot;
     cycleDay;
+    cycleBleedingLevel;
     workContext;
     note;
     noteVisibility;
