@@ -28,6 +28,11 @@
   import { displayTimeseriesValue } from '$lib/utils/metrics';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import { StripCellMapper } from '$lib/charts/adapter';
+  import {
+    meanBucketMetric,
+    formatBucketRangeLabel,
+    type AxisBucket,
+  } from '$lib/utils/compareAxisZoom';
   import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
 
@@ -39,9 +44,19 @@
   };
   export let loading = false;
   export let axisDates: string[] = [];
+  /**
+   * Compare-zoom display buckets (#482). When set, each strip cell aggregates
+   * its bucket's days via mean-of-logged-days (Option A: encode the bucket
+   * mean), matching the Lines path — a single source of truth, no dual axis
+   * against the heatmap. Empty when unzoomed / used standalone.
+   */
+  export let buckets: readonly AxisBucket[] = [];
   export let axisLayout: DailyAxisLayout = compareDailyAxisLayout;
   export let markers: readonly EventMarker[] = [];
   export let enableCursor = true;
+
+  /** Fade cells whose bucket has missing calendar days, signalling lower coverage. */
+  const PARTIAL_COVERAGE_OPACITY = 0.55;
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
 
@@ -91,7 +106,10 @@
     dayGap: axisLayout.dayGap,
     rightPadding: axisLayout.rightPadding,
   };
-  $: width = dailyPlotContentWidth(axisDates, plotLayout);
+  // One column per bucket when zoomed, else one per day. Cursor keys, geometry
+  // and overlays all follow these keys (bucket starts) — mirrors MetricTimeseries.
+  $: displayAxisKeys = buckets.length > 0 ? buckets.map((bucket) => bucket.start) : axisDates;
+  $: width = dailyPlotContentWidth(displayAxisKeys, plotLayout);
   $: height =
     paddingTop +
     visibleMetrics.length * stripHeight +
@@ -103,6 +121,7 @@
 
   type Cell = {
     date: string;
+    label: string;
     x: number;
     width: number;
     fill: string;
@@ -112,22 +131,49 @@
     sign: 'neg' | 'mid' | 'pos';
   };
 
-  function buildRow(metric: StripMetric): Cell[] {
-    return axisDates.map((date, index) => {
-      const point = byDate.get(date) ?? null;
+  /** Mean of a metric's logged (display-space) values across a bucket's days. */
+  function bucketDisplayMean(metric: StripMetric, bucket: AxisBucket): number | null {
+    return meanBucketMetric((date) => {
+      const point = byDate.get(date);
       const raw = point ? point[metric.key] : null;
-      const display =
-        raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
+      return raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
+    }, bucket);
+  }
+
+  function buildRow(metric: StripMetric): Cell[] {
+    const cellW = axisLayout.dayWidth;
+    return displayAxisKeys.map((key, index) => {
+      const bucket = buckets.length > 0 ? buckets[index] : null;
+      let display: number | null;
+      let raw: number | null;
+      let partial = false;
+      let label = key;
+      if (bucket) {
+        display = bucketDisplayMean(metric, bucket);
+        raw = null; // aggregate — no single raw value
+        partial = bucket.partial || bucket.presentDays < bucket.dayCount;
+        label = formatBucketRangeLabel(bucket);
+      } else {
+        const point = byDate.get(key) ?? null;
+        const value = point ? point[metric.key] : null;
+        display =
+          value === null || value === undefined ? null : displayTimeseriesValue(metric.key, value);
+        raw = value ?? null;
+      }
       const encoded = metric.mapper.encode(display ?? NaN);
       const cx = dailyAxisXForIndex(index, plotLayout);
-      const cellW = axisLayout.dayWidth;
+      const opacity =
+        encoded.opacity > 0 && partial
+          ? encoded.opacity * PARTIAL_COVERAGE_OPACITY
+          : encoded.opacity;
       return {
-        date,
+        date: key,
+        label,
         x: cx - cellW / 2,
         width: cellW,
         fill: encoded.color,
-        opacity: encoded.opacity,
-        rawValue: raw ?? null,
+        opacity,
+        rawValue: raw,
         displayValue: display,
         sign: encoded.sign,
       };
@@ -143,15 +189,35 @@
     };
   });
 
-  // Cursor wiring — same contract as MetricTimeseries.
-  $: if (enableCursor && axisDates.length > 0) {
-    timelineCursor.setAxis(axisDates);
+  // Cursor wiring — same contract as MetricTimeseries: publish bucket starts
+  // when zoomed so cursor keys stay aligned with the rendered columns.
+  $: if (enableCursor && displayAxisKeys.length > 0) {
+    timelineCursor.setAxis(displayAxisKeys);
   }
+
+  /** Remap marker dates onto bucket starts when zoomed; EventMarkerLayer dedupes. */
+  $: displayMarkers =
+    buckets.length === 0
+      ? markers
+      : markers
+          .map((marker) => {
+            const start = buckets.find((b) => b.dates.includes(marker.date))?.start;
+            if (!start) return null;
+            const end = marker.endDate
+              ? buckets.find((b) => b.dates.includes(marker.endDate as string))?.start
+              : undefined;
+            return {
+              ...marker,
+              date: start,
+              ...(end && end !== start ? { endDate: end } : { endDate: undefined }),
+            };
+          })
+          .filter((marker): marker is EventMarker => marker !== null);
 
   let hostEl: HTMLDivElement | null = null;
 
   function nearestDateForX(clientX: number): string | null {
-    if (!hostEl || axisDates.length === 0) return null;
+    if (!hostEl || displayAxisKeys.length === 0) return null;
     const gutterWidth = axisLayout.labelWidth;
     const plotRect = hostEl.querySelector('.strip__plot')?.getBoundingClientRect();
     const plotLeft = plotRect?.left ?? hostEl.getBoundingClientRect().left + gutterWidth;
@@ -159,7 +225,7 @@
     const local = ((clientX - plotLeft) / plotWidth) * width;
     let bestIndex = 0;
     let bestDelta = Infinity;
-    for (let i = 0; i < axisDates.length; i += 1) {
+    for (let i = 0; i < displayAxisKeys.length; i += 1) {
       const x = dailyAxisXForIndex(i, plotLayout);
       const delta = Math.abs(x - local);
       if (delta < bestDelta) {
@@ -167,7 +233,7 @@
         bestIndex = i;
       }
     }
-    return axisDates[bestIndex] ?? null;
+    return displayAxisKeys[bestIndex] ?? null;
   }
 
   function handlePointerMove(event: PointerEvent): void {
@@ -200,11 +266,12 @@
         break;
       case 'Home':
         event.preventDefault();
-        if (axisDates[0]) timelineCursor.focus(axisDates[0]);
+        if (displayAxisKeys[0]) timelineCursor.focus(displayAxisKeys[0]);
         break;
       case 'End':
         event.preventDefault();
-        if (axisDates[axisDates.length - 1]) timelineCursor.focus(axisDates[axisDates.length - 1]);
+        if (displayAxisKeys[displayAxisKeys.length - 1])
+          timelineCursor.focus(displayAxisKeys[displayAxisKeys.length - 1]);
         break;
       case 'Escape':
         event.preventDefault();
@@ -240,8 +307,8 @@
       aria-label={$_('trends.strip.aria')}
       aria-orientation="horizontal"
       aria-valuemin={0}
-      aria-valuemax={Math.max(0, axisDates.length - 1)}
-      aria-valuenow={Math.max(0, axisDates.indexOf($timelineCursorDate ?? ''))}
+      aria-valuemax={Math.max(0, displayAxisKeys.length - 1)}
+      aria-valuenow={Math.max(0, displayAxisKeys.indexOf($timelineCursorDate ?? ''))}
       aria-valuetext={$timelineCursorDate ?? undefined}
       on:pointermove={handlePointerMove}
       on:pointerleave={handlePointerLeave}
@@ -300,16 +367,16 @@
                   role="button"
                   tabindex="-1"
                   aria-label={cell.displayValue === null
-                    ? `${$_(row.label)} — ${cell.date}`
-                    : `${$_(row.label)} — ${cell.date}: ${cell.displayValue.toFixed(1)}`}
+                    ? `${$_(row.label)} — ${cell.label}`
+                    : `${$_(row.label)} — ${cell.label}: ${cell.displayValue.toFixed(1)}`}
                 />
               {/each}
             </g>
           {/each}
 
           <EventMarkerLayer
-            {markers}
-            {axisDates}
+            markers={displayMarkers}
+            axisDates={displayAxisKeys}
             axisLayout={plotLayout}
             height={height - paddingBottom}
             top={0}
@@ -317,7 +384,7 @@
 
           {#if enableCursor}
             <TimelineCursorOverlay
-              {axisDates}
+              axisDates={displayAxisKeys}
               axisLayout={plotLayout}
               height={height - paddingBottom}
               top={0}

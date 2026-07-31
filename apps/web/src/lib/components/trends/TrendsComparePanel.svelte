@@ -115,23 +115,13 @@
   );
 
   let zoomStage: CompareZoomStageIndex = readCompareZoomStage();
-  /** Shown after switching to Strips resets a coarse zoom (CAZ-3 Option 1). */
-  let stripGateNotice = false;
   let axisScroller: HTMLDivElement;
   let lastAxisKey = '';
   let pendingFocusDate: string | null = null;
 
   function setMode(next: CompareMode): void {
-    if (next === 'strips' && zoomStage > 0) {
-      // Prefer resetting zoom over dual-truth strip/day axes.
-      zoomStage = 0;
-      writeCompareZoomStage(0);
-      pendingFocusDate = null;
-      timelineCursor.clear();
-      stripGateNotice = true;
-    } else if (next === 'lines') {
-      stripGateNotice = false;
-    }
+    // #482: Strips now share the Lines bucket aggregation, so the zoom stage
+    // carries across modes — no gate, no reset.
     mode = next;
     writeCompareMode(next);
     dispatch('modeChange', { value: next });
@@ -208,10 +198,10 @@
     '';
   $: axisDates = axisStart && axisEnd ? buildIsoDateRange(axisStart, axisEnd) : [];
   /**
-   * Strip mode has no bucket Z-score aggregation yet — day columns only.
-   * Switching to Strips also resets persisted zoom (see setMode).
+   * #482: Strips share the Lines bucket aggregation (Option A — mean of logged
+   * days, then divergent-encode), so the zoom stage applies to both modes.
    */
-  $: effectiveZoomStage = mode === 'strips' ? 0 : zoomStage;
+  $: effectiveZoomStage = zoomStage;
   $: axisBuckets = buildAxisBuckets(axisDates, effectiveZoomStage);
   $: bucketAxisLayout =
     effectiveZoomStage === 0
@@ -221,10 +211,8 @@
           dayWidth: Math.max(axisLayout.dayWidth, 28),
         };
   $: zoomDays = stageDays(effectiveZoomStage);
-  $: canZoomOut = mode === 'lines' && zoomStage < 4;
-  $: canZoomIn = mode === 'lines' && zoomStage > 0;
-  $: zoomControlsDisabledReason =
-    mode === 'strips' ? $_('trends.compare.zoom.strips_disabled') : '';
+  $: canZoomOut = zoomStage < 4;
+  $: canZoomIn = zoomStage > 0;
   $: axisKey = `${axisStart}:${axisEnd}:${axisDates.length}:${effectiveZoomStage}:${mode}`;
   $: if (axisKey && axisKey !== lastAxisKey) {
     lastAxisKey = axisKey;
@@ -394,16 +382,6 @@
           {$_('trends.compare.zoom.tap_hint')}
         </p>
       {/if}
-      {#if mode === 'strips'}
-        <p class="compare__zoom-hint" data-testid="trends-compare-zoom-strips-disabled">
-          {zoomControlsDisabledReason}
-        </p>
-      {/if}
-      {#if stripGateNotice && mode === 'strips'}
-        <p class="compare__zoom-detail" data-testid="trends-compare-zoom-strip-gate">
-          {$_('trends.compare.zoom.strip_gate_reset')}
-        </p>
-      {/if}
       {#if cursorDetailLabel}
         <p class="compare__zoom-detail" data-testid="trends-compare-zoom-detail">
           {cursorDetailLabel}
@@ -423,6 +401,7 @@
         {enabled}
         {loading}
         {axisDates}
+        buckets={axisBuckets}
         axisLayout={bucketAxisLayout}
         {markers}
         enableCursor
