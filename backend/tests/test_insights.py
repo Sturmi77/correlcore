@@ -708,6 +708,10 @@ async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
             AsyncMock(return_value=True),
         ),
         patch(
+            "app.services.insight_service._analytics_excluded_tag_keys",
+            AsyncMock(return_value=(set(), set())),
+        ),
+        patch(
             "app.services.insight_service.list_historical_tag_presence_dates_by_slug",
             AsyncMock(return_value=onset_dates),
         ) as presence,
@@ -731,3 +735,60 @@ async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
     # Resolved via the feature slug, not the subject (outcome).
     presence.assert_awaited_once()
     assert presence.await_args.kwargs["tag_slug"] == "cycling"
+
+
+@pytest.mark.asyncio
+async def test_get_insight_event_windows_lag_respects_analytics_exclusion() -> None:
+    # #581: a lag insight stores the tag as payload.feature, so it is not
+    # subject-filtered; the feature-aligned path must still honour the tag's
+    # include_in_analytics=False setting instead of leaking its presence dates.
+    user = make_user()
+    insight = _make_insight(
+        user,
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        subject_type="symptom",
+        subject_label="Fatigue",
+        payload={
+            "method": "lag",
+            "feature": {"kind": "tag", "slug": "cycling", "name": "Cycling"},
+            "target": {"kind": "symptom", "name": "Fatigue"},
+            "lag_days": 2,
+        },
+    )
+    timeseries = MagicMock()
+    timeseries.points = []
+    db = AsyncMock()
+
+    with (
+        patch(
+            "app.services.insight_service.get_insight_by_id",
+            AsyncMock(return_value=insight),
+        ),
+        patch(
+            "app.services.insight_service._analytics_enabled",
+            AsyncMock(return_value=True),
+        ),
+        patch(
+            "app.services.insight_service._analytics_excluded_tag_keys",
+            AsyncMock(return_value=(set(), {"cycling"})),
+        ),
+        patch(
+            "app.services.insight_service.list_historical_tag_presence_dates_by_slug",
+            AsyncMock(return_value=[date(2026, 5, 1)]),
+        ) as presence,
+        patch(
+            "app.services.insight_service.get_timeseries",
+            AsyncMock(return_value=timeseries),
+        ),
+    ):
+        response = await get_insight_event_windows(
+            db,
+            user_id=user.id,
+            insight_id=insight.id,
+            range_="90d",
+        )
+
+    # Excluded feature tag → no windows surfaced, and we never query its dates.
+    assert response.events == []
+    assert response.lag_days == 2
+    presence.assert_not_awaited()

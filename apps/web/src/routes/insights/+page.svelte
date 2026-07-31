@@ -89,6 +89,7 @@
   import type { MetricKey } from '$lib/utils/charts';
   import {
     devEventWindowsFromHeatmaps,
+    devLagEventWindowsFromHeatmaps,
     insightMetricToChartKey,
   } from '$lib/utils/exploreEventWindows';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
@@ -718,11 +719,10 @@
         if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
           return;
         }
-        exploreEventsWindows = devEventWindowsFromHeatmaps(
-          insight,
-          fixture.tagHeatmap,
-          fixture.symptomHeatmap
-        );
+        exploreEventsWindows =
+          insight.payload?.method === 'lag'
+            ? devLagEventWindowsFromHeatmaps(insight, fixture.tagHeatmap, fixture.symptomHeatmap)
+            : devEventWindowsFromHeatmaps(insight, fixture.tagHeatmap, fixture.symptomHeatmap);
         exploreEventsPoints = fixture.timeseries.points;
         const devLag = insight.payload?.lag_days;
         exploreEventsLagOffset = typeof devLag === 'number' ? devLag : null;

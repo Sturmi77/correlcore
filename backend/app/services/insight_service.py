@@ -481,6 +481,13 @@ async def get_insight_event_windows(
         tag_slug = onset_slug if lag is not None else await _resolve_tag_slug(db, insight)
         if not tag_slug and lag is not None:
             tag_slug = await _tag_slug_by_id(db, onset_id)
+        # Lag insights carry the tag as payload.feature, so the insight itself is
+        # not subject-filtered by list_insights. Enforce the analytics-exclusion
+        # promise here before surfacing an excluded tag's presence dates.
+        if tag_slug and lag is not None:
+            excluded_ids, excluded_slugs = await _analytics_excluded_tag_keys(db, user_id=user_id)
+            if tag_slug.casefold() in excluded_slugs or _parse_uuid(onset_id) in excluded_ids:
+                tag_slug = None
         if not tag_slug:
             dates = []
         else:
