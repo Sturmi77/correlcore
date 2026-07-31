@@ -5,6 +5,8 @@ import {
   pruneHeatmapAxes,
   pruneHeatmapDates,
   pruneHeatmapRows,
+  pruneHeatmapRowsByBuckets,
+  pruneCooccurrenceAxisIds,
   pruneTagCooccurrenceMatrix,
   sliceAxisIdsByTopStrength,
   sliceSquareMatrixByTopStrength,
@@ -35,6 +37,25 @@ describe('heatmapPruning', () => {
     expect(pruneHeatmapRows(rows, dates, valueFor).map((row) => row.id)).toEqual(['a']);
   });
 
+  it('prunes rows with no values in visible buckets (#590)', () => {
+    type Bucket = { dates: string[] };
+    const buckets: Bucket[] = [
+      { dates: ['2026-07-02'] },
+      { dates: ['2026-07-03'] },
+    ];
+    const valueForBucket = (row: (typeof rows)[number], bucket: Bucket) =>
+      bucket.dates.reduce((sum, date) => sum + valueFor(row, date), 0);
+
+    expect(pruneHeatmapRowsByBuckets(rows, buckets, valueForBucket).map((row) => row.id)).toEqual(
+      []
+    );
+    expect(
+      pruneHeatmapRowsByBuckets(rows, [{ dates: ['2026-07-01'] }], valueForBucket).map(
+        (row) => row.id
+      )
+    ).toEqual(['a']);
+  });
+
   it('prunes empty date columns', () => {
     expect(pruneHeatmapDates(rows, dates, valueFor)).toEqual(['2026-07-01']);
   });
@@ -62,6 +83,18 @@ describe('heatmapPruning', () => {
     expect(pruned.counts).toEqual([
       [0, 2],
       [2, 0],
+    ]);
+  });
+
+  it('keeps co-occurrence axes with any positive jaccard profile (#590)', () => {
+    const profiles = new Map<string, number[]>([
+      ['sym-1', [0.5]],
+      ['tag-1', [0.5]],
+      ['empty', [0]],
+    ]);
+    expect(pruneCooccurrenceAxisIds(['sym-1', 'tag-1', 'empty'], profiles)).toEqual([
+      'sym-1',
+      'tag-1',
     ]);
   });
 

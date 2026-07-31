@@ -31,7 +31,7 @@
   export let cooccurrenceLoading = false;
   export let phase: InsightMaturityPhase | null = null;
   export let loading = false;
-  export let pruneSparseAxes = false;
+  export let pruneSparseAxes = true;
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string };

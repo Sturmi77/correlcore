@@ -15,7 +15,7 @@
     sumBucketCounts,
     type AxisBucket,
   } from '$lib/utils/compareAxisZoom';
-  import { pruneHeatmapRows } from '$lib/utils/heatmapPruning';
+  import { pruneHeatmapRows, pruneHeatmapRowsByBuckets } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import type { EventMarker } from './EventMarkerLayer.svelte';
@@ -68,7 +68,7 @@
    * MetricTimeseries / UnifiedStripChart on a shared `dates` axis, and
    * dropping empty days would shift cells out of alignment with the chart.
    */
-  export let pruneSparseAxes = false;
+  export let pruneSparseAxes = true;
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string; rowId: string };
@@ -205,9 +205,6 @@
     if (delta !== 0) return delta;
     return a.label.localeCompare(b.label);
   });
-  $: rows = pruneSparseAxes
-    ? pruneHeatmapRows(sortedRows, axisDates, (row, date) => valueFor(row, date))
-    : sortedRows;
   // Prefer explicit zoom buckets from the Compare panel; otherwise one column per day.
   $: visibleBuckets =
     buckets.length > 0
@@ -221,6 +218,13 @@
           partial: false,
           dates: [date],
         }));
+  $: rows = pruneSparseAxes
+    ? visibleBuckets.length > 0
+      ? pruneHeatmapRowsByBuckets(sortedRows, visibleBuckets, (row, bucket) =>
+          valueForBucket(row, bucket)
+        )
+      : pruneHeatmapRows(sortedRows, axisDates, (row, date) => valueFor(row, date))
+    : sortedRows;
   $: visibleAxisDates = visibleBuckets.map((bucket) => bucket.start);
   $: maxValue = Math.max(
     0,

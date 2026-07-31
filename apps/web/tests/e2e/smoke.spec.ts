@@ -236,6 +236,27 @@ async function installSmokeApi(page: Page, options: { authenticated: boolean }) 
   return { writes };
 }
 
+test('anonymous home shows the marketing landing page (#588)', async ({ page }) => {
+  await installSmokeApi(page, { authenticated: false });
+
+  await page.goto('/');
+  await expect(page.getByTestId('marketing-landing')).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('landing-cta-login')).toBeVisible();
+  await expect(page.getByTestId('app-nav-brand')).toHaveCount(0);
+});
+
+test('authenticated landing preview uses ?landing=1 without app nav (#588)', async ({ page }) => {
+  await installSmokeApi(page, { authenticated: true });
+
+  await page.goto('/?landing=1');
+  await expect(page.getByTestId('marketing-landing')).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('home-zone-context')).toHaveCount(0);
+});
+
 test('login redirects to a protected workflow', async ({ page }) => {
   await installSmokeApi(page, { authenticated: false });
 

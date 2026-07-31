@@ -123,7 +123,11 @@ If Let's Encrypt HTTP-01 is used on the NAS, complete cert issuance immediately 
 ```bash
 curl -sfI "https://correlcore.com/" | head -20
 curl -sf "https://correlcore.com/api/v1/health"
+./scripts/verify-deploy-health.sh https://correlcore.com a7de9fb
 ```
+
+The last command confirms the running `git_commit` includes a fix (e.g. tag-group naming #573).
+If it fails, redeploy with a current `IMAGE_TAG` — see `infra/dockhand/README.md`.
 
 Browser (mobile data):
 

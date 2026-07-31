@@ -26,7 +26,7 @@
   export let minPairsForDisplay = 5;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let enableClusterSort = false;
-  export let pruneSparseAxes = false;
+  export let pruneSparseAxes = true;
   /** Server co-occurrence clusters (#489); empty maps when insufficient_data. */
   export let clusterMeta: TagClusterMeta = { byTagId: new Map(), labels: [] };
   /** Focused cluster id, or null for "all". Two-way bound from the page. */
