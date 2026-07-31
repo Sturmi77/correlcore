@@ -23,6 +23,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **APP_ENV whitespace no longer bypasses production/staging secret guards** —
+  `Settings.validate_production_secrets` compared `APP_ENV.lower()` to exact
+  tokens without stripping, so values like `production ` (trailing space from
+  `.env` / compose / CI) skipped SECRET_KEY, ENCRYPTION_KEY, CORS, DEBUG, and
+  COOKIE_SECURE checks while the process still looked production-bound.
+  `APP_ENV` is now normalized with `.strip()` before validation.
 - **Photo upload rejects decompression-bomb dimensions before EXIF decode** —
   `POST /api/v1/media/photos` capped compressed bytes (10 MiB) but not decoded
   pixels. A ~160 KiB solid 7000×7000 PNG passed the byte guard, then

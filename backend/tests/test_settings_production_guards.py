@@ -97,3 +97,37 @@ def test_production_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s.cookie_secure_effective is True
     assert s.DEBUG is False
     assert s.DEV_VIEW_ENABLED is False
+
+
+@pytest.mark.parametrize("app_env", ["production ", " production", "production\t", "PRODUCTION "])
+def test_production_guards_apply_when_app_env_has_whitespace(
+    monkeypatch: pytest.MonkeyPatch, app_env: str
+) -> None:
+    """Whitespace around APP_ENV must not skip staging/production secret guards."""
+    monkeypatch.setenv("APP_ENV", app_env)
+    monkeypatch.setenv("SECRET_KEY", "CHANGE_ME_IN_PRODUCTION_MIN_32_BYTES_RANDOM")
+    with pytest.raises(ValidationError, match="SECRET_KEY"):
+        Settings()
+
+
+def test_production_whitespace_rejects_debug_and_insecure_cookies(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "production ")
+    monkeypatch.setenv("DEBUG", "true")
+    with pytest.raises(ValidationError, match="DEBUG"):
+        Settings()
+
+    monkeypatch.setenv("DEBUG", "false")
+    monkeypatch.setenv("COOKIE_SECURE", "false")
+    with pytest.raises(ValidationError, match="COOKIE_SECURE"):
+        Settings()
+
+
+def test_production_whitespace_normalizes_app_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "  production  ")
+    s = Settings()
+    assert s.APP_ENV == "production"
+    assert s.cookie_secure_effective is True

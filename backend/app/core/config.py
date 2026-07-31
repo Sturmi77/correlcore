@@ -20,6 +20,22 @@ class Settings(BaseSettings):
 
     # App
     APP_ENV: str = "development"  # development | staging | production
+
+    @field_validator("APP_ENV", mode="before")
+    @classmethod
+    def strip_app_env(cls, v: object) -> object:
+        """Normalize APP_ENV so whitespace cannot bypass staging/production guards.
+
+        ``validate_production_secrets`` and cookie Secure heuristics compare
+        ``APP_ENV.lower()`` to exact tokens. A value like ``\"production \"``
+        (trailing space from .env / compose / CI) would otherwise skip secret,
+        CORS, DEBUG, and COOKIE_SECURE checks while still looking like production
+        to operators.
+        """
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     DEV_VIEW_ENABLED: bool = False
