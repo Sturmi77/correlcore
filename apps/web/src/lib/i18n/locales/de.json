@@ -497,6 +497,9 @@
       "sort_recent": "Zuletzt aktiv",
       "sort_correlation": "Nach Korrelation",
       "sort_pinned": "Angepinnt zuerst",
+      "sort_clustered": "Nach Tag-Gruppe",
+      "focus_label": "Auf Tag-Gruppe fokussieren",
+      "focus_all": "Alle Gruppen",
       "pin_aria": "Zeile oben anpinnen",
       "unpin_aria": "Pin entfernen",
       "zoom": {

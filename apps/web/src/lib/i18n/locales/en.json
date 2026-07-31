@@ -497,6 +497,9 @@
       "sort_recent": "Most recent",
       "sort_correlation": "By correlation",
       "sort_pinned": "Pinned first",
+      "sort_clustered": "By tag group",
+      "focus_label": "Focus on a tag group",
+      "focus_all": "All groups",
       "pin_aria": "Pin row to top",
       "unpin_aria": "Unpin row",
       "zoom": {

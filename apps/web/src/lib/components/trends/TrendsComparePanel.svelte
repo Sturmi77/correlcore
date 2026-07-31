@@ -2,7 +2,12 @@
   import { browser } from '$app/environment';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { tick } from 'svelte';
+  import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
+  import { fetchTagClusters, type TagClustersResponse } from '$lib/api/insights';
+  import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
+  import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
+  import { auth } from '$lib/stores/auth';
   import type {
     SymptomHeatmapResponse,
     TagHeatmapResponse,
@@ -32,6 +37,7 @@
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
+  import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
   import UnifiedStripChart from './UnifiedStripChart.svelte';
@@ -79,6 +85,7 @@
     const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     axisLayout = compareDailyAxisLayoutFromRoot(rootPx);
     timelineCursor.reset();
+    void loadTagClusters();
   });
   onDestroy(() => {
     timelineCursor.reset();
@@ -118,6 +125,34 @@
   let axisScroller: HTMLDivElement;
   let lastAxisKey = '';
   let pendingFocusDate: string | null = null;
+  let tagClusters: TagClustersResponse | null = null;
+  let focusedClusterId: number | null = null;
+
+  $: tagClusterMeta = buildTagClusterMeta(tagClusters);
+  $: clustersAvailable = tagClusterMeta.labels.length > 0;
+  $: if (
+    focusedClusterId !== null &&
+    !tagClusterMeta.labels.some((cluster) => cluster.cluster_id === focusedClusterId)
+  ) {
+    focusedClusterId = null;
+  }
+
+  async function loadTagClusters(): Promise<void> {
+    if (get(auth).status !== 'authenticated') return;
+    try {
+      if (get(devForceVisualizations)) {
+        tagClusters = getDevPhaseFixture(get(devPhase)).tagClusters;
+        return;
+      }
+      tagClusters = await fetchTagClusters();
+    } catch {
+      tagClusters = null;
+    }
+  }
+
+  function focusCluster(clusterId: number | null): void {
+    focusedClusterId = clusterId;
+  }
 
   function setMode(next: CompareMode): void {
     // #482: Strips now share the Lines bucket aggregation, so the zoom stage
@@ -341,8 +376,43 @@
           <option value="recent">{$_('trends.compare.sort_recent')}</option>
           <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
           <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
+          <option value="clustered" disabled={!clustersAvailable}>
+            {$_('trends.compare.sort_clustered')}
+          </option>
         </select>
       </label>
+    </div>
+  {/if}
+
+  {#if !compactChrome && clustersAvailable && showTags}
+    <div
+      class="compare__clusters"
+      role="group"
+      aria-label={$_('trends.compare.focus_label')}
+      data-testid="trends-compare-focus"
+    >
+      <button
+        type="button"
+        class="compare__chip"
+        class:compare__chip--active={focusedClusterId === null}
+        aria-pressed={focusedClusterId === null}
+        on:click={() => focusCluster(null)}
+      >
+        {$_('trends.compare.focus_all')}
+      </button>
+      {#each tagClusterMeta.labels as cluster (cluster.cluster_id)}
+        <button
+          type="button"
+          class="compare__chip"
+          class:compare__chip--active={focusedClusterId === cluster.cluster_id}
+          aria-pressed={focusedClusterId === cluster.cluster_id}
+          data-testid="trends-compare-focus-chip"
+          on:click={() =>
+            focusCluster(focusedClusterId === cluster.cluster_id ? null : cluster.cluster_id)}
+        >
+          {cluster.label}
+        </button>
+      {/each}
     </div>
   {/if}
 
@@ -446,6 +516,8 @@
         {sortMode}
         {pinned}
         {correlationScores}
+        clusterMeta={tagClusterMeta}
+        {focusedClusterId}
         scrollable={false}
         autoScroll={false}
         {pruneSparseAxes}
@@ -573,6 +645,12 @@
     background: var(--color-surface);
     color: var(--color-text);
     font: inherit;
+  }
+
+  .compare__clusters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
   .compare__zoom-block {

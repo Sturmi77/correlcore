@@ -139,6 +139,7 @@
         <option value="recent">{$_('trends.compare.sort_recent')}</option>
         <option value="correlation">{$_('trends.compare.sort_correlation')}</option>
         <option value="pinned">{$_('trends.compare.sort_pinned')}</option>
+        <option value="clustered">{$_('trends.compare.sort_clustered')}</option>
       </select>
     </label>
   </div>
