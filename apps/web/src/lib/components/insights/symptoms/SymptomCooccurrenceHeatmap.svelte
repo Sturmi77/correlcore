@@ -21,7 +21,7 @@
   export let phase: InsightMaturityPhase | null = null;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let hideHeading = false;
-  export let pruneSparseAxes = false;
+  export let pruneSparseAxes = true;
 
   const dispatch = createEventDispatcher<{ selectCell: { cell: SymptomTagCooccurrenceCell } }>();
   const COMPACT_QUERY = '(max-width: 480px)';

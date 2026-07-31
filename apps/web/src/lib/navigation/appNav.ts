@@ -59,7 +59,26 @@ export function isNavItemActive(pathname: string, href: string, match: NavMatch)
 
 export function shouldShowAppNav(
   authStatus: 'loading' | 'authenticated' | 'anonymous',
-  pathname: string
+  pathname: string,
+  searchParams?: Pick<URLSearchParams, 'get'>
 ): boolean {
+  if (
+    authStatus === 'authenticated' &&
+    pathname === '/' &&
+    searchParams?.get('landing') === '1'
+  ) {
+    return false;
+  }
   return authStatus === 'authenticated' && !isRouteWithoutAppNav(pathname);
+}
+
+/** Marketing landing on `/` for anonymous visitors or `?landing=1` preview (#588). */
+export function isMarketingLandingView(
+  authStatus: 'loading' | 'authenticated' | 'anonymous',
+  pathname: string,
+  searchParams?: Pick<URLSearchParams, 'get'>
+): boolean {
+  if (pathname !== '/') return false;
+  if (authStatus !== 'authenticated') return true;
+  return searchParams?.get('landing') === '1';
 }

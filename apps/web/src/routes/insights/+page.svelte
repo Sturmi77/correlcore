@@ -926,7 +926,7 @@
               cooccurrenceLoading={symptomCooccurrenceLoading}
               phase={insightMaturity?.phase ?? null}
               loading={loading || symptomWindowLoading}
-              pruneSparseAxes={compactInsights}
+              pruneSparseAxes
               on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
               on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
             />
@@ -944,7 +944,7 @@
               enableClusterSort={insightMaturity?.phase === 'robust'}
               clusterMeta={tagClusterMeta}
               bind:focusedClusterId={focusedTagClusterId}
-              pruneSparseAxes={compactInsights}
+              pruneSparseAxes
               on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
               on:selectPair={(event) => void openCooccurrenceHistory(event)}
             />

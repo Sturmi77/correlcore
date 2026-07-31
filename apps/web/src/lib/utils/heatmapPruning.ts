@@ -23,6 +23,16 @@ export function pruneHeatmapRows<T extends HeatmapPrunableRow>(
   return rows.filter((row) => dates.some((date) => valueFor(row, date) > 0));
 }
 
+/** Hide rows with zero values across all visible Compare zoom buckets (O-59 / #590). */
+export function pruneHeatmapRowsByBuckets<T, B>(
+  rows: readonly T[],
+  buckets: readonly B[],
+  valueForBucket: (row: T, bucket: B) => number
+): T[] {
+  if (buckets.length === 0) return [...rows];
+  return rows.filter((row) => buckets.some((bucket) => valueForBucket(row, bucket) > 0));
+}
+
 export function pruneHeatmapDates<T extends HeatmapPrunableRow>(
   rows: readonly T[],
   dates: readonly string[],

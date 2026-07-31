@@ -47,6 +47,13 @@
   import { hasOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
   import LandingPage from '$lib/components/landing/LandingPage.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import { isMarketingLandingView } from '$lib/navigation/appNav';
+
+  $: showLandingPreview = isMarketingLandingView(
+    $auth.status,
+    $page.url.pathname,
+    $page.url.searchParams
+  );
 
   const EARLY_CONTEXT_PATTERN_KEY = 'early_context_pattern';
   const LEGACY_FIRST_WEEK_PATTERN_KEY = 'first_week_pattern';
@@ -247,7 +254,7 @@
   <title>{$_('app.name')}</title>
 </svelte:head>
 
-{#if $auth.status === 'authenticated'}
+{#if $auth.status === 'authenticated' && !showLandingPreview}
   <div class="home-screen screen-stack screen-stack--loose">
     <ScreenHeader title={$_('nav.home')} visuallyHidden />
     {#if showPwaInstallBanner}

@@ -5,6 +5,7 @@ import {
   pruneHeatmapAxes,
   pruneHeatmapDates,
   pruneHeatmapRows,
+  pruneHeatmapRowsByBuckets,
   pruneTagCooccurrenceMatrix,
   sliceAxisIdsByTopStrength,
   sliceSquareMatrixByTopStrength,
@@ -33,6 +34,25 @@ describe('heatmapPruning', () => {
 
   it('prunes empty rows', () => {
     expect(pruneHeatmapRows(rows, dates, valueFor).map((row) => row.id)).toEqual(['a']);
+  });
+
+  it('prunes rows with no values in visible buckets (#590)', () => {
+    type Bucket = { dates: string[] };
+    const buckets: Bucket[] = [
+      { dates: ['2026-07-02'] },
+      { dates: ['2026-07-03'] },
+    ];
+    const valueForBucket = (row: (typeof rows)[number], bucket: Bucket) =>
+      bucket.dates.reduce((sum, date) => sum + valueFor(row, date), 0);
+
+    expect(pruneHeatmapRowsByBuckets(rows, buckets, valueForBucket).map((row) => row.id)).toEqual(
+      []
+    );
+    expect(
+      pruneHeatmapRowsByBuckets(rows, [{ dates: ['2026-07-01'] }], valueForBucket).map(
+        (row) => row.id
+      )
+    ).toEqual(['a']);
   });
 
   it('prunes empty date columns', () => {
