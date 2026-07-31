@@ -1,5 +1,8 @@
 # Issue Tracker Hygiene — 2026-07-15
 
+> **Follow-up:** see [`ISSUE_TRACKER_HYGIENE_2026-07-31.md`](ISSUE_TRACKER_HYGIENE_2026-07-31.md)
+> for the current open-issue close list (#488, #459, #588).
+
 Operator close list for issues that are **already shipped on `main`**
 (merged via PR [#393](https://github.com/Sturmi77/correlcore/pull/393) and earlier
 milestone work). The cloud-agent token (`cursor[bot]`) cannot call `closeIssue`
