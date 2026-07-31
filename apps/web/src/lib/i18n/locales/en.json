@@ -636,7 +636,15 @@
       "heading": "Cycle tracking",
       "body": "Control whether the cycle-day field appears in every daily entry.",
       "enabled": "Cycle function enabled",
-      "hint": "When enabled, you can log your cycle day (1–35) per entry. CorrelCore treats it like a metric — no prediction, no medical advice."
+      "hint": "When enabled, you can log your cycle day (1–35) per entry. CorrelCore treats it like a metric — no prediction, no medical advice.",
+      "delete_action": "Delete cycle data",
+      "delete_title": "Delete cycle data?",
+      "delete_body": "This clears cycle day and bleeding level from all your entries. Other entry data stays unchanged.",
+      "delete_confirm": "Delete cycle data",
+      "delete_cancel": "Cancel",
+      "delete_busy": "Deleting…",
+      "delete_success": "Cycle data cleared from {count} entries.",
+      "delete_error": "Could not delete cycle data."
     },
     "vocabulary": {
       "heading": "Tracking vocabulary",
@@ -857,6 +865,7 @@
       "backend_heading": "Backend diagnostics",
       "backend_body": "Runtime commit, image digest, worker runs and DB backups via /dev when the server exposes DEV_VIEW_ENABLED.",
       "backend_unavailable_hint": "This deployment has not enabled the backend developer endpoint (typical for managed cloud). You can still open /dev to read the notice, or use Force visualizations above for UI testing.",
+      "backend_error_hint": "Could not reach the backend developer endpoint (network or server error). Client-only developer tools above still work on this device.",
       "force_viz_label": "Force visualizations with mock data",
       "force_viz_aria": "Toggle mock data for visualizations",
       "phase_label": "Insight maturity",

@@ -794,10 +794,17 @@ Schlaf-/Wearable-Import selbst folgt in M8; die Consent-API ist die Foundation.
 Speichert nicht-sensitive UI-/Insight-Präferenzen des aktuellen Users.
 Der Analytics-Worker berücksichtigt `analytics_enabled=false` beim Job-Listing.
 
-**Felder (Response / PATCH, alle optional außer `user_id` in GET):**
+**Response-Felder (GET, immer gesetzt):** `user_id`, `created_at`, `updated_at` plus die
+PATCH-fähigen Felder unten. Bei PATCH sind alle Felder optional; **`null` für ein Feld
+bedeutet No-Op** (Wert bleibt unverändert).
+
+**Felder (Response / PATCH):**
 
 | Feld                             | Typ              | Default        | Beschreibung                       |
 | -------------------------------- | ---------------- | -------------- | ---------------------------------- |
+| `user_id`                        | uuid             | —              | Nur GET; authentifizierter User    |
+| `created_at`                     | datetime         | —              | Nur GET                            |
+| `updated_at`                     | datetime         | —              | Nur GET                            |
 | `analytics_enabled`              | bool             | `true`         | Insights/Analytics für den User    |
 | `digest_enabled`                 | bool             | `false`        | Wöchentlicher Insight-Digest       |
 | `cycle_tracking_enabled`         | bool             | `true`         | Zyklustag-Feld im Entry-Formular   |
@@ -812,18 +819,19 @@ Der Analytics-Worker berücksichtigt `analytics_enabled=false` beim Job-Listing.
 **`home_sections` (#584):** Array von `{ "key": string, "enabled": bool }`.
 Reihenfolge = Render-Reihenfolge auf Home. Erlaubte Keys:
 `first_week_banner`, `daily_brief`, `work_context`, `weekday_overview`.
-`NULL` oder leer in der DB → Server liefert das brief-first-Default-Layout;
-unbekannte Keys werden verworfen, fehlende Default-Keys eingefügt.
+Unbekannte Keys werden serverseitig **still verworfen** (kein 422); fehlende
+Default-Keys werden eingefügt. `NULL` oder leer in der DB → Server liefert das
+brief-first-Default-Layout (`first_week_banner` zuerst).
 
 Beispiel PATCH:
 
 ```json
 {
   "home_sections": [
+    { "key": "first_week_banner", "enabled": true },
     { "key": "daily_brief", "enabled": true },
     { "key": "weekday_overview", "enabled": true },
-    { "key": "work_context", "enabled": false },
-    { "key": "first_week_banner", "enabled": true }
+    { "key": "work_context", "enabled": false }
   ]
 }
 ```

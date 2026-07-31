@@ -88,7 +88,7 @@
     </div>
     <div class="landing__hero-visual">
       <BrowserFrameMock>
-        <TagGroupsSection data={landingTagClusters} />
+        <TagGroupsSection data={landingTagClusters} plainClusterTitles />
       </BrowserFrameMock>
     </div>
   </section>

@@ -10,6 +10,8 @@
 
   export let data: TagClustersResponse | null = null;
   export let loading = false;
+  /** When true, cluster labels are shown verbatim (landing preview). */
+  export let plainClusterTitles = false;
 
   $: showSkeleton = loading && !data;
   $: clusters = data?.status === 'ok' ? data.clusters : [];
@@ -83,7 +85,11 @@
       {#each clusters as cluster}
         <article class="tag-groups__card">
           <div class="tag-groups__card-head">
-            <h3>{$_('insights.tag_groups.card_title', { values: { name: cluster.label } })}</h3>
+            <h3>
+              {plainClusterTitles
+                ? cluster.label
+                : $_('insights.tag_groups.card_title', { values: { name: cluster.label } })}
+            </h3>
             <span
               >{$_('insights.tag_groups.strength', {
                 values: { value: Math.round(cluster.strength * 100) },
