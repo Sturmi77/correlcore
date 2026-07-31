@@ -58,7 +58,10 @@
   /** Fade cells whose bucket has missing calendar days, signalling lower coverage. */
   const PARTIAL_COVERAGE_OPACITY = 0.55;
 
-  const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
+  const dispatch = createEventDispatcher<{
+    selectDate: { date: string };
+    zoomInBucket: { bucket: AxisBucket };
+  }>();
 
   // Strip geometry — mirrors heatmap row sizing for visual rhyme.
   const stripHeight = 28;
@@ -248,6 +251,14 @@
   }
 
   function handleCellClick(date: string): void {
+    // A multi-day aggregate cell refines one zoom stage (parity with Lines and
+    // the heatmap); a single-day cell opens that day. Prevents opening the
+    // bucket's first — possibly empty — day for an aggregate. (#482)
+    const bucket = buckets.find((b) => b.start === date) ?? null;
+    if (bucket && bucket.dates.length > 1) {
+      dispatch('zoomInBucket', { bucket });
+      return;
+    }
     if (enableCursor) timelineCursor.focus(date);
     dispatch('selectDate', { date });
   }

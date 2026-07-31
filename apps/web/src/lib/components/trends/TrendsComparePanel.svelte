@@ -148,9 +148,13 @@
     setZoomStage(clampZoomStage(zoomStage - 1));
   }
 
-  /** CAZ-2: multi-day tap zooms one stage finer and keeps the interval in view. */
+  /**
+   * CAZ-2: multi-day tap zooms one stage finer and keeps the interval in view.
+   * #482: also active in Strips mode now that strips share the bucket axis, so
+   * zoomable heatmap/strip cells behave the same in both modes.
+   */
   function zoomInBucket(bucket: AxisBucket): void {
-    if (mode !== 'lines' || zoomStage === 0 || bucket.dates.length <= 1) return;
+    if (zoomStage === 0 || bucket.dates.length <= 1) return;
     pendingFocusDate = bucket.start;
     zoomStage = clampZoomStage(zoomStage - 1);
     writeCompareZoomStage(zoomStage);
@@ -406,6 +410,7 @@
         {markers}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+        on:zoomInBucket={handleZoomInBucket}
       />
     {:else}
       <MetricTimeseries

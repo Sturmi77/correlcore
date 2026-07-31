@@ -1,4 +1,4 @@
-import { render } from '@testing-library/svelte';
+import { fireEvent, render } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import UnifiedStripChart from './UnifiedStripChart.svelte';
 import { buildAxisBuckets } from '$lib/utils/compareAxisZoom';
@@ -131,5 +131,72 @@ describe('UnifiedStripChart', () => {
     expect(Number(moodCells[0]?.getAttribute('opacity'))).toBe(0);
     // Full bucket with logged data → visible.
     expect(Number(moodCells[1]?.getAttribute('opacity'))).toBeGreaterThan(0);
+  });
+
+  it('zooms into a multi-day bucket cell instead of opening its first day (#482)', async () => {
+    const zoomInBucket = vi.fn();
+    const selectDate = vi.fn();
+    const axisDates = ['2026-05-01', '2026-05-02', '2026-05-03'];
+    const buckets = buildAxisBuckets(axisDates, 1); // one 3-day bucket
+
+    const { container } = render(UnifiedStripChart, {
+      props: {
+        axisDates,
+        buckets,
+        enabled,
+        points: [
+          {
+            period_start: '2026-05-01',
+            period_end: '2026-05-01',
+            entry_count: 1,
+            mood_avg: 4,
+            energy_avg: 3,
+            stress_avg: 3,
+          },
+        ],
+      },
+      events: { zoomInBucket, selectDate },
+    });
+
+    const cell = container.querySelector('[data-metric="mood_avg"] .strip__cell');
+    await fireEvent.click(cell as Element);
+
+    expect(zoomInBucket).toHaveBeenCalledTimes(1);
+    expect(zoomInBucket.mock.calls[0][0].detail.bucket.dates).toHaveLength(3);
+    // Must not open the bucket's first (possibly empty) day.
+    expect(selectDate).not.toHaveBeenCalled();
+  });
+
+  it('opens the day for a single-day cell (#482)', async () => {
+    const zoomInBucket = vi.fn();
+    const selectDate = vi.fn();
+    const axisDates = ['2026-05-01', '2026-05-02'];
+    const buckets = buildAxisBuckets(axisDates, 0); // single-day buckets
+
+    const { container } = render(UnifiedStripChart, {
+      props: {
+        axisDates,
+        buckets,
+        enabled,
+        points: [
+          {
+            period_start: '2026-05-01',
+            period_end: '2026-05-01',
+            entry_count: 1,
+            mood_avg: 4,
+            energy_avg: 3,
+            stress_avg: 3,
+          },
+        ],
+      },
+      events: { zoomInBucket, selectDate },
+    });
+
+    const cell = container.querySelector('[data-metric="mood_avg"] .strip__cell');
+    await fireEvent.click(cell as Element);
+
+    expect(selectDate).toHaveBeenCalledTimes(1);
+    expect(selectDate.mock.calls[0][0].detail.date).toBe('2026-05-01');
+    expect(zoomInBucket).not.toHaveBeenCalled();
   });
 });
