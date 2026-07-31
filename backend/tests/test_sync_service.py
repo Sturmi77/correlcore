@@ -530,6 +530,65 @@ async def test_record_entry_upsert_revision_appends_log_without_note(
     assert kwargs["payload"]["symptoms"] == {}
 
 
+@pytest.mark.asyncio
+async def test_scrub_cycle_shd_from_revision_log_nulls_cycle_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from unittest.mock import AsyncMock, MagicMock
+
+    from app.models.sync_engine import SyncRevisionLog
+    from app.services import sync_service
+
+    user = make_user()
+    dirty = SyncRevisionLog(
+        user_id=user.id,
+        user_rev=1,
+        entity_type="entry",
+        entity_id=uuid.uuid4(),
+        operation="upsert",
+        payload={
+            "mood_score": 4,
+            "cycle_day": 12,
+            "cycle_bleeding_level": "medium",
+            "note": None,
+        },
+        entity_updated_at=datetime.now(UTC),
+    )
+    clean = SyncRevisionLog(
+        user_id=user.id,
+        user_rev=2,
+        entity_type="entry",
+        entity_id=uuid.uuid4(),
+        operation="upsert",
+        payload={"mood_score": 3, "cycle_day": None, "cycle_bleeding_level": None},
+        entity_updated_at=datetime.now(UTC),
+    )
+
+    db = MagicMock()
+    db.flush = AsyncMock()
+    scalars = MagicMock()
+    scalars.all.return_value = [dirty, clean]
+    result = MagicMock()
+    result.scalars.return_value = scalars
+    db.execute = AsyncMock(return_value=result)
+
+    flagged: list[tuple[object, str]] = []
+    monkeypatch.setattr(
+        sync_service,
+        "flag_modified",
+        lambda obj, key: flagged.append((obj, key)),
+    )
+
+    scrubbed = await sync_service.scrub_cycle_shd_from_revision_log(db, user_id=user.id)
+
+    assert scrubbed == 1
+    assert dirty.payload["cycle_day"] is None
+    assert dirty.payload["cycle_bleeding_level"] is None
+    assert dirty.payload["mood_score"] == 4
+    assert flagged == [(dirty, "payload")]
+    db.flush.assert_awaited_once()
+
+
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_push_new_entry_visible_in_database() -> None:

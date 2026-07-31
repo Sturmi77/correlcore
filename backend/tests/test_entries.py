@@ -44,6 +44,7 @@ from app.services.entry_service import (
     EntryDateOutOfRangeError,
     EntryNotFoundError,
     EntryReadOnlyError,
+    clear_user_cycle_data,
     create_entry,
     create_entry_batch,
     get_entry,
@@ -266,6 +267,41 @@ async def test_create_entry_duplicate_raises_conflict(rest_revision_recorders) -
 
     db.rollback.assert_awaited_once()
     rest_revision_recorders["entry"].assert_not_awaited()
+
+
+# ---------------------------------------------------------------------------
+# Service: clear_user_cycle_data
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_clear_user_cycle_data_nulls_fields_and_records_revisions(
+    rest_revision_recorders,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user = make_user()
+    with_cycle = make_entry(user, cycle_day=5)
+    with_cycle.cycle_bleeding_level = BleedingLevel.LIGHT
+    without_cycle = make_entry(user, cycle_day=None)
+    db = _make_db()
+    db.execute = AsyncMock(return_value=_scalars_all_result([with_cycle]))
+
+    scrub = AsyncMock(return_value=1)
+    monkeypatch.setattr(
+        "app.services.sync_service.scrub_cycle_shd_from_revision_log",
+        scrub,
+    )
+
+    cleared = await clear_user_cycle_data(db, user_id=user.id)
+
+    assert cleared == 1
+    assert with_cycle.cycle_day is None
+    assert with_cycle.cycle_bleeding_level is None
+    assert with_cycle.updated_at is not None
+    assert without_cycle.cycle_day is None
+    rest_revision_recorders["entry"].assert_awaited_once()
+    assert rest_revision_recorders["entry"].await_args.kwargs["entry"] is with_cycle
+    scrub.assert_awaited_once_with(db, user_id=user.id)
 
 
 # ---------------------------------------------------------------------------

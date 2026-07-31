@@ -28,3 +28,34 @@ def test_sanitise_entry_for_log_redacts_cycle_fields() -> None:
     assert payload["cycle_day"] == "<redacted>"
     assert payload["cycle_bleeding_level"] == "<redacted>"
     assert payload["entry_date"] == "2026-07-31"
+    assert "mood_score" not in payload
+    assert "note" not in payload
+
+
+def test_sanitise_entry_for_log_dict_uses_metadata_allowlist() -> None:
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    dump = {
+        "id": entry_id,
+        "user_id": user_id,
+        "entry_date": date(2026, 7, 31),
+        "slot": EntrySlot.DAY,
+        "mood_score": 5,
+        "energy": 4,
+        "stress": 2,
+        "note": "secret",
+        "cycle_day": 8,
+        "cycle_bleeding_level": BleedingLevel.HEAVY,
+        "symptoms": {"x": 2},
+    }
+
+    payload = sanitise_entry_for_log(dump)
+
+    assert payload == {
+        "id": str(entry_id),
+        "user_id": str(user_id),
+        "entry_date": "2026-07-31",
+        "slot": "day",
+        "cycle_day": "<redacted>",
+        "cycle_bleeding_level": "<redacted>",
+    }
