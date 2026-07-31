@@ -62,11 +62,7 @@ export function shouldShowAppNav(
   pathname: string,
   searchParams?: Pick<URLSearchParams, 'get'>
 ): boolean {
-  if (
-    authStatus === 'authenticated' &&
-    pathname === '/' &&
-    searchParams?.get('landing') === '1'
-  ) {
+  if (authStatus === 'authenticated' && pathname === '/' && searchParams?.get('landing') === '1') {
     return false;
   }
   return authStatus === 'authenticated' && !isRouteWithoutAppNav(pathname);

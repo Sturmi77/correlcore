@@ -39,10 +39,7 @@ describe('heatmapPruning', () => {
 
   it('prunes rows with no values in visible buckets (#590)', () => {
     type Bucket = { dates: string[] };
-    const buckets: Bucket[] = [
-      { dates: ['2026-07-02'] },
-      { dates: ['2026-07-03'] },
-    ];
+    const buckets: Bucket[] = [{ dates: ['2026-07-02'] }, { dates: ['2026-07-03'] }];
     const valueForBucket = (row: (typeof rows)[number], bucket: Bucket) =>
       bucket.dates.reduce((sum, date) => sum + valueFor(row, date), 0);
 

@@ -53,9 +53,9 @@ describe('appNav routing helpers', () => {
     it('shows marketing landing for anonymous home and ?landing=1 preview', () => {
       expect(isMarketingLandingView('anonymous', '/')).toBe(true);
       expect(isMarketingLandingView('authenticated', '/')).toBe(false);
-      expect(
-        isMarketingLandingView('authenticated', '/', new URLSearchParams('landing=1'))
-      ).toBe(true);
+      expect(isMarketingLandingView('authenticated', '/', new URLSearchParams('landing=1'))).toBe(
+        true
+      );
       expect(isMarketingLandingView('authenticated', '/insights')).toBe(false);
     });
   });
