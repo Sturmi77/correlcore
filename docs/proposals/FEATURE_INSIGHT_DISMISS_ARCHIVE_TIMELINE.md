@@ -25,17 +25,17 @@ Dieses Issue entscheidet **nicht** pauschal eine UI, sondern bewertet Optionen A
 
 Dismiss ist heute **kein Soft-Delete und kein Archiv**, sondern ein **Client-seitiges Hide** über Preference-Keys:
 
-| Schicht | Verhalten |
-| --- | --- |
-| UI | ✕ auf [`InsightCard`](../../apps/web/src/lib/components/insights/InsightCard.svelte) → `dismiss` |
-| Store | [`dismissInsight(id)`](../../apps/web/src/lib/stores/insights.ts) filtert lokal und PATCH’t Preferences |
-| Persistenz | `UserPreference.dismissed_insight_keys` (JSONB `string[]`, max **128**) — UUID-Keys und Banner-Keys |
-| Insight-Zeile | [`Insight`](../../backend/app/models/insight.py) hat **kein** `status` / `dismissed_at` / Soft-Delete |
-| API | Kein `DELETE`/`PATCH /insights/{id}`; nur Prefs + `GET /insights`, `GET /insights/latest`, Regenerieren, Digest |
-| Feed | Frontend filtert dismissed UUIDs; Backend liefert sie weiterhin |
-| Regenerieren | [`generate_and_store_insights`](../../backend/app/services/insight_engine.py) **hard-deletet** alle Rows für `(user_id, generated_for_date)` und legt **neue UUIDs** an |
-| Digest | Ranking berücksichtigt `dismissed_insight_keys` **nicht** |
-| Export | Insights im DSGVO-Export aktuell Stub/leer |
+| Schicht       | Verhalten                                                                                                                                                               |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI            | ✕ auf [`InsightCard`](../../apps/web/src/lib/components/insights/InsightCard.svelte) → `dismiss`                                                                        |
+| Store         | [`dismissInsight(id)`](../../apps/web/src/lib/stores/insights.ts) filtert lokal und PATCH’t Preferences                                                                 |
+| Persistenz    | `UserPreference.dismissed_insight_keys` (JSONB `string[]`, max **128**) — UUID-Keys und Banner-Keys                                                                     |
+| Insight-Zeile | [`Insight`](../../backend/app/models/insight.py) hat **kein** `status` / `dismissed_at` / Soft-Delete                                                                   |
+| API           | Kein `DELETE`/`PATCH /insights/{id}`; nur Prefs + `GET /insights`, `GET /insights/latest`, Regenerieren, Digest                                                         |
+| Feed          | Frontend filtert dismissed UUIDs; Backend liefert sie weiterhin                                                                                                         |
+| Regenerieren  | [`generate_and_store_insights`](../../backend/app/services/insight_engine.py) **hard-deletet** alle Rows für `(user_id, generated_for_date)` und legt **neue UUIDs** an |
+| Digest        | Ranking berücksichtigt `dismissed_insight_keys` **nicht**                                                                                                               |
+| Export        | Insights im DSGVO-Export aktuell Stub/leer                                                                                                                              |
 
 Historische Rows über mehrere `generated_for_date` existieren in der DB; `list_insights` ist chronologisch (newest-first), die Produkt-UI nutzt aber vor allem `/latest` (Dedup pro semantischem Subject). Es gibt **keine** Archiv-/Zeitleisten-Oberfläche und **kein Undo**.
 
@@ -48,7 +48,7 @@ Historische Rows über mehrere `generated_for_date` existieren in der DB; `list_
 5. **Keine Zeitachse** — Wann trat das Muster erstmals / zuletzt auf? DB hat `generated_for_date` / `generated_at`, UI nicht.
 6. **Kein Audit** — kein `dismissed_at`, kein Grund, keine Export-Historie der Dismissals.
 
-Nutzer:innen, die Insights bewusst wegklicken (zu früh, irrelevant, emotional belastend, „weiß ich schon“), verlieren damit faktisch die Möglichkeit, später nachzuschlagen: *„Was hat die App damals erkannt?“*
+Nutzer:innen, die Insights bewusst wegklicken (zu früh, irrelevant, emotional belastend, „weiß ich schon“), verlieren damit faktisch die Möglichkeit, später nachzuschlagen: _„Was hat die App damals erkannt?“_
 
 ## Analyse der Optionen
 
@@ -56,11 +56,11 @@ Nutzer:innen, die Insights bewusst wegklicken (zu früh, irrelevant, emotional b
 
 **Idee:** Weiterhin `dismissed_insight_keys`, aber UI zeigt eine Sektion „Ausgeblendet“ (oder Settings) mit Undo (= Key aus Liste entfernen).
 
-| Pro | Contra |
-| --- | --- |
+| Pro                                    | Contra                                                          |
+| -------------------------------------- | --------------------------------------------------------------- |
 | Sehr geringer Aufwand (nur FE + Prefs) | Kein echter Zeitbezug; nur aktuelle Rows mit noch gültiger UUID |
-| Keine Migration | Regenerieren bricht Zuordnung weiterhin |
-| Schnelles Undo | Kein Server-Filter; Digest bleibt inkonsistent |
+| Keine Migration                        | Regenerieren bricht Zuordnung weiterhin                         |
+| Schnelles Undo                         | Kein Server-Filter; Digest bleibt inkonsistent                  |
 
 **Umsetzbarkeit:** Hoch. Änderungen: `insights` Store (`undismissInsight`), UI-Sektion auf `/insights` oder Settings, i18n, Tests. Backend optional: Prefs-Merge statt Full-Replace dokumentieren.
 
@@ -72,11 +72,11 @@ Nutzer:innen, die Insights bewusst wegklicken (zu früh, irrelevant, emotional b
 
 **Idee:** Spalten z. B. `dismissed_at TIMESTAMPTZ NULL`, optional `dismiss_reason`, ggf. `visibility: active|dismissed|archived`. Dismiss = `PATCH /insights/{id}` statt Prefs-UUID-Liste.
 
-| Pro | Contra |
-| --- | --- |
+| Pro                                         | Contra                                                                           |
+| ------------------------------------------- | -------------------------------------------------------------------------------- |
 | Querybar, exportierbar, Digest kann filtern | Same-Day-Regenerate löscht die Row → Status geht verloren, sofern nicht migriert |
-| `dismissed_at` für Zeitleiste | Migration + API + FE-Umschreibung |
-| Klarer Lifecycle auf dem Insight | Banner-Keys (`early_context_pattern`) bleiben Prefs |
+| `dismissed_at` für Zeitleiste               | Migration + API + FE-Umschreibung                                                |
+| Klarer Lifecycle auf dem Insight            | Banner-Keys (`early_context_pattern`) bleiben Prefs                              |
 
 **Umsetzbarkeit:** Mittel. Migration auf `insights`, Endpoints, `list_latest_insights`/`list_insights` mit `include=dismissed|active`, Digest-Filter, Prefs-Deprecation/Migration der UUID-Keys.
 
@@ -88,11 +88,11 @@ Nutzer:innen, die Insights bewusst wegklicken (zu früh, irrelevant, emotional b
 
 **Idee:** Statt UUID einen **semantischen Subject-Key** speichern (gleiche Logik wie `_subject_key` in [`insight_service.py`](../../backend/app/services/insight_service.py): Typ + Metric + Subject/Slug/Lag). Prefs oder eigene Tabelle `insight_dismissals(user_id, subject_key, dismissed_at, mode)`.
 
-| Pro | Contra |
-| --- | --- |
-| Überlebt Regenerieren / neue UUIDs | Subject-Key-Evolution (Legacy Tags, Lag-Payload) muss stabil bleiben |
-| „Dieses Muster nicht mehr zeigen“ | Historische Instanzen des Musters trotzdem sichtbar machen braucht zusätzliche History-UI |
-| Cap sinnvoller als 128 UUIDs | Banner-Keys weiterhin separat |
+| Pro                                | Contra                                                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| Überlebt Regenerieren / neue UUIDs | Subject-Key-Evolution (Legacy Tags, Lag-Payload) muss stabil bleiben                      |
+| „Dieses Muster nicht mehr zeigen“  | Historische Instanzen des Musters trotzdem sichtbar machen braucht zusätzliche History-UI |
+| Cap sinnvoller als 128 UUIDs       | Banner-Keys weiterhin separat                                                             |
 
 **Umsetzbarkeit:** Mittel. Backend: Subject-Key-Helper teilen; Prefs oder Tabelle; Engine/Digest respektieren Keys; FE: Dismiss sendet Subject-Key (+ optional UUID für Instant-Hide).
 
@@ -111,11 +111,11 @@ Nutzer:innen, die Insights bewusst wegklicken (zu früh, irrelevant, emotional b
 
 Datenbasis: bestehende `insights`-Rows + Digests (`insight_digests.insight_ids`). Lücken: Same-Day-Hard-Delete entfernt Tagesversionen; Retention-Policy fehlt.
 
-| Pro | Contra |
-| --- | --- |
-| Beantwortet die Kernfrage „wann trat das auf?“ | UI-Aufwand; Mobile-Layout |
-| Nutzt vorhandene History-Rows + `/insights` | Engine muss History **nicht** mehr wegwerfen (Retention) |
-| Passt zu Weekly Digest als Wochen-Snapshots | Speicherkosten / Encryption der Statements |
+| Pro                                            | Contra                                                   |
+| ---------------------------------------------- | -------------------------------------------------------- |
+| Beantwortet die Kernfrage „wann trat das auf?“ | UI-Aufwand; Mobile-Layout                                |
+| Nutzt vorhandene History-Rows + `/insights`    | Engine muss History **nicht** mehr wegwerfen (Retention) |
+| Passt zu Weekly Digest als Wochen-Snapshots    | Speicherkosten / Encryption der Statements               |
 
 **Umsetzbarkeit:** Mittel–hoch je nach Scope.
 
@@ -132,10 +132,10 @@ Datenbasis: bestehende `insights`-Rows + Digests (`insight_digests.insight_ids`)
 
 **Idee:** Dismiss und Generierung als Events: `insight_events(kind=generated|dismissed|restored|superseded, insight_id|snapshot, at)`. Oder bei Regenerieren Statement+Metadaten in `insight_archive` kopieren, bevor hard-delete.
 
-| Pro | Contra |
-| --- | --- |
-| Audit-tauglich, DSGVO-Export klar | Höchste Komplexität |
-| Unabhängig von Live-Row-Lifecycle | Doppelte encrypted Blobs |
+| Pro                               | Contra                                     |
+| --------------------------------- | ------------------------------------------ |
+| Audit-tauglich, DSGVO-Export klar | Höchste Komplexität                        |
+| Unabhängig von Live-Row-Lifecycle | Doppelte encrypted Blobs                   |
 | Echte Zeitleiste auch nach Delete | Mehr Storage; Retention/Löschkonzept nötig |
 
 **Umsetzbarkeit:** Niedriger Priorität / späteres Hardening. Sinnvoll wenn Insights rechtlich/historisch nachvollziehbar bleiben müssen.
@@ -146,11 +146,11 @@ Datenbasis: bestehende `insights`-Rows + Digests (`insight_digests.insight_ids`)
 
 **Idee:** Weekly Digests ([`insight_digests`](../../backend/app/models/insight_digest.py)) als leichtgewichtiges Archiv; dismissed Insights trotzdem in Digest-Snapshots.
 
-| Pro | Contra |
-| --- | --- |
-| Infrastruktur existiert | Nur Wochengranularität; nur Top-N |
-| Wenig neuer Code | `insight_ids` ohne Row → Hydration bricht |
-| | Kein täglicher Dismiss-Lifecycle |
+| Pro                     | Contra                                    |
+| ----------------------- | ----------------------------------------- |
+| Infrastruktur existiert | Nur Wochengranularität; nur Top-N         |
+| Wenig neuer Code        | `insight_ids` ohne Row → Hydration bricht |
+|                         | Kein täglicher Dismiss-Lifecycle          |
 
 **Umsetzbarkeit:** Hoch als Ergänzung, **unzureichend** als alleinige Lösung.
 
@@ -158,14 +158,14 @@ Datenbasis: bestehende `insights`-Rows + Digests (`insight_digests.insight_ids`)
 
 ## Vergleich (Kurz)
 
-| Option | Wissen erhalten | Zeitbezug | Überlebt Regenerate | Aufwand | Empfohlen |
-| --- | --- | --- | --- | --- | --- |
-| A Undo + Ausgeblendet-Liste | teilweise | nein | nein | niedrig | Phase 0 |
-| B Soft-Dismiss auf Row | ja (solange Row lebt) | `dismissed_at` | nein ohne Engine-Fix | mittel | Phase 1 Baustein |
-| C Subject-stabile Keys | Intent ja | via Join auf History | **ja** | mittel | Phase 1 Kern |
-| D Timeline/Archiv-UI | ja | **ja** | braucht Retention | mittel–hoch | Phase 2 |
-| E Event/Snapshot-Archiv | vollständig | ja | ja | hoch | Phase 3 / Compliance |
-| F Digest-only | schwach | Wochen | bedingt | niedrig | Ergänzung |
+| Option                      | Wissen erhalten       | Zeitbezug            | Überlebt Regenerate  | Aufwand     | Empfohlen            |
+| --------------------------- | --------------------- | -------------------- | -------------------- | ----------- | -------------------- |
+| A Undo + Ausgeblendet-Liste | teilweise             | nein                 | nein                 | niedrig     | Phase 0              |
+| B Soft-Dismiss auf Row      | ja (solange Row lebt) | `dismissed_at`       | nein ohne Engine-Fix | mittel      | Phase 1 Baustein     |
+| C Subject-stabile Keys      | Intent ja             | via Join auf History | **ja**               | mittel      | Phase 1 Kern         |
+| D Timeline/Archiv-UI        | ja                    | **ja**               | braucht Retention    | mittel–hoch | Phase 2              |
+| E Event/Snapshot-Archiv     | vollständig           | ja                   | ja                   | hoch        | Phase 3 / Compliance |
+| F Digest-only               | schwach               | Wochen               | bedingt              | niedrig     | Ergänzung            |
 
 ## Vorgeschlagene Lösung (gestaffelt)
 
@@ -228,16 +228,16 @@ Ja — Insights enthalten verschlüsselte Statements und abgeleitete Gesundheits
 
 ## Betroffene Dateien (Orientierung)
 
-| Bereich | Pfad |
-| --- | --- |
-| Model Insight | `backend/app/models/insight.py` |
-| Prefs | `backend/app/models/user_preference.py`, `schemas/user_preferences.py` |
-| Engine Regenerate | `backend/app/services/insight_engine.py` |
-| List/Latest | `backend/app/services/insight_service.py` |
-| Digest | `backend/app/services/insight_digest.py` |
-| API | `backend/app/api/v1/endpoints/insights.py`, `user.py` |
-| FE Store/UI | `apps/web/src/lib/stores/insights.ts`, `InsightCard.svelte`, `routes/insights/+page.svelte` |
-| Docs | `docs/API.md`, Weekly-Digest-Plan |
+| Bereich           | Pfad                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| Model Insight     | `backend/app/models/insight.py`                                                             |
+| Prefs             | `backend/app/models/user_preference.py`, `schemas/user_preferences.py`                      |
+| Engine Regenerate | `backend/app/services/insight_engine.py`                                                    |
+| List/Latest       | `backend/app/services/insight_service.py`                                                   |
+| Digest            | `backend/app/services/insight_digest.py`                                                    |
+| API               | `backend/app/api/v1/endpoints/insights.py`, `user.py`                                       |
+| FE Store/UI       | `apps/web/src/lib/stores/insights.ts`, `InsightCard.svelte`, `routes/insights/+page.svelte` |
+| Docs              | `docs/API.md`, Weekly-Digest-Plan                                                           |
 
 ## Akzeptanzkriterien (für die spätere Umsetzung)
 
