@@ -66,6 +66,7 @@
   let userPreferences: UserPreferencesResponse | null = null;
   let dashboardLoading = false;
   let dashboardLoaded = false;
+  let preferencesLoaded = false;
   let activeDevFixtureKey = '';
   let onboardingRedirecting = false;
 
@@ -95,8 +96,10 @@
     !$pwaInstallStore.installed &&
     ((dashboardSummary?.entry_count ?? 0) >= 1 || userPreferences?.onboarding_retro_completed)
   );
-  $: homeSections = mergeHomeSections(userPreferences?.home_sections ?? null);
-  $: enabledHomeSections = resolveEnabledSections(homeSections);
+  $: homeSections = mergeHomeSections(
+    preferencesLoaded ? (userPreferences?.home_sections ?? null) : null
+  );
+  $: enabledHomeSections = preferencesLoaded ? resolveEnabledSections(homeSections) : [];
 
   function openEntry(date: string = todayIso): void {
     openEntrySheet(date, { onboardingTags: showOnboardingTags });
@@ -116,6 +119,7 @@
         todayEntry = findEntryForDate(recentEntries, todayIso);
         dashboardSummary = fixture.dashboard;
         userPreferences = fixture.preferences;
+        preferencesLoaded = true;
         return;
       }
 
@@ -156,11 +160,13 @@
       }
       dashboardSummary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
       userPreferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : null;
+      preferencesLoaded = true;
     } catch {
       recentEntries = [];
       todayEntry = null;
       dashboardSummary = null;
       userPreferences = null;
+      preferencesLoaded = true;
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
@@ -189,6 +195,7 @@
   $: if (
     dashboardLoaded &&
     $auth.status === 'authenticated' &&
+    !showLandingPreview &&
     !onboardingRedirecting &&
     !entrySheetOpen &&
     !isOpenEntryRequested($page.url.searchParams) &&

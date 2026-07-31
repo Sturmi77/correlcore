@@ -69,7 +69,20 @@ async def update_user_preferences(
 
 def to_preferences_response(preferences: UserPreference) -> UserPreferencesResponse:
     """Serialize preferences with merged home section defaults."""
-    response = UserPreferencesResponse.model_validate(preferences)
-    return response.model_copy(
-        update={"home_sections": merge_home_sections(preferences.home_sections)}
-    )
+    normalized_sections = normalize_home_sections(preferences.home_sections)
+    payload = {
+        "user_id": preferences.user_id,
+        "analytics_enabled": preferences.analytics_enabled,
+        "digest_enabled": preferences.digest_enabled,
+        "onboarding_retro_completed": preferences.onboarding_retro_completed,
+        "onboarding_profile_completed": preferences.onboarding_profile_completed,
+        "onboarding_maturity_intro_seen": preferences.onboarding_maturity_intro_seen,
+        "cycle_tracking_enabled": preferences.cycle_tracking_enabled,
+        "dismissed_insight_keys": preferences.dismissed_insight_keys,
+        "reached_milestone_keys": preferences.reached_milestone_keys,
+        "last_seen_insight_at": preferences.last_seen_insight_at,
+        "home_sections": merge_home_sections(normalized_sections),
+        "created_at": preferences.created_at,
+        "updated_at": preferences.updated_at,
+    }
+    return UserPreferencesResponse.model_validate(payload)

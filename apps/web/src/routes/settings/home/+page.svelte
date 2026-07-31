@@ -17,15 +17,19 @@
 
   let preferences: UserPreferencesResponse | null = null;
   let sections: HomeSectionPreference[] = DEFAULT_HOME_SECTIONS.map((section) => ({ ...section }));
+  let loading = true;
   let busy = false;
   let error = '';
 
   async function loadPreferences(): Promise<void> {
+    loading = true;
     try {
       preferences = await fetchUserPreferences();
       sections = mergeHomeSections(preferences.home_sections);
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.home.error_load');
+    } finally {
+      loading = false;
     }
   }
 
@@ -69,7 +73,7 @@
     </div>
     <HomeSectionsEditor
       {sections}
-      disabled={busy}
+      disabled={busy || loading}
       on:change={({ detail }) => void persistSections(detail)}
     />
   </Panel>
