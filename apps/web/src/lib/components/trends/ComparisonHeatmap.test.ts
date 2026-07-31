@@ -63,6 +63,51 @@ describe('ComparisonHeatmap shared axis', () => {
     expect(runCell?.getAttribute('aria-label')).toContain('Logged days');
   });
 
+  it('orders tag rows by server cluster when sortMode is clustered (#592)', () => {
+    render(ComparisonHeatmapHarness, {
+      props: {
+        pruneSparseAxes: false,
+        sortMode: 'clustered',
+        clusterMeta: {
+          byTagId: new Map([
+            ['t1', 2],
+            ['t2', 1],
+          ]),
+          labels: [
+            { cluster_id: 1, label: 'Morning' },
+            { cluster_id: 2, label: 'Evening' },
+          ],
+        },
+      },
+    });
+
+    const labels = screen.getAllByText(/Run|Empty/).map((node) => node.textContent?.trim());
+    expect(labels).toEqual(['Empty', 'Run']);
+  });
+
+  it('filters tag rows to the focused cluster (#592)', () => {
+    render(ComparisonHeatmapHarness, {
+      props: {
+        pruneSparseAxes: false,
+        sortMode: 'clustered',
+        focusedClusterId: 2,
+        clusterMeta: {
+          byTagId: new Map([
+            ['t1', 2],
+            ['t2', 1],
+          ]),
+          labels: [
+            { cluster_id: 1, label: 'Morning' },
+            { cluster_id: 2, label: 'Evening' },
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByText('Run')).toBeTruthy();
+    expect(screen.queryByText('Empty')).toBeNull();
+  });
+
   it('prunes rows with no values in visible buckets when pruneSparseAxes is on (#590)', () => {
     render(ComparisonHeatmapHarness, {
       props: {

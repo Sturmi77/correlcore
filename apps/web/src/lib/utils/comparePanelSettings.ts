@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import { isCompareZoomStage, type CompareZoomStageIndex } from '$lib/utils/compareAxisZoom';
 
 export type CompareMode = 'lines' | 'strips';
-export type CompareSortMode = 'frequency' | 'recent' | 'correlation' | 'pinned';
+export type CompareSortMode = 'frequency' | 'recent' | 'correlation' | 'pinned' | 'clustered';
 export type { CompareZoomStageIndex };
 
 export const COMPARE_MODE_KEY = 'cc_trend_compare_mode';
@@ -50,7 +50,11 @@ export function readCompareSortMode(): CompareSortMode {
     COMPARE_SORT_KEY,
     'frequency',
     (value) =>
-      value === 'frequency' || value === 'recent' || value === 'correlation' || value === 'pinned'
+      value === 'frequency' ||
+      value === 'recent' ||
+      value === 'correlation' ||
+      value === 'pinned' ||
+      value === 'clustered'
   );
 }
 
@@ -64,7 +68,11 @@ export function isCompareMode(value: unknown): value is CompareMode {
 
 export function isCompareSortMode(value: unknown): value is CompareSortMode {
   return (
-    value === 'frequency' || value === 'recent' || value === 'correlation' || value === 'pinned'
+    value === 'frequency' ||
+    value === 'recent' ||
+    value === 'correlation' ||
+    value === 'pinned' ||
+    value === 'clustered'
   );
 }
 

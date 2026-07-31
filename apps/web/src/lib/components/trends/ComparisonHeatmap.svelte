@@ -17,6 +17,7 @@
   } from '$lib/utils/compareAxisZoom';
   import { pruneHeatmapRows, pruneHeatmapRowsByBuckets } from '$lib/utils/heatmapPruning';
   import { timelineCursor } from '$lib/stores/timelineCursor';
+  import type { TagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import type { EventMarker } from './EventMarkerLayer.svelte';
 
@@ -51,7 +52,7 @@
    * component owns the persisted preference. 'correlation' falls back to
    * 'frequency' when no correlationScores map is supplied.
    */
-  export let sortMode: 'frequency' | 'recent' | 'correlation' | 'pinned' = 'frequency';
+  export let sortMode: 'frequency' | 'recent' | 'correlation' | 'pinned' | 'clustered' = 'frequency';
   /**
    * Sprint 2 (ADR-0035): row ids that should float to the top regardless
    * of the sort mode. Persisted by the parent.
@@ -69,6 +70,12 @@
    * dropping empty days would shift cells out of alignment with the chart.
    */
   export let pruneSparseAxes = true;
+  /** Server tag groups (#592); empty maps when insufficient_data. */
+  export let clusterMeta: TagClusterMeta = { byTagId: new Map(), labels: [] };
+  /** Focused cluster id, or null for all tag rows. */
+  export let focusedClusterId: number | null = null;
+
+  const UNGROUPED_CLUSTER = Number.POSITIVE_INFINITY;
 
   const dispatch = createEventDispatcher<{
     selectDate: { date: string; rowId: string };
@@ -161,13 +168,6 @@
       : []),
   ];
 
-  /**
-   * Sprint 2 (ADR-0035): apply pin + sort.
-   *
-   * 1. Compute a primary score per row based on `sortMode`.
-   * 2. Pinned rows always sort to the top, in their pin-order.
-   * 3. Stable secondary sort by label to keep ties deterministic.
-   */
   function rowScore(row: Row): number {
     if (sortMode === 'recent') {
       let maxIdx = -1;
@@ -188,13 +188,41 @@
     return row.days.reduce((sum, d) => sum + (d.count ?? 0), 0);
   }
 
+  function clusterOrder(left: Row, right: Row): number {
+    const leftCluster = clusterMeta.byTagId.get(left.id) ?? UNGROUPED_CLUSTER;
+    const rightCluster = clusterMeta.byTagId.get(right.id) ?? UNGROUPED_CLUSTER;
+    if (leftCluster !== rightCluster) return leftCluster - rightCluster;
+    return left.label.localeCompare(right.label, undefined, { sensitivity: 'base' });
+  }
+
+  $: clustersAvailable = clusterMeta.labels.length > 0;
+  $: clusterSortActive =
+    sortMode === 'clustered' &&
+    clustersAvailable &&
+    rawRows.some((row) => row.kind === 'tag' && clusterMeta.byTagId.has(row.id));
+  $: clusterFilteredRows =
+    focusedClusterId !== null && clustersAvailable
+      ? (() => {
+          const focusedTags = rawRows.filter(
+            (row) => row.kind === 'tag' && clusterMeta.byTagId.get(row.id) === focusedClusterId
+          );
+          if (focusedTags.length === 0) return rawRows;
+          return rawRows.filter(
+            (row) => row.kind !== 'tag' || clusterMeta.byTagId.get(row.id) === focusedClusterId
+          );
+        })()
+      : rawRows;
+
   $: pinnedOrder = new Map(pinned.map((id, idx) => [id, idx]));
-  $: sortedRows = [...rawRows].sort((a, b) => {
+  $: sortedRows = [...clusterFilteredRows].sort((a, b) => {
     const aPin = pinnedOrder.get(a.id);
     const bPin = pinnedOrder.get(b.id);
     if (aPin !== undefined && bPin !== undefined) return aPin - bPin;
     if (aPin !== undefined) return -1;
     if (bPin !== undefined) return 1;
+    if (clusterSortActive && a.kind === 'tag' && b.kind === 'tag') {
+      return clusterOrder(a, b);
+    }
     if (sortMode === 'pinned') {
       return (
         b.days.reduce((s, d) => s + (d.count ?? 0), 0) -
@@ -225,6 +253,20 @@
         )
       : pruneHeatmapRows(sortedRows, axisDates, (row, date) => valueFor(row, date))
     : sortedRows;
+  $: showClusterGaps = clusterSortActive && focusedClusterId === null;
+  $: clusterBoundaries = showClusterGaps
+    ? rows.map((row, index) => {
+        if (row.kind !== 'tag') return false;
+        for (let previous = index - 1; previous >= 0; previous -= 1) {
+          const prior = rows[previous];
+          if (prior.kind !== 'tag') continue;
+          return (
+            clusterMeta.byTagId.get(row.id) !== clusterMeta.byTagId.get(prior.id)
+          );
+        }
+        return false;
+      })
+    : rows.map(() => false);
   $: visibleAxisDates = visibleBuckets.map((bucket) => bucket.start);
   $: maxValue = Math.max(
     0,
@@ -287,8 +329,12 @@
       bind:this={scroller}
     >
       <div class="compare-heatmap__grid" style={gridStyle}>
-        {#each rows as row (row.id)}
-          <div class="compare-heatmap__label" data-kind={row.kind}>
+        {#each rows as row, rowIndex (row.id)}
+          <div
+            class="compare-heatmap__label"
+            class:compare-heatmap__boundary-top={clusterBoundaries[rowIndex]}
+            data-kind={row.kind}
+          >
             <button
               type="button"
               class="compare-heatmap__pin"
@@ -311,6 +357,7 @@
             <button
               type="button"
               class={`compare-heatmap__cell compare-heatmap__cell--${heatmapLevel(value, maxValue)}`}
+              class:compare-heatmap__boundary-top={clusterBoundaries[rowIndex]}
               class:compare-heatmap__cell--cursor={enableCursor && cursorDate === columnKey}
               class:compare-heatmap__cell--marker={bucketHasMarker(bucket)}
               class:compare-heatmap__cell--marker-band={bucketHasMarkerBand(bucket)}
@@ -427,6 +474,12 @@
   .compare-heatmap__label[data-kind='work_context'] .compare-heatmap__label-text {
     color: var(--color-text-muted);
     font-weight: 700;
+  }
+
+  /* Tag-group cluster gap (#592): opens space where a new cluster begins. */
+  .compare-heatmap__boundary-top {
+    margin-top: var(--space-2);
+    box-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent);
   }
 
   .compare-heatmap__pin {
