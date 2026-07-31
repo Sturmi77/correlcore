@@ -1155,7 +1155,9 @@
       "inactive_tag_badge": "Tag inactive",
       "inactive_tag_hint": "This tag is no longer used for new calculations.",
       "cluster_features": "Multiple factors",
-      "lag_days_unit": "days"
+      "lag_days_unit": "days",
+      "lag_profile_label": "Association by delay (days)",
+      "lag_profile_aria": "Association strength by delay; strongest at +{days} days"
     },
     "disclaimer": {
       "modal_title": "What does this insight mean?",

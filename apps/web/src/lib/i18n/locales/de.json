@@ -1155,7 +1155,9 @@
       "inactive_tag_badge": "Tag inaktiv",
       "inactive_tag_hint": "Dieser Tag wird fuer neue Berechnungen nicht mehr verwendet.",
       "cluster_features": "Mehrere Faktoren",
-      "lag_days_unit": "Tage"
+      "lag_days_unit": "Tage",
+      "lag_profile_label": "Zusammenhang je Verzoegerung (Tage)",
+      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen"
     },
     "disclaimer": {
       "modal_title": "Was bedeutet diese Erkenntnis?",
