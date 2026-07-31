@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Literal, TypedDict
 
 HomeSectionKey = Literal[
@@ -50,7 +51,7 @@ def _coerce_section(raw: object) -> HomeSectionPreference | None:
 
 
 def merge_home_sections(
-    stored: list[object] | None,
+    stored: Sequence[object] | None,
 ) -> list[HomeSectionPreference]:
     """Resolve stored preferences with defaults for missing or unknown keys."""
     if not stored:
@@ -75,7 +76,7 @@ def merge_home_sections(
 
 
 def normalize_home_sections(
-    sections: list[object] | None,
+    sections: Sequence[object] | None,
 ) -> list[HomeSectionPreference] | None:
     """Validate and dedupe a PATCH payload; empty list is allowed."""
     if sections is None:

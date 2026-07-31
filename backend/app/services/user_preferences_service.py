@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user_preference import UserPreference
-from app.schemas.user_preferences import UserPreferencesUpdate, UserPreferencesResponse
+from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
 from app.services.home_sections import merge_home_sections, normalize_home_sections
 
 

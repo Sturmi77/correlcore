@@ -8,7 +8,6 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 HomeSectionKey = Literal[
     "first_week_banner",
     "daily_brief",

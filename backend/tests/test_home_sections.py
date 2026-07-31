@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from app.services.home_sections import (
     DEFAULT_HOME_SECTIONS,
     merge_home_sections,
