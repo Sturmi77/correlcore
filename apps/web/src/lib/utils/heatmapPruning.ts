@@ -54,14 +54,12 @@ export function pruneHeatmapAxes<T extends HeatmapPrunableRow>(
 
 export function pruneCooccurrenceAxisIds(
   ids: readonly string[],
-  profiles: Map<string, number[]>,
-  minTotal = 1
+  profiles: Map<string, number[]>
 ): string[] {
   return ids.filter((id) => {
     const profile = profiles.get(id);
     if (!profile) return false;
-    const total = profile.reduce((sum, value) => sum + value, 0);
-    return total >= minTotal;
+    return profile.some((value) => value > 0);
   });
 }
 

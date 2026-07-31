@@ -6,6 +6,7 @@ import {
   pruneHeatmapDates,
   pruneHeatmapRows,
   pruneHeatmapRowsByBuckets,
+  pruneCooccurrenceAxisIds,
   pruneTagCooccurrenceMatrix,
   sliceAxisIdsByTopStrength,
   sliceSquareMatrixByTopStrength,
@@ -82,6 +83,18 @@ describe('heatmapPruning', () => {
     expect(pruned.counts).toEqual([
       [0, 2],
       [2, 0],
+    ]);
+  });
+
+  it('keeps co-occurrence axes with any positive jaccard profile (#590)', () => {
+    const profiles = new Map<string, number[]>([
+      ['sym-1', [0.5]],
+      ['tag-1', [0.5]],
+      ['empty', [0]],
+    ]);
+    expect(pruneCooccurrenceAxisIds(['sym-1', 'tag-1', 'empty'], profiles)).toEqual([
+      'sym-1',
+      'tag-1',
     ]);
   });
 
