@@ -3,6 +3,11 @@
 Operator close list for issues that are **already shipped / tracking-complete**
 but still open (missing `Closes #…` on the shipping PR, or tracking doc done).
 
+**Prevention going forward:** PRs that fully finish an issue (no external
+tests/sign-off still open) must include `Closes #…` / `Fixes #…` in the PR
+body so GitHub closes the issue on merge. See `AGENTS.md` →
+“PRs must auto-close finished issues”.
+
 The cloud-agent token (`cursor[bot]`) **cannot** call `closeIssue` /
 `addComment` (HTTP 403 / no triage permission). Repo owner must run the
 commands below.
