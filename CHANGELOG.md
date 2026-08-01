@@ -209,6 +209,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.7] — 2026-08-01
+
+Mobile UX polish on top of 1.1.6. No new migrations.
+
+### Fixed
+
+- **Dismissed insights start collapsed** — the „Ausgeblendete Erkenntnisse“
+  archive is a closed `<details>` block with a count badge, so hidden cards no
+  longer consume the same vertical space as the active feed.
+- **Entry note and cycle stay expanded** — remove the mobile
+  „Notiz oder Zyklustag“ toggle; note and cycle fields are always visible in
+  the full entry form (quick mode unchanged).
+- **Insight correlation matrix fits portrait** — drop the 42rem row min-width
+  below 767px, cap effect bars relatively, and hide the metric column under
+  480px so the matrix no longer forces horizontal page scroll.
+
+---
+
 ## [1.1.6] — 2026-08-01
 
 Insights dismiss archive, lag visualizations, configurable Home, and cycle
