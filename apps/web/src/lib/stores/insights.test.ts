@@ -1,42 +1,35 @@
 /**
- * InsightStore tests — Issue #167 (M3.1).
- *
- * Covers:
- *  - Store initialises with loading:false, empty insights
- *  - loadInsights() transitions to loaded state
- *  - latest is correctly derived (highest confidence × |effect_size|)
- *  - dismiss() updates dismissedIds and recomputes latest
- *  - API error does NOT throw — only sets error string
- *  - Home CTA unaffected (error state is isolated)
+ * InsightStore tests — Issue #167 (M3.1) + #601 Phase 1.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 
-// ─── Mock API modules ─────────────────────────────────────────────────────────
-
 vi.mock('$lib/api/insights', () => ({
   listLatestInsights: vi.fn(),
+  listInsightDismissals: vi.fn().mockResolvedValue({ dismissals: [] }),
+  createInsightDismissal: vi.fn(),
+  deleteInsightDismissal: vi.fn(),
+  deleteInsightDismissalByInsightId: vi.fn(),
 }));
 
-vi.mock('$lib/api/preferences', () => ({
-  fetchUserPreferences: vi.fn().mockResolvedValue({ dismissed_insight_keys: [] }),
-  updateUserPreferences: vi.fn().mockResolvedValue({}),
-}));
-
-import { listLatestInsights } from '$lib/api/insights';
-import type { InsightResponse } from '$lib/api/insights';
-import { updateUserPreferences } from '$lib/api/preferences';
+import {
+  listLatestInsights,
+  listInsightDismissals,
+  createInsightDismissal,
+  deleteInsightDismissal,
+  deleteInsightDismissalByInsightId,
+  type InsightResponse,
+} from '$lib/api/insights';
 import {
   insightStore,
   rankedInsights,
   loadInsights,
   dismissInsight,
+  undismissInsight,
   resetInsightStore,
 } from './insights';
 import { devForceVisualizationsControl, devMode, devPhase } from './devMode';
-
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 const makeInsight = (
   overrides: Partial<{
@@ -81,12 +74,11 @@ const insightList = (insights: InsightResponse[]) => ({
   insights,
 });
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-
 beforeEach(() => {
   devMode.set(false);
   resetInsightStore();
   vi.clearAllMocks();
+  vi.mocked(listInsightDismissals).mockResolvedValue({ dismissals: [] });
 });
 
 describe('insightStore — initial state', () => {
@@ -119,13 +111,11 @@ describe('loadInsights()', () => {
   it('sets error string on API failure — does NOT throw', async () => {
     vi.mocked(listLatestInsights).mockRejectedValue(new Error('Network error'));
 
-    // Must not throw
     await expect(loadInsights()).resolves.toBeUndefined();
 
     const state = get(insightStore);
     expect(state.loading).toBe(false);
     expect(state.error).toBe('Network error');
-    // Insights list stays empty (or keeps prior value) — not corrupted
     expect(Array.isArray(state.insights)).toBe(true);
   });
 
@@ -138,13 +128,20 @@ describe('loadInsights()', () => {
     await loadInsights();
 
     const state = get(insightStore);
-    // strong: 0.9 × 0.7 = 0.63  >  medium: 0.25  >  weak: 0.03
     expect(state.latest?.id).toBe('strong');
   });
 
   it('latest is null when all insights are dismissed', async () => {
     const insight = makeInsight({ id: 'solo' });
     vi.mocked(listLatestInsights).mockResolvedValue(insightList([insight]));
+    vi.mocked(createInsightDismissal).mockResolvedValue({
+      id: 'dismissal-1',
+      subject_key: 'sk',
+      insight_id: 'solo',
+      dismissed_at: '2026-05-14T00:00:00Z',
+      created_at: '2026-05-14T00:00:00Z',
+      insight: null,
+    });
     await loadInsights();
 
     await dismissInsight('solo');
@@ -172,19 +169,36 @@ describe('dismissInsight()', () => {
     const a = makeInsight({ id: 'a', confidence: 0.9, effect_size: 0.7 });
     const b = makeInsight({ id: 'b', confidence: 0.6, effect_size: 0.5 });
     vi.mocked(listLatestInsights).mockResolvedValue(insightList([a, b]));
+    vi.mocked(createInsightDismissal).mockResolvedValue({
+      id: 'dismissal-a',
+      subject_key: 'sk-a',
+      insight_id: 'a',
+      dismissed_at: '2026-05-14T00:00:00Z',
+      created_at: '2026-05-14T00:00:00Z',
+      insight: null,
+    });
     await loadInsights();
 
     await dismissInsight('a');
 
     const state = get(insightStore);
     expect(state.dismissedIds).toContain('a');
-    // b is now latest
+    expect(state.dismissalIdByInsightId.a).toBe('dismissal-a');
     expect(state.latest?.id).toBe('b');
+    expect(vi.mocked(createInsightDismissal)).toHaveBeenCalledWith('a');
   });
 
   it('is idempotent — double dismiss does not duplicate id', async () => {
     const insight = makeInsight({ id: 'dup' });
     vi.mocked(listLatestInsights).mockResolvedValue(insightList([insight]));
+    vi.mocked(createInsightDismissal).mockResolvedValue({
+      id: 'dismissal-dup',
+      subject_key: 'sk',
+      insight_id: 'dup',
+      dismissed_at: '2026-05-14T00:00:00Z',
+      created_at: '2026-05-14T00:00:00Z',
+      insight: null,
+    });
     await loadInsights();
 
     await dismissInsight('dup');
@@ -192,28 +206,61 @@ describe('dismissInsight()', () => {
 
     const state = get(insightStore);
     expect(state.dismissedIds.filter((id) => id === 'dup')).toHaveLength(1);
+    expect(vi.mocked(createInsightDismissal)).toHaveBeenCalledTimes(1);
   });
 
-  it('fires PATCH /user/preferences best-effort on dismiss', async () => {
-    const insight = makeInsight({ id: 'pref-test' });
-    vi.mocked(listLatestInsights).mockResolvedValue(insightList([insight]));
-    await loadInsights();
-
-    await dismissInsight('pref-test');
-
-    expect(vi.mocked(updateUserPreferences)).toHaveBeenCalledWith({
-      dismissed_insight_keys: ['pref-test'],
-    });
-  });
-
-  it('does NOT throw when preferences PATCH fails', async () => {
+  it('does NOT throw when dismissal POST fails', async () => {
     const insight = makeInsight({ id: 'prefs-fail' });
     vi.mocked(listLatestInsights).mockResolvedValue(insightList([insight]));
-    vi.mocked(updateUserPreferences).mockRejectedValue(new Error('Prefs error'));
+    vi.mocked(createInsightDismissal).mockRejectedValue(new Error('Prefs error'));
     await loadInsights();
 
-    // Must not throw even when the PATCH fails
-    await expect(dismissInsight('prefs-fail')).resolves.toBeUndefined();
+    await expect(dismissInsight('prefs-fail')).resolves.toBeNull();
+  });
+});
+
+describe('undismissInsight()', () => {
+  it('removes id from dismissedIds and deletes dismissal', async () => {
+    const a = makeInsight({ id: 'a', confidence: 0.9, effect_size: 0.7 });
+    const b = makeInsight({ id: 'b', confidence: 0.6, effect_size: 0.5 });
+    vi.mocked(listLatestInsights).mockResolvedValue(insightList([a, b]));
+    vi.mocked(createInsightDismissal).mockResolvedValue({
+      id: 'dismissal-a',
+      subject_key: 'sk-a',
+      insight_id: 'a',
+      dismissed_at: '2026-05-14T00:00:00Z',
+      created_at: '2026-05-14T00:00:00Z',
+      insight: null,
+    });
+    await loadInsights();
+    await dismissInsight('a');
+
+    await undismissInsight('a');
+
+    const state = get(insightStore);
+    expect(state.dismissedIds).not.toContain('a');
+    expect(state.latest?.id).toBe('a');
+    expect(vi.mocked(deleteInsightDismissal)).toHaveBeenCalledWith('dismissal-a');
+  });
+
+  it('falls back to by-insight delete when dismissal id unknown', async () => {
+    const insight = makeInsight({ id: 'solo' });
+    vi.mocked(listLatestInsights).mockResolvedValue(insightList([insight]));
+    vi.mocked(createInsightDismissal).mockRejectedValue(new Error('offline'));
+    await loadInsights();
+    await dismissInsight('solo'); // optimistic dismiss, no dismissal id mapped
+
+    await undismissInsight('solo');
+
+    expect(vi.mocked(deleteInsightDismissalByInsightId)).toHaveBeenCalledWith('solo');
+  });
+
+  it('deletes by explicit dismissal id even when store has no mapping', async () => {
+    vi.mocked(deleteInsightDismissal).mockResolvedValueOnce(undefined);
+
+    await undismissInsight('fresh', { dismissalId: 'dismissal-fresh' });
+
+    expect(vi.mocked(deleteInsightDismissal)).toHaveBeenCalledWith('dismissal-fresh');
   });
 });
 
@@ -233,6 +280,14 @@ describe('rankedInsights derived store', () => {
     const a = makeInsight({ id: 'a', confidence: 0.9, effect_size: 0.8 });
     const b = makeInsight({ id: 'b', confidence: 0.5, effect_size: 0.4 });
     vi.mocked(listLatestInsights).mockResolvedValue(insightList([a, b]));
+    vi.mocked(createInsightDismissal).mockResolvedValue({
+      id: 'dismissal-a',
+      subject_key: 'sk',
+      insight_id: 'a',
+      dismissed_at: '2026-05-14T00:00:00Z',
+      created_at: '2026-05-14T00:00:00Z',
+      insight: null,
+    });
     await loadInsights();
 
     await dismissInsight('a');

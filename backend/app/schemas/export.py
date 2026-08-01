@@ -24,7 +24,7 @@ class ExportScoreLegendItem(BaseModel):
 class ExportEnvelope(BaseModel):
     export_date: datetime
     app_version: str
-    format_version: str = "1.2"
+    format_version: str = "1.3"
     score_legend: dict[str, ExportScoreLegendItem]
     user: ExportUser
     entries: list[dict[str, Any]] = Field(default_factory=list)
@@ -33,5 +33,6 @@ class ExportEnvelope(BaseModel):
     habits: list[dict[str, Any]] = Field(default_factory=list)
     profile: dict[str, Any] | None = None
     insights: list[dict[str, Any]] = Field(default_factory=list)
+    insight_dismissals: list[dict[str, Any]] = Field(default_factory=list)
     photos: list[dict[str, Any]] = Field(default_factory=list)
     sleep: list[dict[str, Any]] = Field(default_factory=list)

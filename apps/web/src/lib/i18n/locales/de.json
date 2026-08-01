@@ -1005,7 +1005,32 @@
       "symptoms_toggle": "Symptome einblenden",
       "analytics_summary": "Analyse vertiefen",
       "analytics_hint": "Symptome und gemeinsame Tags",
-      "analysis_range_label": "Analysezeitraum"
+      "analysis_range_label": "Analysezeitraum",
+      "history_link": "Erkenntnis-Verlauf"
+    },
+    "history": {
+      "title": "Erkenntnis-Verlauf",
+      "subtitle": "Vergangene Auswertungen aus deinen Einträgen — inklusive ausgeblendeter Muster. Bleibt bis zur Kontolöschung.",
+      "heading": "Zeitleiste",
+      "hint": "Jeder Tag zeigt die damals bekannten Muster. Das ist eine vergangene Auswertung, keine Diagnose.",
+      "loading": "Lade Verlauf…",
+      "empty": "Noch kein Erkenntnis-Verlauf.",
+      "error": "Verlauf konnte nicht geladen werden.",
+      "filter_aria": "Verlauf nach Sichtbarkeit filtern",
+      "filter_all": "Alle",
+      "filter_active": "Sichtbar",
+      "filter_dismissed": "Ausgeblendet",
+      "badge_past": "Vergangene Auswertung",
+      "badge_dismissed": "Ausgeblendet",
+      "evolution": "{count}× gesehen von {first} bis {last}",
+      "day_heading": "{date}",
+      "load_more": "Mehr laden"
+    },
+    "dismissed": {
+      "heading": "Ausgeblendete Erkenntnisse",
+      "hint": "Aus dem Feed ausgeblendet — nicht gelöscht. Jederzeit wieder einblendbar.",
+      "undo": "Wieder einblenden",
+      "undo_aria": "Erkenntnis \"{title}\" wieder einblenden"
     },
     "digest": {
       "title": "Wochenzusammenfassung",
@@ -1015,7 +1040,8 @@
       "disabled": "Die Wochenzusammenfassung ist in den Einstellungen deaktiviert.",
       "error": "Wochenzusammenfassung konnte nicht geladen werden.",
       "open_settings": "Einstellungen oeffnen",
-      "range": "Woche vom {start} bis {end}"
+      "range": "Woche vom {start} bis {end}",
+      "history_link": "Erkenntnis-Verlauf oeffnen"
     },
     "mobile": {
       "eyebrow": "Mobile Zusammenfassung",

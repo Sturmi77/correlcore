@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import uuid
 import zipfile
 from collections import defaultdict
@@ -20,13 +21,31 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
+from app.models.insight import Insight
+from app.models.insight_dismissal import InsightDismissal
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
 from app.models.user import User
 from app.models.user_profile import UserProfile
 from app.schemas.export import ExportEnvelope, ExportScoreLegendItem, ExportUser
+from app.services.insight_dismissal_service import migrate_uuid_prefs_to_subject_dismissals
+from app.services.insight_service import _tag_slugs_for_legacy_insights, insight_subject_key
 
-EXPORT_FORMAT_VERSION = "1.2"
+EXPORT_FORMAT_VERSION = "1.3"
+_EXPORT_OMIT_KEYS = frozenset(
+    {
+        "id",
+        "user_id",
+        "entry_id",
+        "tag_id",
+        "symptom_id",
+        "insight_id",
+        "subject_id",
+    }
+)
+_UUID_IN_TEXT = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+)
 APP_EXPORT_VERSION = "1.1.1"
 SCORE_LEGEND: dict[str, ExportScoreLegendItem] = {
     "mood_score": ExportScoreLegendItem(
@@ -57,6 +76,35 @@ CSV_SCORE_LEGENDS = {
 def export_filename(extension: str, *, now: datetime | None = None) -> str:
     stamp = (now or datetime.now(UTC)).date().isoformat()
     return f"correlcore-export-{stamp}.{extension}"
+
+
+def _jsonable_without_ids(value: Any) -> Any:
+    """Serialize nested values while omitting internal IDs / UUID leaves."""
+    if isinstance(value, uuid.UUID):
+        return None
+    if isinstance(value, dict):
+        cleaned: dict[str, Any] = {}
+        for key, item in value.items():
+            if key in _EXPORT_OMIT_KEYS or isinstance(item, uuid.UUID):
+                continue
+            cleaned[key] = _jsonable_without_ids(item)
+        return cleaned
+    if isinstance(value, list):
+        return [_jsonable_without_ids(item) for item in value if not isinstance(item, uuid.UUID)]
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _enum_value(value: object) -> str:
+    enum_value = getattr(value, "value", None)
+    return str(enum_value) if enum_value is not None else str(value)
+
+
+def _export_subject_key(subject_key: str) -> str:
+    """Redact embedded UUIDs so exports omit internal database IDs."""
+
+    return _UUID_IN_TEXT.sub("<id>", subject_key)
 
 
 async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelope:
@@ -144,6 +192,58 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
             }
         )
 
+    insights_result = await db.execute(
+        select(Insight)
+        .where(Insight.user_id == user.id)
+        .order_by(Insight.generated_for_date.asc(), Insight.generated_at.asc())
+    )
+    insights = list(insights_result.scalars().all())
+    tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
+
+    await migrate_uuid_prefs_to_subject_dismissals(db, user_id=user.id)
+
+    dismissals_result = await db.execute(
+        select(InsightDismissal)
+        .where(InsightDismissal.user_id == user.id)
+        .order_by(InsightDismissal.dismissed_at.asc())
+    )
+    dismissals = list(dismissals_result.scalars().all())
+    dismissed_subject_keys = {row.subject_key for row in dismissals}
+
+    exported_insights: list[dict[str, Any]] = []
+    for insight in insights:
+        subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
+        exported_insights.append(
+            {
+                "insight_type": _enum_value(insight.insight_type),
+                "tier": _enum_value(insight.tier),
+                "metric": insight.metric,
+                "subject_type": insight.subject_type,
+                "subject_label": insight.subject_label,
+                "subject_key": _export_subject_key(subject_key),
+                "effect_size": insight.effect_size,
+                "confidence": insight.confidence,
+                "sample_n": insight.sample_n,
+                "statement": insight.statement_enc,
+                "flags": _jsonable_without_ids(insight.flags or {}),
+                "payload": _jsonable_without_ids(insight.payload or {}),
+                "visibility": ("dismissed" if subject_key in dismissed_subject_keys else "active"),
+                "generated_for_date": insight.generated_for_date.isoformat(),
+                "generated_at": insight.generated_at.isoformat(),
+                "created_at": insight.created_at.isoformat(),
+                "updated_at": insight.updated_at.isoformat(),
+            }
+        )
+
+    exported_dismissals = [
+        {
+            "subject_key": _export_subject_key(row.subject_key),
+            "dismissed_at": row.dismissed_at.isoformat(),
+            "created_at": row.created_at.isoformat(),
+        }
+        for row in dismissals
+    ]
+
     return ExportEnvelope(
         export_date=datetime.now(UTC),
         app_version=APP_EXPORT_VERSION,
@@ -184,7 +284,8 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
             if profile is not None
             else None
         ),
-        insights=[],
+        insights=exported_insights,
+        insight_dismissals=exported_dismissals,
         photos=[],
         sleep=[],
     )
@@ -252,14 +353,17 @@ def render_export_zip(envelope: ExportEnvelope) -> bytes:
         "This archive contains your CorrelCore data in machine-readable JSON.\n"
         "It may include sensitive health-related information. Store it carefully.\n\n"
         "Files:\n"
-        "- export.json: entries, assigned tags, assigned symptoms and account metadata.\n"
+        "- export.json: entries, assigned tags, assigned symptoms, insights, "
+        "insight dismissals, and account metadata.\n"
         "- README.txt: this format note.\n\n"
         "Score scales:\n"
         "- mood_score: 1=very bad; 5=very good.\n"
         "- energy: 1=drained; 5=full of energy.\n"
         "- stress: 1=relaxed; 5=very stressed.\n\n"
-        "Sections for photos, habits, insights and sleep are present as empty arrays until those "
-        "features exist in the product.\n"
+        "insights: full insight history (active and hidden), including decrypted "
+        "statements. insight_dismissals: subject-stable hide intents.\n"
+        "Sections for photos, habits and sleep remain empty arrays until those "
+        "features ship in the product.\n"
     )
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:

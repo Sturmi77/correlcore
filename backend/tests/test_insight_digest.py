@@ -70,6 +70,87 @@ def test_build_weekly_digest_requires_three_confident_insights() -> None:
     )
 
 
+@pytest.mark.asyncio
+async def test_compute_weekly_digest_excludes_dismissed_insight_ids() -> None:
+    from app.services.insight_digest import compute_weekly_digest_for_user
+
+    user_id = uuid.uuid4()
+    week = datetime.now(UTC).date()
+    insights = _three_insights()
+    for insight in insights:
+        insight.user_id = user_id
+    dismissed_id = insights[0].id
+
+    with (
+        patch(
+            "app.services.insight_digest._digest_enabled",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "app.services.insight_digest.load_recent_insights",
+            new=AsyncMock(return_value=insights),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.migrate_uuid_prefs_to_subject_dismissals",
+            new=AsyncMock(return_value=0),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.list_dismissed_subject_keys",
+            new=AsyncMock(return_value=set()),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.dismissed_uuid_keys_remaining",
+            new=AsyncMock(return_value={str(dismissed_id)}),
+        ),
+        patch(
+            "app.services.insight_service._tag_slugs_for_legacy_insights",
+            new=AsyncMock(return_value={}),
+        ),
+    ):
+        with pytest.raises(DigestNotAvailableError):
+            await compute_weekly_digest_for_user(
+                MagicMock(), user_id=user_id, as_of=datetime.now(UTC)
+            )
+
+    # With a fourth qualifying insight, dismissed top effect still excluded from ranking.
+    extra = _make_insight(effect_size=0.35, confidence=0.7)
+    extra.user_id = user_id
+    with (
+        patch(
+            "app.services.insight_digest._digest_enabled",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "app.services.insight_digest.load_recent_insights",
+            new=AsyncMock(return_value=[*insights, extra]),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.migrate_uuid_prefs_to_subject_dismissals",
+            new=AsyncMock(return_value=0),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.list_dismissed_subject_keys",
+            new=AsyncMock(return_value=set()),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.dismissed_uuid_keys_remaining",
+            new=AsyncMock(return_value={str(dismissed_id)}),
+        ),
+        patch(
+            "app.services.insight_service._tag_slugs_for_legacy_insights",
+            new=AsyncMock(return_value={}),
+        ),
+    ):
+        digest = await compute_weekly_digest_for_user(
+            MagicMock(),
+            user_id=user_id,
+            as_of=datetime.combine(week, datetime.min.time(), tzinfo=UTC),
+        )
+
+    assert digest.insight_count == DIGEST_TOP_N
+    assert dismissed_id not in {item.id for item in digest.insights}
+
+
 def test_push_payload_scrubs_health_specific_statement_text() -> None:
     digest = build_weekly_digest(
         [
@@ -124,8 +205,12 @@ async def test_hydrate_stored_digest_preserves_insight_order() -> None:
     result = MagicMock()
     # Return out of order — hydrate must follow insight_ids.
     result.scalars.return_value.all.return_value = [insights[0], insights[1], insights[2]]
+    prefs = MagicMock()
+    prefs.scalar_one_or_none.return_value = []
+    empty_keys = MagicMock()
+    empty_keys.all.return_value = []
     db = MagicMock()
-    db.execute = AsyncMock(return_value=result)
+    db.execute = AsyncMock(side_effect=[result, prefs, empty_keys, prefs])
 
     digest = await hydrate_stored_digest(db, row=row)
     assert digest is not None
@@ -241,7 +326,11 @@ async def test_store_then_get_roundtrip_via_hydrate() -> None:
 
     result = MagicMock()
     result.scalars.return_value.all.return_value = insights
-    db.execute = AsyncMock(return_value=result)
+    prefs = MagicMock()
+    prefs.scalar_one_or_none.return_value = []
+    empty_keys = MagicMock()
+    empty_keys.all.return_value = []
+    db.execute = AsyncMock(side_effect=[result, prefs, empty_keys, prefs])
 
     hydrated = await hydrate_stored_digest(db, row=row)
     assert hydrated is not None
@@ -262,6 +351,18 @@ async def test_compute_raises_when_not_enough_insights() -> None:
         patch(
             "app.services.insight_digest.load_recent_insights",
             new=AsyncMock(return_value=_three_insights()[:2]),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.migrate_uuid_prefs_to_subject_dismissals",
+            new=AsyncMock(return_value=0),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.list_dismissed_subject_keys",
+            new=AsyncMock(return_value=set()),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.dismissed_uuid_keys_remaining",
+            new=AsyncMock(return_value=set()),
         ),
     ):
         with pytest.raises(DigestNotAvailableError):

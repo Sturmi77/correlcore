@@ -53,14 +53,14 @@ CorrelCore verarbeitet Gesundheitsdaten (Stimmungsdaten, Symptome, Schlafdaten, 
 
 ## 4. Betroffenenrechte (Art. 15–22 DSGVO)
 
-| Recht                                 | Endpunkt / Umsetzung                                                        | Frist                  | Status |
-| ------------------------------------- | --------------------------------------------------------------------------- | ---------------------- | ------ |
-| Auskunft (Art. 15)                    | `GET /api/v1/user/data` → JSON-Dump aller Daten                             | sofort (automatisiert) | ✅ M2  |
-| Berichtigung (Art. 16)                | Standard-Edit-UI                                                            | sofort                 | ✅ M1  |
-| Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/me` → Cascade alle Daten + Cryptographic Erasure (DEK) | sofort                 | ✅ M1  |
-| Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON/CSV; Foto-Sektion bis M13 leer)       | automatisiert          | ✅ M2  |
-| Widerspruch Analyse (Art. 21)         | `PATCH /api/v1/user/preferences {analytics_enabled: false}`                 | sofort                 | ✅ M3  |
-| Einschränkung (Art. 18)               | Support-Anfrage an Instanz-Betreiber (siehe unten)                          | 72h                    | ✅ M9  |
+| Recht                                 | Endpunkt / Umsetzung                                                                        | Frist                  | Status         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------- | -------------- |
+| Auskunft (Art. 15)                    | `GET /api/v1/user/data` → JSON-Dump aller Daten                                             | sofort (automatisiert) | ✅ M2          |
+| Berichtigung (Art. 16)                | Standard-Edit-UI                                                                            | sofort                 | ✅ M1          |
+| Löschung / Right to Erasure (Art. 17) | `DELETE /api/v1/user/me` → Cascade alle Daten + Cryptographic Erasure (DEK)                 | sofort                 | ✅ M1          |
+| Datenübertragbarkeit (Art. 20)        | `GET /api/v1/user/export` → ZIP (JSON inkl. Insights/Dismissals; Foto-Sektion bis M13 leer) | automatisiert          | ✅ M2 (+ #601) |
+| Widerspruch Analyse (Art. 21)         | `PATCH /api/v1/user/preferences {analytics_enabled: false}`                                 | sofort                 | ✅ M3          |
+| Einschränkung (Art. 18)               | Support-Anfrage an Instanz-Betreiber (siehe unten)                                          | 72h                    | ✅ M9          |
 
 ### Einschränkung der Verarbeitung (Art. 18) — Support-Workflow
 

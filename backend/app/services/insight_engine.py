@@ -1565,10 +1565,13 @@ async def generate_and_store_insights(
 ) -> list[Insight]:
     """Regenerate and store M3 insight rows for a user/date.
 
-    The function is idempotent for ``(user_id, generated_for_date)`` by deleting
-    existing rows for that date before inserting the new candidates. The caller
-    must bind the user's DEK before flushing because ``Insight.statement_enc``
-    uses :class:`app.core.crypto.EncryptedString`.
+    Idempotent for ``(user_id, generated_for_date)``: only rows for that
+    calendar day are replaced. Insights from earlier ``generated_for_date``
+    values are retained until account deletion (CASCADE) so the history /
+    timeline surface (#601 Phase 2) can show pattern evolution.
+
+    The caller must bind the user's DEK before flushing because
+    ``Insight.statement_enc`` uses :class:`app.core.crypto.EncryptedString`.
 
     A per-user transaction advisory lock is taken **before** loading inputs so
     overlapping regenerate / post-batch / analytics-worker runs cannot

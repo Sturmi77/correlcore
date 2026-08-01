@@ -195,6 +195,11 @@ export async function listLatestInsights(
   return api.get<InsightListResponse>(`/insights/latest${buildQuery(query)}`);
 }
 
+/** GET /insights - chronological insight history (newest-first, no subject dedupe). */
+export async function listInsights(query: InsightListQuery = {}): Promise<InsightListResponse> {
+  return api.get<InsightListResponse>(`/insights${buildQuery(query)}`);
+}
+
 /** GET /insights/tag-cooccurrence - tag pair counts for the co-occurrence heatmap (M5.1). */
 export async function fetchTagCooccurrence(
   query: TagCooccurrenceQuery = {}
@@ -259,4 +264,78 @@ export async function fetchInsightEventWindows(
 
 export async function fetchLatestInsightDigest(): Promise<InsightDigestResponse> {
   return api.get<InsightDigestResponse>('/insights/digest/latest');
+}
+
+export type InsightHistoryVisibility = 'active' | 'dismissed' | 'all';
+
+export interface InsightHistoryItem extends InsightResponse {
+  visibility: 'active' | 'dismissed';
+  subject_key: string;
+  first_seen_on: string | null;
+  last_seen_on: string | null;
+  observation_count: number | null;
+}
+
+export interface InsightHistoryResponse {
+  insights: InsightHistoryItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface InsightHistoryQuery {
+  status?: InsightHistoryVisibility;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/** GET /insights/history — chronological timeline / archive (#601 Phase 2). */
+export async function listInsightHistory(
+  query: InsightHistoryQuery = {}
+): Promise<InsightHistoryResponse> {
+  const params = new URLSearchParams();
+  if (query.status) params.set('status', query.status);
+  if (query.from) params.set('from', query.from);
+  if (query.to) params.set('to', query.to);
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  if (query.offset !== undefined) params.set('offset', String(query.offset));
+  const qs = params.toString();
+  return api.get<InsightHistoryResponse>(qs ? `/insights/history?${qs}` : '/insights/history');
+}
+
+export interface InsightDismissalResponse {
+  id: string;
+  subject_key: string;
+  insight_id: string | null;
+  dismissed_at: string;
+  created_at: string;
+  insight: InsightResponse | null;
+}
+
+export interface InsightDismissalListResponse {
+  dismissals: InsightDismissalResponse[];
+}
+
+/** GET /insights/dismissals — subject-stable hidden insights. */
+export async function listInsightDismissals(): Promise<InsightDismissalListResponse> {
+  return api.get<InsightDismissalListResponse>('/insights/dismissals');
+}
+
+/** POST /insights/dismissals — hide by insight id (subject-stable). */
+export async function createInsightDismissal(insightId: string): Promise<InsightDismissalResponse> {
+  return api.post<InsightDismissalResponse>('/insights/dismissals', {
+    insight_id: insightId,
+  });
+}
+
+/** DELETE /insights/dismissals/{id} — undo hide. */
+export async function deleteInsightDismissal(dismissalId: string): Promise<void> {
+  await api.delete(`/insights/dismissals/${encodeURIComponent(dismissalId)}`);
+}
+
+/** DELETE /insights/dismissals/by-insight/{id} — undo by insight id. */
+export async function deleteInsightDismissalByInsightId(insightId: string): Promise<void> {
+  await api.delete(`/insights/dismissals/by-insight/${encodeURIComponent(insightId)}`);
 }

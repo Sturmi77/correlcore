@@ -56,7 +56,7 @@ from app.services.export_service import build_export_envelope, export_filename, 
 from app.services.note_markers import list_user_marker_suggestions
 from app.services.sync_conflict_service import list_sync_conflicts, sanitize_conflict_value
 from app.services.user_preferences_service import (
-    get_or_create_user_preferences,
+    prune_orphaned_dismissed_insight_keys,
     to_preferences_response,
     update_user_preferences,
 )
@@ -143,7 +143,7 @@ async def get_my_preferences(
     current_user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> UserPreferencesResponse:
-    preferences = await get_or_create_user_preferences(db, user_id=current_user.id)
+    preferences = await prune_orphaned_dismissed_insight_keys(db, user_id=current_user.id)
     return to_preferences_response(preferences)
 
 

@@ -1005,7 +1005,32 @@
       "symptoms_toggle": "Blend in symptoms",
       "analytics_summary": "Deepen analysis",
       "analytics_hint": "Symptoms and shared tags",
-      "analysis_range_label": "Analysis time window"
+      "analysis_range_label": "Analysis time window",
+      "history_link": "Insight timeline"
+    },
+    "history": {
+      "title": "Insight timeline",
+      "subtitle": "Past evaluations from your entries — including hidden patterns. Kept until you delete your account.",
+      "heading": "Timeline",
+      "hint": "Each day shows the patterns known at that time. This is a past evaluation, not a diagnosis.",
+      "loading": "Loading timeline…",
+      "empty": "No insight history yet.",
+      "error": "Could not load insight history.",
+      "filter_aria": "Filter timeline by visibility",
+      "filter_all": "All",
+      "filter_active": "Visible",
+      "filter_dismissed": "Hidden",
+      "badge_past": "Past evaluation",
+      "badge_dismissed": "Hidden",
+      "evolution": "Seen {count}× from {first} to {last}",
+      "day_heading": "{date}",
+      "load_more": "Load more"
+    },
+    "dismissed": {
+      "heading": "Hidden insights",
+      "hint": "Hidden from your feed — not deleted. Show again anytime.",
+      "undo": "Show again",
+      "undo_aria": "Show insight \"{title}\" again"
     },
     "digest": {
       "title": "Weekly digest",
@@ -1015,7 +1040,8 @@
       "disabled": "Weekly digest is turned off in Settings.",
       "error": "Could not load weekly digest.",
       "open_settings": "Open settings",
-      "range": "Week of {start} to {end}"
+      "range": "Week of {start} to {end}",
+      "history_link": "Open insight timeline"
     },
     "mobile": {
       "eyebrow": "Mobile summary",
@@ -1189,7 +1215,7 @@
       "collapse": "Hide details",
       "expand_aria": "Expand details for this insight",
       "collapse_aria": "Collapse details for this insight",
-      "dismiss_aria": "Dismiss insight \"{title}\"",
+      "dismiss_aria": "Hide insight \"{title}\"",
       "disclaimer_link": "What does this mean?",
       "sample_meta": "Based on {n} entries \u00b7 {days} days",
       "meta_r": "r (Pearson)",

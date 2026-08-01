@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import uuid
+from dataclasses import dataclass
+from datetime import date as date_type
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -280,6 +283,47 @@ def _latest_subject_key(
     return ("subject", insight.subject_id, insight.subject_label)
 
 
+def _jsonable_subject_part(value: object) -> object:
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    if isinstance(value, tuple):
+        return [_jsonable_subject_part(item) for item in value]
+    if isinstance(value, list):
+        return [_jsonable_subject_part(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            str(key): _jsonable_subject_part(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    return value
+
+
+def insight_subject_key(
+    insight: Insight,
+    *,
+    tag_slugs_by_id: dict[uuid.UUID, str] | None = None,
+) -> str:
+    """Stable string key for subject-stable dismissals (#601 Phase 1).
+
+    Matches the dedupe identity used by :func:`list_latest_insights`
+    (insight family + metric + subject).
+    """
+
+    slugs = tag_slugs_by_id if tag_slugs_by_id is not None else {}
+    insight_type = (
+        insight.insight_type.value
+        if isinstance(insight.insight_type, InsightType)
+        else str(insight.insight_type)
+    )
+    payload = {
+        "insight_type": insight_type,
+        "metric": _latest_metric_key(insight),
+        "subject_type": insight.subject_type,
+        "subject": _jsonable_subject_part(_latest_subject_key(insight, tag_slugs_by_id=slugs)),
+    }
+    return json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=True)
+
+
 async def _tag_slugs_for_legacy_insights(
     db: AsyncSession,
     insights: list[Insight],
@@ -333,11 +377,25 @@ async def list_latest_insights(
         user_id=user_id,
         insights=insights,
     )
+    from app.services.insight_dismissal_service import (
+        dismissed_uuid_keys_remaining,
+        list_dismissed_subject_keys,
+        migrate_uuid_prefs_to_subject_dismissals,
+    )
+
+    await migrate_uuid_prefs_to_subject_dismissals(db, user_id=user_id)
+    dismissed_subject_keys = await list_dismissed_subject_keys(db, user_id=user_id)
+    dismissed_uuid_keys = await dismissed_uuid_keys_remaining(db, user_id=user_id)
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
 
     latest: list[Insight] = []
     seen: set[tuple[object, ...]] = set()
     for insight in insights:
+        if str(insight.id) in dismissed_uuid_keys:
+            continue
+        subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
+        if subject_key in dismissed_subject_keys:
+            continue
         key = (
             insight.insight_type,
             _latest_metric_key(insight),
@@ -351,6 +409,105 @@ async def list_latest_insights(
         if len(latest) >= limit:
             break
     return latest
+
+
+@dataclass(frozen=True)
+class InsightHistoryEntry:
+    insight: Insight
+    subject_key: str
+    visibility: str  # "active" | "dismissed"
+    first_seen_on: date_type | None
+    last_seen_on: date_type | None
+    observation_count: int
+
+
+async def list_insight_history(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    status: str = "all",
+    from_date: date_type | None = None,
+    to_date: date_type | None = None,
+    limit: int = DEFAULT_INSIGHT_LIST_LIMIT,
+    offset: int = 0,
+) -> tuple[list[InsightHistoryEntry], int]:
+    """Return chronological insight history for the timeline (#601 Phase 2).
+
+    Includes active and/or dismissed subjects. Does **not** subject-dedupe —
+    each ``generated_for_date`` version remains visible so pattern evolution
+    is queryable until account deletion.
+    """
+
+    from app.services.insight_dismissal_service import (
+        dismissed_uuid_keys_remaining,
+        list_dismissed_subject_keys,
+        migrate_uuid_prefs_to_subject_dismissals,
+    )
+
+    if status not in {"active", "dismissed", "all"}:
+        status = "all"
+    limit = _clamp_limit(limit, default=DEFAULT_INSIGHT_LIST_LIMIT, maximum=MAX_INSIGHT_LIST_LIMIT)
+    offset = max(0, offset)
+
+    filters = [Insight.user_id == user_id]
+    if from_date is not None:
+        filters.append(Insight.generated_for_date >= from_date)
+    if to_date is not None:
+        filters.append(Insight.generated_for_date <= to_date)
+
+    result = await db.execute(
+        select(Insight)
+        .where(*filters)
+        .order_by(
+            Insight.generated_for_date.desc(),
+            Insight.generated_at.desc(),
+            Insight.created_at.desc(),
+        )
+    )
+    insights = await _filter_analytics_excluded_insights(
+        db,
+        user_id=user_id,
+        insights=list(result.scalars().all()),
+    )
+
+    await migrate_uuid_prefs_to_subject_dismissals(db, user_id=user_id)
+    dismissed_subject_keys = await list_dismissed_subject_keys(db, user_id=user_id)
+    dismissed_uuid_keys = await dismissed_uuid_keys_remaining(db, user_id=user_id)
+    tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
+
+    subject_dates: dict[str, list[date_type]] = {}
+    annotated: list[tuple[Insight, str, str]] = []
+    for insight in insights:
+        subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
+        is_dismissed = (
+            subject_key in dismissed_subject_keys or str(insight.id) in dismissed_uuid_keys
+        )
+        visibility = "dismissed" if is_dismissed else "active"
+        if status == "active" and visibility != "active":
+            continue
+        if status == "dismissed" and visibility != "dismissed":
+            continue
+        annotated.append((insight, subject_key, visibility))
+        subject_dates.setdefault(subject_key, []).append(insight.generated_for_date)
+
+    subject_stats = {
+        key: (min(dates), max(dates), len(dates)) for key, dates in subject_dates.items()
+    }
+
+    total = len(annotated)
+    page = annotated[offset : offset + limit]
+    entries = [
+        InsightHistoryEntry(
+            insight=insight,
+            subject_key=subject_key,
+            visibility=visibility,
+            first_seen_on=subject_stats[subject_key][0],
+            last_seen_on=subject_stats[subject_key][1],
+            observation_count=subject_stats[subject_key][2],
+        )
+        for insight, subject_key, visibility in page
+    ]
+    return entries, total
 
 
 async def get_insight_by_id(

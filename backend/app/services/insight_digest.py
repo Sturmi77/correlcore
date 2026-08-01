@@ -196,7 +196,8 @@ async def hydrate_stored_digest(
     """Rebuild a :class:`WeeklyDigest` from a stored row + live insight rows.
 
     Returns ``None`` when insight IDs are missing/deleted so callers can fall
-    back to a fresh compute.
+    back to a fresh compute. Dismissed subjects are dropped from the returned
+    envelope without mutating the persisted snapshot (#601).
     """
 
     try:
@@ -220,10 +221,60 @@ async def hydrate_stored_digest(
             return None
         items.append(_insight_to_digest_item(insight))
 
-    return WeeklyDigest(
+    digest = WeeklyDigest(
         week_start=row.week_start,
         week_end=row.week_end,
         insights=tuple(items),
+    )
+    return await _filter_digest_dismissals(db, user_id=row.user_id, digest=digest)
+
+
+async def _filter_digest_dismissals(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    digest: WeeklyDigest,
+) -> WeeklyDigest:
+    """Drop currently dismissed insights from a digest response (snapshot untouched)."""
+
+    from app.services.insight_dismissal_service import (
+        dismissed_uuid_keys_remaining,
+        list_dismissed_subject_keys,
+        migrate_uuid_prefs_to_subject_dismissals,
+    )
+    from app.services.insight_service import (
+        _tag_slugs_for_legacy_insights,
+        insight_subject_key,
+    )
+
+    await migrate_uuid_prefs_to_subject_dismissals(db, user_id=user_id)
+    dismissed_subject_keys = await list_dismissed_subject_keys(db, user_id=user_id)
+    dismissed_uuid_keys = await dismissed_uuid_keys_remaining(db, user_id=user_id)
+    if not dismissed_subject_keys and not dismissed_uuid_keys:
+        return digest
+
+    insight_ids = [item.id for item in digest.insights]
+    result = await db.execute(
+        select(Insight).where(Insight.user_id == user_id, Insight.id.in_(insight_ids))
+    )
+    by_id = {insight.id: insight for insight in result.scalars().all()}
+    tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, list(by_id.values()))
+
+    kept: list[DigestInsightItem] = []
+    for item in digest.insights:
+        if str(item.id) in dismissed_uuid_keys:
+            continue
+        insight = by_id.get(item.id)
+        if insight is not None and (
+            insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id) in dismissed_subject_keys
+        ):
+            continue
+        kept.append(item)
+
+    return WeeklyDigest(
+        week_start=digest.week_start,
+        week_end=digest.week_end,
+        insights=tuple(kept),
     )
 
 
@@ -246,6 +297,32 @@ async def compute_weekly_digest_for_user(
         week_start=week_start,
         week_end=week_end,
     )
+    from app.services.insight_dismissal_service import (
+        dismissed_uuid_keys_remaining,
+        list_dismissed_subject_keys,
+        migrate_uuid_prefs_to_subject_dismissals,
+    )
+    from app.services.insight_service import (
+        _tag_slugs_for_legacy_insights,
+        insight_subject_key,
+    )
+
+    await migrate_uuid_prefs_to_subject_dismissals(db, user_id=user_id)
+    dismissed_subject_keys = await list_dismissed_subject_keys(db, user_id=user_id)
+    dismissed_uuid_keys = await dismissed_uuid_keys_remaining(db, user_id=user_id)
+    if dismissed_subject_keys or dismissed_uuid_keys:
+        tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
+        filtered: list[Insight] = []
+        for insight in insights:
+            if str(insight.id) in dismissed_uuid_keys:
+                continue
+            if (
+                insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
+                in dismissed_subject_keys
+            ):
+                continue
+            filtered.append(insight)
+        insights = filtered
     digest = build_weekly_digest(insights, week_start=week_start, week_end=week_end)
     if digest is None:
         raise DigestNotAvailableError(user_id)
