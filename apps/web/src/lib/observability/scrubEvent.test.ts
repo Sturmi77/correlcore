@@ -10,6 +10,8 @@ describe('scrubSentryEvent', () => {
         data: {
           password: 'CorrectHorse123!',
           mood_score: 3,
+          cycle_day: 14,
+          cycle_bleeding_level: 'light',
           note: 'private journal',
         },
         cookies: { access_token: 'secret' },
@@ -21,6 +23,8 @@ describe('scrubSentryEvent', () => {
 
     expect(scrubbed.request?.data?.password).toBe('[Filtered]');
     expect(scrubbed.request?.data?.mood_score).toBe('[Filtered]');
+    expect(scrubbed.request?.data?.cycle_day).toBe('[Filtered]');
+    expect(scrubbed.request?.data?.cycle_bleeding_level).toBe('[Filtered]');
     expect(scrubbed.request?.data?.note).toBe('[Filtered]');
     expect(scrubbed.request?.cookies?.access_token).toBe('[Filtered]');
     expect(scrubbed.request?.headers?.authorization).toBe('[Filtered]');
