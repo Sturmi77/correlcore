@@ -221,7 +221,7 @@ for (const viewport of [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'mobile-large', width: 430, height: 932 },
 ]) {
-  test(`${viewport.name} keeps tags and symptoms visible; note and cycle behind toggle`, async ({
+  test(`${viewport.name} keeps tags, symptoms, note and cycle expanded without toggle`, async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -241,15 +241,11 @@ for (const viewport of [
     await expect(tag).toBeVisible();
     await expect(symptom).toBeVisible();
 
-    const toggle = page.getByTestId('entry-optional-extras-toggle');
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('#entry-section-note')).not.toBeVisible();
-
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByTestId('entry-optional-extras-toggle')).toHaveCount(0);
     await expect(page.locator('#entry-section-note')).toBeVisible();
+    await expect(page.locator('#entry-section-cycle')).toBeVisible();
 
-    for (const control of [toggle, tag, symptom]) {
+    for (const control of [tag, symptom]) {
       const box = await control.boundingBox();
       expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
     }

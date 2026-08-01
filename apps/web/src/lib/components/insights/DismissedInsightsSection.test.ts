@@ -9,6 +9,8 @@ vi.mock('svelte-i18n', async () => {
     _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
       if (key === 'insights.dismissed.heading') return 'Hidden insights';
       if (key === 'insights.dismissed.hint') return 'Hidden from your feed';
+      if (key === 'insights.dismissed.toggle_aria')
+        return `Show or hide hidden insights (${options?.values?.count ?? 0})`;
       if (key === 'insights.dismissed.undo') return 'Show again';
       if (key === 'insights.dismissed.undo_aria')
         return `Show insight "${options?.values?.title ?? ''}" again`;
@@ -70,7 +72,7 @@ describe('DismissedInsightsSection', () => {
     expect(screen.queryByTestId('dismissed-insights-section')).toBeNull();
   });
 
-  it('renders hidden insights and dispatches undismiss', async () => {
+  it('starts collapsed and expands to show undo', async () => {
     const undismiss = vi.fn();
     render(DismissedInsightsSection, {
       props: {
@@ -79,8 +81,13 @@ describe('DismissedInsightsSection', () => {
       events: { undismiss },
     });
 
-    expect(screen.getByTestId('dismissed-insights-section')).toBeTruthy();
+    const section = screen.getByTestId('dismissed-insights-section') as HTMLDetailsElement;
+    expect(section.open).toBe(false);
     expect(screen.getByText('Hidden insights')).toBeTruthy();
+    expect(screen.getByText('1')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('dismissed-insights-toggle'));
+    expect(section.open).toBe(true);
     await fireEvent.click(screen.getByTestId('dismissed-insight-undo'));
     expect(undismiss).toHaveBeenCalledOnce();
     expect(undismiss.mock.calls[0]?.[0].detail).toEqual({
