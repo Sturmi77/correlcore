@@ -106,11 +106,6 @@
   const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   let entryDate: string = initialDate;
-  // Keep SSR and the first client render identical; viewport adaptation happens on mount.
-  let compactEntry = false;
-  /** Note + cycle day only; tags/symptoms/time slots stay visible (O-21). */
-  let showOptionalExtras = !compactEntry;
-  let optionalTouched = false;
   let selectedSlot: EntrySlot = 'day';
   let moodScore = NEUTRAL_SCALE_DEFAULT;
   let energy = NEUTRAL_SCALE_DEFAULT;
@@ -139,7 +134,6 @@
   let errorKey: string | null = null;
   let cycleDayInvalid = false;
   let offline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
-  let mobileMedia: MediaQueryList | null = null;
 
   // Edit-mode: when the user navigates to a date/slot that already has an
   // entry, we hydrate the form with the existing values so
@@ -510,7 +504,6 @@
         // to count as user edits.
         await Promise.resolve();
         hydrating = false;
-        syncOptionalExtrasVisibility();
         if (pendingDeferredOnboardingRetry) {
           pendingDeferredOnboardingRetry = false;
           scheduleDeferredOnboardingRetry();
@@ -558,30 +551,6 @@
     const parsed = Number(value);
     cycleDay = value === '' || !Number.isFinite(parsed) ? null : parsed;
     cycleDayInvalid = cycleDay !== null && (cycleDay < 1 || cycleDay > 35);
-  }
-
-  function hasOptionalExtrasContent(): boolean {
-    return note.trim().length > 0 || cycleDay !== null || cycleBleedingLevel !== null;
-  }
-
-  function toggleOptionalExtras() {
-    optionalTouched = true;
-    showOptionalExtras = !showOptionalExtras;
-  }
-
-  function syncOptionalExtrasVisibility() {
-    if (!compactEntry) {
-      showOptionalExtras = true;
-      return;
-    }
-    if (!optionalTouched) {
-      showOptionalExtras = hasOptionalExtrasContent();
-    }
-  }
-
-  function syncCompactEntry() {
-    compactEntry = Boolean(mobileMedia?.matches);
-    syncOptionalExtrasVisibility();
   }
 
   function handleOnline() {
@@ -1198,9 +1167,6 @@
       .catch(() => {
         markerSuggestions = [];
       });
-    mobileMedia = window.matchMedia('(max-width: 767px)');
-    syncCompactEntry();
-    mobileMedia.addEventListener('change', syncCompactEntry);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     window.addEventListener('beforeunload', onBeforeUnload);
@@ -1232,7 +1198,6 @@
       window.removeEventListener('offline', handleOffline);
     }
     unsubscribeConnectivity?.();
-    mobileMedia?.removeEventListener('change', syncCompactEntry);
     autoSave.destroy();
   });
 
@@ -1424,93 +1389,74 @@
       <SymptomChecker bind:selected={selectedSymptoms} />
     </section>
 
-    {#if compactEntry}
-      <Button
-        type="button"
-        variant="ghost"
-        fullWidth
-        className="entry-optional-extras-toggle"
-        data-testid="entry-optional-extras-toggle"
-        aria-expanded={showOptionalExtras}
-        aria-controls="entry-optional-extras"
-        on:click={toggleOptionalExtras}
-      >
-        {showOptionalExtras ? $_('entry.optional_extras_hide') : $_('entry.optional_extras_toggle')}
-      </Button>
-    {/if}
+    <section class="entry-section" aria-labelledby="entry-section-note">
+      <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
+      <label class="entry-field">
+        <span class="sr-only">{$_('entry.note_placeholder')}</span>
+        <textarea
+          class="input"
+          rows="4"
+          maxlength="4000"
+          bind:value={note}
+          placeholder={$_('entry.note_placeholder')}></textarea>
+      </label>
+      <NoteMarkerChips
+        markers={noteMarkers}
+        suggestions={markerSuggestions}
+        on:toggle={handleMarkerToggle}
+        on:addCustom={handleCustomMarker}
+      />
+      <label class="entry-field entry-field--inline">
+        <span class="entry-label">{$_('entry.note_visibility.label')}</span>
+        <select bind:value={noteVisibility} data-testid="entry-note-visibility">
+          <option value="full">{$_('entry.note_visibility.full')}</option>
+          <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
+          <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
+        </select>
+      </label>
+    </section>
 
-    {#if showOptionalExtras}
-      <div id="entry-optional-extras" class="entry-optional-extras">
-        <section class="entry-section" aria-labelledby="entry-section-note">
-          <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
-          <label class="entry-field">
-            <span class="sr-only">{$_('entry.note_placeholder')}</span>
-            <textarea
-              class="input"
-              rows="4"
-              maxlength="4000"
-              bind:value={note}
-              placeholder={$_('entry.note_placeholder')}></textarea>
-          </label>
-          <NoteMarkerChips
-            markers={noteMarkers}
-            suggestions={markerSuggestions}
-            on:toggle={handleMarkerToggle}
-            on:addCustom={handleCustomMarker}
+    {#if cycleTrackingEnabled}
+      <section class="entry-section" aria-labelledby="entry-section-cycle">
+        <h2 id="entry-section-cycle" class="entry-section__title">
+          {$_('entry.section.cycle')}
+        </h2>
+        <label class="entry-field">
+          <span class="entry-label">{$_('entry.cycle_day.label')}</span>
+          <input
+            type="number"
+            class="input"
+            min="1"
+            max="35"
+            value={cycleDay ?? ''}
+            on:input={onCycleDayInput}
+            aria-invalid={cycleDayInvalid}
+            aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
+            placeholder={$_('entry.cycle_day.placeholder')}
           />
-          <label class="entry-field entry-field--inline">
-            <span class="entry-label">{$_('entry.note_visibility.label')}</span>
-            <select bind:value={noteVisibility} data-testid="entry-note-visibility">
-              <option value="full">{$_('entry.note_visibility.full')}</option>
-              <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
-              <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
-            </select>
-          </label>
-        </section>
-
-        {#if cycleTrackingEnabled}
-          <section class="entry-section" aria-labelledby="entry-section-cycle">
-            <h2 id="entry-section-cycle" class="entry-section__title">
-              {$_('entry.section.cycle')}
-            </h2>
-            <label class="entry-field">
-              <span class="entry-label">{$_('entry.cycle_day.label')}</span>
-              <input
-                type="number"
-                class="input"
-                min="1"
-                max="35"
-                value={cycleDay ?? ''}
-                on:input={onCycleDayInput}
-                aria-invalid={cycleDayInvalid}
-                aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
-                placeholder={$_('entry.cycle_day.placeholder')}
-              />
-            </label>
-            <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
-            {#if cycleDayInvalid}
-              <p id="entry-cycle-error" class="entry-error" role="alert">
-                {$_('entry.cycle_day.error_range')}
-              </p>
-            {/if}
-            <label class="entry-field">
-              <span class="entry-label">{$_('entry.cycle_bleeding.label')}</span>
-              <select
-                class="input"
-                value={cycleBleedingLevel ?? ''}
-                on:change={onCycleBleedingChange}
-                data-testid="entry-cycle-bleeding"
-              >
-                <option value="">{$_('entry.cycle_bleeding.unset')}</option>
-                {#each bleedingLevelOptions as level}
-                  <option value={level}>{$_(`entry.cycle_bleeding.${level}`)}</option>
-                {/each}
-              </select>
-            </label>
-            <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
-          </section>
+        </label>
+        <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
+        {#if cycleDayInvalid}
+          <p id="entry-cycle-error" class="entry-error" role="alert">
+            {$_('entry.cycle_day.error_range')}
+          </p>
         {/if}
-      </div>
+        <label class="entry-field">
+          <span class="entry-label">{$_('entry.cycle_bleeding.label')}</span>
+          <select
+            class="input"
+            value={cycleBleedingLevel ?? ''}
+            on:change={onCycleBleedingChange}
+            data-testid="entry-cycle-bleeding"
+          >
+            <option value="">{$_('entry.cycle_bleeding.unset')}</option>
+            {#each bleedingLevelOptions as level}
+              <option value={level}>{$_(`entry.cycle_bleeding.${level}`)}</option>
+            {/each}
+          </select>
+        </label>
+        <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
+      </section>
     {/if}
 
     <section class="entry-section" aria-labelledby="entry-section-delta">
@@ -1549,17 +1495,6 @@
     gap: var(--space-4);
     max-width: none;
     margin: 0;
-  }
-
-  .entry-optional-extras {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-  }
-
-  :global(.entry-optional-extras-toggle) {
-    width: 100%;
-    justify-content: center;
   }
 
   .entry-header-row {
@@ -1731,8 +1666,7 @@
       flex-wrap: wrap;
     }
 
-    .entry-form,
-    .entry-optional-extras {
+    .entry-form {
       gap: var(--screen-gap);
     }
 

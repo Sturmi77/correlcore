@@ -249,8 +249,6 @@
     "offline_sync": {
       "conflict_note": "Some fields were updated from another device. Your latest synced version is shown."
     },
-    "optional_extras_toggle": "Add note or cycle day",
-    "optional_extras_hide": "Hide note and cycle day",
     "onboarding_tags": {
       "title": "What do you want to track?",
       "hint": "Pick a few starting tags — you can turn any tag into a habit later in Insights."
@@ -1029,6 +1027,7 @@
     "dismissed": {
       "heading": "Hidden insights",
       "hint": "Hidden from your feed — not deleted. Show again anytime.",
+      "toggle_aria": "Show or hide hidden insights ({count})",
       "undo": "Show again",
       "undo_aria": "Show insight \"{title}\" again"
     },

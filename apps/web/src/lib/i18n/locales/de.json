@@ -259,8 +259,6 @@
       "default_low": "niedrig",
       "default_high": "hoch"
     },
-    "optional_extras_toggle": "Notiz oder Zyklustag",
-    "optional_extras_hide": "Notiz und Zyklustag ausblenden",
     "onboarding_tags": {
       "title": "Was m\u00f6chtest du tracken?",
       "hint": "W\u00e4hle ein paar Start-Tags \u2014 sp\u00e4ter kannst du jeden Tag in Insights als Gewohnheit festlegen."
@@ -1029,6 +1027,7 @@
     "dismissed": {
       "heading": "Ausgeblendete Erkenntnisse",
       "hint": "Aus dem Feed ausgeblendet — nicht gelöscht. Jederzeit wieder einblendbar.",
+      "toggle_aria": "Ausgeblendete Erkenntnisse anzeigen oder verbergen ({count})",
       "undo": "Wieder einblenden",
       "undo_aria": "Erkenntnis \"{title}\" wieder einblenden"
     },

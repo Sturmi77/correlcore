@@ -2,8 +2,9 @@
   /**
    * DismissedInsightsSection — #601 Phase 0/1
    *
-   * Lists hide'd insights with Undo. Cards are not dismissable here;
-   * primary action is "Show again".
+   * Lists hide'd insights with Undo. Collapsed by default so the archive
+   * does not consume feed-height. Cards are not dismissable here; primary
+   * action is "Show again".
    */
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -30,15 +31,21 @@
 </script>
 
 {#if resolvedItems.length > 0}
-  <section
-    class="dismissed-insights"
-    data-testid="dismissed-insights-section"
-    aria-labelledby="dismissed-insights-heading"
-  >
-    <header class="dismissed-insights__header">
-      <h2 id="dismissed-insights-heading">{$_('insights.dismissed.heading')}</h2>
-      <p>{$_('insights.dismissed.hint')}</p>
-    </header>
+  <details class="dismissed-insights" data-testid="dismissed-insights-section">
+    <summary
+      class="dismissed-insights__summary"
+      data-testid="dismissed-insights-toggle"
+      aria-label={$_('insights.dismissed.toggle_aria', {
+        values: { count: resolvedItems.length },
+      })}
+    >
+      <span class="dismissed-insights__summary-title" id="dismissed-insights-heading">
+        {$_('insights.dismissed.heading')}
+      </span>
+      <span class="dismissed-insights__count">{resolvedItems.length}</span>
+    </summary>
+
+    <p class="dismissed-insights__hint">{$_('insights.dismissed.hint')}</p>
 
     <ul class="dismissed-insights__list">
       {#each resolvedItems as item (item.dismissalId)}
@@ -65,7 +72,7 @@
         </li>
       {/each}
     </ul>
-  </section>
+  </details>
 {/if}
 
 <style>
@@ -73,23 +80,62 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    padding: var(--space-3);
   }
 
-  .dismissed-insights__header {
-    display: grid;
-    gap: var(--space-1);
+  .dismissed-insights__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    cursor: pointer;
+    list-style: none;
+    font: inherit;
+    color: inherit;
   }
 
-  .dismissed-insights__header h2,
-  .dismissed-insights__header p {
+  .dismissed-insights__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .dismissed-insights__summary::after {
+    content: '';
+    width: 0.55rem;
+    height: 0.55rem;
+    border-right: 2px solid var(--color-text-muted);
+    border-bottom: 2px solid var(--color-text-muted);
+    transform: rotate(45deg);
+    transition: transform 120ms ease;
+    flex-shrink: 0;
+  }
+
+  .dismissed-insights[open] .dismissed-insights__summary::after {
+    transform: rotate(225deg);
+    margin-top: 0.25rem;
+  }
+
+  .dismissed-insights__summary-title {
     margin: 0;
-  }
-
-  .dismissed-insights__header h2 {
     font-size: var(--text-lg);
+    font-weight: 600;
   }
 
-  .dismissed-insights__header p {
+  .dismissed-insights__count {
+    margin-left: auto;
+    min-width: 1.5rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-text-muted) 12%, var(--color-surface));
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+
+  .dismissed-insights__hint {
+    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
   }
