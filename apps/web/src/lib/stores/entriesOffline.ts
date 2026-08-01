@@ -362,6 +362,19 @@ export async function clearCycleDataOffline(): Promise<number> {
       for (const serverEntry of serverEntries) {
         const local = await db.entries.get(serverEntry.id);
         if (!local) continue;
+        // Never clobber pending/conflict (or newer) local rows with a server snapshot —
+        // that would wipe unsynced mood/note/energy edits from IndexedDB while the
+        // outbox still holds them, and a later form hydrate/autosave can ack+rewrite
+        // the outbox from the stale local row (data loss).
+        if (shouldPreferLocalEntry(local, serverEntry.updated_at)) {
+          if (entryHasCycleData(local)) {
+            await db.entries.update(local.id, {
+              cycle_day: null,
+              cycle_bleeding_level: null,
+            });
+          }
+          continue;
+        }
         await applyPulledEntry(
           serverEntry.id,
           {
@@ -378,9 +391,7 @@ export async function clearCycleDataOffline(): Promise<number> {
             symptoms: local.symptoms,
           },
           serverEntry.updated_at,
-          local.sync_state === 'pending' || local.sync_state === 'conflict'
-            ? local.sync_state
-            : 'synced'
+          'synced'
         );
       }
     } catch {
