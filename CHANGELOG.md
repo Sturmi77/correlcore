@@ -8,17 +8,6 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-
-- **Configurable Home screen layout (#584).** Users can show, hide, and reorder
-  compact Home blocks via `/settings/home`. Preferences persist in
-  `user_preferences.home_sections` (JSONB, migration 034). Default layout
-  matches the previous brief-first order: early pattern notice, daily brief,
-  work-context summary, weekday overview. Today context strip, primary CTA,
-  PWA install banner, and onboarding redirect remain fixed. See ADR-0017
-  (2026-07-31 amendment) and
-  [`docs/proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md`](docs/proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md).
-
 ### Docs
 
 - **Reverse-proxy edges now document the required large proxy buffers** — the
@@ -34,12 +23,6 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **APP_ENV whitespace no longer bypasses production/staging secret guards** —
-  `Settings.validate_production_secrets` compared `APP_ENV.lower()` to exact
-  tokens without stripping, so values like `production ` (trailing space from
-  `.env` / compose / CI) skipped SECRET_KEY, ENCRYPTION_KEY, CORS, DEBUG, and
-  COOKIE_SECURE checks while the process still looked production-bound.
-  `APP_ENV` is now normalized with `.strip()` before validation.
 - **Photo upload rejects decompression-bomb dimensions before EXIF decode** —
   `POST /api/v1/media/photos` capped compressed bytes (10 MiB) but not decoded
   pixels. A ~160 KiB solid 7000×7000 PNG passed the byte guard, then
@@ -223,6 +206,80 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - **ADR-0040** — Self-Host-Auth-Edge decision: keep secure cookie auth by
   default, make the edge contract trivial and self-verifying, and document an
   opt-in Bearer fallback for genuinely cross-origin self-host topologies.
+
+---
+
+## [1.1.6] — 2026-08-01
+
+Insights dismiss archive, lag visualizations, configurable Home, and cycle
+Stage 1. Requires migrations **034–036** (`alembic upgrade head`) before the
+new API/web images.
+
+### Added
+
+- **Insight dismiss: Hide + Undo, history timeline, GDPR export** (#601) —
+  ✕ on an insight card is a subject-stable hide (table `insight_dismissals`,
+  migration 036), not a hard delete. Feed and digest omit dismissed subjects;
+  „Ausgeblendet“ on `/insights` supports Undo; `/insights/history` shows
+  active and dismissed rows over time. DSGVO export `format_version` 1.3
+  includes full insight history plus dismissals (no internal IDs).
+- **Configurable Home screen layout** (#584) — users show, hide, and reorder
+  compact Home blocks via `/settings/home`. Preferences persist in
+  `user_preferences.home_sections` (JSONB, migration 034). Default order
+  matches the previous brief-first layout: early pattern notice, daily brief,
+  work-context summary, weekday overview. Today context strip, primary CTA,
+  PWA install banner, and onboarding redirect remain fixed. See ADR-0017
+  (2026-07-31 amendment) and
+  [`docs/proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md`](docs/proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md).
+- **Lag profile mini-bars on insight cards** (#488 Phase 1b, #583) — lag
+  insights show a compact day-offset profile; persisted rows can be backfilled
+  (#596).
+- **Lag-correlation heatmap** (#488 Phase 2, #586) — Insights gains a
+  lag-aware co-occurrence view for delayed tag↔outcome patterns.
+- **Cycle tracking Stage 1** (#547, #606) — optional `cycle_bleeding_level`
+  on entries (migration 035), EntryForm field when cycle tracking is on,
+  SHD-safe log redaction, and `DELETE /api/v1/entries/cycle-data` (clears
+  cycle columns, sync revisions, scrubs revision-log SHD). Stage 2+
+  (phase inference, calendar overlay, etc.) remains deferred.
+- **ComparisonHeatmap cluster sort** (#592, #597) — Trends Compare can order
+  axes by tag-group clusters with focus chips.
+- **Correlation matrix as the primary Insights matrix** (#600) — matrix sits
+  above the top insight as a single inline view.
+- **Client developer mode in production builds** (#589, #598) — Settings can
+  enable the client-side developer probe without a separate debug build.
+
+### Fixed
+
+- **APP_ENV whitespace no longer bypasses production/staging secret guards**
+  (#582) — `Settings.validate_production_secrets` compared `APP_ENV.lower()`
+  to exact tokens without stripping, so values like `production ` (trailing
+  space from `.env` / compose / CI) skipped SECRET_KEY, ENCRYPTION_KEY, CORS,
+  DEBUG, and COOKIE_SECURE checks while the process still looked
+  production-bound. `APP_ENV` is now normalized with `.strip()` before
+  validation.
+- **Heatmap sparse-axis pruning + landing preview + deploy verify** (#587,
+  #588, #590, #593) — empty heatmap rows pruned on all viewports;
+  `?landing=1` shows the marketing landing while logged in;
+  `scripts/verify-deploy-health.sh` checks post-deploy image ancestry.
+- **Offline cycle erase no longer clobbers pending entry edits** (#618) —
+  after `DELETE …/cycle-data`, local hydrate skipped `shouldPreferLocalEntry`
+  and overwrote unsynced mood/note/energy from stale server rows. Pending
+  locals now keep scalars and only clear cycle fields.
+- **Consolidated Codex P1/P2 review follow-ups** (#607) — lag-profile
+  backfill RLS/`as_of`, Home sections load gate + a11y, cycle delete offline
+  scrub, Compare cluster focus, deploy-verify ancestry check. Inventory:
+  [`docs/quality/PR_REVIEW_FIX_PLAN_2026-07-31.md`](docs/quality/PR_REVIEW_FIX_PLAN_2026-07-31.md).
+
+### Docs
+
+- Issue-tracker hygiene and PR auto-close guidance (#603, #604);
+  Home customization and insight-dismiss proposal docs (#595, #602).
+
+### Internal
+
+- Dependabot bumps for Actions (`setup-node`/`python`/`java`,
+  `docker/login-action`) and frontend devDeps (Svelte, jsdom, autoprefixer,
+  svelte-check) (#608–#616).
 
 ---
 
