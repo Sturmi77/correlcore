@@ -130,7 +130,7 @@
 <svelte:head>
   <meta
     name="description"
-    content="Privacy-first mood &amp; habit tracker — understand why some days are good and others are bad."
+    content="Privacy-first correlation analysis for your wellbeing — understand why some days are good and others are bad."
   />
 </svelte:head>
 

@@ -1503,7 +1503,7 @@
     },
     "register": {
       "title": "Konto erstellen",
-      "subtitle": "Datenschutzorientierter Stimmungs- und Gewohnheitstracker.",
+      "subtitle": "Datenschutzorientierte Korrelationsanalyse fürs Wohlbefinden.",
       "submit": "Registrieren",
       "have_account": "Schon registriert?",
       "login_link": "Hier anmelden",
@@ -1619,7 +1619,8 @@
   "landing": {
     "badge": "Selbst gehostet · v1.0",
     "hero_title": "Verstehe, warum manche Tage gut sind – und andere nicht.",
-    "hero_subtitle": "CorrelCore ist ein datenschutzfreundlicher Stimmungs- und Gewohnheits-Tracker mit Korrelationsanalyse. 60 Sekunden am Tag eintragen – die Auswertung übernimmt den Rest. Keine Gamification, niemals.",
+    "hero_subtitle": "CorrelCore ist eine datenschutzfreundliche Korrelationsanalyse fürs Wohlbefinden. 60 Sekunden am Tag eintragen – die Auswertung zeigt, welche Faktoren wirklich zusammenhängen. Keine Gamification, niemals.",
+    "hero_micro": "Spearman-, Lag- und Multivariat-Analyse – FDR-korrigiert und nach Konfidenz gestuft.",
     "cta_register": "Registrieren",
     "cta_login": "Anmelden",
     "cta_apk": "APK herunterladen",
@@ -1642,7 +1643,7 @@
       },
       "2": {
         "title": "60 Sekunden am Tag",
-        "body": "Stimmung, Energie, Stress, Tags und Symptome – schnell genug, um dranzubleiben, statt zur Pflicht zu werden."
+        "body": "Stimmung, Energie, Stress, Tags und Symptome – schnell erfasst und die Datenbasis, aus der die Auswertung ihre Zusammenhänge zieht."
       },
       "3": {
         "title": "Keine Gamification, niemals",
@@ -1719,7 +1720,7 @@
       },
       "software": {
         "heading": "Ueber die Software",
-        "body": "CorrelCore ist Open-Source-Software fuer Stimmungs- und Gewohnheitstracking. Kein Medizinprodukt. Insights dienen der persoenlichen Reflexion.\n\nRepository: github.com/Sturmi77/correlcore"
+        "body": "CorrelCore ist Open-Source-Software fuer Korrelationsanalyse zum persoenlichen Wohlbefinden. Kein Medizinprodukt. Insights dienen der persoenlichen Reflexion.\n\nRepository: github.com/Sturmi77/correlcore"
       }
     }
   }

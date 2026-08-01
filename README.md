@@ -5,8 +5,8 @@
 <h1 align="center">CorrelCore</h1>
 
 <p align="center">
-  <strong>Privacy-first mood &amp; habit tracker with correlation analysis</strong><br />
-  Understand why some days are good and others are not — selfhosted, offline-capable, 60 seconds per day.
+  <strong>Privacy-first correlation analysis for your wellbeing</strong><br />
+  Understand why some days are good and others are not — from a 60-second daily check-in. Selfhosted, offline-capable.
 </p>
 
 <p align="center">
@@ -29,7 +29,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 | **Correlations, not raw data** | The app explains why days were good or bad                                                                   |
 | **Selfhosted & offline-ready** | Your health data stays on your instance; PWA shell caching and feature-flagged Dexie sync (M4.1) are shipped |
 | **60 seconds per day**         | No more, or it simply won't get done                                                                         |
-| **No gamification, ever**      | You track your habits — not how often you open the app                                                       |
+| **No gamification, ever**      | You collect data points — not streaks, and not how often you open the app                                    |
 
 **Public selfhost line:** tag **`v1.0.0`** (2026-07-11, M10) through the `v1.0.x` patch line, then **`v1.1.0`** (weekday top signal, habit build/reduce encoding, widget fixes — includes a database migration) and **`v1.1.1`** (insight previews on the landing, tag-group heatmap clustering, Android download section, ops monitoring overlay). Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/). Release notes: [`CHANGELOG.md`](CHANGELOG.md).
 
