@@ -1503,7 +1503,7 @@
     },
     "register": {
       "title": "Create account",
-      "subtitle": "Privacy-first mood and habit tracker.",
+      "subtitle": "Privacy-first correlation analysis for your wellbeing.",
       "submit": "Sign up",
       "have_account": "Already have an account?",
       "login_link": "Sign in here",
@@ -1619,7 +1619,8 @@
   "landing": {
     "badge": "Self-hosted · v1.0",
     "hero_title": "Understand why some days are good — and others aren't.",
-    "hero_subtitle": "CorrelCore is a privacy-first mood & habit tracker with correlation analysis. Log 60 seconds a day; let the data explain the rest. No gamification, ever.",
+    "hero_subtitle": "CorrelCore is privacy-first correlation analysis for your wellbeing. Log 60 seconds a day; the analysis shows which factors actually connect — no gamification, ever.",
+    "hero_micro": "Spearman, lag and multivariate analysis — FDR-corrected and ranked by confidence.",
     "cta_register": "Create account",
     "cta_login": "Log in",
     "cta_apk": "Download APK",
@@ -1642,7 +1643,7 @@
       },
       "2": {
         "title": "60 seconds a day",
-        "body": "Mood, energy, stress, tags and symptoms — quick enough to keep doing, not another chore."
+        "body": "Mood, energy, stress, tags and symptoms — quick to log, and the data the analysis draws its correlations from."
       },
       "3": {
         "title": "No gamification, ever",
@@ -1719,7 +1720,7 @@
       },
       "software": {
         "heading": "About the software",
-        "body": "CorrelCore is open-source mood and habit tracking software. It is not a medical device. Insights are for personal reflection only.\n\nRepository: github.com/Sturmi77/correlcore"
+        "body": "CorrelCore is open-source correlation-analysis software for personal wellbeing. It is not a medical device. Insights are for personal reflection only.\n\nRepository: github.com/Sturmi77/correlcore"
       }
     }
   }

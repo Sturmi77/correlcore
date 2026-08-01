@@ -1,7 +1,7 @@
 {
   "name": "CorrelCore",
   "short_name": "CorrelCore",
-  "description": "Privacy-first mood & habit tracker",
+  "description": "Privacy-first correlation analysis for your wellbeing",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#171614",

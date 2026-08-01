@@ -85,6 +85,7 @@
       <span class="landing__badge" data-testid="landing-badge">{$_('landing.badge')}</span>
       <h1 class="landing__title">{$_('landing.hero_title')}</h1>
       <p class="landing__subtitle">{$_('landing.hero_subtitle')}</p>
+      <p class="landing__hero-micro">{$_('landing.hero_micro')}</p>
     </div>
     <div class="landing__hero-visual">
       <BrowserFrameMock>
@@ -357,6 +358,15 @@
     color: var(--color-text-muted);
     font-size: var(--text-base);
     line-height: 1.6;
+  }
+
+  .landing__hero-micro {
+    margin: 0;
+    max-width: 36rem;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    letter-spacing: 0.01em;
+    opacity: 0.85;
   }
 
   .landing__hero-visual {

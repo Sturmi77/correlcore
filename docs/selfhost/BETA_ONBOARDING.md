@@ -106,7 +106,7 @@ Subject: `CorrelCore Beta — your access`
 ```text
 Hi <name>,
 
-thanks for joining the CorrelCore closed beta (pre-release, selfhosted mood & habit tracker).
+thanks for joining the CorrelCore closed beta (pre-release, selfhosted wellbeing correlation analysis).
 
 Instance URL: https://beta.<your-domain>
 Privacy policy: https://beta.<your-domain>/privacy

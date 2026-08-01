@@ -1,7 +1,7 @@
 # CorrelCore Documentation
 
-Welcome to the public documentation for **CorrelCore** — a privacy-first mood and
-habit tracker with correlation analysis, designed for selfhosting.
+Welcome to the public documentation for **CorrelCore** — privacy-first correlation
+analysis for your wellbeing, built on a 60-second daily check-in and designed for selfhosting.
 
 ## What you'll find here
 
