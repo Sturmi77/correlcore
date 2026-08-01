@@ -11,8 +11,9 @@ Do not run a half-cutover (public web without working verify mail) if you can av
 
 > **IONOS marketing + NAS app:** If you keep the website builder on
 > `correlcore.com` and run CorrelCore on `app.correlcore.com`, follow
-> **Topology H** in the topology runbook — do **not** point the apex A-Record
-> at the NAS. This file’s default steps assume **Topology A** (full apex on NAS).
+> [`hosted-topology-h-cutover.md`](hosted-topology-h-cutover.md) — do **not**
+> point the apex A-Record at the NAS. This file’s default steps assume
+> **Topology A** (full apex on NAS).
 
 ```mermaid
 flowchart LR
@@ -29,11 +30,11 @@ flowchart LR
 
 Pick one topology before the window ([`hosted-topology-options.md`](hosted-topology-options.md)):
 
-| Topology                  | Apex `correlcore.com`         | App login            | This runbook                   |
-| ------------------------- | ----------------------------- | -------------------- | ------------------------------ |
-| **A** Full NAS            | → NAS                         | apex `/auth/login`   | Steps below                    |
-| **B** IONOS reverse proxy | DNS stays IONOS; proxy to NAS | apex                 | Adapt “Flip” to proxy enable   |
-| **H** Hybrid ★            | stays IONOS marketing         | `app.correlcore.com` | Use topology H section instead |
+| Topology                  | Apex `correlcore.com`         | App login            | This runbook                                                   |
+| ------------------------- | ----------------------------- | -------------------- | -------------------------------------------------------------- |
+| **A** Full NAS            | → NAS                         | apex `/auth/login`   | Steps below                                                    |
+| **B** IONOS reverse proxy | DNS stays IONOS; proxy to NAS | apex                 | Adapt “Flip” to proxy enable                                   |
+| **H** Hybrid ★            | stays IONOS marketing         | `app.correlcore.com` | [`hosted-topology-h-cutover.md`](hosted-topology-h-cutover.md) |
 
 ### Topology A phases (default below)
 
@@ -48,10 +49,11 @@ AAAA: only point at NAS if IPv6 edge is real; otherwise **remove** IONOS AAAA so
 
 ### Topology H reminder (if chosen)
 
-- Do **not** move apex A to the NAS.
+- Do **not** move apex A to the NAS (or move it **back** to IONOS if A is already live).
 - Add `app.correlcore.com` → NAS; ENV/`DOMAIN` = `app.correlcore.com`.
 - IONOS page CTAs → `https://app.correlcore.com/auth/login` (etc.).
-- SMTP still IONOS. Full steps: topology runbook § Topology H.
+- SMTP still IONOS. Full steps + checklist:
+  [`hosted-topology-h-cutover.md`](hosted-topology-h-cutover.md).
 
 ---
 

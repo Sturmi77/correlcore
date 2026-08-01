@@ -1,10 +1,11 @@
-# M10.2 Sprint Status — Public Hosted Launch
+﻿# M10.2 Sprint Status — Public Hosted Launch
 
-Last updated: 2026-07-26  
+Last updated: 2026-08-01  
 Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)  
 Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
-Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)
+Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)  
+Topology H cutover: [`runbooks/hosted-topology-h-cutover.md`](runbooks/hosted-topology-h-cutover.md)
 
 > **Update 2026-07-26 — Cutover erfolgt.** Der öffentliche Betrieb auf
 > `correlcore.com` ist live (Edge-/Auth-Cookie-/Nginx-Fixes #526/#527/#531/#540,
@@ -21,7 +22,7 @@ Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topolo
 | Sprint 0 — Baseline        | **Done** (repo + issues #459–#464; milestones/NAS inventory → maintainer) |
 | Sprint 1 — DNS + Nginx     | **Repo done**; live ops via combined cutover                              |
 | Sprint 2 — SMTP            | **Repo done** (SMTP + cutover runbooks); live ops same window as S1       |
-| Topology decision (A/B/H)  | **Pending maintainer**                                                    |
+| Topology decision (A/B/H)  | **H live** (`app.correlcore.com` + IONOS apex marketing)                  |
 | Sprint 3 — Landing / Legal | **Landing live**; Legal-Content + Domain-Doku offen (#462)                |
 | Sprint 4 — APK             | **APK-CTA done** (#463); Signing-Ops (#429) separat                       |
 | Sprint 5 — Closeout        | Pending — `nas-to-vps.md` (#464) + Milestone-Close                        |
@@ -29,10 +30,11 @@ Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topolo
 
 **Maintainer next step:**
 
-1. Choose topology in [`runbooks/hosted-topology-options.md`](runbooks/hosted-topology-options.md)
-   (IONOS marketing stays → **H** / `app.correlcore.com`).
-2. Execute matching cutover ([`hosted-cutover.md`](runbooks/hosted-cutover.md) or Topology H section).
-
+Topology **H** is live (FRONTEND_BASE_URL=https://app.correlcore.com; register/verify E2E green).
+Remaining open: #461 (SMTP/Mailpit verify), #462 (legal/domain docs), #464 (
+as-to-vps.md).
+Runbook: [
+unbooks/hosted-topology-h-cutover.md](runbooks/hosted-topology-h-cutover.md).
 ---
 
 ## Binding decisions (Sprint 0 + topology)
@@ -40,7 +42,7 @@ Topology options: [`runbooks/hosted-topology-options.md`](runbooks/hosted-topolo
 | Decision                     | Binding answer                                                         |
 | ---------------------------- | ---------------------------------------------------------------------- |
 | Public domain                | **`correlcore.com`** (doc sync `.app`→`.com` in Sprint 3)              |
-| Hosted topology              | **Pending:** A / B / **H** (IONOS marketing + `app.` on NAS)           |
+| Hosted topology              | **H** — IONOS marketing on apex + app on `app.correlcore.com`          |
 | Launch edge on NAS           | **Host-Nginx** for app origin; no Traefik parallel                     |
 | Traefik on Hosted NAS        | **Do not enable** while Nginx terminates TLS                           |
 | Mailpit on Hosted            | Until SMTP E2E → then **remove**. Quickstart keeps Mailpit             |

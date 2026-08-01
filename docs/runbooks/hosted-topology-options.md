@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-19  
 **Milestone:** M10.2  
-**Related:** [`hosted-cutover.md`](hosted-cutover.md) · [`hosted-nginx-edge.md`](hosted-nginx-edge.md) · [`hosted-smtp.md`](hosted-smtp.md)  
+**Related:** [`hosted-cutover.md`](hosted-cutover.md) · [`hosted-topology-h-cutover.md`](hosted-topology-h-cutover.md) · [`hosted-nginx-edge.md`](hosted-nginx-edge.md) · [`hosted-smtp.md`](hosted-smtp.md)  
 **Auth constraint:** [ADR-0011](../adr/0011-web-internal-reverse-proxy.md) — browser talks **same-origin** `/api/v1`; web container proxies to API.  
 **Edge contract:** [ADR-0040](../adr/0040-selfhost-auth-edge-passthrough.md) — the edge does one-rule passthrough (all paths → web, `X-Forwarded-Proto: https`, `Set-Cookie` untouched). Whatever topology you pick, run `scripts/verify-auth-cookie.sh` after cutover.
 
@@ -225,14 +225,19 @@ VITE_API_BASE_URL=https://app.correlcore.com/api/v1
 
 ### Combined cutover for Topology H
 
-1. **Prep NAS** for `app.correlcore.com` (Nginx + ENV + SMTP) — no apex change.
-2. **Create DNS** `app` → NAS (or proxy); get TLS on `app`.
-3. **Smoke** `https://app.correlcore.com/` + register/verify (IONOS SMTP).
-4. **Remove Hosted Mailpit**.
-5. **Point IONOS marketing CTAs** at `app.correlcore.com`.
-6. Apex `correlcore.com` can stay on IONOS indefinitely for marketing.
+**Operator checklist (A→H or greenfield):**  
+[`hosted-topology-h-cutover.md`](hosted-topology-h-cutover.md)
 
-Rollback: delete/change only `app` DNS; apex marketing untouched.
+Summary:
+
+1. **Prep NAS** for `app.correlcore.com` (Nginx + TLS) — apex can stay on NAS until flip.
+2. **Create DNS** `app` → NAS (or proxy); parallel smoke on `app.`.
+3. **Flip:** ENV → `app.` + apex A/AAAA **back to IONOS** marketing.
+4. **Point IONOS marketing CTAs** at `app.correlcore.com`.
+5. **Prove** register/verify (IONOS SMTP) + `verify-auth-cookie.sh`.
+6. Apex stays on IONOS indefinitely for marketing.
+
+Rollback: restore ENV/apex DNS per the H cutover runbook; marketing apex untouched once Phase 3b is done.
 
 ---
 
@@ -255,4 +260,5 @@ Rollback: delete/change only `app` DNS; apex marketing untouched.
 If the parallel IONOS landing should remain the public marketing face: choose **Topology H**.  
 If you want a single brand URL with login on the apex: choose **A** or **B** and retire the IONOS builder for `/`.
 
-Document the choice in [`../M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md) binding decisions before the live window.
+Document the choice in [`../M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](../M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md) binding decisions before the live window.  
+Execute with [`hosted-topology-h-cutover.md`](hosted-topology-h-cutover.md).
