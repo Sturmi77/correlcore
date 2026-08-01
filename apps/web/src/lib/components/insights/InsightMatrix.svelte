@@ -299,7 +299,7 @@
     }
 
     .insight-matrix__row--head {
-      font-size: 0.65rem;
+      font-size: var(--text-2xs);
       letter-spacing: 0.02em;
     }
 
