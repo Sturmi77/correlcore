@@ -1,6 +1,6 @@
 # M10.2 Backlog — Public Hosted Launch
 
-Last updated: 2026-07-26  
+Last updated: 2026-08-01  
 **Plan:** [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 **Status:** [`M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md`](M10_2_PUBLIC_HOSTED_LAUNCH_STATUS.md)  
 **Combined cutover:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
@@ -8,7 +8,7 @@ Last updated: 2026-07-26
 
 > **Update 2026-07-26 — Cutover erfolgt.** Betrieb auf `correlcore.com` ist live.
 > Verbleibende Arbeit + Reihenfolge: [`proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md`](proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md).
-> Offen: #461 (SMTP/Mailpit), #462 (Legal/Domain-Doku), #464 (`nas-to-vps.md`).
+> Offen: #621 (launch closeout leftovers; supersedes #459/#461/#462/#464).
 
 Single backlog for remaining Hosted-launch work. Do not duplicate these items into
 ad-hoc checklists elsewhere — update this file + STATUS when items move.
@@ -48,7 +48,7 @@ NAS runs `app.correlcore.com`. Avoid public web without working SMTP if possible
 
 ## Sprint 2 — SMTP
 
-**Issue:** #461 · **Runbook:** [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md)  
+**Issue:** #621 (was #461) · **Runbook:** [`runbooks/hosted-smtp.md`](runbooks/hosted-smtp.md)  
 **Execute with Sprint 1 live steps via:** [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)
 
 | ID    | Item                                                 | Tag    | Notes                               |
@@ -64,7 +64,7 @@ NAS runs `app.correlcore.com`. Avoid public web without working SMTP if possible
 
 ## Sprint 3 — Landing / Legal / domain docs
 
-**Issue:** #462
+**Issue:** #621 (was #462)
 
 | ID    | Item                                                  | Tag          | Notes                            |
 | ----- | ----------------------------------------------------- | ------------ | -------------------------------- |
@@ -91,7 +91,7 @@ NAS runs `app.correlcore.com`. Avoid public web without working SMTP if possible
 
 ## Sprint 5 — Closeout / VPS-ready
 
-**Issue:** #464
+**Issue:** #621 (was #464)
 
 | ID    | Item                                           | Tag    | Notes                               |
 | ----- | ---------------------------------------------- | ------ | ----------------------------------- |
@@ -116,9 +116,9 @@ NAS runs `app.correlcore.com`. Avoid public web without working SMTP if possible
 
 ## Parallel / reuse (do not re-file)
 
-| Issue | Topic                                               |
-| ----- | --------------------------------------------------- |
-| #429  | Android signing + first APK                         |
-| #450  | APK links in release notes only if asset exists     |
-| #453  | Persistent session (“Angemeldet bleiben”)           |
-| #459  | Sprint 0 docs (repo done; milestone attach pending) |
+| Issue | Topic                                                 |
+| ----- | ----------------------------------------------------- |
+| #429  | Android signing + first APK                           |
+| #450  | APK links in release notes only if asset exists       |
+| #453  | Persistent session (“Angemeldet bleiben”)             |
+| #459  | Sprint 0 docs — **closed**; remaining hygiene on #621 |

@@ -1,6 +1,6 @@
 # M10.2 Sprint Status — Public Hosted Launch
 
-Last updated: 2026-08-01  
+Last updated: 2026-08-01 (#621 leftovers)  
 Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
 Backlog: [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md)  
 Combined cutover: [`runbooks/hosted-cutover.md`](runbooks/hosted-cutover.md)  
@@ -11,9 +11,8 @@ Topology H cutover: [`runbooks/hosted-topology-h-cutover.md`](runbooks/hosted-to
 > `correlcore.com` ist live (Edge-/Auth-Cookie-/Nginx-Fixes #526/#527/#531/#540,
 > Landing #510/#512). Verbleibende Punkte, Entscheidungen und Reihenfolge stehen
 > gebündelt in [`proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md`](proposals/M102_ALTLASTEN_ONBOARDING_PLAN.md).
-> Noch offen: #461 (SMTP/Mailpit verifizieren + aus Hosted entfernen), #462
-> (Hosted-Impressum/Legal + Domain-Doku-Sync), #464 (`nas-to-vps.md`). #463
-> (Landing APK-CTA) ist erledigt.
+> Remaining launch leftovers consolidated in #621 (supersedes #459/#461/#462/#464).
+> #463 (Landing APK-CTA) is done.
 
 ## Overall
 
@@ -23,15 +22,15 @@ Topology H cutover: [`runbooks/hosted-topology-h-cutover.md`](runbooks/hosted-to
 | Sprint 1 — DNS + Nginx     | **Repo done**; live ops via combined cutover                              |
 | Sprint 2 — SMTP            | **Repo done** (SMTP + cutover runbooks); live ops same window as S1       |
 | Topology decision (A/B/H)  | **H live** (`app.correlcore.com` + IONOS apex marketing)                  |
-| Sprint 3 — Landing / Legal | **Landing live**; Legal-Content + Domain-Doku offen (#462)                |
+| Sprint 3 — Landing / Legal | **Landing live**; Legal leftovers → #621                                  |
 | Sprint 4 — APK             | **APK-CTA done** (#463); Signing-Ops (#429) separat                       |
-| Sprint 5 — Closeout        | Pending — `nas-to-vps.md` (#464) + Milestone-Close                        |
-| Exit criteria              | **Teilweise erfüllt** — Cutover live; offen: #461/#462/#464               |
+| Sprint 5 — Closeout        | Pending — leftovers on #621 (`nas-to-vps.md` + milestone close)           |
+| Exit criteria              | **Teilweise erfüllt** — Cutover live; offen: #621                         |
 
 **Maintainer next step:**
 
 Topology **H** is live (`FRONTEND_BASE_URL=https://app.correlcore.com`; register/verify E2E green).
-Remaining open: #461 (SMTP/Mailpit verify), #462 (legal/domain docs), #464 (`nas-to-vps.md`).
+Remaining open: #621 (M10.2 launch closeout leftovers; supersedes #459/#461/#462/#464).
 Runbook: [`runbooks/hosted-topology-h-cutover.md`](runbooks/hosted-topology-h-cutover.md).
 ---
 
@@ -134,11 +133,11 @@ See [`M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG
 
 | Sprint | Issue                  |
 | ------ | ---------------------- |
-| 0      | #459                   |
+| 0      | #459 (closed → #621)   |
 | 1      | #460                   |
-| 2      | #461                   |
-| 3      | #462                   |
+| 2      | #461 (closed → #621)   |
+| 3      | #462 (closed → #621)   |
 | 4      | #463 (blocked by #429) |
-| 5      | #464                   |
+| 5      | #464 (closed → #621)   |
 
 Reuse #429 / #450 / #453 — do not file duplicates.
