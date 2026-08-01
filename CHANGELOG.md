@@ -265,6 +265,10 @@ new API/web images.
   after `DELETE …/cycle-data`, local hydrate skipped `shouldPreferLocalEntry`
   and overwrote unsynced mood/note/energy from stale server rows. Pending
   locals now keep scalars and only clear cycle fields.
+- **Home weekday strip hides auto-assigned weekend context** — `weekend`
+  remains visible in Arbeitssituation-Muster, but is excluded from
+  „Deine Woche auf einen Blick“ top signals (and from dashboard
+  `top_signal` candidates) so real tags can surface on Sat/Sun.
 - **Consolidated Codex P1/P2 review follow-ups** (#607) — lag-profile
   backfill RLS/`as_of`, Home sections load gate + a11y, cycle delete offline
   scrub, Compare cluster focus, deploy-verify ancestry check. Inventory:
