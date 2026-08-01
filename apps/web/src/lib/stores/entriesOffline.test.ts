@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntryResponse } from '$lib/api/entries';
 import { listEntries } from '$lib/api/entries';
 import { resetOfflineDbForTests } from '$lib/offline/db';
+import { listPendingChanges } from '$lib/offline/changeLog';
 import {
   applyPulledEntry,
   findLocalEntryByDateSlot,
@@ -269,7 +270,7 @@ describe('entriesOffline', () => {
       cycle_day: 12,
       cycle_bleeding_level: 'medium',
       work_context: 'office',
-      note: '',
+      note: 'keep me',
       selectedTagIds: [],
       selectedSymptoms: [],
     });
@@ -277,6 +278,10 @@ describe('entriesOffline', () => {
     vi.mocked(listEntries).mockResolvedValue([
       {
         ...apiEntry(saved.entryId),
+        mood_score: 1,
+        energy: 1,
+        stress: 5,
+        note: 'stale server',
         cycle_day: null,
         cycle_bleeding_level: null,
       },
@@ -288,5 +293,93 @@ describe('entriesOffline', () => {
     const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
     expect(local?.cycle_day).toBeNull();
     expect(local?.cycle_bleeding_level ?? null).toBeNull();
+    // Pending local body fields must survive the post-delete server hydrate.
+    expect(local?.mood_score).toBe(3);
+    expect(local?.energy).toBe(3);
+    expect(local?.stress).toBe(3);
+    expect(local?.note).toBe('keep me');
+    expect(local?.sync_state).toBe('pending');
+
+    const pending = await listPendingChanges();
+    const upsert = pending.find((row) => row.entity_id === saved.entryId);
+    expect(upsert?.payload).toMatchObject({
+      mood_score: 3,
+      note: 'keep me',
+      cycle_day: null,
+      cycle_bleeding_level: null,
+    });
+  });
+
+  it('does not clobber pending non-cycle edits when clearing cycle data', async () => {
+    const saved = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 5,
+      energy: 4,
+      stress: 1,
+      slot: 'day',
+      cycle_day: null,
+      work_context: 'homeoffice',
+      note: 'pending note',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    // A different local row still has SHD so clearCycleDataOffline runs the
+    // online server hydrate path (which previously overwrote *all* locals).
+    await applyPulledEntry(
+      'other-entry',
+      {
+        entry_date: '2026-07-12',
+        slot: 'day',
+        mood_score: 2,
+        energy: 2,
+        stress: 2,
+        cycle_day: 8,
+        cycle_bleeding_level: 'light',
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-12T08:00:00.000Z',
+      'synced'
+    );
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        mood_score: 1,
+        energy: 1,
+        stress: 5,
+        work_context: 'office',
+        note: 'stale server',
+        cycle_day: null,
+        cycle_bleeding_level: null,
+      },
+      {
+        ...apiEntry('other-entry'),
+        entry_date: '2026-07-12',
+        mood_score: 2,
+        energy: 2,
+        stress: 2,
+        cycle_day: null,
+        cycle_bleeding_level: null,
+        note: null,
+        updated_at: '2026-07-12T09:00:00.000Z',
+      },
+    ]);
+
+    const cleared = await clearCycleDataOffline();
+    expect(cleared).toBe(1);
+
+    const pendingLocal = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(pendingLocal?.mood_score).toBe(5);
+    expect(pendingLocal?.note).toBe('pending note');
+    expect(pendingLocal?.work_context).toBe('homeoffice');
+    expect(pendingLocal?.sync_state).toBe('pending');
+
+    const syncedOther = await findLocalEntryByDateSlot('2026-07-12', 'day');
+    expect(syncedOther?.cycle_day).toBeNull();
+    expect(syncedOther?.cycle_bleeding_level ?? null).toBeNull();
   });
 });
