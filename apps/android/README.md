@@ -9,7 +9,7 @@ TWA/Bubblewrap is not used.
 
 - Node.js 22+ and pnpm 11+ (monorepo root)
 - JDK 21
-- Android Studio **or** Android SDK 35 + build-tools (only for device/APK builds)
+- Android Studio **or** Android SDK 36 + build-tools (only for device/APK builds)
 - Python 3 + Pillow (optional — regenerate launcher/splash from `apps/web/static/icons/`)
 
 The Capacitor `webDir` is `../web/build-capacitor` — a static SPA produced with
@@ -35,7 +35,7 @@ pnpm cap:sync          # build:capacitor + cap sync android
 pnpm cap:open          # opens Android Studio
 ```
 
-USB debug install from Android Studio: Run ▶ on a device/emulator (API 31+ recommended; `minSdk` 23).
+USB debug install from Android Studio: Run ▶ on a device/emulator (API 31+ recommended; `minSdk` 24).
 
 CLI debug APK (SDK required):
 

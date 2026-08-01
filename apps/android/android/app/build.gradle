@@ -36,8 +36,8 @@ android {
     namespace "de.correlcore.app"
     compileSdk rootProject.ext.compileSdkVersion
 
-    // API-level gate only. minSdk is 23 with no core-library desugaring, so
-    // java.time (ZoneId, LocalDate, …) throws NoClassDefFoundError on API 23-25
+    // API-level gate only. minSdk is 24 with no core-library desugaring, so
+    // java.time (ZoneId, LocalDate, …) throws NoClassDefFoundError on API 24-25
     // — an Error the app's catch(Exception) blocks miss, killing the thread
     // silently (this shipped once as a dead widget, #445). checkOnly scopes lint
     // to just these checks so pre-existing unrelated warnings don't fail the build.

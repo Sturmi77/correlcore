@@ -43,11 +43,8 @@ if (!/allowMixedContent:\s*true/.test(configText)) {
     'capacitor.config.ts must set allowMixedContent: true — https://localhost WebView otherwise blocks http:// API fetches (mixed content)'
   );
 }
-if (!configText.includes("adjustMarginsForEdgeToEdge: 'disable'")) {
-  throw new Error(
-    'capacitor.config.ts must disable edge-to-edge margins (CSS safe-area owns status-bar inset)'
-  );
-}
+// Cap 8 removed android.adjustMarginsForEdgeToEdge; safe-area is CSS-owned
+// (apps/web app.css). Do not reintroduce the Cap-7-only config key.
 
 const manifest = await readFile(resolve(root, 'android/app/src/main/AndroidManifest.xml'), 'utf8');
 if (!manifest.includes('android:scheme="correlcore"')) {
@@ -81,8 +78,8 @@ const pushVersion = pkg.dependencies?.['@capacitor/push-notifications'];
 if (!pushVersion) {
   throw new Error('@capacitor/push-notifications must be listed in dependencies');
 }
-if (!String(pushVersion).startsWith('7.')) {
-  throw new Error(`@capacitor/push-notifications must be Capacitor 7.x (got ${pushVersion})`);
+if (!String(pushVersion).startsWith('8.')) {
+  throw new Error(`@capacitor/push-notifications must be Capacitor 8.x (got ${pushVersion})`);
 }
 if (!manifest.includes('POST_NOTIFICATIONS')) {
   throw new Error('AndroidManifest must declare POST_NOTIFICATIONS for FCM');
