@@ -1,4 +1,4 @@
-﻿# M10.2 Sprint Status — Public Hosted Launch
+# M10.2 Sprint Status — Public Hosted Launch
 
 Last updated: 2026-08-01  
 Plan: [`M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md)  
@@ -30,11 +30,9 @@ Topology H cutover: [`runbooks/hosted-topology-h-cutover.md`](runbooks/hosted-to
 
 **Maintainer next step:**
 
-Topology **H** is live (FRONTEND_BASE_URL=https://app.correlcore.com; register/verify E2E green).
-Remaining open: #461 (SMTP/Mailpit verify), #462 (legal/domain docs), #464 (
-as-to-vps.md).
-Runbook: [
-unbooks/hosted-topology-h-cutover.md](runbooks/hosted-topology-h-cutover.md).
+Topology **H** is live (`FRONTEND_BASE_URL=https://app.correlcore.com`; register/verify E2E green).
+Remaining open: #461 (SMTP/Mailpit verify), #462 (legal/domain docs), #464 (`nas-to-vps.md`).
+Runbook: [`runbooks/hosted-topology-h-cutover.md`](runbooks/hosted-topology-h-cutover.md).
 ---
 
 ## Binding decisions (Sprint 0 + topology)
