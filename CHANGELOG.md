@@ -209,6 +209,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.8] — 2026-08-01
+
+Patch for CI style-token guardrail. No new migrations; upgrade is a plain image pull from 1.1.7.
+
+### Fixed
+
+- **Insight matrix mobile header** uses `--text-2xs` instead of hardcoded `0.65rem` so `pnpm check:style-tokens` / CI Style token guardrail passes.
+
+---
+
 ## [1.1.7] — 2026-08-01
 
 Mobile UX polish on top of 1.1.6. No new migrations.
