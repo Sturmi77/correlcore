@@ -19,10 +19,8 @@ const config: CapacitorConfig = {
     // blocks that as mixed content unless this is true — cleartext alone
     // is not enough (Tailscale "works in other apps" is expected).
     allowMixedContent: true,
-    // Status-bar inset is handled in web CSS (`--page-padding-top` /
-    // `safe-area-inset-top`). Keep Capacitor margins disabled to avoid
-    // double padding on Android 15 edge-to-edge.
-    adjustMarginsForEdgeToEdge: 'disable',
+    // Cap 8 removed adjustMarginsForEdgeToEdge; insets come from CSS
+    // env(safe-area-inset-*) / System Bars (see apps/web app.css page-shell).
   },
   server: {
     // url: 'http://localhost:5173',

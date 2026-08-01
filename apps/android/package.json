@@ -14,12 +14,12 @@
     "assemble:release": "cd android && ./gradlew assembleRelease bundleRelease"
   },
   "dependencies": {
-    "@capacitor/app": "7.1.2",
-    "@capacitor/push-notifications": "7.0.3"
+    "@capacitor/app": "8.1.1",
+    "@capacitor/push-notifications": "8.1.2"
   },
   "devDependencies": {
-    "@capacitor/android": "7.6.7",
-    "@capacitor/cli": "7.6.7",
-    "@capacitor/core": "7.6.7"
+    "@capacitor/android": "8.5.0",
+    "@capacitor/cli": "8.5.0",
+    "@capacitor/core": "8.5.0"
   }
 }

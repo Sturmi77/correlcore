@@ -24,9 +24,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@capacitor/app": "7.1.2",
-    "@capacitor/core": "7.6.7",
-    "@capacitor/push-notifications": "7.0.3",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.0",
+    "@capacitor/push-notifications": "8.1.2",
     "@sentry/browser": "^10.68.0",
     "@sentry/node": "^10.68.0",
     "dexie": "^4.4.4",
