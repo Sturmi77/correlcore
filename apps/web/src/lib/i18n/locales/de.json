@@ -1620,7 +1620,7 @@
     "badge": "Selbst gehostet · v1.0",
     "hero_title": "Verstehe, warum manche Tage gut sind – und andere nicht.",
     "hero_subtitle": "CorrelCore ist eine datenschutzfreundliche Korrelationsanalyse fürs Wohlbefinden. 60 Sekunden am Tag eintragen – die Auswertung zeigt, welche Faktoren wirklich zusammenhängen. Keine Gamification, niemals.",
-    "hero_micro": "Spearman-, Lag- und Multivariat-Analyse – FDR-korrigiert und nach Konfidenz gestuft.",
+    "hero_micro": "Spearman- und Lag-Analyse (FDR-korrigiert) plus kreuzvalidierte Multivariat-Modelle – nach Konfidenz gestuft.",
     "cta_register": "Registrieren",
     "cta_login": "Anmelden",
     "cta_apk": "APK herunterladen",
