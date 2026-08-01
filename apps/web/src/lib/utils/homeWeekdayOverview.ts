@@ -133,8 +133,16 @@ export function buildWeekdayOverviewCells(
   }
 
   // Top signals only fill days a confounder did not claim (#487).
+  // Calendar-derived `weekend` crowds out real tags on Sat/Sun — skip it so
+  // the finding slot stays empty (or shows a non-weekend signal from the API).
   const topSignalByDay = new Map(
-    weekdaySummary.filter((item) => item.top_signal).map((item) => [item.weekday, item.top_signal!])
+    weekdaySummary
+      .filter((item) => item.top_signal)
+      .filter(
+        (item) =>
+          !(item.top_signal!.kind === 'work_context' && item.top_signal!.label === 'weekend')
+      )
+      .map((item) => [item.weekday, item.top_signal!])
   );
 
   return WEEKDAY_KEYS.map((weekday, weekdayIndex) => {

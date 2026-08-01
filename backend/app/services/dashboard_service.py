@@ -187,6 +187,10 @@ async def _weekday_top_signals(
         )
     for weekday, work_context, count in context_rows:
         label = work_context.value if hasattr(work_context, "value") else str(work_context)
+        # Auto-assigned calendar context — not a meaningful "top signal" on Home
+        # weekday overview (crowds out tags on Sat/Sun). Insights keep weekend.
+        if label == "weekend":
+            continue
         per_weekday.setdefault(int(weekday), []).append(
             ("work_context", None, label, int(count or 0))
         )

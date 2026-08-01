@@ -217,4 +217,27 @@ describe('top signal vs confounder precedence (#487)', () => {
     const tag = buildWeekdayOverviewCells([], [summary(0, 'Meeting')]);
     expect(tag[0].findingLabelKey).toBeNull();
   });
+
+  it('hides calendar-derived weekend work_context top signals on the weekday strip', () => {
+    const cells = buildWeekdayOverviewCells(
+      [],
+      [
+        {
+          weekday: 5,
+          entry_count: 8,
+          mood_avg: 3.2,
+          top_signal: { kind: 'work_context', id: null, label: 'weekend', count: 8, share: 1 },
+        },
+        {
+          weekday: 6,
+          entry_count: 7,
+          mood_avg: 3.5,
+          top_signal: { kind: 'tag', id: 't1', label: 'Family', count: 4, share: 0.57 },
+        },
+      ]
+    );
+    expect(cells[5].findingLabel).toBeNull();
+    expect(cells[5].findingSource).toBeNull();
+    expect(cells[6].findingLabel).toBe('Family');
+  });
 });
