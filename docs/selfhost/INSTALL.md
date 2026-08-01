@@ -524,7 +524,7 @@ Pin images for reproducible deploys:
 
 ```env
 IMAGE_REGISTRY=ghcr.io/sturmi77   # or docker.io/<username> for Docker Hub
-IMAGE_TAG=v1.1.1                  # any v1.x pin works; or sha-<short> from GHCR / Docker Hub
+IMAGE_TAG=v1.1.7                  # any v1.x pin works; or sha-<short> from GHCR / Docker Hub
 ```
 
 See [`CONTAINER_IMAGES.md`](CONTAINER_IMAGES.md) for registry and tag details.

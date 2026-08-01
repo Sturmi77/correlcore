@@ -29,7 +29,7 @@ Updates: open the same Releases page again and install the newer APK
 
 > **v1.0.0 note:** The first public tag was a selfhost/Docker release and does
 > **not** include an Android APK. Signed sideload APKs are available from **`v1.0.1`**
-> onward; prefer the latest **`v1.x`** release (e.g. **`v1.1.1`**).
+> onward; prefer the latest **`v1.x`** release (e.g. **`v1.1.7`**).
 
 ### Option B — Obtainium (auto-updates)
 
@@ -85,7 +85,7 @@ export ANDROID_KEYSTORE_PATH=/absolute/path/to/correlcore-upload.keystore
 export ANDROID_KEYSTORE_PASSWORD=...
 export ANDROID_KEY_ALIAS=correlcore
 export ANDROID_KEY_PASSWORD=...
-export ANDROID_VERSION_NAME=1.1.1
+export ANDROID_VERSION_NAME=1.1.7
 export ANDROID_VERSION_CODE=1000008
 pnpm cap:assemble:release
 # → apps/android/android/app/build/outputs/apk/release/app-release.apk
@@ -96,8 +96,8 @@ Or use `apps/android/android/keystore.properties` from
 [`apps/android/keystore.properties.example`](../../apps/android/keystore.properties.example).
 
 **CI version encoding:** on `v*` tags, [`release-android.yml`](../../.github/workflows/release-android.yml)
-strips the leading `v` for `versionName` (e.g. `v1.1.1` → `1.1.1`) and sets
-`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.1.1` → `1001001`).
+strips the leading `v` for `versionName` (e.g. `v1.1.7` → `1.1.7`) and sets
+`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.1.7` → `1001007`).
 Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / run number.
 
 ### CI
@@ -113,7 +113,7 @@ Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / r
   The build is checked out **from that tag**, so backfilled binaries always match
   the release they are attached to.
 
-Tag example: `git tag v1.1.1 && git push origin v1.1.1`.
+Tag example: `git tag v1.1.7 && git push origin v1.1.7`.
 
 The **Download APK** block is written only by the Android workflow, and only
 after it has verified the APK is attached to the release. A tag built without

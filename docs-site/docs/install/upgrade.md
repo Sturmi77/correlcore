@@ -5,20 +5,20 @@ Last updated: 2026-07-19
 ## Post-1.0.x image upgrades (current)
 
 Selfhost operators on the **1.0.x** line should pin `IMAGE_TAG` to the latest
-release they trust (e.g. **`v1.1.1`**; any **`v1.x`** pin works), then pull and
+release they trust (e.g. **`v1.1.7`**; any **`v1.x`** pin works), then pull and
 restart:
 
 ```bash
 cd correlcore/infra/docker
 
-# Set in .env, e.g. IMAGE_TAG=v1.1.1
+# Set in .env, e.g. IMAGE_TAG=v1.1.7
 grep IMAGE_TAG .env
 
 docker compose pull
 docker compose up -d
 ```
 
-Optional: also set `APP_VERSION=1.1.1` so `/api/v1/health` and error-tracking
+Optional: also set `APP_VERSION=1.1.7` so `/api/v1/health` and error-tracking
 release labels match the image. Leaving an older `APP_VERSION` in a retained
 `.env` does not block the upgrade.
 

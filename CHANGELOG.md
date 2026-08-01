@@ -225,6 +225,10 @@ Mobile UX polish on top of 1.1.6. No new migrations.
   below 767px, cap effect bars relatively, and hide the metric column under
   480px so the matrix no longer forces horizontal page scroll.
 
+### Docs
+
+- **Topology H cutover runbook** for `app.correlcore.com` (plus STATUS/launch leftover pointers).
+
 ---
 
 ## [1.1.6] — 2026-08-01
