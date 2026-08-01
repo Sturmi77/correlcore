@@ -177,7 +177,10 @@
           <span role="cell">{row.subject_label ?? '-'}</span>
           <span role="cell">{row.metric}</span>
           <span role="cell" class="insight-matrix__effect">
-            <span style={`width: ${Math.max(10, Math.abs(effect) * 120)}px`}></span>
+            <span
+              class="insight-matrix__effect-bar"
+              style={`--effect: ${Math.min(1, Math.abs(effect))}`}
+            ></span>
             {effect.toFixed(2)}
           </span>
           <span role="cell">{percent(row.confidence)}</span>
@@ -230,17 +233,24 @@
     overflow-x: auto;
     border: 1px solid var(--color-border-chart);
     border-radius: var(--radius-md);
+    /* Prevent the fixed row min-width from widening the page shell. */
+    max-width: 100%;
   }
 
   .insight-matrix__row {
     min-width: 42rem;
     display: grid;
-    grid-template-columns: 1.4fr 1fr 1.1fr 0.8fr;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.8fr);
     gap: 0.75rem;
     align-items: center;
     padding: 0.6rem 0.75rem;
     border-top: 1px solid var(--color-border-chart);
     font-size: var(--text-sm);
+  }
+
+  .insight-matrix__row > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .insight-matrix__row--head {
@@ -255,21 +265,53 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-width: 0;
   }
 
-  .insight-matrix__effect span {
+  .insight-matrix__effect-bar {
     display: inline-block;
+    flex: 0 1 auto;
+    width: calc(var(--effect, 0) * 7.5rem);
+    max-width: 45%;
+    min-width: 0.4rem;
     height: 0.55rem;
     border-radius: var(--radius-full);
     background: var(--color-text-muted);
   }
 
-  .insight-matrix__row[data-tone='positive'] .insight-matrix__effect span {
+  .insight-matrix__row[data-tone='positive'] .insight-matrix__effect-bar {
     background: var(--color-success);
   }
 
-  .insight-matrix__row[data-tone='negative'] .insight-matrix__effect span {
+  .insight-matrix__row[data-tone='negative'] .insight-matrix__effect-bar {
     background: var(--color-error);
+  }
+
+  @media (max-width: 767px) {
+    /* Drop the desktop 42rem floor so four columns fit portrait without
+       forcing page-level horizontal scroll (same idea as --preview). */
+    .insight-matrix__row {
+      min-width: 0;
+      gap: 0.4rem;
+      padding: 0.5rem 0.6rem;
+      font-size: var(--text-xs);
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.85fr) minmax(0, 1.15fr) minmax(0, 0.7fr);
+    }
+
+    .insight-matrix__row--head {
+      font-size: 0.65rem;
+      letter-spacing: 0.02em;
+    }
+
+    .insight-matrix__effect {
+      gap: 0.35rem;
+    }
+
+    .insight-matrix__effect-bar {
+      width: calc(var(--effect, 0) * 4.5rem);
+      max-width: 40%;
+      height: 0.45rem;
+    }
   }
 
   @media (max-width: 480px) {
@@ -277,6 +319,15 @@
     .insight-matrix__actions {
       flex-direction: column;
       align-items: stretch;
+    }
+
+    /* Metric labels are secondary on narrow phones — keep subject + effect. */
+    .insight-matrix__row {
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 0.75fr);
+    }
+
+    .insight-matrix__row > span:nth-child(2) {
+      display: none;
     }
   }
 

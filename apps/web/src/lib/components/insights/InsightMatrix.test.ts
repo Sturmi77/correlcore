@@ -145,4 +145,17 @@ describe('InsightMatrix', () => {
     expect(rows[2].textContent).toContain('Walk');
     expect(rows[3].textContent).toContain('Focus');
   });
+
+  it('uses a relative effect bar and drops the wide min-width on mobile CSS', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const source = readFileSync(
+      resolve('src/lib/components/insights/InsightMatrix.svelte'),
+      'utf8'
+    );
+    expect(source).toContain('insight-matrix__effect-bar');
+    expect(source).toContain('--effect:');
+    expect(source).toContain('@media (max-width: 767px)');
+    expect(source).toMatch(/@media \(max-width: 767px\)[\s\S]*min-width:\s*0/);
+  });
 });
