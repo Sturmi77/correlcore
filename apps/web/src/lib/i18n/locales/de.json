@@ -455,7 +455,9 @@
     "metric": {
       "mood": "Stimmung",
       "energy": "Energie",
-      "stress": "Stress"
+      "stress": "Stress",
+      "sleep_minutes": "Schlafdauer",
+      "sleep_quality": "Schlafqualität"
     },
     "smoothing": {
       "label": "Trend-Glaettung",
@@ -550,7 +552,12 @@
     "esm": {
       "eyebrow": "Ereignis-Ausrichtung",
       "title": "Tage rund um jeden Onset",
-      "body": "Jede Zeile zeigt die Tage rund um ein Ereignis — so werden gemeinsame Muster sichtbar.",
+      "body": "Jede Zeile richtet dasselbe Zeitfenster um ein Ereignis aus (T0 = Onset), damit Muster in {metric} vergleichbar werden. Das zeigt einen Zusammenhang in deinen Einträgen — keine Ursache und keine medizinische Diagnose.",
+      "metric_label": "Metrik: {metric}",
+      "axis_caption": "Tage relativ zum Ereignis (T0 = Onset)",
+      "legend_worse": "Schlechter",
+      "legend_better": "Besser",
+      "legend_aria": "Farbskala für {metric}",
       "aria": "Ereignis-ausgerichtete Klein-Multiples",
       "close_aria": "Ereignis-Ansicht schliessen",
       "empty": "Noch keine Ereignisse fuer diesen Insight verfuegbar.",
@@ -711,7 +718,8 @@
         "revoke_action": "Einwilligung widerrufen",
         "granted_at": "Einwilligung erteilt am {timestamp}.",
         "error": "Health-Connect-Einwilligung konnte nicht aktualisiert werden.",
-        "deferred_note": "Import ist noch nicht verfuegbar. Die Einwilligung speichert nur deine Praeferenz fuer den kommenden Android-Pfad."
+        "deferred_note": "Der Import laeuft in der CorrelCore-Android-App. Erteile hier die Einwilligung und oeffne dann die Health-Connect-Synchronisierung, um dein Geraet zu verbinden und Schlaf zu importieren.",
+        "manage_action": "Health-Connect-Synchronisierung oeffnen"
       }
     },
     "appearance": {
@@ -1634,7 +1642,9 @@
       "ok": "Schlaf-Synchronisierung abgeschlossen.",
       "no_consent": "Erteile zuerst die Health-Connect-Einwilligung.",
       "unavailable": "Health Connect ist auf diesem Geraet nicht verfuegbar.",
-      "no_data": "Keine Schlafdaten fuer die letzten 30 Tage gefunden."
+      "no_data": "Keine Schlafdaten fuer die letzten 7 Tage gefunden.",
+      "sync_disabled": "Der Schlaf-Import ist ausgeschaltet. Aktiviere den Schalter unten, um zu synchronisieren.",
+      "error": "Schlaf-Synchronisierung fehlgeschlagen. Pruefe deine Verbindung und versuche es erneut."
     }
   },
   "privacy": {

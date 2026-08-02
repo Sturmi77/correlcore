@@ -45,20 +45,25 @@ async def import_health_connect_sleep(
             sleep_sync_enabled=False,
         )
 
+    # Fetch every candidate entry in one query instead of one SELECT per item
+    # — a full-history import can cover hundreds of nights per request.
+    entry_dates = [item.entry_date for item in items]
+    result = await db.execute(
+        select(Entry).where(
+            Entry.user_id == user_id,
+            Entry.entry_date.in_(entry_dates),
+            Entry.slot == EntrySlot.DAY,
+        )
+    )
+    entries_by_date = {entry.entry_date: entry for entry in result.scalars().all()}
+
     updated = 0
     skipped_existing = 0
     skipped_no_entry = 0
     touched: list[Entry] = []
 
     for item in items:
-        result = await db.execute(
-            select(Entry).where(
-                Entry.user_id == user_id,
-                Entry.entry_date == item.entry_date,
-                Entry.slot == EntrySlot.DAY,
-            )
-        )
-        entry = result.scalar_one_or_none()
+        entry = entries_by_date.get(item.entry_date)
         if entry is None:
             skipped_no_entry += 1
             continue

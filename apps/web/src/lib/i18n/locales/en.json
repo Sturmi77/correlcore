@@ -455,7 +455,9 @@
     "metric": {
       "mood": "Mood",
       "energy": "Energy",
-      "stress": "Stress"
+      "stress": "Stress",
+      "sleep_minutes": "Sleep duration",
+      "sleep_quality": "Sleep quality"
     },
     "smoothing": {
       "label": "Trend smoothing",
@@ -550,7 +552,12 @@
     "esm": {
       "eyebrow": "Event-aligned view",
       "title": "Aligned around each onset",
-      "body": "Each row shows the days around one event so co-occurring patterns become visible.",
+      "body": "Each row lines up the same calendar window around one event (T0 = onset), so patterns in {metric} become comparable. This shows an association in your entries — not a cause or a medical diagnosis.",
+      "metric_label": "Metric: {metric}",
+      "axis_caption": "Days relative to the event (T0 = onset)",
+      "legend_worse": "Worse",
+      "legend_better": "Better",
+      "legend_aria": "Colour scale for {metric}",
       "aria": "Event-aligned small multiples",
       "close_aria": "Close event-aligned view",
       "empty": "No events available for this insight yet.",
@@ -711,7 +718,8 @@
         "revoke_action": "Revoke consent",
         "granted_at": "Consent granted on {timestamp}.",
         "error": "Could not update Health Connect consent.",
-        "deferred_note": "Import is not available yet. Granting consent only records your preference for the upcoming Android path."
+        "deferred_note": "Import runs in the CorrelCore Android app. Grant consent here, then open Health Connect sync to connect and import sleep on your device.",
+        "manage_action": "Open Health Connect sync"
       }
     },
     "appearance": {
@@ -1634,7 +1642,9 @@
       "ok": "Sleep sync complete.",
       "no_consent": "Grant the Health Connect consent first.",
       "unavailable": "Health Connect is not available on this device.",
-      "no_data": "No sleep records found for the last 30 days."
+      "no_data": "No sleep records found for the last 7 days.",
+      "sync_disabled": "Sleep import is turned off. Turn on the toggle below to sync.",
+      "error": "Sleep sync failed. Check your connection and try again."
     }
   },
   "privacy": {

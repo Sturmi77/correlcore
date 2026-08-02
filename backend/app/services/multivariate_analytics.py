@@ -11,6 +11,7 @@ from typing import Any, Literal
 
 import pandas as pd
 from scipy.stats import pearsonr
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import make_pipeline
@@ -35,6 +36,10 @@ METRIC_TARGETS: tuple[MetricName, ...] = ("mood_score", "energy", "stress")
 # the design matrix when at least this fraction of days recorded it (and the
 # absolute floor below is met); remaining gaps are mean-imputed.
 SLEEP_METRICS: tuple[str, ...] = ("sleep_minutes", "sleep_quality")
+SLEEP_METRIC_LABELS: dict[str, str] = {
+    "sleep_minutes": "sleep duration",
+    "sleep_quality": "sleep quality",
+}
 MIN_SLEEP_COLUMN_COVERAGE = 0.5
 MIN_SLEEP_COLUMN_OBSERVATIONS = 15
 
@@ -173,24 +178,23 @@ def build_design_matrix(
     for symptom_id in eligible_symptoms:
         feature_meta[_binary_column("symptom", symptom_id)] = symptom_meta[symptom_id]
 
-    # Sleep feature columns join only when well covered; missing days are
-    # mean-imputed so the complete-case Lasso/lag pipeline stays NaN-free.
-    sleep_impute: dict[str, float] = {}
+    # Sleep feature columns join only when well covered. Missing days keep NaN
+    # (no imputation here) so run_lag_analysis can do genuine pairwise deletion;
+    # run_lasso_models applies its own fold-local imputation instead (#172).
+    sleep_columns: list[str] = []
     coverage_floor = max(
         MIN_SLEEP_COLUMN_OBSERVATIONS,
         math.ceil(MIN_SLEEP_COLUMN_COVERAGE * len(sorted_entries)),
     )
     for metric in SLEEP_METRICS:
         present = [
-            getattr(entry, metric)
-            for entry in sorted_entries
-            if getattr(entry, metric) is not None
+            getattr(entry, metric) for entry in sorted_entries if getattr(entry, metric) is not None
         ]
         if len(present) < coverage_floor or len(set(present)) < 2:
             continue
-        sleep_impute[metric] = sum(present) / len(present)
+        sleep_columns.append(metric)
         feature_meta[metric] = FeatureMetadata(
-            kind="metric", key=metric, label=metric, slug=metric
+            kind="metric", key=metric, label=SLEEP_METRIC_LABELS.get(metric, metric), slug=metric
         )
 
     rows: list[dict[str, object]] = []
@@ -205,9 +209,9 @@ def build_design_matrix(
             row[_binary_column("tag", tag_id)] = 1 if tag_id in entry.tag_ids else 0
         for symptom_id in eligible_symptoms:
             row[_binary_column("symptom", symptom_id)] = 1 if symptom_id in entry.symptom_ids else 0
-        for metric, mean_value in sleep_impute.items():
+        for metric in sleep_columns:
             value = getattr(entry, metric)
-            row[metric] = float(value) if value is not None else mean_value
+            row[metric] = float(value) if value is not None else math.nan
         rows.append(row)
 
     frame = pd.DataFrame(rows)
@@ -238,6 +242,7 @@ def _time_series_cv_score(
     y = frame[target]
     for train_index, test_index in m7_time_series_split().split(x):
         fold_model = make_pipeline(
+            SimpleImputer(strategy="mean"),
             StandardScaler(),
             Lasso(alpha=alpha, max_iter=20_000),
         )
@@ -273,6 +278,7 @@ def run_lasso_models(
             continue
 
         model = make_pipeline(
+            SimpleImputer(strategy="mean"),
             StandardScaler(),
             LassoCV(cv=splitter, random_state=0, max_iter=20_000),
         )
@@ -335,34 +341,17 @@ def build_lagged_frame(
     return lagged.dropna().copy()
 
 
-def run_lag_analysis(
-    frame: pd.DataFrame,
-    feature_meta: Mapping[str, FeatureMetadata],
+def _lag_pairs(
+    lagged: pd.DataFrame,
     *,
-    max_lag_days: int = MAX_LAG_DAYS,
-    min_observations: int = MIN_LAG_OBSERVATIONS,
-    min_abs_correlation: float = MIN_ABS_LAG_CORRELATION,
-    fdr_alpha: float = LAG_FDR_ALPHA,
-) -> list[LagFinding]:
-    """Compute lagged associations with BH correction across the full lag matrix."""
-
-    if len(frame) < MIN_ML_ENTRIES:
-        return []
-
-    base_columns = [
-        column for column in frame.columns if column in feature_meta and frame[column].nunique() > 1
-    ]
-    if len(base_columns) < 2:
-        return []
-
-    target_columns = [
-        column for column in base_columns if feature_meta[column].kind in {"metric", "symptom"}
-    ]
-
-    lagged = build_lagged_frame(frame, base_columns, max_lag_days=max_lag_days)
+    target_columns: Sequence[str],
+    feature_columns: Sequence[str],
+    max_lag_days: int,
+    min_observations: int,
+) -> list[tuple[str, str, int, float, float, int]]:
     raw: list[tuple[str, str, int, float, float, int]] = []
     for target in target_columns:
-        for feature in base_columns:
+        for feature in feature_columns:
             if feature == target:
                 continue
             for lag_days in range(1, max_lag_days + 1):
@@ -378,6 +367,73 @@ def run_lag_analysis(
                 if correlation is None or p_value is None:
                     continue
                 raw.append((target, feature, lag_days, correlation, p_value, len(pair)))
+    return raw
+
+
+def run_lag_analysis(
+    frame: pd.DataFrame,
+    feature_meta: Mapping[str, FeatureMetadata],
+    *,
+    max_lag_days: int = MAX_LAG_DAYS,
+    min_observations: int = MIN_LAG_OBSERVATIONS,
+    min_abs_correlation: float = MIN_ABS_LAG_CORRELATION,
+    fdr_alpha: float = LAG_FDR_ALPHA,
+) -> list[LagFinding]:
+    """Compute lagged associations with BH correction across the full lag matrix."""
+
+    if len(frame) < MIN_ML_ENTRIES:
+        return []
+
+    all_columns = [
+        column for column in frame.columns if column in feature_meta and frame[column].nunique() > 1
+    ]
+    if len(all_columns) < 2:
+        return []
+
+    # Sleep predictors carry real missingness (optional field, pairwise deletion).
+    # Keep them out of the shared joint matrix below — build_lagged_frame drops any
+    # row missing *any* of its columns, so a sparsely-recorded sleep column would
+    # otherwise silently shrink every unrelated tag/symptom/metric pair too (#172).
+    sleep_columns = [column for column in all_columns if column in SLEEP_METRICS]
+    base_columns = [column for column in all_columns if column not in SLEEP_METRICS]
+
+    target_columns = [
+        column for column in base_columns if feature_meta[column].kind in {"metric", "symptom"}
+    ]
+
+    raw: list[tuple[str, str, int, float, float, int]] = []
+    if len(base_columns) >= 2:
+        # Slice to base_columns first: build_lagged_frame's final dropna() drops a
+        # row if *any* column of the frame it's given is NaN, so passing the full
+        # design matrix here would let a stray, sparsely-recorded sleep column
+        # silently shrink every unrelated tag/symptom/metric pair too (#172).
+        lagged = build_lagged_frame(frame[base_columns], base_columns, max_lag_days=max_lag_days)
+        raw.extend(
+            _lag_pairs(
+                lagged,
+                target_columns=target_columns,
+                feature_columns=base_columns,
+                max_lag_days=max_lag_days,
+                min_observations=min_observations,
+            )
+        )
+
+    # Sleep is a predictor only (never a lag target, per the documented "prior sleep
+    # explains mood/energy" direction) and each sleep column gets its own two-column
+    # lagged frame so only days that actually recorded it are dropped (#172).
+    for feature in sleep_columns:
+        for target in target_columns:
+            pair_frame = frame[[target, feature]]
+            pair_lagged = build_lagged_frame(pair_frame, [feature], max_lag_days=max_lag_days)
+            raw.extend(
+                _lag_pairs(
+                    pair_lagged,
+                    target_columns=[target],
+                    feature_columns=[feature],
+                    max_lag_days=max_lag_days,
+                    min_observations=min_observations,
+                )
+            )
 
     if not raw:
         return []

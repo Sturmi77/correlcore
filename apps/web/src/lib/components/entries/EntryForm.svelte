@@ -612,6 +612,12 @@
     'weekend',
     'travel',
   ];
+  /**
+   * #630: hide Morning/Noon/Evening until slot analytics give the chips a job.
+   * Re-enable when Insights/Trends consume `slot` meaningfully (ADR-0028).
+   * API field `slot` and stored values stay unchanged; default remains `day`.
+   */
+  const SHOW_ENTRY_TIME_SLOTS = false;
   const ENTRY_SLOTS: Exclude<EntrySlot, 'day'>[] = ['morning', 'noon', 'evening'];
 
   $: quickEntry = openMode === 'quick';
@@ -1339,21 +1345,25 @@
           required
         />
       </label>
-      <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
-        {#each ENTRY_SLOTS as slot}
-          <button
-            type="button"
-            class:active={selectedSlot === slot}
-            aria-pressed={selectedSlot === slot}
-            disabled={loading || entryDate !== loadedEntryDate}
-            on:click={() => setSlot(slot)}
-          >
-            {$_(`entry.time_slot.${slot}`)}
-          </button>
-        {/each}
-      </div>
+      {#if SHOW_ENTRY_TIME_SLOTS}
+        <div class="entry-chip-row" role="group" aria-label={$_('entry.time_slot.label')}>
+          {#each ENTRY_SLOTS as slot}
+            <button
+              type="button"
+              class:active={selectedSlot === slot}
+              aria-pressed={selectedSlot === slot}
+              disabled={loading || entryDate !== loadedEntryDate}
+              on:click={() => setSlot(slot)}
+            >
+              {$_(`entry.time_slot.${slot}`)}
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
-    <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
+    {#if SHOW_ENTRY_TIME_SLOTS}
+      <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
+    {/if}
   </section>
 
   {#if onboardingTagsEnabled}

@@ -360,6 +360,38 @@ def test_sleep_correlation_requires_enough_paired_days() -> None:
     )
 
 
+def test_sleep_mood_correlation_flagged_when_weekday_confounded() -> None:
+    """M8 Sprint 2 (#172): a raw sleep↔mood link fully driven by weekend timing
+    (more sleep and better mood on weekends alike) is flagged as confounded
+    rather than presented as a plain sleep association."""
+    start = date(2026, 1, 5)  # a Monday
+    rng = Random(172)
+    entries = []
+    for offset in range(98):
+        day = start + timedelta(days=offset)
+        is_weekend = day.weekday() >= 5
+        mood = (4 + rng.choice([0, 1])) if is_weekend else (1 + rng.choice([0, 1]))
+        sleep_minutes = (
+            (450 + rng.choice([-20, 0, 20])) if is_weekend else (330 + rng.choice([-20, 0, 20]))
+        )
+        entries.append(_entry(day, mood=mood, energy=3, stress=3, sleep_minutes=sleep_minutes))
+
+    candidates = generate_insight_candidates(entries, as_of=start + timedelta(days=98))
+
+    duration = next(
+        (
+            c
+            for c in candidates
+            if c.insight_type == InsightType.SPEARMAN and c.metric == "mood_sleep_minutes"
+        ),
+        None,
+    )
+    assert duration is not None
+    assert duration.flags.get("weekday_confounded") is True
+    assert duration.flags.get("calendar_context_confounded") is True
+    assert "weekday" in duration.statement.lower()
+
+
 def test_pointbiserial_marks_work_context_confounder() -> None:
     tag_id = uuid.uuid4()
     tag = TagSnapshot(id=tag_id, label="Office-heavy", slug="office_heavy")

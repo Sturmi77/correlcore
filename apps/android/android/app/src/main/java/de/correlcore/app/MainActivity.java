@@ -3,9 +3,11 @@ package de.correlcore.app;
 import android.content.Intent;
 import android.os.Bundle;
 import android.webkit.ValueCallback;
+import android.webkit.WebView;
 
 import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.WebViewListener;
 
 import de.correlcore.app.health.HealthConnectPlugin;
 import de.correlcore.app.push.PushAvailabilityPlugin;
@@ -23,6 +25,12 @@ public class MainActivity extends BridgeActivity {
     // Web route that documents which Health Connect data is read and why.
     private static final String HC_RATIONALE_PATH = "/health-connect";
 
+    // Cold start: the WebView's first page load has not finished yet, so a
+    // rationale intent that arrives via onCreate must wait for onPageLoaded
+    // (below) instead of navigating immediately (#626 review).
+    private boolean webViewLoaded = false;
+    private boolean pendingRationaleRoute = false;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(WidgetCredentialsPlugin.class);
@@ -30,6 +38,19 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SecureSessionPlugin.class);
         registerPlugin(HealthConnectPlugin.class);
         super.onCreate(savedInstanceState);
+        final Bridge bridge = getBridge();
+        if (bridge != null) {
+            bridge.addWebViewListener(new WebViewListener() {
+                @Override
+                public void onPageLoaded(WebView webView) {
+                    webViewLoaded = true;
+                    if (pendingRationaleRoute) {
+                        pendingRationaleRoute = false;
+                        navigateToRationale(bridge);
+                    }
+                }
+            });
+        }
         // Only poll when a widget is actually on a homescreen (#446). Also
         // cancels leftover work from a build that scheduled unconditionally.
         WidgetRefreshWorker.syncPeriodicWork(getApplicationContext());
@@ -45,7 +66,11 @@ public class MainActivity extends BridgeActivity {
     /**
      * When Health Connect launches us to show the permission rationale, send the
      * WebView to the rationale page (M8 Sprint 3, ADR-0042). Best-effort: if the
-     * bridge is not ready yet the app simply opens at its normal start route.
+     * bridge never becomes available the app simply opens at its normal start
+     * route. On a cold start the WebView's initial page has not finished
+     * loading yet, so navigating immediately races that pending load and can be
+     * silently overwritten — defer until {@link WebViewListener#onPageLoaded}
+     * fires instead (#626 review).
      */
     private void routeHealthConnectRationale(Intent intent) {
         if (intent == null || intent.getAction() == null) {
@@ -56,14 +81,23 @@ public class MainActivity extends BridgeActivity {
             return;
         }
         final Bridge bridge = getBridge();
-        if (bridge == null || bridge.getWebView() == null) {
+        if (bridge == null) {
             return;
         }
-        bridge.getWebView().post(() ->
-            bridge.eval(
-                "window.location.assign('" + HC_RATIONALE_PATH + "')",
-                (ValueCallback<String>) value -> { }
-            )
+        if (webViewLoaded) {
+            navigateToRationale(bridge);
+        } else {
+            pendingRationaleRoute = true;
+        }
+    }
+
+    private void navigateToRationale(Bridge bridge) {
+        if (bridge.getWebView() == null) {
+            return;
+        }
+        bridge.eval(
+            "window.location.assign('" + HC_RATIONALE_PATH + "')",
+            (ValueCallback<String>) value -> { }
         );
     }
 }

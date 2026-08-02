@@ -9,13 +9,14 @@ import {
 
 describe('appNav routing helpers', () => {
   describe('isPublicRoute', () => {
-    it('treats home, auth, status, offline, privacy, and impressum as public', () => {
+    it('treats home, auth, status, offline, privacy, impressum, and health-connect as public', () => {
       expect(isPublicRoute('/')).toBe(true);
       expect(isPublicRoute('/auth/login')).toBe(true);
       expect(isPublicRoute('/status')).toBe(true);
       expect(isPublicRoute('/offline')).toBe(true);
       expect(isPublicRoute('/privacy')).toBe(true);
       expect(isPublicRoute('/impressum')).toBe(true);
+      expect(isPublicRoute('/health-connect')).toBe(true);
       expect(isPublicRoute('/insights')).toBe(false);
       expect(isPublicRoute('/settings')).toBe(false);
     });

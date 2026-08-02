@@ -1,6 +1,6 @@
 # Health Connect (Android)
 
-Last updated: 2026-08-02 · Milestone: **M8 Sprint 3** (#172) · Strategy: [ADR-0042](../adr/0042-health-connect-bridge-strategy.md)
+Last updated: 2026-08-02 · Milestone: **M8 Sprint 3–4** (#172) · Strategy: [ADR-0042](../adr/0042-health-connect-bridge-strategy.md)
 
 CorrelCore reads a minimal set of on-device health data from **Health Connect**
 on Android. This document lists every permission, the data flow, and the manual

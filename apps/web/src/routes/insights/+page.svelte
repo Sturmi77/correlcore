@@ -886,6 +886,7 @@
         on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
         on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
         on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
+        on:openDisclaimer={() => (disclaimerOpen = true)}
       />
     {:else if compactInsights && !feedLoading && !error && insightMaturity}
       <InsightStageHeader
@@ -1069,6 +1070,9 @@
   .insights-page__matrix {
     min-width: 0;
     max-width: 100%;
+    /* Extra clearance so the last matrix rows clear the fixed bottom nav (#628). */
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
   }
 
   .insights-page__analytics {

@@ -233,7 +233,7 @@ describe('EntryForm smart defaults', () => {
   });
 });
 
-describe('EntryForm slot changes', () => {
+describe.skip('EntryForm slot changes (#630: re-enable with SHOW_ENTRY_TIME_SLOTS)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.mocked(listEntries).mockResolvedValue([]);
@@ -645,6 +645,34 @@ describe('EntryForm slot changes', () => {
     ).toBe('evening note');
     expect(eveningButton.getAttribute('aria-pressed')).toBe('true');
     expect(container.querySelector('form')?.getAttribute('data-autosave-status')).toBe('idle');
+  });
+});
+
+describe('EntryForm time slots hidden (#630)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(listEntries).mockResolvedValue([]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('does not render Morning/Noon/Evening chips while SHOW_ENTRY_TIME_SLOTS is false', async () => {
+    render(EntryForm, { props: { initialDate: '2026-06-02' } });
+    await flushAsync();
+
+    expect(screen.queryByRole('button', { name: 'entry.time_slot.morning' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'entry.time_slot.noon' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'entry.time_slot.evening' })).toBeNull();
+    expect(screen.queryByText('entry.time_slot.hint')).toBeNull();
   });
 });
 

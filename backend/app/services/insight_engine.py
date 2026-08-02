@@ -52,6 +52,8 @@ from app.services.symptom_analytics import (
 )
 from app.services.tag_service import analytics_tag_predicate
 from app.services.weekday_confounder import (
+    is_continuous_association_calendar_context_confounded,
+    is_continuous_association_weekday_confounded,
     is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
 )
@@ -549,23 +551,28 @@ def _sleep_spearman_candidates(
     recorded that sleep value take part, and a pair needs at least
     ``MIN_SLEEP_OBSERVATIONS`` such days. The confidence tier reflects that
     paired count, not the total entry count. FDR is applied across the sleep
-    family independently of the always-present metric pairs.
+    family independently of the always-present metric pairs. A raw hit is
+    checked against weekday/work-context OLS controls (e.g. weekend days with
+    both more sleep and better mood) and flagged rather than presented as a
+    plain sleep association when calendar context explains it away.
     """
     if len(entries) < MIN_BIVARIATE_ENTRIES:
         return []
 
-    raw: list[tuple[SleepMetricName, float, float, int]] = []
+    raw: list[tuple[SleepMetricName, float, float, int, bool, bool]] = []
     metrics: tuple[SleepMetricName, ...] = ("sleep_minutes", "sleep_quality")
     for metric in metrics:
         paired = [
-            (getattr(entry, metric), entry.mood_score)
+            (entry.entry_date, entry.work_context, getattr(entry, metric), entry.mood_score)
             for entry in entries
             if getattr(entry, metric) is not None
         ]
         if len(paired) < MIN_SLEEP_OBSERVATIONS:
             continue
-        sleep_values = [pair[0] for pair in paired]
-        mood_values = [pair[1] for pair in paired]
+        entry_dates = [item[0] for item in paired]
+        work_contexts = [item[1] for item in paired]
+        sleep_values = [item[2] for item in paired]
+        mood_values = [item[3] for item in paired]
         if len(set(sleep_values)) < 2 or len(set(mood_values)) < 2:
             continue
         result = spearmanr(sleep_values, mood_values)
@@ -573,10 +580,42 @@ def _sleep_spearman_candidates(
         p_value = _finite_float(result.pvalue)
         if rho is None or p_value is None or abs(rho) < MIN_ABS_EFFECT_SIZE:
             continue
-        raw.append((metric, rho, p_value, len(paired)))
+
+        weekday_confounded = is_continuous_association_weekday_confounded(
+            entry_dates,
+            mood_values,
+            sleep_values,
+            raw_coefficient=rho,
+            raw_p_value=p_value,
+            min_effect=MIN_ABS_EFFECT_SIZE,
+            alpha=FDR_ALPHA,
+        )
+        calendar_context_confounded = (
+            weekday_confounded
+            or is_continuous_association_calendar_context_confounded(
+                entry_dates,
+                [work_context.value for work_context in work_contexts],
+                mood_values,
+                sleep_values,
+                raw_coefficient=rho,
+                raw_p_value=p_value,
+                min_effect=MIN_ABS_EFFECT_SIZE,
+                alpha=FDR_ALPHA,
+            )
+        )
+        raw.append(
+            (metric, rho, p_value, len(paired), weekday_confounded, calendar_context_confounded)
+        )
 
     candidates: list[InsightCandidate] = []
-    for (metric, rho, p_value, sample_n), (significant, p_corrected) in zip(
+    for (
+        metric,
+        rho,
+        p_value,
+        sample_n,
+        weekday_confounded,
+        calendar_context_confounded,
+    ), (significant, p_corrected) in zip(
         raw,
         _fdr_results([item[2] for item in raw]),
         strict=True,
@@ -590,6 +629,14 @@ def _sleep_spearman_candidates(
             f"In your entries so far, mood tends to be {direction} "
             f"when {label} is higher. This is a data pattern, not a diagnosis."
         )
+        statement = _weekday_confounded_statement(
+            statement, weekday_confounded=calendar_context_confounded
+        )
+        confounders = _confounders(
+            weekday_confounded=weekday_confounded,
+            work_context_confounded=False,
+            calendar_context_confounded=calendar_context_confounded,
+        )
         candidates.append(
             InsightCandidate(
                 insight_type=InsightType.SPEARMAN,
@@ -602,12 +649,18 @@ def _sleep_spearman_candidates(
                 confidence=_confidence(rho, p_corrected, tier),
                 sample_n=sample_n,
                 statement=statement,
-                flags=_base_flags(p_value=p_value, p_corrected=p_corrected, method="spearman"),
+                flags={
+                    **_base_flags(p_value=p_value, p_corrected=p_corrected, method="spearman"),
+                    "weekday_confounded": weekday_confounded,
+                    "calendar_context_confounded": calendar_context_confounded,
+                },
                 payload={
                     "left_metric": "mood_score",
                     "right_metric": metric,
                     "rho": round(rho, 4),
                     "p_corrected": round(p_corrected, 4),
+                    "confounder": _primary_confounder(confounders),
+                    "confounders": confounders,
                 },
                 generated_for_date=generated_for_date,
             )
