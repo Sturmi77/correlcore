@@ -1069,6 +1069,9 @@
   .insights-page__matrix {
     min-width: 0;
     max-width: 100%;
+    /* Extra clearance so the last matrix rows clear the fixed bottom nav (#628). */
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
   }
 
   .insights-page__analytics {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, within, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import MobileInsightLead from './MobileInsightLead.svelte';
 import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
@@ -64,12 +64,10 @@ describe('MobileInsightLead', () => {
     expect(screen.queryByTestId('insight-stage-meta')).toBeNull();
   });
 
-  it('keeps non-causal guidance visible beside the lead insight', () => {
+  it('does not repeat the correlation disclaimer beside the lead (#632)', () => {
     render(MobileInsightLead, { props: { insight } });
 
-    const note = screen.getByTestId('mobile-insight-correlation-note');
-    expect(note).toBeTruthy();
-    expect(within(note).getByRole('link').getAttribute('href')).toBe('/insights/disclaimer');
+    expect(screen.queryByTestId('mobile-insight-correlation-note')).toBeNull();
   });
 
   it('links the featured insight back to trends', () => {

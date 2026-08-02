@@ -97,4 +97,23 @@ describe('EventAlignedSmallMultiplesSheet lag marker (#488)', () => {
     expect(screen.queryByTestId('esm-lag-band')).toBeNull();
     expect(screen.queryByTestId('esm-lag-note')).toBeNull();
   });
+
+  it('renders intro, metric label, axis caption and colour legend (#631)', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'energy_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.getByTestId('esm-intro').textContent).toContain('trends.esm.body');
+    expect(screen.getByTestId('esm-metric-label').textContent).toContain('trends.esm.metric_label');
+    expect(screen.getByTestId('esm-axis-caption').textContent).toBe('trends.esm.axis_caption');
+    expect(screen.getByTestId('esm-legend').textContent).toContain('trends.esm.legend_low');
+    expect(screen.getByTestId('esm-legend').textContent).toContain('trends.esm.legend_high');
+  });
 });

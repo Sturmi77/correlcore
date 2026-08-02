@@ -40,11 +40,6 @@
     on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
   />
 
-  <p class="mobile-lead__note" data-testid="mobile-insight-correlation-note">
-    {$_('insights.mobile.correlation_note')}
-    <a href="/insights/disclaimer">{$_('insights.mobile.correlation_link')}</a>
-  </p>
-
   <AnalysisCrossLink {insight} direction="to-trends" />
 
   {#if showMilestone && maturity}
@@ -68,8 +63,7 @@
 
   .mobile-lead__header,
   .mobile-lead__header h2,
-  .mobile-lead__header p,
-  .mobile-lead__note {
+  .mobile-lead__header p {
     margin: 0;
   }
 
@@ -91,21 +85,9 @@
     line-height: 1.25;
   }
 
-  .mobile-lead__header > p:last-child,
-  .mobile-lead__note {
+  .mobile-lead__header > p:last-child {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     line-height: 1.5;
-  }
-
-  .mobile-lead__note {
-    padding: 0 var(--space-1);
-  }
-
-  .mobile-lead__note a {
-    color: var(--color-primary);
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 </style>

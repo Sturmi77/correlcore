@@ -61,7 +61,17 @@
   const labelWidth = 110;
   const dayCount = radius * 2 + 1; // -7..+7 inclusive
 
+  const metricI18nKey: Record<MetricKey, string> = {
+    mood_avg: 'trends.metric.mood',
+    energy_avg: 'trends.metric.energy',
+    stress_avg: 'trends.metric.stress',
+  };
+
   $: gateOpen = isSmallMultiplesUnlocked(phase);
+  $: metricLabel = $_(metricI18nKey[metric] ?? 'trends.metric.mood');
+  $: legendGradient = `linear-gradient(to right, ${mapper.encode(1).color}, ${
+    mapper.encode(3).color
+  }, ${mapper.encode(5).color})`;
 
   function isoOffset(iso: string, deltaDays: number): string {
     const [y, m, d] = iso.split('-').map(Number);
@@ -130,7 +140,12 @@
     <div>
       <p class="esm__eyebrow">{$_('trends.esm.eyebrow')}</p>
       <h2 id="esm-title">{$_('trends.esm.title')}</h2>
-      <p class="esm__body">{$_('trends.esm.body')}</p>
+      <p class="esm__metric" data-testid="esm-metric-label">
+        {$_('trends.esm.metric_label', { values: { metric: metricLabel } })}
+      </p>
+      <p class="esm__body" data-testid="esm-intro">
+        {$_('trends.esm.body', { values: { metric: metricLabel } })}
+      </p>
       {#if lagColumn != null}
         <p class="esm__lag-note" data-testid="esm-lag-note">
           {$_('trends.esm.lag_hint', { values: { days: lagColumn } })}
@@ -150,6 +165,7 @@
   {#if rows.length === 0}
     <p class="esm__empty">{$_('trends.esm.empty')}</p>
   {:else}
+    <p class="esm__axis-caption" data-testid="esm-axis-caption">{$_('trends.esm.axis_caption')}</p>
     <div class="esm__scroll">
       <svg
         class="esm__svg"
@@ -226,6 +242,15 @@
         {/each}
       </svg>
     </div>
+    <p
+      class="esm__legend"
+      data-testid="esm-legend"
+      aria-label={$_('trends.esm.legend_aria', { values: { metric: metricLabel } })}
+    >
+      <span>{$_('trends.esm.legend_low')}</span>
+      <span class="esm__legend-scale" style={`background: ${legendGradient}`}></span>
+      <span>{$_('trends.esm.legend_high')}</span>
+    </p>
   {/if}
 </BottomSheet>
 
@@ -257,6 +282,35 @@
     margin: var(--space-1) 0 0;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .esm__metric {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .esm__axis-caption {
+    margin: 0 0 var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .esm__legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .esm__legend-scale {
+    flex: 1;
+    height: 0.5rem;
+    border-radius: var(--radius-full);
+    min-width: 4rem;
   }
 
   .esm__close {

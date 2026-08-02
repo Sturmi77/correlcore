@@ -6,6 +6,7 @@ import {
   buildLinePoints,
   dailyAxisChartWidth,
   dailyAxisXForDate,
+  dailyPlotContentWidth,
   formatTimeseriesTick,
   heatmapLevel,
   linePath,
@@ -53,6 +54,13 @@ describe('chart utilities', () => {
     expect(dates).toEqual(['2026-05-01', '2026-05-02', '2026-05-03']);
     expect(dailyAxisXForDate('2026-05-02', dates, layout)).toBe(139);
     expect(dailyAxisChartWidth(dates, layout)).toBe(164);
+  });
+
+  it('includes leading dayGap in plot content width (#629)', () => {
+    const dates = buildIsoDateRange('2026-05-01', '2026-05-03');
+    const layout = { labelWidth: 0, dayWidth: 10, dayGap: 2, rightPadding: 0 };
+    // 2 + (3*10 + 2*2) + 0 = 36 — matches last cell right edge with leading gap.
+    expect(dailyPlotContentWidth(dates, layout)).toBe(36);
   });
 
   it('maps timeseries points onto zoom buckets by mean of days with values', () => {
