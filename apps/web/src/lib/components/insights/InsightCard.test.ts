@@ -241,11 +241,9 @@ describe('InsightCard', () => {
     expect(screen.queryByTestId('insight-card-explore-events')).toBeNull();
   });
 
-  it('renders disclaimer link', () => {
+  it('omits per-card disclaimer link (#632 — Feed ⓘ is canonical)', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
-    const link = screen.getByTestId('insight-card-disclaimer');
-    expect(link).toBeTruthy();
-    expect(link.tagName.toLowerCase()).toBe('a');
+    expect(screen.queryByTestId('insight-card-disclaimer')).toBeNull();
   });
 
   it('expand toggle has correct ARIA attributes in collapsed state', () => {

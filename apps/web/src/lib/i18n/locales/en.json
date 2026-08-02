@@ -552,7 +552,12 @@
     "esm": {
       "eyebrow": "Event-aligned view",
       "title": "Aligned around each onset",
-      "body": "Each row shows the days around one event so co-occurring patterns become visible.",
+      "body": "Each row lines up the same calendar window around one event (T0 = onset), so patterns in {metric} become comparable. This shows an association in your entries — not a cause or a medical diagnosis.",
+      "metric_label": "Metric: {metric}",
+      "axis_caption": "Days relative to the event (T0 = onset)",
+      "legend_worse": "Worse",
+      "legend_better": "Better",
+      "legend_aria": "Colour scale for {metric}",
       "aria": "Event-aligned small multiples",
       "close_aria": "Close event-aligned view",
       "empty": "No events available for this insight yet.",

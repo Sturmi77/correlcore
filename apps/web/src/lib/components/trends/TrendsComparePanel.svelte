@@ -595,6 +595,8 @@
     gap: var(--space-4);
     overflow-x: auto;
     padding-bottom: var(--space-2);
+    /* #629: hard stop at first/last data — no rubber-band past the axis. */
+    overscroll-behavior-x: contain;
   }
 
   /* Sprint 2 (ADR-0035) — token-only, hue-agnostic controls. */

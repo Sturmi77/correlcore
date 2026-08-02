@@ -4,7 +4,7 @@ import type { DailyAxisLayout } from '$lib/utils/charts';
 export const TRENDS_DAY_CELL_REM = 0.82;
 export const TRENDS_DAY_GAP_REM = 0.18;
 export const TRENDS_LABEL_MIN_REM = 7;
-export const TRENDS_AXIS_RIGHT_PADDING_REM = 1.125;
+export const TRENDS_AXIS_RIGHT_PADDING_REM = 0;
 
 export interface TrendsDayAxisMetrics {
   rootPx: number;

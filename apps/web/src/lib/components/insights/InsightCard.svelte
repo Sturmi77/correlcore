@@ -423,15 +423,6 @@
       </div>
     {/if}
 
-    <a
-      href="/insights/disclaimer"
-      class="insight-card__disclaimer"
-      data-testid="insight-card-disclaimer"
-      rel="noopener"
-    >
-      {$_('insights.card.disclaimer_link')} <span aria-hidden="true">ⓘ</span>
-    </a>
-
     {#if canExploreEvents}
       <button
         type="button"
@@ -684,17 +675,6 @@
     font-weight: 600;
   }
 
-  .insight-card__disclaimer {
-    font-size: var(--text-xs, 0.75rem);
-    color: var(--color-text-muted);
-    text-decoration: underline;
-    text-decoration-style: dotted;
-    text-underline-offset: 2px;
-    align-self: flex-start;
-  }
-  .insight-card__disclaimer:hover {
-    color: var(--color-primary);
-  }
   .insight-card__toggle {
     display: flex;
     align-items: center;

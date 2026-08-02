@@ -97,4 +97,45 @@ describe('EventAlignedSmallMultiplesSheet lag marker (#488)', () => {
     expect(screen.queryByTestId('esm-lag-band')).toBeNull();
     expect(screen.queryByTestId('esm-lag-note')).toBeNull();
   });
+
+  it('renders intro, metric label, axis caption and colour legend (#631)', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'energy_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.getByTestId('esm-intro').textContent).toContain('trends.esm.body');
+    expect(screen.getByTestId('esm-metric-label').textContent).toContain('trends.esm.metric_label');
+    expect(screen.getByTestId('esm-axis-caption').textContent).toBe('trends.esm.axis_caption');
+    expect(screen.getByTestId('esm-legend').textContent).toContain('trends.esm.legend_worse');
+    expect(screen.getByTestId('esm-legend').textContent).toContain('trends.esm.legend_better');
+  });
+
+  it('labels the legend by well-being direction so it stays correct for inverted metrics like stress (#631)', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'stress_avg',
+        lagOffset: null,
+      },
+    });
+
+    const legend = screen.getByTestId('esm-legend').textContent ?? '';
+    // "Worse"/"Better" describe the already-inverted display value (higher =
+    // better for every metric), so no metric-specific reversal is needed —
+    // unlike "Lower"/"Higher", which described raw stress backwards.
+    expect(legend).toContain('trends.esm.legend_worse');
+    expect(legend).toContain('trends.esm.legend_better');
+    expect(legend).not.toContain('trends.esm.legend_low');
+    expect(legend).not.toContain('trends.esm.legend_high');
+  });
 });

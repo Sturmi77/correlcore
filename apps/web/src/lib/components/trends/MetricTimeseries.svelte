@@ -109,12 +109,26 @@
     const labels = aligned ? displayAxisKeys : points.map((point) => point.period_start);
     if (labels.length === 0) return [];
     const indexes = [0, Math.floor((labels.length - 1) / 2), labels.length - 1];
-    return [...new Set(indexes)].map((index) => ({
+    const uniqueIndexes = [...new Set(indexes)];
+    const lastUniqueIndex = uniqueIndexes.length - 1;
+    return uniqueIndexes.map((index, position) => ({
       x: aligned
         ? dailyAxisXForIndex(index, plotLayout)
         : paddingLeft + (index / Math.max(1, labels.length - 1)) * innerW,
       label: formatTimeseriesTick(range, labels[index]),
       date: labels[index],
+      // First/last ticks anchor away from the chart edge (rather than
+      // centering) so the label text doesn't clip against the SVG bounds —
+      // notably the last day column, which has no trailing axis padding
+      // by design (#629, #631 review).
+      anchor:
+        uniqueIndexes.length < 2
+          ? ('middle' as const)
+          : position === 0
+            ? ('start' as const)
+            : position === lastUniqueIndex
+              ? ('end' as const)
+              : ('middle' as const),
     }));
   })();
 
@@ -342,7 +356,12 @@
               <line x1={plotStart} x2={plotEnd} y1={y} y2={y} class="timeseries__grid" />
             {/each}
             {#each xLabels as tick}
-              <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
+              <text
+                x={tick.x}
+                y={height - 10}
+                class="timeseries__tick timeseries__tick--x"
+                style={`text-anchor: ${tick.anchor}`}
+              >
                 {tick.label}
               </text>
             {/each}
@@ -465,7 +484,12 @@
           {/each}
 
           {#each xLabels as tick}
-            <text x={tick.x} y={height - 10} class="timeseries__tick timeseries__tick--x">
+            <text
+              x={tick.x}
+              y={height - 10}
+              class="timeseries__tick timeseries__tick--x"
+              style={`text-anchor: ${tick.anchor}`}
+            >
               {tick.label}
             </text>
           {/each}
