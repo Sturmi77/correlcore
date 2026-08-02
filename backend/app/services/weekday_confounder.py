@@ -161,6 +161,121 @@ def is_metric_association_calendar_context_confounded(
     return adjusted_p >= alpha or abs(adjusted_coef) < min_effect
 
 
+def _standardized(values: Sequence[float]) -> np.ndarray | None:
+    """Z-score a continuous predictor so its OLS coefficient is comparable to
+    ``min_effect`` thresholds tuned for correlation-scale effect sizes."""
+
+    array = np.asarray(values, dtype=float)
+    std = array.std(ddof=0)
+    if std == 0:
+        return None
+    return (array - array.mean()) / std
+
+
+def is_continuous_association_weekday_confounded(
+    entry_dates: Sequence[date_type],
+    metric_values: Sequence[float],
+    predictor_values: Sequence[float],
+    *,
+    raw_coefficient: float,
+    raw_p_value: float,
+    min_effect: float = DEFAULT_MIN_EFFECT,
+    alpha: float = DEFAULT_ALPHA,
+) -> bool:
+    """Return True when a raw continuous↔continuous association (e.g. sleep↔mood,
+    #172) is explained by weekday effects after OLS adjustment."""
+
+    if raw_p_value >= alpha or abs(raw_coefficient) < min_effect:
+        return False
+    if len(entry_dates) < MIN_OLS_ROWS:
+        return False
+    if len(set(metric_values)) < 2 or len(set(predictor_values)) < 2:
+        return False
+
+    weekdays = [entry_date.weekday() for entry_date in entry_dates]
+    if len(set(weekdays)) <= 1:
+        return False
+
+    predictor = _standardized(predictor_values)
+    if predictor is None:
+        return False
+
+    y = np.asarray(metric_values, dtype=float)
+    weekday_matrix = _weekday_dummy_matrix(weekdays)
+    design = sm.add_constant(np.column_stack([predictor, weekday_matrix]), has_constant="add")
+
+    try:
+        result = sm.OLS(y, design).fit(
+            cov_type="HAC",
+            cov_kwds={"maxlags": _hac_maxlags(len(y))},
+        )
+    except (ValueError, np.linalg.LinAlgError):
+        return False
+
+    adjusted_coef = _finite_float(result.params[1])
+    adjusted_p = _finite_float(result.pvalues[1])
+    if adjusted_coef is None or adjusted_p is None:
+        return False
+    return adjusted_p >= alpha or abs(adjusted_coef) < min_effect
+
+
+def is_continuous_association_calendar_context_confounded(
+    entry_dates: Sequence[date_type],
+    work_contexts: Sequence[str],
+    metric_values: Sequence[float],
+    predictor_values: Sequence[float],
+    *,
+    raw_coefficient: float,
+    raw_p_value: float,
+    min_effect: float = DEFAULT_MIN_EFFECT,
+    alpha: float = DEFAULT_ALPHA,
+) -> bool:
+    """Return True when weekday/work-context controls explain a raw continuous
+    association (e.g. sleep↔mood, #172)."""
+
+    if raw_p_value >= alpha or abs(raw_coefficient) < min_effect:
+        return False
+    if len(entry_dates) < MIN_CONTEXT_OLS_ROWS:
+        return False
+    if len(entry_dates) != len(work_contexts):
+        return False
+    if len(set(metric_values)) < 2 or len(set(predictor_values)) < 2:
+        return False
+    if len(set(work_contexts)) < 2:
+        return False
+
+    predictor = _standardized(predictor_values)
+    if predictor is None:
+        return False
+
+    y = np.asarray(metric_values, dtype=float)
+    weekdays = [entry_date.weekday() for entry_date in entry_dates]
+    design = sm.add_constant(
+        np.column_stack(
+            [
+                predictor,
+                _weekday_dummy_matrix(weekdays),
+                _categorical_dummy_matrix(work_contexts),
+            ]
+        ),
+        has_constant="add",
+    )
+
+    try:
+        result = sm.OLS(y, design).fit(
+            cov_type="HAC",
+            cov_kwds={"maxlags": _hac_maxlags(len(y))},
+        )
+    except (ValueError, np.linalg.LinAlgError):
+        return False
+
+    adjusted_coef = _finite_float(result.params[1])
+    adjusted_p = _finite_float(result.pvalues[1])
+    if adjusted_coef is None or adjusted_p is None:
+        return False
+    return adjusted_p >= alpha or abs(adjusted_coef) < min_effect
+
+
 def is_pair_cooccurrence_weekday_confounded(
     entry_dates: Sequence[date_type],
     symptom_present: Sequence[int],
