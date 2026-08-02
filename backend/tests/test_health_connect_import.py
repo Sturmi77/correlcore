@@ -103,6 +103,23 @@ async def test_import_skips_everything_when_toggle_disabled() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_imported_sleep_rides_account_delete_cascade() -> None:
+    """M8 exit criterion: deleting the account removes imported HC data.
+
+    Imported sleep lives in ``entries.sleep_minutes`` (there is no separate HC
+    table), so it is removed by the existing ``entries.user_id`` ON DELETE
+    CASCADE. This guards against a future migration dropping that behaviour.
+    """
+    from app.models.entry import Entry
+
+    assert "sleep_minutes" in Entry.__table__.columns
+    user_fks = [
+        fk for fk in Entry.__table__.foreign_keys if fk.column.table.name == "users"
+    ]
+    assert user_fks, "entries must have a foreign key to users"
+    assert all(fk.ondelete == "CASCADE" for fk in user_fks)
+
+
 @pytest.mark.asyncio
 async def test_import_endpoint_403_without_consent(async_client: AsyncClient, user: User) -> None:
     async def override() -> User:

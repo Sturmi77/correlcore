@@ -6,18 +6,24 @@ Implementation notes for **M8 — Schlaf & Health Connect** (manual sleep
 fields, wearable import, sleep↔mood insights, cycle HC deep integration).
 Milestone resequencing: [`M7_M8_MILESTONE_SWAP.md`](M7_M8_MILESTONE_SWAP.md).
 
-## Deferral status (post-v1.0)
+## Status (M8 core shipped, Sprints 1–5)
 
-**Health Connect import is not available in the current web release.** What
-already shipped is the **consent foundation** only:
+The M8 **core** landed via #172 (Sprints 1–5) — see
+[`M8_SPRINT_STATUS.md`](M8_SPRINT_STATUS.md) and
+[`quality/M8_QUALITY_GATE.md`](quality/M8_QUALITY_GATE.md):
 
-- `consent_log` + `POST/GET /api/v1/user/me/consents`
-- Settings privacy UI (copy states M8/M11; no sync runs)
-- `canUseHealthConnectImport()` gate helper (unused by an import path yet)
+- Manual sleep fields (`sleep_minutes`, `sleep_quality`) on entries + API/sync/export.
+- Sleep↔mood correlation in the insight feed (+ sleep columns in the Lasso matrix).
+- Native Health Connect bridge (custom Kotlin plugin, [ADR-0042](adr/0042-health-connect-bridge-strategy.md))
+  with the `/health-connect` rationale screen.
+- Consent-gated sleep import (`POST /api/v1/health-connect/import`, manual-wins,
+  per-field toggle, in-app "Sync now").
 
-Do **not** treat the Settings Health Connect section as a finished wearable
-feature. Manual sleep fields, HC permission UX, background sync, and cycle HC
-remain **M8**; Capacitor/Play declaration remains **M11**.
+**Deferred / split out:** Cycle Health Connect + phase bands (own sub-milestone),
+Sleep×Symptom, heart-rate persistence, extended sleep fields, and the native
+WorkManager background sync. The **native path is not built in CI** (no Android
+SDK) — device QA precedes any sideload/Play release. Play Data-Safety declaration
+stays with the Play exit.
 
 Open decisions tracker: [`docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md`](quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md).
 
