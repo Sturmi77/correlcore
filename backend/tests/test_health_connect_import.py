@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import AsyncClient
@@ -24,6 +24,20 @@ def _prefs(user: User, *, sleep_enabled: bool = True) -> UserPreference:
     return prefs
 
 
+def _db_with_entries(prefs: UserPreference, entries: list) -> MagicMock:
+    """Mock a preferences lookup (``scalar_one_or_none``) followed by the
+    single batched entries lookup (``scalars().all()``) the service now
+    issues instead of one SELECT per import item."""
+    db = MagicMock()
+    db.flush = AsyncMock()
+    prefs_result = MagicMock()
+    prefs_result.scalar_one_or_none.return_value = prefs
+    entries_result = MagicMock()
+    entries_result.scalars.return_value.all.return_value = entries
+    db.execute = AsyncMock(side_effect=[prefs_result, entries_result])
+    return db
+
+
 # ---------------------------------------------------------------------------
 # Service: merge rules
 # ---------------------------------------------------------------------------
@@ -33,7 +47,7 @@ def _prefs(user: User, *, sleep_enabled: bool = True) -> UserPreference:
 async def test_import_fills_empty_sleep_on_existing_entry(rest_revision_recorders) -> None:
     user = make_user()
     entry = make_entry(user)  # sleep_minutes defaults to None
-    db = make_db_session_with_results(_prefs(user), entry)
+    db = _db_with_entries(_prefs(user), [entry])
 
     result = await import_health_connect_sleep(
         db,
@@ -49,11 +63,32 @@ async def test_import_fills_empty_sleep_on_existing_entry(rest_revision_recorder
 
 
 @pytest.mark.asyncio
+async def test_import_batches_entry_lookup_into_one_query(rest_revision_recorders) -> None:
+    """A multi-night import issues one preferences query + one batched entries
+    query — never one entry query per item (#634 review)."""
+    user = make_user()
+    entries = [make_entry(user, entry_date=date(2026, 8, day)) for day in (1, 2, 3)]
+    db = _db_with_entries(_prefs(user), entries)
+
+    result = await import_health_connect_sleep(
+        db,
+        user_id=user.id,
+        items=[
+            HealthConnectSleepImportItem(entry_date=e.entry_date, sleep_minutes=400)
+            for e in entries
+        ],
+    )
+
+    assert result.updated == 3
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.asyncio
 async def test_import_never_overwrites_manual_sleep(rest_revision_recorders) -> None:
     user = make_user()
     entry = make_entry(user)
     entry.sleep_minutes = 400  # a value the user already typed
-    db = make_db_session_with_results(_prefs(user), entry)
+    db = _db_with_entries(_prefs(user), [entry])
 
     result = await import_health_connect_sleep(
         db,
@@ -70,7 +105,7 @@ async def test_import_never_overwrites_manual_sleep(rest_revision_recorders) -> 
 @pytest.mark.asyncio
 async def test_import_does_not_create_entries_for_untracked_days() -> None:
     user = make_user()
-    db = make_db_session_with_results(_prefs(user), None)
+    db = _db_with_entries(_prefs(user), [])
 
     result = await import_health_connect_sleep(
         db,
