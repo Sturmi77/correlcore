@@ -22,7 +22,13 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
   { href: '/settings', labelKey: 'nav.settings', match: 'prefix', icon: 'settings' },
 ] as const;
 
-/** Exact `/` plus prefixes — anonymous visitors must reach the marketing landing. */
+/**
+ * Exact `/` plus prefixes — anonymous visitors must reach the marketing landing.
+ * `/health-connect` is the Health Connect data-use rationale (M8 Sprint 3):
+ * Android can open it for a logged-out user via the OS permission-usage
+ * screen, and the page itself only renders static disclosure copy, gating
+ * consent/permission actions behind auth separately.
+ */
 const PUBLIC_ROUTE_PREFIXES = [
   '/',
   '/auth',
@@ -30,6 +36,7 @@ const PUBLIC_ROUTE_PREFIXES = [
   '/offline',
   '/privacy',
   '/impressum',
+  '/health-connect',
 ] as const;
 
 /** Routes that hide the app chrome (no bottom / side nav). */
