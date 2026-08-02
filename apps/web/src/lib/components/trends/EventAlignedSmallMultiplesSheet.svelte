@@ -247,9 +247,9 @@
       data-testid="esm-legend"
       aria-label={$_('trends.esm.legend_aria', { values: { metric: metricLabel } })}
     >
-      <span>{$_('trends.esm.legend_low')}</span>
+      <span>{$_('trends.esm.legend_worse')}</span>
       <span class="esm__legend-scale" style={`background: ${legendGradient}`}></span>
-      <span>{$_('trends.esm.legend_high')}</span>
+      <span>{$_('trends.esm.legend_better')}</span>
     </p>
   {/if}
 </BottomSheet>
