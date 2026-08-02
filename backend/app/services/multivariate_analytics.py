@@ -325,8 +325,16 @@ def build_lagged_frame(
     columns: Sequence[str],
     *,
     max_lag_days: int = MAX_LAG_DAYS,
+    dropna: bool = True,
 ) -> pd.DataFrame:
-    """Construct lag features and drop causal warm-up rows after shifting."""
+    """Construct lag features and optionally drop rows with any NaN.
+
+    For complete-case joint lag matrices (tags/symptoms/always-present metrics),
+    ``dropna=True`` removes causal warm-up rows after shifting. For optional
+    sleep predictors, pass ``dropna=False`` so contemporaneous sleep gaps do not
+    discard rows that still have a valid ``target`` + ``feature_lagN`` pair;
+    callers then pairwise-delete per lag via :func:`_lag_pairs` (#172).
+    """
 
     if frame.empty:
         return frame.copy()
@@ -338,6 +346,8 @@ def build_lagged_frame(
     for column in columns:
         for lag_days in range(1, max_lag_days + 1):
             lagged[f"{column}_lag{lag_days}"] = lagged[column].shift(lag_days)
+    if not dropna:
+        return lagged.copy()
     return lagged.dropna().copy()
 
 
@@ -420,11 +430,19 @@ def run_lag_analysis(
 
     # Sleep is a predictor only (never a lag target, per the documented "prior sleep
     # explains mood/energy" direction) and each sleep column gets its own two-column
-    # lagged frame so only days that actually recorded it are dropped (#172).
+    # lagged frame. Keep NaNs after shifting: requiring contemporaneous sleep would
+    # zero out lag pairs whenever sleep has gaps (e.g. 50% coverage checkerboard →
+    # every row misses either same-day sleep or sleep_lagN). _lag_pairs dropna's
+    # per (target, lag_column) for genuine pairwise deletion (#172).
     for feature in sleep_columns:
         for target in target_columns:
             pair_frame = frame[[target, feature]]
-            pair_lagged = build_lagged_frame(pair_frame, [feature], max_lag_days=max_lag_days)
+            pair_lagged = build_lagged_frame(
+                pair_frame,
+                [feature],
+                max_lag_days=max_lag_days,
+                dropna=False,
+            )
             raw.extend(
                 _lag_pairs(
                     pair_lagged,

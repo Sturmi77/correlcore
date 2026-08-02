@@ -199,6 +199,44 @@ def test_lasso_handles_sleep_gaps_via_fold_local_imputation() -> None:
     assert findings == run_lasso_models(frame, feature_meta)
 
 
+def test_lag_analysis_sleep_predictor_keeps_gappy_pairwise_pairs() -> None:
+    """Sleep lag must pairwise-delete on (target, sleep_lagN), not same-day sleep.
+
+    With alternating sleep gaps at the coverage floor, requiring contemporaneous
+    sleep in build_lagged_frame.dropna() yields zero lag rows even when every
+    day-after-sleep has a valid mood↔prior-sleep pair (#172).
+    """
+    start = date(2026, 1, 1)
+    entries = []
+    for offset in range(MIN_ML_ENTRIES):
+        # Checkerboard sleep (~50% coverage, with variance) + mood elevated the
+        # day after sleep so lag-1 is a real, detectable association.
+        sleep_minutes = 400 + (offset % 5) * 20 if offset % 2 == 0 else None
+        mood = 5 if offset > 0 and (offset - 1) % 2 == 0 else 2
+        entries.append(_entry(start + timedelta(days=offset), mood=mood, sleep_minutes=sleep_minutes))
+
+    frame, feature_meta = build_design_matrix(entries)
+    assert "sleep_minutes" in frame.columns
+    assert frame["sleep_minutes"].isna().sum() == MIN_ML_ENTRIES // 2
+
+    findings = run_lag_analysis(
+        frame,
+        feature_meta,
+        max_lag_days=1,
+        min_observations=10,
+        min_abs_correlation=0.1,
+    )
+    sleep_to_mood = [
+        finding
+        for finding in findings
+        if finding.feature.key == "sleep_minutes" and finding.target.key == "mood_score"
+    ]
+    assert sleep_to_mood, "gappy sleep must still produce sleep→mood lag findings"
+    assert sleep_to_mood[0].lag_days == 1
+    # Every odd day after an even sleep day is a valid pair (~half the series).
+    assert sleep_to_mood[0].sample_n == MIN_ML_ENTRIES // 2
+
+
 def test_lag_analysis_never_targets_sleep_and_uses_pairwise_deletion() -> None:
     """M8 Sprint 2 (#172): sleep is a lag predictor only, and its own missing days
     don't shrink unrelated tag/symptom lag pairs (real pairwise deletion)."""
