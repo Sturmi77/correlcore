@@ -30,7 +30,9 @@ export const compareDailyAxisLayout: DailyAxisLayout = {
   labelWidth: 160,
   dayWidth: 18,
   dayGap: 4,
-  rightPadding: 18,
+  // #629: trailing pad was empty scroll past the last day; leading dayGap is
+  // already accounted for in dailyPlotContentWidth / dailyAxisChartWidth.
+  rightPadding: 0,
 };
 
 export const metricStyles: Record<MetricKey, MetricStyle> = {
@@ -127,7 +129,9 @@ export function dailyPlotContentWidth(
   dates: readonly string[],
   layout: Pick<DailyAxisLayout, 'dayWidth' | 'dayGap' | 'rightPadding'> = compareDailyAxisLayout
 ): number {
-  return dailyAxisContentWidth(dates, layout) + layout.rightPadding;
+  // Include leading dayGap so width matches dailyAxisXForIndex geometry
+  // (first cell is offset by dayGap when the sticky gutter owns labelWidth).
+  return layout.dayGap + dailyAxisContentWidth(dates, layout) + layout.rightPadding;
 }
 
 export function dailyAxisXForIndex(

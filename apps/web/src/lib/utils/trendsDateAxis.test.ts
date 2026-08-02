@@ -15,7 +15,7 @@ describe('trendsDateAxis', () => {
       labelWidth: 112,
       dayWidth: 13.12,
       dayGap: 2.88,
-      rightPadding: 18,
+      rightPadding: 0,
     });
   });
 

@@ -6,6 +6,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
+import kotlin.reflect.KClass
 
 /**
  * Thin Health Connect bridge — M8 Sprint 3 (#172, ADR-0042).
@@ -150,10 +152,10 @@ class HealthConnectPlugin : Plugin() {
             try {
                 val filter = TimeRangeFilter.between(start, end)
                 val sleepRecords = withContext(Dispatchers.IO) {
-                    client.readRecords(ReadRecordsRequest(SleepSessionRecord::class, filter)).records
+                    readAllRecords(client, SleepSessionRecord::class, filter)
                 }
                 val heartRecords = withContext(Dispatchers.IO) {
-                    client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter)).records
+                    readAllRecords(client, HeartRateRecord::class, filter)
                 }
 
                 val sleep = JSArray()
@@ -189,6 +191,28 @@ class HealthConnectPlugin : Plugin() {
                 call.reject("read_failed", e)
             }
         }
+    }
+
+    /**
+     * Health Connect paginates large result sets; a single [HealthConnectClient.readRecords]
+     * call only returns one page and silently drops the rest. Follow [ReadRecordsResponse.pageToken]
+     * until it is exhausted so wide date ranges don't produce truncated sleep/heart-rate data.
+     */
+    private suspend fun <T : Record> readAllRecords(
+        client: HealthConnectClient,
+        recordType: KClass<T>,
+        filter: TimeRangeFilter,
+    ): List<T> {
+        val records = mutableListOf<T>()
+        var pageToken: String? = null
+        do {
+            val response = client.readRecords(
+                ReadRecordsRequest(recordType, filter, pageToken = pageToken),
+            )
+            records.addAll(response.records)
+            pageToken = response.pageToken
+        } while (!pageToken.isNullOrEmpty())
+        return records
     }
 
     private fun parseInstant(value: String?): Instant? {

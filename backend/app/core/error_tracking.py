@@ -30,6 +30,9 @@ _SENSITIVE_KEYS = frozenset(
         "stress",
         "sleep_minutes",
         "sleep_quality",
+        # ADR-0033 Art. 9 cycle SHD — must match sanitise_entry_for_log allowlist.
+        "cycle_day",
+        "cycle_bleeding_level",
         "symptoms",
         "symptom_intensity",
         "intensity",

@@ -159,7 +159,13 @@
   {/if}
 
   {#if rows.length}
-    <div class="insight-matrix__table" role="table" aria-label={$_('insights.matrix.heading')}>
+    <div
+      class="insight-matrix__table"
+      class:insight-matrix__table--scrollable={!preview}
+      role="table"
+      aria-label={$_('insights.matrix.heading')}
+      data-testid="insight-matrix-table"
+    >
       <div class="insight-matrix__row insight-matrix__row--head" role="row">
         <span role="columnheader">{$_('insights.matrix.subject')}</span>
         <span role="columnheader">{$_('insights.matrix.metric')}</span>
@@ -237,6 +243,15 @@
     max-width: 100%;
   }
 
+  /* #628: long correlation lists stay fully reachable inside the matrix
+     instead of clipping under the fixed bottom nav with no scroll affordance. */
+  .insight-matrix__table--scrollable {
+    max-height: min(70dvh, 32rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .insight-matrix__row {
     min-width: 42rem;
     display: grid;
@@ -259,6 +274,13 @@
     font-weight: 700;
     color: var(--color-text-muted);
     text-transform: uppercase;
+  }
+
+  .insight-matrix__table--scrollable .insight-matrix__row--head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--color-surface-chart-bg, var(--color-surface));
   }
 
   .insight-matrix__effect {

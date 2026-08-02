@@ -68,6 +68,23 @@ describe('MetricTimeseries', () => {
     expect(container.querySelector('.timeseries__gutter')).toBeTruthy();
   });
 
+  it('anchors the first/last date ticks away from the chart edges so labels stay unclipped (#631)', () => {
+    const { container } = render(MetricTimeseries, {
+      props: {
+        points,
+        range: 'week',
+        loading: false,
+        enabled: { mood_avg: true, energy_avg: true, stress_avg: true },
+        axisDates: ['2026-05-01', '2026-05-02'],
+      },
+    });
+
+    const ticks = container.querySelectorAll('.timeseries__tick--x');
+    expect(ticks.length).toBe(2);
+    expect(ticks[0]?.getAttribute('style')).toContain('text-anchor: start');
+    expect(ticks[ticks.length - 1]?.getAttribute('style')).toContain('text-anchor: end');
+  });
+
   it('renders skeleton and empty states', () => {
     const loading = render(MetricTimeseries, {
       props: {
