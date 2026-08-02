@@ -185,6 +185,7 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "onboarding_profile_completed": preferences.onboarding_profile_completed,
         "onboarding_maturity_intro_seen": preferences.onboarding_maturity_intro_seen,
         "cycle_tracking_enabled": preferences.cycle_tracking_enabled,
+        "health_connect_sync_sleep_enabled": preferences.health_connect_sync_sleep_enabled,
         "dismissed_insight_keys": preferences.dismissed_insight_keys,
         "reached_milestone_keys": preferences.reached_milestone_keys,
         "last_seen_insight_at": preferences.last_seen_insight_at,

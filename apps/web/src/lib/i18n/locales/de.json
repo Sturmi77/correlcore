@@ -718,7 +718,8 @@
         "revoke_action": "Einwilligung widerrufen",
         "granted_at": "Einwilligung erteilt am {timestamp}.",
         "error": "Health-Connect-Einwilligung konnte nicht aktualisiert werden.",
-        "deferred_note": "Import ist noch nicht verfuegbar. Die Einwilligung speichert nur deine Praeferenz fuer den kommenden Android-Pfad."
+        "deferred_note": "Der Import laeuft in der CorrelCore-Android-App. Erteile hier die Einwilligung und oeffne dann die Health-Connect-Synchronisierung, um dein Geraet zu verbinden und Schlaf zu importieren.",
+        "manage_action": "Health-Connect-Synchronisierung oeffnen"
       }
     },
     "appearance": {
@@ -1629,8 +1630,21 @@
     },
     "actions": {
       "grant": "Health-Connect-Zugriff erteilen",
+      "sync": "Schlaf jetzt synchronisieren",
       "open_settings": "Einstellungen oeffnen",
       "back": "Zurueck zu Einstellungen"
+    },
+    "toggle": {
+      "sleep_sync": "Schlaf aus Health Connect importieren",
+      "sleep_sync_hint": "Wenn aus, wird kein Schlaf importiert. Bereits importierte Werte bleiben; du kannst sie wie jeden manuellen Eintrag bearbeiten oder loeschen."
+    },
+    "sync": {
+      "ok": "Schlaf-Synchronisierung abgeschlossen.",
+      "no_consent": "Erteile zuerst die Health-Connect-Einwilligung.",
+      "unavailable": "Health Connect ist auf diesem Geraet nicht verfuegbar.",
+      "no_data": "Keine Schlafdaten fuer die letzten 7 Tage gefunden.",
+      "sync_disabled": "Der Schlaf-Import ist ausgeschaltet. Aktiviere den Schalter unten, um zu synchronisieren.",
+      "error": "Schlaf-Synchronisierung fehlgeschlagen. Pruefe deine Verbindung und versuche es erneut."
     }
   },
   "privacy": {

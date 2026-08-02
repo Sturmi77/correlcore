@@ -718,7 +718,8 @@
         "revoke_action": "Revoke consent",
         "granted_at": "Consent granted on {timestamp}.",
         "error": "Could not update Health Connect consent.",
-        "deferred_note": "Import is not available yet. Granting consent only records your preference for the upcoming Android path."
+        "deferred_note": "Import runs in the CorrelCore Android app. Grant consent here, then open Health Connect sync to connect and import sleep on your device.",
+        "manage_action": "Open Health Connect sync"
       }
     },
     "appearance": {
@@ -1629,8 +1630,21 @@
     },
     "actions": {
       "grant": "Grant Health Connect access",
+      "sync": "Sync sleep now",
       "open_settings": "Open Settings",
       "back": "Back to Settings"
+    },
+    "toggle": {
+      "sleep_sync": "Import sleep from Health Connect",
+      "sleep_sync_hint": "When off, no sleep is imported. Values already imported stay; you can edit or clear them like any manual entry."
+    },
+    "sync": {
+      "ok": "Sleep sync complete.",
+      "no_consent": "Grant the Health Connect consent first.",
+      "unavailable": "Health Connect is not available on this device.",
+      "no_data": "No sleep records found for the last 7 days.",
+      "sync_disabled": "Sleep import is turned off. Turn on the toggle below to sync.",
+      "error": "Sleep sync failed. Check your connection and try again."
     }
   },
   "privacy": {
