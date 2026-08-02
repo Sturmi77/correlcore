@@ -28,6 +28,8 @@ _SENSITIVE_KEYS = frozenset(
         "mood_score",
         "energy",
         "stress",
+        "sleep_minutes",
+        "sleep_quality",
         "symptoms",
         "symptom_intensity",
         "intensity",

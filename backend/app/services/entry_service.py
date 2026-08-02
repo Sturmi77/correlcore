@@ -281,6 +281,8 @@ async def create_entry(
         stress=payload.stress,
         cycle_day=payload.cycle_day,
         cycle_bleeding_level=payload.cycle_bleeding_level,
+        sleep_minutes=payload.sleep_minutes,
+        sleep_quality=payload.sleep_quality,
         source=payload.source,
         work_context=payload.work_context,
         note_enc=payload.note,

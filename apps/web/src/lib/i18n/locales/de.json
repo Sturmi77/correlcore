@@ -185,6 +185,7 @@
       "symptoms": "Symptome",
       "note": "Notiz",
       "cycle": "Zyklus",
+      "sleep": "Schlaf",
       "delta": "Vergleich mit gestern"
     },
     "time_slot": {
@@ -209,6 +210,22 @@
       "light": "Leicht",
       "medium": "Mittel",
       "heavy": "Stark"
+    },
+    "sleep_minutes": {
+      "label": "Schlafdauer (optional)",
+      "placeholder": "Minuten, z. B. 450",
+      "hint": "Gesamtschlaf in Minuten (0-1440). 450 Minuten = 7,5 Stunden.",
+      "error_range": "Die Schlafdauer muss zwischen 0 und 1440 Minuten liegen."
+    },
+    "sleep_quality": {
+      "label": "Schlafqualität (optional)",
+      "unset": "Nicht gesetzt",
+      "hint": "Deine subjektive Bewertung von 1 (schlecht) bis 5 (super).",
+      "level_1": "1 - Schlecht",
+      "level_2": "2 - Weniger gut",
+      "level_3": "3 - Okay",
+      "level_4": "4 - Gut",
+      "level_5": "5 - Super"
     },
     "work_context": {
       "homeoffice": "Homeoffice",

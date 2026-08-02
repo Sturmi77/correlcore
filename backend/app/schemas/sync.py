@@ -63,6 +63,8 @@ class SyncEntryPayload(BaseModel):
     stress: int = Field(ge=1, le=5)
     cycle_day: int | None = Field(default=None, ge=1, le=35)
     cycle_bleeding_level: BleedingLevel | None = None
+    sleep_minutes: int | None = Field(default=None, ge=0, le=1440)
+    sleep_quality: int | None = Field(default=None, ge=1, le=5)
     work_context: WorkContext
     note: str | None = None
     tag_ids: list[uuid.UUID] = Field(default_factory=list)

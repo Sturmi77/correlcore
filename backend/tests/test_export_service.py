@@ -116,7 +116,7 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
 
     assert payload["user"]["email"] == "me@example.test"
     assert payload["app_version"] == "1.1.8"
-    assert payload["format_version"] == "1.3"
+    assert payload["format_version"] == "1.4"
     assert payload["score_legend"]["stress"] == {
         "min": 1,
         "max": 5,
@@ -147,6 +147,71 @@ async def test_export_omits_internal_ids_and_includes_assigned_data() -> None:
 
 
 @pytest.mark.asyncio
+async def test_export_includes_sleep_on_entry_and_top_level_array() -> None:
+    """M8 Sprint 1 (#172): sleep fields appear on the entry and in the sleep[] projection."""
+    user = make_user()
+    entry = make_entry(user, mood_score=3)
+    entry.sleep_minutes = 450
+    entry.sleep_quality = 4
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result([entry]),
+            _scalar_optional_result(None),
+            _row_result([]),
+            _row_result([]),
+            _scalar_result([]),
+            _prefs_keys_result([]),
+            _scalar_result([]),
+        ]
+    )
+
+    envelope = await build_export_envelope(db, user=user)
+    payload = envelope.model_dump(mode="json")
+
+    assert payload["entries"][0]["sleep_minutes"] == 450
+    assert payload["entries"][0]["sleep_quality"] == 4
+    assert payload["sleep"] == [
+        {
+            "date": entry.entry_date.isoformat(),
+            "slot": entry.slot.value,
+            "sleep_minutes": 450,
+            "sleep_quality": 4,
+            "source": entry.source.value,
+        }
+    ]
+
+    csv_bytes = render_export_csv(envelope)
+    csv_text = csv_bytes.decode("utf-8-sig")
+    assert "sleep_minutes" in csv_text.splitlines()[0]
+    assert "450" in csv_text
+
+
+@pytest.mark.asyncio
+async def test_export_sleep_array_empty_when_no_sleep_data() -> None:
+    user = make_user()
+    entry = make_entry(user, mood_score=3)
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result([entry]),
+            _scalar_optional_result(None),
+            _row_result([]),
+            _row_result([]),
+            _scalar_result([]),
+            _prefs_keys_result([]),
+            _scalar_result([]),
+        ]
+    )
+
+    envelope = await build_export_envelope(db, user=user)
+    assert envelope.sleep == []
+    assert envelope.entries[0]["sleep_minutes"] is None
+
+
+@pytest.mark.asyncio
 async def test_export_includes_insights_and_dismissals_without_ids() -> None:
     user = make_user()
     entry = make_entry(user)
@@ -170,7 +235,7 @@ async def test_export_includes_insights_and_dismissals_without_ids() -> None:
     envelope = await build_export_envelope(db, user=user)
     payload = envelope.model_dump(mode="json")
 
-    assert payload["format_version"] == "1.3"
+    assert payload["format_version"] == "1.4"
     assert len(payload["insights"]) == 1
     assert payload["insights"][0]["statement"] == "Statement for energy"
     assert payload["insights"][0]["visibility"] == "dismissed"
@@ -223,7 +288,7 @@ async def test_export_csv_and_zip_render() -> None:
         assert "stress: 1=relaxed; 5=very stressed" in readme
         assert "insight_dismissals" in readme
         data = json.loads(archive.read("export.json"))
-        assert data["format_version"] == "1.3"
+        assert data["format_version"] == "1.4"
         assert data["score_legend"]["energy"]["max_label"] == "full of energy"
         assert data["entries"][0]["date"] == entry.entry_date.isoformat()
         assert "insight_dismissals" in data

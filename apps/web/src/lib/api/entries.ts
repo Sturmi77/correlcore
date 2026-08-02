@@ -31,6 +31,8 @@ export interface EntryResponse {
   stress: number;
   cycle_day: number | null;
   cycle_bleeding_level?: BleedingLevel | null;
+  sleep_minutes?: number | null;
+  sleep_quality?: number | null;
   source: EntrySource;
   work_context: WorkContext;
   note: string | null;
@@ -52,6 +54,8 @@ export interface EntryCreatePayload {
   stress: number;
   cycle_day?: number | null;
   cycle_bleeding_level?: BleedingLevel | null;
+  sleep_minutes?: number | null;
+  sleep_quality?: number | null;
   source?: EntrySource;
   work_context: WorkContext;
   note?: string;
@@ -71,6 +75,8 @@ export interface EntryUpdatePayload {
   slot?: EntrySlot;
   cycle_day?: number | null;
   cycle_bleeding_level?: BleedingLevel | null;
+  sleep_minutes?: number | null;
+  sleep_quality?: number | null;
   work_context?: WorkContext;
   note?: string;
   note_raw?: string;

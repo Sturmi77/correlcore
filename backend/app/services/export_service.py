@@ -31,7 +31,7 @@ from app.schemas.export import ExportEnvelope, ExportScoreLegendItem, ExportUser
 from app.services.insight_dismissal_service import migrate_uuid_prefs_to_subject_dismissals
 from app.services.insight_service import _tag_slugs_for_legacy_insights, insight_subject_key
 
-EXPORT_FORMAT_VERSION = "1.3"
+EXPORT_FORMAT_VERSION = "1.4"
 _EXPORT_OMIT_KEYS = frozenset(
     {
         "id",
@@ -181,6 +181,8 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
                     if entry.cycle_bleeding_level is not None
                     else None
                 ),
+                "sleep_minutes": entry.sleep_minutes,
+                "sleep_quality": entry.sleep_quality,
                 "work_context": entry.work_context.value,
                 "source": entry.source.value,
                 "note": None if note_hidden else entry.note_enc,
@@ -287,7 +289,17 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
         insights=exported_insights,
         insight_dismissals=exported_dismissals,
         photos=[],
-        sleep=[],
+        sleep=[
+            {
+                "date": entry.entry_date.isoformat(),
+                "slot": entry.slot.value,
+                "sleep_minutes": entry.sleep_minutes,
+                "sleep_quality": entry.sleep_quality,
+                "source": entry.source.value,
+            }
+            for entry in entries
+            if entry.sleep_minutes is not None or entry.sleep_quality is not None
+        ],
     )
 
 
@@ -308,6 +320,8 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
             "stress",
             "cycle_day",
             "cycle_bleeding_level",
+            "sleep_minutes",
+            "sleep_quality",
             "mood_scale",
             "energy_scale",
             "stress_scale",
@@ -330,6 +344,12 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
                 "stress": entry["stress"],
                 "cycle_day": entry.get("cycle_day") or "",
                 "cycle_bleeding_level": entry.get("cycle_bleeding_level") or "",
+                "sleep_minutes": (
+                    "" if entry.get("sleep_minutes") is None else entry["sleep_minutes"]
+                ),
+                "sleep_quality": (
+                    "" if entry.get("sleep_quality") is None else entry["sleep_quality"]
+                ),
                 "mood_scale": CSV_SCORE_LEGENDS["mood_score"],
                 "energy_scale": CSV_SCORE_LEGENDS["energy"],
                 "stress_scale": CSV_SCORE_LEGENDS["stress"],
@@ -362,8 +382,9 @@ def render_export_zip(envelope: ExportEnvelope) -> bytes:
         "- stress: 1=relaxed; 5=very stressed.\n\n"
         "insights: full insight history (active and hidden), including decrypted "
         "statements. insight_dismissals: subject-stable hide intents.\n"
-        "Sections for photos, habits and sleep remain empty arrays until those "
-        "features ship in the product.\n"
+        "sleep: per-day manual sleep records (sleep_minutes 0..1440, sleep_quality "
+        "1..5); the same values also appear on each entry. Sections for photos and "
+        "habits remain empty arrays until those features ship in the product.\n"
     )
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:

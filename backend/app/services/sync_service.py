@@ -367,6 +367,8 @@ def _entry_payload_from_model(
         "cycle_bleeding_level": (
             entry.cycle_bleeding_level.value if entry.cycle_bleeding_level is not None else None
         ),
+        "sleep_minutes": entry.sleep_minutes,
+        "sleep_quality": entry.sleep_quality,
         "work_context": entry.work_context.value,
         "note": note_value,
         "tag_ids": [str(tag_id) for tag_id in tag_ids],
@@ -544,6 +546,8 @@ async def _merge_entry_upsert(
                 stress=payload.stress,
                 cycle_day=payload.cycle_day,
                 cycle_bleeding_level=payload.cycle_bleeding_level,
+                sleep_minutes=payload.sleep_minutes,
+                sleep_quality=payload.sleep_quality,
                 source=EntrySource.DIRECT,
                 work_context=payload.work_context,
                 note_enc=payload.note,
@@ -647,6 +651,8 @@ async def _merge_entry_upsert(
         entry.stress = payload.stress
         entry.cycle_day = payload.cycle_day
         entry.cycle_bleeding_level = payload.cycle_bleeding_level
+        entry.sleep_minutes = payload.sleep_minutes
+        entry.sleep_quality = payload.sleep_quality
         entry.work_context = payload.work_context
         entry.note_enc = payload.note
         entry.updated_at = client_ts

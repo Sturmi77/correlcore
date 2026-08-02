@@ -16,6 +16,8 @@ export interface SyncEntryPayload {
   energy: number;
   stress: number;
   cycle_day: number | null;
+  sleep_minutes?: number | null;
+  sleep_quality?: number | null;
   work_context: WorkContext;
   note: string | null;
   tag_ids: string[];
