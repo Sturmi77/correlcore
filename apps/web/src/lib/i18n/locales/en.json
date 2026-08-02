@@ -1071,8 +1071,6 @@
       "eyebrow": "Mobile summary",
       "strongest_heading": "Strongest current signal",
       "context": "Ranked from {n} entries in the last {days} days",
-      "correlation_note": "This describes an association in your entries, not a cause.",
-      "correlation_link": "How to read this",
       "maturity_heading": "Data maturity",
       "more_heading": "More patterns"
     },
@@ -1084,6 +1082,7 @@
       "aria_label": "Insights feed",
       "title": "Insights",
       "subtitle": "{n} entries in the last {days} days",
+      "correlation_header": "These are correlations in your own entries — patterns, not causes or diagnoses.",
       "disclaimer_aria": "Show explanation for correlations",
       "filter_label": "Filter insights",
       "tab_all": "All",

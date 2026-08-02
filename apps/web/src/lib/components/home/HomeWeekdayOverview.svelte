@@ -2,6 +2,7 @@
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
   import type { WeekdaySummaryItem } from '$lib/api/dashboard';
+  import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import {
     buildWeekdayOverviewCells,
     hasWeekdayOverviewContent,
@@ -109,7 +110,9 @@
     </div>
 
     {#if weekdayInsight?.statement}
-      <p class="weekday-overview__statement">{weekdayInsight.statement}</p>
+      <p class="weekday-overview__statement">
+        {stripLegacyInsightStatementTails(weekdayInsight.statement)}
+      </p>
     {/if}
     <p class="weekday-overview__hint">{$_('home.weekday_overview.hint')}</p>
   </section>

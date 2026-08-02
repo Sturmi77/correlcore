@@ -22,6 +22,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   Phase-Bands, Sleep×Symptom, HR-Persistenz, nativer Background-Sync. Details:
   [`docs/M8_SPRINT_STATUS.md`](docs/M8_SPRINT_STATUS.md).
 
+### Changed
+
+- **Korrelations-Disclaimer entflechtet (#632).** Die wiederholten Safety-Sätze
+  („…data pattern, not a diagnosis." / „…not a cause.") am Ende **jedes**
+  Insight-Statements wurden entfernt (`insight_engine.py`, 11 Statement-Builder)
+  und durch **einen** dezenten Feed-Header-Hinweis ersetzt
+  (`insights.feed.correlation_header`). Die vollständige Erklärung bleibt über
+  das ⓘ / `CorrelationDisclaimer` in ≤2 Klicks erreichbar. Statements sind jetzt
+  rein deskriptiv; Confounder-Hinweise bleiben unverändert. Zusätzlich: der
+  redundante Medical-Disclaimer im Auth-Layout entfernt (Legal-Links zu
+  Privacy/Impressum bleiben), und die seit #632 Phase-1 ungenutzten
+  `insights.mobile.correlation_note`/`correlation_link`-Keys aufgeräumt.
+
 ### Docs
 
 - **Reverse-proxy edges now document the required large proxy buffers** — the

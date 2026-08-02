@@ -98,7 +98,9 @@ def test_symptom_mood_association_candidates_use_fdr_and_frequency_guards() -> N
     assert candidate.payload["symptom_slug"] == "headache"
     assert candidate.payload["symptom_n"] == 10
     assert candidate.flags["multiple_testing_correction"] == "fdr_bh"
-    assert "cause" in candidate.statement
+    # #632: descriptive statement only; the "not a cause" hedge moved to the feed header.
+    assert "line up with" in candidate.statement
+    assert "cause" not in candidate.statement
 
 
 def test_symptom_mood_association_skips_near_daily_symptoms() -> None:

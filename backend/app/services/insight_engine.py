@@ -513,7 +513,7 @@ def _spearman_candidates(
         direction = _direction(rho, "higher", "lower")
         statement = (
             f"In your entries so far, {_METRIC_LABELS[left]} tends to be {direction} "
-            f"when {_METRIC_LABELS[right]} is higher. This is a data pattern, not a diagnosis."
+            f"when {_METRIC_LABELS[right]} is higher."
         )
         candidates.append(
             InsightCandidate(
@@ -625,10 +625,7 @@ def _sleep_spearman_candidates(
         tier = confidence_tier_for_sample(sample_n)
         direction = _direction(rho, "higher", "lower")
         label = _SLEEP_METRIC_LABELS[metric]
-        statement = (
-            f"In your entries so far, mood tends to be {direction} "
-            f"when {label} is higher. This is a data pattern, not a diagnosis."
-        )
+        statement = f"In your entries so far, mood tends to be {direction} when {label} is higher."
         statement = _weekday_confounded_statement(
             statement, weekday_confounded=calendar_context_confounded
         )
@@ -784,8 +781,7 @@ def _pointbiserial_candidates(
             continue
         direction = _direction(coefficient, "higher", "lower")
         statement = (
-            f"Days tagged {tag.label} currently line up with {direction} mood scores "
-            "in your data. Treat this as a pattern to reflect on, not a cause."
+            f"Days tagged {tag.label} currently line up with {direction} mood scores in your data."
         )
         statement = _context_confounded_statement(
             statement,
@@ -866,10 +862,7 @@ def _weekday_candidates(
 
     direction = _direction(delta, "higher", "lower")
     label = _WEEKDAY_LABELS[weekday]
-    statement = (
-        f"{label}s currently line up with {direction} mood than your overall average. "
-        "This is an early calendar pattern, not a diagnosis."
-    )
+    statement = f"{label}s currently line up with {direction} mood than your overall average."
     effect_size = round(delta, 4)
     return [
         InsightCandidate(
@@ -940,10 +933,7 @@ def _work_context_candidates(
     effect_size = round(delta, 4)
     label = _WORK_CONTEXT_LABELS[work_context]
     direction = _direction(delta, "higher", "lower")
-    statement = (
-        f"{label} days currently line up with {direction} mood than your overall average. "
-        "This is an early context pattern, not a diagnosis."
-    )
+    statement = f"{label} days currently line up with {direction} mood than your overall average."
     return [
         InsightCandidate(
             insight_type=InsightType.WORK_CONTEXT_PATTERN,
@@ -1025,8 +1015,7 @@ def _weekday_context_candidates(
     subject_label = f"{weekday_label}s in {context_label}"
     direction = _direction(delta, "higher", "lower")
     statement = (
-        f"{subject_label} currently line up with {direction} mood than your overall average. "
-        "This is an early calendar/context pattern, not a diagnosis."
+        f"{subject_label} currently line up with {direction} mood than your overall average."
     )
     return [
         InsightCandidate(
@@ -1129,17 +1118,14 @@ def _payload_feature(
 
 def _lasso_statement(finding: LassoFinding) -> str:
     labels = ", ".join(feature.feature.label for feature in finding.features[:3])
-    return (
-        f"Across your tracked signals, {finding.target} currently varies most with {labels}. "
-        "This is a multivariate pattern, not a cause."
-    )
+    return f"Across your tracked signals, {finding.target} currently varies most with {labels}."
 
 
 def _lag_statement(finding: LagFinding) -> str:
     direction = _direction(finding.correlation, "higher", "lower")
     return (
         f"{finding.feature.label} logged {finding.lag_days} day(s) earlier currently lines up "
-        f"with {direction} {finding.target.label}. Treat this as a time-shifted pattern, not a cause."
+        f"with {direction} {finding.target.label}."
     )
 
 
@@ -1279,8 +1265,7 @@ def _symptom_metric_statement(finding: SymptomMetricAssociation) -> str:
     direction = _direction(finding.coefficient, "higher", "lower")
     statement = (
         f"Days with {finding.symptom.label} currently line up with {direction} "
-        f"{_METRIC_LABELS[finding.metric]} in your data. "
-        "Treat this as an association, not a cause."
+        f"{_METRIC_LABELS[finding.metric]} in your data."
     )
     return _context_confounded_statement(
         statement,
@@ -1297,8 +1282,7 @@ def _symptom_tag_statement(finding: SymptomTagAssociation) -> str:
         relationship = "appears less often with"
     statement = (
         f"{finding.symptom.label} currently {relationship} {finding.tag.label} "
-        "more than expected from their individual frequencies. "
-        "This is a co-occurrence pattern, not a cause."
+        "more than expected from their individual frequencies."
     )
     return _context_confounded_statement(
         statement,
@@ -1464,8 +1448,7 @@ def _changepoint_candidates(
     delta = after_avg - before_avg
     direction = _direction(delta, "higher", "lower")
     statement = (
-        f"Your mood average shifted to {direction} levels around entry {index + 1} "
-        "in your history. This is a descriptive pattern, not a diagnosis."
+        f"Your mood average shifted to {direction} levels around entry {index + 1} in your history."
     )
     effect_size = round(delta, 4)
     return [

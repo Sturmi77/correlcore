@@ -29,6 +29,7 @@
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
+  import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
 
   export let insight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
@@ -311,7 +312,7 @@
         data-testid="insight-card-direction">{glyph}</span
       >
       <p class="insight-card__statement" data-testid="insight-card-statement">
-        {insight.statement ?? $_('home.insight.empty_statement')}
+        {stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')}
       </p>
       {#if dismissable}
         <button

@@ -3,6 +3,10 @@
   import type { EntryResponse } from '$lib/api/entries';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { topInsightLabel } from '$lib/utils/analysisCrossLinks';
+  import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
+  // Maintainer (#632): home shows a lead statement without the InsightFeed
+  // correlation header; full CorrelationDisclaimer remains on /insights
+  // (bridge link below) and /insights/disclaimer. Do not re-add per-statement tails.
   import {
     maturityProgressMessage,
     maturityProgressPercent,
@@ -32,7 +36,8 @@
   <div class="daily-brief__lead">
     {#if latestInsight}
       <p class="daily-brief__lead-statement" data-testid="daily-brief-lead-statement">
-        {latestInsight.statement ?? $_('home.brief.insight_fallback')}
+        {stripLegacyInsightStatementTails(latestInsight.statement) ||
+          $_('home.brief.insight_fallback')}
       </p>
       <p class="daily-brief__caption" data-testid="daily-brief-lead-caption">
         {latestInsight.subject_label ?? latestInsight.metric}
