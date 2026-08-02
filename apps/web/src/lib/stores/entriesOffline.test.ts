@@ -611,6 +611,14 @@ describe('entriesOffline', () => {
       selectedSymptoms: [],
     });
 
+    const pendingBefore = await listPendingChanges();
+    const upsertBefore = pendingBefore.find((row) => row.entity_id === saved.entryId);
+    expect(upsertBefore?.client_ts).toBeTruthy();
+    // Server sleep must be newer than the stale outbox (HC just filled).
+    const serverUpdatedAt = new Date(
+      new Date(upsertBefore!.client_ts).getTime() + 60_000
+    ).toISOString();
+
     vi.mocked(listEntries).mockResolvedValue([
       {
         ...apiEntry(saved.entryId),
@@ -618,7 +626,7 @@ describe('entriesOffline', () => {
         sleep_minutes: 410,
         sleep_quality: null,
         note: null,
-        updated_at: '2026-07-13T09:00:00.000Z',
+        updated_at: serverUpdatedAt,
       },
     ]);
 
@@ -639,6 +647,68 @@ describe('entriesOffline', () => {
       note: 'mood only',
       sleep_minutes: 410,
     });
+  });
+
+  it('does not resurrect sleep over a newer pending clear after HC Sync now', async () => {
+    await applyPulledEntry(
+      'clear-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        cycle_day: null,
+        sleep_minutes: 430,
+        sleep_quality: null,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T08:00:00.000Z',
+      'synced'
+    );
+
+    // User clears sleep while offline; outbox is newer than the server row.
+    const saved = await saveEntryOffline('clear-entry', {
+      entry_date: '2026-07-13',
+      mood_score: 3,
+      energy: 3,
+      stress: 2,
+      slot: 'day',
+      cycle_day: null,
+      sleep_minutes: null,
+      sleep_quality: null,
+      work_context: 'office',
+      note: '',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        sleep_minutes: 430,
+        sleep_quality: null,
+        // Server still holds the pre-clear value (push has not landed).
+        updated_at: '2026-07-13T08:00:00.000Z',
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport([
+      { entry_date: '2026-07-13', sleep_minutes: 430 },
+    ]);
+    expect(filled).toBe(0);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBeNull();
+    expect(local?.sync_state).toBe('pending');
+
+    const pending = await listPendingChanges();
+    const upsert = pending.find((row) => row.entity_id === saved.entryId);
+    expect(upsert?.payload).toMatchObject({ sleep_minutes: null });
+    expect(upsert?.client_ts).toBe(local?.updated_at);
   });
 
   it('does not overwrite local sleep or mismatched server values after HC import', async () => {
