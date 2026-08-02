@@ -1635,7 +1635,9 @@
       "ok": "Schlaf-Synchronisierung abgeschlossen.",
       "no_consent": "Erteile zuerst die Health-Connect-Einwilligung.",
       "unavailable": "Health Connect ist auf diesem Geraet nicht verfuegbar.",
-      "no_data": "Keine Schlafdaten fuer die letzten 30 Tage gefunden."
+      "no_data": "Keine Schlafdaten fuer die letzten 7 Tage gefunden.",
+      "sync_disabled": "Der Schlaf-Import ist ausgeschaltet. Aktiviere den Schalter unten, um zu synchronisieren.",
+      "error": "Schlaf-Synchronisierung fehlgeschlagen. Pruefe deine Verbindung und versuche es erneut."
     }
   },
   "privacy": {

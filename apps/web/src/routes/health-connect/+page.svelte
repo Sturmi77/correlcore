@@ -22,8 +22,10 @@
   // Health Connect reads exactly these two data types — nothing else.
   const dataKeys = ['sleep', 'heart_rate'] as const;
   const sectionKeys = ['what', 'why', 'ondevice', 'control'] as const;
-  // Foreground sync window: the last 30 days of nights.
-  const SYNC_WINDOW_DAYS = 30;
+  // Foreground sync window: the last 7 days of nights, matching the entries
+  // REST API's editable/backdate window (BACKDATE_DAYS_LIMIT) so every
+  // imported value can still be edited or cleared like a manual entry.
+  const SYNC_WINDOW_DAYS = 7;
 
   let consents: ConsentListResponse | null = null;
   let preferences: UserPreferencesResponse | null = null;
@@ -78,6 +80,12 @@
         end: end.toISOString(),
       });
       syncMessageKey = `health_connect.sync.${result.status}`;
+      if (result.status === 'sync_disabled') {
+        // The server is authoritative: reflect the disabled toggle locally too.
+        sleepSyncEnabled = false;
+      }
+    } catch {
+      syncMessageKey = 'health_connect.sync.error';
     } finally {
       syncing = false;
     }

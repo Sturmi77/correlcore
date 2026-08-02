@@ -1635,7 +1635,9 @@
       "ok": "Sleep sync complete.",
       "no_consent": "Grant the Health Connect consent first.",
       "unavailable": "Health Connect is not available on this device.",
-      "no_data": "No sleep records found for the last 30 days."
+      "no_data": "No sleep records found for the last 7 days.",
+      "sync_disabled": "Sleep import is turned off. Turn on the toggle below to sync.",
+      "error": "Sleep sync failed. Check your connection and try again."
     }
   },
   "privacy": {
