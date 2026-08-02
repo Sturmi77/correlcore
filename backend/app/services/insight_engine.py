@@ -625,10 +625,7 @@ def _sleep_spearman_candidates(
         tier = confidence_tier_for_sample(sample_n)
         direction = _direction(rho, "higher", "lower")
         label = _SLEEP_METRIC_LABELS[metric]
-        statement = (
-            f"In your entries so far, mood tends to be {direction} "
-            f"when {label} is higher."
-        )
+        statement = f"In your entries so far, mood tends to be {direction} when {label} is higher."
         statement = _weekday_confounded_statement(
             statement, weekday_confounded=calendar_context_confounded
         )
@@ -784,8 +781,7 @@ def _pointbiserial_candidates(
             continue
         direction = _direction(coefficient, "higher", "lower")
         statement = (
-            f"Days tagged {tag.label} currently line up with {direction} mood scores "
-            "in your data."
+            f"Days tagged {tag.label} currently line up with {direction} mood scores in your data."
         )
         statement = _context_confounded_statement(
             statement,
@@ -866,9 +862,7 @@ def _weekday_candidates(
 
     direction = _direction(delta, "higher", "lower")
     label = _WEEKDAY_LABELS[weekday]
-    statement = (
-        f"{label}s currently line up with {direction} mood than your overall average."
-    )
+    statement = f"{label}s currently line up with {direction} mood than your overall average."
     effect_size = round(delta, 4)
     return [
         InsightCandidate(
@@ -939,9 +933,7 @@ def _work_context_candidates(
     effect_size = round(delta, 4)
     label = _WORK_CONTEXT_LABELS[work_context]
     direction = _direction(delta, "higher", "lower")
-    statement = (
-        f"{label} days currently line up with {direction} mood than your overall average."
-    )
+    statement = f"{label} days currently line up with {direction} mood than your overall average."
     return [
         InsightCandidate(
             insight_type=InsightType.WORK_CONTEXT_PATTERN,
@@ -1126,9 +1118,7 @@ def _payload_feature(
 
 def _lasso_statement(finding: LassoFinding) -> str:
     labels = ", ".join(feature.feature.label for feature in finding.features[:3])
-    return (
-        f"Across your tracked signals, {finding.target} currently varies most with {labels}."
-    )
+    return f"Across your tracked signals, {finding.target} currently varies most with {labels}."
 
 
 def _lag_statement(finding: LagFinding) -> str:
@@ -1458,8 +1448,7 @@ def _changepoint_candidates(
     delta = after_avg - before_avg
     direction = _direction(delta, "higher", "lower")
     statement = (
-        f"Your mood average shifted to {direction} levels around entry {index + 1} "
-        "in your history."
+        f"Your mood average shifted to {direction} levels around entry {index + 1} in your history."
     )
     effect_size = round(delta, 4)
     return [
