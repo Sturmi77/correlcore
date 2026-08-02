@@ -51,6 +51,8 @@ def _entry(
     work_context: WorkContext = WorkContext.HOMEOFFICE,
     tag_ids: frozenset[uuid.UUID] = frozenset(),
     symptom_ids: frozenset[uuid.UUID] = frozenset(),
+    sleep_minutes: int | None = None,
+    sleep_quality: int | None = None,
 ) -> AnalyticsEntry:
     return AnalyticsEntry(
         id=uuid.uuid4(),
@@ -61,6 +63,8 @@ def _entry(
         work_context=work_context,
         tag_ids=tag_ids,
         symptom_ids=symptom_ids,
+        sleep_minutes=sleep_minutes,
+        sleep_quality=sleep_quality,
     )
 
 
@@ -298,6 +302,94 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     assert tag_candidate.subject_id == sport_id
     assert tag_candidate.payload["tag_slug"] == "sport"
     assert tag_candidate.payload["tagged_count"] == 15
+
+
+def test_sleep_mood_spearman_candidates_surface() -> None:
+    """M8 Sprint 2 (#172): sleep↔mood correlations appear in the insights feed."""
+    start = date(2026, 4, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset % 2 == 0 else 2,
+            energy=3,
+            stress=3,
+            sleep_minutes=470 if offset % 2 == 0 else 300,
+            sleep_quality=5 if offset % 2 == 0 else 2,
+        )
+        for offset in range(30)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=date(2026, 4, 30))
+
+    sleep_candidates = [
+        c
+        for c in candidates
+        if c.insight_type == InsightType.SPEARMAN and c.metric.startswith("mood_sleep_")
+    ]
+    metrics = {c.metric for c in sleep_candidates}
+    assert "mood_sleep_minutes" in metrics
+    assert "mood_sleep_quality" in metrics
+    duration = next(c for c in sleep_candidates if c.metric == "mood_sleep_minutes")
+    assert duration.subject_type == "metric"
+    assert duration.subject_label == "sleep_minutes"
+    assert duration.effect_size is not None and duration.effect_size > 0
+    assert duration.sample_n == 30
+    assert "higher" in duration.statement
+    assert "diagnosis" in duration.statement.lower()
+
+
+def test_sleep_correlation_requires_enough_paired_days() -> None:
+    """Sparse sleep data (below the paired-observation floor) yields no candidate."""
+    start = date(2026, 4, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=5 if offset % 2 == 0 else 2,
+            energy=3,
+            stress=3,
+            sleep_minutes=(470 if offset % 2 == 0 else 300) if offset < 10 else None,
+        )
+        for offset in range(30)
+    ]
+
+    candidates = generate_insight_candidates(entries, as_of=date(2026, 4, 30))
+
+    assert not any(
+        c.insight_type == InsightType.SPEARMAN and c.metric.startswith("mood_sleep_")
+        for c in candidates
+    )
+
+
+def test_sleep_mood_correlation_flagged_when_weekday_confounded() -> None:
+    """M8 Sprint 2 (#172): a raw sleep↔mood link fully driven by weekend timing
+    (more sleep and better mood on weekends alike) is flagged as confounded
+    rather than presented as a plain sleep association."""
+    start = date(2026, 1, 5)  # a Monday
+    rng = Random(172)
+    entries = []
+    for offset in range(98):
+        day = start + timedelta(days=offset)
+        is_weekend = day.weekday() >= 5
+        mood = (4 + rng.choice([0, 1])) if is_weekend else (1 + rng.choice([0, 1]))
+        sleep_minutes = (
+            (450 + rng.choice([-20, 0, 20])) if is_weekend else (330 + rng.choice([-20, 0, 20]))
+        )
+        entries.append(_entry(day, mood=mood, energy=3, stress=3, sleep_minutes=sleep_minutes))
+
+    candidates = generate_insight_candidates(entries, as_of=start + timedelta(days=98))
+
+    duration = next(
+        (
+            c
+            for c in candidates
+            if c.insight_type == InsightType.SPEARMAN and c.metric == "mood_sleep_minutes"
+        ),
+        None,
+    )
+    assert duration is not None
+    assert duration.flags.get("weekday_confounded") is True
+    assert duration.flags.get("calendar_context_confounded") is True
+    assert "weekday" in duration.statement.lower()
 
 
 def test_pointbiserial_marks_work_context_confounder() -> None:

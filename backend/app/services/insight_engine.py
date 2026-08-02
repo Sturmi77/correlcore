@@ -52,6 +52,8 @@ from app.services.symptom_analytics import (
 )
 from app.services.tag_service import analytics_tag_predicate
 from app.services.weekday_confounder import (
+    is_continuous_association_calendar_context_confounded,
+    is_continuous_association_weekday_confounded,
     is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
 )
@@ -108,6 +110,15 @@ _METRIC_LABELS: dict[MetricName, str] = {
     "energy": "energy",
     "stress": "stress",
 }
+# M8 Sprint 2 (#172): manual sleep metrics correlated against mood.
+SleepMetricName = Literal["sleep_minutes", "sleep_quality"]
+_SLEEP_METRIC_LABELS: dict[SleepMetricName, str] = {
+    "sleep_minutes": "sleep duration",
+    "sleep_quality": "sleep quality",
+}
+# A sleep↔mood correlation needs at least this many days that actually recorded
+# sleep (pairwise deletion), matching the bivariate bar for other correlations.
+MIN_SLEEP_OBSERVATIONS = MIN_BIVARIATE_ENTRIES
 _WEEKDAY_LABELS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 _WORK_CONTEXT_LABELS: dict[WorkContext, str] = {
     WorkContext.HOMEOFFICE: "Home office",
@@ -131,6 +142,10 @@ class AnalyticsEntry:
     work_context: WorkContext = WorkContext.HOMEOFFICE
     tag_ids: frozenset[uuid.UUID] = field(default_factory=frozenset)
     symptom_ids: frozenset[uuid.UUID] = field(default_factory=frozenset)
+    # M8 Sprint 2 (#172): optional manual sleep metrics. None when the day has no
+    # sleep record — sleep↔mood correlations use pairwise deletion on these.
+    sleep_minutes: int | None = None
+    sleep_quality: int | None = None
 
 
 @dataclass(frozen=True)
@@ -192,6 +207,18 @@ def _metric_value(entry: AnalyticsEntry, metric: MetricName) -> int:
     if metric == "energy":
         return entry.energy
     return entry.stress
+
+
+def _optional_mean_round(values: Sequence[int | None]) -> int | None:
+    """Mean of the present values, rounded; None when every value is missing.
+
+    Used to collapse multi-slot sleep records into one daily value while
+    preserving "no sleep recorded" as None (M8 Sprint 2).
+    """
+    present = [value for value in values if value is not None]
+    if not present:
+        return None
+    return round(sum(present) / len(present))
 
 
 def display_metric_value(
@@ -396,6 +423,8 @@ def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEn
                 work_context=first.work_context,
                 tag_ids=frozenset(tag_id for row in rows for tag_id in row.tag_ids),
                 symptom_ids=frozenset(symptom_id for row in rows for symptom_id in row.symptom_ids),
+                sleep_minutes=_optional_mean_round([row.sleep_minutes for row in rows]),
+                sleep_quality=_optional_mean_round([row.sleep_quality for row in rows]),
             )
         )
     return daily
@@ -439,6 +468,8 @@ def _canonicalize_tag_aliases(
             work_context=entry.work_context,
             tag_ids=frozenset(aliases.get(tag_id, tag_id) for tag_id in entry.tag_ids),
             symptom_ids=entry.symptom_ids,
+            sleep_minutes=entry.sleep_minutes,
+            sleep_quality=entry.sleep_quality,
         )
         for entry in entries
     ]
@@ -502,6 +533,134 @@ def _spearman_candidates(
                     "right_metric": right,
                     "rho": round(rho, 4),
                     "p_corrected": round(p_corrected, 4),
+                },
+                generated_for_date=generated_for_date,
+            )
+        )
+    return candidates
+
+
+def _sleep_spearman_candidates(
+    entries: Sequence[AnalyticsEntry],
+    *,
+    generated_for_date: date_type,
+) -> list[InsightCandidate]:
+    """Spearman sleep↔mood correlations (M8 Sprint 2, #172).
+
+    Sleep is optional, so each metric uses pairwise deletion: only days that
+    recorded that sleep value take part, and a pair needs at least
+    ``MIN_SLEEP_OBSERVATIONS`` such days. The confidence tier reflects that
+    paired count, not the total entry count. FDR is applied across the sleep
+    family independently of the always-present metric pairs. A raw hit is
+    checked against weekday/work-context OLS controls (e.g. weekend days with
+    both more sleep and better mood) and flagged rather than presented as a
+    plain sleep association when calendar context explains it away.
+    """
+    if len(entries) < MIN_BIVARIATE_ENTRIES:
+        return []
+
+    raw: list[tuple[SleepMetricName, float, float, int, bool, bool]] = []
+    metrics: tuple[SleepMetricName, ...] = ("sleep_minutes", "sleep_quality")
+    for metric in metrics:
+        paired = [
+            (entry.entry_date, entry.work_context, getattr(entry, metric), entry.mood_score)
+            for entry in entries
+            if getattr(entry, metric) is not None
+        ]
+        if len(paired) < MIN_SLEEP_OBSERVATIONS:
+            continue
+        entry_dates = [item[0] for item in paired]
+        work_contexts = [item[1] for item in paired]
+        sleep_values = [item[2] for item in paired]
+        mood_values = [item[3] for item in paired]
+        if len(set(sleep_values)) < 2 or len(set(mood_values)) < 2:
+            continue
+        result = spearmanr(sleep_values, mood_values)
+        rho = _finite_float(result.statistic)
+        p_value = _finite_float(result.pvalue)
+        if rho is None or p_value is None or abs(rho) < MIN_ABS_EFFECT_SIZE:
+            continue
+
+        weekday_confounded = is_continuous_association_weekday_confounded(
+            entry_dates,
+            mood_values,
+            sleep_values,
+            raw_coefficient=rho,
+            raw_p_value=p_value,
+            min_effect=MIN_ABS_EFFECT_SIZE,
+            alpha=FDR_ALPHA,
+        )
+        calendar_context_confounded = (
+            weekday_confounded
+            or is_continuous_association_calendar_context_confounded(
+                entry_dates,
+                [work_context.value for work_context in work_contexts],
+                mood_values,
+                sleep_values,
+                raw_coefficient=rho,
+                raw_p_value=p_value,
+                min_effect=MIN_ABS_EFFECT_SIZE,
+                alpha=FDR_ALPHA,
+            )
+        )
+        raw.append(
+            (metric, rho, p_value, len(paired), weekday_confounded, calendar_context_confounded)
+        )
+
+    candidates: list[InsightCandidate] = []
+    for (
+        metric,
+        rho,
+        p_value,
+        sample_n,
+        weekday_confounded,
+        calendar_context_confounded,
+    ), (significant, p_corrected) in zip(
+        raw,
+        _fdr_results([item[2] for item in raw]),
+        strict=True,
+    ):
+        if not significant:
+            continue
+        tier = confidence_tier_for_sample(sample_n)
+        direction = _direction(rho, "higher", "lower")
+        label = _SLEEP_METRIC_LABELS[metric]
+        statement = (
+            f"In your entries so far, mood tends to be {direction} "
+            f"when {label} is higher. This is a data pattern, not a diagnosis."
+        )
+        statement = _weekday_confounded_statement(
+            statement, weekday_confounded=calendar_context_confounded
+        )
+        confounders = _confounders(
+            weekday_confounded=weekday_confounded,
+            work_context_confounded=False,
+            calendar_context_confounded=calendar_context_confounded,
+        )
+        candidates.append(
+            InsightCandidate(
+                insight_type=InsightType.SPEARMAN,
+                tier=tier,
+                metric=f"mood_{metric}",
+                subject_type="metric",
+                subject_id=None,
+                subject_label=metric,
+                effect_size=round(rho, 4),
+                confidence=_confidence(rho, p_corrected, tier),
+                sample_n=sample_n,
+                statement=statement,
+                flags={
+                    **_base_flags(p_value=p_value, p_corrected=p_corrected, method="spearman"),
+                    "weekday_confounded": weekday_confounded,
+                    "calendar_context_confounded": calendar_context_confounded,
+                },
+                payload={
+                    "left_metric": "mood_score",
+                    "right_metric": metric,
+                    "rho": round(rho, 4),
+                    "p_corrected": round(p_corrected, 4),
+                    "confounder": _primary_confounder(confounders),
+                    "confounders": confounders,
                 },
                 generated_for_date=generated_for_date,
             )
@@ -916,6 +1075,8 @@ def _multivariate_entries(entries: Sequence[AnalyticsEntry]) -> list[Multivariat
             stress=entry.stress,
             tag_ids=entry.tag_ids,
             symptom_ids=entry.symptom_ids,
+            sleep_minutes=entry.sleep_minutes,
+            sleep_quality=entry.sleep_quality,
         )
         for entry in entries
     ]
@@ -1364,6 +1525,7 @@ def generate_insight_candidates(
             generated_for_date=generated_for_date,
         ),
         *_spearman_candidates(daily_entries, tier=tier, generated_for_date=generated_for_date),
+        *_sleep_spearman_candidates(daily_entries, generated_for_date=generated_for_date),
         *_pointbiserial_candidates(
             daily_entries,
             tags_by_id,
@@ -1487,6 +1649,8 @@ async def _load_analytics_inputs(
             work_context=entry.work_context,
             tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
             symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
+            sleep_minutes=entry.sleep_minutes,
+            sleep_quality=entry.sleep_quality,
         )
         for entry in entries
     ]
