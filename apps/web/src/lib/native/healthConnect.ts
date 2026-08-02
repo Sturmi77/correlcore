@@ -45,8 +45,8 @@ export interface HealthConnectReadResult {
 
 type HealthConnectPlugin = {
   isAvailable(): Promise<HealthConnectAvailability>;
-  checkPermissions(): Promise<HealthConnectPermissionState>;
-  requestPermissions(): Promise<HealthConnectPermissionState>;
+  checkHealthPermissions(): Promise<HealthConnectPermissionState>;
+  requestHealthPermissions(): Promise<HealthConnectPermissionState>;
   readSleepAndHeartRate(options: { start: string; end: string }): Promise<HealthConnectReadResult>;
 };
 
@@ -81,7 +81,7 @@ export async function checkHealthConnectPermissions(): Promise<HealthConnectPerm
   const plugin = isCapacitorBuild() ? getNativePlugin() : null;
   if (!plugin) return { granted: false, available: false };
   try {
-    return await plugin.checkPermissions();
+    return await plugin.checkHealthPermissions();
   } catch {
     return { granted: false, available: false };
   }
@@ -101,7 +101,7 @@ export async function requestHealthConnectPermissions(
   const plugin = isCapacitorBuild() ? getNativePlugin() : null;
   if (!plugin) return { granted: false, available: false };
   try {
-    return await plugin.requestPermissions();
+    return await plugin.requestHealthPermissions();
   } catch {
     return { granted: false, available: false };
   }

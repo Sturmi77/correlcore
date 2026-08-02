@@ -1,5 +1,6 @@
 package de.correlcore.app.health
 
+import android.annotation.SuppressLint
 import androidx.activity.result.ActivityResult
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -32,6 +33,12 @@ import java.time.Instant
  * The web layer additionally gates every call behind the DSGVO Art. 9 consent
  * (`canUseHealthConnectImport`). Writing imported values into entries is Sprint 4.
  */
+// java.time (Instant/Duration) and the Health Connect client need API 26+.
+// Every entry point here is gated behind HealthConnectClient.getSdkStatus() ==
+// SDK_AVAILABLE, which is only true on API 26+ (Health Connect does not exist on
+// 24–25), so the java.time code never runs on the app's minSdk-24 floor. The
+// NewApi lint (build.gradle) is therefore suppressed for this HC-only class.
+@SuppressLint("NewApi")
 @CapacitorPlugin(name = "HealthConnect")
 class HealthConnectPlugin : Plugin() {
 
@@ -65,8 +72,10 @@ class HealthConnectPlugin : Plugin() {
         call.resolve(result)
     }
 
+    // Named *HealthPermissions to avoid clashing with Capacitor Plugin's built-in
+    // checkPermissions/requestPermissions (we don't use its permission-alias system).
     @PluginMethod
-    fun checkPermissions(call: PluginCall) {
+    fun checkHealthPermissions(call: PluginCall) {
         val client = clientOrNull()
         if (client == null) {
             call.resolve(JSObject().put("granted", false).put("available", false))
@@ -89,7 +98,7 @@ class HealthConnectPlugin : Plugin() {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    fun requestHealthPermissions(call: PluginCall) {
         if (sdkStatus() != HealthConnectClient.SDK_AVAILABLE) {
             call.reject("health_connect_unavailable")
             return
