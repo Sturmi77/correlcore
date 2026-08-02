@@ -56,8 +56,8 @@ class MultivariateEntry:
     symptom_ids: frozenset[uuid.UUID]
     # M8 Sprint 2 (#172): optional manual sleep metrics. Added to the design
     # matrix as continuous feature columns only when coverage is high enough
-    # (see MIN_SLEEP_COLUMN_COVERAGE); missing days are mean-imputed so the
-    # complete-case Lasso/lag pipeline stays NaN-free.
+    # (see MIN_SLEEP_COLUMN_COVERAGE). Missing days stay NaN for lag pairwise
+    # deletion; Lasso applies fold-local mean imputation instead.
     sleep_minutes: int | None = None
     sleep_quality: int | None = None
 

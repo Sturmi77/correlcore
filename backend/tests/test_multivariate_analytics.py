@@ -202,22 +202,47 @@ def test_lasso_handles_sleep_gaps_via_fold_local_imputation() -> None:
 def test_lag_analysis_sleep_predictor_keeps_gappy_pairwise_pairs() -> None:
     """Sleep lag must pairwise-delete on (target, sleep_lagN), not same-day sleep.
 
-    With alternating sleep gaps at the coverage floor, requiring contemporaneous
-    sleep in build_lagged_frame.dropna() yields zero lag rows even when every
-    day-after-sleep has a valid mood↔prior-sleep pair (#172).
+    Requiring contemporaneous sleep in ``build_lagged_frame(...).dropna()`` drops
+    every gap day and every day-after-gap, wiping most valid prior-sleep→mood
+    pairs. With sleep missing every third day, correct pairwise keeps ~2/3 of
+    rows while the old blanket dropna kept only ~1/3 (#172).
     """
     start = date(2026, 1, 1)
     entries = []
     for offset in range(MIN_ML_ENTRIES):
-        # Checkerboard sleep (~50% coverage, with variance) + mood elevated the
-        # day after sleep so lag-1 is a real, detectable association.
-        sleep_minutes = 400 + (offset % 5) * 20 if offset % 2 == 0 else None
-        mood = 5 if offset > 0 and (offset - 1) % 2 == 0 else 2
+        # ~67% coverage (above the 50% floor) with systematic gaps.
+        sleep_minutes = None if offset % 3 == 0 else 350 + (offset % 7) * 15
+        if offset == 0 or (offset - 1) % 3 == 0:
+            # No usable prior sleep — neutral mood with light variance so the
+            # series is not constant if these rows ever leak into a pair.
+            mood = 2 + (offset % 2)
+        else:
+            prior_sleep = 350 + ((offset - 1) % 7) * 15
+            mood = max(1, min(5, 1 + (prior_sleep - 350) // 20))
         entries.append(_entry(start + timedelta(days=offset), mood=mood, sleep_minutes=sleep_minutes))
 
     frame, feature_meta = build_design_matrix(entries)
     assert "sleep_minutes" in frame.columns
-    assert frame["sleep_minutes"].isna().sum() == MIN_ML_ENTRIES // 2
+    assert frame["sleep_minutes"].isna().any()
+
+    # Old path: blanket dropna on [mood, sleep, sleep_lag1] keeps only days that
+    # have same-day sleep AND prior sleep (~1/3). New path must keep ~2/3.
+    broken = build_lagged_frame(
+        frame[["mood_score", "sleep_minutes"]],
+        ["sleep_minutes"],
+        max_lag_days=1,
+        dropna=True,
+    )
+    fixed = build_lagged_frame(
+        frame[["mood_score", "sleep_minutes"]],
+        ["sleep_minutes"],
+        max_lag_days=1,
+        dropna=False,
+    )
+    broken_n = len(broken[["mood_score", "sleep_minutes_lag1"]].dropna()) if len(broken) else 0
+    fixed_n = len(fixed[["mood_score", "sleep_minutes_lag1"]].dropna())
+    assert fixed_n > broken_n
+    assert fixed_n >= (MIN_ML_ENTRIES * 2) // 3 - 1  # warm-up may drop the first day
 
     findings = run_lag_analysis(
         frame,
@@ -233,8 +258,7 @@ def test_lag_analysis_sleep_predictor_keeps_gappy_pairwise_pairs() -> None:
     ]
     assert sleep_to_mood, "gappy sleep must still produce sleep→mood lag findings"
     assert sleep_to_mood[0].lag_days == 1
-    # Every odd day after an even sleep day is a valid pair (~half the series).
-    assert sleep_to_mood[0].sample_n == MIN_ML_ENTRIES // 2
+    assert sleep_to_mood[0].sample_n == fixed_n
 
 
 def test_lag_analysis_never_targets_sleep_and_uses_pairwise_deletion() -> None:
