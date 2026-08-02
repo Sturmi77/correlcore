@@ -1587,6 +1587,45 @@
       "label": "Abmelden"
     }
   },
+  "health_connect": {
+    "page_title": "Health Connect",
+    "page_subtitle": "Wie CorrelCore auf Android Schlaf- und Herzfrequenzdaten liest",
+    "intro": "Auf Android kann CorrelCore einen eng begrenzten Satz an Daten aus Health Connect lesen — dem geraeteinternen Speicher, in den Apps wie Fitbit, Samsung Health oder Garmin ihre Werte schreiben. Ohne deine ausdrueckliche Einwilligung wird nichts gelesen.",
+    "data": {
+      "sleep": "Schlafphasen (Dauer und Zeitraum)",
+      "heart_rate": "Herzfrequenz-Datensaetze"
+    },
+    "data_note": "Nur diese zwei Datentypen fragt CorrelCore an. Bewegungsprofile, Standort und Schritte werden nie gelesen — die Begrenzung ist in der App erzwungen, nicht nur hier beschrieben.",
+    "sections": {
+      "what": {
+        "heading": "Was gelesen wird",
+        "body": "Nur Schlafphasen und Herzfrequenz-Datensaetze, und nur fuer die Zeitraeume, die du importierst. CorrelCore nutzt sie, um deine eigenen Korrelationen anzureichern (zum Beispiel Schlaf gegen Stimmung)."
+      },
+      "why": {
+        "heading": "Warum",
+        "body": "Damit von Wearables erfasster Schlaf und Herzfrequenz in deine Erkenntnisse einfliessen, ohne sie von Hand einzutippen. Das ist eine Analyse deiner eigenen Daten — niemals eine Diagnose."
+      },
+      "ondevice": {
+        "heading": "Bleibt auf deinem Geraetepfad",
+        "body": "Health Connect ist ein geraeteinterner Android-Speicher. Daten fliessen aus Health Connect nur in deine CorrelCore-Instanz; keine Dritt-Cloud ist beteiligt."
+      },
+      "control": {
+        "heading": "Du behaeltst die Kontrolle",
+        "body": "Du erteilst eine einmalige Einwilligung und bestaetigst dann die Health-Connect-Berechtigung. Beides kannst du jederzeit in den Einstellungen widerrufen; ein Konto-Loeschen entfernt importierte Daten."
+      }
+    },
+    "status": {
+      "android_only": "Der Health-Connect-Import ist nur in der CorrelCore-Android-App verfuegbar.",
+      "unavailable": "Health Connect ist auf diesem Geraet nicht verfuegbar. Installiere oder aktiviere es und kehre dann hierher zurueck.",
+      "needs_consent": "Erteile zuerst die Health-Connect-Einwilligung in den Einstellungen und komme dann zum Verbinden zurueck.",
+      "granted": "Health-Connect-Zugriff ist erteilt. Schlaf- und Herzfrequenzdaten koennen importiert werden."
+    },
+    "actions": {
+      "grant": "Health-Connect-Zugriff erteilen",
+      "open_settings": "Einstellungen oeffnen",
+      "back": "Zurueck zu Einstellungen"
+    }
+  },
   "privacy": {
     "page_title": "Datenschutzerklaerung",
     "page_subtitle": "Wie diese CorrelCore-Installation mit deinen Daten umgeht",

@@ -36,7 +36,24 @@
                     android:pathPrefix="/new" />
             </intent-filter>
 
+            <!-- M8 Sprint 3 — Health Connect permission rationale (pre-Android 14 HC APK) -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+
         </activity>
+
+        <!-- M8 Sprint 3 — Android 14+ framework Health Connect rationale entry point -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -67,4 +84,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- M11 Sprint 5 — FCM / notification permission (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- M8 Sprint 3 — Health Connect read, sleep + heart rate only (data minimization) -->
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
 </manifest>

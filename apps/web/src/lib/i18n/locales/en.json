@@ -1587,6 +1587,45 @@
       "label": "Sign out"
     }
   },
+  "health_connect": {
+    "page_title": "Health Connect",
+    "page_subtitle": "How CorrelCore reads sleep and heart-rate data on Android",
+    "intro": "On Android, CorrelCore can read a limited set of data from Health Connect — the on-device store where apps like Fitbit, Samsung Health or Garmin can write your metrics. Nothing is read without your explicit consent.",
+    "data": {
+      "sleep": "Sleep sessions (duration and timing)",
+      "heart_rate": "Heart-rate records"
+    },
+    "data_note": "These are the only two data types CorrelCore requests. Movement profiles, location and steps are never read — the limit is enforced in the app, not just here.",
+    "sections": {
+      "what": {
+        "heading": "What is read",
+        "body": "Only sleep sessions and heart-rate records, and only for the time ranges you import. CorrelCore uses them to enrich your own correlations (for example sleep versus mood)."
+      },
+      "why": {
+        "heading": "Why",
+        "body": "So wearable-recorded sleep and heart rate can inform your insights without re-typing them by hand. This is analysis of your own data — never a diagnosis."
+      },
+      "ondevice": {
+        "heading": "Stays on your device path",
+        "body": "Health Connect is an on-device Android store. Data flows from Health Connect into your CorrelCore instance only; no third-party cloud is involved."
+      },
+      "control": {
+        "heading": "You stay in control",
+        "body": "You grant a one-time consent, then approve the Health Connect permission. You can revoke either at any time in Settings, and deleting your account removes imported data."
+      }
+    },
+    "status": {
+      "android_only": "Health Connect import is only available in the CorrelCore Android app.",
+      "unavailable": "Health Connect is not available on this device. Install or enable it, then return here.",
+      "needs_consent": "Grant the Health Connect consent in Settings first, then come back to connect.",
+      "granted": "Health Connect access is granted. Sleep and heart-rate data can be imported."
+    },
+    "actions": {
+      "grant": "Grant Health Connect access",
+      "open_settings": "Open Settings",
+      "back": "Back to Settings"
+    }
+  },
   "privacy": {
     "page_title": "Privacy policy",
     "page_subtitle": "How this CorrelCore installation handles your data",
