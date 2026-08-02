@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Korrelations-Disclaimer entflechtet (#632).** Die wiederholten Safety-Sätze
+  („…data pattern, not a diagnosis." / „…not a cause.") am Ende **jedes**
+  Insight-Statements wurden entfernt (`insight_engine.py`, 11 Statement-Builder)
+  und durch **einen** dezenten Feed-Header-Hinweis ersetzt
+  (`insights.feed.correlation_header`). Die vollständige Erklärung bleibt über
+  das ⓘ / `CorrelationDisclaimer` in ≤2 Klicks erreichbar. Statements sind jetzt
+  rein deskriptiv; Confounder-Hinweise bleiben unverändert.
+
 ### Docs
 
 - **Reverse-proxy edges now document the required large proxy buffers** — the

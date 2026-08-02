@@ -1084,6 +1084,7 @@
       "aria_label": "Insights feed",
       "title": "Insights",
       "subtitle": "{n} entries in the last {days} days",
+      "correlation_header": "These are correlations in your own entries — patterns, not causes or diagnoses.",
       "disclaimer_aria": "Show explanation for correlations",
       "filter_label": "Filter insights",
       "tab_all": "All",

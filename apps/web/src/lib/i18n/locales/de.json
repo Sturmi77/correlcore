@@ -1084,6 +1084,7 @@
       "aria_label": "Erkenntnisse Feed",
       "title": "Erkenntnisse",
       "subtitle": "{n} Eintraege in den letzten {days} Tagen",
+      "correlation_header": "Das sind Korrelationen in deinen eigenen Eintraegen — Muster, keine Ursachen oder Diagnosen.",
       "disclaimer_aria": "Erklaerung zu Korrelationen anzeigen",
       "filter_label": "Erkenntnisse filtern",
       "tab_all": "Alle",

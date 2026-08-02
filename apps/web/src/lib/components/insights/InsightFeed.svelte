@@ -116,6 +116,9 @@
         </svg>
       </button>
     </div>
+    <p class="if-correlation-hint" data-testid="insight-feed-correlation-hint">
+      {$_('insights.feed.correlation_header')}
+    </p>
   {/if}
 
   {#if showFilters}
@@ -247,6 +250,14 @@
     font-size: var(--text-sm);
     color: var(--color-text-muted);
     margin: 0;
+  }
+
+  /* #632: single correlation hint for the whole feed (replaces the former
+     per-statement "not a cause/diagnosis" tails). */
+  .if-correlation-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin: var(--space-1) 0 0;
   }
 
   .if-disclaimer-btn {

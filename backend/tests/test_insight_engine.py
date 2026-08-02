@@ -335,7 +335,9 @@ def test_sleep_mood_spearman_candidates_surface() -> None:
     assert duration.effect_size is not None and duration.effect_size > 0
     assert duration.sample_n == 30
     assert "higher" in duration.statement
-    assert "diagnosis" in duration.statement.lower()
+    # #632: the repeated per-statement medical hedge moved to a single feed-header
+    # hint — statements stay purely descriptive now.
+    assert "diagnosis" not in duration.statement.lower()
 
 
 def test_sleep_correlation_requires_enough_paired_days() -> None:
