@@ -219,7 +219,9 @@ def test_lag_analysis_sleep_predictor_keeps_gappy_pairwise_pairs() -> None:
         else:
             prior_sleep = 350 + ((offset - 1) % 7) * 15
             mood = max(1, min(5, 1 + (prior_sleep - 350) // 20))
-        entries.append(_entry(start + timedelta(days=offset), mood=mood, sleep_minutes=sleep_minutes))
+        entries.append(
+            _entry(start + timedelta(days=offset), mood=mood, sleep_minutes=sleep_minutes)
+        )
 
     frame, feature_meta = build_design_matrix(entries)
     assert "sleep_minutes" in frame.columns
