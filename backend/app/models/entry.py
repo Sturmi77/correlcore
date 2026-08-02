@@ -112,6 +112,14 @@ class Entry(Base):
             name="ck_entries_cycle_day_range",
         ),
         CheckConstraint(
+            "sleep_minutes IS NULL OR sleep_minutes BETWEEN 0 AND 1440",
+            name="ck_entries_sleep_minutes_range",
+        ),
+        CheckConstraint(
+            "sleep_quality IS NULL OR sleep_quality BETWEEN 1 AND 5",
+            name="ck_entries_sleep_quality_range",
+        ),
+        CheckConstraint(
             "note_visibility IN ('full', 'analysis_only', 'hidden')",
             name="ck_entries_note_visibility_allowed",
         ),
@@ -142,6 +150,11 @@ class Entry(Base):
     energy: Mapped[int] = mapped_column(Integer, nullable=False)
     stress: Mapped[int] = mapped_column(Integer, nullable=False)
     cycle_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # M8 Sprint 1 (#172): optional manual sleep tracking. sleep_minutes is total
+    # sleep duration (0..1440); sleep_quality is subjective 1..5. Health Connect
+    # import (M8 S2) later fills these with source=wearable — manual wins.
+    sleep_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sleep_quality: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cycle_bleeding_level: Mapped[BleedingLevel | None] = mapped_column(
         Enum(BleedingLevel, name="bleeding_level", values_callable=lambda x: [e.value for e in x]),
         nullable=True,

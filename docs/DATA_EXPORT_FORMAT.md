@@ -108,9 +108,21 @@ The ZIP export is the canonical DSGVO Art. 20 portability export. It contains:
     }
   ],
   "photos": [],
-  "sleep": []
+  "sleep": [
+    {
+      "date": "2026-05-14",
+      "slot": "day",
+      "sleep_minutes": 450,
+      "sleep_quality": 3,
+      "source": "direct"
+    }
+  ]
 }
 ```
+
+Since format `1.4` (M8 Sprint 1), each entry also carries `sleep_minutes`
+(0..1440) and `sleep_quality` (1..5); the top-level `sleep` array is a
+per-day projection of those values for entries that recorded sleep.
 
 Internal database IDs and `user_id` values are intentionally omitted. Tags in
 the export may include `habit_type` (`none`, `build`, `reduce`) and

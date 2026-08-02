@@ -113,6 +113,10 @@
   let cycleDay: number | null = null;
   let cycleBleedingLevel: BleedingLevel | null = null;
   const bleedingLevelOptions: BleedingLevel[] = ['none', 'spotting', 'light', 'medium', 'heavy'];
+  // M8 Sprint 1 (#172): optional manual sleep. sleepMinutes 0..1440, sleepQuality 1..5.
+  let sleepMinutes: number | null = null;
+  let sleepQuality: number | null = null;
+  let sleepMinutesInvalid = false;
   let workContext: WorkContext = defaultWorkContextForDate(
     new Date(initialDate + 'T00:00:00'),
     workContextTypical
@@ -216,6 +220,9 @@
     cycleDay = null;
     cycleBleedingLevel = null;
     cycleDayInvalid = false;
+    sleepMinutes = null;
+    sleepQuality = null;
+    sleepMinutesInvalid = false;
     note = '';
     noteVisibility = 'full';
     noteMarkers = [];
@@ -316,6 +323,9 @@
           cycleDay = fields.cycleDay;
           cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
+          sleepMinutes = fields.sleepMinutes;
+          sleepQuality = fields.sleepQuality;
+          sleepMinutesInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
           note = fields.note;
@@ -336,6 +346,9 @@
           cycleDay = matchingEntry.cycle_day;
           cycleBleedingLevel = matchingEntry.cycle_bleeding_level ?? null;
           cycleDayInvalid = false;
+          sleepMinutes = matchingEntry.sleep_minutes ?? null;
+          sleepQuality = matchingEntry.sleep_quality ?? null;
+          sleepMinutesInvalid = false;
           workContext = matchingEntry.work_context;
           workContextTouched = true;
           note = matchingEntry.note ?? '';
@@ -386,6 +399,9 @@
           cycleDay = fields.cycleDay;
           cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
+          sleepMinutes = fields.sleepMinutes;
+          sleepQuality = fields.sleepQuality;
+          sleepMinutesInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
           note = fields.note;
@@ -483,6 +499,9 @@
           cycleDay = fields.cycleDay;
           cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
+          sleepMinutes = fields.sleepMinutes;
+          sleepQuality = fields.sleepQuality;
+          sleepMinutesInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
           note = fields.note;
@@ -551,6 +570,18 @@
     const parsed = Number(value);
     cycleDay = value === '' || !Number.isFinite(parsed) ? null : parsed;
     cycleDayInvalid = cycleDay !== null && (cycleDay < 1 || cycleDay > 35);
+  }
+
+  function onSleepMinutesInput(e: Event) {
+    const value = (e.currentTarget as HTMLInputElement).value;
+    const parsed = Number(value);
+    sleepMinutes = value === '' || !Number.isFinite(parsed) ? null : Math.round(parsed);
+    sleepMinutesInvalid = sleepMinutes !== null && (sleepMinutes < 0 || sleepMinutes > 1440);
+  }
+
+  function onSleepQualityChange(e: Event) {
+    const value = (e.currentTarget as HTMLSelectElement).value;
+    sleepQuality = value === '' ? null : Number(value);
   }
 
   function handleOnline() {
@@ -718,6 +749,8 @@
       slot: selectedSlot,
       cycle_day: cycleDay ?? null,
       cycle_bleeding_level: cycleBleedingLevel,
+      sleep_minutes: sleepMinutes ?? null,
+      sleep_quality: sleepQuality ?? null,
       work_context: workContext,
       note: note.trim(),
       selectedTagIds: [...selectedTagIds],
@@ -794,6 +827,13 @@
     if (snap.cycle_day !== null && (snap.cycle_day < 1 || snap.cycle_day > 35)) {
       throw new Error('invalid_cycle_day');
     }
+    if (
+      snap.sleep_minutes !== null &&
+      snap.sleep_minutes !== undefined &&
+      (snap.sleep_minutes < 0 || snap.sleep_minutes > 1440)
+    ) {
+      throw new Error('invalid_sleep_minutes');
+    }
     const startedAsCreate = !existingEntryId;
     if (startedAsCreate) createSaveInFlight = true;
 
@@ -820,6 +860,8 @@
           slot: resolvedSnap.slot,
           cycle_day: resolvedSnap.cycle_day,
           cycle_bleeding_level: resolvedSnap.cycle_bleeding_level ?? null,
+          sleep_minutes: resolvedSnap.sleep_minutes ?? null,
+          sleep_quality: resolvedSnap.sleep_quality ?? null,
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note,
           note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
@@ -836,6 +878,8 @@
           stress: resolvedSnap.stress,
           cycle_day: resolvedSnap.cycle_day,
           cycle_bleeding_level: resolvedSnap.cycle_bleeding_level ?? null,
+          sleep_minutes: resolvedSnap.sleep_minutes ?? null,
+          sleep_quality: resolvedSnap.sleep_quality ?? null,
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note ? resolvedSnap.note : undefined,
           note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
@@ -1110,6 +1154,8 @@
     selectedSlot;
     cycleDay;
     cycleBleedingLevel;
+    sleepMinutes;
+    sleepQuality;
     workContext;
     note;
     noteVisibility;
@@ -1458,6 +1504,50 @@
         <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
       </section>
     {/if}
+
+    <section class="entry-section" aria-labelledby="entry-section-sleep">
+      <h2 id="entry-section-sleep" class="entry-section__title">
+        {$_('entry.section.sleep')}
+      </h2>
+      <label class="entry-field">
+        <span class="entry-label">{$_('entry.sleep_minutes.label')}</span>
+        <input
+          type="number"
+          class="input"
+          min="0"
+          max="1440"
+          step="15"
+          inputmode="numeric"
+          value={sleepMinutes ?? ''}
+          on:input={onSleepMinutesInput}
+          aria-invalid={sleepMinutesInvalid}
+          aria-describedby={sleepMinutesInvalid ? 'entry-sleep-error' : 'entry-sleep-hint'}
+          placeholder={$_('entry.sleep_minutes.placeholder')}
+          data-testid="entry-sleep-minutes"
+        />
+      </label>
+      <p id="entry-sleep-hint" class="entry-hint">{$_('entry.sleep_minutes.hint')}</p>
+      {#if sleepMinutesInvalid}
+        <p id="entry-sleep-error" class="entry-error" role="alert">
+          {$_('entry.sleep_minutes.error_range')}
+        </p>
+      {/if}
+      <label class="entry-field">
+        <span class="entry-label">{$_('entry.sleep_quality.label')}</span>
+        <select
+          class="input"
+          value={sleepQuality ?? ''}
+          on:change={onSleepQualityChange}
+          data-testid="entry-sleep-quality"
+        >
+          <option value="">{$_('entry.sleep_quality.unset')}</option>
+          {#each [1, 2, 3, 4, 5] as level}
+            <option value={level}>{$_(`entry.sleep_quality.level_${level}`)}</option>
+          {/each}
+        </select>
+      </label>
+      <p class="entry-hint">{$_('entry.sleep_quality.hint')}</p>
+    </section>
 
     <section class="entry-section" aria-labelledby="entry-section-delta">
       <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>

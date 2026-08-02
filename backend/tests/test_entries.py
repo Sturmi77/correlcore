@@ -142,6 +142,36 @@ async def test_create_entry_persists_cycle_bleeding_level(rest_revision_recorder
 
 
 @pytest.mark.asyncio
+async def test_create_entry_persists_sleep_fields(rest_revision_recorders) -> None:
+    """M8 Sprint 1 (#172): manual sleep_minutes / sleep_quality round-trip."""
+    user = make_user()
+    db = _make_db()
+
+    entry = await create_entry(
+        db,
+        user_id=user.id,
+        payload=_payload(sleep_minutes=450, sleep_quality=4),
+    )
+
+    assert entry.sleep_minutes == 450
+    assert entry.sleep_quality == 4
+
+
+def test_entry_create_schema_rejects_sleep_minutes_over_a_day() -> None:
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        _payload(sleep_minutes=1441)
+
+
+def test_entry_create_schema_rejects_sleep_quality_out_of_range() -> None:
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        _payload(sleep_quality=6)
+
+
+@pytest.mark.asyncio
 async def test_create_entry_at_backdate_boundary_succeeds() -> None:
     """Exactly 7 days back is still allowed."""
     user = make_user()

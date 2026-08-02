@@ -22,12 +22,42 @@ from app.schemas.sync import SyncChange, SyncPushRequest
 from app.services.auth_service import register_user
 from app.services.sync_service import (
     SyncBadRequestError,
+    _entry_payload_from_model,
     decode_cursor,
     encode_cursor,
     pull_changes,
     push_changes,
 )
-from tests.conftest import make_user
+from tests.conftest import make_entry, make_user
+
+
+def test_entry_payload_from_model_includes_sleep_fields() -> None:
+    """M8 Sprint 1 (#172): sleep fields travel in the sync entry payload."""
+    user = make_user()
+    entry = make_entry(user, mood_score=3)
+    entry.sleep_minutes = 420
+    entry.sleep_quality = 2
+
+    payload = _entry_payload_from_model(entry, tag_ids=[], symptoms={})
+
+    assert payload["sleep_minutes"] == 420
+    assert payload["sleep_quality"] == 2
+
+
+def test_sync_entry_payload_accepts_sleep_fields() -> None:
+    from app.schemas.sync import SyncEntryPayload
+
+    payload = SyncEntryPayload(
+        entry_date=date.today(),
+        mood_score=3,
+        energy=3,
+        stress=3,
+        work_context=WorkContext.OFFICE,
+        sleep_minutes=480,
+        sleep_quality=5,
+    )
+    assert payload.sleep_minutes == 480
+    assert payload.sleep_quality == 5
 
 
 async def _dek_token_for_user(session, user_id: uuid.UUID):

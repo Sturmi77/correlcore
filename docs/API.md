@@ -286,8 +286,10 @@ POST   /api/v1/auth/callback     OIDC Callback (Code → Session)
 ## 3. Entries
 
 Daily mood/energy/stress log (M1+). Tags and symptoms are assigned via
-separate entry sub-routes (§4, §5). Sleep fields follow in M8. All
-endpoints require `get_current_verified_user` and are rate-limited per IP.
+separate entry sub-routes (§4, §5). Optional manual sleep fields
+(`sleep_minutes` 0..1440, `sleep_quality` 1..5) shipped with M8 Sprint 1
+(#172). All endpoints require `get_current_verified_user` and are
+rate-limited per IP.
 
 ```
 POST   /api/v1/entries                  Create entry                         (60/min)
@@ -486,11 +488,12 @@ batch-fähig (`GET /entries`).
 
 ### Zukünftige Felder
 
+`sleep_minutes` (0..1440) und `sleep_quality` (1..5) sind seit M8 Sprint 1
+Teil der Entry-Response (nullable). Weiterhin offen:
+
 ```jsonc
-// Sobald Issue #9 / M8 landen, erweitert sich die Antwort um:
-// "symptoms": [{ "symptom_id": "uuid", "intensity": 1 }],
-// "sleep_minutes": 450,
-// "sleep_quality": 3
+// Sobald Issue #9 landet, erweitert sich die Antwort um:
+// "symptoms": [{ "symptom_id": "uuid", "intensity": 1 }]
 ```
 
 ---
