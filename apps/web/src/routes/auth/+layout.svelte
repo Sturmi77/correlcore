@@ -33,7 +33,6 @@
         <a href="/impressum" data-testid="auth-footer-impressum">{$_('landing.footer.impressum')}</a
         >
       </nav>
-      <p class="auth-disclaimer">{$_('disclaimer.medical')}</p>
     </footer>
   </main>
 </div>
@@ -106,11 +105,5 @@
   .auth-legal a:hover {
     color: var(--color-primary);
     text-decoration: underline;
-  }
-
-  .auth-disclaimer {
-    font-size: var(--text-xs);
-    opacity: 0.7;
-    line-height: 1.5;
   }
 </style>

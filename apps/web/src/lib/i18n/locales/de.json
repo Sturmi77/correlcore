@@ -1071,8 +1071,6 @@
       "eyebrow": "Mobile Zusammenfassung",
       "strongest_heading": "Stärkstes aktuelles Signal",
       "context": "Priorisiert aus {n} Einträgen der letzten {days} Tage",
-      "correlation_note": "Das beschreibt einen Zusammenhang in deinen Einträgen, keine Ursache.",
-      "correlation_link": "So liest du das",
       "maturity_heading": "Datenreife",
       "more_heading": "Weitere Muster"
     },

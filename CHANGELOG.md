@@ -16,7 +16,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   und durch **einen** dezenten Feed-Header-Hinweis ersetzt
   (`insights.feed.correlation_header`). Die vollständige Erklärung bleibt über
   das ⓘ / `CorrelationDisclaimer` in ≤2 Klicks erreichbar. Statements sind jetzt
-  rein deskriptiv; Confounder-Hinweise bleiben unverändert.
+  rein deskriptiv; Confounder-Hinweise bleiben unverändert. Zusätzlich: der
+  redundante Medical-Disclaimer im Auth-Layout entfernt (Legal-Links zu
+  Privacy/Impressum bleiben), und die seit #632 Phase-1 ungenutzten
+  `insights.mobile.correlation_note`/`correlation_link`-Keys aufgeräumt.
 
 ### Docs
 
