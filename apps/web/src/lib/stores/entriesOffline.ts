@@ -357,6 +357,87 @@ function entryHasCycleData(entry: LocalEntry): boolean {
   );
 }
 
+export interface HealthConnectSleepFillItem {
+  entry_date: string;
+  sleep_minutes: number;
+}
+
+/**
+ * After Health Connect fills server ``sleep_minutes``, copy those values into
+ * IndexedDB (and pending outbox payloads) fill-only.
+ *
+ * Sprint 4 emits sync revisions for imports, but Sync now never pulled them
+ * into Dexie. A later offline/API-down mood edit then pushed explicit
+ * ``sleep_minutes: null`` and wiped the wearable fill (#634 follow-up).
+ *
+ * Only dates whose server value matches the just-imported minutes are touched,
+ * so a concurrent manual value (HC skipped) cannot be overwritten locally.
+ */
+export async function fillLocalSleepAfterHealthConnectImport(
+  items: HealthConnectSleepFillItem[]
+): Promise<number> {
+  if (items.length === 0) return 0;
+
+  const importedByDate = new Map(
+    items.map((item) => [item.entry_date, item.sleep_minutes] as const)
+  );
+  const dates = [...importedByDate.keys()].sort();
+  const startDate = dates[0];
+  const endDate = dates[dates.length - 1];
+
+  let serverEntries: EntryResponse[];
+  try {
+    serverEntries = await listEntries({
+      start_date: startDate,
+      end_date: endDate,
+      limit: Math.min(500, Math.max(50, dates.length * 2)),
+    });
+  } catch {
+    return 0;
+  }
+
+  const db = getOfflineDb();
+  let filled = 0;
+
+  for (const serverEntry of serverEntries) {
+    const importedMinutes = importedByDate.get(serverEntry.entry_date);
+    if (importedMinutes == null) continue;
+    if (serverEntry.slot !== 'day') continue;
+    // Server must reflect our fill — skips manual-wins and unrelated rows.
+    if (serverEntry.sleep_minutes !== importedMinutes) continue;
+
+    let local = await db.entries.get(serverEntry.id);
+    if (!local) {
+      local = await findLocalEntryByDateSlot(serverEntry.entry_date, serverEntry.slot);
+    }
+    if (!local) continue;
+    // Local manual (or prior fill) wins — never clobber a non-null local value.
+    if (local.sleep_minutes != null) continue;
+
+    await db.entries.update(local.id, { sleep_minutes: importedMinutes });
+    filled += 1;
+
+    const pending = await listPendingChanges();
+    for (const change of pending) {
+      if (change.entity_id !== local.id || change.operation !== 'upsert') continue;
+      const payload = change.payload;
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) continue;
+      const current = payload as Record<string, unknown>;
+      // buildSyncEntryPayload always sends sleep_minutes (often null). Replace
+      // null/missing only so a later push cannot wipe the HC fill.
+      if (current.sleep_minutes != null) continue;
+      await db.change_log.update(change.seq!, {
+        payload: {
+          ...current,
+          sleep_minutes: importedMinutes,
+        },
+      });
+    }
+  }
+
+  return filled;
+}
+
 /** Clear cycle SHD fields from IndexedDB and pending outbox payloads (ADR-0033). */
 export async function clearCycleDataOffline(): Promise<number> {
   const db = getOfflineDb();

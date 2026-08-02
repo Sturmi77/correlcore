@@ -11,6 +11,9 @@
 import type { ConsentListResponse } from '$lib/api/consents';
 import { importHealthConnectSleep, type HealthConnectImportResponse } from '$lib/api/healthConnect';
 import { canUseHealthConnectImport } from '$lib/healthConnect/consent';
+import { canUseOfflineSync } from '$lib/offline/featureFlag';
+import { scheduleSync } from '$lib/offline/syncOrchestrator';
+import { fillLocalSleepAfterHealthConnectImport } from '$lib/stores/entriesOffline';
 import { readHealthConnectSleepAndHeartRate, type HealthConnectSleepRecord } from './healthConnect';
 
 /** Local ISO date (YYYY-MM-DD) of an instant, in the device's timezone. */
@@ -119,6 +122,20 @@ export async function syncHealthConnectSleep(
   // Report that explicitly instead of claiming success when nothing synced.
   if (!imported.sleep_sync_enabled) {
     return { status: 'sync_disabled', imported };
+  }
+  // Revisions alone are not enough: Sync now must reconcile Dexie (and any
+  // pending outbox null sleep) before an offline/API-down mood edit can push
+  // nulls and wipe the wearable fill. Pull is defense-in-depth for cursors.
+  if (imported.updated > 0) {
+    try {
+      await fillLocalSleepAfterHealthConnectImport(sleep);
+    } catch {
+      // Best-effort; empty/unopened Dexie is fine. scheduleSync still helps
+      // when offline sync is active.
+    }
+    if (canUseOfflineSync()) {
+      scheduleSync();
+    }
   }
   return { status: 'ok', imported };
 }

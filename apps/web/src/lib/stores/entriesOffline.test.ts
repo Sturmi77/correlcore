@@ -7,6 +7,7 @@ import { listPendingChanges } from '$lib/offline/changeLog';
 import {
   applyPulledEntry,
   findLocalEntryByDateSlot,
+  fillLocalSleepAfterHealthConnectImport,
   hydrateServerEntryFromApi,
   localEntryToEntryResponse,
   resolveServerEntryIdForDateSlot,
@@ -552,5 +553,130 @@ describe('entriesOffline', () => {
     expect(local?.sleep_quality).toBe(5);
     expect(local?.note).toBe('keep sleep');
     expect(local?.sync_state).toBe('synced');
+  });
+
+  it('fills local null sleep after Health Connect import so offline edits cannot wipe it', async () => {
+    await applyPulledEntry(
+      'hc-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        cycle_day: null,
+        sleep_minutes: null,
+        sleep_quality: null,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T08:00:00.000Z',
+      'synced'
+    );
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry('hc-entry'),
+        sleep_minutes: 430,
+        sleep_quality: null,
+        updated_at: '2026-07-13T10:00:00.000Z',
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport([
+      { entry_date: '2026-07-13', sleep_minutes: 430 },
+    ]);
+    expect(filled).toBe(1);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBe(430);
+    expect(local?.mood_score).toBe(3);
+  });
+
+  it('patches pending outbox null sleep after Health Connect import', async () => {
+    const saved = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 4,
+      energy: 3,
+      stress: 2,
+      slot: 'day',
+      cycle_day: null,
+      sleep_minutes: null,
+      sleep_quality: null,
+      work_context: 'office',
+      note: 'mood only',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        mood_score: 3,
+        sleep_minutes: 410,
+        sleep_quality: null,
+        note: null,
+        updated_at: '2026-07-13T09:00:00.000Z',
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport([
+      { entry_date: '2026-07-13', sleep_minutes: 410 },
+    ]);
+    expect(filled).toBe(1);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBe(410);
+    expect(local?.mood_score).toBe(4);
+    expect(local?.sync_state).toBe('pending');
+
+    const pending = await listPendingChanges();
+    const upsert = pending.find((row) => row.entity_id === saved.entryId);
+    expect(upsert?.payload).toMatchObject({
+      mood_score: 4,
+      note: 'mood only',
+      sleep_minutes: 410,
+    });
+  });
+
+  it('does not overwrite local sleep or mismatched server values after HC import', async () => {
+    await applyPulledEntry(
+      'manual-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        cycle_day: null,
+        sleep_minutes: 480,
+        sleep_quality: 4,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T08:00:00.000Z',
+      'synced'
+    );
+
+    // Server kept the manual value (HC skipped); imported minutes differ.
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry('manual-entry'),
+        sleep_minutes: 480,
+        sleep_quality: 4,
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport([
+      { entry_date: '2026-07-13', sleep_minutes: 999 },
+    ]);
+    expect(filled).toBe(0);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBe(480);
   });
 });

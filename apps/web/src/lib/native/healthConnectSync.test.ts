@@ -6,9 +6,21 @@ vi.mock('./healthConnect', () => ({
 vi.mock('$lib/api/healthConnect', () => ({
   importHealthConnectSleep: vi.fn(),
 }));
+vi.mock('$lib/offline/featureFlag', () => ({
+  canUseOfflineSync: vi.fn(() => false),
+}));
+vi.mock('$lib/offline/syncOrchestrator', () => ({
+  scheduleSync: vi.fn(),
+}));
+vi.mock('$lib/stores/entriesOffline', () => ({
+  fillLocalSleepAfterHealthConnectImport: vi.fn(async () => 0),
+}));
 
 import { importHealthConnectSleep } from '$lib/api/healthConnect';
 import type { ConsentListResponse } from '$lib/api/consents';
+import { canUseOfflineSync } from '$lib/offline/featureFlag';
+import { scheduleSync } from '$lib/offline/syncOrchestrator';
+import { fillLocalSleepAfterHealthConnectImport } from '$lib/stores/entriesOffline';
 import { readHealthConnectSleepAndHeartRate } from './healthConnect';
 import { aggregateSleepByDate, syncHealthConnectSleep } from './healthConnectSync';
 
@@ -69,6 +81,11 @@ describe('syncHealthConnectSleep', () => {
   beforeEach(() => {
     vi.mocked(readHealthConnectSleepAndHeartRate).mockReset();
     vi.mocked(importHealthConnectSleep).mockReset();
+    vi.mocked(canUseOfflineSync).mockReset();
+    vi.mocked(canUseOfflineSync).mockReturnValue(false);
+    vi.mocked(scheduleSync).mockReset();
+    vi.mocked(fillLocalSleepAfterHealthConnectImport).mockReset();
+    vi.mocked(fillLocalSleepAfterHealthConnectImport).mockResolvedValue(0);
   });
   afterEach(() => vi.clearAllMocks());
 
@@ -112,6 +129,10 @@ describe('syncHealthConnectSleep', () => {
     const items = vi.mocked(importHealthConnectSleep).mock.calls[0][0];
     expect(items).toHaveLength(1);
     expect(items[0].sleep_minutes).toBe(450);
+    // Dexie fill is always attempted after a non-zero import; pull only when
+    // offline sync is active (default mock: false).
+    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledOnce();
+    expect(scheduleSync).not.toHaveBeenCalled();
   });
 
   it('reports sync_disabled instead of ok when the server has the toggle off', async () => {
@@ -129,5 +150,51 @@ describe('syncHealthConnectSleep', () => {
     const result = await syncHealthConnectSleep(granted, range);
 
     expect(result.status).toBe('sync_disabled');
+    expect(fillLocalSleepAfterHealthConnectImport).not.toHaveBeenCalled();
+    expect(scheduleSync).not.toHaveBeenCalled();
+  });
+
+  it('schedules sync after Dexie reconcile when offline sync is enabled', async () => {
+    vi.mocked(canUseOfflineSync).mockReturnValue(true);
+    vi.mocked(readHealthConnectSleepAndHeartRate).mockResolvedValue({
+      sleep: [{ startTime: 'x', endTime: '2026-08-02T06:00:00Z', durationMinutes: 450 }],
+      heartRate: [],
+    });
+    vi.mocked(importHealthConnectSleep).mockResolvedValue({
+      updated: 1,
+      skipped_existing_value: 0,
+      skipped_no_entry: 0,
+      sleep_sync_enabled: true,
+    });
+    vi.mocked(fillLocalSleepAfterHealthConnectImport).mockResolvedValue(1);
+
+    const result = await syncHealthConnectSleep(granted, range);
+
+    expect(result.status).toBe('ok');
+    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledOnce();
+    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledWith([
+      expect.objectContaining({ sleep_minutes: 450 }),
+    ]);
+    expect(scheduleSync).toHaveBeenCalledOnce();
+  });
+
+  it('skips Dexie reconcile when the import updated nothing', async () => {
+    vi.mocked(canUseOfflineSync).mockReturnValue(true);
+    vi.mocked(readHealthConnectSleepAndHeartRate).mockResolvedValue({
+      sleep: [{ startTime: 'x', endTime: '2026-08-02T06:00:00Z', durationMinutes: 450 }],
+      heartRate: [],
+    });
+    vi.mocked(importHealthConnectSleep).mockResolvedValue({
+      updated: 0,
+      skipped_existing_value: 1,
+      skipped_no_entry: 0,
+      sleep_sync_enabled: true,
+    });
+
+    const result = await syncHealthConnectSleep(granted, range);
+
+    expect(result.status).toBe('ok');
+    expect(fillLocalSleepAfterHealthConnectImport).not.toHaveBeenCalled();
+    expect(scheduleSync).not.toHaveBeenCalled();
   });
 });
