@@ -22,6 +22,8 @@ export interface EntryFormSnapshot {
   slot: EntrySlot;
   cycle_day: number | null;
   cycle_bleeding_level?: import('$lib/api/entries').BleedingLevel | null;
+  sleep_minutes?: number | null;
+  sleep_quality?: number | null;
   work_context: WorkContext;
   note: string;
   selectedTagIds: string[];
@@ -48,6 +50,8 @@ export function buildSyncEntryPayload(snapshot: EntryFormSnapshot): Record<strin
     stress: snapshot.stress,
     cycle_day: snapshot.cycle_day,
     cycle_bleeding_level: snapshot.cycle_bleeding_level,
+    sleep_minutes: snapshot.sleep_minutes ?? null,
+    sleep_quality: snapshot.sleep_quality ?? null,
     work_context: snapshot.work_context,
     note: snapshot.note ? snapshot.note : null,
     tag_ids: [...snapshot.selectedTagIds],
@@ -62,6 +66,8 @@ export function localEntryToFormFields(entry: LocalEntry): {
   selectedSlot: EntrySlot;
   cycleDay: number | null;
   cycleBleedingLevel: import('$lib/api/entries').BleedingLevel | null;
+  sleepMinutes: number | null;
+  sleepQuality: number | null;
   workContext: WorkContext;
   note: string;
   selectedTagIds: string[];
@@ -74,6 +80,8 @@ export function localEntryToFormFields(entry: LocalEntry): {
     selectedSlot: entry.slot,
     cycleDay: entry.cycle_day,
     cycleBleedingLevel: entry.cycle_bleeding_level ?? null,
+    sleepMinutes: entry.sleep_minutes ?? null,
+    sleepQuality: entry.sleep_quality ?? null,
     workContext: entry.work_context,
     note: entry.note ?? '',
     selectedTagIds: [...entry.tag_ids],
@@ -241,6 +249,8 @@ export async function saveEntryOffline(
     stress: snapshot.stress,
     cycle_day: snapshot.cycle_day,
     cycle_bleeding_level: snapshot.cycle_bleeding_level,
+    sleep_minutes: snapshot.sleep_minutes ?? null,
+    sleep_quality: snapshot.sleep_quality ?? null,
     work_context: snapshot.work_context,
     note: snapshot.note ? snapshot.note : null,
     tag_ids: [...snapshot.selectedTagIds],

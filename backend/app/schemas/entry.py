@@ -42,6 +42,10 @@ MAX_NOTE_LENGTH = 4000
 # Enforced in the service layer; documented here for schema readers.
 BACKDATE_DAYS_LIMIT = 7
 
+# Manual sleep tracking bounds (M8 Sprint 1, #172). sleep_minutes covers a full
+# day (24h = 1440); sleep_quality shares the 1..5 scale family with mood/energy.
+MAX_SLEEP_MINUTES = 1440
+
 # Clients key ``entry_date`` by the device-local calendar day (Home
 # ``localIsoDate``, entry sheet ``isoDate``, widget ``tz``). The API
 # container runs in UTC with no TZ env, so a user east of UTC reaches
@@ -69,6 +73,8 @@ class EntryCreate(BaseModel):
     stress: int = Field(ge=1, le=5)
     cycle_day: int | None = Field(default=None, ge=1, le=35)
     cycle_bleeding_level: BleedingLevel | None = None
+    sleep_minutes: int | None = Field(default=None, ge=0, le=MAX_SLEEP_MINUTES)
+    sleep_quality: int | None = Field(default=None, ge=1, le=5)
     source: EntrySource = EntrySource.DIRECT
     work_context: WorkContext
     note: str | None = Field(
@@ -107,6 +113,8 @@ class EntryUpdate(BaseModel):
     slot: EntrySlot | None = None
     cycle_day: int | None = Field(default=None, ge=1, le=35)
     cycle_bleeding_level: BleedingLevel | None = None
+    sleep_minutes: int | None = Field(default=None, ge=0, le=MAX_SLEEP_MINUTES)
+    sleep_quality: int | None = Field(default=None, ge=1, le=5)
     work_context: WorkContext | None = None
     note: str | None = Field(
         default=None, validation_alias=AliasChoices("note", "note_raw"), max_length=MAX_NOTE_LENGTH
@@ -141,6 +149,8 @@ class EntryResponse(BaseModel):
     stress: int
     cycle_day: int | None = None
     cycle_bleeding_level: BleedingLevel | None = None
+    sleep_minutes: int | None = None
+    sleep_quality: int | None = None
     source: EntrySource
     work_context: WorkContext
     note: str | None = Field(default=None, validation_alias="note_enc")

@@ -185,6 +185,7 @@
       "symptoms": "Symptoms",
       "note": "Note",
       "cycle": "Cycle",
+      "sleep": "Sleep",
       "delta": "Compared to yesterday"
     },
     "time_slot": {
@@ -209,6 +210,22 @@
       "light": "Light",
       "medium": "Medium",
       "heavy": "Heavy"
+    },
+    "sleep_minutes": {
+      "label": "Sleep duration (optional)",
+      "placeholder": "Minutes, e.g. 450",
+      "hint": "Total sleep in minutes (0-1440). 450 minutes = 7.5 hours.",
+      "error_range": "Sleep duration must be between 0 and 1440 minutes."
+    },
+    "sleep_quality": {
+      "label": "Sleep quality (optional)",
+      "unset": "Not set",
+      "hint": "Your subjective rating from 1 (poor) to 5 (great).",
+      "level_1": "1 - Poor",
+      "level_2": "2 - Fair",
+      "level_3": "3 - Okay",
+      "level_4": "4 - Good",
+      "level_5": "5 - Great"
     },
     "work_context": {
       "homeoffice": "Home office",
