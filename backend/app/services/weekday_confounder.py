@@ -169,7 +169,7 @@ def _standardized(values: Sequence[float]) -> np.ndarray | None:
     std = array.std(ddof=0)
     if std == 0:
         return None
-    return (array - array.mean()) / std
+    return np.asarray((array - array.mean()) / std, dtype=float)
 
 
 def is_continuous_association_weekday_confounded(
