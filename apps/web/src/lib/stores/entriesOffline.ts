@@ -418,6 +418,7 @@ export async function fillLocalSleepAfterHealthConnectImport(
     filled += 1;
 
     const pending = await listPendingChanges();
+    const now = new Date().toISOString();
     for (const change of pending) {
       if (change.entity_id !== local.id || change.operation !== 'upsert') continue;
       const payload = change.payload;
@@ -426,7 +427,10 @@ export async function fillLocalSleepAfterHealthConnectImport(
       // buildSyncEntryPayload always sends sleep_minutes (often null). Replace
       // null/missing only so a later push cannot wipe the HC fill.
       if (current.sleep_minutes != null) continue;
+      // Bump client_ts: HC import advances server updated_at; an older outbox
+      // timestamp would lose LWW on the next push (#640).
       await db.change_log.update(change.seq!, {
+        client_ts: now,
         payload: {
           ...current,
           sleep_minutes: importedMinutes,

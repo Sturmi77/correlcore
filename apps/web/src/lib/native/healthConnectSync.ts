@@ -125,8 +125,11 @@ export async function syncHealthConnectSleep(
   }
   // Revisions alone are not enough: Sync now must reconcile Dexie (and any
   // pending outbox null sleep) before an offline/API-down mood edit can push
-  // nulls and wipe the wearable fill. Pull is defense-in-depth for cursors.
-  if (imported.updated > 0) {
+  // nulls and wipe the wearable fill. Also reconcile when the server already
+  // held the value (`skipped_existing_value`) so a prior failed local fill can
+  // recover on retry (#640).
+  const needsLocalReconcile = imported.updated > 0 || imported.skipped_existing_value > 0;
+  if (needsLocalReconcile) {
     try {
       await fillLocalSleepAfterHealthConnectImport(sleep);
     } catch {

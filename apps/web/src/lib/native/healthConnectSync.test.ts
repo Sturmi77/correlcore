@@ -58,12 +58,28 @@ describe('aggregateSleepByDate', () => {
   });
 
   it('clamps a day total to 1440 minutes', () => {
+    // Build wake-times in the local TZ so both sessions share one wake-date
+    // everywhere (fixed UTC ends can split across local midnights).
+    const wakeDay = new Date(2026, 7, 2);
+    const end1 = new Date(wakeDay);
+    end1.setHours(6, 0, 0, 0);
+    const start1 = new Date(end1.getTime() - 720 * 60_000);
+    const end2 = new Date(wakeDay);
+    end2.setHours(22, 0, 0, 0);
+    const start2 = new Date(end2.getTime() - 840 * 60_000);
     const map = aggregateSleepByDate([
-      // Two non-overlapping sessions, both ending on the same wake-date, whose
-      // combined duration exceeds a day.
-      { startTime: '2026-08-01T14:00:00Z', endTime: '2026-08-02T02:00:00Z', durationMinutes: 720 },
-      { startTime: '2026-08-02T08:00:00Z', endTime: '2026-08-02T22:00:00Z', durationMinutes: 840 },
+      {
+        startTime: start1.toISOString(),
+        endTime: end1.toISOString(),
+        durationMinutes: 720,
+      },
+      {
+        startTime: start2.toISOString(),
+        endTime: end2.toISOString(),
+        durationMinutes: 840,
+      },
     ]);
+    expect(map.size).toBe(1);
     expect([...map.values()][0]).toBe(1440);
   });
 
@@ -178,7 +194,7 @@ describe('syncHealthConnectSleep', () => {
     expect(scheduleSync).toHaveBeenCalledOnce();
   });
 
-  it('skips Dexie reconcile when the import updated nothing', async () => {
+  it('reconciles Dexie when the server skipped dates that already had sleep (#640)', async () => {
     vi.mocked(canUseOfflineSync).mockReturnValue(true);
     vi.mocked(readHealthConnectSleepAndHeartRate).mockResolvedValue({
       sleep: [{ startTime: 'x', endTime: '2026-08-02T06:00:00Z', durationMinutes: 450 }],
@@ -188,6 +204,26 @@ describe('syncHealthConnectSleep', () => {
       updated: 0,
       skipped_existing_value: 1,
       skipped_no_entry: 0,
+      sleep_sync_enabled: true,
+    });
+
+    const result = await syncHealthConnectSleep(granted, range);
+
+    expect(result.status).toBe('ok');
+    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledOnce();
+    expect(scheduleSync).toHaveBeenCalledOnce();
+  });
+
+  it('skips Dexie reconcile when the import neither updated nor skipped existing values', async () => {
+    vi.mocked(canUseOfflineSync).mockReturnValue(true);
+    vi.mocked(readHealthConnectSleepAndHeartRate).mockResolvedValue({
+      sleep: [{ startTime: 'x', endTime: '2026-08-02T06:00:00Z', durationMinutes: 450 }],
+      heartRate: [],
+    });
+    vi.mocked(importHealthConnectSleep).mockResolvedValue({
+      updated: 0,
+      skipped_existing_value: 0,
+      skipped_no_entry: 1,
       sleep_sync_enabled: true,
     });
 
