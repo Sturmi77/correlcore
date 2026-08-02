@@ -257,6 +257,155 @@ async def test_resolve_sync_symptoms_drops_unknown_and_invalid_keys() -> None:
 
 
 @pytest.mark.asyncio
+async def test_merge_entry_upsert_preserves_sleep_when_client_omits_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Pre-M8 clients omit sleep_* — client-wins must not null existing sleep."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    older_server_ts = datetime(2026, 7, 20, 10, 0, tzinfo=UTC)
+    client_ts = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+
+    existing = Entry(
+        id=entry_id,
+        user_id=user_id,
+        entry_date=date(2026, 7, 24),
+        slot=EntrySlot.DAY,
+        mood_score=2,
+        energy=2,
+        stress=2,
+        cycle_day=None,
+        sleep_minutes=420,
+        sleep_quality=4,
+        source=EntrySource.DIRECT,
+        work_context=WorkContext.HOMEOFFICE,
+        note_enc=None,
+        updated_at=older_server_ts,
+    )
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 5,
+            "energy": 3,
+            "stress": 2,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": "mood edit from pre-sleep client",
+            "tag_ids": [],
+            "symptoms": {},
+        },
+        updated_at=client_ts,
+    )
+
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._resolve_sync_symptoms", AsyncMock(return_value={})),
+        patch("app.services.sync_service.assign_tags_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.assign_symptoms_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_tags_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_symptoms_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    assert existing.mood_score == 5
+    assert existing.sleep_minutes == 420
+    assert existing.sleep_quality == 4
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_clears_sleep_when_client_sends_null(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit null sleep keys (new web) must still clear server sleep."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    older_server_ts = datetime(2026, 7, 20, 10, 0, tzinfo=UTC)
+    client_ts = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+
+    existing = Entry(
+        id=entry_id,
+        user_id=user_id,
+        entry_date=date(2026, 7, 24),
+        slot=EntrySlot.DAY,
+        mood_score=2,
+        energy=2,
+        stress=2,
+        cycle_day=None,
+        sleep_minutes=420,
+        sleep_quality=4,
+        source=EntrySource.DIRECT,
+        work_context=WorkContext.HOMEOFFICE,
+        note_enc=None,
+        updated_at=older_server_ts,
+    )
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 3,
+            "energy": 3,
+            "stress": 2,
+            "sleep_minutes": None,
+            "sleep_quality": None,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": None,
+            "tag_ids": [],
+            "symptoms": {},
+        },
+        updated_at=client_ts,
+    )
+
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._resolve_sync_symptoms", AsyncMock(return_value={})),
+        patch("app.services.sync_service.assign_tags_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.assign_symptoms_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_tags_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_symptoms_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    assert existing.sleep_minutes is None
+    assert existing.sleep_quality is None
+
+
+@pytest.mark.asyncio
 async def test_merge_entry_upsert_filters_deleted_tag_before_assign(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
