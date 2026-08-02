@@ -70,6 +70,15 @@ describe('MobileInsightLead', () => {
     expect(screen.queryByTestId('mobile-insight-correlation-note')).toBeNull();
   });
 
+  it('exposes a disclaimer trigger since the feed context row may be hidden or absent (#632)', async () => {
+    const handler = vi.fn();
+    render(MobileInsightLead, { props: { insight }, events: { openDisclaimer: handler } });
+
+    await fireEvent.click(screen.getByTestId('mobile-insight-lead-disclaimer-btn'));
+
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
   it('links the featured insight back to trends', () => {
     render(MobileInsightLead, { props: { insight } });
     expect(screen.getByTestId('analysis-cross-link-trends').getAttribute('href')).toBe('/trends');

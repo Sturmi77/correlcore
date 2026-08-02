@@ -886,6 +886,7 @@
         on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
         on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
         on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
+        on:openDisclaimer={() => (disclaimerOpen = true)}
       />
     {:else if compactInsights && !feedLoading && !error && insightMaturity}
       <InsightStageHeader
