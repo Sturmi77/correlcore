@@ -711,7 +711,8 @@
         "revoke_action": "Einwilligung widerrufen",
         "granted_at": "Einwilligung erteilt am {timestamp}.",
         "error": "Health-Connect-Einwilligung konnte nicht aktualisiert werden.",
-        "deferred_note": "Import ist noch nicht verfuegbar. Die Einwilligung speichert nur deine Praeferenz fuer den kommenden Android-Pfad."
+        "deferred_note": "Der Import laeuft in der CorrelCore-Android-App. Erteile hier die Einwilligung und oeffne dann die Health-Connect-Synchronisierung, um dein Geraet zu verbinden und Schlaf zu importieren.",
+        "manage_action": "Health-Connect-Synchronisierung oeffnen"
       }
     },
     "appearance": {

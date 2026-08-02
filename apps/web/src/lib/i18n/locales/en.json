@@ -711,7 +711,8 @@
         "revoke_action": "Revoke consent",
         "granted_at": "Consent granted on {timestamp}.",
         "error": "Could not update Health Connect consent.",
-        "deferred_note": "Import is not available yet. Granting consent only records your preference for the upcoming Android path."
+        "deferred_note": "Import runs in the CorrelCore Android app. Grant consent here, then open Health Connect sync to connect and import sleep on your device.",
+        "manage_action": "Open Health Connect sync"
       }
     },
     "appearance": {

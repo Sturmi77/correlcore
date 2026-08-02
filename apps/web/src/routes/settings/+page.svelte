@@ -567,6 +567,11 @@
         <p class="settings__consent-scope" data-testid="health-connect-deferred-note">
           {$_('settings.privacy.health_connect.deferred_note')}
         </p>
+        <div class="settings__actions">
+          <Button href="/health-connect" variant="secondary" data-testid="health-connect-open-sync">
+            {$_('settings.privacy.health_connect.manage_action')}
+          </Button>
+        </div>
         {#if healthConnectGranted && healthConnectConsent?.updated_at}
           <p class="settings__consent-timestamp" data-testid="health-connect-consent-timestamp">
             {$_('settings.privacy.health_connect.granted_at', {
