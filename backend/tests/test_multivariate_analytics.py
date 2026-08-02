@@ -90,8 +90,8 @@ def test_design_matrix_contains_eligible_symptoms_and_drops_sparse_features() ->
     assert feature_meta[f"symptom_{common_symptom_id.hex}"].kind == "symptom"
 
 
-def test_design_matrix_adds_well_covered_sleep_columns_and_imputes_gaps() -> None:
-    """M8 Sprint 2 (#172): sleep joins as a metric column with mean-imputed gaps."""
+def test_design_matrix_adds_well_covered_sleep_columns() -> None:
+    """M8 Sprint 2 (#172): sleep joins as a metric column."""
     start = date(2026, 1, 1)
     # 30 days: full coverage on sleep_minutes (values vary), no sleep_quality at all.
     entries = [
@@ -106,8 +106,33 @@ def test_design_matrix_adds_well_covered_sleep_columns_and_imputes_gaps() -> Non
 
     assert "sleep_minutes" in frame.columns
     assert feature_meta["sleep_minutes"].kind == "metric"
+    assert feature_meta["sleep_minutes"].label == "sleep duration"
     assert "sleep_quality" not in frame.columns  # never recorded → no column
     assert not frame["sleep_minutes"].isna().any()
+
+
+def test_design_matrix_keeps_sleep_gaps_as_nan_for_pairwise_deletion() -> None:
+    """M8 Sprint 2 (#172): missing sleep days stay NaN — no design-matrix imputation.
+
+    Lag analysis needs real missingness for pairwise deletion (see
+    run_lag_analysis); only run_lasso_models imputes, and only fold-locally.
+    """
+    start = date(2026, 1, 1)
+    # 20 of 30 days recorded sleep_minutes (above the coverage floor, but with gaps).
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            sleep_minutes=None if offset % 3 == 0 else 420 + offset,
+        )
+        for offset in range(30)
+    ]
+
+    frame, _ = build_design_matrix(entries)
+
+    assert "sleep_minutes" in frame.columns
+    assert frame["sleep_minutes"].isna().sum() == 10
+    recorded_offsets = [offset for offset in range(30) if offset % 3 != 0]
+    assert frame["sleep_minutes"].notna().sum() == len(recorded_offsets)
 
 
 def test_design_matrix_omits_sparsely_covered_sleep_column() -> None:
@@ -153,6 +178,81 @@ def test_lasso_waits_for_90_entries_and_is_reproducible() -> None:
         for finding in first
         for coefficient in finding.features
     )
+
+
+def test_lasso_handles_sleep_gaps_via_fold_local_imputation() -> None:
+    """M8 Sprint 2 (#172): Lasso tolerates NaN sleep gaps via its own imputer step."""
+    start = date(2026, 1, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=2 if offset % 3 == 0 else 5,
+            sleep_minutes=None if offset % 4 == 0 else 400 + (offset % 5) * 10,
+        )
+        for offset in range(MIN_ML_ENTRIES)
+    ]
+    frame, feature_meta = build_design_matrix(entries)
+
+    assert frame["sleep_minutes"].isna().any()
+    findings = run_lasso_models(frame, feature_meta)
+
+    assert findings == run_lasso_models(frame, feature_meta)
+
+
+def test_lag_analysis_never_targets_sleep_and_uses_pairwise_deletion() -> None:
+    """M8 Sprint 2 (#172): sleep is a lag predictor only, and its own missing days
+    don't shrink unrelated tag/symptom lag pairs (real pairwise deletion)."""
+    tag_id = uuid.uuid4()
+    symptom_id = uuid.uuid4()
+    start = date(2026, 1, 1)
+    entries = []
+    for offset in range(100):
+        tag_present = offset % 4 == 0
+        symptom_present = offset > 0 and (offset - 1) % 4 == 0
+        entries.append(
+            _entry(
+                start + timedelta(days=offset),
+                tag_ids=frozenset({tag_id}) if tag_present else frozenset(),
+                symptom_ids=frozenset({symptom_id}) if symptom_present else frozenset(),
+                # Sparse, gap-ridden sleep coverage on top of the tag/symptom signal.
+                sleep_minutes=None if offset % 3 == 0 else 400 + (offset % 6) * 10,
+            )
+        )
+    frame_with_sleep, meta_with_sleep = build_design_matrix(
+        entries,
+        tags={tag_id: _feature("tag", tag_id, "stressful-day")},
+        symptoms={symptom_id: _feature("symptom", symptom_id, "headache")},
+    )
+    frame_without_sleep, meta_without_sleep = build_design_matrix(
+        [
+            _entry(entry.entry_date, tag_ids=entry.tag_ids, symptom_ids=entry.symptom_ids)
+            for entry in entries
+        ],
+        tags={tag_id: _feature("tag", tag_id, "stressful-day")},
+        symptoms={symptom_id: _feature("symptom", symptom_id, "headache")},
+    )
+
+    findings_with_sleep = run_lag_analysis(frame_with_sleep, meta_with_sleep)
+    findings_without_sleep = run_lag_analysis(frame_without_sleep, meta_without_sleep)
+
+    assert not any(finding.target.key == "sleep_minutes" for finding in findings_with_sleep)
+    tag_symptom_finding = next(
+        finding
+        for finding in findings_with_sleep
+        if finding.target.kind == "symptom" and finding.feature.kind == "tag"
+    )
+    # Match by lag_days too: adding sleep changes the FDR family, which can shift
+    # *which* lag survives for tag/symptom — but not the sample size available at
+    # any given lag, since a sparsely-recorded unrelated sleep column must not
+    # shrink this pair's rows (that global-dropna regression is what #172 fixes).
+    baseline_finding = next(
+        finding
+        for finding in findings_without_sleep
+        if finding.target.kind == "symptom"
+        and finding.feature.kind == "tag"
+        and finding.lag_days == tag_symptom_finding.lag_days
+    )
+    assert tag_symptom_finding.sample_n == baseline_finding.sample_n
 
 
 def test_lag_frame_drops_shift_warmup_rows_without_false_zero_fill() -> None:

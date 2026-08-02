@@ -455,7 +455,9 @@
     "metric": {
       "mood": "Stimmung",
       "energy": "Energie",
-      "stress": "Stress"
+      "stress": "Stress",
+      "sleep_minutes": "Schlafdauer",
+      "sleep_quality": "Schlafqualität"
     },
     "smoothing": {
       "label": "Trend-Glaettung",
