@@ -1,6 +1,6 @@
 # M8 Notes — Sleep & Health Connect
 
-Last updated: 2026-07-16
+Last updated: 2026-08-02
 
 Implementation notes for **M8 — Schlaf & Health Connect** (manual sleep
 fields, wearable import, sleep↔mood insights, cycle HC deep integration).
@@ -45,11 +45,12 @@ phase bands) ships here together with the Android path (M11).
 ### Sprint 2 — Health Connect (Android)
 
 - Permission request with rationale screen (Schlaf + HR only; no movement profiles)
-- Background sync from Health Connect sleep records
+- Foreground sync ("Sync now") from Health Connect sleep records — **landed in
+  Sprint 4** (`POST /health-connect/import`). **Background** (`WorkManager`)
+  sync remains deferred — see [`M8_SPRINT_STATUS.md`](M8_SPRINT_STATUS.md).
 - `docs/features/HEALTH_CONNECT.md` documents all permissions
-- DSGVO: Art. 9 explicit consent before first import — **consent foundation landed**
-  (`consent_log` migration 025, consents API, Settings UI). **Import/sync not
-  landed** — blocked on M8 Sprint 2 + M11 Android shell.
+- DSGVO: Art. 9 explicit consent before first import — **landed** (`consent_log`
+  migration 025, consents API, Settings UI, consent-gated import in Sprint 4).
 
 ### Sprint 3 — Sleep×Symptom & Cycle HC
 
@@ -61,16 +62,20 @@ phase bands) ships here together with the Android path (M11).
 
 ## Acceptance Criteria
 
-- [ ] Health Connect permission requested with rationale screen
-- [ ] Import limited to sleep + HR (technically enforced)
-- [ ] Sync writes `cycle_day` only when null (manual wins)
-- [ ] User can disable Health Connect sync in Settings
-- [ ] Sleep×Symptom insights when sleep metrics present
-- [ ] Phase bands render with disclaimer; no medical claim language
-- [ ] Account delete removes imported HC data
-- [ ] `noGamificationCopy.test.ts` / copy lint passes
-- [ ] Visual QA at 375 px, 768 px (light + dark)
-- [ ] CI green
+Status below reflects the **M8-core** exit (Sprints 1–5, this PR); see
+[`M8_SPRINT_STATUS.md`](M8_SPRINT_STATUS.md) for the authoritative per-item
+audit and evidence.
+
+- [x] Health Connect permission requested with rationale screen
+- [x] Import limited to sleep + HR (technically enforced)
+- [ ] Sync writes `cycle_day` only when null (manual wins) — **deferred**, Cycle HC ships in its own sub-milestone
+- [x] User can disable Health Connect sync in Settings (per-field toggle)
+- [ ] Sleep×Symptom insights when sleep metrics present — **deferred**, follow-up
+- [ ] Phase bands render with disclaimer; no medical claim language — **deferred**, Cycle HC sub-milestone
+- [x] Account delete removes imported HC data
+- [x] `noGamificationCopy.test.ts` / copy lint passes
+- [ ] Visual QA at 375 px, 768 px (light + dark) — manual, tracked in [`quality/M8_VISUAL_QA.md`](quality/M8_VISUAL_QA.md)
+- [x] CI green
 
 ## Prerequisites
 
