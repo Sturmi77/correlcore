@@ -21,6 +21,8 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'trends.metric.mood') return 'Mood';
       if (key === 'trends.metric.energy') return 'Energy';
       if (key === 'trends.metric.stress') return 'Stress';
+      if (key === 'trends.metric.sleep_minutes') return 'Sleep duration';
+      if (key === 'trends.metric.sleep_quality') return 'Sleep quality';
       if (key.startsWith('maturity.badge.') && !key.endsWith('_tooltip'))
         return `${key} · ${options?.values?.n} entries`;
       return key;
@@ -115,6 +117,21 @@ describe('InsightCard', () => {
   it('renders title as "metric -> subject" format', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
     expect(screen.getByTestId('insight-card-title').textContent).toContain('mood → sport');
+  });
+
+  it('renders human-readable labels for sleep spearman insights (#625 review)', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...INSIGHT,
+          metric: 'mood_sleep_minutes',
+          subject_type: 'metric',
+          subject_id: null,
+          subject_label: 'sleep_minutes',
+        },
+      },
+    });
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('Mood → Sleep duration');
   });
 
   it('interpolates both entry count and time window in metadata', () => {

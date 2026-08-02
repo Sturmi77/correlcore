@@ -455,7 +455,9 @@
     "metric": {
       "mood": "Mood",
       "energy": "Energy",
-      "stress": "Stress"
+      "stress": "Stress",
+      "sleep_minutes": "Sleep duration",
+      "sleep_quality": "Sleep quality"
     },
     "smoothing": {
       "label": "Trend smoothing",

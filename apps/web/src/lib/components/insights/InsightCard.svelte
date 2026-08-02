@@ -170,6 +170,8 @@
     if (metric === 'mood' || metric === 'mood_score' || !metric) return $_('trends.metric.mood');
     if (metric === 'energy' || metric === 'energy_avg') return $_('trends.metric.energy');
     if (metric === 'stress' || metric === 'stress_avg') return $_('trends.metric.stress');
+    if (metric === 'sleep_minutes') return $_('trends.metric.sleep_minutes');
+    if (metric === 'sleep_quality') return $_('trends.metric.sleep_quality');
     return metric;
   }
 
@@ -238,6 +240,10 @@
           lagDays !== null ? ` (+${lagDays} ${$_('insights.card.lag_days_unit')})` : '';
         return `${feature} → ${target}${lagSuffix}`;
       }
+    }
+    if (ins.metric === 'mood_sleep_minutes' || ins.metric === 'mood_sleep_quality') {
+      const sleepKey = ins.metric === 'mood_sleep_minutes' ? 'sleep_minutes' : 'sleep_quality';
+      return `${metricLabel('mood')} → ${metricLabel(sleepKey)}`;
     }
     const a = ins.metric ?? '?';
     const b = ins.subject_label ?? null;
