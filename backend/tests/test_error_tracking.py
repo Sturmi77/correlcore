@@ -12,6 +12,8 @@ def test_scrub_mapping_redacts_health_fields_and_email() -> None:
     scrubbed = scrub_mapping(
         {
             "mood_score": 4,
+            "cycle_day": 12,
+            "cycle_bleeding_level": "medium",
             "note": "Heute Migräne",
             "email": "alice@example.com",
             "user_id": "00000000-0000-4000-8000-000000000001",
@@ -19,6 +21,8 @@ def test_scrub_mapping_redacts_health_fields_and_email() -> None:
     )
 
     assert scrubbed["mood_score"] == "[Filtered]"
+    assert scrubbed["cycle_day"] == "[Filtered]"
+    assert scrubbed["cycle_bleeding_level"] == "[Filtered]"
     assert scrubbed["note"] == "[Filtered]"
     assert scrubbed["email"] == "[Filtered]"
     assert scrubbed["user_id"] == "00000000-0000-4000-8000-000000000001"
@@ -31,6 +35,8 @@ def test_scrub_sentry_event_strips_request_payload_and_cookies() -> None:
             "data": {
                 "password": "CorrectHorse123!",
                 "mood_score": 2,
+                "cycle_day": 8,
+                "cycle_bleeding_level": "heavy",
                 "note": "private journal",
             },
             "cookies": {"access_token": "secret", "refresh_token": "secret2"},
@@ -45,6 +51,8 @@ def test_scrub_sentry_event_strips_request_payload_and_cookies() -> None:
     assert scrubbed is not None
     assert scrubbed["request"]["data"]["password"] == "[Filtered]"
     assert scrubbed["request"]["data"]["mood_score"] == "[Filtered]"
+    assert scrubbed["request"]["data"]["cycle_day"] == "[Filtered]"
+    assert scrubbed["request"]["data"]["cycle_bleeding_level"] == "[Filtered]"
     assert scrubbed["request"]["data"]["note"] == "[Filtered]"
     assert scrubbed["request"]["cookies"]["access_token"] == "[Filtered]"
     assert scrubbed["request"]["headers"]["authorization"] == "[Filtered]"

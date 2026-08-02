@@ -10,6 +10,9 @@ const SENSITIVE_KEYS = new Set([
   'mood_score',
   'energy',
   'stress',
+  // ADR-0033 Art. 9 cycle SHD (parity with backend error_tracking scrubber).
+  'cycle_day',
+  'cycle_bleeding_level',
   'symptoms',
   'symptom_intensity',
   'intensity',
