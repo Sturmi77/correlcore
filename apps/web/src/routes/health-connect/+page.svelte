@@ -5,6 +5,11 @@
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import { fetchUserConsents, type ConsentListResponse } from '$lib/api/consents';
+  import {
+    fetchUserPreferences,
+    updateUserPreferences,
+    type UserPreferencesResponse,
+  } from '$lib/api/preferences';
   import { canUseHealthConnectImport } from '$lib/healthConnect/consent';
   import {
     checkHealthConnectPermissions,
@@ -12,16 +17,23 @@
     isHealthConnectBridgePresent,
     requestHealthConnectPermissions,
   } from '$lib/native/healthConnect';
+  import { syncHealthConnectSleep } from '$lib/native/healthConnectSync';
 
   // Health Connect reads exactly these two data types — nothing else.
   const dataKeys = ['sleep', 'heart_rate'] as const;
   const sectionKeys = ['what', 'why', 'ondevice', 'control'] as const;
+  // Foreground sync window: the last 30 days of nights.
+  const SYNC_WINDOW_DAYS = 30;
 
   let consents: ConsentListResponse | null = null;
+  let preferences: UserPreferencesResponse | null = null;
+  let sleepSyncEnabled = true;
   let bridgePresent = false;
   let available = false;
   let granted = false;
   let busy = false;
+  let syncing = false;
+  let syncMessageKey: string | null = null;
 
   $: consentGranted = canUseHealthConnectImport(consents);
 
@@ -43,11 +55,45 @@
     }
   }
 
+  async function toggleSleepSync(event: Event): Promise<void> {
+    const enabled = (event.currentTarget as HTMLInputElement).checked;
+    sleepSyncEnabled = enabled;
+    try {
+      preferences = await updateUserPreferences({ health_connect_sync_sleep_enabled: enabled });
+      sleepSyncEnabled = preferences.health_connect_sync_sleep_enabled ?? true;
+    } catch {
+      // Revert the optimistic toggle on failure.
+      sleepSyncEnabled = !enabled;
+    }
+  }
+
+  async function syncNow(): Promise<void> {
+    syncing = true;
+    syncMessageKey = null;
+    try {
+      const end = new Date();
+      const start = new Date(end.getTime() - SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+      const result = await syncHealthConnectSleep(consents, {
+        start: start.toISOString(),
+        end: end.toISOString(),
+      });
+      syncMessageKey = `health_connect.sync.${result.status}`;
+    } finally {
+      syncing = false;
+    }
+  }
+
   onMount(async () => {
     try {
       consents = await fetchUserConsents();
     } catch {
       consents = null;
+    }
+    try {
+      preferences = await fetchUserPreferences();
+      sleepSyncEnabled = preferences.health_connect_sync_sleep_enabled ?? true;
+    } catch {
+      preferences = null;
     }
     await refresh();
   });
@@ -94,6 +140,19 @@
         <p class="hc-page__note" data-testid="health-connect-granted">
           {$_('health_connect.status.granted')}
         </p>
+        <Button
+          variant="primary"
+          disabled={syncing || !sleepSyncEnabled}
+          on:click={syncNow}
+          data-testid="health-connect-sync"
+        >
+          {$_('health_connect.actions.sync')}
+        </Button>
+        {#if syncMessageKey}
+          <p class="hc-page__note" role="status" data-testid="health-connect-sync-result">
+            {$_(syncMessageKey)}
+          </p>
+        {/if}
       {:else}
         <Button
           variant="primary"
@@ -105,6 +164,14 @@
         </Button>
       {/if}
     </div>
+
+    {#if consentGranted}
+      <label class="hc-page__toggle" data-testid="health-connect-sleep-toggle">
+        <input type="checkbox" checked={sleepSyncEnabled} on:change={toggleSleepSync} />
+        <span>{$_('health_connect.toggle.sleep_sync')}</span>
+      </label>
+      <p class="hc-page__note">{$_('health_connect.toggle.sleep_sync_hint')}</p>
+    {/if}
 
     <div class="hc-page__actions">
       <Button href="/settings" variant="secondary" data-testid="health-connect-back">
@@ -162,6 +229,13 @@
     flex-direction: column;
     gap: var(--space-2);
     margin-bottom: var(--space-4);
+  }
+
+  .hc-page__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
   }
 
   .hc-page__actions {

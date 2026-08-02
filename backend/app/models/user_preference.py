@@ -62,6 +62,13 @@ class UserPreference(Base):
         default=True,
         server_default="true",
     )
+    # M8 Sprint 4 (#172): per-field toggle for Health Connect sleep sync.
+    health_connect_sync_sleep_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+    )
     dismissed_insight_keys: Mapped[list[str]] = mapped_column(
         JSONB,
         nullable=False,

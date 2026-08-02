@@ -51,6 +51,7 @@ def _make_preferences(user: User) -> UserPreference:
     preferences.onboarding_profile_completed = False
     preferences.onboarding_maturity_intro_seen = False
     preferences.cycle_tracking_enabled = True
+    preferences.health_connect_sync_sleep_enabled = True
     preferences.dismissed_insight_keys = []
     preferences.reached_milestone_keys = []
     preferences.last_seen_insight_at = None

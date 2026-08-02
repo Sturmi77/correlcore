@@ -1622,8 +1622,19 @@
     },
     "actions": {
       "grant": "Grant Health Connect access",
+      "sync": "Sync sleep now",
       "open_settings": "Open Settings",
       "back": "Back to Settings"
+    },
+    "toggle": {
+      "sleep_sync": "Import sleep from Health Connect",
+      "sleep_sync_hint": "When off, no sleep is imported. Values already imported stay; you can edit or clear them like any manual entry."
+    },
+    "sync": {
+      "ok": "Sleep sync complete.",
+      "no_consent": "Grant the Health Connect consent first.",
+      "unavailable": "Health Connect is not available on this device.",
+      "no_data": "No sleep records found for the last 30 days."
     }
   },
   "privacy": {

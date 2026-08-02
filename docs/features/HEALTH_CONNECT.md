@@ -6,13 +6,34 @@ CorrelCore reads a minimal set of on-device health data from **Health Connect**
 on Android. This document lists every permission, the data flow, and the manual
 device QA required (the native path is not built in CI without an Android SDK).
 
-## Scope of this sprint
+## Scope
 
-Sprint 3 delivers the **bridge only**: availability check, permission request,
-and raw reads of sleep + heart rate exposed to the WebView. Writing imported
-values into entries is **Sprint 4**. Cycle/menstruation import and the Play
-Store data-safety declaration are **out of scope** (separate sub-milestone /
-Play exit).
+- **Sprint 3** — the bridge: availability, permission request, and raw reads of
+  sleep + heart rate exposed to the WebView.
+- **Sprint 4** — sleep import: `POST /api/v1/health-connect/import` fills
+  `sleep_minutes` on existing entries (manual wins), a per-field toggle, and the
+  in-app foreground "Sync now" action.
+
+Still out of scope: **heart-rate persistence** (no entry column yet — HR is read
+at the permission level but not stored), **native WorkManager background sync**
+(foreground sync only for now), cycle/menstruation import (separate
+sub-milestone), and the Play Store data-safety declaration (Play exit).
+
+## Sprint 4 — import
+
+`POST /api/v1/health-connect/import` — body `{ sleep: [{ entry_date, sleep_minutes }] }`.
+
+- **Consent-gated:** 403 unless the Art. 9 consent (`consent_log`) is granted.
+- **Per-field toggle:** `user_preferences.health_connect_sync_sleep_enabled`
+  (default true); when off, the endpoint imports nothing.
+- **Manual wins:** only entries whose `sleep_minutes` is NULL are filled; a typed
+  value is never overwritten.
+- **No fabricated entries:** days without a logged entry are skipped, because
+  `mood`/`energy`/`stress` are required and must not be invented.
+
+The web hub (`/health-connect`) reads HC sleep via the bridge, aggregates
+sessions into one `sleep_minutes` per wake-date (`lib/native/healthConnectSync.ts`),
+and calls the import endpoint.
 
 ## Permissions (data minimization)
 

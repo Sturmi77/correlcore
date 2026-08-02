@@ -1622,8 +1622,19 @@
     },
     "actions": {
       "grant": "Health-Connect-Zugriff erteilen",
+      "sync": "Schlaf jetzt synchronisieren",
       "open_settings": "Einstellungen oeffnen",
       "back": "Zurueck zu Einstellungen"
+    },
+    "toggle": {
+      "sleep_sync": "Schlaf aus Health Connect importieren",
+      "sleep_sync_hint": "Wenn aus, wird kein Schlaf importiert. Bereits importierte Werte bleiben; du kannst sie wie jeden manuellen Eintrag bearbeiten oder loeschen."
+    },
+    "sync": {
+      "ok": "Schlaf-Synchronisierung abgeschlossen.",
+      "no_consent": "Erteile zuerst die Health-Connect-Einwilligung.",
+      "unavailable": "Health Connect ist auf diesem Geraet nicht verfuegbar.",
+      "no_data": "Keine Schlafdaten fuer die letzten 30 Tage gefunden."
     }
   },
   "privacy": {
