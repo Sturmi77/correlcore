@@ -112,6 +112,9 @@ export function localEntryToEntryResponse(entry: LocalEntry, userId = ''): Entry
     energy: entry.energy,
     stress: entry.stress,
     cycle_day: entry.cycle_day,
+    cycle_bleeding_level: entry.cycle_bleeding_level ?? null,
+    sleep_minutes: entry.sleep_minutes ?? null,
+    sleep_quality: entry.sleep_quality ?? null,
     source: 'direct',
     work_context: entry.work_context,
     note: entry.note,
@@ -212,6 +215,8 @@ export async function hydrateServerEntryFromApi(
       stress: entry.stress,
       cycle_day: entry.cycle_day,
       cycle_bleeding_level: entry.cycle_bleeding_level ?? null,
+      sleep_minutes: entry.sleep_minutes ?? null,
+      sleep_quality: entry.sleep_quality ?? null,
       work_context: entry.work_context,
       note: entry.note,
       tag_ids: tagIds,
@@ -297,6 +302,8 @@ export async function applyPulledEntry(
       data.cycle_bleeding_level == null || data.cycle_bleeding_level === undefined
         ? null
         : (String(data.cycle_bleeding_level) as import('$lib/api/entries').BleedingLevel),
+    sleep_minutes: data.sleep_minutes == null ? null : Number(data.sleep_minutes),
+    sleep_quality: data.sleep_quality == null ? null : Number(data.sleep_quality),
     work_context: data.work_context as WorkContext,
     note: data.note == null ? null : String(data.note),
     tag_ids: Array.isArray(data.tag_ids) ? data.tag_ids.map(String) : [],

@@ -443,6 +443,9 @@
       cycleDay = matchingEntry.cycle_day;
       cycleBleedingLevel = matchingEntry.cycle_bleeding_level ?? null;
       cycleDayInvalid = false;
+      sleepMinutes = matchingEntry.sleep_minutes ?? null;
+      sleepQuality = matchingEntry.sleep_quality ?? null;
+      sleepMinutesInvalid = false;
       workContext = matchingEntry.work_context;
       // Mark touched so the date-change reactive block doesn't reset it
       // back to the weekday default.
