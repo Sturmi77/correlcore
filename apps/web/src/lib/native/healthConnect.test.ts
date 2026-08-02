@@ -39,8 +39,8 @@ describe('healthConnect bridge', () => {
         Plugins: {
           HealthConnect: {
             isAvailable,
-            checkPermissions,
-            requestPermissions,
+            checkHealthPermissions: checkPermissions,
+            requestHealthPermissions: requestPermissions,
             readSleepAndHeartRate,
           },
         },

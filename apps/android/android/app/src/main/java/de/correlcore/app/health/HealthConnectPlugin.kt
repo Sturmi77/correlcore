@@ -65,8 +65,10 @@ class HealthConnectPlugin : Plugin() {
         call.resolve(result)
     }
 
+    // Named *HealthPermissions to avoid clashing with Capacitor Plugin's built-in
+    // checkPermissions/requestPermissions (we don't use its permission-alias system).
     @PluginMethod
-    fun checkPermissions(call: PluginCall) {
+    fun checkHealthPermissions(call: PluginCall) {
         val client = clientOrNull()
         if (client == null) {
             call.resolve(JSObject().put("granted", false).put("available", false))
@@ -89,7 +91,7 @@ class HealthConnectPlugin : Plugin() {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    fun requestHealthPermissions(call: PluginCall) {
         if (sdkStatus() != HealthConnectClient.SDK_AVAILABLE) {
             call.reject("health_connect_unavailable")
             return
