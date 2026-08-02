@@ -78,9 +78,7 @@ api_router.include_router(widget.router, prefix="/widget", tags=["widget"])
 api_router.include_router(insights.router, prefix="/insights", tags=["insights"])
 
 # M8 Sprint 4 — Health Connect sleep import (consent-gated)
-api_router.include_router(
-    health_connect.router, prefix="/health-connect", tags=["health-connect"]
-)
+api_router.include_router(health_connect.router, prefix="/health-connect", tags=["health-connect"])
 
 # M5 habit statistics.
 api_router.include_router(habits.router, prefix="/habits", tags=["habits"])
