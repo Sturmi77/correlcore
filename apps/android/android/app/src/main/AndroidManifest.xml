@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      M8 Sprint 3 — androidx.health.connect requires minSdk 26, but the app keeps
+      minSdk 24. Health Connect is simply unavailable below 26 (guarded at runtime
+      via HealthConnectClient.getSdkStatus), so we override the library's floor
+      instead of dropping Android 7.x support. Google's documented approach.
+    -->
+    <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
 
     <application
         android:allowBackup="false"
