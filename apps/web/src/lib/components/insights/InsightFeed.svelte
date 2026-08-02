@@ -83,6 +83,8 @@
     ? `insights.feed.empty_phase.${maturity?.phase}.body`
     : 'insights.feed.empty_body';
   $: showRegenerateAction = isPhaseEmpty;
+  // #632 review: do not claim "these are correlations" while loading/empty/error.
+  $: showCorrelationHint = showContext && !loading && !error && resolvedTotalCount > 0;
 
   const SKELETON_COUNT = 3;
   const skeletonItems: number[] = Array.from({ length: SKELETON_COUNT }, (_, idx) => idx);
@@ -116,9 +118,11 @@
         </svg>
       </button>
     </div>
-    <p class="if-correlation-hint" data-testid="insight-feed-correlation-hint">
-      {$_('insights.feed.correlation_header')}
-    </p>
+    {#if showCorrelationHint}
+      <p class="if-correlation-hint" data-testid="insight-feed-correlation-hint">
+        {$_('insights.feed.correlation_header')}
+      </p>
+    {/if}
   {/if}
 
   {#if showFilters}

@@ -325,6 +325,28 @@ describe('InsightFeed', () => {
     expect(screen.queryByTestId('insight-quality-meter')).toBeNull();
   });
 
+  it('shows correlation hint when insights are loaded', () => {
+    render(InsightFeed, { props: { insights: [makeInsight()] } });
+    expect(screen.getByTestId('insight-feed-correlation-hint')).toBeTruthy();
+  });
+
+  it('hides correlation hint while loading, on error, or when empty', () => {
+    const { unmount: unmountLoading } = render(InsightFeed, {
+      props: { insights: [], loading: true },
+    });
+    expect(screen.queryByTestId('insight-feed-correlation-hint')).toBeNull();
+    unmountLoading();
+
+    const { unmount: unmountError } = render(InsightFeed, {
+      props: { insights: [], error: 'boom' },
+    });
+    expect(screen.queryByTestId('insight-feed-correlation-hint')).toBeNull();
+    unmountError();
+
+    render(InsightFeed, { props: { insights: [] } });
+    expect(screen.queryByTestId('insight-feed-correlation-hint')).toBeNull();
+  });
+
   it('renders disclaimer button', () => {
     render(InsightFeed, { props: { insights: [] } });
     expect(screen.getByTestId('insight-feed-disclaimer-btn')).toBeTruthy();

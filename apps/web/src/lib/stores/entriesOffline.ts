@@ -112,6 +112,9 @@ export function localEntryToEntryResponse(entry: LocalEntry, userId = ''): Entry
     energy: entry.energy,
     stress: entry.stress,
     cycle_day: entry.cycle_day,
+    cycle_bleeding_level: entry.cycle_bleeding_level ?? null,
+    sleep_minutes: entry.sleep_minutes ?? null,
+    sleep_quality: entry.sleep_quality ?? null,
     source: 'direct',
     work_context: entry.work_context,
     note: entry.note,
@@ -212,6 +215,8 @@ export async function hydrateServerEntryFromApi(
       stress: entry.stress,
       cycle_day: entry.cycle_day,
       cycle_bleeding_level: entry.cycle_bleeding_level ?? null,
+      sleep_minutes: entry.sleep_minutes ?? null,
+      sleep_quality: entry.sleep_quality ?? null,
       work_context: entry.work_context,
       note: entry.note,
       tag_ids: tagIds,
@@ -275,6 +280,21 @@ export async function saveEntryOffline(
   return { entryId, syncState };
 }
 
+function sleepFieldFromPull(
+  data: Record<string, unknown>,
+  key: 'sleep_minutes' | 'sleep_quality',
+  existing: number | null | undefined
+): number | null {
+  // Presence-aware: partial callers (e.g. clearCycleDataOffline) may omit sleep
+  // keys. Treating omitted as null would wipe IDB sleep and later push nulls
+  // to the server after an offline/API-down edit. Explicit null still clears.
+  if (!(key in data)) {
+    return existing ?? null;
+  }
+  const value = data[key];
+  return value == null ? null : Number(value);
+}
+
 export async function applyPulledEntry(
   entryId: string,
   data: Record<string, unknown>,
@@ -283,6 +303,7 @@ export async function applyPulledEntry(
 ): Promise<void> {
   const entryDate = String(data.entry_date);
   const slot = (data.slot as EntrySlot) ?? 'day';
+  const existing = await getOfflineDb().entries.get(entryId);
   await deleteStaleEntriesForDateSlot(entryId, entryDate, slot);
 
   const localEntry: LocalEntry = {
@@ -297,6 +318,8 @@ export async function applyPulledEntry(
       data.cycle_bleeding_level == null || data.cycle_bleeding_level === undefined
         ? null
         : (String(data.cycle_bleeding_level) as import('$lib/api/entries').BleedingLevel),
+    sleep_minutes: sleepFieldFromPull(data, 'sleep_minutes', existing?.sleep_minutes),
+    sleep_quality: sleepFieldFromPull(data, 'sleep_quality', existing?.sleep_quality),
     work_context: data.work_context as WorkContext,
     note: data.note == null ? null : String(data.note),
     tag_ids: Array.isArray(data.tag_ids) ? data.tag_ids.map(String) : [],
@@ -395,6 +418,11 @@ export async function clearCycleDataOffline(): Promise<number> {
             stress: serverEntry.stress,
             cycle_day: null,
             cycle_bleeding_level: null,
+            // Preserve non-cycle fields from the server snapshot — omitting
+            // sleep here used to null IDB sleep via applyPulledEntry and
+            // later push nulls after an offline edit (#636 follow-up).
+            sleep_minutes: serverEntry.sleep_minutes ?? null,
+            sleep_quality: serverEntry.sleep_quality ?? null,
             work_context: serverEntry.work_context,
             note: serverEntry.note,
             tag_ids: local.tag_ids,

@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
+  import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
 
   export let insight: InsightResponse | null = null;
 
@@ -18,7 +19,7 @@
   <div class="first-week-banner__copy">
     <p class="first-week-banner__title">{$_(titleKey)}</p>
     <p class="first-week-banner__body">
-      {insight?.statement ?? $_(bodyKey)}
+      {stripLegacyInsightStatementTails(insight?.statement) || $_(bodyKey)}
     </p>
   </div>
   <div class="first-week-banner__actions">

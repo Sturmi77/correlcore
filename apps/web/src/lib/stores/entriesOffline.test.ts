@@ -28,6 +28,8 @@ function apiEntry(id: string): EntryResponse {
     energy: 3,
     stress: 2,
     cycle_day: null,
+    sleep_minutes: 420,
+    sleep_quality: 4,
     source: 'direct',
     work_context: 'office',
     note: 'server note',
@@ -99,9 +101,125 @@ describe('entriesOffline', () => {
     const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
     expect(local?.id).toBe('server-entry-id');
     expect(local?.mood_score).toBe(4);
+    expect(local?.sleep_minutes).toBe(420);
+    expect(local?.sleep_quality).toBe(4);
     expect(local?.tag_ids).toEqual(['tag-1']);
     expect(local?.symptoms).toEqual({ 'sym-1': 3 });
     expect(local?.sync_state).toBe('synced');
+  });
+
+  it('preserves sleep fields when applying a pulled entry', async () => {
+    await applyPulledEntry(
+      'sleep-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        sleep_minutes: 390,
+        sleep_quality: 5,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T09:00:00.000Z',
+      'synced'
+    );
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBe(390);
+    expect(local?.sleep_quality).toBe(5);
+  });
+
+  it('preserves existing sleep when a pull omits sleep keys', async () => {
+    await applyPulledEntry(
+      'sleep-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        sleep_minutes: 420,
+        sleep_quality: 4,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T09:00:00.000Z',
+      'synced'
+    );
+
+    await applyPulledEntry(
+      'sleep-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 4,
+        energy: 3,
+        stress: 2,
+        cycle_day: null,
+        cycle_bleeding_level: null,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T10:00:00.000Z',
+      'synced'
+    );
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.mood_score).toBe(4);
+    expect(local?.sleep_minutes).toBe(420);
+    expect(local?.sleep_quality).toBe(4);
+  });
+
+  it('clears sleep when a pull sends explicit null sleep keys', async () => {
+    await applyPulledEntry(
+      'sleep-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        sleep_minutes: 420,
+        sleep_quality: 4,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T09:00:00.000Z',
+      'synced'
+    );
+
+    await applyPulledEntry(
+      'sleep-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        sleep_minutes: null,
+        sleep_quality: null,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T10:00:00.000Z',
+      'synced'
+    );
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBeNull();
+    expect(local?.sleep_quality).toBeNull();
   });
 
   it('dedupes stale rows when applying a pulled entry', async () => {
@@ -247,6 +365,8 @@ describe('entriesOffline', () => {
       energy: 3,
       stress: 2,
       cycle_day: null,
+      sleep_minutes: 480,
+      sleep_quality: 3,
       work_context: 'office',
       note: 'hello',
       tag_ids: [],
@@ -258,6 +378,8 @@ describe('entriesOffline', () => {
     expect(mapped.id).toBe('local-1');
     expect(mapped.entry_date).toBe('2026-07-13');
     expect(mapped.mood_score).toBe(4);
+    expect(mapped.sleep_minutes).toBe(480);
+    expect(mapped.sleep_quality).toBe(3);
   });
 
   it('clears cycle fields from local entries and pending outbox payloads', async () => {
@@ -381,5 +503,54 @@ describe('entriesOffline', () => {
     const syncedOther = await findLocalEntryByDateSlot('2026-07-12', 'day');
     expect(syncedOther?.cycle_day).toBeNull();
     expect(syncedOther?.cycle_bleeding_level ?? null).toBeNull();
+  });
+
+  it('preserves sleep when clearing cycle data rehydrates synced rows', async () => {
+    await applyPulledEntry(
+      'sleep-cycle-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 4,
+        energy: 3,
+        stress: 2,
+        cycle_day: 10,
+        cycle_bleeding_level: 'light',
+        sleep_minutes: 450,
+        sleep_quality: 5,
+        work_context: 'office',
+        note: 'keep sleep',
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T08:00:00.000Z',
+      'synced'
+    );
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry('sleep-cycle-entry'),
+        mood_score: 4,
+        energy: 3,
+        stress: 2,
+        cycle_day: null,
+        cycle_bleeding_level: null,
+        sleep_minutes: 450,
+        sleep_quality: 5,
+        note: 'keep sleep',
+        updated_at: '2026-07-13T09:00:00.000Z',
+      },
+    ]);
+
+    const cleared = await clearCycleDataOffline();
+    expect(cleared).toBe(1);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.cycle_day).toBeNull();
+    expect(local?.cycle_bleeding_level ?? null).toBeNull();
+    expect(local?.sleep_minutes).toBe(450);
+    expect(local?.sleep_quality).toBe(5);
+    expect(local?.note).toBe('keep sleep');
+    expect(local?.sync_state).toBe('synced');
   });
 });

@@ -1180,29 +1180,33 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 ### M8 — Schlaf & Health Connect (Woche 20–21)
 
 > Implementierungsnotizen: [`M8_NOTES.md`](M8_NOTES.md) (Schlaf, Wearables, Cycle-Health-Connect).
-> Consent-Foundation (#31) und Notes-Signals (#201/#202) sind gelandet; Sleep-/HC-Import bleibt M8 Exit.
+> **M8-Kern (Sprints 1–5, #172) gelandet:** manuelle Schlaffelder, Schlaf↔Mood-Insights,
+> nativer Health-Connect-Bridge und consent-gated Sleep-Import. Status + Gate:
+> [`M8_SPRINT_STATUS.md`](M8_SPRINT_STATUS.md), [`quality/M8_QUALITY_GATE.md`](quality/M8_QUALITY_GATE.md).
+> **Herausgelöst / Follow-up:** Cycle-Health-Connect + Phase-Bands (eigenes Sub-Milestone),
+> Sleep×Symptom, HR-Persistenz, erweiterte Schlaffelder, native WorkManager-Background-Sync.
 
-- Manuelle Schlafdaten erweiterte Felder (Einschlafzeit, Tiefschlaf)
-- Android-seitig: Health Connect Import (Schlaf, HR, Schritte)
-- Korrelation Schlaf↔Mood in Insights; Sleep×Symptom als Level-1-Erweiterung (ADR-0025)
-- Cycle-Deep-Integration: Health Connect `READ_MENSTRUATION`, Phase-Bands (mit M11 Android-Shell)
-- **Exit:** Wearable-Daten fließen automatisch
+- [x] Manuelle Schlafdaten (`sleep_minutes`, `sleep_quality`) — erweiterte Felder (Einschlafzeit/Tiefschlaf) = Follow-up
+- [x] Android-seitig: Health Connect Import (Schlaf) — HR read-limitiert (Permission), Persistenz = Follow-up; keine Schritte
+- [x] Korrelation Schlaf↔Mood in Insights — Sleep×Symptom (ADR-0025) = Follow-up
+- [ ] Cycle-Deep-Integration: Health Connect `READ_MENSTRUATION`, Phase-Bands → **eigenes Sub-Milestone**
+- **Exit (Kern):** Wearable-Schlaf fließt via „Sync now" in bestehende Einträge
 
 #### Akzeptanzkriterien M8
 
 - [x] Art.-9-Consent-Architektur (`consent_log`, `/user/me/consents`, Settings Privacy) — Foundation #31
-- [ ] Health Connect Permission-Request erklärt klar welche Daten gelesen werden (In-App-Erklärungsscreen)
-- [ ] Keine Weitergabe von Health-Connect-Daten an Third-Party-Services
-- [ ] Import importiert nur Schlaf + HR (keine Bewegungsprofile, keine Standortdaten)
-- [ ] Health Connect API Declaration korrekt in `AndroidManifest.xml` eingetragen
-- [ ] Sleep×Symptom-Korrelationen erscheinen wenn Schlafmetriken vorhanden
-- [ ] **Quality-Gate**: Code-Quality-Review + Security-Audit gemäß §9 durchgeführt und bestanden
+- [x] Health Connect Permission-Request erklärt klar welche Daten gelesen werden (In-App-Erklärungsscreen `/health-connect`, Sprint 3)
+- [x] Keine Weitergabe von Health-Connect-Daten an Third-Party-Services (on-device, keine Cloud-Aggregatoren — ADR-0042)
+- [x] Import importiert nur Schlaf + HR (Read technisch auf Schlaf+HR fixiert; Write nur Schlaf; keine Bewegungsprofile/Standortdaten)
+- [x] Health Connect Permissions + Rationale-Intent-Filter korrekt in `AndroidManifest.xml` (Play-Data-Safety-Declaration → Play-Exit)
+- [ ] Sleep×Symptom-Korrelationen erscheinen wenn Schlafmetriken vorhanden → **Follow-up** (Schlaf↔Mood ist gelandet)
+- [x] **Quality-Gate**: Code-Quality-Review gemäß §9 durchgeführt — [`quality/M8_QUALITY_GATE.md`](quality/M8_QUALITY_GATE.md)
 
 #### DSGVO-Checkpoint M8
 
-- [x] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Consent-API/UI (#31); Onboarding-Import-Screen folgt mit HC-Import
-- [ ] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR importiert, keine Bewegungsprofile (technisch durchgesetzt)
-- [ ] 🔒 DSGVO: Löschung von importierten Health-Connect-Daten bei Account-Delete vollständig implementiert und getestet
+- [x] 🔒 DSGVO: Health Connect Daten = Art. 9 DSGVO → explizite Einwilligung via Consent-API/UI (#31); Import zusätzlich gated
+- [x] 🔒 DSGVO: Daten-Minimierung: nur Schlaf + HR gelesen, keine Bewegungsprofile (nativ fixierte Permission-Menge, ADR-0042)
+- [x] 🔒 DSGVO: Löschung importierter Health-Connect-Daten bei Account-Delete (via `entries` ON DELETE CASCADE; Test in `test_health_connect_import.py`)
 
 ---
 

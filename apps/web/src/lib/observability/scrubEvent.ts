@@ -13,6 +13,9 @@ const SENSITIVE_KEYS = new Set([
   // ADR-0033 Art. 9 cycle SHD (parity with backend error_tracking scrubber).
   'cycle_day',
   'cycle_bleeding_level',
+  // M8 Sprint 1 (#172): manual sleep is health data — keep parity with BE scrubber.
+  'sleep_minutes',
+  'sleep_quality',
   'symptoms',
   'symptom_intensity',
   'intensity',

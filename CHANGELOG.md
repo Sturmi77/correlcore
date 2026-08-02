@@ -8,6 +8,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **M8 — Schlaf & Health Connect (Kern, #172).** Manuelle Schlaffelder
+  (`sleep_minutes`, `sleep_quality`) an Einträgen inkl. API, Offline-Sync und
+  Export; Schlaf↔Mood-Korrelation im Insight-Feed (plus Schlaf als Feature-Spalte
+  in der Lasso-/Lag-Design-Matrix); nativer Health-Connect-Bridge (eigenes
+  Kotlin-Plugin, [ADR-0042](docs/adr/0042-health-connect-bridge-strategy.md)) mit
+  Rationale-Screen `/health-connect`; consent-gated Sleep-Import
+  (`POST /api/v1/health-connect/import`, „manuell gewinnt", per-Feld-Toggle,
+  In-App-„Sync now"). Nur Schlaf + Herzfrequenz werden gelesen (nativ fixiert);
+  importiert wird nur Schlaf. Herausgelöst/Follow-up: Cycle-Health-Connect +
+  Phase-Bands, Sleep×Symptom, HR-Persistenz, nativer Background-Sync. Details:
+  [`docs/M8_SPRINT_STATUS.md`](docs/M8_SPRINT_STATUS.md).
+
 ### Changed
 
 - **Korrelations-Disclaimer entflechtet (#632).** Die wiederholten Safety-Sätze

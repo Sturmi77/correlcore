@@ -651,8 +651,14 @@ async def _merge_entry_upsert(
         entry.stress = payload.stress
         entry.cycle_day = payload.cycle_day
         entry.cycle_bleeding_level = payload.cycle_bleeding_level
-        entry.sleep_minutes = payload.sleep_minutes
-        entry.sleep_quality = payload.sleep_quality
+        # Presence-aware sleep assign: pre-M8 / cached clients omit these keys
+        # and Pydantic defaults them to None. Unconditional assign would wipe
+        # sleep written by a newer client during mixed-version rollout.
+        # Explicit null (key present) still clears — new web always sends keys.
+        if "sleep_minutes" in payload.model_fields_set:
+            entry.sleep_minutes = payload.sleep_minutes
+        if "sleep_quality" in payload.model_fields_set:
+            entry.sleep_quality = payload.sleep_quality
         entry.work_context = payload.work_context
         entry.note_enc = payload.note
         entry.updated_at = client_ts
