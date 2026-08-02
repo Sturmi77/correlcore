@@ -24,6 +24,8 @@ def _entry(
     stress: int = 3,
     tag_ids: frozenset[uuid.UUID] = frozenset(),
     symptom_ids: frozenset[uuid.UUID] = frozenset(),
+    sleep_minutes: int | None = None,
+    sleep_quality: int | None = None,
 ) -> MultivariateEntry:
     return MultivariateEntry(
         entry_date=day,
@@ -32,6 +34,8 @@ def _entry(
         stress=stress,
         tag_ids=tag_ids,
         symptom_ids=symptom_ids,
+        sleep_minutes=sleep_minutes,
+        sleep_quality=sleep_quality,
     )
 
 
@@ -84,6 +88,42 @@ def test_design_matrix_contains_eligible_symptoms_and_drops_sparse_features() ->
     assert f"symptom_{common_symptom_id.hex}" in frame.columns
     assert f"symptom_{rare_symptom_id.hex}" not in frame.columns
     assert feature_meta[f"symptom_{common_symptom_id.hex}"].kind == "symptom"
+
+
+def test_design_matrix_adds_well_covered_sleep_columns_and_imputes_gaps() -> None:
+    """M8 Sprint 2 (#172): sleep joins as a metric column with mean-imputed gaps."""
+    start = date(2026, 1, 1)
+    # 30 days: full coverage on sleep_minutes (values vary), no sleep_quality at all.
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            sleep_minutes=420 if offset % 2 == 0 else 480,
+        )
+        for offset in range(30)
+    ]
+
+    frame, feature_meta = build_design_matrix(entries)
+
+    assert "sleep_minutes" in frame.columns
+    assert feature_meta["sleep_minutes"].kind == "metric"
+    assert "sleep_quality" not in frame.columns  # never recorded → no column
+    assert not frame["sleep_minutes"].isna().any()
+
+
+def test_design_matrix_omits_sparsely_covered_sleep_column() -> None:
+    start = date(2026, 1, 1)
+    # Only 5 of 30 days recorded sleep_minutes → below the coverage floor.
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            sleep_minutes=450 if offset < 5 else None,
+        )
+        for offset in range(30)
+    ]
+
+    frame, _ = build_design_matrix(entries)
+
+    assert "sleep_minutes" not in frame.columns
 
 
 def test_lasso_waits_for_90_entries_and_is_reproducible() -> None:

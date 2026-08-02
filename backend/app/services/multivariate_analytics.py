@@ -31,6 +31,13 @@ TIMESERIES_SPLITS = 5
 
 METRIC_TARGETS: tuple[MetricName, ...] = ("mood_score", "energy", "stress")
 
+# M8 Sprint 2 (#172): optional sleep feature columns. A sleep metric only joins
+# the design matrix when at least this fraction of days recorded it (and the
+# absolute floor below is met); remaining gaps are mean-imputed.
+SLEEP_METRICS: tuple[str, ...] = ("sleep_minutes", "sleep_quality")
+MIN_SLEEP_COLUMN_COVERAGE = 0.5
+MIN_SLEEP_COLUMN_OBSERVATIONS = 15
+
 
 @dataclass(frozen=True)
 class MultivariateEntry:
@@ -42,6 +49,12 @@ class MultivariateEntry:
     stress: int
     tag_ids: frozenset[uuid.UUID]
     symptom_ids: frozenset[uuid.UUID]
+    # M8 Sprint 2 (#172): optional manual sleep metrics. Added to the design
+    # matrix as continuous feature columns only when coverage is high enough
+    # (see MIN_SLEEP_COLUMN_COVERAGE); missing days are mean-imputed so the
+    # complete-case Lasso/lag pipeline stays NaN-free.
+    sleep_minutes: int | None = None
+    sleep_quality: int | None = None
 
 
 @dataclass(frozen=True)
@@ -160,6 +173,26 @@ def build_design_matrix(
     for symptom_id in eligible_symptoms:
         feature_meta[_binary_column("symptom", symptom_id)] = symptom_meta[symptom_id]
 
+    # Sleep feature columns join only when well covered; missing days are
+    # mean-imputed so the complete-case Lasso/lag pipeline stays NaN-free.
+    sleep_impute: dict[str, float] = {}
+    coverage_floor = max(
+        MIN_SLEEP_COLUMN_OBSERVATIONS,
+        math.ceil(MIN_SLEEP_COLUMN_COVERAGE * len(sorted_entries)),
+    )
+    for metric in SLEEP_METRICS:
+        present = [
+            getattr(entry, metric)
+            for entry in sorted_entries
+            if getattr(entry, metric) is not None
+        ]
+        if len(present) < coverage_floor or len(set(present)) < 2:
+            continue
+        sleep_impute[metric] = sum(present) / len(present)
+        feature_meta[metric] = FeatureMetadata(
+            kind="metric", key=metric, label=metric, slug=metric
+        )
+
     rows: list[dict[str, object]] = []
     for entry in sorted_entries:
         row: dict[str, object] = {
@@ -172,6 +205,9 @@ def build_design_matrix(
             row[_binary_column("tag", tag_id)] = 1 if tag_id in entry.tag_ids else 0
         for symptom_id in eligible_symptoms:
             row[_binary_column("symptom", symptom_id)] = 1 if symptom_id in entry.symptom_ids else 0
+        for metric, mean_value in sleep_impute.items():
+            value = getattr(entry, metric)
+            row[metric] = float(value) if value is not None else mean_value
         rows.append(row)
 
     frame = pd.DataFrame(rows)
