@@ -10,6 +10,16 @@
     -->
     <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
 
+    <!--
+      M8 Sprint 3 — package visibility (Android 11+) hides the separately
+      installed Health Connect provider unless queried explicitly, which would
+      make HealthConnectClient.getSdkStatus() report SDK_UNAVAILABLE even when
+      the provider is installed.
+    -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:fullBackupContent="@xml/backup_rules"
