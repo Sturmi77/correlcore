@@ -135,6 +135,8 @@ describe('syncHealthConnectSleep', () => {
       skipped_existing_value: 0,
       skipped_no_entry: 0,
       sleep_sync_enabled: true,
+      updated_entry_dates: ['2026-08-02'],
+      skipped_existing_entry_dates: [],
     });
 
     const result = await syncHealthConnectSleep(granted, range);
@@ -148,6 +150,10 @@ describe('syncHealthConnectSleep', () => {
     // Dexie fill is always attempted after a non-zero import; pull only when
     // offline sync is active (default mock: false).
     expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledOnce();
+    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledWith(
+      [expect.objectContaining({ sleep_minutes: 450 })],
+      { skippedExistingDates: [] }
+    );
     expect(scheduleSync).not.toHaveBeenCalled();
   });
 
@@ -181,6 +187,8 @@ describe('syncHealthConnectSleep', () => {
       skipped_existing_value: 0,
       skipped_no_entry: 0,
       sleep_sync_enabled: true,
+      updated_entry_dates: ['2026-08-02'],
+      skipped_existing_entry_dates: [],
     });
     vi.mocked(fillLocalSleepAfterHealthConnectImport).mockResolvedValue(1);
 
@@ -188,9 +196,10 @@ describe('syncHealthConnectSleep', () => {
 
     expect(result.status).toBe('ok');
     expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledOnce();
-    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledWith([
-      expect.objectContaining({ sleep_minutes: 450 }),
-    ]);
+    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledWith(
+      [expect.objectContaining({ sleep_minutes: 450 })],
+      { skippedExistingDates: [] }
+    );
     expect(scheduleSync).toHaveBeenCalledOnce();
   });
 
@@ -205,12 +214,18 @@ describe('syncHealthConnectSleep', () => {
       skipped_existing_value: 1,
       skipped_no_entry: 0,
       sleep_sync_enabled: true,
+      updated_entry_dates: [],
+      skipped_existing_entry_dates: ['2026-08-02'],
     });
 
     const result = await syncHealthConnectSleep(granted, range);
 
     expect(result.status).toBe('ok');
     expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledOnce();
+    expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledWith(
+      [expect.objectContaining({ sleep_minutes: 450 })],
+      { skippedExistingDates: ['2026-08-02'] }
+    );
     expect(scheduleSync).toHaveBeenCalledOnce();
   });
 

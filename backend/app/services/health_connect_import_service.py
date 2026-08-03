@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Sequence
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,6 +44,8 @@ async def import_health_connect_sleep(
             skipped_existing_value=0,
             skipped_no_entry=len(items),
             sleep_sync_enabled=False,
+            updated_entry_dates=[],
+            skipped_existing_entry_dates=[],
         )
 
     # Fetch every candidate entry in one query instead of one SELECT per item
@@ -60,6 +63,8 @@ async def import_health_connect_sleep(
     updated = 0
     skipped_existing = 0
     skipped_no_entry = 0
+    updated_entry_dates: list[date] = []
+    skipped_existing_entry_dates: list[date] = []
     touched: list[Entry] = []
 
     for item in items:
@@ -69,9 +74,11 @@ async def import_health_connect_sleep(
             continue
         if entry.sleep_minutes is not None:
             skipped_existing += 1
+            skipped_existing_entry_dates.append(item.entry_date)
             continue
         entry.sleep_minutes = item.sleep_minutes
         updated += 1
+        updated_entry_dates.append(item.entry_date)
         touched.append(entry)
 
     if touched:
@@ -92,4 +99,6 @@ async def import_health_connect_sleep(
         skipped_existing_value=skipped_existing,
         skipped_no_entry=skipped_no_entry,
         sleep_sync_enabled=True,
+        updated_entry_dates=updated_entry_dates,
+        skipped_existing_entry_dates=skipped_existing_entry_dates,
     )

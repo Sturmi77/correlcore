@@ -362,6 +362,21 @@ export interface HealthConnectSleepFillItem {
   sleep_minutes: number;
 }
 
+export interface FillLocalSleepAfterHealthConnectOptions {
+  /**
+   * Dates the import reported as ``skipped_existing_value``. Intentional-clear
+   * protection applies only to these dates — freshly ``updated`` dates must
+   * still fill Dexie/outbox even when a clock-ahead pending mood edit carries
+   * ``sleep_minutes: null``.
+   */
+  skippedExistingDates?: Iterable<string>;
+}
+
+function isoTimestampMs(value: string): number {
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : Number.NaN;
+}
+
 /**
  * After Health Connect fills server ``sleep_minutes``, copy those values into
  * IndexedDB (and pending outbox payloads) fill-only.
@@ -373,16 +388,18 @@ export interface HealthConnectSleepFillItem {
  * Only dates whose server value matches the just-imported minutes are touched,
  * so a concurrent manual value (HC skipped) cannot be overwritten locally.
  *
- * A pending upsert whose ``client_ts`` is newer than the server row and still
- * has null sleep is treated as an intentional clear — do not resurrect sleep
- * into Dexie/outbox or bump ``client_ts`` (that would undo the clear on the
- * next push after a ``skipped_existing_value`` Sync now).
+ * On ``skipped_existing_value`` dates only: a pending upsert whose
+ * ``client_ts`` is newer than the server row and still has null sleep is
+ * treated as an intentional clear — do not resurrect sleep into Dexie/outbox
+ * or bump ``client_ts`` (that would undo the clear on the next push).
  */
 export async function fillLocalSleepAfterHealthConnectImport(
-  items: HealthConnectSleepFillItem[]
+  items: HealthConnectSleepFillItem[],
+  options?: FillLocalSleepAfterHealthConnectOptions
 ): Promise<number> {
   if (items.length === 0) return 0;
 
+  const skippedExistingDates = new Set(options?.skippedExistingDates ?? []);
   const importedByDate = new Map(
     items.map((item) => [item.entry_date, item.sleep_minutes] as const)
   );
@@ -423,17 +440,27 @@ export async function fillLocalSleepAfterHealthConnectImport(
     const pendingForEntry = pending.filter(
       (change) => change.entity_id === local.id && change.operation === 'upsert'
     );
-    // Newer pending null sleep = user cleared (or edited) after the server
-    // value was written. Resurrecting sleep here undoes that intentional clear
-    // once scheduleSync pushes with a bumped client_ts.
-    const newerNullSleepPending = pendingForEntry.some((change) => {
-      const payload = change.payload;
-      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
-      const current = payload as Record<string, unknown>;
-      if (current.sleep_minutes != null) return false;
-      return change.client_ts > serverEntry.updated_at;
-    });
-    if (newerNullSleepPending) continue;
+    // Only on skipped_existing dates: newer pending null sleep means the user
+    // cleared after the server value was written. Do not apply this guard to
+    // freshly updated dates — buildSyncEntryPayload always sends null sleep on
+    // mood edits, and a clock-ahead client_ts would otherwise block #640 fill
+    // and let the next push wipe the wearable value.
+    if (skippedExistingDates.has(serverEntry.entry_date)) {
+      const serverUpdatedMs = isoTimestampMs(serverEntry.updated_at);
+      const newerNullSleepPending = pendingForEntry.some((change) => {
+        const payload = change.payload;
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+        const current = payload as Record<string, unknown>;
+        if (current.sleep_minutes != null) return false;
+        const clientMs = isoTimestampMs(change.client_ts);
+        return (
+          Number.isFinite(clientMs) &&
+          Number.isFinite(serverUpdatedMs) &&
+          clientMs > serverUpdatedMs
+        );
+      });
+      if (newerNullSleepPending) continue;
+    }
 
     await db.entries.update(local.id, { sleep_minutes: importedMinutes });
     filled += 1;

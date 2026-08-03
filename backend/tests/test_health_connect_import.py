@@ -59,6 +59,8 @@ async def test_import_fills_empty_sleep_on_existing_entry(rest_revision_recorder
     assert result.updated == 1
     assert result.skipped_existing_value == 0
     assert result.sleep_sync_enabled is True
+    assert result.updated_entry_dates == [entry.entry_date]
+    assert result.skipped_existing_entry_dates == []
     rest_revision_recorders["entry"].assert_awaited_once()
 
 
@@ -99,6 +101,8 @@ async def test_import_never_overwrites_manual_sleep(rest_revision_recorders) -> 
     assert entry.sleep_minutes == 400  # manual wins
     assert result.updated == 0
     assert result.skipped_existing_value == 1
+    assert result.updated_entry_dates == []
+    assert result.skipped_existing_entry_dates == [entry.entry_date]
     rest_revision_recorders["entry"].assert_not_awaited()
 
 

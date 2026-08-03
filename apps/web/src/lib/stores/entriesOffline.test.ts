@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntryResponse } from '$lib/api/entries';
 import { listEntries } from '$lib/api/entries';
-import { resetOfflineDbForTests } from '$lib/offline/db';
+import { getOfflineDb, resetOfflineDbForTests } from '$lib/offline/db';
 import { listPendingChanges } from '$lib/offline/changeLog';
 import {
   applyPulledEntry,
@@ -696,9 +696,10 @@ describe('entriesOffline', () => {
       },
     ]);
 
-    const filled = await fillLocalSleepAfterHealthConnectImport([
-      { entry_date: '2026-07-13', sleep_minutes: 430 },
-    ]);
+    const filled = await fillLocalSleepAfterHealthConnectImport(
+      [{ entry_date: '2026-07-13', sleep_minutes: 430 }],
+      { skippedExistingDates: ['2026-07-13'] }
+    );
     expect(filled).toBe(0);
 
     const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
@@ -709,6 +710,130 @@ describe('entriesOffline', () => {
     const upsert = pending.find((row) => row.entity_id === saved.entryId);
     expect(upsert?.payload).toMatchObject({ sleep_minutes: null });
     expect(upsert?.client_ts).toBe(local?.updated_at);
+  });
+
+  it('still fills after HC update when a clock-ahead pending mood edit has null sleep', async () => {
+    // buildSyncEntryPayload always sends sleep_minutes: null. A device clock
+    // ahead of the server makes client_ts > server.updated_at after a fresh
+    // HC fill — that must not be treated as an intentional clear on updated dates.
+    const saved = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 4,
+      energy: 3,
+      stress: 2,
+      slot: 'day',
+      cycle_day: null,
+      sleep_minutes: null,
+      sleep_quality: null,
+      work_context: 'office',
+      note: 'mood only',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    const pendingBefore = await listPendingChanges();
+    const upsertBefore = pendingBefore.find((row) => row.entity_id === saved.entryId);
+    expect(upsertBefore?.client_ts).toBeTruthy();
+    // Server import landed "before" the skewed outbox timestamp.
+    const serverUpdatedAt = new Date(
+      new Date(upsertBefore!.client_ts).getTime() - 60_000
+    ).toISOString();
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        mood_score: 3,
+        sleep_minutes: 410,
+        sleep_quality: null,
+        note: null,
+        updated_at: serverUpdatedAt,
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport(
+      [{ entry_date: '2026-07-13', sleep_minutes: 410 }],
+      // Fresh HC update — not a skipped_existing date.
+      { skippedExistingDates: [] }
+    );
+    expect(filled).toBe(1);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBe(410);
+
+    const pending = await listPendingChanges();
+    const upsert = pending.find((row) => row.entity_id === saved.entryId);
+    expect(upsert?.payload).toMatchObject({
+      mood_score: 4,
+      sleep_minutes: 410,
+    });
+  });
+
+  it('compares clear vs server time with Date parsing (whole-second API stamps)', async () => {
+    await applyPulledEntry(
+      'clear-entry-z',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        cycle_day: null,
+        sleep_minutes: 430,
+        sleep_quality: null,
+        work_context: 'office',
+        note: null,
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T08:00:00.000Z',
+      'synced'
+    );
+
+    const saved = await saveEntryOffline('clear-entry-z', {
+      entry_date: '2026-07-13',
+      mood_score: 3,
+      energy: 3,
+      stress: 2,
+      slot: 'day',
+      cycle_day: null,
+      sleep_minutes: null,
+      sleep_quality: null,
+      work_context: 'office',
+      note: '',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    // Force a same-second pair: API whole-second stamp vs client fractional ms.
+    // Lexicographic compare treats '...00.400Z' as older than '...00Z' ('.' < 'Z').
+    const serverUpdatedAt = '2026-07-13T08:00:00Z';
+    const clearClientTs = '2026-07-13T08:00:00.400Z';
+    expect(clearClientTs > serverUpdatedAt).toBe(false);
+    expect(new Date(clearClientTs).getTime()).toBeGreaterThan(new Date(serverUpdatedAt).getTime());
+
+    const db = getOfflineDb();
+    await db.entries.update(saved.entryId, { updated_at: clearClientTs });
+    const pendingBefore = await listPendingChanges();
+    const upsertBefore = pendingBefore.find((row) => row.entity_id === saved.entryId);
+    await db.change_log.update(upsertBefore!.seq!, { client_ts: clearClientTs });
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        sleep_minutes: 430,
+        sleep_quality: null,
+        updated_at: serverUpdatedAt,
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport(
+      [{ entry_date: '2026-07-13', sleep_minutes: 430 }],
+      { skippedExistingDates: ['2026-07-13'] }
+    );
+    expect(filled).toBe(0);
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.sleep_minutes).toBeNull();
   });
 
   it('does not overwrite local sleep or mismatched server values after HC import', async () => {

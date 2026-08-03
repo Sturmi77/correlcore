@@ -131,7 +131,10 @@ export async function syncHealthConnectSleep(
   const needsLocalReconcile = imported.updated > 0 || imported.skipped_existing_value > 0;
   if (needsLocalReconcile) {
     try {
-      await fillLocalSleepAfterHealthConnectImport(sleep);
+      await fillLocalSleepAfterHealthConnectImport(sleep, {
+        // Intentional-clear protection is only valid on skipped_existing dates.
+        skippedExistingDates: imported.skipped_existing_entry_dates ?? [],
+      });
     } catch {
       // Best-effort; empty/unopened Dexie is fine. scheduleSync still helps
       // when offline sync is active.
