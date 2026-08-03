@@ -11,14 +11,23 @@
    * component via CSS media query).
    */
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
   import CorrelationDisclaimer from '$lib/components/insights/CorrelationDisclaimer.svelte';
 
   let open = true;
 
+  // Surfaces that may link here; the `return` query param preserves the origin
+  // on close so users are not bounced to /insights. Allowlisted to avoid any
+  // open-redirect via an attacker-supplied return target.
+  const RETURN_ALLOWLIST = new Set(['/', '/insights', '/insights/digest', '/insights/history']);
+
+  $: rawReturn = $page.url.searchParams.get('return');
+  $: returnTo = rawReturn && RETURN_ALLOWLIST.has(rawReturn) ? rawReturn : '/insights';
+
   function handleClose() {
     open = false;
-    void goto('/insights');
+    void goto(returnTo);
   }
 </script>
 
@@ -42,7 +51,7 @@
        completes before navigation fires). Acts as a safe fallback. -->
   {#if !open}
     <div class="disclaimer-page__fallback">
-      <a class="btn btn-sm variant-ghost-surface" href="/insights">
+      <a class="btn btn-sm variant-ghost-surface" href={returnTo}>
         {$_('nav.back', { default: '← Back' })}
       </a>
     </div>
