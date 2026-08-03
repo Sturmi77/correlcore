@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "CorrelCore",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "tagline": "Verstehe warum manche Tage gut und andere schlecht waren."
   },
   "nav": {
@@ -1647,7 +1647,7 @@
       "error_network": "Schlaf-Synchronisierung fehlgeschlagen: Server nicht erreichbar. Pruefe deine Verbindung und die API-URL.",
       "error_forbidden": "Schlaf-Synchronisierung abgelehnt: Health-Connect-Einwilligung fehlt oder wurde widerrufen. Erteile sie erneut in den Einstellungen.",
       "error_unauthorized": "Schlaf-Synchronisierung abgelehnt: Sitzung abgelaufen. Bitte erneut anmelden.",
-      "error_not_found": "Schlaf-Import ist auf diesem Server nicht verfuegbar. Aktualisiere die Instanz auf v1.2.0 oder neuer.",
+      "error_not_found": "Schlaf-Import ist auf diesem Server nicht verfuegbar. Aktualisiere die Instanz auf v1.2.1 oder neuer.",
       "error_server": "Schlaf-Synchronisierung fehlgeschlagen: Serverfehler. Pruefe, ob Migrationen 037/038 ausgefuehrt wurden.",
       "error": "Schlaf-Synchronisierung fehlgeschlagen. Pruefe deine Verbindung und versuche es erneut."
     }

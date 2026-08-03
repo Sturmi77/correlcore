@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" /></a>
   <a href="https://sturmi77.github.io/correlcore/"><img src="https://img.shields.io/badge/release-selfhost%20v1.x-blue" alt="Release" /></a>
   <a href="#tech-stack"><img src="https://img.shields.io/badge/stack-FastAPI%20%2B%20SvelteKit%20%2B%20PostgreSQL-green" alt="Stack" /></a>
-  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.2.0-informational" alt="Latest tag" /></a>
+  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.2.1-informational" alt="Latest tag" /></a>
 </p>
 
 ---
@@ -31,7 +31,7 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 | **60 seconds per day**         | No more, or it simply won't get done                                                                         |
 | **No gamification, ever**      | You collect data points — not streaks, and not how often you open the app                                    |
 
-**Public selfhost line:** tag **`v1.0.0`** (2026-07-11, M10) through the `v1.0.x` patch line, then **`v1.1.x`**, through latest **`v1.2.0`** (M8 Sleep & Health Connect core, correlation-disclaimer consolidation — includes database migrations). Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/). Release notes: [`CHANGELOG.md`](CHANGELOG.md).
+**Public selfhost line:** tag **`v1.0.0`** (2026-07-11, M10) through the `v1.0.x` patch line, then **`v1.1.x`**, through latest **`v1.2.1`** (M8 Sleep & Health Connect core, correlation-disclaimer consolidation — includes database migrations). Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/). Release notes: [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -53,7 +53,7 @@ Doc/version gaps for the `1.0.x` line: [`docs/releases/RELEASE_1_0_X_DOC_SYNC.md
 
 <br />
 
-Shipped with public selfhost **v1.x** (latest **v1.2.0**). Full table and links:
+Shipped with public selfhost **v1.x** (latest **v1.2.1**). Full table and links:
 [`docs/releases/COMPLETED_MILESTONES.md`](docs/releases/COMPLETED_MILESTONES.md).
 
 | Milestone            | Summary                                                  |
@@ -106,7 +106,7 @@ git clone https://github.com/Sturmi77/correlcore.git
 cd correlcore/infra/docker
 cp .env.example .env
 # Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
-# Prefer IMAGE_TAG=v1.2.0 (or latest v1.x) for published GHCR images
+# Prefer IMAGE_TAG=v1.2.1 (or latest v1.x) for published GHCR images
 # Set acme email in traefik/traefik.yml to match LETSENCRYPT_EMAIL
 docker compose up -d
 ```
@@ -120,7 +120,7 @@ Compose stack matrix (canonical vs secondary, profiles `worker` / `digest`):
 
 Android sideload (optional, M11 pre-Play): download the APK from a [`v*`](https://github.com/Sturmi77/correlcore/releases) release — see [`docs/selfhost/ANDROID_SIDELOAD.md`](docs/selfhost/ANDROID_SIDELOAD.md).
 
-> **Note:** Public selfhost **`1.x`** is the supported release line (latest `v1.2.0`). M8 core (manual sleep + HC sleep import) ships in this tag; remaining M8 follow-ups, M11 Play exit, and M13 full scope stay active development. See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
+> **Note:** Public selfhost **`1.x`** is the supported release line (latest `v1.2.1`). M8 core (manual sleep + HC sleep import) ships in this tag; remaining M8 follow-ups, M11 Play exit, and M13 full scope stay active development. See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
