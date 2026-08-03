@@ -209,6 +209,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.1] — 2026-08-03
+
+Patch on the 1.2 line: clearer Health Connect Sync-now failures and a sleep-only
+native read so heart-rate faults cannot fail sleep import. No new migrations.
+
+### Fixed
+
+- **Health Connect Sync now surfaces specific failures** (#651) — map import
+  `ApiError` / `NetworkError` to concrete statuses (network, 401, 403, 404, 5xx)
+  instead of a generic catch; prefer native `readSleepSessions` for sync; harden
+  malformed sleep payloads; explain empty outcomes (`no_matching_entries`,
+  `already_up_to_date`).
+
+### Upgrade notes
+
+- Plain image/APK pull from 1.2.0. Android `versionCode` moves to **1002001**.
+- Sideload/obtainium: install the new APK to get the sleep-only native method
+  (older APKs fall back to the combined read).
+
+---
+
 ## [1.2.0] — 2026-08-03
 
 Minor bump for **M8 Sleep & Health Connect (core)** and correlation-disclaimer

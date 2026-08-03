@@ -46,7 +46,7 @@ _EXPORT_OMIT_KEYS = frozenset(
 _UUID_IN_TEXT = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
-APP_EXPORT_VERSION = "1.2.0"
+APP_EXPORT_VERSION = "1.2.1"
 SCORE_LEGEND: dict[str, ExportScoreLegendItem] = {
     "mood_score": ExportScoreLegendItem(
         min=1,
