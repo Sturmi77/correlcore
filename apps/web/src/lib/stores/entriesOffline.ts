@@ -430,7 +430,7 @@ export async function fillLocalSleepAfterHealthConnectImport(
     );
     // Newer pending null sleep = user cleared (or edited) after the server
     // value was written. Resurrecting sleep here undoes that intentional clear
-    // once scheduleSync pushes with a bumped client_ts.
+    // once scheduleSync pushes the pending null.
     const newerNullSleepPending = pendingForEntry.some((change) => {
       const payload = change.payload;
       if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
