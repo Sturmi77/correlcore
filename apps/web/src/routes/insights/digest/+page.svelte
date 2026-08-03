@@ -14,9 +14,10 @@
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
-  // Maintainer (#632): digest cards render statements via InsightCard without the
-  // InsightFeed correlation header. Users reach CorrelationDisclaimer from /insights
-  // (back link) or /insights/disclaimer. Do not re-add per-statement tails.
+  import CorrelationHint from '$lib/components/insights/CorrelationHint.svelte';
+  // Maintainer (#632): digest cards render statements via InsightCard. A single
+  // persistent CorrelationHint below the header gives a ≤1-click link to the
+  // canonical /insights/disclaimer. Do not re-add per-statement tails.
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
   let digest: InsightDigestResponse | null = null;
@@ -84,6 +85,7 @@
     <a href="/insights">{$_('nav.back')}</a>
   </p>
   <ScreenHeader title={$_('insights.digest.title')} subtitle={$_('insights.digest.subtitle')} />
+  <CorrelationHint />
 
   <Panel>
     {#if loading}
