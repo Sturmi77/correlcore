@@ -700,10 +700,71 @@ describe('entriesOffline', () => {
     const upsert = pending.find((row) => row.entity_id === saved.entryId);
     expect(upsert?.client_ts).toBe(upsertBefore?.client_ts);
     expect(upsert?.client_ts && upsert.client_ts < serverUpdatedAt).toBe(true);
+    // Sleep is patched; cycle fields stay as in the outbox. With the original
+    // (older) client_ts, push loses LWW so stale SHD cannot resurrect.
     expect(upsert?.payload).toMatchObject({
       sleep_minutes: 420,
-      cycle_day: null,
-      cycle_bleeding_level: null,
+      cycle_day: 12,
+      cycle_bleeding_level: 'medium',
+    });
+  });
+
+  it('does not wipe a newer pending cycle write when patching HC sleep', async () => {
+    // User logged cycle SHD offline before Sync now; server still has null
+    // cycle. Overlaying server cycle into the outbox would destroy that write
+    // and, with a clock-ahead client_ts, push nulls over the user's SHD.
+    const saved = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 4,
+      energy: 3,
+      stress: 2,
+      slot: 'day',
+      cycle_day: 8,
+      cycle_bleeding_level: 'light',
+      sleep_minutes: null,
+      sleep_quality: null,
+      work_context: 'office',
+      note: 'just logged cycle',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    const pendingBefore = await listPendingChanges();
+    const upsertBefore = pendingBefore.find((row) => row.entity_id === saved.entryId);
+    expect(upsertBefore?.client_ts).toBeTruthy();
+    // Clock-ahead outbox: client_ts newer than the HC-filled server row.
+    const serverUpdatedAt = new Date(
+      new Date(upsertBefore!.client_ts).getTime() - 60_000
+    ).toISOString();
+
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        mood_score: 4,
+        cycle_day: null,
+        cycle_bleeding_level: null,
+        sleep_minutes: 390,
+        sleep_quality: null,
+        note: null,
+        updated_at: serverUpdatedAt,
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport(
+      [{ entry_date: '2026-07-13', sleep_minutes: 390 }],
+      { skippedExistingDates: [] }
+    );
+    expect(filled).toBe(1);
+
+    const pending = await listPendingChanges();
+    const upsert = pending.find((row) => row.entity_id === saved.entryId);
+    expect(upsert?.client_ts).toBe(upsertBefore?.client_ts);
+    expect(upsert?.payload).toMatchObject({
+      sleep_minutes: 390,
+      cycle_day: 8,
+      cycle_bleeding_level: 'light',
+      mood_score: 4,
+      note: 'just logged cycle',
     });
   });
 

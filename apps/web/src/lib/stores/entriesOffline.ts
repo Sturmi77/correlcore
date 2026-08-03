@@ -398,6 +398,8 @@ function isoTimestampMs(value: string): number {
  * (cycle SHD erase, mood/energy from another device) while only sleep was
  * meant to be reconciled. When the outbox is older, push loses and the
  * server-side HC fill stays intact; Dexie is still filled for later edits.
+ * Only ``sleep_minutes`` is patched — never overlay other outbox fields from
+ * the server row (that wiped unpushed cycle SHD under clock-ahead LWW).
  */
 export async function fillLocalSleepAfterHealthConnectImport(
   items: HealthConnectSleepFillItem[],
@@ -480,15 +482,14 @@ export async function fillLocalSleepAfterHealthConnectImport(
       // outbox already wins LWW. Do not bump client_ts — that inverted LWW
       // against newer server clears/edits. If client_ts is older than the
       // server row, push loses and server sleep (just filled) stays intact.
+      // Do not overlay other fields (e.g. cycle SHD) from the server row: a
+      // legitimate pending cycle write that has not been pushed yet would be
+      // wiped, and a clock-ahead client_ts would then win LWW with nulls.
       if (current.sleep_minutes != null) continue;
       await db.change_log.update(change.seq!, {
         payload: {
           ...current,
           sleep_minutes: importedMinutes,
-          // Defense in depth: never push stale cycle SHD over a server erase
-          // if this outbox row still somehow wins LWW on its original ts.
-          cycle_day: serverEntry.cycle_day ?? null,
-          cycle_bleeding_level: serverEntry.cycle_bleeding_level ?? null,
         },
       });
     }
