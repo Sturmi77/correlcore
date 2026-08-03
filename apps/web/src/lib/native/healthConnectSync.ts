@@ -8,13 +8,15 @@
  * follow-up — this module is what the in-app "Sync now" action calls.
  */
 
+import { ApiError, NetworkError } from '$lib/api/client';
 import type { ConsentListResponse } from '$lib/api/consents';
 import { importHealthConnectSleep, type HealthConnectImportResponse } from '$lib/api/healthConnect';
 import { canUseHealthConnectImport } from '$lib/healthConnect/consent';
 import { canUseOfflineSync } from '$lib/offline/featureFlag';
 import { scheduleSync } from '$lib/offline/syncOrchestrator';
+import { captureClientException } from '$lib/observability/errorTracking.client';
 import { fillLocalSleepAfterHealthConnectImport } from '$lib/stores/entriesOffline';
-import { readHealthConnectSleepAndHeartRate, type HealthConnectSleepRecord } from './healthConnect';
+import { readHealthConnectSleep, type HealthConnectSleepRecord } from './healthConnect';
 
 /** Local ISO date (YYYY-MM-DD) of an instant, in the device's timezone. */
 function localIsoDate(iso: string): string | null {
@@ -91,14 +93,53 @@ export function aggregateSleepByDate(records: HealthConnectSleepRecord[]): Map<s
   return totals;
 }
 
+export type HealthConnectSyncStatus =
+  | 'ok'
+  | 'no_consent'
+  | 'unavailable'
+  | 'no_data'
+  | 'sync_disabled'
+  | 'no_matching_entries'
+  | 'already_up_to_date'
+  | 'error_network'
+  | 'error_forbidden'
+  | 'error_not_found'
+  | 'error_unauthorized'
+  | 'error_server'
+  | 'error';
+
 export interface HealthConnectSyncResult {
-  status: 'ok' | 'no_consent' | 'unavailable' | 'no_data' | 'sync_disabled';
+  status: HealthConnectSyncStatus;
   imported?: HealthConnectImportResponse;
+}
+
+/** Map thrown API/network failures to a user-facing sync status (no sleep payload). */
+export function mapHealthConnectImportError(err: unknown): HealthConnectSyncStatus {
+  if (err instanceof NetworkError) return 'error_network';
+  if (err instanceof ApiError) {
+    if (err.status === 401) return 'error_unauthorized';
+    if (err.status === 403) return 'error_forbidden';
+    if (err.status === 404) return 'error_not_found';
+    if (err.status >= 500) return 'error_server';
+    return 'error';
+  }
+  return 'error';
+}
+
+function outcomeAfterImport(imported: HealthConnectImportResponse): HealthConnectSyncStatus {
+  if (!imported.sleep_sync_enabled) return 'sync_disabled';
+  if (imported.updated > 0) return 'ok';
+  if (imported.skipped_existing_value > 0 && imported.skipped_no_entry === 0) {
+    return 'already_up_to_date';
+  }
+  if (imported.skipped_no_entry > 0) return 'no_matching_entries';
+  return 'ok';
 }
 
 /**
  * Read HC sleep for [start, end], aggregate per wake-date, and import. `start`
- * and `end` are ISO-8601 instants.
+ * and `end` are ISO-8601 instants. Known API failures become status codes
+ * (never throw) so the UI can show a specific message.
  */
 export async function syncHealthConnectSleep(
   consents: ConsentListResponse | null | undefined,
@@ -106,23 +147,34 @@ export async function syncHealthConnectSleep(
 ): Promise<HealthConnectSyncResult> {
   if (!canUseHealthConnectImport(consents)) return { status: 'no_consent' };
 
-  const data = await readHealthConnectSleepAndHeartRate(consents, range);
-  if (data === null) return { status: 'unavailable' };
+  const sleepRecords = await readHealthConnectSleep(consents, range);
+  if (sleepRecords === null) return { status: 'unavailable' };
 
-  const byDate = aggregateSleepByDate(data.sleep);
+  const byDate = aggregateSleepByDate(sleepRecords);
   if (byDate.size === 0) return { status: 'no_data' };
 
   const sleep = [...byDate.entries()].map(([entry_date, sleep_minutes]) => ({
     entry_date,
     sleep_minutes,
   }));
-  const imported = await importHealthConnectSleep(sleep);
-  // The server is authoritative for the toggle: it may have been disabled on
-  // another device, or the client's optimistic preference fetch may be stale.
-  // Report that explicitly instead of claiming success when nothing synced.
-  if (!imported.sleep_sync_enabled) {
-    return { status: 'sync_disabled', imported };
+
+  let imported: HealthConnectImportResponse;
+  try {
+    imported = await importHealthConnectSleep(sleep);
+  } catch (err) {
+    const status = mapHealthConnectImportError(err);
+    // Scrubbed: status/path only — never the sleep payload.
+    captureClientException(
+      err instanceof Error ? err : new Error(`health_connect_import_failed:${status}`)
+    );
+    return { status };
   }
+
+  const status = outcomeAfterImport(imported);
+  if (status === 'sync_disabled') {
+    return { status, imported };
+  }
+
   // Revisions alone are not enough: Sync now must reconcile Dexie (and any
   // pending outbox null sleep) before an offline/API-down mood edit can push
   // nulls and wipe the wearable fill. Also reconcile when the server already
@@ -143,5 +195,5 @@ export async function syncHealthConnectSleep(
       scheduleSync();
     }
   }
-  return { status: 'ok', imported };
+  return { status, imported };
 }

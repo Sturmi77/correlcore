@@ -75,6 +75,8 @@
     try {
       const end = new Date();
       const start = new Date(end.getTime() - SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+      // Known failures are returned as status codes (never thrown) so the UI
+      // can show a specific message instead of a generic "check your connection".
       const result = await syncHealthConnectSleep(consents, {
         start: start.toISOString(),
         end: end.toISOString(),
@@ -85,6 +87,7 @@
         sleepSyncEnabled = false;
       }
     } catch {
+      // Unexpected throw only — ApiError/NetworkError are mapped inside sync.
       syncMessageKey = 'health_connect.sync.error';
     } finally {
       syncing = false;

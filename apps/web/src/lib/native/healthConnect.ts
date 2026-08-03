@@ -5,8 +5,8 @@
  * The plugin reads **only** sleep + heart-rate records; that limit is enforced
  * natively (see HealthConnectPlugin.kt). Every read here is additionally gated
  * behind the DSGVO Art. 9 consent via {@link canUseHealthConnectImport}.
- * Writing imported values into entries is Sprint 4 — this module only exposes
- * availability, permissions, and raw reads.
+ * Sync now uses {@link readHealthConnectSleep} (sleep-only) so heart-rate read
+ * failures cannot fail the import path.
  */
 
 import type { ConsentListResponse } from '$lib/api/consents';
@@ -47,6 +47,8 @@ type HealthConnectPlugin = {
   isAvailable(): Promise<HealthConnectAvailability>;
   checkHealthPermissions(): Promise<HealthConnectPermissionState>;
   requestHealthPermissions(): Promise<HealthConnectPermissionState>;
+  /** Sleep-only (preferred for Sync now). Absent on older APKs. */
+  readSleepSessions?(options: { start: string; end: string }): Promise<{ sleep?: unknown }>;
   readSleepAndHeartRate(options: { start: string; end: string }): Promise<HealthConnectReadResult>;
 };
 
@@ -58,6 +60,25 @@ function getNativePlugin(): HealthConnectPlugin | null {
     }
   ).Capacitor;
   return cap?.Plugins?.HealthConnect ?? null;
+}
+
+/**
+ * Normalize a Capacitor sleep payload. Non-arrays (missing / malformed bridge
+ * responses) return null so callers can surface `unavailable` instead of throwing.
+ */
+export function normalizeSleepRecords(raw: unknown): HealthConnectSleepRecord[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: HealthConnectSleepRecord[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const rec = item as Record<string, unknown>;
+    const startTime = typeof rec.startTime === 'string' ? rec.startTime : null;
+    const endTime = typeof rec.endTime === 'string' ? rec.endTime : null;
+    const durationMinutes = Number(rec.durationMinutes);
+    if (!startTime || !endTime || !Number.isFinite(durationMinutes)) continue;
+    out.push({ startTime, endTime, durationMinutes });
+  }
+  return out;
 }
 
 /** True only inside the Android app with the native plugin present. */
@@ -108,9 +129,34 @@ export async function requestHealthConnectPermissions(
 }
 
 /**
+ * Read sleep sessions in [start, end] for Sync now. Prefers the sleep-only
+ * native method; falls back to combined read on older APKs. Returns null when
+ * consent is missing, the bridge is absent, the read fails, or the payload is
+ * malformed. `start` and `end` are ISO-8601 instants.
+ */
+export async function readHealthConnectSleep(
+  consents: ConsentListResponse | null | undefined,
+  range: { start: string; end: string }
+): Promise<HealthConnectSleepRecord[] | null> {
+  if (!canUseHealthConnectImport(consents)) return null;
+  const plugin = isCapacitorBuild() ? getNativePlugin() : null;
+  if (!plugin) return null;
+  try {
+    if (typeof plugin.readSleepSessions === 'function') {
+      const result = await plugin.readSleepSessions(range);
+      return normalizeSleepRecords(result?.sleep);
+    }
+    const result = await plugin.readSleepAndHeartRate(range);
+    return normalizeSleepRecords(result?.sleep);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Read sleep + heart-rate records in [start, end]. Returns null when consent is
- * missing, the bridge is absent (browser build), or the read fails. `start` and
- * `end` are ISO-8601 instants.
+ * missing, the bridge is absent (browser build), or the read fails. Prefer
+ * {@link readHealthConnectSleep} for the import/sync path.
  */
 export async function readHealthConnectSleepAndHeartRate(
   consents: ConsentListResponse | null | undefined,
@@ -120,7 +166,13 @@ export async function readHealthConnectSleepAndHeartRate(
   const plugin = isCapacitorBuild() ? getNativePlugin() : null;
   if (!plugin) return null;
   try {
-    return await plugin.readSleepAndHeartRate(range);
+    const result = await plugin.readSleepAndHeartRate(range);
+    const sleep = normalizeSleepRecords(result?.sleep);
+    if (sleep === null) return null;
+    return {
+      sleep,
+      heartRate: Array.isArray(result?.heartRate) ? result.heartRate : [],
+    };
   } catch {
     return null;
   }
