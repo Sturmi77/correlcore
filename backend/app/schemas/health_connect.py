@@ -44,3 +44,14 @@ class HealthConnectImportResponse(BaseModel):
     sleep_sync_enabled: bool = Field(
         description="False when the user disabled the per-field HC sleep toggle"
     )
+    # Per-date outcomes let the client apply intentional-clear guards only on
+    # skipped days, while always reconciling Dexie/outbox for freshly updated days
+    # (avoids clock-ahead pending mood edits blocking #640 fill).
+    updated_entry_dates: list[date_type] = Field(
+        default_factory=list,
+        description="Dates whose empty sleep_minutes was filled on this import",
+    )
+    skipped_existing_entry_dates: list[date_type] = Field(
+        default_factory=list,
+        description="Dates skipped because sleep_minutes was already set",
+    )

@@ -15,6 +15,10 @@ export interface HealthConnectImportResponse {
   skipped_existing_value: number;
   skipped_no_entry: number;
   sleep_sync_enabled: boolean;
+  /** Dates filled on this import (ISO YYYY-MM-DD). */
+  updated_entry_dates?: string[];
+  /** Dates skipped because sleep was already set (ISO YYYY-MM-DD). */
+  skipped_existing_entry_dates?: string[];
 }
 
 /**
