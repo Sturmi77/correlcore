@@ -248,7 +248,7 @@ flowchart TD
   Mo–Sa-Dummies, Sonntag = Referenz, `MIN_OLS_ROWS = 10`, `α = 0.10`. Ist eine Assoziation nach Wochentags-
   Adjustierung nicht mehr signifikant, wird der Insight mit Hinweis versehen
   („Note: this pattern occurs primarily on specific weekdays.") bzw. bei Co-occurrence als confounded markiert.
-- **Sprach-Prinzip:** nie kausal/medizinisch. Immer „pattern / association / co-occurrence, not a cause/diagnosis".
+- **Sprach-Prinzip:** nie kausal/medizinisch. Statements bleiben deskriptiv („pattern / association / co-occurrence"); der „not a cause/diagnosis"-Sicherheitshinweis steht seit #632 **einmal im Feed-Header** (+ ⓘ zur kanonischen Erklärung), nicht mehr an jedem einzelnen Statement.
 
 ### 4.1 Confidence-Tier-Ladder (interne Verlässlichkeit)
 
@@ -277,7 +277,7 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Min-Schwellen:** `MIN_WEEKDAY_ENTRIES = 7`; ausgelöst, wenn `|delta| ≥ MIN_WEEKDAY_DELTA = 0.5`.
 - **Effektgröße:** `delta` (Wochentag-Mittel − Gesamtmittel). Kein p-Wert (Flag `method="weekday_delta"`).
 - **Payload:** `weekday_mood_avgs`, `weekday_entry_counts`, `overall_mood_avg`, `early_pattern` (bool bei < 15 Tagen).
-- **Erwartete Aussage:** „Mondays currently line up with higher/lower mood than your overall average. This is an early calendar pattern, not a diagnosis."
+- **Erwartete Aussage:** „Mondays currently line up with higher/lower mood than your overall average."
 - **Erste Phase mit Sichtbarkeit:** **Phase 2** (`early_patterns`).
 
 #### B) Spearman-Rangkorrelation (Metrik ↔ Metrik) — `spearman`
@@ -286,7 +286,7 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Eingangsdaten:** Tagesvektoren; benötigt ≥ 2 verschiedene Werte je Metrik.
 - **Min-Schwellen:** `MIN_BIVARIATE_ENTRIES = 15`; `|rho| ≥ 0.25`; signifikant nach FDR (`α = 0.05`).
 - **Effektgröße:** `rho`. Payload: `left_metric`, `right_metric`, `rho`, `p_corrected`.
-- **Erwartete Aussage:** „In your entries so far, energy tends to be higher/lower when mood is higher. This is a data pattern, not a diagnosis."
+- **Erwartete Aussage:** „In your entries so far, energy tends to be higher/lower when mood is higher."
 - **Erste Phase mit Sichtbarkeit:** **Phase 3** (`provisional`) — obwohl Phase 3 ab Tag 14 beginnt, greift die Engine erst ab 15.
 
 #### C) Point-biserial (Tag ↔ Mood) — `pointbiserial`
@@ -295,7 +295,7 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Eingangsdaten:** Tagesvektoren + Tag-Zuordnungen (aktive Tags, Alias-kanonisiert via Slug).
 - **Min-Schwellen:** `MIN_BIVARIATE_ENTRIES = 15`; getaggte Tage ≥ `ANALYTICS_MIN_TAG_USAGES = 10`; ungetaggte Tage ≥ `MIN_TAG_GROUP_SIZE = 2`; `|coef| ≥ 0.25`.
 - **Effektgröße:** `coefficient`. Payload: `tagged_count`, `untagged_count`, `tagged_mood_avg`, `untagged_mood_avg`, `p_corrected`; Flag `weekday_confounded`.
-- **Erwartete Aussage:** „Days tagged Walk currently line up with higher mood scores in your data. Treat this as a pattern to reflect on, not a cause." (+ ggf. Wochentags-Hinweis)
+- **Erwartete Aussage:** „Days tagged Walk currently line up with higher mood scores in your data." (+ ggf. Wochentags-Hinweis)
 - **Erste Phase mit Sichtbarkeit:** **Phase 3**. Speist zusammen mit (D) die **Correlation-Matrix** (ab 2 qualifizierenden Insights mit `confidence ≥ 0.2`).
 
 #### D) Symptom ↔ Mood/Energy/Stress-Association — `symptom_mood_association`
@@ -304,7 +304,7 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Eingangsdaten:** Tagesvektoren + Symptom-Zuordnungen (`intensity > 0`).
 - **Min-Schwellen:** `MIN_SYMPTOM_ANALYTICS_ENTRIES = 15`; Symptom-Tage ≥ `MIN_SYMPTOM_USAGES = 5` (und Vergleichsgruppe ≥ 5); `|coef| ≥ 0.25`.
 - **Effektgröße:** `coefficient`. Payload u.a. `symptom_metric_avg`, `comparison_metric_avg`, `symptom_n`, `comparison_n`, `confounder`.
-- **Erwartete Aussage:** „Days with Headache currently line up with lower energy in your data. Treat this as an association, not a cause."
+- **Erwartete Aussage:** „Days with Headache currently line up with lower energy in your data."
 - **Erste Phase mit Sichtbarkeit:** **Phase 3**.
 
 #### E) Symptom ↔ Tag Co-occurrence — `symptom_tag_cooccurrence`
@@ -313,7 +313,7 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Eingangsdaten:** Symptom- und Tag-Präsenz pro Tag.
 - **Min-Schwellen:** `MIN_SYMPTOM_ANALYTICS_ENTRIES = 15`; Symptom ≥ 5 & Tag ≥ 5 Nutzungen; Karten-Schwelle `MIN_CARD_LIFT_DELTA = 0.67`, Heatmap `MIN_HEATMAP_LIFT_DELTA = 0.50`.
 - **Effektgröße:** `phi` (fällt auf `lift − 1` zurück, falls `phi == 0`). Payload: `phi`, `jaccard`, `lift`, `co_count`, Einzel-Counts.
-- **Erwartete Aussage:** „Headache currently appears together with Coffee more than expected from their individual frequencies. This is a co-occurrence pattern, not a cause."
+- **Erwartete Aussage:** „Headache currently appears together with Coffee more than expected from their individual frequencies."
 - **Erste Phase mit Sichtbarkeit:** **Phase 3** (Frontend-Gate `canShowSymptomCooccurrence` = provisional+).
 
 #### F) Multivariate LASSO — `symptom_cluster` (payload `method="lasso"`)
@@ -322,7 +322,7 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Eingangsdaten:** Tagesvektoren + Tags + Symptome (binäre Features ab `MIN_BINARY_FEATURE_USAGES = 5`).
 - **Min-Schwellen:** `MIN_ML_ENTRIES = 90`; `|coef| ≥ MIN_ABS_LASSO_COEFFICIENT = 0.05`.
 - **Effektgröße:** größter absoluter Koeffizient. Payload: Top-Features + Koeffizienten, `alpha`, `cv_score`.
-- **Erwartete Aussage:** „Across your tracked signals, mood currently varies most with Walk, Coffee, Sleep. This is a multivariate pattern, not a cause."
+- **Erwartete Aussage:** „Across your tracked signals, mood currently varies most with Walk, Coffee, Sleep."
 - **Erste Phase mit Sichtbarkeit:** **Phase 4**, aber erst ab **90** Eintragstagen (`◐`).
 
 #### G) Lag-Analyse (zeitversetzt) — `symptom_cluster` (payload `method="lag"`)
@@ -331,7 +331,7 @@ Legende: **Methode** · **Eingangsdaten** · **Min-Schwellen** · **Effektgröß
 - **Eingangsdaten:** wie (F); benötigt `MIN_LAG_OBSERVATIONS = 10` je Lag-Paar.
 - **Min-Schwellen:** `MIN_ML_ENTRIES = 90`; `|correlation| ≥ MIN_ABS_LAG_CORRELATION = 0.25`.
 - **Effektgröße:** `correlation`. Payload: `lag_days`, `feature`, `target`, `p_value_corrected`.
-- **Erwartete Aussage:** „Poor sleep logged 1 day(s) earlier currently lines up with lower mood. Treat this as a time-shifted pattern, not a cause."
+- **Erwartete Aussage:** „Poor sleep logged 1 day(s) earlier currently lines up with lower mood."
 - **Erste Phase mit Sichtbarkeit:** **Phase 4** (≥ 90 Tage).
 
 ### 4.3 Worked Examples — durchgerechnet je Familie
@@ -348,7 +348,7 @@ Effektgröße und FDR bis zum gerenderten Statement. Zweck: Bei einem unklaren I
 - **Auswahl:** größte |Abweichung| → Montag: `delta = 2.6 − 3.28 = −0.68`.
 - **Schwellen:** `n = 21 ≥ MIN_WEEKDAY_ENTRIES (7)` ✅ · `|delta| = 0.68 ≥ MIN_WEEKDAY_DELTA (0.5)` ✅ · kein p-Wert (`method="weekday_delta"`).
 - **`early_pattern`-Flag:** `n < 15`? Nein (`21`) → Flag `false`.
-- **Ergebnis:** Insight wird erzeugt. Statement: „Mondays currently line up with lower mood than your overall average. This is an early calendar pattern, not a diagnosis."
+- **Ergebnis:** Insight wird erzeugt. Statement: „Mondays currently line up with lower mood than your overall average."
 - **Gegenprobe (kein Insight):** wäre Mo 3.0 → `delta = −0.28`, `< 0.5` ❌ → verworfen.
 
 #### B) `spearman` — energy ↔ mood
@@ -356,7 +356,7 @@ Effektgröße und FDR bis zum gerenderten Statement. Zweck: Bei einem unklaren I
 - **Eingabe:** `n = 18` Tagesvektoren, Paare `(energy, mood_score)`, ≥ 2 verschiedene Werte je Metrik.
 - **Berechnung:** `spearmanr` → `rho = 0.52`, roh `p = 0.006`. BH-FDR über die 2 bivariaten Paare → `p_corrected = 0.011`.
 - **Schwellen:** `n = 18 ≥ MIN_BIVARIATE_ENTRIES (15)` ✅ · `|rho| = 0.52 ≥ 0.25` ✅ · `p_corrected = 0.011 < FDR_ALPHA (0.05)` ✅.
-- **Ergebnis:** Insight erzeugt, `effect_size = 0.52`. Statement: „In your entries so far, energy tends to be higher when mood is higher. This is a data pattern, not a diagnosis."
+- **Ergebnis:** Insight erzeugt, `effect_size = 0.52`. Statement: „In your entries so far, energy tends to be higher when mood is higher."
 - **Gegenprobe:** bei `n = 14` würde die Familie gar nicht laufen (Phase 3 ab Tag 14, Engine aber erst ab 15 → §5-Gotcha).
 
 #### C) `pointbiserial` — Tag „Walk" ↔ mood
@@ -373,7 +373,7 @@ Effektgröße und FDR bis zum gerenderten Statement. Zweck: Bei einem unklaren I
 - **Eingabe:** `n = 20`. Symptom „Headache" an `symptom_n = 6` Tagen (`symptom_metric_avg = 2.4`), Vergleichsgruppe `comparison_n = 14` (`comparison_metric_avg = 3.3`).
 - **Berechnung:** Point-biserial Symptom-Präsenz ↔ energy → `coefficient = −0.38`, `p_corrected = 0.048` (BH-FDR mit `SYMPTOM_FDR_ALPHA = 0.10`).
 - **Schwellen:** `n = 20 ≥ MIN_SYMPTOM_ANALYTICS_ENTRIES (15)` ✅ · Symptom-Tage `6 ≥ MIN_SYMPTOM_USAGES (5)` ✅ · Vergleichsgruppe `14 ≥ 5` ✅ · `|coef| = 0.38 ≥ 0.25` ✅ · `0.048 < 0.10` ✅.
-- **Ergebnis:** Insight erzeugt. Statement: „Days with Headache currently line up with lower energy in your data. Treat this as an association, not a cause."
+- **Ergebnis:** Insight erzeugt. Statement: „Days with Headache currently line up with lower energy in your data."
 - **Gegenprobe:** nur 4 Headache-Tage → `4 < 5` ❌ → verworfen.
 
 #### E) `symptom_tag_cooccurrence` — „Headache" ↔ „Coffee"
@@ -382,7 +382,7 @@ Effektgröße und FDR bis zum gerenderten Statement. Zweck: Bei einem unklaren I
 - **Berechnung:** Kontingenz → `lift = 1.74`, `phi = 0.44`, `jaccard = 0.45`; BH-FDR (`α = 0.10`) signifikant.
 - **Schwellen:** `n = 22 ≥ 15` ✅ · Symptom `7 ≥ 5` & Tag `9 ≥ 5` ✅ · Karten-Schwelle `lift − 1 = 0.74 ≥ MIN_CARD_LIFT_DELTA (0.67)` ✅ (Heatmap-Schwelle 0.50 ebenfalls ✅) · Confounder-Check bestanden.
 - **Effektgröße:** `phi = 0.44` (Fallback `lift − 1` nur falls `phi == 0`).
-- **Ergebnis:** Karte **und** Heatmap-Zelle. Statement: „Headache currently appears together with Coffee more than expected from their individual frequencies. This is a co-occurrence pattern, not a cause."
+- **Ergebnis:** Karte **und** Heatmap-Zelle. Statement: „Headache currently appears together with Coffee more than expected from their individual frequencies."
 - **Gegenprobe:** `lift = 1.5` → `lift − 1 = 0.5 < 0.67` ❌ als Karte (erschiene aber noch in der Heatmap, da `0.5 ≥ 0.50`).
 
 #### F) `symptom_cluster` (`method="lasso"`) — multivariat
@@ -390,7 +390,7 @@ Effektgröße und FDR bis zum gerenderten Statement. Zweck: Bei einem unklaren I
 - **Eingabe:** `n = 96` (≥ 90). Design-Matrix aus Metriken + binären Tag-/Symptom-Features (nur Features mit `≥ MIN_BINARY_FEATURE_USAGES = 5` Nutzungen). Target `mood_score`.
 - **Berechnung:** LASSO mit TimeSeriesSplit-CV (`TIMESERIES_SPLITS = 5`) → gewähltes `alpha = 0.03`, `cv_score = 0.31`. Koeffizienten: Walk `+0.22`, Coffee `−0.09`, Sleep `+0.14`, Rest `≈ 0`.
 - **Schwellen:** `n = 96 ≥ MIN_ML_ENTRIES (90)` ✅ · beibehalten werden nur `|coef| ≥ MIN_ABS_LASSO_COEFFICIENT (0.05)` → Walk, Coffee, Sleep ✅ (Rest verworfen).
-- **Ergebnis:** Statement: „Across your tracked signals, mood currently varies most with Walk, Sleep, Coffee. This is a multivariate pattern, not a cause." (`effect_size` = größter |coef| = 0.22).
+- **Ergebnis:** Statement: „Across your tracked signals, mood currently varies most with Walk, Sleep, Coffee." (`effect_size` = größter |coef| = 0.22).
 - **Gegenprobe:** `n = 80` → `< 90` ❌ → die ganze Familie läuft nicht (auch kein Dev-Fixture deckt das ab, §9-Hinweis).
 
 #### G) `symptom_cluster` (`method="lag"`) — zeitversetzt
@@ -398,7 +398,7 @@ Effektgröße und FDR bis zum gerenderten Statement. Zweck: Bei einem unklaren I
 - **Eingabe:** `n = 96`. Feature „poor sleep" (binär), Target `mood_score`. Lags `1..MAX_LAG_DAYS (7)`; je Lag-Paar `≥ MIN_LAG_OBSERVATIONS = 10` Beobachtungen.
 - **Berechnung:** Kreuzkorrelation → Lag 1: `correlation = −0.31`, `p_value_corrected = 0.04` (BH-FDR, `LAG_FDR_ALPHA = 0.10`). Lags 2–7 unter Schwelle.
 - **Schwellen:** `n ≥ 90` ✅ · Lag-1-Beobachtungen `= 41 ≥ 10` ✅ · `|correlation| = 0.31 ≥ MIN_ABS_LAG_CORRELATION (0.25)` ✅ · `0.04 < 0.10` ✅.
-- **Ergebnis:** Statement: „Poor sleep logged 1 day(s) earlier currently lines up with lower mood. Treat this as a time-shifted pattern, not a cause." (`lag_days = 1`, `effect_size = −0.31`).
+- **Ergebnis:** Statement: „Poor sleep logged 1 day(s) earlier currently lines up with lower mood." (`lag_days = 1`, `effect_size = −0.31`).
 - **Gegenprobe:** `|correlation| = 0.2` → `< 0.25` ❌ → kein Lag-Insight.
 
 ### 4.4 Backend ↔ Frontend-Landkarte (Debug-Brücke)
@@ -789,7 +789,7 @@ verschlüsselt, wo mit 🔒 markiert.
     {
       "id": "a1b2c3d4-...",
       "insight_type": "pointbiserial",
-      "statement": "Days tagged Walk currently line up with higher mood scores in your data. Treat this as a pattern to reflect on, not a cause.",
+      "statement": "Days tagged Walk currently line up with higher mood scores in your data.",
       "confidence": 0.62,
       "tier": "developing",
       "effect_size": 0.41,

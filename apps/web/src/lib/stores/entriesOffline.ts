@@ -372,6 +372,11 @@ export interface HealthConnectSleepFillItem {
  *
  * Only dates whose server value matches the just-imported minutes are touched,
  * so a concurrent manual value (HC skipped) cannot be overwritten locally.
+ *
+ * A pending upsert whose ``client_ts`` is newer than the server row and still
+ * has null sleep is treated as an intentional clear — do not resurrect sleep
+ * into Dexie/outbox or bump ``client_ts`` (that would undo the clear on the
+ * next push after a ``skipped_existing_value`` Sync now).
  */
 export async function fillLocalSleepAfterHealthConnectImport(
   items: HealthConnectSleepFillItem[]
@@ -397,6 +402,7 @@ export async function fillLocalSleepAfterHealthConnectImport(
   }
 
   const db = getOfflineDb();
+  const pending = await listPendingChanges();
   let filled = 0;
 
   for (const serverEntry of serverEntries) {
@@ -414,13 +420,26 @@ export async function fillLocalSleepAfterHealthConnectImport(
     // Local manual (or prior fill) wins — never clobber a non-null local value.
     if (local.sleep_minutes != null) continue;
 
+    const pendingForEntry = pending.filter(
+      (change) => change.entity_id === local.id && change.operation === 'upsert'
+    );
+    // Newer pending null sleep = user cleared (or edited) after the server
+    // value was written. Resurrecting sleep here undoes that intentional clear
+    // once scheduleSync pushes with a bumped client_ts.
+    const newerNullSleepPending = pendingForEntry.some((change) => {
+      const payload = change.payload;
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+      const current = payload as Record<string, unknown>;
+      if (current.sleep_minutes != null) return false;
+      return change.client_ts > serverEntry.updated_at;
+    });
+    if (newerNullSleepPending) continue;
+
     await db.entries.update(local.id, { sleep_minutes: importedMinutes });
     filled += 1;
 
-    const pending = await listPendingChanges();
     const now = new Date().toISOString();
-    for (const change of pending) {
-      if (change.entity_id !== local.id || change.operation !== 'upsert') continue;
+    for (const change of pendingForEntry) {
       const payload = change.payload;
       if (!payload || typeof payload !== 'object' || Array.isArray(payload)) continue;
       const current = payload as Record<string, unknown>;

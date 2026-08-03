@@ -32,8 +32,6 @@
       ? $_('onboarding.cycle_step.toggle_hint_on')
       : $_('onboarding.cycle_step.toggle_hint_off')}
   </p>
-
-  <p class="cycle-step__disclaimer">{$_('onboarding.cycle_step.disclaimer')}</p>
 </section>
 
 <style>
@@ -51,8 +49,7 @@
 
   .cycle-step__body,
   .cycle-step__tag-hint,
-  .cycle-step__toggle-hint,
-  .cycle-step__disclaimer {
+  .cycle-step__toggle-hint {
     margin: 0;
     line-height: 1.5;
     color: var(--color-text-muted);
@@ -92,8 +89,7 @@
     flex-shrink: 0;
   }
 
-  .cycle-step__toggle-hint,
-  .cycle-step__disclaimer {
+  .cycle-step__toggle-hint {
     font-size: var(--text-xs);
   }
 </style>
