@@ -135,6 +135,36 @@ class HealthConnectPlugin : Plugin() {
         }
     }
 
+    /**
+     * Sleep-only read for Sync now. Avoids coupling the import path to heart-rate
+     * reads (OEM/SecurityException on HR must not fail sleep sync).
+     */
+    @PluginMethod
+    fun readSleepSessions(call: PluginCall) {
+        val client = clientOrNull()
+        if (client == null) {
+            call.reject("health_connect_unavailable")
+            return
+        }
+        val start = parseInstant(call.getString("start"))
+        val end = parseInstant(call.getString("end"))
+        if (start == null || end == null) {
+            call.reject("invalid_time_range")
+            return
+        }
+        scope.launch {
+            try {
+                val filter = TimeRangeFilter.between(start, end)
+                val sleepRecords = withContext(Dispatchers.IO) {
+                    readAllRecords(client, SleepSessionRecord::class, filter)
+                }
+                call.resolve(JSObject().put("sleep", sleepSessionsToJs(sleepRecords)))
+            } catch (e: Exception) {
+                call.reject("read_failed", e)
+            }
+        }
+    }
+
     @PluginMethod
     fun readSleepAndHeartRate(call: PluginCall) {
         val client = clientOrNull()
@@ -158,19 +188,6 @@ class HealthConnectPlugin : Plugin() {
                     readAllRecords(client, HeartRateRecord::class, filter)
                 }
 
-                val sleep = JSArray()
-                for (record in sleepRecords) {
-                    sleep.put(
-                        JSObject()
-                            .put("startTime", record.startTime.toString())
-                            .put("endTime", record.endTime.toString())
-                            .put(
-                                "durationMinutes",
-                                Duration.between(record.startTime, record.endTime).toMinutes(),
-                            ),
-                    )
-                }
-
                 val heartRate = JSArray()
                 for (record in heartRecords) {
                     val bpm = record.samples.map { it.beatsPerMinute }
@@ -186,11 +203,31 @@ class HealthConnectPlugin : Plugin() {
                     heartRate.put(obj)
                 }
 
-                call.resolve(JSObject().put("sleep", sleep).put("heartRate", heartRate))
+                call.resolve(
+                    JSObject()
+                        .put("sleep", sleepSessionsToJs(sleepRecords))
+                        .put("heartRate", heartRate),
+                )
             } catch (e: Exception) {
                 call.reject("read_failed", e)
             }
         }
+    }
+
+    private fun sleepSessionsToJs(records: List<SleepSessionRecord>): JSArray {
+        val sleep = JSArray()
+        for (record in records) {
+            sleep.put(
+                JSObject()
+                    .put("startTime", record.startTime.toString())
+                    .put("endTime", record.endTime.toString())
+                    .put(
+                        "durationMinutes",
+                        Duration.between(record.startTime, record.endTime).toMinutes(),
+                    ),
+            )
+        }
+        return sleep
     }
 
     /**

@@ -80,8 +80,9 @@ own CorrelCore instance.
 | Method                                  | Result                                                              |
 | --------------------------------------- | ------------------------------------------------------------------- |
 | `isAvailable()`                         | `{ available, status }` — Health Connect SDK status on the device   |
-| `checkPermissions()`                    | `{ granted, available }` for the fixed sleep + HR set               |
-| `requestPermissions()`                  | Launches the HC permission sheet; resolves with the new grant state |
+| `checkHealthPermissions()`              | `{ granted, available }` for the fixed sleep + HR set               |
+| `requestHealthPermissions()`            | Launches the HC permission sheet; resolves with the new grant state |
+| `readSleepSessions({ start, end })`     | `{ sleep[] }` only — used by Sync now (HR failures cannot block)    |
 | `readSleepAndHeartRate({ start, end })` | `{ sleep[], heartRate[] }` for the ISO-8601 range                   |
 
 ## Build & verify (manual — no CI SDK build)

@@ -1642,6 +1642,13 @@
       "unavailable": "Health Connect ist auf diesem Geraet nicht verfuegbar.",
       "no_data": "Keine Schlafdaten fuer die letzten 7 Tage gefunden.",
       "sync_disabled": "Der Schlaf-Import ist ausgeschaltet. Aktiviere den Schalter unten, um zu synchronisieren.",
+      "no_matching_entries": "Schlafdaten gefunden, aber keine passenden Tageintraege. Lege zuerst Stimmungseintraege fuer diese Tage an — importiert wird nur in bestehende Eintraege.",
+      "already_up_to_date": "Schlaf ist bereits fuer die gefundenen Tage gesetzt (manuell oder frueherer Import). Bestehende Werte werden nicht ueberschrieben.",
+      "error_network": "Schlaf-Synchronisierung fehlgeschlagen: Server nicht erreichbar. Pruefe deine Verbindung und die API-URL.",
+      "error_forbidden": "Schlaf-Synchronisierung abgelehnt: Health-Connect-Einwilligung fehlt oder wurde widerrufen. Erteile sie erneut in den Einstellungen.",
+      "error_unauthorized": "Schlaf-Synchronisierung abgelehnt: Sitzung abgelaufen. Bitte erneut anmelden.",
+      "error_not_found": "Schlaf-Import ist auf diesem Server nicht verfuegbar. Aktualisiere die Instanz auf v1.2.0 oder neuer.",
+      "error_server": "Schlaf-Synchronisierung fehlgeschlagen: Serverfehler. Pruefe, ob Migrationen 037/038 ausgefuehrt wurden.",
       "error": "Schlaf-Synchronisierung fehlgeschlagen. Pruefe deine Verbindung und versuche es erneut."
     }
   },

@@ -1642,6 +1642,13 @@
       "unavailable": "Health Connect is not available on this device.",
       "no_data": "No sleep records found for the last 7 days.",
       "sync_disabled": "Sleep import is turned off. Turn on the toggle below to sync.",
+      "no_matching_entries": "Sleep data found, but no matching day entries. Log mood entries for those days first — import only fills existing entries.",
+      "already_up_to_date": "Sleep is already set for the matched days (manual or a prior import). Existing values are never overwritten.",
+      "error_network": "Sleep sync failed: server unreachable. Check your connection and API URL.",
+      "error_forbidden": "Sleep sync rejected: Health Connect consent is missing or revoked. Grant it again in Settings.",
+      "error_unauthorized": "Sleep sync rejected: session expired. Please sign in again.",
+      "error_not_found": "Sleep import is not available on this server. Upgrade the instance to v1.2.0 or newer.",
+      "error_server": "Sleep sync failed: server error. Check that migrations 037/038 have been applied.",
       "error": "Sleep sync failed. Check your connection and try again."
     }
   },
