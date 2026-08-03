@@ -34,6 +34,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   redundante Medical-Disclaimer im Auth-Layout entfernt (Legal-Links zu
   Privacy/Impressum bleiben), und die seit #632 Phase-1 ungenutzten
   `insights.mobile.correlation_note`/`correlation_link`-Keys aufgeräumt.
+  **Phase 2 (Onboarding):** die dreifach identische „Statements stay
+  descriptive, not a diagnosis."-Fußzeile auf **eine** Stelle reduziert
+  (`onboarding.maturity_intro.footer` bleibt; `concepts.footer` und
+  `cycle_step.disclaimer` entfernt). Der Cycle-Medizinhinweis bleibt am
+  Zyklus-Onboarding-Schritt und am Eintrags-Eingabepunkt; die Dublette in der
+  Glossar-Definition (`concepts.cycle_body`) getrimmt. Digest war bereits
+  konsolidiert.
 
 ### Docs
 

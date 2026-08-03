@@ -28,7 +28,6 @@
       </div>
     {/each}
   </dl>
-  <p class="concept-explainer__footer">{$_('onboarding.concepts.footer')}</p>
 </section>
 
 <style>
@@ -79,11 +78,5 @@
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--color-text-muted);
-  }
-
-  .concept-explainer__footer {
-    margin: var(--space-1) 0 0;
-    font-size: var(--text-xs);
-    color: var(--color-text-faint);
   }
 </style>
