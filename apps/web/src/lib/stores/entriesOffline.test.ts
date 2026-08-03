@@ -647,6 +647,64 @@ describe('entriesOffline', () => {
       note: 'mood only',
       sleep_minutes: 410,
     });
+    // Keep original client_ts so a newer server row still wins LWW.
+    expect(upsert?.client_ts).toBe(upsertBefore?.client_ts);
+  });
+
+  it('does not inflate client_ts over newer server cycle clear / mood when patching HC sleep', async () => {
+    // Device A: stale pending still carries cycle SHD + an older mood.
+    const saved = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 5,
+      energy: 3,
+      stress: 2,
+      slot: 'day',
+      cycle_day: 12,
+      cycle_bleeding_level: 'medium',
+      sleep_minutes: null,
+      sleep_quality: null,
+      work_context: 'office',
+      note: 'stale pending',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    const pendingBefore = await listPendingChanges();
+    const upsertBefore = pendingBefore.find((row) => row.entity_id === saved.entryId);
+    expect(upsertBefore?.client_ts).toBeTruthy();
+    const serverUpdatedAt = new Date(
+      new Date(upsertBefore!.client_ts).getTime() + 120_000
+    ).toISOString();
+
+    // Device B (or Settings): cycle SHD erased + mood corrected; HC then
+    // filled sleep and advanced updated_at past the pending outbox.
+    vi.mocked(listEntries).mockResolvedValue([
+      {
+        ...apiEntry(saved.entryId),
+        mood_score: 2,
+        cycle_day: null,
+        cycle_bleeding_level: null,
+        sleep_minutes: 420,
+        sleep_quality: null,
+        note: 'server wins',
+        updated_at: serverUpdatedAt,
+      },
+    ]);
+
+    const filled = await fillLocalSleepAfterHealthConnectImport([
+      { entry_date: '2026-07-13', sleep_minutes: 420 },
+    ]);
+    expect(filled).toBe(1);
+
+    const pending = await listPendingChanges();
+    const upsert = pending.find((row) => row.entity_id === saved.entryId);
+    expect(upsert?.client_ts).toBe(upsertBefore?.client_ts);
+    expect(upsert?.client_ts && upsert.client_ts < serverUpdatedAt).toBe(true);
+    expect(upsert?.payload).toMatchObject({
+      sleep_minutes: 420,
+      cycle_day: null,
+      cycle_bleeding_level: null,
+    });
   });
 
   it('does not resurrect sleep over a newer pending clear after HC Sync now', async () => {
@@ -766,6 +824,8 @@ describe('entriesOffline', () => {
       mood_score: 4,
       sleep_minutes: 410,
     });
+    // Clock-ahead outbox already wins LWW; no client_ts inflation required.
+    expect(upsert?.client_ts).toBe(upsertBefore?.client_ts);
   });
 
   it('compares clear vs server time with Date parsing (whole-second API stamps)', async () => {
