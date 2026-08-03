@@ -28,9 +28,9 @@ Breakpoints: **375 px** (mobile) and **768 px** (tablet). Themes: **light** + **
 | `/insights/digest` (CorrelationHint) | ✅        | ✅       | ✅        | ✅       | overflow 0; **exactly one** `correlation-hint`; link → `/insights/disclaimer`; text/link legible in dark; hint text fits (no clip) |
 | Console (all pages)                  | ✅        | ✅       | ✅        | ✅       | no errors                                                                                                                          |
 
-**Verified by component tests (mock flow not reachable in-browser):**
+**Component-tested only — visual QA still PENDING:**
 
-- **Home daily brief** `CorrelationHint` — shown with the lead statement; gated on `latestInsight` (mock is in the collecting phase, so it does not render there). Covered by `CorrelationHint.test.ts` + Home component tests.
+- **Home daily brief** `CorrelationHint` (shown with the lead statement) — **not rendered visually** at any viewport/theme: the mock/dev environment stays in the collecting phase, so `latestInsight` is null and the hint does not appear. DOM/link behaviour is covered by `CorrelationHint.test.ts` + Home component tests, and it reuses the **same component visually verified on `/insights/digest`** (no overflow/clip, legible in dark) — but the Home-with-insight layout has **not** been manually checked. Tracked as the open item below.
 - **Onboarding** footer de-dup (concepts / cycle_step removed, maturity_intro kept) — covered by the onboarding component tests + `localeCompleteness`.
 
 ## #632 acceptance mapping (final)
@@ -40,7 +40,7 @@ Breakpoints: **375 px** (mobile) and **768 px** (tablet). Themes: **light** + **
 - [x] Sichtbare Mehrfach-Hinweise reduziert — per-Statement-Tails raus (#639); Onboarding-Footer 3→1 (#643).
 - [x] Kanonische Erklärung ≤2 Klicks von jeder Fläche — ⓘ (Feed/Mobile-Lead) + `CorrelationHint`-Link auf Home/Digest (≤1 Klick) (#644).
 - [x] Keine Regression Footer/Legal — Auth-Medical entfernt, Impressum/Privacy/FAQ unverändert (#639).
-- [x] Light/Dark, Mobile+Desktop geprüft — dieses Dokument.
+- [~] Light/Dark, Mobile+Desktop geprüft — `/insights` + `/insights/digest` verifiziert (dieses Dokument). **Offen:** Home-`CorrelationHint` mit Insight (Mock/Dev in Collecting-Phase nicht renderbar) — muss auf einem Gerät mit Daten visuell geprüft werden.
 
 ## Deliberately kept / not changed
 
@@ -51,5 +51,9 @@ Breakpoints: **375 px** (mobile) and **768 px** (tablet). Themes: **light** + **
 
 ## Merge order
 
-#639 (Kern, gemergt) → #642 (Docs) → #643 (Phase-2 S1) → #644 (Phase-2 S2) → **dieser Closeout (S3)**.
-Nach Merge aller offenen PRs kann #632 geschlossen werden.
+#639 (Kern, gemergt) → #642 (Docs) → #643 (Phase-2 S1) → #644 (Phase-2 S2, enthält diesen Closeout).
+
+**#632 bleibt bewusst offen**, bis die verbleibende Home-`CorrelationHint`-Visual-QA
+(mit Insight, 375/768 px, hell/dunkel) auf einem Gerät mit Daten nachgeholt ist.
+Deshalb trägt die abschließende PR **kein `Closes #632`** — der Issue wird erst
+geschlossen, wenn dieser letzte QA-Punkt erledigt ist.
