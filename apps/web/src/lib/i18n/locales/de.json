@@ -1337,8 +1337,7 @@
       "symptom_term": "Symptom",
       "symptom_body": "Etwas, das du körperlich oder mental erlebst — z. B. Kopfschmerz, Grübeln. CorrelCore sucht Zusammenhänge mit Stimmung und Energie.",
       "cycle_term": "Zyklustag",
-      "cycle_body": "Optional: trage deinen Zyklustag (1–35) ein. CorrelCore behandelt ihn wie eine Metrik und sucht Zusammenhänge mit Stimmung, Schlaf und mehr. Keine Vorhersage, keine medizinische Aussage.",
-      "footer": "Aussagen bleiben beschreibend, keine Diagnose.",
+      "cycle_body": "Optional: trage deinen Zyklustag (1–35) ein. CorrelCore behandelt ihn wie eine Metrik und sucht Zusammenhänge mit Stimmung, Schlaf und mehr.",
       "info_label": "Was bedeuten Tag, Gewohnheit und Symptom?",
       "info_close": "Schließen"
     },
@@ -1348,8 +1347,7 @@
       "tag_hint": "Für den Zyklus gibt es außerdem eigene Tags wie Zyklus, Periode oder PMS, die du im vorherigen Schritt auswählen kannst.",
       "toggle_label": "Zyklus-Funktion aktivieren",
       "toggle_hint_on": "Aktiv: Das Zyklustag-Feld erscheint in jedem Tageseintrag.",
-      "toggle_hint_off": "Deaktiviert: kein Zyklustag-Feld. Du kannst die Funktion später unter Einstellungen wieder einschalten.",
-      "disclaimer": "Aussagen bleiben beschreibend, keine Diagnose."
+      "toggle_hint_off": "Deaktiviert: kein Zyklustag-Feld. Du kannst die Funktion später unter Einstellungen wieder einschalten."
     },
     "retro": {
       "title": "Wie waren die letzten Tage?",

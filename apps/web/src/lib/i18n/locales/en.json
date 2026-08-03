@@ -1337,8 +1337,7 @@
       "symptom_term": "Symptom",
       "symptom_body": "Something you experience physically or mentally — e.g. headache, rumination. CorrelCore looks for associations with mood and energy.",
       "cycle_term": "Cycle day",
-      "cycle_body": "Optional: log your cycle day (1–35). CorrelCore treats it like a metric and looks for links with mood, sleep and more. No prediction, no medical advice.",
-      "footer": "Statements stay descriptive, not a diagnosis.",
+      "cycle_body": "Optional: log your cycle day (1–35). CorrelCore treats it like a metric and looks for links with mood, sleep and more.",
       "info_label": "What do tag, habit and symptom mean?",
       "info_close": "Close"
     },
@@ -1348,8 +1347,7 @@
       "tag_hint": "The cycle also has its own tags like Cycle, Period or PMS that you can pick in the previous step.",
       "toggle_label": "Enable cycle function",
       "toggle_hint_on": "On: the cycle-day field appears in every daily entry.",
-      "toggle_hint_off": "Off: no cycle-day field. You can re-enable the function later under Settings.",
-      "disclaimer": "Statements stay descriptive, not a diagnosis."
+      "toggle_hint_off": "Off: no cycle-day field. You can re-enable the function later under Settings."
     },
     "retro": {
       "title": "How were the last few days?",
