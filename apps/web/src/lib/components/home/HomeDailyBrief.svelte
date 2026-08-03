@@ -43,7 +43,7 @@
       <p class="daily-brief__caption" data-testid="daily-brief-lead-caption">
         {latestInsight.subject_label ?? latestInsight.metric}
       </p>
-      <CorrelationHint />
+      <CorrelationHint returnTo="/" />
     {:else if phaseLabel}
       <h2 class="daily-brief__title">{phaseLabel}</h2>
       <p class="daily-brief__statement">{$_('home.brief.phase_fallback')}</p>

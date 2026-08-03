@@ -85,7 +85,6 @@
     <a href="/insights">{$_('nav.back')}</a>
   </p>
   <ScreenHeader title={$_('insights.digest.title')} subtitle={$_('insights.digest.subtitle')} />
-  <CorrelationHint />
 
   <Panel>
     {#if loading}
@@ -103,6 +102,9 @@
           values: { start: digest.week_start, end: digest.week_end },
         })}
       </p>
+      {#if digest.insights.length > 0}
+        <CorrelationHint returnTo="/insights/digest" />
+      {/if}
       <ul class="digest-page__list">
         {#each digest.insights as item (item.id)}
           <li>
