@@ -8,45 +8,6 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-
-- **M8 — Schlaf & Health Connect (Kern, #172).** Manuelle Schlaffelder
-  (`sleep_minutes`, `sleep_quality`) an Einträgen inkl. API, Offline-Sync und
-  Export; Schlaf↔Mood-Korrelation im Insight-Feed (plus Schlaf als Feature-Spalte
-  in der Lasso-/Lag-Design-Matrix); nativer Health-Connect-Bridge (eigenes
-  Kotlin-Plugin, [ADR-0042](docs/adr/0042-health-connect-bridge-strategy.md)) mit
-  Rationale-Screen `/health-connect`; consent-gated Sleep-Import
-  (`POST /api/v1/health-connect/import`, „manuell gewinnt", per-Feld-Toggle,
-  In-App-„Sync now"). Nur Schlaf + Herzfrequenz werden gelesen (nativ fixiert);
-  importiert wird nur Schlaf. Herausgelöst/Follow-up: Cycle-Health-Connect +
-  Phase-Bands, Sleep×Symptom, HR-Persistenz, nativer Background-Sync. Details:
-  [`docs/M8_SPRINT_STATUS.md`](docs/M8_SPRINT_STATUS.md).
-
-### Changed
-
-- **Korrelations-Disclaimer entflechtet (#632).** Die wiederholten Safety-Sätze
-  („…data pattern, not a diagnosis." / „…not a cause.") am Ende **jedes**
-  Insight-Statements wurden entfernt (`insight_engine.py`, 11 Statement-Builder)
-  und durch **einen** dezenten Feed-Header-Hinweis ersetzt
-  (`insights.feed.correlation_header`). Die vollständige Erklärung bleibt über
-  das ⓘ / `CorrelationDisclaimer` in ≤2 Klicks erreichbar. Statements sind jetzt
-  rein deskriptiv; Confounder-Hinweise bleiben unverändert. Zusätzlich: der
-  redundante Medical-Disclaimer im Auth-Layout entfernt (Legal-Links zu
-  Privacy/Impressum bleiben), und die seit #632 Phase-1 ungenutzten
-  `insights.mobile.correlation_note`/`correlation_link`-Keys aufgeräumt.
-  **Phase 2 (Onboarding):** die dreifach identische „Statements stay
-  descriptive, not a diagnosis."-Fußzeile auf **eine** Stelle reduziert
-  (`onboarding.maturity_intro.footer` bleibt; `concepts.footer` und
-  `cycle_step.disclaimer` entfernt). Der Cycle-Medizinhinweis bleibt am
-  Zyklus-Onboarding-Schritt und am Eintrags-Eingabepunkt; die Dublette in der
-  Glossar-Definition (`concepts.cycle_body`) getrimmt. Digest war bereits
-  konsolidiert.
-  **Phase 2 (Reachability):** neue `CorrelationHint`-Komponente (persistenter
-  Ein-Zeilen-Hinweis + „Was bedeutet das?"-Link zu `/insights/disclaimer`,
-  ≤1 Klick) auf Home Daily Brief und Digest, die bislang nur per Zurück-Link
-  (2 Klicks) erreichbar waren. History behält seinen bestehenden Timeline-Hinweis
-  (keine Dublette); Feed/Mobile-Lead behalten ihr ⓘ.
-
 ### Docs
 
 - **Reverse-proxy edges now document the required large proxy buffers** — the
@@ -245,6 +206,61 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - **ADR-0040** — Self-Host-Auth-Edge decision: keep secure cookie auth by
   default, make the edge contract trivial and self-verifying, and document an
   opt-in Bearer fallback for genuinely cross-origin self-host topologies.
+
+---
+
+## [1.2.0] — 2026-08-03
+
+Minor bump for **M8 Sleep & Health Connect (core)** and correlation-disclaimer
+consolidation. New API fields, export format **1.4**, and database migrations
+**037–038** — not a `1.1.x` patch (same rule as `v1.1.0`: semver pins must not
+silently pull schema/API changes).
+
+### Added
+
+- **M8 — Sleep & Health Connect (core, #172).** Manual sleep fields
+  (`sleep_minutes`, `sleep_quality`) on entries including API, offline sync, and
+  export; sleep↔mood correlation in the insight feed (sleep also as a feature
+  column in the Lasso/lag design matrix); native Health Connect bridge (Kotlin
+  plugin, [ADR-0042](docs/adr/0042-health-connect-bridge-strategy.md)) with
+  rationale screen `/health-connect`; consent-gated sleep import
+  (`POST /api/v1/health-connect/import`, manual-wins, per-field toggle,
+  in-app Sync now). Native read scope is sleep + heart rate; only sleep is
+  imported. Follow-ups remain: cycle Health Connect + phase bands,
+  sleep×symptom, HR persistence, native background sync. Details:
+  [`docs/M8_SPRINT_STATUS.md`](docs/M8_SPRINT_STATUS.md).
+
+### Changed
+
+- **Correlation disclaimers consolidated (#632).** Per-statement safety tails
+  ("…not a diagnosis" / "…not a cause") removed from insight statement builders
+  and replaced with one feed-header hint plus ⓘ / `CorrelationDisclaimer`
+  (≤2 clicks). Statements are descriptive; confounder hedges unchanged.
+  Auth-layout medical disclaimer duplicate removed (legal links remain).
+  **Phase 2:** onboarding footers deduped; persistent `CorrelationHint` on Home
+  Daily Brief and Digest (≤1 click to `/insights/disclaimer`).
+
+- **UX feedback sprint (#628–#631, #633).** Entry time-slot chips gated off,
+  Trends/ESM label and disclaimer reachability fixes, chart tick anchoring.
+
+### Fixed
+
+- **Cycle SHD redacted in GlitchTip/Sentry scrubbers** (#622) — `cycle_day` /
+  `cycle_bleeding_level` added to sensitive-key sets on API and web.
+- **Sleep hydrate/sync no longer wipes or resurrects values** (#636–#641,
+  #646, #648–#649) — offline hydration, cycle-clear, Health Connect Sync now,
+  pending clears, and LWW/outbox interactions around imported sleep.
+- **Sleep→mood lag pairs restored under sleep gaps** (#637).
+
+### Upgrade notes
+
+- Run `alembic upgrade head`: migrations **037** (entry sleep fields) and
+  **038** (`user_preferences` Health Connect sleep-sync preference). Prefer a
+  role that can satisfy RLS on `user_preferences` where applicable.
+- GDPR export `format_version` is **1.4** (sleep columns + sleep[] projection).
+- Android `versionCode` moves to **1002000**.
+- Selfhost: set `IMAGE_TAG=v1.2.0` (or `:v1.2` once published) and pull new
+  images after migrate.
 
 ---
 
