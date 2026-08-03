@@ -398,6 +398,8 @@ function isoTimestampMs(value: string): number {
  * (cycle SHD erase, mood/energy from another device) while only sleep was
  * meant to be reconciled. When the outbox is older, push loses and the
  * server-side HC fill stays intact; Dexie is still filled for later edits.
+ * Only ``sleep_minutes`` is patched — never overlay other outbox fields from
+ * the server row (that wiped unpushed cycle SHD under clock-ahead LWW).
  */
 export async function fillLocalSleepAfterHealthConnectImport(
   items: HealthConnectSleepFillItem[],
