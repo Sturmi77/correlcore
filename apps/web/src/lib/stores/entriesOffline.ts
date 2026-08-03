@@ -375,8 +375,13 @@ export interface HealthConnectSleepFillItem {
  *
  * A pending upsert whose ``client_ts`` is newer than the server row and still
  * has null sleep is treated as an intentional clear — do not resurrect sleep
- * into Dexie/outbox or bump ``client_ts`` (that would undo the clear on the
- * next push after a ``skipped_existing_value`` Sync now).
+ * into Dexie/outbox (that would undo the clear on the next push after a
+ * ``skipped_existing_value`` Sync now).
+ *
+ * Outbox sleep is patched in place **without** bumping ``client_ts``. Inflating
+ * the timestamp made a whole-row upsert win LWW over newer server writes
+ * (cycle SHD erase, mood/energy from another device) while only sleep was
+ * meant to be reconciled.
  */
 export async function fillLocalSleepAfterHealthConnectImport(
   items: HealthConnectSleepFillItem[]
@@ -438,21 +443,24 @@ export async function fillLocalSleepAfterHealthConnectImport(
     await db.entries.update(local.id, { sleep_minutes: importedMinutes });
     filled += 1;
 
-    const now = new Date().toISOString();
     for (const change of pendingForEntry) {
       const payload = change.payload;
       if (!payload || typeof payload !== 'object' || Array.isArray(payload)) continue;
       const current = payload as Record<string, unknown>;
       // buildSyncEntryPayload always sends sleep_minutes (often null). Replace
-      // null/missing only so a later push cannot wipe the HC fill.
+      // null/missing only so a later push cannot wipe the HC fill when the
+      // outbox already wins LWW. Do not bump client_ts — that inverted LWW
+      // against newer server clears/edits. If client_ts is older than the
+      // server row, push loses and server sleep (just filled) stays intact.
       if (current.sleep_minutes != null) continue;
-      // Bump client_ts: HC import advances server updated_at; an older outbox
-      // timestamp would lose LWW on the next push (#640).
       await db.change_log.update(change.seq!, {
-        client_ts: now,
         payload: {
           ...current,
           sleep_minutes: importedMinutes,
+          // Defense in depth: never push stale cycle SHD over a server erase
+          // if this outbox row still somehow wins LWW on its original ts.
+          cycle_day: serverEntry.cycle_day ?? null,
+          cycle_bleeding_level: serverEntry.cycle_bleeding_level ?? null,
         },
       });
     }
