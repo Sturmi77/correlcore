@@ -32,8 +32,9 @@
   const SYNC_WINDOW_DAYS = 7;
   // Device-local record of the last successful sync. There is no server field
   // for this in Phase 1 (issue #653 A1, no schema change), so it lives in
-  // localStorage — per-device sync feedback, low stakes.
-  const LAST_SYNC_KEY = 'correlcore.healthConnect.lastSyncAt';
+  // localStorage — per-device sync feedback, low stakes. Declared in
+  // scripts/check-no-token-storage.mjs (ADR-0006): UX timestamp, no auth material.
+  const LAST_SYNC_KEY = 'cc_hc_last_sync';
 
   let consents: ConsentListResponse | null = null;
   let preferences: UserPreferencesResponse | null = null;

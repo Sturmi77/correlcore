@@ -28,6 +28,7 @@ const sourceRoot = path.join(repoRoot, 'apps', 'web', 'src');
 const ALLOWED_KEYS = new Set([
   'cc_analysis_range',
   'cc_entry_open_mode',
+  'cc_hc_last_sync',
   'cc_last_user',
   'cc_offline_client_id',
   'cc_offline_sync_enabled',
