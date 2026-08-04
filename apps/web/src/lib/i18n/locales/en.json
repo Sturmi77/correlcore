@@ -578,6 +578,8 @@
       "empty": "No entry exists for this date.",
       "tags": "Tags",
       "symptoms": "Symptoms",
+      "sleep": "Sleep",
+      "sleep_value": "{hours} h {minutes} min",
       "none": "None"
     }
   },
@@ -1649,7 +1651,10 @@
       "error_unauthorized": "Sleep sync rejected: session expired. Please sign in again.",
       "error_not_found": "Sleep import is not available on this server. Upgrade the instance to v1.2.1 or newer.",
       "error_server": "Sleep sync failed: server error. Check that migrations 037/038 have been applied.",
-      "error": "Sleep sync failed. Check your connection and try again."
+      "error": "Sleep sync failed. Check your connection and try again.",
+      "last_synced": "Last synced: {when}",
+      "summary": "{updated} newly filled · {existing} already set (manual kept) · {missing} without an entry",
+      "days_heading": "Sleep found for these days"
     }
   },
   "privacy": {

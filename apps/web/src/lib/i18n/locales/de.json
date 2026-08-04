@@ -578,6 +578,8 @@
       "empty": "Kein Eintrag fuer dieses Datum vorhanden.",
       "tags": "Tags",
       "symptoms": "Symptome",
+      "sleep": "Schlaf",
+      "sleep_value": "{hours} Std. {minutes} Min.",
       "none": "Keine"
     }
   },
@@ -1649,7 +1651,10 @@
       "error_unauthorized": "Schlaf-Synchronisierung abgelehnt: Sitzung abgelaufen. Bitte erneut anmelden.",
       "error_not_found": "Schlaf-Import ist auf diesem Server nicht verfuegbar. Aktualisiere die Instanz auf v1.2.1 oder neuer.",
       "error_server": "Schlaf-Synchronisierung fehlgeschlagen: Serverfehler. Pruefe, ob Migrationen 037/038 ausgefuehrt wurden.",
-      "error": "Schlaf-Synchronisierung fehlgeschlagen. Pruefe deine Verbindung und versuche es erneut."
+      "error": "Schlaf-Synchronisierung fehlgeschlagen. Pruefe deine Verbindung und versuche es erneut.",
+      "last_synced": "Zuletzt synchronisiert: {when}",
+      "summary": "{updated} neu uebernommen · {existing} bereits gesetzt (manuell behalten) · {missing} ohne Eintrag",
+      "days_heading": "Schlaf gefunden fuer diese Tage"
     }
   },
   "privacy": {

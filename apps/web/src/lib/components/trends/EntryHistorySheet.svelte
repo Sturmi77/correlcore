@@ -23,6 +23,27 @@
   export let details: EntryHistoryDetail[] = [];
 
   const dispatch = createEventDispatcher<{ close: void }>();
+
+  /** "7 h 30 min" from a raw sleep-minutes total. */
+  function formatSleep(minutes: number): string {
+    return $_('trends.history.sleep_value', {
+      values: { hours: Math.floor(minutes / 60), minutes: minutes % 60 },
+    });
+  }
+
+  /**
+   * Read-only sleep line for a day (issue #653 B1). Combines duration and
+   * subjective quality when present. Source (manual vs. Health Connect) is not
+   * distinguishable today — there is no per-field provenance — so this shows
+   * the value regardless of where it came from.
+   */
+  function sleepSummary(entry: EntryResponse): string {
+    const parts: string[] = [];
+    if (entry.sleep_minutes != null) parts.push(formatSleep(entry.sleep_minutes));
+    if (entry.sleep_quality != null)
+      parts.push($_(`entry.sleep_quality.level_${entry.sleep_quality}`));
+    return parts.join(' · ');
+  }
 </script>
 
 <BottomSheet
@@ -78,6 +99,12 @@
               <dt>{$_('entry.work_context_label')}</dt>
               <dd>{$_(`entry.work_context.${detail.entry.work_context}`)}</dd>
             </div>
+            {#if detail.entry.sleep_minutes != null || detail.entry.sleep_quality != null}
+              <div data-testid="entry-history-sleep">
+                <dt>{$_('trends.history.sleep')}</dt>
+                <dd>{sleepSummary(detail.entry)}</dd>
+              </div>
+            {/if}
             <div>
               <dt>{$_('trends.history.tags')}</dt>
               <dd>
