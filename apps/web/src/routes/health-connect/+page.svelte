@@ -11,6 +11,7 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
+  import { currentUser } from '$lib/stores/auth';
   import { canUseHealthConnectImport } from '$lib/healthConnect/consent';
   import {
     checkHealthConnectPermissions,
@@ -34,7 +35,14 @@
   // for this in Phase 1 (issue #653 A1, no schema change), so it lives in
   // localStorage — per-device sync feedback, low stakes. Declared in
   // scripts/check-no-token-storage.mjs (ADR-0006): UX timestamp, no auth material.
+  // The value is scoped to the account that wrote it, so a shared browser or
+  // Android WebView never shows one user another user's sync state (#654 review).
   const LAST_SYNC_KEY = 'cc_hc_last_sync';
+
+  interface StoredLastSync {
+    userId: string | null;
+    at: string;
+  }
 
   let consents: ConsentListResponse | null = null;
   let preferences: UserPreferencesResponse | null = null;
@@ -46,6 +54,7 @@
   let syncing = false;
   let syncResult: HealthConnectSyncResult | null = null;
   let lastSyncAt: string | null = null;
+  let lastSyncLoadedFor: string | null | undefined;
 
   $: consentGranted = canUseHealthConnectImport(consents);
   // Every sync status maps to a health_connect.sync.* copy key.
@@ -54,20 +63,34 @@
   // ran, so its counts and touched days are worth showing.
   $: syncSummary =
     syncResult?.imported && syncResult.status !== 'sync_disabled' ? syncResult.imported : null;
+  // Load (once) the stored timestamp for whoever is authenticated, and reload if
+  // the account changes on this device. Runs only when the user id actually
+  // changes, so it never clobbers a fresh timestamp set by syncNow().
+  $: {
+    const uid = $currentUser?.id ?? null;
+    if (browser && lastSyncLoadedFor !== uid) {
+      lastSyncLoadedFor = uid;
+      lastSyncAt = readLastSyncFor(uid);
+    }
+  }
 
-  function loadLastSync(): string | null {
+  function readLastSyncFor(userId: string | null): string | null {
     if (!browser) return null;
     try {
-      return localStorage.getItem(LAST_SYNC_KEY);
+      const raw = localStorage.getItem(LAST_SYNC_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as StoredLastSync;
+      // Only surface a timestamp that belongs to the viewing account.
+      return parsed && parsed.userId === userId ? parsed.at : null;
     } catch {
       return null;
     }
   }
 
-  function persistLastSync(iso: string): void {
+  function persistLastSync(userId: string | null, at: string): void {
     if (!browser) return;
     try {
-      localStorage.setItem(LAST_SYNC_KEY, iso);
+      localStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ userId, at } satisfies StoredLastSync));
     } catch {
       // Best-effort: private mode / disabled storage must not break the sync.
     }
@@ -127,10 +150,11 @@
       });
       syncResult = result;
       // A completed server round-trip (any non-disabled import outcome) counts
-      // as "last synced", even when nothing needed writing.
+      // as "last synced", even when nothing needed writing. Scope it to the
+      // current account so it is never shown to a different user on this device.
       if (result.imported && result.status !== 'sync_disabled') {
         lastSyncAt = new Date().toISOString();
-        persistLastSync(lastSyncAt);
+        persistLastSync($currentUser?.id ?? null, lastSyncAt);
       }
       if (result.status === 'sync_disabled') {
         // The server is authoritative: reflect the disabled toggle locally too.
@@ -145,7 +169,7 @@
   }
 
   onMount(async () => {
-    lastSyncAt = loadLastSync();
+    // lastSyncAt is loaded reactively from $currentUser (see above).
     try {
       consents = await fetchUserConsents();
     } catch {
