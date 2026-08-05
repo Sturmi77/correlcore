@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
   import { _ } from 'svelte-i18n';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
@@ -10,6 +11,7 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
+  import { currentUser } from '$lib/stores/auth';
   import { canUseHealthConnectImport } from '$lib/healthConnect/consent';
   import {
     checkHealthConnectPermissions,
@@ -17,7 +19,10 @@
     isHealthConnectBridgePresent,
     requestHealthConnectPermissions,
   } from '$lib/native/healthConnect';
-  import { syncHealthConnectSleep } from '$lib/native/healthConnectSync';
+  import {
+    syncHealthConnectSleep,
+    type HealthConnectSyncResult,
+  } from '$lib/native/healthConnectSync';
 
   // Health Connect reads exactly these two data types — nothing else.
   const dataKeys = ['sleep', 'heart_rate'] as const;
@@ -26,6 +31,18 @@
   // REST API's editable/backdate window (BACKDATE_DAYS_LIMIT) so every
   // imported value can still be edited or cleared like a manual entry.
   const SYNC_WINDOW_DAYS = 7;
+  // Device-local record of the last successful sync. There is no server field
+  // for this in Phase 1 (issue #653 A1, no schema change), so it lives in
+  // localStorage — per-device sync feedback, low stakes. Declared in
+  // scripts/check-no-token-storage.mjs (ADR-0006): UX timestamp, no auth material.
+  // The value is scoped to the account that wrote it, so a shared browser or
+  // Android WebView never shows one user another user's sync state (#654 review).
+  const LAST_SYNC_KEY = 'cc_hc_last_sync';
+
+  interface StoredLastSync {
+    userId: string | null;
+    at: string;
+  }
 
   let consents: ConsentListResponse | null = null;
   let preferences: UserPreferencesResponse | null = null;
@@ -35,9 +52,59 @@
   let granted = false;
   let busy = false;
   let syncing = false;
-  let syncMessageKey: string | null = null;
+  let syncResult: HealthConnectSyncResult | null = null;
+  let lastSyncAt: string | null = null;
+  let lastSyncLoadedFor: string | null | undefined;
 
   $: consentGranted = canUseHealthConnectImport(consents);
+  // Every sync status maps to a health_connect.sync.* copy key.
+  $: syncMessageKey = syncResult ? `health_connect.sync.${syncResult.status}` : null;
+  // The server processed an import (not merely a disabled toggle) → a real sync
+  // ran, so its counts and touched days are worth showing.
+  $: syncSummary =
+    syncResult?.imported && syncResult.status !== 'sync_disabled' ? syncResult.imported : null;
+  // Load (once) the stored timestamp for whoever is authenticated, and reload if
+  // the account changes on this device. Runs only when the user id actually
+  // changes, so it never clobbers a fresh timestamp set by syncNow().
+  $: {
+    const uid = $currentUser?.id ?? null;
+    if (browser && lastSyncLoadedFor !== uid) {
+      lastSyncLoadedFor = uid;
+      lastSyncAt = readLastSyncFor(uid);
+    }
+  }
+
+  function readLastSyncFor(userId: string | null): string | null {
+    if (!browser) return null;
+    try {
+      const raw = localStorage.getItem(LAST_SYNC_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as StoredLastSync;
+      // Only surface a timestamp that belongs to the viewing account.
+      return parsed && parsed.userId === userId ? parsed.at : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function persistLastSync(userId: string | null, at: string): void {
+    if (!browser) return;
+    try {
+      localStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ userId, at } satisfies StoredLastSync));
+    } catch {
+      // Best-effort: private mode / disabled storage must not break the sync.
+    }
+  }
+
+  function formatDateTime(iso: string): string {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  }
+
+  function formatDay(isoDate: string): string {
+    const d = new Date(`${isoDate}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? isoDate : d.toLocaleDateString();
+  }
 
   async function refresh(): Promise<void> {
     bridgePresent = isHealthConnectBridgePresent();
@@ -71,7 +138,7 @@
 
   async function syncNow(): Promise<void> {
     syncing = true;
-    syncMessageKey = null;
+    syncResult = null;
     try {
       const end = new Date();
       const start = new Date(end.getTime() - SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000);
@@ -81,20 +148,28 @@
         start: start.toISOString(),
         end: end.toISOString(),
       });
-      syncMessageKey = `health_connect.sync.${result.status}`;
+      syncResult = result;
+      // A completed server round-trip (any non-disabled import outcome) counts
+      // as "last synced", even when nothing needed writing. Scope it to the
+      // current account so it is never shown to a different user on this device.
+      if (result.imported && result.status !== 'sync_disabled') {
+        lastSyncAt = new Date().toISOString();
+        persistLastSync($currentUser?.id ?? null, lastSyncAt);
+      }
       if (result.status === 'sync_disabled') {
         // The server is authoritative: reflect the disabled toggle locally too.
         sleepSyncEnabled = false;
       }
     } catch {
       // Unexpected throw only — ApiError/NetworkError are mapped inside sync.
-      syncMessageKey = 'health_connect.sync.error';
+      syncResult = { status: 'error' };
     } finally {
       syncing = false;
     }
   }
 
   onMount(async () => {
+    // lastSyncAt is loaded reactively from $currentUser (see above).
     try {
       consents = await fetchUserConsents();
     } catch {
@@ -159,10 +234,38 @@
         >
           {$_('health_connect.actions.sync')}
         </Button>
+        {#if lastSyncAt}
+          <p class="hc-page__note" data-testid="health-connect-last-sync">
+            {$_('health_connect.sync.last_synced', {
+              values: { when: formatDateTime(lastSyncAt) },
+            })}
+          </p>
+        {/if}
         {#if syncMessageKey}
           <p class="hc-page__note" role="status" data-testid="health-connect-sync-result">
             {$_(syncMessageKey)}
           </p>
+        {/if}
+        {#if syncSummary}
+          <div class="hc-page__sync-summary" data-testid="health-connect-sync-summary">
+            <p class="hc-page__sync-counts">
+              {$_('health_connect.sync.summary', {
+                values: {
+                  updated: syncSummary.updated,
+                  existing: syncSummary.skipped_existing_value,
+                  missing: syncSummary.skipped_no_entry,
+                },
+              })}
+            </p>
+            {#if syncResult?.dates && syncResult.dates.length > 0}
+              <p class="hc-page__sync-days-heading">{$_('health_connect.sync.days_heading')}</p>
+              <ul class="hc-page__sync-days" data-testid="health-connect-sync-days">
+                {#each syncResult.dates as day (day)}
+                  <li>{formatDay(day)}</li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
         {/if}
       {:else}
         <Button
@@ -240,6 +343,31 @@
     flex-direction: column;
     gap: var(--space-2);
     margin-bottom: var(--space-4);
+  }
+
+  .hc-page__sync-summary {
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    border: 1px solid oklch(from var(--color-text) l c h / 0.08);
+    background: var(--color-surface-offset);
+  }
+
+  .hc-page__sync-counts {
+    margin: 0 0 var(--space-2);
+    line-height: 1.6;
+  }
+
+  .hc-page__sync-days-heading {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .hc-page__sync-days {
+    margin: 0;
+    padding-left: var(--space-4);
+    font-size: var(--text-sm);
   }
 
   .hc-page__toggle {

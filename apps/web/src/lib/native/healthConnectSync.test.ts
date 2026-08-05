@@ -166,6 +166,8 @@ describe('syncHealthConnectSleep', () => {
     const items = vi.mocked(importHealthConnectSleep).mock.calls[0][0];
     expect(items).toHaveLength(1);
     expect(items[0].sleep_minutes).toBe(450);
+    // Surfaces the touched wake-dates for the sync summary UI (#653 A2).
+    expect(result.dates).toEqual([items[0].entry_date]);
     expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledOnce();
     expect(fillLocalSleepAfterHealthConnectImport).toHaveBeenCalledWith(
       [expect.objectContaining({ sleep_minutes: 450 })],

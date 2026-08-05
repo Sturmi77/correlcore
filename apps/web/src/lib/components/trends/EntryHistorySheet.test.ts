@@ -49,6 +49,37 @@ describe('EntryHistorySheet', () => {
     expect(screen.getByText('Focused day')).toBeTruthy();
   });
 
+  it('shows a read-only sleep line when the entry has sleep data (#653 B1)', () => {
+    render(EntryHistorySheet, {
+      props: {
+        open: true,
+        date: '2026-05-16',
+        details: [
+          {
+            entry: { ...entry, sleep_minutes: 450, sleep_quality: 4 },
+            tags: [],
+            symptoms: [],
+            markers: [],
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByTestId('entry-history-sleep')).toBeTruthy();
+  });
+
+  it('omits the sleep line when the entry has no sleep data', () => {
+    render(EntryHistorySheet, {
+      props: {
+        open: true,
+        date: '2026-05-16',
+        details: [{ entry, tags: [], symptoms: [], markers: [] }],
+      },
+    });
+
+    expect(screen.queryByTestId('entry-history-sleep')).toBeNull();
+  });
+
   it('dispatches close from the close button', async () => {
     const close = vi.fn();
     render(EntryHistorySheet, {

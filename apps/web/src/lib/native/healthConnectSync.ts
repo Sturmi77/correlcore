@@ -111,6 +111,13 @@ export type HealthConnectSyncStatus =
 export interface HealthConnectSyncResult {
   status: HealthConnectSyncStatus;
   imported?: HealthConnectImportResponse;
+  /**
+   * Wake-dates (YYYY-MM-DD, sorted) for which Health Connect sleep was found and
+   * sent. Surfaced so the UI can show which days a sync touched (issue #653 A2).
+   * The per-day outcome (newly filled vs. manual kept) is only available in
+   * aggregate via `imported`, so this is "sleep found for these days".
+   */
+  dates?: string[];
 }
 
 /** Map thrown API/network failures to a user-facing sync status (no sleep payload). */
@@ -157,6 +164,7 @@ export async function syncHealthConnectSleep(
     entry_date,
     sleep_minutes,
   }));
+  const dates = sleep.map((s) => s.entry_date).sort();
 
   let imported: HealthConnectImportResponse;
   try {
@@ -167,12 +175,12 @@ export async function syncHealthConnectSleep(
     captureClientException(
       err instanceof Error ? err : new Error(`health_connect_import_failed:${status}`)
     );
-    return { status };
+    return { status, dates };
   }
 
   const status = outcomeAfterImport(imported);
   if (status === 'sync_disabled') {
-    return { status, imported };
+    return { status, imported, dates };
   }
 
   // Revisions alone are not enough: Sync now must reconcile Dexie (and any
@@ -195,5 +203,5 @@ export async function syncHealthConnectSleep(
       scheduleSync();
     }
   }
-  return { status, imported };
+  return { status, imported, dates };
 }
