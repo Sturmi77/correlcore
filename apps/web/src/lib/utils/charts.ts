@@ -2,9 +2,9 @@ import type { TimeseriesPoint } from '$lib/api/stats';
 import { meanBucketMetric, type AxisBucket } from '$lib/utils/compareAxisZoom';
 import { displayTimeseriesValue } from '$lib/utils/metrics';
 
-export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
+export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg' | 'sleep_quality_avg';
 export type TimeseriesRange = 'week' | 'month' | 'quarter' | 'year';
-export type PointShape = 'circle' | 'diamond' | 'triangle';
+export type PointShape = 'circle' | 'diamond' | 'triangle' | 'square';
 
 export interface ChartPoint {
   x: number;
@@ -50,6 +50,11 @@ export const metricStyles: Record<MetricKey, MetricStyle> = {
     color: 'var(--color-metric-stress)',
     dasharray: '2 5',
     shape: 'triangle',
+  },
+  sleep_quality_avg: {
+    color: 'var(--color-metric-sleep)',
+    dasharray: '1 4',
+    shape: 'square',
   },
 };
 
@@ -214,6 +219,7 @@ export function smoothTimeseriesPoints(
       mood_avg: average('mood_avg'),
       energy_avg: average('energy_avg'),
       stress_avg: average('stress_avg'),
+      sleep_quality_avg: average('sleep_quality_avg'),
     };
   });
 }

@@ -41,6 +41,7 @@
     mood_avg: true,
     energy_avg: true,
     stress_avg: true,
+    sleep_quality_avg: true,
   };
   export let loading = false;
   export let axisDates: string[] = [];

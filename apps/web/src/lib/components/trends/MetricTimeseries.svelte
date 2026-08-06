@@ -34,6 +34,7 @@
     mood_avg: true,
     energy_avg: true,
     stress_avg: true,
+    sleep_quality_avg: true,
   };
   export let loading = false;
   export let axisDates: string[] = [];
@@ -70,6 +71,7 @@
     { key: 'mood_avg', label: 'trends.metric.mood' },
     { key: 'energy_avg', label: 'trends.metric.energy' },
     { key: 'stress_avg', label: 'trends.metric.stress' },
+    { key: 'sleep_quality_avg', label: 'trends.metric.sleep_quality' },
   ];
 
   $: noteDateSet = new Set(noteDates);
@@ -138,6 +140,10 @@
 
   function trianglePoints(x: number, y: number, size: number): string {
     return `${x},${y - size} ${x + size},${y + size} ${x - size},${y + size}`;
+  }
+
+  function squarePoints(x: number, y: number, size: number): string {
+    return `${x - size},${y - size} ${x + size},${y - size} ${x + size},${y + size} ${x - size},${y + size}`;
   }
 
   // Sprint 1 (ADR-0035): publish the display axis (bucket starts when zoomed).
@@ -425,6 +431,12 @@
                         class="timeseries__point"
                         style={`--metric-color: ${metric.style.color}`}
                         points={diamondPoints(point.x, point.y, pointRadius + 1)}
+                      />
+                    {:else if metric.style.shape === 'square'}
+                      <polygon
+                        class="timeseries__point"
+                        style={`--metric-color: ${metric.style.color}`}
+                        points={squarePoints(point.x, point.y, pointRadius)}
                       />
                     {:else}
                       <polygon

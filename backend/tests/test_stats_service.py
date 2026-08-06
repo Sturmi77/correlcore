@@ -52,6 +52,27 @@ async def test_timeseries_week_fills_missing_days() -> None:
 
 
 @pytest.mark.asyncio
+async def test_timeseries_averages_only_rated_sleep_quality() -> None:
+    # Sleep quality is optional: a bucket averages only the days that carry a
+    # rating, and stays None when no day in it has sleep quality (#653 B2).
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    entries = [
+        make_entry(user, entry_date=as_of - timedelta(days=1), sleep_quality=4),
+        make_entry(user, entry_date=as_of, sleep_quality=2),
+    ]
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(entries))
+
+    out = await get_timeseries(db, user_id=user.id, range_="week", as_of=as_of)
+
+    assert out.points[-1].sleep_quality_avg == 2
+    assert out.points[-2].sleep_quality_avg == 4
+    # A day with an entry but no sleep rating averages to None, not 0.
+    assert out.points[0].sleep_quality_avg is None
+
+
+@pytest.mark.asyncio
 async def test_timeseries_quarter_returns_90_daily_points() -> None:
     user = make_user()
     as_of = date(2026, 5, 9)

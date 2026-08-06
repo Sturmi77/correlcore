@@ -15,6 +15,7 @@ const points = [
     mood_avg: 3,
     energy_avg: 4,
     stress_avg: 4,
+    sleep_quality_avg: null,
   },
   {
     period_start: '2026-06-02',
@@ -23,6 +24,7 @@ const points = [
     mood_avg: 4,
     energy_avg: 3,
     stress_avg: 2,
+    sleep_quality_avg: null,
   },
 ];
 

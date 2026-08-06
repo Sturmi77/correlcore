@@ -11,6 +11,7 @@
     mood_avg: 'trends.metric.mood',
     energy_avg: 'trends.metric.energy',
     stress_avg: 'trends.metric.stress',
+    sleep_quality_avg: 'trends.metric.sleep_quality',
   };
 
   const dispatch = createEventDispatcher<{

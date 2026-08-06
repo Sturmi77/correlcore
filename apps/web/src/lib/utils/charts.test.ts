@@ -25,6 +25,7 @@ describe('chart utilities', () => {
           mood_avg: 1,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-02',
@@ -33,6 +34,7 @@ describe('chart utilities', () => {
           mood_avg: 5,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
       ],
       'mood_avg',
@@ -74,6 +76,7 @@ describe('chart utilities', () => {
           mood_avg: 2,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-02',
@@ -82,6 +85,7 @@ describe('chart utilities', () => {
           mood_avg: null,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-03',
@@ -90,6 +94,7 @@ describe('chart utilities', () => {
           mood_avg: 4,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
       ],
       'mood_avg',
@@ -123,6 +128,7 @@ describe('chart utilities', () => {
           mood_avg: 1,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-03',
@@ -131,6 +137,7 @@ describe('chart utilities', () => {
           mood_avg: 5,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
       ],
       'mood_avg',
@@ -155,6 +162,7 @@ describe('chart utilities', () => {
           mood_avg: null,
           energy_avg: null,
           stress_avg: 5,
+          sleep_quality_avg: null,
         },
       ],
       'stress_avg',
@@ -170,6 +178,7 @@ describe('chart utilities', () => {
           mood_avg: null,
           energy_avg: null,
           stress_avg: 1,
+          sleep_quality_avg: null,
         },
       ],
       'stress_avg',
@@ -197,7 +206,10 @@ describe('chart utilities', () => {
     expect(metricStyles.mood_avg.shape).toBe('circle');
     expect(metricStyles.energy_avg.shape).toBe('diamond');
     expect(metricStyles.stress_avg.shape).toBe('triangle');
-    expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(3);
+    expect(metricStyles.sleep_quality_avg.shape).toBe('square');
+    // Distinct shapes and dasharrays keep the four lines separable without colour.
+    expect(new Set(Object.values(metricStyles).map((style) => style.shape)).size).toBe(4);
+    expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(4);
   });
 
   it('smooths timeseries with a trailing average and preserves null gaps', () => {
@@ -209,6 +221,7 @@ describe('chart utilities', () => {
         mood_avg: 1,
         energy_avg: null,
         stress_avg: 5,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-02',
@@ -217,6 +230,7 @@ describe('chart utilities', () => {
         mood_avg: 3,
         energy_avg: 4,
         stress_avg: null,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-03',
@@ -225,6 +239,7 @@ describe('chart utilities', () => {
         mood_avg: 5,
         energy_avg: 2,
         stress_avg: 1,
+        sleep_quality_avg: null,
       },
     ];
 
@@ -245,6 +260,7 @@ describe('chart utilities', () => {
         mood_avg: 4,
         energy_avg: 3,
         stress_avg: 2,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-02',
@@ -253,6 +269,7 @@ describe('chart utilities', () => {
         mood_avg: null,
         energy_avg: null,
         stress_avg: null,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-03',
@@ -261,6 +278,7 @@ describe('chart utilities', () => {
         mood_avg: null,
         energy_avg: null,
         stress_avg: null,
+        sleep_quality_avg: null,
       },
     ];
 

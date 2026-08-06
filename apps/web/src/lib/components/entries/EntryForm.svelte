@@ -23,6 +23,7 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
+  import OptionalScaleSlider from '$lib/components/entries/OptionalScaleSlider.svelte';
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import OnboardingTagSuggestions from '$lib/components/entries/OnboardingTagSuggestions.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
@@ -580,11 +581,6 @@
     const parsed = Number(value);
     sleepMinutes = value === '' || !Number.isFinite(parsed) ? null : Math.round(parsed);
     sleepMinutesInvalid = sleepMinutes !== null && (sleepMinutes < 0 || sleepMinutes > 1440);
-  }
-
-  function onSleepQualityChange(e: Event) {
-    const value = (e.currentTarget as HTMLSelectElement).value;
-    sleepQuality = value === '' ? null : Number(value);
   }
 
   function handleOnline() {
@@ -1410,6 +1406,18 @@
         scaleType="stress"
         bind:value={stress}
       />
+
+      <OptionalScaleSlider
+        id="entry-sleep-quality"
+        label={$_('entry.sleep_quality.label')}
+        addLabel={$_('entry.sleep_quality.add')}
+        clearLabel={$_('entry.sleep_quality.clear')}
+        decrementLabel={$_('entry.sleep_quality.decrement')}
+        incrementLabel={$_('entry.sleep_quality.increment')}
+        scaleType="sleep"
+        testId="entry-sleep-quality"
+        bind:value={sleepQuality}
+      />
     </div>
   </section>
 
@@ -1545,21 +1553,9 @@
           {$_('entry.sleep_minutes.error_range')}
         </p>
       {/if}
-      <label class="entry-field">
-        <span class="entry-label">{$_('entry.sleep_quality.label')}</span>
-        <select
-          class="input"
-          value={sleepQuality ?? ''}
-          on:change={onSleepQualityChange}
-          data-testid="entry-sleep-quality"
-        >
-          <option value="">{$_('entry.sleep_quality.unset')}</option>
-          {#each [1, 2, 3, 4, 5] as level}
-            <option value={level}>{$_(`entry.sleep_quality.level_${level}`)}</option>
-          {/each}
-        </select>
-      </label>
-      <p class="entry-hint">{$_('entry.sleep_quality.hint')}</p>
+      <!-- Sleep *quality* now lives in the metrics section as an optional 1–5
+           slider alongside mood/energy/stress (#653 B6). This section keeps only
+           the sleep *duration* input, which is on a different (minutes) scale. -->
     </section>
 
     <section class="entry-section" aria-labelledby="entry-section-delta">

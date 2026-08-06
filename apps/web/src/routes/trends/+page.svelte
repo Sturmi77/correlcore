@@ -97,6 +97,7 @@
     mood_avg: true,
     energy_avg: true,
     stress_avg: true,
+    sleep_quality_avg: true,
   };
   let loading = false;
   let trendsLoaded = false;

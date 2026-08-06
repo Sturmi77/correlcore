@@ -127,6 +127,11 @@ async def get_timeseries(
                 mood_avg=_round_avg([e.mood_score for e in bucket]),
                 energy_avg=_round_avg([e.energy for e in bucket]),
                 stress_avg=_round_avg([e.stress for e in bucket]),
+                # Sleep quality is optional (nullable) — average only the days that
+                # have a rating, so buckets without any sleep data stay None (#653 B2).
+                sleep_quality_avg=_round_avg(
+                    [e.sleep_quality for e in bucket if e.sleep_quality is not None]
+                ),
             )
         )
     return TimeseriesResponse(range=range_, points=points)

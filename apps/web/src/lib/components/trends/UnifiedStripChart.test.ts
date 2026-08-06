@@ -15,6 +15,7 @@ const enabled = {
   mood_avg: true,
   energy_avg: true,
   stress_avg: true,
+  sleep_quality_avg: false,
 };
 
 describe('UnifiedStripChart', () => {
@@ -31,6 +32,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 3,
             energy_avg: 3,
             stress_avg: 5,
+            sleep_quality_avg: null,
           },
           {
             period_start: '2026-05-02',
@@ -39,6 +41,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 3,
             energy_avg: 3,
             stress_avg: 1,
+            sleep_quality_avg: null,
           },
         ],
       },
@@ -69,6 +72,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 4,
             energy_avg: 3,
             stress_avg: 3,
+            sleep_quality_avg: null,
           },
           {
             period_start: '2026-05-02',
@@ -77,6 +81,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 4,
             energy_avg: 3,
             stress_avg: 3,
+            sleep_quality_avg: null,
           },
           // 2026-05-03 missing — mean must ignore it, not treat as 0.
         ],
@@ -112,6 +117,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 4,
             energy_avg: 3,
             stress_avg: 3,
+            sleep_quality_avg: null,
           },
           {
             period_start: '2026-05-04',
@@ -120,6 +126,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 4,
             energy_avg: 3,
             stress_avg: 3,
+            sleep_quality_avg: null,
           },
         ],
       },
@@ -152,6 +159,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 4,
             energy_avg: 3,
             stress_avg: 3,
+            sleep_quality_avg: null,
           },
         ],
       },
@@ -186,6 +194,7 @@ describe('UnifiedStripChart', () => {
             mood_avg: 4,
             energy_avg: 3,
             stress_avg: 3,
+            sleep_quality_avg: null,
           },
         ],
       },
