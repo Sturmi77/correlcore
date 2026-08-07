@@ -28,6 +28,7 @@ class TimeseriesPoint(BaseModel):
     mood_avg: float | None = None
     energy_avg: float | None = None
     stress_avg: float | None = None
+    sleep_quality_avg: float | None = None
 
 
 class TimeseriesResponse(BaseModel):

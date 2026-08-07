@@ -41,6 +41,7 @@
     mood_avg: true,
     energy_avg: true,
     stress_avg: true,
+    sleep_quality_avg: true,
   };
   export let loading = false;
   export let axisDates: string[] = [];
@@ -96,6 +97,11 @@
     {
       key: 'stress_avg',
       label: 'trends.metric.stress',
+      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
+    },
+    {
+      key: 'sleep_quality_avg',
+      label: 'trends.metric.sleep_quality',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
     },
   ];

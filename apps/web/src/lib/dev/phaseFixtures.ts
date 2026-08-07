@@ -206,6 +206,7 @@ function makeTimeseries(entries: EntryResponse[]): TimeseriesResponse {
         mood_avg: entry.mood_score,
         energy_avg: entry.energy,
         stress_avg: entry.stress,
+        sleep_quality_avg: entry.sleep_quality ?? null,
       })),
   };
 }

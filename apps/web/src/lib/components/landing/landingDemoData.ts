@@ -124,6 +124,7 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     mood_avg: 3.2,
     energy_avg: 3.0,
     stress_avg: 2.8,
+    sleep_quality_avg: 3.0,
   },
   {
     period_start: '2026-07-14',
@@ -132,6 +133,7 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     mood_avg: 3.6,
     energy_avg: 3.4,
     stress_avg: 2.5,
+    sleep_quality_avg: 3.5,
   },
   {
     period_start: '2026-07-15',
@@ -140,6 +142,7 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     mood_avg: 3.1,
     energy_avg: 2.9,
     stress_avg: 3.2,
+    sleep_quality_avg: 2.5,
   },
   {
     period_start: '2026-07-16',
@@ -148,6 +151,7 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     mood_avg: 3.9,
     energy_avg: 3.7,
     stress_avg: 2.2,
+    sleep_quality_avg: 4.0,
   },
   {
     period_start: '2026-07-17',
@@ -156,6 +160,7 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     mood_avg: 4.1,
     energy_avg: 3.8,
     stress_avg: 2.0,
+    sleep_quality_avg: 4.5,
   },
   {
     period_start: '2026-07-18',
@@ -164,6 +169,7 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     mood_avg: 3.7,
     energy_avg: 3.5,
     stress_avg: 2.4,
+    sleep_quality_avg: 3.5,
   },
   {
     period_start: '2026-07-19',
@@ -172,6 +178,7 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
     mood_avg: 3.8,
     energy_avg: 3.6,
     stress_avg: 2.3,
+    sleep_quality_avg: 4.0,
   },
 ];
 

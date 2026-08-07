@@ -10,6 +10,7 @@ export interface TimeseriesPoint {
   mood_avg: number | null;
   energy_avg: number | null;
   stress_avg: number | null;
+  sleep_quality_avg: number | null;
 }
 
 export interface TimeseriesResponse {

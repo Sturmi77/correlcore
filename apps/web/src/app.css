@@ -133,6 +133,7 @@
   --color-metric-mood: #7c6af5;
   --color-metric-energy: #34d399;
   --color-metric-stress: #f87171;
+  --color-metric-sleep: #38bdf8;
 
   /* GAP-03: Surface-Tokens für Komponenten (ersetzt ungültige rgb(--color-surface-50/200/300)) */
   --color-surface-tag-bg: #221f1c;
@@ -206,6 +207,7 @@
   --color-metric-mood: #6356d9;
   --color-metric-energy: #10b981;
   --color-metric-stress: #ef4444;
+  --color-metric-sleep: #0284c7;
 
   /* GAP-03: Surface-Tokens für Komponenten */
   --color-surface-tag-bg: #ffffff;
@@ -269,6 +271,7 @@
     --color-metric-mood: #7c6af5;
     --color-metric-energy: #34d399;
     --color-metric-stress: #f87171;
+    --color-metric-sleep: #38bdf8;
     --color-surface-tag-bg: #221f1c;
     --color-surface-chart-bg: color-mix(in oklch, var(--color-surface) 72%, transparent);
     --color-border-chart: color-mix(in oklch, var(--color-border) 45%, transparent);

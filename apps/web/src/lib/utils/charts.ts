@@ -2,15 +2,23 @@ import type { TimeseriesPoint } from '$lib/api/stats';
 import { meanBucketMetric, type AxisBucket } from '$lib/utils/compareAxisZoom';
 import { displayTimeseriesValue } from '$lib/utils/metrics';
 
-export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
+export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg' | 'sleep_quality_avg';
 export type TimeseriesRange = 'week' | 'month' | 'quarter' | 'year';
-export type PointShape = 'circle' | 'diamond' | 'triangle';
+export type PointShape = 'circle' | 'diamond' | 'triangle' | 'square';
 
 export interface ChartPoint {
   x: number;
   y: number;
   value: number;
   label: string;
+  /**
+   * Position on the source axis (raw-point index, axis-date index, or bucket
+   * index depending on the builder). Consumers use it to break the line at
+   * gaps — days/buckets without a value are dropped from the point list, so
+   * without this a sparse series (e.g. optional sleep quality) would draw a
+   * straight segment across the gap and imply data that isn't there (#657).
+   */
+  index: number;
 }
 
 export interface DailyAxisLayout {
@@ -51,6 +59,11 @@ export const metricStyles: Record<MetricKey, MetricStyle> = {
     dasharray: '2 5',
     shape: 'triangle',
   },
+  sleep_quality_avg: {
+    color: 'var(--color-metric-sleep)',
+    dasharray: '1 4',
+    shape: 'square',
+  },
 };
 
 export function formatTimeseriesTick(range: TimeseriesRange, isoDate: string): string {
@@ -74,7 +87,7 @@ export function buildLinePoints(
     const value = displayTimeseriesValue(metric, raw);
     const x = points.length > 1 ? index * step : width / 2;
     const y = height - ((value - 1) / 4) * height;
-    return [{ x, y, value, label: point.period_start }];
+    return [{ x, y, value, label: point.period_start, index }];
   });
 }
 
@@ -166,7 +179,7 @@ export function buildDailyAxisLinePoints(
     const value = displayTimeseriesValue(metric, raw);
     const x = dailyAxisXForIndex(index, layout);
     const y = height - ((value - 1) / 4) * height;
-    return [{ x, y, value, label: point.period_start }];
+    return [{ x, y, value, label: point.period_start, index }];
   });
 }
 
@@ -189,7 +202,7 @@ export function buildBucketAxisLinePoints(
     const value = displayTimeseriesValue(metric, raw);
     const x = dailyAxisXForIndex(index, layout);
     const y = height - ((value - 1) / 4) * height;
-    return [{ x, y, value, label: bucket.start }];
+    return [{ x, y, value, label: bucket.start, index }];
   });
 }
 
@@ -214,6 +227,7 @@ export function smoothTimeseriesPoints(
       mood_avg: average('mood_avg'),
       energy_avg: average('energy_avg'),
       stress_avg: average('stress_avg'),
+      sleep_quality_avg: average('sleep_quality_avg'),
     };
   });
 }
@@ -222,6 +236,22 @@ export function linePath(points: readonly ChartPoint[]): string {
   if (points.length === 0) return '';
   return points
     .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+    .join(' ');
+}
+
+/**
+ * Like {@link linePath} but starts a new subpath (move, not line) whenever two
+ * consecutive points are not adjacent on the source axis. That leaves visible
+ * gaps for days/buckets without a value instead of drawing a straight segment
+ * across them — essential for sparse series like optional sleep quality (#657).
+ */
+export function segmentedLinePath(points: readonly ChartPoint[]): string {
+  if (points.length === 0) return '';
+  return points
+    .map((p, i) => {
+      const move = i === 0 || p.index !== points[i - 1].index + 1;
+      return `${move ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+    })
     .join(' ');
 }
 

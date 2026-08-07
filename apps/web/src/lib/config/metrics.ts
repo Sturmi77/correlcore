@@ -9,7 +9,7 @@ import type { EntryMetricField } from '$lib/contracts/apiContract';
 
 export type { EntryMetricField } from '$lib/contracts/apiContract';
 
-export type TimeseriesMetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg';
+export type TimeseriesMetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg' | 'sleep_quality_avg';
 
 export interface MetricDefinition {
   field: EntryMetricField;
@@ -49,8 +49,13 @@ export const ENTRY_METRICS: Record<EntryMetricField, MetricDefinition> = {
   },
 };
 
-/** Maps timeseries API keys to entry metric fields. */
-export const TIMESERIES_METRIC_FIELDS: Record<TimeseriesMetricKey, EntryMetricField> = {
+/**
+ * Maps timeseries API keys to entry metric fields. `sleep_quality_avg` has no
+ * core entry-metric field (it is an optional wearable/manual signal, not part of
+ * ENTRY_CONTRACT.metrics), so it is intentionally absent — see
+ * `timeseriesMetricInvert`, which treats a missing mapping as never-inverted.
+ */
+export const TIMESERIES_METRIC_FIELDS: Partial<Record<TimeseriesMetricKey, EntryMetricField>> = {
   mood_avg: 'mood_score',
   energy_avg: 'energy',
   stress_avg: 'stress',
@@ -61,5 +66,7 @@ export function getEntryMetric(field: EntryMetricField): MetricDefinition {
 }
 
 export function timeseriesMetricInvert(key: TimeseriesMetricKey): boolean {
-  return ENTRY_METRICS[TIMESERIES_METRIC_FIELDS[key]].invert;
+  const field = TIMESERIES_METRIC_FIELDS[key];
+  // No entry-field mapping (e.g. sleep_quality_avg) → higher is better, never inverted.
+  return field ? ENTRY_METRICS[field].invert : false;
 }

@@ -11,6 +11,7 @@ import {
   heatmapLevel,
   linePath,
   metricStyles,
+  segmentedLinePath,
   smoothTimeseriesPoints,
 } from './charts';
 
@@ -25,6 +26,7 @@ describe('chart utilities', () => {
           mood_avg: 1,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-02',
@@ -33,6 +35,7 @@ describe('chart utilities', () => {
           mood_avg: 5,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
       ],
       'mood_avg',
@@ -41,10 +44,12 @@ describe('chart utilities', () => {
     );
 
     expect(points).toEqual([
-      { x: 0, y: 40, value: 1, label: '2026-05-01' },
-      { x: 100, y: 0, value: 5, label: '2026-05-02' },
+      { x: 0, y: 40, value: 1, label: '2026-05-01', index: 0 },
+      { x: 100, y: 0, value: 5, label: '2026-05-02', index: 1 },
     ]);
     expect(linePath(points)).toBe('M 0.00 40.00 L 100.00 0.00');
+    // Adjacent axis indices (0, 1) stay connected under the segmented path too.
+    expect(segmentedLinePath(points)).toBe('M 0.00 40.00 L 100.00 0.00');
   });
 
   it('builds a shared daily axis for aligned chart and heatmap rows', () => {
@@ -74,6 +79,7 @@ describe('chart utilities', () => {
           mood_avg: 2,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-02',
@@ -82,6 +88,7 @@ describe('chart utilities', () => {
           mood_avg: null,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-03',
@@ -90,6 +97,7 @@ describe('chart utilities', () => {
           mood_avg: 4,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
       ],
       'mood_avg',
@@ -108,7 +116,7 @@ describe('chart utilities', () => {
       layout
     );
 
-    expect(points).toEqual([{ x: 127, y: 20, value: 3, label: '2026-05-01' }]);
+    expect(points).toEqual([{ x: 127, y: 20, value: 3, label: '2026-05-01', index: 0 }]);
   });
 
   it('maps timeseries points onto the shared daily axis by date', () => {
@@ -123,6 +131,7 @@ describe('chart utilities', () => {
           mood_avg: 1,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
         {
           period_start: '2026-05-03',
@@ -131,6 +140,7 @@ describe('chart utilities', () => {
           mood_avg: 5,
           energy_avg: null,
           stress_avg: null,
+          sleep_quality_avg: null,
         },
       ],
       'mood_avg',
@@ -140,9 +150,14 @@ describe('chart utilities', () => {
     );
 
     expect(points).toEqual([
-      { x: 127, y: 40, value: 1, label: '2026-05-01' },
-      { x: 151, y: 0, value: 5, label: '2026-05-03' },
+      { x: 127, y: 40, value: 1, label: '2026-05-01', index: 0 },
+      { x: 151, y: 0, value: 5, label: '2026-05-03', index: 2 },
     ]);
+    // The gap day (2026-05-02, index 1) is absent, so a segmented path must
+    // start a new subpath rather than draw across it (#657).
+    expect(segmentedLinePath(points)).toBe('M 127.00 40.00 M 151.00 0.00');
+    // A plain linePath would (wrongly) connect them.
+    expect(linePath(points)).toBe('M 127.00 40.00 L 151.00 0.00');
   });
 
   it('inverts stress_avg on the chart Y axis (higher raw stress plots lower)', () => {
@@ -155,6 +170,7 @@ describe('chart utilities', () => {
           mood_avg: null,
           energy_avg: null,
           stress_avg: 5,
+          sleep_quality_avg: null,
         },
       ],
       'stress_avg',
@@ -170,6 +186,7 @@ describe('chart utilities', () => {
           mood_avg: null,
           energy_avg: null,
           stress_avg: 1,
+          sleep_quality_avg: null,
         },
       ],
       'stress_avg',
@@ -197,7 +214,10 @@ describe('chart utilities', () => {
     expect(metricStyles.mood_avg.shape).toBe('circle');
     expect(metricStyles.energy_avg.shape).toBe('diamond');
     expect(metricStyles.stress_avg.shape).toBe('triangle');
-    expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(3);
+    expect(metricStyles.sleep_quality_avg.shape).toBe('square');
+    // Distinct shapes and dasharrays keep the four lines separable without colour.
+    expect(new Set(Object.values(metricStyles).map((style) => style.shape)).size).toBe(4);
+    expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(4);
   });
 
   it('smooths timeseries with a trailing average and preserves null gaps', () => {
@@ -209,6 +229,7 @@ describe('chart utilities', () => {
         mood_avg: 1,
         energy_avg: null,
         stress_avg: 5,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-02',
@@ -217,6 +238,7 @@ describe('chart utilities', () => {
         mood_avg: 3,
         energy_avg: 4,
         stress_avg: null,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-03',
@@ -225,6 +247,7 @@ describe('chart utilities', () => {
         mood_avg: 5,
         energy_avg: 2,
         stress_avg: 1,
+        sleep_quality_avg: null,
       },
     ];
 
@@ -245,6 +268,7 @@ describe('chart utilities', () => {
         mood_avg: 4,
         energy_avg: 3,
         stress_avg: 2,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-02',
@@ -253,6 +277,7 @@ describe('chart utilities', () => {
         mood_avg: null,
         energy_avg: null,
         stress_avg: null,
+        sleep_quality_avg: null,
       },
       {
         period_start: '2026-05-03',
@@ -261,6 +286,7 @@ describe('chart utilities', () => {
         mood_avg: null,
         energy_avg: null,
         stress_avg: null,
+        sleep_quality_avg: null,
       },
     ];
 

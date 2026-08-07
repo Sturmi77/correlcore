@@ -59,6 +59,7 @@ describe('EventAlignedSmallMultiplesSheet lag marker (#488)', () => {
       mood_avg: 4,
       energy_avg: 3,
       stress_avg: 2,
+      sleep_quality_avg: null,
     },
     {
       period_start: '2026-05-12',
@@ -67,6 +68,7 @@ describe('EventAlignedSmallMultiplesSheet lag marker (#488)', () => {
       mood_avg: 2,
       energy_avg: 3,
       stress_avg: 4,
+      sleep_quality_avg: null,
     },
   ];
   const events = [{ onset: '2026-05-10', label: 'Cycling' }];
