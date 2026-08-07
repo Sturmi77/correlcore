@@ -10,7 +10,7 @@
     dailyAxisXForIndex,
     dailyPlotContentWidth,
     formatTimeseriesTick,
-    linePath,
+    segmentedLinePath,
     metricStyles,
     type DailyAxisLayout,
     type MetricKey,
@@ -104,7 +104,12 @@
       x: aligned ? point.x : point.x + paddingLeft,
       y: point.y + paddingTop,
     }));
-    return { ...metric, style: metricStyles[metric.key], points: shifted, path: linePath(shifted) };
+    return {
+      ...metric,
+      style: metricStyles[metric.key],
+      points: shifted,
+      path: segmentedLinePath(shifted),
+    };
   });
 
   $: xLabels = (() => {
@@ -540,6 +545,12 @@
                       class="timeseries__point"
                       style={`--metric-color: ${metric.style.color}`}
                       points={diamondPoints(point.x, point.y, pointRadius + 1)}
+                    />
+                  {:else if metric.style.shape === 'square'}
+                    <polygon
+                      class="timeseries__point"
+                      style={`--metric-color: ${metric.style.color}`}
+                      points={squarePoints(point.x, point.y, pointRadius)}
                     />
                   {:else}
                     <polygon

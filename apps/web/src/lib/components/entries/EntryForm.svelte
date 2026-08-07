@@ -1407,17 +1407,25 @@
         bind:value={stress}
       />
 
-      <OptionalScaleSlider
-        id="entry-sleep-quality"
-        label={$_('entry.sleep_quality.label')}
-        addLabel={$_('entry.sleep_quality.add')}
-        clearLabel={$_('entry.sleep_quality.clear')}
-        decrementLabel={$_('entry.sleep_quality.decrement')}
-        incrementLabel={$_('entry.sleep_quality.increment')}
-        scaleType="sleep"
-        testId="entry-sleep-quality"
-        bind:value={sleepQuality}
-      />
+      <!--
+        Sleep quality sits with the core scales in the full form (same mask +
+        1–5 slider as mood/energy/stress, #653 B6), but stays out of quick
+        capture: it is optional, and quick mode deliberately hides optional
+        extras to keep the flow short (#657 review).
+      -->
+      {#if !quickEntry}
+        <OptionalScaleSlider
+          id="entry-sleep-quality"
+          label={$_('entry.sleep_quality.label')}
+          addLabel={$_('entry.sleep_quality.add')}
+          clearLabel={$_('entry.sleep_quality.clear')}
+          decrementLabel={$_('entry.sleep_quality.decrement')}
+          incrementLabel={$_('entry.sleep_quality.increment')}
+          scaleType="sleep"
+          testId="entry-sleep-quality"
+          bind:value={sleepQuality}
+        />
+      {/if}
     </div>
   </section>
 

@@ -11,6 +11,7 @@ import {
   heatmapLevel,
   linePath,
   metricStyles,
+  segmentedLinePath,
   smoothTimeseriesPoints,
 } from './charts';
 
@@ -43,10 +44,12 @@ describe('chart utilities', () => {
     );
 
     expect(points).toEqual([
-      { x: 0, y: 40, value: 1, label: '2026-05-01' },
-      { x: 100, y: 0, value: 5, label: '2026-05-02' },
+      { x: 0, y: 40, value: 1, label: '2026-05-01', index: 0 },
+      { x: 100, y: 0, value: 5, label: '2026-05-02', index: 1 },
     ]);
     expect(linePath(points)).toBe('M 0.00 40.00 L 100.00 0.00');
+    // Adjacent axis indices (0, 1) stay connected under the segmented path too.
+    expect(segmentedLinePath(points)).toBe('M 0.00 40.00 L 100.00 0.00');
   });
 
   it('builds a shared daily axis for aligned chart and heatmap rows', () => {
@@ -113,7 +116,7 @@ describe('chart utilities', () => {
       layout
     );
 
-    expect(points).toEqual([{ x: 127, y: 20, value: 3, label: '2026-05-01' }]);
+    expect(points).toEqual([{ x: 127, y: 20, value: 3, label: '2026-05-01', index: 0 }]);
   });
 
   it('maps timeseries points onto the shared daily axis by date', () => {
@@ -147,9 +150,14 @@ describe('chart utilities', () => {
     );
 
     expect(points).toEqual([
-      { x: 127, y: 40, value: 1, label: '2026-05-01' },
-      { x: 151, y: 0, value: 5, label: '2026-05-03' },
+      { x: 127, y: 40, value: 1, label: '2026-05-01', index: 0 },
+      { x: 151, y: 0, value: 5, label: '2026-05-03', index: 2 },
     ]);
+    // The gap day (2026-05-02, index 1) is absent, so a segmented path must
+    // start a new subpath rather than draw across it (#657).
+    expect(segmentedLinePath(points)).toBe('M 127.00 40.00 M 151.00 0.00');
+    // A plain linePath would (wrongly) connect them.
+    expect(linePath(points)).toBe('M 127.00 40.00 L 151.00 0.00');
   });
 
   it('inverts stress_avg on the chart Y axis (higher raw stress plots lower)', () => {

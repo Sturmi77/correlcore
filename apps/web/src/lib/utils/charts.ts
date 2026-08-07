@@ -11,6 +11,14 @@ export interface ChartPoint {
   y: number;
   value: number;
   label: string;
+  /**
+   * Position on the source axis (raw-point index, axis-date index, or bucket
+   * index depending on the builder). Consumers use it to break the line at
+   * gaps — days/buckets without a value are dropped from the point list, so
+   * without this a sparse series (e.g. optional sleep quality) would draw a
+   * straight segment across the gap and imply data that isn't there (#657).
+   */
+  index: number;
 }
 
 export interface DailyAxisLayout {
@@ -79,7 +87,7 @@ export function buildLinePoints(
     const value = displayTimeseriesValue(metric, raw);
     const x = points.length > 1 ? index * step : width / 2;
     const y = height - ((value - 1) / 4) * height;
-    return [{ x, y, value, label: point.period_start }];
+    return [{ x, y, value, label: point.period_start, index }];
   });
 }
 
@@ -171,7 +179,7 @@ export function buildDailyAxisLinePoints(
     const value = displayTimeseriesValue(metric, raw);
     const x = dailyAxisXForIndex(index, layout);
     const y = height - ((value - 1) / 4) * height;
-    return [{ x, y, value, label: point.period_start }];
+    return [{ x, y, value, label: point.period_start, index }];
   });
 }
 
@@ -194,7 +202,7 @@ export function buildBucketAxisLinePoints(
     const value = displayTimeseriesValue(metric, raw);
     const x = dailyAxisXForIndex(index, layout);
     const y = height - ((value - 1) / 4) * height;
-    return [{ x, y, value, label: bucket.start }];
+    return [{ x, y, value, label: bucket.start, index }];
   });
 }
 
@@ -228,6 +236,22 @@ export function linePath(points: readonly ChartPoint[]): string {
   if (points.length === 0) return '';
   return points
     .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+    .join(' ');
+}
+
+/**
+ * Like {@link linePath} but starts a new subpath (move, not line) whenever two
+ * consecutive points are not adjacent on the source axis. That leaves visible
+ * gaps for days/buckets without a value instead of drawing a straight segment
+ * across them — essential for sparse series like optional sleep quality (#657).
+ */
+export function segmentedLinePath(points: readonly ChartPoint[]): string {
+  if (points.length === 0) return '';
+  return points
+    .map((p, i) => {
+      const move = i === 0 || p.index !== points[i - 1].index + 1;
+      return `${move ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+    })
     .join(' ');
 }
 

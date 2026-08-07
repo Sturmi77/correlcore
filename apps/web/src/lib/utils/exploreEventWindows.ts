@@ -30,6 +30,7 @@ export function isExploreEventsSubject(insight: InsightResponse): boolean {
 export function insightMetricToChartKey(metric: string | null | undefined): MetricKey {
   if (metric === 'energy' || metric === 'energy_avg') return 'energy_avg';
   if (metric === 'stress' || metric === 'stress_avg') return 'stress_avg';
+  if (metric === 'sleep_quality' || metric === 'sleep_quality_avg') return 'sleep_quality_avg';
   return 'mood_avg';
 }
 

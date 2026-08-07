@@ -1,7 +1,9 @@
 import type { SymptomHeatmapResponse, TagHeatmapResponse, TimeseriesPoint } from '$lib/api/stats';
 import type { MetricKey } from '$lib/utils/charts';
 
-const METRICS: MetricKey[] = ['mood_avg', 'energy_avg', 'stress_avg'];
+// Order matters: it is the tie-break priority when deltas are equal, so the
+// core three stay ahead of optional sleep quality.
+const METRICS: MetricKey[] = ['mood_avg', 'energy_avg', 'stress_avg', 'sleep_quality_avg'];
 
 export type MobileMetricMovement = {
   metric: MetricKey;

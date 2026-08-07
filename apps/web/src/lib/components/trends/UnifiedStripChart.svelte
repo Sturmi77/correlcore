@@ -99,6 +99,11 @@
       label: 'trends.metric.stress',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
     },
+    {
+      key: 'sleep_quality_avg',
+      label: 'trends.metric.sleep_quality',
+      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
+    },
   ];
 
   $: visibleMetrics = metrics.filter((m) => enabled[m.key]);
