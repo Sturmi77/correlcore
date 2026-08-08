@@ -4,6 +4,10 @@ name: Release — Container Images
 # - Push to main → :latest + :main + :sha-<short>
 # - Tag v* (e.g. v1.0.0) → :v1.0.0 + :v1.0 + :latest
 # - manual dispatch → same tag rules as branch/tag context
+# - Push to main / dispatch also aliases any bare-semver tags still on the
+#   registry (:1.3.0) to the documented v-prefixed names (:v1.3.0). Needed
+#   because Actions runs the workflow file from the *tagged* commit — re-running
+#   an old v* tag build cannot pick up the v{{version}} pattern fix on main.
 #
 # Registries:
 # - GHCR (always): ghcr.io/<owner>/correlcore-{api,web}
@@ -153,3 +157,90 @@ jobs:
           provenance: false
           build-args: |
             VITE_API_BASE_URL=/api/v1
+
+  # Historical releases published bare semver (:1.3.0) while docs pin :v1.3.0.
+  # #667 fixed future tag builds on main, but re-cutting an old git tag still
+  # executes the workflow at that tag's commit (pre-fix patterns). Alias the
+  # existing multi-arch indexes instead of rebuilding or force-moving tags.
+  alias-v-prefix:
+    name: Alias bare semver → v-prefixed
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect Docker Hub credentials
+        id: dockerhub
+        shell: bash
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [[ -n "${DOCKERHUB_USERNAME}" && -n "${DOCKERHUB_TOKEN}" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Login to Docker Hub
+        if: steps.dockerhub.outputs.enabled == 'true'
+        uses: docker/login-action@v4.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Discover bare semver tags and alias to v-prefixed
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_ENABLED: ${{ steps.dockerhub.outputs.enabled }}
+        run: |
+          set -euo pipefail
+          owner_lc="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          # Package REST owner segment can differ by case; prefer lowercase, fall back.
+          versions_json="$(mktemp)"
+          if ! gh api --paginate \
+              "/users/${owner_lc}/packages/container/correlcore-api/versions" \
+              >"${versions_json}" 2>/dev/null; then
+            gh api --paginate \
+              "/users/${{ github.repository_owner }}/packages/container/correlcore-api/versions" \
+              >"${versions_json}"
+          fi
+          # grep exits 1 on no match — do not fail the job when every tag is already v-prefixed.
+          mapfile -t bare_tags < <(
+            jq -r '.[].metadata.container.tags[]?' "${versions_json}" \
+              | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' \
+              | sort -u \
+              || true
+          )
+          rm -f "${versions_json}"
+          if [[ "${#bare_tags[@]}" -eq 0 || -z "${bare_tags[0]:-}" ]]; then
+            echo "No bare semver tags found to alias."
+            exit 0
+          fi
+          echo "Bare semver tags: ${bare_tags[*]}"
+          registries="ghcr.io/${owner_lc}"
+          if [[ "${DOCKERHUB_ENABLED}" == "true" && -n "${DOCKERHUB_USERNAME}" ]]; then
+            registries="${registries} docker.io/${DOCKERHUB_USERNAME}"
+          fi
+          chmod +x scripts/alias-v-prefix-image-tags.sh
+          REGISTRIES="${registries}" \
+            SOURCE_TAGS="${bare_tags[*]}" \
+            ./scripts/alias-v-prefix-image-tags.sh
+
