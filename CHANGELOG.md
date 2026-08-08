@@ -8,35 +8,6 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.3.0] — 2026-08-08
-
-Sleep quality becomes a first-class entry input and a fourth trend line, and the
-Health Connect sync is now visible in-app, on top of the 1.2 M8 sleep & Health
-Connect core. Security: `cryptography` 50.0.0 (PYSEC-2026-3552). **No new
-database migrations.**
-
-### Added
-
-- **Sleep quality is a first-class 1–5 entry input and a fourth trend line**
-  (#657, #653 B6/B2) — the optional sleep-quality rating moves into the main
-  entry mask as a slider next to mood/energy/stress (hidden in quick capture,
-  never auto-filled), and rides through Trends as a fourth series: a square,
-  gap-aware line (unrated days break the line instead of implying data), a strip
-  in strip mode, the mobile movement summary, and sleep-quality lag-insight
-  event windows. The backend adds `sleep_quality_avg` to the timeseries
-  aggregate. Reuses the existing `sleep_quality` column — no migration.
-- **Health Connect sync is visible in-app** (#654) — the `/health-connect`
-  page shows a sync summary (newly filled / already set, manual kept / days
-  without an entry) and an account-scoped, on-device "last synced" time, lists
-  the days a sync touched, and the Trends day-history sheet shows imported sleep
-  read-only. Days with sleep data, not HC-only days — per-field provenance stays
-  a separate, deliberate decision (#653).
-
-### Security
-
-- **`cryptography` upgraded to 50.0.0** (#656) — resolves advisory
-  PYSEC-2026-3552; no code change, the floor is raised in `backend/pyproject.toml`.
-
 ### Docs
 
 - **Reverse-proxy edges now document the required large proxy buffers** — the
@@ -237,6 +208,35 @@ database migrations.**
   opt-in Bearer fallback for genuinely cross-origin self-host topologies.
 
 ---
+
+## [1.3.0] — 2026-08-08
+
+Sleep quality becomes a first-class entry input and a fourth trend line, and the
+Health Connect sync is now visible in-app, on top of the 1.2 M8 sleep & Health
+Connect core. Security: `cryptography` 50.0.0 (PYSEC-2026-3552). **No new
+database migrations.**
+
+### Added
+
+- **Sleep quality is a first-class 1–5 entry input and a fourth trend line**
+  (#657, #653 B6/B2) — the optional sleep-quality rating moves into the main
+  entry mask as a slider next to mood/energy/stress (hidden in quick capture,
+  never auto-filled), and rides through Trends as a fourth series: a square,
+  gap-aware line (unrated days break the line instead of implying data), a strip
+  in strip mode, the mobile movement summary, and sleep-quality lag-insight
+  event windows. The backend adds `sleep_quality_avg` to the timeseries
+  aggregate. Reuses the existing `sleep_quality` column — no migration.
+- **Health Connect sync is visible in-app** (#654) — the `/health-connect`
+  page shows a sync summary (newly filled / already set, manual kept / days
+  without an entry) and an account-scoped, on-device "last synced" time, lists
+  the days a sync touched, and the Trends day-history sheet shows imported sleep
+  read-only. Days with sleep data, not HC-only days — per-field provenance stays
+  a separate, deliberate decision (#653).
+
+### Security
+
+- **`cryptography` upgraded to 50.0.0** (#656) — resolves advisory
+  PYSEC-2026-3552; no code change, the floor is raised in `backend/pyproject.toml`.
 
 ## [1.2.1] — 2026-08-03
 

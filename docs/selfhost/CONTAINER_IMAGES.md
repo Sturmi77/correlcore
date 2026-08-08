@@ -29,7 +29,7 @@ Built by [`.github/workflows/release-images.yml`](../../.github/workflows/releas
 | ------------------------- | --------------------------------------- |
 | Push to `main`            | `:latest`, `:main`, `:sha-<short>`      |
 | Tag `v1.0.0`              | `:v1.0.0`, `:v1.0`, `:latest`           |
-| Tag `v1.3.0` (any `v1.x`) | `:v1.3.0`, `:v1.2` (semver minor alias) |
+| Tag `v1.3.0` (any `v1.x`) | `:v1.3.0`, `:v1.3` (semver minor alias) |
 | `workflow_dispatch`       | Same rules for current ref context      |
 
 Pin production deploys to an immutable tag (any **`v1.x`** pin works on the 1.x line):
