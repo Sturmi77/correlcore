@@ -33,6 +33,9 @@ import { clearSessionTokens, setSessionTokens } from '$lib/api/sessionTokens';
 import { disablePushNotifications, enablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
 import { resetEntrySheetStore } from '$lib/stores/entrySheet';
+import { resetEntriesStore } from '$lib/stores/entries';
+import { resetTagsStore } from '$lib/stores/tags';
+import { resetSymptomsStore } from '$lib/stores/symptoms';
 import { connectivity } from '$lib/stores/connectivity';
 import { cacheLastUser, clearLastUser, readLastUser } from '$lib/stores/lastUserCache';
 import {
@@ -56,6 +59,22 @@ export const isAuthenticated = derived(_auth, ($a) => $a.status === 'authenticat
 export const isAuthLoading = derived(_auth, ($a) => $a.status === 'loading');
 
 let hydrated = false;
+
+/**
+ * Drop in-memory account catalogues / caches on every session boundary.
+ *
+ * TagPicker / SymptomChecker skip network refresh when the store is already
+ * ``ready``, so leaving another account's custom tags/symptoms in memory lets
+ * the next SPA login (no full reload) render them. Insights and the entry
+ * sheet were already cleared; entries/tags/symptoms must match.
+ */
+function resetAccountScopedUiStores(): void {
+  resetInsightStore();
+  resetEntrySheetStore();
+  resetEntriesStore();
+  resetTagsStore();
+  resetSymptomsStore();
+}
 
 /**
  * Capacitor cold start: load refresh/access from EncryptedSharedPreferences
@@ -95,8 +114,7 @@ export function forceSessionExpired(): void {
   clearSessionTokens();
   clearLastUser();
   connectivity.markServerReachable(true);
-  resetInsightStore();
-  resetEntrySheetStore();
+  resetAccountScopedUiStores();
   _auth.set({ status: 'anonymous' });
 }
 
@@ -189,8 +207,7 @@ export async function login(payload: LoginPayload): Promise<UserResponse> {
   // Credentials were accepted (apiLogin returned 200); probe before UI auth.
   const sessionUser = await requirePersistedSession(loginResult.user);
   connectivity.markServerReachable(true);
-  resetInsightStore();
-  resetEntrySheetStore();
+  resetAccountScopedUiStores();
   await becomeAuthenticated(sessionUser, { enablePush: true });
   return sessionUser;
 }
@@ -209,8 +226,7 @@ export async function logout(): Promise<void> {
   await clearOfflineDataForLogout();
   clearAllOnboardingSuggestionStashes();
   clearLastUser();
-  resetInsightStore();
-  resetEntrySheetStore();
+  resetAccountScopedUiStores();
   _auth.set({ status: 'anonymous' });
 }
 
@@ -224,8 +240,7 @@ export async function logout(): Promise<void> {
 export async function setUser(userFromAuthResponse: UserResponse): Promise<void> {
   const sessionUser = await requirePersistedSession(userFromAuthResponse);
   connectivity.markServerReachable(true);
-  resetInsightStore();
-  resetEntrySheetStore();
+  resetAccountScopedUiStores();
   await becomeAuthenticated(sessionUser, { enablePush: true });
 }
 
