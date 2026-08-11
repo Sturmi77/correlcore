@@ -28,7 +28,9 @@ import { captureClientException } from '$lib/observability/errorTracking.client'
 import { fillLocalSleepAfterHealthConnectImport } from '$lib/stores/entriesOffline';
 import { readHealthConnectSleep } from './healthConnect';
 import {
+  _resetHealthConnectSyncForTests,
   aggregateSleepByDate,
+  drainHealthConnectSyncForSessionChange,
   mapHealthConnectImportError,
   syncHealthConnectSleep,
 } from './healthConnectSync';
@@ -114,6 +116,7 @@ describe('mapHealthConnectImportError', () => {
 
 describe('syncHealthConnectSleep', () => {
   beforeEach(() => {
+    _resetHealthConnectSyncForTests();
     vi.mocked(readHealthConnectSleep).mockReset();
     vi.mocked(importHealthConnectSleep).mockReset();
     vi.mocked(canUseOfflineSync).mockReset();
@@ -123,7 +126,10 @@ describe('syncHealthConnectSleep', () => {
     vi.mocked(fillLocalSleepAfterHealthConnectImport).mockResolvedValue(0);
     vi.mocked(captureClientException).mockReset();
   });
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    _resetHealthConnectSyncForTests();
+    vi.clearAllMocks();
+  });
 
   it('refuses without consent and never reads the bridge', async () => {
     const result = await syncHealthConnectSleep(revoked, range);
@@ -287,5 +293,50 @@ describe('syncHealthConnectSleep', () => {
       { skippedExistingDates: ['2026-08-02'] }
     );
     expect(scheduleSync).toHaveBeenCalledOnce();
+  });
+
+  it('aborts import when the authenticated user changes during the native read', async () => {
+    let currentId: string | null = 'user-a';
+    type SleepRows = { startTime: string; endTime: string; durationMinutes: number }[];
+    let releaseRead: (value: SleepRows) => void = () => {};
+    const readGate = new Promise<SleepRows>((resolve) => {
+      releaseRead = resolve;
+    });
+    vi.mocked(readHealthConnectSleep).mockReturnValue(readGate);
+
+    const syncPromise = syncHealthConnectSleep(granted, range, {
+      actorUserId: 'user-a',
+      currentUserId: () => currentId,
+    });
+
+    // Account switch while Health Connect is still reading sessions.
+    currentId = 'user-b';
+    releaseRead([{ startTime: 'x', endTime: '2026-08-02T06:00:00Z', durationMinutes: 450 }]);
+
+    const result = await syncPromise;
+    expect(result.status).toBe('error_unauthorized');
+    expect(importHealthConnectSleep).not.toHaveBeenCalled();
+    expect(fillLocalSleepAfterHealthConnectImport).not.toHaveBeenCalled();
+  });
+
+  it('drains an in-flight Sync now before session credentials can change', async () => {
+    type SleepRows = { startTime: string; endTime: string; durationMinutes: number }[];
+    let releaseRead: (value: SleepRows) => void = () => {};
+    const readGate = new Promise<SleepRows>((resolve) => {
+      releaseRead = resolve;
+    });
+    vi.mocked(readHealthConnectSleep).mockReturnValue(readGate);
+
+    const syncPromise = syncHealthConnectSleep(granted, range);
+    let drained = false;
+    const drainPromise = drainHealthConnectSyncForSessionChange().then(() => {
+      drained = true;
+    });
+
+    expect(drained).toBe(false);
+    releaseRead([]);
+    await syncPromise;
+    await drainPromise;
+    expect(drained).toBe(true);
   });
 });

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
@@ -140,14 +141,28 @@
     syncing = true;
     syncResult = null;
     try {
+      const actorUserId = get(currentUser)?.id;
+      if (!actorUserId) {
+        syncResult = { status: 'error_unauthorized' };
+        return;
+      }
       const end = new Date();
       const start = new Date(end.getTime() - SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000);
       // Known failures are returned as status codes (never thrown) so the UI
       // can show a specific message instead of a generic "check your connection".
-      const result = await syncHealthConnectSleep(consents, {
-        start: start.toISOString(),
-        end: end.toISOString(),
-      });
+      // Auth guard: native read can outlive a same-tab account switch; without
+      // re-checking the actor, import would use the next account's Bearer.
+      const result = await syncHealthConnectSleep(
+        consents,
+        {
+          start: start.toISOString(),
+          end: end.toISOString(),
+        },
+        {
+          actorUserId,
+          currentUserId: () => get(currentUser)?.id,
+        }
+      );
       syncResult = result;
       // A completed server round-trip (any non-disabled import outcome) counts
       // as "last synced", even when nothing needed writing. Scope it to the

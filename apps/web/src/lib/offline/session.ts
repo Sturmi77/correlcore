@@ -11,6 +11,7 @@ import {
   offlineDbNameForUser,
   type CorrelCoreOfflineDB,
 } from './db';
+import { drainHealthConnectSyncForSessionChange } from '$lib/native/healthConnectSyncLifecycle';
 import {
   drainOfflineSyncForSessionChange as drainSyncOrchestratorForSessionChange,
   resetSyncOrchestratorForTests,
@@ -18,7 +19,10 @@ import {
 import { SYNC_META_KEYS } from './types';
 
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
+  // Offline outbox push first, then HC Sync now — both must finish under the
+  // current credentials before login/logout swaps Bearer/cookies.
   await drainSyncOrchestratorForSessionChange();
+  await drainHealthConnectSyncForSessionChange();
 }
 
 /** Wipe Dexie data and client identity so the next account starts clean. */
