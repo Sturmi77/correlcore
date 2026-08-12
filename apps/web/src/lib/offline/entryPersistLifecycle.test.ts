@@ -34,7 +34,12 @@ describe('entryPersistLifecycle', () => {
   });
 
   it('drain swallows persist rejection so session change can proceed', async () => {
-    trackEntryPersistInFlight(Promise.reject(new Error('save failed')));
+    const failed = Promise.reject(new Error('save failed'));
+    // Attach a no-op catch before tracking so the synthetic reject is not an
+    // unhandled rejection in this unit test (production saves are awaited by
+    // autoSave and/or drain).
+    void failed.catch(() => {});
+    trackEntryPersistInFlight(failed);
     await expect(drainEntryPersistForSessionChange()).resolves.toBeUndefined();
   });
 

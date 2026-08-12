@@ -13,11 +13,22 @@ let entryPersistInFlight: Promise<unknown> | null = null;
 
 /** Register the active entry persist promise (cleared in ``finally``). */
 export function trackEntryPersistInFlight(run: Promise<unknown>): void {
-  entryPersistInFlight = run.finally(() => {
-    if (entryPersistInFlight === run) {
-      entryPersistInFlight = null;
+  entryPersistInFlight = run;
+  // Use then(onFulfilled, onRejected) — not finally()+void — so a rejected
+  // save does not leave an unhandled rejection on a floating wrapper promise
+  // when nobody is currently draining.
+  void run.then(
+    () => {
+      if (entryPersistInFlight === run) {
+        entryPersistInFlight = null;
+      }
+    },
+    () => {
+      if (entryPersistInFlight === run) {
+        entryPersistInFlight = null;
+      }
     }
-  });
+  );
 }
 
 /** Await any in-flight entry persist before swapping session credentials. */
