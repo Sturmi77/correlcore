@@ -4,6 +4,7 @@
   import type { WorkContextTypical } from '$lib/api/profile';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import EntryForm from '$lib/components/entries/EntryForm.svelte';
+  import { currentUser } from '$lib/stores/auth';
   import { getEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
 
   export let open = false;
@@ -16,6 +17,11 @@
 
   let entryForm: EntryForm;
   let openMode: EntryOpenMode = 'full';
+
+  // Remount when the authenticated account changes without an anonymous gap
+  // (login/setUser A→B). Otherwise the prior user's hydrated mood/note/
+  // existingEntryId stay in the closed sheet and can autosave into B.
+  $: entryFormRemountKey = `${$currentUser?.id ?? ''}:${initialDate}`;
 
   $: if (open) {
     openMode = getEntryOpenMode();
@@ -54,7 +60,7 @@
     >
       ×
     </button>
-    {#key initialDate}
+    {#key entryFormRemountKey}
       <div class="entry-sheet__body">
         <EntryForm
           bind:this={entryForm}

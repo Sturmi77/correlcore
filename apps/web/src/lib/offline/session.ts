@@ -11,6 +11,7 @@ import {
   offlineDbNameForUser,
   type CorrelCoreOfflineDB,
 } from './db';
+import { drainEntryPersistForSessionChange } from './entryPersistLifecycle';
 import {
   drainOfflineSyncForSessionChange as drainSyncOrchestratorForSessionChange,
   resetSyncOrchestratorForTests,
@@ -18,7 +19,10 @@ import {
 import { SYNC_META_KEYS } from './types';
 
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
+  // Offline outbox push first, then entry autosave — both must finish under the
+  // current credentials before login/logout swaps Bearer/cookies.
   await drainSyncOrchestratorForSessionChange();
+  await drainEntryPersistForSessionChange();
 }
 
 /** Wipe Dexie data and client identity so the next account starts clean. */
