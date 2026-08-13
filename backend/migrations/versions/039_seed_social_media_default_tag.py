@@ -56,18 +56,26 @@ def upgrade() -> None:
     # bulk seed in migration 004 relied on. The INSERT policy would otherwise
     # reject ``is_default = TRUE`` rows.
     for slug, name, category, icon, color in _MISSING_DEFAULTS:
+        # ``:slug`` is bound under two distinct names (``slug`` / ``slug_check``)
+        # on purpose. Reusing one named parameter across the SELECT list and the
+        # NOT EXISTS predicate collapses to a single ``$1``, and PostgreSQL then
+        # deduces conflicting types for it — ``text`` from the bare SELECT value
+        # vs ``character varying`` from the ``slug`` column comparison — which
+        # aborts with "inconsistent types deduced for parameter $1". Two names
+        # give two independently-typed placeholders.
         result = conn.execute(
             sa.text(
                 """
                 INSERT INTO tags (slug, name, category, icon, color, is_default, user_id)
                 SELECT :slug, :name, CAST(:category AS tag_category), :icon, :color, TRUE, NULL
                 WHERE NOT EXISTS (
-                    SELECT 1 FROM tags WHERE slug = :slug AND is_default = TRUE
+                    SELECT 1 FROM tags WHERE slug = :slug_check AND is_default = TRUE
                 )
                 """
             ),
             {
                 "slug": slug,
+                "slug_check": slug,
                 "name": name,
                 "category": category,
                 "icon": icon,
