@@ -52,3 +52,39 @@ export function trendsPlotWidth(dayCount: number, metrics: TrendsDayAxisMetrics)
   if (dayCount <= 0) return metrics.labelPx;
   return metrics.labelPx + dayCount * metrics.cellPx + (dayCount - 1) * metrics.gapPx;
 }
+
+/**
+ * Clamp the shared compare axis to the extent of days that actually carry data
+ * (#676, follow-up to #629).
+ *
+ * The compare tab always loads a fixed 365-day window, so the raw axis bounds
+ * derived from that window can reach far past the user's first or last logged
+ * day. That left an empty scroll region on either side — no hard "Anschlag".
+ * This trims the range to ``[max(rawStart, firstDataDate), min(rawEnd,
+ * lastDataDate)]`` so the timeline stops at the data on both ends and only spans
+ * as far as data exists.
+ *
+ * ``dataDates`` are the ISO days that hold data (in practice: days with at least
+ * one entry — every tag/symptom/work-context layer derives from entries, so the
+ * entry-day extent bounds them all). ISO ``YYYY-MM-DD`` strings order
+ * chronologically under lexical comparison, so no Date parsing is needed. With
+ * no data dates the raw window is returned unchanged.
+ */
+export function clampAxisRangeToData(
+  rawStart: string,
+  rawEnd: string,
+  dataDates: readonly string[]
+): { start: string; end: string } {
+  if (dataDates.length === 0) return { start: rawStart, end: rawEnd };
+  let first = dataDates[0];
+  let last = dataDates[0];
+  for (const date of dataDates) {
+    if (date < first) first = date;
+    if (date > last) last = date;
+  }
+  const start = rawStart && rawStart > first ? rawStart : first;
+  const end = rawEnd && rawEnd < last ? rawEnd : last;
+  // If the raw window sits entirely outside the data extent the clamp can invert
+  // (start > end); fall back to the data extent so the axis is never empty.
+  return start <= end ? { start, end } : { start: first, end: last };
+}

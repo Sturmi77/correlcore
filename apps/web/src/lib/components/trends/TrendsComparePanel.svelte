@@ -24,7 +24,7 @@
     type AxisBucket,
     type CompareZoomStageIndex,
   } from '$lib/utils/compareAxisZoom';
-  import { compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
+  import { clampAxisRangeToData, compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import {
     readCompareMode,
@@ -234,19 +234,31 @@
     timelineCursor.setDate(focusKey, 'tap');
   }
 
-  $: axisStart =
+  $: rawAxisStart =
     tagHeatmap?.start_date ??
     symptomHeatmap?.start_date ??
     workContextHeatmap?.start_date ??
     points[0]?.period_start ??
     '';
-  $: axisEnd =
+  $: rawAxisEnd =
     tagHeatmap?.end_date ??
     symptomHeatmap?.end_date ??
     workContextHeatmap?.end_date ??
     points[points.length - 1]?.period_end ??
     points[points.length - 1]?.period_start ??
     '';
+  /**
+   * #676: the compare tab always loads a fixed 365-day window, so the raw bounds
+   * above can reach past the user's first/last logged day and leave an empty
+   * scroll region with no "Anschlag". Clamp the axis to the days that actually
+   * hold entries so the timeline stops hard at the data on both ends.
+   */
+  $: dataDates = points.filter((point) => point.entry_count > 0).map((point) => point.period_start);
+  $: ({ start: axisStart, end: axisEnd } = clampAxisRangeToData(
+    rawAxisStart,
+    rawAxisEnd,
+    dataDates
+  ));
   $: axisDates = axisStart && axisEnd ? buildIsoDateRange(axisStart, axisEnd) : [];
   /**
    * #482: Strips share the Lines bucket aggregation (Option A — mean of logged
