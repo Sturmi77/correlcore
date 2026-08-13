@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import settings
-from app.models.entry import Entry, EntrySource
+from app.models.entry import Entry, EntrySource, NoteVisibility
 from app.models.symptom import Symptom
 from app.models.sync_engine import (
     SyncClientState,
@@ -371,6 +371,11 @@ def _entry_payload_from_model(
         "sleep_quality": entry.sleep_quality,
         "work_context": entry.work_context.value,
         "note": note_value,
+        "note_visibility": (
+            entry.note_visibility.value
+            if isinstance(entry.note_visibility, NoteVisibility)
+            else str(entry.note_visibility)
+        ),
         "tag_ids": [str(tag_id) for tag_id in tag_ids],
         "symptoms": symptoms,
     }
@@ -390,6 +395,13 @@ async def _hydrate_entry_pull_payload(
         return data
     hydrated = dict(data)
     hydrated["note"] = entry.note_enc
+    # Live visibility: pre-fix revision rows omit the key; pull must not
+    # default Hidden notes back to Full on the client.
+    hydrated["note_visibility"] = (
+        entry.note_visibility.value
+        if isinstance(entry.note_visibility, NoteVisibility)
+        else str(entry.note_visibility)
+    )
     return hydrated
 
 
@@ -551,6 +563,7 @@ async def _merge_entry_upsert(
                 source=EntrySource.DIRECT,
                 work_context=payload.work_context,
                 note_enc=payload.note,
+                note_visibility=NoteVisibility(str(payload.note_visibility)),
                 updated_at=client_ts,
             )
             db.add(entry)
@@ -659,6 +672,11 @@ async def _merge_entry_upsert(
             entry.sleep_minutes = payload.sleep_minutes
         if "sleep_quality" in payload.model_fields_set:
             entry.sleep_quality = payload.sleep_quality
+        # Presence-aware: cached / pre-fix clients omit note_visibility and
+        # Pydantic defaults it to Full. Unconditional assign would re-expose
+        # Hidden notes on the next mood edit.
+        if "note_visibility" in payload.model_fields_set:
+            entry.note_visibility = NoteVisibility(str(payload.note_visibility))
         entry.work_context = payload.work_context
         entry.note_enc = payload.note
         entry.updated_at = client_ts

@@ -785,6 +785,28 @@ describe('EntryForm offline sync edge cases (R-04 / R-05)', () => {
     expect(completeOnboarding).not.toHaveBeenCalled();
     expect(saveEntryOffline).toHaveBeenCalledTimes(1);
   });
+
+  it('includes Hidden note_visibility in the offline sync snapshot', async () => {
+    render(EntryForm, {
+      props: { initialDate: '2026-06-02' },
+    });
+
+    await flushAsync();
+    await fireEvent.input(screen.getByPlaceholderText('entry.note_placeholder'), {
+      target: { value: 'keep this private' },
+    });
+    await fireEvent.change(screen.getByTestId('entry-note-visibility'), {
+      target: { value: 'hidden' },
+    });
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(saveEntryOffline).toHaveBeenCalled();
+    const [, snap] = vi.mocked(saveEntryOffline).mock.calls[0];
+    expect(snap.note).toBe('keep this private');
+    expect(snap.note_visibility).toBe('hidden');
+  });
 });
 
 function tagResponse(id: string): TagResponse {
