@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
-import { readable, writable, type Writable } from 'svelte/store';
+import { readable, type Writable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import EntrySheet from './EntrySheet.svelte';
 
