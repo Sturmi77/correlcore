@@ -24,6 +24,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.entry import BleedingLevel, EntrySlot, WorkContext
+from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 
 # ---------------------------------------------------------------------------
 # Enums — wire-stable entity / table identifiers
@@ -45,6 +46,7 @@ class SyncConflictField(StrEnum):
     ENERGY = "energy"
     STRESS = "stress"
     NOTE = "note"
+    NOTE_VISIBILITY = "note_visibility"
     SYMPTOMS = "symptoms"
 
 
@@ -67,6 +69,7 @@ class SyncEntryPayload(BaseModel):
     sleep_quality: int | None = Field(default=None, ge=1, le=5)
     work_context: WorkContext
     note: str | None = None
+    note_visibility: NoteVisibilitySchema = NoteVisibilitySchema.FULL
     tag_ids: list[uuid.UUID] = Field(default_factory=list)
     symptoms: dict[str, int] = Field(
         default_factory=dict,

@@ -6,6 +6,7 @@ import { getOfflineDb, resetOfflineDbForTests } from '$lib/offline/db';
 import { listPendingChanges } from '$lib/offline/changeLog';
 import {
   applyPulledEntry,
+  buildSyncEntryPayload,
   findLocalEntryByDateSlot,
   fillLocalSleepAfterHealthConnectImport,
   hydrateServerEntryFromApi,
@@ -34,6 +35,7 @@ function apiEntry(id: string): EntryResponse {
     source: 'direct',
     work_context: 'office',
     note: 'server note',
+    note_visibility: 'analysis_only',
     created_at: '2026-07-13T08:00:00.000Z',
     updated_at: '2026-07-13T08:00:00.000Z',
   };
@@ -104,6 +106,7 @@ describe('entriesOffline', () => {
     expect(local?.mood_score).toBe(4);
     expect(local?.sleep_minutes).toBe(420);
     expect(local?.sleep_quality).toBe(4);
+    expect(local?.note_visibility).toBe('analysis_only');
     expect(local?.tag_ids).toEqual(['tag-1']);
     expect(local?.symptoms).toEqual({ 'sym-1': 3 });
     expect(local?.sync_state).toBe('synced');
@@ -381,6 +384,94 @@ describe('entriesOffline', () => {
     expect(mapped.mood_score).toBe(4);
     expect(mapped.sleep_minutes).toBe(480);
     expect(mapped.sleep_quality).toBe(3);
+    expect(mapped.note_visibility).toBe('full');
+  });
+
+  it('persists note_visibility through Dexie and the sync outbox payload', async () => {
+    const saved = await saveEntryOffline(null, {
+      entry_date: '2026-07-13',
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      slot: 'day',
+      cycle_day: null,
+      work_context: 'office',
+      note: 'keep this private',
+      note_visibility: 'hidden',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.id).toBe(saved.entryId);
+    expect(local?.note_visibility).toBe('hidden');
+
+    const pending = await listPendingChanges();
+    const upsert = pending.find((change) => change.entity_id === saved.entryId);
+    expect(upsert?.payload).toMatchObject({
+      note: 'keep this private',
+      note_visibility: 'hidden',
+    });
+
+    const mapped = localEntryToEntryResponse(local!);
+    expect(mapped.note_visibility).toBe('hidden');
+  });
+
+  it('includes note_visibility in the sync payload even when omitted on the snapshot', () => {
+    const payload = buildSyncEntryPayload({
+      entry_date: '2026-07-13',
+      mood_score: 3,
+      energy: 3,
+      stress: 3,
+      slot: 'day',
+      cycle_day: null,
+      work_context: 'office',
+      note: 'visible',
+      selectedTagIds: [],
+      selectedSymptoms: [],
+    });
+    expect(payload.note_visibility).toBe('full');
+  });
+
+  it('preserves existing note_visibility when a pull omits the key', async () => {
+    await applyPulledEntry(
+      'vis-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 3,
+        energy: 3,
+        stress: 2,
+        work_context: 'office',
+        note: 'private',
+        note_visibility: 'hidden',
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T09:00:00.000Z',
+      'synced'
+    );
+
+    await applyPulledEntry(
+      'vis-entry',
+      {
+        entry_date: '2026-07-13',
+        slot: 'day',
+        mood_score: 4,
+        energy: 3,
+        stress: 2,
+        work_context: 'office',
+        note: 'private',
+        tag_ids: [],
+        symptoms: {},
+      },
+      '2026-07-13T10:00:00.000Z',
+      'synced'
+    );
+
+    const local = await findLocalEntryByDateSlot('2026-07-13', 'day');
+    expect(local?.mood_score).toBe(4);
+    expect(local?.note_visibility).toBe('hidden');
   });
 
   it('clears cycle fields from local entries and pending outbox payloads', async () => {

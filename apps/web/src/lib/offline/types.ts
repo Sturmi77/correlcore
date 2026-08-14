@@ -1,3 +1,4 @@
+import type { NoteVisibility } from '$lib/api/noteMarkers';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 
 export type SyncState = 'local' | 'pending' | 'synced' | 'conflict';
@@ -21,6 +22,7 @@ export interface LocalEntry {
   sleep_quality?: number | null;
   work_context: WorkContext;
   note: string | null;
+  note_visibility?: NoteVisibility;
   tag_ids: string[];
   symptoms: Record<string, number>;
   updated_at: string;

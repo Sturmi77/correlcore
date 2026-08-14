@@ -330,6 +330,7 @@
           workContext = fields.workContext;
           workContextTouched = true;
           note = fields.note;
+          noteVisibility = fields.noteVisibility ?? 'full';
           selectedTagIds = fields.selectedTagIds;
           selectedSymptoms = fields.selectedSymptoms;
           if (typeof navigator !== 'undefined' && navigator.onLine) {
@@ -406,6 +407,7 @@
           workContext = fields.workContext;
           workContextTouched = true;
           note = fields.note;
+          noteVisibility = fields.noteVisibility ?? 'full';
           selectedTagIds = fields.selectedTagIds;
           selectedSymptoms = fields.selectedSymptoms;
           if (typeof navigator !== 'undefined' && navigator.onLine) {
@@ -509,6 +511,7 @@
           workContext = fields.workContext;
           workContextTouched = true;
           note = fields.note;
+          noteVisibility = fields.noteVisibility ?? 'full';
           selectedTagIds = fields.selectedTagIds;
           selectedSymptoms = fields.selectedSymptoms;
           loadedEntryDate = date;
@@ -758,6 +761,7 @@
       sleep_quality: sleepQuality ?? null,
       work_context: workContext,
       note: note.trim(),
+      note_visibility: noteVisibility,
       selectedTagIds: [...selectedTagIds],
       selectedSymptoms: selectedSymptoms.map((s) => ({ ...s })),
     };
@@ -870,7 +874,7 @@
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note,
           note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
-          note_visibility: noteVisibility,
+          note_visibility: resolvedSnap.note_visibility ?? noteVisibility,
         });
         entryId = updated.id;
         noteMarkers = updated.note_markers ?? noteMarkers;
@@ -888,7 +892,7 @@
           work_context: resolvedSnap.work_context,
           note: resolvedSnap.note ? resolvedSnap.note : undefined,
           note_summary_short: computeNoteSummaryShort(resolvedSnap.note) ?? undefined,
-          note_visibility: noteVisibility,
+          note_visibility: resolvedSnap.note_visibility ?? noteVisibility,
         });
         entryId = created.id;
         // POST → PATCH-Flip: store the id so subsequent saves go via
