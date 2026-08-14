@@ -399,7 +399,25 @@ export function scheduleSync(): void {
   });
 }
 
+/**
+ * Backstop against a drain livelock: if some re-entrant trigger keeps starting
+ * a fresh `syncInFlight` between iterations, give up after this many rounds and
+ * proceed with the session swap rather than hang login/logout forever. Sized far
+ * above any legitimate follow-up chain (which is bounded by the outbox emptying).
+ */
+const MAX_SESSION_DRAIN_ITERATIONS = 50;
+
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
+  // Stop connectivity-driven syncs up front. The online handler otherwise stays
+  // subscribed until resetSyncOrchestratorState() runs *after* the loop, so a
+  // flapping connection could keep calling scheduleSync() → a new `syncInFlight`
+  // between iterations, starving the break condition and livelocking the drain.
+  // resetSyncOrchestratorState() below unsubscribes it again, so doing it here
+  // first is idempotent; the outbox is drained by awaiting the in-flight sync,
+  // not by connectivity wake-ups.
+  onlineUnsubscribe?.();
+  onlineUnsubscribe = null;
+
   // Loop until quiescent: a completing sync may set `syncDirty` after its
   // do-while (e.g. persist/HC `scheduleSync()` during `refreshMeta`) and
   // `finally` starts a follow-up via `scheduleSync()` *after* clearing
@@ -407,7 +425,13 @@ export async function drainOfflineSyncForSessionChange(): Promise<void> {
   // `resetSyncOrchestratorState()` while that follow-up is already running,
   // so login()/logout() could swap cookies under an untracked push of the
   // previous account's outbox. Same pattern as entry persist / HC drain.
-  while (syncInFlight) {
+  //
+  // The iteration cap is a belt-and-suspenders backstop for any remaining
+  // re-entrant trigger (e.g. a visibilitychange burst): the drain must never
+  // hang a session change.
+  let iterations = 0;
+  while (syncInFlight && iterations < MAX_SESSION_DRAIN_ITERATIONS) {
+    iterations += 1;
     const inFlight = syncInFlight;
     try {
       await inFlight;

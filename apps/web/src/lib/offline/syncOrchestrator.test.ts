@@ -9,6 +9,7 @@ import { setOfflineSyncEnabled } from './featureFlag';
 import {
   _holdNthRefreshMetaForTests,
   drainOfflineSyncForSessionChange,
+  initializeSyncOrchestrator,
   peekSyncOrchestrator,
   pullSince,
   pushPending,
@@ -633,6 +634,29 @@ describe('syncOrchestrator', () => {
 
     expect(drained).toBe(true);
     expect(peekSyncOrchestrator().syncing).toBe(false);
+  });
+
+  it('unsubscribes the connectivity handler up front so the drain cannot livelock (#681)', async () => {
+    // The online handler is the drain's only unbounded re-entrant trigger: while
+    // subscribed it can keep calling scheduleSync() between loop iterations. The
+    // drain must tear it down before looping (not only in the trailing reset).
+    pullSyncChanges.mockResolvedValue({
+      cursor: 'cursor-1',
+      changes: [],
+      has_more: false,
+      server_time: '2026-06-30T12:01:00.000Z',
+    });
+
+    const unsubscribe = vi.fn();
+    const cleanup = initializeSyncOrchestrator(() => unsubscribe);
+
+    await drainOfflineSyncForSessionChange();
+
+    expect(unsubscribe).toHaveBeenCalled();
+    // A drained session change leaves no in-flight sync tracked.
+    expect(peekSyncOrchestrator().syncing).toBe(false);
+
+    cleanup();
   });
 
   it('re-drains the outbox when a save lands during an in-flight sync', async () => {
