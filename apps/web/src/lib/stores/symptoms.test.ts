@@ -86,6 +86,28 @@ describe('refreshSymptoms', () => {
       expect(state.message).toBe('boom');
     }
   });
+
+  it('drops an in-flight result when the store is reset mid-flight (#669)', async () => {
+    // Account A's request is still in flight when a session boundary resets the
+    // store; A's response must not repopulate B's freshly-cleared store.
+    let resolveList!: (value: symptomsApi.SymptomResponse[]) => void;
+    vi.mocked(symptomsApi.listVisibleSymptoms).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveList = resolve;
+      })
+    );
+
+    const pending = refreshSymptoms();
+    expect(get(symptoms).status).toBe('loading');
+
+    resetSymptomsStore(); // session boundary (logout/login) bumps the generation
+    expect(get(symptoms).status).toBe('idle');
+
+    resolveList([makeSymptom({ id: 'a', name: 'Account A symptom' })]);
+    await pending;
+
+    expect(get(symptoms).status).toBe('idle');
+  });
 });
 
 describe('symptomsList ordering', () => {

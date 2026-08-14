@@ -12,6 +12,7 @@ import {
   type CorrelCoreOfflineDB,
 } from './db';
 import { drainEntryPersistForSessionChange } from './entryPersistLifecycle';
+import { drainHealthConnectSyncForSessionChange } from '$lib/native/healthConnectSyncLifecycle';
 import {
   drainOfflineSyncForSessionChange as drainSyncOrchestratorForSessionChange,
   resetSyncOrchestratorForTests,
@@ -19,13 +20,16 @@ import {
 import { SYNC_META_KEYS } from './types';
 
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
-  // Entry autosaves first, then the offline outbox. A completing persist calls
-  // onLocalEntrySaved() -> scheduleSync(), enqueuing a *new* outbox push; if the
-  // orchestrator were drained first that follow-up push would escape the drain
-  // and could run under the next account. Persist -> orchestrator guarantees
-  // both — including persist-scheduled pushes — finish under the current
-  // credentials before login/logout swaps Bearer/cookies.
+  // Entry autosaves and HC Sync now first, then the offline outbox. A completing
+  // persist calls onLocalEntrySaved() and a completing sync reconciles Dexie —
+  // both call scheduleSync() right before their tracked promise resolves,
+  // enqueuing a *new* outbox push. Draining the orchestrator first would let
+  // those follow-up pushes escape the drain and run under the next account.
+  // Draining producers before the orchestrator guarantees both — including the
+  // pushes they schedule — finish under the current credentials before
+  // login/logout swaps Bearer/cookies.
   await drainEntryPersistForSessionChange();
+  await drainHealthConnectSyncForSessionChange();
   await drainSyncOrchestratorForSessionChange();
 }
 

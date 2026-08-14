@@ -4,6 +4,7 @@
 
 import type { EntryResponse } from '$lib/api/entries';
 import { listEntries } from '$lib/api/entries';
+import type { NoteVisibility } from '$lib/api/noteMarkers';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 import type { SymptomEntry } from '$lib/api/symptoms';
 import {
@@ -26,6 +27,7 @@ export interface EntryFormSnapshot {
   sleep_quality?: number | null;
   work_context: WorkContext;
   note: string;
+  note_visibility?: NoteVisibility;
   selectedTagIds: string[];
   selectedSymptoms: SymptomEntry[];
 }
@@ -54,6 +56,7 @@ export function buildSyncEntryPayload(snapshot: EntryFormSnapshot): Record<strin
     sleep_quality: snapshot.sleep_quality ?? null,
     work_context: snapshot.work_context,
     note: snapshot.note ? snapshot.note : null,
+    note_visibility: snapshot.note_visibility ?? 'full',
     tag_ids: [...snapshot.selectedTagIds],
     symptoms: symptomsToMap(snapshot.selectedSymptoms),
   };
@@ -70,6 +73,7 @@ export function localEntryToFormFields(entry: LocalEntry): {
   sleepQuality: number | null;
   workContext: WorkContext;
   note: string;
+  noteVisibility: NoteVisibility;
   selectedTagIds: string[];
   selectedSymptoms: SymptomEntry[];
 } {
@@ -84,6 +88,7 @@ export function localEntryToFormFields(entry: LocalEntry): {
     sleepQuality: entry.sleep_quality ?? null,
     workContext: entry.work_context,
     note: entry.note ?? '',
+    noteVisibility: entry.note_visibility ?? 'full',
     selectedTagIds: [...entry.tag_ids],
     selectedSymptoms: Object.entries(entry.symptoms).map(([symptom_id, intensity]) => ({
       symptom_id,
@@ -118,6 +123,7 @@ export function localEntryToEntryResponse(entry: LocalEntry, userId = ''): Entry
     source: 'direct',
     work_context: entry.work_context,
     note: entry.note,
+    note_visibility: entry.note_visibility ?? 'full',
     created_at: entry.updated_at,
     updated_at: entry.updated_at,
   };
@@ -219,6 +225,7 @@ export async function hydrateServerEntryFromApi(
       sleep_quality: entry.sleep_quality ?? null,
       work_context: entry.work_context,
       note: entry.note,
+      note_visibility: entry.note_visibility ?? 'full',
       tag_ids: tagIds,
       symptoms: symptomsToMap(symptoms),
     },
@@ -258,6 +265,7 @@ export async function saveEntryOffline(
     sleep_quality: snapshot.sleep_quality ?? null,
     work_context: snapshot.work_context,
     note: snapshot.note ? snapshot.note : null,
+    note_visibility: snapshot.note_visibility ?? 'full',
     tag_ids: [...snapshot.selectedTagIds],
     symptoms: symptomsToMap(snapshot.selectedSymptoms),
     updated_at: now,
@@ -278,6 +286,22 @@ export async function saveEntryOffline(
   });
 
   return { entryId, syncState };
+}
+
+function noteVisibilityFromPull(
+  data: Record<string, unknown>,
+  existing: NoteVisibility | undefined
+): NoteVisibility {
+  // Presence-aware: old revision payloads omit the key. Treating omitted as
+  // Full would re-expose a locally Hidden note after pull.
+  if (!('note_visibility' in data)) {
+    return existing ?? 'full';
+  }
+  const value = data.note_visibility;
+  if (value === 'hidden' || value === 'analysis_only' || value === 'full') {
+    return value;
+  }
+  return existing ?? 'full';
 }
 
 function sleepFieldFromPull(
@@ -322,6 +346,7 @@ export async function applyPulledEntry(
     sleep_quality: sleepFieldFromPull(data, 'sleep_quality', existing?.sleep_quality),
     work_context: data.work_context as WorkContext,
     note: data.note == null ? null : String(data.note),
+    note_visibility: noteVisibilityFromPull(data, existing?.note_visibility),
     tag_ids: Array.isArray(data.tag_ids) ? data.tag_ids.map(String) : [],
     symptoms:
       data.symptoms && typeof data.symptoms === 'object'
@@ -566,6 +591,7 @@ export async function clearCycleDataOffline(): Promise<number> {
             sleep_quality: serverEntry.sleep_quality ?? null,
             work_context: serverEntry.work_context,
             note: serverEntry.note,
+            note_visibility: serverEntry.note_visibility ?? local.note_visibility ?? 'full',
             tag_ids: local.tag_ids,
             symptoms: local.symptoms,
           },

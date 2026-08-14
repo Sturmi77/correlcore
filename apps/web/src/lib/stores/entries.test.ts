@@ -81,6 +81,28 @@ describe('refreshEntries', () => {
     await refreshEntries(7);
     expect(entriesApi.listEntries).toHaveBeenCalledWith({ limit: 7 });
   });
+
+  it('drops an in-flight result when the store is reset mid-flight (#669)', async () => {
+    // Account A's request is still in flight when a session boundary resets the
+    // store; A's response must not repopulate B's freshly-cleared store.
+    let resolveList!: (value: entriesApi.EntryResponse[]) => void;
+    vi.mocked(entriesApi.listEntries).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveList = resolve;
+      })
+    );
+
+    const pending = refreshEntries();
+    expect(get(entries).status).toBe('loading');
+
+    resetEntriesStore(); // session boundary (logout/login) bumps the generation
+    expect(get(entries).status).toBe('idle');
+
+    resolveList([makeEntry({ id: 'a' })]);
+    await pending;
+
+    expect(get(entries).status).toBe('idle');
+  });
 });
 
 describe('submitEntry', () => {

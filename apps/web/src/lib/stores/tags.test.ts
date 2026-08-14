@@ -92,6 +92,29 @@ describe('refreshTags', () => {
       expect(state.message).toBe('boom');
     }
   });
+
+  it('drops an in-flight result when the store is reset mid-flight (#669)', async () => {
+    // Account A's request is still in flight when a session boundary resets the
+    // store; A's response must not repopulate B's freshly-cleared store.
+    let resolveList!: (value: tagsApi.TagResponse[]) => void;
+    vi.mocked(tagsApi.listVisibleTags).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveList = resolve;
+      })
+    );
+
+    const pending = refreshTags();
+    expect(get(tags).status).toBe('loading');
+
+    resetTagsStore(); // session boundary (logout/login) bumps the generation
+    expect(get(tags).status).toBe('idle');
+
+    resolveList([makeTag({ id: 'a', name: 'Account A tag' })]);
+    await pending;
+
+    // Stale response is discarded — the store stays idle, not ready.
+    expect(get(tags).status).toBe('idle');
+  });
 });
 
 describe('submitTag', () => {

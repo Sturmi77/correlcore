@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from app.core.crypto import reset_current_user_dek, set_current_user_dek, unwrap_dek
 from app.db.session import AsyncSessionLocal, bind_rls_current_user
-from app.models.entry import Entry, EntrySlot, EntrySource, WorkContext
+from app.models.entry import Entry, EntrySlot, EntrySource, NoteVisibility, WorkContext
 from app.models.sync_conflict import SyncConflict
 from app.models.user_encryption_key import UserEncryptionKey
 from app.schemas.auth import RegisterRequest
@@ -58,6 +58,40 @@ def test_sync_entry_payload_accepts_sleep_fields() -> None:
     )
     assert payload.sleep_minutes == 480
     assert payload.sleep_quality == 5
+
+
+def test_entry_payload_from_model_includes_note_visibility() -> None:
+    user = make_user()
+    entry = make_entry(user, mood_score=3)
+    entry.note_visibility = NoteVisibility.HIDDEN
+
+    payload = _entry_payload_from_model(entry, tag_ids=[], symptoms={})
+
+    assert payload["note_visibility"] == "hidden"
+
+
+def test_sync_entry_payload_accepts_note_visibility() -> None:
+    from app.schemas.sync import SyncEntryPayload
+
+    payload = SyncEntryPayload(
+        entry_date=date.today(),
+        mood_score=3,
+        energy=3,
+        stress=3,
+        work_context=WorkContext.OFFICE,
+        note="private",
+        note_visibility="hidden",
+    )
+    assert payload.note_visibility == "hidden"
+    omitted = SyncEntryPayload(
+        entry_date=date.today(),
+        mood_score=3,
+        energy=3,
+        stress=3,
+        work_context=WorkContext.OFFICE,
+    )
+    assert omitted.note_visibility == "full"
+    assert "note_visibility" not in omitted.model_fields_set
 
 
 async def _dek_token_for_user(session, user_id: uuid.UUID):
@@ -403,6 +437,340 @@ async def test_merge_entry_upsert_clears_sleep_when_client_sends_null(
     assert conflicts == []
     assert existing.sleep_minutes is None
     assert existing.sleep_quality is None
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_applies_hidden_note_visibility(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Offline Hidden must persist — default Full would leak the note into analysis."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    older_server_ts = datetime(2026, 7, 20, 10, 0, tzinfo=UTC)
+    client_ts = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+
+    existing = Entry(
+        id=entry_id,
+        user_id=user_id,
+        entry_date=date(2026, 7, 24),
+        slot=EntrySlot.DAY,
+        mood_score=2,
+        energy=2,
+        stress=2,
+        cycle_day=None,
+        source=EntrySource.DIRECT,
+        work_context=WorkContext.HOMEOFFICE,
+        note_enc="private note",
+        note_visibility=NoteVisibility.FULL,
+        updated_at=older_server_ts,
+    )
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 3,
+            "energy": 3,
+            "stress": 2,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": "private note",
+            "note_visibility": "hidden",
+            "tag_ids": [],
+            "symptoms": {},
+        },
+        updated_at=client_ts,
+    )
+
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._resolve_sync_symptoms", AsyncMock(return_value={})),
+        patch("app.services.sync_service.assign_tags_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.assign_symptoms_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_tags_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_symptoms_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    assert existing.note_visibility == NoteVisibility.HIDDEN
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_preserves_note_visibility_when_client_omits_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Pre-fix clients omit note_visibility — client-wins must not reset Hidden to Full."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    older_server_ts = datetime(2026, 7, 20, 10, 0, tzinfo=UTC)
+    client_ts = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+
+    existing = Entry(
+        id=entry_id,
+        user_id=user_id,
+        entry_date=date(2026, 7, 24),
+        slot=EntrySlot.DAY,
+        mood_score=2,
+        energy=2,
+        stress=2,
+        cycle_day=None,
+        source=EntrySource.DIRECT,
+        work_context=WorkContext.HOMEOFFICE,
+        note_enc="private note",
+        note_visibility=NoteVisibility.HIDDEN,
+        updated_at=older_server_ts,
+    )
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 5,
+            "energy": 3,
+            "stress": 2,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": "private note",
+            "tag_ids": [],
+            "symptoms": {},
+        },
+        updated_at=client_ts,
+    )
+
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._resolve_sync_symptoms", AsyncMock(return_value={})),
+        patch("app.services.sync_service.assign_tags_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.assign_symptoms_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_tags_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_symptoms_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    assert existing.mood_score == 5
+    assert existing.note_visibility == NoteVisibility.HIDDEN
+
+
+def _hidden_visibility_entry(entry_id: uuid.UUID, user_id: uuid.UUID, server_ts: datetime) -> Entry:
+    return Entry(
+        id=entry_id,
+        user_id=user_id,
+        entry_date=date(2026, 7, 24),
+        slot=EntrySlot.DAY,
+        mood_score=2,
+        energy=2,
+        stress=2,
+        cycle_day=None,
+        source=EntrySource.DIRECT,
+        work_context=WorkContext.HOMEOFFICE,
+        note_enc="private note",
+        note_visibility=NoteVisibility.FULL,
+        updated_at=server_ts,
+    )
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_refreshes_signals_when_visibility_changes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Client-wins visibility flip must refresh derived note signals (Hidden clears them)."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    existing = _hidden_visibility_entry(entry_id, user_id, datetime(2026, 7, 20, 10, 0, tzinfo=UTC))
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 2,
+            "energy": 2,
+            "stress": 2,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": "private note",
+            "note_visibility": "hidden",
+            "tag_ids": [],
+            "symptoms": {},
+        },
+        updated_at=datetime(2026, 7, 24, 12, 0, tzinfo=UTC),
+    )
+
+    extractor = AsyncMock(return_value=[])
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._resolve_sync_symptoms", AsyncMock(return_value={})),
+        patch("app.services.sync_service.assign_tags_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.assign_symptoms_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_tags_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_symptoms_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+        patch("app.services.sync_service.extract_and_store_signals_for_entry", extractor),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    assert existing.note_visibility == NoteVisibility.HIDDEN
+    extractor.assert_awaited_once_with(db, user_id=user_id, entry_id=entry_id)
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_skips_signal_refresh_when_note_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A non-note change (e.g. mood) must not needlessly re-extract note signals."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    existing = _hidden_visibility_entry(entry_id, user_id, datetime(2026, 7, 20, 10, 0, tzinfo=UTC))
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 5,  # only the mood changes
+            "energy": 2,
+            "stress": 2,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": "private note",  # unchanged; note_visibility omitted
+            "tag_ids": [],
+            "symptoms": {},
+        },
+        updated_at=datetime(2026, 7, 24, 12, 0, tzinfo=UTC),
+    )
+
+    extractor = AsyncMock(return_value=[])
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._resolve_sync_symptoms", AsyncMock(return_value={})),
+        patch("app.services.sync_service.assign_tags_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.assign_symptoms_to_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_tags_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.list_symptoms_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._append_revision_log", new_callable=AsyncMock),
+        patch("app.services.sync_service.extract_and_store_signals_for_entry", extractor),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert conflicts == []
+    assert existing.mood_score == 5
+    extractor.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_merge_entry_upsert_reports_note_visibility_conflict_when_server_newer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A dropped Hidden change (server revision newer) must surface as a conflict, not a silent ack."""
+    from app.services import entry_service
+    from app.services.sync_service import _merge_entry_upsert
+
+    monkeypatch.setattr(entry_service, "_today", lambda: date(2026, 7, 24))
+
+    entry_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    # Server revision is newer than the client change → client loses.
+    existing = _hidden_visibility_entry(entry_id, user_id, datetime(2026, 7, 25, 10, 0, tzinfo=UTC))
+
+    entry_result = MagicMock()
+    entry_result.scalar_one_or_none.return_value = existing
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=entry_result)
+    db.flush = AsyncMock()
+    db.add = MagicMock()
+
+    change = SyncChange(
+        seq=1,
+        id=entry_id,
+        table="entries",
+        operation="upsert",
+        data={
+            "entry_date": date(2026, 7, 24).isoformat(),
+            "slot": EntrySlot.DAY.value,
+            "mood_score": 2,  # scalars match the server so only visibility conflicts
+            "energy": 2,
+            "stress": 2,
+            "work_context": WorkContext.HOMEOFFICE.value,
+            "note": "private note",
+            "note_visibility": "hidden",
+            "tag_ids": [],
+            "symptoms": {},
+        },
+        updated_at=datetime(2026, 7, 24, 12, 0, tzinfo=UTC),
+    )
+
+    extractor = AsyncMock(return_value=[])
+    with (
+        patch("app.services.sync_service._resolve_sync_tag_ids", AsyncMock(return_value=[])),
+        patch("app.services.sync_service._resolve_sync_symptoms", AsyncMock(return_value={})),
+        patch("app.services.sync_service.list_symptoms_for_entry", AsyncMock(return_value=[])),
+        patch("app.services.sync_service.extract_and_store_signals_for_entry", extractor),
+    ):
+        conflicts = await _merge_entry_upsert(db, user_id=user_id, change=change)
+
+    assert [c.field_name for c in conflicts] == ["note_visibility"]
+    # Server revision keeps its value; the client change is reported, not applied.
+    assert existing.note_visibility == NoteVisibility.FULL
+    extractor.assert_not_awaited()
 
 
 @pytest.mark.asyncio

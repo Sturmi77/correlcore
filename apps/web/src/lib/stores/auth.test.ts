@@ -19,6 +19,22 @@ vi.mock('$lib/stores/insights', () => ({
   resetInsightStore: vi.fn(),
 }));
 
+vi.mock('$lib/stores/entrySheet', () => ({
+  resetEntrySheetStore: vi.fn(),
+}));
+
+vi.mock('$lib/stores/entries', () => ({
+  resetEntriesStore: vi.fn(),
+}));
+
+vi.mock('$lib/stores/tags', () => ({
+  resetTagsStore: vi.fn(),
+}));
+
+vi.mock('$lib/stores/symptoms', () => ({
+  resetSymptomsStore: vi.fn(),
+}));
+
 vi.mock('$lib/offline/session', () => ({
   clearOfflineDataForAnonymousSession: vi.fn(),
   clearOfflineDataForLogout: vi.fn(),
@@ -41,6 +57,10 @@ import { notifySessionExpired } from '$lib/api/sessionExpired';
 import * as offlineSession from '$lib/offline/session';
 import { disablePushNotifications } from '$lib/native/pushNotifications';
 import { resetInsightStore } from '$lib/stores/insights';
+import { resetEntrySheetStore } from '$lib/stores/entrySheet';
+import { resetEntriesStore } from '$lib/stores/entries';
+import { resetTagsStore } from '$lib/stores/tags';
+import { resetSymptomsStore } from '$lib/stores/symptoms';
 import { connectivity } from '$lib/stores/connectivity';
 import { LAST_USER_STORAGE_KEY } from '$lib/stores/lastUserCache';
 import { clearAllOnboardingSuggestionStashes } from '$lib/utils/onboardingSuggestionStash';
@@ -140,6 +160,10 @@ describe('forceSessionExpired', () => {
     expect(get(auth)).toEqual({ status: 'anonymous' });
     expect(localStorage.getItem(LAST_USER_STORAGE_KEY)).toBeNull();
     expect(resetInsightStore).toHaveBeenCalled();
+    expect(resetTagsStore).toHaveBeenCalled();
+    expect(resetSymptomsStore).toHaveBeenCalled();
+    expect(resetEntriesStore).toHaveBeenCalled();
+    expect(resetEntrySheetStore).toHaveBeenCalled();
   });
 
   it('is wired to the API session-expired notifier', async () => {
@@ -196,6 +220,10 @@ describe('login / logout / setUser', () => {
     // becomeAuthenticated before it rebinds the offline DB to the new user.
     expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(2);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
+    expect(resetTagsStore).toHaveBeenCalledTimes(1);
+    expect(resetSymptomsStore).toHaveBeenCalledTimes(1);
+    expect(resetEntriesStore).toHaveBeenCalledTimes(1);
+    expect(resetEntrySheetStore).toHaveBeenCalledTimes(1);
   });
 
   it('login fails when cookies did not stick (/auth/me → null)', async () => {
@@ -221,6 +249,10 @@ describe('login / logout / setUser', () => {
     await setUser(fakeUser);
     expect(get(isAuthenticated)).toBe(true);
     vi.mocked(resetInsightStore).mockClear();
+    vi.mocked(resetTagsStore).mockClear();
+    vi.mocked(resetSymptomsStore).mockClear();
+    vi.mocked(resetEntriesStore).mockClear();
+    vi.mocked(resetEntrySheetStore).mockClear();
     vi.mocked(clearAllOnboardingSuggestionStashes).mockClear();
     // setUp's setUser() drained once via becomeAuthenticated; clear so the
     // assertion below targets logout's own drain in isolation.
@@ -232,6 +264,10 @@ describe('login / logout / setUser', () => {
     expect(offlineSession.clearOfflineDataForLogout).toHaveBeenCalledTimes(1);
     expect(clearAllOnboardingSuggestionStashes).toHaveBeenCalledTimes(1);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
+    expect(resetTagsStore).toHaveBeenCalledTimes(1);
+    expect(resetSymptomsStore).toHaveBeenCalledTimes(1);
+    expect(resetEntriesStore).toHaveBeenCalledTimes(1);
+    expect(resetEntrySheetStore).toHaveBeenCalledTimes(1);
   });
 
   it('logout unregisters push before clearing the session', async () => {
@@ -257,6 +293,10 @@ describe('login / logout / setUser', () => {
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
+    expect(resetTagsStore).toHaveBeenCalledTimes(1);
+    expect(resetSymptomsStore).toHaveBeenCalledTimes(1);
+    expect(resetEntriesStore).toHaveBeenCalledTimes(1);
+    expect(resetEntrySheetStore).toHaveBeenCalledTimes(1);
     // #671: becomeAuthenticated must drain in-flight offline work under the
     // outgoing identity BEFORE rebinding the offline DB to the new user.
     expect(
@@ -264,6 +304,24 @@ describe('login / logout / setUser', () => {
     ).toBeLessThan(
       vi.mocked(offlineSession.prepareOfflineDataForAuthenticatedUser).mock.invocationCallOrder[0]
     );
+  });
+
+  it('clears tag/symptom/entry caches on logout so the next SPA login cannot reuse them', async () => {
+    // TagPicker/SymptomChecker skip refresh when status is already ready.
+    // Without this reset, account B would see account A's custom catalogue
+    // after logout→login without a full document reload.
+    vi.mocked(authApi.fetchCurrentUser).mockResolvedValueOnce(fakeUser);
+    await setUser(fakeUser);
+    vi.mocked(resetTagsStore).mockClear();
+    vi.mocked(resetSymptomsStore).mockClear();
+    vi.mocked(resetEntriesStore).mockClear();
+    vi.mocked(authApi.logout).mockResolvedValueOnce({ message: 'ok' });
+
+    await logout();
+
+    expect(resetTagsStore).toHaveBeenCalledTimes(1);
+    expect(resetSymptomsStore).toHaveBeenCalledTimes(1);
+    expect(resetEntriesStore).toHaveBeenCalledTimes(1);
   });
 
   it('setUser fails when cookies did not stick (/auth/me → null)', async () => {
