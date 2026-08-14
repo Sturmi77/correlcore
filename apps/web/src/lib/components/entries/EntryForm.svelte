@@ -73,6 +73,7 @@
   import { NEUTRAL_SCALE_DEFAULT, scaleDefaultsFromPrevious } from '$lib/utils/entrySmartDefaults';
   import { setEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
+  import { trackEntryPersistInFlight } from '$lib/offline/entryPersistLifecycle';
   import { auth } from '$lib/stores/auth';
   import { connectivity } from '$lib/stores/connectivity';
   import { onLocalEntrySaved, scheduleSync, syncOrchestrator } from '$lib/offline/syncOrchestrator';
@@ -827,12 +828,35 @@
   }
 
   /**
+   * Abort when the authenticated user changed mid-persist (login/logout/
+   * setUser). autoSave.destroy() does not cancel an in-flight ``opts.save``;
+   * without this guard a slow await (onboarding finalize, relation re-fetch)
+   * can resume under the next account and write the prior snapshot there.
+   */
+  function assertPersistActor(actorUserId: string): void {
+    if (currentUserId() !== actorUserId) {
+      throw new Error('entry_persist_aborted_actor_changed');
+    }
+  }
+
+  /**
    * The actual persistence path. Mirrors the previous manual
    * ``onSubmit``: POST on first save (no ``existingEntryId``), PATCH
    * thereafter. Tag and symptom replace-sets always run after the
    * entry write so unchecked rows actually disappear server-side.
    */
   async function persist(snap: FormSnapshot): Promise<void> {
+    const actorUserId = currentUserId();
+    if (!actorUserId) {
+      throw new Error('entry_persist_aborted_unauthenticated');
+    }
+
+    const run = persistForActor(snap, actorUserId);
+    trackEntryPersistInFlight(run);
+    await run;
+  }
+
+  async function persistForActor(snap: FormSnapshot, actorUserId: string): Promise<void> {
     if (snap.cycle_day !== null && (snap.cycle_day < 1 || snap.cycle_day > 35)) {
       throw new Error('invalid_cycle_day');
     }
@@ -848,6 +872,8 @@
 
     try {
       const resolvedSnap = await preserveUnresolvedRelations(await resolveOnboardingTags(snap));
+      // Re-check after awaits that may have spanned a session swap.
+      assertPersistActor(actorUserId);
 
       if (canUseOfflineSync()) {
         const result = await saveEntryOffline(existingEntryId, resolvedSnap);
@@ -902,6 +928,7 @@
         await flushPendingMarkers(entryId);
       }
 
+      assertPersistActor(actorUserId);
       await assignTagsToEntry(entryId, resolvedSnap.selectedTagIds);
       await assignSymptomsToEntry(entryId, resolvedSnap.selectedSymptoms);
       await refreshDayDelta(resolvedSnap.entry_date, resolvedSnap.slot);
