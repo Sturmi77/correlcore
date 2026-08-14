@@ -34,6 +34,10 @@ import {
   mapHealthConnectImportError,
   syncHealthConnectSleep,
 } from './healthConnectSync';
+import {
+  _resetHealthConnectSyncLifecycleForTests,
+  trackHealthConnectSyncInFlight,
+} from './healthConnectSyncLifecycle';
 
 const granted = {
   current: [{ consent_type: 'health_connect', granted: true }],
@@ -338,5 +342,66 @@ describe('syncHealthConnectSleep', () => {
     await syncPromise;
     await drainPromise;
     expect(drained).toBe(true);
+  });
+});
+
+describe('healthConnectSyncLifecycle drain', () => {
+  afterEach(() => {
+    _resetHealthConnectSyncLifecycleForTests();
+  });
+
+  it('drain waits for every overlapping sync, not just the latest', async () => {
+    // Regression: a single-slot registry (and its self-referential finally that
+    // compared the wrapped promise to the raw run, so it never cleared) drained
+    // only the newest sync. Two "Sync now" runs can overlap across a navigate.
+    let resolveFirst!: () => void;
+    const first = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    let resolveSecond!: () => void;
+    const second = new Promise<void>((resolve) => {
+      resolveSecond = resolve;
+    });
+
+    trackHealthConnectSyncInFlight(first);
+    trackHealthConnectSyncInFlight(second);
+
+    const drained = vi.fn();
+    const drainPromise = drainHealthConnectSyncForSessionChange().then(drained);
+
+    resolveSecond();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(drained).not.toHaveBeenCalled();
+
+    resolveFirst();
+    await drainPromise;
+    expect(drained).toHaveBeenCalledTimes(1);
+  });
+
+  it('drain also awaits a sync registered after draining began', async () => {
+    let resolveFirst!: () => void;
+    const first = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    trackHealthConnectSyncInFlight(first);
+
+    const drained = vi.fn();
+    const drainPromise = drainHealthConnectSyncForSessionChange().then(drained);
+
+    let resolveLate!: () => void;
+    const late = new Promise<void>((resolve) => {
+      resolveLate = resolve;
+    });
+    trackHealthConnectSyncInFlight(late);
+
+    resolveFirst();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(drained).not.toHaveBeenCalled();
+
+    resolveLate();
+    await drainPromise;
+    expect(drained).toHaveBeenCalledTimes(1);
   });
 });

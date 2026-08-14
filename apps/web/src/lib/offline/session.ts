@@ -19,10 +19,14 @@ import {
 import { SYNC_META_KEYS } from './types';
 
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
-  // Offline outbox push first, then HC Sync now — both must finish under the
+  // HC Sync now first, then the offline outbox. A completing sync reconciles
+  // Dexie and calls scheduleSync() right before its tracked promise resolves,
+  // enqueuing a new outbox push; draining the orchestrator first would let that
+  // push escape the drain and run under the next account. Sync -> orchestrator
+  // guarantees both — including the sync-scheduled push — finish under the
   // current credentials before login/logout swaps Bearer/cookies.
-  await drainSyncOrchestratorForSessionChange();
   await drainHealthConnectSyncForSessionChange();
+  await drainSyncOrchestratorForSessionChange();
 }
 
 /** Wipe Dexie data and client identity so the next account starts clean. */
