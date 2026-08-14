@@ -223,6 +223,7 @@
       "hint": "Your subjective rating from 1 (poor) to 5 (great).",
       "add": "Rate sleep quality",
       "clear": "Clear",
+      "unset_hint": "Optional – tap to record.",
       "decrement": "Decrease sleep quality",
       "increment": "Increase sleep quality",
       "level_1": "1 - Poor",

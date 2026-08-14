@@ -3,9 +3,17 @@
    * Optional 1–5 scale slider (#653 B6).
    *
    * Same look and scale as ScaleSlider (mood/energy/stress) but the value is
-   * *optional*: it starts unset (`null`) and shows an "add rating" affordance
-   * instead of a slider, so an entry never fabricates a default rating. Once
-   * rated it renders the full slider plus a clear control back to `null`.
+   * *optional*: `null` means "not recorded", distinct from a low rating, so an
+   * entry never fabricates a default.
+   *
+   * Two presentations:
+   *   - Default (`expandedByDefault = false`): starts collapsed behind an "add
+   *     rating" affordance.
+   *   - `expandedByDefault = true` (#673): the slider is always visible so the
+   *     field is not hidden behind "Optional". While unset it sits at
+   *     `defaultValue` with a "not recorded" readout (`–`) and `unsetHint`; the
+   *     first interaction records a real value, and the clear control returns
+   *     it to `null`.
    *
    * It deliberately does not reuse ScaleSlider via `bind:value`: that component's
    * value is a non-null `number`, so an optional wrapper would fight its type.
@@ -28,6 +36,15 @@
   export let defaultValue = 3;
   export let scaleType: ScaleType = 'default';
   export let testId: string | undefined = undefined;
+  /** #673: render the slider up front instead of the "add rating" button. */
+  export let expandedByDefault = false;
+  /** Muted note shown under the slider while unset in expanded mode. */
+  export let unsetHint = '';
+
+  $: isUnset = value === null;
+  /** Slider position while unset in expanded mode (does not record a value). */
+  $: sliderPos = value ?? clamp(defaultValue);
+  $: showAddButton = isUnset && !expandedByDefault;
 
   const scaleLegendKeys: Record<ScaleType, { low: string; high: string }> = {
     mood: { low: 'entry.scale.mood_low', high: 'entry.scale.mood_high' },
@@ -56,11 +73,12 @@
   }
 
   function decrement(): void {
-    if (value !== null) value = clamp(value - 1);
+    // From an unset expanded slider the first step records a value.
+    value = clamp(sliderPos - 1);
   }
 
   function increment(): void {
-    if (value !== null) value = clamp(value + 1);
+    value = clamp(sliderPos + 1);
   }
 
   function onRangeInput(event: Event): void {
@@ -76,7 +94,7 @@
     {/if}
   </div>
 
-  {#if value === null}
+  {#if showAddButton}
     <button
       type="button"
       class="scale-add"
@@ -91,13 +109,13 @@
       <span class="scale-legend__high">{max} = {legendHigh}</span>
     </div>
   {:else}
-    <div class="scale-row">
+    <div class="scale-row" class:scale-row--unset={isUnset}>
       <button
         type="button"
         class="scale-step"
         aria-label={decrementLabel}
         on:click={decrement}
-        disabled={value <= min}
+        disabled={sliderPos <= min}
       >
         -
       </button>
@@ -107,13 +125,13 @@
         {min}
         {max}
         step="1"
-        {value}
+        value={sliderPos}
         on:input={onRangeInput}
         data-testid={testId}
         aria-valuemin={min}
         aria-valuemax={max}
-        aria-valuenow={value}
-        aria-valuetext={`${value}; ${legendText}`}
+        aria-valuenow={sliderPos}
+        aria-valuetext={isUnset ? unsetHint || legendText : `${value}; ${legendText}`}
         aria-describedby={legendId}
       />
       <button
@@ -121,12 +139,16 @@
         class="scale-step"
         aria-label={incrementLabel}
         on:click={increment}
-        disabled={value >= max}
+        disabled={sliderPos >= max}
       >
         +
       </button>
-      <output class="scale-value" for={id}>{value}</output>
+      <output class="scale-value" for={id}>{isUnset ? '–' : value}</output>
     </div>
+
+    {#if isUnset && unsetHint}
+      <p class="scale-unset-hint">{unsetHint}</p>
+    {/if}
 
     <div class="scale-legend" id={legendId}>
       <span class="scale-legend__low">{min} = {legendLow}</span>
@@ -222,6 +244,18 @@
     font-weight: 600;
     min-width: 1.5rem;
     text-align: right;
+  }
+
+  /* Unset-but-expanded (#673): the slider is visible but not yet recorded. */
+  .scale-row--unset .scale-value {
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  .scale-unset-hint {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
   }
 
   input[type='range'] {

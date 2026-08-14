@@ -1416,7 +1416,8 @@
 
       <!--
         Sleep quality sits with the core scales (same mask + 1–5 slider as
-        mood/energy/stress, #653 B6). It remains clearable to null via
+        mood/energy/stress, #653 B6). #673: shown expanded up front (not hidden
+        behind an "add" button), but still clearable to null via
         OptionalScaleSlider so "not recorded" stays distinct from a low rating.
       -->
       <OptionalScaleSlider
@@ -1426,6 +1427,8 @@
         clearLabel={$_('entry.sleep_quality.clear')}
         decrementLabel={$_('entry.sleep_quality.decrement')}
         incrementLabel={$_('entry.sleep_quality.increment')}
+        unsetHint={$_('entry.sleep_quality.unset_hint')}
+        expandedByDefault
         scaleType="sleep"
         testId="entry-sleep-quality"
         bind:value={sleepQuality}
