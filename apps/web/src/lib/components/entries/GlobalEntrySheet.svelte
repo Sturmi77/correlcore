@@ -22,14 +22,15 @@
   let sheetOpen = false;
   let workContextTypical: WorkContextTypical | null = null;
   let cycleTrackingEnabled = true;
-  let profileLoaded = false;
+  /** User id whose profile defaults are currently cached (null = none). */
+  let profileLoadedForUserId: string | null = null;
   let openFromQueryPending = false;
 
   $: sheetOpen = $entrySheetStore.open;
 
   // Re-read the cycle preference each time the sheet opens so a Settings toggle
   // made earlier in the same session is reflected without a reload (the initial
-  // load is guarded by `profileLoaded` and would otherwise stay stale).
+  // load is guarded by `profileLoadedForUserId` and would otherwise stay stale).
   let sheetWasOpen = false;
   $: if (sheetOpen && !sheetWasOpen) {
     sheetWasOpen = true;
@@ -115,14 +116,28 @@
   }
 
   async function loadProfileDefault(): Promise<void> {
-    if (profileLoaded || get(auth).status !== 'authenticated') return;
-    profileLoaded = true;
+    const state = get(auth);
+    if (state.status !== 'authenticated') return;
+    const userId = state.user.id;
+    // Skip only when this account's defaults are already cached. login()/setUser()
+    // can move A→B while staying `authenticated` (no anonymous gap), so a boolean
+    // `profileLoaded` would leave A's work_context_typical in place and autosave
+    // it into B's new entries.
+    if (profileLoadedForUserId === userId) return;
+    profileLoadedForUserId = userId;
+    // Drop prior-account defaults before the await so a slow profile fetch cannot
+    // keep painting A's typical onto B's sheet.
+    workContextTypical = null;
+    cycleTrackingEnabled = true;
     // allSettled: a transient /user/preferences failure must not discard a
     // successfully loaded work-context profile default (and vice versa).
     const [profileRes, prefRes] = await Promise.allSettled([
       fetchUserProfile(),
       fetchUserPreferences(),
     ]);
+    // Another account may have won the race while we awaited.
+    const latest = get(auth);
+    if (latest.status !== 'authenticated' || latest.user.id !== userId) return;
     if (profileRes.status === 'fulfilled') {
       workContextTypical = profileRes.value.work_context_typical ?? null;
     }
@@ -153,7 +168,7 @@
         sheetOpen = false;
         workContextTypical = null;
         cycleTrackingEnabled = true;
-        profileLoaded = false;
+        profileLoadedForUserId = null;
         return;
       }
       void loadProfileDefault();

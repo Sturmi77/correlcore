@@ -28,10 +28,16 @@ import { captureClientException } from '$lib/observability/errorTracking.client'
 import { fillLocalSleepAfterHealthConnectImport } from '$lib/stores/entriesOffline';
 import { readHealthConnectSleep } from './healthConnect';
 import {
+  _resetHealthConnectSyncForTests,
   aggregateSleepByDate,
+  drainHealthConnectSyncForSessionChange,
   mapHealthConnectImportError,
   syncHealthConnectSleep,
 } from './healthConnectSync';
+import {
+  _resetHealthConnectSyncLifecycleForTests,
+  trackHealthConnectSyncInFlight,
+} from './healthConnectSyncLifecycle';
 
 const granted = {
   current: [{ consent_type: 'health_connect', granted: true }],
@@ -114,6 +120,7 @@ describe('mapHealthConnectImportError', () => {
 
 describe('syncHealthConnectSleep', () => {
   beforeEach(() => {
+    _resetHealthConnectSyncForTests();
     vi.mocked(readHealthConnectSleep).mockReset();
     vi.mocked(importHealthConnectSleep).mockReset();
     vi.mocked(canUseOfflineSync).mockReset();
@@ -123,7 +130,10 @@ describe('syncHealthConnectSleep', () => {
     vi.mocked(fillLocalSleepAfterHealthConnectImport).mockResolvedValue(0);
     vi.mocked(captureClientException).mockReset();
   });
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    _resetHealthConnectSyncForTests();
+    vi.clearAllMocks();
+  });
 
   it('refuses without consent and never reads the bridge', async () => {
     const result = await syncHealthConnectSleep(revoked, range);
@@ -287,5 +297,111 @@ describe('syncHealthConnectSleep', () => {
       { skippedExistingDates: ['2026-08-02'] }
     );
     expect(scheduleSync).toHaveBeenCalledOnce();
+  });
+
+  it('aborts import when the authenticated user changes during the native read', async () => {
+    let currentId: string | null = 'user-a';
+    type SleepRows = { startTime: string; endTime: string; durationMinutes: number }[];
+    let releaseRead: (value: SleepRows) => void = () => {};
+    const readGate = new Promise<SleepRows>((resolve) => {
+      releaseRead = resolve;
+    });
+    vi.mocked(readHealthConnectSleep).mockReturnValue(readGate);
+
+    const syncPromise = syncHealthConnectSleep(granted, range, {
+      actorUserId: 'user-a',
+      currentUserId: () => currentId,
+    });
+
+    // Account switch while Health Connect is still reading sessions.
+    currentId = 'user-b';
+    releaseRead([{ startTime: 'x', endTime: '2026-08-02T06:00:00Z', durationMinutes: 450 }]);
+
+    const result = await syncPromise;
+    expect(result.status).toBe('error_unauthorized');
+    expect(importHealthConnectSleep).not.toHaveBeenCalled();
+    expect(fillLocalSleepAfterHealthConnectImport).not.toHaveBeenCalled();
+  });
+
+  it('drains an in-flight Sync now before session credentials can change', async () => {
+    type SleepRows = { startTime: string; endTime: string; durationMinutes: number }[];
+    let releaseRead: (value: SleepRows) => void = () => {};
+    const readGate = new Promise<SleepRows>((resolve) => {
+      releaseRead = resolve;
+    });
+    vi.mocked(readHealthConnectSleep).mockReturnValue(readGate);
+
+    const syncPromise = syncHealthConnectSleep(granted, range);
+    let drained = false;
+    const drainPromise = drainHealthConnectSyncForSessionChange().then(() => {
+      drained = true;
+    });
+
+    expect(drained).toBe(false);
+    releaseRead([]);
+    await syncPromise;
+    await drainPromise;
+    expect(drained).toBe(true);
+  });
+});
+
+describe('healthConnectSyncLifecycle drain', () => {
+  afterEach(() => {
+    _resetHealthConnectSyncLifecycleForTests();
+  });
+
+  it('drain waits for every overlapping sync, not just the latest', async () => {
+    // Regression: a single-slot registry (and its self-referential finally that
+    // compared the wrapped promise to the raw run, so it never cleared) drained
+    // only the newest sync. Two "Sync now" runs can overlap across a navigate.
+    let resolveFirst!: () => void;
+    const first = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    let resolveSecond!: () => void;
+    const second = new Promise<void>((resolve) => {
+      resolveSecond = resolve;
+    });
+
+    trackHealthConnectSyncInFlight(first);
+    trackHealthConnectSyncInFlight(second);
+
+    const drained = vi.fn();
+    const drainPromise = drainHealthConnectSyncForSessionChange().then(drained);
+
+    resolveSecond();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(drained).not.toHaveBeenCalled();
+
+    resolveFirst();
+    await drainPromise;
+    expect(drained).toHaveBeenCalledTimes(1);
+  });
+
+  it('drain also awaits a sync registered after draining began', async () => {
+    let resolveFirst!: () => void;
+    const first = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    trackHealthConnectSyncInFlight(first);
+
+    const drained = vi.fn();
+    const drainPromise = drainHealthConnectSyncForSessionChange().then(drained);
+
+    let resolveLate!: () => void;
+    const late = new Promise<void>((resolve) => {
+      resolveLate = resolve;
+    });
+    trackHealthConnectSyncInFlight(late);
+
+    resolveFirst();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(drained).not.toHaveBeenCalled();
+
+    resolveLate();
+    await drainPromise;
+    expect(drained).toHaveBeenCalledTimes(1);
   });
 });

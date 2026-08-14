@@ -17,6 +17,29 @@ import { scheduleSync } from '$lib/offline/syncOrchestrator';
 import { captureClientException } from '$lib/observability/errorTracking.client';
 import { fillLocalSleepAfterHealthConnectImport } from '$lib/stores/entriesOffline';
 import { readHealthConnectSleep, type HealthConnectSleepRecord } from './healthConnect';
+import {
+  _resetHealthConnectSyncLifecycleForTests,
+  drainHealthConnectSyncForSessionChange,
+  trackHealthConnectSyncInFlight,
+} from './healthConnectSyncLifecycle';
+
+export { drainHealthConnectSyncForSessionChange };
+
+/**
+ * Identity guard for Sync now. The page supplies the actor id and a live
+ * lookup so this module does not import the auth store (avoids a cycle through
+ * offline session drain).
+ */
+export interface HealthConnectSyncAuthGuard {
+  actorUserId: string;
+  currentUserId: () => string | null | undefined;
+}
+
+function actorStillCurrent(auth?: HealthConnectSyncAuthGuard): boolean {
+  if (!auth) return true;
+  const current = auth.currentUserId();
+  return typeof current === 'string' && current === auth.actorUserId;
+}
 
 /** Local ISO date (YYYY-MM-DD) of an instant, in the device's timezone. */
 function localIsoDate(iso: string): string | null {
@@ -147,12 +170,34 @@ function outcomeAfterImport(imported: HealthConnectImportResponse): HealthConnec
  * Read HC sleep for [start, end], aggregate per wake-date, and import. `start`
  * and `end` are ISO-8601 instants. Known API failures become status codes
  * (never throw) so the UI can show a specific message.
+ *
+ * When ``auth`` is provided, import/local-fill abort if the authenticated user
+ * changes mid-flight (wrong-user wearable write). Session login/logout also
+ * await {@link drainHealthConnectSyncForSessionChange} so the native read
+ * cannot outlive a credential swap.
  */
 export async function syncHealthConnectSleep(
   consents: ConsentListResponse | null | undefined,
-  range: { start: string; end: string }
+  range: { start: string; end: string },
+  auth?: HealthConnectSyncAuthGuard
+): Promise<HealthConnectSyncResult> {
+  const run = runHealthConnectSleepSync(consents, range, auth);
+  trackHealthConnectSyncInFlight(run);
+  return run;
+}
+
+/** Test-only: drop in-flight tracking between cases. */
+export function _resetHealthConnectSyncForTests(): void {
+  _resetHealthConnectSyncLifecycleForTests();
+}
+
+async function runHealthConnectSleepSync(
+  consents: ConsentListResponse | null | undefined,
+  range: { start: string; end: string },
+  auth?: HealthConnectSyncAuthGuard
 ): Promise<HealthConnectSyncResult> {
   if (!canUseHealthConnectImport(consents)) return { status: 'no_consent' };
+  if (auth && !actorStillCurrent(auth)) return { status: 'error_unauthorized' };
 
   const sleepRecords = await readHealthConnectSleep(consents, range);
   if (sleepRecords === null) return { status: 'unavailable' };
@@ -165,6 +210,13 @@ export async function syncHealthConnectSleep(
     sleep_minutes,
   }));
   const dates = sleep.map((s) => s.entry_date).sort();
+
+  // Re-check after the (slow) native read — login/logout may have swapped the
+  // Bearer/cookies. Import uses credentials at request time, so without this
+  // guard A's wearable totals would write into B's null-sleep entries.
+  if (!actorStillCurrent(auth)) {
+    return { status: 'error_unauthorized', dates };
+  }
 
   let imported: HealthConnectImportResponse;
   try {
@@ -190,6 +242,9 @@ export async function syncHealthConnectSleep(
   // recover on retry (#640).
   const needsLocalReconcile = imported.updated > 0 || imported.skipped_existing_value > 0;
   if (needsLocalReconcile) {
+    if (!actorStillCurrent(auth)) {
+      return { status: 'error_unauthorized', imported, dates };
+    }
     try {
       await fillLocalSleepAfterHealthConnectImport(sleep, {
         // Intentional-clear protection is only valid on skipped_existing dates.

@@ -1,4 +1,4 @@
-import { render } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import type { Writable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,10 +6,12 @@ import { closeEntrySheet, entrySheetSnapshot, resetEntrySheetStore } from '$lib/
 import { isoDate } from '$lib/utils/entryForm';
 import GlobalEntrySheet from './GlobalEntrySheet.svelte';
 
-type AuthTestState = {
-  status: 'authenticated';
-  user: { id: string; email: string; is_verified: boolean };
-};
+type AuthTestState =
+  | {
+      status: 'authenticated';
+      user: { id: string; email: string; is_verified: boolean };
+    }
+  | { status: 'anonymous' };
 
 type PageTestState = {
   url: URL;
@@ -18,6 +20,9 @@ type PageTestState = {
 const testHelpers = vi.hoisted(() => ({
   authStore: null as Writable<AuthTestState> | null,
   pageStore: null as Writable<PageTestState> | null,
+  fetchUserProfile: vi.fn(),
+  fetchUserPreferences: vi.fn(),
+  fetchDashboardSummary: vi.fn(),
 }));
 
 vi.mock('$lib/stores/auth', async () => {
@@ -37,6 +42,18 @@ vi.mock('$app/stores', async () => {
   return { page };
 });
 
+vi.mock('$lib/api/profile', () => ({
+  fetchUserProfile: (...args: unknown[]) => testHelpers.fetchUserProfile(...args),
+}));
+
+vi.mock('$lib/api/preferences', () => ({
+  fetchUserPreferences: (...args: unknown[]) => testHelpers.fetchUserPreferences(...args),
+}));
+
+vi.mock('$lib/api/dashboard', () => ({
+  fetchDashboardSummary: (...args: unknown[]) => testHelpers.fetchDashboardSummary(...args),
+}));
+
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
   return {
@@ -48,6 +65,9 @@ vi.mock('./EntrySheet.svelte', () => ({
   default: function EntrySheetMock(anchor: Element | Comment, props: Record<string, unknown> = {}) {
     const el = document.createElement('div');
     el.setAttribute('data-testid', 'entry-sheet-mock');
+    // Svelte 5 passes live getters for props — keep the original object so
+    // tests can read current values (spreading would freeze getter snapshots).
+    (el as HTMLElement & { __entrySheetProps?: Record<string, unknown> }).__entrySheetProps = props;
 
     const update = () => {
       el.setAttribute('data-open', String(Boolean(props.open)));
@@ -62,7 +82,7 @@ vi.mock('./EntrySheet.svelte', () => ({
         return () => {};
       },
       $set(nextProps: Record<string, unknown>) {
-        props = { ...props, ...nextProps };
+        Object.assign(props, nextProps);
         update();
       },
       $destroy() {
@@ -89,6 +109,13 @@ describe('GlobalEntrySheet openEntry query handling', () => {
   beforeEach(() => {
     resetEntrySheetStore();
     window.history.replaceState({}, '', '/');
+    testHelpers.fetchUserProfile.mockResolvedValue({ work_context_typical: null });
+    testHelpers.fetchUserPreferences.mockResolvedValue({
+      user_id: 'user-1',
+      cycle_tracking_enabled: true,
+      onboarding_completed: true,
+    });
+    testHelpers.fetchDashboardSummary.mockResolvedValue({ entry_count: 3 });
     testHelpers.authStore?.set({
       status: 'authenticated',
       user: { id: 'user-1', email: 'user@example.com', is_verified: true },
@@ -131,5 +158,40 @@ describe('GlobalEntrySheet openEntry query handling', () => {
 
     expect(entrySheetSnapshot()).toMatchObject({ open: true, date: isoDate(new Date()) });
     expect(window.location.search).toBe('');
+  });
+
+  it('reloads work_context_typical when login switches accounts without an anonymous gap', async () => {
+    // login()/setUser() can go A→B while status stays authenticated. A boolean
+    // profileLoaded gate would keep A's typical and autosave it into B's entry.
+    testHelpers.fetchUserProfile
+      .mockResolvedValueOnce({ work_context_typical: 'office' })
+      .mockResolvedValueOnce({ work_context_typical: 'remote' });
+
+    testHelpers.authStore?.set({
+      status: 'authenticated',
+      user: { id: 'user-a', email: 'a@example.com', is_verified: true },
+    });
+    render(GlobalEntrySheet);
+
+    const sheetProps = () =>
+      (
+        screen.getByTestId('entry-sheet-mock') as HTMLElement & {
+          __entrySheetProps?: Record<string, unknown>;
+        }
+      ).__entrySheetProps;
+
+    await waitFor(() => {
+      expect(sheetProps()?.workContextTypical).toBe('office');
+    });
+
+    testHelpers.authStore?.set({
+      status: 'authenticated',
+      user: { id: 'user-b', email: 'b@example.com', is_verified: true },
+    });
+
+    await waitFor(() => {
+      expect(sheetProps()?.workContextTypical).toBe('remote');
+    });
+    expect(testHelpers.fetchUserProfile).toHaveBeenCalledTimes(2);
   });
 });
