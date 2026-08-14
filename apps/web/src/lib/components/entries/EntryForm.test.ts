@@ -1399,3 +1399,41 @@ describe('EntryForm onboarding deferral on unreachable API (P1b)', () => {
     expect(hasOnboardingSuggestionStash('user-1')).toBe(false);
   });
 });
+
+describe('EntryForm — quick/full capture mode removed (#674)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(listEntries).mockResolvedValue([]);
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('no longer renders the quick/full toggle in sheet mode', async () => {
+    render(EntryForm, { props: { initialDate: '2026-06-02', mode: 'sheet' } });
+    await flushAsync();
+    expect(screen.queryByTestId('entry-open-mode-control')).toBeNull();
+  });
+
+  it('renders the full form even with a legacy cc_entry_open_mode=quick preference', async () => {
+    // The quick mode is gone; a stale preference from it must not hide sections
+    // that quick capture used to omit (tags, symptoms, sleep quality).
+    localStorage.setItem('cc_entry_open_mode', 'quick');
+    render(EntryForm, { props: { initialDate: '2026-06-02', mode: 'sheet' } });
+    await flushAsync();
+
+    expect(screen.queryByTestId('entry-open-mode-control')).toBeNull();
+    expect(screen.getByTestId('tag-picker-mock')).toBeTruthy();
+    expect(screen.getByTestId('symptom-checker-mock')).toBeTruthy();
+    expect(screen.getByTestId('entry-sleep-quality')).toBeTruthy();
+  });
+});
