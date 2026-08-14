@@ -61,17 +61,18 @@ describe('/ home screen ownership contract', () => {
     expect(entryLaunchButtonSource).not.toContain('/entries/new');
   });
 
-  it('uses the shared Button primitive for entry actions', () => {
+  it('uses one shared Button in the today context for the entry action (#675)', () => {
     const todayContextSource = readFileSync(
       resolve('src/lib/components/home/HomeTodayContext.svelte'),
       'utf8'
     );
     expect(source).toContain('$lib/components/common/Button.svelte');
-    expect(source).toContain('data-testid="home-cta"');
-    expect(source).toContain('{#if !todayEntry}');
+    // #675: the separate foot CTA was removed — a single button in the today
+    // context header covers both states (log today / edit), so no home-cta.
+    expect(source).not.toContain('data-testid="home-cta"');
     expect(source).not.toContain('HomeSparkline');
     expect(todayContextSource).toContain('data-testid="home-today-action"');
-    expect(todayContextSource).toContain('{#if !loading && todayEntry}');
+    expect(todayContextSource).toContain('{#if !loading}');
   });
 
   it('surfaces weekday and work-context patterns without adding a separate dashboard zone', () => {

@@ -26,13 +26,31 @@ const entry: EntryResponse = {
 };
 
 describe('HomeTodayContext', () => {
-  it('shows no-entry status when today has no entry', () => {
+  it('shows no-entry status and the primary log-today action when today has no entry', () => {
     render(HomeTodayContext, {
       props: { todayIso: '2026-05-15', todayEntry: null, loading: false },
     });
     expect(screen.getByTestId('home-today-status').textContent).toContain('home.no_entry_today');
     expect(screen.queryByTestId('home-work-context')).toBeNull();
+    // #675: one button in both states — with no entry it is the "log today" CTA.
+    expect(screen.getByTestId('home-today-action').textContent).toContain('home.cta_log_today');
+  });
+
+  it('hides the action while loading', () => {
+    render(HomeTodayContext, {
+      props: { todayIso: '2026-05-15', todayEntry: null, loading: true },
+    });
     expect(screen.queryByTestId('home-today-action')).toBeNull();
+  });
+
+  it('dispatches logToday from the no-entry state too', async () => {
+    const spy = vi.fn();
+    render(HomeTodayContext, {
+      props: { todayIso: '2026-05-15', todayEntry: null, loading: false },
+      events: { logToday: spy },
+    });
+    await fireEvent.click(screen.getByTestId('home-today-action'));
+    expect(spy).toHaveBeenCalled();
   });
 
   it('shows work context and tracked status when entry exists', () => {
