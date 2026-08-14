@@ -79,6 +79,13 @@ async function becomeAuthenticated(
   user: UserResponse,
   options: { enablePush: boolean }
 ): Promise<void> {
+  // Drain in-flight offline work under the *outgoing* identity before rebinding
+  // the DB. login()/logout() already drain up front, but reconnectSession(),
+  // hydrate() and setUser() reach here without one: prepareOfflineDataFor…()
+  // rebinds IndexedDB to `user` while `get(auth)` still returns the previous
+  // user, so an autosave's assertPersistActor() check passes yet the write lands
+  // in the new account's DB. Draining here closes that window for every caller.
+  await drainOfflineSyncForSessionChange();
   cacheLastUser(user);
   await prepareOfflineDataForAuthenticatedUser(user.id);
   _auth.set({ status: 'authenticated', user });

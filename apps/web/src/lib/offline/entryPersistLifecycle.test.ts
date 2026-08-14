@@ -43,9 +43,12 @@ describe('entryPersistLifecycle', () => {
     await expect(drainEntryPersistForSessionChange()).resolves.toBeUndefined();
   });
 
-  it('tracks the latest persist when a newer one is registered', async () => {
-    const first = new Promise<void>(() => {
-      /* never settles */
+  it('drain waits for every overlapping persist, not just the latest', async () => {
+    // Regression: a single-slot registry forgot the older persist and let it
+    // settle after the session drain. EntrySheet remounts can overlap two saves.
+    let resolveFirst!: () => void;
+    const first = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
     });
     let resolveSecond!: () => void;
     const second = new Promise<void>((resolve) => {
@@ -58,11 +61,41 @@ describe('entryPersistLifecycle', () => {
     const drained = vi.fn();
     const drainPromise = drainEntryPersistForSessionChange().then(drained);
 
-    // First is still pending; drain should be waiting on second only.
+    // Newest settles first, but the older one is still pending: drain must wait.
+    resolveSecond();
+    await Promise.resolve();
     await Promise.resolve();
     expect(drained).not.toHaveBeenCalled();
 
-    resolveSecond();
+    resolveFirst();
+    await drainPromise;
+    expect(drained).toHaveBeenCalledTimes(1);
+  });
+
+  it('drain also awaits a persist registered after draining began', async () => {
+    // The iterative drain must catch an overlapping save that starts (is
+    // registered) while an earlier batch is still being awaited.
+    let resolveFirst!: () => void;
+    const first = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    trackEntryPersistInFlight(first);
+
+    const drained = vi.fn();
+    const drainPromise = drainEntryPersistForSessionChange().then(drained);
+
+    let resolveLate!: () => void;
+    const late = new Promise<void>((resolve) => {
+      resolveLate = resolve;
+    });
+    trackEntryPersistInFlight(late);
+
+    resolveFirst();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(drained).not.toHaveBeenCalled();
+
+    resolveLate();
     await drainPromise;
     expect(drained).toHaveBeenCalledTimes(1);
   });

@@ -19,10 +19,14 @@ import {
 import { SYNC_META_KEYS } from './types';
 
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
-  // Offline outbox push first, then entry autosave — both must finish under the
-  // current credentials before login/logout swaps Bearer/cookies.
-  await drainSyncOrchestratorForSessionChange();
+  // Entry autosaves first, then the offline outbox. A completing persist calls
+  // onLocalEntrySaved() -> scheduleSync(), enqueuing a *new* outbox push; if the
+  // orchestrator were drained first that follow-up push would escape the drain
+  // and could run under the next account. Persist -> orchestrator guarantees
+  // both — including persist-scheduled pushes — finish under the current
+  // credentials before login/logout swaps Bearer/cookies.
   await drainEntryPersistForSessionChange();
+  await drainSyncOrchestratorForSessionChange();
 }
 
 /** Wipe Dexie data and client identity so the next account starts clean. */

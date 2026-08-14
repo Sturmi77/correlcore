@@ -192,7 +192,9 @@ describe('login / logout / setUser', () => {
     expect(authApi.fetchCurrentUser).toHaveBeenCalled();
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
-    expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(1);
+    // Twice: once up front before apiLogin swaps cookies, once inside
+    // becomeAuthenticated before it rebinds the offline DB to the new user.
+    expect(offlineSession.drainOfflineSyncForSessionChange).toHaveBeenCalledTimes(2);
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
   });
 
@@ -220,6 +222,9 @@ describe('login / logout / setUser', () => {
     expect(get(isAuthenticated)).toBe(true);
     vi.mocked(resetInsightStore).mockClear();
     vi.mocked(clearAllOnboardingSuggestionStashes).mockClear();
+    // setUp's setUser() drained once via becomeAuthenticated; clear so the
+    // assertion below targets logout's own drain in isolation.
+    vi.mocked(offlineSession.drainOfflineSyncForSessionChange).mockClear();
     vi.mocked(authApi.logout).mockRejectedValueOnce(new Error('boom'));
     await logout();
     expect(get(auth)).toEqual({ status: 'anonymous' });
@@ -252,6 +257,13 @@ describe('login / logout / setUser', () => {
     expect(get(auth)).toEqual({ status: 'authenticated', user: fakeUser });
     expect(offlineSession.prepareOfflineDataForAuthenticatedUser).toHaveBeenCalledWith('usr_1');
     expect(resetInsightStore).toHaveBeenCalledTimes(1);
+    // #671: becomeAuthenticated must drain in-flight offline work under the
+    // outgoing identity BEFORE rebinding the offline DB to the new user.
+    expect(
+      vi.mocked(offlineSession.drainOfflineSyncForSessionChange).mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      vi.mocked(offlineSession.prepareOfflineDataForAuthenticatedUser).mock.invocationCallOrder[0]
+    );
   });
 
   it('setUser fails when cookies did not stick (/auth/me → null)', async () => {

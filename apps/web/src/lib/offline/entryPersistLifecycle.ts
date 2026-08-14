@@ -7,42 +7,49 @@
  * login()/logout() await this before swapping cookies/Bearer so a slow
  * persist (e.g. onboarding finalize, relation re-fetch) cannot resume under
  * the next account and write the prior user's snapshot into their entries.
+ *
+ * The tracker holds *every* concurrent persist, not just the most recent one.
+ * `EntrySheet` can remount its keyed `EntryForm` for another date while the
+ * destroyed form's `autoSave.destroy()` leaves an `opts.save` still running, so
+ * two persists overlap. A single-slot registry would forget the older one and
+ * let it settle *after* the session drain — resuming under the next account.
  */
 
-let entryPersistInFlight: Promise<unknown> | null = null;
+const inFlight = new Set<Promise<unknown>>();
 
-/** Register the active entry persist promise (cleared in ``finally``). */
+/** Register an active entry persist promise (removed once it settles). */
 export function trackEntryPersistInFlight(run: Promise<unknown>): void {
-  entryPersistInFlight = run;
-  // Use then(onFulfilled, onRejected) — not finally()+void — so a rejected
-  // save does not leave an unhandled rejection on a floating wrapper promise
-  // when nobody is currently draining.
+  inFlight.add(run);
+  // then(onFulfilled, onRejected) rather than finally()+void: a rejected save
+  // must not leave an unhandled rejection on a floating wrapper promise when
+  // nobody is currently draining.
   void run.then(
     () => {
-      if (entryPersistInFlight === run) {
-        entryPersistInFlight = null;
-      }
+      inFlight.delete(run);
     },
     () => {
-      if (entryPersistInFlight === run) {
-        entryPersistInFlight = null;
-      }
+      inFlight.delete(run);
     }
   );
 }
 
-/** Await any in-flight entry persist before swapping session credentials. */
+/**
+ * Await every in-flight entry persist before swapping session credentials.
+ *
+ * Loops until the set is empty: awaiting one batch can surface a persist that
+ * was registered after the snapshot was taken (an overlapping save that had
+ * not started when draining began), so a single `allSettled` pass is not
+ * enough to guarantee quiescence.
+ */
 export async function drainEntryPersistForSessionChange(): Promise<void> {
-  const inFlight = entryPersistInFlight;
-  if (!inFlight) return;
-  try {
-    await inFlight;
-  } catch {
-    // Failures are already mapped to autosave error state; session transition proceeds.
+  while (inFlight.size > 0) {
+    // Failures are already mapped to autosave error state; session transition
+    // proceeds regardless, so allSettled (never rejecting) is what we want.
+    await Promise.allSettled([...inFlight]);
   }
 }
 
 /** Test-only: drop in-flight tracking between cases. */
 export function _resetEntryPersistLifecycleForTests(): void {
-  entryPersistInFlight = null;
+  inFlight.clear();
 }
