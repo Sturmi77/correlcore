@@ -40,7 +40,12 @@
     </div>
   </div>
 
-  {#if !loading && todayEntry}
+  {#if !loading}
+    <!--
+      #675: one button in a fixed position for both states; only the text and
+      colour change (primary "log today" when no entry yet → secondary "edit"
+      once recorded). The prior separate foot CTA was removed.
+    -->
     <Button
       type="button"
       size="sm"

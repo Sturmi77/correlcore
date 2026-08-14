@@ -335,25 +335,6 @@
         {/if}
       {/each}
     </section>
-
-    <!-- Zone 3: primary CTA when today is not logged -->
-    {#if !todayEntry}
-      <section class="home-zone home-zone--foot" data-testid="home-zone-cta">
-        <Button
-          type="button"
-          variant="primary"
-          size="lg"
-          fullWidth
-          stacked
-          className="home-cta"
-          data-testid="home-cta"
-          on:click={() => openEntry(todayIso)}
-        >
-          <span class="text-lg font-semibold">{$_('home.cta_log_today')}</span>
-          <span class="text-sm home-cta__hint">{$_('entry.subtitle')}</span>
-        </Button>
-      </section>
-    {/if}
   </div>
 {:else}
   <LandingPage />
@@ -373,10 +354,6 @@
 
   .home-zone--sections {
     gap: var(--space-4);
-  }
-
-  .home-zone--foot {
-    gap: var(--screen-gap);
   }
 
   .home-install {
@@ -410,13 +387,5 @@
     gap: var(--space-2);
     flex-wrap: wrap;
     justify-content: flex-end;
-  }
-
-  :global(.home-cta) {
-    border: 1px solid color-mix(in oklch, var(--color-primary) 25%, transparent);
-  }
-
-  :global(.home-cta .home-cta__hint) {
-    color: color-mix(in srgb, var(--color-text-inverse) 78%, transparent);
   }
 </style>
