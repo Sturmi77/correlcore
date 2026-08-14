@@ -29,6 +29,12 @@ export type TagsState =
 
 const _tags = writable<TagsState>({ status: 'idle' });
 
+// Incremented on every reset (session boundary). An in-flight refresh compares
+// the generation it captured at start against this; a mismatch means a reset
+// happened mid-flight, so the resolved response belongs to a prior account and
+// must not repopulate the store (#669).
+let storeGeneration = 0;
+
 export const tags = { subscribe: _tags.subscribe };
 
 /** Flat list of currently-known tags (defaults + custom), or [] when not ready. */
@@ -61,12 +67,18 @@ export const tagsByCategory = derived(_tags, ($s) => {
 
 /** Refresh the tag catalogue from the server. */
 export async function refreshTags(): Promise<TagResponse[]> {
+  const gen = storeGeneration;
   _tags.set({ status: 'loading' });
   try {
     const list = await apiListVisibleTags();
+    // A session boundary (resetTagsStore) bumped the generation while this
+    // request for the previous account was in flight — drop the stale result
+    // instead of restoring another user's tags over the new account's store.
+    if (gen !== storeGeneration) return list;
     _tags.set({ status: 'ready', tags: list });
     return list;
   } catch (err) {
+    if (gen !== storeGeneration) throw err;
     const message = err instanceof Error ? err.message : 'Failed to load tags';
     _tags.set({ status: 'error', message });
     throw err;
@@ -117,5 +129,8 @@ export async function removeTag(id: string): Promise<void> {
 
 /** Reset the cache — useful on logout. */
 export function resetTagsStore(): void {
+  // Bump the generation so any in-flight refreshTags() for the previous
+  // account drops its result instead of repopulating the store post-swap.
+  storeGeneration += 1;
   _tags.set({ status: 'idle' });
 }
