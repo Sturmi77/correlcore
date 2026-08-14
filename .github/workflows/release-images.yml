@@ -222,10 +222,13 @@ jobs:
               "/users/${{ github.repository_owner }}/packages/container/correlcore-api/versions" \
               >"${versions_json}"
           fi
+          # Match bare X.Y / X.Y.Z and prerelease X.Y.Z-<pre> (e.g. 1.0.0-rc.1),
+          # which docker/metadata-action also published without the leading v.
+          # The digits.digits anchor still excludes latest / main / sha-<...>.
           # grep exits 1 on no match — do not fail the job when every tag is already v-prefixed.
           mapfile -t bare_tags < <(
             jq -r '.[].metadata.container.tags[]?' "${versions_json}" \
-              | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' \
+              | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+(-[0-9A-Za-z.-]+)?)?$' \
               | sort -u \
               || true
           )

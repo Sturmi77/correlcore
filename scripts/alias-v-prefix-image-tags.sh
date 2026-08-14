@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Alias bare-semver container tags (1.3.0, 1.3) to the documented v-prefixed
-# names (v1.3.0, v1.3) without rebuilding.
+# Alias bare-semver container tags (1.3.0, 1.3, 1.0.0-rc.1) to the documented
+# v-prefixed names (v1.3.0, v1.3, v1.0.0-rc.1) without rebuilding.
 #
 # Why: docker/metadata-action's type=semver strips the leading v from git tags,
 # so historical GHCR publishes used :1.3.0 while docs/compose pin IMAGE_TAG=v1.3.0.
@@ -14,7 +14,8 @@
 # Env:
 #   REGISTRIES    space-separated registry/owner prefixes (required)
 #   IMAGES        space-separated image names (default: correlcore-api correlcore-web)
-#   SOURCE_TAGS   space-separated bare semver tags to alias (required)
+#   SOURCE_TAGS   space-separated bare semver tags to alias, incl. prerelease
+#                 (required), e.g. '1.3.0 1.3 1.0.0-rc.1'
 #   DRY_RUN       if 1, only print actions (default: 0)
 #   FAIL_ON_ERROR if 1, exit non-zero on first alias failure (default: 0)
 set -euo pipefail
@@ -49,8 +50,10 @@ failed=0
 for registry in ${REGISTRIES}; do
   for image in ${IMAGES}; do
     for bare in ${SOURCE_TAGS}; do
-      # Only bare numeric semver / major.minor — never rewrite sha-/latest/main.
-      if [[ ! "${bare}" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+      # Bare semver: major.minor, major.minor.patch, and prerelease
+      # major.minor.patch-<pre> (e.g. 1.0.0-rc.1). The digits.digits anchor
+      # still never rewrites sha-/latest/main.
+      if [[ ! "${bare}" =~ ^[0-9]+\.[0-9]+(\.[0-9]+(-[0-9A-Za-z.-]+)?)?$ ]]; then
         echo "skip (not bare semver): ${bare}"
         skipped_invalid=$((skipped_invalid + 1))
         continue
