@@ -25,6 +25,7 @@
   import { tags, tagsByCategory, refreshTags, submitTag } from '$lib/stores/tags';
   import { TAG_CATEGORIES, MAX_TAGS_PER_ENTRY, type TagCategory } from '$lib/api/tags';
   import IconRender from '$lib/components/common/IconRender.svelte';
+  import CategoryIcon from '$lib/components/common/CategoryIcon.svelte';
   import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
 
   /** Two-way bound: list of selected tag IDs. */
@@ -181,7 +182,10 @@
   {:else if $tags.status === 'ready'}
     {#each visibleCategories as cat (cat)}
       <div class="tag-category">
-        <h3 class="tag-category-label">{$_(`tag.category.${cat}`)}</h3>
+        <h3 class="tag-category-label">
+          <CategoryIcon category={cat} />
+          <span>{$_(`tag.category.${cat}`)}</span>
+        </h3>
         <div class="tag-chips">
           {#each $tagsByCategory[cat] as tag (tag.id)}
             {@const active = isSelected(tag.id, selected)}
@@ -194,11 +198,6 @@
               on:click={() => toggle(tag.id)}
               style={tag.color ? `--tag-color: ${tag.color}` : ''}
             >
-              {#if tag.icon}
-                <span class="tag-icon" aria-hidden="true">
-                  <IconRender icon={tag.icon} size={ICON_SIZE_SM} />
-                </span>
-              {/if}
               <span class="tag-name">{tag.name}</span>
             </button>
           {/each}
@@ -382,6 +381,9 @@
   }
 
   .tag-category-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
     font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
@@ -428,11 +430,6 @@
     background: var(--tag-color, var(--color-primary));
     border-color: var(--tag-color, var(--color-primary));
     color: var(--color-text-inverse);
-  }
-
-  .tag-icon {
-    font-size: var(--text-base);
-    line-height: 1;
   }
 
   .tag-custom {

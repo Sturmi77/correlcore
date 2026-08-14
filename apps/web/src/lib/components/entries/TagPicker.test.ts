@@ -87,6 +87,26 @@ describe('TagPicker', () => {
     tagStoreMocks.submitTag.mockReset();
   });
 
+  it('renders a curated category icon in the visible category header (#672)', () => {
+    render(TagPicker, { props: { selected: [] } });
+    // The default tag is in the "work" category, so that header is visible.
+    const heading = screen.getByText('tag.category.work').closest('h3');
+    expect(heading).not.toBeNull();
+    // Category-level iconography is a statically-imported Lucide SVG.
+    expect(heading?.querySelector('svg')).toBeTruthy();
+  });
+
+  it('does not render a per-tag icon glyph inside the chip (#672)', () => {
+    tagStoreMocks.state.set({
+      status: 'ready',
+      tags: [tag({ id: 'iconned', name: 'Iconned', category: 'work', icon: 'dumbbell' })],
+    });
+    render(TagPicker, { props: { selected: [] } });
+    const chip = screen.getByRole('button', { name: 'Iconned' });
+    // The chip is now name + colour only — no decorative per-item icon.
+    expect(chip.querySelector('svg')).toBeNull();
+  });
+
   it('creates a custom tag inline and selects it', async () => {
     const created = tag({
       id: 'tag-new',

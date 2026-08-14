@@ -251,11 +251,6 @@
         <li class="symptom-row">
           <fieldset class="symptom-fieldset" {disabled}>
             <legend class="symptom-name">
-              {#if symptom.icon}
-                <span class="symptom-icon" aria-hidden="true">
-                  <IconRender icon={symptom.icon} />
-                </span>
-              {/if}
               <span>{name}</span>
             </legend>
             <button
@@ -458,13 +453,6 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-  }
-
-  .symptom-icon {
-    font-size: var(--text-base);
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
   }
 
   .symptom-custom-hint {
