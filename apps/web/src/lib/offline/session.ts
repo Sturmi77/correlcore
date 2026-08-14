@@ -25,9 +25,9 @@ export async function drainOfflineSyncForSessionChange(): Promise<void> {
   // both call scheduleSync() right before their tracked promise resolves,
   // enqueuing a *new* outbox push. Draining the orchestrator first would let
   // those follow-up pushes escape the drain and run under the next account.
-  // Draining producers before the orchestrator guarantees both — including the
-  // pushes they schedule — finish under the current credentials before
-  // login/logout swaps Bearer/cookies.
+  // Producers first, then the orchestrator (which loops until follow-up
+  // scheduleSync() calls from a dirty tail also settle) keeps the whole chain
+  // on the current credentials before login/logout swaps Bearer/cookies.
   await drainEntryPersistForSessionChange();
   await drainHealthConnectSyncForSessionChange();
   await drainSyncOrchestratorForSessionChange();

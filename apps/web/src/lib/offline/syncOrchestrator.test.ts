@@ -7,7 +7,9 @@ import { CLIENT_ID_STORAGE_KEY, getOrCreateClientId, peekClientId } from './clie
 import { resetOfflineDbForTests } from './db';
 import { setOfflineSyncEnabled } from './featureFlag';
 import {
+  _holdNthRefreshMetaForTests,
   drainOfflineSyncForSessionChange,
+  initializeSyncOrchestrator,
   peekSyncOrchestrator,
   pullSince,
   pushPending,
@@ -534,6 +536,127 @@ describe('syncOrchestrator', () => {
       conflictNote: null,
       syncing: false,
     });
+  });
+
+  it('drains a dirty follow-up push started after the in-flight sync settles', async () => {
+    // Regression: scheduleSync during the post-do-while tail (persist/HC
+    // completing while refreshMeta is still running) sets syncDirty, and
+    // finally starts a new syncAll after clearing syncInFlight. A single-shot
+    // drain awaited the old promise, reset tracking, and let that follow-up
+    // push the previous account's outbox after login swapped cookies.
+    await appendChange({
+      batch_id: 'batch-1',
+      entity_type: 'entry',
+      entity_id: 'e1',
+      operation: 'upsert',
+      payload: { mood_score: 2 },
+      client_ts: '2026-06-30T12:00:00.000Z',
+    });
+
+    let releaseFirstPush!: () => void;
+    let releaseSecondPush!: () => void;
+    pushSyncChanges.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseFirstPush = () =>
+            resolve({
+              cursor: 'cursor-1',
+              applied: 1,
+              skipped: 0,
+              conflicts: [],
+              idempotent_replay: false,
+            });
+        })
+    );
+    pushSyncChanges.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseSecondPush = () =>
+            resolve({
+              cursor: 'cursor-2',
+              applied: 1,
+              skipped: 0,
+              conflicts: [],
+              idempotent_replay: false,
+            });
+        })
+    );
+    pullSyncChanges.mockResolvedValue({
+      cursor: 'cursor-1',
+      changes: [],
+      has_more: false,
+      server_time: '2026-06-30T12:01:00.000Z',
+    });
+
+    let releaseTail!: () => void;
+    _holdNthRefreshMetaForTests(
+      3,
+      new Promise<void>((resolve) => {
+        releaseTail = resolve;
+      })
+    );
+
+    const first = syncAll();
+    await vi.waitFor(() => {
+      expect(pushSyncChanges).toHaveBeenCalledOnce();
+    });
+
+    releaseFirstPush();
+    await vi.waitFor(() => {
+      expect(peekSyncOrchestrator().lastPullAt).not.toBeNull();
+    });
+
+    await appendChange({
+      batch_id: 'batch-2',
+      entity_type: 'entry',
+      entity_id: 'e2',
+      operation: 'upsert',
+      payload: { mood_score: 5 },
+      client_ts: '2026-06-30T12:02:00.000Z',
+    });
+    const overlapping = syncAll();
+
+    let drained = false;
+    const drainPromise = drainOfflineSyncForSessionChange().then(() => {
+      drained = true;
+    });
+
+    releaseTail();
+    await vi.waitFor(() => {
+      expect(pushSyncChanges.mock.calls.length).toBeGreaterThanOrEqual(2);
+    });
+    expect(drained).toBe(false);
+
+    releaseSecondPush();
+    await drainPromise;
+    await first;
+    await overlapping;
+
+    expect(drained).toBe(true);
+    expect(peekSyncOrchestrator().syncing).toBe(false);
+  });
+
+  it('unsubscribes the connectivity handler up front so the drain cannot livelock (#681)', async () => {
+    // The online handler is the drain's only unbounded re-entrant trigger: while
+    // subscribed it can keep calling scheduleSync() between loop iterations. The
+    // drain must tear it down before looping (not only in the trailing reset).
+    pullSyncChanges.mockResolvedValue({
+      cursor: 'cursor-1',
+      changes: [],
+      has_more: false,
+      server_time: '2026-06-30T12:01:00.000Z',
+    });
+
+    const unsubscribe = vi.fn();
+    const cleanup = initializeSyncOrchestrator(() => unsubscribe);
+
+    await drainOfflineSyncForSessionChange();
+
+    expect(unsubscribe).toHaveBeenCalled();
+    // A drained session change leaves no in-flight sync tracked.
+    expect(peekSyncOrchestrator().syncing).toBe(false);
+
+    cleanup();
   });
 
   it('re-drains the outbox when a save lands during an in-flight sync', async () => {

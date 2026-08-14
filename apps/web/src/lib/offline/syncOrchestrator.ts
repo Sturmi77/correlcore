@@ -109,6 +109,9 @@ let syncInFlight: Promise<void> | null = null;
 let syncDirty = false;
 let initialized = false;
 let onlineUnsubscribe: (() => void) | null = null;
+/** Test-only: wait on this gate inside `refreshMeta` after `refreshMetaSkip` prior calls. */
+let refreshMetaHold: Promise<void> | null = null;
+let refreshMetaSkip = 0;
 
 function resetSyncOrchestratorState(): void {
   onlineUnsubscribe?.();
@@ -116,6 +119,8 @@ function resetSyncOrchestratorState(): void {
   initialized = false;
   syncInFlight = null;
   syncDirty = false;
+  refreshMetaHold = null;
+  refreshMetaSkip = 0;
   store.set(initialState);
 }
 
@@ -126,6 +131,15 @@ function tableForEntityType(entityType: OfflineEntityType): SyncTableName {
 }
 
 async function refreshMeta(): Promise<void> {
+  if (refreshMetaHold) {
+    if (refreshMetaSkip > 0) {
+      refreshMetaSkip -= 1;
+    } else {
+      const gate = refreshMetaHold;
+      refreshMetaHold = null;
+      await gate;
+    }
+  }
   const pending = await listPendingChanges();
   const lastPushAt = await getSyncMeta(SYNC_META_KEYS.lastPushAt);
   const lastPullAt = await getSyncMeta(SYNC_META_KEYS.lastPullAt);
@@ -385,13 +399,48 @@ export function scheduleSync(): void {
   });
 }
 
+/**
+ * Backstop against a drain livelock: if some re-entrant trigger keeps starting
+ * a fresh `syncInFlight` between iterations, give up after this many rounds and
+ * proceed with the session swap rather than hang login/logout forever. Sized far
+ * above any legitimate follow-up chain (which is bounded by the outbox emptying).
+ */
+const MAX_SESSION_DRAIN_ITERATIONS = 50;
+
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
-  const inFlight = syncInFlight;
-  if (inFlight) {
+  // Stop connectivity-driven syncs up front. The online handler otherwise stays
+  // subscribed until resetSyncOrchestratorState() runs *after* the loop, so a
+  // flapping connection could keep calling scheduleSync() → a new `syncInFlight`
+  // between iterations, starving the break condition and livelocking the drain.
+  // resetSyncOrchestratorState() below unsubscribes it again, so doing it here
+  // first is idempotent; the outbox is drained by awaiting the in-flight sync,
+  // not by connectivity wake-ups.
+  onlineUnsubscribe?.();
+  onlineUnsubscribe = null;
+
+  // Loop until quiescent: a completing sync may set `syncDirty` after its
+  // do-while (e.g. persist/HC `scheduleSync()` during `refreshMeta`) and
+  // `finally` starts a follow-up via `scheduleSync()` *after* clearing
+  // `syncInFlight`. A single await of the current promise would then
+  // `resetSyncOrchestratorState()` while that follow-up is already running,
+  // so login()/logout() could swap cookies under an untracked push of the
+  // previous account's outbox. Same pattern as entry persist / HC drain.
+  //
+  // The iteration cap is a belt-and-suspenders backstop for any remaining
+  // re-entrant trigger (e.g. a visibilitychange burst): the drain must never
+  // hang a session change.
+  let iterations = 0;
+  while (syncInFlight && iterations < MAX_SESSION_DRAIN_ITERATIONS) {
+    iterations += 1;
+    const inFlight = syncInFlight;
     try {
       await inFlight;
     } catch {
       // Failed pushes stay pending locally; the session transition must still continue.
+    }
+    // If we awaited a promise that was replaced mid-wait, keep looping.
+    if (syncInFlight === inFlight) {
+      break;
     }
   }
   resetSyncOrchestratorState();
@@ -451,6 +500,16 @@ export function initializeSyncOrchestrator(
 /** Test helper — reset singleton orchestrator hooks. */
 export function resetSyncOrchestratorForTests(): void {
   resetSyncOrchestratorState();
+}
+
+/**
+ * Test-only: the Nth `refreshMeta()` waits on `gate` before reading IDB.
+ * `n=3` is the `finally` tail after pushPending + pullSince, so an overlapping
+ * `syncAll` can set `syncDirty` after the inner do-while can consume it.
+ */
+export function _holdNthRefreshMetaForTests(n: number, gate: Promise<void>): void {
+  refreshMetaSkip = Math.max(0, n - 1);
+  refreshMetaHold = gate;
 }
 
 /** Test helper — read orchestrator state synchronously. */
