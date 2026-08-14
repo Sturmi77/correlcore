@@ -223,6 +223,7 @@
       "hint": "Deine subjektive Bewertung von 1 (schlecht) bis 5 (super).",
       "add": "Schlafqualität bewerten",
       "clear": "Zurücksetzen",
+      "unset_hint": "Optional – zum Erfassen antippen.",
       "decrement": "Schlafqualität verringern",
       "increment": "Schlafqualität erhöhen",
       "level_1": "1 - Schlecht",
@@ -290,11 +291,6 @@
       "title": "Wie war dein Tag?",
       "close": "Eintrag schlie\u00dfen",
       "done": "Fertig"
-    },
-    "open_mode": {
-      "label": "Erfassungsmodus",
-      "quick": "Schnell",
-      "full": "Vollst\u00e4ndig"
     },
     "delta": {
       "heading": "Vergleich mit gestern",

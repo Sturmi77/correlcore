@@ -32,7 +32,6 @@
   import NoteMarkerChips from '$lib/components/entries/NoteMarkerChips.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
-  import SegmentedControl from '$lib/components/common/SegmentedControl.svelte';
   import {
     fetchEntryDelta,
     listEntries,
@@ -71,7 +70,6 @@
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
   import { isoDate, mergeUnresolvedSymptoms, mergeUnresolvedTagIds } from '$lib/utils/entryForm';
   import { NEUTRAL_SCALE_DEFAULT, scaleDefaultsFromPrevious } from '$lib/utils/entrySmartDefaults';
-  import { setEntryOpenMode, type EntryOpenMode } from '$lib/utils/entryOpenMode';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
   import { trackEntryPersistInFlight } from '$lib/offline/entryPersistLifecycle';
   import { auth } from '$lib/stores/auth';
@@ -92,8 +90,6 @@
   } from '$lib/utils/onboardingSuggestionStash';
 
   export let mode: 'page' | 'sheet' = 'page';
-  /** Quick capture hides tags, symptoms, and optional extras (O-25). */
-  export let openMode: EntryOpenMode = 'full';
   /** When true, show onboarding tag suggestions and finalize onboarding on first save. */
   export let onboardingTagsEnabled = false;
   /** ISO date `YYYY-MM-DD` for the entry being edited. */
@@ -622,17 +618,6 @@
    */
   const SHOW_ENTRY_TIME_SLOTS = false;
   const ENTRY_SLOTS: Exclude<EntrySlot, 'day'>[] = ['morning', 'noon', 'evening'];
-
-  $: quickEntry = openMode === 'quick';
-  $: openModeOptions = [
-    { id: 'quick' as const, label: $_('entry.open_mode.quick'), testId: 'entry-open-mode-quick' },
-    { id: 'full' as const, label: $_('entry.open_mode.full'), testId: 'entry-open-mode-full' },
-  ];
-
-  function setOpenMode(next: EntryOpenMode): void {
-    openMode = next;
-    setEntryOpenMode(next);
-  }
 
   function waitForAutoSaveNotSaving(): Promise<void> {
     if (autoSave.peek().status !== 'saving') return Promise.resolve();
@@ -1342,15 +1327,6 @@
       {/if}
     </div>
   </div>
-  {#if mode === 'sheet'}
-    <SegmentedControl
-      value={openMode}
-      options={openModeOptions}
-      ariaLabel={$_('entry.open_mode.label')}
-      testId="entry-open-mode-control"
-      on:change={(event) => setOpenMode(event.detail.value as EntryOpenMode)}
-    />
-  {/if}
 </header>
 
 <form
@@ -1439,24 +1415,24 @@
       />
 
       <!--
-        Sleep quality sits with the core scales in the full form (same mask +
-        1–5 slider as mood/energy/stress, #653 B6), but stays out of quick
-        capture: it is optional, and quick mode deliberately hides optional
-        extras to keep the flow short (#657 review).
+        Sleep quality sits with the core scales (same mask + 1–5 slider as
+        mood/energy/stress, #653 B6). #673: shown expanded up front (not hidden
+        behind an "add" button), but still clearable to null via
+        OptionalScaleSlider so "not recorded" stays distinct from a low rating.
       -->
-      {#if !quickEntry}
-        <OptionalScaleSlider
-          id="entry-sleep-quality"
-          label={$_('entry.sleep_quality.label')}
-          addLabel={$_('entry.sleep_quality.add')}
-          clearLabel={$_('entry.sleep_quality.clear')}
-          decrementLabel={$_('entry.sleep_quality.decrement')}
-          incrementLabel={$_('entry.sleep_quality.increment')}
-          scaleType="sleep"
-          testId="entry-sleep-quality"
-          bind:value={sleepQuality}
-        />
-      {/if}
+      <OptionalScaleSlider
+        id="entry-sleep-quality"
+        label={$_('entry.sleep_quality.label')}
+        addLabel={$_('entry.sleep_quality.add')}
+        clearLabel={$_('entry.sleep_quality.clear')}
+        decrementLabel={$_('entry.sleep_quality.decrement')}
+        incrementLabel={$_('entry.sleep_quality.increment')}
+        unsetHint={$_('entry.sleep_quality.unset_hint')}
+        expandedByDefault
+        scaleType="sleep"
+        testId="entry-sleep-quality"
+        bind:value={sleepQuality}
+      />
     </div>
   </section>
 
@@ -1482,126 +1458,124 @@
     </label>
   </section>
 
-  {#if !quickEntry}
-    <section class="entry-section" aria-labelledby="entry-section-tags">
-      <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
-      <TagPicker bind:selected={selectedTagIds} />
-    </section>
+  <section class="entry-section" aria-labelledby="entry-section-tags">
+    <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
+    <TagPicker bind:selected={selectedTagIds} />
+  </section>
 
-    <section class="entry-section" aria-labelledby="entry-section-symptoms">
-      <h2 id="entry-section-symptoms" class="entry-section__title">
-        {$_('entry.section.symptoms')}
-      </h2>
-      <SymptomChecker bind:selected={selectedSymptoms} />
-    </section>
+  <section class="entry-section" aria-labelledby="entry-section-symptoms">
+    <h2 id="entry-section-symptoms" class="entry-section__title">
+      {$_('entry.section.symptoms')}
+    </h2>
+    <SymptomChecker bind:selected={selectedSymptoms} />
+  </section>
 
-    <section class="entry-section" aria-labelledby="entry-section-note">
-      <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
-      <label class="entry-field">
-        <span class="sr-only">{$_('entry.note_placeholder')}</span>
-        <textarea
-          class="input"
-          rows="4"
-          maxlength="4000"
-          bind:value={note}
-          placeholder={$_('entry.note_placeholder')}></textarea>
-      </label>
-      <NoteMarkerChips
-        markers={noteMarkers}
-        suggestions={markerSuggestions}
-        on:toggle={handleMarkerToggle}
-        on:addCustom={handleCustomMarker}
-      />
-      <label class="entry-field entry-field--inline">
-        <span class="entry-label">{$_('entry.note_visibility.label')}</span>
-        <select bind:value={noteVisibility} data-testid="entry-note-visibility">
-          <option value="full">{$_('entry.note_visibility.full')}</option>
-          <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
-          <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
-        </select>
-      </label>
-    </section>
+  <section class="entry-section" aria-labelledby="entry-section-note">
+    <h2 id="entry-section-note" class="entry-section__title">{$_('entry.section.note')}</h2>
+    <label class="entry-field">
+      <span class="sr-only">{$_('entry.note_placeholder')}</span>
+      <textarea
+        class="input"
+        rows="4"
+        maxlength="4000"
+        bind:value={note}
+        placeholder={$_('entry.note_placeholder')}></textarea>
+    </label>
+    <NoteMarkerChips
+      markers={noteMarkers}
+      suggestions={markerSuggestions}
+      on:toggle={handleMarkerToggle}
+      on:addCustom={handleCustomMarker}
+    />
+    <label class="entry-field entry-field--inline">
+      <span class="entry-label">{$_('entry.note_visibility.label')}</span>
+      <select bind:value={noteVisibility} data-testid="entry-note-visibility">
+        <option value="full">{$_('entry.note_visibility.full')}</option>
+        <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
+        <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
+      </select>
+    </label>
+  </section>
 
-    {#if cycleTrackingEnabled}
-      <section class="entry-section" aria-labelledby="entry-section-cycle">
-        <h2 id="entry-section-cycle" class="entry-section__title">
-          {$_('entry.section.cycle')}
-        </h2>
-        <label class="entry-field">
-          <span class="entry-label">{$_('entry.cycle_day.label')}</span>
-          <input
-            type="number"
-            class="input"
-            min="1"
-            max="35"
-            value={cycleDay ?? ''}
-            on:input={onCycleDayInput}
-            aria-invalid={cycleDayInvalid}
-            aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
-            placeholder={$_('entry.cycle_day.placeholder')}
-          />
-        </label>
-        <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
-        {#if cycleDayInvalid}
-          <p id="entry-cycle-error" class="entry-error" role="alert">
-            {$_('entry.cycle_day.error_range')}
-          </p>
-        {/if}
-        <label class="entry-field">
-          <span class="entry-label">{$_('entry.cycle_bleeding.label')}</span>
-          <select
-            class="input"
-            value={cycleBleedingLevel ?? ''}
-            on:change={onCycleBleedingChange}
-            data-testid="entry-cycle-bleeding"
-          >
-            <option value="">{$_('entry.cycle_bleeding.unset')}</option>
-            {#each bleedingLevelOptions as level}
-              <option value={level}>{$_(`entry.cycle_bleeding.${level}`)}</option>
-            {/each}
-          </select>
-        </label>
-        <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
-      </section>
-    {/if}
-
-    <section class="entry-section" aria-labelledby="entry-section-sleep">
-      <h2 id="entry-section-sleep" class="entry-section__title">
-        {$_('entry.section.sleep')}
+  {#if cycleTrackingEnabled}
+    <section class="entry-section" aria-labelledby="entry-section-cycle">
+      <h2 id="entry-section-cycle" class="entry-section__title">
+        {$_('entry.section.cycle')}
       </h2>
       <label class="entry-field">
-        <span class="entry-label">{$_('entry.sleep_minutes.label')}</span>
+        <span class="entry-label">{$_('entry.cycle_day.label')}</span>
         <input
           type="number"
           class="input"
-          min="0"
-          max="1440"
-          step="15"
-          inputmode="numeric"
-          value={sleepMinutes ?? ''}
-          on:input={onSleepMinutesInput}
-          aria-invalid={sleepMinutesInvalid}
-          aria-describedby={sleepMinutesInvalid ? 'entry-sleep-error' : 'entry-sleep-hint'}
-          placeholder={$_('entry.sleep_minutes.placeholder')}
-          data-testid="entry-sleep-minutes"
+          min="1"
+          max="35"
+          value={cycleDay ?? ''}
+          on:input={onCycleDayInput}
+          aria-invalid={cycleDayInvalid}
+          aria-describedby={cycleDayInvalid ? 'entry-cycle-error' : 'entry-cycle-hint'}
+          placeholder={$_('entry.cycle_day.placeholder')}
         />
       </label>
-      <p id="entry-sleep-hint" class="entry-hint">{$_('entry.sleep_minutes.hint')}</p>
-      {#if sleepMinutesInvalid}
-        <p id="entry-sleep-error" class="entry-error" role="alert">
-          {$_('entry.sleep_minutes.error_range')}
+      <p id="entry-cycle-hint" class="entry-hint">{$_('entry.cycle_day.hint')}</p>
+      {#if cycleDayInvalid}
+        <p id="entry-cycle-error" class="entry-error" role="alert">
+          {$_('entry.cycle_day.error_range')}
         </p>
       {/if}
-      <!-- Sleep *quality* now lives in the metrics section as an optional 1–5
-           slider alongside mood/energy/stress (#653 B6). This section keeps only
-           the sleep *duration* input, which is on a different (minutes) scale. -->
-    </section>
-
-    <section class="entry-section" aria-labelledby="entry-section-delta">
-      <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
-      <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
+      <label class="entry-field">
+        <span class="entry-label">{$_('entry.cycle_bleeding.label')}</span>
+        <select
+          class="input"
+          value={cycleBleedingLevel ?? ''}
+          on:change={onCycleBleedingChange}
+          data-testid="entry-cycle-bleeding"
+        >
+          <option value="">{$_('entry.cycle_bleeding.unset')}</option>
+          {#each bleedingLevelOptions as level}
+            <option value={level}>{$_(`entry.cycle_bleeding.${level}`)}</option>
+          {/each}
+        </select>
+      </label>
+      <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
     </section>
   {/if}
+
+  <section class="entry-section" aria-labelledby="entry-section-sleep">
+    <h2 id="entry-section-sleep" class="entry-section__title">
+      {$_('entry.section.sleep')}
+    </h2>
+    <label class="entry-field">
+      <span class="entry-label">{$_('entry.sleep_minutes.label')}</span>
+      <input
+        type="number"
+        class="input"
+        min="0"
+        max="1440"
+        step="15"
+        inputmode="numeric"
+        value={sleepMinutes ?? ''}
+        on:input={onSleepMinutesInput}
+        aria-invalid={sleepMinutesInvalid}
+        aria-describedby={sleepMinutesInvalid ? 'entry-sleep-error' : 'entry-sleep-hint'}
+        placeholder={$_('entry.sleep_minutes.placeholder')}
+        data-testid="entry-sleep-minutes"
+      />
+    </label>
+    <p id="entry-sleep-hint" class="entry-hint">{$_('entry.sleep_minutes.hint')}</p>
+    {#if sleepMinutesInvalid}
+      <p id="entry-sleep-error" class="entry-error" role="alert">
+        {$_('entry.sleep_minutes.error_range')}
+      </p>
+    {/if}
+    <!-- Sleep *quality* now lives in the metrics section as an optional 1–5
+           slider alongside mood/energy/stress (#653 B6). This section keeps only
+           the sleep *duration* input, which is on a different (minutes) scale. -->
+  </section>
+
+  <section class="entry-section" aria-labelledby="entry-section-delta">
+    <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
+    <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
+  </section>
 
   {#if offlineSyncConflictKey}
     <p class="entry-hint" role="status" data-testid="entry-sync-conflict-note">
