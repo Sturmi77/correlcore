@@ -42,6 +42,7 @@ from app.schemas.sync import (
     SyncTagPayload,
 )
 from app.services import entry_service
+from app.services.note_signal_extractor import extract_and_store_signals_for_entry
 from app.services.symptom_service import (
     SymptomsNotFoundError,
     assign_symptoms_to_entry,
@@ -63,6 +64,7 @@ _CRITICAL_FIELDS = frozenset(
         SyncConflictField.ENERGY.value,
         SyncConflictField.STRESS.value,
         SyncConflictField.NOTE.value,
+        SyncConflictField.NOTE_VISIBILITY.value,
         SyncConflictField.SYMPTOMS.value,
     }
 )
@@ -629,6 +631,11 @@ async def _merge_entry_upsert(
                 ),
                 entity_updated_at=entry.updated_at,
             )
+            # Extract note signals for the freshly-created entry, mirroring the
+            # REST create path (skipped when there is nothing to extract from and
+            # the note is not Hidden). A Hidden note stores no signals.
+            if payload.note or entry.note_visibility != NoteVisibility.FULL:
+                await extract_and_store_signals_for_entry(db, user_id=user_id, entry_id=entry.id)
             return conflicts
 
     server_ts = _ensure_utc(entry.updated_at)
@@ -659,6 +666,10 @@ async def _merge_entry_upsert(
     ]
 
     if _client_wins(client_ts, server_ts):
+        # Snapshot before mutation so we only refresh derived note signals when
+        # the note text or its visibility actually changed (see below).
+        previous_note_enc = entry.note_enc
+        previous_visibility = entry.note_visibility
         entry.mood_score = payload.mood_score
         entry.energy = payload.energy
         entry.stress = payload.stress
@@ -716,6 +727,11 @@ async def _merge_entry_upsert(
             ),
             entity_updated_at=entry.updated_at,
         )
+        # Refresh derived note signals when the note or its visibility changed —
+        # the REST PATCH path schedules this; the offline push path must match or
+        # a note flipped to Hidden keeps leaking its previously-extracted signals.
+        if entry.note_enc != previous_note_enc or entry.note_visibility != previous_visibility:
+            await extract_and_store_signals_for_entry(db, user_id=user_id, entry_id=entry.id)
         return conflicts
 
     for field_name, client_val, _server_val, server_report in scalar_fields:
@@ -742,6 +758,32 @@ async def _merge_entry_upsert(
             server_ts=server_ts,
             client_value=client_cmp,
             server_value=server_cmp,
+        )
+        if report is not None:
+            conflicts.append(report)
+
+    # note_visibility loses the same way the scalar fields do: a newer server
+    # revision keeps its value, but the dropped client change must still be
+    # reported so the outbox can surface it instead of silently acking. Only
+    # when the client actually sent the field (presence-aware) — a pre-fix
+    # client omits it and must not raise a spurious Full-vs-Hidden conflict.
+    if "note_visibility" in payload.model_fields_set:
+        client_visibility = NoteVisibility(str(payload.note_visibility))
+        server_visibility = (
+            entry.note_visibility.value
+            if isinstance(entry.note_visibility, NoteVisibility)
+            else str(entry.note_visibility)
+        )
+        report = await _maybe_conflict(
+            db,
+            user_id=user_id,
+            entity_id=conflict_entity_id,
+            entity_type="entry",
+            field_name=SyncConflictField.NOTE_VISIBILITY.value,
+            client_ts=client_ts,
+            server_ts=server_ts,
+            client_value={"value": client_visibility.value},
+            server_value={"value": server_visibility},
         )
         if report is not None:
             conflicts.append(report)

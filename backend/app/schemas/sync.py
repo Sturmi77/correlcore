@@ -46,6 +46,7 @@ class SyncConflictField(StrEnum):
     ENERGY = "energy"
     STRESS = "stress"
     NOTE = "note"
+    NOTE_VISIBILITY = "note_visibility"
     SYMPTOMS = "symptoms"
 
 
