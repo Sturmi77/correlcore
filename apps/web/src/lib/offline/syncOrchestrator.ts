@@ -109,6 +109,9 @@ let syncInFlight: Promise<void> | null = null;
 let syncDirty = false;
 let initialized = false;
 let onlineUnsubscribe: (() => void) | null = null;
+/** Test-only: wait on this gate inside `refreshMeta` after `refreshMetaSkip` prior calls. */
+let refreshMetaHold: Promise<void> | null = null;
+let refreshMetaSkip = 0;
 
 function resetSyncOrchestratorState(): void {
   onlineUnsubscribe?.();
@@ -116,6 +119,8 @@ function resetSyncOrchestratorState(): void {
   initialized = false;
   syncInFlight = null;
   syncDirty = false;
+  refreshMetaHold = null;
+  refreshMetaSkip = 0;
   store.set(initialState);
 }
 
@@ -126,6 +131,15 @@ function tableForEntityType(entityType: OfflineEntityType): SyncTableName {
 }
 
 async function refreshMeta(): Promise<void> {
+  if (refreshMetaHold) {
+    if (refreshMetaSkip > 0) {
+      refreshMetaSkip -= 1;
+    } else {
+      const gate = refreshMetaHold;
+      refreshMetaHold = null;
+      await gate;
+    }
+  }
   const pending = await listPendingChanges();
   const lastPushAt = await getSyncMeta(SYNC_META_KEYS.lastPushAt);
   const lastPullAt = await getSyncMeta(SYNC_META_KEYS.lastPullAt);
@@ -386,12 +400,23 @@ export function scheduleSync(): void {
 }
 
 export async function drainOfflineSyncForSessionChange(): Promise<void> {
-  const inFlight = syncInFlight;
-  if (inFlight) {
+  // Loop until quiescent: a completing sync may set `syncDirty` after its
+  // do-while (e.g. persist/HC `scheduleSync()` during `refreshMeta`) and
+  // `finally` starts a follow-up via `scheduleSync()` *after* clearing
+  // `syncInFlight`. A single await of the current promise would then
+  // `resetSyncOrchestratorState()` while that follow-up is already running,
+  // so login()/logout() could swap cookies under an untracked push of the
+  // previous account's outbox. Same pattern as entry persist / HC drain.
+  while (syncInFlight) {
+    const inFlight = syncInFlight;
     try {
       await inFlight;
     } catch {
       // Failed pushes stay pending locally; the session transition must still continue.
+    }
+    // If we awaited a promise that was replaced mid-wait, keep looping.
+    if (syncInFlight === inFlight) {
+      break;
     }
   }
   resetSyncOrchestratorState();
@@ -451,6 +476,16 @@ export function initializeSyncOrchestrator(
 /** Test helper — reset singleton orchestrator hooks. */
 export function resetSyncOrchestratorForTests(): void {
   resetSyncOrchestratorState();
+}
+
+/**
+ * Test-only: the Nth `refreshMeta()` waits on `gate` before reading IDB.
+ * `n=3` is the `finally` tail after pushPending + pullSince, so an overlapping
+ * `syncAll` can set `syncDirty` after the inner do-while can consume it.
+ */
+export function _holdNthRefreshMetaForTests(n: number, gate: Promise<void>): void {
+  refreshMetaSkip = Math.max(0, n - 1);
+  refreshMetaHold = gate;
 }
 
 /** Test helper — read orchestrator state synchronously. */
