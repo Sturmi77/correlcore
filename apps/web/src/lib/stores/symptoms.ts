@@ -29,6 +29,12 @@ export type SymptomsState =
 
 const _symptoms = writable<SymptomsState>({ status: 'idle' });
 
+// Incremented on every reset (session boundary). An in-flight refresh compares
+// the generation it captured at start against this; a mismatch means a reset
+// happened mid-flight, so the resolved response belongs to a prior account and
+// must not repopulate the store (#669).
+let storeGeneration = 0;
+
 export const symptoms = { subscribe: _symptoms.subscribe };
 
 /**
@@ -48,12 +54,18 @@ export const symptomsList = derived(_symptoms, ($s) => {
 
 /** Refresh the symptom catalogue from the server. */
 export async function refreshSymptoms(): Promise<SymptomResponse[]> {
+  const gen = storeGeneration;
   _symptoms.set({ status: 'loading' });
   try {
     const list = await apiListVisibleSymptoms();
+    // A session boundary (resetSymptomsStore) bumped the generation while this
+    // request for the previous account was in flight — drop the stale result
+    // instead of restoring another user's symptoms over the new account's store.
+    if (gen !== storeGeneration) return list;
     _symptoms.set({ status: 'ready', symptoms: list });
     return list;
   } catch (err) {
+    if (gen !== storeGeneration) throw err;
     const message = err instanceof Error ? err.message : 'Failed to load symptoms';
     _symptoms.set({ status: 'error', message });
     throw err;
@@ -99,5 +111,8 @@ export async function removeSymptom(id: string): Promise<void> {
 
 /** Reset the cache — useful on logout. */
 export function resetSymptomsStore(): void {
+  // Bump the generation so any in-flight refreshSymptoms() for the previous
+  // account drops its result instead of repopulating the store post-swap.
+  storeGeneration += 1;
   _symptoms.set({ status: 'idle' });
 }
