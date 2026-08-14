@@ -291,11 +291,6 @@
       "close": "Eintrag schlie\u00dfen",
       "done": "Fertig"
     },
-    "open_mode": {
-      "label": "Erfassungsmodus",
-      "quick": "Schnell",
-      "full": "Vollst\u00e4ndig"
-    },
     "delta": {
       "heading": "Vergleich mit gestern",
       "subheading": "Ein direkter Vergleich desselben Tages-Slots.",

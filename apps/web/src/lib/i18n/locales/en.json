@@ -279,11 +279,6 @@
       "close": "Close entry",
       "done": "Done"
     },
-    "open_mode": {
-      "label": "Entry detail level",
-      "quick": "Quick",
-      "full": "Full"
-    },
     "scale": {
       "mood_low": "very bad",
       "mood_high": "very good",
