@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    admin,
     analysis,
     auth,
     dashboard,
@@ -40,6 +41,8 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 # (DSGVO Art. 17 erasure). Future M2+: GET /user/me, PATCH /user/me,
 # data-export endpoints (Issue #25).
 api_router.include_router(user.router, prefix="/user", tags=["user"])
+
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 # Device push tokens (M11 Sprint 5 — FCM; UnifiedPush provider reserved for M4.2)
 api_router.include_router(devices.router, prefix="/devices", tags=["devices"])
