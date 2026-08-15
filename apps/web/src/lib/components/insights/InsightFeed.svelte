@@ -2,14 +2,14 @@
   /**
    * InsightFeed — Issue #164, FRONTEND.md §5 Screen 3
    *
-   * Renders a sorted, filterable list of InsightCards.
+   * Renders a sorted list of InsightCards.
    * Sort: confidence × |effect_size| descending.
-   * Filter tabs: All | Mood | Symptoms | Context
    *
    * Props
    * -----
-   * insights           InsightResponse[]  Insights for the current view (may be pre-filtered)
-   * totalInsightCount  number             Unfiltered API insight count for empty-state semantics
+   * insights           InsightResponse[]  Insights for the current view
+   * totalInsightCount  number             Total API insight count for empty-state semantics
+   * dismissedCount     number             Insights the user has dismissed (empty-state semantics)
    * loading            boolean            Show skeleton cards
    * error              string | null      Inline error banner
    * entryCount         number             Total entries in analysis window (for header)
@@ -24,15 +24,9 @@
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import EmptyState from '$lib/components/common/EmptyState.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
-  import TabBar from '$lib/components/common/TabBar.svelte';
   import InsightCard from './InsightCard.svelte';
   import CorrelationDisclaimer from './CorrelationDisclaimer.svelte';
   import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
-  import {
-    filterInsightsByTab,
-    getInsightFeedFilterTabs,
-    type InsightFeedFilterTab,
-  } from '$lib/utils/insightFeedFilter';
   import { rankInsights } from '$lib/utils/insightRanking';
 
   export let insights: InsightResponse[] = [];
@@ -46,11 +40,10 @@
   export let notedEntryCount: number | null = null;
   export let inactiveTagIds: readonly string[] = [];
   export let showContext = true;
-  export let showFilters = true;
   /** When false, cards omit phase badges because maturity is shown in page chrome (O-01). */
   export let showMaturityBadge = true;
-  /** When set, the parent owns filter UI and state (O-22). */
-  export let filterTab: InsightFeedFilterTab | undefined = undefined;
+  /** Count of dismissed insights, to distinguish "all dismissed" from "none yet" (#686). */
+  export let dismissedCount = 0;
   /** Analysis window in days for the context subtitle (O-46). */
   export let analysisRangeDays = 90;
   /** Enables the Explore aligned events affordance on insight cards (ADR-0035 §6). */
@@ -67,21 +60,24 @@
     selectDate: { date: string };
   }>();
 
-  let internalFilterTab: InsightFeedFilterTab = 'all';
   let disclaimerOpen = false;
 
-  $: activeTab = filterTab ?? internalFilterTab;
-  $: filterTabOptions = getInsightFeedFilterTabs($_, 'insight-feed-tab');
-
-  $: filtered = rankInsights(filterInsightsByTab(insights, activeTab));
+  $: filtered = rankInsights(insights);
   $: resolvedTotalCount = totalInsightCount ?? insights.length;
   $: isPhaseEmpty = Boolean(maturity && resolvedTotalCount === 0);
+  // #686: "all dismissed" is distinct from "no insights yet" — insights existed,
+  // the user has just cleared them all, so the empty state says *new*.
+  $: isAllDismissed = !isPhaseEmpty && resolvedTotalCount === 0 && dismissedCount > 0;
   $: emptyTitleKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.title`
-    : 'insights.feed.empty_title';
+    : isAllDismissed
+      ? 'insights.feed.empty_all_dismissed_title'
+      : 'insights.feed.empty_title';
   $: emptyBodyKey = isPhaseEmpty
     ? `insights.feed.empty_phase.${maturity?.phase}.body`
-    : 'insights.feed.empty_body';
+    : isAllDismissed
+      ? 'insights.feed.empty_all_dismissed_body'
+      : 'insights.feed.empty_body';
   $: showRegenerateAction = isPhaseEmpty;
   // #632 review: do not claim "these are correlations" while loading/empty/error.
   $: showCorrelationHint = showContext && !loading && !error && resolvedTotalCount > 0;
@@ -123,16 +119,6 @@
         {$_('insights.feed.correlation_header')}
       </p>
     {/if}
-  {/if}
-
-  {#if showFilters}
-    <TabBar
-      value={activeTab}
-      options={filterTabOptions}
-      ariaLabel={$_('insights.feed.filter_label')}
-      testId="insight-feed-tabs"
-      on:change={(event) => (internalFilterTab = event.detail.value as InsightFeedFilterTab)}
-    />
   {/if}
 
   <!-- Inline error banner -->
