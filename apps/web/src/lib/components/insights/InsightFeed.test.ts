@@ -88,32 +88,26 @@ describe('InsightFeed', () => {
     expect(screen.getByText('insights.feed.empty_phase.early_patterns.body')).toBeTruthy();
   });
 
-  it('uses filter empty copy when insights exist but the active tab matches none', () => {
-    const robustMaturity: InsightMaturity = {
-      ...maturity,
-      phase: 'robust',
-      phase_index: 4,
-      current_entries: 67,
-      next_phase_at: null,
-      next_phase_label: null,
-      entries_until_next: null,
-    };
-
+  it('uses "no new insights" copy when all insights have been dismissed (#686)', () => {
     render(InsightFeed, {
       props: {
-        // Parent already filtered out energy/sleep/stress cards for the mood tab.
+        // Dismissed insights are removed from the list; dismissedCount records them.
         insights: [],
-        totalInsightCount: 1,
-        maturity: robustMaturity,
-        filterTab: 'mood',
-        showFilters: false,
+        totalInsightCount: 0,
+        dismissedCount: 3,
       },
     });
 
-    expect(screen.getByText('insights.feed.empty_title')).toBeTruthy();
-    expect(screen.getByText('insights.feed.empty_body')).toBeTruthy();
-    expect(screen.queryByText('insights.feed.empty_phase.robust.title')).toBeNull();
+    expect(screen.getByText('insights.feed.empty_all_dismissed_title')).toBeTruthy();
+    expect(screen.getByText('insights.feed.empty_all_dismissed_body')).toBeTruthy();
+    expect(screen.queryByText('insights.feed.empty_title')).toBeNull();
     expect(screen.queryByTestId('insight-feed-empty-secondary-cta')).toBeNull();
+  });
+
+  it('uses the plain empty copy when there are genuinely no insights (none dismissed)', () => {
+    render(InsightFeed, { props: { insights: [], totalInsightCount: 0, dismissedCount: 0 } });
+    expect(screen.getByText('insights.feed.empty_title')).toBeTruthy();
+    expect(screen.queryByText('insights.feed.empty_all_dismissed_title')).toBeNull();
   });
 
   it('uses robust phase empty copy and regenerate CTA when API returned no insights', () => {
@@ -228,80 +222,16 @@ describe('InsightFeed', () => {
     expect(cards[2]?.getAttribute('data-featured')).toBe('false');
   });
 
-  // ── Filter tabs ───────────────────────────────────────────────────
-  it('renders all 4 filter tabs', () => {
-    render(InsightFeed, { props: { insights: [] } });
-    expect(screen.getByTestId('insight-feed-tab-all')).toBeTruthy();
-    expect(screen.getByTestId('insight-feed-tab-mood')).toBeTruthy();
-    expect(screen.getByTestId('insight-feed-tab-symptoms')).toBeTruthy();
-    expect(screen.getByTestId('insight-feed-tab-context')).toBeTruthy();
-  });
-
-  it('all tab is selected by default', () => {
-    render(InsightFeed, { props: { insights: [] } });
-    expect(screen.getByTestId('insight-feed-tab-all').getAttribute('aria-selected')).toBe('true');
-  });
-
-  it('clicking mood tab sets aria-selected=true on mood', async () => {
-    render(InsightFeed, { props: { insights: [] } });
-    await fireEvent.click(screen.getByTestId('insight-feed-tab-mood'));
-    expect(screen.getByTestId('insight-feed-tab-mood').getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByTestId('insight-feed-tab-all').getAttribute('aria-selected')).toBe('false');
-  });
-
-  it('mood tab filters out non-mood insights', async () => {
-    const moodInsight = makeInsight({ id: 'm', metric: 'mood' });
-    const energyInsight = makeInsight({ id: 'e', metric: 'energy' });
-    render(InsightFeed, { props: { insights: [moodInsight, energyInsight] } });
-    await fireEvent.click(screen.getByTestId('insight-feed-tab-mood'));
-    const list = screen.getByTestId('insight-feed-list');
-    expect(list.querySelectorAll('li').length).toBe(1);
-  });
-
-  it('symptoms tab includes future symptom insight payloads', async () => {
-    const symptomInsight = makeInsight({
-      id: 'symptom',
-      metric: 'mood',
-      insight_type: 'symptom_mood_association',
-      subject_type: 'symptom',
-      subject_label: 'Headache',
-    });
-    const tagInsight = makeInsight({ id: 'tag', metric: 'mood', subject_type: 'tag' });
-    render(InsightFeed, { props: { insights: [symptomInsight, tagInsight] } });
-    await fireEvent.click(screen.getByTestId('insight-feed-tab-symptoms'));
-    const list = screen.getByTestId('insight-feed-list');
-    expect(list.querySelectorAll('li').length).toBe(1);
-  });
-
-  it('context tab shows calendar and office context insights only', async () => {
-    const contextInsight = makeInsight({
-      id: 'context',
-      insight_type: 'work_context_pattern',
-      payload: { work_context: 'office' },
-    });
-    const tagInsight = makeInsight({ id: 'tag', metric: 'mood', subject_type: 'tag' });
-    render(InsightFeed, { props: { insights: [contextInsight, tagInsight] } });
-
-    await fireEvent.click(screen.getByTestId('insight-feed-tab-context'));
-
-    const list = screen.getByTestId('insight-feed-list');
-    expect(list.querySelectorAll('li').length).toBe(1);
-    expect(screen.getByTestId('insight-card-context-badge')).toBeTruthy();
-  });
-
-  it('uses external filterTab when provided', async () => {
-    const moodInsight = makeInsight({ id: 'm', metric: 'mood' });
-    const sleepInsight = makeInsight({ id: 's', metric: 'sleep' });
+  // ── No in-feed filter (#685) ──────────────────────────────────────
+  it('no longer renders the symptom/mood filter tabs', () => {
     render(InsightFeed, {
-      props: {
-        insights: [moodInsight, sleepInsight],
-        filterTab: 'mood',
-        showFilters: false,
-      },
+      props: { insights: [makeInsight(), makeInsight({ metric: 'energy' })] },
     });
-    const list = screen.getByTestId('insight-feed-list');
-    expect(list.querySelectorAll('li').length).toBe(1);
     expect(screen.queryByTestId('insight-feed-tabs')).toBeNull();
+    expect(screen.queryByTestId('insight-feed-tab-all')).toBeNull();
+    expect(screen.queryByTestId('insight-feed-tab-mood')).toBeNull();
+    // All insights render — no filtering removes any.
+    expect(screen.getByTestId('insight-feed-list').querySelectorAll('li').length).toBe(2);
   });
 
   // ── Header ────────────────────────────────────────────────────────

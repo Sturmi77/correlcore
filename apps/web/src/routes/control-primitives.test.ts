@@ -28,10 +28,10 @@ describe('control primitive contract', () => {
     expect(trendsToolbarSource).toContain('<TabBar');
     expect(trendsSource).not.toContain('trends__tabs');
 
-    expect(insightFeedSource).toContain('$lib/components/common/TabBar.svelte');
-    expect(insightFeedSource).toContain('<TabBar');
-    expect(insightFeedSource).not.toContain('if-tabs');
-    expect(insightFeedSource).not.toContain('if-tab');
+    // #685: the in-feed symptom/mood filter TabBar was removed — the feed no
+    // longer renders any filter tabs.
+    expect(insightFeedSource).not.toContain('<TabBar');
+    expect(insightFeedSource).not.toContain('insight-feed-tabs');
 
     expect(insightsRouteSource).toContain(
       '$lib/components/insights/InsightsAnalysisToolbar.svelte'

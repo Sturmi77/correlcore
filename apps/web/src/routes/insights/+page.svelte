@@ -4,7 +4,6 @@
    *
    * Replaces the old raw-list rendering with the InsightFeed component.
    * - Sort: confidence × |effect_size| descending (done inside InsightFeed)
-   * - Filter tabs: All | Mood | Symptoms | Sleep
    * - Inline error banner — no full-page crash on API failure
    * - Empty state / skeleton delegated to InsightFeed
    *
@@ -75,11 +74,7 @@
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
-  import {
-    getInsightFeedFilterTabs,
-    rankedInsightsForTab,
-    type InsightFeedFilterTab,
-  } from '$lib/utils/insightFeedFilter';
+  import { rankInsights } from '$lib/utils/insightRanking';
   import {
     canShowAdvancedAnalytics,
     canShowMatrixTab,
@@ -142,7 +137,6 @@
   let symptomCooccurrenceRequestId = 0;
   let symptomWindowRequestId = 0;
   let symptomWindowLoading = false;
-  let filterTab: InsightFeedFilterTab = 'all';
   let exploreEventsOpen = false;
   let exploreEventsInsight: InsightResponse | null = null;
   let exploreEventsWindows: EventWindow[] = [];
@@ -285,8 +279,6 @@
     label: $_(option.label),
     testId: `insights-range-${option.id}`,
   }));
-
-  $: filterTabOptions = getInsightFeedFilterTabs($_);
 
   function devFixtureKey(): string {
     return `${$devPhase.presetId}:${$devPhase.entryCount}:${$devPhase.onboardingCompleted}`;
@@ -715,7 +707,7 @@
   $: showTagCooccurrencePanel =
     canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
     (cooccurrenceLoading || hasTagCooccurrenceData(cooccurrence));
-  $: filteredRankedInsights = rankedInsightsForTab(insights, filterTab);
+  $: filteredRankedInsights = rankInsights(insights);
   $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
   $: remainingMobileInsights = filteredRankedInsights.slice(1);
   $: feedInsights =
@@ -855,10 +847,7 @@
     <InsightsAnalysisToolbar
       analysisRange={toolbarAnalysisRange}
       analysisRangeOptions={analysisRangeControlOptions}
-      {filterTab}
-      {filterTabOptions}
       on:rangeChange={(event) => setAnalysisRange(event.detail.value)}
-      on:filterChange={(event) => (filterTab = event.detail.value)}
     />
 
     {#if showMatrix}
@@ -917,13 +906,12 @@
             entryCount={visibleEntryCount}
             {analysisRangeDays}
             {inactiveTagIds}
-            {filterTab}
+            dismissedCount={dismissedItems.length}
             {enableExploreEvents}
             {regenerateBusy}
             {regenerateMessage}
             {regenerateError}
             showContext={false}
-            showFilters={false}
             showMaturityBadge={false}
             on:retry={loadInsights}
             on:regenerate={() => void handleRegenerateInsights()}
@@ -942,12 +930,11 @@
           entryCount={visibleEntryCount}
           {analysisRangeDays}
           {inactiveTagIds}
-          {filterTab}
+          dismissedCount={dismissedItems.length}
           {enableExploreEvents}
           {regenerateBusy}
           {regenerateMessage}
           {regenerateError}
-          showFilters={false}
           showMaturityBadge={!pageMaturityChrome}
           on:retry={loadInsights}
           on:regenerate={() => void handleRegenerateInsights()}
