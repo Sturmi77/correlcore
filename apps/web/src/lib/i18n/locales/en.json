@@ -699,8 +699,31 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Export your data and manage local app options.",
+    "subtitle": "Choose a category to manage your data, analysis, privacy and appearance.",
     "auth_required": "Please sign in to export your data.",
+    "back": "Back to settings",
+    "groups": {
+      "data": {
+        "title": "Your data",
+        "subtitle": "Tags, symptoms, cycle tracking and data export.",
+        "summary": "Tags, symptoms, cycle & export"
+      },
+      "analysis": {
+        "title": "Analysis & insights",
+        "subtitle": "Analysis options and the weekly digest.",
+        "summary": "Analysis options & digest"
+      },
+      "privacy": {
+        "title": "Privacy & account",
+        "subtitle": "Health Connect, privacy policy, logout and account deletion.",
+        "summary": "Health Connect, logout & delete"
+      },
+      "appearance": {
+        "title": "Appearance",
+        "subtitle": "Theme, language and home & app layout.",
+        "summary": "Theme, language & layout"
+      }
+    },
     "section": {
       "tracking": "Tracking",
       "vocabulary": "Vocabulary",
@@ -951,6 +974,7 @@
     },
     "developer": {
       "heading": "Developer",
+      "entry_body": "Developer tools and test fixtures live on /dev. Unlock with 7 taps on the version string below (works in production builds).",
       "body": "Unlock with 7 taps on the version string below (works in production builds). Client tools use mock data locally; backend diagnostics need DEV_VIEW_ENABLED on self-hosted deployments.",
       "toggle_label": "Enable developer mode",
       "toggle_aria": "Toggle developer mode",
@@ -1497,6 +1521,14 @@
     "title": "Developer View",
     "eyebrow": "Runtime diagnostics",
     "subtitle": "Verify the deployed GitHub commit, image tag and optional OCI digest.",
+    "tabs": {
+      "aria": "Developer view sections",
+      "version": "Version",
+      "runtime": "Runtime",
+      "workers": "Workers",
+      "db": "Database",
+      "devviz": "Dev visualization"
+    },
     "backend_unavailable_title": "Backend developer endpoint not available.",
     "backend_unavailable_body": "DEV_VIEW_ENABLED is false on the server. Runtime diagnostics are unavailable in this environment. The Developer View was opened because you enabled the manual toggle in Settings.",
     "back_settings": "Back to Settings",

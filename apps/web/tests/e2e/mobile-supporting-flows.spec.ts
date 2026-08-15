@@ -69,14 +69,15 @@ for (const viewport of [
   }) => {
     await page.setViewportSize(viewport);
     await installSupportingFlowApi(page);
-    await page.goto('/settings');
+    // #694: vocabulary editors now live under the "Your data" category page.
+    await page.goto('/settings/data');
 
     const symptomsLink = page.getByTestId('settings-vocab-symptoms');
-    const appLink = page.getByRole('link', { name: 'App & offline' });
+    const tagsLink = page.getByTestId('settings-vocab-tags');
     await expect(symptomsLink).toBeVisible({ timeout: 15_000 });
-    await expect(appLink).toBeVisible();
+    await expect(tagsLink).toBeVisible();
 
-    for (const control of [symptomsLink, appLink]) {
+    for (const control of [symptomsLink, tagsLink]) {
       expect((await control.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
     }
     expect(
@@ -97,7 +98,7 @@ for (const viewport of [
 test('connection loss surfaces a global retry state', async ({ context, page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installSupportingFlowApi(page);
-  await page.goto('/settings');
+  await page.goto('/settings/data');
   await expect(page.getByTestId('settings-vocab-symptoms')).toBeVisible({
     timeout: 15_000,
   });

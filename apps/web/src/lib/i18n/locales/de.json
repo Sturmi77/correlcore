@@ -699,8 +699,31 @@
   },
   "settings": {
     "title": "Einstellungen",
-    "subtitle": "Exportiere deine Daten und verwalte lokale App-Optionen.",
+    "subtitle": "Wähle einen Bereich, um Daten, Analyse, Datenschutz und Darstellung zu verwalten.",
     "auth_required": "Bitte melde dich an, um deine Daten zu exportieren.",
+    "back": "Zurück zu den Einstellungen",
+    "groups": {
+      "data": {
+        "title": "Deine Daten",
+        "subtitle": "Tags, Symptome, Zyklus-Tracking und Datenexport.",
+        "summary": "Tags, Symptome, Zyklus & Export"
+      },
+      "analysis": {
+        "title": "Analyse & Insights",
+        "subtitle": "Analyse-Optionen und der wöchentliche Digest.",
+        "summary": "Analyse-Optionen & Digest"
+      },
+      "privacy": {
+        "title": "Datenschutz & Konto",
+        "subtitle": "Health Connect, Datenschutzerklärung, Logout und Kontolöschung.",
+        "summary": "Health Connect, Logout & Löschen"
+      },
+      "appearance": {
+        "title": "Darstellung",
+        "subtitle": "Theme, Sprache sowie Home- & App-Layout.",
+        "summary": "Theme, Sprache & Layout"
+      }
+    },
     "section": {
       "tracking": "Tracking",
       "vocabulary": "Vokabular",
@@ -951,6 +974,7 @@
     },
     "developer": {
       "heading": "Entwickler",
+      "entry_body": "Entwickler-Werkzeuge und Test-Fixtures liegen auf /dev. Freischaltung mit 7 Taps auf die Versionszeile unten (funktioniert auch in Production-Builds).",
       "body": "Freischaltung mit 7 Taps auf die Versionszeile unten (funktioniert auch in Production-Builds). Client-Tools nutzen lokale Mock-Daten; Backend-Diagnose braucht DEV_VIEW_ENABLED beim Selfhosting.",
       "toggle_label": "Entwicklermodus aktivieren",
       "toggle_aria": "Entwicklermodus umschalten",
@@ -1497,6 +1521,14 @@
     "title": "Entwickleransicht",
     "eyebrow": "Laufzeitdiagnose",
     "subtitle": "Pruefe den deployten GitHub-Commit, Image-Tag und optionalen OCI-Digest.",
+    "tabs": {
+      "aria": "Entwickleransicht-Bereiche",
+      "version": "Version",
+      "runtime": "Laufzeit",
+      "workers": "Workers",
+      "db": "Datenbank",
+      "devviz": "Dev-Visualisierung"
+    },
     "backend_unavailable_title": "Backend-Developer-Endpoint nicht verfuegbar.",
     "backend_unavailable_body": "DEV_VIEW_ENABLED ist auf dem Server false. Laufzeitdiagnosen sind in dieser Umgebung nicht verfuegbar. Der Developer View wurde geoeffnet, weil du den manuellen Toggle in den Einstellungen aktiviert hast.",
     "back_settings": "Zurueck zu Einstellungen",

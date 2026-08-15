@@ -20,6 +20,10 @@ describe('state primitive adoption', () => {
       src('routes', 'trends', '+page.svelte'),
       src('routes', 'settings', '+page.svelte'),
       src('routes', 'settings', 'tags', '+page.svelte'),
+      // #694: the settings hub is now a lean index; the forms (with their
+      // InlineAlert states) live on the category sub-pages.
+      src('routes', 'settings', 'privacy', '+page.svelte'),
+      src('routes', 'settings', 'data', '+page.svelte'),
     ];
 
     expect(routes.every((source) => source.includes('Panel'))).toBe(true);

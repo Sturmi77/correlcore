@@ -851,7 +851,7 @@ test.describe('W6–W7 Analyse & Habits', () => {
 
   test('month user can refresh insights from settings', async ({ page }) => {
     const api = await installJourneyApi(page, { profile: 'month_user' });
-    await page.goto('/settings');
+    await page.goto('/settings/analysis');
 
     await page.getByTestId('regenerate-insights').click();
     await expect(page.getByText(/insights refreshed|Erkenntnisse aktualisiert/i)).toBeVisible({
