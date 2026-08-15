@@ -138,6 +138,9 @@ async def delete_user_endpoint(
     await admin_service.record_admin_action(
         db, actor=admin, action=ADMIN_ACTION_DELETE_USER, target=target
     )
+    # purge_user_account rebinds RLS to ``target`` so FORCE-RLS CASCADE
+    # (user_encryption_keys, entries, …) can see the victim's rows. The
+    # request GUC is still the admin from require_admin / get_current_user.
     await purge_user_account(db, TokenStore(redis), target)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
