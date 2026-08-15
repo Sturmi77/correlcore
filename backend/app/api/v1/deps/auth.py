@@ -176,6 +176,24 @@ async def get_current_verified_user(
     return current_user
 
 
+async def require_admin(
+    current_user: User = Depends(get_current_verified_user),
+) -> User:
+    """Require a verified user with the admin flag (#677 admin console).
+
+    Distinct from ``get_current_insight_trigger_admin`` (env email allowlist)
+    and ``require_dev_view_enabled`` (build/ops flag): admin access is a
+    per-user DB flag, granted/revoked in the admin console, bootstrapped by the
+    migration-040 backfill of all pre-existing accounts.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_user
+
+
 async def get_current_insight_trigger_admin(
     current_user: User = Depends(get_current_verified_user),
 ) -> User:

@@ -25,6 +25,7 @@ from app.api.v1.deps.auth import (
     _load_and_bind_dek,
     _resolve_user,
     get_current_verified_user,
+    require_admin,
 )
 from app.core.config import settings
 from app.core.crypto import DecryptionError
@@ -230,6 +231,29 @@ async def test_get_current_verified_user_blocks_unverified_with_403() -> None:
         await get_current_verified_user(current_user=user)
     assert exc_info.value.status_code == 403
     assert "not verified" in exc_info.value.detail.lower()
+
+
+# ---------------------------------------------------------------------------
+# require_admin (#677 admin console)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_require_admin_passes_through_for_admin() -> None:
+    user = make_user(verified=True)
+    user.is_admin = True
+    returned = await require_admin(current_user=user)
+    assert returned is user
+
+
+@pytest.mark.asyncio
+async def test_require_admin_blocks_non_admin_with_403() -> None:
+    user = make_user(verified=True)
+    user.is_admin = False
+    with pytest.raises(HTTPException) as exc_info:
+        await require_admin(current_user=user)
+    assert exc_info.value.status_code == 403
+    assert "admin" in exc_info.value.detail.lower()
 
 
 # ---------------------------------------------------------------------------

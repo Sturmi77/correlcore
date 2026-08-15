@@ -83,15 +83,19 @@ def make_user(
     *,
     verified: bool = True,
     active: bool = True,
+    admin: bool = False,
     email: str = "test@example.com",
     display_name: str | None = "Test User",
     hashed_password: str = "$2b$12$placeholder",
 ) -> User:
     """Build a detached :class:`User` for service-layer tests.
 
-    The default user is verified+active so endpoint tests don't need to
-    repeat the boilerplate. Pass ``verified=False`` for the email-flow
-    tests and ``active=False`` for the disabled-account paths.
+    The default user is verified+active (non-admin) so endpoint tests don't
+    need to repeat the boilerplate. Pass ``verified=False`` for the email-flow
+    tests, ``active=False`` for the disabled-account paths, and ``admin=True``
+    for admin-console paths. ``is_admin`` is set explicitly because a detached
+    instance would otherwise read ``None`` (server_default only applies on
+    flush), which fails ``UserResponse`` validation (#677).
     """
     u = User()
     u.id = uuid.uuid4()
@@ -100,6 +104,7 @@ def make_user(
     u.display_name = display_name
     u.is_active = active
     u.is_verified = verified
+    u.is_admin = admin
     u.created_at = datetime.now(UTC)
     u.updated_at = datetime.now(UTC)
     return u

@@ -55,6 +55,15 @@ class User(Base):
         default=False,
         server_default="false",
     )
+    # Admin-console access (#677). New accounts default to non-admin; migration
+    # 040 backfills all pre-existing accounts to admin. Grant/revoke thereafter
+    # happens in the admin console — there is no ADMIN_EMAILS env allowlist.
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
