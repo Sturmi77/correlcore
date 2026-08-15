@@ -16,12 +16,12 @@ the service contract:
 from __future__ import annotations
 
 import logging
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.core.security import hash_password
-from app.services.user_service import UserDeletionError, delete_user_account
+from app.services.user_service import UserDeletionError, delete_user_account, purge_user_account
 from tests.conftest import make_user
 
 # ---------------------------------------------------------------------------
@@ -42,6 +42,15 @@ def _make_token_store() -> MagicMock:
     store.revoke = AsyncMock()
     store.is_valid = AsyncMock()
     return store
+
+
+@pytest.fixture(autouse=True)
+def bind_rls() -> AsyncMock:
+    """``purge_user_account`` rebinds RLS to the target; keep unit tests off the DB."""
+    with patch(
+        "app.services.user_service.bind_rls_current_user", new_callable=AsyncMock
+    ) as mock:
+        yield mock
 
 
 # ---------------------------------------------------------------------------
@@ -108,8 +117,12 @@ async def test_delete_user_happy_path_revokes_tokens_and_deletes() -> None:
 
 
 @pytest.mark.asyncio
-async def test_delete_user_revokes_tokens_before_deleting_row() -> None:
-    """Order matters — even on a later DB failure the user is logged out."""
+async def test_delete_user_revokes_tokens_before_deleting_row(bind_rls: AsyncMock) -> None:
+    """Order matters — even on a later DB failure the user is logged out.
+
+    RLS is rebound to the target after revoke and before DELETE so an admin
+    actor's GUC cannot hide the target's FORCE-RLS children from CASCADE.
+    """
     user = make_user(hashed_password=hash_password("correct-pw1"))
     db = _make_db()
     store = _make_token_store()
@@ -119,15 +132,20 @@ async def test_delete_user_revokes_tokens_before_deleting_row() -> None:
     async def _track_revoke(_uid: str) -> None:
         call_order.append("revoke_all")
 
+    async def _track_bind(_db: object, _user_id: object) -> None:
+        call_order.append("bind_rls")
+
     async def _track_execute(*_a: object, **_kw: object) -> None:
         call_order.append("delete")
 
     store.revoke_all = AsyncMock(side_effect=_track_revoke)
+    bind_rls.side_effect = _track_bind
     db.execute = AsyncMock(side_effect=_track_execute)
 
     await delete_user_account(db, store, user, password="correct-pw1")
 
-    assert call_order == ["revoke_all", "delete"]
+    assert call_order == ["revoke_all", "bind_rls", "delete"]
+    bind_rls.assert_awaited_once_with(db, user.id)
 
 
 @pytest.mark.asyncio
@@ -172,3 +190,30 @@ async def test_delete_user_revoke_all_is_called_even_with_no_active_sessions() -
 
     store.revoke_all.assert_awaited_once_with(str(user.id))
     db.execute.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# Admin / cross-user purge must rebind RLS to the target
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_purge_binds_rls_to_target_before_delete(bind_rls: AsyncMock) -> None:
+    """Admin DELETE /users/{id} runs under the actor's ``app.current_user_id``.
+
+    Without rebinding, FORCE RLS hides the target's ``user_encryption_keys``
+    (and every other cascaded child) from ``correlcore_app``. The FK check
+    still sees those rows, so the wipe raises IntegrityError and 500s.
+    """
+    user = make_user()
+    db = _make_db()
+    store = _make_token_store()
+
+    await purge_user_account(db, store, user)
+
+    bind_rls.assert_awaited_once_with(db, user.id)
+    store.revoke_all.assert_awaited_once_with(str(user.id))
+    db.execute.assert_awaited_once()
+    delete_stmt = db.execute.await_args.args[0]
+    compiled = str(delete_stmt.compile(compile_kwargs={"literal_binds": False}))
+    assert compiled.startswith("DELETE FROM users")

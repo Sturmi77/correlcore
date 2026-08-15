@@ -41,6 +41,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import verify_password
 from app.db.redis_client import TokenStore
+from app.db.session import bind_rls_current_user
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -104,12 +105,24 @@ async def purge_user_account(
     via ``require_admin`` (#677 admin console). ``db.commit()`` is left to the
     session dependency so the caller can compose (e.g. write an audit row in the
     same transaction).
+
+    Rebinds ``app.current_user_id`` to ``user.id`` before the DELETE. Production
+    runs as ``correlcore_app`` under FORCE RLS: cascaded child deletes
+    (``user_encryption_keys``, ``entries``, …) are subject to owner policies.
+    Self-service already has that GUC from ``get_current_user``; the admin
+    path is bound to the *actor*, so without this rebind PostgreSQL hides the
+    target's children, the FK check (which bypasses RLS) still sees them, and
+    the DELETE raises an IntegrityError — every real admin wipe 500s.
     """
     user_id_str = str(user.id)
 
     # Kill every refresh token JTI for this user. ``revoke_all`` is idempotent
     # and a no-op if nothing is stored.
     await token_store.revoke_all(user_id_str)
+
+    # CASCADE child deletes are planned with RLS. Bind the *target* so the
+    # production app role can see and remove their rows (see docstring).
+    await bind_rls_current_user(db, user.id)
 
     # Hard-delete the row. The ON DELETE CASCADE chain on every FK to
     # ``users.id`` (see module docstring) takes care of all dependent rows,
