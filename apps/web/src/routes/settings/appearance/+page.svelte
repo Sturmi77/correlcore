@@ -1,5 +1,6 @@
 <script lang="ts">
   import { _, locale } from 'svelte-i18n';
+  import { auth } from '$lib/stores/auth';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -34,32 +35,39 @@
     </Button>
   </ScreenHeader>
 
-  <Panel variant="bordered">
-    <div class="appearance-settings__head">
-      <h2>{$_('settings.appearance.heading')}</h2>
-      <p>{$_('settings.appearance.body')}</p>
-    </div>
-    <div class="appearance-settings__row">
-      <span>{$_('settings.appearance.theme')}</span>
-      <ThemeToggle testId="settings-theme-toggle-panel" />
-    </div>
-    <SegmentedControl
-      value={$locale ?? 'de'}
-      options={localeOptions}
-      ariaLabel={$_('settings.appearance.language')}
-      testId="settings-language-control"
-      equalWidth={false}
-      on:change={(event) => selectLocale(event.detail.value as AppLocale)}
-    />
-    <div class="appearance-settings__actions">
-      <Button href="/settings/home" variant="secondary" data-testid="settings-home-layout">
-        {$_('settings.home.open')}
-      </Button>
-      <Button href="/settings/app" variant="secondary" data-testid="settings-app-open">
-        {$_('settings.app.open')}
-      </Button>
-    </div>
-  </Panel>
+  {#if $auth.status !== 'authenticated'}
+    <Panel variant="bordered">
+      <p>{$_('settings.auth_required')}</p>
+      <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
+    </Panel>
+  {:else}
+    <Panel variant="bordered">
+      <div class="appearance-settings__head">
+        <h2>{$_('settings.appearance.heading')}</h2>
+        <p>{$_('settings.appearance.body')}</p>
+      </div>
+      <div class="appearance-settings__row">
+        <span>{$_('settings.appearance.theme')}</span>
+        <ThemeToggle testId="settings-theme-toggle-panel" />
+      </div>
+      <SegmentedControl
+        value={$locale ?? 'de'}
+        options={localeOptions}
+        ariaLabel={$_('settings.appearance.language')}
+        testId="settings-language-control"
+        equalWidth={false}
+        on:change={(event) => selectLocale(event.detail.value as AppLocale)}
+      />
+      <div class="appearance-settings__actions">
+        <Button href="/settings/home" variant="secondary" data-testid="settings-home-layout">
+          {$_('settings.home.open')}
+        </Button>
+        <Button href="/settings/app" variant="secondary" data-testid="settings-app-open">
+          {$_('settings.app.open')}
+        </Button>
+      </div>
+    </Panel>
+  {/if}
 </main>
 
 <style>
