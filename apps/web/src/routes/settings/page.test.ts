@@ -4,17 +4,10 @@ import Page from './+page.svelte';
 import { devMode } from '$lib/stores/devMode';
 
 vi.mock('svelte-i18n', async () => {
-  const { readable, writable } = await import('svelte/store');
+  const { readable } = await import('svelte/store');
   return {
     _: readable((key: string) => key),
-    locale: writable('de'),
-  };
-});
-
-vi.mock('$lib/i18n', async () => {
-  const i18n = await import('svelte-i18n');
-  return {
-    setAppLocale: vi.fn((nextLocale: string) => i18n.locale.set(nextLocale)),
+    locale: readable('de'),
   };
 });
 
@@ -25,8 +18,8 @@ vi.mock('$lib/stores/auth', async () => {
       status: 'authenticated',
       user: { id: 'user-1', email: 'user@example.com' },
     }),
+    // No is_admin → the admin entry stays hidden (gating check below).
     currentUser: readable({ id: 'user-1', email: 'user@example.com' }),
-    logout: vi.fn(async () => undefined),
   };
 });
 
@@ -40,99 +33,49 @@ vi.mock('$lib/api/dev', () => ({
   }),
 }));
 
-vi.mock('$lib/api/entries', () => ({
-  deleteCycleData: vi.fn(async () => ({ cleared_entries: 3 })),
-}));
-
-vi.mock('$lib/stores/entriesOffline', () => ({
-  clearCycleDataOffline: vi.fn(async () => 0),
-}));
-
-vi.mock('$lib/api/export', () => ({
-  downloadExport: vi.fn(),
-  exportFilename: vi.fn((kind: string) => `export.${kind}`),
-  saveBlob: vi.fn(),
-}));
-
-vi.mock('$lib/api/preferences', () => ({
-  fetchUserPreferences: vi.fn(async () => ({
-    user_id: 'user-1',
-    analytics_enabled: true,
-    digest_enabled: true,
-    onboarding_retro_completed: true,
-    onboarding_profile_completed: true,
-    onboarding_maturity_intro_seen: true,
-    cycle_tracking_enabled: true,
-    dismissed_insight_keys: [],
-    reached_milestone_keys: [],
-    last_seen_insight_at: null,
-    home_sections: null,
-    created_at: '2026-05-16T10:00:00Z',
-    updated_at: '2026-05-16T10:00:00Z',
-  })),
-  updateUserPreferences: vi.fn(async (payload) => ({
-    user_id: 'user-1',
-    analytics_enabled: payload.analytics_enabled ?? true,
-    digest_enabled: payload.digest_enabled ?? false,
-    onboarding_retro_completed: true,
-    onboarding_profile_completed: true,
-    onboarding_maturity_intro_seen: true,
-    cycle_tracking_enabled: payload.cycle_tracking_enabled ?? true,
-    dismissed_insight_keys: [],
-    reached_milestone_keys: [],
-    last_seen_insight_at: null,
-    home_sections: null,
-    created_at: '2026-05-16T10:00:00Z',
-    updated_at: '2026-05-16T10:00:00Z',
-  })),
-}));
-
-vi.mock('$lib/api/user', () => ({
-  deleteAccount: vi.fn(async () => undefined),
-}));
-
-vi.mock('$lib/api/insights', () => ({
-  regenerateInsights: vi.fn(async () => ({
-    status: 'ok',
-    generated_for_date: '2026-07-13',
-    insight_count: 5,
-    tag_clusters_status: 'ok',
-    trigger_source: 'user_regenerate',
-  })),
-}));
-
-vi.mock('$lib/api/consents', () => ({
-  HEALTH_CONNECT_CONSENT_TYPE: 'health_connect',
-  HEALTH_CONNECT_CONSENT_VERSION: '1',
-  fetchUserConsents: vi.fn(async () => ({
-    current: [],
-    history: [],
-  })),
-  recordUserConsent: vi.fn(),
-  revokeUserConsent: vi.fn(),
-}));
-
-describe('/settings Sprint 7', () => {
+describe('/settings hub (#694 IA)', () => {
   beforeEach(() => {
     devMode.set(false);
     localStorage.clear();
   });
 
-  it('renders the canonical settings sections', async () => {
+  it('renders the four category entries and no inline forms', async () => {
     render(Page);
 
-    expect(await screen.findByTestId('settings-section-vocabulary')).toBeTruthy();
-    expect(screen.getByTestId('settings-vocab-tags')).toBeTruthy();
-    expect(screen.getByTestId('settings-vocab-symptoms')).toBeTruthy();
-    expect(screen.getByTestId('settings-vocab-habits')).toBeTruthy();
-    expect(screen.getByTestId('settings-delete-account')).toBeTruthy();
-    expect(screen.getByTestId('settings-privacy-policy')).toBeTruthy();
-    expect(screen.getByTestId('settings-section-export')).toBeTruthy();
-    expect(screen.getByTestId('settings-section-analysis')).toBeTruthy();
-    expect(screen.getByTestId('settings-section-privacy')).toBeTruthy();
-    expect(screen.getByTestId('settings-health-connect-consent')).toBeTruthy();
-    expect(screen.getByTestId('settings-section-appearance')).toBeTruthy();
-    expect(screen.getByTestId('settings-section-account')).toBeTruthy();
+    expect(await screen.findByTestId('settings-cat-data')).toBeTruthy();
+    expect(screen.getByTestId('settings-cat-analysis')).toBeTruthy();
+    expect(screen.getByTestId('settings-cat-privacy')).toBeTruthy();
+    expect(screen.getByTestId('settings-cat-appearance')).toBeTruthy();
+
+    // The forms moved to the sub-pages — the hub must not carry them anymore.
+    expect(screen.queryByTestId('regenerate-insights')).toBeNull();
+    expect(screen.queryByTestId('cycle-delete-data')).toBeNull();
+    expect(screen.queryByTestId('settings-delete-account')).toBeNull();
+    expect(screen.queryByTestId('settings-language-control')).toBeNull();
+  });
+
+  it('links each category to its real sub-route', async () => {
+    render(Page);
+
+    expect((await screen.findByTestId('settings-cat-data')).getAttribute('href')).toBe(
+      '/settings/data'
+    );
+    expect(screen.getByTestId('settings-cat-analysis').getAttribute('href')).toBe(
+      '/settings/analysis'
+    );
+    expect(screen.getByTestId('settings-cat-privacy').getAttribute('href')).toBe(
+      '/settings/privacy'
+    );
+    expect(screen.getByTestId('settings-cat-appearance').getAttribute('href')).toBe(
+      '/settings/appearance'
+    );
+  });
+
+  it('keeps the admin entry gated behind is_admin', async () => {
+    render(Page);
+    await screen.findByTestId('settings-cat-data');
+    // currentUser mock has no is_admin → entry hidden.
+    expect(screen.queryByTestId('settings-section-admin')).toBeNull();
   });
 
   it('keeps developer controls hidden until the 7x tap unlock', async () => {
@@ -179,27 +122,5 @@ describe('/settings Sprint 7', () => {
     await waitFor(() => {
       expect((screen.getByTestId('developer-entry-count') as HTMLInputElement).value).toBe('42');
     });
-  });
-
-  it('switches locale through the segmented language control', async () => {
-    render(Page);
-
-    await fireEvent.click(screen.getByTestId('language-en'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('language-en').getAttribute('aria-pressed')).toBe('true');
-    });
-  });
-
-  it('shows regenerate insights control in analysis section', async () => {
-    render(Page);
-
-    expect(await screen.findByTestId('regenerate-insights')).toBeTruthy();
-  });
-
-  it('shows cycle data delete control in cycle section', async () => {
-    render(Page);
-
-    expect(await screen.findByTestId('cycle-delete-data')).toBeTruthy();
   });
 });

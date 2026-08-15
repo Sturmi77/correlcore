@@ -699,8 +699,31 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Export your data and manage local app options.",
+    "subtitle": "Choose a category to manage your data, analysis, privacy and appearance.",
     "auth_required": "Please sign in to export your data.",
+    "back": "Back to settings",
+    "groups": {
+      "data": {
+        "title": "Your data",
+        "subtitle": "Tags, symptoms, cycle tracking and data export.",
+        "summary": "Tags, symptoms, cycle & export"
+      },
+      "analysis": {
+        "title": "Analysis & insights",
+        "subtitle": "Analysis options and the weekly digest.",
+        "summary": "Analysis options & digest"
+      },
+      "privacy": {
+        "title": "Privacy & account",
+        "subtitle": "Health Connect, privacy policy, logout and account deletion.",
+        "summary": "Health Connect, logout & delete"
+      },
+      "appearance": {
+        "title": "Appearance",
+        "subtitle": "Theme, language and home & app layout.",
+        "summary": "Theme, language & layout"
+      }
+    },
     "section": {
       "tracking": "Tracking",
       "vocabulary": "Vocabulary",

@@ -9,6 +9,10 @@ const trendsToolbarSource = readFileSync(
 );
 const insightsRouteSource = readFileSync(resolve('src/routes/insights/+page.svelte'), 'utf8');
 const settingsSource = readFileSync(resolve('src/routes/settings/+page.svelte'), 'utf8');
+const appearanceSettingsSource = readFileSync(
+  resolve('src/routes/settings/appearance/+page.svelte'),
+  'utf8'
+);
 const insightFeedSource = readFileSync(
   resolve('src/lib/components/insights/InsightFeed.svelte'),
   'utf8'
@@ -41,9 +45,12 @@ describe('control primitive contract', () => {
   });
 
   it('uses shared controls for settings selections and actions', () => {
-    expect(settingsSource).toContain('$lib/components/common/SegmentedControl.svelte');
-    expect(settingsSource).toContain('<SegmentedControl');
-    expect(settingsSource).not.toContain('settings__language button');
+    // #694: the language SegmentedControl now lives on the Appearance sub-page.
+    expect(appearanceSettingsSource).toContain('$lib/components/common/SegmentedControl.svelte');
+    expect(appearanceSettingsSource).toContain('<SegmentedControl');
+    expect(appearanceSettingsSource).not.toContain('settings__language button');
+    // The settings hub is a lean index — no raw button classes anywhere.
     expect(settingsSource).not.toContain('class="btn');
+    expect(appearanceSettingsSource).not.toContain('class="btn');
   });
 });

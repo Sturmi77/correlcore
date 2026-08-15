@@ -130,7 +130,7 @@ test.setTimeout(APP_READY_TIMEOUT_MS);
 
 test('privacy policy is linked from settings and renders sections', async ({ page }) => {
   await installGdprApi(page);
-  await page.goto('/settings');
+  await page.goto('/settings/privacy');
 
   await expect(page.getByTestId('settings-privacy-policy')).toBeVisible({
     timeout: APP_READY_TIMEOUT_MS,
@@ -144,7 +144,7 @@ test('privacy policy is linked from settings and renders sections', async ({ pag
 
 test('ZIP export triggers GET /user/export', async ({ page }) => {
   const api = await installGdprApi(page);
-  await page.goto('/settings');
+  await page.goto('/settings/data');
 
   await expect(page.getByTestId('settings-section-export')).toBeVisible({
     timeout: APP_READY_TIMEOUT_MS,
@@ -158,7 +158,7 @@ test('ZIP export triggers GET /user/export', async ({ page }) => {
 
 test('analytics opt-out sends PATCH /user/preferences', async ({ page }) => {
   const api = await installGdprApi(page, { analyticsEnabled: true });
-  await page.goto('/settings');
+  await page.goto('/settings/analysis');
 
   const toggle = page.getByTestId('analytics-toggle');
   await expect(toggle).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
@@ -181,7 +181,7 @@ test('analytics opt-out sends PATCH /user/preferences', async ({ page }) => {
 
 test('account deletion confirms password and clears session', async ({ page }) => {
   const api = await installGdprApi(page);
-  await page.goto('/settings');
+  await page.goto('/settings/privacy');
 
   await page.getByTestId('settings-delete-account').click({ timeout: APP_READY_TIMEOUT_MS });
   await expect(page.getByTestId('settings-delete-dialog')).toBeVisible();

@@ -699,8 +699,31 @@
   },
   "settings": {
     "title": "Einstellungen",
-    "subtitle": "Exportiere deine Daten und verwalte lokale App-Optionen.",
+    "subtitle": "Wähle einen Bereich, um Daten, Analyse, Datenschutz und Darstellung zu verwalten.",
     "auth_required": "Bitte melde dich an, um deine Daten zu exportieren.",
+    "back": "Zurück zu den Einstellungen",
+    "groups": {
+      "data": {
+        "title": "Deine Daten",
+        "subtitle": "Tags, Symptome, Zyklus-Tracking und Datenexport.",
+        "summary": "Tags, Symptome, Zyklus & Export"
+      },
+      "analysis": {
+        "title": "Analyse & Insights",
+        "subtitle": "Analyse-Optionen und der wöchentliche Digest.",
+        "summary": "Analyse-Optionen & Digest"
+      },
+      "privacy": {
+        "title": "Datenschutz & Konto",
+        "subtitle": "Health Connect, Datenschutzerklärung, Logout und Kontolöschung.",
+        "summary": "Health Connect, Logout & Löschen"
+      },
+      "appearance": {
+        "title": "Darstellung",
+        "subtitle": "Theme, Sprache sowie Home- & App-Layout.",
+        "summary": "Theme, Sprache & Layout"
+      }
+    },
     "section": {
       "tracking": "Tracking",
       "vocabulary": "Vokabular",
