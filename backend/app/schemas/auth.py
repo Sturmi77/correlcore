@@ -92,6 +92,9 @@ class UserResponse(BaseModel):
     email: str
     display_name: str | None
     is_verified: bool
+    # Admin-console access (#677). Lets the client gate the /admin entry point;
+    # the server still enforces every admin action via require_admin().
+    is_admin: bool = False
 
     model_config = {"from_attributes": True}
 
