@@ -47,9 +47,7 @@ def _make_token_store() -> MagicMock:
 @pytest.fixture(autouse=True)
 def bind_rls() -> AsyncMock:
     """``purge_user_account`` rebinds RLS to the target; keep unit tests off the DB."""
-    with patch(
-        "app.services.user_service.bind_rls_current_user", new_callable=AsyncMock
-    ) as mock:
+    with patch("app.services.user_service.bind_rls_current_user", new_callable=AsyncMock) as mock:
         yield mock
 
 
