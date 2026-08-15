@@ -2,17 +2,9 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { auth, currentUser } from '$lib/stores/auth';
-  import {
-    devPhase,
-    devForceVisualizations,
-    devForceVisualizationsControl,
-    devMode,
-    type DevInsightMaturity,
-  } from '$lib/stores/devMode';
-  import { DEV_PHASE_PRESETS, type DevPhasePresetId } from '$lib/dev/phaseFixtures';
+  import { devMode } from '$lib/stores/devMode';
   import Button from '$lib/components/common/Button.svelte';
   import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
-  import IconButton from '$lib/components/common/IconButton.svelte';
   import { BRAND_MARK_SM } from '$lib/constants/iconSizes';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -35,13 +27,6 @@
   type DevBackendState = 'unknown' | 'available' | 'disabled' | 'error';
   let devBackendState: DevBackendState = 'unknown';
   $: devAvailable = devBackendState === 'available';
-  const devInsightPhases: DevInsightMaturity[] = [
-    'collecting',
-    'early_patterns',
-    'provisional',
-    'robust',
-  ];
-  $: selectedDevPreset = DEV_PHASE_PRESETS[$devPhase.presetId];
 
   async function checkDevView(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
@@ -102,11 +87,6 @@
     }, TAP_TIMEOUT_MS);
   }
 
-  function updateDevEntryCount(value: string): void {
-    const parsed = Number.parseInt(value, 10);
-    devPhase.setEntryCount(Number.isFinite(parsed) ? parsed : 0);
-  }
-
   onMount(() => {
     void checkDevView();
     return registerPageRefresh(async () => {
@@ -153,121 +133,28 @@
       </Panel>
     {/if}
 
-    <!-- DEVELOPER entry: gated (7×-tap client dev mode or backend DEV_VIEW_ENABLED) -->
+    <!-- DEVELOPER entry: slim, gated (7×-tap client dev mode or backend DEV_VIEW_ENABLED).
+         All dev tools/fixtures now live on /dev (#695). -->
     {#if $devMode || devAvailable}
       <section class="settings__panel settings__panel--developer" data-testid="developer-section">
         <div class="settings__gated-head">
           <span class="settings__section-kicker">{$_('settings.section.developer')}</span>
           <h2>{$_('settings.developer.heading')}</h2>
-          <p>{$_('settings.developer.body')}</p>
+          <p>{$_('settings.developer.entry_body')}</p>
         </div>
-        <label class="settings__toggle-label">
-          <input
-            type="checkbox"
-            class="settings__toggle"
-            checked={$devMode}
-            aria-label={$_('settings.developer.toggle_aria')}
-            data-testid="developer-toggle"
-            on:change={(e) => devMode.set(e.currentTarget.checked)}
-          />
-          <span>{$_('settings.developer.toggle_label')}</span>
-        </label>
-        {#if $devMode}
-          <p class="settings__dev-hint" data-testid="developer-client-active-hint">
-            {$_('settings.developer.client_active_hint')}
+        {#if $devMode && !devAvailable && devBackendState === 'disabled'}
+          <p class="settings__dev-hint" data-testid="developer-backend-unavailable-hint">
+            {$_('settings.developer.backend_unavailable_hint')}
           </p>
-          <label class="settings__toggle-label">
-            <input
-              type="checkbox"
-              class="settings__toggle"
-              checked={$devForceVisualizations}
-              aria-label={$_('settings.developer.force_viz_aria')}
-              data-testid="force-viz-toggle"
-              on:change={(e) => devForceVisualizationsControl.set(e.currentTarget.checked)}
-            />
-            <span>{$_('settings.developer.force_viz_label')}</span>
-          </label>
-          <div class="settings__dev-grid" data-testid="developer-phase-controls">
-            <label class="settings__field">
-              <span>{$_('settings.developer.phase_label')}</span>
-              <select
-                value={$devPhase.presetId}
-                data-testid="developer-phase-select"
-                on:change={(e) => devPhase.setPreset(e.currentTarget.value as DevPhasePresetId)}
-              >
-                {#each devInsightPhases as phase}
-                  <option value={phase}>{$_(`settings.developer.phase.${phase}`)}</option>
-                {/each}
-              </select>
-            </label>
-          </div>
-          <p class="settings__dev-summary" data-testid="developer-phase-summary">
-            {$_(selectedDevPreset.coverageKey, {
-              values: { count: $devPhase.entryCount },
-            })}
+        {:else if $devMode && !devAvailable && devBackendState === 'error'}
+          <p class="settings__dev-hint" data-testid="developer-backend-error-hint">
+            {$_('settings.developer.backend_error_hint')}
           </p>
-          <details class="settings__dev-advanced">
-            <summary>{$_('settings.developer.advanced')}</summary>
-            <div class="settings__dev-grid">
-              <label class="settings__field">
-                <span>{$_('settings.developer.entry_count_label')}</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="200"
-                  value={$devPhase.entryCount}
-                  data-testid="developer-entry-count"
-                  on:input={(e) => updateDevEntryCount(e.currentTarget.value)}
-                />
-              </label>
-              <label class="settings__toggle-label">
-                <input
-                  type="checkbox"
-                  class="settings__toggle"
-                  checked={$devPhase.onboardingCompleted}
-                  data-testid="developer-onboarding-toggle"
-                  on:change={(e) => devPhase.setOnboardingCompleted(e.currentTarget.checked)}
-                />
-                <span>{$_('settings.developer.onboarding_completed')}</span>
-              </label>
-            </div>
-          </details>
-          <div class="settings__actions">
-            <Button
-              variant="secondary"
-              data-testid="developer-onboarding-preview"
-              on:click={() => devPhase.setOnboardingPreviewOpen(true)}
-            >
-              {$_('settings.developer.preview_onboarding')}
-            </Button>
-          </div>
         {/if}
-
-        <div class="settings__dev-backend" data-testid="developer-backend-block">
-          <h3 class="settings__dev-subheading">{$_('settings.developer.backend_heading')}</h3>
-          <p class="settings__dev-hint">{$_('settings.developer.backend_body')}</p>
-          {#if devAvailable}
-            <div class="settings__actions">
-              <Button href="/dev" variant="secondary" data-testid="dev-link">
-                {$_('settings.dev.open')}
-              </Button>
-            </div>
-          {:else if $devMode}
-            {#if devBackendState === 'disabled'}
-              <p class="settings__dev-hint" data-testid="developer-backend-unavailable-hint">
-                {$_('settings.developer.backend_unavailable_hint')}
-              </p>
-            {:else if devBackendState === 'error'}
-              <p class="settings__dev-hint" data-testid="developer-backend-error-hint">
-                {$_('settings.developer.backend_error_hint')}
-              </p>
-            {/if}
-            <div class="settings__actions">
-              <Button href="/dev" variant="secondary" data-testid="dev-link">
-                {$_('settings.dev.open')}
-              </Button>
-            </div>
-          {/if}
+        <div class="settings__actions">
+          <Button href="/dev" variant="secondary" data-testid="dev-link">
+            {$_('settings.dev.open')}
+          </Button>
         </div>
       </section>
     {/if}
@@ -293,39 +180,6 @@
 {#if toastVisible}
   <div class="settings__toast" role="status" aria-live="polite" data-testid="dev-toast">
     {toastMessage}
-  </div>
-{/if}
-
-{#if $devMode && $devPhase.onboardingPreviewOpen}
-  <div
-    class="settings__modal-backdrop"
-    role="presentation"
-    on:click={() => devPhase.setOnboardingPreviewOpen(false)}
-  >
-    <dialog
-      open
-      class="settings__modal"
-      aria-modal="true"
-      aria-labelledby="onboarding-preview-title"
-      on:click|stopPropagation
-    >
-      <div class="settings__modal-head">
-        <h2 id="onboarding-preview-title">{$_('settings.developer.preview_title')}</h2>
-        <IconButton
-          type="button"
-          ariaLabel={$_('settings.developer.preview_close')}
-          title={$_('settings.developer.preview_close')}
-          on:click={() => devPhase.setOnboardingPreviewOpen(false)}
-        >
-          x
-        </IconButton>
-      </div>
-      <iframe
-        class="settings__preview-frame"
-        title={$_('settings.developer.preview_title')}
-        src="/onboarding?preview=1"
-      ></iframe>
-    </dialog>
   </div>
 {/if}
 
@@ -413,131 +267,11 @@
     gap: 0.65rem;
   }
 
-  .settings__toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    cursor: pointer;
-    min-height: 2.75rem;
-    padding-block: 0.25rem;
-    user-select: none;
-  }
-
-  .settings__toggle {
-    width: 1.25rem;
-    height: 1.25rem;
-    min-width: 1.25rem;
-    cursor: pointer;
-    accent-color: var(--color-primary);
-  }
-
-  .settings__dev-backend {
-    display: grid;
-    gap: var(--space-2);
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--color-border);
-  }
-
-  .settings__dev-subheading {
-    margin: 0;
-    font-size: var(--text-sm);
-    font-weight: 700;
-  }
-
   .settings__dev-hint {
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     line-height: 1.5;
-  }
-
-  .settings__dev-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: var(--space-3);
-  }
-
-  .settings__field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
-  }
-
-  .settings__field select,
-  .settings__field input {
-    min-height: 44px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: 0 var(--space-3);
-    background: var(--color-surface);
-    color: var(--color-text);
-  }
-
-  .settings__dev-summary {
-    margin: 0;
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    line-height: 1.5;
-  }
-
-  .settings__dev-advanced {
-    display: grid;
-    gap: var(--space-3);
-  }
-
-  .settings__dev-advanced summary {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    font-weight: 700;
-  }
-
-  .settings__modal-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 500;
-    display: grid;
-    place-items: center;
-    padding: var(--space-4);
-    background: color-mix(in srgb, var(--color-surface) 62%, transparent);
-  }
-
-  .settings__modal {
-    width: min(100%, 42rem);
-    height: min(88dvh, 52rem);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .settings__modal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-3);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .settings__modal-head h2 {
-    margin: 0;
-    font-size: var(--text-base);
-  }
-
-  .settings__preview-frame {
-    flex: 1;
-    width: 100%;
-    border: 0;
-    background: var(--color-surface);
   }
 
   .settings__footer {

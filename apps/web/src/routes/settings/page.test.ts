@@ -78,7 +78,7 @@ describe('/settings hub (#694 IA)', () => {
     expect(screen.queryByTestId('settings-section-admin')).toBeNull();
   });
 
-  it('keeps developer controls hidden until the 7x tap unlock', async () => {
+  it('keeps the slim developer entry hidden until the 7x tap unlock', async () => {
     render(Page);
 
     expect(screen.queryByTestId('developer-section')).toBeNull();
@@ -91,36 +91,22 @@ describe('/settings hub (#694 IA)', () => {
     await waitFor(() => {
       expect(screen.getByTestId('developer-section')).toBeTruthy();
     });
-    expect(screen.getByTestId('force-viz-toggle')).toBeTruthy();
+    // #695: the dev tools moved to /dev — the hub only keeps a gated link.
+    expect(screen.getByTestId('dev-link')).toBeTruthy();
+    expect(screen.queryByTestId('force-viz-toggle')).toBeNull();
+    expect(screen.queryByTestId('developer-phase-select')).toBeNull();
     await waitFor(() => {
       expect(screen.getByTestId('developer-backend-unavailable-hint')).toBeTruthy();
     });
   });
 
-  it('shows developer section on load when dev mode was persisted', async () => {
+  it('shows the slim developer entry on load when dev mode was persisted', async () => {
     localStorage.setItem('dev_mode_enabled', 'true');
     devMode.set(true);
 
     render(Page);
 
     expect(await screen.findByTestId('developer-section')).toBeTruthy();
-    expect(screen.getByTestId('force-viz-toggle')).toBeTruthy();
-  });
-
-  it('applies the selected developer phase preset entry count', async () => {
-    render(Page);
-
-    const version = screen.getByTestId('version-string');
-    for (let i = 0; i < 7; i++) {
-      await fireEvent.click(version);
-    }
-
-    const phaseSelect = await screen.findByTestId('developer-phase-select');
-    await fireEvent.change(phaseSelect, { target: { value: 'robust' } });
-    await fireEvent.click(screen.getByText('settings.developer.advanced'));
-
-    await waitFor(() => {
-      expect((screen.getByTestId('developer-entry-count') as HTMLInputElement).value).toBe('42');
-    });
+    expect(screen.getByTestId('dev-link')).toBeTruthy();
   });
 });
