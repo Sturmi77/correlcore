@@ -218,7 +218,7 @@
   <title>{$_('admin.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="admin">
+<main class="admin screen-stack">
   <header class="admin__top">
     <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
   </header>
@@ -468,10 +468,6 @@
   .admin {
     width: min(100%, 64rem);
     margin: 0 auto;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
   }
 
   .admin__top {
@@ -747,11 +743,5 @@
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-  }
-
-  @media (max-width: 768px) {
-    .admin {
-      padding: 1rem;
-    }
   }
 </style>
