@@ -637,6 +637,66 @@
       "above_target": "Above target range"
     }
   },
+  "admin": {
+    "eyebrow": "Admin console",
+    "title": "User management",
+    "subtitle": "Search accounts, disable or delete them, and trigger password resets.",
+    "loading": "Loading users…",
+    "empty": "No users match this filter.",
+    "busy": "…",
+    "search_placeholder": "Search by email",
+    "search_action": "Search",
+    "self_hint": "You cannot perform this action on your own account.",
+    "error_load": "Could not load users.",
+    "error_action": "The action failed. Please try again.",
+    "forbidden_title": "Admins only",
+    "forbidden_body": "Your account does not have admin access.",
+    "back_settings": "Back to settings",
+    "range": "{from}–{to} of {total}",
+    "prev": "Previous",
+    "next": "Next",
+    "filter": {
+      "label": "Filter by status",
+      "all": "All",
+      "active": "Active",
+      "disabled": "Disabled"
+    },
+    "col": {
+      "user": "User",
+      "status": "Status",
+      "created": "Joined",
+      "actions": "Actions"
+    },
+    "badge": {
+      "you": "You",
+      "admin": "Admin",
+      "active": "Active",
+      "disabled": "Disabled",
+      "unverified": "Unverified"
+    },
+    "action": {
+      "reset": "Reset password",
+      "disable": "Disable",
+      "enable": "Enable",
+      "delete": "Delete"
+    },
+    "toast": {
+      "enabled": "Enabled {email}.",
+      "disabled": "Disabled {email}.",
+      "reset_sent": "Password-reset email sent to {email}.",
+      "reset_conflict": "{email} must be active and verified to receive a reset link.",
+      "deleted": "Deleted {email}."
+    },
+    "delete": {
+      "title": "Delete user permanently",
+      "body": "This erases {email} and all {count} of their entries. Their encrypted data becomes unrecoverable.",
+      "irreversible": "This cannot be undone (DSGVO Art. 17 erasure).",
+      "confirm_label": "Type {email} to confirm",
+      "cancel": "Cancel",
+      "confirm": "Delete permanently",
+      "forbidden": "You cannot delete your own account."
+    }
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Export your data and manage local app options.",
@@ -650,7 +710,13 @@
       "appearance": "Appearance",
       "home": "Home",
       "account": "Account",
+      "admin": "Admin",
       "developer": "Developer"
+    },
+    "admin": {
+      "heading": "Admin console",
+      "body": "Manage user accounts: search, disable, delete, and reset passwords.",
+      "open": "Open admin console"
     },
     "tracking": {
       "heading": "Manage tracking",

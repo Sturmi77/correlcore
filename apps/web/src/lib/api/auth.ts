@@ -18,6 +18,8 @@ export interface UserResponse {
   email: string;
   display_name: string | null;
   is_verified: boolean;
+  /** Admin-console access (#677). Absent on older backends → treated as false. */
+  is_admin?: boolean;
 }
 
 export interface TokenResponse {

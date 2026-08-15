@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { _, locale } from 'svelte-i18n';
   import { goto } from '$app/navigation';
-  import { auth, logout } from '$lib/stores/auth';
+  import { auth, currentUser, logout } from '$lib/stores/auth';
   import {
     devPhase,
     devForceVisualizations,
@@ -672,6 +672,22 @@
         </Button>
       </div>
     </section>
+
+    <!-- ADMIN section: only for accounts with is_admin (#677) -->
+    {#if $currentUser?.is_admin}
+      <section class="settings__panel" data-testid="settings-section-admin">
+        <div class="settings__panel-head">
+          <span class="settings__section-kicker">{$_('settings.section.admin')}</span>
+          <h2>{$_('settings.admin.heading')}</h2>
+          <p>{$_('settings.admin.body')}</p>
+        </div>
+        <div class="settings__actions">
+          <Button href="/admin" variant="secondary" data-testid="settings-admin-link">
+            {$_('settings.admin.open')}
+          </Button>
+        </div>
+      </section>
+    {/if}
 
     <!-- DEVELOPER section: client dev mode (7× tap / persisted) or backend DEV_VIEW_ENABLED -->
     {#if $devMode || devAvailable}

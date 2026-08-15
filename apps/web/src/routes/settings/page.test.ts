@@ -25,6 +25,7 @@ vi.mock('$lib/stores/auth', async () => {
       status: 'authenticated',
       user: { id: 'user-1', email: 'user@example.com' },
     }),
+    currentUser: readable({ id: 'user-1', email: 'user@example.com' }),
     logout: vi.fn(async () => undefined),
   };
 });
