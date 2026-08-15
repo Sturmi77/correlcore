@@ -4,6 +4,7 @@ Every new model module must be imported in this file.
 Alembic's env.py does ``import app.models`` which triggers this file.
 """
 
+from app.models.admin_audit_log import AdminAuditLog  # noqa: F401
 from app.models.consent_log import ConsentLog  # noqa: F401
 from app.models.device_token import DeviceToken, PushPlatform, PushProvider  # noqa: F401
 from app.models.email_verification_token import EmailVerificationToken  # noqa: F401
@@ -44,6 +45,7 @@ __all__ = [
     "INTENSITY_MAX",
     "INTENSITY_MIN",
     "STANDARD_SYMPTOM_KEYS",
+    "AdminAuditLog",
     "ConsentLog",
     "DeviceToken",
     "EmailVerificationToken",

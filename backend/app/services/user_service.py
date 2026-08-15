@@ -89,17 +89,33 @@ async def delete_user_account(
         )
         raise UserDeletionError("Invalid credentials")
 
+    await purge_user_account(db, token_store, user)
+
+
+async def purge_user_account(
+    db: AsyncSession,
+    token_store: TokenStore,
+    user: User,
+) -> None:
+    """Destructive hard-delete: revoke refresh tokens + cascade-delete the row.
+
+    Performs **no** authorization on its own — callers must authorize first:
+    self-service via password re-auth (:func:`delete_user_account`) or an admin
+    via ``require_admin`` (#677 admin console). ``db.commit()`` is left to the
+    session dependency so the caller can compose (e.g. write an audit row in the
+    same transaction).
+    """
     user_id_str = str(user.id)
 
-    # Step 2: kill every refresh token JTI for this user. ``revoke_all``
-    # is idempotent and a no-op if nothing is stored.
+    # Kill every refresh token JTI for this user. ``revoke_all`` is idempotent
+    # and a no-op if nothing is stored.
     await token_store.revoke_all(user_id_str)
 
-    # Step 3: hard-delete the row. The ON DELETE CASCADE chain on every
-    # FK to ``users.id`` (see module docstring) takes care of all
-    # dependent rows, including the ``user_encryption_keys`` row that
-    # holds the wrapped DEK — that single row going away is what turns
-    # all of this user's ciphertexts into permanent garbage.
+    # Hard-delete the row. The ON DELETE CASCADE chain on every FK to
+    # ``users.id`` (see module docstring) takes care of all dependent rows,
+    # including the ``user_encryption_keys`` row that holds the wrapped DEK —
+    # that single row going away is what turns all of this user's ciphertexts
+    # into permanent garbage.
     await db.execute(delete(User).where(User.id == user.id))
 
     logger.info(
