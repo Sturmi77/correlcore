@@ -637,6 +637,66 @@
       "above_target": "Ueber dem Zielbereich"
     }
   },
+  "admin": {
+    "eyebrow": "Admin-Konsole",
+    "title": "Benutzerverwaltung",
+    "subtitle": "Konten suchen, deaktivieren oder löschen und Passwort-Resets auslösen.",
+    "loading": "Benutzer werden geladen…",
+    "empty": "Keine Benutzer entsprechen diesem Filter.",
+    "busy": "…",
+    "search_placeholder": "Nach E-Mail suchen",
+    "search_action": "Suchen",
+    "self_hint": "Diese Aktion ist für das eigene Konto nicht möglich.",
+    "error_load": "Benutzer konnten nicht geladen werden.",
+    "error_action": "Die Aktion ist fehlgeschlagen. Bitte erneut versuchen.",
+    "forbidden_title": "Nur für Admins",
+    "forbidden_body": "Dein Konto hat keinen Admin-Zugriff.",
+    "back_settings": "Zurück zu den Einstellungen",
+    "range": "{from}–{to} von {total}",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "filter": {
+      "label": "Nach Status filtern",
+      "all": "Alle",
+      "active": "Aktiv",
+      "disabled": "Deaktiviert"
+    },
+    "col": {
+      "user": "Benutzer",
+      "status": "Status",
+      "created": "Beigetreten",
+      "actions": "Aktionen"
+    },
+    "badge": {
+      "you": "Du",
+      "admin": "Admin",
+      "active": "Aktiv",
+      "disabled": "Deaktiviert",
+      "unverified": "Unbestätigt"
+    },
+    "action": {
+      "reset": "Passwort zurücksetzen",
+      "disable": "Deaktivieren",
+      "enable": "Aktivieren",
+      "delete": "Löschen"
+    },
+    "toast": {
+      "enabled": "{email} aktiviert.",
+      "disabled": "{email} deaktiviert.",
+      "reset_sent": "Passwort-Reset-E-Mail an {email} gesendet.",
+      "reset_conflict": "{email} muss aktiv und bestätigt sein, um einen Reset-Link zu erhalten.",
+      "deleted": "{email} gelöscht."
+    },
+    "delete": {
+      "title": "Benutzer endgültig löschen",
+      "body": "Dies löscht {email} und alle {count} zugehörigen Einträge. Die verschlüsselten Daten werden unwiederbringlich.",
+      "irreversible": "Dies kann nicht rückgängig gemacht werden (DSGVO Art. 17 Löschung).",
+      "confirm_label": "Zum Bestätigen {email} eingeben",
+      "cancel": "Abbrechen",
+      "confirm": "Endgültig löschen",
+      "forbidden": "Das eigene Konto kann nicht gelöscht werden."
+    }
+  },
   "settings": {
     "title": "Einstellungen",
     "subtitle": "Exportiere deine Daten und verwalte lokale App-Optionen.",
@@ -650,7 +710,13 @@
       "appearance": "Darstellung",
       "home": "Home",
       "account": "Konto",
+      "admin": "Admin",
       "developer": "Entwickler"
+    },
+    "admin": {
+      "heading": "Admin-Konsole",
+      "body": "Benutzerkonten verwalten: suchen, deaktivieren, löschen und Passwörter zurücksetzen.",
+      "open": "Admin-Konsole öffnen"
     },
     "tracking": {
       "heading": "Tracking verwalten",
