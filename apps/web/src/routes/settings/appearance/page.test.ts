@@ -7,6 +7,13 @@ vi.mock('svelte-i18n', async () => {
   return { _: readable((key: string) => key), locale: writable('de') };
 });
 
+vi.mock('$lib/stores/auth', async () => {
+  const { readable } = await import('svelte/store');
+  return {
+    auth: readable({ status: 'authenticated', user: { id: 'user-1', email: 'user@example.com' } }),
+  };
+});
+
 vi.mock('$lib/i18n', async () => {
   const i18n = await import('svelte-i18n');
   return {
