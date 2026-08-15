@@ -41,7 +41,7 @@
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/svelte": "^5.4.2",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.2.0",
     "autoprefixer": "^10.5.4",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.0.1",
