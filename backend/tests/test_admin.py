@@ -55,7 +55,9 @@ async def test_non_admin_forbidden_on_every_route(async_client: AsyncClient) -> 
     calls = [
         async_client.get(f"{BASE}/users", cookies=COOKIES),
         async_client.get(f"{BASE}/users/{target}", cookies=COOKIES),
-        async_client.patch(f"{BASE}/users/{target}/active", json={"is_active": False}, cookies=COOKIES),
+        async_client.patch(
+            f"{BASE}/users/{target}/active", json={"is_active": False}, cookies=COOKIES
+        ),
         async_client.delete(f"{BASE}/users/{target}", cookies=COOKIES),
         async_client.post(f"{BASE}/users/{target}/password-reset", cookies=COOKIES),
     ]
@@ -79,7 +81,9 @@ async def test_list_users(async_client: AsyncClient) -> None:
         new_callable=AsyncMock,
         return_value=(listed, 2),
     ) as mock_list:
-        r = await async_client.get(f"{BASE}/users?query=example&active=true&limit=25", cookies=COOKIES)
+        r = await async_client.get(
+            f"{BASE}/users?query=example&active=true&limit=25", cookies=COOKIES
+        )
 
     assert r.status_code == 200
     body = r.json()
