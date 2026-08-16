@@ -13,11 +13,18 @@ from app.services.cleanup_service import cleanup_unverified_accounts
 from app.workers.analytics import run_cleanup_once, seconds_until_next_cleanup
 
 
-def _session_with_stale_ids(*user_ids: uuid.UUID) -> MagicMock:
-    result = MagicMock()
-    result.scalars.return_value.all.return_value = list(user_ids)
+def _session_with_stale_ids(*user_ids: uuid.UUID, delete_rowcount: int = 1) -> MagicMock:
+    async def execute(stmt: object, *_args: object, **_kwargs: object) -> MagicMock:
+        result = MagicMock()
+        compiled = str(stmt.compile(compile_kwargs={"literal_binds": False}))
+        if compiled.startswith("DELETE"):
+            result.rowcount = delete_rowcount
+            return result
+        result.scalars.return_value.all.return_value = list(user_ids)
+        return result
+
     session = MagicMock()
-    session.execute = AsyncMock(return_value=result)
+    session.execute = AsyncMock(side_effect=execute)
     return session
 
 
@@ -122,6 +129,49 @@ async def test_cleanup_binds_rls_to_each_target_before_delete(bind_rls: AsyncMoc
     assert str(second_delete.compile(compile_kwargs={"literal_binds": False})).startswith(
         "DELETE FROM users"
     )
+    for delete_stmt in (first_delete, second_delete):
+        where_sql = str(delete_stmt.whereclause)
+        assert "users.is_verified IS false" in where_sql
+        assert "users.created_at <" in where_sql
+
+
+@pytest.mark.asyncio
+async def test_cleanup_delete_keeps_retention_predicates() -> None:
+    """List-then-delete must not drop is_verified / age on the DELETE.
+
+    #709 rebound RLS per target (needed for CASCADE) but deleted by id only.
+    A concurrent verify_email commits ``is_verified=true`` after the list;
+    READ COMMITTED then applies the bare id DELETE and wipes a live account.
+    """
+    user_id = uuid.uuid4()
+    db = _session_with_stale_ids(user_id)
+
+    await cleanup_unverified_accounts(
+        db,
+        now=datetime(2026, 5, 10, tzinfo=UTC),
+        retention_days=7,
+    )
+
+    delete_stmt = db.execute.await_args_list[1].args[0]
+    where_sql = str(delete_stmt.whereclause)
+    assert "users.is_verified IS false" in where_sql
+    assert "users.created_at <" in where_sql
+    assert delete_stmt.compile().params["created_at_1"] == datetime(2026, 5, 3, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
+async def test_cleanup_skips_ids_that_no_longer_match_retention() -> None:
+    """rowcount 0 means verify/age raced; do not report those ids as deleted."""
+    user_id = uuid.uuid4()
+    db = _session_with_stale_ids(user_id, delete_rowcount=0)
+
+    count = await cleanup_unverified_accounts(
+        db,
+        now=datetime(2026, 5, 10, tzinfo=UTC),
+        retention_days=7,
+    )
+
+    assert count == 0
 
 
 @pytest.mark.asyncio

@@ -49,8 +49,18 @@ async def cleanup_unverified_accounts(
     deleted_ids: list[str] = []
     for user_id in user_ids:
         await bind_rls_current_user(db, user_id)
-        await db.execute(delete(User).where(User.id == user_id))
-        deleted_ids.append(str(user_id))
+        # Re-apply the retention predicates on DELETE. Postgres READ COMMITTED
+        # waits for a concurrent verify_email row lock, then rechecks WHERE.
+        # A bare ``DELETE … WHERE id = :id`` would wipe the account after a
+        # successful verification in that window.
+        result = await db.execute(
+            delete(User)
+            .where(User.id == user_id)
+            .where(User.is_verified.is_(False))
+            .where(User.created_at < threshold)
+        )
+        if result.rowcount:
+            deleted_ids.append(str(user_id))
 
     logger.info(
         "unverified account cleanup completed",
