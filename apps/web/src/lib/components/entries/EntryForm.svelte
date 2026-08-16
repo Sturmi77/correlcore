@@ -1665,15 +1665,20 @@
     padding: var(--space-4);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    background: var(--color-surface);
+    /* Elevate each section above the sheet background (--color-bg) so every
+       block — including the sparse Cycle/Sleep sections — reads as a clearly
+       separated card in both themes (#687). */
+    background: var(--color-surface-2);
   }
 
   .entry-section__title {
     margin: 0;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-fg);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
@@ -1690,7 +1695,9 @@
     color: var(--color-text);
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
+    /* Recede within the elevated section card (which is now surface-2) while
+       staying legible; the primary rule marks it as an info note (#687). */
+    background: var(--color-surface);
     border-left: 3px solid var(--color-primary);
   }
 
