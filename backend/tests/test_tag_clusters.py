@@ -300,6 +300,7 @@ def test_tag_clusters_sort_floor_and_omitted_counts() -> None:
     assert strengths == sorted(strengths, reverse=True)  # unified strength-desc order
     assert [c.cluster_id for c in resp.clusters] == [1, 2]  # ids follow display order
     assert resp.omitted_signal_count == 2  # the two noise tags are in no shown group
+    assert resp.strength_floor == 0.45  # early bucket floor exposed for client bands
 
 
 def test_tag_clusters_floor_drops_chance_only_groups() -> None:

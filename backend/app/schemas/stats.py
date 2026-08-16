@@ -175,6 +175,9 @@ class TagClustersResponse(BaseModel):
     silhouette_score: float | None = None
     clusters: list[TagClusterGroup] = Field(default_factory=list)
     # Transparency (#706): how many groups are shown after the strength floor +
-    # display cap, and how many active signals ended up in no shown group.
+    # display cap, how many active signals ended up in no shown group, and the
+    # sample-size-aware floor that was applied (so clients can derive strength
+    # bands without duplicating the calibrated constants).
     shown_cluster_count: int = Field(default=0, ge=0)
     omitted_signal_count: int = Field(default=0, ge=0)
+    strength_floor: float = Field(default=0.0, ge=0, le=1)

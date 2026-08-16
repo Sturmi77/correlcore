@@ -596,6 +596,7 @@ def _finalize(
     response.clusters = kept
     response.shown_cluster_count = len(kept)
     response.omitted_signal_count = max(0, vector_set.active_signal_count - len(shown_signal_ids))
+    response.strength_floor = floor
     return response
 
 
