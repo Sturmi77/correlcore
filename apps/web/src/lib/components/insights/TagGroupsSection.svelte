@@ -5,6 +5,7 @@
     getTagGroupsInsufficientKey,
     getTagGroupsInsufficientValues,
     getTagGroupsSubtitleKey,
+    getTagStrengthBand,
     showTagClusterMaturityBadge,
   } from '$lib/utils/tagGroupsPresentation';
 
@@ -29,6 +30,10 @@
       return `${member.icon} ${member.name}`;
     }
     return member.name;
+  }
+
+  function strengthBand(strength: number) {
+    return getTagStrengthBand(strength, data?.strength_floor);
   }
 
   function clusterMembers(cluster: (typeof clusters)[number]): TagClusterMember[] {
@@ -90,11 +95,14 @@
                 ? cluster.label
                 : $_('insights.tag_groups.card_title', { values: { name: cluster.label } })}
             </h3>
-            <span
-              >{$_('insights.tag_groups.strength', {
-                values: { value: Math.round(cluster.strength * 100) },
-              })}</span
-            >
+            <span class="tag-groups__strength" data-band={strengthBand(cluster.strength)}>
+              {$_(`insights.tag_groups.strength_band.${strengthBand(cluster.strength)}`)}
+              <span class="tag-groups__strength-detail">
+                {$_('insights.tag_groups.strength_detail', {
+                  values: { value: Math.round(cluster.strength * 100) },
+                })}
+              </span>
+            </span>
           </div>
           <ul class="tag-groups__chips" aria-label={cluster.label}>
             {#each clusterMembers(cluster) as member (member.signal_id)}
@@ -109,6 +117,16 @@
         </article>
       {/each}
     </div>
+    {#if (data?.omitted_signal_count ?? 0) > 0}
+      <p class="tag-groups__omitted" data-testid="tag-groups-omitted">
+        {$_('insights.tag_groups.omitted', {
+          values: {
+            shown: data?.shown_cluster_count ?? clusters.length,
+            omitted: data?.omitted_signal_count ?? 0,
+          },
+        })}
+      </p>
+    {/if}
   {:else if !loading}
     <div class="tag-groups__empty">
       <p>{$_('insights.tag_groups.empty')}</p>
@@ -204,6 +222,38 @@
     color: var(--color-text-muted);
     font-size: var(--text-xs);
     font-weight: 700;
+  }
+
+  /* #706: band is the primary read, % a secondary detail. */
+  .tag-groups__strength {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    color: var(--color-text);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .tag-groups__strength[data-band='weak'] {
+    color: var(--color-text-muted);
+  }
+
+  .tag-groups__strength[data-band='strong'] {
+    color: var(--color-primary);
+  }
+
+  .tag-groups__strength-detail {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--color-text-muted);
+  }
+
+  .tag-groups__omitted {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
   }
 
   .tag-groups__chips {

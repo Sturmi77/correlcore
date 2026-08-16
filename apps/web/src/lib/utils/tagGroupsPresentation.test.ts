@@ -4,6 +4,7 @@ import {
   getTagGroupsInsufficientKey,
   getTagGroupsInsufficientValues,
   getTagGroupsSubtitleKey,
+  getTagStrengthBand,
   showTagClusterMaturityBadge,
 } from './tagGroupsPresentation';
 
@@ -86,5 +87,33 @@ describe('tagGroupsPresentation', () => {
 
     expect(getTagGroupsInsufficientKey(data)).toBe('insights.tag_groups.insufficient_tags');
     expect(getTagGroupsInsufficientValues(data).target).toBe(5);
+  });
+});
+
+describe('getTagStrengthBand (#706, headroom over floor)', () => {
+  // headroom h = (strength - floor) / (1 - floor); weak <0.25, medium <0.45, strong >=0.45
+  it('maps just-above-floor to weak', () => {
+    // (0.30 - 0.22) / 0.78 = 0.10 -> weak
+    expect(getTagStrengthBand(0.3, 0.22)).toBe('weak');
+  });
+
+  it('maps mid headroom to medium', () => {
+    // (0.5 - 0.22) / 0.78 = 0.36 -> medium
+    expect(getTagStrengthBand(0.5, 0.22)).toBe('medium');
+  });
+
+  it('maps high headroom to strong', () => {
+    // (0.72 - 0.22) / 0.78 = 0.64 -> strong
+    expect(getTagStrengthBand(0.72, 0.22)).toBe('strong');
+  });
+
+  it('is maturity-consistent: same headroom -> same band across floors', () => {
+    // early floor 0.45, strength 0.79 -> (0.79-0.45)/0.55 = 0.62 -> strong (matches robust 0.72)
+    expect(getTagStrengthBand(0.79, 0.45)).toBe('strong');
+  });
+
+  it('treats a missing floor as 0 (old backend)', () => {
+    expect(getTagStrengthBand(0.1, undefined)).toBe('weak');
+    expect(getTagStrengthBand(0.6, undefined)).toBe('strong');
   });
 });

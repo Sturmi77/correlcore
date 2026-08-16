@@ -128,6 +128,92 @@ describe('TagGroupsSection', () => {
     );
   });
 
+  it('renders a strength band as the primary read with the % as detail (#706)', () => {
+    const { container } = render(TagGroupsSection, {
+      props: {
+        data: {
+          status: 'ok',
+          entry_count: 100,
+          active_tag_count: 6,
+          active_signal_count: 6,
+          window_days: 90,
+          k: 3,
+          reason: null,
+          cluster_kind: 'tags_only',
+          cluster_maturity: 'robust',
+          cluster_mode: 'kmeans',
+          entries_until_robust: null,
+          strength_floor: 0.22,
+          shown_cluster_count: 1,
+          omitted_signal_count: 0,
+          clusters: [
+            {
+              cluster_id: 1,
+              label: 'Movement',
+              cluster_kind: 'tags_only',
+              strength: 0.72, // headroom (0.72-0.22)/0.78 = 0.64 -> strong
+              members: [],
+              tags: [{ tag_id: '1', slug: 'sport', name: 'Sport', category: 'sport', color: null }],
+            },
+          ],
+        },
+      },
+    });
+
+    const band = container.querySelector('[data-band]');
+    expect(band?.getAttribute('data-band')).toBe('strong');
+    expect(band?.textContent).toContain('insights.tag_groups.strength_band.strong');
+    expect(band?.textContent).toContain('insights.tag_groups.strength_detail:{"value":72}');
+    // omitted_signal_count 0 -> no hint
+    expect(screen.queryByTestId('tag-groups-omitted')).toBeNull();
+  });
+
+  it('shows the omitted-tags hint when signals were left out (#706)', () => {
+    render(TagGroupsSection, {
+      props: {
+        data: {
+          status: 'ok',
+          entry_count: 100,
+          active_tag_count: 8,
+          active_signal_count: 8,
+          window_days: 90,
+          k: 2,
+          reason: null,
+          cluster_kind: 'tags_only',
+          cluster_maturity: 'robust',
+          cluster_mode: 'kmeans',
+          entries_until_robust: null,
+          strength_floor: 0.22,
+          shown_cluster_count: 2,
+          omitted_signal_count: 3,
+          clusters: [
+            {
+              cluster_id: 1,
+              label: 'A',
+              cluster_kind: 'tags_only',
+              strength: 0.8,
+              members: [],
+              tags: [{ tag_id: '1', slug: 'a', name: 'A', category: 'sport', color: null }],
+            },
+            {
+              cluster_id: 2,
+              label: 'B',
+              cluster_kind: 'tags_only',
+              strength: 0.5,
+              members: [],
+              tags: [{ tag_id: '2', slug: 'b', name: 'B', category: 'work', color: null }],
+            },
+          ],
+        },
+      },
+    });
+
+    const hint = screen.getByTestId('tag-groups-omitted');
+    expect(hint.textContent).toContain('insights.tag_groups.omitted');
+    expect(hint.textContent).toContain('"omitted":3');
+    expect(hint.textContent).toContain('"shown":2');
+  });
+
   it('shows progress copy for 25-day insufficient state', () => {
     render(TagGroupsSection, {
       props: {
