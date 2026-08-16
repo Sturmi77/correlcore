@@ -238,7 +238,9 @@ async def test_regenerate_insights_for_user_returns_pipeline_result() -> None:
         patch("app.services.insight_worker_service.unwrap_dek", return_value=b"dek"),
         patch("app.services.insight_worker_service.set_current_user_dek", return_value="token"),
         patch("app.services.insight_worker_service.reset_current_user_dek"),
-        patch("app.services.insight_worker_service.bind_rls_current_user", new=AsyncMock()),
+        patch(
+            "app.services.insight_worker_service.bind_rls_current_user", new=AsyncMock()
+        ) as bind_rls,
         patch(
             "app.services.insight_worker_service.generate_and_store_insights",
             new=AsyncMock(return_value=[object(), object(), object()]),
@@ -264,6 +266,8 @@ async def test_regenerate_insights_for_user_returns_pipeline_result() -> None:
     assert result.insight_count == 3
     assert result.tag_clusters_status == "ok"
     assert result.trigger_source == "user_regenerate"
+    # Fresh post-batch sessions have no request GUC; bind before DEK/pref reads.
+    assert bind_rls.await_args_list[0].args == (db, user_id)
 
 
 @pytest.mark.asyncio
