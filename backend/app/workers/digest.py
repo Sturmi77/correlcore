@@ -18,7 +18,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, time, timedelta
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import reset_current_user_dek, set_current_user_dek, unwrap_dek
@@ -60,21 +60,42 @@ def seconds_until_next_digest(now: datetime | None = None) -> float:
 
 
 async def _list_digest_user_ids(db: AsyncSession) -> list[uuid.UUID]:
+    """Return opted-in users. ``users`` has no RLS; preferences are FORCE-RLS.
+
+    A single join against ``user_preferences`` with no GUC hides every pref
+    row from ``correlcore_app``, so ``digest_enabled IS TRUE`` never matches
+    and the weekly worker processes nobody. List candidates from ``users``,
+    then bind each id before reading their preference row.
+    """
+
     result = await db.execute(
         select(User.id)
-        .outerjoin(UserPreference, UserPreference.user_id == User.id)
         .where(
             User.is_active.is_(True),
             User.is_verified.is_(True),
-            or_(UserPreference.analytics_enabled.is_(True), UserPreference.user_id.is_(None)),
-            # Opt-in: require an explicit preferences row with digest_enabled=true.
-            # Migration 031 reset the legacy rows that carried true from the
-            # pre-#398 default, so this now really does mean "user opted in".
-            UserPreference.digest_enabled.is_(True),
         )
         .order_by(User.id.asc())
     )
-    return list(result.scalars().all())
+    eligible: list[uuid.UUID] = []
+    for user_id in result.scalars().all():
+        await bind_rls_current_user(db, user_id)
+        pref = (
+            await db.execute(
+                select(UserPreference.analytics_enabled, UserPreference.digest_enabled).where(
+                    UserPreference.user_id == user_id
+                )
+            )
+        ).first()
+        if pref is None:
+            # Opt-in: require an explicit preferences row with digest_enabled=true.
+            # Migration 031 reset the legacy rows that carried true from the
+            # pre-#398 default, so this now really does mean "user opted in".
+            continue
+        analytics_enabled, digest_enabled = pref
+        if analytics_enabled is not True or digest_enabled is not True:
+            continue
+        eligible.append(user_id)
+    return eligible
 
 
 async def run_digest_once(

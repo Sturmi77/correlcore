@@ -164,6 +164,11 @@ async def regenerate_insights_for_user(
     from app.models.worker_run import WorkerJobKind, WorkerRunStatus
     from app.services.worker_run_service import finish_run, start_run
 
+    # Background callers (post-batch) open a fresh session with no request GUC.
+    # ``user_encryption_keys`` / ``user_preferences`` are FORCE RLS, so the
+    # eligibility queries below return zero rows unless we bind first.
+    await bind_rls_current_user(db, user_id)
+
     run_id = await start_run(
         job_kind=WorkerJobKind.USER_INSIGHTS,
         trigger_source=trigger_source,
