@@ -1,5 +1,21 @@
 import type { TagClustersResponse } from '$lib/api/insights';
 
+// #706: strength bands on headroom above the calibrated floor
+// h = (strength - floor) / (1 - floor). Cut-offs (0.25 / 0.45) are the terciles
+// of the genuine-group distribution from the calibration harness — stable across
+// maturities once normalised, so a band means the same at any entry count.
+export type TagStrengthBand = 'weak' | 'medium' | 'strong';
+const BAND_WEAK_MAX = 0.25;
+const BAND_MEDIUM_MAX = 0.45;
+
+export function getTagStrengthBand(strength: number, floor: number | undefined): TagStrengthBand {
+  const safeFloor = Math.min(Math.max(floor ?? 0, 0), 0.99);
+  const headroom = (strength - safeFloor) / (1 - safeFloor);
+  if (headroom < BAND_WEAK_MAX) return 'weak';
+  if (headroom < BAND_MEDIUM_MAX) return 'medium';
+  return 'strong';
+}
+
 export const TAG_CLUSTER_MIN_PAIR_ENTRIES = 30;
 export const TAG_CLUSTER_MIN_PROVISIONAL_ENTRIES = 45;
 export const TAG_CLUSTER_MIN_ROBUST_ENTRIES = 90;

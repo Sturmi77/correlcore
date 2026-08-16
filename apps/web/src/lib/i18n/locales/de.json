@@ -1305,6 +1305,13 @@
       "insufficient_tags": "{entries} Entries · mindestens {target} aktive Tags oder Symptome noetig (aktuell {tags})",
       "insufficient_generic": "{entries} Entries und {tags} aktive Signale reichen fuer Tag-Gruppen noch nicht aus.",
       "strength": "{value}% gemeinsames Muster",
+      "strength_band": {
+        "weak": "lose verbunden",
+        "medium": "verbunden",
+        "strong": "stark verbunden"
+      },
+      "strength_detail": "{value}% gemeinsame Tage",
+      "omitted": "Zeigt die {shown} stärksten Gruppen. {omitted} weitere Tags gehören noch zu keiner klaren Gruppe.",
       "badge": {
         "early": "Erste Muster · {entries} Entries",
         "early_tooltip": "Basiert auf gemeinsam auftretenden Tag-Paaren. Muster koennen sich mit mehr Daten aendern.",

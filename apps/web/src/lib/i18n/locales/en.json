@@ -1305,6 +1305,13 @@
       "insufficient_tags": "{entries} entries tracked · need at least {target} active tags or symptoms (currently {tags})",
       "insufficient_generic": "{entries} entries and {tags} active signals are not enough for tag groups yet.",
       "strength": "{value}% shared pattern",
+      "strength_band": {
+        "weak": "loosely linked",
+        "medium": "linked",
+        "strong": "strongly linked"
+      },
+      "strength_detail": "{value}% of days shared",
+      "omitted": "Showing the {shown} strongest groups. {omitted} more tags aren't in a clear group yet.",
       "badge": {
         "early": "First patterns · {entries} entries",
         "early_tooltip": "Based on co-occurring tag pairs. Patterns may change as more entries are added.",

@@ -140,6 +140,10 @@ export interface TagClustersResponse {
   entries_until_robust?: number | null;
   silhouette_score?: number | null;
   clusters: TagClusterGroup[];
+  /** #706: transparency + client-side strength bands (defaulted for old backends). */
+  shown_cluster_count?: number;
+  omitted_signal_count?: number;
+  strength_floor?: number;
 }
 
 export interface InsightRegenerateResponse {
