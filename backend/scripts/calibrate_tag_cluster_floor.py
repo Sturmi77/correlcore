@@ -70,6 +70,9 @@ from app.services.tag_cluster_service import (
 
 # Representative entry counts per maturity tier (thresholds: 30 / 45 / 90).
 DEFAULT_BUCKETS: dict[str, int] = {"early": 35, "provisional": 60, "robust": 120}
+# Calibrated per-bucket floor (rounded null-P95, see the run report). Used here
+# only to derive band cut-offs from the *shown* genuine-group distribution.
+CALIBRATED_FLOOR: dict[str, float] = {"early": 0.45, "provisional": 0.35, "robust": 0.22}
 _CATEGORIES = list(TagCategory)
 
 
@@ -248,11 +251,24 @@ def summarize(observations: list[ClusterObservation], buckets: dict[str, int]) -
             if null and not np.isnan(null_p95)
             else float("nan")
         )
+        # Band cut-offs (#706 decision 1): distribution of *shown* genuine groups
+        # (strength >= calibrated floor), plus a headroom-normalised view
+        # h = (strength - floor) / (1 - floor) so bands mean the same across tiers.
+        floor = CALIBRATED_FLOOR.get(bucket, null_p95)
+        shown = [s for s in pos if s >= floor]
+        headroom = [(s - floor) / (1 - floor) for s in shown if s < 1.0]
         report["buckets"][bucket] = {
             "n_null_clusters": len(null),
             "n_pos_clusters": len(pos),  # genuine (planted-matching) groups only
             "n_noise_clusters": len(noise),
             "noise_p50": _pct(noise, 50),
+            "floor_used": floor,
+            "n_shown_genuine": len(shown),
+            "shown_genuine_p33": _pct(shown, 33),
+            "shown_genuine_p50": _pct(shown, 50),
+            "shown_genuine_p67": _pct(shown, 67),
+            "headroom_p33": _pct(headroom, 33),
+            "headroom_p67": _pct(headroom, 67),
             "null_p90": _pct(null, 90),
             "null_p95": null_p95,
             "null_p99": null_p99,
@@ -292,6 +308,18 @@ def _print_report(report: dict) -> None:
             f"{b['null_p95']:>10.3f}{b['null_p99']:>10.3f}{b['pos_p5']:>9.3f}{b['pos_p50']:>9.3f}"
             f"{b['sensitivity_at_p95']:>10.2f}{b['specificity_at_p95']:>10.2f}"
         )
+    print("\nBand cut-offs (shown genuine groups, strength >= floor):")
+    print(
+        f"{'bucket':<12}{'floor':>7}{'shown_n':>9}"
+        f"{'sg_p33':>8}{'sg_p50':>8}{'sg_p67':>8}{'hr_p33':>8}{'hr_p67':>8}"
+    )
+    for bucket, b in report["buckets"].items():
+        print(
+            f"{bucket:<12}{b['floor_used']:>7.2f}{b['n_shown_genuine']:>9}"
+            f"{b['shown_genuine_p33']:>8.3f}{b['shown_genuine_p50']:>8.3f}"
+            f"{b['shown_genuine_p67']:>8.3f}{b['headroom_p33']:>8.3f}{b['headroom_p67']:>8.3f}"
+        )
+
     rec = report["recommendation"]
     print("\nRecommendation:")
     print(
