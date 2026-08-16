@@ -8,6 +8,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-08-16
+
 ### Docs
 
 - **Reverse-proxy edges now document the required large proxy buffers** — the
@@ -23,6 +25,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Admin hard-delete and scheduled workers rebind RLS before cascading /
+  eligibility queries** — production runs as `correlcore_app` under FORCE RLS,
+  where the session GUC `app.current_user_id` scopes owned rows. The admin
+  purge (`#698`) and the daily cleanup, weekly digest scan and post-batch
+  insight regeneration (`#709`) ran with the wrong or no GUC, so cascaded child
+  deletes hit an `IntegrityError` (aborting the nightly bundle) and the digest /
+  regen eligibility reads returned zero rows (processing nobody). Each target is
+  now bound before the operation.
+- **Settings appearance sub-page is gated behind auth like its siblings** —
+  `/settings/appearance` rendered its controls outside the
+  `auth.status !== 'authenticated'` guard used by data/analysis/privacy
+  (`#705`). Cosmetic (the layout already redirects anonymous visitors), now
+  consistent.
+- **Daily-entry sections read as clearly separated cards** — in dark mode the
+  section cards' background matched the sheet background with a low-contrast
+  border, so the sparse Cycle and Sleep blocks blurred together. Sections are
+  now elevated with anchored headings (`#687`).
 - **Photo upload rejects decompression-bomb dimensions before EXIF decode** —
   `POST /api/v1/media/photos` capped compressed bytes (10 MiB) but not decoded
   pixels. A ~160 KiB solid 7000×7000 PNG passed the byte guard, then
@@ -190,8 +209,41 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   (`error.session_not_persisted`, de/en). The Capacitor/APK Bearer path is
   unaffected.
 
+### Changed
+
+- **Developer tools consolidated onto `/dev`** (`#695`) — the client dev-mode
+  toggles and phase/fixture controls moved out of Settings onto `/dev`, which is
+  now split into tabs (Version · Runtime · Workers · Database · Dev
+  visualization). Settings keeps only a slim, gated Developer entry plus the
+  7×-tap activator. Gating (`DEV_VIEW_ENABLED` / 7×-tap) is unchanged.
+- **Tag groups: consistent, honest ranking** (`#706`) — one display order across
+  all maturities (by cohesion strength, size→label tie-break) so the shown %
+  matches the order; a sample-size-aware strength floor (calibrated against a
+  permutation-null model) drops chance-level groups; strength is presented as a
+  qualitative band with the % as detail; and an "N more tags aren't in a clear
+  group yet" hint appears when signals are omitted.
+- **Insights feed: dropped the low-value symptom/mood filter** and clarified the
+  dismiss-all empty state (`#685`, `#686`).
+
 ### Added
 
+- **Admin console** (`#677`) — an `/admin` user-management surface gated by a new
+  `is_admin` flag (`require_admin`, 403 for non-admins): search accounts,
+  disable/enable, DSGVO-Art.-17 hard-delete (typed-email confirmation), and
+  trigger a self-service password-reset email. Sensitive actions write to an
+  append-only, FK-free `admin_audit_log`. A migration backfills existing
+  accounts to admin as the bootstrap; admins cannot disable or delete their own
+  account.
+- **Settings information architecture** (`#694`) — the monolithic settings page
+  became a lean hub linking to real category sub-pages (`/settings/data`,
+  `/settings/analysis`, `/settings/privacy`, `/settings/appearance`); every
+  control and its behaviour moved to the owning page. Admin/Developer entries
+  stay gated and out of the general list.
+- **Tag-cluster floor calibration harness** at
+  `backend/scripts/calibrate_tag_cluster_floor.py` (`#706`, `#707`) — a
+  documented, no-side-effect offline tool that derives the tag-group strength
+  floor and band cut-offs from a permutation-null model instead of a guessed
+  constant.
 - **Canonical hosted Nginx edge config** at `infra/nginx/correlcore.com.conf`
   (ADR-0040) — a single self-contained one-rule passthrough server block (no
   `include` snippet, so it also deploys on a standalone edge machine or a
