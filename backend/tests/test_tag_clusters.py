@@ -269,3 +269,63 @@ async def test_tag_clusters_endpoint_returns_response(
     assert response.status_code == 200
     service.assert_awaited_once()
     assert response.json()["status"] == "insufficient_data"
+
+
+def test_tag_clusters_sort_floor_and_omitted_counts() -> None:
+    """#706: strongest-first order, cluster_id = display order, omitted count."""
+    p1a = make_tag(slug="p1a", name="P1A", category=TagCategory.WORK)
+    p1b = make_tag(slug="p1b", name="P1B", category=TagCategory.WORK)
+    p2a = make_tag(slug="p2a", name="P2A", category=TagCategory.SPORT)
+    p2b = make_tag(slug="p2b", name="P2B", category=TagCategory.SPORT)
+    n1 = make_tag(slug="n1", name="N1", category=TagCategory.LEISURE)
+    n2 = make_tag(slug="n2", name="N2", category=TagCategory.CONSUMPTION)
+    tags = [p1a, p1b, p2a, p2b, n1, n2]
+
+    start = date(2026, 1, 1)
+    daily: list[DailyTagSet] = []
+    for offset in range(35):  # early bucket → pair mode
+        ids: set[object] = {p1a.id, p1b.id} if offset % 2 == 0 else {p2a.id, p2b.id}
+        if offset % 7 == 0:
+            ids.add(n1.id)  # noise: never co-occurs enough to pair
+        if offset % 11 == 0:
+            ids.add(n2.id)
+        daily.append(DailyTagSet(entry_date=start + timedelta(days=offset), tag_ids=frozenset(ids)))
+
+    resp = build_tag_cluster_response(build_tag_vectors(daily, tags))
+
+    assert resp.status == "ok"
+    assert resp.cluster_mode == "pair"
+    assert resp.shown_cluster_count == len(resp.clusters) == 2
+    strengths = [c.strength for c in resp.clusters]
+    assert strengths == sorted(strengths, reverse=True)  # unified strength-desc order
+    assert [c.cluster_id for c in resp.clusters] == [1, 2]  # ids follow display order
+    assert resp.omitted_signal_count == 2  # the two noise tags are in no shown group
+    assert resp.strength_floor == 0.45  # early bucket floor exposed for client bands
+
+
+def test_tag_clusters_floor_drops_chance_only_groups() -> None:
+    """#706: only weakly co-occurring groups (below the floor) → insufficient.
+
+    Eight tags in overlapping 15-day blocks that step by 11 days: adjacent tags
+    share ~4 days (Jaccard ≈ 0.15), non-adjacent none. K-Means still forms
+    groups, but every group's mean cohesion is below the robust floor (0.22), so
+    the response degrades to insufficient with ``below_strength_floor``.
+    """
+    tags = [make_tag(slug=f"t{i}", name=f"T{i}", category=TagCategory.WORK) for i in range(8)]
+    present_days: dict[int, set[int]] = {
+        j: set(range(j * 11, j * 11 + 15)) for j in range(len(tags))
+    }
+
+    start = date(2026, 1, 1)
+    daily = [
+        DailyTagSet(
+            entry_date=start + timedelta(days=day),
+            tag_ids=frozenset(tags[j].id for j in range(len(tags)) if day in present_days[j]),
+        )
+        for day in range(100)  # robust bucket
+    ]
+
+    resp = build_tag_cluster_response(build_tag_vectors(daily, tags))
+
+    assert resp.status == "insufficient_data"
+    assert resp.reason == "below_strength_floor"

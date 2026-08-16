@@ -43,6 +43,19 @@ MIN_PAIR_CO_COUNT = 5
 MAX_PAIR_CLUSTERS = 6
 MAX_PROVISIONAL_CLUSTER_SIZE = 5
 
+# Display cap after floor/sort (#706): the safety ceiling on how many groups the
+# UI ever shows, regardless of how many survive the floor.
+MAX_DISPLAY_CLUSTERS = 6
+
+# Per-maturity strength floor (#706): a group is shown only when its mean pairwise
+# Jaccard cohesion exceeds what independent tags produce by chance at that sample
+# size. Values are the rounded null-P95 from the permutation-null calibration
+# harness (scripts/calibrate_tag_cluster_floor.py); the floor is sample-size
+# dependent because chance co-occurrence is higher with fewer entries.
+STRENGTH_FLOOR_EARLY = 0.45
+STRENGTH_FLOOR_PROVISIONAL = 0.35
+STRENGTH_FLOOR_ROBUST = 0.22
+
 
 @dataclass(frozen=True)
 class DailyTagSet:
@@ -541,6 +554,52 @@ def _cluster_strength(
     return round(sum(values) / len(values), 4) if values else 0.0
 
 
+def _strength_floor(entry_count: int) -> float:
+    """Sample-size-aware display floor (#706); see the ``STRENGTH_FLOOR_*`` docs."""
+    if entry_count >= MIN_TAG_CLUSTER_ROBUST_ENTRIES:
+        return STRENGTH_FLOOR_ROBUST
+    if entry_count >= MIN_TAG_CLUSTER_PROVISIONAL_ENTRIES:
+        return STRENGTH_FLOOR_PROVISIONAL
+    return STRENGTH_FLOOR_EARLY
+
+
+def _finalize(
+    response: TagClustersResponse | None, vector_set: TagVectorSet
+) -> TagClustersResponse | None:
+    """Apply the #706 display contract to a freshly built ``ok`` response.
+
+    Drops groups below the sample-size floor, sorts by strength (the metric the
+    UI shows) with a size→label tie-break, caps at ``MAX_DISPLAY_CLUSTERS``, and
+    renumbers ``cluster_id`` to the display order. Also records how many groups
+    are shown and how many active signals ended up in none of them. Returns
+    ``None`` when nothing survives the floor, so callers can fall through to the
+    next candidate (or to insufficient data).
+    """
+    if response is None or response.status != "ok":
+        return None
+
+    floor = _strength_floor(vector_set.entry_count)
+    kept = [cluster for cluster in response.clusters if cluster.strength >= floor]
+    if not kept:
+        return None
+
+    kept.sort(key=lambda c: (-c.strength, -len(c.members or c.tags), c.label))
+    kept = kept[:MAX_DISPLAY_CLUSTERS]
+    for ordinal, cluster in enumerate(kept, start=1):
+        cluster.cluster_id = ordinal
+
+    shown_signal_ids: set[uuid.UUID] = set()
+    for cluster in kept:
+        shown_signal_ids.update(member.signal_id for member in cluster.members)
+        shown_signal_ids.update(tag.tag_id for tag in cluster.tags)
+
+    response.clusters = kept
+    response.shown_cluster_count = len(kept)
+    response.omitted_signal_count = max(0, vector_set.active_signal_count - len(shown_signal_ids))
+    response.strength_floor = floor
+    return response
+
+
 def build_tag_cluster_response(
     vector_set: TagVectorSet,
     *,
@@ -580,13 +639,15 @@ def build_tag_cluster_response(
             max_cluster_size=None,
             allow_mixed=True,
         )
-        if robust is not None:
-            return robust
+        finalized = _finalize(robust, vector_set)
+        if finalized is not None:
+            return finalized
         return _insufficient(
             entry_count=entry_count,
             active_tag_count=vector_set.active_tag_count,
             active_signal_count=active_signal_count,
-            reason="not_enough_vector_variance",
+            # Clusters were built but all fell below the display floor.
+            reason="below_strength_floor" if robust is not None else "not_enough_vector_variance",
             window_days=effective_window,
         )
 
@@ -601,20 +662,23 @@ def build_tag_cluster_response(
             max_cluster_size=MAX_PROVISIONAL_CLUSTER_SIZE,
             allow_mixed=True,
         )
-        if provisional is not None:
-            return provisional
+        finalized = _finalize(provisional, vector_set)
+        if finalized is not None:
+            return finalized
         pair_fallback = _build_pair_clusters(
             vector_set,
             window_days=effective_window,
             cluster_maturity="early",
         )
-        if pair_fallback is not None:
-            return pair_fallback
+        finalized_pair = _finalize(pair_fallback, vector_set)
+        if finalized_pair is not None:
+            return finalized_pair
+        built = provisional is not None or pair_fallback is not None
         return _insufficient(
             entry_count=entry_count,
             active_tag_count=vector_set.active_tag_count,
             active_signal_count=active_signal_count,
-            reason="not_enough_pair_signal",
+            reason="below_strength_floor" if built else "not_enough_pair_signal",
             window_days=effective_window,
         )
 
@@ -623,13 +687,14 @@ def build_tag_cluster_response(
         window_days=effective_window,
         cluster_maturity="early",
     )
-    if pair is not None:
-        return pair
+    finalized = _finalize(pair, vector_set)
+    if finalized is not None:
+        return finalized
     return _insufficient(
         entry_count=entry_count,
         active_tag_count=vector_set.active_tag_count,
         active_signal_count=active_signal_count,
-        reason="not_enough_pair_signal",
+        reason="below_strength_floor" if pair is not None else "not_enough_pair_signal",
         window_days=effective_window,
     )
 
