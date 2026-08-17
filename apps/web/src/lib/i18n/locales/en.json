@@ -177,9 +177,8 @@
     "work_context_label": "Work context",
     "work_context_required_hint": "Please choose your work situation \u2014 weekends default to \u201cWeekend\u201d. Auto-save still runs without a separate confirmation.",
     "section": {
-      "date": "Date",
+      "day_context": "Day & context",
       "metrics": "Mood & body",
-      "work_context": "Work situation",
       "time": "Time of day",
       "tags": "Tags",
       "symptoms": "Symptoms",
@@ -198,13 +197,12 @@
     "cycle_day": {
       "label": "Cycle day (optional)",
       "placeholder": "1-35",
-      "hint": "Neutral tracking only. CorrelCore does not predict or diagnose cycle phases.",
+      "hint": "Neutral tracking only — no prediction, no diagnosis.",
       "error_range": "Cycle day must be between 1 and 35."
     },
     "cycle_bleeding": {
       "label": "Bleeding (optional)",
       "unset": "Not set",
-      "hint": "Optional strength for your own records. Not used for medical predictions.",
       "none": "None",
       "spotting": "Spotting",
       "light": "Light",
@@ -214,7 +212,7 @@
     "sleep_minutes": {
       "label": "Sleep duration (optional)",
       "placeholder": "Minutes, e.g. 450",
-      "hint": "Total sleep in minutes (0-1440). 450 minutes = 7.5 hours.",
+      "hint": "450 minutes = 7.5 hours.",
       "error_range": "Sleep duration must be between 0 and 1440 minutes."
     },
     "sleep_quality": {
@@ -293,7 +291,6 @@
       "default_high": "high"
     },
     "delta": {
-      "heading": "Compared with yesterday",
       "subheading": "A direct comparison of the same daily entry slot.",
       "loading": "Updating...",
       "mood": "Mood",
@@ -772,7 +769,6 @@
       "habits_body": "Mark tags as build or reduce habits for Trends."
     },
     "analysis": {
-      "heading": "Analysis",
       "body": "Control whether your entries are used for local patterns and insights.",
       "analytics_enabled": "Analysis enabled",
       "insights": "Explore insights",
@@ -788,7 +784,7 @@
       "digest_preview_link": "Open digest preview"
     },
     "privacy": {
-      "heading": "Privacy & account data",
+      "heading": "Privacy",
       "body": "Export your data above or permanently delete your account here.",
       "delete_placeholder": "Delete account (M9)",
       "delete_action": "Delete account",
@@ -816,7 +812,6 @@
       }
     },
     "appearance": {
-      "heading": "Appearance",
       "body": "Adjust theme and language for this installation.",
       "theme": "Theme",
       "language": "Language"

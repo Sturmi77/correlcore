@@ -43,7 +43,6 @@
   {:else}
     <Panel variant="bordered">
       <div class="appearance-settings__head">
-        <h2>{$_('settings.appearance.heading')}</h2>
         <p>{$_('settings.appearance.body')}</p>
       </div>
       <div class="appearance-settings__row">
@@ -76,13 +75,8 @@
     margin: 0 auto;
   }
 
-  .appearance-settings__head h2 {
-    margin: 0;
-    font-size: var(--text-lg, 1.125rem);
-  }
-
   .appearance-settings__head p {
-    margin: var(--space-1) 0 0;
+    margin: 0;
     color: var(--color-text-muted);
     line-height: 1.5;
   }

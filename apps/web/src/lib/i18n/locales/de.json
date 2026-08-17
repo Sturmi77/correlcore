@@ -177,9 +177,8 @@
     "work_context_label": "Arbeitssituation",
     "work_context_required_hint": "Bitte w\u00e4hle deine Arbeitssituation \u2014 am Wochenende ist \u00abWochenende\u00bb vorausgew\u00e4hlt. Auto-Save l\u00e4uft auch ohne manuelle Best\u00e4tigung.",
     "section": {
-      "date": "Datum",
+      "day_context": "Tag & Kontext",
       "metrics": "Stimmung & K\u00f6rper",
-      "work_context": "Arbeitssituation",
       "time": "Tageszeit",
       "tags": "Tags",
       "symptoms": "Symptome",
@@ -198,13 +197,12 @@
     "cycle_day": {
       "label": "Zyklustag (optional)",
       "placeholder": "1-35",
-      "hint": "Nur neutrale Erfassung. CorrelCore macht keine Vorhersage und keine Diagnose.",
+      "hint": "Nur neutrale Erfassung – keine Vorhersage, keine Diagnose.",
       "error_range": "Der Zyklustag muss zwischen 1 und 35 liegen."
     },
     "cycle_bleeding": {
       "label": "Blutung (optional)",
       "unset": "Nicht gesetzt",
-      "hint": "Optionale Staerke fuer deine eigenen Aufzeichnungen. Keine medizinische Vorhersage.",
       "none": "Keine",
       "spotting": "Schmierblutung",
       "light": "Leicht",
@@ -214,7 +212,7 @@
     "sleep_minutes": {
       "label": "Schlafdauer (optional)",
       "placeholder": "Minuten, z. B. 450",
-      "hint": "Gesamtschlaf in Minuten (0-1440). 450 Minuten = 7,5 Stunden.",
+      "hint": "450 Minuten = 7,5 Stunden.",
       "error_range": "Die Schlafdauer muss zwischen 0 und 1440 Minuten liegen."
     },
     "sleep_quality": {
@@ -293,7 +291,6 @@
       "done": "Fertig"
     },
     "delta": {
-      "heading": "Vergleich mit gestern",
       "subheading": "Ein direkter Vergleich desselben Tages-Slots.",
       "loading": "Aktualisiere...",
       "mood": "Stimmung",
@@ -772,7 +769,6 @@
       "habits_body": "Tags als Aufbau- oder Reduktionsgewohnheiten fuer Trends markieren."
     },
     "analysis": {
-      "heading": "Analyse",
       "body": "Steuere, ob deine Eintraege fuer lokale Muster und Erkenntnisse ausgewertet werden.",
       "analytics_enabled": "Analyse aktiviert",
       "insights": "Erkenntnisse ansehen",
@@ -788,7 +784,7 @@
       "digest_preview_link": "Digest-Vorschau oeffnen"
     },
     "privacy": {
-      "heading": "Datenschutz & Kontodaten",
+      "heading": "Datenschutz",
       "body": "Exportiere deine Daten oben oder loesche dein Konto dauerhaft hier.",
       "delete_placeholder": "Account loeschen (M9)",
       "delete_action": "Account loeschen",
@@ -816,7 +812,6 @@
       }
     },
     "appearance": {
-      "heading": "Darstellung",
       "body": "Passe Theme und Sprache fuer diese Installation an.",
       "theme": "Design",
       "language": "Sprache"

@@ -32,12 +32,9 @@
 </script>
 
 {#if hasComparison}
-  <section class="day-delta" aria-label={$_('entry.delta.heading')} data-testid="day-delta-card">
+  <div class="day-delta" data-testid="day-delta-card">
     <header class="day-delta__header">
-      <div>
-        <h2>{$_('entry.delta.heading')}</h2>
-        <p>{$_('entry.delta.subheading')}</p>
-      </div>
+      <p>{$_('entry.delta.subheading')}</p>
       {#if loading}
         <span class="day-delta__loading">{$_('entry.delta.loading')}</span>
       {/if}
@@ -63,7 +60,7 @@
         </ul>
       </div>
     {/if}
-  </section>
+  </div>
 {/if}
 
 <style>
@@ -83,14 +80,8 @@
     gap: var(--space-3);
   }
 
-  .day-delta__header h2,
   .day-delta__header p {
     margin: 0;
-  }
-
-  .day-delta__header h2 {
-    font-size: var(--text-sm);
-    font-weight: 700;
   }
 
   .day-delta__header p,

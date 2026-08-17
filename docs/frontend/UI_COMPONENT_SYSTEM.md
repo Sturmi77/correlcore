@@ -68,6 +68,12 @@ Required contract:
 - No duplicate Home button when the app navigation is visible
 - Theme switching belongs in global chrome or Settings, not every route header
 
+Heading convention (avoid duplicate titles):
+
+- `ScreenHeader.title` is the single page-level `<h1>` and the only screen-level title.
+- A `Panel` gets its own `<h2>` **only** when the screen has **two or more sibling sections** that need distinguishing. A single-section screen must not repeat the page title as a `<h2>` — keep only the descriptive body text.
+- When a multi-section screen splits a combined page title (e.g. "Datenschutz & Konto" → sections "Datenschutz" + "Konto"), each section heading names its own part; no section heading restates the full page title.
+
 ### `Panel`
 
 Use for bounded information or tool surfaces.

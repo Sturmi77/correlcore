@@ -1337,8 +1337,10 @@
   data-loading={loading ? 'true' : 'false'}
   data-autosave-status={autoSaveSnap.status}
 >
-  <section class="entry-section" aria-labelledby="entry-section-date">
-    <h2 id="entry-section-date" class="entry-section__title">{$_('entry.section.date')}</h2>
+  <section class="entry-section" aria-labelledby="entry-section-day-context">
+    <h2 id="entry-section-day-context" class="entry-section__title">
+      {$_('entry.section.day_context')}
+    </h2>
     <div class="entry-date-row">
       <label class="entry-field entry-field--date">
         <span class="entry-label">{$_('entry.date_label')}</span>
@@ -1370,10 +1372,29 @@
     {#if SHOW_ENTRY_TIME_SLOTS}
       <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
     {/if}
+
+    <label class="entry-field">
+      <span class="entry-label">{$_('entry.work_context_label')}</span>
+      <select
+        class="input"
+        value={workContext}
+        on:change={onWorkContextChange}
+        aria-describedby={workContextTouched ? undefined : 'entry-work-context-hint'}
+      >
+        {#each WORK_CONTEXTS as wc}
+          <option value={wc}>{$_(`entry.work_context.${wc}`)}</option>
+        {/each}
+      </select>
+    </label>
+    {#if !workContextTouched}
+      <p class="entry-hint" id="entry-work-context-hint">
+        {$_('entry.work_context_required_hint')}
+      </p>
+    {/if}
   </section>
 
   {#if onboardingTagsEnabled}
-    <section class="entry-section" aria-labelledby="entry-section-onboarding-tags">
+    <section class="entry-section">
       <OnboardingTagSuggestions
         groups={suggestionGroups}
         loading={suggestionsLoading}
@@ -1413,12 +1434,19 @@
         scaleType="stress"
         bind:value={stress}
       />
+    </div>
+  </section>
 
+  <section class="entry-section" aria-labelledby="entry-section-sleep">
+    <h2 id="entry-section-sleep" class="entry-section__title">
+      {$_('entry.section.sleep')}
+    </h2>
+    <div class="entry-section__stack">
       <!--
-        Sleep quality sits with the core scales (same mask + 1–5 slider as
-        mood/energy/stress, #653 B6). #673: shown expanded up front (not hidden
-        behind an "add" button), but still clearable to null via
-        OptionalScaleSlider so "not recorded" stays distinct from a low rating.
+        Sleep quality (1–5, same mask as mood/energy/stress, #653 B6/#673:
+        expanded up front, clearable to null so "not recorded" stays distinct
+        from a low rating) now lives next to sleep *duration* so the whole
+        "sleep" topic sits in one section instead of being split across the form.
       -->
       <OptionalScaleSlider
         id="entry-sleep-quality"
@@ -1433,29 +1461,32 @@
         testId="entry-sleep-quality"
         bind:value={sleepQuality}
       />
+      <div class="entry-sleep-duration">
+        <label class="entry-field">
+          <span class="entry-label">{$_('entry.sleep_minutes.label')}</span>
+          <input
+            type="number"
+            class="input"
+            min="0"
+            max="1440"
+            step="15"
+            inputmode="numeric"
+            value={sleepMinutes ?? ''}
+            on:input={onSleepMinutesInput}
+            aria-invalid={sleepMinutesInvalid}
+            aria-describedby={sleepMinutesInvalid ? 'entry-sleep-error' : 'entry-sleep-hint'}
+            placeholder={$_('entry.sleep_minutes.placeholder')}
+            data-testid="entry-sleep-minutes"
+          />
+        </label>
+        <p id="entry-sleep-hint" class="entry-hint">{$_('entry.sleep_minutes.hint')}</p>
+        {#if sleepMinutesInvalid}
+          <p id="entry-sleep-error" class="entry-error" role="alert">
+            {$_('entry.sleep_minutes.error_range')}
+          </p>
+        {/if}
+      </div>
     </div>
-  </section>
-
-  <section class="entry-section" aria-labelledby="entry-section-work">
-    <h2 id="entry-section-work" class="entry-section__title">{$_('entry.section.work_context')}</h2>
-    {#if !workContextTouched}
-      <p class="entry-hint" id="entry-work-context-hint">
-        {$_('entry.work_context_required_hint')}
-      </p>
-    {/if}
-    <label class="entry-field">
-      <span class="entry-label">{$_('entry.work_context_label')}</span>
-      <select
-        class="input"
-        value={workContext}
-        on:change={onWorkContextChange}
-        aria-describedby={workContextTouched ? undefined : 'entry-work-context-hint'}
-      >
-        {#each WORK_CONTEXTS as wc}
-          <option value={wc}>{$_(`entry.work_context.${wc}`)}</option>
-        {/each}
-      </select>
-    </label>
   </section>
 
   <section class="entry-section" aria-labelledby="entry-section-tags">
@@ -1487,14 +1518,16 @@
       on:toggle={handleMarkerToggle}
       on:addCustom={handleCustomMarker}
     />
-    <label class="entry-field entry-field--inline">
-      <span class="entry-label">{$_('entry.note_visibility.label')}</span>
-      <select bind:value={noteVisibility} data-testid="entry-note-visibility">
-        <option value="full">{$_('entry.note_visibility.full')}</option>
-        <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
-        <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
-      </select>
-    </label>
+    {#if note?.trim()}
+      <label class="entry-field entry-field--inline">
+        <span class="entry-label">{$_('entry.note_visibility.label')}</span>
+        <select bind:value={noteVisibility} data-testid="entry-note-visibility">
+          <option value="full">{$_('entry.note_visibility.full')}</option>
+          <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
+          <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
+        </select>
+      </label>
+    {/if}
   </section>
 
   {#if cycleTrackingEnabled}
@@ -1536,46 +1569,15 @@
           {/each}
         </select>
       </label>
-      <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
     </section>
   {/if}
 
-  <section class="entry-section" aria-labelledby="entry-section-sleep">
-    <h2 id="entry-section-sleep" class="entry-section__title">
-      {$_('entry.section.sleep')}
-    </h2>
-    <label class="entry-field">
-      <span class="entry-label">{$_('entry.sleep_minutes.label')}</span>
-      <input
-        type="number"
-        class="input"
-        min="0"
-        max="1440"
-        step="15"
-        inputmode="numeric"
-        value={sleepMinutes ?? ''}
-        on:input={onSleepMinutesInput}
-        aria-invalid={sleepMinutesInvalid}
-        aria-describedby={sleepMinutesInvalid ? 'entry-sleep-error' : 'entry-sleep-hint'}
-        placeholder={$_('entry.sleep_minutes.placeholder')}
-        data-testid="entry-sleep-minutes"
-      />
-    </label>
-    <p id="entry-sleep-hint" class="entry-hint">{$_('entry.sleep_minutes.hint')}</p>
-    {#if sleepMinutesInvalid}
-      <p id="entry-sleep-error" class="entry-error" role="alert">
-        {$_('entry.sleep_minutes.error_range')}
-      </p>
-    {/if}
-    <!-- Sleep *quality* now lives in the metrics section as an optional 1–5
-           slider alongside mood/energy/stress (#653 B6). This section keeps only
-           the sleep *duration* input, which is on a different (minutes) scale. -->
-  </section>
-
-  <section class="entry-section" aria-labelledby="entry-section-delta">
-    <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
-    <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
-  </section>
+  {#if dayDelta}
+    <section class="entry-section entry-section--review" aria-labelledby="entry-section-delta">
+      <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
+      <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
+    </section>
+  {/if}
 
   {#if offlineSyncConflictKey}
     <p class="entry-hint" role="status" data-testid="entry-sync-conflict-note">
@@ -1586,6 +1588,8 @@
   {#if errorKey}
     <p class="entry-error" role="alert">{$_(errorKey)}</p>
   {/if}
+
+  <p class="entry-disclaimer" role="note">{$_('disclaimer.medical')}</p>
 
   <div class="entry-actions">
     <Button type="button" variant="secondary" on:click={onCancel} data-testid="entry-cancel">
@@ -1686,6 +1690,28 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-5);
+  }
+
+  .entry-sleep-duration {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  /* The day-comparison is read-only output, not an input. Set it apart from the
+     entry sections above it so it reads as a summary rather than another field. */
+  .entry-section--review {
+    background: transparent;
+    border-style: dashed;
+  }
+
+  /* Single medical disclaimer for the whole entry (symptoms, cycle, …) so it is
+     not repeated per section (#714). */
+  .entry-disclaimer {
+    margin: 0;
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    color: var(--color-text-muted);
   }
 
   .entry-hint {
