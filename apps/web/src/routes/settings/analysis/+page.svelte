@@ -110,7 +110,6 @@
   {:else}
     <Panel variant="bordered">
       <div class="analysis-settings__head">
-        <h2>{$_('settings.analysis.heading')}</h2>
         <p>{$_('settings.analysis.body')}</p>
       </div>
       <label class="analysis-settings__toggle-label">
@@ -173,13 +172,8 @@
     margin: 0 auto;
   }
 
-  .analysis-settings__head h2 {
-    margin: 0;
-    font-size: var(--text-lg, 1.125rem);
-  }
-
   .analysis-settings__head p {
-    margin: var(--space-1) 0 0;
+    margin: 0;
     color: var(--color-text-muted);
     line-height: 1.5;
   }

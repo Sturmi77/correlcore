@@ -772,7 +772,6 @@
       "habits_body": "Tags als Aufbau- oder Reduktionsgewohnheiten fuer Trends markieren."
     },
     "analysis": {
-      "heading": "Analyse",
       "body": "Steuere, ob deine Eintraege fuer lokale Muster und Erkenntnisse ausgewertet werden.",
       "analytics_enabled": "Analyse aktiviert",
       "insights": "Erkenntnisse ansehen",
@@ -788,7 +787,7 @@
       "digest_preview_link": "Digest-Vorschau oeffnen"
     },
     "privacy": {
-      "heading": "Datenschutz & Kontodaten",
+      "heading": "Datenschutz",
       "body": "Exportiere deine Daten oben oder loesche dein Konto dauerhaft hier.",
       "delete_placeholder": "Account loeschen (M9)",
       "delete_action": "Account loeschen",
@@ -816,7 +815,6 @@
       }
     },
     "appearance": {
-      "heading": "Darstellung",
       "body": "Passe Theme und Sprache fuer diese Installation an.",
       "theme": "Design",
       "language": "Sprache"
