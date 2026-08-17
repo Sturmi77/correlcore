@@ -293,7 +293,6 @@
       "done": "Fertig"
     },
     "delta": {
-      "heading": "Vergleich mit gestern",
       "subheading": "Ein direkter Vergleich desselben Tages-Slots.",
       "loading": "Aktualisiere...",
       "mood": "Stimmung",

@@ -1373,7 +1373,7 @@
   </section>
 
   {#if onboardingTagsEnabled}
-    <section class="entry-section" aria-labelledby="entry-section-onboarding-tags">
+    <section class="entry-section">
       <OnboardingTagSuggestions
         groups={suggestionGroups}
         loading={suggestionsLoading}

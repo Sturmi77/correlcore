@@ -51,7 +51,7 @@ describe('DayDeltaCard', () => {
   it('renders neutral metric deltas and shared tags', () => {
     render(DayDeltaCard, { props: { delta: base } });
 
-    expect(screen.getByText('entry.delta.heading')).toBeTruthy();
+    expect(screen.getByText('entry.delta.subheading')).toBeTruthy();
     expect(screen.getByText('+1')).toBeTruthy();
     expect(screen.getByText('-2')).toBeTruthy();
     expect(screen.getByText('0')).toBeTruthy();

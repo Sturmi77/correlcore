@@ -293,7 +293,6 @@
       "default_high": "high"
     },
     "delta": {
-      "heading": "Compared with yesterday",
       "subheading": "A direct comparison of the same daily entry slot.",
       "loading": "Updating...",
       "mood": "Mood",
