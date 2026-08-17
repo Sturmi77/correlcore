@@ -168,8 +168,37 @@ do not declare unused permissions.“*
 | **B — HC-Loop fertigstellen + deklarieren** | M8-Sprint-4-Import in Entries fertig, Demo-Video, HC-Privacy | Nur wenn HC-Import ohnehin jetzt gefinished wird — koppelt M11-Exit an M8 |
 
 Der Sprint-Plan nennt Full-HC-Import ausdrücklich als **Non-Goal für M11**
-(„do not block Closed Testing on full Garmin sync“). → **Option A** hält M11 und
+(„do not block Closed Testing on full Garmin sync”). → **Option A** hält M11 und
 M8 entkoppelt und ist der risikoärmste Pfad zum Exit.
+
+### 4.1 Wechselwirkung mit Food-Tracking (#715) — Re-Analyse
+
+Der neu angedachte **Nutrition/Food-Tracker** ([#715](https://github.com/Sturmi77/correlcore/issues/715))
+sieht **Health Connect `NutritionRecord`** ausdrücklich als **Phase-2-Import-Pfad**
+vor („extends the existing Health Connect sleep integration”). Das ändert die
+**strategische Richtung**, aber **nicht die M11-Empfehlung**:
+
+- **Richtung:** HC wird zur **wachsenden** Integrationsfläche (heute Schlaf + HR;
+  später Nutrition), nicht zu einem Einmal-Feature. Das spricht dafür, den
+  HC-Ausschluss als **sauberen, wiederverwendbaren Gradle-Flavor-Schalter** zu
+  bauen (nicht als Wegwerf-Manifest-Hack), damit HC später **einmal** sauber
+  wieder aktiviert + deklariert werden kann.
+- **Timing:** #715 ist **Backlog/unscheduled** (kein MoSCoW-Must, „pull at most
+  one per sprint”). HC-Nutrition ist dort **Phase 2**, hinter der nativen
+  Phase-1-Domäne — also **≥ 2 Phasen entfernt und ungeplant**. Es macht HC für
+  den **initialen** Play-Build **nicht** dringlich.
+- **Fazit:** **Option A bleibt** für den ersten Closed-Testing-Build. Neu ist nur
+  die Rahmung: Der `play`-Flavor-HC-Ausschluss ist ein **temporäres Gate**, kein
+  endgültiger Verzicht. **Reverse-Trigger** = das **erste** von
+  { M8-HC-Schlaf-Import in Entries geshippt · #715 Phase-2 (HC-Nutrition)
+  geshippt }. Bei Reaktivierung die HC-Deklaration **einmal** für das
+  **konsolidierte** Read-Set (Schlaf + HR + ggf. Nutrition) durchführen, um
+  mehrfache HC-Reviews zu vermeiden.
+- **Zusätzliche Play-Flagge aus #715 (nicht M11-blockierend):** Externe
+  Food-Lookup-APIs (FatSecret / Open Food Facts) bedeuten einen **neuen
+  Netzwerk-Ziel-/Data-Safety-Sachverhalt** (Query-/Barcode-Daten verlassen das
+  Gerät). Vor einem Rollout mit Food-Tracking muss das Data-Safety-Mapping
+  (#721 §7) aktualisiert werden.
 
 ---
 
