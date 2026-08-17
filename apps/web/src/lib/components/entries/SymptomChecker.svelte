@@ -30,9 +30,10 @@
    * Privacy
    * -------
    * Symptoms are health data under DSGVO Art. 9. The component never logs
-   * the user's selections, even on error. We render a permanent medical
-   * disclaimer (`disclaimer.medical`) at the top of the section so users
-   * know CorrelCore is not a diagnostic tool.
+   * the user's selections, even on error. The medical disclaimer
+   * (`disclaimer.medical`) is rendered once at the entry-form level (see
+   * EntryForm) so it covers symptoms, cycle and the rest of the entry
+   * without repeating per section.
    */
 
   import { onMount } from 'svelte';
@@ -221,7 +222,6 @@
     </span>
   </div>
 
-  <p class="symptom-disclaimer" role="note">{$_('disclaimer.medical')}</p>
   <p class="symptom-intensity-note" role="note" data-testid="symptom-intensity-note">
     {$_('symptom.intensity_disabled_hint')}
   </p>
@@ -372,15 +372,6 @@
     font-size: var(--text-xs);
     opacity: 0.7;
     font-variant-numeric: tabular-nums;
-  }
-
-  .symptom-disclaimer {
-    font-size: var(--text-xs);
-    line-height: 1.4;
-    opacity: 0.75;
-    border-left: 3px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
-    padding: var(--space-1) var(--space-3);
-    margin: 0;
   }
 
   .symptom-status {

@@ -177,9 +177,8 @@
     "work_context_label": "Arbeitssituation",
     "work_context_required_hint": "Bitte w\u00e4hle deine Arbeitssituation \u2014 am Wochenende ist \u00abWochenende\u00bb vorausgew\u00e4hlt. Auto-Save l\u00e4uft auch ohne manuelle Best\u00e4tigung.",
     "section": {
-      "date": "Datum",
+      "day_context": "Tag & Kontext",
       "metrics": "Stimmung & K\u00f6rper",
-      "work_context": "Arbeitssituation",
       "time": "Tageszeit",
       "tags": "Tags",
       "symptoms": "Symptome",
@@ -198,13 +197,12 @@
     "cycle_day": {
       "label": "Zyklustag (optional)",
       "placeholder": "1-35",
-      "hint": "Nur neutrale Erfassung. CorrelCore macht keine Vorhersage und keine Diagnose.",
+      "hint": "Nur neutrale Erfassung – keine Vorhersage, keine Diagnose.",
       "error_range": "Der Zyklustag muss zwischen 1 und 35 liegen."
     },
     "cycle_bleeding": {
       "label": "Blutung (optional)",
       "unset": "Nicht gesetzt",
-      "hint": "Optionale Staerke fuer deine eigenen Aufzeichnungen. Keine medizinische Vorhersage.",
       "none": "Keine",
       "spotting": "Schmierblutung",
       "light": "Leicht",

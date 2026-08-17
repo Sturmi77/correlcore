@@ -177,9 +177,8 @@
     "work_context_label": "Work context",
     "work_context_required_hint": "Please choose your work situation \u2014 weekends default to \u201cWeekend\u201d. Auto-save still runs without a separate confirmation.",
     "section": {
-      "date": "Date",
+      "day_context": "Day & context",
       "metrics": "Mood & body",
-      "work_context": "Work situation",
       "time": "Time of day",
       "tags": "Tags",
       "symptoms": "Symptoms",
@@ -198,13 +197,12 @@
     "cycle_day": {
       "label": "Cycle day (optional)",
       "placeholder": "1-35",
-      "hint": "Neutral tracking only. CorrelCore does not predict or diagnose cycle phases.",
+      "hint": "Neutral tracking only — no prediction, no diagnosis.",
       "error_range": "Cycle day must be between 1 and 35."
     },
     "cycle_bleeding": {
       "label": "Bleeding (optional)",
       "unset": "Not set",
-      "hint": "Optional strength for your own records. Not used for medical predictions.",
       "none": "None",
       "spotting": "Spotting",
       "light": "Light",

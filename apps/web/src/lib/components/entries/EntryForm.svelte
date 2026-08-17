@@ -1337,8 +1337,10 @@
   data-loading={loading ? 'true' : 'false'}
   data-autosave-status={autoSaveSnap.status}
 >
-  <section class="entry-section" aria-labelledby="entry-section-date">
-    <h2 id="entry-section-date" class="entry-section__title">{$_('entry.section.date')}</h2>
+  <section class="entry-section" aria-labelledby="entry-section-day-context">
+    <h2 id="entry-section-day-context" class="entry-section__title">
+      {$_('entry.section.day_context')}
+    </h2>
     <div class="entry-date-row">
       <label class="entry-field entry-field--date">
         <span class="entry-label">{$_('entry.date_label')}</span>
@@ -1369,6 +1371,25 @@
     </div>
     {#if SHOW_ENTRY_TIME_SLOTS}
       <p class="entry-hint">{$_('entry.time_slot.hint')}</p>
+    {/if}
+
+    <label class="entry-field">
+      <span class="entry-label">{$_('entry.work_context_label')}</span>
+      <select
+        class="input"
+        value={workContext}
+        on:change={onWorkContextChange}
+        aria-describedby={workContextTouched ? undefined : 'entry-work-context-hint'}
+      >
+        {#each WORK_CONTEXTS as wc}
+          <option value={wc}>{$_(`entry.work_context.${wc}`)}</option>
+        {/each}
+      </select>
+    </label>
+    {#if !workContextTouched}
+      <p class="entry-hint" id="entry-work-context-hint">
+        {$_('entry.work_context_required_hint')}
+      </p>
     {/if}
   </section>
 
@@ -1468,28 +1489,6 @@
     </div>
   </section>
 
-  <section class="entry-section" aria-labelledby="entry-section-work">
-    <h2 id="entry-section-work" class="entry-section__title">{$_('entry.section.work_context')}</h2>
-    {#if !workContextTouched}
-      <p class="entry-hint" id="entry-work-context-hint">
-        {$_('entry.work_context_required_hint')}
-      </p>
-    {/if}
-    <label class="entry-field">
-      <span class="entry-label">{$_('entry.work_context_label')}</span>
-      <select
-        class="input"
-        value={workContext}
-        on:change={onWorkContextChange}
-        aria-describedby={workContextTouched ? undefined : 'entry-work-context-hint'}
-      >
-        {#each WORK_CONTEXTS as wc}
-          <option value={wc}>{$_(`entry.work_context.${wc}`)}</option>
-        {/each}
-      </select>
-    </label>
-  </section>
-
   <section class="entry-section" aria-labelledby="entry-section-tags">
     <h2 id="entry-section-tags" class="entry-section__title">{$_('entry.section.tags')}</h2>
     <TagPicker bind:selected={selectedTagIds} />
@@ -1570,7 +1569,6 @@
           {/each}
         </select>
       </label>
-      <p class="entry-hint">{$_('entry.cycle_bleeding.hint')}</p>
     </section>
   {/if}
 
@@ -1590,6 +1588,8 @@
   {#if errorKey}
     <p class="entry-error" role="alert">{$_(errorKey)}</p>
   {/if}
+
+  <p class="entry-disclaimer" role="note">{$_('disclaimer.medical')}</p>
 
   <div class="entry-actions">
     <Button type="button" variant="secondary" on:click={onCancel} data-testid="entry-cancel">
@@ -1703,6 +1703,15 @@
   .entry-section--review {
     background: transparent;
     border-style: dashed;
+  }
+
+  /* Single medical disclaimer for the whole entry (symptoms, cycle, …) so it is
+     not repeated per section (#714). */
+  .entry-disclaimer {
+    margin: 0;
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    color: var(--color-text-muted);
   }
 
   .entry-hint {
