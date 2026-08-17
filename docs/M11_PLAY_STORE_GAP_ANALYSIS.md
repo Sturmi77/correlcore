@@ -211,14 +211,24 @@ flowchart TD
 
 ---
 
-## 6. Vorgeschlagenes Tracking-Issue
+## 6. Tracking-Issues (angelegt 2026-08-17)
 
-> **ops(M11-exit): Play Console, Data Safety, Closed Testing**
->
-> Nachfolger zu #429 (dort nur Sideload/Checklist A erledigt). Verfolgt
-> Checklist C aus `docs/selfhost/M11_OPS_CHECKLIST.md` bis zum M11-Exit
-> (Closed Testing). Body: Checklisten AP-1…AP-6 aus dieser Gap-Analyse; HC-
-> Entscheidung (§4 Option A/B) als erstes zu klären.
+Umbrella + ein Issue je Arbeitspaket, jeweils mit Checkliste und Wer/Wie pro
+Schritt, als GitHub-Sub-Issues unter dem Umbrella verknüpft:
+
+| Issue | Arbeitspaket |
+| ----- | ------------ |
+| **#717** | Umbrella — ops(M11-exit): Play Console, Data Safety & Closed Testing |
+| **#718** | AP-HC — Health-Connect-Deklaration entscheiden + Play-Build ohne HC (Risiko-Gate) |
+| **#719** | AP-1 — Play Console Bootstrap (Account, App, App Signing, AAB Internal) |
+| **#720** | AP-2 — Store-Listing-Assets (Texte DE/EN, Grafiken, Screenshots) |
+| **#721** | AP-3 — Data Safety Form + Privacy-URL + HC-Deklaration |
+| **#722** | AP-4 — Firebase/FCM Live-Push (nicht Closed-Testing-blockierend) |
+| **#723** | AP-5 — Device-QA + Pre-Launch-Report |
+| **#724** | AP-6 — Quality-Gate + DSGVO-Checkpoint + Closeout |
+
+Rollen-Legende in jedem Issue: 👤 Operator (@Sturmi77) · 🤖 Agent (Claude Code)
+· 🔍 Reviewer.
 
 ---
 
