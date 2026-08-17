@@ -162,9 +162,8 @@
   $: atLimit = selected.length >= MAX_TAGS_PER_ENTRY;
 </script>
 
-<section class="tag-picker" aria-labelledby="tag-picker-heading">
+<div class="tag-picker">
   <div class="tag-picker-header">
-    <h2 id="tag-picker-heading" class="entry-label">{$_('tag.picker_label')}</h2>
     <span class="tag-counter" aria-live="polite">
       {$_('tag.picker_counter', { values: { count: selected.length, max: MAX_TAGS_PER_ENTRY } })}
     </span>
@@ -315,7 +314,7 @@
       </form>
     {/if}
   </div>
-</section>
+</div>
 
 <style>
   .tag-picker {
@@ -326,7 +325,7 @@
 
   .tag-picker-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: baseline;
     gap: var(--space-3);
   }

@@ -212,11 +212,8 @@
   $: atLimit = selected.length >= MAX_SYMPTOMS_PER_ENTRY;
 </script>
 
-<section class="symptom-checker" aria-labelledby="symptom-checker-heading">
+<div class="symptom-checker">
   <div class="symptom-checker-header">
-    <h2 id="symptom-checker-heading" class="entry-label">
-      {$_('symptom.picker_label')}
-    </h2>
     <span class="symptom-counter" aria-live="polite">
       {$_('symptom.picker_counter', {
         values: { count: selected.length, max: MAX_SYMPTOMS_PER_ENTRY },
@@ -355,7 +352,7 @@
       </form>
     {/if}
   </div>
-</section>
+</div>
 
 <style>
   .symptom-checker {
@@ -366,7 +363,7 @@
 
   .symptom-checker-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: baseline;
     gap: var(--space-3);
   }
