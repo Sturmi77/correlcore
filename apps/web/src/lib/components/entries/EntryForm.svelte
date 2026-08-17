@@ -1413,12 +1413,19 @@
         scaleType="stress"
         bind:value={stress}
       />
+    </div>
+  </section>
 
+  <section class="entry-section" aria-labelledby="entry-section-sleep">
+    <h2 id="entry-section-sleep" class="entry-section__title">
+      {$_('entry.section.sleep')}
+    </h2>
+    <div class="entry-section__stack">
       <!--
-        Sleep quality sits with the core scales (same mask + 1–5 slider as
-        mood/energy/stress, #653 B6). #673: shown expanded up front (not hidden
-        behind an "add" button), but still clearable to null via
-        OptionalScaleSlider so "not recorded" stays distinct from a low rating.
+        Sleep quality (1–5, same mask as mood/energy/stress, #653 B6/#673:
+        expanded up front, clearable to null so "not recorded" stays distinct
+        from a low rating) now lives next to sleep *duration* so the whole
+        "sleep" topic sits in one section instead of being split across the form.
       -->
       <OptionalScaleSlider
         id="entry-sleep-quality"
@@ -1433,6 +1440,31 @@
         testId="entry-sleep-quality"
         bind:value={sleepQuality}
       />
+      <div class="entry-sleep-duration">
+        <label class="entry-field">
+          <span class="entry-label">{$_('entry.sleep_minutes.label')}</span>
+          <input
+            type="number"
+            class="input"
+            min="0"
+            max="1440"
+            step="15"
+            inputmode="numeric"
+            value={sleepMinutes ?? ''}
+            on:input={onSleepMinutesInput}
+            aria-invalid={sleepMinutesInvalid}
+            aria-describedby={sleepMinutesInvalid ? 'entry-sleep-error' : 'entry-sleep-hint'}
+            placeholder={$_('entry.sleep_minutes.placeholder')}
+            data-testid="entry-sleep-minutes"
+          />
+        </label>
+        <p id="entry-sleep-hint" class="entry-hint">{$_('entry.sleep_minutes.hint')}</p>
+        {#if sleepMinutesInvalid}
+          <p id="entry-sleep-error" class="entry-error" role="alert">
+            {$_('entry.sleep_minutes.error_range')}
+          </p>
+        {/if}
+      </div>
     </div>
   </section>
 
@@ -1487,14 +1519,16 @@
       on:toggle={handleMarkerToggle}
       on:addCustom={handleCustomMarker}
     />
-    <label class="entry-field entry-field--inline">
-      <span class="entry-label">{$_('entry.note_visibility.label')}</span>
-      <select bind:value={noteVisibility} data-testid="entry-note-visibility">
-        <option value="full">{$_('entry.note_visibility.full')}</option>
-        <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
-        <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
-      </select>
-    </label>
+    {#if note?.trim()}
+      <label class="entry-field entry-field--inline">
+        <span class="entry-label">{$_('entry.note_visibility.label')}</span>
+        <select bind:value={noteVisibility} data-testid="entry-note-visibility">
+          <option value="full">{$_('entry.note_visibility.full')}</option>
+          <option value="analysis_only">{$_('entry.note_visibility.analysis_only')}</option>
+          <option value="hidden">{$_('entry.note_visibility.hidden')}</option>
+        </select>
+      </label>
+    {/if}
   </section>
 
   {#if cycleTrackingEnabled}
@@ -1540,42 +1574,12 @@
     </section>
   {/if}
 
-  <section class="entry-section" aria-labelledby="entry-section-sleep">
-    <h2 id="entry-section-sleep" class="entry-section__title">
-      {$_('entry.section.sleep')}
-    </h2>
-    <label class="entry-field">
-      <span class="entry-label">{$_('entry.sleep_minutes.label')}</span>
-      <input
-        type="number"
-        class="input"
-        min="0"
-        max="1440"
-        step="15"
-        inputmode="numeric"
-        value={sleepMinutes ?? ''}
-        on:input={onSleepMinutesInput}
-        aria-invalid={sleepMinutesInvalid}
-        aria-describedby={sleepMinutesInvalid ? 'entry-sleep-error' : 'entry-sleep-hint'}
-        placeholder={$_('entry.sleep_minutes.placeholder')}
-        data-testid="entry-sleep-minutes"
-      />
-    </label>
-    <p id="entry-sleep-hint" class="entry-hint">{$_('entry.sleep_minutes.hint')}</p>
-    {#if sleepMinutesInvalid}
-      <p id="entry-sleep-error" class="entry-error" role="alert">
-        {$_('entry.sleep_minutes.error_range')}
-      </p>
-    {/if}
-    <!-- Sleep *quality* now lives in the metrics section as an optional 1–5
-           slider alongside mood/energy/stress (#653 B6). This section keeps only
-           the sleep *duration* input, which is on a different (minutes) scale. -->
-  </section>
-
-  <section class="entry-section" aria-labelledby="entry-section-delta">
-    <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
-    <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
-  </section>
+  {#if dayDelta}
+    <section class="entry-section entry-section--review" aria-labelledby="entry-section-delta">
+      <h2 id="entry-section-delta" class="entry-section__title">{$_('entry.section.delta')}</h2>
+      <DayDeltaCard delta={dayDelta} loading={dayDeltaLoading} />
+    </section>
+  {/if}
 
   {#if offlineSyncConflictKey}
     <p class="entry-hint" role="status" data-testid="entry-sync-conflict-note">
@@ -1686,6 +1690,19 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-5);
+  }
+
+  .entry-sleep-duration {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  /* The day-comparison is read-only output, not an input. Set it apart from the
+     entry sections above it so it reads as a summary rather than another field. */
+  .entry-section--review {
+    background: transparent;
+    border-style: dashed;
   }
 
   .entry-hint {

@@ -214,7 +214,7 @@
     "sleep_minutes": {
       "label": "Schlafdauer (optional)",
       "placeholder": "Minuten, z. B. 450",
-      "hint": "Gesamtschlaf in Minuten (0-1440). 450 Minuten = 7,5 Stunden.",
+      "hint": "450 Minuten = 7,5 Stunden.",
       "error_range": "Die Schlafdauer muss zwischen 0 und 1440 Minuten liegen."
     },
     "sleep_quality": {
