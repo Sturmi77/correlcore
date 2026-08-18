@@ -4,8 +4,8 @@
   import { auth } from '$lib/stores/auth';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import Button from '$lib/components/common/Button.svelte';
+  import CategoryIcon from '$lib/components/common/CategoryIcon.svelte';
   import DataState from '$lib/components/common/DataState.svelte';
-  import IconRender from '$lib/components/common/IconRender.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -22,13 +22,15 @@
     type TagResponse,
   } from '$lib/api/tags';
   import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
-  import { defaultTagColorForCurrentTheme } from '$lib/constants/tagDefaults';
+  import {
+    categoryColorForCurrentTheme,
+    defaultTagColorForCurrentTheme,
+  } from '$lib/constants/tagDefaults';
   import { refreshTags } from '$lib/stores/tags';
 
   type Draft = {
     name: string;
     category: TagCategory;
-    icon: string;
     color: string;
     habit_type: HabitType;
     target_frequency: number;
@@ -43,11 +45,13 @@
   let defaultBySlug: Record<string, TagResponse> = {};
   let drafts: Record<string, Draft> = {};
   let creating = false;
+  // Tracks whether the create-form colour was set manually, so switching
+  // category re-suggests the group colour only while it is still untouched.
+  let newColorTouched = false;
   let newDraft: Draft = {
     name: '',
     category: 'other',
-    icon: '',
-    color: defaultTagColorForCurrentTheme(),
+    color: categoryColorForCurrentTheme('other'),
     habit_type: 'none',
     target_frequency: 3,
     include_in_analytics: true,
@@ -62,11 +66,11 @@
   }
 
   function resetNewDraft(): void {
+    newColorTouched = false;
     newDraft = {
       name: '',
       category: 'other',
-      icon: '',
-      color: defaultTagColorForCurrentTheme(),
+      color: categoryColorForCurrentTheme('other'),
       habit_type: 'none',
       target_frequency: 3,
       include_in_analytics: true,
@@ -77,7 +81,6 @@
     return {
       name: tag.name,
       category: tag.category,
-      icon: tag.icon ?? '',
       color: tag.color ?? defaultTagColorForCurrentTheme(),
       habit_type: tag.habit_type,
       target_frequency: tag.target_frequency ?? 3,
@@ -89,7 +92,6 @@
     return (
       a.name === b.name &&
       a.category === b.category &&
-      a.icon === b.icon &&
       a.color === b.color &&
       a.habit_type === b.habit_type &&
       a.target_frequency === b.target_frequency &&
@@ -99,7 +101,7 @@
 
   /** True when any row draft differs from the last loaded tag, or create form is dirty. */
   function hasDirtyDrafts(): boolean {
-    if (newDraft.name.trim() || newDraft.icon.trim()) return true;
+    if (newDraft.name.trim()) return true;
     return tags.some((tag) => {
       const draft = drafts[tag.id];
       if (!draft) return false;
@@ -153,7 +155,6 @@
         slug: slugifyName(name) || 'tag',
         name,
         category: newDraft.category,
-        icon: newDraft.icon.trim() ? newDraft.icon.trim() : null,
         color: newDraft.color,
         include_in_analytics: newDraft.include_in_analytics,
         habit_type: newDraft.habit_type,
@@ -170,6 +171,11 @@
   }
 
   function setNewDraft(patch: Partial<Draft>): void {
+    if (patch.color !== undefined) newColorTouched = true;
+    // Switching category re-suggests the group colour until the user picks one.
+    if (patch.category !== undefined && !newColorTouched) {
+      patch = { ...patch, color: categoryColorForCurrentTheme(patch.category) };
+    }
     newDraft = { ...newDraft, ...patch };
   }
 
@@ -182,7 +188,6 @@
       await updateTag(tag.id, {
         name: draft.name,
         category: draft.category,
-        icon: draft.icon.trim() ? draft.icon.trim() : null,
         color: draft.color,
         include_in_analytics: draft.include_in_analytics,
         habit_type: draft.habit_type,
@@ -333,16 +338,6 @@
           </select>
         </label>
         <label>
-          <span>{$_('settings.tags.icon')}</span>
-          <input
-            class="input"
-            value={newDraft.icon}
-            maxlength="32"
-            on:input={(event) =>
-              setNewDraft({ icon: (event.currentTarget as HTMLInputElement).value })}
-          />
-        </label>
-        <label>
           <span>{$_('settings.tags.color')}</span>
           <input
             class="tag-settings__color"
@@ -433,11 +428,7 @@
                     class="tag-settings__icon"
                     style={tag.color ? `--tag-color: ${tag.color}` : ''}
                   >
-                    {#if draft?.icon}
-                      <IconRender icon={draft.icon} size={ICON_SIZE_MD} />
-                    {:else}
-                      <span aria-hidden="true">#</span>
-                    {/if}
+                    <CategoryIcon category={tag.category} size={ICON_SIZE_MD} />
                   </span>
                   <div>
                     <strong>{tag.name}</strong>
@@ -485,18 +476,6 @@
                           <option value={category}>{$_(`tag.category.${category}`)}</option>
                         {/each}
                       </select>
-                    </label>
-                    <label>
-                      <span>{$_('settings.tags.icon')}</span>
-                      <input
-                        class="input"
-                        value={draft.icon}
-                        maxlength="32"
-                        on:input={(event) =>
-                          setDraft(tag.id, {
-                            icon: (event.currentTarget as HTMLInputElement).value,
-                          })}
-                      />
                     </label>
                     <label>
                       <span>{$_('settings.tags.color')}</span>
@@ -695,7 +674,7 @@
   .tag-settings__fields {
     display: grid;
     grid-template-columns:
-      minmax(8rem, 1.4fr) minmax(7rem, 1fr) minmax(6rem, 0.9fr) auto
+      minmax(8rem, 1.4fr) minmax(7rem, 1fr) auto
       minmax(8rem, 1fr) minmax(5rem, 0.6fr);
     gap: 0.55rem;
     align-items: end;
@@ -763,7 +742,7 @@
   .tag-settings__create-form {
     display: grid;
     grid-template-columns:
-      minmax(8rem, 1.4fr) minmax(7rem, 1fr) minmax(6rem, 0.9fr) auto
+      minmax(8rem, 1.4fr) minmax(7rem, 1fr) auto
       minmax(8rem, 1fr) minmax(5rem, 0.6fr) auto;
     gap: 0.55rem;
     align-items: end;

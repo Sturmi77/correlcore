@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import Page from './+page.svelte';
 import type { TagResponse } from '$lib/api/tags';
+import { categoryColorForCurrentTheme } from '$lib/constants/tagDefaults';
 
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
@@ -168,6 +169,38 @@ describe('/settings/tags Sprint 8', () => {
           slug: 'meditation',
           category: 'other',
           include_in_analytics: true,
+        })
+      );
+    });
+    // No icon is sent any more (#672).
+    expect(vi.mocked(tagsApi.createTag).mock.calls[0][0]).not.toHaveProperty('icon');
+  });
+
+  it('offers no icon field and suggests the category colour on create', async () => {
+    vi.mocked(tagsApi.listVisibleTags).mockResolvedValue([]);
+    vi.mocked(tagsApi.createTag).mockResolvedValue(makeTag({ id: 'new-tag' }));
+
+    render(Page);
+
+    const createSection = await screen.findByTestId('tag-settings-create');
+    // The icon field is gone from the create form.
+    expect(createSection.textContent).not.toContain('settings.tags.icon');
+
+    const nameInput = createSection.querySelectorAll('input.input')[0] as HTMLInputElement;
+    nameInput.value = 'Sprint';
+    await fireEvent.input(nameInput);
+
+    const categorySelect = createSection.querySelector('select.input') as HTMLSelectElement;
+    categorySelect.value = 'sport';
+    await fireEvent.change(categorySelect);
+
+    await fireEvent.click(screen.getByText('settings.tags.create_submit'));
+
+    await waitFor(() => {
+      expect(tagsApi.createTag).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'sport',
+          color: categoryColorForCurrentTheme('sport'),
         })
       );
     });
