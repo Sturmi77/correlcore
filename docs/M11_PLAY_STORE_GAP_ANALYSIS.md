@@ -160,15 +160,15 @@ Deklarierte, aber im UI nicht nutzbare HC-Permissions führen regelmäßig zur
 **Ablehnung**. Der Sprint-Plan warnt bereits explizit: *„if HC import not ready,
 do not declare unused permissions.“*
 
-**Entscheidung (Owner, vor AP-1):**
+**Entscheidung: ✅ Option A — bestätigt vom Owner (2026-08-18, #718).**
 
-| Option | Inhalt | Empfehlung |
-| ------ | ------ | ---------- |
-| **A — HC aus dem Play-Build entfernen** | Product-Flavor / Build ohne HC-Permissions & HC-Plugin für Closed Testing; HC bleibt im Sideload-Build | **Empfohlen** für schnellen Closed-Testing-Exit ohne HC-Review-Aufwand |
-| **B — HC-Loop fertigstellen + deklarieren** | M8-Sprint-4-Import in Entries fertig, Demo-Video, HC-Privacy | Nur wenn HC-Import ohnehin jetzt gefinished wird — koppelt M11-Exit an M8 |
+| Option | Inhalt | Status |
+| ------ | ------ | ------ |
+| **A — HC aus dem Play-Build entfernen** | Product-Flavor / Build ohne HC-Permissions & HC-Plugin für Closed Testing; HC bleibt im Sideload-Build | **✅ Gewählt** — risikoärmster Closed-Testing-Exit ohne HC-Review |
+| **B — HC-Loop fertigstellen + deklarieren** | M8-Sprint-4-Import in Entries fertig, Demo-Video, HC-Privacy | Verworfen für M11 — würde Exit an M8 koppeln |
 
 Der Sprint-Plan nennt Full-HC-Import ausdrücklich als **Non-Goal für M11**
-(„do not block Closed Testing on full Garmin sync”). → **Option A** hält M11 und
+(„do not block Closed Testing on full Garmin sync”). Option A hält M11 und
 M8 entkoppelt und ist der risikoärmste Pfad zum Exit.
 
 ### 4.1 Wechselwirkung mit Food-Tracking (#715) — Re-Analyse
@@ -199,6 +199,51 @@ vor („extends the existing Health Connect sleep integration”). Das ändert d
   Netzwerk-Ziel-/Data-Safety-Sachverhalt** (Query-/Barcode-Daten verlassen das
   Gerät). Vor einem Rollout mit Food-Tracking muss das Data-Safety-Mapping
   (#721 §7) aktualisiert werden.
+
+### 4.2 Reverse-Path — Rückkehr zur HC-Anbindung im Play-Build
+
+Wird bei **Reverse-Trigger** abgearbeitet (= erstes von: M8-HC-Schlaf-Import in
+Entries geshippt · #715 Phase-2 HC-Nutrition geshippt). Unter Option A bleibt der
+gesamte HC-Code erhalten — Rückkehr heißt **„Flavor-Gate öffnen + HC-Review
+bestehen"**, nicht „neu bauen".
+
+**Kern-Merksatz:** Rückkehr kostet primär **einen HC-Google-Review + Demo-Video +
+Privacy/Data-Safety-Update** → HC **einmal mit dem vollen geplanten Read-Set**
+reaktivieren, nicht in Etappen.
+
+**0. Vorbedingung (👤 Produkt) — der eigentliche Auslöser**
+- [ ] Nutzersichtbares, **ausgeliefertes** HC-Feature existiert (HC-Werte in
+      Entries sichtbar/nutzbar). Ohne das reproduziert die Deklaration exakt das
+      Ablehnungsrisiko, das Option A vermeidet.
+
+**1. Code/Build (🤖 Agent, klein)**
+- [ ] HC im `play`-Flavor reaktivieren: `health.READ_*`-Permissions, `<queries>`,
+      `overrideLibrary`, HC-Rationale-Intent-Filter + `ViewPermissionUsageActivity`-
+      Alias, `HealthConnectPlugin`-Registrierung, `connect-client`-Dependency zurück
+      in geteilten/`play`-Sourceset (oder Flavor-Split auflösen, wenn HC in allen Builds).
+- [ ] Konsolidiertes Read-Set festlegen (Schlaf + HR + ggf. Nutrition) — **eine** Deklaration.
+- [ ] CI-Assert umdrehen: der Option-A-Guard „Play-AAB ohne `health.*`" muss für den
+      HC-tragenden Flavor invertiert/entfernt werden, sonst blockt CI den Release.
+- [ ] versionCode-Bump + neuer signierter AAB; NewApi-Lint grün (minSdk 24 vs. HC API 26+
+      bereits per `getSdkStatus`-Guard + `overrideLibrary` abgesichert).
+
+**2. Play Console / HC-Deklaration (👤 Operator, review-schwer)**
+- [ ] Health-Connect-Declaration-Formular je Datentyp mit konkretem Use-Case.
+- [ ] Demo-Video: In-App-Feature nutzt jede Permission sichtbar (Google-Pflicht).
+- [ ] HC-Datennutzungs-Policy-Konformität (keine Werbe-Nutzung, kein unzulässiges
+      Teilen, Widerruf respektieren).
+- [ ] Zusätzliche Google-Review-Runde einplanen.
+
+**3. Datenschutz/DSGVO (🤖 Agent-Entwurf → 👤 Operator)**
+- [ ] PRIVACY.md + öffentliche URL um HC-Abschnitt ergänzen (Daten, Zweck,
+      Aufbewahrung, Löschung, kein Teilen).
+- [ ] Data-Safety: die in `PLAY_DATA_SAFETY_MAPPING.md` §1 auf AP-HC gegatete
+      **HC-Zeile** aktivieren (collected · not shared · encrypted · deletable).
+- [ ] ADR-0033 §8 + Mapping-Doku + PRIVACY.md synchron halten (Review vor jeder Einreichung).
+
+**4. Datenminimierung (Grundregel)**
+- [ ] Jede deklarierte Permission zeigt auf ein **geshipptes** Feature — kein HR
+      deklarieren, wenn nur Schlaf sichtbar ist. Read-Set und UI deckungsgleich halten.
 
 ---
 
