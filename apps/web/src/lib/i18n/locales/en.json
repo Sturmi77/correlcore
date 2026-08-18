@@ -1823,6 +1823,8 @@
       "offline": "Offline-capable",
       "license": "AGPL open source"
     },
+    "journey_heading": "Insights grow with your data",
+    "journey_body": "Every association is ranked by confidence — from first patterns to robust. No pressure, no streaks: just growing evidence the longer you track.",
     "android_heading": "Android app",
     "android_body": "A signed APK straight from GitHub Releases. Subscribe to the repo with Obtainium to get updates automatically — no app store required.",
     "android_download": "Download APK",

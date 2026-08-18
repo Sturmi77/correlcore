@@ -43,6 +43,66 @@
     { key: 'license', tone: 'stress' },
   ] as const;
 
+  // Maturity journey (A2 + C4): the three insight tiers, each carrying its
+  // token colour and an increasing glow — the "evidence grows with your data,
+  // no gamification" story told visually. Labels/ranges reuse the app's own
+  // maturity vocabulary so the marketing copy can't drift from the product.
+  const journeyStages = [
+    {
+      key: 'early',
+      tier: 'early',
+      label: 'maturity.early_patterns.label',
+      range: 'maturity.early_patterns.range',
+    },
+    {
+      key: 'provisional',
+      tier: 'provisional',
+      label: 'maturity.provisional.label',
+      range: 'maturity.provisional.range',
+    },
+    {
+      key: 'robust',
+      tier: 'robust',
+      label: 'maturity.robust.label',
+      range: 'maturity.robust.range',
+    },
+  ] as const;
+
+  // D1 — scroll reveal. Fades/slides a section in when it enters the viewport.
+  // Honours prefers-reduced-motion (and any missing IntersectionObserver) by
+  // showing the content immediately, so nothing is ever hidden without JS-driven
+  // motion to bring it back.
+  function reveal(node: HTMLElement, delay = 0) {
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReduced || typeof IntersectionObserver === 'undefined') {
+      node.classList.add('is-visible');
+      return {};
+    }
+
+    if (delay) node.style.transitionDelay = `${delay}ms`;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            node.classList.add('is-visible');
+            observer.unobserve(node);
+          }
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    );
+    observer.observe(node);
+    return {
+      destroy() {
+        observer.disconnect();
+      },
+    };
+  }
+
   $: activeLocale = (($locale ?? 'de').split('-')[0] === 'en' ? 'en' : 'de') as AppLocale;
   $: nextLocale = (activeLocale === 'de' ? 'en' : 'de') as AppLocale;
 
@@ -120,7 +180,11 @@
     </div>
   </section>
 
-  <section class="landing__previews" aria-labelledby="landing-previews-heading">
+  <section
+    class="landing__previews landing__reveal"
+    use:reveal
+    aria-labelledby="landing-previews-heading"
+  >
     <h2 id="landing-previews-heading" class="landing__section-heading">
       {$_('landing.previews_heading')}
     </h2>
@@ -171,7 +235,11 @@
     </div>
   </section>
 
-  <section class="landing__bento" aria-labelledby="landing-features-heading">
+  <section
+    class="landing__bento landing__reveal"
+    use:reveal
+    aria-labelledby="landing-features-heading"
+  >
     <h2 id="landing-features-heading" class="landing__section-heading">
       {$_('landing.features_heading')}
     </h2>
@@ -206,7 +274,33 @@
     </div>
   </section>
 
-  <section class="landing__android" aria-labelledby="landing-android-heading">
+  <section
+    class="landing__journey"
+    use:reveal
+    aria-labelledby="landing-journey-heading"
+    data-testid="landing-journey"
+  >
+    <h2 id="landing-journey-heading" class="landing__section-heading">
+      {$_('landing.journey_heading')}
+    </h2>
+    <p class="landing__journey-lead">{$_('landing.journey_body')}</p>
+    <div class="landing__journey-bar" aria-hidden="true"></div>
+    <ol class="landing__journey-track">
+      {#each journeyStages as stage (stage.key)}
+        <li class="landing__journey-stage" data-tier={stage.tier}>
+          <span class="landing__journey-node" aria-hidden="true"></span>
+          <span class="landing__journey-range">{$_(stage.range)}</span>
+          <span class="landing__journey-label">{$_(stage.label)}</span>
+        </li>
+      {/each}
+    </ol>
+  </section>
+
+  <section
+    class="landing__android landing__reveal"
+    use:reveal
+    aria-labelledby="landing-android-heading"
+  >
     <h2 id="landing-android-heading" class="landing__section-heading">
       {$_('landing.android_heading')}
     </h2>
@@ -234,7 +328,11 @@
     <p class="landing__android-note">{$_('landing.android_sha256')}</p>
   </section>
 
-  <section class="landing__selfhost" aria-labelledby="landing-selfhost-heading">
+  <section
+    class="landing__selfhost landing__reveal"
+    use:reveal
+    aria-labelledby="landing-selfhost-heading"
+  >
     <div>
       <h2 id="landing-selfhost-heading">{$_('landing.selfhost_title')}</h2>
       <p>{$_('landing.selfhost_body')}</p>
@@ -258,7 +356,7 @@
     </div>
   </section>
 
-  <section class="landing__faq" aria-labelledby="landing-faq-heading">
+  <section class="landing__faq landing__reveal" use:reveal aria-labelledby="landing-faq-heading">
     <h2 id="landing-faq-heading" class="landing__section-heading">{$_('landing.faq_heading')}</h2>
     <div class="landing__faq-list">
       {#each faqKeys as key}
@@ -297,7 +395,13 @@
     margin-inline: auto;
   }
 
+  /* D3 — sticky header. Stays readable over scrolling content via a tinted
+     wash; the blur is layered on for desktop only (matches app.css policy,
+     mobile Firefox repaints it as an opaque block). */
   .landing__header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -305,6 +409,16 @@
     flex-wrap: wrap;
     padding: var(--space-4) 0;
     border-bottom: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+  }
+
+  @supports (backdrop-filter: blur(8px)) {
+    @media (min-width: 768px) {
+      .landing__header {
+        background: color-mix(in srgb, var(--color-bg) 68%, transparent);
+        backdrop-filter: blur(12px);
+      }
+    }
   }
 
   .landing__brand {
@@ -746,9 +860,179 @@
     text-decoration: underline;
   }
 
+  /* D1 — scroll reveal. Sections start slightly lowered + transparent; the
+     `reveal` action adds `is-visible` when they scroll into view. The action
+     itself short-circuits under prefers-reduced-motion, and the media query
+     below is a belt-and-braces guard for the CSS. */
+  .landing__reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 560ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+
+  .landing__reveal:global(.is-visible) {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* B3 — dot grid behind the feature bento, giving a quiet "data" texture. */
+  .landing__bento {
+    position: relative;
+    padding: var(--space-6) var(--space-5);
+    border-radius: var(--radius-lg);
+    background-image: radial-gradient(
+      color-mix(in oklch, var(--color-primary) 24%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+    background-position: -1px -1px;
+  }
+
+  .landing__bento > .landing__section-heading,
+  .landing__bento > .landing__bento-grid {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Fade the dot field toward the edges so it never reads as a hard rectangle. */
+  .landing__bento::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(120% 120% at 50% 0%, transparent 55%, var(--color-bg) 100%);
+  }
+
+  /* B2 — the maturity journey sits on a tinted panel to break the flat run of
+     sections, mirroring the self-host block's treatment. */
+  .landing__journey {
+    padding: var(--space-8) var(--space-5);
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+    background: color-mix(in srgb, var(--color-surface-2) 60%, transparent);
+    text-align: center;
+  }
+
+  .landing__journey-lead {
+    margin: 0 auto var(--space-6);
+    max-width: 44rem;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+  }
+
+  /* A2/C4 — progression bar tinted early → provisional → robust with a glow. */
+  .landing__journey-bar {
+    height: 4px;
+    max-width: 40rem;
+    margin: 0 auto var(--space-6);
+    border-radius: var(--radius-full);
+    background: linear-gradient(
+      90deg,
+      var(--color-insight-early) 0%,
+      var(--color-insight-provisional) 50%,
+      var(--color-insight-robust) 100%
+    );
+    box-shadow: 0 0 16px color-mix(in oklch, var(--color-insight-robust) 45%, transparent);
+  }
+
+  .landing__journey-track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .landing__journey-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-3);
+    border: 1px solid color-mix(in srgb, var(--tier-color) 32%, var(--color-border));
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+    /* Staggered reveal, keyed on the section becoming visible. */
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 480ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* `is-visible` is added at runtime by the reveal action, so the scoped
+     compiler can't see it statically — mark it :global so Svelte keeps the
+     rule instead of pruning it as unused. */
+  .landing__journey:global(.is-visible) .landing__journey-stage {
+    opacity: 1;
+    transform: none;
+  }
+  .landing__journey:global(.is-visible) .landing__journey-stage:nth-child(2) {
+    transition-delay: 130ms;
+  }
+  .landing__journey:global(.is-visible) .landing__journey-stage:nth-child(3) {
+    transition-delay: 260ms;
+  }
+
+  .landing__journey-stage[data-tier='early'] {
+    --tier-color: var(--color-insight-early);
+    --tier-glow: 6px;
+  }
+  .landing__journey-stage[data-tier='provisional'] {
+    --tier-color: var(--color-insight-provisional);
+    --tier-glow: 13px;
+  }
+  .landing__journey-stage[data-tier='robust'] {
+    --tier-color: var(--color-insight-robust);
+    --tier-glow: 22px;
+  }
+
+  /* C4 — node glow deepens as the tier matures. */
+  .landing__journey-node {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: var(--radius-full);
+    background: var(--tier-color);
+    box-shadow: 0 0 var(--tier-glow) color-mix(in oklch, var(--tier-color) 70%, transparent);
+  }
+
+  .landing__journey-range {
+    font-size: var(--text-xs);
+    color: var(--color-text-faint);
+  }
+
+  .landing__journey-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* Belt-and-braces: never animate translate/opacity for reduced-motion users. */
+  @media (prefers-reduced-motion: reduce) {
+    .landing__reveal,
+    .landing__journey-stage {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
   @media (max-width: 480px) {
     .landing__metric-row {
       grid-template-columns: 1fr;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .landing__journey-track {
+      grid-template-columns: repeat(3, 1fr);
     }
   }
 

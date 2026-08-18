@@ -1823,6 +1823,8 @@
       "offline": "Offline-fähig",
       "license": "AGPL-Open-Source"
     },
+    "journey_heading": "Erkenntnisse wachsen mit deinen Daten",
+    "journey_body": "Jeder Zusammenhang ist nach Konfidenz gestuft – von ersten Mustern bis robust. Kein Leistungsdruck, keine Streaks: nur wachsende Evidenz, je länger du trackst.",
     "android_heading": "Android-App",
     "android_body": "Signiertes APK direkt von GitHub Releases. Mit Obtainium abonnierst du das Repo und bekommst Updates automatisch – ganz ohne App-Store.",
     "android_download": "APK herunterladen",
