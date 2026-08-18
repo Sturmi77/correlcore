@@ -367,8 +367,6 @@
     "scale_label": "Intensit\u00e4t f\u00fcr {name}",
     "intensity_disabled_hint": "Intensit\u00e4tsstufen sind noch nicht verf\u00fcgbar \u2014 Symptome werden vorerst nur als \u201evorhanden\u201c erfasst.",
     "present_toggle": "{name} als vorhanden markieren",
-    "present_on": "Vorhanden",
-    "present_off": "Nicht vorhanden",
     "intensity": {
       "0": "Nicht vorhanden",
       "1": "Leicht",
