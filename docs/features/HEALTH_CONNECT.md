@@ -95,10 +95,17 @@ pnpm --filter @correlcore/android validate
 
 Full device build (needs JDK 21 + Android SDK 36):
 
+Health Connect ships in the **`sideload`** flavor only; the `play` flavor is
+HC-free (AP-HC Option A — [`../M11_PLAY_STORE_GAP_ANALYSIS.md`](../M11_PLAY_STORE_GAP_ANALYSIS.md) §4).
+Build the HC-enabled APK:
+
 ```bash
 pnpm cap:sync
-pnpm cap:assemble:debug   # apps/android/android/app/build/outputs/apk/debug/app-debug.apk
+cd apps/android/android && ./gradlew assembleSideloadDebug
+# → app/build/outputs/apk/sideload/debug/app-sideload-debug.apk  (with Health Connect)
 ```
+
+(`pnpm cap:assemble:debug` builds both flavors; the HC APK is the `sideload` one.)
 
 ### Device QA checklist
 

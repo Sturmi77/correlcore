@@ -46,6 +46,20 @@ android {
         abortOnError true
         warningsAsErrors false
     }
+    // AP-HC Option A (docs/M11_PLAY_STORE_GAP_ANALYSIS.md §4): two distribution
+    // flavors. `sideload` (GitHub Releases / Obtainium) keeps Health Connect;
+    // `play` (Play Store AAB) ships HC-free — no health.* permissions, no HC
+    // plugin, no HC declaration/review. Health Connect code, the connect-client
+    // dependency and the HC manifest entries live only in src/sideload/.
+    flavorDimensions = ["distribution"]
+    productFlavors {
+        sideload {
+            dimension "distribution"
+        }
+        play {
+            dimension "distribution"
+        }
+    }
     defaultConfig {
         applicationId "de.correlcore.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -116,8 +130,9 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0'
     // Issue #453 — Keystore-backed session restore for Capacitor WebView
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
-    // M8 Sprint 3 (#172) — Health Connect on-device read (sleep + HR)
-    implementation "androidx.health.connect:connect-client:$healthConnectVersion"
+    // M8 Sprint 3 (#172) — Health Connect on-device read (sleep + HR).
+    // sideload flavor only — the Play build ships HC-free (AP-HC Option A).
+    sideloadImplementation "androidx.health.connect:connect-client:$healthConnectVersion"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
