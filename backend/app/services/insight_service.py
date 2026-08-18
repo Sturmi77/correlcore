@@ -7,7 +7,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import date as date_type
 
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
@@ -345,6 +345,50 @@ async def _tag_slugs_for_legacy_insights(
     return {row[0]: row[1] for row in result.all()}
 
 
+def newest_insight_per_subject_stmt(user_id: uuid.UUID) -> Select[tuple[Insight]]:
+    """Select the newest insight row per analytical subject for one user.
+
+    Insights accumulate across generation dates — the pipeline only replaces a
+    single ``generated_for_date`` — so a plain "newest N rows" fetch could let a
+    burst of rows for a few subjects push another subject's newest row out of the
+    window entirely. That silently starves the starved subject from the feed and,
+    e.g., makes the correlation matrix disappear (#725). Collapsing to the newest
+    row per subject in SQL keeps the row cap acting on *subjects*, not raw rows.
+
+    The window partition is deliberately at least as fine as the Python subject
+    dedupe in :func:`list_latest_insights`: it also splits on ``payload`` so lag /
+    lasso symptom-cluster variants that share a subject id are never merged here.
+    The Python pass then collapses the remaining cross-id slug/label variants.
+    """
+
+    ranked = (
+        select(
+            Insight.id.label("id"),
+            func.row_number()
+            .over(
+                partition_by=(
+                    Insight.insight_type,
+                    Insight.metric,
+                    Insight.subject_type,
+                    Insight.subject_id,
+                    Insight.payload,
+                ),
+                order_by=(Insight.generated_at.desc(), Insight.created_at.desc()),
+            )
+            .label("subject_rank"),
+        )
+        .where(Insight.user_id == user_id)
+        .subquery()
+    )
+    newest_ids = select(ranked.c.id).where(ranked.c.subject_rank == 1)
+    return (
+        select(Insight)
+        .where(Insight.user_id == user_id, Insight.id.in_(newest_ids))
+        .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
+        .limit(MAX_INSIGHT_LIST_LIMIT)
+    )
+
+
 async def list_latest_insights(
     db: AsyncSession,
     *,
@@ -354,9 +398,10 @@ async def list_latest_insights(
     """Return the newest insight per analytical subject.
 
     A subject is the tuple of insight family, metric and optional target
-    (metric/tag/weekday). Keeping this de-duplication in Python avoids
-    Postgres-specific ``DISTINCT ON`` so service tests stay simple while the
-    DB query remains owner-filtered and newest-first.
+    (metric/tag/weekday). The DB fetch already collapses to the newest row per
+    subject (see :func:`newest_insight_per_subject_stmt`) so no subject can be
+    starved by the row cap; the Python pass below additionally merges cross-id
+    slug/label variants that SQL cannot see.
     """
 
     limit = _clamp_limit(
@@ -364,12 +409,7 @@ async def list_latest_insights(
         default=DEFAULT_LATEST_INSIGHT_LIMIT,
         maximum=MAX_LATEST_INSIGHT_LIMIT,
     )
-    result = await db.execute(
-        select(Insight)
-        .where(Insight.user_id == user_id)
-        .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
-        .limit(MAX_INSIGHT_LIST_LIMIT)
-    )
+    result = await db.execute(newest_insight_per_subject_stmt(user_id))
 
     insights = list(result.scalars().all())
     insights = await _filter_analytics_excluded_insights(
