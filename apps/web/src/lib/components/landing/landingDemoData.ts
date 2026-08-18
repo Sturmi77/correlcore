@@ -243,6 +243,62 @@ export const landingInsights: InsightResponse[] = [
 /** Strongest insight, used for the standalone Insight Card product shot. */
 export const landingFeaturedInsight: InsightResponse = landingInsights[0];
 
+/**
+ * Lag-correlation product shot (#488). `LagCorrelationHeatmap` renders one row
+ * per feature→target pair and needs `payload.method === 'lag'` with a
+ * `lag_profile` of ≥ 2 `{lag, r}` points; it self-hides below two rows, so we
+ * ship two pairs. Targets use core-metric keys (`mood_score`, `energy`) so the
+ * component translates them to localized metric names. This is the app's key
+ * differentiator — showing *with what time delay* a factor acts.
+ */
+export const landingLagInsights: InsightResponse[] = [
+  demoInsight({
+    id: 'demo-lag-sleep-mood',
+    insight_type: 'lag',
+    subject_id: 'demo-poor-sleep',
+    subject_label: 'Poor sleep',
+    metric: 'mood_score',
+    effect_size: 0.62,
+    confidence: 0.74,
+    statement: 'Poor sleep tends to lower mood about two days later.',
+    payload: {
+      method: 'lag',
+      lag_days: 2,
+      feature: { name: 'Poor sleep', key: 'poor-sleep', kind: 'tag' },
+      target: { name: 'Mood', key: 'mood_score', kind: 'metric' },
+      lag_profile: [
+        { lag: 1, r: -0.28 },
+        { lag: 2, r: -0.62 },
+        { lag: 3, r: -0.41 },
+        { lag: 4, r: -0.19 },
+        { lag: 5, r: -0.08 },
+      ],
+    },
+  }),
+  demoInsight({
+    id: 'demo-lag-exercise-energy',
+    insight_type: 'lag',
+    subject_id: 'demo-exercise',
+    subject_label: 'Exercise',
+    metric: 'energy',
+    effect_size: 0.55,
+    confidence: 0.7,
+    statement: 'Exercise tends to raise energy the next day.',
+    payload: {
+      method: 'lag',
+      lag_days: 1,
+      feature: { name: 'Exercise', key: 'exercise', kind: 'tag' },
+      target: { name: 'Energy', key: 'energy', kind: 'metric' },
+      lag_profile: [
+        { lag: 1, r: 0.55 },
+        { lag: 2, r: 0.38 },
+        { lag: 3, r: 0.22 },
+        { lag: 4, r: 0.1 },
+      ],
+    },
+  }),
+];
+
 export const landingMaturity: InsightMaturity = {
   phase: 'robust',
   phase_index: 4,

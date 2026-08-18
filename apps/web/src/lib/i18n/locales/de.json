@@ -1816,6 +1816,13 @@
     "preview_matrix": "Insight-Matrix: Zusammenhänge nach Effektstärke.",
     "preview_card": "Erkenntnis-Karte: eine Beobachtung, sachlich formuliert.",
     "preview_heatmap": "Tag-Heatmap: was gemeinsam vorkommt, nach Gruppen.",
+    "preview_lag": "Lag-Heatmap: mit welcher zeitlichen Verzögerung ein Faktor wirkt.",
+    "trust": {
+      "privacy": "Datenschutz zuerst",
+      "selfhost": "Selbst gehostet",
+      "offline": "Offline-fähig",
+      "license": "AGPL-Open-Source"
+    },
     "android_heading": "Android-App",
     "android_body": "Signiertes APK direkt von GitHub Releases. Mit Obtainium abonnierst du das Repo und bekommst Updates automatisch – ganz ohne App-Store.",
     "android_download": "APK herunterladen",

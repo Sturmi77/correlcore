@@ -9,6 +9,7 @@
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
   import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
+  import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import BrowserFrameMock from '$lib/components/landing/BrowserFrameMock.svelte';
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
@@ -17,6 +18,7 @@
     landingTimeseriesPoints,
     landingInsights,
     landingFeaturedInsight,
+    landingLagInsights,
     landingMaturity,
     landingCooccurrence,
   } from '$lib/components/landing/landingDemoData';
@@ -32,6 +34,14 @@
   import { setAppLocale, type AppLocale } from '$lib/i18n';
 
   const faqKeys = ['1', '2', '3', '4'] as const;
+
+  // Trust row (D2): four value props, each tied to a token-tinted marker.
+  const trustItems = [
+    { key: 'privacy', tone: 'mood' },
+    { key: 'selfhost', tone: 'energy' },
+    { key: 'offline', tone: 'sleep' },
+    { key: 'license', tone: 'stress' },
+  ] as const;
 
   $: activeLocale = (($locale ?? 'de').split('-')[0] === 'en' ? 'en' : 'de') as AppLocale;
   $: nextLocale = (activeLocale === 'de' ? 'en' : 'de') as AppLocale;
@@ -74,20 +84,36 @@
       <Button href="/auth/login" variant="ghost" size="sm" data-testid="landing-cta-login">
         {$_('landing.cta_login')}
       </Button>
-      <Button href="/auth/register" variant="primary" size="sm" data-testid="landing-cta-register">
+      <Button
+        href="/auth/register"
+        variant="primary"
+        size="sm"
+        className="landing__cta-primary"
+        data-testid="landing-cta-register"
+      >
         {$_('landing.cta_register')}
       </Button>
     </div>
   </header>
 
   <section class="landing__hero">
+    <span class="landing__hero-aurora" aria-hidden="true"></span>
     <div class="landing__hero-copy">
       <span class="landing__badge" data-testid="landing-badge">{$_('landing.badge')}</span>
       <h1 class="landing__title">{$_('landing.hero_title')}</h1>
       <p class="landing__subtitle">{$_('landing.hero_subtitle')}</p>
       <p class="landing__hero-micro">{$_('landing.hero_micro')}</p>
+      <ul class="landing__trust" data-testid="landing-trust">
+        {#each trustItems as item (item.key)}
+          <li class="landing__trust-item" data-tone={item.tone}>
+            <span class="landing__trust-dot" aria-hidden="true"></span>
+            {$_(`landing.trust.${item.key}`)}
+          </li>
+        {/each}
+      </ul>
     </div>
     <div class="landing__hero-visual">
+      <span class="landing__hero-glow" aria-hidden="true"></span>
       <BrowserFrameMock>
         <TagGroupsSection data={landingTagClusters} plainClusterTitles />
       </BrowserFrameMock>
@@ -134,6 +160,14 @@
         </BrowserFrameMock>
         <figcaption>{$_('landing.preview_heatmap')}</figcaption>
       </figure>
+      <figure class="landing__preview">
+        <BrowserFrameMock address="app.correlcore.example/insights">
+          <div class="landing__shot" inert aria-hidden="true">
+            <LagCorrelationHeatmap insights={landingLagInsights} />
+          </div>
+        </BrowserFrameMock>
+        <figcaption>{$_('landing.preview_lag')}</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -142,7 +176,7 @@
       {$_('landing.features_heading')}
     </h2>
     <div class="landing__bento-grid">
-      <article class="landing__tile" data-testid="landing-feature-1">
+      <article class="landing__tile" data-tone="mood" data-testid="landing-feature-1">
         <h3>{$_('landing.features.1.title')}</h3>
         <p>{$_('landing.features.1.body')}</p>
         <div class="landing__metric-row" aria-hidden="true">
@@ -152,7 +186,7 @@
         </div>
         <div class="landing__viz-note">{$_('landing.viz_correlations')}</div>
       </article>
-      <article class="landing__tile" data-testid="landing-feature-2">
+      <article class="landing__tile" data-tone="energy" data-testid="landing-feature-2">
         <h3>{$_('landing.features.2.title')}</h3>
         <p>{$_('landing.features.2.body')}</p>
         <div class="landing__metric-row" aria-hidden="true">
@@ -319,6 +353,7 @@
   }
 
   .landing__hero {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-8);
@@ -326,7 +361,38 @@
     padding: var(--space-8) 0 var(--space-6);
   }
 
+  /* B1 — Aurora field behind the hero. Token-only, low opacity, static (no
+     animation, so nothing to gate on prefers-reduced-motion). Blends the
+     brand primary with the energy + sleep metric hues for a warm/cool wash
+     that reads in both themes without overpowering the copy. */
+  .landing__hero-aurora {
+    position: absolute;
+    inset: -12% -8% -20%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        42% 55% at 18% 22%,
+        color-mix(in oklch, var(--color-primary) 30%, transparent) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        40% 50% at 82% 8%,
+        color-mix(in oklch, var(--color-metric-sleep) 24%, transparent) 0%,
+        transparent 72%
+      ),
+      radial-gradient(
+        46% 60% at 68% 92%,
+        color-mix(in oklch, var(--color-metric-energy) 20%, transparent) 0%,
+        transparent 74%
+      );
+    filter: blur(52px);
+    opacity: 0.75;
+  }
+
   .landing__hero-copy {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -370,7 +436,87 @@
   }
 
   .landing__hero-visual {
+    position: relative;
     min-width: 0;
+  }
+
+  /* C1 — Glow that lifts the product shot off the flat background. Larger and
+     softer than the brand-mark glow; sits behind the browser frame. */
+  .landing__hero-glow {
+    position: absolute;
+    inset: -8%;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(
+      circle at 50% 40%,
+      color-mix(in oklch, var(--color-primary) 34%, transparent) 0%,
+      transparent 68%
+    );
+    filter: blur(32px);
+  }
+
+  .landing__hero-visual :global(.cc-frame) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* D2 — Trust row: token-tinted value props under the hero copy. */
+  .landing__trust {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin: var(--space-1) 0 0;
+    padding: 0;
+  }
+
+  .landing__trust-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--color-text-muted);
+  }
+
+  .landing__trust-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--radius-full);
+    background: var(--tone, var(--color-primary));
+    box-shadow: 0 0 8px color-mix(in oklch, var(--tone, var(--color-primary)) 60%, transparent);
+  }
+
+  .landing__trust-item[data-tone='mood'] {
+    --tone: var(--color-metric-mood);
+  }
+  .landing__trust-item[data-tone='energy'] {
+    --tone: var(--color-metric-energy);
+  }
+  .landing__trust-item[data-tone='sleep'] {
+    --tone: var(--color-metric-sleep);
+  }
+  .landing__trust-item[data-tone='stress'] {
+    --tone: var(--color-metric-stress);
+  }
+
+  /* C3 — Primary CTA glow. Rests with a soft halo, brightens on hover/focus. */
+  :global(.landing__cta-primary) {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--color-primary) 40%, transparent),
+      0 4px 18px color-mix(in oklch, var(--color-primary) 30%, transparent);
+    transition:
+      box-shadow var(--transition-interactive),
+      transform var(--transition-interactive);
+  }
+
+  :global(.landing__cta-primary:hover),
+  :global(.landing__cta-primary:focus-visible) {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--color-primary) 55%, transparent),
+      0 6px 26px color-mix(in oklch, var(--color-primary) 46%, transparent);
   }
 
   .landing__section-heading {
@@ -449,13 +595,30 @@
   }
 
   .landing__tile {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-5);
     border: 1px solid var(--color-border);
+    border-top: 2px solid
+      color-mix(in oklch, var(--tone, var(--color-primary)) 55%, var(--color-border));
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklch, var(--tone, var(--color-primary)) 7%, transparent) 0%,
+        transparent 40%
+      ),
+      color-mix(in srgb, var(--color-surface) 92%, transparent);
+  }
+
+  /* B4 — each tile carries its lead metric's hue on the top edge. */
+  .landing__tile[data-tone='mood'] {
+    --tone: var(--color-metric-mood);
+  }
+  .landing__tile[data-tone='energy'] {
+    --tone: var(--color-metric-energy);
   }
 
   .landing__tile h3 {
