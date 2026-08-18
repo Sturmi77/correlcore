@@ -24,9 +24,8 @@
   import { _ } from 'svelte-i18n';
   import { tags, tagsByCategory, refreshTags, submitTag } from '$lib/stores/tags';
   import { TAG_CATEGORIES, MAX_TAGS_PER_ENTRY, type TagCategory } from '$lib/api/tags';
-  import IconRender from '$lib/components/common/IconRender.svelte';
   import CategoryIcon from '$lib/components/common/CategoryIcon.svelte';
-  import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
+  import { categoryColorForCurrentTheme } from '$lib/constants/tagDefaults';
 
   /** Two-way bound: list of selected tag IDs. */
   export let selected: string[] = [];
@@ -38,11 +37,13 @@
   let customName = '';
   let customSlug = '';
   let customCategory: TagCategory = 'other';
-  let customIcon = '';
   let customColor = '';
   let customError: string | null = null;
   let customBusy = false;
   let slugTouched = false;
+  // Tracks whether the colour was set manually, so switching category
+  // re-suggests the group colour only while it is still untouched.
+  let colorTouched = false;
 
   async function loadTags() {
     loadError = null;
@@ -94,10 +95,10 @@
     customName = '';
     customSlug = '';
     customCategory = 'other';
-    customIcon = '';
-    customColor = '';
+    customColor = categoryColorForCurrentTheme('other');
     customError = null;
     slugTouched = false;
+    colorTouched = false;
     showCustomForm = true;
   }
 
@@ -106,12 +107,22 @@
     customError = null;
   }
 
+  function onCategoryChange(e: Event) {
+    customCategory = (e.target as HTMLSelectElement).value as TagCategory;
+    // Re-suggest the group colour until the user picks one manually.
+    if (!colorTouched) customColor = categoryColorForCurrentTheme(customCategory);
+  }
+
+  function onColorInput(e: Event) {
+    colorTouched = true;
+    customColor = (e.target as HTMLInputElement).value;
+  }
+
   async function onSubmitCustom() {
     if (customBusy) return;
     customError = null;
     const name = customName.trim();
     const slug = customSlug.trim().toLowerCase();
-    const icon = customIcon.trim();
     const color = customColor.trim();
     if (!name || !slug || !customCategory) {
       customError = 'tag.custom.error_required';
@@ -131,7 +142,6 @@
         slug,
         name,
         category: customCategory,
-        icon: icon || null,
         color: color || null,
       });
       if (!selected.includes(created.id) && selected.length < MAX_TAGS_PER_ENTRY) {
@@ -242,7 +252,12 @@
         </label>
         <label class="tag-custom-field">
           <span class="tag-custom-label">{$_('tag.custom.category_label')}</span>
-          <select class="input" bind:value={customCategory} disabled={customBusy || disabled}>
+          <select
+            class="input"
+            value={customCategory}
+            on:change={onCategoryChange}
+            disabled={customBusy || disabled}
+          >
             {#each TAG_CATEGORIES as category}
               <option value={category}>{$_(`tag.category.${category}`)}</option>
             {/each}
@@ -263,40 +278,22 @@
             placeholder={$_('tag.custom.slug_placeholder')}
           />
         </label>
-        <div class="tag-custom-grid">
-          <label class="tag-custom-field">
-            <span class="tag-custom-label">{$_('tag.custom.icon_label')}</span>
-            <input
-              class="input"
-              type="text"
-              bind:value={customIcon}
-              maxlength="32"
-              disabled={customBusy || disabled}
-              placeholder={$_('tag.custom.icon_placeholder')}
-            />
-          </label>
-          <label class="tag-custom-field">
-            <span class="tag-custom-label">{$_('tag.custom.color_label')}</span>
-            <input
-              class="input"
-              type="text"
-              bind:value={customColor}
-              maxlength="7"
-              pattern="#[0-9a-fA-F]{6}"
-              disabled={customBusy || disabled}
-              placeholder={$_('tag.custom.color_placeholder')}
-            />
-          </label>
-        </div>
-        {#if customIcon.trim() || customColor.trim()}
+        <label class="tag-custom-field">
+          <span class="tag-custom-label">{$_('tag.custom.color_label')}</span>
+          <input
+            class="tag-custom-color"
+            type="color"
+            value={customColor}
+            on:input={onColorInput}
+            disabled={customBusy || disabled}
+          />
+        </label>
+        {#if customColor.trim()}
           <span
             class="tag-custom-preview"
-            style={customColor.trim() ? `--tag-color: ${customColor.trim()}` : ''}
+            style={`--tag-color: ${customColor.trim()}`}
             aria-live="polite"
           >
-            {#if customIcon.trim()}
-              <IconRender icon={customIcon} size={ICON_SIZE_SM} />
-            {/if}
             {customName || $_('tag.custom.preview')}
           </span>
         {/if}
@@ -485,10 +482,19 @@
     opacity: 0.8;
   }
 
-  .tag-custom-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
+  .tag-custom-color {
+    width: 3rem;
+    min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    padding: 0.15rem;
+    cursor: pointer;
+  }
+
+  .tag-custom-color:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .tag-custom-preview {
@@ -513,11 +519,5 @@
     display: flex;
     gap: var(--space-2);
     justify-content: flex-end;
-  }
-
-  @media (max-width: 480px) {
-    .tag-custom-grid {
-      grid-template-columns: 1fr;
-    }
   }
 </style>
