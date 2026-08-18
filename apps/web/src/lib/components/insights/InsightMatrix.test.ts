@@ -7,6 +7,7 @@ vi.mock('svelte-i18n', async () => {
 
   return {
     _: readable((key: string) => key),
+    locale: readable('en'),
   };
 });
 
@@ -154,6 +155,32 @@ describe('InsightMatrix', () => {
     expect(rows[1].textContent).toContain('Headache');
     expect(rows[2].textContent).toContain('Walk');
     expect(rows[3].textContent).toContain('Focus');
+  });
+
+  it('surfaces a last-updated hint from the newest generated_at (#725)', () => {
+    render(InsightMatrix, {
+      props: {
+        insights: [
+          { ...base, id: 'older', subject_label: 'Older', generated_at: '2026-05-10T00:00:00Z' },
+          { ...base, id: 'newer', subject_label: 'Newer', generated_at: '2026-05-14T00:00:00Z' },
+        ],
+      },
+    });
+
+    // The hint renders whenever a row carries a generated_at. (The mocked $_
+    // echoes the key, so the interpolated date is not part of the visible text.)
+    expect(screen.getByTestId('insight-matrix-updated')).toBeTruthy();
+  });
+
+  it('hides the last-updated hint in marketing preview mode', () => {
+    render(InsightMatrix, {
+      props: {
+        preview: true,
+        insights: [{ ...base, id: 'p', subject_label: 'Preview' }],
+      },
+    });
+
+    expect(screen.queryByTestId('insight-matrix-updated')).toBeNull();
   });
 
   it('uses a relative effect bar and drops the wide min-width on mobile CSS', async () => {

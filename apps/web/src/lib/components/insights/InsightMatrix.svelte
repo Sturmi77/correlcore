@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
   import { isMatrixInsight, isWeakMatrixInsight } from '$lib/utils/insightMatrixGate';
 
@@ -74,6 +74,20 @@
   $: rows = displayRows.filter(isMatrixInsight).sort(byEffectDesc);
   $: weakRows = preview ? [] : displayRows.filter(isWeakMatrixInsight).sort(byEffectDesc);
 
+  // #725 transparency: surface when the matrix was last recomputed, so lines
+  // shifting after a regenerate read as an update rather than a glitch.
+  function formatUpdated(iso: string): string {
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return new Intl.DateTimeFormat($locale ?? undefined, { dateStyle: 'medium' }).format(parsed);
+  }
+
+  $: lastUpdated = [...rows, ...weakRows].reduce<string>(
+    (latest, row) => (row.generated_at > latest ? row.generated_at : latest),
+    ''
+  );
+  $: lastUpdatedLabel = lastUpdated ? formatUpdated(lastUpdated) : '';
+
   function tone(effect: number): 'positive' | 'negative' | 'neutral' {
     if (effect >= 0.15) return 'positive';
     if (effect <= -0.15) return 'negative';
@@ -143,6 +157,11 @@
       <div>
         <h2>{$_('insights.matrix.heading')}</h2>
         <p>{$_('insights.matrix.subtitle')}</p>
+        {#if lastUpdatedLabel}
+          <p class="insight-matrix__updated" data-testid="insight-matrix-updated">
+            {$_('insights.matrix.updated', { values: { date: lastUpdatedLabel } })}
+          </p>
+        {/if}
       </div>
       <div class="insight-matrix__actions">
         <button
@@ -258,6 +277,11 @@
   .insight-matrix__empty {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .insight-matrix__updated {
+    margin-top: 0.25rem;
+    font-size: var(--text-xs);
   }
 
   .insight-matrix__table {

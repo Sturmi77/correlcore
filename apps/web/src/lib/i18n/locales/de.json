@@ -1210,6 +1210,7 @@
       "export": "PNG exportieren",
       "empty": "Noch keine ausreichend stabilen Muster vorhanden.",
       "empty_strong": "Aktuell keine belastbaren Zusammenhänge. Schwächere Muster findest du unten.",
+      "updated": "Zuletzt aktualisiert: {date}",
       "weak_toggle": "{count} schwächere Zusammenhänge anzeigen",
       "weak_note": "Diese Zusammenhänge liegen unter der Verlässlichkeitsschwelle und können sich mit mehr Daten noch ändern."
     },
