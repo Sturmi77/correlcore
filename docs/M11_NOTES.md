@@ -28,6 +28,12 @@ Capacitor Android package under [`apps/android/`](../apps/android/):
 Health Connect **consent** foundation shipped with #31 (`consent_log`, Settings Privacy).
 Native HC import and Play Data Safety declaration remain M8/M11 exit work.
 
+**HC / Play build (AP-HC Option A, #718):** the app builds two distribution
+flavors — `sideload` (Health Connect, GitHub/Obtainium APK) and `play` (HC-free
+AAB for the Play Store, no HC declaration/review). HC code + `connect-client` +
+HC manifest entries live only in `app/src/sideload/`. Bringing HC back into the
+Play build later: reverse-path in [`M11_PLAY_STORE_GAP_ANALYSIS.md`](M11_PLAY_STORE_GAP_ANALYSIS.md) §4.2.
+
 ## Context — Homescreen widget
 
 M4 delivered a **PWA install prompt** and homescreen shortcut (web-based).

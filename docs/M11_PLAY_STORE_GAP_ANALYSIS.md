@@ -266,14 +266,14 @@ flowchart TD
 
 **Was der Agent jetzt vorbereiten kann (kein Google-Zugang nötig):**
 
-1. **AP-0:** Ops-Exit-Issue formulieren/anlegen (§ 6).
-2. **AP-HC:** Option A umsetzen — Play-Build-Variante ohne HC-Permissions
-   (Manifest-Flavor / Gradle-Flavor `play` vs. `sideload`), inkl. CI-Schalter.
-   *Erst nach Owner-Freigabe der Entscheidung.*
-3. **AP-2:** Store-Listing-Copy (DE/EN, Kurz/Lang) entwerfen + Asset-Format-
-   Checkliste.
-4. **AP-3:** Data-Safety-Mapping-Dokument (Datentyp → Zweck → Verschlüsselung →
-   Löschung) als Formular-Vorlage; Privacy-URL-Erreichbarkeit prüfen.
+1. ✅ **AP-0:** Ops-Exit-Issue #717 + Sub-Issues #718–#724 angelegt.
+2. ✅ **AP-HC:** Option A **umgesetzt** — Gradle-Flavors `sideload` (HC) / `play`
+   (HC-frei) mit flavor-spezifischem Manifest + `HealthConnectSupport`-Seam,
+   `sideloadImplementation connect-client`, und CI-Assert
+   (`apps/android/scripts/assert-health-permissions.sh`: Play-AAB HC-frei,
+   Sideload-APK HC-tragend). GitHub-APK = sideload, Play-AAB = play.
+3. ✅ **AP-2:** Store-Listing-Copy DE/EN — [`docs/marketing/PLAY_STORE_LISTING.md`](marketing/PLAY_STORE_LISTING.md).
+4. ✅ **AP-3:** Data-Safety-Mapping — [`docs/legal/PLAY_DATA_SAFETY_MAPPING.md`](legal/PLAY_DATA_SAFETY_MAPPING.md).
 5. **AP-6-Teil:** Vorab-Update der Akzeptanz-Checkboxen-Vorlage in
    `M11_NOTES.md` / Design-Doc, sobald die Ops-Schritte erfolgt sind.
 
