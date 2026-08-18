@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
+  import { isMatrixInsight, isWeakMatrixInsight } from '$lib/utils/insightMatrixGate';
 
   export let insights: InsightResponse[] = [];
   /**
@@ -61,19 +62,31 @@
     return [...byKey.values()];
   }
 
-  function isMatrixInsight(insight: InsightResponse): boolean {
-    return (
-      (insight.insight_type === 'pointbiserial' ||
-        insight.insight_type === 'symptom_mood_association') &&
-      insight.effect_size !== null &&
-      insight.confidence !== null &&
-      insight.confidence >= 0.2
-    );
+  function byEffectDesc(a: InsightResponse, b: InsightResponse): number {
+    return Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0);
   }
 
-  $: rows = dedupeRows(insights.filter(isMatrixInsight)).sort(
-    (a, b) => Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0)
+  // #725: dedupe once across all renderable rows, then split into reliable
+  // (strong) and weakened bands so a subject never appears in both.
+  $: displayRows = dedupeRows(
+    insights.filter((insight) => isMatrixInsight(insight) || isWeakMatrixInsight(insight))
   );
+  $: rows = displayRows.filter(isMatrixInsight).sort(byEffectDesc);
+  $: weakRows = preview ? [] : displayRows.filter(isWeakMatrixInsight).sort(byEffectDesc);
+
+  // #725 transparency: surface when the matrix was last recomputed, so lines
+  // shifting after a regenerate read as an update rather than a glitch.
+  function formatUpdated(iso: string): string {
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return new Intl.DateTimeFormat($locale ?? undefined, { dateStyle: 'medium' }).format(parsed);
+  }
+
+  $: lastUpdated = [...rows, ...weakRows].reduce<string>(
+    (latest, row) => (row.generated_at > latest ? row.generated_at : latest),
+    ''
+  );
+  $: lastUpdatedLabel = lastUpdated ? formatUpdated(lastUpdated) : '';
 
   function tone(effect: number): 'positive' | 'negative' | 'neutral' {
     if (effect >= 0.15) return 'positive';
@@ -144,6 +157,11 @@
       <div>
         <h2>{$_('insights.matrix.heading')}</h2>
         <p>{$_('insights.matrix.subtitle')}</p>
+        {#if lastUpdatedLabel}
+          <p class="insight-matrix__updated" data-testid="insight-matrix-updated">
+            {$_('insights.matrix.updated', { values: { date: lastUpdatedLabel } })}
+          </p>
+        {/if}
       </div>
       <div class="insight-matrix__actions">
         <button
@@ -159,44 +177,70 @@
   {/if}
 
   {#if rows.length}
-    <div
-      class="insight-matrix__table"
-      class:insight-matrix__table--scrollable={!preview}
-      role="table"
-      aria-label={$_('insights.matrix.heading')}
-      data-testid="insight-matrix-table"
-    >
-      <div class="insight-matrix__row insight-matrix__row--head" role="row">
-        <span role="columnheader">{$_('insights.matrix.subject')}</span>
-        <span role="columnheader">{$_('insights.matrix.metric')}</span>
-        <span role="columnheader">{$_('insights.matrix.effect')}</span>
-        <span role="columnheader">{$_('insights.matrix.confidence')}</span>
-      </div>
-      {#each rows as row}
-        {@const effect = row.effect_size ?? 0}
-        <div
-          class="insight-matrix__row"
-          role="row"
-          data-tone={tone(effect)}
-          title={`${row.statement ?? ''} | n=${row.sample_n} | confidence=${percent(row.confidence)}`}
-        >
-          <span role="cell">{row.subject_label ?? '-'}</span>
-          <span role="cell">{row.metric}</span>
-          <span role="cell" class="insight-matrix__effect">
-            <span
-              class="insight-matrix__effect-bar"
-              style={`--effect: ${Math.min(1, Math.abs(effect))}`}
-            ></span>
-            {effect.toFixed(2)}
-          </span>
-          <span role="cell">{percent(row.confidence)}</span>
-        </div>
-      {/each}
-    </div>
+    {@render matrixTable(rows, !preview, 'insight-matrix-table', $_('insights.matrix.heading'))}
+  {:else if weakRows.length}
+    <p class="insight-matrix__empty">{$_('insights.matrix.empty_strong')}</p>
   {:else}
     <p class="insight-matrix__empty">{$_('insights.matrix.empty')}</p>
   {/if}
+
+  {#if weakRows.length}
+    <details class="insight-matrix__weak" data-testid="insight-matrix-weak">
+      <summary class="insight-matrix__weak-toggle">
+        {$_('insights.matrix.weak_toggle', { values: { count: weakRows.length } })}
+      </summary>
+      <p class="insight-matrix__weak-note">{$_('insights.matrix.weak_note')}</p>
+      {@render matrixTable(
+        weakRows,
+        false,
+        'insight-matrix-weak-table',
+        $_('insights.matrix.weak_toggle', { values: { count: weakRows.length } })
+      )}
+    </details>
+  {/if}
 </section>
+
+{#snippet matrixTable(
+  tableRows: InsightResponse[],
+  scrollable: boolean,
+  testId: string,
+  ariaLabel: string
+)}
+  <div
+    class="insight-matrix__table"
+    class:insight-matrix__table--scrollable={scrollable}
+    role="table"
+    aria-label={ariaLabel}
+    data-testid={testId}
+  >
+    <div class="insight-matrix__row insight-matrix__row--head" role="row">
+      <span role="columnheader">{$_('insights.matrix.subject')}</span>
+      <span role="columnheader">{$_('insights.matrix.metric')}</span>
+      <span role="columnheader">{$_('insights.matrix.effect')}</span>
+      <span role="columnheader">{$_('insights.matrix.confidence')}</span>
+    </div>
+    {#each tableRows as row}
+      {@const effect = row.effect_size ?? 0}
+      <div
+        class="insight-matrix__row"
+        role="row"
+        data-tone={tone(effect)}
+        title={`${row.statement ?? ''} | n=${row.sample_n} | confidence=${percent(row.confidence)}`}
+      >
+        <span role="cell">{row.subject_label ?? '-'}</span>
+        <span role="cell">{row.metric}</span>
+        <span role="cell" class="insight-matrix__effect">
+          <span
+            class="insight-matrix__effect-bar"
+            style={`--effect: ${Math.min(1, Math.abs(effect))}`}
+          ></span>
+          {effect.toFixed(2)}
+        </span>
+        <span role="cell">{percent(row.confidence)}</span>
+      </div>
+    {/each}
+  </div>
+{/snippet}
 
 <style>
   .insight-matrix {
@@ -233,6 +277,11 @@
   .insight-matrix__empty {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .insight-matrix__updated {
+    margin-top: 0.25rem;
+    font-size: var(--text-xs);
   }
 
   .insight-matrix__table {
@@ -307,6 +356,33 @@
 
   .insight-matrix__row[data-tone='negative'] .insight-matrix__effect-bar {
     background: var(--color-error);
+  }
+
+  /* #725: weakened correlations stay reachable in a collapsed disclosure
+     instead of making the whole matrix disappear. Muted so they read as
+     "below the reliability threshold", not as headline findings. */
+  .insight-matrix__weak {
+    border: 1px solid var(--color-border-chart);
+    border-radius: var(--radius-md);
+    padding: 0.25rem 0.5rem;
+  }
+
+  .insight-matrix__weak-toggle {
+    cursor: pointer;
+    padding: 0.35rem 0.25rem;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+
+  .insight-matrix__weak-note {
+    margin: 0.25rem 0.25rem 0.5rem;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .insight-matrix__weak .insight-matrix__table {
+    opacity: 0.75;
   }
 
   @media (max-width: 767px) {

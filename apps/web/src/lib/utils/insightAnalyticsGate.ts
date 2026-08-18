@@ -4,7 +4,10 @@ import type {
   SymptomTagCooccurrenceResponse,
   TagCooccurrenceResponse,
 } from '$lib/api/insights';
-import { MATRIX_TAB_MIN_INSIGHTS, countMatrixInsights } from '$lib/utils/insightMatrixGate';
+import {
+  MATRIX_TAB_MIN_INSIGHTS,
+  countDisplayableMatrixInsights,
+} from '$lib/utils/insightMatrixGate';
 
 const EARLY_PHASES: InsightMaturityPhase[] = ['early_patterns', 'provisional', 'robust'];
 const PROVISIONAL_PHASES: InsightMaturityPhase[] = ['provisional', 'robust'];
@@ -17,10 +20,12 @@ export function canShowMatrixTab(
   phase: InsightMaturityPhase | null,
   insights: readonly InsightResponse[]
 ): boolean {
+  // #725: count weakened rows too, so a run that only softened an existing
+  // correlation keeps the matrix visible (collapsed) instead of hiding it.
   return (
     phase !== null &&
     EARLY_PHASES.includes(phase) &&
-    countMatrixInsights(insights) >= MATRIX_TAB_MIN_INSIGHTS
+    countDisplayableMatrixInsights(insights) >= MATRIX_TAB_MIN_INSIGHTS
   );
 }
 
