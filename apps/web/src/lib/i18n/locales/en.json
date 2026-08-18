@@ -1208,7 +1208,10 @@
       "effect": "Effect",
       "confidence": "Confidence",
       "export": "Export PNG",
-      "empty": "No sufficiently stable patterns yet."
+      "empty": "No sufficiently stable patterns yet.",
+      "empty_strong": "No reliable correlations right now. Weaker patterns are listed below.",
+      "weak_toggle": "Show {count} weaker correlations",
+      "weak_note": "These correlations are below the reliability threshold and may still change as more data arrives."
     },
     "cooccurrence": {
       "heading": "Patterns",

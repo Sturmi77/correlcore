@@ -44,6 +44,21 @@ describe('insightAnalyticsGate', () => {
     expect(canShowMatrixTab('early_patterns', insights)).toBe(true);
   });
 
+  it('keeps the matrix visible when rows soften into the weak band (#725)', () => {
+    // Two correlations dip below 0.2 (weakened) — the section must not disappear.
+    const weakened = [
+      { ...matrixInsight('a'), confidence: 0.18 },
+      { ...matrixInsight('b'), confidence: 0.15 },
+    ];
+    expect(canShowMatrixTab('early_patterns', weakened)).toBe(true);
+    // Below the weak floor there is genuinely nothing to show.
+    const noise = [
+      { ...matrixInsight('a'), confidence: 0.05 },
+      { ...matrixInsight('b'), confidence: 0.04 },
+    ];
+    expect(canShowMatrixTab('early_patterns', noise)).toBe(false);
+  });
+
   it('gates co-occurrence surfaces by maturity', () => {
     expect(canShowTagCooccurrence('collecting')).toBe(false);
     expect(canShowTagCooccurrence('early_patterns')).toBe(true);
