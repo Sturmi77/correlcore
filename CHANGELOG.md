@@ -20,7 +20,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   unter Settings → Analyse (`digest_enabled`, standardmäßig aus). Der
   irreführende Ops-Hinweis im Settings-Text und der Empty-State auf
   `/insights/digest` wurden entsprechend angepasst. `python -m app.workers.digest
-  --once` bleibt für manuelle Läufe / Backfills erhalten (#738).
+--once` bleibt für manuelle Läufe / Backfills erhalten (#738).
+  **Upgrade-Hinweis:** Instanzen, die bisher `COMPOSE_PROFILES=…,digest`
+  nutzten, müssen den nun verwaisten `digest-worker`-Container einmalig
+  entfernen (`docker compose rm -sf digest-worker` bzw. `up -d
+--remove-orphans`) und `digest` aus `COMPOSE_PROFILES` streichen — sonst
+  läuft er auf altem Image weiter und erzeugt doppelte Digest-Snapshots.
 
 - **Symptom-Auswahl im Entry Sheet als kompakte Chips** — Symptome sind seit
   #544 presence-only (binärer Toggle), wurden aber weiterhin als volle Zeile
