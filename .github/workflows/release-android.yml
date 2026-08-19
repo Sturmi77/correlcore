@@ -112,19 +112,21 @@ jobs:
 
       - name: Lint (NewApi — catch java.time on minSdk 23)
         working-directory: apps/android/android
+        # HC (java.time) lives in the sideload flavor; lint both so the Play
+        # flavor is exercised too (AP-HC Option A flavor split).
         run: |
           chmod +x gradlew
-          ./gradlew lintDebug --stacktrace
+          ./gradlew lintSideloadDebug lintPlayDebug --stacktrace
 
-      - name: Assemble debug APK
+      - name: Assemble debug APKs (both flavors)
         working-directory: apps/android/android
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleSideloadDebug assemblePlayDebug --stacktrace
 
-      - name: Upload debug APK
+      - name: Upload debug APK (sideload)
         uses: actions/upload-artifact@v7
         with:
           name: correlcore-debug-apk
-          path: apps/android/android/app/build/outputs/apk/debug/app-debug.apk
+          path: apps/android/android/app/build/outputs/apk/sideload/debug/app-sideload-debug.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -303,8 +305,19 @@ jobs:
           # lintDebug) is skipped on tag / workflow_dispatch, i.e. exactly the
           # paths that publish signed artifacts. Without this a java.time
           # regression in a tagged source could still ship (#445 class).
-          ./gradlew lintRelease --stacktrace
-          ./gradlew assembleRelease bundleRelease --stacktrace
+          ./gradlew lintSideloadRelease lintPlayRelease --stacktrace
+          # AP-HC Option A flavor split: sideload APK -> GitHub (HC), play AAB ->
+          # Play Store (HC-free). The play APK is built only to assert the AAB's
+          # merged permission set (same manifest) contains no health.* perms.
+          ./gradlew assembleSideloadRelease assemblePlayRelease bundlePlayRelease --stacktrace
+
+      - name: Assert flavor Health Connect split
+        run: |
+          chmod +x apps/android/scripts/assert-health-permissions.sh
+          apps/android/scripts/assert-health-permissions.sh absent \
+            apps/android/android/app/build/outputs/apk/play/release/app-play-release.apk
+          apps/android/scripts/assert-health-permissions.sh present \
+            apps/android/android/app/build/outputs/apk/sideload/release/app-sideload-release.apk
 
       - name: Package artifacts + SHA-256
         id: pkg
@@ -313,8 +326,10 @@ jobs:
           OUT="${RUNNER_TEMP}/android-dist"
           mkdir -p "${OUT}"
           VER="${{ steps.ver.outputs.version_name }}"
-          APK_SRC="apps/android/android/app/build/outputs/apk/release/app-release.apk"
-          AAB_SRC="apps/android/android/app/build/outputs/bundle/release/app-release.aab"
+          # APK = sideload flavor (Health Connect, GitHub Releases / Obtainium).
+          # AAB = play flavor (HC-free, Play Console upload). Asset names unchanged.
+          APK_SRC="apps/android/android/app/build/outputs/apk/sideload/release/app-sideload-release.apk"
+          AAB_SRC="apps/android/android/app/build/outputs/bundle/playRelease/app-play-release.aab"
           APK_DST="${OUT}/correlcore-${VER}.apk"
           AAB_DST="${OUT}/correlcore-${VER}.aab"
           cp "${APK_SRC}" "${APK_DST}"

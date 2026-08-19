@@ -340,10 +340,7 @@
       "category_label": "Category",
       "slug_label": "Slug (unique)",
       "slug_placeholder": "deep-work",
-      "icon_label": "Icon (optional)",
-      "icon_placeholder": "briefcase",
       "color_label": "Color (optional)",
-      "color_placeholder": "#7c3aed",
       "preview": "New tag",
       "save": "Create",
       "save_busy": "Saving...",
@@ -847,7 +844,6 @@
       "analytics_excluded": "Excluded from analytics",
       "name": "Name",
       "category": "Category",
-      "icon": "Icon",
       "color": "Color",
       "habit_type": "Habit",
       "habit_none": "None",
@@ -1206,7 +1202,11 @@
       "effect": "Effect",
       "confidence": "Confidence",
       "export": "Export PNG",
-      "empty": "No sufficiently stable patterns yet."
+      "empty": "No sufficiently stable patterns yet.",
+      "empty_strong": "No reliable correlations right now. Weaker patterns are listed below.",
+      "updated": "Last updated: {date}",
+      "weak_toggle": "Show {count} weaker correlations",
+      "weak_note": "These correlations are below the reliability threshold and may still change as more data arrives."
     },
     "cooccurrence": {
       "heading": "Patterns",

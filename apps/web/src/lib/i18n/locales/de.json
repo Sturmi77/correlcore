@@ -340,10 +340,7 @@
       "category_label": "Kategorie",
       "slug_label": "Slug (eindeutig)",
       "slug_placeholder": "deep-work",
-      "icon_label": "Icon (optional)",
-      "icon_placeholder": "briefcase",
       "color_label": "Farbe (optional)",
-      "color_placeholder": "#7c3aed",
       "preview": "Neuer Tag",
       "save": "Anlegen",
       "save_busy": "Speichert...",
@@ -847,7 +844,6 @@
       "analytics_excluded": "Nicht in Analysen",
       "name": "Name",
       "category": "Kategorie",
-      "icon": "Icon",
       "color": "Farbe",
       "habit_type": "Gewohnheit",
       "habit_none": "Keine",
@@ -1206,7 +1202,11 @@
       "effect": "Effekt",
       "confidence": "Konfidenz",
       "export": "PNG exportieren",
-      "empty": "Noch keine ausreichend stabilen Muster vorhanden."
+      "empty": "Noch keine ausreichend stabilen Muster vorhanden.",
+      "empty_strong": "Aktuell keine belastbaren Zusammenhänge. Schwächere Muster findest du unten.",
+      "updated": "Zuletzt aktualisiert: {date}",
+      "weak_toggle": "{count} schwächere Zusammenhänge anzeigen",
+      "weak_note": "Diese Zusammenhänge liegen unter der Verlässlichkeitsschwelle und können sich mit mehr Daten noch ändern."
     },
     "cooccurrence": {
       "heading": "Muster",

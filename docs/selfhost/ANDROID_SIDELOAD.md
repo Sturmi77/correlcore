@@ -87,10 +87,18 @@ export ANDROID_KEY_ALIAS=correlcore
 export ANDROID_KEY_PASSWORD=...
 export ANDROID_VERSION_NAME=1.3.0
 export ANDROID_VERSION_CODE=1003000
-pnpm cap:assemble:release
-# → apps/android/android/app/build/outputs/apk/release/app-release.apk
-# → apps/android/android/app/build/outputs/bundle/release/app-release.aab
+pnpm cap:assemble:release   # builds both flavors
+# sideload APK (Health Connect, this sideload channel):
+# → apps/android/android/app/build/outputs/apk/sideload/release/app-sideload-release.apk
+# play AAB (HC-free, Play Console upload):
+# → apps/android/android/app/build/outputs/bundle/playRelease/app-play-release.aab
 ```
+
+**Flavors:** the signed **sideload APK** (with Health Connect) is what ships on
+GitHub Releases / Obtainium; the **play AAB** is HC-free for the Play Store
+(AP-HC Option A — [`../M11_PLAY_STORE_GAP_ANALYSIS.md`](../M11_PLAY_STORE_GAP_ANALYSIS.md) §4).
+The Release keeps the stable asset names `correlcore-<ver>.apk` (sideload) and
+`correlcore-<ver>.aab` (play).
 
 Or use `apps/android/android/keystore.properties` from
 [`apps/android/keystore.properties.example`](../../apps/android/keystore.properties.example).
@@ -104,10 +112,10 @@ Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / r
 
 [`.github/workflows/release-android.yml`](../../.github/workflows/release-android.yml):
 
-- **PRs / main pushes:** debug APK artifact (unsigned debug key)
-- **`v*` tags** (and secrets set): signed `assembleRelease` + `bundleRelease`,
-  upload artifact + attach `correlcore-<ver>.apk`, `.aab`, and `SHA256SUMS.txt`
-  to the GitHub Release
+- **PRs / main pushes:** debug APK artifact for both flavors (unsigned debug key; sideload APK uploaded)
+- **`v*` tags** (and secrets set): signed `assembleSideloadRelease` + `bundlePlayRelease`,
+  HC flavor-split asserted, then attach `correlcore-<ver>.apk` (sideload),
+  `.aab` (play), and `SHA256SUMS.txt` to the GitHub Release
 - **workflow_dispatch:** signed build; optional input `attach_to_tag` (e.g. `v1.0.1`)
   re-attaches APK/AAB to an existing GitHub Release if a tag push missed them.
   The build is checked out **from that tag**, so backfilled binaries always match

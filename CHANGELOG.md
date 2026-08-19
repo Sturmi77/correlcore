@@ -20,6 +20,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   (`aria-pressed`, benannte `role="group"`) und das 44-px-Tap-Target bleiben
   erhalten.
 
+### Fixed
+
+- **Tag-Erstellung ohne Icon-Feld, mit Gruppenfarbe als Vorschlag** — das
+  Anlegen und Bearbeiten von Tags bot weiterhin ein Icon-Feld an, obwohl die
+  per-Tag-Glyphen mit #672 zugunsten der Kategorie-Icons (`CategoryIcon`)
+  abgeschafft wurden; das Feld ist jetzt aus dem Create-/Edit-Formular
+  (`settings/tags`) und dem Inline-`TagPicker` entfernt (inkl. Payload und
+  ungenutzter i18n-Keys). Neu angelegte Tags schlagen zudem standardmäßig die
+  Farbe der gewählten Kategorie/Gruppe vor (neue `CATEGORY_COLORS`-Palette,
+  pro Theme), übersteuerbar per Farbwähler — bislang war die Farbe konstant
+  auf die Primärfarbe vorbelegt.
+
 ## [1.4.0] — 2026-08-16
 
 ### Docs

@@ -19,6 +19,7 @@ from app.services.insight_service import (
     get_insight_maturity,
     list_insights,
     list_latest_insights,
+    newest_insight_per_subject_stmt,
 )
 from tests.conftest import make_user
 
@@ -267,6 +268,31 @@ async def test_list_latest_insights_deduplicates_by_subject() -> None:
         out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [newest_tag, metric]
+
+
+def test_newest_insight_per_subject_stmt_collapses_per_subject_in_sql() -> None:
+    """#725: the /latest fetch must collapse to the newest row per subject in SQL.
+
+    Insights accumulate across generation dates, so a plain "newest N rows" fetch
+    could starve a subject (e.g. hiding the correlation matrix). The window must
+    partition per subject and stay at least as fine as the Python dedupe by also
+    splitting on ``payload`` (lag / lasso variants share a subject id).
+    """
+    from sqlalchemy.dialects import postgresql
+
+    stmt = newest_insight_per_subject_stmt(uuid.uuid4())
+    sql = str(stmt.compile(dialect=postgresql.dialect()))
+
+    assert "row_number() OVER" in sql
+    partition = sql.split("PARTITION BY", 1)[1].split("ORDER BY", 1)[0]
+    for column in (
+        "insight_type",
+        "metric",
+        "subject_type",
+        "subject_id",
+        "payload",
+    ):
+        assert column in partition, f"partition must split on {column}"
 
 
 @pytest.mark.asyncio

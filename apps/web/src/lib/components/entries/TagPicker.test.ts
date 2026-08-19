@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MAX_TAGS_PER_ENTRY, type TagResponse } from '$lib/api/tags';
+import { categoryColorForCurrentTheme } from '$lib/constants/tagDefaults';
 import TagPicker from './TagPicker.svelte';
 
 vi.mock('svelte-i18n', () => ({
@@ -128,18 +129,51 @@ describe('TagPicker', () => {
     await fireEvent.click(screen.getByText('tag.custom.save'));
 
     await waitFor(() => {
+      // No icon field any more (#672); colour defaults to the group colour.
       expect(tagStoreMocks.submitTag).toHaveBeenCalledWith({
         slug: 'deep-work',
         name: 'Deep Work',
         category: 'other',
-        icon: null,
-        color: null,
+        color: categoryColorForCurrentTheme('other'),
       });
       expect(screen.getByText('Deep Work')).toBeTruthy();
     });
 
     const createdChip = screen.getByRole('button', { name: 'Deep Work' });
     expect(createdChip.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('offers no icon field and suggests the group colour on category change', async () => {
+    tagStoreMocks.submitTag.mockImplementation(async () => {
+      const created = tag({ id: 'tag-run', slug: 'running', name: 'Running', category: 'sport' });
+      tagStoreMocks.state.update((state) => ({ status: 'ready', tags: [...state.tags, created] }));
+      return created;
+    });
+
+    render(TagPicker, { props: { selected: [] } });
+    await fireEvent.click(screen.getByText('+ tag.custom.add_button'));
+
+    // The icon field is gone.
+    expect(screen.queryByText('tag.custom.icon_label')).toBeNull();
+
+    await fireEvent.input(screen.getByPlaceholderText('tag.custom.name_placeholder'), {
+      target: { value: 'Running' },
+    });
+    // Switching the category re-suggests that group's colour.
+    const category = screen
+      .getByText('tag.custom.category_label')
+      .parentElement?.querySelector('select') as HTMLSelectElement;
+    await fireEvent.change(category, { target: { value: 'sport' } });
+    await fireEvent.click(screen.getByText('tag.custom.save'));
+
+    await waitFor(() => {
+      expect(tagStoreMocks.submitTag).toHaveBeenCalledWith({
+        slug: 'running',
+        name: 'Running',
+        category: 'sport',
+        color: categoryColorForCurrentTheme('sport'),
+      });
+    });
   });
 
   it('explains the selection limit and blocks new choices', () => {

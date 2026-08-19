@@ -41,7 +41,9 @@ CLI debug APK (SDK required):
 
 ```bash
 pnpm cap:assemble:debug
-# → apps/android/android/app/build/outputs/apk/debug/app-debug.apk
+# builds both flavors:
+# → app/build/outputs/apk/sideload/debug/app-sideload-debug.apk   (with Health Connect)
+# → app/build/outputs/apk/play/debug/app-play-debug.apk           (HC-free)
 ```
 
 ## Day-to-day commands
@@ -90,7 +92,37 @@ launcher widget picker. “+ Add entry” uses `correlcore://entries/new`.
 ## Health Connect (M8/M11)
 
 DSGVO Art. 9 consent is recorded server-side before import (`POST /api/v1/user/me/consents`).
-The `@capacitor-community/health-connect` plugin lands in a follow-up M11 sprint.
+On-device reads (sleep + heart rate) go through the native `HealthConnectPlugin`.
+
+**Health Connect ships in the `sideload` flavor only** — the `play` flavor is
+HC-free (AP-HC Option A, [`docs/M11_PLAY_STORE_GAP_ANALYSIS.md`](../../docs/M11_PLAY_STORE_GAP_ANALYSIS.md) §4).
+See Distribution flavors below.
+
+## Distribution flavors (`sideload` / `play`)
+
+Two product flavors on the `distribution` dimension:
+
+| Flavor     | Health Connect | Artifact              | Channel                                  |
+| ---------- | -------------- | --------------------- | ---------------------------------------- |
+| `sideload` | **yes**        | signed **APK**        | GitHub Releases / Obtainium / self-host  |
+| `play`     | **no**         | signed **AAB**        | Play Store (HC-free — no HC declaration) |
+
+HC code, the `connect-client` dependency and the HC manifest entries live only
+in `app/src/sideload/`; `app/src/play/` supplies a no-op `HealthConnectSupport`.
+`MainActivity` stays flavor-agnostic. Reverse-path to bring HC back into the Play
+build: gap-analysis §4.2.
+
+Build specific flavors:
+
+```bash
+cd android
+./gradlew assembleSideloadRelease    # HC APK → apk/sideload/release/
+./gradlew bundlePlayRelease          # HC-free AAB → bundle/playRelease/
+```
+
+`pnpm cap:assemble:debug` / `:release` still build **all** flavors (aggregate
+`assembleDebug` / `assembleRelease bundleRelease`). CI attaches the sideload APK
+and the play AAB and asserts the split (`scripts/assert-health-permissions.sh`).
 
 ## Release signing (Sprint 2)
 
@@ -113,6 +145,7 @@ signed APK + AAB + `SHA256SUMS.txt` to the GitHub Release.
 [`.github/workflows/release-android.yml`](../../.github/workflows/release-android.yml):
 
 1. Validates Capacitor config (no SDK)
-2. Builds debug APK (`assembleDebug`) on PRs / main
-3. Builds **signed** release APK/AAB on `v*` tags / `workflow_dispatch` when
-   signing secrets are configured
+2. Builds debug APKs for both flavors on PRs / main (uploads the sideload APK)
+3. Builds **signed** release on `v*` tags / `workflow_dispatch` when signing
+   secrets are configured: sideload APK + play AAB, with the HC flavor-split
+   asserted before packaging
