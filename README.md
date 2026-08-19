@@ -122,6 +122,23 @@ Android sideload (optional, M11 pre-Play): download the APK from a [`v*`](https:
 
 > **Note:** Public selfhost **`1.x`** is the supported release line (latest `v1.3.0`). M8 core (manual sleep + HC sleep import) ships in this tag; remaining M8 follow-ups, M11 Play exit, and M13 full scope stay active development. See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
 
+### Deployment mode (hosted vs. self-host)
+
+One web bundle serves both a self-hosted instance and the managed SaaS. The
+anonymous landing decides its primary call-to-action **at runtime** from a
+public descriptor (`GET /api/v1/instance`) — no separate build. Two env vars
+control it:
+
+| Env variable           | Default    | Effect                                                                                     |
+| ---------------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| `DEPLOYMENT_MODE`      | `selfhost` | `selfhost` \| `hosted` — badge wording + default CTA framing.                              |
+| `REGISTRATION_ENABLED` | `true`     | Open self-registration → landing shows **Create account**; `false` → **Self-host** (docs). |
+
+Defaults need no configuration: a self-host instance shows **Create account**
+(register on _your_ instance); **Log in** is always present; logged-in users
+never see the landing. Full behavior table and per-role walkthrough:
+[`docs/selfhost/INSTANCE_MODE.md`](docs/selfhost/INSTANCE_MODE.md).
+
 ---
 
 ## Monorepo Structure
@@ -170,21 +187,22 @@ Task: <your specific task here>
 **Public docs site:** [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/) —
 install guide, user guide, API overview, privacy. Source: [`docs-site/`](docs-site/).
 
-| Document                                                                | Content                                                          |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                           | Vision, features, architecture, roadmap — single source of truth |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                                 | Component diagram, deployment topologies, sync protocol          |
-| [API.md](docs/API.md)                                                   | OpenAPI guidelines, endpoints, auth flow                         |
-| [FRONTEND.md](docs/FRONTEND.md)                                         | Mobile/Web roles, responsive shell, component ownership          |
-| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                   | Local setup, quality gates, NAS/pnpm notes, test database        |
-| [Completed milestones](docs/releases/COMPLETED_MILESTONES.md)           | Archived M0–M10.1 checklist                                      |
-| [1.0.x doc sync](docs/releases/RELEASE_1_0_X_DOC_SYNC.md)               | Remaining updates to fully reflect the release line              |
-| [M11 Sprint Plan](docs/M11_SPRINT_PLAN.md)                              | Android Capacitor → Play Closed Testing                          |
-| [Android sideload](docs/selfhost/ANDROID_SIDELOAD.md)                   | Install signed APK from GitHub Releases                          |
-| [Phase & Insight Matrix](docs/PHASE_INSIGHT_MATRIX.md)                  | Maturity phases, unlock gates, thresholds                        |
-| [Open decisions](docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md) | What still needs a product/ops decision                          |
-| [ADR Index](docs/adr/)                                                  | Architecture decision records                                    |
-| [Quality Gates](docs/quality/)                                          | Visual QA and quality gate reports                               |
+| Document                                                                | Content                                                            |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)                           | Vision, features, architecture, roadmap — single source of truth   |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)                                 | Component diagram, deployment topologies, sync protocol            |
+| [API.md](docs/API.md)                                                   | OpenAPI guidelines, endpoints, auth flow                           |
+| [FRONTEND.md](docs/FRONTEND.md)                                         | Mobile/Web roles, responsive shell, component ownership            |
+| [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                   | Local setup, quality gates, NAS/pnpm notes, test database          |
+| [Completed milestones](docs/releases/COMPLETED_MILESTONES.md)           | Archived M0–M10.1 checklist                                        |
+| [1.0.x doc sync](docs/releases/RELEASE_1_0_X_DOC_SYNC.md)               | Remaining updates to fully reflect the release line                |
+| [M11 Sprint Plan](docs/M11_SPRINT_PLAN.md)                              | Android Capacitor → Play Closed Testing                            |
+| [Android sideload](docs/selfhost/ANDROID_SIDELOAD.md)                   | Install signed APK from GitHub Releases                            |
+| [Instance mode](docs/selfhost/INSTANCE_MODE.md)                         | Hosted vs. self-host landing CTA — `DEPLOYMENT_MODE`, registration |
+| [Phase & Insight Matrix](docs/PHASE_INSIGHT_MATRIX.md)                  | Maturity phases, unlock gates, thresholds                          |
+| [Open decisions](docs/quality/OPEN_DECISIONS_AND_BACKLOG_2026-07-16.md) | What still needs a product/ops decision                            |
+| [ADR Index](docs/adr/)                                                  | Architecture decision records                                      |
+| [Quality Gates](docs/quality/)                                          | Visual QA and quality gate reports                                 |
 
 Additional milestone plans, market analysis, and feature notes live under [`docs/`](docs/).
 

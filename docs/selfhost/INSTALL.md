@@ -146,23 +146,32 @@ Or use `./scripts/bootstrap-selfhost-env.sh --production` to generate secrets in
 
 Edit `.env` and set at minimum:
 
-| Variable            | Notes                                            |
-| ------------------- | ------------------------------------------------ |
-| `DOMAIN`            | Apex host, e.g. `correlcore.example.com`         |
-| `LETSENCRYPT_EMAIL` | ACME registration email                          |
-| `SECRET_KEY`        | ≥ 32 bytes, URL-safe                             |
-| `ENCRYPTION_KEY`    | Fernet key — **store outside the server backup** |
-| `POSTGRES_PASSWORD` | ≥ 20 chars, no `@` or `/`                        |
-| `APP_DB_PASSWORD`   | Separate from `POSTGRES_PASSWORD`                |
-| `REDIS_PASSWORD`    | ≥ 20 chars recommended                           |
-| `CORS_ORIGINS`      | `https://${DOMAIN}` in production                |
-| `FRONTEND_BASE_URL` | `https://${DOMAIN}`                              |
-| `APP_ENV`           | `production` or `staging`                        |
-| `SMTP_HOST`         | Real relay in production (not `mailpit`)         |
+| Variable               | Notes                                                             |
+| ---------------------- | ----------------------------------------------------------------- |
+| `DOMAIN`               | Apex host, e.g. `correlcore.example.com`                          |
+| `LETSENCRYPT_EMAIL`    | ACME registration email                                           |
+| `SECRET_KEY`           | ≥ 32 bytes, URL-safe                                              |
+| `ENCRYPTION_KEY`       | Fernet key — **store outside the server backup**                  |
+| `POSTGRES_PASSWORD`    | ≥ 20 chars, no `@` or `/`                                         |
+| `APP_DB_PASSWORD`      | Separate from `POSTGRES_PASSWORD`                                 |
+| `REDIS_PASSWORD`       | ≥ 20 chars recommended                                            |
+| `CORS_ORIGINS`         | `https://${DOMAIN}` in production                                 |
+| `FRONTEND_BASE_URL`    | `https://${DOMAIN}`                                               |
+| `APP_ENV`              | `production` or `staging`                                         |
+| `SMTP_HOST`            | Real relay in production (not `mailpit`)                          |
+| `DEPLOYMENT_MODE`      | `selfhost` (default) or `hosted` — landing CTA / badge, see below |
+| `REGISTRATION_ENABLED` | `true` (default) opens self-registration; `false` closes it       |
 
 > **ENCRYPTION_KEY warning (ADR-0005):** Encrypted mood notes and custom symptom names
 > cannot be decrypted without this key — even from a valid database backup. Store it in a
 > password manager or offline secret store, not only on the VPS.
+
+> **Instance mode (landing CTA):** defaults need no configuration — a self-host
+> instance shows **Create account** on the anonymous landing (visitors register
+> on your instance) and **Log in** is always available. Set
+> `REGISTRATION_ENABLED=false` to close self-registration, or
+> `DEPLOYMENT_MODE=hosted` for the managed-SaaS framing. Full behavior table and
+> per-role walkthrough: [`INSTANCE_MODE.md`](INSTANCE_MODE.md).
 
 ### 3. Traefik static config
 
