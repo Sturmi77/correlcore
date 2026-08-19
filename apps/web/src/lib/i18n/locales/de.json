@@ -775,7 +775,7 @@
       "regenerate_disabled": "Aktiviere die Analyse oben, um Erkenntnisse zu aktualisieren.",
       "regenerate_error": "Erkenntnisse konnten nicht aktualisiert werden.",
       "digest_enabled": "Woechentliche Erkenntnis-Zusammenfassung",
-      "digest_hint": "Opt-in fuer eine In-App-Sonntags-Zusammenfassung. Aktiviere das Digest-Worker-Profil (COMPOSE_PROFILES=…,digest), damit die Generierung geplant laeuft.",
+      "digest_hint": "Opt-in fuer eine In-App-Sonntags-Zusammenfassung deiner staerksten Erkenntnisse der letzten Woche.",
       "digest_preview_link": "Digest-Vorschau oeffnen"
     },
     "privacy": {
@@ -1143,7 +1143,7 @@
       "title": "Wochenzusammenfassung",
       "subtitle": "Die drei staerksten Erkenntnisse der letzten sieben Tage.",
       "loading": "Lade Wochenzusammenfassung...",
-      "empty": "Noch nicht genug aktuelle Erkenntnisse fuer eine Wochenzusammenfassung.",
+      "empty": "Noch keine Wochenzusammenfassung — trage weiter Eintraege ein, dann werden deine staerksten Erkenntnisse der Woche hier zusammengefasst.",
       "disabled": "Die Wochenzusammenfassung ist in den Einstellungen deaktiviert.",
       "error": "Wochenzusammenfassung konnte nicht geladen werden.",
       "open_settings": "Einstellungen oeffnen",

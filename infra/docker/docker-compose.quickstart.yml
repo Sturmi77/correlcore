@@ -200,6 +200,8 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # Analytics worker: daily insights + retention cleanup, and the weekly in-app
+  # digest on Sundays (opt-in per user via Settings; no separate profile).
   worker:
     <<: *api-image
     container_name: correlcore-quickstart-worker
@@ -215,25 +217,6 @@ services:
       - internal
     profiles:
       - worker
-    security_opt:
-      - no-new-privileges:true
-
-  # Weekly digest (opt-in): COMPOSE_PROFILES=worker,digest
-  digest-worker:
-    <<: *api-image
-    container_name: correlcore-quickstart-digest-worker
-    restart: unless-stopped
-    command: ['python', '-m', 'app.workers.digest']
-    environment: *api-env
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-    networks:
-      - internal
-    profiles:
-      - digest
     security_opt:
       - no-new-privileges:true
 

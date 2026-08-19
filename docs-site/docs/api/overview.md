@@ -83,7 +83,7 @@ Custom symptom slugs are HMAC-stabilized ([ADR-0039](https://github.com/Sturmi77
 | Method | Path                                    | Notes                                               |
 | ------ | --------------------------------------- | --------------------------------------------------- |
 | `GET`  | `/api/v1/insights`                      | Generated insight cards                             |
-| `GET`  | `/api/v1/insights/digest/latest`        | Weekly digest preview (schedule completion TBD)     |
+| `GET`  | `/api/v1/insights/digest/latest`        | Weekly digest (generated Sundays by the worker)     |
 | `GET`  | `/api/v1/insights/tag-clusters`         | Tag groups (tiered maturity, M10.1)                 |
 | `POST` | `/api/v1/insights/regenerate`           | On-demand insight run (1×/hour)                     |
 | `POST` | `/api/v1/insights/trigger`              | Admin manual worker run                             |
@@ -96,10 +96,12 @@ Custom symptom slugs are HMAC-stabilized ([ADR-0039](https://github.com/Sturmi77
 
 Insight generation runs in the background **worker** (nightly 03:00 UTC) or on demand via
 **Settings → Analysis → Refresh insights** (`POST /insights/regenerate`).
-Weekly digests: `python -m app.workers.digest --once` (push delivery still depends on M4.2).
+The same worker generates the weekly in-app digest on Sundays; delivery is opt-in
+per user (Settings → Analysis, `digest_enabled`). Manual/backfill:
+`python -m app.workers.digest --once`. Push/email delivery is out of scope
+(in-app only).
 
-Weekly digest: preference + preview exist; scheduled delivery is tracked in
-[`WEEKLY_DIGEST_COMPLETION_PLAN.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/features/WEEKLY_DIGEST_COMPLETION_PLAN.md).
+See [`WEEKLY_DIGEST_COMPLETION_PLAN.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/features/WEEKLY_DIGEST_COMPLETION_PLAN.md).
 
 ---
 

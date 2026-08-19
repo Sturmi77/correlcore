@@ -204,30 +204,6 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  # ── Weekly Digest Worker (opt-in profile) ──────────────────────────────────
-  # Enable with COMPOSE_PROFILES=digest (or combine: worker,digest).
-  # Sleeps until Sunday 17:00 UTC, then runs app.workers.digest.
-  digest-worker:
-    <<: *api-image
-    container_name: correlcore-digest-worker
-    restart: unless-stopped
-    command: ['python', '-m', 'app.workers.digest']
-    env_file: .env
-    environment: *api-env
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - internal
-    profiles:
-      - digest
-    security_opt:
-      - no-new-privileges:true
-
   # ── Datenbank ──────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16

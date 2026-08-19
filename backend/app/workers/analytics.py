@@ -20,11 +20,24 @@ from app.services.insight_worker_service import (
 )
 from app.services.sync_conflict_service import cleanup_stale_sync_conflicts
 from app.services.worker_run_service import finish_run, start_run
+from app.workers.digest import DigestRunSummary, run_digest_once
 
 logger = logging.getLogger(__name__)
 
 CleanupSleep = Callable[[float], Awaitable[None]]
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
+
+# Weekly insight digest runs as part of the daily bundle on this weekday
+# (Monday=0 … Sunday=6). It piggybacks on the daily 03:00 UTC slot so no
+# separate scheduler or container is needed; the per-user ``digest_enabled``
+# preference remains the only opt-in (#738).
+DIGEST_WEEKDAY = 6  # Sunday
+
+
+def is_weekly_digest_slot(now: datetime | None = None) -> bool:
+    """Return True when the daily run should also generate weekly digests."""
+
+    return (now or datetime.now(UTC)).weekday() == DIGEST_WEEKDAY
 
 
 @dataclass(frozen=True)
@@ -44,6 +57,7 @@ class DailyRunSummary:
     deleted_unverified_accounts: int
     deleted_sync_conflicts: int
     insight_run: InsightRunSummary
+    digest_run: DigestRunSummary | None = None
 
 
 def seconds_until_next_cleanup(now: datetime | None = None) -> float:
@@ -204,22 +218,39 @@ async def run_daily_jobs_once(
             session_factory=session_factory,
             trigger_source=trigger_source,
         )
+        # Weekly digest piggybacks on the daily bundle (#738): generate it right
+        # after fresh insights on the digest weekday. It records its own DIGEST
+        # run row, so a digest failure is isolated from the daily bundle result.
+        digest_run: DigestRunSummary | None = None
+        if is_weekly_digest_slot(current):
+            try:
+                digest_run = await run_digest_once(
+                    as_of=current,
+                    trigger_source=trigger_source,
+                )
+            except Exception:
+                logger.exception("weekly digest generation failed")
         summary = DailyRunSummary(
             deleted_unverified_accounts=deleted_accounts,
             deleted_sync_conflicts=deleted_conflicts,
             insight_run=insight_run,
+            digest_run=digest_run,
         )
+        result: dict[str, object] = {
+            "deleted_unverified_accounts": deleted_accounts,
+            "deleted_sync_conflicts": deleted_conflicts,
+            "eligible_users": insight_run.eligible_users,
+            "processed_users": insight_run.processed_users,
+            "failed_users": insight_run.failed_users,
+            "generated_insights": insight_run.generated_insights,
+        }
+        if digest_run is not None:
+            result["digest_eligible_users"] = digest_run.eligible_users
+            result["digest_processed_users"] = digest_run.processed_users
         await finish_run(
             run_id,
             status=WorkerRunStatus.SUCCEEDED,
-            result={
-                "deleted_unverified_accounts": deleted_accounts,
-                "deleted_sync_conflicts": deleted_conflicts,
-                "eligible_users": insight_run.eligible_users,
-                "processed_users": insight_run.processed_users,
-                "failed_users": insight_run.failed_users,
-                "generated_insights": insight_run.generated_insights,
-            },
+            result=result,
         )
         return summary
     except Exception as exc:
