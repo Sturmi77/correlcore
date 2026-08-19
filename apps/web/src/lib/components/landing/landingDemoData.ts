@@ -8,6 +8,7 @@ import type {
   TagClustersResponse,
   TagCooccurrenceResponse,
 } from '$lib/api/insights';
+import type { WeekdaySummaryItem } from '$lib/api/dashboard';
 import type { TimeseriesPoint } from '$lib/api/stats';
 
 export const landingTagClusters: TagClustersResponse = {
@@ -308,6 +309,54 @@ export const landingMaturity: InsightMaturity = {
   entries_until_next: null,
   user_message_key: 'insights.maturity.robust',
 };
+
+/**
+ * Weekday product shot (A3). `HomeWeekdayOverview` derives its bars from a
+ * `weekday_summary` (index 0 = Monday) plus an optional `weekday_pattern`
+ * insight for the tier badge + statement. Labels stay in English to match the
+ * other product shots. Friday is the high day, Saturday the low — so the
+ * best/worst highlights both fire.
+ */
+export const landingWeekdaySummary: WeekdaySummaryItem[] = [
+  { weekday: 0, entry_count: 9, mood_avg: 3.4, top_signal: null },
+  { weekday: 1, entry_count: 9, mood_avg: 3.6, top_signal: null },
+  {
+    weekday: 2,
+    entry_count: 9,
+    mood_avg: 3.9,
+    top_signal: { kind: 'tag', id: 'demo-home-office', label: 'Home office', count: 6, share: 0.7 },
+  },
+  { weekday: 3, entry_count: 9, mood_avg: 3.5, top_signal: null },
+  {
+    weekday: 4,
+    entry_count: 9,
+    mood_avg: 4.2,
+    top_signal: { kind: 'tag', id: 'demo-exercise', label: 'Exercise', count: 7, share: 0.78 },
+  },
+  {
+    weekday: 5,
+    entry_count: 8,
+    mood_avg: 3.1,
+    top_signal: { kind: 'tag', id: 'demo-poor-sleep', label: 'Poor sleep', count: 5, share: 0.63 },
+  },
+  { weekday: 6, entry_count: 8, mood_avg: 3.3, top_signal: null },
+];
+
+export const landingWeekdayInsight: InsightResponse = demoInsight({
+  id: 'demo-weekday-pattern',
+  insight_type: 'weekday_pattern',
+  subject_type: 'weekday',
+  subject_id: 'demo-friday',
+  subject_label: 'Friday',
+  metric: 'mood_score',
+  effect_size: 0.44,
+  confidence: 0.62,
+  statement: 'Fridays tend to show the highest mood.',
+  payload: {
+    weekday: 4,
+    weekday_mood_avgs: { '0': 3.4, '1': 3.6, '2': 3.9, '3': 3.5, '4': 4.2, '5': 3.1, '6': 3.3 },
+  },
+});
 
 function cooRef(tag_id: string, slug: string, name: string) {
   return { tag_id, slug, name, category: 'demo', color: null };

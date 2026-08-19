@@ -1825,6 +1825,15 @@
     },
     "journey_heading": "Erkenntnisse wachsen mit deinen Daten",
     "journey_body": "Jeder Zusammenhang ist nach Konfidenz gestuft – von ersten Mustern bis robust. Kein Leistungsdruck, keine Streaks: nur wachsende Evidenz, je länger du trackst.",
+    "weekday_heading": "Warum manche Tage besser sind",
+    "weekday_caption": "Wochentags-Muster: durchschnittliche Stimmung pro Tag, mit dem auffälligsten Signal (Produktvorschau).",
+    "ticker_label": "Beispiel-Erkenntnisse",
+    "ticker": {
+      "1": "Schlaf → Stimmung · +2 Tage · r = 0.62",
+      "2": "Sport → Energie · nächster Tag · r = 0.55",
+      "3": "Homeoffice → weniger Stress · r = 0.38",
+      "4": "Kaffee → Energie · gleicher Tag · r = 0.24"
+    },
     "android_heading": "Android-App",
     "android_body": "Signiertes APK direkt von GitHub Releases. Mit Obtainium abonnierst du das Repo und bekommst Updates automatisch – ganz ohne App-Store.",
     "android_download": "APK herunterladen",

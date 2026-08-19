@@ -10,8 +10,12 @@
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
   import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
   import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';
+  import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import BrowserFrameMock from '$lib/components/landing/BrowserFrameMock.svelte';
+  import { tweened } from 'svelte/motion';
+  import { cubicOut } from 'svelte/easing';
+  import { fade } from 'svelte/transition';
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import {
     landingTagClusters,
@@ -21,6 +25,8 @@
     landingLagInsights,
     landingMaturity,
     landingCooccurrence,
+    landingWeekdaySummary,
+    landingWeekdayInsight,
   } from '$lib/components/landing/landingDemoData';
 
   const landingClusterMeta = buildTagClusterMeta(landingTagClusters);
@@ -94,6 +100,73 @@
         }
       },
       { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    );
+    observer.observe(node);
+    return {
+      destroy() {
+        observer.disconnect();
+      },
+    };
+  }
+
+  function prefersReducedMotion(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  }
+
+  // A5 — insight ticker: crossfades through a few example statements. Holds the
+  // first line under reduced-motion (no auto-advance).
+  const tickerKeys = ['1', '2', '3', '4'] as const;
+  let tickerIndex = 0;
+  function ticker(_node: HTMLElement) {
+    if (prefersReducedMotion()) return {};
+    const id = setInterval(() => {
+      tickerIndex = (tickerIndex + 1) % tickerKeys.length;
+    }, 3600);
+    return {
+      destroy() {
+        clearInterval(id);
+      },
+    };
+  }
+
+  // D5 — count-up for the bento metric tiles. Values tween from 0 to target the
+  // first time the feature grid scrolls into view (instant for reduced-motion).
+  // Order + decimals match the six MetricCards rendered below.
+  const metricTargets = [3.8, 3.4, 2.3, 86, 3.8, 3.5];
+  const metricDecimals = [1, 1, 1, 0, 1, 1];
+  const counts = tweened(
+    metricTargets.map(() => 0),
+    { duration: 900, easing: cubicOut }
+  );
+  let countsStarted = false;
+  function startCounts(): void {
+    if (countsStarted) return;
+    countsStarted = true;
+    void counts.set(metricTargets, { duration: prefersReducedMotion() ? 0 : 900 });
+  }
+  $: countValues = $counts.map((value, index) => value.toFixed(metricDecimals[index]));
+
+  // Fire a callback the first time a node enters the viewport (immediately when
+  // IntersectionObserver is unavailable or motion is reduced) — drives count-up.
+  function whenVisible(node: HTMLElement, callback: () => void) {
+    if (typeof IntersectionObserver === 'undefined' || prefersReducedMotion()) {
+      callback();
+      return {};
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            callback();
+            observer.disconnect();
+          }
+        }
+      },
+      { threshold: 0.25 }
     );
     observer.observe(node);
     return {
@@ -180,6 +253,17 @@
     </div>
   </section>
 
+  <div class="landing__ticker" data-testid="landing-ticker" use:ticker>
+    <span class="landing__ticker-label">{$_('landing.ticker_label')}</span>
+    <span class="landing__ticker-viewport" aria-live="polite">
+      {#key tickerIndex}
+        <span class="landing__ticker-line" in:fade={{ duration: 380 }}>
+          {$_(`landing.ticker.${tickerKeys[tickerIndex]}`)}
+        </span>
+      {/key}
+    </span>
+  </div>
+
   <section
     class="landing__previews landing__reveal"
     use:reveal
@@ -236,8 +320,32 @@
   </section>
 
   <section
+    class="landing__weekday landing__reveal"
+    use:reveal
+    aria-labelledby="landing-weekday-heading"
+    data-testid="landing-weekday"
+  >
+    <h2 id="landing-weekday-heading" class="landing__section-heading">
+      {$_('landing.weekday_heading')}
+    </h2>
+    <figure class="landing__weekday-figure">
+      <BrowserFrameMock address="app.correlcore.example/home">
+        <div class="landing__shot" inert aria-hidden="true">
+          <HomeWeekdayOverview
+            insights={[landingWeekdayInsight]}
+            weekdayInsight={landingWeekdayInsight}
+            weekdaySummary={landingWeekdaySummary}
+          />
+        </div>
+      </BrowserFrameMock>
+      <figcaption>{$_('landing.weekday_caption')}</figcaption>
+    </figure>
+  </section>
+
+  <section
     class="landing__bento landing__reveal"
     use:reveal
+    use:whenVisible={startCounts}
     aria-labelledby="landing-features-heading"
   >
     <h2 id="landing-features-heading" class="landing__section-heading">
@@ -248,9 +356,24 @@
         <h3>{$_('landing.features.1.title')}</h3>
         <p>{$_('landing.features.1.body')}</p>
         <div class="landing__metric-row" aria-hidden="true">
-          <MetricCard metric="mood_score" label={$_('landing.metric_mood')} value="3.8" unit="/5" />
-          <MetricCard metric="energy" label={$_('landing.metric_energy')} value="3.4" unit="/5" />
-          <MetricCard metric="stress" label={$_('landing.metric_stress')} value="2.3" unit="/5" />
+          <MetricCard
+            metric="mood_score"
+            label={$_('landing.metric_mood')}
+            value={countValues[0]}
+            unit="/5"
+          />
+          <MetricCard
+            metric="energy"
+            label={$_('landing.metric_energy')}
+            value={countValues[1]}
+            unit="/5"
+          />
+          <MetricCard
+            metric="stress"
+            label={$_('landing.metric_stress')}
+            value={countValues[2]}
+            unit="/5"
+          />
         </div>
         <div class="landing__viz-note">{$_('landing.viz_correlations')}</div>
       </article>
@@ -261,11 +384,21 @@
           <MetricCard
             metric="tracking_consistency"
             label={$_('landing.metric_consistency')}
-            value="86"
+            value={countValues[3]}
             unit="%"
           />
-          <MetricCard metric="mood_score" label={$_('landing.metric_mood')} value="3.8" unit="/5" />
-          <MetricCard metric="energy" label={$_('landing.metric_energy')} value="3.5" unit="/5" />
+          <MetricCard
+            metric="mood_score"
+            label={$_('landing.metric_mood')}
+            value={countValues[4]}
+            unit="/5"
+          />
+          <MetricCard
+            metric="energy"
+            label={$_('landing.metric_energy')}
+            value={countValues[5]}
+            unit="/5"
+          />
         </div>
         <div class="landing__timeseries" aria-hidden="true">
           <MetricTimeseries points={landingTimeseriesPoints} range="week" enableCursor={false} />
@@ -525,18 +658,22 @@
     letter-spacing: 0.02em;
   }
 
+  /* D4 — sharper hero hierarchy: larger, tighter headline; higher-contrast,
+     slightly larger sub. */
   .landing__title {
     margin: 0;
-    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
-    line-height: 1.15;
+    font-size: clamp(2.1rem, 3.9vw, 3rem);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
     max-width: 18ch;
   }
 
   .landing__subtitle {
     margin: 0;
-    max-width: 36rem;
-    color: var(--color-text-muted);
-    font-size: var(--text-base);
+    max-width: 38rem;
+    color: var(--color-text);
+    font-size: clamp(1rem, 1.4vw, 1.12rem);
     line-height: 1.6;
   }
 
@@ -671,11 +808,67 @@
     user-select: none;
   }
 
+  /* Grid finish — four previews balance as a 2×2 (was 3+1 orphan). */
   @media (min-width: 768px) {
     .landing__preview-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       align-items: start;
     }
+  }
+
+  /* A5 — insight ticker pill under the hero. */
+  .landing__ticker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    width: fit-content;
+    max-width: 100%;
+    margin: calc(var(--space-4) * -1) auto 0;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+  }
+
+  .landing__ticker-label {
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+  }
+
+  .landing__ticker-viewport {
+    display: inline-grid;
+    align-items: center;
+    min-height: 1.4em;
+    min-width: 0;
+  }
+
+  .landing__ticker-line {
+    grid-area: 1 / 1;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-primary);
+    white-space: nowrap;
+  }
+
+  /* A3 — weekday overview product shot, centred like the other showcases. */
+  .landing__weekday-figure {
+    margin: 0 auto;
+    max-width: 46rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .landing__weekday-figure figcaption {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-align: center;
   }
 
   .landing__android {
