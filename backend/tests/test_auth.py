@@ -88,6 +88,29 @@ async def test_register_new_email_returns_202(async_client: AsyncClient) -> None
 
 
 @pytest.mark.asyncio
+async def test_register_disabled_returns_generic_202_without_creating(
+    async_client: AsyncClient,
+) -> None:
+    """#734/#735: with REGISTRATION_ENABLED=false the endpoint short-circuits to
+    the same generic 202 and never creates a user (enumeration-safe)."""
+    with (
+        patch("app.api.v1.endpoints.auth.settings.REGISTRATION_ENABLED", False),
+        patch(
+            "app.api.v1.endpoints.auth.request_registration",
+            new_callable=AsyncMock,
+        ) as mock_request,
+    ):
+        r = await async_client.post(
+            "/api/v1/auth/register",
+            json={"email": "closed@example.com", "password": TEST_PASSWORD},
+        )
+    assert r.status_code == 202
+    assert r.json()["message"].startswith("If the email is not yet registered")
+    # No registration work happens when self-registration is closed.
+    mock_request.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_register_existing_email_also_returns_202(async_client: AsyncClient) -> None:
     """Issue #65 (SA-1): existing email yields the same 202 response.
 

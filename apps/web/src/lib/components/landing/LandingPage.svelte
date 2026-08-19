@@ -288,7 +288,7 @@
 
   <div class="landing__ticker" data-testid="landing-ticker" use:ticker>
     <span class="landing__ticker-label">{$_('landing.ticker_label')}</span>
-    <span class="landing__ticker-viewport" aria-live="polite">
+    <span class="landing__ticker-viewport">
       {#key tickerIndex}
         <span class="landing__ticker-line" in:fade={{ duration: 380 }}>
           {$_(`landing.ticker.${tickerKeys[tickerIndex]}`)}
@@ -637,7 +637,7 @@
      messily into the hero. The APK button is redundant with the Android
      section below, so drop it from the header on mobile; the remaining actions
      (theme, lang, login, primary) fit or wrap cleanly. */
-  @media (max-width: 640px) {
+  @media (max-width: 767px) {
     /* Scope under the (scoped) header so specificity (0,2,0) beats Button's own
        `.ui-button { display: inline-flex }` regardless of stylesheet order. */
     .landing__header :global(.landing__header-apk) {
@@ -652,6 +652,10 @@
     gap: var(--space-8);
     align-items: center;
     padding: var(--space-8) 0 var(--space-6);
+    /* Clip the aurora's horizontal bleed so its box never causes sideways
+       page scroll on narrow viewports (PR #736 review). `clip` keeps the
+       header's position:sticky intact (unlike `hidden`). */
+    overflow: clip;
   }
 
   /* B1 — Aurora field behind the hero. Token-only, low opacity, static (no
@@ -899,7 +903,11 @@
     font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-primary);
-    white-space: nowrap;
+    /* Wrap on narrow viewports — long localized strings must never force
+       horizontal scroll (PR #736 review). */
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
   }
 
   /* A3 — weekday overview product shot, centred like the other showcases. */
@@ -1117,6 +1125,15 @@
     transform: none;
   }
 
+  /* Visible-by-default without scripting: if JS is disabled the `reveal` action
+     never runs, so never leave a section stuck transparent (PR #736 review). */
+  @media (scripting: none) {
+    .landing__reveal {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   /* B3 — dot grid behind the feature bento, giving a quiet "data" texture. */
   .landing__bento {
     position: relative;
@@ -1195,7 +1212,8 @@
     align-items: center;
     gap: var(--space-1);
     padding: var(--space-4) var(--space-3);
-    border: 1px solid color-mix(in srgb, var(--tier-color) 32%, var(--color-border));
+    border: 1px solid
+      color-mix(in srgb, var(--tier-color, var(--color-primary)) 32%, var(--color-border));
     border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--color-surface) 88%, transparent);
     /* Staggered reveal, keyed on the section becoming visible. */
@@ -1238,8 +1256,9 @@
     width: 0.85rem;
     height: 0.85rem;
     border-radius: var(--radius-full);
-    background: var(--tier-color);
-    box-shadow: 0 0 var(--tier-glow) color-mix(in oklch, var(--tier-color) 70%, transparent);
+    background: var(--tier-color, var(--color-primary));
+    box-shadow: 0 0 var(--tier-glow, 8px)
+      color-mix(in oklch, var(--tier-color, var(--color-primary)) 70%, transparent);
   }
 
   .landing__journey-range {
@@ -1269,7 +1288,7 @@
     }
   }
 
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
     .landing__journey-track {
       grid-template-columns: repeat(3, 1fr);
     }

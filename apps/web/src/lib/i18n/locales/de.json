@@ -1818,7 +1818,7 @@
     "preview_matrix": "Insight-Matrix: Zusammenhänge nach Effektstärke.",
     "preview_card": "Erkenntnis-Karte: eine Beobachtung, sachlich formuliert.",
     "preview_heatmap": "Tag-Heatmap: was gemeinsam vorkommt, nach Gruppen.",
-    "preview_lag": "Lag-Heatmap: mit welcher zeitlichen Verzögerung ein Faktor wirkt.",
+    "preview_lag": "Lag-Heatmap: bei welcher zeitlichen Verzögerung ein Zusammenhang am stärksten ist.",
     "trust": {
       "privacy": "Datenschutz zuerst",
       "selfhost": "Selbst gehostet",

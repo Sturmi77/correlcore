@@ -43,6 +43,7 @@ from app.core.auth_cookies import (
     clear_auth_cookies,
     set_auth_cookies,
 )
+from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.db.redis_client import TokenStore, get_redis
 from app.db.session import get_session
@@ -146,6 +147,14 @@ async def register(
 
     Rate-limit: 5 requests per minute per IP.
     """
+    if not settings.REGISTRATION_ENABLED:
+        # Self-registration closed for this instance (#734/#735). Return the
+        # same generic 202 as the open path so the response is indistinguishable
+        # (enumeration-safe), but create no user and send no mail. The only
+        # observable difference — that registration is closed — is already
+        # public via GET /api/v1/instance, so this leaks nothing new.
+        return MessageResponse(message=_REGISTER_GENERIC_MESSAGE)
+
     outcome = await request_registration(db, data)
 
     if outcome.action == "created":

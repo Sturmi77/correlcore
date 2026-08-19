@@ -71,8 +71,10 @@ REGISTRATION_ENABLED=false
 ```
 
 The primary CTA then becomes **Self-host** (→ docs) and self-registration is
-off; you still sign in via **Log in** (create users server-side / via an
-invite flow as appropriate).
+off — enforced server-side: `POST /api/v1/auth/register` returns the same
+enumeration-safe `202` **without creating an account** or sending mail. You
+still sign in via **Log in** (create users server-side / via an invite flow as
+appropriate).
 
 ### User of the hosted correlcore.com instance
 

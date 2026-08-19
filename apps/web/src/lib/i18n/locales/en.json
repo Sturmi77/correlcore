@@ -1818,7 +1818,7 @@
     "preview_matrix": "Insight matrix: associations ranked by effect size.",
     "preview_card": "Insight card: one observation, stated plainly.",
     "preview_heatmap": "Tag heatmap: what co-occurs, grouped by cluster.",
-    "preview_lag": "Lag heatmap: with what time delay a factor takes effect.",
+    "preview_lag": "Lag heatmap: at what time delay the association is strongest.",
     "trust": {
       "privacy": "Privacy-first",
       "selfhost": "Self-hosted",
