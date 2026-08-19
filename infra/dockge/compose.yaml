@@ -248,24 +248,6 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  digest-worker:
-    <<: *api-image
-    container_name: correlcore-digest-worker
-    restart: unless-stopped
-    command: ['python', '-m', 'app.workers.digest']
-    environment: *api-env
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-    networks:
-      - correlcore
-    profiles:
-      - digest
-    security_opt:
-      - no-new-privileges:true
-
 volumes:
   postgres_data:
     name: correlcore_postgres_data

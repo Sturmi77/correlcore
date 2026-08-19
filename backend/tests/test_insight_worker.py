@@ -301,3 +301,89 @@ async def test_run_daily_jobs_once_runs_cleanup_then_insights() -> None:
     assert summary.deleted_unverified_accounts == 1
     assert summary.deleted_sync_conflicts == 2
     assert summary.insight_run.generated_insights == 4
+    # Tuesday is not the weekly digest slot.
+    assert summary.digest_run is None
+
+
+def _insight_run_mock() -> MagicMock:
+    return MagicMock(
+        eligible_users=1,
+        processed_users=1,
+        failed_users=0,
+        generated_insights=4,
+    )
+
+
+@pytest.mark.asyncio
+async def test_run_daily_jobs_once_generates_digest_on_weekly_slot() -> None:
+    """On the digest weekday the daily bundle also generates the weekly digest."""
+    from app.workers.digest import DigestRunSummary
+
+    digest_summary = DigestRunSummary(
+        eligible_users=2,
+        processed_users=2,
+        skipped_users=0,
+        failed_users=0,
+    )
+    digest_mock = AsyncMock(return_value=digest_summary)
+
+    with (
+        patch("app.workers.analytics.run_cleanup_once", new=AsyncMock(return_value=(0, 0))),
+        patch(
+            "app.workers.analytics.run_insights_once",
+            new=AsyncMock(return_value=_insight_run_mock()),
+        ),
+        patch("app.workers.analytics.run_digest_once", new=digest_mock),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+    ):
+        # 2026-05-17 is a Sunday.
+        summary = await run_daily_jobs_once(now=datetime(2026, 5, 17, 3, tzinfo=UTC))
+
+    digest_mock.assert_awaited_once()
+    assert summary.digest_run is digest_summary
+
+
+@pytest.mark.asyncio
+async def test_run_daily_jobs_once_skips_digest_off_slot() -> None:
+    """Off the digest weekday the daily bundle never touches digest generation."""
+    digest_mock = AsyncMock()
+
+    with (
+        patch("app.workers.analytics.run_cleanup_once", new=AsyncMock(return_value=(0, 0))),
+        patch(
+            "app.workers.analytics.run_insights_once",
+            new=AsyncMock(return_value=_insight_run_mock()),
+        ),
+        patch("app.workers.analytics.run_digest_once", new=digest_mock),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+    ):
+        # 2026-05-16 is a Saturday.
+        summary = await run_daily_jobs_once(now=datetime(2026, 5, 16, 3, tzinfo=UTC))
+
+    digest_mock.assert_not_awaited()
+    assert summary.digest_run is None
+
+
+@pytest.mark.asyncio
+async def test_run_daily_jobs_once_isolates_digest_failure() -> None:
+    """A digest failure is logged and does not fail the daily bundle."""
+    with (
+        patch("app.workers.analytics.run_cleanup_once", new=AsyncMock(return_value=(0, 0))),
+        patch(
+            "app.workers.analytics.run_insights_once",
+            new=AsyncMock(return_value=_insight_run_mock()),
+        ),
+        patch(
+            "app.workers.analytics.run_digest_once",
+            new=AsyncMock(side_effect=RuntimeError("boom")),
+        ),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()) as finish_run,
+    ):
+        summary = await run_daily_jobs_once(now=datetime(2026, 5, 17, 3, tzinfo=UTC))
+
+    # Daily bundle still records success; digest failure is isolated.
+    assert summary.digest_run is None
+    assert finish_run.await_args.kwargs["status"].name == "SUCCEEDED"

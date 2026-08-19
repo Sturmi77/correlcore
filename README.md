@@ -115,7 +115,7 @@ After startup, CorrelCore is available at `https://your-domain.tld`
 
 Homelab / Tailnet without public DNS: see [`infra/dockhand/README.md`](infra/dockhand/README.md).
 
-Compose stack matrix (canonical vs secondary, profiles `worker` / `digest`):
+Compose stack matrix (canonical vs secondary, profile `worker`):
 [`docs/selfhost/COMPOSE_STACKS.md`](docs/selfhost/COMPOSE_STACKS.md).
 
 Android sideload (optional, M11 pre-Play): download the APK from a [`v*`](https://github.com/Sturmi77/correlcore/releases) release — see [`docs/selfhost/ANDROID_SIDELOAD.md`](docs/selfhost/ANDROID_SIDELOAD.md).

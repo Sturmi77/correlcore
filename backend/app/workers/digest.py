@@ -1,12 +1,13 @@
-"""Weekly insight digest worker (#147).
+"""Weekly insight digest generation (#147, #738).
 
-No in-process APScheduler is wired today. Run manually or from cron:
+Scheduled generation runs as part of the daily analytics worker on the digest
+weekday (see ``app.workers.analytics.is_weekly_digest_slot``) — there is no
+separate scheduler, container, or compose profile. The per-user
+``digest_enabled`` preference is the only opt-in.
+
+For manual runs or one-off backfills:
 
     python -m app.workers.digest --once
-
-Suggested cron (Sunday ~17:00 UTC):
-
-    0 17 * * 0 cd /app/backend && uv run python -m app.workers.digest --once
 """
 
 from __future__ import annotations
@@ -14,9 +15,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, time, timedelta
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,20 +43,6 @@ class DigestRunSummary:
     processed_users: int
     skipped_users: int
     failed_users: int
-
-
-def seconds_until_next_digest(now: datetime | None = None) -> float:
-    """Return seconds until the next Sunday 17:00 UTC digest slot."""
-
-    current = now or datetime.now(UTC)
-    days_ahead = (6 - current.weekday()) % 7
-    run_at = datetime.combine(
-        current.date() + timedelta(days=days_ahead),
-        time(hour=17, tzinfo=UTC),
-    )
-    if run_at <= current:
-        run_at += timedelta(days=7)
-    return (run_at - current).total_seconds()
 
 
 async def _list_digest_user_ids(db: AsyncSession) -> list[uuid.UUID]:
@@ -179,36 +165,23 @@ async def run_digest_once(
         raise
 
 
-async def run_digest_worker(
-    *,
-    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
-) -> None:
-    """Run weekly digest generation forever on Sunday 17:00 UTC."""
-
-    logger.info("correlcore digest worker started")
-    while True:
-        delay = seconds_until_next_digest()
-        logger.info("next digest run scheduled", extra={"delay_seconds": delay})
-        await sleep(delay)
-        await run_digest_once(trigger_source=WorkerTriggerSource.SCHEDULED)
-
-
 def main() -> None:
+    """Manual / backfill entrypoint. Scheduled runs live in the daily worker."""
+
     import argparse
 
-    parser = argparse.ArgumentParser(description="CorrelCore weekly insight digest worker")
+    parser = argparse.ArgumentParser(
+        description="CorrelCore weekly insight digest — one-off generation",
+    )
     parser.add_argument(
         "--once",
         action="store_true",
-        help="Run digest generation once and exit",
+        help="Run digest generation once and exit (default; kept for compatibility)",
     )
-    args = parser.parse_args()
+    parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
-    if args.once:
-        asyncio.run(run_digest_once(trigger_source=WorkerTriggerSource.CLI_ONCE))
-        return
-    asyncio.run(run_digest_worker())
+    asyncio.run(run_digest_once(trigger_source=WorkerTriggerSource.CLI_ONCE))
 
 
 if __name__ == "__main__":

@@ -775,7 +775,7 @@
       "regenerate_disabled": "Enable analysis above to refresh insights.",
       "regenerate_error": "Could not refresh insights.",
       "digest_enabled": "Weekly insight digest",
-      "digest_hint": "Opt-in for an in-app Sunday summary of your top insights. Enable the digest worker profile (COMPOSE_PROFILES=…,digest) on your instance to schedule generation.",
+      "digest_hint": "Opt in for an in-app Sunday summary of your top insights from the past week.",
       "digest_preview_link": "Open digest preview"
     },
     "privacy": {
@@ -1143,7 +1143,7 @@
       "title": "Weekly digest",
       "subtitle": "Top three insights from the last seven days.",
       "loading": "Loading weekly digest...",
-      "empty": "Not enough recent insights for a weekly digest yet.",
+      "empty": "No weekly digest yet — keep logging entries and your top insights from the week will be summarised here.",
       "disabled": "Weekly digest is turned off in Settings.",
       "error": "Could not load weekly digest.",
       "open_settings": "Open settings",

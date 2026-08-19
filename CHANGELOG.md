@@ -10,6 +10,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Weekly Digest wird ohne eigenes Profil/Container erzeugt** — die
+  Generierung der wöchentlichen In-App-Zusammenfassung lief bisher nur hinter
+  dem Opt-in-Compose-Profil `digest` (eigener `digest-worker`-Container), das
+  auf der gehosteten Instanz nie aktiv war — der Settings-Toggle konnte an sein,
+  ohne dass je ein Digest entstand. Die Erzeugung läuft jetzt sonntags im
+  bestehenden Analytics-`worker` (kein separater Scheduler, Container oder
+  `COMPOSE_PROFILES=digest` mehr); einziger Trigger ist das Pro-User-Opt-in
+  unter Settings → Analyse (`digest_enabled`, standardmäßig aus). Der
+  irreführende Ops-Hinweis im Settings-Text und der Empty-State auf
+  `/insights/digest` wurden entsprechend angepasst. `python -m app.workers.digest
+  --once` bleibt für manuelle Läufe / Backfills erhalten (#738).
+
 - **Symptom-Auswahl im Entry Sheet als kompakte Chips** — Symptome sind seit
   #544 presence-only (binärer Toggle), wurden aber weiterhin als volle Zeile
   mit eigenem, volle-Breite-Pill-Button je Symptom gerendert, was auf Mobile

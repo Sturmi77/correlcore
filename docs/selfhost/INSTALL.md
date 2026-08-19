@@ -65,12 +65,10 @@ docker compose -f docker-compose.quickstart.yml up -d
 Optional profiles (see [`COMPOSE_STACKS.md`](COMPOSE_STACKS.md)):
 
 ```bash
-# Insights generation + unverified-account cleanup (recommended for durable homelab)
+# Insights generation + unverified-account cleanup (recommended for durable homelab).
+# The same worker also generates the weekly in-app digest on Sundays — users opt
+# in per account under Settings → Analysis; no extra profile needed.
 echo 'COMPOSE_PROFILES=worker' >> .env
-docker compose -f docker-compose.quickstart.yml up -d
-
-# Weekly in-app digest (Sunday 17:00 UTC) — users must opt in under Settings → Analysis
-echo 'COMPOSE_PROFILES=worker,digest' >> .env
 docker compose -f docker-compose.quickstart.yml up -d
 
 # Error tracking (GlitchTip on port 8080)
@@ -206,13 +204,7 @@ Optional profiles:
 docker compose --profile monitoring up -d
 ```
 
-The **analytics worker** starts automatically with the production stack (insights + GDPR account cleanup). No `--profile worker` needed on Path A.
-
-Weekly **digest** is opt-in for users (`digest_enabled`) and for operators:
-
-```bash
-COMPOSE_PROFILES=digest docker compose up -d
-```
+The **analytics worker** starts automatically with the production stack (insights + GDPR account cleanup). No `--profile worker` needed on Path A. The same worker also generates the weekly in-app **digest** on Sundays; there is no separate profile or container. Users opt in per account under Settings → Analysis (`digest_enabled`, off by default).
 
 After first start with `monitoring`:
 
