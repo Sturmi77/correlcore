@@ -45,6 +45,25 @@ class Settings(BaseSettings):
     GIT_COMMIT: str = "unknown"
     GIT_BRANCH: str = "unknown"
     BUILD_TIME: str = ""
+
+    # Deployment descriptor (#734/#735). Exposed via the public
+    # ``GET /api/v1/instance`` endpoint so one web bundle can present a
+    # self-host CTA or an account-signup CTA at runtime — no rebuild, no
+    # build-time flag. ``selfhost`` (default) vs ``hosted`` (managed SaaS,
+    # correlcore.com).
+    DEPLOYMENT_MODE: str = "selfhost"
+    # Whether anonymous visitors may self-register on this instance. Hosted
+    # SaaS keeps this open; a locked-down personal selfhost may set it false.
+    REGISTRATION_ENABLED: bool = True
+
+    @field_validator("DEPLOYMENT_MODE", mode="before")
+    @classmethod
+    def normalize_deployment_mode(cls, v: object) -> object:
+        """Coerce to the two supported tokens; anything unknown is selfhost."""
+        if isinstance(v, str):
+            return "hosted" if v.strip().lower() == "hosted" else "selfhost"
+        return v
+
     SECRET_KEY: str = Field(
         default="CHANGE_ME_IN_PRODUCTION_MIN_32_BYTES_RANDOM",
         validation_alias=AliasChoices("SECRET_KEY", "JWT_SECRET"),

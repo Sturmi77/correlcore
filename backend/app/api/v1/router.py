@@ -15,6 +15,7 @@ from app.api.v1.endpoints import (
     health,
     health_connect,
     insights,
+    instance,
     media,
     note_markers,
     note_signals,
@@ -30,6 +31,9 @@ api_router = APIRouter()
 
 # Internal health probes
 api_router.include_router(health.router, prefix="/health", tags=["internal"])
+
+# Public deployment descriptor (hosted vs selfhost, registration, version)
+api_router.include_router(instance.router, prefix="/instance", tags=["internal"])
 
 # Feature-flagged developer diagnostics (Issue #125)
 api_router.include_router(dev.router, prefix="/dev", tags=["internal"])
