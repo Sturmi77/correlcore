@@ -278,6 +278,11 @@ jobs:
   e2e-smoke:
     name: E2E smoke (Playwright)
     runs-on: ubuntu-latest
+    # Guardrail: the smoke flow normally finishes in ~1-2 min. Without an
+    # explicit cap a stuck setup step (pnpm/playwright install) or a lost
+    # runner would hang on GitHub's 6h default. Fail fast so a flake is a
+    # quick re-run, not an hours-long block (#732 follow-up).
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
