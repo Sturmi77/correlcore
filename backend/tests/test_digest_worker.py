@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.workers.digest import _list_digest_user_ids
+from app.workers.digest import (
+    _list_digest_user_ids,
+    _parse_digest_cli,
+    run_legacy_digest_container,
+)
 
 
 def _scalars_result(values: list[object]) -> MagicMock:
@@ -75,3 +80,53 @@ async def test_list_digest_user_ids_skips_analytics_opt_out() -> None:
         eligible = await _list_digest_user_ids(db)
 
     assert eligible == []
+
+
+def test_digest_cli_requires_once_for_one_shot() -> None:
+    """Bare ``python -m app.workers.digest`` is the leftover compose command."""
+
+    assert _parse_digest_cli([]).once is False
+    assert _parse_digest_cli(["--once"]).once is True
+
+
+@pytest.mark.asyncio
+async def test_legacy_digest_container_idles_without_generating() -> None:
+    """Leftover digest-worker must not generate-and-exit (Docker restart loop)."""
+    with (
+        patch("app.workers.digest.run_digest_once", new=AsyncMock()) as generate,
+        patch(
+            "app.workers.digest.asyncio.sleep",
+            new=AsyncMock(side_effect=asyncio.CancelledError),
+        ) as sleep,
+    ):
+        with pytest.raises(asyncio.CancelledError):
+            await run_legacy_digest_container()
+
+    generate.assert_not_called()
+    sleep.assert_awaited_once()
+
+
+def test_digest_main_without_once_idles(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.argv", ["digest"])
+    with patch("app.workers.digest.asyncio.run") as run:
+        from app.workers.digest import main
+
+        main()
+
+    run.assert_called_once()
+    coro = run.call_args.args[0]
+    assert coro.cr_code.co_name == "run_legacy_digest_container"
+    coro.close()
+
+
+def test_digest_main_once_generates(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.argv", ["digest", "--once"])
+    with patch("app.workers.digest.asyncio.run") as run:
+        from app.workers.digest import main
+
+        main()
+
+    run.assert_called_once()
+    coro = run.call_args.args[0]
+    assert coro.cr_code.co_name == "run_digest_once"
+    coro.close()

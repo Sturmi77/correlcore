@@ -39,10 +39,11 @@ is no separate `digest` profile or container. Delivery is opt-in **per user**
 (Settings → Analysis, `digest_enabled`, off by default).
 
 > Upgrading from a stack that used `COMPOSE_PROFILES=…,digest`? Remove the old
-> `digest-worker` orphan once (`docker compose rm -sf digest-worker` or
-> `docker compose up -d --remove-orphans`) and drop `digest` from
-> `COMPOSE_PROFILES` — otherwise it keeps running on a stale image and writes
-> duplicate digest snapshots.
+> `digest-worker` once (`docker compose rm -sf digest-worker` or, after
+> replacing compose files, `docker compose up -d --remove-orphans`) and drop
+> `digest` from `COMPOSE_PROFILES`. An orphan on a stale image keeps the old
+> Sunday loop (duplicate weekly snapshots). A leftover service whose compose
+> file was not updated is recreated on image pull and is not an orphan.
 
 Examples:
 
