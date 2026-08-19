@@ -1803,6 +1803,7 @@
   },
   "landing": {
     "badge": "Selbst gehostet · v{version}",
+    "badge_hosted": "Gehostet · v{version}",
     "hero_title": "Verstehe, warum manche Tage gut sind – und andere nicht.",
     "hero_subtitle": "CorrelCore ist eine datenschutzfreundliche Korrelationsanalyse fürs Wohlbefinden. 60 Sekunden am Tag eintragen – die Auswertung zeigt, welche Faktoren wirklich zusammenhängen. Keine Gamification, niemals.",
     "hero_micro": "Spearman-, Lag- und Multivariat-Analyse – FDR-korrigiert und nach Konfidenz gestuft.",

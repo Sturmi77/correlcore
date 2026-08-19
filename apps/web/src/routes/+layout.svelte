@@ -7,6 +7,7 @@
   import { setupI18n } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
   import { auth, hydrate, reconnectSession } from '$lib/stores/auth';
+  import { loadInstanceConfig } from '$lib/stores/instanceConfig';
   import { syncDevModeFromStorage, devPhase } from '$lib/stores/devMode';
   import { ensureStandaloneLaunchRoute } from '$lib/utils/pwaLaunch';
   import AppNav from '$lib/components/common/AppNav.svelte';
@@ -95,6 +96,9 @@
     if (saved) {
       theme.set(saved);
     }
+    // Discover hosted vs self-host at runtime (public, best-effort) so the
+    // landing can pick the right primary CTA without a build-time flag.
+    void loadInstanceConfig();
     void hydrate().then(() => scheduleSync());
     const onBrowserOnline = () => {
       // After a network restore, re-probe the API then drain the outbox.

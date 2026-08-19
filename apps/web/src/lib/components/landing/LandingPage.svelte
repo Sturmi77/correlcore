@@ -31,17 +31,29 @@
     REPO_URL,
   } from '$lib/constants/publicUrls';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
+  import { instanceConfig } from '$lib/stores/instanceConfig';
 
   const faqKeys = ['1', '2', '3', '4'] as const;
 
-  // B2 (#734) — hosted vs. self-host mode. On the SaaS site (correlcore.com)
-  // account creation is the primary action; on the open-source / self-host
-  // marketing page there is no instance to register against yet, so the
-  // primary action is "self-host it" (→ docs). Instance owners still reach
-  // login (and register via the login page) in both modes. Build-time flag,
-  // mirroring the VITE_* convention used elsewhere (offline/capacitor).
-  const hostedMode =
-    import.meta.env.VITE_HOSTED_MODE === 'true' || import.meta.env.VITE_HOSTED_MODE === '1';
+  // B2 (#734/#735) — hosted vs. self-host is a RUNTIME fact from the backend
+  // (GET /api/v1/instance), not a build flag, so one bundle serves both the
+  // managed SaaS and any self-hosted instance. Primary CTA is account signup
+  // whenever registration is available here — the hosted SaaS, or a self-host
+  // instance with open registration; otherwise it's "self-host it" (→ docs)
+  // for the marketing/promo / locked-down case. Login stays in every mode
+  // (the login page links to register). Until the descriptor resolves (or if
+  // it never does — e.g. no backend), we fall back to the self-host CTA.
+  $: showRegisterCta = $instanceConfig
+    ? $instanceConfig.mode === 'hosted' || $instanceConfig.registration_enabled
+    : false;
+  // B3: prefer the real running version from the backend; fall back to the
+  // bundled app.version string. The badge wording follows the mode so a hosted
+  // deployment doesn't claim to be self-hosted.
+  $: badgeVersion = $instanceConfig?.version ?? $_('app.version');
+  $: badgeText =
+    $instanceConfig?.mode === 'hosted'
+      ? $_('landing.badge_hosted', { values: { version: badgeVersion } })
+      : $_('landing.badge', { values: { version: badgeVersion } });
 
   // Trust row (D2): four value props, each tied to a token-tinted marker.
   const trustItems = [
@@ -222,7 +234,7 @@
       <Button href="/auth/login" variant="ghost" size="sm" data-testid="landing-cta-login">
         {$_('landing.cta_login')}
       </Button>
-      {#if hostedMode}
+      {#if showRegisterCta}
         <Button
           href="/auth/register"
           variant="primary"
@@ -252,7 +264,7 @@
     <span class="landing__hero-aurora" aria-hidden="true"></span>
     <div class="landing__hero-copy">
       <span class="landing__badge" data-testid="landing-badge">
-        {$_('landing.badge', { values: { version: $_('app.version') } })}
+        {badgeText}
       </span>
       <h1 class="landing__title">{$_('landing.hero_title')}</h1>
       <p class="landing__subtitle">{$_('landing.hero_subtitle')}</p>
