@@ -17,19 +17,12 @@
   import { cubicOut } from 'svelte/easing';
   import { fade } from 'svelte/transition';
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
-  import {
-    landingTagClusters,
-    landingTimeseriesPoints,
-    landingInsights,
-    landingFeaturedInsight,
-    landingLagInsights,
-    landingMaturity,
-    landingCooccurrence,
-    landingWeekdaySummary,
-    landingWeekdayInsight,
-  } from '$lib/components/landing/landingDemoData';
+  import { buildLandingDemo } from '$lib/components/landing/landingDemoData';
 
-  const landingClusterMeta = buildTagClusterMeta(landingTagClusters);
+  // B4 (#734): product-shot data follows the active locale. Rebuilt reactively
+  // from `$_`, so switching DE/EN re-localizes the demo tags/statements too.
+  $: demo = buildLandingDemo($_);
+  $: landingClusterMeta = buildTagClusterMeta(demo.tagClusters);
   import { BRAND_MARK_MD } from '$lib/constants/iconSizes';
   import {
     ANDROID_RELEASES_URL,
@@ -41,12 +34,23 @@
 
   const faqKeys = ['1', '2', '3', '4'] as const;
 
+  // B2 (#734) — hosted vs. self-host mode. On the SaaS site (correlcore.com)
+  // account creation is the primary action; on the open-source / self-host
+  // marketing page there is no instance to register against yet, so the
+  // primary action is "self-host it" (→ docs). Instance owners still reach
+  // login (and register via the login page) in both modes. Build-time flag,
+  // mirroring the VITE_* convention used elsewhere (offline/capacitor).
+  const hostedMode =
+    import.meta.env.VITE_HOSTED_MODE === 'true' || import.meta.env.VITE_HOSTED_MODE === '1';
+
   // Trust row (D2): four value props, each tied to a token-tinted marker.
   const trustItems = [
     { key: 'privacy', tone: 'mood' },
     { key: 'selfhost', tone: 'energy' },
     { key: 'offline', tone: 'sleep' },
-    { key: 'license', tone: 'stress' },
+    // B5 (#734): not 'stress' — a red marker reads as an error/warning on a
+    // positive trust badge. Gold is distinct from the other three and neutral.
+    { key: 'license', tone: 'gold' },
   ] as const;
 
   // Maturity journey (A2 + C4): the three insight tiers, each carrying its
@@ -210,6 +214,7 @@
         size="sm"
         target="_blank"
         rel="noopener noreferrer"
+        className="landing__header-apk"
         data-testid="landing-cta-apk"
       >
         {$_('landing.cta_apk')}
@@ -217,22 +222,38 @@
       <Button href="/auth/login" variant="ghost" size="sm" data-testid="landing-cta-login">
         {$_('landing.cta_login')}
       </Button>
-      <Button
-        href="/auth/register"
-        variant="primary"
-        size="sm"
-        className="landing__cta-primary"
-        data-testid="landing-cta-register"
-      >
-        {$_('landing.cta_register')}
-      </Button>
+      {#if hostedMode}
+        <Button
+          href="/auth/register"
+          variant="primary"
+          size="sm"
+          className="landing__cta-primary"
+          data-testid="landing-cta-register"
+        >
+          {$_('landing.cta_register')}
+        </Button>
+      {:else}
+        <Button
+          href={DOCS_SITE_URL}
+          variant="primary"
+          size="sm"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="landing__cta-primary"
+          data-testid="landing-cta-selfhost"
+        >
+          {$_('landing.cta_selfhost')}
+        </Button>
+      {/if}
     </div>
   </header>
 
   <section class="landing__hero">
     <span class="landing__hero-aurora" aria-hidden="true"></span>
     <div class="landing__hero-copy">
-      <span class="landing__badge" data-testid="landing-badge">{$_('landing.badge')}</span>
+      <span class="landing__badge" data-testid="landing-badge">
+        {$_('landing.badge', { values: { version: $_('app.version') } })}
+      </span>
       <h1 class="landing__title">{$_('landing.hero_title')}</h1>
       <p class="landing__subtitle">{$_('landing.hero_subtitle')}</p>
       <p class="landing__hero-micro">{$_('landing.hero_micro')}</p>
@@ -248,7 +269,7 @@
     <div class="landing__hero-visual">
       <span class="landing__hero-glow" aria-hidden="true"></span>
       <BrowserFrameMock>
-        <TagGroupsSection data={landingTagClusters} plainClusterTitles />
+        <TagGroupsSection data={demo.tagClusters} plainClusterTitles />
       </BrowserFrameMock>
     </div>
   </section>
@@ -279,7 +300,7 @@
                order and pointer events, aria-hidden hides the duplicated app
                UI from screen readers; the figcaption carries the description. -->
           <div class="landing__shot" inert aria-hidden="true">
-            <InsightMatrix insights={landingInsights} preview />
+            <InsightMatrix insights={demo.insights} preview />
           </div>
         </BrowserFrameMock>
         <figcaption>{$_('landing.preview_matrix')}</figcaption>
@@ -287,7 +308,7 @@
       <figure class="landing__preview">
         <BrowserFrameMock address="app.correlcore.example/insights">
           <div class="landing__shot" inert aria-hidden="true">
-            <InsightCard insight={landingFeaturedInsight} maturity={landingMaturity} featured />
+            <InsightCard insight={demo.featuredInsight} maturity={demo.maturity} featured />
           </div>
         </BrowserFrameMock>
         <figcaption>{$_('landing.preview_card')}</figcaption>
@@ -296,7 +317,7 @@
         <BrowserFrameMock address="app.correlcore.example/insights">
           <div class="landing__shot" inert aria-hidden="true">
             <TagCooccurrenceHeatmap
-              data={landingCooccurrence}
+              data={demo.cooccurrence}
               sortMode="clustered"
               enableClusterSort
               clusterMeta={landingClusterMeta}
@@ -311,7 +332,7 @@
       <figure class="landing__preview">
         <BrowserFrameMock address="app.correlcore.example/insights">
           <div class="landing__shot" inert aria-hidden="true">
-            <LagCorrelationHeatmap insights={landingLagInsights} />
+            <LagCorrelationHeatmap insights={demo.lagInsights} />
           </div>
         </BrowserFrameMock>
         <figcaption>{$_('landing.preview_lag')}</figcaption>
@@ -332,9 +353,9 @@
       <BrowserFrameMock address="app.correlcore.example/home">
         <div class="landing__shot" inert aria-hidden="true">
           <HomeWeekdayOverview
-            insights={[landingWeekdayInsight]}
-            weekdayInsight={landingWeekdayInsight}
-            weekdaySummary={landingWeekdaySummary}
+            insights={[demo.weekdayInsight]}
+            weekdayInsight={demo.weekdayInsight}
+            weekdaySummary={demo.weekdaySummary}
           />
         </div>
       </BrowserFrameMock>
@@ -401,7 +422,7 @@
           />
         </div>
         <div class="landing__timeseries" aria-hidden="true">
-          <MetricTimeseries points={landingTimeseriesPoints} range="week" enableCursor={false} />
+          <MetricTimeseries points={demo.timeseriesPoints} range="week" enableCursor={false} />
         </div>
       </article>
     </div>
@@ -597,6 +618,19 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--space-2);
+    min-width: 0;
+  }
+
+  /* B1 (#734) — on narrow screens the five header actions overflow and wrap
+     messily into the hero. The APK button is redundant with the Android
+     section below, so drop it from the header on mobile; the remaining actions
+     (theme, lang, login, primary) fit or wrap cleanly. */
+  @media (max-width: 640px) {
+    /* Scope under the (scoped) header so specificity (0,2,0) beats Button's own
+       `.ui-button { display: inline-flex }` regardless of stylesheet order. */
+    .landing__header :global(.landing__header-apk) {
+      display: none;
+    }
   }
 
   .landing__hero {
@@ -749,8 +783,8 @@
   .landing__trust-item[data-tone='sleep'] {
     --tone: var(--color-metric-sleep);
   }
-  .landing__trust-item[data-tone='stress'] {
-    --tone: var(--color-metric-stress);
+  .landing__trust-item[data-tone='gold'] {
+    --tone: var(--color-gold);
   }
 
   /* C3 — Primary CTA glow. Rests with a soft halo, brightens on hover/focus. */
