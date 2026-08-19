@@ -8,6 +8,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Symptom-Auswahl im Entry Sheet als kompakte Chips** — Symptome sind seit
+  #544 presence-only (binärer Toggle), wurden aber weiterhin als volle Zeile
+  mit eigenem, volle-Breite-Pill-Button je Symptom gerendert, was auf Mobile
+  extrem viel vertikalen Platz kostete (~450–550 px für die Default-Symptome).
+  Sie erscheinen jetzt als umbrechende Toggle-Chips — dasselbe Muster wie der
+  angrenzende `TagPicker` — was die Höhe rund um das 3–4-Fache reduziert und
+  den Abschnitt visuell konsistent macht (#732). Barrierefreiheit
+  (`aria-pressed`, benannte `role="group"`) und das 44-px-Tap-Target bleiben
+  erhalten.
+
 ### Fixed
 
 - **Tag-Erstellung ohne Icon-Feld, mit Gruppenfarbe als Vorschlag** — das

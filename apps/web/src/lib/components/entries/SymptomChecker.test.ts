@@ -81,20 +81,29 @@ describe('SymptomChecker', () => {
 
   it('treats legacy intensity 0 as absent and upgrades on toggle', async () => {
     // Backend contract: intensity 0 = absent (analytics use intensity > 0).
-    // The presence toggle must show "Not present" and the first click must
+    // The presence chip must read as not-present and the first click must
     // mark present — not clear the row.
     const selected: SymptomEntry[] = [{ symptom_id: symptom.id, intensity: 0 }];
     render(SymptomChecker, { props: { selected } });
 
     const toggle = screen.getByTestId('symptom-toggle') as HTMLButtonElement;
     expect(toggle.getAttribute('aria-pressed')).toBe('false');
-    expect(toggle.textContent).toContain('symptom.present_off');
+    expect(toggle.classList.contains('symptom-chip-active')).toBe(false);
     expect(toggle.disabled).toBe(false);
+    // The chip shows the symptom name, not a present/absent text label.
+    expect(toggle.textContent).toContain('Headache');
 
     toggle.click();
     await Promise.resolve();
 
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
-    expect(toggle.textContent).toContain('symptom.present_on');
+    expect(toggle.classList.contains('symptom-chip-active')).toBe(true);
+  });
+
+  it('renders symptoms as a labelled chip group (#732)', () => {
+    render(SymptomChecker, { props: { selected: [] as SymptomEntry[] } });
+    const group = screen.getByRole('group', { name: 'entry.section.symptoms' });
+    // Compact chips, not full-width rows: the toggle lives inside the group.
+    expect(group.querySelector('[data-testid="symptom-toggle"]')).not.toBeNull();
   });
 });

@@ -17,15 +17,19 @@
    *
    * UX
    * --
-   * Each symptom row is a single present/not-present toggle (#544): intensity
+   * Each symptom is a single present/not-present toggle (#544): intensity
    * levels are hidden until the intensity analytics land, since the stored
-   * value is currently ignored. A note explains this above the list.
+   * value is currently ignored. A note explains this above the list. Because
+   * a symptom is now binary (present/absent), it renders as a compact
+   * wrapping chip — the same pattern as the adjacent TagPicker — instead of a
+   * full-width row per symptom, which was extremely space-hungry on mobile
+   * (#732).
    *
    * Accessibility
    * -------------
-   * Each toggle is a `<button type="button" aria-pressed>` so screen readers
-   * announce whether the symptom is marked present. Each row is a fieldset with
-   * a legend carrying the symptom name.
+   * Each chip is a `<button type="button" aria-pressed>` so screen readers
+   * announce whether the symptom is marked present; its `aria-label` carries
+   * the symptom name. The chips live in a labelled `role="group"`.
    *
    * Privacy
    * -------
@@ -39,7 +43,7 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import IconRender from '$lib/components/common/IconRender.svelte';
-  import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
+  import { ICON_SIZE_MD, ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import { refreshSymptoms, submitSymptom, symptoms, symptomsList } from '$lib/stores/symptoms';
   import {
     MAX_SYMPTOMS_PER_ENTRY,
@@ -240,32 +244,28 @@
   {/if}
 
   {#if list.length > 0}
-    <ul class="symptom-list">
+    <div class="symptom-chips" role="group" aria-label={$_('entry.section.symptoms')}>
       {#each list as symptom (symptom.id)}
         {@const current = getIntensity(symptom.id, selected)}
         {@const present = isPresentIntensity(current)}
         {@const name = displayName(symptom, $_)}
-        <li class="symptom-row">
-          <fieldset class="symptom-fieldset" {disabled}>
-            <legend class="symptom-name">
-              <span>{name}</span>
-            </legend>
-            <button
-              type="button"
-              class="symptom-toggle"
-              class:symptom-toggle-active={present}
-              aria-pressed={present}
-              data-testid="symptom-toggle"
-              aria-label={$_('symptom.present_toggle', { values: { name } })}
-              disabled={disabled || (!present && atLimit && current !== 0)}
-              on:click={() => toggleSymptom(symptom.id)}
-            >
-              {present ? $_('symptom.present_on') : $_('symptom.present_off')}
-            </button>
-          </fieldset>
-        </li>
+        <button
+          type="button"
+          class="symptom-chip"
+          class:symptom-chip-active={present}
+          aria-pressed={present}
+          data-testid="symptom-toggle"
+          aria-label={$_('symptom.present_toggle', { values: { name } })}
+          disabled={disabled || (!present && atLimit && current !== 0)}
+          on:click={() => toggleSymptom(symptom.id)}
+        >
+          {#if symptom.icon}
+            <IconRender icon={symptom.icon} size={ICON_SIZE_SM} />
+          {/if}
+          <span class="symptom-chip-name">{name}</span>
+        </button>
       {/each}
-    </ul>
+    </div>
   {:else if $symptoms.status === 'ready'}
     <p class="symptom-status">{$_('symptom.empty')}</p>
   {/if}
@@ -411,36 +411,10 @@
     font-size: var(--text-sm);
   }
 
-  .symptom-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  .symptom-chips {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .symptom-row {
-    margin: 0;
-  }
-
-  .symptom-fieldset {
-    border: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: minmax(8rem, 1fr) auto;
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  .symptom-name {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
   .symptom-custom-hint {
@@ -468,33 +442,35 @@
     opacity: 0.85;
   }
 
-  .symptom-toggle {
+  .symptom-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     min-height: 44px;
-    padding: var(--space-2) var(--space-4);
+    padding: 0.35rem 0.75rem;
     border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
     background: transparent;
     color: inherit;
     font-size: var(--text-sm);
-    font-weight: 600;
+    line-height: 1.2;
     cursor: pointer;
-    white-space: nowrap;
     transition:
       background var(--transition-fast),
       border-color var(--transition-fast),
       color var(--transition-fast);
   }
 
-  .symptom-toggle:hover:not(:disabled) {
+  .symptom-chip:hover:not(:disabled) {
     border-color: var(--color-primary);
   }
 
-  .symptom-toggle:disabled {
+  .symptom-chip:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
 
-  .symptom-toggle-active {
+  .symptom-chip-active {
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: var(--color-text-inverse);
@@ -564,15 +540,5 @@
     display: flex;
     gap: var(--space-2);
     justify-content: flex-end;
-  }
-
-  @media (max-width: 480px) {
-    .symptom-fieldset {
-      grid-template-columns: 1fr;
-    }
-
-    .symptom-toggle {
-      width: 100%;
-    }
   }
 </style>

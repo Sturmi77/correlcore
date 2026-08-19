@@ -364,8 +364,6 @@
     "scale_label": "Intensity for {name}",
     "intensity_disabled_hint": "Intensity levels aren't available yet — symptoms are recorded as present for now.",
     "present_toggle": "Mark {name} as present",
-    "present_on": "Present",
-    "present_off": "Not present",
     "intensity": {
       "0": "None",
       "1": "Mild",
