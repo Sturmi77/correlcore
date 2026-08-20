@@ -49,7 +49,7 @@ CorrelCore fills the gap: log ~60 seconds a day, and it surfaces the association
 - 📴 **Offline-capable** — installable PWA with offline shell caching and feature-flagged local-first sync.
 - ⚡ **60 seconds a day** — mood, energy, stress, tags and symptoms in one quick check-in.
 - 🚫 **No gamification, ever** — you collect data points, not streaks; the app never optimizes for how often you open it.
-- 🧾 **Your data is yours** — full export any time; AGPL-licensed, auditable source.
+- 🧾 **Your data is yours** — export your entries any time; AGPL-licensed, auditable source.
 
 <p align="center">
   <img src="docs/assets/screenshots/weekday.png" alt="Weekday overview — average mood per day with each day's standout signal" width="620" />
@@ -63,7 +63,7 @@ CorrelCore is one codebase that runs in two modes — the **same web bundle**, d
 | Mode              | What it is                                                                                | Who runs it | Status                                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
 | **Self-hosted**   | You run the full stack (Docker) on your own server; your data never leaves your instance. | You         | **Available now** — [Quickstart](#quickstart-self-host) · [`docs/selfhost/INSTALL.md`](docs/selfhost/INSTALL.md) |
-| **Hosted (SaaS)** | Managed instance at `correlcore.com` — sign up, no ops.                                   | Us          | Runtime support **shipped**; public launch in progress (M10.2 → M12)                                             |
+| **Hosted (SaaS)** | Managed instance at `correlcore.com` — sign up, no ops.                                   | Us          | **Live (beta)** — public cutover done; general-availability closeout in progress                                 |
 
 Two backend env vars control the mode; defaults give a working self-host with open registration:
 
@@ -86,6 +86,7 @@ cd correlcore/infra/docker
 cp .env.example .env
 # Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
 # Pin IMAGE_TAG=v1.4.0 (or the latest v1.x) for published GHCR images
+# Set acme.email in infra/docker/traefik/traefik.yml to match LETSENCRYPT_EMAIL
 docker compose up -d
 ```
 
@@ -97,9 +98,10 @@ After startup, CorrelCore is available at `https://your-domain.tld`.
 
 ## Roadmap
 
-- [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights.
-- [ ] **M10.2 / M12** — Hosted launch (`correlcore.com`): runtime hosted/self-host mode **shipped** (see [Deployment options](#deployment-options)); managed edge, SMTP and public sign-up remaining.
+- [x] **M8** — Sleep & Health Connect: manual sleep fields, wearable import, and sleep↔mood insights **shipped**; on-device visual/HC QA still pending.
+- [x] **M10.2** — Hosted launch (`correlcore.com`): public cutover **live** (topology H; register/verify E2E green); launch closeout ([#621](https://github.com/Sturmi77/correlcore/issues/621)) remaining.
 - [ ] **M11** — Android Play Store (Capacitor): shell, signed sideload, widget and FCM **complete**; Play Console / ops remaining ([#429](https://github.com/Sturmi77/correlcore/issues/429)).
+- [ ] **M12** — Managed SaaS hardening (general availability on top of the M10.2 cutover).
 - [ ] **M13** — Photo & media: MinIO gallery; EXIF-strip foundation shipped.
 
 Full roadmap lives in [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md); shipped milestones are archived in [`docs/releases/COMPLETED_MILESTONES.md`](docs/releases/COMPLETED_MILESTONES.md).
