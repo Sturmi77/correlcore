@@ -15,6 +15,7 @@
   import PullToRefresh from '$lib/components/common/PullToRefresh.svelte';
   import PwaStatusBanner from '$lib/components/common/PwaStatusBanner.svelte';
   import GlobalEntrySheet from '$lib/components/entries/GlobalEntrySheet.svelte';
+  import WeeklyDigestModal from '$lib/components/insights/WeeklyDigestModal.svelte';
   import { isPublicRoute, isMarketingLandingView, shouldShowAppNav } from '$lib/navigation/appNav';
   import { entrySheetStore } from '$lib/stores/entrySheet';
   import { pwaLifecycle } from '$lib/stores/pwaLifecycle';
@@ -168,6 +169,7 @@
       <AppNav />
       <PwaStatusBanner />
       <GlobalEntrySheet />
+      <WeeklyDigestModal />
     </div>
   {:else}
     <!--

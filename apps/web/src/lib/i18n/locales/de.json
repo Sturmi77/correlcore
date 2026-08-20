@@ -1148,7 +1148,13 @@
       "error": "Wochenzusammenfassung konnte nicht geladen werden.",
       "open_settings": "Einstellungen oeffnen",
       "range": "Woche vom {start} bis {end}",
-      "history_link": "Erkenntnis-Verlauf oeffnen"
+      "history_link": "Erkenntnis-Verlauf oeffnen",
+      "modal": {
+        "eyebrow": "Neu diese Woche",
+        "view_full": "Vollstaendige Zusammenfassung oeffnen",
+        "dismiss": "Schliessen",
+        "close_aria": "Wochenzusammenfassung schliessen"
+      }
     },
     "mobile": {
       "eyebrow": "Mobile Zusammenfassung",

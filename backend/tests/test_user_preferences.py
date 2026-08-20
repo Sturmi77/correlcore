@@ -55,6 +55,7 @@ def _make_preferences(user: User) -> UserPreference:
     preferences.dismissed_insight_keys = []
     preferences.reached_milestone_keys = []
     preferences.last_seen_insight_at = None
+    preferences.last_seen_digest_at = None
     preferences.created_at = now
     preferences.updated_at = now
     return preferences
@@ -93,6 +94,26 @@ async def test_update_user_preferences_dedupes_dismissed_keys() -> None:
     assert out.dismissed_insight_keys == ["first_week_pattern"]
     db.flush.assert_awaited_once()
     db.refresh.assert_awaited_once_with(preferences)
+
+
+@pytest.mark.asyncio
+async def test_update_user_preferences_sets_last_seen_digest_at() -> None:
+    # #739: the one-time modal marks a digest seen by patching this timestamp.
+    user = make_user()
+    preferences = _make_preferences(user)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    seen_at = datetime(2026, 8, 16, 3, tzinfo=UTC)
+    out = await update_user_preferences(
+        db,
+        user_id=user.id,
+        payload=UserPreferencesUpdate(last_seen_digest_at=seen_at),
+    )
+
+    assert out.last_seen_digest_at == seen_at
 
 
 @pytest.mark.asyncio

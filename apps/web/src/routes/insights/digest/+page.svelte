@@ -4,16 +4,12 @@
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
   import { ApiError } from '$lib/api/client';
-  import {
-    fetchLatestInsightDigest,
-    type InsightDigestResponse,
-    type InsightResponse,
-  } from '$lib/api/insights';
+  import { fetchLatestInsightDigest, type InsightDigestResponse } from '$lib/api/insights';
   import Button from '$lib/components/common/Button.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
-  import InsightCard from '$lib/components/insights/InsightCard.svelte';
+  import DigestInsightCards from '$lib/components/insights/DigestInsightCards.svelte';
   import CorrelationHint from '$lib/components/insights/CorrelationHint.svelte';
   // Maintainer (#632): digest cards render statements via InsightCard. A single
   // persistent CorrelationHint below the header gives a ≤1-click link to the
@@ -23,29 +19,6 @@
   let digest: InsightDigestResponse | null = null;
   let loading = true;
   let error = '';
-
-  function toInsightResponse(item: InsightDigestResponse['insights'][number]): InsightResponse {
-    return {
-      id: item.id,
-      user_id: '',
-      insight_type: item.insight_type,
-      tier: 'developing',
-      metric: item.metric,
-      subject_type: null,
-      subject_id: null,
-      subject_label: null,
-      effect_size: item.effect_size,
-      confidence: item.confidence,
-      sample_n: 0,
-      statement: item.statement,
-      flags: { medical_disclaimer_required: true, causal_claim: false },
-      payload: {},
-      generated_for_date: digest?.week_end ?? '',
-      generated_at: digest?.week_end ?? '',
-      created_at: digest?.week_end ?? '',
-      updated_at: digest?.week_end ?? '',
-    };
-  }
 
   async function loadDigest(): Promise<void> {
     loading = true;
@@ -105,17 +78,9 @@
       {#if digest.insights.length > 0}
         <CorrelationHint returnTo="/insights/digest" />
       {/if}
-      <ul class="digest-page__list">
-        {#each digest.insights as item (item.id)}
-          <li>
-            <InsightCard
-              insight={toInsightResponse(item)}
-              showMaturityBadge={false}
-              dismissable={false}
-            />
-          </li>
-        {/each}
-      </ul>
+      <div class="digest-page__list">
+        <DigestInsightCards insights={digest.insights} referenceDate={digest.week_end} />
+      </div>
       <p class="digest-page__history-link">
         <a href="/insights/history">{$_('insights.digest.history_link')}</a>
       </p>
@@ -141,11 +106,7 @@
   }
 
   .digest-page__list {
-    list-style: none;
-    margin: var(--space-4) 0 0;
-    padding: 0;
-    display: grid;
-    gap: var(--space-3);
+    margin-top: var(--space-4);
   }
 
   .digest-page__actions {

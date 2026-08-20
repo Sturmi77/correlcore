@@ -1148,7 +1148,13 @@
       "error": "Could not load weekly digest.",
       "open_settings": "Open settings",
       "range": "Week of {start} to {end}",
-      "history_link": "Open insight timeline"
+      "history_link": "Open insight timeline",
+      "modal": {
+        "eyebrow": "New this week",
+        "view_full": "Open full digest",
+        "dismiss": "Dismiss",
+        "close_aria": "Close weekly digest"
+      }
     },
     "mobile": {
       "eyebrow": "Mobile summary",

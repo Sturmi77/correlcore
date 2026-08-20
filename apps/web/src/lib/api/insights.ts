@@ -70,6 +70,9 @@ export interface InsightDigestResponse {
   insights: InsightDigestItem[];
   push_title: string;
   push_body: string;
+  // #739: set for a persisted weekly digest, null for the on-demand recompute
+  // fallback. Only a stored digest (stable timestamp) drives the one-time modal.
+  generated_at?: string | null;
 }
 
 export interface InsightListQuery {

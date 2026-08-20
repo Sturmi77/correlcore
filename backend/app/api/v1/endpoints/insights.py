@@ -136,6 +136,7 @@ async def get_latest_digest_endpoint(
         ],
         push_title=push["title"],
         push_body=push["body"],
+        generated_at=digest.generated_at,
     )
 
 
