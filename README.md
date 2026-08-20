@@ -43,13 +43,13 @@ CorrelCore fills the gap: log ~60 seconds a day, and it surfaces the association
 
 ## Features
 
-- 📊 **Correlations, not raw data** — statistical analysis explains why days were good or bad, ranked by effect size and confidence.
-- ⏱️ **Time-lag insights** — see _with what delay_ a factor (e.g. poor sleep) tends to move mood or energy.
-- 🔒 **Privacy-first & self-hosted** — your health data stays on your instance; no third-party telemetry. Notes and custom symptoms are encrypted at rest.
-- 📴 **Offline-capable** — installable PWA with offline shell caching and feature-flagged local-first sync.
-- ⚡ **60 seconds a day** — mood, energy, stress, tags and symptoms in one quick check-in.
-- 🚫 **No gamification, ever** — you collect data points, not streaks; the app never optimizes for how often you open it.
-- 🧾 **Your data is yours** — export your entries any time; AGPL-licensed, auditable source.
+- **Correlations, not raw data** — statistical analysis explains why days were good or bad, ranked by effect size and confidence.
+- **Time-lag insights** — see _with what delay_ a factor (e.g. poor sleep) tends to move mood or energy.
+- **Privacy-first & self-hosted** — your health data stays on your instance; no third-party telemetry. Notes and custom symptoms are encrypted at rest.
+- **Offline-capable** — installable PWA with offline shell caching and feature-flagged local-first sync.
+- **60 seconds a day** — mood, energy, stress, tags and symptoms in one quick check-in.
+- **No gamification, ever** — you collect data points, not streaks; the app never optimizes for how often you open it.
+- **Your data is yours** — export your entries any time; AGPL-licensed, auditable source.
 
 <p align="center">
   <img src="docs/assets/screenshots/weekday.png" alt="Weekday overview — average mood per day with each day's standout signal" width="620" />
