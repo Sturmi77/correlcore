@@ -23,6 +23,12 @@
   let open = false;
   let digest: InsightDigestResponse | null = null;
 
+  // Yield to the entry/onboarding sheet *reactively*: those sheets can open
+  // later in the same session (Home / GlobalEntrySheet), so a one-shot check at
+  // decision time is not enough. While a blocking sheet is open we hide the
+  // digest modal and re-show it once the sheet closes — never overlaying it.
+  $: visible = open && !$entrySheetStore.open;
+
   const TITLE_ID = 'weekly-digest-modal-title';
 
   async function maybeShow(): Promise<void> {
@@ -44,13 +50,9 @@
       return;
     }
 
-    if (
-      shouldShowWeeklyDigestModal({
-        preferences,
-        digest: latest,
-        blockingSheetOpen: $entrySheetStore.open,
-      })
-    ) {
+    // Decide purely on digest freshness; the reactive `visible` gate above
+    // defers rendering while a blocking sheet is open (handles either ordering).
+    if (shouldShowWeeklyDigestModal({ preferences, digest: latest })) {
       digest = latest;
       open = true;
     }
@@ -80,9 +82,9 @@
   });
 </script>
 
-{#if open && digest}
+{#if visible && digest}
   <BottomSheet
-    {open}
+    open={visible}
     labelledBy={TITLE_ID}
     testId="weekly-digest-modal"
     closeAriaLabel={$_('insights.digest.modal.close_aria')}
