@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" /></a>
   <a href="https://sturmi77.github.io/correlcore/"><img src="https://img.shields.io/badge/release-selfhost%20v1.x-blue" alt="Release" /></a>
   <a href="#tech-stack"><img src="https://img.shields.io/badge/stack-FastAPI%20%2B%20SvelteKit%20%2B%20PostgreSQL-green" alt="Stack" /></a>
-  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.3.0-informational" alt="Latest tag" /></a>
+  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.4.0-informational" alt="Latest tag" /></a>
 </p>
 
 ---
@@ -31,7 +31,27 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 | **60 seconds per day**         | No more, or it simply won't get done                                                                         |
 | **No gamification, ever**      | You collect data points — not streaks, and not how often you open the app                                    |
 
-**Public selfhost line:** tag **`v1.0.0`** (2026-07-11, M10) through the `v1.0.x` patch line, then **`v1.1.x`**, through latest **`v1.3.0`** (sleep-quality slider input + a 4th trend line, Health Connect sync visibility, on the M8 sleep & HC core — no new database migrations). Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/). Release notes: [`CHANGELOG.md`](CHANGELOG.md).
+**Latest release:** **`v1.4.0`** on the supported self-host **`v1.x`** line. Docs: [sturmi77.github.io/correlcore](https://sturmi77.github.io/correlcore/) · Release notes: [`CHANGELOG.md`](CHANGELOG.md). Earlier releases and completed milestones are archived (see [Roadmap](#roadmap) and [`docs/releases/COMPLETED_MILESTONES.md`](docs/releases/COMPLETED_MILESTONES.md)).
+
+---
+
+## Deployment options
+
+CorrelCore is one codebase that runs in two modes — the **same web bundle**, distinguished at runtime by the backend (`GET /api/v1/instance`), so there is no separate build.
+
+| Mode              | What it is                                                                                | Who runs it | Status                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------- |
+| **Self-hosted**   | You run the full stack (Docker) on your own server; your data never leaves your instance. | You         | **Available now** — [Quickstart](#quickstart-selfhost) · [`docs/selfhost/INSTALL.md`](docs/selfhost/INSTALL.md) |
+| **Hosted (SaaS)** | Managed instance at `correlcore.com` — sign up, no ops.                                   | Us          | Runtime support **shipped**; public launch in progress (M10.2 → M12)                                            |
+
+The mode is set by two env vars on the backend; defaults give a working self-host with open registration:
+
+| Env variable           | Default    | Effect                                                                                                                                          |
+| ---------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DEPLOYMENT_MODE`      | `selfhost` | `selfhost` \| `hosted` — badge wording and default landing CTA framing.                                                                         |
+| `REGISTRATION_ENABLED` | `true`     | `true` opens self-registration (landing shows **Create account**); `false` closes it (server-enforced) and the landing points to **Self-host**. |
+
+**Log in** is always available and logged-in users never see the marketing landing. Full behavior table and per-role walkthrough: [`docs/selfhost/INSTANCE_MODE.md`](docs/selfhost/INSTANCE_MODE.md).
 
 ---
 
@@ -40,20 +60,18 @@ People sense that sleep, exercise, remote work days, or social contacts influenc
 ### Active
 
 - [ ] **M8** — Sleep & Health Connect: manual sleep fields, Android wearable import, sleep↔mood insights, cycle HC sync (with M11). HC **consent** foundation shipped (#31). See [`docs/M8_NOTES.md`](docs/M8_NOTES.md).
-- [ ] **M10.2** — Public Hosted Launch (`correlcore.com`): Nginx edge on NAS, real SMTP, login without VPN, APK on landing — [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md), backlog [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_BACKLOG.md). Selfhost path stays independent.
-- [ ] **M11** — Android Play Store (Capacitor) — Sprints 1–5 **complete** (shell, signed sideload, Bearer auth, Glance widget, FCM registration). Play Console / Firebase / ops remaining — [`docs/M11_SPRINT_PLAN.md`](docs/M11_SPRINT_PLAN.md), [#429](https://github.com/Sturmi77/correlcore/issues/429). Sideload APKs attach to `v*` GitHub Releases.
-- [ ] **M12** — SaaS mode (managed hosting)
-- [ ] **M13** — Photo & media: MinIO persist + gallery; **EXIF strip foundation** shipped (`POST /media/photos`, #28); optional Immich follow-up
+- [ ] **M10.2 / M12** — Hosted launch (`correlcore.com`): runtime hosted/self-host mode **shipped** (see [Deployment options](#deployment-options)); managed edge, SMTP and public sign-up remaining — [`docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md`](docs/M10_2_PUBLIC_HOSTED_LAUNCH_PLAN.md).
+- [ ] **M11** — Android Play Store (Capacitor): Sprints 1–5 **complete** (shell, signed sideload, Bearer auth, Glance widget, FCM). Play Console / ops remaining — [`docs/M11_SPRINT_PLAN.md`](docs/M11_SPRINT_PLAN.md), [#429](https://github.com/Sturmi77/correlcore/issues/429).
+- [ ] **M13** — Photo & media: MinIO persist + gallery; **EXIF-strip foundation** shipped (`POST /media/photos`, #28).
 
-Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md)  
-Doc/version gaps for the `1.0.x` line: [`docs/releases/RELEASE_1_0_X_DOC_SYNC.md`](docs/releases/RELEASE_1_0_X_DOC_SYNC.md)
+Full roadmap: [`docs/DESIGN_DOCUMENT.md`](docs/DESIGN_DOCUMENT.md).
 
 <details>
 <summary><strong>Completed milestones (M0–M10.1) — archived</strong></summary>
 
 <br />
 
-Shipped with public selfhost **v1.x** (latest **v1.3.0**). Full table and links:
+Shipped on the public self-host **v1.x** line. Full table and links:
 [`docs/releases/COMPLETED_MILESTONES.md`](docs/releases/COMPLETED_MILESTONES.md).
 
 | Milestone            | Summary                                                  |
@@ -106,7 +124,7 @@ git clone https://github.com/Sturmi77/correlcore.git
 cd correlcore/infra/docker
 cp .env.example .env
 # Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
-# Prefer IMAGE_TAG=v1.3.0 (or latest v1.x) for published GHCR images
+# Pin IMAGE_TAG=v1.4.0 (or the latest v1.x) for published GHCR images
 # Set acme email in traefik/traefik.yml to match LETSENCRYPT_EMAIL
 docker compose up -d
 ```
@@ -120,24 +138,9 @@ Compose stack matrix (canonical vs secondary, profile `worker`):
 
 Android sideload (optional, M11 pre-Play): download the APK from a [`v*`](https://github.com/Sturmi77/correlcore/releases) release — see [`docs/selfhost/ANDROID_SIDELOAD.md`](docs/selfhost/ANDROID_SIDELOAD.md).
 
-> **Note:** Public selfhost **`1.x`** is the supported release line (latest `v1.3.0`). M8 core (manual sleep + HC sleep import) ships in this tag; remaining M8 follow-ups, M11 Play exit, and M13 full scope stay active development. See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
+> **Hosted vs. self-host:** defaults give a working self-host with open registration — no extra config. To run the managed-SaaS framing or close self-registration, set `DEPLOYMENT_MODE` / `REGISTRATION_ENABLED` (see [Deployment options](#deployment-options) and [`docs/selfhost/INSTANCE_MODE.md`](docs/selfhost/INSTANCE_MODE.md)).
 
-### Deployment mode (hosted vs. self-host)
-
-One web bundle serves both a self-hosted instance and the managed SaaS. The
-anonymous landing decides its primary call-to-action **at runtime** from a
-public descriptor (`GET /api/v1/instance`) — no separate build. Two env vars
-control it:
-
-| Env variable           | Default    | Effect                                                                                     |
-| ---------------------- | ---------- | ------------------------------------------------------------------------------------------ |
-| `DEPLOYMENT_MODE`      | `selfhost` | `selfhost` \| `hosted` — badge wording + default CTA framing.                              |
-| `REGISTRATION_ENABLED` | `true`     | Open self-registration → landing shows **Create account**; `false` → **Self-host** (docs). |
-
-Defaults need no configuration: a self-host instance shows **Create account**
-(register on _your_ instance); **Log in** is always present; logged-in users
-never see the landing. Full behavior table and per-role walkthrough:
-[`docs/selfhost/INSTANCE_MODE.md`](docs/selfhost/INSTANCE_MODE.md).
+> **Support & security:** self-host **`v1.x`** is the supported line (latest `v1.4.0`). See [`SECURITY.md`](SECURITY.md) and [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -158,7 +161,7 @@ correlcore/
 ├── docs/
 │   ├── DESIGN_DOCUMENT.md      # Single source of truth
 │   ├── ARCHITECTURE.md
-│   ├── releases/               # Completed milestones archive, 1.0.x sync checklist
+│   ├── releases/               # Completed milestones archive
 │   ├── assets/brand/           # Logo mark for docs / README
 │   ├── quality/                # Quality gate reports
 │   └── adr/                    # Architecture decision records
@@ -195,7 +198,6 @@ install guide, user guide, API overview, privacy. Source: [`docs-site/`](docs-si
 | [FRONTEND.md](docs/FRONTEND.md)                                         | Mobile/Web roles, responsive shell, component ownership            |
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md)                                   | Local setup, quality gates, NAS/pnpm notes, test database          |
 | [Completed milestones](docs/releases/COMPLETED_MILESTONES.md)           | Archived M0–M10.1 checklist                                        |
-| [1.0.x doc sync](docs/releases/RELEASE_1_0_X_DOC_SYNC.md)               | Remaining updates to fully reflect the release line                |
 | [M11 Sprint Plan](docs/M11_SPRINT_PLAN.md)                              | Android Capacitor → Play Closed Testing                            |
 | [Android sideload](docs/selfhost/ANDROID_SIDELOAD.md)                   | Install signed APK from GitHub Releases                            |
 | [Instance mode](docs/selfhost/INSTANCE_MODE.md)                         | Hosted vs. self-host landing CTA — `DEPLOYMENT_MODE`, registration |
