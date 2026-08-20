@@ -167,6 +167,13 @@ async def update_user_preferences(
             if normalized is not None:
                 setattr(preferences, key, normalized)
             continue
+        if key == "last_seen_digest_at":
+            # High-water mark (#739): never move it backward. A stale client
+            # holding an older digest across a weekly generation must not
+            # overwrite a newer "seen" timestamp, or that digest would reappear.
+            current = preferences.last_seen_digest_at
+            if current is not None and value < current:
+                continue
         setattr(preferences, key, value)
 
     await db.flush()

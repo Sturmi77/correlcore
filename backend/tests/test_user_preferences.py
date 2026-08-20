@@ -117,6 +117,33 @@ async def test_update_user_preferences_sets_last_seen_digest_at() -> None:
 
 
 @pytest.mark.asyncio
+async def test_update_user_preferences_last_seen_digest_at_is_monotonic() -> None:
+    # #739: a stale client must not move the high-water mark backward.
+    user = make_user()
+    preferences = _make_preferences(user)
+    preferences.last_seen_digest_at = datetime(2026, 8, 16, 3, tzinfo=UTC)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    out = await update_user_preferences(
+        db,
+        user_id=user.id,
+        payload=UserPreferencesUpdate(last_seen_digest_at=datetime(2026, 8, 9, 3, tzinfo=UTC)),
+    )
+
+    # Older timestamp ignored; newer one accepted.
+    assert out.last_seen_digest_at == datetime(2026, 8, 16, 3, tzinfo=UTC)
+    out = await update_user_preferences(
+        db,
+        user_id=user.id,
+        payload=UserPreferencesUpdate(last_seen_digest_at=datetime(2026, 8, 23, 3, tzinfo=UTC)),
+    )
+    assert out.last_seen_digest_at == datetime(2026, 8, 23, 3, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
 async def test_add_and_remove_dismissed_insight_keys() -> None:
     user = make_user()
     preferences = _make_preferences(user)

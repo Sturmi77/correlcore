@@ -77,18 +77,45 @@
     void goto('/insights/digest');
   }
 
+  function onSheetClose(): void {
+    // The dialog also emits `close` when we *yield* to a blocking sheet
+    // (`visible` → false). That is a temporary hide, not a user dismissal — it
+    // must not persist last_seen_digest_at, or a digest the user never saw would
+    // be marked seen. During a yield the entry/onboarding sheet is open, so only
+    // a genuine close (Esc / backdrop) with no blocking sheet dismisses.
+    if ($entrySheetStore.open) return;
+    void dismiss();
+  }
+
   onMount(() => {
     void maybeShow();
+    // Installed PWA / Capacitor WebViews stay mounted across a background span,
+    // so onMount does not re-run when the user returns after the weekly worker
+    // ran. Re-check on foreground so a digest generated while backgrounded is
+    // still discovered (#739). Skipped while a modal is already open.
+    const onVisible = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !open) {
+        void maybeShow();
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisible);
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisible);
+      }
+    };
   });
 </script>
 
-{#if visible && digest}
+{#if open && digest}
   <BottomSheet
     open={visible}
     labelledBy={TITLE_ID}
     testId="weekly-digest-modal"
     closeAriaLabel={$_('insights.digest.modal.close_aria')}
-    on:close={() => void dismiss()}
+    on:close={onSheetClose}
   >
     <div class="weekly-digest-modal">
       <header class="weekly-digest-modal__head">
