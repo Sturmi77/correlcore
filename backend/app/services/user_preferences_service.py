@@ -167,6 +167,13 @@ async def update_user_preferences(
             if normalized is not None:
                 setattr(preferences, key, normalized)
             continue
+        if key == "last_seen_digest_at":
+            # High-water mark (#739): never move it backward. A stale client
+            # holding an older digest across a weekly generation must not
+            # overwrite a newer "seen" timestamp, or that digest would reappear.
+            current = preferences.last_seen_digest_at
+            if current is not None and value < current:
+                continue
         setattr(preferences, key, value)
 
     await db.flush()
@@ -189,6 +196,7 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "dismissed_insight_keys": preferences.dismissed_insight_keys,
         "reached_milestone_keys": preferences.reached_milestone_keys,
         "last_seen_insight_at": preferences.last_seen_insight_at,
+        "last_seen_digest_at": preferences.last_seen_digest_at,
         "home_sections": merge_home_sections(normalized_sections),
         "created_at": preferences.created_at,
         "updated_at": preferences.updated_at,

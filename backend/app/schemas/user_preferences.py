@@ -37,6 +37,7 @@ class UserPreferencesUpdate(BaseModel):
     dismissed_insight_keys: list[str] | None = Field(default=None, max_length=128)
     reached_milestone_keys: list[str] | None = Field(default=None, max_length=128)
     last_seen_insight_at: datetime | None = None
+    last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = Field(default=None, max_length=16)
 
 
@@ -56,6 +57,7 @@ class UserPreferencesResponse(BaseModel):
     dismissed_insight_keys: list[str] = Field(default_factory=list)
     reached_milestone_keys: list[str] = Field(default_factory=list)
     last_seen_insight_at: datetime | None = None
+    last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = None
     created_at: datetime
     updated_at: datetime

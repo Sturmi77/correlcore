@@ -85,6 +85,13 @@ class UserPreference(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    # #739: timestamp of the newest weekly digest the user has seen in the
+    # one-time modal. NULL = never shown; the modal fires when a stored digest's
+    # generated_at is newer than this.
+    last_seen_digest_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     home_sections: Mapped[list[dict[str, object]] | None] = mapped_column(
         JSONB,
         nullable=True,

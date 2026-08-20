@@ -44,6 +44,10 @@ class WeeklyDigest:
     week_start: date_type
     week_end: date_type
     insights: tuple[DigestInsightItem, ...]
+    # Persisted snapshots carry the worker's generation timestamp; the on-demand
+    # recompute fallback leaves it ``None`` so the "new digest" modal (#739) only
+    # fires for a stored weekly digest, never for a transient recompute.
+    generated_at: datetime | None = None
 
     @property
     def insight_count(self) -> int:
@@ -225,6 +229,7 @@ async def hydrate_stored_digest(
         week_start=row.week_start,
         week_end=row.week_end,
         insights=tuple(items),
+        generated_at=row.generated_at,
     )
     return await _filter_digest_dismissals(db, user_id=row.user_id, digest=digest)
 
@@ -275,6 +280,7 @@ async def _filter_digest_dismissals(
         week_start=digest.week_start,
         week_end=digest.week_end,
         insights=tuple(kept),
+        generated_at=digest.generated_at,
     )
 
 

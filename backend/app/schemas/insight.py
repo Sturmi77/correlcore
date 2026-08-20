@@ -129,6 +129,9 @@ class InsightDigestResponse(BaseModel):
     insights: list[InsightDigestItemResponse] = Field(default_factory=list)
     push_title: str
     push_body: str
+    # Present for a persisted weekly digest; ``None`` for the on-demand
+    # recompute fallback (drives the one-time "new digest" modal, #739).
+    generated_at: datetime | None = None
 
 
 class InsightDismissalCreate(BaseModel):

@@ -70,6 +70,21 @@ def test_build_weekly_digest_requires_three_confident_insights() -> None:
     )
 
 
+def test_build_weekly_digest_has_no_generated_at() -> None:
+    # #739: freshly built (recompute) digests carry no generation timestamp, so
+    # the on-demand fallback never triggers the one-time modal.
+    insights = [
+        _make_insight(effect_size=0.4, confidence=0.8),
+        _make_insight(effect_size=0.35, confidence=0.75),
+        _make_insight(effect_size=0.3, confidence=0.7),
+    ]
+    digest = build_weekly_digest(
+        insights, week_start=datetime.now(UTC).date(), week_end=datetime.now(UTC).date()
+    )
+    assert digest is not None
+    assert digest.generated_at is None
+
+
 @pytest.mark.asyncio
 async def test_compute_weekly_digest_excludes_dismissed_insight_ids() -> None:
     from app.services.insight_digest import compute_weekly_digest_for_user
@@ -201,6 +216,7 @@ async def test_hydrate_stored_digest_preserves_insight_order() -> None:
     row.insight_count = 3
     row.push_title = "t"
     row.push_body = "b"
+    row.generated_at = datetime(2026, 8, 16, 3, tzinfo=UTC)
 
     result = MagicMock()
     # Return out of order — hydrate must follow insight_ids.
@@ -219,6 +235,9 @@ async def test_hydrate_stored_digest_preserves_insight_order() -> None:
         insights[0].id,
         insights[1].id,
     ]
+    # #739: the persisted generation timestamp is carried onto the envelope so
+    # the client can drive the one-time modal.
+    assert digest.generated_at == datetime(2026, 8, 16, 3, tzinfo=UTC)
 
 
 @pytest.mark.asyncio
