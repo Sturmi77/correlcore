@@ -39,6 +39,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Legacy `digest-worker` one-shot no longer restart-loops** — after #740,
+  `python -m app.workers.digest` without `--once` generated once and exited 0.
+  Older compose files still launch that command with `restart: unless-stopped`
+  (and pulling a new image recreates the service when the compose file was not
+  updated — that is **not** an orphan). Docker then restarted the container in
+  a tight loop, inserting a new `insight_digests` row per opted-in user on
+  every restart. Bare invocation now idles; `--once` is unchanged for
+  manual/cron runs. Weekly generation remains in the analytics worker.
+
 - **Tag-Erstellung ohne Icon-Feld, mit Gruppenfarbe als Vorschlag** — das
   Anlegen und Bearbeiten von Tags bot weiterhin ein Icon-Feld an, obwohl die
   per-Tag-Glyphen mit #672 zugunsten der Kategorie-Icons (`CategoryIcon`)

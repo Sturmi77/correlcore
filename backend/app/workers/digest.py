@@ -8,10 +8,15 @@ separate scheduler, container, or compose profile. The per-user
 For manual runs or one-off backfills:
 
     python -m app.workers.digest --once
+
+Invoking the module without ``--once`` idles instead of generating. Older
+compose files launched this as a long-lived ``digest-worker`` with
+``restart: unless-stopped``; exiting 0 would tight-loop under Docker.
 """
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 import uuid
@@ -165,10 +170,30 @@ async def run_digest_once(
         raise
 
 
-def main() -> None:
-    """Manual / backfill entrypoint. Scheduled runs live in the daily worker."""
+LEGACY_DIGEST_IDLE_SECONDS = 3600
 
-    import argparse
+
+async def run_legacy_digest_container() -> None:
+    """Idle so leftover ``digest-worker`` compose services do not tight-loop.
+
+    Pre-#740 compose launched ``python -m app.workers.digest`` (no ``--once``)
+    as a long-lived service with ``restart: unless-stopped``. After #740 that
+    module always ran one generation and exited 0, so Docker restarted it
+    immediately — a new ``insight_digests`` row per opted-in user on every
+    restart. Weekly generation now lives in the analytics worker; this path
+    only keeps the process alive.
+    """
+
+    logger.warning(
+        "standalone digest worker loop is retired; weekly digest runs in the "
+        "analytics worker. Idling so restart: unless-stopped does not tight-loop"
+    )
+    while True:
+        await asyncio.sleep(LEGACY_DIGEST_IDLE_SECONDS)
+
+
+def _parse_digest_cli(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse digest CLI args. ``--once`` is required for one-shot generation."""
 
     parser = argparse.ArgumentParser(
         description="CorrelCore weekly insight digest — one-off generation",
@@ -176,12 +201,24 @@ def main() -> None:
     parser.add_argument(
         "--once",
         action="store_true",
-        help="Run digest generation once and exit (default; kept for compatibility)",
+        help="Run digest generation once and exit (manual / cron / backfill)",
     )
-    parser.parse_args()
+    return parser.parse_args(argv)
 
+
+def main() -> None:
+    """CLI entrypoint. Scheduled runs live in the daily analytics worker.
+
+    ``--once`` generates once (manual / cron). Without it, idle so leftover
+    long-lived compose services do not exit 0 and get restarted in a loop.
+    """
+
+    args = _parse_digest_cli()
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(run_digest_once(trigger_source=WorkerTriggerSource.CLI_ONCE))
+    if args.once:
+        asyncio.run(run_digest_once(trigger_source=WorkerTriggerSource.CLI_ONCE))
+        return
+    asyncio.run(run_legacy_digest_container())
 
 
 if __name__ == "__main__":
