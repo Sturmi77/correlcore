@@ -23,6 +23,25 @@ COPY app/ app/
 RUN uv venv .venv && \
     uv pip install --python .venv/bin/python -e ".[analytics]"
 
+# ---- Supercronic stage (#757) ----
+# Fetches the static supercronic binary once, pinned + checksum-verified, so
+# the runtime stage never needs curl/apt (smaller image, smaller attack
+# surface). supercronic (MIT, https://github.com/aptible/supercronic) drives
+# the worker's nightly `--once` invocation from #757: unlike the previous
+# asyncio-sleep loop in a `restart: unless-stopped` container, a crash inside
+# one nightly job no longer takes the whole scheduler down with it — the
+# container/process stays up and simply waits for the next scheduled tick.
+FROM python:3.12-slim AS supercronic
+ARG SUPERCRONIC_VERSION=v0.2.49
+ARG SUPERCRONIC_SHA1SUM=e63c11a9726b775a6a11801e81af4f3fb926aa68
+ARG SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-amd64
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSLo /tmp/supercronic "${SUPERCRONIC_URL}" \
+    && echo "${SUPERCRONIC_SHA1SUM}  /tmp/supercronic" | sha1sum -c - \
+    && chmod +x /tmp/supercronic
+
 # ---- Runtime stage ----
 FROM python:3.12-slim AS runtime
 
@@ -34,6 +53,13 @@ ARG BUILD_TIME=
 
 # Non-root user for security
 RUN groupadd -r correlcore && useradd -r -g correlcore correlcore
+
+# procps provides pgrep, used by the worker container's HEALTHCHECK (#757)
+# to report supercronic process liveness as a secondary/complementary signal
+# to GET /worker/status (the primary "did the job actually run" signal, #756).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends procps \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy venv from builder
 COPY --from=builder /app/.venv .venv
@@ -49,6 +75,8 @@ COPY app/ app/
 COPY migrations/ migrations/
 COPY scripts/ scripts/
 COPY migrations/alembic.ini alembic.ini
+COPY crontab/ crontab/
+COPY --from=supercronic /tmp/supercronic /usr/local/bin/supercronic
 
 USER correlcore
 

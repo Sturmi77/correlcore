@@ -1,0 +1,18 @@
+# CorrelCore Analytics-Worker — supercronic crontab (#757)
+#
+# Ersetzt den bisherigen Dauerprozess (asyncio-Sleep-Loop bis 03:00 UTC,
+# siehe seconds_until_next_cleanup() in app/workers/analytics.py) durch einen
+# extern getriggerten, einmaligen Lauf pro Tag. Container-TZ ist UTC
+# (python:3.12-slim-Standard, kein TZ-Override in den Compose-Dateien) —
+# `0 3 * * *` entspricht damit exakt dem bisherigen 03:00-UTC-Zeitpunkt.
+#
+# Der wöchentliche Digest (Sonntags, DIGEST_WEEKDAY=6) piggybackt weiterhin
+# auf denselben täglichen Lauf — run_daily_jobs_once() entscheidet intern,
+# ob heute zusätzlich der Digest fällig ist. Kein separater Cron-Eintrag
+# nötig.
+#
+# --once beendet den Prozess nach einem Durchlauf; supercronic selbst bleibt
+# dauerhaft laufen und wartet auf den nächsten Tick. Ein Crash/Nicht-Null-Exit
+# innerhalb des Jobs wird von supercronic geloggt (-passthrough-logs im
+# Compose-command), reißt aber nicht den ganzen Scheduler-Prozess mit.
+0 3 * * * python -m app.workers.analytics --once
