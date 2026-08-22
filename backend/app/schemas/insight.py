@@ -67,6 +67,9 @@ class InsightListResponse(BaseModel):
 
     insight_maturity: InsightMaturity
     insights: list[InsightResponse] = Field(default_factory=list)
+    # The timestamp is independent of persisted rows: a successful generation
+    # may legitimately produce no candidates and therefore no new Insight.
+    last_successful_insight_run_at: datetime | None = None
 
 
 class InsightEventWindow(BaseModel):

@@ -76,6 +76,7 @@ from app.services.insight_worker_service import (
 )
 from app.services.stats_service import get_symptom_tag_cooccurrence, get_tag_cooccurrence
 from app.services.tag_cluster_service import get_tag_clusters
+from app.services.worker_run_service import latest_successful_insight_run_at
 from app.workers.analytics import run_insights_once
 
 logger = logging.getLogger(__name__)
@@ -157,9 +158,11 @@ async def list_insights_endpoint(
 ) -> InsightListResponse:
     insights = await list_insights(db, user_id=user.id, limit=limit)
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
+    last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights],
+        last_successful_insight_run_at=last_successful_run,
     )
 
 
@@ -177,9 +180,11 @@ async def list_latest_insights_endpoint(
 ) -> InsightListResponse:
     insights = await list_latest_insights(db, user_id=user.id, limit=limit)
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
+    last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights],
+        last_successful_insight_run_at=last_successful_run,
     )
 
 

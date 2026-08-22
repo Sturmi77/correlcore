@@ -200,13 +200,18 @@ async def run_insights_once(
         failed = 0
         generated = 0
         for job in jobs:
+            user_run_id = await start_run(
+                job_kind=WorkerJobKind.USER_INSIGHTS,
+                trigger_source=trigger_source,
+                scope_user_id=job.user_id,
+            )
             async with session_factory() as session:
                 try:
                     # #753 (I): a pathological single user (huge history,
                     # hung query, runaway computation) must not stall every
                     # subsequent user for the rest of the night — the loop
                     # is otherwise sequential.
-                    generated += await asyncio.wait_for(
+                    insight_count = await asyncio.wait_for(
                         generate_insights_for_job(
                             session,
                             job=job,
@@ -215,7 +220,16 @@ async def run_insights_once(
                         timeout=settings.WORKER_JOB_TIMEOUT_SECONDS,
                     )
                     await session.commit()
+                    generated += insight_count
                     processed += 1
+                    await finish_run(
+                        user_run_id,
+                        status=WorkerRunStatus.SUCCEEDED,
+                        result={
+                            "generated_for_date": generated_for_date.isoformat(),
+                            "insight_count": insight_count,
+                        },
+                    )
                 except TimeoutError:
                     # Cancelling the coroutine does not itself stop an
                     # in-flight Postgres statement. The 30-second
@@ -224,6 +238,11 @@ async def run_insights_once(
                     # even when driver-side cancellation is delayed.
                     await session.rollback()
                     failed += 1
+                    await finish_run(
+                        user_run_id,
+                        status=WorkerRunStatus.FAILED,
+                        error_message="insight generation timed out",
+                    )
                     logger.exception(
                         "insight generation timed out",
                         extra={
@@ -231,9 +250,14 @@ async def run_insights_once(
                             "timeout_seconds": settings.WORKER_JOB_TIMEOUT_SECONDS,
                         },
                     )
-                except Exception:
+                except Exception as exc:
                     await session.rollback()
                     failed += 1
+                    await finish_run(
+                        user_run_id,
+                        status=WorkerRunStatus.FAILED,
+                        error_message=str(exc),
+                    )
                     logger.exception(
                         "insight generation failed",
                         extra={"user_id": str(job.user_id)},

@@ -14,14 +14,20 @@ import { render, screen, fireEvent } from '@testing-library/svelte';
 import InsightFeed from './InsightFeed.svelte';
 import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: (run: (formatter: (key: string) => string) => void) => {
-      run((key: string) => key);
-      return () => undefined;
+vi.mock('svelte-i18n', async () => {
+  const { readable } = await import('svelte/store');
+
+  return {
+    _: {
+      subscribe: (run: (formatter: (key: string) => string) => void) => {
+        run((key: string) => key);
+        return () => undefined;
+      },
     },
-  },
-}));
+    // #755: InsightFeed reads $locale to format the staleness banner date.
+    locale: readable('en'),
+  };
+});
 
 function makeInsight(overrides: Partial<InsightResponse> = {}): InsightResponse {
   return {
@@ -280,5 +286,142 @@ describe('InsightFeed', () => {
   it('renders disclaimer button', () => {
     render(InsightFeed, { props: { insights: [] } });
     expect(screen.getByTestId('insight-feed-disclaimer-btn')).toBeTruthy();
+  });
+
+  // ── Staleness banner (#755) ───────────────────────────────────────────
+  it('shows the staleness banner when insights exist but are older than the threshold', () => {
+    const stale = makeInsight({ generated_at: '2026-05-01T00:00:00Z' });
+    render(InsightFeed, {
+      props: { insights: [stale], now: '2026-05-05T00:00:00Z' }, // 96h later
+    });
+
+    expect(screen.getByTestId('insight-feed-stale-banner')).toBeTruthy();
+    expect(screen.getByTestId('insight-feed-stale-action')).toBeTruthy();
+    // The feed itself must still render — staleness is independent of the empty state.
+    expect(screen.getByTestId('insight-feed-list')).toBeTruthy();
+  });
+
+  it('hides the staleness banner when the latest insight is within the threshold', () => {
+    const fresh = makeInsight({ generated_at: '2026-05-04T12:00:00Z' });
+    render(InsightFeed, {
+      props: { insights: [fresh], now: '2026-05-05T00:00:00Z' }, // 11.5h later
+    });
+
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+  });
+
+  it('uses the successful run timestamp when a zero-candidate run leaves old rows in place', () => {
+    const oldRow = makeInsight({ generated_at: '2026-05-01T00:00:00Z' });
+    render(InsightFeed, {
+      props: {
+        insights: [oldRow],
+        now: '2026-05-05T00:00:00Z',
+        lastSuccessfulInsightRunAt: '2026-05-04T23:00:00Z',
+      },
+    });
+
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+  });
+
+  it('uses the complete staleness set when the rendered feed excludes the mobile lead card', () => {
+    const primaryFresh = makeInsight({ id: 'primary', generated_at: '2026-05-04T23:00:00Z' });
+    const remainingOld = makeInsight({ id: 'remaining', generated_at: '2026-05-01T00:00:00Z' });
+    render(InsightFeed, {
+      props: {
+        insights: [remainingOld],
+        stalenessInsights: [primaryFresh, remainingOld],
+        now: '2026-05-05T00:00:00Z',
+      },
+    });
+
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+  });
+
+  it('renders the stale warning without an empty state for a compact primary card', () => {
+    const stalePrimary = makeInsight({ generated_at: '2026-05-01T00:00:00Z' });
+    render(InsightFeed, {
+      props: {
+        insights: [],
+        stalenessInsights: [stalePrimary],
+        hideContent: true,
+        now: '2026-05-05T00:00:00Z',
+      },
+    });
+
+    expect(screen.getByTestId('insight-feed-stale-banner')).toBeTruthy();
+    expect(screen.queryByTestId('insight-feed-empty')).toBeNull();
+  });
+
+  it('suppresses stale regeneration when analytics is disabled', () => {
+    const stale = makeInsight({ generated_at: '2026-05-01T00:00:00Z' });
+    render(InsightFeed, {
+      props: { insights: [stale], now: '2026-05-05T00:00:00Z', analyticsEnabled: false },
+    });
+
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+    expect(screen.queryByTestId('insight-feed-stale-action')).toBeNull();
+  });
+
+  it('updates staleness as wall-clock time passes when no test time is injected', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-02T15:00:00Z'));
+    const nearlyStale = makeInsight({ generated_at: '2026-05-01T00:00:00Z' });
+    render(InsightFeed, { props: { insights: [nearlyStale] } });
+
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+    await vi.advanceTimersByTimeAsync(2 * 60 * 60 * 1000);
+
+    expect(screen.getByTestId('insight-feed-stale-banner')).toBeTruthy();
+    vi.useRealTimers();
+  });
+
+  it('hides the staleness banner for the true-empty state (no generated_at to compare)', () => {
+    render(InsightFeed, {
+      props: { insights: [], maturity, now: '2026-05-05T00:00:00Z' },
+    });
+
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+    // Empty-state CTA still covers the true-empty case, independently of staleness.
+    expect(screen.getByTestId('insight-feed-empty')).toBeTruthy();
+  });
+
+  it('respects a custom staleAfterHours threshold', () => {
+    const insight = makeInsight({ generated_at: '2026-05-04T00:00:00Z' });
+    const { unmount } = render(InsightFeed, {
+      props: { insights: [insight], now: '2026-05-05T00:00:00Z', staleAfterHours: 48 }, // 24h later
+    });
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+    unmount();
+
+    render(InsightFeed, {
+      props: { insights: [insight], now: '2026-05-05T00:00:00Z', staleAfterHours: 12 }, // 24h later
+    });
+    expect(screen.getByTestId('insight-feed-stale-banner')).toBeTruthy();
+  });
+
+  it('dispatches regenerate from the staleness banner action', async () => {
+    const handler = vi.fn();
+    const stale = makeInsight({ generated_at: '2026-05-01T00:00:00Z' });
+    render(InsightFeed, {
+      props: { insights: [stale], now: '2026-05-05T00:00:00Z' },
+      events: { regenerate: handler },
+    });
+
+    await fireEvent.click(screen.getByTestId('insight-feed-stale-action'));
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('hides the staleness banner while loading or on error, even if stale', () => {
+    const stale = makeInsight({ generated_at: '2026-05-01T00:00:00Z' });
+    const { unmount: unmountLoading } = render(InsightFeed, {
+      props: { insights: [stale], now: '2026-05-05T00:00:00Z', loading: true },
+    });
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
+    unmountLoading();
+
+    render(InsightFeed, {
+      props: { insights: [stale], now: '2026-05-05T00:00:00Z', error: 'boom' },
+    });
+    expect(screen.queryByTestId('insight-feed-stale-banner')).toBeNull();
   });
 });

@@ -52,6 +52,12 @@ export interface InsightResponse {
 export interface InsightListResponse {
   insight_maturity: InsightMaturity;
   insights: InsightResponse[];
+  /**
+   * Timestamp of the latest completed generation attempt for this user.
+   * This can be newer than every persisted row when a run correctly found no
+   * candidates, so freshness must prefer it over `generated_at`.
+   */
+  last_successful_insight_run_at?: string | null;
 }
 
 export interface InsightDigestItem {
