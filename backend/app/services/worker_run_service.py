@@ -183,3 +183,50 @@ async def latest_worker_runs(
             else None
         ),
     }
+
+
+# Job kinds monitored by GET /worker/status (#756). CLEANUP is deliberately
+# excluded: run_cleanup_once() only writes its own worker_runs row when
+# invoked standalone (record_run=True); the nightly path folds cleanup into
+# the DAILY_BUNDLE row (record_run=False), so a CLEANUP-kind row is not a
+# meaningful freshness signal in normal operation. USER_INSIGHTS is excluded
+# too: it is scoped per-user/on-demand (regenerate button), not a system-wide
+# recurring job with a fixed cadence, so it has no single "last successful
+# run" that means anything in aggregate.
+MONITORED_KINDS: tuple[WorkerJobKind, ...] = (
+    WorkerJobKind.DAILY_BUNDLE,
+    WorkerJobKind.INSIGHTS,
+    WorkerJobKind.DIGEST,
+)
+
+
+async def latest_successful_system_runs(
+    db: AsyncSession,
+    *,
+    kinds: tuple[WorkerJobKind, ...] = MONITORED_KINDS,
+) -> dict[WorkerJobKind, WorkerRun | None]:
+    """Return the most recent SUCCEEDED, system-wide run per job kind.
+
+    Unlike :func:`latest_worker_runs` (which returns the latest run
+    *regardless of status*, for the admin dev view where seeing a recent
+    failure is itself useful context), this only considers
+    ``WorkerRunStatus.SUCCEEDED`` rows: a job that keeps crashing every night
+    should be reported as "stale" by the freshness endpoint, not "fresh"
+    just because it *attempted* to run recently. Always scoped to
+    ``scope_user_id IS NULL`` — these are the system-level recurring jobs,
+    not a specific user's on-demand insight regeneration.
+    """
+
+    result: dict[WorkerJobKind, WorkerRun | None] = {}
+    for kind in kinds:
+        stmt = (
+            select(WorkerRun)
+            .where(WorkerRun.job_kind == kind)
+            .where(WorkerRun.status == WorkerRunStatus.SUCCEEDED)
+            .where(WorkerRun.scope_user_id.is_(None))
+            .order_by(WorkerRun.started_at.desc())
+            .limit(1)
+        )
+        run_result = await db.execute(stmt)
+        result[kind] = run_result.scalar_one_or_none()
+    return result

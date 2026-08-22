@@ -33,6 +33,11 @@ x-api-env: &api-env
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-https://${DOMAIN}}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+  # Worker freshness monitoring (#756) — GET /worker/status. Empty key falls
+  # back to admin-session auth only; set it to allow an external uptime
+  # monitor (Uptime-Kuma, healthchecks.io) to poll without a browser session.
+  WORKER_STATUS_API_KEY: ${WORKER_STATUS_API_KEY:-}
+  WORKER_STALE_AFTER_HOURS: ${WORKER_STALE_AFTER_HOURS:-30}
   # Photo storage ships in M13 and is off by default. Only when PHOTOS_ENABLED
   # is true do production Settings require a non-default MINIO_SECRET_KEY
   # (≥16 chars, not CHANGE_ME*); until then the placeholder is fine (#543).

@@ -10,6 +10,7 @@ import pytest
 
 from app.models.worker_run import WorkerJobKind, WorkerRun, WorkerRunStatus, WorkerTriggerSource
 from app.services import worker_run_service
+from tests.conftest import make_db_session_with_results
 
 
 class _SessionCtx:
@@ -73,3 +74,55 @@ async def test_start_and_finish_run_round_trip() -> None:
     assert created[0].job_kind == WorkerJobKind.INSIGHTS
     assert session.get.await_args.args[1] == run_id
     assert session.commit.await_count >= 2
+
+
+def _fake_succeeded_run(job_kind: WorkerJobKind, *, finished_at: datetime) -> WorkerRun:
+    return WorkerRun(
+        id=uuid.uuid4(),
+        worker_name="analytics",
+        job_kind=job_kind,
+        trigger_source=WorkerTriggerSource.SCHEDULED,
+        status=WorkerRunStatus.SUCCEEDED,
+        started_at=finished_at,
+        finished_at=finished_at,
+        scope_user_id=None,
+        result={},
+    )
+
+
+@pytest.mark.asyncio
+async def test_latest_successful_system_runs_returns_one_per_kind() -> None:
+    """Queries run in MONITORED_KINDS order; each kind gets its own row (#756)."""
+
+    bundle_run = _fake_succeeded_run(
+        WorkerJobKind.DAILY_BUNDLE, finished_at=datetime(2026, 8, 20, 3, 5, tzinfo=UTC)
+    )
+    insights_run = _fake_succeeded_run(
+        WorkerJobKind.INSIGHTS, finished_at=datetime(2026, 8, 20, 3, 3, tzinfo=UTC)
+    )
+    # No successful DIGEST run yet (e.g. fresh install before first Sunday slot).
+    db = make_db_session_with_results(bundle_run, insights_run, None)
+
+    result = await worker_run_service.latest_successful_system_runs(db)
+
+    assert result[WorkerJobKind.DAILY_BUNDLE] is bundle_run
+    assert result[WorkerJobKind.INSIGHTS] is insights_run
+    assert result[WorkerJobKind.DIGEST] is None
+    assert db.execute.await_count == 3
+
+
+@pytest.mark.asyncio
+async def test_latest_successful_system_runs_filters_by_status_in_query() -> None:
+    """Each per-kind query must filter on SUCCEEDED + scope_user_id IS NULL,
+    not just "most recent regardless of status" like latest_worker_runs —
+    otherwise a repeatedly-crashing job would look fresh.
+    """
+
+    db = make_db_session_with_results(None, None, None)
+
+    await worker_run_service.latest_successful_system_runs(db, kinds=(WorkerJobKind.DAILY_BUNDLE,))
+
+    assert db.execute.await_count == 1
+    compiled = str(db.execute.await_args.args[0])
+    assert "status" in compiled.lower()
+    assert "scope_user_id" in compiled.lower()
