@@ -120,7 +120,21 @@ async def run_cleanup_once(
             # logged, and skipped; the other step and its results survive.
             try:
                 async with session.begin_nested():
-                    deleted_accounts = await cleanup_unverified_accounts(session)
+                    cleanup_result = await cleanup_unverified_accounts(session)
+                deleted_accounts = cleanup_result.deleted_count
+                # #752 (Bulkhead): individual account deletes are isolated in
+                # their own SAVEPOINTs inside cleanup_unverified_accounts, so a
+                # per-user failure does not raise here. Surface those isolated
+                # failures as a step error so a batch where every delete fails
+                # is recorded as FAILED instead of a healthy no-op run.
+                if cleanup_result.has_failures:
+                    step_errors["unverified_accounts"] = (
+                        f"{len(cleanup_result.failed_user_ids)} account delete(s) failed"
+                    )
+                    logger.error(
+                        "unverified account cleanup had isolated per-user failures",
+                        extra={"failed_count": len(cleanup_result.failed_user_ids)},
+                    )
             except Exception as exc:
                 step_errors["unverified_accounts"] = str(exc)
                 logger.exception("unverified account cleanup step failed")
