@@ -78,8 +78,23 @@ async def cleanup_unverified_accounts(
         try:
             async with db.begin_nested():
                 await bind_rls_current_user(db, user_id)
-                await db.execute(delete(User).where(User.id == user_id))
-            deleted_ids.append(str(user_id))
+                # Re-apply the retention predicates on DELETE. Postgres READ
+                # COMMITTED waits for a concurrent verify_email row lock, then
+                # rechecks WHERE. A bare ``DELETE … WHERE id = :id`` would wipe
+                # the account after a successful verification in that window
+                # (#712 leftover from #709; still present after #762 SAVEPOINTs).
+                result = await db.execute(
+                    delete(User)
+                    .where(User.id == user_id)
+                    .where(User.is_verified.is_(False))
+                    .where(User.created_at < threshold)
+                )
+            # CursorResult.rowcount is int at runtime; Result stubs vary, so
+            # read it defensively for mypy without treating a raced 0-row
+            # delete as a failure (the user verified or aged out of scope).
+            deleted_rows = int(getattr(result, "rowcount", 0) or 0)
+            if deleted_rows > 0:
+                deleted_ids.append(str(user_id))
         except Exception:
             failed_ids.append(str(user_id))
             logger.exception(
