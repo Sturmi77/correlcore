@@ -93,6 +93,31 @@ class InsightLockTimeoutError(Exception):
     """
 
 
+async def _generate_insight_candidates_in_thread(
+    entries: list[AnalyticsEntry],
+    tags: list[TagSnapshot],
+    symptoms: list[SymptomSnapshot],
+    *,
+    as_of: date_type,
+) -> list[InsightCandidate]:
+    """Run pure, potentially expensive statistics outside the event loop.
+
+    The inputs are fully materialized plain data structures, so no SQLAlchemy
+    session or ORM object crosses the thread boundary. ``asyncio.to_thread``
+    cannot forcibly stop a running calculation, but it keeps the event loop
+    responsive: the worker deadline can proceed with the next user while the
+    executor worker winds down.
+    """
+
+    return await asyncio.to_thread(
+        generate_insight_candidates,
+        entries,
+        tags,
+        symptoms,
+        as_of=as_of,
+    )
+
+
 async def _acquire_insight_generation_lock(db: AsyncSession, *, user_id: uuid.UUID) -> None:
     """Serialize insight regenerate/delete/insert for ``user_id`` until commit.
 
@@ -1766,12 +1791,21 @@ async def generate_and_store_insights(
         user_id=user_id,
         as_of=generated_for_date,
     )
-    candidates = generate_insight_candidates(entries, tags, symptoms, as_of=generated_for_date)
+    candidates = await _generate_insight_candidates_in_thread(
+        entries,
+        tags,
+        symptoms,
+        as_of=generated_for_date,
+    )
     from app.services.note_marker_insights import build_marker_mood_insights
 
     marker_rows = await _load_entries_with_markers(db, user_id=user_id, as_of=generated_for_date)
     candidates.extend(
-        build_marker_mood_insights(marker_rows, generated_for_date=generated_for_date)
+        await asyncio.to_thread(
+            build_marker_mood_insights,
+            marker_rows,
+            generated_for_date=generated_for_date,
+        )
     )
 
     if settings.INSIGHTS_LLM_ENABLED:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import time
 import uuid
 from datetime import date, timedelta
 from random import Random
@@ -18,6 +20,7 @@ from app.services.insight_engine import (
     _acquire_insight_generation_lock,
     _canonicalize_tag_aliases,
     _dedupe_daily_entries,
+    _generate_insight_candidates_in_thread,
     _insight_generation_lock_keys,
     confidence_tier_for_sample,
     display_metric_value,
@@ -594,9 +597,7 @@ async def test_acquire_insight_generation_lock_retries_then_succeeds() -> None:
     """#753 (H): a contended lock is retried with backoff, not blocked on forever."""
     user_id = uuid.uuid4()
     db = MagicMock()
-    db.execute = AsyncMock(
-        side_effect=[_scalar_result_single(False), _scalar_result_single(True)]
-    )
+    db.execute = AsyncMock(side_effect=[_scalar_result_single(False), _scalar_result_single(True)])
 
     with patch("app.services.insight_engine.asyncio.sleep", new=AsyncMock()) as sleep_mock:
         await _acquire_insight_generation_lock(db, user_id=user_id)
@@ -617,6 +618,30 @@ async def test_acquire_insight_generation_lock_raises_after_max_attempts() -> No
             await _acquire_insight_generation_lock(db, user_id=user_id)
 
     assert db.execute.await_count == settings.INSIGHT_LOCK_MAX_ATTEMPTS
+
+
+@pytest.mark.asyncio
+async def test_candidate_generation_runs_in_thread_without_blocking_event_loop() -> None:
+    """A long statistics calculation must not delay unrelated event-loop work."""
+
+    loop = asyncio.get_running_loop()
+    calculation_started = asyncio.Event()
+
+    def slow_calculation(*_args: object, **_kwargs: object) -> list[object]:
+        loop.call_soon_threadsafe(calculation_started.set)
+        time.sleep(0.05)
+        return []
+
+    with patch(
+        "app.services.insight_engine.generate_insight_candidates",
+        side_effect=slow_calculation,
+    ):
+        task = asyncio.create_task(
+            _generate_insight_candidates_in_thread([], [], [], as_of=date(2026, 5, 1))
+        )
+        await asyncio.wait_for(calculation_started.wait(), timeout=0.02)
+        assert not task.done()
+        assert await task == []
 
 
 @pytest.mark.asyncio
