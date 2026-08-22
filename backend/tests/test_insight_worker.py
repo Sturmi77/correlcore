@@ -7,13 +7,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.services.insight_engine import InsightLockTimeoutError
 from app.services.insight_worker_service import (
     InsightGenerationJob,
     generate_insights_for_job,
     list_insight_generation_jobs,
     regenerate_insights_for_user,
 )
-from app.workers.analytics import run_daily_jobs_once, run_insights_once
+from app.workers.analytics import CleanupRunSummary, run_daily_jobs_once, run_insights_once
 
 
 def _scalars_result(values: list[object]) -> MagicMock:
@@ -213,6 +214,38 @@ async def test_generate_insights_for_job_resets_dek_on_engine_failure() -> None:
 
 
 @pytest.mark.asyncio
+async def test_generate_insights_for_job_logs_and_propagates_lock_contention() -> None:
+    """Contention is distinct from an unexpected per-user worker failure."""
+
+    db = MagicMock()
+    job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"wrapped-dek")
+
+    with (
+        patch("app.services.insight_worker_service.unwrap_dek", return_value=b"dek"),
+        patch("app.services.insight_worker_service.set_current_user_dek", return_value="token"),
+        patch("app.services.insight_worker_service.reset_current_user_dek") as reset,
+        patch(
+            "app.services.insight_worker_service.bind_rls_current_user",
+            new=AsyncMock(),
+        ),
+        patch(
+            "app.services.insight_worker_service.generate_and_store_insights",
+            new=AsyncMock(side_effect=InsightLockTimeoutError("held")),
+        ),
+        patch("app.services.insight_worker_service.logger.info") as info,
+    ):
+        with pytest.raises(InsightLockTimeoutError):
+            await generate_insights_for_job(
+                db,
+                job=job,
+                as_of=datetime(2026, 5, 12, tzinfo=UTC).date(),
+            )
+
+    info.assert_called_once()
+    reset.assert_called_once_with("token")
+
+
+@pytest.mark.asyncio
 async def test_run_insights_once_isolates_per_user_failures() -> None:
     jobs = [
         InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"one"),
@@ -336,9 +369,9 @@ async def test_regenerate_insights_for_user_returns_pipeline_result() -> None:
 async def test_run_daily_jobs_once_runs_cleanup_then_insights() -> None:
     calls: list[str] = []
 
-    async def fake_cleanup(**_kwargs: object) -> tuple[int, int]:
+    async def fake_cleanup(**_kwargs: object) -> CleanupRunSummary:
         calls.append("cleanup")
-        return 1, 2
+        return CleanupRunSummary(1, 2)
 
     async def fake_insights(**kwargs: object) -> object:
         as_of = kwargs["as_of"]
@@ -367,6 +400,36 @@ async def test_run_daily_jobs_once_runs_cleanup_then_insights() -> None:
     assert summary.digest_run is None
 
 
+@pytest.mark.asyncio
+async def test_run_daily_jobs_once_marks_cleanup_partial_failure() -> None:
+    """A bulkhead-isolated cleanup error must remain visible on bundle telemetry."""
+
+    cleanup_run = CleanupRunSummary(
+        deleted_unverified_accounts=0,
+        deleted_sync_conflicts=2,
+        step_errors=(("unverified_accounts", "database timeout"),),
+    )
+
+    with (
+        patch(
+            "app.workers.analytics.run_cleanup_once",
+            new=AsyncMock(return_value=cleanup_run),
+        ),
+        patch(
+            "app.workers.analytics.run_insights_once",
+            new=AsyncMock(return_value=_insight_run_mock()),
+        ),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()) as finish_run,
+    ):
+        summary = await run_daily_jobs_once(now=datetime(2026, 5, 12, tzinfo=UTC))
+
+    assert summary.cleanup_step_errors == cleanup_run.step_errors
+    assert finish_run.await_args.kwargs["status"].name == "FAILED"
+    assert finish_run.await_args.kwargs["result"]["cleanup_failed_steps"] == ["unverified_accounts"]
+    assert finish_run.await_args.kwargs["error_message"] == "unverified_accounts: database timeout"
+
+
 def _insight_run_mock() -> MagicMock:
     return MagicMock(
         eligible_users=1,
@@ -390,7 +453,10 @@ async def test_run_daily_jobs_once_generates_digest_on_weekly_slot() -> None:
     digest_mock = AsyncMock(return_value=digest_summary)
 
     with (
-        patch("app.workers.analytics.run_cleanup_once", new=AsyncMock(return_value=(0, 0))),
+        patch(
+            "app.workers.analytics.run_cleanup_once",
+            new=AsyncMock(return_value=CleanupRunSummary(0, 0)),
+        ),
         patch(
             "app.workers.analytics.run_insights_once",
             new=AsyncMock(return_value=_insight_run_mock()),
@@ -412,7 +478,10 @@ async def test_run_daily_jobs_once_skips_digest_off_slot() -> None:
     digest_mock = AsyncMock()
 
     with (
-        patch("app.workers.analytics.run_cleanup_once", new=AsyncMock(return_value=(0, 0))),
+        patch(
+            "app.workers.analytics.run_cleanup_once",
+            new=AsyncMock(return_value=CleanupRunSummary(0, 0)),
+        ),
         patch(
             "app.workers.analytics.run_insights_once",
             new=AsyncMock(return_value=_insight_run_mock()),
@@ -432,7 +501,10 @@ async def test_run_daily_jobs_once_skips_digest_off_slot() -> None:
 async def test_run_daily_jobs_once_isolates_digest_failure() -> None:
     """A digest failure is logged and does not fail the daily bundle."""
     with (
-        patch("app.workers.analytics.run_cleanup_once", new=AsyncMock(return_value=(0, 0))),
+        patch(
+            "app.workers.analytics.run_cleanup_once",
+            new=AsyncMock(return_value=CleanupRunSummary(0, 0)),
+        ),
         patch(
             "app.workers.analytics.run_insights_once",
             new=AsyncMock(return_value=_insight_run_mock()),

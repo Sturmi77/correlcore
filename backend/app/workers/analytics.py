@@ -52,6 +52,29 @@ class InsightRunSummary:
 
 
 @dataclass(frozen=True)
+class CleanupRunSummary:
+    """Aggregated result for retention cleanup, including isolated failures."""
+
+    deleted_unverified_accounts: int
+    deleted_sync_conflicts: int
+    step_errors: tuple[tuple[str, str], ...] = ()
+
+    @property
+    def has_errors(self) -> bool:
+        """Return whether at least one cleanup step failed."""
+
+        return bool(self.step_errors)
+
+    @property
+    def error_message(self) -> str | None:
+        """Return a compact telemetry message for isolated step failures."""
+
+        if not self.step_errors:
+            return None
+        return "; ".join(f"{step}: {error}" for step, error in self.step_errors)
+
+
+@dataclass(frozen=True)
 class DailyRunSummary:
     """Aggregated result for all daily worker jobs."""
 
@@ -59,6 +82,7 @@ class DailyRunSummary:
     deleted_sync_conflicts: int
     insight_run: InsightRunSummary
     digest_run: DigestRunSummary | None = None
+    cleanup_step_errors: tuple[tuple[str, str], ...] = ()
 
 
 def seconds_until_next_cleanup(now: datetime | None = None) -> float:
@@ -75,8 +99,8 @@ async def run_cleanup_once(
     session_factory: SessionFactory = AsyncSessionLocal,
     trigger_source: str | WorkerTriggerSource = WorkerTriggerSource.SCHEDULED,
     record_run: bool = True,
-) -> tuple[int, int]:
-    """Run retention cleanups in one transaction and return deleted row counts."""
+) -> CleanupRunSummary:
+    """Run retention cleanups and return counts plus isolated step errors."""
 
     run_id = None
     if record_run:
@@ -110,6 +134,11 @@ async def run_cleanup_once(
 
             await session.commit()
 
+        summary = CleanupRunSummary(
+            deleted_unverified_accounts=deleted_accounts,
+            deleted_sync_conflicts=deleted_conflicts,
+            step_errors=tuple(step_errors.items()),
+        )
         result = {
             "deleted_unverified_accounts": deleted_accounts,
             "deleted_sync_conflicts": deleted_conflicts,
@@ -117,11 +146,11 @@ async def run_cleanup_once(
         if record_run:
             await finish_run(
                 run_id,
-                status=WorkerRunStatus.FAILED if step_errors else WorkerRunStatus.SUCCEEDED,
+                status=WorkerRunStatus.FAILED if summary.has_errors else WorkerRunStatus.SUCCEEDED,
                 result=result,
-                error_message="; ".join(f"{k}: {v}" for k, v in step_errors.items()) or None,
+                error_message=summary.error_message,
             )
-        return deleted_accounts, deleted_conflicts
+        return summary
     except Exception as exc:
         if record_run:
             await finish_run(
@@ -174,6 +203,11 @@ async def run_insights_once(
                     await session.commit()
                     processed += 1
                 except TimeoutError:
+                    # Cancelling the coroutine does not itself stop an
+                    # in-flight Postgres statement. The 30-second
+                    # ``statement_timeout`` configured in db/session.py is
+                    # the second line of defense that releases that connection
+                    # even when driver-side cancellation is delayed.
                     await session.rollback()
                     failed += 1
                     logger.exception(
@@ -244,7 +278,7 @@ async def run_daily_jobs_once(
         # Nested cleanup/insights runs are recorded separately; skip duplicate
         # cleanup-only row when it is part of the bundle by recording cleanup
         # outcomes only on the daily_bundle + insights rows.
-        deleted_accounts, deleted_conflicts = await run_cleanup_once(
+        cleanup_run = await run_cleanup_once(
             session_factory=session_factory,
             trigger_source=trigger_source,
             record_run=False,
@@ -267,26 +301,33 @@ async def run_daily_jobs_once(
             except Exception:
                 logger.exception("weekly digest generation failed")
         summary = DailyRunSummary(
-            deleted_unverified_accounts=deleted_accounts,
-            deleted_sync_conflicts=deleted_conflicts,
+            deleted_unverified_accounts=cleanup_run.deleted_unverified_accounts,
+            deleted_sync_conflicts=cleanup_run.deleted_sync_conflicts,
             insight_run=insight_run,
             digest_run=digest_run,
+            cleanup_step_errors=cleanup_run.step_errors,
         )
         result: dict[str, object] = {
-            "deleted_unverified_accounts": deleted_accounts,
-            "deleted_sync_conflicts": deleted_conflicts,
+            "deleted_unverified_accounts": cleanup_run.deleted_unverified_accounts,
+            "deleted_sync_conflicts": cleanup_run.deleted_sync_conflicts,
             "eligible_users": insight_run.eligible_users,
             "processed_users": insight_run.processed_users,
             "failed_users": insight_run.failed_users,
             "generated_insights": insight_run.generated_insights,
         }
+        if cleanup_run.has_errors:
+            result["cleanup_failed_steps"] = [step for step, _ in cleanup_run.step_errors]
         if digest_run is not None:
             result["digest_eligible_users"] = digest_run.eligible_users
             result["digest_processed_users"] = digest_run.processed_users
         await finish_run(
             run_id,
-            status=WorkerRunStatus.SUCCEEDED,
+            # Cleanup's per-step bulkhead intentionally lets later work
+            # continue, but a partial cleanup must not look healthy in the
+            # daily bundle telemetry (#762 Codex finding).
+            status=WorkerRunStatus.FAILED if cleanup_run.has_errors else WorkerRunStatus.SUCCEEDED,
             result=result,
+            error_message=cleanup_run.error_message,
         )
         return summary
     except Exception as exc:

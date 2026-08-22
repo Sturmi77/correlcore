@@ -205,10 +205,11 @@ async def test_run_cleanup_once_accepts_session_factory() -> None:
 
     session = FakeSession()
 
-    deleted_accounts, deleted_conflicts = await run_cleanup_once(session_factory=lambda: session)
+    summary = await run_cleanup_once(session_factory=lambda: session)
 
-    assert deleted_accounts == 0
-    assert deleted_conflicts == 0
+    assert summary.deleted_unverified_accounts == 0
+    assert summary.deleted_sync_conflicts == 0
+    assert not summary.has_errors
     assert session.commit.await_count == 1
     assert session.rollback.await_count == 0
 
@@ -243,13 +244,12 @@ async def test_run_cleanup_once_isolates_step_failures() -> None:
             new=AsyncMock(return_value=3),
         ),
     ):
-        deleted_accounts, deleted_conflicts = await run_cleanup_once(
-            session_factory=lambda: session
-        )
+        summary = await run_cleanup_once(session_factory=lambda: session)
 
     # The failing step contributes nothing, but the successful step's result
     # survives and the transaction still commits instead of rolling back.
-    assert deleted_accounts == 0
-    assert deleted_conflicts == 3
+    assert summary.deleted_unverified_accounts == 0
+    assert summary.deleted_sync_conflicts == 3
+    assert summary.step_errors == (("unverified_accounts", "boom"),)
     assert session.commit.await_count == 1
     assert session.rollback.await_count == 0
