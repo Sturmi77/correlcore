@@ -18,7 +18,7 @@ stacks in [`infra/docker/`](../../infra/docker/).
 | -------------------------- | ------------------------------------------------------------ |
 | Existing production VPS    | `git pull` → `docker compose pull` → `docker compose up -d` |
 | Quickstart / homelab       | Same three commands, `-f docker-compose.quickstart.yml`      |
-| Secrets / `.env`           | **No required new vars.** Optional monitoring vars for #756  |
+| Secrets / `.env`           | **No required new vars.** Optional monitoring vars for #756 apply out of the box on `docker-compose.yml`; on the quickstart/user-test stacks the safe defaults (`WORKER_STATUS_API_KEY` empty → admin-session-only, `WORKER_STALE_AFTER_HOURS=30`) are baked in and not overridable via `.env` — edit the compose file directly if you need to change them there |
 | External uptime monitoring | Recommended: wire `GET /api/v1/worker/status` in (see below) |
 
 This migration is designed **non-breaking**: the worker still runs the exact
@@ -33,7 +33,6 @@ daily schedule. Only *how* that job is triggered inside the container changes.
 | ------------- | ------------------------------------------------------------------------------------------ |
 | **Added**     | `supercronic` binary baked into the `worker`-role image (`backend/Dockerfile`)             |
 | **Added**     | `backend/crontab/worker.crontab` — single daily entry, `0 3 * * * python -m app.workers.analytics --once` |
-| **Added**     | `worker` service `healthcheck:` block (`pgrep -f supercronic`) on all three compose files   |
 | **Added**     | `GET /api/v1/worker/status` endpoint (#756) — freshness per job kind, see below            |
 | **Changed**   | `worker.command` — from `['python', '-m', 'app.workers.analytics']` to `['supercronic', '-passthrough-logs', '/app/crontab/worker.crontab']` |
 | **Unchanged** | `worker.restart: unless-stopped`, job logic itself, nightly 03:00 UTC schedule, weekly Sunday digest piggyback |
@@ -57,6 +56,11 @@ reports the age of the *last successful* run per job, independent of whether
 the process is currently alive), an external monitor can now detect "the
 worker hasn't actually completed a job in 30+ hours" — the failure mode #757
 was written to close.
+
+The `worker` service's compose block itself only changes in one line — its
+`command:` — deliberately, to keep the upgrade diff minimal for selfhost
+operators. No new container, no new required `.env` entry, no new
+`healthcheck:` block was added on top of that.
 
 ---
 
@@ -113,8 +117,8 @@ unchanged.)
 
 ```bash
 docker compose ps
-# correlcore-worker should show "healthy" once its new HEALTHCHECK passes
-# (pgrep -f supercronic — a process-liveness check, not a job-success check)
+# correlcore-worker should show "Up" (no dedicated healthcheck was added for
+# this change — the freshness signal to watch is /worker/status, see below)
 
 docker compose logs worker --tail=20
 # Expect supercronic startup log lines; no cron output yet until the next
@@ -138,16 +142,18 @@ docker compose exec worker python -m app.workers.analytics --once
 
 | Signal                                  | Before (#745 baseline)              | After (#756 + #757)                                                        |
 | ---------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- |
-| Container process liveness               | None (no `healthcheck:` on worker)   | `pgrep -f supercronic` docker healthcheck — **secondary** signal only        |
-| Job success/freshness                    | None — silent failure possible       | `GET /api/v1/worker/status` (#756) — **primary** signal, age of last success per job kind |
+| Container process liveness               | None (no `healthcheck:` on worker)   | None (unchanged — no `healthcheck:` block was added; not needed since freshness is tracked via #756) |
+| Job success/freshness                    | None — silent failure possible       | `GET /api/v1/worker/status` (#756) — **only** signal, age of last success per job kind |
 | Crash recovery                            | Whole container restart needed       | `supercronic` survives a crashed `--once` subprocess; container stays up     |
 | Loud crash reporting                     | GlitchTip (if `--profile monitoring` enabled), unchanged | Unchanged, still applies                                              |
 
 **Action for existing external monitors:** if you already poll the worker
-container's Docker healthcheck status or its logs for liveness, that keeps
-working but is not sufficient on its own — add a check against
-`GET /api/v1/worker/status` on the `api` container/domain as the primary
-signal. See the install docs for exact Uptime-Kuma / healthchecks.io setup.
+container's Docker status (`docker compose ps`) or logs for liveness, that
+keeps working exactly as before — this migration does not change it. What's
+new is `GET /api/v1/worker/status` on the `api` container/domain, which is
+the only signal that actually reflects whether the nightly job is still
+succeeding. See the install docs for exact Uptime-Kuma / healthchecks.io
+setup.
 
 ---
 
@@ -155,9 +161,9 @@ signal. See the install docs for exact Uptime-Kuma / healthchecks.io setup.
 
 | Symptom                                    | Likely cause                                              | Fix                                                                          |
 | -------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `worker` container unhealthy after upgrade    | `supercronic` binary missing/checksum failed at build time    | `docker compose build worker --no-cache`, check build logs for the checksum step |
+| `worker` container crash-loops after upgrade  | `supercronic` binary missing/checksum failed at build time    | `docker compose build worker --no-cache`, check build logs for the checksum step |
 | No nightly job output in logs                | Waiting for next `0 3 * * *` UTC tick                        | Trigger manually: `docker compose exec worker python -m app.workers.analytics --once` |
-| `/worker/status` returns 401                 | Neither `WORKER_STATUS_API_KEY` nor an admin session provided | Set the env var, or call it from an authenticated admin browser session          |
+| `/worker/status` returns 401                 | Neither `WORKER_STATUS_API_KEY` nor an admin session provided | On `docker-compose.yml`, set the env var in `.env`; on quickstart/user-test, call it from an authenticated admin browser session instead (or edit the compose file to add the var) |
 | `/worker/status` shows `job_status: never_run` for every job right after upgrade | Expected — no successful run recorded yet on this DB          | Wait for the next tick or trigger manually; recheck                              |
 | Weekly digest not appearing                  | Unrelated to this migration — check user's Settings opt-in    | See `docs/DEVELOPMENT.md` digest section                                        |
 

@@ -33,11 +33,6 @@ x-api-env: &api-env
   FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-https://${DOMAIN}}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
-  # Worker freshness monitoring (#756) — GET /worker/status. Empty key falls
-  # back to admin-session auth only; set it to allow an external uptime
-  # monitor (Uptime-Kuma, healthchecks.io) to poll without a browser session.
-  WORKER_STATUS_API_KEY: ${WORKER_STATUS_API_KEY:-}
-  WORKER_STALE_AFTER_HOURS: ${WORKER_STALE_AFTER_HOURS:-30}
   # Photo storage ships in M13 and is off by default. Only when PHOTOS_ENABLED
   # is true do production Settings require a non-default MINIO_SECRET_KEY
   # (≥16 chars, not CHANGE_ME*); until then the placeholder is fine (#543).
@@ -195,9 +190,12 @@ services:
   # protection against supercronic/container-level crashes -- a crash inside
   # a single --once run no longer takes supercronic itself down with it,
   # which was the actual failure mode behind #745/#757.
-  # The healthcheck below is only a secondary process-liveness signal; the
-  # primary freshness signal is GET /api/v1/worker/status (#756, served by
-  # the api container) -- see docs/selfhost/M11_WORKER_CRON_MIGRATION.md.
+  # Freshness signal for this service is GET /api/v1/worker/status (#756,
+  # served by the api container) -- see docs/selfhost/M11_WORKER_CRON_MIGRATION.md.
+  # No container-level healthcheck override here by design (kept the compose
+  # diff minimal); the image's own HEALTHCHECK (curl against :8000/health)
+  # does not apply meaningfully to this service either way since worker
+  # never runs uvicorn -- pre-existing since before this change.
   worker:
     <<: *api-image
     container_name: correlcore-worker
@@ -205,12 +203,6 @@ services:
     command: ['supercronic', '-passthrough-logs', '/app/crontab/worker.crontab']
     env_file: .env
     environment: *api-env
-    healthcheck:
-      test: ['CMD-SHELL', 'pgrep -f supercronic > /dev/null || exit 1']
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
     depends_on:
       migrate:
         condition: service_completed_successfully

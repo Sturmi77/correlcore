@@ -54,13 +54,6 @@ ARG BUILD_TIME=
 # Non-root user for security
 RUN groupadd -r correlcore && useradd -r -g correlcore correlcore
 
-# procps provides pgrep, used by the worker container's HEALTHCHECK (#757)
-# to report supercronic process liveness as a secondary/complementary signal
-# to GET /worker/status (the primary "did the job actually run" signal, #756).
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends procps \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy venv from builder
 COPY --from=builder /app/.venv .venv
 ENV PATH="/app/.venv/bin:$PATH"
