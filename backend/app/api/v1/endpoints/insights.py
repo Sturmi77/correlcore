@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date
 
@@ -76,6 +77,7 @@ from app.services.stats_service import get_symptom_tag_cooccurrence, get_tag_coo
 from app.services.tag_cluster_service import get_tag_clusters
 from app.workers.analytics import run_insights_once
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -415,6 +417,25 @@ async def regenerate_insights_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No encryption key found for insight generation",
+        ) from exc
+    except Exception as exc:
+        # #754: an unclassified failure (e.g. the RLS/FK cascade class from
+        # #745, or a lock/DB timeout from #753) previously surfaced as a raw
+        # 500 with no actionable message. Give the user a clear, friendly
+        # response and free the cooldown slot so a genuinely failed attempt
+        # does not also block them from retrying for an hour.
+        await db.rollback()
+        await redis.delete(f"insight:regenerate:{user.id}")
+        logger.exception(
+            "insight regeneration failed unexpectedly",
+            extra={"user_id": str(user.id)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "We couldn't refresh your insights right now. "
+                "Please try again in a few minutes, or contact support if it keeps happening."
+            ),
         ) from exc
 
     return InsightRegenerateResponse(

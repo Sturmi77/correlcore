@@ -71,12 +71,23 @@ async def list_insight_generation_jobs(db: AsyncSession) -> list[InsightGenerati
     )
     user_ids = result.scalars().all()
 
+    # #752 (Bulkhead): listing runs read-only per user, but any failing
+    # statement still poisons the shared transaction until rolled back. A
+    # SAVEPOINT per user keeps one bad lookup from wiping out every
+    # subsequent user's eligibility check for the night.
     jobs: list[InsightGenerationJob] = []
     for user_id in user_ids:
-        await bind_rls_current_user(db, user_id)
-        job = await load_insight_generation_job(db, user_id=user_id)
-        if job is not None:
-            jobs.append(job)
+        try:
+            async with db.begin_nested():
+                await bind_rls_current_user(db, user_id)
+                job = await load_insight_generation_job(db, user_id=user_id)
+            if job is not None:
+                jobs.append(job)
+        except Exception:
+            logger.exception(
+                "insight job listing failed for user",
+                extra={"user_id": str(user_id)},
+            )
 
     return jobs
 

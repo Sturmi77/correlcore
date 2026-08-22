@@ -3,14 +3,16 @@ from __future__ import annotations
 import uuid
 from datetime import date, timedelta
 from random import Random
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.core.config import settings
 from app.models.entry import WorkContext
 from app.models.insight import InsightTier, InsightType
 from app.services.insight_engine import (
     AnalyticsEntry,
+    InsightLockTimeoutError,
     SymptomSnapshot,
     TagSnapshot,
     _acquire_insight_generation_lock,
@@ -39,6 +41,12 @@ def _scalar_result(values: list[object]) -> MagicMock:
 def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
     result = MagicMock()
     result.all.return_value = values
+    return result
+
+
+def _scalar_result_single(value: object) -> MagicMock:
+    result = MagicMock()
+    result.scalar.return_value = value
     return result
 
 
@@ -577,8 +585,38 @@ async def test_acquire_insight_generation_lock_uses_transaction_advisory_lock() 
 
     stmt = db.execute.await_args.args[0]
     params = db.execute.await_args.args[1]
-    assert "pg_advisory_xact_lock" in str(stmt)
+    assert "pg_try_advisory_xact_lock" in str(stmt)
     assert params == {"ns": ns, "key": key}
+
+
+@pytest.mark.asyncio
+async def test_acquire_insight_generation_lock_retries_then_succeeds() -> None:
+    """#753 (H): a contended lock is retried with backoff, not blocked on forever."""
+    user_id = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[_scalar_result_single(False), _scalar_result_single(True)]
+    )
+
+    with patch("app.services.insight_engine.asyncio.sleep", new=AsyncMock()) as sleep_mock:
+        await _acquire_insight_generation_lock(db, user_id=user_id)
+
+    assert db.execute.await_count == 2
+    sleep_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_acquire_insight_generation_lock_raises_after_max_attempts() -> None:
+    """#753 (H): exhausting all attempts raises a clear, catchable error."""
+    user_id = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result_single(False))
+
+    with patch("app.services.insight_engine.asyncio.sleep", new=AsyncMock()):
+        with pytest.raises(InsightLockTimeoutError):
+            await _acquire_insight_generation_lock(db, user_id=user_id)
+
+    assert db.execute.await_count == settings.INSIGHT_LOCK_MAX_ATTEMPTS
 
 
 @pytest.mark.asyncio
@@ -616,7 +654,7 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     assert stored
     assert db.execute.await_count == 7
     lock_stmt = db.execute.await_args_list[0].args[0]
-    assert "pg_advisory_xact_lock" in str(lock_stmt)
+    assert "pg_try_advisory_xact_lock" in str(lock_stmt)
     load_stmt = db.execute.await_args_list[1].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)

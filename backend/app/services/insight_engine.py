@@ -7,6 +7,7 @@ or UI assumptions are introduced in this sprint.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import math
@@ -80,13 +81,42 @@ def _insight_generation_lock_keys(user_id: uuid.UUID) -> tuple[int, int]:
     return _INSIGHT_GENERATION_LOCK_NS, key
 
 
+class InsightLockTimeoutError(Exception):
+    """Raised when the per-user insight-generation lock cannot be acquired.
+
+    #753 (Option H): the previous implementation used the blocking
+    ``pg_advisory_xact_lock``, which waits indefinitely for a conflicting
+    transaction (scheduled run, manual regenerate, post-batch hook) and
+    holds a pooled DB connection the entire time. A bounded, fast-failing
+    error lets callers retry later or surface a clear message instead of
+    silently starving the connection pool.
+    """
+
+
 async def _acquire_insight_generation_lock(db: AsyncSession, *, user_id: uuid.UUID) -> None:
-    """Serialize insight regenerate/delete/insert for ``user_id`` until commit."""
+    """Serialize insight regenerate/delete/insert for ``user_id`` until commit.
+
+    Uses ``pg_try_advisory_xact_lock`` (non-blocking) in a bounded retry loop
+    with backoff instead of the blocking ``pg_advisory_xact_lock`` — see
+    :class:`InsightLockTimeoutError`.
+    """
 
     ns, key = _insight_generation_lock_keys(user_id)
-    await db.execute(
-        text("SELECT pg_advisory_xact_lock(:ns, :key)"),
-        {"ns": ns, "key": key},
+    max_attempts = settings.INSIGHT_LOCK_MAX_ATTEMPTS
+    backoff = settings.INSIGHT_LOCK_RETRY_BACKOFF_SECONDS
+    for attempt in range(1, max_attempts + 1):
+        result = await db.execute(
+            text("SELECT pg_try_advisory_xact_lock(:ns, :key)"),
+            {"ns": ns, "key": key},
+        )
+        if result.scalar():
+            return
+        if attempt < max_attempts:
+            await asyncio.sleep(backoff * attempt)
+
+    raise InsightLockTimeoutError(
+        f"Could not acquire insight-generation lock for user {user_id} "
+        f"after {max_attempts} attempts"
     )
 
 

@@ -177,6 +177,14 @@ def test_worker_schedules_next_cleanup_for_tomorrow_after_three_utc() -> None:
     assert seconds_until_next_cleanup(now) == timedelta(days=1).total_seconds()
 
 
+class _FakeSavepoint:
+    async def __aenter__(self) -> _FakeSavepoint:
+        return self
+
+    async def __aexit__(self, *_exc: object) -> None:
+        return None
+
+
 @pytest.mark.asyncio
 async def test_run_cleanup_once_accepts_session_factory() -> None:
     class FakeSession:
@@ -185,6 +193,9 @@ async def test_run_cleanup_once_accepts_session_factory() -> None:
             self.rollback = AsyncMock()
             self.execute = AsyncMock(return_value=MagicMock())
             self.execute.return_value.scalars.return_value.all.return_value = []
+
+        def begin_nested(self) -> _FakeSavepoint:
+            return _FakeSavepoint()
 
         async def __aenter__(self) -> FakeSession:
             return self
@@ -198,5 +209,47 @@ async def test_run_cleanup_once_accepts_session_factory() -> None:
 
     assert deleted_accounts == 0
     assert deleted_conflicts == 0
+    assert session.commit.await_count == 1
+    assert session.rollback.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_run_cleanup_once_isolates_step_failures() -> None:
+    """#752 (Bulkhead): one retention step failing must not roll back the other."""
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self.commit = AsyncMock()
+            self.rollback = AsyncMock()
+
+        def begin_nested(self) -> _FakeSavepoint:
+            return _FakeSavepoint()
+
+        async def __aenter__(self) -> FakeSession:
+            return self
+
+        async def __aexit__(self, *_exc: object) -> None:
+            return None
+
+    session = FakeSession()
+
+    with (
+        patch(
+            "app.workers.analytics.cleanup_unverified_accounts",
+            new=AsyncMock(side_effect=RuntimeError("boom")),
+        ),
+        patch(
+            "app.workers.analytics.cleanup_stale_sync_conflicts",
+            new=AsyncMock(return_value=3),
+        ),
+    ):
+        deleted_accounts, deleted_conflicts = await run_cleanup_once(
+            session_factory=lambda: session
+        )
+
+    # The failing step contributes nothing, but the successful step's result
+    # survives and the transaction still commits instead of rolling back.
+    assert deleted_accounts == 0
+    assert deleted_conflicts == 3
     assert session.commit.await_count == 1
     assert session.rollback.await_count == 0

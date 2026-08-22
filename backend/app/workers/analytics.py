@@ -11,6 +11,7 @@ from datetime import UTC, datetime, time, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.worker_run import WorkerJobKind, WorkerRunStatus, WorkerTriggerSource
 from app.services.cleanup_service import cleanup_unverified_accounts
@@ -83,24 +84,42 @@ async def run_cleanup_once(
             job_kind=WorkerJobKind.CLEANUP,
             trigger_source=trigger_source,
         )
+    deleted_accounts = 0
+    deleted_conflicts = 0
+    step_errors: dict[str, str] = {}
     try:
         async with session_factory() as session:
+            # #752 (Bulkhead): each retention step runs in its own SAVEPOINT.
+            # Previously both ran in one implicit transaction — a failure in
+            # either aborted both and rolled back everything, even the parts
+            # that had already succeeded. Now a failing step is isolated,
+            # logged, and skipped; the other step and its results survive.
             try:
-                deleted_accounts = await cleanup_unverified_accounts(session)
-                deleted_conflicts = await cleanup_stale_sync_conflicts(session)
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                logger.exception("daily retention cleanup failed")
-                raise
+                async with session.begin_nested():
+                    deleted_accounts = await cleanup_unverified_accounts(session)
+            except Exception as exc:
+                step_errors["unverified_accounts"] = str(exc)
+                logger.exception("unverified account cleanup step failed")
+
+            try:
+                async with session.begin_nested():
+                    deleted_conflicts = await cleanup_stale_sync_conflicts(session)
+            except Exception as exc:
+                step_errors["sync_conflicts"] = str(exc)
+                logger.exception("sync conflict cleanup step failed")
+
+            await session.commit()
+
+        result = {
+            "deleted_unverified_accounts": deleted_accounts,
+            "deleted_sync_conflicts": deleted_conflicts,
+        }
         if record_run:
             await finish_run(
                 run_id,
-                status=WorkerRunStatus.SUCCEEDED,
-                result={
-                    "deleted_unverified_accounts": deleted_accounts,
-                    "deleted_sync_conflicts": deleted_conflicts,
-                },
+                status=WorkerRunStatus.FAILED if step_errors else WorkerRunStatus.SUCCEEDED,
+                result=result,
+                error_message="; ".join(f"{k}: {v}" for k, v in step_errors.items()) or None,
             )
         return deleted_accounts, deleted_conflicts
     except Exception as exc:
@@ -140,13 +159,30 @@ async def run_insights_once(
         for job in jobs:
             async with session_factory() as session:
                 try:
-                    generated += await generate_insights_for_job(
-                        session,
-                        job=job,
-                        as_of=generated_for_date,
+                    # #753 (I): a pathological single user (huge history,
+                    # hung query, runaway computation) must not stall every
+                    # subsequent user for the rest of the night — the loop
+                    # is otherwise sequential.
+                    generated += await asyncio.wait_for(
+                        generate_insights_for_job(
+                            session,
+                            job=job,
+                            as_of=generated_for_date,
+                        ),
+                        timeout=settings.WORKER_JOB_TIMEOUT_SECONDS,
                     )
                     await session.commit()
                     processed += 1
+                except TimeoutError:
+                    await session.rollback()
+                    failed += 1
+                    logger.exception(
+                        "insight generation timed out",
+                        extra={
+                            "user_id": str(job.user_id),
+                            "timeout_seconds": settings.WORKER_JOB_TIMEOUT_SECONDS,
+                        },
+                    )
                 except Exception:
                     await session.rollback()
                     failed += 1

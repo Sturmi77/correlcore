@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -84,6 +85,32 @@ async def test_list_insight_generation_jobs_filters_eligible_users() -> None:
     user_scoped_stmt = db.execute.await_args_list[1].args[0]
     assert "user_encryption_keys" in str(user_scoped_stmt)
     assert "user_preferences" in str(user_scoped_stmt)
+
+
+@pytest.mark.asyncio
+async def test_list_insight_generation_jobs_isolates_per_user_failures() -> None:
+    """#752 (Bulkhead): one user's lookup failing must not drop every other user."""
+    bad_user_id = uuid.uuid4()
+    good_user_id = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([bad_user_id, good_user_id]),
+            _first_result((b"wrapped-dek", None)),
+        ]
+    )
+
+    async def _bind_rls(_db: object, user_id: uuid.UUID) -> None:
+        if user_id == bad_user_id:
+            raise RuntimeError("boom")
+
+    with patch(
+        "app.services.insight_worker_service.bind_rls_current_user",
+        new=AsyncMock(side_effect=_bind_rls),
+    ):
+        jobs = await list_insight_generation_jobs(db)
+
+    assert jobs == [InsightGenerationJob(user_id=good_user_id, wrapped_dek=b"wrapped-dek")]
 
 
 @pytest.mark.asyncio
@@ -217,6 +244,41 @@ async def test_run_insights_once_isolates_per_user_failures() -> None:
     assert summary.generated_insights == 3
     assert session_factory.sessions[1].commit.await_count == 1
     assert session_factory.sessions[2].rollback.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_run_insights_once_times_out_slow_user_and_continues() -> None:
+    """#753 (I): a hung per-user job is bounded and does not block the batch."""
+    jobs = [
+        InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"slow"),
+        InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"fast"),
+    ]
+    session_factory = _FakeSessionFactory()
+
+    async def fake_generate(_session: object, *, job: InsightGenerationJob, as_of: object) -> int:
+        if job.user_id == jobs[0].user_id:
+            await asyncio.sleep(10)
+            return 99
+        return 2
+
+    with (
+        patch(
+            "app.workers.analytics.list_insight_generation_jobs", new=AsyncMock(return_value=jobs)
+        ),
+        patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+        patch("app.workers.analytics.settings.WORKER_JOB_TIMEOUT_SECONDS", 0.01),
+    ):
+        summary = await run_insights_once(
+            as_of=datetime(2026, 5, 12, tzinfo=UTC),
+            session_factory=session_factory,
+        )
+
+    assert summary.eligible_users == 2
+    assert summary.processed_users == 1
+    assert summary.failed_users == 1
+    assert summary.generated_insights == 2
 
 
 @pytest.mark.asyncio

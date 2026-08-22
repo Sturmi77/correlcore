@@ -46,17 +46,33 @@ async def cleanup_unverified_accounts(
     )
     user_ids = list(listed.scalars().all())
 
+    # #752 (Bulkhead): each delete runs in its own SAVEPOINT so one user's
+    # IntegrityError (the RLS/FK cascade failure class documented above)
+    # only rolls back that one delete, not the whole cleanup transaction —
+    # the remaining users, and the sync-conflict cleanup that follows in
+    # the same transaction, still get a chance to run.
     deleted_ids: list[str] = []
+    failed_ids: list[str] = []
     for user_id in user_ids:
-        await bind_rls_current_user(db, user_id)
-        await db.execute(delete(User).where(User.id == user_id))
-        deleted_ids.append(str(user_id))
+        try:
+            async with db.begin_nested():
+                await bind_rls_current_user(db, user_id)
+                await db.execute(delete(User).where(User.id == user_id))
+            deleted_ids.append(str(user_id))
+        except Exception:
+            failed_ids.append(str(user_id))
+            logger.exception(
+                "unverified account cleanup failed for user",
+                extra={"user_id": str(user_id)},
+            )
 
     logger.info(
         "unverified account cleanup completed",
         extra={
             "deleted_count": len(deleted_ids),
             "user_ids": deleted_ids,
+            "failed_count": len(failed_ids),
+            "failed_user_ids": failed_ids,
         },
     )
     return len(deleted_ids)
