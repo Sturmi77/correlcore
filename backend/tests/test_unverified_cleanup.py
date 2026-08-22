@@ -9,7 +9,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.services.cleanup_service import cleanup_unverified_accounts
+from app.services.cleanup_service import (
+    UnverifiedCleanupResult,
+    cleanup_unverified_accounts,
+)
 from app.workers.analytics import run_cleanup_once, seconds_until_next_cleanup
 
 
@@ -39,13 +42,14 @@ async def test_cleanup_deletes_unverified_accounts_older_than_retention() -> Non
     user_id = uuid.uuid4()
     db = _session_with_stale_ids(user_id)
 
-    count = await cleanup_unverified_accounts(
+    result = await cleanup_unverified_accounts(
         db,
         now=datetime(2026, 5, 10, 12, tzinfo=UTC),
         retention_days=7,
     )
 
-    assert count == 1
+    assert result.deleted_count == 1
+    assert not result.has_failures
     stmt = _select_stmt(db)
     assert "users.is_verified IS false" in str(stmt.whereclause)
     assert "users.created_at <" in str(stmt.whereclause)
@@ -57,9 +61,9 @@ async def test_cleanup_keeps_accounts_exactly_on_threshold_by_using_strict_less_
     db = _session_with_stale_ids()
     now = datetime(2026, 5, 10, 3, tzinfo=UTC)
 
-    count = await cleanup_unverified_accounts(db, now=now, retention_days=7)
+    result = await cleanup_unverified_accounts(db, now=now, retention_days=7)
 
-    assert count == 0
+    assert result.deleted_count == 0
     stmt = _select_stmt(db)
     assert "users.created_at <" in str(stmt.whereclause)
     assert "<=" not in str(stmt.whereclause)
@@ -84,13 +88,13 @@ async def test_cleanup_preserves_verified_accounts_by_filtering_false_only() -> 
 async def test_cleanup_returns_deleted_count_from_listed_ids() -> None:
     db = _session_with_stale_ids(uuid.uuid4(), uuid.uuid4(), uuid.uuid4())
 
-    count = await cleanup_unverified_accounts(
+    result = await cleanup_unverified_accounts(
         db,
         now=datetime(2026, 5, 10, tzinfo=UTC),
         retention_days=7,
     )
 
-    assert count == 3
+    assert result.deleted_count == 3
 
 
 @pytest.mark.asyncio
@@ -105,13 +109,13 @@ async def test_cleanup_binds_rls_to_each_target_before_delete(bind_rls: AsyncMoc
     second = uuid.uuid4()
     db = _session_with_stale_ids(first, second)
 
-    count = await cleanup_unverified_accounts(
+    result = await cleanup_unverified_accounts(
         db,
         now=datetime(2026, 5, 10, tzinfo=UTC),
         retention_days=7,
     )
 
-    assert count == 2
+    assert result.deleted_count == 2
     assert [call.args for call in bind_rls.await_args_list] == [(db, first), (db, second)]
     assert db.execute.await_count == 3  # list + one DELETE per user
     first_delete = db.execute.await_args_list[1].args[0]
@@ -139,8 +143,8 @@ async def test_cleanup_is_idempotent_when_nothing_matches() -> None:
         retention_days=7,
     )
 
-    assert first == 0
-    assert second == 0
+    assert first.deleted_count == 0
+    assert second.deleted_count == 0
     assert db.execute.await_count == 2
 
 
@@ -177,6 +181,14 @@ def test_worker_schedules_next_cleanup_for_tomorrow_after_three_utc() -> None:
     assert seconds_until_next_cleanup(now) == timedelta(days=1).total_seconds()
 
 
+class _FakeSavepoint:
+    async def __aenter__(self) -> _FakeSavepoint:
+        return self
+
+    async def __aexit__(self, *_exc: object) -> None:
+        return None
+
+
 @pytest.mark.asyncio
 async def test_run_cleanup_once_accepts_session_factory() -> None:
     class FakeSession:
@@ -186,6 +198,9 @@ async def test_run_cleanup_once_accepts_session_factory() -> None:
             self.execute = AsyncMock(return_value=MagicMock())
             self.execute.return_value.scalars.return_value.all.return_value = []
 
+        def begin_nested(self) -> _FakeSavepoint:
+            return _FakeSavepoint()
+
         async def __aenter__(self) -> FakeSession:
             return self
 
@@ -194,9 +209,103 @@ async def test_run_cleanup_once_accepts_session_factory() -> None:
 
     session = FakeSession()
 
-    deleted_accounts, deleted_conflicts = await run_cleanup_once(session_factory=lambda: session)
+    summary = await run_cleanup_once(session_factory=lambda: session)
 
-    assert deleted_accounts == 0
-    assert deleted_conflicts == 0
+    assert summary.deleted_unverified_accounts == 0
+    assert summary.deleted_sync_conflicts == 0
+    assert not summary.has_errors
+    assert session.commit.await_count == 1
+    assert session.rollback.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_run_cleanup_once_isolates_step_failures() -> None:
+    """#752 (Bulkhead): one retention step failing must not roll back the other."""
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self.commit = AsyncMock()
+            self.rollback = AsyncMock()
+
+        def begin_nested(self) -> _FakeSavepoint:
+            return _FakeSavepoint()
+
+        async def __aenter__(self) -> FakeSession:
+            return self
+
+        async def __aexit__(self, *_exc: object) -> None:
+            return None
+
+    session = FakeSession()
+
+    with (
+        patch(
+            "app.workers.analytics.cleanup_unverified_accounts",
+            new=AsyncMock(side_effect=RuntimeError("boom")),
+        ),
+        patch(
+            "app.workers.analytics.cleanup_stale_sync_conflicts",
+            new=AsyncMock(return_value=3),
+        ),
+    ):
+        summary = await run_cleanup_once(session_factory=lambda: session)
+
+    # The failing step contributes nothing, but the successful step's result
+    # survives and the transaction still commits instead of rolling back.
+    assert summary.deleted_unverified_accounts == 0
+    assert summary.deleted_sync_conflicts == 3
+    assert summary.step_errors == (("unverified_accounts", "boom"),)
+    assert session.commit.await_count == 1
+    assert session.rollback.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_run_cleanup_once_reports_isolated_per_user_delete_failures() -> None:
+    """Isolated per-user delete failures must fail the run, not read as healthy.
+
+    cleanup_unverified_accounts isolates each delete in its own SAVEPOINT, so a
+    per-user IntegrityError does not raise out of the step. Without surfacing
+    those failures the daily bundle would record SUCCEEDED even when every
+    delete failed; the run must instead carry the step error so worker
+    telemetry shows FAILED while the bulkhead keeps other work committed.
+    """
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self.commit = AsyncMock()
+            self.rollback = AsyncMock()
+
+        def begin_nested(self) -> _FakeSavepoint:
+            return _FakeSavepoint()
+
+        async def __aenter__(self) -> FakeSession:
+            return self
+
+        async def __aexit__(self, *_exc: object) -> None:
+            return None
+
+    session = FakeSession()
+
+    with (
+        patch(
+            "app.workers.analytics.cleanup_unverified_accounts",
+            new=AsyncMock(
+                return_value=UnverifiedCleanupResult(
+                    deleted_count=0,
+                    failed_user_ids=("u1", "u2"),
+                )
+            ),
+        ),
+        patch(
+            "app.workers.analytics.cleanup_stale_sync_conflicts",
+            new=AsyncMock(return_value=0),
+        ),
+    ):
+        summary = await run_cleanup_once(session_factory=lambda: session)
+
+    assert summary.deleted_unverified_accounts == 0
+    assert summary.has_errors
+    assert summary.step_errors == (("unverified_accounts", "2 account delete(s) failed"),)
+    # Bulkhead intact: successful work still commits, nothing rolls back.
     assert session.commit.await_count == 1
     assert session.rollback.await_count == 0

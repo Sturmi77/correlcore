@@ -17,7 +17,7 @@ from app.db.session import AsyncSessionLocal, bind_rls_current_user
 from app.models.user import User
 from app.models.user_encryption_key import UserEncryptionKey
 from app.models.user_preference import UserPreference
-from app.services.insight_engine import generate_and_store_insights
+from app.services.insight_engine import InsightLockTimeoutError, generate_and_store_insights
 from app.services.tag_cluster_service import recompute_tag_vectors_and_clusters
 
 logger = logging.getLogger(__name__)
@@ -71,12 +71,23 @@ async def list_insight_generation_jobs(db: AsyncSession) -> list[InsightGenerati
     )
     user_ids = result.scalars().all()
 
+    # #752 (Bulkhead): listing runs read-only per user, but any failing
+    # statement still poisons the shared transaction until rolled back. A
+    # SAVEPOINT per user keeps one bad lookup from wiping out every
+    # subsequent user's eligibility check for the night.
     jobs: list[InsightGenerationJob] = []
     for user_id in user_ids:
-        await bind_rls_current_user(db, user_id)
-        job = await load_insight_generation_job(db, user_id=user_id)
-        if job is not None:
-            jobs.append(job)
+        try:
+            async with db.begin_nested():
+                await bind_rls_current_user(db, user_id)
+                job = await load_insight_generation_job(db, user_id=user_id)
+            if job is not None:
+                jobs.append(job)
+        except Exception:
+            logger.exception(
+                "insight job listing failed for user",
+                extra={"user_id": str(user_id)},
+            )
 
     return jobs
 
@@ -123,7 +134,17 @@ async def _run_insight_pipeline_for_job(
     tag_clusters_status: Literal["ok", "insufficient_data"] = "insufficient_data"
     try:
         await bind_rls_current_user(db, job.user_id)
-        insights = await generate_and_store_insights(db, user_id=job.user_id, as_of=as_of)
+        try:
+            insights = await generate_and_store_insights(db, user_id=job.user_id, as_of=as_of)
+        except InsightLockTimeoutError:
+            # Lock contention is an expected, temporary outcome of overlapping
+            # scheduled, post-batch and manual runs. Propagate it unchanged so
+            # each caller can apply its own no-storm policy.
+            logger.info(
+                "insight generation deferred because another run holds the lock",
+                extra={"user_id": str(job.user_id)},
+            )
+            raise
         try:
             async with db.begin_nested():
                 clusters = await recompute_tag_vectors_and_clusters(
@@ -283,6 +304,14 @@ async def run_insight_regeneration_background(
             await session.commit()
         except AnalyticsDisabledError:
             await session.rollback()
+        except InsightLockTimeoutError:
+            await session.rollback()
+            # Keep the Redis debounce key: launching another post-batch run
+            # immediately would collide with the same lock holder again.
+            logger.info(
+                "background insight regeneration deferred due to lock contention",
+                extra={"user_id": str(user_id), "trigger_source": trigger_source},
+            )
         except Exception:
             await session.rollback()
             logger.exception(
