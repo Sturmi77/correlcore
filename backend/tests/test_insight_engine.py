@@ -1,21 +1,26 @@
 from __future__ import annotations
 
+import asyncio
+import time
 import uuid
 from datetime import date, timedelta
 from random import Random
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.core.config import settings
 from app.models.entry import WorkContext
 from app.models.insight import InsightTier, InsightType
 from app.services.insight_engine import (
     AnalyticsEntry,
+    InsightLockTimeoutError,
     SymptomSnapshot,
     TagSnapshot,
     _acquire_insight_generation_lock,
     _canonicalize_tag_aliases,
     _dedupe_daily_entries,
+    _generate_insight_candidates_in_thread,
     _insight_generation_lock_keys,
     confidence_tier_for_sample,
     display_metric_value,
@@ -39,6 +44,12 @@ def _scalar_result(values: list[object]) -> MagicMock:
 def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
     result = MagicMock()
     result.all.return_value = values
+    return result
+
+
+def _scalar_result_single(value: object) -> MagicMock:
+    result = MagicMock()
+    result.scalar.return_value = value
     return result
 
 
@@ -577,8 +588,60 @@ async def test_acquire_insight_generation_lock_uses_transaction_advisory_lock() 
 
     stmt = db.execute.await_args.args[0]
     params = db.execute.await_args.args[1]
-    assert "pg_advisory_xact_lock" in str(stmt)
+    assert "pg_try_advisory_xact_lock" in str(stmt)
     assert params == {"ns": ns, "key": key}
+
+
+@pytest.mark.asyncio
+async def test_acquire_insight_generation_lock_retries_then_succeeds() -> None:
+    """#753 (H): a contended lock is retried with backoff, not blocked on forever."""
+    user_id = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[_scalar_result_single(False), _scalar_result_single(True)])
+
+    with patch("app.services.insight_engine.asyncio.sleep", new=AsyncMock()) as sleep_mock:
+        await _acquire_insight_generation_lock(db, user_id=user_id)
+
+    assert db.execute.await_count == 2
+    sleep_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_acquire_insight_generation_lock_raises_after_max_attempts() -> None:
+    """#753 (H): exhausting all attempts raises a clear, catchable error."""
+    user_id = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result_single(False))
+
+    with patch("app.services.insight_engine.asyncio.sleep", new=AsyncMock()):
+        with pytest.raises(InsightLockTimeoutError):
+            await _acquire_insight_generation_lock(db, user_id=user_id)
+
+    assert db.execute.await_count == settings.INSIGHT_LOCK_MAX_ATTEMPTS
+
+
+@pytest.mark.asyncio
+async def test_candidate_generation_runs_in_thread_without_blocking_event_loop() -> None:
+    """A long statistics calculation must not delay unrelated event-loop work."""
+
+    loop = asyncio.get_running_loop()
+    calculation_started = asyncio.Event()
+
+    def slow_calculation(*_args: object, **_kwargs: object) -> list[object]:
+        loop.call_soon_threadsafe(calculation_started.set)
+        time.sleep(0.05)
+        return []
+
+    with patch(
+        "app.services.insight_engine.generate_insight_candidates",
+        side_effect=slow_calculation,
+    ):
+        task = asyncio.create_task(
+            _generate_insight_candidates_in_thread([], [], [], as_of=date(2026, 5, 1))
+        )
+        await asyncio.wait_for(calculation_started.wait(), timeout=0.02)
+        assert not task.done()
+        assert await task == []
 
 
 @pytest.mark.asyncio
@@ -616,7 +679,7 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     assert stored
     assert db.execute.await_count == 7
     lock_stmt = db.execute.await_args_list[0].args[0]
-    assert "pg_advisory_xact_lock" in str(lock_stmt)
+    assert "pg_try_advisory_xact_lock" in str(lock_stmt)
     load_stmt = db.execute.await_args_list[1].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
@@ -15,13 +16,33 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
+class UnverifiedCleanupResult:
+    """Outcome of an unverified-account cleanup pass.
+
+    ``deleted_count`` counts the rows actually removed. ``failed_user_ids``
+    carries the per-user deletes that raised and were isolated in their own
+    SAVEPOINT — these must be surfaced to the caller so a batch where deletes
+    silently fail is not recorded as a healthy run.
+    """
+
+    deleted_count: int
+    failed_user_ids: tuple[str, ...] = field(default_factory=tuple)
+
+    @property
+    def has_failures(self) -> bool:
+        """Return whether at least one targeted account delete failed."""
+
+        return bool(self.failed_user_ids)
+
+
 async def cleanup_unverified_accounts(
     db: AsyncSession,
     *,
     now: datetime | None = None,
     retention_days: int | None = None,
-) -> int:
-    """Delete stale unverified accounts and return the deleted row count.
+) -> UnverifiedCleanupResult:
+    """Delete stale unverified accounts and return deleted count plus failures.
 
     The delete is intentionally scoped to ``is_verified = false`` and
     ``created_at < threshold``. Accounts exactly on the threshold remain for
@@ -46,17 +67,36 @@ async def cleanup_unverified_accounts(
     )
     user_ids = list(listed.scalars().all())
 
+    # #752 (Bulkhead): each delete runs in its own SAVEPOINT so one user's
+    # IntegrityError (the RLS/FK cascade failure class documented above)
+    # only rolls back that one delete, not the whole cleanup transaction —
+    # the remaining users, and the sync-conflict cleanup that follows in
+    # the same transaction, still get a chance to run.
     deleted_ids: list[str] = []
+    failed_ids: list[str] = []
     for user_id in user_ids:
-        await bind_rls_current_user(db, user_id)
-        await db.execute(delete(User).where(User.id == user_id))
-        deleted_ids.append(str(user_id))
+        try:
+            async with db.begin_nested():
+                await bind_rls_current_user(db, user_id)
+                await db.execute(delete(User).where(User.id == user_id))
+            deleted_ids.append(str(user_id))
+        except Exception:
+            failed_ids.append(str(user_id))
+            logger.exception(
+                "unverified account cleanup failed for user",
+                extra={"user_id": str(user_id)},
+            )
 
     logger.info(
         "unverified account cleanup completed",
         extra={
             "deleted_count": len(deleted_ids),
             "user_ids": deleted_ids,
+            "failed_count": len(failed_ids),
+            "failed_user_ids": failed_ids,
         },
     )
-    return len(deleted_ids)
+    return UnverifiedCleanupResult(
+        deleted_count=len(deleted_ids),
+        failed_user_ids=tuple(failed_ids),
+    )
