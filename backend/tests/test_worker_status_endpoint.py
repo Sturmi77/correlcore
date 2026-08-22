@@ -192,3 +192,40 @@ async def test_worker_status_flags_stale_daily_bundle(async_client: AsyncClient)
     job_by_kind = {job["job_kind"]: job for job in data["jobs"]}
     assert job_by_kind["daily_bundle"]["job_status"] == "stale"
     assert job_by_kind["daily_bundle"]["age_hours"] == pytest.approx(40, abs=0.1)
+
+
+@pytest.mark.asyncio
+async def test_worker_status_is_stale_when_all_insight_users_failed(
+    async_client: AsyncClient,
+) -> None:
+    """A SUCCEEDED batch with no successful user work is excluded by the query."""
+
+    settings.WORKER_STATUS_API_KEY = "secret-key"
+    settings.WORKER_STALE_AFTER_HOURS = 30
+    app.dependency_overrides[get_current_user_lax] = _no_session_user()
+    now = datetime.now(UTC)
+    runs = {
+        WorkerJobKind.DAILY_BUNDLE: _fake_run(
+            WorkerJobKind.DAILY_BUNDLE, finished_at=now - timedelta(hours=1)
+        ),
+        # latest_successful_system_runs() returns None here because the latest
+        # SUCCEEDED insight row had failed_users == eligible_users.
+        WorkerJobKind.INSIGHTS: None,
+        WorkerJobKind.DIGEST: _fake_run(WorkerJobKind.DIGEST, finished_at=now - timedelta(days=2)),
+    }
+
+    with patch(
+        "app.api.v1.endpoints.worker_status.latest_successful_system_runs",
+        new=AsyncMock(return_value=runs),
+    ):
+        response = await async_client.get(
+            "/api/v1/worker/status",
+            headers={"X-Worker-Status-Key": "secret-key"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "stale"
+    job_by_kind = {job["job_kind"]: job for job in data["jobs"]}
+    assert job_by_kind["insights"]["job_status"] == "never_run"
+    assert job_by_kind["insights"]["stale"] is True

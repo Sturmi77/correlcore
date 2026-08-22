@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
@@ -272,21 +273,34 @@ async def run_worker(*, sleep: CleanupSleep = asyncio.sleep) -> None:
         await run_daily_jobs_once(trigger_source=WorkerTriggerSource.SCHEDULED)
 
 
-def main() -> None:
-    """CLI entrypoint used by Docker Compose."""
-    import argparse
-
+def _parse_worker_cli(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse one-shot worker options used by cron and manual invocations."""
     parser = argparse.ArgumentParser(description="CorrelCore analytics worker")
     parser.add_argument(
         "--once",
         action="store_true",
         help="Run the daily worker bundle once and exit (cleanup + insights)",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--source",
+        choices=[source.value for source in WorkerTriggerSource],
+        help=(
+            "Recorded trigger source for --once; defaults to cli_once so "
+            "manual invocations remain distinguishable from scheduled runs"
+        ),
+    )
+    return parser.parse_args(argv)
 
+
+def main() -> None:
+    """CLI entrypoint used by Docker Compose."""
+    args = _parse_worker_cli()
     logging.basicConfig(level=logging.INFO)
     if args.once:
-        asyncio.run(run_daily_jobs_once(trigger_source=WorkerTriggerSource.CLI_ONCE))
+        trigger_source = (
+            WorkerTriggerSource(args.source) if args.source else WorkerTriggerSource.CLI_ONCE
+        )
+        asyncio.run(run_daily_jobs_once(trigger_source=trigger_source))
         return
     asyncio.run(run_worker())
 

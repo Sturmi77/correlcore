@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import Integer, cast, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import AsyncSessionLocal
@@ -210,12 +210,28 @@ async def latest_successful_system_runs(
     Unlike :func:`latest_worker_runs` (which returns the latest run
     *regardless of status*, for the admin dev view where seeing a recent
     failure is itself useful context), this only considers
-    ``WorkerRunStatus.SUCCEEDED`` rows: a job that keeps crashing every night
-    should be reported as "stale" by the freshness endpoint, not "fresh"
-    just because it *attempted* to run recently. Always scoped to
-    ``scope_user_id IS NULL`` — these are the system-level recurring jobs,
-    not a specific user's on-demand insight regeneration.
+    ``WorkerRunStatus.SUCCEEDED`` rows which did not fail for every eligible
+    user: a job that keeps crashing every night, or whose individual user
+    work all fails while the enclosing batch survives, should be reported as
+    "stale" by the freshness endpoint, not "fresh" just because it
+    *attempted* to run recently. Always scoped to ``scope_user_id IS NULL`` —
+    these are the system-level recurring jobs, not a specific user's
+    on-demand insight regeneration.
     """
+
+    failed_users = cast(WorkerRun.result["failed_users"].astext, Integer)
+    eligible_users = cast(WorkerRun.result["eligible_users"].astext, Integer)
+    has_successful_batch_outcome = or_(
+        # Keep historical/other successful runs whose result payload predates
+        # the per-user metrics. New insight, digest and daily bundle runs
+        # always carry both fields.
+        WorkerRun.result["failed_users"].astext.is_(None),
+        WorkerRun.result["eligible_users"].astext.is_(None),
+        # A batch with no eligible users is a valid no-op, not a complete
+        # failure. Otherwise exclude failed_users == eligible_users.
+        eligible_users == 0,
+        failed_users < eligible_users,
+    )
 
     result: dict[WorkerJobKind, WorkerRun | None] = {}
     for kind in kinds:
@@ -224,7 +240,9 @@ async def latest_successful_system_runs(
             .where(WorkerRun.job_kind == kind)
             .where(WorkerRun.status == WorkerRunStatus.SUCCEEDED)
             .where(WorkerRun.scope_user_id.is_(None))
-            .order_by(WorkerRun.started_at.desc())
+            .where(WorkerRun.finished_at.is_not(None))
+            .where(has_successful_batch_outcome)
+            .order_by(WorkerRun.finished_at.desc())
             .limit(1)
         )
         run_result = await db.execute(stmt)

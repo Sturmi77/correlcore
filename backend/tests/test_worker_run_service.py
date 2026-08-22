@@ -113,9 +113,8 @@ async def test_latest_successful_system_runs_returns_one_per_kind() -> None:
 
 @pytest.mark.asyncio
 async def test_latest_successful_system_runs_filters_by_status_in_query() -> None:
-    """Each per-kind query must filter on SUCCEEDED + scope_user_id IS NULL,
-    not just "most recent regardless of status" like latest_worker_runs —
-    otherwise a repeatedly-crashing job would look fresh.
+    """Each per-kind query must filter out failed or incomplete system work,
+    not just return the latest run regardless of outcome.
     """
 
     db = make_db_session_with_results(None, None, None)
@@ -124,5 +123,13 @@ async def test_latest_successful_system_runs_filters_by_status_in_query() -> Non
 
     assert db.execute.await_count == 1
     compiled = str(db.execute.await_args.args[0])
-    assert "status" in compiled.lower()
-    assert "scope_user_id" in compiled.lower()
+    compiled_lower = compiled.lower()
+    assert "status" in compiled_lower
+    assert "scope_user_id" in compiled_lower
+    assert "finished_at" in compiled_lower
+    assert "result" in compiled_lower
+    assert "order by worker_runs.finished_at desc" in compiled_lower
+    assert set(db.execute.await_args.args[0].compile().params.values()) >= {
+        "eligible_users",
+        "failed_users",
+    }

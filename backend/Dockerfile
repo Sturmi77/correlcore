@@ -32,14 +32,24 @@ RUN uv venv .venv && \
 # one nightly job no longer takes the whole scheduler down with it — the
 # container/process stays up and simply waits for the next scheduled tick.
 FROM python:3.12-slim AS supercronic
+ARG TARGETARCH
 ARG SUPERCRONIC_VERSION=v0.2.49
-ARG SUPERCRONIC_SHA1SUM=e63c11a9726b775a6a11801e81af4f3fb926aa68
-ARG SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-amd64
+ARG SUPERCRONIC_AMD64_SHA1SUM=e63c11a9726b775a6a11801e81af4f3fb926aa68
+ARG SUPERCRONIC_ARM64_SHA1SUM=0b6c5bb743e0b0dafed1132198c81807927ac413
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -fsSLo /tmp/supercronic "${SUPERCRONIC_URL}" \
-    && echo "${SUPERCRONIC_SHA1SUM}  /tmp/supercronic" | sha1sum -c - \
+    && case "${TARGETARCH}" in \
+        amd64) \
+            supercronic_sha1sum="${SUPERCRONIC_AMD64_SHA1SUM}" ;; \
+        arm64) \
+            supercronic_sha1sum="${SUPERCRONIC_ARM64_SHA1SUM}" ;; \
+        *) \
+            echo "Unsupported supercronic architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSLo /tmp/supercronic \
+        "https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-${TARGETARCH}" \
+    && echo "${supercronic_sha1sum}  /tmp/supercronic" | sha1sum -c - \
     && chmod +x /tmp/supercronic
 
 # ---- Runtime stage ----

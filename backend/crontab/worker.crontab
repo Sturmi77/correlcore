@@ -11,8 +11,9 @@
 # ob heute zusätzlich der Digest fällig ist. Kein separater Cron-Eintrag
 # nötig.
 #
-# --once beendet den Prozess nach einem Durchlauf; supercronic selbst bleibt
+# --once beendet den Prozess nach einem Durchlauf; --source scheduled bewahrt
+# die Unterscheidung zum manuellen CLI-Repair-Lauf. supercronic selbst bleibt
 # dauerhaft laufen und wartet auf den nächsten Tick. Ein Crash/Nicht-Null-Exit
 # innerhalb des Jobs wird von supercronic geloggt (-passthrough-logs im
 # Compose-command), reißt aber nicht den ganzen Scheduler-Prozess mit.
-0 3 * * * python -m app.workers.analytics --once
+0 3 * * * python -m app.workers.analytics --once --source scheduled
