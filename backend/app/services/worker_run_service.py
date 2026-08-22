@@ -248,3 +248,30 @@ async def latest_successful_system_runs(
         run_result = await db.execute(stmt)
         result[kind] = run_result.scalar_one_or_none()
     return result
+
+
+async def latest_successful_insight_run_at(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> datetime | None:
+    """Return the completed time of this user's latest successful generation.
+
+    Unlike ``Insight.generated_at``, this is refreshed when a run succeeds
+    with zero candidates.  It is deliberately scoped to ``USER_INSIGHTS`` so
+    a global worker heartbeat cannot make an individual user's stale feed look
+    fresh when their generation failed.
+    """
+
+    result = await db.execute(
+        select(WorkerRun.finished_at)
+        .where(
+            WorkerRun.scope_user_id == user_id,
+            WorkerRun.job_kind == WorkerJobKind.USER_INSIGHTS,
+            WorkerRun.status == WorkerRunStatus.SUCCEEDED,
+            WorkerRun.finished_at.is_not(None),
+        )
+        .order_by(WorkerRun.finished_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()

@@ -269,8 +269,10 @@ async def test_run_insights_once_isolates_per_user_failures() -> None:
             "app.workers.analytics.list_insight_generation_jobs", new=AsyncMock(return_value=jobs)
         ),
         patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
-        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
-        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+        patch(
+            "app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())
+        ) as start_run,
+        patch("app.workers.analytics.finish_run", new=AsyncMock()) as finish_run,
     ):
         summary = await run_insights_once(
             as_of=datetime(2026, 5, 12, tzinfo=UTC),
@@ -283,6 +285,8 @@ async def test_run_insights_once_isolates_per_user_failures() -> None:
     assert summary.generated_insights == 3
     assert session_factory.sessions[1].commit.await_count == 1
     assert session_factory.sessions[2].rollback.await_count == 1
+    assert start_run.await_count == 3
+    assert finish_run.await_count == 3
 
 
 @pytest.mark.asyncio

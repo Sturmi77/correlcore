@@ -31,4 +31,20 @@ describe('InlineAlert', () => {
 
     expect(handler).toHaveBeenCalledOnce();
   });
+
+  it('disables the action button while actionLoading is true (#755)', () => {
+    render(InlineAlert, {
+      props: {
+        variant: 'warning',
+        message: 'Insights are stale',
+        actionLabel: 'Refresh now',
+        actionTestId: 'stale-action',
+        actionLoading: true,
+      },
+    });
+
+    const button = screen.getByTestId('stale-action') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+  });
 });
