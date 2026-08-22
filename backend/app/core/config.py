@@ -189,6 +189,17 @@ class Settings(BaseSettings):
     # rare tags have too little statistical power even inside a large history.
     ANALYTICS_MIN_TAG_USAGES: int = Field(default=10, ge=2)
 
+    # Worker robustness (#753): hard ceilings so a stuck query, a held
+    # advisory lock, or a runaway per-user job cannot hang a connection or
+    # the nightly batch indefinitely. Milliseconds, mirrors Postgres units.
+    DB_STATEMENT_TIMEOUT_MS: int = Field(default=30_000, ge=1_000)
+    DB_LOCK_TIMEOUT_MS: int = Field(default=5_000, ge=1_000)
+    # Per-user insight/digest job wall-clock ceiling inside the worker loop.
+    WORKER_JOB_TIMEOUT_SECONDS: int = Field(default=180, ge=10)
+    # Retry/backoff for the insight-generation advisory lock (#753 Option H).
+    INSIGHT_LOCK_MAX_ATTEMPTS: int = Field(default=3, ge=1)
+    INSIGHT_LOCK_RETRY_BACKOFF_SECONDS: float = Field(default=0.5, ge=0.0)
+
     # Comma-separated admin emails allowed to call POST /insights/trigger.
     INSIGHT_TRIGGER_ADMIN_EMAILS: Annotated[list[str], NoDecode] = Field(default_factory=list)
 

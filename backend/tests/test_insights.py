@@ -688,6 +688,99 @@ async def test_regenerate_insights_endpoint_rejects_disabled_analytics(
 
 
 @pytest.mark.asyncio
+async def test_regenerate_insights_endpoint_returns_friendly_error_on_unexpected_failure(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    """#754: an unclassified worker/DB failure surfaces a friendly 503, not a raw 500,
+    and frees the hourly cooldown slot instead of penalizing the user for it.
+    """
+    from app.db.redis_client import get_redis
+
+    async def override() -> User:
+        return user
+
+    redis = AsyncMock()
+    redis.delete = AsyncMock()
+
+    async def redis_override():
+        yield redis
+
+    app.dependency_overrides[get_current_verified_user] = override
+    app.dependency_overrides[get_redis] = redis_override
+    try:
+        with (
+            patch(
+                "app.api.v1.endpoints.insights.try_acquire_regenerate_slot",
+                new_callable=AsyncMock,
+                return_value=True,
+            ),
+            patch(
+                "app.api.v1.endpoints.insights.regenerate_insights_for_user",
+                new_callable=AsyncMock,
+                side_effect=RuntimeError("db exploded"),
+            ),
+        ):
+            response = await async_client.post(
+                "/api/v1/insights/regenerate",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
+    assert "try again" in response.json()["detail"].lower()
+    redis.delete.assert_awaited_once_with(f"insight:regenerate:{user.id}")
+
+
+@pytest.mark.asyncio
+async def test_regenerate_insights_endpoint_keeps_cooldown_during_lock_contention(
+    async_client: AsyncClient,
+    user: User,
+) -> None:
+    """Expected lock contention returns a retryable 503 without a retry storm."""
+
+    from app.db.redis_client import get_redis
+    from app.services.insight_engine import InsightLockTimeoutError
+
+    async def override() -> User:
+        return user
+
+    redis = AsyncMock()
+    redis.delete = AsyncMock()
+
+    async def redis_override():
+        yield redis
+
+    app.dependency_overrides[get_current_verified_user] = override
+    app.dependency_overrides[get_redis] = redis_override
+    try:
+        with (
+            patch(
+                "app.api.v1.endpoints.insights.try_acquire_regenerate_slot",
+                new_callable=AsyncMock,
+                return_value=True,
+            ),
+            patch(
+                "app.api.v1.endpoints.insights.regenerate_insights_for_user",
+                new_callable=AsyncMock,
+                side_effect=InsightLockTimeoutError("held by another run"),
+            ),
+        ):
+            response = await async_client.post(
+                "/api/v1/insights/regenerate",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
+    assert response.headers["retry-after"] == "3600"
+    assert "already being refreshed" in response.json()["detail"].lower()
+    redis.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_insights_endpoint_requires_auth(async_client: AsyncClient) -> None:
     response = await async_client.get("/api/v1/insights")
 
