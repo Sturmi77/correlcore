@@ -138,18 +138,37 @@ async def run_insights_once(
         failed = 0
         generated = 0
         for job in jobs:
+            user_run_id = await start_run(
+                job_kind=WorkerJobKind.USER_INSIGHTS,
+                trigger_source=trigger_source,
+                scope_user_id=job.user_id,
+            )
             async with session_factory() as session:
                 try:
-                    generated += await generate_insights_for_job(
+                    insight_count = await generate_insights_for_job(
                         session,
                         job=job,
                         as_of=generated_for_date,
                     )
                     await session.commit()
+                    generated += insight_count
                     processed += 1
-                except Exception:
+                    await finish_run(
+                        user_run_id,
+                        status=WorkerRunStatus.SUCCEEDED,
+                        result={
+                            "generated_for_date": generated_for_date.isoformat(),
+                            "insight_count": insight_count,
+                        },
+                    )
+                except Exception as exc:
                     await session.rollback()
                     failed += 1
+                    await finish_run(
+                        user_run_id,
+                        status=WorkerRunStatus.FAILED,
+                        error_message=str(exc),
+                    )
                     logger.exception(
                         "insight generation failed",
                         extra={"user_id": str(job.user_id)},
