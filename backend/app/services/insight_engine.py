@@ -7,6 +7,7 @@ or UI assumptions are introduced in this sprint.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import math
@@ -80,13 +81,67 @@ def _insight_generation_lock_keys(user_id: uuid.UUID) -> tuple[int, int]:
     return _INSIGHT_GENERATION_LOCK_NS, key
 
 
+class InsightLockTimeoutError(Exception):
+    """Raised when the per-user insight-generation lock cannot be acquired.
+
+    #753 (Option H): the previous implementation used the blocking
+    ``pg_advisory_xact_lock``, which waits indefinitely for a conflicting
+    transaction (scheduled run, manual regenerate, post-batch hook) and
+    holds a pooled DB connection the entire time. A bounded, fast-failing
+    error lets callers retry later or surface a clear message instead of
+    silently starving the connection pool.
+    """
+
+
+async def _generate_insight_candidates_in_thread(
+    entries: list[AnalyticsEntry],
+    tags: list[TagSnapshot],
+    symptoms: list[SymptomSnapshot],
+    *,
+    as_of: date_type,
+) -> list[InsightCandidate]:
+    """Run pure, potentially expensive statistics outside the event loop.
+
+    The inputs are fully materialized plain data structures, so no SQLAlchemy
+    session or ORM object crosses the thread boundary. ``asyncio.to_thread``
+    cannot forcibly stop a running calculation, but it keeps the event loop
+    responsive: the worker deadline can proceed with the next user while the
+    executor worker winds down.
+    """
+
+    return await asyncio.to_thread(
+        generate_insight_candidates,
+        entries,
+        tags,
+        symptoms,
+        as_of=as_of,
+    )
+
+
 async def _acquire_insight_generation_lock(db: AsyncSession, *, user_id: uuid.UUID) -> None:
-    """Serialize insight regenerate/delete/insert for ``user_id`` until commit."""
+    """Serialize insight regenerate/delete/insert for ``user_id`` until commit.
+
+    Uses ``pg_try_advisory_xact_lock`` (non-blocking) in a bounded retry loop
+    with backoff instead of the blocking ``pg_advisory_xact_lock`` — see
+    :class:`InsightLockTimeoutError`.
+    """
 
     ns, key = _insight_generation_lock_keys(user_id)
-    await db.execute(
-        text("SELECT pg_advisory_xact_lock(:ns, :key)"),
-        {"ns": ns, "key": key},
+    max_attempts = settings.INSIGHT_LOCK_MAX_ATTEMPTS
+    backoff = settings.INSIGHT_LOCK_RETRY_BACKOFF_SECONDS
+    for attempt in range(1, max_attempts + 1):
+        result = await db.execute(
+            text("SELECT pg_try_advisory_xact_lock(:ns, :key)"),
+            {"ns": ns, "key": key},
+        )
+        if result.scalar():
+            return
+        if attempt < max_attempts:
+            await asyncio.sleep(backoff * attempt)
+
+    raise InsightLockTimeoutError(
+        f"Could not acquire insight-generation lock for user {user_id} "
+        f"after {max_attempts} attempts"
     )
 
 
@@ -1736,12 +1791,21 @@ async def generate_and_store_insights(
         user_id=user_id,
         as_of=generated_for_date,
     )
-    candidates = generate_insight_candidates(entries, tags, symptoms, as_of=generated_for_date)
+    candidates = await _generate_insight_candidates_in_thread(
+        entries,
+        tags,
+        symptoms,
+        as_of=generated_for_date,
+    )
     from app.services.note_marker_insights import build_marker_mood_insights
 
     marker_rows = await _load_entries_with_markers(db, user_id=user_id, as_of=generated_for_date)
     candidates.extend(
-        build_marker_mood_insights(marker_rows, generated_for_date=generated_for_date)
+        await asyncio.to_thread(
+            build_marker_mood_insights,
+            marker_rows,
+            generated_for_date=generated_for_date,
+        )
     )
 
     if settings.INSIGHTS_LLM_ENABLED:

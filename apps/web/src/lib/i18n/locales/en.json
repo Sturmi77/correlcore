@@ -1180,6 +1180,8 @@
       "empty_all_dismissed_body": "You've seen all current insights. New ones appear here once there are enough fresh entries.",
       "empty_cta": "Go to home",
       "empty_regenerate_cta": "Refresh insights",
+      "stale_banner_message": "Your insights were last refreshed on {date}. The scheduled overnight run appears to have been missed.",
+      "stale_banner_action": "Refresh now",
       "empty_phase": {
         "collecting": {
           "title": "We are still building your foundation.",

@@ -176,6 +176,40 @@ async def get_current_verified_user(
     return current_user
 
 
+async def get_current_user_lax(
+    db: AsyncSession = Depends(get_session),
+    access_token: str | None = Cookie(default=None),
+    authorization: str | None = Header(default=None),
+) -> User | None:
+    """Optional-auth variant of :func:`get_current_user` (#756).
+
+    Returns ``None`` instead of raising when no token is present or the
+    token/user is invalid, expired, or inactive. Used by endpoints that need
+    to know "is there a logged-in user, and are they an admin" without that
+    being the *only* way to authenticate — e.g. ``GET /worker/status``, which
+    also accepts a static monitoring API key for external uptime checkers
+    that cannot hold a browser session.
+
+    Deliberately skips DEK unwrap/RLS binding (unlike ``get_current_user``):
+    callers only need identity/role flags such as ``is_admin``, not access to
+    the user's encrypted data, so paying the DEK-unwrap cost here would be
+    wasted work and an unnecessary decrypt on every unauthenticated poll.
+    """
+    token: str | None = None
+    if access_token:
+        token = access_token
+    elif authorization and authorization.startswith("Bearer "):
+        token = authorization.removeprefix("Bearer ").strip()
+
+    if not token:
+        return None
+
+    try:
+        return await _resolve_user(token, db)
+    except HTTPException:
+        return None
+
+
 async def require_admin(
     current_user: User = Depends(get_current_verified_user),
 ) -> User:

@@ -40,6 +40,29 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     DEV_VIEW_ENABLED: bool = False
     DEV_DB_BACKUP_DIR: str = "/tmp/correlcore-backups"
+
+    # Worker freshness monitoring (#756). GET /worker/status exposes age and
+    # status of the last successful run per WorkerJobKind so an external
+    # uptime monitor (Uptime-Kuma, healthchecks.io, GlitchTip cron monitor)
+    # can alert when the nightly worker silently stops making progress —
+    # as opposed to crashing loudly, which #745 Phase 4 already covers via
+    # GlitchTip error tracking. The endpoint is never fully unauthenticated:
+    # it accepts either this static key (for monitors that cannot hold a
+    # browser session) or an existing admin user session (`is_admin=True`).
+    # Left empty by default; a self-hoster running only Uptime-Kuma/etc.
+    # from outside the trusted network should set this explicitly. It is
+    # NOT hard-required in production (unlike SECRET_KEY et al.) because the
+    # admin-session fallback already keeps the endpoint from being open.
+    WORKER_STATUS_API_KEY: str = ""
+    # Hours after the last successful daily-cadence run (daily_bundle,
+    # insights) before /worker/status reports that job kind as "stale".
+    # Jobs run once nightly at 03:00 UTC (see
+    # app.workers.analytics.seconds_until_next_cleanup); 30h gives ~6h of
+    # slack past the expected ~24h cadence — tighter than the 40h the
+    # frontend insight feed uses for its end-user staleness banner (#755),
+    # because this value drives ops alerting and should fire before a
+    # second nightly run is at risk of being missed too.
+    WORKER_STALE_AFTER_HOURS: int = 30
     IMAGE_TAG: str = "latest"
     IMAGE_DIGEST: str = ""
     GIT_COMMIT: str = "unknown"
@@ -188,6 +211,17 @@ class Settings(BaseSettings):
     # This is intentionally stricter than the global entry-count tier because
     # rare tags have too little statistical power even inside a large history.
     ANALYTICS_MIN_TAG_USAGES: int = Field(default=10, ge=2)
+
+    # Worker robustness (#753): hard ceilings so a stuck query, a held
+    # advisory lock, or a runaway per-user job cannot hang a connection or
+    # the nightly batch indefinitely. Milliseconds, mirrors Postgres units.
+    DB_STATEMENT_TIMEOUT_MS: int = Field(default=30_000, ge=1_000)
+    DB_LOCK_TIMEOUT_MS: int = Field(default=5_000, ge=1_000)
+    # Per-user insight/digest job wall-clock ceiling inside the worker loop.
+    WORKER_JOB_TIMEOUT_SECONDS: int = Field(default=180, ge=10)
+    # Retry/backoff for the insight-generation advisory lock (#753 Option H).
+    INSIGHT_LOCK_MAX_ATTEMPTS: int = Field(default=3, ge=1)
+    INSIGHT_LOCK_RETRY_BACKOFF_SECONDS: float = Field(default=0.5, ge=0.0)
 
     # Comma-separated admin emails allowed to call POST /insights/trigger.
     INSIGHT_TRIGGER_ADMIN_EMAILS: Annotated[list[str], NoDecode] = Field(default_factory=list)

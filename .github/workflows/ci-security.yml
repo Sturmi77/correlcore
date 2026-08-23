@@ -46,7 +46,8 @@ jobs:
         run: |
           uv sync --python 3.12 --extra dev --extra analytics --frozen
           # ecdsa via python-jose: HS256-only JWT (ADR-0004); no upstream fix (PYSEC-2026-1325)
-          uv run --python 3.12 pip-audit --skip-editable --ignore-vuln PYSEC-2026-1325
+          # pip 26.1.2 (build tool only, not shipped in the runtime image); fix 26.2 not yet in the pinned toolchain (PYSEC-2026-3721)
+          uv run --python 3.12 pip-audit --skip-editable --ignore-vuln PYSEC-2026-1325 --ignore-vuln PYSEC-2026-3721
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6

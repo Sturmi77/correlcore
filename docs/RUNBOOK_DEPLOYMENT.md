@@ -374,8 +374,11 @@ danach durch den unverified Account blockiert.
 
 ### Kanonischer Pfad seit M2
 
-Der Worker `python -m app.workers.analytics` fuehrt taeglich um 03:00 UTC
-`cleanup_unverified_accounts` aus. Alle Accounts mit `is_verified=false` und
+Der Worker fuehrt taeglich um 03:00 UTC `cleanup_unverified_accounts` aus
+(seit #757 via `supercronic` extern getriggert als `python -m
+app.workers.analytics --once`, siehe
+[`M11_WORKER_CRON_MIGRATION.md`](selfhost/M11_WORKER_CRON_MIGRATION.md) —
+die Job-Logik selbst ist unveraendert). Alle Accounts mit `is_verified=false` und
 `created_at < now - UNVERIFIED_CLEANUP_DAYS` werden per `DELETE FROM users`
 entfernt. Default ist `UNVERIFIED_CLEANUP_DAYS=7`.
 

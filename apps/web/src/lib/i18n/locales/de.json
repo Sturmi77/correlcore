@@ -1180,6 +1180,8 @@
       "empty_all_dismissed_body": "Du hast alle aktuellen Erkenntnisse gesehen. Neue erscheinen hier, sobald genug neue Eintraege vorliegen.",
       "empty_cta": "Zur Startseite",
       "empty_regenerate_cta": "Erkenntnisse aktualisieren",
+      "stale_banner_message": "Deine Erkenntnisse wurden zuletzt am {date} aktualisiert. Der planmaessige naechtliche Lauf scheint ausgeblieben zu sein.",
+      "stale_banner_action": "Jetzt aktualisieren",
       "empty_phase": {
         "collecting": {
           "title": "Wir sammeln noch deine Grundlage.",
