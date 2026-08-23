@@ -10,6 +10,13 @@ updates:
     labels:
       - dependencies
       - javascript
+    ignore:
+      # eslint-plugin-svelte v3 is a breaking major: it revamps the recommended
+      # ruleset and surfaces ~215 new lint errors across the existing Svelte
+      # code. Defer it to a dedicated migration instead of a routine bump; v2.x
+      # minor/patch updates still flow. See closed PR #751.
+      - dependency-name: 'eslint-plugin-svelte'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: pip
     directory: '/backend'
