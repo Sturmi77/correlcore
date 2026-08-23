@@ -181,6 +181,59 @@ Full backup/restore procedure:
 
 ---
 
+## Worker freshness monitoring
+
+The nightly worker (cleanup + insights + weekly digest) can fail silently:
+the container keeps running, but the actual nightly job stops completing.
+`GET /api/v1/worker/status` reports the age of the last **successful** run
+per job kind so an external uptime tool can alert on that, not just on
+whether the process is alive (#756).
+
+```bash
+# Set a static key so external monitors can call the endpoint without a
+# browser session (leave unset to require an admin login instead):
+echo 'WORKER_STATUS_API_KEY='$(openssl rand -hex 24) >> .env
+
+curl -sf -H "X-Worker-Status-Key: ${WORKER_STATUS_API_KEY}" \
+  "https://${DOMAIN}/api/v1/worker/status"
+```
+
+Example response:
+
+```json
+{
+  "status": "ok",
+  "generated_at": "2026-08-22T06:00:00Z",
+  "jobs": [
+    { "job_kind": "daily_bundle", "job_status": "fresh", "age_hours": 3.0, "stale_after_hours": 30, "stale": false },
+    { "job_kind": "insights", "job_status": "fresh", "age_hours": 3.0, "stale_after_hours": 30, "stale": false },
+    { "job_kind": "digest", "job_status": "fresh", "age_hours": 27.0, "stale_after_hours": 210, "stale": false }
+  ]
+}
+```
+
+Wire it into whatever uptime tool you already run:
+
+- **Uptime-Kuma**: HTTP(s) monitor, add the `X-Worker-Status-Key` header,
+  enable "Keyword" or "JSON Query" mode checking `status == "ok"`.
+- **healthchecks.io**: use its HTTP check type against the same URL, or ping
+  it from a small script/cron that curls `/worker/status` and only pings
+  "success" when `status == "ok"`.
+- **GlitchTip cron monitor** (if you already run the `monitoring` profile,
+  see above): configure a Cron Monitor with the expected daily schedule and
+  ping it from the same wrapper script.
+
+`WORKER_STALE_AFTER_HOURS` (default `30`) controls how many hours past the
+last successful `daily_bundle`/`insights` run before they're reported stale;
+the weekly digest uses 7× that value automatically. Tune it up if your host
+sleeps/suspends overnight.
+
+See also [`M11_WORKER_CRON_MIGRATION.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/selfhost/M11_WORKER_CRON_MIGRATION.md)
+for the move from a long-running worker process to externally-triggered
+cron runs (#757), which this endpoint is designed to monitor.
+
+---
+
 ## Troubleshooting
 
 | Symptom                     | Fix                                          |

@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.models.worker_run import WorkerTriggerSource
 from app.services.insight_engine import InsightLockTimeoutError
 from app.services.insight_worker_service import (
     InsightGenerationJob,
@@ -14,7 +15,12 @@ from app.services.insight_worker_service import (
     list_insight_generation_jobs,
     regenerate_insights_for_user,
 )
-from app.workers.analytics import CleanupRunSummary, run_daily_jobs_once, run_insights_once
+from app.workers.analytics import (
+    CleanupRunSummary,
+    main,
+    run_daily_jobs_once,
+    run_insights_once,
+)
 
 
 def _scalars_result(values: list[object]) -> MagicMock:
@@ -525,3 +531,26 @@ async def test_run_daily_jobs_once_isolates_digest_failure() -> None:
     # Daily bundle still records success; digest failure is isolated.
     assert summary.digest_run is None
     assert finish_run.await_args.kwargs["status"].name == "SUCCEEDED"
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected_source"),
+    [
+        (["analytics", "--once"], WorkerTriggerSource.CLI_ONCE),
+        (["analytics", "--once", "--source", "scheduled"], WorkerTriggerSource.SCHEDULED),
+    ],
+)
+def test_analytics_once_cli_records_explicit_trigger_source(
+    monkeypatch: pytest.MonkeyPatch,
+    argv: list[str],
+    expected_source: WorkerTriggerSource,
+) -> None:
+    """Cron can identify itself without changing manual --once attribution."""
+
+    run_once = AsyncMock()
+    monkeypatch.setattr("sys.argv", argv)
+
+    with patch("app.workers.analytics.run_daily_jobs_once", new=run_once):
+        main()
+
+    run_once.assert_awaited_once_with(trigger_source=expected_source)

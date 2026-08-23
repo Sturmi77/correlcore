@@ -25,6 +25,7 @@ from app.api.v1.endpoints import (
     tags,
     user,
     widget,
+    worker_status,
 )
 
 api_router = APIRouter()
@@ -37,6 +38,9 @@ api_router.include_router(instance.router, prefix="/instance", tags=["internal"]
 
 # Feature-flagged developer diagnostics (Issue #125)
 api_router.include_router(dev.router, prefix="/dev", tags=["internal"])
+
+# Worker freshness monitoring for external uptime tools (#756)
+api_router.include_router(worker_status.router, prefix="/worker", tags=["internal"])
 
 # Auth
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
