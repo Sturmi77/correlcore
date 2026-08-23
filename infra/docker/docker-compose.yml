@@ -185,11 +185,22 @@ services:
       start_period: 15s
 
   # ── Analytics Worker ───────────────────────────────────────────────────────
+  # supercronic (#757) triggers the daily --once run at 03:00 UTC instead of
+  # a long-running asyncio sleep loop; restart: unless-stopped is kept as
+  # protection against supercronic/container-level crashes -- a crash inside
+  # a single --once run no longer takes supercronic itself down with it,
+  # which was the actual failure mode behind #745/#757.
+  # Freshness signal for this service is GET /api/v1/worker/status (#756,
+  # served by the api container) -- see docs/selfhost/M11_WORKER_CRON_MIGRATION.md.
+  # No container-level healthcheck override here by design (kept the compose
+  # diff minimal); the image's own HEALTHCHECK (curl against :8000/health)
+  # does not apply meaningfully to this service either way since worker
+  # never runs uvicorn -- pre-existing since before this change.
   worker:
     <<: *api-image
     container_name: correlcore-worker
     restart: unless-stopped
-    command: ['python', '-m', 'app.workers.analytics']
+    command: ['supercronic', '-passthrough-logs', '/app/crontab/worker.crontab']
     env_file: .env
     environment: *api-env
     depends_on:

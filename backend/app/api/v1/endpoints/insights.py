@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date
 
@@ -53,6 +54,7 @@ from app.services.insight_dismissal_service import (
     delete_insight_dismissal_by_insight_id,
     list_insight_dismissals,
 )
+from app.services.insight_engine import InsightLockTimeoutError
 from app.services.insight_service import (
     DEFAULT_INSIGHT_LIST_LIMIT,
     DEFAULT_LATEST_INSIGHT_LIMIT,
@@ -74,8 +76,10 @@ from app.services.insight_worker_service import (
 )
 from app.services.stats_service import get_symptom_tag_cooccurrence, get_tag_cooccurrence
 from app.services.tag_cluster_service import get_tag_clusters
+from app.services.worker_run_service import latest_successful_insight_run_at
 from app.workers.analytics import run_insights_once
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -154,9 +158,11 @@ async def list_insights_endpoint(
 ) -> InsightListResponse:
     insights = await list_insights(db, user_id=user.id, limit=limit)
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
+    last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights],
+        last_successful_insight_run_at=last_successful_run,
     )
 
 
@@ -174,9 +180,11 @@ async def list_latest_insights_endpoint(
 ) -> InsightListResponse:
     insights = await list_latest_insights(db, user_id=user.id, limit=limit)
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
+    last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights],
+        last_successful_insight_run_at=last_successful_run,
     )
 
 
@@ -415,6 +423,42 @@ async def regenerate_insights_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No encryption key found for insight generation",
+        ) from exc
+    except InsightLockTimeoutError as exc:
+        await db.rollback()
+        # Do not clear the hourly cooldown for expected contention. An
+        # immediate retry would normally collide with the same transaction and
+        # turn a temporary condition into a retry storm.
+        logger.info(
+            "insight regeneration deferred due to lock contention",
+            extra={"user_id": str(user.id)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "Your insights are already being refreshed. Please try again in up to an hour."
+            ),
+            headers={"Retry-After": "3600"},
+        ) from exc
+    except Exception as exc:
+        # #754: an unclassified failure (e.g. the RLS/FK cascade class from
+        # #745, or a DB timeout from #753) previously surfaced as a raw 500
+        # with no actionable message. Give the user a clear, friendly response
+        # and free the cooldown slot so a genuinely failed attempt does not
+        # also block them from retrying for an hour. Expected lock contention
+        # has its own handler above and deliberately retains the cooldown.
+        await db.rollback()
+        await redis.delete(f"insight:regenerate:{user.id}")
+        logger.exception(
+            "insight regeneration failed unexpectedly",
+            extra={"user_id": str(user.id)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "We couldn't refresh your insights right now. "
+                "Please try again in a few minutes, or contact support if it keeps happening."
+            ),
         ) from exc
 
     return InsightRegenerateResponse(
