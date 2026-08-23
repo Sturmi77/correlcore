@@ -236,11 +236,15 @@ services:
   # ── Analytics-Worker (optional, --profile worker) ───────────────────────
   # Führt tägliche Wartungsjobs aus, aktuell den M2-Cleanup für unverified
   # Accounts. Aktivieren mit --profile worker.
+  # supercronic (#757) triggers the daily --once run at 03:00 UTC instead of
+  # a long-running asyncio sleep loop -- see docker-compose.yml for the full
+  # rationale. Freshness signal remains GET /api/v1/worker/status (#756,
+  # served by the api container).
   worker:
     <<: *api-image
     container_name: correlcore-test-worker
     restart: unless-stopped
-    command: ['python', '-m', 'app.workers.analytics']
+    command: ['supercronic', '-passthrough-logs', '/app/crontab/worker.crontab']
     environment: *api-env
     depends_on:
       migrate:

@@ -100,6 +100,7 @@
   let insightsLoaded = false;
   let error: string | null = null;
   let insightMaturity: InsightMaturity | null = null;
+  let lastSuccessfulInsightRunAt: string | null = null;
   let userPreferences: UserPreferencesResponse | null = null;
   let regenerateBusy = false;
   let regenerateMessage = '';
@@ -575,6 +576,7 @@
       if (insightsResult.status === 'fulfilled') {
         insights = insightsResult.value.insights;
         insightMaturity = insightsResult.value.insight_maturity;
+        lastSuccessfulInsightRunAt = insightsResult.value.last_successful_insight_run_at ?? null;
       } else {
         const insightErr = insightsResult.reason;
         error = insightErr instanceof Error ? insightErr.message : $_('error.generic');
@@ -717,7 +719,7 @@
     feedLoading ||
     Boolean(error) ||
     !compactInsights ||
-    !primaryMobileInsight;
+    Boolean(primaryMobileInsight);
   $: enableExploreEvents = isSmallMultiplesUnlocked(insightMaturity?.phase ?? null);
 
   function ensureAnalyticsLoaded(): void {
@@ -896,11 +898,17 @@
     {/if}
 
     {#if showInsightFeed}
-      {#if compactInsights && feedInsights.length > 0 && primaryMobileInsight}
+      {#if compactInsights && primaryMobileInsight}
         <section class="insights-page__more" data-testid="mobile-insights-more">
-          <h2>{$_('insights.mobile.more_heading')}</h2>
+          {#if feedInsights.length > 0}
+            <h2>{$_('insights.mobile.more_heading')}</h2>
+          {/if}
           <InsightFeed
             insights={feedInsights}
+            stalenessInsights={insights}
+            {lastSuccessfulInsightRunAt}
+            analyticsEnabled={userPreferences?.analytics_enabled !== false}
+            hideContent={feedInsights.length === 0}
             totalInsightCount={insights.length}
             maturity={insightMaturity}
             entryCount={visibleEntryCount}
@@ -923,6 +931,9 @@
       {:else}
         <InsightFeed
           insights={feedInsights}
+          stalenessInsights={insights}
+          {lastSuccessfulInsightRunAt}
+          analyticsEnabled={userPreferences?.analytics_enabled !== false}
           totalInsightCount={insights.length}
           maturity={insightMaturity}
           loading={feedLoading}

@@ -15,6 +15,15 @@ engine = create_async_engine(
     max_overflow=20,
     echo=settings.DEBUG,
     future=True,
+    # #753 (J): hard server-side ceilings so a stuck query or a lock wait
+    # cannot hold a pooled connection forever. asyncpg applies these via
+    # SET on every new connection (server_settings), not just the first.
+    connect_args={
+        "server_settings": {
+            "statement_timeout": str(settings.DB_STATEMENT_TIMEOUT_MS),
+            "lock_timeout": str(settings.DB_LOCK_TIMEOUT_MS),
+        }
+    },
 )
 
 AsyncSessionLocal = async_sessionmaker(
