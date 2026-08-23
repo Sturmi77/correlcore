@@ -11,6 +11,9 @@
   export let actionLabel = '';
   export let actionTestId = '';
   export let testId: string | undefined = undefined;
+  /** #755: lets callers show a busy/disabled action button (e.g. regenerate in flight). */
+  export let actionLoading = false;
+  export let actionDisabled = false;
 
   const dispatch = createEventDispatcher<{ action: void }>();
 
@@ -25,6 +28,8 @@
       variant={variant === 'error' ? 'danger' : 'secondary'}
       size="sm"
       data-testid={actionDataTestId}
+      loading={actionLoading}
+      disabled={actionDisabled}
       on:click={() => dispatch('action')}
     >
       {actionLabel}
