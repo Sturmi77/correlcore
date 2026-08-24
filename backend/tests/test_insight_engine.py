@@ -873,3 +873,22 @@ async def test_load_analytics_inputs_returns_empty_when_all_entries_corrupt() ->
     assert entries == []
     assert tags == []
     assert symptoms == []
+
+
+@pytest.mark.asyncio
+async def test_load_analytics_inputs_defers_encrypted_note_column() -> None:
+    """#772 review: note_enc must not be loaded (it decrypts eagerly on load).
+
+    Deferring it means an undecryptable note can never abort the analytics load
+    at row-materialization time, before the per-entry guard runs.
+    """
+    user = make_user()
+    as_of = date(2026, 5, 1)
+    entry = make_entry(user, entry_date=as_of - timedelta(days=1))
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[_scalar_result([entry]), _row_result([]), _row_result([])])
+
+    await load_analytics_data(db, user_id=user.id, as_of=as_of)
+
+    entries_stmt = db.execute.await_args_list[0].args[0]
+    assert "note_enc" not in str(entries_stmt.compile())

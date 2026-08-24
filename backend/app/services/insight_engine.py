@@ -22,6 +22,7 @@ from typing import Any, Literal
 from scipy.stats import chisquare, pointbiserialr, spearmanr
 from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
@@ -1622,7 +1623,16 @@ async def _load_analytics_inputs(
     as_of: date_type,
 ) -> tuple[list[AnalyticsEntry], list[TagSnapshot], list[SymptomSnapshot]]:
     result = await db.execute(
+        # #758 (M) / #772 review: defer ``note_enc`` so the encrypted note is
+        # never loaded here. Its ``EncryptedString`` result processor decrypts
+        # eagerly during row materialization (``.all()``), i.e. *before* the
+        # per-entry guard below — so an undecryptable note would otherwise abort
+        # the whole user's run at load time. Analytics never reads the note, so
+        # deferring it removes that failure mode entirely (and skips needless
+        # decryption); the per-entry guard still covers residual materialization
+        # errors on the columns we do use.
         select(Entry)
+        .options(defer(Entry.note_enc))
         # Temporal integrity guard: analytics must follow entry_date only.
         # created_at/updated_at would leak look-ahead bias for backdated entries.
         .where(Entry.user_id == user_id, Entry.entry_date < as_of)

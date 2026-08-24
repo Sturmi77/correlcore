@@ -294,7 +294,10 @@ async def _record_user_failure(
                 "threshold": settings.WORKER_POISON_PILL_THRESHOLD,
             },
         )
-        error_message = f"{base_message} (poison pill: {consecutive} consecutive failures)"
+        # Prepend the annotation: finish_run -> _truncate_error keeps the
+        # prefix and drops the tail, so a long base_message would otherwise
+        # truncate the poison-pill marker out of the persisted run (#772 review).
+        error_message = f"[poison pill: {consecutive} consecutive failures] {base_message}"
     await finish_run(
         run_id,
         status=WorkerRunStatus.FAILED,
