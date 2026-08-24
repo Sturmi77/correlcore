@@ -173,6 +173,14 @@
     min-width: 0;
   }
 
+  /* Edge case: a page may pass the controls slot but render nothing into it
+   * (e.g. Trends/Insights when logged out gate the toolbar behind auth). Svelte
+   * still emits the slot wrapper (with an anchor comment), so hide it when it
+   * holds no element to avoid a stray gap inside the sticky header. */
+  .screen-header__controls:not(:has(*)) {
+    display: none;
+  }
+
   /* ----------------------------------------------------------------------- *
    * Floating/sticky mode (#703 Stage 2). The header becomes the screen chrome
    * that owns the top offset, so the melted-in toolbars drop their own sticky.
