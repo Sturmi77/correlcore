@@ -40,14 +40,19 @@
   onMount(() => {
     if (!sticky) return;
     const scrollParent = findScrollParent(headerEl);
-    const target: HTMLElement | Window = scrollParent ?? window;
+    // Read from whichever actually scrolls (the shell content column normally,
+    // the window as fallback) and listen on both — so a mis-detected scroll
+    // parent can't leave the title stuck expanded/collapsed.
     const read = (): void => {
-      const y = scrollParent ? scrollParent.scrollTop : window.scrollY;
+      const y = Math.max(scrollParent?.scrollTop ?? 0, window.scrollY);
       scrolled = y > 24;
     };
     read();
-    target.addEventListener('scroll', read, { passive: true });
-    return () => target.removeEventListener('scroll', read);
+    const targets: (HTMLElement | Window)[] = scrollParent ? [scrollParent, window] : [window];
+    for (const target of targets) target.addEventListener('scroll', read, { passive: true });
+    return () => {
+      for (const target of targets) target.removeEventListener('scroll', read);
+    };
   });
 </script>
 
