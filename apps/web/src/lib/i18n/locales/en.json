@@ -11,7 +11,8 @@
     "trends": "Trends",
     "insights": "Insights",
     "settings": "Settings",
-    "back": "← Back"
+    "back": "← Back",
+    "back_to": "Back to {target}"
   },
   "a11y": {
     "skip_to_content": "Skip to content",

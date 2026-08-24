@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
 
   export let title: string;
   export let subtitle = '';
@@ -59,7 +60,12 @@
   class:screen-header--scrolled={sticky && scrolled}
 >
   {#if back}
-    <a class="screen-header__back" href={back.href} data-testid="screen-back">
+    <a
+      class="screen-header__back"
+      href={back.href}
+      data-testid="screen-back"
+      aria-label={$_('nav.back_to', { values: { target: back.label } })}
+    >
       <span class="screen-header__back-icon" aria-hidden="true">←</span>
       {back.label}
     </a>
