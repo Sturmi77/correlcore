@@ -63,10 +63,16 @@ Use once per primary screen below the app shell.
 
 Required contract:
 
-- `title`, optional `subtitle`
-- Optional compact action slot
+- `title`, optional `subtitle`, optional `eyebrow`
+- Optional `actions` slot for lightweight per-screen actions
+- Optional `back={{ href, label }}` for drill-down screens — renders the one
+  shared ghost back link (`data-testid="screen-back"`). Do **not** hand-roll a
+  raw `btn` anchor or a custom `__top` bar for back/context navigation (#703).
 - No duplicate Home button when the app navigation is visible
-- Theme switching belongs in global chrome or Settings, not every route header
+- Theme switching belongs in Appearance settings, not route/drill-down headers.
+  The `ThemeToggle` lives on `settings/appearance` only; ad-hoc copies on
+  utility/drill-down screens (`/dev`, `/entries/day`) were removed (#703). This
+  is enforced by `src/routes/screen-chrome.test.ts`.
 
 Heading convention (avoid duplicate titles):
 

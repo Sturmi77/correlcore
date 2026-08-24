@@ -28,6 +28,25 @@ describe('ScreenHeader', () => {
     expect(screen.getByRole('banner').classList.contains('screen-header--compact')).toBe(true);
   });
 
+  it('renders a shared back affordance when a back target is given', () => {
+    render(ScreenHeader, {
+      props: {
+        title: 'Developer tools',
+        back: { href: '/settings', label: 'Settings' },
+      },
+    });
+
+    const back = screen.getByTestId('screen-back');
+    expect(back.getAttribute('href')).toBe('/settings');
+    expect(back.textContent).toContain('Settings');
+  });
+
+  it('omits the back affordance by default', () => {
+    render(ScreenHeader, { props: { title: 'Trends' } });
+
+    expect(screen.queryByTestId('screen-back')).toBeNull();
+  });
+
   it('can hide the header visually while keeping the h1 in the DOM', () => {
     render(ScreenHeader, {
       props: {

@@ -6,7 +6,7 @@
   import IconRender from '$lib/components/common/IconRender.svelte';
   import IconButton from '$lib/components/common/IconButton.svelte';
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
-  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import { ApiError } from '$lib/api/client';
   import {
     createDevDbBackup,
@@ -220,16 +220,12 @@
 </svelte:head>
 
 <main class="dev">
-  <header class="dev__top">
-    <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
-    <ThemeToggle testId="dev-theme-toggle" />
-  </header>
-
-  <section class="dev__intro">
-    <p class="dev__eyebrow">{$_('dev.eyebrow')}</p>
-    <h1>{$_('dev.title')}</h1>
-    <p>{$_('dev.subtitle')}</p>
-  </section>
+  <ScreenHeader
+    eyebrow={$_('dev.eyebrow')}
+    title={$_('dev.title')}
+    subtitle={$_('dev.subtitle')}
+    back={{ href: '/settings', label: $_('nav.settings') }}
+  />
 
   <TabBar
     value={activeTab}
@@ -694,7 +690,6 @@
     gap: 1rem;
   }
 
-  .dev__top,
   .dev__panel-head {
     display: flex;
     align-items: center;
@@ -708,36 +703,16 @@
     gap: 0.5rem;
   }
 
-  .dev__intro {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .dev__intro h1,
   .dev__panel h2,
   .dev__card h3,
   .dev__subheading {
     margin: 0;
   }
 
-  .dev__intro h1 {
-    font-size: var(--text-2xl, 1.5rem);
-  }
-
-  .dev__intro p,
   .dev__muted,
   .dev__footer {
     margin: 0;
     opacity: 0.72;
-  }
-
-  .dev__eyebrow {
-    font-size: var(--text-xs);
-    letter-spacing: 0;
-    text-transform: uppercase;
-    font-weight: 700;
-    color: var(--color-primary);
   }
 
   .dev__hero,
