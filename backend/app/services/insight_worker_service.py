@@ -246,28 +246,65 @@ async def regenerate_insights_for_user(
 
 
 async def try_acquire_regenerate_slot(*, user_id: uuid.UUID) -> bool:
-    """Return True when the user may start a new on-demand regeneration."""
+    """Return True when the user may start a new on-demand regeneration.
+
+    #759 (fault injection): the hourly cooldown is a best-effort rate limit,
+    not a correctness guard — the endpoint also carries a slowapi per-minute
+    limit. If Redis is unreachable we fail open (return True) so a Redis outage
+    degrades gracefully to "no hourly cooldown" instead of 500-ing the manual
+    regenerate endpoint.
+    """
 
     from redis.asyncio import Redis
+    from redis.exceptions import RedisError
 
     from app.core.config import settings
 
-    client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+    try:
+        client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+    except RedisError:
+        logger.warning(
+            "regenerate cooldown check failing open: redis unavailable",
+            extra={"user_id": str(user_id)},
+        )
+        return True
     try:
         key = f"insight:regenerate:{user_id}"
         return bool(await client.set(key, "1", nx=True, ex=INSIGHT_REGENERATE_COOLDOWN_SECONDS))
+    except RedisError:
+        logger.warning(
+            "regenerate cooldown check failing open: redis error",
+            extra={"user_id": str(user_id)},
+        )
+        return True
     finally:
-        await client.aclose()
+        try:
+            await client.aclose()
+        except RedisError:
+            pass
 
 
 async def schedule_post_batch_insight_regeneration(*, user_id: uuid.UUID) -> None:
     """Debounced regeneration hook used after successful bulk entry import."""
 
     from redis.asyncio import Redis
+    from redis.exceptions import RedisError
 
     from app.core.config import settings
 
-    client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+    # #759 (fault injection): the debounce key stops overlapping bulk imports
+    # from launching a regeneration storm. If Redis is unreachable we cannot
+    # debounce safely, so we skip the opportunistic post-batch run rather than
+    # risk that storm or crash the import request — the nightly scheduled run
+    # (and any manual regenerate) still covers the user.
+    try:
+        client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+    except RedisError:
+        logger.warning(
+            "post-batch regeneration skipped: redis unavailable",
+            extra={"user_id": str(user_id)},
+        )
+        return
     try:
         debounce_key = f"insight:post_batch:{user_id}"
         acquired = await client.set(
@@ -278,8 +315,17 @@ async def schedule_post_batch_insight_regeneration(*, user_id: uuid.UUID) -> Non
         )
         if not acquired:
             return
+    except RedisError:
+        logger.warning(
+            "post-batch regeneration skipped: redis error",
+            extra={"user_id": str(user_id)},
+        )
+        return
     finally:
-        await client.aclose()
+        try:
+            await client.aclose()
+        except RedisError:
+            pass
 
     await run_insight_regeneration_background(
         user_id=user_id,
