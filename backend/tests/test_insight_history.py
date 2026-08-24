@@ -214,7 +214,7 @@ async def test_generate_delete_targets_only_same_generated_for_date() -> None:
             _load_result(entries),
             _pair_result(tag_rows),
             _pair_result([]),
-            _load_result(entries),
+            _pair_result([(entry, False) for entry in entries]),
             _pair_result([]),
             MagicMock(),
         ]
