@@ -569,7 +569,9 @@ async def test_run_insights_once_retries_transient_failure_then_succeeds() -> No
     async def fake_generate(_session: object, *, job: InsightGenerationJob, as_of: object) -> int:
         attempts["n"] += 1
         if attempts["n"] == 1:
-            raise OperationalError("SELECT 1", {}, Exception("connection reset"))
+            err = OperationalError("SELECT 1", {}, Exception("connection reset"))
+            err.connection_invalidated = True  # a genuine lost connection
+            raise err
         return 4
 
     with (

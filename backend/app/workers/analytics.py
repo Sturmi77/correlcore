@@ -11,7 +11,7 @@ from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 
-from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
+from sqlalchemy.exc import DBAPIError, InterfaceError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -203,13 +203,21 @@ def _is_transient_error(exc: BaseException) -> bool:
       would just contend again and multiply nightly work under DB pressure —
       the lock holder finishing, or the next scheduled run, is the right
       recovery, not an immediate worker-loop retry (cursor[bot] review, #772).
+
+    We only retry a *genuinely lost* connection: SQLAlchemy flags a reset/closed
+    connection via ``connection_invalidated``, and ``InterfaceError`` is a
+    driver-level connection fault — both of which a fresh session recovers. A
+    non-disconnect ``OperationalError`` (too-many-connections, resource
+    exhaustion, a statement-level error) is deliberately *not* retried: an
+    immediate retry would not fix it and could amplify sequential nightly work
+    during a DB-pressure incident (cursor[bot] review, #772).
     """
 
     if isinstance(exc, InsightLockTimeoutError | TimeoutError):
         return False
     if isinstance(exc, DBAPIError) and exc.connection_invalidated:
         return True
-    return isinstance(exc, OperationalError | InterfaceError)
+    return isinstance(exc, InterfaceError)
 
 
 async def _generate_for_user_with_retry(

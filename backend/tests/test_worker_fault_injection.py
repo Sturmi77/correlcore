@@ -56,13 +56,19 @@ class _FakeSessionFactory:
 
 
 def _killed_connection_error() -> OperationalError:
-    """A SQLAlchemy error shaped like asyncpg losing its server connection."""
+    """A SQLAlchemy error shaped like asyncpg losing its server connection.
 
-    return OperationalError(
+    A real lost/reset connection is flagged ``connection_invalidated`` by
+    SQLAlchemy's disconnect detection; the worker only retries those.
+    """
+
+    err = OperationalError(
         "SELECT 1",
         {},
         Exception("server closed the connection unexpectedly"),
     )
+    err.connection_invalidated = True
+    return err
 
 
 def _invalidated_connection_error() -> DBAPIError:
@@ -146,6 +152,45 @@ async def test_connection_invalidated_error_is_retried() -> None:
     assert attempts["n"] == 2
     assert summary.processed_users == 1
     assert summary.failed_users == 0
+
+
+@pytest.mark.asyncio
+async def test_non_disconnect_operational_error_is_not_retried() -> None:
+    """A non-disconnect OperationalError (e.g. too-many-connections) is permanent.
+
+    Retrying would not fix a load/resource error and could amplify nightly work,
+    so only connection_invalidated / InterfaceError faults are retried (#772).
+    """
+    job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"one")
+    session_factory = _FakeSessionFactory()
+    calls = {"n": 0}
+
+    async def fake_generate(_session: object, *, job: InsightGenerationJob, as_of: object) -> int:
+        calls["n"] += 1
+        # connection_invalidated defaults to False -> not a disconnect.
+        raise OperationalError("SELECT 1", {}, Exception("sorry, too many clients already"))
+
+    with (
+        patch(
+            "app.workers.analytics.list_insight_generation_jobs",
+            new=AsyncMock(return_value=[job]),
+        ),
+        patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+        patch(
+            "app.workers.analytics.count_consecutive_user_insight_failures",
+            new=AsyncMock(return_value=0),
+        ),
+    ):
+        summary = await run_insights_once(
+            as_of=datetime(2026, 5, 12, tzinfo=UTC),
+            session_factory=session_factory,
+        )
+
+    assert calls["n"] == 1  # no retry for a non-disconnect OperationalError
+    assert summary.failed_users == 1
+    assert summary.processed_users == 0
 
 
 @pytest.mark.asyncio
