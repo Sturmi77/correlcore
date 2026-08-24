@@ -250,6 +250,41 @@ async def latest_successful_system_runs(
     return result
 
 
+async def count_consecutive_user_insight_failures(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> int:
+    """Return the current streak of FAILED USER_INSIGHTS runs for a user.
+
+    Counts FAILED runs more recent than the user's last SUCCEEDED run (#758 L).
+    ``RUNNING`` rows are ignored so a caller can compute the *prior* streak
+    while the current run is still in flight, then add the current failure
+    itself. A user with no history, or whose most recent finished run
+    succeeded, has a streak of ``0``.
+    """
+
+    # Per-user runs are already capped at PER_USER_RETENTION by
+    # _enforce_retention, so the streak cannot exceed that; bound the scan
+    # explicitly so the query stays cheap regardless (cursor[bot] review, #772).
+    result = await db.execute(
+        select(WorkerRun.status)
+        .where(
+            WorkerRun.scope_user_id == user_id,
+            WorkerRun.job_kind == WorkerJobKind.USER_INSIGHTS,
+            WorkerRun.status.in_([WorkerRunStatus.SUCCEEDED, WorkerRunStatus.FAILED]),
+        )
+        .order_by(WorkerRun.started_at.desc())
+        .limit(PER_USER_RETENTION + 1)
+    )
+    streak = 0
+    for (status,) in result.all():
+        if status == WorkerRunStatus.SUCCEEDED:
+            break
+        streak += 1
+    return streak
+
+
 async def latest_successful_insight_run_at(
     db: AsyncSession,
     *,

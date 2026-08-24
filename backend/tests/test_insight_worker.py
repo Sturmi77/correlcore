@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from sqlalchemy.exc import OperationalError
 
-from app.models.worker_run import WorkerTriggerSource
+from app.models.worker_run import WorkerRunStatus, WorkerTriggerSource
 from app.services.insight_engine import InsightLockTimeoutError
 from app.services.insight_worker_service import (
     InsightGenerationJob,
@@ -17,6 +19,7 @@ from app.services.insight_worker_service import (
 )
 from app.workers.analytics import (
     CleanupRunSummary,
+    _record_user_failure,
     main,
     run_daily_jobs_once,
     run_insights_once,
@@ -554,3 +557,174 @@ def test_analytics_once_cli_records_explicit_trigger_source(
         main()
 
     run_once.assert_awaited_once_with(trigger_source=expected_source)
+
+
+@pytest.mark.asyncio
+async def test_run_insights_once_retries_transient_failure_then_succeeds() -> None:
+    """#758 (K): a transient DB error is retried on a fresh session and succeeds."""
+    job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"one")
+    session_factory = _FakeSessionFactory()
+    attempts = {"n": 0}
+
+    async def fake_generate(_session: object, *, job: InsightGenerationJob, as_of: object) -> int:
+        attempts["n"] += 1
+        if attempts["n"] == 1:
+            err = OperationalError("SELECT 1", {}, Exception("connection reset"))
+            err.connection_invalidated = True  # a genuine lost connection
+            raise err
+        return 4
+
+    with (
+        patch(
+            "app.workers.analytics.list_insight_generation_jobs",
+            new=AsyncMock(return_value=[job]),
+        ),
+        patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()) as finish_run,
+        patch("app.workers.analytics.settings.WORKER_TRANSIENT_RETRY_BACKOFF_SECONDS", 0),
+    ):
+        summary = await run_insights_once(
+            as_of=datetime(2026, 5, 12, tzinfo=UTC),
+            session_factory=session_factory,
+        )
+
+    assert attempts["n"] == 2  # one transient failure, one successful retry
+    assert summary.processed_users == 1
+    assert summary.failed_users == 0
+    assert summary.generated_insights == 4
+    # The user run is recorded SUCCEEDED once (plus the enclosing INSIGHTS run).
+    finished_statuses = [call.kwargs["status"] for call in finish_run.await_args_list]
+    assert WorkerRunStatus.FAILED not in finished_statuses
+
+
+@pytest.mark.asyncio
+async def test_run_insights_once_does_not_retry_permanent_failure() -> None:
+    """#758 (K): a permanent data error is marked failed without any retry."""
+    job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"one")
+    session_factory = _FakeSessionFactory()
+    calls = {"n": 0}
+
+    async def fake_generate(_session: object, *, job: InsightGenerationJob, as_of: object) -> int:
+        calls["n"] += 1
+        raise ValueError("corrupt row")
+
+    with (
+        patch(
+            "app.workers.analytics.list_insight_generation_jobs",
+            new=AsyncMock(return_value=[job]),
+        ),
+        patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+        patch(
+            "app.workers.analytics.count_consecutive_user_insight_failures",
+            new=AsyncMock(return_value=0),
+        ),
+    ):
+        summary = await run_insights_once(
+            as_of=datetime(2026, 5, 12, tzinfo=UTC),
+            session_factory=session_factory,
+        )
+
+    assert calls["n"] == 1  # no retry for a permanent error
+    assert summary.processed_users == 0
+    assert summary.failed_users == 1
+
+
+@pytest.mark.asyncio
+async def test_record_user_failure_escalates_poison_pill(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """#758 (L): crossing the streak threshold logs an escalation and tags the run."""
+    run_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    session_factory = _FakeSessionFactory()
+
+    with (
+        patch(
+            "app.workers.analytics.count_consecutive_user_insight_failures",
+            new=AsyncMock(return_value=2),  # prior 2 + current 1 == threshold 3
+        ),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()) as finish_run,
+        patch("app.workers.analytics.settings.WORKER_POISON_PILL_THRESHOLD", 3),
+        caplog.at_level(logging.ERROR, logger="app.workers.analytics"),
+    ):
+        await _record_user_failure(
+            run_id,
+            user_id,
+            base_message="bad dek",
+            session_factory=session_factory,
+        )
+
+    assert "poison pill" in caplog.text.lower()
+    finish_run.assert_awaited_once()
+    kwargs = finish_run.await_args.kwargs
+    assert kwargs["status"] == WorkerRunStatus.FAILED
+    assert "poison pill" in kwargs["error_message"].lower()
+    assert "3" in kwargs["error_message"]
+
+
+@pytest.mark.asyncio
+async def test_record_user_failure_below_threshold_stays_quiet(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """#758 (L): below the streak threshold there is no escalation or tag."""
+    session_factory = _FakeSessionFactory()
+
+    with (
+        patch(
+            "app.workers.analytics.count_consecutive_user_insight_failures",
+            new=AsyncMock(return_value=0),  # prior 0 + current 1 < threshold 3
+        ),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()) as finish_run,
+        patch("app.workers.analytics.settings.WORKER_POISON_PILL_THRESHOLD", 3),
+        caplog.at_level(logging.ERROR, logger="app.workers.analytics"),
+    ):
+        await _record_user_failure(
+            uuid.uuid4(),
+            uuid.uuid4(),
+            base_message="transient blip",
+            session_factory=session_factory,
+        )
+
+    assert "poison pill" not in caplog.text.lower()
+    assert finish_run.await_args.kwargs["error_message"] == "transient blip"
+
+
+@pytest.mark.asyncio
+async def test_run_insights_once_does_not_retry_lock_timeout() -> None:
+    """#758 (K) / #772 review: a held advisory lock is permanent at this layer.
+
+    generate_insights_for_job already retried the lock INSIGHT_LOCK_MAX_ATTEMPTS
+    times, so the worker loop must not re-run the whole job and contend again.
+    """
+    job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"one")
+    session_factory = _FakeSessionFactory()
+    calls = {"n": 0}
+
+    async def fake_generate(_session: object, *, job: InsightGenerationJob, as_of: object) -> int:
+        calls["n"] += 1
+        raise InsightLockTimeoutError("held")
+
+    with (
+        patch(
+            "app.workers.analytics.list_insight_generation_jobs",
+            new=AsyncMock(return_value=[job]),
+        ),
+        patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+        patch(
+            "app.workers.analytics.count_consecutive_user_insight_failures",
+            new=AsyncMock(return_value=0),
+        ),
+    ):
+        summary = await run_insights_once(
+            as_of=datetime(2026, 5, 12, tzinfo=UTC),
+            session_factory=session_factory,
+        )
+
+    assert calls["n"] == 1  # no in-loop retry for lock contention
+    assert summary.failed_users == 1
+    assert summary.processed_users == 0

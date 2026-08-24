@@ -808,3 +808,87 @@ def test_m7_lasso_candidates_include_symptom_features_after_90_entries() -> None
         for candidate in lasso_candidates
         for feature in candidate.payload["features"]
     )
+
+
+class _CorruptEntry:
+    """Stand-in for an entry whose encrypted/decoded fields fail to load.
+
+    Only ``id`` and ``entry_date`` materialize; any analytics field access
+    raises, mimicking a corrupt row or an undecryptable value under the DEK.
+    """
+
+    def __init__(self, entry_date: date) -> None:
+        self.id = uuid.uuid4()
+        self.entry_date = entry_date
+
+    def __getattr__(self, name: str) -> object:
+        raise ValueError(f"undecryptable field: {name}")
+
+
+@pytest.mark.asyncio
+async def test_load_analytics_inputs_skips_corrupt_entry(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """#758 (M): one corrupt entry is skipped, not fatal to the whole load."""
+    user = make_user()
+    as_of = date(2026, 5, 1)
+    good_one = make_entry(user, entry_date=as_of - timedelta(days=2), mood_score=4)
+    good_two = make_entry(user, entry_date=as_of - timedelta(days=1), mood_score=2)
+    corrupt = _CorruptEntry(as_of - timedelta(days=3))
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result([good_one, corrupt, good_two]),
+            _row_result([]),
+            _row_result([]),
+        ]
+    )
+
+    with caplog.at_level("WARNING", logger="app.services.insight_engine"):
+        entries, _, _ = await load_analytics_data(db, user_id=user.id, as_of=as_of)
+
+    loaded_ids = {entry.id for entry in entries}
+    assert loaded_ids == {good_one.id, good_two.id}
+    assert corrupt.id not in loaded_ids
+    assert "skipped corrupt entries" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_load_analytics_inputs_returns_empty_when_all_entries_corrupt() -> None:
+    """#758 (M): if every entry is unreadable the load degrades to empty, not error."""
+    user = make_user()
+    as_of = date(2026, 5, 1)
+    corrupt = [_CorruptEntry(as_of - timedelta(days=i + 1)) for i in range(3)]
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(list(corrupt)),
+            _row_result([]),
+            _row_result([]),
+        ]
+    )
+
+    entries, tags, symptoms = await load_analytics_data(db, user_id=user.id, as_of=as_of)
+
+    assert entries == []
+    assert tags == []
+    assert symptoms == []
+
+
+@pytest.mark.asyncio
+async def test_load_analytics_inputs_defers_encrypted_note_column() -> None:
+    """#772 review: note_enc must not be loaded (it decrypts eagerly on load).
+
+    Deferring it means an undecryptable note can never abort the analytics load
+    at row-materialization time, before the per-entry guard runs.
+    """
+    user = make_user()
+    as_of = date(2026, 5, 1)
+    entry = make_entry(user, entry_date=as_of - timedelta(days=1))
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[_scalar_result([entry]), _row_result([]), _row_result([])])
+
+    await load_analytics_data(db, user_id=user.id, as_of=as_of)
+
+    entries_stmt = db.execute.await_args_list[0].args[0]
+    assert "note_enc" not in str(entries_stmt.compile())

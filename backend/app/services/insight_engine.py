@@ -22,6 +22,7 @@ from typing import Any, Literal
 from scipy.stats import chisquare, pointbiserialr, spearmanr
 from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
@@ -1622,7 +1623,16 @@ async def _load_analytics_inputs(
     as_of: date_type,
 ) -> tuple[list[AnalyticsEntry], list[TagSnapshot], list[SymptomSnapshot]]:
     result = await db.execute(
+        # #758 (M) / #772 review: defer ``note_enc`` so the encrypted note is
+        # never loaded here. Its ``EncryptedString`` result processor decrypts
+        # eagerly during row materialization (``.all()``), i.e. *before* the
+        # per-entry guard below — so an undecryptable note would otherwise abort
+        # the whole user's run at load time. Analytics never reads the note, so
+        # deferring it removes that failure mode entirely (and skips needless
+        # decryption); the per-entry guard still covers residual materialization
+        # errors on the columns we do use.
         select(Entry)
+        .options(defer(Entry.note_enc))
         # Temporal integrity guard: analytics must follow entry_date only.
         # created_at/updated_at would leak look-ahead bias for backdated entries.
         .where(Entry.user_id == user_id, Entry.entry_date < as_of)
@@ -1677,21 +1687,51 @@ async def _load_analytics_inputs(
             is_default=symptom.is_default,
         )
 
-    analytics_entries = [
-        AnalyticsEntry(
-            id=entry.id,
-            entry_date=entry.entry_date,
-            mood_score=entry.mood_score,
-            energy=entry.energy,
-            stress=entry.stress,
-            work_context=entry.work_context,
-            tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
-            symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
-            sleep_minutes=entry.sleep_minutes,
-            sleep_quality=entry.sleep_quality,
+    # #758 (M) Graceful degradation: a single corrupt or undecryptable entry
+    # (e.g. a bad enum value or a value that fails to materialize) must be
+    # logged and skipped, not abort the whole day's computation for the user.
+    # Materializing each AnalyticsEntry in isolation keeps one poisoned row from
+    # sinking every insight the user would otherwise still get.
+    analytics_entries: list[AnalyticsEntry] = []
+    skipped = 0
+    for entry in entries:
+        try:
+            analytics_entries.append(
+                AnalyticsEntry(
+                    id=entry.id,
+                    entry_date=entry.entry_date,
+                    mood_score=entry.mood_score,
+                    energy=entry.energy,
+                    stress=entry.stress,
+                    work_context=entry.work_context,
+                    tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
+                    symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
+                    sleep_minutes=entry.sleep_minutes,
+                    sleep_quality=entry.sleep_quality,
+                )
+            )
+        except (ValueError, TypeError, LookupError) as exc:
+            # Narrow to the errors a corrupt/undecryptable row actually raises
+            # (bad enum -> LookupError/ValueError, wrong type -> TypeError) so
+            # an unexpected programming bug still fails the user's job loudly
+            # instead of silently shrinking the sample (cursor[bot] review,
+            # #772).
+            skipped += 1
+            logger.warning(
+                "skipping unreadable analytics entry",
+                extra={"user_id": str(user_id), "entry_id": str(entry.id), "error": str(exc)},
+            )
+    if skipped:
+        logger.warning(
+            "analytics input load skipped corrupt entries",
+            extra={
+                "user_id": str(user_id),
+                "skipped_entries": skipped,
+                "loaded_entries": len(analytics_entries),
+            },
         )
-        for entry in entries
-    ]
+    if not analytics_entries:
+        return [], [], []
     canonical_entries, canonical_tags = _canonicalize_tag_aliases(
         analytics_entries,
         tags_by_id.values(),
