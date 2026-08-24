@@ -1677,21 +1677,46 @@ async def _load_analytics_inputs(
             is_default=symptom.is_default,
         )
 
-    analytics_entries = [
-        AnalyticsEntry(
-            id=entry.id,
-            entry_date=entry.entry_date,
-            mood_score=entry.mood_score,
-            energy=entry.energy,
-            stress=entry.stress,
-            work_context=entry.work_context,
-            tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
-            symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
-            sleep_minutes=entry.sleep_minutes,
-            sleep_quality=entry.sleep_quality,
+    # #758 (M) Graceful degradation: a single corrupt or undecryptable entry
+    # (e.g. a bad enum value or a value that fails to materialize) must be
+    # logged and skipped, not abort the whole day's computation for the user.
+    # Materializing each AnalyticsEntry in isolation keeps one poisoned row from
+    # sinking every insight the user would otherwise still get.
+    analytics_entries: list[AnalyticsEntry] = []
+    skipped = 0
+    for entry in entries:
+        try:
+            analytics_entries.append(
+                AnalyticsEntry(
+                    id=entry.id,
+                    entry_date=entry.entry_date,
+                    mood_score=entry.mood_score,
+                    energy=entry.energy,
+                    stress=entry.stress,
+                    work_context=entry.work_context,
+                    tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
+                    symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
+                    sleep_minutes=entry.sleep_minutes,
+                    sleep_quality=entry.sleep_quality,
+                )
+            )
+        except Exception:
+            skipped += 1
+            logger.exception(
+                "skipping unreadable analytics entry",
+                extra={"user_id": str(user_id), "entry_id": str(entry.id)},
+            )
+    if skipped:
+        logger.warning(
+            "analytics input load skipped corrupt entries",
+            extra={
+                "user_id": str(user_id),
+                "skipped_entries": skipped,
+                "loaded_entries": len(analytics_entries),
+            },
         )
-        for entry in entries
-    ]
+    if not analytics_entries:
+        return [], [], []
     canonical_entries, canonical_tags = _canonicalize_tag_aliases(
         analytics_entries,
         tags_by_id.values(),

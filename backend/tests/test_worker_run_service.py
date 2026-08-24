@@ -133,3 +133,60 @@ async def test_latest_successful_system_runs_filters_by_status_in_query() -> Non
         "eligible_users",
         "failed_users",
     }
+
+
+def _status_rows(statuses: list[WorkerRunStatus]) -> MagicMock:
+    result = MagicMock()
+    result.all.return_value = [(status,) for status in statuses]
+    return result
+
+
+@pytest.mark.asyncio
+async def test_count_consecutive_user_insight_failures_counts_current_streak() -> None:
+    """#758 (L): count FAILED runs newer than the last SUCCEEDED one."""
+    db = MagicMock()
+    db.execute = AsyncMock(
+        return_value=_status_rows(
+            [
+                WorkerRunStatus.FAILED,
+                WorkerRunStatus.FAILED,
+                WorkerRunStatus.SUCCEEDED,
+                WorkerRunStatus.FAILED,
+            ]
+        )
+    )
+
+    streak = await worker_run_service.count_consecutive_user_insight_failures(
+        db, user_id=uuid.uuid4()
+    )
+
+    assert streak == 2
+    stmt = str(db.execute.await_args.args[0])
+    assert "worker_runs.job_kind" in stmt
+    assert "order by worker_runs.started_at desc" in stmt.lower()
+
+
+@pytest.mark.asyncio
+async def test_count_consecutive_user_insight_failures_zero_when_latest_succeeded() -> None:
+    db = MagicMock()
+    db.execute = AsyncMock(
+        return_value=_status_rows([WorkerRunStatus.SUCCEEDED, WorkerRunStatus.FAILED])
+    )
+
+    streak = await worker_run_service.count_consecutive_user_insight_failures(
+        db, user_id=uuid.uuid4()
+    )
+
+    assert streak == 0
+
+
+@pytest.mark.asyncio
+async def test_count_consecutive_user_insight_failures_zero_without_history() -> None:
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_status_rows([]))
+
+    streak = await worker_run_service.count_consecutive_user_insight_failures(
+        db, user_id=uuid.uuid4()
+    )
+
+    assert streak == 0

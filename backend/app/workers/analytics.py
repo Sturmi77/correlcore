@@ -5,23 +5,31 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import uuid
 from collections.abc import Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
-from datetime import UTC, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 
+from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.worker_run import WorkerJobKind, WorkerRunStatus, WorkerTriggerSource
 from app.services.cleanup_service import cleanup_unverified_accounts
+from app.services.insight_engine import InsightLockTimeoutError
 from app.services.insight_worker_service import (
+    InsightGenerationJob,
     generate_insights_for_job,
     list_insight_generation_jobs,
 )
 from app.services.sync_conflict_service import cleanup_stale_sync_conflicts
-from app.services.worker_run_service import finish_run, start_run
+from app.services.worker_run_service import (
+    count_consecutive_user_insight_failures,
+    finish_run,
+    start_run,
+)
 from app.workers.digest import DigestRunSummary, run_digest_once
 
 logger = logging.getLogger(__name__)
@@ -176,6 +184,114 @@ async def run_cleanup_once(
         raise
 
 
+def _is_transient_error(exc: BaseException) -> bool:
+    """Classify an error as transient (worth an in-run retry) vs. permanent.
+
+    #758 (K): a dropped/reset connection, a lock timeout (#753) or transient
+    driver error is expected to succeed on a fresh attempt, so a short retry
+    is warranted. A permanent data error (bad DEK, corrupt row, programming
+    error) will fail identically on retry and is not retried. ``TimeoutError``
+    is treated as permanent on purpose: it already consumed the per-user
+    wall-clock ceiling, so retrying would just stack another full timeout.
+    """
+
+    if isinstance(exc, InsightLockTimeoutError):
+        return True
+    if isinstance(exc, DBAPIError) and exc.connection_invalidated:
+        return True
+    return isinstance(exc, OperationalError | InterfaceError)
+
+
+async def _generate_for_user_with_retry(
+    *,
+    job: InsightGenerationJob,
+    generated_for_date: date,
+    session_factory: SessionFactory,
+) -> int:
+    """Generate one user's insights, retrying transient failures in-run.
+
+    Each attempt uses a fresh session so a connection invalidated by a
+    transient error is replaced rather than reused. Raises on a permanent
+    error, or once the transient retry budget is exhausted.
+    """
+
+    attempts = settings.WORKER_TRANSIENT_MAX_RETRIES + 1
+    for attempt in range(1, attempts + 1):
+        async with session_factory() as session:
+            try:
+                insight_count = await asyncio.wait_for(
+                    generate_insights_for_job(
+                        session,
+                        job=job,
+                        as_of=generated_for_date,
+                    ),
+                    timeout=settings.WORKER_JOB_TIMEOUT_SECONDS,
+                )
+                await session.commit()
+                return insight_count
+            except Exception as exc:
+                await session.rollback()
+                if attempt < attempts and _is_transient_error(exc):
+                    logger.warning(
+                        "insight generation transient failure; retrying",
+                        extra={
+                            "user_id": str(job.user_id),
+                            "attempt": attempt,
+                            "max_attempts": attempts,
+                            "error": str(exc),
+                        },
+                    )
+                    await asyncio.sleep(settings.WORKER_TRANSIENT_RETRY_BACKOFF_SECONDS)
+                    continue
+                raise
+    # Unreachable: the loop either returns or raises on the final attempt.
+    raise RuntimeError("insight retry loop exited without a result")
+
+
+async def _record_user_failure(
+    run_id: uuid.UUID | None,
+    user_id: uuid.UUID,
+    *,
+    base_message: str,
+    session_factory: SessionFactory,
+) -> None:
+    """Persist a failed USER_INSIGHTS run and escalate a poison-pill streak.
+
+    #758 (L): a user whose generation fails run after run (e.g. a corrupt DEK)
+    otherwise leaves only one quiet log line per night. Once the consecutive
+    failure count crosses ``WORKER_POISON_PILL_THRESHOLD`` we log a loud
+    escalation and tag the persisted run so the streak is visible in the
+    dev/admin worker view, not just in that night's log.
+    """
+
+    prior_failures = 0
+    try:
+        async with session_factory() as session:
+            prior_failures = await count_consecutive_user_insight_failures(session, user_id=user_id)
+    except Exception:
+        logger.exception(
+            "poison-pill streak check failed",
+            extra={"user_id": str(user_id)},
+        )
+    consecutive = prior_failures + 1
+    error_message = base_message
+    if consecutive >= settings.WORKER_POISON_PILL_THRESHOLD:
+        logger.error(
+            "insight generation poison pill: user keeps failing every run",
+            extra={
+                "user_id": str(user_id),
+                "consecutive_failures": consecutive,
+                "threshold": settings.WORKER_POISON_PILL_THRESHOLD,
+            },
+        )
+        error_message = f"{base_message} (poison pill: {consecutive} consecutive failures)"
+    await finish_run(
+        run_id,
+        status=WorkerRunStatus.FAILED,
+        error_message=error_message,
+    )
+
+
 async def run_insights_once(
     *,
     as_of: datetime | None = None,
@@ -206,63 +322,59 @@ async def run_insights_once(
                 trigger_source=trigger_source,
                 scope_user_id=job.user_id,
             )
-            async with session_factory() as session:
-                try:
-                    # #753 (I): a pathological single user (huge history,
-                    # hung query, runaway computation) must not stall every
-                    # subsequent user for the rest of the night — the loop
-                    # is otherwise sequential.
-                    insight_count = await asyncio.wait_for(
-                        generate_insights_for_job(
-                            session,
-                            job=job,
-                            as_of=generated_for_date,
-                        ),
-                        timeout=settings.WORKER_JOB_TIMEOUT_SECONDS,
-                    )
-                    await session.commit()
-                    generated += insight_count
-                    processed += 1
-                    await finish_run(
-                        user_run_id,
-                        status=WorkerRunStatus.SUCCEEDED,
-                        result={
-                            "generated_for_date": generated_for_date.isoformat(),
-                            "insight_count": insight_count,
-                        },
-                    )
-                except TimeoutError:
-                    # Cancelling the coroutine does not itself stop an
-                    # in-flight Postgres statement. The 30-second
-                    # ``statement_timeout`` configured in db/session.py is
-                    # the second line of defense that releases that connection
-                    # even when driver-side cancellation is delayed.
-                    await session.rollback()
-                    failed += 1
-                    await finish_run(
-                        user_run_id,
-                        status=WorkerRunStatus.FAILED,
-                        error_message="insight generation timed out",
-                    )
-                    logger.exception(
-                        "insight generation timed out",
-                        extra={
-                            "user_id": str(job.user_id),
-                            "timeout_seconds": settings.WORKER_JOB_TIMEOUT_SECONDS,
-                        },
-                    )
-                except Exception as exc:
-                    await session.rollback()
-                    failed += 1
-                    await finish_run(
-                        user_run_id,
-                        status=WorkerRunStatus.FAILED,
-                        error_message=str(exc),
-                    )
-                    logger.exception(
-                        "insight generation failed",
-                        extra={"user_id": str(job.user_id)},
-                    )
+            try:
+                # #753 (I): a pathological single user (huge history, hung
+                # query, runaway computation) must not stall every subsequent
+                # user for the rest of the night — the loop is otherwise
+                # sequential. #758 (K): transient failures get a short in-run
+                # retry on a fresh session before the user is marked failed.
+                insight_count = await _generate_for_user_with_retry(
+                    job=job,
+                    generated_for_date=generated_for_date,
+                    session_factory=session_factory,
+                )
+            except TimeoutError:
+                # Cancelling the coroutine does not itself stop an in-flight
+                # Postgres statement. The ``statement_timeout`` configured in
+                # db/session.py is the second line of defense that releases
+                # that connection even when driver-side cancellation is delayed.
+                failed += 1
+                logger.exception(
+                    "insight generation timed out",
+                    extra={
+                        "user_id": str(job.user_id),
+                        "timeout_seconds": settings.WORKER_JOB_TIMEOUT_SECONDS,
+                    },
+                )
+                await _record_user_failure(
+                    user_run_id,
+                    job.user_id,
+                    base_message="insight generation timed out",
+                    session_factory=session_factory,
+                )
+            except Exception as exc:
+                failed += 1
+                logger.exception(
+                    "insight generation failed",
+                    extra={"user_id": str(job.user_id)},
+                )
+                await _record_user_failure(
+                    user_run_id,
+                    job.user_id,
+                    base_message=str(exc),
+                    session_factory=session_factory,
+                )
+            else:
+                generated += insight_count
+                processed += 1
+                await finish_run(
+                    user_run_id,
+                    status=WorkerRunStatus.SUCCEEDED,
+                    result={
+                        "generated_for_date": generated_for_date.isoformat(),
+                        "insight_count": insight_count,
+                    },
+                )
 
         summary = InsightRunSummary(
             eligible_users=len(jobs),

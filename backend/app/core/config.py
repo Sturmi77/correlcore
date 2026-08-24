@@ -223,6 +223,17 @@ class Settings(BaseSettings):
     INSIGHT_LOCK_MAX_ATTEMPTS: int = Field(default=3, ge=1)
     INSIGHT_LOCK_RETRY_BACKOFF_SECONDS: float = Field(default=0.5, ge=0.0)
 
+    # Fault-tolerance refinement (#758). K — transient vs. permanent error
+    # classification: a connection reset or lock timeout gets a short in-run
+    # retry before the user is marked failed, while a permanent data error is
+    # not retried. Number of extra attempts after the first (0 disables retry).
+    WORKER_TRANSIENT_MAX_RETRIES: int = Field(default=2, ge=0)
+    WORKER_TRANSIENT_RETRY_BACKOFF_SECONDS: float = Field(default=0.5, ge=0.0)
+    # L — poison-pill escalation: once a single user's insight generation has
+    # failed this many scheduled runs in a row (e.g. a corrupt DEK), the worker
+    # logs a loud escalation instead of one quiet line per night.
+    WORKER_POISON_PILL_THRESHOLD: int = Field(default=3, ge=1)
+
     # Comma-separated admin emails allowed to call POST /insights/trigger.
     INSIGHT_TRIGGER_ADMIN_EMAILS: Annotated[list[str], NoDecode] = Field(default_factory=list)
 
