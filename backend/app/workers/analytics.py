@@ -187,16 +187,26 @@ async def run_cleanup_once(
 def _is_transient_error(exc: BaseException) -> bool:
     """Classify an error as transient (worth an in-run retry) vs. permanent.
 
-    #758 (K): a dropped/reset connection, a lock timeout (#753) or transient
-    driver error is expected to succeed on a fresh attempt, so a short retry
-    is warranted. A permanent data error (bad DEK, corrupt row, programming
-    error) will fail identically on retry and is not retried. ``TimeoutError``
-    is treated as permanent on purpose: it already consumed the per-user
-    wall-clock ceiling, so retrying would just stack another full timeout.
+    #758 (K): a dropped/reset or invalidated connection is expected to succeed
+    on a fresh attempt, so a short retry is warranted. A permanent data error
+    (bad DEK, corrupt row, programming error) will fail identically on retry
+    and is not retried.
+
+    Two failures are deliberately treated as permanent *at this layer* even
+    though they are transient in nature:
+
+    - ``TimeoutError`` already consumed the per-user wall-clock ceiling, so
+      retrying would just stack another full timeout.
+    - ``InsightLockTimeoutError`` means another run already holds the advisory
+      lock; ``generate_insights_for_job`` has *already* retried the lock
+      ``INSIGHT_LOCK_MAX_ATTEMPTS`` times. Re-running the whole job in-loop
+      would just contend again and multiply nightly work under DB pressure —
+      the lock holder finishing, or the next scheduled run, is the right
+      recovery, not an immediate worker-loop retry (cursor[bot] review, #772).
     """
 
-    if isinstance(exc, InsightLockTimeoutError):
-        return True
+    if isinstance(exc, InsightLockTimeoutError | TimeoutError):
+        return False
     if isinstance(exc, DBAPIError) and exc.connection_invalidated:
         return True
     return isinstance(exc, OperationalError | InterfaceError)

@@ -1700,11 +1700,16 @@ async def _load_analytics_inputs(
                     sleep_quality=entry.sleep_quality,
                 )
             )
-        except Exception:
+        except (ValueError, TypeError, LookupError) as exc:
+            # Narrow to the errors a corrupt/undecryptable row actually raises
+            # (bad enum -> LookupError/ValueError, wrong type -> TypeError) so
+            # an unexpected programming bug still fails the user's job loudly
+            # instead of silently shrinking the sample (cursor[bot] review,
+            # #772).
             skipped += 1
-            logger.exception(
+            logger.warning(
                 "skipping unreadable analytics entry",
-                extra={"user_id": str(user_id), "entry_id": str(entry.id)},
+                extra={"user_id": str(user_id), "entry_id": str(entry.id), "error": str(exc)},
             )
     if skipped:
         logger.warning(

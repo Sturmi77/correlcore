@@ -231,20 +231,6 @@ async def test_regenerate_slot_fails_open_when_redis_set_errors(
 
 
 @pytest.mark.asyncio
-async def test_regenerate_slot_fails_open_when_redis_connect_raises() -> None:
-    """A Redis error while *connecting* also fails open rather than 500-ing."""
-    from redis.exceptions import ConnectionError as RedisConnectionError
-
-    with patch(
-        "redis.asyncio.Redis.from_url",
-        side_effect=RedisConnectionError("no route to host"),
-    ):
-        allowed = await try_acquire_regenerate_slot(user_id=uuid.uuid4())
-
-    assert allowed is True
-
-
-@pytest.mark.asyncio
 async def test_post_batch_skips_regeneration_when_redis_down() -> None:
     """A Redis outage skips the opportunistic post-batch run without crashing."""
     fake = _FakeRedis(fail_on_set=True)

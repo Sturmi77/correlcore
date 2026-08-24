@@ -264,6 +264,9 @@ async def count_consecutive_user_insight_failures(
     succeeded, has a streak of ``0``.
     """
 
+    # Per-user runs are already capped at PER_USER_RETENTION by
+    # _enforce_retention, so the streak cannot exceed that; bound the scan
+    # explicitly so the query stays cheap regardless (cursor[bot] review, #772).
     result = await db.execute(
         select(WorkerRun.status)
         .where(
@@ -272,6 +275,7 @@ async def count_consecutive_user_insight_failures(
             WorkerRun.status.in_([WorkerRunStatus.SUCCEEDED, WorkerRunStatus.FAILED]),
         )
         .order_by(WorkerRun.started_at.desc())
+        .limit(PER_USER_RETENTION + 1)
     )
     streak = 0
     for (status,) in result.all():

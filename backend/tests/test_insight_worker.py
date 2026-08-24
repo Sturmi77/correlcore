@@ -688,3 +688,41 @@ async def test_record_user_failure_below_threshold_stays_quiet(
 
     assert "poison pill" not in caplog.text.lower()
     assert finish_run.await_args.kwargs["error_message"] == "transient blip"
+
+
+@pytest.mark.asyncio
+async def test_run_insights_once_does_not_retry_lock_timeout() -> None:
+    """#758 (K) / #772 review: a held advisory lock is permanent at this layer.
+
+    generate_insights_for_job already retried the lock INSIGHT_LOCK_MAX_ATTEMPTS
+    times, so the worker loop must not re-run the whole job and contend again.
+    """
+    job = InsightGenerationJob(user_id=uuid.uuid4(), wrapped_dek=b"one")
+    session_factory = _FakeSessionFactory()
+    calls = {"n": 0}
+
+    async def fake_generate(_session: object, *, job: InsightGenerationJob, as_of: object) -> int:
+        calls["n"] += 1
+        raise InsightLockTimeoutError("held")
+
+    with (
+        patch(
+            "app.workers.analytics.list_insight_generation_jobs",
+            new=AsyncMock(return_value=[job]),
+        ),
+        patch("app.workers.analytics.generate_insights_for_job", side_effect=fake_generate),
+        patch("app.workers.analytics.start_run", new=AsyncMock(return_value=uuid.uuid4())),
+        patch("app.workers.analytics.finish_run", new=AsyncMock()),
+        patch(
+            "app.workers.analytics.count_consecutive_user_insight_failures",
+            new=AsyncMock(return_value=0),
+        ),
+    ):
+        summary = await run_insights_once(
+            as_of=datetime(2026, 5, 12, tzinfo=UTC),
+            session_factory=session_factory,
+        )
+
+    assert calls["n"] == 1  # no in-loop retry for lock contention
+    assert summary.failed_users == 1
+    assert summary.processed_users == 0
