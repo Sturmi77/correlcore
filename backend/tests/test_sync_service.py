@@ -60,6 +60,30 @@ def test_sync_entry_payload_accepts_sleep_fields() -> None:
     assert payload.sleep_quality == 5
 
 
+def test_sync_entry_payload_blank_note_normalizes_to_none() -> None:
+    """#773 follow-up: mirror EntryCreate/EntryUpdate so the sync path never
+    stores a whitespace-only note as ciphertext. Otherwise ``note_enc IS NOT
+    NULL`` (the analytics marker has_note signal) would count a blank note."""
+    from app.schemas.sync import SyncEntryPayload
+
+    def _payload(note: str | None) -> SyncEntryPayload:
+        return SyncEntryPayload(
+            entry_date=date.today(),
+            mood_score=3,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE,
+            note=note,
+        )
+
+    assert _payload("   ").note is None
+    assert _payload("\n\t ").note is None
+    assert _payload("").note is None
+    assert _payload(None).note is None
+    # A real note (even with surrounding whitespace) is preserved verbatim.
+    assert _payload("  real note  ").note == "  real note  "
+
+
 def test_entry_payload_from_model_includes_note_visibility() -> None:
     user = make_user()
     entry = make_entry(user, mood_score=3)
