@@ -28,17 +28,12 @@
 </div>
 
 <style>
+  /* #703 Stage 2: the toolbar renders inside ScreenHeader's sticky `controls`
+   * slot, which owns the blur/backdrop chrome — here it is just the layout. */
   .insights-toolbar {
-    position: sticky;
-    top: calc(var(--app-header-height, 0px) + var(--space-2));
-    z-index: 3;
     display: grid;
     gap: var(--space-2);
-    padding: var(--space-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-    backdrop-filter: blur(8px);
+    min-width: 0;
   }
 
   .insights-toolbar__row {
@@ -50,7 +45,6 @@
 
   @media (max-width: 480px) {
     .insights-toolbar {
-      padding: var(--space-2);
       gap: var(--space-1);
     }
 

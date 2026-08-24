@@ -8,6 +8,10 @@ const trendsToolbarSource = readFileSync(
   'utf8'
 );
 const insightsRouteSource = readFileSync(resolve('src/routes/insights/+page.svelte'), 'utf8');
+const insightsToolbarSource = readFileSync(
+  resolve('src/lib/components/insights/InsightsAnalysisToolbar.svelte'),
+  'utf8'
+);
 const settingsSource = readFileSync(resolve('src/routes/settings/+page.svelte'), 'utf8');
 const appearanceSettingsSource = readFileSync(
   resolve('src/routes/settings/appearance/+page.svelte'),
@@ -19,11 +23,20 @@ const insightFeedSource = readFileSync(
 );
 
 describe('control primitive contract', () => {
-  it('uses a dedicated sticky toolbar for the global Trends range', () => {
+  it('melts the analysis toolbars into the sticky ScreenHeader controls slot (#703 Stage 2)', () => {
     expect(trendsSource).toContain('TrendsAnalysisToolbar');
     expect(trendsToolbarSource).toContain('trends-toolbar');
     expect(trendsToolbarSource).toContain('data-testid="trends-sticky-toolbar"');
     expect(trendsSource).not.toContain('trends__controls');
+
+    // The header owns the sticky chrome now; both toolbars render inside its
+    // `controls` slot and no longer position themselves sticky.
+    expect(trendsSource).toContain('sticky');
+    expect(trendsSource).toContain('slot="controls"');
+    expect(insightsRouteSource).toContain('sticky');
+    expect(insightsRouteSource).toContain('slot="controls"');
+    expect(trendsToolbarSource).not.toContain('position: sticky');
+    expect(insightsToolbarSource).not.toContain('position: sticky');
   });
 
   it('uses TabBar for Trends and Insights tabs', () => {

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   export let title: string;
   export let subtitle = '';
   export let eyebrow = '';
@@ -11,12 +13,50 @@
    * screen hand-rolling a raw `btn` anchor.
    */
   export let back: { href: string; label: string } | null = null;
+  /**
+   * Floating header mode (#703 Stage 2). When true the header is the sticky
+   * screen chrome (blur/backdrop) that owns the top offset, its `controls` slot
+   * carries the screen's controls (e.g. the analysis toolbars), and the title
+   * copy collapses on scroll so only `[back · controls]` stays pinned.
+   */
+  export let sticky = false;
+
+  let headerEl: HTMLElement | undefined;
+  let scrolled = false;
+
+  /** Nearest ancestor that actually scrolls — the shell content column, not the
+   * window (see routes/+layout.svelte: `.page-shell` is `overflow-y-auto`). */
+  function findScrollParent(node: HTMLElement | undefined): HTMLElement | null {
+    let el = node?.parentElement ?? null;
+    while (el) {
+      const overflowY = getComputedStyle(el).overflowY;
+      if (overflowY === 'auto' || overflowY === 'scroll') return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  onMount(() => {
+    if (!sticky) return;
+    const scrollParent = findScrollParent(headerEl);
+    const target: HTMLElement | Window = scrollParent ?? window;
+    const read = (): void => {
+      const y = scrollParent ? scrollParent.scrollTop : window.scrollY;
+      scrolled = y > 24;
+    };
+    read();
+    target.addEventListener('scroll', read, { passive: true });
+    return () => target.removeEventListener('scroll', read);
+  });
 </script>
 
 <header
+  bind:this={headerEl}
   class="screen-header"
   class:screen-header--compact={compact}
   class:screen-header--visually-hidden={visuallyHidden}
+  class:screen-header--sticky={sticky}
+  class:screen-header--scrolled={sticky && scrolled}
 >
   {#if back}
     <a class="screen-header__back" href={back.href} data-testid="screen-back">
@@ -42,6 +82,12 @@
       </div>
     {/if}
   </div>
+
+  {#if $$slots.controls}
+    <div class="screen-header__controls">
+      <slot name="controls" />
+    </div>
+  {/if}
 </header>
 
 <style>
@@ -123,6 +169,52 @@
     gap: var(--space-2);
   }
 
+  .screen-header__controls {
+    min-width: 0;
+  }
+
+  /* ----------------------------------------------------------------------- *
+   * Floating/sticky mode (#703 Stage 2). The header becomes the screen chrome
+   * that owns the top offset, so the melted-in toolbars drop their own sticky.
+   * ----------------------------------------------------------------------- */
+  .screen-header--sticky {
+    position: sticky;
+    top: var(--space-2);
+    z-index: 4;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  /* shrink-on-scroll: collapse the title copy once scrolled so only
+   * [back · controls] stays pinned and content keeps the viewport. */
+  .screen-header--sticky .screen-header__eyebrow,
+  .screen-header--sticky .screen-header__subtitle {
+    overflow: hidden;
+    transition:
+      max-height 0.2s ease,
+      opacity 0.2s ease,
+      margin 0.2s ease;
+    max-height: 3rem;
+  }
+
+  .screen-header--sticky h1 {
+    transition: font-size 0.2s ease;
+  }
+
+  .screen-header--scrolled .screen-header__eyebrow,
+  .screen-header--scrolled .screen-header__subtitle {
+    max-height: 0;
+    margin: 0;
+    opacity: 0;
+  }
+
+  .screen-header--scrolled h1 {
+    font-size: var(--text-lg);
+  }
+
   .screen-header--visually-hidden {
     position: absolute;
     width: 1px;
@@ -133,6 +225,14 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .screen-header--sticky .screen-header__eyebrow,
+    .screen-header--sticky .screen-header__subtitle,
+    .screen-header--sticky h1 {
+      transition: none;
+    }
   }
 
   @media (max-width: 480px) {

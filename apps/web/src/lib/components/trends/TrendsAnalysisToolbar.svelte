@@ -61,17 +61,13 @@
 </div>
 
 <style>
+  /* #703 Stage 2: the toolbar no longer owns sticky chrome — it renders inside
+   * ScreenHeader's sticky `controls` slot, which provides blur/backdrop and the
+   * top offset. Here it is just the control layout (range + tabs + filters). */
   .trends-toolbar {
-    position: sticky;
-    top: calc(var(--app-header-height, 0px) + var(--space-2));
-    z-index: 3;
     display: grid;
     gap: var(--space-2);
-    padding: var(--space-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-    backdrop-filter: blur(8px);
+    min-width: 0;
   }
 
   .trends-toolbar__row {
@@ -89,7 +85,6 @@
 
   @media (max-width: 480px) {
     .trends-toolbar {
-      padding: var(--space-2);
       gap: var(--space-1);
     }
 

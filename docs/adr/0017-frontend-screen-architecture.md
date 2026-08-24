@@ -117,3 +117,31 @@ grids remain off Home regardless of customization.
 Settings live at `/settings/home` (secondary surface within the Settings screen,
 not a new primary screen). See
 [`../proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md`](../proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md).
+
+## 2026-08-24 Unified Screen Chrome / Header Contract Amendment (#703)
+
+There is one shared top-chrome contract: every primary and drill-down screen
+renders exactly one `ScreenHeader`, never a hand-rolled `__top` bar or raw `btn`
+back anchor.
+
+**Grammar:** `[back/context] · [title] · [controls/actions]`.
+
+- **Back / context** — drill-down screens (`/entries/day`, `/dev`, `/admin`,
+  and settings sub-pages) pass `back={{ href, label }}`; `ScreenHeader` renders
+  the single shared ghost back link. No route hand-rolls its own back affordance.
+- **Theme** — `ThemeToggle` lives only on `settings/appearance`; it is not part
+  of route or drill-down headers.
+- **Floating header (Stage 2)** — screens that carry controls (Trends, Insights)
+  set `sticky`. The header is then the sticky screen chrome (blur/backdrop, owns
+  the top offset via `position: sticky`, so no separate `--app-header-height`
+  fixed-bar offset is needed), and the analysis toolbars render inside its
+  `controls` slot instead of positioning themselves sticky. The title copy
+  collapses on scroll (`prefers-reduced-motion` respected) so `[back · controls]`
+  stays reachable without a tall fixed header eating the ~640px content shell.
+- **Out of scope** — `visuallyHidden` screens (Home, Onboarding) keep no visible
+  header and are never made sticky.
+
+Consistent with the Mobile/Web Composition amendment: one responsive component
+(mobile-lean/collapsing, desktop-richer inline), not a separate desktop header.
+Enforced by `src/routes/screen-chrome.test.ts` and
+`src/routes/control-primitives.test.ts`.

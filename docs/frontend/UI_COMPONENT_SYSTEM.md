@@ -73,6 +73,13 @@ Required contract:
   The `ThemeToggle` lives on `settings/appearance` only; ad-hoc copies on
   utility/drill-down screens (`/dev`, `/entries/day`) were removed (#703). This
   is enforced by `src/routes/screen-chrome.test.ts`.
+- Optional `sticky` floating mode (#703 Stage 2): the header becomes the sticky
+  screen chrome (blur/backdrop, owns the top offset) and its `controls` slot
+  carries the screen's controls. On scroll the title copy collapses so only
+  `[back · controls]` stays pinned (respecting `prefers-reduced-motion`). The
+  Trends/Insights analysis toolbars render inside this `controls` slot rather
+  than positioning themselves sticky — the header owns sticky, the toolbars are
+  just the control layout. Enforced by `src/routes/control-primitives.test.ts`.
 
 Heading convention (avoid duplicate titles):
 

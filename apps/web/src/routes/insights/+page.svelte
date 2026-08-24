@@ -833,7 +833,17 @@
 </svelte:head>
 
 <main class="insights-page screen-stack screen-stack--tight">
-  <ScreenHeader title={$_('insights.page.title')} subtitle={$_('insights.page.subtitle')} />
+  <ScreenHeader title={$_('insights.page.title')} subtitle={$_('insights.page.subtitle')} sticky>
+    <svelte:fragment slot="controls">
+      {#if $auth.status === 'authenticated'}
+        <InsightsAnalysisToolbar
+          analysisRange={toolbarAnalysisRange}
+          analysisRangeOptions={analysisRangeControlOptions}
+          on:rangeChange={(event) => setAnalysisRange(event.detail.value)}
+        />
+      {/if}
+    </svelte:fragment>
+  </ScreenHeader>
   <p class="insights-page__history-link">
     <a href="/insights/history">{$_('insights.page.history_link')}</a>
   </p>
@@ -846,12 +856,6 @@
       </Button>
     </Panel>
   {:else}
-    <InsightsAnalysisToolbar
-      analysisRange={toolbarAnalysisRange}
-      analysisRangeOptions={analysisRangeControlOptions}
-      on:rangeChange={(event) => setAnalysisRange(event.detail.value)}
-    />
-
     {#if showMatrix}
       <section class="insights-page__matrix" data-testid="insights-matrix-section">
         <InsightMatrix {insights} />

@@ -420,7 +420,45 @@
 </svelte:head>
 
 <main class="trends screen-stack">
-  <ScreenHeader title={$_('trends.title')} subtitle={$_('trends.subtitle')} />
+  <ScreenHeader title={$_('trends.title')} subtitle={$_('trends.subtitle')} sticky>
+    <svelte:fragment slot="controls">
+      {#if $auth.status === 'authenticated'}
+        <TrendsAnalysisToolbar
+          analysisRange={$analysisRange}
+          analysisRangeOptions={rangeControlOptions}
+          {activeTab}
+          tabOptions={trendTabOptions}
+          showCompareFilters={activeTab === 'compare'}
+          embedCompareFilters={!compactTrends}
+          showRangeControl={activeTab !== 'compare'}
+          on:rangeChange={(event) => {
+            const nextRange = event.detail.value as TimeseriesRange;
+            setAnalysisRange(nextRange);
+            void loadTrends(nextRange);
+          }}
+          on:tabChange={(event) => {
+            activeTab = event.detail.value as TrendTab;
+            void loadTrends();
+          }}
+        >
+          <svelte:fragment slot="compare-filters">
+            <TrendsCompareFilters
+              {smoothing}
+              {smoothingAvailable}
+              {metrics}
+              {selectedCategory}
+              on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+              on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+              on:categoryChange={(event) => {
+                selectedCategory = event.detail.category;
+                void loadTrends();
+              }}
+            />
+          </svelte:fragment>
+        </TrendsAnalysisToolbar>
+      {/if}
+    </svelte:fragment>
+  </ScreenHeader>
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">
@@ -428,40 +466,6 @@
       <Button href="/auth/login" variant="primary" size="sm">{$_('auth.login.submit')}</Button>
     </Panel>
   {:else}
-    <TrendsAnalysisToolbar
-      analysisRange={$analysisRange}
-      analysisRangeOptions={rangeControlOptions}
-      {activeTab}
-      tabOptions={trendTabOptions}
-      showCompareFilters={activeTab === 'compare'}
-      embedCompareFilters={!compactTrends}
-      showRangeControl={activeTab !== 'compare'}
-      on:rangeChange={(event) => {
-        const nextRange = event.detail.value as TimeseriesRange;
-        setAnalysisRange(nextRange);
-        void loadTrends(nextRange);
-      }}
-      on:tabChange={(event) => {
-        activeTab = event.detail.value as TrendTab;
-        void loadTrends();
-      }}
-    >
-      <svelte:fragment slot="compare-filters">
-        <TrendsCompareFilters
-          {smoothing}
-          {smoothingAvailable}
-          {metrics}
-          {selectedCategory}
-          on:smoothingChange={(event) => setSmoothing(event.detail.value)}
-          on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-          on:categoryChange={(event) => {
-            selectedCategory = event.detail.category;
-            void loadTrends();
-          }}
-        />
-      </svelte:fragment>
-    </TrendsAnalysisToolbar>
-
     {#if error}
       <InlineAlert variant="error" message={error} />
     {/if}

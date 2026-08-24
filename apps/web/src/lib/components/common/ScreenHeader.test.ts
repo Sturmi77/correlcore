@@ -47,6 +47,18 @@ describe('ScreenHeader', () => {
     expect(screen.queryByTestId('screen-back')).toBeNull();
   });
 
+  it('marks the header as sticky floating chrome when sticky is set (#703 Stage 2)', () => {
+    render(ScreenHeader, { props: { title: 'Trends', sticky: true } });
+
+    expect(screen.getByRole('banner').classList.contains('screen-header--sticky')).toBe(true);
+  });
+
+  it('is not sticky by default', () => {
+    render(ScreenHeader, { props: { title: 'Trends' } });
+
+    expect(screen.getByRole('banner').classList.contains('screen-header--sticky')).toBe(false);
+  });
+
   it('can hide the header visually while keeping the h1 in the DOM', () => {
     render(ScreenHeader, {
       props: {

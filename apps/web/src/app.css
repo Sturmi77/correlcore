@@ -76,7 +76,9 @@
   --page-padding-x-right: max(var(--space-4), env(safe-area-inset-right));
   --page-padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
   --content-max-width: 640px;
-  --app-header-height: 0px;
+  /* No global fixed top-bar: the sticky ScreenHeader (#703 Stage 2) sits in
+   * normal flow and offsets itself via `top: var(--space-2)`, so the old
+   * `--app-header-height` placeholder was removed. */
   --app-nav-height: 4.25rem;
   --app-nav-width: 5.75rem;
 }
