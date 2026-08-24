@@ -76,7 +76,11 @@
   <p class="history-page__back">
     <a href="/insights">{$_('nav.back')}</a>
   </p>
-  <ScreenHeader title={$_('insights.history.title')} subtitle={$_('insights.history.subtitle')} />
+  <ScreenHeader
+    title={$_('insights.history.title')}
+    subtitle={$_('insights.history.subtitle')}
+    back={{ href: '/insights', label: $_('nav.insights') }}
+  />
 
   <InsightHistoryTimeline
     {items}

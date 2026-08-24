@@ -65,14 +65,23 @@ Required contract:
 
 - `title`, optional `subtitle`, optional `eyebrow`
 - Optional `actions` slot for lightweight per-screen actions
-- Optional `back={{ href, label }}` for drill-down screens — renders the one
-  shared ghost back link (`data-testid="screen-back"`). Do **not** hand-roll a
-  raw `btn` anchor or a custom `__top` bar for back/context navigation (#703).
+- `back={{ href, label }}` is the **one** back affordance for every drill-down
+  screen — renders the single shared ghost link (`data-testid="screen-back"`),
+  left of the title, labelled with the destination (`← Settings`, `← Insights`,
+  `← Trends`). It replaces per-screen `__top` bars, raw `btn` anchors, and
+  `slot="actions"` back buttons alike. Every settings sub-page, the insights
+  drill-downs (`digest`, `history`), `/health-connect`, `/dev`, `/admin`, and
+  `/entries/day` use it (#703). _Exception:_ the dual-origin legal pages
+  (`/impressum`, `/privacy`) keep their in-body "back to settings / back to
+  home" buttons because they are reached from both the app and the public
+  landing footer.
 - No duplicate Home button when the app navigation is visible
 - Theme switching belongs in Appearance settings, not route/drill-down headers.
   The `ThemeToggle` lives on `settings/appearance` only; ad-hoc copies on
   utility/drill-down screens (`/dev`, `/entries/day`) were removed (#703). This
-  is enforced by `src/routes/screen-chrome.test.ts`.
+  is enforced by `src/routes/screen-chrome.test.ts`. _Exception:_ the full-page
+  entry form (`EntryForm` in `mode === 'page'`) keeps a `ThemeToggle` because it
+  is a focused input surface with no ScreenHeader or nav chrome of its own.
 - Optional `sticky` floating mode (#703 Stage 2): the header becomes the sticky
   screen chrome (blur/backdrop, owns the top offset) and its `controls` slot
   carries the screen's controls. On scroll the title copy collapses so only

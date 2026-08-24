@@ -126,11 +126,18 @@ back anchor.
 
 **Grammar:** `[back/context] · [title] · [controls/actions]`.
 
-- **Back / context** — drill-down screens (`/entries/day`, `/dev`, `/admin`,
-  and settings sub-pages) pass `back={{ href, label }}`; `ScreenHeader` renders
-  the single shared ghost back link. No route hand-rolls its own back affordance.
-- **Theme** — `ThemeToggle` lives only on `settings/appearance`; it is not part
-  of route or drill-down headers.
+- **Back / context** — every drill-down screen passes `back={{ href, label }}`
+  and `ScreenHeader` renders the single shared ghost link (left of the title,
+  labelled with the destination): all settings sub-pages, the insights
+  drill-downs (`digest`, `history`), `/health-connect`, `/dev`, `/admin`, and
+  `/entries/day`. No route hand-rolls a `__top` bar, a raw anchor, or a
+  `slot="actions"` back button. _Exception:_ the dual-origin legal pages
+  (`/impressum`, `/privacy`) keep in-body back buttons for both the app and the
+  public landing footer.
+- **Theme** — `ThemeToggle` lives only on `settings/appearance` and is not part
+  of route or drill-down headers. _Exception:_ the full-page entry form
+  (`EntryForm` `mode === 'page'`) keeps one, as a focused input surface with no
+  header/nav chrome of its own.
 - **Floating header (Stage 2)** — screens that carry controls (Trends, Insights)
   set `sticky`. The header is then the sticky screen chrome (blur/backdrop, owns
   the top offset via `position: sticky`, so no separate `--app-header-height`

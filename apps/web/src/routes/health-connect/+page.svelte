@@ -208,6 +208,7 @@
   <ScreenHeader
     title={$_('health_connect.page_title')}
     subtitle={$_('health_connect.page_subtitle')}
+    back={{ href: '/settings', label: $_('nav.settings') }}
   />
 
   <Panel>

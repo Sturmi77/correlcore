@@ -9,6 +9,14 @@ const routeSources = {
   tagSettings: readFileSync(resolve('src/routes/settings/tags/+page.svelte'), 'utf8'),
   appSettings: readFileSync(resolve('src/routes/settings/app/+page.svelte'), 'utf8'),
   symptomSettings: readFileSync(resolve('src/routes/settings/symptoms/+page.svelte'), 'utf8'),
+  analysisSettings: readFileSync(resolve('src/routes/settings/analysis/+page.svelte'), 'utf8'),
+  appearanceSettings: readFileSync(resolve('src/routes/settings/appearance/+page.svelte'), 'utf8'),
+  dataSettings: readFileSync(resolve('src/routes/settings/data/+page.svelte'), 'utf8'),
+  homeSettings: readFileSync(resolve('src/routes/settings/home/+page.svelte'), 'utf8'),
+  privacySettings: readFileSync(resolve('src/routes/settings/privacy/+page.svelte'), 'utf8'),
+  insightsDigest: readFileSync(resolve('src/routes/insights/digest/+page.svelte'), 'utf8'),
+  insightsHistory: readFileSync(resolve('src/routes/insights/history/+page.svelte'), 'utf8'),
+  healthConnect: readFileSync(resolve('src/routes/health-connect/+page.svelte'), 'utf8'),
   dayEntries: readFileSync(resolve('src/routes/entries/day/[date]/+page.svelte'), 'utf8'),
   dev: readFileSync(resolve('src/routes/dev/+page.svelte'), 'utf8'),
   admin: readFileSync(resolve('src/routes/admin/+page.svelte'), 'utf8'),
@@ -41,12 +49,31 @@ describe('screen chrome contract', () => {
     }
   });
 
-  it('gives drill-down screens one visible ScreenHeader with a back affordance (#703)', () => {
-    // Stage 1: the three hand-rolled `__top` bars are folded into ScreenHeader's
-    // shared `back` prop instead of raw btn anchors + duplicate headings.
-    for (const source of [routeSources.dayEntries, routeSources.dev, routeSources.admin]) {
+  it('gives every drill-down screen one shared ScreenHeader back affordance (#703)', () => {
+    // One back pattern everywhere: ScreenHeader's `back` prop (a left-aligned
+    // ghost link), not per-screen `__top` bars or `slot="actions"` back buttons.
+    const drillDowns = [
+      routeSources.dayEntries,
+      routeSources.dev,
+      routeSources.admin,
+      routeSources.analysisSettings,
+      routeSources.appSettings,
+      routeSources.appearanceSettings,
+      routeSources.dataSettings,
+      routeSources.homeSettings,
+      routeSources.privacySettings,
+      routeSources.symptomSettings,
+      routeSources.tagSettings,
+      routeSources.insightsDigest,
+      routeSources.insightsHistory,
+      routeSources.healthConnect,
+    ];
+    for (const source of drillDowns) {
       expect(source).toContain('<ScreenHeader');
       expect(source).toContain('back={{');
+      // No screen re-implements back as a header action button.
+      expect(source).not.toContain('slot="actions" href="/settings"');
+      expect(source).not.toContain('slot="actions" href="/insights"');
     }
     // The drill-down header is now visible (not the a11y-only hidden variant).
     expect(routeSources.dayEntries).not.toContain('visuallyHidden');

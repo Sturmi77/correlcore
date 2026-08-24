@@ -79,11 +79,12 @@
 </svelte:head>
 
 <main class="app-settings screen-stack">
-  <ScreenHeader title={$_('settings.app.title')} subtitle={$_('settings.app.subtitle')} compact>
-    <Button slot="actions" href="/settings" variant="ghost" size="sm">
-      {$_('settings.app.back_settings')}
-    </Button>
-  </ScreenHeader>
+  <ScreenHeader
+    title={$_('settings.app.title')}
+    subtitle={$_('settings.app.subtitle')}
+    compact
+    back={{ href: '/settings', label: $_('nav.settings') }}
+  />
 
   <Panel variant="bordered">
     <div class="app-settings__section">

@@ -57,7 +57,11 @@
   <p class="digest-page__back">
     <a href="/insights">{$_('nav.back')}</a>
   </p>
-  <ScreenHeader title={$_('insights.digest.title')} subtitle={$_('insights.digest.subtitle')} />
+  <ScreenHeader
+    title={$_('insights.digest.title')}
+    subtitle={$_('insights.digest.subtitle')}
+    back={{ href: '/insights', label: $_('nav.insights') }}
+  />
 
   <Panel>
     {#if loading}

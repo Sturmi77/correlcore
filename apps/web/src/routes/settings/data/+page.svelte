@@ -108,11 +108,8 @@
     title={$_('settings.groups.data.title')}
     subtitle={$_('settings.groups.data.subtitle')}
     compact
-  >
-    <Button slot="actions" href="/settings" variant="ghost" size="sm">
-      {$_('settings.back')}
-    </Button>
-  </ScreenHeader>
+    back={{ href: '/settings', label: $_('nav.settings') }}
+  />
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">

@@ -112,11 +112,8 @@
     title={$_('settings.symptoms.title')}
     subtitle={$_('settings.symptoms.subtitle')}
     compact
-  >
-    <Button slot="actions" href="/settings" variant="ghost" size="sm">
-      {$_('settings.symptoms.back_settings')}
-    </Button>
-  </ScreenHeader>
+    back={{ href: '/settings', label: $_('nav.settings') }}
+  />
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">
