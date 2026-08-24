@@ -83,7 +83,9 @@
       {/if}
       <h1>{title}</h1>
       {#if subtitle}
-        <p class="screen-header__subtitle">{subtitle}</p>
+        <div class="screen-header__subtitle-collapse">
+          <p class="screen-header__subtitle">{subtitle}</p>
+        </div>
       {/if}
     </div>
 
@@ -216,29 +218,35 @@
     backdrop-filter: blur(8px);
   }
 
-  /* shrink-on-scroll: collapse the title copy once scrolled so only
-   * [back · controls] stays pinned and content keeps the viewport. */
-  .screen-header--sticky .screen-header__eyebrow,
-  .screen-header--sticky .screen-header__subtitle {
-    overflow: hidden;
+  /* The subtitle wrapper is transparent to layout until the header is sticky. */
+  .screen-header__subtitle-collapse {
+    display: contents;
+  }
+
+  /* shrink-on-scroll: collapse the subtitle once scrolled so only
+   * [back · controls] stays pinned and content keeps the viewport. Uses a
+   * grid-rows 1fr→0fr collapse so the expanded state is the subtitle's natural
+   * height and is never clipped at large text scale (#774 review), while the
+   * collapse still animates smoothly. */
+  .screen-header--sticky .screen-header__subtitle-collapse {
+    display: grid;
+    grid-template-rows: 1fr;
     transition:
-      max-height 0.2s ease,
-      opacity 0.2s ease,
-      margin 0.2s ease;
-    /* Expanded cap only exists so the collapse can animate to 0. Keep it well
-     * above any realistic multi-line subtitle at large text scale so it never
-     * clips the expanded copy (#774 review). */
-    max-height: 8rem;
+      grid-template-rows 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .screen-header--sticky .screen-header__subtitle-collapse > .screen-header__subtitle {
+    min-height: 0;
+    overflow: hidden;
   }
 
   .screen-header--sticky h1 {
     transition: font-size 0.2s ease;
   }
 
-  .screen-header--scrolled .screen-header__eyebrow,
-  .screen-header--scrolled .screen-header__subtitle {
-    max-height: 0;
-    margin: 0;
+  .screen-header--scrolled .screen-header__subtitle-collapse {
+    grid-template-rows: 0fr;
     opacity: 0;
   }
 
@@ -259,8 +267,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .screen-header--sticky .screen-header__eyebrow,
-    .screen-header--sticky .screen-header__subtitle,
+    .screen-header--sticky .screen-header__subtitle-collapse,
     .screen-header--sticky h1 {
       transition: none;
     }
