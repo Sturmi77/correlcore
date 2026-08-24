@@ -120,6 +120,12 @@
     align-self: flex-start;
     align-items: center;
     gap: var(--space-1);
+    /* 44px min touch target (FRONTEND.md contract). Horizontal padding is
+     * offset by a negative inline margin so the glyph still aligns with the
+     * title's left edge (#774 review). */
+    min-height: 2.75rem;
+    padding-inline: var(--space-1);
+    margin-inline-start: calc(-1 * var(--space-1));
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     font-weight: 600;
@@ -198,7 +204,10 @@
    * ----------------------------------------------------------------------- */
   .screen-header--sticky {
     position: sticky;
-    top: var(--space-2);
+    /* Clear the device top safe-area (notch/status bar) in the Capacitor
+     * edge-to-edge layout, where the shell's initial safe-area padding scrolls
+     * away — otherwise the pinned controls can sit under the status bar (#774). */
+    top: max(var(--space-2), env(safe-area-inset-top, 0px));
     z-index: 4;
     padding: var(--space-3);
     border: 1px solid var(--color-border);
