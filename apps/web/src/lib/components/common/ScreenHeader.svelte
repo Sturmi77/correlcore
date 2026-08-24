@@ -225,7 +225,10 @@
       max-height 0.2s ease,
       opacity 0.2s ease,
       margin 0.2s ease;
-    max-height: 3rem;
+    /* Expanded cap only exists so the collapse can animate to 0. Keep it well
+     * above any realistic multi-line subtitle at large text scale so it never
+     * clips the expanded copy (#774 review). */
+    max-height: 8rem;
   }
 
   .screen-header--sticky h1 {
