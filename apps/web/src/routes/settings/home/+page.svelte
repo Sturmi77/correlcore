@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import Button from '$lib/components/common/Button.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -60,11 +59,12 @@
 </svelte:head>
 
 <main class="home-settings screen-stack">
-  <ScreenHeader title={$_('settings.home.title')} subtitle={$_('settings.home.subtitle')} compact>
-    <Button slot="actions" href="/settings" variant="ghost" size="sm">
-      {$_('settings.home.back_settings')}
-    </Button>
-  </ScreenHeader>
+  <ScreenHeader
+    title={$_('settings.home.title')}
+    subtitle={$_('settings.home.subtitle')}
+    compact
+    back={{ href: '/settings', label: $_('nav.settings') }}
+  />
 
   <Panel variant="bordered">
     <div class="home-settings__intro">

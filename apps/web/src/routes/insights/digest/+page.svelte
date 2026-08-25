@@ -54,10 +54,11 @@
 </svelte:head>
 
 <div class="digest-page">
-  <p class="digest-page__back">
-    <a href="/insights">{$_('nav.back')}</a>
-  </p>
-  <ScreenHeader title={$_('insights.digest.title')} subtitle={$_('insights.digest.subtitle')} />
+  <ScreenHeader
+    title={$_('insights.digest.title')}
+    subtitle={$_('insights.digest.subtitle')}
+    back={{ href: '/insights', label: $_('nav.insights') }}
+  />
 
   <Panel>
     {#if loading}
@@ -93,10 +94,6 @@
     display: grid;
     gap: var(--space-4);
     padding: var(--space-4);
-  }
-
-  .digest-page__back {
-    margin: 0;
   }
 
   .digest-page__status,

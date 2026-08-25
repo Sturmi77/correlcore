@@ -117,3 +117,38 @@ grids remain off Home regardless of customization.
 Settings live at `/settings/home` (secondary surface within the Settings screen,
 not a new primary screen). See
 [`../proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md`](../proposals/FEATURE_HOME_SCREEN_CUSTOMIZATION.md).
+
+## 2026-08-24 Unified Screen Chrome / Header Contract Amendment (#703)
+
+There is one shared top-chrome contract: every primary and drill-down screen
+renders exactly one `ScreenHeader`, never a hand-rolled `__top` bar or raw `btn`
+back anchor.
+
+**Grammar:** `[back/context] · [title] · [controls/actions]`.
+
+- **Back / context** — every drill-down screen passes `back={{ href, label }}`
+  and `ScreenHeader` renders the single shared ghost link (left of the title,
+  labelled with the destination): all settings sub-pages, the insights
+  drill-downs (`digest`, `history`), `/health-connect`, `/dev`, `/admin`, and
+  `/entries/day`. No route hand-rolls a `__top` bar, a raw anchor, or a
+  `slot="actions"` back button. _Exception:_ the dual-origin legal pages
+  (`/impressum`, `/privacy`) keep in-body back buttons for both the app and the
+  public landing footer.
+- **Theme** — `ThemeToggle` lives only on `settings/appearance` and is not part
+  of route or drill-down headers. _Exception:_ the full-page entry form
+  (`EntryForm` `mode === 'page'`) keeps one, as a focused input surface with no
+  header/nav chrome of its own.
+- **Floating header (Stage 2)** — screens that carry controls (Trends, Insights)
+  set `sticky`. The header is then the sticky screen chrome (blur/backdrop, owns
+  the top offset via `position: sticky`, so no separate `--app-header-height`
+  fixed-bar offset is needed), and the analysis toolbars render inside its
+  `controls` slot instead of positioning themselves sticky. The title copy
+  collapses on scroll (`prefers-reduced-motion` respected) so `[back · controls]`
+  stays reachable without a tall fixed header eating the ~640px content shell.
+- **Out of scope** — `visuallyHidden` screens (Home, Onboarding) keep no visible
+  header and are never made sticky.
+
+Consistent with the Mobile/Web Composition amendment: one responsive component
+(mobile-lean/collapsing, desktop-richer inline), not a separate desktop header.
+Enforced by `src/routes/screen-chrome.test.ts` and
+`src/routes/control-primitives.test.ts`.

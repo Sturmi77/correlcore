@@ -11,7 +11,8 @@
     "trends": "Trends",
     "insights": "Erkenntnisse",
     "settings": "Einstellungen",
-    "back": "← Zurueck"
+    "back": "← Zurueck",
+    "back_to": "Zurück zu {target}"
   },
   "a11y": {
     "skip_to_content": "Zum Inhalt springen",

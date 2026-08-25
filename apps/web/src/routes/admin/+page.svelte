@@ -4,6 +4,7 @@
   import { _, locale } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
   import { ApiError } from '$lib/api/client';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import {
     deleteAdminUser,
     fetchAdminUser,
@@ -219,15 +220,12 @@
 </svelte:head>
 
 <main class="admin screen-stack">
-  <header class="admin__top">
-    <a class="btn btn-sm variant-ghost-surface" href="/settings">{$_('nav.settings')}</a>
-  </header>
-
-  <section class="admin__intro">
-    <p class="admin__eyebrow">{$_('admin.eyebrow')}</p>
-    <h1>{$_('admin.title')}</h1>
-    <p>{$_('admin.subtitle')}</p>
-  </section>
+  <ScreenHeader
+    eyebrow={$_('admin.eyebrow')}
+    title={$_('admin.title')}
+    subtitle={$_('admin.subtitle')}
+    back={{ href: '/settings', label: $_('nav.settings') }}
+  />
 
   {#if forbidden}
     <section class="admin__panel admin__panel--notice" role="status" data-testid="admin-forbidden">
@@ -470,35 +468,9 @@
     margin: 0 auto;
   }
 
-  .admin__top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .admin__intro {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .admin__intro h1 {
-    margin: 0;
-    font-size: var(--text-2xl, 1.5rem);
-  }
-
-  .admin__intro p,
   .admin__muted {
     margin: 0;
     color: var(--color-text-muted);
-  }
-
-  .admin__eyebrow {
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    font-weight: 700;
-    color: var(--color-primary);
   }
 
   .admin__panel {

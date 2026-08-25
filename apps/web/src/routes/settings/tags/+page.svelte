@@ -268,7 +268,12 @@
 </svelte:head>
 
 <main class="tag-settings screen-stack">
-  <ScreenHeader title={$_('settings.tags.title')} subtitle={$_('settings.tags.subtitle')} compact>
+  <ScreenHeader
+    title={$_('settings.tags.title')}
+    subtitle={$_('settings.tags.subtitle')}
+    compact
+    back={{ href: '/settings', label: $_('nav.settings') }}
+  >
     <div slot="actions" class="tag-settings__header-actions">
       <Button
         variant="ghost"
@@ -279,9 +284,6 @@
         on:click={() => (showConcepts = !showConcepts)}
       >
         {showConcepts ? $_('onboarding.concepts.info_close') : '?'}
-      </Button>
-      <Button href="/settings" variant="ghost" size="sm">
-        {$_('settings.tags.back_settings')}
       </Button>
     </div>
   </ScreenHeader>

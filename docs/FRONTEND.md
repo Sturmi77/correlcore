@@ -216,7 +216,7 @@ All new controls and screen-level refactors must follow the shared component con
 Mandatory shared primitives for the next frontend hardening work:
 
 - `Button` / `IconButton` for all actions, including text links that behave like controls
-- `ScreenHeader` for primary screen headers
+- `ScreenHeader` for primary **and** drill-down screen headers — including back/context navigation via its `back={{ href, label }}` prop, not a hand-rolled `__top` bar (#703)
 - `Panel` for bounded information and tool surfaces
 - `SegmentedControl` and `TabBar` for filters and within-screen views
 - `BottomSheet` for entry creation and secondary mobile flows

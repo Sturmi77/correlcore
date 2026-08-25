@@ -73,10 +73,11 @@
 </svelte:head>
 
 <div class="history-page">
-  <p class="history-page__back">
-    <a href="/insights">{$_('nav.back')}</a>
-  </p>
-  <ScreenHeader title={$_('insights.history.title')} subtitle={$_('insights.history.subtitle')} />
+  <ScreenHeader
+    title={$_('insights.history.title')}
+    subtitle={$_('insights.history.subtitle')}
+    back={{ href: '/insights', label: $_('nav.insights') }}
+  />
 
   <InsightHistoryTimeline
     {items}
@@ -94,9 +95,5 @@
     display: grid;
     gap: var(--space-4);
     padding: var(--space-4);
-  }
-
-  .history-page__back {
-    margin: 0;
   }
 </style>

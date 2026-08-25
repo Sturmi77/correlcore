@@ -4,7 +4,6 @@
   import { page } from '$app/stores';
   import { auth } from '$lib/stores/auth';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
-  import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import IconRender from '$lib/components/common/IconRender.svelte';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
@@ -115,24 +114,19 @@
 </svelte:head>
 
 <main class="day-entries">
-  <ScreenHeader title={$_('day_entries.title')} subtitle={date} visuallyHidden />
-
-  <header class="day-entries__top">
-    <a class="btn btn-sm variant-ghost-surface" href="/trends">{$_('nav.trends')}</a>
-    <ThemeToggle testId="day-entries-theme-toggle" />
-  </header>
-
-  <section class="day-entries__intro">
-    <div>
-      <h2 class="day-entries__heading">{$_('day_entries.title')}</h2>
-      <p>{date}</p>
-    </div>
-    {#if editableDate}
-      <a class="btn btn-sm btn--secondary" href={`/entries/new?date=${date}`}>
-        {$_('day_entries.add_or_edit')}
-      </a>
-    {/if}
-  </section>
+  <ScreenHeader
+    title={$_('day_entries.title')}
+    subtitle={date}
+    back={{ href: '/trends', label: $_('nav.trends') }}
+  >
+    <svelte:fragment slot="actions">
+      {#if editableDate}
+        <a class="btn btn-sm btn--secondary" href={`/entries/new?date=${date}`}>
+          {$_('day_entries.add_or_edit')}
+        </a>
+      {/if}
+    </svelte:fragment>
+  </ScreenHeader>
 
   <label class="day-entries__filter">
     <input type="checkbox" bind:checked={notesOnly} data-testid="day-entries-notes-only" />
@@ -247,8 +241,6 @@
     gap: 1rem;
   }
 
-  .day-entries__top,
-  .day-entries__intro,
   .day-entries__card-head {
     display: flex;
     align-items: center;
@@ -256,14 +248,12 @@
     gap: 1rem;
   }
 
-  .day-entries__intro h2,
   .day-entries__card h2 {
     margin: 0;
     font-size: var(--text-xl, 1.25rem);
     font-weight: 700;
   }
 
-  .day-entries__intro p,
   .day-entries__card p {
     margin: 0.25rem 0 0;
     opacity: 0.72;
@@ -345,7 +335,6 @@
       padding: 1rem;
     }
 
-    .day-entries__intro,
     .day-entries__card-head,
     .day-entries__empty {
       align-items: stretch;

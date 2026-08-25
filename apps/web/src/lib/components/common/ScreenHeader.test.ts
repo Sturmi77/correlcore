@@ -1,6 +1,26 @@
 import { render, screen } from '@testing-library/svelte';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import ScreenHeader from './ScreenHeader.svelte';
+
+// ScreenHeader formats the back link's aria-label via $_. Mock svelte-i18n with
+// a formatter that echoes the key plus interpolated values so the a11y test can
+// assert the destination is present (real localisation lives in the locale JSON).
+vi.mock('svelte-i18n', async () => {
+  const { readable } = await import('svelte/store');
+  const format = (key: string, opts?: { values?: Record<string, unknown> }): string => {
+    const values = opts?.values;
+    return values ? `${key} ${Object.values(values).join(' ')}` : key;
+  };
+  return {
+    _: {
+      subscribe: (run: (formatter: typeof format) => void) => {
+        run(format);
+        return () => undefined;
+      },
+    },
+    locale: readable('en'),
+  };
+});
 
 describe('ScreenHeader', () => {
   it('renders one accessible screen heading and supporting copy', () => {
@@ -26,6 +46,41 @@ describe('ScreenHeader', () => {
     });
 
     expect(screen.getByRole('banner').classList.contains('screen-header--compact')).toBe(true);
+  });
+
+  it('renders a shared back affordance when a back target is given', () => {
+    render(ScreenHeader, {
+      props: {
+        title: 'Developer tools',
+        back: { href: '/settings', label: 'Settings' },
+      },
+    });
+
+    const back = screen.getByTestId('screen-back');
+    expect(back.getAttribute('href')).toBe('/settings');
+    expect(back.textContent).toContain('Settings');
+    // a11y: screen readers get an explicit "Back to …" name, not a bare label
+    // that reads like the nav link. The arrow glyph is aria-hidden.
+    expect(back.getAttribute('aria-label')).toContain('Settings');
+    expect(back.getAttribute('aria-label')).not.toBe('Settings');
+  });
+
+  it('omits the back affordance by default', () => {
+    render(ScreenHeader, { props: { title: 'Trends' } });
+
+    expect(screen.queryByTestId('screen-back')).toBeNull();
+  });
+
+  it('marks the header as sticky floating chrome when sticky is set (#703 Stage 2)', () => {
+    render(ScreenHeader, { props: { title: 'Trends', sticky: true } });
+
+    expect(screen.getByRole('banner').classList.contains('screen-header--sticky')).toBe(true);
+  });
+
+  it('is not sticky by default', () => {
+    render(ScreenHeader, { props: { title: 'Trends' } });
+
+    expect(screen.getByRole('banner').classList.contains('screen-header--sticky')).toBe(false);
   });
 
   it('can hide the header visually while keeping the h1 in the DOM', () => {

@@ -63,10 +63,32 @@ Use once per primary screen below the app shell.
 
 Required contract:
 
-- `title`, optional `subtitle`
-- Optional compact action slot
+- `title`, optional `subtitle`, optional `eyebrow`
+- Optional `actions` slot for lightweight per-screen actions
+- `back={{ href, label }}` is the **one** back affordance for every drill-down
+  screen — renders the single shared ghost link (`data-testid="screen-back"`),
+  left of the title, labelled with the destination (`← Settings`, `← Insights`,
+  `← Trends`). It replaces per-screen `__top` bars, raw `btn` anchors, and
+  `slot="actions"` back buttons alike. Every settings sub-page, the insights
+  drill-downs (`digest`, `history`), `/health-connect`, `/dev`, `/admin`, and
+  `/entries/day` use it (#703). _Exception:_ the dual-origin legal pages
+  (`/impressum`, `/privacy`) keep their in-body "back to settings / back to
+  home" buttons because they are reached from both the app and the public
+  landing footer.
 - No duplicate Home button when the app navigation is visible
-- Theme switching belongs in global chrome or Settings, not every route header
+- Theme switching belongs in Appearance settings, not route/drill-down headers.
+  The `ThemeToggle` lives on `settings/appearance` only; ad-hoc copies on
+  utility/drill-down screens (`/dev`, `/entries/day`) were removed (#703). This
+  is enforced by `src/routes/screen-chrome.test.ts`. _Exception:_ the full-page
+  entry form (`EntryForm` in `mode === 'page'`) keeps a `ThemeToggle` because it
+  is a focused input surface with no ScreenHeader or nav chrome of its own.
+- Optional `sticky` floating mode (#703 Stage 2): the header becomes the sticky
+  screen chrome (blur/backdrop, owns the top offset) and its `controls` slot
+  carries the screen's controls. On scroll the title copy collapses so only
+  `[back · controls]` stays pinned (respecting `prefers-reduced-motion`). The
+  Trends/Insights analysis toolbars render inside this `controls` slot rather
+  than positioning themselves sticky — the header owns sticky, the toolbars are
+  just the control layout. Enforced by `src/routes/control-primitives.test.ts`.
 
 Heading convention (avoid duplicate titles):
 
