@@ -7,23 +7,17 @@
   import MetricCard from '$lib/components/home/MetricCard.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
-  import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
   import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';
   import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
   import UnifiedStripChart from '$lib/components/trends/UnifiedStripChart.svelte';
   import BrowserFrameMock from '$lib/components/landing/BrowserFrameMock.svelte';
   import type { DailyAxisLayout } from '$lib/utils/charts';
-  import { tweened } from 'svelte/motion';
-  import { cubicOut } from 'svelte/easing';
-  import { fade } from 'svelte/transition';
-  import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import { buildLandingDemo } from '$lib/components/landing/landingDemoData';
 
   // B4 (#734): product-shot data follows the active locale. Rebuilt reactively
   // from `$_`, so switching DE/EN re-localizes the demo tags/statements too.
   $: demo = buildLandingDemo($_);
-  $: landingClusterMeta = buildTagClusterMeta(demo.tagClusters);
   import { BRAND_MARK_MD } from '$lib/constants/iconSizes';
   import {
     ANDROID_RELEASES_URL,
@@ -112,6 +106,15 @@
     },
   ] as const;
 
+  // Effect budget (I9 #735). The "calm, no dopamine" positioning can't coexist
+  // with a page full of competing motion, so the decorative effects are capped
+  // at three earned accents: (1) the hero atmosphere (aurora + glow), (2) the
+  // maturity-journey progression (gradient bar + tier glow — it encodes meaning),
+  // and (3) this one subtle scroll-reveal as the single entrance motion. The
+  // rotating insight ticker, the metric count-up and the bento dot-pattern were
+  // removed. CTA/brand glow and link affordances stay — they're interaction
+  // feedback, not standalone decoration.
+  //
   // D1 — scroll reveal. Fades/slides a section in when it enters the viewport.
   // Honours prefers-reduced-motion (and any missing IntersectionObserver) by
   // showing the content immediately, so nothing is ever hidden without JS-driven
@@ -147,72 +150,10 @@
     };
   }
 
-  function prefersReducedMotion(): boolean {
-    return (
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    );
-  }
-
-  // A5 — insight ticker: crossfades through a few example statements. Holds the
-  // first line under reduced-motion (no auto-advance).
-  const tickerKeys = ['1', '2', '3', '4'] as const;
-  let tickerIndex = 0;
-  function ticker(_node: HTMLElement) {
-    if (prefersReducedMotion()) return {};
-    const id = setInterval(() => {
-      tickerIndex = (tickerIndex + 1) % tickerKeys.length;
-    }, 3600);
-    return {
-      destroy() {
-        clearInterval(id);
-      },
-    };
-  }
-
-  // D5 — count-up for the bento metric tiles. Values tween from 0 to target the
-  // first time the feature grid scrolls into view (instant for reduced-motion).
-  // Order + decimals match the six MetricCards rendered below.
-  const metricTargets = [3.8, 3.4, 2.3, 86, 3.8, 3.5];
-  const metricDecimals = [1, 1, 1, 0, 1, 1];
-  const counts = tweened(
-    metricTargets.map(() => 0),
-    { duration: 900, easing: cubicOut }
-  );
-  let countsStarted = false;
-  function startCounts(): void {
-    if (countsStarted) return;
-    countsStarted = true;
-    void counts.set(metricTargets, { duration: prefersReducedMotion() ? 0 : 900 });
-  }
-  $: countValues = $counts.map((value, index) => value.toFixed(metricDecimals[index]));
-
-  // Fire a callback the first time a node enters the viewport (immediately when
-  // IntersectionObserver is unavailable or motion is reduced) — drives count-up.
-  function whenVisible(node: HTMLElement, callback: () => void) {
-    if (typeof IntersectionObserver === 'undefined' || prefersReducedMotion()) {
-      callback();
-      return {};
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            callback();
-            observer.disconnect();
-          }
-        }
-      },
-      { threshold: 0.25 }
-    );
-    observer.observe(node);
-    return {
-      destroy() {
-        observer.disconnect();
-      },
-    };
-  }
+  // Static feature-tile metric values. Order matches the six MetricCards below.
+  // (I9 #735: these used to count up from 0 on scroll — dropped as decorative
+  // motion; the numbers now render at rest.)
+  const metricValues = ['3.8', '3.4', '2.3', '86', '3.8', '3.5'] as const;
 
   $: activeLocale = (($locale ?? 'de').split('-')[0] === 'en' ? 'en' : 'de') as AppLocale;
   $: nextLocale = (activeLocale === 'de' ? 'en' : 'de') as AppLocale;
@@ -339,17 +280,6 @@
     </div>
   </section>
 
-  <div class="landing__ticker" data-testid="landing-ticker" use:ticker>
-    <span class="landing__ticker-label">{$_('landing.ticker_label')}</span>
-    <span class="landing__ticker-viewport">
-      {#key tickerIndex}
-        <span class="landing__ticker-line" in:fade={{ duration: 380 }}>
-          {$_(`landing.ticker.${tickerKeys[tickerIndex]}`)}
-        </span>
-      {/key}
-    </span>
-  </div>
-
   <section
     class="landing__previews landing__reveal"
     use:reveal
@@ -381,22 +311,6 @@
       <figure class="landing__preview">
         <BrowserFrameMock address="app.correlcore.example/insights">
           <div class="landing__shot" inert aria-hidden="true">
-            <TagCooccurrenceHeatmap
-              data={demo.cooccurrence}
-              sortMode="clustered"
-              enableClusterSort
-              clusterMeta={landingClusterMeta}
-              showRangeSelector={false}
-              minPairsForDisplay={1}
-              preview
-            />
-          </div>
-        </BrowserFrameMock>
-        <figcaption>{$_('landing.preview_heatmap')}</figcaption>
-      </figure>
-      <figure class="landing__preview">
-        <BrowserFrameMock address="app.correlcore.example/insights">
-          <div class="landing__shot" inert aria-hidden="true">
             <LagCorrelationHeatmap insights={demo.lagInsights} />
           </div>
         </BrowserFrameMock>
@@ -414,6 +328,20 @@
     <h2 id="landing-weekday-heading" class="landing__section-heading">
       {$_('landing.weekday_heading')}
     </h2>
+    <!-- I11 (#735): the weekday chart marks the best day green and the toughest
+         day gold — and gold reads as an award without a key. This landing-scoped
+         legend names both, so the colour semantics aren't ambiguous in a shot
+         that has none of the app's surrounding context. -->
+    <ul class="landing__weekday-legend" data-testid="landing-weekday-legend">
+      <li class="landing__weekday-legend-item" data-mark="best">
+        <span class="landing__weekday-legend-swatch" aria-hidden="true"></span>
+        {$_('landing.weekday_legend_best')}
+      </li>
+      <li class="landing__weekday-legend-item" data-mark="worst">
+        <span class="landing__weekday-legend-swatch" aria-hidden="true"></span>
+        {$_('landing.weekday_legend_worst')}
+      </li>
+    </ul>
     <figure class="landing__weekday-figure">
       <BrowserFrameMock address="app.correlcore.example/home">
         <div class="landing__shot" inert aria-hidden="true">
@@ -428,12 +356,8 @@
     </figure>
   </section>
 
-  <section
-    class="landing__bento landing__reveal"
-    use:reveal
-    use:whenVisible={startCounts}
-    aria-labelledby="landing-features-heading"
-  >
+  <section class="landing__bento landing__reveal" use:reveal aria-labelledby="landing-features-heading">
+
     <h2 id="landing-features-heading" class="landing__section-heading">
       {$_('landing.features_heading')}
     </h2>
@@ -445,19 +369,19 @@
           <MetricCard
             metric="mood_score"
             label={$_('landing.metric_mood')}
-            value={countValues[0]}
+            value={metricValues[0]}
             unit="/5"
           />
           <MetricCard
             metric="energy"
             label={$_('landing.metric_energy')}
-            value={countValues[1]}
+            value={metricValues[1]}
             unit="/5"
           />
           <MetricCard
             metric="stress"
             label={$_('landing.metric_stress')}
-            value={countValues[2]}
+            value={metricValues[2]}
             unit="/5"
           />
         </div>
@@ -470,19 +394,19 @@
           <MetricCard
             metric="tracking_consistency"
             label={$_('landing.metric_consistency')}
-            value={countValues[3]}
+            value={metricValues[3]}
             unit="%"
           />
           <MetricCard
             metric="mood_score"
             label={$_('landing.metric_mood')}
-            value={countValues[4]}
+            value={metricValues[4]}
             unit="/5"
           />
           <MetricCard
             metric="energy"
             label={$_('landing.metric_energy')}
-            value={countValues[5]}
+            value={metricValues[5]}
             unit="/5"
           />
         </div>
@@ -970,56 +894,48 @@
     overflow: hidden;
   }
 
-  /* Grid finish — four previews balance as a 2×2 (was 3+1 orphan). */
+  /* I10 (#735): the previews were trimmed from four to the three most
+     distinct shots (matrix, plain-language card, lag-heatmap USP), so they
+     sit as a clean 3-up row instead of a 2×2 with an orphan. */
   @media (min-width: 768px) {
     .landing__preview-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       align-items: start;
     }
   }
 
-  /* A5 — insight ticker pill under the hero. */
-  .landing__ticker {
+  /* I11 (#735) — best/worst colour key for the weekday shot. */
+  .landing__weekday-legend {
+    list-style: none;
     display: flex;
-    align-items: center;
-    justify-content: center;
     flex-wrap: wrap;
-    gap: var(--space-2) var(--space-3);
-    width: fit-content;
-    max-width: 100%;
-    margin: calc(var(--space-4) * -1) auto 0;
-    padding: var(--space-2) var(--space-4);
-    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
-    border-radius: var(--radius-full);
-    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+    justify-content: center;
+    gap: var(--space-2) var(--space-4);
+    margin: calc(var(--space-4) * -1) 0 var(--space-4);
+    padding: 0;
   }
 
-  .landing__ticker-label {
-    font-size: var(--text-2xs);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-text-faint);
-  }
-
-  .landing__ticker-viewport {
-    display: inline-grid;
+  .landing__weekday-legend-item {
+    display: inline-flex;
     align-items: center;
-    min-height: 1.4em;
-    min-width: 0;
-  }
-
-  .landing__ticker-line {
-    grid-area: 1 / 1;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    gap: var(--space-2);
     font-size: var(--text-xs);
     font-weight: 600;
-    color: var(--color-primary);
-    /* Wrap on narrow viewports — long localized strings must never force
-       horizontal scroll (PR #736 review). */
-    white-space: normal;
-    overflow-wrap: anywhere;
-    text-align: center;
+    color: var(--color-text-muted);
+  }
+
+  .landing__weekday-legend-swatch {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Match the bar colours the weekday chart actually uses. */
+  .landing__weekday-legend-item[data-mark='best'] .landing__weekday-legend-swatch {
+    background: var(--color-success);
+  }
+  .landing__weekday-legend-item[data-mark='worst'] .landing__weekday-legend-swatch {
+    background: var(--color-warning);
   }
 
   /* A3 — weekday overview product shot, centred like the other showcases. */
@@ -1246,34 +1162,11 @@
     }
   }
 
-  /* B3 — dot grid behind the feature bento, giving a quiet "data" texture. */
+  /* Feature bento. I9 (#735) removed the decorative dot-grid texture that used
+     to sit behind it — the section is now a plain padded block. */
   .landing__bento {
-    position: relative;
     padding: var(--space-6) var(--space-5);
     border-radius: var(--radius-lg);
-    background-image: radial-gradient(
-      color-mix(in oklch, var(--color-primary) 24%, transparent) 1px,
-      transparent 1px
-    );
-    background-size: 22px 22px;
-    background-position: -1px -1px;
-  }
-
-  .landing__bento > .landing__section-heading,
-  .landing__bento > .landing__bento-grid {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Fade the dot field toward the edges so it never reads as a hard rectangle. */
-  .landing__bento::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    border-radius: inherit;
-    background: radial-gradient(120% 120% at 50% 0%, transparent 55%, var(--color-bg) 100%);
   }
 
   /* B2 — the maturity journey sits on a tinted panel to break the flat run of

@@ -1825,7 +1825,6 @@
     "previews_heading": "A look inside the app",
     "preview_matrix": "Insight matrix: associations ranked by effect size.",
     "preview_card": "Insight card: one observation, stated plainly.",
-    "preview_heatmap": "Tag heatmap: what co-occurs, grouped by cluster.",
     "preview_lag": "Lag heatmap: at what time delay the association is strongest.",
     "trust": {
       "privacy": "Privacy-first",
@@ -1839,13 +1838,8 @@
     "journey_body": "Every association is ranked by confidence — from first patterns to robust — and grows more reliable the longer you track.",
     "weekday_heading": "Why some days are better",
     "weekday_caption": "Weekday patterns: average mood per day, with the day's standout signal (product preview).",
-    "ticker_label": "Example insights",
-    "ticker": {
-      "1": "Sleep → mood · +2 days · r = 0.62",
-      "2": "Exercise → energy · next day · r = 0.55",
-      "3": "Remote work → less stress · r = 0.38",
-      "4": "Coffee → energy · same day · r = 0.24"
-    },
+    "weekday_legend_best": "Best day",
+    "weekday_legend_worst": "Toughest day",
     "demo": {
       "poor_sleep": "Poor sleep",
       "low_energy": "Low energy",

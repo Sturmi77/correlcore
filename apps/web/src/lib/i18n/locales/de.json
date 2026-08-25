@@ -1825,7 +1825,6 @@
     "previews_heading": "Ein Blick in die App",
     "preview_matrix": "Insight-Matrix: Zusammenhänge nach Effektstärke.",
     "preview_card": "Erkenntnis-Karte: eine Beobachtung, sachlich formuliert.",
-    "preview_heatmap": "Tag-Heatmap: was gemeinsam vorkommt, nach Gruppen.",
     "preview_lag": "Lag-Heatmap: bei welcher zeitlichen Verzögerung ein Zusammenhang am stärksten ist.",
     "trust": {
       "privacy": "Datenschutz zuerst",
@@ -1839,13 +1838,8 @@
     "journey_body": "Jeder Zusammenhang ist nach Konfidenz gestuft – von ersten Mustern bis robust – und wird zuverlässiger, je länger du trackst.",
     "weekday_heading": "Warum manche Tage besser sind",
     "weekday_caption": "Wochentags-Muster: durchschnittliche Stimmung pro Tag, mit dem auffälligsten Signal (Produktvorschau).",
-    "ticker_label": "Beispiel-Erkenntnisse",
-    "ticker": {
-      "1": "Schlaf → Stimmung · +2 Tage · r = 0.62",
-      "2": "Sport → Energie · nächster Tag · r = 0.55",
-      "3": "Homeoffice → weniger Stress · r = 0.38",
-      "4": "Kaffee → Energie · gleicher Tag · r = 0.24"
-    },
+    "weekday_legend_best": "Bester Tag",
+    "weekday_legend_worst": "Härtester Tag",
     "demo": {
       "poor_sleep": "Schlecht geschlafen",
       "low_energy": "Wenig Energie",

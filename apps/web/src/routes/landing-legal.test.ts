@@ -48,6 +48,12 @@ describe('M10 marketing landing and legal pages', () => {
     expect(landingSource).toContain('SECURITY_POLICY_URL');
   });
 
+  it('labels the weekday chart best/worst colours with a legend (#735 I11)', () => {
+    expect(landingSource).toContain('data-testid="landing-weekday-legend"');
+    expect(landingSource).toContain("data-mark='best'");
+    expect(landingSource).toContain("data-mark='worst'");
+  });
+
   it('links privacy and impressum from the legal footer', () => {
     expect(landingSource).toContain('LegalFooter');
     expect(legalFooterSource).toContain('data-testid="legal-footer-privacy"');
