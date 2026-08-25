@@ -781,6 +781,8 @@
       exploreEventsWindows = response.events.map((event) => ({
         onset: event.onset,
         label: event.label ?? undefined,
+        durationDays: event.duration_days ?? 1,
+        noteSummary: event.note_summary ?? undefined,
       }));
       exploreEventsPoints = response.points;
       exploreEventsLagOffset = response.lag_days ?? null;

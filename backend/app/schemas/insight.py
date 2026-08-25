@@ -73,10 +73,18 @@ class InsightListResponse(BaseModel):
 
 
 class InsightEventWindow(BaseModel):
-    """Single tag/symptom occurrence aligned at t = 0 (ADR-0035 §6)."""
+    """One episode onset aligned at t = 0 (ADR-0035 §6).
+
+    Consecutive presence days collapse to a single episode: ``onset`` is the
+    first day of the run and ``duration_days`` is how long it lasted.
+    ``note_summary`` is the onset-day entry preview when the user marked the
+    note as fully visible (``note_visibility=full``).
+    """
 
     onset: date_type
     label: str | None = None
+    duration_days: int = Field(default=1, ge=1)
+    note_summary: str | None = Field(default=None, max_length=120)
 
 
 class InsightEventWindowsResponse(BaseModel):

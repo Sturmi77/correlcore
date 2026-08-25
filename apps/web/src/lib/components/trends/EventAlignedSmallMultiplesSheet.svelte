@@ -2,11 +2,18 @@
   import type { TimeseriesPoint } from '$lib/api/stats';
 
   export interface EventWindow {
-    /** Onset date of the event (t = 0). */
+    /** Onset date of the episode (t = 0) — first day of a consecutive run. */
     onset: string;
-    /** Optional human label rendered in the sub-heading. */
+    /** Optional subject/feature name (shown in the sheet header). */
     label?: string;
+    /** How many consecutive presence days the episode lasted (default 1). */
+    durationDays?: number;
+    /** Onset-day note preview (FULL visibility only). */
+    noteSummary?: string;
   }
+
+  /** Soft cap so the sheet stays scannable; mean row still uses all episodes. */
+  export const MAX_EPISODE_ROWS = 12;
 
   // Re-exports kept for backwards-compatibility with earlier imports.
   export { isSmallMultiplesUnlocked, SMALL_MULTIPLES_RADIUS } from './smallMultiplesGate';
@@ -17,7 +24,7 @@
    * EventAlignedSmallMultiplesSheet — M3.8 Sprint 3 (ADR-0035 §6)
    *
    * Secondary sheet opened from an Insight card. Shows the same metric
-   * (mood / energy / stress) across multiple event windows aligned at
+   * (mood / energy / stress) across episode onsets aligned at
    * t = 0 = onset, so co-occurring patterns become visually obvious.
    *
    * Hard rules:
@@ -27,9 +34,11 @@
    *     so callers can guard their button visibility consistently.
    *   - Token-only colour: every fill / stroke goes through the
    *     chart-adapter divergent encoding. No hue is hardcoded.
+   *   - One row per episode onset (consecutive presence days collapse);
+   *     a mean row summarises the shared pattern across all episodes.
    */
   import { createEventDispatcher } from 'svelte';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import type { InsightMaturityPhase } from '$lib/api/insights';
   import type { MetricKey } from '$lib/utils/charts';
   import { displayTimeseriesValue } from '$lib/utils/metrics';
@@ -38,7 +47,7 @@
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
 
   export let open = false;
-  /** Event windows to align — onset becomes t = 0. */
+  /** Episode windows to align — onset becomes t = 0. */
   export let events: readonly EventWindow[] = [];
   /** All timeseries points available to the sheet — already filtered to the user. */
   export let points: readonly TimeseriesPoint[] = [];
@@ -58,7 +67,7 @@
   const radius = SMALL_MULTIPLES_RADIUS;
   const cellSize = 22;
   const cellGap = 4;
-  const labelWidth = 110;
+  const labelWidth = 128;
   const dayCount = radius * 2 + 1; // -7..+7 inclusive
 
   const metricI18nKey: Record<MetricKey, string> = {
@@ -73,6 +82,7 @@
   $: legendGradient = `linear-gradient(to right, ${mapper.encode(1).color}, ${
     mapper.encode(3).color
   }, ${mapper.encode(5).color})`;
+  $: subjectLabel = events.find((evt) => evt.label)?.label ?? null;
 
   function isoOffset(iso: string, deltaDays: number): string {
     const [y, m, d] = iso.split('-').map(Number);
@@ -81,24 +91,44 @@
     return date.toISOString().slice(0, 10);
   }
 
-  type WindowRow = {
-    onset: string;
-    label: string;
-    cells: {
-      date: string;
-      offset: number;
-      fill: string;
-      opacity: number;
-      sign: 'neg' | 'mid' | 'pos';
-      displayValue: number | null;
-    }[];
+  function formatOnsetDate(iso: string): string {
+    const [y, m, d] = iso.split('-').map(Number);
+    const date = new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1));
+    try {
+      return new Intl.DateTimeFormat($locale ?? 'en', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+      }).format(date);
+    } catch {
+      return iso;
+    }
+  }
+
+  type WindowCell = {
+    date: string;
+    offset: number;
+    fill: string;
+    opacity: number;
+    sign: 'neg' | 'mid' | 'pos';
+    displayValue: number | null;
   };
 
-  function buildWindow(evt: EventWindow): WindowRow {
+  type WindowRow = {
+    id: string;
+    onset: string | null;
+    label: string;
+    noteSummary: string | null;
+    kind: 'mean' | 'episode';
+    cells: WindowCell[];
+  };
+
+  function buildCells(onset: string): WindowCell[] {
     const byDate = new Map(points.map((p) => [p.period_start, p]));
-    const cells = [];
+    const cells: WindowCell[] = [];
     for (let offset = -radius; offset <= radius; offset += 1) {
-      const date = isoOffset(evt.onset, offset);
+      const date = isoOffset(onset, offset);
       const point = byDate.get(date) ?? null;
       const raw = point ? point[metric] : null;
       const display =
@@ -113,14 +143,67 @@
         displayValue: display,
       });
     }
+    return cells;
+  }
+
+  function episodeLabel(evt: EventWindow): string {
+    const dateLabel = formatOnsetDate(evt.onset);
+    const duration = evt.durationDays ?? 1;
+    if (duration > 1) {
+      return $_(`trends.esm.row_label_duration`, {
+        values: { date: dateLabel, days: duration },
+      });
+    }
+    return dateLabel;
+  }
+
+  function buildMeanRow(episodeRows: WindowRow[]): WindowRow | null {
+    if (episodeRows.length < 2) return null;
+    const cells: WindowCell[] = [];
+    for (let i = 0; i < dayCount; i += 1) {
+      const offset = i - radius;
+      const values = episodeRows
+        .map((row) => row.cells[i]?.displayValue)
+        .filter((v): v is number => v !== null && v !== undefined);
+      const display =
+        values.length === 0 ? null : values.reduce((sum, v) => sum + v, 0) / values.length;
+      const encoded = mapper.encode(display ?? Number.NaN);
+      cells.push({
+        date: '',
+        offset,
+        fill: encoded.color,
+        opacity: encoded.opacity,
+        sign: encoded.sign,
+        displayValue: display,
+      });
+    }
     return {
-      onset: evt.onset,
-      label: evt.label ?? evt.onset,
+      id: 'mean',
+      onset: null,
+      label: $_('trends.esm.mean_row'),
+      noteSummary: null,
+      kind: 'mean',
       cells,
     };
   }
 
-  $: rows = events.map(buildWindow);
+  $: allEpisodeRows = events.map((evt): WindowRow => ({
+    id: evt.onset,
+    onset: evt.onset,
+    label: episodeLabel(evt),
+    noteSummary: evt.noteSummary?.trim() ? evt.noteSummary.trim() : null,
+    kind: 'episode',
+    cells: buildCells(evt.onset),
+  }));
+  // Prefer the most recent episodes when capping; mean still uses all.
+  $: visibleEpisodeRows =
+    allEpisodeRows.length <= MAX_EPISODE_ROWS
+      ? allEpisodeRows
+      : allEpisodeRows.slice(-MAX_EPISODE_ROWS);
+  $: meanRow = buildMeanRow(allEpisodeRows);
+  $: rows = meanRow ? [meanRow, ...visibleEpisodeRows] : visibleEpisodeRows;
+  $: noteRows = visibleEpisodeRows.filter((row) => row.noteSummary);
+  $: hiddenCount = Math.max(0, allEpisodeRows.length - visibleEpisodeRows.length);
   $: gridWidth = labelWidth + dayCount * (cellSize + cellGap);
   $: gridHeight = rows.length * (cellSize + cellGap) + 32; // + axis labels
   $: sheetOpen = open && gateOpen;
@@ -141,6 +224,9 @@
     <div>
       <p class="esm__eyebrow">{$_('trends.esm.eyebrow')}</p>
       <h2 id="esm-title">{$_('trends.esm.title')}</h2>
+      {#if subjectLabel}
+        <p class="esm__subject" data-testid="esm-subject">{subjectLabel}</p>
+      {/if}
       <p class="esm__metric" data-testid="esm-metric-label">
         {$_('trends.esm.metric_label', { values: { metric: metricLabel } })}
       </p>
@@ -150,6 +236,13 @@
       {#if lagColumn != null}
         <p class="esm__lag-note" data-testid="esm-lag-note">
           {$_('trends.esm.lag_hint', { values: { days: lagColumn } })}
+        </p>
+      {/if}
+      {#if hiddenCount > 0}
+        <p class="esm__cap-note" data-testid="esm-cap-note">
+          {$_('trends.esm.cap_note', {
+            values: { shown: visibleEpisodeRows.length, total: allEpisodeRows.length },
+          })}
         </p>
       {/if}
     </div>
@@ -202,17 +295,25 @@
           {/each}
         </g>
 
-        {#each rows as row, rowIndex (row.onset)}
+        {#each rows as row, rowIndex (row.id)}
           {@const top = 24 + rowIndex * (cellSize + cellGap)}
-          <g class="esm__row" data-onset={row.onset}>
+          <g
+            class="esm__row"
+            class:esm__row--mean={row.kind === 'mean'}
+            data-onset={row.onset ?? 'mean'}
+          >
             <text
               x={labelWidth - 8}
               y={top + cellSize / 2}
               text-anchor="end"
               dominant-baseline="middle"
               class="esm__row-label"
+              class:esm__row-label--mean={row.kind === 'mean'}
             >
               {row.label}
+              {#if row.noteSummary}
+                <title>{row.noteSummary}</title>
+              {/if}
             </text>
 
             {#each row.cells as cell (cell.offset)}
@@ -220,6 +321,7 @@
                 class="esm__cell"
                 class:esm__cell--t0={cell.offset === 0}
                 class:esm__cell--lag={cell.offset === lagColumn}
+                class:esm__cell--mean={row.kind === 'mean'}
                 x={labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
                 y={top}
                 width={cellSize}
@@ -233,8 +335,8 @@
                   : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.displayValue.toFixed(1)}`}
               >
                 <title>
-                  {cell.date}{cell.displayValue !== null
-                    ? ` — ${cell.displayValue.toFixed(1)}`
+                  {#if cell.date}{cell.date}{/if}{cell.displayValue !== null
+                    ? `${cell.date ? ' — ' : ''}${cell.displayValue.toFixed(1)}`
                     : ''}
                 </title>
               </rect>
@@ -252,6 +354,19 @@
       <span class="esm__legend-scale" style={`background: ${legendGradient}`}></span>
       <span>{$_('trends.esm.legend_better')}</span>
     </p>
+    {#if noteRows.length > 0}
+      <section class="esm__notes" data-testid="esm-notes" aria-label={$_('trends.esm.notes_aria')}>
+        <h3 class="esm__notes-heading">{$_('trends.esm.notes_heading')}</h3>
+        <ul class="esm__notes-list">
+          {#each noteRows as row (row.id)}
+            <li class="esm__notes-item">
+              <span class="esm__notes-date">{row.label}</span>
+              <span class="esm__notes-text">{row.noteSummary}</span>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
   {/if}
 </BottomSheet>
 
@@ -277,6 +392,13 @@
   .esm__header h2 {
     margin: 0;
     font-size: var(--text-lg);
+  }
+
+  .esm__subject {
+    margin: var(--space-1) 0 0;
+    color: var(--color-fg);
+    font-size: var(--text-base);
+    font-weight: 600;
   }
 
   .esm__body {
@@ -355,17 +477,73 @@
     font-weight: 600;
   }
 
+  .esm__row-label--mean {
+    fill: var(--color-cursor);
+    font-weight: 700;
+  }
+
+  .esm__cell--mean {
+    stroke: var(--color-cursor);
+    stroke-width: 1;
+  }
+
   .esm__cell--t0 {
     /* The t=0 column carries a thin halo so the anchor line is obvious. */
     stroke: var(--color-cursor);
     stroke-width: 1.5;
   }
 
-  .esm__lag-note {
+  .esm__lag-note,
+  .esm__cap-note {
     margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+  }
+
+  .esm__lag-note {
     color: var(--color-cursor);
+    font-weight: 600;
+  }
+
+  .esm__cap-note {
+    color: var(--color-text-muted);
+  }
+
+  .esm__notes {
+    margin: var(--space-3) 0 0;
+  }
+
+  .esm__notes-heading {
+    margin: 0 0 var(--space-2);
+    color: var(--color-text);
     font-size: var(--text-sm);
     font-weight: 600;
+  }
+
+  .esm__notes-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .esm__notes-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .esm__notes-date {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  .esm__notes-text {
+    color: var(--color-fg);
+    font-size: var(--text-sm);
+    line-height: 1.35;
   }
 
   /* #488: the expected-outcome column at t = +lag_days. Token-only (ADR-0035 §10). */

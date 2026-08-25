@@ -117,7 +117,7 @@ describe('exploreEventWindows', () => {
       { start_date: '2026-06-01', end_date: '2026-07-01', symptoms: [] }
     );
 
-    expect(windows).toEqual([{ onset: '2026-06-10', label: 'Sport' }]);
+    expect(windows).toEqual([{ onset: '2026-06-10', label: 'Sport', durationDays: 1 }]);
   });
 
   it('maps insight metrics to chart keys', () => {
@@ -126,10 +126,16 @@ describe('exploreEventWindows', () => {
     expect(insightMetricToChartKey('stress')).toBe('stress_avg');
   });
 
-  it('deduplicates and sorts onset dates', () => {
+  it('deduplicates, sorts, and collapses consecutive days into episodes', () => {
     expect(datesToEventWindows(['2026-07-03', '2026-07-01', '2026-07-03'], 'Focus')).toEqual([
-      { onset: '2026-07-01', label: 'Focus' },
-      { onset: '2026-07-03', label: 'Focus' },
+      { onset: '2026-07-01', label: 'Focus', durationDays: 1 },
+      { onset: '2026-07-03', label: 'Focus', durationDays: 1 },
+    ]);
+    expect(
+      datesToEventWindows(['2026-07-01', '2026-07-02', '2026-07-03', '2026-07-05'], 'Focus')
+    ).toEqual([
+      { onset: '2026-07-01', label: 'Focus', durationDays: 3 },
+      { onset: '2026-07-05', label: 'Focus', durationDays: 1 },
     ]);
   });
 
@@ -146,7 +152,7 @@ describe('exploreEventWindows', () => {
       listSymptomsForEntry
     );
 
-    expect(windows).toEqual([{ onset: '2026-07-01', label: 'Focus' }]);
+    expect(windows).toEqual([{ onset: '2026-07-01', label: 'Focus', durationDays: 1 }]);
   });
 
   it('returns empty windows for unsupported subjects', async () => {
@@ -184,6 +190,6 @@ describe('exploreEventWindows', () => {
       { start_date: '2026-06-01', end_date: '2026-07-01', symptoms: [] }
     );
 
-    expect(windows).toEqual([{ onset: '2026-06-10', label: 'Walk' }]);
+    expect(windows).toEqual([{ onset: '2026-06-10', label: 'Walk', durationDays: 1 }]);
   });
 });

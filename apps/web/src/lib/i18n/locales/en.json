@@ -546,10 +546,10 @@
     },
     "esm": {
       "eyebrow": "Event-aligned view",
-      "title": "Aligned around each onset",
-      "body": "Each row lines up the same calendar window around one event (T0 = onset), so patterns in {metric} become comparable. This shows an association in your entries — not a cause or a medical diagnosis.",
+      "title": "Aligned around each episode",
+      "body": "Each row is one episode (T0 = first day). Consecutive days of the same tag or symptom count as a single event. The top row averages the pattern across all episodes for {metric}. This shows an association in your entries — not a cause or a medical diagnosis.",
       "metric_label": "Metric: {metric}",
-      "axis_caption": "Days relative to the event (T0 = onset)",
+      "axis_caption": "Days relative to episode onset (T0)",
       "legend_worse": "Worse",
       "legend_better": "Better",
       "legend_aria": "Colour scale for {metric}",
@@ -558,7 +558,12 @@
       "empty": "No events available for this insight yet.",
       "locked": "Available once the insight reaches the provisional phase.",
       "open_action": "Explore aligned events",
-      "lag_hint": "T0 = trigger · outcome marked at +{days} days"
+      "lag_hint": "T0 = trigger · outcome marked at +{days} days",
+      "mean_row": "Average",
+      "row_label_duration": "{date} ({days}d)",
+      "cap_note": "Showing the {shown} most recent of {total} episodes; average uses all.",
+      "notes_heading": "Notes on onset day (T0)",
+      "notes_aria": "Notes written on each episode onset day"
     },
     "markers": {
       "aria": "Event markers on the shared timeline"

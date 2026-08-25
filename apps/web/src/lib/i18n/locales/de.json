@@ -546,19 +546,24 @@
     },
     "esm": {
       "eyebrow": "Ereignis-Ausrichtung",
-      "title": "Tage rund um jeden Onset",
-      "body": "Jede Zeile richtet dasselbe Zeitfenster um ein Ereignis aus (T0 = Onset), damit Muster in {metric} vergleichbar werden. Das zeigt einen Zusammenhang in deinen Einträgen — keine Ursache und keine medizinische Diagnose.",
+      "title": "Ausgerichtet um jede Episode",
+      "body": "Jede Zeile ist eine Episode (T0 = erster Tag). Aufeinanderfolgende Tage desselben Tags oder Symptoms zaehlen als ein Ereignis. Die oberste Zeile mittelt das Muster ueber alle Episoden fuer {metric}. Das zeigt einen Zusammenhang in deinen Eintraegen — keine Ursache und keine medizinische Diagnose.",
       "metric_label": "Metrik: {metric}",
-      "axis_caption": "Tage relativ zum Ereignis (T0 = Onset)",
+      "axis_caption": "Tage relativ zum Episoden-Onset (T0)",
       "legend_worse": "Schlechter",
       "legend_better": "Besser",
-      "legend_aria": "Farbskala für {metric}",
+      "legend_aria": "Farbskala fuer {metric}",
       "aria": "Ereignis-ausgerichtete Klein-Multiples",
       "close_aria": "Ereignis-Ansicht schliessen",
       "empty": "Noch keine Ereignisse fuer diesen Insight verfuegbar.",
       "locked": "Verfuegbar sobald der Insight die provisorische Phase erreicht.",
       "open_action": "Ausgerichtete Ereignisse erkunden",
-      "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen"
+      "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen",
+      "mean_row": "Durchschnitt",
+      "row_label_duration": "{date} ({days} T.)",
+      "cap_note": "Zeigt die {shown} juengsten von {total} Episoden; Durchschnitt nutzt alle.",
+      "notes_heading": "Notizen am Onset-Tag (T0)",
+      "notes_aria": "Notizen vom ersten Tag jeder Episode"
     },
     "markers": {
       "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"

@@ -38,11 +38,42 @@ export function datesToEventWindows(
   dates: readonly string[],
   label?: string | null
 ): EventWindow[] {
-  const unique = [...new Set(dates)].sort();
-  return unique.map((onset) => ({
+  return episodeOnsets(dates).map(({ onset, durationDays }) => ({
     onset,
     label: label ?? undefined,
+    durationDays,
   }));
+}
+
+/** Collapse consecutive ISO dates into episode onsets (first day + duration). */
+export function episodeOnsets(dates: readonly string[]): { onset: string; durationDays: number }[] {
+  const unique = [...new Set(dates)].sort();
+  if (unique.length === 0) return [];
+
+  const episodes: { onset: string; durationDays: number }[] = [];
+  let start = unique[0]!;
+  let prev = start;
+
+  for (let i = 1; i < unique.length; i += 1) {
+    const day = unique[i]!;
+    if (isoDayDiff(prev, day) === 1) {
+      prev = day;
+      continue;
+    }
+    episodes.push({ onset: start, durationDays: isoDayDiff(start, prev) + 1 });
+    start = day;
+    prev = day;
+  }
+  episodes.push({ onset: start, durationDays: isoDayDiff(start, prev) + 1 });
+  return episodes;
+}
+
+function isoDayDiff(fromIso: string, toIso: string): number {
+  const [fy, fm, fd] = fromIso.split('-').map(Number);
+  const [ty, tm, td] = toIso.split('-').map(Number);
+  const from = Date.UTC(fy!, (fm ?? 1) - 1, fd ?? 1);
+  const to = Date.UTC(ty!, (tm ?? 1) - 1, td ?? 1);
+  return Math.round((to - from) / 86_400_000);
 }
 
 export async function collectTagPresenceDates(

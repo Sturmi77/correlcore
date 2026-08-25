@@ -10,7 +10,7 @@ from datetime import date as date_type
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.entry import Entry
+from app.models.entry import Entry, NoteVisibility
 from app.models.insight import Insight, InsightType
 from app.models.tag import Tag
 from app.schemas.insight import (
@@ -626,6 +626,60 @@ def _parse_uuid(value: object) -> uuid.UUID | None:
     return None
 
 
+def episode_onsets(presence_dates: list[date_type]) -> list[tuple[date_type, int]]:
+    """Collapse consecutive presence days into (onset, duration_days) episodes.
+
+    Each calendar day the tag/symptom is present must not become its own row —
+    a three-day migraine is one event with onset on day 1 and duration 3.
+    """
+    if not presence_dates:
+        return []
+    ordered = sorted(set(presence_dates))
+    episodes: list[tuple[date_type, int]] = []
+    start = ordered[0]
+    prev = start
+    for day in ordered[1:]:
+        if (day - prev).days == 1:
+            prev = day
+            continue
+        episodes.append((start, (prev - start).days + 1))
+        start = day
+        prev = day
+    episodes.append((start, (prev - start).days + 1))
+    return episodes
+
+
+async def onset_note_summaries(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    onset_dates: list[date_type],
+) -> dict[date_type, str]:
+    """Map onset dates → visible note_summary_short (FULL visibility only)."""
+    if not onset_dates:
+        return {}
+    unique_dates = sorted(set(onset_dates))
+    stmt = (
+        select(Entry.entry_date, Entry.note_summary_short)
+        .where(
+            Entry.user_id == user_id,
+            Entry.entry_date.in_(unique_dates),
+            Entry.note_visibility == NoteVisibility.FULL,
+            Entry.note_summary_short.is_not(None),
+        )
+        .order_by(Entry.entry_date.asc(), Entry.created_at.asc())
+    )
+    result = await db.execute(stmt)
+    summaries: dict[date_type, str] = {}
+    for entry_date, summary in result.all():
+        if entry_date in summaries:
+            continue
+        text = summary.strip() if isinstance(summary, str) else ""
+        if text:
+            summaries[entry_date] = text
+    return summaries
+
+
 async def get_insight_event_windows(
     db: AsyncSession,
     *,
@@ -712,7 +766,21 @@ async def get_insight_event_windows(
         user_id=user_id,
         range_=cooccurrence_range_to_timeseries(range_),
     )
-    events = [InsightEventWindow(onset=day, label=label) for day in dates]
+    episodes = episode_onsets(dates)
+    notes = await onset_note_summaries(
+        db,
+        user_id=user_id,
+        onset_dates=[onset for onset, _duration in episodes],
+    )
+    events = [
+        InsightEventWindow(
+            onset=onset,
+            label=label,
+            duration_days=duration,
+            note_summary=notes.get(onset),
+        )
+        for onset, duration in episodes
+    ]
     return InsightEventWindowsResponse(
         range=range_,
         start_date=start_date,

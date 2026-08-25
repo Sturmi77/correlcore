@@ -15,6 +15,7 @@ from app.services.insight_service import (
     _lag_onset_feature,
     _parse_uuid,
     calculate_insight_maturity,
+    episode_onsets,
     get_insight_event_windows,
     get_insight_maturity,
     list_insights,
@@ -922,6 +923,33 @@ def test_parse_uuid_roundtrips_and_rejects_junk() -> None:
     assert _parse_uuid(None) is None
 
 
+def test_episode_onsets_collapses_consecutive_days() -> None:
+    assert episode_onsets([]) == []
+    assert episode_onsets([date(2026, 5, 1)]) == [(date(2026, 5, 1), 1)]
+    # Three-day streak → one episode starting on day 1.
+    assert episode_onsets(
+        [date(2026, 5, 1), date(2026, 5, 2), date(2026, 5, 3)]
+    ) == [(date(2026, 5, 1), 3)]
+    # Two separate episodes with a gap.
+    assert episode_onsets(
+        [
+            date(2026, 5, 1),
+            date(2026, 5, 2),
+            date(2026, 5, 5),
+            date(2026, 5, 8),
+            date(2026, 5, 9),
+        ]
+    ) == [
+        (date(2026, 5, 1), 2),
+        (date(2026, 5, 5), 1),
+        (date(2026, 5, 8), 2),
+    ]
+    # Dedup + unordered input.
+    assert episode_onsets(
+        [date(2026, 5, 3), date(2026, 5, 1), date(2026, 5, 2), date(2026, 5, 1)]
+    ) == [(date(2026, 5, 1), 3)]
+
+
 @pytest.mark.asyncio
 async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
     user = make_user()
@@ -937,7 +965,12 @@ async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
             "lag_days": 2,
         },
     )
-    onset_dates = [date(2026, 5, 1), date(2026, 5, 5)]
+    # Consecutive days collapse to one episode; a gap starts another.
+    presence_dates = [
+        date(2026, 5, 1),
+        date(2026, 5, 2),
+        date(2026, 5, 5),
+    ]
     timeseries = MagicMock()
     timeseries.points = []
     db = AsyncMock()
@@ -957,8 +990,12 @@ async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
         ),
         patch(
             "app.services.insight_service.list_historical_tag_presence_dates_by_slug",
-            AsyncMock(return_value=onset_dates),
+            AsyncMock(return_value=presence_dates),
         ) as presence,
+        patch(
+            "app.services.insight_service.onset_note_summaries",
+            AsyncMock(return_value={}),
+        ),
         patch(
             "app.services.insight_service.get_timeseries",
             AsyncMock(return_value=timeseries),
@@ -971,10 +1008,14 @@ async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
             range_="90d",
         )
 
-    # Onsets are the feature's occurrences (labelled with the feature), and the
-    # response carries lag_days so the sheet can mark t = +lag_days.
-    assert [event.onset for event in response.events] == onset_dates
+    # Onsets are episode starts of the feature (labelled with the feature), and
+    # the response carries lag_days so the sheet can mark t = +lag_days.
+    assert [(event.onset, event.duration_days) for event in response.events] == [
+        (date(2026, 5, 1), 2),
+        (date(2026, 5, 5), 1),
+    ]
     assert response.events[0].label == "Cycling"
+    assert response.events[0].note_summary is None
     assert response.lag_days == 2
     # Resolved via the feature slug, not the subject (outcome).
     presence.assert_awaited_once()
@@ -1036,3 +1077,58 @@ async def test_get_insight_event_windows_lag_respects_analytics_exclusion() -> N
     assert response.events == []
     assert response.lag_days == 2
     presence.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_insight_event_windows_attaches_onset_note_summaries() -> None:
+    user = make_user()
+    insight = _make_insight(
+        user,
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=uuid.uuid4(),
+        subject_label="Sport",
+        payload={},
+    )
+    timeseries = MagicMock()
+    timeseries.points = []
+    db = AsyncMock()
+    onset = date(2026, 5, 10)
+
+    with (
+        patch(
+            "app.services.insight_service.get_insight_by_id",
+            AsyncMock(return_value=insight),
+        ),
+        patch(
+            "app.services.insight_service._analytics_enabled",
+            AsyncMock(return_value=True),
+        ),
+        patch(
+            "app.services.insight_service._resolve_tag_slug",
+            AsyncMock(return_value="sport"),
+        ),
+        patch(
+            "app.services.insight_service.list_historical_tag_presence_dates_by_slug",
+            AsyncMock(return_value=[onset, date(2026, 5, 11)]),
+        ),
+        patch(
+            "app.services.insight_service.onset_note_summaries",
+            AsyncMock(return_value={onset: "Lange Radtour, danach muede"}),
+        ),
+        patch(
+            "app.services.insight_service.get_timeseries",
+            AsyncMock(return_value=timeseries),
+        ),
+    ):
+        response = await get_insight_event_windows(
+            db,
+            user_id=user.id,
+            insight_id=insight.id,
+            range_="90d",
+        )
+
+    assert len(response.events) == 1
+    assert response.events[0].onset == onset
+    assert response.events[0].duration_days == 2
+    assert response.events[0].note_summary == "Lange Radtour, danach muede"

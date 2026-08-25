@@ -18,6 +18,7 @@ vi.mock('svelte-i18n', async () => {
     _: readable((key: string, opts?: { values?: Record<string, unknown> }) =>
       opts?.values ? `${key}:${JSON.stringify(opts.values)}` : key
     ),
+    locale: readable('en'),
   };
 });
 
@@ -139,5 +140,86 @@ describe('EventAlignedSmallMultiplesSheet lag marker (#488)', () => {
     expect(legend).toContain('trends.esm.legend_better');
     expect(legend).not.toContain('trends.esm.legend_low');
     expect(legend).not.toContain('trends.esm.legend_high');
+  });
+
+  it('shows one row per episode with a mean row and subject header', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events: [
+          { onset: '2026-05-01', label: 'Cycling', durationDays: 2 },
+          { onset: '2026-05-10', label: 'Cycling', durationDays: 1 },
+        ],
+        points,
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.getByTestId('esm-subject').textContent).toBe('Cycling');
+    const svg = screen.getByRole('img');
+    // Mean + two episode rows.
+    expect(svg.querySelectorAll('.esm__row')).toHaveLength(3);
+    expect(svg.querySelector('.esm__row--mean')).toBeTruthy();
+  });
+
+  it('omits the mean row when only one episode is present', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events: [{ onset: '2026-05-10', label: 'Cycling', durationDays: 1 }],
+        points,
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    const svg = screen.getByRole('img');
+    expect(svg.querySelectorAll('.esm__row')).toHaveLength(1);
+    expect(svg.querySelector('.esm__row--mean')).toBeNull();
+  });
+
+  it('lists onset-day notes when available', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events: [
+          {
+            onset: '2026-05-10',
+            label: 'Cycling',
+            durationDays: 1,
+            noteSummary: 'Long ride, tired after',
+          },
+          { onset: '2026-05-18', label: 'Cycling', durationDays: 1 },
+        ],
+        points,
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    const notes = screen.getByTestId('esm-notes');
+    expect(notes.textContent).toContain('trends.esm.notes_heading');
+    expect(notes.textContent).toContain('Long ride, tired after');
+    // Second episode has no note — only one list item.
+    expect(notes.querySelectorAll('.esm__notes-item')).toHaveLength(1);
+  });
+
+  it('hides the notes section when no episode has a note', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events: [{ onset: '2026-05-10', label: 'Cycling', durationDays: 1 }],
+        points,
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.queryByTestId('esm-notes')).toBeNull();
   });
 });

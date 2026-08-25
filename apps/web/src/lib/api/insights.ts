@@ -247,6 +247,10 @@ export async function fetchSymptomTagCooccurrence(
 export interface InsightEventWindowResponse {
   onset: string;
   label: string | null;
+  /** Consecutive presence days collapsed into one episode (default 1). */
+  duration_days?: number;
+  /** Onset-day note preview when visibility is full. */
+  note_summary?: string | null;
 }
 
 export interface InsightEventWindowsResponse {
