@@ -283,6 +283,10 @@
       <h1 class="landing__title">{$_('landing.hero_title')}</h1>
       <p class="landing__subtitle">{$_('landing.hero_subtitle')}</p>
       <p class="landing__hero-micro">{$_('landing.hero_micro')}</p>
+      <!-- I3 (#735): the method jargon stays for the technical audience, but as
+           a de-emphasized secondary line — the plain-language micro above is the
+           primary read. -->
+      <p class="landing__hero-tech">{$_('landing.hero_micro_tech')}</p>
       <ul class="landing__trust" data-testid="landing-trust">
         {#each trustItems as item (item.key)}
           <li class="landing__trust-item" data-tone={item.tone}>
@@ -755,6 +759,16 @@
     font-size: var(--text-xs);
     letter-spacing: 0.01em;
     opacity: 0.85;
+  }
+
+  /* I3 (#735) — the "for the technically inclined" jargon line, one step
+     quieter than the plain micro copy above it. */
+  .landing__hero-tech {
+    margin: calc(var(--space-1) * -1) 0 0;
+    max-width: 36rem;
+    color: var(--color-text-faint);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.01em;
   }
 
   .landing__hero-visual {
