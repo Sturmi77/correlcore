@@ -11,8 +11,8 @@ Entwurf der Store-Listing-Texte für Google Play (Internal → Closed Testing).
   Vorhersage, keine Fruchtbarkeits-/Verhütungsaussagen) — konsistent mit
   ADR-0033 §9 und dem produktweiten „non-medical"-Prinzip.
 - **Kein Gamification-Wording** (keine Streaks, keine „Belohnungen") — Kern-USP.
-- Konsistent mit README-USP: *Korrelationen statt Rohdaten · Privacy-first ·
-  Selfhosted & offline-ready · 60 Sekunden/Tag*.
+- Konsistent mit README-USP: _Korrelationen statt Rohdaten · Privacy-first ·
+  Selfhosted & offline-ready · 60 Sekunden/Tag_.
 - Die App ist ein **Client zu einer CorrelCore-Instanz** (Selfhost oder
   `correlcore.com`) — die Texte dürfen keine reine Standalone-Cloud-App suggerieren.
 
@@ -21,16 +21,19 @@ Entwurf der Store-Listing-Texte für Google Play (Internal → Closed Testing).
 ## Deutsch (Primär-Locale de-DE)
 
 ### App-Name
+
 ```
 CorrelCore
 ```
 
 ### Kurzbeschreibung (max. 80 Zeichen)
+
 > Verstehe, warum manche Tage gut sind — Privacy-first, in 60 Sekunden pro Tag.
 
 _(76 Zeichen inkl. Leerzeichen — vor Veröffentlichung nachzählen)_
 
 Alternative (72 Zeichen):
+
 > Dein Wohlbefinden verstehen: Korrelationen statt Rohdaten. Privacy-first.
 
 ### Langbeschreibung (max. 4000 Zeichen)
@@ -88,11 +91,13 @@ dir gewählten Instanz. Open Source (AGPL-3.0).
 ## English (Locale en-US)
 
 ### App name
+
 ```
 CorrelCore
 ```
 
 ### Short description (max. 80 chars)
+
 > Understand why some days are good — privacy-first, in 60 seconds a day.
 
 _(70 chars — recount before publishing)_
@@ -149,12 +154,12 @@ source (AGPL-3.0).
 
 ## Grafik-Assets (👤 Operator erstellt; Zielformate)
 
-| Asset | Format | Quelle |
-| ----- | ------ | ------ |
-| App-Icon | 512×512 PNG (32-bit, Alpha) | `docs/assets/brand/correlcore-logo-mark.svg` exportieren |
-| Feature-Graphic | 1024×500 PNG/JPG | Brand-Farben + Logo; kein Text-Overkill |
-| Phone-Screenshots | ≥ 2 (empf. 4–8), 16:9 o. 9:16, min. 320 px | Realgerät/Emulator |
-| Tablet-Screenshots 7"/10" | nur falls Tablet-Support deklariert | optional |
+| Asset                     | Format                                     | Quelle                                                   |
+| ------------------------- | ------------------------------------------ | -------------------------------------------------------- |
+| App-Icon                  | 512×512 PNG (32-bit, Alpha)                | `docs/assets/brand/correlcore-logo-mark.svg` exportieren |
+| Feature-Graphic           | 1024×500 PNG/JPG                           | Brand-Farben + Logo; kein Text-Overkill                  |
+| Phone-Screenshots         | ≥ 2 (empf. 4–8), 16:9 o. 9:16, min. 320 px | Realgerät/Emulator                                       |
+| Tablet-Screenshots 7"/10" | nur falls Tablet-Support deklariert        | optional                                                 |
 
 ## Screenshot-Shotlist (empfohlen, 5 Stück)
 

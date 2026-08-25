@@ -246,4 +246,3 @@ jobs:
           REGISTRIES="${registries}" \
             SOURCE_TAGS="${bare_tags[*]}" \
             ./scripts/alias-v-prefix-image-tags.sh
-

@@ -102,10 +102,10 @@ See Distribution flavors below.
 
 Two product flavors on the `distribution` dimension:
 
-| Flavor     | Health Connect | Artifact              | Channel                                  |
-| ---------- | -------------- | --------------------- | ---------------------------------------- |
-| `sideload` | **yes**        | signed **APK**        | GitHub Releases / Obtainium / self-host  |
-| `play`     | **no**         | signed **AAB**        | Play Store (HC-free — no HC declaration) |
+| Flavor     | Health Connect | Artifact       | Channel                                  |
+| ---------- | -------------- | -------------- | ---------------------------------------- |
+| `sideload` | **yes**        | signed **APK** | GitHub Releases / Obtainium / self-host  |
+| `play`     | **no**         | signed **AAB** | Play Store (HC-free — no HC declaration) |
 
 HC code, the `connect-client` dependency and the HC manifest entries live only
 in `app/src/sideload/`; `app/src/play/` supplies a no-op `HealthConnectSupport`.
