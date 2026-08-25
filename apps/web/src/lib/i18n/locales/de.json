@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "CorrelCore",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "tagline": "Verstehe warum manche Tage gut und andere schlecht waren."
   },
   "nav": {
@@ -1812,84 +1812,85 @@
     "badge": "Selbst gehostet · v{version}",
     "badge_hosted": "Gehostet · v{version}",
     "hero_title": "Verstehe, warum manche Tage gut sind – und andere nicht.",
-    "hero_subtitle": "CorrelCore ist eine datenschutzfreundliche Korrelationsanalyse fürs Wohlbefinden. 60 Sekunden am Tag eintragen – die Auswertung zeigt, welche Faktoren wirklich zusammenhängen. Keine Gamification, niemals.",
-    "hero_micro": "Spearman-, Lag- und Multivariat-Analyse – FDR-korrigiert und nach Konfidenz gestuft.",
+    "hero_subtitle": "60 Sekunden am Tag eintragen. Die Auswertung zeigt, welche Faktoren wirklich mit Stimmung und Energie zusammenhängen – auf deiner Instanz, ohne Tracking durch Dritte.",
+    "hero_micro": "Zusammenhänge werden nach Sicherheit gestuft und mit zeitlicher Verzögerung betrachtet.",
     "cta_register": "Registrieren",
     "cta_login": "Anmelden",
-    "cta_apk": "APK herunterladen",
     "cta_selfhost": "Selbst hosten",
     "cta_docs": "Dokumentation",
     "lang_toggle": "Sprache auf {locale} umschalten",
-    "features_heading": "Was CorrelCore wirklich macht",
-    "previews_heading": "Ein Blick in die App",
-    "preview_matrix": "Insight-Matrix: Zusammenhänge nach Effektstärke.",
-    "preview_card": "Erkenntnis-Karte: eine Beobachtung, sachlich formuliert.",
-    "preview_heatmap": "Tag-Heatmap: was gemeinsam vorkommt, nach Gruppen.",
-    "preview_lag": "Lag-Heatmap: bei welcher zeitlichen Verzögerung ein Zusammenhang am stärksten ist.",
+    "example_data": "Beispieldaten",
+    "paths_heading": "Zwei Wege",
+    "paths": {
+      "try": {
+        "title": "Ausprobieren",
+        "body": "Konto anlegen, den täglichen Check-in machen, Muster entstehen lassen. Kein App-Store nötig.",
+        "cta": "Konto anlegen"
+      },
+      "try_closed": {
+        "body": "Diese Instanz nimmt gerade keine neuen Konten an. Wenn du schon eines hast, kannst du dich anmelden.",
+        "cta": "Anmelden"
+      },
+      "host": {
+        "title": "Selbst betreiben",
+        "body": "Docker Compose auf NAS, VPS oder Ersatzrechner. Daten bleiben bei dir.",
+        "cta": "Zur Installationsanleitung"
+      }
+    },
+    "checkin": {
+      "today": "Heute",
+      "duration": "ca. 60 Sekunden",
+      "caption": "Der tägliche Check-in: Stimmung, Energie, Stress, Schlaf, Tags.",
+      "mood": "Stimmung",
+      "energy": "Energie",
+      "stress": "Stress",
+      "sleep": "Schlaf",
+      "tags": "Tags",
+      "symptoms": "Symptome"
+    },
+    "previews_heading": "Was du daraus siehst",
+    "preview_card": "Eine Erkenntnis in Alltagssprache – nicht als Dashboard voller Rohwerte.",
+    "preview_lag": "Nicht nur ob, sondern wann: schlechter Schlaf wirkt hier zwei Tage später auf die Stimmung.",
     "trust": {
       "privacy": "Datenschutz zuerst",
-      "selfhost": "Selbst gehostet",
+      "notelemetry": "Keine Telemetrie",
       "offline": "Offline-fähig",
       "license": "AGPL-Open-Source"
     },
     "journey_heading": "Erkenntnisse wachsen mit deinen Daten",
-    "journey_body": "Jeder Zusammenhang ist nach Konfidenz gestuft – von ersten Mustern bis robust. Kein Leistungsdruck, keine Streaks: nur wachsende Evidenz, je länger du trackst.",
+    "journey_body": "Jeder Zusammenhang ist nach Sicherheit gestuft – von ersten Mustern bis robust. Keine Gamification: nur Evidenz, die mit der Zeit belastbarer wird.",
     "weekday_heading": "Warum manche Tage besser sind",
-    "weekday_caption": "Wochentags-Muster: durchschnittliche Stimmung pro Tag, mit dem auffälligsten Signal (Produktvorschau).",
-    "ticker_label": "Beispiel-Erkenntnisse",
-    "ticker": {
-      "1": "Schlaf → Stimmung · +2 Tage · r = 0.62",
-      "2": "Sport → Energie · nächster Tag · r = 0.55",
-      "3": "Homeoffice → weniger Stress · r = 0.38",
-      "4": "Kaffee → Energie · gleicher Tag · r = 0.24"
-    },
+    "weekday_caption": "Durchschnittliche Stimmung je Wochentag, mit dem auffälligsten Signal des Tages.",
+    "weekday_legend_best": "Höchste Stimmung",
+    "weekday_legend_worst": "Niedrigste Stimmung",
     "demo": {
       "poor_sleep": "Schlecht geschlafen",
       "low_energy": "Wenig Energie",
       "headache": "Kopfschmerzen",
       "exercise": "Sport",
-      "good_mood": "Gute Laune",
       "coffee": "Kaffee",
       "home_office": "Homeoffice",
       "friday": "Freitag",
-      "cluster_poor_sleep": "Cluster: schlechter Schlaf",
-      "cluster_active": "Aktive Tage",
       "stmt_exercise_mood": "Tage mit Sport zeigen tendenziell eine bessere Stimmung.",
-      "stmt_sleep_mood": "Schlecht-geschlafen-Tage zeigen tendenziell eine schlechtere Stimmung.",
-      "stmt_coffee_energy": "Kaffee-Tage zeigen tendenziell etwas mehr Energie.",
       "stmt_lag_sleep_mood": "Schlechter Schlaf senkt die Stimmung tendenziell etwa zwei Tage später.",
       "stmt_lag_exercise_energy": "Sport hebt die Energie tendenziell am Folgetag.",
       "stmt_weekday_friday": "Freitags ist die Stimmung tendenziell am höchsten."
     },
     "android_heading": "Android-App",
-    "android_body": "Signiertes APK direkt von GitHub Releases. Mit Obtainium abonnierst du das Repo und bekommst Updates automatisch – ganz ohne App-Store.",
+    "android_body": "Signiertes APK direkt von GitHub Releases. Mit Obtainium bekommst du Updates automatisch – ohne App-Store.",
     "android_download": "APK herunterladen",
     "android_obtainium": "Mit Obtainium (Auto-Updates)",
     "android_sha256": "Jedes Release enthält SHA256SUMS.txt zur Prüfung des Downloads.",
-    "features": {
-      "1": {
-        "title": "Korrelationen statt Rohdaten",
-        "body": "Statistische Auswertung zeigt, welche Faktoren – Schlaf, Sport, Homeoffice-Tage – tatsächlich mit Stimmung und Energie zusammenhängen."
-      },
-      "2": {
-        "title": "60 Sekunden am Tag",
-        "body": "Stimmung, Energie, Stress, Tags und Symptome – schnell erfasst und die Datenbasis, aus der die Auswertung ihre Zusammenhänge zieht."
-      },
-      "3": {
-        "title": "Keine Gamification, niemals",
-        "body": "Kein Leistungsdruck, keine künstliche Dringlichkeit. Nur Tracking-Kontinuität, zur eigenen Reflexion."
-      }
+    "selfhost_title": "Für Selfhoster",
+    "selfhost_body": "CorrelCore läuft auf deinem eigenen Server. Kein Konto bei uns, keine Telemetrie, kein Tracking durch Dritte.",
+    "selfhost_ops": {
+      "runtime": "Docker Compose; PostgreSQL 16 und Redis",
+      "data": "Persistente Volumes; Backup im Install-Guide beschrieben",
+      "edge": "Reverse-Proxy und TLS (Nginx oder Traefik)",
+      "hardware": "x86 und ARM, einschließlich NAS",
+      "updates": "Image pullen, Compose neu starten"
     },
-    "metric_mood": "Stimmung",
-    "metric_energy": "Energie",
-    "metric_stress": "Stress",
-    "metric_consistency": "Tracking-Kontinuität",
-    "viz_correlations": "Insight-Matrix, Insight-Karte und Tag-Heatmap (Produktvorschau)",
-    "selfhost_title": "Deine Daten bleiben deine",
-    "selfhost_body": "CorrelCore läuft auf deinem eigenen Server – NAS, VPS oder Ersatzrechner. Kein Konto bei uns, keine Telemetrie, kein Tracking durch Dritte. Ein Befehl genügt für eine laufende Instanz.",
-    "docker_label": "docker compose up -d",
-    "tech_title": "Open Source, nachvollziehbar",
-    "tech_body": "FastAPI + PostgreSQL im Backend, SvelteKit im Web-Frontend. Keine versteckte Logik – Quellcode lesen, selbst hosten oder beitragen.",
+    "docker_label": "docker compose -f docker-compose.quickstart.yml up -d",
     "tech_github": "Quellcode auf GitHub ansehen",
     "faq_heading": "Fragen",
     "faq": {
@@ -1899,11 +1900,12 @@
       },
       "2": {
         "q": "Muss ich es selbst hosten?",
-        "a": "Aktuell ja – CorrelCore ist als Self-Hosted-Release verfügbar. Docker Compose startet den kompletten Stack in wenigen Minuten; offlinefähige mobile Unterstützung ist geplant."
+        "a_hosted": "Nein. Du kannst hier ein Konto anlegen oder eine eigene Instanz betreiben – beides ist vorgesehen.",
+        "a_selfhost": "Diese Instanz läuft selbst gehostet. Es gibt zusätzlich eine gehostete Variante unter correlcore.com, falls du nicht selbst betreiben möchtest."
       },
       "3": {
         "q": "Was, wenn ich erst wenige Tage Daten habe?",
-        "a": "Erkenntnisse sind nach Konfidenz markiert – „Frühes Muster“ bis „Robust“ – damit du immer weißt, wie viel Vertrauen ein Zusammenhang schon verdient."
+        "a": "Erkenntnisse sind nach Sicherheit markiert – „Frühes Muster“ bis „Robust“ – damit du immer weißt, wie viel Vertrauen ein Zusammenhang schon verdient."
       },
       "4": {
         "q": "Kann ich meine Daten exportieren?",

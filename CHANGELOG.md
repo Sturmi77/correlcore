@@ -8,55 +8,58 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-08-25
+
+Ops-Upgrade (Compose, Digest-Worker, Worker-Cron, Alembic 042):
+[`docs/selfhost/UPGRADE_1_5_0.md`](docs/selfhost/UPGRADE_1_5_0.md).
+
+### Added
+
+- **Worker-Freshness-Endpoint** — `GET /api/v1/worker/status` berichtet pro
+  Job-Art das Alter des letzten erfolgreichen Laufs, unabhängig davon, ob der
+  Container gerade „Up" ist (#756). Optional `WORKER_STATUS_API_KEY`.
+- **Weekly-Digest-Modal** — die wöchentliche Zusammenfassung erscheint einmalig
+  beim ersten App-Open nach Generierung (#739).
+- **Instanz-Descriptor für die Landing** — `GET /api/v1/instance` steuert zur
+  Laufzeit Hosted- vs. Selfhost-CTA (#736).
+- **Vereinheitlichte Screen-Kopfleiste** — ein `ScreenHeader` mit Zurück und
+  schwebendem Sticky-Modus (#703).
+
 ### Changed
 
-- **Weekly Digest wird ohne eigenes Profil/Container erzeugt** — die
-  Generierung der wöchentlichen In-App-Zusammenfassung lief bisher nur hinter
-  dem Opt-in-Compose-Profil `digest` (eigener `digest-worker`-Container), das
-  auf der gehosteten Instanz nie aktiv war — der Settings-Toggle konnte an sein,
-  ohne dass je ein Digest entstand. Die Erzeugung läuft jetzt sonntags im
-  bestehenden Analytics-`worker` (kein separater Scheduler, Container oder
-  `COMPOSE_PROFILES=digest` mehr); einziger Trigger ist das Pro-User-Opt-in
-  unter Settings → Analyse (`digest_enabled`, standardmäßig aus). Der
-  irreführende Ops-Hinweis im Settings-Text und der Empty-State auf
-  `/insights/digest` wurden entsprechend angepasst. `python -m app.workers.digest
---once` bleibt für manuelle Läufe / Backfills erhalten (#738).
-  **Upgrade-Hinweis:** Instanzen, die bisher `COMPOSE_PROFILES=…,digest`
-  nutzten, müssen den nun verwaisten `digest-worker`-Container einmalig
-  entfernen (`docker compose rm -sf digest-worker` bzw. `up -d
---remove-orphans`) und `digest` aus `COMPOSE_PROFILES` streichen — sonst
-  läuft er auf altem Image weiter und erzeugt doppelte Digest-Snapshots.
-
-- **Symptom-Auswahl im Entry Sheet als kompakte Chips** — Symptome sind seit
-  #544 presence-only (binärer Toggle), wurden aber weiterhin als volle Zeile
-  mit eigenem, volle-Breite-Pill-Button je Symptom gerendert, was auf Mobile
-  extrem viel vertikalen Platz kostete (~450–550 px für die Default-Symptome).
-  Sie erscheinen jetzt als umbrechende Toggle-Chips — dasselbe Muster wie der
-  angrenzende `TagPicker` — was die Höhe rund um das 3–4-Fache reduziert und
-  den Abschnitt visuell konsistent macht (#732). Barrierefreiheit
-  (`aria-pressed`, benannte `role="group"`) und das 44-px-Tap-Target bleiben
-  erhalten.
+- **Marketing-Landing finalisiert (#735)** — zwei Pfade (Ausprobieren vs.
+  Selbst betreiben), 60-Sekunden-Check-in als Hero, eine primäre CTA, belegte
+  Trust-Claims, Selfhost-Ops-Fakten, weniger Deko/Chart-Redundanz. Jargon und
+  das dreifache „Keine Gamification" sind raus; FAQ unterscheidet Hosted- und
+  Selfhost-Instanz.
+- **Weekly Digest ohne eigenes Profil/Container** — Erzeugung sonntags im
+  Analytics-`worker`; `COMPOSE_PROFILES=digest` / `digest-worker` entfallen
+  (#738, #740). User-Opt-in unter Settings → Analyse (`digest_enabled`,
+  standardmäßig aus). `python -m app.workers.digest --once` bleibt für
+  manuelle Läufe.
+- **Analytics-Worker per Cron statt Sleep-Loop** — der Worker-Container läuft
+  `supercronic` und startet `python -m app.workers.analytics --once` um
+  03:00 UTC; ein Job-Crash reißt den Scheduler nicht mehr mit (#757).
+- **Symptom-Auswahl als kompakte Chips** im Entry Sheet (#732).
+- **Tag-Erstellung ohne Icon-Feld**, Gruppenfarbe als Vorschlag (#727, #728).
 
 ### Fixed
 
-- **Legacy `digest-worker` one-shot no longer restart-loops** — after #740,
-  `python -m app.workers.digest` without `--once` generated once and exited 0.
-  Older compose files still launch that command with `restart: unless-stopped`
-  (and pulling a new image recreates the service when the compose file was not
-  updated — that is **not** an orphan). Docker then restarted the container in
-  a tight loop, inserting a new `insight_digests` row per opted-in user on
-  every restart. Bare invocation now idles; `--once` is unchanged for
-  manual/cron runs. Weekly generation remains in the analytics worker.
+- **Legacy `digest-worker` one-shot restart-loop** — bare `python -m
+app.workers.digest` idled nach einem Lauf nicht und wurde von
+  `restart: unless-stopped` in einer engen Schleife neu gestartet (#741).
+- **Korrelationsmatrix verschwindet nicht mehr**, wenn Zeilen weicher werden
+  (#725).
+- **Eine kaputte Notiz bricht die Insight-Generierung nicht mehr ab** (#773).
+- **Retention-Prädikate bleiben auf unverified-account DELETE** (#766).
+- **Doppelte Settings-Überschriften** entfernt (#716).
+- Worker: Bulkhead, Timeouts, verständliche Regenerate-Fehler, Staleness-UX,
+  Fault-Injection-Tests (#752–#759).
 
-- **Tag-Erstellung ohne Icon-Feld, mit Gruppenfarbe als Vorschlag** — das
-  Anlegen und Bearbeiten von Tags bot weiterhin ein Icon-Feld an, obwohl die
-  per-Tag-Glyphen mit #672 zugunsten der Kategorie-Icons (`CategoryIcon`)
-  abgeschafft wurden; das Feld ist jetzt aus dem Create-/Edit-Formular
-  (`settings/tags`) und dem Inline-`TagPicker` entfernt (inkl. Payload und
-  ungenutzter i18n-Keys). Neu angelegte Tags schlagen zudem standardmäßig die
-  Farbe der gewählten Kategorie/Gruppe vor (neue `CATEGORY_COLORS`-Palette,
-  pro Theme), übersteuerbar per Farbwähler — bislang war die Farbe konstant
-  auf die Primärfarbe vorbelegt.
+### Docs
+
+- README als Front-Door, Play-Store-Gap-Analyse (M11, Ops), Worker-Cron- und
+  1.5.0-Compose-Upgrade-Guides.
 
 ## [1.4.0] — 2026-08-16
 

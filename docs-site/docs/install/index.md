@@ -14,7 +14,8 @@ Deploy CorrelCore on your own infrastructure. Full operator reference also lives
 
 **Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
 
-Existing VPS operators upgrading from pre-M10 compose: see [Upgrade guide](upgrade.md).
+Existing operators on **v1.4.0** (or any earlier 1.x pin): see [Upgrade guide](upgrade.md)
+(compose update to **v1.5.0**). Pre-M10 MinIO stacks are covered in the same page.
 
 ---
 
@@ -152,7 +153,7 @@ Pin images for reproducible deploys — see [Container images](container-images.
 
 ```env
 IMAGE_REGISTRY=ghcr.io/sturmi77
-IMAGE_TAG=v1.3.0   # any v1.x pin works
+IMAGE_TAG=v1.5.0   # any v1.x pin works
 ```
 
 ```bash
@@ -205,9 +206,27 @@ Example response:
   "status": "ok",
   "generated_at": "2026-08-22T06:00:00Z",
   "jobs": [
-    { "job_kind": "daily_bundle", "job_status": "fresh", "age_hours": 3.0, "stale_after_hours": 30, "stale": false },
-    { "job_kind": "insights", "job_status": "fresh", "age_hours": 3.0, "stale_after_hours": 30, "stale": false },
-    { "job_kind": "digest", "job_status": "fresh", "age_hours": 27.0, "stale_after_hours": 210, "stale": false }
+    {
+      "job_kind": "daily_bundle",
+      "job_status": "fresh",
+      "age_hours": 3.0,
+      "stale_after_hours": 30,
+      "stale": false
+    },
+    {
+      "job_kind": "insights",
+      "job_status": "fresh",
+      "age_hours": 3.0,
+      "stale_after_hours": 30,
+      "stale": false
+    },
+    {
+      "job_kind": "digest",
+      "job_status": "fresh",
+      "age_hours": 27.0,
+      "stale_after_hours": 210,
+      "stale": false
+    }
   ]
 }
 ```
