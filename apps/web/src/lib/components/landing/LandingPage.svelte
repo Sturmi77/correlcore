@@ -760,15 +760,11 @@
     width: 0.7rem;
     height: 0.7rem;
     border-radius: var(--radius-sm);
-    background: var(--swatch);
+    background: var(--color-success);
   }
 
-  .landing__weekday-legend li[data-tone='best'] {
-    --swatch: var(--color-success);
-  }
-
-  .landing__weekday-legend li[data-tone='worst'] {
-    --swatch: var(--color-warning);
+  .landing__weekday-legend li[data-tone='worst']::before {
+    background: var(--color-warning);
   }
 
   .landing__android {
