@@ -86,6 +86,59 @@ export const landingTimeseriesPoints: TimeseriesPoint[] = [
   },
 ];
 
+/**
+ * Hero strip series (A4). A denser multi-week wave — sleep dips drag mood and
+ * energy down a day or two later while stress rises, then everything recovers —
+ * so the divergent strip reads as the actual correlation story rather than a
+ * flat band. Kept separate from `landingTimeseriesPoints` so the bento
+ * week-timeseries shot is unchanged. Values are display-space 1–5 (stress is
+ * inverted inside the strip), one entry per day.
+ */
+const STRIP_WAVE: ReadonlyArray<
+  readonly [sleep: number, mood: number, energy: number, stress: number]
+> = [
+  [4.1, 3.9, 3.7, 2.1],
+  [4.3, 4.0, 3.8, 2.0],
+  [3.4, 3.5, 3.4, 2.5],
+  [2.8, 3.1, 3.0, 3.0],
+  [2.3, 2.6, 2.5, 3.6],
+  [2.0, 2.3, 2.3, 3.9],
+  [2.6, 2.7, 2.6, 3.4],
+  [3.3, 3.1, 3.0, 2.8],
+  [3.9, 3.6, 3.5, 2.4],
+  [4.3, 3.9, 3.8, 2.0],
+  [3.8, 3.9, 3.8, 2.2],
+  [3.2, 3.4, 3.3, 2.7],
+  [3.9, 3.7, 3.6, 2.2],
+  [4.5, 4.2, 4.0, 1.8],
+];
+
+/** ISO date `offset` days before `end` (UTC, no wall-clock drift). */
+function isoDaysBefore(end: string, offset: number): string {
+  const date = new Date(`${end}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - offset);
+  return date.toISOString().slice(0, 10);
+}
+
+/** Locale-independent hero strip fixture — ends on the same day as the rest. */
+export const landingStripPoints: TimeseriesPoint[] = STRIP_WAVE.map(
+  ([sleep, mood, energy, stress], index) => {
+    const period = isoDaysBefore('2026-07-19', STRIP_WAVE.length - 1 - index);
+    return {
+      period_start: period,
+      period_end: period,
+      entry_count: 1,
+      mood_avg: mood,
+      energy_avg: energy,
+      stress_avg: stress,
+      sleep_quality_avg: sleep,
+    };
+  }
+);
+
+/** Axis keys for the hero strip, aligned to `landingStripPoints`. */
+export const landingStripAxisDates: string[] = landingStripPoints.map((p) => p.period_start);
+
 /** Locale-independent maturity fixture (renders via a message key). */
 export const landingMaturity: InsightMaturity = {
   phase: 'robust',
@@ -128,6 +181,8 @@ function cooRef(tag_id: string, slug: string, name: string) {
 export interface LandingDemo {
   tagClusters: TagClustersResponse;
   timeseriesPoints: TimeseriesPoint[];
+  stripPoints: TimeseriesPoint[];
+  stripAxisDates: string[];
   insights: InsightResponse[];
   featuredInsight: InsightResponse;
   lagInsights: InsightResponse[];
@@ -450,6 +505,8 @@ export function buildLandingDemo(t: TranslateFn): LandingDemo {
   return {
     tagClusters,
     timeseriesPoints: landingTimeseriesPoints,
+    stripPoints: landingStripPoints,
+    stripAxisDates: landingStripAxisDates,
     insights,
     featuredInsight: insights[0],
     lagInsights,

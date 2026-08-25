@@ -5,14 +5,15 @@
   import LegalFooter from '$lib/components/common/LegalFooter.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import MetricCard from '$lib/components/home/MetricCard.svelte';
-  import TagGroupsSection from '$lib/components/insights/TagGroupsSection.svelte';
   import InsightMatrix from '$lib/components/insights/InsightMatrix.svelte';
   import InsightCard from '$lib/components/insights/InsightCard.svelte';
   import TagCooccurrenceHeatmap from '$lib/components/insights/TagCooccurrenceHeatmap.svelte';
   import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';
   import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
   import MetricTimeseries from '$lib/components/trends/MetricTimeseries.svelte';
+  import UnifiedStripChart from '$lib/components/trends/UnifiedStripChart.svelte';
   import BrowserFrameMock from '$lib/components/landing/BrowserFrameMock.svelte';
+  import type { DailyAxisLayout } from '$lib/utils/charts';
   import { tweened } from 'svelte/motion';
   import { cubicOut } from 'svelte/easing';
   import { fade } from 'svelte/transition';
@@ -34,6 +35,19 @@
   import { instanceConfig } from '$lib/stores/instanceConfig';
 
   const faqKeys = ['1', '2', '3', '4'] as const;
+
+  // A4 — the hero product shot is the UnifiedStripChart (mood/energy/stress/
+  // sleep on the shared divergent axis): the actual "these move together, with
+  // a delay" story, denser than the tag-cluster shot it replaces. A compact
+  // axis (smaller gutter + day width than the trends page default) lets the full
+  // multi-week series fit the hero frame without horizontal scroll. Static shot
+  // only — cursor disabled, wrapper is inert/aria-hidden like the other shots.
+  const heroStripLayout: DailyAxisLayout = {
+    labelWidth: 112,
+    dayWidth: 14,
+    dayGap: 3,
+    rightPadding: 0,
+  };
 
   // B2 (#734/#735) — hosted vs. self-host is a RUNTIME fact from the backend
   // (GET /api/v1/instance), not a build flag, so one bundle serves both the
@@ -280,8 +294,15 @@
     </div>
     <div class="landing__hero-visual">
       <span class="landing__hero-glow" aria-hidden="true"></span>
-      <BrowserFrameMock>
-        <TagGroupsSection data={demo.tagClusters} plainClusterTitles />
+      <BrowserFrameMock address="app.correlcore.example/trends">
+        <div class="landing__shot landing__hero-shot" inert aria-hidden="true">
+          <UnifiedStripChart
+            points={demo.stripPoints}
+            axisDates={demo.stripAxisDates}
+            axisLayout={heroStripLayout}
+            enableCursor={false}
+          />
+        </div>
       </BrowserFrameMock>
     </div>
   </section>
@@ -856,6 +877,15 @@
   .landing__shot {
     pointer-events: none;
     user-select: none;
+  }
+
+  /* A4 — hero strip shot: centre the compact chart in the frame and clip any
+     bleed on very narrow phones so it never forces the hero to scroll sideways
+     (the frame itself already has overflow: hidden). */
+  .landing__hero-shot {
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
   }
 
   /* Grid finish — four previews balance as a 2×2 (was 3+1 orphan). */
