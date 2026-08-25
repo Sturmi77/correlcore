@@ -21,7 +21,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.entry import BleedingLevel, EntrySlot, WorkContext
 from app.schemas.note import NoteVisibility as NoteVisibilitySchema
@@ -75,6 +75,17 @@ class SyncEntryPayload(BaseModel):
         default_factory=dict,
         description="Map symptom_id (UUID string) → intensity 0..3",
     )
+
+    @field_validator("note")
+    @classmethod
+    def note_not_only_whitespace(cls, v: str | None) -> str | None:
+        # Mirror EntryCreate/EntryUpdate: a blank/whitespace-only note is stored
+        # as NULL, so ``note_enc IS NOT NULL`` stays a reliable "has a real note"
+        # signal without decrypting (#773 follow-up — the analytics marker loader
+        # derives has_note from ciphertext presence).
+        if v is not None and not v.strip():
+            return None
+        return v
 
 
 class SyncTagPayload(BaseModel):

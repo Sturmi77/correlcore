@@ -26,6 +26,7 @@ from sqlalchemy.orm import defer
 from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
+from app.core.crypto import DecryptionError
 from app.models.entry import Entry, WorkContext
 from app.models.entry_note import EntryNoteMarker
 from app.models.insight import Insight, InsightTier, InsightType
@@ -42,7 +43,6 @@ from app.services.multivariate_analytics import (
     run_lasso_models,
 )
 from app.services.note_marker_insights import EntryWithMarkers
-from app.services.note_markers import entry_has_note
 from app.services.symptom_analytics import (
     DailySymptomEntry,
     SymptomMetricAssociation,
@@ -1710,12 +1710,12 @@ async def _load_analytics_inputs(
                     sleep_quality=entry.sleep_quality,
                 )
             )
-        except (ValueError, TypeError, LookupError) as exc:
+        except (ValueError, TypeError, LookupError, DecryptionError) as exc:
             # Narrow to the errors a corrupt/undecryptable row actually raises
-            # (bad enum -> LookupError/ValueError, wrong type -> TypeError) so
-            # an unexpected programming bug still fails the user's job loudly
-            # instead of silently shrinking the sample (cursor[bot] review,
-            # #772).
+            # (bad enum -> LookupError/ValueError, wrong type -> TypeError,
+            # bad ciphertext -> DecryptionError) so an unexpected programming
+            # bug still fails the user's job loudly instead of silently
+            # shrinking the sample (cursor[bot] review, #772).
             skipped += 1
             logger.warning(
                 "skipping unreadable analytics entry",
@@ -1743,6 +1743,18 @@ async def _load_analytics_inputs(
     )
 
 
+def _has_stored_note(*, has_note_enc: object, summary: str | None) -> bool:
+    """Presence of a note without decrypting ``Entry.note_enc``.
+
+    ``has_note_enc`` is the SQL ``note_enc IS NOT NULL`` flag (ciphertext
+    existence). The summary column is plaintext. Together they match
+    :func:`app.services.note_markers.entry_has_note` without triggering
+    ``EncryptedString.process_result_value``.
+    """
+
+    return bool(has_note_enc) or bool(summary and str(summary).strip())
+
+
 async def _load_entries_with_markers(
     db: AsyncSession,
     *,
@@ -1751,37 +1763,69 @@ async def _load_entries_with_markers(
 ) -> list[EntryWithMarkers]:
     from app.models.entry import NoteVisibility
 
+    # Same #772 P1 as ``_load_analytics_inputs``: ``EncryptedString`` decrypts
+    # ``note_enc`` during ``.all()``, *before* any per-row guard. This loader
+    # always runs from ``generate_and_store_insights`` after the analytics
+    # load, so deferring only there left one undecryptable note able to abort
+    # the whole user job. Select a SQL NULL-check instead of the ciphertext,
+    # and never call ``entry_has_note`` (it reads ``note_enc`` and would
+    # lazy-load the deferred column).
+    has_note_enc = Entry.note_enc.isnot(None).label("has_note_enc")
     entry_rows = await db.execute(
-        select(Entry).where(
+        select(Entry, has_note_enc)
+        .options(defer(Entry.note_enc))
+        .where(
             Entry.user_id == user_id,
             Entry.entry_date < as_of,
             Entry.note_visibility != NoteVisibility.HIDDEN.value,
         )
     )
-    entries = list(entry_rows.scalars().all())
-    if not entries:
+    rows = list(entry_rows.all())
+    if not rows:
         return []
 
     marker_rows = await db.execute(
         select(EntryNoteMarker).where(
             EntryNoteMarker.user_id == user_id,
-            EntryNoteMarker.entry_id.in_([entry.id for entry in entries]),
+            EntryNoteMarker.entry_id.in_([entry.id for entry, _has_note in rows]),
         )
     )
     markers_by_entry: dict[uuid.UUID, set[str]] = defaultdict(set)
     for marker in marker_rows.scalars().all():
         markers_by_entry[marker.entry_id].add(marker.marker)
 
-    return [
-        EntryWithMarkers(
-            entry_id=entry.id,
-            entry_date=entry.entry_date,
-            mood_score=entry.mood_score,
-            markers=frozenset(markers_by_entry.get(entry.id, set())),
-            has_note=entry_has_note(entry),
+    loaded: list[EntryWithMarkers] = []
+    skipped = 0
+    for entry, has_note_enc_flag in rows:
+        try:
+            loaded.append(
+                EntryWithMarkers(
+                    entry_id=entry.id,
+                    entry_date=entry.entry_date,
+                    mood_score=entry.mood_score,
+                    markers=frozenset(markers_by_entry.get(entry.id, set())),
+                    has_note=_has_stored_note(
+                        has_note_enc=has_note_enc_flag,
+                        summary=entry.note_summary_short,
+                    ),
+                )
+            )
+        except (ValueError, TypeError, LookupError, DecryptionError) as exc:
+            skipped += 1
+            logger.warning(
+                "skipping unreadable marker entry",
+                extra={"user_id": str(user_id), "entry_id": str(entry.id), "error": str(exc)},
+            )
+    if skipped:
+        logger.warning(
+            "marker input load skipped corrupt entries",
+            extra={
+                "user_id": str(user_id),
+                "skipped_entries": skipped,
+                "loaded_entries": len(loaded),
+            },
         )
-        for entry in entries
-    ]
+    return loaded
 
 
 async def load_analytics_data(
