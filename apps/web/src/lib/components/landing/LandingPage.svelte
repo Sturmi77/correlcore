@@ -30,6 +30,8 @@
     OBTAINIUM_URL,
     DOCS_SITE_URL,
     REPO_URL,
+    LICENSE_URL,
+    SECURITY_POLICY_URL,
   } from '$lib/constants/publicUrls';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
   import { instanceConfig } from '$lib/stores/instanceConfig';
@@ -69,14 +71,20 @@
       ? $_('landing.badge_hosted', { values: { version: badgeVersion } })
       : $_('landing.badge', { values: { version: badgeVersion } });
 
-  // Trust row (D2): four value props, each tied to a token-tinted marker.
+  // Trust row (D2 + I5 #735): four value props, each tied to a token-tinted
+  // marker AND linked inline to its proof — the skeptical self-host/dev audience
+  // can verify every claim instead of taking a bullet at face value. `internal`
+  // targets stay in-app (SvelteKit route); the rest open the doc/source in a new
+  // tab. GPG/SBOM are deliberately NOT claimed — releases aren't signed and carry
+  // no SBOM (only the APK SHA256, shown in the Android section), so asserting
+  // them would be the opposite of proof.
   const trustItems = [
-    { key: 'privacy', tone: 'mood' },
-    { key: 'selfhost', tone: 'energy' },
-    { key: 'offline', tone: 'sleep' },
+    { key: 'privacy', tone: 'mood', href: '/privacy', internal: true },
+    { key: 'selfhost', tone: 'energy', href: DOCS_SITE_URL, internal: false },
+    { key: 'offline', tone: 'sleep', href: DOCS_SITE_URL, internal: false },
     // B5 (#734): not 'stress' — a red marker reads as an error/warning on a
     // positive trust badge. Gold is distinct from the other three and neutral.
-    { key: 'license', tone: 'gold' },
+    { key: 'license', tone: 'gold', href: LICENSE_URL, internal: false },
   ] as const;
 
   // Maturity journey (A2 + C4): the three insight tiers, each carrying its
@@ -290,11 +298,31 @@
       <ul class="landing__trust" data-testid="landing-trust">
         {#each trustItems as item (item.key)}
           <li class="landing__trust-item" data-tone={item.tone}>
-            <span class="landing__trust-dot" aria-hidden="true"></span>
-            {$_(`landing.trust.${item.key}`)}
+            <a
+              class="landing__trust-link"
+              href={item.href}
+              target={item.internal ? undefined : '_blank'}
+              rel={item.internal ? undefined : 'noopener noreferrer'}
+              data-testid={`landing-trust-${item.key}`}
+            >
+              <span class="landing__trust-dot" aria-hidden="true"></span>
+              {$_(`landing.trust.${item.key}`)}
+            </a>
           </li>
         {/each}
       </ul>
+      <p class="landing__trust-verify">
+        {$_('landing.trust_verify')}
+        <a
+          class="landing__trust-verify-link"
+          href={SECURITY_POLICY_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="landing-trust-security"
+        >
+          {$_('landing.trust_verify_link')} →
+        </a>
+      </p>
     </div>
     <div class="landing__hero-visual">
       <span class="landing__hero-glow" aria-hidden="true"></span>
@@ -810,11 +838,51 @@
   .landing__trust-item {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
     font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.01em;
     color: var(--color-text-muted);
+  }
+
+  /* I5 (#735) — each claim is an inline link to its proof. Looks like the
+     surrounding label; the underline appears on hover/focus as the affordance. */
+  .landing__trust-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition-interactive);
+  }
+
+  .landing__trust-link:hover,
+  .landing__trust-link:focus-visible {
+    color: var(--color-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* I5 — a quiet line under the badges that names the "verify it yourself"
+     stance and links the one proof that isn't its own badge: the security
+     policy. */
+  .landing__trust-verify {
+    margin: var(--space-1) 0 0;
+    max-width: 40rem;
+    font-size: var(--text-2xs);
+    color: var(--color-text-faint);
+  }
+
+  .landing__trust-verify-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .landing__trust-verify-link:hover,
+  .landing__trust-verify-link:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .landing__trust-dot {

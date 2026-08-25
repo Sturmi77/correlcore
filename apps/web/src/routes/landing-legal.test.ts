@@ -39,6 +39,15 @@ describe('M10 marketing landing and legal pages', () => {
     expect(landingSource).toContain('landing-faq-');
   });
 
+  it('backs each trust claim with an inline proof link (#735 I5)', () => {
+    // Privacy → in-app policy; license → LICENSE; plus a security-policy link.
+    expect(landingSource).toContain('data-testid={`landing-trust-${item.key}`}');
+    expect(landingSource).toContain("href: '/privacy'");
+    expect(landingSource).toContain('LICENSE_URL');
+    expect(landingSource).toContain('data-testid="landing-trust-security"');
+    expect(landingSource).toContain('SECURITY_POLICY_URL');
+  });
+
   it('links privacy and impressum from the legal footer', () => {
     expect(landingSource).toContain('LegalFooter');
     expect(legalFooterSource).toContain('data-testid="legal-footer-privacy"');

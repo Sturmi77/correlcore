@@ -5,3 +5,7 @@ export const REPO_URL = 'https://github.com/Sturmi77/correlcore';
 export const ANDROID_RELEASES_URL = `${REPO_URL}/releases/latest`;
 /** Obtainium — installs and auto-updates the APK straight from GitHub Releases. */
 export const OBTAINIUM_URL = 'https://obtainium.imranr.dev/';
+/** AGPL-3.0 license text — proof for the "AGPL open source" trust claim (#735 I5). */
+export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
+/** Security policy — reporting + security architecture references (#735 I5). */
+export const SECURITY_POLICY_URL = `${REPO_URL}/blob/main/SECURITY.md`;

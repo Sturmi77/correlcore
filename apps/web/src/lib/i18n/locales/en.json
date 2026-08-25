@@ -1833,6 +1833,8 @@
       "offline": "Offline-capable",
       "license": "AGPL open source"
     },
+    "trust_verify": "Don't take our word for it — every claim links to its source.",
+    "trust_verify_link": "Read the security policy",
     "journey_heading": "Insights grow with your data",
     "journey_body": "Every association is ranked by confidence — from first patterns to robust — and grows more reliable the longer you track.",
     "weekday_heading": "Why some days are better",

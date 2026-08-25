@@ -1833,6 +1833,8 @@
       "offline": "Offline-fähig",
       "license": "AGPL-Open-Source"
     },
+    "trust_verify": "Nicht nur behauptet – jeder Punkt verlinkt auf seinen Beleg.",
+    "trust_verify_link": "Security-Policy lesen",
     "journey_heading": "Erkenntnisse wachsen mit deinen Daten",
     "journey_body": "Jeder Zusammenhang ist nach Konfidenz gestuft – von ersten Mustern bis robust – und wird zuverlässiger, je länger du trackst.",
     "weekday_heading": "Warum manche Tage besser sind",
