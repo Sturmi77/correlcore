@@ -20,12 +20,12 @@ two external dependencies it relies on and asserting it **recovers** instead
 of dying:
 
 - **Database connection faults** — the per-user insight loop must retry a
-  *transient* disconnect on a fresh session (#758 K), isolate a *persistent*
+  _transient_ disconnect on a fresh session (#758 K), isolate a _persistent_
   fault to the one user while the rest of the batch still runs (#752), and
   never let one user's failure abort the scheduled run.
-- **Redis connection faults** — the on-demand regenerate cooldown fails *open*
+- **Redis connection faults** — the on-demand regenerate cooldown fails _open_
   (a Redis outage must not 500 the endpoint), and the post-batch debounce
-  *skips* rather than crash the bulk-import request or start a regeneration
+  _skips_ rather than crash the bulk-import request or start a regeneration
   storm (#759).
 
 Faults are injected at the mock boundary — a session or Redis client that

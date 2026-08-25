@@ -36,7 +36,7 @@ Testing)** und **Sprint 7 (Quality-Gate / Closeout)**.
 ### 1.1 Tracking-Loch (Meta-Gap — zuerst schließen)
 
 Issue [#429](https://github.com/Sturmi77/correlcore/issues/429) wurde am
-2026-07-23 als *completed* geschlossen. Im Abschlusskommentar steht explizit:
+2026-07-23 als _completed_ geschlossen. Im Abschlusskommentar steht explizit:
 
 > „Checklist C (M11 exit) was never started and is not tracked anywhere else …
 > If the Play track is still intended, it needs its own issue.“
@@ -53,28 +53,29 @@ sonst ist der Restweg unverfolgt.
 
 ## 2. Statusmatrix — was steht, was fehlt
 
-| Bereich | Status | Blocker-Typ |
-| ------- | ------ | ----------- |
-| Capacitor-Shell, Debug-/Release-Build, Signing | ✅ Done | — |
-| Signierte APK/AAB an GitHub Releases (Sideload) | ✅ Done, produktiv | — |
-| Bearer-Auth + API-Base-URL (ADR-0006) | ✅ Code done; Device-Smoke offen | Manuell |
-| Glance-Widget + `GET /widget/summary` | ✅ Code done; Device-QA offen | Manuell |
-| FCM-Registrierung + Device-Token-API | ✅ Code done; Live-Push offen | Ops (Firebase) |
-| **Play Console Account + App** | ❌ Nicht begonnen | Ops (Mensch, $25) |
-| **Play App Signing (Upload-Key = CI-Keystore)** | ❌ Nicht begonnen | Ops (Mensch) |
-| **Internal-Testing-Track (AAB-Upload)** | ❌ Nicht begonnen | Ops (Mensch) |
-| **Store-Listing-Assets** | ❌ Nicht begonnen | Content |
-| **Data Safety Form** | ❌ Nicht begonnen | Content + DSGVO |
-| **Health-Connect-Declaration** | ⚠️ Risiko, Entscheidung offen | **Code/Produkt** |
-| **Pre-Launch-Report clean** | ❌ Nicht begonnen | Ops (Google-Devices) |
-| **Quality-Gate + Security-Audit (§9)** | ❌ Nicht begonnen | Review |
-| **DSGVO-Checkpoint M11 (3 Items)** | ❌ Nicht begonnen | DSGVO |
+| Bereich                                         | Status                           | Blocker-Typ          |
+| ----------------------------------------------- | -------------------------------- | -------------------- |
+| Capacitor-Shell, Debug-/Release-Build, Signing  | ✅ Done                          | —                    |
+| Signierte APK/AAB an GitHub Releases (Sideload) | ✅ Done, produktiv               | —                    |
+| Bearer-Auth + API-Base-URL (ADR-0006)           | ✅ Code done; Device-Smoke offen | Manuell              |
+| Glance-Widget + `GET /widget/summary`           | ✅ Code done; Device-QA offen    | Manuell              |
+| FCM-Registrierung + Device-Token-API            | ✅ Code done; Live-Push offen    | Ops (Firebase)       |
+| **Play Console Account + App**                  | ❌ Nicht begonnen                | Ops (Mensch, $25)    |
+| **Play App Signing (Upload-Key = CI-Keystore)** | ❌ Nicht begonnen                | Ops (Mensch)         |
+| **Internal-Testing-Track (AAB-Upload)**         | ❌ Nicht begonnen                | Ops (Mensch)         |
+| **Store-Listing-Assets**                        | ❌ Nicht begonnen                | Content              |
+| **Data Safety Form**                            | ❌ Nicht begonnen                | Content + DSGVO      |
+| **Health-Connect-Declaration**                  | ⚠️ Risiko, Entscheidung offen    | **Code/Produkt**     |
+| **Pre-Launch-Report clean**                     | ❌ Nicht begonnen                | Ops (Google-Devices) |
+| **Quality-Gate + Security-Audit (§9)**          | ❌ Nicht begonnen                | Review               |
+| **DSGVO-Checkpoint M11 (3 Items)**              | ❌ Nicht begonnen                | DSGVO                |
 
 ---
 
 ## 3. Detail-Gap nach Arbeitspaketen
 
 ### AP-1 — Play Console Bootstrap (Ops, Mensch)
+
 - [ ] Google-Play-Console-Entwicklerkonto ($25 einmalig)
 - [ ] App `de.correlcore.app` anlegen (Package-ID final = `de.correlcore.app`,
       konsistent mit Manifest/`build.gradle`)
@@ -88,6 +89,7 @@ sonst ist der Restweg unverfolgt.
 > Vorbereitbar: Upload-Anleitung + Version-Mapping (tag → versionCode) prüfen.
 
 ### AP-2 — Store-Listing-Assets (Content)
+
 - [ ] Kurzbeschreibung (≤ 80 Zeichen), Langbeschreibung (≤ 4000 Zeichen) —
       DE + EN, keine Health-Claims, konsistent mit README/Landing-Wording
 - [ ] Feature-Graphic 1024×500, App-Icon 512×512 (Brand-Assets vorhanden unter
@@ -100,6 +102,7 @@ sonst ist der Restweg unverfolgt.
 > mit Zielformaten liefern; Screenshots erfordern echte Geräte/Emulator.
 
 ### AP-3 — Data Safety & Privacy (DSGVO-kritisch, review-blockierend)
+
 - [ ] Data-Safety-Formular wahrheitsgemäß, abgestimmt mit
       [ADR-0033](adr/0033-sensitive-health-data-handling-cycle-signals.md)
       (Zyklus + HC-Realität) — **nur deklarieren, was wirklich ausgeliefert wird**
@@ -111,6 +114,7 @@ sonst ist der Restweg unverfolgt.
 > welche Daten, Zweck, Verschlüsselung, Löschung) als Vorlage für das Formular.
 
 ### AP-4 — Firebase / FCM (Sprint-5-Exit, Ops — nicht Closed-Testing-blockierend)
+
 - [ ] Firebase-Projekt; Android-App `de.correlcore.app`
 - [ ] `google-services.json` → `apps/android/android/app/` (lokal/CI-Secret)
 - [ ] Service-Account (FCM Admin) → API-Secret `FCM_CREDENTIALS_JSON`
@@ -121,11 +125,13 @@ sonst ist der Restweg unverfolgt.
 > setzt `FCM_ENABLED=false`). Offenes Akzeptanzkriterium, aber **kein** Exit-Blocker.
 
 ### AP-5 — Geräte-QA & Pre-Launch (manuell / Google-Devices)
+
 - [ ] Widget: hell/dunkel, Android 12 & 14, 4×1 & 4×2 ohne Truncation
 - [ ] Device-Smoke Auth: Register/Login + Entry aus signierter APK
 - [ ] Pre-Launch-Report: keine kritischen Crashes (Google testet auf Realgeräten)
 
 ### AP-6 — Quality-Gate & Closeout (Sprint 7)
+
 - [ ] Code-Quality-Review + Security-Audit gemäß Design-Doc §9
 - [ ] DSGVO-Checkpoint M11 (Data Safety, Privacy-URL, HC-Deklaration)
 - [ ] `CHANGELOG`, `M11_NOTES`-Checkboxen, README-Milestone-Zeile aktualisieren
@@ -145,27 +151,28 @@ android.permission.health.READ_HEART_RATE
 ```
 
 `HealthConnectPlugin.kt` liest Schlaf + Herzfrequenz funktional aus. **Aber:**
-laut Klassenkommentar ist *„Writing imported values into entries is Sprint 4“*
+laut Klassenkommentar ist _„Writing imported values into entries is Sprint 4“_
 (M8 Sprint 4) — der **nutzerseitige Feature-Loop** (Import sichtbar in Entries)
 ist möglicherweise noch nicht vollständig ausgeliefert.
 
 **Warum das Play blockiert:** Google verlangt für Apps mit Health-Connect-
 Permissions:
+
 1. ein separates **Health-Connect-Declaration-Formular**,
 2. **Nachweis der aktiven Nutzung** in einem ausgelieferten Feature
    (i. d. R. Demo-Video),
 3. einen **HC-spezifischen Datenschutz-Abschnitt**.
 
 Deklarierte, aber im UI nicht nutzbare HC-Permissions führen regelmäßig zur
-**Ablehnung**. Der Sprint-Plan warnt bereits explizit: *„if HC import not ready,
-do not declare unused permissions.“*
+**Ablehnung**. Der Sprint-Plan warnt bereits explizit: _„if HC import not ready,
+do not declare unused permissions.“_
 
 **Entscheidung: ✅ Option A — bestätigt vom Owner (2026-08-18, #718).**
 
-| Option | Inhalt | Status |
-| ------ | ------ | ------ |
-| **A — HC aus dem Play-Build entfernen** | Product-Flavor / Build ohne HC-Permissions & HC-Plugin für Closed Testing; HC bleibt im Sideload-Build | **✅ Gewählt** — risikoärmster Closed-Testing-Exit ohne HC-Review |
-| **B — HC-Loop fertigstellen + deklarieren** | M8-Sprint-4-Import in Entries fertig, Demo-Video, HC-Privacy | Verworfen für M11 — würde Exit an M8 koppeln |
+| Option                                      | Inhalt                                                                                                 | Status                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| **A — HC aus dem Play-Build entfernen**     | Product-Flavor / Build ohne HC-Permissions & HC-Plugin für Closed Testing; HC bleibt im Sideload-Build | **✅ Gewählt** — risikoärmster Closed-Testing-Exit ohne HC-Review |
+| **B — HC-Loop fertigstellen + deklarieren** | M8-Sprint-4-Import in Entries fertig, Demo-Video, HC-Privacy                                           | Verworfen für M11 — würde Exit an M8 koppeln                      |
 
 Der Sprint-Plan nennt Full-HC-Import ausdrücklich als **Non-Goal für M11**
 („do not block Closed Testing on full Garmin sync”). Option A hält M11 und
@@ -212,11 +219,13 @@ Privacy/Data-Safety-Update** → HC **einmal mit dem vollen geplanten Read-Set**
 reaktivieren, nicht in Etappen.
 
 **0. Vorbedingung (👤 Produkt) — der eigentliche Auslöser**
+
 - [ ] Nutzersichtbares, **ausgeliefertes** HC-Feature existiert (HC-Werte in
       Entries sichtbar/nutzbar). Ohne das reproduziert die Deklaration exakt das
       Ablehnungsrisiko, das Option A vermeidet.
 
 **1. Code/Build (🤖 Agent, klein)**
+
 - [ ] HC im `play`-Flavor reaktivieren: `health.READ_*`-Permissions, `<queries>`,
       `overrideLibrary`, HC-Rationale-Intent-Filter + `ViewPermissionUsageActivity`-
       Alias, `HealthConnectPlugin`-Registrierung, `connect-client`-Dependency zurück
@@ -228,6 +237,7 @@ reaktivieren, nicht in Etappen.
       bereits per `getSdkStatus`-Guard + `overrideLibrary` abgesichert).
 
 **2. Play Console / HC-Deklaration (👤 Operator, review-schwer)**
+
 - [ ] Health-Connect-Declaration-Formular je Datentyp mit konkretem Use-Case.
 - [ ] Demo-Video: In-App-Feature nutzt jede Permission sichtbar (Google-Pflicht).
 - [ ] HC-Datennutzungs-Policy-Konformität (keine Werbe-Nutzung, kein unzulässiges
@@ -235,6 +245,7 @@ reaktivieren, nicht in Etappen.
 - [ ] Zusätzliche Google-Review-Runde einplanen.
 
 **3. Datenschutz/DSGVO (🤖 Agent-Entwurf → 👤 Operator)**
+
 - [ ] PRIVACY.md + öffentliche URL um HC-Abschnitt ergänzen (Daten, Zweck,
       Aufbewahrung, Löschung, kein Teilen).
 - [ ] Data-Safety: die in `PLAY_DATA_SAFETY_MAPPING.md` §1 auf AP-HC gegatete
@@ -242,6 +253,7 @@ reaktivieren, nicht in Etappen.
 - [ ] ADR-0033 §8 + Mapping-Doku + PRIVACY.md synchron halten (Review vor jeder Einreichung).
 
 **4. Datenminimierung (Grundregel)**
+
 - [ ] Jede deklarierte Permission zeigt auf ein **geshipptes** Feature — kein HR
       deklarieren, wenn nur Schlaf sichtbar ist. Read-Set und UI deckungsgleich halten.
 
@@ -290,16 +302,16 @@ flowchart TD
 Umbrella + ein Issue je Arbeitspaket, jeweils mit Checkliste und Wer/Wie pro
 Schritt, als GitHub-Sub-Issues unter dem Umbrella verknüpft:
 
-| Issue | Arbeitspaket |
-| ----- | ------------ |
-| **#717** | Umbrella — ops(M11-exit): Play Console, Data Safety & Closed Testing |
+| Issue    | Arbeitspaket                                                                      |
+| -------- | --------------------------------------------------------------------------------- |
+| **#717** | Umbrella — ops(M11-exit): Play Console, Data Safety & Closed Testing              |
 | **#718** | AP-HC — Health-Connect-Deklaration entscheiden + Play-Build ohne HC (Risiko-Gate) |
-| **#719** | AP-1 — Play Console Bootstrap (Account, App, App Signing, AAB Internal) |
-| **#720** | AP-2 — Store-Listing-Assets (Texte DE/EN, Grafiken, Screenshots) |
-| **#721** | AP-3 — Data Safety Form + Privacy-URL + HC-Deklaration |
-| **#722** | AP-4 — Firebase/FCM Live-Push (nicht Closed-Testing-blockierend) |
-| **#723** | AP-5 — Device-QA + Pre-Launch-Report |
-| **#724** | AP-6 — Quality-Gate + DSGVO-Checkpoint + Closeout |
+| **#719** | AP-1 — Play Console Bootstrap (Account, App, App Signing, AAB Internal)           |
+| **#720** | AP-2 — Store-Listing-Assets (Texte DE/EN, Grafiken, Screenshots)                  |
+| **#721** | AP-3 — Data Safety Form + Privacy-URL + HC-Deklaration                            |
+| **#722** | AP-4 — Firebase/FCM Live-Push (nicht Closed-Testing-blockierend)                  |
+| **#723** | AP-5 — Device-QA + Pre-Launch-Report                                              |
+| **#724** | AP-6 — Quality-Gate + DSGVO-Checkpoint + Closeout                                 |
 
 Rollen-Legende in jedem Issue: 👤 Operator (@Sturmi77) · 🤖 Agent (Claude Code)
 · 🔍 Reviewer.
