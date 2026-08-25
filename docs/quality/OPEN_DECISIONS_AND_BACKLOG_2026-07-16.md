@@ -21,14 +21,15 @@ Living tracker. Update when a decision lands.
 
 ## Still open
 
-| ID                 | Topic                                              | Notes                              |
-| ------------------ | -------------------------------------------------- | ---------------------------------- |
-| D-I1               | Generate secondary compose stacks from one source  | Matrix documented; codegen not yet |
-| D-I4               | Stamp older GUI/quality audits as Historical       | Opportunistic                      |
-| Digest WP1         | Prefer stored digest on GET                        | See completion plan                |
-| LayerChart revisit | When Trends lasagna is scheduled + bundle measured | Spike criteria                     |
-| Media / HC         | Deferred M13 / M8+M11                              | Not reopened here                  |
-| External pentest   | Still pending (`M9_PENTEST.md`)                    |                                    |
+| ID                 | Topic                                              | Notes / track                                                                            |
+| ------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| D-I1               | Generate secondary compose stacks from one source  | [#781](https://github.com/Sturmi77/correlcore/issues/781); matrix in `COMPOSE_STACKS.md` |
+| D-I4               | Stamp older GUI/quality audits as Historical       | Opportunistic; also #776 docs hygiene                                                    |
+| Digest WP1         | Prefer stored digest on GET                        | See completion plan                                                                      |
+| LayerChart revisit | When Trends lasagna is scheduled + bundle measured | Spike criteria                                                                           |
+| Media / HC         | Deferred M13 / M8+M11                              | Not reopened here                                                                        |
+| External pentest   | Still pending (`M9_PENTEST.md`)                    | [#782](https://github.com/Sturmi77/correlcore/issues/782)                                |
+| Audit 2026-08-25   | Security / quality / maintainability follow-ups    | Epic [#776](https://github.com/Sturmi77/correlcore/issues/776); living audit refreshed   |
 
 ---
 
