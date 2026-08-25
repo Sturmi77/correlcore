@@ -22,21 +22,29 @@ describe('M10 marketing landing and legal pages', () => {
     expect(homeSource).not.toContain('Pre-Alpha');
   });
 
-  it('exposes login, APK download, and register CTAs on the landing page', () => {
+  it('exposes login and register CTAs; APK stays in the Android section (#735 I4)', () => {
     expect(landingSource).toContain('data-testid="landing-cta-login"');
     expect(landingSource).toContain('href="/auth/login"');
-    expect(landingSource).toContain('data-testid="landing-cta-apk"');
-    expect(landingSource).toContain('ANDROID_RELEASES_URL');
     expect(landingSource).toContain('data-testid="landing-cta-register"');
     expect(landingSource).toContain('href="/auth/register"');
+    expect(landingSource).not.toContain('data-testid="landing-cta-apk"');
+    expect(landingSource).toContain('data-testid="landing-android-download"');
+    expect(landingSource).toContain('ANDROID_RELEASES_URL');
   });
 
-  it('uses split-hero bento structure from the marketing handoff', () => {
-    expect(landingSource).toContain('BrowserFrameMock');
-    expect(landingSource).toContain('landing__bento');
-    expect(landingSource).toContain('landing-feature-1');
-    expect(landingSource).toContain('landing-feature-2');
+  it('shows the daily check-in as the hero product shot (#735 I2)', () => {
+    expect(landingSource).toContain('LandingCheckinMock');
+    expect(landingSource).toContain('data-testid="landing-paths"');
+    expect(landingSource).toContain('landing-path-try');
+    expect(landingSource).toContain('landing-path-host');
     expect(landingSource).toContain('landing-faq-');
+  });
+
+  it('links trust claims to backing documents (#735 I5)', () => {
+    expect(landingSource).toContain('data-testid={`landing-trust-${item.key}`}');
+    expect(landingSource).toContain("href: '/privacy'");
+    expect(landingSource).toContain('SECURITY_URL');
+    expect(landingSource).toContain('LICENSE_URL');
   });
 
   it('links privacy and impressum from the legal footer', () => {

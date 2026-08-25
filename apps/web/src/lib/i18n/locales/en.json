@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "CorrelCore",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "tagline": "Understand why some days are good and others are bad."
   },
   "nav": {
@@ -1812,84 +1812,85 @@
     "badge": "Self-hosted · v{version}",
     "badge_hosted": "Hosted · v{version}",
     "hero_title": "Understand why some days are good — and others aren't.",
-    "hero_subtitle": "CorrelCore is privacy-first correlation analysis for your wellbeing. Log 60 seconds a day; the analysis shows which factors actually connect — no gamification, ever.",
-    "hero_micro": "Spearman, lag and multivariate analysis — FDR-corrected and ranked by confidence.",
+    "hero_subtitle": "Log 60 seconds a day. The analysis shows which factors actually relate to mood and energy — on your instance, with no third-party tracking.",
+    "hero_micro": "Associations are ranked by how confident they are, and at what delay they show up.",
     "cta_register": "Create account",
     "cta_login": "Log in",
-    "cta_apk": "Download APK",
     "cta_selfhost": "Self-host",
     "cta_docs": "Documentation",
     "lang_toggle": "Switch language to {locale}",
-    "features_heading": "What CorrelCore actually does",
-    "previews_heading": "A look inside the app",
-    "preview_matrix": "Insight matrix: associations ranked by effect size.",
-    "preview_card": "Insight card: one observation, stated plainly.",
-    "preview_heatmap": "Tag heatmap: what co-occurs, grouped by cluster.",
-    "preview_lag": "Lag heatmap: at what time delay the association is strongest.",
+    "example_data": "Sample data",
+    "paths_heading": "Two ways in",
+    "paths": {
+      "try": {
+        "title": "Try it",
+        "body": "Create an account, do the daily check-in, let patterns emerge. No app store required.",
+        "cta": "Create account"
+      },
+      "try_closed": {
+        "body": "This instance is not accepting new accounts right now. If you already have one, you can log in.",
+        "cta": "Log in"
+      },
+      "host": {
+        "title": "Run it yourself",
+        "body": "Docker Compose on a NAS, VPS, or spare machine. Your data stays with you.",
+        "cta": "Open the install guide"
+      }
+    },
+    "checkin": {
+      "today": "Today",
+      "duration": "about 60 seconds",
+      "caption": "The daily check-in: mood, energy, stress, sleep, tags.",
+      "mood": "Mood",
+      "energy": "Energy",
+      "stress": "Stress",
+      "sleep": "Sleep",
+      "tags": "Tags",
+      "symptoms": "Symptoms"
+    },
+    "previews_heading": "What you get from it",
+    "preview_card": "One observation in plain language — not a dashboard of raw scores.",
+    "preview_lag": "Not just whether, but when: poor sleep here shows up in mood about two days later.",
     "trust": {
       "privacy": "Privacy-first",
-      "selfhost": "Self-hosted",
+      "notelemetry": "No telemetry",
       "offline": "Offline-capable",
       "license": "AGPL open source"
     },
     "journey_heading": "Insights grow with your data",
-    "journey_body": "Every association is ranked by confidence — from first patterns to robust. No pressure, no streaks: just growing evidence the longer you track.",
+    "journey_body": "Every association is ranked by confidence — from first patterns to robust. No gamification: just evidence that gets stronger over time.",
     "weekday_heading": "Why some days are better",
-    "weekday_caption": "Weekday patterns: average mood per day, with the day's standout signal (product preview).",
-    "ticker_label": "Example insights",
-    "ticker": {
-      "1": "Sleep → mood · +2 days · r = 0.62",
-      "2": "Exercise → energy · next day · r = 0.55",
-      "3": "Remote work → less stress · r = 0.38",
-      "4": "Coffee → energy · same day · r = 0.24"
-    },
+    "weekday_caption": "Average mood by weekday, with that day's standout signal.",
+    "weekday_legend_best": "Highest mood",
+    "weekday_legend_worst": "Lowest mood",
     "demo": {
       "poor_sleep": "Poor sleep",
       "low_energy": "Low energy",
       "headache": "Headache",
       "exercise": "Exercise",
-      "good_mood": "Good mood",
       "coffee": "Coffee",
       "home_office": "Home office",
       "friday": "Friday",
-      "cluster_poor_sleep": "Poor-sleep cluster",
-      "cluster_active": "Active days",
       "stmt_exercise_mood": "Days with exercise tend to show higher mood.",
-      "stmt_sleep_mood": "Poor-sleep days tend to show lower mood.",
-      "stmt_coffee_energy": "Coffee days tend to show slightly higher energy.",
       "stmt_lag_sleep_mood": "Poor sleep tends to lower mood about two days later.",
       "stmt_lag_exercise_energy": "Exercise tends to raise energy the next day.",
       "stmt_weekday_friday": "Fridays tend to show the highest mood."
     },
     "android_heading": "Android app",
-    "android_body": "A signed APK straight from GitHub Releases. Subscribe to the repo with Obtainium to get updates automatically — no app store required.",
+    "android_body": "A signed APK from GitHub Releases. Obtainium can auto-update it — no app store required.",
     "android_download": "Download APK",
     "android_obtainium": "Get it with Obtainium (auto-updates)",
     "android_sha256": "Every release ships SHA256SUMS.txt so you can verify the download.",
-    "features": {
-      "1": {
-        "title": "Correlations, not raw data",
-        "body": "Statistical analysis surfaces which factors — sleep, exercise, remote-work days — actually relate to your mood and energy."
-      },
-      "2": {
-        "title": "60 seconds a day",
-        "body": "Mood, energy, stress, tags and symptoms — quick to log, and the data the analysis draws its correlations from."
-      },
-      "3": {
-        "title": "No gamification, ever",
-        "body": "No performance pressure, no artificial urgency. Just tracking consistency, for your own reflection."
-      }
+    "selfhost_title": "For self-hosters",
+    "selfhost_body": "CorrelCore runs on your own server. No account with us, no telemetry, no third-party analytics.",
+    "selfhost_ops": {
+      "runtime": "Docker Compose; PostgreSQL 16 and Redis",
+      "data": "Persistent volumes; backups covered in the install guide",
+      "edge": "Reverse proxy and TLS (Nginx or Traefik)",
+      "hardware": "x86 and ARM, including NAS",
+      "updates": "Pull the image, restart Compose"
     },
-    "metric_mood": "Mood",
-    "metric_energy": "Energy",
-    "metric_stress": "Stress",
-    "metric_consistency": "Tracking consistency",
-    "viz_correlations": "Insight matrix, insight card, and tag heatmap (product preview)",
-    "selfhost_title": "Your data stays yours",
-    "selfhost_body": "CorrelCore runs on your own server — a NAS, a VPS, a spare machine. No account with us, no telemetry, no third-party analytics. One command gets you a running instance.",
-    "docker_label": "docker compose up -d",
-    "tech_title": "Open source, inspectable",
-    "tech_body": "FastAPI + PostgreSQL backend, SvelteKit web frontend. No hidden logic — read the source, self-host it, or contribute.",
+    "docker_label": "docker compose -f docker-compose.quickstart.yml up -d",
     "tech_github": "View source on GitHub",
     "faq_heading": "Questions",
     "faq": {
@@ -1899,7 +1900,8 @@
       },
       "2": {
         "q": "Do I need to self-host it?",
-        "a": "Yes, for now — CorrelCore is a self-hosted release. Docker Compose brings up the full stack in minutes; offline-capable mobile support is planned."
+        "a_hosted": "No. You can create an account here, or run your own instance — both are supported.",
+        "a_selfhost": "This instance is self-hosted. There is also a hosted option at correlcore.com if you would rather not operate it yourself."
       },
       "3": {
         "q": "What if I only have a few days of data?",

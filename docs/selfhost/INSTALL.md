@@ -9,6 +9,7 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 
 **Related:** [`BETA_CHECKLIST.md`](BETA_CHECKLIST.md) · [`../frontend/USER_WORKFLOWS.md`](../frontend/USER_WORKFLOWS.md) ·
 [`CONTAINER_IMAGES.md`](CONTAINER_IMAGES.md) ·
+[`UPGRADE_1_5_0.md`](UPGRADE_1_5_0.md) ·
 [`M10_COMPOSE_UPGRADE.md`](M10_COMPOSE_UPGRADE.md) ·
 [`../adr/0005-verschluesselung-at-rest.md`](../adr/0005-verschluesselung-at-rest.md)
 
@@ -24,7 +25,8 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 
 **Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
 
-Existing VPS operators upgrading from pre-M10 compose: [`M10_COMPOSE_UPGRADE.md`](M10_COMPOSE_UPGRADE.md).
+Existing operators on **v1.4.0** (or any earlier 1.x pin): [`UPGRADE_1_5_0.md`](UPGRADE_1_5_0.md).
+Pre-M10 compose (MinIO): [`M10_COMPOSE_UPGRADE.md`](M10_COMPOSE_UPGRADE.md).
 
 ---
 
@@ -525,7 +527,7 @@ Pin images for reproducible deploys:
 
 ```env
 IMAGE_REGISTRY=ghcr.io/sturmi77   # or docker.io/<username> for Docker Hub
-IMAGE_TAG=v1.3.0                  # any v1.x pin works; or sha-<short> from GHCR / Docker Hub
+IMAGE_TAG=v1.5.0                  # any v1.x pin works; or sha-<short> from GHCR / Docker Hub
 ```
 
 See [`CONTAINER_IMAGES.md`](CONTAINER_IMAGES.md) for registry and tag details.

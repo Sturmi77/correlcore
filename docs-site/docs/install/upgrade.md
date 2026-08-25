@@ -1,31 +1,86 @@
-# Upgrade guide — post-1.0.x images & M10 compose
+# Upgrade guide — v1.5.0 compose update
 
-Last updated: 2026-07-19
+Last updated: 2026-08-25
 
-## Post-1.0.x image upgrades (current)
+Canonical long form (rollback, troubleshooting, Alembic notes):
+[`docs/selfhost/UPGRADE_1_5_0.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/selfhost/UPGRADE_1_5_0.md)
+in the repository.
 
-Selfhost operators on the **1.0.x** line should pin `IMAGE_TAG` to the latest
-release they trust (e.g. **`v1.3.0`**; any **`v1.x`** pin works), then pull and
-restart:
+## v1.5.0 (current)
+
+From **v1.4.0** (or any earlier 1.x pin) to **v1.5.0**.
+
+| Who                  | Action                                                                                        |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| Production / homelab | Pin `IMAGE_TAG=v1.5.0`, drop `digest` from `COMPOSE_PROFILES`, pull, `up -d --remove-orphans` |
+| `.env`               | **No required new vars.** Optional: `WORKER_STATUS_API_KEY`, `APP_VERSION=1.5.0`              |
+| Database             | `migrate` applies Alembic **042** (`last_seen_digest_at`)                                     |
+
+Ops traps: leftover **`digest-worker`** (duplicate weekly digests) and mixing a
+**1.5.0 worker image** with a **1.4.0 `command`** (or the reverse).
+
+### 1. Pin the release
+
+```env
+IMAGE_TAG=v1.5.0
+APP_VERSION=1.5.0
+```
+
+### 2. Drop the old digest profile
+
+If `.env` has `COMPOSE_PROFILES=…,digest`, remove `digest`. Then:
+
+```bash
+docker compose rm -sf digest-worker
+```
+
+Weekly digest now runs inside the analytics `worker` on Sundays (user opt-in
+under Settings → Analysis). Quickstart still needs `COMPOSE_PROFILES=worker`.
+
+### 3. Pull and recreate
 
 ```bash
 cd correlcore/infra/docker
+docker compose pull
+docker compose up -d --remove-orphans
+```
 
-# Set in .env, e.g. IMAGE_TAG=v1.3.0
+Quickstart: add `-f docker-compose.quickstart.yml` to both commands.
+
+### 4. Verify
+
+```bash
+docker compose ps
+docker compose logs migrate --tail=30
+curl -sf "https://${DOMAIN}/api/v1/health"
+```
+
+`migrate` should exit 0 (upgrade to 042 or already at head). Worker stays up
+via `supercronic` (03:00 UTC `--once`); trigger a job with
+`docker compose exec worker python -m app.workers.analytics --once` if you
+do not want to wait.
+
+Optional freshness probe: `GET /api/v1/worker/status` (static
+`WORKER_STATUS_API_KEY` or an admin session).
+
+Rollback: set `IMAGE_TAG=v1.4.0` and `up -d` again. Do not restore
+`digest-worker` unless you also revert the in-worker digest job.
+
+---
+
+## Older 1.x image pins
+
+Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.5.0`**.
+
+```bash
+cd correlcore/infra/docker
 grep IMAGE_TAG .env
-
 docker compose pull
 docker compose up -d
 ```
 
-Optional: also set `APP_VERSION=1.3.0` so `/api/v1/health` and error-tracking
-release labels match the image. Leaving an older `APP_VERSION` in a retained
-`.env` does not block the upgrade.
-
 The `migrate` service runs `alembic upgrade head` before the API starts.
-See [Container images](container-images.md) for registry and tag details.
-
-**Related:** [Install overview](index.md)
+See [Container images](container-images.md).
 
 ---
 
@@ -46,11 +101,9 @@ Read this before `git pull` if you run
 M10 Sprint 1 is designed **non-breaking**: mood tracking, auth, insights
 (worker), and HTTPS (Traefik) continue without new flags or profile knowledge.
 
----
+### What changes (Sprint 1)
 
-## What changes (Sprint 1)
-
-### Production `docker-compose.yml`
+#### Production `docker-compose.yml`
 
 | Change type   | Detail                                                    |
 | ------------- | --------------------------------------------------------- |
@@ -62,19 +115,9 @@ M10 Sprint 1 is designed **non-breaking**: mood tracking, auth, insights
 
 Container count drops from **12 → 10** (two unused MinIO containers removed).
 
-### New files (quickstart path — optional for existing VPS)
+### Your `.env` — what to change
 
-- `docker-compose.quickstart.yml`
-- `.env.quickstart.example`
-- `scripts/bootstrap-selfhost-env.sh --quickstart`
-
-Existing VPS operators **do not need** the quickstart compose unless switching paths.
-
----
-
-## Your `.env` — what to change
-
-### Required: nothing new
+#### Required: nothing new
 
 Keep all existing secrets:
 
@@ -82,7 +125,7 @@ Keep all existing secrets:
 - `POSTGRES_*`, `APP_DB_*`, `REDIS_PASSWORD`
 - `DOMAIN`, `CORS_ORIGINS`, `SMTP_*`
 
-### Recommended: verify before upgrade
+#### Recommended: verify before upgrade
 
 ```bash
 grep -E '^(FRONTEND_BASE_URL|DOMAIN|SMTP_HOST|CORS_ORIGINS)=' .env
@@ -96,15 +139,13 @@ grep -E '^(FRONTEND_BASE_URL|DOMAIN|SMTP_HOST|CORS_ORIGINS)=' .env
 
 Verify/reset email links depend on `FRONTEND_BASE_URL`.
 
-### Optional: remove (harmless if left)
+#### Optional: remove (harmless if left)
 
 `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_ENDPOINT`, `MINIO_BUCKET_PHOTOS`, `MINIO_SECURE`
 
 The API no longer reads these from compose after Sprint 1.
 
----
-
-## Upgrade procedure
+### Upgrade procedure (M10)
 
 ```bash
 cd correlcore/infra/docker
@@ -117,31 +158,7 @@ docker compose pull
 docker compose up -d
 ```
 
-### What happens on `up -d`
-
-1. **`migrate`** runs once (`alembic upgrade head`) — idempotent
-2. **MinIO containers** are stopped and removed (no product feature used them)
-3. **api, web, worker, traefik** restart with updated config
-
-### Verify
-
-```bash
-docker compose ps
-curl -sf "https://${DOMAIN}/api/v1/health"
-```
-
 Expected running services: traefik, socket-proxy, api, web, worker,
 postgres, redis, mailpit, migrate (exited 0).
-
----
-
-## Troubleshooting
-
-| Symptom                 | Likely cause                        | Fix                                            |
-| ----------------------- | ----------------------------------- | ---------------------------------------------- |
-| API stuck waiting       | Old compose has `depends_on: minio` | Ensure Sprint 1 compose is fully pulled        |
-| Verify email wrong host | `FRONTEND_BASE_URL` unset           | Set `https://${DOMAIN}` in `.env`, restart api |
-| `migrate` exits 1       | DB credentials                      | Check passwords (no `@` or `/`)                |
-| Insights empty          | Worker not running                  | `correlcore-worker` should be **running**      |
 
 MinIO returns with **M13** photo upload via `--profile storage` (planned).
