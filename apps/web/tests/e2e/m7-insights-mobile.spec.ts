@@ -54,7 +54,9 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await page.getByRole('button', { name: '90D' }).tap();
   await expect(page.getByRole('button', { name: '90D' })).toHaveAttribute('aria-pressed', 'true');
   const tagCooccurrenceCell = page
-    .getByRole('gridcell', { name: /Focus work and Walk together/i })
+    .getByRole('gridcell', {
+      name: /Walk.*Caffeine together|Caffeine.*Walk together|Walk.*Meetings together|Meetings.*Walk together|Deep work.*Walk together|Walk.*Deep work together/i,
+    })
     .first();
   await tagCooccurrenceCell.scrollIntoViewIfNeeded();
   await tagCooccurrenceCell.evaluate((element) => {

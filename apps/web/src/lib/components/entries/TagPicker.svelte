@@ -26,6 +26,7 @@
   import { TAG_CATEGORIES, MAX_TAGS_PER_ENTRY, type TagCategory } from '$lib/api/tags';
   import CategoryIcon from '$lib/components/common/CategoryIcon.svelte';
   import { categoryColorForCurrentTheme } from '$lib/constants/tagDefaults';
+  import { localizedCatalogName } from '$lib/utils/localizedCatalogName';
 
   /** Two-way bound: list of selected tag IDs. */
   export let selected: string[] = [];
@@ -207,7 +208,9 @@
               on:click={() => toggle(tag.id)}
               style={tag.color ? `--tag-color: ${tag.color}` : ''}
             >
-              <span class="tag-name">{tag.name}</span>
+              <span class="tag-name"
+                >{localizedCatalogName(tag.slug, tag.is_default, tag.name, $_)}</span
+              >
             </button>
           {/each}
         </div>

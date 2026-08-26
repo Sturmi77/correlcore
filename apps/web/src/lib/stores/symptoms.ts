@@ -2,7 +2,7 @@
  * Symptoms store — Issue #57 (Custom-Symptome, ADR-0008).
  *
  * In-memory cache of the symptom catalogue (defaults + custom symptoms).
- * The catalogue is small (≤ 50 custom + 5 defaults), so we keep one flat
+ * The catalogue is small (≤ 50 custom + curated defaults), so we keep one flat
  * array in memory and refresh on demand. Symptoms have no category, so the
  * picker renders a single flat alphabetised list (defaults first, then
  * custom — see `symptomsList`).

@@ -306,11 +306,13 @@
           .filter((entry) => entry.entry_date === date)
           .map((entry) => ({
             entry,
-            tags: ['Focus work'],
-            symptoms: fixture.symptomHeatmap.symptoms.map((symptom) => ({
-              name: symptom.name,
-              intensity: symptom.days.find((day) => day.date === date)?.max_intensity ?? 1,
-            })),
+            tags: fixture.tagsByEntryId[entry.id] ?? [],
+            symptoms:
+              fixture.symptomsByEntryId[entry.id] ??
+              fixture.symptomHeatmap.symptoms.map((symptom) => ({
+                name: symptom.name,
+                intensity: symptom.days.find((day) => day.date === date)?.max_intensity ?? 1,
+              })),
             markers: entry.note_markers ?? [],
           }));
         return;

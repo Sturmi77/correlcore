@@ -50,9 +50,15 @@ async def test_get_onboarding_tag_suggestions(async_client: AsyncClient) -> None
     }
     sport_group = next(group for group in body["groups"] if group["category"] == "sport")
     assert len(sport_group["suggestions"]) >= 2
+    assert any(s["slug"] == "strength" for s in sport_group["suggestions"])
+    assert all(s["slug"] != "strength-training" for s in sport_group["suggestions"])
     # Social media is seeded as a plain leisure tag (#542).
     leisure_group = next(group for group in body["groups"] if group["category"] == "leisure")
     assert any(s["slug"] == "social-media" for s in leisure_group["suggestions"])
+    consumption = next(group for group in body["groups"] if group["category"] == "consumption")
+    assert any(s["slug"] == "caffeine_high" for s in consumption["suggestions"])
+    health = next(group for group in body["groups"] if group["category"] == "health")
+    assert any(s["slug"] == "walk" for s in health["suggestions"])
 
 
 @pytest.mark.asyncio
@@ -207,3 +213,37 @@ async def test_complete_onboarding_sets_habit_on_existing_tag(
     assert updates[0][0] == existing.id
     assert updates[0][1].habit_type == "reduce"
     assert updates[0][1].target_frequency == 2
+
+
+@pytest.mark.asyncio
+async def test_complete_onboarding_remaps_legacy_slugs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stale clients that still post `caffeine` reuse the curated default."""
+    looked_up: list[str] = []
+    existing = MagicMock()
+    existing.id = uuid.uuid4()
+
+    async def fake_find(db, *, user_id, slug):  # noqa: ANN001, ANN202
+        looked_up.append(slug)
+        return existing
+
+    async def fake_prefs(db, *, user_id, payload):  # noqa: ANN001, ANN202
+        return MagicMock()
+
+    monkeypatch.setattr(onboarding_service, "_find_visible_tag_by_slug", fake_find)
+    monkeypatch.setattr(onboarding_service, "update_user_preferences", fake_prefs)
+
+    await onboarding_service.complete_onboarding(
+        MagicMock(),
+        user_id=uuid.uuid4(),
+        tags=[
+            OnboardingTagInput(
+                slug="caffeine",
+                name="Caffeine",
+                category="consumption",
+            )
+        ],
+    )
+
+    assert looked_up == ["caffeine_high"]

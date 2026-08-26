@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import type { TagSuggestion, TagSuggestionGroup } from '$lib/api/onboarding';
   import ConceptExplainer from '$lib/components/onboarding/ConceptExplainer.svelte';
+  import { localizedCatalogName } from '$lib/utils/localizedCatalogName';
 
   export let groups: TagSuggestionGroup[] = [];
   export let loading = false;
@@ -41,7 +42,7 @@
                 data-testid="onboarding-tag-suggestion"
                 on:click={() => dispatch('toggle', tag)}
               >
-                {tag.name}
+                {localizedCatalogName(tag.slug, true, tag.name, $_)}
               </button>
             {/each}
           </div>
