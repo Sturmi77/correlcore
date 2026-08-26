@@ -365,8 +365,8 @@
           .filter((entry) => entry.entry_date === date)
           .map((entry) => ({
             entry,
-            tags: ['Focus work'],
-            symptoms: [{ name: 'Headache', intensity: 2 }],
+            tags: fixture.tagsByEntryId[entry.id] ?? [],
+            symptoms: fixture.symptomsByEntryId[entry.id] ?? [{ name: 'Headache', intensity: 2 }],
           }));
         return;
       }

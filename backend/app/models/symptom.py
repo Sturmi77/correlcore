@@ -74,7 +74,7 @@ from app.db.base import Base
 # Standard symptom set (M1 default seed)
 # ---------------------------------------------------------------------------
 #
-# Slugs of the curated default symptoms. Migration 006 inserts one
+# Slugs of the curated default symptoms. Migrations 006 and 043 insert one
 # ``Symptom`` row per slug with ``is_default=True`` and a deterministic
 # UUID5 (``NAMESPACE_DNS`` + slug) so the migration is idempotent against
 # re-runs.
@@ -85,6 +85,9 @@ STANDARD_SYMPTOM_KEYS: tuple[str, ...] = (
     "back_pain",
     "fatigue",
     "cold",
+    "migraine",
+    "nausea",
+    "dizziness",
 )
 
 # Bounds for the intensity scale (0 = absent, 3 = strong). Mirrored in
