@@ -23,6 +23,10 @@
   } from '$lib/constants/publicUrls';
   import { setAppLocale, type AppLocale } from '$lib/i18n';
   import { instanceConfig } from '$lib/stores/instanceConfig';
+  import {
+    MATURITY_INTRO_PHASES,
+    MATURITY_INTRO_THUMBS,
+  } from '$lib/utils/maturityExpectationIntro';
 
   const faqKeys = ['1', '2', '3', '4'] as const;
   const opsKeys = ['runtime', 'data', 'edge', 'hardware', 'updates'] as const;
@@ -49,26 +53,13 @@
     { key: 'license', href: LICENSE_URL, tone: 'gold', external: true },
   ] as const;
 
-  const journeyStages = [
-    {
-      key: 'early',
-      tier: 'early',
-      label: 'maturity.early_patterns.label',
-      range: 'maturity.early_patterns.range',
-    },
-    {
-      key: 'provisional',
-      tier: 'provisional',
-      label: 'maturity.provisional.label',
-      range: 'maturity.provisional.range',
-    },
-    {
-      key: 'robust',
-      tier: 'robust',
-      label: 'maturity.robust.label',
-      range: 'maturity.robust.range',
-    },
-  ] as const;
+  // Four maturity phases — same thumbs as onboarding expectation intro.
+  const journeyStages = MATURITY_INTRO_PHASES.map((phase, index) => ({
+    key: phase,
+    tier: phase === 'early_patterns' ? 'early' : phase,
+    phase,
+    index,
+  }));
 
   function reveal(node: HTMLElement) {
     const prefersReduced =
@@ -272,10 +263,24 @@
     <p class="landing__journey-lead">{$_('landing.journey_body')}</p>
     <ol class="landing__journey-track">
       {#each journeyStages as stage (stage.key)}
-        <li class="landing__journey-stage" data-tier={stage.tier}>
-          <span class="landing__journey-node" aria-hidden="true"></span>
-          <span class="landing__journey-range">{$_(stage.range)}</span>
-          <span class="landing__journey-label">{$_(stage.label)}</span>
+        <li class="landing__journey-stage" data-tier={stage.tier} data-phase={stage.phase}>
+          <img
+            class="landing__journey-thumb"
+            src={MATURITY_INTRO_THUMBS[stage.phase]}
+            alt={$_('onboarding.maturity_intro.thumb_alt', { values: { n: stage.index + 1 } })}
+            width="96"
+            height="96"
+            loading="lazy"
+            decoding="async"
+          />
+          <span class="landing__journey-range">{$_(`maturity.${stage.phase}.range`)}</span>
+          <span class="landing__journey-label">{$_(`maturity.${stage.phase}.label`)}</span>
+          <p class="landing__journey-expectation">
+            {$_(`onboarding.maturity_intro.${stage.phase}.expectation`)}
+          </p>
+          <p class="landing__journey-not-yet">
+            {$_(`onboarding.maturity_intro.${stage.phase}.not_yet`)}
+          </p>
         </li>
       {/each}
     </ol>
@@ -947,8 +952,12 @@
       color-mix(in srgb, var(--tier-color, var(--color-primary)) 28%, var(--color-border));
     border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+    text-align: center;
   }
 
+  .landing__journey-stage[data-tier='collecting'] {
+    --tier-color: var(--color-text-faint);
+  }
   .landing__journey-stage[data-tier='early'] {
     --tier-color: var(--color-insight-early);
   }
@@ -959,11 +968,15 @@
     --tier-color: var(--color-insight-robust);
   }
 
-  .landing__journey-node {
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: var(--radius-full);
-    background: var(--tier-color, var(--color-primary));
+  .landing__journey-thumb {
+    width: 6rem;
+    height: 6rem;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    border: 1px solid
+      color-mix(in srgb, var(--tier-color, var(--color-border)) 40%, var(--color-border));
+    background: var(--color-surface-offset);
+    margin-bottom: var(--space-2);
   }
 
   .landing__journey-range {
@@ -977,6 +990,22 @@
     color: var(--color-text);
   }
 
+  .landing__journey-expectation {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-xs);
+    line-height: 1.45;
+    color: var(--color-text-muted);
+    max-width: 16rem;
+  }
+
+  .landing__journey-not-yet {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    color: var(--color-text-faint);
+    max-width: 16rem;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .landing__reveal {
       opacity: 1;
@@ -987,13 +1016,12 @@
 
   @media (min-width: 768px) {
     .landing__path-grid,
-    .landing__preview-grid,
-    .landing__journey-track {
+    .landing__preview-grid {
       grid-template-columns: repeat(2, 1fr);
     }
 
     .landing__journey-track {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
@@ -1006,6 +1034,10 @@
       grid-template-columns: 1fr 1fr;
       gap: var(--space-12);
       padding: var(--space-12) 0 var(--space-8);
+    }
+
+    .landing__journey-track {
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 </style>

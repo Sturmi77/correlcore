@@ -42,8 +42,9 @@ Mobile-Surface (`mobile-daily`, 390×844, Präfix `mobile__`):
 - `mobile__HomePage__robust.png` — Home (`/`) inkl. Bottom-Tab-Navigation
 
 > Alle Bilder stammen aus **Dev Mode + `dev_force_viz`** mit den Phase-Presets — die Insight-Daten
-> kommen aus `getDevPhaseFixture` (`apps/web/src/lib/dev/phaseFixtures.ts`), **nicht** aus einer echten
-> Nutzer-Datenbank. Sie dienen ausschließlich als Debug-/Doku-Referenz.
+> kommen aus `getDevPhaseFixture` (`apps/web/src/lib/dev/phaseFixtures.ts`), das wiederum die
+> Lifestyle-Persona in `personaDataset.ts` nutzt (**nicht** aus einer echten Nutzer-Datenbank).
+> Sie dienen ausschließlich als Debug-/Doku-/Marketing-Referenz.
 
 ## Reproduzierbare Aufnahme (Dev Mode, manuell)
 
@@ -58,20 +59,33 @@ Mobile-Surface (`mobile-daily`, 390×844, Präfix `mobile__`):
    `insight-stage-header`, `home-zone-sections`, `trends-compare-panel`).
 4. Als `<Komponente>__<preset>.png` hier ablegen.
 
-## Automatisierte Aufnahme (Playwright, empfohlen)
+## Automatisierte Aufnahme (Playwright)
 
-Die Desktop-Bilder wurden mit Playwright headless (Chromium, Viewport 1440×1600, `deviceScaleFactor: 2`,
-Dark-Theme) erzeugt; die Mobile-Bilder mit einem eigenen Kontext (Viewport **390×844**, `deviceScaleFactor: 3`,
-mobiler User-Agent) — dieser triggert unterhalb von `DESKTOP_SHELL_BREAKPOINT_PX = 768` die `mobile-daily`-Surface
-(`MobileInsightLead`, Bottom-Tab-Nav). Kernschritte des Skripts:
+```bash
+cd apps/web
+CAPTURE_SCREENSHOTS=1 pnpm exec playwright test tests/e2e/capture-phase-screenshots.spec.ts
+```
+
+Das Skript regeneriert die **Mobile-Phasenprogression**, `mobile__MobileInsightLead__robust`, Onboarding-/Landing-Thumbs
+(`static/onboarding/maturity/phase*.png`), README-Marketing-Shots (`docs/assets/screenshots/`) und einen
+Landing-Journey-Shot (`landing__Journey__maturity.png`). Desktop-Komponenten-Galerie (Matrix, Feed, …)
+weiterhin manuell oder per Erweiterung des Skripts. Für saubere 144×144-Thumbs wird optional `sharp`
+als Dev-Dependency genutzt (`pnpm --filter @correlcore/web add -D sharp`).
+
+**Noch nicht automatisiert / Orphans:** `TrendsComparePanel__robust.png`, `TrendsHealthContext__robust.png`,
+sowie unreferenzierte `mobile__HomeInsightZone__robust.png`, `mobile__InsightFeed__robust.png`,
+`mobile__TrendsPage__robust.png` — bei Bedarf manuell regenerieren oder entfernen.
+
+Weitere Kernschritte (manuell/erweitert):
 
 - `addInitScript`: `localStorage` setzen — `dev_mode_enabled=true`, `dev_force_viz=true`, `correlcore-locale=de`.
 - `page.route('**/api/v1/**', …)`: Auth (`/auth/me` → Mock-User) + Basis-Endpunkte mocken. Die Insights selbst
   liefert bei aktivem `dev_force_viz` die Client-Fixture, kein Backend nötig. Vorlage:
   [`apps/web/tests/e2e/helpers/insightsApiMock.ts`](../../../../apps/web/tests/e2e/helpers/insightsApiMock.ts).
-- Pro Preset: `/settings` → `selectOption('[data-testid="developer-phase-select"]', <preset>)` → **SPA-Link**
-  zur Zielroute → `locator(<testid>).screenshot({ path: … })`.
+- Pro Preset: `/dev` → Tab **Dev-Viz** → `selectOption('[data-testid="developer-phase-select"]', <preset>)` → **SPA-Link**
+  zur Zielroute → `locator(...).screenshot({ path: … })`.
 
 > Hinweis: `robust` (42 Einträge) deckt **kein** ML/Lag ab (braucht ≥ 90). Für LASSO/Lag-Screenshots ist eine
 > erweiterte Fixture oder ein manueller Datensatz nötig (siehe §9-Hinweis in der Referenz). Die ML/Lag-Zeilen in
-> §4.4.1 verweisen daher ersatzweise auf `InsightCard__robust.png`.
+> §4.4.1 verweisen daher ersatzweise auf `InsightCard__robust.png`. Landing-Marketing-Mocks nutzen weiterhin
+> ~92 Einträge in `landingDemoData.ts` für Lag-Previews.

@@ -1907,7 +1907,7 @@
       "license": "AGPL-Open-Source"
     },
     "journey_heading": "Erkenntnisse wachsen mit deinen Daten",
-    "journey_body": "Jeder Zusammenhang ist nach Sicherheit gestuft – von ersten Mustern bis robust. Keine Gamification: nur Evidenz, die mit der Zeit belastbarer wird.",
+    "journey_body": "Vom ersten Eintrag bis zu belastbaren Mustern: CorrelCore stuft jede Erkenntnis nach Datenreife. Am Anfang siehst du vor allem den Aufbau — nicht sofort volle Insights. Keine Gamification: nur Evidenz, die mit der Zeit belastbarer wird.",
     "weekday_heading": "Warum manche Tage besser sind",
     "weekday_caption": "Durchschnittliche Stimmung je Wochentag, mit dem auffälligsten Signal des Tages.",
     "weekday_legend_best": "Höchste Stimmung",
@@ -1955,7 +1955,7 @@
       },
       "3": {
         "q": "Was, wenn ich erst wenige Tage Daten habe?",
-        "a": "Erkenntnisse sind nach Sicherheit markiert – „Frühes Muster“ bis „Robust“ – damit du immer weißt, wie viel Vertrauen ein Zusammenhang schon verdient."
+        "a": "Am Anfang (Daten sammeln) gibt es noch keine Insight-Karten — das ist Absicht. Später sind Erkenntnisse nach Reife markiert („Erste Muster“ bis „Robust“), damit du weißt, wie viel Vertrauen ein Zusammenhang schon verdient."
       },
       "4": {
         "q": "Kann ich meine Daten exportieren?",

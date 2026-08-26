@@ -1907,7 +1907,7 @@
       "license": "AGPL open source"
     },
     "journey_heading": "Insights grow with your data",
-    "journey_body": "Every association is ranked by confidence — from first patterns to robust. No gamification: just evidence that gets stronger over time.",
+    "journey_body": "From the first entry to stronger patterns: CorrelCore ranks every insight by data maturity. Early on you mostly build the foundation — not full insights yet. No gamification: just evidence that gets stronger over time.",
     "weekday_heading": "Why some days are better",
     "weekday_caption": "Average mood by weekday, with that day's standout signal.",
     "weekday_legend_best": "Highest mood",
@@ -1955,7 +1955,7 @@
       },
       "3": {
         "q": "What if I only have a few days of data?",
-        "a": "Insights are labeled by confidence — \"Early pattern\" through \"Robust\" — so you always know how much to trust a correlation yet."
+        "a": "Early on (collecting) there are no insight cards yet — by design. Later, insights are labeled by maturity (\"First patterns\" through \"Robust\") so you know how much to trust a correlation."
       },
       "4": {
         "q": "Can I export my data?",
