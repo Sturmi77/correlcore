@@ -58,13 +58,13 @@ Status: **Fixed** (this PR) / **Open** / **Accepted**.
 | M9  | Open   | SlowAPI fails hard when Redis is down (no in-memory fallback)             | `rate_limit.py`                      |
 | M10 | Open   | Five near-duplicate compose/env stacks drift                              | `infra/docker`, `dockhand`, `dockge` |
 | M11 | Open   | No Dependabot/Renovate despite M9 note                                    | `.github/`                           |
-| M12 | Open   | ADR-0006 claims JSON Content-Type CSRF check; not enforced in API         | `main.py` / auth                     |
+| M12 | Fixed  | Content-Type CSRF gate now enforced (415 on non-JSON mutating bodies)     | `core/csrf.py`, `main.py`            |
 
 ### Low / Info
 
 | ID  | Status   | Finding                                                                |
 | --- | -------- | ---------------------------------------------------------------------- |
-| L1  | Open     | Access tokens not denylisted on logout (15 min TTL residual)           |
+| L1  | Accepted | Access tokens not denylisted on logout (≤15 min TTL residual; ADR-0006) |
 | L2  | Open     | bcrypt 72-byte silent truncation                                       |
 | L3  | Accepted | `python-jose` + `ecdsa` advisory (HS256-only; tracked in M9_PENTEST)   |
 | L4  | Open     | Tag `color` not regex-validated (`#RRGGBB`) — CSS injection surface    |
@@ -100,6 +100,25 @@ Status: **Fixed** (this PR) / **Open** / **Accepted**.
 6. Gitleaks allowlist narrowed to CI Fernet fixture string
 7. `SLUG_HMAC_KEY` in bootstrap + all selfhost env examples
 8. Docs: v1.0 messaging, React GUI “planned not scaffolded”
+
+---
+
+## Remediated 2026-08-26 (#779)
+
+- **M12 — Content-Type CSRF gate.** `ContentTypeCSRFMiddleware` rejects
+  state-changing requests with a non-JSON body (415); `multipart/form-data`
+  allowed for media uploads, bodiless mutations allowed. Tests in
+  `tests/test_csrf_content_type.py`. ADR-0006 amended.
+- **S3 — CSP report-only.** Report-only `Content-Security-Policy-Report-Only`
+  added to the Traefik `security-headers` middleware
+  (`infra/docker/docker-compose.yml`); observe first, then promote to a blocking
+  header once the report window is clean and `style-src 'unsafe-inline'` is
+  removed. ADR-0006 amended.
+- **L1 — access-token denylist.** Accepted residual (≤15 min TTL on an
+  HttpOnly + SameSite=strict cookie); documented in ADR-0006. Revisit when the
+  Redis job queue (#761) lands.
+- **MFA / lockout.** Explicit defer decision recorded in ADR-0004 (TOTP-MFA
+  moved post-launch; per-account lockout accepted residual behind SlowAPI).
 
 ---
 
