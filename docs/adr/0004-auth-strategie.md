@@ -82,27 +82,3 @@ the client redirects to `/?openEntry=1` instead of `/auth/login`.
 | **M1**      | Vollständige Auth-Integration: alle Endpunkte abgesichert, Rate-Limiting aktiv, Login/Logout/Register UI fertig |
 | **M3**      | TOTP-MFA als optionales Opt-in                                                                                  |
 | **M12+**    | Authentik OIDC-Integration für SaaS-Phase                                                                       |
-
----
-
-## Amendment 2026-08-26 — MFA / lockout status (#779)
-
-Follow-up from the 2026-08-25 security audit (epic #776). This ADR listed
-**TOTP-MFA (M3)** and mentions account lockout, but neither is shipped. To keep
-the ADR consistent with the code, the current decision is recorded explicitly:
-
-- **TOTP-MFA — deferred (not scheduled for the M11 launch).** The launch threat
-  model relies on bcrypt-12 + a dummy-hash on failed login, enumeration-safe
-  register/forgot flows, SlowAPI rate limiting on auth routes, and
-  HttpOnly + `SameSite=strict` cookies. Optional TOTP opt-in remains desirable
-  and is moved out of M3 into a post-launch backlog item; it does not block
-  Closed Testing.
-- **Account lockout — deferred (accepted residual).** Per-IP SlowAPI limits on
-  login/refresh/forgot/reset are the current brute-force control. A per-account
-  lockout (with its own DoS/lockout-abuse trade-offs) is not implemented; the
-  rate limits are the accepted mitigation for now.
-
-The "Umsetzung" table's **M3 / TOTP-MFA** row is superseded by this amendment
-(re-scheduled post-launch). Revisit MFA when a multi-user / shared-device or
-SaaS (Phase 2 / Authentik OIDC) deployment is targeted, where a provider-backed
-MFA is the more natural home.

@@ -15,7 +15,6 @@ from starlette.responses import Response
 from app.api.v1.router import api_router
 from app.core.auth_cookies import warn_if_http_staging_may_drop_cookies
 from app.core.config import settings
-from app.core.csrf import ContentTypeCSRFMiddleware
 from app.core.error_tracking import init_error_tracking
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
@@ -65,10 +64,6 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID"],
         expose_headers=["X-Request-ID", "X-Auth-Fail-Reason"],
     )
-    # Content-Type CSRF hardening (audit M12): reject non-JSON bodies on
-    # state-changing requests. Added inside CORS so a rejected 415 still carries
-    # CORS headers and the browser can read it.
-    app.add_middleware(ContentTypeCSRFMiddleware)
 
     # ── Routers ────────────────────────────────────────────────────────────
     app.include_router(api_router, prefix="/api/v1")
