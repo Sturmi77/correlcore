@@ -75,6 +75,14 @@ def _default_symptom_uuid(slug: str) -> uuid.UUID:
 def upgrade() -> None:
     conn = op.get_bind()
 
+    # ``TagCategory`` (app.models.tag) gained a ``cycle`` member that was never
+    # added to the Postgres ``tag_category`` enum; the curated cycle/period/pms
+    # defaults below cast to it. ``ALTER TYPE ... ADD VALUE`` cannot run inside
+    # the migration transaction and the new label is unusable until committed,
+    # so add it in an autocommit block before the inserts.
+    with op.get_context().autocommit_block():
+        op.execute("ALTER TYPE tag_category ADD VALUE IF NOT EXISTS 'cycle'")
+
     for slug, name, category, icon, color in _NEW_DEFAULT_TAGS:
         result = conn.execute(
             sa.text(

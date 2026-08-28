@@ -192,11 +192,9 @@ async function expectPhaseSurface(page: Page, phase: (typeof PHASES)[number]): P
 }
 
 async function cropSquareThumb(sourcePath: string, basename: string): Promise<void> {
-  const { createRequire } = await import('node:module');
-  const require = createRequire(import.meta.url);
-  let sharp: typeof import('sharp') | null = null;
+  let sharp: typeof import('sharp').default | null = null;
   try {
-    sharp = require('sharp');
+    sharp = (await import('sharp')).default;
   } catch {
     sharp = null;
   }
