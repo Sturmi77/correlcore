@@ -9,10 +9,13 @@ baseline. Tracking epic:
 
 **Update 2026-08-28:** three tracked follow-ups landed — **Q1** (analytics
 monolith) split in [#787](https://github.com/Sturmi77/correlcore/issues/787),
-and **M12** (Content-Type CSRF) + **S3** (report-only CSP) shipped in
-[#789](https://github.com/Sturmi77/correlcore/issues/789), which also records
-the **L1** (access-token denylist) and **MFA/lockout** ADR decisions. Rows and
-the follow-up table below reflect this; issues #777 and #779 are closed.
+**M12** (Content-Type CSRF) enforced and **S3** (report-only CSP) partially
+addressed in [#789](https://github.com/Sturmi77/correlcore/issues/789), which
+also records the **L1** (access-token denylist) and **MFA/lockout** ADR
+decisions. Rows and the follow-up table below reflect this; issues #777 and
+#779 are closed. Remaining hardening (S3 report sink, CSRF exception scoping,
+JWT TTL cap) is tracked in
+[#791](https://github.com/Sturmi77/correlcore/issues/791).
 
 **Scope:** auth/crypto, secrets hygiene, rate limits, abuse resistance,
 documentation accuracy, code quality gates, maintainability.
@@ -22,7 +25,10 @@ credentials. Design remains strong (HttpOnly cookies, DEK wrapping, RLS,
 SlowAPI, security CI). Jul-2026 remediations held; six former Open Medium/Low
 items are now **Fixed**. Highest residual risk shifted from config races to
 **scale debt** (analytics monolith + hand-maintained FE/BE types) and
-**missing external assurance** (pentest, SAST/DAST).
+**missing external assurance** (pentest, SAST/DAST). _[2026-08-28: the
+analytics monolith (Q1) has since been split —
+[#787](https://github.com/Sturmi77/correlcore/issues/787); scale debt now
+centres on the hand-maintained FE/BE types.]_
 
 ---
 
@@ -78,33 +84,33 @@ Issue links point at the 2026-08-25 follow-up epic and children.
 
 ### Low / Info
 
-| ID  | Status   | Finding                                                                 | Track                                                                       |
-| --- | -------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| L1  | Accepted | Access tokens not denylisted on logout (≤15 min TTL residual; ADR-0006) | [#789](https://github.com/Sturmi77/correlcore/issues/789) accepted residual |
-| L2  | Open     | bcrypt 72-byte silent truncation                                        | Documented; accept or migrate hasher later                                  |
-| L3  | Accepted | `python-jose` + `ecdsa` advisory (HS256-only; M9_PENTEST)               | —                                                                           |
-| L4  | Fixed    | Tag `color` not regex-validated (`#RRGGBB`)                             | `schemas/tag.py` hex validator                                              |
-| L5  | Fixed    | Login password field unbounded length                                   | `max_length=128` on login                                                   |
-| L6  | Fixed    | README / CONTRIBUTING contradicted v1.0 badge                           | —                                                                           |
-| L7  | Fixed    | AGENTS.md advertised missing `pnpm dev:react`                           | Correctly “planned, not scaffolded”                                         |
-| I1  | Open     | External pentest still pending (`M9_PENTEST.md`)                        | [#782](https://github.com/Sturmi77/correlcore/issues/782)                   |
-| I2  | Open     | Frontend Vitest has no coverage floor; backend floor is 70%             | [#780](https://github.com/Sturmi77/correlcore/issues/780)                   |
+| ID  | Status   | Finding                                                                                                     | Track                                                                       |
+| --- | -------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| L1  | Accepted | Access tokens not denylisted on logout (15-min default TTL residual; setting unbounded, see #791; ADR-0006) | [#789](https://github.com/Sturmi77/correlcore/issues/789) accepted residual |
+| L2  | Open     | bcrypt 72-byte silent truncation                                                                            | Documented; accept or migrate hasher later                                  |
+| L3  | Accepted | `python-jose` + `ecdsa` advisory (HS256-only; M9_PENTEST)                                                   | —                                                                           |
+| L4  | Fixed    | Tag `color` not regex-validated (`#RRGGBB`)                                                                 | `schemas/tag.py` hex validator                                              |
+| L5  | Fixed    | Login password field unbounded length                                                                       | `max_length=128` on login                                                   |
+| L6  | Fixed    | README / CONTRIBUTING contradicted v1.0 badge                                                               | —                                                                           |
+| L7  | Fixed    | AGENTS.md advertised missing `pnpm dev:react`                                                               | Correctly “planned, not scaffolded”                                         |
+| I1  | Open     | External pentest still pending (`M9_PENTEST.md`)                                                            | [#782](https://github.com/Sturmi77/correlcore/issues/782)                   |
+| I2  | Open     | Frontend Vitest has no coverage floor; backend floor is 70%                                                 | [#780](https://github.com/Sturmi77/correlcore/issues/780)                   |
 
 ### Added 2026-08-25 (gap analysis)
 
-| ID  | Sev    | Status   | Finding                                                                 | Location                    | Track                                                                      |
-| --- | ------ | -------- | ----------------------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------- |
-| S1  | Medium | Open     | No SAST (CodeQL/Semgrep/Bandit), DAST, or container image scan in CI    | `.github/workflows/`        | [#776](https://github.com/Sturmi77/correlcore/issues/776) (P2 checklist)   |
-| S2  | Medium | Accepted | MFA / account lockout deferred (ADR-0004 records the decision)          | ADR-0004                    | [#789](https://github.com/Sturmi77/correlcore/issues/789) (defer decision) |
-| S3  | Medium | Fixed    | Report-only CSP on Traefik security-headers (observe before enforce)    | `docker-compose.yml`        | [#789](https://github.com/Sturmi77/correlcore/issues/789)                  |
-| Q1  | High   | Fixed    | `insight_engine.py` split into `app.services.insights.*` family modules | `services/insights/`        | [#787](https://github.com/Sturmi77/correlcore/issues/787)                  |
-| Q2  | High   | Open     | Hand-maintained FE DTOs; enum/range contract tests only (no OpenAPI→TS) | `apps/web/src/lib/api/`     | [#778](https://github.com/Sturmi77/correlcore/issues/778)                  |
-| Q3  | Medium | Open     | Oversized Svelte routes (settings ~1.3k, insights ~1.1k, trends ~0.6k)  | `apps/web/src/routes/`      | [#776](https://github.com/Sturmi77/correlcore/issues/776) (P1 checklist)   |
-| Q4  | Medium | Open     | CI e2e is mocked smoke only                                             | `ci-web.yml`                | [#780](https://github.com/Sturmi77/correlcore/issues/780)                  |
-| Q5  | Medium | Open     | Path-filtered CI can skip cross-stack contract tests                    | `ci-api.yml` / `ci-web.yml` | [#780](https://github.com/Sturmi77/correlcore/issues/780)                  |
-| Q6  | Low    | Open     | OpenAPI app version string still `0.0.1` while package is 1.3.0         | `main.py`                   | [#776](https://github.com/Sturmi77/correlcore/issues/776) docs hygiene     |
-| Q7  | Low    | Open     | `packages/` empty; dual PII scrub lists FE/BE can drift                 | scrubbers                   | Soft-coupled to [#778](https://github.com/Sturmi77/correlcore/issues/778)  |
-| Q8  | Low    | Open     | ADR-0007 still implies workers/health TBD; workers exist                | ADR-0007                    | [#776](https://github.com/Sturmi77/correlcore/issues/776) docs hygiene     |
+| ID  | Sev    | Status   | Finding                                                                    | Location                    | Track                                                                                                                          |
+| --- | ------ | -------- | -------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| S1  | Medium | Open     | No SAST (CodeQL/Semgrep/Bandit), DAST, or container image scan in CI       | `.github/workflows/`        | [#776](https://github.com/Sturmi77/correlcore/issues/776) (P2 checklist)                                                       |
+| S2  | Medium | Accepted | MFA / account lockout deferred (ADR-0004 records the decision)             | ADR-0004                    | [#789](https://github.com/Sturmi77/correlcore/issues/789) (defer decision)                                                     |
+| S3  | Medium | Partial  | Report-only CSP shipped (prod compose); no report sink / not enforcing yet | `docker-compose.yml`        | [#789](https://github.com/Sturmi77/correlcore/issues/789), hardening [#791](https://github.com/Sturmi77/correlcore/issues/791) |
+| Q1  | High   | Fixed    | `insight_engine.py` split into `app.services.insights.*` family modules    | `services/insights/`        | [#787](https://github.com/Sturmi77/correlcore/issues/787)                                                                      |
+| Q2  | High   | Open     | Hand-maintained FE DTOs; enum/range contract tests only (no OpenAPI→TS)    | `apps/web/src/lib/api/`     | [#778](https://github.com/Sturmi77/correlcore/issues/778)                                                                      |
+| Q3  | Medium | Open     | Oversized Svelte routes (settings ~1.3k, insights ~1.1k, trends ~0.6k)     | `apps/web/src/routes/`      | [#776](https://github.com/Sturmi77/correlcore/issues/776) (P1 checklist)                                                       |
+| Q4  | Medium | Open     | CI e2e is mocked smoke only                                                | `ci-web.yml`                | [#780](https://github.com/Sturmi77/correlcore/issues/780)                                                                      |
+| Q5  | Medium | Open     | Path-filtered CI can skip cross-stack contract tests                       | `ci-api.yml` / `ci-web.yml` | [#780](https://github.com/Sturmi77/correlcore/issues/780)                                                                      |
+| Q6  | Low    | Open     | OpenAPI app version string still `0.0.1` while package is 1.3.0            | `main.py`                   | [#776](https://github.com/Sturmi77/correlcore/issues/776) docs hygiene                                                         |
+| Q7  | Low    | Open     | `packages/` empty; dual PII scrub lists FE/BE can drift                    | scrubbers                   | Soft-coupled to [#778](https://github.com/Sturmi77/correlcore/issues/778)                                                      |
+| Q8  | Low    | Open     | ADR-0007 still implies workers/health TBD; workers exist                   | ADR-0007                    | [#776](https://github.com/Sturmi77/correlcore/issues/776) docs hygiene                                                         |
 
 ---
 
@@ -158,8 +164,11 @@ Issue links point at the 2026-08-25 follow-up epic and children.
    CORS and RequestID so a 415 still carries CORS + `X-Request-ID`
    ([#789](https://github.com/Sturmi77/correlcore/issues/789)).
 3. **S3** — report-only `Content-Security-Policy-Report-Only` on the Traefik
-   `security-headers` middleware (observe before enforce)
-   ([#789](https://github.com/Sturmi77/correlcore/issues/789)).
+   `security-headers` middleware (observe before enforce). Status **Partial**:
+   no report sink yet and prod-compose only — report destination + non-prod
+   rollout tracked in
+   [#789](https://github.com/Sturmi77/correlcore/issues/789) /
+   [#791](https://github.com/Sturmi77/correlcore/issues/791).
 4. **L1 / MFA** — decisions recorded: access-token denylist accepted as a
    ≤15-min residual (ADR-0006); TOTP-MFA deferred post-launch, per-account
    lockout accepted behind SlowAPI (ADR-0004).
