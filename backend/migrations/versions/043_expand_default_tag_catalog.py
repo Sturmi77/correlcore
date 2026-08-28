@@ -75,11 +75,14 @@ def _default_symptom_uuid(slug: str) -> uuid.UUID:
 def upgrade() -> None:
     conn = op.get_bind()
 
-    # ``TagCategory`` (app.models.tag) gained a ``cycle`` member that was never
-    # added to the Postgres ``tag_category`` enum; the curated cycle/period/pms
-    # defaults below cast to it. ``ALTER TYPE ... ADD VALUE`` cannot run inside
-    # the migration transaction and the new label is unusable until committed,
-    # so add it in an autocommit block before the inserts.
+    # Migration 013 already added the ``cycle`` label to the ``tag_category``
+    # enum, but env.py runs the whole upgrade in a single transaction, so that
+    # ADD VALUE is not yet committed when the curated cycle/period/pms defaults
+    # below cast to it — Postgres rejects a new enum label used before its
+    # defining transaction commits (UnsafeNewEnumValueUsageError). Force a
+    # commit boundary with an autocommit block so the label becomes usable
+    # here; the ADD VALUE IF NOT EXISTS keeps it a self-healing no-op should
+    # 013 ever change.
     with op.get_context().autocommit_block():
         op.execute("ALTER TYPE tag_category ADD VALUE IF NOT EXISTS 'cycle'")
 
