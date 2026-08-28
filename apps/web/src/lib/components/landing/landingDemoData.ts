@@ -6,7 +6,7 @@
  * are resolved from i18n via `buildLandingDemo`, so the product shots follow
  * the active locale. Structural/numeric data stays static.
  *
- * #735 I8: each shot tells a different story (exercise→mood, sleep lag,
+ * #735 I8: each shot tells a different story (walk→mood, sleep lag,
  * Friday weekday) so the page does not chew the same fake numbers five times.
  */
 import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
@@ -58,28 +58,29 @@ export interface LandingDemo {
 }
 
 export function buildLandingDemo(t: TranslateFn): LandingDemo {
-  const poorSleep = t('landing.demo.poor_sleep');
-  const exercise = t('landing.demo.exercise');
+  const walk = t('landing.demo.walk');
   const homeOffice = t('landing.demo.home_office');
   const friday = t('landing.demo.friday');
+  const sleepQuality = t('trends.metric.sleep_quality');
+  const alcohol = t('landing.demo.alcohol');
 
   const featuredInsight = demoInsight({
-    id: 'demo-exercise-mood',
-    subject_id: 'demo-exercise',
-    subject_label: exercise,
+    id: 'demo-walk-mood',
+    subject_id: 'demo-walk',
+    subject_label: walk,
     metric: 'mood_score',
     effect_size: 0.42,
     confidence: 0.81,
-    statement: t('landing.demo.stmt_exercise_mood'),
-    payload: { tag_slug: 'exercise', tag_name: exercise },
+    statement: t('landing.demo.stmt_walk_mood'),
+    payload: { tag_slug: 'walk', tag_name: walk },
   });
 
   const lagInsights: InsightResponse[] = [
     demoInsight({
       id: 'demo-lag-sleep-mood',
       insight_type: 'lag',
-      subject_id: 'demo-poor-sleep',
-      subject_label: poorSleep,
+      subject_id: 'demo-sleep-quality',
+      subject_label: sleepQuality,
       metric: 'mood_score',
       effect_size: 0.62,
       confidence: 0.74,
@@ -87,7 +88,7 @@ export function buildLandingDemo(t: TranslateFn): LandingDemo {
       payload: {
         method: 'lag',
         lag_days: 2,
-        feature: { name: poorSleep, key: 'poor-sleep', kind: 'tag' },
+        feature: { name: sleepQuality, key: 'sleep_quality', kind: 'metric' },
         target: { name: 'Mood', key: 'mood_score', kind: 'metric' },
         lag_profile: [
           { lag: 1, r: -0.28 },
@@ -99,18 +100,18 @@ export function buildLandingDemo(t: TranslateFn): LandingDemo {
       },
     }),
     demoInsight({
-      id: 'demo-lag-exercise-energy',
+      id: 'demo-lag-walk-energy',
       insight_type: 'lag',
-      subject_id: 'demo-exercise',
-      subject_label: exercise,
+      subject_id: 'demo-walk',
+      subject_label: walk,
       metric: 'energy',
       effect_size: 0.55,
       confidence: 0.7,
-      statement: t('landing.demo.stmt_lag_exercise_energy'),
+      statement: t('landing.demo.stmt_lag_walk_energy'),
       payload: {
         method: 'lag',
         lag_days: 1,
-        feature: { name: exercise, key: 'exercise', kind: 'tag' },
+        feature: { name: walk, key: 'walk', kind: 'tag' },
         target: { name: 'Energy', key: 'energy', kind: 'metric' },
         lag_profile: [
           { lag: 1, r: 0.55 },
@@ -142,13 +143,13 @@ export function buildLandingDemo(t: TranslateFn): LandingDemo {
       weekday: 4,
       entry_count: 9,
       mood_avg: 4.2,
-      top_signal: { kind: 'tag', id: 'demo-exercise', label: exercise, count: 7, share: 0.78 },
+      top_signal: { kind: 'tag', id: 'demo-walk', label: walk, count: 7, share: 0.78 },
     },
     {
       weekday: 5,
       entry_count: 8,
       mood_avg: 3.1,
-      top_signal: { kind: 'tag', id: 'demo-poor-sleep', label: poorSleep, count: 5, share: 0.63 },
+      top_signal: { kind: 'tag', id: 'demo-alcohol', label: alcohol, count: 5, share: 0.63 },
     },
     { weekday: 6, entry_count: 8, mood_avg: 3.3, top_signal: null },
   ];

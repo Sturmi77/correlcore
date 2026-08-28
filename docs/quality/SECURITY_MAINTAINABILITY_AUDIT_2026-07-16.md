@@ -1,40 +1,49 @@
 # Security & Maintainability Audit — 2026-07-16
 
-Living audit of CorrelCore (`main` @ post-v1.0). Complements
-[`M9_PENTEST.md`](M9_PENTEST.md) and older frontend audits under
-`docs/frontend/`.
+Living audit of CorrelCore. Complements [`M9_PENTEST.md`](M9_PENTEST.md)
+and older frontend audits under `docs/frontend/`.
+
+**Last refresh:** 2026-08-25 (`main` @ v1.3) — gap analysis vs Art. 9 SaaS
+baseline. Tracking epic:
+[#776](https://github.com/Sturmi77/correlcore/issues/776).
 
 **Scope:** auth/crypto, secrets hygiene, rate limits, abuse resistance,
-documentation accuracy, maintainability.
+documentation accuracy, code quality gates, maintainability.
 
-**Verdict:** No critical auth bypass or committed production credentials.
-Design is strong (HttpOnly cookies, DEK wrapping, RLS, SlowAPI on sensitive
-routes). Highest residual risks were refresh-token race, production config
-gaps, and deploy/bootstrap drift — several remediations shipped with this
-audit (see § Remediated).
+**Verdict (2026-08-25):** No critical auth bypass or committed production
+credentials. Design remains strong (HttpOnly cookies, DEK wrapping, RLS,
+SlowAPI, security CI). Jul-2026 remediations held; six former Open Medium/Low
+items are now **Fixed**. Highest residual risk shifted from config races to
+**scale debt** (analytics monolith + hand-maintained FE/BE types) and
+**missing external assurance** (pentest, SAST/DAST).
 
 ---
 
 ## Scorecard
 
-| Area            | Grade | Notes                                                                  |
-| --------------- | ----- | ---------------------------------------------------------------------- |
-| Auth & sessions | B+    | Solid cookie/JWT model; atomic refresh rotate now fixed                |
-| Crypto at rest  | A-    | Per-user DEK + MultiFernet; Fernet validity checked in staging/prod    |
-| Secrets hygiene | B+    | No real secrets in git; gitleaks allowlist tightened                   |
-| Rate limits     | B     | Auth/entries covered; export/refresh/logout/delete now limited         |
-| Authorization   | A-    | App filters + Postgres RLS; admin decrypt path is intentional          |
-| Docs accuracy   | B-    | v1.0 messaging + React GUI docs corrected; sprint archives still noisy |
-| Maintainability | B-    | Five compose/env stacks; no Dependabot; React GUI still uns scaffolded |
+| Area                       | Grade (2026-08-25) | Jul 2026 | Notes                                                               |
+| -------------------------- | ------------------ | -------- | ------------------------------------------------------------------- |
+| Auth & sessions            | A-                 | B+       | Cookie/JWT model solid; body JWT opt-in; atomic refresh rotate      |
+| Crypto at rest             | A-                 | A-       | Per-user DEK + MultiFernet; Fernet validity checked in staging/prod |
+| Secrets hygiene            | A-                 | B+       | No real secrets in git; gitleaks + Dependabot                       |
+| Rate limits                | A-                 | B        | Auth/data/export/delete covered; Redis blip → in-memory fallback    |
+| Authorization              | A-                 | A-       | App filters + Postgres RLS                                          |
+| Supply chain / CI security | B+                 | B        | gitleaks, pip-audit, pnpm audit, Dependabot; no SAST/DAST/Trivy yet |
+| Code quality gates         | A-                 | B+       | ruff, mypy strict, pytest cov≥70, ESLint, style/contrast gates      |
+| Docs accuracy              | B                  | B-       | React GUI correctly “planned”; sprint archives still noisy          |
+| Maintainability            | B-                 | B-       | Compose drift + god modules + hand DTOs; React still unscaffolded   |
+| External assurance         | C+                 | C+       | External pentest still pending (`M9_PENTEST.md`)                    |
 
 ---
 
 ## Findings
 
-Severity: **Critical** / **High** / **Medium** / **Low** / **Info**.
-Status: **Fixed** (this PR) / **Open** / **Accepted**.
+Severity: **Critical** / **High** / **Medium** / **Low** / **Info**.  
+Status: **Fixed** / **Open** / **Accepted**.
 
-### High
+Issue links point at the 2026-08-25 follow-up epic and children.
+
+### High (original Jul set — all Fixed)
 
 | ID  | Status | Finding                                                                                          | Location                                              |
 | --- | ------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
@@ -45,52 +54,73 @@ Status: **Fixed** (this PR) / **Open** / **Accepted**.
 
 ### Medium
 
-| ID  | Status | Finding                                                                   | Location                             |
-| --- | ------ | ------------------------------------------------------------------------- | ------------------------------------ |
-| M1  | Fixed  | `clear_auth_cookies` omitted Secure/SameSite/HttpOnly                     | `auth_cookies.py`                    |
-| M2  | Fixed  | Production secret checks skipped Fernet validity, MinIO default, CORS `*` | `config.py`                          |
-| M3  | Fixed  | `/auth/refresh`, `/auth/logout` unrate-limited                            | `auth.py`                            |
-| M4  | Fixed  | Export + account-delete unrate-limited                                    | `export.py`, `user.py`               |
-| M5  | Fixed  | Photo upload buffered entire body before size check                       | `media.py`                           |
-| M6  | Fixed  | `TokenStore.revoke_all` used Redis `KEYS`                                 | `redis_client.py`                    |
-| M7  | Open   | Access JWT still returned in JSON body (XSS can steal despite HttpOnly)   | `auth.py` TokenResponse              |
-| M8  | Open   | Password policy min 8 + letter/digit — thin for Art. 9 data               | `schemas/auth.py`                    |
-| M9  | Open   | SlowAPI fails hard when Redis is down (no in-memory fallback)             | `rate_limit.py`                      |
-| M10 | Open   | Five near-duplicate compose/env stacks drift                              | `infra/docker`, `dockhand`, `dockge` |
-| M11 | Open   | No Dependabot/Renovate despite M9 note                                    | `.github/`                           |
-| M12 | Fixed  | Content-Type CSRF gate now enforced (415 on non-JSON mutating bodies)     | `core/csrf.py`, `main.py`            |
+| ID  | Status | Finding                                                                   | Location                             | Track                                                                            |
+| --- | ------ | ------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------- |
+| M1  | Fixed  | `clear_auth_cookies` omitted Secure/SameSite/HttpOnly                     | `auth_cookies.py`                    | —                                                                                |
+| M2  | Fixed  | Production secret checks skipped Fernet validity, MinIO default, CORS `*` | `config.py`                          | —                                                                                |
+| M3  | Fixed  | `/auth/refresh`, `/auth/logout` unrate-limited                            | `auth.py`                            | —                                                                                |
+| M4  | Fixed  | Export + account-delete unrate-limited                                    | `export.py`, `user.py`               | —                                                                                |
+| M5  | Fixed  | Photo upload buffered entire body before size check                       | `media.py`                           | —                                                                                |
+| M6  | Fixed  | `TokenStore.revoke_all` used Redis `KEYS`                                 | `redis_client.py`                    | —                                                                                |
+| M7  | Fixed  | Access JWT in JSON body by default (XSS steal despite HttpOnly)           | `auth.py`                            | Opt-in `?include_access_token=true` only; cookie refresh never returns body JWTs |
+| M8  | Fixed  | Password policy min 8 + letter/digit — thin for Art. 9 data               | `password_policy.py`                 | Min **12** + letter/digit + common-password denylist                             |
+| M9  | Fixed  | SlowAPI fails hard when Redis is down (no in-memory fallback)             | `rate_limit.py`                      | `in_memory_fallback_enabled=True`                                                |
+| M10 | Open   | Near-duplicate compose/env stacks drift                                   | `infra/docker`, `dockhand`, `dockge` | [#781](https://github.com/Sturmi77/correlcore/issues/781) (D-I1)                 |
+| M11 | Fixed  | No Dependabot/Renovate despite M9 note                                    | `.github/dependabot.yml`             | npm, pip/backend, github-actions                                                 |
+| M12 | Open   | ADR-0006 claims JSON Content-Type CSRF check; not enforced in API         | `main.py` / auth                     | [#779](https://github.com/Sturmi77/correlcore/issues/779)                        |
 
 ### Low / Info
 
-| ID  | Status   | Finding                                                                |
-| --- | -------- | ---------------------------------------------------------------------- |
-| L1  | Accepted | Access tokens not denylisted on logout (≤15 min TTL residual; ADR-0006) |
-| L2  | Open     | bcrypt 72-byte silent truncation                                       |
-| L3  | Accepted | `python-jose` + `ecdsa` advisory (HS256-only; tracked in M9_PENTEST)   |
-| L4  | Open     | Tag `color` not regex-validated (`#RRGGBB`) — CSS injection surface    |
-| L5  | Open     | Login password field unbounded length (CPU cost on bcrypt)             |
-| L6  | Fixed    | README “pre-alpha” / CONTRIBUTING “until v1.0” contradicted v1.0 badge |
-| L7  | Fixed    | AGENTS.md / CLAUDE.md advertised missing `pnpm dev:react`              |
-| I1  | Info     | External pentest still pending (`M9_PENTEST.md`)                       |
-| I2  | Info     | Frontend Vitest has no coverage floor; backend floor is 70%            |
+| ID  | Status   | Finding                                                      | Track                                                     |
+| --- | -------- | ------------------------------------------------------------ | --------------------------------------------------------- |
+| L1  | Open     | Access tokens not denylisted on logout (15 min TTL residual) | [#779](https://github.com/Sturmi77/correlcore/issues/779) |
+| L2  | Open     | bcrypt 72-byte silent truncation                             | Documented; accept or migrate hasher later                |
+| L3  | Accepted | `python-jose` + `ecdsa` advisory (HS256-only; M9_PENTEST)    | —                                                         |
+| L4  | Fixed    | Tag `color` not regex-validated (`#RRGGBB`)                  | `schemas/tag.py` hex validator                            |
+| L5  | Fixed    | Login password field unbounded length                        | `max_length=128` on login                                 |
+| L6  | Fixed    | README / CONTRIBUTING contradicted v1.0 badge                | —                                                         |
+| L7  | Fixed    | AGENTS.md advertised missing `pnpm dev:react`                | Correctly “planned, not scaffolded”                       |
+| I1  | Open     | External pentest still pending (`M9_PENTEST.md`)             | [#782](https://github.com/Sturmi77/correlcore/issues/782) |
+| I2  | Open     | Frontend Vitest has no coverage floor; backend floor is 70%  | [#780](https://github.com/Sturmi77/correlcore/issues/780) |
+
+### Added 2026-08-25 (gap analysis)
+
+| ID  | Sev    | Status | Finding                                                                 | Location                     | Track                                                                     |
+| --- | ------ | ------ | ----------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------- |
+| S1  | Medium | Open   | No SAST (CodeQL/Semgrep/Bandit), DAST, or container image scan in CI    | `.github/workflows/`         | [#776](https://github.com/Sturmi77/correlcore/issues/776) (P2 checklist)  |
+| S2  | Medium | Open   | No MFA / account lockout despite ADR-0004 phase notes                   | ADR-0004                     | [#779](https://github.com/Sturmi77/correlcore/issues/779) (decision)      |
+| S3  | Medium | Open   | No CSP on app edge (#22 shipped HSTS/frameDeny/nosniff, not CSP)        | `docker-compose.yml`         | [#779](https://github.com/Sturmi77/correlcore/issues/779)                 |
+| Q1  | High   | Open   | `insight_engine.py` ~1.8k lines — primary analytics god module          | `services/insight_engine.py` | [#777](https://github.com/Sturmi77/correlcore/issues/777)                 |
+| Q2  | High   | Open   | Hand-maintained FE DTOs; enum/range contract tests only (no OpenAPI→TS) | `apps/web/src/lib/api/`      | [#778](https://github.com/Sturmi77/correlcore/issues/778)                 |
+| Q3  | Medium | Open   | Oversized Svelte routes (settings ~1.3k, insights ~1.1k, trends ~0.6k)  | `apps/web/src/routes/`       | [#776](https://github.com/Sturmi77/correlcore/issues/776) (P1 checklist)  |
+| Q4  | Medium | Open   | CI e2e is mocked smoke only                                             | `ci-web.yml`                 | [#780](https://github.com/Sturmi77/correlcore/issues/780)                 |
+| Q5  | Medium | Open   | Path-filtered CI can skip cross-stack contract tests                    | `ci-api.yml` / `ci-web.yml`  | [#780](https://github.com/Sturmi77/correlcore/issues/780)                 |
+| Q6  | Low    | Open   | OpenAPI app version string still `0.0.1` while package is 1.3.0         | `main.py`                    | [#776](https://github.com/Sturmi77/correlcore/issues/776) docs hygiene    |
+| Q7  | Low    | Open   | `packages/` empty; dual PII scrub lists FE/BE can drift                 | scrubbers                    | Soft-coupled to [#778](https://github.com/Sturmi77/correlcore/issues/778) |
+| Q8  | Low    | Open   | ADR-0007 still implies workers/health TBD; workers exist                | ADR-0007                     | [#776](https://github.com/Sturmi77/correlcore/issues/776) docs hygiene    |
 
 ---
 
 ## What’s done well
 
 - HttpOnly + SameSite=strict cookies; refresh cookie path-scoped to `/api/v1/auth/refresh`
-- Refresh reuse → revoke-all (now atomic)
+- Refresh reuse → revoke-all (atomic Lua rotate)
 - bcrypt-12 + dummy hash on failed login; enumeration-safe register/forgot
+- Password policy min 12 + denylist; login password length capped
 - Per-user DEK, request-scoped ContextVar, no key logging
 - Dual authz: service `user_id` filters + Postgres RLS
-- SlowAPI on auth-sensitive and most data routes; proxy header trust off by default
-- Security CI: gitleaks (full history), pip-audit, pnpm audit
-- No `{@html}` / `dangerouslySetInnerHTML` sinks found
+- SlowAPI on auth-sensitive and most data routes; in-memory fallback on Redis blip; proxy header trust opt-in
+- Security CI: gitleaks (full history), pip-audit, pnpm audit `--prod`, Dependabot
+- Body access JWT omitted on cookie flows (Capacitor/API opt-in only)
+- Tag color hex validation; media chunked upload + EXIF strip
+- No `{@html}` / `dangerouslySetInnerHTML` sinks found under `apps/web/src`
 - Open redirect hardening via `safeNext` on login
+- PII/SHD scrubbing for structured logs and GlitchTip/Sentry
+- Quality gates: ruff, mypy strict, pytest cov≥70%, ESLint, svelte-check, contrast/style/token guards
 
 ---
 
-## Remediated in this change set
+## Remediated in original 2026-07-16 change set
 
 1. Atomic Lua refresh rotate + SCAN-based `revoke_all`
 2. Production guards: `DEBUG`, `DEV_VIEW_ENABLED`, valid Fernet keys, MinIO secret, CORS allowlist
@@ -101,41 +131,55 @@ Status: **Fixed** (this PR) / **Open** / **Accepted**.
 7. `SLUG_HMAC_KEY` in bootstrap + all selfhost env examples
 8. Docs: v1.0 messaging, React GUI “planned not scaffolded”
 
----
+## Remediated after Jul 2026 (confirmed 2026-08-25)
 
-## Remediated 2026-08-26 (#779)
-
-- **M12 — Content-Type CSRF gate.** `ContentTypeCSRFMiddleware` rejects
-  state-changing requests with a non-JSON body (415); `multipart/form-data`
-  allowed for media uploads, bodiless mutations allowed. Tests in
-  `tests/test_csrf_content_type.py`. ADR-0006 amended.
-- **S3 — CSP report-only.** Report-only `Content-Security-Policy-Report-Only`
-  added to the Traefik `security-headers` middleware
-  (`infra/docker/docker-compose.yml`); observe first, then promote to a blocking
-  header once the report window is clean and `style-src 'unsafe-inline'` is
-  removed. ADR-0006 amended.
-- **L1 — access-token denylist.** Accepted residual (≤15 min TTL on an
-  HttpOnly + SameSite=strict cookie); documented in ADR-0006. Revisit when the
-  Redis job queue (#761) lands.
-- **MFA / lockout.** Explicit defer decision recorded in ADR-0004 (TOTP-MFA
-  moved post-launch; per-account lockout accepted residual behind SlowAPI).
+1. **M7** — Omit body JWT on browser cookie flows; opt-in `?include_access_token=true`
+2. **M8** — Password min 12 + strength validator + denylist (`password_policy.py`)
+3. **M9** — `in_memory_fallback_enabled=True` for SlowAPI
+4. **M11** — `.github/dependabot.yml` (npm, pip/backend, actions)
+5. **L4** — Tag `color` hex `#RRGGBB` validator
+6. **L5** — Login password `max_length=128`
 
 ---
 
-## Recommended follow-ups (not in this PR)
+## Recommended follow-ups (tracked)
 
-1. Omit `access_token` from browser cookie flows (M7)
-2. Strengthen password policy / breached-password check (M8)
-3. Define Redis-outage policy for SlowAPI (M9)
-4. Add Dependabot for uv + pnpm (M11)
-5. Collapse compose/env stacks to one generated source of truth (M10)
-6. Schedule external pentest (I1)
-7. Archive or stamp historical `docs/quality/*` / `docs/frontend/*AUDIT*` so open findings are not confused with live backlog
+Epic: [#776](https://github.com/Sturmi77/correlcore/issues/776)
+
+| Priority | Action                                                                      | Issue                                                               |
+| -------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| P0       | Split `insight_engine.py` / bound analytics modules                         | [#777](https://github.com/Sturmi77/correlcore/issues/777)           |
+| P0       | OpenAPI → TS types / `packages/api-types` + widen contract CI               | [#778](https://github.com/Sturmi77/correlcore/issues/778)           |
+| P1       | Decompose insights / settings / trends pages                                | [#776](https://github.com/Sturmi77/correlcore/issues/776) checklist |
+| P1       | Vitest coverage thresholds + real-API e2e + contract path filters           | [#780](https://github.com/Sturmi77/correlcore/issues/780)           |
+| P1       | Compose single-source generation (D-I1 / M10)                               | [#781](https://github.com/Sturmi77/correlcore/issues/781)           |
+| P1       | Content-Type CSRF (M12) + CSP / denylist / MFA decisions                    | [#779](https://github.com/Sturmi77/correlcore/issues/779)           |
+| P2       | Semgrep/CodeQL (+ optional Trivy); docs hygiene (ADR-0007, OpenAPI version) | [#776](https://github.com/Sturmi77/correlcore/issues/776) checklist |
+| P3       | External pentest                                                            | [#782](https://github.com/Sturmi77/correlcore/issues/782)           |
+
+**Explicit non-goal:** Do not scaffold `apps/web-react` until shared API types exist.
+
+---
+
+## Gap matrix (2026-08-25)
+
+| Dimension             | Good at this maturity                                | Current                                        | Status  |
+| --------------------- | ---------------------------------------------------- | ---------------------------------------------- | ------- |
+| Threat model / Art. 9 | Encryption, scrubbing, RLS, rate limits, secret scan | HttpOnly+SameSite, DEK, RLS, SlowAPI, gitleaks | Strong  |
+| Auth maturity         | MFA option, lockout, logout kills access             | JWT cookies + refresh rotate; no MFA/denylist  | Gap     |
+| Contract discipline   | Generated client or shared package + CI              | Hand DTOs; enum contract only                  | Gap     |
+| Module boundaries     | Analytics split; thin routes                         | `insight_engine` + mega pages                  | Gap     |
+| Test pyramid          | Unit + selective integration + real-API e2e          | Unit excellent; e2e mostly mocked smoke        | Partial |
+| SAST / DAST / images  | CodeQL or Semgrep + image scan                       | Deps audit + gitleaks only                     | Gap     |
+| Observability         | Health + scrubbed errors + job SLOs                  | Health/logs/GlitchTip; no Prometheus by design | Partial |
+| External assurance    | Independent pentest before broad hosted              | Pending (M9)                                   | Gap     |
+| Dual frontend         | Shared packages before second GUI                    | React unscaffolded (correct)                   | OK      |
 
 ---
 
 ## Test plan
 
-- `cd backend && uv run --python 3.12 pytest tests/test_auth_service.py tests/test_auth_cookies.py tests/test_settings_cookie_secure.py tests/test_settings_production_guards.py tests/test_media.py -q`
+- `cd backend && uv run --python 3.12 pytest tests/test_auth_service.py tests/test_auth_cookies.py tests/test_settings_cookie_secure.py tests/test_settings_production_guards.py tests/test_media.py tests/test_password_policy.py -q`
 - `uv run --python 3.12 ruff check app tests`
-- Confirm staging/quickstart still starts after setting `SLUG_HMAC_KEY`
+- Confirm Dependabot config present: `.github/dependabot.yml`
+- Confirm cookie refresh path omits body JWT without `include_access_token`
