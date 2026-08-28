@@ -15,6 +15,7 @@ from starlette.responses import Response
 from app.api.v1.router import api_router
 from app.core.auth_cookies import warn_if_http_staging_may_drop_cookies
 from app.core.config import settings
+from app.core.csrf import ContentTypeCSRFMiddleware
 from app.core.error_tracking import init_error_tracking
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
@@ -53,7 +54,15 @@ def create_app() -> FastAPI:
         cast(Callable[[Request, Exception], Response], _rate_limit_exceeded_handler),
     )
 
-    # ── Middleware (outermost first) ────────────────────────────────────────
+    # ── Middleware (registered innermost-first) ─────────────────────────────
+    # Starlette wraps the app with the last-added middleware outermost, so the
+    # effective request order is CORS -> RequestID -> CSRF -> route. The CSRF
+    # gate sits innermost so a rejected 415 still flows back out through
+    # RequestID (X-Request-ID + completion logging) and CORS (headers the
+    # browser can read).
+    # Content-Type CSRF hardening (audit M12): reject non-JSON bodies on
+    # state-changing requests.
+    app.add_middleware(ContentTypeCSRFMiddleware)
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(
         CORSMiddleware,
