@@ -21,10 +21,14 @@ on:
       - 'packages/api-types/**'
       - '.github/workflows/ci-contract.yml'
 
+permissions:
+  contents: read
+
 jobs:
   contract-drift:
     name: OpenAPI → TS types are in sync
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
