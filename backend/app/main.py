@@ -54,13 +54,16 @@ def create_app() -> FastAPI:
         cast(Callable[[Request, Exception], Response], _rate_limit_exceeded_handler),
     )
 
-    # ── Middleware (outermost first) ────────────────────────────────────────
-    app.add_middleware(RequestIDMiddleware)
+    # ── Middleware (registered innermost-first) ─────────────────────────────
+    # Starlette wraps the app with the last-added middleware outermost, so the
+    # effective request order is CORS -> RequestID -> CSRF -> route. The CSRF
+    # gate sits innermost so a rejected 415 still flows back out through
+    # RequestID (X-Request-ID + completion logging) and CORS (headers the
+    # browser can read).
     # Content-Type CSRF hardening (audit M12): reject non-JSON bodies on
-    # state-changing requests. Registered before CORS so CORS stays the
-    # outermost layer (Starlette applies the last-added middleware outermost)
-    # and a rejected 415 still carries CORS headers the browser can read.
+    # state-changing requests.
     app.add_middleware(ContentTypeCSRFMiddleware)
+    app.add_middleware(RequestIDMiddleware)
     app.add_middleware(
         CORSMiddleware,
         # Include Capacitor WebView origin (https://localhost) automatically.
