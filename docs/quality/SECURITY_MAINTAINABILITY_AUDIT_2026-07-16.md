@@ -164,10 +164,12 @@ Issue links point at the 2026-08-25 follow-up epic and children.
    ≤15-min residual (ADR-0006); TOTP-MFA deferred post-launch, per-account
    lockout accepted behind SlowAPI (ADR-0004).
 
-**Follow-up hardening (review-bot notes, not blocking):** scope the multipart
-CSRF exception to the upload path, reject body-present requests with an empty
-`Content-Type`, and give the report-only CSP a `report-uri`/`report-to` plus
-roll it to the non-prod compose stacks.
+**Follow-up hardening (review-bot notes, not blocking — tracked in
+[#791](https://github.com/Sturmi77/correlcore/issues/791)):** scope the
+multipart CSRF exception to the upload path, reject body-present requests with
+an empty `Content-Type`, give the report-only CSP a `report-uri`/`report-to`
+plus roll it to the non-prod compose stacks, and bound
+`JWT_ACCESS_TOKEN_EXPIRE_MINUTES` for the ADR-0006 ≤15-min residual.
 
 ---
 
