@@ -109,6 +109,35 @@ On Unix-like systems, `backend/scripts/check.sh` remains the canonical backend
 gate. Run `pnpm check:contrast` from the repo root before opening a web PR,
 then use `pnpm` directly for lint/typecheck/test.
 
+## API types (OpenAPI → TypeScript)
+
+The frontend/backend contract is pinned by generated types in
+[`packages/api-types`](../packages/api-types) (issue #778, audit Q2), so a
+backend schema change can no longer drift silently past the hand-written DTOs.
+
+- `packages/api-types/openapi.json` — the FastAPI schema, exported by
+  `backend/scripts/export_openapi.py`.
+- `packages/api-types/src/schema.d.ts` — TypeScript types generated from it by
+  [`openapi-typescript`](https://openapi-ts.dev). Do not hand-edit; both files
+  are committed and diffed in CI (`.github/workflows/ci-contract.yml`).
+
+Regenerate both after changing any request/response schema and commit the
+result:
+
+```bash
+# 1. export the schema from the app (writes packages/api-types/openapi.json)
+uv run --python 3.12 python backend/scripts/export_openapi.py
+# 2. regenerate the TypeScript types from it
+pnpm --filter @correlcore/api-types generate
+```
+
+Critical response/request types (auth, entries, insights) are bound to the
+generated schema by compile-time assertions in
+[`apps/web/src/lib/api/contracts.generated.ts`](../apps/web/src/lib/api/contracts.generated.ts):
+a backend rename, removal, or incompatible re-type of a covered field breaks
+`pnpm typecheck`. New frontend code can import the generated shapes directly via
+the `Api*` aliases exported there (e.g. `import type { ApiEntryResponse }`).
+
 ## UI work without a backend (mock API + dev-mode fixtures)
 
 For pure frontend work there is a backend-free path: a minimal mock API plus the

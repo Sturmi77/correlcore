@@ -1,0 +1,70 @@
+name: CI — API contract
+
+# Anti-drift net for the FE/BE contract (issue #778, audit Q2). The committed
+# OpenAPI snapshot in packages/api-types and the TypeScript types generated from
+# it are the single source of truth; this workflow re-exports the schema from
+# the live FastAPI app and re-generates the types, then fails if either differs
+# from what is committed. Regenerate locally with the commands in
+# docs/DEVELOPMENT.md ("API types") and commit the result.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'packages/api-types/**'
+      - '.github/workflows/ci-contract.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'packages/api-types/**'
+      - '.github/workflows/ci-contract.yml'
+
+jobs:
+  contract-drift:
+    name: OpenAPI → TS types are in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: 'latest'
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --python 3.12 --extra dev --extra analytics --frozen
+
+      - name: Export OpenAPI schema from the app
+        working-directory: backend
+        run: uv run --python 3.12 python scripts/export_openapi.py
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate TypeScript types
+        run: pnpm --filter @correlcore/api-types generate
+
+      - name: Fail if the committed contract is stale
+        run: |
+          if ! git diff --exit-code -- packages/api-types/openapi.json packages/api-types/src/schema.d.ts; then
+            echo "::error::The committed API contract is out of date. Run 'uv run python backend/scripts/export_openapi.py' and 'pnpm --filter @correlcore/api-types generate', then commit packages/api-types/. See docs/DEVELOPMENT.md (API types)."
+            exit 1
+          fi
