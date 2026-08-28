@@ -13,9 +13,9 @@
   ] as const;
 
   const tags = [
-    { key: 'exercise', tone: 'energy' },
-    { key: 'home_office', tone: 'mood' },
-    { key: 'coffee', tone: 'gold' },
+    { key: 'walk', tone: 'energy' },
+    { key: 'meetings', tone: 'mood' },
+    { key: 'caffeine', tone: 'gold' },
   ] as const;
 </script>
 
@@ -57,7 +57,7 @@
         {$_('landing.demo.headache')}
       </li>
       <li class="checkin__chip">
-        {$_('landing.demo.low_energy')}
+        {$_('landing.demo.fatigue')}
       </li>
     </ul>
   </div>

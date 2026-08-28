@@ -23,6 +23,7 @@
   import { OPEN_ENTRY_HOME_PATH } from '$lib/navigation/openEntry';
   import { shouldSkipOnboardingSummary } from '$lib/utils/onboardingEntry';
   import { writeOnboardingSuggestionStash } from '$lib/utils/onboardingSuggestionStash';
+  import { localizedCatalogName } from '$lib/utils/localizedCatalogName';
   import { currentUser } from '$lib/stores/auth';
   import { connectivity } from '$lib/stores/connectivity';
 
@@ -51,6 +52,10 @@
   // without reloading the wizard.
   $: suggestionSlugs = new Set(groups.flatMap((g) => g.suggestions.map((s) => s.slug)));
   $: customSelected = selectedTags.filter((tag) => !suggestionSlugs.has(tag.slug));
+
+  function tagLabel(tag: TagSuggestion): string {
+    return localizedCatalogName(tag.slug, suggestionSlugs.has(tag.slug), tag.name, $_);
+  }
   $: showSummaryStep = !shouldSkipOnboardingSummary(selectedTags.length);
   // The optional goals step only appears once at least one tag is picked.
   $: showGoalsStep = selectedTags.length > 0;
@@ -277,7 +282,7 @@
                       data-testid="onboarding-tag-suggestion"
                       on:click={() => toggleSuggestion(tag)}
                     >
-                      {tag.name}
+                      {tagLabel(tag)}
                     </button>
                   {/each}
                 </div>
@@ -326,10 +331,10 @@
         <div class="onboarding-flow__goals" data-testid="onboarding-goals">
           {#each selectedTags as tag (tag.slug)}
             <div class="onboarding-flow__goal-row">
-              <span class="onboarding-flow__goal-name">{tag.name}</span>
+              <span class="onboarding-flow__goal-name">{tagLabel(tag)}</span>
               <select
                 class="input"
-                aria-label={$_('onboarding.goals.type_label', { values: { name: tag.name } })}
+                aria-label={$_('onboarding.goals.type_label', { values: { name: tagLabel(tag) } })}
                 data-testid="onboarding-goal-type"
                 value={habitTypeFor(tag.slug)}
                 on:change={(e) =>
@@ -349,7 +354,7 @@
                     max="7"
                     step="1"
                     aria-label={$_('onboarding.goals.frequency_aria', {
-                      values: { name: tag.name },
+                      values: { name: tagLabel(tag) },
                     })}
                     value={habitFreqFor(tag.slug)}
                     on:input={(e) =>
@@ -374,7 +379,7 @@
         <p>{$_('onboarding.guided.summary_body', { values: { count: selectedTags.length } })}</p>
         <div class="onboarding-flow__chips onboarding-flow__chips--summary">
           {#each selectedTags as tag}
-            <span>{tag.name}</span>
+            <span>{tagLabel(tag)}</span>
           {/each}
         </div>
       {:else if currentStep === 'cycle'}
