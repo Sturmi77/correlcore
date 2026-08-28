@@ -125,8 +125,9 @@ Regenerate both after changing any request/response schema and commit the
 result:
 
 ```bash
-# 1. export the schema from the app (writes packages/api-types/openapi.json)
-uv run --python 3.12 python backend/scripts/export_openapi.py
+# 1. export the schema from the app (writes packages/api-types/openapi.json).
+#    Run from backend/ so uv finds the project and `app` is importable.
+(cd backend && uv run --python 3.12 python scripts/export_openapi.py)
 # 2. regenerate the TypeScript types from it
 pnpm --filter @correlcore/api-types generate
 ```
