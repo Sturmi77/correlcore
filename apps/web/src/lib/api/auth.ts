@@ -13,6 +13,10 @@ import { clearSessionTokens, getRefreshToken, setSessionTokens } from './session
 // Types — mirror backend schemas
 // ---------------------------------------------------------------------------
 
+// Generated OpenAPI shapes (issue #778) — re-exported so the contract drift
+// guard in ./contracts.generated.ts is part of the real import graph.
+export type { ApiUserResponse, ApiTokenResponse } from './contracts.generated';
+
 export interface UserResponse {
   id: string;
   email: string;
