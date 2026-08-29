@@ -1,0 +1,23 @@
+{
+  "name": "@correlcore/api-types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript types generated from the CorrelCore FastAPI OpenAPI schema (issue #778, audit Q2).",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./openapi.json": "./openapi.json"
+  },
+  "files": [
+    "index.ts",
+    "src/schema.d.ts",
+    "openapi.json"
+  ],
+  "scripts": {
+    "generate": "openapi-typescript openapi.json --output src/schema.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.9.1"
+  }
+}

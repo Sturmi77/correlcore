@@ -14,6 +14,9 @@ import type { TagResponse } from './tags';
 
 export type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
 export type { NoteVisibility } from './noteMarkers';
+// Generated OpenAPI shapes (issue #778) — re-exported so the contract drift
+// guard in ./contracts.generated.ts is part of the real import graph.
+export type { ApiEntryResponse, ApiEntryCreate } from './contracts.generated';
 
 // ---------------------------------------------------------------------------
 // DTOs

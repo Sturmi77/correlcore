@@ -8,6 +8,10 @@
 
 import { api } from './client';
 
+// Generated OpenAPI shapes (issue #778) — re-exported so the contract drift
+// guard in ./contracts.generated.ts is part of the real import graph.
+export type { ApiInsightResponse, ApiInsightListResponse } from './contracts.generated';
+
 export type InsightType =
   | 'pointbiserial'
   | 'spearman'

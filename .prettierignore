@@ -9,3 +9,8 @@ backend/.venv
 .env
 .env.*
 pnpm-lock.yaml
+
+# Generated API types (issue #778) — regenerated and diffed in CI, kept in
+# openapi-typescript's own formatting so the drift check stays byte-exact.
+packages/api-types/openapi.json
+packages/api-types/src/schema.d.ts

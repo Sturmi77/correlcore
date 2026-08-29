@@ -21,12 +21,18 @@ RUN corepack enable
 # Lockfile + Workspace-Manifeste zuerst (Layer-Cache)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 COPY apps/web/package.json apps/web/package.json
+# @correlcore/web depends on the workspace package @correlcore/api-types
+# (issue #778); its manifest must be present so the filtered frozen install can
+# resolve the workspace graph.
+COPY packages/api-types/package.json packages/api-types/package.json
 
 # Deps installieren (frozen — reproducible)
 RUN pnpm install --frozen-lockfile --filter @correlcore/web...
 
 # Quellen
 COPY apps/web/ apps/web/
+# api-types sources (generated OpenAPI types) needed for the web typecheck/build.
+COPY packages/api-types/ packages/api-types/
 
 # Build (Vite + SvelteKit Node-Adapter)
 #
