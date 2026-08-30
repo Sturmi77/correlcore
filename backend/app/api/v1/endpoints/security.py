@@ -95,10 +95,21 @@ def _summarize(payload: Any) -> list[dict[str, Any]]:
 async def csp_report(request: Request) -> Response:
     """Ingest a CSP violation report and log it. Always returns 204."""
 
+    # Reject an oversized report by its declared Content-Length *before* buffering
+    # the body, so an honestly-declared large POST never gets read into memory.
+    declared_length = request.headers.get("content-length")
+    if declared_length is not None:
+        try:
+            if int(declared_length) > _MAX_REPORT_BODY_BYTES:
+                logger.warning("csp_report_oversized bytes=%s", declared_length)
+                return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except ValueError:
+            pass  # malformed header — fall through to the post-read guard below
+
     raw = await request.body()
     if len(raw) > _MAX_REPORT_BODY_BYTES:
-        # Too large to be a legitimate report — record that one arrived and stop
-        # (never parse a slice: truncating JSON before parsing corrupts it).
+        # Chunked / no Content-Length fallback: bound after reading, still never
+        # parse a slice (truncating JSON before parsing corrupts it).
         logger.warning("csp_report_oversized bytes=%d", len(raw))
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
