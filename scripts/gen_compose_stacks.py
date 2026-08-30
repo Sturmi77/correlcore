@@ -151,6 +151,20 @@ _BANNER = [
     "============================================================================",
 ]
 
+# Shared note carried into every generated (non-prod) stack. These homelab
+# stacks run without a reverse proxy on a non-public Tailscale network, so —
+# unlike the production compose — they inject no Content-Security-Policy (#791).
+# The CSP decision is recorded in ADR-0006; kept here so each generated file is
+# self-documenting.
+_CSP_NOTE = [
+    "Security headers / CSP (#791): this stack sets NO Content-Security-Policy",
+    "(not even report-only). The CSP is injected by the Traefik reverse proxy in",
+    "the production compose (infra/docker/docker-compose.yml); there is no proxy",
+    "here (direct Tailnet ports), so no injection point, and the surface is small",
+    "on a non-public Tailscale network. Front this stack with a reverse proxy, or",
+    "use the production compose, if you need CSP.",
+]
+
 
 def _load_canonical() -> dict[str, Any]:
     with CANONICAL.open(encoding="utf-8") as fh:
@@ -269,7 +283,9 @@ def _build_stack(overlay: dict[str, Any]) -> dict[str, Any]:
 
 def _render(overlay: dict[str, Any]) -> str:
     compose = _build_stack(overlay)
-    header = "\n".join(f"# {line}".rstrip() for line in [*_BANNER, "", *overlay["header"]])
+    header = "\n".join(
+        f"# {line}".rstrip() for line in [*_BANNER, "", *overlay["header"], "", *_CSP_NOTE]
+    )
     # width high enough that long ${VAR} values (e.g. DATABASE_URL) are never
     # folded mid-value, which keeps the generated YAML readable and greppable.
     body = yaml.safe_dump(compose, sort_keys=False, default_flow_style=False, width=4096)

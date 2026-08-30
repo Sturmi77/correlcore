@@ -20,6 +20,7 @@ from app.api.v1.endpoints import (
     note_markers,
     note_signals,
     onboarding,
+    security,
     symptoms,
     sync,
     tags,
@@ -35,6 +36,9 @@ api_router.include_router(health.router, prefix="/health", tags=["internal"])
 
 # Public deployment descriptor (hosted vs selfhost, registration, version)
 api_router.include_router(instance.router, prefix="/instance", tags=["internal"])
+
+# Browser security-report collector (CSP report-only destination, #791)
+api_router.include_router(security.router, prefix="/security", tags=["internal"])
 
 # Feature-flagged developer diagnostics (Issue #125)
 api_router.include_router(dev.router, prefix="/dev", tags=["internal"])

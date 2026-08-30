@@ -46,13 +46,27 @@ async def test_rejects_form_urlencoded_body(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_allows_multipart_form_data(async_client: AsyncClient) -> None:
-    """Documented exception for authenticated media uploads — gate must pass."""
+async def test_rejects_multipart_on_non_upload_route(async_client: AsyncClient) -> None:
+    """#791: multipart is only allowed on the media-upload route, not everywhere.
+
+    A cross-site HTML form can post ``multipart/form-data`` without a preflight,
+    so allowing it globally would re-open form-CSRF on every mutating route.
+    """
     resp = await async_client.post(
         _REGISTER,
         files={"file": ("x.txt", b"data", "text/plain")},
     )
-    # Not blocked by the CSRF gate; the endpoint itself rejects the shape (422).
+    assert resp.status_code == 415
+
+
+@pytest.mark.asyncio
+async def test_allows_multipart_on_media_upload_route(async_client: AsyncClient) -> None:
+    """The scoped exception: multipart passes the gate on POST /media/photos."""
+    resp = await async_client.post(
+        "/api/v1/media/photos",
+        files={"file": ("x.jpg", b"data", "image/jpeg")},
+    )
+    # Not blocked by the CSRF gate; the route rejects on auth (401/403), not 415.
     assert resp.status_code != 415
 
 
@@ -70,6 +84,34 @@ async def test_allows_bodiless_mutation(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_rejects_body_with_empty_content_type(async_client: AsyncClient) -> None:
+    """#791: a body with no declared media type must not bypass the gate.
+
+    A CORS-safelisted ``fetch(url, {method: "POST", credentials: "include"})``
+    sends a body and no Content-Type, and reaches here without a preflight.
+    """
+    resp = await async_client.post(_REGISTER, content=b'{"email": "a@b.co"}')
+    assert resp.status_code == 415
+
+
+@pytest.mark.asyncio
 async def test_get_requests_are_not_gated(async_client: AsyncClient) -> None:
     resp = await async_client.get("/health")
     assert resp.status_code == 200
+
+
+def test_request_has_body_detects_content_length() -> None:
+    from starlette.requests import Request
+
+    from app.core.csrf import _request_has_body
+
+    def _req(headers: dict[str, str]) -> Request:
+        raw = [(k.lower().encode(), v.encode()) for k, v in headers.items()]
+        return Request({"type": "http", "headers": raw})
+
+    assert _request_has_body(_req({"content-length": "5"})) is True
+    assert _request_has_body(_req({"content-length": "0"})) is False
+    assert _request_has_body(_req({})) is False
+    assert _request_has_body(_req({"transfer-encoding": "chunked"})) is True
+    # Malformed length → fail closed (treat as body present).
+    assert _request_has_body(_req({"content-length": "abc"})) is True

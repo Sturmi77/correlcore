@@ -92,11 +92,21 @@ services:
       - 'traefik.http.middlewares.security-headers.headers.browserXssFilter=true'
       - 'traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin'
       - 'traefik.http.middlewares.security-headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=()'
-      # CSP report-only first (audit S3 / #779): observe violations before
+      # CSP report-only first (audit S3 / #779, #791): observe violations before
       # enforcing. Promote to a blocking Content-Security-Policy header once the
       # report window is clean. 'unsafe-inline' style is required by the current
       # SvelteKit build; tighten with hashes/nonces before enforcing.
-      - "traefik.http.middlewares.security-headers.headers.customResponseHeaders.Content-Security-Policy-Report-Only=default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'"
+      #
+      # Reporting destination (#791): violations are POSTed to the API's
+      # collector, which logs them (backend app.api.v1.endpoints.security). Both
+      # the legacy `report-uri` and the modern Reporting API (`report-to` +
+      # `Reporting-Endpoints`) are declared so current and older browsers both
+      # deliver reports. The endpoint URL is same-origin *relative* on purpose:
+      # it resolves against the document origin (so `connect-src 'self'` and
+      # SameSite cookies are unaffected) and avoids depending on `${DOMAIN}`
+      # interpolation in the header value.
+      - 'traefik.http.middlewares.security-headers.headers.customResponseHeaders.Reporting-Endpoints=csp-endpoint="/api/v1/security/csp-report"'
+      - "traefik.http.middlewares.security-headers.headers.customResponseHeaders.Content-Security-Policy-Report-Only=default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; report-uri /api/v1/security/csp-report; report-to csp-endpoint"
       - 'traefik.http.middlewares.redirect-https.redirectscheme.scheme=https'
       - 'traefik.http.middlewares.redirect-https.redirectscheme.permanent=true'
       - 'traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)'

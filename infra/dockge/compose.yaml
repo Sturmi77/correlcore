@@ -11,6 +11,13 @@
 # Dockge UI. Tailscale-internal homelab (no Traefik/TLS); ports bind to
 # ${TAILSCALE_IP} (default 127.0.0.1). GlitchTip is omitted here; use the
 # user-test or quickstart stack (profile `monitoring`) for error tracking.
+#
+# Security headers / CSP (#791): this stack sets NO Content-Security-Policy
+# (not even report-only). The CSP is injected by the Traefik reverse proxy in
+# the production compose (infra/docker/docker-compose.yml); there is no proxy
+# here (direct Tailnet ports), so no injection point, and the surface is small
+# on a non-public Tailscale network. Front this stack with a reverse proxy, or
+# use the production compose, if you need CSP.
 
 x-api-env: &id001
   APP_ENV: ${APP_ENV:-staging}
