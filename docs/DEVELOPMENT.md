@@ -139,6 +139,44 @@ a backend rename, removal, or incompatible re-type of a covered field breaks
 `pnpm typecheck`. New frontend code can import the generated shapes directly via
 the `Api*` aliases exported there (e.g. `import type { ApiEntryResponse }`).
 
+## CI quality gates (#780, audit I2/Q4/Q5)
+
+Three gates protect the FE/BE seam beyond the plain unit/lint/typecheck jobs:
+
+**Coverage floor (web).** `pnpm --filter @correlcore/web test:coverage` (the
+"Coverage floor" job in `ci-web.yml`) enforces a non-regression floor on the
+schema-sensitive client surface — `src/lib/api/**` and `src/lib/offline/**`,
+where a silent regression would break real user flows. Thresholds live in
+[`apps/web/vite.config.ts`](../apps/web/vite.config.ts) (`test.coverage.thresholds`)
+and are set a few points below current coverage; raise them as coverage grows,
+don't lower them to make a change pass. A plain `pnpm test` skips coverage and
+stays fast — coverage is computed only with `--coverage`.
+
+**Contract path filters.** The hand-maintained FE contract constants in
+[`apps/web/src/lib/contracts/apiContract.ts`](../apps/web/src/lib/contracts/apiContract.ts)
+are asserted against the backend enums/schema by
+`backend/tests/test_api_contract.py`. `ci-contract.yml` runs that test and is
+triggered on **both** `backend/**` and `apps/web/src/lib/contracts/**`, so a
+change on either side of the contract re-validates the other — a web-only edit
+can no longer drift past CI.
+
+**E2E happy path — real-API deferred (accepted).** The acceptance criterion asked
+for a real-API browser happy path (auth + entry + insight) _or_ a documented
+defer with an expanded mocked smoke. We take the defer: standing up Postgres +
+Redis + migrations + API + web inside the Playwright job is disproportionate for
+the current single-app setup, and two layers already cover the flow end-to-end
+from different angles:
+
+- `apps/web/tests/e2e/smoke.spec.ts` (the "E2E smoke" job) drives the real
+  SvelteKit app against a mocked API and covers all three flows — auth (login →
+  protected redirect), entry (create + autosave), insight (render analytics
+  surface).
+- The "Health smoke (real Postgres + Redis)" job in `ci-api.yml` exercises the
+  real API against a real database.
+
+Revisit when a shared-environment or multi-service e2e harness is stood up (then
+wire a real-API happy path and drop this note).
+
 ## UI work without a backend (mock API + dev-mode fixtures)
 
 For pure frontend work there is a backend-free path: a minimal mock API plus the

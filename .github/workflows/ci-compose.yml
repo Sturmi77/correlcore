@@ -1,0 +1,72 @@
+name: CI — Compose stacks
+
+# Anti-drift net for the homelab Compose stacks (issue #781, audit M10/D-I1).
+# The secondary stacks (user-test, dockge, dockhand) are generated from the
+# canonical quickstart stack by scripts/gen_compose_stacks.py. This workflow
+# fails if the committed files are stale, and validates every stack (canonical +
+# generated) with `docker compose config`. Regenerate locally with
+# `python scripts/gen_compose_stacks.py` and commit — see
+# docs/selfhost/COMPOSE_STACKS.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/docker/docker-compose.quickstart.yml'
+      - 'infra/docker/docker-compose.user-test.yml'
+      - 'infra/dockge/compose.yaml'
+      - 'infra/dockhand/compose.yaml'
+      - 'scripts/gen_compose_stacks.py'
+      - '.github/workflows/ci-compose.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/docker/docker-compose.quickstart.yml'
+      - 'infra/docker/docker-compose.user-test.yml'
+      - 'infra/dockge/compose.yaml'
+      - 'infra/dockhand/compose.yaml'
+      - 'scripts/gen_compose_stacks.py'
+      - '.github/workflows/ci-compose.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compose-drift:
+    name: Generated stacks are in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: 'latest'
+
+      # Self-contained: uv fetches PyYAML on the fly (there is no root Python
+      # project), matching the documented contributor command.
+      - name: Fail if the generated Compose stacks are stale
+        run: uv run --no-project --with "pyyaml>=6,<7" python scripts/gen_compose_stacks.py --check
+
+      # `docker compose config` resolves interpolation + validates the schema
+      # for every stack (canonical source included) without pulling images.
+      - name: Validate all homelab stacks (docker compose config)
+        run: |
+          set -euo pipefail
+          # Non-secret placeholders that only satisfy the `${VAR:?…}` guards —
+          # `config` never uses them as real credentials. Exported here (not as
+          # literal file values) and kept low-entropy so the secret scanner has
+          # nothing to flag.
+          export POSTGRES_PASSWORD=ci REDIS_PASSWORD=ci APP_DB_PASSWORD=ci
+          export ENCRYPTION_KEY=ci SLUG_HMAC_KEY=ci SECRET_KEY=ci
+          export CORS_ORIGINS=http://127.0.0.1:3010
+          for f in \
+            infra/docker/docker-compose.quickstart.yml \
+            infra/docker/docker-compose.user-test.yml \
+            infra/dockge/compose.yaml \
+            infra/dockhand/compose.yaml; do
+            echo "::group::docker compose config — $f"
+            docker compose -f "$f" --profile worker --profile monitoring config >/dev/null
+            echo "::endgroup::"
+          done

@@ -1,113 +1,108 @@
-# CorrelCore — Dockge-Stack für ersten User-Test
-# ───────────────────────────────────────────────────────────────────────────
-# Drop-in für Dockge: nach /opt/stacks/correlcore/ kopieren (compose.yaml + .env),
-# dann im Dockge-UI "Deploy" klicken.
+# ============================================================================
+# GENERATED FILE — DO NOT EDIT.
+# Generated from infra/docker/docker-compose.quickstart.yml by
+# scripts/gen_compose_stacks.py (#781). Edit the canonical quickstart stack or
+# that script and run `python scripts/gen_compose_stacks.py`, then commit.
+# See docs/selfhost/COMPOSE_STACKS.md.
+# ============================================================================
 #
-# Zielumgebung: Tailscale-internes Netz (Homelab / Synology / Mini-PC).
-#   - Kein Letsencrypt, kein Traefik — Web/API direkt auf Tailnet-IP gebunden.
-#   - Ports binden auf ${TAILSCALE_IP} (Default 127.0.0.1) → kein WAN-Exposure.
+# CorrelCore — Dockge drop-in stack.
+# Copy compose.yaml + .env to /opt/stacks/correlcore/ and Deploy in the
+# Dockge UI. Tailscale-internal homelab (no Traefik/TLS); ports bind to
+# ${TAILSCALE_IP} (default 127.0.0.1). GlitchTip is omitted here; use the
+# user-test or quickstart stack (profile `monitoring`) for error tracking.
 #
-# Security-Header / CSP (#791): Dieser Stack setzt bewusst KEINE
-# Content-Security-Policy (auch nicht report-only). Sie wird in der Production-
-# Compose (docker-compose.yml) vom Traefik-Reverse-Proxy injiziert; hier gibt es
-# keinen Proxy (direkte Tailnet-Ports), also keinen Injektionspunkt, und die
-# Angriffsfläche ist durch das nicht-öffentliche Tailscale-Netz ohnehin klein.
-#
-# Optional aktivierbar:
-#   • GlitchTip (Error-Tracking, Web-UI Port 8080)
-#   • Worker für M2-Cleanup-Jobs via --profile worker
-#
-# Nicht enthalten (M1-Scope):
-#   MinIO (Foto-Upload erst M13) — wer Foto-Tests braucht, nimmt die
-#   Production-Compose docker-compose.yml.
-#
-# Migrations laufen einmalig im migrate-Service (alembic upgrade head),
-# blockieren api/worker bis Schema aktuell ist. Idempotent.
+# Security headers / CSP (#791): this stack sets NO Content-Security-Policy
+# (not even report-only). The CSP is injected by the Traefik reverse proxy in
+# the production compose (infra/docker/docker-compose.yml); there is no proxy
+# here (direct Tailnet ports), so no injection point, and the surface is small
+# on a non-public Tailscale network. Front this stack with a reverse proxy, or
+# use the production compose, if you need CSP.
 
-x-api-image: &api-image
-  image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
-  pull_policy: always
-
-x-api-env: &api-env
+x-api-env: &id001
   APP_ENV: ${APP_ENV:-staging}
-  # HTTP Homelab without TLS: must be false (ADR-0006). Secure cookies on
-  # http:// origins are dropped → subsequent API calls 401.
   COOKIE_SECURE: ${COOKIE_SECURE:-false}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
-  # Custom-Symptom-Slug HMAC (ADR-0039) — required when APP_ENV=staging|production.
   SLUG_HMAC_KEY: ${SLUG_HMAC_KEY:?SLUG_HMAC_KEY must be set}
   DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-correlcore_app}:${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-correlcore}
   REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
   RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+  RATE_LIMIT_TRUST_PROXY_HEADERS: 'false'
   CORS_ORIGINS: ${CORS_ORIGINS}
   SMTP_HOST: ${SMTP_HOST:-mailpit}
   SMTP_PORT: ${SMTP_PORT:-1025}
   SMTP_USER: ${SMTP_USER:-}
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   SMTP_FROM: ${SMTP_FROM:-noreply@correlcore.local}
-  FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+  FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://127.0.0.1:${WEB_HOST_PORT:-3000}}
   UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
-  # Photo storage ships in M13 and is off by default. Only when PHOTOS_ENABLED
-  # is true do production Settings require a non-default MINIO_SECRET_KEY
-  # (≥16 chars, not CHANGE_ME*); until then the placeholder is fine (#543).
-  # Must be in compose environment — .env alone is not injected into the container.
-  PHOTOS_ENABLED: ${PHOTOS_ENABLED:-false}
-  MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET}
   IMAGE_TAG: ${IMAGE_TAG:-latest}
   IMAGE_DIGEST: ${IMAGE_DIGEST:-}
-
 services:
-  # ── Migrations-Init ───────────────────────────────────────────────────────
-  # Läuft einmal vor api+worker, blockiert bis Schema aktuell ist.
   migrate:
-    <<: *api-image
+    image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
+    pull_policy: always
     container_name: correlcore-migrate
-    command: ['alembic', 'upgrade', 'head']
+    command:
+    - alembic
+    - upgrade
+    - head
     environment:
-      <<: *api-env
+      APP_ENV: ${APP_ENV:-staging}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+      SLUG_HMAC_KEY: ${SLUG_HMAC_KEY:?SLUG_HMAC_KEY must be set}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-correlcore}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      RATE_LIMIT_STORAGE_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      RATE_LIMIT_TRUST_PROXY_HEADERS: 'false'
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@correlcore.local}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://127.0.0.1:${WEB_HOST_PORT:-3000}}
+      UNVERIFIED_CLEANUP_DAYS: ${UNVERIFIED_CLEANUP_DAYS:-7}
+      DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
+      IMAGE_TAG: ${IMAGE_TAG:-latest}
+      IMAGE_DIGEST: ${IMAGE_DIGEST:-}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - correlcore
+    - correlcore
     restart: 'no'
     security_opt:
-      - no-new-privileges:true
-
-  # ── Backend API ───────────────────────────────────────────────────────────
+    - no-new-privileges:true
   api:
-    <<: *api-image
+    image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
+    pull_policy: always
     container_name: correlcore-api
     restart: unless-stopped
-    environment: *api-env
+    environment: *id001
     depends_on:
       migrate:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    ports:
-      # Host-Port konfigurierbar (Default 8210), um Konflikten mit anderen
-      # Self-Hosted-Diensten auszuweichen (Paperless = 8000 etc.).
-      - '${TAILSCALE_IP:-127.0.0.1}:${API_HOST_PORT:-8210}:8000'
     networks:
-      - correlcore
+    - correlcore
     security_opt:
-      - no-new-privileges:true
+    - no-new-privileges:true
     healthcheck:
       test:
-        [
-          'CMD-SHELL',
-          'python -c "import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health/live\")" || exit 1',
-        ]
+      - CMD-SHELL
+      - python -c "import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health/live\")" || exit 1
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 20s
-
-  # ── Web Frontend ──────────────────────────────────────────────────────────
+    ports:
+    - ${TAILSCALE_IP:-127.0.0.1}:${API_HOST_PORT:-8210}:8000
   web:
     image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-web:${IMAGE_TAG:-latest}
     pull_policy: always
@@ -115,25 +110,24 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+      INTERNAL_API_URL: http://api:8000
     depends_on:
       api:
         condition: service_healthy
     ports:
-      # Host-Port konfigurierbar (Default 3000), siehe API-Kommentar oben.
-      - '${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000'
+    - ${TAILSCALE_IP:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000
     networks:
-      - correlcore
+    - correlcore
     security_opt:
-      - no-new-privileges:true
+    - no-new-privileges:true
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1']
+      test:
+      - CMD-SHELL
+      - wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
-
-  # ── Datenbank ─────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
     container_name: correlcore-postgres
@@ -145,46 +139,44 @@ services:
       APP_DB_USER: ${APP_DB_USER:-correlcore_app}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./initdb:/docker-entrypoint-initdb.d:ro
+    - postgres_data:/var/lib/postgresql/data
+    - ./initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test:
-        ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}']
+      - CMD-SHELL
+      - pg_isready -U ${POSTGRES_USER:-correlcore} -d ${POSTGRES_DB:-correlcore}
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
     networks:
-      - correlcore
-    # Keine Port-Exposition — DB nur intern erreichbar
+    - correlcore
     security_opt:
-      - no-new-privileges:true
-
-  # ── Cache & Token-Store ───────────────────────────────────────────────────
+    - no-new-privileges:true
   redis:
     image: redis:7-alpine
     container_name: correlcore-redis
     restart: unless-stopped
-    command: >
-      redis-server
-      --requirepass ${REDIS_PASSWORD}
-      --appendonly yes
-      --appendfsync everysec
+    command: 'redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --appendfsync everysec
+
+      '
     volumes:
-      - redis_data:/data
+    - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      test:
+      - CMD
+      - redis-cli
+      - -a
+      - ${REDIS_PASSWORD}
+      - ping
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     networks:
-      - correlcore
+    - correlcore
     security_opt:
-      - no-new-privileges:true
-
-  # ── Mailpit (SMTP-Catcher für Mail-Verifikation) ──────────────────────────
-  # Web-UI:  http://${TAILSCALE_IP}:8025
+    - no-new-privileges:true
   mailpit:
     image: axllent/mailpit:latest
     container_name: correlcore-mailpit
@@ -194,73 +186,48 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
     ports:
-      - '${TAILSCALE_IP:-127.0.0.1}:8025:8025'
+    - ${TAILSCALE_IP:-127.0.0.1}:8025:8025
     networks:
-      - correlcore
+    - correlcore
     security_opt:
-      - no-new-privileges:true
+    - no-new-privileges:true
     healthcheck:
-      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:8025/api/v1/info']
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://localhost:8025/api/v1/info
       interval: 30s
       timeout: 5s
       retries: 3
-
-  # ── GlitchTip (Error-Tracking, optional) ──────────────────────────────────
-  # Aktivieren: Block einkommentieren + GLITCHTIP_SECRET_KEY in .env setzen.
-  # Erst-Bootstrap nach erstem Up:
-  #   docker exec -it correlcore-glitchtip ./manage.py migrate
-  #   docker exec -it correlcore-glitchtip ./manage.py createsuperuser
-  #
-  # glitchtip:
-  #   image: glitchtip/glitchtip:latest
-  #   container_name: correlcore-glitchtip
-  #   restart: unless-stopped
-  #   environment:
-  #     DATABASE_URL: postgresql://${POSTGRES_USER:-correlcore}:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
-  #     SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-}
-  #     EMAIL_URL: smtp://mailpit:1025
-  #     DEFAULT_FROM_EMAIL: errors@correlcore.local
-  #     GLITCHTIP_DOMAIN: http://${TAILSCALE_IP:-127.0.0.1}:8080
-  #     ENABLE_USER_REGISTRATION: 'false'
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   ports:
-  #     - '${TAILSCALE_IP:-127.0.0.1}:8080:8080'
-  #   networks:
-  #     - correlcore
-  #   security_opt:
-  #     - no-new-privileges:true
-
-  # ── Analytics-Worker (optional, M2+) ──────────────────────────────────────
-  # Führt tägliche Wartungsjobs aus, aktuell den M2-Cleanup für unverified
-  # Accounts. Bei Bedarf einkommentieren.
-  #
   worker:
-    <<: *api-image
+    image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
+    pull_policy: always
     container_name: correlcore-worker
     restart: unless-stopped
-    command: ['python', '-m', 'app.workers.analytics']
-    environment: *api-env
+    command:
+    - supercronic
+    - -passthrough-logs
+    - /app/crontab/worker.crontab
+    environment: *id001
     depends_on:
       migrate:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
     networks:
-      - correlcore
+    - correlcore
     profiles:
-      - worker
+    - worker
     security_opt:
-      - no-new-privileges:true
-
+    - no-new-privileges:true
 volumes:
   postgres_data:
     name: correlcore_postgres_data
   redis_data:
     name: correlcore_redis_data
-
 networks:
   correlcore:
-    name: correlcore
     driver: bridge
+    name: correlcore

@@ -254,6 +254,32 @@ jobs:
       - name: Run Vitest
         run: pnpm test
 
+  coverage:
+    name: Coverage floor (lib/api + offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      # Enforces the non-regression coverage floor on the schema-sensitive client
+      # surface (src/lib/api + src/lib/offline). Thresholds live in
+      # apps/web/vite.config.ts (#780, audit Q4/Q5).
+      - name: Vitest coverage
+        run: pnpm test:coverage
+
   build:
     name: Build (vite)
     runs-on: ubuntu-latest

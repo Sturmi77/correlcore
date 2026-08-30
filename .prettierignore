@@ -14,3 +14,10 @@ pnpm-lock.yaml
 # openapi-typescript's own formatting so the drift check stays byte-exact.
 packages/api-types/openapi.json
 packages/api-types/src/schema.d.ts
+
+# Generated homelab Compose stacks (issue #781) — emitted by
+# scripts/gen_compose_stacks.py in PyYAML's formatting and diffed in CI, so the
+# drift check stays byte-exact. Edit the canonical quickstart stack instead.
+infra/docker/docker-compose.user-test.yml
+infra/dockge/compose.yaml
+infra/dockhand/compose.yaml

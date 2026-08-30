@@ -70,27 +70,32 @@ Migration 012 erteilt Rechte und erzwingt Row-Level-Security auf User-Daten.
 
 ## Optional aktivieren
 
-In `compose.yaml` sind zwei Service-Blöcke auskommentiert:
-
-- **GlitchTip** (Error-Tracking, Web-UI Port 8080)
-  Block einkommentieren + `GLITCHTIP_SECRET_KEY` setzen, dann nach erstem
-  Up:
+- **Analytics-Worker** (Insights, Cleanup, wöchentlicher Digest)
+  Ist als Compose-Profil `worker` definiert. Aktivieren über die `.env`:
   ```bash
-  docker exec -it correlcore-glitchtip ./manage.py migrate
-  docker exec -it correlcore-glitchtip ./manage.py createsuperuser
+  echo 'COMPOSE_PROFILES=worker' >> .env   # dann im Dockge-UI Re-Deploy
   ```
-- **Analytics-Worker** (M2+)
-  Erst aktivieren wenn `app/workers/analytics.py` implementiert ist —
-  Code existiert noch nicht (CrashLoop sonst).
+  Der Worker startet `supercronic` und braucht ein **Image ≥ v1.5.0** (siehe
+  Hinweis unter „Update auf neuen Image-Tag").
+- **GlitchTip** (Error-Tracking) ist in diesem Stack **nicht enthalten** —
+  anders als bei quickstart/user-test gibt es hier keinen GlitchTip-Service.
+  Wer Error-Tracking braucht, nimmt den `user-test`- oder `quickstart`-Stack
+  (Profil `monitoring`).
 
 ## Update auf neuen Image-Tag
 
 ```bash
 # Variante A: in .env auf neuen Tag setzen, dann im Dockge-UI "Update"
-IMAGE_TAG=v0.3.0
+IMAGE_TAG=v1.5.0
 
 # Variante B: bei IMAGE_TAG=latest reicht Re-Deploy → pull_policy: always
 ```
+
+> **Worker-Profil braucht ein Image ≥ v1.5.0.** Der `worker`-Service startet
+> `supercronic` (Cron-basierter Analytics-Trigger, #757), das erst ab den
+> 1.5-Images gebaut ist. Mit einem älteren Pin (`v0.3.0` o. ä.) crash-loopt der
+> Worker beim Aktivieren von `COMPOSE_PROFILES=worker`. Ohne Worker-Profil ist
+> jeder Tag ok.
 
 ## Backup
 
@@ -108,12 +113,14 @@ docker run --rm -v correlcore_postgres_data:/data -v "$PWD":/backup \
 
 ## Unterschiede zu `infra/docker/docker-compose.user-test.yml`
 
-| Punkt             | user-test compose      | Dockge compose                                             |
-| ----------------- | ---------------------- | ---------------------------------------------------------- |
-| Top-level `name:` | `correlcore-test`      | _kein_ (Dockge nutzt Ordner)                               |
-| Container-Präfix  | `correlcore-test-*`    | `correlcore-*`                                             |
-| Volume-Namen      | compose-default        | explizit (`correlcore_*`)                                  |
-| Profiles          | `monitoring`, `worker` | _entfernt_ — Blöcke kommentiert (Dockge ignoriert Profile) |
-| Network-Name      | `internal`             | `correlcore`                                               |
+| Punkt             | user-test compose   | Dockge compose                                  |
+| ----------------- | ------------------- | ----------------------------------------------- |
+| Top-level `name:` | `correlcore-test`   | _kein_ (Dockge nutzt Ordner)                    |
+| Container-Präfix  | `correlcore-test-*` | `correlcore-*`                                  |
+| Volume-Namen      | compose-default     | explizit (`correlcore_*`)                       |
+| GlitchTip         | Profil `monitoring` | _nicht enthalten_                               |
+| Analytics-Worker  | Profil `worker`     | Profil `worker` (via `COMPOSE_PROFILES=worker`) |
+| Network-Name      | `internal`          | `correlcore`                                    |
 
-Funktional identisch — gleiche Images, gleiche Services, gleiche Healthchecks.
+Gleiche Images, gleiche Healthchecks. Beide Stacks werden aus derselben
+kanonischen Quelle generiert (siehe [`COMPOSE_STACKS.md`](../../docs/selfhost/COMPOSE_STACKS.md)).

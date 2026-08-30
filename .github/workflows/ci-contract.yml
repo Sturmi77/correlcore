@@ -13,6 +13,11 @@ on:
     paths:
       - 'backend/**'
       - 'packages/api-types/**'
+      # The hand-maintained FE contract constants are asserted against the
+      # backend models by backend/tests/test_api_contract.py. Editing only the
+      # web contract must therefore also run this workflow (#780, audit Q4/Q5),
+      # otherwise a web-only contract drift would pass CI.
+      - 'apps/web/src/lib/contracts/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/ci-contract.yml'
   pull_request:
@@ -20,6 +25,7 @@ on:
     paths:
       - 'backend/**'
       - 'packages/api-types/**'
+      - 'apps/web/src/lib/contracts/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/ci-contract.yml'
 
@@ -47,6 +53,14 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: uv sync --python 3.12 --extra dev --extra analytics --frozen
+
+      # Assert the hand-maintained FE contract constants (apps/web/src/lib/
+      # contracts/apiContract.ts) still match the backend enums/schema. Running
+      # it here — gated on both backend/** and the web contract path — means a
+      # web-only contract edit is validated against the backend too (#780).
+      - name: Backend ↔ frontend contract test
+        working-directory: backend
+        run: uv run --python 3.12 python -m pytest tests/test_api_contract.py -q --no-cov
 
       - name: Export OpenAPI schema from the app
         working-directory: backend
