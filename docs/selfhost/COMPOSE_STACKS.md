@@ -1,6 +1,6 @@
 # Compose stacks — canonical matrix
 
-Last updated: 2026-07-16
+Last updated: 2026-08-30
 
 CorrelCore ships several Compose files for different operator paths. Prefer the
 **canonical** files below; treat Dockhand/Dockge as thin wrappers of the same
@@ -58,14 +58,37 @@ Manual one-shot (any env with DB access):
 cd backend && uv run --python 3.12 python -m app.workers.digest --once
 ```
 
-## Drift policy
+## Generation workflow (#781)
 
-When adding an env var or service:
+The **homelab secondary stacks are generated**, not hand-edited. The single
+source of truth is the canonical quickstart stack
+([`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml)) —
+its service shape and the shared `x-api-env` block. These files are generated
+from it by [`scripts/gen_compose_stacks.py`](../../scripts/gen_compose_stacks.py)
+and carry a `GENERATED FILE — DO NOT EDIT` banner:
 
-1. Update **canonical** `docker-compose.yml` + `docker-compose.quickstart.yml` first.
-2. Mirror into user-test / dockhand / dockge in the same PR.
-3. Update `.env*.example` and [`INSTALL.md`](INSTALL.md).
-4. Prefer `${VAR:?…}` for secrets on production-oriented stacks.
+| Generated file                              | Derived-stack overlay (the only differences)                     |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| `infra/docker/docker-compose.user-test.yml` | project name, container prefix, host-published API, GlitchTip on |
+| `infra/dockge/compose.yaml`                 | `correlcore` network, host-published API, GlitchTip omitted      |
+| `infra/dockhand/compose.yaml`               | `correlcore` network, API internal-only (ADR-0011), GlitchTip on |
 
-Longer-term: generate secondary stacks from the canonical quickstart file
-(tracked as open infra decision).
+The prod `docker-compose.yml` and `docker-compose.ops.yml` (Traefik/TLS) are
+structurally distinct and stay hand-maintained.
+
+**To change a shared env var, label, or service:**
+
+1. Edit the **canonical quickstart** stack (or a per-stack overlay in
+   `scripts/gen_compose_stacks.py` for a genuine per-stack difference).
+2. Regenerate and commit (run under uv so PyYAML resolves without a manual
+   install — there is no root Python project):
+   ```bash
+   uv run --no-project --with "pyyaml>=6,<7" python scripts/gen_compose_stacks.py
+   ```
+3. Update `.env*.example` and [`INSTALL.md`](INSTALL.md) if the var is new.
+4. Prefer `${VAR:?…}` for secrets so a missing value fails fast.
+
+CI (`.github/workflows/ci-compose.yml`) fails if a generated file is stale
+(`gen_compose_stacks.py --check`) and validates every stack with
+`docker compose config`. The generator refuses to emit any resolved secret —
+outputs carry only `${VAR}` references.
