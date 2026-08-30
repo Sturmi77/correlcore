@@ -87,10 +87,16 @@ In `compose.yaml` sind zwei Service-Blöcke auskommentiert:
 
 ```bash
 # Variante A: in .env auf neuen Tag setzen, dann im Dockge-UI "Update"
-IMAGE_TAG=v0.3.0
+IMAGE_TAG=v1.5.0
 
 # Variante B: bei IMAGE_TAG=latest reicht Re-Deploy → pull_policy: always
 ```
+
+> **Worker-Profil braucht ein Image ≥ v1.5.0.** Der `worker`-Service startet
+> `supercronic` (Cron-basierter Analytics-Trigger, #757), das erst ab den
+> 1.5-Images gebaut ist. Mit einem älteren Pin (`v0.3.0` o. ä.) crash-loopt der
+> Worker beim Aktivieren von `COMPOSE_PROFILES=worker`. Ohne Worker-Profil ist
+> jeder Tag ok.
 
 ## Backup
 
