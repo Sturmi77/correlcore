@@ -12,7 +12,6 @@
 # ${TAILSCALE_IP} (default 127.0.0.1). GlitchTip is omitted here; use the
 # user-test or quickstart stack (profile `monitoring`) for error tracking.
 
-name: dockge
 x-api-env: &id001
   APP_ENV: ${APP_ENV:-staging}
   COOKIE_SECURE: ${COOKIE_SECURE:-false}

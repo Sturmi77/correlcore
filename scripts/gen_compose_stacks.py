@@ -91,7 +91,12 @@ STACKS: dict[str, dict[str, Any]] = {
         ],
     },
     "infra/dockge/compose.yaml": {
-        "project": "dockge",
+        # No top-level name on purpose: Dockge deploys from a per-stack folder
+        # (documented /opt/stacks/correlcore), and Compose then uses that folder
+        # as the project name. Forcing a name here would change the project
+        # identity and collide with the existing fixed-name correlcore-*
+        # containers on an in-place upgrade.
+        "project": None,
         "prefix": "correlcore-",
         "network": "correlcore",
         "network_name": "correlcore",
@@ -231,7 +236,12 @@ def _build_stack(overlay: dict[str, Any]) -> dict[str, Any]:
     compose.pop("x-api-image", None)
     compose.pop("x-web-image", None)
 
-    compose["name"] = overlay["project"]
+    # A stack with an explicit project name pins it; one with project=None omits
+    # the key so Compose derives the project from the deploy directory (Dockge).
+    if overlay["project"] is None:
+        compose.pop("name", None)
+    else:
+        compose["name"] = overlay["project"]
     _reprefix_containers(compose, overlay["prefix"])
     _rename_network(compose, overlay["network"])
 
