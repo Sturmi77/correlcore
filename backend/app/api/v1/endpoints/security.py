@@ -36,9 +36,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Cap what we log per report so a misconfigured page (or a hostile client) cannot
-# flood the logs with arbitrarily large bodies.
-_MAX_REPORT_LOG_CHARS = 4_000
+# Cap the body we parse, and (more tightly) what we log per field, so a
+# misconfigured page or a hostile client cannot flood the logs. Report fields
+# are attacker-controlled, so they are logged via ``%r`` (which escapes control
+# characters) inside a message that the JSON log formatter then escapes again —
+# no newline in a report value can forge a second log line.
+_MAX_REPORT_PARSE_CHARS = 4_000
+_MAX_FIELD_LOG_CHARS = 300
+
+
+def _truncate(value: object, limit: int = _MAX_FIELD_LOG_CHARS) -> str | None:
+    """Stringify and length-cap an attacker-controlled field for logging."""
+
+    if value is None:
+        return None
+    return str(value)[:limit]
 
 
 def _summarize(payload: Any) -> list[dict[str, Any]]:
@@ -82,25 +94,26 @@ async def csp_report(request: Request) -> Response:
     """Ingest a CSP violation report and log it. Always returns 204."""
 
     raw = await request.body()
-    text = raw.decode("utf-8", errors="replace")[:_MAX_REPORT_LOG_CHARS]
+    text = raw.decode("utf-8", errors="replace")[:_MAX_REPORT_PARSE_CHARS]
     try:
         payload = json.loads(text) if text else None
     except json.JSONDecodeError:
         payload = None
 
+    # The JSON log formatter (app.core.logging) serializes only the record's
+    # message, not `extra=` fields, so the violation details are encoded into the
+    # message itself (via %r) rather than passed as extras.
     summaries = _summarize(payload)
     if summaries:
         for summary in summaries:
             logger.warning(
-                "csp_violation",
-                extra={
-                    "csp_directive": summary["directive"],
-                    "csp_blocked_uri": summary["blocked_uri"],
-                    "csp_document_uri": summary["document_uri"],
-                },
+                "csp_violation directive=%r blocked_uri=%r document_uri=%r",
+                _truncate(summary["directive"]),
+                _truncate(summary["blocked_uri"]),
+                _truncate(summary["document_uri"]),
             )
     else:
         # Unrecognized shape — still record that something arrived, truncated.
-        logger.warning("csp_report_unparsed", extra={"csp_raw": text})
+        logger.warning("csp_report_unparsed raw=%r", _truncate(text))
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

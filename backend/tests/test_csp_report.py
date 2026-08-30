@@ -17,7 +17,9 @@ _CSP_REPORT = "/api/v1/security/csp-report"
 
 
 @pytest.mark.asyncio
-async def test_accepts_legacy_report_uri_shape(async_client: AsyncClient) -> None:
+async def test_accepts_legacy_report_uri_shape(
+    async_client: AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
     body = json.dumps(
         {
             "csp-report": {
@@ -27,13 +29,41 @@ async def test_accepts_legacy_report_uri_shape(async_client: AsyncClient) -> Non
             }
         }
     )
-    resp = await async_client.post(
-        _CSP_REPORT,
-        content=body.encode(),
-        headers={"Content-Type": "application/csp-report"},
-    )
+    with caplog.at_level("WARNING"):
+        resp = await async_client.post(
+            _CSP_REPORT,
+            content=body.encode(),
+            headers={"Content-Type": "application/csp-report"},
+        )
     # 204, and crucially NOT 415 — the CSRF gate exempts this route+media type.
     assert resp.status_code == 204
+    # The violation detail is actually recorded in the log message (the JSON
+    # formatter serializes only the message, not extras), and control chars in
+    # attacker-controlled fields are escaped via %r.
+    logged = "\n".join(r.getMessage() for r in caplog.records)
+    assert "csp_violation" in logged
+    assert "https://evil.example/x.js" in logged
+
+
+@pytest.mark.asyncio
+async def test_log_message_escapes_newlines_in_report_fields(
+    async_client: AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A newline in an attacker-controlled field must not forge a second log line."""
+    body = json.dumps({"csp-report": {"blocked-uri": "https://evil.example/\nFAKE level=CRITICAL"}})
+    with caplog.at_level("WARNING"):
+        resp = await async_client.post(
+            _CSP_REPORT,
+            content=body.encode(),
+            headers={"Content-Type": "application/csp-report"},
+        )
+    assert resp.status_code == 204
+    # %r renders the newline as an escape sequence, so the raw message carries no
+    # literal newline from the report value.
+    csp_records = [r for r in caplog.records if r.getMessage().startswith("csp_violation")]
+    assert csp_records
+    assert "\\n" in csp_records[0].getMessage()
+    assert "\nFAKE level=CRITICAL" not in csp_records[0].getMessage()
 
 
 @pytest.mark.asyncio
