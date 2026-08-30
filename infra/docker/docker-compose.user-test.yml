@@ -6,6 +6,14 @@
 # - Ports werden nur aufs Tailscale-Interface bzw. localhost gebunden, NICHT
 #   global, damit sie aus öffentlichem WAN nicht erreichbar sind.
 #
+# Security-Header / CSP (#791): Dieser Stack setzt bewusst KEINE
+# Content-Security-Policy (auch nicht report-only). Sie wird in der Production-
+# Compose (docker-compose.yml) vom Traefik-Reverse-Proxy injiziert; hier gibt es
+# keinen Proxy (direkte Tailnet-Ports), also keinen Injektionspunkt, und die
+# Angriffsfläche ist durch das nicht-öffentliche Tailscale-Netz ohnehin klein.
+# Wer CSP im Homelab braucht, stellt einen Reverse-Proxy davor oder nutzt die
+# Production-Compose.
+#
 # Optional aktivierte Profile:
 #   --profile monitoring   → GlitchTip (Error-Tracking)
 #   --profile worker       → Worker für M2-Cleanup-Jobs

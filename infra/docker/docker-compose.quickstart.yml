@@ -1,6 +1,13 @@
 # CorrelCore — Quickstart Compose (Homelab / Tailscale / eval)
 # M10 Sprint 1: canonical homelab path — no Traefik, no MinIO (photos → M13).
 #
+# Security headers / CSP (#791): this stack deliberately sets NO
+# Content-Security-Policy (not even report-only). The CSP is injected by the
+# Traefik reverse proxy in the production compose (docker-compose.yml); there is
+# no proxy here (direct Tailnet ports), so no injection point, and the attack
+# surface is small on a non-public Tailscale network. Front this stack with a
+# reverse proxy, or use the production compose, if you need CSP.
+#
 # Setup:
 #   ../../scripts/bootstrap-selfhost-env.sh --quickstart
 #   docker compose -f docker-compose.quickstart.yml up -d

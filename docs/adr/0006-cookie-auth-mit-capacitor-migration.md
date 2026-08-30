@@ -144,3 +144,43 @@ no denylist store is provisioned yet (the analytics Redis/arq queue is still
 pending, #761), and the ≤15-minute window on an HttpOnly+SameSite cookie is a
 low-severity residual for the current single-app, self-host threat model. Revisit
 when the Redis job queue lands or a shared-device deployment is targeted.
+
+## Amendment 2026-08-30 — CSRF/CSP hardening follow-ups (#791)
+
+Follow-ups flagged by review on #789 (the #779 remediation), tracked in #791.
+
+### M12 — multipart exception scoped; empty Content-Type no longer bypasses
+
+- The `multipart/form-data` exception is now scoped to the exact upload route
+  (`POST /api/v1/media/photos`) instead of being allowed on every mutating
+  route. A cross-site form can post `multipart/form-data` without a preflight,
+  so a global allowance would have re-opened form-CSRF on all mutating endpoints
+  if SameSite ever regressed.
+- A request that carries a **body** but omits `Content-Type` is now rejected
+  with **415**. An empty Content-Type is treated as "bodiless" only when no body
+  is actually present (`Content-Length: 0` / no chunked transfer). This closes
+  the CORS-safelisted `fetch(url, {method: "POST", credentials: "include"})`
+  path, which sends no Content-Type and previously slipped through.
+- `POST /api/v1/security/csp-report` accepts `application/csp-report` and
+  `application/reports+json` (browsers post CSP reports as these); the exception
+  is scoped to that route only.
+
+### S3 — CSP report-only now has a reporting destination
+
+The report-only CSP previously had no `report-uri`/`report-to`, so the
+"observe before enforce" window collected nothing. It now points at a
+self-hosted collector (`POST /api/v1/security/csp-report`, backend
+`app.api.v1.endpoints.security`) via both `report-uri` (legacy) and the
+Reporting API (`report-to` + `Reporting-Endpoints`); the endpoint logs
+violations. The non-prod compose stacks (`user-test`, `quickstart`, `dockge`)
+deliberately carry no CSP: they run without a reverse proxy on a non-public
+Tailscale network, so there is no header-injection point and the surface is
+small — documented inline in each file.
+
+### L1 — access-token TTL bound to keep the residual valid
+
+The L1 "no logout denylist" residual is only acceptable while access tokens are
+short-lived. `Settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES` is now **bounded to
+≤ 15 in staging/production** (`validate_production_secrets`); raising it fails
+startup. The residual above is therefore conditioned on that bound — raising the
+TTL requires amending this decision (e.g. adding the denylist) first.

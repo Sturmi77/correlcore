@@ -7,6 +7,12 @@
 #   - Kein Letsencrypt, kein Traefik — Web/API direkt auf Tailnet-IP gebunden.
 #   - Ports binden auf ${TAILSCALE_IP} (Default 127.0.0.1) → kein WAN-Exposure.
 #
+# Security-Header / CSP (#791): Dieser Stack setzt bewusst KEINE
+# Content-Security-Policy (auch nicht report-only). Sie wird in der Production-
+# Compose (docker-compose.yml) vom Traefik-Reverse-Proxy injiziert; hier gibt es
+# keinen Proxy (direkte Tailnet-Ports), also keinen Injektionspunkt, und die
+# Angriffsfläche ist durch das nicht-öffentliche Tailscale-Netz ohnehin klein.
+#
 # Optional aktivierbar:
 #   • GlitchTip (Error-Tracking, Web-UI Port 8080)
 #   • Worker für M2-Cleanup-Jobs via --profile worker

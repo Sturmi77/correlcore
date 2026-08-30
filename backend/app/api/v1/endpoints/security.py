@@ -1,0 +1,106 @@
+"""Security reporting collector (audit S3 / #791).
+
+The deployment ships a ``Content-Security-Policy-Report-Only`` header (infra
+Traefik stack) so violations can be observed before the policy is switched to
+enforcing. Without a reporting destination the browser emits nothing, so the
+"observe first" window collects no data. This endpoint is that destination: it
+ingests CSP violation reports and logs them, giving a fully self-hosted,
+observable path (no third-party report collector required).
+
+The route is intentionally:
+
+* **unauthenticated** — the browser posts violation reports without credentials,
+  often for the anonymous landing page before any login;
+* **side-effect-free** — it only logs; it never writes user data or returns a
+  body, so there is nothing for a forged request to abuse;
+* **CSRF-exempt for report media types** — browsers send ``application/csp-report``
+  (legacy ``report-uri``) or ``application/reports+json`` (Reporting API), which
+  the Content-Type CSRF gate allows only for this exact route (see
+  ``app.core.csrf``).
+
+It is excluded from the OpenAPI schema (``include_in_schema=False``): it is a
+browser-to-infra hook, not part of the client API contract.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from typing import Any
+
+from fastapi import APIRouter, Request, Response, status
+
+from app.core.rate_limit import limiter
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+# Cap what we log per report so a misconfigured page (or a hostile client) cannot
+# flood the logs with arbitrarily large bodies.
+_MAX_REPORT_LOG_CHARS = 4_000
+
+
+def _summarize(payload: Any) -> list[dict[str, Any]]:
+    """Extract the interesting fields from either report shape.
+
+    ``report-uri`` posts ``{"csp-report": {...}}``; the Reporting API posts a
+    list of ``{"type": "csp-violation", "body": {...}}`` entries. Returns a list
+    of flat dicts with the fields worth alerting on; unknown shapes yield ``[]``.
+    """
+
+    reports: list[dict[str, Any]] = []
+    if isinstance(payload, dict) and isinstance(payload.get("csp-report"), dict):
+        reports.append(payload["csp-report"])
+    elif isinstance(payload, list):
+        for entry in payload:
+            if isinstance(entry, dict) and isinstance(entry.get("body"), dict):
+                reports.append(entry["body"])
+
+    summaries: list[dict[str, Any]] = []
+    for report in reports:
+        summaries.append(
+            {
+                # Field names differ between the two schemas; check both.
+                "directive": report.get("violated-directive")
+                or report.get("effectiveDirective")
+                or report.get("effective-directive"),
+                "blocked_uri": report.get("blocked-uri") or report.get("blockedURL"),
+                "document_uri": report.get("document-uri") or report.get("documentURL"),
+            }
+        )
+    return summaries
+
+
+@router.post(
+    "/csp-report",
+    status_code=status.HTTP_204_NO_CONTENT,
+    include_in_schema=False,
+)
+@limiter.limit("60/minute")
+async def csp_report(request: Request) -> Response:
+    """Ingest a CSP violation report and log it. Always returns 204."""
+
+    raw = await request.body()
+    text = raw.decode("utf-8", errors="replace")[:_MAX_REPORT_LOG_CHARS]
+    try:
+        payload = json.loads(text) if text else None
+    except json.JSONDecodeError:
+        payload = None
+
+    summaries = _summarize(payload)
+    if summaries:
+        for summary in summaries:
+            logger.warning(
+                "csp_violation",
+                extra={
+                    "csp_directive": summary["directive"],
+                    "csp_blocked_uri": summary["blocked_uri"],
+                    "csp_document_uri": summary["document_uri"],
+                },
+            )
+    else:
+        # Unrecognized shape — still record that something arrived, truncated.
+        logger.warning("csp_report_unparsed", extra={"csp_raw": text})
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

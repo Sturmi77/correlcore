@@ -9,6 +9,11 @@ from typing import Annotated
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+# ADR-0006 L1 residual: "no logout denylist" is only acceptable while access
+# tokens are short-lived. Cap the TTL in real deployments so an operator cannot
+# silently invalidate that assumption (#791).
+PROD_MAX_ACCESS_TOKEN_EXPIRE_MINUTES = 15
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -104,7 +109,13 @@ class Settings(BaseSettings):
 
     # JWT (ADR-0004: Phase 1 native JWT)
     JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    # ADR-0006 accepts "no logout denylist" as a residual risk *because* access
+    # tokens are short-lived (≤15 min): a stolen token expires on its own soon
+    # after logout. That guarantee only holds while the TTL stays small, so the
+    # value is bounded to PROD_MAX_ACCESS_TOKEN_EXPIRE_MINUTES in
+    # staging/production (see validate_production_secrets). Dev may raise it for
+    # convenience.
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, ge=1)
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # Auth-Cookie Secure-Flag (ADR-0006).
@@ -369,6 +380,17 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "CORS_ORIGINS must be an explicit non-empty allowlist "
                     "(wildcard '*' is not allowed) in staging/production"
+                )
+            # ADR-0006 L1: the "no logout denylist" residual is only acceptable
+            # while access tokens are short-lived (#791). Refuse a TTL that would
+            # leave a stolen token usable well past logout.
+            if self.JWT_ACCESS_TOKEN_EXPIRE_MINUTES > PROD_MAX_ACCESS_TOKEN_EXPIRE_MINUTES:
+                raise ValueError(
+                    "JWT_ACCESS_TOKEN_EXPIRE_MINUTES must be "
+                    f"≤ {PROD_MAX_ACCESS_TOKEN_EXPIRE_MINUTES} in staging/production "
+                    "(ADR-0006 L1: there is no logout denylist, so a long-lived "
+                    "access token stays usable after logout). Lower the TTL or "
+                    "amend ADR-0006 before raising this bound."
                 )
         # Production hard-blocks debug/ops surfaces. The MinIO secret is only
         # required once photo storage is enabled (PHOTOS_ENABLED, M13) — until

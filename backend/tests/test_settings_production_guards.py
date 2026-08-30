@@ -23,6 +23,7 @@ def _base_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "SECRET_KEY",
         "ENCRYPTION_KEY",
         "SLUG_HMAC_KEY",
+        "JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://t:t@localhost/t")
@@ -131,3 +132,35 @@ def test_production_whitespace_normalizes_app_env(
     s = Settings()
     assert s.APP_ENV == "production"
     assert s.cookie_secure_effective is True
+
+
+# ── ADR-0006 L1: access-token TTL bound (#791) ──────────────────────────────
+
+
+@pytest.mark.parametrize("app_env", ["production", "staging"])
+def test_rejects_access_token_ttl_above_bound(
+    monkeypatch: pytest.MonkeyPatch, app_env: str
+) -> None:
+    """The L1 'no logout denylist' residual holds only while the TTL is ≤15 min."""
+    monkeypatch.setenv("APP_ENV", app_env)
+    monkeypatch.setenv("COOKIE_SECURE", "false" if app_env == "staging" else "true")
+    monkeypatch.setenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "16")
+    with pytest.raises(ValidationError, match="JWT_ACCESS_TOKEN_EXPIRE_MINUTES"):
+        Settings()
+
+
+@pytest.mark.parametrize("app_env", ["production", "staging"])
+def test_allows_access_token_ttl_at_bound(
+    monkeypatch: pytest.MonkeyPatch, app_env: str
+) -> None:
+    monkeypatch.setenv("APP_ENV", app_env)
+    monkeypatch.setenv("COOKIE_SECURE", "false" if app_env == "staging" else "true")
+    monkeypatch.setenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "15")
+    assert Settings().JWT_ACCESS_TOKEN_EXPIRE_MINUTES == 15
+
+
+def test_dev_allows_long_access_token_ttl(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dev convenience: the bound applies only to staging/production."""
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "120")
+    assert Settings().JWT_ACCESS_TOKEN_EXPIRE_MINUTES == 120
