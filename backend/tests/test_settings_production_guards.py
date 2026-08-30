@@ -150,9 +150,7 @@ def test_rejects_access_token_ttl_above_bound(
 
 
 @pytest.mark.parametrize("app_env", ["production", "staging"])
-def test_allows_access_token_ttl_at_bound(
-    monkeypatch: pytest.MonkeyPatch, app_env: str
-) -> None:
+def test_allows_access_token_ttl_at_bound(monkeypatch: pytest.MonkeyPatch, app_env: str) -> None:
     monkeypatch.setenv("APP_ENV", app_env)
     monkeypatch.setenv("COOKIE_SECURE", "false" if app_env == "staging" else "true")
     monkeypatch.setenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "15")
