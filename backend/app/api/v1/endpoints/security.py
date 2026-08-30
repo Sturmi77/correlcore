@@ -36,12 +36,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Cap the body we parse, and (more tightly) what we log per field, so a
-# misconfigured page or a hostile client cannot flood the logs. Report fields
-# are attacker-controlled, so they are logged via ``%r`` (which escapes control
-# characters) inside a message that the JSON log formatter then escapes again —
-# no newline in a report value can forge a second log line.
-_MAX_REPORT_PARSE_CHARS = 4_000
+# Bound the body we accept (DoS guard) and, separately and more tightly, what we
+# log per field. The size cap is on the *raw body* and gates whether we parse at
+# all — never a slice of the JSON before parsing, which would corrupt an
+# otherwise valid large batch and drop exactly the bursts worth investigating.
+# Report fields are attacker-controlled, so they are logged via ``%r`` (which
+# escapes control characters) inside a message that the JSON log formatter then
+# escapes again — no newline in a report value can forge a second log line.
+_MAX_REPORT_BODY_BYTES = 64_000
 _MAX_FIELD_LOG_CHARS = 300
 
 
@@ -94,7 +96,15 @@ async def csp_report(request: Request) -> Response:
     """Ingest a CSP violation report and log it. Always returns 204."""
 
     raw = await request.body()
-    text = raw.decode("utf-8", errors="replace")[:_MAX_REPORT_PARSE_CHARS]
+    if len(raw) > _MAX_REPORT_BODY_BYTES:
+        # Too large to be a legitimate report — record that one arrived and stop
+        # (never parse a slice: truncating JSON before parsing corrupts it).
+        logger.warning("csp_report_oversized bytes=%d", len(raw))
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    # Parse the *full* body (bounded above); only individual fields are truncated,
+    # and only when logged.
+    text = raw.decode("utf-8", errors="replace")
     try:
         payload = json.loads(text) if text else None
     except json.JSONDecodeError:

@@ -99,6 +99,46 @@ async def test_malformed_body_still_204(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_large_but_valid_payload_still_parsed(
+    async_client: AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A valid report over the old 4k char cap must parse, not fall to 'unparsed'.
+
+    Truncating the raw JSON before json.loads would have corrupted the payload
+    (#798 codex P2). Parsing now runs on the full body; only fields are capped.
+    """
+    long_uri = "https://evil.example/" + "a" * 5_000
+    body = json.dumps({"csp-report": {"violated-directive": "img-src", "blocked-uri": long_uri}})
+    assert len(body) > 4_000
+    with caplog.at_level("WARNING"):
+        resp = await async_client.post(
+            _CSP_REPORT,
+            content=body.encode(),
+            headers={"Content-Type": "application/csp-report"},
+        )
+    assert resp.status_code == 204
+    messages = [r.getMessage() for r in caplog.records]
+    assert any(m.startswith("csp_violation") for m in messages)
+    assert not any(m.startswith("csp_report_unparsed") for m in messages)
+
+
+@pytest.mark.asyncio
+async def test_oversized_body_short_circuits(
+    async_client: AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A body beyond the size guard is recorded and dropped without parsing."""
+    body = json.dumps({"csp-report": {"blocked-uri": "x" * 70_000}})
+    with caplog.at_level("WARNING"):
+        resp = await async_client.post(
+            _CSP_REPORT,
+            content=body.encode(),
+            headers={"Content-Type": "application/csp-report"},
+        )
+    assert resp.status_code == 204
+    assert any(r.getMessage().startswith("csp_report_oversized") for r in caplog.records)
+
+
+@pytest.mark.asyncio
 async def test_report_route_rejects_plain_text(async_client: AsyncClient) -> None:
     """The CSRF exemption is scoped to report media types, not text/plain."""
     resp = await async_client.post(
