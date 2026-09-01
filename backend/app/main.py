@@ -40,7 +40,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="CorrelCore API",
         description="Privacy-first wellbeing correlation-analysis API",
-        version="0.0.1",
+        version=settings.APP_VERSION,
         docs_url="/api/docs" if settings.DEBUG else None,
         redoc_url="/api/redoc" if settings.DEBUG else None,
         openapi_url="/api/openapi.json" if settings.DEBUG else None,

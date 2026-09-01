@@ -99,7 +99,7 @@ Konsumenten verwenden `depends_on: { service: { condition: service_healthy } }`,
 
 - `worker`: Code existiert noch nicht (`backend/app/workers/` ist leer). Sobald M3 (Analytics-Worker) startet, wird ein File-basierter Liveness-Probe ergänzt: Worker schreibt alle 60s einen Timestamp in `/tmp/worker-alive`, Healthcheck prüft Alter dieser Datei.
   **Update (#756, Phase 3 Worker-Robustheit):** Der file-basierte Heartbeat wurde nie umgesetzt — stattdessen exponiert `GET /api/v1/worker/status` seit #756 Alter und Status des letzten _erfolgreichen_ Laufs pro `WorkerJobKind` (gelesen aus `worker_runs`), was den ursprünglich geplanten Container-Heartbeat als Signal ersetzt: eine reine Prozess-Liveness-Datei hätte nicht erkannt, dass der Worker zwar läuft, aber seine nächtlichen Jobs nicht mehr erfolgreich abschließt. Externe Monitore (Uptime-Kuma, healthchecks.io, GlitchTip-Cron-Monitor) pollen diesen Endpoint statt eines Docker-`healthcheck:`-Blocks auf dem Worker-Container. Mit #757 (Umstieg von Dauerprozess auf extern getriggerte `--once`-Läufe via `supercronic`) bleibt der Worker-Container bewusst ohne eigenen `healthcheck:`-Block (wie zuvor) — ein zusätzlicher Prozess-Liveness-Check (`pgrep -f supercronic`) wurde erwogen, aber verworfen, um den Compose-Diff für Self-Hoster minimal zu halten und keine zweite, redundante Signalquelle neben `/worker/status` einzuführen; `/worker/status` bleibt die alleinige Quelle für "funktioniert der Worker tatsächlich".
-- `glitchtip`: Optionaler Monitoring-Service mit Profile `monitoring`. Healthcheck wird nachgezogen, wenn der Stack standardmäßig mit Glitchtip ausgeliefert wird (geplant ab M9 Beta-Härtung).
+- `glitchtip`: Optionaler Monitoring-Service mit Profile `monitoring`. **Update (M9 Sprint 2):** Der Healthcheck wurde ergänzt (siehe Implementierungs-Status unten) — diese Lücke ist geschlossen.
 
 ### 5. Privacy-Konsequenzen (DSGVO Art. 5, Art. 32)
 
@@ -130,7 +130,7 @@ Stacktraces dürfen Pfade und System-Variablen enthalten, aber keine Tagebuchein
 **Negativ / Trade-offs:**
 
 - ContextVars erfordern, dass _alle_ Logger über das Standard-`logging`-Modul gehen — `print()`-Aufrufe würden die Korrelation verlieren. Wird per Lint/Code-Review durchgesetzt.
-- Worker- und Glitchtip-Healthchecks fehlen aktuell bewusst (siehe Punkt 4) — stellt sich erst ab M3 als Schmerzpunkt dar.
+- ~~Worker- und Glitchtip-Healthchecks fehlen aktuell bewusst (siehe Punkt 4) — stellt sich erst ab M3 als Schmerzpunkt dar.~~ **Update 2026-09 (Audit Q8):** beide Lücken sind geschlossen — Worker-Liveness läuft über `GET /api/v1/worker/status` (#756/#757, bewusst kein Container-`healthcheck:`), Glitchtip hat seit M9 Sprint 2 einen Healthcheck.
 - Kein `/metrics`-Prometheus-Endpoint. Bewusste Entscheidung (D-012 „schlanker Ansatz"): Selfhoster bekommt Healthchecks + Logs, Prometheus/Grafana ist Opt-in via späterer `docker-compose.ops.yml`. Nachteil: keine historischen Metriken im Default-Stack.
 
 **Folge-ADRs:**
@@ -150,13 +150,13 @@ Stacktraces dürfen Pfade und System-Variablen enthalten, aber keine Tagebuchein
 
 ## Implementierungs-Status
 
-| Komponente                       | Datei                                    | Status         |
-| -------------------------------- | ---------------------------------------- | -------------- |
-| Liveness/Readiness/Summary       | `backend/app/api/v1/endpoints/health.py` | ✅ PR #35      |
-| Probe-Service                    | `backend/app/services/health_service.py` | ✅ PR #35      |
-| JSON-Logging                     | `backend/app/core/logging.py`            | ✅ PR #35      |
-| Request-ID-Middleware            | `backend/app/core/request_id.py`         | ✅ PR #35      |
-| Docker-Healthchecks (6 Services) | `infra/docker/docker-compose.yml`        | ✅ PR #35      |
-| DSGVO-Log-Scrubbing-Test         | `backend/tests/test_log_scrubbing.py`    | ✅ Diese ADR   |
-| Worker-Healthcheck               | `infra/docker/docker-compose.yml`        | ⏳ Geplant M3  |
-| Glitchtip-Healthcheck            | `infra/docker/docker-compose.yml`        | ✅ M9 Sprint 2 |
+| Komponente                         | Datei                                           | Status                                               |
+| ---------------------------------- | ----------------------------------------------- | ---------------------------------------------------- |
+| Liveness/Readiness/Summary         | `backend/app/api/v1/endpoints/health.py`        | ✅ PR #35                                            |
+| Probe-Service                      | `backend/app/services/health_service.py`        | ✅ PR #35                                            |
+| JSON-Logging                       | `backend/app/core/logging.py`                   | ✅ PR #35                                            |
+| Request-ID-Middleware              | `backend/app/core/request_id.py`                | ✅ PR #35                                            |
+| Docker-Healthchecks (6 Services)   | `infra/docker/docker-compose.yml`               | ✅ PR #35                                            |
+| DSGVO-Log-Scrubbing-Test           | `backend/tests/test_log_scrubbing.py`           | ✅ Diese ADR                                         |
+| Worker-Liveness (`/worker/status`) | `backend/app/api/v1/endpoints/worker_status.py` | ✅ #756/#757 (bewusst kein Container-`healthcheck:`) |
+| Glitchtip-Healthcheck              | `infra/docker/docker-compose.yml`               | ✅ M9 Sprint 2                                       |
