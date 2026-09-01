@@ -1,0 +1,160 @@
+name: Container Image Scan
+
+# Trivy scan of the two shipped container images — correlcore-api and
+# correlcore-web (audit epic #776 — "missing external assurance: ... image
+# scan"). Complements CodeQL (source SAST) and ci-security.yml (gitleaks +
+# dependency audit of the source tree): Trivy inspects the *built* images, so
+# it catches vulnerable OS packages and bundled runtime deps that only exist in
+# the final layers (base image CVEs, transitively pulled binaries) — not just
+# what the lockfiles declare. Findings surface in the repo Security tab and as
+# PR checks. Free on this public repository.
+#
+# Non-gating by design: the scan reports (SARIF → code scanning) but does not
+# fail the build. To gate once the baseline is triaged, set `--exit-code 1` on
+# the scan step — the build then fails on any finding matching `--severity`
+# (currently CRITICAL,HIGH,MEDIUM). Narrow `--severity` to CRITICAL,HIGH first
+# if you don't want MEDIUM findings to block.
+#
+# Scope: on push/PR this builds the image from source at the triggering commit
+# (same inputs as release-images.yml) and scans that — the pre-publish signal.
+# It is not the already-published registry digest; the mutable base tags mean a
+# rebuild can differ from a previously shipped digest. Scanning deployed digests
+# (and wiring a scan into the release/publish path) is tracked as a follow-up.
+
+on:
+  # Path filters mirror every input the two image builds copy
+  # (release-images.yml): api ← backend/** (context is backend/, covers its
+  # Dockerfile); web ← apps/web/**, packages/** (api-types), and the root
+  # workspace manifests. Keep the push and pull_request lists identical.
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - apps/web/**
+      - packages/**
+      - package.json
+      - pnpm-workspace.yaml
+      - pnpm-lock.yaml
+      - .npmrc
+      - .github/workflows/ci-image-scan.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - backend/**
+      - apps/web/**
+      - packages/**
+      - package.json
+      - pnpm-workspace.yaml
+      - pnpm-lock.yaml
+      - .npmrc
+      - .github/workflows/ci-image-scan.yml
+  schedule:
+    # Weekly rescan so newly disclosed CVEs in already-shipped base layers are
+    # caught even when the images themselves are quiet. Mondays 04:27 UTC
+    # (offset from CodeQL's 03:27 so the two security scans don't collide).
+    - cron: '27 4 * * 1'
+
+# Least privilege by default; the scan job widens only what it needs.
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Scan ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write # upload SARIF to code scanning
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Same build inputs as release-images.yml, single-arch amd64 loaded
+          # into the local daemon (no push) so Trivy scans the image built from
+          # this commit's source (see the scope note in the header). Keep
+          # build-args in sync with that workflow.
+          - image: correlcore-api
+            context: backend
+            dockerfile: backend/Dockerfile
+            ref: correlcore-api:scan
+          - image: correlcore-web
+            context: .
+            dockerfile: apps/web/Dockerfile
+            ref: correlcore-web:scan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build api image
+        if: matrix.image == 'correlcore-api'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: ${{ matrix.ref }}
+          cache-from: type=gha,scope=scan-${{ matrix.image }}
+          cache-to: type=gha,scope=scan-${{ matrix.image }},mode=max
+          provenance: false
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
+            BUILD_TIME=unknown
+
+      - name: Build web image
+        if: matrix.image == 'correlcore-web'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: ${{ matrix.ref }}
+          cache-from: type=gha,scope=scan-${{ matrix.image }}
+          cache-to: type=gha,scope=scan-${{ matrix.image }},mode=max
+          provenance: false
+          build-args: |
+            VITE_API_BASE_URL=/api/v1
+
+      - name: Install Trivy
+        # Install from Aqua's official APT repository rather than the
+        # trivy-action's bundled install.sh: that script resolves and downloads
+        # the release tarball from github.com unauthenticated, which fails
+        # (rate limit / transient) on shared runners. The APT repo is stable
+        # and self-contained. Trivy defaults its vuln-DB pulls to the GHCR
+        # mirror (ghcr.io/aquasecurity/trivy-db), so no Docker Hub override is
+        # needed.
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key \
+            | gpg --dearmor \
+            | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" \
+            | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+          trivy --version
+
+      - name: Run Trivy vulnerability scan
+        run: |
+          trivy image \
+            --format sarif \
+            --output "trivy-${{ matrix.image }}.sarif" \
+            --severity CRITICAL,HIGH,MEDIUM \
+            --ignore-unfixed \
+            --exit-code 0 \
+            "${{ matrix.ref }}"
+
+      - name: Upload SARIF to code scanning
+        # Always upload, even if the scan step reported findings, so the
+        # Security tab reflects the latest state.
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.image }}.sarif
+          category: trivy-${{ matrix.image }}
