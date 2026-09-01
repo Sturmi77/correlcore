@@ -1,19 +1,77 @@
-# Upgrade guide — v1.5.0 compose update
+# Upgrade guide — v1.6.0
 
-Last updated: 2026-08-25
+Last updated: 2026-09-01
 
 Canonical long form (rollback, troubleshooting, Alembic notes):
-[`docs/selfhost/UPGRADE_1_5_0.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/selfhost/UPGRADE_1_5_0.md)
+[`docs/selfhost/UPGRADE_1_6_0.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/selfhost/UPGRADE_1_6_0.md)
 in the repository.
 
-## v1.5.0 (current)
+## v1.6.0 (current)
+
+From **v1.5.0** (or any earlier 1.x pin) to **v1.6.0**. Security and assurance
+release — **two changes can stop a running deployment**, check them first.
+
+| Who                  | Action                                                                           |
+| -------------------- | -------------------------------------------------------------------------------- |
+| Production / homelab | Check the two blockers, pin `IMAGE_TAG=v1.6.0`, pull, `up -d --remove-orphans`   |
+| `.env`               | **No required new vars.** Remove a pinned `APP_VERSION`                          |
+| Database             | `migrate` applies Alembic **043** (expanded tag / symptom catalogue, idempotent) |
+| Custom API clients   | State-changing requests need `Content-Type: application/json`, else **415**      |
+
+### Blocker 1 — access-token TTL capped at 15 minutes
+
+If `.env` sets `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` above 15, the API **refuses to
+start** in staging/production. Set it to `15` or remove the line.
+
+```bash
+grep JWT_ACCESS_TOKEN_EXPIRE_MINUTES .env
+```
+
+### Blocker 2 — non-JSON state-changing requests return 415
+
+The Content-Type CSRF gate rejects bodies without `Content-Type:
+application/json`. The web and Android clients already comply; your own scripts
+may not.
+
+### Remove a pinned `APP_VERSION`
+
+The version now comes from the installed package, so `/health`, `/instance`,
+OpenAPI and Sentry report the running image. A value in `.env` overrides that
+and goes stale.
+
+```bash
+grep APP_VERSION .env   # remove the line if present
+```
+
+### Pin, pull, verify
+
+```env
+IMAGE_TAG=v1.6.0
+```
+
+```bash
+docker compose pull
+docker compose up -d --remove-orphans
+docker compose logs migrate --tail=30   # "Running upgrade 042 -> 043" or at head
+curl -sf "https://${DOMAIN}/api/v1/health"   # "version":"1.6.0"
+```
+
+Also note: `infra/dockge/` and `infra/dockhand/` compose files are now
+**generated** (`scripts/gen_compose_stacks.py`) — do not edit them directly.
+
+Rollback: set `IMAGE_TAG=v1.5.0` and `up -d`. Alembic 043 is additive and
+idempotent, so a 1.5.0 image runs against it unchanged.
+
+---
+
+## v1.5.0
 
 From **v1.4.0** (or any earlier 1.x pin) to **v1.5.0**.
 
 | Who                  | Action                                                                                        |
 | -------------------- | --------------------------------------------------------------------------------------------- |
 | Production / homelab | Pin `IMAGE_TAG=v1.5.0`, drop `digest` from `COMPOSE_PROFILES`, pull, `up -d --remove-orphans` |
-| `.env`               | **No required new vars.** Optional: `WORKER_STATUS_API_KEY`, `APP_VERSION=1.5.0`              |
+| `.env`               | **No required new vars.** Optional: `WORKER_STATUS_API_KEY`                                   |
 | Database             | `migrate` applies Alembic **042** (`last_seen_digest_at`)                                     |
 
 Ops traps: leftover **`digest-worker`** (duplicate weekly digests) and mixing a
@@ -23,7 +81,6 @@ Ops traps: leftover **`digest-worker`** (duplicate weekly digests) and mixing a
 
 ```env
 IMAGE_TAG=v1.5.0
-APP_VERSION=1.5.0
 ```
 
 ### 2. Drop the old digest profile
@@ -70,7 +127,7 @@ Rollback: set `IMAGE_TAG=v1.4.0` and `up -d` again. Do not restore
 
 ## Older 1.x image pins
 
-Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.5.0`**.
+Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.6.0`**.
 
 ```bash
 cd correlcore/infra/docker
