@@ -33,6 +33,11 @@ The Content-Type CSRF gate rejects bodies without `Content-Type:
 application/json`. The web and Android clients already comply; your own scripts
 may not.
 
+Two routes keep their own media types and must **not** be switched to JSON:
+`POST /api/v1/media/photos` (`multipart/form-data`) and
+`POST /api/v1/security/csp-report` (`application/csp-report`,
+`application/reports+json`).
+
 ### Remove a pinned `APP_VERSION`
 
 The version now comes from the installed package, so `/health`, `/instance`,

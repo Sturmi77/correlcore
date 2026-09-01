@@ -49,7 +49,7 @@ that assumption, so the bound is now enforced (#791).
 The Content-Type CSRF gate rejects `POST` / `PUT` / `PATCH` / `DELETE` requests
 that carry a body without `Content-Type: application/json` (#779, #789).
 
-The web and Android clients already send JSON. Only **your own** scripts,
+The web and Android clients already comply. Only **your own** scripts,
 integrations or `curl` calls are affected:
 
 ```bash
@@ -58,6 +58,16 @@ curl -X POST https://$DOMAIN/api/v1/... -d 'a=b'
 # correct
 curl -X POST https://$DOMAIN/api/v1/... -H 'Content-Type: application/json' -d '{"a":"b"}'
 ```
+
+**Route exceptions — do not "fix" these to JSON.** Two routes keep their own
+media types (`backend/app/core/csrf.py`):
+
+| Route                              | Allowed content types                                |
+| ---------------------------------- | ---------------------------------------------------- |
+| `POST /api/v1/media/photos`        | `multipart/form-data` (file upload)                  |
+| `POST /api/v1/security/csp-report` | `application/csp-report`, `application/reports+json` |
+
+Photo upload requires multipart — sending JSON there would break it.
 
 ---
 
@@ -75,8 +85,9 @@ default — it will report a stale version forever.
 grep APP_VERSION infra/docker/.env
 ```
 
-`.env.example` no longer ships the pin. Uncomment only for a deliberate custom
-build.
+`.env.example` no longer ships a concrete pin (only a
+`<your-custom-build-version>` placeholder). Set it only for a deliberate custom
+build, and never to an older version than the image you run.
 
 ### Generated secondary compose stacks
 
@@ -179,6 +190,15 @@ IMAGE_TAG=v1.5.0
 docker compose pull && docker compose up -d
 ```
 
-Alembic **043** is additive and idempotent; it does not need a downgrade for a
-1.5.0 image to run. If you must reverse it:
-`docker compose run --rm migrate alembic downgrade 042`.
+Alembic **043** is additive and idempotent; a 1.5.0 image runs against it
+unchanged, so a plain image rollback needs **no** downgrade.
+
+If you nevertheless want to reverse the migration, run it **before** you change
+the pin — the v1.5.0 `migrate` image predates revision `043` and cannot resolve
+it:
+
+```bash
+# still pinned to v1.6.0 (or override explicitly)
+IMAGE_TAG=v1.6.0 docker compose run --rm migrate alembic downgrade 042
+# only then switch the pin back to v1.5.0
+```
