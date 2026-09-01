@@ -1,0 +1,127 @@
+name: Container Image Scan
+
+# Trivy scan of the two shipped container images — correlcore-api and
+# correlcore-web (audit epic #776 — "missing external assurance: ... image
+# scan"). Complements CodeQL (source SAST) and ci-security.yml (gitleaks +
+# dependency audit of the source tree): Trivy inspects the *built* images, so
+# it catches vulnerable OS packages and bundled runtime deps that only exist in
+# the final layers (base image CVEs, transitively pulled binaries) — not just
+# what the lockfiles declare. Findings surface in the repo Security tab and as
+# PR checks. Free on this public repository.
+#
+# Non-gating by design: the scan reports (SARIF → code scanning) but does not
+# fail the build. Flip `exit-code` to 1 below to turn a fresh HIGH/CRITICAL
+# finding into a required check once the baseline is clean.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - apps/web/**
+      - backend/Dockerfile
+      - apps/web/Dockerfile
+      - pnpm-lock.yaml
+      - .github/workflows/ci-image-scan.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - backend/**
+      - apps/web/**
+      - backend/Dockerfile
+      - apps/web/Dockerfile
+      - pnpm-lock.yaml
+      - .github/workflows/ci-image-scan.yml
+  schedule:
+    # Weekly rescan so newly disclosed CVEs in already-shipped base layers are
+    # caught even when the images themselves are quiet. Mondays 04:27 UTC
+    # (offset from CodeQL's 03:27 so the two security scans don't collide).
+    - cron: '27 4 * * 1'
+
+# Least privilege by default; the scan job widens only what it needs.
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Scan ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write # upload SARIF to code scanning
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Same build inputs as release-images.yml, single-arch amd64 loaded
+          # into the local daemon (no push) so Trivy can scan the exact image
+          # that ships. Keep build-args in sync with that workflow.
+          - image: correlcore-api
+            context: backend
+            dockerfile: backend/Dockerfile
+            ref: correlcore-api:scan
+          - image: correlcore-web
+            context: .
+            dockerfile: apps/web/Dockerfile
+            ref: correlcore-web:scan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build api image
+        if: matrix.image == 'correlcore-api'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: ${{ matrix.ref }}
+          cache-from: type=gha,scope=scan-${{ matrix.image }}
+          cache-to: type=gha,scope=scan-${{ matrix.image }},mode=max
+          provenance: false
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
+            BUILD_TIME=unknown
+
+      - name: Build web image
+        if: matrix.image == 'correlcore-web'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: ${{ matrix.ref }}
+          cache-from: type=gha,scope=scan-${{ matrix.image }}
+          cache-to: type=gha,scope=scan-${{ matrix.image }},mode=max
+          provenance: false
+          build-args: |
+            VITE_API_BASE_URL=/api/v1
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ matrix.ref }}
+          format: sarif
+          output: trivy-${{ matrix.image }}.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          # Report only — do not fail the build (see header). Flip to 1 to gate.
+          exit-code: '0'
+          ignore-unfixed: true
+        env:
+          # Pull the vuln DB from the GHCR mirror to dodge Docker Hub rate limits.
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
+
+      - name: Upload SARIF to code scanning
+        # Always upload, even if the scan step reported findings, so the
+        # Security tab reflects the latest state.
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.image }}.sarif
+          category: trivy-${{ matrix.image }}
