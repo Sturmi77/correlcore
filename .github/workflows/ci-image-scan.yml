@@ -103,7 +103,11 @@ jobs:
             VITE_API_BASE_URL=/api/v1
 
       - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@0.28.0
+        # trivy-action release tags are v-prefixed (v0.29.0 … v0.36.0). Trivy
+        # itself defaults its vuln-DB pulls to the GHCR mirror
+        # (ghcr.io/aquasecurity/trivy-db), so no Docker Hub rate-limit override
+        # is needed here.
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: ${{ matrix.ref }}
           format: sarif
@@ -112,10 +116,6 @@ jobs:
           # Report only — do not fail the build (see header). Flip to 1 to gate.
           exit-code: '0'
           ignore-unfixed: true
-        env:
-          # Pull the vuln DB from the GHCR mirror to dodge Docker Hub rate limits.
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
 
       - name: Upload SARIF to code scanning
         # Always upload, even if the scan step reported findings, so the
