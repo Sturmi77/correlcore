@@ -2,9 +2,12 @@
 useDefault = true
 
 [allowlist]
-description = "CI unit-test Fernet fixture only (not a production secret)"
-# Exact ENCRYPTION_KEY used in .github/workflows/ci-api.yml pytest env.
-# Do NOT path-allowlist the whole workflow file — that would hide future leaks.
+description = "CI-only test fixtures (not production secrets)"
+# Exact fixture values used in the CI workflow envs (ci-api.yml, ci-dast.yml):
+# a valid-but-throwaway Fernet ENCRYPTION_KEY and the placeholder SECRET_KEY.
+# Value-scoped on purpose — do NOT path-allowlist the whole workflow files,
+# that would hide future real leaks in them.
 regexes = [
   '''SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4=''',
+  '''test-secret-key-min-32-bytes-long-padding''',
 ]

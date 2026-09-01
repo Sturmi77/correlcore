@@ -54,4 +54,7 @@ limiter = Limiter(
     key_func=rate_limit_key,
     storage_uri=_rate_limit_storage_uri(),
     in_memory_fallback_enabled=True,
+    # Disabled only by an explicit RATE_LIMIT_ENABLED=false (isolated CI/DAST
+    # harnesses); True everywhere real. When False, SlowAPI no-ops every limit.
+    enabled=settings.RATE_LIMIT_ENABLED,
 )

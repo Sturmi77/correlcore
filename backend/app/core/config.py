@@ -106,6 +106,11 @@ class Settings(BaseSettings):
     # Rate limiting
     RATE_LIMIT_STORAGE_URL: str = ""
     RATE_LIMIT_TRUST_PROXY_HEADERS: bool = False
+    # Escape hatch for isolated CI harnesses that must exercise handler logic
+    # without SlowAPI's per-endpoint caps throttling them (e.g. the DAST scan in
+    # ci-dast.yml, where every request shares one client IP). MUST stay True in
+    # every real deployment; there is no code path that flips it off implicitly.
+    RATE_LIMIT_ENABLED: bool = True
 
     # JWT (ADR-0004: Phase 1 native JWT)
     JWT_ALGORITHM: str = "HS256"
