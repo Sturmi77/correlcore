@@ -15,6 +15,23 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 PROD_MAX_ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 
+def _default_app_version() -> str:
+    """Single source of truth for the app version: the installed package
+    version (``pyproject`` ``[project].version``).
+
+    Keeps the OpenAPI ``info.version`` and the health/instance/Sentry release
+    string from drifting off the actual release (audit Q6). Overridable via the
+    ``APP_VERSION`` env var; falls back when the distribution metadata is not
+    present (e.g. running straight from a source tree without an install).
+    """
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("correlcore-backend")
+    except PackageNotFoundError:
+        return "0.0.0+unknown"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -41,7 +58,7 @@ class Settings(BaseSettings):
             return v.strip()
         return v
 
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = Field(default_factory=_default_app_version)
     DEBUG: bool = False
     DEV_VIEW_ENABLED: bool = False
     DEV_DB_BACKUP_DIR: str = "/tmp/correlcore-backups"
