@@ -25,27 +25,29 @@ credentials. Design remains strong (HttpOnly cookies, DEK wrapping, RLS,
 SlowAPI, security CI). Jul-2026 remediations held; six former Open Medium/Low
 items are now **Fixed**. Highest residual risk shifted from config races to
 **scale debt** (analytics monolith + hand-maintained FE/BE types) and
-**missing external assurance** (pentest, SAST/DAST). _[2026-08-28: the
+**missing external assurance** (pentest, DAST). _[2026-08-28: the
 analytics monolith (Q1) has since been split —
 [#787](https://github.com/Sturmi77/correlcore/issues/787); scale debt now
-centres on the hand-maintained FE/BE types.]_
+centres on the hand-maintained FE/BE types.]_ _[2026-09-01: SAST via CodeQL
+landed — [#801](https://github.com/Sturmi77/correlcore/issues/801); external
+assurance now centres on the pending pentest and DAST.]_
 
 ---
 
 ## Scorecard
 
-| Area                       | Grade (2026-08-25) | Jul 2026 | Notes                                                               |
-| -------------------------- | ------------------ | -------- | ------------------------------------------------------------------- |
-| Auth & sessions            | A-                 | B+       | Cookie/JWT model solid; body JWT opt-in; atomic refresh rotate      |
-| Crypto at rest             | A-                 | A-       | Per-user DEK + MultiFernet; Fernet validity checked in staging/prod |
-| Secrets hygiene            | A-                 | B+       | No real secrets in git; gitleaks + Dependabot                       |
-| Rate limits                | A-                 | B        | Auth/data/export/delete covered; Redis blip → in-memory fallback    |
-| Authorization              | A-                 | A-       | App filters + Postgres RLS                                          |
-| Supply chain / CI security | B+                 | B        | gitleaks, pip-audit, pnpm audit, Dependabot; no SAST/DAST/Trivy yet |
-| Code quality gates         | A-                 | B+       | ruff, mypy strict, pytest cov≥70, ESLint, style/contrast gates      |
-| Docs accuracy              | B                  | B-       | React GUI correctly “planned”; sprint archives still noisy          |
-| Maintainability            | B-                 | B-       | Compose drift + god modules + hand DTOs; React still unscaffolded   |
-| External assurance         | C+                 | C+       | External pentest still pending (`M9_PENTEST.md`)                    |
+| Area                       | Grade (2026-08-25) | Jul 2026 | Notes                                                                              |
+| -------------------------- | ------------------ | -------- | ---------------------------------------------------------------------------------- |
+| Auth & sessions            | A-                 | B+       | Cookie/JWT model solid; body JWT opt-in; atomic refresh rotate                     |
+| Crypto at rest             | A-                 | A-       | Per-user DEK + MultiFernet; Fernet validity checked in staging/prod                |
+| Secrets hygiene            | A-                 | B+       | No real secrets in git; gitleaks + Dependabot                                      |
+| Rate limits                | A-                 | B        | Auth/data/export/delete covered; Redis blip → in-memory fallback                   |
+| Authorization              | A-                 | A-       | App filters + Postgres RLS                                                         |
+| Supply chain / CI security | B+                 | B        | gitleaks, pip-audit, pnpm audit, Dependabot, CodeQL SAST; DAST/Trivy still pending |
+| Code quality gates         | A-                 | B+       | ruff, mypy strict, pytest cov≥70, ESLint, style/contrast gates                     |
+| Docs accuracy              | B                  | B-       | React GUI correctly “planned”; sprint archives still noisy                         |
+| Maintainability            | B-                 | B-       | Compose drift + god modules + hand DTOs; React still unscaffolded                  |
+| External assurance         | C+                 | C+       | External pentest still pending (`M9_PENTEST.md`)                                   |
 
 ---
 
@@ -186,16 +188,16 @@ plus roll it to the non-prod compose stacks, and bound
 
 Epic: [#776](https://github.com/Sturmi77/correlcore/issues/776)
 
-| Priority | Action                                                                      | Issue                                                               |
-| -------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| ~~P0~~   | ✅ Split `insight_engine.py` / bound analytics modules — **done**           | [#777](https://github.com/Sturmi77/correlcore/issues/777) (#787)    |
-| P0       | OpenAPI → TS types / `packages/api-types` + widen contract CI               | [#778](https://github.com/Sturmi77/correlcore/issues/778)           |
-| P1       | Decompose insights / settings / trends pages                                | [#776](https://github.com/Sturmi77/correlcore/issues/776) checklist |
-| P1       | Vitest coverage thresholds + real-API e2e + contract path filters           | [#780](https://github.com/Sturmi77/correlcore/issues/780)           |
-| P1       | Compose single-source generation (D-I1 / M10)                               | [#781](https://github.com/Sturmi77/correlcore/issues/781)           |
-| ~~P1~~   | ✅ Content-Type CSRF (M12) + CSP / denylist / MFA decisions — **done**      | [#779](https://github.com/Sturmi77/correlcore/issues/779) (#789)    |
-| P2       | Semgrep/CodeQL (+ optional Trivy); docs hygiene (ADR-0007, OpenAPI version) | [#776](https://github.com/Sturmi77/correlcore/issues/776) checklist |
-| P3       | External pentest                                                            | [#782](https://github.com/Sturmi77/correlcore/issues/782)           |
+| Priority | Action                                                                                                                                                              | Issue                                                               |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ~~P0~~   | ✅ Split `insight_engine.py` / bound analytics modules — **done**                                                                                                   | [#777](https://github.com/Sturmi77/correlcore/issues/777) (#787)    |
+| P0       | OpenAPI → TS types / `packages/api-types` + widen contract CI                                                                                                       | [#778](https://github.com/Sturmi77/correlcore/issues/778)           |
+| P1       | Decompose insights / settings / trends pages                                                                                                                        | [#776](https://github.com/Sturmi77/correlcore/issues/776) checklist |
+| P1       | Vitest coverage thresholds + real-API e2e + contract path filters                                                                                                   | [#780](https://github.com/Sturmi77/correlcore/issues/780)           |
+| P1       | Compose single-source generation (D-I1 / M10)                                                                                                                       | [#781](https://github.com/Sturmi77/correlcore/issues/781)           |
+| ~~P1~~   | ✅ Content-Type CSRF (M12) + CSP / denylist / MFA decisions — **done**                                                                                              | [#779](https://github.com/Sturmi77/correlcore/issues/779) (#789)    |
+| P2       | CodeQL SAST done ([#801](https://github.com/Sturmi77/correlcore/issues/801)); remaining: optional Trivy image scan + DAST; docs hygiene (ADR-0007, OpenAPI version) | [#776](https://github.com/Sturmi77/correlcore/issues/776) checklist |
+| P3       | External pentest                                                                                                                                                    | [#782](https://github.com/Sturmi77/correlcore/issues/782)           |
 
 **Explicit non-goal:** Do not scaffold `apps/web-react` until shared API types exist.
 
@@ -210,7 +212,7 @@ Epic: [#776](https://github.com/Sturmi77/correlcore/issues/776)
 | Contract discipline   | Generated client or shared package + CI              | Hand DTOs; enum contract only                                                                                | Gap     |
 | Module boundaries     | Analytics split; thin routes                         | analytics split into `insights.*`; routes still large                                                        | Partial |
 | Test pyramid          | Unit + selective integration + real-API e2e          | Unit excellent; e2e mostly mocked smoke                                                                      | Partial |
-| SAST / DAST / images  | CodeQL or Semgrep + image scan                       | Deps audit + gitleaks only                                                                                   | Gap     |
+| SAST / DAST / images  | CodeQL or Semgrep + image scan                       | CodeQL SAST (#801) + deps audit + gitleaks; no DAST / image scan yet                                         | Partial |
 | Observability         | Health + scrubbed errors + job SLOs                  | Health/logs/GlitchTip; no Prometheus by design                                                               | Partial |
 | External assurance    | Independent pentest before broad hosted              | Pending (M9)                                                                                                 | Gap     |
 | Dual frontend         | Shared packages before second GUI                    | React unscaffolded (correct)                                                                                 | OK      |
