@@ -9,21 +9,33 @@ name: DAST (OWASP ZAP)
 #
 # Target: the FastAPI app run live (uvicorn) against a real Postgres + Redis,
 # migrated with `alembic upgrade head` — the same bring-up as ci-api.yml. ZAP
-# runs its OpenAPI-driven API scan, visiting every documented endpoint. The
-# schema is exposed here by DEBUG=true; this is a throwaway CI instance, so
-# handing the scanner the endpoint list is intentional and safe.
+# runs its OpenAPI-driven API scan, actively probing every documented endpoint.
+# The schema is exposed here by DEBUG=true; this is a throwaway CI instance, so
+# handing the scanner the endpoint list is intentional and safe. RATE_LIMIT
+# _ENABLED=false disables SlowAPI for the run so the many scanner requests
+# (all one client IP) reach handler logic instead of collecting 429s.
+#
+# Coverage scope: the scan runs UNAUTHENTICATED, so it exercises the pre-auth
+# attack surface — registration, login, password reset, token refresh, the CSP
+# report sink, health — plus request validation and error handling on every
+# route (protected routes answer 401 before their handler). That pre-auth
+# surface is the highest-value target (what an anonymous attacker can reach).
+# Authenticated deep-scanning (seed a verified user + drive ZAP session/auth so
+# it probes post-login endpoints) is a tracked follow-up.
 #
 # Topology caveat: this scans the app WITHOUT the production Traefik proxy, so
 # response security headers (CSP/HSTS/X-Frame-Options/…) are absent — Traefik
-# injects them in the prod stack (#791). The proxy-owned "header not set" alerts
-# are downgraded in .zap/api-scan-rules.tsv to keep the report focused on
+# injects them in the prod stack (#791). Those proxy-owned "header not set"
+# alerts are downgraded in .zap/api-scan-rules.tsv to keep the report focused on
 # app-layer findings. Follow-up: scan the full Traefik-fronted stack (and the
 # web UI) for header/UI coverage.
 #
-# Non-gating by design: the scan reports (HTML/JSON/MD artifact + job summary)
-# but does not fail the build (`-I` + continue-on-error), same posture as the
-# CodeQL and Trivy rollouts. Tighten specific rules to FAIL in the rules file
-# once the baseline is triaged.
+# Non-gating for FINDINGS, gating for OPERATIONAL failure: `-I` keeps ZAP from
+# failing the build on alerts (same report-only posture as CodeQL/Trivy), but
+# the scan step still fails if ZAP itself did not run (image pull, networking,
+# schema import, or startup error) or produced no report — otherwise a broken
+# scheduled control would silently pass forever. Tighten specific rules to FAIL
+# in the rules file once the baseline is triaged.
 
 on:
   push:
@@ -92,6 +104,9 @@ jobs:
       REDIS_URL: 'redis://localhost:6379/0'
       RATE_LIMIT_STORAGE_URL: 'redis://localhost:6379/1'
       CORS_ORIGINS: 'http://localhost:3000'
+      # Let the scanner's many same-IP requests reach handler logic instead of
+      # tripping SlowAPI's per-endpoint caps. Isolated CI instance only.
+      RATE_LIMIT_ENABLED: 'false'
       SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
       ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
       SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
@@ -149,9 +164,12 @@ jobs:
           chmod -R 777 zap-out
 
       - name: Run ZAP API scan
-        continue-on-error: true # non-gating: findings must not fail the build
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          # -I => findings (WARN) never fail the scan; exit is 0 on a clean or
+          # warnings-only run, non-zero only if a rule is set to FAIL (none are)
+          # or ZAP could not run (bad args, import/startup/networking error).
+          set +e
           docker run --rm --network host \
             -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
@@ -163,6 +181,22 @@ jobs:
               -w zap-report.md \
               -J zap-report.json \
               -I
+          zap_exit=$?
+          set -e
+          echo "ZAP exit code: ${zap_exit}"
+          # Gate on operational failure only: a report must exist (scanner ran)
+          # and the exit code must be within ZAP's findings range (0=pass,
+          # 1=FAIL-rule, 2=WARN — all "it ran"). Anything else (125 pull fail,
+          # ZAP crash) fails the job so the control can't rot silently.
+          if [ ! -s zap-out/zap-report.json ]; then
+            echo "::error::ZAP produced no report — operational failure." >&2
+            exit 1
+          fi
+          if [ "${zap_exit}" -gt 2 ]; then
+            echo "::error::ZAP exited ${zap_exit} — operational failure (not findings)." >&2
+            exit 1
+          fi
+          echo "Scan ran; findings are report-only (non-gating)."
 
       - name: Publish scan summary
         if: always()
