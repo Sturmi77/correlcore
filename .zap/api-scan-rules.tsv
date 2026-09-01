@@ -1,0 +1,25 @@
+# OWASP ZAP alert rule config for the DAST API scan (.github/workflows/ci-dast.yml).
+# Format: <pluginId>	<IGNORE|WARN|FAIL>	<comment>   (tab-separated)
+#
+# The scan targets the FastAPI app directly (uvicorn), WITHOUT the production
+# Traefik reverse proxy in front. The app deliberately does not emit response
+# security headers itself — Traefik's `security-headers` middleware injects the
+# whole suite in the production stack (infra/docker/docker-compose.yml:
+# stsSeconds/frameDeny/contentTypeNosniff/browserXssFilter/referrerPolicy/
+# permissionsPolicy + Content-Security-Policy-Report-Only; audit #791).
+#
+# So the "header not set" passive alerts below are false positives for THIS
+# test topology (proxy absent), not real gaps. Downgrade them to IGNORE to keep
+# the report focused on app-layer findings (injection, auth, info leaks). To
+# exercise the header suite dynamically, scan the Traefik-fronted stack — see
+# the follow-up note in the workflow header.
+#
+# Everything not listed keeps its default threshold (passive alerts WARN; the
+# scan is non-gating regardless — see the `-I` flag / continue-on-error step).
+
+10015	IGNORE	Re-examine Cache-control Directives — Traefik/app caching policy, not scanned here
+10020	IGNORE	Anti-clickjacking (X-Frame-Options) — Traefik frameDeny=true
+10021	IGNORE	X-Content-Type-Options missing — Traefik contentTypeNosniff=true
+10035	IGNORE	Strict-Transport-Security not set — Traefik stsSeconds/forceSTSHeader (HTTPS-only anyway)
+10038	IGNORE	Content Security Policy not set — Traefik injects CSP-Report-Only (#791)
+10063	IGNORE	Permissions Policy not set — Traefik permissionsPolicy

@@ -1,0 +1,191 @@
+name: DAST (OWASP ZAP)
+
+# Dynamic application security testing — the last CI-automatable leg of the
+# external-assurance triad in the security audit (epic #776 — "missing external
+# assurance: pentest, SAST"). SAST (CodeQL, #801) and image scanning (Trivy,
+# #802) inspect code and built layers statically; ZAP exercises the *running*
+# API and observes real responses (injection, auth handling, info disclosure,
+# error leakage) that only appear at runtime.
+#
+# Target: the FastAPI app run live (uvicorn) against a real Postgres + Redis,
+# migrated with `alembic upgrade head` — the same bring-up as ci-api.yml. ZAP
+# runs its OpenAPI-driven API scan, visiting every documented endpoint. The
+# schema is exposed here by DEBUG=true; this is a throwaway CI instance, so
+# handing the scanner the endpoint list is intentional and safe.
+#
+# Topology caveat: this scans the app WITHOUT the production Traefik proxy, so
+# response security headers (CSP/HSTS/X-Frame-Options/…) are absent — Traefik
+# injects them in the prod stack (#791). The proxy-owned "header not set" alerts
+# are downgraded in .zap/api-scan-rules.tsv to keep the report focused on
+# app-layer findings. Follow-up: scan the full Traefik-fronted stack (and the
+# web UI) for header/UI coverage.
+#
+# Non-gating by design: the scan reports (HTML/JSON/MD artifact + job summary)
+# but does not fail the build (`-I` + continue-on-error), same posture as the
+# CodeQL and Trivy rollouts. Tighten specific rules to FAIL in the rules file
+# once the baseline is triaged.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - .zap/api-scan-rules.tsv
+      - .github/workflows/ci-dast.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - backend/**
+      - .zap/api-scan-rules.tsv
+      - .github/workflows/ci-dast.yml
+  schedule:
+    # Weekly runtime scan so newly disclosed classes of issue are caught even
+    # when the app is quiet. Mondays 05:27 UTC (offset from CodeQL 03:27 and
+    # Trivy 04:27 so the three security scans don't collide).
+    - cron: '27 5 * * 1'
+  workflow_dispatch:
+
+# Cancel an in-flight run when a newer commit arrives on the same ref.
+concurrency:
+  group: dast-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: the scan only reads the checkout and uploads an artifact.
+permissions:
+  contents: read
+
+jobs:
+  zap-api:
+    name: ZAP API scan (live FastAPI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: correlcore
+          POSTGRES_PASSWORD: correlcore
+          POSTGRES_DB: correlcore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U correlcore"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Runnable non-production config (mirrors ci-api.yml). DEBUG=true exposes
+      # /api/openapi.json for the scanner; allowed because APP_ENV != production.
+      # The keys below are CI-only test values, not secrets.
+      APP_ENV: test
+      DEBUG: 'true'
+      DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
+      REDIS_URL: 'redis://localhost:6379/0'
+      RATE_LIMIT_STORAGE_URL: 'redis://localhost:6379/1'
+      CORS_ORIGINS: 'http://localhost:3000'
+      SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
+      ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
+      SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: 'latest'
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: uv sync --python 3.12 --extra dev --extra analytics --frozen
+
+      - name: Apply migrations
+        working-directory: backend
+        run: uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
+
+      - name: Start API (uvicorn)
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          nohup uv run --python 3.12 uvicorn app.main:app \
+            --host 127.0.0.1 --port 8000 > "$GITHUB_WORKSPACE/uvicorn.log" 2>&1 &
+          echo "Waiting for /health/live ..."
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/health/live > /dev/null 2>&1; then
+              echo "API is up after ${i}s."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::API did not become healthy within 60s" >&2
+          cat "$GITHUB_WORKSPACE/uvicorn.log" || true
+          exit 1
+
+      - name: Verify OpenAPI schema is exposed
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8000/api/openapi.json > /dev/null
+          echo "OpenAPI schema reachable."
+
+      - name: Prepare ZAP workspace
+        run: |
+          set -euo pipefail
+          mkdir -p zap-out
+          cp .zap/api-scan-rules.tsv zap-out/api-scan-rules.tsv
+          # ZAP runs as uid 1000 inside the container and writes reports here.
+          chmod -R 777 zap-out
+
+      - name: Run ZAP API scan
+        continue-on-error: true # non-gating: findings must not fail the build
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-api-scan.py \
+              -t http://127.0.0.1:8000/api/openapi.json \
+              -f openapi \
+              -c api-scan-rules.tsv \
+              -r zap-report.html \
+              -w zap-report.md \
+              -J zap-report.json \
+              -I
+
+      - name: Publish scan summary
+        if: always()
+        run: |
+          if [ -f zap-out/zap-report.md ]; then
+            {
+              echo "## OWASP ZAP API scan"
+              echo ""
+              cat zap-out/zap-report.md
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No ZAP report produced (scan step failed before writing one)." \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zap-api-report
+          path: |
+            zap-out/zap-report.html
+            zap-out/zap-report.json
+            zap-out/zap-report.md
+          retention-days: 30
+          if-no-files-found: warn
