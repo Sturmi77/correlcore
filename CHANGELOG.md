@@ -8,6 +8,72 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-09-01
+
+Sicherheits- und Assurance-Release. **Zwei Änderungen können ein bestehendes
+Deployment beim Upgrade stoppen** — bitte vorher lesen:
+[`docs/selfhost/UPGRADE_1_6_0.md`](docs/selfhost/UPGRADE_1_6_0.md).
+
+### Security
+
+- **Access-Token-TTL in staging/production auf 15 Minuten begrenzt (#791, #798)** —
+  `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` > 15 wird beim Start **abgelehnt** (die API
+  startet dann nicht). ADR-0006 akzeptiert „keine Logout-Denylist" nur, solange
+  Access-Tokens kurzlebig sind; die Grenze macht diese Annahme unumgehbar.
+- **Content-Type-CSRF-Gate (#779, #789, #798)** — state-changing Requests ohne
+  JSON-Content-Type werden mit **415** abgelehnt. Schützt gegen
+  Cross-Site-Form-Posts; eigene Clients müssen `application/json` senden.
+- **Report-only CSP + Report-Sink (#791, #798)** — Traefik liefert eine
+  `Content-Security-Policy-Report-Only`; Verstöße sammelt der neue Endpoint
+  `POST /api/v1/security/csp-report` (nicht im OpenAPI-Schema, größenbegrenzt).
+- **SAST via CodeQL (#801)** — `security-extended`, Python + JS/TS, wöchentlich.
+- **Container-Image-Scan via Trivy (#802)** — api- und web-Image, SARIF in den
+  Security-Tab.
+- **DAST via OWASP ZAP (#803)** — OpenAPI-getriebener Scan gegen eine live
+  gestartete API; deckt die unauthentifizierte Angriffsfläche ab.
+
+### Added
+
+- **Generierte TypeScript-Typen aus der OpenAPI (#778, #792)** — neues Paket
+  `packages/api-types`; CI bricht bei Drift zwischen Backend-Schema und Typen.
+- **Persona-Demodaten + Landing-Screenshots (#788)** — reproduzierbarer
+  Demo-Datensatz und Maturity-Screenshots für die Landing.
+- **`RATE_LIMIT_ENABLED` (#805)** — Escape-Hatch für isolierte CI-Harnesses
+  (DAST). Default `true`; **muss in echten Deployments `true` bleiben**.
+- **Compose-Generator `scripts/gen_compose_stacks.py` (#781, #800)** — erzeugt
+  die Sekundär-Stacks aus einer Quelle, CI prüft auf Drift.
+- **FE-Coverage-Floor + Contract-Path-Filter (#780, #799)** — Nicht-Regressions-
+  Schwelle für `lib/api` und `lib/offline`.
+
+### Changed
+
+- **`insight_engine` in Familien-Module zerlegt (#777, #787)** — `correlation`,
+  `weekday`, `symptoms`, `shared`; keine Verhaltensänderung.
+- **Sekundär-Stacks (dockge, dockhand) werden generiert (#781, #800)** — nicht
+  mehr direkt editieren; Änderungen an der Quelle bzw. am Generator vornehmen.
+- **`APP_VERSION` kommt aus der Paket-Version (#805)** — OpenAPI-`info.version`,
+  Health, `/instance` und der Sentry-Release melden dieselbe Version. Ein
+  gesetztes `APP_VERSION` in der `.env` **überschreibt** das und wird veraltet;
+  siehe Upgrade-Guide.
+- **Erweiterter Default-Tag-Katalog (Alembic 043)** — zusätzliche Lifestyle- und
+  Journal-Tags sowie drei physiologische Default-Symptome; idempotent.
+- Dependency-Bumps: `@sveltejs/kit`, `@sveltejs/vite-plugin-svelte`,
+  `@sveltejs/adapter-node`, `@playwright/test`, `vitest`, `svelte-check`,
+  `typescript-eslint`, `actions/setup-java`.
+
+### Fixed
+
+- Prettier-Drift, die nach #784 auf `main` blockierte (#785).
+
+### Docs
+
+- Sicherheits-/Wartbarkeits-Audit auf 2026-08-25 aktualisiert und die
+  Remediationen nachgezogen (#783, #790, #804, #805).
+- `M9_PENTEST.md` führt die automatisierten Scans (report-only) neben dem
+  weiterhin offenen manuellen Pentest.
+- ADR-0007 spiegelt Worker-Liveness über `/api/v1/worker/status` und den
+  Glitchtip-Healthcheck.
+
 ## [1.5.0] — 2026-08-25
 
 Ops-Upgrade (Compose, Digest-Worker, Worker-Cron, Alembic 042):
