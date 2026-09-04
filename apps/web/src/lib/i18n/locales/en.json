@@ -68,11 +68,14 @@
       "top_symptom": "Notable symptom",
       "work_context_heading": "Work context pattern",
       "work_context_hint": "Average per situation",
-      "work_context_metric_aria": "Work context metric",
       "metric_mood": "Mood",
       "metric_energy": "Energy",
       "metric_stress": "Stress",
-      "work_context_value": "{mood} · {count} days",
+      "work_context_days": "{count} days",
+      "work_context_cell": "{context} – {metric}: {value} of 5",
+      "work_context_legend_low": "lower",
+      "work_context_legend_high": "better",
+      "work_context_stress_note": "Stronger shading = better (stress inverted).",
       "none": "None"
     },
     "insight": {

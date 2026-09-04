@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-test('home stress bars use inverted widths (lower stress = wider bar)', async ({ page }) => {
+test('home work-context heatmap inverts stress (lower stress = stronger cell)', async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     localStorage.setItem('dev_mode_enabled', 'true');
     localStorage.setItem('dev_force_viz', 'true');
@@ -105,49 +107,49 @@ test('home stress bars use inverted widths (lower stress = wider bar)', async ({
 
   await page.goto('/');
 
-  await page.getByTestId('home-work-context-metric-stress').click();
+  const heatmap = page.getByTestId('home-work-context-heatmap');
+  await expect(heatmap).toBeVisible();
 
-  const bars = page.locator('.daily-brief__work-context-bar');
-  await expect(bars).toHaveCount(3);
+  const rows = heatmap.locator('.work-context-summary__row');
+  await expect(rows).toHaveCount(3);
 
-  const widths = await bars.evaluateAll((nodes) =>
-    nodes.map((node) => {
-      const style = (node as HTMLElement).style.getPropertyValue('--bar-width');
-      return parseFloat(style);
-    })
+  // Read the stress cell (raw value + intensity level) per work context.
+  const stressByContext = await rows.evaluateAll((nodes) =>
+    Object.fromEntries(
+      nodes.map((row) => {
+        const context = row.getAttribute('data-context') ?? '';
+        const cell = row.querySelector('[data-metric="stress"]') as HTMLElement | null;
+        return [
+          context,
+          {
+            level: Number(cell?.getAttribute('data-level')),
+            value: cell?.textContent?.trim() ?? '',
+          },
+        ];
+      })
+    )
   );
 
-  const labels = await page.locator('.daily-brief__work-context-row strong').allTextContents();
+  // Raw stress averages are shown unchanged in the cell.
+  expect(stressByContext.vacation.value).toBe('2.2');
+  expect(stressByContext.office.value).toBe('3.6');
+  expect(stressByContext.homeoffice.value).toBe('2.8');
 
-  // vacation 2.2 -> display 3.8 -> 76%; office 3.6 -> 2.4 -> 48%; homeoffice 2.8 -> 3.2 -> 64%
-  expect(Math.max(...widths)).toBeCloseTo(76, 0);
-  expect(Math.min(...widths)).toBeCloseTo(48, 0);
+  // Stress is inverted for shading: lower raw stress -> higher goodness -> stronger level.
+  // vacation 2.2 (goodness 3.8) > homeoffice 2.8 (3.2) > office 3.6 (2.4)
+  expect(stressByContext.vacation.level).toBeGreaterThan(stressByContext.homeoffice.level);
+  expect(stressByContext.homeoffice.level).toBeGreaterThan(stressByContext.office.level);
 
-  const vacationIndex = labels.findIndex((t) => t.includes('2.2'));
-  const officeIndex = labels.findIndex((t) => t.includes('3.6'));
-  const homeofficeIndex = labels.findIndex((t) => t.includes('2.8'));
-  expect(vacationIndex).toBeGreaterThanOrEqual(0);
-  expect(officeIndex).toBeGreaterThanOrEqual(0);
-  expect(widths[vacationIndex]).toBeGreaterThan(widths[officeIndex]);
+  // Best overall situation (vacation) is ordered first.
+  const firstContext = await rows.first().getAttribute('data-context');
+  expect(firstContext).toBe('vacation');
 
-  const rowData = await page.locator('.daily-brief__work-context-row').evaluateAll((rows) =>
-    rows.map((row) => ({
-      highlight: row.getAttribute('data-highlight'),
-      metricColor: (
-        row.querySelector('.daily-brief__work-context-bar') as HTMLElement
-      )?.style.getPropertyValue('--bar-metric-color'),
-      barColor: getComputedStyle(
-        row.querySelector('.daily-brief__work-context-bar') as Element
-      ).getPropertyValue('--bar-color'),
-    }))
-  );
-
-  expect(rowData[vacationIndex].highlight).toBe('high');
-  expect(rowData[officeIndex].highlight).toBe('low');
-  expect(rowData[homeofficeIndex].highlight).toBe('none');
-
-  // Worst stress uses metric red; neutral uses primary; best uses success green.
-  expect(rowData[officeIndex].barColor).toMatch(/metric-stress|239,\s*68,\s*68|ef4444/i);
-  expect(rowData[homeofficeIndex].metricColor).toContain('primary');
-  expect(rowData[vacationIndex].barColor).toMatch(/success|22,\s*163,\s*74|16a34a/i);
+  // Token-based single-hue ramp — no red/green semantic colours on the cells.
+  const cellBackgrounds = await heatmap
+    .locator('.work-context-summary__cell')
+    .evaluateAll((cells) => cells.map((cell) => getComputedStyle(cell).backgroundColor));
+  for (const background of cellBackgrounds) {
+    expect(background).not.toMatch(/239,\s*68,\s*68|ef4444/i); // metric-stress red
+    expect(background).not.toMatch(/22,\s*163,\s*74|16a34a/i); // success green
+  }
 });

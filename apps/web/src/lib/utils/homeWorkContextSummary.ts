@@ -1,9 +1,12 @@
 import type { WorkContextSummaryItem } from '$lib/api/dashboard';
+import { heatmapLevel } from '$lib/utils/charts';
 import { displayMetricValue } from '$lib/utils/metrics';
 
-const METRIC_SCALE_MAX = 5;
+/** Metrics shown per work context, in column order. */
+export const WORK_CONTEXT_METRICS = ['mood', 'energy', 'stress'] as const;
+export type WorkContextMetricKey = (typeof WORK_CONTEXT_METRICS)[number];
 
-export type WorkContextMetricKey = 'mood' | 'energy' | 'stress';
+const METRIC_SCALE_MAX = 5;
 
 const METRIC_FIELD: Record<WorkContextMetricKey, keyof WorkContextSummaryItem> = {
   mood: 'mood_avg',
@@ -11,19 +14,7 @@ const METRIC_FIELD: Record<WorkContextMetricKey, keyof WorkContextSummaryItem> =
   stress: 'stress_avg',
 };
 
-const METRIC_INVERT: Record<WorkContextMetricKey, boolean> = {
-  mood: false,
-  energy: false,
-  stress: true,
-};
-
-export type WorkContextDisplayItem = WorkContextSummaryItem & {
-  /** Deviation from the weighted average for the active metric. */
-  metricDelta: number | null;
-  /** Raw average for the active metric. */
-  metricAvg: number | null;
-};
-
+/** Raw average for a metric, or null when unavailable. */
 export function workContextMetricAvg(
   item: WorkContextSummaryItem,
   metric: WorkContextMetricKey
@@ -32,98 +23,75 @@ export function workContextMetricAvg(
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-export function weightedMoodAverage(items: WorkContextSummaryItem[]): number | null {
-  return weightedMetricAverage(items, 'mood');
-}
-
-export function weightedMetricAverage(
-  items: WorkContextSummaryItem[],
+/**
+ * Normalised "goodness" on the 1–5 scale where higher is always better.
+ * Stress is inverted (via `displayMetricValue`) so that stronger heatmap
+ * shading consistently reads as "better" across all three columns.
+ */
+export function workContextMetricGoodness(
+  item: WorkContextSummaryItem,
   metric: WorkContextMetricKey
 ): number | null {
-  const withMetric = items.filter(
-    (item) => workContextMetricAvg(item, metric) !== null && item.entry_count > 0
-  );
-  if (!withMetric.length) return null;
-
-  const totalWeight = withMetric.reduce((sum, item) => sum + item.entry_count, 0);
-  if (totalWeight <= 0) return null;
-
-  const weighted = withMetric.reduce(
-    (sum, item) => sum + workContextMetricAvg(item, metric)! * item.entry_count,
-    0
-  );
-  return weighted / totalWeight;
+  const raw = workContextMetricAvg(item, metric);
+  if (raw === null) return null;
+  return metric === 'stress' ? displayMetricValue('stress', raw) : raw;
 }
 
-export function buildWorkContextDisplayItems(
+/** Heatmap intensity bucket 0–4 for a goodness value (0 = no data). */
+export function workContextGoodnessLevel(goodness: number | null): number {
+  if (goodness === null) return 0;
+  return heatmapLevel(goodness, METRIC_SCALE_MAX);
+}
+
+export interface WorkContextHeatmapCell {
+  metric: WorkContextMetricKey;
+  /** Raw average for the metric (shown in the cell). */
+  avg: number | null;
+  /** Normalised 1–5 goodness (stress inverted). */
+  goodness: number | null;
+  /** Heatmap intensity bucket 0–4. */
+  level: number;
+}
+
+export interface WorkContextHeatmapRow {
+  work_context: WorkContextSummaryItem['work_context'];
+  entry_count: number;
+  cells: WorkContextHeatmapCell[];
+  /** Mean goodness across available metrics — drives row ordering. */
+  score: number | null;
+}
+
+/**
+ * Build heatmap rows (one per work context) with all three metrics as
+ * colour-coded cells, sorted best-situation-first by mean goodness.
+ */
+export function buildWorkContextHeatmapRows(
   items: WorkContextSummaryItem[],
-  metric: WorkContextMetricKey = 'mood',
-  limit = 4
-): WorkContextDisplayItem[] {
-  const overall = weightedMetricAverage(items, metric);
+  limit = 6
+): WorkContextHeatmapRow[] {
   return items
-    .filter((item) => item.entry_count > 0 && workContextMetricAvg(item, metric) !== null)
+    .filter((item) => item.entry_count > 0)
     .map((item) => {
-      const metricAvg = workContextMetricAvg(item, metric);
-      return {
-        ...item,
-        metricAvg,
-        metricDelta: overall === null || metricAvg === null ? null : metricAvg - overall,
-        moodDelta: overall === null || metricAvg === null ? null : metricAvg - overall,
-      };
+      const cells: WorkContextHeatmapCell[] = WORK_CONTEXT_METRICS.map((metric) => {
+        const avg = workContextMetricAvg(item, metric);
+        const goodness = workContextMetricGoodness(item, metric);
+        return { metric, avg, goodness, level: workContextGoodnessLevel(goodness) };
+      });
+      const goodnessValues = cells
+        .map((cell) => cell.goodness)
+        .filter((value): value is number => value !== null);
+      const score = goodnessValues.length
+        ? goodnessValues.reduce((sum, value) => sum + value, 0) / goodnessValues.length
+        : null;
+      return { work_context: item.work_context, entry_count: item.entry_count, cells, score };
     })
+    .filter((row) => row.cells.some((cell) => cell.avg !== null))
     .sort((a, b) => {
-      const deltaA = Math.abs(a.metricDelta ?? 0);
-      const deltaB = Math.abs(b.metricDelta ?? 0);
-      if (deltaB !== deltaA) return deltaB - deltaA;
+      const scoreA = a.score ?? Number.NEGATIVE_INFINITY;
+      const scoreB = b.score ?? Number.NEGATIVE_INFINITY;
+      if (scoreB !== scoreA) return scoreB - scoreA;
       if (b.entry_count !== a.entry_count) return b.entry_count - a.entry_count;
       return a.work_context.localeCompare(b.work_context);
     })
     .slice(0, limit);
-}
-
-/** Bar width uses display-normalized values so inverted metrics read consistently. */
-export function workContextMetricBarWidth(
-  metric: WorkContextMetricKey,
-  rawAvg: number | null
-): string {
-  if (rawAvg === null) return '0%';
-  const displayValue =
-    metric === 'stress'
-      ? displayMetricValue('stress', rawAvg)
-      : metric === 'energy'
-        ? rawAvg
-        : rawAvg;
-  const ratio = Math.min(METRIC_SCALE_MAX, Math.max(0, displayValue)) / METRIC_SCALE_MAX;
-  return `${ratio * 100}%`;
-}
-
-/** @deprecated Use workContextMetricBarWidth */
-export function workContextMoodBarWidth(moodAvg: number | null): string {
-  return workContextMetricBarWidth('mood', moodAvg);
-}
-
-export function workContextMetricHighLow(
-  values: readonly number[],
-  metric: WorkContextMetricKey
-): { high: number | null; low: number | null } {
-  if (!values.length) return { high: null, low: null };
-  const invert = METRIC_INVERT[metric];
-  const high = invert ? Math.min(...values) : Math.max(...values);
-  const low = invert ? Math.max(...values) : Math.min(...values);
-  if (high === low) return { high: null, low: null };
-  return { high, low };
-}
-
-export function workContextMetricCssVar(metric: WorkContextMetricKey): string {
-  if (metric === 'energy') return 'var(--color-metric-energy)';
-  if (metric === 'stress') return 'var(--color-metric-stress)';
-  return 'var(--color-metric-mood)';
-}
-
-/** Neutral bar fill when a row has no high/low highlight. */
-export function workContextMetricNeutralBarColor(metric: WorkContextMetricKey): string {
-  // Reserve metric-stress red for the worst context only (see HomeDailyBrief stress CSS).
-  if (metric === 'stress') return 'var(--color-primary)';
-  return workContextMetricCssVar(metric);
 }
