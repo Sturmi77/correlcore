@@ -9,7 +9,12 @@
   }
 
   // Re-exports kept for backwards-compatibility with earlier imports.
-  export { isSmallMultiplesUnlocked, SMALL_MULTIPLES_RADIUS } from './smallMultiplesGate';
+  export {
+    hasEnoughOccurrences,
+    isSmallMultiplesUnlocked,
+    MIN_SMALL_MULTIPLES_OCCURRENCES,
+    SMALL_MULTIPLES_RADIUS,
+  } from './smallMultiplesGate';
 </script>
 
 <script lang="ts">
@@ -25,6 +30,9 @@
    *     insight maturity phase is >= 'provisional'. The Insight card
    *     enforces this before dispatching; the helper above is exposed
    *     so callers can guard their button visibility consistently.
+   *   - Occurrence floor (#811): median trajectory (#810) requires
+   *     ≥ MIN_SMALL_MULTIPLES_OCCURRENCES collapsed episodes (#809).
+   *     Below that, individual rows still render with a need-more hint.
    *   - Token-only colour: every fill / stroke goes through the
    *     chart-adapter divergent encoding. No hue is hardcoded.
    */
@@ -33,8 +41,14 @@
   import type { InsightMaturityPhase } from '$lib/api/insights';
   import type { MetricKey } from '$lib/utils/charts';
   import { displayTimeseriesValue } from '$lib/utils/metrics';
+  import { buildMedianTrajectory } from '$lib/utils/medianTrajectory';
   import { StripCellMapper } from '$lib/charts/adapter';
-  import { isSmallMultiplesUnlocked, SMALL_MULTIPLES_RADIUS } from './smallMultiplesGate';
+  import {
+    hasEnoughOccurrences,
+    isSmallMultiplesUnlocked,
+    MIN_SMALL_MULTIPLES_OCCURRENCES,
+    SMALL_MULTIPLES_RADIUS,
+  } from './smallMultiplesGate';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
 
   export let open = false;
@@ -121,8 +135,22 @@
   }
 
   $: rows = events.map(buildWindow);
+  $: showMedian = hasEnoughOccurrences(rows.length);
+  $: showNeedMore = rows.length > 0 && !showMedian;
+  $: medianCells = showMedian
+    ? buildMedianTrajectory(rows, radius).map((cell) => {
+        const encoded = mapper.encode(cell.median ?? Number.NaN);
+        return {
+          ...cell,
+          fill: encoded.color,
+          opacity: encoded.opacity,
+          sign: encoded.sign,
+        };
+      })
+    : [];
+  $: rowCount = rows.length + (showMedian ? 1 : 0);
   $: gridWidth = labelWidth + dayCount * (cellSize + cellGap);
-  $: gridHeight = rows.length * (cellSize + cellGap) + 32; // + axis labels
+  $: gridHeight = rowCount * (cellSize + cellGap) + 32; // + axis labels
   $: sheetOpen = open && gateOpen;
   // Only highlight a lag column that falls inside the rendered ±radius window.
   $: lagColumn =
@@ -166,6 +194,14 @@
   {#if rows.length === 0}
     <p class="esm__empty">{$_('trends.esm.empty')}</p>
   {:else}
+    {#if showNeedMore}
+      <p class="esm__need-more" data-testid="esm-need-more">
+        {$_('trends.esm.need_more', { values: { min: MIN_SMALL_MULTIPLES_OCCURRENCES } })}
+      </p>
+    {/if}
+    {#if showMedian}
+      <p class="esm__median-hint" data-testid="esm-median-hint">{$_('trends.esm.median_hint')}</p>
+    {/if}
     <p class="esm__axis-caption" data-testid="esm-axis-caption">{$_('trends.esm.axis_caption')}</p>
     <div class="esm__scroll">
       <svg
@@ -202,8 +238,87 @@
           {/each}
         </g>
 
+        {#if showMedian}
+          {@const medianTop = 24}
+          {@const medianLabel = $_('trends.esm.median_label')}
+          <g
+            class="esm__row esm__row--median"
+            data-testid="esm-median-row"
+            role="group"
+            aria-label={$_('trends.esm.median_aria', { values: { count: rows.length } })}
+          >
+            <text
+              x={labelWidth - 8}
+              y={medianTop + cellSize / 2}
+              text-anchor="end"
+              dominant-baseline="middle"
+              class="esm__row-label esm__row-label--median"
+            >
+              {medianLabel}
+            </text>
+
+            {#each medianCells as cell (cell.offset)}
+              <!-- IQR band behind the median cell (token fill, low opacity). -->
+              {#if cell.q1 != null && cell.q3 != null && cell.q1 !== cell.q3}
+                {@const q1Enc = mapper.encode(cell.q1)}
+                {@const q3Enc = mapper.encode(cell.q3)}
+                <rect
+                  class="esm__iqr"
+                  x={labelWidth + (cell.offset + radius) * (cellSize + cellGap) - 1}
+                  y={medianTop - 2}
+                  width={cellSize + 2}
+                  height={cellSize + 4}
+                  fill={q1Enc.color}
+                  opacity={0.12}
+                  rx="4"
+                />
+                <rect
+                  class="esm__iqr"
+                  x={labelWidth + (cell.offset + radius) * (cellSize + cellGap) - 1}
+                  y={medianTop - 2}
+                  width={cellSize + 2}
+                  height={cellSize + 4}
+                  fill={q3Enc.color}
+                  opacity={0.08}
+                  rx="4"
+                />
+              {/if}
+              <rect
+                class="esm__cell esm__cell--median"
+                class:esm__cell--t0={cell.offset === 0}
+                class:esm__cell--lag={cell.offset === lagColumn}
+                x={labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
+                y={medianTop}
+                width={cellSize}
+                height={cellSize}
+                fill={cell.fill}
+                opacity={cell.opacity}
+                rx="3"
+                data-sign={cell.sign}
+                aria-label={cell.median === null
+                  ? `${medianLabel} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: —`
+                  : `${medianLabel} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.median.toFixed(1)}${
+                      cell.q1 != null && cell.q3 != null
+                        ? ` (IQR ${cell.q1.toFixed(1)}–${cell.q3.toFixed(1)})`
+                        : ''
+                    }`}
+              >
+                <title>
+                  {cell.median !== null
+                    ? `median ${cell.median.toFixed(1)}${
+                        cell.q1 != null && cell.q3 != null
+                          ? ` · IQR ${cell.q1.toFixed(1)}–${cell.q3.toFixed(1)}`
+                          : ''
+                      }`
+                    : '—'}
+                </title>
+              </rect>
+            {/each}
+          </g>
+        {/if}
+
         {#each rows as row, rowIndex (row.onset)}
-          {@const top = 24 + rowIndex * (cellSize + cellGap)}
+          {@const top = 24 + ((showMedian ? 1 : 0) + rowIndex) * (cellSize + cellGap)}
           <g class="esm__row" data-onset={row.onset}>
             <text
               x={labelWidth - 8}
@@ -298,6 +413,17 @@
     font-size: var(--text-xs);
   }
 
+  .esm__need-more,
+  .esm__median-hint {
+    margin: 0 0 var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .esm__need-more {
+    color: var(--color-cursor);
+  }
+
   .esm__legend {
     display: flex;
     align-items: center;
@@ -355,8 +481,17 @@
     font-weight: 600;
   }
 
+  .esm__row-label--median {
+    fill: var(--color-cursor);
+  }
+
   .esm__cell--t0 {
     /* The t=0 column carries a thin halo so the anchor line is obvious. */
+    stroke: var(--color-cursor);
+    stroke-width: 1.5;
+  }
+
+  .esm__cell--median {
     stroke: var(--color-cursor);
     stroke-width: 1.5;
   }

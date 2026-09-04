@@ -605,6 +605,10 @@
       "aria": "Ereignis-ausgerichtete Klein-Multiples",
       "close_aria": "Ereignis-Ansicht schliessen",
       "empty": "Noch keine Ereignisse fuer diesen Insight verfuegbar.",
+      "need_more": "Mehr Daten noetig: die Median-Trajektorie erscheint ab mindestens {min} Occurrences. Einzelne Episoden siehst du weiterhin unten.",
+      "median_label": "Median",
+      "median_hint": "Obere Zeile: Median ueber alle Occurrences (IQR in den Zelldetails).",
+      "median_aria": "Median-Trajektorie ueber {count} Occurrences",
       "locked": "Verfuegbar sobald der Insight die provisorische Phase erreicht.",
       "open_action": "Ausgerichtete Ereignisse erkunden",
       "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen"
