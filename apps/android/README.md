@@ -127,6 +127,9 @@ and the play AAB and asserts the split (`scripts/assert-health-permissions.sh`).
 ## Release signing (Sprint 2)
 
 Sideload / GitHub Releases path: [`docs/selfhost/ANDROID_SIDELOAD.md`](../../docs/selfhost/ANDROID_SIDELOAD.md).
+Play Internal upload (AP-1): [`docs/runbooks/play-console-bootstrap.md`](../../docs/runbooks/play-console-bootstrap.md)
+— verify the upload-key SHA-256 with
+`scripts/print-upload-cert-fingerprint.sh` before comparing to Play Console.
 
 ```bash
 export ANDROID_KEYSTORE_PATH=/path/to/correlcore-upload.keystore
