@@ -923,6 +923,59 @@ def test_parse_uuid_roundtrips_and_rejects_junk() -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_insight_event_windows_collapses_contiguous_days_to_episodes() -> None:
+    """#809: contiguous presence days become one episode onset."""
+    user = make_user()
+    insight = _make_insight(
+        user,
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_label="Sport",
+        payload={},
+    )
+    # Three contiguous days + one isolated day → two episode onsets.
+    presence = [date(2026, 5, 1), date(2026, 5, 2), date(2026, 5, 3), date(2026, 5, 10)]
+    timeseries = MagicMock()
+    timeseries.points = []
+    db = AsyncMock()
+
+    with (
+        patch(
+            "app.services.insight_service.get_insight_by_id",
+            AsyncMock(return_value=insight),
+        ),
+        patch(
+            "app.services.insight_service._analytics_enabled",
+            AsyncMock(return_value=True),
+        ),
+        patch(
+            "app.services.insight_service._resolve_tag_slug",
+            AsyncMock(return_value="sport"),
+        ),
+        patch(
+            "app.services.insight_service.list_historical_tag_presence_dates_by_slug",
+            AsyncMock(return_value=presence),
+        ),
+        patch(
+            "app.services.insight_service.get_timeseries",
+            AsyncMock(return_value=timeseries),
+        ),
+    ):
+        response = await get_insight_event_windows(
+            db,
+            user_id=user.id,
+            insight_id=insight.id,
+            range_="90d",
+        )
+
+    assert [event.onset for event in response.events] == [
+        date(2026, 5, 1),
+        date(2026, 5, 10),
+    ]
+    assert response.events[0].label == "Sport"
+
+
+@pytest.mark.asyncio
 async def test_get_insight_event_windows_lag_aligns_on_feature() -> None:
     user = make_user()
     insight = _make_insight(

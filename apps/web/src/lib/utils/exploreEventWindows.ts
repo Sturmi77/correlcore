@@ -34,12 +34,48 @@ export function insightMetricToChartKey(metric: string | null | undefined): Metr
   return 'mood_avg';
 }
 
+/**
+ * #809 / ADR-0035 §6: collapse contiguous ISO presence days into episode onsets.
+ * An occurrence is an episode; onset = first day of each run. Default
+ * `minGapDays = 1` keeps only adjacent calendar days in the same episode
+ * (gap of ≥2 days starts a new one). Must stay in sync with
+ * `collapse_presence_dates_to_episodes` in the backend.
+ */
+export function collapsePresenceDatesToEpisodes(
+  dates: readonly string[],
+  minGapDays = 1
+): string[] {
+  if (minGapDays < 1) {
+    throw new Error('minGapDays must be >= 1');
+  }
+  const unique = [...new Set(dates)].sort();
+  if (unique.length === 0) return [];
+
+  const onsets: string[] = [unique[0]];
+  let prev = unique[0];
+  for (let i = 1; i < unique.length; i += 1) {
+    const day = unique[i];
+    if (isoDayDiff(prev, day) > minGapDays) {
+      onsets.push(day);
+    }
+    prev = day;
+  }
+  return onsets;
+}
+
+/** Calendar-day difference between two YYYY-MM-DD strings (b - a), UTC-safe. */
+function isoDayDiff(a: string, b: string): number {
+  const [ay, am, ad] = a.split('-').map(Number);
+  const [by, bm, bd] = b.split('-').map(Number);
+  const ms = Date.UTC(by, (bm ?? 1) - 1, bd ?? 1) - Date.UTC(ay, (am ?? 1) - 1, ad ?? 1);
+  return Math.round(ms / 86_400_000);
+}
+
 export function datesToEventWindows(
   dates: readonly string[],
   label?: string | null
 ): EventWindow[] {
-  const unique = [...new Set(dates)].sort();
-  return unique.map((onset) => ({
+  return collapsePresenceDatesToEpisodes(dates).map((onset) => ({
     onset,
     label: label ?? undefined,
   }));

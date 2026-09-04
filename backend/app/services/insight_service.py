@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date as date_type
 
@@ -48,6 +49,36 @@ class InsightEventWindowsUnsupportedError(Exception):
     def __init__(self, subject_type: str | None) -> None:
         self.subject_type = subject_type
         super().__init__(f"Event windows unsupported for subject_type={subject_type!r}")
+
+
+def collapse_presence_dates_to_episodes(
+    dates: Sequence[date_type],
+    *,
+    min_gap_days: int = 1,
+) -> list[date_type]:
+    """Collapse contiguous presence days into episode onsets (ADR-0035 §6 / #809).
+
+    An *occurrence* is an episode: a run of presence days where each consecutive
+    pair differs by at most ``min_gap_days`` calendar days. The onset is the
+    first day of each run.
+
+    With the default ``min_gap_days=1``, only adjacent calendar days stay in the
+    same episode; a gap of ≥2 days starts a new episode.
+    """
+    if min_gap_days < 1:
+        raise ValueError("min_gap_days must be >= 1")
+
+    sorted_dates = sorted(set(dates))
+    if not sorted_dates:
+        return []
+
+    onsets: list[date_type] = [sorted_dates[0]]
+    prev = sorted_dates[0]
+    for day in sorted_dates[1:]:
+        if (day - prev).days > min_gap_days:
+            onsets.append(day)
+        prev = day
+    return onsets
 
 
 def _clamp_limit(limit: int, *, default: int, maximum: int) -> int:
@@ -712,7 +743,9 @@ async def get_insight_event_windows(
         user_id=user_id,
         range_=cooccurrence_range_to_timeseries(range_),
     )
-    events = [InsightEventWindow(onset=day, label=label) for day in dates]
+    # #809: occurrence = episode (contiguous presence days → one onset).
+    episode_onsets = collapse_presence_dates_to_episodes(dates)
+    events = [InsightEventWindow(onset=day, label=label) for day in episode_onsets]
     return InsightEventWindowsResponse(
         range=range_,
         start_date=start_date,
