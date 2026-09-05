@@ -57,9 +57,7 @@ class UserPreferencesUpdate(BaseModel):
     last_seen_insight_at: datetime | None = None
     last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = Field(default=None, max_length=16)
-    insight_sections: list[InsightSectionPreference] | None = Field(
-        default=None, max_length=16
-    )
+    insight_sections: list[InsightSectionPreference] | None = Field(default=None, max_length=16)
 
 
 class UserPreferencesResponse(BaseModel):
