@@ -13,14 +13,14 @@ closeout records, not the living strategy.
 
 ## Pyramid
 
-| Layer                | What                                                                            | When                                        |
-| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------- |
-| **Unit**             | Backend `pytest` (mocked DB/Redis); Web Vitest                                  | Every PR (path-filtered)                    |
-| **Contract / style** | OpenAPI→TS (`ci-contract.yml`), `apiContract.ts`, contrast/style/token guards   | Every PR touching those paths               |
-| **Integration**      | `pytest -m integration` against real Postgres (pgvector) + Redis                | Every API PR (`ci-api.yml` integration job) |
-| **E2E (Playwright)** | Mocked API smoke (+ a11y) on PR; mobile / journeys / GDPR nightly               | PR smoke; nightly expanded                  |
-| **Security**         | gitleaks, pip-audit, pnpm audit (gating); CodeQL / Trivy CRITICAL / ZAP (mixed) | Push/PR / schedule                          |
-| **Manual / device**  | Capacitor, Health Connect, widgets, FCM, Play Pre-Launch                        | Milestone / device QA — not CI              |
+| Layer                | What                                                                                                                       | When                                        |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **Unit**             | Backend `pytest` (mocked DB/Redis); Web Vitest                                                                             | Every PR (path-filtered)                    |
+| **Contract / style** | OpenAPI→TS (`ci-contract.yml`), `apiContract.ts`, contrast/style/token guards                                              | Every PR touching those paths               |
+| **Integration**      | `pytest -m integration` against real Postgres (pgvector) + Redis                                                           | Every API PR (`ci-api.yml` integration job) |
+| **E2E (Playwright)** | Mocked API smoke (+ a11y) on PR; mobile / journeys / GDPR nightly                                                          | PR smoke; nightly expanded                  |
+| **Security**         | gitleaks, pip-audit, pnpm audit (gating); CodeQL / Trivy / ZAP (report; CRITICAL gate deferred until image baseline clean) | Push/PR / schedule                          |
+| **Manual / device**  | Capacitor, Health Connect, widgets, FCM, Play Pre-Launch                                                                   | Milestone / device QA — not CI              |
 
 ---
 

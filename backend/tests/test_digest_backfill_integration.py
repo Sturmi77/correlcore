@@ -21,9 +21,10 @@ BACKFILL_SQL = "UPDATE user_preferences SET digest_enabled = false WHERE digest_
 @pytest.fixture(autouse=True)
 async def dispose_async_engine_after_integration_test() -> None:
     yield
-    from app.db.session import engine
+    from app.db import session as db_session
 
-    await engine.dispose()
+    await db_session.engine.dispose()
+    db_session.reset_engine()
 
 
 def _integration_enabled() -> bool:

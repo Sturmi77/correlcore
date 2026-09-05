@@ -28,9 +28,10 @@ from app.services.user_service import delete_user_account
 @pytest.fixture(autouse=True)
 async def dispose_async_engine_after_integration_test() -> None:
     yield
-    from app.db.session import engine
+    from app.db import session as db_session
 
-    await engine.dispose()
+    await db_session.engine.dispose()
+    db_session.reset_engine()
 
 
 def _integration_enabled() -> bool:
@@ -99,12 +100,8 @@ async def test_delete_user_account_cascades_entries_insights_and_dek() -> None:
 
     async with AsyncSessionLocal() as session:
         await bind_rls_current_user(session, user_id)
-        assert (
-            await session.execute(select(func.count()).select_from(Entry))
-        ).scalar_one() == 1
-        assert (
-            await session.execute(select(func.count()).select_from(Insight))
-        ).scalar_one() == 1
+        assert (await session.execute(select(func.count()).select_from(Entry))).scalar_one() == 1
+        assert (await session.execute(select(func.count()).select_from(Insight))).scalar_one() == 1
         assert (
             await session.execute(
                 select(func.count())
@@ -113,9 +110,7 @@ async def test_delete_user_account_cascades_entries_insights_and_dek() -> None:
             )
         ).scalar_one() == 1
 
-        db_user = (
-            await session.execute(select(User).where(User.id == user_id))
-        ).scalar_one()
+        db_user = (await session.execute(select(User).where(User.id == user_id))).scalar_one()
         await delete_user_account(session, _token_store(), db_user, password)
         await session.commit()
 

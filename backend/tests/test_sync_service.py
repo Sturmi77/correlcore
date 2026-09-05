@@ -162,9 +162,10 @@ def _entry_change(
 @pytest.fixture(autouse=True)
 async def dispose_async_engine_after_integration_test() -> None:
     yield
-    from app.db.session import engine
+    from app.db import session as db_session
 
-    await engine.dispose()
+    await db_session.engine.dispose()
+    db_session.reset_engine()
 
 
 def test_encode_decode_cursor_round_trip() -> None:

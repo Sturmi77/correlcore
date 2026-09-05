@@ -27,9 +27,10 @@ _APP_ROLE = "correlcore_app"
 @pytest.fixture(autouse=True)
 async def dispose_async_engine_after_integration_test() -> None:
     yield
-    from app.db.session import engine
+    from app.db import session as db_session
 
-    await engine.dispose()
+    await db_session.engine.dispose()
+    db_session.reset_engine()
 
 
 def _integration_enabled() -> bool:
@@ -57,10 +58,7 @@ async def _ensure_app_role() -> None:
             )
         )
         await session.execute(
-            text(
-                f"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public "
-                f"TO {_APP_ROLE}"
-            )
+            text(f"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO {_APP_ROLE}")
         )
         await session.commit()
 
