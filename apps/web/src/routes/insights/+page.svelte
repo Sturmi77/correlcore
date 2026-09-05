@@ -700,7 +700,9 @@
     insightMaturity,
     userPreferences?.reached_milestone_keys
   );
-  $: pageMaturityChrome = Boolean(insightMaturity);
+  // #823: the readiness header is a configurable section now — when the user
+  // hides it, the feed shows its own maturity badge so phase info is not lost.
+  $: pageMaturityChrome = Boolean(insightMaturity) && stageHeaderEnabled;
   $: showSymptomAnalytics = canShowAdvancedAnalytics(insightMaturity?.phase ?? null);
   // #571: the correlation matrix is shown inline & prominent (not behind a tab).
   $: showMatrix = canShowMatrixTab(insightMaturity?.phase ?? null, insights);
@@ -723,13 +725,17 @@
     Boolean(primaryMobileInsight);
   $: enableExploreEvents = isSmallMultiplesUnlocked(insightMaturity?.phase ?? null);
 
-  // #821: configurable section order/visibility. `insight_feed` is locked
-  // (always enabled) but reorderable; the readiness stage header stays fixed
-  // chrome outside this list. User config is an AND-gate on top of the existing
-  // phase/data gates below.
+  // #821/#823: configurable section order/visibility. `insight_feed` is locked
+  // (always enabled) but reorderable; the readiness `stage_header` is now a
+  // regular section (hideable + reorderable). User config is an AND-gate on top
+  // of the existing phase/data gates below.
   $: enabledInsightSectionKeys = resolveEnabledInsightSections(
     mergeInsightSections(userPreferences?.insight_sections ?? null)
   ).map((section) => section.key);
+  $: stageHeaderEnabled = enabledInsightSectionKeys.includes('stage_header');
+  // Avoid a duplicate milestone: on mobile-with-primary the milestone-only strip
+  // lives inside MobileInsightLead, so the standalone stage header suppresses it.
+  $: showStageMilestone = showMaturityMilestone && !(compactInsights && primaryMobileInsight);
 
   function ensureAnalyticsLoaded(): void {
     if (!cooccurrenceRequested && !cooccurrenceLoading) {
@@ -865,27 +871,21 @@
       </Button>
     </Panel>
   {:else}
-    <!-- Fixed readiness chrome (#821): stays outside the reorderable list.
-         On mobile-with-primary the readiness header is folded into the lead
-         (milestone-only), so the standalone header only shows without a primary. -->
-    {#if !compactInsights && insightMaturity}
-      <InsightStageHeader
-        maturity={insightMaturity}
-        showMilestone={showMaturityMilestone}
-        on:dismissMilestone={(e) => void dismissMaturityMilestone(e.detail.key)}
-      />
-    {:else if compactInsights && !feedLoading && !error && !primaryMobileInsight && insightMaturity}
-      <InsightStageHeader
-        maturity={insightMaturity}
-        showMilestone={showMaturityMilestone}
-        on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
-      />
-    {/if}
-
-    <!-- Configurable sections in stored order (#821). Each still respects its
-         existing phase/data gate; user visibility is an additional AND-gate. -->
+    <!-- Configurable sections in stored order (#821/#823). Each still respects
+         its existing phase/data gate; user visibility is an additional AND-gate.
+         The readiness stage header (#823) is now a regular section here; the
+         milestone-only strip still lives inside MobileInsightLead, so
+         showStageMilestone suppresses the duplicate on mobile-with-primary. -->
     {#each enabledInsightSectionKeys as sectionKey (sectionKey)}
-      {#if sectionKey === 'correlation_matrix'}
+      {#if sectionKey === 'stage_header'}
+        {#if insightMaturity}
+          <InsightStageHeader
+            maturity={insightMaturity}
+            showMilestone={showStageMilestone}
+            on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
+          />
+        {/if}
+      {:else if sectionKey === 'correlation_matrix'}
         {#if showMatrix}
           <section class="insights-page__matrix" data-testid="insights-matrix-section">
             <InsightMatrix {insights} />

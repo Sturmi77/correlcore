@@ -9,6 +9,7 @@ export interface HomeSectionPreference {
 }
 
 export type InsightSectionKey =
+  | 'stage_header'
   | 'correlation_matrix'
   | 'insight_feed'
   | 'lag_heatmap'
