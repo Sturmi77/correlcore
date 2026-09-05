@@ -83,7 +83,7 @@
   ) {
     focusedClusterId = null;
   }
-  $: rawMatrix = data ? buildTagCooccurrenceMatrix(data.pairs) : { tags: [], counts: [] };
+  $: rawMatrix = data ? buildTagCooccurrenceMatrix(data.pairs ?? []) : { tags: [], counts: [] };
   $: orderedMatrix = orderTagCooccurrenceMatrix(rawMatrix, sortMode, clusterMeta.byTagId);
   $: focusedMatrix =
     focusedClusterId !== null
@@ -93,7 +93,7 @@
     ? pruneTagCooccurrenceMatrix(focusedMatrix.tags, focusedMatrix.counts)
     : focusedMatrix;
   $: totalAxes = prunedMatrix.tags.length;
-  $: nextDensitySignature = `${data?.start_date ?? ''}:${data?.end_date ?? ''}:${data?.pairs.length ?? 0}:${sortMode}:${pruneSparseAxes}:${compactViewport}:${totalAxes}:${focusedClusterId ?? 'all'}`;
+  $: nextDensitySignature = `${data?.start_date ?? ''}:${data?.end_date ?? ''}:${data?.pairs?.length ?? 0}:${sortMode}:${pruneSparseAxes}:${compactViewport}:${totalAxes}:${focusedClusterId ?? 'all'}`;
   $: if (nextDensitySignature !== densitySignature) {
     densitySignature = nextDensitySignature;
     visibleCount = defaultCooccurrenceVisibleCount(totalAxes, compactViewport);
@@ -122,7 +122,7 @@
   $: canDecreaseDensity = effectiveVisible > Math.min(COOCCURRENCE_MIN_VISIBLE, totalAxes);
   $: canIncreaseDensity = effectiveVisible < totalAxes;
   $: maxCount = matrix.counts.flat().reduce((peak, count) => Math.max(peak, count), 0);
-  $: hasEnoughPairs = (data?.pairs.length ?? 0) >= minPairsForDisplay;
+  $: hasEnoughPairs = (data?.pairs?.length ?? 0) >= minPairsForDisplay;
   $: showSkeleton = loading && !data;
   $: interactiveCells = matrix.tags.flatMap((rowTag, rowIndex) =>
     matrix.tags.flatMap((colTag, colIndex) => {

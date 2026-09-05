@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { InsightResponse } from '$lib/api/insights';
+import type { InsightResponse, TagCooccurrenceResponse } from '$lib/api/insights';
 import {
   canShowAdvancedAnalytics,
   canShowMatrixTab,
@@ -76,6 +76,14 @@ describe('insightAnalyticsGate', () => {
         min_count: 2,
         pairs: [],
       })
+    ).toBe(false);
+    expect(
+      hasTagCooccurrenceData({
+        range: '90d',
+        start_date: '2026-01-01',
+        end_date: '2026-03-01',
+        min_count: 2,
+      } as TagCooccurrenceResponse)
     ).toBe(false);
     expect(
       hasTagCooccurrenceData({
