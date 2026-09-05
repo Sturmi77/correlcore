@@ -12,8 +12,11 @@
 #   ../../scripts/bootstrap-selfhost-env.sh --quickstart
 #   docker compose -f docker-compose.quickstart.yml up -d
 #
-# Homelab durable (insights + cleanup):
-#   echo 'COMPOSE_PROFILES=worker' >> .env
+# IMPORTANT — the analytics `worker` (nightly insights + retention cleanup + the
+# weekly in-app digest on Sundays) is behind the `worker` profile and is OFF by
+# default. Without it, scheduled insights and the weekly digest are never
+# generated and you must trigger them by hand. Enable it in .env, then redeploy:
+#   echo 'COMPOSE_PROFILES=worker' >> .env      # or: worker,monitoring
 #   docker compose -f docker-compose.quickstart.yml up -d
 #
 # See docs/selfhost/INSTALL.md Path B and docs/M10_SPRINT_PLAN.md.

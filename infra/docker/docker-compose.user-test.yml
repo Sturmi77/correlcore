@@ -13,6 +13,13 @@
 # Start:  cp .env.example .env  &&  edit  &&
 #         docker compose -f docker-compose.user-test.yml up -d
 #
+# IMPORTANT — the analytics `worker` (nightly insights + retention
+# cleanup + the weekly in-app digest on Sundays) is behind the `worker`
+# profile and is OFF by default. Without it, scheduled insights and the
+# weekly digest are never generated and you must trigger them by hand.
+# Enable it in the stack .env, then redeploy:
+#     COMPOSE_PROFILES=worker            # or: worker,monitoring
+#
 # Security headers / CSP (#791): this stack sets NO Content-Security-Policy
 # (not even report-only). The CSP is injected by the Traefik reverse proxy in
 # the production compose (infra/docker/docker-compose.yml); there is no proxy

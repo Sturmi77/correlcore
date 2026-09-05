@@ -165,6 +165,24 @@ _CSP_NOTE = [
     "use the production compose, if you need CSP.",
 ]
 
+# Every generated stack carries the analytics `worker` behind the `worker`
+# compose profile (off by default). Unlike the production compose — where the
+# worker has no profile and always runs — a homelab operator who never sets
+# COMPOSE_PROFILES=worker gets no scheduled insights and no weekly digest at
+# all (they must be triggered by hand). Keep the reminder in one place so it
+# stays identical across stacks; the enable example gains `,monitoring` only on
+# stacks that actually ship GlitchTip.
+def _worker_note(*, glitchtip: bool) -> list[str]:
+    enable = "COMPOSE_PROFILES=worker" + ("            # or: worker,monitoring" if glitchtip else "")
+    return [
+        "IMPORTANT — the analytics `worker` (nightly insights + retention",
+        "cleanup + the weekly in-app digest on Sundays) is behind the `worker`",
+        "profile and is OFF by default. Without it, scheduled insights and the",
+        "weekly digest are never generated and you must trigger them by hand.",
+        "Enable it in the stack .env, then redeploy:",
+        f"    {enable}",
+    ]
+
 
 def _load_canonical() -> dict[str, Any]:
     with CANONICAL.open(encoding="utf-8") as fh:
@@ -283,8 +301,10 @@ def _build_stack(overlay: dict[str, Any]) -> dict[str, Any]:
 
 def _render(overlay: dict[str, Any]) -> str:
     compose = _build_stack(overlay)
+    worker_note = _worker_note(glitchtip=bool(overlay["glitchtip"]))
     header = "\n".join(
-        f"# {line}".rstrip() for line in [*_BANNER, "", *overlay["header"], "", *_CSP_NOTE]
+        f"# {line}".rstrip()
+        for line in [*_BANNER, "", *overlay["header"], "", *worker_note, "", *_CSP_NOTE]
     )
     # width high enough that long ${VAR} values (e.g. DATABASE_URL) are never
     # folded mid-value, which keeps the generated YAML readable and greppable.
