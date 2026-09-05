@@ -1,5 +1,8 @@
 # M10 Quality Gate — Code-Quality-Review + Security-Audit
 
+> **Historical** — M10 closeout record (2026-07-11). Living strategy:
+> [`TESTING.md`](TESTING.md).
+
 **Milestone:** M10 — Public Selfhost Release v1.0  
 **Stand:** 2026-07-11 (Sprint 6 milestone closeout M10-C)  
 **Audit-Basis-Branch:** `cursor/m10-sprint6-closeout-072d` (includes Sprint 0–5 merges + closeout)  

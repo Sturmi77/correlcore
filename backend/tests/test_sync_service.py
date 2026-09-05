@@ -159,14 +159,6 @@ def _entry_change(
     )
 
 
-@pytest.fixture(autouse=True)
-async def dispose_async_engine_after_integration_test() -> None:
-    yield
-    from app.db.session import engine
-
-    await engine.dispose()
-
-
 def test_encode_decode_cursor_round_trip() -> None:
     wall = datetime(2026, 6, 30, 12, 0, tzinfo=UTC)
     cursor = encode_cursor(user_rev=42, wall=wall)
@@ -1226,6 +1218,9 @@ async def test_pull_returns_only_changes_after_cursor() -> None:
     first_id = uuid.uuid4()
     second_id = uuid.uuid4()
     now = datetime.now(UTC)
+    # Distinct dates: same (user, date, DAY slot) would slot-merge into first_id.
+    first_date = date.today() - timedelta(days=1)
+    second_date = date.today()
 
     async with AsyncSessionLocal() as session:
         user = await register_user(
@@ -1245,7 +1240,14 @@ async def test_pull_returns_only_changes_after_cursor() -> None:
                 request=SyncPushRequest(
                     client_id=client_id,
                     batch_id=uuid.uuid4(),
-                    changes=[_entry_change(entry_id=first_id, seq=1, updated_at=now)],
+                    changes=[
+                        _entry_change(
+                            entry_id=first_id,
+                            seq=1,
+                            updated_at=now,
+                            entry_date=first_date,
+                        )
+                    ],
                 ),
             )
             first_pull = await pull_changes(session, user_id=user.id, since=None, limit=10)
@@ -1261,6 +1263,7 @@ async def test_pull_returns_only_changes_after_cursor() -> None:
                             seq=2,
                             mood_score=5,
                             updated_at=now + timedelta(seconds=1),
+                            entry_date=second_date,
                         )
                     ],
                 ),

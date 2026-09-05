@@ -1,5 +1,8 @@
 # M1 Quality-Gate — Code-Quality-Review + Security-Audit
 
+> **Historical** — M1 closeout record (2026-05-07). Living strategy:
+> [`TESTING.md`](TESTING.md).
+
 **Milestone:** M1 — Core Entry (Mood-Logging, Tags, Symptome, App-Level-Verschlüsselung)
 **Stand:** 2026-05-07 (alle Findings geschlossen, M1-Review-bereit)
 **Audit-Basis-Commit:** [`a48966c`](https://github.com/Sturmi77/correlcore/commit/a48966c) (`main`, post #50, Audit-Stand 2026-05-04)

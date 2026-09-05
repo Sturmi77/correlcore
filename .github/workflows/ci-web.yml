@@ -10,6 +10,7 @@ on:
       - 'package.json'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
+      - '.nvmrc'
       - 'packages/**'
       - 'scripts/check-contrast.mjs'
       - 'scripts/check-style-contract.mjs'
@@ -28,6 +29,7 @@ on:
       - 'package.json'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
+      - '.nvmrc'
       - 'packages/**'
       - 'scripts/check-contrast.mjs'
       - 'scripts/check-style-contract.mjs'
@@ -38,6 +40,10 @@ on:
       - '.prettierignore'
       - '.github/workflows/ci-web.yml'
 
+concurrency:
+  group: ci-web-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: apps/web
@@ -46,6 +52,7 @@ jobs:
   lint:
     name: Lint (ESLint + svelte-check)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -58,6 +65,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -69,6 +78,7 @@ jobs:
   format:
     name: Format auto-fix (Prettier)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
@@ -85,6 +95,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -113,6 +125,7 @@ jobs:
   typecheck:
     name: Typecheck (svelte-check)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -125,6 +138,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -136,6 +151,7 @@ jobs:
   contrast:
     name: Contrast check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -148,6 +164,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -160,6 +178,7 @@ jobs:
   style-contract:
     name: Style contract lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -172,6 +191,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -184,6 +205,7 @@ jobs:
   style-tokens:
     name: Style token guardrail (F-21)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -196,6 +218,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -208,6 +232,7 @@ jobs:
   no-token-storage:
     name: Web storage guardrail (ADR-0006)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -220,6 +245,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -234,6 +261,7 @@ jobs:
   test:
     name: Unit tests (vitest)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -246,6 +274,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -257,6 +287,7 @@ jobs:
   coverage:
     name: Coverage floor (lib/api + offline)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -269,6 +300,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -283,35 +316,6 @@ jobs:
   build:
     name: Build (vite)
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: '11.0.8'
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: '.nvmrc'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: .
-
-      - name: Build
-        run: pnpm build
-        env:
-          VITE_API_BASE_URL: '/api/v1'
-
-  e2e-smoke:
-    name: E2E smoke (Playwright)
-    runs-on: ubuntu-latest
-    # Guardrail: the smoke flow normally finishes in ~1-2 min. Without an
-    # explicit cap a stuck setup step (pnpm/playwright install) or a lost
-    # runner would hang on GitHub's 6h default. Fail fast so a flake is a
-    # quick re-run, not an hours-long block (#732 follow-up).
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -325,6 +329,38 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_API_BASE_URL: '/api/v1'
+
+  e2e-smoke:
+    name: E2E smoke (Playwright)
+    runs-on: ubuntu-latest
+    # Guardrail: production webServer (pnpm build && node build) needs headroom
+    # beyond the old 15m cap. Fail fast so a flake is a quick re-run (#732).
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -337,3 +373,12 @@ jobs:
         run: pnpm test:e2e:smoke
         env:
           VITE_API_BASE_URL: '/api/v1'
+          PLAYWRIGHT_WEB_SERVER: production
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

@@ -39,15 +39,15 @@ When switching from private → **public**:
 
 Recommended rules (Settings → Branches → Add rule for `main`):
 
-| Rule                                | Setting                                                     |
-| ----------------------------------- | ----------------------------------------------------------- |
-| Require pull request before merging | ✅                                                          |
-| Required approvals                  | ≥ 1                                                         |
-| Require status checks               | ✅ `CI — Web`, `CI — API`, `CI — Docs Site` (as applicable) |
-| Require branches up to date         | ✅                                                          |
-| Include administrators              | optional (team preference)                                  |
-| Restrict force pushes               | ✅                                                          |
-| Restrict deletions                  | ✅                                                          |
+| Rule                                | Setting                                                                                                                                      |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Require pull request before merging | ✅                                                                                                                                           |
+| Required approvals                  | ≥ 1                                                                                                                                          |
+| Require status checks               | ✅ `CI — Web`, `CI — API`, `CI — API contract`, `CI - Security`, `CI — Docs Site` (as applicable; see [`TESTING.md`](../quality/TESTING.md)) |
+| Require branches up to date         | ✅                                                                                                                                           |
+| Include administrators              | optional (team preference)                                                                                                                   |
+| Restrict force pushes               | ✅                                                                                                                                           |
+| Restrict deletions                  | ✅                                                                                                                                           |
 
 Document any repo-specific exceptions in your team runbook.
 

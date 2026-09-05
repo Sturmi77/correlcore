@@ -1,5 +1,8 @@
 # M9 Quality Gate — Code-Quality-Review + Security-Audit
 
+> **Historical** — M9 closeout record (2026-07-11). Living strategy:
+> [`TESTING.md`](TESTING.md).
+
 **Milestone:** M9 — Beta Hardening (ops, privacy, backup, observability, security CI, beta program)
 **Stand:** 2026-07-11 (Sprint 6 milestone closeout M9-C)
 **Audit-Basis-Commit:** `cursor/m9-sprint-6-closeout-2529` (includes Sprint 0–5 merges + closeout fixes)

@@ -748,7 +748,7 @@ test.describe('W3 Tägliche Eingabe', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    await page.getByTestId('home-cta').click();
+    await page.getByTestId('home-today-action').click();
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
 
     await page.getByRole('button', { name: 'Increase mood' }).click();
@@ -764,7 +764,7 @@ test.describe('W3 Tägliche Eingabe', () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');
 
-    await page.getByTestId('home-cta').click();
+    await page.getByTestId('home-today-action').click();
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     await expect(page).toHaveURL('/');
   });
@@ -793,7 +793,7 @@ test.describe('W5 Erste Erkenntnis', () => {
     await expect(page.getByTestId('home-daily-brief')).toBeVisible({
       timeout: APP_READY_TIMEOUT_MS,
     });
-    await expect(page.getByTestId('home-cta')).toBeVisible();
+    await expect(page.getByTestId('home-today-action')).toBeVisible();
   });
 
   test('week user sees insight statement on insights', async ({ page }) => {

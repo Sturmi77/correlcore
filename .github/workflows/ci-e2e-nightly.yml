@@ -1,0 +1,61 @@
+name: CI — E2E nightly
+
+# Expanded Playwright suites (mobile / journeys / GDPR). Not a PR merge gate —
+# failures notify via the Actions UI until the suite is flake-free enough to
+# promote. See docs/quality/TESTING.md.
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-e2e-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-expanded:
+    name: Playwright mobile + journeys + GDPR
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run expanded E2E
+        run: |
+          pnpm test:e2e:mobile
+          pnpm test:e2e:journeys
+          pnpm test:e2e:gdpr
+        env:
+          VITE_API_BASE_URL: '/api/v1'
+          PLAYWRIGHT_WEB_SERVER: 'production'
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-nightly-report
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          retention-days: 14
+          if-no-files-found: ignore

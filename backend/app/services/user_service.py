@@ -8,8 +8,8 @@ delete relies on database ON DELETE CASCADE on every table that references
 ciphertexts are mathematically unrecoverable.
 
 Cascade reach (kept in sync with the model layer; verified by
-``test_user_service.py::test_delete_user_cascade_reach`` whenever a new FK
-is introduced):
+``tests/test_gdpr_delete_integration.py`` against real Postgres whenever
+a new FK is introduced — also covered by ``ondelete='CASCADE'`` on models):
 
 - ``entries``                       — ON DELETE CASCADE
 - ``entry_tags``                    — ON DELETE CASCADE

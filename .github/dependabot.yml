@@ -29,6 +29,24 @@ updates:
     # python-jose pulls ecdsa; HS256-only usage is documented in M9_PENTEST.
     # Leave ignore empty so advisories stay visible; CI may still accept known ones.
 
+  - package-ecosystem: docker
+    directory: '/backend'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker
+    directory: '/apps/web'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker
+
   - package-ecosystem: github-actions
     directory: '/'
     schedule:

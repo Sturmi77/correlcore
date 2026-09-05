@@ -7,6 +7,17 @@ Run the full suite the way CI does (`.github/workflows/ci-api.yml`, the
 uv run --python 3.12 --extra dev --extra analytics pytest
 ```
 
+Integration tests (`@pytest.mark.integration`) need a migrated pgvector
+Postgres + Redis and `CORRELCORE_RUN_INTEGRATION=1`. CI runs them in the
+**Integration** job after `alembic upgrade head`:
+
+```bash
+export CORRELCORE_RUN_INTEGRATION=1
+uv run --python 3.12 pytest -m integration -q --no-cov
+```
+
+Strategy overview: [`docs/quality/TESTING.md`](../../docs/quality/TESTING.md).
+
 Target a single file without the coverage gate while iterating:
 
 ```bash

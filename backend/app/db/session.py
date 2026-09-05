@@ -5,34 +5,69 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    pool_size=10,
-    max_overflow=20,
-    echo=settings.DEBUG,
-    future=True,
-    # #753 (J): hard server-side ceilings so a stuck query or a lock wait
-    # cannot hold a pooled connection forever. asyncpg applies these via
-    # SET on every new connection (server_settings), not just the first.
-    connect_args={
-        "server_settings": {
-            "statement_timeout": str(settings.DB_STATEMENT_TIMEOUT_MS),
-            "lock_timeout": str(settings.DB_LOCK_TIMEOUT_MS),
-        }
-    },
-)
 
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
+def _make_engine() -> AsyncEngine:
+    # pytest-asyncio (mode=auto) uses a fresh event loop per test. QueuePool
+    # would hand back asyncpg connections bound to a previous loop and raise
+    # InterfaceError ("another operation is in progress"). NullPool in test
+    # avoids cross-loop reuse; production keeps a sized pool.
+    pool_kwargs: dict[str, object]
+    if settings.APP_ENV.lower() == "test":
+        pool_kwargs = {"poolclass": NullPool}
+    else:
+        pool_kwargs = {"pool_size": 10, "max_overflow": 20}
+
+    return create_async_engine(
+        settings.DATABASE_URL,
+        **pool_kwargs,
+        echo=settings.DEBUG,
+        future=True,
+        # #753 (J): hard server-side ceilings so a stuck query or a lock wait
+        # cannot hold a pooled connection forever. asyncpg applies these via
+        # SET on every new connection (server_settings), not just the first.
+        connect_args={
+            "server_settings": {
+                "statement_timeout": str(settings.DB_STATEMENT_TIMEOUT_MS),
+                "lock_timeout": str(settings.DB_LOCK_TIMEOUT_MS),
+            }
+        },
+    )
+
+
+def _make_session_factory(bind: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(
+        bind,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+
+
+engine = _make_engine()
+AsyncSessionLocal = _make_session_factory(engine)
+
+
+def reset_engine() -> None:
+    """Replace the module-level engine after ``engine.dispose()``.
+
+    Prefer NullPool under ``APP_ENV=test`` so pytest-asyncio can keep one
+    engine across per-test loops without QueuePool cross-loop reuse. When
+    dispose is still required, recreate and reconfigure the sessionmaker.
+    """
+    global engine
+    engine = _make_engine()
+    AsyncSessionLocal.configure(bind=engine)
 
 
 async def bind_rls_current_user(session: AsyncSession, user_id: uuid.UUID) -> None:

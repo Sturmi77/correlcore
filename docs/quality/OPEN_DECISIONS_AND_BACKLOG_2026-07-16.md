@@ -24,7 +24,7 @@ Living tracker. Update when a decision lands.
 | ID                 | Topic                                              | Notes / track                                                                            |
 | ------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | D-I1               | Generate secondary compose stacks from one source  | [#781](https://github.com/Sturmi77/correlcore/issues/781); matrix in `COMPOSE_STACKS.md` |
-| D-I4               | Stamp older GUI/quality audits as Historical       | Opportunistic; also #776 docs hygiene                                                    |
+| D-I4               | Stamp older GUI/quality audits as Historical       | Milestone `*_QUALITY_GATE.md` stamped; remaining Visual QA opportunistic (#776)          |
 | Digest WP1         | Prefer stored digest on GET                        | See completion plan                                                                      |
 | LayerChart revisit | When Trends lasagna is scheduled + bundle measured | Spike criteria                                                                           |
 | Media / HC         | Deferred M13 / M8+M11                              | Not reopened here                                                                        |

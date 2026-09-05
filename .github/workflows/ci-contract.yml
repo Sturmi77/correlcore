@@ -18,6 +18,9 @@ on:
       # web contract must therefore also run this workflow (#780, audit Q4/Q5),
       # otherwise a web-only contract drift would pass CI.
       - 'apps/web/src/lib/contracts/**'
+      # FE DTO / apiFetch surfaces outside lib/contracts must also re-check the
+      # OpenAPI→TS seam so path filters cannot skip contract CI on client edits.
+      - 'apps/web/src/lib/api/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/ci-contract.yml'
   pull_request:
@@ -26,11 +29,19 @@ on:
       - 'backend/**'
       - 'packages/api-types/**'
       - 'apps/web/src/lib/contracts/**'
+      - 'apps/web/src/lib/api/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/ci-contract.yml'
 
+concurrency:
+  group: ci-contract-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+
+env:
+  UV_VERSION: '0.9.5'
 
 jobs:
   contract-drift:
@@ -43,7 +54,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: 'latest'
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -75,6 +87,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile

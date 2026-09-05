@@ -1,5 +1,8 @@
 # M7 Quality Gate — Code-Quality-Review + Security-Audit
 
+> **Historical** — M7 closeout record (2026-06-30). Living strategy:
+> [`TESTING.md`](TESTING.md).
+
 **Milestone:** M7 — Insights v2 (Lasso, lag, symptom analytics, tag clustering)
 **Stand:** 2026-06-30 (Sprint M7-C milestone closeout)
 **Audit-Basis-Commit:** `main` post M7 Sprint 9 merge (#238)

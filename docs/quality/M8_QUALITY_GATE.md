@@ -1,5 +1,8 @@
 # M8 Quality Gate — Sleep & Health Connect
 
+> **Historical** — M8 closeout record (2026-08-02). Living strategy:
+> [`TESTING.md`](TESTING.md).
+
 **Milestone:** M8 — Schlaf & Health Connect (core: manual sleep, sleep↔mood, HC bridge, sleep import)
 **Stand:** 2026-08-02 (Sprint 5 closeout)
 **Referenz:** [`DESIGN_DOCUMENT.md` §9](../DESIGN_DOCUMENT.md), [`M8_SPRINT_STATUS.md`](../M8_SPRINT_STATUS.md)

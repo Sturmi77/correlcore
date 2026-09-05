@@ -18,7 +18,7 @@
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test tests/e2e/smoke.spec.ts",
+    "test:e2e:smoke": "playwright test tests/e2e/smoke.spec.ts tests/e2e/a11y-smoke.spec.ts",
     "test:e2e:mobile": "playwright test tests/e2e/mobile-entry-foundation.spec.ts tests/e2e/mobile-trends-foundation.spec.ts tests/e2e/mobile-insights-foundation.spec.ts tests/e2e/mobile-supporting-flows.spec.ts tests/e2e/m7-insights-mobile.spec.ts tests/e2e/mobile-theme-parity.spec.ts",
     "test:e2e:journeys": "playwright test tests/e2e/user-journeys.spec.ts",
     "test:e2e:gdpr": "playwright test tests/e2e/gdpr-self-service.spec.ts",
@@ -35,6 +35,7 @@
     "svelte-i18n": "^4.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
     "@sveltejs/adapter-node": "^5.5.7",
     "@sveltejs/adapter-static": "^3.0.10",
