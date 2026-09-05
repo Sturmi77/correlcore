@@ -9,16 +9,9 @@ export default defineConfig({
     exclude: ['lucide-svelte'],
   },
   build: {
-    // Performance budget: JS < 150 KB gz
+    // Performance budget: JS < 150 KB gz.
+    // No manualChunks: object form breaks Vite 8 Rolldown; function form is deprecated.
     reportCompressedSize: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Split vendor chunks for better caching
-          svelte: ['svelte'],
-        },
-      },
-    },
   },
   test: {
     environment: 'jsdom',
