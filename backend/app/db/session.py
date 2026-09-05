@@ -11,15 +11,25 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
 
 def _make_engine() -> AsyncEngine:
+    # pytest-asyncio (mode=auto) uses a fresh event loop per test. QueuePool
+    # would hand back asyncpg connections bound to a previous loop and raise
+    # InterfaceError ("another operation is in progress"). NullPool in test
+    # avoids cross-loop reuse; production keeps a sized pool.
+    pool_kwargs: dict[str, object]
+    if settings.APP_ENV.lower() == "test":
+        pool_kwargs = {"poolclass": NullPool}
+    else:
+        pool_kwargs = {"pool_size": 10, "max_overflow": 20}
+
     return create_async_engine(
         settings.DATABASE_URL,
-        pool_size=10,
-        max_overflow=20,
+        **pool_kwargs,
         echo=settings.DEBUG,
         future=True,
         # #753 (J): hard server-side ceilings so a stuck query or a lock wait
@@ -51,9 +61,9 @@ AsyncSessionLocal = _make_session_factory(engine)
 def reset_engine() -> None:
     """Replace the module-level engine after ``engine.dispose()``.
 
-    Prefer not disposing between pytest-asyncio tests (different event loops).
-    When dispose is required, recreate the pool and reconfigure the shared
-    sessionmaker in place so importers keep working.
+    Prefer NullPool under ``APP_ENV=test`` so pytest-asyncio can keep one
+    engine across per-test loops without QueuePool cross-loop reuse. When
+    dispose is still required, recreate and reconfigure the sessionmaker.
     """
     global engine
     engine = _make_engine()
