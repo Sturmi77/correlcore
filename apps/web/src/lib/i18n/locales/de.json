@@ -1027,7 +1027,10 @@
       "error_load": "Erkenntnisse-Aufbau konnte nicht geladen werden.",
       "error_save": "Erkenntnisse-Aufbau konnte nicht gespeichert werden.",
       "sections": {
-        "stage_header": { "label": "Reifegrad & Fortschritt", "description": "Aktuelle Analyse-Reifephase mit Fortschrittsbalken und Meilensteinen." },
+        "stage_header": {
+          "label": "Reifegrad & Fortschritt",
+          "description": "Aktuelle Analyse-Reifephase mit Fortschrittsbalken und Meilensteinen."
+        },
         "correlation_matrix": {
           "label": "Korrelationsmatrix",
           "description": "\u00dcbersichts-Matrix der st\u00e4rksten Zusammenh\u00e4nge zwischen Faktoren."
