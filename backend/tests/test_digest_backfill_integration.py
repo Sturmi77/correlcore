@@ -18,15 +18,6 @@ from app.db.session import AsyncSessionLocal, bind_rls_current_user
 BACKFILL_SQL = "UPDATE user_preferences SET digest_enabled = false WHERE digest_enabled = true"
 
 
-@pytest.fixture(autouse=True)
-async def dispose_async_engine_after_integration_test() -> None:
-    yield
-    from app.db import session as db_session
-
-    await db_session.engine.dispose()
-    db_session.reset_engine()
-
-
 def _integration_enabled() -> bool:
     return os.getenv("CORRELCORE_RUN_INTEGRATION") == "1"
 

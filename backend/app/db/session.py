@@ -5,12 +5,17 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.core.config import settings
 
 
-def _make_engine():
+def _make_engine() -> AsyncEngine:
     return create_async_engine(
         settings.DATABASE_URL,
         pool_size=10,
@@ -29,7 +34,7 @@ def _make_engine():
     )
 
 
-def _make_session_factory(bind):
+def _make_session_factory(bind: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(
         bind,
         class_=AsyncSession,
@@ -46,10 +51,9 @@ AsyncSessionLocal = _make_session_factory(engine)
 def reset_engine() -> None:
     """Replace the module-level engine after ``engine.dispose()``.
 
-    Integration tests dispose the shared engine between cases to avoid
-    connection leaks across pytest-asyncio loops. ``AsyncSessionLocal`` is
-    reconfigured in place so modules that imported the sessionmaker at
-    load time keep working on the new pool.
+    Prefer not disposing between pytest-asyncio tests (different event loops).
+    When dispose is required, recreate the pool and reconfigure the shared
+    sessionmaker in place so importers keep working.
     """
     global engine
     engine = _make_engine()

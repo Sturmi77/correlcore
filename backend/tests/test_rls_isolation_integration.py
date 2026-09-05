@@ -24,15 +24,6 @@ from app.services.auth_service import register_user
 _APP_ROLE = "correlcore_app"
 
 
-@pytest.fixture(autouse=True)
-async def dispose_async_engine_after_integration_test() -> None:
-    yield
-    from app.db import session as db_session
-
-    await db_session.engine.dispose()
-    db_session.reset_engine()
-
-
 def _integration_enabled() -> bool:
     return os.getenv("CORRELCORE_RUN_INTEGRATION") == "1"
 
