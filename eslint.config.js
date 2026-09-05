@@ -22,6 +22,7 @@ export default [
       '**/node_modules/**',
       '**/.svelte-kit/**',
       '**/build/**',
+      '**/build-capacitor/**',
       '**/dist/**',
       'apps/android/**',
     ],
