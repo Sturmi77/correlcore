@@ -46,6 +46,16 @@ describe('insightSections', () => {
     expect(isInsightSectionLocked('lag_heatmap')).toBe(false);
   });
 
+  it('has stage_header as a default, non-locked section (#823)', () => {
+    expect(DEFAULT_INSIGHT_SECTIONS[0]?.key).toBe('stage_header');
+    expect(isInsightSectionLocked('stage_header')).toBe(false);
+    // Unlike insight_feed, it may be hidden.
+    const normalized = normalizeInsightSectionsForSave([{ key: 'stage_header', enabled: false }]);
+    expect(normalized).toEqual([{ key: 'stage_header', enabled: false }]);
+    const merged = mergeInsightSections([{ key: 'stage_header', enabled: false }]);
+    expect(merged.find((section) => section.key === 'stage_header')?.enabled).toBe(false);
+  });
+
   it('resolves enabled sections only', () => {
     const enabled = resolveEnabledInsightSections([
       { key: 'insight_feed', enabled: true },

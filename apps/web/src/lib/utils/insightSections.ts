@@ -7,6 +7,7 @@ export type { InsightSectionKey, InsightSectionPreference };
 export const LOCKED_INSIGHT_SECTION_KEYS: InsightSectionKey[] = ['insight_feed'];
 
 export const DEFAULT_INSIGHT_SECTIONS: InsightSectionPreference[] = [
+  { key: 'stage_header', enabled: true },
   { key: 'correlation_matrix', enabled: true },
   { key: 'insight_feed', enabled: true },
   { key: 'lag_heatmap', enabled: true },
@@ -18,6 +19,7 @@ export const DEFAULT_INSIGHT_SECTIONS: InsightSectionPreference[] = [
 
 const insightSectionUtils = createSectionUtils<InsightSectionKey>({
   validKeys: [
+    'stage_header',
     'correlation_matrix',
     'insight_feed',
     'lag_heatmap',

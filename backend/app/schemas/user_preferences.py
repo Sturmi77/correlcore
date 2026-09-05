@@ -18,6 +18,7 @@ HomeSectionKey = Literal[
 
 # Documented allowed keys — validated in ``normalize_insight_sections`` (#821).
 InsightSectionKey = Literal[
+    "stage_header",
     "correlation_matrix",
     "insight_feed",
     "lag_heatmap",

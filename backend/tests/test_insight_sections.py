@@ -65,3 +65,19 @@ def test_normalize_insight_sections_forces_locked_feed_enabled() -> None:
     assert normalize_insight_sections([{"key": "insight_feed", "enabled": False}]) == [
         {"key": "insight_feed", "enabled": True}
     ]
+
+
+def test_stage_header_is_a_default_section() -> None:
+    # #823: readiness header is a regular, hideable section (default first).
+    assert DEFAULT_INSIGHT_SECTIONS[0]["key"] == "stage_header"
+    assert DEFAULT_INSIGHT_SECTIONS[0]["enabled"] is True
+
+
+def test_stage_header_can_be_disabled() -> None:
+    # Unlike insight_feed, stage_header is not locked and may be hidden.
+    assert normalize_insight_sections([{"key": "stage_header", "enabled": False}]) == [
+        {"key": "stage_header", "enabled": False}
+    ]
+    merged = merge_insight_sections([{"key": "stage_header", "enabled": False}])
+    stage = next(item for item in merged if item["key"] == "stage_header")
+    assert stage["enabled"] is False

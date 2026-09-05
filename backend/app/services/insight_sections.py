@@ -17,6 +17,7 @@ from app.services.section_preferences import (
 )
 
 InsightSectionKey = Literal[
+    "stage_header",
     "correlation_matrix",
     "insight_feed",
     "lag_heatmap",
@@ -28,6 +29,7 @@ InsightSectionKey = Literal[
 
 VALID_INSIGHT_SECTION_KEYS: frozenset[str] = frozenset(
     {
+        "stage_header",
         "correlation_matrix",
         "insight_feed",
         "lag_heatmap",
@@ -45,6 +47,7 @@ InsightSectionPreference = SectionPreference
 
 
 DEFAULT_INSIGHT_SECTIONS: list[SectionPreference] = [
+    {"key": "stage_header", "enabled": True},
     {"key": "correlation_matrix", "enabled": True},
     {"key": "insight_feed", "enabled": True},
     {"key": "lag_heatmap", "enabled": True},

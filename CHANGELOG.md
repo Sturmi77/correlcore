@@ -18,6 +18,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   (Symptom-Analyse, Tag-Gruppen, Tag-Kookkurrenz) aufgeteilt. Neue Spalte
   `user_preferences.insight_sections` (Migration `044`); die bestehenden
   Reifephasen-/Daten-Gates bleiben als zusätzliche Bedingung erhalten.
+- **Reifegrad-Header konfigurierbar (#823)** — der Reifegrad-/Fortschritts-Block
+  (`InsightStageHeader`) ist nun ein regulärer, ein-/ausblendbarer und
+  verschiebbarer Bereich der Erkenntnisse-Seite (neuer Section-Key
+  `stage_header`, standardmäßig oben sichtbar). Beim Ausblenden zeigt der Feed
+  sein eigenes Reife-Badge, sodass die Phaseninfo nicht verloren geht. Keine
+  Migration nötig (nutzt die bestehende `insight_sections`-Spalte).
 
 ## [1.6.0] — 2026-09-01
 

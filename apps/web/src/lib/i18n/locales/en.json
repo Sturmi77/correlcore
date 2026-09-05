@@ -1027,6 +1027,7 @@
       "error_load": "Could not load the Insights layout.",
       "error_save": "Could not save the Insights layout.",
       "sections": {
+        "stage_header": { "label": "Readiness & progress", "description": "Current analysis maturity phase with a progress bar and milestones." },
         "correlation_matrix": {
           "label": "Correlation matrix",
           "description": "Overview matrix of the strongest links between factors."
