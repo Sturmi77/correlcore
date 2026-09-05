@@ -1,6 +1,6 @@
 # M11 Play Store — Gap-Analyse & Restplan
 
-Last updated: 2026-08-17
+Last updated: 2026-09-04
 
 Detailanalyse des verbleibenden Gaps zwischen dem aktuellen Stand und dem
 **M11-Exit-Kriterium: Play Store Closed Testing live**.
@@ -86,7 +86,10 @@ sonst ist der Restweg unverfolgt.
       (`correlcore-<ver>.aab` liegt bereits an jedem `v*`-Tag)
 
 > Agent kann hier **nicht** handeln (Google-Login, Zahlung, Konsole).
-> Vorbereitbar: Upload-Anleitung + Version-Mapping (tag → versionCode) prüfen.
+> **Vorbereitung (2026-09-04):** Runbook
+> [`docs/runbooks/play-console-bootstrap.md`](runbooks/play-console-bootstrap.md),
+> Fingerprint-Skript `apps/android/scripts/print-upload-cert-fingerprint.sh`,
+> versionCode-Tabelle + `v1.6.0` AAB als erster Upload-Kandidat verifiziert.
 
 ### AP-2 — Store-Listing-Assets (Content)
 

@@ -1,15 +1,19 @@
 /**
- * Phase-gate tests for the Event-Aligned Small Multiples sheet.
+ * Phase-gate + occurrence-floor + median tests for Event-Aligned Small Multiples.
  *
  * The sheet is only safe to render once the insight has reached the
- * provisional or robust phase (ADR-0021). The helper exported from the
- * sheet module is the single source of truth used by both the component
- * and the calling Insight card; both call sites must stay aligned.
+ * provisional or robust phase (ADR-0021). The median trajectory (#810)
+ * additionally requires ≥ MIN_SMALL_MULTIPLES_OCCURRENCES episodes (#811).
  */
 
 import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
-import { isSmallMultiplesUnlocked, SMALL_MULTIPLES_RADIUS } from './smallMultiplesGate';
+import {
+  hasEnoughOccurrences,
+  isSmallMultiplesUnlocked,
+  MIN_SMALL_MULTIPLES_OCCURRENCES,
+  SMALL_MULTIPLES_RADIUS,
+} from './smallMultiplesGate';
 import EventAlignedSmallMultiplesSheet from './EventAlignedSmallMultiplesSheet.svelte';
 
 vi.mock('svelte-i18n', async () => {
@@ -44,9 +48,18 @@ describe('isSmallMultiplesUnlocked (ADR-0021 phase gate)', () => {
   });
 
   it('keeps the window radius at 7 days', () => {
-    // The compare panel and any other call site must keep this in sync
-    // — it is part of the visual contract documented in ADR-0035 §6.
     expect(SMALL_MULTIPLES_RADIUS).toBe(7);
+  });
+});
+
+describe('hasEnoughOccurrences (#811)', () => {
+  it('requires the documented floor of 3 episodes', () => {
+    expect(MIN_SMALL_MULTIPLES_OCCURRENCES).toBe(3);
+    expect(hasEnoughOccurrences(0)).toBe(false);
+    expect(hasEnoughOccurrences(1)).toBe(false);
+    expect(hasEnoughOccurrences(2)).toBe(false);
+    expect(hasEnoughOccurrences(3)).toBe(true);
+    expect(hasEnoughOccurrences(5)).toBe(true);
   });
 });
 
@@ -132,12 +145,82 @@ describe('EventAlignedSmallMultiplesSheet lag marker (#488)', () => {
     });
 
     const legend = screen.getByTestId('esm-legend').textContent ?? '';
-    // "Worse"/"Better" describe the already-inverted display value (higher =
-    // better for every metric), so no metric-specific reversal is needed —
-    // unlike "Lower"/"Higher", which described raw stress backwards.
     expect(legend).toContain('trends.esm.legend_worse');
     expect(legend).toContain('trends.esm.legend_better');
     expect(legend).not.toContain('trends.esm.legend_low');
     expect(legend).not.toContain('trends.esm.legend_high');
+  });
+});
+
+describe('EventAlignedSmallMultiplesSheet occurrence floor + median (#810/#811)', () => {
+  const points = [
+    {
+      period_start: '2026-05-01',
+      period_end: '2026-05-01',
+      entry_count: 1,
+      mood_avg: 2,
+      energy_avg: 3,
+      stress_avg: 3,
+      sleep_quality_avg: null,
+    },
+    {
+      period_start: '2026-05-10',
+      period_end: '2026-05-10',
+      entry_count: 1,
+      mood_avg: 4,
+      energy_avg: 3,
+      stress_avg: 2,
+      sleep_quality_avg: null,
+    },
+    {
+      period_start: '2026-05-20',
+      period_end: '2026-05-20',
+      entry_count: 1,
+      mood_avg: 3,
+      energy_avg: 3,
+      stress_avg: 3,
+      sleep_quality_avg: null,
+    },
+  ];
+
+  it('shows need-more hint and hides median when fewer than 3 episodes', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events: [
+          { onset: '2026-05-01', label: 'A' },
+          { onset: '2026-05-10', label: 'B' },
+        ],
+        points,
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.getByTestId('esm-need-more').textContent).toContain('trends.esm.need_more');
+    expect(screen.queryByTestId('esm-median-row')).toBeNull();
+    expect(screen.queryByTestId('esm-median-hint')).toBeNull();
+  });
+
+  it('renders the median trajectory once there are ≥ 3 episodes', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events: [
+          { onset: '2026-05-01', label: 'A' },
+          { onset: '2026-05-10', label: 'B' },
+          { onset: '2026-05-20', label: 'C' },
+        ],
+        points,
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.queryByTestId('esm-need-more')).toBeNull();
+    expect(screen.getByTestId('esm-median-row')).toBeTruthy();
+    expect(screen.getByTestId('esm-median-hint').textContent).toBe('trends.esm.median_hint');
   });
 });

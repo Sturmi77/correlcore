@@ -1,6 +1,6 @@
 # M11 Ops checklist — signing, sideload & Play Store
 
-Last updated: 2026-07-18
+Last updated: 2026-09-04
 
 Operator / maintainer work that is **outside the app code sprints**, but required
 before or after M11 exit (Play Closed Testing). Engineering sprints 1–2 land
@@ -11,6 +11,7 @@ Related:
 - Sideload UX: [`ANDROID_SIDELOAD.md`](ANDROID_SIDELOAD.md)
 - Sprint plan: [`../M11_SPRINT_PLAN.md`](../M11_SPRINT_PLAN.md)
 - Capacitor shell: [`../../apps/android/README.md`](../../apps/android/README.md)
+- **Play Console bootstrap (AP-1 / #719):** [`../runbooks/play-console-bootstrap.md`](../runbooks/play-console-bootstrap.md)
 
 ## Why signing secrets stay required
 
@@ -77,14 +78,23 @@ These proceed without Play / without signing secrets:
 
 ## Checklist C — Play Store (M11 exit / shortly after)
 
+Step-by-step for the first Internal upload:
+[`../runbooks/play-console-bootstrap.md`](../runbooks/play-console-bootstrap.md)
+(AP-1 / [#719](https://github.com/Sturmi77/correlcore/issues/719)). AP-HC (#718)
+Option A is done — upload the **play** AAB (`correlcore-*.aab`), never the
+sideload APK.
+
 - [ ] Google Play Console developer account ($25 one-time)
-- [ ] Create app `de.correlcore.app` (or confirm package id)
-- [ ] Decide Play App Signing: Google-managed app key + your upload key (recommended)
-- [ ] Internal testing track: upload AAB from CI Release artifact
-- [ ] Store listing: short/long description, feature graphic, screenshots
-- [ ] Data Safety form (ADR-0033 / cycle + HC reality — declare only what you ship)
+- [ ] Create app `de.correlcore.app` (package id exact)
+- [ ] Play App Signing: Google-managed app key + CI keystore as upload key
+- [ ] Verify upload-key SHA-256 (`apps/android/scripts/print-upload-cert-fingerprint.sh`)
+- [ ] Internal testing track: upload `correlcore-<ver>.aab` from latest `v*` Release
+      (first candidate: `v1.6.0` → versionCode `1006000`)
+- [ ] Owner install smoke from Internal opt-in link
+- [ ] Store listing: short/long description, feature graphic, screenshots (#720)
+- [ ] Data Safety form (ADR-0033 / cycle + HC reality — declare only what you ship) (#721)
 - [ ] Privacy policy public URL (landing from M10)
-- [ ] Pre-Launch Report: no critical crashes
+- [ ] Pre-Launch Report: no critical crashes (#723)
 - [ ] Promote Internal → **Closed Testing** (M11 exit criterion)
 - [ ] Optional: link Closed Testing invite in BETA_ONBOARDING
 

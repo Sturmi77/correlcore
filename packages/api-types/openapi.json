@@ -2200,7 +2200,7 @@
         "type": "object"
       },
       "InsightEventWindow": {
-        "description": "Single tag/symptom occurrence aligned at t = 0 (ADR-0035 §6).",
+        "description": "Single tag/symptom *episode* onset aligned at t = 0 (ADR-0035 §6 / #809).\n\nContiguous presence days collapse to one window; ``onset`` is the first day\nof the episode.",
         "properties": {
           "label": {
             "anyOf": [

@@ -605,6 +605,10 @@
       "aria": "Event-aligned small multiples",
       "close_aria": "Close event-aligned view",
       "empty": "No events available for this insight yet.",
+      "need_more": "Need more data: the median trajectory appears once there are at least {min} occurrences. Individual episodes are still shown below.",
+      "median_label": "Median",
+      "median_hint": "Top row: median across occurrences (cell details include the IQR).",
+      "median_aria": "Median trajectory across {count} occurrences",
       "locked": "Available once the insight reaches the provisional phase.",
       "open_action": "Explore aligned events",
       "lag_hint": "T0 = trigger · outcome marked at +{days} days"

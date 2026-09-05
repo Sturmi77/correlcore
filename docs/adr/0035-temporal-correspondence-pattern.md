@@ -122,6 +122,14 @@ window ±7 days, configurable to ±14). A median line across occurrences is
 overlaid. This is the Single-Event-Alignment configuration shown empirically
 best for precursor/aftereffect questions (Zhang et al. 2019).
 
+**Occurrence = episode (#809).** Contiguous presence days of the same tag or
+symptom collapse to a single occurrence. The onset (t = 0) is the **first** day
+of the run. By default only adjacent calendar days stay in one episode; a gap of
+≥2 days starts a new episode (`min_gap_days = 1` in
+`collapse_presence_dates_to_episodes` / `collapsePresenceDatesToEpisodes`). Dev
+fixtures and the production event-windows API must apply the same collapse so
+aligned-row counts stay consistent.
+
 Phase-gated: visible only from insight phase `provisional` onward
 (ADR-0021), with appropriate confidence and base-rate disclaimers
 (ADR-0018, [`docs/frontend/SYMPTOM_VISUALIZATION.md`](../frontend/SYMPTOM_VISUALIZATION.md)

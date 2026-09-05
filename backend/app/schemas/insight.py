@@ -73,7 +73,11 @@ class InsightListResponse(BaseModel):
 
 
 class InsightEventWindow(BaseModel):
-    """Single tag/symptom occurrence aligned at t = 0 (ADR-0035 §6)."""
+    """Single tag/symptom *episode* onset aligned at t = 0 (ADR-0035 §6 / #809).
+
+    Contiguous presence days collapse to one window; ``onset`` is the first day
+    of the episode.
+    """
 
     onset: date_type
     label: str | None = None

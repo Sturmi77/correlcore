@@ -3,6 +3,7 @@ import type { EntryResponse } from '$lib/api/entries';
 import type { InsightResponse } from '$lib/api/insights';
 import {
   buildExploreEventWindows,
+  collapsePresenceDatesToEpisodes,
   datesToEventWindows,
   devEventWindowsFromHeatmaps,
   devLagEventWindowsFromHeatmaps,
@@ -130,6 +131,65 @@ describe('exploreEventWindows', () => {
     expect(datesToEventWindows(['2026-07-03', '2026-07-01', '2026-07-03'], 'Focus')).toEqual([
       { onset: '2026-07-01', label: 'Focus' },
       { onset: '2026-07-03', label: 'Focus' },
+    ]);
+  });
+
+  it('collapses contiguous presence days into one episode onset (#809)', () => {
+    expect(
+      collapsePresenceDatesToEpisodes([
+        '2026-07-03',
+        '2026-07-01',
+        '2026-07-02',
+        '2026-07-01',
+        '2026-07-05',
+      ])
+    ).toEqual(['2026-07-01', '2026-07-05']);
+
+    expect(datesToEventWindows(['2026-07-01', '2026-07-02', '2026-07-03'], 'Migraine')).toEqual([
+      { onset: '2026-07-01', label: 'Migraine' },
+    ]);
+
+    // One missing day between presence days (gap of 2 calendar days) → new episode.
+    expect(collapsePresenceDatesToEpisodes(['2026-07-01', '2026-07-03'])).toEqual([
+      '2026-07-01',
+      '2026-07-03',
+    ]);
+
+    // Optional wider gap tolerance keeps a 1-day hole in the same episode.
+    expect(collapsePresenceDatesToEpisodes(['2026-07-01', '2026-07-03'], 2)).toEqual([
+      '2026-07-01',
+    ]);
+  });
+
+  it('collapses contiguous heatmap days in the dev fixture path (#809)', () => {
+    const insight = baseInsight({ subject_type: 'tag', subject_id: 't1', subject_label: 'Walk' });
+    const windows = devEventWindowsFromHeatmaps(
+      insight,
+      {
+        start_date: '2026-06-01',
+        end_date: '2026-07-01',
+        tags: [
+          {
+            tag_id: 't1',
+            slug: 'walk',
+            name: 'Walk',
+            category: 'sport',
+            color: null,
+            days: [
+              { date: '2026-06-10', count: 1 },
+              { date: '2026-06-11', count: 1 },
+              { date: '2026-06-12', count: 1 },
+              { date: '2026-06-15', count: 1 },
+            ],
+          },
+        ],
+      },
+      { start_date: '2026-06-01', end_date: '2026-07-01', symptoms: [] }
+    );
+
+    expect(windows).toEqual([
+      { onset: '2026-06-10', label: 'Walk' },
+      { onset: '2026-06-15', label: 'Walk' },
     ]);
   });
 

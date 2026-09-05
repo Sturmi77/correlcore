@@ -2470,7 +2470,10 @@ export interface components {
         };
         /**
          * InsightEventWindow
-         * @description Single tag/symptom occurrence aligned at t = 0 (ADR-0035 §6).
+         * @description Single tag/symptom *episode* onset aligned at t = 0 (ADR-0035 §6 / #809).
+         *
+         *     Contiguous presence days collapse to one window; ``onset`` is the first day
+         *     of the episode.
          */
         InsightEventWindow: {
             /** Label */
