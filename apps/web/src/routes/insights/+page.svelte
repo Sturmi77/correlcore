@@ -733,9 +733,13 @@
     mergeInsightSections(userPreferences?.insight_sections ?? null)
   ).map((section) => section.key);
   $: stageHeaderEnabled = enabledInsightSectionKeys.includes('stage_header');
-  // Avoid a duplicate milestone: on mobile-with-primary the milestone-only strip
-  // lives inside MobileInsightLead, so the standalone stage header suppresses it.
-  $: showStageMilestone = showMaturityMilestone && !(compactInsights && primaryMobileInsight);
+  // The milestone belongs to the stage_header section, so hiding that section
+  // hides the milestone everywhere. On mobile-with-primary the milestone-only
+  // strip lives inside MobileInsightLead (gated by showLeadMilestone), and the
+  // standalone header suppresses its own copy there to avoid a duplicate.
+  $: showLeadMilestone = showMaturityMilestone && stageHeaderEnabled;
+  $: showStageMilestone =
+    showMaturityMilestone && stageHeaderEnabled && !(compactInsights && primaryMobileInsight);
 
   function ensureAnalyticsLoaded(): void {
     if (!cooccurrenceRequested && !cooccurrenceLoading) {
@@ -899,7 +903,7 @@
               maturity={insightMaturity}
               entryCount={visibleEntryCount}
               {inactiveTagIds}
-              showMilestone={showMaturityMilestone}
+              showMilestone={showLeadMilestone}
               {enableExploreEvents}
               on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
               on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
