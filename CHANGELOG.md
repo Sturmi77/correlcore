@@ -8,6 +8,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Konfigurierbare Erkenntnisse-Seite (#821)** — unter Einstellungen →
+  Darstellung → „Erkenntnisse-Aufbau" (`/settings/insights`) lassen sich die
+  Bereiche der Erkenntnisse-Seite ein-/ausblenden und sortieren, analog zum
+  Home-Aufbau (#584). Der Haupt-Feed bleibt immer sichtbar, ist aber
+  verschiebbar; die erweiterte Analyse ist in drei einzeln schaltbare Bereiche
+  (Symptom-Analyse, Tag-Gruppen, Tag-Kookkurrenz) aufgeteilt. Neue Spalte
+  `user_preferences.insight_sections` (Migration `044`); die bestehenden
+  Reifephasen-/Daten-Gates bleiben als zusätzliche Bedingung erhalten.
+
 ## [1.6.0] — 2026-09-01
 
 Sicherheits- und Assurance-Release. **Zwei Änderungen können ein bestehendes

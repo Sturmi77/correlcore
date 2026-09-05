@@ -2795,6 +2795,25 @@
         "title": "InsightResponse",
         "type": "object"
       },
+      "InsightSectionPreference": {
+        "description": "One configurable Insights page block.",
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "enabled"
+        ],
+        "title": "InsightSectionPreference",
+        "type": "object"
+      },
       "InsightTier": {
         "description": "Confidence tier assigned by analytics gates.",
         "enum": [
@@ -5221,6 +5240,20 @@
             ],
             "title": "Home Sections"
           },
+          "insight_sections": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/InsightSectionPreference"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insight Sections"
+          },
           "last_seen_digest_at": {
             "anyOf": [
               {
@@ -5363,6 +5396,21 @@
               }
             ],
             "title": "Home Sections"
+          },
+          "insight_sections": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/InsightSectionPreference"
+                },
+                "maxItems": 16,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insight Sections"
           },
           "last_seen_digest_at": {
             "anyOf": [

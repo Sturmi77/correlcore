@@ -96,6 +96,11 @@ class UserPreference(Base):
         JSONB,
         nullable=True,
     )
+    # #821: configurable Insights page section order/visibility.
+    insight_sections: Mapped[list[dict[str, object]] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

@@ -1,9 +1,19 @@
-"""Home screen section preferences (#584)."""
+"""Home screen section preferences (#584).
+
+Thin wrapper over the generic section-preference helpers
+(``app.services.section_preferences``); Home has no locked sections.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, TypedDict
+from typing import Literal
+
+from app.services.section_preferences import (
+    SectionPreference,
+    merge_sections,
+    normalize_sections,
+)
 
 HomeSectionKey = Literal[
     "first_week_banner",
@@ -21,13 +31,11 @@ VALID_HOME_SECTION_KEYS: frozenset[str] = frozenset(
     }
 )
 
-
-class HomeSectionPreference(TypedDict):
-    key: str
-    enabled: bool
+# Re-exported for backwards compatibility with existing imports.
+HomeSectionPreference = SectionPreference
 
 
-DEFAULT_HOME_SECTIONS: list[HomeSectionPreference] = [
+DEFAULT_HOME_SECTIONS: list[SectionPreference] = [
     {"key": "first_week_banner", "enabled": True},
     {"key": "daily_brief", "enabled": True},
     {"key": "work_context", "enabled": True},
@@ -35,61 +43,19 @@ DEFAULT_HOME_SECTIONS: list[HomeSectionPreference] = [
 ]
 
 
-def _coerce_section(raw: object) -> HomeSectionPreference | None:
-    if not isinstance(raw, dict):
-        return None
-    key = raw.get("key")
-    enabled = raw.get("enabled")
-    if not isinstance(key, str):
-        return None
-    key = key.strip()
-    if key not in VALID_HOME_SECTION_KEYS:
-        return None
-    if not isinstance(enabled, bool):
-        return None
-    return {"key": key, "enabled": enabled}
-
-
 def merge_home_sections(
     stored: Sequence[object] | None,
-) -> list[HomeSectionPreference]:
+) -> list[SectionPreference]:
     """Resolve stored preferences with defaults for missing or unknown keys."""
-    if not stored:
-        return [section.copy() for section in DEFAULT_HOME_SECTIONS]
-
-    merged: list[HomeSectionPreference] = []
-    seen: set[str] = set()
-
-    for raw in stored:
-        section = _coerce_section(raw)
-        if section is None or section["key"] in seen:
-            continue
-        merged.append(section)
-        seen.add(section["key"])
-
-    for default in DEFAULT_HOME_SECTIONS:
-        if default["key"] not in seen:
-            merged.append(default.copy())
-            seen.add(default["key"])
-
-    return merged
+    return merge_sections(
+        stored,
+        defaults=DEFAULT_HOME_SECTIONS,
+        valid_keys=VALID_HOME_SECTION_KEYS,
+    )
 
 
 def normalize_home_sections(
     sections: Sequence[object] | None,
-) -> list[HomeSectionPreference] | None:
+) -> list[SectionPreference] | None:
     """Validate and dedupe a PATCH payload; empty list is allowed."""
-    if sections is None:
-        return None
-
-    normalized: list[HomeSectionPreference] = []
-    seen: set[str] = set()
-
-    for raw in sections:
-        section = _coerce_section(raw)
-        if section is None or section["key"] in seen:
-            continue
-        normalized.append(section)
-        seen.add(section["key"])
-
-    return normalized
+    return normalize_sections(sections, valid_keys=VALID_HOME_SECTION_KEYS)

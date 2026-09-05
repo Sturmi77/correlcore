@@ -16,9 +16,27 @@ HomeSectionKey = Literal[
     "weekday_overview",
 ]
 
+# Documented allowed keys — validated in ``normalize_insight_sections`` (#821).
+InsightSectionKey = Literal[
+    "correlation_matrix",
+    "insight_feed",
+    "lag_heatmap",
+    "dismissed",
+    "symptom_analytics",
+    "tag_groups",
+    "tag_cooccurrence",
+]
+
 
 class HomeSectionPreference(BaseModel):
     """One configurable Home screen block."""
+
+    key: str
+    enabled: bool
+
+
+class InsightSectionPreference(BaseModel):
+    """One configurable Insights page block."""
 
     key: str
     enabled: bool
@@ -39,6 +57,9 @@ class UserPreferencesUpdate(BaseModel):
     last_seen_insight_at: datetime | None = None
     last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = Field(default=None, max_length=16)
+    insight_sections: list[InsightSectionPreference] | None = Field(
+        default=None, max_length=16
+    )
 
 
 class UserPreferencesResponse(BaseModel):
@@ -59,5 +80,6 @@ class UserPreferencesResponse(BaseModel):
     last_seen_insight_at: datetime | None = None
     last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = None
+    insight_sections: list[InsightSectionPreference] | None = None
     created_at: datetime
     updated_at: datetime

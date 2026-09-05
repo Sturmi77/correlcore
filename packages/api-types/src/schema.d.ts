@@ -2724,6 +2724,16 @@ export interface components {
             user_id: string;
         };
         /**
+         * InsightSectionPreference
+         * @description One configurable Insights page block.
+         */
+        InsightSectionPreference: {
+            /** Enabled */
+            enabled: boolean;
+            /** Key */
+            key: string;
+        };
+        /**
          * InsightTier
          * @description Confidence tier assigned by analytics gates.
          * @enum {string}
@@ -3776,6 +3786,8 @@ export interface components {
             health_connect_sync_sleep_enabled: boolean;
             /** Home Sections */
             home_sections?: components["schemas"]["HomeSectionPreference"][] | null;
+            /** Insight Sections */
+            insight_sections?: components["schemas"]["InsightSectionPreference"][] | null;
             /** Last Seen Digest At */
             last_seen_digest_at?: string | null;
             /** Last Seen Insight At */
@@ -3819,6 +3831,8 @@ export interface components {
             health_connect_sync_sleep_enabled?: boolean | null;
             /** Home Sections */
             home_sections?: components["schemas"]["HomeSectionPreference"][] | null;
+            /** Insight Sections */
+            insight_sections?: components["schemas"]["InsightSectionPreference"][] | null;
             /** Last Seen Digest At */
             last_seen_digest_at?: string | null;
             /** Last Seen Insight At */

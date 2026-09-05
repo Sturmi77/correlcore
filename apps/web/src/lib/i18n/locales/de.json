@@ -1006,6 +1006,29 @@
         }
       }
     },
+    "insights": {
+      "open": "Erkenntnisse-Aufbau",
+      "title": "Erkenntnisse-Aufbau",
+      "subtitle": "W\u00e4hle, welche Bereiche auf der Erkenntnisse-Seite erscheinen und in welcher Reihenfolge.",
+      "heading": "Erkenntnisse-Bereiche",
+      "body": "Der Haupt-Feed bleibt immer sichtbar, l\u00e4sst sich aber verschieben. Alle anderen Bereiche kannst du ein-, ausblenden und sortieren. Ein Bereich erscheint nur, wenn genug Daten daf\u00fcr vorliegen.",
+      "list_aria": "Konfigurierbare Erkenntnisse-Bereiche",
+      "move_up": "Bereich nach oben",
+      "move_down": "Bereich nach unten",
+      "reset_defaults": "Standardanordnung wiederherstellen",
+      "locked_note": "Immer sichtbar",
+      "error_load": "Erkenntnisse-Aufbau konnte nicht geladen werden.",
+      "error_save": "Erkenntnisse-Aufbau konnte nicht gespeichert werden.",
+      "sections": {
+        "correlation_matrix": { "label": "Korrelationsmatrix", "description": "\u00dcbersichts-Matrix der st\u00e4rksten Zusammenh\u00e4nge zwischen Faktoren." },
+        "insight_feed": { "label": "Erkenntnis-Feed", "description": "Deine wichtigsten Erkenntnisse als Liste. Bleibt immer sichtbar." },
+        "lag_heatmap": { "label": "Zeitversatz-Heatmap", "description": "Zusammenh\u00e4nge mit zeitlicher Verz\u00f6gerung (z. B. Wirkung erst Tage sp\u00e4ter)." },
+        "dismissed": { "label": "Ausgeblendete Erkenntnisse", "description": "Von dir ausgeblendete Erkenntnisse zum Wiederherstellen." },
+        "symptom_analytics": { "label": "Symptom-Analyse", "description": "Symptom-Heatmap und Zusammenh\u00e4nge mit Tags." },
+        "tag_groups": { "label": "Tag-Gruppen", "description": "Automatisch erkannte Gruppen h\u00e4ufig gemeinsam auftretender Tags." },
+        "tag_cooccurrence": { "label": "Tag-Kookkurrenz", "description": "Wie oft Tags gemeinsam an denselben Tagen vorkommen." }
+      }
+    },
     "dev": {
       "heading": "Entwickleransicht",
       "body": "Pr\u00fcfe den GitHub-Commit, Image-Tag und optionalen OCI-Digest, den das Backend aktuell meldet.",

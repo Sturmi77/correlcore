@@ -44,6 +44,10 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
+  import {
+    mergeInsightSections,
+    resolveEnabledInsightSections,
+  } from '$lib/utils/insightSections';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -722,6 +726,14 @@
     Boolean(primaryMobileInsight);
   $: enableExploreEvents = isSmallMultiplesUnlocked(insightMaturity?.phase ?? null);
 
+  // #821: configurable section order/visibility. `insight_feed` is locked
+  // (always enabled) but reorderable; the readiness stage header stays fixed
+  // chrome outside this list. User config is an AND-gate on top of the existing
+  // phase/data gates below.
+  $: enabledInsightSectionKeys = resolveEnabledInsightSections(
+    mergeInsightSections(userPreferences?.insight_sections ?? null)
+  ).map((section) => section.key);
+
   function ensureAnalyticsLoaded(): void {
     if (!cooccurrenceRequested && !cooccurrenceLoading) {
       void loadCooccurrence();
@@ -856,34 +868,16 @@
       </Button>
     </Panel>
   {:else}
-    {#if showMatrix}
-      <section class="insights-page__matrix" data-testid="insights-matrix-section">
-        <InsightMatrix {insights} />
-      </section>
-    {/if}
-
+    <!-- Fixed readiness chrome (#821): stays outside the reorderable list.
+         On mobile-with-primary the readiness header is folded into the lead
+         (milestone-only), so the standalone header only shows without a primary. -->
     {#if !compactInsights && insightMaturity}
       <InsightStageHeader
         maturity={insightMaturity}
         showMilestone={showMaturityMilestone}
         on:dismissMilestone={(e) => void dismissMaturityMilestone(e.detail.key)}
       />
-    {/if}
-
-    {#if compactInsights && !feedLoading && !error && primaryMobileInsight}
-      <MobileInsightLead
-        insight={primaryMobileInsight}
-        maturity={insightMaturity}
-        entryCount={visibleEntryCount}
-        {inactiveTagIds}
-        showMilestone={showMaturityMilestone}
-        {enableExploreEvents}
-        on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
-        on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
-        on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
-        on:openDisclaimer={() => (disclaimerOpen = true)}
-      />
-    {:else if compactInsights && !feedLoading && !error && insightMaturity}
+    {:else if compactInsights && !feedLoading && !error && !primaryMobileInsight && insightMaturity}
       <InsightStageHeader
         maturity={insightMaturity}
         showMilestone={showMaturityMilestone}
@@ -891,92 +885,112 @@
       />
     {/if}
 
-    {#if showLagHeatmap}
-      <section class="insights-page__lag-heatmap" data-testid="insights-lag-heatmap-section">
-        <LagCorrelationHeatmap {insights} />
-      </section>
-    {/if}
-
-    {#if !compactInsights && primaryMobileInsight}
-      <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
-    {/if}
-
-    {#if showInsightFeed}
-      {#if compactInsights && primaryMobileInsight}
-        <section class="insights-page__more" data-testid="mobile-insights-more">
-          {#if feedInsights.length > 0}
-            <h2>{$_('insights.mobile.more_heading')}</h2>
+    <!-- Configurable sections in stored order (#821). Each still respects its
+         existing phase/data gate; user visibility is an additional AND-gate. -->
+    {#each enabledInsightSectionKeys as sectionKey (sectionKey)}
+      {#if sectionKey === 'correlation_matrix'}
+        {#if showMatrix}
+          <section class="insights-page__matrix" data-testid="insights-matrix-section">
+            <InsightMatrix {insights} />
+          </section>
+        {/if}
+      {:else if sectionKey === 'insight_feed'}
+        <div class="insights-page__feed" data-testid="insight-section-insight_feed">
+          {#if compactInsights && !feedLoading && !error && primaryMobileInsight}
+            <MobileInsightLead
+              insight={primaryMobileInsight}
+              maturity={insightMaturity}
+              entryCount={visibleEntryCount}
+              {inactiveTagIds}
+              showMilestone={showMaturityMilestone}
+              {enableExploreEvents}
+              on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
+              on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+              on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
+              on:openDisclaimer={() => (disclaimerOpen = true)}
+            />
           {/if}
-          <InsightFeed
-            insights={feedInsights}
-            stalenessInsights={insights}
-            {lastSuccessfulInsightRunAt}
-            analyticsEnabled={userPreferences?.analytics_enabled !== false}
-            hideContent={feedInsights.length === 0}
-            totalInsightCount={insights.length}
-            maturity={insightMaturity}
-            entryCount={visibleEntryCount}
-            {analysisRangeDays}
-            {inactiveTagIds}
-            dismissedCount={dismissedItems.length}
-            {enableExploreEvents}
-            {regenerateBusy}
-            {regenerateMessage}
-            {regenerateError}
-            showContext={false}
-            showMaturityBadge={false}
-            on:retry={loadInsights}
-            on:regenerate={() => void handleRegenerateInsights()}
-            on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
-            on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
-            on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
-          />
-        </section>
-      {:else}
-        <InsightFeed
-          insights={feedInsights}
-          stalenessInsights={insights}
-          {lastSuccessfulInsightRunAt}
-          analyticsEnabled={userPreferences?.analytics_enabled !== false}
-          totalInsightCount={insights.length}
+
+          {#if !compactInsights && primaryMobileInsight}
+            <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
+          {/if}
+
+          {#if showInsightFeed}
+            {#if compactInsights && primaryMobileInsight}
+              <section class="insights-page__more" data-testid="mobile-insights-more">
+                {#if feedInsights.length > 0}
+                  <h2>{$_('insights.mobile.more_heading')}</h2>
+                {/if}
+                <InsightFeed
+                  insights={feedInsights}
+                  stalenessInsights={insights}
+                  {lastSuccessfulInsightRunAt}
+                  analyticsEnabled={userPreferences?.analytics_enabled !== false}
+                  hideContent={feedInsights.length === 0}
+                  totalInsightCount={insights.length}
+                  maturity={insightMaturity}
+                  entryCount={visibleEntryCount}
+                  {analysisRangeDays}
+                  {inactiveTagIds}
+                  dismissedCount={dismissedItems.length}
+                  {enableExploreEvents}
+                  {regenerateBusy}
+                  {regenerateMessage}
+                  {regenerateError}
+                  showContext={false}
+                  showMaturityBadge={false}
+                  on:retry={loadInsights}
+                  on:regenerate={() => void handleRegenerateInsights()}
+                  on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
+                  on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+                  on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+                />
+              </section>
+            {:else}
+              <InsightFeed
+                insights={feedInsights}
+                stalenessInsights={insights}
+                {lastSuccessfulInsightRunAt}
+                analyticsEnabled={userPreferences?.analytics_enabled !== false}
+                totalInsightCount={insights.length}
+                maturity={insightMaturity}
+                loading={feedLoading}
+                {error}
+                entryCount={visibleEntryCount}
+                {analysisRangeDays}
+                {inactiveTagIds}
+                dismissedCount={dismissedItems.length}
+                {enableExploreEvents}
+                {regenerateBusy}
+                {regenerateMessage}
+                {regenerateError}
+                showMaturityBadge={!pageMaturityChrome}
+                on:retry={loadInsights}
+                on:regenerate={() => void handleRegenerateInsights()}
+                on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
+                on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+                on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+              />
+            {/if}
+          {/if}
+        </div>
+      {:else if sectionKey === 'lag_heatmap'}
+        {#if showLagHeatmap}
+          <section class="insights-page__lag-heatmap" data-testid="insights-lag-heatmap-section">
+            <LagCorrelationHeatmap {insights} />
+          </section>
+        {/if}
+      {:else if sectionKey === 'dismissed'}
+        <DismissedInsightsSection
+          items={dismissedItems}
           maturity={insightMaturity}
-          loading={feedLoading}
-          {error}
-          entryCount={visibleEntryCount}
-          {analysisRangeDays}
           {inactiveTagIds}
-          dismissedCount={dismissedItems.length}
-          {enableExploreEvents}
-          {regenerateBusy}
-          {regenerateMessage}
-          {regenerateError}
-          showMaturityBadge={!pageMaturityChrome}
-          on:retry={loadInsights}
-          on:regenerate={() => void handleRegenerateInsights()}
-          on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
-          on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
-          on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+          on:undismiss={(event) =>
+            void handleUndismissInsight(event.detail.id, event.detail.dismissalId)}
         />
-      {/if}
-    {/if}
-
-    <DismissedInsightsSection
-      items={dismissedItems}
-      maturity={insightMaturity}
-      {inactiveTagIds}
-      on:undismiss={(event) =>
-        void handleUndismissInsight(event.detail.id, event.detail.dismissalId)}
-    />
-
-    {#if showAdvancedAnalytics}
-      <section class="insights-page__analytics" data-testid="insights-analytics-panel">
-        <header class="insights-page__analytics-header">
-          <h2>{$_('insights.page.analytics_summary')}</h2>
-          <p>{$_('insights.page.analytics_hint')}</p>
-        </header>
-
-        <div class="insights-page__analytics-body">
-          {#if showSymptomAnalytics}
+      {:else if sectionKey === 'symptom_analytics'}
+        {#if showAdvancedAnalytics && showSymptomAnalytics}
+          <div class="insights-page__analytics-block" data-testid="insight-section-symptom_analytics">
             <SymptomAnalyticsSection
               heatmap={visibleSymptomHeatmap}
               entries={visibleMoodEntries}
@@ -988,11 +1002,17 @@
               on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
               on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
             />
-          {/if}
-
-          <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
-
-          {#if showTagCooccurrencePanel}
+          </div>
+        {/if}
+      {:else if sectionKey === 'tag_groups'}
+        {#if showAdvancedAnalytics}
+          <div class="insights-page__analytics-block" data-testid="insight-section-tag_groups">
+            <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
+          </div>
+        {/if}
+      {:else if sectionKey === 'tag_cooccurrence'}
+        {#if showAdvancedAnalytics && showTagCooccurrencePanel}
+          <div class="insights-page__analytics-block" data-testid="insight-section-tag_cooccurrence">
             <TagCooccurrenceHeatmap
               data={cooccurrence}
               loading={cooccurrenceLoading}
@@ -1006,10 +1026,10 @@
               on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
               on:selectPair={(event) => void openCooccurrenceHistory(event)}
             />
-          {/if}
-        </div>
-      </section>
-    {/if}
+          </div>
+        {/if}
+      {/if}
+    {/each}
 
     <CooccurrenceEntrySheet
       open={cooccurrenceHistoryOpen}
@@ -1077,45 +1097,26 @@
     margin-bottom: var(--space-2);
   }
 
-  .insights-page__analytics {
-    border: 1px solid var(--color-border-chart);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-chart-bg);
-    min-width: 0;
-  }
-
-  .insights-page__analytics-header {
-    display: grid;
-    gap: var(--space-1);
-    padding: var(--space-4) var(--space-4) 0;
-  }
-
-  .insights-page__analytics-header h2,
-  .insights-page__analytics-header p {
-    margin: 0;
-  }
-
-  .insights-page__analytics-header h2 {
-    font-size: var(--text-lg);
-  }
-
-  .insights-page__analytics-header p {
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-  }
-
-  .insights-page__analytics-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
-    padding: var(--space-4);
+  /* #821: analytics blocks are individually orderable now (no shared panel).
+     Keep each block from forcing page-level horizontal scroll; wide charts
+     scroll inside themselves. */
+  .insights-page__feed,
+  .insights-page__analytics-block {
     min-width: 0;
     max-width: 100%;
-    /* Keep horizontal scroll inside each chart/heatmap — not the shared panel. */
+  }
+
+  .insights-page__feed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--screen-gap-tight, var(--space-3));
+  }
+
+  .insights-page__analytics-block {
     overflow-x: hidden;
   }
 
-  .insights-page__analytics-body > :global(*) {
+  .insights-page__analytics-block > :global(*) {
     min-width: 0;
     max-width: 100%;
   }
