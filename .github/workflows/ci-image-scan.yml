@@ -154,7 +154,7 @@ jobs:
         # Always upload, even if the scan step reported findings, so the
         # Security tab reflects the latest state.
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-${{ matrix.image }}.sarif
           category: trivy-${{ matrix.image }}
