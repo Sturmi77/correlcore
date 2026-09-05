@@ -462,7 +462,13 @@ async function installJourneyApi(
     }
 
     if (path.startsWith('/insights/tag-cooccurrence')) {
-      return json(200, { range: 'month', cells: [], tags: [] });
+      return json(200, {
+        range: '90d',
+        start_date: '2026-06-01',
+        end_date: '2026-06-30',
+        min_count: 2,
+        pairs: [],
+      });
     }
 
     if (path.startsWith('/insights/tag-clusters')) {
@@ -748,7 +754,7 @@ test.describe('W3 Tägliche Eingabe', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    await page.getByTestId('home-cta').click();
+    await page.getByTestId('home-today-action').click();
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
 
     await page.getByRole('button', { name: 'Increase mood' }).click();
@@ -764,7 +770,7 @@ test.describe('W3 Tägliche Eingabe', () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');
 
-    await page.getByTestId('home-cta').click();
+    await page.getByTestId('home-today-action').click();
     await expect(page.getByTestId('entry-sheet')).toBeVisible({ timeout: APP_READY_TIMEOUT_MS });
     await expect(page).toHaveURL('/');
   });
@@ -793,7 +799,7 @@ test.describe('W5 Erste Erkenntnis', () => {
     await expect(page.getByTestId('home-daily-brief')).toBeVisible({
       timeout: APP_READY_TIMEOUT_MS,
     });
-    await expect(page.getByTestId('home-cta')).toBeVisible();
+    await expect(page.getByTestId('home-today-action')).toBeVisible();
   });
 
   test('week user sees insight statement on insights', async ({ page }) => {
@@ -805,7 +811,7 @@ test.describe('W5 Erste Erkenntnis', () => {
       timeout: APP_READY_TIMEOUT_MS,
     });
     await expect(page.getByText(/fridays currently line up/i)).toBeVisible();
-    await expect(page.getByTestId('insight-maturity-badge')).toHaveAttribute(
+    await expect(page.getByTestId('insight-stage-header')).toHaveAttribute(
       'data-phase',
       'early_patterns'
     );
@@ -838,11 +844,9 @@ test.describe('W6–W7 Analyse & Habits', () => {
     await installJourneyApi(page, { profile: 'month_user' });
     await page.goto('/insights');
 
-    await expect(page.getByTestId('insight-maturity-badge')).toHaveAttribute(
-      'data-phase',
-      'robust',
-      { timeout: APP_READY_TIMEOUT_MS }
-    );
+    await expect(page.getByTestId('insight-stage-header')).toHaveAttribute('data-phase', 'robust', {
+      timeout: APP_READY_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('tag-groups-maturity-badge')).toHaveAttribute(
       'data-maturity',
       'provisional'

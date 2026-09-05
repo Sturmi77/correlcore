@@ -41,7 +41,7 @@ export function hasTagCooccurrenceData(
   data: TagCooccurrenceResponse | null,
   minPairs = 1
 ): boolean {
-  return (data?.pairs.length ?? 0) >= minPairs;
+  return (data?.pairs?.length ?? 0) >= minPairs;
 }
 
 export function hasSymptomCooccurrenceData(data: SymptomTagCooccurrenceResponse | null): boolean {
