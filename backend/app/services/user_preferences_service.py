@@ -11,6 +11,10 @@ from app.models.insight import Insight
 from app.models.user_preference import UserPreference
 from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
 from app.services.home_sections import merge_home_sections, normalize_home_sections
+from app.services.insight_sections import (
+    merge_insight_sections,
+    normalize_insight_sections,
+)
 
 
 def _dedupe_strings(values: list[str]) -> list[str]:
@@ -167,6 +171,11 @@ async def update_user_preferences(
             if normalized is not None:
                 setattr(preferences, key, normalized)
             continue
+        if key == "insight_sections":
+            normalized = normalize_insight_sections(value)
+            if normalized is not None:
+                setattr(preferences, key, normalized)
+            continue
         if key == "last_seen_digest_at":
             # High-water mark (#739): never move it backward. A stale client
             # holding an older digest across a weekly generation must not
@@ -184,6 +193,7 @@ async def update_user_preferences(
 def to_preferences_response(preferences: UserPreference) -> UserPreferencesResponse:
     """Serialize preferences with merged home section defaults."""
     normalized_sections = normalize_home_sections(preferences.home_sections)
+    normalized_insight_sections = normalize_insight_sections(preferences.insight_sections)
     payload = {
         "user_id": preferences.user_id,
         "analytics_enabled": preferences.analytics_enabled,
@@ -198,6 +208,7 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "last_seen_insight_at": preferences.last_seen_insight_at,
         "last_seen_digest_at": preferences.last_seen_digest_at,
         "home_sections": merge_home_sections(normalized_sections),
+        "insight_sections": merge_insight_sections(normalized_insight_sections),
         "created_at": preferences.created_at,
         "updated_at": preferences.updated_at,
     }

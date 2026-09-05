@@ -8,6 +8,20 @@ export interface HomeSectionPreference {
   enabled: boolean;
 }
 
+export type InsightSectionKey =
+  | 'correlation_matrix'
+  | 'insight_feed'
+  | 'lag_heatmap'
+  | 'dismissed'
+  | 'symptom_analytics'
+  | 'tag_groups'
+  | 'tag_cooccurrence';
+
+export interface InsightSectionPreference {
+  key: InsightSectionKey;
+  enabled: boolean;
+}
+
 export interface UserPreferencesResponse {
   user_id: string;
   analytics_enabled: boolean;
@@ -24,6 +38,7 @@ export interface UserPreferencesResponse {
   // #739: newest weekly digest the user has seen in the one-time modal.
   last_seen_digest_at?: string | null;
   home_sections?: HomeSectionPreference[] | null;
+  insight_sections?: InsightSectionPreference[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +56,7 @@ export interface UserPreferencesUpdate {
   last_seen_insight_at?: string | null;
   last_seen_digest_at?: string | null;
   home_sections?: HomeSectionPreference[];
+  insight_sections?: InsightSectionPreference[];
 }
 
 export async function fetchUserPreferences(): Promise<UserPreferencesResponse> {
