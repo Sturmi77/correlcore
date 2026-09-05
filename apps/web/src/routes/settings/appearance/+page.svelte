@@ -58,7 +58,11 @@
         <Button href="/settings/home" variant="secondary" data-testid="settings-home-layout">
           {$_('settings.home.open')}
         </Button>
-        <Button href="/settings/insights" variant="secondary" data-testid="settings-insights-layout">
+        <Button
+          href="/settings/insights"
+          variant="secondary"
+          data-testid="settings-insights-layout"
+        >
           {$_('settings.insights.open')}
         </Button>
         <Button href="/settings/app" variant="secondary" data-testid="settings-app-open">

@@ -21,9 +21,7 @@ export function mergeHomeSections(
   return homeSectionUtils.merge(stored);
 }
 
-export function resolveEnabledSections(
-  sections: HomeSectionPreference[]
-): HomeSectionPreference[] {
+export function resolveEnabledSections(sections: HomeSectionPreference[]): HomeSectionPreference[] {
   return homeSectionUtils.resolveEnabled(sections);
 }
 

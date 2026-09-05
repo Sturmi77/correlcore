@@ -79,7 +79,9 @@ describe('/settings/insights layout editor', () => {
     render(Page);
     await screen.findByTestId('insights-sections-editor');
 
-    const feedToggle = screen.getByTestId('insights-section-toggle-insight_feed') as HTMLInputElement;
+    const feedToggle = screen.getByTestId(
+      'insights-section-toggle-insight_feed'
+    ) as HTMLInputElement;
     expect(feedToggle.checked).toBe(true);
     expect(feedToggle.disabled).toBe(true);
     expect(screen.getByTestId('insights-section-locked-insight_feed')).toBeTruthy();

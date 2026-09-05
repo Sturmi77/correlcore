@@ -44,10 +44,7 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import {
-    mergeInsightSections,
-    resolveEnabledInsightSections,
-  } from '$lib/utils/insightSections';
+  import { mergeInsightSections, resolveEnabledInsightSections } from '$lib/utils/insightSections';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -990,7 +987,10 @@
         />
       {:else if sectionKey === 'symptom_analytics'}
         {#if showAdvancedAnalytics && showSymptomAnalytics}
-          <div class="insights-page__analytics-block" data-testid="insight-section-symptom_analytics">
+          <div
+            class="insights-page__analytics-block"
+            data-testid="insight-section-symptom_analytics"
+          >
             <SymptomAnalyticsSection
               heatmap={visibleSymptomHeatmap}
               entries={visibleMoodEntries}
@@ -1012,7 +1012,10 @@
         {/if}
       {:else if sectionKey === 'tag_cooccurrence'}
         {#if showAdvancedAnalytics && showTagCooccurrencePanel}
-          <div class="insights-page__analytics-block" data-testid="insight-section-tag_cooccurrence">
+          <div
+            class="insights-page__analytics-block"
+            data-testid="insight-section-tag_cooccurrence"
+          >
             <TagCooccurrenceHeatmap
               data={cooccurrence}
               loading={cooccurrenceLoading}

@@ -1027,13 +1027,34 @@
       "error_load": "Could not load the Insights layout.",
       "error_save": "Could not save the Insights layout.",
       "sections": {
-        "correlation_matrix": { "label": "Correlation matrix", "description": "Overview matrix of the strongest links between factors." },
-        "insight_feed": { "label": "Insight feed", "description": "Your most important insights as a list. Always visible." },
-        "lag_heatmap": { "label": "Lag heatmap", "description": "Links with a time offset (e.g. an effect only days later)." },
-        "dismissed": { "label": "Dismissed insights", "description": "Insights you dismissed, available to restore." },
-        "symptom_analytics": { "label": "Symptom analytics", "description": "Symptom heatmap and links with tags." },
-        "tag_groups": { "label": "Tag groups", "description": "Automatically detected groups of tags that often occur together." },
-        "tag_cooccurrence": { "label": "Tag co-occurrence", "description": "How often tags occur together on the same days." }
+        "correlation_matrix": {
+          "label": "Correlation matrix",
+          "description": "Overview matrix of the strongest links between factors."
+        },
+        "insight_feed": {
+          "label": "Insight feed",
+          "description": "Your most important insights as a list. Always visible."
+        },
+        "lag_heatmap": {
+          "label": "Lag heatmap",
+          "description": "Links with a time offset (e.g. an effect only days later)."
+        },
+        "dismissed": {
+          "label": "Dismissed insights",
+          "description": "Insights you dismissed, available to restore."
+        },
+        "symptom_analytics": {
+          "label": "Symptom analytics",
+          "description": "Symptom heatmap and links with tags."
+        },
+        "tag_groups": {
+          "label": "Tag groups",
+          "description": "Automatically detected groups of tags that often occur together."
+        },
+        "tag_cooccurrence": {
+          "label": "Tag co-occurrence",
+          "description": "How often tags occur together on the same days."
+        }
       }
     },
     "dev": {

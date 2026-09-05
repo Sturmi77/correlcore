@@ -74,7 +74,10 @@
             <strong>{$_(`${i18nPrefix}.sections.${section.key}.label`)}</strong>
             <span>{$_(`${i18nPrefix}.sections.${section.key}.description`)}</span>
             {#if lockedSet.has(section.key)}
-              <span class="sections-editor__locked" data-testid={`${testIdPrefix}-section-locked-${section.key}`}>
+              <span
+                class="sections-editor__locked"
+                data-testid={`${testIdPrefix}-section-locked-${section.key}`}
+              >
                 {$_(`${i18nPrefix}.locked_note`)}
               </span>
             {/if}
