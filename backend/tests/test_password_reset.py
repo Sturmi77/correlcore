@@ -124,6 +124,9 @@ async def test_reset_password_concurrent_same_token_is_single_use_on_postgres(
                 is_verified=True,
             )
         )
+        # Flush first so the FK target exists before inserting the token
+        # (avoids insert-order races under FORCE RLS / app-role leftovers).
+        await session.flush()
         session.add(
             PasswordResetToken(
                 id=uuid.uuid4(),

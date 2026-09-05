@@ -197,8 +197,25 @@ jobs:
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
-      - name: pytest -m integration
-        run: uv run --python 3.12 pytest -m integration -q --no-cov
+      # One process per module: shared Postgres + leftover RLS/role/revision
+      # state from GDPR/RLS suites otherwise bleeds into password_reset/sync.
+      - name: pytest -m integration (per-module processes)
+        run: |
+          set -euo pipefail
+          files=(
+            tests/test_health_readiness_integration.py
+            tests/test_digest_backfill_integration.py
+            tests/test_gdpr_delete_integration.py
+            tests/test_rls_isolation_integration.py
+            tests/test_m7_qa_seed_integration.py
+            tests/test_password_reset.py
+            tests/test_sync_service.py
+          )
+          for f in "${files[@]}"; do
+            echo "::group::pytest -m integration $f"
+            uv run --python 3.12 pytest "$f" -m integration -q --no-cov
+            echo "::endgroup::"
+          done
         env:
           APP_ENV: test
           CORRELCORE_RUN_INTEGRATION: '1'
