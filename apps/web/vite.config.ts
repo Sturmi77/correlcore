@@ -30,9 +30,9 @@ export default defineConfig({
       exclude: ['**/*.{test,spec}.{js,ts}', '**/*.d.ts'],
       reporter: ['text-summary', 'text'],
       thresholds: {
-        statements: 68,
-        branches: 58,
-        functions: 63,
+        statements: 69,
+        branches: 59,
+        functions: 64,
         lines: 70,
       },
     },

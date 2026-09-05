@@ -1445,20 +1445,25 @@ persist (`stored: false` stub) + gallery remain M13 exit work. See [`M13_NOTES.m
 
 Die folgenden Punkte gelten für **jeden** Pull-Request, unabhängig vom Milestone. Zusätzlich definiert jeder Milestone ein **Quality-Gate** (Code-Quality-Review + Security-Audit), das vor dem Milestone-Exit bestanden sein muss.
 
+**Kanonische Teststrategie / CI-Pyramide:** [`docs/quality/TESTING.md`](quality/TESTING.md).
+Operative Gates: [`docs/DEVELOPMENT.md`](DEVELOPMENT.md).
+
 ### Pro Pull-Request
 
+Automatisierte Checks (CI) decken Unit, Integration (bei Backend-Änderungen), Contract und Smoke-E2E ab — siehe TESTING.md. Die Checklist unten bleibt die menschliche DoD.
+
 - [ ] Code reviewed (Self-Review-Checkliste)
-- [ ] Tests grün (Unit + Integration)
-- [ ] OpenAPI-Spec aktualisiert
+- [ ] Tests grün (Unit + Integration — CI bzw. lokal wie in TESTING.md)
+- [ ] OpenAPI-Spec aktualisiert (bei Schema-Änderungen; `packages/api-types` regenerieren)
 - [ ] Dokumentation angepasst
-- [ ] Migration getestet (forward + rollback)
-- [ ] Manuell auf Staging verifiziert
+- [ ] Migration getestet (forward + rollback — CI `migrations-smoke` bei Backend)
+- [ ] Betroffene Flows lokal oder auf Staging verifiziert (Staging nur wenn der Change Deploy-Risiko hat; kein Blocker für reine Docs/Unit-PRs)
 - [ ] Changelog-Eintrag
 - [ ] Privacy-Impact geprüft (bei Gesundheitsdaten-relevanten Changes)
 - [ ] No-Gamification-Check: kein Streak-Zähler, kein Badge, kein Punkte-System eingebaut
 - [ ] 🔒 DSGVO: Art.-9-Impact-Check durchgeführt bei allen health-daten-relevanten Changes
 - [ ] 🔒 DSGVO: EXIF-Strip verifiziert bei Foto-relevanten Changes (automatisierter Test mit GPS-EXIF-Testbild)
-- [ ] 🔒 DSGVO: Löschkonzept geprüft bei neuen Datenfeldern (werden Felder bei Account-Delete vollständig entfernt?)
+- [ ] 🔒 DSGVO: Löschkonzept geprüft bei neuen Datenfeldern (werden Felder bei Account-Delete vollständig entfernt? — Cascade-Integrationstest bei neuen FKs)
 
 ### Pro Milestone (Quality-Gate)
 

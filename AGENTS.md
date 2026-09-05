@@ -62,6 +62,8 @@ Production GUI remains SvelteKit (`pnpm dev` on port **5173**).
 
 ### Lint / test / build
 
+Canonical strategy and CI pyramid: [`docs/quality/TESTING.md`](docs/quality/TESTING.md).
+
 | Layer                  | Commands                                                                         |
 | ---------------------- | -------------------------------------------------------------------------------- |
 | Web + root             | `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`                         |

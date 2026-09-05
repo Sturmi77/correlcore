@@ -139,6 +139,11 @@ a backend rename, removal, or incompatible re-type of a covered field breaks
 `pnpm typecheck`. New frontend code can import the generated shapes directly via
 the `Api*` aliases exported there (e.g. `import type { ApiEntryResponse }`).
 
+## Testing strategy
+
+Canonical pyramid, coverage floors, required checks, and out-of-CI scope:
+[`docs/quality/TESTING.md`](quality/TESTING.md).
+
 ## CI quality gates (#780, audit I2/Q4/Q5)
 
 Three gates protect the FE/BE seam beyond the plain unit/lint/typecheck jobs:
@@ -167,15 +172,18 @@ Redis + migrations + API + web inside the Playwright job is disproportionate for
 the current single-app setup, and two layers already cover the flow end-to-end
 from different angles:
 
-- `apps/web/tests/e2e/smoke.spec.ts` (the "E2E smoke" job) drives the real
-  SvelteKit app against a mocked API and covers all three flows — auth (login →
-  protected redirect), entry (create + autosave), insight (render analytics
-  surface).
-- The "Health smoke (real Postgres + Redis)" job in `ci-api.yml` exercises the
-  real API against a real database.
+- `apps/web/tests/e2e/smoke.spec.ts` (+ `a11y-smoke.spec.ts`) drive the real
+  SvelteKit **production** build against a mocked API and cover auth, entry,
+  insight, plus serious/critical axe violations.
+- The "Health smoke" and **"Integration (pytest -m integration)"** jobs in
+  `ci-api.yml` exercise the real API / ORM against real Postgres (pgvector) +
+  Redis — including sync, password-reset, RLS isolation, and GDPR cascade.
+- Nightly `ci-e2e-nightly.yml` runs mobile / journeys / GDPR Playwright suites
+  (not a PR merge gate).
 
 Revisit when a shared-environment or multi-service e2e harness is stood up (then
-wire a real-API happy path and drop this note).
+wire a real-API happy path and drop this note). See
+[`docs/quality/TESTING.md`](quality/TESTING.md).
 
 ## UI work without a backend (mock API + dev-mode fixtures)
 

@@ -12,91 +12,86 @@ on:
       - 'backend/**'
       - '.github/workflows/ci-api.yml'
 
+concurrency:
+  group: ci-api-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: backend
+
+env:
+  UV_VERSION: '0.9.5'
 
 jobs:
   lint:
     name: Lint & Format (ruff)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: 'latest'
-
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: uv sync --python 3.12 --extra dev --extra analytics --frozen
-
       - name: Lint (ruff check)
         run: uv run --python 3.12 ruff check .
-
       - name: Format check (ruff format)
         run: uv run --python 3.12 ruff format --check .
 
   typecheck:
     name: Typecheck (mypy)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: 'latest'
-
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: uv sync --python 3.12 --extra dev --extra analytics --frozen
-
       - name: Typecheck (mypy)
         run: uv run --python 3.12 mypy app
 
   test:
     name: Tests (pytest + coverage)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: 'latest'
-
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: uv sync --python 3.12 --extra dev --extra analytics --frozen
-
       - name: Run tests with coverage
         run: uv run --python 3.12 pytest
         env:
-          # Test environment — no real DB/Redis needed for unit tests
-          # (health probes are mocked in test_health.py)
           APP_ENV: test
           DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
-          # Valid Fernet test key (32 random bytes, URL-safe base64). NOT a secret —
-          # only used by unit tests to exercise wrap/unwrap and EncryptedString round-trips.
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
-
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
         if: always()
@@ -108,9 +103,10 @@ jobs:
   health-smoke:
     name: Health smoke (real Postgres + Redis)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16.4-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: correlcore
           POSTGRES_PASSWORD: correlcore
@@ -133,20 +129,17 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v7
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: 'latest'
-
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: uv sync --python 3.12 --extra dev --extra analytics --frozen
-
       - name: Probe readiness against real services
         run: uv run --python 3.12 pytest tests/test_health_readiness_integration.py -q --no-cov
         env:
@@ -155,9 +148,70 @@ jobs:
           DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
           REDIS_URL: 'redis://localhost:6379/0'
 
+  integration:
+    name: Integration (pytest -m integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: correlcore
+          POSTGRES_PASSWORD: correlcore
+          POSTGRES_DB: correlcore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U correlcore"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: uv sync --python 3.12 --extra dev --extra analytics --frozen
+      - name: alembic upgrade head
+        run: uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
+        env:
+          APP_ENV: test
+          DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
+          REDIS_URL: 'redis://localhost:6379/0'
+          SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
+          ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
+          SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+      - name: pytest -m integration
+        run: uv run --python 3.12 pytest -m integration -q --no-cov
+        env:
+          APP_ENV: test
+          CORRELCORE_RUN_INTEGRATION: '1'
+          DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
+          REDIS_URL: 'redis://localhost:6379/0'
+          SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
+          ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
+          SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+
   migrations-smoke:
     name: Migrations smoke (alembic upgrade head)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -174,27 +228,17 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v7
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: 'latest'
-
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: uv sync --python 3.12 --extra dev --extra analytics --frozen
-
-      # Catches the class of bugs where a migration generates SQL that compiles
-      # but is rejected by PostgreSQL at execution time — e.g. ENUM<>VARCHAR
-      # cast mismatches in ``op.bulk_insert`` (see migration 004 / PR #89),
-      # missing extension creates, FK ordering, server_default expression
-      # mismatches. Unit tests with mocked DBs cannot catch these. Runs
-      # ``alembic upgrade head`` against a real Postgres 16.4-alpine, which
-      # mirrors the version in ``infra/dockhand/compose.yaml``.
       - name: alembic upgrade head
         run: uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
         env:
@@ -204,19 +248,12 @@ jobs:
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
-
-      # Bonus paranoia: round-trip the schema. ``downgrade base`` exercises
-      # every ``downgrade()`` step — they tend to rot silently because no
-      # tests touch them — then ``upgrade head`` again confirms the up path
-      # is idempotent against a wiped DB.
       - name: alembic downgrade base then upgrade head (round-trip)
         run: |
           uv run --python 3.12 alembic -c migrations/alembic.ini downgrade base
           uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
-          uv run --python 3.12 pytest tests/test_m7_qa_seed_integration.py tests/test_digest_backfill_integration.py -q --no-cov
         env:
           APP_ENV: test
-          CORRELCORE_RUN_INTEGRATION: '1'
           DATABASE_URL: 'postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore'
           REDIS_URL: 'redis://:changeme@localhost:6379/0'
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'

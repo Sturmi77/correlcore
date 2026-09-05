@@ -128,7 +128,9 @@ Offline → Cached data with "offline" badge or graceful hide
 | CLS                            | < 0.1    |
 | FID / INP                      | < 100 ms |
 
-Enforced via Lighthouse CI in the CI/CD pipeline. Web Vitals monitoring via GlitchTip.
+**Target** (not yet a CI job): Lighthouse CI against these budgets when a
+hosted Web Vitals gate is worth the maintenance. Until then, keep an eye on
+eportCompressedSize in the Vite build and GlitchTip Web Vitals in production.
 
 ---
 

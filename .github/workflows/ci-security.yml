@@ -7,13 +7,21 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: ci-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+
+env:
+  UV_VERSION: '0.9.5'
 
 jobs:
   secret-scan:
     name: Secrets (gitleaks)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout full history
         uses: actions/checkout@v7
@@ -28,13 +36,15 @@ jobs:
   dependency-audit:
     name: Dependency audit (pip-audit + pnpm audit)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: 'latest'
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -58,6 +68,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Frontend pnpm audit (production)
         run: |
