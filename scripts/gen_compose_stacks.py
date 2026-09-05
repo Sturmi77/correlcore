@@ -137,6 +137,13 @@ STACKS: dict[str, dict[str, Any]] = {
             "not published on the host: the web container proxies /api/* to",
             "http://api:8000 inside the Compose network. Profiles: `worker`,",
             "`monitoring`.",
+            "",
+            "IMPORTANT — the analytics `worker` (nightly insights + retention",
+            "cleanup + the weekly in-app digest on Sundays) is behind the `worker`",
+            "profile and is OFF by default. Without it, scheduled insights and the",
+            "weekly digest are never generated and you must trigger them by hand.",
+            "Enable it in the stack .env, then redeploy:",
+            "    COMPOSE_PROFILES=worker            # or: worker,monitoring",
         ],
     },
 }
