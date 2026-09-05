@@ -1,5 +1,5 @@
 # ---- Build stage ----
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN uv venv .venv && \
 # asyncio-sleep loop in a `restart: unless-stopped` container, a crash inside
 # one nightly job no longer takes the whole scheduler down with it — the
 # container/process stays up and simply waits for the next scheduled tick.
-FROM python:3.12-slim AS supercronic
+FROM python:3.14-slim AS supercronic
 ARG TARGETARCH
 ARG SUPERCRONIC_VERSION=v0.2.49
 ARG SUPERCRONIC_AMD64_SHA1SUM=e63c11a9726b775a6a11801e81af4f3fb926aa68
@@ -53,7 +53,7 @@ RUN apt-get update \
     && chmod +x /tmp/supercronic
 
 # ---- Runtime stage ----
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 WORKDIR /app
 
