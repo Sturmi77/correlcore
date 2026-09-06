@@ -14,6 +14,13 @@ vi.mock('$lib/stores/auth', async () => {
   };
 });
 
+vi.mock('$app/stores', async () => {
+  const { readable } = await import('svelte/store');
+  return {
+    page: readable({ url: new URL('http://localhost/settings/data') }),
+  };
+});
+
 const { deleteCycleDataMock, downloadExportMock, saveBlobMock } = vi.hoisted(() => ({
   deleteCycleDataMock: vi.fn(async () => ({ cleared_entries: 3 })),
   downloadExportMock: vi.fn(async () => new Blob(['x'])),
@@ -37,6 +44,7 @@ vi.mock('$lib/api/preferences', () => ({
 describe('/settings/data', () => {
   it('exposes vocabulary links, cycle and export controls', async () => {
     render(Page);
+    expect(await screen.findByTestId('settings-category-bar')).toBeTruthy();
     expect(await screen.findByTestId('settings-vocab-tags')).toBeTruthy();
     expect(screen.getByTestId('settings-vocab-symptoms')).toBeTruthy();
     expect(screen.getByTestId('cycle-toggle')).toBeTruthy();

@@ -21,6 +21,12 @@ vi.mock('$lib/stores/auth', async () => {
   };
 });
 vi.mock('$app/navigation', () => ({ goto: gotoMock }));
+vi.mock('$app/stores', async () => {
+  const { readable } = await import('svelte/store');
+  return {
+    page: readable({ url: new URL('http://localhost/settings/privacy') }),
+  };
+});
 vi.mock('$lib/api/user', () => ({ deleteAccount: deleteAccountMock }));
 vi.mock('$lib/api/consents', () => ({
   HEALTH_CONNECT_CONSENT_TYPE: 'health_connect',
