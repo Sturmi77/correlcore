@@ -67,15 +67,13 @@ docker compose -f docker-compose.quickstart.yml up -d
 Optional profiles (see [`COMPOSE_STACKS.md`](COMPOSE_STACKS.md)):
 
 ```bash
-# Insights generation + unverified-account cleanup (recommended for durable homelab).
-# The same worker also generates the weekly in-app digest on Sundays — users opt
-# in per account under Settings → Analysis; no extra profile needed.
-echo 'COMPOSE_PROFILES=worker' >> .env
-docker compose -f docker-compose.quickstart.yml up -d
-
 # Error tracking (GlitchTip on port 8080)
 docker compose -f docker-compose.quickstart.yml --profile monitoring up -d
 ```
+
+The analytics **worker** (nightly insights, account cleanup, Sunday digest generation)
+starts with the default stack — no `COMPOSE_PROFILES=worker` needed. Users still opt
+in to the in-app digest under Settings → Analysis.
 
 ### 3. Verify
 

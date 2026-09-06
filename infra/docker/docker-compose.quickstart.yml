@@ -12,12 +12,10 @@
 #   ../../scripts/bootstrap-selfhost-env.sh --quickstart
 #   docker compose -f docker-compose.quickstart.yml up -d
 #
-# IMPORTANT — the analytics `worker` (nightly insights + retention cleanup + the
-# weekly in-app digest on Sundays) is behind the `worker` profile and is OFF by
-# default. Without it, scheduled insights and the weekly digest are never
-# generated and you must trigger them by hand. Enable it in .env, then redeploy:
-#   echo 'COMPOSE_PROFILES=worker' >> .env      # or: worker,monitoring
-#   docker compose -f docker-compose.quickstart.yml up -d
+# The analytics `worker` (nightly insights + retention cleanup + the weekly
+# in-app digest on Sundays) always starts with this stack — same as production
+# (#818). Optional profile: `monitoring` (GlitchTip). Users still opt in to the
+# digest per account under Settings → Analysis (`digest_enabled`).
 #
 # See docs/selfhost/INSTALL.md Path B and docs/M10_SPRINT_PLAN.md.
 
@@ -229,8 +227,6 @@ services:
         condition: service_healthy
     networks:
       - internal
-    profiles:
-      - worker
     security_opt:
       - no-new-privileges:true
 

@@ -56,13 +56,12 @@ docker compose -f docker-compose.quickstart.yml up -d
 Optional profiles:
 
 ```bash
-# Insights + GDPR account cleanup (recommended for durable homelab)
-echo 'COMPOSE_PROFILES=worker' >> .env
-docker compose -f docker-compose.quickstart.yml up -d
-
 # Error tracking (GlitchTip on port 8080)
 docker compose -f docker-compose.quickstart.yml --profile monitoring up -d
 ```
+
+The analytics **worker** starts with the default stack (no `COMPOSE_PROFILES=worker`
+needed). Users opt in to the in-app digest under Settings → Analysis.
 
 ### 3. Verify
 

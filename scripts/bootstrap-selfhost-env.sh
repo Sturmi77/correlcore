@@ -104,7 +104,8 @@ write_quickstart_env() {
   echo "Mailpit UI: http://${ts_ip}:8025"
   echo "App:        http://${ts_ip}:${web_port}"
   echo ""
-  echo "For insights + cleanup, add to .env: COMPOSE_PROFILES=worker"
+  echo "Analytics worker starts with the default stack (insights + cleanup)."
+  echo "Optional: docker compose -f docker-compose.quickstart.yml --profile monitoring up -d"
 }
 
 write_production_hint() {

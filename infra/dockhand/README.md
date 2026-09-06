@@ -319,16 +319,16 @@ docker run --rm -v correlcore_postgres_data:/data -v "$PWD":/backup \
 
 ## Unterschiede zu den anderen Compose-Varianten
 
-| Punkt              | user-test (CLI)        | Dockge                     | Dockhand                            |
-| ------------------ | ---------------------- | -------------------------- | ----------------------------------- |
-| Top-level `name:`  | `correlcore-test`      | _kein_ (nimmt Verzeichnis) | `correlcore` (Dockhand respektiert) |
-| Container-Präfix   | `correlcore-test-*`    | `correlcore-*`             | `correlcore-*`                      |
-| `pull_policy`      | `always`               | `always`                   | `always` (api/migrate/worker/web)   |
-| Profiles           | `monitoring`, `worker` | _auskommentiert_           | `monitoring`, `worker` (UI-Feld)    |
-| Logging-Limits     | _default_              | _default_                  | `json-file` 10 MB × 3 (per Anchor)  |
-| Volume-Namen       | compose-default        | explizit (`correlcore_*`)  | explizit (`correlcore_*`)           |
-| Network-Name       | `internal`             | `correlcore`               | `correlcore`                        |
-| Git-Sync supported | nein                   | nein                       | ja (Webhook-Auto-Deploy)            |
+| Punkt              | user-test (CLI)     | Dockge                     | Dockhand                            |
+| ------------------ | ------------------- | -------------------------- | ----------------------------------- |
+| Top-level `name:`  | `correlcore-test`   | _kein_ (nimmt Verzeichnis) | `correlcore` (Dockhand respektiert) |
+| Container-Präfix   | `correlcore-test-*` | `correlcore-*`             | `correlcore-*`                      |
+| `pull_policy`      | `always`            | `always`                   | `always` (api/migrate/worker/web)   |
+| Profiles           | `monitoring`        | _(none optional)_          | `monitoring` (UI-Feld)              |
+| Logging-Limits     | _default_           | _default_                  | `json-file` 10 MB × 3 (per Anchor)  |
+| Volume-Namen       | compose-default     | explizit (`correlcore_*`)  | explizit (`correlcore_*`)           |
+| Network-Name       | `internal`          | `correlcore`               | `correlcore`                        |
+| Git-Sync supported | nein                | nein                       | ja (Webhook-Auto-Deploy)            |
 
 Funktional identisch — gleiche GHCR-Images, gleiche Services, gleiche
 Healthchecks, gleicher Tailscale-IP-Bind.

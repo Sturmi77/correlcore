@@ -10,15 +10,14 @@
 # Git-stack: New → From Git, path infra/dockhand, branch main.
 # Tailscale-internal homelab (no Traefik/TLS). Per ADR-0011 the API is
 # not published on the host: the web container proxies /api/* to
-# http://api:8000 inside the Compose network. Profiles: `worker`,
-# `monitoring`.
+# http://api:8000 inside the Compose network. Analytics worker always
+# on; optional profile: `monitoring` (GlitchTip).
 #
-# IMPORTANT — the analytics `worker` (nightly insights + retention
-# cleanup + the weekly in-app digest on Sundays) is behind the `worker`
-# profile and is OFF by default. Without it, scheduled insights and the
-# weekly digest are never generated and you must trigger them by hand.
-# Enable it in the stack .env, then redeploy:
-#     COMPOSE_PROFILES=worker            # or: worker,monitoring
+# The analytics `worker` (nightly insights + retention cleanup + the
+# weekly in-app digest on Sundays) always starts with this stack (#818).
+# Users opt in to the digest per account under Settings → Analysis.
+# Optional: enable GlitchTip with COMPOSE_PROFILES=monitoring
+# (or `--profile monitoring`).
 #
 # Security headers / CSP (#791): this stack sets NO Content-Security-Policy
 # (not even report-only). The CSP is injected by the Traefik reverse proxy in
@@ -284,8 +283,6 @@ services:
         condition: service_healthy
     networks:
     - correlcore
-    profiles:
-    - worker
     security_opt:
     - no-new-privileges:true
     logging:

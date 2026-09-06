@@ -12,12 +12,9 @@
 # ${TAILSCALE_IP} (default 127.0.0.1). GlitchTip is omitted here; use the
 # user-test or quickstart stack (profile `monitoring`) for error tracking.
 #
-# IMPORTANT — the analytics `worker` (nightly insights + retention
-# cleanup + the weekly in-app digest on Sundays) is behind the `worker`
-# profile and is OFF by default. Without it, scheduled insights and the
-# weekly digest are never generated and you must trigger them by hand.
-# Enable it in the stack .env, then redeploy:
-#     COMPOSE_PROFILES=worker
+# The analytics `worker` (nightly insights + retention cleanup + the
+# weekly in-app digest on Sundays) always starts with this stack (#818).
+# Users opt in to the digest per account under Settings → Analysis.
 #
 # Security headers / CSP (#791): this stack sets NO Content-Security-Policy
 # (not even report-only). The CSP is injected by the Traefik reverse proxy in
@@ -225,8 +222,6 @@ services:
         condition: service_healthy
     networks:
     - correlcore
-    profiles:
-    - worker
     security_opt:
     - no-new-privileges:true
 volumes:
