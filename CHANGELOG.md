@@ -8,8 +8,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-09-06
+
+Test-Minor nach v1.6.0: Ops-/Digest-Fixes, Settings-Navigation und Sticky-Chrome.
+
+### Fixed
+
+- **Analytics-Worker default-on (#818)** — Homelab-/Quickstart-Compose startet den
+  Worker wie Production ohne separates `worker`-Profil (nur `monitoring` bleibt
+  optional). Behebt fehlende nächtliche Insights/Digests in dockhand/dockge.
+- **Weekly-Digest-Persistenz bei Opt-in (#819)** — beim Aktivieren von
+  `digest_enabled` (und nach manuellem Insight-Regenerate) wird ein Digest-Snapshot
+  best-effort persistiert, damit das einmalige Modal (#739) nicht bis Sonntag
+  warten muss. Settings zeigen einen Hinweis, solange noch kein Snapshot da ist.
+
 ### Added
 
+- **Settings-Kategorieleiste (#702)** — persistente Link-Navigation zwischen
+  Daten / Analyse / Datenschutz / Darstellung auf den Settings-Unterseiten
+  (Deep-Links und Zurück bleiben erhalten).
+- **Sticky Control-Density (#786)** — Trends-Metrik-Chips und „Anpassen“ bleiben
+  auf Mobile in der sticky `ScreenHeader`-Leiste; beim Scrollen verdichten sich
+  Controls (Trends + Insights), Tap-Targets ≥44px.
 - **Konfigurierbare Erkenntnisse-Seite (#821)** — unter Einstellungen →
   Darstellung → „Erkenntnisse-Aufbau" (`/settings/insights`) lassen sich die
   Bereiche der Erkenntnisse-Seite ein-/ausblenden und sortieren, analog zum
@@ -24,6 +44,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   `stage_header`, standardmäßig oben sichtbar). Beim Ausblenden zeigt der Feed
   sein eigenes Reife-Badge, sodass die Phaseninfo nicht verloren geht. Keine
   Migration nötig (nutzt die bestehende `insight_sections`-Spalte).
+
+### Changed
+
+- **lucide-svelte → `@lucide/svelte` (#836)** — Paket-Migration auf den aktuellen
+  Lucide-Svelte-Namespace.
+- **Vite 8 / Capacitor 8.5.1** — Bundler- und Native-Stack-Alignment (#826, #835).
 
 ## [1.6.0] — 2026-09-01
 

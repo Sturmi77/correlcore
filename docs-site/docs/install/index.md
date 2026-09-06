@@ -15,7 +15,7 @@ Deploy CorrelCore on your own infrastructure. Full operator reference also lives
 **Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
 
 Existing operators on **v1.4.0** (or any earlier 1.x pin): see [Upgrade guide](upgrade.md)
-(compose update to **v1.6.0**). Pre-M10 MinIO stacks are covered in the same page.
+(compose update to **v1.7.0**). Pre-M10 MinIO stacks are covered in the same page.
 
 ---
 
@@ -152,7 +152,7 @@ Pin images for reproducible deploys — see [Container images](container-images.
 
 ```env
 IMAGE_REGISTRY=ghcr.io/sturmi77
-IMAGE_TAG=v1.6.0   # any v1.x pin works
+IMAGE_TAG=v1.7.0   # any v1.x pin works
 ```
 
 ```bash

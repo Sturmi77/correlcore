@@ -1,15 +1,44 @@
-# Upgrade guide — v1.6.0
+# Upgrade guide — v1.7.0
 
-Last updated: 2026-09-01
+Last updated: 2026-09-06
 
-Canonical long form (rollback, troubleshooting, Alembic notes):
-[`docs/selfhost/UPGRADE_1_6_0.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/selfhost/UPGRADE_1_6_0.md)
-in the repository.
+## v1.7.0 (current)
 
-## v1.6.0 (current)
+From **v1.6.0** to **v1.7.0**. Test minor — no new required env vars and **no new
+blocking API changes** relative to v1.6.0.
+
+If you are on **v1.5.0 or earlier**, complete the [v1.6.0](#v160) prerequisite
+checks first (JWT access-token TTL ≤ 15 minutes; JSON `Content-Type` on
+state-changing API requests), then pin/pull v1.7.0. Skipping those steps can
+still prevent the API from starting or return **415** to custom clients.
+
+| Who                  | Action                                                                                    |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| Production / homelab | Pin `IMAGE_TAG=v1.7.0`, pull, `up -d --remove-orphans` (run [v1.6.0](#v160) blockers first if upgrading from earlier) |
+| `.env`               | **No required new vars.** Homelab stacks now start the analytics worker by default (#818) |
+| Database             | `migrate` applies Alembic through **044** (`insight_sections`) if not already             |
+
+```env
+IMAGE_TAG=v1.7.0
+```
+
+```bash
+docker compose pull
+docker compose up -d --remove-orphans
+curl -sf "https://${DOMAIN}/api/v1/health"   # "version":"1.7.0"
+```
+
+Rollback: set `IMAGE_TAG=v1.6.0` and `up -d`.
+
+---
+
+## v1.6.0
 
 From **v1.5.0** (or any earlier 1.x pin) to **v1.6.0**. Security and assurance
 release — **two changes can stop a running deployment**, check them first.
+Canonical long form (rollback, troubleshooting, Alembic notes):
+[`docs/selfhost/UPGRADE_1_6_0.md`](https://github.com/Sturmi77/correlcore/blob/main/docs/selfhost/UPGRADE_1_6_0.md)
+in the repository.
 
 | Who                  | Action                                                                           |
 | -------------------- | -------------------------------------------------------------------------------- |
@@ -132,7 +161,7 @@ Rollback: set `IMAGE_TAG=v1.4.0` and `up -d` again. Do not restore
 
 ## Older 1.x image pins
 
-Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.6.0`**.
+Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.7.0`**.
 
 ```bash
 cd correlcore/infra/docker

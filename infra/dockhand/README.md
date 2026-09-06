@@ -265,7 +265,7 @@ wenn der CVE-Count nicht steigt.
 
 ```bash
 # .env — pin a release, not an old sha-* forever
-IMAGE_TAG=v1.6.0
+IMAGE_TAG=v1.7.0
 ```
 
 Im Dockhand-UI: Stack-Detail → **Re-pull images** → **Redeploy**.
