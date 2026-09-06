@@ -1,17 +1,18 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
-  import ChartLine from 'lucide-svelte/icons/chart-line';
-  import Lightbulb from 'lucide-svelte/icons/lightbulb';
-  import Settings from 'lucide-svelte/icons/settings';
-  import type { ComponentType } from 'svelte';
+  import ChartLine from '@lucide/svelte/icons/chart-line';
+  import Lightbulb from '@lucide/svelte/icons/lightbulb';
+  import Settings from '@lucide/svelte/icons/settings';
+  import type { Component } from 'svelte';
+  import type { LucideProps } from '@lucide/svelte';
   import CorrelCoreLogo from '$lib/components/common/CorrelCoreLogo.svelte';
   import { BRAND_MARK_MD, BRAND_MARK_SM, ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { isNavItemActive, NAV_ITEMS, type NavItemConfig } from '$lib/navigation/appNav';
 
   type LucideNavIcon = Exclude<NavItemConfig['icon'], 'home'>;
 
-  const LUCIDE_ICONS: Record<LucideNavIcon, ComponentType> = {
+  const LUCIDE_ICONS: Record<LucideNavIcon, Component<LucideProps>> = {
     lightbulb: Lightbulb,
     'chart-line': ChartLine,
     settings: Settings,

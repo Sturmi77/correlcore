@@ -10,7 +10,7 @@
    *      Backend ``Symptom.icon`` and ``Tag.icon`` are documented in
    *      ``backend/app/models/tag.py`` as accepting either form. Slugs are
    *      kebab-case, ASCII letters/digits/hyphens only. Dynamically loaded
-   *      from ``lucide-svelte/icons/<slug>`` to keep the bundle small —
+   *      from ``@lucide/svelte/icons/<slug>`` to keep the bundle small —
    *      only icons actually referenced by saved symptoms or tags are
    *      pulled in at runtime.
    *
@@ -26,21 +26,15 @@
    */
 
   import { onMount } from 'svelte';
-  import type { SvelteComponent } from 'svelte';
+  import type { Component } from 'svelte';
+  import type { LucideProps } from '@lucide/svelte';
 
   export let icon: string | null | undefined = null;
   export let size = 18;
   /** Optional ARIA label override; defaults to ``aria-hidden=true``. */
   export let label: string | null = null;
 
-  /**
-   * Lucide ships pre-compiled Svelte components whose prop types are
-   * not exposed publicly. We only ever pass ``size`` plus standard
-   * a11y attributes — there is no observable benefit to a tighter
-   * generic, so use ``Record<string, unknown>`` to silence both
-   * eslint's no-explicit-any and TS strictness.
-   */
-  type LucideIcon = typeof SvelteComponent<Record<string, unknown>>;
+  type LucideIcon = Component<LucideProps>;
 
   /**
    * Cache resolved icon components per slug so repeated mounts don't
@@ -90,7 +84,7 @@
     // Vite/SvelteKit resolves this at build time but the actual chunk is
     // only fetched when this code path runs. Errors (slug typo, network)
     // are swallowed — surrounding label keeps the symptom legible.
-    import(/* @vite-ignore */ `lucide-svelte/icons/${slug}.svelte`)
+    import(/* @vite-ignore */ `@lucide/svelte/icons/${slug}.svelte`)
       .then((mod) => {
         const comp = mod.default;
         if (!comp) return;

@@ -1,6 +1,6 @@
 /**
  * Icon size scale (ISP-9) — pixel-number mirror of the --icon-sm/-md CSS
- * tokens in app.css, for lucide-svelte's `size` prop (a plain number, not
+ * tokens in app.css, for @lucide/svelte's `size` prop (a plain number, not
  * something a CSS custom property can feed directly).
  *
  * Values are the dominant size found in each real usage cluster
