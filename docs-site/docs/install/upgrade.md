@@ -4,12 +4,17 @@ Last updated: 2026-09-06
 
 ## v1.7.0 (current)
 
-From **v1.6.0** (or any earlier 1.x pin) to **v1.7.0**. Test minor — no new
-required env vars; no blocking API changes.
+From **v1.6.0** to **v1.7.0**. Test minor — no new required env vars and **no new
+blocking API changes** relative to v1.6.0.
+
+If you are on **v1.5.0 or earlier**, complete the [v1.6.0](#v160) prerequisite
+checks first (JWT access-token TTL ≤ 15 minutes; JSON `Content-Type` on
+state-changing API requests), then pin/pull v1.7.0. Skipping those steps can
+still prevent the API from starting or return **415** to custom clients.
 
 | Who                  | Action                                                                                    |
 | -------------------- | ----------------------------------------------------------------------------------------- |
-| Production / homelab | Pin `IMAGE_TAG=v1.7.0`, pull, `up -d --remove-orphans`                                    |
+| Production / homelab | Pin `IMAGE_TAG=v1.7.0`, pull, `up -d --remove-orphans` (run [v1.6.0](#v160) blockers first if upgrading from earlier) |
 | `.env`               | **No required new vars.** Homelab stacks now start the analytics worker by default (#818) |
 | Database             | `migrate` applies Alembic through **044** (`insight_sections`) if not already             |
 
