@@ -832,7 +832,8 @@
       "regenerate_disabled": "Aktiviere die Analyse oben, um Erkenntnisse zu aktualisieren.",
       "regenerate_error": "Erkenntnisse konnten nicht aktualisiert werden.",
       "digest_enabled": "Woechentliche Erkenntnis-Zusammenfassung",
-      "digest_hint": "Opt-in fuer eine In-App-Sonntags-Zusammenfassung deiner staerksten Erkenntnisse der letzten Woche.",
+      "digest_hint": "Opt-in fuer eine In-App-Zusammenfassung deiner staerksten Erkenntnisse der letzten Woche. Bei genug Erkenntnissen erscheint die erste Zusammenfassung direkt nach dem Aktivieren, sonst nach dem naechsten Wochenlauf (Sonntag).",
+      "digest_pending_hint": "Dein erster Digest ist noch nicht bereit. Aktualisiere oben die Erkenntnisse oder warte auf den naechsten Wochenlauf (Sonntag).",
       "digest_preview_link": "Digest-Vorschau oeffnen"
     },
     "privacy": {

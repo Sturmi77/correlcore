@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 
 from sqlalchemy import select
@@ -15,6 +16,8 @@ from app.services.insight_sections import (
     merge_insight_sections,
     normalize_insight_sections,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _dedupe_strings(values: list[str]) -> list[str]:
@@ -160,6 +163,7 @@ async def update_user_preferences(
 ) -> UserPreference:
     preferences = await get_or_create_user_preferences(db, user_id=user_id)
     updates = payload.model_dump(exclude_unset=True)
+    was_digest_enabled = bool(preferences.digest_enabled)
 
     for key, value in updates.items():
         if value is None:
@@ -187,6 +191,20 @@ async def update_user_preferences(
 
     await db.flush()
     await db.refresh(preferences)
+
+    # #819: when digest is opted in mid-week, persist a snapshot immediately so
+    # WeeklyDigestModal can fire without waiting for Sunday's worker slot.
+    if updates.get("digest_enabled") is True and not was_digest_enabled:
+        try:
+            from app.services.insight_digest import persist_weekly_digest_if_available
+
+            await persist_weekly_digest_if_available(db, user_id=user_id)
+        except Exception:
+            logger.exception(
+                "digest persist on opt-in failed",
+                extra={"user_id": str(user_id)},
+            )
+
     return preferences
 
 

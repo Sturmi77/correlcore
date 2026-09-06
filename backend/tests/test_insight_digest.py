@@ -17,6 +17,7 @@ from app.services.insight_digest import (
     get_latest_weekly_digest,
     hydrate_stored_digest,
     insight_has_sufficient_confidence,
+    persist_weekly_digest_if_available,
     push_payload_is_scrubbed,
     rank_digest_insights,
     store_weekly_digest,
@@ -386,3 +387,79 @@ async def test_compute_raises_when_not_enough_insights() -> None:
     ):
         with pytest.raises(DigestNotAvailableError):
             await compute_weekly_digest_for_user(db, user_id=uuid.uuid4())
+
+
+@pytest.mark.asyncio
+async def test_persist_weekly_digest_if_available_stores_when_qualifying() -> None:
+    # #819: opt-in / regenerate path should persist a snapshot with generated_at.
+    user_id = uuid.uuid4()
+    week = datetime.now(UTC).date()
+    insights = _three_insights()
+    for insight in insights:
+        insight.user_id = user_id
+    digest = build_weekly_digest(insights, week_start=week, week_end=week)
+    assert digest is not None
+
+    db = MagicMock()
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+    db.add = MagicMock()
+
+    with (
+        patch(
+            "app.services.insight_digest.compute_weekly_digest_for_user",
+            new=AsyncMock(return_value=digest),
+        ),
+        patch(
+            "app.services.insight_digest.load_latest_stored_digest",
+            new=AsyncMock(return_value=None),
+        ),
+    ):
+        row = await persist_weekly_digest_if_available(db, user_id=user_id)
+
+    assert row is not None
+    db.add.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_persist_weekly_digest_if_available_skips_when_unavailable() -> None:
+    db = MagicMock()
+    with patch(
+        "app.services.insight_digest.compute_weekly_digest_for_user",
+        new=AsyncMock(side_effect=DigestNotAvailableError(uuid.uuid4())),
+    ):
+        assert await persist_weekly_digest_if_available(db, user_id=uuid.uuid4()) is None
+
+
+@pytest.mark.asyncio
+async def test_persist_weekly_digest_if_available_reuses_same_week_snapshot() -> None:
+    user_id = uuid.uuid4()
+    week = datetime.now(UTC).date()
+    insights = _three_insights()
+    digest = build_weekly_digest(insights, week_start=week, week_end=week)
+    assert digest is not None
+
+    existing = InsightDigest()
+    existing.user_id = user_id
+    existing.week_start = week
+    existing.week_end = week
+    existing.insight_ids = [str(item.id) for item in digest.insights]
+    existing.insight_count = DIGEST_TOP_N
+    existing.generated_at = datetime.now(UTC)
+
+    db = MagicMock()
+    db.add = MagicMock()
+    with (
+        patch(
+            "app.services.insight_digest.compute_weekly_digest_for_user",
+            new=AsyncMock(return_value=digest),
+        ),
+        patch(
+            "app.services.insight_digest.load_latest_stored_digest",
+            new=AsyncMock(return_value=existing),
+        ),
+    ):
+        out = await persist_weekly_digest_if_available(db, user_id=user_id)
+
+    assert out is existing
+    db.add.assert_not_called()
