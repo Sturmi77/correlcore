@@ -72,7 +72,9 @@ describe('/settings/analysis', () => {
     const toggle = (await screen.findByTestId('digest-toggle')) as HTMLInputElement;
     await fireEvent.click(toggle);
     await waitFor(() =>
-      expect(updatePrefsMock).toHaveBeenCalledWith(expect.objectContaining({ digest_enabled: true }))
+      expect(updatePrefsMock).toHaveBeenCalledWith(
+        expect.objectContaining({ digest_enabled: true })
+      )
     );
     expect(await screen.findByTestId('digest-pending-hint')).toBeTruthy();
   });
