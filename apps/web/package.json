@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",
-    "@capacitor/core": "8.5.0",
+    "@capacitor/core": "8.5.1",
     "@capacitor/push-notifications": "8.1.2",
     "@sentry/browser": "^10.70.0",
     "@sentry/node": "^10.73.0",
@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@correlcore/api-types": "workspace:*",
     "@playwright/test": "^1.62.1",
     "@sveltejs/adapter-node": "^5.5.7",
     "@sveltejs/adapter-static": "^3.0.10",
@@ -55,7 +56,6 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.0.12",
-    "vitest": "^4.1.11",
-    "@correlcore/api-types": "workspace:*"
+    "vitest": "^4.1.11"
   }
 }
