@@ -5,7 +5,7 @@
 #   docker build -f apps/web/Dockerfile -t correlcore-web .
 
 # ---- Build stage ----
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /repo
 
@@ -15,8 +15,10 @@ WORKDIR /repo
 # Buildx-Container — deshalb hier explizit.
 ENV CI=true
 
-# pnpm via corepack
-RUN corepack enable
+# pnpm via corepack.
+# node:26-alpine no longer bundles corepack, so install it explicitly first
+# (npm ships with the base image) before enabling it.
+RUN npm install -g corepack@0.36.0 && corepack enable
 
 # Lockfile + Workspace-Manifeste zuerst (Layer-Cache)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
@@ -56,7 +58,7 @@ WORKDIR /repo
 RUN pnpm deploy --filter @correlcore/web --prod --legacy /repo/deploy
 
 # ---- Runtime stage ----
-FROM node:22-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 WORKDIR /app
 
