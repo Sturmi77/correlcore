@@ -386,3 +386,33 @@ async def store_weekly_digest(
     await db.flush()
     await db.refresh(row)
     return row
+
+
+async def persist_weekly_digest_if_available(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    as_of: datetime | None = None,
+) -> InsightDigest | None:
+    """Best-effort compute + store so the one-time digest modal can fire mid-week (#819).
+
+    Skips when there are not enough qualifying insights, or when a snapshot for
+    the same ``week_start`` already exists. Does not require ``digest_enabled``
+    (callers gate that). Never raises ``DigestNotAvailableError``.
+    """
+
+    try:
+        digest = await compute_weekly_digest_for_user(
+            db,
+            user_id=user_id,
+            as_of=as_of,
+            require_enabled=False,
+        )
+    except DigestNotAvailableError:
+        return None
+
+    stored = await load_latest_stored_digest(db, user_id=user_id)
+    if stored is not None and stored.week_start == digest.week_start:
+        return stored
+
+    return await store_weekly_digest(db, user_id=user_id, digest=digest)

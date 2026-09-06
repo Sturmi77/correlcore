@@ -14,19 +14,25 @@ vi.mock('$lib/stores/auth', async () => {
   };
 });
 
-const { updatePrefsMock, regenerateMock } = vi.hoisted(() => ({
+const { updatePrefsMock, regenerateMock, fetchDigestMock } = vi.hoisted(() => ({
   updatePrefsMock: vi.fn(async (p: Record<string, boolean>) => ({
     analytics_enabled: p.analytics_enabled ?? true,
     digest_enabled: p.digest_enabled ?? false,
   })),
   regenerateMock: vi.fn(async () => ({ insight_count: 5 })),
+  fetchDigestMock: vi.fn(async () => {
+    throw new Error('no digest');
+  }),
 }));
 
 vi.mock('$lib/api/preferences', () => ({
   fetchUserPreferences: vi.fn(async () => ({ analytics_enabled: true, digest_enabled: false })),
   updateUserPreferences: updatePrefsMock,
 }));
-vi.mock('$lib/api/insights', () => ({ regenerateInsights: regenerateMock }));
+vi.mock('$lib/api/insights', () => ({
+  regenerateInsights: regenerateMock,
+  fetchLatestInsightDigest: fetchDigestMock,
+}));
 
 describe('/settings/analysis', () => {
   it('renders analytics + digest toggles and regenerate control', async () => {
@@ -52,5 +58,17 @@ describe('/settings/analysis', () => {
     render(Page);
     await fireEvent.click(await screen.findByTestId('regenerate-insights'));
     await waitFor(() => expect(regenerateMock).toHaveBeenCalled());
+  });
+
+  it('shows pending digest hint after enabling when no snapshot exists', async () => {
+    render(Page);
+    const toggle = (await screen.findByTestId('digest-toggle')) as HTMLInputElement;
+    await fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(updatePrefsMock).toHaveBeenCalledWith(
+        expect.objectContaining({ digest_enabled: true })
+      )
+    );
+    expect(await screen.findByTestId('digest-pending-hint')).toBeTruthy();
   });
 });

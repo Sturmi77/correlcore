@@ -12,7 +12,7 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import { regenerateInsights } from '$lib/api/insights';
+  import { fetchLatestInsightDigest, regenerateInsights } from '$lib/api/insights';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
   let preferences: UserPreferencesResponse | null = null;
@@ -21,11 +21,26 @@
   let regenerateBusy = false;
   let regenerateMessage = '';
   let regenerateError = '';
+  /** #819: digest enabled but no persisted snapshot yet (modal cannot fire). */
+  let digestPendingHint = false;
+
+  async function refreshDigestPendingHint(): Promise<void> {
+    digestPendingHint = false;
+    if (!preferences?.digest_enabled) return;
+    try {
+      const digest = await fetchLatestInsightDigest();
+      digestPendingHint = !digest.generated_at;
+    } catch {
+      // 404 / other: no persisted digest yet.
+      digestPendingHint = true;
+    }
+  }
 
   async function loadPreferences(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     try {
       preferences = await fetchUserPreferences();
+      await refreshDigestPendingHint();
     } catch (err) {
       preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
     }
@@ -48,6 +63,7 @@
     preferencesError = '';
     try {
       preferences = await updateUserPreferences({ digest_enabled: enabled });
+      await refreshDigestPendingHint();
     } catch (err) {
       preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
     } finally {
@@ -65,6 +81,7 @@
       regenerateMessage = $_('settings.analysis.regenerate_success', {
         values: { count: result.insight_count },
       });
+      await refreshDigestPendingHint();
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
         regenerateError = $_('settings.analysis.regenerate_rate_limited');
@@ -132,6 +149,11 @@
         <span>{$_('settings.analysis.digest_enabled')}</span>
       </label>
       <p class="analysis-settings__note">{$_('settings.analysis.digest_hint')}</p>
+      {#if digestPendingHint}
+        <p class="analysis-settings__note" data-testid="digest-pending-hint">
+          {$_('settings.analysis.digest_pending_hint')}
+        </p>
+      {/if}
       <p class="analysis-settings__note">
         <a href="/insights/digest" data-testid="digest-preview-link">
           {$_('settings.analysis.digest_preview_link')}

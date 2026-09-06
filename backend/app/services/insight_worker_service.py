@@ -218,6 +218,21 @@ async def regenerate_insights_for_user(
                 "trigger_source": trigger_source,
             },
         )
+        # #819: after interactive regenerate, persist a digest when opted in so
+        # the one-time modal does not wait for the Sunday worker slot.
+        from app.services.insight_digest import (
+            _digest_enabled,
+            persist_weekly_digest_if_available,
+        )
+
+        if await _digest_enabled(db, user_id=user_id):
+            try:
+                await persist_weekly_digest_if_available(db, user_id=user_id)
+            except Exception:
+                logger.exception(
+                    "digest persist after regenerate failed",
+                    extra={"user_id": str(user_id)},
+                )
         result = InsightPipelineResult(
             generated_for_date=generated_for_date,
             insight_count=insight_count,

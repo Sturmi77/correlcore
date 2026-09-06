@@ -832,7 +832,8 @@
       "regenerate_disabled": "Enable analysis above to refresh insights.",
       "regenerate_error": "Could not refresh insights.",
       "digest_enabled": "Weekly insight digest",
-      "digest_hint": "Opt in for an in-app Sunday summary of your top insights from the past week.",
+      "digest_hint": "Opt in for an in-app summary of your top insights from the past week. When enough insights exist, the first summary can appear right after you enable it; otherwise after the next weekly run (Sunday).",
+      "digest_pending_hint": "Your first digest is not ready yet. Refresh insights above, or wait for the next weekly run (Sunday).",
       "digest_preview_link": "Open digest preview"
     },
     "privacy": {

@@ -144,6 +144,54 @@ async def test_update_user_preferences_last_seen_digest_at_is_monotonic() -> Non
 
 
 @pytest.mark.asyncio
+async def test_update_user_preferences_persists_digest_on_opt_in() -> None:
+    # #819: flipping digest_enabled false→true triggers a best-effort snapshot.
+    user = make_user()
+    preferences = _make_preferences(user)
+    preferences.digest_enabled = False
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    with patch(
+        "app.services.insight_digest.persist_weekly_digest_if_available",
+        new=AsyncMock(return_value=None),
+    ) as persist:
+        out = await update_user_preferences(
+            db,
+            user_id=user.id,
+            payload=UserPreferencesUpdate(digest_enabled=True),
+        )
+
+    assert out.digest_enabled is True
+    persist.assert_awaited_once_with(db, user_id=user.id)
+
+
+@pytest.mark.asyncio
+async def test_update_user_preferences_skips_digest_persist_when_already_enabled() -> None:
+    user = make_user()
+    preferences = _make_preferences(user)
+    preferences.digest_enabled = True
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    with patch(
+        "app.services.insight_digest.persist_weekly_digest_if_available",
+        new=AsyncMock(return_value=None),
+    ) as persist:
+        await update_user_preferences(
+            db,
+            user_id=user.id,
+            payload=UserPreferencesUpdate(digest_enabled=True),
+        )
+
+    persist.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_add_and_remove_dismissed_insight_keys() -> None:
     user = make_user()
     preferences = _make_preferences(user)
