@@ -29,7 +29,7 @@ Updates: open the same Releases page again and install the newer APK
 
 > **v1.0.0 note:** The first public tag was a selfhost/Docker release and does
 > **not** include an Android APK. Signed sideload APKs are available from **`v1.0.1`**
-> onward; prefer the latest **`v1.x`** release (e.g. **`v1.7.0`**).
+> onward; prefer the latest **`v1.x`** release (e.g. **`v1.7.1`**).
 
 ### Option B — Obtainium (auto-updates)
 

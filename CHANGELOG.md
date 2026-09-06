@@ -8,6 +8,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.1] — 2026-09-06
+
+Bugfix-Patch nach v1.7.0 (Sticky-Chrome, Settings-Reorder, Home-Heatmap).
+
+### Fixed
+
+- **Sticky ScreenHeader Vibrieren (#851)** — Collapse/Expand nutzen getrennte
+  Scroll-Schwellen (Hysterese), damit der Header beim Eindampfen nicht mehr
+  oszilliert.
+- **Trends scrolled Control-Overlap (#848)** — Metrik-Chips scrollen separat;
+  Kategorie/Anpassen bleiben gepinnt; negativer Control-Margin entfernt (#849).
+- **Erkenntnisse-Bereiche verschieben (#847)** — Reorder bleibt während Prefs-Saves
+  bedienbar; Write-Token verhindert stale PATCH-Überschreiben; Chevron-Controls
+  (#849). Zusätzlich serialisierte Latest-Wins-Persistenz für Home/Insights
+  Section-Saves (#850).
+- **Home Arbeitssituationsmuster-Kontrast (#854)** — volle `--color-heatmap-*`-
+  Ramp und relative Spalten-Skala über die sichtbaren Situationen (#855).
+
 ## [1.7.0] — 2026-09-06
 
 Test-Minor nach v1.6.0: Ops-/Digest-Fixes, Settings-Navigation und Sticky-Chrome.

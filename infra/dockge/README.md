@@ -82,7 +82,7 @@ Migration 012 erteilt Rechte und erzwingt Row-Level-Security auf User-Daten.
 
 ```bash
 # Variante A: in .env auf neuen Tag setzen, dann im Dockge-UI "Update"
-IMAGE_TAG=v1.7.0
+IMAGE_TAG=v1.7.1
 
 # Variante B: bei IMAGE_TAG=latest reicht Re-Deploy → pull_policy: always
 ```

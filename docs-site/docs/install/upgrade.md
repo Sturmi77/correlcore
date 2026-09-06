@@ -1,34 +1,60 @@
-# Upgrade guide — v1.7.0
+# Upgrade guide — v1.7.1
 
 Last updated: 2026-09-06
 
-## v1.7.0 (current)
+## v1.7.1 (current)
+
+From **v1.7.0** to **v1.7.1**. Bugfix patch — no new required env vars and **no
+new blocking API / migration changes**.
+
+| Who                  | Action                                                              |
+| -------------------- | ------------------------------------------------------------------- |
+| Production / homelab | Pin `IMAGE_TAG=v1.7.1`, pull, `up -d --remove-orphans`              |
+| `.env`               | **No required new vars.**                                           |
+| Database             | No new Alembic revision beyond **044** (already required for 1.7.0) |
+
+```env
+IMAGE_TAG=v1.7.1
+```
+
+```bash
+docker compose pull
+docker compose up -d --remove-orphans
+curl -sf "https://${DOMAIN}/api/v1/health"   # "version":"1.7.1"
+```
+
+Rollback: set `IMAGE_TAG=v1.7.0` and `up -d`.
+
+---
+
+## v1.7.0
 
 From **v1.6.0** to **v1.7.0**. Test minor — no new required env vars and **no new
 blocking API changes** relative to v1.6.0.
 
 If you are on **v1.5.0 or earlier**, complete the [v1.6.0](#v160) prerequisite
 checks first (JWT access-token TTL ≤ 15 minutes; JSON `Content-Type` on
-state-changing API requests), then pin/pull v1.7.0. Skipping those steps can
-still prevent the API from starting or return **415** to custom clients.
+state-changing API requests), then pin/pull v1.7.0 (or jump straight to
+**v1.7.1** after those checks). Skipping those steps can still prevent the API
+from starting or return **415** to custom clients.
 
-| Who                  | Action                                                                                                                |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Production / homelab | Pin `IMAGE_TAG=v1.7.0`, pull, `up -d --remove-orphans` (run [v1.6.0](#v160) blockers first if upgrading from earlier) |
-| `.env`               | **No required new vars.** Homelab stacks now start the analytics worker by default (#818)                             |
-| Database             | `migrate` applies Alembic through **044** (`insight_sections`) if not already                                         |
+| Who                  | Action                                                                                                                                    |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Production / homelab | Prefer `IMAGE_TAG=v1.7.1`; or pin `v1.7.0`, pull, `up -d --remove-orphans` (run [v1.6.0](#v160) blockers first if upgrading from earlier) |
+| `.env`               | **No required new vars.** Homelab stacks now start the analytics worker by default (#818)                                                 |
+| Database             | `migrate` applies Alembic through **044** (`insight_sections`) if not already                                                             |
 
 ```env
-IMAGE_TAG=v1.7.0
+IMAGE_TAG=v1.7.1
 ```
 
 ```bash
 docker compose pull
 docker compose up -d --remove-orphans
-curl -sf "https://${DOMAIN}/api/v1/health"   # "version":"1.7.0"
+curl -sf "https://${DOMAIN}/api/v1/health"   # "version":"1.7.1"
 ```
 
-Rollback: set `IMAGE_TAG=v1.6.0` and `up -d`.
+Rollback from 1.7.0: set `IMAGE_TAG=v1.6.0` and `up -d`.
 
 ---
 
@@ -161,7 +187,7 @@ Rollback: set `IMAGE_TAG=v1.4.0` and `up -d` again. Do not restore
 
 ## Older 1.x image pins
 
-Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.7.0`**.
+Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.7.1`**.
 
 ```bash
 cd correlcore/infra/docker
