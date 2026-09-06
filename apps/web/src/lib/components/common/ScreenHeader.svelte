@@ -268,9 +268,8 @@
     padding: var(--space-2) var(--space-3);
   }
 
-  .screen-header--scrolled .screen-header__controls {
-    margin-top: calc(-1 * var(--space-1));
-  }
+  /* #848: do not pull controls into the title row with negative margin — that
+   * stacked overlapping hit targets when Trends compare filters densify. */
 
   .screen-header--scrolled :global(.segmented-control) {
     padding: 0;
