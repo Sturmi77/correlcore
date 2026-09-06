@@ -93,6 +93,66 @@ describe('/settings/home layout editor', () => {
     });
   });
 
+  it('does not fire a second PATCH until the in-flight reorder finishes (latest wins)', async () => {
+    let resolveFirst: (() => void) | undefined;
+    updateUserPreferencesMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = () =>
+            resolve({
+              user_id: 'user-1',
+              analytics_enabled: true,
+              digest_enabled: false,
+              onboarding_retro_completed: true,
+              onboarding_profile_completed: true,
+              onboarding_maturity_intro_seen: true,
+              cycle_tracking_enabled: true,
+              dismissed_insight_keys: [],
+              reached_milestone_keys: [],
+              last_seen_insight_at: null,
+              home_sections: [
+                { key: 'daily_brief', enabled: true },
+                { key: 'first_week_banner', enabled: true },
+                { key: 'work_context', enabled: true },
+                { key: 'weekday_overview', enabled: true },
+              ],
+              created_at: '2026-05-16T10:00:00Z',
+              updated_at: '2026-05-16T10:00:00Z',
+            });
+        })
+    );
+
+    render(Page);
+    await screen.findByTestId('home-sections-editor');
+
+    await fireEvent.click(screen.getByTestId('home-section-down-first_week_banner'));
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledTimes(1);
+    });
+
+    await fireEvent.click(screen.getByTestId('home-section-down-first_week_banner'));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(updateUserPreferencesMock).toHaveBeenCalledTimes(1);
+
+    resolveFirst?.();
+
+    const latestOrder = ['daily_brief', 'work_context', 'first_week_banner', 'weekday_overview'];
+
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledTimes(2);
+    });
+    const lastPayload = updateUserPreferencesMock.mock.calls.at(-1)?.[0]?.home_sections ?? [];
+    expect(lastPayload.map((section: { key: string }) => section.key)).toEqual(latestOrder);
+
+    await waitFor(() => {
+      const rows = screen.getAllByTestId(/^home-section-row-/);
+      expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual(
+        latestOrder.map((key) => `home-section-row-${key}`)
+      );
+    });
+  });
+
   it('resets to the default layout', async () => {
     render(Page);
     await screen.findByTestId('home-sections-editor');

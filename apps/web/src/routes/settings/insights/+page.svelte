@@ -12,6 +12,7 @@
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
   import { DEFAULT_INSIGHT_SECTIONS, mergeInsightSections } from '$lib/utils/insightSections';
+  import { createLatestWinsGate } from '$lib/utils/latestWinsPersist';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
   let preferences: UserPreferencesResponse | null = null;
@@ -21,14 +22,16 @@
   let loading = true;
   let busy = false;
   let error = '';
-  /** Monotonic write token so stale PATCH responses cannot overwrite newer local order (#847). */
-  let persistSeq = 0;
+  /** Serialize PATCHes so a slower earlier reorder cannot overwrite a later one. */
+  const persistGate = createLatestWinsGate();
+  let confirmedSections: InsightSectionPreference[] = sections;
 
   async function loadPreferences(): Promise<void> {
     loading = true;
     try {
       preferences = await fetchUserPreferences();
       sections = mergeInsightSections(preferences.insight_sections);
+      confirmedSections = sections;
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.insights.error_load');
     } finally {
@@ -37,22 +40,27 @@
   }
 
   async function persistSections(next: InsightSectionPreference[]): Promise<void> {
-    const previous = sections;
-    const seq = ++persistSeq;
+    const seq = persistGate.begin();
     sections = next;
     busy = true;
     error = '';
-    try {
-      preferences = await updateUserPreferences({ insight_sections: next });
-      if (seq !== persistSeq) return;
-      sections = mergeInsightSections(preferences.insight_sections);
-    } catch (err) {
-      if (seq !== persistSeq) return;
-      sections = previous;
-      error = err instanceof Error ? err.message : $_('settings.insights.error_save');
-    } finally {
-      if (seq === persistSeq) busy = false;
-    }
+    await persistGate.enqueue(async () => {
+      if (!persistGate.isCurrent(seq)) return;
+      try {
+        const toSend = sections;
+        const saved = await updateUserPreferences({ insight_sections: toSend });
+        confirmedSections = mergeInsightSections(saved.insight_sections);
+        if (!persistGate.isCurrent(seq)) return;
+        preferences = saved;
+        sections = confirmedSections;
+      } catch (err) {
+        if (!persistGate.isCurrent(seq)) return;
+        sections = confirmedSections;
+        error = err instanceof Error ? err.message : $_('settings.insights.error_save');
+      } finally {
+        if (persistGate.isCurrent(seq)) busy = false;
+      }
+    });
   }
 
   onMount(() => {

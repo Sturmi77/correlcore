@@ -12,6 +12,7 @@
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
   import { DEFAULT_HOME_SECTIONS, mergeHomeSections } from '$lib/utils/homeSections';
+  import { createLatestWinsGate } from '$lib/utils/latestWinsPersist';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
   let preferences: UserPreferencesResponse | null = null;
@@ -19,14 +20,16 @@
   let loading = true;
   let busy = false;
   let error = '';
-  /** Monotonic write token so stale PATCH responses cannot overwrite newer local order. */
-  let persistSeq = 0;
+  /** Serialize PATCHes so a slower earlier reorder cannot overwrite a later one. */
+  const persistGate = createLatestWinsGate();
+  let confirmedSections: HomeSectionPreference[] = sections;
 
   async function loadPreferences(): Promise<void> {
     loading = true;
     try {
       preferences = await fetchUserPreferences();
       sections = mergeHomeSections(preferences.home_sections);
+      confirmedSections = sections;
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.home.error_load');
     } finally {
@@ -35,22 +38,27 @@
   }
 
   async function persistSections(next: HomeSectionPreference[]): Promise<void> {
-    const previous = sections;
-    const seq = ++persistSeq;
+    const seq = persistGate.begin();
     sections = next;
     busy = true;
     error = '';
-    try {
-      preferences = await updateUserPreferences({ home_sections: next });
-      if (seq !== persistSeq) return;
-      sections = mergeHomeSections(preferences.home_sections);
-    } catch (err) {
-      if (seq !== persistSeq) return;
-      sections = previous;
-      error = err instanceof Error ? err.message : $_('settings.home.error_save');
-    } finally {
-      if (seq === persistSeq) busy = false;
-    }
+    await persistGate.enqueue(async () => {
+      if (!persistGate.isCurrent(seq)) return;
+      try {
+        const toSend = sections;
+        const saved = await updateUserPreferences({ home_sections: toSend });
+        confirmedSections = mergeHomeSections(saved.home_sections);
+        if (!persistGate.isCurrent(seq)) return;
+        preferences = saved;
+        sections = confirmedSections;
+      } catch (err) {
+        if (!persistGate.isCurrent(seq)) return;
+        sections = confirmedSections;
+        error = err instanceof Error ? err.message : $_('settings.home.error_save');
+      } finally {
+        if (persistGate.isCurrent(seq)) busy = false;
+      }
+    });
   }
 
   onMount(() => {
