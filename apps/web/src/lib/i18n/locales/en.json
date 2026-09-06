@@ -67,7 +67,7 @@
       "top_tag": "Notable tag",
       "top_symptom": "Notable symptom",
       "work_context_heading": "Work context pattern",
-      "work_context_hint": "Average per situation",
+      "work_context_hint": "Average per situation · colour relative to rows shown",
       "metric_mood": "Mood",
       "metric_energy": "Energy",
       "metric_stress": "Stress",
@@ -75,7 +75,7 @@
       "work_context_cell": "{context} – {metric}: {value} of 5",
       "work_context_legend_low": "lower",
       "work_context_legend_high": "better",
-      "work_context_stress_note": "Stronger shading = better (stress inverted).",
+      "work_context_stress_note": "Stronger shading = better within the situations shown (stress inverted; colour scaled per column).",
       "none": "None"
     },
     "insight": {

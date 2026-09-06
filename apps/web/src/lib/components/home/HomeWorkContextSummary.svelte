@@ -79,7 +79,9 @@
                 },
               })}
             >
-              {cell.avg === null ? '–' : formatAverage(cell.avg)}
+              <span class="work-context-summary__value">
+                {cell.avg === null ? '–' : formatAverage(cell.avg)}
+              </span>
             </span>
           {/each}
         </div>
@@ -184,29 +186,35 @@
     background: var(--color-surface-dynamic);
   }
 
+  .work-context-summary__value {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.75rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in oklch, var(--color-surface) 88%, transparent);
+    color: var(--color-text);
+  }
+
   /*
-   * Sequential single-hue ramp built from the project heatmap token
-   * (see ComparisonHeatmap). Tinted over the surface so the in-cell value
-   * keeps sufficient contrast in both themes — intentionally no red/green.
+   * #854: full sequential heatmap token ladder (same as ComparisonHeatmap /
+   * TagHeatmap) so low vs high goodness is perceptually wide. Value chips keep
+   * text contrast — intentionally no red/green.
    */
   .work-context-summary__cell--1 {
-    color: var(--color-text);
-    background: color-mix(in oklch, var(--color-heatmap-4) 16%, var(--color-surface));
+    background: var(--color-heatmap-1);
   }
 
   .work-context-summary__cell--2 {
-    color: var(--color-text);
-    background: color-mix(in oklch, var(--color-heatmap-4) 30%, var(--color-surface));
+    background: var(--color-heatmap-2);
   }
 
   .work-context-summary__cell--3 {
-    color: var(--color-text);
-    background: color-mix(in oklch, var(--color-heatmap-4) 44%, var(--color-surface));
+    background: var(--color-heatmap-3);
   }
 
   .work-context-summary__cell--4 {
-    color: var(--color-text);
-    background: color-mix(in oklch, var(--color-heatmap-4) 58%, var(--color-surface));
+    background: var(--color-heatmap-4);
   }
 
   .work-context-summary__legend {
