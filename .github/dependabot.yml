@@ -17,6 +17,18 @@ updates:
       # minor/patch updates still flow. See closed PR #751.
       - dependency-name: 'eslint-plugin-svelte'
         update-types: ['version-update:semver-major']
+      # lucide-svelte is deprecated; we migrated to @lucide/svelte. Ignore any
+      # remaining major bumps of the old package name (see closed PR #750).
+      - dependency-name: 'lucide-svelte'
+        update-types: ['version-update:semver-major']
+    groups:
+      # validate-config.mjs requires @capacitor/{android,cli,core} on the same
+      # version; single-package Dependabot PRs always fail that check.
+      capacitor:
+        patterns:
+          - '@capacitor/android'
+          - '@capacitor/cli'
+          - '@capacitor/core'
 
   - package-ecosystem: pip
     directory: '/backend'

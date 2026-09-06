@@ -18,9 +18,9 @@
     groupHabitsByType,
   } from '$lib/utils/habitMetrics';
   import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
-  import Minus from 'lucide-svelte/icons/minus';
-  import TrendingDown from 'lucide-svelte/icons/trending-down';
-  import TrendingUp from 'lucide-svelte/icons/trending-up';
+  import Minus from '@lucide/svelte/icons/minus';
+  import TrendingDown from '@lucide/svelte/icons/trending-down';
+  import TrendingUp from '@lucide/svelte/icons/trending-up';
 
   export let habits: HabitStatsResponse[] = [];
   export let tags: TagResponse[] = [];

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Activity from 'lucide-svelte/icons/activity';
-  import Minus from 'lucide-svelte/icons/minus';
-  import Tag from 'lucide-svelte/icons/tag';
-  import TrendingDown from 'lucide-svelte/icons/trending-down';
-  import TrendingUp from 'lucide-svelte/icons/trending-up';
+  import Activity from '@lucide/svelte/icons/activity';
+  import Minus from '@lucide/svelte/icons/minus';
+  import Tag from '@lucide/svelte/icons/tag';
+  import TrendingDown from '@lucide/svelte/icons/trending-down';
+  import TrendingUp from '@lucide/svelte/icons/trending-up';
   import { _ } from 'svelte-i18n';
   import type {
     SymptomHeatmapResponse,

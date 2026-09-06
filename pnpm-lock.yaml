@@ -70,6 +70,9 @@ importers:
       '@capacitor/push-notifications':
         specifier: 8.1.2
         version: 8.1.2(@capacitor/core@8.5.1)
+      '@lucide/svelte':
+        specifier: ^1.41.0
+        version: 1.41.0(svelte@5.56.9(@typescript-eslint/types@8.69.0))
       '@sentry/browser':
         specifier: ^10.70.0
         version: 10.70.0
@@ -79,9 +82,6 @@ importers:
       dexie:
         specifier: ^4.4.4
         version: 4.4.4
-      lucide-svelte:
-        specifier: ^0.469.0
-        version: 0.469.0(svelte@5.56.9(@typescript-eslint/types@8.69.0))
       svelte-i18n:
         specifier: ^4.0.0
         version: 4.0.1(svelte@5.56.9(@typescript-eslint/types@8.69.0))
@@ -733,6 +733,11 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@lucide/svelte@1.41.0':
+    resolution: {integrity: sha512-N5dInvHWGxNcnu3VJvbO2zOJA832Uy4he6qGwcqd8i3m8iYGlLoebp+e+X8NfncXXLnXkYvru5BnkUVdNdo1xg==}
+    peerDependencies:
+      svelte: ^5
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -2336,12 +2341,6 @@ packages:
   lru-queue@0.1.0:
     resolution: {integrity: sha512-BpdYkt9EvGl8OfWHDQPISVpcl5xZthb+XPsbELj5AQXxIC8IriDZIQYjBJPEm5rS420sjZ0TLEzRcq5KdBhYrQ==}
 
-  lucide-svelte@0.469.0:
-    resolution: {integrity: sha512-PMIJ8jrFqVUsXJz4d1yfAQplaGhNOahwwkzbunha8DhpiD73xqX24n8dE1dPpUk3vcrdWVsHc1y/liHHotOnGQ==}
-    deprecated: Package deprecated. Please use @lucide/svelte instead.
-    peerDependencies:
-      svelte: ^3 || ^4 || ^5.0.0-next.42
-
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -3567,6 +3566,10 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@lucide/svelte@1.41.0(svelte@5.56.9(@typescript-eslint/types@8.69.0))':
+    dependencies:
+      svelte: 5.56.9(@typescript-eslint/types@8.69.0)
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
@@ -5047,10 +5050,6 @@ snapshots:
   lru-queue@0.1.0:
     dependencies:
       es5-ext: 0.10.64
-
-  lucide-svelte@0.469.0(svelte@5.56.9(@typescript-eslint/types@8.69.0)):
-    dependencies:
-      svelte: 5.56.9(@typescript-eslint/types@8.69.0)
 
   lz-string@1.5.0: {}
 
