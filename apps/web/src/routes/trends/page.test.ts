@@ -175,7 +175,7 @@ describe('/trends page', () => {
     expect(screen.getByText('trends.compare.work_contexts')).toBeTruthy();
   });
 
-  it('uses scroll-first composition on mobile with summary, quick filters, and detail canvas', async () => {
+  it('uses scroll-first composition on mobile with summary, sticky quick filters, and detail canvas', async () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: vi.fn(() => ({
@@ -193,8 +193,9 @@ describe('/trends page', () => {
     render(Page);
     expect(await screen.findByTestId('mobile-trends-summary')).toBeTruthy();
     expect(screen.getByTestId('mobile-trends-detail')).toBeTruthy();
+    // #786: quick filters live in the sticky ScreenHeader controls slot.
     expect(screen.getByTestId('trends-compare-quick-filters')).toBeTruthy();
-    expect(screen.queryByTestId('trends-filters-toolbar')).toBeNull();
+    expect(screen.getByTestId('trends-filters-toolbar')).toBeTruthy();
     expect(screen.queryByTestId('mobile-trends-detail-toggle')).toBeNull();
   });
 

@@ -66,7 +66,7 @@
    * top offset. Here it is just the control layout (range + tabs + filters). */
   .trends-toolbar {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--screen-header-controls-gap, var(--space-2));
     min-width: 0;
   }
 
@@ -74,22 +74,36 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--screen-header-controls-gap, var(--space-2));
     min-width: 0;
   }
 
   .trends-toolbar__row--filters {
-    padding-top: var(--space-1);
+    padding-top: var(--screen-header-controls-pad, var(--space-1));
     border-top: 1px solid var(--color-border);
+    transition:
+      padding-top 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  /* #786: when sticky chrome is scrolled, drop the filter separator to reclaim height. */
+  :global(.screen-header--scrolled) .trends-toolbar__row--filters {
+    border-top-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .trends-toolbar__row--filters {
+      transition: none;
+    }
   }
 
   @media (max-width: 480px) {
     .trends-toolbar {
-      gap: var(--space-1);
+      gap: var(--screen-header-controls-gap, var(--space-1));
     }
 
     .trends-toolbar__row {
-      gap: var(--space-2);
+      gap: var(--screen-header-controls-gap, var(--space-2));
     }
   }
 </style>

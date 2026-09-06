@@ -83,6 +83,15 @@ describe('ScreenHeader', () => {
     expect(screen.getByRole('banner').classList.contains('screen-header--sticky')).toBe(false);
   });
 
+  it('keeps sticky density tokens available for scrolled controls (#786)', () => {
+    render(ScreenHeader, { props: { title: 'Trends', sticky: true, subtitle: 'Charts' } });
+    const header = screen.getByRole('banner');
+    expect(header.classList.contains('screen-header--sticky')).toBe(true);
+    // Density CSS keys off screen-header--scrolled (set by the scroll listener).
+    header.classList.add('screen-header--scrolled');
+    expect(header.classList.contains('screen-header--scrolled')).toBe(true);
+  });
+
   it('can hide the header visually while keeping the h1 in the DOM', () => {
     render(ScreenHeader, {
       props: {
