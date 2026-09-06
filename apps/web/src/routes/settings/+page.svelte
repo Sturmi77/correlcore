@@ -11,15 +11,11 @@
   import { ApiError } from '$lib/api/client';
   import { fetchDevInfo } from '$lib/api/dev';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import { SETTINGS_CATEGORIES } from '$lib/navigation/settingsCategories';
 
   // Category index — the four user-facing groups (#694). Each links to a real
   // sub-route; the panels themselves live on those pages.
-  const categories = [
-    { href: '/settings/data', key: 'data', testId: 'settings-cat-data' },
-    { href: '/settings/analysis', key: 'analysis', testId: 'settings-cat-analysis' },
-    { href: '/settings/privacy', key: 'privacy', testId: 'settings-cat-privacy' },
-    { href: '/settings/appearance', key: 'appearance', testId: 'settings-cat-appearance' },
-  ] as const;
+  const categories = SETTINGS_CATEGORIES;
 
   // ---------------------------------------------------------------------------
   // Dev view availability (backend flag)

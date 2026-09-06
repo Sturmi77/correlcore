@@ -14,6 +14,13 @@ vi.mock('$lib/stores/auth', async () => {
   };
 });
 
+vi.mock('$app/stores', async () => {
+  const { readable } = await import('svelte/store');
+  return {
+    page: readable({ url: new URL('http://localhost/settings/appearance') }),
+  };
+});
+
 vi.mock('$lib/i18n', async () => {
   const i18n = await import('svelte-i18n');
   return {

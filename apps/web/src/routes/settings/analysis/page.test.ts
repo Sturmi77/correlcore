@@ -14,6 +14,13 @@ vi.mock('$lib/stores/auth', async () => {
   };
 });
 
+vi.mock('$app/stores', async () => {
+  const { readable } = await import('svelte/store');
+  return {
+    page: readable({ url: new URL('http://localhost/settings/analysis') }),
+  };
+});
+
 const { updatePrefsMock, regenerateMock, fetchDigestMock } = vi.hoisted(() => ({
   updatePrefsMock: vi.fn(async (p: Record<string, boolean>) => ({
     analytics_enabled: p.analytics_enabled ?? true,
@@ -65,9 +72,7 @@ describe('/settings/analysis', () => {
     const toggle = (await screen.findByTestId('digest-toggle')) as HTMLInputElement;
     await fireEvent.click(toggle);
     await waitFor(() =>
-      expect(updatePrefsMock).toHaveBeenCalledWith(
-        expect.objectContaining({ digest_enabled: true })
-      )
+      expect(updatePrefsMock).toHaveBeenCalledWith(expect.objectContaining({ digest_enabled: true }))
     );
     expect(await screen.findByTestId('digest-pending-hint')).toBeTruthy();
   });

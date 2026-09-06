@@ -6,6 +6,7 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import SettingsCategoryBar from '$lib/components/settings/SettingsCategoryBar.svelte';
   import { ApiError } from '$lib/api/client';
   import {
     fetchUserPreferences,
@@ -115,6 +116,7 @@
     compact
     back={{ href: '/settings', label: $_('nav.settings') }}
   />
+  <SettingsCategoryBar />
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">

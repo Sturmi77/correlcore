@@ -4,6 +4,7 @@
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import SettingsCategoryBar from '$lib/components/settings/SettingsCategoryBar.svelte';
   import SegmentedControl, {
     type SegmentedControlOption,
   } from '$lib/components/common/SegmentedControl.svelte';
@@ -31,6 +32,7 @@
     compact
     back={{ href: '/settings', label: $_('nav.settings') }}
   />
+  <SettingsCategoryBar />
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">

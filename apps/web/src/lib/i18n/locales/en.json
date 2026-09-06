@@ -773,6 +773,13 @@
         "summary": "Theme, language & layout"
       }
     },
+    "category_nav": {
+      "aria_label": "Settings categories",
+      "data": "Data",
+      "analysis": "Analysis",
+      "privacy": "Privacy",
+      "appearance": "Appearance"
+    },
     "section": {
       "tracking": "Tracking",
       "vocabulary": "Vocabulary",
