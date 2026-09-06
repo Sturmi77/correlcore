@@ -175,6 +175,79 @@ describe('/settings/insights layout editor', () => {
     resolveSave?.();
   });
 
+  it('does not fire a second PATCH until the in-flight reorder finishes (latest wins)', async () => {
+    let resolveFirst: (() => void) | undefined;
+    updateUserPreferencesMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = () =>
+            resolve({
+              user_id: 'user-1',
+              analytics_enabled: true,
+              digest_enabled: false,
+              onboarding_retro_completed: true,
+              onboarding_profile_completed: true,
+              onboarding_maturity_intro_seen: true,
+              cycle_tracking_enabled: true,
+              dismissed_insight_keys: [],
+              reached_milestone_keys: [],
+              last_seen_insight_at: null,
+              insight_sections: [
+                { key: 'correlation_matrix', enabled: true },
+                { key: 'stage_header', enabled: true },
+                { key: 'insight_feed', enabled: true },
+                { key: 'lag_heatmap', enabled: true },
+                { key: 'dismissed', enabled: true },
+                { key: 'symptom_analytics', enabled: true },
+                { key: 'tag_groups', enabled: true },
+                { key: 'tag_cooccurrence', enabled: true },
+              ],
+              created_at: '2026-05-16T10:00:00Z',
+              updated_at: '2026-05-16T10:00:00Z',
+            });
+        })
+    );
+
+    render(Page);
+    await screen.findByTestId('insights-sections-editor');
+
+    await fireEvent.click(screen.getByTestId('insights-section-down-stage_header'));
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledTimes(1);
+    });
+
+    await fireEvent.click(screen.getByTestId('insights-section-down-stage_header'));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(updateUserPreferencesMock).toHaveBeenCalledTimes(1);
+
+    resolveFirst?.();
+
+    const latestOrder = [
+      'correlation_matrix',
+      'insight_feed',
+      'stage_header',
+      'lag_heatmap',
+      'dismissed',
+      'symptom_analytics',
+      'tag_groups',
+      'tag_cooccurrence',
+    ];
+
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledTimes(2);
+    });
+    const lastPayload = updateUserPreferencesMock.mock.calls.at(-1)?.[0]?.insight_sections ?? [];
+    expect(lastPayload.map((section: { key: string }) => section.key)).toEqual(latestOrder);
+
+    await waitFor(() => {
+      const rows = screen.getAllByTestId(/^insights-section-row-/);
+      expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual(
+        latestOrder.map((key) => `insights-section-row-${key}`)
+      );
+    });
+  });
+
   it('resets to the default layout', async () => {
     render(Page);
     await screen.findByTestId('insights-sections-editor');
