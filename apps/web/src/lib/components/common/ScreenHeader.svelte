@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import { nextScreenHeaderScrolled } from '$lib/utils/screenHeaderScroll';
 
   export let title: string;
   export let subtitle = '';
@@ -43,9 +44,11 @@
     // Read from whichever actually scrolls (the shell content column normally,
     // the window as fallback) and listen on both — so a mis-detected scroll
     // parent can't leave the title stuck expanded/collapsed.
+    // #851: collapse/expand use separate thresholds so sticky height feedback
+    // near the old single edge does not oscillate (vibrate).
     const read = (): void => {
       const y = Math.max(scrollParent?.scrollTop ?? 0, window.scrollY);
-      scrolled = y > 24;
+      scrolled = nextScreenHeaderScrolled(y, scrolled);
     };
     read();
     const targets: (HTMLElement | Window)[] = scrollParent ? [scrollParent, window] : [window];
