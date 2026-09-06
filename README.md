@@ -12,7 +12,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" /></a>
   <a href="https://sturmi77.github.io/correlcore/"><img src="https://img.shields.io/badge/release-selfhost%20v1.x-blue" alt="Release" /></a>
-  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.7.0-informational" alt="Latest release" /></a>
+  <a href="https://github.com/Sturmi77/correlcore/releases"><img src="https://img.shields.io/badge/latest-v1.7.1-informational" alt="Latest release" /></a>
   <a href="#tech-stack"><img src="https://img.shields.io/badge/stack-FastAPI%20%2B%20SvelteKit%20%2B%20PostgreSQL-green" alt="Stack" /></a>
 </p>
 
@@ -85,7 +85,7 @@ git clone https://github.com/Sturmi77/correlcore.git
 cd correlcore/infra/docker
 cp .env.example .env
 # Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
-# Pin IMAGE_TAG=v1.7.0 (or the latest v1.x) for published GHCR images
+# Pin IMAGE_TAG=v1.7.1 (or the latest v1.x) for published GHCR images
 # Set acme.email in infra/docker/traefik/traefik.yml to match LETSENCRYPT_EMAIL
 docker compose up -d
 ```

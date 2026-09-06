@@ -13,7 +13,7 @@ On boot the web client fetches a public, dependency-free endpoint:
 ```
 GET /api/v1/instance  →  { "mode": "selfhost" | "hosted",
                            "registration_enabled": true | false,
-                           "version": "1.7.0" }
+                           "version": "1.7.1" }
 ```
 
 The values come from configuration the backend already owns:
@@ -93,7 +93,7 @@ refinement, not a blocker.
 
 ```bash
 curl -s https://your-domain.tld/api/v1/instance
-# {"mode":"selfhost","registration_enabled":true,"version":"1.7.0"}
+# {"mode":"selfhost","registration_enabled":true,"version":"1.7.1"}
 ```
 
 Change `DEPLOYMENT_MODE` / `REGISTRATION_ENABLED` in `.env`, restart the `api`

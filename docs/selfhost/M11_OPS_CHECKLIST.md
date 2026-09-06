@@ -89,7 +89,7 @@ sideload APK.
 - [ ] Play App Signing: Google-managed app key + CI keystore as upload key
 - [ ] Verify upload-key SHA-256 (`apps/android/scripts/print-upload-cert-fingerprint.sh`)
 - [ ] Internal testing track: upload `correlcore-<ver>.aab` from latest `v*` Release
-      (first candidate: `v1.7.0` → versionCode `1007000`)
+      (first candidate: `v1.7.1` → versionCode `1007001`)
 - [ ] Owner install smoke from Internal opt-in link
 - [ ] Store listing: short/long description, feature graphic, screenshots (#720)
 - [ ] Data Safety form (ADR-0033 / cycle + HC reality — declare only what you ship) (#721)
