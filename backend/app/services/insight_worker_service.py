@@ -220,13 +220,13 @@ async def regenerate_insights_for_user(
         )
         # #819: after interactive regenerate, persist a digest when opted in so
         # the one-time modal does not wait for the Sunday worker slot.
-        pref_result = await db.execute(
-            select(UserPreference.digest_enabled).where(UserPreference.user_id == user_id)
+        from app.services.insight_digest import (
+            _digest_enabled,
+            persist_weekly_digest_if_available,
         )
-        if pref_result.scalar_one_or_none() is True:
-            try:
-                from app.services.insight_digest import persist_weekly_digest_if_available
 
+        if await _digest_enabled(db, user_id=user_id):
+            try:
                 await persist_weekly_digest_if_available(db, user_id=user_id)
             except Exception:
                 logger.exception(

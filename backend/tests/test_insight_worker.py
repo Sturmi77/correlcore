@@ -364,6 +364,10 @@ async def test_regenerate_insights_for_user_returns_pipeline_result() -> None:
             new=AsyncMock(return_value=uuid.uuid4()),
         ),
         patch("app.services.worker_run_service.finish_run", new=AsyncMock()),
+        patch(
+            "app.services.insight_digest._digest_enabled",
+            new=AsyncMock(return_value=False),
+        ),
     ):
         result = await regenerate_insights_for_user(
             db,
