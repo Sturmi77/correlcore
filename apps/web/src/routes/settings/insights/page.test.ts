@@ -131,11 +131,35 @@ describe('/settings/insights layout editor', () => {
   });
 
   it('keeps reorder controls enabled while a save is in flight (#847)', async () => {
-    let resolveSave: ((value: unknown) => void) | undefined;
+    let resolveSave: (() => void) | undefined;
     updateUserPreferencesMock.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveSave = resolve;
+          resolveSave = () =>
+            resolve({
+              user_id: 'user-1',
+              analytics_enabled: true,
+              digest_enabled: false,
+              onboarding_retro_completed: true,
+              onboarding_profile_completed: true,
+              onboarding_maturity_intro_seen: true,
+              cycle_tracking_enabled: true,
+              dismissed_insight_keys: [],
+              reached_milestone_keys: [],
+              last_seen_insight_at: null,
+              insight_sections: [
+                { key: 'correlation_matrix', enabled: true },
+                { key: 'stage_header', enabled: true },
+                { key: 'insight_feed', enabled: true },
+                { key: 'lag_heatmap', enabled: true },
+                { key: 'dismissed', enabled: true },
+                { key: 'symptom_analytics', enabled: true },
+                { key: 'tag_groups', enabled: true },
+                { key: 'tag_cooccurrence', enabled: true },
+              ],
+              created_at: '2026-05-16T10:00:00Z',
+              updated_at: '2026-05-16T10:00:00Z',
+            });
         })
     );
 
@@ -148,30 +172,7 @@ describe('/settings/insights layout editor', () => {
     ) as HTMLButtonElement;
     expect(nextMove.disabled).toBe(false);
 
-    resolveSave?.({
-      user_id: 'user-1',
-      analytics_enabled: true,
-      digest_enabled: false,
-      onboarding_retro_completed: true,
-      onboarding_profile_completed: true,
-      onboarding_maturity_intro_seen: true,
-      cycle_tracking_enabled: true,
-      dismissed_insight_keys: [],
-      reached_milestone_keys: [],
-      last_seen_insight_at: null,
-      insight_sections: [
-        { key: 'correlation_matrix', enabled: true },
-        { key: 'stage_header', enabled: true },
-        { key: 'insight_feed', enabled: true },
-        { key: 'lag_heatmap', enabled: true },
-        { key: 'dismissed', enabled: true },
-        { key: 'symptom_analytics', enabled: true },
-        { key: 'tag_groups', enabled: true },
-        { key: 'tag_cooccurrence', enabled: true },
-      ],
-      created_at: '2026-05-16T10:00:00Z',
-      updated_at: '2026-05-16T10:00:00Z',
-    });
+    resolveSave?.();
   });
 
   it('resets to the default layout', async () => {
