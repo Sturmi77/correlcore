@@ -18,7 +18,7 @@ ENV CI=true
 # pnpm via corepack.
 # node:26-alpine no longer bundles corepack, so install it explicitly first
 # (npm ships with the base image) before enabling it.
-RUN npm install -g corepack@latest && corepack enable
+RUN npm install -g corepack@0.36.0 && corepack enable
 
 # Lockfile + Workspace-Manifeste zuerst (Layer-Cache)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
