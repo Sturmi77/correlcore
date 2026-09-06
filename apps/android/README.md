@@ -17,6 +17,12 @@ The Capacitor `webDir` is `../web/build-capacitor` — a static SPA produced wit
 (`@sveltejs/adapter-static` fallback). Production web hosting still uses
 `adapter-node` via the normal `pnpm build`.
 
+Vite 8 / Rolldown is the current bundler. Keep `kit.paths.relative: false` in
+`apps/web/svelte.config.js` so the WebView loads absolute `/_app/...` assets
+(relative `../_app` paths break non-root routes in the SPA shell). Sprint 4 of
+[#665](https://github.com/Sturmi77/correlcore/issues/665) verified
+`build:capacitor` + `cap sync` against that stack.
+
 ## App identity
 
 | Field           | Value                      |
