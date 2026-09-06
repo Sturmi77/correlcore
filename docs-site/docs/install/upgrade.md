@@ -12,11 +12,11 @@ checks first (JWT access-token TTL ≤ 15 minutes; JSON `Content-Type` on
 state-changing API requests), then pin/pull v1.7.0. Skipping those steps can
 still prevent the API from starting or return **415** to custom clients.
 
-| Who                  | Action                                                                                    |
-| -------------------- | ----------------------------------------------------------------------------------------- |
+| Who                  | Action                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Production / homelab | Pin `IMAGE_TAG=v1.7.0`, pull, `up -d --remove-orphans` (run [v1.6.0](#v160) blockers first if upgrading from earlier) |
-| `.env`               | **No required new vars.** Homelab stacks now start the analytics worker by default (#818) |
-| Database             | `migrate` applies Alembic through **044** (`insight_sections`) if not already             |
+| `.env`               | **No required new vars.** Homelab stacks now start the analytics worker by default (#818)                             |
+| Database             | `migrate` applies Alembic through **044** (`insight_sections`) if not already                                         |
 
 ```env
 IMAGE_TAG=v1.7.0
