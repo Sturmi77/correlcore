@@ -21,6 +21,8 @@
   let loading = true;
   let busy = false;
   let error = '';
+  /** Monotonic write token so stale PATCH responses cannot overwrite newer local order (#847). */
+  let persistSeq = 0;
 
   async function loadPreferences(): Promise<void> {
     loading = true;
@@ -36,17 +38,20 @@
 
   async function persistSections(next: InsightSectionPreference[]): Promise<void> {
     const previous = sections;
+    const seq = ++persistSeq;
     sections = next;
     busy = true;
     error = '';
     try {
       preferences = await updateUserPreferences({ insight_sections: next });
+      if (seq !== persistSeq) return;
       sections = mergeInsightSections(preferences.insight_sections);
     } catch (err) {
+      if (seq !== persistSeq) return;
       sections = previous;
       error = err instanceof Error ? err.message : $_('settings.insights.error_save');
     } finally {
-      busy = false;
+      if (seq === persistSeq) busy = false;
     }
   }
 
@@ -60,7 +65,7 @@
   <title>{$_('settings.insights.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="insights-settings screen-stack">
+<main class="insights-settings screen-stack" aria-busy={busy}>
   <ScreenHeader
     title={$_('settings.insights.title')}
     subtitle={$_('settings.insights.subtitle')}
@@ -75,7 +80,7 @@
     </div>
     <InsightSectionsEditor
       {sections}
-      disabled={busy || loading}
+      disabled={loading}
       on:change={({ detail }) => void persistSections(detail)}
     />
   </Panel>

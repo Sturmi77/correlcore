@@ -127,8 +127,16 @@
     white-space: nowrap;
   }
 
-  /* #786: scrolled sticky chrome — single-row feel, still ≥44px taps. */
+  /* #786/#848: scrolled sticky chrome — pin category + customize; only the
+   * metric chip track scrolls horizontally so chips cannot paint over CTAs. */
   :global(.screen-header--scrolled) .quick-filters {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  :global(.screen-header--scrolled) .quick-filters__metrics {
+    flex: 1 1 auto;
+    min-width: 0;
     flex-wrap: nowrap;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -136,16 +144,18 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  :global(.screen-header--scrolled) .quick-filters::-webkit-scrollbar {
+  :global(.screen-header--scrolled) .quick-filters__metrics::-webkit-scrollbar {
     display: none;
   }
 
-  :global(.screen-header--scrolled) .quick-filters__metrics {
-    flex-wrap: nowrap;
+  :global(.screen-header--scrolled) .quick-filters__chip {
+    flex: 0 0 auto;
+    padding-inline: var(--space-2);
   }
 
-  :global(.screen-header--scrolled) .quick-filters__chip {
-    padding-inline: var(--space-2);
+  :global(.screen-header--scrolled) .quick-filters__category,
+  :global(.screen-header--scrolled) .quick-filters__customize {
+    flex: 0 0 auto;
   }
 
   .sr-only {

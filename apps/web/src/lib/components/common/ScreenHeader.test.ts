@@ -92,6 +92,17 @@ describe('ScreenHeader', () => {
     expect(header.classList.contains('screen-header--scrolled')).toBe(true);
   });
 
+  it('does not pull scrolled controls into the title with negative margin (#848)', async () => {
+    const { default: Harness } = await import('./ScreenHeader.scrolled.test.svelte');
+    render(Harness);
+    const header = screen.getByRole('banner');
+    header.classList.add('screen-header--scrolled');
+
+    const controls = screen.getByTestId('header-controls-probe').parentElement;
+    expect(controls).toBeTruthy();
+    expect(Number.parseFloat(getComputedStyle(controls as Element).marginTop)).toBe(0);
+  });
+
   it('can hide the header visually while keeping the h1 in the DOM', () => {
     render(ScreenHeader, {
       props: {

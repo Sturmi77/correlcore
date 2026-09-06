@@ -19,6 +19,8 @@
   let loading = true;
   let busy = false;
   let error = '';
+  /** Monotonic write token so stale PATCH responses cannot overwrite newer local order. */
+  let persistSeq = 0;
 
   async function loadPreferences(): Promise<void> {
     loading = true;
@@ -34,17 +36,20 @@
 
   async function persistSections(next: HomeSectionPreference[]): Promise<void> {
     const previous = sections;
+    const seq = ++persistSeq;
     sections = next;
     busy = true;
     error = '';
     try {
       preferences = await updateUserPreferences({ home_sections: next });
+      if (seq !== persistSeq) return;
       sections = mergeHomeSections(preferences.home_sections);
     } catch (err) {
+      if (seq !== persistSeq) return;
       sections = previous;
       error = err instanceof Error ? err.message : $_('settings.home.error_save');
     } finally {
-      busy = false;
+      if (seq === persistSeq) busy = false;
     }
   }
 
@@ -58,7 +63,7 @@
   <title>{$_('settings.home.title')} - {$_('app.name')}</title>
 </svelte:head>
 
-<main class="home-settings screen-stack">
+<main class="home-settings screen-stack" aria-busy={busy}>
   <ScreenHeader
     title={$_('settings.home.title')}
     subtitle={$_('settings.home.subtitle')}
@@ -73,7 +78,7 @@
     </div>
     <HomeSectionsEditor
       {sections}
-      disabled={busy || loading}
+      disabled={loading}
       on:change={({ detail }) => void persistSections(detail)}
     />
   </Panel>

@@ -1,7 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import IconButton from '$lib/components/common/IconButton.svelte';
+  import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import type { SectionPreference } from '$lib/utils/sectionPreferences';
 
   /**
@@ -92,7 +95,7 @@
             data-testid={`${testIdPrefix}-section-up-${section.key}`}
             on:click={() => moveSection(section.key, -1)}
           >
-            ↑
+            <ChevronUp size={ICON_SIZE_SM} aria-hidden="true" />
           </IconButton>
           <IconButton
             type="button"
@@ -102,7 +105,7 @@
             data-testid={`${testIdPrefix}-section-down-${section.key}`}
             on:click={() => moveSection(section.key, 1)}
           >
-            ↓
+            <ChevronDown size={ICON_SIZE_SM} aria-hidden="true" />
           </IconButton>
         </div>
       </li>

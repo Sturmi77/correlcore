@@ -86,9 +86,9 @@
       border-color 0.2s ease;
   }
 
-  /* #786: when sticky chrome is scrolled, drop the filter separator to reclaim height. */
+  /* #786/#848: keep a light separator so densified rows do not visually merge. */
   :global(.screen-header--scrolled) .trends-toolbar__row--filters {
-    border-top-color: transparent;
+    border-top-color: color-mix(in srgb, var(--color-border) 55%, transparent);
   }
 
   @media (prefers-reduced-motion: reduce) {
