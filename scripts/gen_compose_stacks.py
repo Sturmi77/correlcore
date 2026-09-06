@@ -84,7 +84,8 @@ STACKS: dict[str, dict[str, Any]] = {
         "header": [
             "CorrelCore — Compose stack for published-image user tests (GHCR).",
             "Tailscale-internal homelab (no Traefik/TLS); ports bind to the",
-            "Tailscale/loopback interface only. Profiles: `worker`, `monitoring`.",
+            "Tailscale/loopback interface only. Analytics worker always on;",
+            "optional profile: `monitoring` (GlitchTip).",
             "",
             "Start:  cp .env.example .env  &&  edit  &&",
             "        docker compose -f docker-compose.user-test.yml up -d",
@@ -135,8 +136,8 @@ STACKS: dict[str, dict[str, Any]] = {
             "Git-stack: New → From Git, path infra/dockhand, branch main.",
             "Tailscale-internal homelab (no Traefik/TLS). Per ADR-0011 the API is",
             "not published on the host: the web container proxies /api/* to",
-            "http://api:8000 inside the Compose network. Profiles: `worker`,",
-            "`monitoring`.",
+            "http://api:8000 inside the Compose network. Analytics worker always",
+            "on; optional profile: `monitoring` (GlitchTip).",
         ],
     },
 }
@@ -165,23 +166,23 @@ _CSP_NOTE = [
     "use the production compose, if you need CSP.",
 ]
 
-# Every generated stack carries the analytics `worker` behind the `worker`
-# compose profile (off by default). Unlike the production compose — where the
-# worker has no profile and always runs — a homelab operator who never sets
-# COMPOSE_PROFILES=worker gets no scheduled insights and no weekly digest at
-# all (they must be triggered by hand). Keep the reminder in one place so it
-# stays identical across stacks; the enable example gains `,monitoring` only on
-# stacks that actually ship GlitchTip.
+# Homelab stacks start the analytics `worker` by default (#818), matching
+# production. GlitchTip stays behind the optional `monitoring` profile where
+# the stack ships it.
 def _worker_note(*, glitchtip: bool) -> list[str]:
-    enable = "COMPOSE_PROFILES=worker" + ("            # or: worker,monitoring" if glitchtip else "")
-    return [
-        "IMPORTANT — the analytics `worker` (nightly insights + retention",
-        "cleanup + the weekly in-app digest on Sundays) is behind the `worker`",
-        "profile and is OFF by default. Without it, scheduled insights and the",
-        "weekly digest are never generated and you must trigger them by hand.",
-        "Enable it in the stack .env, then redeploy:",
-        f"    {enable}",
+    lines = [
+        "The analytics `worker` (nightly insights + retention cleanup + the",
+        "weekly in-app digest on Sundays) always starts with this stack (#818).",
+        "Users opt in to the digest per account under Settings → Analysis.",
     ]
+    if glitchtip:
+        lines.extend(
+            [
+                "Optional: enable GlitchTip with COMPOSE_PROFILES=monitoring",
+                "(or `--profile monitoring`).",
+            ]
+        )
+    return lines
 
 
 def _load_canonical() -> dict[str, Any]:

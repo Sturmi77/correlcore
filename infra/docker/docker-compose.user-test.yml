@@ -8,17 +8,17 @@
 #
 # CorrelCore — Compose stack for published-image user tests (GHCR).
 # Tailscale-internal homelab (no Traefik/TLS); ports bind to the
-# Tailscale/loopback interface only. Profiles: `worker`, `monitoring`.
+# Tailscale/loopback interface only. Analytics worker always on;
+# optional profile: `monitoring` (GlitchTip).
 #
 # Start:  cp .env.example .env  &&  edit  &&
 #         docker compose -f docker-compose.user-test.yml up -d
 #
-# IMPORTANT — the analytics `worker` (nightly insights + retention
-# cleanup + the weekly in-app digest on Sundays) is behind the `worker`
-# profile and is OFF by default. Without it, scheduled insights and the
-# weekly digest are never generated and you must trigger them by hand.
-# Enable it in the stack .env, then redeploy:
-#     COMPOSE_PROFILES=worker            # or: worker,monitoring
+# The analytics `worker` (nightly insights + retention cleanup + the
+# weekly in-app digest on Sundays) always starts with this stack (#818).
+# Users opt in to the digest per account under Settings → Analysis.
+# Optional: enable GlitchTip with COMPOSE_PROFILES=monitoring
+# (or `--profile monitoring`).
 #
 # Security headers / CSP (#791): this stack sets NO Content-Security-Policy
 # (not even report-only). The CSP is injected by the Traefik reverse proxy in
@@ -249,8 +249,6 @@ services:
         condition: service_healthy
     networks:
     - internal
-    profiles:
-    - worker
     security_opt:
     - no-new-privileges:true
 volumes:
