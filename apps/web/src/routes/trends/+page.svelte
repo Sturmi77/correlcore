@@ -431,7 +431,7 @@
           {activeTab}
           tabOptions={trendTabOptions}
           showCompareFilters={activeTab === 'compare'}
-          embedCompareFilters={!compactTrends}
+          embedCompareFilters={true}
           showRangeControl={activeTab !== 'compare'}
           on:rangeChange={(event) => {
             const nextRange = event.detail.value as TimeseriesRange;
@@ -444,18 +444,31 @@
           }}
         >
           <svelte:fragment slot="compare-filters">
-            <TrendsCompareFilters
-              {smoothing}
-              {smoothingAvailable}
-              {metrics}
-              {selectedCategory}
-              on:smoothingChange={(event) => setSmoothing(event.detail.value)}
-              on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-              on:categoryChange={(event) => {
-                selectedCategory = event.detail.category;
-                void loadTrends();
-              }}
-            />
+            {#if compactTrends}
+              <TrendsCompareQuickFilters
+                {metrics}
+                {selectedCategory}
+                on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+                on:categoryChange={(event) => {
+                  selectedCategory = event.detail.category;
+                  void loadTrends();
+                }}
+                on:openSettings={() => (compareSettingsOpen = true)}
+              />
+            {:else}
+              <TrendsCompareFilters
+                {smoothing}
+                {smoothingAvailable}
+                {metrics}
+                {selectedCategory}
+                on:smoothingChange={(event) => setSmoothing(event.detail.value)}
+                on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+                on:categoryChange={(event) => {
+                  selectedCategory = event.detail.category;
+                  void loadTrends();
+                }}
+              />
+            {/if}
           </svelte:fragment>
         </TrendsAnalysisToolbar>
       {/if}
@@ -477,19 +490,6 @@
     {/if}
 
     {#if activeTab === 'compare'}
-      {#if compactTrends}
-        <TrendsCompareQuickFilters
-          {metrics}
-          {selectedCategory}
-          on:metricToggle={(event) => toggleMetric(event.detail.metric)}
-          on:categoryChange={(event) => {
-            selectedCategory = event.detail.category;
-            void loadTrends();
-          }}
-          on:openSettings={() => (compareSettingsOpen = true)}
-        />
-      {/if}
-
       {#if compactTrends}
         <MobileTrendsSummary
           points={displayTimeseries?.points ?? []}

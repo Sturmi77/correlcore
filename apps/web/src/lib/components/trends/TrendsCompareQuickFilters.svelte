@@ -67,7 +67,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--screen-header-controls-gap, var(--space-2));
     min-width: 0;
   }
 
@@ -80,7 +80,7 @@
   }
 
   .quick-filters__chip {
-    min-height: var(--tap-target);
+    min-height: var(--screen-header-control-min-height, var(--tap-target));
     padding: 0 var(--space-2);
     border-radius: var(--radius-full);
     border: 1px solid var(--color-border);
@@ -105,7 +105,7 @@
 
   .quick-filters__category select {
     width: 100%;
-    min-height: var(--tap-target);
+    min-height: var(--screen-header-control-min-height, var(--tap-target));
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: 0 var(--space-2);
@@ -115,7 +115,7 @@
   }
 
   .quick-filters__customize {
-    min-height: var(--tap-target);
+    min-height: var(--screen-header-control-min-height, var(--tap-target));
     padding: 0 var(--space-3);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border);
@@ -125,6 +125,27 @@
     font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
+  }
+
+  /* #786: scrolled sticky chrome — single-row feel, still ≥44px taps. */
+  :global(.screen-header--scrolled) .quick-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :global(.screen-header--scrolled) .quick-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  :global(.screen-header--scrolled) .quick-filters__metrics {
+    flex-wrap: nowrap;
+  }
+
+  :global(.screen-header--scrolled) .quick-filters__chip {
+    padding-inline: var(--space-2);
   }
 
   .sr-only {

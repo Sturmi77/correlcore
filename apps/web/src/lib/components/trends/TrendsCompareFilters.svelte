@@ -73,7 +73,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--screen-header-controls-gap, var(--space-3));
   }
 
   .compare-filters__metrics {
@@ -91,7 +91,7 @@
 
   .compare-filters__metrics label,
   .compare-filters__select {
-    min-height: 44px;
+    min-height: var(--screen-header-control-min-height, 44px);
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
@@ -103,12 +103,25 @@
   }
 
   .compare-filters__select select {
-    min-height: 44px;
+    min-height: var(--screen-header-control-min-height, 44px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: 0 var(--space-2);
     background: var(--color-surface);
     color: inherit;
+  }
+
+  /* #786: hide the metrics legend when sticky chrome is scrolled to reclaim a row. */
+  :global(.screen-header--scrolled) .compare-filters__metrics legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   @media (max-width: 767px) {

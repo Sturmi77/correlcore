@@ -32,25 +32,25 @@
    * slot, which owns the blur/backdrop chrome — here it is just the layout. */
   .insights-toolbar {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--screen-header-controls-gap, var(--space-2));
     min-width: 0;
   }
 
   .insights-toolbar__row {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--screen-header-controls-gap, var(--space-3));
     min-width: 0;
   }
 
   @media (max-width: 480px) {
     .insights-toolbar {
-      gap: var(--space-1);
+      gap: var(--screen-header-controls-gap, var(--space-1));
     }
 
     .insights-toolbar__row {
       flex-wrap: wrap;
-      gap: var(--space-2);
+      gap: var(--screen-header-controls-gap, var(--space-2));
     }
   }
 </style>

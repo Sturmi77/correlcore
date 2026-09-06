@@ -205,6 +205,12 @@
    * that owns the top offset, so the melted-in toolbars drop their own sticky.
    * ----------------------------------------------------------------------- */
   .screen-header--sticky {
+    /* #786: density tokens for controls that live in the sticky slot. Children
+     * (Trends/Insights toolbars, chips) read these so scrolled chrome shrinks
+     * without a second full-height toolbar under the condensed title. */
+    --screen-header-controls-gap: var(--space-2);
+    --screen-header-controls-pad: var(--space-1);
+    --screen-header-control-min-height: var(--tap-target, 2.75rem);
     position: sticky;
     /* Clear the device top safe-area (notch/status bar) in the Capacitor
      * edge-to-edge layout, where the shell's initial safe-area padding scrolls
@@ -216,6 +222,7 @@
     border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     backdrop-filter: blur(8px);
+    transition: padding 0.2s ease;
   }
 
   /* The subtitle wrapper is transparent to layout until the header is sticky. */
@@ -254,6 +261,28 @@
     font-size: var(--text-lg);
   }
 
+  /* #786: also condense the controls row — tighter gaps/padding, still ≥44px taps. */
+  .screen-header--scrolled {
+    --screen-header-controls-gap: var(--space-1);
+    --screen-header-controls-pad: 0px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .screen-header--scrolled .screen-header__controls {
+    margin-top: calc(-1 * var(--space-1));
+  }
+
+  .screen-header--scrolled :global(.segmented-control) {
+    padding: 0;
+    gap: 0;
+  }
+
+  .screen-header--scrolled :global(.segmented-control__item),
+  .screen-header--scrolled :global(.tab-bar__item) {
+    min-height: var(--screen-header-control-min-height, var(--tap-target, 2.75rem));
+    padding-block: 0;
+  }
+
   .screen-header--visually-hidden {
     position: absolute;
     width: 1px;
@@ -268,7 +297,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .screen-header--sticky .screen-header__subtitle-collapse,
-    .screen-header--sticky h1 {
+    .screen-header--sticky h1,
+    .screen-header--sticky {
       transition: none;
     }
   }
