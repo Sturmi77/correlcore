@@ -300,3 +300,55 @@ async def test_health_context_endpoint_returns_dto(async_client: AsyncClient, us
 async def test_health_context_endpoint_unauthenticated(async_client: AsyncClient) -> None:
     r = await async_client.get("/api/v1/entries/stats/health-context")
     assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_health_context_endpoint_contract_shape(
+    async_client: AsyncClient, user: User
+) -> None:
+    # Drift guard: the serialized JSON must match the frontend
+    # `HealthContextResponse` interface (apps/web/src/lib/api/stats.ts).
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.entries.get_health_context",
+            new_callable=AsyncMock,
+            return_value=_sample_dto(),
+        ):
+            r = await async_client.get(
+                "/api/v1/entries/stats/health-context",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    body = r.json()
+    assert set(body.keys()) == {
+        "as_of",
+        "coverage_window_days",
+        "maturity",
+        "coverage",
+        "sections",
+        "health_connect",
+    }
+    assert set(body["maturity"].keys()) == {
+        "phase",
+        "phase_index",
+        "current_entries",
+        "next_phase_at",
+        "entries_until_next",
+    }
+    assert set(body["coverage"].keys()) == {"entry", "sleep", "symptom"}
+    for metric in body["coverage"].values():
+        assert set(metric.keys()) == {"days_with_data", "window_days", "pct"}
+    for section in body["sections"]:
+        assert set(section.keys()) == {
+            "id",
+            "unlocked",
+            "reason",
+            "entries_until_unlock",
+            "copy_key",
+        }

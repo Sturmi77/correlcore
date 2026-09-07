@@ -1,7 +1,7 @@
 # Feature Spec: Health Data Maturity (Trends „Health Context")
 
-**Status:** Freeze-Kandidat (v1.0.0-rc) — D1–D7 aufgelöst, UI-Abgleich (G1–G7) + Fixtures (§9) vollständig; bereit für Review-Gate (§Weg zur Spec, Schritt 5)
-**Version:** 1.0.0-rc.1
+**Status:** Umgesetzt (C-full Phase 1–3) — Backend-DTO + Trends-Panel live, Tests grün; offen: Review-Gate + finaler 360px-Geräte-Check
+**Version:** 1.0.0
 **Created:** 2026-09-07
 **Updated:** 2026-09-07
 **Owner:** @Sturmi77
@@ -410,20 +410,25 @@ Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
 - [x] **i18n** `apps/web/src/lib/i18n/locales/{de,en}.json`: neue `trends.maturity.*`-Keys; alte
   `trends.health.*`/`trends.consistency.*`-Keys bleiben unangetastet (nur nicht mehr vom Panel genutzt).
 
-### Phase 3 — Tests & Cleanup (~0,5d)
+### Phase 3 — Tests & Cleanup (~0,5d) — ✅ UMGESETZT (bis auf Geräte-Check)
 
-- [ ] **Component-/UI-Tests** (`TrendsHealthContext.test.ts` neu): Rendering je Fixture, Gate-Zustände,
-  keine Streak-Zahlen, i18n-Keys vorhanden.
-- [ ] **Contract-Test** DTO ↔ Frontend-Typ.
-- [ ] `trends/page.test.ts` an den neuen Datenfluss anpassen.
-- [ ] Prüfen, ob `fetchEntryStreak`/`EntryStreakResponse` sonst noch genutzt wird; sonst
-  zurückbauen. `docs/FRONTEND.md`-Verweis auf den Trends-Health-Block aktualisieren.
-- [ ] Mobile-Check auf 360px (echtes Gerät / DevTools).
+- [x] **Component-/UI-Tests** `TrendsHealthContext.test.ts`: Meter je Coverage-Zeile, Gate-Zustände
+  (locked + Copy-Key, kein Deep-Link), keine Streak-Labels, Cycle-Sektion, `InsightStageHeader`-Reuse.
+- [x] **Contract-Test** DTO ↔ Frontend-Typ: `test_health_context_endpoint_contract_shape` prüft die
+  serialisierten JSON-Keys gegen das `HealthContextResponse`-Interface (Drift-Guard).
+- [x] `trends/page.test.ts` an den neuen Datenfluss angepasst (Mock `fetchHealthContext`, Heading-Key).
+- [x] **Streak-Rückbau geprüft:** `fetchEntryStreak`/`EntryStreakResponse` sind frontendseitig nur noch
+  vom eigenen Client-Test + der Dev-Fixture referenziert; der Backend-`/stats/streak`-Endpoint bleibt
+  reale API → **bewusst belassen** (kein durch diese Änderung erzeugter Dead Code).
+- [x] `docs/FRONTEND.md`-Verweis auf den Trends-Datenreife-Block aktualisiert (Screen 4).
+- [ ] **Mobile-Check auf 360px** (echtes Gerät / DevTools): CSS umgesetzt (mobile-first, Umbruch,
+  einspaltige Meter, Cycle-Strip mit eigenem `overflow-x`); der visuelle Geräte-Check steht als
+  einziger offener Punkt aus (headless im CI-Container nicht sinnvoll ausführbar).
 
 ### Risiken / Hinweise
 
-- **Sleep-Coverage-Quelle:** entweder Timeseries `sleep_quality_avg` oder Entry-`sleep_*` — in Phase 1
-  eine Quelle als kanonisch festlegen (Konsistenz mit Engine-Sleep-Gate).
+- **Sleep-Coverage-Quelle:** ✅ aufgelöst in Phase 1 — kanonisch `Entry.sleep_minutes` (die Spalte,
+  die das Engine-Sleep-Gate `MIN_SLEEP_COLUMN_COVERAGE` steuert).
 - **Kein neuer Screen** (ADR-0017): alles bleibt im Trends-Panel.
 - **PR erst auf Zuruf** — kein automatischer PR (siehe Projektregeln).
 
