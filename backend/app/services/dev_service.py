@@ -105,21 +105,27 @@ def _probe_minio_sync() -> DevHealthComponent:
     return DevHealthComponent(name="minio", status=_status_value(status), detail=detail)
 
 
-def _probe_web_sync() -> DevHealthComponent | None:
-    status, detail = _tcp_probe_sync(_COMPOSE_WEB_HOST, _COMPOSE_WEB_PORT)
-    if status is None:
-        return None
-    return DevHealthComponent(name="web", status=_status_value(status), detail=detail)
-
-
 def _database_hostname() -> str:
     raw = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
     return (urlparse(raw).hostname or "").lower()
 
 
+def _running_on_compose_network() -> bool:
+    return _database_hostname() in _COMPOSE_DB_HOSTS
+
+
+def _probe_web_sync() -> DevHealthComponent | None:
+    status, detail = _tcp_probe_sync(_COMPOSE_WEB_HOST, _COMPOSE_WEB_PORT)
+    if status is None:
+        if _running_on_compose_network():
+            return DevHealthComponent(name="web", status="down", detail="stopped")
+        return None
+    return DevHealthComponent(name="web", status=_status_value(status), detail=detail)
+
+
 def _probe_worker_sync() -> DevHealthComponent | None:
     """Compose-only: DNS for ``worker``. Unresolved means the container stopped."""
-    if _database_hostname() not in _COMPOSE_DB_HOSTS:
+    if not _running_on_compose_network():
         return None
     try:
         socket.getaddrinfo(_COMPOSE_WORKER_HOST, None)

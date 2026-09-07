@@ -134,4 +134,25 @@ describe('devHealth', () => {
       { name: 'worker', issue: 'stopped' },
     ]);
   });
+
+  it('keeps probe faults for services missing from a partial Docker list', () => {
+    expect(
+      selectFaultyHomeContainers({
+        ...baseInfo,
+        containers: [
+          {
+            name: 'correlcore-postgres',
+            service: 'postgres',
+            state: 'running',
+            health: 'healthy',
+            issue: 'none',
+          },
+        ],
+        health_components: [
+          { name: 'postgres', status: 'ok' },
+          { name: 'worker', status: 'down', detail: 'stopped' },
+        ],
+      })
+    ).toEqual([{ name: 'worker', issue: 'stopped' }]);
+  });
 });

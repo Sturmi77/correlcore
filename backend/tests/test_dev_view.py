@@ -258,6 +258,7 @@ def test_tcp_probe_sync_ok_down_and_unresolved() -> None:
 
 def test_optional_probes_omit_unresolved_web_and_empty_smtp() -> None:
     settings.SMTP_HOST = ""
+    settings.DATABASE_URL = "postgresql+asyncpg://u:p@localhost:5432/correlcore"
     with patch(
         "app.services.dev_service._tcp_probe_sync",
         return_value=(None, "unresolved"),
@@ -268,6 +269,19 @@ def test_optional_probes_omit_unresolved_web_and_empty_smtp() -> None:
         assert minio.status == "down"
         assert minio.detail == "unresolved"
         assert _probe_smtp_sync() is None
+
+
+def test_web_probe_reports_stopped_on_compose_network() -> None:
+    settings.DATABASE_URL = "postgresql+asyncpg://u:p@postgres:5432/correlcore"
+    with patch(
+        "app.services.dev_service._tcp_probe_sync",
+        return_value=(None, "unresolved"),
+    ):
+        component = _probe_web_sync()
+    assert component is not None
+    assert component.name == "web"
+    assert component.status == "down"
+    assert component.detail == "stopped"
 
 
 def test_web_probe_lists_down_when_port_closed() -> None:

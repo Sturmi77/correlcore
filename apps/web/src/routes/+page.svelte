@@ -78,6 +78,7 @@
   let onboardingRedirecting = false;
   let faultyContainers: FaultyHomeContainer[] = [];
   let containerHealthKey = '';
+  let containerHealthGeneration = 0;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -91,8 +92,10 @@
 
   $: if (containerHealthRequest !== containerHealthKey) {
     containerHealthKey = containerHealthRequest;
+    containerHealthGeneration += 1;
+    const generation = containerHealthGeneration;
     if (containerHealthRequest === 'load') {
-      void loadFaultyContainers();
+      void loadFaultyContainers(generation);
     } else {
       faultyContainers = [];
     }
@@ -123,11 +126,17 @@
   );
   $: enabledHomeSections = preferencesLoaded ? resolveEnabledSections(homeSections) : [];
 
-  async function loadFaultyContainers(): Promise<void> {
+  async function loadFaultyContainers(generation: number): Promise<void> {
     try {
       const info = await fetchDevInfo();
+      if (generation !== containerHealthGeneration) return;
+      if (!insightWorkerIsOverdue(get(insightStore).lastInsightRun)) {
+        faultyContainers = [];
+        return;
+      }
       faultyContainers = selectFaultyHomeContainers(info);
     } catch (err) {
+      if (generation !== containerHealthGeneration) return;
       if (err instanceof ApiError && (err.status === 404 || err.status === 401)) {
         faultyContainers = [];
         return;

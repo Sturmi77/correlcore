@@ -16,6 +16,12 @@ export function healthStatusTone(status: string): DevHealthTone {
   return 'down';
 }
 
+export function containerIssueTone(issue: string): DevHealthTone {
+  if (issue === 'unhealthy') return 'down';
+  if (issue === 'stopped') return 'warn';
+  return 'ok';
+}
+
 export function insightWorkerNeverRan(
   run: { status: string; finished_at?: string | null } | null | undefined
 ): boolean {
@@ -35,29 +41,67 @@ export function insightWorkerIsOverdue(
   now: Date = new Date()
 ): boolean {
   if (insightWorkerNeverRan(run)) return true;
-  const finished = new Date(run.finished_at as string);
+  const finishedAt = run.finished_at;
+  if (!finishedAt) return true;
+  const finished = new Date(finishedAt);
   if (Number.isNaN(finished.getTime())) return true;
   const ageMs = now.getTime() - finished.getTime();
   return ageMs >= INSIGHT_WORKER_STALE_AFTER_HOURS * 60 * 60 * 1000;
 }
 
-export function selectFaultyHomeContainers(info: DevInfoResponse): FaultyHomeContainer[] {
-  if (info.containers?.length) {
-    return info.containers
-      .filter((container) => container.issue === 'unhealthy' || container.issue === 'stopped')
-      .map((container) => ({
-        name: container.service || container.name,
-        issue: container.issue,
-      }));
+function dockerIdentityKeys(info: DevInfoResponse): Set<string> {
+  const keys = new Set<string>();
+  for (const container of info.containers ?? []) {
+    if (container.service) keys.add(container.service.toLowerCase());
+    if (container.name) keys.add(container.name.toLowerCase());
   }
+  return keys;
+}
+
+function dockerCoversProbe(keys: Set<string>, probeName: string): boolean {
+  const needle = probeName.toLowerCase();
+  for (const key of keys) {
+    if (key === needle || key.includes(needle)) return true;
+  }
+  return false;
+}
+
+function faultyFromDocker(info: DevInfoResponse): FaultyHomeContainer[] {
+  return (info.containers ?? [])
+    .filter(
+      (container): container is typeof container & { issue: FaultyHomeContainer['issue'] } =>
+        container.issue === 'unhealthy' || container.issue === 'stopped'
+    )
+    .map((container) => ({
+      name: container.service || container.name,
+      issue: container.issue,
+    }));
+}
+
+function faultyFromProbes(info: DevInfoResponse): FaultyHomeContainer[] {
   return (info.health_components ?? [])
     .filter((component) => !HOME_PROBE_SKIP.has(component.name))
     .filter((component) => component.status === 'down' || component.status === 'degraded')
     .filter((component) => component.detail !== 'unresolved')
     .map((component) => ({
       name: component.name,
-      issue: component.detail === 'stopped' ? 'stopped' : 'unhealthy',
+      issue: component.detail === 'stopped' ? ('stopped' as const) : ('unhealthy' as const),
     }));
+}
+
+export function selectFaultyHomeContainers(info: DevInfoResponse): FaultyHomeContainer[] {
+  const fromDocker = faultyFromDocker(info);
+  const dockerKeys = dockerIdentityKeys(info);
+  const merged = [...fromDocker];
+  const seen = new Set(fromDocker.map((fault) => fault.name.toLowerCase()));
+  for (const fault of faultyFromProbes(info)) {
+    if (dockerCoversProbe(dockerKeys, fault.name) || seen.has(fault.name.toLowerCase())) {
+      continue;
+    }
+    seen.add(fault.name.toLowerCase());
+    merged.push(fault);
+  }
+  return merged;
 }
 
 export function resolveHealthComponents(

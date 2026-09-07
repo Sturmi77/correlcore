@@ -1714,6 +1714,13 @@
       "down": "down",
       "unavailable": "nicht erreichbar"
     },
+    "containers": "Docker-Container",
+    "containers_hint": "Engine-Status, wenn erreichbar (TCP-Proxy oder Host-docker-CLI). Saubere migrate-Exits gelten als none.",
+    "container_issue": {
+      "none": "ok",
+      "unhealthy": "unhealthy",
+      "stopped": "gestoppt"
+    },
     "db_pool_size": "DB-Pool-Groesse",
     "db_checked_out": "DB ausgecheckt",
     "na": "n/a",

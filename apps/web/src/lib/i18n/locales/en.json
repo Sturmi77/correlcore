@@ -1714,6 +1714,13 @@
       "down": "down",
       "unavailable": "unavailable"
     },
+    "containers": "Docker containers",
+    "containers_hint": "Engine state when reachable (TCP proxy or host docker CLI). Clean migrate exits are listed as none.",
+    "container_issue": {
+      "none": "ok",
+      "unhealthy": "unhealthy",
+      "stopped": "stopped"
+    },
     "db_pool_size": "DB Pool Size",
     "db_checked_out": "DB Checked Out",
     "na": "n/a",

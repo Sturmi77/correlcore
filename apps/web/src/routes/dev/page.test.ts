@@ -122,4 +122,34 @@ describe('/dev consolidation (#695)', () => {
     expect(screen.getByTestId('dev-health-encryption')).toBeTruthy();
     expect(screen.getByTestId('dev-health-minio').textContent).toContain('unresolved');
   });
+
+  it('renders Docker container state on the runtime tab', async () => {
+    fetchDevInfo.mockResolvedValue({
+      ...sampleInfo,
+      containers: [
+        {
+          name: 'correlcore-worker',
+          service: 'worker',
+          state: 'exited',
+          health: 'none',
+          exit_code: 137,
+          issue: 'stopped',
+          status_text: 'Exited (137) 4 minutes ago',
+        },
+      ],
+    });
+    fetchWorkerRunsLatest.mockResolvedValue({
+      daily_bundle: null,
+      fleet_insights: null,
+      user_insights: null,
+    });
+    fetchWorkerRuns.mockResolvedValue({ items: [] });
+    fetchDevDbBackups.mockResolvedValue({ items: [], backup_dir: '/tmp' });
+
+    render(Page);
+    await fireEvent.click(await screen.findByTestId('dev-tab-runtime'));
+
+    expect(await screen.findByTestId('dev-containers')).toBeTruthy();
+    expect(screen.getByTestId('dev-container-worker').textContent).toContain('stopped');
+  });
 });

@@ -13,10 +13,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - **Developer View stack health** — `/dev` Runtime lists per-service reachability
   (API, Postgres, Redis, encryption, Web, worker, MinIO, SMTP/Mailpit) from
   application probes, plus Docker container state when the Engine API is
-  reachable. Home shows unhealthy/stopped containers next to the analysis badge
-  when client developer mode is on and the insight worker has never run or the
-  last USER_INSIGHTS run is older than 30h (missed nightly cadence).
-  A clean `migrate` exit (0) is ignored.
+  reachable (TCP proxy / host CLI; not attached in production compose). Home
+  shows unhealthy/stopped containers next to the analysis badge when client
+  developer mode is on and the insight worker has never run or the last
+  USER_INSIGHTS run is older than 30h (missed nightly cadence). A clean
+  `migrate` exit (0) is ignored.
 
 ## [1.7.1] — 2026-09-06
 

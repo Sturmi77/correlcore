@@ -31,7 +31,11 @@
     type DevInsightMaturity,
   } from '$lib/stores/devMode';
   import { DEV_PHASE_PRESETS, type DevPhasePresetId } from '$lib/dev/phaseFixtures';
-  import { resolveHealthComponents, healthStatusTone } from '$lib/utils/devHealth';
+  import {
+    containerIssueTone,
+    healthStatusTone,
+    resolveHealthComponents,
+  } from '$lib/utils/devHealth';
 
   const COMMIT_BASE_URL = 'https://github.com/sturmi77/correlcore/commit/';
   const REFRESH_MS = 30_000;
@@ -471,6 +475,31 @@
               </li>
             {/each}
           </ul>
+          {#if info.containers?.length}
+            <h3 class="dev__subheading">{$_('dev.containers')}</h3>
+            <p class="dev__muted">{$_('dev.containers_hint')}</p>
+            <ul class="dev__status-list" data-testid="dev-containers">
+              {#each info.containers as container (container.name)}
+                {@const tone = containerIssueTone(container.issue)}
+                <li
+                  class:dev__ok={tone === 'ok'}
+                  class:dev__warn={tone === 'warn'}
+                  class:dev__down={tone === 'down'}
+                  data-testid="dev-container-{container.service || container.name}"
+                >
+                  <span class="dev__service-name">{container.service || container.name}</span>
+                  <span>
+                    {$_(`dev.container_issue.${container.issue}`)}
+                    {#if container.status_text}
+                      <span class="dev__subtle">({container.status_text})</span>
+                    {:else if container.state}
+                      <span class="dev__subtle">({container.state})</span>
+                    {/if}
+                  </span>
+                </li>
+              {/each}
+            </ul>
+          {/if}
           <dl class="dev__facts dev__facts--compact">
             <div>
               <dt>{$_('dev.db_pool_size')}</dt>

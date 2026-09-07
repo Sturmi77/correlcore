@@ -2,9 +2,10 @@
 
 ADR-0015 forbids mounting the Docker socket into the API container. This
 module only talks to the Engine API over ``DOCKER_HOST`` / ``DEV_DOCKER_HOST``
-(typically ``tcp://socket-proxy:2375``) or the host ``docker`` CLI when that
-binary is on PATH (local uvicorn). Failures are swallowed — the /dev view
-still has application-level probes.
+(typically ``tcp://socket-proxy:2375`` on a non-production overlay) or the
+host ``docker`` CLI when that binary is on PATH (local uvicorn). Production
+skips the CLI fallback. Failures are swallowed — the /dev view still has
+application-level probes.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ import os
 import re
 import shutil
 import subprocess
-from typing import Any
+from typing import Any, Literal
 from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -27,15 +28,26 @@ logger = logging.getLogger(__name__)
 
 _EXIT_CODE_RE = re.compile(r"Exited \((\-?\d+)\)", re.IGNORECASE)
 _STACK_NAME_RE = re.compile(r"^correlcore", re.IGNORECASE)
-_COMPOSE_PROJECT_PREFIX = "correlcore"
+_DEFAULT_COMPOSE_PROJECT = "correlcore"
 _CLI_TIMEOUT_SECONDS = 3.0
 _HTTP_TIMEOUT_SECONDS = 2.0
+_ALLOWED_ENGINE_HOSTS = frozenset(
+    {"socket-proxy", "localhost", "127.0.0.1", "::1", "host.docker.internal"}
+)
+_STOPPED_STATES = frozenset(
+    {"exited", "dead", "paused", "stopped", "restarting", "created", "removing"}
+)
+
+DevContainerHealthFlag = Literal["healthy", "unhealthy", "starting", "none"]
+DevContainerIssue = Literal["unhealthy", "stopped", "none"]
 
 
 def list_stack_containers() -> list[DevContainerHealth]:
-    raw_rows = _load_raw_containers()
-    containers = [_normalize_container(row) for row in raw_rows]
-    return [container for container in containers if _is_stack_container(container)]
+    return [
+        _normalize_container(row)
+        for row in _load_raw_containers()
+        if _raw_belongs_to_stack(row)
+    ]
 
 
 def _load_raw_containers() -> list[dict[str, Any]]:
@@ -57,7 +69,9 @@ def _engine_http_base() -> str | None:
 def _list_via_engine_http(docker_host: str) -> list[dict[str, Any]] | None:
     parsed = urlparse(docker_host if "://" in docker_host else f"tcp://{docker_host}")
     host = parsed.hostname
-    if not host:
+    if not host or host.lower() not in _ALLOWED_ENGINE_HOSTS:
+        if host:
+            logger.info("dev docker engine host rejected: %s", host)
         return None
     port = parsed.port or 2375
     url = f"http://{host}:{port}/containers/json?all=true"
@@ -73,6 +87,8 @@ def _list_via_engine_http(docker_host: str) -> list[dict[str, Any]] | None:
 
 
 def _list_via_cli() -> list[dict[str, Any]]:
+    if settings.APP_ENV.lower() == "production":
+        return []
     docker = shutil.which("docker")
     if not docker:
         return []
@@ -152,7 +168,7 @@ def _service_from_name(name: str) -> str:
     return stripped or name
 
 
-def _health_from_status(status: str) -> str:
+def _health_from_status(status: str) -> DevContainerHealthFlag:
     lower = status.lower()
     if "(unhealthy)" in lower:
         return "unhealthy"
@@ -173,12 +189,18 @@ def _exit_code_from_status(status: str) -> int | None:
         return None
 
 
-def _is_stack_container(container: DevContainerHealth) -> bool:
-    if _STACK_NAME_RE.match(container.name):
-        return True
-    return container.service not in {"", container.name} and container.name.startswith(
-        _COMPOSE_PROJECT_PREFIX
-    )
+def _expected_compose_project() -> str:
+    return os.environ.get("COMPOSE_PROJECT_NAME", "").strip()
+
+
+def _raw_belongs_to_stack(raw: dict[str, Any]) -> bool:
+    project = _labels(raw).get("com.docker.compose.project", "").strip()
+    expected = _expected_compose_project()
+    if expected:
+        return project == expected
+    if project:
+        return project == _DEFAULT_COMPOSE_PROJECT
+    return bool(_STACK_NAME_RE.match(_container_name(raw)))
 
 
 def _is_clean_one_shot(service: str, name: str, state: str, exit_code: int | None) -> bool:
@@ -195,11 +217,11 @@ def _issue_for(
     service: str,
     name: str,
     exit_code: int | None,
-) -> str:
+) -> DevContainerIssue:
     if _is_clean_one_shot(service, name, state, exit_code):
         return "none"
     if health == "unhealthy":
         return "unhealthy"
-    if state in {"exited", "dead", "paused", "stopped", "restarting"}:
+    if state in _STOPPED_STATES:
         return "stopped"
     return "none"

@@ -139,8 +139,6 @@ services:
     env_file: .env
     environment:
       <<: *api-env
-      # Read-only Engine API via socket-proxy (SEC-03). Used by /dev container health.
-      DOCKER_HOST: tcp://socket-proxy:2375
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -160,7 +158,6 @@ services:
     networks:
       - internal
       - edge
-      - socket
     security_opt:
       - no-new-privileges:true
     healthcheck:
