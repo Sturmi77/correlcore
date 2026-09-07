@@ -1,7 +1,7 @@
 # Feature Spec: Health Data Maturity (Trends „Health Context")
 
-**Status:** Draft — Entscheidungen D1–D7 aufgelöst; Freeze steht noch aus (offen: Beispiel-Fixtures §9)
-**Version:** 0.2.0
+**Status:** Draft — D1–D7 aufgelöst, UI-Abgleich (G1–G6) eingearbeitet; Freeze offen (Beispiel-Fixtures §9)
+**Version:** 0.3.0
 **Created:** 2026-09-07
 **Updated:** 2026-09-07
 **Owner:** @Sturmi77
@@ -107,13 +107,15 @@ Es gibt **kein** einheitliches „Engine-Fenster" — der Code nutzt mehrere:
   (fest **90**, nicht per Query konfigurierbar in v1) ausgeliefert, damit die UI es beschriften kann.
 - **Gate-Kopplung [D5 — Hybrid]:** Zwei Ebenen:
   1. **Maturity-Phase** (`collecting → early_patterns → provisional → robust`) dient als **grobe
-     Fortschritts-/Kontext-Anzeige** (Chip + „noch N Einträge").
+     Fortschritts-/Kontext-Anzeige**. Diese Ebene wird **nicht neu gebaut**, sondern durch
+     Wiederverwendung der bestehenden Komponente **`InsightStageHeader`** dargestellt (siehe §7.6 / G1) —
+     es darf keine zweite Readiness-Fläche entstehen (FRONTEND.md:352).
   2. Die **tatsächliche Sektions-Freischaltung** (`unlocked`) hängt am **echten Feature-Threshold**:
      Symptom ab 15 Entries, Sleep ab Coverage ≥ 0.5 **und** ≥ 15 Beobachtungen, (später) Cluster 45/90.
 
-  Damit zeigt der Chip den Gesamtfortschritt, während jede Sektion unabhängig freischaltet — konsistent
-  mit dem, was die Engine je Feature wirklich rechnet. Das Backend bleibt einziger Owner beider Ebenen;
-  das Frontend rendert nur (§5).
+  Damit zeigt der Reife-Kopf den Gesamtfortschritt, während jede Sektion unabhängig freischaltet —
+  konsistent mit dem, was die Engine je Feature wirklich rechnet. Das Backend bleibt einziger Owner
+  beider Ebenen; das Frontend rendert nur (§5).
 
 ---
 
@@ -204,6 +206,24 @@ Eine spätere Auslagerung in einen eigenen Bereich bleibt möglich, ist aber v1 
 Dieser Block zeigt **Reife/Abdeckung + Deep-Links**, **nicht** die Analyse selbst. Symptom-Muster leben
 in Insights-Symptom-Analytics; Wearable-Import/Consent lebt im HC-Hub.
 
+### 7.6 UI-Konventionen (Abgleich mit realem UI — G1–G6)
+
+Aus dem Abgleich Mockup ↔ echte Komponenten (`InsightStageHeader.svelte`) + FRONTEND.md. Diese Regeln
+sind **verbindlich** für die Implementierung:
+
+| # | Regel | Referenz |
+| - | ----- | -------- |
+| **G1** | **Keine zweite Readiness-Fläche.** Die Reife/Phase wird ausschließlich über die geteilte Komponente **`InsightStageHeader`** dargestellt (wiederverwenden, nicht nachbauen). Alternativ nur Deep-Link zu Insights. | FRONTEND.md:352 „only default phase/readiness surface" |
+| **G2** | **Keine Emoji** in Progress-/Lock-/Warn-Anzeigen. Lucide-Icons (`@lucide/svelte`, z. B. `Lock`, `HelpCircle`). | FRONTEND.md:601, :73/:77 |
+| **G3** | Coverage-Balken als **`role="meter"`** mit `aria-valuemin/max/now` + `aria-label` (analog `.stage__track`). | `InsightStageHeader.svelte:78-85` |
+| **G4** | Interaktive Elemente (Deep-Links, Hilfe) mit **≥ 44px** Trefferfläche. | `.stage__text-button { min-height: 44px }` |
+| **G5** | **Bestehende i18n-Keys wiederverwenden** (`maturity.{phase}.label`, `maturity.journey.compact_entries_until_next`, `insights.stage.readiness_label`) statt neuer Reife-Copy — verhindert Wording-Drift. | en/de.json `maturity.*` |
+| **G6** | Falls Reife-Kopf gerendert wird: exakter Stil der Komponente (`N/4`-Marker, `--color-text-inverse`, `--radius-full`), keine Bespoke-Chips. | `InsightStageHeader.svelte` |
+
+**Bereits konform (kein Handlungsbedarf):** einfarbige Meter-Skala ohne Rot/Grün-Urteil
+(FRONTEND.md/ADR-0035), keine Streak-Rekorde (neutrales „X von Y Tagen"), deskriptive statt imperative
+Copy (FRONTEND.md:601), Theme-aware, Progressive Disclosure statt leerer „unavailable"-Fläche.
+
 ---
 
 ## 8. Privacy / Logging
@@ -239,6 +259,8 @@ _(Werte werden nach Auflösung von §4 ergänzt.)_
 - [ ] Contract-/UI-Tests (`trends/page.test.ts` + Komponenten-/API-Tests).
 - [ ] Titel und Inhalt deckungsgleich; keine gamifizierenden Streak-Rekord-Zahlen.
 - [ ] Cycle-Overlay klar getrennt oder mit migriert.
+- [ ] UI-Konventionen §7.6 erfüllt: `InsightStageHeader` wiederverwendet (G1), keine Emoji (G2),
+      `role="meter"` (G3), 44px-Trefferflächen (G4), i18n-Reuse (G5).
 
 ---
 
