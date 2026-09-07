@@ -40,10 +40,8 @@ export function insightWorkerIsOverdue(
   run: { status: string; finished_at?: string | null } | null | undefined,
   now: Date = new Date()
 ): boolean {
-  if (insightWorkerNeverRan(run)) return true;
-  const finishedAt = run.finished_at;
-  if (!finishedAt) return true;
-  const finished = new Date(finishedAt);
+  if (!run || run.status === 'never_run' || !run.finished_at) return true;
+  const finished = new Date(run.finished_at);
   if (Number.isNaN(finished.getTime())) return true;
   const ageMs = now.getTime() - finished.getTime();
   return ageMs >= INSIGHT_WORKER_STALE_AFTER_HOURS * 60 * 60 * 1000;

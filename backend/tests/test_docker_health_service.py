@@ -150,7 +150,9 @@ def test_list_stack_containers_respects_compose_project_name(monkeypatch) -> Non
 def test_engine_http_rejects_non_allowlisted_host(monkeypatch) -> None:
     from app.services import docker_health_service
 
-    monkeypatch.setattr(docker_health_service.settings, "DEV_DOCKER_HOST", "tcp://evil.example:2375")
+    monkeypatch.setattr(
+        docker_health_service.settings, "DEV_DOCKER_HOST", "tcp://evil.example:2375"
+    )
     monkeypatch.setattr(docker_health_service.settings, "APP_ENV", "development")
     monkeypatch.setattr(docker_health_service, "_list_via_cli", lambda: [])
     assert list_stack_containers() == []

@@ -44,9 +44,7 @@ DevContainerIssue = Literal["unhealthy", "stopped", "none"]
 
 def list_stack_containers() -> list[DevContainerHealth]:
     return [
-        _normalize_container(row)
-        for row in _load_raw_containers()
-        if _raw_belongs_to_stack(row)
+        _normalize_container(row) for row in _load_raw_containers() if _raw_belongs_to_stack(row)
     ]
 
 
