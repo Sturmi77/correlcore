@@ -1,7 +1,7 @@
 # Feature Spec: Health Data Maturity (Trends „Health Context")
 
-**Status:** Draft — D1–D7 aufgelöst, UI-Abgleich (G1–G6) eingearbeitet; Freeze offen (Beispiel-Fixtures §9)
-**Version:** 0.3.0
+**Status:** Freeze-Kandidat (v1.0.0-rc) — D1–D7 aufgelöst, UI-Abgleich (G1–G7) + Fixtures (§9) vollständig; bereit für Review-Gate (§Weg zur Spec, Schritt 5)
+**Version:** 1.0.0-rc.1
 **Created:** 2026-09-07
 **Updated:** 2026-09-07
 **Owner:** @Sturmi77
@@ -14,8 +14,9 @@
 
 Dieses Dokument ist ein **Spec-Entwurf im Dialog**. Bereits getroffene Entscheidungen sind
 als **[ENTSCHIEDEN]** markiert, noch offene Forks als **[OFFEN]** mit einer Empfehlung.
-Die Spec gilt erst als _freezebar_, wenn (a) alle **[OFFEN]**-Punkte aufgelöst und (b) die
-drei Beispiel-Fixtures (§9) ohne Diskussion passen (Issue-Schritt 4 + 5).
+Stand v1.0.0-rc: (a) alle **[OFFEN]**-Punkte sind aufgelöst und (b) die drei Beispiel-Fixtures (§9)
+sind ausformuliert und folgen ohne Diskussion aus §3–§5. Damit ist die Spec inhaltlich freezebar;
+es fehlt nur noch das Review-Gate (Issue-Schritt 5).
 
 Änderungen an Formeln, Fenstern oder Gates nach dem Freeze nur mit Spec-Diff (Issue-Schritt 5).
 
@@ -239,16 +240,84 @@ Copy (FRONTEND.md:601), Theme-aware, Progressive Disclosure statt leerer „unav
 
 ---
 
-## 9. Beispiel-Fixtures [SPÄTER — Freeze-Kriterium]
+## 9. Beispiel-Fixtures [ENTSCHIEDEN — Freeze-Kriterium]
 
-Drei User-Profile als JSON-Fixtures mit erwarteter Panel-Ausgabe; Spec gilt erst als freezebar, wenn
-alle drei ohne Diskussion passen (Issue-Schritt 4):
+Drei User-Profile als Fixtures (DTO-Response + erwartete Panel-Ausgabe). Die Spec gilt als **freezebar**,
+weil alle drei ohne Diskussion aus den Regeln §3–§5 folgen (Issue-Schritt 4/5). Fenster überall 90 Tage,
+Gates per Feature-Threshold (Symptom ≥ 15 Entries; Sleep Coverage ≥ 0.5 & ≥ 15 Beobachtungen).
+Diese JSON-Blöcke sind die kanonische Grundlage für die Backend- und Contract-Tests.
 
-1. **Neu** (< 7 Entries): Phase `collecting`, alle Sektionen `unlocked:false`, Coverage niedrig.
-2. **Sleep-arm** (viele Entries, wenig Sleep): Symptom unlocked, Sleep `insufficient_coverage`.
-3. **Symptom-reich**: Symptom + Maturity hoch, Sleep mittel.
+### 9.1 Profil „Neu" (< 7 Entries)
 
-_(Werte werden nach Auflösung von §4 ergänzt.)_
+```json
+{
+  "as_of": "2026-09-07",
+  "coverage_window_days": 90,
+  "maturity": { "phase": "collecting", "phase_index": 1, "current_entries": 4, "next_phase_at": 7, "entries_until_next": 3 },
+  "coverage": {
+    "entry":   { "days_with_data": 4, "window_days": 90, "pct": 0.04 },
+    "sleep":   { "days_with_data": 2, "window_days": 90, "pct": 0.02 },
+    "symptom": { "days_with_data": 1, "window_days": 90, "pct": 0.01 }
+  },
+  "sections": [
+    { "id": "symptom", "unlocked": false, "reason": "insufficient_entries",  "entries_until_unlock": 11,   "copy_key": "trends.maturity.symptom.insufficient_entries" },
+    { "id": "sleep",   "unlocked": false, "reason": "insufficient_coverage", "entries_until_unlock": null, "copy_key": "trends.maturity.sleep.insufficient_coverage" }
+  ],
+  "health_connect": null
+}
+```
+
+**Erwartete Panel-Ausgabe:** Reife-Kopf `1/4 · Daten sammeln · 4/7 Einträge, noch 3 bis Erste Muster`
+(Meter ~57 %). Entry-Coverage 4 % („4 von 90 Tagen"). Symptom **gesperrt** („noch 11 Einträge …"),
+Sleep **gesperrt** („zu wenig Schlafdaten …"). Kein Cycle-Strip.
+
+### 9.2 Profil „Sleep-arm" (viele Entries, wenig Sleep)
+
+```json
+{
+  "as_of": "2026-09-07",
+  "coverage_window_days": 90,
+  "maturity": { "phase": "provisional", "phase_index": 3, "current_entries": 24, "next_phase_at": 30, "entries_until_next": 6 },
+  "coverage": {
+    "entry":   { "days_with_data": 61, "window_days": 90, "pct": 0.68 },
+    "sleep":   { "days_with_data": 18, "window_days": 90, "pct": 0.20 },
+    "symptom": { "days_with_data": 44, "window_days": 90, "pct": 0.49 }
+  },
+  "sections": [
+    { "id": "symptom", "unlocked": true,  "reason": "ok",                    "entries_until_unlock": null, "copy_key": "trends.maturity.symptom.ok" },
+    { "id": "sleep",   "unlocked": false, "reason": "insufficient_coverage", "entries_until_unlock": null, "copy_key": "trends.maturity.sleep.insufficient_coverage" }
+  ],
+  "health_connect": null
+}
+```
+
+**Erwartete Panel-Ausgabe:** Reife-Kopf `3/4 · Vorläufig · 24/30 Einträge, noch 6 bis Robust`
+(Meter ~62 %). Entry 68 %, Symptom 49 % **frei** (+ Deep-Link Insights-Symptome), Sleep 20 %
+**gesperrt** („Sleep-Insights ab 50 % Abdeckung"). Kein Cycle-Strip.
+
+### 9.3 Profil „Symptom-reich" (robust, mit Health-Connect)
+
+```json
+{
+  "as_of": "2026-09-07",
+  "coverage_window_days": 90,
+  "maturity": { "phase": "robust", "phase_index": 4, "current_entries": 96, "next_phase_at": null, "entries_until_next": null },
+  "coverage": {
+    "entry":   { "days_with_data": 82, "window_days": 90, "pct": 0.91 },
+    "sleep":   { "days_with_data": 58, "window_days": 90, "pct": 0.64 },
+    "symptom": { "days_with_data": 75, "window_days": 90, "pct": 0.83 }
+  },
+  "sections": [
+    { "id": "symptom", "unlocked": true, "reason": "ok", "entries_until_unlock": null, "copy_key": "trends.maturity.symptom.ok" },
+    { "id": "sleep",   "unlocked": true, "reason": "ok", "entries_until_unlock": null, "copy_key": "trends.maturity.sleep.ok" }
+  ],
+  "health_connect": { "consent": true, "last_sync_at": "2026-09-06T22:10:00Z", "sleep_import_ok": true }
+}
+```
+
+**Erwartete Panel-Ausgabe:** Reife-Kopf `4/4 · Robust · 96 Einträge, robust` (Meter 100 %). Entry 91 %,
+Symptom 83 %, Sleep 64 % — alle **frei**. Cycle-Strip erscheint als **eigene, neutrale** Sektion.
+`health_connect` belegt (Anzeige v1 optional; kein Klartext-Gesundheitswert, nur Meta).
 
 ---
 
@@ -281,8 +350,10 @@ Alle sieben Forks sind im Spec-Dialog (2026-09-07) entschieden:
 | D6 | Health-Connect-Status ins DTO? | ✅ ENTSCHIEDEN | **optionales Feld** `health_connect`, Anzeige v1 optional |
 | D7 | Endpoint-Pfad | ✅ ENTSCHIEDEN | **`/api/v1/entries/stats/health-context`** |
 
-**Verbleibend bis Freeze:** Beispiel-Fixtures (§9) mit erwarteter Panel-Ausgabe — Freeze-Kriterium laut
-Issue-Schritt 4/5.
+**Verbleibend bis Freeze:** nur noch das **Review-Gate** (Frontend + Backend gegenzeichnen,
+Issue-Schritt 5). Inhaltlich ist die Spec vollständig — alle Entscheidungen (D1–D7), UI-Konventionen
+(G1–G7) und Fixtures (§9) sind ausformuliert. Nach dem Gegenzeichnen: Status → `Accepted`, dann C-full
+implementieren.
 
 ---
 
