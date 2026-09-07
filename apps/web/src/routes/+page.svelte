@@ -29,7 +29,7 @@
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
   import {
-    insightWorkerNeverRan,
+    insightWorkerIsOverdue,
     selectFaultyHomeContainers,
     type FaultyHomeContainer,
   } from '$lib/utils/devHealth';
@@ -85,9 +85,9 @@
   $: insightMaturity = $insightStore.insightMaturity;
   $: lastInsightRun = $insightStore.lastInsightRun;
   $: insightLoading = $insightStore.loading;
-  $: workerNeverRan = !insightLoading && insightWorkerNeverRan(lastInsightRun);
+  $: workerNeedsContainerHealth = !insightLoading && insightWorkerIsOverdue(lastInsightRun);
   $: containerHealthRequest =
-    $auth.status === 'authenticated' && $devMode && workerNeverRan ? 'load' : 'skip';
+    $auth.status === 'authenticated' && $devMode && workerNeedsContainerHealth ? 'load' : 'skip';
 
   $: if (containerHealthRequest !== containerHealthKey) {
     containerHealthKey = containerHealthRequest;

@@ -22,6 +22,25 @@ export function insightWorkerNeverRan(
   return !run || run.status === 'never_run' || !run.finished_at;
 }
 
+/**
+ * Nightly USER_INSIGHTS cadence is ~24h (03:00 UTC). 30h matches
+ * ``WORKER_STALE_AFTER_HOURS`` so Home container warnings fire after a missed
+ * scheduled run, before a second night is at risk — tighter than the 40h
+ * end-user InsightFeed banner.
+ */
+export const INSIGHT_WORKER_STALE_AFTER_HOURS = 30;
+
+export function insightWorkerIsOverdue(
+  run: { status: string; finished_at?: string | null } | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (insightWorkerNeverRan(run)) return true;
+  const finished = new Date(run.finished_at as string);
+  if (Number.isNaN(finished.getTime())) return true;
+  const ageMs = now.getTime() - finished.getTime();
+  return ageMs >= INSIGHT_WORKER_STALE_AFTER_HOURS * 60 * 60 * 1000;
+}
+
 export function selectFaultyHomeContainers(info: DevInfoResponse): FaultyHomeContainer[] {
   if (info.containers?.length) {
     return info.containers

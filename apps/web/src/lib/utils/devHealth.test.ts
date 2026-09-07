@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   fallbackHealthComponents,
   healthStatusTone,
+  insightWorkerIsOverdue,
   insightWorkerNeverRan,
   resolveHealthComponents,
   selectFaultyHomeContainers,
@@ -66,6 +67,17 @@ describe('devHealth', () => {
     expect(insightWorkerNeverRan({ status: 'never_run', finished_at: null })).toBe(true);
     expect(
       insightWorkerNeverRan({ status: 'succeeded', finished_at: '2026-09-07T03:00:00Z' })
+    ).toBe(false);
+  });
+
+  it('treats a missed nightly cadence as overdue', () => {
+    const now = new Date('2026-09-08T12:00:00Z');
+    expect(insightWorkerIsOverdue(null, now)).toBe(true);
+    expect(
+      insightWorkerIsOverdue({ status: 'succeeded', finished_at: '2026-09-07T03:00:00Z' }, now)
+    ).toBe(true);
+    expect(
+      insightWorkerIsOverdue({ status: 'succeeded', finished_at: '2026-09-07T10:00:00Z' }, now)
     ).toBe(false);
   });
 
