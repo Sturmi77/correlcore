@@ -1,5 +1,25 @@
 import { api } from './client';
 
+export type DevHealthStatus = 'ok' | 'degraded' | 'down' | 'unavailable';
+
+export interface DevHealthComponent {
+  name: string;
+  status: DevHealthStatus;
+  detail?: string;
+}
+
+export type DevContainerIssue = 'unhealthy' | 'stopped' | 'none';
+
+export interface DevContainerHealth {
+  name: string;
+  service: string;
+  state: string;
+  health: 'healthy' | 'unhealthy' | 'starting' | 'none';
+  exit_code?: number | null;
+  issue: DevContainerIssue;
+  status_text?: string;
+}
+
 export interface DevInfoResponse {
   image_hash: string;
   image_digest: string | null;
@@ -16,6 +36,8 @@ export interface DevInfoResponse {
   minio_connected: boolean;
   health_ready: boolean;
   uptime_seconds: number;
+  health_components?: DevHealthComponent[];
+  containers?: DevContainerHealth[];
 }
 
 export interface WorkerRunResponse {

@@ -1721,6 +1721,40 @@ export interface components {
             /** Password */
             password: string;
         };
+        /**
+         * DevContainerHealth
+         * @description Docker-reported state for one Compose/stack container.
+         *
+         *     ``issue`` is ``none`` for a clean one-shot (migrate exited 0) even though
+         *     the container is stopped.
+         */
+        DevContainerHealth: {
+            /** Exit Code */
+            exit_code?: number | null;
+            /**
+             * Health
+             * @default none
+             * @enum {string}
+             */
+            health: "healthy" | "unhealthy" | "starting" | "none";
+            /**
+             * Issue
+             * @default none
+             * @enum {string}
+             */
+            issue: "unhealthy" | "stopped" | "none";
+            /** Name */
+            name: string;
+            /** Service */
+            service: string;
+            /** State */
+            state: string;
+            /**
+             * Status Text
+             * @default
+             */
+            status_text: string;
+        };
         /** DevDbBackupCreateResponse */
         DevDbBackupCreateResponse: {
             backup: components["schemas"]["DevDbBackupItem"];
@@ -1794,10 +1828,33 @@ export interface components {
              */
             status: "ok";
         };
+        /**
+         * DevHealthComponent
+         * @description Reachability of one stack service as seen from the API process.
+         *
+         *     This is an application-level probe (TCP / SELECT 1 / PING), not Docker
+         *     HEALTHCHECK state. ADR-0015 forbids a Docker socket in the API container.
+         */
+        DevHealthComponent: {
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "degraded" | "down" | "unavailable";
+        };
         /** DevInfoResponse */
         DevInfoResponse: {
             /** Build Time */
             build_time: string | null;
+            /** Containers */
+            containers?: components["schemas"]["DevContainerHealth"][];
             /** Db Checked Out */
             db_checked_out: number | null;
             /** Db Migration Head */
@@ -1810,6 +1867,8 @@ export interface components {
             git_branch: string;
             /** Git Commit */
             git_commit: string;
+            /** Health Components */
+            health_components?: components["schemas"]["DevHealthComponent"][];
             /** Health Ready */
             health_ready: boolean;
             /** Image Digest */

@@ -137,7 +137,8 @@ services:
     container_name: correlcore-api
     restart: unless-stopped
     env_file: .env
-    environment: *api-env
+    environment:
+      <<: *api-env
     depends_on:
       migrate:
         condition: service_completed_successfully

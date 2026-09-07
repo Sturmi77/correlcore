@@ -31,6 +31,11 @@
     type DevInsightMaturity,
   } from '$lib/stores/devMode';
   import { DEV_PHASE_PRESETS, type DevPhasePresetId } from '$lib/dev/phaseFixtures';
+  import {
+    containerIssueTone,
+    healthStatusTone,
+    resolveHealthComponents,
+  } from '$lib/utils/devHealth';
 
   const COMMIT_BASE_URL = 'https://github.com/sturmi77/correlcore/commit/';
   const REFRESH_MS = 30_000;
@@ -64,6 +69,7 @@
   let activeCommitUrl: string | null = null;
 
   $: activeCommitUrl = info ? commitUrl(info.git_commit) : null;
+  $: healthComponents = info ? resolveHealthComponents(info) : [];
 
   // Dev-Visualization (client-only fixtures) — moved here from Settings (#695).
   const devInsightPhases: DevInsightMaturity[] = [
@@ -439,18 +445,61 @@
 
         <article class="dev__panel">
           <h2>{$_('dev.infrastructure')}</h2>
-          <div class="dev__status-list">
-            <span class:dev__ok={info.health_ready} class:dev__down={!info.health_ready}>
-              {$_('dev.health')}
-              {info.health_ready ? $_('dev.ready') : $_('dev.not_ready')}
-            </span>
-            <span class:dev__ok={info.redis_connected} class:dev__down={!info.redis_connected}>
-              Redis {info.redis_connected ? $_('dev.connected') : $_('dev.down')}
-            </span>
-            <span class:dev__ok={info.minio_connected} class:dev__down={!info.minio_connected}>
-              MinIO {info.minio_connected ? $_('dev.connected') : $_('dev.down')}
-            </span>
-          </div>
+          <span
+            class:dev__ok={info.health_ready}
+            class:dev__down={!info.health_ready}
+            class="dev__overall"
+          >
+            {$_('dev.health')}
+            {info.health_ready ? $_('dev.ready') : $_('dev.not_ready')}
+          </span>
+          <h3 class="dev__subheading">{$_('dev.services')}</h3>
+          <p class="dev__muted">{$_('dev.services_hint')}</p>
+          <ul class="dev__status-list" data-testid="dev-health-components">
+            {#each healthComponents as component (component.name)}
+              {@const tone = healthStatusTone(component.status)}
+              <li
+                class:dev__ok={tone === 'ok'}
+                class:dev__warn={tone === 'warn'}
+                class:dev__down={tone === 'down'}
+                class:dev__muted-chip={tone === 'muted'}
+                data-testid="dev-health-{component.name}"
+              >
+                <span class="dev__service-name">{component.name}</span>
+                <span>
+                  {$_(`dev.component_status.${component.status}`)}
+                  {#if component.detail}
+                    <span class="dev__subtle">({component.detail})</span>
+                  {/if}
+                </span>
+              </li>
+            {/each}
+          </ul>
+          {#if info.containers?.length}
+            <h3 class="dev__subheading">{$_('dev.containers')}</h3>
+            <p class="dev__muted">{$_('dev.containers_hint')}</p>
+            <ul class="dev__status-list" data-testid="dev-containers">
+              {#each info.containers as container (container.name)}
+                {@const tone = containerIssueTone(container.issue)}
+                <li
+                  class:dev__ok={tone === 'ok'}
+                  class:dev__warn={tone === 'warn'}
+                  class:dev__down={tone === 'down'}
+                  data-testid="dev-container-{container.service || container.name}"
+                >
+                  <span class="dev__service-name">{container.service || container.name}</span>
+                  <span>
+                    {$_(`dev.container_issue.${container.issue}`)}
+                    {#if container.status_text}
+                      <span class="dev__subtle">({container.status_text})</span>
+                    {:else if container.state}
+                      <span class="dev__subtle">({container.state})</span>
+                    {/if}
+                  </span>
+                </li>
+              {/each}
+            </ul>
+          {/if}
           <dl class="dev__facts dev__facts--compact">
             <div>
               <dt>{$_('dev.db_pool_size')}</dt>
@@ -920,13 +969,25 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
 
-  .dev__status-list span {
+  .dev__status-list li,
+  .dev__overall {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.5rem;
     padding: 0.35rem 0.55rem;
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
     font-weight: 700;
+  }
+
+  .dev__service-name {
+    text-transform: capitalize;
   }
 
   .dev__ok {
@@ -934,9 +995,19 @@
     background: color-mix(in oklch, var(--color-success) 14%, var(--color-surface));
   }
 
+  .dev__warn {
+    color: var(--color-warning);
+    background: color-mix(in oklch, var(--color-warning) 14%, var(--color-surface));
+  }
+
   .dev__down {
     color: var(--color-error);
     background: var(--color-error-highlight);
+  }
+
+  .dev__muted-chip {
+    color: var(--color-text-muted);
+    background: color-mix(in oklch, var(--color-text-muted) 14%, var(--color-surface));
   }
 
   .dev__footer code {
